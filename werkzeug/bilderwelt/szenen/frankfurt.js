@@ -160,6 +160,7 @@ const imRahmen = (svg) => {
     const z = (d.match(/-?\d+(\.\d+)?/g) || []).map(Number), pts = [];
     for (let i = 0; i + 1 < z.length; i += 2) pts.push([z[i], z[i + 1]]);
     if (pts.length && pts.every((q) => q[0] < X0) || pts.every((q) => q[0] > X1) || pts.every((q) => q[1] < Y0) || pts.every((q) => q[1] > Y1)) return "";
+    if (!/[a-z]/.test(d.replace(/e-?\d/g, "")) && pts.some((q) => !innen(q))) return "";
     return m;
   });
   svg = svg.replace(/<(ellipse|circle) ([^>]*)\/>/g, (m, tag, at) => {
@@ -242,7 +243,7 @@ const platane = (x, fuss, s, hoch, breit, himmel = "#a9c6e0", nb = 15) => {
   /* Plattenborke: unregelmäßige Flecken in Oliv, Creme und Grau */
   for (let i = 0; i < (nb > 10 ? 9 : 2); i++) {
     const yy = fuss - rnd() * hoch * 0.55, xx = x - st * 0.7 + rnd() * st * 1.2, w = st * (0.35 + rnd() * 0.4), h = st * (0.5 + rnd() * 0.9);
-    g += `<path d="M${r(xx)} ${r(yy)} l${r(w)} ${r(-h * 0.2)} l${r(-w * 0.2)} ${r(-h)} l${r(-w * 0.9)} ${r(h * 0.15)} Z" fill="${["#9d9a6a", "#e9e3cb", "#8f8c80", "#c7c09e"][Math.floor(rnd() * 4)]}" opacity=".75"/>`;
+    g += `<path d="M${r(xx)} ${r(yy)} L${r(xx + w)} ${r(yy - h * 0.2)} L${r(xx + w * 0.8)} ${r(yy - h * 1.2)} L${r(xx - w * 0.1)} ${r(yy - h * 1.05)} Z" fill="${["#9d9a6a", "#e9e3cb", "#8f8c80", "#c7c09e"][Math.floor(rnd() * 4)]}" opacity=".75"/>`;
   }
   /* Krone */
   const cx = x, cy = fuss - hoch * 0.78, R = breit / 2;
@@ -1162,7 +1163,7 @@ const PROM = 2.2;
   const R = (x, z) => [x, anX(SUED, x) - 0.4, z];
   const EISEN = "#24382c";
   k += `<path d="${linie(xs.map((x) => R(x, PROM + 1.1)))}" stroke="${EISEN}" stroke-width="1" fill="none"/>`;
-  k += `<path d="${linie(xs.map((x) => R(x, PROM + 1.1)))}" stroke="#6f8a74" stroke-width=".3" fill="none" transform="translate(0 -.35)"/>`;
+  k += `<path d="${linie(xs.map((x) => R(x, PROM + 1.14)))}" stroke="#6f8a74" stroke-width=".3" fill="none"/>`;
   k += `<path d="${linie(xs.map((x) => R(x, PROM + 0.55)))}" stroke="${EISEN}" stroke-width=".5" fill="none"/>`;
   k += `<path d="${linie(xs.map((x) => R(x, PROM + 0.12)))}" stroke="${EISEN}" stroke-width=".45" fill="none"/>`;
   for (const x of xs) {
@@ -1217,8 +1218,8 @@ const PROM = 2.2;
   k += `<path d="${poly([[c[0] + w / 2 + 0.05, c[1] - 1.2, PROM + 2.6], [c[0] + w / 2 + 0.05, c[1] + 1.2, PROM + 2.6], [c[0] + w / 2 + 0.05, c[1] + 1.2, PROM + 3.3], [c[0] + w / 2 + 0.05, c[1] - 1.2, PROM + 3.3]])}" fill="#1f3d2a"/>`;
   const sm = pr(c[0] + w / 2 + 0.06, c[1], PROM + 2.85);
   {
-    const xF = c[0] + w / 2 + 0.06, p0 = pr(xF, c[1] - 1, PROM + 2.85), p1 = pr(xF, c[1] + 1, PROM + 2.85), sv = mass(xF, c[1]);
-    k += `<text x="0" y=".14" font-size=".42" text-anchor="middle" fill="#f3e2a8" font-family="Georgia,serif" font-weight="bold" transform="matrix(${r((p1[0] - p0[0]) / 2 * 100) / 100} ${r((p1[1] - p0[1]) / 2 * 100) / 100} 0 ${r(sv * 100) / 100} ${r(sm[0])} ${r(sm[1])})">Ebbelwoi</text>`;
+    const xF = c[0] + w / 2 + 0.06, p0 = pr(xF, c[1] - 1, PROM + 2.85), p1 = pr(xF, c[1] + 1, PROM + 2.85), sv = mass(xF, c[1] + 0.55), sm = pr(xF, c[1] + 0.55, PROM + 2.85);
+    k += `<text x="0" y=".1" font-size=".3" text-anchor="middle" fill="#f3e2a8" font-family="Georgia,serif" font-weight="bold" transform="matrix(${r((p1[0] - p0[0]) / 2 * 100) / 100} ${r((p1[1] - p0[1]) / 2 * 100) / 100} 0 ${r(sv * 100) / 100} ${r(sm[0])} ${r(sm[1])})">Ebbelwoi</text>`;
   }
   /* der grüne Kranz (Fichtenzweige) am Eckpfosten */
   const kz = pr(c[0] + w / 2 + 0.62, c[1] + d / 2 + 0.28, PROM + 2.05), ks = mass(c[0] + w / 2, c[1] + d / 2);

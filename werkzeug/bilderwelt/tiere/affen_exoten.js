@@ -501,7 +501,7 @@ function gorilla(T) {
 }
 
 /* Hautfarben für Hände/Füße: c = nah (fern → nah), cf = fern, l/lf = Licht, g/gf = Verlauf, na/nf = Nagel */
-const HAUT_G = { n: "g", c: ["#151413", "#1b1a19", "#22201f"], cf: ["#0e0d0d", "#121110", "#151413"], l: "#9a948d", lf: "#4a4642",
+const HAUT_G = { n: "g", c: ["#151413", "#1b1a19", "#22201f"], cf: ["#0e0d0d", "#121110", "#151413"], l: "#9a948d", lf: "#4a4642", polster: "#4a4440",
   g: [[0, "#34312f"], [0.55, "#1d1c1b"], [1, "#0c0b0b"]], gf: [[0, "#222020"], [0.6, "#121111"], [1, "#080808"]], na: "#5e5750", nf: "#35312d", sohle: "#7a736b" };
 const HAUT_S = { n: "s", c: ["#231c18", "#2a221e", "#332924"], cf: ["#161210", "#1a1513", "#1e1815"], l: "#a8968a", lf: "#5a4c44",
   g: [[0, "#4a3c34"], [0.55, "#2c2420"], [1, "#141010"]], gf: [[0, "#2c2420"], [0.6, "#1a1513"], [1, "#0c0a08"]], na: "#7a6a5e", nf: "#3e342e", sohle: "#8a7a6c" };
@@ -523,18 +523,18 @@ function knoechelhand(W, T, wx, fern, pal = HAUT_G, o = {}) {
   /* Daumenstummel hinten innen, ohne Bodenkontakt */
   s += W.glied([[wx - hb + 1, -12], [wx - hb - 0.8, -9.6], [wx - hb - 1, -8.2]], 2.4, fern ? "#0c0b0b" : C[0], "");
   /* Finger: fern (Zeige-) → nah (kleiner Finger); Front = Knöchel (PIP) */
-  const F = [[1.4, -1.2, 5.2, 5.2], [0.8, -0.8, 6, 5.4], [0.3, -0.4, 5.6, 5.4], [0, 0, 4.4, 5]];
+  const F = [[1.2, -1.6, 5.4, 4.6], [1.4, -1.1, 6.4, 4.8], [0.6, -0.6, 5.4, 4.8], [-0.4, 0, 3.6, 4.4]];
   F.forEach(([dz, dy, L, h], i) => {
     const x0 = wx - hb + 1.6, x1 = wx + hb + (L * lang) + vor + dz;
     const pts = [[x0, -7 + dy], [wx + hb - 0.6, -7.4 + dy], [x1 - h * 0.6, -h + dy], [x1 - h * 0.1, -h * 0.62 + dy], [x1, -h * 0.25], [x1 - h * 0.35, 0, 1], [x0 + 0.6, 0, 1], [x0 - 0.4, -2.6]];
     const c = fern ? (pal.walzeF || ["#0b0a0a", "#0d0c0c", "#0f0e0e", "#121110"])[i] : [C[0], C[0], C[1], C[2]][i];
     s += W.teil(pts, i < 3 && !fern ? T.lg("fw" + pal.n + i, [[0, "#1e1c1b"], [1, c]], 0, 0, 1, 0) : c,
       /* Knöchelpolster vorn oben: matt, heller, Querfalten */
-      W.weich([[x1 - h * 0.45, -h * 0.66 + dy, h * 0.42, h * 0.22, -20, PO, i === 3 ? 0.95 : 0.6], [x0 + (x1 - x0) * 0.5, -0.6, (x1 - x0) * 0.5, 0.6, 0, "#000", 0.6]], 0.35) +
+      W.weich([[x1 - h * 0.42, -h * 0.62 + dy, h * 0.45, h * 0.3, -25, PO, 1], [x1 - h * 0.5, -h * 0.75 + dy, h * 0.25, h * 0.12, -25, fern ? PO : "#6a645e", 0.7], [x0 + (x1 - x0) * 0.5, -0.6, (x1 - x0) * 0.5, 0.6, 0, "#000", 0.6]], 0.3) +
       (i === 3 && !fern ? W.falten([`M${f1(x1 - h * 0.6)} ${f1(-h * 0.92)}q.6 .8 .4 1.8`, `M${f1(x1 - h * 0.35)} ${f1(-h * 0.84)}q.6 .7 .4 1.6`, `M${f1(x1 - h * 0.85)} ${f1(-h * 0.94)}q.5 .7 .3 1.6`,
         `M${f1(wx + hb - 0.2)} -6.8q.8 .4 1.2 1.2`], 0.1, "#000", "#7a746e", 0.7, 0.18) : "") +
       (i === 3 && !fern ? W.L([`M${f1(x0 + 1)} ${f1(-h * 0.98)}L${f1(x1 - h * 0.7)} ${f1(-h * 0.98)}`], "#000", 0.14, 0.45) : ""),
-    { rand: fern ? 0.3 : 0.5, rw: 0.3, vol: false });
+    { rand: fern ? 0.3 : 0.7, rw: 0.35, vol: false });
   });
   /* Mittelhand (senkrecht), Handrücken mit Querfalten, Ballen hinten */
   const hand = [[wx - hb + 0.4, top], [wx + hb - 0.4, top], [wx + hb, -12], [wx + hb - 0.4, -7.6], [wx + 2, -6.6], [wx - hb + 1, -6.8], [wx - hb, -11]];

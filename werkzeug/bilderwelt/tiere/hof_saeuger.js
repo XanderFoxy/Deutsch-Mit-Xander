@@ -1336,7 +1336,7 @@ function schwein(T) {
   const F = flecken(T, "#fff4ec", "#7a3020");
   const U = ' gradientUnits="userSpaceOnUse"';
   /* Flanke cremig, Terminator bei ≈ 60 % der Rumpfhöhe, Kernschatten, warmes Reflexlicht am Unterbauch; Beine etwas dunkler */
-  const haut = T.lg("haut", [[0, "#f8e8de"], [0.18, "#f3ddd0"], [0.4, "#ecccbc"], [0.52, "#dcb2a0"], [0.6, "#e2b8a6"], [0.68, "#dcae9c"], [1, "#d0a090"]], 0, -90, 0, 0, U);
+  const haut = T.lg("haut", [[0, "#f8e8de"], [0.18, "#f3ddd0"], [0.38, "#eaccbc"], [0.5, "#d4a894"], [0.58, "#deb2a0"], [0.66, "#d6a896"], [1, "#cc9c8c"]], 0, -90, 0, 0, U);
   const fernH = T.lg("fernH", [[0, "#b89488"], [1, "#a8887c"]], 0, -40, 0, 0, U);
   const borsten = fellMuster(T, "b", 1.6, 26, [["#fff8f0", 1, 0.05, 0.6], ["#c8907e", 0.5, 0.05, 0.4]], 18, 6);
   const poren = fellMuster(T, "p", 0.06, 110, [["#a86a5a", 1, 0.1, 0.1]], 180, 7);
@@ -1367,7 +1367,7 @@ function schwein(T) {
     rumpfLicht(F, 8, 148, -89, -37, 0.8) + F.licht(80, -86, 60, 3, 0.4) +
     /* Schinken: Kugelmasse mit eigenem Glanz, Kernschatten unten-vorn, Senke zur Flanke; Schulter mit Glanz, Senke dahinter */
     F.licht(20, -70, 13, 12, 0.5) + F.glanz(14, -74, 6, 5, 0.4) + F.schatten(26, -46, 14, 6, 0.45, -20) + F.schatten(44, -56, 7, 16, 0.3, -15) +
-    F.licht(126, -72, 11, 12, 0.42) + F.schatten(110, -62, 6, 18, 0.18, 10) + F.schatten(136, -50, 8, 8, 0.3, 15) +
+    F.licht(128, -72, 11, 12, 0.42) + F.schatten(136, -50, 8, 8, 0.3, 15) +
     /* Falten als weiche Wülste: Halsfalten hinter der Backe, Ellbogen, Kniefalte; Fesselringe */
     [0, 1, 2].map((i) => F.kante(146 - i * 3.2, -70 + i * 2, 147 - i * 3.2, -56 + i * 2, 0.7, 0.4) + F.rinne(147.2 - i * 3.2, -70 + i * 2, 148.2 - i * 3.2, -56 + i * 2, 0.8, 0.3)).join("") +
     F.kante(120, -43, 132, -45.6, 0.7, 0.4) + F.rinne(120, -41.6, 132, -44.2, 0.8, 0.35) + F.rinne(44, -40, 50, -48, 1, 0.35) + F.licht(47, -46, 1.2, 3, 0.3, 30) +
@@ -1416,19 +1416,20 @@ function schwein(T) {
   s += F.rinne(159.4, -66, 166, -65.4, 0.3, 0.35) + F.rinne(160, -64.6, 165, -64, 0.25, 0.25);
   /* Schlappohr (Landrasse): kräftiger, eingerollter Ohrgrund über/hinter dem Auge; breit-dreieckig nach vorn-unten,
      Spitze vor dem Auge auf Höhe des Nasenrückens; durchscheinend warm zum Rand, feine verzweigte Adern */
-  const ohr = [[145.4, -84.8], [151.6, -86], [158, -84.6], [164, -81], [169.8, -76], [174.6, -71], [177.6, -67.4], [177.4, -65.4], [175, -65.2],
-    [170.4, -66.4], [166, -67.6], [162, -69.4], [156.6, -73.4], [151.4, -77], [147, -80.4]];
-  s += imRumpf(rk, F.schatten(165, -66, 12, 2.6, 0.5, 20) + F.schatten(152, -74, 6, 4, 0.4));
+  const ohr = [[145.4, -84.8], [151.6, -86.2], [158, -85], [164.6, -81.6], [170.4, -76.4], [174.6, -70.6], [176.6, -65.6], [176.2, -62.6], [174, -62],
+    [170.2, -64], [166.4, -66.6], [162.6, -69.2], [158, -72.6], [152.4, -76.6], [147.4, -80]];
+  s += imRumpf(rk, F.schatten(164, -64.6, 12, 2.8, 0.5, 28) + F.schatten(152, -73, 6, 4, 0.4));
   s += vol(T, "ohr", 1.2, stueck(T, ohr, T.lg("ohr", [[0, "#f0d2c4"], [0.55, "#efc2b2"], [1, "#e8a290"]], 0, 0, 1, 1),
     /* Ohrgrund: Rolle mit zwei Knorpelfalten */
     F.licht(150, -82, 4, 2, 0.5, 20) + F.rinne(148, -80.4, 154, -77, 0.6, 0.45) + F.rinne(150.6, -83.6, 156.6, -80.2, 0.5, 0.35) +
-    F.licht(159, -81, 9, 1.6, 0.5, 34) + F.schatten(166, -71.6, 9, 1.4, 0.3, 36) + F.glanz(173, -68, 3, 1.6, 0.35, 40) +
-    fein(T, strich([[152, -82], [158, -79.8], [164, -75.6], [170, -70.6], [174.6, -67.4]], "#a8506a", 0.16, 0.32, 0.05) +
-      strich([[158, -79.8], [160.6, -76.2], [161.4, -73.4]], "#a8506a", 0.12, 0.3, 0.05) + strich([[164, -75.6], [166.6, -72.4], [167, -70.2]], "#a8506a", 0.11, 0.28, 0.05) +
-      strich([[160.6, -76.2], [163, -75.2]], "#a8506a", 0.09, 0.28, 0.05) + strich([[166.6, -72.4], [169, -71.6]], "#a8506a", 0.08, 0.26, 0.05)) +
+    F.licht(160, -81.4, 10, 2, 0.5, 34) + F.schatten(166, -69.6, 10, 1.8, 0.35, 36) + F.glanz(172.6, -66, 3, 2, 0.4, 55) +
+    fein(T, strich([[152, -82], [158, -80], [164, -76], [170, -70.6], [174.4, -64.6]], "#a8506a", 0.16, 0.32, 0.05) +
+      strich([[158, -80], [160.4, -76.4], [161, -72.6]], "#a8506a", 0.12, 0.3, 0.05) + strich([[164, -76], [166.4, -72], [166.6, -68.6]], "#a8506a", 0.11, 0.28, 0.05) +
+      strich([[160.4, -76.4], [163, -75.4]], "#a8506a", 0.09, 0.28, 0.05) + strich([[166.4, -72], [169, -71]], "#a8506a", 0.08, 0.26, 0.05) +
+      strich([[170, -70.6], [171, -66.6]], "#a8506a", 0.08, 0.26, 0.05)) +
     haare2(T, ohr, 22, 30, 1.1, { farben: [["#fff8f0", 1, 0.04, 0.6]], streuung: 20, szene: 0 }),
     { licht: 0, q: 0.05 }), { schatten: "#6a2418", dunkel: 0.35, hell: 0.35 });
-  s += saum2(T, [[164, -81], [169.8, -76], [174.6, -71], [177.6, -67.4]], 14, 30, 1, "#fff4ec", 0.04, 0.6, { ab: 0.2, streuung: 30 });
+  s += saum2(T, [[164.6, -81.6], [170.4, -76.4], [174.6, -70.6], [176.6, -65.6]], 14, 30, 1, "#fff4ec", 0.04, 0.6, { ab: 0.2, streuung: 30 });
   const kb = T.box(scheibe.concat(ohr, [[146, -50]]));
   return { svg: s, box: [1, -92, 186, 0], fuesse: [S_HCX + 3, S_HCX + 11, S_VCX - 2, S_VCX + 5], kopf: [kb[0] - 2, kb[1] - 6, kb[2] + 2, kb[3] + 2] };
 }

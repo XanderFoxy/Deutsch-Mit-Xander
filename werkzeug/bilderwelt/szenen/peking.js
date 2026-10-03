@@ -373,9 +373,10 @@ const X = (m) => CX + m;
     for (const [ax, ay, bx, by, cx2, cy2] of [[88, yTrauf2 - 2.6, 62, yGrat, 57, yFirst], [86, yTrauf1 - 2.4, 72, yWand2 + 0.4, 72, yWand2 + 0.4]]) {
       k += `<path d="M${X(sd * ax)} ${r(ay)} L${X(sd * bx)} ${r(by)} L${X(sd * cx2)} ${r(cy2)}" stroke="#c88a10" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
       const p = (t) => [X(sd * (ax + (bx - ax) * t)), ay + (by - ay) * t];
-      let [fx, fy] = p(0.05); k += reiter(fx, fy, -sd);
-      for (let i = 0; i < 9; i++) { [fx, fy] = p(0.12 + i * 0.062); k += tier(fx, fy, -sd, i); }
-      [fx, fy] = p(0.76); k += chuishou(fx, fy, -sd);
+      const gross = (fx, fy, inhalt) => `<g transform="translate(${r(fx)} ${r(fy)}) scale(1.6) translate(${r(-fx)} ${r(-fy)})">${inhalt}</g>`;
+      let [fx, fy] = p(0.04); k += gross(fx, fy, reiter(fx, fy, -sd));
+      for (let i = 0; i < 9; i++) { [fx, fy] = p(0.115 + i * 0.066); k += gross(fx, fy, tier(fx, fy, -sd, i)); }
+      [fx, fy] = p(0.8); k += gross(fx, fy, chuishou(fx, fy, -sd));
     }
   }
   /* First mit großen Chiwen: Drachenkopf „verschluckt“ den First, Schwanz hochgerollt, Schwertgriff */
@@ -383,9 +384,21 @@ const X = (m) => CX + m;
   for (const sd of [-1, 1]) {
     const x0 = X(sd * 55), y0 = yFirst;
     const pt = (dx, dy) => `${r(x0 + sd * dx)} ${r(y0 + dy)}`;
-    k += `<path d="M${pt(-1.2, 0.2)} L${pt(-1.2, -1.6)} Q${pt(-0.6, -3.4)} ${pt(0.8, -3.2)} L${pt(1.4, -5.6)} Q${pt(2.6, -7)} ${pt(3.6, -6)} Q${pt(4.6, -4.6)} ${pt(3.6, -3.6)} Q${pt(3.2, -5)} ${pt(2.6, -4.6)} L${pt(2.6, -2.2)} Q${pt(4.4, -1.6)} ${pt(4.6, 0.2)} Z" fill="#c88a10" stroke="#7a5206" stroke-width=".25"/>`;
-    k += `<path d="M${pt(-1.2, -0.6)} Q${pt(-0.2, 0)} ${pt(1, -0.8)}" stroke="#5a3a06" stroke-width=".35" fill="none"/><circle cx="${r(x0 + sd * 0.6)}" cy="${r(y0 - 2.1)}" r=".35" fill="#5a3a06"/>`;
-    k += `<path d="M${pt(1.8, -3.4)} L${pt(1.8, -6.8)}" stroke="#c88a10" stroke-width=".6"/><rect x="${r(x0 + sd * 1.8 - 0.7)}" y="${r(y0 - 7.2)}" width="1.4" height=".5" fill="#e9bd3c"/>`;
+    /* Chiwen (UNSICHER in den Einzelheiten): Drachenkopf mit weit offenem Maul beißt in den First,
+       darüber der Körper, der Fischschwanz rollt sich nach außen ein; hinten steckt der Schwertgriff. */
+    const pfad = (pts) => "M" + pts.map(([a, b]) => pt(a * 1.15, b * 1.15)).join(" L") + " Z";
+    k += `<path d="${pfad([[-2.4, -1.7], [-1.9, -3.2], [-0.6, -4.3], [0.9, -4.6], [1.0, -6.6], [1.5, -8.0], [2.6, -8.7], [3.8, -8.4], [4.6, -7.4], [4.5, -6.3], [3.9, -5.7], [4.7, -5.3], [3.6, -5.0], [3.2, -5.9], [3.6, -6.6], [3.3, -7.3], [2.6, -7.2], [2.3, -6.0], [2.5, -4.4], [3.2, -2.6], [3.4, 0.4], [-1.9, 0.4], [-2.3, -0.2], [-0.6, -0.4], [-0.6, -1.5]])}" fill="#c88a10" stroke="#6a4404" stroke-width=".25" stroke-linejoin="round"/>`;
+    /* Maulhöhle, Zähne und der First, der im Maul verschwindet */
+    k += `<path d="${pfad([[-2.4, -1.7], [-0.6, -1.5], [-0.6, -0.4], [-2.3, -0.2]])}" fill="#4a1e04"/>`;
+    k += `<rect x="${r(Math.min(x0, x0 + sd * -2.9))}" y="${r(y0 - 1.4)}" width="${r(2.9)}" height="1.6" fill="#c88a10"/><rect x="${r(Math.min(x0, x0 + sd * -2.9))}" y="${r(y0 - 1.4)}" width="${r(2.9)}" height=".5" fill="#f6d36a"/>`;
+    k += `<path d="M${pt(-2.2, -1.85)} L${pt(-1.9, -1.35)} L${pt(-1.6, -1.85)} M${pt(-1.3, -1.8)} L${pt(-1.05, -1.35)} L${pt(-0.8, -1.75)}" fill="#fff6dc"/>`;
+    /* Glanz auf Kopf und Rücken, Schuppenbögen, Mähne, Auge mit Braue */
+    k += `<path d="M${pt(-1.6, -3.4)} Q${pt(-0.2, -4.6)} ${pt(1.2, -4.4)}" stroke="#f6d36a" stroke-width=".35" fill="none"/><path d="M${pt(1.4, -7.6)} Q${pt(2.4, -8.6)} ${pt(3.8, -8.2)}" stroke="#f6d36a" stroke-width=".3" fill="none"/>`;
+    for (const [a, b] of [[2.9, -1.2], [2.6, -2.4], [2.7, -3.6], [1.8, -2.0], [1.9, -3.1]]) k += `<path d="M${pt(a - 0.45, b)} Q${pt(a, b + 0.5)} ${pt(a + 0.45, b)}" stroke="#8a5a08" stroke-width=".2" fill="none"/>`;
+    k += `<path d="M${pt(1.0, -4.5)} L${pt(1.9, -4.9)} L${pt(1.5, -4.0)} L${pt(2.4, -4.2)} L${pt(1.8, -3.3)}" fill="#a86c08"/>`;
+    k += `<circle cx="${r(x0 + sd * 0.15)}" cy="${r(y0 - 3.0)}" r=".55" fill="#fff6dc"/><circle cx="${r(x0 + sd * 0.0)}" cy="${r(y0 - 3.0)}" r=".3" fill="#2a1602"/><path d="M${pt(-0.7, -3.6)} Q${pt(0.2, -4.2)} ${pt(0.9, -3.7)}" stroke="#6a4404" stroke-width=".3" fill="none"/>`;
+    /* Schwertgriff mit Parierstange, schräg im Rücken */
+    k += `<path d="M${pt(2.2, -4.0)} L${pt(1.9, -7.9)}" stroke="#7a5206" stroke-width=".55"/><path d="M${pt(1.4, -5.2)} L${pt(2.8, -5.3)}" stroke="#e9bd3c" stroke-width=".45"/><circle cx="${r(x0 + sd * 1.9 * 1.15)}" cy="${r(y0 - 8.1 * 1.15)}" r=".3" fill="#e9bd3c"/>`;
   }
   S.teil({ anker: [132, 64], id: "tor", de: "das Tor des Himmlischen Friedens", syl: "TOR des HIMM-li-schen FRIE-dens", it: "la Porta della Pace Celeste", itSyl: "POR-ta del-la PA-ce ce-LE-ste", en: "Gate of Heavenly Peace", x: 0, y: 0, kunst: k,
     zoom: { x: 86, y: 34, w: 102, h: 68 }, unter: torUnter,
@@ -802,7 +815,9 @@ const enteUnter = [];
   /* Glanzlichter längs über die knusprige Haut */
   ente += `<path d="M-11 -7.2 Q-1 -10.6 10 -8.6" stroke="#ffd9a0" stroke-width="1" fill="none" opacity=".7"/><path d="M-9 -5.6 Q0 -8.4 8 -7" stroke="#ffe6c0" stroke-width=".5" fill="none" opacity=".55"/>`;
   /* kleiner hängender Hals mit Kopf, am Plattenrand liegend */
-  ente += `<path d="M-13.6 -2.4 Q-17 -3.4 -18.6 -1.6 Q-19.4 -.6 -18.8 .4" stroke="#7a3410" stroke-width="1.9" fill="none" stroke-linecap="round"/><ellipse cx="-19.4" cy=".8" rx="1.7" ry="1.1" fill="#6a2a0c"/><path d="M-20.8 1 l-1.4 .5 l1.2 .3" fill="#4a1a06"/>`;
+  ente += `<path d="M-13.4 -2.6 Q-16.4 -4 -17.6 -2.6 Q-18.2 -1.6 -17.8 -.6" stroke="#7a3410" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M-13.8 -3.4 Q-16.2 -4.4 -17.4 -3.4" stroke="#d08a48" stroke-width=".45" fill="none" opacity=".8"/>`;
+  /* Kopf rund mit flachem Entenschnabel, auf dem Tellerrand liegend */
+  ente += `<path d="M-16.2 -.4 Q-16.2 -2.4 -18.2 -2.4 Q-20.2 -2.4 -20.2 -.6 Q-20.2 .6 -18.6 .7 Q-16.2 .8 -16.2 -.4 Z" fill="#6e2c0c"/><path d="M-19.8 -.1 Q-21.6 -.5 -23.2 .1 Q-23.8 .5 -23.2 .9 Q-21.6 1.3 -19.6 .7 Z" fill="#4a1e08"/><path d="M-19.8 .35 L-23.4 .5" stroke="#2a1004" stroke-width=".18"/><path d="M-19.6 -1.9 Q-18.4 -2.6 -17 -1.8" stroke="#c07a3a" stroke-width=".35" fill="none"/>`;
   let k = schattenAuf(px, py, 24 * q, 3 * q, q) + g(px, py, q, ente);
   /* Teller mit Hautscheiben im Fächer: Haut oben, heller Fettrand */
   const dT = 2.2, [tx, ty2] = tp(1.06, dT), qt = sk(dT);
