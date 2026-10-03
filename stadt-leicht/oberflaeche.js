@@ -1330,12 +1330,124 @@
     if (!o) return;
     o._zurueck = { x: o.x, y: o.y, dreh: o.dreh };
     o.geist = true; geist = o;
+    if (o.art === "feld") feldAufnehmen(o);   // FASSUNG 874
     if (O.fokusVergessen) O.fokusVergessen();
     karteZeigen("setzen", geist); SZ.geaendert(); L().unruhe = 2;
     grossHeraus(o);   // FASSUNG 844
   }
+  /* =====================================================================
+     FASSUNG 874 — XANDER (Funk 255, wörtlich): „Ich möchte dass man das Feld verschieben kann und dass es standardmäßig
+     zwischen der Bäckerei und der Mühle ist also hinter der Bäckerei quasi … das Feld auf der rechten Seite ist auch noch
+     nicht in einer geeigneten Position wo ich locker drauf zugreifen kann innerhalb des Bildausschnitts".
+     Ein Acker (dorf.js D.FELD_ORTE) ist kein Bild der Szene, sondern Korn, das am Boden gemalt wird (korn.js). Für Menü,
+     Halten, Ziehen und Setzen steht er als „Ding" da: art „feld", seine Grundfläche ist das Rechteck in den Bildachsen
+     (dreh 3,5 = um 45° gedreht, so liegt u = x − y quer und v = x + y längs). Bedient wird er wie ein Haus: langes
+     Drücken (auch im Überblick des kleinen Rahmens) → Menü am Acker → „Versetzen" oder bei offenem Menü halten → er hebt
+     sich (Summen) und folgt dem Finger; der gestrichelte Rahmen ist grün, wo er hin darf, rot, wo nicht (dorf.js
+     D.feldPruefen: nur freie Wiese, nichts Hohes davor, der Kornwagen kommt hin). Loslassen bzw. „Setzen" setzt ihn und
+     merkt den Platz („Gesetzt"); an einer roten Stelle rastet er an seinen alten Platz zurück und sagt, warum. Korn,
+     Tippfläche zum Ernten und Zeichen folgen ihm schon beim Ziehen; die Ladestellen des Kornwagens, die Bäume und der
+     Kornwagen selbst kommen beim Setzen nach (Neuaufbau wie bei einem Wahrzeichen). Außerhalb des Spiels (eigene Seite,
+     Schmücken/Bauen) öffnet schon ein Tipp aufs Feld sein Menü; im Spiel erntet der Tipp weiter.
+     ===================================================================== */
+  const feldDinge = {};
+  const M_UV = Math.SQRT1_2;   // eine Einheit in u bzw. v sind 0,71 m
+  function feldDing(f) {
+    if (!f || f.u0 == null || !D.feldPruefen) return null;
+    const o = feldDinge[f.nr] || (feldDinge[f.nr] = { art: "feld", nr: f.nr, name: "Getreidefeld", dreh: 3.5, hoehe: 1.2, stufe: 1, fuss: [1, 1] });
+    if (!o.geist) { const um = (f.u0 + f.u1) / 2, vm = (f.v0 + f.v1) / 2; o.x = (um + vm) / 2; o.y = (vm - um) / 2; }
+    o.fuss = [(f.u1 - f.u0) * M_UV, (f.v1 - f.v0) * M_UV];
+    o.versetzt = !!f.versetzt;
+    return o;
+  }
+  O.feldDing = (nr) => feldDing((D.FELD_ORTE || []).find((q) => q.nr === nr));
+  /* der Acker unter dem Finger (Bildpunkt); das Korn steht knapp 1 m hoch – oben am Acker zählt auch ein Stück darüber */
+  function feldUnter(px, py) {
+    if (!D.feldPruefen) return null;
+    const a = ST.aufBoden(px, py), u = a[0] - a[1], v = a[0] + a[1];
+    const f = (D.FELD_ORTE || []).find((q) => q.u0 != null && u >= q.u0 - 0.5 && u <= q.u1 + 0.5 && v >= q.v0 - 2.5 && v <= q.v1 + 0.5);
+    return f ? feldDing(f) : null;
+  }
+  O.feldUnter = feldUnter;
+  /* zu Beginn des Versetzens: die Ladestellen (brauner Boden unter dem Korn) verschwinden bis zum Setzen – sonst bliebe am
+     alten Platz ein Fleck stehen */
+  function feldAufnehmen(o) {
+    o._zurueck = o._zurueck || { x: o.x, y: o.y, dreh: o.dreh };
+    if (D.ladestellenWeg) D.ladestellenWeg();
+    feldNach(o, true);
+  }
+  /* der Acker folgt dem Geist; grün/rot höchstens alle 120 ms neu prüfen (sofort beim Tippen und beim Setzen) */
+  let feldPruefZeit = 0;
+  function feldNach(o, sofort) {
+    D.feldVerschieben(o.nr, o.x - o.y, o.x + o.y);
+    const jetzt = performance.now();
+    if (sofort || jetzt - feldPruefZeit > 120) { feldPruefZeit = jetzt; o._grund = D.feldPruefen(o.nr, o.x - o.y, o.x + o.y); o._frei = !o._grund; }
+    L().unruhe = 2;
+  }
+  function feldFertig(ok) {
+    const o = geist, z = o._zurueck;
+    let gesetzt = false, grund = null;
+    if (ok) { grund = D.feldPruefen(o.nr, o.x - o.y, o.x + o.y); gesetzt = !grund; }
+    if (!gesetzt && z) { o.x = z.x; o.y = z.y; }
+    const s = D.FELD_STANDARD[o.nr], um = o.x - o.y, vm = o.x + o.y;
+    const aufPlatz = !!s && Math.abs(um - s[0]) < 0.3 && Math.abs(vm - s[1]) < 0.3;
+    if (aufPlatz) { o.x = (s[0] + s[1]) / 2; o.y = (s[1] - s[0]) / 2; }
+    o.geist = false; delete o._zurueck; delete o._frei; delete o._grund; delete o.heben;
+    geist = null; karte.hidden = true;
+    if (gesetzt && ST.verwalten && ST.verwalten.feldSetzen) ST.verwalten.feldSetzen(o.nr, aufPlatz ? null : [o.x - o.y, o.x + o.y]);
+    D.feldVerschieben(o.nr, o.x - o.y, o.x + o.y);
+    if (D.felderNeu) D.felderNeu();   // Ladestellen an den neuen (oder alten) Platz – aus dem gemerkten Stand
+    if (gesetzt) ansage("Gesetzt");
+    else if (ok) { O.summen(); ansage("Hier geht kein Acker hin – " + grund); }
+    SZ.geaendert(); miniMalen(); L().unruhe = 2;
+    /* Bäume, Kornwagen (lädt am neuen Platz) und Wahrzeichen neu – wie nach dem Versetzen eines Wahrzeichens */
+    if (gesetzt || L().aufbauenSpaeter) L().aufbauen();
+  }
+  /* „Freier Platz": die nächste Stelle, an der der Acker ganz frei liegt (Ringe um die jetzige Stelle, höchstens ~0,3 s) */
+  function feldFreiSuchen(o) {
+    const u0 = o.x - o.y, v0 = o.x + o.y, t0 = performance.now();
+    let q = D.feldPruefen(o.nr, u0, v0) ? null : [u0, v0];
+    for (let r = 3; !q && r <= 90 && performance.now() - t0 < 300; r += 3) for (let i = 0, n = Math.max(8, Math.round(r * 0.8)); i < n && !q; i++) {
+      const a = i / n * Math.PI * 2, u = u0 + Math.cos(a) * r, v = v0 + Math.sin(a) * r;
+      if (!D.feldPruefen(o.nr, u, v)) q = [u, v];
+    }
+    if (!q) { ansage("Kein ganz freier Platz in der Nähe"); return; }
+    const frei = q[0] === u0 && q[1] === v0;
+    o.x = (q[0] + q[1]) / 2; o.y = (q[1] - q[0]) / 2; feldNach(o, true); SZ.geaendert();
+    const P = ST.proj(o.x, o.y, 0);
+    if (P[0] < 0 || P[1] < 0 || P[0] > K.W || P[1] > K.H) { const z = O.klemmZiel ? O.klemmZiel(o.x, o.y, K.s) : [o.x, o.y]; L().fliegeZu(z[0], z[1], K.s, 500); }
+    ansage(frei ? "Hier ist schon Platz" : "Freien Platz gefunden");
+  }
+  /* „Zurück auf den Ackerplatz" (wie „Zurück auf den Bauplatz" bei Häusern) */
+  function feldZurueck(o) {
+    if (ST.verwalten && ST.verwalten.feldSetzen) ST.verwalten.feldSetzen(o.nr, null);
+    if (D.felderNeu) D.felderNeu();
+    SZ.geaendert(); miniMalen(); L().aufbauen();
+    ansage("Wieder auf dem Ackerplatz");
+    const n = O.feldDing(o.nr);
+    if (n) karteZeigen("haus", n, null, { still: true });
+  }
+  /* der gestrichelte Rahmen beim Versetzen (grün/rot wie bei Häusern und Wahrzeichen, szene.js auswahlRahmen) und der
+     weiche Lichtrand, solange sein Menü offen ist (wie der Lichtkreis unter einem Haus) */
+  SZ.zuhoerer.push(function (g, t) {
+    const o = geist && geist.art === "feld" ? geist : SZ.auswahl && SZ.auswahl.art === "feld" && karte && !karte.hidden ? SZ.auswahl : null;
+    if (!o) return;
+    const ec = SZ.ecken(o, 0.6).map((p) => ST.proj(p[0], p[1], 0));
+    g.save();
+    if (o.geist) {
+      g.strokeStyle = o._frei === true ? "rgba(110,235,120,0.95)" : o._frei === false ? "rgba(255,92,80,0.95)" : "rgba(255,226,140,0.95)";
+      g.lineWidth = 3 * K.dpr; g.setLineDash([7 * K.dpr, 5 * K.dpr]);
+    } else {
+      const puls = 0.5 + 0.5 * Math.sin((t || 0) * Math.PI * 2 / 1.8);
+      g.strokeStyle = "rgba(255,244,205," + (0.62 + 0.25 * puls).toFixed(3) + ")"; g.lineWidth = 2.4 * K.dpr;
+      g.shadowColor = "rgba(255,220,120,0.8)"; g.shadowBlur = 8 * K.dpr;
+    }
+    g.beginPath(); ec.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.stroke();
+    g.restore();
+  });
   /* FASSUNG 844 — große Dinge setzen: prüfen, ob die Stelle frei ist (dorf.js D.freiFuerWunder), und frei suchen */
-  function grossDing(o) { return !!o && (o.art === "wunder" || (o.fuss && Math.max(o.fuss[0], o.fuss[1]) * (o.art === "wunder" ? 1 : (o.stufe || 1)) > 16)); }
+  /* FASSUNG 874 — ein Acker ist kein großes Ding in diesem Sinn: er prüft seinen Platz selbst (D.feldPruefen) */
+  function grossDing(o) { return !!o && o.art !== "feld" && (o.art === "wunder" || (o.fuss && Math.max(o.fuss[0], o.fuss[1]) * (o.art === "wunder" ? 1 : (o.stufe || 1)) > 16)); }
   function fussVon(o) { const f = o.fuss || [2, 2], m = o.art === "wunder" ? 1 : (o.stufe || 1); return [f[0] * m, f[1] * m]; }
   function andereGrosse(o) { return SZ.objekte.filter((x) => x !== o && !x.geist && (x.art === "wunder" || (x.art === "eigen" && grossDing(x)))).map((x) => ({ x: x.x, y: x.y, fussS: fussVon(x), dreh: x.dreh })); }
   let pruefZeit = 0;
@@ -1357,12 +1469,13 @@
   }
   /* große Dinge beim Versetzen: weit genug heraus, dass sie samt Umgebung ins Bild passen */
   function grossHeraus(o) {
-    if (!grossDing(o)) return;
+    if (!grossDing(o) && !(o && o.art === "feld")) return;   // FASSUNG 874 — auch ein Acker ganz ins Bild
     const f = fussVon(o), d = Math.hypot(f[0], f[1]), sZiel = Math.max(K.min, Math.min(K.s, 0.42 * K.W / Math.max(1, d)));
     if (sZiel < K.s * 0.97) { const z = O.klemmZiel ? O.klemmZiel(o.x, o.y, sZiel) : [o.x, o.y]; L().fliegeZu(z[0], z[1], sZiel, 600); }
   }
   function geistFertig(ok) {
     if (!geist) return;
+    if (geist.art === "feld") { feldFertig(ok); return; }   // FASSUNG 874
     /* FASSUNG 815 — ein abgestelltes Auto fährt nicht mehr, bis man „Losfahren" tippt */
     const parkt = ok && geist.autoParken && ST.autos ? geist.autoParken : null;
     if (parkt) ST.autos.parken(parkt, true);
@@ -1396,7 +1509,7 @@
   }
   function anheben(o) {
     halten = null;
-    if (geist || SZ.objekte.indexOf(o) < 0) return;
+    if (geist || (o.art !== "feld" && SZ.objekte.indexOf(o) < 0)) return;   // FASSUNG 874 — ein Acker ist kein Bild der Szene
     try { if (navigator.vibrate) navigator.vibrate(15); } catch (e) {}
     clearTimeout(O._tippUhr); O._tipp = null;
     if (O.wahlZu) O.wahlZu();
@@ -1405,6 +1518,7 @@
     karte.hidden = true; karte._ding = null; SZ.auswahl = null;
     o._zurueck = { x: o.x, y: o.y, dreh: o.dreh };
     o.geist = true; o.heben = 7; geist = o; geistZiehen = true; gehoben = o;
+    if (o.art === "feld") feldAufnehmen(o);   // FASSUNG 874
     document.body.classList.add("lk-gehoben");
     ansage("Ziehen – loslassen setzt");
     SZ.geaendert(); L().unruhe = 2;
@@ -1428,14 +1542,16 @@
        langes Halten es an wie bisher (Fassung 822). Der Finger danach ist kein Tipp. */
     const offen0 = karte && !karte.hidden && karte._ding;
     if (!geist && !zweiter) {
-      const lo = SZ.treffer(p.x, p.y, (x) => x.art === "haus" || x.art === "wunder" || x.art === "eigen" || (x.art === "kulisse" && !!x.name) || (x.art === "natur" && istBaum(x) && !x.umland && !x.hinten));
-      if (lo && !(offen0 === lo && haltenErlaubt())) langUhr = setTimeout(() => { langUhr = 0; if (geist || SZ.objekte.indexOf(lo) < 0) return; langMenue(lo); }, O.langMs || 500);
+      /* FASSUNG 874 — auch auf einem Acker (Häuser und Bäume davor gehen vor) */
+      const lo = SZ.treffer(p.x, p.y, (x) => x.art === "haus" || x.art === "wunder" || x.art === "eigen" || (x.art === "kulisse" && !!x.name) || (x.art === "natur" && istBaum(x) && !x.umland && !x.hinten)) || feldUnter(p.x, p.y);
+      if (lo && !(offen0 === lo && haltenErlaubt())) langUhr = setTimeout(() => { langUhr = 0; if (geist || (lo.art !== "feld" && SZ.objekte.indexOf(lo) < 0)) return; langMenue(lo); }, O.langMs || 500);
     }
     if (!geist && haltenErlaubt()) {
       /* nur das gewählte Ding („wenn es jetzt angeklickt ist … und ich würde das jetzt halten“) – wer über ein anderes Haus
          wischt, schiebt wie immer die Karte */
       const gew = karte && !karte.hidden && karte._ding;
-      const o = gew && (gew.art === "haus" || gew.art === "eigen" || gew.art === "natur") ? SZ.treffer(p.x, p.y, (x) => x === gew) : null;
+      const o = gew && (gew.art === "haus" || gew.art === "eigen" || gew.art === "natur") ? SZ.treffer(p.x, p.y, (x) => x === gew)
+        : gew && gew.art === "feld" && feldUnter(p.x, p.y) === gew && !SZ.treffer(p.x, p.y, (x) => x.art !== "natur") ? gew : null;   // FASSUNG 874 — der Acker, dessen Menü offen ist
       /* (zweistufig: hing das Telefon kurz, kommen die liegengebliebenen Fingerbewegungen noch vor dem Anheben an – wer in
          Wahrheit schon schiebt, schiebt die Karte und hebt nichts an) */
       if (o) {
@@ -1451,7 +1567,7 @@
       /* auf dem Geist angesetzt? dann zieht der Finger den Geist */
       const t = SZ.treffer(p.x, p.y, (o) => o === geist);
       const G = ST.proj(geist.x, geist.y, 0);
-      if (t || Math.hypot(p.x - G[0], p.y - G[1]) < 50 * K.dpr) geistZiehen = true;
+      if (t || Math.hypot(p.x - G[0], p.y - G[1]) < 50 * K.dpr || (geist.art === "feld" && feldUnter(p.x, p.y) === geist)) geistZiehen = true;   // FASSUNG 874 — irgendwo auf dem Acker
     }
   };
   let langUhr = 0;
@@ -1480,6 +1596,7 @@
     const a = ST.aufBoden(neu.x, neu.y), b = ST.aufBoden(alt.x, alt.y);
     geist.x += a[0] - b[0]; geist.y += a[1] - b[1]; imBauraum(geist); SZ.geaendert();
     if (grossDing(geist)) platzPruefen(geist);   // FASSUNG 844 — grün/rot
+    if (geist.art === "feld") feldNach(geist);   // FASSUNG 874 — Korn, Tippfläche und Zeichen folgen, grün/rot
     return true;
   };
   O.zeigerHoch = function () {
@@ -1490,7 +1607,7 @@
     if (gehoben) {
       const o = gehoben; gehoben = null; delete o.heben;
       document.body.classList.remove("lk-gehoben");
-      if (geist === o) { geistFertig(true); if (SZ.objekte.indexOf(o) >= 0) waehlen(o, { still: true }); }
+      if (geist === o) { geistFertig(true); if (o.art === "feld" || SZ.objekte.indexOf(o) >= 0) waehlen(o, { still: true }); }   // FASSUNG 874 — auch der Acker
     }
   };
   /* FASSUNG 822 — Koordinator: „solange ein Objekt so gewählt ist, dreht der Dreh-Schieber das Objekt". Ziel des Schiebers:
@@ -1498,7 +1615,7 @@
      O.schieberDrehen(r): r = +1/−1 Schritt (45° bei Bildern mit acht Winkeln), gibt true zurück, wenn ein Ding gedreht wurde.
      O.schieberSetzen(grad): stellt die Blickrichtung des Dings auf den nächsten erlaubten Winkel. */
   O.schieberZiel = function () {
-    if (geist) return geist;
+    if (geist) return geist.art === "feld" ? null : geist;   // FASSUNG 874 — ein Acker dreht nicht (dann dreht der Schieber die Karte)
     const d = karte && !karte.hidden && karte._ding;
     return d && (d.art === "haus" || d.art === "eigen") && SZ.objekte.indexOf(d) >= 0 ? d : null;
   };
@@ -1534,7 +1651,7 @@
     einzelTippen(px, py);
   };
   function einzelTippen(px, py) {
-    if (geist) { const a = ST.aufBoden(px, py); geist.x = a[0]; geist.y = a[1]; imBauraum(geist); if (grossDing(geist)) platzPruefen(geist, true); SZ.geaendert(); L().unruhe = 2; return; }
+    if (geist) { const a = ST.aufBoden(px, py); geist.x = a[0]; geist.y = a[1]; imBauraum(geist); if (grossDing(geist)) platzPruefen(geist, true); if (geist.art === "feld") feldNach(geist, true); SZ.geaendert(); L().unruhe = 2; return; }
     if (leiste && !leiste.hidden) { leisteZeigen(false); return; }
     if (bauLeiste) { bauLeisteZeigen(false); return; }
     /* FASSUNG 815 — Tipp auf ein fahrendes Auto: seine Karte (im großen Bild) */
@@ -1590,6 +1707,10 @@
       const nb = baumNahe(px, py);
       if (nb) { baumTun(nb); auswahlWeg(); return; }
       /* (FASSUNG 817: der Doppeltipp wird jetzt schon in O.tippen erkannt, für jede Stelle im Bild) */
+    } else {
+      /* FASSUNG 874 — außerhalb des Spiels (eigene Seite, Schmücken/Bauen) öffnet ein Tipp auf den Acker sein Menü */
+      const fd = feldUnter(px, py);
+      if (fd) { waehlen(fd); return; }
     }
     for (const k in D.PLAETZE) {
       const pl = D.PLAETZE[k];
@@ -1766,6 +1887,7 @@
   function gleichesDing(o) {
     if (!o) return null;
     if (SZ.objekte.indexOf(o) >= 0) return o;
+    if (o.art === "feld") return feldDing((D.FELD_ORTE || []).find((q) => q.nr === o.nr));   // FASSUNG 874 — derselbe Acker bleibt derselbe
     return SZ.objekte.find((n) => n.art === o.art && (o.spiel ? n.spiel === o.spiel : o.nkey ? n.nkey === o.nkey
       : n.bild === o.bild && Math.abs(n.x - o.x) < 0.05 && Math.abs(n.y - o.y) < 0.05)) || null;
   }
@@ -1911,8 +2033,17 @@
     karte.append(titel, zeile, knoepfe);
     const zu = knopf("kreuz", "Schließen", () => { if (geist) geistFertig(false); auswahlWeg(); karte.hidden = true; }, "lk-klein");
     if (art === "setzen") {
-      titel.textContent = o && (o.art === "haus" || o.art === "wunder") ? o.name + " versetzen" : "Schmuck setzen";
+      titel.textContent = o && (o.art === "haus" || o.art === "wunder" || o.art === "feld") ? o.name + " versetzen" : "Schmuck setzen";
       zeile.textContent = "Mit dem Finger verschieben oder auf die Wiese tippen.";
+      /* FASSUNG 874 — ein Acker: grün/rot wie bei großen Dingen, „Freier Platz", kein Drehen (er liegt immer quer zum Blick) */
+      if (o && o.art === "feld") {
+        zeile.textContent = "Ziehen oder auf die Wiese tippen · grün = passt, rot = geht nicht";
+        const fp = el("button", "lk-text-knopf lk-freiplatz", SYM.versetzen + "<span>Freier Platz</span>"); fp.type = "button";
+        fp.title = "An die nächste Stelle schieben, an der der Acker ganz frei liegt";
+        fp.addEventListener("click", (e) => { e.stopPropagation(); if (geist && geist.art === "feld") feldFreiSuchen(geist); });
+        knoepfe.append(fp, knopf("haken", "Setzen", () => geistFertig(true), "lk-gut"), knopf("kreuz", "Abbrechen", () => geistFertig(false)));
+        return;
+      }
       knoepfe.append(knopf("links", "Drehen", () => objDrehen(geist, 1)), knopf("rechts", "Andersherum drehen", () => objDrehen(geist, -1)),
         knopf("haken", "Setzen", () => geistFertig(true), "lk-gut"), knopf("kreuz", "Abbrechen", () => geistFertig(false)));
       /* FASSUNG 844 — XANDER (Walkie 313): „ich möchte den Kölner Dom irgendwie besser setzen können und ich habe kaum Platz
@@ -2003,6 +2134,15 @@
       knoepfe.append(knopf("versetzen", "Versetzen", () => hausVersetzen(o)), knopf("abriss", "Entfernen", () => baumEntfernen(o)));
       /* FASSUNG 833 — die Wald-Station (Holzfäller und Jäger losschicken) auch im Vollbild des Spiels */
       if (window.parent !== window && !O.gestalten) knoepfe.append(knopf("liste", "Wald: Holzfäller und Jäger", () => { auswahlWeg(); try { window.parent.postMessage({ typ: "leicht-haus", g: "wald" }, location.origin); } catch (e) {} }));
+      knoepfe.append(zu);
+      amDingLegen();
+      return;
+    }
+    /* FASSUNG 874 — ein Acker: Versetzen und (wenn er woanders liegt) zurück auf seinen Ackerplatz */
+    if (o.art === "feld") {
+      zeile.textContent = o.versetzt ? "Getreide für die Mühle · selbst hingestellt" : "Getreide für die Mühle";
+      knoepfe.append(knopf("versetzen", "Versetzen", () => hausVersetzen(o)));
+      if (o.versetzt) knoepfe.append(knopf("zurueck", "Zurück auf den Ackerplatz", () => feldZurueck(o)));
       knoepfe.append(zu);
       amDingLegen();
       return;

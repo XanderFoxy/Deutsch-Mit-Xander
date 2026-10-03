@@ -236,6 +236,15 @@
     const mx = f.reduce((s, p) => s + p[0], 0) / f.length, my = f.reduce((s, p) => s + p[1], 0) / f.length;
     return { knoten: best.i, abstand: L, weg: pts, mitte: [mx, my], groesse: f.length };
   }
+  /* FASSUNG 874 — XANDER (Funk 255): „Ich möchte dass man das Feld verschieben kann". Fände der Kornwagen einen Acker,
+     dessen Ladestelle diese Zellen (ganze Meter) hätte? Dieselbe Regel wie beim Aufbauen: ein Feldweg vom nächsten
+     Wegpunkt (höchstens 36 m), nicht durchs Wasser und nicht durch ein Haus (das Wegenetz hängt ganz zusammen – jeder
+     Wegpunkt führt zur Mühle). dorf.js (D.feldPruefen) lässt einen Acker nur dort setzen, wo das gilt – so lädt der
+     Wagen nach dem Versetzen am neuen Platz. */
+  FW.feldErreichbar = function (zellen) {
+    if (!netz || !netz.P.length || !zellen || !zellen.length) return true;
+    return !!feldAnschluss(zellen, hindernisse());
+  };
 
   /* ---------------- Aufbauen ---------------- */
   function haus(name) {

@@ -53,8 +53,16 @@ function naegel(liste, farbe) {
   const g = liste.map(([x, y, b, h]) => `M${r(x + b * 0.35)} ${r(y - h * 0.75)}q${r(b * 0.2)} ${r(-h * 0.1)} ${r(b * 0.35)} ${r(h * 0.15)}`).join("");
   return `<path d="${d}" fill="${farbe}" stroke="#1a140c" stroke-width=".1" stroke-opacity=".6"/><path d="${g}" fill="none" stroke="#fff" stroke-width=".1" stroke-opacity=".5" stroke-linecap="round"/>`;
 }
-/* weiche Licht-/Schattenfläche (für Muskeln), ohne Rand */
-const fl = (T, pts, farbe, op) => T.form(pts, farbe, ` opacity="${op}"`);
+/* weiche Farb-/Licht-/Schattenzone: bei voller Feinheit mit Weichzeichner (keine harten Kanten), in Szenen ohne */
+function weichFilter(T) {
+  const sd = T._weich || 0.7, id = T.id("weich" + Math.round(sd * 10));
+  if (!T["_wf" + sd]) {
+    T["_wf" + sd] = 1;
+    T.def(`<filter id="${id}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="${sd}"/></filter>`);
+  }
+  return `url(#${id})`;
+}
+const fl = (T, pts, farbe, op) => T.form(pts, farbe, ` opacity="${op}"` + (T.fein && op < 1 ? ` filter="${weichFilter(T)}"` : ""));
 /* weiches Licht / weicher Schatten als Ellipse mit Radialverlauf (Muskelpakete, Kernschatten) */
 function licht(T, cx, cy, rx, ry, rot, op, dunkel) {
   const f = dunkel ? T.rg("dunkel", [[0, "#000", 0.6], [0.6, "#000", 0.25], [1, "#000", 0]]) : T.rg("licht", [[0, "#fff", 0.5], [0.6, "#fff", 0.2], [1, "#fff", 0]]);
@@ -77,7 +85,8 @@ function schuppenFeld(T, oben, unten, x0, x1, n, groesse, o = {}) {
     const t = (1 - Math.cos(Math.PI * (i + 0.5) / n)) / 2, sk = 0.35 + 0.65 * Math.sin(Math.PI * (i + 0.5) / n);
     let x = x0 + (i % 2) * groesse(x0, t) * 0.9 + T.rnd() * 0.5;
     while (x < x1) {
-      const ya = yBei(oben, x), yb = yBei(unten, x), y = ya + (yb - ya) * t, k = groesse(x, t) * (0.85 + T.rnd() * 0.3);
+      const ya = yBei(oben, x), yb = yBei(unten, x), k = groesse(x, t) * (0.75 + T.rnd() * 0.5);
+      const y = ya + (yb - ya) * t + (T.rnd() - 0.5) * Math.abs(yb - ya) / n * 0.8;
       const ky = k * 0.8 * sk;
       /* relative Züge (m/a) halten den Pfad kurz */
       const ax = r(x - k), ay = r(y);
@@ -88,7 +97,7 @@ function schuppenFeld(T, oben, unten, x0, x1, n, groesse, o = {}) {
         hh += (qx === null ? `M${bx} ${by}` : `m${r(bx - qx)} ${r(by - qy)}`) + `a${r(k * 0.8)} ${r(ky * 0.7) || 0.1} 0 0 1 ${r(k * 0.8)} ${r(-ky * 0.52)}`;
         qx = bx + r(k * 0.8); qy = by + r(-ky * 0.52);
       }
-      x += k * 2.05;
+      x += k * (1.9 + T.rnd() * 0.4);
     }
   }
   return `<path d="${dd}" fill="none" stroke="${o.dunkel || "#140f08"}" stroke-width="${o.w || 0.12}" stroke-opacity="${o.opD || 0.45}"/>` +

@@ -80,6 +80,14 @@
       aus.orte[k] = { preis: klemm(Math.round(+s.preis || 0), 0, 3), stufe: klemm(Math.round(+s.stufe || 0), 0, 3), zustand: klemm(+s.zustand || 0, 20, 100),
         t: isFinite(+s.t) ? +s.t : 0, tag: typeof s.tag === "string" ? s.tag.slice(0, 10) : "", besucher: Math.max(0, +s.besucher || 0), offen: Math.max(0, +s.offen || 0), gesamt: Math.max(0, Math.floor(+s.gesamt || 0)) };
     }
+    /* FASSUNG 874 — XANDER (Funk 255): „Ich möchte dass man das Feld verschieben kann". Der Platz eines versetzten Ackers
+       (Mitte in den Bildachsen u, v) steht mit im selben Stand – nur Äcker, die nicht auf ihrem Ackerplatz liegen. */
+    const fe = d.felder && typeof d.felder === "object" ? d.felder : null;
+    if (fe) for (const nr of ["91", "92"]) {
+      const p = fe[nr];
+      if (!Array.isArray(p) || p.length !== 2 || !isFinite(+p[0]) || !isFinite(+p[1]) || Math.abs(+p[0]) > 400 || Math.abs(+p[1]) > 400) continue;
+      (aus.felder || (aus.felder = {}))[nr] = [+(+p[0]).toFixed(2), +(+p[1]).toFixed(2)];
+    }
     return aus;
   }
   let D = null;
@@ -102,6 +110,16 @@
     if (L().dekoSpeichern) L().dekoSpeichern();
   }
   V.speichern = speichern;
+  /* FASSUNG 874 — der gemerkte Platz eines Ackers ([u, v] oder null = sein Ackerplatz, dorf.js D.FELD_STANDARD);
+     feldSetzen(nr, null) stellt ihn zurück. Gespeichert wie alles hier: im Browser und im Stand der Stadt (Feld
+     „verwalten" von spiel_stadt_leicht_speichern – keine neue Tabelle). */
+  V.feldLage = function (nr) { const f = daten().felder; return f && f[String(nr)] ? f[String(nr)].slice() : null; };
+  V.feldSetzen = function (nr, uv) {
+    const d = daten(), k = String(nr);
+    if (uv && isFinite(+uv[0]) && isFinite(+uv[1])) (d.felder || (d.felder = {}))[k] = [+(+uv[0]).toFixed(2), +(+uv[1]).toFixed(2)];
+    else if (d.felder) { delete d.felder[k]; if (!Object.keys(d.felder).length) delete d.felder; }
+    speichern();
+  };
   V.jetzt = () => Date.now();
 
   /* ---------------- Uhr: deutsche Zeit ---------------- */

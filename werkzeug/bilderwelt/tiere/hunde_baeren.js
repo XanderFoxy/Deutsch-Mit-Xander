@@ -646,87 +646,94 @@ function eisbaer(T) {
    Vorderbeine verbindet; sonst weiß bis cremeweiß. Augen klein, dunkel, mit SENKRECHTER Schlitzpupille (anders als
    andere Bären). Sohlengänger, kräftige Krallen, „Pseudodaumen“ am Handgelenk. Fell dicht, wollig, ölig. */
 function panda(T) {
+  /* gedrungen, tonnenförmig; großer runder Kopf. Nase rechts x≈165, Rücken 78 cm */
   const rumpf = [
-    [9, -46], [10.6, -57], [17, -67], [30, -73.6], [50, -76.4], [72, -76.6], [92, -75.6], [108, -73.4], [118, -70.4],  // runder Rücken
-    [125, -70], [131, -74.4], [139, -76.2], [147, -74.6], [153, -70.4], [157, -65.2],                                  // großer runder Oberkopf
-    [160.6, -61.4], [163.4, -58.6], [164.2, -55.6], [163.2, -53.2],                                                    // kurze Schnauze, Nase
-    [160, -52.4], [157, -51.6, 1], [155.6, -49.8], [151, -48.4], [145, -48],                                           // Lippe, Kinn
-    [139, -47.4], [133, -45.6], [127.6, -42], [123, -36], [118, -30.4],                                               // volle Wangen, Kehle, Brust
-    [110, -27.4], [96, -26.6], [80, -27], [64, -28], [48, -30], [34, -33.4], [22, -37.6], [13, -41.6],                 // Bauch
+    [16, -47], [17, -58], [24, -67.4], [38, -74.4], [58, -77.6], [80, -77.6], [98, -76], [110, -73.4], [117, -71.6],     // runder Rücken
+    [121, -76], [127, -81.6], [136, -84.4], [145, -82.8], [152, -78], [156.6, -72.4],                                  // großer runder Oberkopf
+    [160, -67.6], [163.2, -64.6], [164.8, -61.6], [164.2, -58.8],                                                      // kurze Schnauze, Nase
+    [161.6, -57.8], [158.4, -57, 1], [156.8, -55], [152, -52.6], [145, -50.6], [137, -50.2], [130, -51.4],              // Kinn, mächtige Wangen
+    [125, -49], [121.4, -42], [117, -34], [110, -29],                                                                 // Kehle, Brust
+    [96, -27.4], [80, -27], [64, -27.8], [48, -29.6], [34, -33], [24, -38], [18, -42.6],                               // Bauch
   ];
-  const vbN = glied([[110, -52], [102, -32], [104.6, -18], [107, -10]], [[11, 11], [10, 8.6], [8.4, 7.8], [7.8, 7.8]], tatzeB(100, 124, 10));
-  const hbN = glied([[30, -56], [40.6, -34], [36, -18], [33.6, -10]], [[15, 12.6], [11.6, 9.4], [8.6, 7.8], [8, 8]], tatzeB(26, 50, 9));
-  const vbF = glied([[100, -52], [91, -32], [93, -18], [95, -10]], [[10, 10], [9.2, 8], [7.8, 7.2], [7.2, 7.2]], tatzeB(88.6, 111, 9.4));
-  const hbF = glied([[42, -56], [53, -34], [49, -18], [47, -10]], [[13.6, 11.4], [10.6, 8.6], [8, 7.2], [7.4, 7.4]], tatzeB(40, 62, 8.6));
+  const vbN = glied([[110, -52], [103, -32], [105.4, -18], [107.4, -10]], [[11, 11], [10, 8.8], [8.4, 7.8], [7.8, 7.8]], tatzeB(100, 124, 10));
+  const hbN = glied([[34, -56], [44, -34], [39.6, -18], [37.4, -10]], [[15, 12.6], [11.6, 9.4], [8.6, 7.8], [8, 8]], tatzeB(30, 54, 9));
+  const vbF = glied([[100, -52], [91.6, -32], [93.4, -18], [95.4, -10]], [[10, 10], [9.2, 8], [7.8, 7.2], [7.2, 7.2]], tatzeB(89, 111.6, 9.4));
+  const hbF = glied([[46, -56], [56, -34], [52, -18], [50, -10]], [[13.6, 11.4], [10.6, 8.6], [8, 7.2], [7.4, 7.4]], tatzeB(43, 65, 8.6));
 
-  const weissV = hoehenVerlauf(T, "weiss", -78, 0, [[-78, "#f7f4ec"], [-60, "#efeadf"], [-40, "#e2dbcb"], [-26, "#cfc6b2"], [0, "#c2b8a2"]]);
-  const schwarzV = hoehenVerlauf(T, "schwarz", -78, 0, [[-78, "#3a3632"], [-50, "#24211e"], [-20, "#1a1816"], [0, "#121110"]]);
-  const box = [0, -86, 168, 0];
-  const wHaar = [["#fff", 1, 0.14, 0.6], ["#a8a090", 0.7, 0.13, 0.4]], sHaar = [["#000", 1, 0.13, 0.5], ["#6a645c", 0.8, 0.12, 0.5]];
+  const weissV = hoehenVerlauf(T, "weiss", -86, 0, [[-86, "#f8f5ee"], [-66, "#f0ebe0"], [-46, "#e4ddcd"], [-30, "#d2c9b5"], [0, "#c2b8a2"]]);
+  const schwarzV = hoehenVerlauf(T, "schwarz", -86, 0, [[-86, "#3c3834"], [-56, "#26231f"], [-24, "#1b1917"], [0, "#121110"]]);
+  const box = [0, -94, 168, 0];
+  const wHaar = [["#fff", 1, 0.13, 0.6], ["#a8a090", 0.7, 0.12, 0.4]], sHaar = [["#000", 1, 0.13, 0.5], ["#7a746a", 0.8, 0.12, 0.45]];
+  const glanz = "#9a948a";
 
   let s = "";
-  /* fernes Ohr */
-  const ohrF = [[140.6, -75], [141.6, -80.6], [145.4, -83], [149.2, -81], [149.6, -75.6]];
-  s += T.form(ohrF, "#141210") + fellKante(T, [[141.6, -80.4], [145.4, -82.8], [149.2, -80.8]], 14, 0.2, -1, "#2a2724", 0.12, 0.6);
-  /* ferne Beine (schwarz, im Schatten) */
+  /* fernes Ohr (etwas weiter vorn, halb hinter dem Kopf) */
+  const ohrF = [[136.4, -83.4], [137.4, -89], [141.4, -91.6], [145.6, -89.6], [146, -83.6]];
+  s += T.form(ohrF, "#161412") + fellKante(T, [[137.4, -88.8], [141.4, -91.4], [145.6, -89.4]], 16, 0.2, -1, "#2a2724", 0.12, 0.6);
+  /* ferne Beine: schwarz, aber modelliert (Glanz vorn, Kernschatten hinten) */
   const fD = vereint(T, [vbF, hbF]);
-  s += silhouette(T, fD, "#141210", fellGrund(T, fD, "pF", "#000", "#6a645c", 95, box, 0.6) + haare(T, unten(vbF, -32), 30, 96, 1.6, sHaar, 10) + haare(T, unten(hbF, -32), 30, 98, 1.6, sHaar, 10), "#000", 0.6, 0.4);
-  s += baerKrallen(110.6, -1.8, 3, 2.6, 1, "#3a342c", "#fff", 0.8, T.fein !== false) + baerKrallen(61.6, -1.6, 3, 2.4, 1, "#3a342c", "#fff", 0.8, T.fein !== false);
+  s += silhouette(T, fD, schwarzV, fellGrund(T, fD, "pF", "#000", "#8a847a", 95, box, 0.5) + fleck(T, "", 94, -26, 2.6, 14, glanz, 0.4) + fleck(T, "", 53, -26, 2.6, 12, glanz, 0.35) +
+    fleck(T, "", 76, -40, 30, 10, "#000", 0.5) + haare(T, unten(vbF, -34), 30, 96, 1.6, sHaar, 10) + haare(T, unten(hbF, -34), 30, 98, 1.6, sHaar, 10), "#000", 0.6, 0.4);
+  s += baerKrallen(111.2, -1.8, 3, 2.6, 1, "#4a443a", "#fff", 0.8, T.fein !== false) + baerKrallen(64.6, -1.6, 3, 2.4, 1, "#4a443a", "#fff", 0.8, T.fein !== false);
   /* Schwanz: kurz, weiß */
-  s += T.form([[12, -58], [6.6, -57], [5.4, -53], [8, -50.4], [11.6, -51.6]], "#ece6d8") + fellKante(T, [[6.6, -57], [5.4, -53], [8, -50.6]], 10, -1, 0.5, "#fff", 0.12, 0.7);
+  s += T.form([[19, -58], [13.4, -57.4], [12, -53.4], [14.6, -50.6], [18.6, -51.6]], "#ece6d8") + fellKante(T, [[13.4, -57.4], [12, -53.4], [14.6, -50.8]], 10, -1, 0.5, "#fff", 0.12, 0.7);
 
   /* Körper + Kopf + nahe Beine */
   const kD = vereint(T, [rumpf, vbN, hbN]);
   let n = "";
-  n += fellGrund(T, T.glatt(gleich(rumpf)), "pR", "#6a6252", "#fff", 155, box, 0.6);
-  /* weiße Formen: Licht oben, Schatten unten */
-  n += fleck(T, "", 50, -66, 26, 9, "#fff", 0.6) + fleck(T, "", 140, -68, 10, 6, "#fff", 0.5) + fleck(T, "", 66, -30, 36, 6, "#000", 0.2) + fleck(T, "", 140, -50, 10, 5, "#000", 0.2);
-  /* schwarzes Schulterband: über den Widerrist, vorn und hinten in die Vorderbeine */
-  const band = [[94, -76.6], [108, -74.6], [119, -71.2], [121, -62], [120, -46], [114, -30], [104, -26], [98, -30], [96, -44], [92, -58], [90, -68]];
-  n += T.form(band, schwarzV);
-  /* schwarze Beine */
-  n += T.form(unten(vbN, -50).concat([[96, -40]]), schwarzV) + T.form(unten(hbN, -54), schwarzV);
-  n += fellGrund(T, vereint(T, [band, unten(vbN, -50), unten(hbN, -54)]), "pS", "#000", "#8a847a", 100, box, 0.6);
-  n += fleck(T, "", 102, -60, 8, 8, "#fff", 0.15) + fleck(T, "", 30, -40, 8, 10, "#fff", 0.12) + fleck(T, "", 104, -20, 3, 8, "#fff", 0.12);
+  n += fellGrund(T, T.glatt(gleich(rumpf)), "pR", "#6a6252", "#fff", 160, box, 0.4);
+  /* weiße Formen: Licht oben (Rücken, Kopf), Schatten unten (Bauch, unter den Wangen) */
+  n += fleck(T, "", 56, -68, 26, 9, "#fff", 0.6) + fleck(T, "", 138, -76, 12, 6, "#fff", 0.5) + fleck(T, "", 70, -32, 34, 7, "#000", 0.2) + fleck(T, "", 140, -54, 12, 4, "#000", 0.25);
+  /* schwarzes Schulterband: schräg über den Widerrist, unten in beide Vorderbeine und über die Brust */
+  const band = [[86, -78], [101, -77], [112, -73.4], [118, -66], [122, -54], [123, -44], [118, -33], [110, -28], [100, -27.4], [97, -38], [92, -52], [86, -64], [83, -73]];
+  const hinten = [[14, -46], [17, -56], [25, -62.6], [37, -63.6], [48, -58], [55, -47], [57, -36], [54, -28], [48, -20], [47, -10], [57, -4], [57, 1], [22, 1], [26, -10], [22, -22], [17, -34]];
+  const vorn = unten(vbN, -40).concat([[96, -36]]);
+  n += T.form(band, schwarzV) + T.form(hinten, schwarzV) + T.form(vorn, schwarzV);
+  const schwarzD = vereint(T, [band, hinten, vorn]);
+  n += fellGrund(T, schwarzD, "pS", "#000", "#8a847a", 100, box, 0.6);
+  /* Plastik im Schwarz: Glanz auf Schulter, Vorderkante der Läufe, Keule; Kernschatten hinten */
+  n += fleck(T, "", 104, -64, 8, 9, glanz, 0.4) + fleck(T, "", 109, -22, 2.6, 12, glanz, 0.4) + fleck(T, "", 36, -50, 10, 8, glanz, 0.35) + fleck(T, "", 40, -22, 2.6, 10, glanz, 0.3);
+  n += fleck(T, "", 98, -30, 4, 12, "#000", 0.5) + fleck(T, "", 26, -24, 3, 12, "#000", 0.4) + fleck(T, "", 80, -1, 50, 4, "#000", 0.4);
   /* Haare: weiß auf weiß, schwarz auf schwarz */
-  const wuchs = (x, y) => (x > 120 ? 160 : y > -34 ? 96 : x < 30 ? 110 + (x - 10) * 2 : 170 - (y + 70) * 0.5);
-  n += straehnen(T, rumpf.filter((p) => p[0] < 124), 140, wuchs, 4, 0.3, ["#8a8070", 0.25], ["#fff", 0.6], 14);
-  n += haare(T, rumpf.filter((p) => p[0] < 124), 160, wuchs, 2.6, wHaar, 12, 0.2);
-  n += straehnen(T, band, 40, 120, 4, 0.3, ["#000", 0.35], ["#6a645c", 0.4], 14) + haare(T, band, 60, 115, 2.4, sHaar, 12);
-  n += haare(T, unten(vbN, -40), 40, 96, 1.6, sHaar, 10) + haare(T, unten(hbN, -50), 50, (x, y) => (y < -30 ? 115 : 96), 1.8, sHaar, 10);
-  /* Kopf: Augenfleck (unregelmäßig, schräg nach vorn-unten), Schnauze, Wangen */
-  const kopf = [[125, -70], [131, -74.4], [139, -76.2], [147, -74.6], [153, -70.4], [157, -65.2], [160.6, -61.4], [163, -58], [158, -52], [150, -48.4], [140, -47.6], [130, -48], [125, -56]];
-  n += haare(T, kopf, 150, (x, y) => (x > 152 ? 192 : 160 + (y + 60) * 1.2), 1.4, wHaar, 14);
-  const augenfleck = [[141.6, -66.6], [146, -68.4], [150.2, -66.8], [152, -63], [151.4, -59.4], [148.6, -57.6], [145, -58.8], [142, -62]];
-  n += T.form(augenfleck, T.rg("augenfleck", [[0, "#1a1816"], [0.8, "#1f1d1a"], [1, "#2a2724", 0.85]], 0.55, 0.4, 0.6)) + haare(T, augenfleck, 30, 150, 0.9, sHaar, 20);
-  n += fellKante(T, [[142, -62], [145, -58.8], [148.6, -57.6], [151.4, -59.4]], 14, -0.4, 0.9, "#1a1816", 0.1, 0.6);
-  n += fleck(T, "", 157, -55, 6, 3, "#000", 0.15) + fleck(T, "", 136, -56, 7, 6, "#fff", 0.3);
-  n += zart(T, [[162.2, -53.2], [159, -52.6], [156, -52.6], [154.4, -52]], "#1a1614", 0.4, 0.8) + zart(T, [[162.4, -53.4], [162.6, -51.4]], "#1a1614", 0.3, 0.6);
+  const wuchs = (x, y) => (x > 118 ? 160 : y > -34 ? 96 : x < 30 ? 110 + (x - 10) * 2 : 170 - (y + 70) * 0.5);
+  const rumpfH = rumpf.filter((p) => p[0] < 120);
+  n += straehnen(T, rumpfH, 130, wuchs, 4, 0.3, ["#8a8070", 0.22], ["#fff", 0.6], 14);
+  n += haare(T, rumpfH, 150, wuchs, 2.6, wHaar, 12, 0.2);
+  n += straehnen(T, band, 40, 112, 4, 0.3, ["#000", 0.35], ["#7a746a", 0.4], 14) + haare(T, band, 60, 108, 2.4, sHaar, 12);
+  n += straehnen(T, hinten, 40, (x, y) => (y < -30 ? 118 : 96), 3.4, 0.3, ["#000", 0.35], ["#7a746a", 0.4], 14) + haare(T, vorn, 40, 96, 1.6, sHaar, 10) + haare(T, hinten, 40, (x, y) => (y < -30 ? 115 : 96), 1.8, sHaar, 10);
+  /* Kopf: weiß, große Wangen; Augenfleck unregelmäßig, schräg zur Schnauze abfallend */
+  const kopf = [[118, -72], [127, -81.6], [136, -84.4], [145, -82.8], [152, -78], [156.6, -72.4], [160, -67.6], [163.2, -64.6], [158, -58], [152, -53], [144, -51], [134, -51], [124, -52], [119, -60]];
+  n += haare(T, kopf, 170, (x, y) => (x > 152 ? 192 : 165 + (y + 66) * 1.3), 1.3, wHaar, 14);
+  n += fleck(T, "", 132, -60, 10, 7, "#fff", 0.35) + fleck(T, "", 156, -61, 5, 3, "#000", 0.15);
+  const augenfleck = [[141, -73.4], [143.6, -77.4], [148, -78.6], [151.8, -76.6], [153.6, -72.4], [153.2, -67.6], [151, -63.6], [147.6, -62], [144.4, -63.6], [142, -67.6]];
+  n += T.form(augenfleck, T.rg("augenfleck", [[0, "#1a1816"], [0.8, "#1f1d1a"], [1, "#2a2724", 0.85]], 0.55, 0.4, 0.6)) + haare(T, augenfleck, 34, 150, 0.9, sHaar, 20);
+  n += fellKante(T, [[142, -67.6], [144.4, -63.6], [147.6, -62], [151, -63.6]], 14, -0.4, 0.9, "#1a1816", 0.1, 0.6);
+  n += fleck(T, "", 149.2, -76.6, 1.4, 0.8, glanz, 0.4);
+  n += zart(T, [[162.4, -58.4], [159.4, -57.6], [156.6, -57.4], [154.8, -56.6]], "#1a1614", 0.4, 0.8) + zart(T, [[163, -58.8], [163.2, -57]], "#1a1614", 0.3, 0.6);
   s += silhouette(T, kD, weissV, n, "#4a443c", 0.7, 0.3);
 
-  /* Randhaare: Rücken, Bauch (weiß), Band/Beine (schwarz), Wangen */
-  s += fellKante(T, [[17, -67], [30, -73.6], [50, -76.4], [72, -76.6], [92, -75.6]], 40, -2, -0.4, "#fff", 0.16, 0.7);
-  s += fellKante(T, [[94, -76.6], [108, -74.6], [119, -71.2]], 18, -2, -0.6, "#2a2724", 0.15, 0.7);
-  s += fellKante(T, [[96, -27.2], [80, -27], [64, -28], [48, -30], [34, -33.4]], 36, -1, 2.2, "#d9d1c0", 0.15, 0.7);
-  s += fellKante(T, [[133, -45.6], [127.6, -42], [123, -36]], 14, -1.4, 1.6, "#e8e2d4", 0.14, 0.7);
-  s += fellKante(T, [[10.6, -57], [9.4, -48], [13, -41.6]], 12, -1.2, 0.8, "#e8e2d4", 0.14, 0.6);
-  s += fellKante(T, [[96, -40], [96, -30], [100, -24]], 12, -1.4, 1.2, "#1a1816", 0.14, 0.6);
-  /* Tatzen: kräftige helle Krallen, Zehenwülste */
-  s += baerKrallen(123.6, -2, 4, 3, 1.1, "#5a544a", "#fff", 1, T.fein !== false) + baerKrallen(49.6, -1.8, 4, 2.8, 1.1, "#5a544a", "#fff", 1, T.fein !== false);
-  if (T.fein !== false) s += `<path d="M120 -5.4q-.8 2.4 -.3 5M116 -6.2q-.8 2.6 -.3 5.6M46.4 -4.8q-.8 2.2 -.3 4.6M42.6 -5.6q-.8 2.4 -.3 5.2" stroke="#000" stroke-width=".4" stroke-opacity=".6" fill="none"/>`;
+  /* Randhaare: Rücken, Bauch, Band/Beine (schwarz), Wangen */
+  s += fellKante(T, [[24, -67.4], [38, -74.4], [58, -77.6], [80, -77.6]], 34, -2, -0.4, "#fff", 0.15, 0.7);
+  s += fellKante(T, [[86, -77.8], [101, -76.8], [112, -73.2]], 18, -2, -0.6, "#2a2724", 0.15, 0.7);
+  s += fellKante(T, [[96, -27.6], [80, -27], [64, -27.8], [48, -29.6]], 30, -1, 2.2, "#d9d1c0", 0.15, 0.7);
+  s += fellKante(T, [[152, -52.6], [145, -50.6], [137, -50.2], [130, -51.4], [125, -49], [121.4, -42]], 30, -1.4, 1.8, "#ece6d8", 0.14, 0.75);
+  s += fellKante(T, [[17, -56], [15, -50], [18, -43]], 10, -1.2, 0.8, "#1a1816", 0.14, 0.6);
+  /* Tatzen: kräftige Krallen, Zehenwülste */
+  s += baerKrallen(123.6, -2, 4, 3, 1.1, "#5a544a", "#fff", 1, T.fein !== false) + baerKrallen(53.6, -1.8, 4, 2.8, 1.1, "#5a544a", "#fff", 1, T.fein !== false);
+  if (T.fein !== false) s += `<path d="M120 -5.4q-.8 2.4 -.3 5M116 -6.2q-.8 2.6 -.3 5.6M50.4 -4.8q-.8 2.2 -.3 4.6M46.6 -5.6q-.8 2.4 -.3 5.2" stroke="#000" stroke-width=".4" stroke-opacity=".6" fill="none"/>`;
   /* Nase */
-  const nase = [[160.6, -60.4], [163.4, -58.8], [164.6, -56], [163.8, -53.6], [161.6, -53.4], [160.2, -55.6]];
+  const nase = [[160.8, -66.4], [163.8, -64.6], [165.2, -61.6], [164.6, -59], [162.2, -58.6], [160.6, -61]];
   const naseS = T.form(nase, T.lg("nase", [[0, "#3e3631"], [0.5, "#171311"], [1, "#0a0807"]]));
   s += T.fein !== false && T.relief ? `<g filter="${T.relief("nase", { f: 3.4, tiefe: 0.2, okt: 1 })}">${naseS}</g>` : naseS;
-  s += `<path d="M164.2 -54.8q-1 -.3 -1.6 .5q.5 .4 1.3 .3" fill="#000"/><ellipse cx="162" cy="-58.8" rx=".9" ry=".35" fill="#fff" opacity=".45"/>`;
-  /* Auge: klein, dunkelbraun, SENKRECHTE Schlitzpupille, im schwarzen Fleck; feuchter Glanz */
-  s += T.augeReal ? T.augeReal(147.4, -65.2, 0.95, { iris: "#4a2e1a", iris2: "#1a0e06", offen: 0.75, winkel: -10, pupille: "schlitz", lid: "#000" }) : T.auge(147.4, -65.2, 1, "#4a2e1a", { pupille: "schlitz" });
-  /* nahes Ohr: rund, schwarz, pelzig */
-  const ohr = [[127.4, -72.6], [127.6, -78.4], [131, -82.4], [135.6, -82], [138.2, -78.4], [137.4, -73.4]];
-  s += T.koerper(ohr, T.lg("ohr", [[0, "#2e2b28"], [1, "#121110"]]), { vol: false, rand: false, innen: haare(T, ohr, 50, -95, 1.4, sHaar, 40, 0.3) });
-  s += fellKante(T, [[127.4, -73.4], [127.6, -78.4], [131, -82.4], [135.6, -82], [138.2, -78.4]], 30, 0, -1.1, "#1a1816", 0.12, 0.7);
-  if (T.fein !== false) s += `<path d="M159 -55q3 -.2 5.6 .8M158.6 -55.8q3 -.8 5.8 -.6" stroke="#8a8070" stroke-width=".1" fill="none" opacity=".6"/>`;
-  return { svg: s, box: [5.4, -83, 164.6, 0] };
+  s += `<path d="M164.8 -60.2q-1 -.3 -1.6 .5q.5 .4 1.3 .3" fill="#000"/><ellipse cx="162.4" cy="-64.6" rx=".9" ry=".35" fill="#fff" opacity=".45"/>`;
+  /* Auge: klein, dunkelbraun, SENKRECHTE Schlitzpupille, im oberen Teil des Flecks */
+  s += T.augeReal ? T.augeReal(148.8, -73.4, 1, { iris: "#4a2e1a", iris2: "#1a0e06", offen: 0.72, winkel: -12, pupille: "schlitz", lid: "#000" }) : T.auge(148.8, -73.4, 1, "#4a2e1a", { pupille: "schlitz" });
+  /* nahes Ohr: rund, schwarz, pelzig, mit Glanz */
+  const ohr = [[123.6, -79.4], [123.6, -85.6], [127.4, -90.4], [132.6, -90.4], [135.6, -86.4], [135, -80.6]];
+  s += T.koerper(ohr, T.lg("ohr", [[0, "#3a3632"], [1, "#121110"]]), { vol: false, rand: false, innen: fleck(T, "", 127, -87, 3, 2, glanz, 0.4) + haare(T, ohr, 50, -95, 1.4, sHaar, 40, 0.3) });
+  s += fellKante(T, [[123.6, -80.4], [123.6, -85.6], [127.4, -90.4], [132.6, -90.4], [135.6, -86.4]], 30, 0, -1.1, "#1a1816", 0.12, 0.7);
+  if (T.fein !== false) s += `<path d="M159.4 -59.4q3 -.2 5.6 .8M159 -60.2q3 -.8 5.8 -.6" stroke="#8a8070" stroke-width=".1" fill="none" opacity=".6"/>`;
+  return { svg: s, box: [12, -91.6, 165.2, 0] };
 }
 
 module.exports = [
@@ -739,5 +746,5 @@ module.exports = [
   { id: "eisbaer", de: "der Eisbär", syl: "EIS-bär", it: "l'orso polare", itSyl: "OR-so po-LA-re", en: "polar bear",
     gruppe: "Raubtiere", lebensraum: "Arktis", laenge: 2.21, hoehe: 1.12, zeichne: eisbaer },
   { id: "panda", de: "der Panda", syl: "PAN-da", it: "il panda", itSyl: "PAN-da", en: "panda",
-    gruppe: "Raubtiere", lebensraum: "Bambuswald", laenge: 1.59, hoehe: 0.83, zeichne: panda },
+    gruppe: "Raubtiere", lebensraum: "Bambuswald", laenge: 1.53, hoehe: 0.92, zeichne: panda },
 ];

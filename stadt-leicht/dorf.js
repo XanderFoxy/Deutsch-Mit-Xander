@@ -748,7 +748,7 @@
          im Boden) und damit die Autos bleiben genau wie bis jetzt – so kommen sie weiter über den Markt (Sonde 830). Die
          kleinen Ackerflecken im Boden bleiben die Ladestellen des Kornwagens. */
       /* FASSUNG 827 — die Ladestellen liegen jetzt unter den gemalten Äckern (vorher lag die rechte als brauner Fleck am Weg) */
-      for (const [px, py, fw, fh] of [[73, 104, 4.5, 4.5], [306, 151, 5, 5.5], [73, 110, 3, 3]]) { const q = welt(px, py); rund(q[0], q[1], fw, fh, 2); }
+      /* FASSUNG 874 — die Ladestellen gehen mit ihrem Acker mit (ladestellenMalen, unten); erst die Äcker, dann ihre Ladestellen */
       /* FASSUNG 827 — XANDER (Funk 248): „die getreideäcker scheinen auf einem Gehweg zu sein" · „die Getreidefelder waren
          früher auf beiden Seiten". Der linke Acker (91) lag über dem Weg zu Kaserne und Krankenhaus; jetzt liegt er links
          auf der freien Wiese (unter Kuhstall und Mühle), der rechte (92) rechts zwischen Krankenhaus und Brandenburger Tor.
@@ -759,10 +759,134 @@
       /* FASSUNG 829 — XANDER (Funk 255): „dass es standardmäßig zwischen der Bäckerei und der Mühle ist also hinter der
          Bäckerei quasi". Acker 91 liegt jetzt dort (16 × 24, Mitte u −58, v −14: frei von Wegen, Wasser und Häusern); der
          Kölner Dom hat damit seinen alten freien Platz auf der linken Wiese wieder. */
-      for (const [um, vm, bu, bv, nr] of [[-58, -14, 16, 24, 91], [94, 31, 18, 30, 92]]) {
-        const u0 = um - bu / 2, u1 = um + bu / 2, v0 = vm - bv / 2, v1 = vm + bv / 2, q = vw(um, vm);
-        D.FELD_ORTE.push({ nr: nr, x: +q[0].toFixed(2), y: +q[1].toFixed(2), r: Math.hypot(bu, bv) / 2 / Math.SQRT2, u0: u0, u1: u1, v0: v0, v1: v1 });
+      /* FASSUNG 874 — die Plätze stehen jetzt in D.FELD_STANDARD; ein selbst versetzter Acker liegt, wo man ihn hingestellt
+         hat (gemerkt in verwalten.js, D.feldMitte) */
+      D.felderSetzen();
+      ladestellenMalen();
+    };
+    /* =====================================================================
+       FASSUNG 874 — XANDER (Funk 255, wörtlich): „Ich möchte dass man das Feld verschieben kann und dass es standardmäßig
+       zwischen der Bäckerei und der Mühle ist also hinter der Bäckerei quasi … das Feld auf der rechten Seite ist auch noch
+       nicht in einer geeigneten Position wo ich locker drauf zugreifen kann innerhalb des Bildausschnitts".
+       Die beiden Äcker lassen sich versetzen wie ein Haus (oberflaeche.js: Menü am Acker, Halten und Ziehen, grün/rot,
+       Setzen). Ohne gemerkten Platz liegen sie auf ihrem Ackerplatz (D.FELD_STANDARD: Mitte u, v und Größe in den
+       Bildachsen u = x − y, v = x + y). Was am Acker hängt, geht mit: das gemalte Korn (korn.js liest D.FELD_ORTE), die
+       Tippfläche zum Ernten und das Zeichen (oberflaeche.js, ebenso), die Ladestellen des Kornwagens (Bodenart 2, hier
+       gemalt; fuhrwerk.js findet sie beim nächsten Aufbau). Gemerkt wird der Platz im Stand „verwalten" (verwalten.js
+       feldLage/feldSetzen: im Browser und über spiel_stadt_leicht_speichern – keine neue Tabelle).
+       ===================================================================== */
+    D.FELD_STANDARD = { 91: [-58, -14, 16, 24], 92: [94, 31, 18, 30] };
+    /* Ladestellen des Kornwagens am Ackerplatz (Punkt im alten Bild, Halbachsen in Metern, Acker) – sie wandern mit dem Acker */
+    const LADESTELLEN = [[73, 104, 4.5, 4.5, 91], [306, 151, 5, 5.5, 92], [73, 110, 3, 3, 91]];
+    /* Mitte (u, v) eines Ackers: der gemerkte Platz (wenn er auf dem Plateau liegt), sonst sein Ackerplatz */
+    D.feldMitte = function (nr) {
+      const s = D.FELD_STANDARD[nr];
+      let l = null;
+      try { l = ST.verwalten && ST.verwalten.feldLage ? ST.verwalten.feldLage(nr) : null; } catch (e) { l = null; }
+      if (l && D.randAbst((l[0] + l[1]) / 2, (l[1] - l[0]) / 2) < 0) return [l[0], l[1]];
+      return [s[0], s[1]];
+    };
+    const feldOrt = (nr, um, vm) => {
+      const s = D.FELD_STANDARD[nr], bu = s[2], bv = s[3], q = vw(um, vm);
+      return { nr: nr, x: +q[0].toFixed(2), y: +q[1].toFixed(2), r: Math.hypot(bu, bv) / 2 / Math.SQRT2, u0: um - bu / 2, u1: um + bu / 2, v0: vm - bv / 2, v1: vm + bv / 2,
+        versetzt: Math.abs(um - s[0]) > 0.01 || Math.abs(vm - s[1]) > 0.01 };
+    };
+    D.felderSetzen = function () {
+      D.FELD_ORTE = [91, 92].map((nr) => { const m = D.feldMitte(nr); return feldOrt(nr, m[0], m[1]); });
+      D.feldSig = D.FELD_ORTE.map((f) => f.nr + "@" + f.u0 + ":" + f.v0).join(",");
+    };
+    /* Ladestellen eines Ackers mit der Mitte (um, vm): [x, y, Halbachse x, Halbachse y] in der Welt */
+    D.ladestellen = function (nr, um, vm) {
+      const s = D.FELD_STANDARD[nr], du = um - s[0], dv = vm - s[1];
+      return LADESTELLEN.filter((l) => l[4] === nr).map(([px, py, fw, fh]) => { const q = welt(px, py); return [q[0] + (du + dv) / 2, q[1] + (dv - du) / 2, fw, fh]; });
+    };
+    function ladestellenMalen() {
+      for (const f of D.FELD_ORTE) for (const [x, y, fw, fh] of D.ladestellen(f.nr, (f.u0 + f.u1) / 2, (f.v0 + f.v1) / 2)) rund(x, y, fw, fh, 2);
+    }
+    /* Ladestellen weg (Bodenart 2 – in der Originalkarte liegen dort nur sie) bzw. an den Plätzen der Äcker neu */
+    D.ladestellenWeg = function () { const d = B.daten; if (!d) return; for (let i = 2; i < d.length; i += 4) d[i] = 0; B.pinsel(0, 0, 0.01, 2, 0); };
+    D.felderNeu = function () { D.felderSetzen(); D.ladestellenWeg(); ladestellenMalen(); };
+    /* beim Aufbau: hat sich ein gemerkter Platz geändert (der Stand vom Server kommt erst nach dem ersten Boden), dann neu */
+    D.felderAuffrischen = function () { const alt = D.feldSig; D.felderSetzen(); if (D.feldSig !== alt) { D.ladestellenWeg(); ladestellenMalen(); return true; } return false; };
+    /* beim Ziehen: nur der gemalte Acker (Korn, Tippfläche, Zeichen) folgt dem Finger; gemerkt wird erst beim Setzen */
+    D.feldVerschieben = function (nr, um, vm) {
+      const i = D.FELD_ORTE.findIndex((f) => f.nr === nr);
+      if (i >= 0) D.FELD_ORTE[i] = feldOrt(nr, +um.toFixed(2), +vm.toFixed(2));
+    };
+    /* Darf der Acker nr mit der Mitte (um, vm) dort liegen? null = ja, sonst der Grund (kurz, für die Ansage).
+       Nur auf freier Wiese: ganz auf dem Plateau, vor der Bahn, kein Weg, kein Wasser, kein Vorgarten, keine Weide, kein
+       anderer Acker, nichts darauf (Haus, Bauplatz, Wahrzeichen, Bahnhof, Bootsverleih, Brücke, Laterne, eigener Schmuck,
+       ein selbst versetzter Baum) und nichts Hohes davor, dessen Bild mehr als 15 % des Ackers zudeckt (so misst auch Sonde
+       844 die Ackerplätze). Gewachsene Bäume stören nicht: auf und vor einem Acker wächst keiner (D.feldNah, D.kulisse).
+       Hat das Dorf eine Mühle, muss der Kornwagen hinkommen (fuhrwerk.js, dieselbe Regel wie beim Aufbau). */
+    const SPANNE = (ec, u) => {   // v-Bereich eines konvexen Vielecks (u, v) auf der Senkrechten u, sonst null
+      let a = Infinity, b = -Infinity;
+      for (let i = 0; i < ec.length; i++) {
+        const p = ec[i], q = ec[(i + 1) % ec.length];
+        if ((u < Math.min(p[0], q[0])) || (u > Math.max(p[0], q[0]))) continue;
+        const v = Math.abs(q[0] - p[0]) < 1e-9 ? [p[1], q[1]] : [p[1] + (q[1] - p[1]) * (u - p[0]) / (q[0] - p[0])];
+        for (const w of v) { a = Math.min(a, w); b = Math.max(b, w); }
       }
+      return a <= b ? [a, b] : null;
+    };
+    const getrennt = (A, Bq) => {   // Trennachsen-Test zweier konvexer Vielecke
+      for (const Q of [A, Bq]) for (let i = 0; i < Q.length; i++) {
+        const p = Q[i], q = Q[(i + 1) % Q.length], nx = q[1] - p[1], ny = p[0] - q[0];
+        const pa = A.map((e) => e[0] * nx + e[1] * ny), pb = Bq.map((e) => e[0] * nx + e[1] * ny);
+        if (Math.max(...pa) < Math.min(...pb) || Math.max(...pb) < Math.min(...pa)) return true;
+      }
+      return false;
+    };
+    const DING_NAME = { d_laterne: "eine Laterne", d_bank: "eine Bank", d_bruecke: "eine Brücke", d_zaun: "ein Zaun", d_brunnen: "der Brunnen" };
+    D.feldPruefen = function (nr, um, vm) {
+      const s = D.FELD_STANDARD[nr]; if (!s || !isFinite(um) || !isFinite(vm)) return "kein Acker";
+      const bu = s[2], bv = s[3], u0 = um - bu / 2, u1 = um + bu / 2, v0 = vm - bv / 2, v1 = vm + bv / 2, R = 1.5;   // Feldrain (korn.js 1,3) und Luft
+      const geh = (ST.tiere && ST.tiere.gehege) || [];
+      for (let u = u0 - R; u <= u1 + R + 1e-6; u += 1) for (let v = v0 - R; v <= v1 + R + 1e-6; v += 1) {
+        const x = (u + v) / 2, y = (v - u) / 2;
+        if (D.randAbst(x, y) > -2) return "zu nah am Rand";
+        if (vonBahn(x, y) < 5 || x + y < D.HORIZONT + 6) return "zu nah an der Bahn";
+        if (B.wert(x, y, 1) > 0.05) return "dort ist Wasser";
+        if (B.wert(x, y, 0) > 0.05) return "dort ist ein Weg";
+        if (B.wert(x, y, 3) > 0.3) return "dort ist ein Vorgarten";
+        for (const g of geh) if (g.frei && g.frei(x, y)) return "dort ist eine Weide";
+      }
+      for (const f of D.FELD_ORTE) if (f.nr !== nr && f.u0 != null && u0 < f.u1 + 3 && u1 > f.u0 - 3 && v0 < f.v1 + 3 && v1 > f.v0 - 3) return "dort liegt schon ein Acker";
+      const acker = [[u0 - R, v0 - R], [u1 + R, v0 - R], [u1 + R, v1 + R], [u0 - R, v1 + R]];
+      const uv = (pts) => pts.map(([x, y]) => [x - y, x + y]);
+      /* Bauplätze (auch leere: dort kommt das Haus hin, wenn es gebaut wird) */
+      for (const k in P) {
+        const b = D.BILD[k], m = (D.MASS || {})[k] || 1, ec = uv(SZ.ecken({ x: P[k].x, y: P[k].y, dreh: P[k].dreh, fuss: [b[2][0] * m, b[2][1] * m] }, 1));
+        if (!getrennt(ec, acker)) return "dort ist der Bauplatz " + (k === "muehle" ? "der Mühle" : "für " + (D.GEBAEUDE[k] ? D.GEBAEUDE[k][0] : k));
+      }
+      const n = 8, punkte = [], gedeckt = new Uint8Array(n * n), HV = ST.KZ / ST.KY * 0.8;   // 1 m Höhe deckt im Bild so viele v-Einheiten (Dach schmaler)
+      for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) punkte.push([u0 + (i + 0.5) * bu / n, v0 + (j + 0.5) * bv / n]);
+      for (const o of SZ.objekte) {
+        if (o.geist || o.art === "feld" || SZ.flach(o) || (o.art === "natur" && !o.versetzt) || o.jahr || o.nurWinter || !o.fuss) continue;
+        const ec = uv(SZ.ecken(o, o.art === "natur" ? 0.5 : 1));
+        const name = o.name || DING_NAME[o.bild] || (o.art === "eigen" ? "dein Schmuck" : o.art === "natur" ? "ein Baum" : "etwas");
+        if (!getrennt(ec, acker)) return "dort steht " + name;
+        /* steht es davor (im Bild darunter) und ist hoch? Wie viel seines Bildes liegt über dem Acker? */
+        const H = (o.hoehe || 4) * (o.art === "wunder" ? 1 : (o.stufe || 1));
+        let a0 = Infinity, a1 = -Infinity, b1 = -Infinity;
+        for (const [u, v] of ec) { a0 = Math.min(a0, u); a1 = Math.max(a1, u); b1 = Math.max(b1, v); }
+        if (H < 2.5 || b1 < v0 || a1 < u0 || a0 > u1) continue;
+        const rand = (a1 - a0) * 0.12, hv = H * HV;
+        for (let k = 0; k < punkte.length; k++) {
+          const [u, v] = punkte[k]; if (gedeckt[k] || u < a0 + rand || u > a1 - rand) continue;
+          const sp = SPANNE(ec, u); if (sp && v <= sp[1] && v >= sp[0] - hv) gedeckt[k] = 1;
+        }
+      }
+      let zu = 0; for (const z of gedeckt) zu += z;
+      if (zu > punkte.length * 0.15) return "ein Haus davor verdeckt ihn";
+      /* der Kornwagen muss hinkommen (nur wenn eine Mühle steht; sonst fährt keiner) */
+      const FW = ST.fuhrwerk;
+      if (FW && FW.feldErreichbar && FW.muehle) {
+        const zellen = [];
+        for (const [x, y, fw, fh] of D.ladestellen(nr, um, vm)) for (let a = Math.ceil(x - fw); a <= x + fw; a++) for (let b = Math.ceil(y - fh); b <= y + fh; b++) if (((a - x) / (fw - 0.6)) ** 2 + ((b - y) / (fh - 0.6)) ** 2 <= 1) zellen.push([a, b]);
+        if (!FW.feldErreichbar(zellen)) return "zu weit vom Weg – der Kornwagen käme nicht hin";
+      }
+      return null;
     };
     D.kulisse = function () {
       const liste = [];
@@ -836,7 +960,9 @@
         return true;
       };
       /* Weihnachtspyramide und Krippe nahe am Markt, auf freier Wiese */
-      const nahMarkt = (bild, fuss, hoehe) => { for (let i = 0; i < 24; i++) { const a = rad(i * 37), d = 15 + (i % 4) * 3, x = MARKT[0] + Math.cos(a) * d, y = MARKT[1] + Math.sin(a) * d; if (frei(x, y, fuss[0] / 2)) { setze(bild, x, y, 0, { fuss: fuss, hoehe: hoehe, nurWinter: 1, jahr: "winter", deko: 1 }); return; } } };
+      /* FASSUNG 874 — nicht auf einen (versetzten) Acker: Pyramide, Krippe und Schneemänner weichen ihm aus (am Ackerplatz
+         stand nie einer von ihnen – dort bleibt alles, wie es war) */
+      const nahMarkt = (bild, fuss, hoehe) => { for (let i = 0; i < 24; i++) { const a = rad(i * 37), d = 15 + (i % 4) * 3, x = MARKT[0] + Math.cos(a) * d, y = MARKT[1] + Math.sin(a) * d; if (frei(x, y, fuss[0] / 2) && !D.feldNah(x, y)) { setze(bild, x, y, 0, { fuss: fuss, hoehe: hoehe, nurWinter: 1, jahr: "winter", deko: 1 }); return; } } };
       nahMarkt("d_pyramide", [9.2, 9.2], 13); nahMarkt("d_krippe", [7.2, 5.4], 5.2);
       /* Wald ringsum (nicht auf dem Gleis, nicht im Wasser). Was hinter der Horizontlinie steht, verdecken bei Blick nach
          Norden die Alpen (hinten: nur beim Drehen zu sehen). */
@@ -885,7 +1011,7 @@
         if (!frei(q[0], q[1], 1.5)) continue;
         liste.push({ art: "natur", bild: "n_obstbaum" + (i % 2), x: q[0], y: q[1], dreh: 0, fuss: [3, 3], hoehe: 6 });
       }
-      for (const [x, y] of [[-16, 26], [24, -30], [40, 30], [-30, -16]]) if (frei(x, y, 1)) setze("d_schneemann", x, y, 0, { fuss: [1.3, 1.3], hoehe: 1.9, nurWinter: 1, jahr: "winter", deko: 1 });
+      for (const [x, y] of [[-16, 26], [24, -30], [40, 30], [-30, -16]]) if (frei(x, y, 1) && !D.feldNah(x, y)) setze("d_schneemann", x, y, 0, { fuss: [1.3, 1.3], hoehe: 1.9, nurWinter: 1, jahr: "winter", deko: 1 });
       /* FASSUNG 844 — erst jetzt (die Zufallsfolge und damit jeder andere Baum bleibt, wie er war): kein Baum auf oder vor
          einem neuen Acker (sein Bild läge über dem Feld) und keiner im Felsberg des Bergwerks hinter der Bahn */
       const bw = P.bergwerk, bwR = Math.hypot(D.BILD.bergwerk[2][0], D.BILD.bergwerk[2][1]) / 2 * ((D.MASS || {}).bergwerk || 1) + 3;
@@ -906,6 +1032,8 @@
   /* ---------------- Spielstand → Gebäude ---------------- */
   /* ich: Antwort von spiel_ich (dorf, dorf_plan, baustellen, volk) */
   D.aufbauen = function (ich, eigeneDeko) {
+    /* FASSUNG 874 — die Äcker auf ihren gemerkten Plätzen, bevor Wahrzeichen und Bäume ihnen ausweichen */
+    if (D.felderAuffrischen && D.feldSig != null) D.felderAuffrischen();
     SZ.objekte = []; SZ.naechsteId = 1;
     const dorf = (ich && ich.dorf) || {};
     const plan = (ich && ich.dorf_plan) || {};

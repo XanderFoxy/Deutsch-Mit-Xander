@@ -299,7 +299,6 @@ function orca(T) {
   k += weichF(R.saum(600, 700, 4, 13), "#ffffff", 0.75, 1.6);
   k += weichF(R.saum(560, 640, 3, 7), "#ffffff", 0.35, 1.2);
   k += weichF(R.linse(300, 580, 0.27, 0.06), "#b8cad8", 0.13, 6);
-  k += H.riefen(R, 110, 600, 0.08, 0.3, 90, 0.3, 0.1, "#a9bccb");
   k += H.kaustik([90, -318, 700, -230], R.band(90, 700, -0.1, 0.36), { op: 0.07, fx: 0.022, fy: 0.04, seed: 23, blur: 1.4, exp: 4 });
   if (F) {
     /* Zahnharken-Narben (hell, parallel) und weiche Hautfalten an der Brustflosse */
@@ -382,7 +381,6 @@ function delfin(T) {
   k += weichF(R.linse(40, 112, 0.1, 0.022), "#ffffff", 0.55, 0.6);
   k += weichF(R.linse(150, 240, 0.3, 0.05), "#eaf2f7", 0.2, 2);
   k += weichF(R.linse(255, 278, (x, u) => 0.18 + u * 0.08, 0.06), "#ffffff", 0.5, 0.5);
-  k += H.riefen(R, 40, 236, 0.1, 0.32, 110, 0.14, 0.07, "#e8f0f5") + H.riefen(R, 120, 236, 0.3, 0.55, 60, 0.14, 0.06, "#e8f0f5");
   k += H.kaustik([20, -86, 282, -55], R.band(20, 282, -0.1, 0.38), { op: 0.06, fx: 0.07, fy: 0.12, seed: 5, blur: 0.6, exp: 5, mblur: 4 });
   /* Fluke: Kante am Stiel, Licht auf den Vorderkanten, Schatten der nahen auf die ferne Hälfte */
   k += weichF([[26, -57], [12, -58], [2, -55], [-1, -52.8], [2, -50], [12, -48], [26, -49], [18, -53]], "#000", 0.35, 1.8);

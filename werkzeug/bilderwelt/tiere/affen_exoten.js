@@ -121,7 +121,7 @@ function werk(T) {
     if (!blur.has(k)) { blur.add(k); T.def(`<filter id="${id}" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="${f1(sd)}"/></filter>`); }
     return `url(#${id})`;
   };
-  W.weich = (liste, sd) => `<g filter="${W.blur(sd)}">` + liste.map((e) => typeof e === "string" ? e :
+  W.weich = (liste, sd) => `<g filter="${W.blur(sd)}">` + liste.filter((e) => T.fein || typeof e === "string" || e[2] * e[3] > 30).map((e) => typeof e === "string" ? e :
     `<ellipse cx="${f1(e[0])}" cy="${f1(e[1])}" rx="${f1(e[2])}" ry="${f1(e[3])}"${e[4] ? ` transform="rotate(${e[4]} ${f1(e[0])} ${f1(e[1])})"` : ""} fill="${e[5]}"${e[6] < 1 ? ` fill-opacity="${e[6]}"` : ""}/>`).join("") + `</g>`;
   /* Fell-Textur: feine Haarstruktur als gestreckte Rauschstruktur (nur volle Feinheit), gezeichnet INNERHALB der
      Teil-Klammer (kein eigener Clip). winkel = Wuchsrichtung (0 = vorn, 90 = abwärts), box = Umriss-Box.
@@ -266,15 +266,12 @@ function gorilla(T) {
   const beinN = [[14, -95], [24, -86], [34, -74], [42, -64], [49, -56], [51.5, -46], [49, -38], [45, -30], [43, -22]].concat(
     W.zotteln([[43, -22], [42.5, -15], [36, -11], [28, -10.5], [21, -14]], 2.2 / sz, 2.2, 84).slice(1),
     W.zotteln([[21, -14], [19.5, -21], [17, -30], [13, -42], [8, -54], [3, -66], [1, -78], [2, -92]], 3 / sz, 2.6, 104).slice(1));
-  const beinSat = [[0, -96], [14, -97], [27, -86], [35, -76]].concat(W.zotteln([[35, -76], [30, -66], [18, -62], [4, -66]], 2.2 / sz, 3, 120).slice(1));
   s += W.teil(beinN, fellG("bn", -94, -10),
     W.fell("bn", 102, [-1, -96, 52, -8], { ho: 0.55 }) +
-    W.weich([`<path d="${G(beinSat)}" fill="#9a958e" opacity=".7"/>`], 3) + `<path d="${G(beinSat)}" fill="#9d9891" opacity=".8"/>` +
-    W.fell("bns", 125, [-1, -98, 36, -58], { hell: "#f4f1ea", dunkel: "#2a2826", ho: 0.45, do: 0.5, fx: 3, fy: 0.32, hk: "s", licht: false }) +
     W.weich([[26, -80, 12, 8, 30, "#fff", 0.22], [45.5, -46, 4, 11, -25, "#9da1a8", 0.3], [9, -40, 6, 18, -15, "#000", 0.5], [32, -14, 12, 4, 0, "#000", 0.45], [37, -55, 6, 8, 0, "#000", 0.3]], 3) +
     W.haare(beinN, 160, (x, y) => (y < -58 ? 118 : 100), 2.6, SCHWARZ, { licht: (x, y) => licht(x, y) * 0.85, buendel: 3, szene: 0.1 }) +
-    W.haare(beinSat, 60, 125, 2, SILBER, { licht: (x, y) => clamp(0.3 + (-y - 66) / 25), buendel: 3, szene: 0.1 }),
-  { rand: 0, maske: W.maske("bn", [-10, -100, 60, -5], 0, -96, 0, -84) });
+    "",
+  { rand: 0, maske: W.maske("bn", [-10, -100, 60, -5], 0, -90, 0, -70) });
 
   /* ---------- nahes Vorderbein (Arm), Schulter weich im Rumpf ---------- */
   s += knoechelhand(W, T, 92, false);
@@ -298,61 +295,62 @@ function gorilla(T) {
   return W.fertig(s, 1);
 }
 
-/* Knöchelhand (Gorilla): Handgelenk-Mitte x = wx (Gelenk bei y ≈ −27). Finger 2–5 eingerollt: Grundglied schräg nach
+/* Knöchelhand (Gorilla): Handgelenk-Mitte x = wx (Gelenk bei y ≈ −26). Finger 2–5 eingerollt: Grundglied schräg nach
    vorn-unten, Mittelglied liegt mit dem RÜCKEN auf dem Boden, Endglied unter die Hand gerollt (Nagel zeigt nach hinten).
-   Man sieht den kleinen Finger (nah), davor ragen Ring- und Mittelfinger (länger, dahinter) heraus. fern = dunkler. */
+   Man sieht den kleinen Finger (nah), davor ragen Ring- und Mittelfinger (länger, dahinter) heraus. fern = Schattenseite. */
 function knoechelhand(W, T, wx, fern) {
   const P = (x, y) => [wx + x, y];
-  const H = fern ? ["#0d0c0c", "#0b0a0a", "#0f0e0e"] : ["#161514", "#1b1a19", "#232120"];
-  const LI = fern ? "" : "#8d8780";
+  const C = fern ? ["#0e0d0d", "#121110", "#151413"] : ["#151413", "#1b1a19", "#22201f"];
+  const LI = fern ? "#4a4642" : "#9a948d";
   let s = "";
-  /* Finger von hinten nach vorn: Mittel-, Ringfinger (dahinter), dann Hand, dann kleiner Finger */
-  const finger = (dx, b, c, la, mcpY) => {
-    const mcp = P(8.6 + dx * 0.4, mcpY), pip = P(13.6 + dx, -b / 2), dip = P(8.4 + dx, -b / 2), tip = P(5.8 + dx, -b / 2 - 1.7);
-    let f = W.glied([mcp, P(12 + dx, -7), pip, dip, tip], b, c, LI, { la });
-    if (!fern && T.fein) f += W.L([`M${f1(pip[0] - 0.4)} ${f1(-b + 0.1)}q1.3 .3 2 1.5`, `M${f1(pip[0] - 1.1)} ${f1(-b + 0.4)}q1.2 .3 1.8 1.5`, `M${f1(pip[0] - 1.8)} ${f1(-b + 0.9)}q1 .3 1.4 1.2`], "#000", 0.16, 0.8) +
-      W.L([`M${f1(pip[0] - 0.2)} ${f1(-b - 0.1)}q1.3 .3 2 1.5`], "#a39d96", 0.12, 0.5);
+  const finger = (dx, b, c, la, my) => {
+    const mcp = P(9.4 + dx * 0.3, my), pip = P(13.4 + dx, -b / 2), dip = P(8.8 + dx, -b / 2), tip = P(6.6 + dx, -b / 2 - 1.5);
+    let f = W.glied([mcp, P(12 + dx, -6.6), pip, dip, tip], b, c, LI, { la });
+    if (T.fein && !fern) f += W.L([`M${f1(pip[0] - 0.2)} ${f1(-b + 0.2)}q1.3 .3 1.9 1.6`, `M${f1(pip[0] - 1)} ${f1(-b + 0.5)}q1.2 .3 1.7 1.5`, `M${f1(pip[0] - 1.8)} ${f1(-b + 1)}q1 .3 1.3 1.2`,
+      `M${f1(mcp[0] + 0.4)} ${f1(mcp[1] + 0.2)}q1.4 -.1 2 1`], "#000", 0.16, 0.8) + W.L([`M${f1(pip[0])} ${f1(-b - 0.1)}q1.3 .3 2 1.6`], "#b1aba4", 0.12, 0.5);
     /* Nagel am eingerollten Endglied, zeigt nach hinten-unten */
-    const nx = tip[0] - 0.4, ny = tip[1] + 0.9;
-    f += `<ellipse cx="${f1(nx)}" cy="${f1(ny)}" rx=".65" ry="1.15" transform="rotate(-35 ${f1(nx)} ${f1(ny)})" fill="${fern ? "#2a2724" : "#5c554e"}"/>` +
-      (fern ? "" : `<path d="M${f1(nx - 0.5)} ${f1(ny - 0.7)}q.3 -.4 .9 -.3" stroke="#e0d9d0" stroke-opacity=".55" stroke-width=".14" fill="none"/>`);
+    const nx = tip[0] - 0.5, ny = tip[1] + 0.8;
+    f += `<ellipse cx="${f1(nx)}" cy="${f1(ny)}" rx=".65" ry="1.1" transform="rotate(-35 ${f1(nx)} ${f1(ny)})" fill="${fern ? "#35312d" : "#5e5750"}"/>` +
+      (T.fein ? `<path d="M${f1(nx - 0.5)} ${f1(ny - 0.7)}q.3 -.4 .9 -.3" stroke="#e6dfd6" stroke-opacity="${fern ? 0.25 : 0.55}" stroke-width=".14" fill="none"/>` : "");
     return f;
   };
-  s += finger(3.2, 4.3, H[0], 0.22, -13) + finger(1.5, 4.1, H[1], 0.26, -12.4);
-  /* Handrücken (Mittelhand) und Handballen */
-  const hand = [P(-8.5, -28), P(8.5, -28), P(10.6, -21), P(12.4, -15), P(11.6, -11.6), P(8.6, -9.6), P(4, -8.6), P(0.6, -5.6), P(-2.6, -4.4), P(-6.6, -6.6), P(-9, -12), P(-9.4, -20)];
-  s += W.teil(hand, fern ? "#0e0d0d" : T.lg("hd", [[0, "#2d2b29"], [0.55, "#1b1a19"], [1, "#0d0c0c"]], 1, 0, 0, 1), fern ? "" :
-    W.relief("hand", W.weich([[wx + 5.5, -17.5, 4, 7, -25, "#9a948d", 0.55], [wx + 11, -12.6, 1.8, 1.6, 0, "#a7a19a", 0.5], [wx - 5, -9, 4, 4, 0, "#000", 0.55]], 1.1) +
-      (T.fein ? W.L([`M${f1(wx + 9.6)} ${f1(-14.6)}q1.3 -.1 2.2 .9`, `M${f1(wx + 9.2)} ${f1(-13.4)}q1.3 0 2.1 .9`, `M${f1(wx + 2.4)} ${f1(-21)}q2 .5 3.4 2`,
-        `M${f1(wx + 1.6)} ${f1(-18)}q2 .6 3.4 2`, `M${f1(wx - 6)} ${f1(-12)}q1.6 -1.6 3.8 -1.6`], "#000", 0.16, 0.75) : ""), { f: 1.8, tiefe: 0.45, okt: 2 }),
+  s += finger(2.6, 4.4, C[0], 0.2, -12) + finger(1.2, 4.2, C[1], 0.24, -11.4);
+  /* Handrücken (Mittelhand, schräg nach vorn-unten) und Handballen (hinten, angehoben) */
+  const hand = [P(-5.8, -28), P(5.8, -28), P(8.2, -20), P(10.4, -13.8), P(11.2, -10.6), P(9, -8.4), P(6, -7.4), P(3.4, -5.6), P(1, -6.8), P(-2.6, -10.8), P(-5, -16.4), P(-6, -22)];
+  s += W.teil(hand, T.lg(fern ? "hdf" : "hd", fern ? [[0, "#222020"], [0.6, "#121111"], [1, "#080808"]] : [[0, "#34312f"], [0.55, "#1d1c1b"], [1, "#0c0b0b"]], 1, 0, 0, 1),
+    W.weich([[wx + 6, -17.5, 3, 7, -22, fern ? "#5a5550" : "#a39d96", 0.5], [wx + 10.2, -12, 1.6, 1.6, 0, fern ? "#5a5550" : "#aea8a1", 0.45], [wx - 3, -11, 3, 5, 20, "#000", 0.55]], 1) +
+    (T.fein && !fern ? W.L([`M${f1(wx + 9.2)} ${f1(-14.8)}q1.3 -.1 2.1 .9`, `M${f1(wx + 8.8)} ${f1(-13.6)}q1.3 0 2 .9`, `M${f1(wx + 3)} ${f1(-21.6)}q1.8 .5 3 1.8`,
+      `M${f1(wx + 2.2)} ${f1(-18.6)}q1.8 .6 3 1.8`, `M${f1(wx - 3.6)} ${f1(-12.4)}q1.4 -1.4 3.4 -1.4`, `M${f1(wx + 0.6)} ${f1(-9)}q1.2 -.8 2.8 -.6`], "#000", 0.15, 0.7) : ""),
   { rand: 0.5, vol: false });
   /* kleiner Finger (nah): kürzer, ganz vorn im Bild */
-  s += finger(-1.6, 3.8, H[2], 0.4, -11);
+  s += finger(-1.4, 3.9, C[2], 0.38, -10.2);
   return s;
 }
 
-/* Gorillafuß: Sohlengänger, Ferse rund, Zehen 2–5 gestaffelt mit Nägeln, Großzehe innen (Spitze sichtbar).
-   dx = Versatz (ferner Fuß), fern = dunkler, ohne Feinheiten */
+/* Gorillafuß: Sohlengänger, Ferse rund, kurze dicke Zehen 2–5 gestaffelt (nach unten gekrümmt) mit Nägeln oben;
+   dx = Versatz (ferner Fuß), fern = Schattenseite */
 function gorillaFuss(W, T, dx, fern) {
   const P = (x, y) => [x + dx, y];
-  const H = fern ? ["#0b0a0a", "#0d0c0c", "#0f0e0e", "#100f0f"] : ["#121110", "#161514", "#1a1918", "#1f1d1c"];
+  const C = fern ? ["#0b0a0a", "#0d0c0c", "#100f0f", "#121111"] : ["#121110", "#161514", "#1a1918", "#201e1d"];
+  const LI = fern ? "#46423e" : "#8f8982";
   let s = "";
-  /* Großzehe (innen, fern) */
-  s += W.glied([P(38, -6.8), P(44, -5.8), P(48.4, -3.6)], 3.6, fern ? "#0a0909" : "#0f0e0e");
-  const fussPts = [P(20, -14), P(17.4, -8), P(18.4, -2), P(22.6, 0, 1), P(39, 0, 1), P(42.4, -1.4), P(44, -4.2), P(42.6, -7.4), P(38, -9.4), P(33, -11.4), P(27, -15)];
-  s += W.teil(fussPts, fern ? "#0e0d0d" : T.lg("fu", [[0, "#2d2b29"], [0.55, "#1b1a19"], [1, "#0c0b0b"]]), fern ? "" :
-    W.relief("fuss", W.weich([[dx + 31, -10.5, 10, 3, -14, "#8e8881", 0.55], [dx + 30, -1, 12, 1.6, 0, "#000", 0.6], [dx + 19.6, -6, 2, 4, 0, "#77716b", 0.4]], 1.2) +
-      (T.fein ? W.L(["M33 -10.6q3.6 1 6.4 3", "M27 -8q3.6 .8 6.2 2.6", "M22.4 -3.6q2.4 .4 4.2 1.8", "M20.6 -9.4q1.2 1.8 1.2 3.8"].map((d) => d.replace(/^M([\d.]+)/, (m, x) => "M" + f1(+x + dx))), "#000", 0.18, 0.6) : ""),
-      { f: 1.8, tiefe: 0.45, okt: 2 }), { rand: 0.5, vol: false });
-  /* Zehen 2–5: von fern (2, längste) nach nah (5, kürzeste), leicht nach unten gekrümmt, Nagel oben an der Spitze */
-  [[49.6, -6.6, 3.2], [48.2, -6, 3.1], [46.4, -5.2, 3], [44.4, -4.4, 2.8]].forEach(([tx, by, b], i) => {
-    const bx = 38.6 + i * 0.4;
-    s += W.glied([P(bx, by - 0.6), P(tx - 3.2, by + 0.4), P(tx - 0.6, -b / 2 - 0.2), P(tx + 0.2, -b / 2 + 0.3)], b, H[i], fern ? "" : "#837d76", { la: 0.3 });
-    const nx = tx - 1.2 + dx, ny = -b - 0.05;
-    s += `<ellipse cx="${f1(nx)}" cy="${f1(ny)}" rx="1.05" ry=".5" transform="rotate(24 ${f1(nx)} ${f1(ny)})" fill="${fern ? "#272421" : "#565049"}"/>` +
-      (fern ? "" : `<path d="M${f1(nx - 0.7)} ${f1(ny - 0.3)}q.6 -.3 1.2 0" stroke="#e0d9d0" stroke-opacity=".5" stroke-width=".13" fill="none"/>` +
-        (T.fein ? W.L([`M${f1(tx - 3 + dx)} ${f1(-b - 0.2)}q.4 .8 .2 1.6`], "#000", 0.14, 0.7) : ""));
-  });
+  /* Zehen 2–4 (fern → nah), Fuß, dann Zehe 5 (nah) */
+  const zehe = (i) => {
+    const [bx, by, tx, b] = [[38.4, -7.4, 46.6, 3.4], [38.2, -6.6, 45.6, 3.3], [37.8, -5.8, 44.4, 3.2], [37.2, -4.8, 42.8, 3]][i];
+    let z = W.glied([P(bx, by), P(bx + (tx - bx) * 0.62, by + 1.4), P(tx - 0.4, -b / 2 - 0.1)], b, C[i], LI, { la: 0.3 });
+    const nx = tx - 1.5 + dx, ny = -b + 0.15;
+    z += `<ellipse cx="${f1(nx)}" cy="${f1(ny)}" rx="1.05" ry=".5" transform="rotate(30 ${f1(nx)} ${f1(ny)})" fill="${fern ? "#302c29" : "#5a534c"}"/>` +
+      (T.fein ? `<path d="M${f1(nx - 0.8)} ${f1(ny - 0.2)}q.6 -.4 1.3 0" stroke="#e0d9d0" stroke-opacity="${fern ? 0.2 : 0.5}" stroke-width=".13" fill="none"/>` +
+        (fern ? "" : W.L([`M${f1(bx + 3.4 + dx)} ${f1(by - 0.6)}q.5 .9 .3 1.8`], "#000", 0.14, 0.7)) : "");
+    return z;
+  };
+  s += zehe(0) + zehe(1) + zehe(2);
+  const fussPts = [P(20, -14), P(17.6, -8.6), P(18, -2.6), P(21.6, 0, 1), P(37, 0, 1), P(39.6, -1.4), P(40.6, -4.2), P(39.6, -7.4), P(36, -9.4), P(31.4, -11.4), P(26.4, -14.6)];
+  s += W.teil(fussPts, T.lg(fern ? "fuf" : "fu", fern ? [[0, "#222020"], [0.6, "#121111"], [1, "#080808"]] : [[0, "#302e2c"], [0.55, "#1b1a19"], [1, "#0c0b0b"]]),
+    W.weich([[dx + 30, -10.6, 9, 2.6, -14, LI, 0.5], [dx + 29, -0.8, 11, 1.4, 0, "#000", 0.6], [dx + 19.4, -6, 1.8, 3.6, 0, LI, 0.35]], 1) +
+    (T.fein && !fern ? W.L(["M32.6 -10.8q3.4 1 6 3", "M26.6 -8q3.4 .8 5.8 2.6", "M22.4 -3.6q2.4 .4 4 1.8", "M20.4 -9.6q1.2 1.8 1.2 3.8"].map((d) => d.replace(/^M([\d.]+)/, (m, x) => "M" + f1(+x + dx))), "#000", 0.16, 0.6) : ""),
+  { rand: 0.5, vol: false });
+  s += zehe(3);
   return s;
 }
 
