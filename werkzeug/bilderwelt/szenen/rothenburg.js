@@ -899,10 +899,19 @@ const LL = -8;
    19 — DER LATERNE
    ===================================================================== */
 const NW = (() => { const d = 7.4, [x, y] = P(1.0, d, 0); return { x, y, s: F / d }; })();
-const nw = B.mensch({ id: "rtb_nachtwaechter", geschlecht: "m", pose: "stehen", blick: 330, frisur: "kurz", haarfarbe: "grau", haut: "hell", bart: "voll",
+const nw = B.mensch({ id: "rtb_nachtwaechter", geschlecht: "m", pose: "stehen", blick: 330, frisur: "kurz", haarfarbe: "grau", haut: "hell",
   kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "mantel", farbe: "#1e1c21" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel", farbe: "#1a1a1a" }, kopf: { stueck: "hut", farbe: "#17161a" } } }, 1.78 * NW.s);
 const NP = (n) => { const q = nw.z.punkte[n]; return [q[0] * nw.k, q[1] * nw.k]; };
 const HAENDE = [NP("handL"), NP("handR")].sort((a, b) => a[0] - b[0]);
+/* Hellebarde: in der Hand, oben leicht nach außen geneigt; hinter dem Umhang verdeckt */
+const STANGE = (() => {
+  const [hx, hy] = HAENDE[0], sch = [NP("schulterL"), NP("schulterR")].sort((a, b) => a[0] - b[0])[0];
+  const kx = 0.085;   /* dx je dy: oben leicht nach außen geneigt, frei vom Gesicht */
+  void sch;
+  const X = (y) => hx + (y - hy) * kx;
+  const sy = Math.min(NP("schulterL")[1], NP("schulterR")[1]);
+  return { hx, hy, X, kx, fuss: [X(0), 0], top: [X(-2.5 * NW.s), -2.5 * NW.s], umhangU: sy + 13.5, schulter: sy - 0.5 };
+})();
 {
   let k = schatten(10, 0.5, 14, 2.4, 0.35) + nw.svg;
   /* Pelerine (weiter Umhang) über den Schultern */
@@ -911,34 +920,42 @@ const HAENDE = [NP("handL"), NP("handR")].sort((a, b) => a[0] - b[0]);
   k += `<path d="M${r(hx - 3)} ${r(hy + 1)} Q${r(lo - 2)} ${r(oy + 1)} ${r(lo - 3.4)} ${r(oy + 13)} Q${r((lo + hi) / 2)} ${r(oy + 15)} ${r(hi + 3.4)} ${r(oy + 13)} Q${r(hi + 2)} ${r(oy + 1)} ${r(hx + 3)} ${r(hy + 1)} Z" fill="${S.lg("umhang", [[0, "#2a2830"], [0.5, "#16151a"], [1, "#0e0d10"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M${r(hx - 2.6)} ${r(hy + 1.4)} Q${r(hx)} ${r(hy + 3)} ${r(hx + 2.6)} ${r(hy + 1.4)}" stroke="#d8d4cc" stroke-width=".7" fill="none"/>`;
   k += `<path d="M${r(hi + 2.6)} ${r(oy + 6)} Q${r(hi + 2)} ${r(oy + 3)} ${r(hi)} ${r(oy + 1.4)}" stroke="#ffcf8a" stroke-width=".5" fill="none" opacity=".35"/>`;
-  /* breite Krempe des Schlapphuts */
+  /* breite Krempe des Schlapphuts — hoch genug, dass die Augen darunter sichtbar bleiben */
   const [kx, ky2] = NP("scheitel");
-  k += `<ellipse cx="${r(kx)}" cy="${r(ky2 + 2.4)}" rx="7.4" ry="1.5" fill="#141317"/><path d="M${r(kx - 7)} ${r(ky2 + 2.2)} Q${r(kx)} ${r(ky2 + 1.2)} ${r(kx + 7)} ${r(ky2 + 2.2)}" stroke="#3a3840" stroke-width=".3" fill="none"/>`;
-  /* Horn am Gürtel */
-  const [bx, by] = NP("huefteR");
-  k += `<path d="M${r(bx - 1)} ${r(by)} q3 1 4 4 l-1.4 .4 q-.8 -2.4 -3 -3.2 Z" fill="#c9a46a" stroke="#7a5a2a" stroke-width=".25"/>`;
+  k += `<ellipse cx="${r(kx)}" cy="${r(ky2 + 1.5)}" rx="6.8" ry="1.05" fill="#141317"/><path d="M${r(kx - 6.4)} ${r(ky2 + 1.4)} Q${r(kx)} ${r(ky2 + 0.6)} ${r(kx + 6.4)} ${r(ky2 + 1.4)}" stroke="#3a3840" stroke-width=".3" fill="none"/>`;
+  /* Horn am Gürtel: Kuhhorn mit Messingbeschlag und Mundstück, am Lederriemen */
+  const [bx, by] = NP("huefteL"), [qx, qy] = NP("schulterR");
+  k += `<path d="M${r(qx)} ${r(qy + 1)} L${r(bx + 0.4)} ${r(by - 1.2)}" stroke="#5a3a1e" stroke-width=".7"/>`;
+  const HORN = `M${r(bx - 1)} ${r(by - 1.6)} Q${r(bx + 2.6)} ${r(by - 1.2)} ${r(bx + 3.6)} ${r(by + 2.4)} L${r(bx + 5.2)} ${r(by + 1.6)} L${r(bx + 5)} ${r(by + 4.6)} L${r(bx + 2.4)} ${r(by + 3.4)} Q${r(bx + 1.6)} ${r(by + 0.4)} ${r(bx - 1)} ${r(by - 0.6)} Z`;
+  k += `<path d="${HORN}" fill="${S.lg("horn", [[0, "#efe0bc"], [0.6, "#c9a46a"], [1, "#7a5a2a"]], 0, 0, 1, 1)}" stroke="#5a4020" stroke-width=".25"/>`;
+  k += `<path d="M${r(bx + 3.4)} ${r(by + 2.2)} L${r(bx + 2.6)} ${r(by + 3.3)}" stroke="#c9a640" stroke-width=".8"/><circle cx="${r(bx - 1)}" cy="${r(by - 1.1)}" r=".55" fill="#c9a640"/>`;
+  k += `<ellipse cx="${r(bx + 5.1)}" cy="${r(by + 3.1)}" rx=".55" ry="1.5" fill="#3a2a14"/>`;
   S.teil({ id: "nachtwaechter", de: "der Nachtwächter", syl: "NACHT-wäch-ter", it: "la guardia notturna", itSyl: "GUAR-dia not-TUR-na", en: "night watchman", x: NW.x, y: NW.y, kunst: k,
     tipp: "Am Abend führt der Nachtwächter mit Schlapphut und Horn die Gäste durch die Altstadt.",
-    zoom: { x: r(NW.x + kx - 26), y: r(NW.y + ky2 - 8), w: 52, h: 34 },
+    zoom: { x: r(NW.x + kx - 30), y: r(NW.y + ky2 - 6), w: 60, h: 40 },
     unter: [
-      { id: "hut", de: "der Hut", syl: "HUT", it: "il cappello", itSyl: "cap-PEL-lo", en: "hat", x: NW.x + kx, y: NW.y + ky2, kunst: flaeche(-7.8, -5, 15.6, 9),
+      { id: "hut", de: "der Hut", syl: "HUT", it: "il cappello", itSyl: "cap-PEL-lo", en: "hat", x: NW.x + kx, y: NW.y + ky2 + 3, kunst: flaeche(-7.2, -8, 14.4, 7.6),
         tipp: "Der Nachtwächter trägt einen breiten schwarzen Schlapphut." },
+      { id: "horn", de: "das Horn", syl: "HORN", it: "il corno", itSyl: "COR-no", en: "horn", x: NW.x + bx + 2, y: NW.y + by + 4.8, kunst: flaeche(-3.6, -7, 8, 7.6),
+        tipp: "Mit dem Horn bläst der Nachtwächter zur vollen Stunde." },
     ] });
 }
 {
-  /* Hellebarde: die linke Hand umfasst die Stange; Fläche nur Stange und Klinge */
-  const [hx, hy] = HAENDE[0];
-  const top = -2.45 * NW.s;
-  let k = `<rect x="${r(hx - 0.75)}" y="${r(top)}" width="1.5" height="${r(-top)}" rx=".5" fill="${S.lg("stange", [[0, "#5a3a22"], [0.5, "#9a7048"], [1, "#4a2e18"]], 0, 0, 1, 0)}"/>`;
+  /* Hellebarde: schräg an die Schulter gelehnt; zwischen Hand und Schulter verdeckt der Umhang die Stange */
+  const { hx, hy, X, kx, fuss, top, umhangU, schulter } = STANGE;
+  const ox = r(hx), oy = r(hy - 6);   /* Ankerpunkt des Teils: an der Hand */
   const STAHL = S.lg("stahl", [[0, "#e8ecef"], [0.5, "#aab3ba"], [1, "#7a838a"]], 0, 0, 1, 0);
-  k += `<path d="M${r(hx - 0.7)} ${r(top)} L${r(hx)} ${r(top - 10)} L${r(hx + 0.7)} ${r(top)} Z" fill="${STAHL}"/>`;
-  k += `<path d="M${r(hx + 0.6)} ${r(top + 1)} L${r(hx + 6.4)} ${r(top - 1.6)} Q${r(hx + 7.4)} ${r(top + 3)} ${r(hx + 6.2)} ${r(top + 7.4)} L${r(hx + 0.6)} ${r(top + 5)} Z" fill="${STAHL}" stroke="#5a6268" stroke-width=".25"/>`;
-  k += `<path d="M${r(hx - 0.6)} ${r(top + 2)} L${r(hx - 3.6)} ${r(top + 0.4)} L${r(hx - 3)} ${r(top + 2.2)} L${r(hx - 0.6)} ${r(top + 3.6)} Z" fill="${STAHL}"/>`;
-  k += `<rect x="${r(hx - 0.9)}" y="${r(top + 5)}" width="1.8" height="1.2" fill="#c9a640"/><path d="M${r(hx + 6.2)} ${r(top - 1)} L${r(hx + 6.8)} ${r(top + 5)}" stroke="#fff" stroke-width=".4" opacity=".6"/>`;
+  const winkel = Math.atan(kx) * 180 / Math.PI;
+  const holz = S.lg("stange", [[0, "#5a3a22"], [0.5, "#9a7048"], [1, "#4a2e18"]], 0, 0, 1, 0);
+  let k = `<path d="M${r(fuss[0])} 0 L${r(X(umhangU))} ${r(umhangU)} M${r(X(schulter))} ${r(schulter)} L${r(top[0])} ${r(top[1])}" stroke="#4a2e18" stroke-width="1.5" stroke-linecap="round"/><path d="M${r(fuss[0] - 0.3)} 0 L${r(X(umhangU) - 0.3)} ${r(umhangU)} M${r(X(schulter) - 0.3)} ${r(schulter)} L${r(top[0] - 0.3)} ${r(top[1])}" stroke="#a87c50" stroke-width=".45"/>`;
+  void holz;
+  /* Klinge als Gruppe, entlang der Stange gedreht */
+  k += `<g transform="translate(${r(top[0])} ${r(top[1])}) rotate(${r(-winkel)})"><path d="M-.7 0 L0 -10 L.7 0 Z" fill="${STAHL}"/><path d="M.6 1 L6.4 -1.6 Q7.4 3 6.2 7.4 L.6 5 Z" fill="${STAHL}" stroke="#5a6268" stroke-width=".25"/><path d="M-.6 2 L-3.6 .4 L-3 2.2 L-.6 3.6 Z" fill="${STAHL}"/><rect x="-.9" y="5" width="1.8" height="1.2" fill="#c9a640"/><path d="M6.2 -1 L6.8 5" stroke="#fff" stroke-width=".4" opacity=".6"/></g>`;
   /* Faust um die Stange */
-  k += `<ellipse cx="${r(hx)}" cy="${r(hy - 0.6)}" rx="1.3" ry="1.1" fill="#e8c4a2"/><path d="M${r(hx - 1.1)} ${r(hy - 1)} h2.2 M${r(hx - 1.1)} ${r(hy - 0.3)} h2.2" stroke="#c49a7a" stroke-width=".25"/>`;
-  k += `<path class="bw-flaeche" d="M${r(hx - 1.4)} ${r(hy - 4)} L${r(hx + 1.4)} ${r(hy - 4)} L${r(hx + 1.4)} ${r(top + 8)} L${r(hx + 7.4)} ${r(top + 7.4)} L${r(hx + 7.4)} ${r(top - 10)} L${r(hx - 4)} ${r(top - 10)} L${r(hx - 4)} ${r(top + 8)} L${r(hx - 1.4)} ${r(top + 8)} Z" fill="rgba(255,255,255,0.001)"/>`;
-  S.teil({ oben: true, id: "hellebarde", de: "die Hellebarde", syl: "hel-le-BAR-de", it: "l'alabarda", itSyl: "a-la-BAR-da", en: "halberd", x: NW.x, y: NW.y, kunst: k,
+  k += `<ellipse cx="${r(hx)}" cy="${r(hy - 0.6)}" rx="1.3" ry="1.15" fill="#e8c4a2"/><path d="M${r(hx - 1.1)} ${r(hy - 1)} h2.2 M${r(hx - 1.1)} ${r(hy - 0.3)} h2.2" stroke="#c49a7a" stroke-width=".25"/>`;
+  /* Trefferfläche: schmale Polster um die sichtbaren Stücke und um die Klinge */
+  k += `<path class="bw-flaeche" d="M${r(fuss[0] - 1.6)} 0 L${r(fuss[0] + 1.6)} 0 L${r(X(umhangU) + 1.6)} ${r(umhangU)} L${r(X(umhangU) - 1.6)} ${r(umhangU)} Z M${r(top[0] - 4.5)} ${r(top[1] - 10)} L${r(top[0] + 7.6)} ${r(top[1] - 10)} L${r(X(schulter) + 1.8)} ${r(schulter)} L${r(X(schulter) - 1.8)} ${r(schulter)} Z" fill="rgba(255,255,255,0.001)"/>`;
+  S.teil({ oben: true, id: "hellebarde", de: "die Hellebarde", syl: "hel-le-BAR-de", it: "l'alabarda", itSyl: "a-la-BAR-da", en: "halberd", x: NW.x + ox, y: NW.y + oy, kunst: `<g transform="translate(${-ox} ${-oy})">${k}</g>`,
     tipp: "Die Hellebarde ist halb Axt, halb Spieß. Damit schützte der Nachtwächter früher die Stadt." });
 }
 {
@@ -950,10 +967,10 @@ const HAENDE = [NP("handL"), NP("handR")].sort((a, b) => a[0] - b[0]);
   k += `<rect x="${r(lx - 2.2)}" y="${r(ly - 3.6)}" width="4.4" height="6.8" fill="#fff3c4"/><rect x="${r(lx - 0.5)}" y="${r(ly - 1)}" width="1" height="3" fill="#f6f1e4"/><path d="M${r(lx)} ${r(ly - 2.6)} q.6 .8 0 1.6 q-.6 -.8 0 -1.6 Z" fill="#ff9a2a"/>`;
   k += `<path d="M${r(lx - 2.2)} ${r(ly - 3.6)} v6.8 M${r(lx + 2.2)} ${r(ly - 3.6)} v6.8 M${r(lx)} ${r(ly - 3.6)} v6.8" stroke="#8a6a2a" stroke-width=".35"/>`;
   k += `<rect x="${r(lx - 2.6)}" y="${r(ly + 3.2)}" width="5.2" height="1" fill="${GOLD}"/>`;
-  S.teil({ oben: true, id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "la lanterna", itSyl: "lan-TER-na", en: "lantern", x: NW.x, y: NW.y, kunst: k + flaeche(lx - 3, ly - 6, 6, 11),
+  const ox = r(lx), oy = r(ly + 4.4);
+  S.teil({ oben: true, id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "la lanterna", itSyl: "lan-TER-na", en: "lantern", x: NW.x + ox, y: NW.y + oy, kunst: `<g transform="translate(${-ox} ${-oy})">${k + flaeche(lx - 3, ly - 6, 6, 11)}</g>`,
     tipp: "Früher gab es keine Straßenlampen. Der Nachtwächter trug eine Laterne." });
 }
-
 /* Abendstimmung über allem: oben warmer Schein, unten kühler */
 S.davor(`<rect width="400" height="260" fill="${S.lg("abendschein", [[0, "#ffb070", 0.08], [0.5, "#ffb070", 0], [1, "#203050", 0.08]])}"/>`);
 

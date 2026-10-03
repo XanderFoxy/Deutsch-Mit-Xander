@@ -92,6 +92,17 @@ function schlank(svg, Q = 1, flach = false) {
   }
   return s;
 }
+/* für sehr kleine Figuren: winzige Pfade (unter min Figur-cm) und zarte Schattierungen weglassen */
+function fein(svg, min, transp) {
+  return svg.replace(/<(path|circle|ellipse|rect|line)[^>]*\/>/g, (e) => {
+    const op = (e.match(/ opacity="([\d.]+)"/) || [])[1];
+    if (op && +op < transp) return "";
+    const n = ((e.match(/ d="([^"]+)"/) || [, ""])[1].match(/-?\d*\.?\d+/g) || []).map(Number);
+    if (!n.length) return e;
+    const xs = n.filter((_, i) => i % 2 === 0), ys = n.filter((_, i) => i % 2 === 1);
+    return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) < min ? "" : e;
+  });
+}
 B.mensch({ geschlecht: "m" }, 1);
 const M0 = globalThis.DMA_MENSCH;
 /* die Melone: runder, niedriger Kopf, schmale Krempe */
@@ -703,7 +714,7 @@ const krone = (cx, cy, rx, ry, n, gr) => {
     /* was der Wagenkasten verdeckt (Beine, Schuhe), wird gar nicht erst gezeichnet */
     const unten = g.z.sitz.y + 4;
     const svg = g.svg.replace(/<path [^>]*d="([^"]+)"[^>]*\/>/g, (p, d) => { const n = d.match(/-?\d*\.?\d+/g).map(Number).filter((_, i) => i % 2 === 1); return Math.min(...n) > unten ? "" : p; });
-    return `<g transform="translate(${ox} ${oy})">${schlank(svg, 4, true)}</g>`;
+    return `<g transform="translate(${ox} ${oy})">${fein(schlank(svg, 4, true), 5, 0.35)}</g>`;
   };
   k += gast({ id: "wie_gm", geschlecht: "m", frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "hellblau" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, m(1.78), 2.3);
   k += gast({ id: "wie_gw", geschlecht: "w", frisur: "lang", haarfarbe: "blond", kleidung: { oberteil: { stueck: "bluse", farbe: "rosa" }, unterteil: { stueck: "rock", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, kopf: { stueck: "hut", farbe: "#e8dcc0" } } }, m(1.66), 2.12);
@@ -727,7 +738,7 @@ const krone = (cx, cy, rx, ry, n, gr) => {
     kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "jacke", farbe: "#26262c" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "melone" } } }, m(1.76));
   const sitz = { x: m(0.45), y: m(-1.66) };
   const kx = r(sitz.x - kut.z.sitz.x * kut.k), ky = r(sitz.y - kut.z.sitz.y * kut.k);
-  k += `<g transform="translate(${kx} ${ky})">${schlank(kut.svg, 3, true)}</g>`;
+  k += `<g transform="translate(${kx} ${ky})">${fein(schlank(kut.svg, 3, true), 3, 0.3)}</g>`;
   const hand = { x: kx + kut.z.handL.x * kut.k, y: ky + kut.z.handL.y * kut.k };
   k += `<path d="M${r(hand.x)} ${r(hand.y)} Q${m(-1)} ${m(-1.9)} ${m(PB - 1.42)} ${m(-1.84)} M${r(hand.x)} ${r(hand.y + 0.3)} Q${m(-1)} ${m(-1.8)} ${m(PB - 1.6)} ${m(-1.8)}" stroke="#2b1d12" stroke-width=".22" fill="none"/>`;
   const kopf = { x: kx + kut.z.kopf.x * kut.k, y: ky + kut.z.kopf.y * kut.k };
@@ -826,7 +837,7 @@ const PODEST = yp(3.6);
   const o = B.mensch({ id: "wie_ober", geschlecht: "m", pose: "servieren", blick: 60, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "kellnerhemd" }, jacke: { stueck: "weste", farbe: "schwarz" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, zubehoer: { stueck: "tablett" } } }, r(1.78 * s));
   /* im Glas auf seinem Tablett ist Wasser */
-  const svg = schlank(o.svg, 1, true).replace(/fill="#e8b84a" opacity=".85"/g, `fill="#d6e9ef" opacity=".7"`);
+  const svg = kompakt(o.svg).replace(/fill="#e8b84a" opacity=".85"/g, `fill="#d6e9ef" opacity=".7"`);
   S.teil({ id: "ober", de: "der Ober", syl: "O-ber", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x: OBER.x, y: Y, kunst: schlag(4, 0.4, 16, 14, 0.28) + svg,
     tipp: "In Wien ruft man im Kaffeehaus: „Herr Ober, bitte zahlen!“" });
 }

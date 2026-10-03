@@ -945,9 +945,9 @@ function robbeBaby(T) {
   /* pralle Walze ohne Hals: großer Rundkopf (≈ 26 % der Länge) sitzt direkt auf einem Fettring; Oberkopf rund mit
      Stirnabsatz, kurze stumpfe Schnauze mit wulstigen Polstern; Kinn geht ohne Kehle in die volle Brust über; Bauch quillt */
   const rumpf = [
-    [12, -9], [16, -15.6], [22, -21.6], [30, -26.4], [40, -30.4], [50, -33.4], [58, -35.8], [64, -37.6], [68.4, -38.6], [71.6, -40.8], [75.4, -42.6], [80, -43.4],
+    [9.6, -10.4], [11.6, -13.4], [16, -15.6], [22, -21.6], [30, -26.4], [40, -30.4], [50, -33.4], [58, -35.8], [64, -37.6], [68.4, -38.6], [71.6, -40.8], [75.4, -42.6], [80, -43.4],
     [84.6, -42.4], [88, -40.2], [89.8, -37.8], [91.6, -36.4], [93.4, -35], [94.6, -33], [94.8, -30.6], [93.8, -28.8], [91.6, -27.8], [88.6, -27.2], [85.6, -26.2],
-    [82.6, -23.8], [80.4, -20.4], [78, -16], [74.4, -11.4], [68.4, -6.8], [60, -3], [50, -0.8], [38, 0, 1], [26, -0.2], [18.4, -2.6], [13.8, -5.6],
+    [82.6, -23.8], [80.4, -20.4], [78, -16], [74.4, -11.4], [68.4, -6.8], [60, -3], [50, -0.8], [38, 0, 1], [26, -0.2], [18.4, -2.6], [13.6, -5.2], [10.6, -7.2],
   ];
   const kD = G(rumpf);
   const fell = verlauf(T, "rfell", 0, -44, 0, 0, [[[0, -44], "#fefbf3"], [[0, -33], "#f8f5ec"], [[0, -22], "#e4e8ed"], [[0, -11], "#c3cfdc"], [[0, -3], "#a9b8c9"], [[0, 0], "#c5d3e0"]]);
@@ -969,13 +969,6 @@ function robbeBaby(T) {
     i += haare(T, p, 40, 186, 0.45, [["#8d96a1", 1, 0.035, 0.45]], 14, 0.2, 0.1);
     i += `<path d="M${J(1.8 + dx, -17.6 + dy)}l-.7 -.25M${J(3 + dx, -15.5 + dy)}l-.7 -.05M${J(2.4 + dx, -13 + dy)}l-.7 .1M${J(0.6 + dx, -10.4 + dy)}l-.7 .3" stroke="#121212" stroke-width=".28" stroke-linecap="round"/>`;
     let o = `<g filter="${vol(T, "rhf", { weich: 0.9, tiefe: 3, schatten: "#101418" })}">${silhouette(T, G(p), c, i)}</g>`;
-    /* Haarmanschette: weißes Lanugo greift als echter Lappen über die ersten 25–30 % der Flosse, endet in Haarspitzen;
-       darunter ein weicher Schlagschatten auf der Flosse */
-    const m = [[16 + dx, -15.4 + dy], [12.4 + dx, -15 + dy], [10.2 + dx, -14 + dy], [9.4 + dx, -12 + dy], [9.6 + dx, -9.8 + dy], [10.8 + dx, -7.8 + dy], [13.4 + dx, -6.8 + dy], [16 + dx, -6.6 + dy]];
-    o += weich(m.map(([x, y]) => [x - 0.9, y + 0.3]), "#0c0e12", 0.45, 0.5);
-    o += form(T, m, fern ? "#c1cad5" : verlauf(T, "rhm", 0, -15, 0, -6, [[[0, -15], "#f4f6f8"], [[0, -6], "#aebccc"]]));
-    o += fein(T, straehnen(T, m, 14, 182, 1.2, { m: 4, ab: 0.06, licht: ["#ffffff", 0.6, 0.045], schatten: ["#93a3b6", 0.4, 0.05] }));
-    o += haarSaum(T, m.slice(0, 7), 46, 1.5, [[fern ? "#b9c3cf" : "#eef1f4", 1, 0.06, 0.9], ["#a9b7c7", 0.6, 0.06, 0.85]], 1, 0.6);
     return o;
   };
   s += hf(1.2, -3, true) + hf(0, 0, false);
@@ -1004,11 +997,12 @@ function robbeBaby(T) {
      Lichtseite zart, Schattenseite deutlicher */
   const wuchs = (x, y) => (x > 84 ? 192 : x > 70 ? 182 + (y + 34) * 1.6 : x > 62 ? 132 - (y + 30) * 1.2 : 170 - (y + 18) * 0.9);
   const unten = [[14, -6], [30, -10], [50, -12], [66, -12], [76, -17], [78, -12], [62, -3.2], [40, -0.4], [20, -1.6]];
-  n += straehnen(T, rumpf.filter((p) => p[0] < 88), 200, wuchs, 1.9, { m: 4, ab: 0.07, licht: ["#ffffff", 0.7, 0.05], schatten: ["#b9c6d5", 0.32, 0.055], sz: 0.07 });
-  n += straehnen(T, unten, 70, wuchs, 1.8, { m: 4, ab: 0.07, licht: ["#e2e8ef", 0.35, 0.05], schatten: ["#8b9db3", 0.35, 0.055], sz: 0.07 });
+  n += straehnen(T, rumpf.filter((p) => p[0] < 88), 250, wuchs, 2.8, { m: 3, ab: 0.08, welle: 0.15, licht: ["#ffffff", 0.55, 0.05], schatten: ["#b4c2d2", 0.42, 0.055], sz: 0.07 });
+  n += straehnen(T, unten, 100, wuchs, 2.5, { m: 3, ab: 0.08, welle: 0.15, licht: ["#dfe6ee", 0.16, 0.05], schatten: ["#8898ae", 0.42, 0.055], sz: 0.07 });
   s += `<g filter="${vol(T, "rrumpf", { weich: 4.5, tiefe: 5, umgebung: 0.38, schatten: "#20304a" })}">${silhouette(T, kD, fell, n)}</g>`;
   /* Fellsaum: oben fast weiß in den Hintergrund, unten kühl grau – keine glatte Vektorkante */
-  s += haarSaum(T, rumpf.slice(0, 14), 220, 1.2, [["#ffffff", 1, 0.06, 0.85], ["#e6eaef", 0.6, 0.06, 0.8]], -1, -0.5);
+  s += haarSaum(T, [rumpf[rumpf.length - 2], rumpf[rumpf.length - 1], rumpf[0], rumpf[1]], 50, 1.4, [["#e9edf2", 1, 0.06, 0.9], ["#b2bfce", 0.8, 0.06, 0.85]], -1, 0);
+  s += haarSaum(T, rumpf.slice(1, 14), 220, 1.2, [["#ffffff", 1, 0.06, 0.85], ["#e6eaef", 0.6, 0.06, 0.8]], -1, -0.5);
   s += haarSaum(T, rumpf.slice(21, 30), 110, 1, [["#c7d0db", 1, 0.06, 0.8], ["#aab8c8", 0.6, 0.06, 0.7]], -1, 0.3);
 
   /* ---- Vorderflosse: mit Lanugo, 5 Zehenwölbungen vorn, 5 kräftige, nur leicht gebogene Krallen; Schatten auf dem Körper ---- */
@@ -1033,15 +1027,16 @@ function robbeBaby(T) {
     s += `<path d="${d}" stroke="#a49e92" stroke-width=".2" stroke-linecap="round" stroke-opacity=".7"/>`;
   }
   {
+    /* 14 Vibrissen in 4 Reihen, sanft nach hinten-unten gebogen, fächern wenig; Perlung als zarte Verdickungen */
     let d = "";
     const k = F ? 14 : 7;
     for (let i = 0; i < k; i++) {
-      const r = i % 4, c = Math.floor(i / 4), bx = 89.8 + c * 1.2 - r * 0.45, by = -33 + r * 0.95 + c * 0.2, L = 4.4 + r * 1.4 + T.rnd() * 2.6;
-      const a = (-4 + r * 15 + (T.rnd() - 0.5) * 10) * Math.PI / 180, ex = bx + Math.cos(a) * L, ey = by + Math.sin(a) * L + L * 0.2;
-      if (F) { let p = `M${J(bx, by)}`; for (let j = 1; j <= 10; j++) { const f = j / 10, w = (j % 2 ? 0.1 : -0.1) * (1 - f); p += `L${J(bx + (ex - bx) * f - Math.sin(a) * w, by + (ey - by) * f + Math.cos(a) * w + Math.sin(f * Math.PI) * L * 0.07)}`; } d += p; }
-      else d += `M${J(bx, by)}Q${J((bx + ex) / 2, (by + ey) / 2 + L * 0.08, ex, ey)}`;
+      const r = i % 4, c = Math.floor(i / 4), bx = 90 + c * 1.15 - r * 0.4, by = -32.9 + r * 0.9 + c * 0.15, L = 4.6 + r * 1 + T.rnd() * 2.2;
+      const a = (2 + r * 8 + (T.rnd() - 0.5) * 8) * Math.PI / 180, ex = bx + Math.cos(a) * L, ey = by + Math.sin(a) * L;
+      d += `M${J(bx, by)}Q${J((bx + ex) / 2 + 0.2, (by + ey) / 2 - L * 0.06, ex, ey + L * 0.05)}`;
     }
-    s += (F ? `<path d="${d}" fill="none" stroke="#7d8794" stroke-width=".11" stroke-opacity=".6" transform="translate(.04 .06)"/>` : "") + `<path d="${d}" fill="none" stroke="#f3efe6" stroke-width=".11" stroke-opacity=".95" stroke-linejoin="round"/>`;
+    s += (F ? `<path d="${d}" fill="none" stroke="#7d8794" stroke-width=".1" stroke-opacity=".55" transform="translate(.04 .07)"/>` : "") + `<path d="${d}" fill="none" stroke="#f3efe6" stroke-width=".11" stroke-linecap="round"/>`
+      + fein(T, `<path d="${d}" fill="none" stroke="#fffaf0" stroke-width=".17" stroke-dasharray=".14 .5" stroke-opacity=".5"/>`);
   }
   s += fein(T, `<path d="M83.2 -38.4q.8 -1.8 2.2 -2.6M84 -38.2q1 -1.6 2.6 -2M84.8 -38q1.2 -1.2 2.6 -1.4" stroke="#d8d6cf" stroke-width=".07" fill="none"/>`);
   /* ---- Auge: sehr groß, rund, fast schwarz, in weicher Mulde; feuchter dunkler Lidrand, Fell überlappt den Rand leicht;
@@ -1050,10 +1045,10 @@ function robbeBaby(T) {
   {
     const x = 84.8, y = -34, rx = 2.5, ry = 2.3;
     s += form(T, [[84.6, -31.8], [86.6, -31.8], [86.8, -29], [85.6, -26.2], [84.2, -25.6], [83.8, -28.2]], "#b8b4a6", F ? ` opacity=".7" filter="${blur(T, 0.3, 0.5)}"` : ` opacity=".5"`);
-    s += fein(T, `<path d="M84.6 -29.4l.5 1.6l.3 -1.4M85.6 -28.6l.3 1.8l.4 -1.6M84.8 -27.4l.4 1.4l.3 -1.2" fill="#a29d8f" fill-opacity=".8"/>` + zart(T, [[85.8, -31], [85.6, -29], [85, -27]], "#fffdf6", 0.15, 0.6));
+    s += fein(T, `<path d="M84.8 -31.4q.3 2 -.2 4.6M85.5 -31.4q.4 2.2 0 5M86.2 -31.2q.2 1.8 -.2 3.8M85.1 -30q.5 1.6 .2 3.2" fill="none" stroke="#9c9789" stroke-width=".09" stroke-opacity=".7" stroke-linecap="round"/>` + zart(T, [[85.9, -31.2], [85.8, -29.6], [85.4, -28]], "#fffdf6", 0.12, 0.55));
     s += weich([[x - 3.4, y - 1.4], [x + 3.4, y - 1.6], [x + 3.2, y + 2.4], [x - 3, y + 2.6]], "#9aa7b8", 0.45, 0.9);
     s += `<ellipse cx="${Z2(x)}" cy="${Z2(y)}" rx="${Z2(rx + 0.3)}" ry="${Z2(ry + 0.3)}" fill="#0c0908"/><ellipse cx="${Z2(x)}" cy="${Z2(y)}" rx="${Z2(rx)}" ry="${Z2(ry)}" fill="${T.rg("rauge", [[0, "#24180f"], [0.75, "#1a0f0a"], [1, "#080504"]], 0.5, 0.45, 0.6)}"/>`;
-    s += `<ellipse cx="${Z2(x - 0.9)}" cy="${Z2(y - 1)}" rx=".45" ry=".32" fill="#fff" opacity=".92"/><path d="M${J(x - 1.5, y + 1.6)}q${J(1.5, 0.8, 3, 0)}" fill="none" stroke="#9fb4cf" stroke-width=".5" stroke-opacity=".45"/>`;
+    s += `<ellipse cx="${Z2(x - 0.9)}" cy="${Z2(y - 1)}" rx=".45" ry=".32" fill="#fff" opacity=".92"/><path d="M${J(x - 1.5, y + 1.6)}q${J(1.5, 0.8, 3, 0)}" fill="none" stroke="#9fb4cf" stroke-width=".3" stroke-opacity=".3"/>`;
     s += `<ellipse cx="${Z2(x)}" cy="${Z2(y)}" rx="${Z2(rx + 0.15)}" ry="${Z2(ry + 0.15)}" fill="none" stroke="#3a3632" stroke-width=".2" stroke-opacity=".7"/>`;
     s += haarSaum(T, [[x - 2.8, y - 0.6], [x - 1.6, y - 2.6], [x + 0.4, y - 2.9], [x + 2.4, y - 2]], 24, 0.5, [["#f4f5f6", 1, 0.06, 0.85]], 1, 0.2);
   }

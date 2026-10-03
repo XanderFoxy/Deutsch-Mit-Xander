@@ -404,6 +404,8 @@ const kappX = (pts, x0, x1) => { let p = schnitt(pts, (q) => q[0] >= x0, (a, b) 
 const vl = (pts, fill, ex = "") => pts.length > 2 ? `<path d="M${pts.map(pr).join(" L")} Z" fill="${fill}"${ex}/>` : "";
 const kappO = (pts, ym) => schnitt(pts, (p) => p[1] >= ym, (a, b) => { const t = (ym - a[1]) / (b[1] - a[1]); return [a[0] + (b[0] - a[0]) * t, ym]; });
 const KLIP = [-2.5, 402.5];
+/* die Naht zwischen Nord- und Ostblick: genau am Eckmast mit dem Straßenschild */
+const SEAM = 231.3;
 const rahmen = (pts) => pts.length > 2 ? kappO(kappY(kappX(pts, KLIP[0], KLIP[1]), 262.5), -2.5) : [];
 const vr = (pts, fill, ex = "") => vl(rahmen(pts), fill, ex);
 /* Strecke am Rahmen beschneiden (Liang–Barsky); "" wenn ganz draußen */
@@ -593,7 +595,7 @@ const HAUS = {};
   /* Ostblick: nördlich und südlich der Lombard Street, Blöcke bis zur Mason Street (≈ 0,7 km) */
   const freiE = (a0, a1, d0, d1) => (a1 <= 0 ? VO + F * a1 / d1 < 230 : VO + F * a0 / d1 > 405) || d1 > 715 || (a0 >= -39.2 && a1 <= -14.9 && d1 <= 126.1) || (a1 <= 0 && d0 < 30);
   const reihenE = [[2, 126], [147, 273], [294, 420], [441, 567], [588, 714]];
-  KLIP[0] = 236;
+  KLIP[0] = SEAM;
   const LE = [
     ...bloecke(PO, gzE, [[-272, -150], [-135, -15]], reihenE, freiE, 105, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => f }, rnd2, () => 99),
     ...bloecke(PO, gzE, [[5, 125]], reihenE, freiE, 140, { vorn: (f) => misch(f, "#000000", 0.08), seite: (f) => misch(f, "#000000", 0.34) }, rnd2, (a0, a1, d0) => d0 < 130 ? 10.5 : 99),
@@ -640,18 +642,30 @@ const HAUS = {};
     if (d0 >= 70 && d0 < 80) HAUS.erker = { p: PN(-16.5, e0 + 0.4, ez0), q: PN(-16.5, e0 + 0.4, ez1), g: PN(-16.95, d0 + 5.5, zb1), g2: PN(-16.95, d0 + 5.5, zb1 + 2.4), d: d0 };
   }
   const DECK = [], vd = (pts, f, ex = "") => { const q = rahmen(pts); if (!ex) DECK.push(q); return vl(q, f, ex); };
-  /* Nordseite der Lombard Street (Ostblick): Fassaden nach Süden, sonnig */
-  for (let d0 = 118; d0 >= 35; d0 -= 7.6) {
-    const d1 = d0 + 7.6, i = Math.round(d0 / 7.6) + 3, f = farben[i % 7], zb0 = zL(d0), zb1 = zL(d1), zr = zb0 + 10;
+  /* Nordseite der Lombard Street (Ostblick): Fassaden nach Süden (Nachmittagssonne von Südwesten),
+     Erker, Haustür mit Eingangstreppe, Garage mit Paneelen */
+  KLIP[0] = SEAM;
+  for (let d0 = 118; d0 >= 34; d0 -= 7.6) {
+    const d1 = d0 + 7.6, i = Math.round(d0 / 7.6) + 3, f = farben[i % 7], zb0 = zL(d0), zb1 = zL(d1), zr = zb0 + 10, nah = d0 < 75;
     if (zr < E - 0.3) k += vd([PO(-15, d0, zr), PO(-26, d0, zr), PO(-26, d1, zr), PO(-15, d1, zr)], "#a89f92");
-    k += vd([PO(-15, d0, zb0), PO(-15, d0, zr), PO(-15, d1, zr), PO(-15, d1, zb1)], f.w);
+    k += vd([PO(-15, d0, zb0), PO(-15, d0, zr), PO(-15, d1, zr), PO(-15, d1, zb1)], schatt(f.w, 0.94));
     k += vd([PO(-15, d0, zr - 0.6), PO(-14.5, d0, zr - 0.6), PO(-14.5, d1, zr - 0.6), PO(-15, d1, zr - 0.6)], f.t);
-    const e0 = d0 + 2, e1 = d0 + 5.4, ez0 = zb0 + 2.8, ez1 = zr - 1.2;
-    k += vd([PO(-15, e0, ez0), PO(-14, e0 + 0.8, ez0), PO(-14, e0 + 0.8, ez1), PO(-15, e0, ez1)], schatt(f.w, 1.0));
-    k += vd([PO(-14, e0 + 0.8, ez0), PO(-14, e1 - 0.8, ez0), PO(-14, e1 - 0.8, ez1), PO(-14, e0 + 0.8, ez1)], schatt(f.w, 0.92));
-    for (const zf of [ez0 + 0.5, ez0 + 3.2]) k += vd([PO(-14.85, e0 + 0.12, zf), PO(-14.12, e0 + 0.7, zf), PO(-14.12, e0 + 0.7, zf + 1.8), PO(-14.85, e0 + 0.12, zf + 1.8)], "#4f6274", ` stroke="${f.t}" stroke-width=".15"`);
-    k += vd([PO(-14.95, d0 + 5.8, zb1), PO(-14.95, d0 + 5.8, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1 + 2.3), PO(-14.95, d1 - 0.3, zb1)], "#e2ddd2");
+    const e0 = d0 + 2.2, e1 = d0 + 5.2, ez0 = zb0 + 2.8, ez1 = zr - 1.2;
+    k += vd([PO(-15, e0, ez0), PO(-14, e0 + 0.8, ez0), PO(-14, e0 + 0.8, ez1), PO(-15, e0, ez1)], misch(f.w, "#ffffff", 0.25));
+    k += vd([PO(-14, e0 + 0.8, ez0), PO(-14, e1 - 0.8, ez0), PO(-14, e1 - 0.8, ez1), PO(-14, e0 + 0.8, ez1)], schatt(f.w, 0.9));
+    for (const zf of [ez0 + 0.5, ez0 + 3.2]) {
+      k += vd([PO(-14.85, e0 + 0.12, zf), PO(-14.12, e0 + 0.7, zf), PO(-14.12, e0 + 0.7, zf + 1.8), PO(-14.85, e0 + 0.12, zf + 1.8)], "#4f6274", ` stroke="${f.t}" stroke-width=".15"`);
+      k += vd([PO(-13.98, e0 + 1, zf), PO(-13.98, e1 - 1, zf), PO(-13.98, e1 - 1, zf + 1.8), PO(-13.98, e0 + 1, zf + 1.8)], "#46586a", ` stroke="${f.t}" stroke-width=".15"`);
+    }
+    /* Haustür oben am Hang mit Vordach und Treppe, Garage unten (Gehweghöhe) */
+    k += vd([PO(-14.97, d0 + 0.5, zb0 + 0.9), PO(-14.97, d0 + 0.5, zb0 + 3), PO(-14.97, d0 + 1.6, zb0 + 3), PO(-14.97, d0 + 1.6, zb0 + 0.9)], f.a);
+    k += vd([PO(-14.4, d0 + 0.3, zb0 + 3.1), PO(-14.4, d0 + 1.8, zb0 + 3.1), PO(-15, d0 + 1.8, zb0 + 3.3), PO(-15, d0 + 0.3, zb0 + 3.3)], f.t);
+    if (nah) for (let j = 0; j < 4; j++) { const zz = zb0 + 0.22 * (j + 1); k += vd([PO(-14.2 + j * 0.2, d0 + 0.4, zz), PO(-14.2 + j * 0.2, d0 + 1.7, zz), PO(-14.2 + j * 0.2, d0 + 1.7, zz - 0.22), PO(-14.2 + j * 0.2, d0 + 0.4, zz - 0.22)], j % 2 ? "#cfc9bd" : "#e0dace"); }
+    const g0 = d0 + 5.6, g1 = d1 - 0.3, gz0 = zL(g1);
+    k += vd([PO(-14.95, g0, gz0), PO(-14.95, g0, gz0 + 2.3), PO(-14.95, g1, gz0 + 2.3), PO(-14.95, g1, gz0)], misch(f.t, "#c9c2b4", 0.4));
+    if (nah) { let gp = ""; for (let j = 1; j < 4; j++) gp += seg(PO(-14.94, g0 + 0.1, gz0 + j * 0.58), PO(-14.94, g1 - 0.1, gz0 + j * 0.58)) + " "; k += `<path d="${gp}" stroke="#9c958a" stroke-width=".18"/>`; }
   }
+  KLIP[0] = -2.5;
   DECK.forEach((q) => q.length > 2 && decke(q));
   decke(GARTEN); decke(BEET);
   const sE = zeichneListe(LE), sN = zeichneListe(LN);

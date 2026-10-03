@@ -197,15 +197,20 @@ function mach(T, dez = 1) {
     for (const [x, y, wi, len, n, ab, bg] of gruppen) {
       const a = wi * Math.PI / 180, cx = Math.cos(a), cy = Math.sin(a), nx = -cy, ny = cx;
       for (let j = 0; j < n; j++) {
-        const o2 = ab * (j - (n - 1) / 2) + (T.rnd() - 0.5) * ab * 0.25, v = (T.rnd() - 0.5) * len * 0.14, Lj = len * (0.7 + T.rnd() * 0.45);
+        const o2 = ab * (j - (n - 1) / 2) * (0.6 + T.rnd() * 0.8), v = (T.rnd() - 0.5) * len * 0.2, Lj = len * (0.7 + T.rnd() * 0.6);
+        const wa = a + (T.rnd() - 0.5) * 0.1;
         const ox = x + nx * o2 + cx * v, oy = y + ny * o2 + cy * v, b = bg * len * 0.06, wj = w * (0.55 + T.rnd() * 0.6);
-        const li = [], re = [];
-        for (let i = 0; i <= 6; i++) {
-          const t = i / 6, bb = 4 * t * (1 - t) * b, px = ox + cx * Lj * t + nx * bb, py = oy + cy * Lj * t + ny * bb;
-          const h = wj / 2 * Math.pow(Math.sin(Math.PI * t), 0.8) * (0.8 + 0.4 * Math.sin(t * 9 + j));
-          li.push([px + nx * h, py + ny * h]); re.push([px - nx * h, py - ny * h]);
-        }
-        d += H.vieleck(li.concat(re.reverse()));
+        const ccx = Math.cos(wa), ccy = Math.sin(wa);
+        const stueck = (t0, t1) => {
+          const li = [], re = [];
+          for (let i = 0; i <= 6; i++) {
+            const tt = i / 6, t = t0 + (t1 - t0) * tt, bb = 4 * t * (1 - t) * b, px = ox + ccx * Lj * t + nx * bb, py = oy + ccy * Lj * t + ny * bb;
+            const h = wj / 2 * Math.pow(Math.sin(Math.PI * tt), 0.8) * (0.8 + 0.4 * Math.sin(t * 9 + j));
+            li.push([px + nx * h, py + ny * h]); re.push([px - nx * h, py - ny * h]);
+          }
+          d += H.vieleck(li.concat(re.reverse()));
+        };
+        if (n >= 3 && j === 1) { const g = 0.35 + T.rnd() * 0.3; stueck(0, g - 0.08); stueck(g + 0.08, 1); } else stueck(0, 1);
       }
     }
     return (o.rand ? `<path d="${d}" fill="none" stroke="${o.rand}" stroke-width="${f(w * 0.5)}" stroke-opacity="${op * 0.6}" stroke-linejoin="round"/>` : "") + `<path d="${d}" fill="${farbe}" opacity="${op}"/>`;
@@ -214,17 +219,21 @@ function mach(T, dez = 1) {
   /* wie T.volumen (kern.js), aber das Licht wird vor dem Mischen leicht weichgezeichnet: keine Stufen/Höhenlinien
      auf großen hellen Flächen (8-Bit-Quantisierung der Höhenkarte) */
   const volSchon = {};
+  /* stufenlos (wie kern.js T.volumen, aber Licht von OBEN aus dem Wasser): Innen-Schatten zur Unterkante aus der
+     nach oben verschobenen, weichen Silhouette; Innen-Glanz zur Oberkante aus der nach unten verschobenen. */
   H.vol = (name, weich, inner, o = {}) => {
     if (!F) return inner;
-    const el = o.hoehe || 52, amb = o.umgebung != null ? o.umgebung : 0.35, id = T.id("vl" + name);
+    const id = T.id("vl" + name), st = Math.min(1, 0.09 * (o.tiefe || 4)), amb = o.umgebung != null ? o.umgebung : 0.35;
     if (!volSchon[id]) {
       volSchon[id] = 1;
+      const d = weich * 0.9, r4 = (n) => Math.round(n * 1e4) / 1e4;
       T.def(`<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%" color-interpolation-filters="sRGB">` +
         `<feGaussianBlur in="SourceAlpha" stdDeviation="${weich}" result="b"/>` +
-        `<feDiffuseLighting in="b" surfaceScale="${o.tiefe || 4}" diffuseConstant="1" lighting-color="#fff" result="d"><feDistantLight azimuth="${o.azimut || 248}" elevation="${el}"/></feDiffuseLighting>` +
-        `<feGaussianBlur in="d" stdDeviation="${Math.max(0.3, Math.round(weich * 0.12 * 10) / 10)}" result="d2"/>` +
-        `<feComposite in="d2" in2="SourceGraphic" operator="arithmetic" k1="${Math.round((1 - amb) / Math.sin(el * Math.PI / 180) * 1e4) / 1e4}" k2="0" k3="${amb}" k4="0" result="m"/>` +
-        `<feComposite in="m" in2="SourceGraphic" operator="in"/></filter>`);
+        `<feOffset in="b" dx="${r4(-d * 0.25)}" dy="${r4(-d)}" result="bu"/><feOffset in="b" dx="${r4(d * 0.2)}" dy="${r4(d * 0.8)}" result="bo"/>` +
+        `<feComposite in="SourceAlpha" in2="bu" operator="out" result="ms"/><feComposite in="SourceAlpha" in2="bo" operator="out" result="mg"/>` +
+        `<feFlood flood-color="#03080d" flood-opacity="${r4(st * (1 - amb) * 0.95)}"/><feComposite in2="ms" operator="in" result="s"/>` +
+        `<feFlood flood-color="#eaf4fa" flood-opacity="${r4(st * (1 - amb) * (o.glanz || 0.38))}"/><feComposite in2="mg" operator="in" result="g"/>` +
+        `<feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="s"/><feMergeNode in="g"/></feMerge><feComposite in2="SourceGraphic" operator="in"/></filter>`);
     }
     return `<g filter="url(#${id})">${inner}</g>`;
   };
@@ -290,11 +299,13 @@ function mach(T, dez = 1) {
      (Faktor k), ferner nach oben (k · fern) und am Ansatz vom Stiel verdeckt. o: { x0, y0, L, S, k, fern, plan, farbe,
      hell, dunkel, rand, zacken, weich }. Liefert { fern, nah } (fern vor dem Rumpf, nah danach zeichnen). */
   H.fluke = (o) => {
-    const { x0, y0, L, S } = o, k = o.k || 0.2, kf = k * (o.fern || 0.55);
-    const plan = o.plan || [[-0.12, 0.06], [0, 0.18], [0.25, 0.46], [0.5, 0.74], [0.75, 0.93], [0.92, 1.0], [1, 0.97, 1], [0.9, 0.78], [0.8, 0.52], [0.7, 0.27], [0.62, 0.1], [0.56, 0, 1], [-0.12, 0, 1]];
-    const ispitze = plan.findIndex((q, i) => i > 0 && q[2]);
+    /* gier: die Fluke ist leicht zum Betrachter gedreht – die ferne Hälfte ist kürzer (L · (1 − gier)) */
+    const { x0, y0, S } = o, k = o.k || 0.33, kf = k * (o.fern || 0.55), gier = o.gier != null ? o.gier : 0.2;
+    const plan = o.plan || [[-0.12, 0.06], [0, 0.18], [0.25, 0.5], [0.5, 0.8], [0.7, 0.96], [0.86, 1.02], [0.96, 0.98], [1, 0.88], [0.95, 0.7], [0.87, 0.48], [0.77, 0.27], [0.67, 0.1], [0.6, 0, 1], [-0.12, 0, 1]];
+    const ispitze = plan.reduce((m, q, i) => (q[0] > plan[m][0] ? i : m), 0);
     const kerbe = plan.length - 2;
     const half = (nah) => {
+      const L = o.L * (nah ? 1 : 1 - gier);
       /* Schließkante (Kerbe → Ansatz) leicht gewölbt: die nahe Hälfte greift etwas über die Achse (Kiel des Stiels) */
       const un = plan[kerbe][0], ua = plan[plan.length - 1][0];
       const pl = plan.slice(0, -1).concat([[un * 0.7 + ua * 0.3, -0.03], [un * 0.35 + ua * 0.65, -0.035], plan[plan.length - 1]]);
@@ -309,12 +320,15 @@ function mach(T, dez = 1) {
       return pts;
     };
     const mk = (nah) => {
+      const L = o.L * (nah ? 1 : 1 - gier);
       const pts = half(nah), d = G(pts), sg = nah ? 1 : -1, kk = nah ? k : kf;
       const grad = T.lg("flu" + (nah ? "N" : "F"), [[0, o.hell || "#3a4550"], [0.5, o.farbe || "#1d2126"], [1, o.dunkel || "#121418"]], f(x0 - 0.15 * L), f(y0 + sg * 0.2 * S * kk), f(x0 - 0.8 * L), f(y0 + sg * 0.5 * S * kk), H.US);
-      const vk = plan.slice(1, ispitze + 1).map(([u, v]) => [x0 - u * L - 1.2 * L / 100, y0 + sg * v * S * kk - sg * 0.012 * S]);
+      const vk = plan.slice(1, ispitze).map(([u, v]) => [x0 - u * L - 1.2 * L / 100, y0 + sg * v * S * kk - sg * 0.012 * S]);
       const hk = pts.slice(ispitze, pts.length - 3).map((p) => [p[0], p[1]]);
       let inn = H.weichL([vk], o.licht || "#9fb3c2", Math.max(0.6, S * 0.012), nah ? 0.45 : 0.3, Math.max(0.3, S * 0.006));
       inn += H.L([hk], "#000", Math.max(0.3, S * 0.0045), 0.6);
+      /* Fläche zur Hinterkante dunkler */
+      inn += H.weichF(hk.concat(hk.slice().reverse().map(([x, y]) => [x + L * 0.12, y - sg * S * kk * 0.12])), "#000", 0.25, Math.max(0.5, S * 0.012));
       if (o.extra) inn += o.extra(nah, pts);
       if (nah) inn += H.weichL([pts.slice(-3).map((p) => [p[0], p[1] + S * kk * 0.02])], "#000", Math.max(0.5, S * 0.012), 0.35, Math.max(0.3, S * 0.006));
       const teil = H.teil(d, grad, { innen: inn, randD: G(pts.slice(1, -3), false), randA: 0.2, rw: Math.max(0.3, S * 0.004) });
