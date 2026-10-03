@@ -826,10 +826,10 @@ function eisbaer(T) {
   const versetzt = (p, dx) => p.map((q) => [q[0] + dx, q[1], q[2]]);
   const vbF = versetzt(vbN, -16), hbF = versetzt(hbN, 15);
 
-  const fell = hoehenVerlauf(T, "fell", -114, 0, [[-114, "#fbf8f1"], [-100, "#f5f0e5"], [-84, "#eee8d8"], [-66, "#e6dfcc"], [-48, "#ded5be"], [-24, "#dcd2b9"], [0, "#cfc3a5"]]);
+  const fell = hoehenVerlauf(T, "fell", -114, 0, [[-114, "#fbf8f1"], [-100, "#f6f1e7"], [-84, "#f0eadc"], [-66, "#e9e2d1"], [-48, "#e4dcc8"], [-24, "#e6dfcd"], [0, "#dad1bb"]]);
   const fellF = hoehenVerlauf(T, "fellF", -114, 0, [[-60, "#cdd1d2"], [-30, "#c4c8c8"], [0, "#b4b6ae"]]);
   /* kühler Kernschatten im unteren Drittel, Reflexlicht an der Bauchkante, Schlagschatten auf die Laufansätze */
-  const kern = hoehenVerlauf(T, "eKern", -112, -18, [[-84, blau, 0], [-68, blau, 0.38], [-56, blau, 0.55], [-50, blau, 0.42], [-46, blau, 0.24], [-41, blau, 0.4], [-28, blau, 0.14], [-18, blau, 0]]);
+  const kern = hoehenVerlauf(T, "eKern", -112, -18, [[-86, blau, 0], [-70, blau, 0.24], [-58, blau, 0.42], [-50, blau, 0.36], [-40, blau, 0.24], [-26, blau, 0.1], [-14, blau, 0]]);
   const weissS = (pts, n, len, w) => bueschel(T, pts, n, wuchs, len, w, ["#ffffff", 0.55], ["#8a98aa", 0.22], { streu: 14 });
   const wuchs = (x, y) => (x > 150 ? 172 - (y + 88) * 0.5 : x > 110 ? 120 : x < 44 ? 100 + (x - 10) * 1.6 : y > -54 ? 140 : 170 - (y + 105) * 0.4);
 

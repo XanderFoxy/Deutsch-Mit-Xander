@@ -1427,7 +1427,7 @@ function narwal(T) {
   const P = R.P;
   /* Flecken-Vorlagen: zerlappte, ausgefranste Formen (je 3 überlappende Teilformen), als <use> skaliert und gedreht */
   const vid = T.id("fleck");
-  {
+  if (F) {
     let defs = "";
     for (let v = 0; v < 5; v++) {
       let d = "";
@@ -1477,18 +1477,18 @@ function narwal(T) {
   let k = "";
   /* Fleckung: Rücken fast geschlossen dunkel, nach unten Netz mit hellen Lücken, dann einzelne Flecken; Bauch weiß;
      am Kopf feiner gesprenkelt */
-  k += weichF(R.band(-60, 470, -0.3, 0.07), FLECK, 0.9, 2);
-  const liste = [];
-  const nF = F ? 520 : 120;
-  for (let i = 0; i < nF; i++) {
-    const x = -10 + T.rnd() * 470, t = T.rnd() * 0.8, kopf = x > 385;
-    const p = Math.pow(Math.max(0, (0.72 - t) / 0.64), 1.4);
-    if (T.rnd() > p) continue;
-    const [px, py] = P(x, t), dicht = 1 - t / 0.8;
-    const r = kopf ? 0.8 + T.rnd() * 2.2 : (1 + T.rnd() * 3) * (0.7 + dicht * 0.9) * (F ? 1 : 1.5);
-    liste.push([px, py, r, t < 0.22 ? 2 : t < 0.45 ? Math.floor(T.rnd() * 2) + 1 : Math.floor(T.rnd() * 2)]);
-  }
-  k += flecken(liste);
+  /* Fleckung als Muster aus derselben Rauschvorlage mit nach oben sinkender Schwelle: einzelne zerlappte Flecken
+     unten, nach oben dichter und zu einem Netz mit hellen Lücken verschmolzen, Rücken fast geschlossen */
+  const bx0 = [-60, -150, 470, -30];
+  const zone = (t0, t1, sw, name, fx, op, x0 = -60, x1 = 470) => {
+    const mid = T.id("nz" + name), band = R.band(x0, x1, t0, t1);
+    T.def(`<mask id="${mid}" maskUnits="userSpaceOnUse" x="-80" y="-170" width="570" height="160"><path d="${F ? G(band) : H.vieleck(band)}" fill="#fff" filter="${H.weich(5, T.box(band))}"/></mask>`);
+    const fu = T.rauschen("n" + name, { fx, fy: fx * 1.5, okt: 3, farbe: FLECK, staerke: 12, schwelle: sw, seed: 5 });
+    return `<g mask="url(#${mid})" opacity="${op}"><rect x="${bx0[0]}" y="${bx0[1]}" width="${bx0[2] - bx0[0]}" height="${bx0[3] - bx0[1]}" filter="${fu}"/></g>`;
+  };
+  k += weichF(R.band(-60, 470, -0.3, 0.06), FLECK, 0.9, 2);
+  k += (F ? zone(-0.3, 0.78, 0.6, "a", 0.13, 0.75) : "") + zone(-0.3, 0.5, 0.52, "b", 0.13, 0.8) + zone(-0.3, 0.26, 0.4, "c", 0.13, 0.9);
+  if (F) k += zone(0.05, 0.75, 0.55, "k", 0.26, 0.7, 384, 470);
   /* Kopf dunkler, um Maul und Kinn heller; Bauch weiß */
   k += weichF([[470, -140], [400, -135], [384, -90], [400, -64], [440, -70], [470, -90]], "#000", 0.15, 8);
   k += weichF([[462, -76], [450, -62], [436, -52], [420, -48], [440, -60], [452, -70]], "#e8ecea", 0.5, 2);

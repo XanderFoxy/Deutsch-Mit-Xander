@@ -1192,11 +1192,11 @@ function gazelle(T) {
   const lauf = T.lg("lauf", [[0, "#b98250"], [1, "#c99a6a"]], 0, -45, 0, 0, US);
   const licht = T.lg("licht", [[0, "#fff", 0.18], [0.3, "#fff", 0.03], [0.55, "#000", 0], [0.8, "#2a1608", 0.2], [1, "#2a1608", 0.1]], 0, -72, 0, -40, US);
   const WS = "#f3efe8", SW = "#120c08";
-  const hf = (dunkel) => [[dunkel || "#5a3618", 2, 0.11, 0.3], ["#f4dcb4", 2, 0.1, 0.32]];
-  const fR = F ? H.fellMuster("r", 172, hf(), { tile: 3, n: 40, len: 1.1, streu: 0.25 }) : "";
-  const fH = F ? H.fellMuster("h", 64, hf(), { tile: 3, n: 40, len: 1, streu: 0.25 }) : "";
-  const fB = F ? H.fellMuster("b", 92, hf(), { tile: 2, n: 22, len: 0.7, streu: 0.2 }) : "";
-  const fK = F ? H.fellMuster("k", 205, hf("#4a2c14"), { tile: 2, n: 22, len: 0.6, streu: 0.3 }) : "";
+  const hf = (dunkel) => [[dunkel || "#5a3618", 2, 0.1, 0.16], ["#f4dcb4", 2, 0.09, 0.2]];
+  const fR = F ? H.fellMuster("r", 172, hf(), { tile: 7, n: 110, len: 1.2, streu: 0.3 }) : "";
+  const fH = F ? H.fellMuster("h", 64, hf(), { tile: 7, n: 110, len: 1.1, streu: 0.3 }) : "";
+  const fB = F ? H.fellMuster("b", 92, hf(), { tile: 4, n: 50, len: 0.8, streu: 0.25 }) : "";
+  const fK = F ? H.fellMuster("k", 205, hf("#4a2c14"), { tile: 4, n: 50, len: 0.6, streu: 0.35 }) : "";
   const fW = F ? H.fellMuster("w", 172, [["#8a8478", 1, 0.1, 0.12]], { tile: 3, n: 20, len: 1, streu: 0.3 }) : "";
   const fS = F ? H.fellMuster("s", 172, [["#6a4a30", 1, 0.12, 0.16]], { tile: 3, n: 20, len: 1, streu: 0.3 }) : "";
   /* ---- Beine: vorn Ellbogen, Vorderfußwurzel als flacher Knoten (vorn Haarbürste), Röhrbein, Fesselkopf, schräge Fessel, schmaler spitzer Huf.
@@ -1219,19 +1219,17 @@ function gazelle(T) {
   s += bein(vorder(80), 1, 1) + bein(hinter(29), 1, 0);
   /* ---- Rumpf mit Hals: Widerrist, Hüfthöcker, Wespentaille (Bauch steigt zur Leiste), Vorbrust vor dem Vorderbein ---- */
   const rumpf = [[23, -68], [32, -71.5], [40, -71], [52, -69.5], [66, -70], [78, -71], [86, -74], [92, -79], [98, -86], [103, -95], [106, -101],
-    [114, -96], [112, -89], [107, -78], [104, -68], [102, -60], [97, -52], [90, -46], [82, -42], [70, -41.5], [60, -44], [52, -48.5], [46, -50], [40, -49], [32, -48], [25, -52], [21, -60]];
+    [114, -96], [112, -89], [107, -78], [104, -68], [102, -60], [97, -52], [90, -46], [82, -42], [70, -41.5], [60, -44], [52, -48.5], [46, -50], [40, -49], [34, -44], [27, -46], [22, -54]];
   const rumpfFl = teil(rumpf, fell, {
     fell: F ? [] : [], ov: [licht], rim: 2.5, rimD: G(rumpf.slice(0, 12), false),
     innen: (F ? `<path d="M80 -110L120 -110L120 -60L95 -60Z" fill="${fH}"/><path d="M15 -80H100V-35H15Z" fill="${fR}"/>` : "") +
       /* helles Band über dem schwarzen, schwarzer Flankenstreif vom Oberarm bis vor den Oberschenkel, weißer Bauch */
-      `<path d="${G([[50, -51], [62, -54.5], [76, -55.5], [88, -54], [92, -51], [88, -49], [76, -50], [62, -49.5], [52, -47.5]])}" fill="#dcbc8a"/>` +
-      `<path d="${G([[51, -48.5], [62, -51.5], [76, -52.5], [88, -51], [92, -48.5], [90, -46], [80, -44.5], [68, -44], [58, -45.2], [52, -46.8]])}" fill="${SW}"/>` +
+      wf([[50, -50.5], [62, -53], [76, -53.5], [88, -52.5], [92, -50], [88, -48.6], [76, -50], [62, -49.5], [52, -47.5]], "#e0c290", 0.95, 0.4) +
+      `<path d="${G([[51, -48.6], [62, -50.6], [76, -51.2], [88, -50.4], [92.5, -48], [90, -46.3], [80, -45.2], [68, -45], [58, -45.8], [52, -47]])}" fill="${SW}"/>` +
+      wf([[54, -49.4], [66, -50.4], [80, -50.4], [90, -49]], "#5a4a3a", 0.5, 0.25, false, 0.6) +
       (F ? `<path d="${G([[52, -47.5], [62, -50.5], [76, -51.5], [88, -50], [90, -48]])}" fill="none" stroke="#3a2e24" stroke-width=".8" stroke-opacity=".4"/>` : "") +
-      `<path d="${G([[50, -47], [58, -45], [70, -44], [82, -45], [92, -47], [100, -48], [100, -30], [44, -30]])}" fill="${T.lg("bauch", [[0, "#e9e5dc"], [1, "#a9a69f"]], 0, -48, 0, -40, US)}"/>` +
+      `<path d="${G([[50, -47.2], [58, -45.6], [70, -45.4], [82, -45.6], [92, -47.2], [100, -48], [100, -30], [44, -30]])}" fill="${T.lg("bauch", [[0, "#e9e5dc"], [1, "#a9a69f"]], 0, -48, 0, -40, US)}"/>` +
       (F ? `<path d="M44 -52H100V-30H44Z" fill="${fW}"/>` : "") +
-      /* Spiegel: schmales weißes Feld an der Hinterkante, kurzer schwarzer Randstreif im mittleren Drittel */
-      `<path d="${G([[22, -66], [26, -66], [27.5, -60], [27.5, -53], [26, -48], [22, -48]])}" fill="${T.lg("spiegel", [[0, "#f2eee6"], [1, "#b8b4ac"]], 0, -66, 0, -48, US)}"/>` +
-      `<path d="${G([[27.2, -63], [28.4, -58], [28.4, -54], [27, -51], [26.6, -55], [26.6, -59]])}" fill="${SW}"/>` +
       /* Kehle weiß, nach unten beige */
       `<path d="${G([[112, -95], [114, -92], [111, -86], [107, -78], [104, -70], [103, -76], [108, -86]])}" fill="${T.lg("kehle", [[0, "#f3efe8"], [1, "#e3cfb0"]], 0, -96, 0, -70, US)}"/>` +
       /* Licht: Kruppe, Rücken, Schulterblatt, Vorbrust-Glanz; Schatten: hinter dem Ellbogen, Flankenmulde, Kehlrinne */
@@ -1241,9 +1239,9 @@ function gazelle(T) {
       kerben([[[47, -66], [44, -58], [46, -51]]], 1, 0.25, "#3a2410"),
   });
   /* Oberschenkel: kräftige Masse von der Kruppe nach vorn-unten zum Knie, Hinterkante konvex bis knapp über das Sprunggelenk */
-  const keule = [[24, -66], [36, -70], [46, -66], [50, -56], [49, -46], [44, -40], [40, -36], [33, -30], [27, -32], [23, -40], [21, -52]];
+  const keule = [[24, -66], [36, -70], [46, -66], [50, -56], [49, -46], [45, -41], [40, -37], [35, -33], [29, -35], [24, -41], [21, -52]];
   const keuleFl = teil(keule, fell, { ov: [licht], fell: [fR],
-    innen: `<path d="${G([[21, -66], [25.6, -66], [27, -58], [26.5, -44], [28, -34], [22, -34]])}" fill="${WS}"/>` + `<path d="${G([[26.6, -62], [27.8, -57], [27.6, -52], [26.2, -48], [26, -53], [26.2, -58]])}" fill="${SW}"/>` +
+    innen: `<path d="${G([[20, -66], [25.4, -66.5], [27, -58], [26.6, -50], [24.6, -44.5], [20, -43]])}" fill="${T.lg("spiegel", [[0, "#f2eee6"], [1, "#bdb8ae"]], 0, -66, 0, -43, US)}"/>` + `<path d="${G([[26.6, -62], [27.8, -57], [27.6, -52], [26.2, -48], [26, -53], [26.2, -58]])}" fill="${SW}"/>` +
       wf([[30, -66], [40, -66], [46, -60]], "#fff", 0.25, 1.4, false) + wf([[48, -50], [42, -40], [34, -32]], "#000", 0.22, 1.2, false) });
   s += H.vol(rumpfFl + keuleFl, [5, 4, 0.4]);
   s += bein(vorder(88), 0, 1) + bein(hinter(24), 0, 0);
