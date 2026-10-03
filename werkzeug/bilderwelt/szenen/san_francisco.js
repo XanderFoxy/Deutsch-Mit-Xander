@@ -57,6 +57,7 @@ const B = require("../bau");
 const S = neueSzene({ id: "san_francisco", titel: "San Francisco", emoji: "🌁", thema: "Länder", kuerzel: "sfo", fassung: 854, breite: 400, hoehe: 260 });
 const rnd = zufall(1937);
 const r = B.r;
+const nz = (v) => String(r(v)).replace(/^(-?)0\./, "$1.");
 const pr = (p) => `${r(p[0])} ${r(p[1])}`;
 
 /* ---------- DIE KAMERAS ---------------------------------------------- */

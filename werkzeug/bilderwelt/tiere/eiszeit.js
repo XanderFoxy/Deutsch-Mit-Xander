@@ -1008,7 +1008,13 @@ function wollnashorn(T) {
   const horn = (h, w0, w1, n, name) => {
     let f = "";
     if (fein) {
-      for (let i = 0; i < n; i++) { const q = -0.88 + 1.76 * i / (n - 1) + (T.rnd() - 0.5) * 0.04, lo = Math.floor(T.rnd() * 2); f += LI(quer(h, w0, w1, q, 0.8).slice(lo, h.length - (i % 3 === 0 ? 1 : 0)), T.rnd() < 0.5 ? "#120c08" : "#a89a8a", 0.35, ` opacity="${(0.05 + T.rnd() * 0.09).toFixed(2)}"`); }
+      const fa = ["", "", ""];
+      for (let i = 0; i < n; i++) {
+        const q = -0.88 + 1.76 * i / (n - 1) + (T.rnd() - 0.5) * 0.04, L = quer(h, w0, w1, q, 0.8), a = L[Math.floor(T.rnd() * 2)], m = L[Math.floor(L.length / 2)], e = L[L.length - 1 - (i % 3 === 0 ? 1 : 0)];
+        fa[Math.floor(T.rnd() * 3)] += "M" + zf(...a) + "Q" + zf(2 * m[0] - (a[0] + e[0]) / 2, 2 * m[1] - (a[1] + e[1]) / 2, ...e);
+      }
+      f += `<path d="${fa[0]}" stroke="#120c08" stroke-width=".35" opacity=".14" fill="none"/><path d="${fa[1]}" stroke="#120c08" stroke-width=".3" opacity=".08" fill="none"/>` +
+        `<path d="${fa[2]}" stroke="#b0a292" stroke-width=".35" opacity=".12" fill="none"/>`;
       let w = "";
       for (let i = 1; i < 7; i++) { const t = i * 0.045, p = entlang(h, t), q = entlang(h, t + 0.01), dx = q[0] - p[0], dy = q[1] - p[1], l = Math.hypot(dx, dy), ww = w0 / 2 * (1 - t * 0.6);
         w += "M" + zf(p[0] - dy / l * ww, p[1] + dx / l * ww) + "q" + zf(dy / l * ww + dx / l * 1.4, -dx / l * ww + dy / l * 1.4, 2 * dy / l * ww, -2 * dx / l * ww); }

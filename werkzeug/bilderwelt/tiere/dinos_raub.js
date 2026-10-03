@@ -1138,137 +1138,139 @@ function allosaurus(T) {
 /* =====================================================================
    PTERANODON – ein FLUGSAURIER (Pterosaurier), KEIN Dinosaurier! (für den Tipp: „Der Pteranodon ist kein
    Dinosaurier, sondern ein Flugsaurier – ein Verwandter, der mit Hautflügeln flog.")
-   RECHERCHE: Pteranodon longiceps (Oberkreide, ~86–84 Mio. J., Niobrara-Meer, Kansas). Spannweite 3,8–5,6 m
-   (Männchen bis ~6 m), nur ~20–25 kg: kurzer, kompakter Rumpf mit breiter Brust (Schulter–Becken ~35 cm bei 4 m
-   Spannweite), kurzer Schwanzstummel. Schädel mit Kamm ≈ ¼ der Spannweite: zahnloser, langer, spitzer Schnabel
-   (Hornscheide/Rhamphotheka mit Längsmaserung, Unterkieferspitze leicht aufgebogen); Männchen mit langem, nach
-   hinten gerichtetem Knochenkamm, der ohne Kante aus der Schädeloberkante wächst. Flügel: Oberarm kräftig mit
-   Deltopektoral-Kamm, Unterarm, lange Mittelhand (~1,3× Unterarm), sehr langer 4. Finger (Flugfinger); Flughaut
-   (Brachiopatagium) bis zum Knöchel, gespannt, mit Aktinofibrillen im Außenflügel (fast parallel zum Flugfinger),
-   durchscheinender Hinterkantensaum; vorn eine schmale Vorflughaut (Propatagium) vom Halsansatz zum Handgelenk,
-   gestützt vom Pteroid; drei kleine Krallenfinger am Ende der Mittelhand. Körper mit Pyknofasern („Fell"),
-   Rücken dunkler, Brust heller. Füße klein, Zehen gebündelt.
-   Gezeichnet im Gleitflug, schräg von oben: ferner Flügel (oben) verkürzt, naher größer; der Kopf ist um die
-   Halsachse gedreht (blickt etwas nach unten), so dass die Seitenansicht lesbar bleibt.
-   Zeichenraum: 1 Einheit = 2 cm.
+   RECHERCHE: Pteranodon longiceps (Oberkreide, ~86–84 Mio. J., Niobrara-Meer, Kansas). Männchen (langer Kamm)
+   ~5,6 m Spannweite, Weibchen 3,5–4 m; nur ~20–25 kg. Kurzer, kompakter Rumpf mit breiter Brust, kurzer, kräftiger
+   Hals (~12–14 % der Spannweite), Schwanzstummel. Schädel mit Kamm ≈ ¼ der Spannweite: zahnloser, langer Schnabel
+   (Hornscheide mit Längsmaserung, Schneidekante leicht S-förmig, Unterkieferspitze leicht aufgebogen); Kamm als
+   flache Klinge mit breiter Basis vom Auge bis zum Hinterkopf, nach hinten verjüngt, Spitze stumpf. Flügel mit
+   großem Seitenverhältnis (≈ 9), nur leicht gepfeilt: Oberarm kurz und kräftig, Unterarm und die längere Mittelhand
+   (~1,3×) bilden die Vorderkante, am Handgelenk 3 kleine Krallenfinger und das Pteroid (stützt die schmale
+   Vorflughaut zum Hals); der lange Flugfinger läuft gerade zur Spitze. Flughaut bis zum Knöchel, größte Tiefe am
+   Handgelenk, Aktinofibrillen im Außenflügel radial vom Flugfinger zur Hinterkante, durchscheinender Hinterkantensaum.
+   Pyknofasern („Fell") auf Körper und Hals. Beine kurz, Zehen gebündelt.
+   Gezeichnet im Gleitflug schräg von oben (ferner Flügel perspektivisch verkürzt), der Kopf um die Halsachse gedreht.
+   Zeichenraum: 1 Einheit = 2,77 cm (Spannweite ≈ 5,5 m).
    ===================================================================== */
 function pteranodon(T) {
   const F = T.fein;
-  GEN = F ? 10 : 2; T._ganz = [-48, -92, 78, 114];
+  GEN = F ? 10 : 2; T._ganz = [-28, -94, 68, 110];
   const LI = "#fff2d8", SC = "#120c08";
-  const st = F ? 0.6 : 1;
+  const st = F ? 0.8 : 1;
   const L = (arr, farbe, w, op) => linien(T, arr, farbe, w, op * st);
-  /* Gegenschattierung: Oberseite (ferner Flügel) dunkler, Unterseite (naher Flügel, Brust) heller */
-  const hautO = T.lg("fhaut", [[0, "#3e3028"], [0.5, "#4e3e34"], [1, "#5a483c"]], 0, 0, 1, 0);
-  const hautU = T.lg("fhautu", [[0, "#5a4638"], [0.5, "#6a5444"], [1, "#7a6250"]], 0, 0, 1, 0);
-  const fell = T.lg("fell", [[0, "#5a4636"], [0.55, "#7a6450"], [1, "#a28c72"]]);
+  /* Gegenschattierung: Oberflügel zur Vorderkante dunkler; Rumpf/Kopf heller */
+  const hautO = T.lg("fhaut", [[0, "#5a483c"], [0.55, "#4c3c32"], [1, "#3e3028"]], 1, 0, 0, 0);
+  const hautU = T.lg("fhautu", [[0, "#7a6452"], [0.55, "#6a5444"], [1, "#5a4638"]], 1, 0, 0, 0);
+  const fell = T.lg("fell", [[0, "#6a5442"], [0.55, "#86705a"], [1, "#a8927a"]]);
 
-  /* Flügel: Profilwölbung (hinter der Vorderkante heller, zur Hinterkante dunkler), Spannungsfalten radial zum Knöchel,
-     durchscheinender, hellerer und wärmerer Hinterkantensaum (leicht gebuchtet), Aktinofibrillen nur außen. */
-  const fluegel = (vorn, hinten, fill, sgn, b, knoechel) => {
-    const pts = vorn.concat(hinten.slice().reverse().slice(1));
-    const A = polyl(vorn), B = polyl(hinten);
-    const zwischen = (u, t0 = 0.02, t1 = 0.98) => { const p = []; for (let i = 0; i <= 14; i++) { const t = t0 + (t1 - t0) * i / 14, a = A.at(t), q = B.at(t); p.push([a[0] + (q[0] - a[0]) * u, a[1] + (q[1] - a[1]) * u]); } return p; };
+  /* Flügel: Profilwölbung (hinter der Vorderkante +15 %, zur Hinterkante −10 %), Spannungsfalten im Innenflügel radial
+     zum Körper, Aktinofibrillen im Außenflügel (vom Flugfinger zur Hinterkante, leicht gebogen, nach außen schwächer),
+     durchscheinender Saum an der gebuchteten Hinterkante. */
+  const fluegel = (vorn, hinten, fill, sgn, b) => {
+    /* Hinterkante leicht gebuchtet zwischen Fibrillenbündeln */
+    const HP = polyl(hinten), hk = [];
+    for (let i = 0; i <= 28; i++) { const [x, y, nx, ny] = HP.at(i / 28), o = i % 2 ? -0.5 * sgn : 0; hk.push([x + nx * o, y + ny * o]); }
+    const pts = vorn.concat(hk.slice().reverse().slice(1));
+    const A = polyl(vorn.slice(3)), B = polyl(hinten);
+    const zw = (u, t0, t1) => { const p = []; for (let i = 0; i <= 12; i++) { const t = t0 + (t1 - t0) * i / 12, a = A.at(t), q = B.at(t); p.push([a[0] + (q[0] - a[0]) * u, a[1] + (q[1] - a[1]) * u]); } return p; };
     let inn = "";
     if (F) {
-      let fa = ["", "", ""];
-      for (let k = 0; k < 16; k++) {
-        const t = 0.45 + 0.52 * (k + T.rnd() * 0.6) / 16, a = A.at(t), q = B.at(Math.min(1, t + 0.04)), u = 0.15 + T.rnd() * 0.25, v = u + 0.35 + T.rnd() * 0.3;
-        fa[k % 3] += `M${zk(a[0] + (q[0] - a[0]) * u)} ${zk(a[1] + (q[1] - a[1]) * u)}Q${zk(a[0] + (q[0] - a[0]) * (u + v) / 2 + sgn)} ${zk(a[1] + (q[1] - a[1]) * (u + v) / 2)} ${zk(a[0] + (q[0] - a[0]) * v)} ${zk(a[1] + (q[1] - a[1]) * v)}`;
+      const fa = ["", "", ""];
+      for (let k = 0; k < 18; k++) {
+        const t = 0.25 + 0.72 * (k + T.rnd() * 0.6) / 18, a = A.at(t), q = B.at(Math.min(1, t + 0.03)), u = 0.08 + T.rnd() * 0.1, v = 0.75 + T.rnd() * 0.2;
+        fa[Math.min(2, Math.floor(k / 6))] += `M${zk(a[0] + (q[0] - a[0]) * u)} ${zk(a[1] + (q[1] - a[1]) * u)}Q${zk(a[0] + (q[0] - a[0]) * (u + v) / 2 + 0.8)} ${zk(a[1] + (q[1] - a[1]) * (u + v) / 2)} ${zk(a[0] + (q[0] - a[0]) * v)} ${zk(a[1] + (q[1] - a[1]) * v)}`;
       }
-      inn += fa.map((d, i) => `<path d="${d.replace(/ -/g, "-")}" fill="none" stroke="#1a120c" stroke-width=".22" stroke-opacity="${[0.1, 0.07, 0.04][i]}"/>`).join("");
+      inn += fa.map((d, i) => `<path d="${d.replace(/ -/g, "-")}" fill="none" stroke="#1a120c" stroke-width=".2" stroke-opacity="${[0.1, 0.07, 0.04][i]}"/>`).join("");
     }
-    let mal = L([zwischen(0.18)], LI, 6, 0.26) + L([zwischen(0.75)], SC, 7, 0.24) + L([zwischen(0.97)], "#e8c8a0", 2.6, 0.4);
-    /* Spannungsfalten radial zum Knöchel */
-    for (const t of [0.35, 0.55, 0.72]) { const a = A.at(t); mal += L([[[a[0] + (knoechel[0] - a[0]) * 0.15, a[1] + (knoechel[1] - a[1]) * 0.15], [a[0] + (knoechel[0] - a[0]) * 0.75, a[1] + (knoechel[1] - a[1]) * 0.75]]], SC, 1.6, 0.12); }
-    /* Kontaktschatten des Rumpfes auf der Flügelwurzel */
-    mal += ell(-4, sgn * 6, 10, 4, 0, SC, 0.35);
-    return teil(T, pts, fill, { innen: inn, mal, weich: 1.4, box: b });
+    let mal = L([zw(0.14, 0, 1)], LI, 3.4, 0.28) + L([zw(0.8, 0, 1)], SC, 4, 0.2) + L([hinten], "#f0d0a4", 2.4, 0.42);
+    for (const t of [0.05, 0.14, 0.24]) { const a = A.at(t), q = B.at(t + 0.06); mal += L([[[a[0] * 0.6 + q[0] * 0.4, a[1] * 0.6 + q[1] * 0.4], [-8, sgn * 6]]], SC, 1.2, 0.12); }
+    /* Kontaktschatten des Rumpfes auf dem Innenflügel (nach rechts unten) */
+    mal += ell(-2, sgn * 7, 8, 3.4, 0, SC, 0.35);
+    return teil(T, pts, fill, { innen: inn, mal, weich: 1.2, box: b });
   };
-  /* Armknochen als Grat mit Lichtkante oben links und Schattenseite; Breite je Abschnitt */
-  const knochen = (vorn, breiten, sgn) => {
-    let s = "";
-    for (let i = 0; i < vorn.length - 1; i++) {
-      const a = vorn[i], b = vorn[i + 1], w0 = breiten[i], w1 = breiten[i + 1] != null ? breiten[i + 1] : breiten[i] * 0.5;
-      const dx = b[0] - a[0], dy = b[1] - a[1], n = Math.hypot(dx, dy), nx = -dy / n, ny = dx / n;
-      s += `M${zk(a[0] + nx * w0 / 2)} ${zk(a[1] + ny * w0 / 2)}L${zk(b[0] + nx * w1 / 2)} ${zk(b[1] + ny * w1 / 2)}L${zk(b[0] - nx * w1 / 2)} ${zk(b[1] - ny * w1 / 2)}L${zk(a[0] - nx * w0 / 2)} ${zk(a[1] - ny * w0 / 2)}Z`;
+  /* Knochen der Vorderkante: Oberarm 3 mit Deltopektoral-Wulst, Unterarm 2,4, Mittelhand 1,8, Flugfinger 1,4 → 0,4;
+     Gelenke als Verdickung der Kontur, Lichtkante oben links, Schattenseite */
+  const knochen = (v, sgn) => {
+    const br = [3, 2.4, 1.8, 1.4, 0.9, 0.4], seg = [];
+    let s2 = "";
+    for (let i = 0; i < v.length - 1; i++) {
+      const w0 = br[i] * (i ? 1.25 : 1), w1 = br[i + 1] != null ? br[i + 1] * 1.25 : 0.4;
+      seg.push(glied(v[i], v[i + 1], w0, i < 3 ? w1 : br[i + 1] || 0.3, i === 0 ? 0.8 : 0, 0, 0.35, 5, i < 3));
     }
-    const iK = pfad(T, s.replace(/ -/g, "-"));
-    return fuell(iK, "#56463a") + geklippt(T, [iK], weichG(T, 0.4, [-50, -95, 20, 116], L([verschiebe(vorn, -0.5, -0.7)], LI, 0.9, 0.55) + L([verschiebe(vorn, 0.5, 0.8)], SC, 0.9, 0.5)));
+    for (const g of seg) s2 += glatt(g);
+    const iK = pfad(T, s2);
+    return fuell(iK, "#5e4c3e") + geklippt(T, [iK], weichG(T, 0.35, [-30, -96, 30, 112], L([verschiebe(v, -0.4, -0.5)], LI, 0.8, 0.5) + L([verschiebe(v, 0.4, 0.6)], SC, 0.8, 0.45)));
   };
-  const gelenke = (liste) => liste.map(([x, y, r]) => ell(x, y, r, r * 0.85, 0, "#5a4a3c") + ell(x - r * 0.3, y - r * 0.32, r * 0.42, r * 0.32, 0, LI, 0.4)).join("");
 
-  /* ---------- ferner Flügel (oben, verkürzt): Oberarm (6,−5)→(2,−14), Unterarm →(8,−25), Mittelhand →(9,−50), Flugfinger ---------- */
-  const fV = [[6, -5], [2, -14], [8, -25], [9.4, -50], [-6, -64], [-22, -76], [-44, -90]];
-  const fH = [[-12, -6], [-16, -18], [-20, -34], [-22, -50], [-26, -64], [-34, -78], [-44, -90]];
-  let s = fluegel(fV, fH, hautO, -1, [-46, -92, 12, -2], [-12, -6]);
-  /* Vorflughaut: flaches Dreieck vom Halsansatz zum Handgelenk, ohne Kontur, Pteroid als dunkler Strich */
-  s += flaeche(T, [[12, -3], [11.6, -14], [9.4, -26], [8, -25], [2, -14], [6, -5]], "#54443a", 0.95) + L([[[9.6, -25.6], [11, -22.6]]], SC, 0.4, 0.8);
-  s += knochen(fV, [3, 2.4, 1.8, 1.4, 0.9, 0.6, 0.4], -1) + gelenke([[2, -14, 1.3], [8, -25, 1.2], [9.4, -50, 1.1]]);
-  s += weichG(T, 1.2, [-2, -20, 14, 0], ell(4.6, -9, 1.6, 4, 15, LI, 0.25 * st));
+  /* ---------- ferner Flügel (oben, verkürzt) ---------- */
+  const fV = [[5, -4], [10.6, -12], [15, -26], [14, -46], [9, -60], [3, -77], [-2, -92]];
+  const fH = [[-20, -7], [-18, -20], [-15.4, -34], [-12, -50], [-8.4, -66], [-5, -80], [-2, -92]];
+  let s = fluegel(fV, fH, hautO, -1, [-24, -94, 18, -2]);
+  /* Vorflughaut: flaches Dreieck Halsansatz → Handgelenk, Vorderkante leicht konkav, Pteroid als dunkler Strich */
+  s += flaeche(T, [[12, -3], [17, -12], [18.4, -24], [15, -26], [10.6, -12], [5, -4]], "#5c4a3e", 0.95) + L([[[15.6, -25.4], [17.6, -22.6]]], SC, 0.4, 0.8);
+  s += knochen(fV, -1);
+  s += krallen(T, [[16, -28.6, 1.6, 0.6, 20, 0.9], [16.4, -27.4, 1.7, 0.6, 0, 0.9], [16, -26.2, 1.5, 0.55, -25, 0.9]]);
 
-  /* ---------- Beine (zwei, leicht gespreizt), Fuß klein in Körperfarbe, Schwanzstummel ---------- */
+  /* ---------- Beine: kurze, bepelzte Oberschenkel, schlanke Unterschenkel, Füße gebündelt; Schwanzstummel ---------- */
   for (const sgn of [-1, 1]) {
-    const bein = [[-10, sgn * 2.6], [-14, sgn * 4.4], [-18, sgn * 5.8], [-21, sgn * 6.8], [-21.6, sgn * 5.6], [-18, sgn * 4], [-14, sgn * 2.4], [-10.6, sgn * 1]];
-    s += teil(T, bein, sgn > 0 ? "#7a6450" : "#56463a", { klein: 1, mal: L([[[-11, sgn * 1.8], [-16, sgn * 4], [-20.6, sgn * 6]]], LI, 0.5, 0.35), weich: 0.3 });
+    const sk = glied([-7, sgn * 2], [-13.6, sgn * 6], 3.4, 2.2, 0.3, 0.3, 0.5, 4, true), us = glied([-13.6, sgn * 6], [-20, sgn * 7.6], 1.8, 1.2, 0, 0, 0.5, 4, true);
+    s += teil(T, us, sgn > 0 ? "#86705a" : "#5e4c3e", { klein: 1 }) + teil(T, sk, sgn > 0 ? fell : "#5e4c3e", { klein: 1, mal: L([[[-8, sgn * 2.2], [-13, sgn * 5.4]]], LI, 0.6, 0.3), weich: 0.3 });
     let z = "";
-    for (let i = 0; i < 4; i++) z += `M${zk(-21.2)} ${zk(sgn * (6 + i * 0.25))}l${zk(-2.2)} ${zk(sgn * (0.3 + i * 0.35))}`;
-    s += `<path d="${z.replace(/ -/g, "-")}" stroke="${sgn > 0 ? "#7a6450" : "#56463a"}" stroke-width=".55" stroke-linecap="round" fill="none"/>`;
-    s += `<path d="M${zk(-23.4)} ${zk(sgn * 6.4)}l-.5 ${zk(sgn * 0.1)}M${zk(-23.4)} ${zk(sgn * 7.4)}l-.5 ${zk(sgn * 0.2)}" stroke="#1e1610" stroke-width=".35" stroke-linecap="round"/>`;
+    for (let i = 0; i < 4; i++) z += `M${zk(-20)} ${zk(sgn * 7.6)}l${zk(-2)} ${zk(sgn * (0.1 + i * 0.22))}`;
+    s += `<path d="${z.replace(/ -/g, "-")}" stroke="${sgn > 0 ? "#86705a" : "#5e4c3e"}" stroke-width=".5" stroke-linecap="round" fill="none"/>`;
   }
-  s += teil(T, [[-12, -1.2], [-18, -0.6], [-18.8, 0.2], [-18, 1], [-12, 1.4]], fell, { klein: 1 });
+  s += teil(T, [[-8, -1], [-12, -0.6], [-12.6, 0.2], [-12, 1], [-8, 1.2]], fell, { klein: 1 });
 
-  /* ---------- Rumpf (kompakte Tropfenform, Brustmuskel an der Flügelwurzel) und Hals mit Pyknofasern ---------- */
-  const rumpf = [[10, -5], [4, -7], [-3, -7], [-8, -5], [-11, -3], [-12.4, 0], [-11, 3], [-8, 5], [-3, 7], [4, 7], [10, 5]];
-  const hals = [[8, -3.2], [16, -3], [24, -2.8], [32, -2.6], [33, 1.4], [24, 1.8], [16, 2.4], [8, 3.6]];
-  const iR = pfad(T, rumpf), iH = pfad(T, hals);
-  let r = fuell(iH, fell) + fuell(iR, fell);
+  /* ---------- Rumpf (kompakt) und kurzer, kräftiger Hals mit Pyknofasern ---------- */
+  const rumpf = [[10, -5.6], [4, -7.2], [-3, -7], [-8, -4.6], [-10.4, -1.6], [-10.6, 0.6], [-8.4, 3.6], [-3, 6.8], [4, 7.4], [10, 5.6]];
+  const hals = [[8, -3.6], [14, -3.4], [20, -2.8], [24, -2.4], [25, 1.8], [20, 2.4], [14, 3], [8, 3.8]];
+  const iR = pfad(T, rumpf), iHa = pfad(T, hals);
+  let r = fuell(iHa, fell) + fuell(iR, fell);
   let fe = "";
   if (F) {
-    /* feine dichte Haarsträhnen in Wuchsrichtung Kopf → Schwanz, Kontrast gering */
-    fe += federn(T, rumpf, 260, (x, y) => 180 + y * 2.4, 1.4, [["#3a2a1e", 1, 0.16, 0.18], ["#d0b896", 0.6, 0.14, 0.18]], { kr: 0.3, streuung: 10 });
-    fe += federn(T, hals, 140, 180, 1.1, [["#3a2a1e", 1, 0.14, 0.18], ["#d0b896", 0.6, 0.12, 0.18]], { kr: 0.3, streuung: 8 });
+    fe += federn(T, rumpf, 240, (x, y) => 180 + y * 2.4, 1.3, [["#3a2a1e", 1, 0.15, 0.16], ["#e0caa6", 0.6, 0.13, 0.16]], { kr: 0.3, streuung: 10 });
+    fe += federn(T, hals, 110, 180, 1, [["#3a2a1e", 1, 0.13, 0.16], ["#e0caa6", 0.6, 0.11, 0.16]], { kr: 0.3, streuung: 8 });
   }
-  let rm = L([[[9, -4.2], [0, -5.6], [-9, -3.6]]], "#3a2a1e", 3, 0.4) + L([[[9, 4.2], [0, 5.6], [-9, 3.4]]], "#e0caa6", 3, 0.32) + ell(5, -3, 3.4, 2.6, 0, LI, 0.25 * st);
-  rm += L([[[9, -1.8], [20, -1.8], [31, -1.6]]], "#3a2a1e", 1.2, 0.35) + L([[[9, 2.2], [20, 1.4], [31, 0.8]]], "#e0caa6", 1, 0.3);
-  /* Hals dreht zum Kopf: Licht/Schatten-Grenze wandert von der Ober- zur Seitenfläche */
-  rm += L([[[22, -0.4], [28, -1.4], [32, -2]]], SC, 1, 0.3);
-  r += geklippt(T, [iR, iH], fe + weichG(T, 0.8, [-14, -9, 35, 9], rm));
-  /* weicher Flaumrand direkt an der Haut */
-  if (F) r += federn(T, rumpf.map(([x, y]) => [x * 1.06, y * 1.12]), 120, (x, y) => 180 + y * 2, 0.8, [["#7a6450", 1, 0.14, 0.4]], { kr: 0.3 }) + federn(T, hals.map(([x, y]) => [x, y * 1.2]), 60, 182, 0.7, [["#7a6450", 1, 0.12, 0.4]]);
-  s += volZonen(T, "rumpf", r, [-14, -9, 35, 9], [[0, 0, "a", { weich: 1.4, tiefe: 3, umgebung: 0.4 }]]);
+  /* Rücken dunkler, Brust heller; Halsunterseite im Kernschatten; die Licht/Schatten-Grenze wandert am Hals zur Seite (Drehung) */
+  let rm = L([[[9, -4.6], [0, -6], [-8, -3.6]]], "#3a2a1e", 2.8, 0.42) + L([[[9, 4.6], [0, 6], [-8, 3]]], "#e8d2ae", 2.6, 0.3) + ell(5, -2.6, 3.6, 2.6, 0, LI, 0.24 * st);
+  rm += L([[[9, -2.2], [15, -2.2], [20, -1.6], [24, -0.6]]], "#3a2a1e", 1.1, 0.35) + L([[[9, 2.6], [16, 2], [24, 1.2]]], SC, 1, 0.4);
+  r += geklippt(T, [iR, iHa], fe + weichG(T, 0.8, [-12, -9, 27, 9], rm));
+  if (F) r += federn(T, rumpf.map(([x, y]) => [x * 1.05, y * 1.1]), 100, (x, y) => 180 + y * 2, 0.7, [["#7a6450", 1, 0.13, 0.45]], { kr: 0.3 }) + federn(T, hals.map(([x, y]) => [x, y * 1.18]), 50, 182, 0.6, [["#7a6450", 1, 0.11, 0.45]]);
+  s += volZonen(T, "rumpf", r, [-12, -9, 27, 9], [[0, 0, "a", { weich: 1.6, tiefe: 3, umgebung: 0.4 }]]);
 
-  /* ---------- naher Flügel (unten, größer) ---------- */
-  const nV = [[6, 5], [2, 16], [9, 29], [10.6, 58], [-6, 76], [-24, 92], [-47, 112]];
-  const nH = [[-12, 6], [-16, 20], [-21, 38], [-23, 58], [-27, 76], [-36, 94], [-47, 112]];
-  s += fluegel(nV, nH, hautU, 1, [-48, 2, 13, 114], [-12, 6]);
-  s += flaeche(T, [[12, 3], [12, 16], [10.8, 30], [9, 29], [2, 16], [6, 5]], "#6e5848", 0.95) + L([[[11, 29.6], [12.4, 26]]], SC, 0.4, 0.8);
-  s += knochen(nV, [3.2, 2.6, 2, 1.5, 1, 0.7, 0.4], 1) + gelenke([[2, 16, 1.4], [9, 29, 1.3], [10.6, 58, 1.2]]);
-  /* drei Krallenfinger am Ende der Mittelhand, Schatten nur auf der Flughaut */
-  s += weichG(T, 0.5, [6, 52, 16, 64], ell(12.4, 60.6, 2.6, 1.1, 30, SC, 0.4));
-  s += krallen(T, [[11, 57, 5.2, 1.4, -15, 0.75], [11.4, 58.6, 5.6, 1.45, 12, 0.75], [10.8, 60, 5, 1.35, 38, 0.75], [10, -49, 4.4, 1.2, 15, -0.7], [10.2, -50.6, 4.6, 1.2, -12, -0.7], [9.6, -52, 4.2, 1.1, -38, -0.7]]);
+  /* ---------- naher Flügel (unten) ---------- */
+  const nV = [[5, 4], [11, 13.4], [16, 30], [15, 54], [9.6, 70], [3, 88], [-2, 108]];
+  const nH = [[-20, 7.6], [-18, 22], [-15, 38], [-11.6, 56], [-8, 74], [-4.6, 92], [-2, 108]];
+  s += fluegel(nV, nH, hautU, 1, [-24, 2, 19, 110]);
+  s += flaeche(T, [[12, 3], [18, 13], [19.4, 27], [16, 30], [11, 13.4], [5, 4]], "#7a6452", 0.95) + L([[[16.6, 29.4], [18.8, 26]]], SC, 0.4, 0.8);
+  s += knochen(nV, 1);
+  /* drei kleine Krallenfinger am Handgelenk, nach vorn-innen, Schatten nur auf der Flughaut */
+  s += weichG(T, 0.4, [12, 26, 22, 36], ell(17.6, 31.4, 1.6, 0.7, 20, SC, 0.35));
+  s += krallen(T, [[16.6, 28.4, 1.8, 0.65, -20, 0.95], [17, 29.6, 1.9, 0.65, 0, 0.95], [16.6, 30.8, 1.7, 0.6, 25, 0.95]]);
 
-  /* ---------- Kopf: Kamm wächst aus dem Schädel, Hornschnabel mit Längsmaserung, Auge oben im Schädel ---------- */
-  const kopfO = [[32, -1.4], [33, -4], [35.6, -5.4], [39, -5.8], [44, -5], [52, -3.8], [62, -2.4], [74.6, -0.6], [74.2, 0], [62, -0.2], [52, 0.4], [44, 1], [38.4, 1.8], [34, 2]];
-  const kamm = [[30.4, -3.4], [26, -5.6], [20, -7.6], [14, -9.4], [11.4, -10.2], [11, -9.4], [14, -7.6], [20, -5.4], [26, -3], [31, -0.8]];
-  const unterK = [[38, 1.2], [46, 0.8], [58, 0], [70, -0.9], [74, -1.2], [73.6, -0.2], [58, 1.4], [46, 2.2], [38, 2.8]];
-  /* Kamm: breite Basis vom Auge bis zum Hinterkopf, Oberkante leicht konvex, Spitze stumpf-rund */
-  const iKa = pfad(T, [[40, -5.6], [34, -6.4], [27, -8], [20, -9.6], [14.6, -10.8], [12.2, -11], [11.6, -10.2], [13, -9.2], [18, -7.4], [24, -5.4], [29, -3.2], [33, -1.2], [37, -3.6]]), iKo = pfad(T, kopfO), iU = pfad(T, unterK);
-  const horn = T.lg("schnabel", [[0, "#4e3e30"], [0.3, "#6e5a44"], [0.75, "#5e4c3a"], [1, "#2e241c"]], 0, 0, 1, 0);
-  let k = fuell(iU, "#5a4836") + fuell(iKa, T.lg("kamm", [[0, "#6a3a24"], [0.5, "#7a4630"], [1, "#5e4c3c"]], 0, 0, 1, 0)) + fuell(iKo, horn);
-  let km = L([[[33.4, -4.6], [40, -5.4], [52, -3.8], [72, -0.8]]], LI, 0.8, 0.55) + L([[[37, 0.6], [52, -0.4], [70, -0.4]]], SC, 0.7, 0.45);
-  /* schmaler heller Streifen der Schädeloberseite (Kopf leicht gedreht), Mulde vor dem Auge, Kiefergelenk, Hautfalte am Mundwinkel */
-  km += L([[[34, -5.2], [40, -5.6], [48, -4.6]]], "#c8b090", 0.5, 0.5) + ell(42.6, -2.2, 2.4, 1, -8, SC, 0.32) + ell(36.6, 1.2, 1, 0.6, 0, SC, 0.45) + L([[[35.6, 1.4], [37.4, 0.6]]], SC, 0.25, 0.6);
-  km += L([[[33, -6], [24, -8.2], [14, -10.4]]], LI, 0.6, 0.45) + L([[[30, -2.6], [22, -5.6], [14, -8.8]]], SC, 0.6, 0.4);
+  /* ---------- Kopf: um die Halsachse gedreht (schmaler Streifen der Schädeloberseite sichtbar) ---------- */
+  const kamm = [[34, -6.6], [28, -8.8], [21, -10.4], [15, -11.4], [12.4, -11.6], [11.8, -10.8], [13.2, -9.8], [18, -8.4], [24, -6.2], [28.6, -3.6], [31.6, -1.4], [33.6, -2.8]];
+  const kopfO = [[29.6, -1.2], [30.4, -4.4], [33, -6.2], [37, -6.4], [42, -5.4], [50, -3.8], [58, -2.4], [64, -1.2], [65.4, -0.7], [65.4, -0.2], [64, 0], [56, 0], [48, 0.5], [42, 0.9], [36, 1.6], [31.4, 1.6]];
+  const unterK = [[34, 1], [42, 0.8], [50, 0.5], [57, 0.1], [63, -0.5], [65, -0.9], [65.2, -0.3], [63, 0.5], [56, 1.2], [46, 2], [38, 2.6], [33.6, 2.6]];
+  const ober = [[31, -4.6], [33.4, -6.6], [37.4, -6.8], [42, -6], [50, -4.4], [58, -2.9], [64.4, -1.3], [58, -2.2], [50, -3.6], [42, -5.2], [37, -5.8], [33, -5.6]];
+  const iKa = pfad(T, kamm), iKo = pfad(T, kopfO), iU = pfad(T, unterK), iOb = pfad(T, ober);
+  const horn = T.lg("schnabel", [[0, "#3e3226"], [0.3, "#5a4a3a"], [0.75, "#4c3e30"], [1, "#241c14"]], 0, 0, 1, 0);
+  let k = fuell(iU, "#463a2e") + fuell(iKa, T.lg("kamm", [[0, "#5e2e1a"], [0.45, "#6e3a22"], [1, "#6a5642"]], 0, 0, 1, 0)) + fuell(iKo, horn) + fuell(iOb, "#7a6a56");
+  /* Licht: Glanzkante oben links am Schnabel, Kamm mit Längsrillen und Schatten auf den Hals, Kiefergelenk unter dem Auge, Hautfalte am Mundwinkel */
+  let km = L([[[33.6, -5.2], [40, -5.6], [52, -3.6], [63, -1.4]]], LI, 0.6, 0.6) + L([[[36, 1.2], [48, 0.2], [62, -0.2]]], SC, 0.7, 0.45);
+  km += ell(34.6, 1.4, 1, 0.6, 0, SC, 0.45) + L([[[33.8, 1.4], [35.4, 0.6]]], SC, 0.25, 0.6);
+  km += L([[[32, -7.2], [24, -9.2], [15, -11]]], LI, 0.6, 0.4) + L([[[30, -3], [22, -6], [14, -9.6]]], SC, 0.6, 0.4);
   let ki = "";
-  if (F) ki += linien(T, [[[46, -2.6], [60, -1.6], [72, -0.6]], [[48, -1.2], [62, -0.8], [72, -0.2]], [[44, -3.8], [56, -2.8], [68, -1.4]], [[30, -5.4], [22, -7.6], [15, -9.6]], [[30, -4], [22, -6.4], [15, -8.8]]], "#2a1e14", 0.1, 0.25);
-  k += geklippt(T, [iU, iKa, iKo], ki + weichG(T, 0.4, [10, -12, 76, 4], km));
-  /* Schneidekante leicht S-förmig, Unterkieferspitze aufgebogen */
-  k += L([[[38, 1], [48, 0.5], [60, -0.1], [70, -0.7], [74, -0.8]]], SC, 0.35, 0.8);
-  s += volZonen(T, "kopf", k, [10, -12, 76, 4], [[0, 0, "a", { weich: 0.8, tiefe: 2.5, umgebung: 0.4 }]]);
-  s += reptilAuge(T, 37.8, -3.4, 1.15, { n: "p", hell: "#9a4a2a", iris: "#6a2e18", rand: "#2a1008", lidHell: "#d8c8a8" });
+  if (F) ki += linien(T, [[[44, -2.6], [56, -1.6], [63, -0.8]], [[46, -1.2], [58, -0.6]], [[42, -4], [54, -2.8]], [[30, -6.4], [22, -8.4], [15, -10.4]], [[30, -5], [22, -7.2], [15, -9.8]], [[29, -3.8], [21, -6.2]]], "#2a1e14", 0.1, 0.2);
+  k += geklippt(T, [iU, iKa, iKo, iOb], ki + weichG(T, 0.4, [10, -13, 67, 4], km));
+  /* Schneidekante leicht S-förmig, Unterkieferspitze aufgebogen, Spitze nicht nadelfein */
+  k += L([[[34, 1], [42, 0.8], [50, 0.4], [57, 0], [62, -0.4], [65, -0.8]]], SC, 0.3, 0.8);
+  /* Schlagschatten von Kamm und Kopf auf den Hals/fernen Flügel */
+  s += weichG(T, 1, [6, -14, 34, 0], flaeche(T, verschiebe(kamm, 1.6, 2.4), SC, 0.25));
+  s += volZonen(T, "kopf", k, [10, -13, 67, 4], [[0, 0, "a", { weich: 0.8, tiefe: 2.5, umgebung: 0.4 }]]);
+  s += reptilAuge(T, 34.8, -4.2, 1.1, { n: "p", hell: "#9a4a2a", iris: "#6a2e18", rand: "#2a1008", lidHell: "#d8c8a8" });
   GEN = 10;
-  return Object.assign(fertig(2, `<g transform="translate(0 -113)">${s}</g>`, [-47.4, -205, 75, 0]), { kopf: [8 * 2, -124 * 2, 78 * 2, -104 * 2] });
+  const f = 2.77;
+  return Object.assign(fertig(f, `<g transform="translate(0 -110.6)">${s}</g>`, [-22.6, -203.4, 65.6, 0]), { kopf: [8 * f, -124 * f, 68 * f, -98 * f] });
 }
 
 const ARTEN = [
@@ -1282,7 +1284,7 @@ const ARTEN = [
     gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 8.55, hoehe: 2.82, f: typeof allosaurus === "function" && allosaurus },
   /* Pteranodon: Flugsaurier, KEIN Dinosaurier (gruppe „Dinosaurier" nur für die Sortierung der Urzeit-Tiere; der Tipp sagt es) */
   { id: "pteranodon", de: "der Pteranodon", syl: "Pte-ra-NO-don", it: "lo pteranodonte", itSyl: "pte-ra-no-DON-te", en: "pteranodon",
-    gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 2.45, hoehe: 4.1, fliegt: true, f: typeof pteranodon === "function" && pteranodon,
+    gruppe: "Dinosaurier", lebensraum: "Urzeit", laenge: 2.45, hoehe: 5.63, fliegt: true, f: typeof pteranodon === "function" && pteranodon,
     tipp: "Der Pteranodon ist kein Dinosaurier, sondern ein Flugsaurier. Er flog mit Flügeln aus Haut." },
 ];
 module.exports = ARTEN.filter((a) => a.f).map(({ f, ...a }) => Object.assign(a, { zeichne: f }));

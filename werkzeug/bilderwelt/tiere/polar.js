@@ -1230,7 +1230,7 @@ function rentier(T) {
       o += `<path d="${d}" fill="none" stroke="#2e2318" stroke-width=".18" stroke-opacity=".5"/>`;
       let pe = "";
       for (let i = 0; i < 26; i++) { const t = T.rnd() * 0.5, j = Math.floor(t * 7), f = t * 7 - j, a = stange[j], b = stange[j + 1]; const p = P(a[0] + (b[0] - a[0]) * f + (T.rnd() - 0.5) * 3.6, a[1] + (b[1] - a[1]) * f); pe += `M${J(p[0], p[1])}h.01`; }
-      o += `<path d="${pe}" stroke="#2a2016" stroke-width=".7" stroke-linecap="round" stroke-opacity=".55"/>`;
+      o += `<path d="${pe}" stroke="#2a2016" stroke-width=".5" stroke-linecap="round" stroke-opacity=".3"/>`;
     }
     o = `<g filter="${vol(T, "geweih" + (fern ? "f" : ""), { weich: 1.4 * k, tiefe: 4, umgebung: 0.3 })}">${o}</g>`;
     /* Rose: knotiger Ring, ≈ 1,3 × Stangendicke */
@@ -1303,11 +1303,14 @@ function rentier(T) {
   /* Augsprosse: senkrechte, schaufelförmige Platte, die vor der Stirn nach vorn unten über den Nasenrücken ragt,
           vorne gezackt mit 4 Enden; eigene Rundung, Schatten auf dem Nasenrücken */
   {
-    const sch = [[177, -141], [181.6, -145.4], [186.4, -147], [190.6, -145.4], [193.4, -141.6], [196.6, -139.4], [194.6, -138.4], [197.6, -135.4], [195, -134.6], [197.4, -131],
-      [194.2, -131.4], [195.2, -127.4], [192, -129.8], [189.6, -134.4], [185.4, -138.6], [180.4, -140.4]];
-    s += weich([[186, -128], [196, -125], [199, -123], [190, -124]], "#2e251d", 0.3, 1.2);
-    s += `<g filter="${vol(T, "raug", { weich: 1.2, tiefe: 3.5 })}">${silhouette(T, G(sch), verlauf(T, "rsch", 178, -146, 197, -128, [[[178, -146], "#5a4632"], [[189, -138], "#7d6a52"], [[197, -128], "#c9bba0"]]),
-      fein(T, zart(T, [[181, -142], [186, -143], [191, -139.6], [194.6, -134]], "#2e2318", 0.16, 0.5)))}</g>`;
+    /* Stiel aus der Rose nach vorn oben, dann die senkrechte Schaufel nach vorn unten vor der Stirn; Enden an der
+       Unterkante zeigen nach vorn unten über den Nasenrücken */
+    const sch = [[177.4, -141.4], [181, -145.6], [185, -147.4], [188.4, -146.6], [191.6, -144.4], [194.6, -141], [197.4, -137.4], [199.6, -133.6],
+      [202.6, -130.6], [199.4, -131], [200.4, -127.4], [197.4, -129.2], [197.2, -125.4], [194.6, -128.4], [193.4, -125.8], [191.8, -130.6],
+      [189.4, -135.6], [186, -140], [182.4, -142.4], [179.4, -140]];
+    s += weich([[188, -127], [196, -124], [200, -122.6], [192, -122]], "#2e251d", 0.3, 1.2);
+    s += `<g filter="${vol(T, "raug", { weich: 1.2, tiefe: 4 })}">${silhouette(T, G(sch), verlauf(T, "rsch", 180, -146, 200, -126, [[[180, -146], "#4e3d2c"], [[190, -138], "#6e5a44"], [[197, -130], "#8f7c62"], [[201, -126], "#cfc1a6"]]),
+      fein(T, zart(T, [[181, -143.6], [186, -145], [191, -142], [195.6, -136]], "#2e2318", 0.18, 0.5) + zart(T, [[184, -144.6], [189, -143.6], [193.4, -139]], "#c9b89a", 0.2, 0.45)))}</g>`;
   }
 
   /* ---- Gesicht: Auge 15 % größer in kleiner Höhle, feine Wimpern nur oben, weiche Voraugendrüse; Nasenlöcher als
