@@ -49,32 +49,32 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 849: spiel.js kommt nach dem Start – erstes Laden 2,79 → 2,56 s bis bereit, 273 KB weniger vorher",
+  stand: "Fassung 850: Italienisch-Daten kommen erst beim Betreten des Raums (−46 KB beim Start), zehn tote Tutor-Töne entfernt",
 
   inArbeit: [
-    { seit: "2026-10-03T01:48",
+    { seit: "2026-10-03T01:59",
       text: "Beide Handys neu laden (Oppo noch auf 842)" },
-    { seit: "2026-10-03T01:48",
-      text: "Italienisch-Daten aus data-exercises.js auslagern" },
-    { seit: "2026-10-03T01:48",
+    { seit: "2026-10-03T01:59",
       text: "Bilderwelt neu (Funk 263)" },
-    { seit: "2026-10-03T01:48",
+    { seit: "2026-10-03T01:59",
       text: "sfu/aussprache: OK abwarten" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-03T01:48",
+    { seit: "2026-10-03T01:59",
       text: "Chat-Fenster (844)" },
-    { seit: "2026-10-03T01:48",
+    { seit: "2026-10-03T01:59",
       text: "Uhr ohne Intl (845)" },
-    { seit: "2026-10-03T01:48",
+    { seit: "2026-10-03T01:59",
       text: "Lesetexte nachladen (846)" },
-    { seit: "2026-10-03T01:48",
+    { seit: "2026-10-03T01:59",
       text: "Tutorfigur WebP (847)" },
-    { seit: "2026-10-03T01:48",
+    { seit: "2026-10-03T01:59",
       text: "Geist-Wache (848)" },
-    { seit: "2026-10-03T01:48",
+    { seit: "2026-10-03T01:59",
       text: "Spiel nach dem Start (849)" },
+    { seit: "2026-10-03T01:59",
+      text: "Italienisch nachladen (850)" },
   ],
 };

@@ -3318,3 +3318,38 @@ Was 848 ändert (livechat.js):
   - „Als App“ ist aufgefangen;
   - spätere Nachrichten gehen direkt ans Spiel;
   - keine Konsolenfehler.
+
+## Fassung 850 — Italienisch-Daten erst beim Betreten des Raums; zehn tote Tutor-Töne (Funk 271)
+
+- **data-italienisch.js (neu)** enthält die Daten des Italienisch-Raums: IT_SUBJEKTE, IT_VERBEN, IT_ERGAENZUNGEN, IT_ZEITANGABEN, IT_GRAMMATIK, IT_WOERTER, IT_BANKEN, IT_GESCHICHTE und IT_TICKER. Inhalt unverändert, 149 KB verkleinert.
+  - Bisher lagen sie in data-exercises.js und kamen bei jedem Start mit, obwohl nur der Betreiber und freigegebene Personen den Raum betreten.
+- **data-exercises.js**:
+  - `IT()` liefert die nachgeladenen Daten, bis dahin leere Listen.
+  - Die Exporte `IT_WOERTER` usw. sind Getter, alle bisherigen Aufrufe bleiben gültig.
+  - Neu: `ladeItalienisch()` (über `ladeDatenteil`) und `italienischDa()`.
+  - `setLernraum("it")` stößt das Laden zusätzlich an.
+  - IT_KATEGORIEN bleibt in data-exercises.js, die Fragen holt `itBank` aus `IT().IT_BANKEN`.
+- **app.js `wechsleLernraum`**: Beim Wechsel nach „it“ ohne Daten wird erst geladen, danach geht der Wechsel wie bisher weiter. Schlägt das Laden fehl, erscheint ein Hinweis.
+  - Das gilt für die gemerkte Wahl nach der Anmeldung, nach einer Runde und für den Schalter in den Einstellungen.
+  - Spiel (`DMA_IT_SPIEL.aktiv`), Laufschrift, Wörterbuch und Wortliste sind ohnehin an den Raum gebunden.
+- **Gemessen** (4G, Rechner 4× gebremst), zwei Läufe:
+
+  | | 849 | 850 |
+  |---|---|---|
+  | kalt bereit | 2,56 s | 2,51 s / 2,48 s |
+  | KB bis bereit | 1.567 | 1.522 |
+  | warm | 1,24 s | 1,37 s / 1,21 s (Streuung) |
+
+  data-exercises.js wird gepackt 191 statt 236 KB übertragen.
+- **Tutor**:
+  - `b-album`, `b-beitraege`, `b-dialekt2`, `b-einstellungen`, `b-feste`, `b-freunde`, `b-kompass2`, `b-musik`, `b-schwarm2` und `b-wegweiser` gab es nie, auch nicht in der Geschichte des Repos. Jeder Besuch dieser Bereiche holte eine 404.
+  - Jetzt steht dort `ton: ""`, der geplante Name in `tonGeplant`. Der Tutor läuft nach Lesezeit wie bisher.
+- **Sonden**:
+  - Neu `pruefe-868-italienisch-nachladen.js`. Geprüft wird:
+    - Inhalt gleich Fassung 849 (aus git);
+    - beim Start nicht geholt, Deutsch-Raum unverändert;
+    - Betreiber tippt 🇮🇹 Italiano: die Datei kommt einmal, mit 618 Wörtern, 20 Verben, 6 Grammatik-Niveaus, 6 Geschichten, 30 Laufschrift-Zeilen und 29 Kategorien mit 67 Fragen;
+    - zurück auf Deutsch geht;
+    - keine Konsolenfehler.
+  - 837, 839 und 843 laden die Daten jetzt vor ihrem direkten `setLernraum("it")`.
+  - Grün: 868, 636, 837, 839, 843, tutor, tutor-stuecke, tutorreiter, tutorbild62, 858, runde21, runde18, 865, 867, 864.
