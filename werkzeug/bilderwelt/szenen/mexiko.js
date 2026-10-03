@@ -92,7 +92,7 @@ const P = (X, Y, Z) => { const dx = X - KAM.vx, dz = Z - KAM.vz; const d = dx * 
 /* Bildpunkt am Boden → Raum */
 const BODEN = (x, y) => { const d = KAM.F * 1.6 / (y - HY), l = (x - KAM.CX) * d / KAM.F; return [KAM.vx + d * KAM.fx + l * KAM.rx, KAM.vz + d * KAM.fz + l * KAM.rz]; };
 /* Vieleck auf den Bildrahmen kappen (Sutherland–Hodgman), damit nichts aus dem Bild ragt */
-function kappe(p, x0 = -3, y0 = -3, x1 = 323, y1 = 203) {
+function kappe(p, x0 = 0, y0 = -3, x1 = 320, y1 = 203) {
   const schnitt = (p, innen, quer) => { const o = []; for (let i = 0; i < p.length; i++) { const a = p[i], b = p[(i + 1) % p.length], ia = innen(a), ib = innen(b); if (ia) o.push(a); if (ia !== ib) o.push(quer(a, b)); } return o; };
   const qx = (x) => (a, b) => [x, a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0])], qy = (y) => (a, b) => [a[0] + (b[0] - a[0]) * (y - a[1]) / (b[1] - a[1]), y];
   p = schnitt(p, (q) => q[0] >= x0, qx(x0)); if (p.length) p = schnitt(p, (q) => q[0] <= x1, qx(x1));
@@ -153,10 +153,11 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
     }
   }
   /* Niedriger Trockenwald (Selva baja) rund um die Plaza */
-  let d = `M0 ${HY + 1} L0 121`;
-  for (let x = 0; x <= 320; x += 4) d += ` L${x} ${r(118 + Math.sin(x * 0.11) * 2 + Math.sin(x * 0.37) * 1.4 + rnd() * 2.2)}`;
+  /* Yucatán ist flach: eine gerade Baumlinie, oben nur kleine Kronenbuckel, dunstig blaugrün */
+  let d = `M0 ${HY + 1} L0 127.5`;
+  for (let x = 0; x <= 320; x += 2.5) d += ` Q${r(x + 1.25)} ${r(126.2 - rnd() * 1.6)} ${r(x + 2.5)} ${r(127.6 + rnd() * 0.6)}`;
   d += ` L320 ${HY + 1} Z`;
-  k += `<path d="${d}" fill="${WALD}"/><path d="${d}" fill="${S.lg("waldluft", [[0, "#d6c4a8", 0.5], [1, "#5d7a47", 0.15]])}"/>`;
+  k += `<path d="${d}" fill="${WALD}"/><path d="${d}" fill="${S.lg("waldluft", [[0, "#b9c4bc", 0.62], [1, "#7d9a86", 0.35]])}"/>`;
   /* Rasen der Großen Plaza, im warmen Streiflicht */
   k += `<rect x="0" y="${HY}" width="320" height="${200 - HY}" fill="url(#${S.id("gras")})"/>`;
   k += `<rect x="0" y="${HY}" width="320" height="${200 - HY}" fill="${S.lg("rasen", [[0, "#e6d29a", 0.5], [0.3, "#a8b35e", 0.15], [1, "#3f6a24", 0.25]])}"/>`;
@@ -242,24 +243,26 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
   /* Gesims, Verwitterung */
   k += flaech([[CXk - tx - 0.2, 17.5, CZk - tz - 0.2], [CXk - tx - 0.2, 17.5, CZk + tz + 0.2], [CXk - tx - 0.2, 18, CZk + tz + 0.2], [CXk - tx - 0.2, 18, CZk - tz - 0.2]], "#f3d8a6");
   S.teil({ id: "kriegertempel", de: "der Tempel der Krieger", syl: "TEM-pel der KRIE-ger", it: "il Tempio dei Guerrieri", itSyl: "TEM-pio dei guer-RIE-ri", en: "Temple of the Warriors", x: 23, y: 112, kunst: um(23, 112, k),
-    tipp: "Oben vor dem Tempel der Krieger liegt die Steinfigur Chac Mool mit einer Schale auf dem Bauch." });
+    tipp: "Vor dem Tempel der Krieger stehen Reihen von Säulen. Früher trugen sie ein Dach." });
 
   /* Säulenreihen vor der Westseite: viereckige Pfeiler, Westseite im Licht, Nordseite im Schatten */
   const saeulen = [];
-  for (let reihe = 0; reihe < 4; reihe++) for (let j = 0; j < 14; j++) saeulen.push([CXk - 26 - reihe * 3.6, CZk - 20 + j * 3.4]);
+  for (let reihe = 0; reihe < 5; reihe++) for (let j = 0; j < 21; j++) saeulen.push([CXk - 26 - reihe * 3.6, CZk - 20 + j * 3.4]);
   saeulen.sort((a, b) => { const da = (a[0] - KAM.vx) * KAM.fx + (a[1] - KAM.vz) * KAM.fz, db = (b[0] - KAM.vx) * KAM.fx + (b[1] - KAM.vz) * KAM.fz; return db - da; });
   let sa = "";
   let anker = null;
   for (const [X, Z] of saeulen) {
     const [x] = P(X, 0, Z);
     if (x < -3 || x > 60) continue;
-    sa += flaech([[X - 0.45, 0, Z - 0.45], [X - 0.45, 0, Z + 0.45], [X - 0.45, 3, Z + 0.45], [X - 0.45, 3, Z - 0.45]], "#ecc890");
-    sa += flaech([[X - 0.45, 0, Z + 0.45], [X + 0.45, 0, Z + 0.45], [X + 0.45, 3, Z + 0.45], [X - 0.45, 3, Z + 0.45]], "#9c8f78");
-    sa += flaech([[X - 0.55, 3, Z - 0.55], [X - 0.55, 3, Z + 0.55], [X - 0.55, 3.35, Z + 0.55], [X - 0.55, 3.35, Z - 0.55]], "#f2d8a8");
-    if (!anker || x > anker[0]) anker = P(X, 1.6, Z);
+    sa += flaech([[X - 0.56, 0, Z - 0.56], [X - 0.56, 0, Z + 0.56], [X - 0.56, 3.1, Z + 0.56], [X - 0.56, 3.1, Z - 0.56]], "#ecc890");
+    sa += flaech([[X - 0.56, 0, Z + 0.56], [X + 0.56, 0, Z + 0.56], [X + 0.56, 3.1, Z + 0.56], [X - 0.56, 3.1, Z + 0.56]], "#9c8f78");
+    /* Kapitellplatte: Oberseite im Licht, Kanten */
+    sa += flaech([[X - 0.68, 3.1, Z - 0.68], [X - 0.68, 3.1, Z + 0.68], [X - 0.68, 3.5, Z + 0.68], [X - 0.68, 3.5, Z - 0.68]], "#f4dcae");
+    sa += flaech([[X - 0.68, 3.1, Z + 0.68], [X + 0.68, 3.1, Z + 0.68], [X + 0.68, 3.5, Z + 0.68], [X - 0.68, 3.5, Z + 0.68]], "#b3a68c");
+    if (x > 18 && x < 34 && (!anker || x > anker[0])) anker = P(X, 1.6, Z);
   }
   S.teil({ id: "saeule", de: "die Säule", syl: "SÄU-le", it: "la colonna", itSyl: "co-LON-na", en: "column", x: anker[0], y: anker[1], kunst: um(anker[0], anker[1], sa),
-    tipp: "Vor dem Tempel stehen so viele Säulen, dass man sie die „Tausend Säulen“ nennt." });
+    tipp: "Hier stehen so viele Säulen, dass man den Platz die „Gruppe der Tausend Säulen“ nennt." });
 }
 
 /* =====================================================================

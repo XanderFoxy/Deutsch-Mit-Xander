@@ -628,64 +628,50 @@ const PAL = { x0: 132, x1: 228, fuss: MOLO, porT: 121.6, logT: 111.8, top: 98.6 
    ===================================================================== */
 const UFER = 243;   /* Kante des Platzes vor San Giorgio (33 m vor uns) */
 const W1 = 133.9;  /* Unterkante des Wasserstreifens am Molo (Molo-Koordinaten) */
+/* Wellenverschiebung für alle Spiegelungen: nur seitlich, in vielen dünnen
+   Streifen, mit weichen Übergängen (keine Treppen) */
+S.def(`<filter id="${S.id("welle")}" x="-8%" y="-10%" width="116%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".035 1.5" numOctaves="2" seed="9"/><feColorMatrix type="matrix" values="1 0 0 0 0  0 0 0 0 .5  0 0 1 0 0  0 0 0 0 1"/><feDisplacementMap in="SourceGraphic" scale="3.4" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".25 .05"/></filter>`);
 {
-  /* Wasserstreifen am Molo mit den festgemachten Gondeln und gestreiften Pfählen
-     (nicht antippbar: die Gondeln dort sind nur Kulisse) */
-  let g = `<rect x="-20" y="${r(WASSER0 - 0.4)}" width="440" height="${r(W1 - WASSER0 + 0.6)}" fill="#a3bfbb"/>`;
-  for (let i = 0; i < 16; i++) {
-    const x = 136 + i * 5.6;
-    g += `<path d="M${r(x - 2.2)} ${r(WASSER0 + 0.9)} q2.2 .8 4.4 0 l.3 -.5 q-2.5 .6 -5 0 Z" fill="#141416"/><rect x="${r(x - 1)}" y="${r(WASSER0 + 0.2)}" width="2" height=".45" fill="#2f4f8a"/>`;
-    if (i % 2 === 0) g += `<rect x="${r(x + 2.8)}" y="${r(WASSER0 - 2.2)}" width=".4" height="3.4" fill="#f1f1ee"/><rect x="${r(x + 2.8)}" y="${r(WASSER0 - 1.8)}" width=".4" height=".5" fill="#2f4f8a"/><rect x="${r(x + 2.8)}" y="${r(WASSER0 - 0.8)}" width=".4" height=".5" fill="#2f4f8a"/>`;
-  }
-  S.hinten(G(g));
-}
-{
-  const Y1 = Y(W1);
-  let k = `<rect x="0" y="${Y1}" width="400" height="${r(UFER - Y1 - 0.4)}" fill="${S.lg("wasser", [[0, "#9fbdb9"], [0.1, "#7fa9a6"], [0.5, "#4d8784"], [1, "#2b6466"]])}"/>`;
-  /* Spiegelungen: die gespiegelten Umrisse der Bauten — gestaucht, dunkler und
-     kühler als das Original, mit dunklem Arkadenband. Waagrechte, gegeneinander
-     versetzte Streifen zerreißen die Ränder, nach unten blenden sie aus. */
+  const Y0 = Y(WASSER0 + 0.2);
+  let k = `<rect x="0" y="${Y0}" width="400" height="${r(UFER - Y0 - 0.4)}" fill="${S.lg("wasser", [[0, "#93b4b1"], [0.1, "#78a3a0"], [0.5, "#4d8784"], [1, "#2b6466"]])}"/>`;
+  /* Spiegelungen: EINE gespiegelte, gestauchte Kopie der Silhouetten (dunkler,
+     kühler, Arkadenband dunkel, Campanile als Schaft), seitlich wellig
+     verschoben und nach unten ausgeblendet; sie beginnt direkt an der
+     Wasserlinie, die vertäuten Gondeln liegen davor */
   {
-    const SQ = 0.62, TIEF = 25;
-    const bauten = [
-      [-2, 27, 103, 131.2, "#a29a8c"], [-2, 27, 122.6, 131.2, "#3d394b"],
-      [26, 50, 101, 131.2, "#b49c84"], [50, 92, 106, 131.2, "#9a9082"], [26, 92, 118, 131.2, "#3e394c"],
-      [89.6, 104.2, 76, 130.2, "#7c4c42"], [89.4, 104.4, 63, 76, "#bcae9d"], [89.6, 104.2, 54, 63, "#a69280"],
-      [100, 114, 122, 131.2, "#7a564c"],
-      [85.2, 86.8, 110, 131.2, "#957c74"], [123.2, 124.8, 110, 131.2, "#6f7276"],
-      [132, 228, 95.4, 111.8, "#c39484"], [132, 228, 111.8, 121.6, "#cbc1b6"], [132, 228, 121.6, 131.2, "#393347"],
-      [227, 243, 100, 131.2, "#4d4a52"], [225, 245, 125.6, 131.2, "#c9c3b8"],
-      [243, 297, 104, 131.2, "#aa9f92"], [243, 297, 120.4, 131.2, "#413a4b"],
-      [297, 327, 100, 131.8, "#8e4e44"], [327, 345, 99, 132.2, "#a8916e"],
-    ];
-    const spitze = { x0: 89.4, x1: 104.4, xs: 98.4, top: 28, fuss: 54.2, c: "#4d7366" };
-    const pfade = {};
-    const f1 = (v) => (Math.round(v * 10) / 10).toString();
-    const add = (c, x0, x1, y, h) => { x0 = Math.max(x0, 14); x1 = Math.min(x1, 320); if (x1 - x0 > 0.2) (pfade[c] = pfade[c] || []).push(`M${f1(x0)} ${f1(y)}h${f1(x1 - x0)}v${f1(h)}h${f1(x0 - x1)}z`); };
-    for (let ym = W1; ym < W1 + TIEF;) {
-      const t = (ym - W1) / TIEF, h = 0.55 + t * 1.5, src = WASSER0 - (ym + h / 2 - WASSER0) / SQ;
-      const dx = (rnd() - 0.5) * (0.7 + t * 3);
-      const seg = (c, a, b) => {
-        let x = a;
-        while (x < b - 0.05) {
-          const len = Math.min(b - x, (b - a) * (0.3 + rnd() * 0.7) + 1.5);
-          const j0 = (rnd() - 0.5) * (0.9 + t * 2.4), j1 = (rnd() - 0.5) * (0.9 + t * 2.4);
-          if (rnd() > t * 0.4) add(c, x + dx + j0, x + len + dx + j1, ym, h * (0.88 + rnd() * 0.22));
-          x += len + (rnd() < t * 0.8 ? 0.4 + rnd() * 3 * t : 0);
-        }
-      };
-      for (const [a, b, top, fuss, c] of bauten) if (src >= top && src <= fuss) seg(c, a, b);
-      if (src >= spitze.top && src < spitze.fuss) { const q = (src - spitze.top) / (spitze.fuss - spitze.top); seg(spitze.c, spitze.xs + (spitze.x0 - spitze.xs) * q, spitze.xs + (spitze.x1 - spitze.xs) * q); }
-      ym += h;
-    }
-    S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="-10" y="${W1}" width="420" height="${TIEF + 4}"><rect x="-10" y="${W1}" width="420" height="${TIEF + 2}" fill="${S.lg("spfade", [[0, "#fff", 0.95], [0.35, "#fff", 0.7], [1, "#fff", 0]])}"/></mask>`);
-    let sp = `<g mask="url(#${S.id("spmaske")})" opacity=".9">` + Object.entries(pfade).map(([c, p]) => `<path d="${p.join("")}" fill="${c}"/>`).join("") + `</g>`;
-    /* helle Wellenkämme, die die Bilder quer zerschneiden */
-    let wk = "";
-    for (let i = 0; i < 70; i++) { const t = rnd(), x = 14 + rnd() * 286, y = W1 + 0.5 + t * (TIEF - 2), w = 2 + rnd() * (4 + t * 10); wk += `M${f1(x)} ${f1(y)}h${f1(w)}`; }
-    sp += `<path d="${wk}" stroke="#86b0ac" stroke-width=".28" opacity=".7"/>`;
-    k += G(sp);
+    const SQ = 0.62, TIEF = 26;
+    const R = (x0, y0, x1, y1, c) => `<rect x="${x0}" y="${y0}" width="${r(x1 - x0)}" height="${r(y1 - y0)}" fill="${c}"/>`;
+    let sp = "";
+    sp += R(14, 103, 27, 131.2, "#a0988b") + R(14, 122.6, 27, 131.2, "#3d394b");
+    sp += `<path d="M26 101 L50 101 L92 106 L92 131.2 L26 131.2 Z" fill="#a8998a"/>` + R(26, 118, 92, 131.2, "#3e394c");
+    sp += R(89.6, 76, 104.2, 130.2, "#7a4a40") + R(89.4, 63, 104.4, 76, "#b8aa98") + R(89.6, 54, 104.2, 63, "#a48f7c") + `<path d="M89.4 54.2 L98.4 28 L104.4 54.2 Z" fill="#4b7064"/>`;
+    sp += R(100, 122, 114, 131.2, "#7a564c") + R(85.2, 104, 86.8, 131.2, "#8f7a72") + R(123.2, 104, 124.8, 131.2, "#6e7174");
+    sp += R(132, 95.4, 228, 111.8, "#c08f80") + R(132, 111.8, 228, 121.6, "#c6bcb2") + R(132, 121.6, 228, 131.2, "#373146");
+    sp += `<path d="M132 114.4 H228" stroke="#5e5560" stroke-width="1.6" stroke-dasharray="1.6 1.2"/><path d="M${Array.from({ length: 16 }, (_, i) => r(132 + (i + 1) * 96 / 17)).map((x) => `${x} 125.4 V131.2`).join(" M")}" stroke="#8f8790" stroke-width="1.1"/>`;
+    sp += R(227, 100, 243, 131.2, "#4b4850") + R(225, 125.6, 245, 131.2, "#c7c0b5");
+    sp += R(243, 104, 297, 131.2, "#a69c8f") + R(243, 120.4, 297, 131.2, "#403a4a") + R(297, 100, 320, 131.8, "#8c4c42");
+    S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="-10" y="${WASSER0}" width="420" height="${TIEF + 2}"><rect x="-10" y="${WASSER0}" width="420" height="${TIEF}" fill="${S.lg("spfade", [[0, "#fff", 0.9], [0.35, "#fff", 0.62], [1, "#fff", 0]])}"/></mask>`);
+    k += G(`<g mask="url(#${S.id("spmaske")})"><g filter="url(#${S.id("welle")})"><g transform="matrix(1 0 0 ${-SQ} 0 ${r(WASSER0 * (1 + SQ))})">${sp}</g></g></g>`);
   }
+  /* die vertäuten Gondeln am Molo: unregelmäßig, leicht verdreht, manche mit
+     dem Bug zum Ufer, Planen in Blau und Dunkelgrün, eine offen mit rotem Sitz;
+     dazwischen Pfähle mit farbigen Ringen */
+  {
+    const z = B.zufall(77);
+    let g = "";
+    let x = 135;
+    while (x < 226) {
+      const kurz = z() < 0.25, len = kurz ? 2.6 : 4 + z() * 0.8, rot = r((z() - 0.5) * 6), yy = r(WASSER0 + 0.8 + z() * 0.6);
+      const plane = ["#2f4f8a", "#2f4f8a", "#24493a", "#1f3c66", null][Math.floor(z() * 5)];
+      g += `<g transform="rotate(${rot} ${r(x)} ${yy})"><path d="M${r(x - len / 2)} ${yy} q${r(len / 2)} .8 ${r(len)} 0 l.3 -.55 q${r(-len / 2 - 0.3)} .65 ${r(-len - 0.3)} 0 Z" fill="#141416"/>`;
+      g += plane ? `<rect x="${r(x - len * 0.25)}" y="${r(yy - 0.25)}" width="${r(len * 0.5)}" height=".42" fill="${plane}"/>` : `<rect x="${r(x - len * 0.18)}" y="${r(yy - 0.3)}" width="${r(len * 0.36)}" height=".4" fill="#b02a34"/>`;
+      g += `</g>`;
+      x += len + 0.8 + z() * 1.8;
+      if (z() < 0.5) { const px = r(x - 0.6), c = ["#2f4f8a", "#b02a34", "#2f6a4a"][Math.floor(z() * 3)], h = 3 + z() * 1.2; g += `<rect x="${px}" y="${r(WASSER0 + 1 - h)}" width=".4" height="${r(h)}" fill="#f1f1ee"/><rect x="${px}" y="${r(WASSER0 + 1.4 - h)}" width=".4" height=".5" fill="${c}"/><rect x="${px}" y="${r(WASSER0 + 2.4 - h)}" width=".4" height=".5" fill="${c}"/>`; }
+    }
+    k += G(g);
+  }
+  const Y1 = Y(W1);
   /* breiter Glitzerpfad der tiefen Sonne (links außerhalb des Bildes):
      hinten schmal und fein, vorn breit und grob */
   k += `<rect x="0" y="${Y1}" width="170" height="${r(UFER - Y1 - 0.4)}" fill="${S.rg("glanz", [[0, "#ffdc9a", 0.42], [0.45, "#ffdc9a", 0.14], [1, "#ffdc9a", 0]], 0, 0.7, 1)}"/>`;
