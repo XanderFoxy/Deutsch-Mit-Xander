@@ -209,23 +209,23 @@ S.hinten(`<rect width="400" height="${HOR + 8}" fill="${S.lg("himmel", [[0, "#5b
   k += `<path d="${fw}" stroke="#6d2416" stroke-width=".08" fill="none"/>`;
   /* Tragseile: Durchhang 143 m ≈ 8 Einheiten; Seitenfelder zu den Verankerungen */
   const kab = (x0, y0, x1, y1, tief) => `M${x0} ${r(y0)} Q${r((x0 + x1) / 2)} ${r(tief)} ${x1} ${r(y1)}`;
-  const ks = `${kab(XS, TS + 0.4, XN, TN + 0.4, (DS + DN) / 2 + 6.6)} M${XS} ${r(TS + 0.4)} Q${XS - 9} ${r(DS - 2)} ${XA} ${r(DA - 0.3)} M${XN} ${r(TN + 0.4)} Q${XN + 9} ${r(DN - 2)} ${XB} ${r(DB - 0.3)}`;
+  const ks = `${kab(XS, TS - 0.4, XN, TN - 0.4, (DS + DN) / 2 + 6.6)} M${XS} ${r(TS - 0.4)} Q${XS - 9} ${r(DS - 2)} ${XA} ${r(DA - 0.3)} M${XN} ${r(TN - 0.4)} Q${XN + 9} ${r(DN - 2)} ${XB} ${r(DB - 0.3)}`;
   k += `<path d="${ks}" stroke="#b5452e" stroke-width=".32" fill="none"/>`;
   let h = "";
-  for (let i = 1; i < 36; i++) { const t = i / 36, x = XS + (XN - XS) * t, y = (1 - t) * (1 - t) * (TS + 0.4) + 2 * t * (1 - t) * ((DS + DN) / 2 + 6.6) + t * t * (TN + 0.4); if (y < dy(x) - 0.2) h += `M${r(x)} ${r(y)} L${r(x)} ${r(dy(x))} `; }
+  for (let i = 1; i < 36; i++) { const t = i / 36, x = XS + (XN - XS) * t, y = (1 - t) * (1 - t) * (TS - 0.4) + 2 * t * (1 - t) * ((DS + DN) / 2 + 6.6) + t * t * (TN - 0.4); if (y < dy(x) - 0.2) h += `M${r(x)} ${r(y)} L${r(x)} ${r(dy(x))} `; }
   k += `<path d="${h}" stroke="#b5452e" stroke-width=".07" fill="none" opacity=".8" pointer-events="none"/>`;
-  /* Türme von der Seite: zwei Beine fast hintereinander, nach oben gestuft, Portal-Schlitze */
-  /* Türme: zwei Beine (von Osten schräg gesehen, ≈ 0,7 Einheiten auseinander), nach oben gestuft,
-     dazwischen die vier Portalriegel (oben kürzer), oben die Art-déco-Abschlüsse */
+  /* Türme: zwei Beine mit Himmel dazwischen, an jedem Riegel nach innen abgetreppt (Art déco);
+     über der Fahrbahn vier Portalriegel (nach oben kürzer und enger), darunter ein großer Riegel;
+     oben die gerippten Abschlüsse, das Tragseil liegt auf dem Turmkopf. Licht von links. */
   const turm = (x, W0, T, D) => {
-    const hgt = W0 - T, bein = (cx, f) => { const st = [[W0, 0.55], [D + 0.4, 0.48], [T + hgt * 0.42, 0.42], [T + hgt * 0.2, 0.37], [T + hgt * 0.07, 0.33]];
-      let p = `M${r(cx - 0.6)} ${r(W0)}`; for (let i = 0; i < st.length; i++) { const [y, hw] = st[i], yn = i + 1 < st.length ? st[i + 1][0] : T; p += ` L${r(cx - hw)} ${r(y)} L${r(cx - hw)} ${r(yn)}`; }
-      for (let i = st.length - 1; i >= 0; i--) { const [y, hw] = st[i], yn = i + 1 < st.length ? st[i + 1][0] : T; p += ` L${r(cx + hw)} ${r(yn)} L${r(cx + hw)} ${r(y)}`; }
-      return `<path d="${p} Z" fill="${f}"/>`; };
-    let s2 = bein(x + 0.45, "#8e2e1e") + bein(x - 0.35, ORANGE);
-    for (const [t, h2] of [[0.04, 0.5], [0.2, 0.45], [0.42, 0.42], [0.62, 0.4]]) { const y = T + hgt * t; s2 += `<rect x="${r(x - 0.15)}" y="${r(y)}" width="${r(0.9 - t * 0.3)}" height="${r(h2)}" fill="#a83a26"/><rect x="${r(x - 0.15)}" y="${r(y)}" width="${r(0.9 - t * 0.3)}" height=".12" fill="#f0b493" opacity=".7"/>`; }
-    s2 += `<rect x="${r(x - 0.75)}" y="${r(T - 0.45)}" width="1.6" height=".45" fill="#953424"/><rect x="${r(x - 0.55)}" y="${r(T - 0.8)}" width="1.1" height=".35" fill="#a43a28"/><circle cx="${r(x)}" cy="${r(T - 1.05)}" r=".16" fill="#ff5040"/>`;
-    s2 += `<path d="M${r(x - 0.95)} ${r(W0)} L${r(x - 0.68)} ${r(T)}" stroke="#ffb27a" stroke-width=".16" opacity=".7"/>`;
+    const hu = D - T, ys = [W0, D + 0.6, D - hu * 0.22, D - hu * 0.48, D - hu * 0.7, D - hu * 0.88, T];
+    const bw = [0.38, 0.34, 0.31, 0.28, 0.25, 0.23], gap = 0.34;
+    let L = "", R = "";
+    for (let i = 0; i < bw.length; i++) { const y0 = ys[i], y1 = ys[i + 1], o = gap + (bw[0] - bw[i]); L += `M${r(x - o - bw[i])} ${r(y0)}H${r(x - o)}V${r(y1)}H${r(x - o - bw[i])}Z`; R += `M${r(x + o)} ${r(y0)}H${r(x + o + bw[i])}V${r(y1)}H${r(x + o)}Z`; }
+    let s2 = `<path d="${L}" fill="#c4492f"/><path d="${R}" fill="#93311f"/>`;
+    for (const [i, h2] of [[1, 0.5], [2, 0.42], [3, 0.36], [4, 0.3], [5, 0.26]]) { const o = gap + (bw[0] - bw[i]); s2 += `<rect x="${r(x - o - 0.05)}" y="${r(ys[i] - h2)}" width="${r(2 * o + 0.1)}" height="${r(h2)}" fill="#a83a26"/>`; }
+    const ot = gap + bw[0] - bw[5];
+    s2 += `<rect x="${r(x - ot - 0.26)}" y="${r(T - 0.35)}" width="${r(2 * ot + 0.52)}" height=".35" fill="#b3402b"/><path d="M${r(x - ot - 0.2)} ${r(T - 0.35)}V${r(T - 0.7)}M${r(x - ot)} ${r(T - 0.35)}V${r(T - 0.8)}M${r(x + ot)} ${r(T - 0.35)}V${r(T - 0.8)}M${r(x + ot + 0.2)} ${r(T - 0.35)}V${r(T - 0.7)}" stroke="#a83a26" stroke-width=".14"/><circle cx="${r(x)}" cy="${r(T - 0.95)}" r=".14" fill="#ff5040"/>`;
     return s2;
   };
   k += turm(XS, WS, TS, DS) + turm(XN, WN, TN, DN);

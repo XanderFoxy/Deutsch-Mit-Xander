@@ -148,10 +148,10 @@ function wolke(x, y, s, seed) {
   return w;
 }
 
-S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.3"/></filter>`);
-S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.1 .45"/></filter>`);
-S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".25"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.3"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("spiegel")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1.1 .45"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".25"/></filter>`);
 const BETON = S.lg("beton", [[0, "#9a9d9b"], [0.35, "#cdcfcb"], [0.75, "#f1f2ee"], [1, "#c2c5c1"]], 0, 0, 1, 0);
 const BACKSTEIN = S.lg("backstein", [[0, "#7a3d29"], [0.5, "#a65a3d"], [0.85, "#c9795a"], [1, "#a8583e"]], 0, 0, 1, 0);
 const SCHIEFER = S.lg("schiefer", [[0, "#2c3238"], [0.55, "#48515a"], [1, "#6c7680"]], 0, 0, 1, 0);

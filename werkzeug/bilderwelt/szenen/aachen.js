@@ -68,9 +68,9 @@ const HOR = 136, AUGE = 1.7, F = 264;
 const km = (y) => (y - HOR) / AUGE;
 const bodenY = (d) => HOR + AUGE * F / d;
 
-S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.3"/></filter>`);
-S.def(`<filter id="${S.id("schw")}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation=".7"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1.3"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("schw")}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation=".7"/></filter>`);
 const STEIN = S.lg("stein", [[0, "#9a8f7a"], [0.55, "#b4a88f"], [1, "#c9bda2"]], 0, 0, 1, 0);
 const BLAUSTEIN = S.lg("blaustein", [[0, "#5f656b"], [0.5, "#7f878d"], [1, "#9ba3a8"]], 0, 0, 1, 0);
 const SCHIEFER = S.lg("schiefer", [[0, "#2e353c"], [0.6, "#4a545e"], [1, "#6e7a85"]], 0, 0, 1, 0);
@@ -81,8 +81,8 @@ const DOMSTEIN = S.lg("domstein", [[0, "#9c9381"], [0.5, "#c9bfa9"], [1, "#ddd2b
 const GOLDLICHT = "#ffc977";                     /* Abendsonne, als Lasur über den Fassaden */
 const LANG = S.lg("lang", [[0, "#1d2224", 0], [0.55, "#1d2224", 0.16], [1, "#1d2224", 0.36]], 0, 0, 1, 0);
 /* langer Abendschatten nach links (etwas nach hinten): Länge ≈ 3,2 × Höhe */
-const schlag = (x, y, w, h, a = 1) => {
-  const L = 3.2 * h;
+const schlag = (x, y, w, h, a = 1, ax = 999) => {
+  const L = Math.min(3.2 * h, ax + x - w * 0.4 - 1);
   return `<path d="M${r(x + w / 2)} ${r(y)} L${r(x - w / 2)} ${r(y)} L${r(x - L)} ${r(y - 0.05 * L)} L${r(x - L + w * 0.4)} ${r(y - 0.05 * L - w * 0.18)} L${r(x + w * 0.3)} ${r(y - w * 0.12)} Z" fill="${LANG}" opacity="${a}" filter="url(#${S.id("schw")})"/>`;
 };
 /* Mensch aus dem Baukasten, ohne runden Bodenschatten, feine Linien weg, Pfade gerundet (Ladezeit) */
@@ -581,7 +581,7 @@ const TISCH = { x: 52, y: 186 };
   const s = km(182);
   let k = "";
   const H = 2.7 * s;
-  k += schlag(0, 0.2, 2.2, H, 0.6);
+  k += schlag(0, 0.2, 2.2, H, 0.6, 24);
   /* am Abend zugeklappt: schmaler Stoffkegel am Mast */
   k += `<rect x="-.55" y="${r(-H - 3)}" width="1.1" height="${r(H + 3)}" fill="#d8d2c4"/><circle cx="0" cy="${r(-H - 3.4)}" r=".8" fill="#cfc6b4"/>`;
   k += `<path d="M-.6 ${r(-H - 2)} Q-3.2 ${r(-H + 10)} -2.2 ${r(-H + 26)} L2.2 ${r(-H + 26)} Q3.2 ${r(-H + 10)} .6 ${r(-H - 2)} Z" fill="${S.lg("schirm", [[0, "#d8cdb6"], [0.55, "#fbf6ec"], [1, "#ffe9c4"]], 0, 0, 1, 0)}"/>`;
@@ -591,9 +591,9 @@ const TISCH = { x: 52, y: 186 };
   S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x: 24, y: 182, steht: true, kunst: k,
     tipp: "Am Abend klappt das Café die Sonnenschirme zu." });
 }
-const stuhl = (x, y, mitLehne = true) => {
+const stuhl = (x, y, mitLehne = true, ax = 999) => {
   const s = km(y), SH = 0.46 * s, LH = 0.9 * s;
-  let k = schlag(0, 0.2, 9, LH, 0.55);
+  let k = schlag(0, 0.2, 9, LH, 0.55, ax);
   k += `<path d="M-4.4 0 L-4 ${r(-SH)} M4.4 0 L4 ${r(-SH)}" stroke="#2c3236" stroke-width=".9"/>`;
   if (mitLehne) {
     k += `<path d="M-3.6 ${r(-SH)} L-4.2 ${r(-LH)} M3.6 ${r(-SH)} L4.2 ${r(-LH)}" stroke="#2c3236" stroke-width=".9"/>`;
@@ -604,7 +604,7 @@ const stuhl = (x, y, mitLehne = true) => {
   return k;
 };
 {
-  S.teil({ id: "stuhl", de: "der Stuhl", syl: "STUHL", it: "la sedia", itSyl: "SE-dia", en: "chair", x: 72, y: 181, steht: true, kunst: stuhl(0, 181) });
+  S.teil({ id: "stuhl", de: "der Stuhl", syl: "STUHL", it: "la sedia", itSyl: "SE-dia", en: "chair", x: 72, y: 181, steht: true, kunst: stuhl(0, 181, true, 72) });
 }
 {
   /* DER GAST — eine Frau sitzt auf dem zweiten Stuhl links vom Tisch (der Stuhl bleibt sichtbar) */
@@ -612,14 +612,14 @@ const stuhl = (x, y, mitLehne = true) => {
   const m = figur({ id: "aac_gast", geschlecht: "w", pose: "sitzen", blick: 70, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "#e9eef3" }, unterteil: { stueck: "rock_knie", farbe: "#2f5f95" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.66 * s);
   const sitzY = m.z.sitz.y * m.k;
-  let k = stuhl(0, Y, true);
+  let k = stuhl(0, Y, true, 30);
   k += `<g transform="translate(0 ${r(-0.46 * s - sitzY)})">${m.svg}</g>`;
   S.teil({ id: "gast", de: "der Gast", syl: "GAST", it: "l'ospite", itSyl: "O-spi-te", en: "guest", x: 30, y: Y, kunst: k,
     tipp: "Im Café trinkt der Gast einen Kaffee und isst Printen dazu." });
 }
 {
   const s = km(TISCH.y), TH = 0.75 * s, R = 0.36 * s;
-  let k = schlag(0, 0.4, 2 * R, TH, 0.6);
+  let k = schlag(0, 0.4, 2 * R, TH, 0.6, TISCH.x);
   k += `<path d="M-3 0 L3 0 L.7 -2 L-.7 -2 Z" fill="#2c3236"/><rect x="-.55" y="${r(-TH)}" width="1.1" height="${r(TH - 1.6)}" fill="#3a4045"/>`;
   k += `<ellipse cx="0" cy="${r(-TH)}" rx="${r(R)}" ry="${r(R * 0.22)}" fill="#8b9298"/><ellipse cx="0" cy="${r(-TH - 0.5)}" rx="${r(R)}" ry="${r(R * 0.22)}" fill="${S.lg("marmor", [[0, "#f3f1ec"], [1, "#d6d2c8"]])}"/>`;
   const top = -TH - 0.5;
@@ -695,7 +695,7 @@ const stuhl = (x, y, mitLehne = true) => {
 const LAT = { x: 248, y: 170 };
 {
   const s = km(LAT.y), H = 4.2 * s;
-  let k = schlag(0, 0.3, 3, H, 0.55);
+  let k = schlag(0, 0.3, 3, H, 0.55, LAT.x);
   k += `<path d="M-2 0 L-1.4 -5 L1.4 -5 L2 0 Z" fill="#23292c"/><rect x="-.6" y="${r(-H + 9)}" width="1.2" height="${r(H - 14)}" fill="${S.lg("lmast", [[0, "#1f2427"], [0.5, "#4d565b"], [1, "#9aa3a8"]], 0, 0, 1, 0)}"/>`;
   k += `<rect x="-1.2" y="${r(-H + 8.4)}" width="2.4" height="1.2" fill="#23292c"/>`;
   k += `<path d="M-2.4 ${r(-H + 8.4)} L-3.4 ${r(-H + 2)} L3.4 ${r(-H + 2)} L2.4 ${r(-H + 8.4)} Z" fill="${S.lg("lglas", [[0, "#fff4d0"], [1, "#e6cf94"]])}" stroke="#23292c" stroke-width=".4"/>`;
@@ -728,12 +728,12 @@ const LAT = { x: 248, y: 170 };
   let k = schlag(0, 0.3, 2, H, 0.6);
   k += `<rect x="-.9" y="${r(-H)}" width="1.8" height="${r(H)}" fill="${S.lg("pfosten", [[0, "#3b3f43"], [0.5, "#80878d"], [1, "#b9c0c5"]], 0, 0, 1, 0)}"/><circle cx="0" cy="${r(-H - 0.5)}" r="1.1" fill="#3b3f43"/>`;
   const schild = (y, links, text, unter, flaggen) => {
-    const w = 27, h = 5.8, x0 = links ? -w + 0.6 : -0.6;
+    const w = 22.5, h = 5.4, x0 = links ? -w + 0.6 : -0.6;
     const pfad = links ? `M${r(x0)} ${r(y + h / 2)} L${r(x0 + 2.8)} ${r(y)} L${r(x0 + w)} ${r(y)} L${r(x0 + w)} ${r(y + h)} L${r(x0 + 2.8)} ${r(y + h)} Z` : `M${r(x0)} ${r(y)} L${r(x0 + w - 2.8)} ${r(y)} L${r(x0 + w)} ${r(y + h / 2)} L${r(x0 + w - 2.8)} ${r(y + h)} L${r(x0)} ${r(y + h)} Z`;
     let g = `<path d="${pfad}" fill="#f4efe2" stroke="#7a2a28" stroke-width=".45"/>`;
     const tx = x0 + w / 2 + (links ? 1.4 : -1.4) + (flaggen ? 3 : 0);
-    g += `<text x="${r(tx)}" y="${r(y + 2.75)}" font-size="${flaggen ? 2.2 : 2.4}" text-anchor="middle" fill="#3a2a1c" font-family="Georgia,serif" font-weight="bold">${text}</text>`;
-    g += `<text x="${r(tx)}" y="${r(y + 4.95)}" font-size="2" text-anchor="middle" fill="#5b4a34" font-family="Arial,sans-serif">${unter}</text>`;
+    g += `<text x="${r(tx)}" y="${r(y + 2.75)}" font-size="${flaggen ? 1.95 : 2.2}" text-anchor="middle" fill="#3a2a1c" font-family="Georgia,serif" font-weight="bold">${text}</text>`;
+    g += `<text x="${r(tx)}" y="${r(y + 4.7)}" font-size="1.75" text-anchor="middle" fill="#5b4a34" font-family="Arial,sans-serif">${unter}</text>`;
     if (flaggen) {
       const fxx = x0 + 1, fyy = y + 0.8;
       g += `<rect x="${r(fxx)}" y="${r(fyy)}" width="1.8" height=".42" fill="#1d1d1d"/><rect x="${r(fxx)}" y="${r(fyy + 0.42)}" width="1.8" height=".42" fill="#dd2a24"/><rect x="${r(fxx)}" y="${r(fyy + 0.84)}" width="1.8" height=".42" fill="#f2c62f"/>`;
@@ -743,11 +743,11 @@ const LAT = { x: 248, y: 170 };
     return g;
   };
   k += schild(-H + 1.2, true, "Elisenbrunnen", "Thermalwasser · 250 m");
-  k += schild(-H + 7.6, true, "Dom", "Katschhof · 150 m");
-  k += schild(-H + 14, true, "Puppenbrunnen", "Krämerstraße · 200 m");
-  k += schild(-H + 20.4, false, "Dreiländereck", "Vaalserberg · 6 km", true);
+  k += schild(-H + 7.2, true, "Dom", "Katschhof · 150 m");
+  k += schild(-H + 13.2, true, "Puppenbrunnen", "Krämerstraße · 200 m");
+  k += schild(-H + 19.2, false, "Dreiländereck", "Vaalserberg · 6 km", true);
   S.teil({ id: "wegweiser", de: "der Wegweiser", syl: "WEG-wei-ser", it: "il cartello indicatore", itSyl: "car-TEL-lo in-di-ca-TO-re", en: "signpost",
-    x: 296, y: Y, steht: true, kunst: k,
+    x: 294, y: Y, steht: true, kunst: k,
     tipp: "Am Dreiländereck treffen sich Deutschland, die Niederlande und Belgien. Am Elisenbrunnen kommt warmes Wasser aus der Erde — es riecht nach Schwefel." });
 }
 

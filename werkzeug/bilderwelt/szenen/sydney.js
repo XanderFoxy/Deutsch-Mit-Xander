@@ -96,16 +96,22 @@ S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%
 S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation="1.4 .3"/></filter>`);
 /* Wiederverwendbar: Wabenverwitterung (Tafoni) als Gruppe, Meißelhiebe und Grasbüschel als Muster */
 {
-  let f = "", l = "";
-  for (const [x, y, w] of [[0, 0, 1.6], [2.8, -0.6, 1.1], [-2.6, 0.4, 1.2], [1.2, 1.6, 0.9], [4.4, 0.8, 0.7], [-1, -1.6, 0.8], [-4.2, -0.4, 0.6]]) {
-    f += `M${r(x - w)} ${r(y)}Q${r(x - w * 0.8)} ${r(y - w * 0.9)} ${r(x + w * 0.2)} ${r(y - w * 0.7)}Q${r(x + w)} ${r(y - w * 0.3)} ${r(x + w * 0.8)} ${r(y + w * 0.4)}Q${r(x)} ${r(y + w * 0.7)} ${r(x - w)} ${r(y)}Z`;
-    l += `M${r(x - w)} ${r(y - w * 0.2)}q${r(w)} ${r(-w * 0.8)} ${r(w * 1.8)} 0`;
+  /* Tafoni: Wabengruppe aus runden Löchern in drei Größen, jedes mit dunklem Inneren, Schattenrand oben
+     und heller, abgerundeter Unterlippe (Licht von oben rechts) */
+  let f = "", sch = "", l = "";
+  for (const [x, y, w] of [[0, 0, 1.5], [3, -0.4, 1.1], [-2.9, 0.3, 1.2], [1.4, 1.9, 0.8], [4.6, 1.3, 0.6], [-1.2, -1.9, 0.7], [-4.7, -0.6, 0.5], [2.4, -2.2, 0.5], [-0.9, 2.1, 0.5], [5.8, -0.5, 0.4]]) {
+    f += `M${r(x - w)} ${r(y)}a${w} ${r(w * 0.78)} 0 1 0 ${r(2 * w)} 0a${w} ${r(w * 0.78)} 0 1 0 ${r(-2 * w)} 0z`;
+    sch += `M${r(x - w * 0.8)} ${r(y - w * 0.2)}q${r(w * 0.8)} ${r(-w * 0.7)} ${r(w * 1.6)} 0`;
+    l += `M${r(x - w * 0.9)} ${r(y + w * 0.55)}q${r(w * 0.9)} ${r(w * 0.6)} ${r(w * 1.8)} 0`;
   }
-  S.def(`<g id="${S.id("taf")}"><path d="${f}" fill="#6a4524" opacity=".62"/><path d="${l}" stroke="#f6e0b2" stroke-width=".3" fill="none" opacity=".85"/></g>`);
+  S.def(`<g id="${S.id("taf")}"><path d="${f}" fill="#4a2c12" opacity=".78"/><path d="${sch}" stroke="#2e1a0a" stroke-width=".3" fill="none" opacity=".6"/><path d="${l}" stroke="#f8e4b6" stroke-width=".45" fill="none"/></g>`);
+  /* Grasbüschel in Felsfugen */
+  S.def(`<g id="${S.id("bueschel")}"><path d="M0 0q-1.2-2.4-3.6-3.6M0 0q-.4-3-1.4-5.4M0 0q.3-3.4.4-6M0 0q.9-2.8 2.4-4.8M0 0q1.4-1.8 3.8-2.6" stroke="#5f8f36" stroke-width=".55" fill="none"/><path d="M.2 0q-.6-2.2-2-3.8M.2 0q.6-2.6 1.6-3.8" stroke="#9cc463" stroke-width=".4" fill="none"/></g>`);
   S.def(`<pattern id="${S.id("meissel")}" width="3.4" height="2.9" patternUnits="userSpaceOnUse" patternTransform="rotate(8)"><path d="M.4 .3l1.1 1.5M2.2 1.6l.8 1" stroke="#9c6e3a" stroke-width=".3"/></pattern>`);
   S.def(`<pattern id="${S.id("gras")}" width="9" height="5" patternUnits="userSpaceOnUse"><path d="M1 5l-.6-2.6M1.6 5l.5-2.9M2.4 5l1.3-2.2M5.4 2.6l-.4-2M6 2.6l.7-2.3M6.6 2.6l1.4-1.6" stroke="#a6cc6e" stroke-width=".4"/><path d="M3.6 4.6l-.9-2M7.6 4.8l.3-2.4M.2 2.2l.6-1.8" stroke="#3f6b25" stroke-width=".4"/></pattern>`);
 }
 const taf = (x, y, sk) => `<use href="#${S.id("taf")}" transform="translate(${r(x)} ${r(y)}) scale(${sk})"/>`;
+const bueschel = (x, y, sk) => `<use href="#${S.id("bueschel")}" transform="translate(${r(x)} ${r(y)}) scale(${sk})"/>`;
 /* =====================================================================
    KULISSE — Himmel, Nordufer, The Rocks
    ===================================================================== */
@@ -741,26 +747,44 @@ const FAEHRE = { X: 296, Y: 157.4, s: 0.78 };
     /* Waben (Tafoni) in der Stirn */
     for (let j = 0; j < 2 + i; j++) { const x = 12 + rnd() * 200; k += taf(x, wav(x) + h * 0.55, r(0.5 + i * 0.25)); }
   });
-  /* rostrote Eisenbänder: breite, weiche Schlieren in den Trittflächen */
-  const EISEN = S.lg("eisenband", [[0, "#b0521f", 0], [0.5, "#b0521f", 0.32], [1, "#b0521f", 0]], 0, 0, 0, 1);
-  for (const [x, y, w, hh] of [[20, 205, 90, 4], [110, 222, 80, 5], [10, 240, 120, 6], [120, 256, 90, 5]]) k += `<path d="M${x} ${y} q${r(w * 0.3)} ${r(-hh * 0.6)} ${r(w * 0.6)} ${r(-hh * 0.2)} t${r(w * 0.4)} ${r(hh * 0.4)} l0 ${hh} q${r(-w * 0.4)} ${r(-hh * 0.5)} ${r(-w * 0.6)} ${r(-hh * 0.1)} t${r(-w * 0.4)} ${r(-hh * 0.3)} Z" fill="${EISEN}"/>`;
+  /* rostrote Eisenbänder: scharfe, wellige Linien entlang der Schichten auf den Trittflächen */
+  let eis = "", eis2 = "";
+  baenke.forEach(([y0, h], i) => {
+    const wav = (x) => y0 + Math.sin(x / 27 + i * 2) * 1.6 + Math.sin(x / 9 + i) * 0.5;
+    for (const [d, a0, a1] of [[h + 2.2, 0, 140], [h + 4.4, 60, 230], [h + 7, 10, 110]]) {
+      if (i === 3 && d > h + 4) continue;
+      let pth = "";
+      for (let x = a0; x <= a1; x += 6) pth += `${x === a0 ? "M" : "L"}${x} ${r(wav(x) + d + Math.sin(x / 7 + i) * 0.5)}`;
+      (d > h + 3 ? eis2 : (eis += pth, "")); if (d > h + 3) eis2 += pth;
+    }
+  });
+  k += `<path d="${eis}" stroke="#a84e1c" stroke-width=".8" fill="none" opacity=".75"/><path d="${eis2}" stroke="#b8622a" stroke-width=".45" fill="none" opacity=".7"/>`;
   /* Klüfte (senkrechte Risse) mit Grasbüscheln */
   for (const [x, y0, y1] of [[58, 214, 232], [148, 200, 214], [96, 232, 250], [182, 214, 232]]) {
     k += `<path d="M${x} ${y0} l1 ${r((y1 - y0) * 0.5)} l-.6 ${r((y1 - y0) * 0.5)}" stroke="#5e3f20" stroke-width=".8" fill="none" opacity=".6"/>`;
-    k += `<path d="M${x} ${y0 + 1} l-1.6 -2.6 M${x + 0.4} ${y0 + 1} l.4 -3 M${x + 0.6} ${y0 + 1} l1.8 -2.2" stroke="#6f9a40" stroke-width=".45"/>`;
+    k += bueschel(x + 0.4, y0 + 1.2, r(0.9 + (y0 - 200) * 0.02));
   }
+  for (const [x, y, sk] of [[22, 219, 1.1], [120, 236, 1.3], [200, 222, 1.1], [40, 254, 1.7], [168, 252, 1.6]]) k += bueschel(x, y, sk);
   /* Regenpfütze in einer Mulde der Felsplatte: spiegelt den Himmel; oben Schattenkante, unten Lichtkante */
   k += `<ellipse cx="132" cy="247.6" rx="25" ry="4.4" fill="#6a4a28" opacity=".35"/><ellipse cx="132" cy="248" rx="23.6" ry="3.7" fill="${S.lg("pfuetze", [[0, "#4f86bd"], [0.6, "#86b2d9"], [1, "#c9dcea"]])}"/>`;
   k += `<path d="M110 248.8q22 3.6 45 0" stroke="#f6e3b8" stroke-width=".6" fill="none"/><path d="M120 246.6h9M136 248.2h12" stroke="#e8f2f8" stroke-width=".35" opacity=".8"/>`;
   k += taf(28, 236, 1.3) + taf(196, 251, 1.5) + taf(62, 255, 1.7) + taf(176, 228, 1);
   /* Ufermauer aus behauenen Sandsteinquadern entlang der Wasserkante: Deckplatte (hell), Stirn mit
      Fugen, Kontaktschatten darunter; an der Wasserseite ein dunkler, nasser Gezeitenstreifen */
-  S.def(`<pattern id="${S.id("quader")}" width="9.4" height="4" patternUnits="userSpaceOnUse"><path d="M.2 0v4M4.9 1.6v2.4" stroke="#8f7046" stroke-width=".3"/><path d="M0 1.6h9.4" stroke="#8f7046" stroke-width=".25"/></pattern>`);
+  let qd = "", fu = "", toene = ["#e8d3a2", "#dcc48e", "#ecdab0", "#d6bd88"];
+  const qs = {};
+  for (let x = 0, j = 0; x < 400; j++) {
+    const w = 7 + rnd() * 5, x1 = Math.min(400, x + w), t = toene[j % 4];
+    qs[t] = (qs[t] || "") + `M${r(x)} ${r(KANTE(x) + 0.2)}L${r(x1)} ${r(KANTE(x1) + 0.2)}L${r(x1)} ${r(KANTE(x1) + 3.4)}L${r(x)} ${r(KANTE(x) + 3.4)}Z`;
+    fu += `M${r(x)} ${r(KANTE(x) + 0.2)}V${r(KANTE(x) + 3.4)}`;
+    x = x1;
+  }
+  for (const t in qs) qd += `<path d="${qs[t]}" fill="${t}"/>`;
   const kanteO = [...Array(41)].map((_, i) => `${i * 10} ${r(KANTE(i * 10) - 0.9)}`), kanteU = [...Array(41)].map((_, i) => `${400 - i * 10} ${r(KANTE(400 - i * 10) + 3.4)}`);
-  const mauerD = `M${kanteO.join(" L")} L${kanteU.join(" L")} Z`;
-  k += `<path d="${mauerD}" fill="${S.lg("mauer", [[0, "#efdcae"], [0.4, "#e2c78f"], [1, "#c9a56b"]])}"/><path d="${mauerD}" fill="url(#${S.id("quader")})"/>`;
-  k += `<path d="M${kanteO.join(" L")}" stroke="#3c4a3a" stroke-width=".7" fill="none" opacity=".7"/>`;
-  k += `<path d="M${kanteU.join(" L")}" stroke="#5e4022" stroke-width=".9" fill="none" opacity=".55"/>`;
+  /* nasser, dunkler Gezeitenstreifen an der Wasserseite, Deckplatte mit Lichtkante, Fugen, Kontaktschatten */
+  k += `<path d="M${kanteO.join(" L")} L${[...Array(41)].map((_, i) => `${400 - i * 10} ${r(KANTE(400 - i * 10) + 0.3)}`).join(" L")} Z" fill="#3f4a32"/>`;
+  k += qd + `<path d="${fu}" stroke="#7a5a32" stroke-width=".35"/><path d="M${[...Array(41)].map((_, i) => `${i * 10} ${r(KANTE(i * 10) + 0.5)}`).join(" L")}" stroke="#fbeccb" stroke-width=".6" fill="none"/>`;
+  k += `<path d="M${kanteU.join(" L")}" stroke="#5e4022" stroke-width="1" fill="none" opacity=".6"/>`;
   /* Bordsteine am Rasen, Gras wächst darüber */
   let bord = "";
   for (let i = 0; i < rand.length - 1; i++) bord += `<path d="M${rand[i][0]} ${rand[i][1]} L${rand[i + 1][0]} ${rand[i + 1][1]}" stroke="#d9bf8c" stroke-width="2.4" stroke-linecap="round"/>`;

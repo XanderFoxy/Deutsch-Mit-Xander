@@ -192,11 +192,11 @@ S.hinten(`<rect y="-2" width="400" height="200" fill="${S.lg("himmel", [[0, "#34
   }
   S.hinten(c);
 }
-/* Taubertal: bewaldeter Gegenhang hinter dem Kobolzeller Tor (≈ 600 m), sehr dunstig */
+/* Taubertal: der bewaldete Gegenhang jenseits der Tauber (≈ 600 m), tief unten und dunstblau */
 {
-  let c = `<path d="M80 156 Q110 148 138 151 Q160 147 186 152 L186 190 L80 190 Z" fill="${S.lg("tal", [[0, "#8fa48a"], [1, "#6c8462"]])}"/>`;
-  for (let i = 0; i < 44; i++) { const x = 82 + rnd() * 102, y = 152 + rnd() * 28; c += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1.3 + rnd() * 1.3)}" ry="${r(1 + rnd() * 0.8)}" fill="${["#738c64", "#829b6c", "#62795a", "#9aae7c"][i % 4]}"/>`; }
-  c += `<path d="M80 150 L186 150 L186 190 L80 190 Z" fill="${S.lg("taldunst", [[0, "#f3d4b0", 0.55], [1, "#f3d4b0", 0.15]])}"/>`;
+  let c = `<path d="M70 150 Q92 144 112 147 Q134 141 156 146 Q172 143 190 147 L190 200 L70 200 Z" fill="${S.lg("tal", [[0, "#9aa9bc"], [0.5, "#7f9183"], [1, "#5f7462"]])}"/>`;
+  for (let i = 0; i < 70; i++) { const x = 72 + rnd() * 116, y = 147 + Math.pow(rnd(), 0.8) * 46, q = 0.8 + (y - 147) / 30; c += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.3)}" ry="${r(q)}" fill="${["#7c8f86", "#8a9a86", "#6d8270", "#a0a88a", "#93806a"][i % 5]}"/>`; }
+  c += `<path d="M70 146 L190 146 L190 200 L70 200 Z" fill="${S.lg("taldunst", [[0, "#dfd6d0", 0.6], [0.6, "#c8cfd8", 0.3], [1, "#c8cfd8", 0.15]])}"/>`;
   S.hinten(c);
 }
 
@@ -304,7 +304,10 @@ const ST = { d: 45, L0: -3.6, L1: 3.6, traufe: 21, spitze: 29 };
    2 — DAS KOBOLZELLER TOR (Doppeltor mit Zwinger, unten an der Steige;
        die Stadtmauer selbst ist von hier hinter den Häusern verborgen)
    ===================================================================== */
-const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: steigeG(KTt), s: F / D }; })();
+/* Was hinter der Kante der Steige liegt, verschwindet unter ihr: Abschneide-Fläche oberhalb der Kante */
+S.def(`<clipPath id="${S.id("steigeclip")}"><path d="M-1 -1 H401 V262 H179 V177.2 L117 178.6 V262 H-1 Z"/></clipPath>`);
+let KOBOLZ = null;
+const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 4.2); return { X, D, g: steigeG(KTt), s: F / D }; })();
 {
   const Q = (dX, H, dD = 0) => P(KT.X + dX, KT.D + dD, H, KT.g);
   let k = "";
@@ -322,8 +325,12 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
   for (const dx of [-1.8, 1.8]) { const [fx, fy] = Q(dx, 15.4); k += `<rect x="${r(fx - 0.3)}" y="${r(fy)}" width=".6" height="1.6" fill="#2e261e"/>`; }
   S.def(`<clipPath id="${S.id("kbclip")}"><rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(yb - yt)}"/><path d="M${r(x0 - 1.6)} ${r(yt)} L${r(xm)} ${r(ys)} L${r(x1 + 1.6)} ${r(yt)} Z"/></clipPath>`);
   k += `<rect clip-path="url(#${S.id("kbclip")})" x="${r(x0 - 2)}" y="${r(ys - 3)}" width="${r(x1 - x0 + 4)}" height="${r(yb - ys + 3)}" fill="${S.lg("taldunst2", [[0, "#f6d6b4", 0.25], [1, "#f6d6b4", 0.55]])}"/>`;
-  S.teil({ id: "kobolzellertor", de: "das Kobolzeller Tor", syl: "KO-bol-zel-ler TOR", it: "la porta Kobolzell", itSyl: "POR-ta KO-bol-zell", en: "Kobolzell Gate", x: 0, y: 0, kunst: k,
-    tipp: "Das Kobolzeller Tor (1360) ist ein Tor in der Stadtmauer. Hinter ihm geht es steil hinunter ins Taubertal." });
+  /* Wehrgang der Stadtmauer: überdachtes Band, das vom Turm schräg den Hang hinaufläuft */
+  { const pts = [[3.2, 0, 0], [8, -3, 1.6], [14, -7, 3.6]], dachU = pts.map(([a2, b2, c2]) => Q(a2, 9.2 + c2, b2)), dachO = pts.map(([a2, b2, c2]) => Q(a2, 10.8 + c2, b2)), mauer = pts.map(([a2, b2, c2]) => Q(a2, 6.6 + c2, b2));
+    k += `<path d="${poly(...dachU, ...mauer.slice().reverse())}" fill="${BRUCH}"/><path d="${poly(...dachO, ...dachU.slice().reverse())}" fill="${DACHZ}"/>`;
+    for (const q of dachU) k += `<path d="M${pt(q)} l0 2.4" stroke="#4a3220" stroke-width=".4"/>`; }
+  KOBOLZ = { x0: x0 - 1.6, x1: x1 + 1.6, ys, yt, yb: Q(0, 13)[1] };
+  S.hinten(`<g clip-path="url(#${S.id("steigeclip")})">${k}</g>`);
 }
 /* =====================================================================
    4 — DAS HAUS: die Häuser an der Kobolzeller Steige (Traufen treppen
@@ -334,7 +341,7 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
   /* Jedes Haus hat EIN Geschoss-Niveau (gh); der Sockel gleicht die Steigung aus. So springen Traufen und
      Fensterreihen von Haus zu Haus deutlich nach unten. */
   const PSh = (t, w, H, g) => { const [X, D] = SX(t, w); return P(X, D, H, g); };
-  const haus = (t0, t1, w, traufe, first, putz, fw, sonne) => {
+  const haus = (t0, t1, w, traufe, first, putz, fw, sonne, kamin) => {
     let g = "";
     const gh = steigeG((t0 + t1) / 2), Q = (t, H) => PSh(t, w, H, gh);
     const fuss0 = PSh(t0, w, 0, steigeG(t0)), fuss1 = PSh(t1, w, 0, steigeG(t1));
@@ -344,6 +351,8 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
     /* Dach: Traufe zur Gasse, First dahinter */
     const off = w > 2.5 ? 4.5 : -4.5;
     g += `<path d="${pz(Q(t0, traufe), Q(t1, traufe), PSh(t1, w + off, first, gh), PSh(t0, w + off, first, gh))}" fill="${DACHZ}"/>${(() => { const q = strecke(Q(t0, traufe), Q(t1, traufe)); return q ? `<path d="M${pt(q[0])} L${pt(q[1])}" stroke="#5e2414" stroke-width=".7"/>` : ""; })()}`;
+    if (kamin) { const tm = (t0 + t1) / 2 + (t1 - t0) * 0.15, c0 = PSh(tm, w + off * 0.55, (traufe + first) / 2, gh), c1 = PSh(tm, w + off * 0.55, first + 1.1, gh), cw = Math.max(0.6, F / SX(tm, w)[1] * 0.35); g += `<rect x="${r(c0[0] - cw / 2)}" y="${r(c1[1])}" width="${r(cw)}" height="${r(c0[1] - c1[1])}" fill="#8a4a32"/><rect x="${r(c0[0] - cw / 2 - 0.2)}" y="${r(c1[1] - 0.4)}" width="${r(cw + 0.4)}" height=".5" fill="#5a3020"/>`;
+      const dg = PSh(t0 + (t1 - t0) * 0.35, w + off * 0.4, traufe + (first - traufe) * 0.4, gh), dw = cw * 1.4; g += `<path d="M${r(dg[0] - dw)} ${r(dg[1])} L${r(dg[0] - dw)} ${r(dg[1] - dw * 0.9)} L${r(dg[0])} ${r(dg[1] - dw * 1.6)} L${r(dg[0] + dw)} ${r(dg[1] - dw * 0.9)} L${r(dg[0] + dw)} ${r(dg[1])} Z" fill="#a54a2e"/><rect x="${r(dg[0] - dw * 0.5)}" y="${r(dg[1] - dw * 0.8)}" width="${r(dw)}" height="${r(dw * 0.7)}" fill="#3a3028"/>`; }
     if (fw) { let p = ""; for (const h of [3.2, 6]) p += `M${pt(Q(t0, h))} L${pt(Q(t1, h))} `; for (let i = 0; i <= 4; i++) { const t = t0 + (t1 - t0) * i / 4; p += `M${pt(Q(t, 3.2))} L${pt(Q(t, traufe))} `; } g += `<path d="${p}" stroke="${BALKEN}" stroke-width=".6" fill="none"/>`; }
     for (const [h0, h1] of (sonne ? [[4, 5.3], [6.7, 7.9]] : [[1.3, 2.5], [4, 5.3], [6.7, 7.9]])) if (h1 < traufe) for (const f of [0.2, 0.55]) { const ta = t0 + (t1 - t0) * f, tb = ta + (t1 - t0) * 0.16; g += fensterQ(Q(ta, h1), Q(tb, h1), Q(tb, h0), Q(ta, h0), { rb: 0.3, licht: rnd() < 0.3, abend: rnd() < 0.3 }); }
     /* Licht: Nordseite schaut zur Abendsonne, Südseite liegt im eigenen Schatten */
@@ -351,24 +360,35 @@ const KTt = 70, KT = (() => { const [X, D] = SX(KTt, 2.5); return { X, D, g: ste
     else g += `<path d="${pz(fuss0, fuss1, Q(t1, traufe), Q(t0, traufe))}" fill="${SCHATTEN}" opacity=".34"/>`;
     return g;
   };
-  /* Südseite (rechts der Steige, Schattenseite): von unten (hinten) nach oben zeichnen */
-  for (const [t0, t1, tr, fi, f, fw] of [[31, 40, 9, 14, "#e6d2b0", 0], [22, 31, 9.6, 15, "#dfb8a0", 1], [13.6, 22, 9.2, 15, "#efe2c4", 0], [0, 13.6, 8.4, 16.6, "#e9b54c", 1]]) k += haus(t0, t1, 0, tr, fi, f, fw, false);
-  /* Nordseite (links, fast streifend, in der Abendsonne) */
-  for (const [t0, t1, tr, fi, f, fw] of [[30, 40, 9, 14, "#e8d8b8", 0], [20, 30, 10, 15, "#d8a898", 1], [10, 20, 9.6, 15, "#ede0c2", 0], [-2, 10, 10.4, 16, "#e2c890", 1], [-12.4, -2, 11, 16.6, "#f0dcc0", 0]]) k += haus(t0, t1, 5, tr, fi, f, fw, true);
-  /* Querhaus an der Biegung der Steige: verdeckt den unteren Teil des Kobolzeller Tors */
-  {
-    const tq = 46, gq = steigeG(tq), Qq = (w, H, dt = 0) => PSh(tq + dt, w, H, gq);
-    k += `<path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 6.5), Qq(-2, 6.5))}" fill="#e9d6b4"/><path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 6.5), Qq(-2, 6.5))}" fill="${PUTZ}"/>`;
-    k += `<path d="${pz(Qq(-2.3, 6.5), Qq(7.3, 6.5), Qq(7.3, 10.5, 4), Qq(-2.3, 10.5, 4))}" fill="${DACHZ}"/><path d="${pz(Qq(-2.3, 6.5), Qq(7.3, 6.5), Qq(7.3, 10.5, 4), Qq(-2.3, 10.5, 4))}" fill="#ffb060" opacity=".12"/>`;
-    for (const w of [-0.8, 1.2, 3.4, 5.4]) for (const [h0, h1] of [[1.2, 2.3], [3.8, 5.0]]) k += fensterQ(Qq(w, h1), Qq(w + 0.9, h1), Qq(w + 0.9, h0), Qq(w, h0), { rb: 0.3, licht: rnd() < 0.35, abend: rnd() < 0.3 });
-    k += `<path d="${pz(Qq(-2, 0), Qq(7, 0), Qq(7, 6.5), Qq(-2, 6.5))}" fill="${SCHATTEN}" opacity=".22"/>`;
-    /* Dunst aus dem Tal über dem Dach */
-    k += `<path d="${pz(Qq(-2.3, 6.5), Qq(7.3, 6.5), Qq(7.3, 10.5, 4), Qq(-2.3, 10.5, 4))}" fill="#f6d8b6" opacity=".3"/>`;
-    { let d = ""; for (let i = 1; i < 6; i++) { const H = 6.5 + 4 * i / 6, dt = 4 * i / 6, q = strecke(Qq(-2.3, H, dt), Qq(7.3, H, dt)); if (q) d += `M${pt(q[0])} L${pt(q[1])} `; } k += `<path d="${d}" stroke="#7a3a24" stroke-width=".3" opacity=".5"/>`; }
-    { const q = strecke(Qq(-2.3, 10.5, 4), Qq(7.3, 10.5, 4)); if (q) k += `<path d="M${pt(q[0])} L${pt(q[1])}" stroke="#6e2a18" stroke-width=".7"/>`; }
-  }
-  S.teil({ id: "haus", de: "das Haus", syl: "HAUS", it: "la casa", itSyl: "CA-sa", en: "house", x: 0, y: 0, kunst: k,
-    tipp: "Die Häuser an der Kobolzeller Steige stehen immer weiter unten – die Gasse ist sehr steil." });
+  /* jenseits der Kante (t > 6): Häuser treppen sich ab, ihre Füße verschwinden unter der Kante; je tiefer, desto blauer.
+     In der Biegung stehen Häuser quer zur Gasse — man sieht ihre Giebel und eine Dachfläche schräg von oben. */
+  const mix = (c1, c2, f) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(c1.substr(i, 2), 16) * (1 - f) + parseInt(c2.substr(i, 2), 16) * f).toString(16).padStart(2, "0")).join("");
+  const hz = (t) => Math.min(0.55, Math.max(0, (t - 6) / 75));
+  const querHaus = (t, w0, w1, traufe, first, putz) => {
+    const gh = steigeG(t + 3.5), Q = (w, H, dt = 0) => PSh(t + dt, w, H, gh), wm = (w0 + w1) / 2, f = hz(t), we = wm > 2.77 ? w0 : w1;
+    let g = `<path d="${pz(Q(w0, -3), Q(w1, -3), Q(w1, traufe), Q(wm, first), Q(w0, traufe))}" fill="${mix(putz, "#b8c2d4", f)}"/>`;
+    for (const [h0, h1] of [[1.2, 2.3], [4, 5.1], [traufe + 0.8, traufe + 1.8]]) for (const u of (h0 > traufe ? [0.42] : [0.2, 0.62])) { const wa = w0 + (w1 - w0) * u, wb = wa + (w1 - w0) * (h0 > traufe ? 0.16 : 0.18); g += `<path d="${pz(Q(wa, h1), Q(wb, h1), Q(wb, h0), Q(wa, h0))}" fill="${mix("#3c4a5e", "#9aa6ba", f)}"/>`; }
+    g += `<path d="${pz(Q(we, traufe), Q(we, traufe, 7), Q(wm, first, 7), Q(wm, first))}" fill="${mix("#a54a2e", "#a8a6b8", f)}"/>`;
+    { let d = ""; for (let i = 1; i < 5; i++) { const H = traufe + (first - traufe) * i / 5, ww = we + (wm - we) * i / 5, q = strecke(Q(ww, H), Q(ww, H, 7)); if (q) d += `M${pt(q[0])} L${pt(q[1])} `; } g += `<path d="${d}" stroke="${mix("#6e2a18", "#8a8aa0", f)}" stroke-width=".3"/>`; }
+    g += `<path d="M${pt(Q(w0 - 0.2, traufe - 0.1))} L${pt(Q(wm, first + 0.25))} L${pt(Q(w1 + 0.2, traufe - 0.1))}" stroke="${mix("#7a3220", "#9a98ac", f)}" stroke-width=".8" fill="none" stroke-linejoin="round"/>`;
+    { const c0 = Q(we + (wm - we) * 0.45, traufe + (first - traufe) * 0.45, 4.6), c1 = Q(we + (wm - we) * 0.45, first + 1, 4.6), cw = Math.max(0.6, 0.6 * F / SX(t, wm)[1]); g += `<rect x="${r(c0[0] - cw / 2)}" y="${r(c1[1])}" width="${r(cw)}" height="${r(c0[1] - c1[1])}" fill="${mix("#7a3a26", "#9a98ac", f)}"/>`;
+      const dg = Q(we + (wm - we) * 0.35, traufe + (first - traufe) * 0.32, 2), dw = cw * 1.3; g += `<path d="M${r(dg[0] - dw)} ${r(dg[1])} L${r(dg[0] - dw)} ${r(dg[1] - dw * 0.9)} L${r(dg[0])} ${r(dg[1] - dw * 1.6)} L${r(dg[0] + dw)} ${r(dg[1] - dw * 0.9)} L${r(dg[0] + dw)} ${r(dg[1])} Z" fill="${mix("#b05a3a", "#a8a6b8", f)}"/><rect x="${r(dg[0] - dw * 0.45)}" y="${r(dg[1] - dw * 0.8)}" width="${r(dw * 0.9)}" height="${r(dw * 0.7)}" fill="#3a3028"/>`; }
+    return g;
+  };
+  const items = [];
+  for (const [t0, t1, tr, fi, f, fw] of [[54, 62, 8.4, 13, "#e6d2b0", 0], [46, 54, 8.8, 13.6, "#dcc6a4", 1], [38, 46, 9, 14, "#efe2c4", 0], [30, 38, 9.2, 14.2, "#dfb8a0", 1], [22, 30, 9.4, 14.6, "#e8d8b8", 0], [13.6, 22, 9.2, 15, "#efe2c4", 0]]) items.push([t0, () => haus(t0, t1, 0, tr, fi, mix(f, "#b8c2d4", hz(t0)), fw, false, true)]);
+  for (const [t0, t1, tr, fi, f, fw] of [[46, 54, 8.6, 13.4, "#e8d8b8", 0], [38, 46, 9, 14, "#d8a898", 1], [30, 38, 9.4, 14.4, "#ede0c2", 0], [22, 30, 9.6, 15, "#e2c890", 1], [14, 22, 9.8, 15, "#f0dcc0", 0], [6, 14, 10, 15.4, "#e8c8a8", 1]]) items.push([t0, () => haus(t0, t1, 5, tr, fi, mix(f, "#b8c2d4", hz(t0)), fw, true, true)]);
+  items.push([52, () => querHaus(52, 1.5, 6.5, 7.6, 12.4, "#e8d2b0")], [40, () => querHaus(40, -1.5, 3.2, 8, 13, "#efdcbc")], [29, () => querHaus(29, 2.6, 6.4, 8.4, 13.4, "#e4c79a")]);
+  items.sort((a2, b2) => b2[0] - a2[0]);
+  let hinter = items.map((it) => it[1]()).join("");
+  hinter += haus(0, 13.6, 0, 8.4, 16.6, "#e9b54c", 1, false);
+  k += `<g clip-path="url(#${S.id("steigeclip")})">${hinter}</g>`;
+  /* diesseits der Kante (links, Nordseite, in der Abendsonne) */
+  for (const [t0, t1, tr, fi, f, fw] of [[-2, 6, 10.4, 16, "#e2c890", 1], [-12.4, -2, 11, 16.6, "#f0dcc0", 0]]) k += haus(t0, t1, 5, tr, fi, f, fw, true);
+  S.hinten(k);
+  /* das Kobolzeller Tor als Wort: Trefferfläche über Helm und Obergeschoss (der Turm selbst ist Kulisse) */
+  S.teil({ id: "kobolzellertor", de: "das Kobolzeller Tor", syl: "KO-bol-zel-ler TOR", it: "la porta Kobolzell", itSyl: "POR-ta KO-bol-zell", en: "Kobolzell Gate", x: 0, y: 0, kunst: `<path class="bw-flaeche" d="M${r(KOBOLZ.x0 - 1)} ${r(KOBOLZ.yb)} L${r(KOBOLZ.x0 - 1)} ${r(KOBOLZ.yt)} L${r((KOBOLZ.x0 + KOBOLZ.x1) / 2)} ${r(KOBOLZ.ys - 2)} L${r(KOBOLZ.x1 + 1)} ${r(KOBOLZ.yt)} L${r(KOBOLZ.x1 + 1)} ${r(KOBOLZ.yb)} Z" fill="rgba(255,255,255,0.001)"/>`,
+    tipp: "Das Kobolzeller Tor (1360) ist ein Tor in der Stadtmauer. Hinter ihm geht es steil hinunter ins Taubertal." });
 }
 
 /* =====================================================================

@@ -569,29 +569,31 @@ const OBER = { x: 48, d: 3.0 };
 /* Laubkronen wie gemalt: dunkle Grundmasse, mittlere Laubballen, Lichtseite
    oben links; ein Wellenfilter franst die Ränder blattartig aus, eine Maske
    schneidet Himmelslöcher; im Inneren sieht man Astwerk */
-S.def(`<filter id="${S.id("laubrand")}" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence type="turbulence" baseFrequency=".45" numOctaves="2" seed="2"/><feDisplacementMap in="SourceGraphic" scale="3.4" xChannelSelector="R" yChannelSelector="G"/></filter>`);
-S.def(`<filter id="${S.id("laubrand2")}" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence type="turbulence" baseFrequency=".9" numOctaves="2" seed="6"/><feDisplacementMap in="SourceGraphic" scale="1.8" xChannelSelector="R" yChannelSelector="G"/></filter>`);
+S.def(`<filter id="${S.id("laubrand")}" x="-15%" y="-15%" width="130%" height="130%"><feTurbulence type="turbulence" baseFrequency="1.5" numOctaves="2" seed="2"/><feDisplacementMap in="SourceGraphic" scale=".9" xChannelSelector="R" yChannelSelector="G"/></filter>`);
 const blob = (z, cx, cy, rx, ry, n, j) => {
   const p = []; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, f = 1 - j / 2 + z() * j; p.push([cx + Math.cos(a) * rx * f, cy + Math.sin(a) * ry * f]); }
   return "M" + p.map((q, i) => { const nq = p[(i + 1) % n]; return `${r((q[0] + nq[0]) / 2)} ${r((q[1] + nq[1]) / 2)} Q${r(nq[0])} ${r(nq[1])}`; }).join(" ") + ` ${r((p[0][0] + p[1][0]) / 2)} ${r((p[0][1] + p[1][1]) / 2)}Z`;
 };
-let laubNr = 0;
-const laubkrone = (cx, cy, rx, ry, seed, fern) => {
-  const z = B.zufall(seed), id = S.id("lk" + laubNr++);
-  const [cd, cm, ch, ca] = fern ? ["#4b6650", "#67875f", "#93ae7f", "#7d7868"] : ["#2f4a2a", "#4d7240", "#7da35e", "#5a5446"];
+/* drei Kronen-Vorlagen (Radius 10), einmal definiert und vielfach gesetzt —
+   weit weg gedunstet, vorn kräftig */
+const VORLAGE = (seed) => {
+  const z = B.zufall(seed), id = S.id("kv" + seed);
   let mittel = "", hell = "", loch = "";
-  for (let i = 0; i < 12; i++) {
-    const a = z() * Math.PI * 2, d = Math.sqrt(z()) * 0.62, x = cx + Math.cos(a) * rx * d, y = cy + Math.sin(a) * ry * d, A = rx * (0.24 + z() * 0.16), Bb = ry * (0.22 + z() * 0.16);
-    mittel += blob(z, x - A * 0.12, y - Bb * 0.14, A, Bb, 10, 0.3);
-    const lit = 1 - Math.max(0, Math.min(1, ((x - cx) / rx + (y - cy) / ry) * 0.6 + 0.5));
-    if (lit > 0.25) hell += blob(z, x - A * 0.3, y - Bb * 0.34, A * 0.5 * (0.5 + lit), Bb * 0.45 * (0.5 + lit), 8, 0.35);
+  for (let i = 0; i < 9; i++) {
+    const a = z() * Math.PI * 2, d = Math.sqrt(z()) * 0.62, x = Math.cos(a) * 10 * d, y = Math.sin(a) * 10 * d, A = 10 * (0.26 + z() * 0.16), Bb = 10 * (0.24 + z() * 0.16);
+    mittel += blob(z, x - A * 0.12, y - Bb * 0.14, A, Bb, 8, 0.3);
+    const lit = 1 - Math.max(0, Math.min(1, (x + y) / 10 * 0.6 + 0.5));
+    if (lit > 0.3) hell += blob(z, x - A * 0.3, y - Bb * 0.34, A * 0.5 * (0.5 + lit), Bb * 0.45 * (0.5 + lit), 7, 0.35);
   }
-  const hs = Math.min(rx, ry) / 20;
-  for (let i = 0; i < 8; i++) { const a = z() * Math.PI * 2, d = 0.35 + z() * 0.55; loch += `<ellipse cx="${r(cx + Math.cos(a) * rx * d)}" cy="${r(cy + Math.sin(a) * ry * d)}" rx="${r((0.8 + z() * 1.8) * hs)}" ry="${r((0.6 + z() * 1.2) * hs)}"/>`; }
-  S.def(`<mask id="${id}" maskUnits="userSpaceOnUse" x="${r(cx - rx * 1.4)}" y="${r(cy - ry * 1.4)}" width="${r(rx * 2.8)}" height="${r(ry * 2.8)}"><rect x="${r(cx - rx * 1.4)}" y="${r(cy - ry * 1.4)}" width="${r(rx * 2.8)}" height="${r(ry * 2.8)}" fill="#fff"/><g>${loch}</g></mask>`);
-  const ast = `M${cx} ${r(cy + ry)} l${r(-rx * 0.3)} ${r(-ry * 0.7)} M${cx} ${r(cy + ry)} l${r(rx * 0.35)} ${r(-ry * 0.8)} M${cx} ${r(cy + ry * 0.6)} l${r(-rx * 0.05)} ${r(-ry * 0.9)}`;
-  return `<g filter="url(#${S.id(fern ? "laubrand2" : "laubrand")})"><g mask="url(#${id})"><path d="${blob(z, cx, cy, rx, ry, 16, 0.3)}" fill="${cd}"/><path d="${ast}" stroke="${ca}" stroke-width="${r(rx * 0.035)}"/><path d="${mittel}" fill="${cm}"/><path d="${hell}" fill="${ch}"/></g></g>`;
+  for (let i = 0; i < 7; i++) { const a = z() * Math.PI * 2, d = 0.35 + z() * 0.55; loch += `<ellipse cx="${r(Math.cos(a) * 10 * d)}" cy="${r(Math.sin(a) * 10 * d)}" rx="${r(0.4 + z() * 0.9)}" ry="${r(0.3 + z() * 0.6)}"/>`; }
+  S.def(`<mask id="${id}m" maskUnits="userSpaceOnUse" x="-14" y="-14" width="28" height="28"><rect x="-14" y="-14" width="28" height="28" fill="#fff"/>${loch}</mask>`);
+  S.def(`<g id="${id}"><g filter="url(#${S.id("laubrand")})"><g mask="url(#${id}m)"><path d="${blob(z, 0, 0, 10, 10, 13, 0.3)}" fill="#2f4a2a"/><path d="M0 10 l-3 -7 M0 10 l3.5 -8 M0 6 l-.5 -9" stroke="#5a5446" stroke-width=".35"/><path d="${mittel}" fill="#4d7240"/><path d="${hell}" fill="#7da35e"/></g></g></g>`);
+  return id;
 };
+const KV = [VORLAGE(3), VORLAGE(7), VORLAGE(13)];
+let kvNr = 0;
+const laubkrone = (cx, cy, rx, ry) => `<use href="#${KV[kvNr++ % 3]}" transform="translate(${r(cx)} ${r(cy)}) scale(${r(rx / 10 * 100) / 100} ${r(ry / 10 * 100) / 100})"/>`;
+const FERNBAUM = dunst("fernbaum", 0.22, [0.78, 0.85, 0.93]);
 {
   let k = "";
   /* Parkrasen, Hecke und Eisenzaun am Ring */
@@ -607,7 +609,7 @@ const laubkrone = (cx, cy, rx, ry, seed, fern) => {
     const kb = r(FB - 7 * M * sc), top = FB - 19 * M * sc;
     k += `<path d="M${r(bx + 2.6)} ${FB} l11 -3.4 l0 .9 l-10 3.1 Z" fill="#1b120a" opacity=".16"/>`;
     k += `<path d="M${r(bx - 1.2)} ${FB} Q${r(bx - 0.9)} ${r(FB - 10)} ${r(bx - 0.7)} ${kb} L${r(bx + 0.7)} ${kb} Q${r(bx + 0.9)} ${r(FB - 10)} ${r(bx + 1.2)} ${FB} Z" fill="#9a937c"/><path d="M${r(bx - 0.3)} ${r(FB - 3)} l0 -3 M${r(bx + 0.4)} ${r(FB - 11)} l0 -3" stroke="#d6d0b4" stroke-width=".5"/>`;
-    k += laubkrone(bx, r((top + kb) / 2 - 1), r(17 * sc), r((kb - top) / 2 + 2), seed, true);
+    k += `<g ${FERNBAUM}>${laubkrone(bx, r((top + kb) / 2 - 1), r(17 * sc), r((kb - top) / 2 + 2))}</g>`;
   }
   /* Kandelaber am fernen Gehsteig (in 36 m) */
   for (const lx of [118, 262]) k += `<rect x="${lx - 0.3}" y="122.4" width=".6" height="24" fill="#3a3d3e"/><path d="M${lx - 3} 123.4 Q${lx} 120.8 ${lx + 3} 123.4" stroke="#3a3d3e" stroke-width=".4" fill="none"/>` +
@@ -1044,8 +1046,8 @@ const PODEST = yp(3.6);
     return g;
   };
   v += platane(2, 1) + platane(398, -1);
-  v += laubkrone(36, 14, 52, 44, 101) + laubkrone(14, 66, 26, 32, 103) + laubkrone(78, -4, 30, 22, 107);
-  v += laubkrone(366, 12, 40, 34, 109) + laubkrone(392, 60, 18, 30, 113);
+  v += laubkrone(36, 14, 52, 44) + laubkrone(14, 66, 26, 32) + laubkrone(78, -4, 30, 22);
+  v += laubkrone(366, 12, 40, 34) + laubkrone(392, 60, 18, 30);
   S.davor(v);
 }
 
