@@ -591,12 +591,12 @@ const unterKathedrale = [];
     t += `<path d="M-.75 -8 v-3.4 q.75 -1.1 1.5 0 v3.4 Z M-.5 -3 v-2.2 q.5 -.7 1 0 v2.2 Z" fill="#3a1c1e" stroke="#d8c3b4" stroke-width=".25"/>`;
     t += `<path d="M-4.25 0 V-19 M4.25 0 V-19" stroke="#7a3a33" stroke-width=".5"/>`;
     /* Zeltdach aus grünen Ziegeln: linke Fläche im Schatten, Gratlinien, Hörfenster */
-    t += `<path d="M-5.8 -21.6 L-.25 -33 L-1.9 -21.6 Z" fill="${GRUEN_S}"/><path d="M-1.9 -21.6 L-.25 -33 L.25 -33 L4.6 -21.6 Z" fill="${GRUEN_M}"/>`;
+    t += `<path d="M-5 -21.6 L-.25 -32 L-1.6 -21.6 Z" fill="${GRUEN_S}"/><path d="M-1.6 -21.6 L-.25 -32 L.25 -32 L4.2 -21.6 Z" fill="${GRUEN_M}"/>`;
     let zr = "";
-    for (let j = 1; j < 6; j++) { const y = -21.6 - j * 2, f = 1 - j * 2 / 11.4; zr += `M${r(-5.8 * f)} ${y} H${r(4.6 * f)}`; }
-    t += `<path d="${zr}" stroke="#1f4a37" stroke-width=".14" opacity=".7"/><path d="M-1.9 -21.6 L-.25 -33" stroke="#9cc7ad" stroke-width=".2"/>`;
-    t += `<path d="M.2 -25 l.8 -1.8 l.8 1.8 Z" fill="${WEISS_L}"/><path d="M-5.8 -21.6 L-.25 -33" stroke="${SCHNEE}" stroke-width=".3" opacity=".8"/>`;
-    t += `<path d="M-6 -21.6 h10.8" stroke="${SCHNEE}" stroke-width=".55"/><path d="M0 -33 V-35.4" stroke="#d6a93a" stroke-width=".3"/><circle cx="0" cy="-34" r=".38" fill="${GOLD}"/>`;
+    for (let j = 1; j < 5; j++) { const y = -21.6 - j * 2, f = 1 - j * 2 / 10.4; zr += `M${r(-5 * f)} ${y} H${r(4.2 * f)}`; }
+    t += `<path d="${zr}" stroke="#1f4a37" stroke-width=".14" opacity=".7"/><path d="M-1.6 -21.6 L-.25 -32" stroke="#9cc7ad" stroke-width=".2"/>`;
+    t += `<path d="M.2 -25 l.8 -1.8 l.8 1.8 Z" fill="${WEISS_L}"/><path d="M-5 -21.6 L-.25 -32" stroke="${SCHNEE}" stroke-width=".3" opacity=".8"/>`;
+    t += `<path d="M-5.2 -21.6 h9.6" stroke="${SCHNEE}" stroke-width=".55"/><path d="M0 -32 V-34.4" stroke="#d6a93a" stroke-width=".3"/><circle cx="0" cy="-33" r=".38" fill="${GOLD}"/>`;
     k += `<g transform="translate(${ox} ${oy}) scale(${s.toFixed(4)})">${t}</g>`;
   }
   /* Zarenturm-Ansatz: die Mauer läuft am Spasski-Turm vorbei nach hinten (Kulisse) */

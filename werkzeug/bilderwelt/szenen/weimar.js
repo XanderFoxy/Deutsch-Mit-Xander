@@ -135,10 +135,11 @@ S.hinten(`<rect x="0" y="${HOR}" width="400" height="${260 - HOR}" fill="#a49b8f
   /* Haus: in der Fassadenebene D, von X0 bis X1, Traufe in m, Dachfirst in m */
   const haus = (D, X0, X1, traufe, first, farbe, fl, achsen, gaube) => {
     const u = sk(D), x0 = Math.max(0.6, xG(D, X0)), x1 = Math.min(399.4, xG(D, X1)), y0 = yG(D, 0), yt = yG(D, traufe), yf = yG(D, first);
+    if (x1 - x0 < 1) return "";
     let g = `<rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(y0 - yt)}" fill="${farbe}"/>`;
     g += `<rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(y0 - yt)}" fill="${S.lg("hauslicht", [[0, "#fff4dc", 0.25], [1, "#000", 0.12]], 0, 0, 1, 0)}"/>`;
-    g += `<path d="M${r(x0 - 0.6)} ${r(yt)} L${r(x0 + (x1 - x0) * 0.12)} ${r(yf)} L${r(x1 - (x1 - x0) * 0.12)} ${r(yf)} L${r(x1 + 0.6)} ${r(yt)} Z" fill="${DACH}"/>`;
-    g += `<rect x="${r(x0 - 0.6)}" y="${r(yt - 0.6)}" width="${r(x1 - x0 + 1.2)}" height=".9" fill="#efe6d4"/>`;
+    g += `<path d="M${r(Math.max(0, x0 - 0.6))} ${r(yt)} L${r(x0 + (x1 - x0) * 0.12)} ${r(yf)} L${r(x1 - (x1 - x0) * 0.12)} ${r(yf)} L${r(Math.min(400, x1 + 0.6))} ${r(yt)} Z" fill="${DACH}"/>`;
+    g += `<rect x="${r(Math.max(0, x0 - 0.6))}" y="${r(yt - 0.6)}" width="${r(Math.min(400, x1 + 0.6) - Math.max(0, x0 - 0.6))}" height=".9" fill="#efe6d4"/>`;
     const dx = (xG(D, X1) - xG(D, X0)) / achsen, fh = (y0 - yt - 0.6 * u) / fl, xa = xG(D, X0);
     for (let f = 0; f < fl; f++) for (let i = 0; i < achsen; i++) {
       const x = xa + (i + 0.5) * dx, y = yt + 0.6 * u + f * fh;
@@ -266,14 +267,14 @@ S.teile[S.teile.length - 1].unter = theaterUnter;
   };
   let k = "";
   const STAMM = S.lg("stamm", [[0, "#7a6550"], [1, "#3c3024"]], 0, 0, 1, 0);
-  for (const [D, X, w] of [[34, -22.5, 0.5], [28, -19.5, 0.55], [33, 22, 0.5], [27, 19, 0.55]]) {
+  for (const [D, X, w] of [[34, -21.6, 0.5], [28, -18.8, 0.55], [33, 21.2, 0.5], [27, 18.4, 0.55]]) {
     const x = xG(D, X), y0 = yG(D), y1 = yG(D, 8), bw = w * sk(D), u = sk(D);
     k += `<path d="M${r(x - bw)} ${r(y0)} L${r(x - bw * 0.55)} ${r(y1)} L${r(x + bw * 0.55)} ${r(y1)} L${r(x + bw)} ${r(y0)} Z" fill="${STAMM}"/>`;
     k += `<path d="M${r(x)} ${r(yG(D, 5.5))} q${r(1.2 * u)} ${r(-0.8 * u)} ${r(2 * u)} ${r(-2.6 * u)} M${r(x)} ${r(yG(D, 6.2))} q${r(-1.1 * u)} ${r(-0.7 * u)} ${r(-1.8 * u)} ${r(-2.4 * u)}" stroke="#4a3b2c" stroke-width="${r(0.18 * u)}" fill="none" stroke-linecap="round"/>`;
     bodenSchatten(D, X, 1, 9, 0.18);
   }
-  k += krone(xG(34, -22.5), yG(34, 10), 38, 56, 31, 0.6) + krone(xG(28, -19.5), yG(28, 9.5), 36, 58, 32, 0.55);
-  k += krone(xG(33, 22), yG(33, 10), 38, 56, 33, 0.65) + krone(xG(27, 19), yG(27, 9.5), 36, 58, 34, 0.55);
+  k += krone(xG(34, -21.6), yG(34, 10), 38, 56, 31, 0.6) + krone(xG(28, -18.8), yG(28, 9.5), 36, 58, 32, 0.55);
+  k += krone(xG(33, 21.2), yG(33, 10), 38, 56, 33, 0.65) + krone(xG(27, 18.4), yG(27, 9.5), 36, 58, 34, 0.55);
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: k,
     tipp: "Im Oktober werden die Blätter der Linden gelb." });
 }
@@ -465,7 +466,7 @@ const ZW = { D: 13, X: -5.6 };
 {
   /* Die Verkäuferin hinter der Theke (bis zur Theke verdeckt) */
   const V = mensch("V", { id: "wmr_verk", geschlecht: "w", blick: 20, frisur: "dutt", haarfarbe: "braun", haut: "hell", laecheln: true, pose: "halten",
-    kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, schuerze: { stueck: "schuerze", farbe: "beige" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kopftuch", farbe: "rot" } } }, 1.64, ZW.D + 0.7, ZW.X + 0.4, 2);
+    kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, schuerze: { stueck: "schuerze", farbe: "beige" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kopftuch", farbe: "rot" } } }, 1.64, ZW.D + 0.7, ZW.X - 0.35, 2);
   const theke = yG(ZW.D, 0.95);
   S.def(`<clipPath id="${S.id("hinterTheke")}"><rect x="-60" y="-120" width="120" height="${r(theke - V.y + 120)}"/></clipPath>`);
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x: V.x, y: V.y,
