@@ -279,7 +279,7 @@ const H = (n, stops, a, b, c, d) => S.lg(n, stops, a, b, c, d);
   const X0 = 106, X1 = 214, Y0 = 32, Y1 = 84, cx = (X0 + X1) / 2;
   let k = `<rect x="${X0 - 2}" y="${Y0 - 2}" width="${X1 - X0 + 4}" height="${Y1 - Y0 + 4}" rx="1" fill="#3a3e42"/><rect x="${X0}" y="${Y0}" width="${X1 - X0}" height="${Y1 - Y0}" fill="#14181e"/>`;
   k += `<rect x="${X0}" y="${Y0}" width="${X1 - X0}" height="6" fill="#1e2a3a"/>`;
-  k += `<path d="M${X0 + 3} ${Y0 + 3.2} l2.2 -.5 l1.6 -2 l.8 0 l-.8 2 l1.6 -.4 l.6 -.8 l.6 0 l-.4 1.2 l.4 1.2 l-.6 0 l-.6 -.8 l-1.6 -.4 l.8 2 l-.8 0 l-1.6 -2 Z" fill="#ffd23a"/><text x="${X0 + 10}" y="${Y0 + 4.4}" font-size="3.6" fill="#ffd23a" font-family="Arial,Helvetica,sans-serif" font-weight="bold">Abflug</text><text x="${X1 - 3}" y="${Y0 + 4.4}" font-size="3" text-anchor="end" fill="#c9d4de" font-family="Arial,Helvetica,sans-serif">Departures</text>`;
+  k += `<text x="${X0 + 3}" y="${Y0 + 4.4}" font-size="3.6" fill="#ffd23a" font-family="Arial,Helvetica,sans-serif" font-weight="bold">Abflug</text><text x="${X1 - 3}" y="${Y0 + 4.4}" font-size="3" text-anchor="end" fill="#c9d4de" font-family="Arial,Helvetica,sans-serif">Departures</text>`;
   const sp = [X0 + 3, X0 + 15, X0 + 32, X0 + 72, X0 + 84];
   ["Zeit", "Flug", "Ziel", "Gate", "Bemerkung"].forEach((t, i) => { k += `<text x="${sp[i]}" y="${Y0 + 9}" font-size="2.2" fill="#8a96a2" font-family="Arial,Helvetica,sans-serif">${t}</text>`; });
   const fluege = [["09:05", "DA 101", "PARIS", "A15", "Boarding", "#7cff8a"], ["09:20", "DA 207", "LONDON", "A22", "Gate offen", "#7cff8a"], ["09:35", "DA 314", "PISA", "A18", "pünktlich", "#e8eef2"],

@@ -173,8 +173,8 @@ const DOSE = { x: 11, y: 104 };
 }
 {
   /* Schuko-Stecker steckt links, Kabel läuft zum Lautsprecher hinunter */
-  let k = `<path d="M-4.2 2.6 C-4.6 10 -3 22 -1 34 C1 50 10 70 22 80" stroke="#1d1f22" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
-  k += `<circle cx="-4.2" cy="0" r="2.7" fill="${S.rg("steckerk", [[0, "#4a4e55"], [1, "#16181b"]], 0.4, 0.35, 0.7)}"/>`;
+  S.hinten(`<path d="M${DOSE.x - 4.2} ${DOSE.y + 2.6} C${DOSE.x - 4.6} ${DOSE.y + 10} ${DOSE.x - 3} ${DOSE.y + 22} ${DOSE.x - 1} ${DOSE.y + 34} C${DOSE.x + 1} ${DOSE.y + 50} ${DOSE.x + 10} ${DOSE.y + 70} ${DOSE.x + 24} ${DOSE.y + 80}" stroke="#1d1f22" stroke-width="1.1" fill="none" stroke-linecap="round"/>`);
+  let k = `<circle cx="-4.2" cy="0" r="2.7" fill="${S.rg("steckerk", [[0, "#4a4e55"], [1, "#16181b"]], 0.4, 0.35, 0.7)}"/>`;
   k += `<rect x="-5.4" y="1.4" width="2.4" height="2.8" rx=".8" fill="#24272b"/>`;
   k += `<circle cx="-5" cy="-.8" r=".7" fill="#fff" opacity=".25"/>`;
   S.teil({ oben: true, id: "stecker", de: "der Stecker", syl: "STE-cker", it: "la spina", itSyl: "SPI-na", en: "plug", x: DOSE.x, y: DOSE.y, kunst: k + flaeche(-7.5, -3.4, 7, 9) });
@@ -266,7 +266,7 @@ const BRETT = [58, 88, 120];         // Oberkanten der Regalböden
   k += karton(-38, BRETT[0], 9, 12, "#1d5fa3", "WLAN") + karton(-28, BRETT[0], 9, 12, "#1d5fa3", "WLAN");
   k += karton(16, BRETT[1], 10, 13, "#26292e", "GAME") + karton(27, BRETT[1], 10, 13, "#26292e", "GAME");
   k += karton(-38, BRETT[2], 14, 12, "#3d6fb8", "PRINT") + karton(22, BRETT[2], 15, 12, "#3d6fb8", "PRINT");
-  k += karton(18, BRETT[0], 7, 8, "#222", "FOTO") + karton(26, BRETT[0], 7, 8, "#222", "FOTO");
+  k += karton(22, BRETT[0], 7, 8, "#222", "FOTO") + karton(30, BRETT[0], 7, 8, "#222", "FOTO");
   k += `<rect x="${-W / 2}" y="-6" width="${W}" height="6" fill="#4e555c"/>`;
   S.teil({ id: "regal", de: "das Regal", syl: "re-GAL", it: "lo scaffale", itSyl: "scaf-FA-le", en: "shelf", x: (RG.x0 + RG.x1) / 2, y: RG.y1, steht: true, kunst: k });
 }
@@ -277,7 +277,7 @@ const BRETT = [58, 88, 120];         // Oberkanten der Regalböden
   for (const [x, a] of [[-5.4, -12], [5.4, 12], [0, 0]]) k += `<rect x="${x - 0.6}" y="-13" width="1.2" height="9" rx=".6" fill="#f4f5f6" stroke="#cfd4d9" stroke-width=".2" transform="rotate(${a} ${x} -4.4)"/>`;
   for (let i = 0; i < 5; i++) k += `<circle cx="${-4.4 + i * 2.2}" cy="-2" r=".4" fill="${i < 4 ? "#3fcf6a" : "#3b8de0"}"/>`;
   k += `<path d="M9 -10 q2 2 0 4 M10.6 -11.4 q3.4 3.4 0 6.8" stroke="#3b8de0" stroke-width=".35" fill="none" opacity=".7"/>`;
-  S.teil({ oben: true, id: "router", de: "der Router", syl: "ROU-ter", it: "il router", itSyl: "ROU-ter", en: "router", x: 256, y: BRETT[0], steht: true, kunst: k,
+  S.teil({ oben: true, id: "router", de: "der Router", syl: "ROU-ter", it: "il router", itSyl: "ROU-ter", en: "router", x: 268, y: BRETT[0], steht: true, kunst: k,
     tipp: "Der Router bringt das Internet per WLAN in die ganze Wohnung." });
 }
 {
@@ -286,7 +286,7 @@ const BRETT = [58, 88, 120];         // Oberkanten der Regalböden
   k += `<rect x="-4.4" y="-6.6" width="8.8" height="5.4" rx=".8" fill="${S.lg("kamera", [[0, "#3d4148"], [1, "#16181b"]])}"/>`;
   k += `<rect x="-2.6" y="-8" width="4" height="1.6" rx=".4" fill="#2a2d31"/><circle cx="0" cy="-3.9" r="2.4" fill="#1b1d20" stroke="#5c636b" stroke-width=".4"/><circle cx="0" cy="-3.9" r="1.3" fill="${S.rg("linse", [[0, "#5b8ad0"], [1, "#0d1a2c"]], 0.35, 0.35, 0.7)}"/><circle cx="-.5" cy="-4.4" r=".4" fill="#fff" opacity=".6"/>`;
   k += `<rect x="2.6" y="-6.2" width="1.2" height=".8" rx=".2" fill="${ROT}"/>`;
-  S.teil({ oben: true, id: "kamera", de: "die Kamera", syl: "KA-me-ra", it: "la fotocamera", itSyl: "fo-to-CA-me-ra", en: "camera", x: 299, y: BRETT[0], steht: true, kunst: k });
+  S.teil({ oben: true, id: "kamera", de: "die Kamera", syl: "KA-me-ra", it: "la fotocamera", itSyl: "fo-to-CA-me-ra", en: "camera", x: 289, y: BRETT[0], steht: true, kunst: k });
 }
 {
   /* DIE SPIELKONSOLE — aufrecht stehend, mit Controller davor */
