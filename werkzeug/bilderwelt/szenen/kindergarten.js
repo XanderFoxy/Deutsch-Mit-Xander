@@ -366,7 +366,7 @@ const FE = { X0: -1.85, X1: 0.6, H0: 0.72, H1: 2.32 };
   /* Bank und Schuhrost */
   k += kiste(X0, X1, 0.29, 0.33, 0.02, z1, { vorn: "#d9bf8f", deckel: BIRKE });
   k += kiste(X0, X1, 0.06, 0.08, 0.02, z1 - 0.02, { deckel: "#b9a07a", vorn: "#a88f69" });
-  { const [a] = P(X0, 0, 0.2), [b] = P(X1, 0, 0.2); for (let x = a + 1.5; x < b; x += 2) { k += `<line x1="${r(x)}" y1="${P(0, 0.08, 0.04)[1]}" x2="${r(x + (x - VX) * 0.12)}" y2="${P(0, 0.08, z1 - 0.02)[1]}" stroke="#8f7a58" stroke-width=".35"/>`; } }
+  for (let X = X0 + 0.04; X < X1 - 0.02; X += 0.05) { const p = P(X, 0.08, 0.04), q = P(X, 0.08, z1 - 0.02); k += `<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" stroke="#8f7a58" stroke-width=".35"/>`; }
   const symbole = ["sonne", "fisch", "blume", "kaefer"];
   for (let i = 0; i < PL; i++) {
     const Xm = X0 + (i + 0.5) * pw;
