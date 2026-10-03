@@ -88,7 +88,7 @@ const mammut = (x0, yb, sk, kalb = false, f = MAMMUTFELL) => {
   /* Schichtwolken, kalt */
   k += `<g filter="url(#${S.id("dunst")})" opacity=".7"><ellipse cx="80" cy="30" rx="60" ry="5" fill="#e9eef3"/><ellipse cx="190" cy="18" rx="70" ry="4" fill="#dfe6ee"/><ellipse cx="150" cy="44" rx="40" ry="3" fill="#eef2f5"/></g>`;
   /* ferne Alpen mit Schnee */
-  k += `<path d="M0 74 L18 58 L30 64 L48 46 L62 56 L78 42 L96 56 L112 50 L130 62 L150 58 L176 70 L200 66 L200 96 L0 96 Z" fill="${S.lg("alpen", [[0, "#9aa8b8"], [1, "#b8c3cf"]])}"/>`;
+  k += `<path d="M0 74 L18 58 L30 64 L48 46 L62 56 L78 42 L96 56 L112 50 L130 62 L150 58 L176 70 L200 66 L200 96 L0 96 Z" fill="${S.lg("alpen", [[0, "#7d8796"], [1, "#a3adb9"]])}"/>`;
   k += `<path d="M38 54 L48 46 L56 52 L52 54 L48 52 L44 56 Z M70 48 L78 42 L88 50 L82 50 L78 47 L74 51 Z M106 54 L112 50 L118 55 L112 54 Z" fill="#f4f7fa"/>`;
   /* Steppe bis zum Horizont, Schneeflecken */
   k += `<rect x="0" y="${HY - 2}" width="320" height="${202 - HY}" fill="${S.lg("steppe", [[0, "#b7b08a"], [0.5, "#a49a6c"], [1, "#8c7f52"]])}"/>`;
@@ -109,13 +109,13 @@ const mammut = (x0, yb, sk, kalb = false, f = MAMMUTFELL) => {
   const x = 70, y = 96;
   /* breites Nährgebiet zwischen den Gipfeln, Zunge fließt ins Vorland */
   const EIS = S.lg("eis", [[0, "#f6fbff"], [0.5, "#dcecf5"], [1, "#b2d4e6"]]);
-  let k = `<path d="M30 64 L48 50 L62 58 L78 46 L96 58 L112 54 L124 66 Q112 70 104 78 Q98 86 102 94 L104 98 L36 98 L40 92 Q44 82 38 74 Q34 68 30 64 Z" fill="${EIS}"/>`;
+  let k = `<path d="M58 56 Q66 60 72 52 Q80 58 92 56 Q90 66 88 74 Q88 86 100 96 L104 98 L36 98 L40 96 Q54 88 56 76 Q58 66 58 56 Z" fill="${EIS}"/>`;
+  k += `<path d="M58 56 Q66 60 72 52 Q80 58 92 56" stroke="#ffffff" stroke-width="1" fill="none"/>`;
   /* Querspalten und Fließbögen */
-  for (let i = 0; i < 8; i++) { const yy = 64 + i * 4.2, w = 30 + i * 3; k += `<path d="M${r(72 - w / 2)} ${r(yy)} q${r(w / 2)} ${r(2 + i * 0.3)} ${w} 0" stroke="#86b6d2" stroke-width=".35" fill="none" opacity=".75"/>`; }
+  for (let i = 0; i < 8; i++) { const yy = 62 + i * 4.4, w = 26 + i * i * 0.7; k += `<path d="M${r(73 - w / 2)} ${r(yy)} q${r(w / 2)} ${r(2 + i * 0.3)} ${r(w)} 0" stroke="#86b6d2" stroke-width=".35" fill="none" opacity=".75"/>`; }
   /* Mittel- und Seitenmoränen (dunkle Schuttbänder) */
-  k += `<path d="M78 48 Q74 70 70 97 M40 92 Q46 80 40 70 M102 94 Q98 82 108 72" stroke="#7a7466" stroke-width="1.1" fill="none" opacity=".7"/>`;
+  k += `<path d="M72 54 Q72 76 68 97 M58 60 Q56 82 44 96 M90 60 Q90 84 100 96" stroke="#7a7466" stroke-width="1" fill="none" opacity=".65"/>`;
   k += `<path d="M36 98 Q52 95 70 97 Q88 95 104 98 L104 100 L36 100 Z" fill="#8f8a7c"/>`;
-  k += `<path d="M64 100 Q68 104 64 110 M78 100 Q80 104 84 108" stroke="#9cc4d6" stroke-width=".7" fill="none" opacity=".8"/>`;
   S.teil({ id: "ez_gletscher", de: "der Gletscher", syl: "GLET-scher", it: "il ghiacciaio", itSyl: "ghiac-CIA-io", en: "glacier", x, y, kunst: um(x, y, k),
     tipp: "Eine Eiszunge, die sich Jahr für Jahr ein Stück vorschiebt. Sie kommt aus den Alpen." });
 }
@@ -157,6 +157,9 @@ const MUND = "M232 166 Q230 128 244 106 Q258 92 276 94 Q296 98 304 120 Q310 142 
   for (let i = 0; i < 30; i++) { const x = 205 + rnd() * 112, y = 20 + rnd() * 170; f += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1 + rnd() * 3)}" ry="${r(0.4 + rnd())}" fill="${rnd() < 0.5 ? "#a39884" : "#ddd5c4"}" opacity=".6"/>`; }
   f += `<path d="M222 40 Q246 14 280 10 L320 8 L320 14 Q284 16 258 26 Q236 36 226 48 Z" fill="#f2f5f7"/>`;
   f += `<path d="M204 84 q10 -4 18 0 M300 70 q10 -3 20 0" stroke="#f2f5f7" stroke-width="1.6" fill="none"/>`;
+  f += `<path d="M196 200 L198 120 Q204 70 222 40 L232 34 Q214 70 210 120 L208 200 Z" fill="#fff" opacity=".18"/>`;
+  for (let i = 0; i < 7; i++) { const x = 212 + rnd() * 100, y = 30 + rnd() * 60; f += `<path d="M${r(x)} ${r(y)} l${r(1 + rnd() * 2)} ${r(6 + rnd() * 10)}" stroke="#6e6656" stroke-width=".5"/>`; }
+  for (const [x, y] of [[204, 170], [212, 182], [306, 176], [314, 160], [226, 60], [296, 54]]) f += `<path d="M${x - 3} ${y} q1 -3 3 -3.4 q2 .4 3 3.4 Z" fill="#5f6a48"/><path d="M${x - 2} ${y - 1} q1 -2 2 -2.2" stroke="#7a8660" stroke-width=".4" fill="none"/>`;
   S.hinten(f);
   let k = `<path d="${MUND}" fill="${S.rg("hoehle", [[0, "#5a3a20"], [0.4, "#2e1e12"], [1, "#120c08"]], 0.5, 0.75, 0.75)}"/>`;
   k += `<path d="M232 166 Q230 128 244 106 Q258 92 276 94 Q296 98 304 120 Q310 142 308 168" stroke="#7a7060" stroke-width="2.4" fill="none"/>`;

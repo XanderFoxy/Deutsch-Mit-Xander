@@ -9,5 +9,5 @@ const id = process.argv[2];
 const w = {}; new Function("window", fs.readFileSync(path.join(__dirname, "../../szenen/" + id + ".js"), "utf8"))(w);
 const sz = w.DMA_SZENE[id];
 console.log(`${sz.id} — ${sz.titel} ${sz.emoji} (${sz.thema}) ${sz.breite}×${sz.hoehe}`);
-const zeile = (t, e) => console.log(e + JSON.stringify({ id: t.id, de: t.de, syl: t.syl, it: t.it, itSyl: t.itSyl, en: t.en, x: t.x, y: t.y, tipp: t.tipp }));
+const zeile = (t, e) => console.log(e + JSON.stringify({ id: t.id, de: t.de, syl: t.syl, it: t.it, itSyl: t.itSyl, en: t.en, x: t.x, y: t.y, tipp: t.tipp, lupe: t.lupe }));   // lupe: Verweis auf eine andere Szene, bleibt erhalten
 for (const t of sz.teile) { zeile(t, ""); for (const u of t.unter || []) zeile(u, "   ↳ "); }

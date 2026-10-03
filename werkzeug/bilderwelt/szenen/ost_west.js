@@ -216,9 +216,9 @@ const yMb = py(0, D_MAUER), yMt = py(3.6, D_MAUER);
   /* Erdgeschoss mit Laden und Haustür, Rustika-Fugen */
   k += `<rect x="0" y="${y(4.2)}" width="${xr}" height="${r(4.2 * s)}" fill="#cdb689"/>`;
   for (let h = 0.6; h < 4.2; h += 0.6) k += `<line x1="0" y1="${y(h)}" x2="${xr}" y2="${y(h)}" stroke="#b39d70" stroke-width=".4"/>`;
-  k += `<rect x="6" y="${y(3.4)}" width="34" height="${r(2.9 * s)}" fill="${S.lg("laden", [[0, "#5d7385"], [1, "#344452"]])}" stroke="#7a6545" stroke-width="1"/>`;
-  k += `<rect x="6" y="${y(3.9)}" width="34" height="${r(0.42 * s)}" fill="#2c4a3a"/><text x="23" y="${r(yb - 3.6 * s)}" font-size="3.6" text-anchor="middle" fill="#f3e3b0" font-family="Georgia,serif">Späti</text>`;
-  k += `<path d="M${54} ${y(0)} L54 ${y(3)} Q64 ${y(3.9)} 74 ${y(3)} L74 ${y(0)} Z" fill="${S.lg("altuer", [[0, "#6a4a2c"], [1, "#4a321c"]], 0, 0, 1, 0)}"/><path d="M64 ${y(0)} V${y(3.5)}" stroke="#3a2614" stroke-width=".6"/>`;
+  k += `<rect x="44" y="${y(3.4)}" width="42" height="${r(2.9 * s)}" fill="${S.lg("laden", [[0, "#5d7385"], [1, "#344452"]])}" stroke="#7a6545" stroke-width="1"/>`;
+  k += `<rect x="44" y="${y(3.9)}" width="42" height="${r(0.42 * s)}" fill="#2c4a3a"/><text x="65" y="${r(yb - 3.6 * s)}" font-size="3.6" text-anchor="middle" fill="#f3e3b0" font-family="Georgia,serif">Späti</text>`;
+  k += `<path d="M${10} ${y(0)} L10 ${y(3)} Q20 ${y(3.9)} 30 ${y(3)} L30 ${y(0)} Z" fill="${S.lg("altuer", [[0, "#6a4a2c"], [1, "#4a321c"]], 0, 0, 1, 0)}"/><path d="M20 ${y(0)} V${y(3.5)}" stroke="#3a2614" stroke-width=".6"/>`;
   /* Gurtgesims */
   k += `<rect x="0" y="${r(yb - 4.5 * s)}" width="${xr}" height="${r(0.3 * s)}" fill="#f4e8cc"/><rect x="0" y="${r(yb - 4.2 * s)}" width="${xr}" height="1" fill="#a68d63"/>`;
   /* Obergeschosse: Fenster mit Stuckverdachung, Balkon mit Gitter */
@@ -238,7 +238,14 @@ const yMb = py(0, D_MAUER), yMt = py(3.6, D_MAUER);
   k += `<path d="M38 ${r(yb - 5.2 * s - 6)} q4 -4 8 0 q4 4 8 0" stroke="#2f3438" stroke-width=".4" fill="none"/>`;
   for (let i = 0; i < 6; i++) k += `<circle cx="${33 + i * 5.6}" cy="${r(yb - 5.2 * s - 12.6)}" r="1.4" fill="${i % 2 ? "#d8282c" : "#4f7d3a"}"/>`;
   k += `<rect x="0" y="0" width="${xr}" height="${r(yb)}" fill="${S.lg("altlicht", [[0, "#fff", 0.1], [1, "#000", 0.08]], 0, 0, 1, 0)}"/>`;
+  const unter = [
+    { id: "balkon", de: "der Balkon", syl: "bal-KON", it: "il balcone", itSyl: "bal-CO-ne", en: "balcony", x: 47, y: r(yb - 5.2 * s), kunst: flaeche(-17, -13, 34, 15),
+      tipp: "Auf dem Balkon wachsen Geranien. Viele Berliner Altbauwohnungen haben einen Balkon zur Straße." },
+    { id: "spaeti", de: "der Späti", syl: "SPÄ-ti", it: "il minimarket aperto fino a tardi", itSyl: "mi-ni-MAR-ket a-PER-to FI-no a TAR-di", en: "late-night shop", x: 65, y: r(yb - 0.6 * s), kunst: flaeche(-21, -3.4 * s, 42, 2.8 * s),
+      tipp: "Der Späti (Spätkauf) hat bis in die Nacht offen — typisch Berlin." },
+  ];
   S.teil({ id: "altbau", de: "der Altbau", syl: "ALT-bau", it: "il palazzo storico", itSyl: "pa-LAZ-zo STO-ri-co", en: "old building", x: 0, y: 0, kunst: k,
+    zoom: { x: 0, y: 44, w: 96, h: 64 }, unter,
     tipp: "Altbauten aus der Zeit um 1900 haben hohe Decken, Stuck und Balkone." });
 }
 
@@ -268,11 +275,18 @@ const cx = (v) => r(Math.min(160, Math.max(-160, v)));
   /* Bordstein der Bernauer Straße */
   k += `<rect x="-160" y="${r(yB1 - 200)}" width="320" height="1" fill="#e6e2da"/><rect x="-160" y="${r(yB0 - 200 - 0.6)}" width="320" height=".8" fill="#e6e2da"/>`;
   /* Gullydeckel und Zebrastreifen über die Bernauer Straße */
-  for (let d = 20; d < 28.4; d += 1.1) k += `<path d="M${P(-2.6, d)} L${P(2.6, d)} L${P(2.6, d + 0.55)} L${P(-2.6, d + 0.55)} Z" fill="#eceae4" transform="translate(-160 -200)"/>`;
   k += `<g transform="translate(${r(px(2.4, 13) - 160)} ${r(py(0, 13) - 200)}) scale(1 .35)" stroke="#eceae4" stroke-width="1.2" fill="none"><circle cx="-7" cy="-6" r="5"/><circle cx="7" cy="-6" r="5"/><path d="M-7 -6 L-2 -14 L5 -14 L7 -6 M-2 -14 L0 -6 L5 -14"/></g>`;
   k += `<ellipse cx="${r(px(2.2, 10.5) - 160)}" cy="${r(py(0, 10.5) - 200)}" rx="5" ry="1.4" fill="#3b3a37"/>`;
   S.teil({ id: "strasse", de: "die Straße", syl: "STRA-ße", it: "la strada", itSyl: "STRA-da", en: "street", x: 160, y: 200, kunst: k,
     tipp: "Die Bernauer Straße gehörte zum Westen. Die Häuser auf der anderen Seite lagen im Osten." });
+}
+
+/* DER ZEBRASTREIFEN über die Bernauer Straße */
+{
+  let k = "";
+  for (let d = 20; d < 28.4; d += 1.1) k += `<path d="M${P(-2.6, d)} L${P(2.6, d)} L${P(2.6, d + 0.55)} L${P(-2.6, d + 0.55)} Z" fill="#eceae4"/>`;
+  S.teil({ oben: true, id: "zebrastreifen", de: "der Zebrastreifen", syl: "ZE-bra-strei-fen", it: "le strisce pedonali", itSyl: "STRI-sce pe-do-NA-li", en: "zebra crossing", x: 0, y: 0, kunst: k,
+    tipp: "Am Zebrastreifen müssen Autos halten, wenn jemand über die Straße gehen will." });
 }
 
 /* =====================================================================

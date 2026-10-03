@@ -46,6 +46,8 @@ const { neueSzene, flaeche, flaecheEllipse, schatten, zufall } = require("../bau
 const B = require("../bau");
 
 const S = neueSzene({ id: "grossbritannien", titel: "Großbritannien", emoji: "🇬🇧", thema: "Länder", kuerzel: "b25a", fassung: 852 });
+/* Verläufe nur einmal anlegen, auch wenn sie in Schleifen gebraucht werden */
+{ const lg = S.lg, rg = S.rg, schon = {}; S.lg = (n, ...a) => schon["l" + n] || (schon["l" + n] = lg(n, ...a)); S.rg = (n, ...a) => schon["r" + n] || (schon["r" + n] = rg(n, ...a)); }
 const rnd = zufall(1859);
 const r = B.r;
 const HOR = 110;

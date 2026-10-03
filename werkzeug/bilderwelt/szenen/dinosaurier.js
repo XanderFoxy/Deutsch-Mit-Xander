@@ -309,7 +309,13 @@ const WAND_FUSS = 138;
   k += `<ellipse cx="${K.P(-3.35, 3.95)[0]}" cy="${K.P(-3.35, 3.95)[1]}" rx="1.4" ry="1.1" fill="#3e2c1c"/><ellipse cx="${K.P(-3.85, 4.05)[0]}" cy="${K.P(-3.85, 4.05)[1]}" rx="1" ry="1.3" fill="#3e2c1c"/><ellipse cx="${K.P(-4.3, 3.85)[0]}" cy="${K.P(-4.3, 3.85)[1]}" rx="1.2" ry=".6" fill="#3e2c1c" opacity=".7"/>`;
   for (let i = 0; i < 8; i++) { const [tx, ty] = K.P(-4.6 + i * 0.17, 3.52 - i * 0.008); k += `<path d="M${tx} ${ty} l.3 1.1 l.3 -1.1 Z" fill="#f4ead2"/>`; }
   k += K.stuetze(-1.3, 3.6) + K.stuetze(2.4, 3.6) + K.stuetze(4.0, 3.0);
-  S.teil({ id: "tyrannosaurus", de: "der Tyrannosaurus", syl: "Ty-ran-no-SAU-rus", it: "il tirannosauro", itSyl: "ti-ran-no-SAU-ro", en: "tyrannosaurus", x: x0, y: yb, steht: true, kunst: um(x0, yb, k),
+  const Q = (a, h) => K.P(a, h).map(Number);
+  const unter = [
+    { id: "schaedel", de: "der Schädel", syl: "SCHÄ-del", it: "il cranio", itSyl: "CRA-nio", en: "skull", p: Q(-3.85, 3.4), f: [-8, -10, 16, 11], tipp: "Der Schädel des T. rex ist fast anderthalb Meter lang." },
+    { id: "rippe", de: "die Rippe", syl: "RIP-pe", it: "la costola", itSyl: "CO-sto-la", en: "rib", p: Q(-1.5, 2.2), f: [-6, -12, 12, 12.4], tipp: "Die Rippen schützen Herz und Lunge." },
+    { id: "wirbel", de: "der Wirbel", syl: "WIR-bel", it: "la vertebra", itSyl: "VER-te-bra", en: "vertebra", p: Q(2.6, 3.2), f: [-7, -8, 14, 8.6], tipp: "Viele Wirbel hintereinander bilden die Wirbelsäule — bis in die Schwanzspitze." },
+  ].map((u) => ({ id: u.id, de: u.de, syl: u.syl, it: u.it, itSyl: u.itSyl, en: u.en, tipp: u.tipp, x: u.p[0], y: u.p[1], kunst: flaeche(...u.f) }));
+  S.teil({ zoom: { x: 214, y: 94, w: 96, h: 64 }, unter, id: "tyrannosaurus", de: "der Tyrannosaurus", syl: "Ty-ran-no-SAU-rus", it: "il tirannosauro", itSyl: "ti-ran-no-SAU-ro", en: "tyrannosaurus", x: x0, y: yb, steht: true, kunst: um(x0, yb, k),
     tipp: "Etwa 12 Meter lang. Die Arme hatten nur zwei Finger. Seine Zähne waren so lang wie Bananen." });
 }
 

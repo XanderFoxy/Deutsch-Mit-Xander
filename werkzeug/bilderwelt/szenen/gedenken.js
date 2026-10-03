@@ -92,7 +92,7 @@ const STS = { x: 286, d: 5.6 };   /* vor der Haustür */
   for (const d of [6.6, 6.1, 5.6, 5.1, 4.7]) k += `<line x1="${r(X_ECKE - 160 - 10)}" y1="${r(py(0, d) - 200)}" x2="160" y2="${r(py(0, d) - 200)}" stroke="#8f897e" stroke-width=".5"/>`;
   for (let L = 0.4; L < 4.5; L += 0.6) k += `<line x1="${r(px(L, D_HAUS) - 160)}" y1="${r(yA - 200)}" x2="${r(Math.min(320, px(L, 4.6)) - 160)}" y2="0" stroke="#8f897e" stroke-width=".4"/>`;
   /* Herbstlaub */
-  for (let i = 0; i < 26; i++) { const x = -40 + rnd() * 196, y = -28 + rnd() * 26; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="1.6" ry=".7" fill="${["#c98b3a", "#a8632a", "#d9a64a"][Math.floor(rnd() * 3)]}" transform="rotate(${Math.round(rnd() * 180)} ${r(x)} ${r(y)})" opacity=".85"/>`; }
+  for (let i = 0; i < 30; i++) { const x = -40 + rnd() * 196, y = -28 + rnd() * 26; if (Math.abs(x - (STS.x - 160)) < 24 && Math.abs(y - (py(0, STS.d) - 200 + 2)) < 5) continue; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="1.6" ry=".7" fill="${["#c98b3a", "#a8632a", "#d9a64a"][Math.floor(rnd() * 3)]}" transform="rotate(${Math.round(rnd() * 180)} ${r(x)} ${r(y)})" opacity=".85"/>`; }
   /* Stolpersteine: drei Messingplatten nebeneinander */
   const sx = STS.x - 160, sy = py(0, STS.d) - 200, sw = 9.2, sh = 3.8;
   for (let i = 0; i < 3; i++) {
@@ -115,7 +115,9 @@ const STS = { x: 286, d: 5.6 };   /* vor der Haustür */
   /* weiße Rose quer über den Steinen */
   const rx = sx + 2, ry = sy + 4.6;
   k += `<path d="M${r(rx - 7)} ${r(ry)} L${r(rx + 3)} ${r(ry - 1.4)}" stroke="#4f7d3a" stroke-width=".5"/><path d="M${r(rx - 3)} ${r(ry - 0.6)} q-1 -1.4 .4 -1.6" fill="#5f8f45"/>`;
-  k += `<circle cx="${r(rx + 4.2)}" cy="${r(ry - 1.6)}" r="1.7" fill="#fbfaf5"/><path d="M${r(rx + 3.4)} ${r(ry - 1.8)} q.8 -.8 1.6 0 q-.8 .6 -1.6 0" stroke="#d8d4c6" stroke-width=".25" fill="none"/>`;
+  k += `<path d="M${r(rx + 3)} ${r(ry - 1.4)} q-.6 -1.6 .4 -2.6 q1 1.2 .6 2.6 Z" fill="#5f8f45"/>`;
+  k += `<ellipse cx="${r(rx + 4.4)}" cy="${r(ry - 1.5)}" rx="1.9" ry="1.5" fill="#f3f1ea"/><ellipse cx="${r(rx + 4.6)}" cy="${r(ry - 1.9)}" rx="1.3" ry="1.1" fill="#fbfaf5"/>`;
+  k += `<path d="M${r(rx + 3.8)} ${r(ry - 2)} q.8 -1 1.6 0 M${r(rx + 4.1)} ${r(ry - 1.5)} q.6 .5 1.1 0" stroke="#d6d1c2" stroke-width=".25" fill="none"/>`;
   unter.push({ id: "rose", de: "die weiße Rose", syl: "WEIS-se RO-se", it: "la rosa bianca", itSyl: "RO-sa BIAN-ca", en: "white rose", x: rx + 2, y: ry + 0.4 + 200 - 200 + 0, kunst: flaeche(-9, -4, 13, 4.6),
     tipp: "Die Weiße Rose war eine Widerstandsgruppe von Studenten in München." });
   /* kleine Steine (jüdischer Brauch) */
@@ -164,7 +166,7 @@ const STS = { x: 286, d: 5.6 };   /* vor der Haustür */
   /* Dunst der Tiefe */
   k += `<path d="M${r(px(-4.6, 40) - VX)} ${r(py(5, 40) - VY)} L${r(px(-4.6, 90) - VX)} ${r(py(5, 90) - VY)} L${r(px(-4.6, 90) - VX)} ${r(py(0, 90) - VY)} L${-VX} ${r(py(0, 90) - VY)} L${-VX} ${r(py(5, 40) - VY)} Z" fill="#e6e8e6" opacity=".2"/>`;
   /* eine Stele vorne für die Lupe */
-  const st = raster.filter((s) => s[1] < 16 && s[2] > 2 && s[3] > 4).sort((a, b) => a[1] - b[1] || b[3] - a[3])[0];
+  const st = raster.filter((s) => s[1] < 22 && s[3] > 2).sort((a, b) => (b[4] - b[3]) * (b[6] - b[5]) - (a[4] - a[3]) * (a[6] - a[5]))[0];
   const unter = [];
   if (st) unter.push({ id: "stele", de: "die Stele", syl: "STE-le", it: "la stele", itSyl: "STE-le", en: "stele", x: (st[3] + st[4]) / 2, y: st[6],
     kunst: flaeche(-(st[4] - st[3]) / 2, -(st[6] - st[5]), st[4] - st[3], st[6] - st[5]), tipp: "Eine Stele ist ein aufrechter Steinblock. Hier gibt es 2711 Stelen — jede ist anders hoch." });

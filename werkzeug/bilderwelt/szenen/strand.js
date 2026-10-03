@@ -263,6 +263,20 @@ const korbKlein = (x, y, sk, f) => {
 }
 
 /* =====================================================================
+   10a — DER SAND (der trockene Strand; alles Weitere liegt darauf)
+   ===================================================================== */
+{
+  const P = "M0 114.4 Q80 115.4 160 114 T282 114.6 L280 200 L0 200 Z";
+  let k = `<path d="${P}" fill="${SAND}"/>`;
+  k += `<path d="${P}" fill="${S.lg("sandteil", [[0, "#c8b088", 0.3], [0.25, "#fff", 0], [1, "#fff5dd", 0.25]])}"/>`;
+  /* Windrippel und Spuren im trockenen Sand */
+  for (let i = 0; i < 26; i++) { const y = 118 + Math.pow(rnd(), 0.8) * 80, x = rnd() * 270, w = 4 + (y - 110) * 0.12; k += `<path d="M${r(x)} ${r(y)} q${r(w / 2)} ${r(-0.6 - (y - 110) * 0.01)} ${r(w)} 0" stroke="#cdb487" stroke-width="${r(0.25 + (y - 110) * 0.004)}" fill="none" opacity=".8"/>`; }
+  for (let i = 0; i < 14; i++) { const x = 130 + rnd() * 140, y = 118 + rnd() * 40; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(0.9 + (y - 110) * 0.02)}" ry="${r(0.4 + (y - 110) * 0.008)}" fill="#cdb98e" opacity=".55"/>`; }
+  S.teil({ id: "sand", de: "der Sand", syl: "SAND", it: "la sabbia", itSyl: "SAB-bia", en: "sand", x: 140, y: 200, kunst: um(140, 200, k),
+    tipp: "Der Ostseesand ist fein und hell — er besteht aus winzigen Quarzkörnern." });
+}
+
+/* =====================================================================
    11 — DIE LUFTMATRATZE (auf dem nassen Sand am Wasser)
    ===================================================================== */
 {
