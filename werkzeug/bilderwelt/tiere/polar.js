@@ -957,20 +957,28 @@ function robbeBaby(T) {
   const hfPts = (dx, dy) => [[18 + dx, -14.6 + dy], [12 + dx, -15.4 + dy], [6 + dx, -16.6 + dy], [0.8 + dx, -18.2 + dy], [2.8 + dx, -15.8 + dy], [2.4 + dx, -13.2 + dy],
     [0.4 + dx, -10.2 + dy], [4.6 + dx, -8.6 + dy], [10 + dx, -7.4 + dy], [16 + dx, -6.4 + dy]];
   const hf = (dx, dy, fern) => {
-    const p = hfPts(dx, dy), c = fern ? "#34373c" : "#3e4146";
+    const p = hfPts(dx, dy), c = fern ? "#2f3237" : "#3e4146";
     let i = "";
+    /* 5 Zehenstrahlen als Wölbungen: Lichtgrat oben, weiche Rinne darunter; äußere Strahlen länger */
     for (let k = 0; k < 5; k++) {
-      const pts = [[13 + dx, -12.6 + dy + k * 0.9], [8 + dx, -14 + dy + k * 1.5], [[1.6, 3, 2.8, 1.6, 0.8][k] + dx, -17.4 + dy + k * 1.9]];
-      i += zart(T, pts.map(([x, y]) => [x, y - 0.25]), fern ? "#5a5e65" : "#6c717a", 0.35, 0.55) + zart(T, pts.map(([x, y]) => [x, y + 0.3]), "#1c1d20", 0.25, 0.5);
+      const pts = [[13 + dx, -12.8 + dy + k * 0.95], [8 + dx, -14.1 + dy + k * 1.45], [[1.8, 3.1, 2.9, 1.8, 0.9][k] + dx, -17.4 + dy + k * 1.85]];
+      i += F ? weich(pts.map(([x, y]) => [x, y - 0.2]).concat(pts.slice().reverse().map(([x, y]) => [x, y + 0.25])), fern ? "#5b6068" : "#71767f", 0.55, 0.25)
+        + zart(T, pts.map(([x, y]) => [x, y + 0.75]), "#1a1b1e", 0.35, 0.45) : zart(T, pts.map(([x, y]) => [x, y - 0.2]), "#6c717a", 0.35, 0.5);
     }
-    i += haare(T, p, 50, 186, 0.5, [["#9aa3ad", 1, 0.04, 0.5]], 14, 0.2, 0.1);
-    i += `<path d="M${J(1.6 + dx, -18 + dy)}l-.8 -.3M${J(2.8 + dx, -15.6 + dy)}l-.8 -.1M${J(2.2 + dx, -13 + dy)}l-.8 .1M${J(0.6 + dx, -10.4 + dy)}l-.8 .3" stroke="#111" stroke-width=".3" stroke-linecap="round"/>`;
+    i += weich([[0, -11 + dy], [18 + dx, -8 + dy], [18 + dx, -5 + dy], [0, -8 + dy]], "#191b1f", 0.45, 1);
+    i += haare(T, p, 40, 186, 0.45, [["#8d96a1", 1, 0.035, 0.45]], 14, 0.2, 0.1);
+    i += `<path d="M${J(1.8 + dx, -17.6 + dy)}l-.7 -.25M${J(3 + dx, -15.5 + dy)}l-.7 -.05M${J(2.4 + dx, -13 + dy)}l-.7 .1M${J(0.6 + dx, -10.4 + dy)}l-.7 .3" stroke="#121212" stroke-width=".28" stroke-linecap="round"/>`;
     let o = `<g filter="${vol(T, "rhf", { weich: 0.9, tiefe: 3, schatten: "#101418" })}">${silhouette(T, G(p), c, i)}</g>`;
-    /* Haarmanschette: weiße, kühl beschattete Haarspitzen greifen über den Flossenansatz */
-    o += haarSaum(T, [[17 + dx, -14.8 + dy], [15 + dx, -12 + dy], [14.4 + dx, -9.4 + dy], [15.4 + dx, -6.6 + dy]], 40, 1.8, [[fern ? "#c5ced8" : "#eef1f4", 1, 0.08, 0.85], ["#b5c2d0", 0.6, 0.08, 0.8]], -1, -0.2);
+    /* Haarmanschette: weißes Lanugo greift als echter Lappen über die ersten 25–30 % der Flosse, endet in Haarspitzen;
+       darunter ein weicher Schlagschatten auf der Flosse */
+    const m = [[16 + dx, -15.4 + dy], [12.4 + dx, -15 + dy], [10.2 + dx, -14 + dy], [9.4 + dx, -12 + dy], [9.6 + dx, -9.8 + dy], [10.8 + dx, -7.8 + dy], [13.4 + dx, -6.8 + dy], [16 + dx, -6.6 + dy]];
+    o += weich(m.map(([x, y]) => [x - 0.9, y + 0.3]), "#0c0e12", 0.45, 0.5);
+    o += form(T, m, fern ? "#c1cad5" : verlauf(T, "rhm", 0, -15, 0, -6, [[[0, -15], "#f4f6f8"], [[0, -6], "#aebccc"]]));
+    o += fein(T, straehnen(T, m, 14, 182, 1.2, { m: 4, ab: 0.06, licht: ["#ffffff", 0.6, 0.045], schatten: ["#93a3b6", 0.4, 0.05] }));
+    o += haarSaum(T, m.slice(0, 7), 46, 1.5, [[fern ? "#b9c3cf" : "#eef1f4", 1, 0.06, 0.9], ["#a9b7c7", 0.6, 0.06, 0.85]], 1, 0.6);
     return o;
   };
-  s += hf(1.6, -1.8, true) + hf(0, 0, false);
+  s += hf(1.2, -3, true) + hf(0, 0, false);
 
   /* ---- Körper ---- */
   let n = `<rect x="0" y="-46" width="98" height="47" fill="${fell}"/>`;
