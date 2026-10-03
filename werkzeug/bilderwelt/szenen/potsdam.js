@@ -429,7 +429,7 @@ bodenSchatten(17.5, 1.5, 0.4, 1.22, 0.26);
     const pts = [[s * 27, 60], [s * 70, 60], [s * 70, 148], [s * 9, 148], [s * 9, 112], [s * 27, 100]];
     k += `<path d="M${pts.map(([X, D]) => `${r(Math.min(400, Math.max(0, xG(D, X))))} ${r(yG(D))}`).join(" L")} Z" fill="${RASEN}"/>`;
     /* Buchsbaumkante zum Kies */
-    k += `<path d="M${r(xG(60, s * 27))} ${r(yG(60))} L${r(xG(100, s * 27))} ${r(yG(100))}" stroke="#3f6b2e" stroke-width="1.1"/>`;
+    k += `<path d="M${r(xG(66, s * 27))} ${r(yG(66))} L${r(xG(100, s * 27))} ${r(yG(100))}" stroke="#3f6b2e" stroke-width="1.1"/>`;
   }
   S.teil({ id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: 0, y: 0, kunst: k });
 }
@@ -576,7 +576,7 @@ for (const p of statuen) bodenSchatten(p.D, p.X, 1.2, 3.9, 0.2);
     k += `<path d="M0 ${r(yG(60))} L400 ${r(yG(60))} L400 260 L0 260 Z" fill="url(#${S.id("korn")})" opacity=".55"/>`;
   }
   /* Rechenspuren des Gärtners (Bögen um die Fontäne) */
-  for (const rr of [26, 29, 33]) { const p = []; for (let i = 0; i <= 40; i++) { const w = Math.PI * 0.62 + i / 40 * Math.PI * 0.76, X = rr * Math.sin(w), D = FD - rr * Math.cos(w); if (D > 10) p.push(`${r(xG(D, X))} ${r(yG(D))}`); } k += `<path d="M${p.join(" L")}" stroke="#b3a487" stroke-width=".4" fill="none" opacity=".55"/>`; }
+  for (const rr of [26, 29, 33]) { const p = []; for (let i = 0; i <= 40; i++) { const w = Math.PI * 0.62 + i / 40 * Math.PI * 0.76, X = rr * Math.sin(w), D = FD - rr * Math.cos(w); const x2 = xG(D, X); if (D > 10 && x2 > 1 && x2 < 399) p.push(`${r(x2)} ${r(yG(D))}`); } k += `<path d="M${p.join(" L")}" stroke="#b3a487" stroke-width=".4" fill="none" opacity=".55"/>`; }
   k += `<g filter="url(#${S.id("schw")})">${schattenListe.join("")}</g>`;
   k += `<rect x="0" y="${r(yG(FD + 30))}" width="400" height="${r(260 - yG(FD + 30))}" fill="${S.lg("kieslicht", [[0, "#000", 0.06], [0.3, "#000", 0], [1, "#fff6e0", 0.12]])}"/>`;
   WEG.teil = S.teil({ id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", itSyl: "sen-TIE-ro", en: "path", x: 0, y: 0, kunst: k,

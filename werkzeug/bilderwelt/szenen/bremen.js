@@ -85,7 +85,7 @@ const t2 = (n) => (+n).toFixed(2);
 
 /* ---------- Kamera: Zylinder-Panorama (Meter: x Ost, y Nord, z Höhe) ---------- */
 const GRAD = Math.PI / 180;
-const CAM = [-10, -44], AUGE = 1.2, HOR = 196, FOK = 173.6, LINKS = 2 * GRAD;
+const CAM = [-6, -30], AUGE = 1.6, HOR = 212, FOK = 176, LINKS = -2 * GRAD;
 const peil = (x, y) => Math.atan2(x - CAM[0], y - CAM[1]);
 const weit = (x, y) => Math.hypot(x - CAM[0], y - CAM[1]);
 const pr = (x, y, z) => [FOK * (peil(x, y) - LINKS), HOR - FOK * (z - AUGE) / weit(x, y)];
@@ -161,18 +161,18 @@ const ROLSTEIN = S.lg("rolstein", [[0, "#cfc6b3"], [0.5, "#ebe4d3"], [1, "#d8cfb
 /* =====================================================================
    KULISSE — Himmel (Oktober, früher Nachmittag), Wolken
    ===================================================================== */
-S.hinten(`<rect width="${BR}" height="${HOR + 4}" fill="${S.lg("himmel", [[0, "#4a82c2"], [0.5, "#86b0da"], [0.85, "#c9dceb"], [1, "#e6ecef"]])}"/>`);
-S.hinten(`<rect width="${BR}" height="${HOR + 4}" fill="${S.lg("sonnenseite", [[0, "#fff3d6", 0], [0.65, "#fff3d6", 0], [1, "#fff0cf", 0.32]], 0, 0, 1, 0)}"/>`);
-{
-  let w = "";
-  for (const [x, y, s] of [[60, 26, 1.1], [128, 54, 0.75], [214, 16, 0.8], [330, 40, 1.2], [270, 86, 0.6], [30, 92, 0.7], [372, 110, 0.6]]) {
-    w += `<g filter="url(#${S.id("wolke")})" opacity=".9">`;
-    for (const [dx, dy, rx, ry] of [[0, 0, 17, 4.6], [-11, 1.5, 10, 3.4], [11, 1, 12, 3.8], [-3, -3.4, 9, 4.4], [5, -2.8, 7, 3.8]])
-      w += `<ellipse cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" rx="${r(rx * s)}" ry="${r(ry * s)}" fill="#fff"/>`;
-    w += `<ellipse cx="${x}" cy="${r(y + 3 * s)}" rx="${r(17 * s)}" ry="${r(2.2 * s)}" fill="#dfe6ee"/></g>`;
-  }
-  S.hinten(w);
-}
+S.hinten(`<rect width="${BR}" height="${HOR + 4}" fill="${S.lg("himmel", [[0, "#3f78bd"], [0.45, "#7aa8d6"], [0.8, "#bcd3e6"], [1, "#e4ebee"]])}"/>`);
+S.hinten(`<rect width="${BR}" height="${HOR + 4}" fill="${S.lg("sonnenseite", [[0, "#fff3d6", 0], [0.6, "#fff3d6", 0], [1, "#fff0cf", 0.3]], 0, 0, 1, 0)}"/>`);
+/* Oktober-Cumulus: gewölbte, sonnige Oberseite, flache graue Unterseite — jede Wolke anders */
+const wolke = (x, y, w, h, n, seed) => {
+  const z = zufall(seed);
+  let top = "";
+  for (let i = 0; i < n; i++) { const t = i / (n - 1), cx = x - w / 2 + t * w, rr = h * (.35 + .65 * Math.sin(Math.PI * (.15 + .7 * t))) * (.75 + z() * .4); top += `<circle cx="${r(cx)}" cy="${r(y - rr * .55)}" r="${r(rr)}" fill="#fff"/>`; }
+  return `<g><path d="M${r(x - w / 2 - h * .3)} ${r(y)} H${r(x + w / 2 + h * .3)} Q${r(x + w / 2)} ${r(y + h * .35)} ${r(x + w * .3)} ${r(y + h * .3)} H${r(x - w * .3)} Q${r(x - w / 2)} ${r(y + h * .35)} ${r(x - w / 2 - h * .3)} ${r(y)} Z" fill="#c9d3dd"/>${top}` +
+    `<path d="M${r(x - w / 2 - h * .25)} ${r(y - h * .05)} H${r(x + w / 2 + h * .25)} L${r(x + w / 2)} ${r(y + h * .22)} H${r(x - w / 2)} Z" fill="${S.lg("wolkenbauch", [[0, "#dfe6ee"], [1, "#b8c4d0"]])}"/>` +
+    `<ellipse cx="${r(x + w * .12)}" cy="${r(y - h * .9)}" rx="${r(w * .22)}" ry="${r(h * .3)}" fill="#fffbef" opacity=".7"/></g>`;
+};
+S.hinten(wolke(70, 40, 70, 13, 7, 3) + wolke(250, 22, 46, 9, 5, 7) + wolke(342, 70, 54, 11, 6, 11) + wolke(150, 92, 30, 6, 4, 5));
 /* ferne Bauten in den Lücken: Liebfrauenkirche (Nordwesten), Domshof (Nordosten), Südostecke */
 const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   /* Giebelhaus in einer senkrechten Ebene E (s nach rechts im Bild), Treppengiebel */
@@ -191,7 +191,7 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   for (const s of [3, 9, 15, 21, 27]) c += pfad(fp(E, [[s - 1, 3], [s + 1, 3], [s + 1, 11.5], [s, 13.6], [s - 1, 11.5]]), "#33302f") + pfad(fr(E, s - .1, 3, s + .1, 12.4), "#b88a74");
   for (const s of [0, 6, 12, 18, 24, 30]) c += pfad(fr(E, s - .6, 0, s + .6, 14), "#7e4333");
   c += pfad(poly([[1, 56, 31], [1.6, 56, 31], [1.3, 56, 38]]), KUPFER);
-  S.hinten(`<g opacity=".9" filter="url(#${S.id("dunst")})">${c}</g>`);
+  S.hinten(`<g opacity=".92">${c}</g><g opacity=".22">${c.replace(/fill="[^"]*"/g, 'fill="#bfd2e4"')}</g>`);
   /* Domshof: Bürgerhäuser hinter der Lücke zwischen Rathaus und Bürgerschaft (Südseiten in der Sonne) */
   let k = "";
   const D = ebene(76, 30, 1, 0);
@@ -202,7 +202,7 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   /* Ostseite südlich der Bürgerschaft: ein Giebelhaus quer (Westseite, Streiflicht) */
   const OS = ebene(57.4, -44, 0, -1);
   k += giebelhaus(OS, 0, 7, 13, 7, "#d2c3a6", "#5a4a44");
-  S.hinten(`<g filter="url(#${S.id("dunst")})">${k}</g>`);
+  S.hinten(`${k}<g opacity=".2">${k.replace(/fill="[^"]*"/g, 'fill="#bfd2e4"')}</g>`);
 }
 
 /* =====================================================================
@@ -229,9 +229,9 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   k += `<path d="${boden}" fill="${S.lg("bodenluft", [[0, "#e9e6df", 0.6], [0.1, "#e9e6df", 0.18], [0.45, "#fff6e0", 0.06], [1, "#2a2218", 0.1]])}"/>`;
   /* helle Granitbänder im Raster (5 m), gebogen wie im Panorama */
   let g = "";
-  for (let y = -54; y <= -4; y += 5) g += linie([[-13, y, 0], [56, y, 0]], 2);
-  for (let x = -5; x <= 55; x += 5) g += linie([[x, -56, 0], [x, -1, 0]], 2);
-  k += `<path d="${g.replace(/M/g, " M")}" stroke="#d9d4c9" stroke-width=".4" fill="none" opacity=".32"/>`;
+  for (let y = -54; y <= -4; y += 5) g += linie([[-13, y, 0], [56, y, 0]], 1.5);
+  for (let x = -10; x <= 55; x += 5) g += linie([[x, -56, 0], [x, -1, 0]], 1.5);
+  k += `<path d="${g.replace(/M/g, " M")}" stroke="#dcd7cc" stroke-width=".45" fill="none" opacity=".5"/>`;
   /* Schatten des Schüttings (Sonne 195°, 32° hoch → 1,6 m Schatten je Meter Höhe nach 15°) */
   const sv = (x, y, z) => [x + z * 0.414, y + z * 1.546, 0];
   k += pfad(poly([[8, -57, 0], sv(8, -57, 10.6), sv(8, -64.5, 19.5), sv(40, -64.5, 19.5), sv(40, -57, 10.6), [40, -57, 0]], 2), "#1f2430", ` opacity=".3"`);

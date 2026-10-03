@@ -361,7 +361,7 @@ const SPEICHER = { x0: 296, d: 210 };
 {
   let k = "";
   /* hinten links (zwischen den Kirchen und dem Tor) und rechts vor den Speichern */
-  for (const [x, d, h, s] of [[24, 140, 15, 3], [52, 150, 15, 5], [88, 130, 17, 7], [120, 125, 14, 11], [276, 120, 15, 13], [300, 110, 13, 17], [380, 115, 13, 19]]) {
+  for (const [x, d, h, s] of [[24, 140, 15, 3], [52, 150, 15, 5], [88, 130, 17, 7], [120, 125, 14, 11], [278, 120, 14, 13], [392, 115, 12, 19]]) {
     const K = F / d, y = r(HOR + AUGE * K);
     k += baum(x, y, h * K, s);
   }
