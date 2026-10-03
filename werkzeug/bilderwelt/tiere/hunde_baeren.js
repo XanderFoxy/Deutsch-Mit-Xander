@@ -1211,7 +1211,7 @@ function hyaene(T) {
   /* Tüpfel: unregelmäßig rund, ohne Hof; Rand gezackt (Haarspitzen), zum Körperrand hin flacher (Wölbung); Größe/Dichte nach Ort */
   const flecken = (pts, n, rMin, rMax, farbe, op, g = () => 1, flach = () => 1) => {
     let d = "";
-    if (T.fein === false) n = Math.round(n * 0.45);
+    if (T.fein === false) n = Math.round(n * 0.32);
     for (const [x, y] of streuPunkte(T, pts, n * 1.6)) {
       const gg = g(x, y);
       if (T.rnd() > gg) continue;
@@ -1240,7 +1240,7 @@ function hyaene(T) {
   /* Licht von links oben, Kernschatten im unteren Rumpfdrittel – als EIN Höhenverlauf für Rumpf UND Läufe (an derselben Höhe
      dieselbe Abdunklung → keine Bänder an den Übergängen; kein Reflexband quer über Keule/Oberarm) */
   const lichtH = hoehenVerlauf(T, "lichtH", -88, 0, [[-88, "#000", 0], [-66, "#000", 0.04], [-52, "#000", 0.22], [-42, "#000", 0.3], [-28, "#000", 0.24], [-12, "#000", 0.1], [0, "#000", 0.04]]);
-  const beinM = (b) => fellMuster(T, "hB", 7.7, 34, 2, 0.2, ["#f2e6c8", 0.24], ["#2e2214", 0.22], 94, b);
+  const beinM = (b) => fellMuster(T, "hB", 7.7, 28, 2, 0.2, ["#f2e6c8", 0.24], ["#2e2214", 0.22], 94, b);
   let s = "";
   /* ---- Ohren: groß, rund, hoch am Scheitel; außen zum Rand dunkelbraun; innen helle Sichel am Vorderrand mit Haarbüscheln ---- */
   const ohrF = [[143.8, -79], [143.6, -84.6], [145.6, -88.6], [148.8, -88.8], [150.8, -85.4], [150.6, -79.6]];
@@ -1290,11 +1290,11 @@ function hyaene(T) {
   /* Tüpfel: groß und dicht an Flanke, Hüfte, Keule; klein, spärlich, blass an Schulter und Hals; keine an Kehle/Brust-Unterseite */
   const zone = [[40, -64], [46, -69], [60, -72], [76, -76.4], [92, -81], [106, -84], [116, -83], [118, -70], [114, -52], [106, -45.4], [94, -46], [80, -48.6], [68, -52], [62, -44], [57, -35],
     [50, -31.4], [44, -35], [41, -43], [39.6, -52]];
-  n += flecken(zone, 84, 0.9, 2.1, "#3a2814", 0.74, (x) => Math.max(0.2, Math.min(1, (116 - x) / 40)), flachR);
+  n += flecken(zone, 72, 0.9, 2.1, "#3a2814", 0.74, (x) => Math.max(0.2, Math.min(1, (116 - x) / 40)), flachR);
   n += flecken([[116, -84], [128, -81], [138, -76], [140, -66], [134, -56], [122, -50], [116, -60]], 12, 0.6, 1.1, "#4a3820", 0.45, () => 0.8, flachR);
   /* Fell: raue Büschel (heller Kopf, dunkle Kerbe), darüber kurze Haare – überkämmen die Fleckränder */
-  n += fellMuster(T, "hR", 9.3, 52, 3, 0.24, ["#f2e6c8", 0.24], ["#2e2214", 0.22], 170, [30, -95, 150, -25]);
-  n += bueschel(T, rumpf, 56, wuchs, 3.6, 0.28, hellB, dunkB);
+  n += fellMuster(T, "hR", 9.3, 44, 3, 0.24, ["#f2e6c8", 0.24], ["#2e2214", 0.22], 170, [30, -95, 150, -25]);
+  n += bueschel(T, rumpf, 44, wuchs, 3.6, 0.28, hellB, dunkB);
   /* Mähne vom Hinterkopf bis über den Widerrist: Büschel nach hinten gelegt, dunkle Spitzen */
   n += bueschel(T, [[104, -87], [116, -87], [128, -83], [140, -79], [140, -74], [128, -78], [114, -82], [104, -83]], 44, 200, 3.4, 0.32, ["#d8c49c", 0.4], ["#1e140a", 0.4]);
   s += teil(T, "hrumpf", rumpf, fell, n,
@@ -1328,7 +1328,7 @@ function hyaene(T) {
   k += fleck(T, "!", 150, -73.6, 6, 1.2, "#fff4dc", 0.3, -8);
   k += fleck(T, "!", 148, -66.4, 5.4, 3.2, "#fff4dc", 0.2, -12);
   k += fleck(T, "!", 148.6, -57.4, 7, 2.6, "#2a1c0e", 0.3, -4) + fleck(T, "!", 154.6, -62, 1.6, 4.4, "#2a1c0e", 0.2, 10);
-  k += fellMuster(T, "hK", 6.1, 34, 1.7, 0.16, ["#f2e6c8", 0.22], ["#2e2214", 0.2], 186, [134, -84, 160, -50]);
+  k += fellMuster(T, "hK", 6.1, 28, 1.7, 0.16, ["#f2e6c8", 0.22], ["#2e2214", 0.2], 186, [134, -84, 160, -50]);
   /* Lefze: lang, fast gerade, bis unter das Auge, Mundwinkel leicht gehoben; dunkel pigmentiert */
   k += zart(T, [[171.4, -59.4], [167.4, -59.2], [163, -59], [159, -58.8], [156.4, -58.8], [155.2, -59.4]], "#0a0705", 0.38, 0.95);
   k += zart(T, [[170.6, -58.6], [166, -58.3], [160, -58.1], [157, -58.1]], "#6a5a48", 0.15, 0.5);

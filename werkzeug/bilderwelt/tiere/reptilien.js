@@ -533,8 +533,11 @@ function panzer(T, A) {
     form(T, poly(Rr.band(0.52, 1.3, 0.12, 1, 8)), C.bauch) + form(T, poly(Rr.band(0.3, 1.3, 0, 0.16, 4)), C.ruecken, ' opacity=".55"') + "</g>";
   if (A.zacken) {
     /* unregelmäßige Grenze dunkle Flanke / heller Bauch: Zungen der Flankenfarbe in wechselnder Breite */
-    let z = ""; for (let t = tH - 0.04; t < 0.99; t += 0.012 + T.rnd() * 0.02) { const w = 0.004 + T.rnd() * 0.008, l = 0.08 + T.rnd() * 0.22; z += pfad(T, [Rr.P(t - w, 0.42), Rr.P(t + w, 0.42), Rr.P(t + w * 0.4, 0.5 + l), Rr.P(t - w * 0.3, 0.5 + l * 0.9)]); }
-    inn += `<path d="${z}" fill="${C.flanke}" opacity=".85" filter="${weich(T, "zg", 0.3)}"/>`;
+    /* unregelmäßig: kurze Zungen wechselnder Breite, dazwischen abgerissene Flecken, die in die helle Seite auslaufen */
+    let z = ""; for (let t = tH - 0.04; t < 0.99; t += 0.008 + T.rnd() * 0.022) { const w = 0.003 + T.rnd() * 0.009, l = 0.02 + T.rnd() * T.rnd() * 0.2, q = (T.rnd() - 0.5) * w;
+      z += poly([Rr.P(t - w, 0.4), Rr.P(t + w, 0.4), Rr.P(t + w * 0.5 + q, 0.5 + l), Rr.P(t - w * 0.4 + q, 0.5 + l * 0.8)]);
+      if (T.rnd() < 0.45) { const u = t + (T.rnd() - 0.5) * 0.01, v = 0.6 + l + T.rnd() * 0.12, rr = 0.002 + T.rnd() * 0.004; z += poly([Rr.P(u - rr, v), Rr.P(u + rr, v - 0.02), Rr.P(u + rr * 0.6, v + 0.05), Rr.P(u - rr * 0.8, v + 0.04)]); } }
+    inn += `<path d="${z}" fill="${C.flanke}" opacity=".8" filter="${weich(T, "zg", 0.5)}"/>`;
   }
   let bd = "";
   for (const b of A.bindenT) { const w = 0.018 + b * 0.014, j = () => (T.rnd() - 0.5) * w * 0.35, vs = [-1.3, -0.8, -0.3, 0.2, 0.62]; bd += poly(vs.map((v) => Rr.P(b + w + j() + v * w * 0.25, v)).concat(vs.slice().reverse().map((v) => Rr.P(b + j() + v * w * 0.25, v)))); }
@@ -803,7 +806,7 @@ function kopfAlligator(T) {
   k += `<path d="M258.6 -33.4Q261 -33.1 263.2 -33.6L263 -33.1Q261 -32.6 258.6 -33Z" fill="#050504" opacity=".9"/>` +
     linien(T, [[[258.2, -33.7], [260.8, -34.3], [263.6, -33.9]]], "#c8c4ae", 0.18, 0.3) + linien(T, [[[258.6, -33.35], [261, -33.65], [263.2, -33.5]]], "#000", 0.35, 0.45);
   /* Nasenbuckel mit Nasenloch vorn oben */
-  k += fleck(T, "l", 294.4, -31.2, 2, 0.8, 0, 0.4) + `<path d="M293.4 -31.1Q294.6 -31.9 295.8 -31.1Q294.6 -30.7 293.4 -31.1Z" fill="#050504"/>` + (F ? linien(T, [[[293, -31.5], [294.6, -32.2], [296.2, -31.5]]], "#e8e4d0", 0.14, 0.45) : "");
+  k += `<ellipse cx="294.6" cy="-31" rx="2.4" ry="1" fill="#3e3f35"/>` + fleck(T, "l", 294.4, -31.4, 2, 0.7, 0, 0.35) + `<path d="M293.6 -31q.6 -.8 1.1 0q-.5 -.3 -1.1 0ZM295 -31.1q.6 -.8 1.1 0q-.5 -.3 -1.1 0Z" fill="#050504"/>` + (F ? linien(T, [[[293, -31.5], [294.6, -32.2], [296.2, -31.5]]], "#e8e4d0", 0.14, 0.45) : "");
   /* Kopf flach gehalten (tiefe Haltung) */
   /* Kopf flach gehalten (tiefe Haltung) */
   return `<g transform="translate(0 4.6) rotate(-1 252 -26)">${k}</g>`;
@@ -811,7 +814,7 @@ function kopfAlligator(T) {
 function alligator(T) {
   const sp = [[0, -0.6, 0.25, 0.25], [15, -1.3, 1.3, 1.4], [30, -2.3, 2.4, 2.8], [45, -3.6, 3.6, 4], [60, -5.4, 4.9, 5.3], [75, -7.6, 6.3, 6.6], [90, -10, 7.8, 8], [105, -12.6, 9.4, 9.4],
     [120, -15, 11, 10.8], [135, -17.2, 12.8, 12.2], [150, -18.8, 14.6, 13.6], [165, -20, 16, 15.2], [180, -20.8, 16.8, 16.2], [195, -21.2, 17.2, 16.8], [207, -21.2, 17, 16.6], [218, -21.4, 16.2, 15],
-    [228, -21.8, 14.6, 12.6], [238, -22.6, 12.6, 10.6], [248, -23.4, 11, 9.6], [258, -24, 10, 8.8]];
+    [228, -21.8, 14.6, 12.6], [238, -22.6, 12, 10.6], [248, -23.4, 9.4, 9.6], [258, -24, 7, 8.8]];
   /* Beine kurz und kräftig, Ellbogen nach hinten-außen (Unterarm schräg), Hinterfuß vorgeschoben; Sohlen auf y = 0 */
   const beine = {
     fern: [
@@ -831,14 +834,14 @@ function alligator(T) {
   let h = panzer(T, { sp, tH: 150, tS: 226, kielH: 0.3, kamm: 0.55, binden: 0.25, zacken: true, beine,
     bindenT: [0.04, 0.11, 0.18, 0.25, 0.32, 0.39],
     farben: { ol: "#35362d", ruecken: "#23241e", flanke: "#484940", bauch: "#d9d0b0", fern: ["#3e3f35", "#2e2f28", "#1c1c18"], bein: ["#525347", "#3d3e34", "#23241e"],
-      binde: "#0e0f0b", fuge: "#5a5b4e", kamm: ["#5a5b4c", "#36372d", "#23241e"], kammF: "#292a23" },
+      binde: "#0e0f0b", fuge: "#4a4b40", kamm: ["#5a5b4c", "#36372d", "#23241e"], kammF: "#292a23" },
     beinOhne: [[[140, -32], [164, -32], [172, -12], [144, -12]], [[212, -30], [230, -30], [230, -10], [212, -10]]],
     beinSchatten: "M214 -23Q222 -20 230 -22.6M141 -25Q153 -21.4 164 -24", kopf: "" });
   /* Kontaktschatten direkt an den Sohlen; Bauchschatten eng und dunkel (tiefe Haltung) */
   const ks = T.rg("ksohle", [[0, "#000", 0.6], [1, "#000", 0]]);
   h = `<ellipse cx="190" cy="0" rx="34" ry="1.2" fill="${ks}" opacity=".7"/>` + [[142, 0, 5], [241, 0, 3.6], [165, 0, 9], [227, 0, 5]].map(([x, y, w]) => `<ellipse cx="${x}" cy="${y}" rx="${w}" ry=".5" fill="${ks}"/>`).join("") + h;
   /* Nackenschild im Körperraum (Hinterhauptschilde liegen über dem Kopfansatz) */
-  h += nackenSchild(T, 232.6, -35.2, 1, 0.8);
+  h += nackenSchild(T, 231.6, -33.6, 0.95, 0.8);
   h += kopfAlligator(T);
   return fertig(3.8 / 3, h, [0, -41, 297.4, 0], [142, 168, 226, 241], [242, -38, 299, -12]);
 }

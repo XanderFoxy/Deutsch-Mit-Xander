@@ -706,18 +706,26 @@ const krone = (cx, cy, rx, ry, n, gr) => {
   k += rad(0.35, -0.45, 0.45) + rad(2.35, -0.6, 0.6);
   /* zurückgeklapptes Verdeck hinter den Fahrgästen */
   k += `<path d="M${P(2.35, -1.42)} Q${P(2.45, -2.14)} ${P(3.02, -2.1)} Q${P(3.22, -1.72)} ${P(3.04, -1.42)} Z" fill="#1b1b1d"/><path d="M${P(2.5, -1.6)} Q${P(2.65, -1.98)} ${P(2.97, -2)} M${P(2.6, -1.5)} Q${P(2.75, -1.86)} ${P(3.04, -1.86)}" stroke="#3c3c42" stroke-width=".3" fill="none"/>`;
-  /* zwei Fahrgäste auf der Rückbank (Beine verdeckt der Wagenkasten) */
-  const sitzen = Object.assign({}, M0.POSEN.sitzen, { schulterL: { vor: 20, seit: 8 }, ellbogenL: 70, unterarmL: -40, schulterR: { vor: 18, seit: 8 }, ellbogenR: 70, unterarmR: -40 });
-  const gast = (spec, h, sx) => {
-    const g = B.mensch(Object.assign({ pose: sitzen, blick: -70, haut: "hell" }, spec), h);
-    const ox = r(m(sx) - g.z.sitz.x * g.k), oy = r(m(-1.46) - g.z.sitz.y * g.k);
-    /* was der Wagenkasten verdeckt (Beine, Schuhe), wird gar nicht erst gezeichnet */
-    const unten = g.z.sitz.y + 4;
-    const svg = g.svg.replace(/<path [^>]*d="([^"]+)"[^>]*\/>/g, (p, d) => { const n = d.match(/-?\d*\.?\d+/g).map(Number).filter((_, i) => i % 2 === 1); return Math.min(...n) > unten ? "" : p; });
-    return `<g transform="translate(${ox} ${oy})">${fein(schlank(svg, 4, true), 5, 0.35)}</g>`;
+  /* zwei Fahrgäste auf der Rückbank, nach links schauend: nur der Oberkörper
+     schaut über den Wagenkasten (in Metern gezeichnet, Licht von links) */
+  const fahrgast = (sx, frau) => {
+    const haut = frau ? "#ecc2a2" : "#dcac88", stoff = frau ? "#e6889f" : "#9fc3e3", stoffD = frau ? "#c4637e" : "#7aa0c4";
+    let g = `<path d="M-.13 .02 L-.16 -.4 Q-.15 -.55 -.04 -.58 L.09 -.58 Q.18 -.55 .17 -.4 L.15 .02 Z" fill="${stoff}"/><path d="M.06 -.56 Q.17 -.53 .17 -.4 L.15 .02 L.06 .02 Z" fill="${stoffD}"/>`;
+    g += `<path d="M-.01 -.6 L-.02 -.67 L.06 -.67 L.06 -.6 Z" fill="${haut}"/>`;
+    /* Kopf im Profil nach links: Stirn, Nase, Kinn */
+    g += `<path d="M.07 -.66 Q.1 -.8 .02 -.85 Q-.06 -.87 -.09 -.8 L-.1 -.75 L-.125 -.72 L-.1 -.71 L-.1 -.68 Q-.08 -.645 -.03 -.65 Q.03 -.64 .07 -.66 Z" fill="${haut}"/>`;
+    g += `<circle cx="-.06" cy="-.765" r=".009" fill="#2a1d14"/><path d="M-.093 -.69 l.026 .004" stroke="#a5524a" stroke-width=".009"/><path d="M.02 -.77 q.02 -.02 .03 0" stroke="${frau ? "#d79a80" : "#b98a6c"}" stroke-width=".012" fill="none"/>`;
+    if (frau) {
+      g += `<path d="M-.07 -.83 Q-.02 -.9 .06 -.85 Q.12 -.78 .11 -.62 Q.1 -.52 .05 -.5 Q.07 -.6 .04 -.68 Q.05 -.78 0 -.8 Q-.04 -.79 -.07 -.83 Z" fill="#e2bf6e"/>`;
+      g += `<ellipse cx="0" cy="-.855" rx=".17" ry=".026" fill="#efe4c6"/><path d="M-.085 -.86 Q-.08 -.95 0 -.955 Q.08 -.95 .085 -.86 Z" fill="#efe4c6"/><path d="M-.085 -.875 h.17" stroke="#c4637e" stroke-width=".018"/>`;
+    } else {
+      g += `<path d="M-.085 -.81 Q-.07 -.885 .02 -.885 Q.1 -.875 .1 -.78 Q.09 -.72 .07 -.7 Q.06 -.77 .02 -.8 Q-.03 -.8 -.085 -.81 Z" fill="#5a3b26"/><path d="M.03 -.74 q.012 -.02 .01 .02" stroke="${haut}" stroke-width=".02" fill="none"/>`;
+    }
+    /* der Arm liegt im Schoß */
+    g += `<path d="M.01 -.54 Q-.03 -.36 -.02 -.27 Q-.06 -.18 -.19 -.16 L-.2 -.11 Q-.04 -.1 .04 -.22 Q.08 -.34 .07 -.53 Z" fill="${stoffD}"/><ellipse cx="-.21" cy="-.135" rx=".035" ry=".025" fill="${haut}"/>`;
+    return `<g transform="translate(${m(sx)} ${m(-1.44)}) scale(${r(s)})">${g}</g>`;
   };
-  k += gast({ id: "wie_gm", geschlecht: "m", frisur: "kurz", haarfarbe: "dunkelbraun", kleidung: { oberteil: { stueck: "hemd", farbe: "hellblau" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, m(1.78), 2.3);
-  k += gast({ id: "wie_gw", geschlecht: "w", frisur: "lang", haarfarbe: "blond", kleidung: { oberteil: { stueck: "bluse", farbe: "rosa" }, unterteil: { stueck: "rock", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, kopf: { stueck: "hut", farbe: "#e8dcc0" } } }, m(1.66), 2.12);
+  k += fahrgast(2.36, false) + fahrgast(2.13, true);
   /* Wagenkasten (schwarz lackiert), rotes Polster, Bock, Laterne, Peitsche */
   k += `<path d="M${P(-0.1, -0.9)} Q${P(0.6, -0.72)} ${P(1.1, -0.86)} L${P(2.9, -0.86)} Q${P(3.05, -1.3)} ${P(2.8, -1.42)} L${P(1.1, -1.42)} Q${P(0.7, -1.2)} ${P(0.5, -1.0)} L${P(-0.1, -1.0)} Z" fill="${S.lg("lack", [[0, "#3c3c42"], [0.4, "#141416"], [1, "#050506"]])}"/>`;
   k += `<path d="M${P(1.2, -1.36)} L${P(2.8, -1.36)}" stroke="#d9a92e" stroke-width=".25"/>`;
@@ -738,7 +746,7 @@ const krone = (cx, cy, rx, ry, n, gr) => {
     kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "jacke", farbe: "#26262c" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "melone" } } }, m(1.76));
   const sitz = { x: m(0.45), y: m(-1.66) };
   const kx = r(sitz.x - kut.z.sitz.x * kut.k), ky = r(sitz.y - kut.z.sitz.y * kut.k);
-  k += `<g transform="translate(${kx} ${ky})">${fein(schlank(kut.svg, 3, true), 3, 0.3)}</g>`;
+  k += `<g transform="translate(${kx} ${ky})">${schlank(kut.svg, 2, true)}</g>`;
   const hand = { x: kx + kut.z.handL.x * kut.k, y: ky + kut.z.handL.y * kut.k };
   k += `<path d="M${r(hand.x)} ${r(hand.y)} Q${m(-1)} ${m(-1.9)} ${m(PB - 1.42)} ${m(-1.84)} M${r(hand.x)} ${r(hand.y + 0.3)} Q${m(-1)} ${m(-1.8)} ${m(PB - 1.6)} ${m(-1.8)}" stroke="#2b1d12" stroke-width=".22" fill="none"/>`;
   const kopf = { x: kx + kut.z.kopf.x * kut.k, y: ky + kut.z.kopf.y * kut.k };

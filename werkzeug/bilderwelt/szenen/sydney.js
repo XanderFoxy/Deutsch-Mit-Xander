@@ -86,14 +86,8 @@ const vorn = (y) => (y - HOR) / 1.6;    // Einheiten je Meter auf dem Felsen vor
 const schlag = (b, h, s, a = 0.32) => `<path d="M${r(-b / 2)} 0 L${r(b / 2)} 0 L${r(b / 2 - 1.2 * h * s)} ${r(-0.13 * h * s)} L${r(-b / 2 - 1.2 * h * s)} ${r(-0.13 * h * s)} Z" fill="#2a1d10" opacity="${a}" filter="url(#bw_weich)"/>`;
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="1"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
 S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation="1.4 .3"/></filter>`);
-/* Wellenmaske: Spiegelbilder zerfallen in waagerechte, unterbrochene Streifen */
-S.def(`<pattern id="${S.id("wellen")}" width="23" height="3.1" patternUnits="userSpaceOnUse" patternTransform="translate(2 0)"><rect x="0" y="0" width="9" height=".9" fill="#fff"/><rect x="11" y=".2" width="5" height=".7" fill="#fff" opacity=".8"/><rect x="4" y="1.5" width="6" height=".8" fill="#fff" opacity=".9"/><rect x="13" y="1.6" width="8.5" height=".9" fill="#fff"/><rect x="19" y=".1" width="3" height=".6" fill="#fff" opacity=".6"/></pattern>`);
-S.def(`<pattern id="${S.id("wellen2")}" width="17" height="2.3" patternUnits="userSpaceOnUse" patternTransform="translate(5 .7)"><rect x="0" y="0" width="4" height=".7" fill="#fff" opacity=".8"/><rect x="9" y="1.1" width="6" height=".8" fill="#fff" opacity=".7"/></pattern>`);
-S.def(`<mask id="${S.id("wellenmaske")}" maskUnits="userSpaceOnUse" x="0" y="146" width="400" height="60"><rect x="0" y="146" width="400" height="60" fill="url(#${S.id("wellen")})" opacity=".85"/><rect x="0" y="146" width="400" height="60" fill="url(#${S.id("wellen2")})"/></mask>`);
-
 /* =====================================================================
    KULISSE — Himmel, Nordufer, The Rocks
    ===================================================================== */
