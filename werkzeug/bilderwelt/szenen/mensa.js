@@ -51,7 +51,15 @@ function klipp(pts) {
   return out.map((p) => [r(p[0]), r(p[1])]);
 }
 const poly = (pts, fill, extra = "") => { const q = klipp(pts); return q.length < 3 ? "" : `<path d="M${q.map((p) => p[0] + " " + p[1]).join(" L")} Z" fill="${fill}"${extra ? " " + extra : ""}/>`; };
-const L = (a, b, w, f, ex = "") => `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${f}" stroke-width="${w}" stroke-linecap="round"${ex}/>`;
+function L(a, b, w, f, ex = "") {
+  /* Liang-Barsky: Linie auf das Bild beschneiden */
+  let t0 = 0, t1 = 1; const dx = b[0] - a[0], dy = b[1] - a[1];
+  for (const [p, q] of [[-dx, a[0]], [dx, 320 - a[0]], [-dy, a[1]], [dy, 200 - a[1]]]) {
+    if (p === 0) { if (q < 0) return ""; continue; }
+    const t = q / p; if (p < 0) { if (t > t1) return ""; if (t > t0) t0 = t; } else { if (t < t0) return ""; if (t < t1) t1 = t; }
+  }
+  return `<line x1="${r(a[0] + t0 * dx)}" y1="${r(a[1] + t0 * dy)}" x2="${r(a[0] + t1 * dx)}" y2="${r(a[1] + t1 * dy)}" stroke="${f}" stroke-width="${w}" stroke-linecap="round"${ex}/>`;
+}
 const um = (ox, oy, svg) => `<g transform="translate(${r(-ox)} ${r(-oy)})">${svg}</g>`;
 function kiste(X0, X1, H0, H1, z0, z1, f) {
   let g = "";
@@ -208,32 +216,36 @@ const AUS = { X0: -3.1, X1: 0.95, z0: 0.45, z1: 1.0, H: 0.9 };
   /* Thekenplatte mit Wärmebecken (GN-Behälter) */
   k += poly([P(X0, H, z1), P(X1, H, z1), P(X1, H, z0), P(X0, H, z0)], STAHL_H);
   const U = [];
+  /* Speisen in GN-Behältern: von vorn sieht man den Behälterrand und den Berg darauf */
+  const ZB = 0.8;
+  const haufen = (X, hoch, f) => { const pts = []; for (let i = 0; i <= 12; i++) { const t = i / 12, xx = X - 0.24 + t * 0.48; pts.push(P(xx, H + 0.05 + Math.sin(t * Math.PI) * hoch, ZB)); } pts.push(P(X + 0.24, H + 0.05, ZB), P(X - 0.24, H + 0.05, ZB)); return poly(pts, f); };
+  const punkte = (X, n, farben, rx, ry, hoch) => { let g = ""; for (let i = 0; i < n; i++) { const t = 0.1 + rnd() * 0.8, [x, y] = P(X - 0.24 + t * 0.48, H + 0.05 + Math.sin(t * Math.PI) * hoch * rnd(), ZB); g += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${farben[i % farben.length]}"/>`; } return g; };
   const speisen = [
-    [-2.65, "Nudeln", (X) => { let g = ""; for (let i = 0; i < 14; i++) { const a = P(X - 0.2 + rnd() * 0.4, H - 0.01, 0.6 + rnd() * 0.2), b = [r(a[0] + 1.6), r(a[1] + rnd() * 0.6 - 0.3)]; g += `<path d="M${a[0]} ${a[1]} Q${r(a[0] + 0.8)} ${r(a[1] - 0.6)} ${b[0]} ${b[1]}" stroke="#ecd07a" stroke-width=".55" fill="none"/>`; } return g; }, "#f0d58a",
+    [-2.4, "Nudeln", "#efd27e", 0.07, (X) => { let g = ""; for (let i = 0; i < 9; i++) { const t = 0.1 + i * 0.09, [x, y] = P(X - 0.24 + t * 0.48, H + 0.05 + Math.sin(t * Math.PI) * 0.06, ZB); g += `<path d="M${r(x - 1.6)} ${r(y + 0.6)} q.8 -1.4 1.6 0 t1.6 0" stroke="#d9b65a" stroke-width=".35" fill="none"/>`; } return g; },
       ["nudeln", "die Nudeln", "NU-deln", "la pasta", "PA-sta", "pasta", "Heute gibt es Spaghetti."]],
-    [-2.05, "Soße", null, "#a8341f", ["sosse", "die Soße", "SO-ße", "il sugo", "SU-go", "sauce", "Bolognese ist eine Soße mit Hackfleisch und Tomaten."]],
-    [-1.45, "Curry", (X) => { let g = ""; for (let i = 0; i < 9; i++) { const [x, y] = P(X - 0.18 + rnd() * 0.36, H - 0.008, 0.62 + rnd() * 0.16); g += `<circle cx="${x}" cy="${y}" r=".5" fill="${["#e07b3a", "#4f9a3a", "#f2c94c"][i % 3]}"/>`; } return g; }, "#e2a33a",
+    [-1.8, "Soße", "#a8341f", 0.035, (X) => punkte(X, 7, ["#c9503a", "#7a2414"], 0.6, 0.3, 0.03),
+      ["sosse", "die Soße", "SO-ße", "il sugo", "SU-go", "sauce", "Bolognese ist eine Soße mit Hackfleisch und Tomaten."]],
+    [-1.2, "Curry", "#e2a33a", 0.045, (X) => punkte(X, 12, ["#e07b3a", "#4f9a3a", "#f2c94c", "#d84a3a"], 0.55, 0.4, 0.045),
       ["gemuese", "das Gemüse", "ge-MÜ-se", "la verdura", "ver-DU-ra", "vegetables", "Im Gemüsecurry sind Karotten, Erbsen und Paprika."]],
-    [-0.85, "Reis", (X) => { let g = ""; for (let i = 0; i < 18; i++) { const [x, y] = P(X - 0.2 + rnd() * 0.4, H - 0.008, 0.6 + rnd() * 0.2); g += `<ellipse cx="${x}" cy="${y}" rx=".35" ry=".18" fill="#fffdf4"/>`; } return g; }, "#f4f0e2",
-      ["reis", "der Reis", "REIS", "il riso", "RI-so", "rice", null]],
-    [-0.25, "Pommes", (X) => { let g = ""; for (let i = 0; i < 14; i++) { const a = P(X - 0.2 + rnd() * 0.4, H - 0.006, 0.6 + rnd() * 0.2); g += `<rect x="${a[0]}" y="${a[1]}" width="1.8" height=".5" fill="#f2c14e" transform="rotate(${Math.round(rnd() * 60 - 30)} ${a[0]} ${a[1]})"/>`; } return g; }, "#e8b64a",
+    [-0.6, "Pommes", "#e8b64a", 0.06, (X) => { let g = ""; for (let i = 0; i < 12; i++) { const t = 0.08 + rnd() * 0.84, [x, y] = P(X - 0.24 + t * 0.48, H + 0.05 + Math.sin(t * Math.PI) * 0.06 * (0.4 + rnd() * 0.6), ZB); g += `<rect x="${x}" y="${y}" width="2.2" height=".55" fill="${i % 2 ? "#f6cf62" : "#e9b443"}" transform="rotate(${Math.round(rnd() * 70 - 35)} ${x} ${y})"/>`; } return g; },
       ["pommes", "die Pommes", "POM-mes", "le patatine fritte", "pa-ta-TI-ne FRIT-te", "fries", "„Pommes“ ist kurz für Pommes frites."]],
-    [0.4, "Salat", (X) => { let g = ""; for (let i = 0; i < 10; i++) { const [x, y] = P(X - 0.2 + rnd() * 0.4, H + 0.01, 0.6 + rnd() * 0.2); g += `<ellipse cx="${x}" cy="${y}" rx="1.2" ry=".6" fill="${i % 4 === 0 ? "#d84a3a" : i % 3 ? "#6fb04a" : "#9ed06a"}"/>`; } return g; }, "#7bbf54",
+    [0.0, "Salat", "#6fb04a", 0.07, (X) => punkte(X, 14, ["#9ed06a", "#4f8f32", "#d84a3a", "#f4f0e2"], 0.9, 0.5, 0.07),
       ["salat", "der Salat", "sa-LAT", "l'insalata", "in-sa-LA-ta", "salad", null]],
   ];
-  for (const [X, name, deko, farbe, wort] of speisen) {
-    const a = X - 0.26, b = X + 0.26;
-    k += poly([P(a, H + 0.005, 0.86), P(b, H + 0.005, 0.86), P(b, H + 0.005, 0.54), P(a, H + 0.005, 0.54)], "#7d868d");
-    k += poly([P(a + 0.03, H, 0.84), P(b - 0.03, H, 0.84), P(b - 0.03, H, 0.56), P(a + 0.03, H, 0.56)], farbe);
-    if (deko) k += deko(X);
-    if (name === "Soße") k += poly([P(a + 0.05, H + 0.002, 0.8), P(b - 0.05, H + 0.002, 0.8), P(b - 0.05, H + 0.002, 0.6), P(a + 0.05, H + 0.002, 0.6)], "#c24a2a", 'opacity=".7"');
-    /* Kelle / Schöpflöffel */
-    const k0 = P(X + 0.1, H + 0.02, 0.72), k1 = P(X + 0.22, H + 0.28, 0.5);
-    k += L(k0, k1, 0.45, "#9aa3aa");
-    const [px, py] = P(X, H, 0.88);
-    k += `<rect x="${r(px - 3.4)}" y="${r(py + 0.2)}" width="6.8" height="2.2" rx=".3" fill="#fff"/>` + T(px, py + 1.9, 1.5, name, "#333", 'text-anchor="middle"');
+  for (const [X, name, farbe, hoch, deko, wort] of speisen) {
+    const a = X - 0.27, b = X + 0.27;
+    /* Behälter: Rand vorn (Edelstahl) */
+    k += haufen(X, hoch, farbe);
+    k += deko(X);
+    k += poly([P(a, H, ZB + 0.12), P(b, H, ZB + 0.12), P(b, H + 0.06, ZB + 0.12), P(a, H + 0.06, ZB + 0.12)], STAHL);
+    k += poly([P(a, H + 0.06, ZB + 0.12), P(b, H + 0.06, ZB + 0.12), P(b, H + 0.065, ZB + 0.12), P(a, H + 0.065, ZB + 0.12)], "#f4f6f7");
+    /* Schöpfkelle */
+    const k0 = P(X + 0.14, H + 0.06, ZB), k1 = P(X + 0.24, H + 0.32, ZB - 0.15);
+    k += L(k0, k1, 0.45, "#8f979e") + `<ellipse cx="${k0[0]}" cy="${k0[1]}" rx="1.1" ry=".5" fill="#9aa3aa"/>`;
+    const [px, py] = P(X, H + 0.06, ZB + 0.12);
+    k += `<rect x="${r(px - 3.6)}" y="${r(py + 0.4)}" width="7.2" height="2" rx=".3" fill="#fff"/>` + T(px, py + 1.9, 1.5, name, "#333", 'text-anchor="middle"');
     const [id, de, syl, it, itSyl, en, tipp] = wort;
-    const o = { id, de, syl, it, itSyl, en, x: px, y: r(py + 2.6), kunst: flaeche(-9, -8, 18, 9.6) };
+    const o = { id, de, syl, it, itSyl, en, x: px, y: r(py + 2.6), kunst: flaeche(-10, -9, 20, 10) };
     if (tipp) o.tipp = tipp;
     U.push(o);
   }
@@ -245,7 +257,7 @@ const AUS = { X0: -3.1, X1: 0.95, z0: 0.45, z1: 1.0, H: 0.9 };
   for (const [hh, zz] of [[0.84, z1 + 0.08], [0.86, z1 + 0.18], [0.88, z1 + 0.28]]) k += L(P(X0 - 0.1, hh, zz), P(X1 + 0.05, hh, zz), 0.9, "#c9cfd4");
   for (let X = X0; X <= X1; X += 1.0) k += L(P(X, 0.84, z1 + 0.06), P(X, 0.84, z1 + 0.3), 0.7, "#aeb6bd") + L(P(X, 0.84, z1 + 0.2), P(X, 0.84, z1), 0.7, "#aeb6bd");
   S.teil({ id: "me_ausgabe", de: "die Essensausgabe", syl: "ES-sens-aus-ga-be", it: "la distribuzione dei pasti", itSyl: "di-stri-bu-ZIO-ne dei PA-sti", en: "servery", x: ax, y: ay, steht: true, kunst: um(ax, ay, k),
-    zoom: { x: r(P(-3.0, H, 1)[0] - 2), y: r(P(-3.0, H, 1)[1] - 34), w: 156, h: 104 },
+    zoom: { x: r(P(-2.75, H, 1)[0] - 2), y: r(P(-2.75, H, 1)[1] - 34), w: 114, h: 76 },
     unter: U,
     tipp: "An der Essensausgabe schiebt man das Tablett auf den Stangen entlang." });
   /* Glas des Hustenschutzes (vor allem, fängt keinen Tipp) */
@@ -376,12 +388,12 @@ const START = { X: -3.15, z: 1.42 };
   const [ax, ay] = P((X0 + X1) / 2 + 0.6, 0, z1);
   let k = "";
   /* Stühle auf der anderen Seite (Lehnen sichtbar) */
-  for (const X of [-3.1, -2.35, -1.6]) {
+  for (const X of [-2.35, -1.6]) {
     k += poly([P(X - 0.2, 0.46, z0 - 0.42), P(X + 0.2, 0.46, z0 - 0.42), P(X + 0.2, 0.92, z0 - 0.44), P(X - 0.2, 0.92, z0 - 0.44)], S.lg("lehneF", [[0, "#3f7a1d"], [1, "#2f5f15"]]));
     k += poly([P(X - 0.2, 0.92, z0 - 0.44), P(X + 0.2, 0.92, z0 - 0.44), P(X + 0.2, 0.94, z0 - 0.42), P(X - 0.2, 0.94, z0 - 0.42)], "#6aa83a");
   }
   /* Tischbeine (Säulenfüße) und Platte */
-  for (const X of [X0 + 0.4, X1 - 0.4]) k += L(P(X, 0, (z0 + z1) / 2), P(X, H - 0.03, (z0 + z1) / 2), 2.4, "#3a3f44") + poly([P(X - 0.3, 0.01, z0 + 0.15), P(X + 0.3, 0.01, z0 + 0.15), P(X + 0.3, 0.01, z1 - 0.15), P(X - 0.3, 0.01, z1 - 0.15)], "#2a2e33");
+  for (const X of [X1 - 0.4]) k += L(P(X, 0, (z0 + z1) / 2), P(X, H - 0.03, (z0 + z1) / 2), 2.4, "#3a3f44") + poly([P(X - 0.3, 0.01, z0 + 0.15), P(X + 0.3, 0.01, z0 + 0.15), P(X + 0.3, 0.01, z1 - 0.15), P(X - 0.3, 0.01, z1 - 0.15)], "#2a2e33");
   k += kiste(X0, X1, H - 0.035, H, z0, z1, { vorn: "#b38a55", deckel: HOLZ, seite: "#a07a48" });
   k += L(P(X0, H, z1), P(X1, H, z1), 0.4, "#fff", ' opacity=".45"');
   const U = [];
