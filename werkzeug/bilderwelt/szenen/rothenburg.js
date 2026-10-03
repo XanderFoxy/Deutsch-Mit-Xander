@@ -126,11 +126,26 @@ function lichtWand(Q, sh, a, b, h0, h1, n = 48, opS = 0.34, opL = 0.2) {
   for (let i = 0; i <= n; i++) { const u = a + (b - a) * i / n, h = Math.max(h0, Math.min(h1, sh(u))); unten.push(Q(u, h0)); kante.push(Q(u, h)); oben.push(Q(u, h1)); }
   return `<path d="${pz(...unten, ...kante.slice().reverse())}" fill="${SCHATTEN}" opacity="${opS}"/><path d="${pz(...kante, ...oben.slice().reverse())}" fill="#ffb45c" opacity="${opL}"/>`;
 }
+/* Licht und Schatten als EIGENE Farbtöne (für das gelbe Plönleinhaus): Schatten per Multiplizieren zu kühlem,
+   gesättigtem Ocker (Gelb #e9b54c → ≈ #c98f3e), Licht als warmes Goldgelb mit rosa Kante, Kante leicht weich.
+   glatt > 0 schließt Lücken im Schattenverlauf (laufendes Maximum), damit die Kante eine saubere Schräge bleibt. */
+function lichtWandWarm(Q, sh, a, b, h0, h1, n, opL, glatt = 0, clip = "") {
+  const cp = clip ? ` clip-path="url(#${S.id(clip)})"` : "";
+  const hs = [];
+  for (let i = 0; i <= n; i++) hs.push(Math.max(h0, Math.min(h1, sh(a + (b - a) * i / n))));
+  /* Schließen (erst Maximum, dann Minimum über ±glatt Stützstellen): füllt schmale Lücken, die Form bleibt */
+  const fen = (arr, f) => arr.map((h, i) => { let m = h; for (let j = Math.max(0, i - glatt); j <= Math.min(n, i + glatt); j++) m = f(m, arr[j]); return m; });
+  const hg = fen(fen(hs, Math.max), Math.min);
+  const unten = [], kante = [], oben = [];
+  for (let i = 0; i <= n; i++) { const u = a + (b - a) * i / n; unten.push(Q(u, h0)); kante.push(Q(u, hg[i])); oben.push(Q(u, h1)); }
+  return `<path d="${pz(...unten, ...kante.slice().reverse())}" fill="#dcc9d0" style="mix-blend-mode:multiply"${cp}/><path d="${pz(...kante, ...oben.slice().reverse())}" fill="#ffc95e" opacity="${opL}"${cp}/><g${cp}><path d="M${kante.map(pt).join(" L")}" stroke="#ffb07a" stroke-width="1.1" fill="none" opacity=".75" filter="url(#${S.id("kante")})"/></g>`;
+}
 
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("glimm")}" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="2.4"/></filter>`);
 S.def(`<filter id="${S.id("wolke")}" x="-20%" y="-80%" width="140%" height="260%"><feGaussianBlur stdDeviation="1"/></filter>`);
 S.def(`<filter id="${S.id("weichlicht")}" x="-10%" y="-60%" width="120%" height="220%"><feGaussianBlur stdDeviation="1.1"/></filter>`);
+S.def(`<filter id="${S.id("kante")}" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur stdDeviation=".3"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".6"/></filter>`);
 
 /* ---------- Stoffe -------------------------------------------------- */
@@ -185,7 +200,7 @@ const wandFenster = (X, d0, d1, h0, h1, opt) => fensterQ(P(X, d0, h1), P(X, d1, 
 /* =====================================================================
    KULISSE — Abendhimmel mit Wolkenbändern, Taubertal im Dunst
    ===================================================================== */
-S.hinten(`<rect y="-2" width="400" height="200" fill="${S.lg("himmel", [[0, "#34548e"], [0.4, "#7690bd"], [0.72, "#dcb6a6"], [0.9, "#f4cfa2"], [1, "#f6dcb0"]])}"/>`);
+S.hinten(`<rect y="-2" width="400" height="200" fill="${S.lg("himmel", [[0, "#4f74b4"], [0.4, "#7f9ac6"], [0.72, "#dcb6a6"], [0.9, "#f4cfa2"], [1, "#f6dcb0"]])}"/>`);
 {
   /* Abendwolken in Bändern (Altocumulus): klare, gewellte Oberkante, flache rosa Unterseite von der tiefen Sonne */
   const WG = S.lg("wolkeband", [[0, "#9a97bd"], [0.55, "#c9a2b4"], [1, "#f7b99c"]]);
@@ -201,9 +216,15 @@ S.hinten(`<rect y="-2" width="400" height="200" fill="${S.lg("himmel", [[0, "#34
 }
 /* Taubertal: der bewaldete Gegenhang jenseits der Tauber (≈ 600 m), tief unten und dunstblau */
 {
-  let c = `<path d="M70 150 Q92 144 112 147 Q134 141 156 146 Q172 143 190 147 L190 200 L70 200 Z" fill="${S.lg("tal", [[0, "#9aa9bc"], [0.5, "#7f9183"], [1, "#5f7462"]])}"/>`;
-  for (let i = 0; i < 70; i++) { const x = 72 + rnd() * 116, y = 147 + Math.pow(rnd(), 0.8) * 46, q = 0.8 + (y - 147) / 30; c += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.3)}" ry="${r(q)}" fill="${["#7c8f86", "#8a9a86", "#6d8270", "#a0a88a", "#93806a"][i % 5]}"/>`; }
-  c += `<path d="M70 146 L190 146 L190 200 L70 200 Z" fill="${S.lg("taldunst", [[0, "#dfd6d0", 0.6], [0.6, "#c8cfd8", 0.3], [1, "#c8cfd8", 0.15]])}"/>`;
+  /* Oberkante als unregelmäßige Waldkante gegen den Himmel (einzelne Kronen), darunter dichter Wald mit hellen
+     Wiesenflecken und ein paar Dächern (Detwang); Dunst nur leicht */
+  let kante = "M70 200 L70 149";
+  for (let x = 70; x < 190; x += 1.6 + rnd() * 1.4) { const y = 146.5 + Math.sin(x / 13) * 1.6 + rnd() * 1.4; kante += ` Q${r(x + 0.8)} ${r(y - 1.4 - rnd())} ${r(x + 1.8)} ${r(y)}`; }
+  let c = `<path d="${kante} L190 200 Z" fill="${S.lg("tal", [[0, "#6f8478"], [0.5, "#64786a"], [1, "#55695a"]])}"/>`;
+  for (const [x, y, w, h] of [[96, 156, 9, 2.2], [142, 160, 12, 2.6], [170, 154, 7, 1.8]]) c += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${h}" fill="#a9b47e" opacity=".9"/>`;
+  for (let i = 0; i < 80; i++) { const x = 72 + rnd() * 116, y = 149 + Math.pow(rnd(), 0.8) * 46, q = 1 + (y - 147) / 22; c += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(q * 1.3)}" ry="${r(q)}" fill="${["#5f7462", "#6d8270", "#7c8f86", "#56695a", "#73866c"][i % 5]}"/>`; }
+  for (const [x, y] of [[138, 163], [143, 164.5], [148, 162.6]]) c += `<rect x="${x - 1.2}" y="${y - 0.9}" width="2.4" height="1.4" fill="#e8dfcc"/><path d="M${x - 1.5} ${y - 0.9} L${x} ${y - 2.2} L${x + 1.5} ${y - 0.9} Z" fill="#a85a3e"/>`;
+  c += `<path d="M70 144 L190 144 L190 200 L70 200 Z" fill="${S.lg("taldunst", [[0, "#d8d4d8", 0.35], [0.6, "#c8cfd8", 0.18], [1, "#c8cfd8", 0.1]])}"/>`;
   S.hinten(c);
 }
 
@@ -425,7 +446,8 @@ const PLOEN_UNTER = [];
     k += `<path d="${poly(W(d3, traufe, 2.5 * vk), W(D1, traufe, 2.5 * vk), P(Lm, D1, first), P(Lm, d3, first))}" fill="${DACHZ}"/>`;
     k += `<path d="M${pt(W(d3, traufe, 2.6 * vk))} L${pt(W(D1, traufe, 2.6 * vk))}" stroke="#8a8f94" stroke-width=".7"/><path d="M${pt(W(35.4, traufe, 0))} L${pt(W(35.4, 0.3, 0))}" stroke="#8a8f94" stroke-width=".7"/>${[1.5, 4, 6.5].map((h) => `<path d="M${pt(W(35.1, h, 0))} L${pt(W(35.7, h, 0))}" stroke="#5f656a" stroke-width=".35"/>`).join("")}`;
     /* Abendsonne von rechts: Schattenkante aus dem Sonnenmodell (die Wand schaut nach Westen) */
-    k += lichtWand((D, h) => W(D, h, h > 3.2 ? vk : 0), (D) => schattenH(Lw, D) - gG(Lw, D), D0, D1, 0, traufe, 18, 0.34, 0.34);
+    /* die Westwand ist die hellste Fläche des Hauses (≈ 87 % Licht) */
+    k += lichtWandWarm((D, h) => W(D, h, h > 3.2 ? vk : 0), (D) => schattenH(Lw, D) - gG(Lw, D), D0, D1, 0, traufe, 18, 0.62, 2);
     k += `<path d="${poly(W(d3, traufe, 2.5 * vk), W(D1, traufe, 2.5 * vk), P(Lm, D1, first), P(Lm, d3, first))}" fill="#ffb060" opacity=".22"/>`;
   }
   const s = F / PH.d;
@@ -486,7 +508,7 @@ const PLOEN_UNTER = [];
   k += `<rect x="${r(X(-5.75, PH.d))}" y="${r(Y(2.9, PH.d))}" width="2.4" height="1.6" rx=".3" fill="#2a4a7a"/><text x="${r(X(-5.75, PH.d) + 1.2)}" y="${r(Y(2.9, PH.d) + 1.25)}" font-size="1.3" text-anchor="middle" fill="#fff" font-family="Arial">7</text>`;
   k += win(-8.55, 1.05, 2.35, 1.05, PH.d, { licht: 1 }) + win(-6.75, 1.2, 2.3, 0.8, PH.d, { abend: 1 });
   /* Abendlicht aus dem Sonnenmodell: Schattenkante der rechten Zeile (Sägezahn), darüber warm — nur auf dem Haus */
-  k += `<g clip-path="url(#${S.id("ploenclip")})">${lichtWand((u, h) => P(u, PH.d - 0.3, h, 0), (u) => schattenH(u, PH.d), PH.L0 - 1, PH.L1 + 1, 0, first + 0.5, 30, 0.3, 0.13)}</g>`;
+  k += lichtWandWarm((u, h) => P(u, PH.d - 0.3, h, 0), (u) => schattenH(u, PH.d), PH.L0 - 1, PH.L1 + 1, 0, first + 0.5, 30, 0.42, 10, "ploenclip");
   PLOEN = k;
   PLOEN_UNTER.push({ id: "giebel", de: "der Giebel", syl: "GIE-bel", it: "il frontone", itSyl: "fron-TO-ne", en: "gable", pts: gieb,
     tipp: "Bei vielen Häusern in Rothenburg zeigt der Giebel zur Gasse." });
@@ -862,9 +884,11 @@ const LL = -8;
   for (const [h0, h1] of [[0.4, 1.1], [1.25, 1.9]]) k += `<path d="${poly(P(L, ta + 0.1, h1), P(L, tb - 0.1, h1), P(L, tb - 0.1, h0), P(L, ta + 0.1, h0))}" fill="none" stroke="#2a1408" stroke-width=".5"/>`;
   { const [x, y] = P(L, tb - 0.15, 1.15); k += `<circle cx="${r(x)}" cy="${r(y)}" r=".8" fill="${GOLD}"/>`; }
   k += `<path d="${poly(P(L, ta - 0.3, 0.2), P(L, tb + 0.3, 0.2), P(L - 0.45, tb + 0.3, 0.2), P(L - 0.45, ta - 0.3, 0.2))}" fill="#a8916c"/><path d="M${pt(P(L - 0.45, ta - 0.3, 0.2))} L${pt(P(L - 0.45, tb + 0.3, 0.2))}" stroke="#7a6a50" stroke-width=".6"/>`;
-  /* Schriftzug über der Tür, Buchstabe für Buchstabe auf der Wand (Leserichtung von hinten nach vorn) */
-  { const txt = "Zum Hirschen", n = txt.length, lage = zeichenLage(txt), da = 9.35, db = 7.0;
-    for (let i = 0; i < n; i++) { if (txt[i] === " ") continue; const fsM = fsFit(txt, da - db, 0.3), d = zeichenD(txt, da, db, fsM)[i], [x, y] = P(L, d, 2.95), fs = fsM * F / d, nx = P(L, d - 0.1, 2.95), sk = Math.atan2(nx[1] - y, nx[0] - x) * 180 / Math.PI; k += `<text x="0" y="0" font-size="${r(fs)}" text-anchor="middle" fill="#3a2a14" font-family="Georgia,serif" font-weight="bold" transform="translate(${r(x)} ${r(y)}) rotate(${r(sk)}) scale(${kurz(L, d, 2.95)} 1)">${txt[i]}</text>`; } }
+  /* Schriftzug über der Tür als EINE Zeile: textLength + spacingAndGlyphs gibt gleichmäßige Laufweite, skewY legt
+     sie in die Flucht der Wand (senkrechte Striche bleiben senkrecht). Leserichtung von hinten nach vorn. */
+  { const txt = "Zum Hirschen", da = 9.35, db = 7.05, dm = (da + db) / 2, fsM = fsFit(txt, da - db, 0.3);
+    const [x0, y0] = P(L, da, 2.95), [x1, y1] = P(L, db, 2.95), tn = (y1 - y0) / (x1 - x0);
+    k += `<text x="0" y="0" font-size="${r(fsM * F / dm)}" textLength="${r(x1 - x0)}" lengthAdjust="spacingAndGlyphs" fill="#3a2a14" font-family="Georgia,serif" font-weight="bold" transform="matrix(1 ${r(tn * 1000) / 1000} 0 1 ${r(x0)} ${r(y0)})">${txt}</text>`; }
   /* Speisekarte an der Wand */
   k += `<path d="${poly(P(L, 8.3, 2.1), P(L, 8.9, 2.1), P(L, 8.9, 1.2), P(L, 8.3, 1.2))}" fill="#2e3a2a" stroke="#7a5a38" stroke-width=".5"/>`;
   for (let i = 0; i < 4; i++) k += `<path d="M${pt(P(L, 8.36, 1.95 - i * 0.18))} L${pt(P(L, 8.84, 1.95 - i * 0.18))}" stroke="#f4efe4" stroke-width=".35"/>`;

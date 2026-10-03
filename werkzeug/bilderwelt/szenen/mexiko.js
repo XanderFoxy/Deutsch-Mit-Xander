@@ -206,7 +206,7 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
     const W2 = w / 2, dx = 2.2;
     g += `<path d="M${r(-W2 + 0.8)} ${r(-h)} L${r(W2 - 0.8)} ${r(-h)} L${r(W2 - 0.8 + dx)} ${r(-h - t)} L${r(-W2 + 1.6 + dx)} ${r(-h - t)} Q${r(-W2 + 0.4 + dx)} ${r(-h - t + 0.2)} ${r(-W2 + 0.8)} ${r(-h)} Z" fill="#ecdcb6"/>`;
     g += `<path d="M${r(W2 - 0.8)} ${r(-h)} L${r(W2 - 0.8 + dx)} ${r(-h - t)} L${r(W2 + dx)} ${r(-t * 0.8)} L${r(W2)} 0 Z" fill="#b5a682"/>`;
-    g += `<path d="M${r(-W2 + 1)} 0 L${r(W2 - 1)} 0 Q${r(W2)} 0 ${r(W2)} -1 L${r(W2)} ${r(-h + 2)} L${r(W2 - 1.4)} ${r(-h + 0.3)} L${r(W2 - 2.6)} ${r(-h)} L${r(-W2 + 1.2)} ${r(-h)} Q${r(-W2)} ${r(-h)} ${r(-W2)} ${r(-h + 1.2)} L${r(-W2)} -1 Q${r(-W2)} 0 ${r(-W2 + 1)} 0 Z" fill="${S.lg("block", [[0, "#a59b86"], [0.7, "#d2c19a"], [1, "#e2d0a8"]], 0, 0, 1, 0)}"/>`;
+    g += `<path d="M${r(-W2 + 1)} 0 L${r(W2 - 1)} 0 Q${r(W2)} 0 ${r(W2)} -1 L${r(W2)} ${r(-h + 2)} L${r(W2 - 1.4)} ${r(-h + 0.3)} L${r(W2 - 2.6)} ${r(-h)} L${r(-W2 + 0.8)} ${r(-h)} Q${r(-W2 + 0.1)} ${r(-h + 0.2)} ${r(-W2 + 0.1)} ${r(-h + 1.2)} L${r(-W2)} -1 Q${r(-W2)} 0 ${r(-W2 + 1)} 0 Z" fill="${S.lg("block", [[0, "#a59b86"], [0.7, "#d2c19a"], [1, "#e2d0a8"]], 0, 0, 1, 0)}"/>`;
     g += `<path d="M${r(-W2)} -3 L${r(-W2 + 1.6)} -1.6 L${r(-W2 + 0.6)} 0 Z" fill="#8f8672"/>`;
     /* Relief: Kukulcán – breiter Leib mit Rautenschuppen, Federbüschel am Rücken, Kopf wie an der Treppe
        (Nasenschnecke, offenes Maul, Zunge); Licht oben, Schattenkante unten */
@@ -217,11 +217,19 @@ const KT = { x: 108, z: -46, h: 20, stufen: 4, sh: 3, tw: 10 };   /* Tempel der 
     let fed = "";
     for (let i = 0; i < 6; i++) { const x = -W2 + 4.5 + i * (w - 16) / 5, y = yb - 2.4 + Math.sin(i * 1.4) * 1.1; fed += `M${r(x)} ${r(y)} l-.5 -1.6 M${r(x + 0.6)} ${r(y)} l.1 -1.8 M${r(x + 1.2)} ${r(y)} l.6 -1.5`; }
     g += `<path d="${fed}" stroke="#d6c398" stroke-width=".55" stroke-linecap="round"/>`;
-    const kx = W2 - 9, ky = yb - 0.3;
-    g += `<path d="M${r(kx - 0.6)} ${r(ky - 2.2)} Q${r(kx + 2.4)} ${r(ky - 3.2)} ${r(kx + 4.4)} ${r(ky - 1.6)} L${r(kx + 4.6)} ${r(ky - 0.4)} L${r(kx + 1.8)} ${r(ky + 0.1)} L${r(kx + 4.4)} ${r(ky + 1.3)} Q${r(kx + 2.6)} ${r(ky + 2.6)} ${r(kx - 0.6)} ${r(ky + 2)} Z" fill="#e7d6ad" stroke="#6f6553" stroke-width=".35"/>`;
-    g += `<path d="M${r(kx + 2.2)} ${r(ky - 2.6)} q.5 -1.2 1.3 -.6 q.4 .6 -.4 .7" stroke="#6f6553" stroke-width=".35" fill="none"/><circle cx="${r(kx + 1.2)}" cy="${r(ky - 1.2)}" r=".5" fill="none" stroke="#6f6553" stroke-width=".3"/>`;
-    g += `<path d="M${r(kx + 2)} ${r(ky + 0.4)} L${r(kx + 5.4)} ${r(ky + 0.6)} L${r(kx + 6)} ${r(ky + 0.2)} M${r(kx + 5.4)} ${r(ky + 0.6)} L${r(kx + 6)} ${r(ky + 1)}" stroke="#8f8370" stroke-width=".45" fill="none"/>`;
-    for (let i = 0; i < 9; i++) g += `<circle cx="${r(-W2 + 1 + rnd() * (w - 2))}" cy="${r(-0.6 - rnd() * (h - 1))}" r="${r(0.3 + rnd() * 0.6)}" fill="${rnd() < 0.5 ? "#8e9a64" : "#c9c08e"}" opacity=".6"/>`;
+    /* Kopf vom Typ der Treppenköpfe: eckige Schnauze, oben die Nasenschnecke, weit offenes Maul mit zwei
+       Fangzähnen, breite herausgestreckte Zunge, dahinter der Federbusch; erhaben (Licht oben, Schatten unten) */
+    const kx = W2 - 9.5, ky = yb - 0.4;
+    const kopfP = `M${r(kx - 0.8)} ${r(ky - 2.6)} L${r(kx + 3.4)} ${r(ky - 2.8)} L${r(kx + 4.6)} ${r(ky - 1.8)} L${r(kx + 4.6)} ${r(ky - 0.9)} L${r(kx + 1.6)} ${r(ky - 0.5)} L${r(kx + 1.6)} ${r(ky + 0.6)} L${r(kx + 4.4)} ${r(ky + 1)} L${r(kx + 4.2)} ${r(ky + 2)} L${r(kx - 0.8)} ${r(ky + 2.2)} Z`;
+    g += `<path d="${kopfP}" fill="#6f6553" transform="translate(.3 .45)"/><path d="${kopfP}" fill="#e7d6ad"/>`;
+    g += `<path d="M${r(kx + 1.6)} ${r(ky - 0.5)} L${r(kx + 4.6)} ${r(ky - 0.9)} L${r(kx + 4.4)} ${r(ky + 1)} L${r(kx + 1.6)} ${r(ky + 0.6)} Z" fill="#7a6e5a"/>`;
+    g += `<path d="M${r(kx + 2.4)} ${r(ky - 0.6)} l.3 .8 l.3 -.85 M${r(kx + 3.5)} ${r(ky - 0.75)} l.3 .85 l.3 -.9" fill="#f4ead2"/>`;
+    g += `<path d="M${r(kx + 1.8)} ${r(ky + 0.15)} L${r(kx + 6)} ${r(ky + 0.3)} L${r(kx + 6.6)} ${r(ky - 0.1)} L${r(kx + 6.2)} ${r(ky + 0.55)} L${r(kx + 6.6)} ${r(ky + 1.1)} L${r(kx + 5.9)} ${r(ky + 0.75)} L${r(kx + 1.8)} ${r(ky + 0.6)} Z" fill="#dccb9f" stroke="#6f6553" stroke-width=".25"/>`;
+    g += `<path d="M${r(kx + 1.6)} ${r(ky - 2.8)} q.2 -1.4 1.3 -1.2 q.9 .3 .5 1.1 q-.4 .5 -.9 .1" stroke="#6f6553" stroke-width=".35" fill="none"/>`;
+    g += `<path d="M${r(kx + 0.2)} ${r(ky - 1.5)} h1 v.7 h-1 Z" fill="none" stroke="#6f6553" stroke-width=".3"/><path d="M${r(kx - 0.3)} ${r(ky - 2.2)} h1.8" stroke="#f5e8c6" stroke-width=".35"/>`;
+    for (let i = 0; i < 5; i++) g += `<path d="M${r(kx - 0.8)} ${r(ky - 1.8 + i * 0.9)} l-1.8 ${r(-1.2 + i * 0.5)}" stroke="#d6c398" stroke-width=".7" stroke-linecap="round"/>`;
+    /* Flechten: deckend, graugrün und gelblich, nur am unteren Rand und in den Vertiefungen */
+    for (let i = 0; i < 7; i++) { const x = -W2 + 1.2 + rnd() * (w - 3), y = -0.5 - rnd() * 1.6; g += `<path d="M${r(x)} ${r(y)} q.5 -.6 1 -.1 q.5 -.2 .6 .4 q-.8 .5 -1.6 -.3 Z" fill="${rnd() < 0.5 ? "#7f8a5c" : "#b9b07a"}"/>`; }
     STEIN = `<g transform="translate(${sx0} ${sy0})">${g}</g>`;
   }
   S.hinten(k);
@@ -535,17 +543,24 @@ const pyrUnter = [];
   ast(-1, T + 1, Math.PI + 0.32, 12, 1.05, 2);
   ast(1, T - 2, -0.36, 11, 1, 2);
   ast(0, T - 3, -Math.PI / 2 - 0.08, 9, 0.9, 1);
-  k += `<path d="${aeste}" fill="${ASTF}"/>`;
-  /* Astkragen: jeder Hauptast geht mit einer Verdickung in den Stamm über (keine Schnittkante) */
-  for (const [y0, sg] of [[T + 9, -1], [T + 5, 1], [T + 1, -1], [T - 2, 1]]) k += `<path d="M${r(sg * 1.2)} ${r(y0 - 2.2)} Q${r(sg * 2.4)} ${r(y0 - 0.6)} ${r(sg * 4.2)} ${r(y0 - 0.4)} L${r(sg * 4.2)} ${r(y0 + 1.6)} Q${r(sg * 2.2)} ${r(y0 + 1.6)} ${r(sg * 1.2)} ${r(y0 + 3.4)} Z" fill="#7c866c"/><path d="M${r(sg * 1.4)} ${r(y0 + 3.2)} Q${r(sg * 2.4)} ${r(y0 + 1.8)} ${r(sg * 4.2)} ${r(y0 + 1.6)}" stroke="#4f5a44" stroke-width=".5" fill="none" opacity=".6"/>`;
-  /* Laub in 2–3 flachen Etagen um die Astenden, mit Himmelslücken; Unterseite kühl, rechts goldener Saum */
+  /* die Äste wachsen hinter der Stammkante hervor (Stamm darüber), an jedem Ast eine weiche Verdickung */
+  {
+    const st = k.indexOf('<path d="M-3 -11 Q-2.6 -40');
+    k = k.slice(0, st) + `<path d="${aeste}" fill="${ASTF}"/>` + k.slice(st);
+    const hw = (y) => y > T + 6 ? 2.25 : 1.1 + Math.max(0, (y - (T - 3))) / 9 * 1.15;
+    for (const [y0, sg, d] of [[T + 9, -1, 1.3], [T + 5, 1, 1.25], [T + 1, -1, 1.05], [T - 2, 1, 1]]) {
+      const xa = sg * (hw(y0 - d - 1.5) - 0.35), xb = sg * (hw(y0 + d + 1.8) - 0.35), xe = sg * (hw(y0) + 2.6);
+      k += `<path d="M${r(xa)} ${r(y0 - d - 1.5)} Q${r(xa + sg * 1.2)} ${r(y0 - d * 0.95)} ${r(xe)} ${r(y0 - d * 0.82)} L${r(xe)} ${r(y0 + d * 0.82)} Q${r(xb + sg * 1.2)} ${r(y0 + d * 0.95)} ${r(xb)} ${r(y0 + d + 1.8)} Z" fill="#8e917a"/>`;
+      k += `<path d="M${r(xe)} ${r(y0 + d * 0.82)} Q${r(xb + sg * 1.2)} ${r(y0 + d * 0.95)} ${r(xb)} ${r(y0 + d + 1.8)}" stroke="#5d6852" stroke-width=".4" fill="none"/>`;
+    }
+  }
   const lagen = [[], [], [], []];
   /* zwei flache Laubstockwerke auf den Hauptästen (Unterseite kühl, Oberkante golden) */
   for (const [x0, x1, y] of [[-30, 30, T - 8], [-20, 22, T - 15]]) {
     for (let x = x0; x < x1; x += 2.2 + rnd() * 1.6) {
       if (rnd() < 0.22) continue;
       const yy = y + (rnd() - 0.5) * 1.6, rr = 1 + rnd() * 1.1;
-      lagen[0].push(`<ellipse cx="${r(x)}" cy="${r(yy + rr * 0.35)}" rx="${r(rr * 1.6)}" ry="${r(rr * 0.6)}"/>`);
+      lagen[0].push(`<ellipse cx="${r(x)}" cy="${r(yy + rr * 0.25)}" rx="${r(rr * 1.45)}" ry="${r(rr * 0.5)}"/>`);
       lagen[rnd() < 0.5 ? 1 : 2].push(`<ellipse cx="${r(x)}" cy="${r(yy)}" rx="${r(rr * 1.5)}" ry="${r(rr * 0.55)}"/>`);
       if (x > 0 && rnd() < 0.6) lagen[3].push(`<ellipse cx="${r(x + rr * 0.4)}" cy="${r(yy - rr * 0.3)}" rx="${r(rr * 0.9)}" ry="${r(rr * 0.3)}"/>`);
     }
@@ -556,7 +571,7 @@ const pyrUnter = [];
       lagen[y > ey ? 0 : x > ex + 1.5 ? 3 : rnd() < 0.5 ? 1 : 2].push(`<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rr * 1.5)}" ry="${r(rr * 0.75)}"/>`);
     }
   }
-  ["#55606a", "#6c8a42", "#7f9c4c", "#c9b860"].forEach((c, i) => { k += `<g fill="${c}">${lagen[i].join("")}</g>`; });
+  ["#5a6b55", "#6c8a42", "#7f9c4c", "#bdb563"].forEach((c, i) => { k += `<g fill="${c}">${lagen[i].join("")}</g>`; });
   const ax0 = 0, ay0 = -60;   /* Bezugspunkt: Stamm über dem Dach */
   S.teil({ id: "kapokbaum", de: "der Kapokbaum", syl: "KA-pok-baum", it: "la ceiba", itSyl: "CEI-ba", en: "kapok tree", x: X + ax0, y: Y + ay0, kunst: `<g transform="translate(${-ax0} ${-ay0})">${k}</g>`,
     tipp: "Für die Maya war der Kapokbaum (Ceiba) heilig: Er verbindet Himmel, Erde und Unterwelt." });
