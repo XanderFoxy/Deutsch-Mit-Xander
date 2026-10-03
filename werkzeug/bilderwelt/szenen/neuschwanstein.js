@@ -639,6 +639,8 @@ const vierFl = (pts, ref) => `<path class="bw-flaeche" d="M${pts.map((p) => `${r
   let k = `<path d="${wandFl(M, 0, 60.1, -8, 2)}" fill="${KALK_SUED}"/><path d="${wandFl(M, 0, 60.1, -8, 2)}" fill="${QUADER}" opacity=".5"/>`;
   for (let s = 0.4; s < 60; s += 2.2) k += `<path d="${poly([M(s, 2), M(s + 1.2, 2), M(s + 1.2, 3.6), M(s, 3.6)])}" fill="#fbf4e6"/>`;
   for (const s of [12, 26, 40, 52]) k += `<path d="${poly([M(s, -3), M(s + 0.4, -3), M(s + 0.4, -0.6), M(s, -0.6)])}" fill="#4a4a50"/>`;
+  /* Schlagschatten des Kemenate-Rundturms (Sonne Südwest) auf die Mauer */
+  k += `<path d="${poly([M(0.2, -8), M(4.6, -8), M(8.4, 3.6), M(3.6, 3.6)])}" fill="#2a3040" opacity=".22"/>`;
   S.teil({ id: "mauer", de: "die Mauer", syl: "MAU-er", it: "il muro di cinta", itSyl: "MU-ro di CIN-ta", en: "wall", x: 0, y: 0, kunst: k,
     tipp: "Die Mauer mit Zinnen umgibt den unteren Hof – wie bei einer echten Burg." });
 }

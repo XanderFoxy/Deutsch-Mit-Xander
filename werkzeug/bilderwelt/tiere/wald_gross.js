@@ -140,6 +140,41 @@ function kit(T, box = [-60, -320, 620, 40], grob = 0.5, feinQ = 10) {
       return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
     }, n, winkel, laenge, farben, o);
   };
+  /* Locken/Strähnen als gefüllte Tropfen (Haarmasse statt Fäden): Fläche poly (o.linie: entlang der offenen Linie), Richtung
+     winkel(x, y), Länge laenge(x, y), Breite = breite × Länge, Biegung o.krumm; o.p(x, y): Annahmewahrscheinlichkeit (Licht). */
+  H.locken = (poly, n, winkel, laenge, breite, farbe, op, o = {}) => {
+    const ziel = Math.round(n * (F ? 1 : (o.szene != null ? o.szene : 0.25)));
+    if (!ziel) return "";
+    const wf = typeof winkel === "function" ? winkel : () => winkel, lf = typeof laenge === "function" ? laenge : () => laenge;
+    let quelle;
+    if (o.linie) {
+      const seg = []; let tot = 0;
+      for (let i = 0; i < poly.length - 1; i++) { const a = poly[i], b = poly[i + 1], l = Math.hypot(b[0] - a[0], b[1] - a[1]); seg.push([a, b, tot, l || 1]); tot += l; }
+      quelle = () => { const t = T.rnd() * tot; let j = seg.length - 1; while (j > 0 && seg[j][2] > t) j--; const [a, b, t0, l] = seg[j], u = (t - t0) / l; return [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u]; };
+    } else {
+      const [x0, y0, x1, y1] = T.box(poly);
+      quelle = () => { const x = x0 + T.rnd() * (x1 - x0), y = y0 + T.rnd() * (y1 - y0); return T.inPoly(x, y, poly) ? [x, y] : null; };
+    }
+    const e = [], R = (v) => Math.round(v * 10);
+    let v = 0;
+    while (e.length < ziel && v < ziel * 30) {
+      v++;
+      const q = quelle();
+      if (!q) continue;
+      const [x, y] = q;
+      if ((o.nur && !o.nur(x, y)) || (o.p && T.rnd() > o.p(x, y))) continue;
+      const a = (wf(x, y) + (T.rnd() - 0.5) * (o.streu != null ? o.streu : 30)) * RAD, L = lf(x, y) * (0.6 + T.rnd() * 0.8), b = breite * L * (0.7 + T.rnd() * 0.6);
+      const k = (o.krumm != null ? o.krumm : 0.35) * (T.rnd() - 0.5) * 2, ta = a + k;
+      const ux = Math.cos(a), uy = Math.sin(a), tx = Math.cos(ta) * L, ty = Math.sin(ta) * L;
+      const c1x = ux * L * 0.45 - uy * b * (1 + k), c1y = uy * L * 0.45 + ux * b * (1 + k);
+      const c2x = ux * L * 0.4 + uy * b * (0.7 - k * 0.4), c2y = uy * L * 0.4 - ux * b * (0.7 - k * 0.4);
+      e.push([R(x), R(y), R(c1x), R(c1y), R(tx), R(ty), R(c2x - tx), R(c2y - ty), -R(tx), -R(ty)]);
+    }
+    e.sort((p, q) => (Math.floor(p[1] / 40) - Math.floor(q[1] / 40)) || ((Math.floor(p[1] / 40) % 2 ? -1 : 1) * (p[0] - q[0])));
+    let d = "", cx = 0, cy = 0;
+    e.forEach((h, j) => { d += (j ? `m${h[0] - cx} ${h[1] - cy}` : `M${h[0]} ${h[1]}`) + `q${h[2]} ${h[3]} ${h[4]} ${h[5]}q${h[6]} ${h[7]} ${h[8]} ${h[9]}z`; cx = h[0]; cy = h[1]; });
+    return `<path transform="scale(.1)" d="${d.replace(/ -/g, "-")}" fill="${farbe}"${op < 1 ? ` fill-opacity="${op}"` : ""}/>`;
+  };
   /* Rauschtextur (Fellstruktur) – nur fein: Rechteck mit Filter, in Wuchsrichtung gedreht */
   H.tex = (n, o, winkel, box, op) => {
     if (!F) return "";
