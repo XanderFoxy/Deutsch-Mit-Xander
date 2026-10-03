@@ -349,21 +349,24 @@ function tierBaukasten(S) {
     return gr(m, dir, k);
   };
 
-  /* ---------------- PAVIAN (Affe mit Schwanz, sitzend) ---------------- */
+  /* ---------------- PAVIAN (Mantelpavian, mit Schwanz, sitzend ~0,7 m) ---------------- */
   T.affe = (m, dir = 1) => {
-    const FELL = LG("tw_pav", [[0, "#8f8a73"], [1, "#6e6a57"]]);
+    const FELL = U("tw_pav", [[0, "#9a9484"], [1, "#6f6a5c"]], -8, 0);
     let k = "";
-    k += `<path d="M-2.2 -1 C-4.6 -1.2 -5.8 -.4 -6.2 0" stroke="#7b7662" stroke-width=".55" fill="none" stroke-linecap="round"/>`;
-    k += `<path d="M-1.8 -6.4 C-3.2 -4.6 -3 -1.6 -2.2 0 L1.8 0 C2.4 -1 2.2 -2.4 1.6 -2.8 C2.2 -4 2 -5.8 1 -6.8 C0 -7.4 -1.2 -7.2 -1.8 -6.4 Z" fill="${FELL}"/>`;
-    k += `<path d="M-.6 -2.8 C1 -3.2 2.6 -2.6 3 -1.4 Q3.2 -.4 2.8 0 L-.6 0 Z" fill="${FELL}"/>`;
-    k += `<path d="M.6 -6 Q2.2 -5.4 2.6 -3.2 L2.4 0 L1.6 0 L1.6 -3 Q1 -4.6 .6 -6 Z" fill="#7a755f"/>`;
-    k += `<path d="M-1.8 -6.6 C-3.2 -4.6 -3 -1.6 -2.2 0 L3 0 C3.2 -1 2.6 -4 1 -6.8 Z" fill="${VOL()}"/>`;
-    /* Mantel-Mähne */
-    k += `<path d="M-2.2 -6.4 Q-1.6 -8.6 .4 -8.6 Q1.8 -8.4 1.8 -7 Q1 -6 -.8 -5.2 Z" fill="#a39d84"/>`;
-    /* Hundeschnauze */
-    k += `<path d="M.2 -8.2 Q.4 -8.8 1.2 -8.6 L3.1 -7.8 Q3.5 -7.4 3.2 -7.1 L1.6 -6.9 Q.6 -7 .2 -8.2 Z" fill="${LG("tw_pavg", [[0, "#a58c80"], [1, "#7e665c"]])}"/>`;
-    k += `<path d="M3.1 -7.7 l.3 .3" stroke="#3a2a24" stroke-width=".16"/>` + auge(1.1, -8.2, 0.12, "#5a3a14");
-    k += `<path d="M.7 -8.5 q.5 -.2 .9 .1" stroke="#4a3a2a" stroke-width=".12" fill="none"/>`;
+    k += `<path d="M-2 -.8 C-3.6 -2.2 -4.8 -1.6 -5 0" stroke="#6f6a5c" stroke-width=".55" fill="none" stroke-linecap="round"/>`;
+    k += `<path d="M1.6 -4.6 L2 -.2 L2.9 0 L2.7 -4.4 Z" fill="#4f4b42"/>`;
+    k += `<path d="M-2.4 0 C-3 -2.4 -2.4 -4.8 -.8 -6 Q.4 -6.8 1.4 -6.2 C2 -5 2.2 -3 2 -1.6 Q1.6 -.2 .6 0 Z" fill="${FELL}"/>`;
+    k += `<ellipse cx="-1.6" cy="-.5" rx="1" ry=".55" fill="#c9665e"/>`;
+    k += `<path d="M-.4 -2.6 Q1.6 -3.4 2.6 -1.4 Q3 -.4 2.4 0 L.2 0 Q-.6 -1.2 -.4 -2.6 Z" fill="#857f6f"/>`;
+    /* silberner Mantel über Schultern und Rücken */
+    k += `<path d="M.4 -7.6 C-1.4 -7.6 -2.8 -5.6 -2.8 -3 Q-2.2 -2.4 -1.6 -3 Q-1.6 -1.8 -.8 -2.4 Q.4 -3.4 1.6 -3.6 C2.2 -4.6 2.2 -6.4 1.4 -7.2 Z" fill="${U("tw_pavm", [[0, "#d6d2c6"], [1, "#a39e8f"]], -8, -2)}"/>`;
+    k += linie("M-.6 -6.8 Q-2 -5.2 -2.2 -3.4 M.2 -6.4 Q-1 -5 -1.2 -3 M1 -6.2 Q.4 -5 .2 -3.6", "#7a7566", 0.6, 0.12);
+    k += `<path d="M1.6 -4.8 Q2.2 -2.4 2.2 -.4 L3.1 0 L3.2 -.4 L2.9 -.5 Q3 -2.6 2.6 -4.8 Z" fill="#8a8474"/>`;
+    /* Kopf mit langer, rosafarbener Hundeschnauze */
+    k += `<circle cx="1" cy="-6.6" r="1.05" fill="#a8a393"/>`;
+    k += `<path d="M1.3 -7.3 Q2.4 -7.2 3.7 -6.5 Q4 -6.2 3.7 -5.8 L3.3 -5.5 Q2.4 -5.3 1.5 -5.6 Q1 -6.4 1.3 -7.3 Z" fill="${LG("tw_pavg", [[0, "#d8a89a"], [1, "#b47f72"]])}"/>`;
+    k += `<path d="M3.6 -6.3 l.25 .3" stroke="#4a2a24" stroke-width=".14"/><path d="M1.9 -5.6 Q2.6 -5.7 3.3 -5.6" stroke="#7a4a40" stroke-width=".1" fill="none"/>`;
+    k += auge(1.75, -6.85, 0.12, "#5a3a14") + linie("M1.4 -7.15 q.4 -.15 .8 .05", "#4a3a2a", 0.8, 0.12);
     return gr(m, dir, k);
   };
 
@@ -388,19 +391,24 @@ function tierBaukasten(S) {
 
   /* ---------------- KROKODIL (Nilkrokodil), 4 m lang, liegend ---------------- */
   T.krokodil = (m, dir = 1) => {
-    const HAUT = LG("tw_kro", [[0, "#5d6a3c"], [0.6, "#4a5530"], [1, "#a7a37a"]]);
-    const leib = "M-22 -0.4 C-16 -0.8 -10 -1.6 -5 -2.8 C-2 -3.6 2 -3.6 6 -3.2 Q8 -3.2 9 -2.8 L13.6 -2.2 Q16.6 -2 17.4 -1.4 Q17.6 -.8 17 -.6 L13 -.4 L8.6 -.3 C4 0 -4 0 -8 0 L-22 0 Z";
-    let k = schatten(0, 0, 18, 0.6, 0.25);
-    k += `<path d="M5.6 -1 Q6.6 .2 7.8 0 L4.6 0 Z M-4.2 -1 Q-3.6 .2 -2.2 0 L-5.4 0 Z" fill="#3e4728"/>`;
-    k += koerper(leib, HAUT);
-    /* Rückenschilde (Schuppenreihen) und Schwanzkamm */
-    for (let i = 0; i < 22; i++) { const x = -20 + i * 1.25, y = x < -5 ? -0.5 - (x + 22) * 0.13 : -3.2 + Math.abs(x) * 0.02; k += `<path d="M${f(x)} ${f(y)} l.4 -.5 l.4 .5" fill="#3c4526"/>`; }
-    for (let i = 0; i < 26; i++) k += `<path d="M${f(-18 + i * 1)} ${f(-0.7 - Math.max(0, i - 4) * 0.08)} l0 .5" stroke="#3c4526" stroke-width=".12" opacity=".7"/>`;
-    k += `<path d="M9.2 -2.6 Q13 -1.6 17 -1.2" stroke="#2f361e" stroke-width=".15" fill="none"/>`;
-    for (let i = 0; i < 6; i++) k += `<path d="M${f(10.5 + i * 1.1)} ${f(-1.45 + i * 0.03)} l.2 .35 l.2 -.35" fill="#f2ecd6"/>`;
-    k += `<path d="M7.8 -3.4 Q8.6 -4 9.4 -3.3 Z" fill="#4a5530"/>` + auge(8.6, -3.25, 0.22, "#7a7a1e");
-    k += `<ellipse cx="17" cy="-1.7" rx=".3" ry=".18" fill="#2a2f1a"/>`;
-    k += `<path d="M5.6 -1.6 L7.6 -.2 L7 0 M-3.8 -1.4 L-2.4 -.1" stroke="#3e4728" stroke-width=".4" fill="none"/>`;
+    const HAUT = U("tw_kro", [[0, "#58653a"], [0.55, "#4c5730"], [0.85, "#6d7444"], [1, "#b9b183"]], -5, 0);
+    const leib = "M-22 -.3 C-16 -1.2 -10 -2.6 -5 -3.9 C-2 -4.7 3 -4.7 6 -4.1 Q7.4 -3.7 8.2 -3.4 Q9.4 -3.5 10 -4.1 Q10.6 -3.6 11 -3.3 L17 -2 Q18 -1.7 17.9 -1 Q17.8 -.5 17 -.5 L13 -.4 Q10 -.2 8 -.5 C4 -.1 -4 0 -8 -.2 L-22 0 Z";
+    let k = schatten(-2, 0, 19, 0.7, 0.28);
+    /* ferne Beine */
+    k += `<path d="M3.6 -1.8 Q4.6 -1 4.4 -.2 L5.6 0 L6.2 -.3 L5.2 -.6 Q5.4 -1.6 4.6 -2.4 Z M-5.6 -2.2 Q-6.6 -1 -6 -.2 L-4.6 0 L-4.4 -.4 L-5.2 -.5 Q-5 -1.4 -4.6 -2.2 Z" fill="#3c4526"/>`;
+    k += `<path d="${leib}" fill="${HAUT}"/><path d="${leib}" fill="${VOLH(5)}"/>`;
+    /* Querbänder am Schwanz, Panzerplatten (Osteoderme) am Rücken */
+    for (let i = 0; i < 7; i++) { const x = -20 + i * 2.4; k += `<path d="M${f(x)} ${f(-0.4 - (x + 22) * 0.14)} q.5 ${f(0.2 + (x + 22) * 0.06)} .2 ${f(0.4 + (x + 22) * 0.12)}" stroke="#2f381c" stroke-width=".55" fill="none" opacity=".6"/>`; }
+    for (let i = 0; i < 24; i++) { const x = -20 + i * 1.1, y = x < -5 ? -0.5 - (x + 22) * 0.2 : -4.1 - Math.min(0, -x * 0.02); if (x > 7) break; k += `<path d="M${f(x)} ${f(y + 0.05)} l.3 -.55 l.3 .55 Z" fill="#323b1e"/>`; }
+    for (let i = 0; i < 9; i++) for (let j = 0; j < 2; j++) k += `<rect x="${f(-4 + i * 1.15)}" y="${f(-3.9 + j * 0.85)}" width=".8" height=".55" rx=".2" fill="#3e4826" opacity=".55"/>`;
+    /* nahe Beine, gespreizt mit Krallen */
+    k += `<path d="M5 -2.6 Q6.4 -1.8 6.6 -.6 L8 0 L8.4 -.2 L8.6 0 L8.9 -.3 L7.6 -.8 Q7.4 -2 6.4 -2.9 Z" fill="#4a5530"/>`;
+    k += `<path d="M-3.6 -2.8 Q-5.4 -2 -5 -.6 L-6.6 -.1 L-6.6 .1 L-4 0 Q-3.4 -.6 -3 -1.6 Z" fill="#4a5530"/>`;
+    /* Kopf: Zahnreihe, Auge mit Wulst, Nasenloch */
+    k += `<path d="M9 -2.4 Q13 -1.7 17.2 -1.3" stroke="#2a301a" stroke-width=".16" fill="none"/>`;
+    for (let i = 0; i < 6; i++) k += `<path d="M${f(10.6 + i * 1.1)} ${f(-1.95 + i * 0.1)} l.2 .4 l.2 -.4" fill="#f2ecd6"/>`;
+    k += auge(10.3, -3.85, 0.22, "#8a8a2a") + `<ellipse cx="17.2" cy="-2" rx=".3" ry=".18" fill="#2a2f1a"/>`;
+    k += linie("M-4 -.3 Q2 -.6 7 -.5", "#d6cf9f", 0.6, 0.2);
     return gr(m, dir, k);
   };
 
@@ -598,7 +606,7 @@ const T = tierBaukasten(S);
 const HOR = 50, M = (y) => 0.1655 * (y - HOR);
 /* Menschen: Pfaddaten auf 0,5 cm gerundet — unsichtbar, spart ein Drittel der Ladezeit */
 const zahl = (x, st) => String(+(Math.round(+x / st) * st).toFixed(1)).replace(/^(-?)0\./, "$1.");
-const schlank = (svg) => svg.replace(/ d="([^"]*)"/g, (a, d) => ` d="${d.replace(/-?\d*\.?\d+/g, (x) => zahl(x, 1))}"`)
+const schlank = (svg) => svg.replace(/ d="([^"]*)"/g, (a, d) => ` d="${d.replace(/-?\d*\.?\d+/g, (x) => zahl(x, 1)).replace(/\s*,\s*/g, " ").replace(/\s*([A-Za-z])\s*/g, "$1").replace(/ -/g, "-")}"`)
   .replace(/ (c[xy]|x[12]?|y[12]?|width|height)="(-?[\d.]+)"/g, (a, n, v) => ` ${n}="${zahl(v, 0.5)}"`)
   .replace(/ (r[xy]?)="(-?[\d.]+)"/g, (a, n, v) => ` ${n}="${zahl(v, 0.1)}"`);
 const mensch = (spec, groesse, y) => schlank(B.mensch(spec, groesse * M(y)).svg);
@@ -625,7 +633,7 @@ S.hinten(`<rect x="8" y="49" width="30" height="10" fill="#b48d5c"/><rect x="18"
   let g = `<rect x="0" y="54" width="320" height="64" fill="${S.lg("savanne", [[0, "#cdbb7f"], [0.5, "#bfae6c"], [1, "#a99a58"]])}"/>`;
   g += `<path d="M0 54 Q80 52 160 55 T320 54 L320 58 L0 58 Z" fill="#b9a666" opacity=".6"/>`;
   for (const [x, y, w] of [[40, 80, 26], [120, 96, 30], [200, 88, 22], [90, 66, 18]]) g += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${w * 0.12}" fill="#9c7c4c" opacity=".35"/>`;
-  for (let i = 0; i < 130; i++) {
+  for (let i = 0; i < 90; i++) {
     const y = 56 + rnd() * 58, x = rnd() * 320, h = 0.6 + (y - 50) * 0.03;
     g += `<path d="M${r(x)} ${r(y)} l${r(-0.4 * h)} ${r(-h)} M${r(x)} ${r(y)} l${r(0.3 * h)} ${r(-h * 1.1)}" stroke="${rnd() < 0.5 ? "#8f8248" : "#d8c98f"}" stroke-width=".3"/>`;
   }
@@ -660,17 +668,17 @@ S.hinten(`<rect x="8" y="49" width="30" height="10" fill="#b48d5c"/><rect x="18"
   g += `<path d="M44 152 L46 116 Q48 108 52 112 L54 152 Z" fill="${S.lg("trennfels", [[0, "#ad957a", 1], [1, "#7f6a53"]], 0, 0, 1, 0)}"/>`;
   /* Badebecken der Tiger */
   g += `<ellipse cx="76" cy="136" rx="16" ry="3.4" fill="${S.lg("katzwasser", [[0, "#5d8a8c"], [1, "#3f6b70"]])}"/><path d="M62 136 Q76 133 90 136" stroke="#cfe2e0" stroke-width=".4" fill="none" opacity=".7"/>`;
-  for (let i = 0; i < 60; i++) { const x = rnd() * 96, y = 118 + rnd() * 34; g += `<path d="M${r(x)} ${r(y)} l-.4 -1.4 M${r(x)} ${r(y)} l.4 -1.5" stroke="#8a7a46" stroke-width=".3" opacity=".7"/>`; }
+  for (let i = 0; i < 30; i++) { const x = rnd() * 96, y = 118 + rnd() * 34; g += `<path d="M${r(x)} ${r(y)} l-.4 -1.4 M${r(x)} ${r(y)} l.4 -1.5" stroke="#8a7a46" stroke-width=".3" opacity=".7"/>`; }
   S.hinten(g);
 }
 /* Menschenaffen-Freianlage (rechts hinter der Glasscheibe) */
 {
   let g = `<rect x="240" y="112" width="80" height="40" fill="${S.lg("affboden", [[0, "#9aa264"], [1, "#7f8a4e"]])}"/>`;
-  for (let i = 0; i < 70; i++) { const x = 240 + rnd() * 80, y = 114 + rnd() * 36; g += `<path d="M${r(x)} ${r(y)} l${r(1 + rnd() * 2)} ${r(-0.4)}" stroke="#d4bf72" stroke-width=".35" opacity=".8"/>`; }
+  for (let i = 0; i < 40; i++) { const x = 240 + rnd() * 80, y = 114 + rnd() * 36; g += `<path d="M${r(x)} ${r(y)} l${r(1 + rnd() * 2)} ${r(-0.4)}" stroke="#d4bf72" stroke-width=".35" opacity=".8"/>`; }
   /* Kletterstämme und Seile */
   g += `<path d="M252 150 L254 96 M290 150 L288 100 M314 150 L313 98" stroke="#6a4e34" stroke-width="2.4" stroke-linecap="round"/>`;
   g += `<path d="M254 104 L288 108 M288 112 L313 106" stroke="#7a5a3c" stroke-width="1.4"/><path d="M262 105 Q268 116 276 107 M296 110 Q300 122 306 108" stroke="#c9b08a" stroke-width=".6" fill="none"/>`;
-  g += `<rect x="290" y="130" width="24" height="3" rx="1" fill="#7a5a3c"/><path d="M292 133 L292 150 M312 133 L312 150" stroke="#6a4e34" stroke-width="1.6"/>`;
+  g += `<rect x="250" y="130" width="24" height="3" rx="1" fill="#7a5a3c"/><path d="M252 133 L252 150 M272 133 L272 150" stroke="#6a4e34" stroke-width="1.6"/>`;
   S.hinten(g);
 }
 
@@ -763,10 +771,10 @@ S.teil({ id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI
 /* =====================================================================
    MENSCHENAFFEN hinter der Glasscheibe: Gorilla, Schimpanse
    ===================================================================== */
-S.teil({ id: "gorilla", de: "der Gorilla", syl: "Go-RIL-la", it: "il gorilla", itSyl: "go-RIL-la", en: "gorilla", x: 268, y: 146,
-  kunst: schatten(0, 0, 11, 1, 0.3) + T.gorilla(M(146), -1),
+S.teil({ id: "gorilla", de: "der Gorilla", syl: "Go-RIL-la", it: "il gorilla", itSyl: "go-RIL-la", en: "gorilla", x: 290, y: 147,
+  kunst: schatten(0, 0, 11, 1, 0.3) + T.gorilla(M(147), -1),
   tipp: "Der Silberrücken ist das alte Männchen: nur er hat den grauen Sattel auf dem Rücken." });
-S.teil({ id: "schimpanse", de: "der Schimpanse", syl: "Schim-PAN-se", it: "lo scimpanzé", itSyl: "scim-pan-ZÉ", en: "chimpanzee", x: 302, y: 130,
+S.teil({ id: "schimpanse", de: "der Schimpanse", syl: "Schim-PAN-se", it: "lo scimpanzé", itSyl: "scim-pan-ZÉ", en: "chimpanzee", x: 262, y: 130,
   kunst: T.schimpanse(M(142), -1),
   tipp: "Kleiner und schlanker als der Gorilla, mit großen abstehenden Ohren." });
 /* Rahmen der Glasscheiben (Kulisse) und Spiegelung (davor) */
@@ -802,10 +810,10 @@ S.hinten(``);
   k += `<path d="M-3 0 Q-2.4 -40 -2 -80 L2 -80 Q2.6 -40 4 0 Z" fill="${S.lg("stamm", [[0, "#5b4634"], [0.5, "#7a6048"], [1, "#4a382a"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M-1.6 -70 Q-10 -80 -16 -88 M1.6 -74 Q10 -84 14 -96 M0 -78 L0 -104" stroke="#5b4634" stroke-width="1.8" fill="none"/>`;
   for (let i = 0; i < 12; i++) k += `<path d="M${r(-2 + rnd() * 4)} ${r(-4 - rnd() * 50)} q.4 -2 0 -4" stroke="#3a2c20" stroke-width=".3" fill="none"/>`;
-  const krone = [[-16, -104, 16], [2, -116, 16], [6, -96, 10], [-4, -92, 12], [-24, -94, 10], [-12, -122, 13]];
+  const krone = [[-20, -104, 16], [-6, -116, 16], [-2, -96, 8], [-10, -92, 12], [-28, -94, 10], [-18, -122, 13]];
   for (const [x, y, rr] of krone) k += `<circle cx="${x}" cy="${y}" r="${rr}" fill="${S.rg("krone", [[0, "#7fa65a"], [0.7, "#5a8240"], [1, "#466a32"]], 0.4, 0.35, 0.7)}"/>`;
   for (let i = 0; i < 45; i++) { const [x, y, rr] = krone[i % krone.length], a = rnd() * 6.28, d = rnd() * rr; k += `<circle cx="${r(x + Math.cos(a) * d)}" cy="${r(y + Math.sin(a) * d)}" r="${r(1 + rnd() * 1.6)}" fill="${rnd() < 0.5 ? "#9cc072" : "#3e5f2c"}" opacity=".5"/>`; }
-  S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 302, y: 168, kunst: k });
+  S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 310, y: 168, kunst: k });
 }
 
 /* =====================================================================

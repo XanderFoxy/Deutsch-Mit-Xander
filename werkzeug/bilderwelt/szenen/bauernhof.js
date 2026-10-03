@@ -38,6 +38,7 @@ const r = B.r;
 function tierKasten(S, seed = 4711) {
   const rnd = zufall(seed);
   const G = {};
+  const T_LG = (n, f) => lg(n, [[0, f[0]], [1, f[1]]]);
   const lg = (n, stops, x1 = 0, y1 = 0, x2 = 0, y2 = 1) => G["l" + n] || (G["l" + n] = S.lg("t" + n, stops, x1, y1, x2, y2));
   const rg = (n, stops, cx = 0.5, cy = 0.5, rr = 0.5) => G["r" + n] || (G["r" + n] = S.rg("t" + n, stops, cx, cy, rr));
   /* glatte Linie durch Punkte (Catmull-Rom); [x, y, 1] = Ecke */
@@ -364,36 +365,53 @@ function tierKasten(S, seed = 4711) {
       s += `<path d="M70 ${r(by(-67))} q-6 2 -12 0" stroke="#2a1a10" stroke-width=".6" fill="none"/>`;
       return fertig(s, k, dir, 110);
     }
+    const RUTE = art === "schaefer" ? "#3a2a1e" : FARBE[1];
     if (pose === "sitzen") {
-      s += form([[-18, -24], [-26, -26], [-34, -18], [-36, -6], [-30, 0, 1], [-14, 0, 1], [-10, -8]], FARBE[1]);
-      const K = [[-24, -20], [-20, -40], [-6, -56], [8, -66], [14, -74], [20, -78], [28, -76], [38, -70], [42, -68], [43, -64], [38, -61], [30, -61], [24, -58], [20, -48],
-        [20, -30], [20, -8], [22, -2], [24, 0, 1], [14, 0, 1], [14, -6], [12, -24], [6, -26], [0, -12], [2, -4], [6, 0, 1], [-22, 0, 1], [-30, -6]];
-      let f = "";
-      if (art === "schaefer") { f += form([[-30, -30], [-6, -58], [6, -60], [0, -36], [-20, -18]], "#24201d"); f += form([[30, -80], [46, -68], [40, -56], [28, -60]], "#1e1a18"); }
-      if (art === "mischling") f += form([[16, -60], [26, -62], [40, -60], [34, -50], [24, -40], [22, 2], [12, 2], [14, -40]], "#f1ebe1");
-      if (art === "beagle") { f += form([[-30, -34], [-6, -52], [0, -40], [-20, -20]], "#2a2420"); f += form([[22, -56], [40, -64], [44, -58], [26, -48], [22, 2], [12, 2], [14, -40]], "#f1ebe1"); }
-      f += striche(30, -28, -66, 24, -4, 1, 2.4, "#000", 0.4, 0.2);
+      /* sitzend, Brust aufrecht, Vorderbeine senkrecht, Keulen am Boden */
+      s += `<path d="M-22 -1 Q-34 0 -40 -4" stroke="${RUTE}" stroke-width="${art === "schaefer" ? 6 : 4}" fill="none" stroke-linecap="round"/>`;
+      s += form([[17, -30], [18, -8], [20, -2], [21, 0, 1], [13, 0, 1], [12, -6], [12, -26]], FARBE[1]);
+      const K = [[-22, -2], [-26, -10], [-24, -20], [-16, -34], [-6, -48], [4, -58], [8, -64], [10, -70], [16, -74], [24, -73], [28, -69], [36, -66], [40, -65], [40.6, -62], [38, -59], [32, -58], [26, -58], [19, -56], [20, -44],
+        [21, -34], [21, -28], [20, -8], [23, -2.4], [25, 0, 1], [15, 0, 1], [15, -4], [15, -24], [12, -30], [6, -26], [2, -20], [6, -10], [10, -3], [11, 0, 1], [-20, 0, 1]];
+      let f = `<path d="M-18 -24 Q-6 -30 2 -18 Q4 -8 0 -2" stroke="#000" stroke-opacity=".18" stroke-width="1.4" fill="none"/>`;
+      if (art === "schaefer") { f += form([[-30, -18], [-14, -40], [4, -58], [10, -52], [-2, -34], [-18, -16]], "#24201d"); f += form([[24, -76], [44, -66], [40, -56], [26, -58]], "#1e1a18"); }
+      if (art === "mischling") f += form([[18, -58], [28, -60], [40, -60], [34, -52], [24, -44], [22, 2], [12, 2], [16, -40]], "#f1ebe1");
+      if (art === "beagle") { f += form([[-30, -20], [-8, -46], [2, -50], [-2, -32], [-20, -14]], "#2a2420"); f += form([[19, -58], [40, -62], [42, -56], [26, -50], [22, 2], [12, 2], [14, -40]], "#f1ebe1"); }
+      f += striche(40, -26, -74, 40, -2, 0.8, 2.4, "#000", 0.4, 0.18);
       s += koerper(K, F, f, { rw: 0.6 });
-      s += `<path d="M-30 -2 q-10 0 -12 -6" stroke="${art === "schaefer" ? "#3a2a1e" : FARBE[1]}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-      if (art === "schaefer") s += form([[16, -76], [14, -92], [16, -96, 1], [22, -86], [23, -78]], "#2a2420");
-      else s += form([[16, -78], [24, -80], [26, -70], [22, -58], [16, -60], [14, -70]], FARBE[1]);
-      s += auge(30, -72, 1.5, "#3a2410");
-      s += `<ellipse cx="42.4" cy="-66" rx="1.8" ry="1.5" fill="#111"/>`;
+      if (art === "schaefer") s += form([[10, -70], [10, -84], [13, -88, 1], [18, -78], [18, -71]], "#2a2420");
+      else s += form([[11, -71], [18, -73], [20, -66], [17, -54], [12, -55], [10, -63]], FARBE[1], ` stroke="#000" stroke-opacity=".25" stroke-width=".5"`);
+      s += auge(27.5, -68.5, 1.5, "#3a2410");
+      s += `<ellipse cx="40" cy="-63" rx="1.9" ry="1.6" fill="#111"/><path d="M38 -59 q-4 1.6 -8 .4" stroke="#2a1a10" stroke-width=".6" fill="none"/>`;
       return fertig(s, k, dir, 70);
     }
-    /* liegen */
-    const K = [[-50, -18], [-36, -26], [-10, -28], [12, -30], [22, -34], [30, -40], [38, -42], [48, -38], [56, -34], [57, -30], [52, -27], [44, -27], [40, -22], [42, -14], [60, -10], [64, -6], [62, -1], [44, 0], [24, 0], [-40, 0], [-52, -6]];
-    let f = "";
-    if (art === "schaefer") { f += form([[-56, -24], [20, -36], [24, -24], [-50, -14]], "#24201d"); f += form([[40, -46], [60, -32], [52, -24], [40, -28]], "#1e1a18"); }
-    if (art === "mischling") f += form([[30, -28], [44, -28], [42, -14], [64, -8], [64, 2], [40, 2], [32, -16]], "#f1ebe1");
-    f += striche(30, -48, -28, 30, -4, 2.4, 0.4, "#000", 0.4, 0.2);
+    /* liegen (Sphinx-Lage, Kopf erhoben) */
+    s += `<path d="M-46 -3 Q-56 -1 -62 -4" stroke="${RUTE}" stroke-width="${art === "schaefer" ? 6 : 4}" fill="none" stroke-linecap="round"/>`;
+    const K = [[-46, -3], [-48, -10], [-44, -16], [-30, -22], [-10, -26], [8, -30], [16, -38], [20, -46], [26, -50], [34, -49], [38, -45], [46, -42], [50, -41], [50.6, -38], [48, -35.6], [42, -35], [36, -35], [30, -35], [26, -32], [24, -24], [26, -14], [40, -8], [50, -5], [52, -2], [50, 0, 1], [18, 0, 1], [-8, 0], [-26, -1], [-34, 0, 1], [-44, 0, 1]];
+    let f = `<path d="M-30 -2 Q-34 -14 -22 -18 Q-14 -18 -12 -6" stroke="#000" stroke-opacity=".2" stroke-width="1.4" fill="none"/><path d="M24 -14 Q36 -8 50 -4" stroke="#000" stroke-opacity=".2" stroke-width="1" fill="none"/>`;
+    if (art === "schaefer") { f += form([[-50, -14], [-30, -26], [10, -32], [14, -24], [-20, -16], [-46, -8]], "#24201d"); f += form([[34, -52], [52, -42], [48, -32], [36, -34]], "#1e1a18"); }
+    if (art === "mischling") f += form([[28, -36], [44, -36], [40, -30], [28, -24], [30, -12], [52, -6], [52, 2], [20, 2], [24, -24]], "#f1ebe1");
+    if (art === "beagle") { f += form([[-46, -12], [-20, -26], [6, -30], [4, -20], [-30, -14]], "#2a2420"); f += form([[28, -36], [48, -38], [52, -34], [36, -32], [28, -22], [52, -6], [52, 2], [22, 2]], "#f1ebe1"); }
+    f += striche(36, -48, -30, 34, -2, 2.4, 0.4, "#000", 0.4, 0.18);
     s += koerper(K, F, f, { rw: 0.6 });
-    s += `<path d="M-50 -4 q-10 2 -16 -2" stroke="${FARBE[1]}" stroke-width="4" fill="none" stroke-linecap="round"/>`;
-    if (art === "schaefer") s += form([[28, -40], [26, -54], [28, -58, 1], [34, -48], [35, -40]], "#2a2420");
-    else s += form([[28, -42], [36, -44], [38, -34], [34, -24], [28, -26], [26, -34]], FARBE[1]);
-    s += auge(44, -36, 1.4, "#3a2410");
-    s += `<ellipse cx="56" cy="-31" rx="1.8" ry="1.4" fill="#111"/>`;
-    return fertig(s, k, dir, 115);
+    if (art === "schaefer") s += form([[20, -46], [20, -60], [23, -64, 1], [28, -54], [28, -47]], "#2a2420");
+    else s += form([[21, -47], [28, -49], [30, -42], [27, -30], [22, -31], [20, -39]], FARBE[1], ` stroke="#000" stroke-opacity=".25" stroke-width=".5"`);
+    s += auge(37.5, -44.5, 1.4, "#3a2410");
+    s += `<ellipse cx="50" cy="-39.4" rx="1.8" ry="1.5" fill="#111"/>`;
+    return fertig(s, k, dir, 110);
+  }
+  /* =================== DER WELPE (Junghund, ~9 Wochen, sitzend) =================== */
+  function welpe(k, dir = 1, o = {}) {
+    const FB = o.farbe || ["#d8b47a", "#b08a52"];
+    let s = `<path d="M-10 -1 Q-15 0 -17 -3" stroke="${FB[1]}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+    s += form([[7.6, -9], [8, -3], [9, 0, 1], [5, 0, 1], [5, -8]], FB[1]);
+    const K = [[-10, -1], [-13, -6], [-12, -12], [-7, -17], [-1, -21], [1, -25], [4, -29], [9, -30.5], [14, -29], [17, -25.4], [19.6, -24.4], [21, -23], [21, -21], [19, -19.4], [15.4, -19], [12, -18.6], [10, -16], [10, -9], [10.4, -2], [12, -0.6], [12, 0, 1], [5.6, 0, 1], [5, -4], [3, -8], [1, -5], [3, -1], [4, 0, 1], [-8, 0, 1]];
+    let f = form([[11, -19], [15, -19], [12, -12], [11, 2], [6, 2], [8, -14]], "#f6eedc");
+    f += striche(30, -13, -30, 20, 0, 0.6, 1.4, "#7a5a30", 0.35, 0.3);
+    s += koerper(K, T_LG("welpe" + FB[0].slice(1), FB), f, { rw: 0.35 });
+    s += form([[4, -28], [8, -29], [8.6, -24], [6.4, -17], [3.4, -18.6], [3, -24]], FB[1], ` stroke="#000" stroke-opacity=".25" stroke-width=".3"`);
+    s += auge(15, -25.6, 1.25, "#2a1a10");
+    s += `<ellipse cx="20.6" cy="-22.6" rx="1.3" ry="1.1" fill="#141010"/><path d="M19.6 -20 q-2 1 -4 .2" stroke="#4a2a18" stroke-width=".4" fill="none"/>`;
+    return fertig(s, k, dir, 34);
   }
 
   /* =================== DIE KATZE (Hauskatze) =================== */
@@ -450,7 +468,7 @@ function tierKasten(S, seed = 4711) {
     const FB = { peking: ["#fbf8ef", "#ddd6c4"], erpel: ["#a8a49c", "#7d786e"], weibchen: ["#a07a50", "#6e5030"] }[art];
     let s = "";
     if (!schwimmt) s += `<path d="M-2 -10 L-2 -1.5 M3 -10 L3.5 -1.5" stroke="#e8902a" stroke-width="1.4"/><path d="M-6 0 L1 0 M0 0 L7 0" stroke="#e07f1c" stroke-width="1.6" stroke-linecap="round"/>`;
-    const y0 = schwimmt ? 8 : 0;
+    const y0 = schwimmt ? 11 : 0;
     const K = [[18, -32], [15, -34.5], [11, -33.5], [9, -29], [9.5, -25], [8, -22], [0, -22], [-10, -21], [-16, -22], [-20, -24], [-19, -19], [-16, -14], [-8, -10], [4, -10], [12, -14], [14, -20], [14, -24], [15, -27]].map(([x, y]) => [x, y + y0]);
     let f = "";
     if (art === "erpel") {
@@ -471,7 +489,97 @@ function tierKasten(S, seed = 4711) {
     return fertig(s, k, dir, 38);
   }
 
-  return { glatt, koerper, form, linie, striche, auge, fertig, klaue, lg, rg, rnd, kuh, kalb, pferd, schwein, schaf, huhn, hahn, kueken, hund, katze, ente };
+  /* =================== DAS KANINCHEN (Hauskaninchen, sitzend) =================== */
+  /* art: "wildfarben" (graubraun), "weiss", "holländer" (schwarz-weiß), "widder" (Hängeohren, hellbraun) */
+  function kaninchen(k, dir = 1, o = {}) {
+    const art = o.art || "wildfarben";
+    const FB = { wildfarben: ["#9a8a74", "#6e5e4a"], weiss: ["#fbfaf6", "#d8d4cc"], hollaender: ["#2a2626", "#141212"], widder: ["#d8b48a", "#a8845a"] }[art];
+    let s = "";
+    const K = [[-16, -1], [-19, -7], [-17, -14], [-10, -19], [-2, -21], [4, -21], [8, -23], [12, -24], [16, -22], [19, -18.4], [19.4, -16.6], [18, -15.6], [15, -15], [11, -14.6], [9, -12], [9, -6], [10.6, -1.4], [13, -0.6], [13, 0, 1], [6, 0, 1], [3, -2], [0, -1], [-1, 0, 1], [-14, 0, 1]];
+    let f = striche(40, -19, -24, 19, 0, 1.4, 0.4, "#000", 0.3, art === "weiss" ? 0.12 : 0.25);
+    if (art === "hollaender") f += form([[2, -22], [9, -22], [8, -12], [10, 2], [-2, 2], [-1, -12]], "#f6f4ee") + form([[13, -24], [16, -20], [17, -17], [14, -16], [12, -20]], "#f6f4ee");
+    if (art === "wildfarben") f += form([[-12, -4], [8, -6], [10, 2], [-14, 2]], "#e8e0d0", ` opacity=".5"`);
+    f += `<path d="M-8 -6 Q-15 -10 -15 -1" stroke="#000" stroke-opacity=".2" stroke-width=".6" fill="none"/>`;
+    s += koerper(K, T_LG("kanin_" + art, FB), f, { rw: 0.35 });
+    s += `<circle cx="-18.4" cy="-8" r="2.4" fill="#f6f4ee"/>`;
+    if (art === "widder") {
+      s += form([[8, -24], [12, -23], [12, -14], [9, -8], [6, -10], [6, -18]], FB[1], ` stroke="#000" stroke-opacity=".2" stroke-width=".3"`);
+    } else {
+      const OH = art === "hollaender" ? "#1e1a1a" : FB[1];
+      s += form([[7, -23], [3, -30], [2, -35], [4, -36], [8, -31], [10, -24]], OH) + form([[9, -24], [7, -31], [7, -36.6], [9.6, -36.4], [11.4, -30], [11.6, -24]], art === "hollaender" ? "#2a2626" : FB[0]);
+      s += `<path d="M8.4 -26 l-.6 -8" stroke="#e8b4a8" stroke-width="1" opacity="${art === "hollaender" ? 0 : 0.6}"/>`;
+    }
+    s += auge(14, -20.6, 1.2, art === "weiss" ? "#b8303a" : "#1a120c");
+    s += `<path d="M18.8 -17.8 l.8 .5 l-.8 .4 Z" fill="#c88a86"/><path d="M18.6 -16.8 l5 -1 M18.6 -16.4 l5 .4" stroke="#fff" stroke-width=".12" opacity=".8"/>`;
+    return fertig(s, k, dir, 40);
+  }
+  /* =================== DAS MEERSCHWEINCHEN (dreifarbig) =================== */
+  function meerschweinchen(k, dir = 1, o = {}) {
+    let s = "";
+    const K = [[-12, -1.4], [-13.4, -6], [-11.4, -11], [-5, -14], [2, -14.4], [6.6, -13.4], [10, -11], [12.4, -8], [12.6, -6.4], [11, -5.6], [8.4, -5], [7.6, -2.4], [8.4, -0.4], [8.4, 0, 1], [4, 0, 1], [2.6, -1], [-8, -1], [-9, 0, 1], [-11, 0, 1]];
+    let f = "";
+    const pal = o.pal || ["#f6f2ea", "#d8823a", "#2a2220"];
+    f += form([[-14, -16], [-4, -16], [-2, 2], [-14, 2]], pal[1]);
+    f += form([[4, -16], [14, -14], [14, -4], [6, -4]], pal[2]);
+    f += form([[6, -14], [8, -14], [10, -4], [6, -4]], pal[0]);
+    f += striche(36, -13, -15, 12, -1, -1.2, 0.6, "#000", 0.3, 0.2);
+    f += `<path d="M-6 -14 q2 3 0 6 M-2 -14 q-2 3 0 6" stroke="#000" stroke-opacity=".2" stroke-width=".4" fill="none"/>`;
+    s += koerper(K, pal[0], f, { rw: 0.3 });
+    s += form([[2.6, -13.2], [2.2, -15.2], [4, -16], [5.4, -14.6], [5, -13]], "#c8826a", ` stroke="#7a4a3a" stroke-width=".2"`);
+    s += auge(8.4, -10.2, 1, "#1a0e08");
+    s += `<path d="M12.2 -7.6 l.6 .4 l-.6 .3 Z" fill="#8a5a50"/><path d="M12 -7 l4 -.8 M12 -6.8 l4 .4" stroke="#fff" stroke-width=".1"/>`;
+    return fertig(s, k, dir, 26);
+  }
+  /* =================== DER HAMSTER (Goldhamster) =================== */
+  function hamster(k, dir = 1) {
+    let s = "";
+    const K = [[-7, -1], [-8.4, -4.6], [-7, -8.4], [-2.6, -10.4], [2, -10.4], [5, -9.4], [7, -7.6], [8.6, -5.4], [8.6, -4.4], [7, -3.6], [5.4, -2.4], [5.6, -.4], [6, 0, 1], [3, 0, 1], [2, -1], [-4, -1], [-5, 0, 1], [-6.4, 0, 1]];
+    let f = form([[-8, -4], [6, -4.8], [8, -2], [6, 1], [-8, 1]], "#f8f2e6");
+    f += form([[2, -7], [6, -7], [7, -4], [3, -3]], "#f8f2e6", ` opacity=".7"`);
+    f += striche(24, -8, -10.4, 8, -1, -0.8, 0.4, "#7a4a1a", 0.25, 0.4);
+    s += koerper(K, T_LG("hamster", ["#e0a052", "#b8742a"]), f, { rw: 0.25 });
+    s += `<ellipse cx="1.8" cy="-10" rx="1.3" ry="1.6" fill="#c8826a" stroke="#8a5a2a" stroke-width=".2"/>`;
+    s += auge(5, -7.4, 0.9, "#0e0806");
+    s += `<path d="M8.4 -5.2 l.5 .3 l-.5 .3 Z" fill="#c87a76"/><path d="M8.2 -4.8 l3 -.8 M8.2 -4.6 l3 .3" stroke="#fff" stroke-width=".08"/>`;
+    return fertig(s, k, dir, 15);
+  }
+  /* =================== DER WELLENSITTICH (grün) — sitzt, Ursprung = Füße auf der Stange =================== */
+  function wellensittich(k, dir = 1, o = {}) {
+    const blau = o.farbe === "blau";
+    let s = "";
+    s += `<path d="M-3.4 3.6 L-8.6 17.4 L-7.4 17.8 L-1 5 Z" fill="${blau ? "#2a4a8a" : "#2a6a6a"}"/><path d="M-2.6 4 L-7.8 17.6" stroke="#1a2a3a" stroke-width=".25"/>`;
+    const K = [[3.6, -12.4], [1.4, -14.2], [-1.4, -13.4], [-2.6, -10.6], [-3.6, -6], [-4, -1], [-3, 4], [-0.6, 5], [1.6, 2], [2.8, -2], [3.6, -6], [4.6, -9.4]];
+    let f = "";
+    f += form([[-4, -15], [4, -15], [4.2, -10], [0, -9], [-3, -11]], blau ? "#f2f2f0" : "#f2e04a");
+    let w = "";
+    for (let i = 0; i < 6; i++) w += `M-3.6 ${r(-11 + i * 1.6)} q1.2 -.6 2.4 0 q1.2 .6 2.4 0`;
+    f += `<path d="${w}" stroke="#1a1a1a" stroke-width=".35" fill="none"/>`;
+    f += `<path d="M-4 -4 Q-1 -6 1 0 Q-1 4 -3.6 4 Z" fill="${blau ? "#3a6ab0" : "#3a8a3a"}" opacity=".7"/>`;
+    for (let i = 0; i < 4; i++) f += `<path d="M-3.4 ${r(-3 + i * 1.6)} q1.4 -.8 3 0" stroke="#1a1a1a" stroke-width=".3" fill="none" opacity=".7"/>`;
+    s += koerper(K, T_LG(blau ? "wsblau" : "wsgruen", blau ? ["#6a9ae0", "#2a5aa8"] : ["#8ad84a", "#3a9a2a"]), f, { rw: 0.2 });
+    s += `<path d="M3.4 -12.6 Q5.4 -12 5 -10 Q4.2 -10.6 3.4 -10.6 Z" fill="#e8c8a0" stroke="#8a6a4a" stroke-width=".15"/>`;
+    s += `<ellipse cx="3.2" cy="-13.4" rx=".9" ry=".5" fill="${blau ? "#6a8ad8" : "#4a6ab0"}"/>`;
+    s += `<circle cx="3" cy="-9.6" r=".45" fill="#1a1a2a"/>`;
+    s += auge(1.4, -12, 0.6, "#f2f2f0", { pupille: true });
+    s += `<path d="M-.6 5 l-.4 1.4 M1 4.6 l.6 1.6" stroke="#c8a0a0" stroke-width=".5"/>`;
+    return `<g transform="scale(${Math.round(dir * k * 10000) / 10000} ${Math.round(k * 10000) / 10000}) translate(0 -6)">${s}</g>`;
+  }
+  /* =================== DIE SCHILDKRÖTE (Griechische Landschildkröte) =================== */
+  function schildkroete(k, dir = 1) {
+    let s = "";
+    s += `<path d="M-10 -1 l-2 1 M-4 -1 l-1 1 M6 -1 l1 1 M10 -2 l2 2" stroke="#8a7a52" stroke-width="2.4" stroke-linecap="round"/>`;
+    s += `<path d="M10 -5 Q14 -9 17 -8 Q19 -7 18.6 -5.4 Q16.4 -4 13 -3.6 Z" fill="${T_LG("haut", ["#a8986a", "#7a6a44"])}"/>`;
+    s += auge(16.4, -7, 0.55, "#1a120a");
+    const K = [[-14, -2], [-13, -7], [-8, -12], [0, -13.4], [8, -12], [12.6, -7], [13.4, -2], [0, -1.4]];
+    let f = "";
+    const platten = [[-8, -6], [-1, -8], [6, -6], [-4, -11], [3, -11], [-10, -3.6], [10, -3.6]];
+    for (const [x, y] of platten) f += `<path d="M${x - 3} ${y} l1.6 -2.4 h2.8 l1.6 2.4 l-1.6 2.4 h-2.8 Z" fill="${T_LG("panzer", ["#c8a04a", "#7a5a24"])}" stroke="#3a2a10" stroke-width=".5"/><ellipse cx="${x}" cy="${y}" rx="1" ry=".7" fill="#e0c070" opacity=".6"/>`;
+    f += `<path d="M-14 -2.6 Q0 -.4 13.4 -2.6" stroke="#3a2a10" stroke-width=".8" fill="none"/>`;
+    s += koerper(K, "#a8803a", f, { rw: 0.4, rand: "#2a1a08" });
+    return fertig(s, k, dir, 30);
+  }
+
+  return { glatt, koerper, form, linie, striche, auge, fertig, klaue, lg, rg, rnd, kuh, kalb, pferd, schwein, schaf, huhn, hahn, kueken, hund, welpe, katze, ente, kaninchen, meerschweinchen, hamster, wellensittich, schildkroete };
 }
 module.exports = { tierKasten };
 

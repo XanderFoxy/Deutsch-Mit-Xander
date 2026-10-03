@@ -48,7 +48,6 @@ const SCHNEE_S = S.lg("schneeschatten", [[0, "#dfe8f2"], [1, "#c3d2e2"]]);
 const PUTZ = S.lg("putz", [[0, "#f4efe4"], [1, "#e2dacb"]]);
 const BALKEN = "#5a3b24";
 const TANNE = S.lg("tannengruen", [[0, "#2f4d3a"], [1, "#1d3527"]], 0, 0, 1, 0);
-S.def(`<pattern id="${S.id("pflaster")}" width="10" height="5" patternUnits="userSpaceOnUse"><rect width="10" height="5" fill="#8c9096"/><rect x=".3" y=".3" width="9.4" height="4.4" rx=".4" fill="#9a9ea4"/><circle cx="2" cy="1.4" r=".25" fill="#fff" opacity=".7"/><circle cx="6.6" cy="3.2" r=".2" fill="#fff" opacity=".7"/><circle cx="8.2" cy="1" r=".18" fill="#fff" opacity=".6"/></pattern>`);
 
 /* =====================================================================
    KULISSE — bedeckter Himmel, ferne Hügel mit Wald, Schneefläche
@@ -128,7 +127,7 @@ S.def(`<pattern id="${S.id("pflaster")}" width="10" height="5" patternUnits="use
 /* =====================================================================
    3 — DAS HAUS (Fachwerkhaus) — Lupe: Eiszapfen, Schornstein, Fenster, Haustür
    ===================================================================== */
-const HAUS = { x0: 2, x1: 98, y: 96, traufe: 60, first: 24 };
+const HAUS = { x0: 6, x1: 98, y: 96, traufe: 60, first: 28 };
 {
   const { x0, x1, y, traufe, first } = HAUS, cx = (x0 + x1) / 2;
   const unter = [];
@@ -136,7 +135,7 @@ const HAUS = { x0: 2, x1: 98, y: 96, traufe: 60, first: 24 };
   /* Erdgeschoss verputzt, Sockel aus Bruchstein */
   k += `<rect x="${x0}" y="${traufe}" width="${x1 - x0}" height="${y - traufe}" fill="${PUTZ}"/>`;
   k += `<rect x="${x0}" y="${y - 5}" width="${x1 - x0}" height="5" fill="#8f877a"/>`;
-  for (let i = 0; i < 26; i++) k += `<rect x="${r(x0 + (i % 13) * 7.4 + (i > 12 ? 3.6 : 0))}" y="${i > 12 ? y - 2.4 : y - 4.8}" width="6.6" height="2.2" rx=".6" fill="${rnd() < 0.5 ? "#9d9486" : "#827a6d"}"/>`;
+  for (let i = 0; i < 24; i++) k += `<rect x="${r(x0 + (i % 12) * 7.4 + (i > 11 ? 3.6 : 0.6))}" y="${i > 11 ? y - 2.4 : y - 4.8}" width="6.6" height="2.2" rx=".6" fill="${rnd() < 0.5 ? "#9d9486" : "#827a6d"}"/>`;
   /* Obergeschoss: Fachwerk */
   const og = traufe + 2, ug = traufe + 18;
   k += `<rect x="${x0}" y="${og - 2}" width="${x1 - x0}" height="2" fill="${BALKEN}"/><rect x="${x0}" y="${ug}" width="${x1 - x0}" height="1.8" fill="${BALKEN}"/>`;
@@ -198,7 +197,7 @@ const HAUS = { x0: 2, x1: 98, y: 96, traufe: 60, first: 24 };
   k += `<rect x="${SX - 3.4}" y="${first - 12}" width="6.8" height="13" fill="${S.lg("ziegel", [[0, "#9b4a35"], [1, "#6f3121"]], 0, 0, 1, 0)}"/>`;
   for (let i = 0; i < 4; i++) k += `<line x1="${SX - 3.4}" y1="${first - 9 + i * 3}" x2="${SX + 3.4}" y2="${first - 9 + i * 3}" stroke="#5a2618" stroke-width=".3"/>`;
   k += `<rect x="${SX - 4.2}" y="${first - 13.4}" width="8.4" height="1.8" fill="#5a2618"/><path d="M${SX - 4.4} ${first - 13.4} Q${SX} ${first - 16} ${SX + 4.4} ${first - 13.4} Z" fill="#ffffff"/>`;
-  k += `<g filter="url(#${S.id("rauch")})" opacity=".75"><circle cx="${SX + 1}" cy="${first - 19}" r="3" fill="#eef1f4"/><circle cx="${SX + 5}" cy="${first - 25}" r="4" fill="#e6eaee"/><circle cx="${SX + 11}" cy="${first - 30}" r="5" fill="#e3e8ec"/></g>`;
+  k += `<g filter="url(#${S.id("rauch")})" opacity=".75"><circle cx="${SX + 2}" cy="${first - 18}" r="2.6" fill="#eef1f4"/><circle cx="${SX + 7}" cy="${first - 22}" r="3.2" fill="#e6eaee"/><circle cx="${SX + 13}" cy="${first - 24}" r="3.6" fill="#e3e8ec"/></g>`;
   unter.push({ id: "schornstein", de: "der Schornstein", syl: "SCHORN-stein", it: "il camino", itSyl: "ca-MI-no", en: "chimney", x: SX, y: first + 1, kunst: flaeche(-5, -16, 10, 17),
     tipp: "Drinnen brennt der Ofen — der Rauch steigt aus dem Schornstein." });
   S.teil({ id: "haus", de: "das Haus", syl: "HAUS", it: "la casa", itSyl: "CA-sa", en: "house", x: cx, y, steht: true, kunst: um(cx, y, k),
@@ -249,7 +248,7 @@ const HAUS = { x0: 2, x1: 98, y: 96, traufe: 60, first: 24 };
    6 — DAS VOGELHAUS — Lupe: Kohlmeise, Rotkehlchen, Meisenknödel
    ===================================================================== */
 {
-  const x = 36, y = 140, sk = s(y);               // 28 je Meter
+  const x = 30, y = 148, sk = s(y);               // 31 je Meter
   const top = y - 1.45 * sk;
   const unter = [];
   let k = `<rect x="${x - 0.9}" y="${r(top)}" width="1.8" height="${r(y - top)}" fill="${S.lg("pfosten", [[0, "#7a5a3c"], [1, "#4f3825"]], 0, 0, 1, 0)}"/>`;
@@ -378,13 +377,20 @@ const HAUS = { x0: 2, x1: 98, y: 96, traufe: 60, first: 24 };
    ===================================================================== */
 {
   const P = "M0 156 L176 156 L194 202 L0 202 Z";
-  let k = `<path d="${P}" fill="url(#${S.id("pflaster")})"/>`;
+  let k = `<path d="${P}" fill="#9a9ea4"/>`;
+  /* Gehwegplatten in Fluchtperspektive (Fluchtpunkt bei x 160 auf dem Horizont) */
+  let fu = "";
+  for (const yy of [160, 166, 173.5, 182, 191.5]) fu += `<line x1="0" y1="${yy}" x2="${r(176 + (yy - 156) * 0.39)}" y2="${yy}" stroke="#7b8087" stroke-width=".45"/>`;
+  for (let i = -11; i <= 1; i++) { const xa = 160 + i * 14.5; let xb = 160 + i * 14.5 * (202 - HY) / (156 - HY), yb = 202; if (xb < 0) { yb = 156 + xa / (xa - xb) * 46; xb = 0; } fu += `<line x1="${r(xa)}" y1="156" x2="${r(xb)}" y2="${r(yb)}" stroke="#7b8087" stroke-width=".45"/>`; }
+  k += `<g clip-path="url(#${S.id("wegclip")})">${fu}</g>`;
+  S.def(`<clipPath id="${S.id("wegclip")}"><path d="${P}"/></clipPath>`);
+  for (let i = 0; i < 40; i++) k += `<rect x="${r(rnd() * 172)}" y="${r(157 + rnd() * 42)}" width=".5" height=".5" fill="#ffffff" opacity=".8"/>`;
   k += `<path d="${P}" fill="${S.lg("gehweglicht", [[0, "#3a4250", 0.25], [1, "#ffffff", 0.08]])}"/>`;
   /* nasse Stellen und Schneereste */
   for (let i = 0; i < 14; i++) { const x = rnd() * 170, y = 160 + rnd() * 38; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(2 + rnd() * 5)}" ry="${r(0.5 + rnd() * 1)}" fill="${rnd() < 0.5 ? "#f2f6fa" : "#6c727a"}" opacity=".6"/>`; }
   /* Bordstein rechts und Schneehaufen vom Räumen */
   k += `<path d="M176 156 L194 202 L198 202 L180 156 Z" fill="#b9bcc0"/>`;
-  k += `<path d="M170 157 Q182 146 194 152 Q206 150 214 160 Q222 176 226 202 L196 202 Z" fill="${SCHNEE}"/><path d="M182 160 Q196 158 206 166" stroke="#c9d6e4" stroke-width=".8" fill="none"/>`;
+  k += `<path d="M174 157 Q184 151 192 154 Q204 156 210 166 Q216 182 220 202 L196 202 L180 158 Z" fill="${SCHNEE}"/><path d="M186 160 Q198 160 206 170" stroke="#c9d6e4" stroke-width=".8" fill="none"/>`;
   S.teil({ id: "gehweg", de: "der Gehweg", syl: "GEH-weg", it: "il marciapiede", itSyl: "mar-cia-PIE-de", en: "pavement", x: 100, y: 200, kunst: um(100, 200, k),
     tipp: "Wer am Gehweg wohnt, muss im Winter Schnee räumen und streuen." });
 }
@@ -411,7 +417,7 @@ const HAUS = { x0: 2, x1: 98, y: 96, traufe: 60, first: 24 };
 let SCHAUFEL = null;
 {
   const x = 74, y = 192;
-  const m = mensch({ id: "b20b_frau", geschlecht: "w", pose: "b20b_schippen", blick: 64, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "hell",
+  const m = mensch({ id: "b20b_frau", geschlecht: "w", pose: "b20b_schippen", blick: 64, frisur: "lang", haarfarbe: "blond", laecheln: true, haut: "hell",
     kleidung: { jacke: { stueck: "jacke", farbe: "gruen_d" }, oberteil: { stueck: "pullover", farbe: "creme" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel", farbe: "braun" },
       kopf: { stueck: "muetze", farbe: "rot" }, zubehoer: { stueck: "handschuhe", farbe: "schwarz" } } }, 1.66 * s(y));
   const hs = [m.z.handL, m.z.handR].map((h) => [h.x * m.k, h.y * m.k]);
@@ -421,18 +427,17 @@ let SCHAUFEL = null;
 }
 {
   const { x, y, hs } = SCHAUFEL;
-  const hi = hs.sort((a, b) => a[1] - b[1]);       // obere und untere Hand
-  const oben = [x + hi[0][0], y + hi[0][1]], unten = [x + hi[1][0], y + hi[1][1]];
-  /* Stiel durch beide Hände bis zum Blatt auf dem Boden */
-  const dx = unten[0] - oben[0], dy = unten[1] - oben[1], L = Math.hypot(dx, dy);
-  const bx = oben[0] + dx / L * 62, by = Math.min(y + 2, oben[1] + dy / L * 62);
-  let k = `<line x1="${r(oben[0] - dx / L * 4)}" y1="${r(oben[1] - dy / L * 4)}" x2="${r(bx)}" y2="${r(by - 2)}" stroke="${S.lg("stiel", [[0, "#c9a06a"], [1, "#9c7344"]], 0, 0, 1, 0)}" stroke-width="1.3" stroke-linecap="round"/>`;
-  k += `<path d="M${r(oben[0] - dx / L * 4 - 2)} ${r(oben[1] - dy / L * 4)} h4" stroke="#2b2b2b" stroke-width="1.1" stroke-linecap="round"/>`;
+  const H = [x + (hs[0][0] + hs[1][0]) / 2, y + (hs[0][1] + hs[1][1]) / 2];
+  const bx = x + 26, by = y + 1;                  // Blatt vorn auf dem Boden
+  const dx = H[0] - bx, dy = H[1] - by, L = Math.hypot(dx, dy);
+  const oben = [H[0] + dx / L * 7, H[1] + dy / L * 7];
+  let k = `<line x1="${r(oben[0])}" y1="${r(oben[1])}" x2="${r(bx)}" y2="${r(by - 2)}" stroke="${S.lg("stiel", [[0, "#c9a06a"], [1, "#9c7344"]], 0, 0, 1, 0)}" stroke-width="1.3" stroke-linecap="round"/>`;
+  k += `<path d="M${r(oben[0] - 2)} ${r(oben[1])} h4" stroke="#2b2b2b" stroke-width="1.1" stroke-linecap="round"/>`;
   /* breites Kunststoffblatt (Schneeschieber), schiebt Schnee vor sich her */
-  k += `<path d="M${r(bx - 3)} ${r(by - 5)} L${r(bx + 16)} ${r(by - 6)} L${r(bx + 17)} ${r(by + 1)} L${r(bx - 2)} ${r(by + 1.4)} Z" fill="${S.lg("blatt", [[0, "#3f86d6"], [1, "#1f5aa0"]])}"/>`;
+  k += `<path d="M${r(bx - 2)} ${r(by - 5)} L${r(bx + 17)} ${r(by - 6)} L${r(bx + 18)} ${r(by + 1)} L${r(bx - 1)} ${r(by + 1.4)} Z" fill="${S.lg("blatt", [[0, "#3f86d6"], [1, "#1f5aa0"]])}"/>`;
   k += `<path d="M${r(bx - 2)} ${r(by + 1.4)} L${r(bx + 17)} ${r(by + 1)}" stroke="#c9ced3" stroke-width=".8"/>`;
   k += `<path d="M${r(bx + 2)} ${r(by - 6.6)} Q${r(bx + 9)} ${r(by - 12)} ${r(bx + 18)} ${r(by - 6.4)} L${r(bx + 17)} ${r(by - 5)} L${r(bx - 3)} ${r(by - 4.4)} Z" fill="${SCHNEE}"/>`;
-  S.teil({ oben: true, id: "schneeschaufel", de: "die Schneeschaufel", syl: "SCHNEE-schau-fel", it: "la pala da neve", itSyl: "PA-la da NE-ve", en: "snow shovel", x: r(bx + 7), y: r(by + 1.4), kunst: um(bx + 7, by + 1.4, k) });
+  S.teil({ oben: true, id: "schneeschaufel", de: "die Schneeschaufel", syl: "SCHNEE-schau-fel", it: "la pala da neve", itSyl: "PA-la da NE-ve", en: "snow shovel", x: r(bx + 8), y: r(by + 1.4), kunst: um(bx + 8, by + 1.4, k) });
 }
 
 /* =====================================================================

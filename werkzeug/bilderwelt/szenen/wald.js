@@ -425,6 +425,18 @@ function fuchs() {
     tipp: "Der Bach bringt frisches Wasser für die Tiere." });
 }
 
+
+{
+  /* DER STEIN: bemooster Findling am Bachufer */
+  const x = 300, y = 190;
+  let k = schatten(0, 0, 14, 1.6, 0.35);
+  const pts = [[-13, 0], [-14, -5], [-10, -11], [-3, -14], [5, -13], [11, -9], [14, -3], [13, 0]];
+  k += T.koerper(pts, S.lg("findling", [[0, "#a8a8a0"], [0.5, "#8a8a82"], [1, "#5a5a54"]]),
+    `<path d="M-12 -7 Q-4 -15 6 -13 Q2 -9 -6 -8 Q-10 -6 -12 -4 Z" fill="${MOOS}"/>` + striche(40, -13, -14, 14, 0, 0.8, 0.4, "#4a4a44", 0.3, 0.4) + `<path d="M2 -10 l3 4 l-1 4" stroke="#4a4a44" stroke-width=".4" fill="none"/>`, { rw: 0.4 });
+  S.teil({ id: "stein", de: "der Stein", syl: "STEIN", it: "la pietra", itSyl: "PIE-tra", en: "stone", x, y, steht: true, kunst: k,
+    tipp: "Den großen Stein hat das Eis vor langer Zeit hierher geschoben – ein Findling." });
+}
+
 /* =====================================================================
    10 — DAS WILDSCHWEIN
    ===================================================================== */
