@@ -116,28 +116,36 @@ S.def(`<pattern id="${S.id("ringel")}" patternUnits="userSpaceOnUse" width="200"
 /* =====================================================================
    KULISSE — Abendhimmel, Dunst, Zecca, Piazzetta-Tiefe, Riva, Molo
    ===================================================================== */
-S.hinten(`<rect width="400" height="${WASSER + 2}" fill="${S.lg("himmel", [[0, "#5f93c6"], [0.45, "#9cbfdc"], [0.8, "#ead8bd"], [1, "#f6dfbd"]])}"/>`);
+/* Abendhimmel: oben rechts kühler, gedämpftes Blau; links unten warm (Pfirsich bis Gold) */
+S.hinten(`<rect width="400" height="${WASSER + 2}" fill="${S.lg("himmel", [[0, "#7a9cc2"], [0.4, "#a9bfd4"], [0.75, "#e6d4c0"], [1, "#f4d9b6"]])}"/>`);
 /* die tiefe Sonne steht links außerhalb des Bildes */
-S.hinten(`<rect width="400" height="${WASSER + 2}" fill="${S.rg("sonne", [[0, "#fff1c8", 0.85], [0.35, "#ffe2a8", 0.35], [1, "#ffe2a8", 0]], 0, 0.62, 0.75)}"/>`);
+S.hinten(`<rect width="400" height="${WASSER + 2}" fill="${S.rg("sonne", [[0, "#ffe7b4", 0.9], [0.4, "#ffd99a", 0.4], [1, "#ffd99a", 0]], 0, 0.68, 0.85)}"/>`);
 {
-  /* Haufenwolken im Abendlicht: links von der tiefen Sonne angestrahlt,
-     rechts kühler im Schatten, die Unterseite warm */
-  S.def(`<filter id="${S.id("wolke")}" x="-20%" y="-30%" width="140%" height="160%"><feGaussianBlur stdDeviation=".3"/></filter>`);
-  const wolke = (x, y, s, buckel) => {
-    let g = `<g filter="url(#${S.id("wolke")})">`;
-    for (const [dx, dy, rr] of buckel) g += `<circle cx="${r(x + (dx + 1.5) * s)}" cy="${r(y + (dy + 1.3) * s)}" r="${r(rr * s)}" fill="#cdb7bd"/>`;
-    for (const [dx, dy, rr] of buckel) g += `<circle cx="${r(x + dx * s)}" cy="${r(y + dy * s)}" r="${r(rr * s)}" fill="${S.rg("wolkelicht", [[0, "#ffffff"], [0.45, "#fff2df"], [0.8, "#f0d3c2"], [1, "#d9b8b8"]], 0.25, 0.25, 0.9)}"/>`;
-    return g + `</g>`;
+  /* Abend-Cumuli: unregelmäßige, ausgefranste Ränder (Wellenverschiebung),
+     flache, kühl-violette Unterseite, die Sonnenseite links golden.
+     Am Horizont lange, ausgefranste Altostratus-Bänder und zarte Schleier. */
+  S.def(`<filter id="${S.id("wolke")}" x="-20%" y="-40%" width="140%" height="180%"><feTurbulence type="fractalNoise" baseFrequency=".3" numOctaves="3" seed="3"/><feDisplacementMap in="SourceGraphic" scale="3.6" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".35"/></filter>`);
+  S.def(`<filter id="${S.id("band")}" x="-10%" y="-300%" width="120%" height="700%"><feTurbulence type="fractalNoise" baseFrequency=".05 .6" numOctaves="2" seed="5"/><feDisplacementMap in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".6"/></filter>`);
+  const LICHT = S.lg("wolkelicht", [[0, "#ffe8c4"], [0.45, "#fbeee4"], [1, "#e8e2ec"]], 0, 0, 400, 0, ' gradientUnits="userSpaceOnUse"');
+  let wz = 0;
+  const wolke = (x, y, w, h, seed) => {
+    const z = B.zufall(seed), c = [];
+    const n = Math.round(w / 5);
+    for (let i = 0; i < n; i++) { const t = i / (n - 1), top = Math.pow(Math.sin(t * Math.PI), 0.7); c.push([x - w / 2 + t * w + (z() - 0.5) * 3, y - top * h * 0.35 + (z() - 0.5) * 2, 2 + z() * 2.5 + top * h * 0.45]); }
+    for (let i = 0; i < n * 0.6; i++) { const t = 0.2 + z() * 0.6; c.push([x - w / 2 + t * w, y - h * (0.3 + z() * 0.4), 2 + z() * h * 0.3]); }
+    for (const [a, b, rr] of c.slice()) for (let k = 0; k < 2; k++) { const an = -Math.PI * (0.15 + z() * 0.7); c.push([a + Math.cos(an) * rr * 0.85, b + Math.sin(an) * rr * 0.85, rr * (0.25 + z() * 0.2)]); }
+    const kr = (dx, dy, f) => c.map(([a, b, rr]) => `<circle cx="${r(a + dx)}" cy="${r(b + dy)}" r="${r(rr * f)}"/>`).join("");
+    const id = S.id("wk" + wz++);
+    S.def(`<clipPath id="${id}"><rect x="${r(x - w)}" y="${r(y - h * 2)}" width="${r(w * 2)}" height="${r(h * 2 + 1.5)}"/></clipPath>`);
+    return `<g filter="url(#${S.id("wolke")})"><g clip-path="url(#${id})"><g fill="#b4a6bf">${kr(0, 0, 1)}</g><g fill="#d8c8d0">${kr(-0.5, -0.8, 0.92)}</g><g fill="${LICHT}">${kr(-0.8, -1.8, 0.86)}</g></g></g>`;
   };
-  /* jede Wolke mit eigener Form; die unteren Buckel liegen flach (Wolkenboden) */
-  S.hinten(wolke(62, 30, 0.95, [[-18, 3, 4.6], [-11, 0, 6.8], [-3, -5, 8.4], [6, -7, 7], [13, -2, 7.4], [20, 2.6, 4.4], [-6, 3, 6], [7, 3.4, 6]]));
-  S.hinten(wolke(214, 20, 0.75, [[-10, 2, 4], [-4, -3, 6.4], [3, -1, 5.2], [9, 2.2, 3.6], [0, 3, 4.6]]));
-  S.hinten(wolke(338, 42, 1, [[-24, 4, 3.4], [-17, 1.6, 5.4], [-9, -2.4, 6.6], [0, -1, 5.6], [8, -4.6, 7.6], [17, 0, 5.8], [24, 3.6, 3.6], [-4, 3.6, 5], [12, 3.8, 4.6]]));
-  S.hinten(wolke(156, 66, 0.5, [[-8, 2, 4], [-2, -2, 5.6], [5, 1, 4.4], [10, 3, 2.6]]));
-  /* flache Abendbänke (Altocumulus) über dem Horizont: links golden, rechts kühl */
+  S.hinten(wolke(62, 36, 54, 24, 11) + wolke(222, 24, 32, 15, 23) + wolke(338, 50, 46, 21, 37) + wolke(156, 72, 22, 10, 41));
+  /* flache, ausgefranste Bänder über dem Horizont: links golden, rechts kühl */
   let band = "";
-  for (const [x, y, w, h] of [[40, 112, 70, 1.8], [120, 118, 50, 1.2], [250, 108, 90, 1.6], [330, 116, 60, 1.3], [190, 124, 40, 1]]) band += `<ellipse cx="${x}" cy="${y}" rx="${w / 2}" ry="${h}" fill="${S.lg("bank", [[0, "#ffd7a6", 0.75], [0.5, "#f7d8c4", 0.5], [1, "#c9c3d6", 0.45]], 0, 0, 1, 0, ' gradientUnits="userSpaceOnUse" x1="0" x2="400"')}"/>`;
-  S.hinten(`<g filter="url(#${S.id("wolke")})">${band}</g>`);
+  for (const [x, y, w, h, c] of [[46, 112, 84, 1.7, "#ffe2b8"], [126, 119, 52, 1.2, "#fbe0c4"], [252, 108, 96, 1.6, "#ecdcd8"], [338, 117, 64, 1.3, "#dcd6e2"], [196, 125, 42, 0.9, "#f4dccb"]]) band += `<path d="M${x - w / 2} ${y} Q${x - w / 4} ${r(y - h)} ${x} ${r(y - h * 0.6)} Q${x + w / 4} ${r(y - h)} ${x + w / 2} ${y} Q${x} ${r(y + h * 0.9)} ${x - w / 2} ${y} Z" fill="${c}" opacity=".8"/>`;
+  /* zarte Schleier, fast wie Kondensstreifen */
+  band += `<path d="M150 84 Q220 79 300 82" stroke="#f6eee8" stroke-width=".7" fill="none" opacity=".5"/><path d="M20 96 Q70 92 130 95" stroke="#fff0dc" stroke-width=".6" fill="none" opacity=".45"/>`;
+  S.hinten(`<g filter="url(#${S.id("band")})">${band}</g>`);
 }
 /* Dunst über der Lagune am Horizont, ferne Dächer von Castello rechts */
 S.hinten(`<rect x="0" y="${HOR - 22}" width="400" height="24" fill="${S.lg("dunst", [[0, "#f4dcc0", 0], [1, "#f4dcc0", 0.6]])}"/>`);
@@ -343,26 +351,28 @@ S.hinten(`<rect x="0" y="${HOR - 22}" width="400" height="24" fill="${S.lg("duns
     let g = `<rect x="${r(x - w * 0.52)}" y="${r(top + w * 0.55)}" width="${r(w * 1.04)}" height="${r(b - top - w * 0.55)}" fill="#c9b9a6"/>`;
     for (let i = 0; i < (gross ? 7 : 5); i++) { const xx = x - w * 0.42 + i * (w * 0.84) / ((gross ? 7 : 5) - 1); g += `<path d="M${r(xx - 0.5)} ${r(top + w * 0.55 + 3.2)} l0 -1.6 q.5 -.8 1 0 l0 1.6 Z" fill="#5d4f47"/>`; }
     /* überhöhte, fast eiförmige Bleihaube (≈ 1,25 × Halbkreis) mit Bleibahnen */
-    const hh = w * 0.72;
+    const hh = w * 0.9;
     g += `<path d="M${r(x - w / 2)} ${r(top + hh)} C${r(x - w / 2)} ${r(top + hh * 0.3)} ${r(x - w * 0.3)} ${r(top - 0.4)} ${r(x)} ${r(top)} C${r(x + w * 0.3)} ${r(top - 0.4)} ${r(x + w / 2)} ${r(top + hh * 0.3)} ${r(x + w / 2)} ${r(top + hh)} Z" fill="${BLEI}"/>`;
     for (const t of [-0.36, -0.22, -0.08, 0.08, 0.22, 0.36]) g += `<path d="M${r(x + t * w * 1.3)} ${r(top + hh)} Q${r(x + t * w * 1.25)} ${r(top + hh * 0.2)} ${r(x)} ${r(top + 0.1)}" stroke="#8d9396" stroke-width=".18" fill="none"/>`;
     g += `<path d="M${r(x - w * 0.38)} ${r(top + hh * 0.75)} C${r(x - w * 0.38)} ${r(top + hh * 0.25)} ${r(x - w * 0.2)} ${r(top + 0.6)} ${r(x - 0.4)} ${r(top + 0.3)}" stroke="#f4f5f2" stroke-width=".55" opacity=".7" fill="none"/>`;
-    /* große Laterne: Säulchen, Zwiebel, vergoldete Kugel, Kreuz */
-    const lw = w * 0.3;
-    g += `<rect x="${r(x - lw / 2)}" y="${r(top - lw * 0.8)}" width="${r(lw)}" height="${r(lw * 0.85)}" fill="#d8d0c2"/>`;
-    for (const t of [-0.25, 0.1]) g += `<rect x="${r(x + t * lw)}" y="${r(top - lw * 0.7)}" width="${r(lw * 0.18)}" height="${r(lw * 0.55)}" fill="#4e443f"/>`;
-    g += `<path d="M${r(x - lw * 0.62)} ${r(top - lw * 0.8)} Q${r(x - lw * 0.8)} ${r(top - lw * 1.5)} ${r(x)} ${r(top - lw * 2.2)} Q${r(x + lw * 0.8)} ${r(top - lw * 1.5)} ${r(x + lw * 0.62)} ${r(top - lw * 0.8)} Z" fill="${BLEI}"/>`;
-    g += `<circle cx="${r(x)}" cy="${r(top - lw * 2.4)}" r="${r(lw * 0.24)}" fill="${GOLD}"/>`;
-    g += `<path d="M${r(x)} ${r(top - lw * 2.6)} L${r(x)} ${r(top - lw * 3.6)} M${r(x - lw * 0.3)} ${r(top - lw * 3.25)} L${r(x + lw * 0.3)} ${r(top - lw * 3.25)}" stroke="#d9a92e" stroke-width="${gross ? 0.42 : 0.34}"/>`;
+    /* Laterne ≈ ⅓ der Kuppelhöhe: runde Trommel mit Bogenöffnungen, kleine
+       Zwiebel, vergoldete Kugel, Kreuz */
+    const lw = w * 0.16;
+    g += `<rect x="${r(x - lw / 2)}" y="${r(top - lw * 1.05)}" width="${r(lw)}" height="${r(lw * 1.15)}" fill="#d8d0c2"/><rect x="${r(x - lw * 0.58)}" y="${r(top - lw * 1.15)}" width="${r(lw * 1.16)}" height="${r(lw * 0.18)}" fill="#efe8dc"/>`;
+    for (const t of [-0.3, 0.05]) g += `<path d="M${r(x + t * lw)} ${r(top - lw * 0.1)} l0 ${r(-lw * 0.6)} q${r(lw * 0.11)} ${r(-lw * 0.2)} ${r(lw * 0.22)} 0 l0 ${r(lw * 0.6)} Z" fill="#4e443f"/>`;
+    g += `<path d="M${r(x - lw * 0.55)} ${r(top - lw * 1.15)} Q${r(x - lw * 0.75)} ${r(top - lw * 1.7)} ${r(x)} ${r(top - lw * 2.3)} Q${r(x + lw * 0.75)} ${r(top - lw * 1.7)} ${r(x + lw * 0.55)} ${r(top - lw * 1.15)} Z" fill="${BLEI}"/>`;
+    g += `<circle cx="${r(x)}" cy="${r(top - lw * 2.5)}" r="${r(lw * 0.24)}" fill="${GOLD}"/>`;
+    g += `<path d="M${r(x)} ${r(top - lw * 2.7)} L${r(x)} ${r(top - lw * 3.7)} M${r(x - lw * 0.3)} ${r(top - lw * 3.35)} L${r(x + lw * 0.3)} ${r(top - lw * 3.35)}" stroke="#d9a92e" stroke-width="${gross ? 0.36 : 0.3}"/>`;
     return g;
   };
-  /* von hinten nach vorn: West (fern), Nord (fern), Mitte, Süd (nah), Ost (nah) */
-  k += kuppel(157, 88.4, 11.6) + kuppel(194, 88, 11.2) + kuppel(180, 83.4, 15.6, true) + kuppel(167, 88.2, 12.6) + kuppel(205, 88.6, 12.6);
+  /* über die Palastbreite verteilt (≈ 25–28 m Abstand): West, Mitte, Ost;
+     die Nordkuppel halb hinter, die Südkuppel halb vor der Hauptkuppel */
+  k += kuppel(147, 83.6, 12.6) + kuppel(176, 81.6, 12) + kuppel(180, 79.4, 15.6, true) + kuppel(212, 83.8, 12.8) + kuppel(184.6, 86.4, 12.6);
   S.teil({ id: "markusdom", de: "der Markusdom", syl: "MAR-kus-dom", it: "la Basilica di San Marco", itSyl: "ba-SI-li-ca di san MAR-co", en: "St Mark's Basilica",
     x: 0, y: 0, kunst: G(k), tipp: "Der Markusdom hat fünf große Kuppeln. Innen glänzen goldene Mosaiken.",
-    zoom: Z({ x: 146, y: 76, w: 72, h: 30 }),
+    zoom: Z({ x: 136, y: 68, w: 90, h: 36 }),
     unter: [
-      { id: "kuppel", de: "die Kuppel", syl: "KUP-pel", it: "la cupola", itSyl: "CU-po-la", en: "dome", x: 205, y: 93, kunst: flaeche(-6.6, -9, 13.2, 9),
+      { id: "kuppel", de: "die Kuppel", syl: "KUP-pel", it: "la cupola", itSyl: "CU-po-la", en: "dome", x: 212, y: 94, kunst: flaeche(-7, -12, 14, 12),
         tipp: "Die Kuppeln sind aus Holz und mit Blei gedeckt – darum glänzen sie silbern." },
     ].map(U) });
 }
