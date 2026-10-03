@@ -1255,78 +1255,97 @@ function dachs(T) {
    runden Ohren, stumpfer Schnauze; vier große Nagezähne mit orangem (eisenhaltigem) Zahnschmelz vorn. Vorderpfoten klein,
    greiffähig, mit Krallen; Hinterfüße groß mit Schwimmhäuten zwischen den fünf Zehen, Putzkralle an der zweiten Zehe. */
 function biber(T) {
-  const H = kit(T, [-10, -50, 130, 4]), { fl, wl, L, F, f } = H;
+  const H = kit(T, [-10, -50, 130, 4]), { fl, wl, L, F, f, f2 } = H, G2 = H.G;
   H.minFl = 3;
-  const DK = "#140a04";
-  const KX = 93, KY = -24, KW = 16, KS = 0.86;
+  const DK = "#140a04", HL = "#ffd8b0";
+  /* ---- Kopf: kurz, hoch, rund; stumpfe breite Schnauze, gewölbter kurzer Nasenrücken, dicke Backen; Auge mittig ---- */
+  const KX = 86, KY = -25, KW = 18, KS = 0.9;
   const K = H.pt(KX, KY, KW, KS), KT = (pts) => H.tr(pts, KX, KY, KW, KS);
-  const kopf = KT([[0, -1.8], [4, -3.8], [9, -4.2], [14, -3.0], [18, -0.8], [20.8, 1.8], [22.4, 4.6], [22.6, 7.2], [21.8, 9.0], [20.2, 9.8], [18.4, 11.4], [16.2, 12.6], [12, 13.4], [7, 13.6], [2, 13]]);
-  const rumpf = [[36.4, -9.4], [37.6, -17], [41.6, -26], [49, -32.4], [59, -35], [69, -33.6], [79, -29.4], [87.4, -25.8]].concat(kopf)
-    .concat([[90.4, -10.4], [91.6, -8.4]])
-    .concat([[92, -5.6], [93.6, -2.4], [96.6, -1.2], [96.6, -0.4], [90.6, -0.4], [88.6, -1.8], [87.6, -5], [86, -8.4]])
-    .concat([[80, -8], [70, -6.8], [61, -6.6]])
-    .concat([[59.8, -3.6], [60.6, -1.6], [60.4, -0.4], [45, -0.4], [43.2, -1.6], [42.6, -4.4], [40.6, -7.2]]);
+  const kopf = KT([[0, -3.6], [4, -6.0], [9, -6.8], [13.4, -6.0], [16.6, -3.8], [18.8, -0.8], [20.0, 2.6], [20.2, 5.6], [19.4, 7.6], [17.8, 8.6], [16.4, 9.6], [14.6, 11.6], [11, 13.4],
+    [6, 14], [1, 13.2]]);
+  /* ---- Rumpf: birnenförmig, höchster Punkt über der Hüfte, massiges Hinterteil, schmalerer Vorderkörper, Bauch fast am Boden ---- */
+  const ruecken = [[31.4, -8.6], [32.6, -16.4], [36.6, -25], [43, -31.8], [51, -35.2], [59, -35], [67, -32.4], [74, -29.0], [80, -26.6], [84.4, -26.4]];
+  const vorne = [[83.6, -10.6], [84.4, -7.6], [84.6, -4.4], [85.4, -2.8]];
+  const bauch = [[78, -3.0], [70, -4.2], [60, -4.6], [50, -4.8], [42, -4.4]];
+  const rumpf = ruecken.concat(kopf).concat(vorne).concat(bauch).concat([[36, -4.6], [32.6, -6.4]]);
   const A = H.flaeche(rumpf);
-  const wuchs = (x, y) => (x > 92 && y < -12 ? 206 : y > -8 ? 100 : 170 - Math.min(1, Math.max(0, (y + 32) / 24)) * 60);
-  const laenge = (x, y) => (x > 92 && y < -12 ? 0.6 : y > -8 ? 0.6 : 2.2);
+  const wuchs = (x, y) => (x > 84 && y < -12 ? 200 : y > -8 ? 100 : 170 - Math.min(1, Math.max(0, (y + 32) / 24)) * 58);
+  const laenge = (x, y) => (x > 84 && y < -12 ? 0.5 : y > -8 ? 0.5 : 1.3);
+  const licht = (x, y) => (y < -26 ? 0.8 : y < -16 ? 0.45 : 0.12);
   let s = "";
-  /* ferne Füße (dunkel) */
-  const fp = (P) => { const B = H.flaeche(P); return H.teil(B, "#2e2018", H.rim(B, 1, 0.8), { rand: false }); };
-  s += fp([[83, -8], [87, -8], [88, -3], [90, -1.4], [90, -0.4], [85, -0.4], [84, -3]]) + fp([[52, -6], [57, -6], [66, -1.4], [66, -0.4], [50, -0.4], [50, -3]]);
-  /* ---- Kelle: flach, oval, schwarzgrau, mit Hornschuppen (leicht von oben gesehen) ---- */
-  const kelle = [[38, -8.6], [32, -10.4], [24, -11.2], [15, -10.4], [9, -8.2], [7.4, -5.6], [9, -3.2], [15, -1.8], [24, -1.6], [32, -2.6], [38, -5]];
+  /* ---- Kelle: liegt flach am Boden (leichte Aufsicht), kommt über einen behaarten Stiel aus dem Rumpf; Schuppen unregelmäßig
+     sechseckig, zur Basis kleiner, glänzende Kanten, vereinzelte Haare ---- */
+  const kelle = [[30, -4.4], [26, -6.0], [19, -6.8], [11, -6.4], [5.2, -5.0], [3.0, -3.2], [5.0, -1.6], [11, -0.6], [19, -0.4], [26, -1.2], [30, -2.2]];
   const KE = H.flaeche(kelle);
   let sch = "";
   if (F) {
-    let d = "";
-    for (let r = 0; r < 6; r++) for (let c = 0; c < 18; c++) {
-      const x = 8 + c * 1.7 + (r % 2) * 0.85, y = -10.6 + r * 1.6;
+    let d = "", dl = "";
+    for (let r = 0; r < 5; r++) for (let c = 0; c < 22; c++) {
+      const g = 0.6 + c / 22 * 0.7, x = 4.6 + c * 1.18 + (r % 2) * 0.55 + (T.rnd() - 0.5) * 0.25, y = -5.8 + r * 1.2 + (T.rnd() - 0.5) * 0.15;
       if (!T.inPoly(x, y, kelle)) continue;
-      d += `M${f(x - 0.9)} ${f(y)}L${f(x)} ${f(y - 0.85)}L${f(x + 0.9)} ${f(y)}L${f(x)} ${f(y + 0.85)}Z`;
+      const w = 0.55 * g * (1.1 - c / 40), hh = 0.42;
+      d += `M${f2(x - w)} ${f2(y)}L${f2(x - w / 2)} ${f2(y - hh)}L${f2(x + w / 2)} ${f2(y - hh)}L${f2(x + w)} ${f2(y)}L${f2(x + w / 2)} ${f2(y + hh)}L${f2(x - w / 2)} ${f2(y + hh)}Z`;
+      dl += `M${f2(x - w / 2)} ${f2(y - hh)}L${f2(x + w / 2)} ${f2(y - hh)}`;
     }
-    sch = `<path d="${d}" fill="none" stroke="#0a0908" stroke-width=".14" stroke-opacity=".7"/><path d="${d}" fill="none" stroke="#8a8680" stroke-width=".08" stroke-opacity=".5" transform="translate(-.12 -.14)"/>`;
+    sch = `<path d="${d}" fill="none" stroke="#0a0908" stroke-width=".09" stroke-opacity=".75"/><path d="${dl}" fill="none" stroke="#a8a49c" stroke-width=".06" stroke-opacity=".5"/>`;
   }
-  s += H.teil(KE, T.lg("ke", [[0, "#4a4642"], [0.6, "#2e2b28"], [1, "#1a1816"]], 0, 0, 0, 1), sch + fl(22, -8.8, 10, 2, 0, "#fff", 0.2) + H.rim(KE, 1.4, 0.9), { rw: 0.1, randA: 0.6 });
+  s += `<path d="${G2(kelle)}" fill="#000" opacity=".3" transform="translate(.6 .9)"${F ? ` filter="${H.blur(0.45)}"` : ""}/>`;
+  s += H.vol("kelle", 1, H.teil(KE, T.lg("ke", [[0, "#5a5650"], [0.5, "#3a3734"], [1, "#22201e"]], 0, 0, 0, 1), sch + fl(16, -4.6, 10, 1.2, 0, "#fff", 0.22) +
+    (F ? H.haare(kelle, 12, 180, 0.6, [["#3a2a1c", 1, 0.03, 0.5]], { szene: 0 }) : ""), { rw: 0.08, randA: 0.6 }), { tiefe: 2 });
+  /* behaarter Schwanzstiel */
+  s += T.form([[33, -7], [30, -5.2], [29.4, -3.2], [32, -2.6], [34, -4]], "#4a2e1a");
+  /* ferner Hinterfuß und ferne Vorderpfote (dunkler) */
+  s += T.form([[60, -5], [64, -5], [70, -1.6], [71.4, -0.2], [58, -0.2], [57.6, -2]], "#24180e") + T.form([[78, -7], [81, -7], [82, -2], [84.6, -0.8], [84.6, 0], [78.4, 0], [77.8, -2.6]], "#24180e");
   /* ---- Körper ---- */
-  const fell = T.lg("fell", [[0, "#7a4a28"], [0.3, "#6a3e20"], [0.6, "#56331c"], [0.82, "#3e2616"], [1, "#2a1a10"]], 0, -36, 0, 0, H.US);
+  const fell = T.lg("fell", [[0, "#6e4628"], [0.3, "#60391e"], [0.6, "#4e2e18"], [0.82, "#3a2212"], [1, "#2a180c"]], 0, -36, 0, 0, H.US);
   let inn = "";
-  inn += H.wf([[44, -10], [60, -9], [84, -10], [88, -6], [60, -5], [44, -6]], "#8a6a50", 0.4, 1.6);
-  inn += H.wf(KT([[0, -4], [24, 0], [24, 10], [10, 13], [0, 12]]), "#4e301a", 0.5, 1);
-  /* Großform: glänzender Rücken (nasses Fell), Kernschatten unten */
-  inn += H.wf([[40, -26], [50, -33.6], [60, -36], [72, -33.6], [86, -26.6], [70, -30], [56, -31], [44, -24]], "#ffd8b0", 0.28, 1.2) +
-    fl(58, -26, 14, 6, -6, "#ffd8b0", 0.14) + H.wf([[42, -14], [60, -12], [84, -13], [86, -7], [60, -6], [42, -7]], DK, 0.4, 1.6) +
-    fl(48, -16, 7, 9, 0, "#ffd8b0", 0.1) + wl([[[57, -12], [59, -8], [60, -5]]], DK, 1.2, 0.3, 0.6);
-  /* Kopf: Auge, Backe, Schnauze, Nase */
-  inn += fl(...K(10, 0.6), 2.2, 1.6, KW, DK, 0.4) + fl(...K(8, 6), 4, 3, KW, "#ffd8b0", 0.18) + fl(...K(16, 2), 4, 1.4, KW, "#fff", 0.16);
-  inn += H.wf(KT([[19.8, 2.2], [21.8, 3.2], [22.8, 5.2], [22.6, 7.2], [21.0, 7.4], [20.4, 5.0]]), "#1a120e", 0.95, 0.12) + fl(...K(21.4, 3.8), 0.7, 0.4, KW, "#fff", 0.5) +
-    L([KT([[21.8, 5.4], [21.2, 6.2]])], "#000", 0.25, 0.8) + L([KT([[21.6, 8.0], [20.6, 9.4], [19.4, 10.4]])], "#1a0c06", 0.25, 0.7);
-  /* Fell: Grannen glänzend, Haar für Haar */
-  inn += H.texR("fell", { fx: 0.5, fy: 3.6, farbe: "#000", staerke: 2.4, schwelle: 0.56, okt: 2 }, 170, [[36, -36], [94, -36], [94, -6], [36, -6]], 0.2);
-  inn += H.haare(rumpf, 420, wuchs, laenge, [["#1e1008", 1, 0.05, 0.42], ["#c0804a", 0.7, 0.045, 0.36], ["#f0c090", 0.3, 0.04, 0.3]], { krumm: 0.12, streu: 12, nur: (x, y) => !(x > 92 && y < -12) });
-  inn += H.haare(KT([[0, -2], [21, 2], [22, 7], [12, 11], [0, 11]]), 110, KW + 200, 0.5, [["#2a160a", 1, 0.035, 0.5], ["#c08850", 0.6, 0.03, 0.4]], { streu: 16, szene: 0 });
-  inn += H.wf([K(8, 12.2), K(3, 11.8), [89.4, -12.4], [88, -10], [91, -15]], DK, 0.35, 0.8);
-  inn += H.rim(A, 1.6, 0.9);
-  s += H.teil(A, fell, inn, { rand: false });
-  s += H.saum(rumpf.slice(1, 9), F ? 90 : 14, 170, 1.8, [["#2a1408", 1, 0.06, 0.6], ["#c0804a", 0.7, 0.05, 0.5]], { offen: true, krumm: 0.15, streu: 16, szene: 0.2 });
-  /* Ohr: klein, rund */
-  const oh = KT([[1.4, -2.4], [0.8, -4.2], [2.2, -5.2], [3.8, -4.4], [3.8, -2.6]]), OH = H.flaeche(oh);
-  s += H.teil(OH, "#3a2414", fl(...K(2.4, -3.4), 0.8, 0.8, 0, "#000", 0.5) + H.rim(OH, 0.6, 0.9), { rand: false });
-  /* Nagezähne: orange Schmelzfront */
-  const zahn = KT([[19.6, 9.6], [21.2, 9.4], [21.2, 12.0], [20.2, 12.4], [19.6, 12.0]]), ZA = H.flaeche(zahn);
-  s += H.teil(ZA, T.lg("zahn", [[0, "#e88a2a"], [0.6, "#c86418"], [1, "#9a4a10"]], 1, 0, 0, 0), H.L([KT([[20.4, 9.6], [20.4, 12.2]])], "#5a2a08", 0.1, 0.7) + fl(...K(20.8, 10.4), 0.3, 0.9, KW, "#fff", 0.5), { rw: 0.08, randA: 0.6 });
-  /* Füße: Vorderpfote mit Krallen, großer Hinterfuß mit Schwimmhäuten */
-  const pfote = [[89.6, -2.0], [93.2, -2.2], [95.8, -1.2], [96.2, -0.4], [89.8, -0.4]];
-  const PF = H.flaeche(pfote);
-  s += H.teil(PF, "#3a2a20", H.rim(PF, 0.6, 0.9), { rand: false }) + H.L([[[94.6, -1.2], [96.4, -0.8], [97.2, -0.1]], [[93.8, -0.9], [95.6, -0.5], [96.4, 0]]], "#6a5a4a", 0.22, 0.9);
-  const fuss = [[44.6, -2.6], [52, -3.4], [58.6, -3.2], [63, -2.2], [66.4, -0.8], [66.2, -0.2], [44.4, -0.3]];
+  inn += fl(60, -8, 22, 4, 0, "#7a5a40", 0.45);
+  /* Schnauze: Nase dunkel mit seitlichen Nasenlöchern, gespaltene Oberlippe; Backe hell im Licht */
+  inn += T.form(KT([[17.4, -1.2], [18.8, -0.2], [19.8, 1.6], [19.8, 3.0], [18.6, 3.2], [17.4, 1.6]]), "#1e1410") + fl(...K(18.4, 0.2), 0.5, 0.3, KW, "#fff", 0.5) +
+    L([KT([[19.4, 1.6], [18.7, 2.4]])], "#000", 0.2, 0.8) + L([KT([[19.0, 5.2], [18.4, 7.0], [17.6, 8.6]])], "#140a06", 0.16, 0.7);
+  /* Fell: dichte dunkle Unterwolle, lange glänzende Grannen (Spitzen hellbraun-golden, gedämpft) */
+  inn += H.fellKorn("b1", [[30, -38], [88, -38], [88, -4], [30, -4]], 170, [["kd", "#1a0c04", 0.5, 3], ["kh", "#d0a070", 0.3, 8]], { fx: 0.9, fy: 7 }) +
+    H.fellKorn("b2", KT([[-2, -7], [20, -1], [20, 12], [2, 14]]), KW + 190, [["kd", "#1a0c04", 0.4, 3], ["kh", "#c09868", 0.28, 8]], { fx: 1.6, fy: 9 });
+  inn += H.haare(rumpf, 340, wuchs, laenge, [["#1e1008", 1, 0.045, 0.42], ["#5a341a", 0.6, 0.05, 0.4]], { krumm: 0.12, streu: 12, nur: (x, y) => !(x > 84 && y < -12), spitze: ["#c89a68", licht, 0.04, 0.45] });
+  inn += H.haare(KT([[0, -5], [18, -1], [19, 7], [10, 12.6], [1, 12.4]]), 120, KW + 196, 0.4, [["#2a160a", 1, 0.03, 0.5]], { streu: 16, szene: 0, spitze: ["#b88c5c", 0.5, 0.025, 0.45] });
+  /* Licht: seidiges Glanzband auf Rücken und Hüfte, Kernschatten unten, Reflex am Bauch; Backe; Schatten unter dem Kiefer */
+  sch = wl([[[36, -24], [43, -31], [51, -34.2], [59, -34], [67, -31.4], [74, -28.2]]], "#ffe0bc", 1.8, 0.4, 0.9) + fl(52, -28, 10, 4, -10, HL, 0.2) +
+    wl([[[40, -10], [52, -8.4], [66, -8.4], [78, -9.4]]], DK, 2.6, 0.32, 1.4) +
+    fl(...K(7, 6), 4, 3.4, KW, HL, 0.2) + H.wf([K(6, 14), K(1, 13.2), [83.6, -10.6], [82, -14]], DK, 0.35, 0.8);
+  const koerper = H.teil(A, fell, inn, { rand: false }) +
+    H.saum(ruecken.slice(1), F ? 110 : 16, wuchs, 1.0, [["#2a1408", 1, 0.05, 0.6], ["#b07a4a", 0.6, 0.045, 0.5]], { offen: true, krumm: 0.15, streu: 16, szene: 0.2 }) +
+    H.saum(bauch, F ? 30 : 6, 96, 0.6, [["#2a1408", 1, 0.05, 0.6]], { offen: true, szene: 0.2 });
+  s += H.vol("rumpf", 3.5, koerper, { tiefe: 3, umgebung: 0.4 }) + A.clip(sch);
+  /* ---- Hinterfuß: Sohlengänger, Ferse am Boden, fünf lange Zehen nach vorn, Schwimmhäute bis zu den Krallen, Putzkralle ---- */
+  const fuss = [[48, -4.0], [53.2, -4.4], [58.6, -3.0], [62.4, -1.4], [64.4, -0.4], [64.2, 0], [47.6, 0], [46.6, -1.6]];
   const FU = H.flaeche(fuss);
-  s += H.teil(FU, T.lg("fu", [[0, "#3a322c"], [1, "#1e1a17"]], 0, 0, 0, 1), (F ? H.L([[[58, -2.6], [61, -1.4], [64.6, -0.4]], [[56, -2.8], [59.6, -1.6], [62.6, -0.4]], [[54, -2.8], [57.4, -1.4], [60, -0.4]]], "#0e0c0a", 0.18, 0.6) : "") +
-    fl(56, -2.4, 6, 0.8, 0, "#fff", 0.15) + H.rim(FU, 0.8, 0.9), { rand: false });
-  /* Auge, Tasthaare */
-  const au = K(10, 0.6);
-  s += T.augeReal(au[0], au[1], 0.62, { iris: "#2a1408", iris2: "#0a0402", pupille: "rund", offen: 0.8, winkel: KW, lid: "#0a0604" });
-  if (F) s += T.schnurrhaare(...K(19.2, 6.4), 9, 5.4, KW + 12, 46, "#1a120c", 0.045) + T.schnurrhaare(...K(18.4, 7.4), 5, 4.2, KW + 30, 30, "#d8c8b0", 0.035);
-  return { svg: s, box: [7.4, -35.2, 110.2, 0], fuesse: [52, 62, 86, 93], kopf: [82, -32, 114, -2] };
+  let zeh = "";
+  if (F) zeh = H.L([[[54, -3.6], [58, -2.2], [63.4, -0.6]], [[53.4, -3.2], [57.4, -1.6], [62.2, -0.2]], [[52.8, -2.8], [56.6, -1.2], [60.6, -0.1]], [[52.2, -2.4], [55.4, -1.0], [58.8, -0.1]]], "#0a0806", 0.12, 0.65) +
+    H.L([[[58, -2.4], [62.6, -0.8]], [[56.6, -1.8], [60.8, -0.4]]], "#6a5a4c", 0.05, 0.5);
+  s += H.teil(FU, T.lg("fu", [[0, "#3a322c"], [1, "#1e1a17"]], 0, 0, 0, 1), zeh + fl(55, -2.8, 6, 0.8, 0, "#fff", 0.14) + H.rim(FU, 0.7, 0.9), { rand: false });
+  s += H.L([[[63.4, -0.6], [64.6, -0.4], [65.2, 0]], [[62.2, -0.2], [63.2, 0]], [[60.6, -0.1], [61.6, 0.05]]], "#2a2420", 0.18, 0.95);
+  /* Vorderpfote: kleine Hand mit fünf Fingern und kräftigen Krallen, Handgelenk erkennbar, Lauf bis zum Handgelenk behaart */
+  const hand = [[83.4, -3.6], [85.0, -3.0], [86.4, -1.8], [87.2, -0.6], [87.0, 0], [83.2, 0], [82.8, -1.8]];
+  const HA = H.flaeche(hand);
+  s += H.teil(HA, "#3a2a20", (F ? H.L([[[85.0, -2.0], [86.6, -0.4]], [[84.4, -1.6], [85.8, -0.2]], [[83.8, -1.2], [85.0, -0.1]]], "#120a06", 0.08, 0.6) : "") + H.rim(HA, 0.5, 0.9), { rand: false }) +
+    H.L([[[86.6, -0.5], [87.6, -0.3], [88.0, 0.1]], [[85.8, -0.2], [86.8, 0], [87.1, 0.2]], [[85.0, -0.1], [85.8, 0.1], [86.1, 0.25]]], "#1a1410", 0.14, 0.95);
+  s += H.saum([[82.8, -4.8], [85.6, -4.2]], F ? 14 : 0, 96, 0.8, [["#4a2e1a", 1, 0.05, 0.7]], { offen: true, szene: 0 });
+  /* ---- Ohr: klein, rund, Basis im Fell, Haare am Rand, Öffnung als Schatten ---- */
+  const oh = KT([[0.6, -3.4], [0.2, -5.0], [1.4, -6.2], [3.0, -5.8], [3.4, -4.0]]), OH = H.flaeche(oh);
+  s += H.teil(OH, "#4a2e1a", fl(...K(1.8, -4.4), 0.7, 0.7, 0, "#0a0604", 0.7), { rand: false }) +
+    H.saum(KT([[0.2, -5.0], [1.4, -6.2], [3.0, -5.8]]), F ? 16 : 0, KW + 250, 0.4, [["#3a2412", 1, 0.035, 0.7]], { offen: true, streu: 40, szene: 0 });
+  /* ---- Nagezähne: zwei obere, nebeneinander, meißelförmig, orange-rostbraun mit Glanzstreifen; untere angedeutet ---- */
+  const zahn = (dx) => KT([[16.2 + dx, 8.4], [17.3 + dx, 8.3], [17.4 + dx, 10.4], [16.3 + dx, 10.6]]);
+  s += T.form(zahn(-0.9), "#8a3e12") + T.form(zahn(0), T.lg("zahn", [[0, "#b4561c"], [0.5, "#c86a24"], [1, "#9a4a14"]], 0, 0, 1, 0)) +
+    H.L([KT([[16.8, 8.5], [16.9, 10.2]])], "#ffe0b0", 0.08, 0.6) + H.L([KT([[16.25, 8.5], [16.3, 10.5]])], "#3a1a06", 0.05, 0.8) +
+    "";
+  /* Auge: klein, dunkel, Lidrand, leichte Augenhöhle */
+  const au = K(8.4, 0.2);
+  s += H.auge(au[0], au[1], 0.62, { iris: "#1a0c06", iris2: "#3a2010", pupille: "rund", offen: 0.82, winkel: KW, hoehle: "#140a04", braue: "#c89a68" });
+  /* Tasthaare: aus mehreren Reihen auf der Oberlippe, Basis dunkel, Spitze hell, nach hinten-unten gebogen */
+  if (F) s += T.schnurrhaare(...K(16.6, 5.4), 6, 5.2, KW + 18, 40, "#2a1a10", 0.05) + T.schnurrhaare(...K(15.8, 6.6), 6, 4.4, KW + 30, 40, "#d8c8b0", 0.04) +
+    T.schnurrhaare(...K(15.2, 7.8), 4, 3.6, KW + 44, 30, "#c8b8a0", 0.04);
+  return { svg: s, box: [3, -35.4, 102.3, 0], fuesse: [52, 60, 82, 87], kopf: [76, -34, 104, -2] };
 }
 
 /* =====================================================================
@@ -1412,7 +1431,7 @@ module.exports = [
   { id: "dachs", de: "der Dachs", syl: "DACHS", it: "il tasso", itSyl: "TAS-so", en: "badger", gruppe: "Wald", lebensraum: "Wald",
     laenge: 0.74, hoehe: 0.3, zeichne: dachs },
   { id: "biber", de: "der Biber", syl: "BI-ber", it: "il castoro", itSyl: "CA-sto-ro", en: "beaver", gruppe: "Wald", lebensraum: "Wald und Fluss",
-    laenge: 1.03, hoehe: 0.35, zeichne: biber },
+    laenge: 0.99, hoehe: 0.35, zeichne: biber },
   { id: "fischotter", de: "der Fischotter", syl: "FISCH-ot-ter", it: "la lontra", itSyl: "LON-tra", en: "otter", gruppe: "Wald", lebensraum: "Fluss und Bach",
     laenge: 1.16, hoehe: 0.27, zeichne: fischotter },
 ];

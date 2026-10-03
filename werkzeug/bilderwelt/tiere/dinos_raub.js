@@ -679,7 +679,7 @@ function velociraptor(T) {
       const ex = x + ux * l, ey = y + uy * l;
       const lob = `M${zk(x + nx)} ${zk(y + ny)}L${zk(x + nx + ux * l * 0.62)} ${zk(y + ny + uy * l * 0.62)}C${zk(ex + nx * 0.95 - ux * l * 0.08)} ${zk(ey + ny * 0.95 - uy * l * 0.08)} ${zk(ex + nx * 0.5)} ${zk(ey + ny * 0.5)} ${zk(ex)} ${zk(ey)}C${zk(ex - nx * 0.5)} ${zk(ey - ny * 0.5)} ${zk(ex - nx * 0.95 - ux * l * 0.08)} ${zk(ey - ny * 0.95 - uy * l * 0.08)} ${zk(x - nx + ux * l * 0.62)} ${zk(y - ny + uy * l * 0.62)}L${zk(x - nx)} ${zk(y - ny)}Z`;
       d += lob;
-      if (F) for (const q of [-0.45, 0, 0.45]) strahl += `M${zk(x + nx * q + ux * l * 0.3)} ${zk(y + ny * q + uy * l * 0.3)}L${zk(x + nx * q * 1.3 + ux * l * 0.85)} ${zk(y + ny * q * 1.3 + uy * l * 0.85)}`;
+      if (F) for (const q of [-0.3, 0.3]) strahl += `M${zk(x + nx * q + ux * l * 0.3)} ${zk(y + ny * q + uy * l * 0.3)}L${zk(x + nx * q * 1.3 + ux * l * 0.85)} ${zk(y + ny * q * 1.3 + uy * l * 0.85)}`;
     }
     d = d.replace(/ -/g, "-");
     return weichG(T, 0.5, b, `<path d="${d}" fill="${SC}" opacity=".26" transform="translate(.25 .5)"/>`) + `<path d="${d}" fill="${o.fill || kleid}"/>` +
@@ -736,8 +736,7 @@ function velociraptor(T) {
   /* Oberschenkel-Keule (befiedert), reicht bis 60 % der Rumpfhöhe in die Flanke */
   const iSch = pfad(T, bz.schenkel);
   let schIn = fuell(iSch, kleid) + geklippt(T, [iSch], lappen([[94, -44], [100, -42], [106, -40]], 4, 8, 4.2, 108, [86, -50, 118, -22]) + lappen([[94, -38], [100, -36], [107, -34.6]], 4, 7, 4, 104, [86, -50, 118, -22]) +
-    weichG(T, 1.2, [86, -56, 118, -24], ell(98, -44, 5, 3.4, -20, LI, 0.24 * st) + L([[[109.4, -42], [111, -35], [109, -30]]], SC, 2.2, 0.5 * st) + L([[[92, -36], [98, -30.4], [104, -28]]], SC, 1.8, 0.42 * st)) +
-    flur([[110.6, -32], [106, -28.6], [101, -29.4], [96.4, -32.6]], [86, -40, 118, -22]));
+    weichG(T, 1.2, [86, -56, 118, -24], ell(98, -44, 5, 3.4, -20, LI, 0.24 * st) + L([[[109.4, -42], [111, -35], [109, -30]]], SC, 2.2, 0.5 * st) + L([[[92, -36], [98, -30.4], [104, -28]]], SC, 1.8, 0.42 * st)));
   const iSG = T.id("schenkel");
   T.def(`<g id="${iSG}" mask="${maskeY(T, "sch", [86, -58, 118, -22], -50, -42)}">${volZonen(T, "schv", schIn, [86, -58, 118, -22], [[0, 0, "a", { weich: 2.6, tiefe: 4, umgebung: 0.35 }]])}</g>`);
 
@@ -777,7 +776,7 @@ function velociraptor(T) {
   const faecher = [[94, cy(94) - 4.4]].concat(fo, [[5.8, cy(6) + 0.1]], fu.slice().reverse(), [[94, cy(94) + 4.4]]);
   const iFa = pfad(T, faecher);
   let fa = fuell(iFa, T.lg("faecher", [[0, "#6a5038"], [0.5, "#86694a"], [1, "#96795a"]], 0, -56, 0, -40, US));
-  let fin = (F ? linien(T, kiele, "#2a1d12", 0.12, 0.18) : "");
+  let fin = "";
   /* Bänder der Wölbung nach gebogen, Kontrast −40 %, zu den Federspitzen weich auslaufend */
   let bd = "";
   for (const x of [78, 64, 50, 37, 25, 13]) bd += `M${x} -58q-2.2 9.6 0 19.4h3.4q-2.2-9.8 0-19.4z`;
@@ -802,23 +801,21 @@ function velociraptor(T) {
   mal += L([[[160, -53.4], [156, -50], [152.6, -45.6]]], SC, 2.4, 0.5) + ell(101, -40, 4, 3, 0, SC, 0.32) + ell(146, -37, 3, 2, 0, SC, 0.35);
   /* Kopf: Antorbitalmulde, Jochbogen-Lichtgrat, Kiefermuskel, Augenstreif, Schatten unter Kiefer */
   let mk = L([[[157.6, -61], [160, -63], [164, -63.4], [168, -62.2], [174, -61.6], [182, -61], [185.6, -59.6]]], LI, 1, 0.45);
-  mk += ell(173, -59.4, 3, 1, -4, SC, 0.5) + L([[[174.4, -60.4], [171, -60.6]]], LI, 0.4, 0.4) + L([[[161.6, -57.8], [165, -58.2], [168.6, -58]]], LI, 0.45, 0.55) + ell(160.6, -59.4, 1.6, 1.4, 0, LI, 0.3 * st) + L([[[159.6, -57], [161.4, -56.2]]], SC, 0.6, 0.5);
+  mk += L([[[163.4, -59.4], [167.2, -59.6], [170.6, -59]]], LI, 0.35, 0.4) + L([[[161.6, -57.8], [165, -58.2], [168.6, -58]]], LI, 0.45, 0.55) + ell(160.6, -59.4, 1.6, 1.4, 0, LI, 0.3 * st) + L([[[159.6, -57], [161.4, -56.2]]], SC, 0.6, 0.5);
   mk += `<path d="M157.6 -59.4q3.4-1.4 7-1.2q2.8 0 5.4.6q-2.6.6-5.4.3q-3.6 0-7 1.4z" fill="${DK}" opacity=".55"/>`;
   mk += L([[[161, -53.6], [168, -54.4], [178, -55.8]]], SC, 1, 0.5) + L([lippe.map(([x, y]) => [x, y + 0.3])], SC, 0.3, 0.55);
   inn += weichG(T, 1.4, [8, -66, 166, 0], mal) + weichG(T, 0.35, [155, -66, 188, -52], mk);
+  /* Antorbitalmulde: ovale, scharf begrenzte Senke – Schatten oben innen, Lichtkante unten */
+  inn += ell(173.4, -59.6, 3, 1, -3, "#2a1c10", 0.3) + weichG(T, 0.15, [169, -62, 178, -57], `<path d="M170.4 -59.4q3-1.6 6 -.4" fill="none" stroke="#1a120a" stroke-width=".35" stroke-opacity=".5"/><path d="M170.6 -59q3 1.4 5.8 .2" fill="none" stroke="${LI}" stroke-width=".3" stroke-opacity=".4"/>`);
   /* Konturfedern in Fluren (Flanke, Schulterdecke, Brust, Nacken): Reihen großer Lappen, untere zuerst */
   const fb = [92, -66, 166, -28];
   for (const [y0, wk] of [[-36, 160], [-40.6, 165], [-45.2, 170], [-49.8, 175]]) inn += lappen([[120, y0 + 1], [132, y0], [144, y0 + 0.6], [150, y0 - 2]], 6, 10, 4.6, wk, fb);
   inn += lappen([[156, -45], [158.4, -49.4], [160.6, -53.4]], 4, 7, 3.8, 130, fb) + lappen([[149, -51.4], [152.6, -55], [156.6, -59]], 4, 8, 4, 160, fb);
-  inn += flur([[156.6, -56], [154, -52.4], [150.6, -49.4], [146.6, -47.4]], [140, -62, 162, -40]);
-  inn += flur([[146, -46.6], [138, -45.4], [128, -45.4], [118, -46.6], [110, -47.8]], [104, -54, 152, -40]);
-  inn += flur([[146, -38.6], [136, -37.4], [124, -37], [114, -38.6]], [108, -44, 152, -32]);
-  inn += flur([[160.6, -51.4], [157.4, -47.2], [154, -43.2], [150, -39.6]], [144, -56, 166, -34]);
 
   /* Kopf befiedert bis 2 E hinter dem Auge; Schnauzenschuppen der Form folgend, zur Lippe größer, Kontrast −40 % */
   if (F) inn += federn(T, [[157, -57.8], [157.4, -61.2], [159.6, -63.2], [162.6, -63.6], [162.4, -60], [161.6, -56.4]], 50, 175, 1, fed) +
     buckel(T, flaechenPunkte(T, [[168, -61.8], [174, -61.4], [180, -61.1], [185.4, -59.6], [185.6, -58.6], [176, -59], [168, -59.6]], 0.5, 0.1, 0.15, 0.9), null, { opF: 0.16, opL: 0.08 }) +
-    buckel(T, flaechenPunkte(T, [[166, -58.8], [185.4, -58.6], [185.4, -57.9], [166, -57.4]], 0.7, 0.2, 0.26), null, { opF: 0.18, opL: 0.08 });
+    buckel(T, flaechenPunkte(T, [[166, -58.6], [185.4, -58.4], [185.4, -58], [166, -57.8]], 1.2, 0.2, 0.24), null, { opF: 0.18, opL: 0.1, lang: 2.4, flach: 1 });
   k += geklippt(T, [iL, iK, iH], inn);
   /* Kontur unregelmäßig aufbrechen: Nacken, Rücken, Brust */
   k += lappen([[157.6, -61], [154, -60.6], [150.6, -59], [146.6, -56], [142.4, -52.8], [134, -51.2], [120, -51.8]], 12, 5, 2.2, 182, [96, -66, 164, -46]) +

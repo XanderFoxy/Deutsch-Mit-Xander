@@ -333,6 +333,7 @@ function werk(T) {
      Rückgabe: Funktion (winkel) → Füll-URL des um winkel gedrehten Musters. */
   const muster = {};
   W.haarMuster = (name, w, h, n, L, farben, krumm = 0.25) => (winkel) => {
+    if (!T.fein) return "none";
     const key = name + "_" + Math.round(winkel);
     const id = T.id("hm" + key);
     if (!muster[key]) {
@@ -393,7 +394,8 @@ function werk(T) {
    ===================================================================== */
 function gorilla(T) {
   const W = werk(T);
-  W.dichte = T.fein ? 1 : 0.7;
+  W.dichte = T.fein ? 0.5 : 0.7;
+  W.saumDichte = T.fein ? 0.6 : 1;
   const STR = ["#0a0909", "#151413", "#21201e", "#302e2c", "#45433f"];
   /* Sattelhaar: kurz, anliegend; oben im Licht #b8b8b8, zur Flanke #7a7a7a */
   const SILBER = [["#56534f", 0.13, 0.6], ["#7a7a7a", 0.13, 0.6], ["#959491", 0.12, 0.6], ["#b8b8b8", 0.12, 0.62], ["#d0cfcc", 0.11, 0.65], ["#e6e5e2", 0.1, 0.65]];
@@ -405,7 +407,9 @@ function gorilla(T) {
   const fellG = (n, a, b, c) => T.lg("fg" + n, [[0, a], [0.5, b], [1, c]]);
   /* schwarzes Fell: lange, gebogene Strähnenbündel in Wuchsrichtung; Glanzhaare nur im Licht */
   const fell = (pts, n, w, L, o = {}) => W.haare(pts, n, w, L, SCHW, Object.assign({ licht, buendel: 4, krumm: 0.45, streu: 12, wahl: (x, y) => 0.25 + licht(x, y) * 0.75, szene: 0.06 }, o));
-  const kante = (pts, n, w, L0, L1, o = {}) => W.kantenStraehnen(pts, n, w, L0, L1, 0.32, (x, y, z) => STR[z > 0.75 ? 3 : z > 0.4 ? 2 : z > 0.15 ? 1 : 0], Object.assign({ kante: 0, szene: 0.25 }, o));
+  /* Konturhaar: auslaufende, gebogene Haare über den Umriss (Länge gemischt) */
+  const KH = [["#000", 0.2, 0.75], ["#141315", 0.18, 0.7], ["#28272b", 0.16, 0.65], ["#3e3e44", 0.14, 0.6]];
+  const kante = (pts, n, w, L0, L1, o = {}) => W.saum(pts, Math.round(n * 0.6), w, (L0 + L1) / 2, KH, Object.assign({ krumm: 0.45, ein: 0.35, streu: 16, szene: 0.25 }, o));
   /* Wuchsrichtung Rumpf: Rücken nach hinten, Flanke nach unten, Schulter mit Wirbel zum Arm */
   const rumpfW = (x, y) => (x > 76 ? 120 + (y + 90) * 0.4 + Math.sin((x + y) * 0.3) * 10 : y < -100 ? 186 : 186 - clamp((y + 100) / 40) * 90);
   /* Haarmuster (Kacheln): Sattel kurz und anliegend, Schwarz lang und strähnig */
@@ -591,61 +595,67 @@ function gorillaKopf(T, W, STR, KAPPE, HAUT, licht) {
   const kappe = [[90, -131], [96, -136.2], [102.6, -138.8], [108.6, -137.6], [114, -133], [117.4, -129], [110, -129.4], [102, -131], [94, -128]];
   s += W.vol("kf", 6, W.teil(kopf, T.lg("kf", [[0, "#2c2a28"], [0.55, "#171615"], [1, "#0a0909"]], 0, -139, 0, -84, UB),
     W.weich([[100, -133, 10, 3.4, -18, "#6e7076", 0.5], [108, -92, 10, 6, 0, "#000", 0.6], [112, -118, 4, 8, 0, "#000", 0.25]], 2.2) +
-    W.fell("kfg", 150, [84, -140, 120, -84], { hell: "#8a8a94", dunkel: null, ho: 0.28, fx: 3, fy: 0.3, hk: "g" }) +
+    W.musterFlaeche(kopf, W.haarMuster("schw", 12, 9, 80, 6, [["#000", 0.16, 0.7], ["#252428", 0.15, 0.6], ["#3e3e44", 0.14, 0.55], ["#5c5c62", 0.12, 0.5]], 0.5)(122)) +
     W.haare(kopf, 190, (x, y) => (y < -126 ? 196 : x < 112 ? 120 + clamp((y + 120) / 30) * 10 : 106), 1.8, [["#000", 0.13, 0.6], ["#151416", 0.13, 0.55], ["#2c2b2e", 0.12, 0.55], ["#4a4a50", 0.12, 0.5], ["#707078", 0.11, 0.5]], { licht: (x, y) => licht(x, y) * 1.1, buendel: 3, krumm: 0.3, szene: 0.08 }) +
-    W.weich([`<path d="${G(kappe)}" fill="#4a2a17" opacity=".42"/>`], 1.8) +
-    W.haare(kappe, 70, (x) => (x < 104 ? 205 : 190), 1.6, KAPPE.map((c) => [c, 0.12, 0.6]), { licht: (x, y) => clamp(0.3 + (-y - 129) / 9), buendel: 2, gerade: true, szene: 0.1 }) +
-    gorillaGesicht(T, W, gesicht, HAUT) +
+    W.weich([`<path d="${G(kappe)}" fill="#4a2a17" opacity=".42"/>`], 2.4) +
+    W.haare(kappe, 140, (x) => (x < 104 ? 205 : 190), 1.6, KAPPE.map((c) => [c, 0.12, 0.6]), { licht: (x, y) => clamp(0.3 + (-y - 129) / 9), buendel: 2, gerade: true, szene: 0.1 }) +
+    /* Gesichtshaut läuft hinten weich ins Kopfhaar aus (keine aufgeklebte Maske) */
+    `<g mask="url(#${W.maskeForm("gh", [[118.6, -128], [140, -128], [142, -82], [124.6, -82], [120.6, -90], [119.4, -104], [119.6, -118]], 1.3)})">` + gorillaGesicht(T, W, gesicht, HAUT) + `</g>` +
     /* Haaransatz: kurze, nach hinten gerichtete Härchen über der Grenze (statt Zackenkante) */
-    (T.fein ? W.haare([[113.6, -126], [118.4, -126], [119.8, -110], [121, -96], [123.4, -88], [127, -84.6], [122, -84.6], [118.4, -94], [116.4, -110]], 70,
-      (x, y) => (y < -112 ? 200 : y < -96 ? 186 : 165), 1.4, [["#0a0909", 0.07, 0.6], ["#1a1918", 0.07, 0.55], ["#2c2a28", 0.06, 0.5]], { mix: 0.8, gerade: true }) : ""),
+    (T.fein ? W.haare([[114.6, -127], [120.4, -126.4], [121.4, -110], [122.4, -96], [125, -88], [128, -84.6], [122, -84.6], [118.4, -94], [116.4, -110]], 110,
+      (x, y) => (y < -112 ? 200 : y < -96 ? 186 : 165), 1.6, [["#0a0909", 0.07, 0.6], ["#1a1918", 0.07, 0.55], ["#2c2a28", 0.06, 0.5]], { mix: 0.8, gerade: true }) : ""),
   { rand: 0, vol: false, maske: W.maskeForm("kf", [[84, -128], [90, -134], [102.6, -141], [118, -132], [142, -110], [142, -80], [122, -80], [108, -84], [101, -92], [97, -104], [93, -116]], 3.4) }), { tiefe: 3, umgebung: 0.5 });
   s += W.L([G(profil, false)], "#000", 0.3, 0.45);
   /* 1 px Streiflicht trennt Kopf und Schulterbuckel (auch klein lesbar) */
   s += W.L([G([[88, -131.4], [95, -135.8], [102.6, -138.4]], false)], "#6a6a70", 0.35, 0.55);
-  s += W.kantenStraehnen([[88, -130], [96, -136.2], [102.6, -138.8], [108.6, -137.6], [114, -133]], 26, (x) => (x < 103 ? 205 : 192), 0.8, 1.8, 0.5,
-    (x, y, z) => KAPPE[z > 0.5 ? 3 : 2], { kante: 0.1, szene: 0.2 });
-  s += W.kantenStraehnen([[100, -93], [108, -87.4], [116, -84.8], [124, -84]], 22, 94, 1, 2.4, 0.6, (x, y, z) => STR[z > 0.5 ? 1 : 0], { szene: 0.15 });
+  /* Kappe: weich ausgefranste Silhouette aus kurzem, rotbraunem, nach hinten gekämmtem Haar */
+  s += W.saum([[88, -130], [96, -136.2], [102.6, -138.8], [108.6, -137.6], [114, -133], [117.4, -129]], 50, (x) => (x < 103 ? 200 : 186), 1.4,
+    KAPPE.map((c) => [c, 0.12, 0.7]), { licht: () => 0.6, krumm: 0.4, ein: 0.5, szene: 0.15 });
+  s += W.saum([[100, -93], [108, -87.4], [116, -84.8], [124, -84]], 30, 96, 2.2, [["#000", 0.16, 0.7], ["#141315", 0.15, 0.65]], { krumm: 0.4, szene: 0.15 });
   /* Ohr: klein, dunkel wie das Gesicht, eng anliegend; Helixrand, Muschel, Tragus; oben vom Haar bedeckt */
   const ohr = [[108.4, -106.6], [110.8, -107.4], [112.2, -105.2], [111.8, -101.8], [110.2, -100], [108.6, -100.8], [108, -103.6]];
   s += W.teil(ohr, HAUT, W.weich([[110.2, -103.6, 1.1, 1.8, 0, "#000", 0.7]], 0.4) +
     W.falten(["M109.2 -106q2 -.6 2.4 1.6q.2 2.2 -1.4 3.6", "M110.6 -103.6q.6 1 0 2"], 0.16, "#000", "#7a7470", 0.8, 0.45) +
     `<ellipse cx="111.6" cy="-102.6" rx=".45" ry=".7" fill="#3a3634"/>`, { rand: 0.4, vol: false });
-  s += W.kantenStraehnen([[107.6, -108], [110, -108.4], [112.4, -106.6]], 10, 120, 0.8, 1.6, 0.4, () => STR[1], { szene: 0 });
+  s += W.saum([[107.6, -108], [110, -108.4], [112.4, -106.6]], 12, 120, 1.2, [["#000", 0.12, 0.7], ["#1e1d1f", 0.12, 0.6]], { szene: 0 });
   return s;
 }
 
-/* Gesichtshaut: matt schwarzgrau, Glanz nur auf Nasenrücken, Wulstkante und Unterlippe; Falten als Rinne + Lichtkante */
+/* Gesichtshaut: matt schwarzgrau, Glanz nur auf Nasenrücken, Wulstkante und Unterlippe; Falten unregelmäßig als Rinne +
+   Lichtkante, Tränensäcke als weiche Wülste; Nasenflügel als dicker aufgeworfener „C“-Wulst, Nasenloch als Schlitz. */
 function gorillaGesicht(T, W, gesicht, HAUT) {
-  let s = `<path d="${G(gesicht)}" fill="${T.lg("gh", [[0, "#2e2b29"], [0.45, HAUT], [1, "#121110"]], 0, -128, 0, -84, UB)}"/>`;
+  let s = `<path d="${G(gesicht)}" fill="${T.lg("gh", [[0, "#2a2725"], [0.45, HAUT], [1, "#121110"]], 0, -128, 0, -84, UB)}"/>`;
   s += W.weich([
     /* Wulstdach: Oberseite im Streiflicht, Unterseite tiefer Schlagschatten über der Augenhöhle */
-    [126.6, -120.6, 6.6, 1.5, 26, "#8e8a86", 0.75], [132.2, -116.6, 1.2, 1.4, 0, "#a6a29e", 0.55], [126.6, -112.4, 6.2, 2.2, 6, "#000", 0.95],
-    /* Nasenrücken glänzt leicht, Schnauzenwölbung matt modelliert, Unterlippe Glanz, Kinn/Kiefer im Schatten */
-    [133.4, -106.2, 2, 0.8, 38, "#8a8682", 0.6], [134.6, -96.4, 3.4, 1.6, -10, "#4a4644", 0.5], [136.2, -91.2, 1.6, 0.6, -10, "#8a8682", 0.55],
-    [128, -88.4, 6, 2.6, 0, "#000", 0.5], [121.6, -100, 3, 7, 0, "#000", 0.35],
+    [126.6, -120.8, 6.4, 1.4, 26, "#7e7a76", 0.7], [132.2, -116.6, 1.2, 1.2, 0, "#8e8a86", 0.5], [126.6, -112.4, 6.2, 2.2, 6, "#000", 0.95],
+    /* Tränensäcke als weiche Wülste (Licht oben, Schatten unten) */
+    [124.6, -106.6, 3.2, 0.7, 8, "#4a4644", 0.6], [124.4, -105.6, 3.4, 0.6, 8, "#000", 0.5], [124.2, -104.2, 3, 0.6, 8, "#454240", 0.45],
+    /* Schnauzenwölbung, Unterlippe, Kinn/Kiefer im Schatten */
+    [134.6, -96.4, 3.4, 1.6, -10, "#3e3a38", 0.45], [136, -91.4, 1.8, 0.5, -10, "#6e6a66", 0.5], [128, -88.4, 6, 2.6, 0, "#000", 0.5], [121.6, -100, 3, 7, 0, "#000", 0.35],
   ], 0.8);
-  /* Falten: über dem Wulst quer, Nasenrücken quer, Tränensäcke, Nasolabialfalte, Oberlippe senkrecht, Kinnfurche */
+  /* Falten: unregelmäßig lang, teils unterbrochen */
   s += W.falten([
-    "M118.4 -124.4q3 -1.4 6.6 -.6", "M119.6 -122.2q3.4 -1.2 7.2 0", "M121 -120.4q2 -.6 4.2 .1",
-    "M129.8 -110.8q1.2 .4 1.6 1.4", "M130.6 -109.6q1.2 .5 1.7 1.5",
-    "M121.2 -106.8q2.4 1.4 5.6 .4", "M120.4 -105q3.2 1.6 6.8 0", "M121.4 -103q2.4 1 4.6 0",
-    "M133 -101.6q-2.4 3.6 -1.2 7.8", "M130.2 -102.4q-2.6 4.6 -.8 9.6", "M126.6 -96.2q-.4 2.6 .8 5",
-    "M136.4 -97l-.3 1.6", "M135.2 -96.8l-.3 1.8", "M137.4 -97.2l-.2 1.2", "M134.4 -88.6q-2 -.6 -3.8 .2",
-  ], 0.2, "#000", "#7e7874", 0.75, 0.35);
-  /* Nase: breiter, flacher Wulst; Nasenflügel als großes, nach außen gerolltes „C“; Nasenloch als schräger Schlitz
-     nach vorn-unten; „Nasenabdruck“: senkrechte Rillen oben auf der Nase */
-  s += W.L(["M135.6 -105.4q-3.8 .4 -4.6 3.6q-.6 3.2 2.2 4.6q2 .8 3.8 -.2"], "#2a2725", 1.3, 1) +
-    W.L(["M135.4 -105.9q-3.6 .5 -4.5 3.2"], "#8a8682", 0.3, 0.55) + W.L(["M131.2 -100.8q.4 2.6 2.6 3.4"], "#000", 0.35, 0.8);
-  s += `<path d="${G([[134.4, -100.4], [136.6, -101.6], [137.6, -100.2], [136.8, -98.6], [135.2, -98.4]])}" fill="#030202"/>`;
-  if (T.fein) s += W.falten(["M134.2 -105.4l.4 1.6", "M135.4 -104.8l.3 1.5", "M133 -105.2l.4 1.4", "M136.4 -103.6l.2 1.2"], 0.12, "#000", "#8a8682", 0.7, 0.3);
+    "M118.6 -124.4q2 -1 4.2 -.8", "M123.4 -125q1.6 -.2 2.6 .2", "M119.8 -122.2q2.6 -1 5 -.4", "M121.4 -120.6q1.4 -.4 2.6 0",
+    "M129.8 -110.8q1.2 .4 1.6 1.4", "M130.8 -109.4q.8 .4 1.1 1",
+    "M120.8 -107q1.6 1 3.6 .6", "M127.2 -106.2q1 0 1.8 -.6", "M120.6 -104.6q2 1.2 3.8 .4",
+    "M133 -101.6q-1.8 2.8 -1.4 5.4", "M131.6 -95.2q0 1.2 .4 2.2", "M130.2 -102.4q-2.2 3.6 -1.4 6.4", "M129 -94.6q.2 1.4 .8 2.6",
+    "M136.6 -97l-.3 1.4", "M135.3 -96.6l-.2 1.6", "M134.4 -88.6q-2 -.6 -3.8 .2",
+  ], 0.18, "#000", "#7a7470", 0.75, 0.35);
+  /* Nasenrücken: 3–4 senkrechte Rillen („Nasenabdruck“), leichter Glanz */
+  s += W.weich([[133.2, -106.4, 1.8, 0.6, 38, "#8a8682", 0.5]], 0.4);
+  s += W.falten(["M132.4 -107.6l.5 2", "M133.6 -107.2l.4 2", "M134.8 -106.4l.3 1.8", "M135.8 -105.4l.2 1.4"], 0.12, "#000", "#8a8682", 0.7, 0.35);
+  /* Nasenflügel: dicker „C“-Wulst (Lichtkante oben, Schatten darunter), Nasenloch schräger Schlitz nach vorn unten */
+  const fl = [[136, -106.2], [132.6, -105.6], [130.4, -103], [130.4, -99.6], [132.6, -97.2], [136, -96.8], [137.4, -98.4], [134.4, -98.8], [132.6, -100.4], [132.8, -103], [134.6, -104.4], [137, -104.4]];
+  s += `<path d="${G(fl)}" fill="${T.lg("gnf", [[0, "#4a4644"], [0.5, "#262321"], [1, "#0e0d0c"]], 0, 0, 0.3, 1)}"/>` +
+    W.L(["M136 -105.8q-3 .2 -4.8 2.4"], "#9a9590", 0.25, 0.5) + W.L(["M131 -99q.8 2 3.2 2.6"], "#000", 0.35, 0.8);
+  s += `<path d="${G([[134, -101.6], [136.4, -102.4], [138, -100.6], [137.6, -99.2], [135.4, -99.4]])}" fill="#030202"/>`;
   /* Mund: Mundspalte bis unter die Augenmitte, dicke Unterlippe */
   s += W.L(["M138.4 -93.2q-3 .4 -6 .3q-3.4 0 -6.4 1.4"], "#000", 0.45, 0.95) + W.L(["M138 -92.3q-3.6 .3 -7 .3"], "#5a5552", 0.22, 0.5);
-  /* Auge: tief unter dem Wulst, Höhle, dickes faltiges Oberlid, dunkelbraune Iris, Glanz gedämpft */
-  s += W.auge2(125.6, -109.6, 1.45, { iris: "#2e1a10", iris2: "#100604", sklera: "#1a120e", offen: 0.78, winkel: 4, lidDeck: 0.3, lid: "#262321", lidHell: "#6e6864",
-    glanz: 0.5, karunkel: "#4e4450", hoehle: "#000" });
-  /* Wulstschatten fällt auf die obere Lidhälfte */
-  s += W.weich([[125.6, -111.6, 3.6, 1.3, 4, "#000", 0.8]], 0.5);
+  /* Auge: tief unter dem Wulst, dicke faltige Lidrolle (≈ 35 %), Iris dunkelbraun, Glanz winzig und gedämpft */
+  s += W.auge2(125.6, -109.6, 1.45, { iris: "#2e1a10", iris2: "#100604", sklera: "#1a120e", offen: 0.8, winkel: 4, lidDeck: 0.36, lid: "#2a2725", lidHell: "#5e5854",
+    glanz: 0.3, karunkel: "#4e4450", hoehle: "#000" });
+  s += W.falten(["M122.6 -111.4q3 -1.2 6.2 -.2"], 0.14, "#000", "#6e6864", 0.7, 0.3);
+  s += W.weich([[125.6, -111.8, 3.6, 1.2, 4, "#000", 0.75]], 0.5);
   return s;
 }
 

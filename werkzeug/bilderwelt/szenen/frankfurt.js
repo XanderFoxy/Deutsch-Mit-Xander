@@ -142,9 +142,10 @@ const anX = (L, x) => { for (let i = 1; i < L.length; i++) if (x >= L[i][0]) { c
 {
   const leer = (svg) => svg.replace(/<path d="M0 0"[^>]*\/>/g, "");
   const teil0 = S.teil, hinten0 = S.hinten;
-  S.teil = (t) => { t.kunst = leer(t.kunst); return teil0(t); };
+  S.teil = (t) => { t.kunst = leer(t.kunst); if (!t.x && !t.y) t.kunst = `<g clip-path="url(#ffm_rahmen)">${t.kunst}</g>`; return teil0(t); };
   S.hinten = (svg) => hinten0(leer(svg));
 }
+S.def(`<clipPath id="ffm_rahmen"><rect x="0" y="0" width="320" height="200"/></clipPath>`);
 /* Fensterraster als Muster (für ferne Häuser, spart Tausende Einzelteile) */
 S.def(`<pattern id="ffm_fenster" width="1.7" height="1.9" patternUnits="userSpaceOnUse"><rect x=".45" y=".5" width=".7" height=".95" fill="#55616c"/></pattern>`);
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
