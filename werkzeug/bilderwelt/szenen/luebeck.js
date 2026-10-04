@@ -902,7 +902,7 @@ function loewe(L, wach, dir) {
   g += m;
   /* Kopf: lange, breite Schnauze, schwerer Unterkiefer, Braue mit Licht, Auge im Schatten, Kinnlocken */
   const kopf = (ox, oy, rot) => {
-    const Q = (x, y) => { const c = Math.cos(rot), sn = Math.sin(rot); x *= 1.15; y *= 1.15; return P(x * c - y * sn + ox, x * sn + y * c + oy); };
+    const Q = (x, y) => { const c = Math.cos(rot), sn = Math.sin(rot); const ks = wach ? 1.15 : 1.02; x *= ks; y *= ks; return P(x * c - y * sn + ox, x * sn + y * c + oy); };
     let h = `<path d="M${Q(-0.1, 0.06)} C${Q(-0.08, 0.12)} ${Q(-0.02, 0.135)} ${Q(0.04, 0.125)} C${Q(0.08, 0.12)} ${Q(0.1, 0.1)} ${Q(0.115, 0.075)} C${Q(0.15, 0.06)} ${Q(0.19, 0.04)} ${Q(0.205, 0.02)} Q${Q(0.218, 0)} ${Q(0.207, -0.025)} C${Q(0.2, -0.04)} ${Q(0.19, -0.05)} ${Q(0.182, -0.05)} C${Q(0.188, -0.07)} ${Q(0.172, -0.1)} ${Q(0.14, -0.106)} C${Q(0.09, -0.116)} ${Q(0.03, -0.11)} ${Q(0, -0.09)} C${Q(-0.04, -0.07)} ${Q(-0.08, -0.02)} ${Q(-0.1, 0.06)} Z" fill="${EISEN}"/>`;
     /* Lichtfläche auf Stirn und Nasenrücken (Licht von rechts oben) */
     h += `<path d="M${Q(-0.02, 0.115)} C${Q(0.04, 0.125)} ${Q(0.09, 0.105)} ${Q(0.12, 0.075)} C${Q(0.16, 0.058)} ${Q(0.19, 0.038)} ${Q(0.2, 0.02)} C${Q(0.16, 0.02)} ${Q(0.11, 0.035)} ${Q(0.07, 0.06)} C${Q(0.04, 0.08)} ${Q(0.01, 0.09)} ${Q(-0.02, 0.115)} Z" fill="#6e6a60" opacity=".45"/>`;
@@ -923,9 +923,9 @@ function loewe(L, wach, dir) {
     for (let i = 0; i < 9; i++) { const a = Math.PI * (0.42 + i * 0.13), [cx, cy] = Q(Math.cos(a) * 0.115 - 0.01, Math.sin(a) * 0.12 + 0.01).split(" ").map(Number); h += `<use href="#${S.id(i % 3 ? "lkd" : "lkh")}" transform="translate(${cx} ${cy}) rotate(${Math.round(dir * (Math.atan2(-Math.cos(a), -Math.sin(a) - 0.8) * 180 / Math.PI))}) scale(.8)"/>`; }
     return h;
   };
-  g += wach ? kopf(0.35, 0.45, 0.05) : kopf(0.36, 0.205, -0.12);
+  g += wach ? kopf(0.35, 0.45, 0.05) : kopf(0.37, 0.19, -0.14);
   /* der schlafende Löwe legt den Kopf auf die gekreuzten Pranken: die vordere liegt über dem Unterkiefer */
-  if (!wach) g += `<g transform="translate(${r(dir * 0.06 * L)} ${r(-0.06 * L)})">${bein(0, EISEN, true, 0.56)}</g>`;
+  if (!wach) g += `<g transform="translate(${r(dir * 0.05 * L)} ${r(-0.022 * L)})">${bein(0, EISEN, true, 0.58)}</g>`;
   return g;
 }
 /* Sockel aus Sandstein in Perspektive: Vorderseite mit Quaderfugen, Flecken und bestoßenen Kanten,
@@ -962,7 +962,8 @@ function sockelP(lat, d, breite, tiefe, hoehe) {
   const tp = [Q(l0 - 0.06, d0 - 0.06, hoehe), Q(l1 + 0.06, d0 - 0.06, hoehe), Q(l1 + 0.06, d1 + 0.06, hoehe), Q(l0 - 0.06, d1 + 0.06, hoehe)];
   g += `<path d="${pfad([Q(innen + aus, d0 - 0.06, hoehe - 0.12), Q(innen + aus, d1 + 0.06, hoehe - 0.12), Q(innen + aus, d1 + 0.06, hoehe), Q(innen + aus, d0 - 0.06, hoehe)])}" fill="${lat < 0 ? "#efe6cf" : "#a39a84"}"/>`;
   g += `<path d="${pfad([Q(l0 - 0.06, d0 - 0.06, hoehe - 0.12), Q(l1 + 0.06, d0 - 0.06, hoehe - 0.12), tp[1], tp[0]])}" fill="#e6dcc2"/>`;
-  g += `<path d="M${Q(l0 - 0.06, d0 - 0.06, hoehe - 0.12).join(" ")} L${Q(l1 + 0.06, d0 - 0.06, hoehe - 0.12).join(" ")} L${Q(innen + aus, d1 + 0.06, hoehe - 0.12).join(" ")}" stroke="#6e6452" stroke-width=".5" fill="none"/>`;
+  const ea = lat < 0 ? l1 + 0.06 : l0 - 0.06, eb = lat < 0 ? l0 - 0.06 : l1 + 0.06;
+  g += `<path d="M${Q(innen + aus, d1 + 0.06, hoehe - 0.12).join(" ")} L${Q(ea, d0 - 0.06, hoehe - 0.12).join(" ")} L${Q(eb, d0 - 0.06, hoehe - 0.12).join(" ")}" stroke="#6e6452" stroke-width=".5" fill="none"/>`;
   g += `<path d="${pfad(tp)}" fill="#d6cbb0"/>`;
   /* Fußplatte, ebenfalls ums Eck */
   g += `<path d="${pfad([Q(innen + aus * 0.8, d0 - 0.05, 0), Q(innen + aus * 0.8, d1 + 0.05, 0), Q(innen + aus * 0.8, d1 + 0.05, 0.1), Q(innen + aus * 0.8, d0 - 0.05, 0.1)])}" fill="${lat < 0 ? "#b5aa90" : "#827a66"}"/>`;
