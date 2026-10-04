@@ -592,7 +592,11 @@ const STADT = {};
   {
     const x = 175, y = 168, b = 10, h = 4.2;
     west += `<path d="M${x} ${y} h${b} v${-h} h${-b} Z" fill="${GRANIT_F}"/><path d="M${x} ${y - h} h${b}" stroke="#ece4d2" stroke-width=".3"/>`;
-    for (let i = 0; i < 3; i++) { const cx = x + 1.8 + i * 3.2; west += `<path d="M${r(cx - 1.1)} ${r(y - 0.8)} L${r(cx - 0.75)} ${r(y - h + 0.7)} L${r(cx + 0.75)} ${r(y - h + 0.7)} L${r(cx + 1.1)} ${r(y - 0.8)} Z" fill="#cfe0ea"/><path d="M${r(cx - 1.1)} ${r(y - 0.8)} L${r(cx - 0.75)} ${r(y - h + 0.7)} L${r(cx + 0.75)} ${r(y - h + 0.7)}" stroke="#4a4238" stroke-width=".35" fill="none"/>`; }
+    /* Öffnungen, kein Glas: dahinter blasser Himmel und Bergkette, unten das Grün der Hänge; dunkle Laibung links und oben */
+    const blick = S.lg("dreifenster", [[0, "#c3cdd3"], [0.45, "#a9b8bc"], [0.55, "#6f8f62"], [1, "#5d7d52"]], 0, 0, 0, 1);
+    let lb = "", fe = "";
+    for (let i = 0; i < 3; i++) { const cx = x + 1.8 + i * 3.2; lb += `M${r(cx - 1.1)} ${r(y - 0.8)}L${r(cx - 0.75)} ${r(y - h + 0.7)}L${r(cx + 0.75)} ${r(y - h + 0.7)}L${r(cx + 1.1)} ${r(y - 0.8)}Z`; fe += `M${r(cx - 0.62)} ${r(y - 0.8)}L${r(cx - 0.4)} ${r(y - h + 1.2)}L${r(cx + 0.75)} ${r(y - h + 1.2)}L${r(cx + 1.1)} ${r(y - 0.8)}Z`; }
+    west += `<path d="${lb}" fill="#3e372e"/><path d="${fe}" fill="${blick}"/>`;
     west += `<path d="M${x} ${y} h${b}" stroke="#4a4238" stroke-width=".4"/>`;
     STADT.fenster = { x: x + b / 2, y: y - h / 2 };
   }
