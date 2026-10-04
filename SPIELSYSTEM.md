@@ -3444,3 +3444,107 @@ XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller".
 - **Sonden**: neu `pruefe-873-ausgelagert.js` (beim Start nichts geholt, Kachelbilder kommen mit 22 echten Zeichnungen nach,
   Kreuzwort öffnet sich mit Gitter, keine Fehler); `pruefe-712` holt die Bilder vorher. Grün: 660, 666, 712, 731, 736, 812,
   858, 864, 873. Rot schon vor dieser Fassung (unverändert): 687, 716.
+
+## Fassung 878 — Städte, Länder und zwei Übersichtskarten; Lupenmarken folgen dem Sichtbaren; Äcker versetzen; Quests nach Niveau; schlanker Start (Funk 255/257/263/271/286/291)
+
+XANDER (Funk 291, wörtlich): „alles weitere außer der Tiere was noch auf dem Plan steht … die Sehenswürdigkeiten Städte und Länder … mit größte Sorgfalt und Präzision auf höchstem Niveau" · (Funk 286): „ein großes Update mit allen kompletten überarbeiteten Bilderwelten ich will keine Stopps mehr haben".
+
+In dieser Fassung stecken fünf Arbeitsstände (874–878), die nacheinander fertig wurden und erst jetzt zusammen ausgeliefert werden. Die Tier-Bibliothek ist NICHT dabei – sie wartet auf Funk 294.
+
+### 874 — Die Äcker lassen sich versetzen (Funk 255)
+XANDER (Funk 255): „Ich möchte dass man das Feld verschieben kann und dass es standardmäßig zwischen der Bäckerei und der Mühle ist also hinter der Bäckerei quasi … das Feld auf der rechten Seite ist auch noch nicht in einer geeigneten Position wo ich locker drauf zugreifen kann innerhalb des Bildausschnitts".
+- Leichte Stadt: Acker 91 liegt ohne Speicherstand hinter der Bäckerei; Acker 92 auf seinem Ackerplatz, im kleinen Rahmen (Telefon hochkant 360 × 225, auch 280 × 175) ganz im Bild und frei von Knöpfen.
+- Tipp auf den Acker → Menü „Getreidefeld" mit „Versetzen"; auch Halten und Ziehen wie bei einem Haus. Auf Straße/Haus: roter Rahmen, „Hier geht kein Acker hin …", der Acker rastet zurück. Auf freier Wiese: grün, „Gesetzt" – Korn, Tippfläche, Zeichen und die Ladestelle des Kornwagens wandern mit.
+- Gemerkt im Stand „verwalten" (felder) über `spiel_stadt_leicht_speichern` und im Browser; keine neue Tabelle. „Zurück auf den Ackerplatz" stellt den Ursprung wieder her.
+- Sonde `pruefe-874-acker-versetzen.js`.
+
+### 875 — Quests nach Niveau (A1–C2) und nach Stand der Stadt (Funk 257/263)
+XANDER (Funk 257): „die Missionen müssen Variation haben und dürfen nicht zu repetitiv sein … gekoppelt an den gewissen Stand des Dorfes … von A1 bis C2 dass man das in den Einstellungen hat" · „dieses fast kannst du nur schreiben wenn er die Grammatik fast richtig hat aber dazu muss die Erkennung auch korrekt sein".
+- Niveau-Wähler im Kopf des Quest-Fensters (Vorgabe A2 bzw. das Spielniveau); gewählt wird nie über dem eigenen Niveau, gut die Hälfte genau darauf.
+- Missionen nur mit ihrem Gebäude (keine Sternwarte → keine Astronomin; keine Baustelle → kein „Was baut ihr da?"); die Fragen lesen die echte Stadt (Zahl der Gebäude, Baustelle, Stadtname).
+- Abwechslung: 80 Missionen hintereinander, nie zweimal dieselbe direkt nacheinander. Mindestens 30 neue Missionen A1–C2 mit freier Antwort, Wortliste und Tipp.
+- Erkennung: Die Wortliste geht mit an „erkennen" (ohne Wörter, die über richtig/falsch entscheiden); verhörte Schlüsselwörter werden nach Klang gezogen („Winter hausen", „Labo", „Neu Schwan Stein") – Endungen und Umlaute nie, ein „Fast" bleibt ein „Fast".
+- Sonde `pruefe-875-quest-niveau.js`.
+
+### 876 — Der Start lädt nur, was man beim Start sieht (Funk 263/271)
+(Ausführlich: siehe Abschnitt unten „876 im Detail".) Kurz: app.js in Stücken (min/app.js 752 → 189 KB gepackt), Startblätter für korrekturen/app-styles/spiel.css (153 + 38 + 46 → 12 + 7 + 0 KB), data-exercises-Teil, Wegweiser später, spiel.js beim Öffnen des Klassenzimmers. Kalt bis „bereit" −35…−40 %, KB bis bereit −60 %, Rückkehr in den Raum 5,2 s statt 8,0 s. Sichtbar ändert sich nichts. Sonde `pruefe-876-start-schlank.js`.
+
+### 877 — Städte, Länder und zwei Übersichtskarten in der neuen Bilderwelt
+36 neue Szenen (nur über `?bilderwelt=neu`, die alte Bilderwelt bleibt unberührt):
+- **Deutschland (17):** Aachen, Bremen, Düsseldorf, Frankfurt am Main, Freiburg im Breisgau, Hannover, Heidelberg, Lübeck, Schloss Neuschwanstein, Nürnberg, Potsdam, Regensburg, Rothenburg ob der Tauber, Stuttgart, Trier, Weimar – dazu die **Deutschlandkarte** (4 Regionen-Lupen Norden/Osten/Westen/Süden mit 23 Städten).
+- **Welt (19):** Amsterdam, Athen, Dubai, Indien (Taj Mahal), Kanada (Niagarafälle), Kapstadt, Mexiko, Moskau, New York, Peking und die Große Mauer, Peru (Machu Picchu), Prag, Rio de Janeiro, San Francisco, Schweiz (Zermatt und Matterhorn), Sydney, Venedig, Wien – dazu die **Weltkarte** (11 direkte Marken, Europa-Lupe mit 11 Ländern/Städten; Deutschland führt in die Deutschlandkarte).
+- Jede Szene: recherchiert (echte Lage, Blickrichtung, Wahrzeichen), ≤ 30 Wörter, gepackt unter 70 KB (Karten 53/44 KB), „alle Teile gut erreichbar".
+- Abnahme: je ein Gestalter und ein unabhängiger Kritiker, acht Achsen (Ortstreue, Wahrzeichen, Perspektive, Typisches, Antippbarkeit, Licht, Handwerk, Wörter), angenommen ab 9 auf jeder Achse; höchstens fünf Runden, danach nur noch Nachbesserungen ohne zusätzliche Größe.
+- Alkohol: neue Szenen sind alkoholfrei (Apfelschorle, Reibekuchen, Zwiebelkuchen statt Lüttje Lage, Viez, Federweißer usw.). Ältere Szenen mit Alkohol stehen als Frage im Funk.
+- Bau-Werkzeug: Verläufe in Bildkoordinaten wirken wieder (`S.lg` schrieb x1/y1 doppelt, der Browser nahm die ersten – Frankfurt neu gebaut).
+- App (Bilderwelt neu):
+  - Artikel-Modus: „Indien", „Italien", „Leipzig" werden nicht mehr als „i"/„l" + Rest zerlegt (Artikel braucht ein Leerzeichen, außer l'); der Modus nimmt nur Teile mit Artikel und erscheint erst ab vier solchen.
+  - Lupenmarken auch IN der Lupe (Stadt in der Regionen-Lupe führt direkt in ihre Szene), um 1/k verkleinert, damit sie fingerbreit bleiben.
+  - „Zurück" aus einer Stadt landet wieder in der Lupe, aus der man kam (die Spur merkt sich die Lupe); „Alle Szenen" löscht die Lupe.
+  - Fangflächen ohne Lupenmarke gemessen (sonst wuchs das Rechteck um die Marke).
+  - Hinweis in der Lupe: „Tipp auf die Lupe an einem Ort – dann gehst du hinein".
+
+### 878 — Lupenmarken folgen dem Sichtbaren
+Gefunden mit dem angeglichenen Prüfwerkzeug: die in 877 eingeführte Ebene „Marken-Dach" (Lupenmarken gewinnen immer) stahl in dichten Bildern dem Nachbarn die Tipps – im Reisebüro öffnete ein Tipp aufs Ägypten-Plakat Japan.
+- Der Kreis im Marken-Dach ist so groß wie der sichtbare Knopf (r 11 statt 15); der Ring bis 15 bleibt im Teil und teilt sich den Platz mit den Nachbarn.
+- Ein Tipp auf den Kreis gilt dem Ding, das man dort SIEHT: liegt die Zeichnung eines anderen Dings über der Marke, bekommt dieses den Tipp (unsichtbare Fangflächen und durchsichtige Ringe anderer Marken zählen nicht).
+- Die Regel „Teile über 8 % des Bildes ohne Ersatzrechteck" (877) gilt nur noch auf Übersichtskarten (`nurForm` oder Name auf „karte"). Im Supermarkt war das Regal sonst nicht mehr antippbar.
+- Neues Teilfeld `marke: [x, y]` (Lage der Lupenmarke; sonst 16/−16), vom Bau-Werkzeug durchgereicht. Gesetzt im Reisebüro (Plakate), in Rom (Forum, Trevibrunnen) und im Behördenviertel (Büro) – sonst unverändert (geprüft: die Bauten unterscheiden sich nur in `marke`).
+- `werkzeug/bilderwelt/pruefe-szene.js` bildet die App jetzt nach (8-%-Regel auf Karten, Lupenmarken, Marken-Dach, Klickregel) und prüft jede Marke: gewinnt sie auf weniger als 40 % ihres Kreises oder liegt sie auf einer Karte über fremdem Land, ist das ein Fehler.
+- Sonde neu: `pruefe-878-karten-lupenweg.js` – mit echten Mausklicks: Weltkarte → Rio → zurück; Weltkarte → Lupe Europa → Deutschland → Lupe Süden → München; Zurück landet in der Süden-Lupe, dann in der Europa-Lupe; „Alle Szenen" löscht die Lupe; jede Marke trifft ihren Kreis.
+
+- **Verdichten (Puls, Vorrang 2 „Ladezeiten"):** neues Werkzeug `werkzeug/bilderwelt/verdichten.js` schreibt die Pfade der gebauten Szenen in relative Schritte um (genau auf die Nachkommastellen des Originals, keine Rundung). Gleiche Verläufe zusammenzulegen wurde versucht und verworfen (dieselbe id steht in manchen Szenen in mehreren Teilen; Zoo II: 5 326 abweichende Bildpunkte). Das Bau-Werkzeug (`bau.js`) verdichtet jetzt beim Schreiben selbst – ein Neubau von Moskau ergibt Byte für Byte dieselbe Datei. Jede Szene wird vorher/nachher dreifach groß gezeichnet (jede Lupe einzeln) und Bildpunkt für Bildpunkt verglichen; geschrieben wird nur bei höchstens 20 deutlich abweichenden Bildpunkten (Kantenglättung). Ergebnis: 199 von 202 Szenen verdichtet (185 davon mit 0 abweichenden Bildpunkten), alle Szenen zusammen gepackt 8,80 → 7,35 MB (−16 %); drei (Freizeitpark, Neuschwanstein, San Francisco: 21–76 Bildpunkte) bleiben wie sie waren.
+
+**Sonden (Endstand Fassung 878)**: grün – 872 (ganze neue Bilderwelt, 203 Szenen, auch nach dem Verdichten), 874 (Äcker), 875 (Quests; ein Lauf unter hoher Rechnerlast scheiterte am nachgestellten Mikrofon, die Wiederholung war grün), 876 (Start), 878 (Kartenweg mit echten Klicks), 817, 830. `pruefe-szene.js` über alle Szenen: grün bis auf die zwei vorbestehenden (Körperbau zu groß, ein Teil der Lerntafel knapp antippbar). 855 (Kornfeld) schwankt: das reife Korn misst je nach Wolkenschatten 174–180, das Stoppelfeld 184, verlangt sind +8 – auf dem Stand vor 878 genauso; am Korn wurde nichts geändert.
+
+**Offen**
+- Vorbestehend (auch mit dem alten Werkzeug): Ränder in Arztpraxis, Bahnhof, Straße, Supermarkt (Kasse 49 Einheiten) ragen über das Bild; Körperbau ist nach dem Verdichten noch gepackt rund 115 KB (über dem Ziel 70); in der Lerntafel ist ein Teil der Mann-Lupe nur knapp antippbar.
+- Bibliothek der Figuren (B.mensch): Gesicht am Hinterkopf, Faust zeigt Finger, Kinderarm zu lang – die Gestalter haben es je Szene abgedeckt; zentral erst nach Absprache, weil es abgenommene Szenen verändern würde.
+
+### 876 im Detail — Der Start lädt nur noch, was man beim Start sieht
+
+XANDER (Funk 263/271, wörtlich): „die Ladezeit der Seite deutlich verringern um ein zehnfaches schneller machen oder dass man wirklich sofort in den Livestream kommt sofort sichtbar ist wie bei HelloTalk" · „alles insgesamt nur zehn Mal schneller" · „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität".
+
+Gemessen mit Playwright-Coverage (neu: `werkzeug/teile-messen.js`; vier Lagen: abgemeldet/angemeldet × Telefon/breiter Schirm; Schritte Start → Wissen → Klassenzimmer → 6 s Ruhe → alle Hauptreiter → „Betreten" → im Raum):
+- app.js: von rund 5 MB Quelltext liefen bis dahin Funktionen mit gut 0,45 MB. 3,6 MB waren Funktionen, die erst später gebraucht werden (Chat-Effekte, Reise, Einstellungen, Spiele, Postfach …).
+- korrekturen.css (153 KB gepackt): beim Start greifen 406 von 3 973 Regeln; spiel.css: eine einzige (`button:disabled`).
+- Trotzdem musste jedes Telefon das alles holen und übersetzen, bevor die Reiter antworteten.
+
+Sichtbar ändert sich nichts. Die Quellen bleiben je EINE Datei – alle Werkzeuge und Sonden lesen sie wie bisher, `?quelle` lädt sie wie immer ganz. Geteilt werden nur die verkleinerten Kopien in min/, beim Bauen (fassung-setzen.js ruft die neuen Werkzeuge auf; ohne acorn oder ohne Liste entsteht min/ wie vorher).
+
+- **app.js in Stücken (`werkzeug/teile-bauen.js`, Liste `werkzeug/app-teile.json`)**
+  - 1 716 Funktionen und 332 Datenblöcke, die beim Start und auf dem Weg ins Klassenzimmer nie laufen, stehen in 15 Stücken: `min/app-teil-raum1…8.js` (Klassenzimmer, Effekte) und `min/app-teil-rest1…7.js`. In min/app.js steht an ihrer Stelle ein kurzer Platzhalter mit demselben Namen.
+  - min/app.js: 752 → 189 KB gepackt (2,6 → 0,7 MB Code).
+  - Eingesetzt wird ein Stück mit eval im Inneren von app.js (`dmaTeilAuswerten`): es sieht alle Namen wie vorher. Funktionen behalten ihre Identität (removeEventListener, Vergleiche, angehängte Eigenschaften); `this`, `new`, `async` laufen wie vorher. Deshalb lässt esbuild die obersten Namen in min/app.js unverkürzt (kostet gepackt rund 12 KB).
+  - Wann: bei `load` über die Leitung (liegen dann im Zwischenspeicher), eingesetzt ab 3 s nach dem Laden, ein Stück je Ruhepause (Klassenzimmer zuerst). Beim Öffnen des Klassenzimmers kommen die Raum-Stücke sofort und sind 0,6 s später eingesetzt.
+  - Ruft jemand eine ausgelagerte Funktion früher (z. B. ein Effekt kommt ganz früh im Chat an), setzt der Platzhalter ihr Stück sofort ein – nötigenfalls synchron geholt. Nichts geht verloren; es dauert nur dieses eine Mal etwas länger. `window.DMA_TEIL_SOFORT` schreibt mit, wenn das passiert.
+  - Rückkehr nach dem Neuladen (man war im Raum): es geht hinein, sobald die Raum-Stücke über die Leitung da sind (höchstens 2,5 s gewartet) – sonst würde jedes Stück einzeln synchron nachgeholt, während sich der Raum aufbaut.
+  - Passt ein Stück nicht zu min/app.js (Seite älter als der Server), erscheint oben „Neue Fassung – jetzt laden"; von selbst neu geladen wird nichts.
+- **data-exercises.js**: 20 große Datenblöcke (Deutschland-Quiz, Wortschatz-Themen, Lückentexte, Konnektoren …), die nur Funktionen lesen, die beim Start nicht laufen, stehen in `min/data-exercises-teil.js`; jede lesende Stelle fragt vorher `dmaUebTeil()`. 190 → 105 KB gepackt beim Start.
+- **data-wegweiser.js** (21 KB) aus der Startliste: kommt 3 s nach dem Laden in einer Ruhepause, spätestens beim Öffnen des Wegweisers (`wegweiserLaden`).
+- **Startblätter (`werkzeug/stil-bauen.js`, Liste `werkzeug/stil-teile.json`)**: Von korrekturen.css, app-styles.css und spiel.css hält nur `min/<name>-start.css` das erste Bild an – die Regeln, die beim Start greifen können (Coverage und querySelector auf das ganze DOM, Zustände wie :hover mitgezählt), in der alten Reihenfolge. Gepackt: 153 + 38 + 46 KB → 12 + 7 + 0 KB.
+  - Die ganzen Blätter werden nach DOMContentLoaded direkt hinter ihr Startblatt gehängt (spiel.css auch, es gestaltet z. B. die Bilder im Platzmenü). Dann gilt Regel für Regel dasselbe wie vorher (jede Startregel steht im ganzen Blatt noch einmal an ihrem alten Platz, dazwischen liegt nichts). Versuch verworfen: sie erst später einzuhängen – dann fehlten sie Dingen, die ein Skript ohne Tipp öffnet (Sonde 660).
+  - Bildvergleich alt/neu (Telefon und breiter Schirm; Start, Lernen, Profil, Wissen, Klassenzimmer): 0 abweichende Bildpunkte – auch wenn die ganzen Blätter absichtlich zurückgehalten werden.
+- **spiel.js** kommt nicht mehr bei DOMContentLoaded (genau dann tippt man Wissen → Klassenzimmer), sondern beim Öffnen des Klassenzimmers (0,3 s nach dem Zeichnen) oder 1,5 s nach dem Laden in einer Ruhepause; es wartet, bis spiel.css gelesen ist.
+- **Im Raum** (egal auf welchem Weg, `LiveChat.beiAenderung` → „drin"): die Raum-Stücke werden sofort geholt und auf einmal eingesetzt (`raumDrin`).
+
+**Gemessen** (`werkzeug/ladezeit-messen.js 4g`, Rechner 4× gebremst; der Prüfrechner war durch parallele Arbeiten stark ausgelastet – Last 8–15 –, deshalb abwechselnd alt/neu, Median aus drei Läufen; die absoluten Zahlen liegen über denen eines ruhigen Rechners):
+
+| | vor 876 | 876 |
+|---|---|---|
+| kalt: erstes Bild | 1 048–1 100 ms | 712–800 ms |
+| kalt: bereit | 2 970–3 310 ms | 1 840–1 990 ms (−35…−40 %) |
+| kalt: Klassenzimmer ab Start | 4 270–4 500 ms | 3 140–3 370 ms (−25 %) |
+| kalt: KB bis bereit | 1 446 | 581 (−60 %) |
+| warm: bereit | 1 410–2 120 ms | 1 560–2 070 ms (kein klarer Unterschied) |
+
+Der Weg „Wissen antippen → Klassenzimmer zu sehen" selbst ist nicht schneller geworden (Messwerte schwanken 0,9–1,6 s in beiden Fassungen); er ist reine Rechenarbeit (activateTab/renderKompass, Layout). Ohne Leitungsbremse (nur Rechner 4×) ist „bereit" alt und neu gleich: die Startzeit ist jetzt Rechnen, nicht Laden.
+
+Rückkehr nach dem Neuladen (gleich wieder im Raum, 4G, Rechner 4×): „drin" nach 5,2–5,4 s statt 8,0–8,3 s.
+
+**Sonden**: neu `pruefe-876-start-schlank.js` (Bau und Stempel; beim Start kein Stück, kein ganzes Blatt, kein spiel.js, kein data-wegweiser.js; die ganzen Blätter direkt hinter ihrem Startblatt, Aussehen davor und danach gleich; Klassenzimmer holt Raum-Stücke, spiel.css, spiel.js; alle Stücke werden eingesetzt; Spiele, Einstellungen, Postfach, Wegweiser, Deutschland-Quiz, Auftritt im Raum; ganz früh ankommender Auftritt läuft trotzdem; `?quelle` wie vorher; keine Seitenfehler) – grün. Grün auf dem Endstand außerdem: 858, 865, 867, 868, 871, 873, 652, 660, 645, 656, 666, 659, 669, 699, runde18, einladungslink. Breiter Lauf (rund 350 Sonden, Rechnerlast 20–40): alle übrigen roten waren auch auf dem Stand vor 876 rot (Zeit-/Rechenbudget-Sonden, Dorf/Stadt, bekannte 687/716/686/659-Reihe). 694: Teil 3 („beim dritten Öffnen nichts Gestempeltes übers Netz") rot, weil die Sonde 1,5 s nach dem Laden neu lädt und spiel.js jetzt erst danach kommt; mit 4,5 s Wartezeit grün – auch alle Stücke kommen dann aus sw.js.
+
+**Offen / nächste Schritte**
+- Die Listen stammen aus vier gemessenen Lagen. Ruft eine seltene Start-Lage eine ausgelagerte Funktion, läuft sie trotzdem, holt dafür aber ihr Stück sofort. Nach größeren Umbauten `node werkzeug/teile-messen.js` laufen lassen; neue Funktionen bleiben sonst einfach in min/app.js.
+- Der Rest der Startzeit ist jetzt Rechenarbeit, nicht Leitung: app.js zeichnet beim Start alle Bereiche vor (renderSetup für „Lernen" usw.), dazu das erste Layout der ganzen Seite. Das zu verschieben wäre der nächste Hebel – ändert aber, wann was gezeichnet wird, und gehört deshalb erst abgesprochen.
+- livechat.js (98 KB) und backend.js stehen weiter ganz in der Startliste.

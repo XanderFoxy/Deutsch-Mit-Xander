@@ -49,20 +49,30 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 853: Kachelbilder und Kreuzwort erst bei Bedarf (app.js −145 KB)",
+  stand: "Fassung 878 — Städte, Länder, Übersichtskarten; Lupenmarken; verdichtete Bilder",
 
   inArbeit: [
-    { seit: "2026-10-03T09:12",
-      text: "Profilfoto erst nach dem Gruß (Vorschlag, sichtbar)" },
-    { seit: "2026-10-03T09:12",
-      text: "21 frühere neue Szenen und Anatomie-Tafeln nicht neu gebaut" },
-    { seit: "2026-10-03T09:12",
-      text: "Sonden 687 und 716 veraltet (rot schon vorher)" },
+    { seit: "2026-10-04T09:19",
+      text: "Tier-Bibliothek: wartet auf Funk 294" },
+    { seit: "2026-10-04T09:19", nurBetreiber: true,
+      text: "Funk-Fragen: Ortsnamen nur in der Lupe, Alkohol in älteren Szenen, Peking-Collage, Kapstadt-Blickwinkel, Raclette" },
+    { seit: "2026-10-04T09:19",
+      text: "Körperbau-Tafel noch 115 KB gepackt" },
+    { seit: "2026-10-04T09:19",
+      text: "Figuren-Bibliothek: Hinterkopf, Faust, Kinderarm zentral richten (nach Absprache)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-03T09:12",
-      text: "Kachelbilder und Kreuzwort ausgelagert (Sonde 873)" },
+    { seit: "2026-10-04T09:19",
+      text: "36 neue Szenen: 17 deutsche Städte, 17 Weltorte, Deutschland- und Weltkarte (nur mit ?bilderwelt=neu)" },
+    { seit: "2026-10-04T09:19",
+      text: "Lupenmarken: Tipp gilt dem, was man sieht; Marke versetzbar" },
+    { seit: "2026-10-04T09:19",
+      text: "Supermarkt-Regal wieder antippbar" },
+    { seit: "2026-10-04T09:19",
+      text: "alle Bilder verdichtet: gepackt 8,80 → 7,35 MB" },
+    { seit: "2026-10-04T09:19",
+      text: "Äcker versetzen, Quests nach Niveau A1–C2, schlanker Start" },
   ],
 };
