@@ -501,7 +501,7 @@ const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} $
   };
   /* Stamm mit Wurzelanlauf, oben gerundet an der Gabel */
   const STAMM = S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0);
-  k += `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .32 * m)} ${r(p[1] - 3 * m)} ${r(p[0] - .52 * m)} 100 ${r(p[0] - 17)} 76 Q${r(p[0] - 7)} 70 ${r(p[0] + 4)} 77 C${r(p[0] + .3 * m)} 100 ${r(p[0] + .38 * m)} ${r(p[1] - 3 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${STAMM}"/>`;
+  k += "AESTE" + `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .32 * m)} ${r(p[1] - 3 * m)} ${r(p[0] - .52 * m)} 100 ${r(p[0] - 17)} 76 Q${r(p[0] - 7)} 70 ${r(p[0] + 4)} 77 C${r(p[0] + .3 * m)} 100 ${r(p[0] + .38 * m)} ${r(p[1] - 3 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${STAMM}"/>`;
   /* Borke der Rosskastanie: sechs lange, leicht gedrehte Rippen; Risse versetzt und verschieden lang, Licht links */
   {
     const yU = p[1] - 1.3 * m, yO = 84, xl = (t) => p[0] - .42 * m + (p[0] - 15 - (p[0] - .42 * m)) * t, xr = (t) => p[0] + .48 * m + (p[0] + 2 - (p[0] + .48 * m)) * t;
@@ -523,10 +523,13 @@ const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} $
   };
   /* ein Laubballen hängt hinter dem Stamm (am rechten Ast), nicht frei davor */
   k = LAUB_HINTER.map(([cx, cy, R, sd, f]) => masse(cx, cy, R, sd, f)).join("") + k;
-  k += ast([[p[0] - 12, 84], [p[0] - 30, 60], [p[0] - 56, 46], [p[0] - 84, 37], [p[0] - 112, 30]], 11, 2.4);
-  k += ast([[p[0] - 7, 84], [p[0] - 10, 46], [p[0] - 5, 20], [p[0] + 2, -2]], 10, 4);
-  k += ast([[p[0] - 2, 86], [p[0] + 10, 60], [p[0] + 26, 47], [p[0] + 30.6, 43.8]], 9, 4.6);
-  k += ast([[p[0] - 56, 46], [p[0] - 70, 56], [p[0] - 90, 62], [p[0] - 103, 60]], 3.4, 1.2);
+  let aeste = "";
+  aeste += ast([[p[0] - 12, 84], [p[0] - 30, 60], [p[0] - 56, 46], [p[0] - 84, 37], [p[0] - 112, 30]], 11, 2.4);
+  aeste += ast([[p[0] - 7, 84], [p[0] - 10, 46], [p[0] - 5, 20], [p[0] + 2, -2]], 10, 4);
+  aeste += ast([[p[0] - 2, 86], [p[0] + 10, 60], [p[0] + 26, 47], [p[0] + 30.6, 43.8]], 9, 4.6);
+  aeste += ast([[p[0] - 56, 46], [p[0] - 70, 56], [p[0] - 90, 62], [p[0] - 103, 60]], 3.4, 1.2);
+  /* die Äste wachsen hinter dem gerundeten Stammkopf hervor: keine Platte an der Gabel */
+  k = k.replace("AESTE", aeste);
   /* schweres Laubdach von oben rechts über das obere Drittel, die Kuppel bleibt frei: innen gelbgrün, am Rand Ocker */
   for (const [cx, cy, R, sd, f] of [[300, 10, 30, 1, "linde"], [258, 6, 26, 2, "gruen"], [222, 14, 22, 3, "linde"], [196, 34, 14, 4, "orange"], [236, 44, 22, 5, "gruen"], [282, 46, 26, 6, "linde"], [310, 70, 18, 7, "orange"], [256, 74, 16, 8, "linde"], [214, 60, 14, 9, "orange"]]) k += masse(cx, cy, R, sd, f);
   /* gefingerte Rosskastanienblätter: kurzer heller Stiel zeigt zum Ast (nach oben), die Blättchen hängen */

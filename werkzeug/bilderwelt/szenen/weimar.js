@@ -82,6 +82,13 @@ const bodenSchatten = (D, X, w, h, a = 0.3) => {
 /* Figuren klein halten: feine Linien weg, Formkoordinaten auf Q cm runden (Verläufe bleiben genau) */
 const schlank = (svg, min = 0.35) => svg.replace(/<path [^>]*fill="none"[^>]*\/>/g, (p) => { const m = p.match(/stroke-width="([\d.]+)"/); return m && +m[1] < min ? "" : p; });
 let KLEIN = 8;
+/* Figuren sparen: runde Linienenden erbt die Gruppe; gleiche Verläufe teilen sich die Stopps per href */
+const VERLAUF = {};
+const sparen = (svg) => svg.replace(/ (stroke-linejoin|stroke-linecap)="round"/g, "").replace(/ data-teil="[^"]*"/g, "").replace(/ class="mensch"/g, "")
+  .replace(/<(linearGradient|radialGradient) id="([^"]+)"([^>]*)>((?:<stop[^>]*>)+)<\/\1>/g, (all, tag, id, at, st) => {
+    const key = tag + at.replace(/="[^"]*"/g, "") + st;
+    if (VERLAUF[key]) return `<${tag} id="${id}"${at} href="#${VERLAUF[key]}"/>`;
+    VERLAUF[key] = id; return all; });
 const kompakt = (svg, Q = 1, min = 0.35) => {
   svg = schlank(svg, min);
   const rund = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : r(v)); };
@@ -96,7 +103,7 @@ const kompakt = (svg, Q = 1, min = 0.35) => {
 const FIG = {};
 const mensch = (name, spec, groesse, D, X, Q = 1, min = 0.35) => {
   const m = B.mensch(spec, 100);
-  S.def(`<g id="${S.id("fig" + name)}">${kompakt(m.svg, Q, min)}</g>`);
+  S.def(`<g id="${S.id("fig" + name)}" stroke-linejoin="round" stroke-linecap="round">${sparen(kompakt(m.svg, Q, min))}</g>`);
   const f = { m, D, X, x: r(xG(D, X)), y: r(yG(D)), u: sk(D), s: groesse * sk(D) / 100 };
   f.p = (q) => ({ x: f.x + q.x * m.k * f.s, y: f.y + q.y * m.k * f.s });
   f.svg = `<use href="#${S.id("fig" + name)}" transform="scale(${f.s.toFixed(5)})"/>`;

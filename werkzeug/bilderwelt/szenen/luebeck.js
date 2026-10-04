@@ -608,7 +608,7 @@ const SCHARTE = { nord: [[-50, 2.4], [6, 2.7], [56, 2.5], [-46, 8.1], [8, 7.9], 
     { id: "schiessscharte", de: "die Schießscharte", syl: "SCHIESS-schar-te", it: "la feritoia", itSyl: "fe-ri-TO-ia", en: "loophole", x: nScharte.x, y: nScharte.y, kunst: flaeche(-M(0.9), -M(1.6), M(1.8), M(1.8), 0.4),
       tipp: "Aus den Schießscharten konnten die Soldaten mit Kanonen schießen." },
     { id: "kanone", de: "die Kanone", syl: "ka-NO-ne", it: "il cannone", itSyl: "can-NO-ne", en: "cannon", x: kanone.x, y: kanone.y, kunst: flaeche(-M(0.7), -M(1.0), M(1.4), M(1.2), 0.4),
-      tipp: "Im zweiten Obergeschoss stehen heute noch alte Kanonen. Man sieht ihre Mündung in der Scharte." },
+      tipp: "Früher standen hier Kanonen. Sie schossen durch die Scharten." },
     { id: "fries", de: "der Fries", syl: "FRIES", it: "il fregio", itSyl: "FRE-gio", en: "frieze", x: TL - M(3.4), y: GY - M(13.6), kunst: flaeche(-M(1.9), -M(1.2), M(3.8), M(1.6), 0.4),
       tipp: "Der Fries ist ein Band aus Tonplatten. Es läuft rund um die Türme." },
     { id: "backstein", de: "der Backstein", syl: "BACK-stein", it: "il mattone", itSyl: "mat-TO-ne", en: "brick", x: sBack.x, y: sBack.y, kunst: flaeche(-M(1.4), -M(1.4), M(2.8), M(2.4), 0.4),
@@ -661,22 +661,26 @@ const SCHARTE = { nord: [[-50, 2.4], [6, 2.7], [56, 2.5], [-46, 8.1], [8, 7.9], 
   const handy = { lende: 1, brust: -2, nacken: -4, kopf: -8, schulterL: { vor: 92, seit: -6, dreh: 0 }, ellbogenL: 60, unterarmL: 0, handL: 20, fingerL: 0.5,
     schulterR: { vor: 96, seit: 12, dreh: 0 }, ellbogenR: 52, unterarmR: 0, handR: 24, fingerR: 0.5,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 };
-  const m = figur({ id: "lbk_tour", geschlecht: "m", pose: handy, blick: 184, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
+  const m = figur({ id: "lbk_tour", geschlecht: "m", pose: handy, blick: -50, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
     kleidung: { oberteil: { stueck: "tshirt", farbe: "weiss" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#2f4a6a" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "kappe", farbe: "#b8473a" } } }, 1.8 * s);
   const hs = [m.z.handL, m.z.handR].sort((a, b) => a.y - b.y)[0], hx = hs.x * m.k, hy = hs.y * m.k;
-  const ph = `<g transform="translate(${r(hx)} ${r(hy - 1.4)})"><rect x="-1.3" y="-2.2" width="2.6" height="1.7" rx=".3" fill="#1d1f22"/><rect x="-1.1" y="-2" width="2.2" height="1.3" fill="#7fa6cf"/><path d="M-.9 -.8 L-.4 -1.7 L.1 -.8 Z M.1 -.8 L.6 -1.7 L1 -.8 Z" fill="#8a3f2b"/></g>`;
+  /* er fotografiert seinen Sohn auf dem Löwen: wir sehen die Rückseite des Handys */
+  const ph = `<g transform="translate(${r(hx)} ${r(hy - 1.2)})"><rect x="-1.1" y="-2.2" width="2.2" height="1.6" rx=".3" fill="#2a2d33"/><circle cx="-.6" cy="-1.8" r=".25" fill="#0c0d0f"/></g>`;
   schlag(lat, d, 1.8, 0.5);
   S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: m.svg + ph,
-    tipp: "Der Tourist macht ein Foto vom Holstentor. Das Tor war früher auf dem 50-Mark-Schein." });
+    tipp: "Der Tourist fotografiert seinen Sohn auf dem Löwen." });
 }
 {
   const d = 25, lat = 3.0, [x, y] = proj(lat, d), s = km(y);
   const zeig = Object.assign({}, POSEN.zeigen, { schulterR: { vor: 135, seit: 32, dreh: 0 }, ellbogenR: 4, nacken: -10, kopf: -14 });
   const m = figur({ id: "lbk_tourin", geschlecht: "w", pose: zeig, blick: 200, frisur: "zopf", haarfarbe: "blond", haut: "hell",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#e9dfcf" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#b0523c" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#2f5a35" } } }, 1.66 * s);
+  /* Rückansicht: das Gesicht der Bibliothek scheint am Hinterkopf durch, darum blondes Haar darüber */
+  const q = m.z.punkte, K = m.k;
+  const haar = `<ellipse cx="${r(((q.scheitel[0] + q.ohr[0]) / 2) * K)}" cy="${r((q.scheitel[1] + q.kinn[1]) / 2 * K)}" rx="${r((Math.abs(q.ohr[0] - q.scheitel[0]) + 1.4) * K)}" ry="${r(((q.kinn[1] - q.scheitel[1]) / 2 - 0.8) * K)}" fill="#c9a35e"/>`;
   schlag(lat, d, 1.66, 0.5);
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: m.svg,
-    tipp: "Die Touristin zeigt auf den schiefen Turm. Er hat sich geneigt, weil der Boden weich ist." });
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: m.svg + haar,
+    tipp: "Die Touristin zeigt auf den schiefen Turm. Sie macht gleich ein Foto davon." });
 }
 
 /* =====================================================================
