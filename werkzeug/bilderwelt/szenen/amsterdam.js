@@ -748,9 +748,8 @@ function prisma(grund, h0, h1, farbe, dachFarbe, licht) {
 /* ferne Brücken (2–7) als Kulisse über dem Wasser — Teil der Brücke (Wort) unten */
 
 /* 2 — DIE HÄUSERZEILE RECHTS (Kulisse) und LINKS (Wort: das Grachtenhaus) */
-S.teil({ id: "giebelhaus", de: "das Giebelhaus", syl: "GIE-bel-haus", it: "la casa con il frontone", itSyl: "CA-sa con il fron-TO-ne", en: "gabled house", anker: [330, 60],
-  kunst: ZR.out + fensterSVG(1, false) + lichtRechts(),
-  tipp: "Die Häuser sind schmal: Früher zahlte man Steuern nach der Breite des Hauses." });
+/* die rechte Zeile ist Kulisse (dasselbe Wort wie links wäre doppelt) */
+S.hinten(kappe(ZR.out + fensterSVG(1, false) + lichtRechts()));
 
 /* die Lupe des Grachtenhauses: Giebelformen und Lastenhaken */
 const grachtUnter = [];
@@ -795,6 +794,8 @@ S.teil({ id: "grachtenhaus", de: "das Grachtenhaus", syl: "GRACH-ten-haus", it: 
   }
   const [bx, by] = P(0, BRUECKEN[0], 0);
   for (const u of ULMEN.fern) FERN.push({ D: u.D, g: ulme(u.X, u.D, u.seed).g });
+  /* drei Räder lehnen am Geländer der ersten Brücke */
+  for (const [X, f] of [[-7.2, "#1d1e22"], [-5.6, "#2a4a7a"], [6.0, "#1d1e22"]]) { const D = BRUECKEN[0] + 0.4, [x, y] = P(X, D, deckH(X)); BRUECKE1 += radUse(x, y, F / D, f, X > 0); }
   BRUECKEN_SVG = FERN.sort((a, b) => b.D - a.D).map((f) => f.g).join("");
   S.teil({ id: "bruecke", de: "die Brücke", syl: "BRÜ-cke", it: "il ponte", itSyl: "PON-te", en: "bridge", anker: [bx, by], kunst: BRUECKEN_SVG + BRUECKE1,
     tipp: "Hinter dieser Brücke liegen sechs weitere hintereinander — man sieht ihre Bögen und Lichter. Amsterdam hat über 1500 Brücken.",
@@ -884,7 +885,7 @@ let LINKS_BOOT = "";
   const z = zufall(8);
   let koepfe = "";
   for (let d = D0 + 4.5; d < D0 + L - 2; d += 1.8) for (const dx of [-1.25, -0.45, 0.45, 1.25]) { if (z() < 0.4) continue; const [x, y] = P(c + dx, d, 1.45), ss = F / d; koepfe += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(0.1 * ss)}" fill="${["#3a2a20", "#b8925a", "#5a3e2c", "#26211f"][Math.floor(z() * 4)]}"/>`; }
-  k += `<g opacity=".45">${koepfe}</g>`;
+  /* (Fahrgäste nicht einzeln: hinter dem spiegelnden Glas nur Schatten) */
   let streb = "";
   for (let d = D0 + 3.4; d < D0 + L - 1; d += 1.6) streb += `M${pt(P(c - w + 0.3, d, 1.58))} L${pt(P(c - w + 0.9, d, 1.8))} L${pt(P(c + w - 0.9, d, 1.8))} L${pt(P(c + w - 0.3, d, 1.58))} `;
   k += `<path d="${streb}" stroke="#f2f4f2" stroke-width=".3" fill="none" opacity=".9"/>`;
@@ -1016,14 +1017,19 @@ const LADEN = { d0: 37.2, d1: 44.6 };
     tipp: "Die braunen Poller heißen „Amsterdammertjes“. Die drei Kreuze kommen aus dem Stadtwappen." });
 }
 
-/* 13 — DIE TOURISTIN am rechten Kai, fotografiert die Brücken */
+/* 13 — DIE TOURISTIN am rechten Kai, fotografiert mit dem Handy die Brücken (klein: eigene, schlanke Zeichnung) */
 {
-  const X = 9.9, D = 44, [x, y] = P(X, D, KAI), s = F / D;
-  const foto = { lende: 1, brust: -3, nacken: 2, kopf: -4, schulterL: { vor: 64, seit: 16 }, ellbogenL: 104, unterarmL: 40, handL: 10, fingerL: 0.5, schulterR: { vor: 62, seit: 18 }, ellbogenR: 106, unterarmR: 40, handR: 10, fingerR: 0.5, huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
-  const m = B.mensch({ id: "ams_tour", geschlecht: "w", pose: foto, blick: 200, frisur: "zopf", haarfarbe: "braun", haut: "mittel", ohneSchatten: true,
-    kleidung: { oberteil: { stueck: "pullover", farbe: "#c8352e" }, jacke: { stueck: "jacke", farbe: "beige" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 1.66 * s);
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: `<ellipse cx="${r(-0.3 * s)}" cy="${r(0.05 * s)}" rx="${r(0.45 * s)}" ry="${r(0.1 * s)}" fill="#14182a" opacity=".25" filter="url(#${S.id("weich")})"/><g ${VOLS}>${schlank(m.svg, 2)}</g>`,
-    tipp: "Die Touristin fotografiert die sieben Brücken." });
+  const X = 9.9, D = 44, [x, y] = P(X, D, KAI), s = F / D, q = (a, b) => `${r(a * s)} ${r(b * s)}`;
+  let k = `<ellipse cx="${r(-0.35 * s)}" cy="${r(0.04 * s)}" rx="${r(0.45 * s)}" ry="${r(0.09 * s)}" fill="#14182a" opacity=".28"/>`;
+  k += `<path d="M${q(-0.1, -0.02)} L${q(-0.12, -0.8)} L${q(0.02, -0.8)} L${q(0.0, -0.02)} Z M${q(0.03, -0.02)} L${q(0.04, -0.8)} L${q(0.15, -0.8)} L${q(0.12, -0.02)} Z" fill="#33507a"/>`;
+  k += `<path d="M${q(-0.16, 0)} h${r(0.14 * s)} v${r(-0.05 * s)} h${r(-0.12 * s)} Z M${q(0.02, 0)} h${r(0.14 * s)} v${r(-0.05 * s)} h${r(-0.12 * s)} Z" fill="#eeeeea"/>`;
+  k += `<path d="M${q(-0.17, -0.74)} Q${q(-0.2, -1.1)} ${q(-0.13, -1.38)} L${q(0.14, -1.38)} Q${q(0.2, -1.1)} ${q(0.19, -0.74)} Z" fill="#d6c6a2"/><path d="M${q(-0.13, -1.36)} L${q(0.14, -1.36)} L${q(0.12, -1.3)} L${q(-0.11, -1.3)} Z" fill="#c8352e"/>`;
+  k += `<path d="M${q(-0.11, -1.33)} Q${q(-0.24, -1.3)} ${q(-0.26, -1.47)}" stroke="#cbb994" stroke-width="${r(0.07 * s)}" fill="none" stroke-linecap="round"/><path d="M${q(0.12, -1.33)} Q${q(0.0, -1.25)} ${q(-0.2, -1.45)}" stroke="#bda984" stroke-width="${r(0.07 * s)}" fill="none" stroke-linecap="round"/>`;
+  k += `<rect x="${r(-0.33 * s)}" y="${r(-1.6 * s)}" width="${r(0.08 * s)}" height="${r(0.15 * s)}" rx="${r(0.015 * s)}" fill="#1a1c20"/><rect x="${r(-0.32 * s)}" y="${r(-1.59 * s)}" width="${r(0.06 * s)}" height="${r(0.12 * s)}" fill="#8fb4d6"/>`;
+  k += `<path d="M${q(-0.07, -1.38)} L${q(0.07, -1.38)} L${q(0.06, -1.44)} L${q(-0.05, -1.44)} Z" fill="#c99a76"/><ellipse cx="${r(0)}" cy="${r(-1.55 * s)}" rx="${r(0.1 * s)}" ry="${r(0.12 * s)}" fill="#c99a76"/>`;
+  k += `<path d="M${q(-0.02, -1.68)} Q${q(0.13, -1.68)} ${q(0.11, -1.5)} Q${q(0.12, -1.42)} ${q(0.19, -1.36)} Q${q(0.05, -1.4)} ${q(0.03, -1.5)} Q${q(-0.04, -1.6)} ${q(-0.09, -1.55)} Q${q(-0.09, -1.66)} ${q(-0.02, -1.68)} Z" fill="#4a3022"/>`;
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: `<g ${VOLS}>${k}</g>`,
+    tipp: "Die Touristin fotografiert mit dem Handy die Brücken." });
 }
 
 /* 14 — DIE FLAGGE von Amsterdam (am linken Haus, in der Sonne) */
@@ -1037,6 +1043,28 @@ const LADEN = { d0: 37.2, d1: 44.6 };
   k += `<path d="M${r(bx)} ${r(by)} Q${r(bx + fw * 0.5)} ${r(by - 0.15 * s)} ${r(bx + fw)} ${r(by + 0.25 * s)} L${r(bx + fw)} ${r(by + fh + 0.25 * s)} Q${r(bx + fw * 0.5)} ${r(by + fh - 0.15 * s)} ${r(bx)} ${r(by + fh)} Z" fill="${S.lg("fahnelicht", [[0, "#fff", 0.2], [0.5, "#000", 0.15], [1, "#fff", 0.25]], 0, 0, 1, 0)}"/>`;
   S.teil({ oben: true, id: "flagge", de: "die Flagge", syl: "FLAG-ge", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag", x: bx, y: by + fh, kunst: `<g transform="translate(${r(-bx)} ${r(-by - fh)})">${k}</g>`,
     tipp: "Die Flagge von Amsterdam ist rot-schwarz-rot mit drei weißen Kreuzen." });
+}
+
+/* Fahrrad als Vorlage (1 Einheit = 1 m, Hinterrad-Aufstand bei 0|0, Fahrtrichtung +x), Farbe über color */
+S.def(`<g id="${S.id("rad")}" fill="none" stroke="currentColor" stroke-width=".04" stroke-linecap="round"><circle cx=".0" cy="-.34" r=".33"/><circle cx="1.1" cy="-.34" r=".33"/><path d="M0 -.34 L.42 -.36 L.36 -.8 M.42 -.36 L.98 -.78 L1.1 -.34 M.36 -.8 L.98 -.78 M.98 -.78 L.95 -1.0 L.8 -1.03" stroke-width=".05"/><path d="M.28 -.86 L.46 -.86" stroke="#3a2618" stroke-width=".06"/><path d="M-.05 -.5 L.3 -.5" stroke-width=".03"/></g>`);
+const radUse = (x, y, s, farbe, links) => `<use href="#${S.id("rad")}" transform="translate(${r(x)} ${r(y)}) scale(${(links ? -s : s).toFixed(3)} ${s.toFixed(3)})" color="${farbe}"/>`;
+/* 15a — DER FAHRRADSTÄNDER am rechten Kai: Bügel und eine Reihe angeschlossener Räder (quer zum Wasser, Vorderrad zur Gracht) */
+{
+  const farben = ["#1d1e22", "#2a4a7a", "#1d1e22", "#7a2a2a", "#2a2a2a", "#3e6a4a", "#1d1e22", "#c9c2b0"];
+  let k = "";
+  const posten = [];
+  for (let i = 0; i < 8; i++) posten.push(47 + i * 1.5);
+  /* Bügel (Edelstahl) */
+  let buegel = "";
+  for (const D of posten) { const a = P(10.5, D, KAI), b = P(10.5, D, KAI + 0.75), c = P(10.9, D, KAI + 0.75), d = P(10.9, D, KAI); buegel += `M${pt(a)} L${pt(b)} L${pt(c)} L${pt(d)}`; }
+  for (const D of posten.slice().reverse()) {
+    const s2 = F / D, [x, y] = P(11.3, D, KAI), sch = `<path d="${pz([P(9.9, D - 0.1, KAI), P(11.5, D - 0.1, KAI), P(11.5, D + 0.5, KAI), P(9.9, D + 0.5, KAI)])}" fill="#141a2a" opacity=".22"/>`;
+    k += sch + radUse(x, y, s2, farben[posten.indexOf(D)], true);
+  }
+  k += `<path d="${buegel}" stroke="#b9c1c6" stroke-width=".55" fill="none"/>`;
+  const [ax, ay] = P(10.7, 50, KAI);
+  S.teil({ id: "fahrradstaender", de: "der Fahrradständer", syl: "FAHR-rad-stän-der", it: "la rastrelliera per bici", itSyl: "ra-strel-LIE-ra per BI-ci", en: "bike rack", anker: [ax, ay], kunst: k,
+    tipp: "Am Fahrradständer schließt man das Rad mit einem Schloss an — in Amsterdam gibt es über 800 000 Fahrräder." });
 }
 
 /* 15 — die nahen Ulmen (vor Häusern, Laden und Booten) */
@@ -1095,8 +1123,10 @@ const GEL = { D: 2.4, h: 3.62 };
   /* Steuerrohr und Gabel (verschwinden nach unten), Oberrohr nach rechts unten */
   k += `<path d="M${q(-0.62, 2.2, HL - 0.06)} L${q(-0.6, 2.2, 3.0)} M${q(-0.6, 2.2, HL - 0.22)} L${q(-0.05, 2.2, 3.05)}" stroke="${S.lg("lack", [[0, "#3a3d42"], [0.5, "#101114"], [1, "#2a2c30"]])}" stroke-width="${r(0.042 * F / 2.2)}" stroke-linecap="round" fill="none"/>`;
   /* Lenker (Hollandrad: nach hinten geschwungen), Griffe */
-  k += `<path d="M${q(-0.47, 1.92, HL - 0.02)} Q${q(-0.62, 1.95, HL + 0.02)} ${q(-0.62, 2.2, HL)} Q${q(-0.62, 2.45, HL + 0.02)} ${q(-0.47, 2.48, HL - 0.02)}" stroke="#c9cfd4" stroke-width="${r(0.022 * F / 2.2)}" fill="none" stroke-linecap="round"/>`;
-  k += `<path d="M${q(-0.47, 1.92, HL - 0.02)} L${q(-0.36, 1.9, HL - 0.03)} M${q(-0.47, 2.48, HL - 0.02)} L${q(-0.36, 2.5, HL - 0.03)}" stroke="#3a2618" stroke-width="${r(0.034 * F / 2.2)}" stroke-linecap="round"/>`;
+  k += `<path d="M${q(-0.47, 1.92, HL - 0.02)} Q${q(-0.62, 1.95, HL + 0.02)} ${q(-0.62, 2.2, HL)} Q${q(-0.62, 2.45, HL + 0.02)} ${q(-0.47, 2.48, HL - 0.02)}" stroke="#141518" stroke-width="${r(0.026 * F / 2.2)}" fill="none" stroke-linecap="round"/>`;
+  k += `<path d="M${q(-0.47, 1.92, HL)} Q${q(-0.6, 1.95, HL + 0.04)} ${q(-0.6, 2.2, HL + 0.02)}" stroke="#7d848c" stroke-width="${r(0.006 * F / 2.2)}" fill="none"/>`;
+  k += `<path d="M${q(-0.62, 2.2, HL - 0.2)} L${q(-0.62, 2.2, HL)}" stroke="#141518" stroke-width="${r(0.035 * F / 2.2)}" stroke-linecap="round"/>`;
+  k += `<path d="M${q(-0.47, 1.92, HL - 0.02)} L${q(-0.36, 1.9, HL - 0.03)} M${q(-0.47, 2.48, HL - 0.02)} L${q(-0.36, 2.5, HL - 0.03)}" stroke="#3a2618" stroke-width="${r(0.04 * F / 2.2)}" stroke-linecap="round"/>`;
   /* Korb (Weide) vorn am Lenker */
   const kb = [pp(-1.0, 2.0, HL - 0.08), pp(-0.66, 2.0, HL - 0.08), pp(-0.66, 2.0, HL - 0.45), pp(-1.0, 2.0, HL - 0.45)];
   let korb = `<path d="${pz(kb)}" fill="${S.lg("weide", [[0, "#c79a5a"], [1, "#8a6230"]])}"/>`;

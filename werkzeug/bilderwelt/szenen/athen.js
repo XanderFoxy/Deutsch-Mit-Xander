@@ -297,8 +297,10 @@ const erUnter = [];
   const E0 = -37, E1 = -15, N0 = 43, N1 = 56, Z0 = 149, Z1 = 157.2;
   const MARMOR_S = S.lg("erechsued", [[0, "#f6dcae"], [1, "#e6c8a2"]], 0, 0, 1, 0);
   /* Ostvorhalle: sechs schlanke ionische Säulen (blass, Streiflicht), Gebälk darüber */
-  for (let i = 0; i < 6; i++) { const n = N0 + 0.8 + i * (N1 - N0 - 1.6) / 5, a = pr(-13, n, Z0 + 0.5), b = pr(-13, n, Z1 - 1.3); k += `<rect x="${r(a[0] - 0.33)}" y="${r(b[1])}" width=".66" height="${r(a[1] - b[1])}" fill="#ecd5b4"/><rect x="${r(a[0] + 0.05)}" y="${r(b[1])}" width=".28" height="${r(a[1] - b[1])}" fill="#c4a690"/>`; }
-  k += `<path d="${Q([[-13, N0, Z1 - 1.3], [-13, N1, Z1 - 1.3], [-13, N1, Z1], [-13, N0, Z1]])}" fill="#ead2b0"/>`;
+  for (let i = 5; i >= 0; i--) { const n = N0 + 0.2 + i * (N1 - N0 - 1) / 5, a = pr(-11.5, n, Z0 + 0.5), b = pr(-11.5, n, Z1 - 1.3); k += `<rect x="${r(a[0] - 0.33)}" y="${r(b[1])}" width=".66" height="${r(a[1] - b[1])}" fill="#ecd5b4"/><rect x="${r(a[0] + 0.05)}" y="${r(b[1])}" width=".28" height="${r(a[1] - b[1])}" fill="#c4a690"/>`; }
+  k += `<path d="${Q([[-11.5, N0 - 0.3, Z1 - 1.3], [-11.5, N1, Z1 - 1.3], [-11.5, N1, Z1], [-11.5, N0 - 0.3, Z1]])}" fill="#ead2b0"/><path d="${Q([[-15, N0 - 0.3, Z1 - 1.3], [-11.5, N0 - 0.3, Z1 - 1.3], [-11.5, N0 - 0.3, Z1], [-15, N0 - 0.3, Z1]])}" fill="#dcc0a0"/>`;
+  /* Fundament und Terrasse vor der Südwand */
+  k += `<path d="${Q([[E0 - 2, N0 - 4, Z0 - 2.6], [E1 + 4, N0 - 4, Z0 - 2.6], [E1 + 4, N0 - 4, Z0 - 0.2], [E0 - 2, N0 - 4, Z0 - 0.2]])}" fill="#d9bfa0"/><path d="${L3([E0 - 2, N0 - 4, Z0 - 0.2], [E1 + 4, N0 - 4, Z0 - 0.2])}" stroke="#fbe6c2" stroke-width=".4"/>`;
   /* Nordwand innen (über die Südwand sichtbar), Südwand aus hellem Marmor mit Quaderlagen */
   k += `<path d="${Q([[E0, N1, Z1], [E1, N1, Z1], [E1, N1, Z1 + 0.6], [E0, N1, Z1 + 0.6]])}" fill="#c9a890"/>`;
   k += `<path d="${Q([[E0, N0, Z0], [E1, N0, Z0], [E1, N0, Z1], [E0, N0, Z1]])}" fill="${MARMOR_S}"/>`;
@@ -318,21 +320,19 @@ const erUnter = [];
   const KE0 = -34.2, KE1 = -28.4, KN = 39.4, KZ = 149.6, KH = 1.8, MH = 2.3, KD = KZ + KH + MH;
   k += `<path d="${Q([[KE0, KN + 3.4, KZ], [KE0, KN, KZ], [KE0, KN, KD + 1.1], [KE0, KN + 3.4, KD + 1.1]])}" fill="#f9dfb0"/>`;
   k += `<path d="${Q([[KE0 + 0.4, KN + 3.4, KZ + KH], [KE1 - 0.4, KN + 3.4, KZ + KH], [KE1 - 0.4, KN + 3.4, KD], [KE0 + 0.4, KN + 3.4, KD]])}" fill="#d3b292"/>`;
-  const kore = (e, n, hell) => {
-    const a = pr(e, n, KZ + KH), b = pr(e, n, KD), u = a[2], h = a[1] - b[1], x = a[0];
-    let c = `<path d="M${r(x - 0.3 * u)} ${r(a[1])} L${r(x - 0.27 * u)} ${r(b[1] + h * 0.42)} Q${r(x - 0.22 * u)} ${r(b[1] + h * 0.27)} ${r(x - 0.12 * u)} ${r(b[1] + h * 0.23)} L${r(x + 0.12 * u)} ${r(b[1] + h * 0.23)} Q${r(x + 0.22 * u)} ${r(b[1] + h * 0.27)} ${r(x + 0.27 * u)} ${r(b[1] + h * 0.42)} L${r(x + 0.3 * u)} ${r(a[1])} Z" fill="${hell ? "#fbe6c0" : "#d9bea0"}"/>`;
-    c += `<path d="M${r(x)} ${r(b[1] + h * 0.23)} L${r(x + 0.27 * u)} ${r(b[1] + h * 0.42)} L${r(x + 0.3 * u)} ${r(a[1])} L${r(x + 0.02 * u)} ${r(a[1])} Z" fill="#c9a88e" opacity="${hell ? 0.8 : 0.5}"/>`;
-    c += `<path d="M${r(x - 0.16 * u)} ${r(a[1])} L${r(x - 0.14 * u)} ${r(b[1] + h * 0.45)} M${r(x - 0.05 * u)} ${r(a[1])} L${r(x - 0.05 * u)} ${r(b[1] + h * 0.5)} M${r(x + 0.1 * u)} ${r(a[1] - h * 0.05)} Q${r(x + 0.16 * u)} ${r(a[1] - h * 0.3)} ${r(x + 0.12 * u)} ${r(b[1] + h * 0.5)}" stroke="#b8957c" stroke-width=".12" fill="none"/>`;
-    c += `<path d="M${r(x + 0.04 * u)} ${r(a[1] - h * 0.32)} q${r(0.1 * u)} ${r(-h * 0.06)} ${r(0.16 * u)} 0" stroke="#fff4dc" stroke-width=".14" fill="none"/>`;
-    c += `<ellipse cx="${r(x)}" cy="${r(b[1] + h * 0.15)}" rx="${r(0.11 * u)}" ry="${r(0.13 * u)}" fill="${hell ? "#f8dfb6" : "#d6bb9c"}"/><path d="M${r(x - 0.13 * u)} ${r(b[1] + h * 0.17)} q-.1 ${r(h * 0.12)} .1 ${r(h * 0.2)} M${r(x + 0.13 * u)} ${r(b[1] + h * 0.17)} q.1 ${r(h * 0.12)} -.1 ${r(h * 0.2)}" stroke="#c9a88e" stroke-width=".14" fill="none"/>`;
-    c += `<path d="M${r(x - 0.12 * u)} ${r(b[1] + h * 0.06)} L${r(x - 0.2 * u)} ${r(b[1])} L${r(x + 0.2 * u)} ${r(b[1])} L${r(x + 0.12 * u)} ${r(b[1] + h * 0.06)} Z" fill="#f2d6aa"/>`;
-    return c;
-  };
+  /* Schlagschatten der vorspringenden Halle auf der Südwand (nach Osten, rechts) */
+  k += `<path d="${Q([[KE1, N0, KZ], [KE1 + 3.2, N0, KZ], [KE1 + 3.2, N0, KD - 0.6], [KE1 + 1.2, N0, KD + 1.1], [KE1, N0, KD + 1.1]])}" fill="#7e6260" opacity=".45"/>`;
+  /* Kore als Vorlage (Höhe 10 = 2,3 m): Korb, Kopf mit Haar bis zu den Schultern, Gewand mit Falten, rechtes Knie vor; links Licht */
+  S.def(`<g id="${S.id("kore")}"><path d="M-1.3 -9.4 L-1.5 -10 L1.5 -10 L1.3 -9.4 Z" fill="#f4dcb2"/><path d="M-1.1 -9.4 Q-1.4 -8 -1.6 -6.6 L1.6 -6.6 Q1.4 -8 1.1 -9.4 Z" fill="#c9a88c"/><ellipse cx="0" cy="-8.4" rx=".75" ry=".95" fill="#f6dcb4"/><path d="M-1.9 -6.8 Q-2 -3.4 -1.7 0 L1.7 0 Q2 -3.4 1.9 -6.8 Q1 -7.4 0 -7.4 Q-1 -7.4 -1.9 -6.8 Z" fill="#f9e2ba"/><path d="M0 -7.4 Q1 -7.4 1.9 -6.8 Q2 -3.4 1.7 0 L.2 0 Z" fill="#c4a088"/><path d="M-1.1 0 L-1.2 -5 M-.4 0 L-.4 -5.6 M.5 0 L.6 -4.6 M1.1 0 Q1.4 -1.6 1 -3.2" stroke="#b8957c" stroke-width=".18" fill="none"/><path d="M.2 -3.4 Q1 -3.1 1.4 -2.6" stroke="#fff2d8" stroke-width=".2" fill="none"/></g>`);
+  const kore = (e, n, hell) => { const a = pr(e, n, KZ + KH), b = pr(e, n, KD); const sc = (a[1] - b[1]) / 10; return `<use href="#${S.id("kore")}" transform="translate(${r(a[0])} ${r(a[1])}) scale(${sc.toFixed(3)})"${hell ? "" : ` opacity=".75"`}/>`; };
   k += kore(KE0 + 0.5, KN + 2.3, false) + kore(KE1 - 0.5, KN + 2.3, false);
   for (let i = 0; i < 4; i++) k += kore(KE0 + 0.5 + i * (KE1 - KE0 - 1) / 3, KN + 0.5, true);
   /* Brüstung (Sockel) vorn: Südseite und Westseite */
   k += `<path d="${Q([[KE0, KN, KZ], [KE1, KN, KZ], [KE1, KN, KZ + KH], [KE0, KN, KZ + KH]])}" fill="${S.lg("korensockel", [[0, "#f8deae"], [1, "#e2c29c"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="${L3([KE0, KN, KZ + KH], [KE1, KN, KZ + KH])}" stroke="${M_HELL}" stroke-width=".3"/><path d="${L3([KE0, KN, KZ + 0.3], [KE1, KN, KZ + 0.3])}" stroke="#c4a184" stroke-width=".2"/>`;
+  k += `<path d="${L3([KE0, KN, KZ], [KE0, KN, KZ + KH])}" stroke="#fff4d8" stroke-width=".45"/>`;
+  /* dunkler Schlitz unter der Decke */
+  k += `<path d="${Q([[KE0, KN, KD - 0.25], [KE1, KN, KD - 0.25], [KE1, KN, KD], [KE0, KN, KD]])}" fill="#5a4446"/>`;
   /* Gebälk mit Zahnschnitt, flaches Dach */
   k += `<path d="${Q([[KE0 - 0.2, KN - 0.1, KD], [KE1 + 0.2, KN - 0.1, KD], [KE1 + 0.2, KN - 0.1, KD + 1.1], [KE0 - 0.2, KN - 0.1, KD + 1.1]])}" fill="#f6dab0"/>`;
   for (let e = KE0; e <= KE1; e += 0.45) { const a = pr(e, KN - 0.1, KD + 0.7); k += `<rect x="${r(a[0])}" y="${r(a[1])}" width=".22" height=".3" fill="#b8957c"/>`; }

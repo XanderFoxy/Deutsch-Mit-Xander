@@ -341,8 +341,10 @@ const AM = {};
     for (let t = 0; t <= 1.0001; t += 0.06) {
       const j = Math.min(AMFALL.length - 2, Math.floor(t * (AMFALL.length - 1))), tt = t * (AMFALL.length - 1) - j;
       const E = AMFALL[j][0] + (AMFALL[j + 1][0] - AMFALL[j][0]) * tt + 30, N = AMFALL[j][1] + (AMFALL[j + 1][1] - AMFALL[j][1]) * tt;
-      const [x, y] = W(E, N, 14 + za() * 8), rr = 1.4 + za() * 1.1, [c0, c1] = farben[Math.floor(za() * farben.length)];
-      k += `<path d="M${r(x - rr)} ${r(y + rr * 1.8)} Q${r(x - rr * 1.1)} ${r(y)} ${r(x)} ${r(y - rr * 0.8)} Q${r(x + rr * 1.1)} ${r(y)} ${r(x + rr)} ${r(y + rr * 1.8)} Z" fill="${c0}"/><path d="M${r(x - rr * 0.5)} ${r(y + rr * 0.3)} Q${r(x)} ${r(y - rr * 0.6)} ${r(x + rr * 0.6)} ${r(y + rr * 0.2)} Q${r(x)} ${r(y + rr * 0.6)} ${r(x - rr * 0.5)} ${r(y + rr * 0.3)} Z" fill="${c1}"/>`;
+      const [x, y] = W(E, N, 14 + za() * 10), rr = 1.2 + za() * 1.4, [c0, c1] = farben[Math.floor(za() * farben.length)];
+      let lap = "", hl = "";
+      for (let l = 0; l < 4; l++) { const an = l * 1.57 + za(), lx = x + Math.cos(an) * rr * 0.55, ly = y + Math.sin(an) * rr * 0.45, lr = rr * (0.5 + za() * 0.2); lap += `<circle cx="${r(lx)}" cy="${r(ly)}" r="${r(lr)}"/>`; if (Math.sin(an) < 0.2) hl += `<circle cx="${r(lx)}" cy="${r(ly - lr * 0.2)}" r="${r(lr * 0.55)}"/>`; }
+      k += `<g fill="${c0}">${lap}</g><g fill="${c1}" opacity=".65">${hl}</g>`;
     }
   }
   /* Felsbrocken (Talus) am Fuß: große graue Blöcke, Wasser schäumt darüber */
