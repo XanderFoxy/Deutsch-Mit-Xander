@@ -197,13 +197,13 @@ const kammY = (x) => { for (let i = 1; i < kamm.length; i++) if (x <= kamm[i][0]
      und rot; gruppenweise verteilt, nach oben kleiner und blasser */
   S.def(`<pattern id="${S.id("waldh")}" width="5.3" height="3.7" patternUnits="userSpaceOnUse" patternTransform="rotate(11)">${kronen(22, 5.3, 3.7, 0.45, 0.9, ["#b8862e", "#c7702c", "#d9a53a", "#a8963a", "#b85a2a", "#c8a040"], "#ffe0a0")}</pattern>`);
   let hb = "";
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 150; i++) {
     const x = 10 + rnd() * 300, y = kammY(x) + 4 + Math.pow(rnd(), 0.75) * (114 - kammY(x)), t = Math.min(1, (y - 15) / 90);
     if (x > 108 && x < 186 && y > 48 && y < 100) continue;
-    const g = .8 + 2.6 * t * (.6 + rnd() * .6);
+    const g = (.5 + 1.3 * t) * (.7 + rnd() * .6), kr = .45 + .55 * t, n = 4 + Math.floor(rnd() * 5);
     let d2 = "";
-    for (let j = 0; j < 3; j++) { const cx = x + (rnd() - .5) * 2.4 * g, cy = y + (rnd() - .5) * 1.2 * g, rr = g * (.5 + rnd() * .5); d2 += `M${r(cx - rr)} ${r(cy)}a${r(rr)} ${r(rr * .8)} 0 1 0 ${r(2 * rr)} 0a${r(rr)} ${r(rr * .8)} 0 1 0 ${r(-2 * rr)} 0`; }
-    hb += `<path d="${d2}" fill="url(#${S.id("waldh")})" opacity="${r(.7 + .3 * t)}"/>`;
+    for (let j = 0; j < n; j++) { const cx = x + (rnd() - .5) * 3 * g, cy = y + (rnd() - .5) * 1.4 * g, rr = kr * (.8 + rnd() * .5); d2 += `M${r(cx - rr)} ${r(cy)}a${r(rr)} ${r(rr * .85)} 0 1 0 ${r(2 * rr)} 0a${r(rr)} ${r(rr * .85)} 0 1 0 ${r(-2 * rr)} 0`; }
+    hb += `<path d="${d2}" fill="url(#${S.id("waldh")})" stroke="#5a4a24" stroke-width=".12" stroke-opacity=".5"/>`;
   }
   k = k.replace(`<g clip-path="url(#${S.id("berg")})">`, `<g clip-path="url(#${S.id("berg")})">${hb}`);
   /* Fernmeldeturm auf dem Gipfel (schlanker Schaft, Betriebsgeschoss, Antenne) */
@@ -574,7 +574,7 @@ const fm = (a, g, laeden) => {
     for (let x = -12 + rnd() * 10; x < 330; x += dx + rnd() * 9) {
       const by = Math.min(nordY(x) + y0 + rnd() * 1.6, 186), g = g0 * (1 + (by - 176) * .015);
       dinge.push({ y: by, f: () => villa(x, by, g, 10 + rnd() * 5, 7.5 + rnd() * 1.5, 7.5 + rnd() * 1.2, 3 + rnd() * .9, WAND[Math.floor(rnd() * WAND.length)], DACH[Math.floor(rnd() * DACH.length)]) });
-      for (let t = 0; t < 2; t++) { const bx = Math.min(316, Math.max(4, x + dx * (.55 + rnd() * .35))), bb = by - 1 + rnd() * 3; dinge.push({ y: bb, f: () => baum(bx, bb, g * (.8 + rnd() * .4), rnd() < .3) }); }
+      for (let t = 0; t < 2; t++) { const bx = Math.min(316, Math.max(4, x + dx * (.5 + rnd() * .4))), bb = by + 1.5 + rnd() * 1.6; dinge.push({ y: bb, f: () => baum(bx, bb, g * (.8 + rnd() * .4), rnd() < .3) }); }
     }
   }
   { let hs = ""; dinge.sort((p, q) => p.y - q.y).forEach((o) => { hs += o.f(); }); k += `<path d="${SCHATTEN}" fill="#1e2a14" opacity=".3"/>` + hs; }
@@ -796,7 +796,7 @@ const ZB = 12.2, ZP = 13.6;
   for (let j = 0; j < 9; j++) {
     const [a, b] = BOGEN(j), pts = [];
     for (let i = 0; i <= 12; i++) { const t = i / 12; pts.push(bp(a + (b - a) * t, bogenZ(t))); }
-    k += `<path d="${pfad([bp(a, 0), ...pts, bp(b, 0)])}" fill="${S.lg("bogen", [[0, "#24181a"], [0.5, "#3b302d"], [0.78, "#56645f"], [0.9, "#9ab4ae"], [1, "#c8dad2"]])}"/>`;
+    k += `<path d="${pfad([bp(a, 0), ...pts, bp(b, 0)])}" fill="${j < 2 ? S.lg("bogenl", [[0, "#24181a"], [0.6, "#3b302d"], [0.88, "#4e5c58"], [1, "#7e9690"]]) : S.lg("bogen", [[0, "#24181a"], [0.5, "#3b302d"], [0.78, "#56645f"], [0.9, "#9ab4ae"], [1, "#c8dad2"]])}"/>`;
     k += `<path d="${pfad(pts, false)}" stroke="#eca07e" stroke-width=".55" fill="none"/><path d="${pfad(pts.slice(0, 6), false)}" stroke="#7a3428" stroke-width=".3" fill="none" transform="translate(-.2 .3)"/>`;
     if (j < 8) {
       const s = (j + 1) / 9, p0 = bp(s - PFEILER, 0), p1 = bp(s + PFEILER, 0), top = bp(s, 4.8), tl = bp(s - PFEILER, 3.4), tr = bp(s + PFEILER, 3.4);
@@ -892,10 +892,14 @@ const ZB = 12.2, ZP = 13.6;
   let k = "";
   const TP = S.lg("torputz", [[0, "#8a8478"], [.35, "#cfc8ba"], [.72, "#f6f0e2"], [.86, "#fff2d6"], [1, "#d8c4a4"]], 0, 0, 1, 0);
   const SST = "#b4553f", SST_L = "#e08a68";
-  /* Brückenkopf: Sockelmauer aus Sandstein unter dem ganzen Tor */
+  /* Brückenkopf: Sockelmauer aus Sandstein unter dem Tor — Oberkante an den Turmfüßen (folgt der Brückenflucht),
+     senkrechte Stirn mit Lagerfugen bis hinunter zur Kaimauer */
   {
-    const a = gp(...at(-9.5, 2.4), 6), b = gp(...at(10, 2.4), 6), c = gp(...at(10, 2.4), Z0 + .6), d = gp(...at(-9.5, 2.4), Z0 + .6);
-    k += `<path d="${pfad([a, b, c, d])}" fill="${S.lg("torsockel", [[0, "#7c3628"], [1, "#c06a4e"]], 0, 0, 1, 0)}"/><path d="${pfad(Array.from({ length: 8 }, (_, i) => gp(...at(-9.5 + i * 2.8, 2.45), 6 + (Z0 - 5.4) * .5)), false)}" stroke="#5a2418" stroke-width=".18" opacity=".5" fill="none"/>`;
+    const tl = gp(...at(-12, 0), Z0), tr = gp(...at(12, 0), Z0), sk = FOC / tief(...at(0, 0)) * GE, xl = tl[0] - 3.9 * sk, xr = tr[0] + 3.9 * sk;
+    const yt = (x) => tl[1] + (tr[1] - tl[1]) * (x - tl[0]) / (tr[0] - tl[0]), yu = Math.max(gp(...at(-12, 2.4), 6)[1], gp(...at(12, 2.4), 6)[1]) + .4;
+    k += `<path d="M${r(xl)} ${r(yt(xl))} L${r(xr)} ${r(yt(xr))} V${r(yu)} H${r(xl)} Z" fill="${S.lg("torsockel", [[0, "#8a3e2c"], [1, "#b05a42"]], 0, 0, 1, 0)}"/>`;
+    k += `<path d="M${r(xl)} ${r(yt(xl) + 1.4)} L${r(xr)} ${r(yt(xr) + 1.4)} M${r(xl)} ${r(yt(xl) + 2.8)} L${r(xr)} ${r(yt(xr) + 2.8)}" stroke="#5a2418" stroke-width=".18" opacity=".55"/>`;
+    k += `<path d="M${r(xl)} ${r(yt(xl))} L${r(xr)} ${r(yt(xr))}" stroke="#f2b494" stroke-width=".35"/>`;
   }
   const turm = (u, dunkel) => {
     const [e, n] = at(u, 0), f = gp(e, n, Z0), t = gp(e, n, ZT), sk = FOC / tief(e, n) * GE, R = 3.7 * sk, cx = f[0];
@@ -919,9 +923,6 @@ const ZB = 12.2, ZP = 13.6;
     const kn = hz(8.4);
     g += `<circle cx="${r(cx)}" cy="${r(kn - .45)}" r=".5" fill="#e8c35a"/><path d="M${r(cx)} ${r(kn - .9)} V${r(kn - 2.6)}" stroke="#3a4049" stroke-width=".3"/>`;
     g += `<path d="M${r(cx + R - .35)} ${r(t[1] + .8)} V${r(f[1] - 1.6)}" stroke="#ffd9a0" stroke-width=".7" stroke-opacity=".85"/>`;
-    /* langer Abendschatten des Turms nach links über die Fahrbahn */
-    const yb = y(ZB);
-    g += `<path d="M${r(cx - R)} ${r(yb)} H${r(cx + R)} l-10 2.6 H${r(cx - R - 10)} Z" fill="#1d140c" opacity=".2"/>`;
     return { g, haube: [cx, hz(2.4)], w: 2 * R, cx, R, f };
   };
   /* Ostturm (links, weiter weg) */
@@ -930,6 +931,8 @@ const ZB = 12.2, ZP = 13.6;
   /* das Ende der Brückenfahrbahn liegt vor dem Ostturm und führt in die Durchfahrt */
   k += `<path d="${pfad([gp(...at(-3.6, 1.2), ZB), gp(...at(3.6, 1.2), ZB), gp(...at(3.6, 16), ZB), gp(...at(-3.6, 16), ZB)])}" fill="#b9a690"/>`;
   k += `<path d="${pfad([gp(...at(-3.6, 1.2), ZB), gp(...at(-3.6, 16), ZB), gp(...at(-3.6, 16), ZP + .3), gp(...at(-3.6, 1.2), ZP + .3)])}" fill="#a24a37"/>`;
+  /* Schatten der Tortürme liegt auf dem Fahrbahnende (Abendsonne aus Westsüdwest) — nur auf der Fahrbahn */
+  k += `<path d="${pfad([gp(...at(-3.6, 1.2), ZB), gp(...at(3.6, 1.2), ZB), gp(...at(3.6, 7), ZB), gp(...at(-3.6, 11), ZB)])}" fill="#4a3428" opacity=".28"/>`;
   /* Mittelbau: Front zwischen den Türmen, Schieferdach, Durchfahrt mit Spitzbogen und Fallgatternische */
   {
     const fr = (u, z) => gp(...at(u, 1.2), z);
@@ -949,8 +952,6 @@ const ZB = 12.2, ZP = 13.6;
   /* Westturm (rechts, näher) */
   const west = turm(8, false);
   k += west.g;
-  /* Abendschatten der Türme nach links auf die Häuser dahinter */
-  k += `<path d="M${r(ost.cx - ost.R)} ${r(ost.f[1] - 3)} l-7 -2.6 l0 -15 l7 2.6 Z" fill="#1d140c" opacity=".14"/>`;
   /* der Brückenaffe (Bronze) auf Fahrbahnhöhe rechts neben der Durchfahrt, mit Spiegel; daneben zwei Mäuse */
   const A = gp(...at(11.5, 4.4), ZB), sa = FOC / tief(...at(11.5, 4.4)) * GE * 1.5;
   const BR = S.lg("bronze", [[0, "#3e2c18"], [0.5, "#7d5e32"], [1, "#d4ac62"]], 0, 0, 1, 0);

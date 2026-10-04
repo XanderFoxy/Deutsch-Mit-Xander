@@ -251,9 +251,17 @@ S.def(`<g id="${S.id("land")}">${Object.keys(LAND).map((k) => USE("k_" + k)).joi
 {
   let g = "";
   const wl = (lo, la, t, gr = 3, extra = "") => { const [x, y] = P(lo, la); return halo(x, y, t, gr, "#3f7896", "#d6ecf2", `font-style="italic" letter-spacing=".5" ${extra}`, 0.6); };
-  g += wl(-150, 77.5, "N o r d p o l a r m e e r", 3) + wl(10, -63, "S ü d p o l a r m e e r", 3.2) + wl(16, 34.2, "Mittelmeer", 2.2);
+  g += wl(-150, 77.5, "N o r d p o l a r m e e r", 3) + wl(10, -63, "S ü d p o l a r m e e r", 3.2) + wl(4, 38.3, "Mittelmeer", 1.9);
   { const [x, y] = P(-25, 1.2); g += text(x, y, "Äquator", 2.6, "#a8453a", `font-style="italic" letter-spacing=".4"`); }
   { const [x, y] = P(10, -82.5); g += text(x, y, "A N T A R K T I S", 3.4, "#7f98a6", `letter-spacing=".8"`); }
+  S.hinten(g);
+}
+/* Bilderbuch: ein Segelschiff im Südatlantik, ein Wal im Pazifik */
+{
+  let [x, y] = P(-28, -40);
+  let g = `<g transform="translate(${r(x)} ${r(y)})"><path d="M-3.4 -.6 L3.6 -.6 L2.6 .9 L-2.6 .9 Z" fill="#7a5232"/><path d="M-.2 -.6 V-6" stroke="#5a3a22" stroke-width=".3"/><path d="M0 -5.8 Q2.6 -3.6 0 -1.1 Z" fill="#fbf6ea"/><path d="M-.4 -5.4 Q-2.8 -3.4 -.4 -1.2 Z" fill="#efe6d2"/><path d="M-.2 -6 l1.2 .4 l-1.2 .4 Z" fill="#c0392b"/><path d="M-4.2 1.2 q1 -.6 2 0 t2 0 t2 0 t2 0" fill="none" stroke="#fff" stroke-width=".3" opacity=".8"/></g>`;
+  [x, y] = P(-150, -38);
+  g += `<g transform="translate(${r(x)} ${r(y)})"><path d="M-4.2 0 Q-3.6 -2.4 -.4 -2.3 Q2.6 -2.2 3.4 -.4 Q4.4 -.9 5 -2 Q5.2 -.6 4.6 .2 Q2.8 .8 -1.6 .7 Q-3.6 .6 -4.2 0 Z" fill="#5d7f99"/><path d="M-3.8 .1 Q-1 .9 3.4 -.3" fill="none" stroke="#dbe8f0" stroke-width=".35"/><circle cx="-2.8" cy="-.9" r=".25" fill="#1d2b36"/><path d="M-1.6 -2.3 q-.4 -1.2 -1.2 -1.6 M-1.6 -2.3 q.3 -1.3 1.1 -1.6" fill="none" stroke="#e8f4fa" stroke-width=".3"/></g>`;
   S.hinten(g);
 }
 /* Windrose und Kartusche in den Ecken außerhalb des Ovals */
@@ -364,7 +372,7 @@ const ICON = {
     <path d="M-4.6 -4.5 Q-4 -5.6 -2.8 -5.2 Q-1.6 -6.2 -.2 -5.4 Q1.2 -6.3 2.4 -5.3 Q3.8 -5.8 4.2 -4.5 Z" fill="#fff"/><path d="M-6.5 0 L-6 -1.6 L-5.4 -.6" fill="${G.berg}"/>`],
   /* Rio: Christusstatue auf dem Corcovado, daneben der Zuckerhut */
   rio: [11, 10.4, () => `<path d="M-5.5 0 L-1.6 -6.2 L-.6 -6.6 L.6 -6.4 L4 -1.6 L5.5 0 Z" fill="${G.gruen}"/><path d="M3.6 0 Q4.2 -3.6 5 -3.8 Q5.8 -3.4 6 0 Z" fill="#6f8a5c"/>
-    <rect x="-.5" y="-7.3" width="1" height=".7" fill="#d9d3c3"/><path d="M-.4 -7.3 L-.35 -9.4 L.35 -9.4 L.4 -7.3 Z" fill="${G.marmor}"/><path d="M-2.3 -9.3 H2.3" stroke="${G.marmor}" stroke-width=".55" stroke-linecap="round"/><circle cx="0" cy="-9.85" r=".38" fill="#fff"/>`],
+    <rect x="-.6" y="-7.4" width="1.2" height=".8" fill="#d9d3c3"/><path d="M-.55 -7.4 L-.42 -10.2 L.42 -10.2 L.55 -7.4 Z" fill="${G.marmor}" stroke="#9aa1aa" stroke-width=".12"/><path d="M-2.9 -10 H2.9" stroke="#f4f6f8" stroke-width=".75" stroke-linecap="round"/><path d="M-2.9 -9.75 H2.9" stroke="#9aa1aa" stroke-width=".15"/><circle cx="0" cy="-10.75" r=".48" fill="#fff" stroke="#9aa1aa" stroke-width=".1"/>`],
   /* Chichén Itzá: Stufenpyramide El Castillo mit Tempel */
   mexiko: [11, 7.6, () => { let k = ""; for (let i = 0; i < 5; i++) { const w = 10.4 - i * 1.6, y = -i * 1.15; k += `<rect x="${r(-w / 2)}" y="${r(y - 1.15)}" width="${r(w)}" height="1.15" fill="${G.stein}"/><path d="M${r(-w / 2)} ${r(y - 1.15)} H${r(w / 2)}" stroke="#fff" stroke-width=".18" opacity=".7"/>`; } return k + `<rect x="-.9" y="-5.75" width="1.8" height="5.75" fill="#b7aa90"/>${reihe(-0.8, -5.5, 10, 0, 1.6, 0.12, "#8a7d64")}<rect x="-1.5" y="-7.6" width="3" height="1.85" fill="${G.stein}"/><rect x="-.4" y="-7.1" width=".8" height="1.3" fill="#4a3a2a"/>`; }],
   /* Freiheitsstatue mit Fackel und Strahlenkrone */
@@ -460,30 +468,34 @@ function kontinent(id, extra, worte, tipp, mehr = {}) {
 }
 /* Gebirge und Wüsten als weiche Tönung */
 const ton = (lst) => lst.map(([lo, la, rx, ry, w, farbe, a]) => { const [x, y] = P(lo, la); return `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${rx}" ry="${ry}" transform="rotate(${w} ${r(x)} ${r(y)})" fill="${farbe}" opacity="${a}"/>`; }).join("");
-const BERGTON = S.rg("bergton", [[0, "#8b6a3e", 0.55], [1, "#8b6a3e", 0]]), WUESTE = S.rg("wuesteton", [[0, "#fff1c6", 0.8], [1, "#fff1c6", 0]]), WALD = S.rg("waldton", [[0, "#3f7a3a", 0.45], [1, "#3f7a3a", 0]]);
+const BERGTON = S.rg("bergton", [[0, "#8b6a3e", 0.3], [1, "#8b6a3e", 0]]), WUESTE = S.rg("wuesteton", [[0, "#fff1c6", 0.8], [1, "#fff1c6", 0]]), WALD = S.rg("waldton", [[0, "#3f7a3a", 0.45], [1, "#3f7a3a", 0]]);
+/* kleine Bergzeichen auf den großen Gebirgen */
+S.def(`<g id="${S.id("berg")}"><path d="M-1.6 0 L0 -2.2 L1.6 0 Z" fill="#c9b48e"/><path d="M0 -2.2 L1.6 0 H.2 Z" fill="#8f7754"/><path d="M-.5 -1.5 L0 -2.2 L.5 -1.5 L.15 -1.65 L-.15 -1.45 Z" fill="#fff"/></g>`);
+const gebirge = (pts, n, s0 = 1) => { let k = ""; const a = pkt(pts.map((q) => q.join(",")).join(" ")); for (let i = 0; i < n; i++) { const t = i / (n - 1) * (a.length - 1), j = Math.min(a.length - 2, Math.floor(t)), u = t - j; const x = a[j].x + (a[j + 1].x - a[j].x) * u + (rnd() - 0.5) * 1.2, y = a[j].y + (a[j + 1].y - a[j].y) * u + (rnd() - 0.5) * 1.2; k += `<use href="#${S.id("berg")}" transform="translate(${+x.toFixed(2)} ${+y.toFixed(2)}) scale(${+(s0 * (0.8 + rnd() * 0.4)).toFixed(2)})"/>`; } return k; };
 /* Orte als Lupen-Teile eines Kontinents: der Kontinent zeichnet ihre Bilder */
 function orteVon(ids) {
   let k = "";
-  const unter = ids.map((id) => { const b = ortBild(id, 0.9, 3.3), { x0, x1, y0, y1 } = b.box; k += b.k; return Object.assign(wort(id), { x: (x0 + x1) / 2, y: y1, kunst: flaeche(-(x1 - x0) / 2, -(y1 - y0), x1 - x0, y1 - y0, 0.8) }); });
+  const unter = ids.map((id) => { const b = ortBild(id, 1, 3.3), { x0, x1, y0, y1 } = b.box; k += b.k; return Object.assign(wort(id), { x: (x0 + x1) / 2, y: y1, kunst: flaeche(-(x1 - x0) / 2, -(y1 - y0), x1 - x0, y1 - y0, 0.8) }); });
   return { k, unter };
 }
 const knopf = (x, y) => ({ x: x - 16, y: y + 16 });
 {
   const o = orteVon(["san_francisco", "new_york", "mexiko", "rio"]);
   kontinent("amerika", ton([[-112, 45, 5, 14, 25, BERGTON, 0.7], [-70, -25, 2.2, 16, 5, BERGTON, 0.7], [-60, -5, 14, 7, 0, WALD, 0.7]])
-    + kontText(-100, 50, "NORDAMERIKA", 3.4, "#55703a") + kontText(-60, -14, "SÜDAMERIKA", 3, "#55703a", 0.8) + o.k,
+    + gebirge([[-125, 58], [-115, 50], [-110, 42], [-107, 35]], 8, 1.5) + gebirge([[-78, 2], [-76, -10], [-70, -20], [-70, -32], [-72, -45]], 9, 1.3)
+    + kontText(-97, 57.5, "NORDAMERIKA", 3.2, "#55703a", 1) + kontText(-60, -14, "SÜDAMERIKA", 3, "#55703a", 0.8) + o.k,
     { id: "amerika", de: "Amerika", syl: "a-ME-ri-ka", it: "l'America", itSyl: "a-ME-ri-ca", en: "America" }, "Amerika besteht aus Nordamerika und Südamerika.",
     Object.assign(knopf(68, 96), { zoom: { x: 30, y: 42, w: 147, h: 98 }, unter: o.unter }));
 }
 {
   const o = orteVon(["dubai", "indien", "peking", "japan"]);
-  kontinent("asien", ton([[85, 32, 14, 3.4, -8, BERGTON, 0.75], [45, 24, 8, 4, -20, WUESTE, 0.7]]) + kontText(100, 63, "ASIEN", 4.2, "#8a4a30", 2) + o.k,
+  kontinent("asien", ton([[85, 32, 14, 3.4, -8, BERGTON, 0.75], [45, 24, 8, 4, -20, WUESTE, 0.7]]) + gebirge([[80, 34.5], [86, 32.2], [93, 31.2], [99, 31.5]], 6, 1.4) + gebirge([[60, 52], [59.5, 58], [60, 64]], 4, 0.9) + kontText(100, 63, "ASIEN", 4.2, "#8a4a30", 2) + o.k,
     { id: "asien", de: "Asien", syl: "A-si-en", it: "l'Asia", itSyl: "A-sia", en: "Asia" }, "Asien ist der größte Kontinent. Hier wohnen die meisten Menschen.",
     Object.assign(knopf(262, 93), { zoom: { x: 240, y: 26, w: 110, h: 73 }, unter: o.unter }));
 }
 {
   const o = orteVon(["aegypten", "kapstadt"]);
-  kontinent("afrika", ton([[12, 22, 18, 7, 0, WUESTE, 0.9], [22, 0, 9, 5, 0, WALD, 0.6]]) + kontText(18, 6, "AFRIKA", 3.6, "#8a5a28") + o.k,
+  kontinent("afrika", ton([[12, 22, 18, 7, 0, WUESTE, 0.9], [22, 0, 9, 5, 0, WALD, 0.6]]) + gebirge([[-7, 31.2], [-1, 33], [5, 35.2]], 4, 1) + kontText(18, 6, "AFRIKA", 3.6, "#8a5a28") + o.k,
     { id: "afrika", de: "Afrika", syl: "A-fri-ka", it: "l'Africa", itSyl: "A-fri-ca", en: "Africa" }, "In Afrika liegt die Sahara, die größte heiße Wüste der Welt.",
     Object.assign(knopf(176, 106), { zoom: { x: 140, y: 58, w: 145, h: 97 }, unter: o.unter }));
 }

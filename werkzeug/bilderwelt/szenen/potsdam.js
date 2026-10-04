@@ -465,8 +465,8 @@ const G = mensch("G", { id: "pdm_gaert", geschlecht: "m", blick: -62, frisur: "k
   pose: { kipp: 8, lende: 4, brust: 4, nacken: 10, kopf: 6, schulterL: { vor: 34, seit: 8, dreh: 10 }, ellbogenL: 46, unterarmL: 40, handL: 0, fingerL: 0.95,
     schulterR: { vor: 20, seit: 10, dreh: 10 }, ellbogenR: 28, unterarmR: 40, handR: 0, fingerR: 0.95,
     huefteL: { vor: 18, seit: 4, dreh: -6 }, knieL: 14, fussL: 4, huefteR: { vor: -12, seit: 4, dreh: -6 }, knieR: 6, fussR: 0 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "arbeitshose" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kappe", farbe: "gruen_d" } } }, 1.78, 34, 3.4, 2, 0.5);
-bodenSchatten(34, 3.4, 0.5, 1.78, 0.26);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "arbeitshose" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kappe", farbe: "gruen_d" } } }, 1.78, 34, 2.5, 2, 0.5);
+bodenSchatten(34, 2.5, 0.5, 1.78, 0.26);
 /* DIE TOURISTIN fotografiert mit dem Handy (von hinten, etwas schräg) */
 const T = mensch("T", { id: "pdm_tour", geschlecht: "w", blick: 160, frisur: "zopf", haarfarbe: "blond", haut: "hell",
   pose: { lende: 1, brust: -2, nacken: 2, kopf: -6, schulterL: { vor: 62, seit: 12, dreh: 10 }, ellbogenL: 96, unterarmL: 30, handL: 4, fingerL: 0.5,
@@ -777,7 +777,7 @@ S.teil({ id: "paar", de: "das Paar", syl: "PAAR", it: "la coppia", itSyl: "COP-p
    11 — WEGWEISER, SCHUBKARRE, GÄRTNER, TOURISTIN, HANDY, TOURIST, KIND, KARTOFFEL
    ===================================================================== */
 const WW = { D: 24, X: -5.2 };
-const SK = { D: 32, X: 4.7 };
+const SK = { D: 32, X: 4.0 };
 bodenSchatten(WW.D, WW.X, 0.12, 2.7, 0.2);
 bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
 {

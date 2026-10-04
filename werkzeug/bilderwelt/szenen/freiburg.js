@@ -403,7 +403,7 @@ const WEG = [[-96, -75], [51, -75], [52.6, -71], [57.6, -48], [61.4, -30]];
    3 — DAS KIESELMOSAIK (Freiburger Wappen, aus weißen, roten und schwarzen Kieseln gesetzt)
    ===================================================================== */
 {
-  const M = [58.6, -53.4], GR = 1.5;
+  const M = [60, -52.4], GR = 1.5;
   /* Ortskoordinaten: u nach rechts, v in die Tiefe (Meter) */
   /* das Wappen schaut zur Kamera: v zeigt vom Betrachter weg, u quer dazu */
   const LM = Math.hypot(M[0] - CAM[0], M[1] - CAM[1]), VV = [(M[0] - CAM[0]) / LM, (M[1] - CAM[1]) / LM], UU = [VV[1], -VV[0]];
@@ -455,8 +455,8 @@ const TM = {};
   t.push(`<path d="M${r(uhr[0])} ${r(uhr[1])} l${r(ur * .38)} ${r(-ur * .22)} M${r(uhr[0])} ${r(uhr[1])} l${r(-ur * .08)} ${r(-ur * .62)}" stroke="#e8c35a" stroke-width="${r(ur * .13)}" stroke-linecap="round"/>`);
   t.push(RT(-9.2, 45.6, 9.2, 46.8, HELL));
   /* Wetterläufe unter Galerie und Gesimsen */
-  for (const [u0, u1, zt, n] of [[-8, 8, 45.4, 10], [-8, 8, 27, 7]]) { let wl = ""; for (let i = 0; i < n; i++) { const u = u0 + rnd() * (u1 - u0), w = .3 + rnd() * .6, l = 3 + rnd() * 5; wl += `M${r(TX(u))} ${r(TY(zt))}h${r(w * TS)}l${r(-w * .2 * TS)} ${r(l * TS)}h${r(-w * .6 * TS)}Z`; }
-    t.push(`<path d="${wl}" fill="${S.lg("turmlauf", [[0, "#2a2020", .5], [1, "#2a2020", 0]], 0, 0, 0, 1)}"/>`); }
+  for (const [u0, u1, zt, n] of [[-8, 8, 45.4, 10], [-8, 8, 27, 7]]) { let wl = ""; for (let i = 0; i < n; i++) { const u = u0 + rnd() * (u1 - u0), w = .3 + rnd() * 1.2, l = 3 + rnd() * 6; wl += `M${r(TX(u))} ${r(TY(zt))}h${r(w * TS)}l${r(w * .15 * TS)} ${r(l * TS)}h${r(-w * 1.3 * TS)}Z`; }
+    t.push(`<path d="${wl}" fill="${S.lg("turmlauf", [[0, "#2a2020", .25], [.6, "#2a2020", .08], [1, "#2a2020", 0]], 0, 0, 0, 1)}"/>`); }
   /* Sterngalerie (46–49 m): Zwölfeck-Stern mit Maßwerkbrüstung, Fialen an den Spitzen */
   {
     const zz = 46.8, zh = 49.4;
@@ -617,7 +617,7 @@ const TM = {};
   /* gotisches Fenster: n Bahnen mit Kleeblattbögen, oben eine Rose mit Vierpass */
   const fenster = (Y, xm, w, z0, z1, bahnen, steg = "#e0a286") => {
     const zk = z1 - w * .9;
-    let g = `<path d="${poly([[xm - w / 2, Y, z0], ...fbogen(Y, xm, w, zk, z1, true, 8)])}" fill="${S.lg("kirchfenster", [[0, "#4a4656"], [0.5, "#2a2430"], [1, "#1f1a20"]])}"/>`;
+    let g = `<path d="${poly([[xm - w / 2, Y, z0], ...fbogen(Y, xm, w, zk, z1, true, 8), [xm + w / 2, Y, z0]])}" fill="${S.lg("kirchfenster", [[0, "#4a4656"], [0.5, "#2a2430"], [1, "#1f1a20"]])}"/>`;
     const zb = zk - .2, sc = FOC / tief(xm, Y);
     let st = linie(fbogen(Y, xm, w, zk, z1, true, 8)) + " ";
     for (let i = 1; i < bahnen; i++) { const x = xm - w / 2 + i * w / bahnen; st += linie([[x, Y, z0], [x, Y, zb]]) + " "; }
@@ -1048,6 +1048,8 @@ const MS = {};
 {
   const f = fuss(52, -41), s = f.s, x = f.x, y = f.y;
   let k = FERNSTAENDE + schlag(52, -41, 3.2, 2.6, .26);
+  /* Schatten des Marktschirms (Dach in 2,6 m Höhe) */
+  { const c = neben(52, -41, .25, 0), pts = []; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; pts.push([c[0] + Math.cos(a) * 1.6 + SCH[0] * 2.6, c[1] + Math.sin(a) * 1.6 + SCH[1] * 2.6, 0]); } k += wurf(pts, .34); }
   /* Schirmstange (hinter dem Tisch), Tisch mit Tuch */
   k += `<path d="M${r(x + .25 * s)} ${r(y - .3 * s)} V${r(y - 2.5 * s)}" stroke="#d8d2c4" stroke-width="${r(.06 * s)}"/>`;
   k += `<path d="M${r(x - 1.5 * s)} ${r(y)} V${r(y - .8 * s)} H${r(x + 1.5 * s)} V${r(y)}" fill="none" stroke="#5a4a3a" stroke-width="${r(.06 * s)}"/>`;
@@ -1107,8 +1109,6 @@ const MS = {};
   /* Preistafeln */
   k += `<rect x="${r(x - .48 * s)}" y="${r(y - .72 * s)}" width="${r(1 * s)}" height="${r(.28 * s)}" fill="#2a2e2a"/><text x="${r(x + .02 * s)}" y="${r(y - .52 * s)}" font-size="${r(.16 * s)}" text-anchor="middle" fill="#f4f0e2" font-family="Comic Sans MS,cursive">Kirschen 6 €</text>`;
   k += `<rect x="${r(x - 1.52 * s)}" y="${r(y - .72 * s)}" width="${r(.96 * s)}" height="${r(.28 * s)}" fill="#2a2e2a"/><text x="${r(x - 1.04 * s)}" y="${r(y - .53 * s)}" font-size="${r(.125 * s)}" text-anchor="middle" fill="#f4f0e2" font-family="Comic Sans MS,cursive">Spargel 1 kg 12 €</text>`;
-  /* Schatten des Marktschirms (Dach in 2,6 m Höhe) */
-  { const c = neben(52, -41, .25, 0), pts = []; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; pts.push([c[0] + Math.cos(a) * 1.6 + SCH[0] * 2.6, c[1] + Math.sin(a) * 1.6 + SCH[1] * 2.6, 0]); } k = k.replace(FERNSTAENDE, FERNSTAENDE + wurf(pts, .3)); }
   /* großer Marktschirm (orange-weiß) */
   let sch = "";
   const ux = x + .25 * s;
@@ -1219,7 +1219,7 @@ const WS = fuss(48.5, -46.5);
       g += `<ellipse cx="${r(x + .45 * s)}" cy="${r(y - tz * s - .1 * s)}" rx="${r(.32 * s)}" ry="${r(.08 * s)}" fill="#3a3a3a"/><ellipse cx="${r(x + .45 * s)}" cy="${r(y - tz * s - .13 * s)}" rx="${r(.26 * s)}" ry="${r(.05 * s)}" fill="#c8963a"/>`;
       g += br;
       /* Dampf über dem Grill: hell, wird nach oben breiter und verblasst (endet unter der Markise) */
-      { const gx = x - .7 * s, gy = y - tz * s - .3 * s; let d = ""; for (let i = 0; i < 9; i++) { const t = i / 9, rr = (.14 + t * .26) * s; d += `M${r(gx + Math.sin(i * .9) * .14 * s - rr)} ${r(gy - t * 1.05 * s)}a${r(rr)} ${r(rr * .8)} 0 1 0 ${r(2 * rr)} 0a${r(rr)} ${r(rr * .8)} 0 1 0 ${r(-2 * rr)} 0`; }
+      { const gx = x - .7 * s, gy = y - tz * s - .3 * s; let d = ""; for (let i = 0; i < 7; i++) { const t = i / 7, rr = (.13 + t * .2) * s; d += `M${r(gx + Math.sin(i * .9) * .14 * s - rr)} ${r(gy - t * .62 * s)}a${r(rr)} ${r(rr * .8)} 0 1 0 ${r(2 * rr)} 0a${r(rr)} ${r(rr * .8)} 0 1 0 ${r(-2 * rr)} 0`; }
         g += `<path d="${d}" fill="${S.lg("dampf", [[0, "#ffffff", 0], [.5, "#ffffff", .14], [1, "#ffffff", .32]], 0, 0, 0, 1)}"/>`; }
       g += `<rect x="${r(x + 1.55 * s)}" y="${r(y - tz * s - .32 * s)}" width="${r(.08 * s)}" height="${r(.3 * s)}" fill="#e8c23a"/>`;
       g += `<text x="${r(x)}" y="${r(y - tz * s * .45)}" font-size="${r(.24 * s)}" text-anchor="middle" fill="#c8202a" font-family="Arial,sans-serif" font-weight="bold">mit Zwiebeln</text>`;

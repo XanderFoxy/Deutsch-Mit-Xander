@@ -173,8 +173,8 @@ function baum(x, y, h, seed, himmel = "#d3d4cb") {
   S.def(`<g id="${id}">${c.map(([a, b2, rr]) => `<circle cx="${r(a)}" cy="${r(b2)}" r="${r(rr)}"/>`).join("")}</g>`);
   const lage = (dx, dy, f, fill) => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(cy + dy)}) scale(${f}) translate(${r(-x)} ${r(-cy)})"/>`;
   g += `<g filter="url(#${S.id("weich")})">${lage(0, 0, 1, "#2f4a26")}${lage(-kr * 0.06, -kr * 0.06, 0.9, "#4a6c32")}${lage(-kr * 0.16, -kr * 0.16, 0.7, "#7d9e48")}${lage(-kr * 0.24, -kr * 0.26, 0.45, "#a8c26a")}</g>`;
-  /* Astlücken mit Ästen, Himmelslöcher am Rand */
-  for (let i = 0; i < 3; i++) { const a = -Math.PI * (0.15 + z() * 0.7), hx = x + Math.cos(a) * kr * 0.72, hy = cy + Math.sin(a) * kr * 0.62; g += `<path d="M${r(hx - kr * 0.07)} ${r(hy)} q${r(kr * 0.05)} ${r(-kr * 0.07)} ${r(kr * 0.12)} ${r(-kr * 0.01)} q${r(-kr * 0.02)} ${r(kr * 0.07)} ${r(-kr * 0.12)} ${r(kr * 0.01)} Z" fill="${himmel}"/><path d="M${r(hx - kr * 0.06)} ${r(hy + kr * 0.03)} l${r(kr * 0.1)} ${r(-kr * 0.05)}" stroke="#5a4e3e" stroke-width="${r(kr * 0.015)}"/>`; }
+  /* dunkle Astlücken mit Ästen (hinter dem Baum stehen Häuser, also keine Himmelslöcher) */
+  for (let i = 0; i < 3; i++) { const a = -Math.PI * (0.15 + z() * 0.7), hx = x + Math.cos(a) * kr * 0.72, hy = cy + Math.sin(a) * kr * 0.62; g += `<path d="M${r(hx - kr * 0.07)} ${r(hy)} q${r(kr * 0.05)} ${r(-kr * 0.07)} ${r(kr * 0.12)} ${r(-kr * 0.01)} q${r(-kr * 0.02)} ${r(kr * 0.07)} ${r(-kr * 0.12)} ${r(kr * 0.01)} Z" fill="#2f4a26"/><path d="M${r(hx - kr * 0.06)} ${r(hy + kr * 0.03)} l${r(kr * 0.1)} ${r(-kr * 0.05)}" stroke="#6a604e" stroke-width="${r(kr * 0.02)}"/>`; }
   g += `<path d="M${r(x)} ${r(y - h * 0.45)} L${r(x - kr * 0.35)} ${r(cy + kr * 0.25)} M${r(x)} ${r(y - h * 0.48)} L${r(x + kr * 0.3)} ${r(cy + kr * 0.2)}" stroke="#7a705e" stroke-width="${r(h * 0.012)}" opacity=".8"/>`;
   return g;
 }

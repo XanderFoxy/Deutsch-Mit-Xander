@@ -891,14 +891,46 @@ const kleineFigur = (svg) => {
 };
 /* Schlagschatten einer Figur der Höhe h (m) auf dem Pflaster, nach Nordnordosten */
 const figSchatten = (X, Y, h, b = .22) => pfad(poly([[X - b, Y, 0], [X + b, Y, 0], [X + b * .5 + h * .414, Y + h * 1.546, 0], [X - b * .5 + h * .414, Y + h * 1.546, 0]], 1), "#1f2430", ` opacity=".3"`);
-const VORLAGE = {};
-/* Vorlagen auf 4 cm gerundet (die Figuren sind im Bild höchstens 25 E hoch — unsichtbar, spart ein Viertel) */
-const vorlage = (name, spec) => { const m = B.mensch(Object.assign({ id: "hbr_" + name }, spec), 1); S.def(`<g id="${S.id("fig_" + name)}">${kleineFigur(m.svg).replace(/ d="([^"]*)"/g, (q, d) => ` d="${d.replace(/-?\d+/g, (n) => String(Math.round(+n / 4) * 4))}"`)}</g>`); VORLAGE[name] = `#${S.id("fig_" + name)}`; };
-vorlage("frau", { geschlecht: "w", pose: "stehen", blick: 200, frisur: "lang", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "weiss" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "rot" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } });
-vorlage("mann", { geschlecht: "m", pose: "stehen", blick: 170, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel", kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "beige" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } });
-vorlage("zeigerin", { geschlecht: "w", pose: "zeigen", blick: 205, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "rot" } } });
-vorlage("halter", { geschlecht: "m", pose: "halten", blick: 250, frisur: "kurz", haarfarbe: "grau", haut: "hell", alter: "alt", kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "grau" }, jacke: { stueck: "mantel", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } });
+const VORLAGE = {}, VZ = {};
+/* Vorlagen auf ganze Zentimeter gerundet (keine Treppen in der Lupe). Rückansicht: der Hinterkopf ist ganz Haar,
+   nur im Nacken ein schmaler Hautstreifen; langes Haar fällt bis auf die Schultern. Zubehör (Schirm, Handy) in der Hand. */
+const vorlage = (name, spec, extra = {}) => {
+  const m = B.mensch(Object.assign({ id: "hbr_" + name }, spec), 1), z = m.z, [kx, ky] = [z.kopf.x, z.kopf.y];
+  let o = "";
+  if (extra.hinten) {
+    const H = extra.hinten;
+    if (H.lang) o += `<path d="M${r(kx - 10)} ${r(ky - 2)} Q${r(kx - 12)} ${r(ky + 14)} ${r(kx - 9)} ${r(ky + 25)} L${r(kx + 9)} ${r(ky + 25)} Q${r(kx + 12)} ${r(ky + 14)} ${r(kx + 10)} ${r(ky - 2)} Z" fill="${H.farbe}"/>`;
+    else o += `<rect x="${r(kx - 3.6)}" y="${r(ky + 9)}" width="7.2" height="4.4" fill="${H.haut}"/>`;
+    o += `<ellipse cx="${r(kx)}" cy="${r(ky + .6)}" rx="9.8" ry="11.4" fill="${H.farbe}"/><path d="M${r(kx - 6)} ${r(ky - 7)} Q${r(kx - 1)} ${r(ky - 10)} ${r(kx + 5)} ${r(ky - 6)}" stroke="#fff" stroke-width="1.4" fill="none" opacity=".18"/><path d="M${r(kx - 3)} ${r(ky + (H.lang ? 6 : 4))} Q${r(kx)} ${r(ky + (H.lang ? 14 : 9))} ${r(kx + 2)} ${r(ky + (H.lang ? 22 : 10))}" stroke="#000" stroke-width="1" fill="none" opacity=".15"/>`;
+  }
+  const hm = [(z.handL.x + z.handR.x) / 2, (z.handL.y + z.handR.y) / 2];
+  if (extra.schirm) { const [hx, hy] = [z.handR.x, z.handR.y]; o += `<path d="M${r(hx)} ${r(hy + 4)} L${r(hx + 2)} ${r(hy - 44)}" stroke="#2a2a2a" stroke-width="1.4"/><path d="M${r(hx - 16)} ${r(hy - 38)} Q${r(hx + 2)} ${r(hy - 66)} ${r(hx + 20)} ${r(hy - 38)} Q${r(hx + 2)} ${r(hy - 43)} ${r(hx - 16)} ${r(hy - 38)} Z" fill="#d23a30"/><path d="M${r(hx + 2)} ${r(hy - 53)} L${r(hx - 7)} ${r(hy - 40)} M${r(hx + 2)} ${r(hy - 53)} L${r(hx + 11)} ${r(hy - 40)}" stroke="#8e2018" stroke-width=".8" fill="none"/>`; }
+  if (extra.handy) o += `<g transform="translate(${r(hm[0] + 2)} ${r(hm[1] - 7)}) rotate(-12)"><rect x="-3.6" y="-7" width="7.2" height="14" rx="1.2" fill="#1e2226"/><rect x="2" y="-6" width=".9" height="12" fill="#9fb4c8" opacity=".7"/></g>`;
+  VZ[name] = { hand: [hm[0] * m.k, hm[1] * m.k] };
+  const fig = kleineFigur(m.svg).replace(/ d="([^"]*)"/g, (q0, d) => ` d="${d.replace(/-?\d+/g, (n) => String(Math.round(+n / 5) * 5))}"`);
+  S.def(`<g id="${S.id("fig_" + name)}">${o ? fig.replace(/<\/g>$/, `<g transform="scale(${m.k.toFixed(6)})">${o}</g></g>`) : fig}</g>`);
+  VORLAGE[name] = `#${S.id("fig_" + name)}`;
+};
+vorlage("frau", { geschlecht: "w", pose: "stehen", blick: 200, frisur: "lang", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "weiss" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "rot" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, { hinten: { farbe: "#c9a466", lang: true } });
+vorlage("mann", { geschlecht: "m", pose: "stehen", blick: 170, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel", kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "beige" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } }, { hinten: { farbe: "#43302a", haut: "#b98a68" } });
+/* die Touristin hebt den Arm schräg zum Roland hinauf, der Kopf geht leicht in den Nacken */
+vorlage("zeigerin", { geschlecht: "w", blick: 205, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell",
+  pose: { lende: 0, brust: -4, nacken: -6, kopf: -14, schulterL: { vor: 3, seit: 7 }, ellbogenL: 12, unterarmL: 10, handL: 6, fingerL: 0.38, schulterR: { vor: 124, seit: 10, dreh: 0 }, ellbogenR: 4, unterarmR: 0, handR: 4, fingerR: "zeigen", huefteL: { vor: 5, seit: 3, dreh: -6 }, knieL: 5, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
+  kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "rot" } } }, { hinten: { farbe: "#43302a", lang: true } });
+/* der Mann an der Bronze: vorgebeugt, beide Hände nach vorn unten an die goldenen Eselsbeine */
+vorlage("halter", { geschlecht: "m", blick: 250, frisur: "kurz", haarfarbe: "grau", haut: "hell", alter: "alt",
+  pose: { kipp: 6, lende: 6, brust: 4, nacken: 2, kopf: 4, schulterL: { vor: 52, seit: 8 }, ellbogenL: 22, unterarmL: 30, handL: 0, fingerL: 0.6, schulterR: { vor: 48, seit: 9 }, ellbogenR: 24, unterarmR: 30, handR: 0, fingerR: 0.6, huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 6, fussL: 0, huefteR: { vor: -6, seit: 2.5, dreh: -6 }, knieR: 3, fussR: 0 },
+  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "grau" }, jacke: { stueck: "mantel", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } });
 vorlage("kind", { geschlecht: "m", alter: "kind", pose: "laufen", blick: 120, frisur: "kurz", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "gruen" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } });
+/* die Stadtführerin schaut zu ihrer Gruppe und hält den roten Schirm hoch */
+vorlage("fuehrerin", { geschlecht: "w", blick: 15, frisur: "kurz", haarfarbe: "grau", haut: "hell",
+  pose: { lende: 1, brust: -2, nacken: 4, kopf: -4, schulterL: { vor: 3, seit: 7 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.36, schulterR: { vor: 20, seit: 28, dreh: 70 }, ellbogenR: 70, unterarmR: 0, handR: 6, fingerR: 0.8, huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
+  kleidung: { oberteil: { stueck: "bluse", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, jacke: { stueck: "mantel", farbe: "blau" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } }, { schirm: true });
+/* einer fotografiert die Bronze mit dem Handy */
+vorlage("fotograf", { geschlecht: "m", blick: 70, frisur: "kurz", haarfarbe: "schwarz", haut: "dunkel",
+  pose: { lende: 0, brust: -3, nacken: 0, kopf: -2, schulterL: { vor: 78, seit: 6 }, ellbogenL: 74, unterarmL: 10, handL: 4, fingerL: 0.5, schulterR: { vor: 80, seit: 6 }, ellbogenR: 70, unterarmR: 10, handR: 4, fingerR: 0.5, huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
+  kleidung: { oberteil: { stueck: "tshirt", farbe: "weiss" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "gelb" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "kappe", farbe: "blau" } } }, { handy: true });
+vorlage("frau2", { geschlecht: "w", pose: "stehen", blick: 345, frisur: "zopf", haarfarbe: "rot", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "mantel", farbe: "grau" }, schuhe: { stueck: "stiefel", farbe: "braun" }, zubehoer: { stueck: "tasche", farbe: "schwarz" } } });
 /* Fahrrad (Seitenansicht, 1,75 m lang) in Metern um den Fußpunkt */
 const fahrrad = (X, Y, sp) => {
   const p = pr(X, Y, 0), m = mass(X, Y);
@@ -909,11 +941,17 @@ const fahrrad = (X, Y, sp) => {
   return g;
 };
 {
+  /* der Mann an der Bronze: so gestellt, dass seine Hände die goldenen Vorderbeine des Esels umfassen */
+  const fuS = pr(SM.x, SM.y, 0), skS = mass(SM.x, SM.y) / 100;
+  const ziel = [fuS[0] - 31 * .92 * skS, fuS[1] + (-30 - 30 * .92) * skS];
+  const Yh = SM.y - .5;
+  let Xh = SM.x - .9;
+  for (let i = 0; i < 30; i++) { const H = 1.74 * mass(Xh, Yh), hx = pr(Xh, Yh, 0)[0] - VZ.halter.hand[0] * H; Xh += (ziel[0] - hx) / mass(Xh, Yh) * .8; }
   const leute = [   // [Vorlage, x, y, Höhe m, gespiegelt]
-    ["halter", -2.9, 5.4, 1.76, false], ["frau", -4.6, 3.2, 1.68, false], ["mann", -5.6, 1.6, 1.8, true],
-    ["frau", 11.8, -17.2, 1.7, true], ["mann", 13.6, -19, 1.8, false], ["mann", 10.4, -19.8, 1.76, true], ["halter", 14.9, -17.4, 1.74, true],
+    ["halter", Xh, Yh, 1.74, true], ["fotograf", -4.6, 3.4, 1.8, false], ["frau2", -5.7, 2.2, 1.68, false],
+    ["fuehrerin", 11.8, -17.2, 1.7, false], ["mann", 13.6, -19, 1.8, false], ["frau", 10.4, -19.8, 1.7, true], ["halter", 14.9, -17.4, 1.74, true],
     ["mann", 3.6, -31.2, 1.82, true], ["frau", 4.4, -30.4, 1.66, false],
-    ["kind", -1.4, -23.4, 1.3, false], ["frau", 5.5, -27.4, 1.7, true],
+    ["kind", -1.4, -23.4, 1.3, false], ["frau2", 5.5, -27.4, 1.7, true],
   ].sort((a, b) => weit(b[1], b[2]) - weit(a[1], a[2]));
   let sch = "", fig = "";
   for (const [v, X, Y, h, sp] of leute) {
@@ -921,8 +959,6 @@ const fahrrad = (X, Y, sp) => {
     sch += figSchatten(X, Y, h);
     if (X === 5.5) { fig += fahrrad(X + .5, Y + .1, true); sch += figSchatten(X + .5, Y + .1, 1, .3); }
     fig += `<use href="${VORLAGE[v]}" transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(sp ? -H : H).toFixed(4)} ${H.toFixed(4)})"/>`;
-    /* die Stadtführerin hält einen roten Schirm hoch */
-    if (X === 11.8) { const m = mass(X, Y), q = pr(X + .25, Y, 1.25), o = pr(X + .3, Y, 2.35); fig += `<path d="M${P(q)} L${P(o)}" stroke="#2a2a2a" stroke-width="${r(.03 * m * 10) / 10}"/><path d="M${r(o[0] - .1 * m)} ${r(o[1] + .35 * m)} L${r(o[0])} ${r(o[1] - .05 * m)} L${r(o[0] + .1 * m)} ${r(o[1] + .35 * m)} Z" fill="#d23a30"/>`; }
   }
   amBoden(sch);
   S.davor(fig);
