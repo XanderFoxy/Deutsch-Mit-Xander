@@ -603,25 +603,31 @@ function stadel(o) {
   return { g, posten, hp, s };
 }
 
-/* Lärche: schlanker Kegel aus hängenden Zweigbüscheln (Etagen), lichte Krone, Herbstgold; Sonne von links */
+/* Lärche: gerader, durchgehender Stamm, kurze waagrechte Äste mit leicht aufgebogenen Spitzen, Nadeln als weiche Büschel (Tupfen) — licht, mit Himmelslöchern; Sonne von links */
 function laerche(X, D, h, seed, gold) {
-  const z = zufall(seed), [bx, by] = P(X, D, hb(D)), s = F / D, H = h * s, W = h * 0.19 * s;
-  let g = `<path d="M${r(bx - 0.16 * s)} ${r(by)} L${r(bx - 0.04 * s)} ${r(by - H)} L${r(bx + 0.04 * s)} ${r(by - H)} L${r(bx + 0.16 * s)} ${r(by)} Z" fill="${S.lg("stammL", [[0, "#8a6a4a"], [0.4, "#5a3e28"], [1, "#2e2016"]], 0, 0, 1, 0)}"/>`;
-  let dunkel = "", mittel = "", hell = "", zweige = "";
-  const etagen = Math.max(9, Math.round(h * (s > 7 ? 1.15 : 0.8)));
+  const z = zufall(seed), [bx, by] = P(X, D, hb(D)), s = F / D, H = h * s, W = h * 0.2 * s;
+  let g = `<path d="M${r(bx - 0.16 * s)} ${r(by)} L${r(bx - 0.03 * s)} ${r(by - H)} L${r(bx + 0.03 * s)} ${r(by - H)} L${r(bx + 0.16 * s)} ${r(by)} Z" fill="${S.lg("stammL", [[0, "#9a7a58"], [0.4, "#6a4a30"], [1, "#3a281a"]], 0, 0, 1, 0)}"/>`;
+  let aeste = "";
+  const tupf = [[], [], []];
+  const etagen = Math.round(h * 1.5);
   for (let i = 0; i < etagen; i++) {
-    const t = i / (etagen - 1), y = by - H * (0.14 + t * 0.84) + (z() - 0.5) * H * 0.02, w = W * Math.pow(1 - t, 0.85) * (0.6 + z() * 0.65) + 0.1 * s, hh = H * 0.05 * (1.2 - t * 0.5);
+    const t = i / (etagen - 1), y = by - H * (0.2 + t * 0.78);
     for (const sg of [-1, 1]) {
-      if (z() < 0.14 && t < 0.85) continue;
-      const ww = w * (0.7 + z() * 0.45), xe = bx + sg * ww, ye = y + hh * (1.0 + z() * 1.3);
-      const tuft = `M${r(bx)} ${r(y - hh * 0.4)} Q${r(bx + sg * ww * 0.55)} ${r(y - hh * 0.6)} ${r(xe)} ${r(ye)} Q${r(bx + sg * ww * 0.7)} ${r(ye + hh * 0.7)} ${r(bx + sg * ww * 0.3)} ${r(y + hh * 0.75)} Q${r(bx + sg * ww * 0.1)} ${r(y + hh * 0.3)} ${r(bx)} ${r(y + hh * 0.2)} Z`;
-      (sg < 0 ? hell : dunkel) !== null && (sg < 0 ? (mittel += tuft) : (dunkel += tuft));
-      if (sg < 0) hell += `M${r(bx + sg * ww * 0.15)} ${r(y - hh * 0.35)} Q${r(bx + sg * ww * 0.55)} ${r(y - hh * 0.5)} ${r(xe)} ${r(ye)} Q${r(bx + sg * ww * 0.6)} ${r(y + hh * 0.05)} ${r(bx + sg * ww * 0.15)} ${r(y + hh * 0.05)} Z`;
-      zweige += `M${r(bx)} ${r(y)} Q${r(bx + sg * ww * 0.5)} ${r(y - hh * 0.3)} ${r(xe - sg * ww * 0.15)} ${r(ye - hh * 0.2)}`;
+      if (z() < 0.12) continue;
+      const w = (W * Math.pow(1 - t, 0.8) * (0.55 + z() * 0.6) + 0.15 * s), xe = bx + sg * w, ye = y + (z() - 0.3) * 0.25 * s;
+      aeste += `M${r(bx)} ${r(y)} Q${r(bx + sg * w * 0.6)} ${r(y + 0.15 * s)} ${r(xe)} ${r(ye - 0.15 * s)}`;
+      const n = 4 + Math.floor(w / s * 4.5);
+      for (let j = 0; j < n; j++) {
+        const u = (j + 0.5) / n, x = bx + sg * w * u + (z() - 0.5) * 0.25 * s, yy = y + 0.12 * s * Math.sin(u * 3) - u * 0.12 * s + (z() - 0.5) * 0.4 * s;
+        const k = sg < 0 ? (z() < 0.6 ? 2 : 1) : (z() < 0.6 ? 0 : 1);
+        tupf[k].push(`M${r(x)} ${r(yy)}h${r(0.18 * s * (0.6 + z()))}`);
+      }
     }
   }
-  const f = gold ? ["#9a6a1e", "#d49a2c", "#f6cf5a"] : ["#4a6230", "#6f8a40", "#a8bf62"];
-  g += `<path d="${zweige}" stroke="#4a3424" stroke-width="${r(Math.max(0.12, 0.035 * s))}" fill="none"/><path d="${dunkel}" fill="${f[0]}" opacity=".95"/><path d="${mittel}" fill="${f[1]}" opacity=".95"/><path d="${hell}" fill="${f[2]}" opacity=".8"/>`;
+  const f = gold ? ["#a06c1c", "#d8a232", "#f6d266"] : ["#6f8a34", "#a8b84a", "#d8c45a"];
+  const dw = r(Math.max(0.7, 0.3 * s));
+  g += `<path d="${aeste}" stroke="#5a4028" stroke-width="${r(Math.max(0.15, 0.04 * s))}" fill="none"/>`;
+  tupf.forEach((t, i) => { g += `<path d="${t.join("")}" stroke="${f[i]}" stroke-width="${dw}" stroke-linecap="round" fill="none"/>`; });
   return { g, bx, by, s, H };
 }
 

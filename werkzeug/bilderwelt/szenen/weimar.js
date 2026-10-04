@@ -363,13 +363,13 @@ S.teile[S.teile.length - 1].unter = theaterUnter;
 const DD = 18, DU = sk(DD), DY = yG(DD);
 const denkmalUnter = [];
 {
-  bodenSchatten(DD, 0, 4.6, 6.9, 0.3);
+  bodenSchatten(DD, 0, 4.6, 6.9, 0.42);
   let k = "";
   /* Granitsockel in Metern: zwei Stufen, Fußgesims, Würfel mit Inschrift, Kopfgesims */
   S.def(`<pattern id="${S.id("granitkorn")}" patternUnits="userSpaceOnUse" width=".5" height=".4"><circle cx=".08" cy=".08" r=".03" fill="#4d4240"/><circle cx=".33" cy=".25" r=".025" fill="#e6d6cc"/><circle cx=".2" cy=".34" r=".02" fill="#6b4c48"/><circle cx=".42" cy=".06" r=".018" fill="#c9b2a8"/></pattern>`);
-  const GRANIT = S.lg("granit", [[0, "#b8a69c"], [0.45, "#9a8780"], [1, "#6a5a55"]], 0, 0, 1, 0);
-  let p = `<rect x="-2.3" y="-.32" width="4.6" height=".32" fill="#958780"/><rect x="-2.3" y="-.32" width="4.6" height=".06" fill="#cdbfb5"/>`;
-  p += `<rect x="-2.0" y="-.64" width="4" height=".32" fill="#a39389"/><rect x="-2.0" y="-.64" width="4" height=".06" fill="#d2c4ba"/>`;
+  const GRANIT = S.lg("granit", [[0, "#b2aaa6"], [0.45, "#9b8f8c"], [1, "#635a58"]], 0, 0, 1, 0);
+  let p = `<rect x="-2.3" y="-.32" width="4.6" height=".32" fill="#8e8784"/><rect x="-2.3" y="-.32" width="4.6" height=".06" fill="#cdbfb5"/>`;
+  p += `<rect x="-2.0" y="-.64" width="4" height=".32" fill="#9d9592"/><rect x="-2.0" y="-.64" width="4" height=".06" fill="#d2c4ba"/>`;
   /* Fußgesims: Plinthe, Wulst, Kehle */
   p += `<path d="M-1.8 -.64 L-1.8 -.9 L-1.72 -.96 Q-1.62 -1.04 -1.66 -1.12 L-1.52 -1.2 L1.52 -1.2 L1.66 -1.12 Q1.62 -1.04 1.72 -.96 L1.8 -.9 L1.8 -.64 Z" fill="${GRANIT}"/>`;
   /* Würfel */
@@ -381,7 +381,7 @@ const denkmalUnter = [];
   const t = (y, txt) => `<text x="0" y="${y}" font-size=".21" text-anchor="middle" fill="${GOLD}" stroke="#5e4512" stroke-width=".012" font-family="'Times New Roman',Georgia,serif" letter-spacing=".02">${txt}</text>`;
   p += t(-2.42, "DEM DICHTERPAAR") + t(-2.08, "GOETHE UND SCHILLER") + t(-1.74, "DAS VATERLAND");
   /* Schlagschatten des Sockels nach rechts hinten auf die Stufen */
-  p += `<path d="M1.52 -1.2 L2.0 -.9 L2.0 -.64 L2.3 -.32 L2.3 0 L1.9 0 L1.52 -.64 Z" fill="#2e2a40" opacity=".25"/>`;
+  p += `<path d="M1.52 -1.2 L2.0 -.9 L2.0 -.64 L2.3 -.32 L2.3 0 L1.9 0 L1.52 -.64 Z" fill="#2e2a40" opacity=".4"/>`;
   /* bronzene Plinthe mit Kante */
   p += `<path d="M-1.4 -3.4 L1.4 -3.4 L1.34 -3.58 L-1.34 -3.58 Z" fill="#3a3424"/><rect x="-1.36" y="-3.6" width="2.72" height=".05" fill="#a49464"/>`;
   k += `<g transform="scale(${DU.toFixed(5)})">${p}</g>`;
@@ -844,12 +844,12 @@ S.teil({ id: "studentin", de: "die Studentin", syl: "stu-DEN-tin", it: "la stude
   tipp: "Die Studentin liest „Faust“ von Goethe." });
 const TO = mensch("TO", { id: "wmr_tour", geschlecht: "m", blick: -32, frisur: "kurz", haarfarbe: "blond", haut: "hell", laecheln: true,
   pose: { lende: 1, brust: -2, nacken: 6, kopf: 4, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
-    schulterR: { vor: 40, seit: 18, dreh: 20 }, ellbogenR: 110, unterarmR: 40, handR: 10, fingerR: 0.7,
+    schulterR: { vor: 80, seit: 10, dreh: 0 }, ellbogenR: 120, unterarmR: 20, handR: 10, fingerR: 0.7,
     huefteL: { vor: 6, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
   kleidung: { oberteil: { stueck: "tshirt", farbe: "grau" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } }, 1.8, 8.4, 1.6, 2.2, 0.5);
 bodenSchatten(8.4, 1.6, 0.5, 1.8, 0.26);
 S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: TO.x, y: TO.y, kunst: TO.svg,
-  tipp: "Der Tourist isst eine Rostbratwurst. Lecker!" });
+  tipp: "Der Tourist beißt gerade in seine Rostbratwurst. Lecker!" });
 {
   /* Brötchen mit Wurst: die Wurst ragt an beiden Enden weit heraus, Senfstreifen */
   const h = TO.p(TO.m.z.handR);
@@ -858,7 +858,7 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
   g += `<path d="M-3.2 -.2 Q0 1.4 3.2 -.2 L2.9 .6 Q0 2 -2.9 .6 Z" fill="#e2b06a"/>`;
   g += `<path d="M-2.8 -1.15 l.6 -.3 l.6 .3 l.6 -.3 l.6 .3 l.6 -.3 l.6 .3 l.6 -.3 l.6 .3 l.6 -.3" stroke="#e9c13a" stroke-width=".35" fill="none"/>`;
   g += `<path d="M-3.4 -.15 Q0 -1.3 3.4 -.15 Q3 .3 0 .1 Q-3 .3 -3.4 -.15 Z" fill="#d9a35a"/>`;
-  S.teil({ oben: true, id: "broetchen", de: "das Brötchen", syl: "BRÖT-chen", it: "il panino", itSyl: "pa-NI-no", en: "bread roll", x: r(h.x), y: r(h.y - 0.6), kunst: g + flaeche(-6.8, -2, 13.6, 3.8, 0.5),
+  S.teil({ oben: true, id: "broetchen", de: "das Brötchen", syl: "BRÖT-chen", it: "il panino", itSyl: "pa-NI-no", en: "bread roll", x: r(h.x), y: r(h.y - 0.6), kunst: `<g transform="rotate(-14)">${g}</g>` + flaeche(-8, -3, 16, 6, 0.5),
     tipp: "Zur Rostbratwurst gehört ein Brötchen. Die Wurst ist immer länger als das Brötchen." });
 }
 {
@@ -868,7 +868,7 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
   let g = `<path d="M-3.4 -1.6 Q-1.6 -2.2 0 -1.4 Q1.6 -2.2 3.4 -1.6 L3.4 1.8 Q1.6 1.2 0 2 Q-1.6 1.2 -3.4 1.8 Z" fill="#f2c230" stroke="#b88a10" stroke-width=".2"/>`;
   g += `<path d="M-3 -1.3 Q-1.5 -1.8 -.2 -1.2 L-.2 1.6 Q-1.5 1 -3 1.4 Z M3 -1.3 Q1.5 -1.8 .2 -1.2 L.2 1.6 Q1.5 1 3 1.4 Z" fill="#f8f2e2"/>`;
   g += `<path d="M-2.6 -.8 H-.7 M-2.6 -.3 H-.7 M-2.6 .2 H-.9 M.7 -.8 H2.6 M.7 -.3 H2.6 M.7 .2 H2.2" stroke="#8a826e" stroke-width=".15"/>`;
-  S.teil({ oben: true, id: "buch", de: "das Buch", syl: "BUCH", it: "il libro", itSyl: "LI-bro", en: "book", x: r(hx), y: r(hy - 0.4), kunst: g + flaeche(-3.8, -2.6, 7.6, 5, 0.5),
+  S.teil({ oben: true, id: "buch", de: "das Buch", syl: "BUCH", it: "il libro", itSyl: "LI-bro", en: "book", x: r(hx), y: r(hy - 0.4), kunst: `<g transform="scale(1.35)">${g}</g>` + flaeche(-5, -3.4, 10, 6.6, 0.5),
     tipp: "Goethe und Schiller haben in Weimar viele berühmte Bücher geschrieben." });
 }
 {

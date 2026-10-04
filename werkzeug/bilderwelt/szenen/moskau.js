@@ -271,13 +271,13 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
   /* Brusčatka: kleine dunkle Granitquader in Reihen quer zum Platz. Nah als Steinreihen
      (Strich mit Lücken = Fugen), weiter hinten nur noch feine Reihenlinien. */
   let reihen = "";
-  for (let d = 10.75, i = 0; d < 26; d += 0.17, i++) {
-    const y0 = Y(d), y1 = Y(d + 0.17), w = 0.13 * F / d;
+  for (let d = 10.75, i = 0; d < 21; d += 0.2, i++) {
+    const y0 = Y(d), y1 = Y(d + 0.2), w = 0.15 * F / d;
     reihen += `<path d="M0 ${r((y0 + y1) / 2 * 10) / 10}H400" stroke="${["#4f525e", "#575b68", "#4b4e59", "#5c606d"][i % 4]}" stroke-width="${r((y0 - y1) * 0.8 * 100) / 100}" stroke-dasharray="${r(w * 0.86 * 100) / 100} ${r(w * 0.14 * 100) / 100}" stroke-dashoffset="${r(rnd() * w * 100) / 100}"/>`;
   }
   k += `<g pointer-events="none">${reihen}</g>`;
   let q = "";
-  for (let d = 26; d < 220; d *= 1.03) q += `M${r(Math.max(0, X(d, -38)))} ${r(Y(d))} L${r(Math.min(400, X(d, 38)))} ${r(Y(d))}`;
+  for (let d = 21; d < 220; d *= 1.03) q += `M${r(Math.max(0, X(d, -38)))} ${r(Y(d))} L${r(Math.min(400, X(d, 38)))} ${r(Y(d))}`;
   k += `<path d="${q}" stroke="#2f313a" stroke-width=".14" opacity=".45"/>`;
   /* bläulicher Glanz der Granitköpfe zur Sonne (rechts vorn) */
   let gl = "";
@@ -710,8 +710,8 @@ const unterKathedrale = [];
   let k = "";
   const FI = S.lg("fichte", [[0, "#1d3a3c"], [0.6, "#2f5a58"], [1, "#4f7e78"]], 0, 0, 1, 0), FS = S.lg("fs", [[0, "#9fb0cc", 0.6], [0.5, "#fff", 0], [1, "#fff", 0]], 0, 0, 1, 0);
   const baum = (d, h, seed) => {
-    const z = zufall(seed), s = F / d, x = X(d, 34.6), y = Y(d), b = 0.85 + z() * 0.35, neig = ((z() - 0.5) * 4).toFixed(1);
-    let g = `<g transform="translate(${r(x)} ${r(y)}) scale(${(s * b).toFixed(4)} ${s.toFixed(4)}) rotate(${neig})">`;
+    const z = zufall(seed);
+    let g = `<g>`;
     g += `<rect x="-.18" y="-.9" width=".36" height=".9" fill="#3a2a24"/>`;
     /* gelappter Kegel: Astlagen, die unteren breiter, Himmelslücken dazwischen */
     let ast = "", schnee = "";
@@ -728,8 +728,13 @@ const unterKathedrale = [];
     g += `<path d="M0 ${r(-h)} V${r(-h - 0.5)}" stroke="#2f5a58" stroke-width=".18"/></g>`;
     return g;
   };
-  const reihe = [[105.5, 8.4], [112, 11.4], [119, 9.2], [126, 12], [133, 8.8], [140, 11], [147, 9.6]];
-  for (let i = reihe.length - 1; i >= 0; i--) k += baum(reihe[i][0], reihe[i][1], 40 + i);
+  /* drei Baumformen als Symbole (Höhe 10 m), mit <use> in verschiedenen Größen und Neigungen gesetzt */
+  for (let v = 0; v < 3; v++) S.def(`<g id="${S.id("fi" + v)}">${baum(0, 10, 40 + v * 7)}</g>`);
+  const reihe = [[105.5, 8.4, 0], [112, 11.4, 1], [119, 9.2, 2], [126, 12, 0], [133, 8.8, 1], [140, 11, 2], [147, 9.6, 0]];
+  for (let i = reihe.length - 1; i >= 0; i--) {
+    const [d, h, v] = reihe[i], s = F / d * h / 10, x = X(d, 34.6), y = Y(d), b = 0.85 + ((i * 37) % 10) / 25;
+    k += `<use href="#${S.id("fi" + v)}" transform="translate(${r(x)} ${r(y)}) scale(${(s * b).toFixed(4)} ${s.toFixed(4)}) rotate(${((i % 3) - 1) * 1.5})"/>`;
+  }
   S.teil({ id: "fichte", de: "die Fichte", syl: "FICH-te", it: "l'abete rosso", itSyl: "a-BE-te ROS-so", en: "spruce", x: 0, y: 0, kunst: k,
     tipp: "Vor der Kremlmauer stehen Blaufichten. Sie sind auch im Winter grün." });
 }
@@ -1124,7 +1129,7 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
     schulterR: { vor: 70, seit: 0, dreh: -30 }, ellbogenR: 120, unterarmR: 40, handR: 0, fingerR: 0.6, huefteL: { vor: 2, seit: 4 }, knieL: 2, fussL: 0, huefteR: { vor: -4, seit: 4 }, knieR: 4, fussR: 0 };
   const m = B.mensch({ id: "msk_tour", geschlecht: "w", blick: -140, neigung: 3, frisur: "lang", haarfarbe: "hellbraun", haut: "hell", pose,
     kleidung: { jacke: { stueck: "jacke", farbe: "#c0473a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "muetze", farbe: "#efe8dc" }, zubehoer: { stueck: "schal", farbe: "#2f5f95" } } }, r(1.66 * F / d));
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: `<g filter="url(#${S.id("kante")})">${kompaktFein(m)}</g>`,
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: `<g filter="url(#${S.id("kante")})">${kompaktFein(m, m.svg, 1)}</g>`,
     tipp: "Viele Touristen fotografieren die bunten Kuppeln." });
   const hx = x + (m.z.handL.x + m.z.handR.x) / 2 * m.k, hy = y + (m.z.handL.y + m.z.handR.y) / 2 * m.k;
   let k = `<rect x="-3.4" y="-2.2" width="6.8" height="4.4" rx=".8" fill="#22252b"/><path d="M-1.6 -2.2 l.5 -1.1 h2.2 l.5 1.1 Z" fill="#2c3036"/><rect x="-3.4" y="-2.2" width="6.8" height=".8" rx=".4" fill="#4a4f58"/>`;

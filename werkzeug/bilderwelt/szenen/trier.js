@@ -77,6 +77,7 @@ const GOLD = S.lg("gold", [[0, "#fff1b0"], [0.45, "#f0c64a"], [1, "#a8781a"]], 0
 const LAUF = S.lg("lauf", [[0, "#0b0a09", 0.75], [0.6, "#0b0a09", 0.35], [1, "#0b0a09", 0]]);            /* Laufspur, oben dunkel */
 const SCHATTENBAND = S.lg("schband", [[0, "#0b0a09", 0.65], [1, "#0b0a09", 0]]);
 const WASCH = S.lg("wasch", [[0, "#b3aa92", 0.32], [1, "#b3aa92", 0]]);              /* Auswaschung, oben hell */
+const TRICHTER = S.lg("trichter", [[0, "#060505"], [0.55, "#1e1b18"], [1, "#857b69"]]);
 const SSCHATTEN = S.lg("sschat", [[0, "#070606", 0.6], [1, "#070606", 0.15]], 0, 0, 1, 0);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wblur")}" x="-60%" y="-20%" width="220%" height="140%"><feGaussianBlur stdDeviation=".7"/></filter>`);
 
@@ -526,11 +527,13 @@ let PN_UNTER = [];
      die Klammerlöcher sitzen an Ober- und Stoßfuge: ausgebrochene Trichter, oben tief, unten helle Bruchkante */
   {
     const bx0 = X(BLOCK.x - BLOCK.w / 2), bx1 = X(BLOCK.x + BLOCK.w / 2), by0 = Y(BLOCK.h + BLOCK.hh), by1 = Y(BLOCK.h);
-    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" fill="#2c2b29"/><rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" fill="#a9a089" opacity=".12"/>`;
-    k += `<path d="M${r(bx0 - 2)} ${by0} H${r(bx1 + 2)} M${r(bx0 - 2)} ${by1} H${r(bx1 + 2)} M${bx0} ${by0} V${by1} M${bx1} ${by0} V${by1}" stroke="#7a7262" stroke-width=".45"/>`;
-    const trichter = (lx, ly, w) => `<path d="M${r(lx - w)} ${r(ly)} l${r(w * 0.3)} ${r(-w * 0.55)} l${r(w * 0.9)} ${r(-w * 0.1)} l${r(w * 0.7)} ${r(w * 0.45)} l${r(-w * 0.2)} ${r(w * 0.7)} l${r(-w * 0.9)} ${r(w * 0.25)} Z" fill="#070606"/><path d="M${r(lx - w * 0.9)} ${r(ly + w * 0.25)} l${r(w * 0.9)} ${r(w * 0.3)} l${r(w * 0.8)} ${r(-w * 0.3)}" stroke="#a9a089" stroke-width=".4" fill="none"/>`;
+    /* Quader wie seine Nachbarn: etwas hellere Kante oben und links (Licht), tiefe Fuge rundum */
+    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" fill="#3e3b37"/><path d="M${r(bx0 + 0.5)} ${r(by1 - 0.5)} V${r(by0 + 0.5)} H${r(bx1 - 0.5)}" stroke="#8c8476" stroke-width=".5" fill="none" opacity=".7"/>`;
+    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" stroke="#070606" stroke-width=".6" fill="none"/>`;
+    /* Trichter in den Stein: außen ausgebrochen (nach unten heller), innen tief und dunkel */
+    const trichter = (lx, ly, w) => `<path d="M${r(lx - w)} ${r(ly - 0.1 * w)} q${r(0.1 * w)} ${r(-0.6 * w)} ${r(0.8 * w)} ${r(-0.7 * w)} q${r(0.8 * w)} ${r(-0.05 * w)} ${r(1.1 * w)} ${r(0.5 * w)} q${r(0.15 * w)} ${r(0.7 * w)} ${r(-0.7 * w)} ${r(0.95 * w)} q${r(-0.9 * w)} ${r(0.1 * w)} ${r(-1.2 * w)} ${r(-0.75 * w)} Z" fill="${TRICHTER}"/><ellipse cx="${r(lx)}" cy="${r(ly - 0.25 * w)}" rx="${r(0.45 * w)}" ry="${r(0.3 * w)}" fill="#050404"/>`;
     LOCH.x = r(bx1); LOCH.y = r(by0 + (by1 - by0) * 0.45);
-    k += trichter(r(bx0 + (bx1 - bx0) * 0.28), r(by0 + 0.4), 1.0) + trichter(r(bx0 + (bx1 - bx0) * 0.72), r(by0 + 0.3), 0.75) + trichter(LOCH.x, LOCH.y, 1.4);
+    k += trichter(r(bx0 + (bx1 - bx0) * 0.28), r(by0 + 0.9), 0.9) + trichter(r(bx0 + (bx1 - bx0) * 0.7), r(by0 + 0.7), 0.6) + trichter(LOCH.x, LOCH.y, 1.4);
   }
   /* die zwei Durchfahrten: Tunnel, Torhof mit Licht von oben, Bögen der Feldseite, dahinter der Platz */
   for (const cx of [-3.55, 3.55]) {
