@@ -385,7 +385,7 @@ const NN = 14, ABST = (HALB - TREPPE - 1) / NN;
 const terrUnter = [];
 S.def(`<pattern id="${S.id("sprossen")}" patternUnits="userSpaceOnUse" width="1.5" height="1.6"><path d="M0 0 H1.5 M0 0 V1.6" stroke="#eef0e8" stroke-width=".22"/></pattern>`);
 const NISCHE = S.lg("nischeglas", [[0, "#c3d6dc"], [0.3, "#6a877b"], [0.6, "#2f4a37"], [1, "#22362a"]]);
-const MSCH = S.lg("mauersch", [[0, "#2a2030", 0.34], [1, "#2a2030", 0]]);
+const MSCH = S.lg("mauersch", [[0, "#2a2030", 0.5], [0.5, "#2a2030", 0.22], [1, "#2a2030", 0]]);
 const TERRGRAS = S.lg("terrgras", [[0, "#5d7d38"], [1, "#3d5a26"]]);
 {
   let k = "";
@@ -663,7 +663,7 @@ const figur = (u, a) => {
 {
   let k = "";
   for (const p of statuen) {
-    bodenSchatten(p.D, p.X, 1.4, 3.9, 0.22);
+    bodenSchatten(p.D, p.X, 1.4, 3.9, 0.34);
     k += `<g transform="translate(${r(p.x)} ${r(p.y)})">${figur(p.u, p.a)}</g>`;
   }
   const vorne = statuen.filter((p) => p.a === 15)[0];
@@ -765,7 +765,7 @@ const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c
   let k = "";
   for (const o of ORANGEN) {
     const u = sk(o.D), x = xG(o.D, o.X), y = yG(o.D);
-    bodenSchatten(o.D, o.X, 1.1, 3.4, 0.24);
+    bodenSchatten(o.D, o.X, 1.1, 3.4, 0.34);
     let g = "";
     g += `<path d="M-.5 0 L-.55 -.85 L.55 -.85 L.5 0 Z" fill="${KUEBEL}"/>`;
     g += `<path d="M-.5 -.28 H.5 M-.53 -.56 H.53" stroke="#203a28" stroke-width=".04"/>`;
@@ -808,7 +808,7 @@ S.teil({ id: "paar", de: "das Paar", syl: "PAAR", it: "la coppia", itSyl: "COP-p
    11 — WEGWEISER, SCHUBKARRE, GÄRTNER, TOURISTIN, HANDY, TOURIST, KIND, KARTOFFEL
    ===================================================================== */
 const WW = { D: 24, X: -5.2 };
-const SK = { D: 32, X: 4.0 };
+const SK = { D: 32, X: 3.6 };
 bodenSchatten(WW.D, WW.X, 0.12, 2.7, 0.2);
 bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
 {
@@ -843,8 +843,9 @@ bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
   /* Gärtner mit Rechen: Stiel durch beide Fäuste, schräg nach vorn links auf den Boden (1,7 m) */
   const hs = [G.m.z.handL, G.m.z.handR].map((h) => G.p(h));
   const hx = (hs[0].x + hs[1].x) / 2, hy = (hs[0].y + hs[1].y) / 2, gy = G.y + 0.4;
-  const fx = hx - (gy - hy) * 0.9;
-  const top = { x: hx + (hx - fx) * 0.35, y: hy - (gy - hy) * 0.35 };
+  /* steiler Stiel, oben kurz über den Händen – er endet nicht am Kind */
+  const fx = hx - (gy - hy) * 0.72;
+  const top = { x: hx + (hx - fx) * 0.1, y: hy - (gy - hy) * 0.1 };
   let g = `<path d="M${r(top.x - G.x)} ${r(top.y - G.y)} L${r(fx - G.x)} ${r(gy - 0.6 - G.y)}" stroke="#c49a62" stroke-width=".7" stroke-linecap="round"/>`;
   for (const h of hs) g += `<circle cx="${r(h.x - G.x)}" cy="${r(h.y - G.y)}" r=".55" fill="#e2b896"/>`;
   g += `<path d="M${r(fx - 3 - G.x)} ${r(gy - 0.9 - G.y)} L${r(fx + 2.4 - G.x)} ${r(gy - 0.5 - G.y)}" stroke="#4c5054" stroke-width=".7"/>`;
@@ -873,7 +874,7 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
   const h = K.p(K.m.z.handR);
   let g = `<ellipse cx="0" cy="0" rx="2.1" ry="1.55" fill="${S.rg("knolle", [[0, "#ecd09a"], [0.6, "#c49a5c"], [1, "#8e6a3a"]], 0.38, 0.32, 0.75)}" transform="rotate(-18)"/>`;
   g += `<circle cx="-.7" cy="-.3" r=".14" fill="#7a5530"/><circle cx=".8" cy=".25" r=".14" fill="#7a5530"/><circle cx=".1" cy=".7" r=".12" fill="#7a5530"/><path d="M-1.2 -.8 q.7 -.6 1.6 -.5" stroke="#f6e6c2" stroke-width=".3" fill="none" opacity=".75"/>`;
-  S.teil({ oben: true, id: "kartoffel", de: "die Kartoffel", syl: "kar-TOF-fel", it: "la patata", itSyl: "pa-TA-ta", en: "potato", x: r(h.x + 0.6), y: r(h.y - 1), kunst: g + flaeche(-3, -3, 6, 6, 0.6),
+  S.teil({ oben: true, id: "kartoffel", de: "die Kartoffel", syl: "kar-TOF-fel", it: "la patata", itSyl: "pa-TA-ta", en: "potato", x: r(h.x + 0.6), y: r(h.y - 1), kunst: `<g transform="scale(1.2)">${g}</g>` + flaeche(-3.6, -3.6, 7.2, 7.2, 0.6),
     tipp: "Friedrich der Große machte die Kartoffel in Preußen bekannt. Darum legen Besucher Kartoffeln auf sein Grab." });
 }
 

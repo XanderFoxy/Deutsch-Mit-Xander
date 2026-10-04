@@ -977,7 +977,7 @@ const fahrrad = (X, Y, sp) => {
 {
   /* das Kind an der Bronze: links an der Kopfseite des Esels, die Fäuste am goldenen Vorderbein */
   const fuS = pr(SM.x, SM.y, 0), skS = mass(SM.x, SM.y) / 100;
-  const ziel = [fuS[0] - 44 * .92 * skS, fuS[1] + (-30 - 30 * .92) * skS];
+  const ziel = [fuS[0] - 40 * .92 * skS, fuS[1] + (-30 - 30 * .92) * skS];
   const Yh = SM.y - .25, HK = 1.24;
   let Xh = SM.x - .9;
   for (let i = 0; i < 30; i++) { const H = HK * mass(Xh, Yh), hx = pr(Xh, Yh, 0)[0] + VZ.kindhalter.hand[0] * H; Xh += (ziel[0] - hx) / mass(Xh, Yh) * .8; }
