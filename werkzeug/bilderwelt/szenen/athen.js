@@ -456,7 +456,7 @@ const parUnter = [];
   k += `<path d="${L3([e0, n1 + 0.4, zK - 0.15], [e0, 0, zG - 0.25])} ${L3([e0, 0, zG - 0.25], [e0, n0 - 0.4, zK - 0.15])}" stroke="#b58a70" stroke-width=".3"/>`;
   /* nummerierte Marmorblöcke der Restaurierung südlich vor dem Tempel */
   const BLOECKE = [];
-  for (let i = 0; i < 9; i++) for (const [n, z] of [[-24, 150.6], [-28.5, 150.4]]) { const e = -22 + i * 5.6 + (n < -26 ? 2.4 : 0); if (rnd() < 0.15) continue; BLOECKE.push([e, n, z]); }
+  for (let i = 0; i < 9; i++) for (const [n, z] of [[-21.5, 150.6], [-21.5, 151.3], [-21.5, 152]]) { const e = -22 + i * 5.6 + (z > 151 ? 0.4 : 0); if (z > 151.9 && rnd() < 0.5) continue; BLOECKE.push([e, n, z]); }
   for (const [e, n, z] of BLOECKE) {
     const b0 = [[e, n, z], [e + 1.5, n, z], [e + 1.5, n, z + 0.7], [e, n, z + 0.7]], top = [[e, n, z + 0.7], [e + 1.5, n, z + 0.7], [e + 1.5, n + 1, z + 0.7], [e, n + 1, z + 0.7]], west = [[e, n, z], [e, n + 1, z], [e, n + 1, z + 0.7], [e, n, z + 0.7]];
     k += `<path d="${Q(west)}" fill="#fff0d2"/><path d="${Q(b0)}" fill="#ead2b0"/><path d="${Q(top)}" fill="#f6e2c2"/>`;
@@ -469,7 +469,7 @@ const parUnter = [];
   const gp = pr(e0, 0, zK);
   parUnter.push({ id: "giebel", de: "der Giebel", syl: "GIE-bel", it: "il frontone", itSyl: "fron-TO-ne", en: "pediment", x: r(gp[0]), y: r(gp[1]), kunst: flaeche(-21, -(gp[1] - pr(e0, 0, zG)[1]) - 1, 42, gp[1] - pr(e0, 0, zG)[1] + 1),
     tipp: "Im Giebel standen früher große Figuren: der Streit von Athene und Poseidon um die Stadt." });
-  const bl0 = pr(-22, -28.5, 150.4), bl1 = pr(28, -24, 151.3);
+  const bl0 = pr(-22, -21.5, 151.6), bl1 = pr(28, -21.5, 152.7);
   parUnter.push({ id: "marmorblock", de: "der Marmorblock", syl: "MAR-mor-block", it: "il blocco di marmo", itSyl: "BLOC-co di MAR-mo", en: "marble block", x: r((bl0[0] + bl1[0]) / 2), y: r(bl0[1] + 1), kunst: flaeche(-(bl1[0] - bl0[0]) / 2 - 1, -4.2, bl1[0] - bl0[0] + 2, 4.6),
     tipp: "Neben dem Parthenon liegen Hunderte nummerierte Marmorblöcke – wie ein riesiges Puzzle. Seit 1975 wird der Tempel restauriert." });
   const pc = pr(0, -15.45, zB);
