@@ -203,12 +203,12 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   /* Relief: Seitenrücken laufen schräg vom Kamm nach links unten; jeder Rücken hat eine Lichtseite (rechts) und
      daneben eine dunkle Rinne. Weich gezeichnet, schmal am Kamm, breit unten. */
   let rel = "";
-  for (const [x0, l, sd] of [[18, 96, 1], [46, 92, 2], [74, 86, 3], [102, 74, 4], [128, 56, 5]]) {
+  for (const [x0, l, sd] of [[40, 80, 1], [76, 80, 2], [110, 74, 3], [140, 60, 4]]) {
     const z = zufall(sd), y0 = profilY(KAMM_B, x0) + 1.5, pts = [[x0, y0]];
-    for (let i = 1; i <= 5; i++) pts.push([x0 - i * (2.6 + z() * 1.6), y0 + l * i / 5]);
+    for (let i = 1; i <= 5; i++) pts.push([x0 - i * (9 + z() * 3), y0 + l * i / 5 * 0.8]);
     const br = (i) => 0.6 + i * 1.5;
-    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a, b]), ...pts.map(([a, b], i) => [a + br(i) * 1.8, b + 1]).reverse()], true, 0.8)}" fill="#b6d3a6" opacity=".26"/>`;
-    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a - br(i) * 1.2, b + 2]), ...pts.map(([a, b]) => [a - 0.4, b]).reverse()], true, 0.8)}" fill="#1c362c" opacity=".34"/>`;
+    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a, b]), ...pts.map(([a, b], i) => [a + br(i) * 1.2, b + br(i) * 1.6]).reverse()], true, 0.8)}" fill="#b6d3a6" opacity=".22"/>`;
+    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a - br(i) * 0.6, b - br(i) * 1.4]), ...pts.map(([a, b]) => [a - 0.4, b - 0.3]).reverse()], true, 0.8)}" fill="#1c362c" opacity=".28"/>`;
   }
   k += `<g filter="url(#${S.id("weich")})">${rel}</g>`;
   for (const [x, w, h, sd] of [[20, 10, 5, 21], [56, 8, 4, 22], [84, 9, 4.5, 23], [112, 7, 3.6, 24], [34, 7, 3.6, 25]]) k += `<g opacity=".7">${fels(x, profilY(KAMM_B, x) + 8 + sd % 3 * 9, w, h, sd, "#a9b0a5", "#6d7a72", "#4f7560")}</g>`;
@@ -385,6 +385,8 @@ const zeile = (x0, x1, y, hm, seed, dachAnteil = 0.06) => {
     teile.push([x, b, lang]);
     x += b + (z() < 0.4 ? 0.3 * m : 0);
   }
+  /* Stützmauer der Terrasse, auf der die Zeile steht (helle Krone, Schatten darunter) */
+  o += `<path d="M${r(x0 - 1.5)} ${r(y + 0.5)} L${r(x1 + 1.5)} ${r(y + 0.5)} L${r(x1 + 1.5)} ${r(y + 0.5 + 1.3 * m)} L${r(x0 - 1.5)} ${r(y + 0.5 + 1.3 * m)} Z" fill="${S.lg("zeilmauer", [[0, "#ddd5c4"], [1, "#a9a090"]])}"/><path d="M${r(x0 - 1.5)} ${r(y + 0.5 + 1.3 * m)} L${r(x1 + 1.5)} ${r(y + 0.5 + 1.3 * m)}" stroke="#3d4a2c" stroke-width="${r(0.5 * m)}" opacity=".35"/>`;
   /* von der Mitte nach außen zeichnen: die äußeren verdecken die inneren richtig (Fluchtpunkt in der Mitte) */
   teile.sort((p, q) => Math.abs(q[0] + q[1] / 2 - VP[0]) - Math.abs(p[0] + p[1] / 2 - VP[0]));
   teile.reverse();
@@ -399,6 +401,9 @@ const STADT = {};
   const ruecken = [[84, 262], [88, 214], [94, 186], [106, 162], [126, 146], [160, 141], [196, 143], [236, 141], [268, 142], [294, 149], [316, 160], [332, 178], [342, 205], [348, 262]];
   k += `<path d="${glatt(ruecken, true, 0.6)}" fill="${S.lg("ruecken", [[0, "#3f6236"], [0.18, "#5f8645"], [0.5, "#7ea052"], [0.85, "#6d9a48"], [1, "#55813e"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="${glatt(ruecken, true, 0.6)}" fill="${WALDF}" opacity=".8"/>`;
+  /* Sektorflächen: Gras zwischen den Ruinen, etwas trockener als der Platz */
+  k += `<path d="${glatt([[108, 168], [120, 152], [150, 147], [180, 150], [194, 160], [196, 200], [150, 206], [108, 204], [102, 186]], true, 0.6)}" fill="${S.lg("westflaeche", [[0, "#97a868"], [1, "#86a05c"]])}"/>`;
+  k += `<path d="${glatt([[236, 150], [262, 146], [288, 150], [300, 162], [306, 190], [300, 206], [246, 204], [240, 176]], true, 0.6)}" fill="${S.lg("ostflaeche", [[0, "#93a766"], [1, "#82a05a"]])}"/>`;
   /* Westhang: Terrassenbögen wandern nach links unten in die Schlucht */
   const westB = [];
   for (let i = 0; i < 11; i++) westB.push([[132 - i * 3.3, 146 + i * 1.3], [118 - i * 3.6, 165 + i * 2.3], [110 - i * 3.2, 189 + i * 2.6], [106 - i * 2.4, 214 + i * 1.5]]);
@@ -412,7 +417,7 @@ const STADT = {};
   k += haus(190, 147, 5, 1.9, 6, 1.6, "front", true, 1) + haus(219, 147, 5, 1.9, 6, 1.6, "front", true, 1);
   /* --- der HAUPTPLATZ: lange Wiese in drei Stufen --- */
   const platz = [[190, 195], [244, 197], [229, 151], [206, 151]];
-  k += `<path d="${P(platz)}" fill="${S.lg("platz", [[0, "#a3c95e"], [1, "#8ab650"]])}"/>`;
+  k += `<path d="${P(platz)}" fill="${S.lg("platz", [[0, "#94b956"], [1, "#7fa94a"]])}"/>`;
   for (const [ya, yb, xa, xb] of [[180, 181.4, 192.6, 238.6], [166, 167, 197, 234], [157.4, 158, 201, 231.6]]) k += `<path d="M${xa} ${ya} L${xb} ${yb} L${xb} ${yb + 1} L${xa} ${ya + 1} Z" fill="#9b917f"/><path d="M${xa} ${ya} L${xb} ${yb}" stroke="#f1e8d4" stroke-width=".35"/>`;
   k += `<path d="${P(platz)}" fill="${GRAS}"/>`;
   /* --- OSTSEKTOR: Zeilen aneinander gebauter Wohnhäuser, dazwischen schmale Gassen und Höfe --- */

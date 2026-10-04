@@ -296,7 +296,7 @@ const NEBENFLUESSE = {
 };
 
 /* Projizierte Hilfen */
-const ring = (namen) => pkt(namen.map((n) => DE[n]).join(" "));
+const ring = (namen) => pkt(namen.map((n) => DE[n]).join(" ")).filter((q, i, a) => !i || Math.hypot(q.x - a[i - 1].x, q.y - a[i - 1].y) > 0.05);
 
 /* =====================================================================
    KULISSE — Papier, Nachbarländer, Deutschland mit Relief, Grenzen
@@ -387,4 +387,35 @@ const DE_D = weg(ring(DE_RING));
   S.hinten(`<path d="${land}" fill="none" stroke="#fff6e0" stroke-width="1.5" opacity=".7"/><path d="${land}" fill="none" stroke="#7d5f35" stroke-width=".62" stroke-linejoin="round"/>`);
 }
 
+
+/* =====================================================================
+   TEILE — 1: die Meere (eigene Küstenlinie, Inseln als Löcher)
+   ===================================================================== */
+const text = (x, y, t, gr, farbe, extra = "") => `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" text-anchor="middle" fill="${farbe}" font-family="Georgia,'Times New Roman',serif" ${extra}>${t}</text>`;
+const halo = (x, y, t, gr, farbe, hf = "#fbf6e8", extra = "", hb = 0.9) => `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" text-anchor="middle" fill="${farbe}" stroke="${hf}" stroke-width="${hb}" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" ${extra}>${t}</text>`;
+S.def(`<pattern id="${S.id("wellen")}" width="9" height="5" patternUnits="userSpaceOnUse"><path d="M.5 3 q1.1 -1.1 2.2 0 t2.2 0" fill="none" stroke="#fff" stroke-width=".28" opacity=".55"/></pattern>`);
+function meer(id, aussen, inseln, label, tipp, worte) {
+  const d = weg(aussen) + Object.values(inseln).map((t) => weg(t)).join("");
+  S.def(`<clipPath id="${S.id(id + "clip")}"><path d="${d}" clip-rule="evenodd"/></clipPath>`);
+  let k = `<path d="${d}" fill-rule="evenodd" fill="${MEER}"/>`;
+  /* Wasserlinien an der Küste (wie auf alten Karten), nur im Meer */
+  k += `<g clip-path="url(#${S.id(id + "clip")})" fill="none" stroke-linejoin="round"><path d="${d}" stroke="#c8e6ee" stroke-width="7" opacity=".45"/><path d="${d}" stroke="#d9eff4" stroke-width="3.6" opacity=".6"/><path d="${d}" stroke="#7fb6cb" stroke-width=".9" opacity=".35"/><path d="${d}" stroke="#eef9fb" stroke-width="1.6" opacity=".7"/></g>`;
+  k += `<path d="${d}" fill-rule="evenodd" fill="url(#${S.id("wellen")})" opacity=".55"/>`;
+  k += `<path d="${d}" fill="none" stroke="#5b8fa8" stroke-width=".38" stroke-linejoin="round"/>`;
+  k += label;
+  S.teil(Object.assign({ x: 0, y: 0, kunst: k, tipp }, worte));
+}
+meer("nordsee", NORDSEE, INSELN_NORD,
+  (() => { const [x, y] = P(5.2, 54.45); return halo(x, y, "N o r d s e e", 6.2, "#2f6f93", "#cfe6ee", `font-style="italic" letter-spacing=".6"`, 0.6); })(),
+  "Die Nordsee hat Ebbe und Flut. Vor der Küste liegt das Wattenmeer.",
+  { id: "nordsee", de: "die Nordsee", syl: "NORD-see", it: "il Mare del Nord", itSyl: "MA-re del NORD", en: "North Sea" });
+meer("ostsee", OSTSEE, INSELN_OST,
+  (() => { const [x, y] = P(16.4, 54.92); return halo(x, y, "O s t s e e", 6.2, "#2f6f93", "#cfe6ee", `font-style="italic" letter-spacing=".6"`, 0.6); })(),
+  "Die Ostsee ist ein Binnenmeer. Ihr Wasser ist wenig salzig.",
+  { id: "ostsee", de: "die Ostsee", syl: "OST-see", it: "il Mar Baltico", itSyl: "MAR BAL-ti-co", en: "Baltic Sea" });
+
 /*@@TEILE@@*/
+
+
+const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/deutschlandkarte.js"));
+console.log(aus);

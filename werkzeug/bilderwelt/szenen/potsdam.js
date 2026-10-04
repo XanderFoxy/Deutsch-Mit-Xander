@@ -500,21 +500,21 @@ const WEG = S.teil({ id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", it
   for (const s of [-1, 1]) {
     /* Rasenstück zwischen Hauptweg (|X| > 4,4) und dem runden Platz der Fontäne */
     const pts = [];
-    for (let D = 9; D <= ringPt(4.4); D += 4) pts.push([s * 4.4, D]);
+    for (let D = 17; D <= ringPt(4.4); D += 4) pts.push([s * 4.4, D]);
     for (let X = 4.4; X <= RING; X += 2) pts.push([s * X, ringPt(X)]);
-    pts.push([s * 60, FD], [s * 60, 9]);
+    pts.push([s * 60, FD], [s * 60, 17]);
     k += `<path d="M${pts.map(([X, D]) => `${r(kl(xG(D, X)))} ${r(yG(D))}`).join(" L")} Z" fill="${RASEN}"/>`;
     /* Mähstreifen in die Tiefe */
     let st = "";
-    for (const X of [7, 10, 13, 16]) st += `M${r(kl(xG(9.5, s * X)))} ${r(yG(9.5))} L${r(kl(xG(ringPt(X) - 1, s * X)))} ${r(yG(ringPt(X) - 1))} `;
+    for (const X of [7, 10, 13, 16]) st += `M${r(kl(xG(17, s * X)))} ${r(yG(17))} L${r(kl(xG(ringPt(X) - 1, s * X)))} ${r(yG(ringPt(X) - 1))} `;
     k += `<path d="${st}" stroke="#86a855" stroke-width="1.6" opacity=".35" fill="none"/>`;
     /* Blumenrabatte entlang des Weges und Buchskante */
     const rab = [];
-    for (let D = 9; D <= ringPt(4.4) - 0.5; D += 4) rab.push([s * 4.5, D]);
+    for (let D = 17; D <= ringPt(4.4) - 0.5; D += 4) rab.push([s * 4.5, D]);
     const rab2 = rab.map(([X, D]) => [X + s * 1.1, D]).reverse();
     k += `<path d="M${[...rab, ...rab2].map(([X, D]) => `${r(kl(xG(D, X)))} ${r(yG(D))}`).join(" L")} Z" fill="${BLUMEN}"/>`;
     const kante = [];
-    for (let D = 9; D <= ringPt(4.4); D += 4) kante.push([s * 4.4, D]);
+    for (let D = 17; D <= ringPt(4.4); D += 4) kante.push([s * 4.4, D]);
     for (let X = 4.4; X <= 14; X += 2) kante.push([s * X, ringPt(X)]);
     k += `<path d="M${kante.map(([X, D]) => `${r(kl(xG(D, X)))} ${r(yG(D, 0.15))}`).join(" L")}" stroke="#2f5524" stroke-width="1.2" fill="none" stroke-linejoin="round"/>`;
   }
@@ -643,12 +643,12 @@ const figur = (u, a) => {
   S.def(`<clipPath id="${S.id("vorstatue")}"><path clip-rule="evenodd" d="M0 0 H400 V260 H0 Z${loch}"/></clipPath>`);
   S.teil({ id: "fontaene", de: "die Fontäne", syl: "fon-TÄ-ne", it: "la fontana", itSyl: "fon-TA-na", en: "fountain", x: 0, y: 0, kunst: `<g clip-path="url(#${S.id("vorstatue")})">${k}</g>`,
     tipp: "Die Große Fontäne springt bis zu 18 Meter hoch. Zur Zeit von Friedrich dem Großen funktionierte sie noch nicht.",
-    zoom: { x: CX - 45, y: r(yb - H - 12), w: 90, h: 60 },
+    zoom: { x: CX - 66, y: r(yb - H - 9), w: 132, h: 88 },
     unter: [
       { id: "strahl", de: "der Strahl", syl: "STRAHL", it: "il getto", itSyl: "GET-to", en: "jet", x: CX, y: r(yb - 3),
         kunst: flaeche(-2.5, -H + 2, 5, H - 2, 0.5), tipp: "Der Strahl fällt oben auseinander und regnet zurück ins Becken." },
-      { id: "becken", de: "das Becken", syl: "BE-cken", it: "la vasca", itSyl: "VAS-ca", en: "basin", x: r(xG(FD - RB, -9)), y: r(yG(FD - RB + 2, 0)),
-        kunst: flaeche(-24, -6, 48, 7, 0.5), tipp: "Das runde Becken hat Ludwig Persius 1841 gebaut." },
+      { id: "becken", de: "das Becken", syl: "BE-cken", it: "la vasca", itSyl: "VAS-ca", en: "basin", x: CX - 40, y: r(yG(FD - RB)),
+        kunst: flaeche(-24, -6, 30, 7, 0.5), tipp: "Das runde Becken hat Ludwig Persius 1841 gebaut." },
     ] });
 }
 
@@ -790,12 +790,12 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
   }
   /* Rechenspuren auf dem Hauptweg (längs) */
   let sp = "";
-  for (const X of [-3.2, -1.8, -0.4, 1.2, 2.8]) sp += `M${r(xG(52, X))} ${r(yG(52))} L${r(xG(9, X))} ${r(yG(9))} `;
+  for (const X of [-3.2, -1.8, -0.4, 1.2, 2.8]) sp += `M${r(xG(52, X))} ${r(yG(52))} L${r(xG(17, X))} ${r(yG(17))} `;
   k += `<path d="${sp}" stroke="#b6a483" stroke-width=".4" fill="none" opacity=".55"/>`;
   /* Herbstblätter auf dem Kies, nah größer */
   let bl = "";
   const z = zufall(44);
-  for (let i = 0; i < 46; i++) { const D = 10 + z() * 45, X = (z() - 0.5) * 9, x = xG(D, X), y = yG(D) + z(), s2 = 0.18 * sk(D); bl += `<path d="M${r(x)} ${r(y)} q${r(s2 * 0.5)} ${r(-s2 * 0.6)} ${r(s2)} 0 q${r(-s2 * 0.5)} ${r(s2 * 0.4)} ${r(-s2)} 0 Z" fill="${["#c98a2a", "#d9b23a", "#a4642a", "#b8502a"][i % 4]}" transform="rotate(${Math.round(z() * 180)} ${r(x)} ${r(y)})"/>`; }
+  for (let i = 0; i < 46; i++) { const D = 18 + z() * 37, X = (z() - 0.5) * 8.6, x = xG(D, X), y = yG(D) + z(), s2 = 0.18 * sk(D); if (x < 3 || x > 397 || y > 257) continue; bl += `<path d="M${r(x)} ${r(y)} q${r(s2 * 0.5)} ${r(-s2 * 0.6)} ${r(s2)} 0 q${r(-s2 * 0.5)} ${r(s2 * 0.4)} ${r(-s2)} 0 Z" fill="${["#c98a2a", "#d9b23a", "#a4642a", "#b8502a"][i % 4]}" transform="rotate(${Math.round(z() * 180)} ${r(x)} ${r(y)})"/>`; }
   k += bl;
   k += `<g filter="url(#${S.id("schw")})">${schattenListe.join("")}</g>`;
   k += `<rect x="0" y="${r(yG(FD + 30))}" width="400" height="${r(260 - yG(FD + 30))}" fill="${S.lg("kieslicht", [[0, "#000", 0.05], [0.3, "#000", 0], [1, "#fff0d0", 0.12]])}"/>`;
