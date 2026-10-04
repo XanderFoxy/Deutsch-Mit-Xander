@@ -127,10 +127,10 @@ S.def(`<pattern id="${S.id("waldfein")}" width="13" height="9" patternUnits="use
 S.def(`<pattern id="${S.id("gras")}" width="5" height="2.6" patternUnits="userSpaceOnUse"><path d="M.6 2.3l.2-.9M1.9 1.4l-.2-.8M3.2 2.4l.3-1M4.3 1.1l-.25-.8M2.6.6l.1-.5" stroke="#d6e98a" stroke-width=".22" opacity=".45"/><path d="M1.2 2.5l-.1-.7M3.8 2.2l.2-.6" stroke="#2f5420" stroke-width=".25" opacity=".35"/></pattern>`);
 S.def(`<pattern id="${S.id("stroh")}" width="2" height="2.6" patternUnits="userSpaceOnUse"><rect width="2" height="2.6" fill="#b48e4e"/><path d="M.3 0 L.5 2.6 M1.1 0 L1.2 2.6 M1.7 0 L1.6 2.6" stroke="#d9b874" stroke-width=".28"/><path d="M.8 0 L.85 2.6" stroke="#7d5e2c" stroke-width=".22"/></pattern>`);
 const WALD = `url(#${S.id("wald")})`, WALDF = `url(#${S.id("waldfein")})`, GRAS = `url(#${S.id("gras")})`, STROH = `url(#${S.id("stroh")})`;
-const GRANIT_L = S.lg("granitl", [[0, "#e6dccb"], [1, "#cfc3ae"]]);         /* Ost-/Südflächen im Morgenlicht */
-const GRANIT_S = S.lg("granits", [[0, "#9a9387"], [1, "#857e73"]]);         /* Westflächen im Schatten */
-const GRANIT_F = S.lg("granitf", [[0, "#c9bfae"], [1, "#b2a794"]]);         /* Südflächen (zu uns), halb im Licht */
-const INNEN = "#5d564c";
+const GRANIT_L = S.lg("granitl", [[0, "#f2ede2"], [1, "#d9d2c3"]]);         /* Ostflächen im Morgenlicht */
+const GRANIT_S = S.lg("granits", [[0, "#8f8b82"], [1, "#7a766d"]]);         /* Westflächen im Schatten */
+const GRANIT_F = S.lg("granitf", [[0, "#d3cec2"], [1, "#b5afa2"]]);         /* Südflächen (zu uns), streifendes Licht */
+const INNEN = "#46423b";
 const RASEN = S.lg("rasen", [[0, "#9cc35a"], [1, "#78a646"]]);
 const RASEN_D = S.lg("rasend", [[0, "#6f9a42"], [1, "#557f34"]]);
 
@@ -310,138 +310,159 @@ const VP = [CX, HOR];
 const dAusY = (y, tief = 70) => 330 * tief / Math.max(4, y - HOR);
 const hinterPunkt = ([x, y], t, d) => { const f = d / (d + t); return [VP[0] + (x - VP[0]) * f, VP[1] + (y - VP[1]) * f]; };
 /* ein Haus: (x, y) = vorne links unten, b = Breite der Front, h = Wandhöhe (Einheiten), t = Tiefe (m), g = Giebelhöhe,
-   giebel: "front" (Giebel an der Front und hinten) oder "seite" (Giebel an den Seiten), dach: Strohdach */
-const haus = (x, y, b, h, t, g, giebel = "front", dach = false, tueren = 1) => {
-  const d = dAusY(y), m = 330 / d;            /* Einheiten je Meter an dieser Stelle */
+   giebel: "front" (Giebel vorn und hinten) oder "seite" (Giebel an den Seiten), dach: rekonstruiertes Strohdach */
+const haus = (x, y, b, h, t, g, giebel = "front", dach = false, tueren = 1, schattenAn = true) => {
+  const d = dAusY(y), m = 330 / d;
   const A = [x, y], Bp = [x + b, y], A2 = hinterPunkt(A, t, d), B2 = hinterPunkt(Bp, t, d);
   const up = (p, v) => [p[0], p[1] - v];
-  const rechtsSicht = x + b < VP[0] + 6;      /* links vom Fluchtpunkt sieht man die rechte (Ost-)Seite */
+  const rechtsSicht = x + b / 2 < VP[0];
   let o = "";
-  /* hintere Giebelwand (Innenseite) */
-  if (giebel === "front") o += `<path d="${P([up(A2, h), [(A2[0] + B2[0]) / 2, A2[1] - h - g * 0.9], up(B2, h)])}" fill="${GRANIT_F}"/>`;
-  /* Innenraum (dunkel) */
+  /* Schlagschatten nach links auf den Boden (Sonne rechts, etwa 45° hoch) */
+  if (schattenAn) o += `<path d="${P([A, [A[0] - h * 0.9, A[1] - h * 0.12], [A2[0] - h * 0.9, A2[1] - h * 0.12], A2])}" fill="#2a3320" opacity=".28"/>`;
+  if (giebel === "front") o += `<path d="${P([up(A2, h), [(A2[0] + B2[0]) / 2, A2[1] - h - g * 0.92], up(B2, h)])}" fill="#d9cfbc"/>`;
   o += `<path d="${P([up(A, h), up(Bp, h), up(B2, h), up(A2, h)])}" fill="${INNEN}"/>`;
-  /* Seitenwand */
+  /* Innenwand hinten im Licht (sichtbar über die Front hinweg) */
+  o += `<path d="${P([up(A2, h), up(B2, h), up(B2, h * 0.35), up(A2, h * 0.35)])}" fill="#b9ae99" opacity=".75"/>`;
   if (rechtsSicht) o += `<path d="${P([Bp, B2, up(B2, h), up(Bp, h)])}" fill="${GRANIT_L}"/>`;
   else o += `<path d="${P([A, A2, up(A2, h), up(A, h)])}" fill="${GRANIT_S}"/>`;
-  /* Front */
   o += `<path d="${P([A, Bp, up(Bp, h), up(A, h)])}" fill="${GRANIT_F}"/>`;
-  if (giebel === "front") o += `<path d="${P([up(A, h), [x + b / 2, y - h - g], up(Bp, h)])}" fill="${GRANIT_F}"/>`;
+  if (giebel === "front") o += `<path d="${P([up(A, h - 0.05), [x + b / 2, y - h - g], up(Bp, h - 0.05)])}" fill="${GRANIT_F}"/>`;
   else {
     const S1 = rechtsSicht ? Bp : A, S2 = rechtsSicht ? B2 : A2;
-    o += `<path d="${P([up(S1, h), [(S1[0] + S2[0]) / 2, (S1[1] + S2[1]) / 2 - h - g], up(S2, h)])}" fill="${rechtsSicht ? GRANIT_L : GRANIT_S}"/>`;
+    o += `<path d="${P([up(S1, h - 0.05), [(S1[0] + S2[0]) / 2, (S1[1] + S2[1]) / 2 - h - g], up(S2, h - 0.05)])}" fill="${rechtsSicht ? GRANIT_L : GRANIT_S}"/>`;
+    const S3 = rechtsSicht ? A : Bp, S4 = rechtsSicht ? A2 : B2;   /* Giebel der Gegenseite, nur die Spitze ragt über den Innenraum */
+    o += `<path d="${P([up(S3, h), [(S3[0] + S4[0]) / 2, (S3[1] + S4[1]) / 2 - h - g], up(S4, h)])}" fill="#d3c8b3"/>`;
   }
-  /* Mauerkrone hell (Licht von oben rechts) und Steinlagen */
-  o += `<path d="M${r(x)} ${r(y - h)} H${r(x + b)}" stroke="#f3ead8" stroke-width="${r(Math.max(0.18, 0.12 * m))}" opacity=".8"/>`;
-  if (b > 3) for (let i = 1; i < 3; i++) o += `<path d="M${r(x + 0.2)} ${r(y - h * i / 3)} H${r(x + b - 0.2)}" stroke="#8f8576" stroke-width=".12" opacity=".6"/>`;
-  /* trapezförmige Türen / Nischen in der Front */
+  o += `<path d="M${r(x)} ${r(y - h)} H${r(x + b)}" stroke="#fbf4e4" stroke-width="${r(Math.max(0.2, 0.14 * m))}" opacity=".85"/>`;
+  if (b > 3) for (let i = 1; i < 3; i++) o += `<path d="M${r(x + 0.2)} ${r(y - h * i / 3)} H${r(x + b - 0.2)}" stroke="#9a907f" stroke-width=".12" opacity=".55"/>`;
   for (let i = 0; i < tueren; i++) {
     const cx = x + b * (i + 0.5) / tueren, tb = Math.min(b / tueren * 0.42, 0.95 * m), th = Math.min(h * 0.72, 1.9 * m);
-    o += `<path d="M${r(cx - tb / 2)} ${r(y)} L${r(cx - tb * 0.36)} ${r(y - th)} L${r(cx + tb * 0.36)} ${r(y - th)} L${r(cx + tb / 2)} ${r(y)} Z" fill="#3e372f"/>`;
+    o += `<path d="M${r(cx - tb / 2)} ${r(y)} L${r(cx - tb * 0.34)} ${r(y - th)} L${r(cx + tb * 0.34)} ${r(y - th)} L${r(cx + tb / 2)} ${r(y)} Z" fill="#3a332b"/>`;
   }
-  if (dach) {
-    /* Strohdach: First über der Längsachse, rechte Fläche im Licht */
-    const gF = [x + b / 2, y - h - g], gH = [(A2[0] + B2[0]) / 2, A2[1] - h - g * 0.9], ue = 0.35 * m;
-    if (giebel === "front") {
-      o += `<path d="${P([[x - ue, y - h + ue * 0.5], gF, gH, [A2[0] - ue, A2[1] - h + ue * 0.5]])}" fill="${S.lg("strohs", [[0, "#8a6a36"], [1, "#6f5228"]])}"/>`;
-      o += `<path d="${P([[x + b + ue, y - h + ue * 0.5], gF, gH, [B2[0] + ue, B2[1] - h + ue * 0.5]])}" fill="${S.lg("strohl", [[0, "#d8b26a"], [1, "#b48e4e"]])}"/>`;
-      o += `<path d="M${r(x - ue)} ${r(y - h + ue * 0.5)} L${r(gF[0])} ${r(gF[1])} L${r(x + b + ue)} ${r(y - h + ue * 0.5)}" stroke="#5e4520" stroke-width=".25" fill="none"/>`;
+  if (dach && giebel === "front") {
+    const gF = [x + b / 2, y - h - g], gH = [(A2[0] + B2[0]) / 2, A2[1] - h - g * 0.92], ue = 0.35 * m;
+    o += `<path d="${P([[x - ue, y - h + ue * 0.6], gF, gH, [A2[0] - ue, A2[1] - h + ue * 0.6]])}" fill="${S.lg("strohs", [[0, "#8a6a36"], [1, "#6f5228"]])}"/>`;
+    o += `<path d="${P([[x + b + ue, y - h + ue * 0.6], gF, gH, [B2[0] + ue, B2[1] - h + ue * 0.6]])}" fill="${S.lg("strohl", [[0, "#dcb66c"], [1, "#b48e4e"]])}"/>`;
+    o += `<path d="M${r(x - ue)} ${r(y - h + ue * 0.6)} L${r(gF[0])} ${r(gF[1])} L${r(x + b + ue)} ${r(y - h + ue * 0.6)}" stroke="#5e4520" stroke-width=".25" fill="none"/>`;
+  }
+  return o;
+};
+/* Terrassenhang: Bögen (je eine Punktliste, oben/hinten → unten/vorn). Zwischen zwei Bögen liegt eine Stufe.
+   seite = -1: Hang fällt nach links (Mauern zeigen weg, ihr Schatten liegt als Streifen auf der unteren Stufe),
+   seite = +1: Hang fällt nach rechts (die Mauern stehen im Morgenlicht und sind zu sehen) */
+const hang = (boegen, seite, breite = 1.2) => {
+  let o = "";
+  for (let i = 0; i < boegen.length - 1; i++) {
+    const a = boegen[i], bb = boegen[i + 1];
+    o += `<path d="${glatt([...a, ...bb.slice().reverse()], true, 0.5)}" fill="${i % 2 ? "#86ad50" : "#91b958"}"/>`;
+    if (seite < 0) {
+      const sch = a.map(([x, y]) => [x - breite, y]);
+      o += `<path d="${glatt([...a, ...sch.slice().reverse()], true, 0.5)}" fill="#3f5a2c" opacity=".55"/>`;
+      o += `<path d="${glatt(a, false)}" stroke="#e8e0c8" stroke-width=".45" fill="none"/>`;
+    } else {
+      const w = a.map(([x, y]) => [x + breite * 0.9, y + breite * 0.5]);
+      o += `<path d="${glatt([...a, ...w.slice().reverse()], true, 0.5)}" fill="${S.lg("mauerlicht", [[0, "#efe7d4"], [1, "#cdc4ae"]], 0, 0, 1, 0)}"/>`;
+      o += `<path d="${glatt(w, false)}" stroke="#55603a" stroke-width=".4" fill="none" opacity=".6"/>`;
     }
   }
   return o;
 };
-/* Terrassen: Bänder entlang einer Linie (links→rechts), n Stufen nach unten (dy) mit Stützmauer (wand) */
-const terrassen = (linie, n, dy, wand, seed, gras = RASEN) => {
-  const z = zufall(seed); let o = "";
-  for (let i = 0; i < n; i++) {
-    const oben = linie.map(([x, y], j) => [x + i * (linie.length > 1 ? 0 : 0), y + i * dy]);
-    const unten = oben.map(([x, y]) => [x, y + wand]);
-    const naechst = oben.map(([x, y]) => [x, y + dy]);
-    o += `<path d="${glatt([...oben, ...naechst.slice().reverse()], true, 0.6)}" fill="${gras}"/>`;
-    o += `<path d="${glatt([...oben, ...unten.slice().reverse()], true, 0.6)}" fill="${S.lg("terrwand", [[0, "#b8ae9b"], [1, "#8e8576"]])}"/>`;
-    o += `<path d="${glatt(oben, false)}" stroke="#e9e1c8" stroke-width=".35" fill="none" opacity=".8"/>`;
+/* Häuserzeile: aneinander gebaute Häuser (gemeinsame Wände), Giebel meist an den Seiten — das typische Zackenbild */
+const zeile = (x0, x1, y, hm, seed, dachAnteil = 0.06) => {
+  const z = zufall(seed), m = 330 / dAusY(y); let o = "", x = x0;
+  const teile = [];
+  while (x < x1 - 2) {
+    if (z() < 0.12) { x += (2 + z() * 3) * m; continue; }          /* Durchgang / Hof */
+    const lang = z() < 0.7, b = Math.min(x1 - x, (lang ? 9 + z() * 5 : 5 + z() * 1.5) * m);
+    if (b < 2.5 * m) break;
+    teile.push([x, b, lang]);
+    x += b + (z() < 0.4 ? 0.3 * m : 0);
   }
+  /* von der Mitte nach außen zeichnen: die äußeren verdecken die inneren richtig (Fluchtpunkt in der Mitte) */
+  teile.sort((p, q) => Math.abs(q[0] + q[1] / 2 - VP[0]) - Math.abs(p[0] + p[1] / 2 - VP[0]));
+  teile.reverse();
+  for (const [xx, b, lang] of teile.reverse()) o += haus(xx, y + (z() - 0.5) * 0.4, b, (3.3 + z() * 0.9) * m * hm, lang ? 5 + z() : 9 + z() * 3, (2.6 + z() * 0.8) * m, lang ? "seite" : "front", z() < dachAnteil, lang ? (z() < 0.5 ? 2 : 0) : 1);
   return o;
 };
-const STADT = { u: [] };
+const STADT = {};
 {
   let k = "";
   const zl = zufall(77);
-  /* --- Untergrund der Stadt: Sattel mit grünen Flächen und Böschungen --- */
-  const sattel = [[96, 150], [120, 140], [150, 138], [190, 141], [228, 140], [262, 140], [292, 146], [318, 156], [334, 170], [338, 200], [326, 215], [96, 215]];
-  k += `<path d="${glatt(sattel, true, 0.7)}" fill="${S.lg("sattel", [[0, "#8fb05a"], [1, "#6f9447"]])}"/>`;
-  /* Westhang: Terrassen fallen nach links in die Schlucht */
-  k += terrassen([[92, 160], [100, 154], [112, 150], [124, 149]], 7, 6.2, 1.4, 1);
-  /* Osthang: Terrassen fallen nach rechts */
-  k += terrassen([[300, 160], [312, 166], [322, 174], [330, 184]], 5, 6, 1.5, 2);
+  /* --- Bergrücken unter der Stadt: links und rechts fällt er steil in die Schlucht --- */
+  const ruecken = [[78, 232], [96, 186], [110, 160], [128, 146], [160, 141], [196, 143], [236, 141], [268, 142], [296, 150], [318, 162], [334, 180], [344, 205], [340, 232]];
+  k += `<path d="${glatt(ruecken, true, 0.7)}" fill="${S.lg("ruecken", [[0, "#7e9f52"], [1, "#5d8240"]])}"/>`;
+  k += `<path d="${glatt(ruecken, true, 0.7)}" fill="${WALDF}" opacity=".6"/>`;
+  /* Westhang: Terrassenbögen wandern nach links unten in die Schlucht */
+  const westB = [];
+  for (let i = 0; i < 11; i++) westB.push([[132 - i * 3.3, 146 + i * 1.3], [118 - i * 3.6, 165 + i * 2.3], [110 - i * 3.2, 189 + i * 2.6], [106 - i * 2.4, 214 + i * 1.5]]);
+  k += hang(westB, -1, 1.3);
+  /* Osthang: Mauern im Morgenlicht */
+  const ostB = [];
+  for (let i = 0; i < 9; i++) ostB.push([[280 + i * 4.2, 148 + i * 2], [298 + i * 3.6, 164 + i * 2.7], [312 + i * 2.8, 188 + i * 2.3], [318 + i * 2.2, 212 + i * 1.3]]);
+  k += hang(ostB, 1, 1.5);
   /* --- Heiliger Felsen ganz hinten mit zwei Strohdachhäusern (Wayranas) --- */
-  k += `<path d="M196 146 Q200 140.5 208 141 Q214 141.5 216 146 Z" fill="${S.lg("hfels", [[0, "#cfc6b5"], [1, "#9a9182"]], 0, 0, 1, 0)}"/>`;
-  k += haus(186, 147, 5.2, 1.9, 6, 1.5, "front", true, 1) + haus(218, 147, 5.2, 1.9, 6, 1.5, "front", true, 1);
-  /* --- der HAUPTPLATZ: lange Wiese in zwei Stufen, Mitte der Stadt --- */
-  const platz = [[187, 192], [242, 194], [228, 151], [204, 151]];
-  k += `<path d="${P(platz)}" fill="${S.lg("platz", [[0, "#a6cc62"], [1, "#89b44f"]])}"/>`;
-  k += `<path d="M190 176 L237 177.5 M195 162 L232 163" stroke="#8f8576" stroke-width=".9"/><path d="M190 175.4 L237 176.9 M195 161.4 L232 162.4" stroke="#e8dfc9" stroke-width=".4"/>`;
+  k += `<path d="M199 146 Q202 140.6 209 141 Q214 141.6 215.6 146 Z" fill="${S.lg("hfels", [[0, "#8d8577"], [1, "#d6ccb8"]], 0, 0, 1, 0)}"/>`;
+  k += haus(190, 147, 5, 1.9, 6, 1.6, "front", true, 1) + haus(219, 147, 5, 1.9, 6, 1.6, "front", true, 1);
+  /* --- der HAUPTPLATZ: lange Wiese in drei Stufen --- */
+  const platz = [[190, 195], [244, 197], [229, 151], [206, 151]];
+  k += `<path d="${P(platz)}" fill="${S.lg("platz", [[0, "#a3c95e"], [1, "#8ab650"]])}"/>`;
+  for (const [ya, yb, xa, xb] of [[180, 181.4, 192.6, 238.6], [166, 167, 197, 234], [157.4, 158, 201, 231.6]]) k += `<path d="M${xa} ${ya} L${xb} ${yb} L${xb} ${yb + 1} L${xa} ${ya + 1} Z" fill="#9b917f"/><path d="M${xa} ${ya} L${xb} ${yb}" stroke="#f1e8d4" stroke-width=".35"/>`;
   k += `<path d="${P(platz)}" fill="${GRAS}"/>`;
-  STADT.platz = { x: 214, y: 172 };
-  /* --- OSTSEKTOR (rechts): dichte Häuserreihen, nach hinten kleiner --- */
+  /* --- OSTSEKTOR: Zeilen aneinander gebauter Wohnhäuser, dazwischen schmale Gassen und Höfe --- */
   let ost = "";
-  for (let row = 0; row < 7; row++) {
-    const y = 152 + row * 6.4, s = 0.62 + row * 0.07;
-    const x0 = 236 + (6 - row) * 2.2 + 4, x1 = 300 - (6 - row) * 3;
-    for (let x = x0; x < x1; x += (6.4 + zl() * 2.4) * s) {
-      const b = (4.2 + zl() * 2.6) * s;
-      if (x + b > x1) break;
-      ost += haus(x, y + zl() * 0.8, b, (2.6 + zl() * 0.6) * s, 5 + zl() * 3, (1.8 + zl() * 0.8) * s, zl() < 0.6 ? "front" : "seite", zl() < 0.1, b > 3.6 ? 1 : 0);
-    }
+  for (let row = 0; row < 9; row++) {
+    const y = 155 + row * 5.2;
+    ost += zeile(239 + (y - 150) * 0.33, 282 + (y - 150) * 0.66, y, 1, 100 + row);
   }
-  /* --- WESTSEKTOR (links): Intihuatana-Hügel, Tempel, Königsbezirk --- */
+  /* Gruppe der drei Tore (hinten rechts, mit Strohdächern) */
+  ost = haus(247, 150, 4.6, 2.2, 6, 1.8, "front", true, 1) + haus(256, 150.6, 4.6, 2.2, 6, 1.8, "front", true, 1) + haus(265, 151.2, 4.6, 2.2, 6, 1.8, "front", true, 1) + ost;
+  /* --- WESTSEKTOR --- */
   let west = "";
-  /* Intihuatana: Stufenhügel mit vier Terrassenringen und dem Sonnenstein oben */
+  /* Intihuatana: Stufenhügel (hinten links) mit dem Sonnenstein oben */
   for (let i = 0; i < 5; i++) {
-    const w = 26 - i * 5.2, y = 160 - i * 4.4, cx = 160 + i * 0.6;
-    west += `<path d="M${r(cx - w)} ${r(y)} Q${r(cx)} ${r(y + 2)} ${r(cx + w)} ${r(y)} L${r(cx + w * 0.86)} ${r(y - 4.4)} Q${r(cx)} ${r(y - 2.6)} ${r(cx - w * 0.86)} ${r(y - 4.4)} Z" fill="${i % 2 ? "#93b75a" : "#88ad52"}"/>`;
-    west += `<path d="M${r(cx - w)} ${r(y)} Q${r(cx)} ${r(y + 2)} ${r(cx + w)} ${r(y)} L${r(cx + w)} ${r(y + 1.4)} Q${r(cx)} ${r(y + 3.4)} ${r(cx - w)} ${r(y + 1.4)} Z" fill="${S.lg("intimauer", [[0, "#9b9283"], [0.6, "#c9bfac"], [1, "#e2d8c4"]], 0, 0, 1, 0)}"/>`;
+    const w = 22 - i * 4.4, y = 158 - i * 3.8, cx = 158 + i * 0.6;
+    west += `<path d="M${r(cx - w)} ${r(y)} Q${r(cx)} ${r(y + 1.8)} ${r(cx + w)} ${r(y)} L${r(cx + w * 0.84)} ${r(y - 3.8)} Q${r(cx)} ${r(y - 2.2)} ${r(cx - w * 0.84)} ${r(y - 3.8)} Z" fill="${i % 2 ? "#92b759" : "#86ac51"}"/>`;
+    west += `<path d="M${r(cx - w)} ${r(y)} Q${r(cx)} ${r(y + 1.8)} ${r(cx + w)} ${r(y)} L${r(cx + w)} ${r(y + 1.3)} Q${r(cx)} ${r(y + 3.1)} ${r(cx - w)} ${r(y + 1.3)} Z" fill="${S.lg("intimauer", [[0, "#8f8677"], [0.55, "#cfc5b1"], [1, "#efe5d0"]], 0, 0, 1, 0)}"/>`;
   }
-  west += `<path d="M160.6 139.6 l1.2 -2 h1.4 l.7 1.1 l.5 .9 Z" fill="#d8cfbd"/><path d="M162 137.6 l.5 -1.6 h.6 l.3 1.6 Z" fill="#b8ae9b"/>`;
-  STADT.inti = { x: 162, y: 140 };
-  /* Heiliger Platz: Haupttempel und Tempel der drei Fenster (große Blöcke, links des Platzes) */
-  west += haus(170, 172, 9, 3.2, 8, 0, "seite", false, 0) + haus(181, 170, 6.5, 3, 6, 0, "seite", false, 3);
-  /* Häuser am Westrand */
-  for (const [x, y, b, h, gi, d] of [[118, 166, 5.6, 2.8, "front", false], [125, 160, 5, 2.6, "seite", false], [133, 168, 6, 2.9, "front", true], [140, 176, 6.4, 3, "seite", false], [124, 177, 6.2, 3, "front", false], [150, 180, 5.6, 3, "front", false], [160, 186, 6.6, 3.2, "front", true], [132, 188, 7, 3.4, "seite", false], [144, 194, 6.6, 3.4, "front", false], [174, 192, 7.2, 3.4, "front", false]])
-    west += haus(x, y, b, h, 6, 2.2, gi, d, 1);
+  west += `<path d="M158.8 140.2 l1.2 -2.2 h1.6 l.8 1.2 l.5 1 Z" fill="#e1d8c5"/><path d="M160.4 138 l.5 -1.8 h.7 l.3 1.8 Z" fill="#b8ae9b"/>`;
+  /* Steinbruch: Feld aus hellen, rohen Granitblöcken zwischen Westsektor und Platz */
+  for (let i = 0; i < 26; i++) { const x = 182 + zl() * 12, y = 158 + zl() * 14, w = 0.8 + zl() * 1.4; west += `<path d="M${r(x)} ${r(y)} l${r(w * 0.3)} ${r(-w * 0.6)} l${r(w * 0.8)} ${r(-w * 0.1)} l${r(w * 0.4)} ${r(w * 0.6)} Z" fill="${zl() < 0.5 ? "#e8dfcc" : "#b9af9c"}"/>`; }
+  /* Heiliger Platz: Haupttempel und Tempel der drei Fenster */
+  west += haus(166, 170, 9, 3.4, 8, 0, "seite", false, 0) + haus(176.5, 168.4, 6.6, 3.2, 6, 0, "seite", false, 3);
+  /* Wohnhäuser im Westsektor (Zeilen von hinten nach vorn) */
+  for (const [x0, x1, y, sd] of [[118, 150, 162, 201], [114, 162, 173, 202], [110, 150, 184, 203], [168, 188, 184, 204], [104, 140, 196, 205], [168, 184, 198, 206]]) west += zeile(x0, x1, y, 1, sd);
   /* der SONNENTEMPEL (Torreón): halbrunder Turm auf dem Felsen, zwei trapezförmige Fenster, fugenlose Blöcke */
-  const T = { x: 158, y: 196 };
-  let st = `<path d="M${T.x - 7} ${T.y} Q${T.x - 7.5} ${T.y - 6} ${T.x - 2} ${T.y - 7.4} Q${T.x + 4} ${T.y - 8} ${T.x + 7} ${T.y - 5} L${T.x + 8} ${T.y} Z" fill="${S.lg("torreonfels", [[0, "#8d8577"], [1, "#b9af9c"]], 0, 0, 1, 0)}"/>`;
-  st += `<path d="M${T.x - 5} ${T.y - 6.4} L${T.x - 5} ${T.y - 12} Q${T.x + 0.5} ${T.y - 14.4} ${T.x + 6} ${T.y - 12} L${T.x + 6} ${T.y - 5.2} Q${T.x + 0.5} ${T.y - 7.6} ${T.x - 5} ${T.y - 6.4} Z" fill="${S.lg("torreon", [[0, "#9f9686"], [0.45, "#e2d8c4"], [0.8, "#f1e8d4"], [1, "#d8cdb6"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 1; i < 6; i++) { const yy = T.y - 6.6 - i * 1.0; st += `<path d="M${T.x - 5} ${r(yy + (i * 0.02))} Q${T.x + 0.5} ${r(yy - 2.3)} ${T.x + 6} ${r(yy + 0.2)}" stroke="#a69c8a" stroke-width=".13" fill="none"/>`; }
-  for (const [x0, x1] of [[-1.2, -0.2], [2.4, 3.3]]) st += `<path d="M${r(T.x + x0)} ${r(T.y - 9.2)} L${r(T.x + x0 + 0.15)} ${r(T.y - 11)} L${r(T.x + x1 - 0.15)} ${r(T.y - 11.1)} L${r(T.x + x1)} ${r(T.y - 9.3)} Z" fill="#4a4238"/>`;
-  st += `<path d="M${T.x - 5} ${T.y - 12} Q${T.x + 0.5} ${T.y - 14.4} ${T.x + 6} ${T.y - 12}" stroke="#fbf3e2" stroke-width=".3" fill="none"/>`;
-  /* Königsbezirk daneben */
-  st += haus(T.x + 8, T.y - 1, 7, 3.4, 6, 2.4, "front", false, 1);
-  STADT.sonne = { x: T.x + 0.5, y: T.y - 10, k: st };
-  /* Hauptstraße/Treppe zwischen Platz und Westsektor */
-  west += `<path d="M184 196 L196 152 L198 152 L187.6 196 Z" fill="#cfc4ae"/>`;
-  for (let i = 0; i < 16; i++) { const t = i / 16; west += `<path d="M${r(184 + 12 * t)} ${r(196 - 44 * t)} h${r(3.6 - 1.6 * t)}" stroke="#8f8576" stroke-width=".18"/>`; }
-  /* Graben und Stadtmauer vorne (trennt Stadt und Landwirtschaft) */
-  const graben = `<path d="M100 206 Q190 198 330 208 L330 212 Q190 203 100 211 Z" fill="#5e6b45" opacity=".6"/><path d="M100 205.4 Q190 197.4 330 207.4" stroke="#d9cfbb" stroke-width=".7" fill="none"/>`;
+  const T = { x: 154, y: 199 };
+  let st = `<path d="M${T.x - 8} ${T.y} Q${T.x - 8.4} ${T.y - 6} ${T.x - 2} ${T.y - 7.6} Q${T.x + 4} ${T.y - 8.2} ${T.x + 8} ${T.y - 5} L${T.x + 9} ${T.y} Z" fill="${S.lg("torreonfels", [[0, "#857d70"], [1, "#c4baa6"]], 0, 0, 1, 0)}"/>`;
+  st += `<path d="M${T.x - 5.6} ${T.y - 6.4} L${T.x - 5.6} ${T.y - 12.4} Q${T.x + 0.4} ${T.y - 15} ${T.x + 6.4} ${T.y - 12.4} L${T.x + 6.4} ${T.y - 5.4} Q${T.x + 0.4} ${T.y - 8} ${T.x - 5.6} ${T.y - 6.4} Z" fill="${S.lg("torreon", [[0, "#9a9182"], [0.45, "#e2d8c4"], [0.8, "#f6eedb"], [1, "#ddd2bb"]], 0, 0, 1, 0)}"/>`;
+  for (let i = 1; i < 6; i++) { const yy = T.y - 6.6 - i * 1.0; st += `<path d="M${T.x - 5.6} ${r(yy)} Q${T.x + 0.4} ${r(yy - 2.5)} ${T.x + 6.4} ${r(yy + 0.2)}" stroke="#a69c8a" stroke-width=".13" fill="none"/>`; }
+  for (const [x0, x1] of [[-1.4, -0.3], [2.4, 3.4]]) st += `<path d="M${r(T.x + x0)} ${r(T.y - 9.4)} L${r(T.x + x0 + 0.16)} ${r(T.y - 11.3)} L${r(T.x + x1 - 0.16)} ${r(T.y - 11.4)} L${r(T.x + x1)} ${r(T.y - 9.5)} Z" fill="#40392f"/>`;
+  st += `<path d="M${T.x - 5.6} ${T.y - 12.4} Q${T.x + 0.4} ${T.y - 15} ${T.x + 6.4} ${T.y - 12.4}" stroke="#fffaf0" stroke-width=".35" fill="none"/>`;
+  st += haus(T.x + 9, T.y - 0.6, 7.4, 3.6, 6, 2.6, "front", false, 1) + haus(T.x - 16, T.y + 1.4, 7.4, 3.8, 6, 2.8, "seite", false, 1);
+  STADT.sonne = { x: T.x + 0.4, y: T.y - 10 };
+  /* Treppe zwischen Westsektor und Platz */
+  west += `<path d="M186 199 L198 153 L200.4 153 L190 199 Z" fill="#d6ccb6"/>`;
+  for (let i = 0; i < 18; i++) { const t = i / 18; west += `<path d="M${r(186 + 12 * t)} ${r(199 - 46 * t)} h${r(4 - 1.6 * t)}" stroke="#8f8576" stroke-width=".16"/>`; }
+  /* Graben und Mauer vorn (trennt Stadt und Landwirtschaft) */
+  const graben = `<path d="M100 214 Q150 206 200 206.6 Q260 207.4 330 214 L330 216.4 Q260 210 200 209.2 Q150 208.6 100 216.6 Z" fill="#3f4d30" opacity=".55"/>`;
   k += west + ost + st + graben;
   STADT.k = k;
 }
 /* Lupen-Teile der Stadt: Zeichnung malt die Stadt mit, hier nur Fangflächen */
 {
-  const zoom = { x: 130, y: 146, w: 108, h: 70 };
+  const zoom = { x: 112, y: 138, w: 120, h: 78 };
   const unter = [];
   unter.push({ id: "sonnentempel", de: "der Sonnentempel", syl: "SON-nen-tem-pel", it: "il Tempio del Sole", itSyl: "TEM-pio del SO-le", en: "Temple of the Sun",
-    x: STADT.sonne.x, y: STADT.sonne.y, kunst: flaeche(-6, -5, 13, 13),
+    x: STADT.sonne.x, y: STADT.sonne.y, kunst: flaeche(-7, -5, 15, 15),
     tipp: "Der Sonnentempel ist halbrund. Seine Steine passen so genau, dass kein Messer dazwischenpasst – ganz ohne Mörtel." });
   unter.push({ id: "hauptplatz", de: "der Hauptplatz", syl: "HAUPT-platz", it: "la piazza principale", itSyl: "PIAZ-za prin-ci-PA-le", en: "main square",
     x: 214, y: 172, kunst: `<path d="M-25 20 L26 22 L14 -19 L-8 -19 Z" class="bw-flaeche" fill="rgba(255,255,255,0.001)"/>`,
     tipp: "Der große, grüne Platz teilt die Stadt in zwei Hälften: oben die Tempel, unten die Wohnhäuser." });
   unter.push({ id: "sonnenstein", de: "der Sonnenstein", syl: "SON-nen-stein", it: "l'Intihuatana", itSyl: "in-ti-hua-TA-na", en: "Intihuatana stone",
-    x: 162, y: 140, kunst: flaeche(-4, -4, 8, 6),
+    x: 160, y: 140, kunst: flaeche(-4, -4, 8, 6),
     tipp: "Oben auf dem Hügel steht der Intihuatana, der „Ort, an dem die Sonne angebunden wird“." });
   unter.push({ id: "haus", de: "das Haus", syl: "HAUS", it: "la casa", itSyl: "CA-sa", en: "house",
-    x: 166, y: 188, kunst: flaeche(-6, -6, 12, 9),
+    x: 125, y: 182, kunst: flaeche(-6, -7, 12, 10),
     tipp: "Die Dächer waren aus Stroh und sind verfallen. Die spitzen Giebel aus Stein stehen noch." });
   S.teil({ id: "ruinenstadt", de: "die Ruinenstadt", syl: "ru-I-nen-stadt", it: "la città in rovina", itSyl: "cit-TÀ in ro-VI-na", en: "ruined city", x: 214, y: 175,
     kunst: um(214, 175, STADT.k), zoom, unter,

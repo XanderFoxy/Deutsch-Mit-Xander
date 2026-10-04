@@ -199,7 +199,7 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
   k += `<path d="${lin}" stroke="#35323a" stroke-width=".22" opacity=".45"/>`;
   let q = "";
   for (let d = 11; d < 200; d *= 1.045) q += `M${r(Math.max(0, X(d, -38)))} ${r(Y(d))} L${r(Math.min(400, X(d, 38)))} ${r(Y(d))}`;
-  k += `<path d="${q}" stroke="#2f2c33" stroke-width=".18" opacity=".5"/>`;
+  k += `<path d="${q}" stroke="#2f2c33" stroke-width=".13" opacity=".32"/>`;
   /* die hellen Steinbänder des Platzes (alle 12 m) */
   let hb = "";
   for (const d of [12, 24, 36, 48, 60, 72, 84, 96, 108, 132, 156, 180]) hb += `M${r(Math.max(0, X(d, -38)))} ${r(Y(d))} L${r(Math.min(400, X(d, 38)))} ${r(Y(d))}`;
@@ -807,7 +807,7 @@ const STAND = { d: 21, l0: -6.9, l1: -3.7, theke: 1.05 };
    10 — DIE VERKÄUFERIN (hinter der Theke, buntes Kopftuch)
    ===================================================================== */
 {
-  const d = 22.2, l = -5.6, x = r(X(d, l)), y = r(Y(d));
+  const d = 22.2, l = -5.35, x = r(X(d, l)), y = r(Y(d));
   const m = B.mensch({ id: "msk_verk", geschlecht: "w", blick: 38, neigung: 3, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true, pose: "servieren",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#e9e1cf" }, jacke: { stueck: "weste", farbe: "#6a2a2a" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kopftuch", farbe: "#b8272a" } } }, r(1.64 * F / d));
   const theke = Y(STAND.d, STAND.theke) - y;
@@ -836,16 +836,16 @@ let KUNDE_HAND = null;
   const m = B.mensch({ id: "msk_kunde", geschlecht: "m", blick: -62, neigung: 3, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true, pose,
     kleidung: { jacke: { stueck: "mantel", farbe: "#2e3a4c" }, unterteil: { stueck: "hose", farbe: "#3a3a40" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "#c8402c" } } }, r(1.8 * F / d));
   /* Uschanka: Fellmütze mit hochgebundenen Ohrenklappen (in Figur-Zentimetern) */
-  const hx = m.z.kopf.x, hy = m.z.kopf.y;
+  const hx = m.z.kopf.x, hy = m.z.kopf.y - 3.5;
   const FELL = S.lg("fell", [[0, "#3a2a20"], [0.5, "#6b4a32"], [1, "#8a6444"]], 0, 0, 1, 0);
   let hut = `<path d="M${r(hx - 12)} ${r(hy - 4)} Q${r(hx - 12)} ${r(hy - 19)} ${r(hx)} ${r(hy - 19.5)} Q${r(hx + 12)} ${r(hy - 19)} ${r(hx + 12)} ${r(hy - 4)} Z" fill="${FELL}"/>`;
   hut += `<path d="M${r(hx - 13)} ${r(hy - 2)} Q${r(hx - 14)} ${r(hy - 9)} ${r(hx - 11)} ${r(hy - 12)} L${r(hx - 8.5)} ${r(hy - 6)} Z" fill="#5a3e2a"/>`;
   hut += `<path d="M${r(hx - 12.5)} ${r(hy - 5)} Q${r(hx)} ${r(hy - 9.5)} ${r(hx + 12.5)} ${r(hy - 5)} L${r(hx + 12.5)} ${r(hy - 9.5)} Q${r(hx)} ${r(hy - 14)} ${r(hx - 12.5)} ${r(hy - 9.5)} Z" fill="#7a5638"/>`;
   let haar = "";
-  for (let i = 0; i < 26; i++) { const a = rnd() * 2 - 1, b = rnd(); haar += `M${r(hx + a * 11)} ${r(hy - 6 - b * 12)} l${r(0.8 + rnd())} ${r(-1 - rnd())}`; }
-  hut += `<path d="${haar}" stroke="#a07a54" stroke-width=".8" opacity=".6"/>`;
+  for (let i = 0; i < 26; i++) { const a = rnd() * 2 - 1, b = rnd(); haar += `M${r(hx + a * 11)} ${r(hy - 6 - b * 12)} l${r(0.5 + rnd() * 0.5)} ${r(-0.8 - rnd() * 0.6)}`; }
+  hut += `<path d="${haar}" stroke="#a07a54" stroke-width=".6" opacity=".45"/>`;
   hut += `<path d="M${r(hx - 9)} ${r(hy - 16)} Q${r(hx + 2)} ${r(hy - 20)} ${r(hx + 10)} ${r(hy - 12)}" stroke="#b08a60" stroke-width="1.4" opacity=".6" fill="none"/>`;
-  hut += `<path d="M${r(hx - 8)} ${r(hy - 19)} Q${r(hx - 9)} ${r(hy - 22.5)} ${r(hx - 6)} ${r(hy - 22.5)} M${r(hx + 6)} ${r(hy - 19)} Q${r(hx + 7)} ${r(hy - 22.5)} ${r(hx + 4)} ${r(hy - 22.5)}" stroke="#3a2a20" stroke-width=".8" fill="none"/>`;
+  hut += `<path d="M${r(hx - 3)} ${r(hy - 19.2)} q3 1.4 6 0" stroke="#3a2a20" stroke-width=".7" fill="none"/>`;
   KUNDE_HAND = { x: x + m.z.handR.x * m.k, y: y + m.z.handR.y * m.k };
   const hutP = { x: r(x + hx * m.k), y: r(y + (hy - 11) * m.k) };
   S.teil({ id: "kunde", de: "der Kunde", syl: "KUN-de", it: "il cliente", itSyl: "cli-EN-te", en: "customer", x, y,
@@ -894,7 +894,7 @@ const THEKE_Y = (l) => Y(STAND.d + 0.15, STAND.theke + 0.03);
 }
 {
   /* Pelmeni: Schale mit Teigtaschen und einem Klecks Schmand */
-  const l = -5.1, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
+  const l = -5.95, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
   let k = `<g transform="scale(${s.toFixed(4)})">`;
   k += `<path d="M-.11 -.06 Q-.1 0 0 0 Q.1 0 .11 -.06 Z" fill="#f4f2ec"/><path d="M-.11 -.06 Q-.1 0 0 0 Q.1 0 .11 -.06" stroke="#2f5fa0" stroke-width=".008" fill="none"/>`;
   k += `<path d="M-.11 -.06 h.22 l-.005 .012 h-.21 Z" fill="#2f5fa0"/>`;
@@ -905,7 +905,7 @@ const THEKE_Y = (l) => Y(STAND.d + 0.15, STAND.theke + 0.03);
 }
 {
   /* Tulaer Lebkuchen (Prjanik): flach, rechteckig, mit Zuckerguss-Muster, angelehnt */
-  const l = -4.75, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
+  const l = -4.8, x = r(X(STAND.d + 0.15, l)), y = r(THEKE_Y(l)), s = F / (STAND.d + 0.15);
   let k = `<g transform="scale(${s.toFixed(4)})">`;
   k += `<path d="M-.07 0 L-.05 -.16 L.07 -.15 L.08 0 Z" fill="#9a5a2a"/><path d="M-.05 -.16 L.07 -.15 L.075 -.13 L-.048 -.142 Z" fill="#b8763a"/>`;
   k += `<path d="M-.035 -.03 Q.0 -.12 .055 -.03 M-.02 -.08 h.05 M0 -.13 v.03" stroke="#f6e8cc" stroke-width=".008" fill="none"/>`;
@@ -917,10 +917,11 @@ const THEKE_Y = (l) => Y(STAND.d + 0.15, STAND.theke + 0.03);
   /* Teeglas im Metallhalter (Podstakannik) in der Hand des Kunden */
   const x = r(KUNDE_HAND.x - 0.6), y = r(KUNDE_HAND.y + 1.2), s = F / 19.5;
   let k = `<g transform="scale(${s.toFixed(4)})">`;
-  k += `<path d="M-.035 -.1 L-.03 0 H.03 L.035 -.1 Z" fill="#c9a050" opacity=".95"/><path d="M-.035 -.1 L-.03 0 H.03 L.035 -.1" stroke="#7a5418" stroke-width=".006" fill="none"/>`;
-  k += `<path d="M-.033 -.04 h.066 M-.032 -.07 h.064" stroke="#7a5418" stroke-width=".005"/>`;
-  k += `<path d="M-.038 -.13 L-.035 -.1 H.035 L.038 -.13 Z" fill="#e6e9ec" opacity=".8"/><path d="M-.035 -.12 H.035" stroke="#a5501e" stroke-width=".01"/>`;
-  k += `<path d="M-.035 -.085 q-.03 0 -.03 .03 q0 .03 .03 .03" stroke="#a37428" stroke-width=".01" fill="none"/>`;
+  /* Glas mit dunkelrotem Tee, unten der silberne Halter mit Muster und Henkel */
+  k += `<path d="M-.036 -.13 L-.033 -.06 H.033 L.036 -.13 Z" fill="#8a3412" opacity=".9"/><path d="M-.036 -.13 H.036 L.035 -.12 H-.035 Z" fill="#e9eef2" opacity=".85"/><path d="M-.028 -.125 L-.026 -.07" stroke="#fff" stroke-width=".006" opacity=".6"/>`;
+  k += `<path d="M-.034 -.075 L-.03 0 H.03 L.034 -.075 Z" fill="${S.lg("silber", [[0, "#7c8088"], [0.4, "#e8ebef"], [1, "#8a8e96"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M-.03 -.05 l.01 .015 l.01 -.015 l.01 .015 l.01 -.015 l.01 .015 l.01 -.015" stroke="#5a5e66" stroke-width=".004" fill="none"/><path d="M-.034 -.004 H.034" stroke="#5a5e66" stroke-width=".006"/>`;
+  k += `<path d="M-.034 -.07 q-.03 0 -.03 .028 q0 .028 .032 .028" stroke="#9a9ea6" stroke-width=".009" fill="none"/>`;
   k += `<path d="M0 -.14 q-.012 -.03 0 -.06 q.012 -.03 0 -.06" stroke="#fff" stroke-width=".007" opacity=".7" fill="none"/></g>`;
   S.teil({ oben: true, id: "teeglas", de: "das Teeglas", syl: "TEE-glas", it: "il bicchiere da tè", itSyl: "bic-CHIE-re da TÈ", en: "tea glass", x, y, steht: true, kunst: k + flaeche(-1.8, -4, 3.6, 4.2, 0.5),
     tipp: "In Russland trinkt man Tee oft aus einem Glas mit Metallhalter." });

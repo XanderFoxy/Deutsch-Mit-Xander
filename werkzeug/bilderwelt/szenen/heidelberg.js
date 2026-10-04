@@ -153,14 +153,16 @@ const kammY = (x) => { for (let i = 1; i < kamm.length; i++) if (x <= kamm[i][0]
       const cx = rnd() * w, cy = rnd() * h, rr = r0 + rnd() * (r1 - r0), f = farben[Math.floor(rnd() * farben.length)];
       for (const [dx, dy] of [[0, 0], [w, 0], [-w, 0], [0, h], [0, -h], [w, h], [-w, -h], [w, -h], [-w, h]]) {
         if (cx + dx < -rr || cx + dx > w + rr || cy + dy < -rr || cy + dy > h + rr) continue;
-        m += `<circle cx="${r(cx + dx)}" cy="${r(cy + dy)}" r="${r(rr)}" fill="${f}"/>`;
-        if (licht) m += `<circle cx="${r(cx + dx + rr * 0.35)}" cy="${r(cy + dy - rr * 0.3)}" r="${r(rr * 0.5)}" fill="${licht}" opacity=".3"/>`;
+        /* Krone: dunkler Lappen unten links (Eigenschatten), Hauptkrone, heller Lappen oben rechts (Westsonne) */
+        const X = cx + dx, Y = cy + dy;
+        m += `<circle cx="${r(X - rr * .18)}" cy="${r(Y + rr * .2)}" r="${r(rr * .9)}" fill="#2c4224" opacity=".55"/><circle cx="${r(X)}" cy="${r(Y)}" r="${r(rr * .85)}" fill="${f}"/>`;
+        if (licht) m += `<circle cx="${r(X + rr * .25)}" cy="${r(Y - rr * .25)}" r="${r(rr * .5)}" fill="${licht}" opacity=".28"/>`;
       }
     }
     return m;
   };
   S.def(`<pattern id="${S.id("waldf")}" width="5.3" height="3.7" patternUnits="userSpaceOnUse" patternTransform="rotate(11)"><rect width="5.3" height="3.7" fill="#4a6a3c"/>${kronen(13, 5.3, 3.7, 0.45, 0.9, ["#3f5d34", "#557a42", "#4a6b3a", "#62844a", "#36502e", "#58763c"], "#a9c88a")}</pattern>`);
-  S.def(`<pattern id="${S.id("waldg")}" width="11.3" height="7.1" patternUnits="userSpaceOnUse" patternTransform="rotate(-7)">${kronen(11, 11.3, 7.1, 1, 1.7, ["#3a5630", "#4e7240", "#5c7f45", "#33492b", "#5f8040"], "#b2d090")}</pattern>`);
+  S.def(`<pattern id="${S.id("waldg")}" width="11.3" height="7.1" patternUnits="userSpaceOnUse" patternTransform="rotate(-7)">${kronen(13, 11.3, 7.1, 1, 1.6, ["#456a38", "#4e7240", "#5c7f45", "#40603a", "#5f8040"], "#c8d890")}</pattern>`);
   S.def(`<linearGradient id="${S.id("nahg")}" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="96"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("nah")}"><rect width="320" height="200" fill="url(#${S.id("nahg")})"/></mask>`);
   let d = `M0 ${kammY(0)}`;
   for (let x = 0; x <= 320; x += 1.6) {
@@ -192,7 +194,7 @@ const kammY = (x) => { for (let i = 1; i < kamm.length; i++) if (x <= kamm[i][0]
   S.def(`<pattern id="${S.id("waldh")}" width="5.3" height="3.7" patternUnits="userSpaceOnUse" patternTransform="rotate(11)"><rect width="5.3" height="3.7" fill="#9a7a34"/>${kronen(13, 5.3, 3.7, 0.45, 0.9, ["#b8862e", "#c7702c", "#d9a53a", "#a8963a", "#b85a2a", "#c8a040"], "#ffe0a0")}</pattern>`);
   let hb = "";
   for (let i = 0; i < 90; i++) {
-    const x = rnd() * 320, y = kammY(x) + 4 + Math.pow(rnd(), 0.75) * (114 - kammY(x)), t = Math.min(1, (y - 15) / 90);
+    const x = 10 + rnd() * 300, y = kammY(x) + 4 + Math.pow(rnd(), 0.75) * (114 - kammY(x)), t = Math.min(1, (y - 15) / 90);
     if (x > 108 && x < 186 && y > 48 && y < 100) continue;
     const g = .8 + 2.6 * t * (.6 + rnd() * .6);
     let d2 = "";
@@ -642,7 +644,7 @@ const VORNE = [];                          // Umrisse der Häuser vor der Kirche
   for (let i = 0; i < 22; i++) { const e = 400 + rnd() * 420, n = quai(e) - 130 - rnd() * 90; hangDinge.push({ f: tief(e, n), e, n, z: hang(e, n), baum: true }); }
   hangDinge.sort((a, b) => b.f - a.f).forEach(({ e, n, z, baum }) => {
     const s = FOC / tief(e, n), p = proj(e, n, z);
-    if (baum) { k += `<circle cx="${r(p[0])}" cy="${r(p[1] - 4 * s)}" r="${r((3.6 + rnd() * 1.6) * s)}" fill="#476636"/><circle cx="${r(p[0] + 1.3 * s)}" cy="${r(p[1] - 5.2 * s)}" r="${r(2.2 * s)}" fill="#6a8a46"/><circle cx="${r(p[0] + 2 * s)}" cy="${r(p[1] - 6 * s)}" r="${r(1 * s)}" fill="#d0b65a" opacity=".55"/>`; return; }
+    if (baum) { k += `<use href="#${S.id(rnd() < .3 ? "baum1" : "baum0")}" transform="translate(${r(p[0])} ${r(p[1])}) scale(${r((1.4 + rnd() * .6) * s * 100) / 100})"/>`; return; }
     const w = 9 + rnd() * 5;
     /* Stützmauer aus Sandstein: Mauerkrone im Licht, Schatten darunter, davor ein Gartenstreifen */
     k += `<path d="${pfad([proj(e - w / 2 - 3, n + 6, z - 3.6), proj(e + w / 2 + 3, n + 6, z - 3.6), proj(e + w / 2 + 3, n + 6, z - 3), proj(e - w / 2 - 3, n + 6, z - 3)])}" fill="#2a3a20" opacity=".3"/>`;
@@ -664,7 +666,7 @@ const VORNE = [];                          // Umrisse der Häuser vor der Kirche
     const n = quai(e) - 3, p = proj(e, n, 6), s = FOC / tief(e, n);
     if (p[0] + 4.6 * s > 320.5) continue;
     k += `<path d="M${r(p[0])} ${r(p[1])} v${r(-6 * s)}" stroke="#7a6a58" stroke-width="${r(.7 * s)}"/>`;
-    k += `<ellipse cx="${r(p[0])}" cy="${r(p[1] - 9 * s)}" rx="${r(4.6 * s)}" ry="${r(4 * s)}" fill="#5a7a3e"/><ellipse cx="${r(p[0] + 1.4 * s)}" cy="${r(p[1] - 10.4 * s)}" rx="${r(2.6 * s)}" ry="${r(2.2 * s)}" fill="#8aa04e"/><ellipse cx="${r(p[0] + 2 * s)}" cy="${r(p[1] - 11.2 * s)}" rx="${r(1.2 * s)}" ry="${r(1 * s)}" fill="#e2c46a" opacity=".6"/>`;
+    k += `<use href="#${S.id("baum0")}" transform="translate(${r(p[0])} ${r(p[1] - 4.5 * s)}) scale(${r(1.9 * s * 100) / 100})"/>`;
     VORNE.push([[p[0] - 4.6 * s, p[1] - 9 * s], [p[0], p[1] - 13 * s], [p[0] + 4.6 * s, p[1] - 9 * s], [p[0], p[1]]]);
   }
   for (let i = 0; i < 16; i++) { const e = 165 + rnd() * 735, n = quai(e) - 2.5, p = proj(e, n, 6.1), s = FOC / tief(e, n); k += `<path d="M${r(p[0])} ${r(p[1])} v${r(-1.5 * s)}" stroke="${["#b8473a", "#2f5f95", "#e8e4da", "#3a3a3a", "#d8ad3a"][i % 5]}" stroke-width="${r(.55 * s)}"/><circle cx="${r(p[0])}" cy="${r(p[1] - 1.75 * s)}" r="${r(.25 * s)}" fill="#e2b48e"/>`; }
@@ -704,7 +706,7 @@ const VORNE = [];                          // Umrisse der Häuser vor der Kirche
     k += `<path d="${sl}" stroke="#2a3038" stroke-width=".14" opacity=".55" fill="none"/>`; }
   k += `<path d="${pfad([proj(TO, NM, zF + .3), proj(334, NM, zF + .3)], false)}" stroke="#a8b4c0" stroke-width=".8"/><path d="${pfad([proj(TO, NM, zF - .6), proj(334, NM, zF - .6)], false)}" stroke="#262b32" stroke-width=".35"/>`;
   for (const [z, n, e0, e1] of [[31.4, 10, 291, 338], [36.6, 9, 292, 335], [41.8, 7, 294, 331], [46.8, 5, 296, 327], [51.6, 3, 300, 322]]) for (let i = 0; i < n; i++) {
-    const e = e0 + (i + .5) * (e1 - e0) / n, nn = NW - .5 + (NM - NW + .5) * (z - zT) / (zF - zT), s = Math.max(.45, FOC / tief(e, nn) * (1 - (z - 31) / 34) * .9);
+    const e = e0 + (i + .5) * (e1 - e0) / n, nn = NW - .5 + (NM - NW + .5) * (z - zT) / (zF - zT), s = Math.max(.55, FOC / tief(e, nn) * (1 - (z - 31) / 34) * 1.15);
     const p = proj(e, nn, z);
     k += `<path d="M${r(p[0] - s)} ${r(p[1] + s * .9)} V${r(p[1])} L${r(p[0])} ${r(p[1] - s * .8)} L${r(p[0] + s)} ${r(p[1])} V${r(p[1] + s * .9)} Z" fill="#7c8691"/><rect x="${r(p[0] - s * .45)}" y="${r(p[1] + s * .05)}" width="${r(s * .9)}" height="${r(s * .8)}" fill="#252a30"/>`;
   }
@@ -746,7 +748,7 @@ const VORNE = [];                          // Umrisse der Häuser vor der Kirche
   const tp = proj(283.5, -417, 45);
   S.teil({ id: "heiliggeistkirche", de: "die Heiliggeistkirche", syl: "HEI-lig-geist-kir-che", it: "la chiesa dello Spirito Santo", itSyl: "CHIE-sa del-lo SPI-ri-to SAN-to", en: "Church of the Holy Spirit",
     x: 0, y: 0, kunst: `<g clip-path="url(#${S.id("hgkclip")})">${k}</g>`, tipp: "Die Heiliggeistkirche ist die größte Kirche der Altstadt. Ihr steiles Schieferdach ist fast so hoch wie die Mauern und hat viele kleine Gauben.",
-    zoom: { x: 196, y: 70, w: 72, h: 48 },
+    zoom: { x: 194, y: 80, w: 72, h: 48 },
     unter: [
       { id: "kirchturm", de: "der Kirchturm", syl: "KIRCH-turm", it: "il campanile", itSyl: "cam-pa-NI-le", en: "church tower", x: tp[0], y: tp[1], kunst: flaeche(-4, -32, 8, 40),
         tipp: "Der Turm der Heiliggeistkirche ist 82 Meter hoch. Oben trägt er eine barocke Haube mit Laterne." },
@@ -1092,7 +1094,7 @@ const BANK = { x: 47, y: 199 };
   const sitzY = m.z.sitz ? m.z.sitz.y * m.k : -0.45 * s;
   S.def(`<clipPath id="${S.id("sitz")}"><rect x="-30" y="-80" width="60" height="${r(80 + sitzY + 1)}"/></clipPath>`);
   S.teil({ id: "studentin", de: "die Studentin", syl: "stu-DEN-tin", it: "la studentessa", itSyl: "stu-den-TES-sa", en: "student", x: BANK.x + 6, y: BANK.y - 29, kunst: `<g transform="translate(0 29)"><g clip-path="url(#${S.id("sitz")})">${rundeFigur(m.svg)}</g></g>`,
-    tipp: "Die Universität Heidelberg ist die älteste in Deutschland — gegründet 1386." });
+    tipp: "Die Universität Heidelberg ist die älteste Universität im heutigen Deutschland — gegründet 1386." });
 }
 {
   const s = km(BANK.y), W = 1.7 * s;

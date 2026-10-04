@@ -190,16 +190,17 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
 {
   /* Liebfrauenkirche: Backstein-Hallenkirche mit hohen Spitzbogenfenstern, Kupferdach (Lage aus dem Plan, unsicher) */
   const E = ebene(-22, 52, 1, 0);
-  let c = pfad(fr(E, 0, 0, 30, 17, 3), S.lg("kirche", [[0, "#93503d"], [1, "#a85e48"]]));
-  c += pfad(poly([[-22, 52, 17], [8, 52, 17], [8, 60, 31], [-22, 60, 31]], 3), KUPFER_D);
-  for (const s of [3, 9, 15, 21, 27]) c += pfad(fp(E, [[s - 1, 3], [s + 1, 3], [s + 1, 11.5], [s, 13.6], [s - 1, 11.5]]), "#33302f") + pfad(fr(E, s - .1, 3, s + .1, 12.4), "#b88a74");
-  for (const s of [0, 6, 12, 18, 24, 30]) c += pfad(fr(E, s - .6, 0, s + .6, 14), "#7e4333");
-  c += pfad(poly([[1, 56, 31], [1.6, 56, 31], [1.3, 56, 38]]), KUPFER);
+  let c = pfad(fr(E, 0, 0, 30, 17, 3), S.lg("kirche", [[0, "#8a4a3a"], [1, "#9e5644"]]));
+  c += pfad(poly([[-22, 52, 17], [8, 52, 17], [8, 60, 31], [-22, 60, 31]], 3), S.lg("kirchdach", [[0, "#3f6e5e"], [1, "#5a917c"]]));
+  c += pfad(poly([[8, 52, 17], [8, 68, 17], [8, 60, 31]], 3), "#7e4333");
+  c += `<path d="${linie([[-22, 60, 31], [8, 60, 31]], 3)}" stroke="#2f5548" stroke-width=".8" fill="none"/><path d="${linie([[8, 52, 17], [8, 60, 31]], 3)}" stroke="#c9b8a4" stroke-width=".5" fill="none"/>`;
+  for (const s of [3, 9, 15, 21, 27]) c += pfad(fp(E, [[s - 1, 3], [s + 1, 3], [s + 1, 11.5], [s, 13.6], [s - 1, 11.5]]), "#33302f") + pfad(fr(E, s - .08, 3, s + .08, 12.6), "#b88a74") + pfad(fr(E, s - 1, 8, s + 1, 8.2), "#b88a74");
+  for (const s of [0, 6, 12, 18, 24, 30]) c += pfad(fr(E, s - .6, 0, s + .6, 14), "#743d2f");
   S.hinten(`<g ${LUFT3}>${c}</g>`);
-  /* Domshof: Bürgerhäuser hinter der Lücke zwischen Rathaus und Bürgerschaft (Südseiten in der Sonne) */
   let k = "";
-  const D = ebene(76, 30, 1, 0);
-  [[0, 9, 19, 5, "#a89c88"], [9, 17, 21, 0, "#9a8a76"], [17, 27, 20, 6, "#b0a28c"], [27, 38, 22, 0, "#8f8270"], [38, 46, 18, 5, "#a39784"]].forEach(([s0, s1, h, gh, f]) => { k += gh ? giebelhaus(D, s0, s1, h, gh, f) : pfad(fr(D, s0, 0, s1, h), f) + pfad(poly([[76 + s0, 30, h], [76 + s1, 30, h], [76 + s1, 35, h + 5], [76 + s0, 35, h + 5]]), "#6e5a50"); });
+  /* Gasse zur Domsheide (Südostecke): Rückfassaden und Giebel in 80–100 m schließen die Lücke */
+  const GA = ebene(92, -66, -1, 0);
+  k += giebelhaus(GA, 0, 8, 14, 7, "#a99b86", "#5a4a44", "#3f4448") + giebelhaus(GA, 8, 15, 15, 7, "#b8a993", "#5a4a44", "#3f4448") + giebelhaus(GA, 15, 22, 13, 6, "#9f927e", "#5a4a44", "#3f4448") + giebelhaus(GA, 22, 30, 14, 7, "#ae9f88", "#5a4a44", "#3f4448") + giebelhaus(GA, 30, 36, 13.4, 6.6, "#a49681", "#5a4a44", "#3f4448");
   /* Südostecke: Giebelhäuser an der Südseite östlich des Schüttings (Nordseiten im Schatten) */
   const SO = ebene(57, -57, -1, 0);
   k += giebelhaus(SO, 0, 5.6, 12.4, 7, "#b9a891", "#5a4a44", "#3f4448") + giebelhaus(SO, 5.6, 11.2, 13.4, 7.6, "#a88f7a", "#5a4a44", "#3f4448") + giebelhaus(SO, 11.2, 17, 12, 6.6, "#bcae98", "#5a4a44", "#3f4448");
@@ -209,6 +210,9 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   S.hinten(`<g ${LUFT3}>${k}</g>`);
 }
 
+/* Schlagschatten am Boden gehören zum Marktplatz: sie fangen keinen Tipp für das Ding ab, das sie wirft */
+let MP = null;
+const amBoden = (svg) => { MP.kunst += svg; return ""; };
 /* =====================================================================
    1 — DER MARKTPLATZ (Pflaster, Fugen, Schatten des Schüttings)
    ===================================================================== */
@@ -241,7 +245,7 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   k += pfad(poly([[8, -57, 0], sv(8, -57, 10.6), sv(8, -64.5, 19.5), sv(40, -64.5, 19.5), sv(40, -57, 10.6), [40, -57, 0]], 2), "#1f2430", ` opacity=".3"`);
   /* Schatten der Südostecke */
   k += pfad(poly([[40, -57, 0], sv(40, -57, 13), sv(50, -57, 13), sv(57, -46, 13), [57, -46, 0]], 2), "#1f2430", ` opacity=".2"`);
-  S.teil({ id: "marktplatz", de: "der Marktplatz", syl: "MARKT-platz", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "market square", x: 0, y: 0, kunst: k,
+  MP = S.teil({ id: "marktplatz", de: "der Marktplatz", syl: "MARKT-platz", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "market square", x: 0, y: 0, kunst: k,
     tipp: "Vom Marktplatz geht man in die Böttcherstraße und in den Schnoor, das älteste Viertel der Stadt." });
 }
 
@@ -370,6 +374,7 @@ const domTeile = {};
    ===================================================================== */
 S.def(`<pattern id="${S.id("blei")}" width="1.1" height="1.1" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0 H1.1 M0 0 V1.1" stroke="#d8dee2" stroke-width=".12" opacity=".55"/></pattern>`);
 const BLEI = `url(#${S.id("blei")})`;
+let RT = null;
 const RH = { L: 41.5, T: 16, WAND: 2.6, ERK: -0.9 };
 const BAY = RH.L / 11;
 const EK = { s0: 4 * BAY + .3, s1: 7 * BAY - .3 };
@@ -551,7 +556,7 @@ const rhTeile = {};
   let zx0 = pr(0, RH.T, 0)[0] - 3, zx1 = pr(RH.L, 0, 0)[0] + 3, zy0 = pr(...Ek((EK.s0 + EK.s1) / 2, 29.8))[1] - 3, zy1 = pr(0, 0, 0)[1] + 4;
   let zw = zx1 - zx0, zh = zy1 - zy0;
   if (zw < zh * 1.5) { const d = zh * 1.5 - zw; zx0 -= d / 2; zw = zh * 1.5; } else { const d = zw / 1.5 - zh; zy0 -= d * .7; zh = zw / 1.5; }
-  S.teil({ id: "rathaus", de: "das Rathaus", syl: "RAT-haus", it: "il municipio", itSyl: "mu-ni-CI-pio", en: "town hall", x: 0, y: 0, kunst: k,
+  RT = S.teil({ id: "rathaus", de: "das Rathaus", syl: "RAT-haus", it: "il municipio", itSyl: "mu-ni-CI-pio", en: "town hall", x: 0, y: 0, kunst: k,
     tipp: "Das Rathaus ist über 600 Jahre alt und gehört zum Welterbe der UNESCO — zusammen mit dem Roland.",
     zoom: { x: r(zx0), y: r(zy0), w: r(zw), h: r(zh) },
     unter: [
@@ -616,7 +621,8 @@ const SM = { x: -1.5, y: 6 };
   g += `<g transform="translate(0 -30) scale(.92)">${t}</g>`;
   /* Schlagschatten auf dem Pflaster nach Nordnordosten (links oben im Bild, hinter der Bronze) */
   const sch = pfad(poly([[SM.x - .6, SM.y - .3, 0], [SM.x + .6, SM.y - .3, 0], [SM.x + .6 + .9, SM.y + 3.2, 0], [SM.x - .6 + .9, SM.y + 3.2, 0]]), "#1f2430", ` opacity=".28"`);
-  const k = sch + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>` + flaeche(fu[0] - 4.6, fu[1] - 11.6, 9.2, 12.2, 0.6);
+  amBoden(sch);
+  const k = `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>` + flaeche(fu[0] - 4.6, fu[1] - 11.6, 9.2, 12.2, 0.6);
   const U = (cx, cy) => [fu[0] + cx * sk, fu[1] + (-30 + cy * .92) * sk];
   const ue = U(-20, -70), uh = U(-14, -122), uk = U(-8, -152), ug = U(-6, -192);
   S.teil({ id: "stadtmusikanten", de: "die Stadtmusikanten", syl: "STADT-mu-si-kan-ten", it: "i musicanti di Brema", itSyl: "mu-si-CAN-ti di BRE-ma", en: "Town Musicians of Bremen", x: 0, y: 0, kunst: k, oben: true,
@@ -696,7 +702,8 @@ const RO = { x: 30, y: -14 };
   g += `<path d="M-1.2 -103 L1.2 -103 L0 -106.4 Z" fill="#d8d0bd"/><circle cx="0" cy="-104.4" r="1" fill="#ece6da"/>`;
   /* feine dunkle Kontur, damit sich der helle Stein vom hellen Hintergrund löst */
   const kontur = `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})" fill="none" stroke="#5f584c" stroke-width=".9" opacity=".55">${g.replace(/fill="[^"]*"/g, "").replace(/<rect /g, '<rect fill="none" ').replace(/<path /g, '<path fill="none" ').replace(/<ellipse /g, '<ellipse fill="none" ').replace(/<circle /g, '<circle fill="none" ')}</g>`;
-  const k = sch + kontur + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
+  amBoden(sch);
+  const k = kontur + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
   const U = (cx, cy) => [fu[0] + cx * sk, fu[1] + cy * sk];
   const us = U(7.2, -66), ub = U(0, -92);
   S.teil({ id: "roland", de: "der Roland", syl: "RO-land", it: "il Rolando di Brema", itSyl: "ro-LAN-do di BRE-ma", en: "Roland statue", x: 0, y: 0, kunst: k,
@@ -811,28 +818,46 @@ const kleineFigur = (svg) => {
 /* Schlagschatten einer Figur der Höhe h (m) auf dem Pflaster, nach Nordnordosten */
 const figSchatten = (X, Y, h, b = .22) => pfad(poly([[X - b, Y, 0], [X + b, Y, 0], [X + b * .5 + h * .414, Y + h * 1.546, 0], [X - b * .5 + h * .414, Y + h * 1.546, 0]], 1), "#1f2430", ` opacity=".3"`);
 const VORLAGE = {};
-const vorlage = (name, spec) => { const m = B.mensch(Object.assign({ id: "hbr_" + name }, spec), 1); S.def(`<g id="${S.id("fig_" + name)}">${kleineFigur(m.svg)}</g>`); VORLAGE[name] = `#${S.id("fig_" + name)}`; };
+/* Vorlagen auf 3 cm gerundet (die Figuren sind im Bild höchstens 25 E hoch — unsichtbar, spart ein Viertel) */
+const vorlage = (name, spec) => { const m = B.mensch(Object.assign({ id: "hbr_" + name }, spec), 1); S.def(`<g id="${S.id("fig_" + name)}">${kleineFigur(m.svg).replace(/ d="([^"]*)"/g, (q, d) => ` d="${d.replace(/-?\d+/g, (n) => String(Math.round(+n / 3) * 3))}"`)}</g>`); VORLAGE[name] = `#${S.id("fig_" + name)}`; };
 vorlage("frau", { geschlecht: "w", pose: "stehen", blick: 200, frisur: "lang", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "weiss" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "rot" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } });
 vorlage("mann", { geschlecht: "m", pose: "stehen", blick: 170, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel", kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "beige" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } });
-vorlage("zeigerin", { geschlecht: "w", pose: "zeigen", blick: 205, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "rot" } } });
+vorlage("zeigerin", { geschlecht: "w", pose: "zeigen", blick: 205, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "rot" } } });
+vorlage("halter", { geschlecht: "m", pose: "halten", blick: 250, frisur: "kurz", haarfarbe: "grau", haut: "hell", alter: "alt", kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "grau" }, jacke: { stueck: "mantel", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } });
+vorlage("kind", { geschlecht: "m", alter: "kind", pose: "laufen", blick: 120, frisur: "kurz", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "gruen" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } });
+/* Fahrrad (Seitenansicht, 1,75 m lang) in Metern um den Fußpunkt */
+const fahrrad = (X, Y, sp) => {
+  const p = pr(X, Y, 0), m = mass(X, Y);
+  let g = `<g transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(sp ? -m : m).toFixed(4)} ${m.toFixed(4)})" fill="none" stroke-linecap="round">`;
+  for (const cx of [-.55, .55]) g += `<circle cx="${cx}" cy="-.34" r=".33" stroke="#1e1e1e" stroke-width=".05"/><circle cx="${cx}" cy="-.34" r=".05" fill="#8a8f94" stroke="none"/>`;
+  g += `<path d="M-.55 -.34 L-.12 -.36 L.3 -.78 L-.22 -.76 Z M-.12 -.36 L-.24 -.86 M.55 -.34 L.36 -.92 L.28 -1 L.42 -1.02" stroke="#c0392b" stroke-width=".05"/>`;
+  g += `<path d="M-.34 -.88 h.24" stroke="#2a2a2a" stroke-width=".07"/><path d="M-.75 -.6 h.42 l-.04 .1 h-.34 Z" fill="#3a3a38" stroke="none"/></g>`;
+  return g;
+};
 {
   const leute = [   // [Vorlage, x, y, Höhe m, gespiegelt]
-    ["mann", -5.6, 3.2, 1.8, false], ["frau", -4.2, 4.8, 1.68, true], ["frau", -3.4, 2.4, 1.62, false],
-    ["zeigerin", 11.8, -17.2, 1.7, true], ["frau", 13.6, -19, 1.66, true], ["mann", 10.4, -19.6, 1.8, true], ["mann", 14.8, -17.6, 1.76, false], ["frau", 9.6, -17.8, 1.6, false],
+    ["halter", -2.9, 5.4, 1.76, false], ["frau", -4.6, 3.2, 1.68, false], ["mann", -5.6, 1.6, 1.8, true],
+    ["frau", 11.8, -17.2, 1.7, true], ["mann", 13.6, -19, 1.8, false], ["mann", 10.4, -19.8, 1.76, true], ["halter", 14.9, -17.4, 1.74, true],
     ["mann", 3.6, -31.2, 1.82, true], ["frau", 4.4, -30.4, 1.66, false],
+    ["kind", -3.6, -21.8, 1.3, false], ["frau", 5.5, -27.4, 1.7, true],
   ].sort((a, b) => weit(b[1], b[2]) - weit(a[1], a[2]));
   let sch = "", fig = "";
   for (const [v, X, Y, h, sp] of leute) {
     const p = pr(X, Y, 0), H = h * mass(X, Y);
     sch += figSchatten(X, Y, h);
+    if (X === 5.5) { fig += fahrrad(X + .5, Y + .1, true); sch += figSchatten(X + .5, Y + .1, 1, .3); }
     fig += `<use href="${VORLAGE[v]}" transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(sp ? -H : H).toFixed(4)} ${H.toFixed(4)})"/>`;
+    /* die Stadtführerin hält einen roten Schirm hoch */
+    if (X === 11.8) { const m = mass(X, Y), q = pr(X + .25, Y, 1.25), o = pr(X + .3, Y, 2.35); fig += `<path d="M${P(q)} L${P(o)}" stroke="#2a2a2a" stroke-width="${r(.03 * m * 10) / 10}"/><path d="M${r(o[0] - .1 * m)} ${r(o[1] + .35 * m)} L${r(o[0])} ${r(o[1] - .05 * m)} L${r(o[0] + .1 * m)} ${r(o[1] + .35 * m)} Z" fill="#d23a30"/>`; }
   }
-  S.davor(sch + fig);
+  amBoden(sch);
+  S.davor(fig);
 }
 {
   const X = 6, Y = -22, fu = pr(X, Y, 0), H = 1.68 * mass(X, Y);
+  amBoden(figSchatten(X, Y, 1.68));
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: 0, y: 0,
-    kunst: figSchatten(X, Y, 1.68) + `<use href="${VORLAGE.zeigerin}" transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${H.toFixed(4)})"/>`,
+    kunst: `<use href="${VORLAGE.zeigerin}" transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${(-H).toFixed(4)} ${H.toFixed(4)})"/>` + flaeche(fu[0] - 5, fu[1] - H - 1, 10, H + 2),
     tipp: "Sie zeigt auf den Roland: „Schau mal, der Ritter mit dem Schwert!“" });
 }
 
@@ -842,7 +867,8 @@ vorlage("zeigerin", { geschlecht: "w", pose: "zeigen", blick: 205, frisur: "zopf
 {
   const taube = (x, y, spiegel) => {
     const p = pr(x, y, 0), k = mass(x, y) * .05;
-    return figSchatten(x, y, .22, .12) + `<g transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(spiegel ? -k : k).toFixed(4)} ${k.toFixed(4)})"><path d="M-2.6 -1.4 Q-1.6 -2.8 .6 -2.6 L2 -2.2 Q2.6 -2.6 3 -3.4 Q3.4 -4 4 -3.6 L4.4 -3.4 L4 -3 Q3.6 -2 3 -1.4 Q1.6 -.4 -.6 -.6 L-2.8 -1 Z" fill="#8a8f98"/><path d="M-1.8 -1.8 Q0 -2.6 1.6 -2 Q.2 -1.2 -1.8 -1.8 Z" fill="#6c717a"/><path d="M-2.4 -1.6 Q-1 -2.6 1 -2.4" stroke="#c9ccd2" stroke-width=".25" fill="none"/><path d="M2.6 -2.2 Q3 -2.8 3.6 -2.6 Q3.4 -1.8 2.8 -1.6 Z" fill="#6f9a86"/><circle cx="3.8" cy="-3.4" r=".18" fill="#c46a2a"/><path d="M.6 -.6 V0 M1.4 -.7 V0" stroke="#c96a6a" stroke-width=".25"/></g>`;
+    amBoden(figSchatten(x, y, .22, .12));
+    return `<g transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(spiegel ? -k : k).toFixed(4)} ${k.toFixed(4)})"><path d="M-2.6 -1.4 Q-1.6 -2.8 .6 -2.6 L2 -2.2 Q2.6 -2.6 3 -3.4 Q3.4 -4 4 -3.6 L4.4 -3.4 L4 -3 Q3.6 -2 3 -1.4 Q1.6 -.4 -.6 -.6 L-2.8 -1 Z" fill="#8a8f98"/><path d="M-1.8 -1.8 Q0 -2.6 1.6 -2 Q.2 -1.2 -1.8 -1.8 Z" fill="#6c717a"/><path d="M-2.4 -1.6 Q-1 -2.6 1 -2.4" stroke="#c9ccd2" stroke-width=".25" fill="none"/><path d="M2.6 -2.2 Q3 -2.8 3.6 -2.6 Q3.4 -1.8 2.8 -1.6 Z" fill="#6f9a86"/><circle cx="3.8" cy="-3.4" r=".18" fill="#c46a2a"/><path d="M.6 -.6 V0 M1.4 -.7 V0" stroke="#c96a6a" stroke-width=".25"/></g>`;
   };
   const a = pr(-1.4, -22.6, 0);
   S.teil({ oben: true, id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 0, y: 0, kunst: taube(-.4, -21.2, true) + taube(-1.4, -22.6, false) + taube(.6, -22.2, false) + flaeche(a[0] - 2, a[1] - 5, 14, 6),
@@ -853,7 +879,8 @@ vorlage("zeigerin", { geschlecht: "w", pose: "zeigen", blick: 205, frisur: "zopf
   /* eine dritte sitzt oben auf dem rechten Nebengiebel des Rathauses */
   const gp = pr(9 * BAY, RH.WAND, 22.6), gm = mass(9 * BAY, RH.WAND) / 100;
   const sitzend = `<g transform="translate(${t2(gp[0])} ${t2(gp[1])}) scale(${gm.toFixed(5)})"><path d="M-20 -6 Q-14 -18 6 -16 L20 -12 Q24 -10 18 -8 L4 -4 Q-10 -2 -20 -6 Z" fill="#9aa4ac"/><path d="M-20 -6 Q-10 -1 4 -4 L6 -10 Q-8 -12 -20 -6 Z" fill="#f4f4f0"/><path d="M14 -10 L26 -12 L18 -8 Z" fill="#1d1d1d"/><circle cx="-16" cy="-12" r="6" fill="#fbfbf8"/><path d="M-22 -12 L-30 -11 L-22 -10 Z" fill="#e8b82a"/><circle cx="-18" cy="-13" r=".9" fill="#111"/><path d="M-6 -2 V4 M0 -3 V4" stroke="#e0a03a" stroke-width="1.4"/></g>`;
-  S.teil({ oben: true, id: "moewe", de: "die Möwe", syl: "MÖ-we", it: "il gabbiano", itSyl: "gab-BIA-no", en: "seagull", x: 0, y: 0, kunst: moewe(118, 70, 1.1, -2.2, false) + moewe(134, 62, .85, -1, true) + sitzend + flaeche(108, 54, 34, 22),
+  RT.kunst += sitzend;
+  S.teil({ oben: true, id: "moewe", de: "die Möwe", syl: "MÖ-we", it: "il gabbiano", itSyl: "gab-BIA-no", en: "seagull", x: 0, y: 0, kunst: moewe(118, 70, 1.1, -2.2, false) + moewe(134, 62, .85, -1, true) + flaeche(110, 57, 30, 18),
     tipp: "Bremen liegt an der Weser. Bis zur Nordsee sind es rund 60 Kilometer — darum fliegen hier Möwen." });
 }
 
@@ -876,7 +903,8 @@ let STUHL = "";
   for (let i = -2; i <= 2; i++) g += `<path d="M${i * 6} -87.6 L${i * 6.4} -69.6" stroke="#6e4620" stroke-width=".8" opacity=".55"/>`;
   for (const y of [-83, -78, -73]) g += `<path d="M-15 ${y} C-6 ${y - 2} 6 ${y - 2} 15 ${y}" stroke="#6e4620" stroke-width=".7" fill="none" opacity=".5"/>`;
   g += `<path d="M-16 -79.6 C-6 -82 6 -82 16 -79.6" stroke="#e8c48a" stroke-width=".9" fill="none" opacity=".7"/>`;
-  STUHL = figSchatten(X, Y, .9, .25) + `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
+  amBoden(figSchatten(X, Y, .9, .25));
+  STUHL = `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
 }
 {
   const X = CAM[0] + TI.d * Math.sin(TI.b * GRAD), Y = CAM[1] + TI.d * Math.cos(TI.b * GRAD);
@@ -923,7 +951,8 @@ let STUHL = "";
   g += `<path d="M${TX + 3.6} ${TY - 5.4} Q${TX + 6.4} ${TY - 5.2} ${TX + 6} ${TY - 3.4} Q${TX + 5.6} ${TY - 2} ${TX + 3.6} ${TY - 2.2}" stroke="#efede8" stroke-width=".9" fill="none"/>`;
   g += `<path d="M${TX - 6} ${TY + .4} L${TX - 1.6} ${TY - .6}" stroke="#a9adb1" stroke-width=".7" stroke-linecap="round"/>`;
   g += `<path d="M${TX - .6} ${TY - 8} q-1.4 -2.2 0 -4.2 q1.4 -2 0 -4 M${TX + 1.4} ${TY - 8} q-1.2 -1.8 0 -3.6" stroke="#fff" stroke-width=".45" fill="none" opacity=".6"/>`;
-  const k = STUHL + figSchatten(X, Y, .75, .4) + `<g transform="translate(${t2(c[0])} ${t2(c[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
+  amBoden(figSchatten(X, Y, .75, .4));
+  const k = STUHL + `<g transform="translate(${t2(c[0])} ${t2(c[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
   const U = (x, y) => [c[0] + x * sk, c[1] + y * sk];
   const uL = U(LX, LY - 2), uK = U(KX, KY - 4), uT = U(TX, TY - 3);
   const zw = 2 * R * sk + 10, zh = zw * 2 / 3;

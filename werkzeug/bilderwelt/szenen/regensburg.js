@@ -395,7 +395,7 @@ const WK = { x: 151, y: W - 1 };
   k += `<rect x="-11" y="-1.6" width="20" height="1.6" fill="#8a8680"/>`;
   k += `<path d="M-7.4 0 L-7.4 -4.8 Q-6 -6 -4.6 -4.8 L-4.6 0 Z" fill="#2a2018"/>`;
   for (const x of [-1.8, 3.4]) k += `<rect x="${x}" y="-5.6" width="2.4" height="2.6" fill="#ffd890" opacity=".85"/><rect x="${x - 1}" y="-5.6" width=".9" height="2.6" fill="#24563a"/><rect x="${x + 2.5}" y="-5.6" width=".9" height="2.6" fill="#24563a"/>`;
-  k += `<text x="-1" y="-6.5" font-size="1.3" text-anchor="middle" fill="#1e1a18" font-family="'Old English Text MT','UnifrakturMaguntia',Georgia,serif" font-weight="bold">Historische Wurstkuchl</text>`;
+  k += `<text x="-1.6" y="-6.5" font-size="1.12" text-anchor="middle" fill="#1e1a18" font-family="'Old English Text MT','UnifrakturMaguntia',Georgia,serif" font-weight="bold">Historische Wurstkuchl</text>`;
   for (const [y, j] of [[-7, "1784"], [-5.4, "1845"], [-3.8, "1988"], [-2.6, "2013"]]) k += `<line x1="6.6" y1="${y}" x2="8.8" y2="${y}" stroke="#1e2a5a" stroke-width=".28"/><text x="7.7" y="${r(y - 0.25)}" font-size=".55" text-anchor="middle" fill="#1e2a5a" font-family="Arial">${j}</text>`;
   k += `<path d="M-12 -8 L-8 -14 L6 -14 L10 -8 Z" fill="${ZIEGEL_D}"/><path d="M-8 -14 L6 -14 L10 -8" stroke="${RAND}" stroke-width=".55" fill="none" opacity=".9"/>`;
   for (let i = 1; i < 5; i++) { const t = i / 5; k += `<line x1="${r(-12 + t * 4)}" y1="${r(-8 - t * 6)}" x2="${r(10 - t * 4)}" y2="${r(-8 - t * 6)}" stroke="#3a1a14" stroke-width=".12" opacity=".6"/>`; }
@@ -616,9 +616,11 @@ const BRUECKE_LEUTE = [];
       /* ein Arm liegt angewinkelt auf dem Tisch */
       if (!hoch) g += `<path d="M${f3(x + 0.17 * gr)} ${f3(sch + 0.06)} L${f3(x + 0.2 * gr)} -.8 L${f3(x + 0.06 * gr)} -.79" stroke="${farbe}" stroke-width="${S2(0.05)}" fill="none" stroke-linejoin="round" stroke-linecap="round"/>`;
       g += `<path d="M${f3(x + 0.085 * gr)} ${f3(ky - 0.04 * gr)} Q${f3(x + 0.095 * gr)} ${f3(ky + 0.04 * gr)} ${f3(x + 0.06 * gr)} ${f3(ky + 0.08 * gr)} M${f3(x + 0.2 * gr)} ${f3(sch + 0.09 * gr)} L${f3(x + 0.19 * gr)} -.78" stroke="${RAND}" stroke-width=".013" fill="none" opacity=".9"/>`;
-      if (hoch) { const sx = hoch, hx = x + sx * 0.15; g += `<path d="M${f3(x + sx * 0.15)} ${f3(sch + 0.03)} L${f3(x + sx * 0.22)} ${f3(sch - 0.18)} L${f3(hx)} -1.42" stroke="${farbe}" stroke-width=".05" fill="none" stroke-linecap="round"/><path d="M${f3(hx - 0.04)} -1.42 L${f3(hx - 0.04)} -1.56 L${f3(hx + 0.04)} -1.56 L${f3(hx + 0.04)} -1.42 Z" fill="#c89030"/><path d="M${f3(hx - 0.045)} -1.56 q.045 -.03 .09 0 Z" fill="#fff4d8"/><path d="M${f3(hx + 0.04)} -1.56 L${f3(hx + 0.04)} -1.42" stroke="${RAND}" stroke-width=".012"/>`; }
+      if (hoch) { const sx = hoch, hx = -0.265 - sx * 0.042, hy = -1.22; g += `<path d="M${f3(x + sx * 0.14)} ${f3(sch + 0.03)} L${f3(x + sx * 0.03 + (hx - x) * 0.25 - sx * 0.05)} ${f3(sch - 0.09)} L${f3(hx - sx * 0.01)} ${f3(hy + 0.01)}" stroke="${farbe}" stroke-width=".048" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M${f3(hx - 0.04)} ${hy} L${f3(hx - 0.04)} ${f3(hy - 0.14)} L${f3(hx + 0.04)} ${f3(hy - 0.14)} L${f3(hx + 0.04)} ${hy} Z" fill="#c89030"/><path d="M${f3(hx - 0.045)} ${f3(hy - 0.14)} q.045 -.03 .09 0 Z" fill="#fff4d8"/><path d="M${f3(hx + 0.028)} ${f3(hy - 0.13)} L${f3(hx + 0.028)} ${f3(hy - 0.01)}" stroke="${RAND}" stroke-width=".012"/>`; }
+      if (!profil && !helm) g += `<circle cx="${f3(x - 0.03 * gr)}" cy="${f3(ky + 0.01)}" r=".009" fill="#2a1a14"/><circle cx="${f3(x + 0.025 * gr)}" cy="${f3(ky + 0.01)}" r=".009" fill="#2a1a14"/>`;
       if (helm) g += `<path d="M${f3(x - 0.1)} ${f3(ky - 0.01)} Q${f3(x - 0.09)} ${f3(ky - 0.13)} ${x} ${f3(ky - 0.13)} Q${f3(x + 0.1)} ${f3(ky - 0.13)} ${f3(x + 0.11)} ${f3(ky - 0.01)} Z" fill="#3a6aa8"/><path d="M${f3(x - 0.04)} ${f3(ky - 0.11)} L${f3(x - 0.035)} ${f3(ky - 0.03)} M${f3(x + 0.03)} ${f3(ky - 0.12)} L${f3(x + 0.03)} ${f3(ky - 0.03)}" stroke="#e8e8e8" stroke-width=".012"/>`;
     }
+    g += `<path d="M.42 -.78 L.43 -.92 L.5 -.92 L.51 -.78 Z" fill="#c89030" opacity=".9"/><path d="M.42 -.92 q.045 -.03 .09 0 Z" fill="#f4ead0"/><ellipse cx="-.62" cy="-.79" rx=".11" ry=".02" fill="#d8d0c0"/><path d="M-.68 -.8 l.1 0 l0 -.02 l-.1 0 Z" fill="#a85a24"/>`;
     g += `<rect x="-1.05" y="-.78" width="1.8" height=".05" fill="${SI}"/><path d="M-1.05 -.78 L.75 -.78" stroke="${RAND}" stroke-width=".012"/>`;
     g += `<g fill="none" stroke="${SI}" stroke-width=".03"><circle cx=".95" cy="-.3" r=".29"/><circle cx="1.31" cy="-.3" r=".29"/><path d="M.95 -.3 L1.08 -.62 L1.26 -.6 L1.31 -.3 M1.08 -.62 L1.12 -.3 L.95 -.3 M1.12 -.3 L1.26 -.6 M1.04 -.7 L1.12 -.7 M1.24 -.6 L1.2 -.72 L1.28 -.74"/></g>`;
     g += `<path d="M1.6 -.3 A.29 .29 0 0 0 1.31 -.59 M1.24 -.3 A.29 .29 0 0 0 .95 -.59" stroke="${RAND}" stroke-width=".012" fill="none"/>`;
@@ -664,11 +666,11 @@ const BRUECKE_LEUTE = [];
   }
   const blatt = (x, y, gr, dreh, fill, extra = "") => `<use href="#${S.id("blatt")}" transform="translate(${r(x)} ${r(y)}) rotate(${Math.round(dreh)}) scale(${r(gr)})" fill="${fill}"${extra}/>`;
   /* die Laubkugeln (Kronen-Koordinaten): oben die Masse, darunter die vier hängenden Ballen */
-  const MASSE = [[10, 30, 14], [30, 30, 15], [55, 26, 15], [78, 22, 14], [98, 20, 12], [104, 31, 8], [14, 50, 12], [40, 46, 12], [66, 40, 11], [90, 36, 9]];
-  const BALLEN = [[[8, 68, 7], [16, 73, 8], [23, 66, 6], [12, 60, 7]], [[34, 62, 6], [41, 67, 7.5], [47, 60, 5], [38, 56, 6]], [[60, 54, 6], [67, 57, 7], [73, 51, 5], [64, 47, 6]], [[85, 44, 5.5], [92, 46, 6.5], [97, 40, 5], [88, 38, 5]]];
+  const MASSE = [[12, 30, 13], [20, 22, 10], [92, 9, 9], [30, 30, 15], [55, 26, 15], [78, 22, 14], [98, 20, 12], [104, 31, 8], [14, 50, 12], [40, 46, 12], [66, 40, 11], [90, 36, 9]];
+  const BALLEN = [[[9, 68, 7], [16, 73, 8], [23, 66, 6], [12, 60, 7]], [[34, 62, 6], [41, 67, 7.5], [47, 60, 5], [38, 56, 6]], [[60, 54, 6], [67, 57, 7], [73, 51, 5], [64, 47, 6]], [[85, 44, 5.5], [92, 46, 6.5], [97, 40, 5], [88, 38, 5]]];
   const KUGELN = [...MASSE, ...BALLEN.flat()];
   /* Grund: oben ein Rechteck bis über den Bildrand, dazu alle Kugeln */
-  let grund = `<path d="M1 -1 L94 -1 L94 18 L1 18 Z"/>`;
+  let grund = `<path d="M1 ${KY - 1} L86 ${KY - 1} L86 ${KY + 18} L1 ${KY + 18} Z"/>`;
   for (const [x, y, rr] of KUGELN) grund += `<circle cx="${x}" cy="${r(KY + y)}" r="${rr}"/>`;
   krone += `<g fill="#18321a">${grund}</g>`;
   /* Tonstufen im Inneren: weich, nach oben rechts heller */
@@ -681,12 +683,12 @@ const BRUECKE_LEUTE = [];
   for (const b of BALLEN) for (const [x, y, rr] of b.slice(0, 2)) lm += `<ellipse cx="${r(x + rr * 0.15)}" cy="${r(KY + y - rr * 0.35)}" rx="${r(rr * 0.6)}" ry="${r(rr * 0.4)}" fill="#24421f"/>`;
   krone += `<g filter="url(#${S.id("rauch")})">${lm}</g>`;
   /* der Blattkranz um den ganzen äußeren Umriss: an jeder Kugel dort, wo ihr Rand frei liegt */
-  const innen = (px, py, ich) => py < 18.5 && px < 94 || KUGELN.some((k) => k !== ich && Math.hypot(px - k[0], py - k[1]) < k[2] - 0.8);
+  const innen = (px, py, ich) => py < 18.5 && px < 86 || KUGELN.some((k) => k !== ich && Math.hypot(px - k[0], py - k[1]) < k[2] - 0.8);
   for (const kg of KUGELN) {
     const [cx, cy, rr] = kg, n = Math.max(5, Math.round(2 * Math.PI * rr / 4.2));
     for (let i = 0; i < n; i++) {
       const a = (i + 0.5) / n * 2 * Math.PI, px = cx + Math.cos(a) * rr, py = cy + Math.sin(a) * rr;
-      if (py < 3 || px < 4 || innen(px, py, kg)) continue;
+      if (py < 4 || px < 8 || innen(px, py, kg)) continue;
       const licht = px > 84 && py < 36 && Math.cos(a) > -0.2 && Math.sin(a) < 0.3;
       krone += blatt(cx + Math.cos(a) * (rr - 1.2), KY + cy + Math.sin(a) * (rr - 1.2), 4.4 + rnd() * 1.4, a * 180 / Math.PI + 90 + (rnd() - 0.5) * 24, licht ? "#3e6a2c" : i % 2 ? "#18321a" : "#1e3a1a");
       if (licht) krone += blatt(cx + Math.cos(a) * rr, KY + cy + Math.sin(a) * rr, 3.4, a * 180 / Math.PI + 100, "#b8d468", ' opacity=".2"');
@@ -810,7 +812,7 @@ const glied = (pts, ws, fill) => {
     let dx = b[0] - a[0], dy = b[1] - a[1]; const l = Math.hypot(dx, dy) || 1; dx /= l; dy /= l;
     L.push([p[0] - dy * ws[i] / 2, p[1] + dx * ws[i] / 2]); R.push([p[0] + dy * ws[i] / 2, p[1] - dx * ws[i] / 2]);
   }
-  return `<path d="M${[...L, ...R.reverse()].map(([x, y]) => `${f3(x)} ${f3(y)}`).join(" L")} Z" fill="${fill}" stroke="${fill}" stroke-width=".012" stroke-linejoin="round"/>`;
+  return `<path d="M${[...L, ...R.reverse()].map(([x, y]) => `${f3(x)} ${f3(y)}`).join(" L")} Z" fill="${fill}" stroke="${fill}" stroke-width=".004" stroke-linejoin="round"/>`;
 };
 const faust = (x, y, rot, fill, gr = 1) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${gr})"><ellipse rx=".034" ry=".027" fill="${fill}"/><ellipse cx="-.022" cy="-.02" rx=".012" ry=".021" fill="${fill}" stroke="${HAUT_S}" stroke-width=".005"/></g>`;
 const boden = (x, w) => `<ellipse cx="${x}" cy="0" rx="${w}" ry=".018" fill="#20180e" opacity=".4"/>`;
@@ -825,31 +827,31 @@ const boden = (x, w) => `<ellipse cx="${x}" cy="0" rx="${w}" ry=".018" fill="#20
   f += `<path d="M-.11 -1.24 Q-.12 -1.37 -.01 -1.38 Q.1 -1.38 .12 -1.26 Q.12 -1.16 .09 -1.12 Q.07 -1.22 .03 -1.28 Q-.04 -1.31 -.11 -1.24 Z" fill="#4a2c1c"/>`;
   f += `<circle cx="-.068" cy="-1.255" r=".011" fill="#2a1a14"/><circle cx="-.018" cy="-1.255" r=".011" fill="#2a1a14"/><path d="M-.065 -1.19 q.02 .012 .04 0" stroke="#8a3a34" stroke-width=".008" fill="none"/>`;
   /* links: Oberarm im Ärmel, Unterarm abgewinkelt, die Hand mit der Gabel über dem Teller */
-  f += glied([[-.19, -1.0], [-.225, -.92]], [.07, .06], "#c89a24") + glied([[-.225, -.92], [-.17, -.84], [-.125, -.8]], [.052, .046, .036], HAUT);
+  f += glied([[-.225, -.92], [-.17, -.845], [-.125, -.8]], [.058, .046, .033], HAUT) + `<ellipse cx="-.205" cy="-.965" rx=".042" ry=".055" transform="rotate(18 -.205 -.965)" fill="#c89a24"/>`;
   f += `<path d="M-.11 -.8 L-.165 -.735 M-.17 -.74 l-.012 .016 M-.162 -.736 l-.008 .02 M-.154 -.732 l-.004 .02" stroke="#c8ccd0" stroke-width=".008" fill="none"/>` + faust(-0.115, -0.8, 20, HAUT);
   /* rechts: Unterarm auf dem Tisch, die Hand am Henkel */
-  f += glied([[.18, -1.0], [.215, -.92]], [.07, .06], "#e2b030") + glied([[.215, -.92], [.18, -.885], [.15, -.87]], [.052, .046, .038], HAUT) + faust(0.13, -0.865, -80, HAUT);
-  f += `<path d="M.09 -1.34 Q.15 -1.26 .14 -1.12 Q.15 -1.04 .2 -.98 L.188 -.976 Q.128 -1.04 .126 -1.12 Q.132 -1.24 .082 -1.33 Z" fill="${RAND}" opacity=".85"/>` + kante("M.193 -.98 L.206 -.91", 0.009);
+  f += glied([[.215, -.92], [.18, -.886], [.15, -.87]], [.058, .046, .036], HAUT) + `<ellipse cx=".198" cy="-.965" rx=".042" ry=".055" transform="rotate(-15 .198 -.965)" fill="#e2b030"/>` + faust(0.13, -0.865, -80, HAUT);
+  f += `<path d="M.07 -1.355 Q.14 -1.35 .147 -1.22 Q.15 -1.12 .162 -1.05 L.148 -1.06 Q.136 -1.13 .134 -1.22 Q.13 -1.32 .066 -1.342 Z" fill="${RAND}" opacity=".85"/>`;
   let k = setze(FRAU.x, FRAU.y, km(FRAU.y), f);
   /* der Vater: von hinten, der Kopf zur Kellnerin gedreht, die rechte Hand winkt */
   let m = `<path d="M-.18 -.47 L-.18 -.53 L.18 -.53 L.18 -.47 Z" fill="#2e4a78"/>`;
   m += `<path d="M-.17 -.52 L-.22 -.93 Q-.2 -.99 -.12 -1.0 L.12 -1.0 Q.2 -.99 .22 -.93 L.17 -.52 Z" fill="#9ec4e4"/><path d="M-.17 -.52 L-.22 -.93 Q-.2 -.99 -.12 -1.0 L-.06 -1.0 L-.08 -.52 Z" fill="#7a9cc0"/>`;
-  m += `<path d="M0 -.98 L.01 -.56 M-.1 -.62 Q0 -.6 .1 -.63" stroke="#7a9cc0" stroke-width=".01" fill="none"/>`;
+  m += `<path d="M-.2 -.9 Q0 -.85 .2 -.9 M.17 -.88 Q.09 -.75 .03 -.6 M.15 -.83 Q.11 -.73 .08 -.62" stroke="#7a9cc0" stroke-width=".01" fill="none"/>`;
   m += glied([[-.205, -.95], [-.245, -.8]], [.1, .085], "#86acd0") + glied([[-.245, -.8], [-.25, -.74], [-.232, -.64]], [.062, .056, .046], HAUT_S);
   m += glied([[.18, -.96], [.27, -1.04]], [.11, .09], "#9ec4e4") + glied([[.27, -1.04], [.335, -1.105], [.365, -1.22], [.375, -1.34]], [.075, .066, .056, .045], HAUT);
   m += `<g transform="translate(.378 -1.395) rotate(8)"><ellipse rx=".036" ry=".052" fill="${HAUT}"/><ellipse cx="-.034" cy=".012" rx=".011" ry=".025" transform="rotate(-35 -.034 .012)" fill="${HAUT}"/><path d="M-.016 -.03 L-.016 -.05 M0 -.034 L0 -.054 M.016 -.03 L.016 -.048" stroke="${HAUT_S}" stroke-width=".006"/></g>`;
   m += `<path d="M-.035 -1.07 L.035 -1.07 L.045 -.99 L-.045 -.99 Z" fill="${HAUT_S}"/>`;
   m += `<ellipse cx=".01" cy="-1.2" rx=".1" ry=".118" fill="#4a3020"/><path d="M.075 -1.28 Q.12 -1.22 .11 -1.15 Q.09 -1.1 .06 -1.1 Q.09 -1.18 .075 -1.28 Z" fill="${HAUT}"/><ellipse cx=".08" cy="-1.19" rx=".018" ry=".032" fill="${HAUT_S}"/><circle cx=".105" cy="-1.225" r=".009" fill="#2a1a14"/>`;
-  m += `<path d="M.07 -1.3 Q.124 -1.22 .112 -1.14 L.1 -1.142 Q.108 -1.22 .062 -1.296 Z" fill="${RAND}" opacity=".85"/>` + kante("M.33 -1.09 L.405 -1.2 M.22 -.93 L.17 -.52", 0.012);
+  m += `<path d="M.07 -1.3 Q.124 -1.22 .112 -1.14 L.1 -1.142 Q.108 -1.22 .062 -1.296 Z" fill="${RAND}" opacity=".85"/>` + glied([[.355, -1.1], [.384, -1.22], [.392, -1.33]], [.012, .011, .009], RAND) + kante("M.209 -.93 L.161 -.53", 0.012);
   k += setze(MANN.x, MANN.y, km(MANN.y), m);
   /* das Kind: sitzt links vorn auf der Bank, dreht sich zum Tisch und beißt in eine Brezn */
-  let c = `<path d="M-.12 -.47 L-.13 -.72 Q-.1 -.76 -.05 -.76 L.06 -.76 Q.12 -.75 .13 -.71 L.12 -.47 Z" fill="#c83a3a"/><path d="M-.12 -.47 L-.13 -.72 Q-.1 -.76 -.05 -.76 L-.02 -.76 L-.04 -.47 Z" fill="#9a2a2a"/>`;
-  c += glied([[-.12, -.72], [-.15, -.62], [-.13, -.55]], [.05, .042, .034], "#c8a080");
-  c += glied([[.1, -.73], [.17, -.77]], [.052, .044], "#c83a3a") + glied([[.17, -.77], [.135, -.85]], [.04, .032], HAUT);
+  let c = `<path d="M-.115 -.47 L-.11 -.6 Q-.125 -.68 -.12 -.71 Q-.08 -.765 0 -.77 Q.08 -.765 .12 -.71 Q.125 -.68 .11 -.6 L.115 -.47 Z" fill="#c83a3a"/><path d="M-.115 -.47 L-.11 -.6 Q-.125 -.68 -.12 -.71 Q-.08 -.765 -.03 -.768 L-.04 -.47 Z" fill="#9a2a2a"/>`;
+  c += glied([[-.13, -.67], [-.152, -.6], [-.13, -.535]], [.042, .036, .028], "#c8a080") + `<ellipse cx="-.118" cy="-.695" rx=".032" ry=".04" fill="#9a2a2a"/>`;
+  c += glied([[.13, -.72], [.17, -.77], [.135, -.85]], [.04, .036, .028], HAUT) + `<ellipse cx=".118" cy="-.71" rx=".034" ry=".038" transform="rotate(-30 .118 -.71)" fill="#c83a3a"/>`;
   c += `<use href="#${S.id("brezn")}" transform="translate(.15 -.86) scale(.014)" stroke="#8a4a1a" stroke-width="2" fill="none" stroke-linecap="round"/>` + faust(0.133, -0.853, -60, HAUT, 0.8);
   c += `<ellipse cx=".005" cy="-.86" rx=".09" ry=".095" fill="#e0b860"/><path d="M.06 -.93 Q.1 -.87 .09 -.8 Q.07 -.77 .045 -.78 Q.07 -.85 .06 -.93 Z" fill="${HAUT}"/><circle cx=".082" cy="-.87" r=".008" fill="#2a1a14"/>`;
   c += `<path d="M-.08 -.84 q-.05 .03 -.045 .1 M.07 -.85 q.06 .04 .05 .1" stroke="#e0b860" stroke-width=".03" fill="none" stroke-linecap="round"/><circle cx="-.083" cy="-.85" r=".013" fill="#3a6ac8"/>`;
-  c += `<path d="M.05 -.945 Q.104 -.87 .094 -.8 L.084 -.802 Q.09 -.87 .043 -.94 Z" fill="${RAND}" opacity=".85"/>` + kante("M.13 -.71 L.12 -.47", 0.012);
+  c += `<path d="M.05 -.945 Q.104 -.87 .094 -.8 L.084 -.802 Q.09 -.87 .043 -.94 Z" fill="${RAND}" opacity=".85"/>` + kante("M.112 -.62 L.108 -.48", 0.01);
   k += setze(KIND.x, KIND.y, km(KIND.y), c);
   S.teil({ id: "gaeste", de: "die Gäste", syl: "GÄS-te", it: "gli ospiti", itSyl: "O-spi-ti", en: "guests", x: FRAU.x, y: 122, kunst: anker(FRAU.x, 122, k),
     tipp: "Eine Familie sitzt am Biertisch. Der Vater winkt der Kellnerin: „Hier, bitte!“" });
@@ -858,8 +860,8 @@ const boden = (x, w) => `<ellipse cx="${x}" cy="0" rx="${w}" ry=".018" fill="#20
   /* DIE KELLNERIN im Dirndl geht zum Tisch: das Tablett auf Schulterhöhe über der flachen Hand, nah am Körper, zwei Halbe darauf */
   const Y = 180, s = km(Y);
   let d = boden(-0.17, 0.08) + boden(0.17, 0.07);
-  d += glied([[.07, -.5], [.1, -.3], [.15, -.07]], [.075, .062, .036], "#b88a6c") + `<path d="M.11 -.07 Q.11 0 .2 0 L.23 0 L.23 -.07 Z" fill="#1a1818"/>`;
-  d += glied([[-.07, -.5], [-.12, -.28], [-.17, -.07]], [.077, .063, .036], "#c89a7a") + `<path d="M-.23 -.06 Q-.24 0 -.16 0 L-.11 0 L-.11 -.07 Z" fill="#1a1818"/>`;
+  d += glied([[.07, -.5], [.095, -.32], [.115, -.22], [.15, -.07]], [.07, .05, .058, .032], "#b88a6c") + `<path d="M.11 -.07 Q.11 0 .2 0 L.23 0 L.23 -.07 Z" fill="#1a1818"/>`;
+  d += glied([[-.07, -.5], [-.11, -.32], [-.135, -.22], [-.17, -.07]], [.072, .05, .06, .032], "#c89a7a") + `<path d="M-.23 -.06 Q-.24 0 -.16 0 L-.11 0 L-.11 -.07 Z" fill="#1a1818"/>`;
   d += glied([[.13, -1.32], [.175, -1.12], [.165, -.96]], [.052, .044, .034], HAUT_S) + faust(0.163, -0.935, 80, HAUT_S);
   d += `<path d="M-.13 -.98 Q-.22 -.7 -.27 -.43 Q0 -.38 .25 -.45 Q.18 -.72 .13 -.98 Z" fill="#2e5a3a"/><path d="M.02 -.98 Q.1 -.7 .25 -.45 Q.12 -.42 .02 -.42 Z" fill="#1e3e28"/>`;
   d += `<path d="M-.12 -.97 Q-.19 -.7 -.22 -.47 Q-.08 -.44 .04 -.45 Q.02 -.72 .03 -.97 Z" fill="#e48aa4"/><path d="M-.12 -.97 L.03 -.97" stroke="#f4b4c8" stroke-width=".02"/><path d="M.11 -.98 l.06 -.03 l0 .07 Z M.11 -.98 l.04 .08" stroke="#e48aa4" stroke-width=".02" fill="#e48aa4"/>`;
@@ -883,7 +885,7 @@ const boden = (x, w) => `<ellipse cx="${x}" cy="0" rx="${w}" ry=".018" fill="#20
   d += `<ellipse cx="-.25" cy="-1.39" rx=".048" ry=".016" fill="${HAUT}"/><ellipse cx="-.218" cy="-1.402" rx=".016" ry=".009" fill="${HAUT}" stroke="${HAUT_S}" stroke-width=".004"/>`;
   const halbe = (x) => `<path d="M${x - 0.035} -1.405 L${x - 0.04} -1.585 L${x + 0.04} -1.585 L${x + 0.035} -1.405 Z" fill="#f0b840"/><path d="M${x - 0.042} -1.585 q.042 -.05 .084 0 Z" fill="#fffaf0"/><path d="M${x + 0.04} -1.55 q.035 .005 .03 .045 q-.005 .035 -.032 .035" stroke="#e0e4e4" stroke-width=".01" fill="none"/>`;
   d += `<ellipse cx="-.26" cy="-1.4" rx=".17" ry=".035" fill="#9aa0a4"/><ellipse cx="-.26" cy="-1.405" rx=".16" ry=".028" fill="#d0d4d6"/>` + halbe(-0.34) + halbe(-0.2);
-  d += kante("M.1 -1.38 Q.17 -1.34 .13 -1.2 L.13 -.97 Q.18 -.72 .25 -.45") + kante("M-.12 -1.4 L-.4 -1.4", 0.008);
+  d += kante("M.095 -1.37 Q.155 -1.335 .12 -1.2 L.12 -1.0") + kante("M.125 -.95 Q.168 -.72 .238 -.465") + kante("M-.12 -1.4 L-.4 -1.4", 0.008);
   let k = langschatten(0, 0.5, 16, 60, 0.36) + setze(0, 0, s, d);
   S.teil({ id: "kellnerin", de: "die Kellnerin", syl: "KELL-ne-rin", it: "la cameriera", itSyl: "ca-me-RIE-ra", en: "waitress", x: 230, y: Y - 34, kunst: anker(0, -34, k),
     tipp: "Die Kellnerin bringt noch zwei Halbe an den Tisch." });

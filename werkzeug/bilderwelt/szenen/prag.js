@@ -140,16 +140,23 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
   let g = `<path d="${huegel}" fill="${S.lg("petrin", [[0, "#7f9a78"], [1, "#5d7a5a"]])}"/>`;
   /* Baumkronen als Rand (gelappt), Dunst darüber */
   /* Wald auf dem Petřín: viele Kronen, oben links von der Sonne gestreift */
-  const rand = (x) => x < 40 ? kuppe + 2 + (x - 13) * (x - 13) * 0.004 : x < 150 ? kuppe + 4 + (x - 40) * (x - 40) * 0.0021 + (x - 40) * 0.05 : 98 + (x - 150) * 0.3;
+  /* Kammlinie genau aus den Bézierkurven des Hügels */
+  const bez = (p0, p1, p2, p3, t) => { const u = 1 - t; return [u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0], u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1]]; };
+  const kamm = [];
+  for (let t = 0; t <= 1.001; t += 0.02) kamm.push(bez([0, kuppe + 2], [8, kuppe - 1], [22, kuppe - 0.5], [40, kuppe + 4], t));
+  for (let t = 0; t <= 1.001; t += 0.02) kamm.push(bez([40, kuppe + 4], [70, kuppe + 12], [110, 88], [150, 98], t));
+  kamm.push([170, 104]);
+  const rand = (x) => { for (let i = 1; i < kamm.length; i++) if (kamm[i][0] >= x) { const [a, b] = [kamm[i - 1], kamm[i]]; return a[1] + (b[1] - a[1]) * (x - a[0]) / Math.max(0.01, b[0] - a[0]); } return 104; };
   let kd = "", kh = "";
   const z = zufall(8);
-  for (let i = 0; i < 260; i++) {
-    const x = z() * 168, y = rand(x) + 0.8 + z() * 26, rr = 1.1 + z() * 1.3;
+  for (let i = 0; i < 650; i++) {
+    const x = z() * 168, y = rand(x) + 0.9 + z() * 30, rr = 0.9 + z() * 1.1;
     if (y > 121) continue;
-    kd += `M${r(x - rr)} ${r(y)} a${r(rr)} ${r(rr * 0.9)} 0 1 1 ${r(2 * rr)} 0Z`;
-    kh += `M${r(x - rr * 0.6)} ${r(y - rr * 0.35)} a${r(rr * 0.5)} ${r(rr * 0.4)} 0 0 1 ${r(rr)} 0Z`;
+    if (y - rr * 0.6 < rand(x)) continue;
+    kd += `M${r(x - rr)} ${r(y)} a${r(rr)} ${r(rr * 0.9)} 0 1 1 ${r(2 * rr)} 0 a${r(rr)} ${r(rr * 0.9)} 0 1 1 ${r(-2 * rr)} 0Z`;
+    kh += `M${r(x - rr * 0.7)} ${r(y - rr * 0.3)} a${r(rr * 0.5)} ${r(rr * 0.45)} 0 0 1 ${r(rr * 0.9)} 0Z`;
   }
-  g += `<path d="${kd}" fill="#5f7d58"/><path d="${kh}" fill="#93ad84" opacity=".7"/>`;
+  g += `<path d="${kd}" fill="#68865f"/><path d="${kh}" fill="#8fa982" opacity=".55"/>`;
   g += `<path d="${huegel}" fill="${S.lg("petdunst", [[0, "#dfe8ef", 0.3], [1, "#dfe8ef", 0.12]])}"/>`;
   /* Kloster Strahov und Häuser am Hang (helle Fassaden, rote Dächer) */
   for (const [x, y, w] of [[96, 93, 6], [104, 95, 5], [118, 97, 7], [130, 99, 6], [141, 100, 6], [152, 102, 7]]) g += `<rect x="${x}" y="${y}" width="${w}" height="3" fill="#e7dcc6"/><path d="M${x - 0.3} ${y} L${x + w / 2} ${y - 1.6} L${x + w + 0.3} ${y}Z" fill="#b65a3c"/>`;
@@ -247,6 +254,13 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
   k += `<path d="M-1.6 -77.6 v-3 h1.2 v3 Z M.4 -77.6 v-3 h1.2 v3 Z" fill="#2f4a42"/>`;
   k += `</g>`;
   S.teil({ id: "veitsdom", de: "der Veitsdom", syl: "VEITS-dom", it: "la Cattedrale di San Vito", itSyl: "cat-te-DRA-le di san VI-to", en: "St Vitus Cathedral", x: x0, y: yb, steht: true, kunst: k,
+    zoom: { x: 314, y: 35, w: 72, h: 48 },
+    unter: [
+      { id: "turm", de: "der Turm", syl: "TURM", it: "la torre", itSyl: "TOR-re", en: "tower", x: x0, y: yb, kunst: flaeche(-7 * s, -96 * s, 14 * s, 96 * s, 0.3),
+        tipp: "Der große Südturm des Veitsdoms ist fast 100 Meter hoch. Oben hat er eine grüne Haube." },
+      { id: "strebebogen", de: "der Strebebogen", syl: "STRE-be-bo-gen", it: "l'arco rampante", itSyl: "AR-co ram-PAN-te", en: "flying buttress", x: r(x0 + 39 * s), y: yb, kunst: flaeche(-22 * s, -38 * s, 44 * s, 34 * s, 0.3),
+        tipp: "Strebebögen stützen die hohen Mauern einer gotischen Kirche von außen." },
+    ],
     tipp: "Der Veitsdom ist die größte Kirche Tschechiens. Man hat fast 600 Jahre an ihm gebaut." });
 }
 
@@ -301,6 +315,9 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
   S.def(`<clipPath id="${S.id("nikclip")}"><rect x="-40" y="-60" width="80" height="${r(60 + (101.5 - yb))}"/></clipPath>`);
   k = `<g clip-path="url(#${S.id("nikclip")})">${k}</g>`;
   S.teil({ id: "nikolauskirche", de: "die Nikolauskirche", syl: "NI-ko-laus-kir-che", it: "la chiesa di San Nicola", itSyl: "CHIE-sa di san ni-CO-la", en: "St Nicholas Church", x: x0, y: yb, steht: true, kunst: k,
+    zoom: { x: 204, y: 54, w: 60, h: 40 },
+    unter: [{ id: "kuppel", de: "die Kuppel", syl: "KUP-pel", it: "la cupola", itSyl: "CU-po-la", en: "dome", x: r(x0 - 14 * s), y: r(yb - 58 * s), kunst: flaecheEllipse(0, 0, 12 * s, 11 * s),
+      tipp: "Die grüne Kuppel ist aus Kupfer. Mit der Zeit ist das Kupfer grün geworden." }],
     tipp: "Die Nikolauskirche ist eine der schönsten Barockkirchen in Prag." });
 }
 
@@ -320,7 +337,7 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
   /* Wellen: kurze helle und dunkle Striche, nach vorn größer */
   let hell = "", dunkel = "";
   for (let i = 0; i < 520; i++) {
-    const y = 122 + Math.pow(rnd(), 1.6) * 138, x = rnd() * 400, w = 0.8 + (y - 120) * 0.05 + rnd() * 1.5;
+    const y = 122 + Math.pow(rnd(), 1.6) * 137, w = 0.8 + (y - 120) * 0.05 + rnd() * 1.5, x = rnd() * (399 - w);
     if (rnd() < 0.55) hell += `M${r(x)} ${r(y)} h${r(w)}`; else dunkel += `M${r(x)} ${r(y)} h${r(w)}`;
   }
   k += `<path d="${hell}" stroke="#d8e6ee" stroke-width=".35" opacity=".55"/><path d="${dunkel}" stroke="#36515b" stroke-width=".35" opacity=".45"/>`;
@@ -412,7 +429,10 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
   k += `<path d="M9.4 -34.5 l.85 -2.4 l.85 2.4 Z" fill="#7d838e"/>`;
   k += `</g>`;
   S.teil({ id: "brueckenturm", de: "der Brückenturm", syl: "BRÜ-cken-turm", it: "la torre del ponte", itSyl: "TOR-re del PON-te", en: "bridge tower", x: x0, y: yb, steht: true, kunst: k + flaeche(-14 * s, -44 * s, 31 * s, 44 * s, 0.6),
-    tipp: "An beiden Enden der Karlsbrücke steht ein Brückenturm. Durch das Tor geht man in die Kleinseite." });
+    zoom: { x: 84, y: 65, w: 64, h: 43 },
+    unter: [{ id: "tor", de: "das Tor", syl: "TOR", it: "la porta", itSyl: "POR-ta", en: "gate", x: x0, y: yb, kunst: flaeche(-3.4 * s, -12 * s, 6.8 * s, 12 * s, 0.3),
+      tipp: "Durch das Tor zwischen den beiden Türmen kommt man in die Kleinseite." }],
+    tipp: "An beiden Enden der Karlsbrücke steht ein Brückenturm. Der hohe Turm hier ist über 500 Jahre alt." });
 }
 
 /* =====================================================================
@@ -533,7 +553,7 @@ const NEPO = { s: 34 + 7 * 31, sei: 1 };
     }
     return g;
   };
-  const statue = (s, sei, i) => {
+  const statue = (s, sei, i, art = i % 5) => {
     const q = sei * (BR + 0.2), sc = F / Dd(s, q), x = X(s, q), y = Y(s, q, 0), nah = s < 110;
     let g = `<g transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})">`;
     /* Sockel (2,6 m): Sockelstufe, Würfel mit Inschriftkartusche, Gesims; links/vorn im Licht */
@@ -542,7 +562,7 @@ const NEPO = { s: 34 + 7 * 31, sei: 1 };
     g += `<path d="M-1.3 -2.35 H1.3 L1.2 -2.6 H-1.2 Z" fill="#b5a68e"/><path d="M-1.3 -2.35 H1.3 V-2.28 H-1.3 Z" fill="#5e564f"/>`;
     if (nah) g += `<path d="M-.55 -1.85 Q-.6 -1.35 -.55 -.85 H.55 Q.6 -1.35 .55 -1.85 Z" fill="#6f6556" stroke="#d2c4ab" stroke-width=".04"/><path d="M-.38 -1.55 h.76 M-.42 -1.35 h.84 M-.36 -1.15 h.72" stroke="#3e3833" stroke-width=".04"/>`;
     else g += `<rect x="-.5" y="-1.8" width="1" height=".9" fill="#6f6556"/>`;
-    g += `<g transform="translate(0 -2.6)">${figur(i % 5, nah)}</g></g>`;
+    g += `<g transform="translate(0 -2.6)">${figur(art, nah)}</g></g>`;
     return g;
   };
   /* von hinten nach vorn zeichnen */
@@ -552,24 +572,24 @@ const NEPO = { s: 34 + 7 * 31, sei: 1 };
       /* der heilige Nepomuk (Bronze): mit Kruzifix, fünf goldene Sterne als Heiligenschein, Bronzetafeln */
       const q = sei * (BR + 0.2), sc = F / Dd(s, q), x = X(s, q), y = Y(s, q, 0);
       let g = `<g transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})">`;
-      g += `<path d="M-1.15 0 V-.35 H1.15 V0 Z M-1.05 -.35 V-2.35 H1.05 V-.35 Z" fill="${SOCKEL}"/><path d="M-1.3 -2.35 H1.3 L1.2 -2.6 H-1.2 Z" fill="#b5a68e"/>`;
-      g += `<rect x="-.75" y="-2.2" width="1.5" height="1.1" fill="#3f3a2a"/><rect x="-.3" y="-1.9" width=".6" height=".5" fill="#e8c86a"/>`;
-      g += `<g transform="translate(0 -2.6)"><path d="M-.5 0 Q-.6 -1.5 -.4 -2.4 Q-.25 -2.75 0 -2.8 Q.25 -2.75 .4 -2.4 Q.6 -1.5 .5 0 Z" fill="#2c2f2a"/>`;
+      g += `<path d="M-1.15 0 V-.35 H1.15 V0 Z M-1.05 -.35 V-3.35 H1.05 V-.35 Z" fill="${SOCKEL}"/><path d="M-1.3 -3.35 H1.3 L1.2 -3.6 H-1.2 Z" fill="#b5a68e"/>`;
+      g += `<rect x="-.75" y="-3.1" width="1.5" height="1.1" fill="#3f3a2a"/><rect x="-.3" y="-2.8" width=".6" height=".5" fill="#e8c86a"/>`;
+      g += `<g transform="translate(0 -3.6) scale(1.15)"><path d="M-.5 0 Q-.6 -1.5 -.4 -2.4 Q-.25 -2.75 0 -2.8 Q.25 -2.75 .4 -2.4 Q.6 -1.5 .5 0 Z" fill="#2c2f2a"/>`;
       g += `<path d="M-.4 -2.4 Q-.25 -2.75 0 -2.8 Q.25 -2.75 .4 -2.4 L.3 -2 L-.3 -2 Z" fill="#e8e2d0"/>`;
       g += `<circle cx="0" cy="-3.05" r=".24" fill="#2c2f2a"/><path d="M-.5 -1.7 L.5 -2.3 M-.1 -2.5 L.1 -1.5" stroke="#3a3326" stroke-width=".1"/>`;
       let st = "";
       for (let j = 0; j < 5; j++) { const a = (-60 + j * 30) * Math.PI / 180; st += `<circle cx="${r(Math.sin(a) * 0.55 * 100) / 100}" cy="${r((-3.1 - Math.cos(a) * 0.55) * 100) / 100}" r=".11" fill="#ffd34a"/>`; }
       g += st + `</g></g>`;
       k += g;
-    } else k += statue(s, sei, i);
+    } else k += statue(s, sei, i, sei === NEPO.sei && s === NEPO.s - 31 ? 4 : i % 5);
   }
   const nx = r(X(NEPO.s, BR + 0.2)), ny = r(Y(NEPO.s, BR + 0.2)), ns = F / Dd(NEPO.s, BR + 0.2);
   S.teil({ id: "statue", de: "die Statue", syl: "STA-tu-e", it: "la statua", itSyl: "STA-tu-a", en: "statue", x: 0, y: 0, kunst: k,
-    zoom: { x: r(nx - 15), y: r(ny - 17), w: 27, h: 18 },
+    zoom: { x: r(nx - 13), y: r(ny - 15), w: 24, h: 16 },
     unter: [
       { id: "nepomuk", de: "der heilige Nepomuk", syl: "der HEI-li-ge NE-po-muk", it: "san Giovanni Nepomuceno", itSyl: "san gio-VAN-ni ne-po-mu-CE-no", en: "St John of Nepomuk", x: nx, y: ny,
-        kunst: flaeche(-1.3 * ns, -6.3 * ns, 2.6 * ns, 6.3 * ns, 0.3), tipp: "Wer die blanke Bronzetafel am Nepomuk berührt, kommt wieder nach Prag – so sagt man." },
-      { id: "heiligenschein", de: "der Heiligenschein", syl: "HEI-li-gen-schein", it: "l'aureola", itSyl: "au-RE-o-la", en: "halo", x: nx, y: r(ny - 6 * ns),
+        kunst: flaeche(-0.8 * ns, -7.6 * ns, 1.6 * ns, 3.2 * ns, 0.3), tipp: "Wer die blanke Bronzetafel am Nepomuk berührt, kommt wieder nach Prag – so sagt man." },
+      { id: "heiligenschein", de: "der Heiligenschein", syl: "HEI-li-gen-schein", it: "l'aureola", itSyl: "au-RE-o-la", en: "halo", x: nx, y: r(ny - 7.6 * ns),
         kunst: flaecheEllipse(0, 0, 0.8 * ns, 0.6 * ns), tipp: "Um den Kopf des Nepomuk leuchten fünf goldene Sterne." },
     ],
     tipp: "Auf der Karlsbrücke stehen 30 Statuen von Heiligen." });
