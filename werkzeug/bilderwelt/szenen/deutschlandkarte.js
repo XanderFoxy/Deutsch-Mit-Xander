@@ -421,12 +421,13 @@ S.def(`<pattern id="${S.id("wellen")}" width="9" height="5" patternUnits="userSp
 const imBild = (pts) => pts.map((q) => { const x = Math.max(-0.4, Math.min(BR + 0.4, q.x)), y = Math.max(-0.4, Math.min(HO + 0.4, q.y)); return x !== q.x || y !== q.y ? { x, y, hart: true } : q; })
   .filter((q, i, a) => !i || Math.hypot(q.x - a[i - 1].x, q.y - a[i - 1].y) > 0.05);
 function meer(id, aussen, inseln, label, tipp, worte) {
-  const d = weg(imBild(pkt(aussen))) + Object.values(inseln).map((t) => weg(t)).join("");
-  S.def(`<path id="${S.id(id)}" d="${d}" fill-rule="evenodd" clip-rule="evenodd"/>`);
+  const dA = weg(imBild(pkt(aussen))), dI = Object.values(inseln).map((t) => weg(t)).join("");
+  S.def(`<path id="${S.id(id)}" d="${dA + dI}" fill-rule="evenodd" clip-rule="evenodd"/>`);
+  S.def(`<path id="${S.id(id + "k")}" d="${dA}"/>`);
   S.def(`<clipPath id="${S.id(id + "clip")}">${USE(id)}</clipPath>`);
   let k = USE(id, `fill="${MEER}"`);
-  /* Wasserlinien an der Küste (wie auf alten Karten), nur im Meer */
-  k += `<g clip-path="url(#${S.id(id + "clip")})" fill="none" stroke-linejoin="round">${USE(id, `stroke="#c8e6ee" stroke-width="5.4" opacity=".45"`)}${USE(id, `stroke="#d9eff4" stroke-width="2.8" opacity=".55"`)}${USE(id, `stroke="#eef9fb" stroke-width="1.3" opacity=".7"`)}</g>`;
+  /* Wasserlinien an der Küste (wie auf alten Karten), nur im Meer; um die Inseln nur ein schmaler Saum */
+  k += `<g clip-path="url(#${S.id(id + "clip")})" fill="none" stroke-linejoin="round">${USE(id + "k", `stroke="#c8e6ee" stroke-width="4.2" opacity=".45"`)}${USE(id + "k", `stroke="#d9eff4" stroke-width="2.2" opacity=".55"`)}${USE(id, `stroke="#eef9fb" stroke-width="1" opacity=".75"`)}</g>`;
   k += USE(id, `fill="url(#${S.id("wellen")})" opacity=".55"`);
   k += USE(id, `fill="none" stroke="#5b8fa8" stroke-width=".38" stroke-linejoin="round"`);
   k += label;
@@ -468,7 +469,7 @@ const G = {
   fels: S.lg("fels", [[0, "#cf9a72"], [0.6, "#a8714f"], [1, "#7a4e35"]], 0, 0, 1, 0),
   granit: S.lg("granit", [[0, "#a4988a"], [0.55, "#7d7266"], [1, "#544a40"]], 0, 0, 1, 0),
 };
-const GLOW = S.rg("glow", [[0, "#fffbec", 0.95], [0.6, "#fffbec", 0.55], [1, "#fffbec", 0]]);
+const GLOW = S.rg("glow", [[0, "#fffbec", 0.85], [0.6, "#fffbec", 0.45], [1, "#fffbec", 0]]);
 const SCHATTEN = S.rg("schatten", [[0, "#3b2a10", 0.4], [1, "#3b2a10", 0]]);
 const fen = (x, y, w, h, f = "#3a2a20", o = 1) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"${o < 1 ? ` opacity="${o}"` : ""}/>`;
 const reihe = (x0, y, n, dx, w, h, f, rr = 0) => { let s = ""; for (let i = 0; i < n; i++) s += `<rect x="${r(x0 + i * dx)}" y="${y}" width="${w}" height="${h}" rx="${rr}" fill="${f}"/>`; return s; };
@@ -760,7 +761,7 @@ const ICON = {
 /* [Länge, Breite, Bildversatz dx/dy, Beschriftung (dx, dy, Ausrichtung), Knopf (dx, dy) vom Ortspunkt] */
 const STADT = {
   hamburg: { ll: [9.99, 53.55], lab: [0, 5.2, "m"] },
-  luebeck: { ll: [10.69, 53.87], lab: [6.4, -1.2, "s"] },
+  luebeck: { ll: [10.69, 53.87], bild: [4.6, 6.6], lab: [10.6, 6.4, "s"] },
   bremen: { ll: [8.81, 53.08], lab: [0, 5.2, "m"], gross: 1.2 },
   hannover: { ll: [9.74, 52.37], lab: [0, 5.2, "m"] },
   berlin: { ll: [13.40, 52.52], bild: [2.5, 0], lab: [9.5, -1.2, "s"] },
@@ -792,7 +793,7 @@ function stadtBild(id) {
   const c = STADT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];
   const bx = dx0 + bdx, by = dy0 + bdy - (c.bild ? 0 : 0.9);
   const g0 = c.gross || 1, [W0, H0, f] = ICON[id], W = W0 * g0, H = H0 * g0;
-  let k = `<ellipse cx="${r(bx)}" cy="${r(by - H * 0.45)}" rx="${r(W * 0.72)}" ry="${r(H * 0.62)}" fill="${GLOW}"/>`;
+  let k = `<ellipse cx="${r(bx)}" cy="${r(by - H * 0.45)}" rx="${r(W * 0.66)}" ry="${r(H * 0.58)}" fill="${GLOW}"/>`;
   k += `<ellipse cx="${r(bx + 0.6)}" cy="${r(by + 0.1)}" rx="${r(W * 0.55)}" ry="1.1" fill="${SCHATTEN}"/>`;
   if (c.bild) { const ey = bdy > 2 ? by - H - 0.3 : by + 0.2; k += `<path d="M${r(dx0)} ${r(dy0)} L${r(bx)} ${r(ey)}" stroke="#7a5a32" stroke-width=".35" stroke-dasharray=".8 .5"/>`; }
   k += `<g transform="translate(${+bx.toFixed(3)} ${+by.toFixed(3)})${g0 !== 1 ? ` scale(${g0})` : ""}">${f()}</g>`;

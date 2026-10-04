@@ -892,8 +892,9 @@ const kleineFigur = (svg) => {
 /* Schlagschatten einer Figur der Höhe h (m) auf dem Pflaster, nach Nordnordosten */
 const figSchatten = (X, Y, h, b = .22) => pfad(poly([[X - b, Y, 0], [X + b, Y, 0], [X + b * .5 + h * .414, Y + h * 1.546, 0], [X - b * .5 + h * .414, Y + h * 1.546, 0]], 1), "#1f2430", ` opacity=".3"`);
 const VORLAGE = {}, VZ = {};
-/* schlank: nach dem Runden zusammengefallene Teilpfade (Brauen, Strähnen, Wimpern in 25 E Höhe) und data-Attribute weglassen */
-const schlank = (svg) => svg.replace(/ data-[\w-]+="[^"]*"/g, "").replace(/<path([^>]*?) d="([^"]*)"([^>]*?)\/>/g, (q, a, d, b) => {
+/* schlank: Linien unter 1 cm Breite, nach dem Runden zusammengefallene Teilpfade (Brauen, Strähnen, Wimpern) und data-Attribute
+   weglassen — bei 25 E Figurenhöhe unsichtbar */
+const schlank = (svg) => svg.replace(/ data-[\w-]+="[^"]*"/g, "").replace(/<path[^>]*fill="none"[^>]*stroke-width="0?\.\d+"[^>]*\/>|<path[^>]*stroke-width="0?\.\d+"[^>]*fill="none"[^>]*\/>/g, "").replace(/<path([^>]*?) d="([^"]*)"([^>]*?)\/>/g, (q, a, d, b) => {
   d = d.replace(/(L-?\d+ -?\d+)(?:\1)+/g, "$1");
   let sub = d.split(/(?=M)/).filter((sp) => { const n = sp.match(/-?\d+/g) || []; for (let i = 2; i + 1 < n.length; i += 2) if (n[i] !== n[0] || n[i + 1] !== n[1]) return true; return false; });
   /* Haar- und Faserstriche (viele winzige Teilpfade) sind bei 25 E Figurenhöhe unsichtbar */
