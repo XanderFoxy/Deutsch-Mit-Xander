@@ -293,11 +293,13 @@ const schlossUnter = [];
     sch += `<path d="M${r(x + 0.2)} ${r(dy - 0.5)} L${r(x + 0.6)} ${r(dy - 0.5)} L${r(x + 0.75)} ${r(dy - 7.6)} L${r(x + 0.35)} ${r(dy - 7.6)} Z"/>`;
     hermen += `<use href="#${S.id("herme")}" transform="translate(${x} ${r(dy)}) scale(${r(-s * f)} 1)"/>`;
   }
+  /* kühler Schatten unter dem Kranzgesims liegt auf der Wand (hinter den Hermen); an den Pavillons gekrümmt, nicht über die Wandkante */
+  k += `<rect x="${-PA}" y="${TOP - 0.05}" width="${2 * PA}" height=".7" fill="#3e3868" opacity=".3"/>`;
+  for (const s of [-1, 1]) { const x0 = s < 0 ? -PB : PA, x1 = s < 0 ? -PA : PB; k += `<path d="M${x0} ${TOP + 0.65} ${bogen(x0, x1, TOP + 0.65, PC)} L${x1} ${TOP} ${bogen(x1, x0, TOP, PC)} Z" fill="#4a4070" opacity=".3"/>`; }
   k += `<g fill="#7a5418" opacity=".3" filter="url(#${S.id("schw")})">${sch}</g>` + hermen;
   /* Gebälk mit Fries und Kranzgesims; unter dem Gesims ein Schattenband */
   const GEB = S.lg("gebaelk", [[0, "#f7edd5"], [1, "#d8c7a0"]]);
   k += `<rect x="${-W - 0.6}" y="${TOP - 1.1}" width="${2 * W + 1.2}" height="1.1" fill="${GEB}"/>`;
-  k += `<rect x="${-W - 0.6}" y="${TOP - 0.05}" width="${2 * W + 1.2}" height=".6" fill="#3e3868" opacity=".32"/>`;
   k += `<rect x="${-W - 0.8}" y="${TOP - 1.5}" width="${2 * W + 1.6}" height=".45" fill="#fbf4e3"/>`;
   /* Mittelbau: gekrümmtes Gebälk (ovaler Saal) mit der Inschrift im Fries */
   const MB = (y, d) => `M-8.2 ${y} Q0 ${r(y - d)} 8.2 ${y}`;
@@ -318,7 +320,6 @@ const schlossUnter = [];
     const x0 = s < 0 ? -PB - 0.3 : PA, x1 = s < 0 ? -PA : PB + 0.3, m = (x0 + x1) / 2, hw = (x1 - x0) / 2;
     const ya = (x, y) => r(y - PC * (1 - ((x - m) / hw) ** 2));
     k += `<path d="M${x0} ${TOP + 0.6} ${bogen(x0, x1, TOP + 0.6, PC)} L${x1} ${TOP - 1.1} ${bogen(x1, x0, TOP - 1.1, PC)} Z" fill="${GEB}"/>`;
-    k += `<path d="M${x0} ${TOP + 0.6} ${bogen(x0, x1, TOP + 0.6, PC)} L${x1} ${TOP} ${bogen(x1, x0, TOP, PC)} Z" fill="#4a4070" opacity=".3"/>`;
     k += `<path d="M${r(x0 - 0.2)} ${TOP - 1.1} ${bogen(x0 - 0.2, x1 + 0.2, TOP - 1.1, PC)} L${r(x1 + 0.2)} ${TOP - 1.55} ${bogen(x1 + 0.2, x0 - 0.2, TOP - 1.55, PC)} Z" fill="#fbf4e3"/>`;
     k += `<path d="M${x0} ${TOP - 1.55} ${bogen(x0, x1, TOP - 1.55, PC)} L${x1} ${TOP - 2.6} ${bogen(x1, x0, TOP - 2.6, PC)} Z" fill="#e9dcc0"/>`;
     let bb = "";
@@ -542,6 +543,7 @@ bodenSchatten(46.6, -6.8, 0.5, 1.8, 0.24);
    5 — DER WEG (heller Kies) — Bodenfläche, Inhalt am Ende
    6 — DER RASEN (Parterre: Rasenstücke mit Buchskanten und Herbstastern)
    ===================================================================== */
+let BECKEN_AUSSEN = "";
 const FD = 80, RB = 20, RS = 23.5, RING = 27.5;      /* Mitte der Fontäne, Becken, Figurenkreis, Platzrand */
 const WEG = S.teil({ id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", itSyl: "sen-TIE-ro", en: "path", x: 0, y: 0, kunst: "",
   tipp: "Die Wege im Park sind aus hellem Kies. Er knirscht unter den Schuhen." });
@@ -681,21 +683,34 @@ const figur = (u, a) => {
    ===================================================================== */
 {
   let k = "";
-  const ring = (rad, h, n = 72) => { const p = []; for (let i = 0; i <= n; i++) { const w = i / n * Math.PI * 2, X = rad * Math.sin(w), D = FD - rad * Math.cos(w); p.push(`${r(xG(D, X))} ${r(yG(D, h))}`); } return "M" + p.join(" L") + " Z"; };
+  /* Das Becken gehört nur zwischen x 60 und 340 zur Fontäne; die Enden links und rechts liegen im Weg (Trefferfläche
+     der Fontäne bleibt schmal). Gefüllte Formen werden dazu in x geklemmt, Linien in Stücke geteilt. */
+  const kl2 = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+  const ring = (rad, h, n = 72, lo = 60, hi = 340) => { const p = []; for (let i = 0; i <= n; i++) { const w = i / n * Math.PI * 2, X = rad * Math.sin(w), D = FD - rad * Math.cos(w); p.push(`${r(kl2(xG(D, X), lo, hi))} ${r(yG(D, h))}`); } return "M" + p.join(" L") + " Z"; };
+  const linie = (pts, innen) => { let d = "", an = false; for (const [x, y] of pts) { if (innen(x)) { d += (an ? " L" : " M") + `${r(x)} ${r(y)}`; an = true; } else an = false; } return d; };
+  const IN = (x) => x >= 60 && x <= 340, AUS = (x) => x <= 60 || x >= 340;
+  let aussen = "";
   /* Wasser: Himmel und Terrassen spiegeln sich, Wellenringe */
-  k += `<path d="${ring(RB, 0.3)}" fill="${S.lg("wasser", [[0, "#7d9a6e"], [0.35, "#a9c0cc"], [1, "#6d8ea4"]])}"/>`;
+  const WASSER = S.lg("wasser", [[0, "#7d9a6e"], [0.35, "#a9c0cc"], [1, "#6d8ea4"]]);
+  k += `<path d="${ring(RB, 0.3)}" fill="${WASSER}"/>`;
+  aussen += `<path d="${ring(RB, 0.3, 72, 0, 60)} ${ring(RB, 0.3, 72, 340, 400)}" fill="${WASSER}"/>`;
   const yb = yG(FD, 0.3), u = sk(FD), H = 8.4 * u;
   for (const rr of [5, 9, 14]) k += `<path d="${ring(rr, 0.32, 40)}" fill="none" stroke="#eef5f8" stroke-width=".3" opacity="${r(0.7 - rr * 0.03)}"/>`;
   /* Spiegelung des Strahls */
-  k += `<path d="M${CX - 2} ${r(yb)} L${CX + 2} ${r(yb)} L${CX + 1} ${r(yb + 2.4)} L${CX - 1} ${r(yb + 2.4)} Z" fill="#f4f8fa" opacity=".6"/>`;
+  k += `<path d="M${CX - 2.2} ${r(yb)} L${CX + 2.2} ${r(yb)} L${CX + 0.8} ${r(yb + 4)} L${CX - 0.8} ${r(yb + 4)} Z" fill="#f4f8fa" opacity=".35"/>`;
   /* Beckenrand aus hellem Stein: hinten als feine Linie, vorn die Außenseite */
-  k += `<path d="${ring(RB, 0.55)}" fill="none" stroke="#f4eee2" stroke-width=".7"/>`;
+  const hinten = []; for (let i = 0; i <= 72; i++) { const w = i / 72 * Math.PI * 2, X = RB * Math.sin(w), D = FD - RB * Math.cos(w); hinten.push([xG(D, X), yG(D, 0.55)]); }
+  k += `<path d="${linie(hinten, IN)}" fill="none" stroke="#f4eee2" stroke-width=".7"/>`;
+  aussen += `<path d="${linie(hinten, AUS)}" fill="none" stroke="#f4eee2" stroke-width=".7"/>`;
   const vorn = [], vorn2 = [];
-  for (let i = 0; i <= 40; i++) { const w = Math.PI / 2 + i / 40 * Math.PI, X = RB * Math.sin(w), D = FD - RB * Math.cos(w); vorn.push(`${r(xG(D, X))} ${r(yG(D, 0.55))}`); vorn2.push(`${r(xG(D, X))} ${r(yG(D, 0))}`); }
-  k += `<path d="M${vorn.join(" L")} L${vorn2.reverse().join(" L")} Z" fill="${S.lg("rand", [[0, "#f6f0e2"], [1, "#b2a690"]])}"/>`;
-  k += `<path d="M${vorn.join(" L")}" stroke="#fffaf0" stroke-width=".5" fill="none"/>`;
+  for (let i = 0; i <= 40; i++) { const w = Math.PI / 2 + i / 40 * Math.PI, X = RB * Math.sin(w), D = FD - RB * Math.cos(w); vorn.push([xG(D, X), yG(D, 0.55)]); vorn2.push([xG(D, X), yG(D, 0)]); }
+  const band = (lo, hi) => "M" + vorn.map(([x, y]) => `${r(kl2(x, lo, hi))} ${r(y)}`).join(" L") + " L" + [...vorn2].reverse().map(([x, y]) => `${r(kl2(x, lo, hi))} ${r(y)}`).join(" L") + " Z";
+  const RAND = S.lg("rand", [[0, "#f6f0e2"], [1, "#b2a690"]]);
+  k += `<path d="${band(60, 340)}" fill="${RAND}"/><path d="${linie(vorn, IN)}" stroke="#fffaf0" stroke-width=".5" fill="none"/>`;
+  aussen += `<path d="${band(0, 60)} ${band(340, 400)}" fill="${RAND}"/><path d="${linie(vorn, AUS)}" stroke="#fffaf0" stroke-width=".5" fill="none"/>`;
+  BECKEN_AUSSEN = aussen;
   /* Nassstreifen auf der Treppe hinter dem Strahl (dunkler), damit der Strahl frei steht */
-  k += `<path d="M${CX - 5} ${r(yb - H - 3)} L${CX + 5} ${r(yb - H - 3)} L${CX + 6.5} ${r(yb - 4)} L${CX - 6.5} ${r(yb - 4)} Z" fill="#5e5442" opacity=".28"/>`;
+  k += `<path d="M${CX - 5} ${r(yb - H - 3)} L${CX + 5} ${r(yb - H - 3)} L${CX + 6.5} ${r(yb - 4)} L${CX - 6.5} ${r(yb - 4)} Z" fill="#5e5442" opacity=".3"/><path d="M${CX - 3} ${r(yb - H - 2)} L${CX + 3} ${r(yb - H - 2)} L${CX + 3.8} ${r(yb - 4)} L${CX - 3.8} ${r(yb - 4)} Z" fill="#4e4436" opacity=".25"/>`;
   /* Sprühschleier, vom Wind nach rechts gezogen */
   k += `<g filter="url(#${S.id("gischt")})"><ellipse cx="${CX + 6}" cy="${r(yb - H * 0.35)}" rx="9" ry="${r(H * 0.36)}" fill="#ffffff" opacity=".22"/>`;
   /* durchsichtige Seitenstränge */
@@ -710,11 +725,12 @@ const figur = (u, a) => {
   let krone2 = "", tropfen = "";
   const zz = zufall(808);
   for (let i = 0; i < 12; i++) {
-    const s2 = i % 2 ? 1 : -1, st = i >> 1, w = 2.6 + st * 2 + zz() * 1.2, top = yb - H - 1.2 - zz() * 1.4;
-    const x0 = CX + s2 * (0.3 + zz() * 0.4), xm = CX + s2 * w * (0.5 + zz() * 0.15), x1 = CX + s2 * (w + 1 + zz() * 1.5), y1 = top + H * (0.16 + st * 0.07 + zz() * 0.06);
+    /* Krone höchstens etwa 70 px breit; die Bögen enden nach rund 40 % der Fallhöhe und zerfallen in Tropfen */
+    const s2 = i % 2 ? 1 : -1, st = i >> 1, w = 1.8 + st * 1.05 + zz() * 0.6, top = yb - H - 1.2 - zz() * 1.4;
+    const x0 = CX + s2 * (0.3 + zz() * 0.4), xm = CX + s2 * w * (0.5 + zz() * 0.15), x1 = CX + s2 * (w + 0.6 + zz() * 0.8), y1 = top + H * (0.1 + st * 0.04 + zz() * 0.04);
     const op = r(0.55 + zz() * 0.4), col = s2 < 0 ? "#ffffff" : "#e2ebf1";
     krone2 += `<path d="M${r(x0)} ${r(top + 1.2)} Q${r(xm)} ${r(top - 2.2)} ${r(x1)} ${r(y1)}" stroke="${col}" stroke-width="${r(0.9 - st * 0.08)}" fill="none" stroke-linecap="round" opacity="${op}"/>`;
-    tropfen += `<path d="M${r(x1)} ${r(y1)} Q${r(x1 + s2 * 0.9)} ${r(y1 + H * 0.12)} ${r(x1 + s2 * 1.2)} ${r(y1 + H * (0.22 + zz() * 0.2))}" stroke="${col}" stroke-width=".42" stroke-dasharray=".4 1.1" fill="none" stroke-linecap="round" opacity="${op}"/>`;
+    tropfen += `<path d="M${r(x1)} ${r(y1)} Q${r(x1 + s2 * 0.9)} ${r(y1 + H * 0.12)} ${r(x1 + s2 * 1.2)} ${r(y1 + H * (0.1 + zz() * 0.1))}" stroke="${col}" stroke-width=".42" stroke-dasharray=".4 1.1" fill="none" stroke-linecap="round" opacity="${op}"/>`;
   }
   k += `<g>${krone2}${tropfen}</g>`;
   k += `<g filter="url(#${S.id("gischt")})"><ellipse cx="${CX}" cy="${r(yb - H - 1.4)}" rx="2.4" ry="1.5" fill="#ffffff" opacity=".85"/></g>`;
@@ -885,7 +901,7 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
   k += bl;
   k += `<g filter="url(#${S.id("schw")})">${schattenListe.join("")}</g>`;
   k += `<rect x="0" y="${r(yG(FD + 30))}" width="400" height="${r(260 - yG(FD + 30))}" fill="${S.lg("kieslicht", [[0, "#000", 0.05], [0.3, "#000", 0], [1, "#fff0d0", 0.12]])}"/>`;
-  WEG.kunst = k;
+  WEG.kunst = k + BECKEN_AUSSEN;
 }
 
 /* Warmes Nachmittagslicht über allem (fängt keinen Tipp ab): golden von links, kühl rechts */

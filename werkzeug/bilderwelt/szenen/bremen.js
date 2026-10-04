@@ -170,7 +170,7 @@ const wolke = (x, y, w, boegen) => {
   boegen.forEach(([t, h], i) => { const nx = x - w / 2 + t * w, ny = i === boegen.length - 1 ? y : y - h * .45, ch = (nx - px) / 2; d += ` A${r(ch * 1.04)} ${r(h)} 0 0 1 ${r(nx)} ${r(ny)}`; px = nx; });
   return `<path d="${d} Z" fill="${S.lg("wolkeverlauf", [[0, "#ffffff"], [0.55, "#f3f6f9"], [0.85, "#d9e2ec"], [1, "#b9c7d7"]])}"/><path d="${d} Z" fill="${S.lg("wolkesonne", [[0, "#fff6e0", 0], [0.5, "#fff6e0", 0], [1, "#fff6e0", 0.45]], 0, 0, 1, 0)}"/>`;
 };
-S.hinten(wolke(88, 46, 76, [[.16, 7], [.4, 12], [.62, 10], [.84, 8], [1, 5]]) + wolke(168, 24, 30, [[.3, 7], [.7, 9], [1, 5]]) + wolke(346, 68, 34, [[.35, 6], [.75, 7], [1, 4]]));
+S.hinten(wolke(88, 46, 80, [[.1, 3.6], [.44, 9], [.6, 4.4], [.86, 6.4], [1, 2.6]]) + wolke(168, 24, 30, [[.22, 4], [.72, 8.6], [1, 3.4]]) + wolke(346, 68, 34, [[.46, 6.4], [.8, 4], [1, 2.4]]));
 let FERN = "", FERN_DOMSHOF = "";
 /* ferne Bauten in den Lücken: Liebfrauenkirche (Nordwesten), Domshof (Nordosten), Südostecke */
 const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
@@ -886,13 +886,22 @@ const SCH = { x0: 8, x1: 40, y: -57, T: 15 };
    ===================================================================== */
 /* kleine Figuren: Verläufe durch ihre Mittelfarbe ersetzen, Pfade auf ganze Zentimeter runden (die Seite lädt schnell) */
 const kleineFigur = (svg) => {
-  const farbe = {};
+  /* Verläufe werden zu ihrer Mittelfarbe — und behalten ihre Durchsichtigkeit: weiche Schatten (unter dem Kinn, am Boden)
+     und Wangenröte bleiben zart statt deckend; kleine auslaufende Flecken (Augen) werden zu kleinen, festen Punkten */
+  const farbe = {}, alpha = {};
   svg = svg.replace(/<(linear|radial)Gradient id="([^"]+)"[^>]*>(.*?)<\/\1Gradient>/g, (q, a, id, inn) => {
-    const st = [...inn.matchAll(/offset="([\d.]+)" stop-color="(#[0-9a-fA-F]+)"/g)]; let best = st[0];
+    const st = [...inn.matchAll(/<stop offset="([\d.]+)" stop-color="(#[0-9a-fA-F]+)"( stop-opacity="([\d.]+)")?/g)]; let best = st[0];
     for (const x of st) if (Math.abs(+x[1] - .45) < Math.abs(+best[1] - .45)) best = x;
-    farbe[id] = best ? best[2] : "#888"; return "";
+    farbe[id] = best ? best[2] : "#888";
+    alpha[id] = st.length ? st.reduce((sum, x) => sum + (x[4] == null ? 1 : +x[4]), 0) / st.length : 1; return "";
   });
-  svg = svg.replace(/url\(#([^)]+)\)/g, (q, id) => farbe[id] || q).replace(/<defs><\/defs>/g, "");
+  svg = svg.replace(/<(ellipse|circle|path)([^>]*?) fill="url\(#([^)]+)\)"([^>]*?)(\/?)>/g, (q, tag, a, id, b, zu) => {
+    if (!(id in farbe)) return q;
+    const al = alpha[id], rx = +((a + b).match(/ r[x]?="([\d.]+)"/) || [0, 99])[1];
+    if (al > .97) return `<${tag}${a} fill="${farbe[id]}"${b}${zu}>`;
+    if (tag !== "path" && rx < 2.2) return `<${tag}${(a + b).replace(/ (r[xy]?)="([\d.]+)"/g, (m0, k0, v) => ` ${k0}="${r(+v * .5)}"`).replace(/ opacity="[\d.]+"/, "")} fill="${farbe[id]}"${zu}>`;
+    return `<${tag}${a} fill="${farbe[id]}" fill-opacity="${r(al * 10) / 10 || .1}"${b}${zu}>`;
+  }).replace(/url\(#([^)]+)\)/g, (q, id) => farbe[id] || q).replace(/<defs><\/defs>/g, "");
   return svg.replace(/ d="([^"]*)"/g, (q, d) => ` d="${d.replace(/-?\d+\.\d+/g, (n) => String(Math.round(+n)))}"`);
 };
 /* Schlagschatten einer Figur der Höhe h (m) auf dem Pflaster, nach Nordnordosten */
@@ -940,7 +949,7 @@ vorlage("zeigerin", { geschlecht: "w", blick: 205, frisur: "lang", haarfarbe: "d
   kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "rot" } } }, { hinten: { farbe: "#43302a", lang: true } });
 /* das Kind an der Bronze: im Profil nach rechts, leicht gebeugt, beide Hände als Fäuste um das goldene Vorderbein des Esels */
 vorlage("kindhalter", { geschlecht: "w", alter: "kind", blick: 84, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell",
-  pose: { kipp: 8, lende: 8, brust: 4, nacken: -6, kopf: -8, schulterL: { vor: 50, seit: 6 }, ellbogenL: 14, unterarmL: 20, handL: 0, fingerL: 1, schulterR: { vor: 46, seit: 7 }, ellbogenR: 16, unterarmR: 20, handR: 0, fingerR: 1, huefteL: { vor: 6, seit: 3, dreh: -4 }, knieL: 6, fussL: 0, huefteR: { vor: -8, seit: 2.5, dreh: -4 }, knieR: 4, fussR: 0 },
+  pose: { kipp: 8, lende: 8, brust: 4, nacken: -6, kopf: -8, schulterL: { vor: 50, seit: 6 }, ellbogenL: 14, unterarmL: -80, handL: -6, fingerL: 1, schulterR: { vor: 46, seit: 7 }, ellbogenR: 16, unterarmR: -80, handR: -6, fingerR: 1, huefteL: { vor: 6, seit: 3, dreh: -4 }, knieL: 6, fussL: 0, huefteR: { vor: -8, seit: 2.5, dreh: -4 }, knieR: 4, fussR: 0 },
   kleidung: { oberteil: { stueck: "pullover", farbe: "rosa" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "hellblau" }, schuhe: { stueck: "gummistiefel", farbe: "gelb" } } }, { fein: true });
 vorlage("kind", { geschlecht: "m", alter: "kind", pose: "laufen", blick: 105, frisur: "kurz", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "gruen" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, { fein: true });
 /* das Paar vorn rechts kommt auf uns zu: eigene Farben, keine Zwillinge der Gruppe */
@@ -968,7 +977,7 @@ const fahrrad = (X, Y, sp) => {
 {
   /* das Kind an der Bronze: links an der Kopfseite des Esels, die Fäuste am goldenen Vorderbein */
   const fuS = pr(SM.x, SM.y, 0), skS = mass(SM.x, SM.y) / 100;
-  const ziel = [fuS[0] - 34 * .92 * skS, fuS[1] + (-30 - 30 * .92) * skS];
+  const ziel = [fuS[0] - 44 * .92 * skS, fuS[1] + (-30 - 30 * .92) * skS];
   const Yh = SM.y - .25, HK = 1.24;
   let Xh = SM.x - .9;
   for (let i = 0; i < 30; i++) { const H = HK * mass(Xh, Yh), hx = pr(Xh, Yh, 0)[0] + VZ.kindhalter.hand[0] * H; Xh += (ziel[0] - hx) / mass(Xh, Yh) * .8; }

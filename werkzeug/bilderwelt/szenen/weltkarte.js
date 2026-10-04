@@ -373,33 +373,33 @@ const ICON = {
 const ORT = {
   /* in der Lupe Europa (Maßstab 0,4) */
   grossbritannien: { ll: [-0.13, 51.5], lab: [-1.9, -3.9, "e"], name: "Großbritannien" },
-  frankreich: { ll: [2.35, 48.86], bild: [0.6, 0], lab: [0, 3.2, "m"], name: "Frankreich" },
+  frankreich: { ll: [2.35, 48.86], bild: [0.6, 0], lab: [-2.6, 3.6, "m"], name: "Frankreich" },
   deutschland: { ll: [10.4, 51.2], lab: [0, -5.2, "m"], name: "Deutschland", rot: true },
   wien: { ll: [16.37, 48.21], lab: [2.6, -0.3, "s"], name: "Wien" },
   venedig: { ll: [12.34, 45.43], bild: [3, 2.2], lab: [4.9, 1.6, "s"], name: "Venedig" },
   italien: { ll: [11.2, 43.4], bild: [-2.9, -0.4], lab: [-2.9, 2.1, "m"], name: "Italien" },
   rom: { ll: [12.5, 41.9], bild: [3.4, 4.3], lab: [3.4, 6.4, "m"], name: "Rom" },
   spanien: { ll: [2.17, 41.4], lab: [-6.2, 2.6, "m"], name: "Spanien" },
-  griechenland: { ll: [23.73, 37.97], lab: [0, 2.9, "m"], name: "Griechenland" },
+  griechenland: { ll: [23.73, 37.97], lab: [1.4, 2.9, "m"], name: "Griechenland" },
   tuerkei: { ll: [28.98, 41.01], lab: [5.5, 2.9, "m"], name: "Türkei" },
   moskau: { ll: [37.62, 55.75], lab: [0, 2.8, "m"], name: "Moskau" },
   /* in der ganzen Karte (Maßstab 0,75) */
   san_francisco: { ll: [-122.42, 37.77], lab: [0, 3.3, "m"], name: "San Francisco", knopf: [48, 62] },
   new_york: { ll: [-74.0, 40.71], lab: [2.6, 1.3, "s"], name: "New York", knopf: [132, 48] },
-  mexiko: { ll: [-88.57, 20.68], lab: [0, 3.3, "m"], name: "Mexiko", knopf: [78, 92] },
+  mexiko: { ll: [-88.57, 20.68], bild: [0.8, 8.2], lab: [0.8, 10.6, "m"], name: "Mexiko", knopf: [78, 92] },
   rio: { ll: [-43.21, -22.91], lab: [0, 3.3, "m"], name: "Rio de Janeiro", knopf: [160, 128] },
   kapstadt: { ll: [18.42, -33.92], lab: [0, 3.3, "m"], name: "Kapstadt", knopf: [193, 152] },
   aegypten: { ll: [31.13, 29.98], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [208, 74] },
   dubai: { ll: [55.27, 25.2], lab: [-1.6, 3.3, "m"], name: "Dubai", knopf: [254, 88] },
   indien: { ll: [78.04, 27.18], lab: [0, 3.3, "m"], name: "Indien", knopf: [288, 88] },
   peking: { ll: [116.4, 39.9], lab: [0, 3.3, "m"], name: "Peking", knopf: [300, 40] },
-  japan: { ll: [138.73, 35.36], bild: [2.6, -0.4], lab: [8, 1.2, "s"], name: "Japan", knopf: [350, 52] },
+  japan: { ll: [138.73, 35.36], bild: [7.2, 0.6], lab: [7.2, 3.6, "m"], name: "Japan", knopf: [350, 52] },
   sydney: { ll: [151.21, -33.87], lab: [0, 3.3, "m"], name: "Sydney", knopf: [362, 150] },
 };
 /* Mitte der Lupenmarke je Ort in der Europa-Lupe (Bildkoordinaten) */
 const MARKE_EU = {
-  grossbritannien: [190.5, 33.6], frankreich: [188.6, 43], deutschland: [196.6, 39.3], wien: [209.4, 41.6], venedig: [205.3, 52.9], italien: [199.9, 45.7],
-  rom: [201.6, 56.6], spanien: [188.4, 50.6], griechenland: [209.5, 55], tuerkei: [223.6, 51], moskau: [229.6, 33],
+  grossbritannien: [190.5, 33.6], frankreich: [188.6, 43], deutschland: [196.6, 39.3], wien: [209.4, 41.6], venedig: [205.3, 52.9], italien: [196.6, 46.2],
+  rom: [201.6, 56.6], spanien: [188.4, 50.6], griechenland: [210.4, 54.5], tuerkei: [223.6, 51], moskau: [229.6, 33],
 };
 function ortBild(id, mass, schrift) {
   const c = ORT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];
@@ -487,9 +487,9 @@ kontinent("amerika", ton([[-112, 45, 5, 14, 25, BERGTON, 0.7], [-70, -25, 2.2, 1
   + kontText(-97, 57.5, "NORDAMERIKA", 3.2, "#55703a", 1) + kontText(-60, -14, "SÜDAMERIKA", 3, "#55703a", 0.8),
   { id: "amerika", de: "Amerika", syl: "a-ME-ri-ka", it: "l'America", itSyl: "a-ME-ri-ca", en: "America" }, "Amerika besteht aus Nordamerika und Südamerika.");
 {
-  const o = lupeUm(["dubai", "indien", "peking", "japan"], 1, 3.3, false, {});
+  const o = lupeUm(["dubai", "indien", "peking", "japan"], 1, 3.3, false, { indien: [262.2, 64] });
   kontinent("asien", ton([[87, 30, 12, 3, -6, BERGTON, 0.6], [45, 24, 8, 4, -20, WUESTE, 0.7]]) + gebirge([[80.5, 29.8], [84, 28.5], [88, 27.9], [92, 27.9], [95.5, 28.5]], 6, 1.4)
-    + gebirge([[60, 52], [59.5, 58], [60, 64]], 4, 0.9) + landName(92, 32.4, "Himalaya", 2.6) + kontText(100, 63, "ASIEN", 4.2, "#8a4a68", 2) + o.k,
+    + gebirge([[60, 52], [59.5, 58], [60, 64]], 4, 0.9) + landName(96, 33.6, "Himalaya", 2.6) + kontText(100, 63, "ASIEN", 4.2, "#8a4a68", 2) + o.k,
     { id: "asien", de: "Asien", syl: "A-si-en", it: "l'Asia", itSyl: "A-sia", en: "Asia" }, "Asien ist der größte Kontinent. Hier wohnen die meisten Menschen.",
     Object.assign(knopf(...P(62, 8)), { zoom: o.zoom, unter: o.unter }));
 }

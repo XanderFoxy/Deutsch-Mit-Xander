@@ -351,7 +351,7 @@ const wolke = (name, cx, by, W0, H, seed) => {
    ===================================================================== */
 const AM = {};
 {
-  const kr = AMFALL.map(([E, N]) => W(E, N, 3)), fu = AMFALL.map(([E, N]) => W(E - 6, N, -32)), fl = AMFALL.map(([E, N]) => W(E - 34, N - 6, UNTEN + 1));
+  const kr = AMFALL.map(([E, N]) => W(E, N, 3)), fu = AMFALL.map(([E, N]) => W(E - 6, N, -35)), fl = AMFALL.map(([E, N]) => W(E - 34, N - 6, UNTEN + 1));
   /* Ufer der USA dahinter: Bäume und ein paar Dächer */
   let k = `<path d="${P([...AMFALL.map(([E, N]) => W(E + 30, N, 14)), ...kr.slice().reverse()])}" fill="#7a5a32"/>`;
   {
@@ -365,18 +365,28 @@ const AM = {};
       k += `<g fill="${c0}">${lap}</g><g fill="${c1}" opacity=".65">${hl}</g>`;
     }
   }
-  /* Felsbrocken (Talus) am Fuß: große graue Blöcke, Wasser schäumt darüber */
-  k += `<path d="${P([...fu, ...fl.slice().reverse()])}" fill="${S.lg("amtalus", [[0, "#8a8479"], [1, "#5f5a52"]])}"/>`;
+  /* Felsbrocken (Talus) am Fuß: Schaum läuft zwischen großen, kantigen Blöcken hinab */
+  k += `<path d="${P([...fu, ...fl.slice().reverse()])}" fill="${S.lg("amtalus", [[0, "#f2f0ea"], [0.6, "#dcdcd4"], [1, "#b9c2bc"]])}"/>`;
   const zt = zufall(41);
-  for (let i = 0; i < 30; i++) { const t = zt(), [x, y] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t); const yy = y + zt() * 8; k += `<path d="M${r(x - 1.4)} ${r(yy + 0.8)} l${r(0.4)} ${r(-1.4)} l${r(1.6)} ${r(-0.3)} l${r(0.7)} ${r(1.5)} Z" fill="${zt() < 0.5 ? "#b2aa9c" : "#7d766b"}"/>`; }
-  /* Wasser über die Brocken: weiße Schleier */
+  let bd = "", bl = "", bs = "";
+  for (let i = 0; i < 22; i++) {
+    const t = (i + zt() * 0.7) / 22, [x, y] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t), [, yb] = fl[0].map((v, q) => v + (fl[fl.length - 1][q] - v) * t);
+    const yy = y + (yb - y) * (0.4 + zt() * 0.45), w = 2.6 + zt() * 2.6, h = w * (0.42 + zt() * 0.22);
+    const A = [x - w / 2, yy + h * 0.35], Bq = [x - w * 0.32, yy - h * 0.45], C = [x + w * 0.12, yy - h * 0.62], D = [x + w * 0.5, yy - h * 0.15], E = [x + w * 0.42, yy + h * 0.38], M = [x + w * 0.02, yy - h * 0.05];
+    bd += P([A, Bq, C, D, E]);
+    bl += P([Bq, C, D, M]);
+    bs += P([M, D, E, [x + w * 0.05, yy + h * 0.38]]);
+  }
+  k += `<path d="${bd}" fill="#6c665d"/><path d="${bl}" fill="#b6ad9e"/><path d="${bs}" fill="#8f877a"/>`;
+  /* Wasser über die Brocken: hochspritzendes Weiß oben am Talus, Bahnen dazwischen */
   let schl = "";
-  for (let i = 0; i < 34; i++) { const t = zt(), [x, y] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t); schl += `<path d="M${r(x - 0.8)} ${r(y)} Q${r(x - 1.4)} ${r(y + 4)} ${r(x - 1.6)} ${r(y + 8 + zt() * 3)} L${r(x + 0.6)} ${r(y + 8)} Q${r(x + 0.4)} ${r(y + 4)} ${r(x + 0.8)} ${r(y)} Z" fill="#f6f4ee" opacity="${r(0.45 + zt() * 0.35)}"/>`; }
+  for (let i = 0; i < 26; i++) { const t = zt(), [x, y] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t); schl += `<path d="M${r(x - 0.7)} ${r(y)} Q${r(x - 1.2)} ${r(y + 2.5)} ${r(x - 1.5)} ${r(y + 4 + zt() * 2)} L${r(x + 0.4)} ${r(y + 4.2)} Q${r(x + 0.3)} ${r(y + 2.5)} ${r(x + 0.7)} ${r(y)} Z" fill="#fbfaf6" opacity="${r(0.55 + zt() * 0.35)}"/>`; }
   k += `<g filter="url(#${S.id("hauch")})">${schl}</g>`;
+  k += `<g filter="url(#${S.id("weich")})">${fu.map(([x, y], i) => `<ellipse cx="${r(x + 3)}" cy="${r(y + 0.6)}" rx="${r(5 + (i % 2) * 2)}" ry="1.4" fill="#fff" opacity=".8"/>`).join("")}</g>`;
   /* Fallendes Wasser (Westseite, im Nachmittagslicht) */
   k += `<path d="${P([...kr, ...fu.map(([x, y]) => [x, y + 1.2]).reverse()])}" fill="${S.lg("amwasser", [[0, "#fff6e4"], [0.6, "#fbf0de"], [1, "#e9e6de"]])}"/>`;
   let st = "";
-  for (let i = 0; i < 40; i++) { const t = i / 40 + zt() * 0.02, [x, y] = kr[0].map((v, q) => v + (kr[kr.length - 1][q] - v) * t), [, y2] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t); st += `M${r(x)} ${r(y + 0.4)} L${r(x - 0.2)} ${r(y2)}`; }
+  for (let i = 0; i < 34; i++) { const t = i / 34 + (zt() - 0.5) * 0.022, [x, y] = kr[0].map((v, q) => v + (kr[kr.length - 1][q] - v) * t), [, y2] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t); st += `M${r(x)} ${r(y + 0.4)} L${r(x - 0.2)} ${r(y2)}`; }
   k += `<path d="${st}" stroke="#c9d3d6" stroke-width=".22" opacity=".8"/>`;
   k += `<path d="${P(kr, false)}" stroke="#7fae9e" stroke-width=".5" fill="none"/>`;
   /* Gischt am Fuß */
@@ -384,6 +394,8 @@ const AM = {};
   /* Luna Island (Bäume) und der Brautschleier rechts daneben */
   const [lx, ly] = W(708, 390, 3);
   k += `<path d="M${r(lx - 4)} ${r(ly + 0.4)} Q${r(lx - 3)} ${r(ly - 5)} ${r(lx)} ${r(ly - 5.4)} Q${r(lx + 3)} ${r(ly - 5)} ${r(lx + 3.6)} ${r(ly + 0.4)} Z" fill="#c8572a"/><path d="M${r(lx - 1)} ${r(ly - 4.6)} q2 -.8 3.6 .6" stroke="#ffd79a" stroke-width=".5" fill="none" opacity=".7"/>`;
+  /* Felswand von Luna Island hinter dem Brautschleier (sonst schaut der Himmel durch) */
+  k += `<path d="${P([W(712, 400, 3), W(696, 360, 3), W(690, 350, -44), W(706, 400, -44)])}" fill="${S.lg("lunafels", [[0, "#a08a68"], [1, "#6f6252"]])}"/><path d="${P([W(711, 398, -6), W(697, 362, -6)], false)} ${P([W(709, 396, -18), W(694, 358, -18)], false)}" stroke="#5a4e40" stroke-width=".25" opacity=".7"/>`;
   const bv = [W(700, 370, 3), W(704, 382, 3)], bvU = [W(696, 370, -24), W(700, 382, -24)];
   k += `<path d="${P([bv[0], bv[1], bvU[1], bvU[0]])}" fill="${S.lg("brautschleier", [[0, "#fffaf0"], [1, "#e6ebea"]])}"/>`;
   /* Stege der Cave of the Winds am Fuß des Brautschleiers mit Besuchern in gelben Capes */
@@ -446,15 +458,18 @@ const HU = {};
     const breite = Math.abs(sg.pB[0] - sg.pA[0]), n = h > 60 ? 0 : Math.max(1, Math.round(breite / 2.6));
     const zw = zufall(500 + sg.i);
     let hell = "", spalt = "";
-    for (let j = 0; j < n; j++) {
-      const t0 = j / n, t1 = (j + 0.55 + zw() * 0.3) / n, q = (t, v) => [sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t + (sg.uA[0] + (sg.uB[0] - sg.uA[0]) * t - (sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t)) * v, sg.pA[1] + (sg.pB[1] - sg.pA[1]) * t + h * v];
+    for (let t = zw() * 0.4 / Math.max(1, n); n && t < 0.97;) {
+      const t0 = t, t1 = Math.min(1, t + (0.2 + Math.pow(zw(), 1.4) * 0.9) / n), q = (t, v) => [sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t + (sg.uA[0] + (sg.uB[0] - sg.uA[0]) * t - (sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t)) * v, sg.pA[1] + (sg.pB[1] - sg.pA[1]) * t + h * v];
       const lang = 0.55 + zw() * 0.4, v0 = 0.06 + g * 0.18;
       const a1 = q(t0, v0), a2 = q(t1, v0), b1 = q(t0 - 0.08, lang), b2 = q(t1 + 0.12, lang), sp = q((t0 + t1) / 2, lang + 0.08);
       hell += `M${r(a1[0])} ${r(a1[1])} L${r(a2[0])} ${r(a2[1])} L${r(b2[0])} ${r(b2[1])} L${r(sp[0])} ${r(sp[1])} L${r(b1[0])} ${r(b1[1])} Z`;
       const c1 = q(t1 + 0.04, v0 + 0.05), c2 = q(t1 + 0.12, v0 + 0.05), d2 = q(t1 + 0.12, lang * 0.8);
       spalt += `M${r(c1[0])} ${r(c1[1])} L${r(c2[0])} ${r(c2[1])} L${r(d2[0])} ${r(d2[1])} Z`;
+      t = t1 + (0.12 + zw() * 0.8) / n;
     }
-    if (n) k += `<path d="${spalt}" fill="${L > 0.3 ? "#b9c8cc" : "#90a6b2"}" opacity=".45"/><path d="${hell}" fill="#ffffff" opacity="${L > 0.3 ? 0.55 : 0.38}"/>`;
+    /* rechts im Dunst verschwinden die Stränge fast */
+    const dunstF = Math.max(0.2, Math.min(1, 1 - (sg.pA[0] - 285) / 45));
+    if (n) k += `<path d="${spalt}" fill="${L > 0.3 ? "#b9c8cc" : "#90a6b2"}" opacity="${r(0.45 * dunstF)}"/><path d="${hell}" fill="#ffffff" opacity="${r((L > 0.3 ? 0.55 : 0.38) * dunstF)}"/>`;
     /* glasige Kante: helle Lichtlinie auf der Kante, darunter der dunkle Bogen des überkippenden Wassers */
     if (g > 0.2 && h < 60) k += `<path d="M${r(sg.pA[0])} ${r(sg.pA[1] + h * 0.05)} L${r(sg.pB[0])} ${r(sg.pB[1] + h * 0.05)}" stroke="#1e5c48" stroke-width=".5" opacity="${r(g * 0.6)}"/>`;
   }
@@ -515,6 +530,7 @@ const HU = {};
     /* weißer Teil der Lippe links (dort ist das Wasser flach und schäumt schon an der Kante) */
     n += `<path d="${P(lippe(0.8), false)}" stroke="#ffffff" stroke-width="1.2" fill="none" opacity=".6"/>`;
     k += n;
+    HU.lippe = [369, top(369) + 1.8];
   }
   const kante = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, 0.4)).filter(([x]) => x < 440);
   let kNah = k + `<path d="${P(kante.filter(([x]) => x >= 330), false)}" stroke="#f4fff8" stroke-width=".6" fill="none" opacity=".9"/>`;
@@ -534,15 +550,16 @@ const HU = {};
   const nah = W(70, -88, -14);
   HU.wasserfall = nah;
   const unter = [
-    { id: "kante", de: "die Kante", syl: "KAN-te", it: "il bordo", itSyl: "BOR-do", en: "brink", x: HU.kante[0], y: HU.kante[1], kunst: flaeche(-10, -2.4, 20, 4.8),
-      tipp: "In der Mitte des Hufeisens ist das Wasser an der Kante besonders tief – deshalb leuchtet es dort grün." },
     { id: "aussichtspunkt", de: "der Aussichtspunkt", syl: "AUS-sichts-punkt", it: "il belvedere", itSyl: "bel-ve-DE-re", en: "viewpoint", x: HU.terrapin[0], y: HU.terrapin[1], kunst: flaeche(-7, -4, 14, 6),
       tipp: "Gegenüber liegt Terrapin Point in den USA. Von dort sehen die Besucher die Fälle von der anderen Seite." },
   ];
-  S.teil({ id: "hufeisenfaelle", de: "die Hufeisenfälle", syl: "HUF-ei-sen-fäl-le", it: "le Cascate a Ferro di Cavallo", itSyl: "ca-SCA-te a FER-ro di ca-VAL-lo", en: "Horseshoe Falls", x: 252, y: 122, kunst: um(252, 122, kappeRand(k)),
+  S.teil({ id: "hufeisenfaelle", de: "die Hufeisenfälle", syl: "HUF-ei-sen-fäl-le", it: "le Cascate a Ferro di Cavallo", itSyl: "ca-SCA-te a FER-ro di ca-VAL-lo", en: "Horseshoe Falls", x: 200, y: 123, kunst: um(200, 123, kappeRand(k)),
     zoom: { x: 150, y: 92, w: 150, h: 100 }, unter,
     tipp: "Die Hufeisenfälle sind mehr als 50 Meter hoch. In jeder Sekunde stürzen hier mehr als 2000 Kubikmeter Wasser hinab." });
   S.teil({ id: "wasserfall", de: "der Wasserfall", syl: "WAS-ser-fall", it: "la cascata", itSyl: "ca-SCA-ta", en: "waterfall", x: 372, y: 150, kunst: um(372, 150, kappeRand(kNah)),
+    zoom: { x: 328, y: 100, w: 72, h: 48 },
+    unter: [{ id: "kante", de: "die Kante", syl: "KAN-te", it: "il bordo", itSyl: "BOR-do", en: "brink", x: HU.lippe[0], y: HU.lippe[1], kunst: flaeche(-8, -2.4, 16, 4.8),
+      tipp: "Wo das Wasser an der Kante besonders tief ist, leuchtet es grün." }],
     tipp: "Ein Wasserfall entsteht, wo ein Fluss über eine Felskante stürzt. Hier am Table Rock donnert das Wasser direkt neben uns hinab." });
 }
 
@@ -634,8 +651,7 @@ const BOOT = {};
   k += `<path d="M${r(fx)} ${r(fy0)} V${r(fy - 0.2)}" stroke="#555" stroke-width=".3"/>`;
   k += `<path d="M${r(fx)} ${r(fy)} h4.4 v2.2 h-4.4 Z" fill="#fff"/><path d="M${r(fx)} ${r(fy)} h1.1 v2.2 h-1.1 Z M${r(fx + 3.3)} ${r(fy)} h1.1 v2.2 h-1.1 Z" fill="#d52b1e"/>`;
   k += `<path d="M${r(fx + 2.2)} ${r(fy + 0.25)} l.28 .5 l.32 -.12 l-.1 .56 l.3 .1 l-.42 .34 l.06 .3 h-.88 l.06 -.3 l-.42 -.34 l.3 -.1 l-.1 -.56 l.32 .12 Z" fill="#d52b1e"/>`;
-  const [cx, cy] = pt(-6, -4.6, 3.6), [dx, dy] = pt(-4, 0, 6.2);
-  BOOT.cape = [cx, cy]; BOOT.deck = [dx, dy];
+  BOOT.cape = pt(3, -3, 6.2); BOOT.deck = pt(-11, 1, 6.2);
   const unter = [
     { id: "regencape", de: "das Regencape", syl: "RE-gen-cape", it: "la mantella", itSyl: "man-TEL-la", en: "rain poncho", x: BOOT.cape[0], y: BOOT.cape[1], kunst: flaeche(-6, -2.4, 12, 3.2),
       tipp: "Auf den kanadischen Booten bekommen alle ein rotes Regencape, auf den amerikanischen ein blaues." },
@@ -746,7 +762,7 @@ const KAPPE = 219, FRONT = 244;     /* Hinterkante der Abdeckplatten, Vorderkant
   for (let i = 0; i < 70; i++) { const x = zm() * 400, yy = KAPPE + 2 + zm() * (FRONT - KAPPE - 2); pk += `<circle cx="${r(x)}" cy="${r(yy)}" r="${r(0.15 + zm() * 0.35)}"/>`; }
   k += `<g fill="#8f7f66" opacity=".5">${pk}</g>`;
   for (const [x, yy, rr] of [[34, 232, 4], [262, 226, 2.4], [150, 238, 3.2]]) k += `<ellipse cx="${x}" cy="${yy}" rx="${rr}" ry="${r(rr * 0.5)}" fill="#c6bf86" opacity=".55"/>`;
-  S.teil({ id: "mauer", de: "die Mauer", syl: "MAU-er", it: "il muretto", itSyl: "mu-RET-to", en: "wall", x: 200, y: 230, kunst: um(200, 230, kappeRand(k)),
+  S.teil({ id: "mauer", de: "die Mauer", syl: "MAU-er", it: "il muretto", itSyl: "mu-RET-to", en: "wall", x: 200, y: 254, kunst: um(200, 254, kappeRand(k)),
     tipp: "Die Mauer schützt die Besucher an der Kante. Dahinter geht es 50 Meter in die Tiefe." });
 }
 

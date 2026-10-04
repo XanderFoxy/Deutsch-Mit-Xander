@@ -464,7 +464,7 @@ S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 
   k += `<g filter="url(#${S.id("spiegel")})" opacity=".32">${sp}</g>`;
   /* Wellen: kurze helle (Himmel) und dunkle Striche, nach vorn größer; Sonnenglitzer links (zur Sonne hin) */
   let hell = "", dunkel = "", glitz = "";
-  for (let i = 0; i < 360; i++) {
+  for (let i = 0; i < 280; i++) {
     const y = 118 + Math.pow(rnd(), 1.5) * 90, w = 0.8 + (y - 116) * 0.06 + rnd() * 1.5, x = rnd() * (399 - w);
     if (rnd() < 0.55) hell += `M${r(x)} ${r(y)}h${r(w)}`; else dunkel += `M${r(x)} ${r(y)}h${r(w)}`;
     if (x < 120 && rnd() < 0.3) glitz += `M${r(x)} ${r(y - 0.3)}h${r(w * 0.5)}`;
@@ -613,7 +613,7 @@ function bruecke(S0, S1) {
       const a = P(s + 0.1, -QI).split(" ").map(Number), b = P(s + 0.1, QI).split(" ").map(Number), dd = Dd(s, 0), w = 0.16 * F / dd;
       const hh = Math.abs(Y(s, 0) - Y(s + 0.2, 0)) * 0.78;
       const seg = strecke(`${a[0]} ${a[1]}`, `${b[0]} ${b[1]}`);
-      if (seg) reihen += `<path d="${seg}" stroke="${["#9c8d78", "#a99a84", "#958671", "#b0a18a"][i % 4]}" stroke-width="${r(hh * 100) / 100}" stroke-dasharray="${r(w * 0.84 * 100) / 100} ${r(w * 0.16 * 100) / 100}" stroke-dashoffset="${r(rnd() * w * 100) / 100}"/>`;
+      if (seg) reihen += `<path d="${seg}" stroke="${["#9c8d78", "#a99a84", "#958671", "#b0a18a"][i % 4]}" stroke-width="${Math.round(hh * 20) / 20}" stroke-dasharray="${Math.round(w * 8.4) / 10} ${Math.max(0.1, Math.round(w * 1.6) / 10)}" stroke-dashoffset="${Math.round(rnd() * w * 10) / 10}"/>`;
     }
     k += `<g pointer-events="none">${reihen}</g>`;
   }
@@ -1007,7 +1007,7 @@ let PUP = null;
   const m = B.mensch({ id: "prg_pup", geschlecht: "m", blick: -28, neigung: 16, frisur: "locken", haarfarbe: "dunkelbraun", haut: "hell", pose,
     kleidung: { oberteil: { stueck: "pullover", farbe: "#2f5f95" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "schal", farbe: "#d9a43a" } } }, r(1.78 * sc));
   PUP = { x, y, m, sc };
-  S.teil({ id: "puppenspieler", de: "der Puppenspieler", syl: "PUP-pen-spie-ler", it: "il burattinaio", itSyl: "bu-rat-ti-NA-io", en: "puppeteer", x, y, kunst: `<g filter="url(#${S.id("kante")})">${kompaktFein(m, m.svg, 0.5)}</g>`,
+  S.teil({ id: "puppenspieler", de: "der Puppenspieler", syl: "PUP-pen-spie-ler", it: "il burattinaio", itSyl: "bu-rat-ti-NA-io", en: "puppeteer", x, y, kunst: `<g filter="url(#${S.id("kante")})">${kompaktFein(m, m.svg, 0.8)}</g>`,
     tipp: "Der Puppenspieler steht hinter der Puppe und hält das Holzkreuz mit den Fäden." });
 }
 {
@@ -1043,7 +1043,7 @@ let PUP = null;
     schulterR: { vor: 20, seit: 10, dreh: 20 }, ellbogenR: 120, unterarmR: 40, handR: 0, fingerR: 0.7, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.4 };
   const m = B.mensch({ id: "prg_tour", geschlecht: "w", blick: 34, neigung: 18, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true, pose,
     kleidung: { kleid: { stueck: "sommerkleid", farbe: "#e9a03a" }, schuhe: { stueck: "turnschuh" } } }, r(1.66 * sc));
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: `<g filter="url(#${S.id("kante")})">${kompaktFein(m, m.svg, 0.5)}</g>`,
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: `<g filter="url(#${S.id("kante")})">${kompaktFein(m, m.svg, 0.8)}</g>`,
     tipp: "Am frühen Morgen ist die Karlsbrücke noch fast leer." });
   /* Trdelník: Hohlgebäck (Rolle), goldbraun mit Zimtzucker, oben Eis */
   const hx = x + m.z.handR.x * m.k, hy = y + m.z.handR.y * m.k;
@@ -1053,7 +1053,7 @@ let PUP = null;
   let zu = "";
   for (let i = 0; i < 14; i++) zu += `<circle cx="${r((rnd() - 0.5) * 2)}" cy="${r(-rnd() * 4.4)}" r=".14" fill="#f6e2b8"/>`;
   k += zu + `<ellipse cx="0" cy="-4.78" rx="1.3" ry=".42" fill="#c98a42"/><ellipse cx="0" cy="-4.74" rx=".86" ry=".26" fill="#5a2e10"/><path d="M-1.25 -4.7 Q0 -4.3 1.25 -4.7" stroke="#e8b56a" stroke-width=".18" fill="none"/></g>`;
-  S.teil({ oben: true, id: "trdelnik", de: "der Trdelník", syl: "TR-del-ník", it: "il trdelník", itSyl: "TR-del-nik", en: "chimney cake", x: r(hx), y: r(hy + 2.2 * ts), kunst: k + flaeche(-6, -6.5 * ts - 2, 12, 6.5 * ts + 3, 0.6),
+  S.teil({ oben: true, id: "trdelnik", de: "der Trdelník", syl: "TR-del-ník", it: "il trdelník", itSyl: "TR-del-nik", en: "chimney cake", x: r(hx), y: r(hy + 2.2 * ts), kunst: k + flaeche(-5, -6.5 * ts - 2, 10, 6.5 * ts + 3, 0.6),
     tipp: "Der Trdelník ist ein süßes Gebäck vom Spieß, mit Zimt und Zucker. Viele Touristen essen ihn in Prag." });
 }
 
