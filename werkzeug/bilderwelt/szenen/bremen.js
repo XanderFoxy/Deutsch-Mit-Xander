@@ -179,7 +179,6 @@ const wolke = (x, y, w, h, massen, seed) => {
     kreise.push([cx + R * (.15 + z() * .2), y - R * (1.15 + z() * .15), R * (.5 + z() * .12)]);
   });
   for (const [cx, cy, R] of kreise.sort((p, q) => q[2] - p[2])) g += `<circle cx="${r(cx)}" cy="${r(Math.min(cy, y - R * .45))}" r="${r(R)}" fill="${WB}"/>`;
-  g += `<path d="M${r(x - w / 2 - h * .3)} ${r(y - h * .2)} H${r(x + w / 2 + h * .3)} V${r(y)} H${r(x - w / 2 - h * .3)} Z" fill="${S.lg("wolkenbasis", [[0, "#bccada", 0], [1, "#b4c2d2", 0.85]], 0, 0, 0, 1)}"/>`;
   return `<g>${g}</g>`;
 };
 S.hinten(wolke(84, 46, 70, 12, [[.15, .95], [.5, 1.35], [.85, .85]], 3) + wolke(206, 30, 26, 14, [[.35, 1.05], [.8, .8]], 7) + wolke(344, 68, 30, 8, [[.3, 1], [.75, .8]], 11));

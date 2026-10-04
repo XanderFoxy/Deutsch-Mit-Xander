@@ -225,8 +225,9 @@ const GRENZEN_EU = [
 const OVAL = (() => { const a = []; for (let la = 90; la >= -90; la -= 5) a.push(`${CM + 180},${la}`); for (let la = -90; la <= 90; la += 5) a.push(`${CM - 180},${la}`); return weg(pkt(a.join(" ")).map((q, i) => i % 37 === 0 || i % 37 === 36 ? Object.assign(q, { hart: true }) : q)); })();
 S.def(`<path id="${S.id("oval")}" d="${OVAL}"/>`);
 S.def(`<clipPath id="${S.id("ovalclip")}">${USE("oval")}</clipPath>`);
-const LAND_D = Object.values(LAND).flat().map((t) => weg(t)).join("");
-S.def(`<path id="${S.id("land")}" d="${LAND_D}"/>`);
+/* jeder Kontinent einmal als Pfad in <defs>; Küstensaum und Kontinent-Teile verweisen darauf */
+for (const [k, ringe] of Object.entries(LAND)) S.def(`<path id="${S.id("k_" + k)}" d="${ringe.map((t) => weg(t)).join("")}"/>`);
+S.def(`<g id="${S.id("land")}">${Object.keys(LAND).map((k) => USE("k_" + k)).join("")}</g>`);
 {
   let g = `<rect x="-2" y="-2" width="${BR + 4}" height="${HO + 4}" fill="${PAPIER}"/>`;
   g += USE("oval", `fill="#7a5a2a" opacity=".22" transform="translate(.6 .9)" filter="url(#${S.id("weich")})"`) + USE("oval", `fill="${OZEAN}"`);
@@ -450,12 +451,10 @@ const verschiebe = (ox, oy, svg) => `<g transform="translate(${+(-ox).toFixed(3)
 /* =====================================================================
    TEILE — 2: die Kontinente (Europa ist die Lupe mit den elf Orten)
    ===================================================================== */
-const KONT_D = {};
-for (const [k, ringe] of Object.entries(LAND)) KONT_D[k] = ringe.map((t) => weg(t)).join("");
 const kontText = (lo, la, t, gr, farbe, sp = 1.2) => { const [x, y] = P(lo, la); return halo(x, y, t, gr, farbe, "#fbf3df", `font-weight="bold" letter-spacing="${sp}" opacity=".85"`, 0.5); };
 function kontinent(id, extra, worte, tipp, mehr = {}) {
   const [f, rand] = FARBE[id];
-  const k = `<path d="${KONT_D[id]}" fill="${f}" stroke="${rand}" stroke-width=".45" stroke-linejoin="round"/>` + extra;
+  const k = USE("k_" + id, `fill="${f}" stroke="${rand}" stroke-width=".45" stroke-linejoin="round"`) + extra;
   const x = mehr.x || 0, y = mehr.y || 0;
   S.teil(Object.assign({ kunst: verschiebe(x, y, k), tipp }, worte, mehr, { x, y }));
 }
