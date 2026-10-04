@@ -752,22 +752,6 @@ S.teil({ id: "grachtenhaus", de: "das Grachtenhaus", syl: "GRACH-ten-haus", it: 
     tipp: "In Amsterdam gibt es mehr Fahrräder als Einwohner." });
 }
 
-/* 6 — DIE HAUSBOOTE an den Kaimauern */
-{
-  /* rechts: kastenförmige „Arke“ (graublau), Pflanzen auf dem Dach */
-  const D0 = 47, D1 = 66, X0 = 5.0, X1 = 7.8;
-  let k = prisma([[X0, D0], [X1, D0], [X1, D1], [X0, D1]], 0, 0.9, "#2b3236", "#3a4246", false);
-  k += prisma([[X0 + 0.2, D0 + 0.6], [X1 - 0.1, D0 + 0.6], [X1 - 0.1, D1 - 0.8], [X0 + 0.2, D1 - 0.8]], 0.9, 2.7, "#6f8796", "#46514f", false);
-  /* Fensterband auf der Gracht-Seite */
-  let fen = "";
-  for (let d = D0 + 1.6; d < D1 - 2; d += 2.6) fen += `M${pt(P(X0 + 0.2, d, 1.4))} L${pt(P(X0 + 0.2, d + 1.6, 1.4))} L${pt(P(X0 + 0.2, d + 1.6, 2.3))} L${pt(P(X0 + 0.2, d, 2.3))} Z`;
-  k += `<path d="${fen}" fill="#273038" stroke="#e8e6df" stroke-width=".35"/>`;
-  for (let i = 0; i < 6; i++) { const d = D0 + 2 + i * 2.8, [x, y] = P(X0 + 1.2, d, 2.7), s = F / d; k += `<ellipse cx="${r(x)}" cy="${r(y - 0.3 * s)}" rx="${r(0.35 * s)}" ry="${r(0.3 * s)}" fill="${i % 2 ? "#4f7a35" : "#6c8f3e"}"/><rect x="${r(x - 0.2 * s)}" y="${r(y - 0.1 * s)}" width="${r(0.4 * s)}" height="${r(0.15 * s)}" fill="#a65d3a"/>`; }
-  /* Spiegelung */
-  const [hx, hy] = P(X0, (D0 + D1) / 2, 0);
-  S.teil({ id: "hausboot", de: "das Hausboot", syl: "HAUS-boot", it: "la casa galleggiante", itSyl: "CA-sa gal-leg-GIAN-te", en: "houseboat", anker: [hx, hy], kunst: k,
-    tipp: "In Amsterdams Grachten liegen etwa 2500 Hausboote. Man wohnt darin wie in einer Wohnung." });
-}
 let LINKS_BOOT = "";
 {
   /* links: umgebauter Lastkahn (dunkelgrüner Rumpf, Holzaufbau, Steuerhaus) */
@@ -786,8 +770,22 @@ let LINKS_BOOT = "";
   const [hx, hy] = P(X1, D0 + 8, 0);
   LINKS_BOOT = { k, hx, hy };
 }
-S.teil({ id: "hausboot_kahn", de: "der Lastkahn", syl: "LAST-kahn", it: "la chiatta", itSyl: "CHIAT-ta", en: "barge", anker: [LINKS_BOOT.hx, LINKS_BOOT.hy], kunst: LINKS_BOOT.k,
-  tipp: "Dieser alte Lastkahn ist heute ein Hausboot." });
+/* 6 — DIE HAUSBOOTE an den Kaimauern */
+{
+  /* rechts: kastenförmige „Arke“ (graublau), Pflanzen auf dem Dach */
+  const D0 = 47, D1 = 66, X0 = 5.0, X1 = 7.8;
+  let k = prisma([[X0, D0], [X1, D0], [X1, D1], [X0, D1]], 0, 0.9, "#2b3236", "#3a4246", false);
+  k += prisma([[X0 + 0.2, D0 + 0.6], [X1 - 0.1, D0 + 0.6], [X1 - 0.1, D1 - 0.8], [X0 + 0.2, D1 - 0.8]], 0.9, 2.7, "#6f8796", "#46514f", false);
+  /* Fensterband auf der Gracht-Seite */
+  let fen = "";
+  for (let d = D0 + 1.6; d < D1 - 2; d += 2.6) fen += `M${pt(P(X0 + 0.2, d, 1.4))} L${pt(P(X0 + 0.2, d + 1.6, 1.4))} L${pt(P(X0 + 0.2, d + 1.6, 2.3))} L${pt(P(X0 + 0.2, d, 2.3))} Z`;
+  k += `<path d="${fen}" fill="#273038" stroke="#e8e6df" stroke-width=".35"/>`;
+  for (let i = 0; i < 6; i++) { const d = D0 + 2 + i * 2.8, [x, y] = P(X0 + 1.2, d, 2.7), s = F / d; k += `<ellipse cx="${r(x)}" cy="${r(y - 0.3 * s)}" rx="${r(0.35 * s)}" ry="${r(0.3 * s)}" fill="${i % 2 ? "#4f7a35" : "#6c8f3e"}"/><rect x="${r(x - 0.2 * s)}" y="${r(y - 0.1 * s)}" width="${r(0.4 * s)}" height="${r(0.15 * s)}" fill="#a65d3a"/>`; }
+  /* Spiegelung */
+  const [hx, hy] = P(X0, (D0 + D1) / 2, 0);
+  S.teil({ id: "hausboot", de: "das Hausboot", syl: "HAUS-boot", it: "la casa galleggiante", itSyl: "CA-sa gal-leg-GIAN-te", en: "houseboat", anker: [LINKS_BOOT.hx, LINKS_BOOT.hy], kunst: k + LINKS_BOOT.k,
+    tipp: "In den Grachten liegen etwa 2500 Hausboote. Viele waren früher Lastkähne." });
+}
 
 /* 7 — DER REIHER auf dem Dach des Lastkahns */
 {
