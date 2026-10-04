@@ -274,15 +274,24 @@ const wolke = (name, cx, by, W0, H, seed) => {
   krone.sort((p, q) => p[0] - q[0]);
   const fussS = fuss.slice().sort((p, q) => p[0] - q[0]);
   let k = `<path d="${glatt([...krone, [fussS[fussS.length - 1][0], fussS[fussS.length - 1][1]], ...fussS.slice().reverse()], true, 0.6)}" fill="${LAUB}"/>`;
-  /* einzelne Kronen oben als Bögen (Silhouette), Lichtseite rechts */
-  /* einzelne Baumkronen (Ahorn, Eiche, Esche im Herbst): je drei Bögen, unten dunkler, oben vom Abendlicht gestreift */
-  const farben = [["#b4421c", "#e07a3a"], ["#c8702a", "#f0a850"], ["#cf9a34", "#f4cc6a"], ["#7f7e34", "#b0ae58"], ["#9c3418", "#d4643a"], ["#5f6f30", "#8fa050"]];
+  /* Herbstbäume in zwei Reihen, im Raum gesetzt: Kronen aus 3–5 Lappen (dazwischen Himmelslöcher), Größen streuen,
+     einzelne hohe Bäume; die hintere Reihe dunstiger */
+  const farben = [["#b4421c", "#e8864a"], ["#c8702a", "#f2b05a"], ["#cf9a34", "#f6d276"], ["#7f7e34", "#b6b45e"], ["#9c3418", "#d86a3e"], ["#5f6f30", "#93a456"]];
   const baeume = [];
-  for (let i = 0; i < krone.length; i += 1) { const [x, y] = krone[i]; baeume.push([x + (zz() - 0.5) * 1.5, y, 1.5 + zz() * 1.3, farben[Math.floor(zz() * farben.length)]]); }
-  baeume.sort((p, q) => p[1] - q[1]);
-  for (const [x, y, rr, [c0, c1]] of baeume) {
-    k += `<path d="M${r(x - rr)} ${r(y + rr * 1.6)} Q${r(x - rr * 1.1)} ${r(y + rr * 0.2)} ${r(x - rr * 0.4)} ${r(y - rr * 0.2)} Q${r(x)} ${r(y - rr * 0.9)} ${r(x + rr * 0.5)} ${r(y - rr * 0.3)} Q${r(x + rr * 1.2)} ${r(y + rr * 0.1)} ${r(x + rr)} ${r(y + rr * 1.6)} Z" fill="${c0}"/>`;
-    k += `<path d="M${r(x - rr * 0.6)} ${r(y + rr * 0.3)} Q${r(x - rr * 0.1)} ${r(y - rr * 0.75)} ${r(x + rr * 0.5)} ${r(y - rr * 0.2)} Q${r(x + rr * 0.9)} ${r(y + rr * 0.3)} ${r(x + rr * 0.7)} ${r(y + rr * 0.8)} Q${r(x)} ${r(y + rr * 0.4)} ${r(x - rr * 0.6)} ${r(y + rr * 0.3)} Z" fill="${c1}"/>`;
+  for (const [ab, n, dunst] of [[48, 30, 0.35], [14, 36, 0]]) for (let i = 0; i < n; i++) {
+    const t = (i + zz() * 0.8) / n, j = Math.min(USUFER.length - 2, Math.floor(t * (USUFER.length - 1))), tt = t * (USUFER.length - 1) - j;
+    const E = USUFER[j][0] + (USUFER[j + 1][0] - USUFER[j][0]) * tt + ab + zz() * 10, N = USUFER[j][1] + (USUFER[j + 1][1] - USUFER[j][1]) * tt;
+    const hoch = zz() < 0.12 ? 26 + zz() * 6 : 13 + zz() * 9, rad = 3.5 + zz() * 4.5;
+    baeume.push({ E, N, hoch, rad, f: farben[Math.floor(zz() * farben.length)], dunst, d: tiefe(E, N) });
+  }
+  baeume.sort((p, q) => q.d - p.d);
+  for (const b of baeume) {
+    const [x, y] = W(b.E, b.N, b.hoch - b.rad), [, y0] = W(b.E, b.N, 2), m = F / b.d, rr = b.rad * m;
+    let lap = "", hl = "";
+    const nl = 3 + Math.floor(zz() * 3);
+    for (let l = 0; l < nl; l++) { const a = (l / nl) * Math.PI * 2 + zz(), lx = x + Math.cos(a) * rr * 0.55, ly = y + Math.sin(a) * rr * 0.45, lr = rr * (0.5 + zz() * 0.2); lap += `<circle cx="${r(lx)}" cy="${r(ly)}" r="${r(lr)}"/>`; if (Math.sin(a) < 0.2) hl += `<circle cx="${r(lx - lr * 0.15)}" cy="${r(ly - lr * 0.2)}" r="${r(lr * 0.55)}"/>`; }
+    k += `<path d="M${r(x)} ${r(y0)} V${r(y + rr * 0.3)}" stroke="#4a3626" stroke-width="${r(Math.max(0.2, rr * 0.12))}"/>`;
+    k += `<g fill="${b.f[0]}"${b.dunst ? ` opacity=".8"` : ""}>${lap}</g><g fill="${b.f[1]}" opacity="${b.dunst ? 0.45 : 0.7}">${hl}</g>`;
   }
   k += `<path d="${glatt([...krone, [fussS[fussS.length - 1][0], fussS[fussS.length - 1][1]], ...fussS.slice().reverse()], true, 0.6)}" fill="${S.lg("inseldunst", [[0, "#e8e0d2", 0.35], [1, "#e8e0d2", 0.05]])}"/>`;
   S.teil({ id: "insel", de: "die Insel", syl: "IN-sel", it: "l'isola", itSyl: "I-so-la", en: "island", x: 120, y: 108, kunst: um(120, 108, kappeRand(k)),

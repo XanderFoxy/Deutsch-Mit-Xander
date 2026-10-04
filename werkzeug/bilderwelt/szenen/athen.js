@@ -27,11 +27,10 @@
      Gebälk 3,3 m (Architrav, Fries mit Triglyphen und Metopen, Gesims),
      Giebel rund 3,5 m. Kein Dach mehr: 1687 explodierte darin ein
      Pulverlager – auf der Südseite fehlen seitdem in der Mitte Säulen und
-     Gebälk (sechs Säulen zerstört), man sieht hindurch auf die Nordseite.
+     Gebälk (sechs Säulen zerstört), man sieht hindurch auf die Ostsäulen von innen.
      Restaurierung seit 1975: das Gerüst an der Westseite ist seit 2025/26
-     fort (Arbeiten abgeschlossen), an der Nordseite wird weiter
-     gearbeitet; im Inneren steht ein Baukran (UNSICHER: Lage/Höhe
-     geschätzt).
+     fort (Arbeiten abgeschlossen); südlich vor dem Tempel liegen nummerierte
+     Marmorblöcke der Restaurierung.
    - PROPYLÄEN (Torbau, Westseite, 6 dorische Säulen, Giebel), links der
      Nordflügel (Pinakothek), rechts davor auf der Bastion der kleine
      ionische Tempel der Athena Nike (4 Säulen vorn).
@@ -511,16 +510,21 @@ const parUnter = [];
   let k = "";
   const C = [-185, -78], R0 = 10, R1 = 38, zR = (rr) => 105 + (rr - R0) * 0.78;
   const bog = (rr, z, t0 = 0, t1 = 180) => { const pts = []; for (let t = t0; t <= t1 + 0.01; t += 9) { const a = t * Math.PI / 180; pts.push(pr(C[0] + rr * Math.cos(a), C[1] + rr * Math.sin(a), z)); } return pts; };
-  /* Zuschauerraum */
-  const aussen = bog(R1 + 1.5, zR(R1) + 0.8), innen = bog(R0, zR(R0));
-  k += `<path d="${P([...aussen, ...innen.reverse()])}" fill="${S.lg("cavea", [[0, "#f3e6d2"], [0.5, "#e2d2bf"], [1, "#c9b6a8"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${aussen.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L")}" stroke="#9c8676" stroke-width=".7" fill="none"/>`;
+  /* Zuschauerraum: die Reihen enden an der Bühnenwand (etwas über den Halbkreis hinaus), alles mit der Cavea-Form beschnitten */
+  const T0 = -14, T1 = 194;
+  const aussen = bog(R1 + 1.5, zR(R1) + 0.8, T0, T1), innen = bog(R0, zR(R0), T0, T1);
+  const caveaD = P([...aussen, ...innen.slice().reverse()]);
+  S.def(`<clipPath id="${S.id("caveaclip")}"><path d="${caveaD}"/></clipPath>`);
+  k += `<path d="${caveaD}" fill="${S.lg("cavea", [[0, "#f3e6d2"], [0.5, "#e2d2bf"], [1, "#c9b6a8"]], 0, 0, 1, 0)}"/>`;
   let reihen = "", schatten = "";
-  for (let rr = R0 + 2.8; rr < R1; rr += 2.8) { const pts = bog(rr, zR(rr)); reihen += "M" + pts.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L") + " "; schatten += "M" + pts.map(([x, y]) => `${r(x)} ${r(y + 0.45)}`).join(" L") + " "; }
-  k += `<path d="${schatten}" stroke="#a8948a" stroke-width=".45" fill="none"/><path d="${reihen}" stroke="#fff7ea" stroke-width=".35" fill="none"/>`;
+  for (let rr = R0 + 2.6; rr < R1; rr += 2.6) { if (Math.abs(rr - 25.6) < 1) continue; const pts = bog(rr, zR(rr), T0, T1); reihen += "M" + pts.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L") + " "; schatten += "M" + pts.map(([x, y]) => `${r(x)} ${r(y + 0.45)}`).join(" L") + " "; }
   let gassen = "";
-  for (const t of [22, 50, 78, 106, 134, 162]) { const a = t * Math.PI / 180, p1 = pr(C[0] + R0 * Math.cos(a), C[1] + R0 * Math.sin(a), zR(R0)), p2 = pr(C[0] + R1 * Math.cos(a), C[1] + R1 * Math.sin(a), zR(R1)); gassen += `M${r(p1[0])} ${r(p1[1])} L${r(p2[0])} ${r(p2[1])} `; }
-  k += `<path d="${gassen}" stroke="#b9a596" stroke-width=".55"/>`;
+  for (const t of [40, 90, 140]) { const a = t * Math.PI / 180, p1 = pr(C[0] + R0 * Math.cos(a), C[1] + R0 * Math.sin(a), zR(R0)), p2 = pr(C[0] + R1 * Math.cos(a), C[1] + R1 * Math.sin(a), zR(R1)); gassen += `M${r(p1[0])} ${r(p1[1])} L${r(p2[0])} ${r(p2[1])} `; }
+  const dia = bog(25.6, zR(25.6), T0, T1);
+  k += `<g clip-path="url(#${S.id("caveaclip")})"><path d="${schatten}" stroke="#a8948a" stroke-width=".45" fill="none"/><path d="${reihen}" stroke="#fff7ea" stroke-width=".35" fill="none"/>`;
+  k += `<path d="M${dia.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L")}" stroke="#faf2e4" stroke-width="1.5" fill="none"/><path d="M${dia.map(([x, y]) => `${r(x)} ${r(y + 0.9)}`).join(" L")}" stroke="#a8948a" stroke-width=".4" fill="none"/>`;
+  k += `<path d="${gassen}" stroke="#bba795" stroke-width="1.1"/><path d="${gassen}" stroke="#f6ecdc" stroke-width=".35" transform="translate(-.4 0)"/></g>`;
+  k += `<path d="M${aussen.map(([x, y]) => `${r(x)} ${r(y)}`).join(" L")}" stroke="#9c8676" stroke-width=".7" fill="none"/>`;
   /* Orchestra (Halbrund, Platten) */
   k += `<path d="${P(bog(R0, zR(R0) - 0.6).concat([pr(C[0] - R0, C[1] - 3, zR(R0) - 0.6), pr(C[0] + R0, C[1] - 3, zR(R0) - 0.6)].reverse()))}" fill="#d8cdbd"/>`;
   /* Bühnenwand: lange Ruine, Oberkante unregelmäßig (Mitte höher) */
@@ -577,10 +581,10 @@ LAGE.tourin.y = HOR + (EYE - 145.4) * F / LAGE.tourin.d; LAGE.tour.y = HOR + (EY
 LAGE.oliv.y = KANTE(368) + 15; LAGE.kiefer.y = KANTE(22) + 17;
 const SCHATTEN = [
   schattenBahn(LAGE.tourin.x, LAGE.tourin.y, LAGE.tourin.d, 1.66, 0.45, 0.3), schattenBahn(LAGE.tour.x, LAGE.tour.y, LAGE.tour.d, 1.8, 0.5, 0.32),
-  schattenBahn(LAGE.oliv.x + 2, LAGE.oliv.y, LAGE.oliv.d, 4.2, 0.5, 4), schattenBahn(LAGE.kiefer.x + 2, LAGE.kiefer.y, LAGE.kiefer.d, 9, 0.6, 5),
+  schattenBahn(LAGE.oliv.x + 2, LAGE.oliv.y, LAGE.oliv.d, 4.2, 1.2, 6), schattenBahn(LAGE.kiefer.x + 2, LAGE.kiefer.y, LAGE.kiefer.d, 9, 1, 8),
   schattenBahn(LAGE.katze.x + 2, LAGE.katze.y, LAGE.katze.d, 0.32, 0.2, 0.12), schattenBahn(LAGE.saeulenrest.x + 2, LAGE.saeulenrest.y, LAGE.saeulenrest.d, 0.44, 1.5, 1.4),
   schattenBahn(LAGE.pick.x + 8, LAGE.pick.y - 3, LAGE.pick.d, 0.28, 0.5, 0.4),
-].filter(Boolean).map((d) => `<path d="${d}" fill="#4a2e3e" opacity=".32" ${W04}/>`).join("");
+].filter(Boolean).map((d) => `<path d="${d}" fill="#4a2e3e" opacity=".45" ${W04}/>`).join("");
 {
   const pts = [];
   for (let x = 0; x <= 400; x += 10) pts.push([x, KANTE(x)]);
@@ -655,31 +659,46 @@ const SCHATTEN = [
 
 /* =====================================================================
    10 — DIE KIEFER: große Aleppo-Kiefer vorn links (45 m)
-   krummer, nach rechts geneigter Stamm mit Borkenplatten, drei Hauptäste,
-   lockere, lichte Krone aus gelbgrünen Nadelbüscheln, dazwischen Himmel
+   krummer, nach rechts geneigter Stamm, oben in drei sich verjüngende Äste
+   geteilt; jedes Nadelbüschel sitzt an einem Zweig; Borke nur im Stamm
    ===================================================================== */
 {
   const { x: sx, y: sy } = LAGE.kiefer;
   let k = "";
-  /* Stamm: unten dick mit Wurzelanlauf, schräg nach rechts, dann Knick; Licht links */
-  const stamm = `M${sx - 9} ${r(sy + 1)} Q${sx - 4} ${r(sy - 3)} ${sx - 3.5} ${r(sy - 20)} Q${sx - 1} ${r(sy - 70)} ${sx + 9} ${r(sy - 110)} Q${sx + 16} ${r(sy - 135)} ${sx + 15} ${r(sy - 152)} L${sx + 20} ${r(sy - 154)} Q${sx + 22} ${r(sy - 134)} ${sx + 15} ${r(sy - 108)} Q${sx + 6} ${r(sy - 70)} ${sx + 4.5} ${r(sy - 20)} Q${sx + 5} ${r(sy - 3)} ${sx + 11} ${r(sy + 1)} Z`;
-  k += `<path d="${stamm}" fill="${S.lg("kiefernstamm", [[0, "#c9b096"], [0.4, "#8c7664"], [1, "#4a3c34"]], 0, 0, 1, 0)}"/>`;
-  /* Borke: Längsrisse und Platten */
+  /* sich verjüngender Ast/Stamm als Fläche entlang einer Mittellinie */
+  const glied = (pts, w0, w1) => { const L = [], R = []; pts.forEach((p, i) => { const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, w = (w0 + (w1 - w0) * i / (pts.length - 1)) / 2; L.push([p[0] - dy / l * w, p[1] + dx / l * w]); R.push([p[0] + dy / l * w, p[1] - dx / l * w]); }); return glatt([...L, ...R.reverse()]); };
+  const STAMM = [[sx + 1, sy + 1], [sx + 1, sy - 20], [sx + 4, sy - 60], [sx + 10, sy - 100], [sx + 16, sy - 128], [sx + 17, sy - 146]];
+  const AESTE = [
+    [[[sx + 17, sy - 144], [sx + 8, sy - 160], [sx - 6, sy - 170], [sx - 22, sy - 172]], 4, 1.2],
+    [[[sx + 17, sy - 146], [sx + 18, sy - 166], [sx + 14, sy - 186], [sx + 8, sy - 198]], 3.6, 1],
+    [[[sx + 16, sy - 140], [sx + 30, sy - 156], [sx + 46, sy - 170], [sx + 62, sy - 172]], 3.8, 1.1],
+    [[[sx + 14, sy - 124], [sx + 30, sy - 132], [sx + 48, sy - 136], [sx + 60, sy - 134]], 2.6, 0.8],
+  ];
+  const stammD = glied(STAMM, 11, 5.5);
+  k += `<path d="${stammD}" fill="${S.lg("kiefernstamm", [[0, "#cdb498"], [0.4, "#8c7664"], [1, "#4a3c34"]], 0, 0, 1, 0)}"/>`;
+  for (const [pts, w0, w1] of AESTE) k += `<path d="${glied(pts, w0, w1)}" fill="#6a5444"/>`;
+  /* Borke nur im Stamm: Längsrisse und Platten (Clip mit dem Stammumriss) */
+  S.def(`<clipPath id="${S.id("stammclip")}"><path d="${stammD}"/></clipPath>`);
   let bo = "";
-  for (let i = 0; i < 22; i++) { const t = rnd(), y = sy - 4 - t * 146, x = sx + (t < 0.48 ? -1.5 + t * 10 : 3.5 + (t - 0.48) * 22) + (rnd() - 0.5) * 5; bo += `M${r(x)} ${r(y)} l${r(0.4 + rnd() * 0.6)} ${r(-3 - rnd() * 5)} `; }
-  k += `<path d="${bo}" stroke="#3e3028" stroke-width=".55" fill="none" opacity=".8"/>`;
-  for (let i = 0; i < 12; i++) { const t = rnd(), y = sy - 6 - t * 140, x = sx - 2 + (t < 0.48 ? t * 10 : 4 + (t - 0.48) * 22); k += `<path d="M${r(x - 1.5)} ${r(y)} q1 -.8 2.4 -.2" stroke="#e2cba8" stroke-width=".5" fill="none" opacity=".7"/>`; }
-  /* drei Hauptäste, gegabelt */
-  const AST = `M${sx + 13} ${r(sy - 120)} Q${sx + 2} ${r(sy - 150)} ${sx - 14} ${r(sy - 164)} M${sx + 1} ${r(sy - 156)} Q${sx - 6} ${r(sy - 172)} ${sx - 4} ${r(sy - 186)} M${sx + 16} ${r(sy - 150)} Q${sx + 24} ${r(sy - 170)} ${sx + 40} ${r(sy - 184)} M${sx + 30} ${r(sy - 174)} Q${sx + 48} ${r(sy - 176)} ${sx + 62} ${r(sy - 166)} M${sx + 17} ${r(sy - 132)} Q${sx + 36} ${r(sy - 140)} ${sx + 56} ${r(sy - 138)}`;
-  k += `<path d="${AST}" stroke="#5a463a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="${AST}" stroke="#bfa486" stroke-width=".6" fill="none" stroke-linecap="round" opacity=".6" transform="translate(-.6 -.4)"/>`;
-  /* Nadelbüschel: unregelmäßige Wolken mit gezacktem Rand, unten dunkler, oben links Abendlicht */
-  const buesch = (x, y, w, h) => {
-    const wolke = (cx, cy, ww, hh, f) => { const pt = []; for (let i = 0; i < 36; i++) { const a = i / 36 * Math.PI * 2, rr = (i % 2 ? 0.9 : 1.06) * (0.8 + rnd() * 0.3) * (1 + 0.12 * Math.sin(a * 3 + cx)); pt.push([klemm(cx + Math.cos(a) * ww / 2 * rr, 0, 400), Math.max(cy + Math.sin(a) * hh / 2 * rr, 0.5)]); } return `<path d="${P(pt)}" fill="${f}"/>`; };
-    return wolke(x, y + h * 0.1, w, h, "#4f6236") + wolke(x - w * 0.08, y - h * 0.08, w * 0.82, h * 0.78, "#728a44") + wolke(x - w * 0.2, y - h * 0.24, w * 0.46, h * 0.42, "#a3b25e");
+  for (let i = 0; i < 26; i++) { const t = rnd() * 0.95, seg = t * (STAMM.length - 1), j = Math.floor(seg), f = seg - j, A = STAMM[j], Bq = STAMM[j + 1], cx = A[0] + (Bq[0] - A[0]) * f + (rnd() - 0.5) * 7, cy = A[1] + (Bq[1] - A[1]) * f; bo += `M${r(cx)} ${r(cy)} l${r(0.6 + rnd() * 0.6)} ${r(-3 - rnd() * 5)} `; }
+  k += `<g clip-path="url(#${S.id("stammclip")})"><path d="${bo}" stroke="#3e3028" stroke-width=".55" fill="none" opacity=".8"/></g>`;
+  /* Nadelbüschel: flach, breiter als hoch, Rand aus feinen Nadelstrichen; je Büschel ein Zweig */
+  const buesch = (x, y, w, h, vonX, vonY) => {
+    let c = `<path d="M${r(vonX)} ${r(vonY)} Q${r((vonX + x) / 2)} ${r(Math.min(vonY, y) - 2)} ${r(x)} ${r(y + h * 0.2)}" stroke="#5a4636" stroke-width=".9" fill="none"/>`;
+    const blob = (cx, cy, ww, hh, f) => { const pt = []; for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2, rr = 0.85 + rnd() * 0.25; pt.push([klemm(cx + Math.cos(a) * ww / 2 * rr, 0, 400), Math.max(cy + Math.sin(a) * hh / 2 * rr, 0.5)]); } return `<path d="${glatt(pt)}" fill="${f}"/>`; };
+    c += blob(x, y, w, h, "#435a30") + blob(x - w * 0.08, y - h * 0.12, w * 0.8, h * 0.7, "#6c8442") + blob(x - w * 0.2, y - h * 0.26, w * 0.42, h * 0.38, "#a1ae5c");
+    let hell = "", dunkel = "";
+    for (let i = 0; i < 26; i++) { const a = Math.PI + i / 25 * Math.PI, rx = Math.cos(a) * w / 2, ry = Math.sin(a) * h / 2, l = 1.2 + rnd() * 1.4; hell += `M${r(klemm(x + rx * 0.85, 0, 400))} ${r(Math.max(y + ry * 0.85, 0.3))} l${r(Math.cos(a + (rnd() - 0.5) * 0.6) * l)} ${r(Math.sin(a + (rnd() - 0.5) * 0.6) * l * 0.8)} `; }
+    for (let i = 0; i < 16; i++) { const a = i / 15 * Math.PI, rx = Math.cos(a) * w / 2, ry = Math.sin(a) * h / 2, l = 1 + rnd(); dunkel += `M${r(klemm(x + rx * 0.85, 0, 400))} ${r(y + ry * 0.85)} l${r(Math.cos(a) * l * 0.5)} ${r(Math.sin(a) * l)} `; }
+    return c + `<path d="${hell}" stroke="#93a656" stroke-width=".35" fill="none"/><path d="${dunkel}" stroke="#34452a" stroke-width=".35" fill="none"/>`;
   };
-  for (const [dx, dy, w, h] of [[-20, -162, 30, 19], [-6, -188, 28, 18], [14, -170, 22, 14], [42, -186, 32, 19], [64, -162, 24, 15], [58, -136, 22, 13], [24, -204, 26, 15], [-36, -148, 18, 11], [32, -150, 20, 12], [2, -210, 20, 11]]) k += buesch(sx + dx, sy + dy, w, h);
-  /* Zapfen */
-  for (const [dx, dy] of [[-10, -160], [46, -180], [58, -136]]) k += `<ellipse cx="${sx + dx}" cy="${r(sy + dy)}" rx=".9" ry="1.4" fill="#7a5236"/><ellipse cx="${sx + dx - 0.3}" cy="${r(sy + dy - 0.4)}" rx=".4" ry=".6" fill="#c08a5a"/>`;
+  const B2 = [
+    [sx - 20, sy - 176, 30, 12, sx - 14, sy - 171], [sx - 6, sy - 168, 22, 10, sx + 2, sy - 165], [sx + 8, sy - 202, 26, 11, sx + 9, sy - 196],
+    [sx + 18, sy - 186, 22, 10, sx + 15, sy - 180], [sx + 40, sy - 178, 30, 12, sx + 40, sy - 166], [sx + 62, sy - 176, 22, 10, sx + 58, sy - 171],
+    [sx + 54, sy - 140, 24, 10, sx + 52, sy - 136], [sx + 32, sy - 140, 18, 8, sx + 32, sy - 132], [sx - 32, sy - 168, 16, 8, sx - 22, sy - 172],
+  ];
+  for (const [x, y, w, h, vx, vy] of B2) k += buesch(x, y, w, h, vx, vy);
+  for (const [dx, dy] of [[-12, -170], [44, -170], [56, -134]]) k += `<ellipse cx="${sx + dx}" cy="${r(sy + dy)}" rx=".9" ry="1.4" fill="#7a5236"/><ellipse cx="${sx + dx - 0.3}" cy="${r(sy + dy - 0.4)}" rx=".4" ry=".6" fill="#c08a5a"/>`;
   S.teil({ anker: [sx + 10, sy - 90], id: "kiefer", de: "die Kiefer", syl: "KIE-fer", it: "il pino", itSyl: "PI-no", en: "pine tree", x: 0, y: 0, kunst: k,
     tipp: "Auf den Hügeln von Athen wachsen Aleppo-Kiefern. An heißen Tagen duftet ihr Harz in der ganzen Luft." });
 }

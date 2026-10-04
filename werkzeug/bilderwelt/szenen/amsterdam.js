@@ -773,12 +773,12 @@ const grachtUnter = [];
   }
   const hk = giebelInfo.find((g) => g.haken && g.h.typ === "trap");
   if (hk) { const [a, b, c] = hk.haken; grachtUnter.push({ id: "lastenhaken", de: "der Lastenhaken", syl: "LAS-ten-ha-ken", it: "il gancio di carico", itSyl: "GAN-cio di CA-ri-co", en: "hoisting hook", x: b[0], y: c[1] + 1,
-    tipp: "Am Haken oben im Giebel zieht man Möbel mit einem Seil durch das Fenster — die Treppen sind zu eng.",
+    tipp: "Oben am Balken hängt der Haken. Mit einem Seil zieht man Möbel durch das Fenster — die Treppen sind zu eng.",
     kunst: flaeche(Math.min(a[0], b[0]) - b[0] - 0.8, a[1] - c[1] - 2.2, Math.abs(b[0] - a[0]) + 2.4, c[1] - a[1] + 3.4, 0.3) }); }
 }
 S.teil({ id: "grachtenhaus", de: "das Grachtenhaus", syl: "GRACH-ten-haus", it: "la casa sul canale", itSyl: "CA-sa sul ca-NA-le", en: "canal house", anker: [60, 70],
   kunst: ZL.out + fensterSVG(-1, true) + lichtLinks(),
-  tipp: "Viele Grachtenhäuser sind über 300 Jahre alt. Kaufleute wohnten vorn und lagerten Waren unter dem Dach.",
+  tipp: "Bauland am Wasser war sehr teuer — darum sind die Grachtenhäuser schmal und hoch. Viele sind über 300 Jahre alt.",
   zoom: { x: 74, y: 0, w: 72, h: 48 }, unter: grachtUnter });
 
 /* 3 — DIE BRÜCKEN: die erste (Keizersgracht) ist das Wort, die hinteren gehören dazu */
@@ -797,7 +797,7 @@ S.teil({ id: "grachtenhaus", de: "das Grachtenhaus", syl: "GRACH-ten-haus", it: 
   for (const u of ULMEN.fern) FERN.push({ D: u.D, g: ulme(u.X, u.D, u.seed).g });
   BRUECKEN_SVG = FERN.sort((a, b) => b.D - a.D).map((f) => f.g).join("");
   S.teil({ id: "bruecke", de: "die Brücke", syl: "BRÜ-cke", it: "il ponte", itSyl: "PON-te", en: "bridge", anker: [bx, by], kunst: BRUECKEN_SVG + BRUECKE1,
-    tipp: "Von hier sieht man sieben Brücken hintereinander. Amsterdam hat über 1500 Brücken.",
+    tipp: "Hinter dieser Brücke liegen sechs weitere hintereinander — man sieht ihre Bögen und Lichter. Amsterdam hat über 1500 Brücken.",
     zoom: { x: 152, y: 98, w: 96, h: 40 }, unter });
 }
 
@@ -813,7 +813,7 @@ S.teil({ id: "grachtenhaus", de: "das Grachtenhaus", syl: "GRACH-ten-haus", it: 
   k += `<path d="M${q(0.03, -1.4)} L${q(0.24, -1.05)}" stroke="#a63e33" stroke-width="${r(0.07 * s)}" stroke-linecap="round"/>`;
   k += `<circle cx="${r(0.08 * s)}" cy="${r(-1.62 * s)}" r="${r(0.11 * s)}" fill="#eec6a4"/><path d="M${q(-0.03, -1.66)} Q${q(0.06, -1.78)} ${q(0.19, -1.67)} L${q(0.12, -1.64)} Z" fill="#c9a466"/>`;
   S.teil({ oben: true, id: "radfahrer", de: "der Radfahrer", syl: "RAD-fah-rer", it: "il ciclista", itSyl: "ci-CLI-sta", en: "cyclist", x: fx, y: fy, kunst: `<g ${VOLS}>${k}</g>`,
-    tipp: "In Amsterdam gibt es mehr Fahrräder als Einwohner." });
+    tipp: "In Amsterdam gibt es über 800 000 Fahrräder." });
 }
 
 let LINKS_BOOT = "";
@@ -933,7 +933,7 @@ const LADEN = { d0: 37.2, d1: 44.6 };
   /* Schaufenster (Erdgeschoss), Markise, Schild „KAAS“ */
   k += `<path d="${pz([Q(LADEN.d0, KAI), Q(LADEN.d1, KAI), Q(LADEN.d1, 4.4), Q(LADEN.d0, 4.4)])}" fill="#203a2c"/>`;
   k += `<path d="${pz([Q(LADEN.d0 + 0.4, 1.6), Q(LADEN.d1 - 2, 1.6), Q(LADEN.d1 - 2, 3.9), Q(LADEN.d0 + 0.4, 3.9)])}" fill="${S.lg("laden", [[0, "#f4dc9a"], [1, "#d8b56a"]])}"/>`;
-  /* Regale mit Käselaiben (Gouda, flach liegend, gestapelt) im Fenster */
+  /* Regale mit Käselaiben (Gouda, flach liegend, gestapelt) im Fenster; darüber dunkelgrüne Sprossen (nach den Laiben gezeichnet) */
   let kaese = "";
   for (let reihe = 0; reihe < 3; reihe++) for (let d = LADEN.d0 + 0.8; d < LADEN.d1 - 2.3; d += 0.62) {
     const [x, y] = Q(d, 2.0 + reihe * 0.6), s = F / d;
@@ -941,6 +941,8 @@ const LADEN = { d0: 37.2, d1: 44.6 };
   }
   k += kaese;
   for (let reihe = 0; reihe < 3; reihe++) k += `<path d="M${pt(Q(LADEN.d0 + 0.4, 2.0 + reihe * 0.6))} L${pt(Q(LADEN.d1 - 2, 2.0 + reihe * 0.6))}" stroke="#7a5230" stroke-width=".5"/>`;
+  { let spr = ""; for (const d of [LADEN.d0 + 0.4 + (LADEN.d1 - 2.4 - LADEN.d0) / 2]) spr += `M${pt(Q(d, 1.6))} L${pt(Q(d, 3.9))}`; spr += `M${pt(Q(LADEN.d0 + 0.4, 3.3))} L${pt(Q(LADEN.d1 - 2, 3.3))}`;
+    k += `<path d="${spr}" stroke="#1f3a2c" stroke-width=".9"/><path d="${pz([Q(LADEN.d0 + 0.4, 1.6), Q(LADEN.d1 - 2, 1.6), Q(LADEN.d1 - 2, 3.9), Q(LADEN.d0 + 0.4, 3.9)])}" fill="none" stroke="#1f3a2c" stroke-width="1.1"/>`; }
   /* Ladentür mit Fenster */
   k += `<path d="${pz([Q(LADEN.d1 - 1.7, KAI + 0.1), Q(LADEN.d1 - 0.5, KAI + 0.1), Q(LADEN.d1 - 0.5, 3.9), Q(LADEN.d1 - 1.7, 3.9)])}" fill="#2a4a38"/><path d="${pz([Q(LADEN.d1 - 1.5, 2.2), Q(LADEN.d1 - 0.7, 2.2), Q(LADEN.d1 - 0.7, 3.6), Q(LADEN.d1 - 1.5, 3.6)])}" fill="#e8c878" opacity=".85"/>`;
   /* Markise (gestreift) ragt zur Gracht */
@@ -960,16 +962,24 @@ const LADEN = { d0: 37.2, d1: 44.6 };
   const kx = tx - 0.45 * ts, ky = ty - 0.8 * ts, m = (a, b) => `${r(kx + a * ts)} ${r(ky + b * ts)}`;
   const laib = (y0, w, h, f) => `<path d="M${m(-w, y0)} Q${m(-w - 0.03, y0 - h / 2)} ${m(-w, y0 - h)} Q${m(0, y0 - h - 0.07)} ${m(w, y0 - h)} Q${m(w + 0.03, y0 - h / 2)} ${m(w, y0)} Q${m(0, y0 + 0.06)} ${m(-w, y0)} Z" fill="${f}"/><path d="M${m(-w, y0 - h)} Q${m(0, y0 - h + 0.06)} ${m(w, y0 - h)}" stroke="#c98a1c" stroke-width="${r(0.012 * ts)}" fill="none"/>`;
   tisch += laib(0, 0.26, 0.1, S.lg("gouda", [[0, "#f7cf4a"], [0.6, "#eaa924"], [1, "#c97f16"]], 0, 0, 1, 0)) + laib(-0.1, 0.24, 0.1, S.lg("gouda", []));
-  tisch += `<path d="M${m(0.02, -0.21)} L${m(0.2, -0.205)} L${m(0.21, -0.13)} L${m(0.05, -0.14)} Z" fill="#fbe7a2"/><path d="M${m(0.02, -0.21)} L${m(0.05, -0.14)}" stroke="#e8c870" stroke-width="${r(0.008 * ts)}"/>`;
+  tisch += `<path d="M${m(-0.02, -0.215)} L${m(0.24, -0.205)} L${m(0.25, -0.11)} L${m(0.02, -0.115)} Z" fill="#fff0b8"/><path d="M${m(0.24, -0.205)} L${m(0.25, -0.11)} L${m(0.27, -0.12)} L${m(0.26, -0.2)} Z" fill="#e8c260"/><path d="M${m(0.02, -0.21)} L${m(0.05, -0.14)}" stroke="#e8c870" stroke-width="${r(0.008 * ts)}"/>`;
   tisch += `<path d="M${m(-0.18, -0.2)} Q${m(-0.05, -0.235)} ${m(0.1, -0.2)}" stroke="#fff4c0" stroke-width="${r(0.012 * ts)}" fill="none" opacity=".8"/>`;
   /* Holzschuhe: ein Paar, gelb lackiert, mit roter Tulpe bemalt (Seitenansicht, Spitze rechts, 36 cm) */
-  const hx = tx + 0.3 * ts, hy = ty - 0.8 * ts;
   const klomp = (x0, dy, f, k = 1.25) => { const q = (a, b) => `${r(hx + (x0 + a * k) * ts)} ${r(hy + (dy + b * k) * ts)}`;
     return `<path d="M${q(-0.15, 0)} L${q(0.1, 0)} Q${q(0.16, -0.005)} ${q(0.19, -0.035)} Q${q(0.215, -0.07)} ${q(0.2, -0.08)} Q${q(0.17, -0.088)} ${q(0.12, -0.09)} Q${q(0.06, -0.095)} ${q(0.03, -0.122)} L${q(-0.12, -0.13)} Q${q(-0.17, -0.125)} ${q(-0.17, -0.07)} Q${q(-0.17, -0.02)} ${q(-0.15, 0)} Z" fill="${f}"/>` +
       `<path d="M${q(-0.12, -0.128)} Q${q(-0.05, -0.15)} ${q(0.03, -0.122)} Q${q(-0.05, -0.112)} ${q(-0.12, -0.128)} Z" fill="#3a220c"/>` +
       `<path d="M${q(0.05, -0.02)} Q${q(0.06, -0.05)} ${q(0.08, -0.07)}" stroke="#3f7a2e" stroke-width="${r(0.012 * ts)}" fill="none"/><path d="M${q(0.065, -0.068)} L${q(0.06, -0.093)} L${q(0.08, -0.083)} L${q(0.1, -0.093)} L${q(0.095, -0.068)} Z" fill="#d0283a"/>` +
       `<path d="M${q(-0.15, -0.1)} Q${q(-0.02, -0.098)} ${q(0.12, -0.082)} Q${q(0.18, -0.08)} ${q(0.2, -0.074)}" stroke="#fff8d8" stroke-width="${r(0.01 * ts)}" fill="none" opacity=".85"/><path d="M${q(-0.15, -0.006)} L${q(0.12, -0.006)}" stroke="#9a6a08" stroke-width="${r(0.014 * ts)}" opacity=".6"/>`; };
-  tisch += klomp(0.02, -0.012, "#d9a420") + klomp(-0.05, 0.01, "#f6cb3c");
+  /* ein Paar große Holzschuhe hängt am Türrahmen (wie bei den Souvenirläden): Seitenansicht, Spitze hochgezogen */
+  const [hx0, hy0] = P(X - 0.2, LADEN.d1 - 0.3, 3.75), hs = F / (LADEN.d1 - 0.3);
+  const klomp2 = (dx, dy, f, f2) => { const q = (a, b) => `${r(hx0 + (dx + a) * hs)} ${r(hy0 + (dy + b) * hs)}`;
+    return `<path d="M${q(-0.02, 0)} L${q(0.04, 0)} L${q(0.07, 0.06)} Q${q(0.1, 0.25)} ${q(0.06, 0.36)} Q${q(0.035, 0.44)} ${q(-0.02, 0.45)} Q${q(-0.05, 0.4)} ${q(-0.04, 0.3)} Q${q(-0.07, 0.15)} ${q(-0.06, 0.06)} Z" fill="${f}"/>` +
+      `<path d="M${q(-0.06, 0.06)} Q${q(-0.07, 0.15)} ${q(-0.04, 0.3)} Q${q(-0.05, 0.4)} ${q(-0.02, 0.45)} Q${q(-0.03, 0.38)} ${q(-0.025, 0.3)} Q${q(-0.04, 0.16)} ${q(-0.03, 0.06)} Z" fill="${f2}"/>` +
+      `<path d="M${q(0.0, 0.02)} Q${q(0.035, 0.05)} ${q(0.03, 0.16)} Q${q(0.01, 0.12)} ${q(0.0, 0.02)} Z" fill="#3a220c"/>` +
+      `<path d="M${q(0.02, 0.36)} Q${q(0.01, 0.3)} ${q(0.025, 0.24)}" stroke="#3f7a2e" stroke-width="${r(0.012 * hs)}" fill="none"/><path d="M${q(0.012, 0.25)} L${q(0.008, 0.21)} L${q(0.022, 0.225)} L${q(0.036, 0.21)} L${q(0.034, 0.25)} Z" fill="#d0283a"/>`; };
+  k += `<path d="M${r(hx0)} ${r(hy0 - 0.25 * hs)} L${r(hx0 - 0.01 * hs)} ${r(hy0)} M${r(hx0)} ${r(hy0 - 0.25 * hs)} L${r(hx0 + 0.12 * hs)} ${r(hy0 + 0.01 * hs)}" stroke="#3a2a1c" stroke-width="${r(0.012 * hs)}"/>`;
+  k += klomp2(0.12, 0.01, "#e9b42a", "#c58a14") + klomp2(0, 0, "#f6cb3c", "#d49a1c");
+  const hx = hx0 + 0.06 * hs, hy = hy0 + 0.45 * hs;
   /* Sirupwaffeln: blaue Dose, eine Waffel lehnt davor (Gitter, Sirup) */
   const wx = tx + 0.68 * ts, wy = ty - 0.8 * ts, w2 = (a, b) => `${r(wx + a * ts)} ${r(wy + b * ts)}`;
   tisch += `<rect x="${r(wx - 0.08 * ts)}" y="${r(wy - 0.2 * ts)}" width="${r(0.16 * ts)}" height="${r(0.2 * ts)}" rx="${r(0.01 * ts)}" fill="#2a5aa0"/><rect x="${r(wx - 0.08 * ts)}" y="${r(wy - 0.13 * ts)}" width="${r(0.16 * ts)}" height="${r(0.05 * ts)}" fill="#f2efe6"/><ellipse cx="${r(wx)}" cy="${r(wy - 0.2 * ts)}" rx="${r(0.08 * ts)}" ry="${r(0.02 * ts)}" fill="#c9d3dc"/>`;
@@ -981,15 +991,15 @@ const LADEN = { d0: 37.2, d1: 44.6 };
   k += `<g ${VOLS}>${tisch}</g>`;
   const unter = [
     { id: "kaese", de: "der Käse", syl: "KÄ-se", it: "il formaggio", itSyl: "for-MAG-gio", en: "cheese", x: kx, y: ky, kunst: flaeche(-0.3 * ts, -0.3 * ts, 0.6 * ts, 0.34 * ts, 0.3),
-      tipp: "Gouda ist ein runder Käse aus Holland. Er hat eine gelbe Wachsrinde." },
-    { id: "holzschuh", de: "der Holzschuh", syl: "HOLZ-schuh", it: "lo zoccolo", itSyl: "ZOC-co-lo", en: "clog", x: hx, y: hy, kunst: flaeche(-0.22 * ts, -0.13 * ts, 0.46 * ts, 0.15 * ts, 0.3),
+      tipp: "Gouda ist ein runder Käse aus den Niederlanden. Er hat eine gelbe Wachsrinde." },
+    { id: "holzschuh", de: "der Holzschuh", syl: "HOLZ-schuh", it: "lo zoccolo", itSyl: "ZOC-co-lo", en: "clog", x: hx, y: hy, kunst: flaeche(-0.14 * hs, -0.47 * hs, 0.3 * hs, 0.5 * hs, 0.3),
       tipp: "Früher trugen die Bauern Holzschuhe. Heute kauft man sie als Souvenir." },
     { id: "sirupwaffel", de: "die Sirupwaffel", syl: "SI-rup-waf-fel", it: "la cialda allo sciroppo", itSyl: "CIAL-da AL-lo sci-ROP-po", en: "stroopwafel", x: wx, y: wy, kunst: flaeche(-0.09 * ts, -0.23 * ts, 0.3 * ts, 0.25 * ts, 0.3),
       tipp: "Die Sirupwaffel (niederländisch „stroopwafel“) legt man auf die heiße Teetasse — dann wird der Sirup weich." },
   ];
   S.teil({ id: "laden", de: "der Laden", syl: "LA-den", it: "il negozio", itSyl: "ne-GO-zio", en: "shop", anker: [tx, ty], kunst: k,
     tipp: "Im Käseladen kann man oft Käse probieren.",
-    zoom: { x: r(tx - 22), y: r(ty - 27), w: 42, h: 28 }, unter });
+    zoom: { x: r(tx - 24), y: r(ty - 33), w: 48, h: 32 }, unter });
 }
 
 /* 12 — DER POLLER (Amsterdammertje) am rechten Kai */
@@ -1115,7 +1125,7 @@ const GEL = { D: 2.4, h: 3.62 };
   const papier = `<path d="M${r(pa[0])} ${r(pa[1])} L${r(pa[0] - 4)} ${r(pa[1] - 22)} L${r((pa[0] + pb[0]) / 2)} ${r(pa[1] - 10)} L${r(pb[0] + 5)} ${r(pb[1] - 24)} L${r(pb[0])} ${r(pb[1])} Z" fill="#f4efe2" opacity=".85"/>`;
   const tk = `<path d="${stiele}" stroke="#4d7f34" stroke-width="${r(0.009 * F / 2)}" fill="none"/>` + blaetter + blueten;
   S.teil({ oben: true, id: "tulpe", de: "die Tulpe", syl: "TUL-pe", it: "il tulipano", itSyl: "tu-LI-pa-no", en: "tulip", anker: [pp(-0.83, 2, HL)[0], pp(-0.83, 2, HL)[1]], kunst: tk,
-    tipp: "Im Frühling blühen in Holland Millionen Tulpen. Die ersten kamen im 16. Jahrhundert aus der Türkei." });
+    tipp: "Im Frühling blühen in den Niederlanden Millionen Tulpen. Die ersten kamen im 16. Jahrhundert aus dem Osmanischen Reich (heute Türkei)." });
   /* die Klingel am Lenker (fernes Ende) */
   const [kx, kyy] = P(-0.33, 2.42, HL + 0.035), ks = F / 2.42;
   const kl = `<ellipse cx="${r(kx)}" cy="${r(kyy)}" rx="${r(0.032 * ks)}" ry="${r(0.022 * ks)}" fill="${S.rg("klingel", [[0, "#ffffff"], [0.4, "#d6dde2"], [1, "#6d777f"]], 0.65, 0.3, 0.8)}"/><rect x="${r(kx - 0.006 * ks)}" y="${r(kyy + 0.015 * ks)}" width="${r(0.012 * ks)}" height="${r(0.025 * ks)}" fill="#8a949b"/><path d="M${r(kx + 0.02 * ks)} ${r(kyy - 0.005 * ks)} l${r(0.03 * ks)} ${r(-0.012 * ks)}" stroke="#4a525a" stroke-width="${r(0.008 * ks)}"/>`;
