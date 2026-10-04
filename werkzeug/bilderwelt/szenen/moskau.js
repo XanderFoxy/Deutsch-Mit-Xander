@@ -919,11 +919,11 @@ const STAND = { d: 21, l0: -6.9, l1: -3.7, theke: 1.05 };
 /* Schatten: Sonne im Südsüdwesten (Azimut 210°, 19° hoch), 60° rechts VOR dem Betrachter.
    Schatten fallen nach links zum Betrachter: je Meter Höhe 1,45 m näher und 2,5 m nach links. */
 const SCH = { dd: -1.45, dl: -2.51 };
-const schlag = (d, l, h, b, a = 0.56) => {
+const schlag = (d, l, h, b, a = 0.68) => {
   /* am Fuß scharf und dunkel, zur Spitze hin heller und weicher */
   const fuss = [P(d + 0.12, l + b), P(d - 0.12, l - b)], mitte = [P(d + SCH.dd * h * 0.55 - 0.08, l + SCH.dl * h * 0.55 - b * 0.7), P(d + SCH.dd * h * 0.55 + 0.08, l + SCH.dl * h * 0.55 + b * 0.7)];
   const spitze = [P(d + SCH.dd * h - 0.06, l + SCH.dl * h - b * 0.4), P(d + SCH.dd * h + 0.06, l + SCH.dl * h + b * 0.4)];
-  return poly([fuss[0], fuss[1], mitte[0], mitte[1]], "#141a3a", ` opacity="${a}" pointer-events="none"`) + poly([mitte[1], mitte[0], spitze[0], spitze[1]], "#141a3a", ` opacity="${r(a * 0.7 * 100) / 100}" filter="url(#${S.id("weichs")})" pointer-events="none"`);
+  return poly([fuss[0], fuss[1], mitte[0], mitte[1]], "#0d1230", ` opacity="${a}" pointer-events="none"`) + poly([mitte[1], mitte[0], spitze[0], spitze[1]], "#141a3a", ` opacity="${r(a * 0.7 * 100) / 100}" filter="url(#${S.id("weichs")})" pointer-events="none"`);
 };
 const BODEN_SCHATTEN = [];   /* werden in den Roten Platz gezeichnet (Bodenfläche) */
 
@@ -1143,12 +1143,12 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
 {
   /* Nebelkrähe (Meter, 46 cm lang): kräftiger aschgrauer Rumpf, schwarzer Kopf mit schwarzem Kehllatz bis zur Brust,
      schwarze Flügel und Schwanz, dicker langer Schnabel, kräftige schwarze Beine. Licht von rechts vorn. */
-  const KR = S.lg("kraehe", [[0, "#5f626a"], [0.6, "#80838b"], [1, "#9a9da4"]], 0, 0, 1, 0);
+  const KR = S.lg("kraehe", [[0, "#5a5d64"], [0.6, "#74777e"], [1, "#8a8d94"]], 0, 0, 1, 0);
   const kraehe = (d, l, sp, pick) => {
     const x = X(d, l), y = Y(d), s = F / d;
-    BODEN_SCHATTEN.push(schlag(d, l, 0.32, 0.14, 0.5));
+    BODEN_SCHATTEN.push(schlag(d, l, 0.32, 0.16, 0.6));
     let k = `<g transform="translate(${r(x)} ${r(y)}) scale(${(s * sp).toFixed(4)} ${s.toFixed(4)})">`;
-    k += `<path d="M-.03 -.12 L-.05 0 M.05 -.12 L.04 0" stroke="#17171b" stroke-width=".025"/><path d="M-.1 0 h.1 M-.01 0 h.1" stroke="#17171b" stroke-width=".018"/>`;
+    k += `<path d="M-.03 -.12 L-.05 0 M.05 -.12 L.04 0" stroke="#17171b" stroke-width=".035"/><path d="M-.1 0 h.1 M-.01 0 h.1" stroke="#17171b" stroke-width=".018"/>`;
     k += `<path d="M-.3 -.2 L-.13 -.17 Q-.06 -.08 .07 -.11 Q.15 -.14 .16 -.24 Q.13 -.3 .02 -.3 Q-.1 -.3 -.16 -.24 Z" fill="${KR}"/>`;
     k += `<path d="M-.31 -.22 L-.12 -.18 L-.02 -.24 Q-.12 -.28 -.2 -.26 Z" fill="#17171b"/><path d="M-.14 -.26 Q-.02 -.31 .1 -.28 Q.04 -.2 -.08 -.18 Z" fill="#202024"/>`;
     k += `<path d="M.08 -.27 Q.14 -.22 .17 -.17 Q.2 -.24 .19 -.3 Z" fill="#17171b"/>`;

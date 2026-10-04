@@ -81,13 +81,14 @@ const bodenSchatten = (D, X, w, h, a = 0.3) => {
 };
 /* Figuren klein halten: feine Linien weg, Formkoordinaten auf Q cm runden (Verläufe bleiben genau) */
 const schlank = (svg, min = 0.35) => svg.replace(/<path [^>]*fill="none"[^>]*\/>/g, (p) => { const m = p.match(/stroke-width="([\d.]+)"/); return m && +m[1] < min ? "" : p; });
-let KLEIN = 20;
+let KLEIN = 8;
 const kompakt = (svg, Q = 1, min = 0.35) => {
   svg = schlank(svg, min);
   const rund = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : r(v)); };
   /* kleine Formen (Gesicht, Hände, Augen) fein runden, große grob — keine Mosaik-Gesichter */
-  const fein = (n) => { const v = Math.round(+n / 0.2) * 0.2; return String(v === 0 ? 0 : r(v)); };
-  const ausdehnung = (p) => { const z = (p.match(/-?\d*\.?\d+/g) || []).map(Number); let a = Infinity, b = -Infinity; for (const v of z) { if (v < a) a = v; if (v > b) b = v; } return b - a; };
+  const fein = (n) => { const v = Math.round(+n / 0.5) * 0.5; return String(v === 0 ? 0 : r(v)); };
+  const ausdehnung = (p) => { const z = (p.match(/-?\d*\.?\d+/g) || []).map(Number), a = [Infinity, Infinity], b = [-Infinity, -Infinity];
+    z.forEach((v, i) => { a[i % 2] = Math.min(a[i % 2], v); b[i % 2] = Math.max(b[i % 2], v); }); return Math.max(b[0] - a[0], b[1] - a[1]); };
   return svg.replace(/<(path|ellipse|circle|rect|line|polygon)\b[^>]*>/g, (tag) => tag
     .replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, ausdehnung(p) < KLEIN ? fein : rund)}"`)
     .replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${(/^<(ellipse|circle)/.test(tag) ? fein : rund)(n)}"`));
