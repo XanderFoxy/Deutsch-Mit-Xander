@@ -224,6 +224,40 @@ Deno.serve(async (anfrage: Request) => {
   if (wav.length < 1000) return json({ fehler: "aufnahme-zu-kurz" }, 400);
   if (wav.length > 2_000_000) return json({ fehler: "aufnahme-zu-lang" }, 413);
 
+  /* FASSUNG 879 — XANDER (Funk 263): „die Spracherkennung von Azure … hört so oft falsche Sachen“; Funk 296: „Ja mach
+     alles weiter“ (Frage 5 in Funk 295: Wortliste je Mission am Server). Bringt die Mission ihre Wortliste mit (phrasen),
+     geht die Aufnahme an Azures „Fast Transcription“ – nur dort nimmt Azure für Deutsch eine Phrase List an; die Wörter
+     der Mission (Winterhausen, Labor, Rathaus …) werden dann bevorzugt erkannt. Die Antwort wird in die gewohnte Form
+     (DisplayText, NBest) gebracht, damit die Stadt sie liest wie bisher. Lehnt Azure ab (Version, Region, Kontingent),
+     geht es ohne Umweg weiter wie vorher – schlechter wird nichts. */
+  const phrasen = Array.isArray(koerper.phrasen)
+    ? (koerper.phrasen as unknown[]).slice(0, 100).map((x) => String(x).slice(0, 60).trim()).filter(Boolean)
+    : [];
+  if (erkennen && phrasen.length) {
+    try {
+      const form = new FormData();
+      form.append("audio", new Blob([wav], { type: "audio/wav" }), "aufnahme.wav");
+      form.append("definition", JSON.stringify({ locales: [sprache], phraseList: { phrases: phrasen } }));
+      const schnell = await fetch(
+        `https://${region}.api.cognitive.microsoft.com/speechtotext/transcriptions:transcribe?api-version=2025-10-15`,
+        { method: "POST", headers: { "Ocp-Apim-Subscription-Key": schluessel }, body: form },
+      );
+      if (schnell.ok) {
+        const j = await schnell.json();
+        const t = String(j?.combinedPhrases?.[0]?.text || "").trim();
+        if (t) {
+          const lexikalisch = t.toLowerCase().replace(/[.,!?;:„“"()«»…]/g, " ").replace(/\s+/g, " ").trim();
+          return json({
+            RecognitionStatus: "Success",
+            DisplayText: t,
+            NBest: [{ Display: t, Lexical: lexikalisch, Confidence: j?.phrases?.[0]?.confidence }],
+            Weg: "wortliste",
+          });
+        }
+      }
+    } catch { /* weiter mit dem gewohnten Weg */ }
+  }
+
   const bewertung = {
     referenceText: text,
     gradingSystem: "HundredMark",
