@@ -350,7 +350,7 @@ const karte = (x, y, inhalt, w = 9, h = 6.6) => `<g transform="translate(${x} ${
   m += `<rect x="1.2" y="1.2" width=".8" height="4" fill="#efe2c4"/><rect x="2.6" y="1.2" width=".8" height="4" fill="#efe2c4"/><rect x="4" y="1.2" width=".8" height="4" fill="#efe2c4"/><rect x=".9" y=".6" width="4.2" height=".7" fill="#e2d2ae"/>`;
   m += `<path d="M5.6 5.2 L5.6 2.4 L8.4 2.4 L8.4 5.2 L7.6 5.2 Q7 3.6 6.4 5.2 Z" fill="#d8c498"/>`;
   m += `<text x="4.5" y="6.3" font-size=".9" text-anchor="middle" fill="#fff" font-family="Georgia">FORO ROMANO</text>`;
-  S.teil({ oben: true, id: "forum", de: "das Forum Romanum", syl: "FO-rum Ro-MA-num", it: "il Foro Romano", itSyl: "FO-ro ro-MA-no", en: "Roman Forum", x: PK.x - 5.7, y: PK.y - 47, kunst: karte(-4.5, -6.6, m), lupe: LUPE,
+  S.teil({ oben: true, id: "forum", de: "das Forum Romanum", syl: "FO-rum Ro-MA-num", it: "il Foro Romano", itSyl: "FO-ro ro-MA-no", en: "Roman Forum", x: PK.x - 5.7, y: PK.y - 47, kunst: karte(-4.5, -6.6, m), lupe: LUPE, marke: [-8, -19],   // FASSUNG 878 — Marke über der Postkarte, nicht auf der Pizzeria
     tipp: "Das Forum war der Marktplatz und das Herz des antiken Rom." });
 }
 {
@@ -358,7 +358,7 @@ const karte = (x, y, inhalt, w = 9, h = 6.6) => `<g transform="translate(${x} ${
   let m = `<rect width="9" height="6.6" fill="#efe2c4"/><rect x=".6" y="1" width="7.8" height="3.6" fill="#e6d4ac"/><rect x="3.6" y="1.6" width="1.8" height="3" rx=".8" fill="#c9b184"/><circle cx="4.5" cy="3" r=".45" fill="#fbf7ee"/>`;
   m += `<path d="M1.2 1.2 v3.2 M2.4 1.2 v3.2 M6.6 1.2 v3.2 M7.8 1.2 v3.2" stroke="#fbf3dc" stroke-width=".4"/><rect y="4.6" width="9" height="2" fill="#5fb4c8"/><path d="M1.6 4.6 Q4.5 3.6 7.4 4.6" fill="#d8c8a2"/>`;
   m += `<text x="4.5" y="6.3" font-size=".9" text-anchor="middle" fill="#fff" font-family="Georgia">FONTANA DI TREVI</text>`;
-  S.teil({ oben: true, id: "trevibrunnen", de: "der Trevibrunnen", syl: "TRE-vi-brun-nen", it: "la Fontana di Trevi", itSyl: "fon-TA-na di TRE-vi", en: "Trevi Fountain", x: PK.x + 5.1, y: PK.y - 47, kunst: karte(-4.5, -6.6, m), lupe: LUPE,
+  S.teil({ oben: true, id: "trevibrunnen", de: "der Trevibrunnen", syl: "TRE-vi-brun-nen", it: "la Fontana di Trevi", itSyl: "fon-TA-na di TRE-vi", en: "Trevi Fountain", x: PK.x + 5.1, y: PK.y - 47, kunst: karte(-4.5, -6.6, m), lupe: LUPE, marke: [2, -19],   // FASSUNG 878 — Marke über der Postkarte, nicht auf der Pizzeria
     tipp: "Wer eine Münze über die Schulter in den Brunnen wirft, kommt nach Rom zurück." });
 }
 

@@ -378,7 +378,7 @@ const ORT = {
   wien: { ll: [16.37, 48.21], bild: [1.4, -0.4], lab: [4, -0.6, "s"], name: "Wien" },
   venedig: { ll: [12.34, 45.43], bild: [3, 2.2], lab: [4.9, 1.6, "s"], name: "Venedig" },
   italien: { ll: [11.2, 43.4], bild: [-2.9, -0.4], lab: [-2.9, 2.1, "m"], name: "Italien" },
-  rom: { ll: [12.5, 41.9], bild: [2.6, 4.3], lab: [3.4, 6.4, "m"], name: "Rom" },
+  rom: { ll: [12.5, 41.9], bild: [2.6, 4.3], lab: [1.6, 0.9, "s"], name: "Rom" },
   spanien: { ll: [2.17, 41.4], lab: [-6.2, 2.6, "m"], name: "Spanien" },
   griechenland: { ll: [23.73, 37.97], gr: 0.8, lab: [0.6, 3.1, "m"], name: "Griechenland" },
   tuerkei: { ll: [28.98, 41.01], bild: [1.6, -0.4], lab: [5.5, 2.9, "m"], name: "Türkei" },
@@ -389,7 +389,7 @@ const ORT = {
   mexiko: { ll: [-88.57, 20.68], bild: [0.8, 8.2], lab: [0.8, 10.6, "m"], name: "Mexiko", knopf: P(-105, 14) },
   rio: { ll: [-43.21, -22.91], lab: [0, 3.3, "m"], name: "Rio de Janeiro", knopf: P(-30, -25) },
   kapstadt: { ll: [18.42, -33.92], lab: [0, 3.3, "m"], name: "Kapstadt", knopf: [193, 152] },
-  aegypten: { ll: [31.13, 29.98], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [228.5, 61] },
+  aegypten: { ll: [31.13, 29.98], bild: [-1.5, 8.8], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [228.5, 61] },
   dubai: { ll: [55.27, 25.2], lab: [-1.6, 3.3, "m"], name: "Dubai", knopf: P(62, 18) },
   indien: { ll: [78.04, 27.18], lab: [0, 3.3, "m"], name: "Indien", knopf: [287, 91] },
   peking: { ll: [116.4, 39.9], lab: [0, 3.3, "m"], name: "Peking", knopf: P(124, 32) },
@@ -397,11 +397,12 @@ const ORT = {
   sydney: { ll: [151.21, -33.87], lab: [0, 3.3, "m"], name: "Sydney", knopf: P(147, -47) },
 };
 /* Mitte der Lupenmarke je Ort in der Europa-Lupe (Bildkoordinaten) */
-/* Marken nach außen ins Meer (Irische See, Biskaya, Atlantik, westliches Mittelmeer, Tyrrhenisches Meer, Adria,
-   Schwarzes Meer), Deutschland in der Nordsee, Wien und Moskau nach Norden; keine zwei Marken berühren sich */
+/* Marken nach außen ins Meer (Irische See, Biskaya, Atlantik, westliches Mittelmeer, Tyrrhenisches Meer, Ägäis,
+   Schwarzes Meer), Deutschland in der Nordsee, Wien und Moskau nach Norden, Venedig rechts neben den Namen,
+   Rom unter das Kolosseum (nicht über Tunesien); keine zwei Marken berühren sich (Runde 4) */
 const MARKE_EU = {
-  grossbritannien: [185.6, 40.6], frankreich: [185.5, 47.4], spanien: [178.8, 55.4], italien: [198, 56.8], rom: [201.6, 60],
-  venedig: [210.6, 52.6], griechenland: [210.2, 57], tuerkei: [224.9, 51], moskau: [229.6, 34.6], deutschland: [195.6, 37.4], wien: [210.6, 38.6],
+  grossbritannien: [185.6, 40.6], frankreich: [185.5, 47.4], spanien: [178.8, 55.4], italien: [198, 56.8], rom: [204.3, 59.6],
+  venedig: [215.7, 47.8], griechenland: [218.4, 57.4], tuerkei: [224.9, 51], moskau: [229.6, 34.6], deutschland: [195.6, 37.4], wien: [210.6, 38.6],
 };
 function ortBild(id, mass, schrift) {
   const c = ORT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];

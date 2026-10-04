@@ -154,7 +154,7 @@ const plakat = (id, lupe, de, syl, it, itSyl, en, x, inhalt, name, farbe) => {
   k += `<g transform="translate(${-w / 2 + 1} ${-h + 1}) scale(${((w - 2) / 24).toFixed(3)})">${inhalt}</g>`;
   k += `<rect x="${-w / 2 + 1}" y="-8" width="${w - 2}" height="7" fill="${farbe}"/>` + T(0, -2.7, r(4.4 * Math.min(1, 6.6 / name.length)), name, "#fff", "middle", "bold", "'Trebuchet MS',Arial,sans-serif", ' letter-spacing=".3"');
   k += `<path d="M${-w / 2} ${-h} L${-w / 2 + 8} ${-h} L${-w / 2} ${-h + 14} Z" fill="#fff" opacity=".18"/>`;
-  S.teil({ id, de, syl, it, itSyl, en, lupe, tipp: ZIEL_TIPP, x, y: PLAKAT.y, kunst: k });
+  S.teil({ id, de, syl, it, itSyl, en, lupe, tipp: ZIEL_TIPP, x, y: PLAKAT.y, kunst: k, marke: [6, -31] });   // FASSUNG 878 — Marke oben rechts AUF dem eigenen Plakat; bei 16/−16 saß sie halb auf dem Nachbarplakat
 };
 plakat("rb_ziel_japan", "japan", "Japan", "JA-pan", "Giappone", "Giap-PO-ne", "Japan", 246,
   `<rect width="24" height="29" fill="${S.lg("jhimmel", [[0, "#fde6d6"], [1, "#fff6ec"]])}"/><circle cx="16" cy="8" r="4.4" fill="#d7262e"/>` +

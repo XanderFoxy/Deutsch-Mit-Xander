@@ -838,7 +838,7 @@ function stadtBild(id) {
   const fl = (lo, la, t, w = 0, gr = 3.3) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" font-style="italic" text-anchor="middle" fill="#2f6f93" stroke="#eef6f4" stroke-width=".7" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" transform="rotate(${w} ${r(x)} ${r(y)})" letter-spacing=".3">${t}</text>`; };
   g += fl(14.0, 48.42, "Donau", -6, 3.6) + fl(10.5, 50.13, "Main", 8) + fl(9.0, 52.56, "Weser", 62) + fl(7.02, 49.98, "Mosel", 18) + fl(8.93, 48.36, "Neckar", -48, 3) + fl(14.85, 52.6, "Oder", 80);
   const geb = (lo, la, t, w = 0, gr = 3.1) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" font-style="italic" text-anchor="middle" fill="#6e5330" stroke="#f2ead2" stroke-width=".7" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" letter-spacing=".7" transform="rotate(${w} ${r(x)} ${r(y)})">${t}</text>`; };
-  g += geb(10.62, 51.67, "Harz") + geb(8.42, 48.42, "Schwarzwald", -82) + geb(13.15, 50.52, "Erzgebirge", -12) + geb(6.5, 50.5, "Eifel");
+  g += geb(10.62, 51.67, "Harz") + geb(8.42, 48.42, "Schwarzwald", -82) + geb(13.15, 50.52, "Erzgebirge", -12) + geb(6.61, 50.43, "Eifel");
   const insel = (lo, la, t, al = "middle") => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="2.7" font-style="italic" text-anchor="${al}" fill="#4d6b52" stroke="#f2f0de" stroke-width=".6" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">${t}</text>`; };
   { const [x, y] = P(9.28, 47.86); g += `<text x="${r(x)}" y="${r(y)}" font-size="2.9" font-style="italic" text-anchor="middle" fill="#2f6f93" stroke="#eef3ec" stroke-width=".6" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">Bodensee</text>`; }
   S.hinten(g);
@@ -1014,11 +1014,11 @@ function region(id, staedte, knopf, worte) {
 const PK = (lo, la) => P(lo, la);
 /* Mitte der Lupenmarke je Stadt (Bildkoordinaten): neben dem Bild, nicht auf Namen oder Nachbarn */
 const MARKE = {
-  hamburg: [179.3, 50], luebeck: [208.5, 37], bremen: [157.6, 62], hannover: [197, 86],
-  berlin: [249.5, 80.5], potsdam: [236, 98], magdeburg: [214, 93], leipzig: [247, 119], weimar: [209, 130], dresden: [272.5, 127],
+  hamburg: [179.3, 50], luebeck: [229.8, 49.4], bremen: [153.6, 70.5], hannover: [197, 86],
+  berlin: [249.5, 80.5], potsdam: [236, 98], magdeburg: [214, 93], leipzig: [247, 119], weimar: [206.5, 129], dresden: [272.5, 127],
   duesseldorf: [137, 120], koeln: [148.5, 133], aachen: [102.3, 137.5], trier: [113.5, 169], frankfurt: [175, 155],
   heidelberg: [176.6, 180], stuttgart: [165, 197], freiburg: [136.5, 222], rothenburg: [194.5, 171], nuernberg: [212.8, 169.5],
-  regensburg: [245, 186.5], muenchen: [232.5, 218], neuschwanstein: [198, 226],
+  regensburg: [247.5, 185], muenchen: [232.5, 218], neuschwanstein: [198, 226],
 };
 region("norden", ["hamburg", "luebeck", "bremen", "hannover"], [121, 44],
   { id: "norden", de: "der Norden", syl: "NOR-den", it: "il Nord", itSyl: "NORD", en: "the North",

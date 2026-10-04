@@ -13,7 +13,8 @@ const w = {}; new Function("window", fs.readFileSync(datei, "utf8"))(w);
 const sz = Object.values(w.DMA_SZENE)[0];
 /* FASSUNG 878 — wie app.js bwBildHtml: Teile mit „lupe" tragen ihre Marke (Fangkreis r 15 bei 16/−16);
    in der Lupe nur die Unter-Teile, verkleinert um 1/k, damit sie fingerbreit bleibt. */
-const marke = (t, k) => `<g class="bw-lupenmarke" data-bw-lupe-sofort="${t.lupe}"${k > 1 ? ` transform="scale(${(1 / k).toFixed(3)})"` : ""}><circle class="bw-lupen-tipp" cx="16" cy="-16" r="15" fill="transparent"/></g>`;
+const marke = (t, k) => { const v = Array.isArray(t.marke) ? `translate(${(+t.marke[0] - 16).toFixed(1)},${(+t.marke[1] + 16).toFixed(1)})` : "", tr = [k > 1 ? `scale(${(1 / k).toFixed(3)})` : "", v].filter(Boolean).join(" ");
+  return `<g class="bw-lupenmarke" data-bw-lupe-sofort="${t.lupe}"${tr ? ` transform="${tr}"` : ""}><circle class="bw-lupen-tipp" cx="16" cy="-16" r="15" fill="transparent"/><circle cx="16" cy="-16" r="8.5" fill="#fff"/></g>`; };   /* marke: [x, y] wie app.js FASSUNG 878 */
 const g = (t, mitMarke, k) => `<g data-bw-teil="${t.id}"${t.oben ? ' data-bw-oben="1"' : ""} transform="translate(${t.x},${t.y})"><g class="bw-kunst">${t.kunst || ""}</g>${t.lupe && mitMarke ? marke(t, k) : ""}</g>`;
 /* Wie in der App (app.js, Trefferebenen; korrekturen.css: .bw-flaeche fängt nichts):
    unter den Zeichnungen je Ding ein Rechteck (mindestens fingerbreit, groß
@@ -27,8 +28,8 @@ const APP_EBENEN = (k) => `(() => {
     f.setAttribute("x", o.x + o.w / 2 - b / 2); f.setAttribute("y", o.y + o.h / 2 - h / 2); f.setAttribute("width", b); f.setAttribute("height", h);
     f.setAttribute("fill", "transparent"); f.setAttribute("data-bw-treff", o.id); return f; };
   const ebene = document.createElementNS(ns, "g");
-  const bildFl = svg.viewBox.baseVal.width * svg.viewBox.baseVal.height;   /* FASSUNG 878 — wie app.js (877): Teile über 8 % des Bildes bekommen kein Ersatzrechteck */
-  [...svg.querySelectorAll("[data-bw-teil]")].map(kasten).filter((o) => o.w > 0 && o.gross <= bildFl * 0.08).sort((a, b) => b.gross - a.gross).forEach((o) => ebene.appendChild(rechteck(o)));
+  const bildFl = svg.viewBox.baseVal.width * svg.viewBox.baseVal.height;   /* FASSUNG 878 — wie app.js: auf Übersichtskarten bekommen Teile über 8 % des Bildes kein Ersatzrechteck */
+  [...svg.querySelectorAll("[data-bw-teil]")].map(kasten).filter((o) => o.w > 0 && (!${!!(sz.nurForm || /karte$/.test(sz.id))} || o.gross <= bildFl * 0.08)).sort((a, b) => b.gross - a.gross).forEach((o) => ebene.appendChild(rechteck(o)));
   const heim = svg.querySelector("[data-bw-teil]").parentNode; heim.insertBefore(ebene, heim.querySelector("[data-bw-teil]"));
   const dach = document.createElementNS(ns, "g");
   [...svg.querySelectorAll("[data-bw-teil][data-bw-oben]")].map(kasten).filter((o) => o.w > 0).sort((a, b) => b.gross - a.gross).forEach((o) => dach.appendChild(rechteck(o)));
@@ -40,7 +41,7 @@ const APP_EBENEN = (k) => `(() => {
   mdach.setAttribute("class", "bw-marken-dach");
   svg.querySelectorAll(".bw-lupenmarke .bw-lupen-tipp").forEach((c) => {
     const mm = heimInv.multiply(c.getCTM()), kr = document.createElementNS(ns, "circle");
-    kr.setAttribute("cx", 16); kr.setAttribute("cy", -16); kr.setAttribute("r", 15); kr.setAttribute("fill", "transparent");
+    kr.setAttribute("cx", 16); kr.setAttribute("cy", -16); kr.setAttribute("r", 11);   /* wie app.js FASSUNG 878 */ kr.setAttribute("fill", "transparent");
     kr.setAttribute("transform", "matrix(" + [mm.a, mm.b, mm.c, mm.d, mm.e, mm.f].join(" ") + ")");
     kr.setAttribute("data-bw-marke", c.closest("[data-bw-teil]").dataset.bwTeil);
     mdach.appendChild(kr);
@@ -61,13 +62,18 @@ const seite = (teile, zoom, unterIds) => {
     await pg.setContent(seite(teile, zoom, zoom ? liste : null));
     return pg.evaluate((ids) => ids.map((id) => {
       const el = document.querySelector(`[data-bw-teil="${id}"]`);
-      const b = el.getBoundingClientRect();
+      const b = (el.querySelector(":scope > .bw-kunst") || el).getBoundingClientRect();   /* FASSUNG 878 — ohne Lupenmarke */
       let treffer = 0, gesamt = 0;
       for (let x = Math.max(0, b.left); x < Math.min(innerWidth, b.right); x += 4) for (let y = Math.max(0, b.top); y < Math.min(innerHeight, b.bottom); y += 4) {
         gesamt++;
         const e = document.elementFromPoint(x, y);
         const t = e && e.closest && e.closest("[data-bw-teil]");
-        const getroffen = e && e.getAttribute && e.getAttribute("data-bw-treff") || (t && t.getAttribute("data-bw-teil"));
+        let getroffen = e && e.getAttribute && e.getAttribute("data-bw-treff") || (t && t.getAttribute("data-bw-teil"));
+        if (e && e.dataset && e.dataset.bwMarke) {   /* FASSUNG 878 — wie der Klick im Marken-Dach: sichtbare fremde Zeichnung darüber gewinnt */
+          const eigen = document.querySelector('[data-bw-teil="' + e.dataset.bwMarke + '"]');
+          const oben = document.elementsFromPoint(x, y).filter((el) => !el.closest(".bw-marken-dach") && !(el.getAttribute && el.getAttribute("data-bw-treff")) && !(el.classList.contains("bw-lupen-tipp") && !eigen.contains(el))).map((el) => el.closest && el.closest("[data-bw-teil]")).find(Boolean);
+          getroffen = oben && oben !== eigen && !eigen.contains(oben) ? oben.dataset.bwTeil : "MARKE:" + e.dataset.bwMarke;
+        }
         if (getroffen === id) treffer++;
       }
       return { id, treffer, gesamt, box: [Math.round(b.left / 4), Math.round(b.top / 4), Math.round(b.width / 4), Math.round(b.height / 4)] };
@@ -81,22 +87,26 @@ const seite = (teile, zoom, unterIds) => {
     const gross = {}; svg.querySelectorAll("[data-bw-teil]").forEach((g) => { const k = (g.querySelector(":scope > .bw-kunst") || g).getBBox(); gross[g.dataset.bwTeil] = k.width * k.height > bildFl * 0.08; });
     const dach = svg.querySelector(".bw-marken-dach"); if (!dach) return [];
     const kreise = [...dach.children];
-    const mitte = kreise.map((c) => { const b = c.getBoundingClientRect(), e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return e === c; });
-    dach.style.pointerEvents = "none"; [...dach.children].forEach((c) => (c.style.pointerEvents = "none"));
-    svg.querySelectorAll(".bw-lupenmarke").forEach((m) => (m.style.pointerEvents = "none"));   /* gemessen wird, was UNTER der Marke liegt */
-    const aus = kreise.map((c, i) => {
-      const id = c.dataset.bwMarke, b = c.getBoundingClientRect(), r = b.width / 2, cx = b.left + r, cy = b.top + r, unter = {};
+    /* wie der Klick in app.js (FASSUNG 878): Fangrechtecke und Marken-Dach zählen nicht, die oberste ZEICHNUNG entscheidet.
+       Liegt die eigene Marke oben, gewinnt sie (und deckt, was darunter liegt); liegt ein fremdes Ding darüber, gewinnt dieses. */
+    const stapelTeile = (x, y, eigen) => document.elementsFromPoint(x, y).filter((el) => !el.closest(".bw-marken-dach") && !(el.getAttribute && el.getAttribute("data-bw-treff")) && !(el.classList.contains("bw-lupen-tipp") && !(eigen && eigen.contains(el)))).map((el) => el.closest && el.closest("[data-bw-teil]")).filter(Boolean);
+    const aus = kreise.map((c) => {
+      const id = c.dataset.bwMarke, eigen = svg.querySelector('[data-bw-teil="' + id + '"]'), b = c.getBoundingClientRect(), r = b.width / 2, cx = b.left + r, cy = b.top + r, deckt = {}, verdeckt = {};
+      const oben = (st) => st.find(Boolean);
+      const m0 = oben(stapelTeile(cx, cy, eigen));
       let n = 0;
       for (let x = cx - r; x <= cx + r; x += 3) for (let y = cy - r; y <= cy + r; y += 3) {
         if ((x - cx) ** 2 + (y - cy) ** 2 > r * r) continue;
         n++;
-        const e = document.elementFromPoint(x, y), t = e && e.closest && e.closest("[data-bw-teil]");
-        /* nur die ZEICHNUNG zählt als zugedeckt; ein Fangrechteck daneben darf die Marke überlagern */
-        const hit = t && !(e.getAttribute && e.getAttribute("data-bw-treff")) ? t.dataset.bwTeil : "";
-        if (hit) unter[hit] = (unter[hit] || 0) + 1;
+        const st = stapelTeile(x, y, eigen), erst = st[0];
+        if (erst && erst !== eigen) { verdeckt[erst.dataset.bwTeil] = (verdeckt[erst.dataset.bwTeil] || 0) + 1; continue; }
+        const darunter = st.find((t) => t !== eigen);
+        if (darunter) deckt[darunter.dataset.bwTeil] = (deckt[darunter.dataset.bwTeil] || 0) + 1;
       }
-      const anteil = Object.entries(unter).map(([h, z]) => [h, Math.round(100 * z / n)]).filter(([, a]) => a >= 3).sort((a, b) => b[1] - a[1]);
-      return { id, mitte: mitte[i], fremd: anteil.filter(([h]) => h !== id && !gross[h]), gross: anteil.filter(([h]) => h !== id && gross[h]), eigen: (anteil.find(([h]) => h === id) || [, 0])[1] };
+      const pz = (o) => Object.entries(o).map(([h, z]) => [h, Math.round(100 * z / n)]).filter(([, a]) => a >= 3).sort((a, b) => b[1] - a[1]);
+      const d = pz(deckt);
+      const versteckt = Object.values(verdeckt).reduce((a, b) => a + b, 0);
+      return { id, mitte: !m0 || m0 === eigen, sieg: Math.round(100 * (n - versteckt) / n), fremd: d.filter(([h]) => !gross[h]), gross: d.filter(([h]) => gross[h]), verdeckt: pz(verdeckt) };
     });
     return aus;
   });
@@ -111,13 +121,17 @@ const seite = (teile, zoom, unterIds) => {
   let schlecht = 0;
   for (const m of markenBericht) {
     m.fremd = m.fremd.filter(([h]) => h !== m.in);   /* in der Lupe ist das vergrößerte Teil selbst der Hintergrund */
-    const fehl = !m.mitte || m.fremd.some(([, a]) => a >= 12);
+    /* Fehler: die Marke ist kaum erreichbar (gewinnt auf weniger als 40 % ihres Kreises) — oder auf einer
+       Übersichtskarte liegt sie über fremdem Land. Sonst Hinweis: in Stadtvierteln sitzt die Marke eines
+       Hauses oft sichtbar auf dem Nachbarhaus, der Tipp geht dorthin, wo man den Knopf sieht. */
+    const karte = !!(sz.nurForm || /karte$/.test(sz.id));
+    const fehl = m.sieg < 40 || (karte && m.fremd.some(([, a]) => a >= 12));
     if (fehl) schlecht++;
     const wo = (m.in ? m.in + " › " : "") + m.id;
-    console.log((fehl ? "  MARKE " : "  marke ") + wo.padEnd(24) + (m.mitte ? "" : " Mitte trifft die Marke nicht;") +
+    console.log((fehl ? "  MARKE " : "  marke ") + wo.padEnd(24) + (m.sieg < 40 ? " gewinnt nur auf " + m.sieg + " % ihres Kreises;" : "") + (m.mitte ? "" : " Mitte liegt unter einem anderen Ding;") +
       (m.fremd.length ? " deckt Bild von " + m.fremd.map(([h, a]) => h + " " + a + " %").join(", ") + ";" : "") +
       (m.gross.length ? " über " + m.gross.map(([h, a]) => h + " " + a + " %").join(", ") + ";" : "") +
-      (m.eigen >= 12 ? " eigenes Bild " + m.eigen + " % (Tipp dort führt direkt hinein)" : ""));
+      (m.verdeckt.length ? " verdeckt von " + m.verdeckt.map(([h, a]) => h + " " + a + " %").join(", ") : ""));
   }
   for (const m of [...oben, ...unter]) {
     const ok = m.treffer >= 12;

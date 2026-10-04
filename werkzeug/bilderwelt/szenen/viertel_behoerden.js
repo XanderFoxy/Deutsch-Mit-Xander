@@ -321,7 +321,7 @@ const autoSeite = (Q, seite, farbe, dach) => {
   { H: 14, wand: "#cfd8dc", d: "#9aa3a8", name: "Stadtbibliothek", fs: 4.2, band: "#34495e", symbol: SYM.buch, glas: true, inhalt: seitInhalt(["#c0392b", "#2980b9", "#f1c40f", "#27ae60", "#8e44ad"]),
     w: { id: "vb_bibliothek", de: "die Bibliothek", syl: "Bi-blio-THEK", it: "la biblioteca", itSyl: "bi-blio-TE-ca", en: "library", lupe: "bibliothek" } },
   { H: 19, wand: "#b7c6cf", d: "#8a979e", name: "Büro", band: "#455a64", symbol: SYM.koffer, glas: true,
-    w: { id: "vb_buero", de: "das Büro", syl: "Bü-RO", it: "l'ufficio", itSyl: "uf-FI-cio", en: "office", lupe: "buero" },
+    w: { id: "vb_buero", de: "das Büro", syl: "Bü-RO", it: "l'ufficio", itSyl: "uf-FI-cio", en: "office", lupe: "buero", marke: [18, -40] },   // FASSUNG 878 — Marke höher an die Fassade: bei 16/−16 lag sie unter dem Bewerbungsgespräch-Fenster
     fensterTeil: (Q, fl) => {
       /* DAS BEWERBUNGSGESPRÄCH — Besprechungsraum im 2. Stock: zwei Personen am Tisch */
       let g = fl(0.1, 7.7, 0.9, 9.8, "#fdf6e3") + fl(0.12, 7.75, 0.88, 7.95, "#7a5a3a");

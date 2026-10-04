@@ -64,11 +64,13 @@ function neueSzene(kopf) {
       if (t.oben) o.oben = true;
       if (t.tipp) o.tipp = t.tipp;
       if (t.lupe) o.lupe = t.lupe;     // FASSUNG 852: Verweis auf eine Detail-Szene (Lupe öffnet sie)
+      if (t.marke) o.marke = t.marke.map(r);   // FASSUNG 878: Lage der Lupenmarke vom Ursprung des Teils (sonst 16/−16)
       if (t.zoom) o.zoom = t.zoom;
       if (t.unter) o.unter = t.unter.map((u) => {
         const q = { id: u.id, de: u.de, syl: u.syl, it: u.it, itSyl: u.itSyl, en: u.en, x: r(u.x), y: r(u.y), kunst: u.kunst };
         if (u.tipp) q.tipp = u.tipp;
         if (u.lupe) q.lupe = u.lupe;
+        if (u.marke) q.marke = u.marke.map(r);
         /* Lupen-Dinge liegen in einem größeren gezeichneten Ding: ohne
            obere Fangfläche schluckte das große Ding jeden Tipp. */
         q.oben = true;

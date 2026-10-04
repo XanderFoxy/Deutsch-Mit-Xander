@@ -89077,13 +89077,17 @@
         ? Bildverwaltung.bild(eigen) : null;
       if (eigenesBild) klassen.push("bw-teil-eigen");
       const zeigtLupe = t.zoom && !bwZoom;
+      /* FASSUNG 878 — wohin die Lupenmarke kommt, kann die Szene sagen (marke: [x, y] vom Ursprung des Teils);
+         ohne Angabe bleibt sie oben rechts bei (16, −16). So lässt sich eine Marke vom Nachbarbild wegrücken,
+         ohne die Zeichnung zu verschieben (Reisebüro: die Japan-Marke saß halb auf dem Ägypten-Plakat). */
+      const markeVersatz = Array.isArray(t.marke) && t.marke.length === 2 ? `translate(${(+t.marke[0] - 16).toFixed(1)},${(+t.marke[1] + 16).toFixed(1)})` : "";
       return `<g class="${klassen.join(" ")}" data-bw-teil="${t.id}"${t.oben ? ' data-bw-oben="1"' : ""}
                  transform="translate(${t.x},${t.y})"
                  role="button" tabindex="0"
                  aria-label="${escapeHtml(bwWort(t))}">
                 <title>${escapeHtml(bwWort(t))}</title>
                 <g class="bw-kunst">${t.kunst || ""}</g>
-                ${zeigtLupe ? `<g class="bw-lupenmarke" role="button" tabindex="0"
+                ${zeigtLupe ? `<g class="bw-lupenmarke" role="button" tabindex="0"${markeVersatz ? ` transform="${markeVersatz}"` : ""}
                    data-bw-zoom="${t.id}"
                    aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
                    <title>🔍 Antippen: näher an ${escapeHtml(bwWort(t))}</title>
@@ -89093,7 +89097,7 @@
                    <circle cx="14.8" cy="-17.2" r="4.2" fill="none" stroke="#8a5f2a" stroke-width="1.6"/>
                    <line x1="17.8" y1="-14.2" x2="21.4" y2="-10.6" stroke="#8a5f2a" stroke-width="2.2" stroke-linecap="round"/>
                  </g>` : ""}
-                ${t.lupe && (!bwZoom || istUnter) ? `<g class="bw-lupenmarke" role="button" tabindex="0"${bwZoom && bwZoom.k ? ` transform="scale(${(1 / bwZoom.k).toFixed(3)})"` /* FASSUNG 877 — auch in der Lupe: Stadt in der Regionen-Lupe führt direkt in ihre Szene; fingerbreit trotz Vergrößerung */ : ""}
+                ${t.lupe && (!bwZoom || istUnter) ? `<g class="bw-lupenmarke" role="button" tabindex="0"${(bwZoom && bwZoom.k) || markeVersatz ? ` transform="${[bwZoom && bwZoom.k ? `scale(${(1 / bwZoom.k).toFixed(3)})` : "", markeVersatz].filter(Boolean).join(" ")}"` /* FASSUNG 877 — auch in der Lupe: Stadt in der Regionen-Lupe führt direkt in ihre Szene; fingerbreit trotz Vergrößerung */ : ""}
                    data-bw-lupe-sofort="${t.lupe}"
                    aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
                    <title>🔍 Antippen: ${escapeHtml(bwWort(t))} ganz nah</title>
@@ -89659,8 +89663,11 @@
       /* FASSUNG 877 — Sehr große Teile (mehr als 8 % des Bildes: Regionen,
          Meere, Kontinente) bekommen kein Ersatzrechteck: ihr Rechteck fing
          das Ausland („Straßburg → der Süden", „Groningen → die Nordsee").
-         Sie fangen nur mit ihrer echten Form. */
-      if (window.DMA_BILDERWELT_NEU) {
+         Sie fangen nur mit ihrer echten Form.
+         FASSUNG 878 — nur auf Übersichtskarten (Szene mit nurForm oder Name auf „karte"):
+         im Supermarkt ist das Regal genauso groß, aber von den Waren zugedeckt — ohne
+         sein Rechteck war es gar nicht mehr anzutippen. */
+      if (window.DMA_BILDERWELT_NEU && bwSzene && (bwSzene.nurForm || /karte$/.test(bwSzene.id))) {
         const vbx = (svg.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
         const bildFl = (vbx[2] || 0) * (vbx[3] || 0);
         if (bildFl > 0) for (let i = kaesten.length - 1; i >= 0; i--) if (kaesten[i].gross > bildFl * 0.08) kaesten.splice(i, 1);
@@ -89761,13 +89768,26 @@
             const mm = heimInv.multiply(ctm);
             const kreis = document.createElementNS(ns, "circle");
             kreis.setAttribute("cx", c.getAttribute("cx")); kreis.setAttribute("cy", c.getAttribute("cy"));
-            kreis.setAttribute("r", c.getAttribute("r"));
+            kreis.setAttribute("r", Math.min(11, +c.getAttribute("r") || 11));   // FASSUNG 878 — nur der sichtbare Knopf (r 8,5–10) gewinnt immer; der Ring bis 15 bleibt im Teil und teilt sich den Platz mit den Nachbarn. Mit 15 stahl die Marke im Reisebüro dem Nachbarplakat über die Hälfte seiner Tipps (Sonde pruefe-szene, Marken-Prüfung)
             kreis.setAttribute("fill", "transparent");
             kreis.setAttribute("transform", `matrix(${mm.a} ${mm.b} ${mm.c} ${mm.d} ${mm.e} ${mm.f})`);
             const ziel = c.closest("[data-bw-lupe-sofort]").dataset.bwLupeSofort;
             kreis.setAttribute("data-bw-lupe-sofort", ziel);
             kreis.style.cursor = "pointer";
-            kreis.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); Core.sound.click?.(); bwDetailOeffnen(ziel); });
+            /* FASSUNG 878 — der Kreis schlägt nur die UNSICHTBAREN Fangflächen. Liegt an der getippten Stelle die
+               Zeichnung eines anderen Dings sichtbar ÜBER der Marke, gilt der Tipp diesem Ding: was man sieht, wird getroffen. */
+            const eigen = c.closest("[data-bw-teil]");
+            kreis.addEventListener("click", (e) => {
+              e.stopPropagation(); e.preventDefault();
+              const stapel = document.elementsFromPoint ? document.elementsFromPoint(e.clientX, e.clientY) : [];
+              for (const el of stapel) {
+                if (el === kreis || el.closest(".bw-marken-dach") || (el.getAttribute && el.getAttribute("data-bw-treff")) || (el.classList && el.classList.contains("bw-lupen-tipp") && !eigen.contains(el))) continue;   // unsichtbar: Fangflächen und die durchsichtigen Ringe ANDERER Marken
+                const teil = el.closest && el.closest("[data-bw-teil]");
+                if (!teil || teil === eigen || eigen.contains(teil)) break;
+                teilAntippen(teil.dataset.bwTeil); return;
+              }
+              Core.sound.click?.(); bwDetailOeffnen(ziel);
+            });
             markenDach.appendChild(kreis);
           } catch (e) { /* ohne Kreis bleibt die Marke selbst */ }
         });
