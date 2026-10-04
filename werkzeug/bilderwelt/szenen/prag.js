@@ -605,10 +605,9 @@ const SAND_L = S.lg("sandl", [[0, "#b9ab94"], [0.2, "#a59782"], [1, "#8c7e6b"]],
 const SAND_S = S.lg("sands", [[0, "#857b6f"], [0.2, "#5e564f"], [1, "#4a443f"]], 0, 102, 0, 260, ' gradientUnits="userSpaceOnUse"');
 /* Schatten einer Statue (Sockel 2,6 m, Figur bis 5,6 m) auf der Fahrbahn: breites Band schräg nach vorn rechts */
 const statuenSchatten = (s) => {
-  /* Runde 4: Sockelblock (2,3 m lang, Innenseite bündig mit der Brüstung, 2,6 m hoch) und Figurenkeil (bis 5,6 m);
-     beide in einer Gruppe, damit die Überdeckung nicht doppelt dunkel wird */
+  /* Runde 5: am Fuß so breit wie der Sockel (2,6 m), die Spitze (Figur) etwa 1,5 m breit; Deckkraft 0,35 */
   const sk = (ds, h) => P(s + ds + h * SDS, -QI + h * SDQ), fg = (ds, h) => P(s + ds + h * SDS, -BR - 0.2 + h * SDQ);
-  return `<g opacity=".42">${poly([sk(-1.15, 0), sk(1.15, 0), sk(1.15, 2.6), sk(-1.15, 2.6)], "#2b2a3a")}${poly([fg(-0.7, 2.6), fg(0.7, 2.6), fg(0.55, 4.5), fg(0.3, 5.6), fg(-0.3, 5.6), fg(-0.55, 4.5)], "#2b2a3a")}</g>`;
+  return `<g opacity=".35">${poly([sk(-1.3, 0), sk(1.3, 0), sk(1.3, 2.6), sk(-1.3, 2.6)], "#2b2a3a")}${poly([fg(-1.3, 2.6), fg(1.3, 2.6), fg(1.0, 4.5), fg(0.75, 5.6), fg(-0.75, 5.6), fg(-1.0, 4.5)], "#2b2a3a")}</g>`;
 };
 const laternenSchatten = (s) => strecke(P(s + BRH * SDS, -QI + 0.4), P(s + 4.3 * SDS, -BR + 0.3 + 4.3 * SDQ));
 function bruecke(S0, S1) {
@@ -743,8 +742,10 @@ function kniend(cx, H, dir, opt = {}) {
   g += `<path d="M${p(-0.2, -0.05)} Q${p(-0.04, -0.15)} ${p(0.2, -0.11)} M${p(-0.06, -0.55)} Q${p(-0.11, -0.4)} ${p(-0.06, -0.26)} M${p(0.02, -0.5)} Q${p(0, -0.38)} ${p(0.04, -0.3)}" stroke="${STD}" stroke-width="${q2(H * 0.022)}" fill="none" opacity=".7"/>`;
   g += `<path d="M${p(dir > 0 ? -0.27 : 0.25, -0.02)} Q${p(dir > 0 ? -0.29 : 0.3, -0.13)} ${p(dir > 0 ? -0.17 : 0.19, -0.24)}" stroke="${STW}" stroke-width="${q2(H * 0.014)}" fill="none" opacity=".6"/>`;
   const [kx, ky] = pp(0.05, opt.hoch ? -0.74 : -0.72);
+  /* Runde 5: zwei Arme mit Händen (betend erhoben), größerer Kopf mit Gesicht */
+  if (opt.hoch) g += arm(...pp(-0.02, -0.6), ...pp(0.19, -0.76), H * 0.07);
   g += arm(...pp(0.03, -0.58), ...pp(0.16, opt.hoch ? -0.72 : -0.68), H * 0.075);
-  return g + kopf(kx, ky, H * 0.075, opt.kopf, dir * (opt.hoch ? 1.2 : 0.8));
+  return g + kopf(kx, ky, H * 0.09, opt.kopf, dir * (opt.hoch ? 1.2 : 0.8));
 }
 /* Engelskopf mit zwei Flügeln in der Wolke (barockes Motiv) */
 const engel = (cx, cy, s) => [-1, 1].map((d) => `<path d="M${pt(cx + d * s * 0.6, cy + s * 0.2)} q${q2(d * s * 1.4)} ${q2(-s * 0.2)} ${q2(d * s * 2.3)} ${q2(-s * 1.6)} q${q2(-d * s * 0.5)} ${q2(s * 1.4)} ${q2(-d * s * 2.2)} ${q2(s * 1.9)}Z" fill="#59534a"/><path d="M${pt(cx + d * s * 0.7, cy - s * 0.1)} q${q2(d * s * 1.2)} ${q2(-s * 0.3)} ${q2(d * s * 2)} ${q2(-s * 1.3)}" stroke="${STW}" stroke-width="${q2(s * 0.15)}" fill="none" opacity=".6"/>`).join("") + kopf(cx, cy, s, "", 0.4);
@@ -965,7 +966,7 @@ const schatten = (s, q, h, b, a = 0.3) => poly([P(s - 0.12, q - b), P(s + 0.12, 
       `<path d="M-.01 -.04 v.04 M.03 -.04 v.04" stroke="#c46a5a" stroke-width=".015"/></g>`;
   };
   k += taube(12.4, 1.6, 1) + taube(13.1, 2.4, -1) + taube(12.0, 2.3, 1);
-  const tx = X(12.5, 2.1), ty = Y(12.5, 2.1);
+  const tx = X(13.1, 2.4), ty = Y(13.1, 2.4);   /* Messfläche auf der mittleren Taube */
   S.teil({ oben: true, id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 0, y: 0, kunst: k + flaeche(tx - 9, ty - 7, 18, 9, 0.6) });
 }
 
@@ -1062,7 +1063,7 @@ let PUP = null;
   const s0 = 9.6, q0 = 3.0, sc = F / Dd(s0, q0), x = r(X(s0, q0)), y = r(Y(s0, q0));
   BRUECKE_SCHATTEN.push(schatten(s0, q0, 1.66, 0.24));
   const pose = { kipp: 0, lende: 1, brust: 0, nacken: 2, kopf: 0, huefteL: { vor: 2, seit: 4 }, knieL: 2, fussL: 0, huefteR: { vor: -4, seit: 4 }, knieR: 4, fussR: 0,
-    schulterR: { vor: 20, seit: 10, dreh: 20 }, ellbogenR: 120, unterarmR: 40, handR: 0, fingerR: 0.7, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.4 };
+    schulterR: { vor: 32, seit: 14, dreh: 20 }, ellbogenR: 96, unterarmR: 40, handR: 0, fingerR: 0.7, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.4 };
   const m = B.mensch({ id: "prg_tour", geschlecht: "w", blick: 34, neigung: 18, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true, pose,
     kleidung: { kleid: { stueck: "sommerkleid", farbe: "#e9a03a" }, schuhe: { stueck: "turnschuh" } } }, r(1.66 * sc));
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: `<g filter="url(#${S.id("kante")})">${kompaktFein(m, m.svg, 0.8)}</g>`,
@@ -1074,7 +1075,9 @@ let PUP = null;
   k += `<path d="M-1.05 -.8 L1.05 -1.4 M-1.12 -1.9 L1.12 -2.5 M-1.2 -3 L1.2 -3.6 M-1.26 -4.1 L1.2 -4.6" stroke="#7a3e12" stroke-width=".28"/>`;
   let zu = "";
   for (let i = 0; i < 14; i++) zu += `<circle cx="${r((rnd() - 0.5) * 2)}" cy="${r(-rnd() * 4.4)}" r=".14" fill="#f6e2b8"/>`;
-  k += zu + `<ellipse cx="0" cy="-4.78" rx="1.3" ry=".42" fill="#c98a42"/><ellipse cx="0" cy="-4.74" rx=".86" ry=".26" fill="#5a2e10"/><path d="M-1.25 -4.7 Q0 -4.3 1.25 -4.7" stroke="#e8b56a" stroke-width=".18" fill="none"/></g>`;
+  k += zu + `<ellipse cx="0" cy="-4.78" rx="1.3" ry=".42" fill="#c98a42"/><ellipse cx="0" cy="-4.74" rx=".86" ry=".26" fill="#5a2e10"/><path d="M-1.25 -4.7 Q0 -4.3 1.25 -4.7" stroke="#e8b56a" stroke-width=".18" fill="none"/>` +
+    /* Runde 5: die Hand umfasst die Rolle sichtbar (Finger vorn, Daumen oben) */
+    `<path d="M-1.28 -2.75 Q-.3 -3.0 .55 -2.65 L.6 -1.8 Q-.3 -1.55 -1.2 -1.85Z" fill="#e6c09e"/><path d="M-.85 -2.8 v.95 M-.42 -2.86 v1 M.02 -2.82 v.98" stroke="#b98a6a" stroke-width=".1"/><ellipse cx="-1.05" cy="-2.95" rx=".45" ry=".25" fill="#efcdae"/></g>`;
   S.teil({ oben: true, id: "trdelnik", de: "der Trdelník", syl: "TR-del-ník", it: "il trdelník", itSyl: "TR-del-nik", en: "chimney cake", x: r(hx), y: r(hy + 2.2 * ts), kunst: k + flaeche(-5, -6.5 * ts - 2, 10, 6.5 * ts + 3, 0.6),
     tipp: "Der Trdelník ist ein süßes Gebäck vom Spieß, mit Zimt und Zucker. Viele Touristen essen ihn in Prag." });
 }

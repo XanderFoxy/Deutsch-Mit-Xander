@@ -1015,7 +1015,7 @@ const PK = (lo, la) => P(lo, la);
 /* Mitte der Lupenmarke je Stadt (Bildkoordinaten): neben dem Bild, nicht auf Namen oder Nachbarn */
 const MARKE = {
   hamburg: [179.3, 50], luebeck: [208.5, 37], bremen: [157.6, 62], hannover: [197, 86],
-  berlin: [270, 74.5], potsdam: [236, 98], magdeburg: [214, 93], leipzig: [247, 119], weimar: [209, 130], dresden: [272.5, 127],
+  berlin: [249.5, 80.5], potsdam: [236, 98], magdeburg: [214, 93], leipzig: [247, 119], weimar: [209, 130], dresden: [272.5, 127],
   duesseldorf: [137, 120], koeln: [148.5, 133], aachen: [102.3, 137.5], trier: [113.5, 169], frankfurt: [175, 155],
   heidelberg: [176.6, 180], stuttgart: [165, 197], freiburg: [136.5, 222], rothenburg: [194.5, 171], nuernberg: [212.8, 169.5],
   regensburg: [245, 186.5], muenchen: [232.5, 218], neuschwanstein: [198, 226],

@@ -148,7 +148,7 @@ const volumen = (name, licht, schat, dx = 0.35, a1 = 0.75, a2 = 0.35) => {
 const VOL_FIGUR = volumen("volfigur", "#ffd892", "#1d2a3a", 0.55, 0.85, 0.3);
 const VOL_STEIN = volumen("volstein", "#fff4dc", "#2e2a24", 0.3, 0.8, 0.3);
 const VOL_KLEIN = volumen("volklein", "#fff3d6", "#203040", 0.18, 0.75, 0.3);
-const VOL_BERG = volumen("volberg", "#f6eab8", "#10241c", 0.9, 0.55, 0.25);
+const VOL_BERG = volumen("volberg", "#f6eab8", "#10241c", 0.9, 0, 0.25);   /* kein umlaufender Lichtsaum: die Goldkante liegt nur oben am Grat */
 /* Waldkronen als unregelmäßige Kachel: jede Krone mit Lichtseite rechts oben und Schatten links unten */
 const kronen = (w, h, n, seed, rmin, rmax) => {
   const z = zufall(seed); let a = "", b = "";
@@ -271,7 +271,6 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   k += `<path d="${putD}" fill="${WALD05}"/>`;
   k += `<g opacity=".8">${wand([[340, 86], [337, 98], [334, 112], [333, 126]], 20, "#8e9893", "#5b6862", 31)}</g>`;
   k += wand([[362, 90], [364, 102], [366, 114]], 9, "#8d9792", "#56625c", 32) + wand([[318, 104], [316, 114]], 7, "#87918c", "#55615b", 33);
-  k += `<path d="M300 110 Q330 84 356 80.4 Q380 82 402 94" stroke="#fbeec8" stroke-width=".7" fill="none" opacity=".7" transform="translate(0 .7)"/>`;
   k += `<path d="${putD}" fill="${S.lg("putudunst", [[0, "#dfe9ef", 0], [0.55, "#dfe9ef", 0.1], [1, "#dfe9ef", 0.6]])}"/>`;
   /* naher Osthang (unsere Seite) fällt von der Stadt nach rechts unten zum Fluss: kühler, dunstiger als der Vordergrund */
   const OST = [[312, 262], [314, 210], [322, 186], [334, 172], [350, 170], [372, 178], [392, 186], [402, 190], [402, 246], [330, 250]];
@@ -368,7 +367,7 @@ const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181,
   /* goldene Lichtkante am rechten Grat (Morgensonne) */
   /* Lichtsaum nur am oberen rechten Grat, nach unten in die Fläche ausgeblendet */
   S.def(`<linearGradient id="${S.id("gratgold")}" gradientUnits="userSpaceOnUse" x1="0" y1="30" x2="0" y2="66"><stop offset="0" stop-color="#f6d98f"/><stop offset=".55" stop-color="#f3d58e" stop-opacity=".5"/><stop offset="1" stop-color="#f3d58e" stop-opacity="0"/></linearGradient>`);
-  k += `<path d="${glatt(HUAYNA.slice(13, 20), false)}" stroke="url(#${S.id("gratgold")})" stroke-width=".7" fill="none" opacity=".8" transform="translate(-.5 .6)"/>`;
+  k += `<path d="${glatt(HUAYNA.slice(13, 19), false)}" stroke="url(#${S.id("gratgold")})" stroke-width=".7" fill="none" opacity=".8" transform="translate(-.5 .6)"/>`;
   /* Morgendunst über dem Fuß */
   k += `<path d="${d}" fill="${S.lg("huaynadunst", [[0, "#e3ecf0", 0], [0.6, "#e3ecf0", 0.06], [1, "#e3ecf0", 0.5]])}"/>`;
   /* Huchuy Picchu: deckend, dunkler und blaugrüner als der Stadtrasen, mit eigenem Wald und Felsfleck */
@@ -554,11 +553,7 @@ const STADT = {};
   /* --- OSTSEKTOR: fünf Terrassenstufen; auf jeder Stufe Häusergruppen (Kanchas) um Höfe, Gassen und Treppen --- */
   let ost = "";
   const stufenY = [156, 164, 173, 183, 194];
-  stufenY.forEach((y, i) => {
-    const x0 = 240 + (y - 150) * 0.33, x1 = 284 + (y - 150) * 0.62, m = 330 / dAusY(y);
-    /* Stützmauer-Stirn der Stufe: dunklere Kante */
-    ost += `<path d="M${r(x0 - 2)} ${r(y + 1.4)} L${r(x1 + 2)} ${r(y + 1.4)} L${r(x1 + 2)} ${r(y + 1.4 + 1.6 * m)} L${r(x0 - 2)} ${r(y + 1.4 + 1.6 * m)} Z" fill="${S.lg("ostmauer", [[0, "#a59d8e"], [1, "#6f685e"]])}"/><path d="M${r(x0 - 2)} ${r(y + 1.4)} H${r(x1 + 2)}" stroke="#ddd5c2" stroke-width=".3"/>`;
-  });
+
   /* zwei Treppen und eine Gasse als helle Diagonalen durch die Stufen */
   for (const [xa, ya, xb, yb, w] of [[262, 152, 268, 200, 1.6], [286, 158, 296, 200, 1.4]]) {
     ost += `<path d="M${xa} ${ya} L${xa + w} ${ya} L${xb + w * 1.4} ${yb} L${xb} ${yb} Z" fill="#cfc7b4"/>`;
@@ -567,8 +562,10 @@ const STADT = {};
   }
   /* drei Viertel (Kanchas): je zwei versetzte Hauszeilen mit einer gemeinsamen Umfassungsmauer, dazwischen freie
      Grasflächen; die dritte Gruppe liegt rechts eine Stufe tiefer */
-  for (const [i, xa, xb] of [[0, 243, 270], [2, 250, 284], [4, 277, 310]]) {
+  for (const [i, xa, xb] of [[0, 243, 270], [2, 255, 289], [4, 277, 310]]) {
     const y = stufenY[i], m = 330 / dAusY(y), yf = y + 4.4, hw = 1.2 * m;
+    /* Stützmauer-Stirn der Stufe nur innerhalb der Kancha: sie endet an den Seitenmauern, kein Zaun ins Leere */
+    ost += `<path d="M${r(xa - 1)} ${r(y + 1.4)} L${r(xb + 1)} ${r(y + 1.4)} L${r(xb + 1)} ${r(y + 1.4 + 1.6 * m)} L${r(xa - 1)} ${r(y + 1.4 + 1.6 * m)} Z" fill="${S.lg("ostmauer", [[0, "#a59d8e"], [1, "#6f685e"]])}"/><path d="M${r(xa - 1)} ${r(y + 1.4)} H${r(xb + 1)}" stroke="#ddd5c2" stroke-width=".3"/>`;
     ost += zeile(xa, xb, y - 0.6, 1, 100 + i, 0.06, 0, 0.18);
     const ha = hinterPunkt([xa - 1, yf], 9, dAusY(yf)), hb = hinterPunkt([xb + 1, yf], 9, dAusY(yf));
     ost += `<path d="${Pr([[xb + 1, yf], hb, [hb[0], hb[1] - hw], [xb + 1, yf - hw]])}" fill="${GRANIT_L}"/><path d="${Pr([[xa - 1, yf], ha, [ha[0], ha[1] - hw], [xa - 1, yf - hw]])}" fill="${GRANIT_S}"/><path d="${Pr([[xa - 1, yf], [xb + 1, yf], [xb + 1, yf - hw], [xa - 1, yf - hw]])}" fill="${GRANIT_F}"/><path d="M${r(ha[0])} ${r(ha[1] - hw)}L${r(xa - 1)} ${r(yf - hw)}H${r(xb + 1)}L${r(hb[0])} ${r(hb[1] - hw)}" stroke="#ece4d2" stroke-width=".25" fill="none"/>`;
@@ -592,7 +589,7 @@ const STADT = {};
     }
     west += `<path d="${gw}" fill="#6f7166"/><path d="${gl}" fill="#a3a092"/>`;
     /* drei Terrassen, verschieden tief und lang, sie laufen nicht herum: rechts brechen sie an Felsen ab */
-    const terr = [[140.6, 177.6, 155.4, 0.4, 1.5, 3.8, 2.4], [145.6, 166.4, 148.6, 0.9, 1.2, 2, 0.5], [148.4, 157.4, 142.2, 0.5, 1, 2.4, 1.2]];
+    const terr = [[140.6, 177.6, 155.4, 0.4, 1.5, 3.8, 2.4], [148.2, 166.4, 148.6, 0.9, 1.2, 2, 0.5], [148.4, 157, 142.2, 0.5, 1, 2.4, 1.2]];
     let tritt = "", mauer = "", krone = "", fels = "", fl = "";
     for (const [xa, xb, y, dy, hh, tief, bow] of terr) {
       const yb = y + dy, c1 = [xa + (xb - xa) * 0.25, y + bow], c2 = [xa + (xb - xa) * 0.7, yb + bow * 0.8];
