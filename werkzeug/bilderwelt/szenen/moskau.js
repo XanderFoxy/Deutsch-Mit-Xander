@@ -967,7 +967,7 @@ const BODEN_SCHATTEN = [];   /* werden in den Roten Platz gezeichnet (Bodenfläc
     rosen += `<circle cx="${r(kx + dx)}" cy="${r(ky + dy)}" r="${rr}" fill="#c4232c"/><circle cx="${r(kx + dx - rr * 0.2)}" cy="${r(ky + dy - rr * 0.2)}" r="${r(rr * 0.55)}" fill="#e8454a"/><path d="M${r(kx + dx - rr * 0.4)} ${r(ky + dy)} q${r(rr * 0.4)} ${r(-rr * 0.5)} ${r(rr * 0.7)} 0" stroke="#8a1018" stroke-width=".5" fill="none"/>`;
   }
   tuch += `<g clip-path="url(#${S.id("tuchclip")})"><path d="${GESICHT}" fill="none"/>${rosen}</g><path d="${GESICHT}" fill="none" stroke="#1f1b1e" stroke-width="1.2"/>`;
-  tuch += `<path d="M${r(kx - 0.5)} ${r(ky + 15.5)} q2 2.2 4 0 q-2 -1.4 -4 0Z" fill="#141114"/><path d="M${r(kx + 0.2)} ${r(ky + 15.4)} q1.3 -.7 2.6 0" stroke="#3a3236" stroke-width=".5" fill="none"/><path d="M${r(kx - 16)} ${r(ky + 27)} L${r(kx + 3)} ${r(ky + 20)} L${r(kx + 18)} ${r(ky + 26)}" stroke="#c4232c" stroke-width="1.1" stroke-dasharray="1 .8" fill="none"/>`;
+  tuch += `<path d="M${r(kx + 0.5)} ${r(ky + 19.5)} l1.8 -1.2 l1.8 1.2 l-1.8 1.2Z" fill="#141114" stroke="#2f2a2d" stroke-width=".4"/><path d="M${r(kx - 16)} ${r(ky + 27)} L${r(kx + 3)} ${r(ky + 20)} L${r(kx + 18)} ${r(ky + 26)}" stroke="#c4232c" stroke-width="1.1" stroke-dasharray="1 .8" fill="none"/>`;
   /* das Podest hinter der Theke sieht man nicht; die Figur steht 35 cm höher */
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x, y,
     kunst: `<g clip-path="url(#${clip})"><g transform="scale(${m.k.toFixed(4)})" filter="url(#${S.id("kante")})">${kompaktFein(m, abschneiden(m.svg, theke / m.k + 4)).replace(/^<g transform="scale\([^)]*\)">/, "<g>")}${tuch}</g></g>`,
