@@ -101,6 +101,42 @@ const strecke = (a, b) => {   /* Linie a→b auf das Bild beschnitten */
 };
 const poly = (pts, fill, extra = "") => { const q = klipp(pts); return q.length > 2 ? `<path d="M${q.join(" L")}Z" fill="${fill}"${extra}/>` : ""; };
 
+/* Pfade klein schreiben (Ladezeit): absolute Koordinaten auf Q runden, dann relativ (m, l, c …)
+   ausgeben. Figuren: Q = 1 cm; alle übrigen Pfade am Ende mit Q = 0,001 (ohne sichtbaren Unterschied). */
+function relativ(d, Q) {
+  const tok = d.match(/[a-zA-Z]|-?\d*\.?\d+(?:e-?\d+)?/g); if (!tok) return d;
+  const fmt = (v) => { v = Math.round(v / Q) * Q; v = Math.round(v * 1000) / 1000; return String(v === 0 ? 0 : v).replace(/^0\./, ".").replace(/^-0\./, "-."); };
+  const join = (nums) => nums.map((s, i) => (i && s[0] !== "-" ? " " : "") + s).join("");
+  let out = "", i = 0, cx = 0, cy = 0, sx = 0, sy = 0, cmd = "";
+  const R = (v) => Math.round(v / Q) * Q;
+  while (i < tok.length) {
+    if (/[a-zA-Z]/.test(tok[i])) cmd = tok[i++];
+    const up = cmd.toUpperCase(), rel = cmd !== up;
+    const n = { M: 2, L: 2, T: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, A: 7, Z: 0 }[up];
+    if (up === "Z") { out += "z"; cx = sx; cy = sy; continue; }
+    const a = tok.slice(i, i + n).map(Number); i += n;
+    let nums = [];
+    if (up === "H") { const x = R(rel ? cx + a[0] : a[0]); nums = [fmt(x - cx)]; cx = x; }
+    else if (up === "V") { const y = R(rel ? cy + a[0] : a[0]); nums = [fmt(y - cy)]; cy = y; }
+    else if (up === "A") { const x = R(rel ? cx + a[5] : a[5]), y = R(rel ? cy + a[6] : a[6]); nums = [fmt(a[0]), fmt(a[1]), String(Math.round(a[2])), String(a[3]), String(a[4]), fmt(x - cx), fmt(y - cy)]; cx = x; cy = y; }
+    else { const pts = []; for (let k = 0; k < n; k += 2) pts.push([R(rel ? cx + a[k] : a[k]), R(rel ? cy + a[k + 1] : a[k + 1])]);
+      nums = pts.flatMap(([x, y]) => [fmt(x - cx), fmt(y - cy)]); [cx, cy] = pts[pts.length - 1]; }
+    if (up === "M") { sx = cx; sy = cy; }
+    out += (up === "M" ? "m" : cmd.toLowerCase()) + join(nums);
+    if (up === "M") cmd = rel ? "l" : "L";
+  }
+  return out;
+}
+const kompakt2 = (svg, Q = 1) => svg.replace(/ d="([^"]+)"/g, (a, p) => ` d="${relativ(p, Q)}"`)
+  .replace(/ (x|y|x1|y1|x2|y2|cx|cy|fx|fy)="(-?\d*\.?\d+)"/g, (a, k, n) => { const v = Math.round(+n / Q) * Q; return ` ${k}="${v === 0 ? 0 : Math.round(v * 100) / 100}"`; });
+
+/* vor dem Schreiben: alle Pfade der Szene relativ schreiben */
+function pfadeKlein(S) {
+  const k = (s) => s.replace(/ d="([^"]+)"/g, (a, p) => ` d="${relativ(p, 0.001)}"`);
+  for (const t of S.teile) { t.kunst = k(t.kunst); if (t.unter) for (const u of t.unter) u.kunst = k(u.kunst); }
+  S.kulisse = S.kulisse.map(k); S.vorne = S.vorne.map(k); S.defs = S.defs.map(k);
+}
+
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-5%" y="-30%" width="110%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".6"/></filter>`);
 S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".8 .3"/></filter>`);
@@ -647,7 +683,7 @@ let MUS = null;
   const m = B.mensch({ id: "prg_mus", geschlecht: "m", blick: 30, neigung: 16, frisur: "kurz", haarfarbe: "grau", haut: "hell", laecheln: true, pose,
     kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, jacke: { stueck: "weste", farbe: "#2c2a30" }, unterteil: { stueck: "anzughose" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" }, kopf: { stueck: "hut", farbe: "#2a2a2e" } } }, r(1.76 * sc));
   MUS = { x, y, m, sc };
-  S.teil({ id: "musiker", de: "der Musiker", syl: "MU-si-ker", it: "il musicista", itSyl: "mu-si-CI-sta", en: "musician", x, y, kunst: kompakt(m.svg, 2),
+  S.teil({ id: "musiker", de: "der Musiker", syl: "MU-si-ker", it: "il musicista", itSyl: "mu-si-CI-sta", en: "musician", x, y, kunst: kompakt2(m.svg, 1),
     tipp: "Auf der Karlsbrücke spielen jeden Tag Straßenmusiker." });
 }
 {
@@ -684,7 +720,7 @@ let PUP = null;
   const m = B.mensch({ id: "prg_pup", geschlecht: "m", blick: -28, neigung: 16, frisur: "locken", haarfarbe: "dunkelbraun", haut: "hell", pose,
     kleidung: { oberteil: { stueck: "pullover", farbe: "#2f5f95" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "schal", farbe: "#d9a43a" } } }, r(1.78 * sc));
   PUP = { x, y, m, sc };
-  S.teil({ id: "puppenspieler", de: "der Puppenspieler", syl: "PUP-pen-spie-ler", it: "il burattinaio", itSyl: "bu-rat-ti-NA-io", en: "puppeteer", x, y, kunst: kompakt(m.svg, 2),
+  S.teil({ id: "puppenspieler", de: "der Puppenspieler", syl: "PUP-pen-spie-ler", it: "il burattinaio", itSyl: "bu-rat-ti-NA-io", en: "puppeteer", x, y, kunst: kompakt2(m.svg, 1),
     tipp: "Marionetten bewegt man an Fäden. Prag hat ein eigenes Marionettentheater." });
 }
 {
@@ -719,7 +755,7 @@ let PUP = null;
     schulterR: { vor: 20, seit: 10, dreh: 20 }, ellbogenR: 120, unterarmR: 40, handR: 0, fingerR: 0.7, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.4 };
   const m = B.mensch({ id: "prg_tour", geschlecht: "w", blick: 34, neigung: 18, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true, pose,
     kleidung: { kleid: { stueck: "sommerkleid", farbe: "#e9a03a" }, schuhe: { stueck: "sandale" }, zubehoer: { stueck: "tasche", farbe: "#7d5838" } } }, r(1.66 * sc));
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: kompakt(m.svg, 2),
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: kompakt2(m.svg, 1),
     tipp: "Nicht weit von der Brücke steht am Altstädter Ring die berühmte Astronomische Uhr." });
   /* Trdelník: Hohlgebäck (Rolle), goldbraun mit Zimtzucker, oben Eis */
   const hx = x + m.z.handR.x * m.k, hy = y + m.z.handR.y * m.k;
@@ -732,5 +768,6 @@ let PUP = null;
     tipp: "Der Trdelník ist ein süßes Gebäck. Der Teig wird um einen Spieß gewickelt und über dem Feuer gebacken." });
 }
 
+pfadeKlein(S);
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/prag.js"));
 console.log(aus);

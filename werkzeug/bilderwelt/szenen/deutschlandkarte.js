@@ -300,64 +300,85 @@ const ring = (namen) => pkt(namen.map((n) => DE[n]).join(" ")).filter((q, i, a) 
 
 /* =====================================================================
    KULISSE — Papier, Nachbarländer, Deutschland mit Relief, Grenzen
+   Wiederkehrende Formen stehen einmal in <defs> und werden mit <use>
+   gezeichnet (die Datei bleibt klein, die Seite lädt schnell).
    ===================================================================== */
+const USE = (id, extra = "") => `<use href="#${S.id(id)}" ${extra}/>`;
+const tr = (x, y, s, sx) => `translate(${+x.toFixed(2)} ${+y.toFixed(2)}) scale(${+(sx == null ? s : sx).toFixed(3)} ${+s.toFixed(3)})`;
+/* Zeichen: Hügel (Licht von links), Tanne, Laubbaum */
+S.def(`<g id="${S.id("huegel")}"><path d="M-2 0 C-1.5 -1.5 -.5 -1.9 0 -1.9 C.6 -1.9 1.5 -1.4 2 0 Z" fill="#d9c08b"/><path d="M0 -1.9 C.6 -1.9 1.5 -1.4 2 0 L.3 0 C.5 -.7 .35 -1.4 0 -1.9 Z" fill="#b2925f"/><path d="M-1.6 -.6 C-1.2 -1.3 -.6 -1.6 -.2 -1.7" fill="none" stroke="#f3e5bd" stroke-width=".22"/></g>`);
+S.def(`<g id="${S.id("tanne")}"><path d="M0 -2.7 L1 -.45 H-1 Z" fill="#567f48"/><path d="M0 -2.7 L1 -.45 H.15 Z" fill="#3a5f35"/><rect x="-.13" y="-.5" width=".26" height=".5" fill="#6b4a2a"/></g>`);
+S.def(`<g id="${S.id("laub")}"><circle cx="0" cy="-1.35" r="1" fill="#82a95f"/><path d="M0 -2.35 A1 1 0 0 1 0 -.35 Z" fill="#5f8a47"/><rect x="-.13" y="-.45" width=".26" height=".45" fill="#6b4a2a"/></g>`);
 {
   let g = `<rect x="-2" y="-2" width="${BR + 4}" height="${HO + 4}" fill="${NACHBAR}"/>`;
   /* Nachbarländer: leichte Geländetönung (Ardennen, Vogesen, Jura, Sudeten, Karpaten) */
-  const NAEBEL = [[5.6, 50.1, 0.9, 0.35, -20, 0.5], [7.1, 48.3, 0.25, 0.75, -10, 0.5], [6.6, 47.15, 0.9, 0.2, -35, 0.45], [16.0, 50.6, 1.0, 0.25, -25, 0.45],
-    [19.8, 49.25, 1.2, 0.3, 0, 0.5], [13.8, 48.95, 1.0, 0.25, -25, 0.35], [15.6, 49.5, 1.0, 0.35, 0, 0.25]];
+  const NAEBEL = [[5.6, 50.1, 0.9, 0.35, -20, 0.45], [7.1, 48.3, 0.25, 0.75, -10, 0.45], [6.6, 47.15, 0.9, 0.2, -35, 0.4], [16.0, 50.6, 1.0, 0.25, -25, 0.4],
+    [19.8, 49.25, 1.2, 0.3, 0, 0.45], [13.8, 48.95, 1.0, 0.25, -25, 0.3], [15.6, 49.5, 1.0, 0.35, 0, 0.2]];
   const BERG_N = S.rg("bergn", [[0, "#cdb98d", 0.85], [0.6, "#d8c9a0", 0.4], [1, "#e8dec7", 0]]);
   for (const [lo, la, rx, ry, w, a] of NAEBEL) { const [x, y] = P(lo, la); g += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rx * 20)}" ry="${r(ry * 31)}" transform="rotate(${w} ${r(x)} ${r(y)})" fill="${BERG_N}" opacity="${a}"/>`; }
-  /* Grenzen der Nachbarn: gepunktet */
+  /* Grenzen der Nachbarn: gestrichelt */
   g += `<path d="${NACHBARGRENZEN.map((t) => weg(t, false)).join("")}" fill="none" stroke="#b39f7c" stroke-width=".45" stroke-dasharray="1.4 .9" stroke-linecap="round"/>`;
   S.hinten(g);
 }
 /* Deutschland: Fläche, goldener Grenzsaum innen, Relief */
 const DE_D = weg(ring(DE_RING));
+S.def(`<path id="${S.id("de")}" d="${DE_D}"/>`);
+S.def(`<clipPath id="${S.id("declip")}">${USE("de")}</clipPath>`);
+/* Gebirge: [Länge, Breite, rx°, ry°, Winkel, Fleck (berg/wald), Stärke, Zeichen, Anzahl, Größe] */
+const GEBIRGE = [
+  [10.62, 51.76, 0.42, 0.11, -14, "berg", 1, "huegel+tanne", 16, 0.95],        // Harz
+  [8.15, 48.3, 0.22, 0.62, 4, "wald", 1, "tanne", 34, 0.95],                   // Schwarzwald
+  [9.45, 48.45, 0.95, 0.13, -22, "berg", 0.7, "huegel", 14, 0.85],             // Schwäbische Alb
+  [10.75, 50.72, 0.6, 0.12, -32, "wald", 0.9, "tanne", 18, 0.85],              // Thüringer Wald
+  [13.1, 50.6, 0.95, 0.1, -12, "berg", 0.8, "huegel+tanne", 18, 0.85],         // Erzgebirge
+  [13.1, 49.05, 0.75, 0.16, -27, "wald", 0.9, "tanne", 22, 0.85],              // Bayerischer Wald
+  [6.75, 50.3, 0.45, 0.22, 0, "berg", 0.6, "huegel+laub", 10, 0.8],            // Eifel
+  [7.15, 49.85, 0.5, 0.13, -20, "berg", 0.55, "huegel", 6, 0.75],              // Hunsrück
+  [8.25, 50.22, 0.4, 0.09, -15, "berg", 0.55, "huegel", 5, 0.75],              // Taunus
+  [8.25, 51.2, 0.5, 0.17, 0, "wald", 0.65, "laub+tanne", 12, 0.8],             // Sauerland
+  [9.98, 50.45, 0.18, 0.13, 0, "berg", 0.55, "huegel", 3, 0.75],               // Rhön
+  [9.4, 50.0, 0.25, 0.14, 0, "wald", 0.5, "laub", 6, 0.75],                    // Spessart
+  [8.95, 49.65, 0.2, 0.15, 0, "wald", 0.5, "laub", 4, 0.75],                   // Odenwald
+  [7.85, 49.3, 0.2, 0.2, 0, "wald", 0.55, "laub+tanne", 6, 0.75],              // Pfälzerwald
+  [11.85, 50.05, 0.15, 0.1, 0, "berg", 0.55, "tanne", 3, 0.75],                // Fichtelgebirge
+  [12.35, 49.6, 0.15, 0.35, 10, "wald", 0.5, "tanne", 6, 0.75],                // Oberpfälzer Wald
+  [8.4, 52.05, 0.55, 0.05, -35, "wald", 0.55, "laub", 5, 0.7],                 // Teutoburger Wald
+  [9.5, 51.95, 0.25, 0.15, 0, "berg", 0.4, "huegel", 3, 0.7],                  // Weserbergland
+  [13.95, 50.9, 0.25, 0.08, 0, "berg", 0.5, "huegel", 3, 0.75],                // Elbsandstein
+  [7.1, 48.3, 0.2, 0.6, -10, "-", 0, "tanne", 12, 0.7, 0.45],                  // Vogesen (blass)
+  [5.6, 50.1, 0.8, 0.3, -20, "-", 0, "huegel+laub", 10, 0.7, 0.45],            // Ardennen
+  [16.0, 50.6, 0.9, 0.18, -25, "-", 0, "huegel+tanne", 10, 0.75, 0.45],        // Sudeten
+  [13.8, 48.95, 0.8, 0.18, -25, "-", 0, "tanne", 8, 0.7, 0.45],                // Böhmerwald
+  [19.6, 49.3, 1.0, 0.22, 0, "-", 0, "huegel+tanne", 10, 0.8, 0.45],           // Karpaten
+  [6.6, 47.2, 0.8, 0.12, -35, "-", 0, "huegel", 6, 0.75, 0.45],                // Jura
+];
 {
-  S.def(`<clipPath id="${S.id("declip")}"><path d="${DE_D}"/></clipPath>`);
-  let g = `<path d="${DE_D}" fill="#b89a62" opacity=".35" transform="translate(.5 .7)" filter="${fl("weich1")}"/>`;
-  g += `<path d="${DE_D}" fill="${LAND}"/>`;
-  /* Relief der Mittelgebirge — weiche Flecken, darüber kleine Bergstriche */
-  const BERG = S.rg("berg", [[0, "#c7a96b", 0.85], [0.55, "#d5bd82", 0.45], [1, "#dfe3b2", 0]]);
-  const WALD = S.rg("wald", [[0, "#8fae6a", 0.8], [0.6, "#a9c084", 0.4], [1, "#dfe3b2", 0]]);
-  const GEB = [
-    // [lon, lat, rx°, ry°, Winkel, Farbe, Stärke]
-    [10.62, 51.76, 0.42, 0.11, -14, "berg", 1], [8.15, 48.3, 0.22, 0.62, 4, "wald", 1], [9.45, 48.45, 0.95, 0.13, -22, "berg", 0.8],
-    [10.75, 50.72, 0.6, 0.12, -32, "wald", 0.9], [13.1, 50.6, 0.95, 0.1, -12, "berg", 0.85], [13.1, 49.05, 0.75, 0.16, -27, "wald", 0.9],
-    [6.75, 50.3, 0.45, 0.22, 0, "berg", 0.65], [7.15, 49.85, 0.5, 0.13, -20, "berg", 0.6], [8.25, 50.22, 0.4, 0.09, -15, "berg", 0.6],
-    [8.25, 51.2, 0.5, 0.17, 0, "wald", 0.7], [9.98, 50.45, 0.18, 0.13, 0, "berg", 0.6], [9.25, 50.53, 0.18, 0.12, 0, "berg", 0.5],
-    [9.4, 50.0, 0.25, 0.14, 0, "wald", 0.55], [8.95, 49.65, 0.2, 0.15, 0, "wald", 0.55], [7.85, 49.3, 0.2, 0.2, 0, "wald", 0.6],
-    [7.9, 50.6, 0.3, 0.12, 0, "berg", 0.5], [11.85, 50.05, 0.15, 0.1, 0, "berg", 0.6], [12.35, 49.6, 0.15, 0.35, 10, "wald", 0.55],
-    [8.4, 52.05, 0.55, 0.05, -35, "wald", 0.6], [9.5, 51.95, 0.25, 0.15, 0, "berg", 0.45], [11.1, 49.5, 0.4, 0.1, -60, "berg", 0.35],
-    [13.95, 50.9, 0.25, 0.08, 0, "berg", 0.55], [14.6, 50.85, 0.2, 0.06, 0, "berg", 0.5],
-  ];
-  for (const [lo, la, rx, ry, w, f, a] of GEB) {
-    const [x, y] = P(lo, la);
-    g += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rx * 20.3)}" ry="${r(ry * 31.1)}" transform="rotate(${w} ${r(x)} ${r(y)})" fill="${f === "berg" ? BERG : WALD}" opacity="${a}"/>`;
-  }
-  /* Bergstriche (kleine Bögen mit Licht von links oben) auf Harz, Schwarzwald, Thüringer Wald, Erzgebirge, Bayerischem Wald */
-  const STRICH = [[10.62, 51.76, 0.36, 0.08, -14, 7], [8.15, 48.3, 0.16, 0.5, 4, 9], [10.75, 50.72, 0.5, 0.08, -32, 6], [13.1, 50.6, 0.8, 0.06, -12, 7],
-    [13.1, 49.05, 0.6, 0.11, -27, 7], [9.45, 48.45, 0.8, 0.07, -22, 6], [6.75, 50.3, 0.32, 0.14, 0, 4], [8.25, 51.2, 0.36, 0.11, 0, 4]];
-  let s = "";
-  for (const [lo, la, rx, ry, w, n] of STRICH) {
-    const [cx, cy] = P(lo, la), a = w * Math.PI / 180;
-    for (let i = 0; i < n * 2; i++) {
-      const u = (rnd() * 2 - 1), v = (rnd() * 2 - 1) * 0.7;
+  let g = `<use href="#${S.id("de")}" fill="#b89a62" opacity=".35" transform="translate(.5 .7)" filter="${fl("weich1")}"/>` + USE("de", `fill="${LAND}"`);
+  const BERG = S.rg("berg", [[0, "#cbb07a", 0.75], [0.55, "#d8c28d", 0.35], [1, "#dfe3b2", 0]]);
+  const WALD = S.rg("wald", [[0, "#9db878", 0.7], [0.6, "#b2c98e", 0.3], [1, "#dfe3b2", 0]]);
+  let zeichen = [];
+  for (const [lo, la, rx, ry, w, f, a, art, n, gr, blass] of GEBIRGE) {
+    const [x, y] = P(lo, la), wr = w * Math.PI / 180;
+    if (f !== "-") g += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(rx * 20.3)}" ry="${r(ry * 31.1)}" transform="rotate(${w} ${r(x)} ${r(y)})" fill="${f === "berg" ? BERG : WALD}" opacity="${a}"/>`;
+    const arten = art.split("+");
+    for (let i = 0; i < n; i++) {
+      let u, v; do { u = rnd() * 2 - 1; v = rnd() * 2 - 1; } while (u * u + v * v > 0.85);
       const dx = u * rx * 20.3, dy = v * ry * 31.1;
-      const x = cx + dx * Math.cos(a) - dy * Math.sin(a), y = cy + dx * Math.sin(a) + dy * Math.cos(a), b = 1.3 + rnd() * 0.9;
-      s += `M${r(x - b)} ${r(y + 0.5)}Q${r(x - b * 0.3)} ${r(y - b * 0.55)} ${r(x)} ${r(y - b * 0.6)}`;
+      zeichen.push({ x: x + dx * Math.cos(wr) - dy * Math.sin(wr), y: y + dx * Math.sin(wr) + dy * Math.cos(wr) + 1, art: arten[i % arten.length], s: gr * (0.8 + rnd() * 0.4), o: blass || 1 });
     }
   }
-  g += `<path d="${s}" fill="none" stroke="#8b6c3c" stroke-width=".32" stroke-linecap="round" opacity=".55"/>`;
+  zeichen.sort((a, b) => a.y - b.y);
+  /* blasse Zeichen der Nachbarn liegen unter Deutschland; deshalb zwei Durchgänge */
+  S.hinten(zeichen.filter((z) => z.o < 1).map((z) => `<use href="#${S.id(z.art)}" transform="${tr(z.x, z.y, z.s, rnd() < 0.5 ? -z.s : z.s)}" opacity=".45"/>`).join(""));
+  g += zeichen.filter((z) => z.o === 1).map((z) => `<use href="#${S.id(z.art)}" transform="${tr(z.x, z.y, z.s, rnd() < 0.5 && z.art !== "huegel" ? -z.s : z.s)}"/>`).join("");
   /* goldener Saum innen an der Grenze */
-  g += `<path d="${DE_D}" fill="none" stroke="#e1b552" stroke-width="2.6" opacity=".35" clip-path="url(#${S.id("declip")})"/>`;
+  g += USE("de", `fill="none" stroke="#e1b552" stroke-width="2.6" opacity=".35" clip-path="url(#${S.id("declip")})"`);
   S.hinten(g);
 }
 /* Seen, Haff und Bodden auf dem Land */
 {
   let g = "";
-  for (const [k, t] of Object.entries(GEWAESSER)) g += `<path d="${weg(t)}" fill="${SEEFARBE}" stroke="#6ea9c4" stroke-width=".25"/>`;
+  for (const t of Object.values(GEWAESSER)) g += `<path d="${weg(t)}" fill="${SEEFARBE}" stroke="#6ea9c4" stroke-width=".25"/>`;
   /* Peenestrom als schmaler Wasserlauf, Hindenburgdamm nach Sylt */
   g += `<path d="${weg("13.78,54.13 13.77,54.05 13.82,53.97 13.84,53.88", false)}" fill="none" stroke="${SEEFARBE}" stroke-width=".7"/>`;
   g += `<path d="${weg("8.48,54.9 8.56,54.895 8.63,54.89", false)}" fill="none" stroke="#b9a37a" stroke-width=".35"/>`;
@@ -366,25 +387,27 @@ const DE_D = weg(ring(DE_RING));
 /* Grenzen der Bundesländer */
 {
   const d = Object.entries(LAENDER).map(([k, t]) => weg(t, ["hh", "berlin", "bremen", "bremerhaven"].includes(k))).join("");
-  S.hinten(`<path d="${d}" fill="none" stroke="#fffaf0" stroke-width=".9" opacity=".55"/><path d="${d}" fill="none" stroke="${GRENZE}" stroke-width=".38" stroke-dasharray="1.6 .7 .3 .7" stroke-linecap="round" opacity=".9"/>`);
+  S.def(`<path id="${S.id("laender")}" d="${d}"/>`);
+  S.hinten(USE("laender", `fill="none" stroke="#fffaf0" stroke-width=".9" opacity=".55"`) + USE("laender", `fill="none" stroke="${GRENZE}" stroke-width=".38" stroke-dasharray="1.6 .7 .3 .7" stroke-linecap="round" opacity=".9"`));
   /* Stadtstaaten leicht getönt */
-  S.hinten(["hh", "berlin", "bremen", "bremerhaven"].map((k) => `<path d="${weg(LAENDER[k])}" fill="#d9b98a" opacity=".35"/>`).join(""));
+  S.hinten(`<path d="${["hh", "berlin", "bremen", "bremerhaven"].map((k) => weg(LAENDER[k])).join("")}" fill="#d9b98a" opacity=".35"/>`);
 }
 /* Nebenflüsse (blass) und die Flüsse, die keine eigenen Teile sind */
 {
-  let g = "";
-  for (const t of Object.values(NEBENFLUESSE)) g += `<path d="${weg(t, false)}" fill="none" stroke="${FLUSS}" stroke-width=".42" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>`;
+  let g = `<path d="${Object.values(NEBENFLUESSE).map((t) => weg(t, false)).join("")}" fill="none" stroke="${FLUSS}" stroke-width=".42" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>`;
   for (const k of ["donau", "main", "weser", "mosel", "neckar"]) {
     const breit = k === "donau" ? 0.95 : k === "main" || k === "weser" ? 0.72 : 0.62;
-    g += `<path d="${weg(FLUESSE[k], false)}" fill="none" stroke="#e9f4f8" stroke-width="${r(breit + 0.7)}" stroke-linecap="round" stroke-linejoin="round" opacity=".6"/>`;
-    g += `<path d="${weg(FLUESSE[k], false)}" fill="none" stroke="${FLUSS}" stroke-width="${breit}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    S.def(`<path id="${S.id("f_" + k)}" d="${weg(FLUESSE[k], false)}"/>`);
+    g += USE("f_" + k, `fill="none" stroke="#e9f4f8" stroke-width="${r(breit + 0.7)}" stroke-linecap="round" stroke-linejoin="round" opacity=".6"`);
+    g += USE("f_" + k, `fill="none" stroke="${FLUSS}" stroke-width="${breit}" stroke-linecap="round" stroke-linejoin="round"`);
   }
   S.hinten(g);
 }
 /* Deutschlands Außengrenze kräftig */
 {
   const land = ["dk", "pl1+pl2+pl3+cz1+cz2+at+by_see", "ch+fr1+fr2+fr3+lu1+lu2+be1+be2+nl1+nl2"].map((z) => weg(pkt(z.split("+").map((n) => DE[n]).join(" ")), false)).join("");
-  S.hinten(`<path d="${land}" fill="none" stroke="#fff6e0" stroke-width="1.5" opacity=".7"/><path d="${land}" fill="none" stroke="#7d5f35" stroke-width=".62" stroke-linejoin="round"/>`);
+  S.def(`<path id="${S.id("grenze")}" d="${land}"/>`);
+  S.hinten(USE("grenze", `fill="none" stroke="#fff6e0" stroke-width="1.5" opacity=".7"`) + USE("grenze", `fill="none" stroke="#7d5f35" stroke-width=".62" stroke-linejoin="round"`));
 }
 
 
@@ -396,12 +419,13 @@ const halo = (x, y, t, gr, farbe, hf = "#fbf6e8", extra = "", hb = 0.9) => `<tex
 S.def(`<pattern id="${S.id("wellen")}" width="9" height="5" patternUnits="userSpaceOnUse"><path d="M.5 3 q1.1 -1.1 2.2 0 t2.2 0" fill="none" stroke="#fff" stroke-width=".28" opacity=".55"/></pattern>`);
 function meer(id, aussen, inseln, label, tipp, worte) {
   const d = weg(aussen) + Object.values(inseln).map((t) => weg(t)).join("");
-  S.def(`<clipPath id="${S.id(id + "clip")}"><path d="${d}" clip-rule="evenodd"/></clipPath>`);
-  let k = `<path d="${d}" fill-rule="evenodd" fill="${MEER}"/>`;
+  S.def(`<path id="${S.id(id)}" d="${d}" fill-rule="evenodd" clip-rule="evenodd"/>`);
+  S.def(`<clipPath id="${S.id(id + "clip")}">${USE(id)}</clipPath>`);
+  let k = USE(id, `fill="${MEER}"`);
   /* Wasserlinien an der Küste (wie auf alten Karten), nur im Meer */
-  k += `<g clip-path="url(#${S.id(id + "clip")})" fill="none" stroke-linejoin="round"><path d="${d}" stroke="#c8e6ee" stroke-width="7" opacity=".45"/><path d="${d}" stroke="#d9eff4" stroke-width="3.6" opacity=".6"/><path d="${d}" stroke="#7fb6cb" stroke-width=".9" opacity=".35"/><path d="${d}" stroke="#eef9fb" stroke-width="1.6" opacity=".7"/></g>`;
-  k += `<path d="${d}" fill-rule="evenodd" fill="url(#${S.id("wellen")})" opacity=".55"/>`;
-  k += `<path d="${d}" fill="none" stroke="#5b8fa8" stroke-width=".38" stroke-linejoin="round"/>`;
+  k += `<g clip-path="url(#${S.id(id + "clip")})" fill="none" stroke-linejoin="round">${USE(id, `stroke="#c8e6ee" stroke-width="5.4" opacity=".45"`)}${USE(id, `stroke="#d9eff4" stroke-width="2.8" opacity=".55"`)}${USE(id, `stroke="#eef9fb" stroke-width="1.3" opacity=".7"`)}</g>`;
+  k += USE(id, `fill="url(#${S.id("wellen")})" opacity=".55"`);
+  k += USE(id, `fill="none" stroke="#5b8fa8" stroke-width=".38" stroke-linejoin="round"`);
   k += label;
   S.teil(Object.assign({ x: 0, y: 0, kunst: k, tipp }, worte));
 }
@@ -732,31 +756,29 @@ const ICON = {
    ===================================================================== */
 /* [Länge, Breite, Bildversatz dx/dy, Beschriftung (dx, dy, Ausrichtung), Knopf (dx, dy) vom Ortspunkt] */
 const STADT = {
-  hamburg: { ll: [9.99, 53.55], lab: [0, 5.2, "m"], knopf: [-15, -9] },
-  luebeck: { ll: [10.69, 53.87], lab: [6.4, -1.2, "s"], knopf: [8, -15] },
-  bremen: { ll: [8.81, 53.08], lab: [0, 5.2, "m"], knopf: [-14, -8] },
-  hannover: { ll: [9.74, 52.37], lab: [0, 5.2, "m"], knopf: [12, 9] },
-  berlin: { ll: [13.40, 52.52], bild: [2.5, 0], lab: [9.5, -1.2, "s"], knopf: [13, -15] },
-  potsdam: { ll: [13.06, 52.40], bild: [-11, 5.5], lab: [-11, 10.6, "m"], knopf: [4, 15] },
-  magdeburg: { ll: [11.63, 52.13], lab: [0, 5.2, "m"], knopf: [-12, -13] },
-  leipzig: { ll: [12.37, 51.34], lab: [0, 5.2, "m"], knopf: [12, 8] },
-  dresden: { ll: [13.74, 51.05], lab: [0, 5.2, "m"], knopf: [13, -9] },
-  weimar: { ll: [11.33, 50.98], lab: [0, 5.2, "m"], knopf: [-13, -8] },
-  frankfurt: { ll: [8.68, 50.11], lab: [-7, -2.4, "e"], sub: "am Main", knopf: [13, -12] },
-  trier: { ll: [6.64, 49.75], lab: [0, 5.2, "m"], knopf: [-14, 0] },
-  heidelberg: { ll: [8.69, 49.40], lab: [-7.4, -1, "e"], knopf: [-12, 10] },
-  stuttgart: { ll: [9.18, 48.78], lab: [0, 5.2, "m"], knopf: [-12, 12] },
-  freiburg: { ll: [7.85, 47.99], lab: [0, 5.2, "m"], sub: "im Breisgau", knopf: [-13, -11] },
-  /* in der Lupe Nordrhein-Westfalen */
+  hamburg: { ll: [9.99, 53.55], lab: [0, 5.2, "m"] },
+  luebeck: { ll: [10.69, 53.87], lab: [6.4, -1.2, "s"] },
+  bremen: { ll: [8.81, 53.08], lab: [0, 5.2, "m"], gross: 1.2 },
+  hannover: { ll: [9.74, 52.37], lab: [0, 5.2, "m"] },
+  berlin: { ll: [13.40, 52.52], bild: [2.5, 0], lab: [9.5, -1.2, "s"] },
+  potsdam: { ll: [13.06, 52.40], bild: [-3, 9.6], lab: [-3, 14.8, "m"] },
+  magdeburg: { ll: [11.63, 52.13], lab: [0, 5.2, "m"] },
+  leipzig: { ll: [12.37, 51.34], lab: [0, 5.2, "m"] },
+  dresden: { ll: [13.74, 51.05], lab: [0, 5.2, "m"] },
+  weimar: { ll: [11.33, 50.98], lab: [0, 5.2, "m"], gross: 1.1 },
+  frankfurt: { ll: [8.68, 50.11], lab: [-7, -2.4, "e"], sub: "am Main" },
+  trier: { ll: [6.64, 49.75], lab: [0, 5.2, "m"] },
+  heidelberg: { ll: [8.69, 49.40], lab: [-7.4, -1, "e"] },
+  stuttgart: { ll: [9.18, 48.78], lab: [0, 5.2, "m"] },
+  freiburg: { ll: [7.85, 47.99], lab: [0, 5.2, "m"], sub: "im Breisgau" },
   duesseldorf: { ll: [6.78, 51.23], bild: [-5, 0], lab: [-8, -3, "e"] },
   koeln: { ll: [6.96, 50.94], lab: [6, -0.5, "s"] },
   aachen: { ll: [6.08, 50.78], lab: [0, 5.2, "m"] },
-  /* in der Lupe Bayern */
   rothenburg: { ll: [10.18, 49.38], lab: [-3.5, 5.2, "m"], sub: "ob der Tauber" },
   nuernberg: { ll: [11.08, 49.45], lab: [0.5, 5.2, "m"] },
   regensburg: { ll: [12.10, 49.02], lab: [6.5, -0.6, "s"] },
   muenchen: { ll: [11.58, 48.14], lab: [0, 5.2, "m"] },
-  neuschwanstein: { ll: [10.75, 47.56], bild: [-4, 0], lab: [1.8, 7.3, "e"], name: "Neuschwanstein" },
+  neuschwanstein: { ll: [10.75, 47.56], bild: [-4, 0], lab: [5.6, -1.2, "s"] },
 };
 const NAME = { hamburg: "Hamburg", luebeck: "Lübeck", bremen: "Bremen", hannover: "Hannover", berlin: "Berlin", potsdam: "Potsdam", magdeburg: "Magdeburg",
   leipzig: "Leipzig", dresden: "Dresden", weimar: "Weimar", frankfurt: "Frankfurt", trier: "Trier", heidelberg: "Heidelberg", stuttgart: "Stuttgart",
@@ -766,11 +788,11 @@ const NAME = { hamburg: "Hamburg", luebeck: "Lübeck", bremen: "Bremen", hannove
 function stadtBild(id) {
   const c = STADT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];
   const bx = dx0 + bdx, by = dy0 + bdy - (c.bild ? 0 : 0.9);
-  const [W, H, f] = ICON[id];
+  const g0 = c.gross || 1, [W0, H0, f] = ICON[id], W = W0 * g0, H = H0 * g0;
   let k = `<ellipse cx="${r(bx)}" cy="${r(by - H * 0.45)}" rx="${r(W * 0.72)}" ry="${r(H * 0.62)}" fill="${GLOW}"/>`;
   k += `<ellipse cx="${r(bx + 0.6)}" cy="${r(by + 0.1)}" rx="${r(W * 0.55)}" ry="1.1" fill="${SCHATTEN}"/>`;
-  if (c.bild) k += `<path d="M${r(dx0)} ${r(dy0)} L${r(bx)} ${r(by + 0.2)}" stroke="#7a5a32" stroke-width=".35" stroke-dasharray=".8 .5"/>`;
-  k += `<g transform="translate(${+bx.toFixed(3)} ${+by.toFixed(3)})">${f()}</g>`;
+  if (c.bild) { const ey = bdy > 2 ? by - H - 0.3 : by + 0.2; k += `<path d="M${r(dx0)} ${r(dy0)} L${r(bx)} ${r(ey)}" stroke="#7a5a32" stroke-width=".35" stroke-dasharray=".8 .5"/>`; }
+  k += `<g transform="translate(${+bx.toFixed(3)} ${+by.toFixed(3)})${g0 !== 1 ? ` scale(${g0})` : ""}">${f()}</g>`;
   k += `<circle cx="${r(dx0)}" cy="${r(dy0)}" r="1.15" fill="#c0392b" stroke="#fff8ea" stroke-width=".5"/>`;
   const [lx, ly, al] = c.lab, anchor = { m: "middle", s: "start", e: "end" }[al];
   const name = c.name || NAME[id];
@@ -782,7 +804,173 @@ function stadtBild(id) {
   return { k, box, punkt: [dx0, dy0], bild: [bx, by, W, H] };
 }
 
-/*@@TEILE@@*/
+
+/* =====================================================================
+   KULISSE — Beschriftungen der Nachbarn, Flüsse, Gebirge; Kompass, Maßstab
+   ===================================================================== */
+{
+  let g = "";
+  const land = (lo, la, t, gr = 4.2, sp = 1.2) => { const [x, y] = P(lo, la); return text(x, y, t, gr, "#a38d6a", `letter-spacing="${sp}" opacity=".9"`); };
+  g += land(5.75, 52.55, "NIEDERLANDE") + land(4.55, 50.62, "BELGIEN") + land(5.95, 49.83, "LUX.", 3, 0.6) + land(4.6, 48.45, "FRANKREICH")
+    + land(7.75, 47.3, "SCHWEIZ") + land(14.6, 47.42, "ÖSTERREICH") + land(15.6, 49.62, "TSCHECHIEN") + land(17.3, 52.6, "POLEN", 4.6, 2) + land(19.3, 48.72, "SLOWAKEI", 3.2, 0.8);
+  const haupt = (lo, la, t, dx = 0, dy = 4, al = "middle") => { const [x, y] = P(lo, la); return `<circle cx="${r(x)}" cy="${r(y)}" r=".85" fill="#8c7a5c" stroke="#fbf5e6" stroke-width=".35"/>` + `<text x="${r(x + dx)}" y="${r(y + dy)}" font-size="3.1" font-style="italic" text-anchor="${al}" fill="#7c6a4e" font-family="Georgia,'Times New Roman',serif">${t}</text>`; };
+  g += haupt(4.9, 52.37, "Amsterdam") + haupt(4.35, 50.85, "Brüssel") + haupt(6.13, 49.61, "Luxemburg", -1.5, 4.2, "end") + haupt(2.35, 48.86, "Paris") + haupt(14.42, 50.08, "Prag") + haupt(16.37, 48.21, "Wien", 0, -2.2);
+  const fl = (lo, la, t, w = 0, gr = 3.3) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" font-style="italic" text-anchor="middle" fill="#2f6f93" stroke="#eef6f4" stroke-width=".7" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" transform="rotate(${w} ${r(x)} ${r(y)})" letter-spacing=".3">${t}</text>`; };
+  g += fl(14.85, 48.12, "Donau", -4, 3.6) + fl(10.5, 50.13, "Main", 8) + fl(9.02, 52.78, "Weser", 62) + fl(7.02, 49.98, "Mosel", 18) + fl(8.93, 48.36, "Neckar", -48, 3) + fl(14.85, 52.6, "Oder", 80);
+  const geb = (lo, la, t, w = 0, gr = 3.1) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" font-style="italic" text-anchor="middle" fill="#6e5330" stroke="#f2ead2" stroke-width=".7" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" letter-spacing=".7" transform="rotate(${w} ${r(x)} ${r(y)})">${t}</text>`; };
+  g += geb(10.62, 51.67, "Harz") + geb(8.02, 48.35, "Schwarzwald", -82) + geb(13.15, 50.52, "Erzgebirge", -12) + geb(6.62, 50.15, "Eifel");
+  const insel = (lo, la, t, al = "middle") => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="2.7" font-style="italic" text-anchor="${al}" fill="#4d6b52" stroke="#f2f0de" stroke-width=".6" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">${t}</text>`; };
+  g += insel(13.45, 54.47, "Rügen") + insel(8.1, 54.93, "Sylt", "end") + insel(7.82, 54.13, "Helgoland", "end");
+  { const [x, y] = P(9.28, 47.86); g += `<text x="${r(x)}" y="${r(y)}" font-size="2.9" font-style="italic" text-anchor="middle" fill="#2f6f93" stroke="#eef3ec" stroke-width=".6" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">Bodensee</text>`; }
+  S.hinten(g);
+}
+/* Windrose und Maßstab in der Nordsee */
+{
+  const cx = 60, cy = 40;
+  let g = `<circle cx="${cx}" cy="${cy}" r="11.5" fill="#f7f0dc" opacity=".55"/><circle cx="${cx}" cy="${cy}" r="11.5" fill="none" stroke="#8a6d43" stroke-width=".35"/><circle cx="${cx}" cy="${cy}" r="10.3" fill="none" stroke="#8a6d43" stroke-width=".2"/>`;
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4, lang = i % 2 ? 6.2 : 9.6, b = i % 2 ? 1.1 : 1.6;
+    const sx = Math.sin(a), sy = -Math.cos(a), qx = Math.cos(a), qy = Math.sin(a);
+    const tip = [cx + sx * lang, cy + sy * lang], l = [cx + qx * b, cy + qy * b], rr = [cx - qx * b, cy - qy * b];
+    g += `<path d="M${r(cx)} ${r(cy)} L${r(l[0])} ${r(l[1])} L${r(tip[0])} ${r(tip[1])} Z" fill="${i % 2 ? "#c9a96a" : "#8a6d43"}"/><path d="M${r(cx)} ${r(cy)} L${r(rr[0])} ${r(rr[1])} L${r(tip[0])} ${r(tip[1])} Z" fill="${i % 2 ? "#efe0b8" : "#d8bd85"}"/>`;
+  }
+  g += `<circle cx="${cx}" cy="${cy}" r="1" fill="#b23a2a"/>` + text(cx, cy - 12.6, "N", 3.6, "#6b4f2a", `font-weight="bold"`);
+  /* Maßstab: 100 km = 28 Einheiten */
+  const x0 = 46, y0 = 64;
+  g += `<rect x="${x0}" y="${y0}" width="14" height="1.3" fill="#6b4f2a"/><rect x="${x0 + 14}" y="${y0}" width="14" height="1.3" fill="#fbf5e6" stroke="#6b4f2a" stroke-width=".3"/>`;
+  g += text(x0, y0 + 4.4, "0", 2.6, "#5a4026") + text(x0 + 14, y0 + 4.4, "50", 2.6, "#5a4026") + text(x0 + 28, y0 + 4.4, "100 km", 2.6, "#5a4026");
+  S.hinten(g);
+}
+
+/* =====================================================================
+   KULISSE — die Alpen (Bergzeichen: Licht von links, Schnee auf den Gipfeln)
+   ===================================================================== */
+const inPoly = (pt, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const a = poly[i], b = poly[j]; if ((a.y > pt.y) !== (b.y > pt.y) && pt.x < (b.x - a.x) * (pt.y - a.y) / (b.y - a.y) + a.x) c = !c; } return c; };
+S.def(`<g id="${S.id("berg1")}"><path d="M-3.2 0 L-1.5 -2.7 L-.7 -2.3 L0 -3.8 L.9 -2.6 L1.5 -2.9 L3.2 0 Z" fill="#d9d3c3"/><path d="M0 -3.8 L.9 -2.6 L1.5 -2.9 L3.2 0 L.3 0 L.7 -1.6 Z" fill="#8c8576"/><path d="M-.95 -2.5 L0 -3.8 L.9 -2.6 L.5 -2.35 L.1 -2.85 L-.4 -2.25 Z" fill="#fff"/><path d="M-3.2 0 H3.2" stroke="#6f7b55" stroke-width=".4" opacity=".45"/></g>`);
+S.def(`<g id="${S.id("berg2")}"><path d="M-3.4 0 L-1.9 -2.9 L-1.2 -2.4 L-.4 -3.1 L.6 -2.2 L1.5 -3.3 L3.4 0 Z" fill="#d3ccbb"/><path d="M1.5 -3.3 L3.4 0 L1 0 L1.2 -1.7 Z M-.4 -3.1 L.6 -2.2 L.2 0 L-.6 0 L-.1 -1.6 Z" fill="#8a8373"/><path d="M1 -2.7 L1.5 -3.3 L2.05 -2.4 L1.6 -2.55 Z M-2.35 -2.2 L-1.9 -2.9 L-1.5 -2.55 Z" fill="#fff"/><path d="M-3.4 0 H3.4" stroke="#6f7b55" stroke-width=".4" opacity=".45"/></g>`);
+S.def(`<g id="${S.id("berg3")}"><path d="M-3 0 C-2.2 -1.6 -1 -2.3 0 -2.3 C1.1 -2.3 2.2 -1.5 3 0 Z" fill="#b9c39a"/><path d="M0 -2.3 C1.1 -2.3 2.2 -1.5 3 0 H.4 C.7 -.8 .5 -1.7 0 -2.3 Z" fill="#8c9a6c"/><path d="M-1.6 -.4 L-1.2 -1.3 L-.8 -.4 Z M-.4 -.5 L0 -1.5 L.4 -.5 Z M.9 -.4 L1.3 -1.2 L1.7 -.4 Z" fill="#4f7a45"/></g>`);
+{
+  const NORD = pkt("8.3,47.05 8.7,47.12 9.2,47.25 9.6,47.38 9.9,47.45 10.3,47.52 10.8,47.56 11.2,47.56 11.6,47.66 12.2,47.71 12.6,47.74 13.0,47.76 13.5,47.88 14.0,47.88 14.6,47.9 15.2,47.98 15.8,48.05 16.15,48.12");
+  const RAND = pkt("8.3,46.8").concat(NORD, pkt("16.15,47.8 16.05,47.45 16.2,47.0 16.2,46.8"));
+  const poly = RAND.concat(pkt("@330,266 @140,266"));
+  const nordY = (x) => { for (let i = 1; i < NORD.length; i++) if (x <= NORD[i].x) { const a = NORD[i - 1], b = NORD[i], t = (x - a.x) / (b.x - a.x); return a.y + t * (b.y - a.y); } return NORD[NORD.length - 1].y; };
+  let k = `<path d="${weg(poly)}" fill="${S.lg("alpenband", [[0, "#cfd6b8", 0.75], [0.35, "#c6c9b3", 0.8], [1, "#b7b8a6", 0.85]])}"/>`;
+  const rz = zufall(77), berge = [];
+  for (let y = 236; y < 270; y += 2.7) for (let x = 146; x < 326; x += 6.2) {
+    const p = { x: x + (rz() - 0.5) * 4.2, y: y + (rz() - 0.5) * 1.6 };
+    const t = p.y - nordY(p.x);
+    if (t < 2.2 || !inPoly({ x: p.x, y: p.y - 1 }, poly)) continue;
+    p.t = t; berge.push(p);
+  }
+  berge.sort((a, b) => a.y - b.y);
+  for (const p of berge) {
+    const art = p.t < 5 ? "berg3" : rz() < 0.55 ? "berg1" : "berg2", s = Math.min(1.55, 0.7 + p.t / 16) * (0.85 + rz() * 0.3);
+    k += `<use href="#${S.id(art)}" transform="${tr(p.x, p.y, s, rz() < 0.35 ? -s : s)}"/>`;
+  }
+  /* Zugspitze */
+  const [zx, zy] = P(10.98, 47.42);
+  k += `<path d="M${r(zx - 1.4)} ${r(zy + 0.6)} L${r(zx)} ${r(zy - 1.8)} L${r(zx + 1.4)} ${r(zy + 0.6)} Z" fill="#b23a2a" stroke="#fff" stroke-width=".3"/>`;
+  k += `<text x="${r(zx - 1.8)}" y="${r(zy + 3)}" text-anchor="end" font-size="2.8" font-weight="bold" fill="#3a2716" stroke="#fbf5e6" stroke-width=".8" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">Zugspitze <tspan font-weight="normal" font-style="italic">2962 m</tspan></text>`;
+  { const [x, y] = P(13.7, 47.18); k += halo(x, y, "A L P E N", 5, "#4d3e2a", "#eef0e4", `font-weight="bold" letter-spacing=".9"`, 1); }
+  S.hinten(k);
+}
+/* =====================================================================
+   TEILE — 3: Rhein und Elbe
+   ===================================================================== */
+function fluss(id, linien, breite, label, worte, tipp) {
+  const d = linien.map((t) => weg(t, false)).join("");
+  let k = `<path d="${d}" fill="none" stroke="#000" stroke-opacity=".002" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  k += `<path d="${d}" fill="none" stroke="#eaf5f9" stroke-width="${r(breite + 0.9)}" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>`;
+  k += `<path d="${d}" fill="none" stroke="#3d84b8" stroke-width="${breite}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  k += `<path d="${d}" fill="none" stroke="#9fd0ea" stroke-width="${r(breite * 0.3)}" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>`;
+  k += label;
+  S.teil(Object.assign({ x: 0, y: 0, kunst: k, tipp }, worte));
+}
+const flussText = (lo, la, t, w) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="3.9" font-style="italic" font-weight="bold" text-anchor="middle" fill="#245f86" stroke="#eef6f4" stroke-width=".8" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" letter-spacing=".4" transform="rotate(${w} ${r(x)} ${r(y)})">${t}</text>`; };
+fluss("rhein", [FLUESSE.rhein, FLUESSE.alpenrhein], 1.25, flussText(5.75, 51.93, "Rhein", -2),
+  { id: "rhein", de: "der Rhein", syl: "RHEIN", it: "il Reno", itSyl: "RE-no", en: "Rhine" },
+  "Der Rhein kommt aus den Alpen und fließt durch den Bodensee bis in die Nordsee.");
+S.def(`<path id="${S.id("f_elbe")}" d="${weg(FLUESSE.elbe, false)}"/>`);
+S.hinten(USE("f_elbe", `fill="none" stroke="#e9f4f8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".6"`) + USE("f_elbe", `fill="none" stroke="${FLUSS}" stroke-width="1.05" stroke-linecap="round" stroke-linejoin="round"`) + flussText(11.3, 53.25, "Elbe", -24));
+
+/* =====================================================================
+   TEILE — 4: Städte; Nordrhein-Westfalen und Bayern als Lupen
+   ===================================================================== */
+const WORT = {
+  hamburg: ["Hamburg", "HAM-burg", "Amburgo", "am-BUR-go", "Hamburg", "Am Hafen von Hamburg steht die Elbphilharmonie, ein Konzerthaus."],
+  luebeck: ["Lübeck", "LÜ-beck", "Lubecca", "lu-BEC-ca", "Lübeck", "Das Holstentor ist das alte Stadttor von Lübeck."],
+  bremen: ["Bremen", "BRE-men", "Brema", "BRE-ma", "Bremen", "Esel, Hund, Katze und Hahn: die Bremer Stadtmusikanten aus dem Märchen."],
+  hannover: ["Hannover", "han-NO-ver", "Hannover", "han-NO-ver", "Hanover", "Das Neue Rathaus hat eine grüne Kuppel. Oben ist eine Aussichtsplattform."],
+  berlin: ["Berlin", "ber-LIN", "Berlino", "ber-LI-no", "Berlin", "Berlin ist die Hauptstadt. Hier stehen das Brandenburger Tor und der Fernsehturm."],
+  potsdam: ["Potsdam", "POTS-dam", "Potsdam", "POTS-dam", "Potsdam", "Schloss Sanssouci steht oben auf Weinbergterrassen."],
+  magdeburg: ["Magdeburg", "MAG-de-burg", "Magdeburgo", "mag-de-BUR-go", "Magdeburg", "Magdeburg liegt an der Elbe. Der Dom hat zwei hohe Türme."],
+  leipzig: ["Leipzig", "LEIP-zig", "Lipsia", "LI-psia", "Leipzig", "Das Völkerschlachtdenkmal erinnert an eine große Schlacht im Jahr 1813."],
+  dresden: ["Dresden", "DRES-den", "Dresda", "DRES-da", "Dresden", "Die Frauenkirche wurde im Krieg zerstört. Seit 2005 steht sie wieder."],
+  weimar: ["Weimar", "WEI-mar", "Weimar", "WEI-mar", "Weimar", "Vor dem Theater stehen Goethe und Schiller, zwei berühmte Dichter."],
+  frankfurt: ["Frankfurt am Main", "FRANK-furt am MAIN", "Francoforte sul Meno", "fran-co-FOR-te sul ME-no", "Frankfurt am Main", "Frankfurt hat die meisten Hochhäuser in Deutschland."],
+  trier: ["Trier", "TRIER", "Treviri", "TRE-vi-ri", "Trier", "Die Porta Nigra ist ein Stadttor aus der Römerzeit."],
+  heidelberg: ["Heidelberg", "HEI-del-berg", "Heidelberg", "HEI-del-berg", "Heidelberg", "Über der Altstadt und dem Neckar steht die Ruine des Schlosses."],
+  stuttgart: ["Stuttgart", "STUTT-gart", "Stoccarda", "stoc-CAR-da", "Stuttgart", "Der Stuttgarter Fernsehturm war der erste Fernsehturm aus Beton auf der Welt."],
+  freiburg: ["Freiburg im Breisgau", "FREI-burg im BREIS-gau", "Friburgo in Brisgovia", "fri-BUR-go in bri-SGO-via", "Freiburg im Breisgau", "Das Münster hat einen Turm aus rotem Sandstein."],
+  duesseldorf: ["Düsseldorf", "DÜS-sel-dorf", "Düsseldorf", "DÜS-sel-dorf", "Düsseldorf", "Düsseldorf liegt am Rhein. Der Rheinturm ist 240 Meter hoch."],
+  koeln: ["Köln", "KÖLN", "Colonia", "co-LO-nia", "Cologne", "Die Türme des Kölner Doms sind 157 Meter hoch."],
+  aachen: ["Aachen", "AA-chen", "Aquisgrana", "a-quis-GRA-na", "Aachen", "Im Aachener Dom liegt Karl der Große begraben."],
+  rothenburg: ["Rothenburg ob der Tauber", "RO-then-burg ob der TAU-ber", "Rothenburg ob der Tauber", "RO-then-burg ob der TAU-ber", "Rothenburg ob der Tauber", "Rothenburg hat eine alte Stadtmauer mit vielen Türmen."],
+  nuernberg: ["Nürnberg", "NÜRN-berg", "Norimberga", "no-rim-BER-ga", "Nuremberg", "Die Kaiserburg steht auf einem Felsen über der Altstadt."],
+  regensburg: ["Regensburg", "RE-gens-burg", "Ratisbona", "ra-ti-SBO-na", "Regensburg", "Die Steinerne Brücke über die Donau ist fast 900 Jahre alt."],
+  muenchen: ["München", "MÜN-chen", "Monaco di Baviera", "MO-na-co di ba-VIE-ra", "Munich", "Die Frauenkirche hat zwei Türme mit grünen Hauben."],
+  neuschwanstein: ["das Schloss Neuschwanstein", "SCHLOSS neu-SCHWAN-stein", "il castello di Neuschwanstein", "ca-STEL-lo di neu-SCHWAN-stein", "Neuschwanstein Castle", "König Ludwig II. ließ das Schloss bauen. Es sieht aus wie ein Märchenschloss."],
+};
+const wort = (id) => { const [de, syl, it, itSyl, en, tipp] = WORT[id]; return { id, de, syl, it, itSyl, en, tipp, lupe: id }; };
+const verschiebe = (ox, oy, svg) => `<g transform="translate(${+(-ox).toFixed(3)} ${+(-oy).toFixed(3)})">${svg}</g>`;
+
+/* Vier Lupen: die Himmelsrichtungen. Die Städte sind Lupen-Teile mit Verweis
+   auf ihre Szene. (Einzelne Teile mit „lupe“ bekämen im ganzen Bild je einen
+   großen Lupenknopf – auf einer Karte deckten 23 Knöpfe die Beschriftung zu.) */
+function region(staedte, knopf, zoom, worte) {
+  let k = "";
+  const unter = [];
+  for (const sid of staedte) {
+    const b = stadtBild(sid);
+    k += b.k;
+    const { x0, x1, y0, y1 } = b.box;
+    unter.push(Object.assign(wort(sid), { x: (x0 + x1) / 2, y: y1, kunst: flaeche(-(x1 - x0) / 2, -(y1 - y0), x1 - x0, y1 - y0, 1.2) }));
+  }
+  const ox = knopf[0] - 16, oy = knopf[1] + 16;
+  S.teil(Object.assign({ x: ox, y: oy, kunst: verschiebe(ox, oy, k), zoom, unter }, worte));
+}
+region(["hamburg", "luebeck", "bremen", "hannover"], [128, 44], { x: 140, y: 30, w: 108, h: 72 },
+  { id: "norden", de: "Norddeutschland", syl: "NORD-deutsch-land", it: "la Germania del Nord", itSyl: "ger-MA-nia del NORD", en: "Northern Germany",
+    tipp: "Im Norden liegen die Nordsee und die Ostsee. Das Land ist flach." });
+region(["berlin", "potsdam", "magdeburg", "leipzig", "weimar", "dresden"], [300, 100], { x: 189, y: 70, w: 112, h: 75 },
+  { id: "osten", de: "Ostdeutschland", syl: "OST-deutsch-land", it: "la Germania dell'Est", itSyl: "ger-MA-nia del-l'EST", en: "Eastern Germany",
+    tipp: "Im Osten liegen Berlin, Leipzig und Dresden." });
+region(["duesseldorf", "koeln", "aachen", "trier", "frankfurt"], [86, 172], { x: 81, y: 110, w: 110, h: 73 },
+  { id: "westen", de: "Westdeutschland", syl: "WEST-deutsch-land", it: "la Germania dell'Ovest", itSyl: "ger-MA-nia del-l'O-vest", en: "Western Germany",
+    tipp: "Im Westen fließt der Rhein. Hier liegen Köln, Düsseldorf und Frankfurt." });
+region(["heidelberg", "stuttgart", "freiburg", "rothenburg", "nuernberg", "regensburg", "muenchen", "neuschwanstein"], [118, 226], { x: 135, y: 168, w: 129, h: 86 },
+  { id: "sueden", de: "Süddeutschland", syl: "SÜD-deutsch-land", it: "la Germania del Sud", itSyl: "ger-MA-nia del SUD", en: "Southern Germany",
+    tipp: "Im Süden liegen Bayern und Baden-Württemberg. Ganz im Süden sind die Alpen." });
+
+/* =====================================================================
+   DAVOR — Papier, Vignette, Kartusche
+   ===================================================================== */
+{
+  let g = `<rect x="0" y="0" width="${BR}" height="${HO}" fill="${S.rg("vignette", [[0, "#fff", 0], [0.7, "#7a5a2a", 0], [1, "#7a5a2a", 0.22]], 0.5, 0.5, 0.75)}"/>`;
+  S.def(`<pattern id="${S.id("korn")}" width="23" height="19" patternUnits="userSpaceOnUse">${Array.from({ length: 26 }, () => `<circle cx="${r(rnd() * 23)}" cy="${r(rnd() * 19)}" r="${r(0.12 + rnd() * 0.22)}" fill="${rnd() < 0.5 ? "#6b4f2a" : "#fff"}" opacity=".18"/>`).join("")}</pattern>`);
+  g += `<rect x="0" y="0" width="${BR}" height="${HO}" fill="url(#${S.id("korn")})"/>`;
+  { const [x, y] = P(9.35, 55.27); g += text(x, y, "DÄNEMARK", 3.4, "#a38d6a", `letter-spacing=".8" stroke="#f1e9d6" stroke-width=".7" paint-order="stroke"`); }
+  /* Kartusche unten rechts */
+  const x = 324, y = 236, w = 72, h = 20;
+  g += `<rect x="${x + 0.6}" y="${y + 0.8}" width="${w}" height="${h}" rx="2" fill="#3b2a10" opacity=".25"/>`;
+  g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${S.lg("kart", [[0, "#fbf3dc"], [1, "#efe1bb"]])}" stroke="#8a6d43" stroke-width=".5"/>`;
+  g += `<rect x="${x + 1.2}" y="${y + 1.2}" width="${w - 2.4}" height="${h - 2.4}" rx="1.4" fill="none" stroke="#b8975e" stroke-width=".3"/>`;
+  g += `<rect x="${x + 4}" y="${y + 4.4}" width="7" height="1.8" fill="#1d1d1b"/><rect x="${x + 4}" y="${y + 6.2}" width="7" height="1.8" fill="#d52b1e"/><rect x="${x + 4}" y="${y + 8}" width="7" height="1.8" fill="#f2c200"/>`;
+  g += `<text x="${x + 14}" y="${y + 9.2}" font-size="5.4" font-weight="bold" fill="#3a2716" font-family="Georgia,'Times New Roman',serif">Deutschland</text>`;
+  g += `<text x="${x + 14}" y="${y + 15}" font-size="2.9" font-style="italic" fill="#5a4026" font-family="Georgia,'Times New Roman',serif">16 Bundesländer · Hauptstadt Berlin</text>`;
+  S.davor(g);
+}
+
 
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/deutschlandkarte.js"));

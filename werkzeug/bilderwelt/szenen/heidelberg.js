@@ -1192,7 +1192,7 @@ const pfadKurz = (() => {
 /* direkt aufeinanderfolgende Pfade mit gleichen Eigenschaften (deckend, ohne evenodd) zu einem Pfad zusammenfassen */
 const fasseZusammen = (svg) => {
   let alt;
-  do { alt = svg; svg = svg.replace(/<path d="([^"]*)"((?: [\w-]+="[^"]*")*)\/><path d="([^"]*)"\2\/>/g, (m, a, rest, b) => (/opacity|evenodd|class=/.test(rest) ? m : `<path d="${a} ${b}"${rest}/>`)); } while (svg !== alt);
+  do { alt = svg; svg = svg.replace(/<path d="([^"]*)"((?: [\w-]+="[^"]*")*)\/><path d="([^"]*)"\2\/>/g, (m, a, rest, b) => (/opacity|evenodd|class=|url\(/.test(rest) ? m : `<path d="${a} ${b}"${rest}/>`)); } while (svg !== alt);
   return svg;
 };
 const kuerzePfade = (svg) => fasseZusammen(svg).replace(/ d="([^"]*)"/g, (m, d) => ` d="${pfadKurz(d)}"`);
