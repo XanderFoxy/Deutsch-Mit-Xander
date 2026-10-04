@@ -294,7 +294,7 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   k += `<path d="M0 150 Q40 150 70 160 Q96 172 108 196 L112 226 L0 226 Z" fill="${WALD05}" opacity=".6"/>`;
   /* Dunstsee im Talgrund: oben weich, liegt über dem Fluss nur dünn */
   k += `<g filter="url(#${S.id("dunst")})"><path d="M-2 196 Q30 190 60 194 Q90 198 112 192 L112 206 Q80 210 50 208 Q20 206 -2 210 Z" fill="#eef3f4" opacity=".75"/></g>`;
-  S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 56, y: 186, kunst: um(56, 186, kappeRand(k)),
+  S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 60, y: 204, kunst: um(60, 204, kappeRand(k)),
     tipp: "Die Schlucht ist ein tiefes, enges Tal. Unten fließt der Urubamba, darüber steigen morgens die Nebel auf." });
 }
 
@@ -749,6 +749,27 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
   o += `<path d="M${X(0.95)} ${Y(kh + 0.03)} l${X(0.02)} ${Y(-0.03)} M${X(0.9)} ${Y(kh - 0.04)} q${X(0.04)} ${Y(-0.02)} ${X(0.08)} ${Y(0.01)}" stroke="#4a3a2e" stroke-width="${r(0.02 * u)}" fill="none"/>`;
   return o;
 };
+/* Lamafohlen (Cria): im Verhältnis lange Beine, kleiner runder Körper mit krauser Wolle, kurzer dicker Hals, runder Kopf */
+const fohlenBild = (H, dir, fell, fleck) => {
+  const u = H / 1.8, X = (v) => r(v * u * dir), Y = (v) => r(-v * u);
+  const Q = (pts) => pts.map(([a, b]) => [a * u * dir, -b * u]);
+  let o = `<path d="${glatt(Q([[-0.4, 0.02], [0.45, 0.02], [0.2 - (dir > 0 ? 1.4 : 0.5), 0.12], [-0.5 - (dir > 0 ? 1.1 : 0.2), 0.1]]), true, 0.8)}" fill="#22361a" opacity=".3"/>`;
+  const bein = (x, c) => `<path d="${glatt(Q([[x - 0.06, 1.0], [x - 0.045, 0.5], [x - 0.04, 0.06], [x - 0.06, 0], [x + 0.07, 0], [x + 0.05, 0.06], [x + 0.045, 0.5], [x + 0.06, 1.0]]), true, 0.5)}" fill="${c}"/>`;
+  o += bein(-0.28, "#7a5634") + bein(0.3, "#7a5634");
+  o += `<ellipse cx="0" cy="${Y(1.16)}" rx="${r(0.52 * u)}" ry="${r(0.27 * u)}" fill="${fell}"/>`;
+  let kraus = ""; for (let i = 0; i < 11; i++) { const a = Math.PI * (1.05 + i * 0.09), x = Math.cos(a) * 0.5, y = 1.16 - Math.sin(a) * 0.26; kraus += `<circle cx="${X(x)}" cy="${Y(y)}" r="${r(0.075 * u)}"/>`; }
+  o += `<g fill="${fell}">${kraus}</g>`;
+  if (fleck) o += `<ellipse cx="${X(-0.05)}" cy="${Y(1.22)}" rx="${r(0.24 * u)}" ry="${r(0.13 * u)}" fill="${fleck}" opacity=".9"/>`;
+  let lo = ""; for (let i = 0; i < 9; i++) lo += `M${X(-0.38 + i * 0.09)} ${Y(1.08 + (i % 3) * 0.06)} q${r(0.03 * u * dir)} ${r(-0.04 * u)} ${r(0.06 * u * dir)} 0`;
+  o += `<path d="${lo}" stroke="#5a3e26" stroke-width="${r(0.022 * u)}" fill="none" opacity=".45"/>`;
+  o += bein(-0.38, fell) + bein(0.22, fell);
+  o += `<path d="M${X(-0.44)} ${Y(0.02)} h${X(0.12)} M${X(0.16)} ${Y(0.02)} h${X(0.12)}" stroke="#3d3026" stroke-width="${r(0.05 * u)}"/>`;
+  o += `<path d="${glatt(Q([[0.3, 1.2], [0.36, 1.42], [0.44, 1.56], [0.62, 1.56], [0.6, 1.36], [0.56, 1.14]]), true, 0.8)}" fill="${fell}"/>`;
+  o += `<circle cx="${X(0.56)}" cy="${Y(1.62)}" r="${r(0.16 * u)}" fill="${fell}"/><ellipse cx="${X(0.7)}" cy="${Y(1.58)}" rx="${r(0.09 * u)}" ry="${r(0.07 * u)}" fill="${fell}"/>`;
+  for (const [ox, kr] of [[0.5, -0.04], [0.58, 0.03]]) o += `<path d="${glatt(Q([[ox, 1.72], [ox - 0.03 + kr, 1.84], [ox + kr, 1.9], [ox + 0.05, 1.84], [ox + 0.05, 1.72]]), true, 0.8)}" fill="${fell}"/>`;
+  o += `<circle cx="${X(0.6)}" cy="${Y(1.65)}" r="${r(0.035 * u)}" fill="#1d1712"/><circle cx="${X(0.61)}" cy="${Y(1.66)}" r="${r(0.012 * u)}" fill="#fff"/><path d="M${X(0.76)} ${Y(1.57)} l${X(0.02)} ${Y(-0.02)}" stroke="#3a2e26" stroke-width="${r(0.02 * u)}"/>`;
+  return o;
+};
 {
   /* Mutter auf der zweiten großen Stufe, das Fohlen daneben */
   const t = TERR[TERR.length - 2], x = 168, y = profilY(t.vorn, 168) - 3;
@@ -756,9 +777,9 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
   S.teil({ id: "lama", de: "das Lama", syl: "LA-ma", it: "il lama", itSyl: "LA-ma", en: "llama", x, y, steht: true, kunst: k,
     tipp: "Lamas tragen Lasten und geben Wolle. Hier halten sie das Gras auf den Terrassen kurz." });
   const x2 = 202, y2 = profilY(t.vorn, 202) - 4.5;
-  const k2 = `<g filter="${VOL_FIGUR}">${lama(18, -1, S.lg("fohlenfell", [[0, "#c39668"], [1, "#94693f"]], 0, 0, 1, 0), "#f2ebdc", 6, true)}</g>`;
+  const k2 = `<g filter="${VOL_FIGUR}">${fohlenBild(17, -1, S.lg("fohlenfell", [[0, "#c39668"], [1, "#94693f"]], 0, 0, 1, 0), "#f2ebdc")}</g>`;
   S.teil({ id: "fohlen", de: "das Fohlen", syl: "FOH-len", it: "il piccolo di lama", itSyl: "PIC-co-lo di LA-ma", en: "baby llama", x: x2, y: y2, steht: true, kunst: k2,
-    tipp: "Ein junges Lama heißt Fohlen. Es trinkt etwa sechs Monate lang Milch bei seiner Mutter." });
+    tipp: "Ein junges Lama heißt Fohlen – wie bei Pferden. Es trinkt etwa sechs Monate lang Milch bei seiner Mutter." });
 }
 
 /* =====================================================================
@@ -832,12 +853,16 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
   const poseFoto = { lende: 1, brust: -2, nacken: 4, kopf: 0, schulterL: { vor: 58, seit: 22 }, ellbogenL: 118, unterarmL: 60, handL: 10, fingerL: 0.6, schulterR: { vor: 56, seit: 24 }, ellbogenR: 120, unterarmR: 60, handR: 10, fingerR: 0.6,
     huefteL: { vor: 10, seit: 4, dreh: -6 }, knieL: 8, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -6 }, knieR: 2, fussR: 0 };
   const mm = fig({ id: "per_mutter", geschlecht: "w", alter: "erwachsen", pose: poseFoto, blick: 172, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "hell",
-    kleidung: { oberteil: { stueck: "hemd", farbe: "#e9e4d6" }, unterteil: { stueck: "hose", farbe: "#6a6f52" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "hut", farbe: "#e8dcc0" }, zubehoer: { stueck: "rucksack", farbe: "#2f6f8f" } } }, 39);
-  k = `<g transform="translate(${M.x} ${M.y})"><g filter="${VOL_FIGUR}">${dunkel(mm.svg)}</g></g>` + k;
+    kleidung: { oberteil: { stueck: "hemd", farbe: "#e9e4d6" }, unterteil: { stueck: "hose", farbe: "#6a6f52" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "hut", farbe: "#e8dcc0" } } }, 39);
+  {
+    const [slx, sly] = pk(mm, "schulterL"), [srx, sry] = pk(mm, "schulterR"), [, ty] = pk(mm, "tailleL"), xa = Math.min(slx, srx) + 0.6, xb = Math.max(slx, srx) - 0.6, y0 = Math.min(sly, sry) + 1.2;
+    STADT.rucksack = `<path d="M${r(xa)} ${r(y0)} Q${r((xa + xb) / 2)} ${r(y0 - 1.4)} ${r(xb)} ${r(y0)} L${r(xb + 0.4)} ${r(ty - 0.6)} Q${r((xa + xb) / 2)} ${r(ty + 0.8)} ${r(xa - 0.4)} ${r(ty - 0.6)} Z" fill="${S.lg("rucksack", [[0, "#24566e"], [0.6, "#2f6f8f"], [1, "#4a8aa8"]], 0, 0, 1, 0)}"/><path d="M${r(xa + 0.8)} ${r((y0 + ty) / 2 + 1)} h${r(xb - xa - 1.6)} v${r(ty - y0 - 3)} h${r(-(xb - xa - 1.6))} Z" fill="#285f7a"/><path d="M${r(xa + 0.3)} ${r(y0 + 0.2)} Q${r(xa - 0.6)} ${r(y0 - 1.4)} ${r(xa + 0.6)} ${r(y0 - 2.2)} M${r(xb - 0.3)} ${r(y0 + 0.2)} Q${r(xb + 0.6)} ${r(y0 - 1.4)} ${r(xb - 0.6)} ${r(y0 - 2.2)}" stroke="#1d3e50" stroke-width=".5" fill="none"/><path d="M${r((xa + xb) / 2 - 1)} ${r(y0 - 0.9)} q1 -.8 2 0" stroke="#1d3e50" stroke-width=".35" fill="none"/>`;
+  }
+  k = `<g transform="translate(${M.x} ${M.y})"><g filter="${VOL_FIGUR}">${dunkel(mm.svg)}${STADT.rucksack}</g></g>` + k;
   sch += schattenFigur(M.x, M.y, 39);
   /* Mädchen: schaut zu uns, trägt den Chullo und hält eine Panflöte */
   const Mä = { x: 278, y: 257 };
-  const poseHalt = { lende: 1, brust: -1, nacken: 4, kopf: -4, schulterL: { vor: 34, seit: 12 }, ellbogenL: 100, unterarmL: 70, handL: 6, fingerL: 0.55, schulterR: { vor: 32, seit: 12 }, ellbogenR: 98, unterarmR: 70, handR: 6, fingerR: 0.55,
+  const poseHalt = { lende: 1, brust: -1, nacken: 4, kopf: -4, schulterL: { vor: 4, seit: 8 }, ellbogenL: 12, unterarmL: 0, handL: 0, fingerL: 0.4, schulterR: { vor: 18, seit: 22 }, ellbogenR: 64, unterarmR: 60, handR: 6, fingerR: 0.7,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
   const mk = fig({ id: "per_kind", geschlecht: "w", alter: "kind", pose: poseHalt, blick: -22, frisur: "zopf", haarfarbe: "braun", haut: "hell",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#e0802e" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 31);
@@ -856,8 +881,8 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
     chullo += `<circle cx="${r(cx + 0.2)}" cy="${r(yT - 2.1)}" r="1.05" fill="#f2c230"/><circle cx="${r(cx + 0.5)}" cy="${r(yT - 2.4)}" r=".45" fill="#fff4b8"/>`;
     STADT.muetze = { x: Mä.x + cx, y: Mä.y + (yT + yB) / 2 };
     /* Panflöte (Siku): sieben Rohre, nach rechts kürzer, mit Schnur gebunden — vor der Brust */
-    const hx = (mk.z.handL.x + mk.z.handR.x) / 2 * mk.k, hy = (mk.z.handL.y + mk.z.handR.y) / 2 * mk.k;
-    const fx = hx - 2.4, fy = hy - 2.8;
+    const hx = mk.z.handR.x * mk.k, hy = mk.z.handR.y * mk.k;
+    const fx = hx - 2.3, fy = hy - 1.6;
     for (let i = 0; i < 7; i++) floete += `<rect x="${r(fx + i * 0.68)}" y="${r(fy)}" width=".6" height="${r(5.2 - i * 0.5)}" rx=".28" fill="${i % 2 ? "#d9b56c" : "#e8c98a"}" stroke="#8a6a34" stroke-width=".12"/>`;
     floete += `<path d="M${r(fx - 0.1)} ${r(fy + 1.6)} H${r(fx + 4.8)}" stroke="#c22d33" stroke-width=".45"/>`;
     STADT.floete = { x: Mä.x + fx + 2.3, y: Mä.y + fy + 2.2 };
@@ -872,9 +897,9 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
     { id: "panfloete", de: "die Panflöte", syl: "PAN-flö-te", it: "il flauto di Pan", itSyl: "FLAU-to di PAN", en: "pan flute", x: STADT.floete.x, y: STADT.floete.y, kunst: flaeche(-3.2, -3, 6.4, 6),
       tipp: "Die Panflöte heißt in den Anden Siku. Jedes Rohr hat einen anderen Ton." },
   ];
-  S.teil({ id: "touristen", de: "die Touristen", syl: "tou-RIS-ten", it: "i turisti", itSyl: "tu-RI-sti", en: "tourists", x: 304, y: 236,
+  S.teil({ id: "familie", de: "die Familie", syl: "fa-MI-li-e", it: "la famiglia", itSyl: "fa-MI-glia", en: "family", x: 304, y: 236,
     kunst: um(304, 236, `<g pointer-events="none">${sch}</g>` + k), zoom: { x: 258, y: 206, w: 84, h: 56 }, unter,
-    tipp: "Jeden Tag besuchen Tausende Menschen Machu Picchu. Man darf nur mit einer Eintrittskarte und auf festen Wegen hinein." });
+    tipp: "Eine Familie besucht Machu Picchu. Jeden Tag kommen Tausende Menschen – man darf nur mit Eintrittskarte und auf festen Wegen hinein." });
 }
 
 /* =====================================================================
@@ -899,7 +924,7 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
   ko += `<path d="M-2.1 .4 L-4.2 1.4 L-3.8 .3 Z" fill="#1b5f3e"/><path d="M1.6 -.2 Q2.6 .4 2.4 1 Q1.6 .9 1.2 .3 Z" fill="#d8344a"/>`;
   ko += `<circle cx="1.9" cy="-.25" r=".25" fill="#111"/><path d="M2.6 0 L5.4 .6" stroke="#2a2a2a" stroke-width=".3"/>`;
   ko += `<path d="M-.4 -.6 Q-1.6 -4.2 .6 -4.6 Q.8 -2.4 .4 -.6 Z" fill="#9fd8c0" opacity=".55"/><path d="M-.2 -.6 Q.4 -3.4 2.2 -3.2 Q1.2 -1.6 .5 -.5 Z" fill="#c8f0de" opacity=".45"/>`;
-  S.teil({ oben: true, id: "kolibri", de: "der Kolibri", syl: "KO-li-bri", it: "il colibrì", itSyl: "co-li-BRÌ", en: "hummingbird", x: 219, y: 238, kunst: ko,
+  S.teil({ oben: true, id: "kolibri", de: "der Kolibri", syl: "KO-li-bri", it: "il colibrì", itSyl: "co-li-BRÌ", en: "hummingbird", x: 234, y: 226, kunst: ko,
     tipp: "Der Kolibri schlägt bis zu 50-mal in der Sekunde mit den Flügeln. So kann er in der Luft stehen bleiben." });
 }
 
