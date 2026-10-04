@@ -52,10 +52,10 @@
  "data-minibilder.js": "11474463be41cbe95be5093573363f4920ea0c80",
  "app-styles.css": "7d605bfdf31485176dc4813ea5790e198dcb6d39",
  "data-exercises.js": "b395f55eb9a5b0e9bc8b95aa97e72fe43ff8a253",
- "data-werkstatt.js": "3ca199bf5f0f544a3d713523850e9b92dcc1620f",
  "styles.css": "5794971a647adc6f59393313f66ecaf4a4ead4b6",
  "korrekturen.css": "e528183acce1cc106597a6660977484b26441f15",
  "spiel.css": "41d4e516cb1a83f200d61582a1f895d92e361c38",
  "spiel.js": "5c43a11ad13289f2701f7a755512e514f4f7ed06",
- "app.js": "2de9d7aa86229829194a89698f005337c41ae534"
+ "app.js": "2de9d7aa86229829194a89698f005337c41ae534",
+ "data-werkstatt.js": "f9d880dc66dfec625d550678dfde2af5338d653e"
 }

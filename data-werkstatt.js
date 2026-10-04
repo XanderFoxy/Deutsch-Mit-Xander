@@ -49,30 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 878 — Städte, Länder, Übersichtskarten; Lupenmarken; verdichtete Bilder",
+  stand: "Fassung 879 — schnellerer Start, Lebensanzeige aus, Postfach, alkoholfreie Städte",
 
   inArbeit: [
-    { seit: "2026-10-04T09:19",
-      text: "Tier-Bibliothek: wartet auf Funk 294" },
-    { seit: "2026-10-04T09:19", nurBetreiber: true,
-      text: "Funk-Fragen: Ortsnamen nur in der Lupe, Alkohol in älteren Szenen, Peking-Collage, Kapstadt-Blickwinkel, Raclette" },
-    { seit: "2026-10-04T09:19",
-      text: "Körperbau-Tafel noch 115 KB gepackt" },
-    { seit: "2026-10-04T09:19",
-      text: "Figuren-Bibliothek: Hinterkopf, Faust, Kinderarm zentral richten (nach Absprache)" },
+    { seit: "2026-10-04T12:42",
+      text: "Aussprache-Funktion mit Wortliste hochladen (wartet auf OK)" },
+    { seit: "2026-10-04T12:42",
+      text: "Tier-Bibliothek weiter zeichnen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-04T09:19",
-      text: "36 neue Szenen: 17 deutsche Städte, 17 Weltorte, Deutschland- und Weltkarte (nur mit ?bilderwelt=neu)" },
-    { seit: "2026-10-04T09:19",
-      text: "Lupenmarken: Tipp gilt dem, was man sieht; Marke versetzbar" },
-    { seit: "2026-10-04T09:19",
-      text: "Supermarkt-Regal wieder antippbar" },
-    { seit: "2026-10-04T09:19",
-      text: "alle Bilder verdichtet: gepackt 8,80 → 7,35 MB" },
-    { seit: "2026-10-04T09:19",
-      text: "Äcker versetzen, Quests nach Niveau A1–C2, schlanker Start" },
+    { seit: "2026-10-04T12:42",
+      text: "Start ohne Farbwellen, Übungen erst beim Öffnen" },
+    { seit: "2026-10-04T12:42",
+      text: "Schalter „Lebensanzeige aus“" },
+    { seit: "2026-10-04T12:42",
+      text: "Postfach: Suche, 5 Zuletzt, Alle" },
+    { seit: "2026-10-04T12:42",
+      text: "Ältere Stadtszenen alkoholfrei" },
   ],
 };

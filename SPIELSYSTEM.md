@@ -3548,3 +3548,55 @@ Rückkehr nach dem Neuladen (gleich wieder im Raum, 4G, Rechner 4×): „drin" n
 - Die Listen stammen aus vier gemessenen Lagen. Ruft eine seltene Start-Lage eine ausgelagerte Funktion, läuft sie trotzdem, holt dafür aber ihr Stück sofort. Nach größeren Umbauten `node werkzeug/teile-messen.js` laufen lassen; neue Funktionen bleiben sonst einfach in min/app.js.
 - Der Rest der Startzeit ist jetzt Rechenarbeit, nicht Leitung: app.js zeichnet beim Start alle Bereiche vor (renderSetup für „Lernen" usw.), dazu das erste Layout der ganzen Seite. Das zu verschieben wäre der nächste Hebel – ändert aber, wann was gezeichnet wird, und gehört deshalb erst abgesprochen.
 - livechat.js (98 KB) und backend.js stehen weiter ganz in der Startliste.
+
+## Fassung 879 — Schnellerer Start ohne Farbwellen, Übungen erst beim Öffnen; Lebensanzeige aus; Postfach-Empfänger kompakt; ältere Stadtszenen alkoholfrei; Wortliste für die Erkennung am Server (Funk 263/285/296)
+
+XANDER (Funk 296, wörtlich): „Ja mach alles weiter keine Fragen stellen dann kümmere Dich jetzt bitte um alles das ganz intensiv für mich jetzt dann."
+
+### Start: keine Farbwellen mehr in den ersten Sekunden (Puls, Vorrang 1)
+- Gemessen (Chromium, Telefon, Rechner ×4 gedrosselt, Spur der Stil-Neuberechnungen): beim Start liefen die Farbübergänge der Wetterleiste (Hintergrund 2 s, Schrift und Uhr 1,5 s) vom Grundton zur echten Himmelsfarbe. Farben, SVG-Striche und Schatten blendet der Browser im Hauptfaden über: rund 80 Neuberechnungen aller Stile, zusammen etwa 550 ms.
+- Jetzt gibt es beim ersten Himmel keinen Übergang (Klasse `himmel-sofort` an `<html>`, `styles.css`). Nach dem Laden aller Stilblätter wird die Klasse entfernt, danach wandert der Himmel über den Tag wie bisher.
+- Ergebnis: 112 → 30–36 Stil-Neuberechnungen beim Start, 576 → 180–260 ms. Die Kopfzeile ist um 12, 19 und 23 Uhr Bildpunkt für Bildpunkt gleich.
+- Die Zahl „bereit" ändert das nicht, weil die Übergänge erst danach liefen. Gewonnen ist ein freier Hauptfaden in genau der Zeit, in der die ersten Tipps kommen.
+- Im Ruhezustand (nach 8 s, 5 s gemessen, Tag und Nacht) arbeitet der Hauptfaden nicht.
+
+### Übungsauswahl erst beim Öffnen (Funk 295 Frage 4 → Funk 296 „Ja")
+- `renderSetup()` lief beim Start und bei der Anmeldung, obwohl die Übungen fast nie zu sehen sind.
+- Jetzt wartet eine Wache (ResizeObserver) darauf, dass der Bereich Platz bekommt, und zeichnet dann vor dem nächsten Bild. Es gibt kein leeres Aufblitzen.
+- Ist der Bereich schon beim Start sichtbar, wird wie bisher sofort gezeichnet. Ruft jemand vorher `renderSetup()` auf (Anmeldung, Lernraum-Wechsel), kehrt die Funktion zurück, und die Wache zeichnet später mit dem dann gültigen Stand.
+- Warmer Start bis „bereit" (4G-Messung): 1,00–1,11 s → 0,93–0,97 s. Der kalte Start hängt an der Leitung und bleibt bei rund 1,35 s.
+
+### Lebensanzeige aus (Walkie 285 / Funk 160)
+- Menü → Mehr → „Im Chat": neuer Schalter „Lebensanzeige aus", direkt neben „Nur Mitspieler hören". Gespeichert auf dem eigenen Gerät (`dma_spiel_lp_aus`), wirkt sofort.
+- Ausgeblendet werden in der eigenen Ansicht die Lebensbögen samt Schild an allen Bildern und die LP-Zahl im Menü. Mana, Ladung, Level und Rüstung bleiben sichtbar, die Spiellogik ist unverändert.
+
+### Postfach: Empfänger wie im Messenger (Walkie 296, Möglichkeit 1)
+- Die lange Häkchen-Liste und die Umschaltung „Bestimmte Personen/Rundmail" sind weg.
+- Neu sind ein Suchfeld mit Trefferliste (erscheint erst beim Tippen, höchstens sechs Treffer, Enter nimmt den ersten), Chips für die Gewählten (mit ✕) und darunter die 5 zuletzt Angeschriebenen als Knöpfe.
+- Fürs Team gibt es „📢 Alle" (Rundmail, die Rückfrage vor dem Senden bleibt).
+- „Antworten" wählt die Person auch dann aus, wenn sie unter den Zuletzt-Angeschriebenen steht.
+
+### Ältere Stadtszenen alkoholfrei (Funk 297 Punkt 3)
+- **Dresden und Nürnberg:** Kinderpunsch statt Glühwein, mit hellroter Tasse.
+- **München:**
+  - Festzelt statt Bierzelt, „Servus!" statt „O'zapft is!".
+  - Im Maßkrug ist Spezi, braun mit hellem Rand. Auch die kleinen Krüge an den Tischen im Hintergrund sind braun.
+  - Aus der „Bierbank" wurde die „Bank".
+- **Regensburg:** Apfelschorle und Radi statt der „Halben". Die Kastanie bekommt einen neuen Tipp, und der helle Glasrand ist dezenter, damit er nicht wie eine Schaumkrone wirkt.
+- **Frankfurt, Düsseldorf, Stuttgart:** Texte und Tipps angepasst.
+- Alle sieben Szenen: „alle Teile gut erreichbar", gepackt 36–57 KB.
+
+### Spracherkennung: Wortliste je Mission auch am Server (Funk 263) — NICHT ausgerollt
+- `supabase/functions/aussprache/index.ts`: Schickt die App eine Wortliste mit (`phrasen`, das tut sie seit 875), geht die Aufnahme an Azure Fast Transcription mit `phraseList`. Die bisherige Kurz-Audio-Schnittstelle kennt keine Wortliste.
+- Die Antwort hat dieselbe Form wie bisher (DisplayText/NBest). Geht etwas schief, läuft der gewohnte Weg weiter.
+- Das Hochladen der Funktion wurde von der Rechte-Prüfung dieser Sitzung abgelehnt (Produktiv-Auslieferung). Es braucht Xanders ausdrückliches OK.
+
+### Sonden
+- Neu: `pruefe-879-lebensanzeige-postfach.js` (26 Prüfungen, mit Quellen und mit min/ grün).
+- Gelaufen und grün: 876, 878, 879, 748, 874, 875, 636.
+- Dazu: Bildvergleich der Kopfzeile alt/neu (0 abweichende Bildpunkte zu drei Uhrzeiten), Übungsauswahl beim Start leer und nach dem Öffnen 62 Karten, keine Seitenfehler.
+
+**Offen**
+- Aussprache-Funktion hochladen (wartet auf OK).
+- Tier-Bibliothek: Weg A, weiter zeichnen.
+- livechat.js und backend.js stehen weiter ganz in der Startliste.
