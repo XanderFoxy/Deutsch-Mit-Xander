@@ -444,19 +444,20 @@ const denkmalUnter = [];
     if (aufschlag) { const q = mi(b, c, 0.78); g += glied([q, c], [w2 * 1.3, w2 * 1.3], BRZL, false); }
     return g;
   };
-  const hand = (x, y, rot, s2 = 1) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s2})"><path d="M-2 -1.2 Q0 -2 2 -1.1 Q2.7 .3 2.2 1.3 Q.4 2.4 -1.8 1.5 Q-2.4 .2 -2 -1.2 Z" fill="${BRZL}"/><path d="M-2 -.6 Q-3.3 -.4 -3.2 .9 Q-2.4 1 -1.9 .5" fill="${BRZ}"/><path d="M-1.1 1.6 L-.9 .3 M0 1.9 L.1 .4 M1.1 1.7 L1.1 .4" stroke="${DK}" stroke-width=".28" opacity=".55"/><path d="M-1.8 -1.1 Q0 -1.9 1.8 -1" stroke="${HL}" stroke-width=".35" fill="none" opacity=".7"/></g>`;
+  const hand = (x, y, rot, s2 = 1) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s2})"><path d="M-2 -1.2 Q0 -2 2 -1.1 Q2.7 .3 2.2 1.3 Q.4 2.4 -1.8 1.5 Q-2.4 .2 -2 -1.2 Z" fill="${BRZL}"/><path d="M-2 -.6 Q-3.3 -.4 -3.2 .9 Q-2.4 1 -1.9 .5" fill="${BRZ}"/><path d="M-1.2 1.4 L-1.3 2.6 M0 1.7 L0 3 M1.1 1.5 L1.3 2.6" stroke="${BRZL}" stroke-width=".9" stroke-linecap="round"/><path d="M-.6 1.6 L-.6 2.8 M.6 1.6 L.7 2.8" stroke="${DK}" stroke-width=".25" opacity=".55"/><path d="M-1.8 -1.1 Q0 -1.9 1.8 -1" stroke="${HL}" stroke-width=".35" fill="none" opacity=".7"/></g>`;
   /* Bronzegesicht nur aus Licht und Schatten: Stirn und Nasenrücken hell (Licht von links), Augenhöhlen weich,
      Schatten unter Nase und Kinn – keine Augenschlitze, kein Strichmund. nx: Drehung der Nase, adler: Nasenhöcker */
+  const AUGE = S.lg("auge", [[0, "#14120d", 0.6], [0.55, "#14120d", 0.25], [1, "#14120d", 0]], 0, 0, 0, 1);
   const kopfB = (cx, cy, nx, adler, alt) => { const P2 = (x, y) => `${r(cx + x)} ${r(cy + y)}`;
     return `<ellipse cx="${cx}" cy="${cy}" rx="4.5" ry="5.9" fill="${BRZ}"/>` +
       `<ellipse cx="${r(cx - 1.3)}" cy="${r(cy - 3)}" rx="2.6" ry="1.6" fill="${HL}" opacity=".42"/><ellipse cx="${r(cx - 2.5)}" cy="${r(cy + 1)}" rx="1.1" ry="1.7" fill="${HL}" opacity=".22"/>` +
-      `<ellipse cx="${r(cx - 1.9 + nx)}" cy="${r(cy - 0.5)}" rx="1.2" ry=".7" fill="${DK}" opacity=".22"/><ellipse cx="${r(cx + 1.9 + nx)}" cy="${r(cy - 0.5)}" rx="1.2" ry=".7" fill="${DK}" opacity=".32"/>` +
+      `<ellipse cx="${r(cx - 1.9 + nx)}" cy="${r(cy - 0.5)}" rx="1.2" ry=".7" fill="${AUGE}" opacity=".7"/><ellipse cx="${r(cx + 1.9 + nx)}" cy="${r(cy - 0.5)}" rx="1.2" ry=".7" fill="${AUGE}"/>` +
       `<path d="M${P2(-3.2 + nx, -1.6)}Q${P2(-1.9 + nx, -2.5)} ${P2(-0.6 + nx, -1.7)}" stroke="${HL}" stroke-width=".5" fill="none" opacity=".6"/>` +
       `<path d="M${P2(nx + 0.1, -1.3)}Q${P2(nx + 1.4 + adler, 0.9)} ${P2(nx + 0.6, 2.3)}L${P2(nx - 0.5, 2.4)}Z" fill="${DK}" opacity=".45"/>` +
-      `<path d="M${P2(nx - 0.3, -1.6)}Q${P2(nx + adler * 0.8, 0.2)} ${P2(nx - 0.6, 2)}" stroke="${HL}" stroke-width=".55" fill="none" opacity=".75"/>` +
+      `<path d="M${P2(nx - 0.3, -1.6)}Q${P2(nx + adler * 0.8, 0.2)} ${P2(nx - 0.6, 2)}" stroke="${HL}" stroke-width=".65" fill="none" opacity=".95"/>` +
       `<ellipse cx="${r(cx + nx * 0.6)}" cy="${r(cy + 2.9)}" rx=".9" ry=".3" fill="${DK}" opacity=".35"/>` +
       `<path d="M${P2(nx * 0.6 - 1.2, 3.7)}Q${P2(nx * 0.6, 4)} ${P2(nx * 0.6 + 1.2, 3.6)}" stroke="${DK}" stroke-width=".45" fill="none" opacity=".4"/><ellipse cx="${r(cx + nx * 0.6 - 0.2)}" cy="${r(cy + 4.4)}" rx=".8" ry=".25" fill="${HL}" opacity=".35"/>` +
-      `<ellipse cx="${r(cx + nx * 0.5)}" cy="${r(cy + 5)}" rx="1.4" ry=".8" fill="${HL}" opacity=".22"/><ellipse cx="${r(cx + 2.8)}" cy="${r(cy + 1.3)}" rx="1.6" ry="2.6" fill="${DK}" opacity=".26"/>` +
+      `<ellipse cx="${r(cx + nx * 0.5)}" cy="${r(cy + 5)}" rx="1.4" ry=".8" fill="${HL}" opacity=".22"/><ellipse cx="${r(cx + 2.8)}" cy="${r(cy + 1.3)}" rx="1.6" ry="2.6" fill="${DK}" opacity=".4"/>` +
       (alt ? `<path d="M${P2(-2.2, 5.6)}Q${P2(0, 6.8)} ${P2(2.4, 5.5)}" stroke="${DK}" stroke-width=".45" fill="none" opacity=".45"/>` : "");
   };
   const patina = (d, op = 0.5) => `<path d="${d}" fill="${PAT}" opacity="${op}"/>`;
@@ -470,18 +471,18 @@ const denkmalUnter = [];
     
     /* Strümpfe mit Wade; Spielbein (rechts) mit gebeugtem Knie schräg nach außen */
     g += F("M-6.6 -27 Q-7.8 -19 -6.3 -12 Q-5.4 -7.6 -5.2 -4.6 L-2.6 -4.6 Q-2.4 -8 -1.8 -12 Q-.2 -19 -1.4 -27 Z", BRZL);
-    g += F("M2.8 -27 L7.6 -27.6 Q9 -20 8.9 -13 Q9.2 -8.6 9.8 -5.2 L7.5 -5.2 Q6.6 -8.4 5.1 -12 Q1.7 -19 2.8 -27 Z", BRZL);
+    g += F("M2.8 -27 L7.6 -27.6 Q9 -20 8.9 -13 Q9.6 -8.6 10.8 -4.8 L8.5 -4.8 Q7 -8.4 5.1 -12 Q1.7 -19 2.8 -27 Z", BRZL);
     g += F("M-2.6 -24 Q-1.4 -18 -2.2 -11 Q-2.6 -7 -2.6 -4.8 L-3.6 -4.8 Q-3.4 -9 -3 -12 Q-2.3 -18 -2.6 -24 Z", DK, ' opacity=".35"') + F("M7.4 -25 Q8.4 -19 7.8 -12 Q7.6 -8 7.9 -5.4 L7 -5.4 Q6.8 -9 6.8 -12 Q7.4 -19 7.4 -25 Z", DK, ' opacity=".35"');
     g += kante("M-6.9 -24 Q-7.6 -18 -6.2 -12 Q-5.6 -8 -5.3 -5", 0.45) + kante("M3 -25 Q3.2 -19 5.2 -12.4", 0.45);
     /* Schnallenschuhe: links nach vorn, rechts nach außen gedreht */
-    g += F("M-6.4 0 Q-6.9 -2.9 -5.3 -4.9 L-2.4 -4.9 Q-.9 -3 -.8 0 Z", BRZ2) + F("M7.3 -5.4 L10 -5.4 Q11.8 -3.2 12.2 0 L6.7 0 Q6.1 -2.8 7.3 -5.4 Z", BRZ2);
-    g += `<rect x="-4.6" y="-4.1" width="1.9" height=".9" fill="${HL}"/><rect x="8" y="-4.4" width="1.9" height=".9" fill="${HL}"/>`;
+    g += F("M-6.4 0 Q-6.9 -2.9 -5.3 -4.9 L-2.4 -4.9 Q-.9 -3 -.8 0 Z", BRZ2) + F("M8.3 -5 L11 -5 Q12.8 -2.8 13.4 .5 L7.7 .5 Q7.1 -2.4 8.3 -5 Z", BRZ2);
+    g += `<rect x="-4.6" y="-4.1" width="1.9" height=".9" fill="${HL}"/><rect x="9" y="-4" width="1.9" height=".9" fill="${HL}"/>`;
     /* Kniehose: Bund unter dem Knie, Spielbein-Knie tiefer und nach außen */
     g += F("M-7.4 -58 L7.6 -58 Q8.4 -42 7.9 -28 L2.6 -27.2 Q1.6 -37 .3 -44 Q-.7 -37 -1.2 -27.4 L-6.8 -27.4 Q-7.8 -42 -7.4 -58 Z", BRZ);
     g += F("M-6.9 -28 L-1.2 -28 L-1.3 -27 L-6.8 -27 Z M2.6 -27.6 L7.9 -28.3 L8 -27.3 L2.7 -26.7 Z", BRZ);
     g += `<rect x="-2.4" y="-28" width=".6" height=".9" fill="${HL}" opacity=".5"/><rect x="6.6" y="-28.4" width=".6" height=".9" fill="${HL}" opacity=".5"/>`;
     g += bahn(.2, -44, .6, -28, .3, .8) + bahn(1.4, -40, 5.4, -30.4, -.8, 1) + bahn(-5.8, -52, -5.4, -32, .6, .9) + F("M5.6 -50 Q7.4 -40 7.4 -29 L6.2 -28.6 Q6.4 -40 5 -50 Z", DK, ' opacity=".35"');
-    g += kante("M-7.3 -55 Q-7.8 -42 -7 -29", 0.45) + `<ellipse cx="4.6" cy="-30.6" rx="1.6" ry="1.2" fill="${HL}" opacity=".3"/>`;
+    g += kante("M-7.3 -55 Q-7.8 -42 -7 -29", 0.45) + `<ellipse cx="3.3" cy="-30.8" rx=".35" ry="1.8" fill="${HL}" opacity=".45"/>`;
     /* lange Weste; Saum kippt mit der Hüfte (links höher) */
     g += F("M-6.2 -82 L6.2 -82 L6.9 -53.6 L4 -48.6 L0 -50.2 L-4 -49.6 L-6.8 -54.8 Z", BRZ2);
     for (let y = -79; y > -53; y -= 3.2) g += `<circle cx=".1" cy="${y}" r=".5" fill="${HL}" opacity=".7"/>`;
@@ -513,14 +514,15 @@ const denkmalUnter = [];
     /* Stiefel unter dem Rocksaum: Standbein senkrecht, Spielbein schräg nach außen mit gebeugtem Knie */
     g += F("M1.4 -23 L6.2 -23 Q6.7 -13 5.9 -5.2 L6.5 -1.2 Q6.7 0 5.6 0 L1.1 0 Q.5 -.6 1.3 -2.4 L1.9 -5.2 Q1.1 -13 1.4 -23 Z", BRZ2);
     /* hinterer Rockschoß zwischen den Beinen (hinten länger als vorn) */
-    g += F("M-12 -44 L12 -44 L13.8 -20.6 Q0 -18.8 -14.8 -19.6 Z", BRZ2);
-    g += F("M-6.6 -22.4 L-1.9 -22.4 Q-2.8 -13 -5.4 -6 L-5 -2 Q-5 0 -6.4 0 L-12 0 Q-12.4 -1.4 -10.2 -2.6 L-9.4 -6 Q-8.6 -14 -6.6 -22.4 Z", BRZ2, ' transform="translate(-.6 0)"');
+    g += F("M-12 -44 L12 -44 L14 -18.8 Q0 -17.4 -15 -17.8 Z", BRZ2);
+    g += F("M-6.6 -22.4 L-1.9 -22.4 Q-2.8 -13 -5.4 -6 L-5 -2 Q-5 0 -6.4 0 L-12 0 Q-12.4 -1.4 -10.2 -2.6 L-9.4 -6 Q-8.6 -14 -6.6 -22.4 Z", BRZ2, ' transform="translate(-1.6 .5)"');
     g += F("M4.8 -22 Q5.6 -13 4.9 -5.4 L5.9 -5.2 Q6.7 -13 6.2 -22 Z", DK, ' opacity=".4"') + F("M-3.2 -21.6 Q-4.4 -13 -6.4 -6.2 L-5.4 -6 Q-2.8 -13 -1.9 -22 Z", DK, ' opacity=".4"');
     g += kante("M1.7 -21 Q1.4 -13 2.2 -5.6", 0.45) + kante("M-6.4 -21 Q-8.2 -14 -9.1 -6.4", 0.45) + `<path d="M1.6 -12.6 L6.3 -12.6 M-8.4 -13 L-3.4 -12.4" stroke="${HL}" stroke-width=".55" opacity=".6"/>`;
     /* Hose zwischen den offenen Rockflügeln */
     /* zwei Hosenbeine in der Öffnung bis unter das Knie: Spielbein (links) mit Knie nach vorn-außen */
-    g += F("M-7.2 -60 L.6 -60 L-.6 -42 Q-1 -30 -1.8 -22.2 L-7.4 -22.2 Q-8 -30 -7.6 -42 Z", BRZL) + F("M-.2 -60 L7.4 -60 Q7.6 -40 6.8 -22.8 L1.2 -22.8 Q1 -40 -.2 -60 Z", BRZL);
-    g += F("M3.6 -52 L7.4 -52 Q7.6 -40 6.8 -22.8 L4.6 -22.8 Q5 -40 3.6 -52 Z", DK, ' opacity=".32"') + `<ellipse cx="-4.6" cy="-28.6" rx="1.8" ry="1.4" fill="${HL}" opacity=".35"/>`;
+    const HOSE = S.lg("hose", [[0, "#c2b27c"], [0.45, "#9a8a5a"], [1, "#4e4532"]], 0, 0, 1, 0);
+    g += F("M-7.2 -60 L.6 -60 L-.6 -42 Q-1 -30 -1.8 -22.2 L-7.4 -22.2 Q-8 -30 -7.6 -42 Z", HOSE) + F("M-.2 -60 L7.4 -60 Q7.6 -40 6.8 -22.8 L1.2 -22.8 Q1 -40 -.2 -60 Z", HOSE);
+    g += F("M3.6 -52 L7.4 -52 Q7.6 -40 6.8 -22.8 L4.6 -22.8 Q5 -40 3.6 -52 Z", DK, ' opacity=".32"') + `<ellipse cx="-6.9" cy="-29.4" rx=".35" ry="2" fill="${HL}" opacity=".45"/>`;
     g += bahn(-1.6, -40, -4.4, -28, .5, .8) + kante("M-5 -54 Q-5.4 -38 -5.2 -23", 0.4);
     /* Weste mit Knöpfen, offener Hemdkragen (Bronze, nicht hell) */
     g += F("M-5.6 -82 L5.6 -82 L5.4 -56.6 Q2.6 -54.4 0 -55.6 Q-2.6 -55 -5.6 -57.6 Z", BRZ2);
@@ -529,9 +531,9 @@ const denkmalUnter = [];
     g += F("M-3.4 -87.4 L0 -81.4 L-.8 -86.4 Z", "#c9b884") + F("M3.4 -87.4 L0 -81.4 L.8 -86.4 Z", "#8f8058") + patina("M-.9 -86.2 L0 -82.2 L.9 -86.2 Z", 0.55);
     /* der lange Rock als geschlossene Form: Schultern, Revers, Taille, ausgestellter Saum bis unter das Knie (Saum kippt) */
     /* Gehrock: breite Schultern, vorn offen (Kanten laufen von der Brust schräg nach außen), vorn bis zum Knie, seitlich bis zur Wade */
-    const RK = "M-3.2 -86.8 Q-8.8 -86.8 -11.6 -84.6 Q-13.4 -82.6 -12.9 -78 L-11.4 -66 Q-10.4 -60.6 -10.2 -57.4 Q-13.4 -40 -15 -19.6 Q-12.2 -22 -9.8 -29.6 L-5.4 -58 L-6 -73.6 L-2.2 -82 L2.2 -82 L6 -73.6 L5.4 -58 L10.2 -30.6 Q12.4 -23 14.6 -21 Q13 -40 10 -57.4 Q10.4 -60.6 11.2 -66 L12.8 -78 Q13.2 -82.6 11.4 -84.6 Q8.6 -86.8 3.2 -86.8 Q0 -88.6 -3.2 -86.8 Z";
+    const RK = "M-3.2 -86.8 Q-8.8 -86.8 -11.6 -84.6 Q-13.4 -82.6 -12.9 -78 L-11.4 -66 Q-10.4 -60.6 -10.2 -57.4 Q-13.6 -40 -15.2 -17.6 Q-12.2 -21 -9.8 -29.6 L-5.4 -58 L-6 -73.6 L-2.2 -82 L2.2 -82 L6 -73.6 L5.4 -58 L10.2 -30.6 Q12.4 -22 14.8 -19 Q13 -40 10 -57.4 Q10.4 -60.6 11.2 -66 L12.8 -78 Q13.2 -82.6 11.4 -84.6 Q8.6 -86.8 3.2 -86.8 Q0 -88.6 -3.2 -86.8 Z";
     g += F(RK, BRZ);
-    g += F("M6.4 -82 Q11.6 -82 12 -76 L10.6 -64 Q9.8 -60 9.4 -57.6 Q12 -40 13.2 -21.6 L14.6 -21 Q13 -40 10 -57.4 Q10.4 -60.6 11.2 -66 L12.8 -78 Q13.2 -82.6 11.4 -84.6 Z", DK, ' opacity=".38"');
+    g += F("M6.4 -82 Q11.6 -82 12 -76 L10.6 -64 Q9.8 -60 9.4 -57.6 Q12 -40 13.4 -19.6 L14.8 -19 Q13 -40 10 -57.4 Q10.4 -60.6 11.2 -66 L12.8 -78 Q13.2 -82.6 11.4 -84.6 Z", DK, ' opacity=".38"');
     /* Revers: links im Licht, rechts im Schatten */
     g += F("M-2.2 -82 L-6 -73.6 L-5 -64 L-7.4 -75 L-3 -84.4 Z", "#b0a170") + F("M2.2 -82 L6 -73.6 L5 -64 L7.4 -75 L3 -84.4 Z", "#3a3424");
     g += bahn(-11.4, -54, -13.8, -21, -.6, 1.2) + bahn(-8.4, -48, -10.6, -26, -.3, 1) + bahn(10.6, -54, 12.8, -22.4, .6, 1.2) + bahn(8.2, -46, 10, -28, .3, .9);
@@ -945,8 +947,12 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
   const kette = `<path d="M${r(hx - 2.3)} ${r(hy + 3.8)} Q${r(hx)} ${r(hy + 10.4)} ${r(hx + 2.3)} ${r(hy + 3.8)}" stroke="#c4a86a" stroke-width=".45" fill="none"/>` +
     [[-1.9, 5.8], [-1.1, 7.2], [0, 7.9], [1.1, 7.2], [1.9, 5.8], [0, 9.3]].map(([dx, dy], i) => `<use href="#${S.id("knolle")}" fill="url(#${S.id(i % 2 ? "zwrot" : "zwgelb")})" transform="translate(${r(hx + dx)} ${r(hy + dy)}) scale(1.05)"/>`).join("") +
     `<circle cx="${r(hx - 0.5)}" cy="${r(hy + 8.4)}" r=".35" fill="#e8c34a"/><circle cx="${r(hx + 0.6)}" cy="${r(hy + 8.6)}" r=".35" fill="#c9354a"/>`;
+  /* Kindergesicht: Hautschatten an Mund und Kinn halb aufhellen, Wangen röter */
+  const kp = (n) => { const q = KI.p({ x: KI.m.z.punkte[n][0], y: KI.m.z.punkte[n][1] }); return [r(q.x - KI.x), r(q.y - KI.y)]; }, KR2 = 10.5 * KI.m.k * KI.s;
+  const [mx2, my2] = kp("mund"), [kx2, ky2] = kp("kinn"), [wx2, wy2] = kp("wange");
+  const kindGesicht = `<ellipse cx="${r((mx2 + kx2) / 2)}" cy="${r((my2 + ky2) / 2)}" rx="${r(KR2 * 0.26)}" ry="${r(KR2 * 0.17)}" fill="#f1ceb0" opacity=".4"/><ellipse cx="${wx2}" cy="${wy2}" rx="${r(KR2 * 0.16)}" ry="${r(KR2 * 0.11)}" fill="#e8907e" opacity=".45"/>`;
   S.teil({ id: "familie", de: "die Familie", syl: "fa-MI-lie", it: "la famiglia", itSyl: "fa-MI-glia", en: "family", x: KI.x, y: KI.y,
-    kunst: `<g transform="translate(${r(MU.x - KI.x)} ${r(MU.y - KI.y)})">${MU.svg}</g>${armZopf}${KI.svg}${kette}`,
+    kunst: `<g transform="translate(${r(MU.x - KI.x)} ${r(MU.y - KI.y)})">${MU.svg}</g>${armZopf}${KI.svg}${kindGesicht}${kette}`,
     tipp: "Mutter und Kind kommen Hand in Hand vom Zwiebelmarkt. Das Kind trägt einen kleinen Zwiebelzopf als Kette." });
 }
 

@@ -74,6 +74,7 @@ const r = B.r;
 const HOR = 112, F = 178, CX = 200;
 const um = (ox, oy, svg) => `<g transform="translate(${r(-ox)} ${r(-oy)})">${svg}</g>`;
 const P = (pts, zu = true) => "M" + pts.map(([x, y]) => r(x) + " " + r(y)).join(" L") + (zu ? " Z" : "");
+const Pr = (pts, zu = true) => { let o = "", px = 0, py = 0; pts.forEach(([x, y], i) => { const X0 = r(x), Y0 = r(y); o += i ? `l${r(X0 - px)} ${r(Y0 - py)}` : `M${X0} ${Y0}`; px = X0; py = Y0; }); return (o + (zu ? "z" : "")).replace(/ -/g, "-"); };
 const glatt = (pts, zu = true, k = 1) => {
   let d = `M${r(pts[0][0])} ${r(pts[0][1])}`;
   const n = pts.length, q = (i) => pts[zu ? (i + n) % n : Math.max(0, Math.min(n - 1, i))];
@@ -167,7 +168,8 @@ const volumen = (name, licht, schat, dx = 0.35, a1 = 0.75, a2 = 0.35) => {
 };
 const VOL = volumen("vol", "#ffe2b0", "#1b2433", 0.6, 0.8, 0.35);
 /* Figuren: warmer Lichtsaum rechts (Sonne hinten rechts, 9° hoch) */
-const VOL_FIG = volumen("volfig", "#ffbe78", "#1b2433", 0.9, 0.85, 0.35);
+S.def(`<filter id="${S.id("volfig")}" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB"><feOffset in="SourceAlpha" dx="-.7" dy="0" result="v1"/><feOffset in="SourceAlpha" dx="-4" dy="0" result="v2"/><feComposite in="SourceAlpha" in2="v1" operator="out" result="k1"/><feComposite in="k1" in2="v2" operator="out" result="kante"/><feFlood flood-color="#ffbe78" flood-opacity=".85"/><feComposite in2="kante" operator="in" result="l"/><feOffset in="SourceAlpha" dx="1.2" dy="0" result="w"/><feComposite in="SourceAlpha" in2="w" operator="out" result="kante2"/><feFlood flood-color="#1b2433" flood-opacity=".3"/><feComposite in2="kante2" operator="in" result="s"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="s"/><feMergeNode in="l"/></feMerge></filter>`);
+const VOL_FIG = `url(#${S.id("volfig")})`;   /* Lichtsaum nur an äußeren rechten Kanten (Spalten zwischen den Beinen bleiben dunkel), oben kein Saum */
 const VOL_KLEIN = volumen("volklein", "#ffe6bb", "#1b2433", 0.25, 0.8, 0.3);
 /* Herbstlaub als unregelmäßige Kachel (Kronen mit Lichtseite rechts) */
 const kronen = (w, h, n, seed, rmin, rmax, farben) => {
@@ -391,15 +393,23 @@ const AM = {};
   k += `<path d="${P(kr, false)}" stroke="#7fae9e" stroke-width=".5" fill="none"/>`;
   /* Gischt am Fuß */
   k += `<g filter="url(#${S.id("weich")})">${fl.map(([x, y], i) => `<ellipse cx="${r(x + 2)}" cy="${r(y - 2.5)}" rx="${r(4 + (i % 2) * 2)}" ry="1.8" fill="#fff" opacity=".7"/>`).join("")}</g>`;
-  /* Luna Island (Bäume) und der Brautschleier rechts daneben */
-  const [lx, ly] = W(708, 390, 3);
-  k += `<path d="M${r(lx - 4)} ${r(ly + 0.4)} Q${r(lx - 3)} ${r(ly - 5)} ${r(lx)} ${r(ly - 5.4)} Q${r(lx + 3)} ${r(ly - 5)} ${r(lx + 3.6)} ${r(ly + 0.4)} Z" fill="#c8572a"/><path d="M${r(lx - 1)} ${r(ly - 4.6)} q2 -.8 3.6 .6" stroke="#ffd79a" stroke-width=".5" fill="none" opacity=".7"/>`;
-  /* Felswand von Luna Island hinter dem Brautschleier (sonst schaut der Himmel durch) */
-  k += `<path d="${P([W(712, 400, 3), W(696, 360, 3), W(690, 350, -44), W(706, 400, -44)])}" fill="${S.lg("lunafels", [[0, "#a08a68"], [1, "#6f6252"]])}"/><path d="${P([W(711, 398, -6), W(697, 362, -6)], false)} ${P([W(709, 396, -18), W(694, 358, -18)], false)}" stroke="#5a4e40" stroke-width=".25" opacity=".7"/>`;
-  const bv = [W(700, 370, 3), W(704, 382, 3)], bvU = [W(696, 370, -24), W(700, 382, -24)];
-  k += `<path d="${P([bv[0], bv[1], bvU[1], bvU[0]])}" fill="${S.lg("brautschleier", [[0, "#fffaf0"], [1, "#e6ebea"]])}"/>`;
+  /* Luna Island: kleiner Felsklotz mit Herbstbäumen; rechts davon der Brautschleier als schmaler Fall in voller Höhe,
+     dahinter die Felswand von Goat Island */
+  const fels = (pts, c0, c1) => `<path d="${P(pts)}" fill="${S.lg(c0 + c1, [[0, c0], [1, c1]], 0, 0, 1, 0)}"/>`;
+  k += fels([W(699, 372, 5), W(695, 362, 6.5), W(691, 354, 5.5), W(689, 350, -30), W(694, 360, -36), W(697, 372, -35)], "#7d6c56", "#a08a6a");
+  k += `<path d="${P([W(698, 370, -6), W(692, 356, -5)], false)} ${P([W(697, 369, -18), W(691, 354, -17)], false)}" stroke="#56493b" stroke-width=".22" opacity=".7" fill="none"/>`;
+  k += fels([W(712, 400, 3), W(707, 389, 4), W(704, 387, -35), W(710, 400, -35)], "#8f7b5e", "#b39a74");
+  k += `<path d="${P([W(711, 398, -8), W(707, 389, -6)], false)} ${P([W(710, 397, -20), W(705, 388, -21)], false)}" stroke="#5a4e40" stroke-width=".22" opacity=".7" fill="none"/>`;
+  for (const [E, N, c0, c1] of [[711, 397, "#b4421c", "#e07a3a"], [708, 391, "#cf9a34", "#f4cc6a"], [704, 381, "#c8702a", "#f0a850"], [701, 374, "#7f7e34", "#b0ae58"], [696, 364, "#c8702a", "#f0a850"], [692, 356, "#9c3418", "#d4643a"]]) {
+    const [x, y] = W(E, N, 12);
+    k += `<g fill="${c0}"><circle cx="${r(x - 0.7)}" cy="${r(y + 0.3)}" r="1.1"/><circle cx="${r(x + 0.6)}" cy="${r(y)}" r="1.2"/><circle cx="${r(x)}" cy="${r(y - 0.8)}" r="1"/></g><circle cx="${r(x + 0.5)}" cy="${r(y - 0.7)}" r=".6" fill="${c1}" opacity=".7"/>`;
+  }
+  const bv = [W(706, 388, 3), W(700, 373, 4)], bvU = [W(703, 388, -35), W(697, 373, -35)];
+  k += `<path d="${P([bv[0], bv[1], bvU[1], bvU[0]])}" fill="${S.lg("brautschleier", [[0, "#fffaf0"], [0.7, "#f6f3ec"], [1, "#e6ebea"]], 0, 0, 0, 1)}"/>`;
+  { let st = ""; for (const t of [0.18, 0.4, 0.62, 0.84]) { const a0 = [bv[0][0] + (bv[1][0] - bv[0][0]) * t, bv[0][1] + (bv[1][1] - bv[0][1]) * t], a1 = [bvU[0][0] + (bvU[1][0] - bvU[0][0]) * t, bvU[0][1]]; st += `M${r(a0[0])} ${r(a0[1] + 0.4)}L${r(a1[0])} ${r(a1[1] - 1)}`; } k += `<path d="${st}" stroke="#c9d3d6" stroke-width=".22" opacity=".8"/>`; }
+  k += `<g filter="url(#${S.id("weich")})"><ellipse cx="${r((bvU[0][0] + bvU[1][0]) / 2)}" cy="${r(bvU[0][1])}" rx="4" ry="1.6" fill="#fff" opacity=".85"/></g>`;
   /* Stege der Cave of the Winds am Fuß des Brautschleiers mit Besuchern in gelben Capes */
-  const [sx, sy] = W(686, 372, -30);
+  const [sx, sy] = W(690, 366, -30);
   k += `<path d="M${r(sx - 6)} ${r(sy)} h8 v.6 h-8 Z M${r(sx - 3)} ${r(sy - 2.4)} h6 v.5 h-6 Z" fill="#9a7a4a"/>`;
   for (let i = 0; i < 5; i++) k += `<path d="M${r(sx - 5.4 + i * 1.6)} ${r(sy - 0.1)} l.35 -1.2 l.35 1.2 Z" fill="#f2d02c"/>`;
   AM.brautschleier = [(bv[0][0] + bv[1][0]) / 2, bv[0][1] + (bvU[0][1] - bv[0][1]) * 0.8];
@@ -446,6 +456,7 @@ const HU = {};
   seg.sort((p, q) => q.d - p.d);
   let kHaupt = "";
   const nahSeg = [];
+  let schaumFern = "";
   for (const sg of seg) {
     if (sg.pA[0] > 336 && kHaupt === "") { kHaupt = k; k = ""; }
     const L = sg.licht, g = sg.g, h = sg.uA[1] - sg.pA[1];
@@ -462,13 +473,15 @@ const HU = {};
       const t0 = t, t1 = Math.min(1, t + (0.2 + Math.pow(zw(), 1.4) * 0.9) / n), q = (t, v) => [sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t + (sg.uA[0] + (sg.uB[0] - sg.uA[0]) * t - (sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t)) * v, sg.pA[1] + (sg.pB[1] - sg.pA[1]) * t + h * v];
       const lang = 0.55 + zw() * 0.4, v0 = 0.06 + g * 0.18;
       const a1 = q(t0, v0), a2 = q(t1, v0), b1 = q(t0 - 0.08, lang), b2 = q(t1 + 0.12, lang), sp = q((t0 + t1) / 2, lang + 0.08);
-      hell += `M${r(a1[0])} ${r(a1[1])} L${r(a2[0])} ${r(a2[1])} L${r(b2[0])} ${r(b2[1])} L${r(sp[0])} ${r(sp[1])} L${r(b1[0])} ${r(b1[1])} Z`;
+      hell += `M${r(a1[0])} ${r(a1[1])} L${r(a2[0])} ${r(a2[1])} L${r(b2[0])} ${r(b2[1])} L${r(b1[0])} ${r(b1[1])} Z`;
       const c1 = q(t1 + 0.04, v0 + 0.05), c2 = q(t1 + 0.12, v0 + 0.05), d2 = q(t1 + 0.12, lang * 0.8);
       spalt += `M${r(c1[0])} ${r(c1[1])} L${r(c2[0])} ${r(c2[1])} L${r(d2[0])} ${r(d2[1])} Z`;
       t = t1 + (0.12 + zw() * 0.8) / n;
     }
     /* rechts im Dunst verschwinden die Stränge fast */
     const dunstF = Math.max(0.2, Math.min(1, 1 - (sg.pA[0] - 285) / 45));
+    /* Fuß des Falls: ein durchgehender, weicher Schaumstreifen statt einzelner Spitzen */
+    if (n) { const fq = (t, v) => [sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t + (sg.uA[0] + (sg.uB[0] - sg.uA[0]) * t - (sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t)) * v, sg.pA[1] + (sg.pB[1] - sg.pA[1]) * t + h * v]; schaumFern += P([fq(-0.05, 0.5), fq(1.05, 0.5), fq(1.05, 1), fq(-0.05, 1)]); }
     if (n) k += `<path d="${spalt}" fill="${L > 0.3 ? "#b9c8cc" : "#90a6b2"}" opacity="${r(0.45 * dunstF)}"/><path d="${hell}" fill="#ffffff" opacity="${r((L > 0.3 ? 0.55 : 0.38) * dunstF)}"/>`;
     /* glasige Kante: helle Lichtlinie auf der Kante, darunter der dunkle Bogen des überkippenden Wassers */
     if (g > 0.2 && h < 60) k += `<path d="M${r(sg.pA[0])} ${r(sg.pA[1] + h * 0.05)} L${r(sg.pB[0])} ${r(sg.pB[1] + h * 0.05)}" stroke="#1e5c48" stroke-width=".5" opacity="${r(g * 0.6)}"/>`;
@@ -500,7 +513,7 @@ const HU = {};
       /* Strang: oben glatt, ab etwa halber Höhe in 2–3 Fasern aufgelöst */
       const ym = yt + h * (0.38 + zs() * 0.18), dr = (zs() - 0.4) * 1.2, ys = yt + h * Math.pow(zs(), 1.5) * 0.22;
       const kb = Math.floor((x - x0) / 7);
-      str[kb] = (str[kb] || "") + `M${r(x + 0.2)} ${r(ys)} h${r(b * 0.6)} L${r(x + b + dr + 0.3)} ${r(ym)} L${r(x + dr - 0.3)} ${r(ym)} Z`;
+      str[kb] = (str[kb] || "") + `M${r(x + b * 0.38)} ${r(yt - 1.4)} h${r(b * 0.26)} L${r(x + b + dr + 0.3)} ${r(ym)} L${r(x + dr - 0.3)} ${r(ym)} Z`;
       const nf = b > 1.4 ? 3 : 2;
       for (let f = 0; f < nf; f++) {
         const fx = x + dr - 0.3 + (b + 0.6) * (f + 0.5) / nf, fl = h * (0.25 + zs() * 0.3), fw = (b + 0.6) / nf * (0.5 + zs() * 0.3);
@@ -513,7 +526,7 @@ const HU = {};
     let strS = "";
     for (const kb of Object.keys(str)) {
       const xm = x0 + kb * 7 + 3.5, yt = top(xm) + 3.4, h = bot(xm) - yt;
-      S.def(`<linearGradient id="${S.id("strang" + kb)}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(yt)}" x2="0" y2="${r(yt + h * 0.5)}"><stop offset="0" stop-color="#ffffff" stop-opacity=".08"/><stop offset=".45" stop-color="#ffffff" stop-opacity=".45"/><stop offset="1" stop-color="#ffffff" stop-opacity=".9"/></linearGradient>`);
+      S.def(`<linearGradient id="${S.id("strang" + kb)}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(yt - 1.4)}" x2="0" y2="${r(yt + h * 0.5)}"><stop offset="0" stop-color="#ffffff" stop-opacity="0"/><stop offset=".35" stop-color="#ffffff" stop-opacity=".35"/><stop offset="1" stop-color="#ffffff" stop-opacity=".9"/></linearGradient>`);
       strS += `<path d="${str[kb]}" fill="url(#${S.id("strang" + kb)})"/>`;
     }
     n += `<g mask="url(#${S.id("nahm")})">${gr}</g>`;
@@ -533,6 +546,7 @@ const HU = {};
     k += n;
     HU.lippe = [369, top(369) + 1.8];
   }
+  kHaupt += `<g filter="url(#${S.id("dunst")})"><path d="${schaumFern}" fill="#f7f5ef" opacity=".85"/></g>`;
   const kante = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, 0.4)).filter(([x]) => x < 440);
   let kNah = k + `<path d="${P(kante.filter(([x]) => x >= 330), false)}" stroke="#f4fff8" stroke-width=".6" fill="none" opacity=".9"/>`;
   kNah += `<g filter="url(#${S.id("nebel2")})"><path d="M330 190 Q360 170 404 176 L404 224 L336 224 Z" fill="#f2f3f0" opacity=".85"/></g>`;
@@ -705,7 +719,7 @@ const BOOT = {};
 const blatt = (x, y, s, w, farbe, ader = "#7a1a10") => {
   const pts = [[0, -1], [0.18, -0.62], [0.42, -0.72], [0.36, -0.42], [0.82, -0.5], [0.68, -0.22], [0.98, 0.02], [0.6, 0.12], [0.62, 0.36], [0.3, 0.26], [0.1, 0.5], [0.04, 0.5], [0.04, 0.9], [-0.04, 0.9], [-0.04, 0.5], [-0.1, 0.5], [-0.3, 0.26], [-0.62, 0.36], [-0.6, 0.12], [-0.98, 0.02], [-0.68, -0.22], [-0.82, -0.5], [-0.36, -0.42], [-0.42, -0.72], [-0.18, -0.62]];
   const c = Math.cos(w), sn = Math.sin(w), T = ([a, b]) => [x + (a * c - b * sn) * s, y + (a * sn + b * c) * s];
-  let o = `<path d="${P(pts.map(T))}" fill="${farbe}"/>`;
+  let o = `<path d="${Pr(pts.map(T))}" fill="${farbe}"/>`;
   const [ax, ay] = T([0, 0.5]);
   for (const q of [[0, -0.9], [0.86, -0.4], [-0.86, -0.4], [0.84, 0.06], [-0.84, 0.06]]) { const [bx, by] = T(q); o += `M${r(ax)} ${r(ay)} L${r(bx)} ${r(by)}`; }
   return o.replace(/(M[\d.-]+ [\d.-]+ L[\d.-]+ [\d.-]+)+$/, (m) => `<path d="${m}" stroke="${ader}" stroke-width="${r(s * 0.05)}" opacity=".6"/>`);
@@ -897,7 +911,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   /* Horizontregel: Kamera-Auge 1,6 m, die beiden stehen ≈ 1,9 m vor uns auf derselben Promenade.
      Der Erwachsene (1,78 m) hat die Augen auf dem Horizont (y 112), das Kind (≈ 1,45 m) knapp 25 Einheiten tiefer. */
   /* Tourist: hält das Handy mit der rechten Hand quer zur Seite hoch, Rücken zu uns */
-  const T = { x: 80, y: 264 };
+  const T = { x: 89, y: 264 };
   const poseFoto = { lende: 1, brust: -2, nacken: 2, kopf: -6, schulterL: { vor: 6, seit: 9 }, ellbogenL: 18, unterarmL: 10, handL: 6, fingerL: 0.45,
     schulterR: { vor: 78, seit: 40 }, ellbogenR: 22, unterarmR: 0, handR: 0, fingerR: 1,
     huefteL: { vor: 4, seit: 4, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -4, seit: 4, dreh: -6 }, knieR: 2, fussR: 0 };
@@ -916,7 +930,12 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
     /* Handy quer: wir sehen die Rückseite; die Finger liegen als eine Form hinten auf, der Daumen schaut oben vor */
     const hx = hrx + 1.5, hy = hry - 2.5, w = 14, h = 7;
     kt += `<rect x="${r(hx - w + 3)}" y="${r(hy - h / 2)}" width="${w}" height="${h}" rx="1.2" fill="#24272e"/><path d="M${r(hx + 3)} ${r(hy - h / 2 + 1)} v${h - 2}" stroke="#ffd9a0" stroke-width=".6" opacity=".8"/>`;
-    kt += `<rect x="${r(hx - w + 4.2)}" y="${r(hy - h / 2 + 1)}" width="3.2" height="2.2" rx=".7" fill="#3b3f48"/><circle cx="${r(hx - w + 5.2)}" cy="${r(hy - h / 2 + 2.1)}" r=".6" fill="#0d0f13"/>`;
+    /* wir sehen den Bildschirm (er fotografiert die Fälle): eine Mini-Ansicht mit Gischt und Regenbogen */
+    { const sx = hx - w + 3.7, sy = hy - h / 2 + 0.7, sw = w - 7.6, sh = h - 1.4;
+      kt += `<rect x="${r(sx)}" y="${r(sy)}" width="${r(sw)}" height="${r(sh)}" rx=".4" fill="${S.lg("handysicht", [[0, "#6f9fd0"], [0.55, "#c9d6e2"], [0.62, "#3f8079"], [1, "#2d6a64"]], 0, 0, 0, 1)}"/>`;
+      kt += `<path d="M${r(sx + sw * 0.45)} ${r(sy + sh * 0.62)} q${r(sw * 0.15)} ${r(-sh * 0.55)} ${r(sw * 0.45)} ${r(-sh * 0.4)} v${r(sh * 0.55)} Z" fill="#f4f1ea" opacity=".9"/>`;
+      kt += `<path d="M${r(sx + sw * 0.3)} ${r(sy + sh * 0.62)} q${r(sw * 0.1)} ${r(-sh * 0.5)} ${r(sw * 0.32)} ${r(-sh * 0.62)}" stroke="#e8402a" stroke-width=".3" fill="none"/><path d="M${r(sx + sw * 0.34)} ${r(sy + sh * 0.62)} q${r(sw * 0.09)} ${r(-sh * 0.45)} ${r(sw * 0.3)} ${r(-sh * 0.56)}" stroke="#f5e04a" stroke-width=".25" fill="none"/><path d="M${r(sx + sw * 0.38)} ${r(sy + sh * 0.62)} q${r(sw * 0.08)} ${r(-sh * 0.4)} ${r(sw * 0.28)} ${r(-sh * 0.5)}" stroke="#3a8ae0" stroke-width=".25" fill="none"/>`;
+      kt += `<path d="M${r(sx)} ${r(sy + 0.3)} h${r(sw)}" stroke="#fff" stroke-width=".25" opacity=".5"/>`; }
     /* Finger (Rücken der Hand, eine Form) und Daumen oben */
     kt += `<path d="M${r(hx - 3.4)} ${r(hy - 2.6)} Q${r(hx - 4.4)} ${r(hy)} ${r(hx - 3)} ${r(hy + 3.4)} L${r(hx + 1.6)} ${r(hy + 4.4)} Q${r(hx + 4.2)} ${r(hy + 2)} ${r(hx + 3.4)} ${r(hy - 2.4)} Q${r(hx)} ${r(hy - 3.6)} ${r(hx - 3.4)} ${r(hy - 2.6)} Z" fill="#b98a66"/>`;
     kt += `<path d="M${r(hx - 3.2)} ${r(hy - 0.8)} h3.8 M${r(hx - 3)} ${r(hy + 1.2)} h3.8" stroke="#8a5f42" stroke-width=".35" opacity=".7"/><path d="M${r(hx + 3.4)} ${r(hy - 2)} Q${r(hx + 4.1)} ${r(hy + 0.4)} ${r(hx + 1.8)} ${r(hy + 4)}" stroke="#ffd2a0" stroke-width=".6" fill="none" opacity=".85"/>`;
@@ -926,7 +945,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: T.x, y: T.y - 90, kunst: um(T.x, T.y - 90, kt),
     tipp: "Jedes Jahr kommen Millionen Menschen zu den Niagarafällen. Fast alle machen hier ein Foto." });
   /* Kind: rotes Regencape mit Kapuze, nass glänzend, zeigt mit dem rechten Arm zum Regenbogen */
-  const K = { x: 134, y: 263 };
+  const K = { x: 140, y: 263 };
   const poseZeig = { lende: 1, brust: -2, nacken: 2, kopf: -10, schulterL: { vor: 6, seit: 10 }, ellbogenL: 14, unterarmL: 0, handL: 0, fingerL: 0.4, schulterR: { vor: 118, seit: 40 }, ellbogenR: 6, unterarmR: 0, handR: 40, fingerR: "zeigen",
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
   const mk = fig({ id: "kan_kind", geschlecht: "w", alter: "kind", pose: poseZeig, blick: 145, frisur: "zopf", haarfarbe: "braun", haut: "hell",
@@ -936,7 +955,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   const xa = Math.min(slx, srx) - 4, xb = Math.max(slx, srx) + 4, yu = kny - 4, cx = (stx + hkx) / 2 - 0.6, br = Math.abs(stx - hkx) / 2 + 3.8, ky = sy - 2.6;
   const al = Math.hypot(ex - srx, ey - sry), on = [(ey - sry) / al * 2.6, -(ex - srx) / al * 2.6];   /* Oberseite des gehobenen Arms */
   /* Cape: Kapuze rund um den Kopf, über dem gehobenen Arm eine Zeltfalte bis zum Ellbogen, unten weiter Saum */
-  const capeD = `M${r(cx - br)} ${r(hy2 - 1)} C${r(cx - br - 0.4)} ${r(ky + 3)} ${r(cx - br * 0.55)} ${r(ky)} ${r(cx)} ${r(ky)} C${r(cx + br * 0.6)} ${r(ky)} ${r(cx + br + 0.6)} ${r(ky + 3)} ${r(cx + br)} ${r(hy2 - 1)} Q${r(srx - 1)} ${r(sry - 2)} ${r(srx + on[0])} ${r(sry + on[1])} L${r(ex + on[0])} ${r(ey + on[1])} Q${r(ex + 2.6)} ${r(ey)} ${r(ex + 1.6)} ${r(ey + 2.4)} Q${r(xb + 3)} ${r(sly + 18)} ${r(xb + 3)} ${r(yu)} Q${r((xa + xb) / 2)} ${r(yu + 3)} ${r(xa - 3)} ${r(yu)} Q${r(xa - 2)} ${r(sly + 4)} ${r(slx - 1.5)} ${r(sly - 0.5)} Q${r(cx - br - 1)} ${r(hy2 + 1)} ${r(cx - br)} ${r(hy2 - 1)} Z`;
+  const capeD = `M${r(cx - br)} ${r(hy2 - 1)} C${r(cx - br - 0.4)} ${r(ky + 3)} ${r(cx - br * 0.55)} ${r(ky)} ${r(cx)} ${r(ky)} C${r(cx + br * 0.6)} ${r(ky)} ${r(cx + br + 0.6)} ${r(ky + 3)} ${r(cx + br)} ${r(hy2 - 1)} Q${r(srx - 1)} ${r(sry - 2)} ${r(srx + on[0])} ${r(sry + on[1])} L${r(ex + on[0])} ${r(ey + on[1])} Q${r(ex + 2.6)} ${r(ey)} ${r(ex + 1.6)} ${r(ey + 2.4)} Q${r(xb + 3)} ${r(sly + 18)} ${r(xb + 3)} ${r(yu + 2.4)} C${r(xb - 2)} ${r(yu + 4)} ${r(xb - 6)} ${r(yu + 0.6)} ${r((xa + xb) / 2 + 1)} ${r(yu + 1.6)} C${r(xa + 4)} ${r(yu + 2.8)} ${r(xa)} ${r(yu - 0.6)} ${r(xa - 3)} ${r(yu - 0.8)} Q${r(xa - 2)} ${r(sly + 4)} ${r(slx - 1.5)} ${r(sly - 0.5)} Q${r(cx - br - 1)} ${r(hy2 + 1)} ${r(cx - br)} ${r(hy2 - 1)} Z`;
   let cape = `<path d="${capeD}" fill="${S.lg("kindcape", [[0, "#8e141c"], [0.55, "#cf1f28"], [1, "#e64a38"]], 0, 0, 1, 0)}" opacity=".95"/>`;
   /* Kapuze: Rundung mit hellem Rand oben rechts, Schattenkante am Hals */
   cape += `<path d="M${r(cx - br * 0.2)} ${r(ky + 0.7)} C${r(cx + br * 0.6)} ${r(ky + 0.6)} ${r(cx + br + 0.2)} ${r(ky + 5)} ${r(cx + br - 0.6)} ${r(hy2 - 1)}" stroke="#ff9a82" stroke-width=".9" fill="none" opacity=".8" stroke-linecap="round"/>`;
@@ -961,5 +980,11 @@ S.davor(`<rect width="400" height="260" fill="${S.rg("abendlicht", [[0, "#ffb860
 
 const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang || /[À-ÖÙ-Ý]/.test(x)) ? x : x.toLowerCase()))).join(""); };
 for (const t of S.teile) for (const u of [t, ...(t.unter || [])]) { u.syl = silben(u.syl); u.itSyl = silben(u.itSyl); }
+/* Zahlen in Pfaden knapp schreiben (0.5 → .5, kein Leerzeichen vor dem Minus) — spart Ladezeit, ändert nichts am Bild */
+{
+  const knapp = (t) => t.replace(/ d="([^"]*)"/g, (m0, d) => ` d="${d.replace(/(^|[\s,a-zA-Z-])0\.(\d)/g, "$1.$2").replace(/ -/g, "-").replace(/([a-zA-Z]) /g, "$1")}"`);
+  for (const t of S.teile) { t.kunst = knapp(t.kunst || ""); for (const u of t.unter || []) u.kunst = knapp(u.kunst || ""); }
+  S.defs.forEach((d, i) => { S.defs[i] = knapp(d); });
+}
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/kanada.js"));
 console.log(aus);

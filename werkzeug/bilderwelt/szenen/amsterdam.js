@@ -254,6 +254,8 @@ const RECHTS = zeile(1, 31), LINKS = zeile(-1, 77);
   const neu = fest.map(([typ, d0, d1, farbe, ziegel], i) => ({ d0, d1, w: d1 - d0, typ, He: [14.6, 13.4, 13.8, 15.2, 13.2][i], Ht: [20.4, 19.6, 19.2, 16.3, 19.4][i], farbe, ziegel, n: d1 - d0 > 6.4 ? 3 : 2, z: 0.3 + i * 0.1 }));
   LINKS.length = 0; LINKS.push(...vorher, ...neu, ...nachher);
 }
+/* Eckhäuser an den Querkanälen: Gesims statt Giebel (sonst stünde ihr 12 m tiefes Dach als plumper Block in der Lücke) */
+for (const h of [...RECHTS, ...LINKS]) if (LUECKEN.some(([, b]) => b > 20 && Math.abs(h.d0 - b) < 0.01)) { h.typ = "lijst"; h.Ht = h.He + 1.1; }
 /* Giebelumriss in (u, h): u = 0 … w längs der Zeile, h über dem Wasser (Fuß auf Kaihöhe) */
 function umriss(h) {
   const { w, He, Ht, typ } = h, o = [[0, KAI], [0, He]];
@@ -266,21 +268,22 @@ function umriss(h) {
   } else if (typ === "hals") {
     /* Halsgiebel: Klauenstücke (Viertelkreis-Voluten) an den Schultern, gerader Hals, oben ein flacher Segmentbogen-Fronton
        mit vorspringendem Gesims (breite, flache Abdeckung, keine Spitze) */
-    const a = 0.3 * w, kh = 2.3, top = Ht - 0.85;
+    const a = 0.3 * w, kh = 2.3, top = Ht - 0.6;
     for (let i = 0; i <= 6; i++) { const t = i / 6 * Math.PI / 2; o.push([a * Math.sin(t), He + 0.25 + kh * (1 - Math.cos(t))]); }
     o.push([a, top]); o.push([a - 0.45, top]); o.push([a - 0.45, top + 0.3]);
-    for (let i = 1; i < 6; i++) { const t = i / 6; o.push([a - 0.45 + (w - 2 * a + 0.9) * t, top + 0.3 + 0.55 * Math.sin(Math.PI * t)]); }
+    for (let i = 1; i < 6; i++) { const t = i / 6; o.push([a - 0.45 + (w - 2 * a + 0.9) * t, top + 0.3 + 0.3 * Math.sin(Math.PI * t)]); }
     o.push([w - a + 0.45, top + 0.3]); o.push([w - a + 0.45, top]); o.push([w - a, top]);
     for (let i = 6; i >= 0; i--) { const t = i / 6 * Math.PI / 2; o.push([w - a * Math.sin(t), He + 0.25 + kh * (1 - Math.cos(t))]); }
     o.push([w, He + 0.25]);
   } else if (typ === "klok") {
-    /* Glockengiebel: S-förmige Flanken (unten hohl, oben gewölbt), oben Gesims und ein kleiner Rundbogen */
-    const prof = [[0, 0], [0.11, 0.04], [0.18, 0.15], [0.205, 0.32], [0.2, 0.5], [0.23, 0.68], [0.29, 0.83], [0.35, 0.94], [0.39, 1]];
-    const top = Ht - 0.75, hoch = top - He, rb = 0.12 * w;
+    /* Glockengiebel: breite Glocke mit S-Flanken, die UNTER einer waagrechten Gesimsplatte ansetzen; darauf ein flacher
+       Segmentbogen (Höhe ≤ halbe Breite) — nirgends laufen zwei Kurven spitz zusammen */
+    const prof = [[0, 0], [0.07, 0.1], [0.1, 0.26], [0.12, 0.44], [0.15, 0.62], [0.19, 0.78], [0.23, 0.9], [0.25, 1]];
+    const top = Ht - 0.6, hoch = top - He;
     for (const [u, v] of prof.slice(1)) o.push([u * w, He + v * hoch]);
-    o.push([0.36 * w, top]); o.push([0.36 * w, top + 0.18]);
-    for (let i = 0; i <= 6; i++) { const t = Math.PI * i / 6; o.push([w / 2 - rb * Math.cos(t), top + 0.18 + 0.57 * Math.sin(t)]); }
-    o.push([0.64 * w, top + 0.18]); o.push([0.64 * w, top]);
+    o.push([0.19 * w, top]); o.push([0.19 * w, top + 0.3]); o.push([0.24 * w, top + 0.3]);
+    for (let i = 1; i < 6; i++) { const t = i / 6; o.push([0.24 * w + 0.52 * w * t, top + 0.3 + 0.3 * Math.sin(Math.PI * t)]); }
+    o.push([0.76 * w, top + 0.3]); o.push([0.81 * w, top + 0.3]); o.push([0.81 * w, top]);
     for (const [u, v] of prof.slice(1).reverse()) o.push([w - u * w, He + v * hoch]);
   } else if (typ === "tuit") {
     const a = 0.3 * w;
@@ -403,10 +406,11 @@ function baueZeile(seite, liste) {
     const u = umriss(h), Q = (uu, hh) => projU(seite, h, uu, hh);
     /* Dach hinter dem Giebel: First quer zur Gracht, 12 m tief */
     const dm = h.w / 2, Xd = seite * (FX + 12);
-    if (h.typ !== "lijst") {
+    /* hinter der Keizersgracht verdecken die Querkanal-Häuser die tiefen Dächer — dort keine Dachflächen (sonst ein Block in der Lücke) */
+    if (h.typ !== "lijst" && h.d0 < 140) {
       const dach = pz([P(seite * FX, h.d0 + 0.2, h.He), P(seite * FX, h.d0 + dm, h.Ht - 0.6), P(Xd, h.d0 + dm, h.Ht - 0.6), P(Xd, h.d0 + 0.2, h.He)]);
       out += `<path d="${dach}" fill="${h.z < 0.5 ? "#3d3836" : "#5a3a30"}"/>`;
-    } else {
+    } else if (h.typ === "lijst") {
       out += `<path d="${pz([P(seite * FX, h.d0 + 0.3, h.Ht - 0.2), P(seite * FX, h.d1 - 0.3, h.Ht - 0.2), P(seite * (FX + 1.2), h.d1 - 0.6, h.Ht + 1.0), P(seite * (FX + 1.2), h.d0 + 0.6, h.Ht + 1.0)])}" fill="#3a3533"/>`;
       /* Dachgaube mit Lastenhaken */
       out += `<path d="${pz([Q(dm - 1, h.Ht), Q(dm + 1, h.Ht), Q(dm + 1, h.Ht + 2.2), Q(dm - 1, h.Ht + 2.2)])}" fill="#2c2a2a" stroke="${RAHMEN}" stroke-width=".5"/>`;
@@ -421,10 +425,15 @@ function baueZeile(seite, liste) {
       for (let i = 0; i <= 6; i++) { const t = i / 6 * Math.PI / 2; kl.push(Q(a * Math.sin(t), h.He + 0.25 + kh * (1 - Math.cos(t)))); kr.push(Q(h.w - a * Math.sin(t), h.He + 0.25 + kh * (1 - Math.cos(t)))); }
       const stein = seite < 0 ? "#f3dfb4" : "#9a958a";
       out += `<path d="${pz([Q(0, h.He), ...kl, Q(a, h.He)])} ${pz([Q(h.w, h.He), ...kr, Q(h.w - a, h.He)])}" fill="${stein}"/>`;
-      /* Volute: Schnecke aus dunkler Linie, Umriss der Klaue mit Schattenkante */
-      const schnecke = (sp) => { const o = []; for (let i = 0; i <= 14; i++) { const t = i / 14, w2 = -Math.PI / 2 + t * Math.PI * 3.2, rr = 0.6 * (1 - t * 0.82); o.push(Q(sp(a * 0.34 + Math.cos(w2) * rr), h.He + 1.0 + Math.sin(w2) * rr * 1.1)); } return "M" + o.map(pt).join(" L"); };
-      out += `<path d="${schnecke((u) => u)} ${schnecke((u) => h.w - u)}" stroke="${seite < 0 ? "#6a4524" : "#3e3a34"}" stroke-width=".38" fill="none" stroke-linejoin="round"/>`;
-      out += `<path d="M${kl.map(pt).join(" L")} M${kr.map(pt).join(" L")}" stroke="${seite < 0 ? "#b48a52" : "#6a665e"}" stroke-width=".3" fill="none"/>`;
+      /* Voluten-„Ohren“: gefüllte helle Sandstein-Schnecken außen am Halsansatz, ragen über die Klauenkurve hinaus;
+         rechte Hälfte im Schatten, eingerollte Schnecke als dunkle Linie */
+      const ohr = (sp) => { const c = [a * 0.32, h.He + 1.55], rr = 0.8; const rund_ = [], sch = [];
+        for (let i = 0; i <= 12; i++) { const t = Math.PI * 2 * i / 12; rund_.push(Q(sp(c[0] + Math.cos(t) * rr * 1.25), c[1] + Math.sin(t) * rr)); }
+        for (let i = 0; i <= 6; i++) { const t = -Math.PI / 2 + Math.PI * i / 6; sch.push(Q(sp(c[0] + Math.cos(t) * rr * 1.25), c[1] + Math.sin(t) * rr)); }
+        let sp2 = []; for (let i = 0; i <= 12; i++) { const t = i / 12, w2 = Math.PI / 2 + t * Math.PI * 3.4, q = rr * (0.85 - t * 0.7); sp2.push(Q(sp(c[0] + Math.cos(w2) * q * 1.25), c[1] + Math.sin(w2) * q)); }
+        return { rund: "M" + rund_.map(pt).join(" L") + "Z", sch: "M" + sch.map(pt).join(" L") + "Z", sp: "M" + sp2.map(pt).join(" L") }; };
+      const o1 = ohr((u) => u), o2 = ohr((u) => h.w - u);
+      out += `<path d="${o1.rund}${o2.rund}" fill="${stein}"/><path d="${o1.sch}${o2.sch}" fill="${seite < 0 ? "#c69a62" : "#76726a"}"/><path d="${o1.sp} ${o2.sp}" stroke="${seite < 0 ? "#6a4524" : "#3e3a34"}" stroke-width=".32" fill="none" stroke-linejoin="round"/>`;
     }
     /* Spiegelbild (vereinfachte Fassade, dunkler) */
     if (h.d0 < 260) spiegel += `<path d="${pz(u.map(([a, b]) => P(seite * FX, h.d0 + a, -b)))}" fill="${mix(h.farbe, seite < 0 ? "#ffb36a" : "#1c2a33", seite < 0 ? 0.12 : 0.35)}"/>`;
@@ -493,18 +502,19 @@ const ZR = baueZeile(1, RECHTS), ZL = baueZeile(-1, LINKS);
 SPIEGEL += ZR.spiegel + ZL.spiegel;
 /* Fenster einer Zeile als wenige Pfade: Laibung, Glas, Rahmen + Sprossen */
 function fensterSVG(seite, sonne) {
-  let lai = "", glas = "", rah = "", luk = "";
+  let lai = "", glas = "", rah = "", luk = "", glasF = "";
   for (const f of fensterTeile[seite]) {
     if (sonne || f.D < 60) lai += "M" + f.o.map(pt).join(" L") + " Z";
     const g = f.g, gp = "M" + g.map(pt).join(" L") + " Z";
     if (f.art === "luke") { luk += gp; continue; }
+    if (f.D > 80) { glasF += gp; continue; }
     glas += gp;
     if (f.D > (sonne ? 100 : 62)) continue;
     const m1 = [(g[0][0] + g[1][0]) / 2, (g[0][1] + g[1][1]) / 2], m2 = [(g[3][0] + g[2][0]) / 2, (g[3][1] + g[2][1]) / 2];
     const l1 = [(g[0][0] + g[3][0]) / 2, (g[0][1] + g[3][1]) / 2], l2 = [(g[1][0] + g[2][0]) / 2, (g[1][1] + g[2][1]) / 2];
     rah += `M${pt(l1)} L${pt(l2)} M${pt(m1)} L${pt(m2)}`;
   }
-  return `<path d="${FERNF[seite]}" fill="${sonne ? "#4a4a52" : "#262c34"}" stroke="${sonne ? "#d8c8ac" : "#a8a49c"}" stroke-width=".09"/><path d="${lai}" fill="${sonne ? "#5a463c" : "#1d1a1a"}" opacity=".85"/><path d="${glas}" fill="${sonne ? GLAS_L : GLAS}" stroke="${RAHMEN}" stroke-width=".42" stroke-linejoin="round"/><path d="${luk}" fill="${sonne ? "#2f4a3a" : "#203328"}" stroke="${RAHMEN}" stroke-width=".3"/><path d="${rah}" fill="none" stroke="${RAHMEN}" stroke-width=".3"/>`;
+  return `<path d="${FERNF[seite]}" fill="${sonne ? "#3e3e48" : "#262c34"}"/><path d="${lai}" fill="${sonne ? "#5a463c" : "#1d1a1a"}" opacity=".85"/><path d="${glas}" fill="${sonne ? GLAS_L : GLAS}" stroke="${RAHMEN}" stroke-width=".42" stroke-linejoin="round"/><path d="${glasF}" fill="${sonne ? "#3a3c46" : "#262c34"}"/><path d="${luk}" fill="${sonne ? "#2f4a3a" : "#203328"}" stroke="${RAHMEN}" stroke-width=".3"/><path d="${rah}" fill="none" stroke="${RAHMEN}" stroke-width=".3"/>`;
 }
 
 /* Querkanal-Häuser (frontal, hinter den Lücken): Keizersgracht und Prinsengracht Südseite */
@@ -514,7 +524,7 @@ function fensterSVG(seite, sonne) {
     const z = zufall(D * 7 + seite);
     let X = FX;
     while (X < 34) {
-      const w = 5.5 + z() * 2.5, He = 12.5 + z() * 3, Ht = He + 4 + z() * 2;
+      const w = 5.5 + z() * 2.5, He = 12.5 + z() * 3, Ht = He + 2.4 + z() * 1.4;
       const xa = P(seite * X, D, 0)[0], xb = P(seite * (X + w), D, 0)[0];
       const y0 = P(0, D, KAI)[1], ye = P(0, D, He)[1], yt = P(0, D, Ht)[1];
       const xm = (xa + xb) / 2, f = z() < 0.6 ? ZIEGEL[Math.floor(z() * 5)] : PUTZE[Math.floor(z() * 6)];
@@ -591,18 +601,21 @@ function bruecke(D, tiefe, nr) {
      so steht der Bogen der zweiten ganz im ersten, und die Schenkel der hinteren schauen unten heraus */
   const G = nr === 0 ? BOGEN : BOGEN_R, dH = (X) => deckH(X) + G.dh;
   const s = F / D, licht = sonnig(0, D - 0.5, 2), rueck = D + tiefe;
+  /* Luftperspektive: die hinteren Brücken heller und wärmer verschleiert */
+  const dunst = Math.max(0, Math.min(0.5, (D - 130) / 260)), HZ = "#cfc0b0";
   let g = "";
   /* Durchblick: Wasser unter der Brücke (dunkel), Seitenwände */
   const vorn = bogenPkt(D, 16, G.b, G.s, G.k), hinten = bogenPkt(rueck, 16, G.b, G.s, G.k);
   const loch = (pts, Dd) => "M" + pt(P(-G.b, Dd, -0.05)) + " L" + pts.map(pt).join(" L") + " L" + pt(P(G.b, Dd, -0.05)) + " Z";
   g += `<path d="${loch(vorn, D)} ${loch(hinten, rueck)}" fill="${S.lg("tunnel", [[0, "#2a2a26"], [0.6, "#3c3a2e"], [1, "#4a4636"]])}" fill-rule="evenodd"/>`;
   /* Wasser unter der Brücke: es spiegelt die helle Öffnung dahinter — kein schwarzer Balken */
-  g += `<path d="${pz([P(-G.b, D, 0), P(G.b, D, 0), P(G.b, rueck, 0), P(-G.b, rueck, 0)])}" fill="#8a8670" opacity=".6"/>`;
+  g += `<path d="${pz([P(-G.b, D, 0), P(G.b, D, 0), P(G.b, rueck, 0), P(-G.b, rueck, 0)])}" fill="#a8a490" opacity=".75"/>`;
+  if (dunst > 0) g += `<path d="${loch(vorn, D)} ${loch(hinten, rueck)}" fill="${HZ}" fill-rule="evenodd" opacity="${r(dunst)}"/>`;
   /* Stirnseite mit Bogenöffnung */
   const L = [];
   for (let X = -11; X <= 11.01; X += 1) L.push(P(X, D, dH(X)));
   const stirn = "M" + pt(P(-11, D, 0)) + " L" + L.map(pt).join(" L") + " L" + pt(P(11, D, 0)) + " Z " + loch(vorn, D);
-  const farbe = licht ? "#a35a3c" : "#6e4234";
+  const farbe = mix(licht ? "#a35a3c" : "#6e4234", HZ, dunst);
   g += `<path d="${stirn}" fill="${farbe}" fill-rule="evenodd"/>`;
   /* Ziegelfugen: waagerechte Linien (sparsam) */
   const fern = D > 180;
@@ -631,7 +644,7 @@ function bruecke(D, tiefe, nr) {
   if (licht) g += `<path d="M${L.map(pt).join(" L")}" stroke="#ffd9a0" stroke-width="${r(0.08 * s)}" fill="none"/>`;
   /* Lichterkette: Birnen im Bogen und am Gesims — als gepunktete Linie (eine Birne alle 0,45 m) */
   const pd = (pts) => "M" + pts.map(pt).join(" L");
-  const kette = bogenPkt(D - 0.05, 22, G.b + 0.3, G.s, G.k + 0.28), deckK = [];
+  const kette = [P(-(G.b + 0.3), D - 0.05, 0.08), ...bogenPkt(D - 0.05, 22, G.b + 0.3, G.s, G.k + 0.28), P(G.b + 0.3, D - 0.05, 0.08)], deckK = [];
   for (let X = -10; X <= 10; X += 1) deckK.push(P(X, D - 0.05, dH(X) - 0.05));
   const lp = `${pd(kette)} ${pd(deckK)}`, gap = r(Math.max(0.9, 0.45 * s)), bw = r(Math.max(0.5, 0.09 * s));
   g += `<path d="${lp}" fill="none" stroke="#ffcf7a" stroke-width="${r(Math.max(0.7, 0.2 * s))}" opacity=".35" filter="url(#${S.id("glimm")})"/><path d="${lp}" fill="none" stroke="#fff6d8" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
@@ -641,7 +654,7 @@ function bruecke(D, tiefe, nr) {
   const vornS = bogenPkt(D, 16, G.b, -G.s, -G.k), aussenS = bogenPkt(D, 16, G.b + 0.55, -G.s, -G.k - 0.5);
   SPIEGEL_B += `<path d="M${pt(P(-11, D, 0))} L${sp.map(pt).join(" L")} L${pt(P(11, D, 0))} Z M${pt(P(-G.b, D, 0))} L${vornS.map(pt).join(" L")} L${pt(P(G.b, D, 0))} Z" fill="${mix(farbe, "#262a2a", 0.35)}" fill-rule="evenodd"/>`;
   SPIEGEL_B += `<path d="M${aussenS.map(pt).join(" L")} L${vornS.slice().reverse().map(pt).join(" L")} Z" fill="${licht ? "#cbbd9e" : "#8f887c"}"/>`;
-  SPIEGEL_B += `<path d="${pd(bogenPkt(D - 0.05, 22, G.b + 0.3, -G.s, -G.k - 0.28))}" fill="none" stroke="#ffe2a0" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
+  SPIEGEL_B += `<path d="${pd([P(-(G.b + 0.3), D - 0.05, -0.08), ...bogenPkt(D - 0.05, 22, G.b + 0.3, -G.s, -G.k - 0.28), P(G.b + 0.3, D - 0.05, -0.08)])}" fill="none" stroke="#ffe2a0" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
   if (nr === 0) LICHTER_UNTER = { pts: kette, s, D };
   return g;
 }
@@ -699,23 +712,29 @@ function krone(cx, cy, rx, ry, seed, sonne, fern) {
      Jedes Büschel: warmer Gegenlicht-Saum oben rechts (Sonne hinten rechts), Hauptgrün, Eigenschatten unten links */
   const lappen = (x, y, rr, n) => { const w0 = z() * 6.3; return rund(Array.from({ length: 2 * n }, (_, i) => { const a = w0 + i * Math.PI / n, q = rr * (i % 2 ? 0.8 : 0.97 + z() * 0.08); return [x + Math.cos(a) * q, y + Math.sin(a) * q * 0.86]; })); };
   const N = rx > 60 ? 7 : 6, gx = cx, gy = cy + ry * 0.95, sw = Math.max(0.25, Math.min(rx, ry) * 0.022);
-  let aeste = "", zweige = "", saum = "", gruen = "", schatten = "";
+  let aeste = "", zweige = "", saum = "", gruen = "", schatten = "", fransen = "";
   for (let i = 0; i < N; i++) {
     const t = i / (N - 1), ang = -Math.PI * (0.1 + 0.8 * t) + (z() - 0.5) * 0.2;
     const fx = gx + Math.cos(ang) * rx * 0.42, fy = gy - ry * (0.5 + 0.15 * z()) + Math.sin(ang) * ry * 0.1;
     aeste += `M${r(gx)} ${r(gy)} Q${r(gx + (fx - gx) * 0.25)} ${r(gy + (fy - gy) * 0.7)} ${r(fx)} ${r(fy)}`;
-    const k = 2 + (z() < 0.5 ? 1 : 0);
+    const k = 2;
     for (let j = 0; j < k; j++) {
       const a2 = ang + (j - (k - 1) / 2) * 0.42 + (z() - 0.5) * 0.15, d = 0.62 + 0.36 * z();
       const tx = cx + Math.cos(a2) * rx * d, ty = cy + Math.sin(a2) * ry * d * 0.95 + ry * 0.1;
       zweige += `M${r(fx)} ${r(fy)} Q${r((fx + tx) / 2 + (z() - 0.5) * rx * 0.08)} ${r((fy + ty) / 2 - ry * 0.06)} ${r(tx)} ${r(ty)}`;
-      const rc = Math.min(rx, ry) * (0.15 + z() * 0.09), n = 5 + (z() < 0.3 ? 1 : 0);
-      saum += lappen(tx + rc * 0.14, ty - rc * 0.14, rc, n);
-      gruen += lappen(tx, ty, rc, n);
-      schatten += lappen(tx - rc * 0.2, ty + rc * 0.24, rc * 0.62, 3);
+      /* Büschel aufgelöst in 3–4 Lappen in zwei Größen mit Lücken, dazu kleine Blattgruppen am Rand (ausgefranster Umriss) */
+      const rc = Math.min(rx, ry) * (0.15 + z() * 0.09), m = 3 + (z() < 0.5 ? 1 : 0);
+      for (let q = 0; q < m + 2; q++) {
+        const klein = q >= m, wq = (q / m) * 6.3 + z() * 0.8, dq = klein ? rc * (0.85 + z() * 0.25) : rc * (0.3 + z() * 0.25);
+        const lx = tx + Math.cos(wq) * dq, ly = ty + Math.sin(wq) * dq * 0.8, lr = rc * (klein ? 0.2 + z() * 0.08 : 0.42 + z() * 0.14);
+        if (klein) fransen += `<circle cx="${r(lx)}" cy="${r(ly)}" r="${r(lr)}"/>`; else gruen += lappen(lx, ly, lr, 3);
+        if (!klein && Math.cos(wq) - Math.sin(wq) > -0.2) saum += lappen(lx + lr * 0.18, ly - lr * 0.18, lr, 3);
+      }
+      schatten += lappen(tx - rc * 0.22, ty + rc * 0.26, rc * 0.5, 3);
+      zweige += `M${r(tx)} ${r(ty)} L${r(tx + (z() - 0.5) * rc * 0.8)} ${r(ty - rc * 0.3)}`;
     }
   }
-  return `<path d="${aeste}" stroke="#5e5248" stroke-width="${r(sw * 1.7)}" fill="none" stroke-linecap="round"/><path d="${zweige}" stroke="#655a50" stroke-width="${r(sw)}" fill="none" stroke-linecap="round"/><path d="${saum}" fill="${sonne ? "#f2df86" : "#cfd889"}"/><path d="${gruen}" fill="${sonne ? "#93b444" : "#7c9a3c"}"/><path d="${schatten}" fill="${sonne ? "#64822e" : "#56722c"}" opacity=".85"/>`;
+  return `<path d="${aeste}" stroke="#5e5248" stroke-width="${r(sw * 1.7)}" fill="none" stroke-linecap="round"/><path d="${zweige}" stroke="#655a50" stroke-width="${r(sw)}" fill="none" stroke-linecap="round"/><path d="${saum}" fill="${sonne ? "#f2df86" : "#cfd889"}"/><path d="${gruen}" fill="${sonne ? "#93b444" : "#7c9a3c"}"/><g fill="${sonne ? "#9cbc4a" : "#86a442"}">${fransen}</g><path d="${schatten}" fill="${sonne ? "#64822e" : "#56722c"}" opacity=".5"/>`;
 }
 function ulme(X, D, seed) {
   const [bx, by] = P(X, D, KAI), s = F / D, z = zufall(seed), sonne = X < 0 && sonnig(X, D, 9);
@@ -1176,7 +1195,6 @@ const GEL = { D: 2.4, h: 3.62 };
   k += `<path d="M${q(-0.6, 2.2, HL - 0.22)} Q${q(-0.62, 2.2, HL - 0.08)} ${q(-0.66, 2.2, HL - 0.01)}" stroke="#1c1d20" stroke-width="${r(0.05 * F / 2.2)}" stroke-linecap="round" fill="none"/><path d="M${q(-0.59, 2.17, HL - 0.2)} Q${q(-0.61, 2.17, HL - 0.08)} ${q(-0.65, 2.17, HL - 0.02)}" stroke="#8a9096" stroke-width="${r(0.008 * F / 2.2)}" fill="none"/>`;
   k += `<path d="M${q(-0.47, 1.92, HL - 0.02)} Q${q(-0.64, 1.95, HL + 0.02)} ${q(-0.66, 2.2, HL)} Q${q(-0.64, 2.45, HL + 0.02)} ${q(-0.47, 2.48, HL - 0.02)}" stroke="#141518" stroke-width="${r(0.026 * F / 2.2)}" fill="none" stroke-linecap="round"/>`;
   k += `<path d="M${q(-0.47, 1.92, HL)} Q${q(-0.62, 1.95, HL + 0.04)} ${q(-0.64, 2.2, HL + 0.02)}" stroke="#7d848c" stroke-width="${r(0.006 * F / 2.2)}" fill="none"/>`;
-  { const [mx, my] = pp(-0.66, 2.2, HL), ms = F / 2.2; k += `<ellipse cx="${r(mx)}" cy="${r(my)}" rx="${r(0.02 * ms)}" ry="${r(0.032 * ms)}" fill="#9aa2a8"/><ellipse cx="${r(mx + 0.005 * ms)}" cy="${r(my - 0.009 * ms)}" rx="${r(0.008 * ms)}" ry="${r(0.014 * ms)}" fill="#e6eaec"/>`; }
   k += `<path d="M${q(-0.47, 1.92, HL - 0.02)} L${q(-0.35, 1.9, HL - 0.03)}" stroke="#3a2618" stroke-width="${r(0.04 * F / 1.92)}" stroke-linecap="round"/><path d="M${q(-0.47, 2.48, HL - 0.02)} L${q(-0.37, 2.5, HL - 0.03)}" stroke="#2e1f14" stroke-width="${r(0.04 * F / 2.48)}" stroke-linecap="round"/>`;
   /* Korb (Weide) vorn am Lenker */
   const kb = [pp(-1.0, 2.0, HL - 0.08), pp(-0.66, 2.0, HL - 0.08), pp(-0.66, 2.0, HL - 0.45), pp(-1.0, 2.0, HL - 0.45)];

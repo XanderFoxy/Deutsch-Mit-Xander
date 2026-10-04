@@ -220,11 +220,19 @@ const fels = (x, y, w, h, seed, hell = "#b3b2a4", dunkel = "#6f7671", gruen = "#
 };
 /* langes, schmales Granitband in Fall-Linie mit senkrechten Streifen (Huayna-Picchu-Wände) */
 const wand = (pts, breite, hell, dunkel, seed) => {
-  const z = zufall(seed), dicht = []; for (let i = 0; i < pts.length - 1; i++) for (let t = 0; t < 1; t += 0.34) dicht.push([pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]); dicht.push(pts[pts.length - 1]);
-  const n0 = dicht.length - 1, li = dicht.map(([x, y], i) => [x - breite * (0.25 + 0.3 * Math.sin(Math.PI * i / n0)) * (0.7 + z() * 0.6), y]), re = dicht.map(([x, y], i) => [x + breite * (0.25 + 0.3 * Math.sin(Math.PI * i / n0)) * (0.7 + z() * 0.6), y]).reverse();
-  let o = `<path d="${glatt([...li, ...re], true, 0.7)}" fill="${S.lg("wand" + seed, [[0, dunkel], [0.6, dunkel], [1, hell]], 0, 0, 1, 0)}"/>`;
-  let st = ""; for (let i = 0; i < 4; i++) { const t = (i + 0.5) / 4; st += `M${r(pts[0][0] - breite * 0.5 + breite * t)} ${r(pts[0][1] + 1)} L${r(pts[pts.length - 1][0] - breite * 0.5 + breite * t + (z() - 0.5))} ${r(pts[pts.length - 1][1] - 1)}`; }
-  return o + `<path d="${st}" stroke="#3a403c" stroke-width=".25" opacity=".55"/>`;
+  /* Granitwand in Fall-Linie: oben eine scharfe Abbruchkante, die Breite wechselt, unten franst sie in 2–3 Spitzen
+     in den Wald aus; die rechte Kante (Morgensonne) hart und hell, kein umlaufender Rand */
+  const z = zufall(seed), dicht = []; for (let i = 0; i < pts.length - 1; i++) for (let t = 0; t < 1; t += 0.25) dicht.push([pts[i][0] + (pts[i + 1][0] - pts[i][0]) * t, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * t]); dicht.push(pts[pts.length - 1]);
+  const n0 = dicht.length - 1, b = (i) => breite * (0.35 + 0.25 * Math.sin(Math.PI * i / n0 * 0.8 + 0.3)) * (0.75 + z() * 0.5);
+  const li = dicht.map(([x, y], i) => [x - b(i), y - (i ? 0 : 0.7)]), re = dicht.map(([x, y], i) => [x + b(i) * 0.9, y + (i ? 0 : 0.6)]);
+  li.unshift([dicht[0][0] - b(0) * 0.2, dicht[0][1] - 0.2]);
+  const [ex, ey] = dicht[n0], L = re[n0][0] - li[n0][0], dy = (dicht[n0][1] - dicht[0][1]) / n0;
+  const zacken = [[li[n0][0] + L * 0.18, ey + dy * (0.8 + z())], [li[n0][0] + L * 0.36, ey - dy * 0.3], [li[n0][0] + L * 0.56, ey + dy * (1.4 + z())], [li[n0][0] + L * 0.74, ey], [li[n0][0] + L * 0.9, ey + dy * (0.6 + z() * 0.8)]];
+  const umr = [...li, ...zacken, ...re.reverse()];
+  let o = `<path d="${P(umr)}" fill="${S.lg("wand" + seed, [[0, dunkel], [0.65, dunkel], [1, hell]], 0, 0, 1, 0)}"/>`;
+  o += `<path d="${P([li[0], re[re.length - 1]], false)} ${P(re.slice(re.length - Math.ceil(re.length * 0.7)).reverse(), false).replace("M", "M")}" stroke="#e9e6d6" stroke-width=".4" fill="none" opacity=".75"/>`;
+  let st = ""; for (let i = 0; i < 3; i++) { const t = (i + 0.6) / 3.4; st += `M${r(li[0][0] + (re[re.length - 1][0] - li[0][0]) * t)} ${r(dicht[0][1] + 1)} l${r((z() - 0.5) * 1.2)} ${r((ey - dicht[0][1]) * (0.5 + z() * 0.35))}`; }
+  return o + `<path d="${st}" stroke="#3a403c" stroke-width=".22" opacity=".45"/>`;
 };
 
 /* =====================================================================
@@ -243,7 +251,7 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   ];
   for (const [kamm, [c0, c1, c2], sd] of grate) {
     const dk = P([...kamm, [kamm[kamm.length - 1][0] + 6, 262], [-2, 262]]);
-    k += `<path d="${dk}" fill="${S.lg("grat" + sd, [[0, c0], [0.5, c1], [1, c2]])}"/><path d="${dk}" fill="${sd === 1 ? WALD035 : WALD05}" opacity="${sd === 1 ? 0.6 : 0.8}"/>`;
+    k += `<path d="${dk}" fill="${S.lg("grat" + sd, [[0, c0], [0.5, c1], [1, c2]])}"/>${sd === 1 ? "" : `<path d="${dk}" fill="${WALD05}" opacity=".8"/>`}`;
     /* Seitengrate schräg nach links unten: Lichtsaum rechts innen, Schattenrinne links */
     const z = zufall(sd * 13);
     for (let i = 0; i < 3; i++) {
@@ -284,17 +292,20 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   const wasser = glatt([...oben, ...unten.slice().reverse()], true, 0.6);
   let k = `<path d="${glatt([...unten.map(([x, y]) => [x, y - 1]), [401, 260.6], [316, 260.6]], true, 0.6)}" fill="#2c4733"/><path d="${glatt([...unten.map(([x, y]) => [x, y - 1]), [401, 260.6], [316, 260.6]], true, 0.6)}" fill="${WALD1}" opacity=".7"/>`;
   k += `<path d="${wasser}" fill="${S.lg("fluss", [[0, "#8d8068"], [0.45, "#7f8a6e"], [1, "#6c7660"]], 0, 0, 0, 1)}"/>`;
-  /* Strömungsbänder (etwas heller) und Schaumflecken */
+  /* in der Mitte nur wenige lange Schlieren in Strömungsrichtung; Schaum sammelt sich an den Pfeilern und am Ufer */
   const zf = zufall(57);
   let fl = "", sch = "";
-  for (let i = 0; i < 9; i++) { const x = 320 + zf() * 78, t = 0.2 + zf() * 0.6, y = ob(x) + br(x) * t, l = 6 + zf() * 10; fl += `M${r(x)} ${r(y)} l${r(l)} ${r(-l * 0.115)}`; }
-  k += `<path d="${fl}" stroke="#9aa088" stroke-width=".9" opacity=".45" stroke-linecap="round"/>`;
-  /* Schaum vor allem in den Stromschnellen (an den Blöcken und den Pfeilern): kurze, gebogene Flecken */
-  for (let i = 0; i < 34; i++) {
-    const nest = [334, 352, 376, 392][i % 4], x = nest + (zf() - 0.5) * 16, t = 0.12 + zf() * 0.76, y = ob(x) + br(x) * t, l = 0.6 + zf() * 1.9;
-    sch += `M${r(x)} ${r(y)} q${r(l * 0.5)} ${r(-0.35)} ${r(l)} ${r(l * 0.34)}`;
+  for (const [x, t, l] of [[326, 0.45, 22], [352, 0.62, 28], [383, 0.4, 16]]) fl += `M${r(x)} ${r(ob(x) + br(x) * t)} q${r(l / 2)} ${r(-l * 0.06 + 0.7)} ${l} ${r(-l * 0.115)}`;
+  k += `<g filter="url(#${S.id("weich")})"><path d="${fl}" stroke="#eeece0" stroke-width="1.1" fill="none" opacity=".5" stroke-linecap="round"/></g>`;
+  const b0p = [370, ob(370) - 0.6], b1p = [378.5, ob(378.5) + br(378.5) + 0.6];
+  for (let i = 0; i < 20; i++) {
+    let x, y;
+    if (i < 8) { const t = i < 4 ? 0.36 : 0.68, px = b0p[0] + (b1p[0] - b0p[0]) * t, py = b0p[1] + (b1p[1] - b0p[1]) * t + 2.3; x = px - 1 - zf() * 7; y = py + (zf() - 0.5) * 1.6; }
+    else { x = 320 + zf() * 80; y = ob(x) + br(x) * (i % 2 ? 0.1 + zf() * 0.12 : 0.8 + zf() * 0.1); }
+    const l = 0.6 + zf() * 1.6;
+    sch += `M${r(x)} ${r(y)} q${r(l * 0.5)} ${r(-0.3)} ${r(l)} ${r(l * 0.2)}`;
   }
-  k += `<path d="${sch}" stroke="#f3f1e6" stroke-width=".5" fill="none" opacity=".85" stroke-linecap="round"/>`;
+  k += `<path d="${sch}" stroke="#f3f1e6" stroke-width=".45" fill="none" opacity=".85" stroke-linecap="round"/>`;
   /* Ufer: dunkle Kante oben (ferne Seite) und unten (unsere Seite), Felsblöcke */
   k += `<path d="${glatt(oben, false)}" stroke="#3b3f2e" stroke-width="1.1" fill="none" opacity=".7"/><path d="${glatt(unten, false)}" stroke="#2f3f28" stroke-width="1.6" fill="none" opacity=".8"/>`;
   let bl = "", bh = "";
@@ -342,7 +353,7 @@ const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181,
   for (const [x0, y0, x1, y1] of [[201, 44, 186, 112], [209, 38, 197, 118], [226, 60, 236, 116], [246, 68, 256, 118], [190, 62, 174, 110]]) ri += `M${x0} ${y0} Q${r((x0 + x1) / 2 + (x1 > x0 ? -2 : 2))} ${r((y0 + y1) / 2)} ${x1} ${y1}`;
   k += `<path d="${ri}" stroke="#1d3a2e" stroke-width="1.1" fill="none" opacity=".35" stroke-linecap="round"/>`;
   /* Granitwände: steile, lange Bänder an der Westflanke (im Schatten), eine im Licht an der Ostflanke */
-  k += wand([[198, 40], [195, 52], [192, 64], [190, 76]], 4.6, "#8e958f", "#5c6560", 41) + wand([[205, 37], [203, 48], [201, 60], [200, 70]], 3.4, "#8e958f", "#5a635e", 42);
+  k += wand([[197, 41], [193.6, 52], [190.4, 63], [188.6, 76]], 5.2, "#8e958f", "#5c6560", 41) + wand([[205, 37], [203, 48], [201, 60], [200, 70]], 3.4, "#8e958f", "#5a635e", 42);
   k += wand([[187, 80], [184, 90], [181, 100]], 3.6, "#87908a", "#56605a", 43) + wand([[221, 40], [223, 50], [225, 58]], 3.2, "#c9c7b4", "#8f958c", 44);
   /* Inka-Terrassen am Gipfel: sie folgen der Kuppe (gebogen) und werden nach oben kürzer; auf zweien kleine Ruinen */
   let tm = "", tg = "";
@@ -355,7 +366,9 @@ const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181,
   /* kleine Ruinen: Wände mit Giebel, Lichtseite rechts */
   k += `<path d="M211.8 33 v-1.5 l1.3 -1 l1.3 1 v1.5 Z M216.4 39.6 v-1.4 l1.1 -.9 l1.1 .9 v1.4 Z" fill="#a49d8d"/><path d="M213.1 30.5 l1.3 1 v1.5 h-1.3 Z M217.5 37.3 l1.1 .9 v1.4 h-1.1 Z" fill="#d9d2c0"/>`;
   /* goldene Lichtkante am rechten Grat (Morgensonne) */
-  k += `<path d="${glatt(HUAYNA.slice(13), false)}" stroke="${S.lg("gratgold", [[0, "#f6d98f"], [0.5, "#f3d58e", 0.6], [1, "#f3d58e", 0.1]], 0, 0, 0, 1)}" stroke-width=".8" fill="none" opacity=".8" transform="translate(-.45 .55)"/>`;
+  /* Lichtsaum nur am oberen rechten Grat, nach unten in die Fläche ausgeblendet */
+  S.def(`<linearGradient id="${S.id("gratgold")}" gradientUnits="userSpaceOnUse" x1="0" y1="30" x2="0" y2="66"><stop offset="0" stop-color="#f6d98f"/><stop offset=".55" stop-color="#f3d58e" stop-opacity=".5"/><stop offset="1" stop-color="#f3d58e" stop-opacity="0"/></linearGradient>`);
+  k += `<path d="${glatt(HUAYNA.slice(13, 20), false)}" stroke="url(#${S.id("gratgold")})" stroke-width=".7" fill="none" opacity=".8" transform="translate(-.5 .6)"/>`;
   /* Morgendunst über dem Fuß */
   k += `<path d="${d}" fill="${S.lg("huaynadunst", [[0, "#e3ecf0", 0], [0.6, "#e3ecf0", 0.06], [1, "#e3ecf0", 0.5]])}"/>`;
   /* Huchuy Picchu: deckend, dunkler und blaugrüner als der Stadtrasen, mit eigenem Wald und Felsfleck */
@@ -386,18 +399,20 @@ const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181,
 /* =====================================================================
    6 — DIE SERPENTINE (Straße Hiram Bingham) — vom Stadteingang hinab zur Brücke; die Kehren werden nach unten enger
    ===================================================================== */
-const SERP = [[334, 196], [357, 197.6], [343, 202], [363, 206.6], [353, 210], [360, 212.6], [345, 217.6], [367, 223], [349, 227.6], [373, 232], [352, 236], [377, 239.6], [369.4, 242.8]];
+const SERP = [[332, 196], [362, 197.8], [338, 202.4], [365, 207.2], [343, 211.4], [360, 214.6], [347, 218.6], [364, 223.8], [351, 228], [366, 231.6], [355, 235.4], [371, 239.4], [369.4, 242.8]];
 {
   let pfad = `M${SERP[0][0]} ${SERP[0][1]}`;
   for (let i = 1; i < SERP.length; i++) {
     const [x0, y0] = SERP[i - 1], [x1, y1] = SERP[i], dir = x1 < x0 ? -1 : 1, kr = Math.min(1.6 - i * 0.08, Math.abs(SERP[(i + 1) % SERP.length][1] - y1) * 0.45 + 0.4);
+    /* zwei Stücke verschwinden hinter einer Hangwölbung */
+    if (i === 5 || i === 9) pfad += ` L${r(x0 + (x1 - x0) * 0.28)} ${r(y0 + (y1 - y0) * 0.28)} M${r(x0 + (x1 - x0) * 0.78)} ${r(y0 + (y1 - y0) * 0.78)}`;
     pfad += ` L${r(x1 - dir * kr)} ${r(y1 - 0.3)} Q${r(x1 + dir * 0.4)} ${r(y1 + 0.1)} ${r(x1 - dir * 0.2)} ${r(y1 + kr)}`;
   }
   let k = `<path d="${pfad}" stroke="#2c3a28" stroke-width="1.1" fill="none" stroke-linejoin="round" opacity=".45" transform="translate(-.4 .5)"/>`;
   k += `<path d="${pfad}" stroke="${S.lg("strasse", [[0, "#b3a88e"], [1, "#988e76"]])}" stroke-width=".8" fill="none" stroke-linejoin="round"/>`;
   k += `<path d="${pfad}" stroke="#e6dfcc" stroke-width=".22" fill="none" opacity=".5" transform="translate(.1 -.3)"/>`;
   /* der Hang wölbt sich vor zwei Kehren: Waldbuckel mit Morgenlicht an der Oberkante */
-  for (const [cx, cy, w, h] of [[357, 215.4, 17, 4.6], [363, 233.4, 13, 3.6]]) {
+  for (const [cx, cy, w, h] of [[352.2, 214.6, 13, 4], [359, 231.4, 11, 3.4]]) {
     const bu = glatt([[cx - w / 2, cy + h * 0.3], [cx - w * 0.3, cy - h * 0.45], [cx + w * 0.05, cy - h * 0.6], [cx + w * 0.4, cy - h * 0.3], [cx + w / 2, cy + h * 0.35], [cx, cy + h * 0.6]], true, 0.8);
     k += `<g filter="url(#${S.id("weich")})"><path d="${bu}" fill="${cy > 225 ? "#3c5c4a" : "#45664f"}"/></g><path d="M${r(cx - w * 0.3)} ${r(cy - h * 0.45)} Q${r(cx + w * 0.05)} ${r(cy - h * 0.75)} ${r(cx + w * 0.4)} ${r(cy - h * 0.3)}" stroke="#b9cc94" stroke-width=".3" fill="none" opacity=".35"/>`;
   }
@@ -508,29 +523,12 @@ const STADT = {};
   let k = "";
   const zl = zufall(77);
   /* --- Bergrücken unter der Stadt: schmaler Grat, die Flanken links und rechts fallen in Terrassenstufen ab --- */
-  /* Stufenrand: die Kante folgt einer gekrümmten Höhenlinie; die Stufen werden nach unten (näher) höher;
-     jede zweite Stützmauer steht als heller Streifen im Licht */
-  const WAND = [];
-  const stufig = (pts, schritt, seed) => {
-    const z = zufall(seed), dicht = []; for (let i = 0; i < pts.length - 1; i++) for (let t = 0; t < 1; t += 0.1) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)], t2 = t * t, t3 = t2 * t; dicht.push([0, 1].map((q) => 0.5 * (2 * p1[q] + (-p0[q] + p2[q]) * t + (2 * p0[q] - 5 * p1[q] + 4 * p2[q] - p3[q]) * t2 + (-p0[q] + 3 * p1[q] - 3 * p2[q] + p3[q]) * t3))); }
-    dicht.push(pts[pts.length - 1]);
-    const o = [dicht[0]]; let rest = 0, n = 0;
-    for (let i = 1; i < dicht.length; i++) {
-      const [x0, y0] = o[o.length - 1], [x1, y1] = dicht[i], s0 = schritt * (0.55 + (Math.max(y0, y1) - 140) / 50) * (0.85 + z() * 0.3);
-      if (Math.abs(y1 - y0) < s0 && i < dicht.length - 1) continue;
-      const ecke = (y1 > y0) === (x1 < x0) ? [x0, y1] : [x1, y0];
-      o.push(ecke, [x1, y1]);
-      const senk = ecke[0] === x0 ? [[x0, y0], ecke] : [ecke, [x1, y1]];
-      if (n++ % 2 === 0) WAND.push(senk);
-    }
-    return o;
-  };
-  const links = stufig([[88, 214], [94, 186], [106, 162], [126, 146]], 4, 1), rechts = stufig([[268, 142], [294, 149], [316, 160], [332, 178], [342, 205]], 4, 2);
-  const ruecken = [[84, 262], ...links, [160, 141], [196, 143], [236, 141], ...rechts, [348, 262]];
-  k += `<path d="${P(ruecken)}" fill="${S.lg("ruecken", [[0, "#2c4a30"], [0.12, "#3c5f37"], [0.3, "#6f9548"], [0.5, "#7ea052"], [0.75, "#6f9a48"], [0.9, "#4f7c3c"], [1, "#3c6534"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="${P(ruecken)}" fill="${WALD1}" opacity=".6"/>`;
-  k += `<path d="${P(links, false)} M${P(rechts, false).slice(1)}" stroke="#b5ad9b" stroke-width=".5" fill="none" opacity=".8"/>`;
-  k += `<path d="${WAND.map(([[x0, y0], [x1, y1]]) => { const dx = x0 < 200 ? 1.1 : -1.1; return `M${r(x0)} ${r(y0)}L${r(x1)} ${r(y1)}L${r(x1 + dx)} ${r(y1 + 0.3)}L${r(x0 + dx)} ${r(y0 + 0.3)}Z`; }).join("")}" fill="#e2d9c4"/>`;
+  /* Außenkontur: eine weiche, leicht gewellte Höhenlinie; die Terrassen liegen innen als helle, gekrümmte Mauerstreifen */
+  const flankeL = [[88, 214], [91.4, 199], [94, 186], [99.6, 172.6], [106, 162], [114.6, 153], [126, 146]], flankeR = [[268, 142], [281, 144.6], [294, 149], [306, 154.6], [316, 160], [325, 168.4], [332, 178], [338.4, 191], [342, 205]];
+  const ruecken = glatt([[84, 262], [86, 238], ...flankeL, [160, 141], [196, 143], [236, 141], ...flankeR, [343.4, 230], [345, 262]], true, 0.8);
+  k += `<path d="${ruecken}" fill="${S.lg("ruecken", [[0, "#2c4a30"], [0.12, "#3c5f37"], [0.3, "#6f9548"], [0.5, "#7ea052"], [0.75, "#6f9a48"], [0.9, "#4f7c3c"], [1, "#3c6534"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="${ruecken}" fill="${WALD1}" opacity=".6"/>`;
+  k += `<path d="${glatt(flankeL, false, 0.8)}${glatt(flankeR, false, 0.8).replace("M", " M")}" stroke="#b5ad9b" stroke-width=".4" fill="none" opacity=".6"/>`;
   /* Sektorflächen: Gras zwischen den Ruinen */
   k += `<path d="${glatt([[108, 168], [120, 152], [150, 147], [180, 150], [194, 160], [196, 200], [150, 206], [108, 204], [102, 186]], true, 0.6)}" fill="${S.lg("westflaeche", [[0, "#93a466"], [1, "#82995a"]])}"/>`;
   k += `<path d="${glatt([[236, 150], [262, 146], [288, 150], [300, 162], [306, 190], [300, 206], [246, 204], [240, 176]], true, 0.6)}" fill="${S.lg("ostflaeche", [[0, "#8fa364"], [1, "#7e9858"]])}"/>`;
@@ -539,7 +537,7 @@ const STADT = {};
   for (let i = 0; i < 7; i++) westB.push([[134 - i * 3.6, 147 + i * 1.4], [120 - i * 3.8, 165 + i * 2.2], [112 - i * 3.2, 188 + i * 2.2], [108 - i * 2.2, 210 + i * 1.2]]);
   k += hang(westB, -1, 1.3);
   const ostB = [];
-  for (let i = 0; i < 6; i++) ostB.push([[282 + i * 4.4, 149 + i * 2.1], [300 + i * 3.8, 165 + i * 2.6], [312 + i * 2.8, 188 + i * 2.2], [316 + i * 2, 210 + i * 1.2]]);
+  for (let i = 0; i < 8; i++) ostB.push([[282 + i * 4.4, 149 + i * 2.1], [300 + i * 3.8, 165 + i * 2.6], [312 + i * 2.8, 188 + i * 2.2], [316 + i * 2, 210 + i * 1.2]]);
   k += hang(ostB, 1, 1.5);
   /* --- Heiliger Felsen: aufrechte, flache Platte, ihr Umriss ahmt den Berg dahinter nach; daneben die Wayranas --- */
   k += `<path d="M199.6 146.6 L199.8 144.6 L201.6 143.6 L203.4 142.2 L205.2 141.8 L206.6 142.6 L208.4 142 L210.4 143 L212.6 144.4 L213.4 146.6 Z" fill="${S.lg("hfels", [[0, "#6f685e"], [0.5, "#a9a090"], [1, "#cfc6b4"]], 0, 0, 1, 0)}"/>`;
@@ -560,21 +558,21 @@ const STADT = {};
     const x0 = 240 + (y - 150) * 0.33, x1 = 284 + (y - 150) * 0.62, m = 330 / dAusY(y);
     /* Stützmauer-Stirn der Stufe: dunklere Kante */
     ost += `<path d="M${r(x0 - 2)} ${r(y + 1.4)} L${r(x1 + 2)} ${r(y + 1.4)} L${r(x1 + 2)} ${r(y + 1.4 + 1.6 * m)} L${r(x0 - 2)} ${r(y + 1.4 + 1.6 * m)} Z" fill="${S.lg("ostmauer", [[0, "#a59d8e"], [1, "#6f685e"]])}"/><path d="M${r(x0 - 2)} ${r(y + 1.4)} H${r(x1 + 2)}" stroke="#ddd5c2" stroke-width=".3"/>`;
-    /* jede zweite Zeile um eine halbe Hauslänge versetzt, einzelne Häuser leicht gedreht */
-    ost += zeile(x0, x1, y - 0.6, 1, 100 + i, 0.06, i % 2 ? 5.5 : 0, 0.18);
-    if (i === 1 || i === 3) {
-      /* Kancha: Hof mit gemeinsamer Umfassungsmauer zwischen der hinteren und der vorderen Zeile */
-      const xa = x0 + (i === 1 ? 4 : 14) * m, xb = xa + 30 * m, yf = y + 4.4, hw = 1.2 * m;
-      const ha = hinterPunkt([xa, yf], 9, dAusY(yf)), hb = hinterPunkt([xb, yf], 9, dAusY(yf));
-      ost += `<path d="${Pr([[xa, yf], [xb, yf], [xb, yf - hw], [xa, yf - hw]])}" fill="${GRANIT_F}"/><path d="${Pr([[xb, yf], hb, [hb[0], hb[1] - hw], [xb, yf - hw]])}" fill="${GRANIT_L}"/><path d="${Pr([[xa, yf], ha, [ha[0], ha[1] - hw], [xa, yf - hw]])}" fill="${GRANIT_S}"/><path d="M${r(ha[0])} ${r(ha[1] - hw)}L${r(xa)} ${r(yf - hw)}H${r(xb)}L${r(hb[0])} ${r(hb[1] - hw)}" stroke="#ece4d2" stroke-width=".25" fill="none"/>`;
-    }
-    if (i < 4) ost += zeile(x0 + 2, x1 - 2, y + 4.2, 0.9, 120 + i, 0.06, i % 2 ? 0 : 5.5, 0.18);
   });
   /* zwei Treppen und eine Gasse als helle Diagonalen durch die Stufen */
   for (const [xa, ya, xb, yb, w] of [[262, 152, 268, 200, 1.6], [286, 158, 296, 200, 1.4]]) {
     ost += `<path d="M${xa} ${ya} L${xa + w} ${ya} L${xb + w * 1.4} ${yb} L${xb} ${yb} Z" fill="#cfc7b4"/>`;
     let st = ""; for (let t = 0.04; t < 1; t += 0.06) st += `M${r(xa + (xb - xa) * t)} ${r(ya + (yb - ya) * t)} h${r(w * (1 + 0.4 * t))}`;
     ost += `<path d="${st}" stroke="#8a8274" stroke-width=".15"/>`;
+  }
+  /* drei Viertel (Kanchas): je zwei versetzte Hauszeilen mit einer gemeinsamen Umfassungsmauer, dazwischen freie
+     Grasflächen; die dritte Gruppe liegt rechts eine Stufe tiefer */
+  for (const [i, xa, xb] of [[0, 243, 270], [2, 250, 284], [4, 277, 310]]) {
+    const y = stufenY[i], m = 330 / dAusY(y), yf = y + 4.4, hw = 1.2 * m;
+    ost += zeile(xa, xb, y - 0.6, 1, 100 + i, 0.06, 0, 0.18);
+    const ha = hinterPunkt([xa - 1, yf], 9, dAusY(yf)), hb = hinterPunkt([xb + 1, yf], 9, dAusY(yf));
+    ost += `<path d="${Pr([[xb + 1, yf], hb, [hb[0], hb[1] - hw], [xb + 1, yf - hw]])}" fill="${GRANIT_L}"/><path d="${Pr([[xa - 1, yf], ha, [ha[0], ha[1] - hw], [xa - 1, yf - hw]])}" fill="${GRANIT_S}"/><path d="${Pr([[xa - 1, yf], [xb + 1, yf], [xb + 1, yf - hw], [xa - 1, yf - hw]])}" fill="${GRANIT_F}"/><path d="M${r(ha[0])} ${r(ha[1] - hw)}L${r(xa - 1)} ${r(yf - hw)}H${r(xb + 1)}L${r(hb[0])} ${r(hb[1] - hw)}" stroke="#ece4d2" stroke-width=".25" fill="none"/>`;
+    ost += zeile(xa + 1, xb - 1, y + 4.2, 0.9, 120 + i, 0.06, 5.5, 0.18);
   }
   /* Gruppe der drei Tore (hinten rechts, mit Strohdächern) */
   ost = haus(247, 150, 4.6, 2.2, 6, 1.8, "front", true, 1) + haus(256, 150.6, 4.6, 2.2, 6, 1.8, "front", true, 1) + haus(265, 151.2, 4.6, 2.2, 6, 1.8, "front", true, 1) + ost;

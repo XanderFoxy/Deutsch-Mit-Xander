@@ -89233,7 +89233,7 @@
                 Teilbereiche anklicken kann." Deshalb steht hier jetzt
                 ausdrücklich, was die blinkenden Lupen bedeuten — und wie
                 viele es in diesem Bild sind. */ ""}
-          ${bwZoom ? `<p class="bw-lupenhinweis">🔍 Du bist ganz nah dran. Tipp die Einzelteile an — oder auf den grauen Rand, um wieder das ganze Bild zu sehen.
+          ${bwZoom ? `<p class="bw-lupenhinweis">🔍 Du bist ganz nah dran. ${bwZoomTeile(s).some((u) => u.lupe) ? "Tipp auf die Lupe an einem Ort – dann gehst du hinein" /* FASSUNG 877 — Karten: Städte in der Regionen-Lupe führen weiter */ : "Tipp die Einzelteile an"} — oder auf den grauen Rand, um wieder das ganze Bild zu sehen.
             <span class="bw-lupenliste"><button type="button" class="bw-lupenchip" id="bwZoomRaus">← Wieder herauszoomen</button></span></p>` : ""}
           ${!bwZoom && bwLupenZahl(s) ? `<p class="bw-lupenhinweis">🔍 ${bwLupenZahl(s) === 1
               ? "In diesem Bild blinkt eine Lupe. Tipp direkt darauf — dann gehst du hinein und siehst die Einzelteile."
@@ -89647,7 +89647,7 @@
       const kaesten = [];
       svg.querySelectorAll("[data-bw-teil]").forEach((g) => {
         try {
-          const k = g.getBBox();
+          const k = (g.querySelector(":scope > .bw-kunst") || g).getBBox();   // FASSUNG 877 — ohne Lupenmarke messen, sonst wächst das Fangrechteck um die Marke und stößt an Nachbarn (Karten-Kritik A1)
           if (!(k.width > 0 && k.height > 0)) return;
           const m = (g.getAttribute("transform") || "").match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
           const vx = m ? +m[1] : 0, vy = m ? +m[2] : 0;
@@ -89656,6 +89656,15 @@
         } catch (e) { /* ohne Trefferfläche geht es auch, nur fummeliger */ }
       });
       kaesten.sort((a, b) => b.gross - a.gross);
+      /* FASSUNG 877 — Sehr große Teile (mehr als 8 % des Bildes: Regionen,
+         Meere, Kontinente) bekommen kein Ersatzrechteck: ihr Rechteck fing
+         das Ausland („Straßburg → der Süden", „Groningen → die Nordsee").
+         Sie fangen nur mit ihrer echten Form. */
+      if (window.DMA_BILDERWELT_NEU) {
+        const vbx = (svg.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
+        const bildFl = (vbx[2] || 0) * (vbx[3] || 0);
+        if (bildFl > 0) for (let i = kaesten.length - 1; i >= 0; i--) if (kaesten[i].gross > bildFl * 0.08) kaesten.splice(i, 1);
+      }
       /* JEDE FANGFLÄCHE IST MINDESTENS FINGERBREIT.
          ---------------------------------------------------------
          GEMELDET: „Die Sachen sollen auswählbar sein und sich nicht
@@ -89708,7 +89717,7 @@
       const obenTeile = [];
       svg.querySelectorAll("[data-bw-teil][data-bw-oben]").forEach((g) => {
         try {
-          const k = g.getBBox();
+          const k = (g.querySelector(":scope > .bw-kunst") || g).getBBox();   // FASSUNG 877 — ohne Lupenmarke messen, sonst wächst das Fangrechteck um die Marke und stößt an Nachbarn (Karten-Kritik A1)
           if (!(k.width > 0 && k.height > 0)) return;
           const m = (g.getAttribute("transform") || "").match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
           const vx = m ? +m[1] : 0, vy = m ? +m[2] : 0;
@@ -89735,6 +89744,34 @@
         });
         if (window.DMA_BILDERWELT_NEU) obenTeile.forEach((o) => { const echt = document.createElementNS(ns, "rect"); echt.setAttribute("data-bw-treff", o.id); echt.setAttribute("x", o.x.toFixed(1)); echt.setAttribute("y", o.y.toFixed(1)); echt.setAttribute("width", o.w.toFixed(1)); echt.setAttribute("height", o.h.toFixed(1)); echt.setAttribute("fill", "transparent"); dach.appendChild(echt); });   // FASSUNG 840: Weiche — FASSUNG 852: über den fingerbreiten Rändern noch die echten Umrisse (groß unten, klein oben): wer auf die Tischplatte tippt, bekommt die Tischplatte, nicht die Kante daneben, deren Rand darüber reicht
         heim.appendChild(dach);
+      }
+      /* FASSUNG 877 — Lupenmarken gewinnen immer: eine dritte Ebene ganz oben
+         mit einem durchsichtigen Kreis über jeder sichtbaren Marke. Vorher
+         lag das „oben"-Rechteck eines Lupen-Teils über seiner eigenen Marke,
+         der Tipp öffnete nur die Wortkarte statt die Stadt (Karten-Kritik A1). */
+      const marken = svg.querySelectorAll(".bw-lupenmarke[data-bw-lupe-sofort] .bw-lupen-tipp");
+      if (marken.length && heim.getCTM) {
+        const markenDach = document.createElementNS(ns, "g");
+        markenDach.setAttribute("class", "bw-marken-dach");
+        const heimInv = heim.getCTM() && heim.getCTM().inverse();
+        marken.forEach((c) => {
+          try {
+            const ctm = c.getCTM();
+            if (!ctm || !heimInv) return;
+            const mm = heimInv.multiply(ctm);
+            const kreis = document.createElementNS(ns, "circle");
+            kreis.setAttribute("cx", c.getAttribute("cx")); kreis.setAttribute("cy", c.getAttribute("cy"));
+            kreis.setAttribute("r", c.getAttribute("r"));
+            kreis.setAttribute("fill", "transparent");
+            kreis.setAttribute("transform", `matrix(${mm.a} ${mm.b} ${mm.c} ${mm.d} ${mm.e} ${mm.f})`);
+            const ziel = c.closest("[data-bw-lupe-sofort]").dataset.bwLupeSofort;
+            kreis.setAttribute("data-bw-lupe-sofort", ziel);
+            kreis.style.cursor = "pointer";
+            kreis.addEventListener("click", (e) => { e.stopPropagation(); e.preventDefault(); Core.sound.click?.(); bwDetailOeffnen(ziel); });
+            markenDach.appendChild(kreis);
+          } catch (e) { /* ohne Kreis bleibt die Marke selbst */ }
+        });
+        heim.appendChild(markenDach);
       }
     });
     area.querySelectorAll("[data-bw-treff]").forEach((f) => {
