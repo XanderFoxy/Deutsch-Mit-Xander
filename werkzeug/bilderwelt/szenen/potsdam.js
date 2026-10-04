@@ -508,8 +508,8 @@ const P1 = mensch("P1", { id: "pdm_p1", geschlecht: "w", blick: 120, frisur: "la
   kleidung: { oberteil: { stueck: "pullover", farbe: "rosa" }, jacke: { stueck: "mantel", farbe: "beige" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" } } }, 1.66, 46, -6.1, 4, 1, true);
 const P2 = mensch("P2", { id: "pdm_p2", geschlecht: "m", blick: 118, frisur: "glatze", haarfarbe: "grau", haut: "hell", pose: "gehen",
   kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, jacke: { stueck: "jacke", farbe: "braun" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "halbschuh" } } }, 1.8, 46.6, -6.8, 4, 1, true);
-bodenSchatten(46, -6.1, 0.45, 1.66, 0.24);
-bodenSchatten(46.6, -6.8, 0.5, 1.8, 0.24);
+bodenSchatten(46, -6.1, 0.45, 1.66, 0.15);
+bodenSchatten(46.6, -6.8, 0.5, 1.8, 0.15);
 
 /* =====================================================================
    4 — DIE TREPPE (Freitreppe, 132 Stufen in sechs Läufen, Sandstein)
@@ -763,6 +763,9 @@ const KUEBEL = S.lg("kuebel", [[0, "#6d9c74"], [0.45, "#3f6e48"], [1, "#22402b"]
 const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c"]], 0.32, 0.28, 0.78);
 {
   let k = "";
+  /* gelappte Kugelkronen (zwei Formen), unten eine dunklere Zone */
+  { const oz = zufall(5); for (const v of [0, 1]) S.def(`<path id="${S.id("ork" + v)}" d="${lappenPfad(0, -2.55, 0.8, 0.76, oz)}"/><clipPath id="${S.id("ork" + v)}c"><use href="#${S.id("ork" + v)}"/></clipPath>`); }
+  let oi = 0;
   for (const o of ORANGEN) {
     const u = sk(o.D), x = xG(o.D, o.X), y = yG(o.D);
     bodenSchatten(o.D, o.X, 1.1, 3.4, 0.34);
@@ -772,9 +775,12 @@ const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c
     g += `<rect x="-.6" y="-.92" width=".12" height=".92" fill="#f2ede0"/><rect x=".48" y="-.92" width=".12" height=".92" fill="#b8b09c"/>`;
     g += `<circle cx="-.54" cy="-.98" r=".08" fill="#f2ede0"/><circle cx=".54" cy="-.98" r=".08" fill="#b8b09c"/>`;
     g += `<rect x="-.05" y="-1.9" width=".1" height="1.05" fill="#6b5236"/>`;
-    g += `<circle cx="0" cy="-2.55" r=".78" fill="${ORKRONE}"/>`;
+    const v = S.id("ork" + (oi++ % 2));
+    g += `<use href="#${v}" fill="${ORKRONE}"/><g clip-path="url(#${v}c)"><use href="#${v}" fill="#1c3618" opacity=".45" transform="translate(.06 .95)"/></g>`;
     const z = zufall(Math.round(o.D * 7 + o.X));
-    for (let i = 0; i < 9; i++) { const a = z() * 6.28, d = Math.sqrt(z()) * 0.62; g += `<circle cx="${r(Math.cos(a) * d)}" cy="${r(-2.55 + Math.sin(a) * d)}" r=".075" fill="${Math.cos(a) < 0 ? "#f7a832" : "#d4781a"}"/>`; }
+    let bl = "";
+    for (let i = 0; i < 10; i++) { const a = z() * 6.28, d = Math.sqrt(z()) * 0.6, ox = r(Math.cos(a) * d), oy = r(-2.55 + Math.sin(a) * d); g += `<circle cx="${ox}" cy="${oy}" r="${i % 3 ? ".07" : ".05"}" fill="${Math.cos(a) < 0 ? "#f7a832" : "#d4781a"}"/>`; if (i % 3 === 1) bl += `<ellipse cx="${r(ox + 0.04)}" cy="${r(oy + 0.03)}" rx=".1" ry=".055" fill="#3f6e2c"/>`; }
+    g += bl;
     k += `<g transform="translate(${r(x)} ${r(y)}) scale(${u.toFixed(4)})">${g}</g>`;
   }
   const o = ORANGEN.filter((q) => q.D === 54 && q.X > 0)[0], u = sk(o.D);
