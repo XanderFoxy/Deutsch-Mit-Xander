@@ -821,64 +821,103 @@ let MARZ = null;
    17 — DIE LÖWEN (gusseisern, 1823): links der wachende, rechts der schlafende
    ===================================================================== */
 function loewe(L, wach, dir) {
-  /* Liegender Löwe aus Gusseisen in Seitenansicht (Blick nach rechts bei dir = 1).
-     Klassizistische Lockenmähne in drei Reihen, kantige Schnauze, schwere Braue, Auge im Schatten,
-     geschlossener Mund mit Kinnbart. Licht von rechts oben: Spitzlichter auf Rücken, Locken und Pranken. */
+  /* Liegender Löwe aus Gusseisen (Rauch, 1823) in Seitenansicht, Blick nach rechts bei dir = 1.
+     Licht von rechts oben: warme Spitzlichter auf Rücken, Locken, Braue und Pranken. */
   const P = (x, y) => `${r(dir * x * L)} ${r(-y * L)}`;
-  const D = "#1d1d20", MI = "#2f2f32", HL = "#8a867c", SP = "#b9b4a6";
+  const D = "#1d1d20", MI = "#2c2c2f", HL = "#8a867c", SP = "#c8b48c";
   const z = zufall(wach ? 5 : 9);
+  /* eine Locke (hängend, Wurzel bei 0,0), hell und dunkel, einmal definiert und per <use> gesetzt */
+  if (!loewe.lk) {
+    const w = 0.04 * L, l = 0.08 * L;
+    const lp = `M${r(-w / 2)} 0 C${r(-w * 0.75)} ${r(l * 0.4)} ${r(-w * 0.2)} ${r(l * 0.8)} 0 ${r(l)} C${r(w * 0.25)} ${r(l * 0.75)} ${r(w * 0.7)} ${r(l * 0.4)} ${r(w / 2)} 0 Z`;
+    const hp = `M${r(w * 0.42)} ${r(l * 0.05)} C${r(w * 0.6)} ${r(l * 0.4)} ${r(w * 0.25)} ${r(l * 0.72)} ${r(w * 0.04)} ${r(l * 0.92)}`;
+    S.def(`<g id="${S.id("lkh")}"><path d="${lp}" fill="#3d3c39" stroke="#121214" stroke-width="${r(0.005 * L)}"/><path d="${hp}" stroke="${SP}" stroke-width="${r(0.008 * L)}" fill="none"/></g>`);
+    S.def(`<g id="${S.id("lkd")}"><path d="${lp}" fill="#252528" stroke="#0e0e10" stroke-width="${r(0.005 * L)}"/><path d="${hp}" stroke="#5a5750" stroke-width="${r(0.006 * L)}" fill="none"/></g>`);
+    loewe.lk = true;
+  }
+  const locke = (x, y, grad, sc, hell) => `<use href="#${S.id(hell ? "lkh" : "lkd")}" transform="translate(${P(x, y)}) rotate(${Math.round(grad)}) scale(${sc.toFixed(2)})"/>`;
   let g = "";
-  /* Schwanz mit Quaste um die Hinterpranke */
+  /* Schwanz mit Quaste, um die Hinterpranke gelegt */
   g += `<path d="M${P(-0.47, 0.1)} C${P(-0.62, 0.05)} ${P(-0.52, 0)} ${P(-0.3, 0.012)} S${P(-0.12, 0.02)} ${P(-0.06, 0.03)}" stroke="${MI}" stroke-width="${r(0.026 * L)}" fill="none" stroke-linecap="round"/>`;
   g += `<path d="M${P(-0.09, 0.03)} c${r(dir * 0.03 * L)} ${r(-0.03 * L)} ${r(dir * 0.07 * L)} ${r(-0.01 * L)} c${r(-dir * 0.02 * L)} ${r(0.025 * L)} ${r(-dir * 0.06 * L)} ${r(0.02 * L)} Z" fill="${D}"/>`;
-  /* Rumpf: Schulterblatt, Senke vor der Kruppe, Kruppe, Bauchlinie */
-  g += `<path d="M${P(-0.5, 0.02)} C${P(-0.54, 0.2)} ${P(-0.46, 0.31)} ${P(-0.32, 0.32)} C${P(-0.2, 0.32)} ${P(-0.12, 0.28)} ${P(-0.02, 0.3)} C${P(0.06, 0.33)} ${P(0.1, 0.37)} ${P(0.16, 0.36)} L${P(0.24, 0.3)} L${P(0.26, 0.08)} L${P(0.1, 0.02)} Z" fill="${EISEN}"/>`;
-  g += `<path d="M${P(-0.44, 0.27)} C${P(-0.36, 0.33)} ${P(-0.24, 0.32)} ${P(-0.16, 0.29)} C${P(-0.08, 0.28)} ${P(0.02, 0.31)} ${P(0.1, 0.36)}" stroke="${HL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
-  g += `<path d="M${P(0.0, 0.31)} C${P(0.04, 0.24)} ${P(0.04, 0.16)} ${P(0.0, 0.1)}" stroke="#141416" stroke-width="${r(0.008 * L)}" fill="none" opacity=".7"/>`;
-  /* Hinterkeule und Hinterpranke mit Zehenballen */
-  g += `<path d="M${P(-0.47, 0.04)} C${P(-0.51, 0.2)} ${P(-0.38, 0.28)} ${P(-0.25, 0.24)} C${P(-0.14, 0.2)} ${P(-0.13, 0.08)} ${P(-0.2, 0.03)} Z" fill="${MI}"/>`;
-  g += `<path d="M${P(-0.43, 0.22)} C${P(-0.35, 0.27)} ${P(-0.26, 0.25)} ${P(-0.21, 0.19)}" stroke="${HL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
-  g += `<path d="M${P(-0.3, 0)} L${P(-0.06, 0)} Q${P(-0.025, 0)} ${P(-0.025, 0.03)} Q${P(-0.045, 0.055)} ${P(-0.1, 0.05)} L${P(-0.28, 0.05)} Z" fill="${MI}"/>`;
-  for (const t of [-0.07, -0.045]) g += `<circle cx="${r(dir * t * L)}" cy="${r(-0.018 * L)}" r="${r(0.012 * L)}" fill="${D}"/>`;
-  /* Vorderbeine: hinteres dunkler, vorderes mit Glanz; Pranken mit vier Zehenballen */
-  g += `<path d="M${P(0.14, 0.2)} L${P(0.2, 0.045)} L${P(0.5, 0.05)} Q${P(0.55, 0.055)} ${P(0.55, 0.085)} Q${P(0.53, 0.1)} ${P(0.46, 0.098)} L${P(0.24, 0.1)} Z" fill="${D}"/>`;
-  g += `<path d="M${P(0.08, 0.22)} C${P(0.15, 0.1)} ${P(0.16, 0.04)} ${P(0.2, 0)} L${P(0.53, 0)} Q${P(0.59, 0)} ${P(0.59, 0.035)} Q${P(0.57, 0.062)} ${P(0.49, 0.06)} L${P(0.26, 0.066)} C${P(0.22, 0.12)} ${P(0.2, 0.19)} ${P(0.18, 0.24)} Z" fill="${EISEN}"/>`;
-  for (let i = 0; i < 4; i++) g += `<ellipse cx="${r(dir * (0.535 + i * 0.016) * L)}" cy="${r(-(0.012 + (i % 2) * 0.012) * L)}" rx="${r(0.012 * L)}" ry="${r(0.016 * L)}" fill="${MI}" stroke="#121214" stroke-width="${r(0.004 * L)}"/>`;
-  g += `<path d="M${P(0.26, 0.064)} L${P(0.52, 0.058)}" stroke="${SP}" stroke-width="${r(0.008 * L)}" opacity=".8"/>`;
-  /* Mähne: dunkle Masse, darauf drei Reihen s-förmiger Locken (oben im Licht, unten im Schatten) */
-  const mx = wach ? 0.27 : 0.22, my = wach ? 0.4 : 0.22, mr = wach ? 0.21 : 0.17;
-  g += `<path d="M${P(mx - mr * 1.05, my - mr * 1.25)} C${P(mx - mr * 1.35, my + mr * 0.3)} ${P(mx - mr * 0.5, my + mr * 1.25)} ${P(mx + mr * 0.35, my + mr * 1.1)} C${P(mx + mr * 0.9, my + mr * 0.95)} ${P(mx + mr * 0.85, my - mr * 0.9)} ${P(mx + mr * 0.1, my - mr * 1.3)} Z" fill="${D}"/>`;
-  /* Locken als hängende Tropfen: Reihe für Reihe von außen nach innen, Spitze nach unten-hinten */
-  for (const [rr, n, w] of [[1.0, 11, 0.05], [0.78, 9, 0.046], [0.55, 7, 0.04]]) {
-    for (let i = 0; i < n; i++) {
-      const a = 1.3 + i / (n - 1) * 3.4 + (z() - 0.5) * 0.1;
-      const bx = mx + Math.cos(a) * mr * rr * 0.75, by = my + Math.sin(a) * mr * rr * 0.8;
-      const ta = a - 0.5 - 0.35, len = 0.07 + z() * 0.025;
-      const tx = bx + Math.cos(ta) * len, ty = by + Math.sin(ta) * len - 0.015;
-      const nx = -Math.sin(ta) * w * 0.5, ny = Math.cos(ta) * w * 0.5;
-      const oben = Math.sin(a) > 0.2 || Math.cos(a) > 0.35;
-      g += `<path d="M${P(bx + nx, by + ny)} Q${P(bx + nx * 1.6 + Math.cos(ta) * len * 0.6, by + ny * 1.6 + Math.sin(ta) * len * 0.6)} ${P(tx, ty)} Q${P(bx - nx * 1.2 + Math.cos(ta) * len * 0.5, by - ny * 1.2 + Math.sin(ta) * len * 0.5)} ${P(bx - nx, by - ny)} Z" fill="${oben ? "#3c3b38" : "#232325"}" stroke="#121214" stroke-width="${r(0.004 * L)}"/>`;
-      if (oben) g += `<path d="M${P(bx + nx, by + ny)} Q${P(bx + nx * 1.6 + Math.cos(ta) * len * 0.6, by + ny * 1.6 + Math.sin(ta) * len * 0.6)} ${P(tx, ty)}" stroke="${HL}" stroke-width="${r(0.007 * L)}" fill="none" opacity=".9"/>`;
+  /* Rumpf: Kruppe, Senke vor der Kruppe, Widerrist unter der Mähne, Bauch */
+  g += `<path d="M${P(-0.5, 0.02)} C${P(-0.53, 0.18)} ${P(-0.45, 0.3)} ${P(-0.34, 0.31)} C${P(-0.24, 0.32)} ${P(-0.16, 0.27)} ${P(-0.08, 0.27)} C${P(0, 0.27)} ${P(0.06, 0.31)} ${P(0.12, 0.34)} L${P(0.24, 0.3)} L${P(0.26, 0.06)} L${P(0.1, 0.02)} Z" fill="${EISEN}"/>`;
+  g += `<path d="M${P(-0.45, 0.27)} C${P(-0.38, 0.32)} ${P(-0.27, 0.32)} ${P(-0.18, 0.285)} C${P(-0.12, 0.265)} ${P(-0.04, 0.27)} ${P(0.04, 0.31)}" stroke="${SP}" stroke-width="${r(0.01 * L)}" fill="none" opacity=".8"/>`;
+  /* Schulterblatt als Lichtkante, Rippenbogen als weiche Schattenlinie */
+  g += `<path d="M${P(-0.02, 0.29)} C${P(0.03, 0.24)} ${P(0.04, 0.17)} ${P(0.02, 0.11)}" stroke="${HL}" stroke-width="${r(0.01 * L)}" fill="none"/>`;
+  g += `<path d="M${P(-0.14, 0.24)} C${P(-0.1, 0.16)} ${P(-0.08, 0.1)} ${P(-0.04, 0.05)}" stroke="#141416" stroke-width="${r(0.008 * L)}" fill="none" opacity=".5"/>`;
+  /* Hinterkeule als Muskel (oben Licht, vorn eine Falte), Hinterpranke mit Zehen im Umriss */
+  g += `<path d="M${P(-0.46, 0.05)} C${P(-0.5, 0.17)} ${P(-0.42, 0.27)} ${P(-0.31, 0.265)} C${P(-0.21, 0.26)} ${P(-0.14, 0.19)} ${P(-0.15, 0.11)} C${P(-0.16, 0.05)} ${P(-0.24, 0.03)} ${P(-0.3, 0.03)} Z" fill="${MI}"/>`;
+  g += `<path d="M${P(-0.44, 0.2)} C${P(-0.4, 0.26)} ${P(-0.3, 0.27)} ${P(-0.22, 0.23)}" stroke="${SP}" stroke-width="${r(0.009 * L)}" fill="none" opacity=".75"/><path d="M${P(-0.2, 0.2)} C${P(-0.17, 0.15)} ${P(-0.17, 0.1)} ${P(-0.2, 0.06)}" stroke="#121214" stroke-width="${r(0.007 * L)}" fill="none" opacity=".6"/>`;
+  const pranke = (x0, x1, y0, h, fill, licht) => {
+    /* breite, runde Pranke: Unterarm, Handgelenk, vier Zehenwülste im Umriss */
+    const tw = (x1 - x0) * 0.2;
+    let p = `M${P(x0, y0)} L${P(x1 - tw * 0.6, y0)} Q${P(x1 + tw * 0.15, y0)} ${P(x1, y0 + h * 0.45)}`;
+    for (let i = 0; i < 4; i++) { const xa = x1 - i * tw * 0.95, xb = xa - tw * 0.95; p += ` Q${P(xa + tw * 0.05, y0 + h * (0.95 + (i % 2) * 0.08))} ${P((xa + xb) / 2, y0 + h * (0.9 + (i % 2) * 0.1))} Q${P(xb + tw * 0.1, y0 + h * 0.98)} ${P(xb, y0 + h * 0.82)}`; }
+    p += ` L${P(x0 + tw * 0.4, y0 + h * 0.85)}`;
+    let o = `<path d="${p} Z" fill="${fill}"/>`;
+    for (let i = 1; i < 4; i++) { const xv = x1 - i * tw * 0.95 + tw * 0.05; o += `<path d="M${P(xv, y0 + h * 0.85)} l${r(-dir * 0.004 * L)} ${r(0.035 * L)}" stroke="#0e0e10" stroke-width="${r(0.006 * L)}"/>`; }
+    if (licht) o += `<path d="M${P(x1 - tw * 3.4, y0 + h * 0.97)} Q${P(x1 - tw * 1.6, y0 + h * 1.08)} ${P(x1 - tw * 0.1, y0 + h * 0.8)}" stroke="${SP}" stroke-width="${r(0.008 * L)}" fill="none"/>`;
+    return o;
+  };
+  g += pranke(-0.32, -0.04, 0, 0.055, MI, true);
+  /* Vorderbeine: hinteres dunkler; vorderes mit Ellbogen, Handgelenk und Lichtkante */
+  const bein = (dy, fill, licht, x1 = 0.6) => {
+    let o = `<path d="M${P(0.08, 0.25 + dy)} C${P(0.09, 0.15 + dy)} ${P(0.09, 0.07 + dy)} ${P(0.13, 0.03 + dy)} Q${P(0.15, dy)} ${P(0.21, dy)} L${P(0.42, dy)} L${P(0.42, 0.065 + dy)} L${P(0.28, 0.068 + dy)} C${P(0.23, 0.085 + dy)} ${P(0.2, 0.16 + dy)} ${P(0.19, 0.25 + dy)} Z" fill="${fill}"/>`;
+    o += pranke(0.4, x1, dy, 0.075, fill, licht);
+    if (licht) o += `<path d="M${P(0.28, 0.07 + dy)} L${P(0.42, 0.068 + dy)}" stroke="${SP}" stroke-width="${r(0.008 * L)}"/><path d="M${P(0.13, 0.03 + dy)} q${r(dir * 0.004 * L)} ${r(-0.02 * L)} ${r(dir * 0.03 * L)} ${r(-0.025 * L)}" stroke="${HL}" stroke-width="${r(0.007 * L)}" fill="none"/>`;
+    return o;
+  };
+  g += bein(0.035, D, false, 0.57);
+  if (wach) g += bein(0, EISEN, true);
+  /* Mähne: Lockenkranz um den Kopf, Zotteln fallen schräg über Schulter und Brust bis auf das Vorderbein */
+  const poly = wach ? [[0.22, 0.64], [0.12, 0.58], [0.04, 0.45], [0.0, 0.32], [0.02, 0.2], [0.09, 0.13], [0.19, 0.095], [0.29, 0.08], [0.36, 0.14], [0.39, 0.28], [0.37, 0.48], [0.31, 0.61]]
+    : [[0.2, 0.44], [0.1, 0.4], [0.02, 0.3], [0.0, 0.19], [0.06, 0.12], [0.16, 0.09], [0.26, 0.1], [0.31, 0.2], [0.31, 0.34], [0.27, 0.43]];
+  const mx = wach ? 0.2 : 0.16, my = wach ? 0.36 : 0.26;
+  const innen = (x, y) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+  let m = "";
+  /* Randlocken zeigen nach außen und unten: so wird der Umriss zottig */
+  for (let i = 0; i < poly.length; i++) {
+    const [ax, ay] = poly[i], [bx, by] = poly[(i + 1) % poly.length], n = Math.max(1, Math.round(Math.hypot(bx - ax, by - ay) / 0.04));
+    for (let j = 0; j < n; j++) {
+      const t = (j + z() * 0.5) / n, x = ax + (bx - ax) * t, y = ay + (by - ay) * t;
+      let vx = (x - mx), vy = (y - my) - 0.9; const vl = Math.hypot(vx, vy); vx /= vl; vy /= vl;
+      const grad = Math.atan2(-dir * vx, -vy) * 180 / Math.PI;
+      m += locke(x, y, grad, 0.85 + z() * 0.4, y > my && z() < 0.7);
     }
   }
-  /* Kopf */
+  m += `<path d="M${poly.map(([x, y]) => P(x, y)).join(" L")} Z" fill="${D}"/>`;
+  /* innere Reihen von unten nach oben: die oberen Locken liegen über den unteren */
+  for (let y = poly.reduce((a, q) => Math.min(a, q[1]), 9) + 0.05; y < 0.66; y += 0.042) {
+    for (let x = -0.02 + z() * 0.03; x < 0.42; x += 0.043) {
+      const yy = y + (z() - 0.5) * 0.015;
+      if (!innen(x, yy)) continue;
+      m += locke(x, yy, 18 * dir + (z() - 0.5) * 20, 0.9 + z() * 0.3, yy > my - 0.06 || (x > mx && z() < 0.6));
+    }
+  }
+  g += m;
+  /* Kopf: lange, breite Schnauze, schwerer Unterkiefer, Braue mit Licht, Auge im Schatten, Kinnlocken */
   const kopf = (ox, oy, rot) => {
-    const Q = (x, y) => { const c = Math.cos(rot), sn = Math.sin(rot), X = x * c - y * sn + ox, Y = x * sn + y * c + oy; return P(X, Y); };
-    let h = `<path d="M${Q(-0.09, 0.08)} C${Q(-0.04, 0.15)} ${Q(0.05, 0.15)} ${Q(0.1, 0.1)} L${Q(0.16, 0.03)} L${Q(0.18, 0.0)} Q${Q(0.19, -0.03)} ${Q(0.17, -0.04)} L${Q(0.16, -0.07)} C${Q(0.13, -0.09)} ${Q(0.1, -0.09)} ${Q(0.09, -0.07)} L${Q(0.08, -0.1)} C${Q(0.05, -0.12)} ${Q(0.0, -0.12)} ${Q(-0.04, -0.09)} C${Q(-0.09, -0.05)} ${Q(-0.11, 0.02)} ${Q(-0.09, 0.08)} Z" fill="${EISEN}"/>`;
-    /* schwere Braue mit Spitzlicht, Auge tief im Schatten */
-    h += `<path d="M${Q(0.0, 0.085)} C${Q(0.04, 0.1)} ${Q(0.08, 0.09)} ${Q(0.11, 0.065)} L${Q(0.1, 0.045)} C${Q(0.07, 0.06)} ${Q(0.03, 0.06)} ${Q(0.0, 0.05)} Z" fill="#121214"/>`;
-    h += `<path d="M${Q(0.0, 0.088)} C${Q(0.04, 0.104)} ${Q(0.08, 0.094)} ${Q(0.11, 0.068)}" stroke="${SP}" stroke-width="${r(0.008 * L)}" fill="none"/>`;
-    h += wach ? `<path d="M${Q(0.045, 0.045)} q${r(dir * 0.016 * L)} ${r(-0.008 * L)} ${r(dir * 0.03 * L)} ${r(0.002 * L)} q${r(-dir * 0.014 * L)} ${r(0.008 * L)} ${r(-dir * 0.03 * L)} ${r(-0.002 * L)} Z" fill="#3a3a3c"/><circle cx="${r(dir * (ox + 0.06) * L)}" cy="${r(-(oy + 0.046) * L)}" r="${r(0.004 * L)}" fill="${SP}"/>`
-      : `<path d="M${Q(0.04, 0.042)} q${r(dir * 0.018 * L)} ${r(0.006 * L)} ${r(dir * 0.034 * L)} 0" stroke="#0e0e10" stroke-width="${r(0.007 * L)}" fill="none"/>`;
-    /* Nasenrücken mit Licht, Nase, geschlossener Mund, Kinnbart */
-    h += `<path d="M${Q(0.11, 0.07)} L${Q(0.17, 0.01)}" stroke="${HL}" stroke-width="${r(0.012 * L)}" stroke-linecap="round"/>`;
-    h += `<path d="M${Q(0.165, 0.005)} L${Q(0.19, -0.02)} L${Q(0.17, -0.035)} L${Q(0.15, -0.02)} Z" fill="#0e0e10"/>`;
-    h += `<path d="M${Q(0.165, -0.045)} C${Q(0.14, -0.045)} ${Q(0.11, -0.047)} ${Q(0.085, -0.052)}" stroke="#0e0e10" stroke-width="${r(0.007 * L)}" fill="none"/>`;
-    h += `<path d="M${Q(0.08, -0.095)} l${r(dir * -0.01 * L)} ${r(0.03 * L)} l${r(dir * -0.02 * L)} ${r(-0.02 * L)} l${r(dir * -0.01 * L)} ${r(0.025 * L)} l${r(dir * -0.02 * L)} ${r(-0.02 * L)}" stroke="#2a2a2c" stroke-width="${r(0.01 * L)}" fill="none"/>`;
-    h += `<path d="M${Q(0.03, 0.04)} C${Q(0.06, 0.0)} ${Q(0.1, -0.02)} ${Q(0.14, -0.02)}" stroke="#141416" stroke-width="${r(0.006 * L)}" fill="none" opacity=".7"/>`;
+    const Q = (x, y) => { const c = Math.cos(rot), sn = Math.sin(rot); return P(x * c - y * sn + ox, x * sn + y * c + oy); };
+    let h = `<path d="M${Q(-0.03, 0.115)} Q${Q(-0.06, 0.16)} ${Q(-0.01, 0.16)} Q${Q(0.02, 0.15)} ${Q(0.02, 0.12)} Z" fill="${MI}"/>`;   /* Ohr im Lockenkranz */
+    h += `<path d="M${Q(-0.1, 0.06)} C${Q(-0.08, 0.12)} ${Q(-0.02, 0.135)} ${Q(0.04, 0.125)} C${Q(0.08, 0.12)} ${Q(0.1, 0.1)} ${Q(0.115, 0.075)} C${Q(0.15, 0.06)} ${Q(0.19, 0.04)} ${Q(0.205, 0.02)} Q${Q(0.218, 0)} ${Q(0.207, -0.025)} C${Q(0.2, -0.04)} ${Q(0.19, -0.05)} ${Q(0.182, -0.05)} C${Q(0.188, -0.07)} ${Q(0.172, -0.1)} ${Q(0.14, -0.106)} C${Q(0.09, -0.116)} ${Q(0.03, -0.11)} ${Q(0, -0.09)} C${Q(-0.04, -0.07)} ${Q(-0.08, -0.02)} ${Q(-0.1, 0.06)} Z" fill="${EISEN}"/>`;
+    /* Schatten unter der Braue, Braue mit Spitzlicht, Wangenmuskel */
+    h += `<path d="M${Q(0.02, 0.075)} C${Q(0.06, 0.088)} ${Q(0.1, 0.082)} ${Q(0.12, 0.068)} L${Q(0.11, 0.045)} C${Q(0.08, 0.055)} ${Q(0.05, 0.055)} ${Q(0.02, 0.05)} Z" fill="#111113"/>`;
+    h += `<path d="M${Q(0.0, 0.08)} C${Q(0.05, 0.1)} ${Q(0.1, 0.092)} ${Q(0.125, 0.07)}" stroke="${SP}" stroke-width="${r(0.009 * L)}" fill="none"/>`;
+    h += `<path d="M${Q(0.03, 0.03)} C${Q(0.07, 0.01)} ${Q(0.1, -0.02)} ${Q(0.11, -0.05)}" stroke="#121214" stroke-width="${r(0.007 * L)}" fill="none" opacity=".7"/>`;
+    h += wach ? `<path d="M${Q(0.055, 0.052)} Q${Q(0.075, 0.064)} ${Q(0.095, 0.052)} Q${Q(0.075, 0.044)} ${Q(0.055, 0.052)} Z" fill="#3a3a3c"/><circle cx="${Q(0.083, 0.054).split(" ")[0]}" cy="${Q(0.083, 0.054).split(" ")[1]}" r="${r(0.004 * L)}" fill="${SP}"/>`
+      : `<path d="M${Q(0.05, 0.048)} Q${Q(0.075, 0.04)} ${Q(0.1, 0.05)}" stroke="#0e0e10" stroke-width="${r(0.007 * L)}" fill="none"/>`;
+    /* Nasenrücken als Lichtkante, breite Nase, Schnurrhaarpolster, geschlossenes Maul, schwerer Unterkiefer */
+    h += `<path d="M${Q(0.12, 0.072)} C${Q(0.15, 0.058)} ${Q(0.18, 0.042)} ${Q(0.2, 0.022)}" stroke="${SP}" stroke-width="${r(0.011 * L)}" fill="none" stroke-linecap="round"/>`;
+    h += `<path d="M${Q(0.188, 0.012)} L${Q(0.214, -0.004)} Q${Q(0.216, -0.022)} ${Q(0.205, -0.03)} L${Q(0.18, -0.022)} Z" fill="#0e0e10"/>`;
+    h += `<path d="M${Q(0.185, -0.04)} C${Q(0.16, -0.04)} ${Q(0.12, -0.045)} ${Q(0.09, -0.058)}" stroke="#0e0e10" stroke-width="${r(0.008 * L)}" fill="none"/><path d="M${Q(0.19, -0.035)} C${Q(0.17, -0.015)} ${Q(0.14, -0.012)} ${Q(0.12, -0.025)}" stroke="${HL}" stroke-width="${r(0.006 * L)}" fill="none"/>`;
+    h += `<path d="M${Q(0.17, -0.07)} C${Q(0.13, -0.09)} ${Q(0.06, -0.095)} ${Q(0.02, -0.08)}" stroke="#121214" stroke-width="${r(0.007 * L)}" fill="none" opacity=".6"/>`;
+    for (let i = 0; i < 4; i++) { const [cx, cy] = Q(0.14 - i * 0.03, -0.1 - (i % 2) * 0.006).split(" "); h += `<use href="#${S.id(i % 2 ? "lkd" : "lkh")}" transform="translate(${cx} ${cy}) rotate(${Math.round(dir * (10 + i * 6))}) scale(.55)"/>`; }
     return h;
   };
-  g += wach ? kopf(0.34, 0.43, 0.05) : kopf(0.33, 0.16, -0.32);
+  g += wach ? kopf(0.35, 0.45, 0.05) : kopf(0.36, 0.205, -0.12);
+  /* der schlafende Löwe legt den Kopf auf die gekreuzten Pranken: die vordere liegt über dem Unterkiefer */
+  if (!wach) g += `<g transform="translate(${r(dir * 0.06 * L)} ${r(-0.06 * L)})">${bein(0, EISEN, true, 0.56)}</g>`;
   return g;
 }
 /* Sockel aus Sandstein in Perspektive: Vorderseite mit Quaderfugen, Flecken und bestoßenen Kanten,
