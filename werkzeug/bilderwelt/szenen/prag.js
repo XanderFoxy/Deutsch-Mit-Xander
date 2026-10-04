@@ -839,7 +839,10 @@ S.def(`<g id="${S.id("lat")}"><path d="M-.2 0 h.4 v-.35 h-.4Z" fill="#33363c"/><
   `<path d="M-.33 -2.86 H.33 L0 -3.12Z" fill="#26282c"/><path d="M0 -3.12 V-3.26" stroke="#26282c" stroke-width=".05"/><path d="M-.07 -.4 L-.05 -2.05" stroke="#8a8c92" stroke-width=".025"/></g>`);
 const laterneSvg = (s, sei) => { const q = sei * (BR - BRD / 2), sc = F / Dd(s, q); return `<use href="#${S.id("lat")}" transform="translate(${r(X(s, q))} ${r(Y(s, q, BRH))}) scale(${sc.toFixed(4)})"/>`; };
 
-/* ferner Teil der Brücke mit Statuen und Laternen: Kulisse (von hinten nach vorn gezeichnet) */
+/* ferner Teil der Brücke mit Statuen und Laternen: Kulisse (von hinten nach vorn gezeichnet).
+   Die Statuen und Laternen vor den Kleinseitner Brückentürmen stanzen die Türme aus (Maske), damit
+   die Türme – ein Teil, also über der Kulisse gezeichnet – sie nicht verdecken. */
+const TURM_DINGE = [];
 {
   let k = bruecke(NAHE - 2, 505);
   const dinge = [];
@@ -847,6 +850,7 @@ const laterneSvg = (s, sei) => { const q = sei * (BR - BRD / 2), sc = F / Dd(s, 
   for (const [s, sei] of LATERNEN) if (s > NAHE) dinge.push([s, laterneSvg(s, sei)]);
   dinge.sort((a, b) => b[0] - a[0]);
   k += dinge.map((d) => d[1]).join("");
+  for (const [s, svg] of dinge) if (s >= 110) TURM_DINGE.push(svg);
   S.hinten(k);
 }
 /* Wasser darf den fernen Teil der Brücke und die Sockel der zweiten Statuen nicht übermalen: Aussparungen */
@@ -1055,6 +1059,12 @@ let PUP = null;
 
 BRUECKE.kunst += `<g pointer-events="none">${BRUECKE_SCHATTEN.join("")}</g>`;
 { const md = S.teile.find((t) => t.id === "moldau"); md.kunst = ausgespart(md.kunst); }
+{
+  const t = S.teile.find((t) => t.id === "brueckenturm");
+  S.def(`<filter id="${S.id("schwarz")}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 0"/></filter>`);
+  S.def(`<mask id="${S.id("turmmaske")}" maskUnits="userSpaceOnUse" x="-150" y="-100" width="300" height="200"><rect x="-150" y="-100" width="300" height="200" fill="#fff"/><g transform="translate(${-t.x} ${-t.y})" filter="url(#${S.id("schwarz")})">${TURM_DINGE.join("")}</g></mask>`);
+  t.kunst = `<g mask="url(#${S.id("turmmaske")})">${t.kunst}</g>`;
+}
 for (const t of S.teile) if (["aussichtsturm", "veitsdom", "prager_burg", "nikolauskirche", "brueckenturm"].includes(t.id)) t.kunst = `<g filter="url(#${S.id("luft")})">${t.kunst}</g>`;
 pfadeKlein(S);
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/prag.js"));

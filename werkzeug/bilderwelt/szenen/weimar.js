@@ -194,7 +194,7 @@ const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
   for (let i = 0; i < loecher; i++) {
     const a = -Math.PI * (0.15 + (i + z() * 0.6) / Math.max(1, loecher) * 0.7), d = 0.3 + z() * 0.06, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.75, s = Math.min(w, h) * 0.05 + 1.2;
     let p = ""; for (let k = 0; k < 6; k++) { const t = k / 6 * Math.PI * 2, f = 0.6 + z() * 0.5; p += (k ? "L" : "M") + `${r(hx + Math.cos(t) * s * f)} ${r(hy + Math.sin(t) * s * f * 0.75)}`; }
-    g += `<path d="${p}Z" fill="#9fbcdc" stroke="#9fbcdc" stroke-width=".4" stroke-linejoin="round"/><path d="M${r(hx - s * 0.3)} ${r(hy + s * 1.7)} Q${r(hx - s * 0.1)} ${r(hy + s * 0.5)} ${r(hx + s * 0.5)} ${r(hy - s * 0.2)}" stroke="#3a2e22" stroke-width="${r(0.2 + s * 0.1)}" fill="none" stroke-linecap="round"/>`;
+    g += `<path d="${p}Z" fill="#9fbcdc" stroke="#9fbcdc" stroke-width=".4" stroke-linejoin="round"/><path d="M${r(hx - s * 0.5)} ${r(hy + s * 1.6)} L${r(hx + s * 0.1)} ${r(hy + s * 0.1)} M${r(hx - s * 0.1)} ${r(hy + s * 0.6)} L${r(hx - s * 0.7)} ${r(hy - s * 0.2)}" stroke="#3a2e22" stroke-width="${r(0.2 + s * 0.1)}" fill="none" stroke-linecap="round"/>`;
   }
   return g;
 };
@@ -917,7 +917,7 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
      trägt einen großen Zopf über dem rechten Unterarm; das Kind trägt einen kleinen Zopf als Kette. */
   const MD = 7.0, MX = 3.25;
   KLEIN = 8;
-  const MU = mensch("MU", { id: "wmr_mutter", geschlecht: "w", blick: -16, frisur: "pony", haarfarbe: "hellbraun", haut: "hell", laecheln: true,
+  const MU = mensch("MU", { id: "wmr_mutter", geschlecht: "w", blick: -16, frisur: "lang", haarfarbe: "hellbraun", haut: "hell", laecheln: true,
     pose: { roll: 1.4, lende: 3, brust: -1, brustDreh: 4, nacken: 5, kopf: 6,
       schulterL: { vor: 4, seit: 9 }, ellbogenL: 10, unterarmL: 10, handL: 4, fingerL: 0.7,
       schulterR: { vor: 22, seit: 9 }, ellbogenR: 78, unterarmR: 20, handR: 6, fingerR: 0.6,

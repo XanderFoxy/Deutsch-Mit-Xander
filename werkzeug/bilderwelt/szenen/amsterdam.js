@@ -678,8 +678,8 @@ function krone(cx, cy, rx, ry, seed, sonne, fern) {
   }
   /* April: junges, lockeres Laub in weich gelappten Büscheln an den Astenden; Äste gabeln sich (Y), Himmel scheint durch.
      Jedes Büschel: warmer Gegenlicht-Saum oben rechts (Sonne hinten rechts), Hauptgrün, Eigenschatten unten links */
-  const lappen = (x, y, rr, n) => { const w0 = z() * 6.3; return rund(Array.from({ length: 2 * n }, (_, i) => { const a = w0 + i * Math.PI / n, q = rr * (i % 2 ? 0.72 : 0.96 + z() * 0.1); return [x + Math.cos(a) * q, y + Math.sin(a) * q * 0.86]; })); };
-  const N = rx > 60 ? 6 : 5, gx = cx, gy = cy + ry * 0.95, sw = Math.max(0.25, Math.min(rx, ry) * 0.022);
+  const lappen = (x, y, rr, n) => { const w0 = z() * 6.3; return rund(Array.from({ length: 2 * n }, (_, i) => { const a = w0 + i * Math.PI / n, q = rr * (i % 2 ? 0.8 : 0.97 + z() * 0.08); return [x + Math.cos(a) * q, y + Math.sin(a) * q * 0.86]; })); };
+  const N = rx > 60 ? 7 : 6, gx = cx, gy = cy + ry * 0.95, sw = Math.max(0.25, Math.min(rx, ry) * 0.022);
   let aeste = "", zweige = "", saum = "", gruen = "", schatten = "";
   for (let i = 0; i < N; i++) {
     const t = i / (N - 1), ang = -Math.PI * (0.1 + 0.8 * t) + (z() - 0.5) * 0.2;
@@ -690,7 +690,7 @@ function krone(cx, cy, rx, ry, seed, sonne, fern) {
       const a2 = ang + (j - (k - 1) / 2) * 0.42 + (z() - 0.5) * 0.15, d = 0.62 + 0.36 * z();
       const tx = cx + Math.cos(a2) * rx * d, ty = cy + Math.sin(a2) * ry * d * 0.95 + ry * 0.1;
       zweige += `M${r(fx)} ${r(fy)} Q${r((fx + tx) / 2 + (z() - 0.5) * rx * 0.08)} ${r((fy + ty) / 2 - ry * 0.06)} ${r(tx)} ${r(ty)}`;
-      const rc = Math.min(rx, ry) * (0.17 + z() * 0.08), n = 4 + (z() < 0.5 ? 1 : 0);
+      const rc = Math.min(rx, ry) * (0.15 + z() * 0.09), n = 5 + (z() < 0.3 ? 1 : 0);
       saum += lappen(tx + rc * 0.14, ty - rc * 0.14, rc, n);
       gruen += lappen(tx, ty, rc, n);
       schatten += lappen(tx - rc * 0.2, ty + rc * 0.24, rc * 0.62, 3);
