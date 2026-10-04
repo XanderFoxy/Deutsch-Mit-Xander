@@ -661,11 +661,11 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
 }
 {
   /* DIE VERKÄUFERIN: vorn an der Theke, reicht mit der rechten Hand einen Zopf über die Theke */
-  const V = mensch("V", { id: "wmr_verk", geschlecht: "w", blick: 14, frisur: "dutt", haarfarbe: "braun", haut: "hell", laecheln: true,
+  const V = mensch("V", { id: "wmr_verk", geschlecht: "w", blick: 14, frisur: "lang", haarfarbe: "braun", haut: "hell", laecheln: true,
     pose: { lende: 1, brust: -2, nacken: 4, kopf: 2, schulterL: { vor: 10, seit: 12 }, ellbogenL: 70, unterarmL: 40, handL: 4, fingerL: 0.5,
-      schulterR: { vor: 34, seit: 62, dreh: 10 }, ellbogenR: 40, unterarmR: 30, handR: 0, fingerR: 0.85,
+      schulterR: { vor: 55, seit: 28, dreh: 10 }, ellbogenR: 35, unterarmR: 30, handR: 0, fingerR: 0.85,
       huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-    kleidung: { oberteil: { stueck: "bluse", farbe: "creme" }, schuerze: { stueck: "schuerze", farbe: "#e9dcc0" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "rot" } } }, 1.8, ZW.D + 0.42, (ZW.X0 + ZW.X1) / 2 + 0.1, 3, 0.9);
+    kleidung: { oberteil: { stueck: "bluse", farbe: "creme" }, schuerze: { stueck: "schuerze", farbe: "#b8473a" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" } } }, 1.8, ZW.D + 0.42, (ZW.X0 + ZW.X1) / 2 + 0.1, 3, 0.9);
   const theke = yG(ZW.D, 0.95);
   S.def(`<clipPath id="${S.id("hinterTheke")}"><rect x="-60" y="-120" width="120" height="${r(theke - V.y + 120)}"/></clipPath>`);
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x: V.x, y: V.y,
@@ -703,7 +703,7 @@ const zopf = (x, y, len, s2, rotAnteil, seed) => {
   const pos = [[0.22, 0.95, 0.2], [0.5, 0.8, 0.5], [0.78, 0.92, 0.1], [2.78, 0.88, 0.3], [3.08, 0.98, 0.0], [3.36, 0.82, 0.6]];
   pos.forEach(([dx, len, rot], i) => { k += zopf(xG(ZW.D - 0.2, ZW.X0 + dx), ya, len, u, rot, i * 7 + 3); });
   /* liegende Zöpfe auf der Theke (quer, von oben gesehen) */
-  { const h = FIG.Vh; k += zopf(h.x, h.y - 0.2 * u, 0.62, u, 0.35, 91); }
+  { const h = FIG.Vh; k += zopf(h.x, h.y + 0.04 * u, 0.62, u, 0.35, 91); }
   S.teil({ id: "zwiebelzopf", de: "der Zwiebelzopf", syl: "ZWIE-bel-zopf", it: "la treccia di cipolle", itSyl: "TREC-cia di ci-POL-le", en: "onion braid", x: 0, y: 0, kunst: k,
     tipp: "Zwiebelzöpfe sind das Wahrzeichen des Weimarer Zwiebelmarkts. Den Markt gibt es seit 1653." });
 }
@@ -846,7 +846,7 @@ const LS = { D: 8.6, X: -6.0 };
    13 — DIE STUDENTIN mit dem BUCH, DER TOURIST mit dem BRÖTCHEN, DIE FAMILIE
    ===================================================================== */
 KLEIN = 8;
-const ST = mensch("ST", { id: "wmr_stud", geschlecht: "w", blick: 40, frisur: "locken", haarfarbe: "dunkelbraun", haut: "mittel",
+const ST = mensch("ST", { id: "wmr_stud", geschlecht: "w", blick: 40, frisur: "lang", haarfarbe: "braun", haut: "mittel",
   pose: { lende: 1, brust: -1, nacken: 22, kopf: 14, schulterL: { vor: 26, seit: 12 }, ellbogenL: 96, unterarmL: 50, handL: 4, fingerL: 0.5,
     schulterR: { vor: 24, seit: 13 }, ellbogenR: 98, unterarmR: 50, handR: 4, fingerR: 0.5,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -5, seit: 4, dreh: -10 }, knieR: 9, fussR: 5 },
@@ -857,7 +857,7 @@ S.teil({ id: "studentin", de: "die Studentin", syl: "stu-DEN-tin", it: "la stude
 KLEIN = 8;
 const TO = mensch("TO", { id: "wmr_tour", geschlecht: "m", blick: -32, frisur: "kurz", haarfarbe: "blond", haut: "hell", laecheln: true,
   pose: { lende: 1, brust: -2, nacken: 6, kopf: 4, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
-    schulterR: { vor: 80, seit: 10, dreh: 0 }, ellbogenR: 120, unterarmR: 20, handR: 10, fingerR: 0.7,
+    schulterR: { vor: 90, seit: 20, dreh: 0 }, ellbogenR: 150, unterarmR: 0, handR: 10, fingerR: 0.7,
     huefteL: { vor: 6, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
   kleidung: { oberteil: { stueck: "tshirt", farbe: "grau" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } }, 1.8, 8.4, 1.6, 3, 0.9);
 bodenSchatten(8.4, 1.6, 0.5, 1.8, 0.26);
@@ -871,7 +871,7 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
   g += `<path d="M-3.2 -.2 Q0 1.4 3.2 -.2 L2.9 .6 Q0 2 -2.9 .6 Z" fill="#e2b06a"/>`;
   g += `<path d="M-2.8 -1.15 l.6 -.3 l.6 .3 l.6 -.3 l.6 .3 l.6 -.3 l.6 .3 l.6 -.3 l.6 .3 l.6 -.3" stroke="#e9c13a" stroke-width=".35" fill="none"/>`;
   g += `<path d="M-3.4 -.15 Q0 -1.3 3.4 -.15 Q3 .3 0 .1 Q-3 .3 -3.4 -.15 Z" fill="#d9a35a"/>`;
-  S.teil({ oben: true, id: "broetchen", de: "das Brötchen", syl: "BRÖT-chen", it: "il panino", itSyl: "pa-NI-no", en: "bread roll", x: r(h.x), y: r(h.y - 0.6), kunst: `<g transform="rotate(-14)">${g}</g>` + flaeche(-8, -3, 16, 6, 0.5),
+  S.teil({ oben: true, id: "broetchen", de: "das Brötchen", syl: "BRÖT-chen", it: "il panino", itSyl: "pa-NI-no", en: "bread roll", x: r(h.x + 0.6), y: r(h.y + 0.2), kunst: `<g transform="rotate(-8) scale(.6)">${g}</g>` + flaeche(-8, -3, 16, 6, 0.5),
     tipp: "Zur Rostbratwurst gehört ein Brötchen. Die Wurst ist immer länger als das Brötchen." });
 }
 {

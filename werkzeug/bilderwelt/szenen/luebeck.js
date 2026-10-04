@@ -779,7 +779,7 @@ const [BX0, BY] = proj(BANK.lat0, BANK.d), [BX1] = proj(BANK.lat1, BANK.d), BK =
 }
 {
   /* DIE FRAU sitzt links auf der Bank, die Hände auf den Knien, und schaut zum Kind (rechts) */
-  const sitz = Object.assign({}, POSEN.sitzen, { schulterR: { vor: 46, seit: 16 }, ellbogenR: 28, unterarmR: -30, handR: 10, fingerR: 0.55, kopf: 4 });   /* eine Hand auf dem Oberschenkel, eine greift nach dem Marzipan */
+  const sitz = Object.assign({}, POSEN.sitzen, { schulterR: { vor: 66, seit: 14 }, ellbogenR: 12, unterarmR: -10, handR: 6, fingerR: 0.55, kopf: 8 });   /* eine Hand auf dem Oberschenkel, eine greift nach dem Marzipan */
   const m = figur({ id: "lbk_frau", geschlecht: "w", pose: sitz, blick: 62, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "#f3efe6" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#2f5f95" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.66 * BK);
   const sitzY = m.z.sitz.y * m.k;
@@ -797,7 +797,7 @@ const [BX0, BY] = proj(BANK.lat0, BANK.d), [BX1] = proj(BANK.lat1, BANK.d), BK =
   S.teil({ id: "tuete", de: "die Tüte", syl: "TÜ-te", it: "il sacchetto", itSyl: "sac-CHET-to", en: "bag", x: r(BXM + 0.55 * BK), y: r(BY - 0.46 * BK), steht: true, kunst: licht(k),
     tipp: "In der Tüte ist Marzipan aus Lübeck. Viele Touristen nehmen es als Geschenk mit." });
 }
-const KIND = { lat: -7.6, d: 20 };
+const KIND = { lat: -8.3, d: 20.5 };
 const [KX, KY] = proj(KIND.lat, KIND.d), KK = km(KY);
 let MARZ = null;
 {
@@ -815,8 +815,8 @@ let MARZ = null;
   /* DAS MARZIPAN: ein kleines Marzipanbrot (etwa 13 cm) in roter Hülle mit goldenem Band, in einer Hand;
      die Trefferfläche ist größer als die Zeichnung (oben, damit das kleine Wort sicher antippbar bleibt) */
   const s = KK * 0.75;
-  let k = `<rect x="${r(-0.09 * s)}" y="${r(-0.07 * s)}" width="${r(0.18 * s)}" height="${r(0.08 * s)}" rx="${r(0.015 * s)}" fill="${S.lg("hulle", [[0, "#d63036"], [1, "#8e161c"]])}"/><rect x="${r(-0.03 * s)}" y="${r(-0.07 * s)}" width="${r(0.05 * s)}" height="${r(0.08 * s)}" fill="${GOLD}"/>`;
-  k += flaeche(-4, -4, 8, 6, 0.4);
+  let k = `<rect x="${r(-0.15 * s)}" y="${r(-0.07 * s)}" width="${r(0.18 * s)}" height="${r(0.08 * s)}" rx="${r(0.015 * s)}" fill="${S.lg("hulle", [[0, "#d63036"], [1, "#8e161c"]])}"/><rect x="${r(-0.09 * s)}" y="${r(-0.07 * s)}" width="${r(0.05 * s)}" height="${r(0.08 * s)}" fill="${GOLD}"/>`;
+  k += flaeche(-6, -4, 8, 6, 0.4);
   S.teil({ oben: true, id: "marzipan", de: "das Marzipan", syl: "mar-zi-PAN", it: "il marzapane", itSyl: "mar-za-PA-ne", en: "marzipan", x: MARZ.x, y: r(MARZ.y + 0.3), kunst: k,
     tipp: "Lübecker Marzipan ist berühmt. Man macht es aus Mandeln und Zucker." });
 }
