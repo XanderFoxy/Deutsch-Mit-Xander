@@ -324,7 +324,7 @@ const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181,
   /* Huchuy Picchu: deckend, dunkler und blaugrüner als der Stadtrasen, mit eigenem Wald und Felsfleck */
   const hu = glatt([[156, 160], [160, 146], [168, 137], [178, 132], [188, 133], [196, 138], [202, 147], [205, 160]], true, 0.9);
   k += `<path d="${hu}" fill="${S.lg("huchuy", [[0, "#2c4c3e"], [0.6, "#3d6448"], [1, "#557f52"]], 0, 0, 1, 0)}"/><path d="${hu}" fill="${WALD06}"/>`;
-  k += `<path d="M183 136 l4 -1 l2.4 3.4 l-1 4 l-4 .6 Z" fill="#8a918a"/><path d="M187 135 l2.4 3.4 l-1 4" stroke="#c8c8b8" stroke-width=".4" fill="none"/>`;
+  k += `<path d="M184 137 l2.4 -.8 l1.6 1.8 l-.6 2.4 l-2.6 .2 Z" fill="#7d847d" opacity=".8"/>`;
   S.teil({ id: "huayna_picchu", de: "der Huayna Picchu", syl: "HUAY-na PIC-chu", it: "lo Huayna Picchu", itSyl: "HUAY-na PIC-chu", en: "Huayna Picchu", x: 214, y: 60, kunst: um(214, 60, `<g filter="${VOL_BERG}">${k}</g>`),
     tipp: "Huayna Picchu heißt „junger Berg“. Ganz oben bauten die Inka Terrassen und kleine Tempel – der Weg hinauf ist sehr steil." });
 }
@@ -476,7 +476,8 @@ const STADT = {};
   for (let i = 0; i < 6; i++) ostB.push([[282 + i * 4.4, 149 + i * 2.1], [300 + i * 3.8, 165 + i * 2.6], [312 + i * 2.8, 188 + i * 2.2], [316 + i * 2, 210 + i * 1.2]]);
   k += hang(ostB, 1, 1.5);
   /* --- Heiliger Felsen: aufrechte, flache Platte, ihr Umriss ahmt den Berg dahinter nach; daneben die Wayranas --- */
-  k += `<path d="M200.6 146.4 L201.4 143 L203.6 140.6 L205.6 139.2 L207.2 138.8 L208.6 140 L210.6 141.6 L212.8 143.4 L214 146.4 Z" fill="${S.lg("hfels", [[0, "#7e776c"], [0.55, "#bdb4a3"], [1, "#d8cfbd"]], 0, 0, 1, 0)}"/><path d="M200.6 146.4 H214" stroke="#5a544a" stroke-width=".4"/>`;
+  k += `<path d="M199.6 146.6 L199.8 144.6 L201.6 143.6 L203.4 142.2 L205.2 141.8 L206.6 142.6 L208.4 142 L210.4 143 L212.6 144.4 L213.4 146.6 Z" fill="${S.lg("hfels", [[0, "#6f685e"], [0.5, "#a9a090"], [1, "#cfc6b4"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M201.6 143.6 L203.4 142.2 L205.2 141.8 L206.6 142.6 L208.4 142 L210.4 143" stroke="#e6ddca" stroke-width=".3" fill="none"/><path d="M199 146.6 H214" stroke="#5a544a" stroke-width=".6"/><path d="M204 143 l.4 3.2 M209 143 l-.3 3.4" stroke="#6d665c" stroke-width=".18"/>`;
   k += haus(190, 147, 5, 1.9, 6, 1.6, "front", true, 1) + haus(219, 147, 5, 1.9, 6, 1.6, "front", true, 1);
   /* --- der HAUPTPLATZ: liegt tiefer als beide Sektoren, drei Rasenebenen mit grauen Stützmauer-Stirnen --- */
   const platz = [[190, 195], [244, 197], [229, 151], [206, 151]];
@@ -599,16 +600,22 @@ const TERR = [];
     if (i > 0) k += `<path d="${glatt([...hinten, ...sch.slice().reverse()], true, 0.6)}" fill="#33502a" opacity=".45"/>`;
     TERR.push({ hinten, vorn });
   }
-  /* Mauerkronen: helle Steinreihe mit Fugen auf jeder Kante */
+  /* Mauerkronen: einzelne Decksteine — manche fehlen oder sind verrutscht; Grasbüschel an den Kanten;
+     auf der vorletzten Stufe eine Unterbrechung (Abgang) links der Treppe */
   for (let i = 1; i < kanten.length - 1; i++) {
     const kk = kante(kanten[i], i), d = 0.5 + i * 0.32, zf = zufall(300 + i);
-    const unten = kk.map(([x, y]) => [x, y + d]);
-    k += `<path d="${glatt([...kk.map(([x, y]) => [x, y - d * 0.2]), ...unten.slice().reverse()], true, 0.6)}" fill="${S.lg("krone", [[0, "#f1e9d6"], [1, "#c9bfaa"]])}"/>`;
-    let f = "";
-    for (let x = 66; x < 336; x += d * (2.2 + zf() * 1.6)) f += `M${r(x)} ${r(profilY(kk, x) - d * 0.15)} l${r((zf() - 0.5) * 0.4)} ${r(d * 1.1)}`;
-    k += `<path d="${f}" stroke="#8f8574" stroke-width="${r(0.1 + i * 0.03)}" opacity=".75"/>`;
+    k += `<path d="${glatt([...kk.map(([x, y]) => [x, y + d * 0.2]), ...kk.map(([x, y]) => [x, y + d * 1.1]).reverse()], true, 0.6)}" fill="#7f7768" opacity=".75"/>`;
+    let steine = "", gras = "";
+    for (let x = 64 + zf() * 3; x < 338; ) {
+      const w = d * (2.2 + zf() * 1.8), y = profilY(kk, x + w / 2), dy = zf() < 0.12 ? d * 0.25 : 0;
+      const luecke = zf() < 0.08 || (i === kanten.length - 3 && x > 168 && x < 184);
+      if (!luecke) steine += `<path d="M${r(x + 0.15)} ${r(y - d * 0.2 + dy)} L${r(x + w - 0.15)} ${r(y - d * 0.25 + dy)} L${r(x + w - 0.2)} ${r(y + d * 0.85 + dy)} L${r(x + 0.2)} ${r(y + d * 0.9 + dy)} Z" fill="${["#efe6d2", "#e2d8c3", "#f4ecda", "#d8ceb8"][Math.floor(zf() * 4)]}"/>`;
+      if (zf() < 0.35) { const gx = x + zf() * w; gras += `M${r(gx)} ${r(y - d * 0.1)} l${r(-0.3 - zf() * 0.4)} ${r(-0.8 - i * 0.25)} M${r(gx + 0.4)} ${r(y - d * 0.1)} l${r(0.1)} ${r(-1 - i * 0.3)} M${r(gx + 0.8)} ${r(y - d * 0.1)} l${r(0.4 + zf() * 0.3)} ${r(-0.7 - i * 0.2)}`; }
+      x += w + 0.15;
+    }
+    k += steine + `<path d="${gras}" stroke="#5f8a36" stroke-width="${r(0.18 + i * 0.04)}" stroke-linecap="round"/>`;
   }
-  S.teil({ id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: 200, y: 230, kunst: um(200, 230, kappeRand(k)),
+  S.teil({ id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: 100, y: 236, kunst: um(100, 236, kappeRand(k)),
     tipp: "Auf den Terrassen bauten die Inka Mais und Kartoffeln an. Die Mauern halten die Erde fest, auch bei starkem Regen." });
 }
 
@@ -631,37 +638,54 @@ const TERR = [];
   const Ae = [A[0] - ue, A[1] - H + ue * 0.6], A2e = [A2[0] - ue, A2[1] - H + ue * 0.6], Be = [Bq[0] + ue, Bq[1] - H + ue * 0.6], B2e = [B2[0] + ue, B2[1] - H + ue * 0.6];
   k += `<path d="${P([Ae, [G[0] - 1, G[1] - 1.4], [G2[0] - 1, G2[1] - 1.4], A2e])}" fill="${S.lg("dachs", [[0, "#8e6c36"], [1, "#6c5026"]])}"/>`;
   k += `<path d="${P([Bq, B2, up(B2, H), up(Bq, H)])}" fill="${S.lg("wseite", [[0, "#e9dfca"], [1, "#d2c6ad"]], 0, 0, 1, 0)}"/>`;
-  /* Feldsteine der Seitenwand */
+  /* Feldsteine der Seitenwand: dieselben unregelmäßigen Vielecke, perspektivisch auf die Wand gelegt */
   const zs = zufall(91);
+  const wq = (t, v) => { const bx = Bq[0] + (B2[0] - Bq[0]) * t, by = Bq[1] + (B2[1] - Bq[1]) * t, hh = H * (1 - f * t); return [bx, by - hh * v]; };
   let st = "";
-  for (let row = 0; row < 6; row++) for (let t = 0.04 + (row % 2) * 0.06; t < 0.94; t += 0.13 + zs() * 0.08) {
-    const p0 = [Bq[0] + (B2[0] - Bq[0]) * t, Bq[1] + (B2[1] - Bq[1]) * t], s0 = 1 - f * t, hh = H * s0 / 6;
-    const dt = 0.1, p1 = [Bq[0] + (B2[0] - Bq[0]) * (t + dt), Bq[1] + (B2[1] - Bq[1]) * (t + dt)];
-    st += `<path d="M${r(p0[0])} ${r(p0[1] - row * hh - 0.4)} L${r(p1[0])} ${r(p1[1] - row * hh - 0.4)} L${r(p1[0])} ${r(p1[1] - (row + 1) * hh + 0.3)} L${r(p0[0])} ${r(p0[1] - (row + 1) * hh + 0.3)} Z"/>`;
+  {
+    const fs = ["#e1d4ba", "#d2c4a8", "#e8dcc4", "#cbbd9f"];
+    let v0 = 0;
+    while (v0 < 1) {
+      const hv = [0.11, 0.16, 0.22][Math.floor(zs() * 3)];
+      for (let t = zs() * 0.05; t < 1; ) {
+        const w = hv * (0.5 + zs() * 0.6), j = () => (zs() - 0.5) * 0.02;
+        const pts = [[t + 0.012, v0 + 0.02], [t + w - 0.012, v0 + 0.02 + j()], [t + w - 0.01 + j(), v0 + hv * 0.5], [t + w - 0.014, v0 + hv - 0.02], [t + 0.014 + j(), v0 + hv - 0.025], [t + 0.01, v0 + hv * 0.5]].map(([tt, vv]) => wq(Math.min(1, tt), Math.min(1, vv)));
+        st += `<path d="${P(pts)}" fill="${fs[Math.floor(zs() * fs.length)]}"/>`;
+        t += w + 0.01;
+      }
+      v0 += hv + 0.02;
+    }
   }
-  k += `<g fill="#f4ecdb" stroke="#a89c86" stroke-width=".3" opacity=".85">${st}</g>`;
+  k += `<path d="${P([Bq, B2, up(B2, H), up(Bq, H)])}" fill="#7a6a55" opacity=".9"/>${st}`;
+  st = "";
   k += `<path d="${P([Be, [G[0] + 0.6, G[1] - 1.6], [G2[0] + 0.6, G2[1] - 1.6], B2e])}" fill="${S.lg("dachl", [[0, "#e9c985"], [0.55, "#cfa865"], [1, "#a8823f"]], 0, 0, 1, 0.3)}"/>`;
   k += `<path d="${P([Be, [G[0] + 0.6, G[1] - 1.6], [G2[0] + 0.6, G2[1] - 1.6], B2e])}" fill="${STROH}" opacity=".5"/>`;
   /* Bindeschnüre quer über die Dachfläche und Halme an der Traufe */
   for (let i = 1; i < 6; i++) { const t = i / 6; k += `<path d="M${r(G[0] + (G2[0] - G[0]) * t + 0.6)} ${r(G[1] + (G2[1] - G[1]) * t - 1.6)} L${r(Be[0] + (B2e[0] - Be[0]) * t)} ${r(Be[1] + (B2e[1] - Be[1]) * t)}" stroke="#7d6232" stroke-width=".4" opacity=".6"/>`; }
   let halme = "";
-  for (let t = 0; t <= 1.001; t += 0.035) { const p0 = [Be[0] + (B2e[0] - Be[0]) * t, Be[1] + (B2e[1] - Be[1]) * t]; halme += `M${r(p0[0])} ${r(p0[1] - 0.4)} l${r(0.6)} ${r(2 - t)}`; }
-  k += `<path d="${halme}" stroke="#8a6a34" stroke-width=".45"/>`;
+  for (let t = 0; t <= 1.001; t += 0.022) { const p0 = [Be[0] + (B2e[0] - Be[0]) * t, Be[1] + (B2e[1] - Be[1]) * t], l = (2.6 + zs() * 1.6) * (1 - t * 0.4); halme += `M${r(p0[0] - 0.4)} ${r(p0[1] - 1.2)} l${r(0.5 + zs() * 0.6)} ${r(l)}`; }
+  k += `<path d="M${r(Be[0])} ${r(Be[1] - 1.4)} L${r(B2e[0])} ${r(B2e[1] - 1.2)} L${r(B2e[0] + 0.6)} ${r(B2e[1] + 0.8)} L${r(Be[0] + 0.8)} ${r(Be[1] + 1.4)} Z" fill="#9a7840"/><path d="${halme}" stroke="#7a5a2a" stroke-width=".5"/><path d="${halme.replace(/M([\d.-]+) /g, (m0, v) => "M" + r(+v + 0.35) + " ")}" stroke="#d6b26c" stroke-width=".35" opacity=".8"/>`;
   /* Giebelwand (Südost, zu uns): grobe Feldsteine mit Lehm, streifendes Morgenlicht */
   const giebel = [A, Bq, up(Bq, H), G, up(A, H)];
-  k += `<path d="${P(giebel)}" fill="${S.lg("wfront", [[0, "#cbc1ad"], [1, "#ada38f"]])}"/>`;
-  st = "";
-  for (let row = 0; row < 10; row++) {
-    const y0 = Y - 1 - row * 5.1, hh = 4.2;
-    const breite = (yy) => yy > Y - H ? W : W * (1 - (Y - H - yy) / GI);
-    for (let x = X + 1 + (row % 2) * 2.5; x < X + W - 2; x += 5 + zs() * 3) {
-      const yy = y0 - hh, bw = breite(yy), x0 = X + (W - bw) / 2, x1 = x0 + bw;
-      if (x < x0 + 0.6 || x + 4 > x1 - 0.6) continue;
-      const w = Math.min(3.6 + zs() * 2.6, x1 - 0.6 - x);
-      st += `<path d="M${r(x + 0.3)} ${r(y0)} Q${r(x)} ${r(y0 - hh / 2)} ${r(x + 0.4)} ${r(y0 - hh)} L${r(x + w - 0.3)} ${r(y0 - hh + (zs() - 0.5) * 0.6)} Q${r(x + w + 0.2)} ${r(y0 - hh / 2)} ${r(x + w)} ${r(y0)} Z"/>`;
+  /* Inka-Feldstein: unregelmäßige Vielecke in drei Größen, breite Fugen aus dunklem Lehmmörtel */
+  S.def(`<clipPath id="${S.id("giebelclip")}"><path d="${P(giebel)}"/></clipPath>`);
+  k += `<path d="${P(giebel)}" fill="#7a6a55"/>`;
+  const steinFarben = ["#a89c88", "#b6a991", "#998d7a", "#c0b29a", "#9f9482", "#aea089"];
+  let steine = "";
+  {
+    let y0 = Y;
+    while (y0 > G[1] - 2) {
+      const hh = [2.6, 3.8, 5.2][Math.floor(zs() * 3)];
+      for (let x = X - 2 + zs() * 2; x < X + W + 2; ) {
+        const w = hh * (0.9 + zs() * 0.9), j = () => (zs() - 0.5) * 0.9;
+        const pts = [[x + 0.5 + j(), y0 - 0.5], [x + w * 0.5 + j(), y0 - 0.4 + j() * 0.4], [x + w - 0.5 + j(), y0 - 0.6], [x + w - 0.4 + j(), y0 - hh * 0.55], [x + w - 0.6 + j(), y0 - hh + 0.5], [x + w * 0.45 + j(), y0 - hh + 0.4 + j() * 0.4], [x + 0.5 + j(), y0 - hh + 0.6], [x + 0.3 + j(), y0 - hh * 0.45]];
+        steine += `<path d="${P(pts)}" fill="${steinFarben[Math.floor(zs() * steinFarben.length)]}"/><path d="M${r(pts[6][0])} ${r(pts[6][1] + 0.3)} L${r(pts[5][0])} ${r(pts[5][1] + 0.3)} L${r(pts[4][0])} ${r(pts[4][1] + 0.3)}" stroke="#ddd2bc" stroke-width=".35" fill="none" opacity=".8"/>`;
+        x += w + 0.9 + zs() * 0.6;
+      }
+      y0 -= hh + 0.9;
     }
   }
-  k += `<g fill="#d4cab6" stroke="#8a7f6c" stroke-width=".35" opacity=".9">${st}</g>`;
+  k += `<g clip-path="url(#${S.id("giebelclip")})">${steine}<path d="${P(giebel)}" fill="${S.lg("wfrontlicht", [[0, "#000", 0.12], [0.6, "#000", 0], [1, "#fff4dc", 0.15]], 0, 0, 1, 0)}"/></g>`;
   /* Lichtkante rechts innen, Mauerkrone */
   k += `<path d="M${r(Bq[0] - 0.4)} ${r(Bq[1])} L${r(Bq[0] - 0.4)} ${r(Bq[1] - H)}" stroke="#f3ead6" stroke-width=".8"/>`;
   /* trapezförmige Tür und Fenster im Giebel */
@@ -670,7 +694,7 @@ const TERR = [];
   k += `<path d="M${r(X + W / 2 - 4.6)} ${r(Y - 20.4)} h9.2 v1.8 h-9.2 Z" fill="#b5a88f"/>`;
   k += `<path d="${trapez(X + W / 2, 5.4, 6.6, Y - H - 7)}" fill="#2a241e"/>`;
   /* Steinringe (Dachbinder) an der Giebelkante */
-  for (const t of [0.3, 0.62]) for (const sd of [-1, 1]) { const px = G[0] + sd * (W / 2) * t, py = G[1] + GI * t; k += `<ellipse cx="${r(px + sd * 1.2)}" cy="${r(py)}" rx="1.1" ry=".8" fill="#9a8f7b" stroke="#6e6556" stroke-width=".3"/>`; }
+  for (const t of [0.28, 0.6]) for (const sd of [-1, 1]) { const px = G[0] + sd * ((W / 2) * t + 2.6), py = G[1] + GI * t - 1.2; k += `<ellipse cx="${r(px)}" cy="${r(py)}" rx="1.5" ry="1.15" fill="#b3a68e" stroke="#5f5444" stroke-width=".35"/><ellipse cx="${r(px + 0.15)}" cy="${r(py + 0.1)}" rx=".6" ry=".45" fill="#3a3228"/>`; }
   /* Dachkante vorn (Halme stehen über) */
   k += `<path d="M${r(Ae[0])} ${r(Ae[1])} L${r(G[0])} ${r(G[1] - 2)} L${r(Be[0])} ${r(Be[1])}" stroke="#9d7b40" stroke-width="2" fill="none" stroke-linejoin="round"/>`;
   k += `<path d="M${r(Ae[0])} ${r(Ae[1] - 0.8)} L${r(G[0])} ${r(G[1] - 2.8)} L${r(Be[0])} ${r(Be[1] - 0.8)}" stroke="#ecd39a" stroke-width=".55" fill="none"/>`;

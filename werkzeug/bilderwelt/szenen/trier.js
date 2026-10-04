@@ -133,11 +133,11 @@ function verdichteSVG(svg, q) {
   return svg.replace(/ d="([^"]+)"/g, (m, d) => ` d="${pfadKurz(d, q)}"`);
 }
 /* Mensch aus dem Baukasten, ohne runden Bodenschatten und ohne feinste Linien; Pfade fein (0,4 cm) und relativ */
-function figur(spec, hoehe) {
+function figur(spec, hoehe, q = 0.4) {
   const m = B.mensch(spec, hoehe);
   let z = m.z.svg.replace(/(<g class="mensch">(?:<defs>.*?<\/defs>)?)<ellipse[^>]*\/>/s, "$1");
   z = z.replace(/<path [^>]*\/>/g, (t) => (/fill="none"/.test(t) && +((t.match(/stroke-width="([\d.]+)"/) || [])[1] || 9) < 0.4) ? "" : t);
-  z = verdichteSVG(z, 0.4);
+  z = verdichteSVG(z, q);
   return { svg: `<g transform="scale(${m.k.toFixed(4)})">${z}</g>`, inner: z, k: m.k, z: m.z };
 }
 /* kleine Figur in der Ferne, mit Lichtseite links und Körperschatten rechts */
@@ -489,7 +489,7 @@ let PN_UNTER = [];
     while (x < t.x1 - 0.2) {
       /* Türme: unregelmäßig abgebrochene Quaderstufen (keine Zinnen), Mittelbau: einzelne fehlende Blöcke */
       let bw, drop;
-      if (t.turm) { bw = Math.min(1.3 + z() * 2.2, t.x1 - x); const pIn = t.x0 < 0 ? (x - t.x0) / (t.x1 - t.x0) : (t.x1 - x - bw) / (t.x1 - t.x0); stufe = Math.max(stufe, Math.min(3, Math.round(Math.pow(Math.max(0, pIn), 1.4) * (t.x0 < 0 ? 2.2 : 3.2) + (z() - 0.5) * 0.9))); if (t.x0 > 0) stufe = Math.max(0, Math.min(3, Math.round(Math.pow(Math.max(0, pIn), 1.4) * 3.2 + (z() - 0.5) * 0.9))); drop = stufe * 0.62; }
+      if (t.turm) { bw = Math.min(1.3 + z() * 2.2, t.x1 - x); const pIn = t.x0 < 0 ? (x - t.x0) / (t.x1 - t.x0) : (t.x1 - x - bw) / (t.x1 - t.x0); stufe = Math.max(stufe, Math.min(3, Math.round(Math.pow(Math.max(0, pIn), 1.4) * 2.2 + (z() - 0.5) * 0.5))); if (t.x0 > 0) stufe = Math.max(0, Math.min(3, Math.round(Math.pow(Math.max(0, pIn), 1.4) * 3.2 + (z() - 0.5) * 0.9))); drop = stufe * 0.62; }
       else { bw = Math.min(1.2 + z() * 0.7, t.x1 - x); const v = z(); drop = v < 0.22 ? 0.62 : (v < 0.3 ? 1.24 : 0); }
       ober += `H${X(x)} V${Y(t.h - drop)} H${X(x + bw)} V${Y(t.h)} `;
       x += bw;
@@ -507,7 +507,7 @@ let PN_UNTER = [];
     wasch += `<rect x="${xl}" y="${Y(t.h)}" width="${r(xr - xl)}" height="${M(1.6)}" fill="${S.lg("oberkante", [[0, "#b3aa92", 0.35], [1, "#b3aa92", 0]])}"/>`;
     k += mauer(t, ober, `<g filter="url(#${S.id("wblur")})">${wasch}</g>`);
     /* Gesimse mit Schattenband darunter (schwarze Kruste) */
-    const hs = [G.eg, G.og1, G.og2, G.og3].filter((h) => h < t.h - 0.5);
+    const hs = [G.eg, G.og1, G.og2, G.og3].filter((h) => h < t.h - (t.x0 > 0 ? 2 : 0.5));
     for (const h of hs) {
       k += `<rect x="${xl}" y="${r(Y(h) - 1)}" width="${r(xr - xl)}" height="2" fill="#3e3a34"/><rect x="${xl}" y="${r(Y(h) - 1)}" width="${r(xr - xl)}" height=".55" fill="#aaa18b"/>`;
       k += `<rect x="${xl}" y="${r(Y(h) + 1)}" width="${r(xr - xl)}" height="1" fill="#0b0a09" opacity=".55"/><rect x="${xl}" y="${r(Y(h) + 2)}" width="${r(xr - xl)}" height="${M(0.9)}" fill="${SCHATTENBAND}"/>`;
@@ -539,7 +539,7 @@ let PN_UNTER = [];
     const bx0 = X(BLOCK.x - BLOCK.w / 2), bx1 = X(BLOCK.x + BLOCK.w / 2), by0 = Y(BLOCK.h + BLOCK.hh), by1 = Y(BLOCK.h);
     /* Quader wie seine Nachbarn: etwas hellere Kante oben und links (Licht), tiefe Fuge rundum */
     k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" fill="#3e3b37"/><path d="M${r(bx0 + 0.5)} ${r(by1 - 0.5)} V${r(by0 + 0.5)} H${r(bx1 - 0.5)}" stroke="#8c8476" stroke-width=".5" fill="none" opacity=".7"/>`;
-    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" stroke="#070606" stroke-width=".6" fill="none"/>`;
+    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" stroke="#0f0e0d" stroke-width=".4" fill="none"/>`;
     /* Trichter in den Stein: außen ausgebrochen (nach unten heller), innen tief und dunkel */
     const trichter = (lx, ly, w) => `<path d="M${r(lx - w)} ${r(ly - 0.1 * w)} q${r(0.1 * w)} ${r(-0.6 * w)} ${r(0.8 * w)} ${r(-0.7 * w)} q${r(0.8 * w)} ${r(-0.05 * w)} ${r(1.1 * w)} ${r(0.5 * w)} q${r(0.15 * w)} ${r(0.7 * w)} ${r(-0.7 * w)} ${r(0.95 * w)} q${r(-0.9 * w)} ${r(0.1 * w)} ${r(-1.2 * w)} ${r(-0.75 * w)} Z" fill="${TRICHTER}"/><ellipse cx="${r(lx)}" cy="${r(ly - 0.25 * w)}" rx="${r(0.45 * w)}" ry="${r(0.3 * w)}" fill="#050404"/>`;
     LOCH.x = r(bx1); LOCH.y = r(by0 + (by1 - by0) * 0.45);
@@ -760,7 +760,8 @@ const CAFE = { lat: -14.5, d0: 34.8, d1: 41, h: 14 };
 const ROEM = { lat: 2.1, d: 21.6 };
 {
   const leute = [
-    { lat: -2.0, d: 23.6, g: "w", blick: 75, frisur: "lang", haar: "blond", o: { stueck: "tshirt", farbe: "#e6889f" }, u: { stueck: "jeans" }, z: { stueck: "tasche", farbe: "braun" }, h: 1.64 },
+    { lat: -2.0, d: 23.6, g: "w", blick: 75, frisur: "lang", haar: "blond", o: { stueck: "tshirt", farbe: "#e6889f" }, u: { stueck: "jeans" }, z: { stueck: "tasche", farbe: "braun" }, s: { stueck: "halbschuh", farbe: "braun" }, h: 1.64 },
+    { lat: -2.9, d: 22.3, g: "m", alter: "kind", pose: "zeigen", blick: 70, frisur: "kurz", haar: "hellblond", o: { stueck: "tshirt", farbe: "#f2c230" }, u: { stueck: "shorts", farbe: "#3d5a80" }, z: { stueck: "rucksack", farbe: "#d0473a" }, h: 1.2 },
     { lat: -0.2, d: 22.6, g: "w", blick: 160, frisur: "dutt", haar: "dunkelbraun", o: { stueck: "bluse", farbe: "#f3efe6" }, u: { stueck: "rock_knie", farbe: "#2f4a6a" }, j: { stueck: "jacke", farbe: "#4f8a46" }, h: 1.62, handy: true },
   ];
   const teile = [];
@@ -770,16 +771,18 @@ const ROEM = { lat: 2.1, d: 21.6 };
   const [rx, ry] = proj(-1.0, 23.6);
   leute.sort((a, b) => b.d - a.d).forEach((p, i) => {
     const [x, y] = proj(p.lat, p.d), s = km(y);
-    const kl = { oberteil: p.o, unterteil: p.u, schuhe: { stueck: "turnschuh" } };
+    const kl = { oberteil: p.o, unterteil: p.u, schuhe: p.s || { stueck: "turnschuh" } };
     if (p.j) kl.jacke = p.j; if (p.z) kl.zubehoer = p.z; if (p.kopf) kl.kopf = p.kopf;
-    const m = figur({ id: "trr_t" + i, geschlecht: p.g, pose: p.handy ? handy : "stehen", blick: p.blick, frisur: p.frisur, haarfarbe: p.haar, haut: "hell", laecheln: true, kleidung: kl }, p.h * s);
+    const m = figur({ id: "trr_t" + i, alter: p.alter || "erwachsen", geschlecht: p.g, pose: p.handy ? handy : (p.pose || "stehen"), blick: p.blick, frisur: p.frisur, haarfarbe: p.haar, haut: "hell", laecheln: true, kleidung: kl }, p.h * s, 1);
     let extra = "";
     if (p.handy) { const hd = [m.z.handL, m.z.handR].sort((a, b) => a.y - b.y)[0]; extra = `<rect x="${r(hd.x * m.k - 0.9)}" y="${r(hd.y * m.k - 2.6)}" width="1.8" height="2.6" rx=".3" fill="#1d1f22"/>`; }
+    /* Rückansicht: das Gesicht der Bibliothek scheint am Hinterkopf durch, darum Haar darüber */
+    if (p.blick > 120) { const q = m.z.punkte, K = m.k, cx = ((q.scheitel[0] + q.ohr[0]) / 2 + 0.3) * K, cy = (q.scheitel[1] + q.kinn[1]) / 2 * K; extra += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r((Math.abs(q.ohr[0] - q.scheitel[0]) + 1.4) * K)}" ry="${r(((q.kinn[1] - q.scheitel[1]) / 2 - 0.8) * K)}" fill="#45302a"/><circle cx="${r(q.hinterkopf[0] * K)}" cy="${r(q.hinterkopf[1] * K)}" r="${r(3 * K)}" fill="#4e382e"/>`; }
     teile.push(`<g transform="translate(${r(x - rx)} ${r(y - ry)})">${m.svg}${extra}</g>`);
     schlag(p.lat, p.d, p.h, 0.5);
   });
   S.teil({ id: "reisegruppe", de: "die Reisegruppe", syl: "REI-se-grup-pe", it: "il gruppo di turisti", itSyl: "GRUP-po di tu-RI-sti", en: "tour group", x: rx, y: ry,
-    kunst: teile.join(""), tipp: "Die Reisegruppe hört dem Römer zu. Eine Frau fotografiert das Tor." });
+    kunst: teile.join(""), tipp: "Die Reisegruppe hört dem Römer zu. Eine Frau fotografiert das Tor, ein Kind zeigt auf den Römer." });
 }
 {
   const [x, y] = proj(ROEM.lat, ROEM.d), s = km(y);
@@ -788,7 +791,7 @@ const ROEM = { lat: 2.1, d: 21.6 };
     schulterR: { vor: 120, seit: 22, dreh: 0 }, ellbogenR: 8, unterarmR: 0, handR: 10, fingerR: 0.75,
     huefteL: { vor: 6, seit: 4, dreh: -8 }, knieL: 6, fussL: 2, huefteR: { vor: -4, seit: 4, dreh: -4 }, knieR: 2, fussR: 0 };
   const m = figur({ id: "trr_roem", geschlecht: "m", pose, blick: -55, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
-    kleidung: { oberteil: { stueck: "tshirt", farbe: "#a3262a" }, unterteil: { stueck: "rock_knie", farbe: "#a3262a" }, schuhe: { stueck: "sandale", farbe: "#4a2e14" }, kopf: { stueck: "helm", farbe: "#b9bdc1" } } }, 1.8 * s);
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "#a3262a" }, unterteil: { stueck: "rock_knie", farbe: "#a3262a" }, schuhe: { stueck: "sandale", farbe: "#4a2e14" }, kopf: { stueck: "helm", farbe: "#b9bdc1" } } }, 1.8 * s, 0.8);
   const p = m.z.punkte, k = m.k, P = (n) => p[n];
   const sL = P("schulterL"), sR = P("schulterR"), tL = P("tailleL"), tR = P("tailleR"), hL = P("huefteL"), hR = P("huefteR"), br = P("brust");
   /* Umhang (sagum): fällt von den Schultern nach HINTEN — nur an der Rückenseite (rechts) zu sehen */
@@ -924,7 +927,7 @@ const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
   const [x, y] = proj(STUHL_L.lat, STUHL_L.d), s = km(y);
   const greif = Object.assign({}, POSEN.sitzen, { schulterR: { vor: 44, seit: 14 }, ellbogenR: 46, unterarmR: -40, handR: -6, fingerR: 0.6, kopf: -12, nacken: 2 });
   const m = figur({ id: "trr_gast", alter: "alt", geschlecht: "m", pose: greif, blick: 58, frisur: "glatze", haarfarbe: "grau", haut: "hell", laecheln: true,
-    kleidung: { oberteil: { stueck: "hemd", farbe: "#d8e4ec" }, unterteil: { stueck: "hose", farbe: "#5a5048" }, jacke: { stueck: "weste", farbe: "#6a5038" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, kopf: { stueck: "hut", farbe: "#8a7a5a" } } }, 1.72 * s);
+    kleidung: { oberteil: { stueck: "hemd", farbe: "#d8e4ec" }, unterteil: { stueck: "hose", farbe: "#5a5048" }, jacke: { stueck: "weste", farbe: "#6a5038" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, kopf: { stueck: "hut", farbe: "#8a7a5a" } } }, 1.72 * s, 0.6);
   const sitzY = m.z.sitz.y * m.k;
   S.teil({ id: "gast", de: "der Gast", syl: "GAST", it: "l'ospite", itSyl: "O-spi-te", en: "guest", x, y: r(y - 0.2), kunst: `<g transform="translate(${r(0.1 * s)} ${r(-0.46 * s - sitzY)})">${m.svg}</g>`,
     tipp: "Der Gast trinkt einen Kaffee. Er schaut zur Porta Nigra hinauf." });

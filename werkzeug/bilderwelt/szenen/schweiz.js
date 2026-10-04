@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+const STADEL = [{ X0: 10.4, X1: 14.2, D0: 60, D1: 64.5 }, { X0: 11, X1: 14.6, D0: 70, D1: 74 }];
+const LAERCHEN = [[18.5, 57, 17, 61, true], [9.8, 79, 15, 62, true], [17.8, 68, 13, 63, false], [-9.4, 69, 16, 64, true], [-9.6, 50, 18, 65, false]];
 /* =====================================================================
    SCHWEIZ – ZERMATT UND MATTERHORN (FASSUNG 854) — Bilderwelt neu
    ---------------------------------------------------------------------
@@ -437,6 +439,7 @@ function bisHoehe(pts, hmax, oben) {
 }
 const poly3 = (pts) => pz(pts.map(proj));
 
+S.def(`<pattern id="${S.id("bruch")}" width="5" height="3" patternUnits="userSpaceOnUse"><path d="M0 1.1 Q1.2 .8 2.4 1.2 L2.6 0 M2.4 1.2 Q3.6 1.5 5 1 M0 2.3 Q1 2.6 1.8 2.2 L1.6 1.1 M1.8 2.2 Q3 2 3.8 2.6 L3.9 1.4 M3.8 2.6 Q4.4 2.4 5 2.3 M2.8 3 L3 2.5" stroke="#6a655c" stroke-width=".22" fill="none"/></pattern>`);
 S.def(`<linearGradient id="${S.id("traufe")}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140a04" stop-opacity=".5"/><stop offset=".12" stop-color="#140a04" stop-opacity=".12"/><stop offset=".4" stop-color="#140a04" stop-opacity="0"/></linearGradient>`);
 /* Chalet: Steinsockel (weiß), darüber Lärchenholz, Steinplattendach. first: "D" (Giebel zu uns) oder "X" (Giebel zum Fluss) */
 function chalet(o) {
@@ -676,21 +679,17 @@ function laerche(X, D, h, seed, gold) {
   ];
   for (const u of unter) { const q = T(u.x, u.y); u.x = q[0]; u.y = q[1]; u.kunst = `<g transform="scale(1.368)">${u.kunst}</g>`; }
   const g0 = T(GIPFEL[0], 100), z0 = T(166, 36);
-  S.teil({ id: "matterhorn", de: "das Matterhorn", syl: "MAT-ter-horn", it: "il Cervino", itSyl: "cer-VI-no", en: "Matterhorn", anker: g0, kunst: fern(BERG),
-    tipp: "Das Matterhorn ist der bekannteste Berg der Schweiz. Es steht an der Grenze zu Italien.",
+  S.teil({ id: "matterhorn", de: "das Matterhorn", syl: "MAT-ter-horn", it: "il Cervino", itSyl: "cer-VI-no", en: "Matterhorn", anker: g0, kunst: fern(BERG + MITTE),
+    tipp: "Das Matterhorn ist der bekannteste Berg der Schweiz (4478 m). Der Berg steht an der Grenze zu Italien. An seinem Fuß liegen Gletscher.",
     zoom: { x: r(z0[0]), y: r(z0[1]), w: r(105 * KF), h: r(70 * KF) }, unter });
 }
 /* 2 — DIE WOLKE (Fahnenwolke) */
 S.teil({ oben: true, id: "wolke", de: "die Wolke", syl: "WOL-ke", it: "la nuvola", itSyl: "NU-vo-la", en: "cloud", anker: T(196, 47), kunst: fern(FAHNE),
   tipp: "Der Wind bildet am Gipfel oft eine Wolke wie eine Fahne: die Fahnenwolke." });
-/* 3 — DER GLETSCHER (am Fuß, mit den mittleren Bergen) */
-S.teil({ id: "gletscher", de: "der Gletscher", syl: "GLET-scher", it: "il ghiacciaio", itSyl: "ghiac-CIA-io", en: "glacier", anker: T(250, 100), kunst: fern(MITTE),
-  tipp: "Gletscher sind Flüsse aus Eis. Sie schmelzen langsam, weil es wärmer wird." });
-
 /* Kulisse für Wald (fern) und Hänge: gehören zur Lärche/zum Wald? — die Hänge sind Kulisse über den Teilen davor nicht nötig:
    sie liegen vor dem Matterhorn und werden deshalb als Teil „der Wald“ gezeichnet */
 S.teil({ id: "wald", de: "der Wald", syl: "WALD", it: "il bosco", itSyl: "BO-sco", en: "forest", anker: T(330, 120), kunst: fern(WALD_MITTE + HANG_L + HANG_R),
-  tipp: "Im Herbst werden die Lärchen golden. Sie verlieren als einzige Nadelbäume im Winter ihre Nadeln." });
+  tipp: "Im Wald wachsen Lärchen und Arven. Im Herbst werden die Lärchen golden." });
 
 /* =====================================================================
    DAS DORF — Häuser von hinten nach vorn
@@ -706,12 +705,13 @@ const HAEUSER = [
   { X0: -25, X1: -12.5, D0: 34, D1: 46, he: 13.6, first: "D", balkon: true, kamin: [-21, 40], hotel: true },
   { X0: 12.5, X1: 23, D0: 38, D1: 49, he: 11.2, first: "D", balkon: true, chaletWort: true },
 ];
-let DORF_FERN = "", CHALET_WORT = null, DORF_NAH = [];
+let DORF_FERN = "", CHALET_WORT = null, DORF_NAH = [], HOTEL = null;
 for (const h of HAEUSER.sort((a, b) => b.D0 - a.D0)) {
   const h0 = hb(h.D0), he = h0 + h.he, hr = he + (h.first === "D" ? (h.X1 - h.X0) * 0.3 : (h.D1 - h.D0) * 0.3);
   const c = chalet({ ...h, h0, he, hr, sockel: h0 + (h.hotel ? 5.6 : 3.0), holz: h.hotel ? "#5e3c24" : ["#6a4429", "#5a3820", "#74492a"][Math.round(h.D0) % 3] });
   if (h.fern) DORF_FERN += c.g;
   else if (h.chaletWort) CHALET_WORT = { c, h };
+  else if (h.hotel) HOTEL = { c, h };
   else DORF_NAH.push({ D: h.D0, g: c.g });
 }
 
@@ -736,6 +736,35 @@ let BODEN = "";
   }
 }
 
+/* =====================================================================
+   SCHLAGSCHATTEN (Sonne links, 35° hoch): Häuser links werfen ihre Schatten über Uferweg, Fluss und das rechte Ufer;
+   Lärchen und Stadel werfen lange, schmale Schatten nach rechts
+   ===================================================================== */
+function huelle(p) { p = p.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]); const k = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]); const lo = [], hi = []; for (const q of p) { while (lo.length >= 2 && k(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); } for (const q of p.slice().reverse()) { while (hi.length >= 2 && k(hi[hi.length - 2], hi[hi.length - 1], q) <= 0) hi.pop(); hi.push(q); } return lo.slice(0, -1).concat(hi.slice(0, -1)); }
+function clipX(poly, x0, x1) {
+  let out = poly;
+  for (const [innen, grenze] of [[(q) => q[0] >= x0, x0], [(q) => q[0] <= x1, x1]]) { const inp = out; out = []; for (let i = 0; i < inp.length; i++) { const a = inp[(i + inp.length - 1) % inp.length], b = inp[i], sch = () => [grenze, a[1] + (b[1] - a[1]) * (grenze - a[0]) / (b[0] - a[0])]; if (innen(b)) { if (!innen(a)) out.push(sch()); out.push(b); } else if (innen(a)) out.push(sch()); } if (!out.length) break; }
+  return out;
+}
+const wurf3 = (pts3, hp) => huelle(pts3.map(([X, D, h]) => [X + 1.416 * (h - hp), D + 0.174 * (h - hp)]));
+let SCHATTEN_BODEN = "", SCHATTEN_WASSER = "", RAND_GELAENDER = "";
+{
+  let boden = "", wasser = "";
+  for (const h of HAEUSER) {
+    if (h.fern || h.X1 > 0) continue;
+    const h0 = hb(h.D0), he = h0 + h.he, hr = he + (h.X1 - h.X0) * 0.3, Xm = (h.X0 + h.X1) / 2;
+    const pts = [[h.X0, h.D0, h0], [h.X1, h.D0, h0], [h.X0, h.D1, h0], [h.X1, h.D1, h0], [h.X1 + 0.9, h.D0 - 0.9, he - 0.4], [h.X1 + 0.9, h.D1 + 0.9, he - 0.4], [Xm, h.D0 - 0.9, hr], [Xm, h.D1 + 0.9, hr]];
+    for (const [x0, x1, planeAdd, ziel] of [[-30, -UFER, 0, "b"], [UFER, 30, 0, "b"], [-UFER + 0.9, UFER - 0.9, -4.2, "w"]]) {
+      const hp = h0 + planeAdd, poly = clipX(wurf3(pts, hp), x0, x1);
+      if (poly.length > 2) { const d = pz(poly.map(([X, D]) => P(X, D, hp + 0.02))); if (ziel === "b") boden += d; else wasser += d; }
+    }
+  }
+  for (const [X, D, hh] of LAERCHEN) { const h0 = hb(D), L = 1.416 * hh, w = 1.2; boden += pz([P(X, D - 0.3, h0), P(X + L * 0.5, D + 0.174 * hh * 0.5 - w, h0), P(X + L, D + 0.174 * hh, h0), P(X + L * 0.5, D + 0.174 * hh * 0.5 + w, h0), P(X, D + 0.3, h0)]); }
+  for (const st of STADEL) { const h0 = hb(st.D0), top = 6.5; boden += pz(wurf3([[st.X0, st.D0, h0], [st.X1, st.D0, h0], [st.X0, st.D1, h0], [st.X1, st.D1, h0], [st.X0, st.D0, h0 + top - 1.8], [st.X1, st.D1, h0 + top - 1.8], [(st.X0 + st.X1) / 2, st.D0, h0 + top], [(st.X0 + st.X1) / 2, st.D1, h0 + top]], h0).map(([X, D]) => P(X, D, h0))); }
+  SCHATTEN_BODEN = `<path d="${boden}" fill="#1e2a48" opacity=".28"/>`;
+  SCHATTEN_WASSER = `<path d="${wasser}" fill="#22364a" opacity=".3"/>`;
+}
+
 /* 5 — DER FLUSS (Matter Vispa) mit Ufermauern */
 {
   let k = "";
@@ -745,52 +774,70 @@ let BODEN = "";
   /* Mauern (Bruchstein): die linke schaut nach rechts (Schatten), die rechte nach links (Sonne) */
   k += `<path d="${pz([...Lm, ...Lw.slice().reverse()])}" fill="${S.lg("mauerL", [[0, "#78726a"], [1, "#5a554f"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="${pz([...Rm, ...Rw.slice().reverse()])}" fill="${S.lg("mauerR", [[0, "#d6cfc2"], [1, "#b2aa9c"]], 0, 0, 1, 0)}"/>`;
-  /* Steinlagen und Stoßfugen (nur nah) */
-  let lagen = "", stoss = "";
+  /* Bruchsteinmauer: Lagen ungleich hoch, Stoßfugen versetzt, einzelne Steine heller/dunkler; unten nasser Streifen, Moos in den Fugen */
   const z = zufall(31);
-  for (const sg of [-1, 1]) for (let f = 0.12; f < 1; f += 0.11) {
-    const pts = [];
-    for (const D of [9, 12, 16, 22, 30, 40, 55, 80, 120]) { const hh = hw(D) + f * 4.2, X = sg * (UFER - 0.9 * (1 - f)); pts.push(P(X, D, hh + (z() - 0.5) * 0.06)); }
-    const q = zuschnitt(pts.concat(pts.slice().reverse()));
-    lagen += "M" + pts.filter((p) => p[1] < 262 && p[1] > 0).map(pt).join(" L");
-    for (let D = 9.5 + z(); D < 32; D += 0.7 + z() * 0.8) { const hh = hw(D) + f * 4.2, X = sg * (UFER - 0.9 * (1 - f)), a2 = P(X, D, hh), b2 = P(X, D, hh + 0.42); if (a2[1] < 262) stoss += `M${pt(a2)} L${pt(b2)}`; }
+  let fugen = "", hell = "", dunkel = "", moos = "";
+  for (const sg of [-1, 1]) {
+    const Xw = (f) => sg * (UFER - 0.9 * (1 - f));
+    let f = 0.04;
+    while (f < 0.98) {
+      const df = (0.08 + z() * 0.07);
+      let D = 9 + z() * 0.6;
+      while (D < 60) {
+        const L = (0.5 + z() * 0.9) * (D > 30 ? 1.6 : 1), f1 = Math.min(0.99, f + df);
+        const q = [P(Xw(f), D, hw(D) + f * 4.2), P(Xw(f), D + L, hw(D + L) + f * 4.2), P(Xw(f1), D + L, hw(D + L) + f1 * 4.2), P(Xw(f1), D, hw(D) + f1 * 4.2)];
+        if (q[0][1] < 262) { const d = "M" + q.map(pt).join(" L") + " Z"; fugen += d; const w = z(); if (w < 0.18) hell += d; else if (w < 0.34) dunkel += d; if (z() < 0.05 && D < 30) moos += `M${pt(q[3])} h${r(0.3 * F / D)}`; }
+        D += L;
+      }
+      f += df;
+    }
   }
-  k += `<path d="${lagen}" stroke="#3a3632" stroke-width=".4" fill="none" opacity=".45"/><path d="${stoss}" stroke="#3a3632" stroke-width=".35" opacity=".4"/>`;
+  k += `<path d="${hell}" fill="#fff" opacity=".12"/><path d="${dunkel}" fill="#2a2620" opacity=".14"/><path d="${fugen}" fill="none" stroke="#3a3632" stroke-width=".35" opacity=".55"/><path d="${moos}" stroke="#5d7a3a" stroke-width="1" stroke-linecap="round"/>`;
+  /* nasser Streifen am Wasser */
+  { const nl = [], nr = []; for (const D of Ds) { nl.push(P(-UFER + 0.9 - 0.12, D, hw(D) + 0.5)); nr.push(P(UFER - 0.9 + 0.12, D, hw(D) + 0.5)); }
+    k += `<path d="${pz([...Lw, ...nl.slice().reverse()])} ${pz([...Rw, ...nr.slice().reverse()])}" fill="#2a3230" opacity=".35"/>`; }
   k += `<path d="M${Lm.map(pt).join(" L")} M${Rm.map(pt).join(" L")}" stroke="#e6e1d8" stroke-width="1.1" fill="none"/>`;
-  /* Wasser: milchig grün-grau, hinten hell (Himmel), vorn kräftiger */
+  /* Wasser: milchig grau-türkis (Gletschermilch), wenig Wasser im Herbst */
   const wasser = pz([...Lw, ...Rw.slice().reverse()]);
-  k += `<path d="${wasser}" fill="${S.lg("vispa", [[0, "#cfe0dc"], [0.35, "#a9c7c0"], [0.7, "#80aaa2"], [1, "#5f8f88"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${HOR}" x2="0" y2="262"`)}"/>`;
-  /* Schatten der linken Mauer auf dem Wasser (Sonne von links) */
+  k += `<path d="${wasser}" fill="${S.lg("vispa", [[0, "#d6e2dc"], [0.35, "#b6cac2"], [0.7, "#9eb7ae"], [1, "#8aa79e"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${HOR}" x2="0" y2="262"`)}"/>`;
+  /* Kiesbänke an beiden Ufern und eine Insel in der Mitte: das Wasser fließt in Rinnen dazwischen */
+  const bank = (pts) => pz(pts.map(([X, D]) => P(X, D, hw(D) + 0.05)));
+  const kiesL = [[-UFER + 0.9, 9], [-UFER + 0.9, 140], [-4.6, 140], [-4.4, 90], [-3.6, 60], [-4.8, 36], [-3.4, 22], [-4.2, 9]];
+  const kiesR = [[UFER - 0.9, 9], [UFER - 0.9, 140], [5.0, 140], [4.6, 80], [5.4, 48], [4.2, 26], [5.2, 9]];
+  const insel = [[-1.4, 70], [-0.4, 38], [0.6, 24], [1.4, 30], [1.6, 52], [0.6, 80]];
+  const kies = bank(kiesL) + bank(kiesR) + bank(insel);
+  k += `<path d="${kies}" fill="${S.lg("kies", [[0, "#cfcabd"], [1, "#a9a396"]], 0, 0, 0, 1)}"/>`;
+  /* runde graue Steine: vorn groß, hinten klein und dicht (Texturgradient) */
+  const imKies = (X, D) => { const t = (pts) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > D) !== (yj > D) && X < (xj - xi) * (D - yi) / (yj - yi) + xi) c = !c; } return c; }; return t(kiesL) || t(kiesR) || t(insel); };
+  const stein = [[], [], []];
+  for (let i = 0; i < 520; i++) { const D = 9 + Math.pow(z(), 1.5) * 120, X = (z() * 2 - 1) * (UFER - 0.9); if (!imKies(X, D)) continue; const [x, y] = P(X, D, hw(D)), sz = (0.12 + z() * 0.2) * F / D; stein[Math.floor(z() * 3)].push(`M${r(x)} ${r(y)}h${r(sz * 0.4)}`); }
+  ["#8f8c84", "#b6b1a6", "#6f6c66"].forEach((c, i) => { k += `<path d="${stein[i].join("")}" stroke="${c}" stroke-width="1.1" stroke-linecap="round" fill="none"/>`; });
+  k += SCHATTEN_WASSER;
+  /* Geländer der Uferwege auf den Mauerkronen */
+  { let st = "", ho = ""; for (const sg of [-1, 1]) { const top = []; for (let D = 10; D <= 120; D += D < 30 ? 2 : 4) { const a2 = P(sg * UFER, D, hb(D)), b2 = P(sg * UFER, D, hb(D) + 1.0); st += `M${pt(a2)} L${pt(b2)}`; top.push(b2); } ho += "M" + top.map(pt).join(" L"); }
+    RAND_GELAENDER = `<path d="${st}" stroke="#2a2e30" stroke-width=".55"/><path d="${ho}" stroke="#3a3e40" stroke-width=".8" fill="none"/>`; }
+  /* Schatten der linken Mauer auf Wasser und Kies (Sonne von links) */
   const schattenW = [];
-  for (const D of Ds) schattenW.push(P(-UFER + 0.9 + 1.6, D, hw(D)));
-  k += `<path d="${pz([...Lw, ...schattenW.slice().reverse()])}" fill="#2a4048" opacity=".3"/>`;
-  /* Strömung: lange helle und dunkle Streifen in Fließrichtung (zu uns), kurze Querwellen */
-  let hellS = "", dunkelS = "", quer = "";
-  for (let i = 0; i < 80; i++) {
-    const D = 10 + Math.pow(z(), 1.7) * 160, X = (z() * 2 - 1) * (UFER - 1.3), L = 1.5 + z() * 4;
-    const a2 = P(X, D, hw(D)), b2 = P(X + (z() - 0.5) * 0.4, Math.max(9, D - L), hw(D - L));
-    const d = `M${pt(a2)} Q${r((a2[0] + b2[0]) / 2 + (z() - 0.5) * 2)} ${r((a2[1] + b2[1]) / 2)} ${pt(b2)}`;
-    (z() < 0.68 ? (hellS += d) : (dunkelS += d));
+  for (const D of Ds) schattenW.push(P(-UFER + 0.9 + 1.7, D, hw(D)));
+  k += `<path d="${pz([...Lw, ...schattenW.slice().reverse()])}" fill="#2a3a48" opacity=".32"/>`;
+  /* große Steine in den Rinnen: Schaumkragen stromauf (von uns weg), V-förmige Kielwelle zu uns; stehende Wellen quer */
+  let steine = "", steinLicht = "", schaum = "", kiel = "", wellen = "";
+  for (let i = 0; i < 26; i++) {
+    const D = 10 + Math.pow(z(), 1.3) * 80, X = (z() * 2 - 1) * (UFER - 1.6); if (imKies(X, D)) continue;
+    const [x, y] = P(X, D, hw(D)), s2 = F / D, rr = (0.18 + z() * 0.22) * s2;
+    steine += `M${r(x - rr)} ${r(y)} Q${r(x - rr)} ${r(y - rr * 0.7)} ${r(x)} ${r(y - rr * 0.75)} Q${r(x + rr)} ${r(y - rr * 0.7)} ${r(x + rr)} ${r(y)} Q${r(x)} ${r(y + rr * 0.2)} ${r(x - rr)} ${r(y)} Z`;
+    steinLicht += `M${r(x - rr * 0.85)} ${r(y - rr * 0.1)} Q${r(x - rr * 0.8)} ${r(y - rr * 0.6)} ${r(x - rr * 0.1)} ${r(y - rr * 0.68)} Q${r(x - rr * 0.45)} ${r(y - rr * 0.35)} ${r(x - rr * 0.85)} ${r(y - rr * 0.1)} Z`;
+    schaum += `M${r(x - rr * 1.25)} ${r(y - rr * 0.35)} Q${r(x)} ${r(y - rr * 1.3)} ${r(x + rr * 1.25)} ${r(y - rr * 0.35)} Q${r(x)} ${r(y - rr * 0.85)} ${r(x - rr * 1.25)} ${r(y - rr * 0.35)} Z`;
+    kiel += `M${r(x - rr * 0.8)} ${r(y + rr * 0.1)} L${r(x - rr * 2.2)} ${r(y + rr * 1.6)} M${r(x + rr * 0.8)} ${r(y + rr * 0.1)} L${r(x + rr * 2.2)} ${r(y + rr * 1.6)}`;
   }
-  for (let i = 0; i < 40; i++) { const D = 10 + Math.pow(z(), 1.5) * 120, X = (z() * 2 - 1) * (UFER - 1.4), [x, y] = P(X, D, hw(D)), L = (0.6 + z() * 1.2) * F / D; quer += `M${r(x - L / 2)} ${r(y)} Q${r(x)} ${r(y - 0.2 * F / D)} ${r(x + L / 2)} ${r(y)}`; }
-  /* Steine mit Schaumkragen oben (stromauf) und hellem Kielwasser nach unten */
-  let steine = "", schaum = "", kiel = "", steinLicht = "";
-  for (let i = 0; i < 60; i++) {
-    const D = 10 + Math.pow(z(), 1.4) * 90, X = (z() * 2 - 1) * (UFER - 1.5), [x, y] = P(X, D, hw(D)), s2 = F / D, rr = (0.12 + z() * 0.22) * s2, a = 0.6 + z() * 0.5;
-    steine += `<path d="M${r(x - rr)} ${r(y + rr * 0.1)} Q${r(x - rr * 0.9)} ${r(y - rr * 0.5 * a)} ${r(x - rr * 0.1)} ${r(y - rr * 0.55 * a)} Q${r(x + rr * 0.8)} ${r(y - rr * 0.45 * a)} ${r(x + rr)} ${r(y + rr * 0.05)} Q${r(x)} ${r(y + rr * 0.25)} ${r(x - rr)} ${r(y + rr * 0.1)} Z"/>`;
-    schaum += `M${r(x - rr * 1.5)} ${r(y - rr * 0.05)} Q${r(x - rr * 0.6)} ${r(y - rr * 0.9)} ${r(x + rr * 0.3)} ${r(y - rr * 0.7)} Q${r(x + rr * 1.4)} ${r(y - rr * 0.6)} ${r(x + rr * 1.6)} ${r(y + rr * 0.05)} Q${r(x)} ${r(y - rr * 0.35)} ${r(x - rr * 1.5)} ${r(y - rr * 0.05)} Z`;
-    steinLicht += `M${r(x - rr * 0.85)} ${r(y)} Q${r(x - rr * 0.8)} ${r(y - rr * 0.45 * a)} ${r(x - rr * 0.1)} ${r(y - rr * 0.5 * a)} Q${r(x - rr * 0.5)} ${r(y - rr * 0.25 * a)} ${r(x - rr * 0.85)} ${r(y)} Z`;
-    kiel += `M${r(x - rr * 1.1)} ${r(y + rr * 0.3)} Q${r(x)} ${r(y + rr * 0.9)} ${r(x + rr * 1.1)} ${r(y + rr * 0.3)}`;
-  }
-  k += `<g filter="url(#${S.id("wasser")})"><path d="${dunkelS}" stroke="#4f7f78" stroke-width=".7" fill="none" opacity=".5"/><path d="${hellS}" stroke="#f2f8f6" stroke-width=".9" fill="none" opacity=".7"/><path d="${quer}" stroke="#f4f9f7" stroke-width=".6" fill="none" opacity=".6"/></g>`;
-  k += `<path d="${schaum}" fill="#f6faf8" opacity=".9"/><g fill="#9b9890">${steine}</g><path d="${steinLicht}" fill="#e8e4dc" opacity=".85"/><path d="${kiel}" stroke="#f0f6f4" stroke-width=".5" fill="none" opacity=".6"/>`;
+  for (let i = 0; i < 34; i++) { const D = 10 + Math.pow(z(), 1.4) * 110, X = (z() * 2 - 1) * (UFER - 1.4); if (imKies(X, D)) continue; const [x, y] = P(X, D, hw(D)), L = (0.8 + z() * 1.4) * F / D; wellen += `<path d="M${r(x - L / 2)} ${r(y)} Q${r(x)} ${r(y - 0.25 * F / D)} ${r(x + L / 2)} ${r(y)}" stroke-width="${r(Math.max(0.3, 0.05 * F / D))}"/>`; }
+  k += `<g stroke="#f4f8f6" fill="none" opacity=".75">${wellen}</g><path d="${kiel}" stroke="#eef5f2" stroke-width=".6" fill="none" opacity=".75"/><path d="${schaum}" fill="#fbfdfc"/><path d="${steine}" fill="#8f8c86"/><path d="${steinLicht}" fill="#d6d2c8"/>`;
+  k += RAND_GELAENDER;
   S.teil({ id: "fluss", de: "der Fluss", syl: "FLUSS", it: "il fiume", itSyl: "FIU-me", en: "river", anker: [200, 240], kunst: k,
-    tipp: "Die Matter Vispa kommt aus den Gletschern. Darum ist ihr Wasser milchig und kalt." });
+    tipp: "Die Matter Vispa kommt aus den Gletschern. Darum ist ihr Wasser milchig und kalt. Im Herbst führt sie wenig Wasser." });
 }
 
 /* 7 — die Häuser im Dorf (nah), Stadel und Lärchen */
-const STADEL = [{ X0: 10.4, X1: 14.2, D0: 60, D1: 64.5 }, { X0: 11, X1: 14.6, D0: 70, D1: 74 }];
-const LAERCHEN = [[18.5, 57, 17, 61, true], [9.8, 79, 15, 62, true], [17.8, 68, 13, 63, false], [-9.4, 69, 16, 64, true], [-9.6, 50, 18, 65, false]];
 const STADEL_DATA = [];
 {
   const items = [...DORF_NAH];
@@ -799,8 +846,21 @@ const STADEL_DATA = [];
   /* die nahen Häuser gehören zum Dorf (Wort), die Stadel sind ein eigenes Wort */
   let haus = "";
   for (const it of items) if (it.stadel === undefined) haus += it.g;
-  S.teil({ id: "dorf", de: "das Dorf", syl: "DORF", it: "il villaggio", itSyl: "vil-LAG-gio", en: "village", anker: [70, 150], kunst: BODEN + DORF_FERN + haus,
+  S.teil({ id: "dorf", de: "das Dorf", syl: "DORF", it: "il villaggio", itSyl: "vil-LAG-gio", en: "village", anker: [200, 168], kunst: BODEN + SCHATTEN_BODEN + DORF_FERN + haus,
     tipp: "Zermatt ist autofrei: Hier fahren nur kleine Elektroautos." });
+  /* das Hotel (links vorn): zweigeschossiger Bruchsteinsockel, Haustür mit Treppe, Schild */
+  {
+    const { c, h } = HOTEL, h0 = hb(h.D0), Q = (X, hh) => P(X, h.D0 - 0.01, h0 + hh);
+    let k = c.g;
+    k += `<path d="${pz([Q(h.X1 - 3.4, 0), Q(h.X1 - 0.6, 0), Q(h.X1 - 0.6, 5.5), Q(h.X1 - 3.4, 5.5)])}" fill="url(#${S.id("bruch")})" opacity=".55"/>`;
+    k += `<path d="${pz([Q(h.X1 - 2.6, 0.6), Q(h.X1 - 1.2, 0.6), Q(h.X1 - 1.2, 2.9), Q(h.X1 - 2.6, 2.9)])}" fill="#4a2e1a" stroke="#d8d0c0" stroke-width=".8"/>`;
+    for (let i = 0; i < 3; i++) k += `<path d="${pz([P(h.X1 - 2.9, h.D0 - 0.3 - i * 0.3, h0 + 0.6 - i * 0.2), P(h.X1 - 0.9, h.D0 - 0.3 - i * 0.3, h0 + 0.6 - i * 0.2), P(h.X1 - 0.9, h.D0 - 0.6 - i * 0.3, h0 + 0.4 - i * 0.2), P(h.X1 - 2.9, h.D0 - 0.6 - i * 0.3, h0 + 0.4 - i * 0.2)])}" fill="#b8b2a6" stroke="#8a857c" stroke-width=".3"/>`;
+    const [sx, sy] = Q(h.X1 - 1.9, 3.5), ss = F / h.D0;
+    k += `<rect x="${r(sx - 0.9 * ss)}" y="${r(sy - 0.25 * ss)}" width="${r(1.8 * ss)}" height="${r(0.5 * ss)}" rx="${r(0.05 * ss)}" fill="#2f5a35" stroke="#e8d9a8" stroke-width=".3"/><text x="${r(sx)}" y="${r(sy + 0.12 * ss)}" font-size="${r(0.3 * ss)}" text-anchor="middle" fill="#f4ead0" font-family="Georgia,serif">Zimmer frei</text>`;
+    const [hx, hy] = P((h.X0 + h.X1) / 2, h.D0, h0);
+    S.teil({ id: "hotel", de: "das Hotel", syl: "ho-TEL", it: "l'albergo", itSyl: "al-BER-go", en: "hotel", anker: [Math.max(10, hx), hy], kunst: k,
+      tipp: "Zermatt hat über 100 Hotels. Viele haben unten Stein und oben Holz." });
+  }
   /* der Stadel (Lupe: Steinplatte und Stütze) */
   const sd = STADEL_DATA[0], sObj = STADEL[0];
   const [sx, sy] = P((sObj.X0 + sObj.X1) / 2, sObj.D0, hb(sObj.D0));
@@ -897,6 +957,10 @@ const TER = { X0: 7.6, X1: 11.6, D0: 31.5, D1: 37 };
   let raclette = `<path d="M${rq(-0.05, 0)} L${rq(-0.05, -0.42)} L${rq(0.24, -0.42)} L${rq(0.24, -0.36)} L${rq(0.02, -0.36)} L${rq(0.02, 0)} Z" fill="#7d868d"/><rect x="${r(rx0 - 0.02 * ts)}" y="${r(ry0 - 0.4 * ts)}" width="${r(0.25 * ts)}" height="${r(0.05 * ts)}" fill="#ff8a3c" opacity=".7"/>`;
   raclette += `<path d="M${rq(0.03, -0.12)} L${rq(0.25, -0.2)} L${rq(0.25, -0.08)} Q${rq(0.14, -0.03)} ${rq(0.03, -0.05)} Z" fill="#f4d27a"/><path d="M${rq(0.25, -0.2)} L${rq(0.28, -0.19)} L${rq(0.28, -0.07)} L${rq(0.25, -0.08)} Z" fill="#c98a2a"/>`;
   raclette += `<path d="M${rq(0.2, -0.08)} Q${rq(0.22, -0.02)} ${rq(0.19, 0.0)}" stroke="#ffd96a" stroke-width="${r(0.025 * ts)}" fill="none"/><ellipse cx="${r(rx0 + 0.16 * ts)}" cy="${r(ry0 + 0.0)}" rx="${r(0.14 * ts)}" ry="${r(0.03 * ts)}" fill="#f4f2ec"/><ellipse cx="${r(rx0 + 0.12 * ts)}" cy="${r(ry0 - 0.02 * ts)}" rx="${r(0.04 * ts)}" ry="${r(0.03 * ts)}" fill="#c9a050"/><ellipse cx="${r(rx0 + 0.2 * ts)}" cy="${r(ry0 - 0.02 * ts)}" rx="${r(0.035 * ts)}" ry="${r(0.028 * ts)}" fill="#b88a40"/>`;
+  /* Brotkorb mit Würfeln neben dem Caquelon */
+  { const bx = fx - 0.42 * ts, by = fy; let bk = `<path d="M${r(bx - 0.13 * ts)} ${r(by - 0.1 * ts)} L${r(bx + 0.13 * ts)} ${r(by - 0.1 * ts)} L${r(bx + 0.1 * ts)} ${r(by)} L${r(bx - 0.1 * ts)} ${r(by)} Z" fill="#b88a4a"/><path d="M${r(bx - 0.12 * ts)} ${r(by - 0.06 * ts)} H${r(bx + 0.12 * ts)}" stroke="#8a5e2a" stroke-width="${r(0.008 * ts)}"/>`;
+    for (let i = 0; i < 5; i++) bk += `<rect x="${r(bx + (-0.11 + i * 0.045) * ts)}" y="${r(by - (0.15 + (i % 2) * 0.02) * ts)}" width="${r(0.045 * ts)}" height="${r(0.05 * ts)}" fill="${i % 2 ? "#e8c88a" : "#c8924a"}"/>`;
+    fondue += bk; }
   k += `<g ${VOL}>${fondue}${raclette}</g>`;
   /* KUHGLOCKE am Pfosten des Eingangs (Zierglocke mit Lederriemen) */
   const [gx, gy] = P(TER.X1 - 0.2, TER.D0 + 0.1, h0 + 2.2), gs = F / (TER.D0 + 0.1);
@@ -904,6 +968,8 @@ const TER = { X0: 7.6, X1: 11.6, D0: 31.5, D1: 37 };
   let glocke = `<rect x="${r(gx0 - 0.06 * gs)}" y="${r(gy - 0.5 * gs)}" width="${r(0.12 * gs)}" height="${r(gy0 - gy + 0.5 * gs)}" fill="#6e4a2c"/>`;
   glocke += `<path d="M${r(gx - 0.14 * gs)} ${r(gy - 0.42 * gs)} Q${r(gx)} ${r(gy - 0.3 * gs)} ${r(gx + 0.14 * gs)} ${r(gy - 0.42 * gs)}" stroke="#4a2a16" stroke-width="${r(0.05 * gs)}" fill="none"/>`;
   glocke += `<path d="M${r(gx - 0.1 * gs)} ${r(gy - 0.33 * gs)} L${r(gx + 0.1 * gs)} ${r(gy - 0.33 * gs)} L${r(gx + 0.17 * gs)} ${r(gy + 0.02 * gs)} Q${r(gx)} ${r(gy + 0.07 * gs)} ${r(gx - 0.17 * gs)} ${r(gy + 0.02 * gs)} Z" fill="${S.lg("glocke", [[0, "#f6d77a"], [0.5, "#c9962a"], [1, "#7a5410"]], 0, 0, 1, 0)}"/>`;
+  /* bunt besticktes Lederband */
+  glocke += `<path d="M${r(gx - 0.2 * gs)} ${r(gy - 0.62 * gs)} Q${r(gx)} ${r(gy - 0.42 * gs)} ${r(gx + 0.2 * gs)} ${r(gy - 0.62 * gs)}" stroke="#b8262c" stroke-width="${r(0.07 * gs)}" fill="none"/><path d="M${r(gx - 0.17 * gs)} ${r(gy - 0.58 * gs)} Q${r(gx)} ${r(gy - 0.4 * gs)} ${r(gx + 0.17 * gs)} ${r(gy - 0.58 * gs)}" stroke="#fff" stroke-width="${r(0.025 * gs)}" stroke-dasharray="${r(0.03 * gs)} ${r(0.03 * gs)}" fill="none"/>`;
   glocke += `<path d="M${r(gx - 0.12 * gs)} ${r(gy - 0.2 * gs)} L${r(gx + 0.12 * gs)} ${r(gy - 0.2 * gs)}" stroke="#d8343c" stroke-width="${r(0.03 * gs)}"/><circle cx="${r(gx)}" cy="${r(gy + 0.06 * gs)}" r="${r(0.035 * gs)}" fill="#5a3a10"/>`;
   k += `<g ${VOL}>${glocke}</g>`;
   const [ax, ay] = P((TER.X0 + TER.X1) / 2, TER.D0, h0);
@@ -914,9 +980,9 @@ const TER = { X0: 7.6, X1: 11.6, D0: 31.5, D1: 37 };
       { id: "fondue", de: "das Fondue", syl: "fon-DÜ", it: "la fonduta", itSyl: "fon-DU-ta", en: "fondue", x: fx, y: fy, kunst: flaeche(-0.16 * ts, -0.32 * ts, 0.32 * ts, 0.34 * ts, 0.3),
         tipp: "Beim Käsefondue taucht man Brotwürfel in geschmolzenen Käse." },
       { id: "raclette", de: "das Raclette", syl: "ra-KLETT", it: "la raclette", itSyl: "ra-CLET-te", en: "raclette", x: rx0 + 0.12 * ts, y: ry0, kunst: flaeche(-0.18 * ts, -0.44 * ts, 0.4 * ts, 0.47 * ts, 0.3),
-        tipp: "Raclette kommt aus dem Wallis: Der Käse wird geschmolzen und auf Kartoffeln geschabt." },
+        tipp: "Raclette kommt aus dem Wallis: Der Käse wird geschmolzen und auf Kartoffeln geschabt. In der Schweiz sagt man auch „die Raclette“." },
       { id: "kuhglocke", de: "die Kuhglocke", syl: "KUH-glo-cke", it: "il campanaccio", itSyl: "cam-pa-NAC-cio", en: "cowbell", x: gx, y: gy + 0.08 * gs, kunst: flaeche(-0.2 * gs, -0.55 * gs, 0.4 * gs, 0.63 * gs, 0.3),
-        tipp: "Auf der Alm tragen die Kühe Glocken. So hört der Bauer, wo sie sind." },
+        tipp: "Auf der Alp tragen die Kühe Glocken. So hört der Bauer, wo sie sind." },
     ] });
 }
 
@@ -934,7 +1000,7 @@ const TER = { X0: 7.6, X1: 11.6, D0: 31.5, D1: 37 };
 }
 
 /* 13 — DIE BANK am linken Uferweg mit Picknick (Lupe: Taschenmesser, Schokolade) und 14/15 — DIE WANDERER */
-const BANK = { X: -9.6, D: 31.5 };
+const BANK = { X: -9.6, D: 27.5 };
 {
   const s = F / BANK.D, h0 = hb(BANK.D), [bx, by] = P(BANK.X, BANK.D, h0);
   /* Bank längs zum Fluss (Sitz zeigt zum Wasser): von uns aus seitlich, 1,8 m lang */
@@ -969,33 +1035,58 @@ const BANK = { X: -9.6, D: 31.5 };
     kleidung: { oberteil: { stueck: "pullover", farbe: "#2f8a8a" }, jacke: { stueck: "jacke", farbe: "#d0402e" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "stiefel", farbe: "braun" } } }, 1.66 * ws);
   S.teil({ id: "wanderin", de: "die Wanderin", syl: "WAN-de-rin", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker (woman)", x: wx, y: wy, kunst: `<g ${VOLF}>${schlank(wi.svg, 2)}</g>`,
     tipp: "Die Wanderin macht eine Pause und isst Schokolade." });
-  /* DER WANDERER steht daneben und schaut zum Matterhorn (Rucksack, Wanderstöcke) */
-  const Dw = 27.6, Xw = -7.3, [hx, hy] = P(Xw, Dw, hb(Dw)), hs = F / Dw;
-  const halt = { lende: 1, brust: -2, nacken: -6, kopf: -10, schulterL: { vor: 18, seit: 12 }, ellbogenL: 20, unterarmL: 0, handL: 0, fingerL: 0.8, schulterR: { vor: 18, seit: 12 }, ellbogenR: 22, unterarmR: 0, handR: 0, fingerR: 0.8, huefteL: { vor: 6, seit: 4, dreh: -4 }, knieL: 6, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -4 }, knieR: 3, fussR: 0 };
-  const wa = B.mensch({ id: "chz_wa", geschlecht: "m", pose: halt, blick: 200, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", ohneSchatten: true,
-    kleidung: { oberteil: { stueck: "pullover", farbe: "#e0802e" }, jacke: { stueck: "jacke", farbe: "#2f5f95" }, unterteil: { stueck: "hose", farbe: "#4a4a40" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "muetze", farbe: "#c8352e" } } }, 1.78 * hs);
-  const hands = [wa.z.handL, wa.z.handR].filter(Boolean).map((h) => [h.x * wa.k, h.y * wa.k]);
-  let stoecke = "";
-  for (const [ax2, ay2] of hands) stoecke += `<path d="M${r(ax2)} ${r(ay2 - 0.08 * hs)} L${r(ax2 + (ax2 < 0 ? -0.18 : 0.18) * hs)} ${r(0.02 * hs)}" stroke="#3a3f46" stroke-width="${r(0.025 * hs)}" stroke-linecap="round"/><path d="M${r(ax2)} ${r(ay2 - 0.1 * hs)} L${r(ax2)} ${r(ay2 + 0.06 * hs)}" stroke="#1a1a1a" stroke-width="${r(0.04 * hs)}" stroke-linecap="round"/>`;
-  /* Rucksack (von hinten gut zu sehen) */
-  const ru = (wa.z.punkte && wa.z.punkte.ruecken) ? [wa.z.punkte.ruecken[0] * wa.k, wa.z.punkte.ruecken[1] * wa.k] : [0, -1.25 * hs];
-  const rucksack = `<path d="M${r(ru[0] - 0.19 * hs)} ${r(ru[1] - 0.26 * hs)} Q${r(ru[0])} ${r(ru[1] - 0.34 * hs)} ${r(ru[0] + 0.19 * hs)} ${r(ru[1] - 0.26 * hs)} L${r(ru[0] + 0.2 * hs)} ${r(ru[1] + 0.2 * hs)} Q${r(ru[0])} ${r(ru[1] + 0.27 * hs)} ${r(ru[0] - 0.2 * hs)} ${r(ru[1] + 0.2 * hs)} Z" fill="${S.lg("rucksack", [[0, "#3e8a4a"], [1, "#24562e"]], 0, 0, 1, 0)}"/><path d="M${r(ru[0] - 0.17 * hs)} ${r(ru[1] - 0.12 * hs)} L${r(ru[0] + 0.17 * hs)} ${r(ru[1] - 0.12 * hs)}" stroke="#1a3a1e" stroke-width="${r(0.02 * hs)}"/><rect x="${r(ru[0] - 0.1 * hs)}" y="${r(ru[1] + 0.02 * hs)}" width="${r(0.2 * hs)}" height="${r(0.12 * hs)}" rx="${r(0.02 * hs)}" fill="#2f6a3a"/>`;
-  const schatten = `<path d="M${r(-0.18 * hs)} 0 L${r(0.18 * hs)} 0 L${r(2.45 * hs)} ${r(-0.12 * hs)} L${r(2.3 * hs)} ${r(-0.22 * hs)} Z" fill="#1c2638" opacity=".3" filter="url(#${S.id("weich")})"/>`;
-  S.teil({ id: "wanderer", de: "der Wanderer", syl: "WAN-de-rer", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker", x: hx, y: hy, kunst: schatten + `<g ${VOLF}>${schlank(wa.svg, 2)}${rucksack}</g>${stoecke}`,
-    tipp: "Rund um Zermatt gibt es über 400 Kilometer Wanderwege.",
-    zoom: { x: r(hx - 16), y: r(hy - 2.2 * hs), w: 36, h: 24 },
-    unter: [
-      { id: "rucksack", de: "der Rucksack", syl: "RUCK-sack", it: "lo zaino", itSyl: "ZAI-no", en: "backpack", x: hx + ru[0], y: hy + ru[1] + 0.25 * hs, kunst: flaeche(-0.22 * hs, -0.6 * hs, 0.44 * hs, 0.62 * hs, 0.3),
-        tipp: "Im Rucksack sind Regenjacke, Wasser und Proviant." },
-    ] });
 }
 
-/* 16 — DIE ALPENDOHLEN (schwarz, gelber Schnabel) am Himmel */
+/* 17 — DAS SCHWARZNASENSCHAF (Walliser Rasse) auf der Wiese rechts beim Stadel */
 {
-  const dohle = (x, y, s, f) => `<path d="M${r(x - 3 * s)} ${r(y - 1.4 * s * f)} Q${r(x - 1.4 * s)} ${r(y - 0.6 * s)} ${r(x)} ${r(y)} Q${r(x + 1.4 * s)} ${r(y - 0.6 * s)} ${r(x + 3 * s)} ${r(y - 1.4 * s * f)} Q${r(x + 1.2 * s)} ${r(y + 0.1 * s)} ${r(x)} ${r(y + 0.5 * s)} Q${r(x - 1.2 * s)} ${r(y + 0.1 * s)} ${r(x - 3 * s)} ${r(y - 1.4 * s * f)} Z" fill="#141416"/><path d="M${r(x + 0.15 * s)} ${r(y + 0.2 * s)} l${r(0.5 * s)} ${r(0.05 * s)} l${r(-0.5 * s)} ${r(0.15 * s)} Z" fill="#f2c62e"/>`;
-  const k = dohle(84, 34, 1.1, 1) + dohle(98, 26, 0.85, -0.4) + dohle(70, 22, 0.7, 0.6);
-  S.teil({ oben: true, id: "alpendohle", de: "die Alpendohle", syl: "AL-pen-doh-le", it: "il gracchio alpino", itSyl: "GRAC-chio al-PI-no", en: "alpine chough", x: 84, y: 34, kunst: `<g transform="translate(-84 -34)">${k}</g>`,
-    tipp: "Alpendohlen sind schwarz und haben einen gelben Schnabel. Sie fliegen bis auf die Gipfel." });
+  const schaf = (X, D, sg) => {
+    const [x, y] = P(X, D, hb(D)), s = F / D, q = (a, b) => `${r(x + sg * a * s)} ${r(y + b * s)}`;
+    let g = `<path d="M${q(-0.5, 0.02)} L${q(0.7, 0.02)} L${q(1.6, 0.18)} L${q(0.4, 0.18)} Z" fill="#1e2a48" opacity=".28"/>`;
+    g += `<path d="M${q(-0.42, -0.02)} L${q(-0.4, -0.3)} M${q(-0.22, 0)} L${q(-0.2, -0.3)} M${q(0.3, -0.02)} L${q(0.28, -0.3)} M${q(0.45, 0)} L${q(0.44, -0.3)}" stroke="#1a1a1a" stroke-width="${r(0.07 * s)}"/>`;
+    g += `<path d="M${q(-0.55, -0.45)} Q${q(-0.62, -0.8)} ${q(-0.3, -0.82)} Q${q(-0.1, -0.92)} ${q(0.1, -0.82)} Q${q(0.35, -0.9)} ${q(0.5, -0.75)} Q${q(0.62, -0.55)} ${q(0.5, -0.32)} Q${q(0.2, -0.24)} ${q(-0.1, -0.28)} Q${q(-0.45, -0.25)} ${q(-0.55, -0.45)} Z" fill="#f2ede2"/>`;
+    g += `<path d="M${q(-0.5, -0.6)} Q${q(-0.3, -0.85)} ${q(0.1, -0.82)}" stroke="#fff" stroke-width="${r(0.06 * s)}" fill="none" opacity=".8"/>`;
+    g += `<path d="M${q(0.5, -0.72)} Q${q(0.78, -0.82)} ${q(0.84, -0.6)} Q${q(0.82, -0.48)} ${q(0.7, -0.5)} Q${q(0.6, -0.55)} ${q(0.52, -0.55)} Z" fill="#141414"/><path d="M${q(0.6, -0.78)} Q${q(0.7, -0.92)} ${q(0.62, -0.92)} Q${q(0.55, -0.85)} ${q(0.62, -0.8)}" stroke="#c9b48a" stroke-width="${r(0.04 * s)}" fill="none"/><path d="M${q(0.55, -0.72)} L${q(0.46, -0.66)}" stroke="#141414" stroke-width="${r(0.06 * s)}"/>`;
+    return g;
+  };
+  const k = schaf(16.8, 63.5, 1) + schaf(19.6, 66.5, -1);
+  const [ax, ay] = P(16.8, 63.5, hb(63.5));
+  S.teil({ id: "schaf", de: "das Schwarznasenschaf", syl: "SCHWARZ-na-sen-schaf", it: "la pecora dal naso nero", itSyl: "PE-co-ra dal NA-so NE-ro", en: "Valais blacknose sheep", anker: [ax, ay], kunst: `<g ${VOL}>${k}</g>`,
+    tipp: "Das Schwarznasenschaf lebt im Wallis. Es hat weiße Wolle und ein schwarzes Gesicht." });
+}
+
+/* 18 — DAS GELÄNDER der Kirchbrücke (vorne, 10 m vor uns): Holzhandlauf auf dunklen Stahlpfosten */
+{
+  const D = 10, hd = 4.8, s = F / D;
+  let k = "", pf = "";
+  for (let X = -10.4; X <= 10.4; X += 1.6) { const a2 = P(X, D, hd), b2 = P(X, D, hd + 1.0); pf += `<rect x="${r(a2[0] - 0.04 * s)}" y="${r(b2[1])}" width="${r(0.08 * s)}" height="${r(a2[1] - b2[1])}"/>`; }
+  const y1 = P(0, D, hd + 1.0)[1], y2 = P(0, D, hd + 0.55)[1], y3 = P(0, D, hd + 0.15)[1];
+  k += `<rect x="0" y="${r(y2 - 0.02 * s)}" width="400" height="${r(0.04 * s)}" fill="#2a2e30"/><rect x="0" y="${r(y3 - 0.02 * s)}" width="400" height="${r(0.04 * s)}" fill="#2a2e30"/>`;
+  k += `<g fill="${S.lg("pfosten", [[0, "#5a6064"], [0.4, "#2a2e30"], [1, "#16191a"]], 0, 0, 1, 0)}">${pf}</g>`;
+  k += `<rect x="0" y="${r(y1 - 0.07 * s)}" width="400" height="${r(0.1 * s)}" rx="${r(0.04 * s)}" fill="${S.lg("handlauf", [[0, "#b07a48"], [0.5, "#7a4e28"], [1, "#4a2e16"]])}"/><rect x="0" y="${r(y1 - 0.07 * s)}" width="400" height="${r(0.02 * s)}" fill="#ffe2b0" opacity=".6"/>`;
+  S.teil({ id: "gelaender", de: "das Geländer", syl: "ge-LÄN-der", it: "la ringhiera", itSyl: "rin-GHIE-ra", en: "railing", anker: [120, y1], kunst: k,
+    tipp: "Am Geländer der Kirchbrücke stehen jeden Morgen Menschen und fotografieren das Matterhorn." });
+}
+
+/* 19 — DER BERGSTEIGER am Brückengeländer (vorn rechts, 9 m): Helm, Seil, Pickel am Rucksack; fotografiert den Berg */
+{
+  const X = 3.6, D = 9, [x, y] = P(X, D, 4.8), s = F / D;
+  const foto = { lende: 1, brust: -3, nacken: -4, kopf: -6, schulterL: { vor: 64, seit: 16 }, ellbogenL: 104, unterarmL: 40, handL: 10, fingerL: 0.5, schulterR: { vor: 62, seit: 18 }, ellbogenR: 106, unterarmR: 40, handR: 10, fingerR: 0.5, huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
+  const m = B.mensch({ id: "chz_berg", geschlecht: "m", pose: foto, blick: 196, frisur: "kurz", haarfarbe: "braun", haut: "hell", ohneSchatten: true,
+    kleidung: { oberteil: { stueck: "pullover", farbe: "#2f5f95" }, jacke: { stueck: "jacke", farbe: "#c8352e" }, unterteil: { stueck: "hose", farbe: "#3a3c40" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "helm", farbe: "#f08a1c" } } }, 1.8 * s);
+  const pu = m.z.punkte || {}, ru = pu.ruecken ? [pu.ruecken[0] * m.k, pu.ruecken[1] * m.k] : [0, -1.25 * s];
+  /* Rucksack mit Pickel, Seilring über der Schulter */
+  let k = `<path d="M${r(ru[0] - 0.2 * s)} ${r(ru[1] - 0.28 * s)} Q${r(ru[0])} ${r(ru[1] - 0.36 * s)} ${r(ru[0] + 0.2 * s)} ${r(ru[1] - 0.28 * s)} L${r(ru[0] + 0.21 * s)} ${r(ru[1] + 0.22 * s)} Q${r(ru[0])} ${r(ru[1] + 0.3 * s)} ${r(ru[0] - 0.21 * s)} ${r(ru[1] + 0.22 * s)} Z" fill="${S.lg("rucksack", [[0, "#4a6a3a"], [1, "#2a4422"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${r(ru[0] - 0.18 * s)} ${r(ru[1] - 0.1 * s)} H${r(ru[0] + 0.18 * s)}" stroke="#1a2a14" stroke-width="${r(0.02 * s)}"/>`;
+  k += `<path d="M${r(ru[0] + 0.06 * s)} ${r(ru[1] + 0.2 * s)} L${r(ru[0] + 0.12 * s)} ${r(ru[1] - 0.55 * s)}" stroke="#2a2a2c" stroke-width="${r(0.03 * s)}"/><path d="M${r(ru[0] + 0.0 * s)} ${r(ru[1] - 0.55 * s)} Q${r(ru[0] + 0.12 * s)} ${r(ru[1] - 0.62 * s)} ${r(ru[0] + 0.26 * s)} ${r(ru[1] - 0.5 * s)}" stroke="#b9c1c7" stroke-width="${r(0.035 * s)}" fill="none" stroke-linecap="round"/>`;
+  k += `<ellipse cx="${r(ru[0] - 0.02 * s)}" cy="${r(ru[1] - 0.05 * s)}" rx="${r(0.24 * s)}" ry="${r(0.3 * s)}" transform="rotate(-25 ${r(ru[0])} ${r(ru[1])})" fill="none" stroke="#d8343c" stroke-width="${r(0.045 * s)}"/><ellipse cx="${r(ru[0] - 0.02 * s)}" cy="${r(ru[1] - 0.05 * s)}" rx="${r(0.2 * s)}" ry="${r(0.26 * s)}" transform="rotate(-25 ${r(ru[0])} ${r(ru[1])})" fill="none" stroke="#f2c62e" stroke-width="${r(0.02 * s)}"/>`;
+  S.teil({ id: "bergsteiger", de: "der Bergsteiger", syl: "BERG-stei-ger", it: "l'alpinista", itSyl: "al-pi-NI-sta", en: "mountaineer", x, y, kunst: `<g ${VOLF}>${schlank(m.svg, 1)}${k}</g>`,
+    tipp: "Bergsteiger brauchen Helm, Seil und Pickel. Auf das Matterhorn steigt man meist über den Hörnligrat." });
+}
+
+/* Alpendohlen (schwarz, gelber Schnabel) am Himmel — Kulisse */
+{
+  const dohle = (x, y, s, f) => `<path d="M${r(x - 3 * s)} ${r(y - 1.4 * s * f)} Q${r(x - 1.4 * s)} ${r(y - 0.6 * s)} ${r(x)} ${r(y)} Q${r(x + 1.4 * s)} ${r(y - 0.6 * s)} ${r(x + 3 * s)} ${r(y - 1.4 * s * f)} Q${r(x + 1.2 * s)} ${r(y + 0.1 * s)} ${r(x)} ${r(y + 0.5 * s)} Q${r(x - 1.2 * s)} ${r(y + 0.1 * s)} ${r(x - 3 * s)} ${r(y - 1.4 * s * f)} Z" fill="#141416"/><path d="M${r(x + 0.15 * s)} ${r(y + 0.2 * s)} L${r(x + 0.7 * s)} ${r(y + 0.28 * s)} L${r(x + 0.15 * s)} ${r(y + 0.45 * s)} Z" fill="#f2c62e"/>`;
+  S.hinten(dohle(80, 36, 1.7, 1) + dohle(100, 26, 1.35, -0.4) + dohle(64, 22, 1.1, 0.6));
 }
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/schweiz.js"));
