@@ -1,5 +1,7 @@
 /* =====================================================================
-   TIER-BIBLIOTHEK — MEER, GROSSE TIERE (FASSUNG 854)
+   TIER-BIBLIOTHEK — MEER, GROSSE TIERE (FASSUNG 854; Szene-Fleckung FASSUNG 880)
+   FASSUNG 880 — XANDER (Funk 299, wörtlich): „… kümmere Dich jetzt mal bitte intensiv um das alles“. In Szenen laufen
+   keine Rauschfilter mehr; die Narwal-Fleckung kommt dort aus T.fleckFlaeche (zwei Lagen, FASSUNG 881; Großbild unverändert).
    Orca, Delfin, Weißer Hai, Buckelwal, Hammerhai, Mantarochen,
    Meeresschildkröte, Pottwal, Narwal.
    Maße in Zentimetern, Blick nach rechts, schwimmend (schwimmt: true, kein
@@ -1557,7 +1559,12 @@ function narwal(T) {
     T.def(`<mask id="${mid}" maskUnits="userSpaceOnUse" x="-80" y="-170" width="570" height="160"><path d="${F ? G(band) : H.vieleck(band)}" fill="#fff" filter="${H.weich(5, T.box(band))}"/></mask>`);
     const bl = F ? ` filter="${H.weich(0.4, [-60, -150, 470, -30])}"` : "";
     const fu = T.rauschen("n" + name, { fx, fy: fx * 1.5, okt: 3, farbe: FLECK, staerke: 12, schwelle: sw, seed: 5 });
-    return `<g mask="url(#${mid})" opacity="${op}"><g${bl}><rect x="${bx0[0]}" y="${bx0[1]}" width="${bx0[2] - bx0[0]}" height="${bx0[3] - bx0[1]}" filter="${fu}"/></g></g>`;
+    /* FASSUNG 880 — Szene: kein Rauschfilter mehr (T.rauschen liefert dort "none" – das Rechteck wäre schwarz); die
+       Fleckung kommt dann aus einem filterlosen Fleckenmuster gleicher Farbe und Fleckgröße (Groß-Ansicht unverändert) */
+    /* FASSUNG 881 — Szene: zwei überlagerte Fleckenlagen mit teilerfremden Kacheln (T.fleckFlaeche), keine Tapete mehr */
+    const flaeche = F ? `<rect x="${bx0[0]}" y="${bx0[1]}" width="${bx0[2] - bx0[0]}" height="${bx0[3] - bx0[1]}" filter="${fu}"/>`
+      : T.fleckFlaeche ? T.fleckFlaeche("n" + name, bx0, { farbe: FLECK, fx, fy: fx * 1.5, deckung: 0.56, gruppe: "n", variante: name === "c" ? 1 : 0 }) : "";
+    return `<g mask="url(#${mid})" opacity="${op}"><g${bl}>${flaeche}</g></g>`;
   };
   k += weichF(R.band(-60, 470, -0.3, 0.09), FLECK, 0.9, 2.5);
   k += (F ? zone(-0.3, 0.78, 0.62, "a", 0.13, 0.5) : "") + zone(-0.3, 0.5, 0.52, "b", 0.13, 0.7) + zone(-0.3, 0.3, 0.36, "c", 0.13, 0.95);

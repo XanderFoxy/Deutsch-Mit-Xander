@@ -1459,7 +1459,7 @@ window.DMA_SZENEN = [
   "thema": "Deutschland",
   "breite": 400,
   "hoehe": 260,
-  "zahl": 29,
+  "zahl": 30,
   "lupen": [],
   "stellen": 3
  },

@@ -14,8 +14,21 @@
    zeichne arbeitet in ZENTIMETERN: Blick nach rechts, Boden y = 0
    (box[3] = 0), Licht von links oben. T ist das Werkzeug unten.
    In eine Szene setzt man ein Tier mit setze(); auf ein Blatt mit blatt.js.
+
+   FASSUNG 880 — XANDER (Funk 299, wörtlich): „die nächste Priorität sollte der Abschluss der Tiere sein mache bitte
+   nur deine Aufgaben und nicht irgendwas anderes was du hinein interpretierst … kümmere Dich jetzt mal bitte intensiv
+   um das alles“. Das WERKZEUG 880 ist eingehängt (eigene Module, siehe ANLEITUNG.md „WERKZEUG 880“):
+     bauplan.js  T.skelett, T.BAUPLAENE      – Proportionstabellen (W-Einheiten) → Knochen, Gelenke, Landmarken
+     form880.js  T.glied, T.silhouette, T.licht, T.muster, T.zone, T.oberflaeche, T.beinKette, T.form880 (Helfer)
+     fuss880.js  T.fuss, T.pfote, T.huf, T.klaue, T.sohle, T.vogelfuss, T.theropodenfuss
+     kopf880.js  T.kopf (Schädelvorlagen; Auge in der Höhle über T.augeReal { hoehle: true })
+     fell880.js  T.fluss, T.fell, T.unterhaar, T.federn
+   Szene-Modus (T.fein = false): T.rauschen/T.relief liefern "none", T.textur "" – keine Filter in Szenen.
+   T.koerper zeichnet den Standard-Rand nur noch bei alten Aufrufen (T.stil ≠ 880); neue Arten: EIN Umriss.
    ===================================================================== */
 "use strict";
+/* FASSUNG 880 — Module des Werkzeugs 880 (nur einmal geladen; jedes hat installiere(T), ohne T.rnd zu verbrauchen) */
+const MODULE_880 = ["bauplan", "form880", "fuss880", "kopf880", "fell880"].map((m) => require("./" + m));
 const r = (n) => Math.round(n * 10) / 10;
 const r4 = (n) => Math.round(n * 10000) / 10000;
 
@@ -69,7 +82,10 @@ function werkzeug(S, praefix, seed = 4711) {
     let s = `<path d="${d}" fill="${fill}"/>`;
     const innen = (o.innen || "") + (o.vol !== false ? `<path d="${d}" fill="${T.VOL()}"/>` : "") + (o.volx ? `<path d="${d}" fill="${T.VOLX()}"/>` : "");
     if (innen) s += `<g clip-path="url(#${id})">${innen}</g>`;
-    if (o.rand !== false) s += `<path d="${d}" fill="none" stroke="${o.rand || "#000"}" stroke-opacity="${o.randA != null ? o.randA : 0.3}" stroke-width="${o.rw || 0.8}" stroke-linejoin="round"/>`;
+    /* FASSUNG 880 — Standard-Rand nur für alte Aufrufe; neue Arten (T.stil = 880, gesetzt von T.skelett/T.silhouette)
+       zeichnen EINEN Umriss, Teile ohne Rand („Umriss wie Aufkleber“). Ausdrücklich gesetztes o.rand gilt immer. */
+    const randAn = o.rand !== undefined ? o.rand !== false : T.stil !== 880;
+    if (randAn) s += `<path d="${d}" fill="none" stroke="${o.rand || "#000"}" stroke-opacity="${o.randA != null ? o.randA : 0.3}" stroke-width="${o.rw || 0.8}" stroke-linejoin="round"/>`;
     return s;
   };
   T.form = (pts, fill, extra = "") => `<path d="${typeof pts === "string" ? pts : T.glatt(pts)}" fill="${fill}"${extra}/>`;
@@ -144,6 +160,8 @@ function werkzeug(S, praefix, seed = 4711) {
      fx/fy: Frequenz je cm quer/längs (fx > fy = Striche in Längsrichtung), okt: Feinheit, farbe: Strichfarbe,
      staerke: Deckkraft-Verstärkung. Liefert die Filter-URL. */
   T.rauschen = (n, o = {}) => {
+    /* FASSUNG 880 — Szene: kein Filter (Leistung; Rauschen ist klein ohnehin unsichtbar) */
+    if (!T.fein) return "none";
     const id = T.id("rs" + n);
     if (!filterSchon.has(id)) {
       filterSchon.add(id);
@@ -158,6 +176,8 @@ function werkzeug(S, praefix, seed = 4711) {
   };
   /* Textur in eine Form legen: d = Pfad der Form, filterUrl aus T.rauschen, winkel = Wuchsrichtung (Grad), deckkraft */
   T.textur = (d, filterUrl, winkel = 0, deckkraft = 0.5, box = null) => {
+    /* FASSUNG 880 — Szene: keine Textur (das Rechteck ohne Filter wäre eine schwarze Fläche) */
+    if (!T.fein) return "";
     const cid = T.id("tx" + (nr++));
     T.def(`<clipPath id="${cid}"><path d="${d}"/></clipPath>`);
     const b = box || [-400, -400, 400, 400];
@@ -167,6 +187,8 @@ function werkzeug(S, praefix, seed = 4711) {
   /* Relief (Poren, Schuppen, Falten, Runzeln) als echtes Licht von links oben: auf eine Gruppe anwenden:
      `<g filter="${T.relief("haut", { f: 0.35, tiefe: 1.6 })}">…</g>`. f = Frequenz je cm, tiefe = Höhe, okt = Feinheit. */
   T.relief = (n, o = {}) => {
+    /* FASSUNG 880 — Szene: kein Filter */
+    if (!T.fein) return "none";
     const id = T.id("rf" + n);
     if (!filterSchon.has(id)) {
       filterSchon.add(id);
@@ -264,6 +286,58 @@ function werkzeug(S, praefix, seed = 4711) {
     }
     return s + `</g>`;
   };
+  /* FASSUNG 880 — Auge in der Höhle: o.hoehle = true legt den Schatten der Augenhöhle (Brauenwulst) weich unter das
+     Auge (Radialverlauf, kein Filter). Ohne o.hoehle ist die Ausgabe unverändert. */
+  const augeRealGrund = T.augeReal;
+  T.augeReal = (x, y, rr, o = {}) => (o.hoehle && T.form880 ? T.form880.weichEllipse(x - rr * 0.1, y - rr * 0.55, rr * 2.4, rr * 1.25, o.winkel || 0, "#140c06", 0.42) : "") + augeRealGrund(x, y, rr, o);
+  /* FASSUNG 880 — Fleckenmuster ohne Filter (für Szenen, wo früher T.rauschen Tarnflecken machte).
+     FASSUNG 881 — Prüfer 880, Punkt 15: die Kachel (3,6/fx) war zu klein, beim Narwal wiederholte sich das Muster etwa
+     7× sichtbar wie eine Tapete. Jetzt ZWEI Lagen je Fläche: Lage A (Kachel 4,4/fx) und Lage B = dieselben Flecken
+     × 1,37 (teilerfremde Kachel, versetzt, Flecken dort 1,37× größer) – die Summe wiederholt sich auf der Körperlänge
+     nicht sichtbar; je Lage halbe Deckung, Flecken in drei Größenklassen (klein 50 %, mittel 35 %, groß 15 %).
+     Die Flecken stehen nur EINMAL in den defs (als Kreise in einer gestauchten Gruppe = Ellipsen fx : fy); jede Lage ist
+     ein <use> darauf. Mehrere Flächen derselben Art teilen die Flecken (o.gruppe) und nehmen je eine andere
+     o.variante (gespiegelt und versetzt) – so bleibt der Narwal in der Szene unter 25 KB.
+     T.fleckMuster(n, o) → url(#…) einer Lage (wie bisher); T.fleckFlaeche(n, [x0, y0, x1, y1], o) → beide Lagen als
+     Rechtecke über der Box. o: { farbe, fx, fy (wie T.rauschen: Frequenz je cm), deckung (0–1), gruppe, variante } */
+  const r1 = (v) => Math.round(v * 10) / 10;
+  const fleckGruppe = (key, o) => {
+    const id = T.id("fm880" + key);
+    const fx = o.fx || 0.1, fy = o.fy || fx, sx = r1(4.4 / fx), q = fx / fy;
+    if (!filterSchon.has(id)) {
+      filterSchon.add(id);
+      /* Fleckenzahl so, dass die Fläche wie vorher gedeckt ist (Kachel 3,6/fx mit 8 + 18 × deckung Flecken), je Lage die Hälfte */
+      const k = Math.round((8 + (o.deckung || 0.45) * 18) * (4.4 / 3.6) * (4.4 / 3.6) * 0.5);
+      let e = "";
+      for (let i = 0; i < k; i++) {
+        const u = T.rnd(), g = u < 0.5 ? 0.1 + T.rnd() * 0.08 : u < 0.85 ? 0.19 + T.rnd() * 0.1 : 0.31 + T.rnd() * 0.12;
+        const cx = T.rnd() * sx, cy = T.rnd() * sx, rr = g * (0.85 + T.rnd() * 0.3) / fx;
+        for (const ox of [-sx, 0, sx]) for (const oy of [-sx, 0, sx]) {
+          if (cx + ox + rr < 0 || cx + ox - rr > sx || cy + oy + rr < 0 || cy + oy - rr > sx) continue;
+          e += `<circle cx="${r1(cx + ox)}" cy="${r1(cy + oy)}" r="${r1(rr)}"/>`;
+        }
+      }
+      T.def(`<g id="${id}" fill="${o.farbe || "#000"}"${q !== 1 ? ` transform="scale(1 ${Math.round(q * 1000) / 1000})"` : ""}>${e.replace(/"0\./g, '".')}</g>`);
+    }
+    return { id, sx, sy: r1(sx * q) };
+  };
+  const fleckLage = (key, o, lage) => {
+    const G = fleckGruppe(key, o), v = o.variante || 0, id = G.id + "v" + v + lage;
+    if (!filterSchon.has(id)) {
+      filterSchon.add(id);
+      const s = lage === "b" ? 1.37 : 1, w = r1(G.sx * s), h = r1(G.sy * s);
+      /* Variante: ungerade = gespiegelt; Versatz je Variante und Lage verschieden */
+      const vx = r1(G.sx * ((0.31 * (lage === "b") + 0.43 * v) % 1)), vy = r1(G.sy * ((0.57 * (lage === "b") + 0.29 * v) % 1));
+      const tr = (v % 2 ? `translate(${w} 0)scale(${-s} ${s})` : s !== 1 ? `scale(${s})` : "");
+      T.def(`<pattern id="${id}" patternUnits="userSpaceOnUse" width="${w}" height="${h}"${vx || vy ? ` x="${vx}" y="${vy}"` : ""}><use href="#${G.id}"${tr ? ` transform="${tr}"` : ""}/></pattern>`);
+    }
+    return `url(#${id})`;
+  };
+  T.fleckMuster = (n, o = {}) => fleckLage(o.gruppe || n, o, "a");
+  T.fleckFlaeche = (n, b, o = {}) => {
+    const re = `x="${b[0]}" y="${b[1]}" width="${b[2] - b[0]}" height="${b[3] - b[1]}"`;
+    return `<rect ${re} fill="${fleckLage(o.gruppe || n, o, "a")}"/><rect ${re} fill="${fleckLage(o.gruppe || n, o, "b")}"/>`;
+  };
   /* Schnurrhaare/Tasthaare: n gebogene Haare ab (x, y), Richtung winkel (Grad), Fächer spreizung (Grad), Länge laenge */
   T.schnurrhaare = (x, y, n, laenge, winkel = 10, spreizung = 40, farbe = "#f4efe6", breite = null) => {
     let d = "";
@@ -275,6 +349,8 @@ function werkzeug(S, praefix, seed = 4711) {
     }
     return `<path d="${d}" fill="none" stroke="${farbe}" stroke-width="${breite || r2(laenge * 0.012) || 0.1}" stroke-opacity=".85" stroke-linecap="round"/>`;
   };
+  /* FASSUNG 880 — Werkzeug 880 einhängen (verbraucht keine Zufallszahlen: alte Arten zeichnen bitgleich) */
+  for (const m of MODULE_880) m.installiere(T);
   return T;
 }
 
@@ -283,7 +359,8 @@ function alleArten() {
   const fs = require("fs"), path = require("path");
   const dir = __dirname, arten = [], ids = new Set();
   for (const f of fs.readdirSync(dir).sort()) {
-    if (!/\.js$/.test(f) || /^(kern|blatt|alt-blatt|zz_.*)\.js$/.test(f)) continue;
+    /* FASSUNG 880 — Werkzeug-Module, Sonde und Szenen-Brücke sind keine Gruppen */
+    if (!/\.js$/.test(f) || /^(kern|blatt|alt-blatt|zz_.*|bauplan|form880|fuss880|kopf880|fell880|pruefe-tier|szene|vorlage880)\.js$/.test(f)) continue;
     /* eine halbfertige Gruppe (Helfer arbeiten parallel) darf die anderen nicht aufhalten */
     let liste;
     try { delete require.cache[require.resolve(path.join(dir, f))]; liste = require(path.join(dir, f)); }

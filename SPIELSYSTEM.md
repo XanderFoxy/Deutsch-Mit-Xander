@@ -3663,3 +3663,40 @@ Je Szene ein Zeichner, der gezielt nur das zurückholt, was wegen Alkohol ersetz
 **Offen**
 - Tier-Bibliothek: neues Werkzeug (Skelett, Umriss, Licht, Fell, Füße, Köpfe, Vorprüfung) und Brücke in die App mit der ersten Szene „Tiere der Savanne“ sind im Bau.
 - Weiche der alten Bilderwelt (Sonde 840) – Fassung 881.
+
+## Fassung 881 — Alte Bilderwelt wieder genau wie 812; erste Tier-Szene „Tiere der Savanne“; neues Tier-Werkzeug (Funk 225/299)
+
+XANDER (Funk 299): „die nächste Priorität sollte der Abschluss der Tiere sein“ · (Funk 225, siehe Abschnitt 840): die alte Bilderwelt bleibt unverändert, die neue ist nur eine Option.
+
+### Weiche alte/neue Bilderwelt (Sonde 840 wieder grün)
+- Die Bilderwelt-Regeln aus 877/878 (Artikel-Modus nur mit Leerzeichen, Lupenmarken mit `marke`, Zurück-Spur mit Lupe, Fangflächen ohne Lupenmarke, Marken-Dach mit Klickregel, Hinweis in der Lupe, Artikel-Knopf erst ab vier Wörtern) wirkten ohne Weiche auch in der alten Bilderwelt. Jetzt gelten sie nur noch mit `?bilderwelt=neu`. Der alte Zweig steht Zeile für Zeile wie in 53eaa31 (Stand 812, nur ohne Italienisch aus 843).
+- 25 Weichenstellen (bisher 15). Alle sind im Nachtrag zu Abschnitt 840 aufgeführt; die Sonde zählt sie und prüft jetzt auch `bwNeueRunde`.
+- Vergleich mit einem Arbeitsbaum von 812 im Browser: Badezimmer, Teil, Artikel-Modus, Lupe, Zurück, „Alle Szenen“, Küche – in jedem Schritt Zeichen für Zeichen gleich. Die neue Bilderwelt verhält sich wie vorher; „Andere Szene“ setzt jetzt wie „Alle Szenen“ die Lupe zurück.
+
+### Erste Tier-Szene „Tiere der Savanne“ (nur neue Bilderwelt)
+- Neue Szene `tiere_savanne`, Thema „Tiere“:
+  - 12 Arten aus der Tier-Bibliothek: Elefant, Giraffe, Zebra, Gnu, Gazelle, Nashorn, Nilpferd, Löwe, Löwin, Leopard, Gepard, Hyäne. Herden laufen über `<use>`.
+  - Dazu Berg, Wasserloch, Termitenhügel, Felsen, Akazie, Gras – zusammen 18 Wörter mit Tipps.
+  - Blick vom Safariwagen; die Größen ergeben sich aus dem Abstand.
+- Gepackt 68 KB, „alle Teile gut erreichbar“, in der Szene keine Filter mehr.
+- Erstes Bild in der App (Rechner 4× gedrosselt): 300–445 ms. Das liegt im Bereich der Bäckerei und noch über dem Ziel von 200 ms.
+- Brücke `werkzeug/bilderwelt/tiere/szene.js`:
+  - `tierTeil(S, id, x, y, epm, { dir, herde, tipp, oben, schatten, hinter, davor, ausschnitt })` setzt eine Art aus der Bibliothek als Teil in eine Szene.
+  - Die Zeichnung wird bei jedem Bau frisch aus der Bibliothek geholt. Jede Verbesserung an einer Art kommt so beim nächsten Bau von selbst in die Szene.
+- Nichts Bestehendes wurde ersetzt; die alte Bilderwelt und die Großgeschenke bleiben, wie sie sind.
+
+### Tier-Werkzeug 880 (nur im Werkzeug, nicht in der App)
+- Neu: Baupläne mit Skelett für 12 Körperbauformen (Maßtabellen mit Quellen), durchgehender Körperumriss, Beine als Gelenkkette mit Sprunggelenk und Fersenhöcker, Licht mit Kernschatten ohne Filter, Fell in Strähnen mit Wuchsrichtung, Fuß-Vorlagen (Pfote, Huf, Klaue, Sohle, Vogel- und Theropodenfuß), Kopf-Vorlagen mit Augenhöhle (12), Federn.
+- Neue Vorprüfung `pruefe-tier.js`: misst die Proportionen am Bild gegen Soll-Spannen aus der Recherche, prüft das Licht (Bild mit und ohne Schattierung) und meldet NaN, verbotene Filter, Größe und Zeichenzeit.
+- In Szenen laufen keine Rauschen-/Relief-Filter mehr (Leistung).
+- Der Wolf ist zur Probe komplett neu darauf aufgebaut. Ein unabhängiger Prüfer gab im Mittel 5,2 statt 4,4 – besser, aber noch kein Sprung. Alle anderen 115 Arten sind im Großbild bitgleich wie vorher.
+
+### Sonden
+- Grün: 840, 878, 876 und 879.
+- `pruefe-szene` für `tiere_savanne`.
+
+**Offen**
+- Die sieben fehlenden Tiergruppen (45 Arten: Vögel, kleine Meerestiere, Amphibien/Fische, Amerika/Steppe, Urzeit-Meer).
+- Die schwächsten Arten neu aufbauen (Braunbär, Panda, Jaguar, Gazelle, Säbelzahnkatze, Riesenhirsch, Katta, Kobra, Python, Wellensittich, Diplodocus, Velociraptor, Pteranodon).
+- Je Lebensraum eine Tier-Szene (Polar, Meer, Wald, Bauernhof, Haustiere, Dinosaurier, Eiszeit, Regenwald, Greifvögel …).
+- Ehrlich zum Maßstab: Mit Vektorgrafik ist eine Naturführer-Illustration erreichbar, Fotorealismus nicht (Fotos/Bild-KI sind von hier nicht verfügbar).

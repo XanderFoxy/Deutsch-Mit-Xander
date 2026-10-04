@@ -33,6 +33,10 @@
        hinter / davor: zusätzliche Zeichnung (Szeneneinheiten, vom Fußpunkt aus)
                 unter bzw. über dem Tier, gehört zum Teil (Wasser vor den Beinen,
                 Grasbüschel vor den Hufen)
+       ausschnitt: Inhalt eines clipPath (Szeneneinheiten, vom Fußpunkt aus): vom
+                Tier wird nur gezeichnet, was darin liegt (Nilpferd: nichts unter dem
+                vorderen Ufer). hinter/davor bleiben ganz. Die Trefferfläche bleibt
+                die des Tiers (getBBox kennt keinen Ausschnitt).
        teilId:  andere Teil-id (dieselbe Art zweimal als eigenes Wort)
        seed:    Zufallsstart der Zeichnung (Standard wie setze)
      }
@@ -40,6 +44,11 @@
    zweiten Teil derselben Art art.id + „2“ …), dazu das kuerzel der Szene.
    Gezeichnet wird im Szene-Modus setze(…, { fein: false }): gleiche
    Formen, sparsame Haare – Ladezeit und Zeichenzeit haben Vorrang.
+   Szene-Modus OHNE FILTER (Prüfer 880, Befund 7): Legt eine Art trotz
+   fein: false noch einen Filter an (raubkatzen.js weich(): Weichzeichner
+   auf Kopfzonen von Löwe, Löwin, Gepard, Leopard), nimmt die Brücke ihn
+   wieder heraus – die Formen bleiben, nur ohne Weichzeichner. In der
+   Szene ist er kaum 1 px breit, kostet aber je Tier spürbar Zeichenzeit.
    ===================================================================== */
 "use strict";
 const path = require("path");
@@ -61,6 +70,19 @@ function art(id) {
 
 const zaehler = new WeakMap();   // je Szene: wie oft eine Art schon gesetzt wurde (für eindeutige praefixe)
 
+/* Filter, die beim Zeichnen EINER Art neu in die defs kamen (ab Stelle ab), wieder entfernen – samt Verweisen
+   in der Zeichnung und in den neuen defs. filter="none" fällt ebenfalls weg (gleiche Wirkung, weniger Bytes). */
+function ohneFilter(S, ab, svg) {
+  const weg = [];
+  for (let i = ab; i < S.defs.length; i++) {
+    const m = /^<filter id="([^"]+)"/.exec(S.defs[i]);
+    if (m) { weg.push(m[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&")); S.defs.splice(i--, 1); }
+  }
+  const re = weg.length ? new RegExp(` filter="(?:none|url\\(#(?:${weg.join("|")})\\))"`, "g") : / filter="none"/g;
+  for (let i = ab; i < S.defs.length; i++) S.defs[i] = S.defs[i].replace(re, "");
+  return svg.replace(re, "");
+}
+
 function tierTeil(S, id, x, y, epm, o = {}) {
   const a = art(id);
   const tipp = a.tipp || o.tipp;
@@ -72,18 +94,19 @@ function tierTeil(S, id, x, y, epm, o = {}) {
   const dir0 = o.dir === -1 ? -1 : 1;
   const herde = (o.herde || []).map((h) => ({ x: h.x, y: h.y, epm: (h.epm || epm) * (h.groesse || 1), dir: h.dir === -1 ? -1 : h.dir === 1 ? 1 : dir0 }));
   const { setze } = kern();
+  const ab = S.defs.length;
   let kunst, box;
   if (!herde.length) {
     /* ein Tier: direkt in Szeneneinheiten (setze legt Bodenschatten und Kontaktschatten an) */
     const t = setze(S, a, 0, 0, epm, { fein: false, dir: dir0, praefix, seed: o.seed, schatten: o.schatten });
-    kunst = t.roh;
+    kunst = ohneFilter(S, ab, t.roh);
     box = t.box;
   } else {
     /* Herde: EINE Zeichnung in Zentimetern (epm 100 → Maßstab 1) mit Schatten in die defs,
        jedes Tier ein <use> mit eigenem Ort, Maßstab und Blickrichtung. */
     const t = setze(S, a, 0, 0, 100, { fein: false, dir: 1, praefix, seed: o.seed, schatten: o.schatten });
     const bid = S.id(praefix + "_herdenbild");
-    S.def(`<g id="${bid}">${t.roh}</g>`);
+    S.def(`<g id="${bid}">${ohneFilter(S, ab, t.roh)}</g>`);
     const alle = [{ x, y, epm, dir: dir0 }, ...herde].sort((p, q) => p.y - q.y);
     kunst = alle.map((m) => {
       const k = m.epm / 100;
@@ -94,6 +117,11 @@ function tierTeil(S, id, x, y, epm, o = {}) {
       const bx0 = m.dir === 1 ? x0 : -x1, bx1 = m.dir === 1 ? x1 : -x0;
       return [Math.min(b[0], m.x - x + bx0 * k), Math.min(b[1], m.y - y + y0 * k), Math.max(b[2], m.x - x + bx1 * k), Math.max(b[3], m.y - y + y1 * k)];
     }, [Infinity, Infinity, -Infinity, -Infinity]);
+  }
+  if (o.ausschnitt) {
+    const cid = S.id(praefix + "_ausschnitt");
+    S.def(`<clipPath id="${cid}">${o.ausschnitt}</clipPath>`);
+    kunst = `<g clip-path="url(#${cid})">${kunst}</g>`;
   }
   kunst = (o.hinter || "") + kunst + (o.davor || "");
   const teil = { id: o.teilId || a.id, de: a.de, syl: a.syl, it: a.it, itSyl: a.itSyl, en: a.en, x, y, kunst, tipp };

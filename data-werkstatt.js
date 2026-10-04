@@ -49,22 +49,26 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 880 — Städte authentisch: Bier, Wein und Spezialitäten wieder da",
+  stand: "Fassung 881 — alte Bilderwelt wieder wie 812, erste Tier-Szene Savanne",
 
   inArbeit: [
-    { seit: "2026-10-04T14:50",
-      text: "Tier-Bibliothek: neues Werkzeug und Szene „Tiere der Savanne“" },
-    { seit: "2026-10-04T14:50",
-      text: "Alte Bilderwelt wieder genau wie 812 (Sonde 840)" },
-    { seit: "2026-10-04T14:50",
+    { seit: "2026-10-04T17:28",
+      text: "Tiere: 7 fehlende Gruppen (45 Arten)" },
+    { seit: "2026-10-04T17:28",
+      text: "Tiere: schwächste Arten neu aufbauen" },
+    { seit: "2026-10-04T17:28",
+      text: "Tier-Szenen je Lebensraum" },
+    { seit: "2026-10-04T17:28",
       text: "Aussprache-Funktion mit Wortliste hochladen (wartet auf OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-04T14:50",
-      text: "Glühwein, Bier, Altbier, Apfelwein, Maß wieder in den älteren Städten" },
-    { seit: "2026-10-04T14:50",
-      text: "Lüttje Lage, Viez, Riesling, Retsina, Federweißer, Kirschwasser zurück" },
+    { seit: "2026-10-04T17:28",
+      text: "Alte Bilderwelt wieder genau wie 812 (Sonde 840 grün)" },
+    { seit: "2026-10-04T17:28",
+      text: "Neue Szene „Tiere der Savanne“" },
+    { seit: "2026-10-04T17:28",
+      text: "Neues Tier-Werkzeug (Skelett, Licht, Fell, Füße, Köpfe, Vorprüfung)" },
   ],
 };

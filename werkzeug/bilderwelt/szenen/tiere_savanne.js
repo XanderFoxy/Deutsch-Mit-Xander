@@ -36,8 +36,15 @@
      die Berge des Hochlands.
    - Nashorn: Die Bibliothek zeichnet ein BREITMAULNASHORN. In der
      Serengeti leben (wenige) Spitzmaulnashörner; Breitmaulnashörner gibt
-     es in Ostafrika nur in Schutzgebieten (Kenia, Uganda). Der Tipp nennt
-     darum keinen Ort, nur die Art.
+     es in Ostafrika nur in Schutzgebieten (Kenia, Uganda), die meisten
+     leben im Süden Afrikas (vor allem Südafrika). Der Tipp sagt darum,
+     wo es zu Hause ist (Prüfer 880: Felsen-, Gnu-Tipp und Berg legen die
+     Szene in die Serengeti). Hat die Bibliothek einmal ein
+     Spitzmaulnashorn, passt das besser hierher.
+   - Zebras: Die Herde ist EINE Zeichnung (drei <use>), alle Zebras haben
+     also dasselbe Muster – der Tipp spricht darum nicht vom eigenen
+     Streifenmuster, sondern von den Fliegen (Caro u. a. 2019: Bremsen
+     landen kaum auf gestreiftem Fell).
    - Raubtiere stehen getrennt von ihrer Beute: Löwe und Löwin auf dem
      Kopje links vorn, der Leopard im Baum rechts vorn, der Gepard auf dem
      Termitenhügel, die Hyäne vorn; die Beute (Zebras, Gnus, Gazellen,
@@ -49,7 +56,12 @@
    Größenverhältnis jedes Tiers zu seinem Abstand (Elefant 3,4 m, Gazelle
    0,7 m Schulterhöhe).
    Licht: Sonne links oben (später Vormittag) – wie bei den Tieren der
-   Bibliothek; Schatten von Bäumen und Felsen fallen nach rechts.
+   Bibliothek; Schatten von Bäumen und Felsen fallen nach rechts. Die Tiere
+   sind von links oben beleuchtet gezeichnet; gespiegelt (dir −1) käme ihr
+   Licht von rechts. Darum schauen die großen Einzeltiere vorn (Hyäne,
+   Nilpferd) nach rechts. Gespiegelt bleiben, wo die Komposition es
+   braucht: Leopard (schaut den Ast entlang), je ein Teil der Herden. Eine
+   Lichtrichtung in kern.js setze() wäre die eigentliche Lösung.
    ===================================================================== */
 "use strict";
 const path = require("path");
@@ -117,15 +129,25 @@ const BERG = (() => {
   return k;
 })();
 
+/* Kubische Bézierkurve p = [P0, P1, P2, P3]: Punkt und Richtung bei t (für Dornen und Leopardenschatten,
+   damit sie GENAU auf den gezeichneten Ästen liegen – Prüfer 880: Dornen schwebten neben den Ästen) */
+const bez = (p, t) => { const u = 1 - t, a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t; return [a * p[0][0] + b * p[1][0] + c * p[2][0] + d * p[3][0], a * p[0][1] + b * p[1][1] + c * p[2][1] + d * p[3][1]]; };
+const bezR = (p, t) => { const u = 1 - t, a = 3 * u * u, b = 6 * u * t, c = 3 * t * t; return [a * (p[1][0] - p[0][0]) + b * (p[2][0] - p[1][0]) + c * (p[3][0] - p[2][0]), a * (p[1][1] - p[0][1]) + b * (p[2][1] - p[1][1]) + c * (p[3][1] - p[2][1])]; };
+/* der dicke, fast waagrechte Ast (Ruheplatz des Leoparden): Kurve und Dicke */
+const astKurve = (x, y, e, o) => {
+  const dick = Math.max(0.45, e * 0.3), sd = o.astSeite || 1, ay = y - o.ast * e, ax1 = x + sd * (o.astLang || 2.4) * e;
+  return { dick, sd, p: [[x + sd * dick * 0.2, ay + dick * 0.9], [x + sd * e * 0.6, ay + dick * 0.1], [x + (ax1 - x) * 0.6, ay - dick * 0.1], [ax1, ay - dick * 0.7]] };
+};
 /* Schirmakazie: Stamm mit Gabel, Äste fächerförmig zur flachen Krone; die Krone aus Laubballen (eine
    gemeinsame Füllung, damit die Ballen ohne Naht ineinanderlaufen), Licht links oben, Unterseite dunkel.
    x, y Fuß des Stamms, e Einheiten je Meter, H Höhe (m), W Kronenbreite (m),
-   o: { ast: Höhe (m) eines dicken, fast waagrechten Asts, astSeite: −1 links / 1 rechts, astLang (m), fern, seed } */
+   o: { ast: Höhe (m) eines dicken, fast waagrechten Asts, astSeite: −1 links / 1 rechts, astLang (m), fern, seed,
+        versatz: Kronenmitte seitlich vom Stamm (Anteil der Kronenbreite, Standard 0,04 = leicht rechts) } */
 let anr = 0;
 const akazie = (x, y, e, H, W, o = {}) => {
   const z = zufall(o.seed || 7), id = anr++;
   const hk = H * e, wk = W * e, oben = y - hk, unten = y - hk * (o.unten || 0.74), dick = Math.max(0.45, e * 0.3);
-  const cx = x + wk * 0.04;
+  const cx = x + wk * (o.versatz != null ? o.versatz : 0.04);
   let g = "";
   if (!o.fern) g += `<ellipse cx="${r(cx + wk * 0.1)}" cy="${r(y + e * 0.2)}" rx="${r(wk * 0.44)}" ry="${r(Math.max(1, e * 0.8))}" fill="${WEICH}" opacity=".85"/>`;
   /* Stamm bis zur Gabel (leicht geneigt) */
@@ -133,25 +155,35 @@ const akazie = (x, y, e, H, W, o = {}) => {
   g += `<path d="M${r(x - dick * 0.55)} ${r(y)} C${r(x - dick * 0.4)} ${r(y - (y - gy) * 0.5)} ${r(gx - dick * 0.5)} ${r(gy + (y - gy) * 0.2)} ${r(gx - dick * 0.35)} ${r(gy)} L${r(gx + dick * 0.35)} ${r(gy)} C${r(gx + dick * 0.4)} ${r(gy + (y - gy) * 0.3)} ${r(x + dick * 0.5)} ${r(y - (y - gy) * 0.4)} ${r(x + dick * 0.65)} ${r(y)} Z" fill="${RINDE}"/>`;
   let st = "", li = "";
   const aeste = [[-0.44, 0.04, 0.6], [-0.2, -0.02, 0.5], [0.06, -0.05, 0.52], [0.3, 0.0, 0.5], [0.46, 0.05, 0.38]];
-  for (const [ex, ey, w] of aeste) {
-    const zx = cx + ex * wk, zy = unten + ey * hk;
-    st += `M${r(gx)} ${r(gy)}C${r(gx + (zx - gx) * 0.1)} ${r(gy - (gy - zy) * 0.5)} ${r(gx + (zx - gx) * 0.6)} ${r(gy - (gy - zy) * 0.8)} ${r(zx)} ${r(zy)}`;
+  /* jeder Ast eine kubische Bézierkurve von der Gabel zur Krone */
+  const astP = (ex, ey) => { const zx = cx + ex * wk, zy = unten + ey * hk; return [[gx, gy], [gx + (zx - gx) * 0.1, gy - (gy - zy) * 0.5], [gx + (zx - gx) * 0.6, gy - (gy - zy) * 0.8], [zx, zy]]; };
+  for (const [ex, ey] of aeste) {
+    const p = astP(ex, ey);
+    st += `M${r(p[0][0])} ${r(p[0][1])}C${r(p[1][0])} ${r(p[1][1])} ${r(p[2][0])} ${r(p[2][1])} ${r(p[3][0])} ${r(p[3][1])}`;
   }
-  g += `<path d="${st}" stroke="${o.fern ? "#4e4136" : "#4d3e33"}" stroke-width="${r(dick * 0.5)}" fill="none" stroke-linecap="round"/>`;
-  if (o.ast) {
-    /* dicker, fast waagrechter Ast (Ruheplatz des Leoparden) */
-    const sd = o.astSeite || 1, ay = y - o.ast * e, ax1 = x + sd * (o.astLang || 2.4) * e;
-    const d = `M${r(x + sd * dick * 0.2)} ${r(ay + dick * 0.9)} C${r(x + sd * e * 0.6)} ${r(ay + dick * 0.1)} ${r(x + (ax1 - x) * 0.6)} ${r(ay - dick * 0.1)} ${r(ax1)} ${r(ay - dick * 0.7)}`;
-    g += `<path d="${d}" stroke="${RINDE}" stroke-width="${r(dick * 0.62)}" fill="none" stroke-linecap="round"/>`;
-    li += `<path d="${d}" transform="translate(0 ${r(-dick * 0.2)})" stroke="#b9a48c" stroke-opacity=".45" stroke-width="${r(dick * 0.14)}" fill="none" stroke-linecap="round"/>`;
-    li += `<path d="M${r(ax1)} ${r(ay - dick * 0.7)} q${r(sd * e * 0.2)} ${r(-e * 0.05)} ${r(sd * e * 0.38)} ${r(-e * 0.22)}" stroke="#3c3028" stroke-width="${r(dick * 0.13)}" fill="none" stroke-linecap="round"/>`;
-  }
+  const astBreite = dick * 0.5;
+  g += `<path d="${st}" stroke="${o.fern ? "#4e4136" : "#4d3e33"}" stroke-width="${r(astBreite)}" fill="none" stroke-linecap="round"/>`;
   if (!o.fern) {
-    /* Lichtkante links am Stamm, weiße Dornen an den Ästen */
+    /* Lichtkante links am Stamm, weiße Dornen an den Ästen (unter dem Leoparden-Ast): Fuß des Dorns genau am Rand der Astkurve,
+       der Dorn steht schräg nach außen (zur Astspitze geneigt) – wie die paarigen Dornen der Schirmakazie */
     li += `<path d="M${r(x - dick * 0.32)} ${r(y - e * 0.1)} C${r(x - dick * 0.2)} ${r(y - (y - gy) * 0.5)} ${r(gx - dick * 0.3)} ${r(gy + (y - gy) * 0.25)} ${r(gx - dick * 0.2)} ${r(gy + e * 0.1)}" stroke="#b39d86" stroke-opacity=".5" stroke-width="${r(dick * 0.18)}" fill="none" stroke-linecap="round"/>`;
     let d = "";
-    for (let i = 0; i < 34; i++) { const [ex, ey] = aeste[i % aeste.length], t = 0.25 + z() * 0.7; const px = gx + (cx + ex * wk - gx) * t, py = gy + (unten + ey * hk - gy) * t; d += `M${r(px)} ${r(py)}l${r((z() - 0.5) * e * 0.14)} ${r(-e * 0.09)}`; }
-    li += `<path d="${d}" stroke="#f3eee4" stroke-width="${r(Math.max(0.12, e * 0.02))}" stroke-opacity=".85"/>`;
+    const L = e * 0.09, rand = astBreite * 0.45;
+    for (let i = 0; i < 34; i++) {
+      const [ex, ey] = aeste[i % aeste.length], p = astP(ex, ey), t = 0.25 + z() * 0.7, s = z() < 0.5 ? -1 : 1;
+      const [px, py] = bez(p, t), [tx0, ty0] = bezR(p, t), tl = Math.hypot(tx0, ty0) || 1, tx = tx0 / tl, ty = ty0 / tl;
+      const nx = -ty * s, ny = tx * s;
+      d += `M${r(px + nx * rand)} ${r(py + ny * rand)}l${r((nx * 0.86 + tx * 0.5) * L)} ${r((ny * 0.86 + ty * 0.5) * L)}`;
+    }
+    g += `<path d="${d}" stroke="#f3eee4" stroke-width="${r(Math.max(0.12, e * 0.02))}" stroke-opacity=".85" stroke-linecap="round"/>`;
+  }
+  if (o.ast) {
+    /* dicker, fast waagrechter Ast (Ruheplatz des Leoparden) */
+    const { sd, p } = astKurve(x, y, e, o);
+    const d = `M${r(p[0][0])} ${r(p[0][1])} C${r(p[1][0])} ${r(p[1][1])} ${r(p[2][0])} ${r(p[2][1])} ${r(p[3][0])} ${r(p[3][1])}`;
+    g += `<path d="${d}" stroke="${RINDE}" stroke-width="${r(dick * 0.62)}" fill="none" stroke-linecap="round"/>`;
+    li += `<path d="${d}" transform="translate(0 ${r(-dick * 0.2)})" stroke="#b9a48c" stroke-opacity=".45" stroke-width="${r(dick * 0.14)}" fill="none" stroke-linecap="round"/>`;
+    li += `<path d="M${r(p[3][0])} ${r(p[3][1])} q${r(sd * e * 0.2)} ${r(-e * 0.05)} ${r(sd * e * 0.38)} ${r(-e * 0.22)}" stroke="#3c3028" stroke-width="${r(dick * 0.13)}" fill="none" stroke-linecap="round"/>`;
   }
   g += li;
   /* Krone: zwei flache Lagen aus Laubballen */
@@ -337,12 +369,12 @@ const TEICH = (() => {
     tipp: "Jedes Jahr wandern weit über eine Million Gnus durch die Serengeti und die Masai Mara – immer dem frischen Gras nach." });
 }
 {
-  const a = Q(146, 38), b = Q(164, 35);
+  const a = Q(146, 38), b = Q(169, 35);   // b 5 Einheiten weiter rechts: beide Köpfe frei (Prüfer 880)
   tierTeil(S, "giraffe", a.x, a.y, a.e, { dir: 1, herde: [{ x: b.x, y: b.y, epm: b.e, dir: -1, groesse: 0.9 }],
     tipp: "Die Giraffe ist das höchste Tier der Welt. Ihr langer Hals hat nur sieben Wirbel – genau wie unser Hals." });
 }
 {
-  const a = Q(246, 21), b = Q(254, 22.2), c = Q(239, 22.8);
+  const a = Q(246, 21), b = Q(254, 22.2), c = Q(234, 22.8);   // c 5 Einheiten weiter links: Köpfe frei (Prüfer 880)
   tierTeil(S, "gazelle", a.x, a.y, a.e, { dir: -1, herde: [{ x: b.x, y: b.y, epm: b.e, dir: -1 }, { x: c.x, y: c.y, epm: c.e, dir: 1, groesse: 0.95 }],
     tipp: "Die Thomson-Gazelle erkennt man am schwarzen Streifen an der Seite. Ihr kurzer Schwanz wedelt fast immer." });
 }
@@ -350,13 +382,13 @@ const TEICH = (() => {
 {
   const a = Q(104, 22);
   tierTeil(S, "nashorn", a.x, a.y, a.e, { dir: 1, davor: fussGras([[0, 0, a.e, 3]]),
-    tipp: "Das Breitmaulnashorn frisst Gras. Mit seinen breiten Lippen rupft es das Gras wie ein Rasenmäher." });
+    tipp: "Das Breitmaulnashorn lebt vor allem im Süden Afrikas. Mit seinen breiten Lippen rupft es Gras wie ein Rasenmäher." });
 }
 {
   const a = Q(291, 21.5), b = Q(305, 22.8), c = Q(278, 23.5);
   tierTeil(S, "zebra", a.x, a.y, a.e, { dir: -1, herde: [{ x: b.x, y: b.y, epm: b.e, dir: -1 }, { x: c.x, y: c.y, epm: c.e, dir: 1, groesse: 0.95 }],
     davor: fussGras([[0, 0, a.e, 2], [b.x - a.x, b.y - a.y, b.e, 2], [c.x - a.x, c.y - a.y, c.e, 2]]),
-    tipp: "Jedes Zebra hat sein eigenes Streifenmuster – wie ein Fingerabdruck." });
+    tipp: "Zebras leben in Herden. Ihre Streifen halten stechende Fliegen fern: Bremsen landen kaum auf gestreiftem Fell." });
 }
 {
   const a = Q(204, 19.5);
@@ -392,8 +424,9 @@ const TH = Q(128, 11.4), TH_OBEN = 1.08;
 }
 {
   /* Nilpferd im Wasserloch: Fußpunkt 0,62 m unter dem Wasserspiegel; das Wasser vor Bauch und Beinen
-     ist auf die Form des Wasserlochs geschnitten und leicht durchscheinend (trübes Wasser) */
-  const w = Q(212, 12.6), tief = 0.62 * w.e, hx = w.x, hy = w.y + tief;
+     ist auf die Form des Wasserlochs geschnitten und leicht durchscheinend (trübes Wasser).
+     Blick nach rechts (dir 1): so kommt sein Licht wie das der Szene von links oben (Prüfer 880). */
+  const w = Q(207, 12.6), tief = 0.62 * w.e, hx = w.x, hy = w.y + tief;
   const g = S.lg("wasser2", WASSER_STOPS, 0, r(WL.cy - WL.ry - hy), 0, r(WL.cy + WL.ry - hy), US);
   const cid = S.id("teichclip");
   S.def(`<clipPath id="${cid}"><path d="${TEICH.wasser}" transform="translate(${r(-hx)} ${r(-hy)})"/></clipPath>`);
@@ -401,7 +434,13 @@ const TH = Q(128, 11.4), TH_OBEN = 1.08;
   let dv = `<g clip-path="url(#${cid})"><rect x="${r(-L)}" y="${r(-tief)}" width="${r(2 * L)}" height="${r(tief + 14)}" fill="${g}" fill-opacity=".93"/>`;
   dv += `<path d="M${r(-L * 0.62)} ${r(-tief + 0.1)} C${r(-L * 0.4)} ${r(-tief - 0.9)} ${r(L * 0.3)} ${r(-tief - 0.9)} ${r(L * 0.6)} ${r(-tief + 0.1)}" stroke="#f4f9f9" stroke-opacity=".75" stroke-width=".45" fill="none"/>`;
   dv += `<path d="M${r(-L * 0.75)} ${r(-tief + 1.4)}h${r(L * 0.35)}M${r(-L * 0.1)} ${r(-tief + 2.4)}h${r(L * 0.45)}M${r(L * 0.35)} ${r(-tief + 1.2)}h${r(L * 0.3)}" stroke="#e8f2f2" stroke-opacity=".5" stroke-width=".35"/></g>`;
-  tierTeil(S, "nilpferd", hx, hy, w.e, { dir: -1, schatten: false, davor: dv,
+  /* Das vordere Ufer liegt VOR den Beinen (Prüfer 880: Hufe ragten unter dem Wasser auf den Schlammrand heraus):
+     Wer vom Wagen auf die Hufe 0,62 m unter Wasser blickt, sieht auf den Schlammrand davor. Also wird vom Nilpferd
+     nur gezeichnet, was über der Teichmitte liegt oder innerhalb des Wassers – darunter bleiben Schlamm, Hufspuren
+     und Ufergras des Wasserlochs sichtbar (auch der Schatten der Akazie liegt richtig darauf, und die Trefferfläche
+     des Nilpferds bleibt so groß wie das Tier). */
+  const ausschnitt = `<rect x="${r(-2 * L)}" y="${r(-4 * L)}" width="${r(4 * L)}" height="${r(4 * L + WL.cy - hy)}"/><path d="${TEICH.wasser}" transform="translate(${r(-hx)} ${r(-hy)})"/>`;
+  tierTeil(S, "nilpferd", hx, hy, w.e, { dir: 1, schatten: false, davor: dv, ausschnitt,
     tipp: "Am Tag bleibt das Nilpferd im Wasser, damit seine empfindliche Haut nicht austrocknet. Nachts frisst es an Land Gras." });
 }
 /* ---------- vorne links: der Kopje mit Löwe und Löwin ------------------- */
@@ -431,22 +470,37 @@ const KOPJE_OBEN = 1.45;      // Höhe der Liegefläche oben (m)
 /* ---------- rechts vorn: die Akazie, hoch im Baum der Leopard ------------ */
 const AK = Q(262, 11);
 const AST = 3.3;             // der Ast liegt knapp unter Augenhöhe: der Leopard steht vor Horizont und Bergen, frei von den Tieren der Ebene
+/* Krone 5,8 m hoch und etwas nach links über den Ast gerückt (versatz): so bleibt sie ganz im Bild – mindestens
+   2 Einheiten Abstand zum rechten und oberen Rand (Prüfer 880: Krone ragte bis x 324 und stieß oben an) */
+const AKO = { ast: AST, astSeite: -1, astLang: 2.2, unten: 0.8, seed: 11, versatz: -0.06 };
 {
   const { x, y, e } = AK;
   S.teil({ id: "akazie", de: "die Akazie", syl: "a-KA-zie", it: "l'acacia", itSyl: "a-CA-cia", en: "acacia", x: 0, y: 0,
-    kunst: akazie(x, y, e, 6.0, 4.3, { ast: AST, astSeite: -1, astLang: 2.2, unten: 0.8, seed: 11 }),
+    kunst: akazie(x, y, e, 5.8, 4.3, AKO),
     tipp: "Die Schirmakazie hat lange, weiße Dornen. Giraffen fressen ihre Blätter trotzdem – mit ihrer langen Zunge." });
 }
 {
   const p = Q(AK.x - 1.4 * AK.e, 11, AST + 0.12);
+  /* Auf dem schmalen Ast KEIN Bodenschatten (der schwebte neben dem Ast in der Luft, Prüfer 880), sondern ein
+     schmaler Schatten nur auf der Oberseite des Asts: unter dem Bauch ein weicher Streif (Licht links oben →
+     etwas nach rechts versetzt) und dunkle Kontaktkerne unter den Pfoten. Pfoten (Meter vom Fußpunkt, Blick nach
+     links) wie in der Bibliothek (raubkatzen.js, Leopard fuesse). */
+  const { dick, p: ast } = astKurve(AK.x, AK.y, AK.e, AKO), e = AK.e;
+  const beiX = (xs) => { let a = 0, b = 1; for (let i = 0; i < 30; i++) { const m = (a + b) / 2; if (bez(ast, m)[0] > xs) a = m; else b = m; } return (a + b) / 2; };
+  const oben = (t, anteil) => { const [cx, cy] = bez(ast, t), [tx, ty] = bezR(ast, t), l = Math.hypot(tx, ty) || 1; let nx = -ty / l, ny = tx / l; if (ny > 0) { nx = -nx; ny = -ny; } const h = dick * 0.31 * anteil; return [cx + nx * h - p.x, cy + ny * h - p.y]; };
+  let streif = "";
+  for (let i = 0; i <= 8; i++) { const [sx, sy] = oben(beiX(p.x + (-0.28 + 0.74 * i / 8) * e), 0.7); streif += (i ? "L" : "M") + r(sx) + " " + r(sy); }
+  let sch = `<path d="${streif}" stroke="#1c120a" stroke-opacity=".28" stroke-width="${r(dick * 0.22)}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  for (const f of [-0.275, -0.185, 0.325, 0.415]) sch += `<ellipse cx="${r((f + 0.012) * e)}" cy="${r(e * 0.004)}" rx="${r(e * 0.05)}" ry="${r(e * 0.014)}" fill="#120a04" fill-opacity=".45"/>`;
   /* oben: klein und im Baum (ANLEITUNG) – sonst fängt der Berg dahinter den Tipp zwischen seinen Beinen */
-  tierTeil(S, "leopard", p.x, p.y, p.e, { dir: -1, oben: true,
+  tierTeil(S, "leopard", p.x, p.y, p.e, { dir: -1, oben: true, schatten: false, hinter: sch,
     tipp: "Der Leopard ist sehr stark: Er trägt seine Beute auf einen Baum. Dort können Löwen und Hyänen sie nicht stehlen." });
 }
 /* ---------- ganz vorne: die Hyäne und das Gras -------------------------- */
 {
-  const p = Q(206, 6.9);
-  tierTeil(S, "hyaene", p.x, p.y, p.e, { dir: -1, davor: fussGras([[0, 0, p.e, 1.6]]),
+  /* Blick nach rechts (dir 1): Licht von links oben wie in der ganzen Szene (Prüfer 880) */
+  const p = Q(200, 6.9);
+  tierTeil(S, "hyaene", p.x, p.y, p.e, { dir: 1, davor: fussGras([[0, 0, p.e, 1.6]]),
     tipp: "Die Tüpfelhyäne jagt das meiste Futter selbst. Ihr Ruf klingt wie ein Lachen." });
 }
 {

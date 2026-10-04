@@ -96,7 +96,8 @@ const LICHT = norm(-0.55, -0.83);
    nach unten laufenden Bein a = hinten, b = vorn). Zwischen den Gelenken weich (Catmull-Rom), kein eigener Umriss.
    o: { fuss: [[x, y(, 1)], …] Fußumriss von vorn-oben über die Sohle nach hinten-oben (fuss880),
         extraA / extraB: [[nachIndex, [x, y]], …] (Fersenhöcker, Karpalballen, Ellbogenhöcker …),
-        fern: true → Füllung 20–25 % dunkler/kühler + Schlagschatten des Rumpfes oben (o.schatten = [y0, y1]),
+        fern: true → Füllung 20–25 % dunkler/kühler + Schlagschatten des Rumpfes oben (o.schatten = [y0, y1],
+              o.schattenStaerke 0,55), o.quer: Füllung (Verlauf) für die Rundung quer, o.innen: Zeichnung im Clip,
         farbe (Füllung), ohneOben: true → keine Kappe oben (Glied wächst aus dem Körper) }
    Liefert { umriss, a, b, mitte, radius, d, svg? } — svg nur, wenn o.farbe gesetzt ist.
    ===================================================================== */
@@ -113,11 +114,21 @@ function gliedGeo(kette, breiten, o = {}) {
   const A = a.slice(), B = b.slice();
   /* ersetzeA: Punkt der Rückseite an Index k ersetzen (Fersenhöcker statt Gelenkkante – sonst Doppelzacke) */
   for (const [k, p] of (o.ersetzeA || [])) A[k] = p;
-  for (const [k, p] of (o.extraA || []).slice().sort((u, v) => v[0] - u[0])) A.splice(k + 1, 0, p);
-  for (const [k, p] of (o.extraB || []).slice().sort((u, v) => v[0] - u[0])) B.splice(k + 1, 0, p);
+  /* extraA/extraB: Punkte NACH Index k einfügen; mehrere zum selben k bleiben in der angegebenen Reihenfolge */
+  const einfuegen = (L, liste) => { const nach = new Map(); for (const [k, p] of liste || []) { if (!nach.has(k)) nach.set(k, []); nach.get(k).push(p); } for (const k of [...nach.keys()].sort((u, v) => v - u)) L.splice(k + 1, 0, ...nach.get(k)); };
+  einfuegen(A, o.extraA); einfuegen(B, o.extraB);
+  /* FASSUNG 881 — Mit Fuß endet der Strang EINEN Punkt früher: der Fuß beginnt selbst an der Fessel (vorn) und endet
+     dort (hinten). Vorher lagen Fessel-Punkt des Strangs und erster/letzter Fußpunkt fast aufeinander, der zweite etwas
+     höher – die Catmull-Rom-Kurve schlug dort eine Schleife (helle Spitzen an allen Pfoten, Prüfer 880, Punkt 9). */
+  const fuss = o.fuss && o.fuss.length ? o.fuss : null;
+  if (fuss) { A.pop(); B.pop(); }
   /* Umriss: b oben → unten, Fuß (vorn → hinten), a unten → oben */
-  const umriss = B.concat(o.fuss || [], A.slice().reverse());
-  return { umriss, a: A, b: B, aRoh: a, bRoh: b, mitte: kette, radius: rad };
+  const umriss = B.concat(fuss || [], A.slice().reverse());
+  /* Achse in den Fuß verlängern (Querschnitt Ferse/Ballen → Zehen aus T.pfote/T.huf … als fuss.achse): Licht, Laufmuster,
+     Unterhaar und Fell laufen dann ohne Naht bis in die Zehen statt an der Fessel als gerade Kante zu enden */
+  const aR = a.slice(), bR = b.slice();
+  if (o.fussAchse) { aR.push(o.fussAchse[0]); bR.push(o.fussAchse[1]); }
+  return { umriss, a: A, b: B, aRoh: aR, bRoh: bR, mitte: kette, radius: rad };
 }
 
 /* Beinkette aus dem Skelett: nahe/ferne Beine mit Zwischenpunkten (Muskelbauch oben, Mittelhand-Mitte) und Breiten (cm) */
@@ -133,9 +144,12 @@ function beinKette(sk, wo, o = {}) {
     kette = [p.ellbogen, U, p.handwurzel, M, p.fessel];
     breiten = [g.ellbogen, g.unterarmBauch, g.handwurzel, g.mittelhand, g.fessel].map(mal);
     if (o.oben) { kette.unshift(p.schulter); breiten.unshift([0.09 * W, 0.08 * W]); }
-    /* Karpalballen: kleiner Höcker hinten knapp unter der Vorderfußwurzel */
+    /* (Zweibeiner: Arm ohne Karpalballen) Karpalballen: kleiner RUNDER Höcker hinten knapp unter der Vorderfußwurzel – drei Punkte (davor, Scheitel, danach),
+       Scheitel nur knapp über die Laufbreite (FASSUNG 881: mit EINEM Punkt bei 1,12 × Breite stand er als heller Keil
+       bzw. als spitze Ecke im Umriss – Prüfer 880, Punkt 10) */
     const i = kette.indexOf(p.handwurzel), { n, d } = rahmen(i), wa = breiten[i][0], h = p.handwurzel;
-    extraA.push([i, [h[0] + n[0] * wa * 1.12 + d[0] * wa * 0.9, h[1] + n[1] * wa * 1.12 + d[1] * wa * 0.9]]);
+    const K = (q, t) => [h[0] + n[0] * wa * q + d[0] * wa * t, h[1] + n[1] * wa * q + d[1] * wa * t];
+    if (!sk.zwei && sk.gang !== "flosse") extraA.push([i, K(0.99, 0.4)], [i, K(1.04, 0.95)], [i, K(0.92, 1.55)]);
   } else {
     const Wd = lerp(p.knie, p.sprung, 0.3), M = lerp(p.sprung, p.fessel, 0.5);
     kette = [p.knie, Wd, p.sprung, M, p.fessel];
@@ -158,6 +172,14 @@ function beinKette(sk, wo, o = {}) {
    Liefert { pts, d, id, clip (url), achsen: [...], kanten: { name: [pts] }, zonen: { name: polygon }, sk }
    ===================================================================== */
 function silhouette(T, sk, profil = {}) {
+  /* FASSUNG 881 — Prüfer 880, Punkt 5: T.silhouette taugte nur für stehende Vierbeiner. Jetzt: gang „flosse“ (Robbe) hat
+     ein eigenes Profil (silhouetteFlosse); gang „zwei“ (Theropode, Vogel) nimmt den Arm NICHT in den Umriss (er wird als
+     freies T.glied mit Hand gezeichnet, sil.arm), die Unterlinie läuft von der Vorbrust direkt über die Brust; der
+     Schwanz kann Teil des Umrisses sein (profil.schwanz, Standard bei Theropode und Echse); bei hoher Kruppe
+     (kruppeUeber > 0,2, z. B. Vogel) wird das Gesäß als Viertelellipse gerundet statt als Kastenecke. Für hund, katze,
+     baer, pferd, rind, hirsch, elefant, primat bleibt der Umriss wie bisher (der Wolf zeichnet bitgleich). */
+  if (sk.gang === "flosse") return silhouetteFlosse(T, sk, profil);
+  const zwei = !!sk.zwei;
   const W = sk.W, lm = sk.lm, f = Object.assign({ ruecken: 0.012, nacken: 0.02, brust: 0.015, bauch: 0.01, hose: 0.02 }, profil.fell || {});
   const w = (v) => v * W;
   /* --- Oberlinie: Rücken (aus dem Skelett) + Fellzugabe --- */
@@ -180,17 +202,21 @@ function silhouette(T, sk, profil = {}) {
   /* --- nahe Beine --- */
   const vK = beinKette(sk, "vn"), hK = beinKette(sk, "hn");
   const fv = profil.fussVorn || null, fh = profil.fussHinten || null;
-  const vG = gliedGeo(vK.kette, vK.breiten, { extraA: vK.extraA, ersetzeA: vK.ersetzeA, fuss: fv ? fv.pts : [] });
-  const hG = gliedGeo(hK.kette, hK.breiten, { extraA: hK.extraA, ersetzeA: hK.ersetzeA, fuss: fh ? fh.pts : [] });
+  const vG = gliedGeo(vK.kette, vK.breiten, { extraA: vK.extraA, ersetzeA: vK.ersetzeA, fuss: fv ? fv.pts : [], fussAchse: fv && fv.achse });
+  const hG = gliedGeo(hK.kette, hK.breiten, { extraA: hK.extraA, ersetzeA: hK.ersetzeA, fuss: fh ? fh.pts : [], fussAchse: fh && fh.achse });
   const vn = sk.beine.vn, hn = sk.beine.hn;
   /* --- Weichteile vorn: Vorbrust vor der Bugspitze, Übergang zum Unterarm --- */
   const bs = vn.extra.bugspitze, vb = w(profil.vorbrust != null ? profil.vorbrust : 0.035);
+  /* Zweibeiner: kein Arm im Umriss – die Vorbrust läuft zum Brustbein hinab */
+  const bb = lm.brustbein;
   const vorbrust = [vbTop, [bs[0] + vb, bs[1] + w(0.03)], [bs[0] + vb * 0.6, bs[1] + w(0.1)],
-    [lerp(bs, vG.b[0], 0.75)[0] + w(0.006), lerp(bs, vG.b[0], 0.75)[1] - w(0.01)]];
+    zwei ? [bb[0] - w(0.01), bb[1] + w(0.05)] : [lerp(bs, vG.b[0], 0.75)[0] + w(0.006), lerp(bs, vG.b[0], 0.75)[1] - w(0.01)]];
   /* --- Unterlinie: Achsel → Brust → Bauch → Flanke → Kniefalte --- */
   const eh = vn.extra.ellbogenhoecker, bt = lm.brustTief, fl = lm.flanke, kn = hn.p.knie, ks = hn.extra.kniescheibe;
   const bauchMitte = lerp(bt, fl, 0.5);
-  const unten = [[eh[0] - w(0.01), eh[1] - w(0.025)], [bt[0], bt[1] + w(f.brust)], [lerp(bt, bauchMitte, 0.5)[0], lerp(bt, bauchMitte, 0.5)[1] + w(f.bauch) - w(0.005)],
+  /* Achsel (Vierbeiner) bzw. Brustwölbung zwischen Brustbein und tiefster Brust (Zweibeiner) */
+  const achsel = zwei ? [lerp(bb, bt, 0.45)[0], lerp(bb, bt, 0.45)[1] + w(0.06)] : [eh[0] - w(0.01), eh[1] - w(0.025)];
+  const unten = [achsel, [bt[0], bt[1] + w(f.brust)], [lerp(bt, bauchMitte, 0.5)[0], lerp(bt, bauchMitte, 0.5)[1] + w(f.bauch) - w(0.005)],
     [bauchMitte[0], bauchMitte[1] + w(f.bauch)], [fl[0] + w(0.04), fl[1] + w(f.bauch) * 0.6], [fl[0], fl[1] + w(0.005)],
     /* Kniefalte: Hautfalte von der Flanke zur Kniescheibe */
     [ks[0] + w(0.035), ks[1] - w(0.07)]];
@@ -203,7 +229,21 @@ function silhouette(T, sk, profil = {}) {
   /* Gesäß rund in die schräge Kruppe: ein weiter Bogen (Radius ≈ 0,12 W) vom Gesäß über den Schwanzansatz zur Kruppe –
      vorher saß die Biegung auf 3 cm (Sonde: „Kastenecke an der Kruppe“). Der Schwanz wächst aus diesem Bogen. */
   const kr0 = ru[2], h4 = hose[4];
-  const kruppBogen = [[h4[0] + w(0.006), sa[1] + w(0.062)], [sa[0] - w(0.028), sa[1] + w(0.012)],
+  const sw = sk.schwanz, mitSchwanz = (profil.schwanz != null ? !!profil.schwanz : ["theropode", "echse"].includes(sk.bauplan)) && sw.laenge > w(0.05);
+  let kruppBogen, schwanzG = null;
+  if (mitSchwanz) {
+    /* Schwanz im Umriss: Strang entlang sk.schwanz.kette, Wurzel so hoch wie das Gesäß (von der Hose bis zur Kruppe),
+       zur Spitze auf 10 % verjüngt; Unterkante von der Wurzel zur Spitze, Oberkante zurück zur Kruppe */
+    const unterW = hose[2], d0 = Math.min(sw.dicke || w(0.1), (unterW[1] - kr0[1]) * 0.5), n = sw.kette.length;
+    const kette = sw.kette.map((p, i) => (i === 0 ? [sa[0] + w(0.02), (kr0[1] + unterW[1]) / 2] : p));
+    schwanzG = gliedGeo(kette, kette.map((_, i) => { const t = i / (n - 1), d = d0 * (1 - 0.9 * Math.pow(t, 0.85)); return [d, d]; }));
+    hose.length = 3;
+    kruppBogen = schwanzG.b.slice(1).concat(schwanzG.a.slice(1).reverse(), [[kr0[0] + w(0.05), kr0[1] + w(0.004)]]);
+  } else if (sk.bp.kruppeUeber > 0.2) {
+    /* hohe Kruppe (Vogel): Gesäß als Viertelellipse von der Hose hinauf zur Kruppe */
+    const c = [kr0[0] + w(0.02), h4[1]], rx = c[0] - (h4[0] - w(0.02)), ry = h4[1] - kr0[1];
+    kruppBogen = [0.18, 0.42, 0.66, 0.88].map((u) => [c[0] - rx * Math.cos(u * Math.PI / 2), c[1] - ry * Math.sin(u * Math.PI / 2)]).concat([[kr0[0] + w(0.07), kr0[1] + w(0.001)]]);
+  } else kruppBogen = [[h4[0] + w(0.006), sa[1] + w(0.062)], [sa[0] - w(0.028), sa[1] + w(0.012)],
     [Math.max(sa[0], kr0[0]) + w(0.02), kr0[1] + w(0.016)], [kr0[0] + w(0.07), kr0[1] + w(0.001)]];
   for (const p of kruppBogen) hose.push(p);
   /* --- zusammensetzen (Uhrzeigersinn) --- */
@@ -214,9 +254,8 @@ function silhouette(T, sk, profil = {}) {
   if (kopf) add(kopf.umrissSil);                               // Kopf: Hinterhaupt → Stirn → Nase → Kinn → Kehle
   add(kopf ? kehle.slice(1, -1) : kehle.slice(0, -1));          // Kehle → (Vorbrust folgt)
   add(vorbrust);
-  /* nahes Vorderbein: b ab Unterarm (Index 1), Fuß, a hinauf ohne obersten Punkt; Ellbogenhöcker */
-  add(vG.b.slice(1)); add(fv ? fv.pts : []); add(vG.a.slice(1).reverse());
-  add([[eh[0] + w(0.005), eh[1] + w(0.01)]]);
+  /* nahes Vorderbein: b ab Unterarm (Index 1), Fuß, a hinauf ohne obersten Punkt; Ellbogenhöcker (nicht beim Zweibeiner) */
+  if (!zwei) { add(vG.b.slice(1)); add(fv ? fv.pts : []); add(vG.a.slice(1).reverse()); add([[eh[0] + w(0.005), eh[1] + w(0.01)]]); }
   add(unten);
   /* nahes Hinterbein: b ab Kniescheibe */
   add([[ks[0] + w(0.01), ks[1] - w(0.01)]]);
@@ -231,29 +270,94 @@ function silhouette(T, sk, profil = {}) {
   /* Rumpf+Hals als EIN gebogener Strang, der am Gesäß spitz beginnt (keine Schnittkante): Oberseite = Gesäß hinauf,
      Rücken, Nacken; Unterseite = Hose hinab, Kniefalte, Bauch, Brust, Vorbrust, Kehle */
   const kopfOben = kopf ? kopf.profilOben.slice(1) : [], kopfUnten = kopf ? kopf.profilUnten.slice(0, -1).reverse() : [];
-  const oben = hose.slice(2).concat(ru.slice(3), nacken.slice(1), kopfOben);
-  const unterlinie = [hose[2], hose[1], hose[0], [kn[0] - w(0.02), kn[1] - w(0.08)], [ks[0] + w(0.035), ks[1] - w(0.07)], [fl[0], fl[1] + w(0.005)],
-    [bauchMitte[0], bauchMitte[1] + w(f.bauch)], [bt[0], bt[1] + w(f.brust)], [eh[0] - w(0.01), eh[1] - w(0.025)],
-    vorbrust[3], vorbrust[2], vorbrust[1], vorbrust[0]].concat(kehle.slice(0, -1).reverse(), kopfUnten);
+  /* Rückseite des Rumpfstrangs: Gesäß hinauf bis zur Kruppe (mit Schwanz im Umriss: Querschnitt an der Schwanzwurzel) */
+  const hinten = schwanzG ? [schwanzG.a[0], hose[hose.length - 1]] : hose.slice(2);
+  const oben = hinten.concat(ru.slice(3), nacken.slice(1), kopfOben);
+  /* (ohne den Kniefaltenpunkt: die Unterlinie des Strangs steigt vom Knie gleichmäßig zur Flanke – sonst fächern die
+     Querschnitte an der Falte rückwärts) */
+  const unterlinie = [schwanzG ? schwanzG.b[0] : hose[2], hose[1], hose[0], [kn[0] - w(0.02), kn[1] - w(0.08)], [fl[0], fl[1] + w(0.005)],
+    [bauchMitte[0], bauchMitte[1] + w(f.bauch)], [bt[0], bt[1] + w(f.brust)], achsel,
+    /* Vorbrust als Sehne (vom Ellbogen schräg zur Kehle): folgt der Strang der Brustwölbung, fächern seine Querschnitte
+       am Hals und überkreuzen sich (heller Keil, Sonde 19); die Wölbung bekommt ihren Schatten über rausB */
+    vorbrust[3], vorbrust[0]].concat(kehle.slice(0, -1).reverse(), kopfUnten);
   const N = (T.fein === false ? 10 : 15) + (kopf ? (T.fein === false ? 3 : 6) : 0);
   /* Anker: Kruppe ↔ Kniefalte, Widerrist ↔ Brust hinter dem Ellbogen, Hinterhaupt ↔ Kehle */
-  const iKr = hose.length - 3, iWr = iKr + 1 + ru.length - 4, iPoll = iWr + nacken.length - 1, iKehle = 9 + 4 + kehle.length - 1 - 1;
-  const anker = [[0, 0], [iKr, 4], [iWr, 8]];
+  const iKr = hinten.length - 1, iWr = iKr + 1 + ru.length - 4, iPoll = iWr + nacken.length - 1, iKehle = 8 + 2 + kehle.length - 1 - 1;
+  const anker = [[0, 0], [iKr, 4], [iWr, 7]];
   if (kopf) anker.push([iPoll, iKehle]);
   anker.push([oben.length - 1, unterlinie.length - 1]);
   const rumpf = strangAusLinien(oben, unterlinie, anker, N);
   rumpf.name = "rumpf"; rumpf.art = "rumpf";
+  /* Licht: jeder zweite Querschnitt reicht (der Querverlauf ist längs ohnehin glatt) – halbiert Dreiecke und Verläufe */
+  rumpf.schritt = 2;
   /* Unterseite des Rumpfstrangs reicht in die Läufe hinein und wird dort weich ausgeblendet (keine harte Kante quer über
      Oberarm und Keule; der Schatten unter dem Rumpf läuft als Okklusion auf die Läufe aus) */
-  rumpf.rausB = 0.3;
   rumpf.unterkante = Math.max(bt[1] + w(f.brust), bauchMitte[1] + w(f.bauch));
+  /* … aber nur dort, wo unten Läufe ansetzen (Bauch, Brust): an Hals und Kehle fächern die Querschnitte in der Biegung,
+     ein Überstand würde sich dort überkreuzen (heller Keil am Hals, Sonde 19) */
+  const vorn0 = vG.b[0][0] + w(0.03);
+  rumpf.rausB = rumpf.B.map((p) => { const u = p[0] > vorn0 ? 0.4 : Math.max(0, Math.min(1, (p[1] - (rumpf.unterkante - w(0.16))) / w(0.1))); return Math.round((0.06 + 0.24 * u) * 100) / 100; });
   const achsen = [rumpf];
-  const bA = (g, name) => { const s = { name, art: "glied", A: g.aRoh, B: g.bRoh }; achsen.push(s); return s; };
-  bA(vG, "vn"); bA(hG, "hn");
+  /* rausA 0,24: der Querverlauf reicht über die Rückseite hinaus und deckt Karpalballen und Fersenhöcker mit ab (sonst
+     stand dort ein unschattierter Keil – Prüfer 880, Punkt 10) */
+  const bA = (g, name) => { const s = { name, art: "glied", A: g.aRoh, B: g.bRoh, rausA: 0.24 }; achsen.push(s); return s; };
+  if (!zwei) bA(vG, "vn");
+  bA(hG, "hn");
+  if (schwanzG) achsen.push({ name: "schwanz", art: "schwanz", A: schwanzG.aRoh, B: schwanzG.bRoh });
   /* Kopfachse nur für Fell/Muster – das Licht des Kopfes kommt aus dem durchgehenden Rumpfstrang */
   if (kopf && kopf.achse) achsen.push(Object.assign({ name: "kopf", art: "kopf", ohneLicht: true }, kopf.achse));
   const kanten = { ruecken: kruppBogen.slice(2).concat(ru.slice(3)), nacken, kehle: kehle, vorbrust, unten, hose, vnVorn: vG.b, vnHinten: vG.a, hnVorn: hG.b, hnHinten: hG.a };
-  return { pts, d, id, clip: `url(#${id}c)`, achsen, kanten, sk, beine: { vn: vG, hn: hG }, hals: hg, kopf, W, punkte: { rumpfEcke: kruppBogen[1], vorbrustOben: vbTop, kehle: kehlP } };
+  /* Zweibeiner: Arm als freies Glied (Kette Schulter → Ellbogen → Hand, ohne Karpalballen) zum Selbstzeichnen mit
+     T.glied(sil.arm.kette, sil.arm.breiten, { farbe, … }) und T.hand(sk, "vn") */
+  const arm = zwei ? (() => { const p = vn.p, g = vn.breiten || {}, k = [p.schulter, p.ellbogen, p.handwurzel, p.fessel], br = [[0.06, 0.05], (g.ellbogen || [0.03, 0.03]), (g.handwurzel || [0.02, 0.02]), (g.fessel || [0.015, 0.015])].map((q) => [q[0] * W, q[1] * W]); return { kette: k, breiten: br }; })() : null;
+  if (zwei) kanten.vnVorn = kanten.vnHinten = [];
+  return { pts, d, id, clip: `url(#${id}c)`, achsen, kanten, sk, beine: { vn: zwei ? null : vG, hn: hG }, arm, schwanz: schwanzG, hals: hg, kopf, W, punkte: { rumpfEcke: kruppBogen[1], vorbrustOben: vbTop, kehle: kehlP } };
+}
+
+/* ---------------------------------------------------------------------
+   Robbe (gang „flosse“): Spindel auf dem Boden – Rücken von der Schwanzwurzel über den Widerrist zum Kopf, Kehle und
+   Vorbrust hinab, Bauch liegt auf (knapp über y = 0), hinten die Hinterflossen als Strang nach hinten mit Fächer
+   (profil.fussHinten aus T.flosse). Die Vorderflosse ist NICHT im Umriss (frei darüber: sil.arm + T.flosse vorn).
+   --------------------------------------------------------------------- */
+function silhouetteFlosse(T, sk, profil = {}) {
+  const W = sk.W, lm = sk.lm, w = (v) => v * W, f = Object.assign({ ruecken: 0.01, bauch: 0.0 }, profil.fell || {});
+  const kopf = profil.kopf, hk = sk.hals.kette;
+  const ru = sk.ruecken.map((p) => [p[0], p[1] - w(f.ruecken)]);
+  const wr = ru[ru.length - 1], poll = kopf ? kopf.nackenPunkt : [hk[2][0], hk[2][1] - sk.hals.dickeE * 0.5];
+  const kehlP = kopf ? kopf.kehlPunkt : [hk[2][0] + w(0.02), hk[2][1] + sk.hals.dickeE * 0.5];
+  const nacken = [wr, lerp(wr, poll, 0.5).map((v, i) => v - (i ? w(0.03) : 0)), poll];
+  const bs = lm.bugspitze, bb = lm.brustbein;
+  const kehle = [kehlP, [lerp(kehlP, bs, 0.5)[0] + w(0.04), lerp(kehlP, bs, 0.5)[1]], [bs[0] + w(0.05), bs[1] + w(0.05)]];
+  /* Bauch liegt auf: von der Brust bis zum Becken knapp über dem Boden */
+  const hn = sk.beine.hn.p, boden = -w(0.015);
+  const bauch = [[bb[0], bb[1] + w(0.1)], [bb[0] - w(0.12), boden - w(0.02)], [lerp(bb, hn.huefte, 0.5)[0], boden], [hn.huefte[0] + w(0.25), boden]];
+  /* Hinterflossen: Strang Hüfte → Knie → Sprung → Fessel (nach hinten), Fächer am Ende */
+  const g = sk.beine.hn.breiten || {}, k = [hn.huefte, hn.knie, hn.sprung, hn.fessel];
+  const br = [g.knie || [0.1, 0.1], g.wade || [0.09, 0.09], g.ferse || [0.06, 0.06], g.fessel || [0.05, 0.05]].map((q) => [q[0] * W, q[1] * W]);
+  br[0] = [w(0.16), w(0.12)];
+  const fh = profil.fussHinten || null;
+  const hG = gliedGeo(k, br, { fuss: fh ? fh.pts : [], fussAchse: fh && fh.achse });
+  /* Kette läuft nach hinten (−x): a = unten, b = oben */
+  const pts = [];
+  const add = (arr) => { for (const p of arr) pts.push(p); };
+  add(ru.slice(2)); add(nacken.slice(1, -1));
+  if (kopf) add(kopf.umrissSil); else add([poll]);
+  add(kehle.slice(kopf ? 1 : 0)); add(bauch);
+  add(hG.a.slice(1)); add(fh ? fh.pts.slice().reverse() : []); add(hG.b.slice(1).reverse());
+  add([[ru[0][0] - w(0.04), ru[0][1] + w(0.08)]]);
+  const d = glatt(pts);
+  const id = T.id("sil" + (T._sil = (T._sil || 0) + 1));
+  T.def(`<path id="${id}" d="${d}"/><clipPath id="${id}c"><use href="#${id}"/></clipPath>`);
+  const kopfOben = kopf ? kopf.profilOben.slice(1) : [], kopfUnten = kopf ? kopf.profilUnten.slice(0, -1).reverse() : [];
+  const oben = ru.slice(2).concat(nacken.slice(1), kopfOben), unten = [[ru[0][0], boden]].concat(bauch.slice().reverse(), kehle.slice().reverse(), kopfUnten);
+  const N = (T.fein === false ? 10 : 15) + (kopf ? 4 : 0);
+  const rumpf = strangAusLinien(oben, unten, [[0, 0], [oben.length - 1, unten.length - 1]], N);
+  rumpf.name = "rumpf"; rumpf.art = "rumpf"; rumpf.schritt = 2;
+  const achsen = [rumpf, { name: "hn", art: "glied", A: hG.bRoh, B: hG.aRoh }];
+  if (kopf && kopf.achse) achsen.push(Object.assign({ name: "kopf", art: "kopf", ohneLicht: true }, kopf.achse));
+  const vn = sk.beine.vn.p, gv = sk.beine.vn.breiten || {};
+  const arm = { kette: [vn.schulter, vn.ellbogen, vn.handwurzel, vn.fessel], breiten: [[0.12, 0.1], gv.ellbogen || [0.1, 0.1], gv.handwurzel || [0.08, 0.08], gv.fessel || [0.06, 0.06]].map((q) => [q[0] * W, q[1] * W]) };
+  return { pts, d, id, clip: `url(#${id}c)`, achsen, kanten: { ruecken: ru.slice(2), nacken, kehle, unten: bauch, hnOben: hG.b, hnUnten: hG.a }, sk, beine: { hn: hG }, arm, W, kopf, punkte: { kehle: kehlP } };
 }
 
 /* Strang aus zwei Linien mit Ankerpaaren [[iOben, iUnten], …] (Indizes in den Linien), N Querschnitte */
@@ -262,10 +366,16 @@ function strangAusLinien(oben, unten, anker, N) {
   const mapI = (i, n0, n1) => Math.round(i * (n1 - 1) / Math.max(1, n0 - 1));
   const ank = anker.map(([a, b]) => [Math.min(O.length - 1, a * 6), Math.min(U.length - 1, b * 6)]);
   const A = [], B = [];
+  /* Querschnitte je Ankerabschnitt nach BOGENLÄNGE verteilen (nicht nach Punktzahl – sonst bekam der Kopf zwölf
+     Querschnitte und der ganze Rücken drei; Sonde 18) */
+  const laenge = (pl) => { let l = 0; for (let i = 1; i < pl.length; i++) l += abst(pl[i - 1], pl[i]); return l; };
+  const teilL = [];
+  for (let k = 0; k < ank.length - 1; k++) teilL.push((laenge(O.slice(ank[k][0], ank[k + 1][0] + 1)) + laenge(U.slice(ank[k][1], ank[k + 1][1] + 1))) / 2);
+  const gesamtL = teilL.reduce((a, b) => a + b, 0) || 1;
   for (let k = 0; k < ank.length - 1; k++) {
     const [o0, u0] = ank[k], [o1, u1] = ank[k + 1];
     const teilO = abtasten(O.slice(o0, o1 + 1), 64), teilU = abtasten(U.slice(u0, u1 + 1), 64);
-    const m = Math.max(3, Math.round(N * (o1 - o0) / Math.max(1, O.length - 1)));
+    const m = Math.max(3, Math.round(N * teilL[k] / gesamtL) + 1);
     for (let j = 0; j < m; j++) {
       if (k > 0 && j === 0) continue;
       const t = j / (m - 1), idx = Math.round(t * 63);
@@ -349,6 +459,16 @@ function profilStopps(pr, st, hellF, dunkelF) {
    Schatten), alle mit DERSELBEN Stoppliste (href). Glatt quer zur Achse, folgt jeder Biegung, kein Filter.
    o: { schritt (Querschnitte je Abschnitt), s0, s1, weichS (Ausblenden an den Enden, Anteil), flip (Array), rausA, rausB
         (Überstand über die Kanten, Anteil der Breite), op } */
+/* kleinster Innenwinkel (Grad) zweier Dreiecke – Maß für Splitter */
+function minWinkel(dreiecke) {
+  let m = 180;
+  for (const d of dreiecke) for (let k = 0; k < 3; k++) {
+    const p = d[k], q = d[(k + 1) % 3], r = d[(k + 2) % 3];
+    const ux = q[0] - p[0], uy = q[1] - p[1], vx = r[0] - p[0], vy = r[1] - p[1], l = Math.hypot(ux, uy) * Math.hypot(vx, vy) || 1;
+    m = Math.min(m, Math.acos(Math.max(-1, Math.min(1, (ux * vx + uy * vy) / l))) / RAD);
+  }
+  return m;
+}
 function querVerlauf(T, ax, basisId, o = {}) {
   /* Je Abschnitt zwei Dreiecke mit linearem Verlauf, der an den drei Ecken genau den Querwert t trifft (A = 0, B = 1,
      Lichtseite = 0): stetig über alle Kanten wie ein Verlaufsgitter. shape-rendering crispEdges an der Gruppe → keine
@@ -356,7 +476,7 @@ function querVerlauf(T, ax, basisId, o = {}) {
   const n = ax.A.length, k = Math.max(1, o.schritt || 1);
   const s0 = o.s0 != null ? o.s0 : 0, s1 = o.s1 != null ? o.s1 : 1, ws = o.weichS || 0;
   const i0 = Math.max(0, Math.floor(s0 * (n - 1))), i1 = Math.min(n - 1, Math.ceil(s1 * (n - 1)));
-  const rA = o.rausA != null ? o.rausA : 0.12, rB = o.rausB != null ? o.rausB : 0.12;
+  const rA = o.rausA != null ? o.rausA : 0.12, rBs = o.rausB != null ? o.rausB : 0.12, rBi = (i) => (Array.isArray(rBs) ? rBs[i] : rBs);
   const R = (v) => Math.round(v * 10) / 10;
   const idx = [];
   for (let i = i0; i < i1; i += k) idx.push(i);
@@ -364,7 +484,7 @@ function querVerlauf(T, ax, basisId, o = {}) {
   /* Ecken je Querschnitt (mit Überstand) und ihr t */
   const ts = o.tSkala || 1;
   const ecke = (i) => {
-    const fl = o.flip ? o.flip[i] : false, tA = fl ? 1 : 0, tB = 1 - tA, A = ax.A[i], B = ax.B[i];
+    const fl = o.flip ? o.flip[i] : false, tA = fl ? 1 : 0, tB = 1 - tA, A = ax.A[i], B = ax.B[i], rB = rBi(i);
     return { A: [A[0] + (A[0] - B[0]) * rA, A[1] + (A[1] - B[1]) * rA, (tA + (tA - tB) * rA) * ts], B: [B[0] + (B[0] - A[0]) * rB, B[1] + (B[1] - A[1]) * rB, (tB + (tB - tA) * rB) * ts] };
   };
   let s = "", nr = 0;
@@ -399,9 +519,33 @@ function querVerlauf(T, ax, basisId, o = {}) {
     }
     if (op < 0.02) continue;
     const E = ecke(i), F2 = ecke(j);
-    /* Diagonale abwechselnd legen: die Knicke der Höhenlinien heben sich auf statt Sägezähne zu bilden */
-    if (m % 2 === 0) { dreieck(E.A, E.B, F2.A, op); dreieck(E.B, F2.B, F2.A, op); }
-    else { dreieck(E.A, E.B, F2.B, op); dreieck(E.A, F2.B, F2.A, op); }
+    /* FASSUNG 881 — Facetten (Prüfer 880, Punkt 12: gerade Grate am Kopf, harte Diagonale auf der Keule): ein Viereck,
+       das kein Parallelogramm ist (Querschnitte fächern), lässt sich mit zwei linearen Dreiecken nicht knickfrei
+       schattieren – die Höhenlinien knicken an der Diagonale. Darum je nach „Verwindung“ |A_i + B_j − B_i − A_j| / 2 das
+       Viereck längs (bis 4×, Zwischenquerschnitte auf der Catmull-Rom-Kurve der Kanten) und quer (Mitte t = ½)
+       unterteilen; der Knick wird so klein, dass er im Bild verschwindet. Nur wo nötig – Bytes. */
+    const tw = Math.hypot(E.A[0] + F2.B[0] - E.B[0] - F2.A[0], E.A[1] + F2.B[1] - E.B[1] - F2.A[1]) / 2;
+    /* o.verwindung: erlaubte Verwindung als Anteil der Breite (Standard 0,13; 0 = nie unterteilen; Szene: nie) */
+    const breite = (abst(E.A, E.B) + abst(F2.A, F2.B)) / 2 || 1, vw = T.fein === false ? 0 : o.verwindung != null ? o.verwindung : 0.13, dmax = vw > 0 ? Math.max(0.6, breite * vw) : 1e9;
+    const ks = Math.min(3, Math.max(1, Math.ceil(tw / dmax))), kt = tw > dmax * 3 ? 2 : 1;
+    const Ep = idx[Math.max(0, m - 1)] !== i ? ecke(idx[Math.max(0, m - 1)]) : E, Fn = idx[Math.min(idx.length - 1, m + 2)] !== j ? ecke(idx[Math.min(idx.length - 1, m + 2)]) : F2;
+    const cr = (p0, p1, p2, p3, u) => { const u2 = u * u, u3 = u2 * u, f = (a, b, c, d) => 0.5 * (2 * b + (-a + c) * u + (2 * a - 5 * b + 4 * c - d) * u2 + (-a + 3 * b - 3 * c + d) * u3); return [f(p0[0], p1[0], p2[0], p3[0]), f(p0[1], p1[1], p2[1], p3[1]), p1[2] + (p2[2] - p1[2]) * u]; };
+    const schnitt = (u) => (u <= 0 ? E : u >= 1 ? F2 : { A: cr(Ep.A, E.A, F2.A, Fn.A, u), B: cr(Ep.B, E.B, F2.B, Fn.B, u) });
+    const quer = (Q, v) => [Q.A[0] + (Q.B[0] - Q.A[0]) * v, Q.A[1] + (Q.B[1] - Q.A[1]) * v, Q.A[2] + (Q.B[2] - Q.A[2]) * v];
+    for (let a = 0; a < ks; a++) {
+      const Q0 = schnitt(a / ks), Q1 = schnitt((a + 1) / ks);
+      for (let b = 0; b < kt; b++) {
+        const v0 = b / kt, v1 = (b + 1) / kt;
+        const P = { A: quer(Q0, v0), B: quer(Q0, v1) }, R = { A: quer(Q1, v0), B: quer(Q1, v1) };
+        /* Diagonale abwechselnd legen: die Knicke der Höhenlinien heben sich auf statt Sägezähne zu bilden – außer die
+           gewählte Teilung ergäbe einen Splitter (kleinster Winkel < 14°, z. B. an der Kniefalte oder Vorbrust, wo sich die
+           Querschnitte fächern): dann die andere Diagonale (Sonde 19: „Keil an der Flanke“) */
+        const t1 = [[P.A, P.B, R.A], [P.B, R.B, R.A]], t2 = [[P.A, P.B, R.B], [P.A, R.B, R.A]];
+        const wahl = (m + a + b) % 2 === 0 ? [t1, t2] : [t2, t1];
+        const tri = minWinkel(wahl[0]) < 14 && minWinkel(wahl[1]) > minWinkel(wahl[0]) ? wahl[1] : wahl[0];
+        dreieck(tri[0][0], tri[0][1], tri[0][2], op); dreieck(tri[1][0], tri[1][1], tri[1][2], op);
+      }
+    }
   }
   return s ? `<g shape-rendering="crispEdges">${s}</g>` : "";
 }
@@ -410,14 +554,17 @@ function lichtAchse(T, ax, o) {
   const { flip, kon } = lichtSeiten(ax);
   const kMittel = kon.reduce((a, b) => a + b, 0) / n;
   const st = (o.staerke != null ? o.staerke : 1) * (ax.staerke != null ? ax.staerke : 1) * kMittel;
-  const pr = ax.profil || PROFIL(ax.terminator || o.terminator || 0.62);
+  const term = ax.terminator || o.terminator || 0.62;
+  /* Szene: knappes Profil (6 statt 10 Stützstellen) und Stärke in 0,5er-Stufen – Läufe und Rumpf teilen sich dann meist
+     EINE Stoppliste (Szene ≤ 25 KB) */
+  const pr = ax.profil || (fein ? PROFIL(term) : [[0, 0.16], [0.2, 0.06], [term - 0.14, 0], [term, -0.17], [Math.min(0.9, term + 0.2), -0.32], [1, -0.27]]);
   /* Reicht der Strang über seine Schattenkante hinaus (rausB > 0,15, z. B. Rumpf in die Läufe), läuft das Profil dort
      bis auf 0 aus (Verlauf auf t ∈ [0, 1 + rausB] gestreckt) – sonst endet der Kernschatten mit harter Kante quer über
      Oberarm und Keule (Sonde 16: „Querkante am Ellbogen“). */
-  const rB = ax.rausB != null ? ax.rausB : 0.12, skala = fein && rB > 0.15 ? 1 / (1 + rB) : 1;
+  const rB = Array.isArray(ax.rausB) ? Math.max(...ax.rausB) : ax.rausB != null ? ax.rausB : 0.12, skala = rB > 0.15 ? 1 / (1 + rB) : 1;
   const prV = skala < 1 ? pr.map(([t, v]) => [t * skala, v]).concat([[1, 0]]) : pr;
   /* Stoppliste je (Profil, Stärke, Farben) nur EINMAL anlegen – Läufe, Rute, Rumpf teilen sie, wenn gleich */
-  const stopps = profilStopps(prV, Math.round(st * 10) / 10, o.hell || "#fff4e0", o.dunkel || "#1a120a");
+  const stopps = profilStopps(prV, fein ? Math.round(st * 10) / 10 : Math.round(st * 2) / 2, o.hell || "#fff4e0", o.dunkel || "#1a120a");
   T._lbCache = T._lbCache || new Map();
   let basis = T._lbCache.get(stopps);
   if (!basis) {
@@ -426,7 +573,10 @@ function lichtAchse(T, ax, o) {
     T._lbCache.set(stopps, basis);
   }
   const schritt = fein ? (ax.schritt || 1) : Math.max(2, Math.round(n / 5));
-  const svg = querVerlauf(T, ax, basis, { flip, schritt, rausA: ax.rausA, rausB: fein ? ax.rausB : Math.min(0.12, ax.rausB != null ? ax.rausB : 0.12), s0: ax.s0, s1: ax.s1, tSkala: skala });
+  /* Unterteilung gegen Facetten nur für Rumpf/Hals/Kopf (dort sieht man sie, Prüfer 880, Punkt 12); Läufe sind schmal und
+     vom Fell bedeckt – dort kostet sie nur Bytes. Je Achse überschreibbar: achse.verwindung */
+  const vw = ax.verwindung != null ? ax.verwindung : ax.art === "rumpf" ? (o.verwindung != null ? o.verwindung : 0.2) : 0;
+  const svg = querVerlauf(T, ax, basis, { flip, schritt, rausA: ax.rausA, rausB: ax.rausB, s0: ax.s0, s1: ax.s1, tSkala: skala, verwindung: vw });
   return { svg, flip, pr, st };
 }
 /* weiche Ellipse (Radialverlauf, kein Filter): Muskellicht, Okklusion */
@@ -439,7 +589,7 @@ const winkelVon = (a, b) => Math.atan2(b[1] - a[1], b[0] - a[0]) / RAD;
 function licht(T, sil, o = {}) {
   const dunkelF = o.dunkel || "#1a120a", hellF = o.hell || "#fff4e0", fein = T.fein !== false;
   const achsen = (o.nur ? sil.achsen.filter((a) => o.nur.includes(a.name)) : sil.achsen).concat(o.extra || []);
-  let dS = "", hS = "";
+  let dS = "", hS = "", gS = "", gTief = -1e9;
   const daten = [];
   for (const ax of achsen) {
     if (ax.ohneLicht) continue;
@@ -458,8 +608,16 @@ function licht(T, sil, o = {}) {
       T.def(`<mask id="${mid}" maskUnits="userSpaceOnUse" ${re}><rect ${re} fill="${T.lg("lmg" + ax.name, [[0, "#fff", 0], [1, "#fff", 1]], Math.round(top[0] * 10) / 10, Math.round(top[1] * 10) / 10, Math.round(e[0] * 10) / 10, Math.round(e[1] * 10) / 10, ' gradientUnits="userSpaceOnUse"')}"/></mask>`);
       dd = `<g mask="url(#${mid})">${dd}</g>`;
     }
+    /* Szene: alle Glieder unter EINER gemeinsamen senkrechten Maske (eine Definition statt einer je Lauf) */
+    if (ax.art === "glied" && !fein && ax.blende !== false && dd) { gS += dd; gTief = Math.max(gTief, ax.A[0][1], ax.B[0][1]); daten.push(Object.assign({ ax }, r)); continue; }
     dS += dd;
     daten.push(Object.assign({ ax }, r));
+  }
+  if (gS) {
+    const W0 = sil.W || 80, y0 = Math.round(gTief * 10) / 10, y1 = Math.round((gTief + W0 * 0.12) * 10) / 10, mid = T.id("lmS");
+    const b = box(sil.pts), re = `x="${Math.floor(b[0] - 5)}" y="${Math.floor(y0 - 1)}" width="${Math.ceil(b[2] - b[0] + 10)}" height="${Math.ceil(-y0 + 6)}"`;
+    T.def(`<mask id="${mid}" maskUnits="userSpaceOnUse" ${re}><rect ${re} fill="${T.lg("lmgS", [[0, "#fff", 0], [1, "#fff", 1]], 0, y0, 0, y1, ' gradientUnits="userSpaceOnUse"')}"/></mask>`);
+    dS += `<g mask="url(#${mid})">${gS}</g>`;
   }
   let s = dS;
   /* Okklusion und Muskellichter aus den Landmarken */
@@ -475,19 +633,21 @@ function licht(T, sil, o = {}) {
   if (sk && o.muskeln !== false && fein) {
     const vn = sk.beine.vn.p, hn = sk.beine.hn.p;
     const sbM = lerp(vn.schulterblatt, vn.schulter, 0.42), wsb = winkelVon(vn.schulterblatt, vn.schulter);
-    s += weichEllipse(T, sbM[0] - W * 0.01, sbM[1], W * 0.13, W * 0.055, wsb, hellF, 0.17);                    // Schulterblatt
+    s += weichEllipse(T, sbM[0] - W * 0.01, sbM[1], W * 0.15, W * 0.065, wsb, hellF, 0.1);                    // Schulterblatt
     const hinterSb = lerp(vn.schulterblatt, vn.schulter, 0.5);
-    s += weichEllipse(T, hinterSb[0] - W * 0.07, hinterSb[1] + W * 0.02, W * 0.11, W * 0.022, wsb, dunkelF, 0.16); // Schulterblatt-Hinterkante
+    s += weichEllipse(T, hinterSb[0] - W * 0.07, hinterSb[1] + W * 0.02, W * 0.12, W * 0.03, wsb, dunkelF, 0.1); // Schulterblatt-Hinterkante
     const tz = lerp(vn.schulter, vn.ellbogen, 0.55);
-    s += weichEllipse(T, tz[0] - W * 0.06, tz[1] - W * 0.015, W * 0.075, W * 0.05, -20, hellF, 0.12);           // Trizeps
-    s += weichEllipse(T, tz[0] - W * 0.05, tz[1] + W * 0.05, W * 0.07, W * 0.025, -15, dunkelF, 0.14);          // Trizeps-Unterkante
+    s += weichEllipse(T, tz[0] - W * 0.06, tz[1] - W * 0.015, W * 0.085, W * 0.055, -20, hellF, 0.08);           // Trizeps
+    s += weichEllipse(T, tz[0] - W * 0.05, tz[1] + W * 0.05, W * 0.08, W * 0.03, -15, dunkelF, 0.1);          // Trizeps-Unterkante
     const os = lerp(hn.huefte, hn.knie, 0.45), wos = winkelVon(hn.huefte, hn.knie);
-    s += weichEllipse(T, os[0] + W * 0.01, os[1] - W * 0.02, W * 0.15, W * 0.075, wos, hellF, 0.14);            // Oberschenkel
-    s += weichEllipse(T, os[0] - W * 0.075, os[1] + W * 0.03, W * 0.13, W * 0.025, wos + 8, dunkelF, 0.14);     // Rinne Oberschenkel/Sitzbeinmuskeln
-    const hh = lm.hueftHoecker; s += weichEllipse(T, hh[0], hh[1] - W * 0.01, W * 0.05, W * 0.035, -20, hellF, 0.16); // Hüfthöcker
+    s += weichEllipse(T, os[0] + W * 0.01, os[1] - W * 0.02, W * 0.17, W * 0.085, wos, hellF, 0.09);            // Oberschenkel
+    s += weichEllipse(T, os[0] - W * 0.075, os[1] + W * 0.03, W * 0.14, W * 0.03, wos + 8, dunkelF, 0.1);     // Rinne Oberschenkel/Sitzbeinmuskeln
+    const hh = lm.hueftHoecker; s += weichEllipse(T, hh[0], hh[1] - W * 0.01, W * 0.06, W * 0.04, -20, hellF, 0.1); // Hüfthöcker
     /* Rippenbogen: weicher Schatten hinter der letzten Rippe (Hungergrube) */
     const fl = lm.flanke; s += weichEllipse(T, fl[0] + W * 0.1, fl[1] - W * 0.12, W * 0.05, W * 0.1, 10, dunkelF, 0.1);
   }
+  /* FASSUNG 881 — L.innen: dieselbe Schattierung UNGEKLIPPT (für Arten, die ohnehin alles in EINE <g clip-path> legen –
+     vorher musste der Wolf die Hülle per Regex abschneiden; Prüfer 880, Punkt 14). L.svg bleibt wie bisher geklippt. */
   const svg = sil.clip ? `<g clip-path="${sil.clip}">${s}</g>` : s;
   /* hell(x, y): Lichtwert an einem Punkt (für Fellfarben): Querschnitt suchen, t bestimmen, Profil lesen */
   const hellAn = (x, y) => {
@@ -505,7 +665,7 @@ function licht(T, sil, o = {}) {
     }
     return 0;
   };
-  return { svg, hell: hellAn, daten };
+  return { svg, innen: s, hell: hellAn, daten };
 }
 
 /* =====================================================================
@@ -524,12 +684,13 @@ function muster(T, ax, o = {}) {
     if (o.art === "fleck") {
       /* weicher Fleck als gedrehte Ellipse über der Zone (Sehne von s0 nach s1, Höhe = Zonenbreite): rundum weich – ein
          Vieleck mit Radialverlauf hatte an gebogenen Zonen harte Kanten (Sonde 17: „Bauchband mit Oberkante“) */
-      g = T.rg("mf" + farbe.slice(1) + Math.round(op * 100), [[0, farbe, op], [0.5, farbe, op * 0.8], [1, farbe, 0]]);
+      /* EIN Verlauf je Farbe (Deckkraft am Element) – mehrere Flecken gleicher Farbe teilen ihn */
+      g = T.rg("mf" + farbe.slice(1), [[0, farbe, 1], [0.5, farbe, 0.8], [1, farbe, 0]]);
       const mitte = b.l1.map((p, i) => lerp(p, b.l2[i], 0.5)), m0 = mitte[0], m1 = mitte[mitte.length - 1];
       const c = mitte.reduce((a, p) => [a[0] + p[0] / mitte.length, a[1] + p[1] / mitte.length], [0, 0]);
       const breite = b.l1.reduce((a, p, i) => a + abst(p, b.l2[i]), 0) / b.l1.length;
       const R = (v) => Math.round(v * 10) / 10, dreh = Math.round(Math.atan2(m1[1] - m0[1], m1[0] - m0[0]) / RAD);
-      return `<ellipse cx="${R(c[0])}" cy="${R(c[1])}" rx="${R(abst(m0, m1) * 0.58)}" ry="${R(breite * 0.62)}"${dreh ? ` transform="rotate(${dreh} ${R(c[0])} ${R(c[1])})"` : ""} fill="${g}"/>`;
+      return `<ellipse cx="${R(c[0])}" cy="${R(c[1])}" rx="${R(abst(m0, m1) * 0.58)}" ry="${R(breite * 0.62)}"${dreh ? ` transform="rotate(${dreh} ${R(c[0])} ${R(c[1])})"` : ""} fill="${g}"${op < 0.995 ? ` opacity="${op2(op)}"` : ""}/>`;
     } else {
       const n = ax.A.length, i0 = Math.round(s0 * (n - 1)), i1 = Math.round(s1 * (n - 1));
       const P0 = lerp(ax.A[i0], ax.B[i0], 0.5), P1 = lerp(ax.A[i1], ax.B[i1], 0.5), R = (v) => Math.round(v * 10) / 10;
@@ -660,9 +821,11 @@ function installiere(T) {
         const cid = T.id("gf" + (T._gf = (T._gf || 0) + 1));
         T.def(`<clipPath id="${cid}"><use href="#${pid}"/></clipPath>`);
         const b = box(g.umriss);
-        s += `<g clip-path="url(#${cid})"><rect x="${Math.floor(b[0] - 1)}" y="${Math.floor(b[1] - 1)}" width="${Math.ceil(b[2] - b[0] + 2)}" height="${Math.ceil(b[3] - b[1] + 2)}" fill="${o.fernFarbe || "#1c2430"}" fill-opacity="${o.fernStaerke || 0.24}"/>` +
-          `<rect x="${Math.floor(b[0] - 1)}" y="${Math.floor(y0 - 1)}" width="${Math.ceil(b[2] - b[0] + 2)}" height="${Math.ceil(y1 - y0 + 2)}" fill="${T.lg("gfs" + Math.round(y0) + "_" + Math.round(y1), [[0, "#0e0a06", 0.55], [1, "#0e0a06", 0]], 0, Math.round(y0 * 10) / 10, 0, Math.round(y1 * 10) / 10, ' gradientUnits="userSpaceOnUse"')}"/>` +
-          (o.innen || "") + `</g>`;
+        /* FASSUNG 881: Innenzeichnung (Unterhaar, Fell, Querverlauf) ZUERST, dann die Abdunklung und der Schlagschatten des
+           Rumpfes darüber – so wird auch das Fell des fernen Laufs dunkler und kühler (vorher lag es hell obenauf) */
+        const so = o.schattenStaerke != null ? o.schattenStaerke : 0.55;
+        s += `<g clip-path="url(#${cid})">` + (o.quer ? `<use href="#${pid}" fill="${o.quer}"/>` : "") + (o.innen || "") + `<rect x="${Math.floor(b[0] - 1)}" y="${Math.floor(b[1] - 1)}" width="${Math.ceil(b[2] - b[0] + 2)}" height="${Math.ceil(b[3] - b[1] + 2)}" fill="${o.fernFarbe || "#1c2430"}" fill-opacity="${o.fernStaerke || 0.24}"/>` +
+          `<rect x="${Math.floor(b[0] - 1)}" y="${Math.floor(y0 - 1)}" width="${Math.ceil(b[2] - b[0] + 2)}" height="${Math.ceil(y1 - y0 + 2)}" fill="${T.lg("gfs" + Math.round(y0) + "_" + Math.round(y1) + (so !== 0.55 ? "_" + Math.round(so * 100) : ""), [[0, "#0e0a06", so], [1, "#0e0a06", 0]], 0, Math.round(y0 * 10) / 10, 0, Math.round(y1 * 10) / 10, ' gradientUnits="userSpaceOnUse"')}"/></g>`;
         g.clip = `url(#${cid})`;
       } else if (o.innen) {
         const cid = T.id("gn" + (T._gf = (T._gf || 0) + 1));

@@ -29,66 +29,75 @@ const Z = (v) => String(Math.round(v * 100) / 100).replace(/^(-?)0\./, "$1.");
 
 /* =====================================================================
    T.pfote(fessel, spitze, breite, o) — Zehengänger (Hund, Wolf, Fuchs, Katze)
-   o: { zehen (3 sichtbare Wölbungen), krallen ("#1a140e" | null = eingezogen/Katze), ballen ("#151110"),
-        licht ("#fff"), fell (Farbe der Fellbüschel über den Zehen), afterkralle: true (Vorderpfote innen, hinter dem Bein),
-        lang (Faktor Pfotenlänge), op (Deckkraft bei fernen Pfoten) }
+   o: { krallen ("#1a140e" | null = eingezogen/Katze), ballen ("#151110"), licht ("#fff"), afterkralle: true (Vorderpfote
+        innen, hinter dem Bein), lang (Faktor Pfotenlänge), op (Deckkraft bei fernen Pfoten), fern (nur Umriss + Krallen) }
+   FASSUNG 881 — Prüfer 880, Punkt 9: die Pfote wirkte wie ein Pantoffel (eigene flache Fläche mit gerader Naht zum
+   Lauf, Zehen kaum lesbar, fünf helle Striche wie Wimpern, Krallen als spitze schwarze Sicheln mit Glanz, helle
+   Spitzen am Übergang). Jetzt:
+   - Der Umriss beginnt vorn an der Fessel und endet hinten an der Fessel (der Strang endet einen Punkt früher, siehe
+     form880 gliedGeo) – keine Schleife mehr; die Vorderkante läuft in einer leichten Mulde über die Zehen.
+   - DREI sichtbare Zehenwülste (V hinten, IV oben, III vorn) mit zwei weichen Furchen; Zehenballen und
+     Mittelhandballen nur als dunkler Saum am Boden.
+   - Krallen kurz, dick, stumpf, nach vorn unten in den Boden, matt (kein Glanzlicht).
+   - pfote.achse = Querschnitt Ballen → Zehen: T.silhouette/T.glied verlängern damit die Laufachse in die Pfote, Licht,
+     Laufmuster, Unterhaar und Fell laufen ohne Naht über die Zehen (keine „Wimpern“-Striche mehr).
    ===================================================================== */
 function pfote(T, fessel, spitze, breite, o = {}) {
   const fein = T.fein !== false, [wa, wb] = breite, op = o.op || 1;
   const h = -fessel[1];                                    // Höhe des Zehengrundgelenks
   const L = (spitze[0] - fessel[0]) * (o.lang || 1) + wb * 0.5;
   const x0 = fessel[0] - wa * 1.05, xs = fessel[0] + L + wb * 0.15;     // Ballen hinten … Zehenspitze vorn
-  const H = Math.max(h * 1.15, wb * 1.6);                    // Pfotenhöhe an den Zehen
-  /* Seitenansicht (Hund/Wolf): zwei Zehenknöchel sichtbar – vorn Zehe IV (davor verdeckt III), dahinter, etwas tiefer,
-     die äußere Zehe V; die Zehen sind gewölbt (Knöchel oben, Spitze fällt zum Boden), die Ballen liegen UNTER der Pfote
-     (man sieht nur einen dunklen Saum am Boden), die Krallen kommen vorn aus dem Fell und stoßen schräg in den Boden. */
-  const k = [[0.34, 0.9], [0.7, 0.98]];                    // [Anteil der Länge ab Fessel, Höhe des Knöchels]
+  const H = Math.max(h * 1.25, wb * 1.75);                   // Höhe der Zehenwülste (gewölbt, nicht flach)
   const P = (u, v) => [fessel[0] + (xs - fessel[0]) * u, -H * v];
-  const pts = [[fessel[0] + wb, fessel[1] - wb * 0.3]];
-  pts.push(P(k[0][0] - 0.1, k[0][1] * 0.98), P(k[0][0] + 0.02, k[0][1]), P(k[0][0] + 0.15, k[0][1] - 0.16));   // Zehe V
-  pts.push(P(k[1][0] - 0.08, k[1][1] * 0.97), P(k[1][0] + 0.04, k[1][1] * 0.94), P(0.96, 0.62), P(1.02, 0.3));    // Zehe IV
-  pts.push([xs - (xs - fessel[0]) * 0.03, -H * 0.04]);       // Zehenballen vorn, knapp über dem Boden gerundet
-  pts.push([x0 + wa * 0.4, 0, 1]);                           // Mittelhandballen hinten am Boden
-  pts.push([x0 - wa * 0.02, -H * 0.36], [x0 + wa * 0.18, -H * 0.84], [fessel[0] - wa, fessel[1] + wa * 0.1]);
+  /* Zehenwülste [Mitte, Höhe]: V (hinten, außen), IV (höchster), III (vorn) */
+  const Z = [[0.3, 0.86], [0.56, 0.97], [0.8, 0.84]];
+  const pts = [[fessel[0] + wb * 0.97, fessel[1] - wb * 0.2]];
+  pts.push(P(0.15, 0.84));                                   // flache Mulde zwischen Lauf und Zehen
+  pts.push(P(Z[0][0], Z[0][1]), P(0.43, 0.76), P(Z[1][0], Z[1][1]), P(0.68, 0.76), P(Z[2][0], Z[2][1]));
+  pts.push(P(0.93, 0.62), P(0.99, 0.34), [xs - (xs - fessel[0]) * 0.03, -H * 0.06]);
+  pts.push([fessel[0] + (xs - fessel[0]) * 0.86, 0, 1], [x0 + wa * 0.5, 0, 1]);   // Sohle am Boden
+  pts.push([x0 - wa * 0.04, -H * 0.3], [x0 + wa * 0.12, -H * 0.72], [fessel[0] - wa * 0.96, fessel[1] - wa * 0.15]);
+  const achse = [[x0 + wa * 0.35, -H * 0.42], P(0.9, 0.45)];
   let s = "";
-  const kr = o.krallen === undefined ? "#16110c" : o.krallen;
-  /* Krallen: kurz, dick, stumpf – aus dem Fell vorn an der Zehe, schräg nach vorn unten bis in den Boden */
+  const kr = o.krallen === undefined ? "#241d17" : o.krallen;
+  /* Krallen: kurz, dick, stumpf – vorn unten an jeder Zehe aus dem Fell, schräg nach vorn unten bis zum Boden */
+  /* Kralle als stumpfer, leicht gebogener Keil: Basis (Breite w0) im Fell an der Zehenfront, Achse 58° nach vorn unten,
+     stumpfes Ende (Breite wt) am Boden */
   const kralle = (u, gr) => {
-    const [bx, by] = P(u, 0.36), Lk = H * 0.42 * gr, w0 = H * 0.13 * gr;
-    return `M${Z(bx - w0 * 0.2)} ${Z(by - w0)}q${Z(Lk * 0.55)} ${Z(w0 * 0.1)} ${Z(Lk * 0.8)} ${Z(-by + H * 0.01 + w0)}l${Z(-w0 * 0.9)} ${Z(-H * 0.01)}q${Z(-Lk * 0.08)} ${Z(-Lk * 0.35)} ${Z(-Lk * 0.55)} ${Z(by + w0 * 0.2 - H * 0.0)}z`;
+    /* Rücken der Kralle stark gewölbt (nach vorn oben), Unterseite fast gerade, Spitze rund abgestumpft */
+    const Lk = H * 0.36 * gr, w0 = H * 0.2 * gr, wt = H * 0.085 * gr, a = 62 * Math.PI / 180, dx = Math.cos(a), dy = Math.sin(a), nx = -dy, ny = dx;
+    const b = P(u, Lk * dy / H + 0.015), t = [b[0] + dx * Lk, b[1] + dy * Lk];
+    const q = (p, k, w) => [p[0] + nx * w * k, p[1] + ny * w * k];
+    const a1 = q(b, -0.5, w0), a2 = q(b, 0.5, w0), t1 = q(t, -0.5, wt), t2 = q(t, 0.5, wt);
+    const m1 = [b[0] + dx * Lk * 0.42 - nx * (w0 * 0.5 + Lk * 0.2), b[1] + dy * Lk * 0.42 - ny * (w0 * 0.5 + Lk * 0.2)], m2 = [b[0] + dx * Lk * 0.5 + nx * (wt * 0.6), b[1] + dy * Lk * 0.5 + ny * (wt * 0.6)];
+    return `M${Z2(a1[0])} ${Z2(a1[1])}Q${Z2(m1[0])} ${Z2(m1[1])} ${Z2(t1[0])} ${Z2(t1[1])}Q${Z2(t[0] + dx * wt * 0.9)} ${Z2(t[1] + dy * wt * 0.9)} ${Z2(t2[0])} ${Z2(t2[1])}Q${Z2(m2[0])} ${Z2(m2[1])} ${Z2(a2[0])} ${Z2(a2[1])}Z`;
   };
   if (kr) {
-    s += `<path d="${kralle(0.97, 1) + kralle(k[0][0] + 0.17, 0.8)}" fill="${kr}" fill-opacity="${op2(op)}"/>`;
-    if (fein && !o.fern) s += `<path d="M${Z(P(0.97, 0.36)[0] + H * 0.04)} ${Z(P(0.97, 0.36)[1] - H * 0.06)}q${Z(H * 0.16)} ${Z(H * 0.01)} ${Z(H * 0.24)} ${Z(H * 0.2)}" stroke="${o.licht || "#fff"}" stroke-width="${Z(H * 0.035)}" fill="none" stroke-opacity="${op2(0.4 * op)}" stroke-linecap="round"/>`;
+    s += `<path d="${kralle(0.93, 1) + kralle(0.71, 0.9) + (fein && !o.fern ? kralle(0.47, 0.72) : "")}" fill="${kr}" fill-opacity="${op2(op)}"/>`;
+    /* matte Oberkante (Licht von links oben), kein Glanzpunkt */
+    if (fein && !o.fern) s += `<path d="${kralle(0.93, 0.62) + kralle(0.71, 0.55)}" fill="${o.licht || "#fff"}" fill-opacity="${op2(0.07 * op)}" transform="translate(${Z2(-H * 0.03)} ${Z2(-H * 0.05)})"/>`;
   }
-  /* Sohlensaum: die Ballen tragen – ein flacher dunkler Saum am Boden (keine Einzel-„Kissen“ nebeneinander) */
+  /* Ballen: dunkler Saum am Boden unter den Zehen, hinten der Mittelhandballen etwas höher */
   const XL = xs - fessel[0], bal = o.ballen || "#16110e";
-  const saum = `M${Z(x0 + wa * 0.35)} 0Q${Z(x0 + wa * 0.3)} ${Z(-H * 0.12)} ${Z(fessel[0])} ${Z(-H * 0.1)}Q${Z(fessel[0] + XL * 0.55)} ${Z(-H * 0.07)} ${Z(fessel[0] + XL * 0.97)} ${Z(-H * 0.05)}L${Z(fessel[0] + XL * 0.97)} 0z`;
-  s += `<path d="${saum}" fill="${bal}" fill-opacity="${op2((fein ? 0.55 : 0.45) * op)}"/>`;
-  if (!fein || o.fern) return { pts, svg: s, boden: [x0, xs], spitze: [xs, 0] };
-  /* Zehenfuge zwischen V und IV: weiche dunkle Kerbe von oben bis knapp über den Boden */
-  const fa = P(k[0][0] + 0.17, k[0][1] - 0.2), fb = P(k[0][0] + 0.13, 0.14);
-  s += `<path d="M${Z(fa[0])} ${Z(fa[1])}Q${Z(fa[0] - XL * 0.05)} ${Z((fa[1] + fb[1]) / 2)} ${Z(fb[0])} ${Z(fb[1])}" stroke="#1a120a" stroke-width="${Z(H * 0.08)}" fill="none" stroke-opacity="${op2(0.42 * op)}" stroke-linecap="round"/>`;
-  /* Licht auf den Knöcheln (von links oben) und Schatten unter der Zehenwölbung */
-  const lt = (u, v) => { const a = P(u - 0.1, v * 0.9), b = P(u + 0.05, v * 0.94); return `M${Z(a[0])} ${Z(a[1])}Q${Z((a[0] + b[0]) / 2)} ${Z(a[1] - H * 0.09)} ${Z(b[0])} ${Z(b[1])}`; };
-  s += `<path d="${lt(k[0][0], k[0][1]) + lt(k[1][0], k[1][1])}" stroke="${o.licht || "#fff"}" stroke-width="${Z(H * 0.1)}" fill="none" stroke-opacity="${op2(0.2 * op)}" stroke-linecap="round"/>`;
-  s += `<path d="M${Z(P(0.05, 0.2)[0])} ${Z(-H * 0.2)}Q${Z(P(0.5, 0.3)[0])} ${Z(-H * 0.3)} ${Z(P(0.95, 0.22)[0])} ${Z(-H * 0.2)}" stroke="#1a120a" stroke-width="${Z(H * 0.16)}" fill="none" stroke-opacity="${op2(0.16 * op)}" stroke-linecap="round"/>`;
-  /* Fellbüschel über den Zehen: Haare fallen über die Zehenwurzeln (Farbe des Laufs, wenig Kontrast) */
-  if (o.fell) {
-    let d = "";
-    for (let i = 0; i < 8; i++) {
-      const u = 0.08 + i * 0.11, b = P(u, (u < 0.52 ? k[0][1] : k[1][1]) * 0.96 + 0.04), l = H * (0.28 + T.rnd() * 0.22);
-      d += `M${Z(b[0] - l * 0.45)} ${Z(b[1] - l * 0.45)}q${Z(l * 0.3)} ${Z(l * 0.2)} ${Z(l * 0.6)} ${Z(l * 0.7)}`;
-    }
-    s += `<path d="${d}" stroke="${o.fell}" stroke-width="${Z(H * 0.045)}" fill="none" stroke-opacity="${op2(0.45 * op)}" stroke-linecap="round"/>`;
-  }
-  /* Afterkralle (Daumenkralle) innen am Vordermittelfuß – schaut hinten als kleiner Sporn knapp hervor */
+  const saum = `M${Z2(x0 + wa * 0.3)} ${Z2(-H * 0.02)}Q${Z2(x0 + wa * 0.12)} ${Z2(-H * 0.18)} ${Z2(x0 + wa * 0.8)} ${Z2(-H * 0.15)}` +
+    `Q${Z2(fessel[0] + XL * 0.5)} ${Z2(-H * 0.06)} ${Z2(fessel[0] + XL * 0.86)} ${Z2(-H * 0.04)}L${Z2(fessel[0] + XL * 0.84)} 0L${Z2(x0 + wa * 0.45)} 0Z`;
+  s += `<path d="${saum}" fill="${bal}" fill-opacity="${op2((fein ? 0.42 : 0.38) * op)}"/>`;
+  if (!fein || o.fern) return { pts, svg: s, boden: [x0, xs], spitze: [xs, 0], achse };
+  /* Zehenfurchen zwischen V/IV und IV/III: weiche dunkle Kerben vom Tal hinab bis knapp über den Boden */
+  const furche = (u) => { const a = P(u, 0.74), b = P(u - 0.04, 0.14); return `M${Z2(a[0])} ${Z2(a[1])}Q${Z2(a[0] + XL * 0.015)} ${Z2((a[1] + b[1]) / 2)} ${Z2(b[0])} ${Z2(b[1])}`; };
+  s += `<path d="${furche(0.43) + furche(0.68)}" stroke="#1a120a" stroke-width="${Z2(H * 0.06)}" fill="none" stroke-opacity="${op2(0.38 * op)}" stroke-linecap="round"/>`;
+  s += `<path d="${furche(0.44) + furche(0.69)}" stroke="#1a120a" stroke-width="${Z2(H * 0.16)}" fill="none" stroke-opacity="${op2(0.08 * op)}"/>`;
+  /* Licht auf den Wülsten (von links oben), weich */
+  const lt = (u, v) => { const a = P(u - 0.08, v * 0.9), b = P(u + 0.04, v * 0.93); return `M${Z2(a[0])} ${Z2(a[1])}Q${Z2((a[0] + b[0]) / 2)} ${Z2(a[1] - H * 0.06)} ${Z2(b[0])} ${Z2(b[1])}`; };
+  s += `<path d="${Z.map(([u, v]) => lt(u, v)).join("")}" stroke="${o.licht || "#fff"}" stroke-width="${Z2(H * 0.1)}" fill="none" stroke-opacity="${op2(0.1 * op)}" stroke-linecap="round"/>`;
+  /* Afterkralle (Daumenkralle) innen am Vordermittelfuß – schaut hinten als kleiner, stumpfer Sporn knapp hervor */
   if (o.afterkralle) {
-    const ax = fessel[0] - wa * 0.98, ay = fessel[1] - H * 0.75;
-    s += `<path d="M${Z(ax)} ${Z(ay)}q${Z(-H * 0.12)} ${Z(H * 0.06)} ${Z(-H * 0.1)} ${Z(H * 0.26)}q${Z(H * 0.06)} ${Z(-H * 0.06)} ${Z(H * 0.13)} ${Z(-H * 0.15)}z" fill="${kr || "#16110c"}" fill-opacity="${op2(0.6 * op)}"/>`;
+    const ax = fessel[0] - wa * 0.98, ay = fessel[1] - H * 0.7;
+    s += `<path d="M${Z2(ax)} ${Z2(ay)}q${Z2(-H * 0.1)} ${Z2(H * 0.06)} ${Z2(-H * 0.08)} ${Z2(H * 0.2)}q${Z2(H * 0.06)} ${Z2(-H * 0.03)} ${Z2(H * 0.11)} ${Z2(-H * 0.12)}z" fill="${kr || "#16110c"}" fill-opacity="${op2(0.55 * op)}"/>`;
   }
-  return { pts, svg: s, boden: [x0, xs], spitze: [xs, 0] };
+  return { pts, svg: s, boden: [x0, xs], spitze: [xs, 0], achse };
 }
+const Z2 = (v) => Z(v);
 
 /* =====================================================================
    T.huf(fessel, spitze, breite, o) — Einhufer (Pferd, Esel, Zebra)
@@ -256,6 +265,52 @@ function zehenFuss(T, fessel, spitze, breite, o = {}, theropode = false) {
   return { pts, svg: s, boden: [fessel[0] - wa, tip[0]], spitze: tip };
 }
 
+/* =====================================================================
+   T.hand(sk, wo, o) — Hand des Zweibeiners am freien Arm (FASSUNG 881 — Prüfer 880, Punkt 5: beim Theropoden wurde der
+   Arm mit T.fuss als Bein bis zum Boden gezogen). Theropode: zwei (o.finger) kurze Finger mit gebogenen Krallen, nach
+   innen/unten gehalten (keine „Hasenhände“); Vogel: keine Hand (Flügel – T.federn.schwinge). Liefert { pts: [], svg }.
+   ===================================================================== */
+function hand(T, sk, wo, o = {}) {
+  if (sk.bauplan === "vogel") return { pts: [], svg: "", boden: null, spitze: null };
+  const b = sk.beine[wo], p = b.p, W = sk.W, n = o.finger || 2, kr = o.kralle || "#2a2018", haut = o.haut || null;
+  const a = p.handwurzel, e = p.fessel, [dx, dy] = norm(e[0] - a[0], e[1] - a[1]), L = Math.max(W * 0.05, abst(a, e) * 1.6);
+  let s = "", kd = "";
+  for (let i = 0; i < n; i++) {
+    const ang = Math.atan2(dy, dx) + (i - (n - 1) / 2) * 0.35 + 0.25, l = L * (1 - 0.15 * i);
+    const t = [e[0] + Math.cos(ang) * l, e[1] + Math.sin(ang) * l], m = [(e[0] + t[0]) / 2, (e[1] + t[1]) / 2];
+    if (haut) s += `<path d="${glatt([e, m, t], false)}" stroke="${haut}" stroke-width="${Z(W * 0.016)}" stroke-linecap="round" fill="none"/>`;
+    const g = W * 0.022;
+    kd += `M${Z(t[0])} ${Z(t[1] - g * 0.4)}q${Z(g * 0.9)} ${Z(g * 0.1)} ${Z(g * 0.7)} ${Z(g * 1.3)}q${Z(-g * 0.5)} ${Z(-g * 0.6)} ${Z(-g * 0.9)} ${Z(-g * 0.7)}z`;
+  }
+  return { pts: [], svg: s + `<path d="${kd}" fill="${kr}"/>`, boden: null, spitze: null, hand: true };
+}
+/* =====================================================================
+   T.flosse(fessel, spitze, breite, o) — Robbenflosse (FASSUNG 881 — vorher fiel gang „flosse“ STILL auf T.pfote zurück).
+   Fächer von der Fessel zur Spitze: hinten (Standard) zwei längere Außenzehen mit Kerbe in der Mitte; vorn (o.vorn)
+   Paddel mit fünf kleinen Krallen an den Zehenspitzen. Reihenfolge der pts wie bei den anderen Füßen (B-Seite → A-Seite).
+   ===================================================================== */
+function flosse(T, fessel, spitze, breite, o = {}) {
+  const fein = T.fein !== false, [wa, wb] = breite, [dx, dy] = norm(spitze[0] - fessel[0], spitze[1] - fessel[1]), nx = -dy, ny = dx;
+  const L = abst(fessel, spitze) * (o.lang || 1), Bw = Math.max(wa, wb) * (o.vorn ? 1.25 : 1.7);
+  const P = (u, v) => [fessel[0] + dx * L * u + nx * Bw * v, fessel[1] + dy * L * u + ny * Bw * v];
+  const pts = o.vorn ? [P(0.05, -0.75), P(0.55, -1.0), P(0.95, -0.75), P(1.02, 0), P(0.92, 0.7), P(0.5, 0.95), P(0.05, 0.75)]
+    : [P(0.05, -0.7), P(0.6, -1.0), P(1.0, -1.05), P(0.86, -0.35), P(0.8, 0), P(0.86, 0.35), P(1.0, 1.05), P(0.6, 1.0), P(0.05, 0.7)];
+  let s = "";
+  const haut = o.haut || "#3a342e";
+  if (fein) {
+    /* Zehenstrahlen durch die Schwimmhaut */
+    let d = "";
+    for (let i = 0; i < 5; i++) { const v = -0.8 + i * 0.4, a = P(0.15, v * 0.6), e = P(o.vorn ? 0.95 : (Math.abs(v) > 0.5 ? 0.97 : 0.84), v * 0.95); d += `M${Z(a[0])} ${Z(a[1])}L${Z(e[0])} ${Z(e[1])}`; }
+    s += `<path d="${d}" stroke="${haut}" stroke-opacity=".35" stroke-width="${Z(Bw * 0.06)}" fill="none" stroke-linecap="round"/>`;
+  }
+  if (o.vorn) {
+    let k = "";
+    for (let i = 0; i < 5; i++) { const v = -0.6 + i * 0.3, c = P(0.98 - Math.abs(v) * 0.08, v * 0.85), g = Bw * 0.09; k += `M${Z(c[0])} ${Z(c[1])}l${Z(dx * g * 2)} ${Z(dy * g * 2)}l${Z(nx * g)} ${Z(ny * g)}z`; }
+    s += `<path d="${k}" fill="#1a140e" fill-opacity=".8"/>`;
+  }
+  return { pts, svg: s, boden: null, spitze: P(1, 0), achse: [P(0.55, -0.85), P(0.55, 0.85)] };
+}
+
 function installiere(T) {
   T.pfote = (fessel, spitze, breite, o) => pfote(T, fessel, spitze, breite, o);
   T.huf = (fessel, spitze, breite, o) => huf(T, fessel, spitze, breite, o);
@@ -263,15 +318,24 @@ function installiere(T) {
   T.sohle = (fessel, spitze, breite, o) => sohle(T, fessel, spitze, breite, o);
   T.vogelfuss = (fessel, spitze, breite, o) => zehenFuss(T, fessel, spitze, breite, o, false);
   T.theropodenfuss = (fessel, spitze, breite, o) => zehenFuss(T, fessel, spitze, breite, o, true);
-  /* Fuß passend zum Bein des Skeletts: T.fuss(sk, "vn", o) wählt nach Gangart */
+  T.hand = (sk, wo, o) => hand(T, sk, wo, o);
+  T.flosse = (fessel, spitze, breite, o) => flosse(T, fessel, spitze, breite, o);
+  /* Fuß passend zum Bein des Skeletts: T.fuss(sk, "vn", o) wählt nach Gangart.
+     FASSUNG 881: kein stiller Rückfall auf die Pfote mehr – „flosse“ → T.flosse, Zweibeiner vorn → T.hand, Menschenaffe
+     → Sohle mit Nägeln statt Bärenkrallen; unbekannte Gangart → Fehler. */
   T.fuss = (sk, wo, o = {}) => {
-    const b = sk.beine[wo], br = (b.breiten && b.breiten.fessel) || [0.03, 0.03], W = sk.W;
+    const b = sk.beine[wo], br = (b.breiten && b.breiten.fessel) || [0.03, 0.03], W = sk.W, vorn = wo[0] === "v";
+    if (sk.gang === "zwei" && vorn && !o.art) return T.hand(sk, wo, o);
     const args = [b.p.fessel, b.p.spitze, [br[0] * W, br[1] * W], o];
-    const art = o.art || ({ zehen: "pfote", spitze: (sk.bauplan === "pferd" ? "huf" : "klaue"), sohle: "sohle", saeule: "sohle", zwei: (sk.bauplan === "vogel" ? "vogelfuss" : "theropodenfuss") })[sk.gang] || "pfote";
+    const tab = { zehen: "pfote", spitze: (sk.bauplan === "pferd" ? "huf" : "klaue"), sohle: "sohle", saeule: "sohle", zwei: (sk.bauplan === "vogel" ? "vogelfuss" : "theropodenfuss"), flosse: "flosse" };
+    const art = o.art || tab[sk.gang];
+    if (!art || !T[art]) throw new Error("T.fuss: keine Fußvorlage für Gangart „" + sk.gang + "“ (bekannt: " + Object.keys(tab).join(", ") + ")");
     if (sk.gang === "saeule") args[3] = Object.assign({ art: "elefant" }, o);
+    if (sk.gang === "flosse") args[3] = Object.assign({ vorn }, o);
+    if (sk.bauplan === "primat") args[3] = Object.assign({ kralle: "#4a4038", krallenLang: 0.22, vorn }, o);
     return T[art](...args);
   };
   return T;
 }
 
-module.exports = { installiere, pfote, huf, klaue, sohle, zehenFuss };
+module.exports = { installiere, pfote, huf, klaue, sohle, zehenFuss, hand, flosse };

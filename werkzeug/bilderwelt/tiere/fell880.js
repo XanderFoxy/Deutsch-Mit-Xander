@@ -98,12 +98,14 @@ function streu(T, pts, abstand, test) {
   for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(T.rnd() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
   return out;
 }
-/* Spindel (spitz zulaufende Strähne) von r (Wurzel) über m (Mitte) zur Spitze e, halbe Breite w, Normale n */
+/* Spindel (Strähne) von r (Wurzel) über m (Biegung) zur Spitze e, größte halbe Breite ≈ w, Normale n.
+   FASSUNG 881 — Prüfer 880, Punkt 13: die Strähnen waren gerade Balken mit stumpfem Ende (Wurzel volle Breite) und
+   wirkten aus der Nähe wie Kratzer. Jetzt läuft die Strähne an BEIDEN Enden spitz aus (Breite → 0): zwei Bögen von
+   der Wurzel zur Spitze, die Steuerpunkte zu beiden Seiten der gemeinsamen Biegung – ein schlankes, gebogenes Blatt. */
 function spindel(r, m, e, w, n) {
-  const a = [r[0] + n[0] * w, r[1] + n[1] * w], b = [r[0] - n[0] * w, r[1] - n[1] * w];
-  const c1 = [m[0] + n[0] * w * 1.25, m[1] + n[1] * w * 1.25], c2 = [m[0] - n[0] * w * 1.25, m[1] - n[1] * w * 1.25];
-  const X = G(a[0]), Y = G(a[1]);
-  return `M${X} ${Y}q${G(c1[0]) - X} ${G(c1[1]) - Y} ${G(e[0]) - X} ${G(e[1]) - Y}q${G(c2[0]) - G(e[0])} ${G(c2[1]) - G(e[1])} ${G(b[0]) - G(e[0])} ${G(b[1]) - G(e[1])}z`;
+  const c1 = [m[0] + n[0] * w * 2, m[1] + n[1] * w * 2], c2 = [m[0] - n[0] * w * 2, m[1] - n[1] * w * 2];
+  const X = G(r[0]), Y = G(r[1]), EX = G(e[0]) - X, EY = G(e[1]) - Y;
+  return `M${X} ${Y}q${G(c1[0]) - X} ${G(c1[1]) - Y} ${EX} ${EY}q${G(c2[0]) - G(e[0])} ${G(c2[1]) - G(e[1])} ${-EX} ${-EY}z`;
 }
 
 /* =====================================================================
@@ -141,7 +143,7 @@ function fell(T, sil, o = {}) {
       const L = L0 * (0.65 + T.rnd() * 0.7);
       const p1 = [r[0] + Math.cos(a0) * L * 0.5, r[1] + Math.sin(a0) * L * 0.5];
       const a1 = (fl(p1[0], p1[1]) + (T.rnd() - 0.5) * 8) * RAD;
-      const kr = (z.kruemmung != null ? z.kruemmung : 0.12) * (T.rnd() - 0.5) * 2;
+      const kr = (z.kruemmung != null ? z.kruemmung : 0.22) * (T.rnd() - 0.5) * 2;
       const e = [p1[0] + Math.cos(a1 + kr) * L * 0.5, p1[1] + Math.sin(a1 + kr) * L * 0.5];
       const [dx, dy] = norm(e[0] - r[0], e[1] - r[1]);
       let n = [-dy, dx];
@@ -152,32 +154,37 @@ function fell(T, sil, o = {}) {
       const m = fein ? mn + Math.floor(T.rnd() * (mx - mn + 1)) : Math.max(1, mn - 1);
       const w = w0 * (0.8 + T.rnd() * 0.4);
       const mid = p1;
-      /* dunkle Kerbe: auf der Schattenseite der Gruppe, etwas länger (trennt die Strähnen) */
+      /* dunkle Kerbe: auf der Schattenseite der Gruppe, etwas länger (trennt die Büschel) */
       if (z.dunkel) {
-        const off = w * (m * 0.7 + 0.8);
+        const off = w * (m * 0.6 + 0.8);
         const rk = [r[0] - n[0] * off + dx * L * 0.1, r[1] - n[1] * off + dy * L * 0.1], ek = [e[0] - n[0] * off * 0.4 + dx * L * 0.08, e[1] - n[1] * off * 0.4 + dy * L * 0.08];
         const mk = [mid[0] - n[0] * off * 0.8, mid[1] - n[1] * off * 0.8];
         const opK = z.dunkel[1] * (v < -0.2 ? 0.75 : 1);
         if (strich) leg("s", z.dunkel[0], stufe(opK), breiteStufe(w * 1.6), haar(rk, mk, ek));
-        else leg("f", z.dunkel[0], stufe(opK), 0, spindel(rk, mk, ek, w * 0.8, n));
+        else leg("f", z.dunkel[0], stufe(opK), 0, spindel(rk, mk, ek, w * 0.7, n));
       }
-      /* Strähnen: Wurzeln quer verteilt, laufen zur gemeinsamen Spitze (heller Kopf über dem Terminator, Unterwolle im Schatten) */
+      /* Büschel (FASSUNG 881): m Haare mit GEMEINSAMER Richtung und Biegung, Wurzeln dicht nebeneinander, die mittleren
+         am längsten, leicht gefächert – statt einzelner gerader Balken (heller Kopf über dem Terminator, Unterwolle im
+         Schatten) */
       const licht = v > -0.25;
       const farbe = licht ? z.hell : (z.unterwolle || z.dunkel);
       if (!farbe) continue;
       const op = licht ? farbe[1] * Math.max(0.3, Math.min(1.2, 0.6 + v * 0.65)) : farbe[1] * 0.8;
       let d = "";
+      const bog = [mid[0] - (r[0] + e[0]) / 2, mid[1] - (r[1] + e[1]) / 2];
       for (let j = 0; j < m; j++) {
-        const u = m > 1 ? (j / (m - 1) - 0.5) : 0, rr = [r[0] + n[0] * u * w * m * 1.1, r[1] + n[1] * u * w * m * 1.1];
-        const ee = [e[0] + (T.rnd() - 0.5) * w * 0.8 + n[0] * u * w * 0.4, e[1] + (T.rnd() - 0.5) * w * 0.8 + n[1] * u * w * 0.4];
-        const mm = [(rr[0] + ee[0]) / 2 + (mid[0] - (r[0] + e[0]) / 2), (rr[1] + ee[1]) / 2 + (mid[1] - (r[1] + e[1]) / 2)];
-        d += strich ? haar(rr, mm, ee) : spindel(rr, mm, ee, w * (j === Math.floor(m / 2) ? 0.6 : 0.45), n);
+        const u = m > 1 ? (j / (m - 1) - 0.5) : 0, lf = 0.72 + 0.28 * (1 - Math.abs(u) * 2) + (T.rnd() - 0.5) * 0.12;
+        const rr = [r[0] + n[0] * u * w * m * 0.9, r[1] + n[1] * u * w * m * 0.9];
+        const ee = [rr[0] + (e[0] - r[0]) * lf + n[0] * u * w * m * 0.45, rr[1] + (e[1] - r[1]) * lf + n[1] * u * w * m * 0.45];
+        const mm = [(rr[0] + ee[0]) / 2 + bog[0] * lf, (rr[1] + ee[1]) / 2 + bog[1] * lf];
+        d += strich ? haar(rr, mm, ee) : spindel(rr, mm, ee, w * (Math.abs(u) < 0.2 ? 0.6 : 0.45), n);
       }
       if (strich) leg("s", farbe[0], stufe(op), breiteStufe(w * 1.2), d); else leg("f", farbe[0], stufe(op), 0, d);
-      /* Grannen: dunkle Haarspitzen (z. B. Wolfssattel) */
+      /* Grannen: dunkle Haarspitzen (z. B. Wolfssattel) – FASSUNG 881: gebogen wie der Büschel und spitz auslaufend
+         (vorher gerade gleich breite Striche = dunkle „Kratzer“) */
       if (z.grannen && fein && T.rnd() < (z.grannen[2] || 0.5)) {
-        const g0 = lerp(r, e, 0.5), g1 = [e[0] + dx * L * 0.15, e[1] + dy * L * 0.15];
-        leg("s", z.grannen[0], stufe(z.grannen[1]), breiteStufe(w * 1.3), haar(g0, lerp(g0, g1, 0.5), g1));
+        const g0 = lerp(r, e, 0.45), g1 = [e[0] + dx * L * 0.08, e[1] + dy * L * 0.08], gm = [(g0[0] + g1[0]) / 2 + bog[0] * 0.5, (g0[1] + g1[1]) / 2 + bog[1] * 0.5];
+        leg("f", z.grannen[0], stufe(z.grannen[1]), 0, spindel(g0, gm, g1, Math.max(0.05, w * 0.7), n));
       }
     }
   }
@@ -214,6 +221,54 @@ function fell(T, sil, o = {}) {
     const [art, farbe, op, w] = k.split("|");
     s += art === "s" ? fein10(d, `fill="none" stroke="${farbe}" stroke-width="${Math.round(Number(w) * 10 * 10) / 10}"${op !== "1" ? ` stroke-opacity="${op}"` : ""} stroke-linecap="round"`)
       : fein10(d, `fill="${farbe}"${op !== "1" ? ` fill-opacity="${op}"` : ""}`);
+  }
+  return s;
+}
+
+/* =====================================================================
+   T.unterhaar(zonen) — dichtes kurzes Haar als KACHELMUSTER (nur Großbild; Szene: "")
+   Strähnen (T.fell) allein lassen den glatten Verlauf dazwischen sehen („Pinselstriche auf Airbrush“). Darunter liegt
+   jetzt ein feines, dichtes Haarkleid: je Zone zwei überlagerte Kacheln verschiedener Größe (Seitenverhältnis 1 : 1,34),
+   damit sich keine Wiederholung zeigt; Striche über den Kachelrand werden umlaufend fortgesetzt (keine Kachelnaht).
+   Die Kachel wird per patternTransform in die Wuchsrichtung gedreht – gleiche Kacheln werden zwischen Zonen geteilt.
+   zonen: [{ pts (Vieleck), winkel (Wuchsrichtung in Grad, 180 = nach hinten, 90 = nach unten), kachel (cm, 5,5),
+             dichte (Haare je cm², 1,1), laenge (cm, 1,6), streu (Grad, 34), hell: [farbe, op], dunkel: [farbe, op],
+             einfach: true (nur EINE Kachel, für kleine Zonen) }]
+   ===================================================================== */
+function unterhaar(T, zonen) {
+  if (T.fein === false) return "";
+  T._uhCache = T._uhCache || new Map();
+  const R = (v) => Math.round(v * 10);
+  const kachel = (S, n, L0, streu, dreh, hell, dunkel) => {
+    const key = [S, n, L0, streu, dreh, hell.join(), dunkel.join()].join("|");
+    if (T._uhCache.has(key)) return T._uhCache.get(key);
+    let dh = "", dd = "";
+    for (let i = 0; i < n; i++) {
+      const x = T.rnd() * S, y = T.rnd() * S, a = (180 + (T.rnd() - 0.5) * streu) * RAD, l = L0 * (0.55 + T.rnd()), k = (T.rnd() - 0.5) * 0.4 * L0;
+      for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) {
+        const x0 = x + ox, y0 = y + oy, x1 = x0 + Math.cos(a) * l, y1 = y0 + Math.sin(a) * l;
+        if (Math.max(x0, x1) < 0 || Math.min(x0, x1) > S || Math.max(y0, y1) < 0 || Math.min(y0, y1) > S) continue;
+        const mx = (x0 + x1) / 2 - Math.sin(a) * k, my = (y0 + y1) / 2 + Math.cos(a) * k;
+        const d = `M${R(x0)} ${R(y0)}q${R(mx) - R(x0)} ${R(my) - R(y0)} ${R(x1) - R(x0)} ${R(y1) - R(y0)}`;
+        if (i % 2) dh += d; else dd += d;
+      }
+    }
+    const id = T.id("uh" + (T._uh = (T._uh || 0) + 1));
+    T.def(`<pattern id="${id}" patternUnits="userSpaceOnUse" width="${S}" height="${S}"${dreh ? ` patternTransform="rotate(${dreh})"` : ""}>` +
+      `<g transform="scale(.1)" fill="none" stroke-linecap="round" stroke-width=".7"><path d="${dh.replace(/ -/g, "-")}" stroke="${hell[0]}" stroke-opacity="${op2(hell[1])}"/>` +
+      `<path d="${dd.replace(/ -/g, "-")}" stroke="${dunkel[0]}" stroke-opacity="${op2(dunkel[1])}"/></g></pattern>`);
+    T._uhCache.set(key, `url(#${id})`);
+    return `url(#${id})`;
+  };
+  let s = "";
+  for (const z of zonen) {
+    const S = z.kachel || 5.5, di = z.dichte || 1.1, L0 = z.laenge || 1.6, streu = z.streu != null ? z.streu : 34;
+    const dreh = Math.round((z.winkel != null ? z.winkel : 180) - 180), hell = z.hell || ["#f4ecdc", 0.2], dunkel = z.dunkel || ["#14100c", 0.18];
+    const b = box(z.pts), re = `x="${Math.floor(b[0])}" y="${Math.floor(b[1])}" width="${Math.ceil(b[2] - b[0]) + 1}" height="${Math.ceil(b[3] - b[1]) + 1}"`;
+    const cid = T.id("uhc" + (T._uhc = (T._uhc || 0) + 1));
+    T.def(`<clipPath id="${cid}"><path d="${F.eckig(z.pts)}"/></clipPath>`);
+    s += `<g clip-path="url(#${cid})"><rect ${re} fill="${kachel(S, Math.round(di * S * S), L0, streu, dreh, hell, dunkel)}"/>` +
+      (z.einfach ? "" : `<rect ${re} fill="${kachel(Math.round(S * 13.4) / 10, Math.round(di * S * S * 1.8), L0, streu, dreh, hell, dunkel)}"/>`) + `</g>`;
   }
   return s;
 }
@@ -283,7 +338,8 @@ function schwinge(T, basis, o = {}) {
 function installiere(T) {
   T.fluss = (sil, o) => fluss(T, sil, o);
   T.fell = (sil, o) => fell(T, sil, o);
+  T.unterhaar = (zonen) => unterhaar(T, zonen);
   T.federn = { flur: (pts, o) => federFlur(T, pts, o), schwinge: (basis, o) => schwinge(T, basis, o) };
   return T;
 }
-module.exports = { installiere, fluss, fell, federFlur, schwinge, spindel };
+module.exports = { installiere, fluss, fell, unterhaar, federFlur, schwinge, spindel };

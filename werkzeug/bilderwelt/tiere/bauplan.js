@@ -105,7 +105,8 @@ const BAUPLAENE = {
     becken: [0.18, 0.1, 25],
     hals: { laenge: 0.6, winkel: 40, dickeA: 0.36, dickeE: 0.16 },
     kopf: { laenge: 0.4, winkel: 55 },
-    schwanz: { laenge: 0.55, winkel: 30, dicke: 0.04 },
+    /* FASSUNG 881: Schweif hängt im Stand (vorher 30° = waagerecht abstehend) */
+    schwanz: { laenge: 0.62, winkel: 76, dicke: 0.05 },
     glieder: {
       vorn: { ellbogen: [0.07, 0.065], unterarmBauch: [0.06, 0.055], handwurzel: [0.033, 0.036], mittelhand: [0.025, 0.026], fessel: [0.032, 0.03] },
       hinten: { knie: [0.1, 0.07], wade: [0.075, 0.05], ferse: [0.04, 0.03], mittelfuss: [0.026, 0.027], fessel: [0.032, 0.03] },
@@ -119,7 +120,8 @@ const BAUPLAENE = {
     becken: [0.2, 0.12, 14],
     hals: { laenge: 0.4, winkel: 12, dickeA: 0.42, dickeE: 0.24 },
     kopf: { laenge: 0.36, winkel: 60 },
-    schwanz: { laenge: 0.62, winkel: 4, dicke: 0.03 },
+    /* FASSUNG 881: Schwanz hängt (vorher 4° = waagerecht nach hinten) */
+    schwanz: { laenge: 0.62, winkel: 86, dicke: 0.03 },
     glieder: {
       vorn: { ellbogen: [0.08, 0.07], unterarmBauch: [0.06, 0.06], handwurzel: [0.04, 0.04], mittelhand: [0.03, 0.03], fessel: [0.038, 0.035] },
       hinten: { knie: [0.1, 0.08], wade: [0.07, 0.05], ferse: [0.04, 0.035], mittelfuss: [0.03, 0.03], fessel: [0.038, 0.035] },
@@ -133,7 +135,7 @@ const BAUPLAENE = {
     becken: [0.17, 0.1, 22],
     hals: { laenge: 0.5, winkel: 48, dickeA: 0.3, dickeE: 0.16 },
     kopf: { laenge: 0.36, winkel: 50 },
-    schwanz: { laenge: 0.13, winkel: 30, dicke: 0.03 },
+    schwanz: { laenge: 0.13, winkel: 60, dicke: 0.03 },
     glieder: {
       vorn: { ellbogen: [0.06, 0.055], unterarmBauch: [0.045, 0.045], handwurzel: [0.028, 0.03], mittelhand: [0.02, 0.021], fessel: [0.026, 0.024] },
       hinten: { knie: [0.09, 0.06], wade: [0.065, 0.042], ferse: [0.032, 0.026], mittelfuss: [0.021, 0.022], fessel: [0.026, 0.024] },
@@ -146,8 +148,9 @@ const BAUPLAENE = {
     hinten: { oberschenkel: [0.33, 6], unterschenkel: [0.26, -8], mittelfuss: [0.1, 18], zehe: [0.05, 70] },
     becken: [0.18, 0.1, 20],
     hals: { laenge: 0.18, winkel: 10, dickeA: 0.5, dickeE: 0.44 },
-    kopf: { laenge: 0.45, winkel: 75 },
-    schwanz: { laenge: 0.4, winkel: 12, dicke: 0.03 },
+    /* FASSUNG 881: Kopfachse Hinterhaupt → Rüsselspitze (die Kopfvorlage „elefant“ enthält den Rüssel), Schwanz hängt */
+    kopf: { laenge: 0.8, winkel: 72 },
+    schwanz: { laenge: 0.4, winkel: 80, dicke: 0.03 },
     glieder: {
       vorn: { ellbogen: [0.11, 0.1], unterarmBauch: [0.1, 0.095], handwurzel: [0.09, 0.09], mittelhand: [0.095, 0.095], fessel: [0.1, 0.1] },
       hinten: { knie: [0.12, 0.1], wade: [0.1, 0.09], ferse: [0.09, 0.085], mittelfuss: [0.095, 0.095], fessel: [0.1, 0.1] },
@@ -163,7 +166,9 @@ const BAUPLAENE = {
     kopf: { laenge: 0.32, winkel: 30 },
     schwanz: { laenge: 0, winkel: 0, dicke: 0 },
     glieder: {
-      vorn: { ellbogen: [0.08, 0.08], unterarmBauch: [0.07, 0.07], handwurzel: [0.05, 0.05], mittelhand: [0.05, 0.05], fessel: [0.045, 0.045] },
+      /* FASSUNG 881: Unterarm am Ellbogen kräftig, zum Handgelenk schlank, Knöchel (Knöchelgang) wieder breiter –
+         vorher überall gleich breit („Säule als Arm“, Prüfer 880, Punkt 5) */
+      vorn: { ellbogen: [0.085, 0.075], unterarmBauch: [0.07, 0.062], handwurzel: [0.042, 0.04], mittelhand: [0.05, 0.048], fessel: [0.046, 0.046] },
       hinten: { knie: [0.09, 0.08], wade: [0.07, 0.06], ferse: [0.05, 0.05], mittelfuss: [0.045, 0.045], fessel: [0.04, 0.04] },
     },
   },
@@ -175,7 +180,8 @@ const BAUPLAENE = {
     becken: [0.2, 0.12, 6],
     hals: { laenge: 0.5, winkel: 6, dickeA: 0.5, dickeE: 0.4 },
     kopf: { laenge: 0.9, winkel: 4 },
-    schwanz: { laenge: 3.2, winkel: 84, dicke: 0.2 },
+    /* FASSUNG 881: Schwanz liegt flach nach hinten (vorher 84° = senkrecht in den Boden) */
+    schwanz: { laenge: 3.2, winkel: 6, dicke: 0.2 },
     glieder: {
       vorn: { ellbogen: [0.09, 0.08], unterarmBauch: [0.07, 0.07], handwurzel: [0.05, 0.05], mittelhand: [0.045, 0.045], fessel: [0.04, 0.04] },
       hinten: { knie: [0.1, 0.09], wade: [0.08, 0.07], ferse: [0.06, 0.05], mittelfuss: [0.05, 0.05], fessel: [0.04, 0.04] },
@@ -183,9 +189,11 @@ const BAUPLAENE = {
   },
   robbe: {
     name: "Robbe (Pinnipedia) – Gliedmaßen als Flossen, W = Rückenhöhe liegend", gang: "flosse",
-    rumpfL: 2.6, brustTiefe: 0.9, kruppe: 0.7, aufzug: 0, widerristUeber: 0.1, kruppeUeber: 0.4, bugVor: 0.1,
+    /* FASSUNG 881: Hinterflossen zeigen nach HINTEN (vorher +80…92° = nach vorn unter den Bauch), Rumpf zum Becken flach
+       (Spindel), Kruppe niedrig */
+    rumpfL: 2.6, brustTiefe: 0.9, kruppe: 0.4, aufzug: 0, widerristUeber: 0.1, kruppeUeber: 0.26, bugVor: 0.1,
     vorn: { schulterblatt: [0.25, 50], oberarm: [0.2, -50], unterarm: [0.22, 30], mittelhand: [0.18, 60], zehe: [0.2, 80] },
-    hinten: { oberschenkel: [0.2, 80], unterschenkel: [0.3, 86], mittelfuss: [0.22, 90], zehe: [0.2, 92] },
+    hinten: { oberschenkel: [0.2, -84], unterschenkel: [0.3, -88], mittelfuss: [0.22, -90], zehe: [0.2, -92] },
     becken: [0.15, 0.1, 0],
     hals: { laenge: 0.35, winkel: 30, dickeA: 0.7, dickeE: 0.45 },
     kopf: { laenge: 0.5, winkel: 10 },
@@ -204,7 +212,8 @@ const BAUPLAENE = {
     becken: [0.18, 0.14, 8],
     hals: { laenge: 0.3, winkel: 30, dickeA: 0.36, dickeE: 0.3 },
     kopf: { laenge: 0.38, winkel: 0 },
-    schwanz: { laenge: 1.6, winkel: 84, dicke: 0.17 },
+    /* FASSUNG 881: Schwanz waagerecht in der Luft (vorher 84° = senkrecht in den Boden) */
+    schwanz: { laenge: 1.6, winkel: 10, dicke: 0.17 },
     glieder: {
       vorn: { ellbogen: [0.03, 0.03], unterarmBauch: [0.025, 0.025], handwurzel: [0.02, 0.02], mittelhand: [0.016, 0.016], fessel: [0.014, 0.014] },
       hinten: { knie: [0.12, 0.08], wade: [0.08, 0.05], ferse: [0.045, 0.04], mittelfuss: [0.04, 0.04], fessel: [0.045, 0.04] },
@@ -218,15 +227,99 @@ const BAUPLAENE = {
     becken: [0.16, 0.14, 20],
     hals: { laenge: 0.35, winkel: 60, dickeA: 0.3, dickeE: 0.16 },
     kopf: { laenge: 0.22, winkel: 0 },
-    schwanz: { laenge: 0.4, winkel: 120, dicke: 0.1 },
+    /* FASSUNG 881: Schwanz nach hinten oben (−35° = über der Waagerechten; vorher 120° = nach vorn) */
+    schwanz: { laenge: 0.4, winkel: -35, dicke: 0.1 },
     glieder: {
       vorn: { ellbogen: [0.03, 0.03], unterarmBauch: [0.03, 0.03], handwurzel: [0.02, 0.02], mittelhand: [0.02, 0.02], fessel: [0.02, 0.02] },
       hinten: { knie: [0.09, 0.07], wade: [0.07, 0.05], ferse: [0.028, 0.026], mittelfuss: [0.022, 0.024], fessel: [0.028, 0.026] },
     },
   },
 };
-/* Spitznamen: Ziege/Schaf → rind, Antilope/Gazelle/Reh → hirsch, Löwe/Tiger → katze, Fuchs/Wolf → hund */
-const ALIAS = { ziege: "rind", schaf: "rind", antilope: "hirsch", reh: "hirsch", gazelle: "hirsch", loewe: "katze", wolf: "hund", fuchs: "hund", raubsaurier: "theropode", huhn: "vogel" };
+/* Spitznamen (Art-id → Bauplan). FASSUNG 881 — EINE Tabelle für T.skelett, T.kopf, T.fuss und die Sonde (vorher hatte
+   kopf880.js eine eigene: T.kopf("tiger") ging, T.skelett("tiger") warf „Bauplan unbekannt“ – Prüfer 880, Punkt 6).
+   Die ids sind die der Bibliothek; ein Eintrag sagt nur, welchem Bauplan die Art folgt, nicht dass sie schon damit gebaut ist. */
+const ALIAS = {
+  /* hund */ wolf: "hund", fuchs: "hund", polarfuchs: "hund", hyaene: "hund", schaeferhund: "hund",
+  /* katze */ loewe: "katze", loewin: "katze", tiger: "katze", leopard: "katze", jaguar: "katze", gepard: "katze", luchs: "katze",
+  saebelzahnkatze: "katze",
+  /* baer */ braunbaer: "baer", eisbaer: "baer", hoehlenbaer: "baer", panda: "baer",
+  /* pferd */ esel: "pferd", zebra: "pferd",
+  /* rind */ kuh: "rind", kalb: "rind", ziege: "rind", schaf: "rind", gnu: "rind", wisent: "rind", moschusochse: "rind",
+  /* hirsch */ reh: "hirsch", elch: "hirsch", rentier: "hirsch", riesenhirsch: "hirsch", antilope: "hirsch", gazelle: "hirsch",
+  /* elefant */ mammut: "elefant",
+  /* primat */ gorilla: "primat", schimpanse: "primat", orang_utan: "primat",
+  /* echse */ eidechse: "echse", leguan: "echse", komodowaran: "echse", krokodil: "echse", alligator: "echse",
+  /* robbe */ seehund: "robbe", walross: "robbe", robbe_baby: "robbe",
+  /* theropode */ raubsaurier: "theropode", tyrannosaurus: "theropode", allosaurus: "theropode", velociraptor: "theropode",
+  spinosaurus: "theropode",
+  /* vogel */ huhn: "vogel", hahn: "vogel", henne: "vogel", truthahn: "vogel",
+};
+const bauplanName = (b) => (typeof b === "string" ? (ALIAS[b] || b) : null);
+
+/* ---------------------------------------------------------------------
+   SOLL-SPANNEN (FASSUNG 881) — unabhängig vom Bauplan und von den Art-Parametern, damit die Sonde nicht mehr sich selbst
+   prüft (Prüfer 880, Punkt 1: ein absichtlich kaputter Wolf mit Dackelbrust, Riesenrumpf und Mini-Kopf bestand alle
+   Anatomie-Zeilen, weil die Silhouette gegen sk.masse = die eigenen Eingaben gemessen wurde).
+   Was ein FOTO der stehenden Art in Seitenansicht zeigt (mit Fell), bezogen auf die SICHTBARE Widerristhöhe:
+     bauchfreiheit: Boden → Brustunterkante hinter dem Ellbogen; rumpfL: Bugspitze → Gesäß (waagerecht);
+     kopfL: Hinterhaupt → Nasenspitze; kruppe: Kruppenhöhe / Widerristhöhe; sprungWinkel: Innenwinkel am
+     Sprunggelenk (Grad); fersenH: Höhe des Fersenhöckers. Fehlt eine Größe, wird sie nicht bewertet.
+   Je Art eine eigene Zeile, sonst die des Bauplans (über ALIAS). Eine Art darf in ihrer Datei art.soll setzen
+   (überschreibt einzelne Spannen). Quellen stehen je Zeile; „Richtwert“ = vor dem Neubau der Art selbst recherchieren.
+   --------------------------------------------------------------------- */
+const SOLL = {
+  hund: { quelle: "FCI-Standard 166 DSH: Brusttiefe 45–48 %, Rumpflänge 110–117 %, Kopf ≈ 40 % der Widerristhöhe",
+    bauchfreiheit: [0.5, 0.57], rumpfL: [1.04, 1.2], kopfL: [0.35, 0.43], kruppe: [0.92, 1.0], sprungWinkel: [125, 150], fersenH: [0.22, 0.32] },
+  wolf: { quelle: "RECHERCHE Wolf (hunde_baeren.js): Brust ≈ 44 % W, Kopf 0,35–0,4 W, Sprunggelenk ≈ 27 % W, 135–140°; " +
+      "Rumpf fast quadratisch (Kopf-Rumpf 100–140 cm bei 70–85 cm Schulterhöhe)",
+    bauchfreiheit: [0.52, 0.58], rumpfL: [1.0, 1.15], kopfL: [0.35, 0.4], kruppe: [0.93, 1.0], sprungWinkel: [130, 145], fersenH: [0.24, 0.31] },
+  hyaene: { quelle: "Richtwert (Tüpfelhyäne: Rücken fällt nach hinten ab, Kopf groß)",
+    bauchfreiheit: [0.45, 0.56], rumpfL: [1.1, 1.35], kopfL: [0.3, 0.42], kruppe: [0.78, 0.92] },
+  katze: { quelle: "Long Bone Ratios in Felis catus; Richtwert Löwe (Schulterhöhe 1,2 m, Schädel ≈ 0,35 m)",
+    bauchfreiheit: [0.45, 0.55], rumpfL: [1.2, 1.45], kopfL: [0.27, 0.4], kruppe: [0.92, 1.03], sprungWinkel: [110, 140], fersenH: [0.2, 0.32] },
+  baer: { quelle: "Ginsburg 1961; Kritik Braunbär R3: Bauchfreiheit 45–50 % der Schulterhöhe, Schulterbuckel über der Kruppe",
+    bauchfreiheit: [0.42, 0.52], rumpfL: [1.15, 1.42], kopfL: [0.32, 0.42], kruppe: [0.84, 0.97] },
+  pferd: { quelle: "Normal Proportions of the Horse (PMC10367726): Kopf ≈ 0,4 W, Rumpflänge = Widerrist, Kruppe = Widerrist, " +
+      "Sprunggelenk–Boden = 1 Kopflänge; Rumpftiefe ≈ Beinlänge (UGA B1400)",
+    bauchfreiheit: [0.5, 0.57], rumpfL: [0.95, 1.08], kopfL: [0.36, 0.44], kruppe: [0.97, 1.04], sprungWinkel: [140, 165], fersenH: [0.33, 0.44] },
+  rind: { quelle: "Holstein (animalsciencejournal.usamv.ro 2018/1 Art. 8): Brusttiefe ≈ 0,53 W, schräge Rumpflänge ≈ 1,18 W, Kreuzbein 1,03 W",
+    bauchfreiheit: [0.44, 0.51], rumpfL: [1.1, 1.26], kopfL: [0.3, 0.4], kruppe: [0.99, 1.07], sprungWinkel: [135, 160], fersenH: [0.3, 0.42] },
+  hirsch: { quelle: "Rothirsch (Wikipedia „Red deer“): Schulterhöhe 95–130 cm, Kopf-Rumpf 175–250 cm; Richtwert hochbeinig",
+    bauchfreiheit: [0.52, 0.6], rumpfL: [1.0, 1.18], kopfL: [0.3, 0.4], kruppe: [0.95, 1.03], sprungWinkel: [130, 155], fersenH: [0.3, 0.42] },
+  elefant: { quelle: "Richtwert (Afrikanischer Elefant: Rumpf tief, Rücken nach hinten abfallend)",
+    bauchfreiheit: [0.46, 0.56], rumpfL: [1.0, 1.25], kruppe: [0.84, 0.98] },
+};
+/* Soll für eine Art: eigene Zeile → Zeile des Bauplans (über ALIAS) → null; art.soll überschreibt einzelne Spannen */
+function sollFuer(id, bauplan, eigen) {
+  const basis = SOLL[id] || SOLL[bauplanName(bauplan) || ""] || SOLL[ALIAS[id] || ""] || null;
+  if (!basis && !eigen) return null;
+  const s = Object.assign({}, basis || {}, eigen || {});
+  s.von = eigen ? "art.soll" + (basis ? " + " + (SOLL[id] ? id : bauplanName(bauplan) || ALIAS[id]) : "") : (SOLL[id] ? id : bauplanName(bauplan) || ALIAS[id]);
+  return s;
+}
+/* Art-Parameter gegen den Basis-Bauplan: Längen > 15 % anders, Winkel > 15° anders → Liste für eine Warnung der Sonde
+   (große Abweichungen sind erlaubt, sollen aber bewusst und belegt sein – Prüfer 880, Punkt 1) */
+function abweichungen(bp, basis, pfad = "") {
+  const aus = [];
+  for (const k of Object.keys(basis || {})) {
+    if (k === "name" || k === "gang" || k === "glieder" || !(k in bp)) continue;
+    const a = bp[k], b = basis[k], p = pfad ? pfad + "." + k : k;
+    if (Array.isArray(b) && Array.isArray(a)) {
+      if (b.length === 2 && typeof b[0] === "number") {
+        if (b[0] && Math.abs(a[0] - b[0]) / Math.abs(b[0]) > 0.15) aus.push({ pfad: p + "[Länge]", wert: a[0], basis: b[0], rel: (a[0] - b[0]) / b[0] });
+        if (Math.abs(a[1] - b[1]) > 15) aus.push({ pfad: p + "[Winkel]", wert: a[1], basis: b[1], grad: a[1] - b[1] });
+      } else if (k === "becken") {
+        for (let i = 0; i < 2; i++) if (b[i] && Math.abs(a[i] - b[i]) / b[i] > 0.15) aus.push({ pfad: p + "[" + i + "]", wert: a[i], basis: b[i], rel: (a[i] - b[i]) / b[i] });
+        if (Math.abs(a[2] - b[2]) > 15) aus.push({ pfad: p + "[Neigung]", wert: a[2], basis: b[2], grad: a[2] - b[2] });
+      }
+    } else if (b && typeof b === "object") aus.push(...abweichungen(a || {}, b, p));
+    else if (typeof b === "number" && typeof a === "number") {
+      if (/winkel/i.test(k)) { if (Math.abs(a - b) > 15) aus.push({ pfad: p, wert: a, basis: b, grad: a - b }); }
+      else if (b === 0 ? Math.abs(a) > 0.05 : Math.abs(a - b) / Math.abs(b) > 0.15) aus.push({ pfad: p, wert: a, basis: b, rel: b ? (a - b) / b : null });
+    }
+  }
+  return aus;
+}
 
 const tief = (o) => JSON.parse(JSON.stringify(o));
 /* Teil-Überschreiben (Arten-Parameter über den Bauplan) */
@@ -278,9 +371,9 @@ function beinRoh(seg, namen) {
                   ellbogenhoecker, karpalballen, kniescheibe } }
    --------------------------------------------------------------------- */
 function skelett(bauplan, art = {}, pose = {}) {
-  const name = typeof bauplan === "string" ? (ALIAS[bauplan] || bauplan) : null;
+  const name = bauplanName(bauplan);
   const basis = name ? BAUPLAENE[name] : bauplan;
-  if (!basis) throw new Error("Bauplan unbekannt: " + bauplan);
+  if (!basis) throw new Error("Bauplan unbekannt: " + bauplan + " (bekannt: " + Object.keys(BAUPLAENE).join(", ") + "; Spitznamen siehe ALIAS)");
   const bp = mische(tief(basis), art);
   const W = art.W || 100;
   const zwei = bp.gang === "zwei";
@@ -438,6 +531,7 @@ function skelett(bauplan, art = {}, pose = {}) {
 /* In ein Werkzeug T einhängen (keine Zufallszahlen verbrauchen – bestehende Arten bleiben gleich) */
 function installiere(T) {
   T.BAUPLAENE = BAUPLAENE;
+  T.BAUPLAN_ALIAS = ALIAS;
   T.skelett = (bauplan, art, pose) => {
     T.stil = 880;                       // neue Aufrufe: T.koerper ohne Standard-Rand (siehe kern.js)
     return skelett(bauplan, art, pose);
@@ -445,4 +539,4 @@ function installiere(T) {
   return T;
 }
 
-module.exports = { BAUPLAENE, ALIAS, skelett, installiere, ik, winkelZw };
+module.exports = { BAUPLAENE, ALIAS, SOLL, bauplanName, sollFuer, abweichungen, skelett, installiere, ik, winkelZw };
