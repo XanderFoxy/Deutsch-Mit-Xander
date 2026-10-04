@@ -112,7 +112,42 @@ const USUFER = [[545, 30], [575, 110], [610, 190], [650, 270], [690, 340], [705,
 const LUNA = [[705, 380], [712, 400]];
 const AMFALL = [[712, 400], [722, 450], [735, 510], [748, 570], [760, 630], [770, 700]];
 
-/* Figuren aus B.mensch schlank machen (für die winzigen Fahrgäste nicht nötig; hier nur eigene Formen) */
+/* Figuren aus B.mensch schlank machen (Ladezeit!): Zahlen außerhalb von transform auf ganze Zentimeter der Figur
+   runden (Kurven bleiben Kurven), winzige Teile (< min cm) und feine Linien weglassen, Verläufe auf 3 Stufen kürzen */
+const vereinfache = (svg, grenze = 0.25, min = 2.2) => {
+  svg = svg.replace(/<(path|ellipse|line|circle)\b[^>]*?\/>/g, (el) => {
+    const sw = el.match(/stroke-width="([\d.]+)"/);
+    if (/fill="none"/.test(el) && sw && parseFloat(sw[1]) < grenze) return "";
+    const d = el.match(/ d="([^"]*)"/);
+    if (d && !/[a-df-z]/.test(d[1])) { const v = (d[1].match(/-?\d*\.?\d+/g) || []).map(Number), xs = v.filter((_, i) => i % 2 === 0), ys = v.filter((_, i) => i % 2); if (xs.length > 1 && Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) < min) return ""; }
+    const rr = el.match(/ (?:r|rx)="([^"]*)"/); if (rr && !d && +rr[1] * 2 < min * 0.5) return "";
+    return el;
+  });
+  svg = svg.replace(/(<(?:linear|radial)Gradient\b[^>]*>)((?:<stop[^>]*\/>)+)/g, (m, kopf, stops) => { const st = stops.match(/<stop[^>]*\/>/g); if (st.length <= 3) return m; return kopf + [st[0], st[Math.floor(st.length / 2)], st[st.length - 1]].join(""); });
+  /* reine Linienzüge (nur M/L/Z): Douglas–Peucker mit 0,6 cm Toleranz — dichte Punktreihen werden kurz */
+  const dp = (p, eps) => { if (p.length < 3) return p; const [a, b] = [p[0], p[p.length - 1]], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1e-9; let mi = 0, md = 0; for (let j = 1; j < p.length - 1; j++) { const dd = Math.abs((p[j][0] - a[0]) * dy - (p[j][1] - a[1]) * dx) / l; if (dd > md) { md = dd; mi = j; } } return md > eps ? dp(p.slice(0, mi + 1), eps).slice(0, -1).concat(dp(p.slice(mi), eps)) : [a, b]; };
+  /* Kurven (C/S/Q, absolut) in Punktfolgen wandeln: je Abschnitt Mitte und Ende — danach greift Douglas–Peucker */
+  svg = svg.replace(/ d="([MLCSQZ\d\s.,-]+)"/g, (m0, d) => {
+    if (!/[CSQ]/.test(d)) return m0;
+    const tok = d.match(/[A-Z]|-?\d*\.?\d+/g) || []; let o = "", i = 0, cmd = "", cx = 0, cy = 0, px = 0, py = 0;
+    const n = (k) => +tok[i + k];
+    while (i < tok.length) {
+      if (/[A-Z]/.test(tok[i])) { cmd = tok[i++]; if (cmd === "Z") { o += "Z"; continue; } }
+      if (cmd === "M" || cmd === "L") { o += (cmd === "M" ? "M" : "L") + n(0) + " " + n(1); cx = n(0); cy = n(1); px = cx; py = cy; i += 2; if (cmd === "M") cmd = "L"; }
+      else if (cmd === "C") { const mx = (cx + 3 * n(0) + 3 * n(2) + n(4)) / 8, my = (cy + 3 * n(1) + 3 * n(3) + n(5)) / 8; o += `L${mx} ${my}L${n(4)} ${n(5)}`; px = n(2); py = n(3); cx = n(4); cy = n(5); i += 6; }
+      else if (cmd === "S") { const c1x = 2 * cx - px, c1y = 2 * cy - py, mx = (cx + 3 * c1x + 3 * n(0) + n(2)) / 8, my = (cy + 3 * c1y + 3 * n(1) + n(3)) / 8; o += `L${mx} ${my}L${n(2)} ${n(3)}`; px = n(0); py = n(1); cx = n(2); cy = n(3); i += 4; }
+      else if (cmd === "Q") { const mx = (cx + 2 * n(0) + n(2)) / 4, my = (cy + 2 * n(1) + n(3)) / 4; o += `L${mx} ${my}L${n(2)} ${n(3)}`; cx = n(2); cy = n(3); i += 4; }
+      else return m0;
+    }
+    return ` d="${o}"`;
+  });
+  svg = svg.replace(/ d="([MLZ\d\s.,-]+)"/g, (m0, d) => {
+    const teile = d.split(/(?=M)/).map((seg) => { const zu = /Z/.test(seg), v = (seg.match(/-?\d*\.?\d+/g) || []).map(Number), p = []; for (let i = 0; i + 1 < v.length; i += 2) p.push([v[i], v[i + 1]]); let q; if (p.length > 3) { let mi = 0, md = -1; for (let j = 1; j < p.length; j++) { const dd = Math.hypot(p[j][0] - p[0][0], p[j][1] - p[0][1]); if (dd > md) { md = dd; mi = j; } } q = dp(p.slice(0, mi + 1), 0.6).slice(0, -1).concat(dp(p.slice(mi), 0.6)); } else q = p; return q.length ? "M" + q.map(([x, y]) => Math.round(x) + " " + Math.round(y)).join("L") + (zu ? "Z" : "") : ""; });
+    return ` d="${teile.join("")}"`;
+  });
+  return svg.split(/(transform="[^"]*"|<path d="[^"]*[a-df-z][^"]*")/).map((t, i) => i % 2 ? t : t.replace(/ (d|cx|cy|r|rx|ry|x|y|x1|y1|x2|y2|width|height)="([^"]*)"/g, (m0, n, v) => ` ${n}="${v.replace(/-?\d+\.\d+/g, (z) => String(Math.round(parseFloat(z))))}"`)).join("");
+};
+
 
 /* ---------- Filter und Stoffe ---------------------------------------- */
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.4"/></filter>`);
@@ -330,9 +365,9 @@ const AM = {};
   AM.felsen = fu[2];
   const unter = [
     { id: "brautschleier", de: "der Brautschleier", syl: "BRAUT-schlei-er", it: "il Velo della Sposa", itSyl: "VE-lo del-la SPO-sa", en: "Bridal Veil Falls", x: AM.brautschleier[0], y: AM.brautschleier[1], kunst: flaeche(-3, -6, 6, 12),
-      tipp: "Der schmale Wasserfall heißt Brautschleier. Am Fuß gehen Besucher in gelben Capes auf Holzstegen." },
-    { id: "felsen", de: "die Felsen", syl: "FEL-sen", it: "le rocce", itSyl: "ROC-ce", en: "rocks", x: AM.felsen[0], y: AM.felsen[1] + 4, kunst: flaeche(-12, -4, 24, 8),
-      tipp: "Am Fuß der Amerikanischen Fälle liegen riesige Felsbrocken. Sie sind 1954 abgebrochen." },
+      tipp: "Der Brautschleier ist ein kleiner, schmaler Wasserfall. Am Fuß gehen Besucher in gelben Capes auf Holzstegen." },
+    { id: "felsbrocken", de: "der Felsbrocken", syl: "FELS-bro-cken", it: "il masso", itSyl: "MAS-so", en: "boulder", x: AM.felsen[0], y: AM.felsen[1] + 4, kunst: flaeche(-12, -4, 24, 8),
+      tipp: "Am Fuß der Amerikanischen Fälle liegen riesige Felsbrocken. Viele davon sind 1931 und 1954 abgebrochen." },
   ];
   S.teil({ id: "amerikanische_faelle", de: "die Amerikanischen Fälle", syl: "a-me-ri-KA-ni-schen FÄL-le", it: "le Cascate Americane", itSyl: "ca-SCA-te a-me-ri-CA-ne", en: "American Falls", x: 22, y: 118, kunst: um(22, 118, kappeRand(k)),
     zoom: { x: 0, y: 96, w: 66, h: 44 }, unter,
@@ -661,6 +696,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   /* Okulare mit Gummimuscheln an der linken Seite (zum Betrachter hin, schräg) */
   k += `<path d="M${X - 12} ${Y - 7} q-3.4 0 -3.6 2.4 q.2 2.4 3.6 2.4 Z M${X - 12} ${Y - 1} q-3.4 0 -3.6 2.4 q.2 2.4 3.6 2.4 Z" fill="#141614"/>`;
   k += `<path d="M${X - 9} ${Y - 12} Q${X} ${Y - 14.5} ${X + 8} ${Y - 12}" stroke="#a9d4bc" stroke-width=".8" fill="none" opacity=".55"/>`;
+  k = kappenSchatten(X - 3, X + 3, FRONT + 1) + `<g filter="${VOL}">${k}</g>`;
   S.teil({ id: "fernrohr", de: "das Fernrohr", syl: "FERN-rohr", it: "il cannocchiale", itSyl: "can-noc-CHIA-le", en: "telescope", x: X, y: Y, kunst: um(X, Y, kappeRand(k)),
     tipp: "Für eine Münze kann man durch das Fernrohr schauen. Dann sieht man das Boot ganz nah." });
 }
@@ -750,6 +786,42 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   }
   S.teil({ oben: true, id: "ahornblatt", de: "das Ahornblatt", syl: "A-horn-blatt", it: "la foglia d'acero", itSyl: "FO-glia d'A-ce-ro", en: "maple leaf", x: 226, y: 231, kunst: um(226, 231, `<g filter="${VOL_KLEIN}">${k}</g>`),
     tipp: "Das Ahornblatt ist das Zeichen Kanadas. Man sieht es auf der Flagge und auf vielen Andenken." });
+}
+
+/* =====================================================================
+   19 — DAS KIND (im roten Regencape, kommt gerade vom Boot und zeigt zum Regenbogen)
+   20 — DER TOURIST (fotografiert mit dem Handy)
+   Beide stehen links neben uns an der Mauer, ganz nah: die Füße liegen unter dem Bildrand.
+   ===================================================================== */
+{
+  const fig = (spec, hoehe) => B.mensch(Object.assign({ ohneSchatten: true, laecheln: true }, spec), hoehe);
+  const pk = (m, n) => [m.z.punkte[n][0] * m.k, m.z.punkte[n][1] * m.k];
+  /* Tourist: hält das Handy hoch, Rücken halb zu uns */
+  const T = { x: 158, y: 268 };
+  const poseFoto = { lende: 1, brust: -2, nacken: 2, kopf: -4, schulterL: { vor: 70, seit: 18 }, ellbogenL: 100, unterarmL: 60, handL: 10, fingerL: 0.6, schulterR: { vor: 68, seit: 20 }, ellbogenR: 104, unterarmR: 60, handR: 10, fingerR: 0.6,
+    huefteL: { vor: 4, seit: 4, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -4, seit: 4, dreh: -6 }, knieR: 2, fussR: 0 };
+  const mt = fig({ id: "kan_tourist", geschlecht: "m", alter: "erwachsen", pose: poseFoto, blick: 150, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
+    kleidung: { oberteil: { stueck: "pullover", farbe: "#2f5f95" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "kappe", farbe: "#c8202a" } } }, 104);
+  const hx = (mt.z.handL.x + mt.z.handR.x) / 2 * mt.k, hy = (mt.z.handL.y + mt.z.handR.y) / 2 * mt.k;
+  let kt = `<g transform="translate(${T.x} ${T.y})"><g filter="${VOL}">${vereinfache(mt.svg, 0.3)}</g><rect x="${r(hx - 2.2)}" y="${r(hy - 4.6)}" width="4.4" height="3.2" rx=".5" fill="#1b1d22"/><rect x="${r(hx - 1.8)}" y="${r(hy - 4.2)}" width="3.6" height="2.4" rx=".3" fill="#7fb0d8"/></g>`;
+  S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: T.x, y: T.y - 50, kunst: um(T.x, T.y - 50, kt),
+    tipp: "Jedes Jahr kommen Millionen Menschen zu den Niagarafällen. Fast alle machen hier ein Foto." });
+  /* Kind: rotes Regencape mit Kapuze, nass glänzend, zeigt mit dem rechten Arm zum Regenbogen */
+  const K = { x: 112, y: 270 };
+  const poseZeig = { lende: 1, brust: -2, nacken: 2, kopf: -8, schulterL: { vor: 6, seit: 10 }, ellbogenL: 14, unterarmL: 0, handL: 0, fingerL: 0.4, schulterR: { vor: 120, seit: 34 }, ellbogenR: 8, unterarmR: 0, handR: 0, fingerR: 0.9,
+    huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
+  const mk = fig({ id: "kan_kind", geschlecht: "w", alter: "kind", pose: poseZeig, blick: 140, frisur: "zopf", haarfarbe: "braun", haut: "hell",
+    kleidung: { oberteil: { stueck: "pullover", farbe: "#e9c23a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "gummistiefel", farbe: "#2f6f8f" } } }, 82);
+  const [sx, sy] = pk(mk, "scheitel"), [hkx] = pk(mk, "hinterkopf"), [stx] = pk(mk, "stirn"), [slx, sly] = pk(mk, "schulterL"), [srx] = pk(mk, "schulterR"), [, kny] = pk(mk, "knieL"), [hx2, hy2] = pk(mk, "hals");
+  const xa = Math.min(slx, srx) - 3, xb = Math.max(slx, srx) + 3, yu = kny - 2, cx = (stx + hkx) / 2, br = Math.abs(stx - hkx) / 2 + 1.6;
+  let cape = `<path d="M${r(cx - br)} ${r(hy2 + 1)} Q${r(cx - br - 0.6)} ${r(sy - 3)} ${r(cx)} ${r(sy - 3.4)} Q${r(cx + br + 0.6)} ${r(sy - 3)} ${r(cx + br)} ${r(hy2 + 1)} Q${r(xb + 1)} ${r(sly + 1)} ${r(xb + 3)} ${r(yu)} Q${r((xa + xb) / 2)} ${r(yu + 2.4)} ${r(xa - 3)} ${r(yu)} Q${r(xa - 1)} ${r(sly + 1)} ${r(cx - br)} ${r(hy2 + 1)} Z" fill="${S.lg("kindcape", [[0, "#8e141c"], [0.5, "#d02028"], [1, "#e84a3a"]], 0, 0, 1, 0)}" opacity=".93"/>`;
+  /* nasser Glanz: lange, helle Lichtstreifen innen auf der rechten (sonnennahen) Seite */
+  cape += `<path d="M${r(xb - 2)} ${r(sly + 4)} Q${r(xb + 0.6)} ${r((sly + yu) / 2)} ${r(xb + 1)} ${r(yu - 3)} M${r(cx + br * 0.4)} ${r(sy - 2)} Q${r(cx + br * 0.9)} ${r(sy + 1)} ${r(cx + br * 0.8)} ${r(hy2)}" stroke="#ffd0c4" stroke-width=".9" fill="none" opacity=".75" stroke-linecap="round"/>`;
+  cape += `<path d="M${r((xa + xb) / 2 - 2)} ${r(sly + 6)} l-1.5 ${r(yu - sly - 9)} M${r((xa + xb) / 2 + 3)} ${r(sly + 7)} l1 ${r(yu - sly - 10)}" stroke="#7a1016" stroke-width=".5" opacity=".6"/>`;
+  for (const [dx, dy] of [[-2, 10], [4, 16], [1, 24], [-4, 20]]) cape += `<circle cx="${r(cx + dx)}" cy="${r(sly + dy)}" r=".55" fill="#ffffff" opacity=".7"/>`;
+  const kk = `<g transform="translate(${K.x} ${K.y})"><g filter="${VOL}">${vereinfache(mk.svg, 0.3)}${cape}</g></g>`;
+  S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "la bambina", itSyl: "bam-BI-na", en: "child", x: K.x, y: K.y - 40, kunst: um(K.x, K.y - 40, kappeRand(kk)),
+    tipp: "Das Mädchen kommt gerade vom Boot. Es trägt noch das nasse rote Regencape und zeigt auf den Regenbogen." });
 }
 
 /* Abendlicht: warmer Schein von hinten rechts, fängt keinen Tipp ab */

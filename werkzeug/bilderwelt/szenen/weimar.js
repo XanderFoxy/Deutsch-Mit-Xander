@@ -445,6 +445,8 @@ const denkmalUnter = [];
     g += `<path d="M1.3 -13 Q3.9 -14 6.5 -13 M-8.2 -13.6 Q-5.6 -14.6 -3 -13.2" stroke="${HL}" stroke-width=".5" fill="none" opacity=".6"/>`;
     g += F("M1.6 -.1 Q1.3 -2.8 2 -4.4 L5.6 -4.4 Q6.6 -2.4 6.6 -.1 Z", BRZ2) + F("M-9 -.6 Q-9.8 -2.6 -8.4 -4.8 L-5.2 -4.6 Q-4.6 -2.6 -4.4 -.1 Z", BRZ2);
     g += kante("M-8.8 -1 Q-8.9 -3 -8 -4.4", 0.4) + kante("M1.9 -.6 Q1.7 -2.6 2.3 -4", 0.4);
+    /* Hosenbund und Becken (schließt die Lücke zwischen Weste und Beinen) */
+    g += F("M-7.4 -57 L7.4 -57 L7.6 -50 Q3.6 -46.6 0 -47.4 Q-3.6 -46.6 -7.4 -49.2 Z", BRZ) + bahn(-.4, -52, -.6, -46.8, 0.3, 0.6);
     /* Weste und Hemd mit offenem Kragen (Kragenspitzen liegen über dem Rock) */
     g += F("M-5.2 -80 L5.2 -80 L5.6 -55 Q3 -51.6 0 -52 Q-3 -51.6 -5.6 -55 Z", BRZ2);
     for (let y = -77; y > -56; y -= 3.8) g += `<circle cx=".2" cy="${y}" r=".5" fill="${HL}" opacity=".75"/>`;
@@ -462,17 +464,17 @@ const denkmalUnter = [];
     g += kante("M-10.8 -82.6 Q-11.8 -76 -11.3 -70 Q-10.4 -63 -9.8 -59 Q-13 -42 -14.4 -20", 0.6);
     g += `<ellipse cx="-9.6" cy="-74" rx="1.6" ry="3" fill="${PAT}" opacity=".35"/><ellipse cx="9" cy="-74" rx="1.6" ry="3" fill="${PAT}" opacity=".4"/>`;
     /* linker Arm (rechts im Bild) hält die Rolle locker am Oberschenkel */
-    g += arm([[10.2, -81], [12.2, -63], [10.8, -50.5]], 5.2, 4.2);
+    g += arm([[10.2, -81], [13.4, -65], [10.8, -50.5]], 5.6, 4.2);
     g += `<path d="M9.6 -56 L12.6 -38.6" stroke="#7a6e4a" stroke-width="2.6" stroke-linecap="round"/><path d="M9 -56 L12 -38.6" stroke="${HL}" stroke-width=".5" opacity=".7"/><ellipse cx="9.6" cy="-56" rx="1.4" ry=".9" fill="${HL}" opacity=".7" transform="rotate(-12 9.6 -56)"/>`;
     g += hand(10.8, -49.6, 80, 0.9);
-    /* Kopf gehoben, Blick nach oben rechts: langer Hals, Adlernase, kinnlanges Haar mit Locken über den Ohren */
+    /* Kopf gehoben, Blick nach oben rechts: langer Hals, Adlernase, Haar aus der Stirn nach hinten gestrichen, kurze Koteletten */
     g += F("M-2.1 -91.6 L2.1 -91.6 L2.4 -86 L-2.4 -86 Z", "#4a4230") + kante("M-2 -91 L-2.3 -86.4", 0.4);
     const kopf = `<path d="M-4.8 -96 Q-4.6 -101.8 .6 -102 Q5.8 -101.6 5.6 -95.6 Q6.4 -92 5.6 -89.6 Q4.6 -89 4.2 -90.2 Q4.8 -93.2 3.8 -96.6 Q.6 -99 -3.6 -96.8 Q-4.4 -93.4 -3.8 -90.2 Q-4.6 -89 -5.6 -89.8 Q-6 -92.8 -4.8 -96 Z" fill="${BRZ2}"/>` +
       gesicht(0.4, -95, 0, 0.7, false) +
       `<path d="M.9 -96.2 Q2.6 -94.2 2.2 -92.4 L1.2 -92.6 Z" fill="${HL}" opacity=".35"/>` +
       `<path d="M-4.4 -96.8 Q-3.6 -101 .6 -101.2 Q4.8 -101 5.4 -97.4 Q2.8 -99.6 .4 -99.4 Q-2.6 -99.2 -4.4 -96.8 Z" fill="${BRZ2}"/><path d="M-3.8 -97.6 Q-1.6 -100.4 2.8 -100" stroke="${HL}" stroke-width=".5" fill="none" opacity=".75"/>` +
-      `<g fill="${BRZ2}"><ellipse cx="-5.2" cy="-92.6" rx="1.2" ry="1"/><ellipse cx="-5.1" cy="-90.8" rx="1" ry=".9"/><ellipse cx="5.6" cy="-92.6" rx="1.2" ry="1"/><ellipse cx="5.5" cy="-90.8" rx="1" ry=".9"/></g>` +
-      `<path d="M-5.8 -92.8 q.5 -.7 1.1 -.2 M-5.6 -91 q.5 -.6 1 -.1" stroke="${HL}" stroke-width=".3" fill="none" opacity=".7"/>`;
+      `<path d="M-4.6 -95.4 Q-5.4 -93 -4.4 -91.4 L-3.8 -92 Q-4.2 -94 -3.8 -95.6 Z M5.2 -95.4 Q6 -93 5 -91.4 L4.4 -92 Q4.8 -94 4.4 -95.6 Z" fill="${BRZ2}"/>` +
+      `<path d="M-3.6 -98.6 Q-5 -97.4 -5 -94.6 M-1.6 -100.2 Q-4.2 -99.6 -4.6 -96.8 M2.6 -100.4 Q5.4 -99.6 5.4 -96" stroke="${HL}" stroke-width=".35" fill="none" opacity=".6"/>`;
     g += `<g transform="rotate(-9 0 -91)">${kopf}</g>`;
     fig += `<g transform="translate(${SC} 0) rotate(-2 0 0)">${g}</g>`;
   }
@@ -517,9 +519,9 @@ const denkmalUnter = [];
     fig += `<g transform="translate(${GO} 0) rotate(2 0 0)">${g}</g>`;
   }
   /* Schillers rechter Arm greift zum Kranz (vor Goethes Rockschoß) */
-  fig += `<g transform="translate(${SC} 0)">${arm([[-10.2, -81], [-12.8, -64], [-11.8, -49.6]], 5.2, 4.2)}</g>`;
+  fig += `<g transform="translate(${SC} 0)">${arm([[-10.2, -81], [-13.8, -65], [-11.8, -49.6]], 5.6, 4.2)}</g>`;
   /* Goethes rechter Arm kreuzt vor dem Körper zum Kranz */
-  fig += `<g transform="translate(${GO} 0)">${arm([[-10.2, -81], [-12.4, -64], [1, -51]], 5.4, 4.4)}</g>`;
+  fig += `<g transform="translate(${GO} 0)">${arm([[-10.2, -81], [-12.8, -63], [1, -51]], 5.8, 4.4)}</g>`;
   /* der Lorbeerkranz: spitze Blätter paarweise schräg, zwei lange Bänder */
   const KX = -5.2, KY = -45.4, KR = 5;
   let kranz = `<path d="M${KX - 0.8} ${KY + KR - 0.4} Q${KX - 2.2} ${KY + KR + 5} ${KX - 1.6} ${KY + KR + 10} L${KX - 0.8} ${KY + KR + 9} L${KX - 0.6} ${KY + KR + 10.4} Q${KX - 1.2} ${KY + KR + 5} ${KX + 0.2} ${KY + KR - 0.2} Z" fill="${BRZL}"/>`;

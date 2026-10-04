@@ -357,7 +357,7 @@ const WASSER_PFAD = (() => {
   return pz([...L, ...R.reverse()]);
 })();
 S.def(`<clipPath id="${S.id("wasserclip")}"><path d="${WASSER_PFAD}"/></clipPath>`);
-let SPIEGEL = "";   /* gespiegelte Häuser, Brücken, Boote — werden im Wasser gesammelt */
+let SPIEGEL = "", SPIEGEL_B = "";   /* gespiegelte Häuser / Brücken — werden im Wasser gesammelt */
 
 /* =====================================================================
    DIE HÄUSER — Zeichnen (hinten zuerst), mit Laibungen, Bändern, Dächern
@@ -543,18 +543,17 @@ function fensterSVG(seite, sonne) {
    ===================================================================== */
 let GRACHT_KUNST = "";
 {
-  let k = `<path d="${WASSER_PFAD}" fill="${WASSER}"/>`;
-  /* Himmel im Wasser: hinten hell, vorn dunkler */
-  k += `<path d="${WASSER_PFAD}" fill="${S.lg("himmelwasser", [[0, "#c8d6dc", 0.75], [0.18, "#9cb3bd", 0.35], [0.5, "#7a96a3", 0.12], [1, "#7a96a3", 0]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${HOR + 2}" x2="0" y2="260"`)}"/>`;
+  /* Hinten spiegelt das flach getroffene Wasser den warmen Abendhimmel, vorn (steiler Blick) sieht man die Eigenfarbe: Oliv-Braun */
+  let k = `<path d="${WASSER_PFAD}" fill="${S.lg("wasser2", [[0, "#e6cdb2"], [0.06, "#b9b4b0"], [0.2, "#8a9590"], [0.45, "#5e685c"], [0.75, "#454a3a"], [1, "#363a2c"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${HOR}" x2="0" y2="262"`)}"/>`;
   GRACHT_KUNST = k;
 }
 
 /* =====================================================================
    DIE BRÜCKEN — gemauerte Bögen hintereinander, mit Lichterketten
    ===================================================================== */
-const BOGEN = { b: 4.0, s: 0.35, k: 2.15 };   /* halbe Spannweite, Kämpfer, Scheitel */
+const BOGEN = { b: 4.0, s: 0.5, k: 2.55 };   /* halbe Spannweite, Kämpfer, Scheitel */
 const bogenPkt = (D, n = 16, b = BOGEN.b, s = BOGEN.s, k = BOGEN.k) => { const o = []; for (let i = 0; i <= n; i++) { const a = Math.PI * i / n; o.push(P(-b * Math.cos(a), D, s + (k - s) * Math.sin(a))); } return o; };
-const deckH = (X) => 2.75 + 0.3 * (1 - (X / 10) * (X / 10));
+const deckH = (X) => 3.2 + 0.25 * (1 - (X / 10) * (X / 10));
 let BRUECKEN_SVG = "", BRUECKE1 = "", LICHTER_UNTER = null;
 function bruecke(D, tiefe, nr) {
   const s = F / D, licht = sonnig(0, D - 0.5, 2), rueck = D + tiefe;
@@ -580,8 +579,14 @@ function bruecke(D, tiefe, nr) {
   let keil = "";
   if (!fern) for (let i = 1; i < 16; i++) keil += `M${pt(vorn[i])} L${pt(aussen[i])} `;
   g += `<path d="${keil}" stroke="#6d655c" stroke-width="${r(Math.max(0.1, 0.025 * s))}"/>`;
+  /* Schlussstein im Scheitel */
+  if (!fern) { const k1 = vorn[7], k2 = vorn[9], a1 = aussen[7], a2 = aussen[9], top = P(0, D, BOGEN.k + 0.62); g += `<path d="M${pt(k1)} L${pt(k2)} L${pt([a2[0], top[1]])} L${pt([a1[0], top[1]])} Z" fill="${licht ? "#fff4dc" : "#d6cfc2"}" stroke="#6d655c" stroke-width="${r(Math.max(0.1, 0.025 * s))}"/>`; }
   /* Gesims (Naturstein) und Geländer */
-  g += `<path d="M${L.map(pt).join(" L")} L${L.slice().reverse().map((q) => pt([q[0], q[1] + 0.32 * s])).join(" L")} Z" fill="${licht ? "#f2e6cc" : "#a9a398"}"/>`;
+  g += `<path d="M${L.map(pt).join(" L")} L${L.slice().reverse().map((q) => pt([q[0], q[1] + 0.32 * s])).join(" L")} Z" fill="${licht ? "#f6e8cc" : "#d2c6b2"}"/>`;
+  /* Pfosten im festen Takt (alle 2 m) */
+  let pf = "";
+  for (let X = -10; X <= 10.01; X += 2) { const a = P(X, D, deckH(X)); pf += `M${pt(a)} L${pt([a[0], a[1] - 1.05 * s])} `; }
+  g += `<path d="${pf}" stroke="#141c18" stroke-width="${r(Math.max(0.3, 0.09 * s))}"/>`;
   const gel = L.map((q) => [q[0], q[1] - 1.0 * s]);
   let staebe = "";
   for (let X = -10.5; X <= 10.5; X += fern ? 1.5 : 0.5) { const a = P(X, D, deckH(X)); staebe += `M${pt(a)} L${pt([a[0], a[1] - 1.0 * s])} `; }
@@ -592,14 +597,15 @@ function bruecke(D, tiefe, nr) {
   const pd = (pts) => "M" + pts.map(pt).join(" L");
   const kette = bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, BOGEN.s, BOGEN.k + 0.28), deckK = [];
   for (let X = -10; X <= 10; X += 1) deckK.push(P(X, D - 0.05, deckH(X) - 0.05));
-  const lp = `${pd(kette)} ${pd(deckK)}`, gap = r(0.45 * s), bw = r(Math.max(0.35, 0.08 * s));
-  g += `<path d="${lp}" fill="none" stroke="#ffcf7a" stroke-width="${r(Math.max(1.2, 0.3 * s))}" opacity=".45" filter="url(#${S.id("glimm")})"/><path d="${lp}" fill="none" stroke="#fff6d8" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
-  /* Spiegelung der Brücke: Bogen + Spiegelbild ergeben das Oval */
+  const lp = `${pd(kette)} ${pd(deckK)}`, gap = r(Math.max(0.9, 0.45 * s)), bw = r(Math.max(0.5, 0.09 * s));
+  g += `<path d="${lp}" fill="none" stroke="#ffcf7a" stroke-width="${r(Math.max(0.7, 0.2 * s))}" opacity=".35" filter="url(#${S.id("glimm")})"/><path d="${lp}" fill="none" stroke="#fff6d8" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
+  /* Spiegelung der Brücke: der gespiegelte Bogenring mit seinen Lichtern ergibt mit dem Bogen ein geschlossenes Oval */
   const sp = [];
   for (let X = -11; X <= 11.01; X += 1) sp.push(P(X, D, -deckH(X)));
-  const vornS = bogenPkt(D, 16, BOGEN.b, -BOGEN.s, -BOGEN.k);
-  SPIEGEL += `<path d="M${pt(P(-11, D, 0))} L${sp.map(pt).join(" L")} L${pt(P(11, D, 0))} Z M${pt(P(-BOGEN.b, D, 0))} L${vornS.map(pt).join(" L")} L${pt(P(BOGEN.b, D, 0))} Z" fill="${mix(farbe, "#1c2a30", 0.35)}" fill-rule="evenodd"/>`;
-  SPIEGEL += `<path d="${pd(bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, -BOGEN.s, -BOGEN.k - 0.28))}" fill="none" stroke="#ffe2a0" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}" opacity=".75"/>`;
+  const vornS = bogenPkt(D, 16, BOGEN.b, -BOGEN.s, -BOGEN.k), aussenS = bogenPkt(D, 16, BOGEN.b + 0.55, -BOGEN.s, -BOGEN.k - 0.5);
+  SPIEGEL_B += `<path d="M${pt(P(-11, D, 0))} L${sp.map(pt).join(" L")} L${pt(P(11, D, 0))} Z M${pt(P(-BOGEN.b, D, 0))} L${vornS.map(pt).join(" L")} L${pt(P(BOGEN.b, D, 0))} Z" fill="${mix(farbe, "#262a2a", 0.35)}" fill-rule="evenodd"/>`;
+  SPIEGEL_B += `<path d="M${aussenS.map(pt).join(" L")} L${vornS.slice().reverse().map(pt).join(" L")} Z" fill="${licht ? "#cbbd9e" : "#8f887c"}"/>`;
+  SPIEGEL_B += `<path d="${pd(bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, -BOGEN.s, -BOGEN.k - 0.28))}" fill="none" stroke="#ffe2a0" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
   if (nr === 0) LICHTER_UNTER = { pts: kette, s, D };
   return g;
 }
@@ -716,10 +722,14 @@ function prisma(grund, h0, h1, farbe, dachFarbe, licht) {
 /* 1 — DIE GRACHT (das Wasser mit allen Spiegelungen) */
 {
   let k = GRACHT_KUNST;
-  k += `<g clip-path="url(#${S.id("wasserclip")})"><g filter="url(#${S.id("welle")})" opacity=".62">${SPIEGEL}</g></g>`;
+  /* Spiegelungen: durch waagrechte Wellenbänder gebrochen (Lücken nach vorn größer), nach vorn schwächer (steiler Blick) */
+  S.def(`<pattern id="${S.id("baender")}" width="400" height="2.6" patternUnits="userSpaceOnUse"><rect width="400" height="1.9" fill="#fff"/><rect x="-6" y="1.9" width="140" height=".7" fill="#fff" opacity=".5"/></pattern>`);
+  S.def(`<pattern id="${S.id("baender2")}" width="400" height="5.2" patternUnits="userSpaceOnUse"><rect width="400" height="3.1" fill="#fff"/><rect x="220" y="3.1" width="120" height="2.1" fill="#fff" opacity=".6"/></pattern>`);
+  S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="${HOR}" width="400" height="${262 - HOR}"><rect y="${HOR}" width="400" height="40" fill="url(#${S.id("baender")})"/><rect y="${HOR + 40}" width="400" height="${222 - HOR}" fill="url(#${S.id("baender2")})"/><rect y="${HOR}" width="400" height="${262 - HOR}" fill="${S.lg("spfade", [[0, "#000", 0.1], [0.35, "#000", 0.35], [1, "#000", 0.82]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${HOR}" x2="0" y2="262"`)}"/></mask>`);
+  k += `<g clip-path="url(#${S.id("wasserclip")})"><g mask="url(#${S.id("spmaske")})" opacity=".85">${SPIEGEL}</g><g mask="url(#${S.id("spmaske")})">${SPIEGEL_B}</g></g>`;
   /* Abendsonne durch die Lücke der Herengracht: warmes Licht auf dem nahen Wasser bis zur Schattenkante */
   const kante = []; for (let X = -KX; X <= KX + 0.01; X += 2) kante.push(P(X, 12 + (FX - X) * 0.839, 0));
-  k += `<path d="${pz([P(-KX, 9, 0), P(KX, 9, 0), ...kante.reverse()])}" fill="#ffc77a" opacity=".2"/>`;
+  k += `<path d="${pz([P(-KX, 9, 0), P(KX, 9, 0), ...kante.reverse()])}" fill="${S.lg("sonnestreif", [[0, "#ffb860", 0.45], [1, "#ffc77a", 0.12]])}"/>`;
   /* kleine Wellen: helle Striche, vorn länger */
   const zw = zufall(91);
   let wl = "";
