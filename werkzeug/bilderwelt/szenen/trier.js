@@ -988,7 +988,8 @@ const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
   for (const t of [0.02, 0.04, 0.06]) k += `<circle cx="${r(wx)}" cy="${r(top - t * s)}" r="${r(0.012 * s)}" fill="#5c9a52"/>`;
   k += `<path d="M${r(wx - 0.045 * s)} ${r(top - 0.15 * s)} Q${r(wx - 0.05 * s)} ${r(top - 0.07 * s)} ${r(wx)} ${r(top - 0.068 * s)} Q${r(wx + 0.05 * s)} ${r(top - 0.07 * s)} ${r(wx + 0.045 * s)} ${r(top - 0.15 * s)} Z" fill="#eef4e8" opacity=".55" stroke="#c9d6c4" stroke-width=".15"/>`;
   k += `<path d="M${r(wx - 0.043 * s)} ${r(top - 0.115 * s)} Q${r(wx - 0.045 * s)} ${r(top - 0.075 * s)} ${r(wx)} ${r(top - 0.072 * s)} Q${r(wx + 0.045 * s)} ${r(top - 0.075 * s)} ${r(wx + 0.043 * s)} ${r(top - 0.115 * s)} Z" fill="#f2df8a" opacity=".85"/>`;
-  k += `<path d="M${r(wx - 0.03 * s)} ${r(top - 0.14 * s)} q.3 1.6 .3 3" stroke="#fff" stroke-width=".35" opacity=".8" fill="none"/>`;
+  /* Glanzlicht wächst mit s und endet in der Kelchschale (top−0,08·s), nicht mehr als „Strohhalm“ über dem Stiel */
+  k += `<path d="M${r(wx - 0.03 * s)} ${r(top - 0.14 * s)} q${r(0.004 * s)} ${r(0.03 * s)} ${r(0.004 * s)} ${r(0.06 * s)}" stroke="#fff" stroke-width=".35" opacity=".8" fill="none"/>`;
   schlag(TISCH.lat, TISCH.d, 0.74, 0.7, 0.3);
   S.teil({ oben: true, id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolino", itSyl: "ta-vo-LI-no", en: "table", x: TX, y: TY, steht: true, kunst: licht(k),
     zoom: { x: r(TX - 0.75 * s), y: r(TY - 1.15 * s), w: r(1.5 * s), h: r(1.0 * s) },

@@ -672,18 +672,22 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
   kg += keks(-11.4, -3.2, -20) + keks(9.4, -.2, -8) + keks(14.4, .8, 14);
   for (let i = 0; i < 8; i++) kg += `<circle cx="${r(6 + rnd() * 10)}" cy="${r(1.6 + rnd() * 1.6)}" r=".25" fill="#d9a85a"/>`;
   k += `<g transform="translate(${t2(K[0])} ${t2(K[1])}) scale(${(km * 1.15).toFixed(5)})">${kg}</g>`;
-  /* DIE LÜTTJE LAGE: dunkles Bier und Korn auf dem Holzbrettchen (Maße in cm: Bierglas ≈ 11 hoch,
-     Korngläschen ≈ 6,5 hoch; Ränder und Glaskanten fein umrissen, damit beide Gläser auch auf dem Karo zu lesen sind).
+  /* DIE LÜTTJE LAGE: dunkles Bier und Korn auf dem Holzbrettchen. Echte Gläser (Fachhändler luettjelage.com):
+     Bierglas 8 cm hoch, Ø 5,4 cm, dickwandig mit schwerem Boden, 5 cl – das kleine, niedrige Glas;
+     Korngläschen ≈ 8 cm hoch, Ø ≈ 2 cm, schlank und leicht trichterförmig, 1 cl. Beide also gleich hoch,
+     das Bierglas kurz und breit, das Kornglas lang und dünn. Gezeichnet in Einheiten ×1,1 = cm:
+     Bierglas 7,3 hoch × 4,6–4,9 breit, Kornglas 7,3 hoch × 1,4 (unten) bis 2 (oben). Ränder fein umrissen,
+     damit beide Gläser auch auf dem Karo zu lesen sind.
      FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden‘ */
   const L0 = auf(.6, .62), lm = mdt(.62);
   let lg = `<path d="M-8.4 1.8 L9 1.8 L10.4 -.8 L-7 -.8 Z" fill="#2a3418" opacity=".25"/><path d="M-7.5 0 L7.5 0 L8.4 -1.2 L-6.6 -1.2 Z" fill="#a8743f"/><path d="M-7.5 0 L7.5 0 L7.5 .7 L-7.5 .7 Z" fill="#7e5228"/><path d="M-5.6 -.5 L6.8 -.5 M-4 -.9 L4.6 -.9" stroke="#8e5c2e" stroke-width=".15" opacity=".7"/>`;
-  /* Bierglas: dickes Glas unten, dunkles Bier, Schaumkrone, Rand */
-  lg += `<path d="M-4.6 -.6 L-.6 -.6 L-.3 -11.6 L-4.9 -11.6 Z" fill="#e8eef0" opacity=".45" stroke="#9fb2b8" stroke-width=".2"/><path d="M-4.58 -.6 L-.62 -.6 L-.64 -1.6 L-4.56 -1.6 Z" fill="#dfe8ea" opacity=".75"/>`;
-  lg += `<path d="M-4.56 -1.6 L-.64 -1.6 L-.42 -9.4 L-4.78 -9.4 Z" fill="#3a1e0e"/><path d="M-4.4 -1.8 L-3.6 -1.8 L-3.5 -9.2 L-4.6 -9.2 Z" fill="#6a3416" opacity=".7"/>`;
-  lg += `<path d="M-4.78 -9.4 L-.42 -9.4 L-.38 -10.5 L-4.82 -10.5 Z" fill="#e8d8b8"/><ellipse cx="-2.6" cy="-10.5" rx="2.22" ry=".38" fill="#f4e8cc"/><ellipse cx="-2.6" cy="-11.6" rx="2.3" ry=".4" fill="none" stroke="#9fb2b8" stroke-width=".2"/><path d="M-4.2 -10.8 L-4 -2" stroke="#fff" stroke-width=".35" opacity=".55"/>`;
-  /* Korngläschen: klarer Korn, dicker Boden, Rand */
-  lg += `<path d="M1.2 -.6 L4 -.6 L4.2 -7 L1 -7 Z" fill="#eef4f6" opacity=".55" stroke="#9fb2b8" stroke-width=".2"/><path d="M1.2 -.6 L4 -.6 L4.03 -1.8 L1.17 -1.8 Z" fill="#dfe9ec" opacity=".85"/>`;
-  lg += `<path d="M1.17 -1.8 L4.03 -1.8 L4.13 -5.2 L1.07 -5.2 Z" fill="#f2f6ee" opacity=".6"/><ellipse cx="2.6" cy="-5.2" rx="1.53" ry=".3" fill="#fbfdf6" opacity=".9" stroke="#b4c2c0" stroke-width=".12"/><ellipse cx="2.6" cy="-7" rx="1.6" ry=".32" fill="none" stroke="#9fb2b8" stroke-width=".2"/><path d="M1.5 -6.5 L1.6 -2.2" stroke="#fff" stroke-width=".3" opacity=".8"/>`;
+  /* Bierglas: schwerer Glasboden, dunkles Bier, Schaumkrone etwas unter dem Rand */
+  lg += `<path d="M-4.1 -.6 L-4.25 -7.9 L.65 -7.9 L.5 -.6 Q-1.8 .2 -4.1 -.6 Z" fill="#e8eef0" opacity=".45" stroke="#9fb2b8" stroke-width=".2"/><path d="M-4.1 -.6 Q-1.8 .2 .5 -.6 L.53 -1.8 Q-1.8 -1 -4.13 -1.8 Z" fill="#dfe8ea" opacity=".8"/>`;
+  lg += `<path d="M-3.98 -1.8 Q-1.8 -1.05 .38 -1.8 L.47 -6.5 L-4.07 -6.5 Z" fill="#3a1e0e"/><path d="M-3.85 -2 L-3.2 -2 L-3.25 -6.3 L-3.95 -6.3 Z" fill="#6a3416" opacity=".7"/>`;
+  lg += `<path d="M-4.07 -6.5 Q-1.8 -5.8 .47 -6.5 L.49 -7.3 L-4.09 -7.3 Z" fill="#e8d8b8"/><ellipse cx="-1.8" cy="-7.3" rx="2.29" ry=".38" fill="#f4e8cc"/><ellipse cx="-1.8" cy="-7.9" rx="2.45" ry=".4" fill="none" stroke="#9fb2b8" stroke-width=".2"/><path d="M-3.75 -7.2 L-3.6 -2.1" stroke="#fff" stroke-width=".35" opacity=".55"/>`;
+  /* Korngläschen: schlank, nach oben leicht weiter, dicker Boden, klarer Korn im unteren Drittel */
+  lg += `<path d="M2.7 -.6 L2.4 -7.9 L4.4 -7.9 L4.1 -.6 Q3.4 -.36 2.7 -.6 Z" fill="#eef4f6" opacity=".55" stroke="#9fb2b8" stroke-width=".2"/><path d="M2.7 -.6 Q3.4 -.36 4.1 -.6 L4.13 -1.4 Q3.4 -1.16 2.67 -1.4 Z" fill="#dfe9ec" opacity=".85"/>`;
+  lg += `<path d="M2.77 -1.4 Q3.4 -1.16 4.03 -1.4 L4.1 -3.1 L2.7 -3.1 Z" fill="#f2f6ee" opacity=".6"/><ellipse cx="3.4" cy="-3.1" rx=".7" ry=".13" fill="#fbfdf6" opacity=".9" stroke="#b4c2c0" stroke-width=".12"/><ellipse cx="3.4" cy="-7.9" rx="1" ry=".18" fill="none" stroke="#9fb2b8" stroke-width=".2"/><path d="M2.65 -7.2 L2.85 -1.8" stroke="#fff" stroke-width=".25" opacity=".8"/>`;
   k += `<g transform="translate(${t2(L0[0])} ${t2(L0[1])}) scale(${(lm * 1.1).toFixed(5)})">${lg}</g>`;
   /* Thermoskanne und Becher */
   const T0 = auf(.88, .78), tm = mdt(.78);
@@ -717,7 +721,7 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
     unter: [
       { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 1.5 * km * 1.15, y: K[1] - 2 * km * 1.15, kunst: flaeche(-19 * km, -5 * km, 38 * km, 10.5 * km, .3),
         tipp: "Der Leibniz-Keks kommt aus Hannover und hat genau 52 Zähne." },
-      { id: "luettje_lage", de: "die Lüttje Lage", syl: "LÜTT-je LA-ge", it: "la Lüttje Lage (birra e acquavite di grano)", itSyl: "LÜTT-je LA-ge", en: "Lüttje Lage (beer and schnapps)", x: L0[0], y: L0[1] - 6 * lm, kunst: flaeche(-9.5 * lm, -8.5 * lm, 20 * lm, 17 * lm, .3),
+      { id: "luettje_lage", de: "die Lüttje Lage", syl: "LÜTT-je LA-ge", it: "la Lüttje Lage (birra e acquavite di grano)", itSyl: "LÜTT-je LA-ge", en: "Lüttje Lage (beer and schnapps)", x: L0[0], y: L0[1] - 4 * lm, kunst: flaeche(-9.5 * lm, -5.8 * lm, 20 * lm, 12.3 * lm, .3),
         tipp: "Bier und Korn trinkt man gleichzeitig aus zwei Gläsern in einer Hand. Das gehört zum Schützenfest, dem größten der Welt." },
       { id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "la castagna d'India", itSyl: "ca-STA-gna d'IN-dia", en: "conker", x: KA[0] + 1.5 * mm, y: KA[1] - 1.5 * mm, kunst: flaeche(-9 * mm, -6.5 * mm, 21 * mm, 14 * mm, .3),
         tipp: "Im Herbst sammeln Kinder Kastanien und basteln daraus Tiere." },
