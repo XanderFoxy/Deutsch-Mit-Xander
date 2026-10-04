@@ -88790,11 +88790,14 @@
   const BW_ART_DE = ["der", "die", "das"];
   const BW_ART_IT = ["il", "lo", "la", "l'", "i", "gli", "le"];
   function bwArtikelTrennen(wort) {
-    const m = String(wort).match(/^(der|die|das|il|lo|la|l'|i|gli|le)\s*(.+)$/i);
+    /* FASSUNG 877 — Der Artikel braucht ein Leerzeichen dahinter (nur l'
+       klebt am Wort). Vorher wurde „Indien" zu „i | ndien", „Italien" zu
+       „i | talien" und „Leipzig" zu „le | ipzig" (Kritik der Übersichtskarten). */
+    const m = String(wort).match(/^(?:(der|die|das|il|lo|la|i|gli|le)\s+|(l'))(.+)$/i);
     if (!m) return { artikel: null, rest: wort };
     // l' klebt am Wort: „l'armadio"
-    const artikel = m[1].toLowerCase();
-    return { artikel, rest: m[2] };
+    const artikel = (m[1] || m[2]).toLowerCase();
+    return { artikel, rest: m[3] };
   }
   function bwArtikelAuswahl(richtig) {
     /* Nur Artikel anbieten, die es in dieser Sprache gibt — und im
@@ -89090,7 +89093,7 @@
                    <circle cx="14.8" cy="-17.2" r="4.2" fill="none" stroke="#8a5f2a" stroke-width="1.6"/>
                    <line x1="17.8" y1="-14.2" x2="21.4" y2="-10.6" stroke="#8a5f2a" stroke-width="2.2" stroke-linecap="round"/>
                  </g>` : ""}
-                ${t.lupe && !bwZoom ? `<g class="bw-lupenmarke" role="button" tabindex="0"
+                ${t.lupe && (!bwZoom || istUnter) ? `<g class="bw-lupenmarke" role="button" tabindex="0"${bwZoom && bwZoom.k ? ` transform="scale(${(1 / bwZoom.k).toFixed(3)})"` /* FASSUNG 877 — auch in der Lupe: Stadt in der Regionen-Lupe führt direkt in ihre Szene; fingerbreit trotz Vergrößerung */ : ""}
                    data-bw-lupe-sofort="${t.lupe}"
                    aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
                    <title>🔍 Antippen: ${escapeHtml(bwWort(t))} ganz nah</title>
@@ -89152,8 +89155,10 @@
   async function bwDetailOeffnen(zielId) {
     const ziel = await szeneUndLupenLaden(zielId);
     if (!ziel) return;
+    /* FASSUNG 877 — Die Spur merkt sich auch die Lupe: „Zurück" aus Lübeck
+       führt wieder in den Norden der Deutschlandkarte, nicht auf die ganze Karte. */
+    if (bwSzene) bwSpur.push({ id: bwSzene.id, zoom: bwZoom ? { teil: bwZoom.teil, box: bwZoom.box } : null });
     bwZoom = null;
-    if (bwSzene) bwSpur.push(bwSzene.id);
     bwSzene = ziel;
     bwModus = "entdecken";
     bwRunde = null;
@@ -89164,7 +89169,9 @@
   async function bwEinsZurueck() {
     bwZoom = null;
     const vorher = bwSpur.pop();
-    bwSzene = vorher ? await szeneLaden(vorher) : null;
+    const vorherId = vorher && typeof vorher === "object" ? vorher.id : vorher;
+    bwSzene = vorherId ? await szeneLaden(vorherId) : null;
+    if (vorher && vorher.zoom) bwZoom = { teil: vorher.zoom.teil, box: vorher.zoom.box };
     bwModus = "entdecken";
     bwRunde = null;
     bwGewaehlt = null;
@@ -89173,7 +89180,7 @@
 
   function bwSpurHtml() {
     if (!bwSpur.length) return "";
-    const kette = bwSpur.map((id) => (szeneMitId(id) || {}).titel || id);
+    const kette = bwSpur.map((e) => { const id = e && typeof e === "object" ? e.id : e; return (szeneMitId(id) || {}).titel || id; });
     return `<p class="bw-spur">🔍 ${kette.map((t) => escapeHtml(t)).join(" › ")} › <strong>${escapeHtml(bwSzene.titel)}</strong></p>`;
   }
 
@@ -89200,14 +89207,14 @@
     area.innerHTML = `
       <div class="question-card bw-karte">
         <div class="bw-kopf">
-          <button type="button" class="btn btn-ghost bw-zurueck" id="bwZurueck">${bwSpur.length ? "← Zurück zu " + escapeHtml((szeneMitId(bwSpur[bwSpur.length - 1]) || {}).titel || "") : "← Alle Szenen"}</button>
+          <button type="button" class="btn btn-ghost bw-zurueck" id="bwZurueck">${bwSpur.length ? "← Zurück zu " + escapeHtml((szeneMitId((bwSpur[bwSpur.length - 1] || {}).id || bwSpur[bwSpur.length - 1]) || {}).titel || "") : "← Alle Szenen"}</button>
           <p class="eyebrow" style="margin:0;">${s.emoji} ${escapeHtml(s.titel)}</p>
         </div>
         ${bwSpurHtml()}
         <div class="order-toggle bw-modi">
           <button type="button" class="order-pill" data-bw-modus="entdecken" aria-selected="${bwModus === "entdecken"}">👆 Entdecken</button>
           <button type="button" class="order-pill" data-bw-modus="finden" aria-selected="${bwModus === "finden"}">🔍 Finden</button>
-          <button type="button" class="order-pill" data-bw-modus="artikel" aria-selected="${bwModus === "artikel"}">🏷️ Artikel</button>
+          ${bwArtikelTeile(bwSzene).length >= 4 ? `<button type="button" class="order-pill" data-bw-modus="artikel" aria-selected="${bwModus === "artikel"}">🏷️ Artikel</button>` : "" /* FASSUNG 877 — erst ab vier Wörtern mit Artikel */}
         </div>
         ${bwAnsichtReiheHtml(bwSzene)}
         ${/* GEWUENSCHT: „…und mit dem Baukasten der Bilderwelt, dass
@@ -89521,7 +89528,9 @@
     umgangsSchalterBinden(area, renderBilderwelt);
     document.getElementById("bwZurueck")?.addEventListener("click", () => {
       if (bwSpur.length) { bwEinsZurueck(); return; }
-      bwSzene = null; bwRunde = null; bwGewaehlt = null; renderBilderwelt();
+      bwSzene = null; bwRunde = null; bwGewaehlt = null;
+      bwZoom = null; // FASSUNG 877 — sonst öffnete die Karte beim nächsten Mal wieder in der alten Lupe
+      renderBilderwelt();
     });
     area.querySelectorAll("[data-bw-lupe]").forEach((b) => b.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -89800,8 +89809,14 @@
     });
   }
 
+  /* FASSUNG 877 — Im Artikel-Spiel nur Wörter mit Artikel. Auf den Karten
+     haben Kontinente, Länder und Regionen keinen; vorher hieß die Lösung
+     dann „Richtig ist null Amerika". */
+  function bwArtikelTeile(szene) {
+    return (szene.teile || []).filter((t) => bwArtikelTrennen(bwWort(t)).artikel);
+  }
   function bwNeueRunde() {
-    const teile = bwSzene.teile.slice();
+    const teile = bwModus === "artikel" ? bwArtikelTeile(bwSzene) : bwSzene.teile.slice();
     // Durchmischen und auf die Rundenlänge kürzen — bei kleinen Szenen
     // eben so viele Aufgaben, wie es Dinge gibt.
     for (let i = teile.length - 1; i > 0; i--) {

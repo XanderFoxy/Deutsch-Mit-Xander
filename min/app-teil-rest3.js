@@ -1,4 +1,4 @@
-dmaTeilPasst("329e82574d91"),BEITRAG_FARBEN={"iphone-duo":["#4A6D8C","#7FA8C4"],kirk:["#3F5E8C","#6FA0D0"],alf:["#8A6A4A","#C99A5F"],alphaville:["#6A4A93","#A875D8"],zorro:["#3A3A44","#7A6A93"]},KACHEL_ZEICHNUNGEN={humboldt:`
+dmaTeilPasst("05e279fb0a3f"),BEITRAG_FARBEN={"iphone-duo":["#4A6D8C","#7FA8C4"],kirk:["#3F5E8C","#6FA0D0"],alf:["#8A6A4A","#C99A5F"],alphaville:["#6A4A93","#A875D8"],zorro:["#3A3A44","#7A6A93"]},KACHEL_ZEICHNUNGEN={humboldt:`
       <path d="M14 88 38 54l16 20 14-18 24 32z" fill="#ffffff" opacity="0.28"/>
       <path d="M14 88 38 54l16 20 14-18 24 32z" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linejoin="round" opacity="0.85"/>
       <circle cx="60" cy="42" r="18" fill="none" stroke="#ffffff" stroke-width="3.2"/>

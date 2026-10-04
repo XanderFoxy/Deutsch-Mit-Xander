@@ -820,6 +820,7 @@ let MARZ = null;
 /* =====================================================================
    17 — DIE LÖWEN (gusseisern, 1823): links der wachende, rechts der schlafende
    ===================================================================== */
+let REITER = null;
 function loewe(L, wach, dir) {
   /* Liegender Löwe aus Gusseisen (Rauch, 1823) in Seitenansicht, Blick nach rechts bei dir = 1.
      Licht von rechts oben: warme Spitzlichter auf Rücken, Locken, Braue und Pranken. */
@@ -828,14 +829,17 @@ function loewe(L, wach, dir) {
   const z = zufall(wach ? 5 : 9);
   /* eine Locke (hängend, Wurzel bei 0,0), hell und dunkel, einmal definiert und per <use> gesetzt */
   if (!loewe.lk) {
-    const w = 0.04 * L, l = 0.08 * L;
-    const lp = `M${r(-w / 2)} 0 C${r(-w * 0.75)} ${r(l * 0.4)} ${r(-w * 0.2)} ${r(l * 0.8)} 0 ${r(l)} C${r(w * 0.25)} ${r(l * 0.75)} ${r(w * 0.7)} ${r(l * 0.4)} ${r(w / 2)} 0 Z`;
-    const hp = `M${r(w * 0.42)} ${r(l * 0.05)} C${r(w * 0.6)} ${r(l * 0.4)} ${r(w * 0.25)} ${r(l * 0.72)} ${r(w * 0.04)} ${r(l * 0.92)}`;
-    S.def(`<g id="${S.id("lkh")}"><path d="${lp}" fill="#3d3c39" stroke="#121214" stroke-width="${r(0.005 * L)}"/><path d="${hp}" stroke="${SP}" stroke-width="${r(0.008 * L)}" fill="none"/></g>`);
-    S.def(`<g id="${S.id("lkd")}"><path d="${lp}" fill="#252528" stroke="#0e0e10" stroke-width="${r(0.005 * L)}"/><path d="${hp}" stroke="#5a5750" stroke-width="${r(0.006 * L)}" fill="none"/></g>`);
+    /* S-förmige Zottel: breite Wurzel, Spitze rollt sich zur Seite ein */
+    const w = 0.05 * L, l = 0.085 * L;
+    const lp = `M${r(-w / 2)} 0 C${r(-w * 0.8)} ${r(l * 0.45)} ${r(-w * 0.1)} ${r(l * 0.7)} ${r(-w * 0.15)} ${r(l)} C${r(w * 0.3)} ${r(l * 0.92)} ${r(w * 0.25)} ${r(l * 0.62)} ${r(w * 0.55)} ${r(l * 0.4)} C${r(w * 0.7)} ${r(l * 0.25)} ${r(w * 0.55)} ${r(l * 0.08)} ${r(w / 2)} 0 Z`;
+    const hp = `M${r(w * 0.45)} ${r(l * 0.12)} C${r(w * 0.55)} ${r(l * 0.3)} ${r(w * 0.3)} ${r(l * 0.5)} ${r(w * 0.2)} ${r(l * 0.62)}`;
+    const kp = `M${r(-w * 0.3)} ${r(l * 0.15)} C${r(-w * 0.45)} ${r(l * 0.45)} ${r(-w * 0.05)} ${r(l * 0.65)} ${r(-w * 0.1)} ${r(l * 0.85)}`;
+    S.def(`<g id="${S.id("lkh")}"><path d="${lp}" fill="#35342f" stroke="#141416" stroke-width="${r(0.005 * L)}"/><path d="${kp}" stroke="#18181a" stroke-width="${r(0.005 * L)}" fill="none"/><path d="${hp}" stroke="#7a756a" stroke-width="${r(0.007 * L)}" fill="none"/></g>`);
+    S.def(`<g id="${S.id("lkd")}"><path d="${lp}" fill="#242427" stroke="#0e0e10" stroke-width="${r(0.005 * L)}"/><path d="${kp}" stroke="#101012" stroke-width="${r(0.005 * L)}" fill="none"/></g>`);
+    S.def(`<g id="${S.id("lks")}"><path d="${lp}" fill="#3a3934" stroke="#141416" stroke-width="${r(0.005 * L)}"/><path d="${hp}" stroke="${SP}" stroke-width="${r(0.008 * L)}" fill="none"/></g>`);
     loewe.lk = true;
   }
-  const locke = (x, y, grad, sc, hell) => `<use href="#${S.id(hell ? "lkh" : "lkd")}" transform="translate(${P(x, y)}) rotate(${Math.round(grad)}) scale(${sc.toFixed(2)})"/>`;
+  const locke = (x, y, grad, sc, hell) => { const v = hell ? (z() < 0.25 ? "lks" : "lkh") : "lkd", sx = z() < 0.5 ? -sc : sc; return `<use href="#${S.id(v)}" transform="translate(${P(x, y)}) rotate(${Math.round(grad)}) scale(${sx.toFixed(2)} ${sc.toFixed(2)})"/>`; };
   let g = "";
   /* Schwanz mit Quaste, um die Hinterpranke gelegt */
   g += `<path d="M${P(-0.47, 0.1)} C${P(-0.62, 0.05)} ${P(-0.52, 0)} ${P(-0.3, 0.012)} S${P(-0.12, 0.02)} ${P(-0.06, 0.03)}" stroke="${MI}" stroke-width="${r(0.026 * L)}" fill="none" stroke-linecap="round"/>`;
@@ -871,7 +875,7 @@ function loewe(L, wach, dir) {
   g += bein(0.035, D, false, 0.57);
   if (wach) g += bein(0, EISEN, true);
   /* Mähne: Lockenkranz um den Kopf, Zotteln fallen schräg über Schulter und Brust bis auf das Vorderbein */
-  const poly = wach ? [[0.22, 0.64], [0.12, 0.58], [0.04, 0.45], [0.0, 0.32], [0.02, 0.2], [0.09, 0.13], [0.19, 0.095], [0.29, 0.08], [0.36, 0.14], [0.39, 0.28], [0.37, 0.48], [0.31, 0.61]]
+  const poly = wach ? [[0.24, 0.66], [0.15, 0.58], [0.09, 0.46], [0.06, 0.34], [0.08, 0.25], [0.15, 0.2], [0.23, 0.16], [0.31, 0.135], [0.37, 0.17], [0.4, 0.28], [0.38, 0.45], [0.36, 0.62], [0.31, 0.67]]
     : [[0.2, 0.44], [0.1, 0.4], [0.02, 0.3], [0.0, 0.19], [0.06, 0.12], [0.16, 0.09], [0.26, 0.1], [0.31, 0.2], [0.31, 0.34], [0.27, 0.43]];
   const mx = wach ? 0.2 : 0.16, my = wach ? 0.36 : 0.26;
   const innen = (x, y) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
@@ -888,8 +892,8 @@ function loewe(L, wach, dir) {
   }
   m += `<path d="M${poly.map(([x, y]) => P(x, y)).join(" L")} Z" fill="${D}"/>`;
   /* innere Reihen von unten nach oben: die oberen Locken liegen über den unteren */
-  for (let y = poly.reduce((a, q) => Math.min(a, q[1]), 9) + 0.05; y < 0.66; y += 0.042) {
-    for (let x = -0.02 + z() * 0.03; x < 0.42; x += 0.043) {
+  for (let y = poly.reduce((a, q) => Math.min(a, q[1]), 9) + 0.05; y < 0.66; y += 0.05) {
+    for (let x = 0.02 + z() * 0.03; x < 0.42; x += 0.05) {
       const yy = y + (z() - 0.5) * 0.015;
       if (!innen(x, yy)) continue;
       m += locke(x, yy, 18 * dir + (z() - 0.5) * 20, 0.9 + z() * 0.3, yy > my - 0.06 || (x > mx && z() < 0.6));
@@ -898,9 +902,10 @@ function loewe(L, wach, dir) {
   g += m;
   /* Kopf: lange, breite Schnauze, schwerer Unterkiefer, Braue mit Licht, Auge im Schatten, Kinnlocken */
   const kopf = (ox, oy, rot) => {
-    const Q = (x, y) => { const c = Math.cos(rot), sn = Math.sin(rot); return P(x * c - y * sn + ox, x * sn + y * c + oy); };
-    let h = `<path d="M${Q(-0.03, 0.115)} Q${Q(-0.06, 0.16)} ${Q(-0.01, 0.16)} Q${Q(0.02, 0.15)} ${Q(0.02, 0.12)} Z" fill="${MI}"/>`;   /* Ohr im Lockenkranz */
-    h += `<path d="M${Q(-0.1, 0.06)} C${Q(-0.08, 0.12)} ${Q(-0.02, 0.135)} ${Q(0.04, 0.125)} C${Q(0.08, 0.12)} ${Q(0.1, 0.1)} ${Q(0.115, 0.075)} C${Q(0.15, 0.06)} ${Q(0.19, 0.04)} ${Q(0.205, 0.02)} Q${Q(0.218, 0)} ${Q(0.207, -0.025)} C${Q(0.2, -0.04)} ${Q(0.19, -0.05)} ${Q(0.182, -0.05)} C${Q(0.188, -0.07)} ${Q(0.172, -0.1)} ${Q(0.14, -0.106)} C${Q(0.09, -0.116)} ${Q(0.03, -0.11)} ${Q(0, -0.09)} C${Q(-0.04, -0.07)} ${Q(-0.08, -0.02)} ${Q(-0.1, 0.06)} Z" fill="${EISEN}"/>`;
+    const Q = (x, y) => { const c = Math.cos(rot), sn = Math.sin(rot); x *= 1.15; y *= 1.15; return P(x * c - y * sn + ox, x * sn + y * c + oy); };
+    let h = `<path d="M${Q(-0.1, 0.06)} C${Q(-0.08, 0.12)} ${Q(-0.02, 0.135)} ${Q(0.04, 0.125)} C${Q(0.08, 0.12)} ${Q(0.1, 0.1)} ${Q(0.115, 0.075)} C${Q(0.15, 0.06)} ${Q(0.19, 0.04)} ${Q(0.205, 0.02)} Q${Q(0.218, 0)} ${Q(0.207, -0.025)} C${Q(0.2, -0.04)} ${Q(0.19, -0.05)} ${Q(0.182, -0.05)} C${Q(0.188, -0.07)} ${Q(0.172, -0.1)} ${Q(0.14, -0.106)} C${Q(0.09, -0.116)} ${Q(0.03, -0.11)} ${Q(0, -0.09)} C${Q(-0.04, -0.07)} ${Q(-0.08, -0.02)} ${Q(-0.1, 0.06)} Z" fill="${EISEN}"/>`;
+    /* Lichtfläche auf Stirn und Nasenrücken (Licht von rechts oben) */
+    h += `<path d="M${Q(-0.02, 0.115)} C${Q(0.04, 0.125)} ${Q(0.09, 0.105)} ${Q(0.12, 0.075)} C${Q(0.16, 0.058)} ${Q(0.19, 0.038)} ${Q(0.2, 0.02)} C${Q(0.16, 0.02)} ${Q(0.11, 0.035)} ${Q(0.07, 0.06)} C${Q(0.04, 0.08)} ${Q(0.01, 0.09)} ${Q(-0.02, 0.115)} Z" fill="#6e6a60" opacity=".45"/>`;
     /* Schatten unter der Braue, Braue mit Spitzlicht, Wangenmuskel */
     h += `<path d="M${Q(0.02, 0.075)} C${Q(0.06, 0.088)} ${Q(0.1, 0.082)} ${Q(0.12, 0.068)} L${Q(0.11, 0.045)} C${Q(0.08, 0.055)} ${Q(0.05, 0.055)} ${Q(0.02, 0.05)} Z" fill="#111113"/>`;
     h += `<path d="M${Q(0.0, 0.08)} C${Q(0.05, 0.1)} ${Q(0.1, 0.092)} ${Q(0.125, 0.07)}" stroke="${SP}" stroke-width="${r(0.009 * L)}" fill="none"/>`;
@@ -912,7 +917,10 @@ function loewe(L, wach, dir) {
     h += `<path d="M${Q(0.188, 0.012)} L${Q(0.214, -0.004)} Q${Q(0.216, -0.022)} ${Q(0.205, -0.03)} L${Q(0.18, -0.022)} Z" fill="#0e0e10"/>`;
     h += `<path d="M${Q(0.185, -0.04)} C${Q(0.16, -0.04)} ${Q(0.12, -0.045)} ${Q(0.09, -0.058)}" stroke="#0e0e10" stroke-width="${r(0.008 * L)}" fill="none"/><path d="M${Q(0.19, -0.035)} C${Q(0.17, -0.015)} ${Q(0.14, -0.012)} ${Q(0.12, -0.025)}" stroke="${HL}" stroke-width="${r(0.006 * L)}" fill="none"/>`;
     h += `<path d="M${Q(0.17, -0.07)} C${Q(0.13, -0.09)} ${Q(0.06, -0.095)} ${Q(0.02, -0.08)}" stroke="#121214" stroke-width="${r(0.007 * L)}" fill="none" opacity=".6"/>`;
-    for (let i = 0; i < 4; i++) { const [cx, cy] = Q(0.14 - i * 0.03, -0.1 - (i % 2) * 0.006).split(" "); h += `<use href="#${S.id(i % 2 ? "lkd" : "lkh")}" transform="translate(${cx} ${cy}) rotate(${Math.round(dir * (10 + i * 6))}) scale(.55)"/>`; }
+    /* Kinnbart: drei kurze, eingerollte Locken unter dem Kinn */
+    h += `<path d="M${Q(0.15, -0.1)} Q${Q(0.155, -0.13)} ${Q(0.13, -0.128)} Q${Q(0.12, -0.14)} ${Q(0.1, -0.128)} Q${Q(0.085, -0.138)} ${Q(0.07, -0.122)} Q${Q(0.055, -0.125)} ${Q(0.05, -0.105)} Z" fill="${MI}" stroke="#0e0e10" stroke-width="${r(0.005 * L)}"/><path d="M${Q(0.13, -0.112)} q${r(dir * -0.004 * L)} ${r(0.012 * L)} ${r(dir * -0.012 * L)} ${r(0.014 * L)} M${Q(0.098, -0.112)} q${r(dir * -0.004 * L)} ${r(0.012 * L)} ${r(dir * -0.012 * L)} ${r(0.012 * L)}" stroke="#0e0e10" stroke-width="${r(0.004 * L)}" fill="none"/>`;
+    /* Lockenkranz: einige Locken liegen über dem Hinterkopf und rahmen das Gesicht */
+    for (let i = 0; i < 9; i++) { const a = Math.PI * (0.42 + i * 0.13), [cx, cy] = Q(Math.cos(a) * 0.115 - 0.01, Math.sin(a) * 0.12 + 0.01).split(" ").map(Number); h += `<use href="#${S.id(i % 3 ? "lkd" : "lkh")}" transform="translate(${cx} ${cy}) rotate(${Math.round(dir * (Math.atan2(-Math.cos(a), -Math.sin(a) - 0.8) * 180 / Math.PI))}) scale(.8)"/>`; }
     return h;
   };
   g += wach ? kopf(0.35, 0.45, 0.05) : kopf(0.36, 0.205, -0.12);
@@ -925,49 +933,66 @@ function loewe(L, wach, dir) {
 function sockelP(lat, d, breite, tiefe, hoehe) {
   const [ox, oy] = proj(lat, d);
   const Q = (la, dd, h) => { const [xx, yy] = proj(la, dd, h); return [r(xx - ox), r(yy - oy)]; };
-  const l0 = lat - breite / 2, l1 = lat + breite / 2, d0 = d, d1 = d + tiefe, innen = lat < 0 ? l1 : l0;
+  const l0 = lat - breite / 2, l1 = lat + breite / 2, d0 = d, d1 = d + tiefe, innen = lat < 0 ? l1 : l0, aus = lat < 0 ? 0.06 : -0.06;
+  const zz = zufall(Math.round(lat * 10) + 50);
+  /* drei Lagen verschieden hoch, Läuferverband (Stoßfugen nie übereinander) */
+  const lagen = [0.1, 0.36, 0.56, hoehe - 0.12];
   let g = "";
-  /* Seitenfläche zur Mitte hin (im Licht rechts bzw. Schatten links) */
-  g += `<path d="${pfad([Q(innen, d0, 0), Q(innen, d1, 0), Q(innen, d1, hoehe), Q(innen, d0, hoehe)])}" fill="${lat < 0 ? "#d9cdb0" : "#8f8670"}"/>`;
+  /* Seitenfläche zur Mitte (rechts im Licht, links im Schatten), Fugen laufen ums Eck weiter */
+  g += `<path d="${pfad([Q(innen, d0, 0), Q(innen, d1, 0), Q(innen, d1, hoehe), Q(innen, d0, hoehe)])}" fill="${lat < 0 ? "#d6caac" : "#8f8670"}"/>`;
+  let sf = "";
+  for (const h of lagen.slice(1, 3)) sf += `M${Q(innen, d0, h).join(" ")} L${Q(innen, d1, h).join(" ")} `;
+  sf += `M${Q(innen, d0 + tiefe * 0.55, lagen[0]).join(" ")} L${Q(innen, d0 + tiefe * 0.55, lagen[1]).join(" ")} M${Q(innen, d0 + tiefe * 0.3, lagen[1]).join(" ")} L${Q(innen, d0 + tiefe * 0.3, lagen[2]).join(" ")} M${Q(innen, d0 + tiefe * 0.7, lagen[2]).join(" ")} L${Q(innen, d0 + tiefe * 0.7, lagen[3]).join(" ")}`;
+  g += `<path d="${sf}" stroke="#7a705c" stroke-width=".35" fill="none"/>`;
   /* Vorderseite */
   const vf = [Q(l0, d0, 0), Q(l1, d0, 0), Q(l1, d0, hoehe), Q(l0, d0, hoehe)];
   g += `<path d="${pfad(vf)}" fill="${S.lg("sockelst", [[0, "#a49880"], [0.6, "#c9bd9f"], [1, "#ddd1b4"]], 0, 0, 1, 0)}"/>`;
-  const [ax, ay] = vf[0], [bx] = vf[1], [, cy] = vf[2];
-  const zz = zufall(Math.round(lat * 10) + 50);
-  let fu = `M${ax} ${r((ay + cy) / 2)} H${bx} `;
-  for (const t of [0.33, 0.7]) fu += `M${r(ax + (bx - ax) * t)} ${ay} V${r((ay + cy) / 2)} `;
-  fu += `M${r(ax + (bx - ax) * 0.5)} ${r((ay + cy) / 2)} V${cy} `;
-  g += `<path d="${fu}" stroke="#8a7e66" stroke-width=".35"/>`;
-  for (let i = 0; i < 6; i++) g += `<ellipse cx="${r(ax + zz() * (bx - ax))}" cy="${r(cy + zz() * (ay - cy))}" rx="${r(1 + zz() * 2.5)}" ry="${r(0.5 + zz())}" fill="${zz() < 0.6 ? "#7a705e" : "#efe6d0"}" opacity=".25"/>`;
-  g += `<path d="M${r(ax + 2)} ${cy} l1.2 1 l1 -.6 Z M${r(bx - 5)} ${ay} l1.4 -1 l.8 1 Z" fill="#6e6452"/>`;
-  /* Deckgesims (zwei Stufen) und Oberseite */
+  const [ax, ay] = vf[0], [bx] = vf[1], [, cy] = vf[2], Hh = (h) => r(ay + (cy - ay) * h / hoehe), Xb = (t) => r(ax + (bx - ax) * t);
+  let fu = "";
+  for (const h of lagen.slice(1, 3)) fu += `M${ax} ${Hh(h)} H${bx} `;
+  const stoss = [[0.28, 0.71], [0.12, 0.5, 0.88], [0.36, 0.78]];
+  stoss.forEach((ts, i) => { for (const t of ts) fu += `M${Xb(t + (zz() - 0.5) * 0.04)} ${Hh(lagen[i])} V${Hh(lagen[i + 1])} `; });
+  g += `<path d="${fu}" stroke="#857a62" stroke-width=".4" fill="none"/><path d="${fu.replace(/M([\d.]+) /g, (m0, xv) => `M${r(+xv + 0.35)} `)}" stroke="#efe6cf" stroke-width=".2" fill="none" opacity=".5"/>`;
+  /* Tonwerte: Spritzwasser und grüner Moosschleier am Fuß, einzelne Steine etwas heller oder dunkler */
+  g += `<path d="${pfad([Q(l0, d0, 0.1), Q(l1, d0, 0.1), Q(l1, d0, 0.3), Q(l0, d0, 0.3)])}" fill="${S.lg("spritz", [[0, "#5d6a3e", 0], [1, "#5d6a3e", 0.35]], 0, 0, 0, 1)}"/>`;
+  for (let i = 0; i < 3; i++) { const t0 = zz() * 0.7, li = Math.floor(zz() * 3); g += `<rect x="${Xb(t0)}" y="${Hh(lagen[li + 1])}" width="${r((bx - ax) * (0.12 + zz() * 0.15))}" height="${r(Hh(lagen[li]) - Hh(lagen[li + 1]))}" fill="${zz() < 0.5 ? "#7a705e" : "#f2e9d4"}" opacity=".16"/>`; }
+  /* bestoßene Kanten an drei Ecken */
+  g += `<path d="M${ax} ${r(cy + 2)} l1.6 -1.4 l.4 2.4 Z M${r(bx - 0.2)} ${r(ay - 3)} l-1.4 1 l1.3 1.2 Z M${Xb(0.5)} ${r(cy + 0.1)} l1.5 .9 l1.1 -.9 Z" fill="#8a7e66"/>`;
+  /* Deckgesims ums Eck (vorn und an der Seite) und Oberseite */
   const tp = [Q(l0 - 0.06, d0 - 0.06, hoehe), Q(l1 + 0.06, d0 - 0.06, hoehe), Q(l1 + 0.06, d1 + 0.06, hoehe), Q(l0 - 0.06, d1 + 0.06, hoehe)];
+  g += `<path d="${pfad([Q(innen + aus, d0 - 0.06, hoehe - 0.12), Q(innen + aus, d1 + 0.06, hoehe - 0.12), Q(innen + aus, d1 + 0.06, hoehe), Q(innen + aus, d0 - 0.06, hoehe)])}" fill="${lat < 0 ? "#efe6cf" : "#a39a84"}"/>`;
   g += `<path d="${pfad([Q(l0 - 0.06, d0 - 0.06, hoehe - 0.12), Q(l1 + 0.06, d0 - 0.06, hoehe - 0.12), tp[1], tp[0]])}" fill="#e6dcc2"/>`;
-  g += `<path d="M${Q(l0 - 0.06, d0 - 0.06, hoehe - 0.12).join(" ")} L${Q(l1 + 0.06, d0 - 0.06, hoehe - 0.12).join(" ")}" stroke="#6e6452" stroke-width=".5"/>`;
+  g += `<path d="M${Q(l0 - 0.06, d0 - 0.06, hoehe - 0.12).join(" ")} L${Q(l1 + 0.06, d0 - 0.06, hoehe - 0.12).join(" ")} L${Q(innen + aus, d1 + 0.06, hoehe - 0.12).join(" ")}" stroke="#6e6452" stroke-width=".5" fill="none"/>`;
   g += `<path d="${pfad(tp)}" fill="#d6cbb0"/>`;
-  /* Fußplatte */
+  /* Fußplatte, ebenfalls ums Eck */
+  g += `<path d="${pfad([Q(innen + aus * 0.8, d0 - 0.05, 0), Q(innen + aus * 0.8, d1 + 0.05, 0), Q(innen + aus * 0.8, d1 + 0.05, 0.1), Q(innen + aus * 0.8, d0 - 0.05, 0.1)])}" fill="${lat < 0 ? "#b5aa90" : "#827a66"}"/>`;
   g += `<path d="${pfad([Q(l0 - 0.05, d0 - 0.05, 0), Q(l1 + 0.05, d0 - 0.05, 0), Q(l1 + 0.05, d0 - 0.05, 0.1), Q(l0 - 0.05, d0 - 0.05, 0.1)])}" fill="#9a8f78"/>`;
   return { svg: g, oben: r(Q(lat, d0 + tiefe * 0.4, hoehe)[1]) };
 }
 {
   const d = 13.6, lat = -3.4, [x, y] = proj(lat, d), s = km(y), L = 2.0 * s;
   const so = sockelP(lat, d, 2.5, 1.1, 0.8);
-  /* ein Kind sitzt rittlings auf dem wachen Löwen (Kinder klettern gern auf die Löwen) */
-  const reit = Object.assign({}, POSEN.sitzen, { huefteL: { vor: 30, seit: 14, dreh: -4 }, knieL: 26, huefteR: { vor: 26, seit: 12, dreh: -6 }, knieR: 22, schulterL: { vor: 40, seit: 20 }, ellbogenL: 30, schulterR: { vor: 120, seit: 30 }, ellbogenR: 10, fingerR: 0.1 });
-  const kd = figur({ id: "lbk_reiter", alter: "kind", geschlecht: "m", pose: reit, blick: 70, frisur: "kurz", haarfarbe: "braun", haut: "mittel", laecheln: true,
-    kleidung: { oberteil: { stueck: "tshirt", farbe: "#2f8fbf" }, unterteil: { stueck: "shorts", farbe: "#3d5f8c" }, schuhe: { stueck: "turnschuh" } } }, 1.1 * s);
-  const ry = so.oben - 0.3 * L, sitzY = kd.z.punkte.gesaess[1] * kd.k;
-  const k = so.svg + `<g transform="translate(0 ${so.oben})">${loewe(L, true, 1)}</g>` + `<g transform="translate(${r(-0.08 * L)} ${r(ry - sitzY)})">${kd.svg}</g>`;
+  /* ein Kind sitzt rittlings auf dem Rücken des wachen Löwen: die Beine hängen über die Flanke, die Hände in der Mähne */
+  const reit = Object.assign({}, POSEN.sitzen, { lende: 4, brust: 8, nacken: 2, kopf: -8,
+    huefteL: { vor: 48, seit: 4, dreh: 0 }, knieL: 50, fussL: 10, huefteR: { vor: 46, seit: 4, dreh: 0 }, knieR: 48, fussR: 10,
+    schulterL: { vor: 62, seit: 10 }, ellbogenL: 34, unterarmL: -20, handL: 0, fingerL: 0.6, schulterR: { vor: 70, seit: 12 }, ellbogenR: 30, unterarmR: -20, handR: 0, fingerR: 0.6 });
+  const kd = figur({ id: "lbk_reiter", alter: "kind", geschlecht: "m", pose: reit, blick: 72, frisur: "kurz", haarfarbe: "braun", haut: "mittel", laecheln: true,
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "#2f8fbf" }, unterteil: { stueck: "shorts", farbe: "#3d5f8c" }, schuhe: { stueck: "turnschuh" } } }, 1.05 * s);
+  const gs = kd.z.punkte.gesaess, sitzX = gs[0] * kd.k, sitzY = gs[1] * kd.k;
+  const sx = r(-0.07 * L - sitzX), sy = r(so.oben - 0.285 * L - sitzY);
+  REITER = { x: x + sx + sitzX, y: y + sy + sitzY, hand: [kd.z.handL, kd.z.handR].map((h2) => [r(x + sx + h2.x * kd.k), r(y + sy + h2.y * kd.k)]), L, ox: x, oy: y + so.oben };
+  const k = so.svg + `<g transform="translate(0 ${so.oben})">${loewe(L, true, 1)}</g>` + `<g transform="translate(${sx} ${sy})">${kd.svg}</g>`;
   schlag(lat, d, 1.95, 2.5, 0.5);
-  S.teil({ id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", x, y, steht: true, kunst: licht(k),
-    tipp: "Vor dem Holstentor liegen zwei Löwen aus Eisen. Einer wacht, der andere schläft. Kinder klettern gern auf sie." });
+  if (process.env.DBG) console.error("REITER", JSON.stringify(REITER));
+  S.teil({ id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", x, y, steht: true, kunst: k,
+    tipp: "Vor dem Holstentor liegen zwei Löwen aus Eisen. Einer wacht, der andere schläft. Kinder setzen sich gern auf sie." });
 }
 {
   const d = 13.6, lat = 4.6, [x, y] = proj(lat, d), s = km(y), L = 2.0 * s;
   const so = sockelP(lat, d, 2.5, 1.1, 0.8);
   const k = so.svg + `<g transform="translate(0 ${so.oben})">${loewe(L, false, -1)}</g>`;
   schlag(lat, d, 1.6, 2.5, 0.5);
-  S.teil({ id: "loewe2", de: "der schlafende Löwe", syl: "SCHLA-fen-de LÖ-we", it: "il leone che dorme", itSyl: "le-O-ne che DOR-me", en: "sleeping lion", x, y, steht: true, kunst: licht(k),
+  S.teil({ id: "loewe2", de: "der schlafende Löwe", syl: "SCHLA-fen-de LÖ-we", it: "il leone che dorme", itSyl: "le-O-ne che DOR-me", en: "sleeping lion", x, y, steht: true, kunst: k,
     tipp: "Dieser Löwe schläft. Der andere Löwe passt auf ihn auf." });
 }
 

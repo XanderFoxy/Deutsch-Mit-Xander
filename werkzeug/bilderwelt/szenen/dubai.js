@@ -732,8 +732,8 @@ const tischUnter = [];
   const f = FIG.tourist, u = uAt(f.d), y = yAt(f.d, DECK);
   const foto = {
     lende: 1, brust: -3, nacken: 2, kopf: -6,
-    schulterL: { vor: 150, seit: 12 }, ellbogenL: 20, unterarmL: 40, handL: 10, fingerL: 0.5,
-    schulterR: { vor: 148, seit: 14 }, ellbogenR: 22, unterarmR: 40, handR: 10, fingerR: 0.5,
+    schulterL: { vor: 150, seit: 8 }, ellbogenL: 20, unterarmL: 40, handL: 10, fingerL: 0.95,
+    schulterR: { vor: 148, seit: 10 }, ellbogenR: 22, unterarmR: 40, handR: 10, fingerR: 0.95,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -10 }, knieR: 6, fussR: 4,
   };
   const m = B.mensch({ id: "dxb_tour", geschlecht: "m", pose: foto, blick: 186, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
@@ -741,17 +741,21 @@ const tischUnter = [];
   S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: f.x, y: r(y), kunst: vereinfache(m.svg, 1.8),
     tipp: "Der Tourist trägt eine lange Hose. In der Mall sollen Schultern und Knie bedeckt sein – aus Respekt." });
   /* Das Handy (quer, 15 × 7,5 cm): der Bildschirm zeigt zu uns – darauf Turm und Fontänen */
+  /* Handgelenke → das Handy sitzt in den gekrümmten Händen, mittig über den Handgelenken (Hände dahinter) */
   const hs = [m.z.handL, m.z.handR].filter(Boolean);
-  const hx = f.x + hs.reduce((a, h) => a + h.x, 0) / hs.length * m.k, hy = y + Math.min(...hs.map((h) => h.y)) * m.k;
-  const pw = 0.15 * u * 1.15, ph = 0.075 * u * 1.15;
+  const hx = f.x + hs.reduce((a, h) => a + h.x, 0) / hs.length * m.k, hy = y + (hs.reduce((a, h) => a + h.y, 0) / hs.length - 9) * m.k;
+  const pw = 0.15 * u * 1.35, ph = 0.075 * u * 1.35;
   let k = `<rect x="${r(-pw / 2)}" y="${r(-ph / 2)}" width="${r(pw)}" height="${r(ph)}" rx=".5" fill="#17181b"/>`;
   k += `<rect x="${r(-pw / 2 + 0.3)}" y="${r(-ph / 2 + 0.3)}" width="${r(pw - 0.6)}" height="${r(ph - 0.6)}" fill="${S.lg("bildschirm", [[0, "#7fb0dc"], [0.7, "#d9e6ee"], [1, "#4f8a9a"]])}"/>`;
   k += `<path d="M.3 ${r(ph / 2 - 0.5)} L.3 ${r(-ph / 2 + 0.5)} L.5 ${r(ph / 2 - 0.5)} Z" fill="#7d93a8"/>`;
   for (const [ox, h] of [[-1.6, 1.2], [-0.9, 1.6], [-0.2, 1.1], [1, 1.5], [1.7, 1]]) k += `<rect x="${r(ox)}" y="${r(ph / 2 - 0.45 - h)}" width=".3" height="${h}" fill="#ffffff"/>`;
   k += `<rect x="${r(-pw / 2 + 0.3)}" y="${r(-ph / 2 + 0.3)}" width=".8" height=".5" rx=".2" fill="#e0453a"/>`;
-  /* Hände greifen die Schmalseiten: Daumen und Finger legen sich über den Rand */
-  for (const sd of [-1, 1]) k += `<ellipse cx="${r(sd * (pw / 2 + 0.2))}" cy=".3" rx=".75" ry="1.15" fill="#e2b08c"/><path d="M${r(sd * (pw / 2 - 0.5))} ${r(-ph / 2 + 0.2)} l${r(sd * 0.9)} 0 M${r(sd * (pw / 2 - 0.4))} ${r(ph / 2 - 0.3)} l${r(sd * 0.8)} 0" stroke="#e2b08c" stroke-width=".55" stroke-linecap="round"/>`;
-  S.teil({ oben: true, id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: r(hx), y: r(hy - 2.3), kunst: k + flaeche(-5, -4, 10, 8),
+  /* Griff: Daumen biegen sich über die oberen Gehäuseecken, hinten an der Unterkante drei Fingerkuppen je Seite */
+  for (const sd of [-1, 1]) {
+    k += `<path d="M${r(sd * (pw / 2 + 0.25))} ${r(ph / 2 - 0.2)} Q${r(sd * (pw / 2 + 0.55))} ${r(-ph / 2 + 0.2)} ${r(sd * (pw / 2 - 0.55))} ${r(-ph / 2 + 0.35)}" stroke="#e9bf9c" stroke-width=".7" fill="none" stroke-linecap="round"/><path d="M${r(sd * (pw / 2 + 0.25))} ${r(ph / 2 - 0.2)} Q${r(sd * (pw / 2 + 0.55))} ${r(-ph / 2 + 0.2)} ${r(sd * (pw / 2 - 0.55))} ${r(-ph / 2 + 0.35)}" stroke="#a07c62" stroke-width=".15" fill="none" transform="translate(${r(sd * 0.3)} 0)"/>`;
+    for (let j = 0; j < 3; j++) k += `<ellipse cx="${r(sd * (pw / 2 - 0.5 - j * 0.6))}" cy="${r(ph / 2 + 0.15)}" rx=".3" ry=".24" fill="#e9bf9c" stroke="#a07c62" stroke-width=".15"/>`;
+  }
+  S.teil({ oben: true, id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: r(hx), y: r(hy), kunst: k + flaeche(-5, -4, 10, 8),
     tipp: "Fast alle filmen die Show mit dem Handy." });
 }
 

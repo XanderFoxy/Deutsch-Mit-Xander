@@ -111,11 +111,6 @@ S.hinten(wolke(52, 30, 62, [[.2, 6], [.45, 10], [.72, 8], [.9, 6], [1, 4]]));
 /* =====================================================================
    1 — DER MASCHPARK (alte Bäume links und rechts, Rasen am Nordufer)
    ===================================================================== */
-/* Himmel in Bildkoordinaten: Lücken im Laub zeigen genau die Himmelsfarbe ihrer Höhe */
-S.def(`<linearGradient id="${S.id("himmelU")}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${HOR + 6}"><stop offset="0" stop-color="#4278bb"/><stop offset=".55" stop-color="#8ab3da"/><stop offset=".9" stop-color="#d0e0ec"/><stop offset="1" stop-color="#e9ede8"/></linearGradient>`);
-const HIMMEL_U = `url(#${S.id("himmelU")})`;
-/* unregelmäßige Lücke im Laub (gezackt, vom Laub umrandet) */
-const luecke = (x, y, w, h, seed) => { const z = zufall(seed); let d = ""; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5, f = i % 2 ? .72 + z() * .12 : .9 + z() * .2; d += (i ? " L" : "M") + `${r(x + Math.cos(a) * w * f)} ${r(y + Math.sin(a) * h * f)}`; } return `<path d="${d} Z" fill="${HIMMEL_U}"/>`; };
 /* Laubballen: flach gemalt wie die Dächer — ein gefingerter Blattrand (gemeinsame Form per <use>), drei Tonstufen:
    Schattenzone unten rechts mit Kontaktschatten, Mittelton, Lichtkappe oben links (Sonne Südwest). Kein Verlauf, kein Glanz. */
 for (let v = 0; v < 3; v++) {
@@ -136,7 +131,7 @@ const KRONE = {
   orange: ["#eca862", "#c6702e", "#7a3a18"],
 };
 const ballen = (lap, fam, ok = (x, rr) => rr) => {
-  const [L, M, D] = KRONE[fam], u = (x, y, rr, f, v) => { const q = ok(x, rr); return q > .8 ? `<use href="#${S.id("lap" + v)}" transform="translate(${r(x)} ${r(y)}) scale(${(q).toFixed(2)})" fill="${f}"/>` : ""; };
+  const [L, M, D] = KRONE[fam], u = (x, y, rr, f, v) => { const q = Math.min(ok(x, rr * 1.16), y + 1.5) / 1.16; return q > .8 ? `<use href="#${S.id("lap" + v)}" transform="translate(${r(x)} ${r(y)}) scale(${(q).toFixed(2)})" fill="${f}"/>` : ""; };
   let g = "";
   lap.sort((p, q) => p[1] - q[1]);
   lap.forEach(([x, y, rr], i) => { g += u(x + rr * .12, y + rr * .16, rr, D, i % 3) + u(x, y, rr * .94, M, (i + 1) % 3) + u(x - rr * .26, y - rr * .28, rr * .5, L, (i + 2) % 3); });
@@ -502,46 +497,39 @@ const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} $
     const glatt = (q) => { let d = `M${r(q[0][0])} ${r(q[0][1])}`; for (let i = 1; i < q.length - 1; i++) d += ` Q${r(q[i][0])} ${r(q[i][1])} ${r((q[i][0] + q[i + 1][0]) / 2)} ${r((q[i][1] + q[i + 1][1]) / 2)}`; return d + ` L${r(q[q.length - 1][0])} ${r(q[q.length - 1][1])}`; };
     const e = pts[pts.length - 1];
     const seite = (q) => q.reduce((s0, v) => s0 + v[1] + v[0] * .6, 0), oben = seite(L) < seite(R) ? L : R;
-    return `<path d="${glatt(L)} L${r(e[0])} ${r(e[1])} ${glatt(R.slice().reverse()).replace("M", "L")} Z" fill="#54402f"/><path d="${glatt(oben)}" stroke="#8c7460" stroke-width="${r(Math.max(.3, w1 * .25))}" fill="none" opacity=".7"/>`;
+    return `<path d="${glatt(L)} L${r(e[0])} ${r(e[1])} ${glatt(R.slice().reverse()).replace("M", "L")} Z" fill="${STAMM}"/><path d="${glatt(oben)}" stroke="#8c7460" stroke-width="${r(Math.max(.3, w1 * .25))}" fill="none" opacity=".7"/>`;
   };
-  /* Stamm mit Wurzelanlauf */
-  k += `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .3 * m)} ${r(p[1] - 4 * m)} ${r(p[0] - .6 * m)} ${r(p[1] - 6 * m)} ${r(p[0] - 22)} 52 L${r(p[0] - 10)} 50 C${r(p[0] + .1 * m)} ${r(p[1] - 6 * m)} ${r(p[0] + .38 * m)} ${r(p[1] - 4 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0)}"/>`;
-  /* Borke der Rosskastanie: leicht gedreht, schuppig — schräge, gegeneinander versetzte Risse, Licht links */
+  /* Stamm mit Wurzelanlauf, oben gerundet an der Gabel */
+  const STAMM = S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0);
+  k += `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .32 * m)} ${r(p[1] - 3 * m)} ${r(p[0] - .52 * m)} 100 ${r(p[0] - 17)} 76 Q${r(p[0] - 7)} 70 ${r(p[0] + 4)} 77 C${r(p[0] + .3 * m)} 100 ${r(p[0] + .38 * m)} ${r(p[1] - 3 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${STAMM}"/>`;
+  /* Borke der Rosskastanie: sechs lange, leicht gedrehte Rippen; Risse versetzt und verschieden lang, Licht links */
   {
-    const yU = p[1] - 1.2 * m, yO = 78;
+    const yU = p[1] - 1.3 * m, yO = 84, xl = (t) => p[0] - .42 * m + (p[0] - 15 - (p[0] - .42 * m)) * t, xr = (t) => p[0] + .48 * m + (p[0] + 2 - (p[0] + .48 * m)) * t;
     let dunkel = "", hell = "";
-    for (let j = 0, y = yU; y > yO; j++, y -= 3.4 + rnd() * 1.2) {
-      const t = (yU - y) / (yU - yO), xl = p[0] - .4 * m + (-.2 * m - 4) * t * .3 + 1.4, xr = p[0] + .46 * m - (.46 * m + 2) * t * .45 - 1.4;
-      for (let x = xl + (j % 2 ? 2.2 : 0) + rnd(); x < xr - 1; x += 4.4 + rnd() * 1.6) {
-        const l = 2.6 + rnd() * 1.8, sk = .9 + rnd() * .5;
-        dunkel += `M${r(x)} ${r(y)} q${r(sk * .4)} ${r(-l / 2)} ${r(sk)} ${r(-l)} `;
-        hell += `M${r(x - .5)} ${r(y - .2)} q${r(sk * .4)} ${r(-l / 2)} ${r(sk)} ${r(-l + .4)} `;
-      }
+    for (let i = 0; i < 6; i++) {
+      let d = "", h = "";
+      for (let j = 0; j <= 8; j++) { const t = j / 8, y = yU + (yO - yU) * t, f = (i + .6) / 6.6 + Math.sin(t * 2.6 + i) * .035 - t * .05, x = xl(t) + (xr(t) - xl(t)) * f; d += (j ? " L" : "M") + `${r(x)} ${r(y)}`; h += (j ? " L" : "M") + `${r(x - .9)} ${r(y)}`; }
+      dunkel += d + " "; hell += h + " ";
     }
-    k += `<path d="${hell}" stroke="#a48e78" stroke-width=".35" fill="none" opacity=".45"/><path d="${dunkel}" stroke="#2a1f17" stroke-width=".6" fill="none" opacity=".6" stroke-linecap="round"/>`;
+    k += `<path d="${hell}" stroke="#a48e78" stroke-width=".7" fill="none" opacity=".4" stroke-dasharray="14 4 22 3 9 5"/><path d="${dunkel}" stroke="#2a1f17" stroke-width=".8" fill="none" opacity=".6" stroke-linecap="round" stroke-dasharray="11 3 18 2.5 7 4 25 3"/>`;
   }
   /* Gabelung bei y ≈ 72: runde Äste mit Wulst, nach links oben, nach oben und nach rechts aus dem Bild */
   const LAUB_HINTER = [[292, 96, 12, 10, "gruen"]];
   const masse = (cx, cy, R, seed, fam) => {
-    const z = zufall(seed), [F, D] = KRONE[fam];
-    const lap = []; for (let i = 0; i < 8; i++) { const a = z() * Math.PI * 2, d = R * (.35 + z() * .45); lap.push([cx + Math.cos(a) * d, cy + Math.sin(a) * d * .7, R * (.38 + z() * .2)]); }
+    const z = zufall(seed), lap = [];
+    for (let i = 0; i < 8; i++) { const a = z() * Math.PI * 2, d = R * (.35 + z() * .45); lap.push([cx + Math.cos(a) * d, cy + Math.sin(a) * d * .7, R * (.38 + z() * .2)]); }
     lap.push([cx, cy, R * .6]);
-    lap.sort((p1, q1) => p1[1] - q1[1]);
-    const ok = (x, y, rr) => { rr = Math.min(rr, x + 1, BR + 1 - x, y + 1); return rr > .8 ? rr : 0; };
-    let g = "";
-    for (const [x, y, rr] of lap) { const q = ok(x + rr * .12, y + rr * .14, rr); if (q) g += `<circle cx="${r(x + rr * .12)}" cy="${r(y + rr * .14)}" r="${r(q)}" fill="${D}"/>`; }
-    for (const [x, y, rr] of lap) { const q = ok(x, y, rr * .96); if (q) g += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(q)}" fill="${F}"/>`; }
-    return g;
+    return ballen(lap.filter(([x, y, rr]) => y + rr > -2), fam, (x, rr) => Math.min(rr, x + 1, BR + 1 - x));
   };
   /* ein Laubballen hängt hinter dem Stamm (am rechten Ast), nicht frei davor */
   k = LAUB_HINTER.map(([cx, cy, R, sd, f]) => masse(cx, cy, R, sd, f)).join("") + k;
-  k += ast([[p[0] - 13, 76], [p[0] - 30, 60], [p[0] - 56, 46], [p[0] - 84, 37], [p[0] - 112, 30]], 10, 2.4);
-  k += ast([[p[0] - 10, 74], [p[0] - 11, 46], [p[0] - 5, 20], [p[0] + 2, -2]], 9, 4);
-  k += ast([[p[0] - 6, 78], [p[0] + 10, 60], [p[0] + 26, 47], [p[0] + 30.6, 43.8]], 8, 4.6);
+  k += ast([[p[0] - 12, 84], [p[0] - 30, 60], [p[0] - 56, 46], [p[0] - 84, 37], [p[0] - 112, 30]], 11, 2.4);
+  k += ast([[p[0] - 7, 84], [p[0] - 10, 46], [p[0] - 5, 20], [p[0] + 2, -2]], 10, 4);
+  k += ast([[p[0] - 2, 86], [p[0] + 10, 60], [p[0] + 26, 47], [p[0] + 30.6, 43.8]], 9, 4.6);
+  k += `<path d="M${r(p[0] - 15)} 74 q3 -2.6 5.6 -.4 M${r(p[0] - 6)} 74.6 q3 -2.4 5.4 .2" stroke="#9a8470" stroke-width=".6" fill="none" opacity=".7"/>`;
   k += ast([[p[0] - 56, 46], [p[0] - 70, 56], [p[0] - 90, 62], [p[0] - 103, 60]], 3.4, 1.2);
   /* schweres Laubdach von oben rechts über das obere Drittel, die Kuppel bleibt frei: innen gelbgrün, am Rand Ocker */
   for (const [cx, cy, R, sd, f] of [[300, 10, 30, 1, "linde"], [258, 6, 26, 2, "gruen"], [222, 14, 22, 3, "linde"], [196, 34, 14, 4, "orange"], [236, 44, 22, 5, "gruen"], [282, 46, 26, 6, "linde"], [310, 70, 18, 7, "orange"], [256, 74, 16, 8, "linde"], [214, 60, 14, 9, "orange"]]) k += masse(cx, cy, R, sd, f);
-  for (const [x, y, w, sd] of [[240, 26, 5, 21], [276, 32, 4.2, 22], [222, 40, 3.6, 23], [300, 56, 3.8, 24], [264, 60, 3.2, 25]]) k += luecke(x, y, w, w * .7, sd);
   /* gefingerte Rosskastanienblätter: kurzer heller Stiel zeigt zum Ast (nach oben), die Blättchen hängen */
   const blatt = (x, y, sz, rot, f) => {
     let g = `<g transform="translate(${t2(x)} ${t2(y)}) rotate(${rot}) scale(${sz.toFixed(3)})"><path d="M0 0 L0 4" stroke="#8a6a3a" stroke-width=".45"/>`;
@@ -549,9 +537,10 @@ const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} $
     return g + `</g>`;
   };
   const BF = ["#e2b24a", "#d39a32", "#c4862e", "#b5b04a", "#e8c25a", "#a8a650", "#7a4a22"];
-  const rand = [[190, 46], [200, 62], [208, 74], [222, 82], [238, 88], [254, 92], [270, 98], [286, 106], [298, 110], [304, 104], [204, 30], [212, 20], [181, 31], [187, 60]];
+  const rand = [[190, 46], [200, 62], [208, 74], [222, 82], [238, 88], [254, 92], [314, 86], [204, 30], [212, 20], [181, 31], [187, 60]];
   for (const [x, y] of rand) for (let j = 0; j < 2; j++) k += blatt(x + (rnd() - .5) * 8, y + (rnd() - .5) * 6, .55 + rnd() * .35, Math.round(155 + rnd() * 50), BF[Math.floor(rnd() * 7)]);
-  for (let i = 0; i < 22; i++) { const x = 200 + rnd() * 100, y = 12 + rnd() * 72; k += blatt(x, y, .5 + rnd() * .3, Math.round(150 + rnd() * 60), BF[Math.floor(rnd() * 6)]); }
+  /* fünf fallende Blätter unter der Krone: gedreht und verkürzt */
+  for (const [x, y, rot, sx] of [[214, 104, 40, .45], [236, 122, -25, .6], [252, 140, 70, .35], [226, 152, -60, .5], [246, 168, 15, .4]]) k += `<g transform="translate(${x} ${y}) rotate(${rot}) scale(1 ${sx})">${blatt(0, 0, .5, 0, BF[(x + y) % 5])}</g>`;
   /* Stachelschalen am kurzen Stiel: die Hälfte geschlossen (grüne Stachelkugel), die anderen mit drei
      aufgebogenen Klappen — innen cremefarbene Schale, darin die runde, glänzende Kastanie, der matte Nabel seitlich */
   S.def(`<g id="${S.id("schaleZu")}"><path d="M0 -3.4 V-1.6" stroke="#6a5a30" stroke-width=".35"/><circle r="1.9" fill="${S.rg("stachel", [[0, "#c2cc62"], [0.5, "#8a9a3a"], [1, "#56641f"]], 0.4, 0.35, 0.7)}"/><path d="${Array.from({ length: 16 }, (_, i) => { const w = i * Math.PI / 8 + .2; return `M${r(Math.cos(w) * 1.7)} ${r(Math.sin(w) * 1.7)} l${r(Math.cos(w) * .75)} ${r(Math.sin(w) * .75)}`; }).join(" ")}" stroke="#6a7a2a" stroke-width=".22"/></g>`);
