@@ -8833,6 +8833,7 @@
      ÜBUNGEN — Setup / Spiel / Auswertung
      ============================================================ */
   const setupEl = document.getElementById("exerciseSetup");
+  var setupAufgeschoben = false;   // FASSUNG 879 — siehe unten bei „renderSetup()" (erst beim Öffnen zeichnen)
   const playEl = document.getElementById("exercisePlay");
   const resultsEl = document.getElementById("exerciseResults");
 
@@ -9004,6 +9005,10 @@
   };
 
   async function renderSetup() {
+    /* FASSUNG 879 — noch aufgeschoben und nicht zu sehen (z. B. Anmeldung beim Start): nichts zeichnen; das holt
+       die Wache nach, sobald der Bereich aufgeht – dann mit dem Stand von diesem Augenblick. */
+    if (setupAufgeschoben && !bereichSichtbar(setupEl)) return;
+    setupAufgeschoben = false;
     setupEl.style.display = "";
     playEl.style.display = "none";
     resultsEl.style.display = "none";
@@ -10111,7 +10116,20 @@
     });
   }
 
-  renderSetup();
+  /* FASSUNG 879 — XANDER (Funk 296): „Ja mach alles weiter" (Frage 4 in Funk 295: die Bereiche erst beim Öffnen
+     zeichnen statt alle beim Start). Die Übungsauswahl ist beim Start fast nie zu sehen; gezeichnet wird sie,
+     sobald ihr Bereich wirklich Platz bekommt (ResizeObserver: von 0 auf eine Breite) – vor dem nächsten Bild,
+     also ohne leeres Aufblitzen. Steht sie schon beim Start im Bild, wird sie wie bisher sofort gezeichnet. */
+  if (bereichSichtbar(setupEl) || !window.ResizeObserver) renderSetup();
+  else {
+    setupAufgeschoben = true;
+    const setupWache = new ResizeObserver(() => {
+      if (!bereichSichtbar(setupEl)) return;
+      setupWache.disconnect();
+      if (setupAufgeschoben) renderSetup();
+    });
+    setupWache.observe(setupEl);
+  }
 
   /* ============================================================
      VOKABELTRAINER
