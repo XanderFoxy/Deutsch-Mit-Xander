@@ -646,23 +646,21 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
    ===================================================================== */
 {
   let k = "";
-  const X = 82, Y = 166;     /* Mitte des Kopfes */
-  /* Säule (kommt von unten aus dem Bild) und Joch */
-  k += `<path d="M${X - 4} 261 L${X - 3.4} ${Y + 30} L${X + 3.4} ${Y + 30} L${X + 4} 261 Z" fill="${S.lg("saeule", [[0, "#1d3a2c"], [0.55, "#2f5a44"], [0.8, "#4f8068"], [1, "#24463a"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${X - 7} ${Y + 32} Q${X} ${Y + 27} ${X + 7} ${Y + 32} L${X + 6} ${Y + 35} Q${X} ${Y + 31} ${X - 6} ${Y + 35} Z" fill="#2a4a3a"/>`;
-  k += `<path d="M${X - 2.2} ${Y + 30} L${X - 16} ${Y + 14} L${X - 13} ${Y + 12} L${X} ${Y + 26} L${X + 13} ${Y + 12} L${X + 16} ${Y + 14} L${X + 2.2} ${Y + 30} Z" fill="#26473a"/>`;
-  /* Münzkasten unter dem Kopf */
-  k += `<path d="M${X - 9} ${Y + 10} h18 l-1.4 10 h-15.2 Z" fill="${S.lg("kasten", [[0, "#2e5a46"], [1, "#1f4032"]])}"/><rect x="${X + 2}" y="${Y + 13}" width="4" height="1.2" rx=".4" fill="#0f1f18"/>`;
-  /* Kopf: abgerundeter Kasten, leicht schräg von hinten; oben die Haube über den Gummimuscheln, rechts das große
-     Objektiv (zeigt zu den Fällen); Münzschild seitlich */
-  k += `<path d="M${X - 26} ${Y - 8} Q${X - 27} ${Y - 16} ${X - 19} ${Y - 17} L${X + 20} ${Y - 18} Q${X + 28} ${Y - 17} ${X + 27} ${Y - 9} L${X + 25} ${Y + 7} Q${X + 23} ${Y + 11} ${X + 16} ${Y + 11} L${X - 17} ${Y + 11} Q${X - 24} ${Y + 11} ${X - 25} ${Y + 7} Z" fill="${S.lg("kopf", [[0, "#1f4234"], [0.5, "#2f5e48"], [0.85, "#4f8a6c"], [1, "#2a5242"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${X + 22} ${Y - 14} Q${X + 34} ${Y - 13} ${X + 34} ${Y - 3} Q${X + 34} ${Y + 6} ${X + 22} ${Y + 6} Z" fill="#26493a"/><ellipse cx="${X + 31}" cy="${Y - 4}" rx="3" ry="8.2" fill="#3a5a6a"/><path d="M${X + 30.2} ${Y - 10} q1.8 3 0 7" stroke="#cfe8f4" stroke-width=".8" fill="none" opacity=".7"/>`;
-  k += `<path d="M${X - 22} ${Y - 13} Q${X} ${Y - 19} ${X + 21} ${Y - 14} L${X + 20} ${Y - 7} Q${X} ${Y - 11} ${X - 21} ${Y - 6} Z" fill="#183428"/>`;
-  for (const ox of [-9, 9]) k += `<ellipse cx="${X + ox}" cy="${Y - 7}" rx="5.2" ry="2.6" fill="#141614"/><ellipse cx="${X + ox}" cy="${Y - 7.6}" rx="3.4" ry="1.3" fill="#2a2e2c"/>`;
-  k += `<path d="M${X - 24} ${Y - 15} L${X + 22} ${Y - 16.4}" stroke="#a9d4bc" stroke-width=".9" opacity=".5"/>`;
-  k += `<rect x="${X - 22}" y="${Y + 1}" width="9" height="5" rx=".6" fill="#d9c98a"/><text x="${X - 17.5}" y="${Y + 4.8}" font-size="3" text-anchor="middle" fill="#3a2a10" font-family="Arial,sans-serif">$1</text>`;
-  /* Schatten auf der Mauerfront (Sonne hinten: der Schatten der Säule fällt nach vorn auf die Platte) */
-  k = kappenSchatten(X - 4, X + 4, FRONT + 1) + `<g filter="${VOL}">${k}</g>`;
+  /* Münzfernrohr in Dreiviertelansicht (wie die Tower-Optical-Geräte): runder Kopf mit kurzem Schnabel,
+     schaut nach rechts zu den Fällen; Okulare seitlich, Preisschild an der Säule */
+  const X = 46, Y = 190;
+  let k = "";
+  k += `<path d="M${X - 3} 261 L${X - 2.4} ${Y + 20} L${X + 2.4} ${Y + 20} L${X + 3} 261 Z" fill="${S.lg("saeule", [[0, "#1a3328"], [0.55, "#2c5440"], [0.8, "#4c7c64"], [1, "#22433a"]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="${X - 4.6}" y="${Y + 30}" width="9.2" height="7" rx="1" fill="#24463a"/><rect x="${X - 3.4}" y="${Y + 31.4}" width="6.8" height="3.4" rx=".4" fill="#d9c98a"/><text x="${X}" y="${Y + 34.1}" font-size="2.4" text-anchor="middle" fill="#3a2a10" font-family="Arial,sans-serif">$ 1</text>`;
+  /* Gabel */
+  k += `<path d="M${X - 1.6} ${Y + 21} L${X - 7.6} ${Y + 8} L${X - 5.6} ${Y + 7} L${X} ${Y + 17} L${X + 5.4} ${Y + 7} L${X + 7.4} ${Y + 8} L${X + 1.6} ${Y + 21} Z" fill="#244438"/>`;
+  /* Kopf: rundlicher Körper, Schnabel mit zwei Objektiven nach rechts vorn */
+  k += `<path d="M${X - 13} ${Y - 2} Q${X - 14} ${Y - 11} ${X - 5} ${Y - 12.5} L${X + 7} ${Y - 12} Q${X + 13} ${Y - 10} ${X + 13} ${Y - 2} Q${X + 13} ${Y + 7} ${X + 5} ${Y + 8} L${X - 6} ${Y + 8} Q${X - 13} ${Y + 7} ${X - 13} ${Y - 2} Z" fill="${S.lg("kopf", [[0, "#1d3d31"], [0.55, "#2f5e48"], [0.85, "#4f8a6c"], [1, "#2a5242"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${X + 9} ${Y - 9} L${X + 19} ${Y - 7.6} Q${X + 21} ${Y - 2} ${X + 19} ${Y + 3.6} L${X + 9} ${Y + 5} Z" fill="#26493a"/>`;
+  k += `<ellipse cx="${X + 19.4}" cy="${Y - 4.6}" rx="1.6" ry="2.6" fill="#33526a"/><ellipse cx="${X + 19.4}" cy="${Y + 1.2}" rx="1.6" ry="2.6" fill="#33526a"/><path d="M${X + 19} ${Y - 6.4} q.8 1.2 0 2.6 M${X + 19} ${Y - 0.6} q.8 1.2 0 2.6" stroke="#cfe8f4" stroke-width=".4" fill="none"/>`;
+  /* Okulare mit Gummimuscheln an der linken Seite (zum Betrachter hin, schräg) */
+  k += `<path d="M${X - 12} ${Y - 7} q-3.4 0 -3.6 2.4 q.2 2.4 3.6 2.4 Z M${X - 12} ${Y - 1} q-3.4 0 -3.6 2.4 q.2 2.4 3.6 2.4 Z" fill="#141614"/>`;
+  k += `<path d="M${X - 9} ${Y - 12} Q${X} ${Y - 14.5} ${X + 8} ${Y - 12}" stroke="#a9d4bc" stroke-width=".8" fill="none" opacity=".55"/>`;
   S.teil({ id: "fernrohr", de: "das Fernrohr", syl: "FERN-rohr", it: "il cannocchiale", itSyl: "can-noc-CHIA-le", en: "telescope", x: X, y: Y, kunst: um(X, Y, kappeRand(k)),
     tipp: "Für eine Münze kann man durch das Fernrohr schauen. Dann sieht man das Boot ganz nah." });
 }
@@ -721,22 +719,22 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   let k = kappenSchatten(X - 9, X + 7, Y);
   /* buschiger Schwanz hinter dem Rücken, hoch aufgestellt und oben eingerollt */
   const schw = [[X + 3, Y - 2], [X + 11, Y - 6], [X + 15, Y - 16], [X + 14, Y - 28], [X + 9, Y - 37], [X + 2, Y - 40], [X - 2, Y - 37], [X + 1, Y - 34], [X + 6, Y - 33], [X + 8, Y - 26], [X + 7, Y - 16], [X + 2, Y - 8]];
-  let e = `<path d="${glatt(schw, true, 0.8)}" fill="${S.lg("schwanz", [[0, "#26221e"], [1, "#4a4038"]], 0, 0, 1, 0)}"/>`;
+  let e = `<path d="${glatt(schw, true, 0.8)}" fill="${S.lg("schwanz", [[0, "#1a1817"], [1, "#3a3532"]], 0, 0, 1, 0)}"/>`;
   let haar = "";
   for (let i = 0; i < 18; i++) { const t = i / 17, p = schw[Math.min(5, Math.floor(t * 6))], p2 = schw[Math.min(6, Math.floor(t * 6) + 1)], x = p[0] + (p2[0] - p[0]) * (t * 6 % 1), y = p[1] + (p2[1] - p[1]) * (t * 6 % 1); haar += `M${r(x)} ${r(y)} l${r(1.4 - t * 2.6)} ${r(-0.8 - t * 0.4)}`; }
-  e += `<path d="${haar}" stroke="#8a7a68" stroke-width=".45" opacity=".75" stroke-linecap="round"/>`;
+  e += `<path d="${haar}" stroke="#6e6862" stroke-width=".45" opacity=".75" stroke-linecap="round"/>`;
   /* Körper: sitzt aufrecht, Rücken rund, Bauch etwas heller */
-  e += `<path d="${glatt([[X - 7, Y], [X - 9, Y - 6], [X - 8, Y - 13], [X - 5, Y - 18], [X, Y - 19], [X + 4, Y - 15], [X + 5, Y - 8], [X + 5, Y]], true, 0.8)}" fill="${S.lg("hoernchen", [[0, "#1d1a17"], [0.6, "#2f2a25"], [1, "#4a4038"]], 0, 0, 1, 0)}"/>`;
-  e += `<path d="${glatt([[X - 7.5, Y - 1], [X - 8.6, Y - 7], [X - 7.6, Y - 12], [X - 5.6, Y - 9], [X - 5, Y - 2]], true, 0.8)}" fill="#3f3730"/>`;
+  e += `<path d="${glatt([[X - 7, Y], [X - 9, Y - 6], [X - 8, Y - 13], [X - 5, Y - 18], [X, Y - 19], [X + 4, Y - 15], [X + 5, Y - 8], [X + 5, Y]], true, 0.8)}" fill="${S.lg("hoernchen", [[0, "#141312"], [0.6, "#211f1d"], [1, "#363230"]], 0, 0, 1, 0)}"/>`;
+  e += `<path d="${glatt([[X - 7.5, Y - 1], [X - 8.6, Y - 7], [X - 7.6, Y - 12], [X - 5.6, Y - 9], [X - 5, Y - 2]], true, 0.8)}" fill="#2a2725"/>`;
   /* Kopf mit Schnauze nach links, Ohr, Auge mit hellem Ring */
-  e += `<path d="${glatt([[X - 4, Y - 18], [X - 7.6, Y - 20], [X - 10.4, Y - 22.4], [X - 9.6, Y - 25], [X - 6, Y - 27.4], [X - 1.6, Y - 26.6], [X + 0.4, Y - 23], [X - 0.6, Y - 19]], true, 0.8)}" fill="#2c2621"/>`;
-  e += `<path d="M${X - 3.6} ${Y - 26.6} l-.4 -3.6 l2.6 2.6 Z" fill="#2c2621"/><path d="M${X - 3.4} ${Y - 27} l-.2 -2 l1.2 1.4 Z" fill="#6a5a4c"/>`;
+  e += `<path d="${glatt([[X - 4, Y - 18], [X - 7.6, Y - 20], [X - 10.4, Y - 22.4], [X - 9.6, Y - 25], [X - 6, Y - 27.4], [X - 1.6, Y - 26.6], [X + 0.4, Y - 23], [X - 0.6, Y - 19]], true, 0.8)}" fill="#1d1b19"/>`;
+  e += `<path d="M${X - 3.6} ${Y - 26.6} l-.4 -3.6 l2.6 2.6 Z" fill="#1d1b19"/><path d="M${X - 3.4} ${Y - 27} l-.2 -2 l1.2 1.4 Z" fill="#6a5a4c"/>`;
   e += `<circle cx="${X - 6.4}" cy="${Y - 24}" r="1.2" fill="#8a7a68"/><circle cx="${X - 6.4}" cy="${Y - 24}" r=".8" fill="#0b0a09"/><circle cx="${X - 6.7}" cy="${Y - 24.3}" r=".3" fill="#fff"/><circle cx="${X - 10.2}" cy="${Y - 23}" r=".5" fill="#111"/>`;
   /* Vorderpfoten halten eine Nuss vor der Brust */
   e += `<ellipse cx="${X - 9}" cy="${Y - 15}" rx="2.2" ry="1.9" fill="#a0723c"/><path d="M${X - 10} ${Y - 15.6} q1 -.7 2.2 0" stroke="#d9a868" stroke-width=".4" fill="none"/>`;
   e += `<path d="M${X - 5} ${Y - 16.4} q-2 .4 -3.2 1.6 M${X - 4.6} ${Y - 13.6} q-2 .2 -3.2 1.4" stroke="#24201c" stroke-width="1.2" fill="none" stroke-linecap="round"/>`;
   e += `<path d="M${X - 7} ${Y} q1.8 -1 3.8 0 M${X} ${Y} q2 -1 4 0" stroke="#1d1a17" stroke-width="1.3" fill="none" stroke-linecap="round"/>`;
-  k += `<g filter="${VOL}">${e}</g>`;
+  k += `<g filter="${VOL_KLEIN}">${e}</g>`;
   S.teil({ id: "eichhoernchen", de: "das Eichhörnchen", syl: "EICH-hörn-chen", it: "lo scoiattolo", itSyl: "sco-IAT-to-lo", en: "squirrel", x: X, y: Y - 20, kunst: um(X, Y - 20, k),
     tipp: "In Kanada gibt es viele schwarze Eichhörnchen. Es sind Grauhörnchen mit dunklem Fell." });
 }

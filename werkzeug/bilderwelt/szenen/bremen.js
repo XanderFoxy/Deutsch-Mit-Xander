@@ -405,7 +405,8 @@ const domTeile = {};
   k += pfad(fr(E, 8.6, 0, 9.6, ZE), "#1f1612", ` opacity=".45"`);
   /* ferne Häuser am Domshof in der Lücke zwischen Neuem Rathaus und Dom (Dunst) */
   { const p = (b, d) => [CAM[0] + d * Math.sin(b * GRAD), CAM[1] + d * Math.cos(b * GRAD)]; const a1 = p(60, 150), a2 = p(67, 150);
-    FERN_DOMSHOF = `<g ${LUFT3}>${pfad(poly([[...a1, 0], [...a2, 0], [...a2, 17], [...a1, 17]], 4), "#a99d8a")}${pfad(poly([[...a1, 17], [...a2, 17], [...a2, 21], [...a1, 21]], 4), "#6f6a64")}</g>`; }
+    let f = ""; for (let i = 0; i < 9; i++) for (const z of [3.4, 7, 10.6, 14.2]) { const t0 = (i + .3) / 9, t1 = (i + .62) / 9, A = [a1[0] + (a2[0] - a1[0]) * t0, a1[1] + (a2[1] - a1[1]) * t0], B2 = [a1[0] + (a2[0] - a1[0]) * t1, a1[1] + (a2[1] - a1[1]) * t1]; f += poly([[...A, z], [...B2, z], [...B2, z + 2], [...A, z + 2]], 99); }
+    FERN_DOMSHOF = `<g ${LUFT3}>${pfad(poly([[...a1, 0], [...a2, 0], [...a2, 17], [...a1, 17]], 4), "#b3a690")}${pfad(f, "#56585a")}${pfad(poly([[...a1, 0], [...a2, 0], [...a2, 2.6], [...a1, 2.6]], 4), "#7a7066")}${pfad(poly([[...a1, 17], [...a2, 17], [...a2, 21], [...a1, 21]], 4), "#5a6460")}</g>`; }
   S.teil({ id: "neues_rathaus", de: "das Neue Rathaus", syl: "NEU-e RAT-haus", it: "il Nuovo Municipio", itSyl: "NUO-vo mu-ni-CI-pio", en: "New Town Hall", x: 0, y: 0, kunst: `<g ${LUFT1}>${k}</g>`,
     tipp: "Hinter dem alten Rathaus steht das Neue Rathaus von 1913. Hier arbeitet der Bürgermeister." });
   MP.kunst += FERN_DOMSHOF;
@@ -912,7 +913,7 @@ const vorlage = (name, spec, extra = {}) => {
     const H = extra.hinten;
     if (H.lang) o += `<path d="M${r(kx - 10)} ${r(ky - 2)} Q${r(kx - 12)} ${r(ky + 14)} ${r(kx - 9)} ${r(ky + 25)} L${r(kx + 9)} ${r(ky + 25)} Q${r(kx + 12)} ${r(ky + 14)} ${r(kx + 10)} ${r(ky - 2)} Z" fill="${H.farbe}"/>`;
     else o += `<rect x="${r(kx - 3.6)}" y="${r(ky + 9)}" width="7.2" height="4.4" fill="${H.haut}"/>`;
-    o += `<ellipse cx="${r(kx)}" cy="${r(ky + .6)}" rx="9.8" ry="11.4" fill="${H.farbe}"/><path d="M${r(kx - 6)} ${r(ky - 7)} Q${r(kx - 1)} ${r(ky - 10)} ${r(kx + 5)} ${r(ky - 6)}" stroke="#fff" stroke-width="1.4" fill="none" opacity=".18"/><path d="M${r(kx - 3)} ${r(ky + (H.lang ? 6 : 4))} Q${r(kx)} ${r(ky + (H.lang ? 14 : 9))} ${r(kx + 2)} ${r(ky + (H.lang ? 22 : 10))}" stroke="#000" stroke-width="1" fill="none" opacity=".15"/>`;
+    o += `<ellipse cx="${r(kx)}" cy="${r(ky + .6)}" rx="11.2" ry="12.6" fill="${H.farbe}"/><path d="M${r(kx - 6)} ${r(ky - 7)} Q${r(kx - 1)} ${r(ky - 10)} ${r(kx + 5)} ${r(ky - 6)}" stroke="#fff" stroke-width="1.4" fill="none" opacity=".18"/><path d="M${r(kx - 3)} ${r(ky + (H.lang ? 6 : 4))} Q${r(kx)} ${r(ky + (H.lang ? 14 : 9))} ${r(kx + 2)} ${r(ky + (H.lang ? 22 : 10))}" stroke="#000" stroke-width="1" fill="none" opacity=".15"/>`;
   }
   const hm = [(z.handL.x + z.handR.x) / 2, (z.handL.y + z.handR.y) / 2];
   if (extra.schirm) { const [hx, hy] = [z.handR.x, z.handR.y]; o += `<path d="M${r(hx)} ${r(hy + 4)} L${r(hx + 2)} ${r(hy - 44)}" stroke="#2a2a2a" stroke-width="1.4"/><path d="M${r(hx - 16)} ${r(hy - 38)} Q${r(hx + 2)} ${r(hy - 66)} ${r(hx + 20)} ${r(hy - 38)} Q${r(hx + 2)} ${r(hy - 43)} ${r(hx - 16)} ${r(hy - 38)} Z" fill="#d23a30"/><path d="M${r(hx + 2)} ${r(hy - 53)} L${r(hx - 7)} ${r(hy - 40)} M${r(hx + 2)} ${r(hy - 53)} L${r(hx + 11)} ${r(hy - 40)}" stroke="#8e2018" stroke-width=".8" fill="none"/>`; }
