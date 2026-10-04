@@ -1186,10 +1186,10 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
     k += `<circle cx="${r((kxx + 0.015) * 1000) / 1000}" cy="${r((ky - 0.012) * 1000) / 1000}" r=".008" fill="#8a7a6a"/><path d="M.0 -.29 Q.08 -.29 .14 -.25" stroke="#c9ccd3" stroke-width=".012" fill="none" opacity=".6"/></g>`;
     return k;
   };
-  const d0 = 11.45, l0 = 0.72, x0 = r(X(d0, l0)), y0 = r(Y(d0));
-  let k = kraehe(11.3, 0.55, 1, true) + kraehe(11.6, 0.92, -1, false);
+  const d0 = 11.45, l0 = 0.84, x0 = r(X(d0, l0)), y0 = r(Y(d0));
+  let k = kraehe(11.3, 0.7, 1, true) + kraehe(11.6, 1.02, -1, false);
   /* Kringel (Baranka) auf dem Pflaster */
-  const bx = X(11.45, 0.74), by = Y(11.45), bs = F / 11.45;
+  const bx = X(11.45, 0.86), by = Y(11.45), bs = F / 11.45;
   k += `<ellipse cx="${r(bx)}" cy="${r(by - 0.3)}" rx="${r(0.07 * bs)}" ry="${r(0.03 * bs)}" fill="none" stroke="#c98a3e" stroke-width="${r(0.03 * bs)}"/><ellipse cx="${r(bx - 0.4)}" cy="${r(by - 0.5)}" rx="${r(0.04 * bs)}" ry=".3" fill="#f2c27a" opacity=".6"/>`;
   S.teil({ oben: true, id: "kraehe", de: "die Krähe", syl: "KRÄ-he", it: "la cornacchia", itSyl: "cor-NAC-chia", en: "crow", x: 0, y: 0, steht: true, kunst: k + flaeche(x0 - 13, y0 - 12, 26, 13, 0.6),
     tipp: "In Moskau leben viele graue Nebelkrähen. Hier streiten zwei um einen Kringel." });
