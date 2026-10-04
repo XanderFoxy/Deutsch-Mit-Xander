@@ -81,7 +81,7 @@ const KUPFER = S.lg("kupfer", [[0, "#2f6050"], [0.6, "#6aa58d"], [1, "#3f7a64"]]
 const KUPFER_P = S.lg("kupferp", [[0, "#4a7f84"], [0.6, "#9cc9c6"], [1, "#5f9497"]], 0, 0, 1, 0);
 const GOLD = S.lg("gold", [[0, "#fff1b0"], [0.45, "#f0c64a"], [1, "#a8781a"]], 0, 0, 1, 1);
 const KALK = "#e6dcc6";
-const EISEN = S.lg("eisen", [[0, "#222224"], [0.45, "#3a3a3c"], [0.8, "#6f6b62"], [1, "#3a3a3c"]], 0, 0, 1, 0);
+const EISEN = S.lg("eisen", [[0, "#232326"], [0.5, "#38383b"], [0.85, "#5f5c55"], [1, "#3a3a3c"]], 0, 0, 1, 1);
 /* Ziegelverband (Läufer, versetzt) als Muster in Tor-Einheiten */
 S.def(`<pattern id="${S.id("verband")}" patternUnits="userSpaceOnUse" width="1.2" height=".76"><path d="M0 .38 H1.2 M0 .76 H1.2 M.6 0 V.38 M0 .38 V.76 M1.2 .38 V.76" stroke="#e7c3a3" stroke-width=".07" fill="none"/></pattern>`);
 S.def(`<pattern id="${S.id("glanz")}" patternUnits="userSpaceOnUse" width="3.6" height=".76"><path d="M0 .38 H3.6 M.6 0 V.38 M1.8 .38 V.76 M3 0 V.38" stroke="#8a7a6a" stroke-width=".08" fill="none"/><rect x="2.1" y=".08" width=".5" height=".1" fill="#e6efe8" opacity=".55"/><rect x=".2" y=".46" width=".4" height=".08" fill="#d9e6dc" opacity=".4"/></pattern>`);
@@ -745,32 +745,51 @@ let MARZ = null;
    17 — DIE LÖWEN (gusseisern, 1823): links der wachende, rechts der schlafende
    ===================================================================== */
 function loewe(L, wach, dir) {
-  /* Seitenansicht, Blick nach rechts (dir = 1) bzw. links (dir = −1); Fußpunkt Mitte der Liegefläche */
+  /* Seitenansicht eines liegenden Löwen aus Gusseisen; Blick nach rechts (dir = 1) oder links (−1).
+     Fußpunkt: Mitte der Liegefläche. Licht von rechts oben. */
   const P = (x, y) => `${r(dir * x * L)} ${r(-y * L)}`;
+  const DUNK = "#1c1c1e", MITT = "#2c2c2f", HELL = "#77746b";
+  const z = zufall(wach ? 5 : 9);
   let g = "";
-  /* Schwanz um die Hinterpranke */
-  g += `<path d="M${P(-0.46, 0.12)} Q${P(-0.6, 0.02)} ${P(-0.38, 0.015)} L${P(-0.1, 0.02)}" stroke="#1d1d1f" stroke-width="${r(0.03 * L)}" fill="none" stroke-linecap="round"/><ellipse cx="${r(dir * -0.08 * L)}" cy="${r(-0.025 * L)}" rx="${r(0.045 * L)}" ry="${r(0.025 * L)}" fill="#242426"/>`;
-  /* Rumpf mit Hinterkeule */
-  g += `<path d="M${P(-0.5, 0.02)} Q${P(-0.52, 0.3)} ${P(-0.3, 0.32)} Q${P(-0.05, 0.3)} ${P(0.12, 0.34)} L${P(0.24, 0.28)} L${P(0.26, 0.02)} Z" fill="${EISEN}"/>`;
-  g += `<ellipse cx="${r(dir * -0.33 * L)}" cy="${r(-0.15 * L)}" rx="${r(0.16 * L)}" ry="${r(0.13 * L)}" fill="#2c2c2f"/><path d="M${P(-0.44, 0.24)} Q${P(-0.3, 0.3)} ${P(-0.18, 0.2)}" stroke="#77736b" stroke-width="${r(0.012 * L)}" fill="none" opacity=".7"/>`;
-  /* Vorderpranken nach vorn ausgestreckt */
-  g += `<path d="M${P(0.12, 0.0)} L${P(0.5, 0.0)} Q${P(0.56, 0.0)} ${P(0.56, 0.05)} Q${P(0.54, 0.08)} ${P(0.46, 0.075)} L${P(0.14, 0.09)} Z" fill="#2a2a2d"/>`;
-  for (const t of [0.51, 0.53]) g += `<path d="M${P(t, 0.005)} L${P(t, 0.05)}" stroke="#0e0e10" stroke-width="${r(0.006 * L)}"/>`;
-  /* Mähne und Kopf */
-  if (wach) {
-    g += `<path d="M${P(0.06, 0.18)} Q${P(0.04, 0.5)} ${P(0.24, 0.56)} Q${P(0.42, 0.56)} ${P(0.42, 0.36)} Q${P(0.4, 0.16)} ${P(0.24, 0.1)} Z" fill="#232326"/>`;
-    for (let i = 0; i < 9; i++) { const a = -0.3 + i * 0.22; g += `<path d="M${P(0.24 + Math.cos(a + 1.6) * 0.1, 0.36 + Math.sin(a + 1.6) * 0.1)} Q${P(0.24 + Math.cos(a + 1.6) * 0.17, 0.36 + Math.sin(a + 1.6) * 0.17)} ${P(0.24 + Math.cos(a + 1.75) * 0.19, 0.36 + Math.sin(a + 1.75) * 0.19)}" stroke="${i > 5 ? "#8a857a" : "#4a4844"}" stroke-width="${r(0.012 * L)}" fill="none"/>`; }
-    g += `<path d="M${P(0.3, 0.46)} Q${P(0.42, 0.47)} ${P(0.47, 0.4)} L${P(0.5, 0.36)} Q${P(0.5, 0.31)} ${P(0.45, 0.3)} L${P(0.36, 0.29)} Q${P(0.29, 0.34)} ${P(0.3, 0.46)} Z" fill="${EISEN}"/>`;
-    g += `<path d="M${P(0.4, 0.42)} l${r(dir * 0.025 * L)} 0" stroke="#d9d2c0" stroke-width="${r(0.01 * L)}"/><path d="M${P(0.45, 0.33)} Q${P(0.48, 0.31)} ${P(0.5, 0.33)}" stroke="#0e0e10" stroke-width="${r(0.008 * L)}" fill="none"/>`;
-    g += `<path d="M${P(0.33, 0.47)} L${P(0.35, 0.52)} L${P(0.38, 0.47)} Z" fill="#232326"/>`;
-  } else {
-    g += `<path d="M${P(0.08, 0.14)} Q${P(0.06, 0.38)} ${P(0.22, 0.4)} Q${P(0.36, 0.38)} ${P(0.38, 0.22)} Q${P(0.38, 0.1)} ${P(0.24, 0.07)} Z" fill="#232326"/>`;
-    for (let i = 0; i < 7; i++) { const a = 1.2 + i * 0.25; g += `<path d="M${P(0.22 + Math.cos(a) * 0.08, 0.24 + Math.sin(a) * 0.08)} Q${P(0.22 + Math.cos(a) * 0.14, 0.24 + Math.sin(a) * 0.14)} ${P(0.22 + Math.cos(a + 0.15) * 0.16, 0.24 + Math.sin(a + 0.15) * 0.16)}" stroke="${i < 2 ? "#8a857a" : "#4a4844"}" stroke-width="${r(0.012 * L)}" fill="none"/>`; }
-    g += `<path d="M${P(0.28, 0.24)} Q${P(0.4, 0.25)} ${P(0.46, 0.17)} L${P(0.48, 0.12)} Q${P(0.47, 0.08)} ${P(0.4, 0.08)} L${P(0.3, 0.1)} Q${P(0.25, 0.15)} ${P(0.28, 0.24)} Z" fill="${EISEN}"/>`;
-    g += `<path d="M${P(0.37, 0.19)} q${r(dir * 0.02 * L)} ${r(0.008 * L)} ${r(dir * 0.04 * L)} 0" stroke="#0e0e10" stroke-width="${r(0.008 * L)}" fill="none"/>`;
+  /* Schwanz mit Quaste, um die Hinterpranke gelegt */
+  g += `<path d="M${P(-0.47, 0.1)} C${P(-0.62, 0.05)} ${P(-0.5, 0.0)} ${P(-0.3, 0.012)} S${P(-0.12, 0.02)} ${P(-0.08, 0.03)}" stroke="${MITT}" stroke-width="${r(0.028 * L)}" fill="none" stroke-linecap="round"/>`;
+  g += `<path d="M${P(-0.1, 0.03)} q${r(dir * 0.04 * L)} ${r(-0.025 * L)} ${r(dir * 0.07 * L)} ${r(0.005 * L)} q${r(-dir * 0.03 * L)} ${r(0.02 * L)} ${r(-dir * 0.07 * L)} ${r(0.002 * L)} Z" fill="${DUNK}"/>`;
+  /* Rumpf */
+  g += `<path d="M${P(-0.5, 0.02)} C${P(-0.53, 0.18)} ${P(-0.46, 0.3)} ${P(-0.3, 0.31)} C${P(-0.12, 0.31)} ${P(0.0, 0.33)} ${P(0.12, 0.36)} L${P(0.22, 0.3)} L${P(0.24, 0.08)} L${P(0.1, 0.02)} Z" fill="${EISEN}"/>`;
+  /* Hinterkeule und Hinterpranke */
+  g += `<path d="M${P(-0.47, 0.04)} C${P(-0.5, 0.2)} ${P(-0.38, 0.27)} ${P(-0.26, 0.24)} C${P(-0.15, 0.2)} ${P(-0.14, 0.08)} ${P(-0.2, 0.03)} Z" fill="${MITT}"/>`;
+  g += `<path d="M${P(-0.44, 0.22)} C${P(-0.36, 0.27)} ${P(-0.27, 0.25)} ${P(-0.22, 0.19)}" stroke="${HELL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
+  g += `<path d="M${P(-0.3, 0.0)} L${P(-0.06, 0.0)} Q${P(-0.03, 0.0)} ${P(-0.03, 0.03)} Q${P(-0.05, 0.055)} ${P(-0.1, 0.05)} L${P(-0.28, 0.05)} Z" fill="${MITT}"/>`;
+  /* Rippen und Flanke angedeutet */
+  for (const t of [-0.12, -0.04, 0.04]) g += `<path d="M${P(t, 0.27)} q${r(dir * 0.02 * L)} ${r(0.08 * L)} 0 ${r(0.15 * L)}" stroke="#121214" stroke-width="${r(0.006 * L)}" fill="none" opacity=".6"/>`;
+  g += `<path d="M${P(-0.3, 0.31)} C${P(-0.12, 0.3)} ${P(0.0, 0.32)} ${P(0.12, 0.355)}" stroke="${HELL}" stroke-width="${r(0.01 * L)}" fill="none" opacity=".8"/>`;
+  /* Vorderbeine: hinteres (dunkler) und vorderes, Pranken mit Zehen */
+  g += `<path d="M${P(0.14, 0.2)} L${P(0.2, 0.04)} L${P(0.5, 0.045)} Q${P(0.55, 0.05)} ${P(0.55, 0.08)} Q${P(0.53, 0.1)} ${P(0.46, 0.095)} L${P(0.24, 0.1)} Z" fill="${DUNK}"/>`;
+  g += `<path d="M${P(0.1, 0.2)} C${P(0.16, 0.1)} ${P(0.16, 0.04)} ${P(0.2, 0.0)} L${P(0.52, 0.0)} Q${P(0.58, 0.0)} ${P(0.58, 0.035)} Q${P(0.56, 0.06)} ${P(0.48, 0.058)} L${P(0.26, 0.065)} C${P(0.22, 0.12)} ${P(0.2, 0.18)} ${P(0.18, 0.22)} Z" fill="${EISEN}"/>`;
+  for (const t of [0.53, 0.555]) g += `<path d="M${P(t, 0.004)} L${P(t - 0.006, 0.04)}" stroke="#0e0e10" stroke-width="${r(0.006 * L)}"/>`;
+  g += `<path d="M${P(0.26, 0.062)} L${P(0.5, 0.056)}" stroke="${HELL}" stroke-width="${r(0.008 * L)}" opacity=".8"/>`;
+  /* Mähne: viele Locken in zwei Tönen */
+  const mx = wach ? 0.24 : 0.22, my = wach ? 0.38 : 0.22, mr = wach ? 0.19 : 0.15;
+  g += `<path d="M${P(mx - mr * 0.9, my - mr * 1.1)} C${P(mx - mr * 1.2, my + mr * 0.4)} ${P(mx - mr * 0.3, my + mr * 1.25)} ${P(mx + mr * 0.5, my + mr * 1.05)} C${P(mx + mr * 1.05, my + mr * 0.8)} ${P(mx + mr * 0.95, my - mr * 0.6)} ${P(mx + mr * 0.2, my - mr * 1.2)} Z" fill="${DUNK}"/>`;
+  for (let i = 0; i < 16; i++) {
+    const a = 1.5 + i * 0.27 + z() * 0.1, rr = mr * (0.75 + z() * 0.3);
+    const x0 = mx + Math.cos(a) * mr * 0.35, y0 = my + Math.sin(a) * mr * 0.35, x1 = mx + Math.cos(a) * rr, y1 = my + Math.sin(a) * rr;
+    const xs = mx + Math.cos(a + 0.18) * rr * 0.75, ys = my + Math.sin(a + 0.18) * rr * 0.75;
+    g += `<path d="M${P(x0, y0)} Q${P(xs, ys)} ${P(x1, y1)}" stroke="${Math.cos(a) > 0.1 || Math.sin(a) > 0.6 ? HELL : "#3a3a3d"}" stroke-width="${r(0.014 * L)}" fill="none" stroke-linecap="round" opacity=".85"/>`;
   }
-  /* Glanz auf dem Gusseisen (Licht von rechts) */
-  g += `<path d="M${P(-0.3, 0.31)} Q${P(-0.05, 0.29)} ${P(0.1, 0.33)}" stroke="#a8a294" stroke-width="${r(0.01 * L)}" fill="none" opacity=".6"/>`;
+  /* Kopf */
+  if (wach) {
+    g += `<path d="M${P(0.28, 0.52)} C${P(0.36, 0.56)} ${P(0.44, 0.5)} ${P(0.47, 0.44)} L${P(0.51, 0.39)} Q${P(0.52, 0.35)} ${P(0.49, 0.33)} C${P(0.47, 0.3)} ${P(0.4, 0.29)} ${P(0.34, 0.31)} C${P(0.29, 0.35)} ${P(0.26, 0.45)} ${P(0.28, 0.52)} Z" fill="${EISEN}"/>`;
+    g += `<path d="M${P(0.3, 0.52)} C${P(0.37, 0.55)} ${P(0.44, 0.5)} ${P(0.47, 0.44)}" stroke="${HELL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
+    g += `<path d="M${P(0.38, 0.46)} q${r(dir * 0.025 * L)} ${r(-0.012 * L)} ${r(dir * 0.04 * L)} ${r(0.004 * L)}" stroke="#0e0e10" stroke-width="${r(0.01 * L)}" fill="none"/><circle cx="${r(dir * 0.405 * L)}" cy="${r(-0.452 * L)}" r="${r(0.007 * L)}" fill="#9a968a"/>`;
+    g += `<path d="M${P(0.495, 0.395)} L${P(0.52, 0.375)} L${P(0.5, 0.36)} Z" fill="#0e0e10"/><path d="M${P(0.5, 0.36)} Q${P(0.47, 0.34)} ${P(0.43, 0.345)}" stroke="#0e0e10" stroke-width="${r(0.007 * L)}" fill="none"/>`;
+    g += `<path d="M${P(0.29, 0.5)} q${r(dir * 0.01 * L)} ${r(0.05 * L)} ${r(dir * 0.05 * L)} ${r(0.03 * L)} Z" fill="${MITT}"/>`;
+  } else {
+    g += `<path d="M${P(0.26, 0.28)} C${P(0.34, 0.3)} ${P(0.43, 0.24)} ${P(0.46, 0.18)} L${P(0.5, 0.12)} Q${P(0.5, 0.08)} ${P(0.46, 0.075)} L${P(0.34, 0.08)} C${P(0.28, 0.12)} ${P(0.24, 0.2)} ${P(0.26, 0.28)} Z" fill="${EISEN}"/>`;
+    g += `<path d="M${P(0.28, 0.28)} C${P(0.35, 0.29)} ${P(0.43, 0.24)} ${P(0.46, 0.18)}" stroke="${HELL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
+    g += `<path d="M${P(0.36, 0.2)} q${r(dir * 0.02 * L)} ${r(0.01 * L)} ${r(dir * 0.04 * L)} 0" stroke="#0e0e10" stroke-width="${r(0.009 * L)}" fill="none"/>`;
+    g += `<path d="M${P(0.49, 0.125)} L${P(0.51, 0.1)} L${P(0.49, 0.09)} Z" fill="#0e0e10"/>`;
+  }
   return g;
 }
 const sockel = (L, Hs) => {
@@ -778,7 +797,6 @@ const sockel = (L, Hs) => {
   let g = `<rect x="${r(-0.62 * L)}" y="${r(-Hs)}" width="${r(1.24 * L)}" height="${r(Hs)}" fill="${S.lg("sockelst", [[0, "#9a8f78"], [0.6, "#cfc3a6"], [1, "#e6dcc2"]], 0, 0, 1, 0)}"/>`;
   g += `<rect x="${r(-0.66 * L)}" y="${r(-Hs - 0.04 * L)}" width="${r(1.32 * L)}" height="${r(0.05 * L)}" fill="#e9dfc6"/><rect x="${r(-0.66 * L)}" y="${r(-Hs + 0.01 * L)}" width="${r(1.32 * L)}" height="${r(0.015 * L)}" fill="#7a705e" opacity=".6"/>`;
   g += `<rect x="${r(-0.66 * L)}" y="${r(-0.06 * L)}" width="${r(1.32 * L)}" height="${r(0.06 * L)}" fill="#a89c82"/>`;
-  g += `<rect x="${r(-0.62 * L)}" y="${r(-Hs)}" width="${r(0.3 * L)}" height="${r(Hs)}" fill="#3a3020" opacity=".18"/>`;
   g += `<rect x="${r(-0.5 * L)}" y="${r(-Hs + 0.12 * L)}" width="${r(L)}" height="${r(Hs - 0.26 * L)}" fill="none" stroke="#a89c82" stroke-width=".5"/>`;
   return g;
 };
