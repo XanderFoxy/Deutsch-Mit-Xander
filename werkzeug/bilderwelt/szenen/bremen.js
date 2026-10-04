@@ -173,7 +173,7 @@ const wolke = (x, y, w, h, n, seed) => {
   for (let i = 0; i < n - 2; i++) { const t = (i + .5) / (n - 1), cx = x - w / 2 + t * w + w * .05, rr = h * .5 * (.7 + z() * .4); g += `<circle cx="${r(cx)}" cy="${r(y - h * .9 - rr * .2)}" r="${r(rr)}" fill="${WB}"/>`; }
   return `<g>${g}</g>`;
 };
-S.hinten(wolke(80, 46, 92, 10, 9, 3) + wolke(206, 30, 30, 15, 4, 7) + wolke(346, 70, 22, 5, 3, 11));
+S.hinten(wolke(80, 46, 92, 10, 9, 3) + wolke(206, 30, 30, 15, 4, 7) + wolke(344, 68, 36, 8, 4, 11));
 /* ferne Bauten in den Lücken: Liebfrauenkirche (Nordwesten), Domshof (Nordosten), Südostecke */
 const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   /* Giebelhaus in einer senkrechten Ebene E (s nach rechts im Bild), Treppengiebel */
@@ -863,7 +863,7 @@ const fahrrad = (X, Y, sp) => {
     ["halter", -2.9, 5.4, 1.76, false], ["frau", -4.6, 3.2, 1.68, false], ["mann", -5.6, 1.6, 1.8, true],
     ["frau", 11.8, -17.2, 1.7, true], ["mann", 13.6, -19, 1.8, false], ["mann", 10.4, -19.8, 1.76, true], ["halter", 14.9, -17.4, 1.74, true],
     ["mann", 3.6, -31.2, 1.82, true], ["frau", 4.4, -30.4, 1.66, false],
-    ["kind", -3.6, -21.8, 1.3, false], ["frau", 5.5, -27.4, 1.7, true],
+    ["kind", -1.4, -23.4, 1.3, false], ["frau", 5.5, -27.4, 1.7, true],
   ].sort((a, b) => weit(b[1], b[2]) - weit(a[1], a[2]));
   let sch = "", fig = "";
   for (const [v, X, Y, h, sp] of leute) {
@@ -894,8 +894,8 @@ const fahrrad = (X, Y, sp) => {
     amBoden(figSchatten(x, y, .22, .12));
     return `<g transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(spiegel ? -k : k).toFixed(4)} ${k.toFixed(4)})"><path d="M-2.6 -1.4 Q-1.6 -2.8 .6 -2.6 L2 -2.2 Q2.6 -2.6 3 -3.4 Q3.4 -4 4 -3.6 L4.4 -3.4 L4 -3 Q3.6 -2 3 -1.4 Q1.6 -.4 -.6 -.6 L-2.8 -1 Z" fill="#8a8f98"/><path d="M-1.8 -1.8 Q0 -2.6 1.6 -2 Q.2 -1.2 -1.8 -1.8 Z" fill="#6c717a"/><path d="M-2.4 -1.6 Q-1 -2.6 1 -2.4" stroke="#c9ccd2" stroke-width=".25" fill="none"/><path d="M2.6 -2.2 Q3 -2.8 3.6 -2.6 Q3.4 -1.8 2.8 -1.6 Z" fill="#6f9a86"/><circle cx="3.8" cy="-3.4" r=".18" fill="#c46a2a"/><path d="M.6 -.6 V0 M1.4 -.7 V0" stroke="#c96a6a" stroke-width=".25"/></g>`;
   };
-  const a = pr(-1.4, -22.6, 0);
-  S.teil({ oben: true, id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 0, y: 0, kunst: taube(-.4, -21.2, true) + taube(-1.4, -22.6, false) + taube(.6, -22.2, false) + flaeche(a[0] - 2, a[1] - 5, 14, 6),
+  const a = pr(.6, -22.8, 0);
+  S.teil({ oben: true, id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: 0, y: 0, kunst: taube(1.6, -21.6, true) + taube(.6, -22.8, false) + taube(2.6, -22.4, false) + flaeche(a[0] - 2, a[1] - 5, 14, 6),
     tipp: "Tauben suchen auf dem Marktplatz nach Krümeln." });
 }
 {

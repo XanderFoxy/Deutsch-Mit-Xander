@@ -244,20 +244,20 @@ const zypresse = (x, y, h, w) => `<path d="M${r(x - w / 2)} ${r(y)} Q${r(x - w *
   /* Bäume am Hang (Kiefern, Ölbäume, Zypressen): hinten klein, vorn größer */
   for (let i = 0; i < 60; i++) {
     const j = Math.floor(rnd() * (unten.length - 1)), a = unten[j], b2 = unten[j + 1], f = rnd(), x = a[0] + (b2[0] - a[0]) * f, y = a[1] + (b2[1] - a[1]) * f + 2 + rnd() * 3;
-    if (x < 1 || x > 399) continue;
+    if (x < 6 || x > 394) continue;
     const w = 3.5 + rnd() * 4;
     k += rnd() < 0.18 ? zypresse(x, y + 2, w * 2, w * 0.38) : baumgruppe(x, y, w, w * 0.7);
   }
   for (let i = 0; i < 90; i++) {
-    const x = rnd() * 404 - 2, t = rnd(), yU = (() => { let j = 0; while (j < unten.length - 1 && unten[j + 1][0] < x) j++; const a = unten[j], b2 = unten[Math.min(j + 1, unten.length - 1)]; return b2[0] === a[0] ? a[1] : a[1] + (b2[1] - a[1]) * klemm((x - a[0]) / (b2[0] - a[0]), 0, 1); })();
+    const x = 6 + rnd() * 388, t = rnd(), yU = (() => { let j = 0; while (j < unten.length - 1 && unten[j + 1][0] < x) j++; const a = unten[j], b2 = unten[Math.min(j + 1, unten.length - 1)]; return b2[0] === a[0] ? a[1] : a[1] + (b2[1] - a[1]) * klemm((x - a[0]) / (b2[0] - a[0]), 0, 1); })();
     const y = yU + 4 + t * (214 - yU - 4), w = 5 + (y - 150) * 0.12 + rnd() * 4, h = w * 0.7;
     if (x > 186 && x < 285 && y > 158 && y < 203) continue;
     k += rnd() < 0.15 ? zypresse(x, y, w * 1.9, w * 0.35) : baumgruppe(x, y, w, h);
   }
-  akroUnter.push({ id: "mauer", de: "die Mauer", syl: "MAU-er", it: "le mura", itSyl: "MU-ra", en: "wall", x: r(pr(-30, -58, 141)[0]), y: r(pr(-30, -58, 141)[1]), kunst: flaeche(-40, -11, 80, 13),
+  akroUnter.push({ id: "mauer", de: "die Mauer", syl: "MAU-er", it: "le mura", itSyl: "MU-ra", en: "wall", x: r(pr(-104, -42, 138)[0]), y: r(pr(-104, -42, 138)[1]), kunst: flaeche(-24, -15, 48, 16),
     tipp: "Die Mauer um die Akropolis ist rund 2500 Jahre alt. Sie macht den Felsen zu einer Festung." });
   S.teil({ anker: [250, 140], id: "akropolis", de: "die Akropolis", syl: "a-KRO-po-lis", it: "l'Acropoli", itSyl: "a-CRO-po-li", en: "Acropolis", x: 0, y: 0, kunst: k,
-    zoom: { x: 146, y: 104, w: 72, h: 48 }, unter: akroUnter,
+    zoom: { x: 146, y: 98, w: 72, h: 48 }, unter: akroUnter,
     tipp: "„Akropolis“ heißt „Oberstadt“. Auf dem 156 Meter hohen Felsen standen die wichtigsten Tempel der Stadt." });
 }
 
@@ -502,7 +502,7 @@ const KANTE = (x) => 205 + 4 * Math.sin(x / 37) + 2.5 * Math.sin(x / 13 + 1);
   for (let x = 0; x <= 400; x += 10) pts.push([x, KANTE(x)]);
   let k = `<path d="M0 260 ${pts.map(([x, y]) => `L${x} ${r(y)}`).join(" ")} L400 260 Z" fill="${S.lg("kuppe", [[0, "#e6c79c"], [0.4, "#d4b088"], [1, "#b48f72"]])}"/>`;
   /* große helle und dunkle Flecken im Fels (weich), niedrige Büsche (Thymian, Mastix) */
-  for (let i = 0; i < 14; i++) { const x = rnd() * 400, y = KANTE(x) + 8 + rnd() * 46, w = 10 + rnd() * 26; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(w)}" ry="${r(w * 0.14)}" fill="${rnd() < 0.5 ? "#f3dcb4" : "#a98a70"}" opacity=".45" ${W15}/>`; }
+  for (let i = 0; i < 14; i++) { const w = 10 + rnd() * 26, x = w + 3 + rnd() * (394 - 2 * w), y = KANTE(x) + 8 + rnd() * 46; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(w)}" ry="${r(w * 0.14)}" fill="${rnd() < 0.5 ? "#f3dcb4" : "#a98a70"}" opacity=".45" ${W15}/>`; }
   for (let i = 0; i < 9; i++) { const x = 20 + rnd() * 360, y = KANTE(x) + 4 + rnd() * 20, w = 4 + rnd() * 5; k += `<ellipse cx="${r(x + 1)}" cy="${r(y + 0.6)}" rx="${r(w * 0.6)}" ry="${r(w * 0.12)}" fill="#5a4030" opacity=".35"/>` + baumgruppe(x, y, w, w * 0.45, "#3e4a2a", "#5a6438", "#9c9a5a"); }
   /* trockenes Gras, Thymian, Steine */
   for (let i = 0; i < 70; i++) {
@@ -570,7 +570,7 @@ const KANTE = (x) => 205 + 4 * Math.sin(x / 37) + 2.5 * Math.sin(x / 13 + 1);
     for (let i = 0; i < n - 1; i++) { const t = (i + 0.3) / (n - 1), cx = x - w / 2 + t * w, cy = y - Math.sin(t * Math.PI) * hh * 0.55 - hh * 0.18; c += `<ellipse cx="${r(cx - 0.6)}" cy="${r(cy)}" rx="${r(w / n * 0.8)}" ry="${r(hh * 0.22)}" fill="#8f9a56" opacity=".85"/>`; }
     return c;
   };
-  const baum = [[8, 198, 22, 10], [34, 196, 16, 8], [60, 203, 20, 8], [92, 199, 26, 11], [128, 204, 18, 7], [160, 200, 20, 9], [186, 207, 14, 6], [300, 197, 22, 10], [330, 202, 18, 8], [356, 196, 24, 11], [388, 200, 20, 9], [236, 210, 18, 6], [268, 206, 16, 6]];
+  const baum = [[14, 198, 20, 10], [34, 196, 16, 8], [60, 203, 20, 8], [92, 199, 26, 11], [128, 204, 18, 7], [160, 200, 20, 9], [186, 207, 14, 6], [300, 197, 22, 10], [330, 202, 18, 8], [356, 196, 24, 11], [384, 200, 18, 9], [236, 210, 18, 6], [268, 206, 16, 6]];
   for (const [x, y, w, hh] of baum) h += `<path d="M${r(x - 0.5)} ${r(y + 6)} L${r(x - 0.3)} ${r(y)} L${r(x + 0.3)} ${r(y)} L${r(x + 0.5)} ${r(y + 6)} Z" fill="#5a4636"/>` + krone(x, y, w, hh, "#41532f");
   k += `<g clip-path="url(#${S.id("hang")})">${h}</g>`;
   /* große Aleppo-Kiefer vorn links (45 m): schiefer Stamm, lockere Schirmkrone mit Himmelslöchern */

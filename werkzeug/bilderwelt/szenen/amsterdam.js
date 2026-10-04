@@ -134,6 +134,8 @@ S.def(`<filter id="${S.id("welle")}"${CIF} x="-5%" y="-5%" width="110%" height="
 S.def(`<filter id="${S.id("vol")}"${CIF} x="-10%" y="-5%" width="120%" height="110%"><feOffset in="SourceAlpha" dx="-.5" dy=".15" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="k"/><feFlood flood-color="#ffe2a8" flood-opacity=".9"/><feComposite in2="k" operator="in" result="licht"/><feOffset in="SourceAlpha" dx="1.4" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="s"/><feGaussianBlur in="s" stdDeviation=".6" result="sb"/><feFlood flood-color="#1a2040" flood-opacity=".38"/><feComposite in2="sb" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="schatten"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="schatten"/><feMergeNode in="licht"/></feMerge></filter>`);
 /* im Schatten: nur weiches Himmelslicht von oben, kühle Kante */
 S.def(`<filter id="${S.id("volS")}"${CIF} x="-10%" y="-5%" width="120%" height="110%"><feOffset in="SourceAlpha" dy=".6" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="k"/><feFlood flood-color="#cfe0f2" flood-opacity=".45"/><feComposite in2="k" operator="in" result="licht"/><feOffset in="SourceAlpha" dx="1" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="s"/><feGaussianBlur in="s" stdDeviation=".5" result="sb"/><feFlood flood-color="#101830" flood-opacity=".3"/><feComposite in2="sb" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="schatten"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="schatten"/><feMergeNode in="licht"/></feMerge></filter>`);
+S.def(`<filter id="${S.id("voln")}"${CIF} x="-5%" y="-5%" width="110%" height="110%"><feOffset in="SourceAlpha" dx="-.35" dy=".3" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="k"/><feFlood flood-color="#ffe2a8" flood-opacity=".6"/><feComposite in2="k" operator="in" result="licht"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="licht"/></feMerge></filter>`);
+const VOLN = `filter="url(#${S.id("voln")})"`;
 const VOL = `filter="url(#${S.id("vol")})"`, VOLS = `filter="url(#${S.id("volS")})"`;
 
 /* =====================================================================
@@ -243,12 +245,12 @@ function wolke(cx, cy, s, seed, form) {
   for (const [x, y, rr] of teile) { hl += `<circle cx="${r(x + rr * 0.3)}" cy="${r(y - rr * 0.3)}" r="${r(rr * 0.55)}"/>`; sch += `<circle cx="${r(x - rr * 0.25)}" cy="${r(y + rr * 0.35)}" r="${r(rr * 0.85)}"/>`; }
   const id = S.id("wk" + seed), idb = S.id("wb" + seed), oben = cy - 14 * s;
   return `<clipPath id="${id}"><path d="${umr}"/></clipPath><clipPath id="${idb}"><rect x="${r(xl)}" y="${r(oben)}" width="${r(xr - xl)}" height="${r(fuss - oben)}"/></clipPath>` +
-    `<g clip-path="url(#${idb})"><g clip-path="url(#${id})"><rect x="${r(xl)}" y="${r(oben)}" width="${r(xr - xl)}" height="${r(fuss - oben)}" fill="${S.lg("wolke" + seed, [[0, "#fffaf2"], [0.6, "#f1f0f2"], [1, "#aab6cf"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${r(cy - 6 * s)}" x2="0" y2="${r(fuss)}"`)}"/>` +
-    `<g fill="#8fa2c4" opacity=".32" filter="url(#${S.id("wolkweich")})">${sch}</g><g fill="#fff2d8" opacity=".75" filter="url(#${S.id("wolkweich")})">${hl}</g>` +
+    `<g clip-path="url(#${idb})"><g clip-path="url(#${id})"><rect x="${r(xl)}" y="${r(oben)}" width="${r(xr - xl)}" height="${r(fuss - oben)}" fill="${S.lg("wolke" + seed, [[0, "#fffcf6"], [0.6, "#f6f4f2"], [1, "#bcc6da"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${r(cy - 6 * s)}" x2="0" y2="${r(fuss)}"`)}"/>` +
+    `<g fill="#97a9c8" opacity=".24" filter="url(#${S.id("wolkweich")})">${sch}</g><g fill="#fff2d8" opacity=".75" filter="url(#${S.id("wolkweich")})">${hl}</g>` +
     `<rect x="${r(xl)}" y="${r(oben)}" width="${r(xr - xl)}" height="${r(fuss - oben)}" fill="${S.lg("wolkeseite", [[0, "#7f93b8", 0.22], [0.55, "#fff", 0], [1, "#ffd9a0", 0.22]], 0, 0, 1, 0)}"/></g></g>`;
 }
-const WOLKE_A = [[-9, 0.6, 3.2], [-4.5, -1.6, 4.4], [1, -2.6, 5.2], [6.4, -1, 4], [10.6, 0.8, 2.8]];
-const WOLKE_B = [[-6, 0.4, 2.6], [-2, -1.2, 3.6], [2.6, -0.4, 3.2], [6.2, 0.8, 2.2]];
+const WOLKE_A = [[-11, 1.2, 2.2], [-8, -0.2, 3.2], [-4.4, -2.2, 4.3], [0.4, -4, 5.4], [3.2, -6.4, 3.4], [5.6, -2.4, 4.4], [9, -0.4, 3.2], [11.8, 1.1, 2.1], [-1.6, 0.4, 3.4], [3.6, 0.6, 3]];
+const WOLKE_B = [[-6.4, 0.6, 2.2], [-3, -1.2, 3.2], [0.6, -2.6, 3.8], [3.8, -0.8, 3], [6.8, 0.8, 2], [1.2, 0.4, 2.6]];
 const WOLKE_C = [[-4, 0.5, 1.8], [-1, -0.6, 2.6], [2.4, 0.2, 2]];
 S.hinten(wolke(186, 22, 1.9, 11, WOLKE_A) + wolke(262, 52, 1.3, 12, WOLKE_B) + wolke(150, 70, 0.9, 13, WOLKE_C) + wolke(226, 90, 0.6, 14, WOLKE_B));
 
@@ -985,7 +987,7 @@ const GEL = { D: 2.4, h: 3.62 };
   for (let h = HL - 0.12; h > HL - 0.45; h -= 0.045) fl += `M${q(-1.0, 2.0, h)} L${q(-0.66, 2.0, h)} `;
   for (let X = -0.98; X < -0.66; X += 0.04) fl += `M${q(X, 2.0, HL - 0.08)} L${q(X, 2.0, HL - 0.45)} `;
   korb += `<path d="${fl}" stroke="#6e4a20" stroke-width=".6" opacity=".55"/><path d="M${q(-1.0, 2.0, HL - 0.08)} L${q(-0.66, 2.0, HL - 0.08)}" stroke="#d9b070" stroke-width="${r(0.025 * F / 2.0)}" stroke-linecap="round"/>`;
-  S.teil({ id: "fahrrad", de: "das Fahrrad", syl: "FAHR-rad", it: "la bicicletta", itSyl: "bi-ci-CLET-ta", en: "bicycle", anker: [pp(-0.6, 2.2, 3.2)[0], 258], kunst: `<g ${VOL}>${k}</g>` + korb,
+  S.teil({ id: "fahrrad", de: "das Fahrrad", syl: "FAHR-rad", it: "la bicicletta", itSyl: "bi-ci-CLET-ta", en: "bicycle", anker: [pp(-0.6, 2.2, 3.2)[0], 258], kunst: `<g ${VOLN}>${k}</g>` + korb,
     tipp: "Das typische Hollandrad ist schwarz. Man sitzt darauf ganz aufrecht." });
   /* Tulpen im Korb (Strauß, Seidenpapier) */
   const z = zufall(44);
@@ -1005,7 +1007,7 @@ const GEL = { D: 2.4, h: 3.62 };
   const [pa, pb] = [pp(-0.98, 1.98, HL - 0.05), pp(-0.68, 1.98, HL - 0.05)];
   const papier = `<path d="M${r(pa[0])} ${r(pa[1])} L${r(pa[0] - 4)} ${r(pa[1] - 22)} L${r((pa[0] + pb[0]) / 2)} ${r(pa[1] - 10)} L${r(pb[0] + 5)} ${r(pb[1] - 24)} L${r(pb[0])} ${r(pb[1])} Z" fill="#f4efe2" opacity=".85"/>`;
   const tk = `<path d="${stiele}" stroke="#4d7f34" stroke-width="${r(0.009 * F / 2)}" fill="none"/>` + blaetter + blueten;
-  S.teil({ oben: true, id: "tulpe", de: "die Tulpe", syl: "TUL-pe", it: "il tulipano", itSyl: "tu-LI-pa-no", en: "tulip", anker: [pp(-0.83, 2, HL)[0], pp(-0.83, 2, HL)[1]], kunst: `<g ${VOL}>${tk}</g>`,
+  S.teil({ oben: true, id: "tulpe", de: "die Tulpe", syl: "TUL-pe", it: "il tulipano", itSyl: "tu-LI-pa-no", en: "tulip", anker: [pp(-0.83, 2, HL)[0], pp(-0.83, 2, HL)[1]], kunst: tk,
     tipp: "Im Frühling blühen in Holland Millionen Tulpen. Die ersten kamen im 16. Jahrhundert aus der Türkei." });
   /* die Klingel am Lenker (fernes Ende) */
   const [kx, kyy] = pp(-0.5, 2.42, HL + 0.035), ks = F / 2.42;

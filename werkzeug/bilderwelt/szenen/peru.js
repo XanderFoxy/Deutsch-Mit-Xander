@@ -223,7 +223,7 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   k += `<path d="${glatt(PUTU.slice(1), false)}" stroke="#f3e2b4" stroke-width=".9" fill="none" opacity=".75"/>`;
   k += `<path d="${putD}" fill="${S.lg("putudunst", [[0, "#dfe9ef", 0], [0.55, "#dfe9ef", 0.1], [1, "#dfe9ef", 0.6]])}"/>`;
   /* naher Osthang auf unserer Seite (rechts unten): bewaldet, im Morgenlicht */
-  const OST = [[312, 262], [318, 214], [330, 190], [348, 176], [366, 170], [384, 168], [402, 166], [402, 262]];
+  const OST = [[314, 262], [318, 214], [326, 194], [342, 184], [362, 178], [384, 174], [402, 172], [402, 262]];
   k += `<path d="${glatt(OST, true, 0.7)}" fill="${S.lg("osthang", [[0, "#5f8c45"], [1, "#3d6a36"]])}"/>`;
   k += `<path d="${glatt(OST, true, 0.7)}" fill="${WALD}"/>`;
   k += `<path d="${glatt(OST.slice(1, 7), false)}" stroke="#bcd88a" stroke-width=".8" fill="none" opacity=".7"/>`;
@@ -232,13 +232,13 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
 }
 
 /* =====================================================================
-   3 — DER FLUSS (Urubamba) ganz unten rechts in der Schlucht
+   3 — DIE SCHLUCHT (links: das tiefe Tal des Urubamba im Morgendunst)
    ===================================================================== */
 {
-  const k = `<path d="M300 205 Q330 199 352 202 Q376 205 402 200 L402 207 Q378 212 352 209 Q326 206 304 210 Z" fill="${S.lg("fluss", [[0, "#a7b9a8"], [1, "#6e8e83"]])}"/>` +
-    `<path d="M312 205 q10 -1.2 20 0 M344 204.6 q8 .8 18 .2 M372 205 q10 -.8 22 -1.6" stroke="#eef3ea" stroke-width=".5" fill="none" opacity=".8"/>`;
-  S.teil({ id: "fluss", de: "der Fluss", syl: "FLUSS", it: "il fiume", itSyl: "FIU-me", en: "river", x: 352, y: 205, kunst: um(352, 205, k),
-    tipp: "Der Urubamba fließt rund 450 Meter tiefer als die Stadt. Die Inka nannten ihn den heiligen Fluss." });
+  let k = `<path d="M30 150 Q62 156 84 176 Q100 196 106 226 L70 226 Q56 196 30 176 Z" fill="${S.lg("schlucht", [[0, "#3c5d50", 0.0], [0.4, "#2e4c42", 0.55], [1, "#2a463c", 0.75]], 0, 0, 1, 0)}"/>`;
+  k += `<g filter="url(#${S.id("dunst")})"><path d="M36 182 Q70 174 104 186 L104 196 Q70 188 36 194 Z" fill="#eef3f4" opacity=".85"/><path d="M50 206 Q80 198 108 210 L108 218 Q80 210 50 216 Z" fill="#eef3f4" opacity=".9"/><path d="M26 160 Q52 156 76 166 L74 171 Q52 164 28 167 Z" fill="#f4f7f8" opacity=".8"/></g>`;
+  S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 70, y: 190, kunst: um(70, 190, k),
+    tipp: "Tief unten in der Schlucht fließt der Urubamba, rund 450 Meter unter der Stadt. Die Inka nannten ihn den heiligen Fluss." });
 }
 
 /* =====================================================================
@@ -474,32 +474,38 @@ const STADT = {};
 
 /* =====================================================================
    8 — DIE TERRASSE (Landwirtschaftsbereich zwischen uns und der Stadt)
+   ---------------------------------------------------------------------
+   Wir schauen von oben auf die Stufen: die Stützmauern zeigen von uns weg
+   (zur Stadt). Man sieht die Laufflächen, die helle Mauerkrone und dahinter
+   den Schatten der Mauer auf der nächsttieferen Stufe. Je näher, desto
+   größer: zwei große Stufen vorn (Besucher, Lamas), dann immer schmalere.
    ===================================================================== */
-const TERR = [];          /* Vorderkanten der Stufen (für Lamas und Besucher) */
+const TERR = [];
 {
   let k = "";
-  /* Untergrund: der Hang unter uns, links fällt er in die Schlucht */
-  k += `<path d="M60 262 L66 228 Q120 210 200 209 Q280 210 336 222 L344 262 Z" fill="#6f9746"/>`;
-  /* Stufen von hinten (oben) nach vorn (unten): Lauffläche, darunter die Stützmauer (vorne sichtbar, weil der Hang sich krümmt) */
-  const stufen = [[211.5, 1.6, 2.6], [215.5, 1.9, 3.2], [220.5, 2.3, 4], [227, 2.8, 5], [235.5, 3.4, 6.2], [246.5, 4.2, 7.6], [260.5, 5, 9]];
-  let vorher = 209;
-  stufen.forEach(([y, wand, tief], i) => {
-    const lin = (yy, lift) => [[64 - i * 0.6, yy + 6 + lift], [110, yy + 0.8 + lift], [170, yy - 1.2 + lift], [230, yy - 0.8 + lift], [290, yy + 0.8 + lift], [340 + i * 0.4, yy + 5 + lift]];
-    const oben = lin(vorher, 0), unten = lin(y - wand, 0), fuss = lin(y, 0);
-    k += `<path d="${glatt([...oben, ...unten.slice().reverse()], true, 0.6)}" fill="${S.lg("lauf" + (i % 2), [[0, i % 2 ? "#8db655" : "#97bf5c"], [1, i % 2 ? "#7ba548" : "#86b04f"]])}"/>`;
-    k += `<path d="${glatt([...oben, ...unten.slice().reverse()], true, 0.6)}" fill="${GRAS}"/>`;
-    k += `<path d="${glatt([...unten, ...fuss.slice().reverse()], true, 0.6)}" fill="${S.lg("terrmauer", [[0, "#d8d0bf"], [1, "#a69e8e"]])}"/>`;
-    /* Steinfugen der Mauer: grobe Feldsteine */
-    let fugen = "";
-    const zf = zufall(300 + i);
-    for (let x = 70; x < 336; x += wand * (1.4 + zf())) { const yy = profilY(unten, x); fugen += `M${r(x)} ${r(yy + 0.2)} l${r((zf() - 0.5) * 0.6)} ${r(wand * 0.95)}`; }
-    k += `<path d="${fugen}" stroke="#857d6f" stroke-width="${r(0.12 + i * 0.03)}" opacity=".8"/>`;
-    k += `<path d="${glatt(unten, false)}" stroke="#f6efdf" stroke-width="${r(0.3 + i * 0.06)}" fill="none"/>`;
-    /* Schatten der Mauer auf der nächsten Stufe davor fällt nach links — die Mauer selbst steht im Licht */
-    TERR.push({ y, oben: unten, unten: fuss });
-    vorher = y;
-  });
-  S.teil({ id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: 200, y: 232, kunst: um(200, 232, k),
+  /* Kanten von hinten (bei der Stadt) nach vorn; jede Kante biegt sich links in die Schlucht hinab */
+  const kanten = [209, 211.2, 213.6, 216.6, 220.6, 226, 236.6, 262];
+  const kante = (y, i) => [[60 + i * 1.5, y + 9 + i * 1.2], [92, y + 2.4 + i * 0.3], [140, y + 0.3], [200, y - 0.6], [262, y], [310, y + 1.8 + i * 0.3], [340 - i * 0.6, y + 6 + i * 0.6]];
+  for (let i = 0; i < kanten.length - 1; i++) {
+    const hinten = kante(kanten[i], i), vorn = kante(kanten[i + 1], i + 1), tief = kanten[i + 1] - kanten[i];
+    k += `<path d="${glatt([...hinten, ...vorn.slice().reverse()], true, 0.6)}" fill="${S.lg("lauf" + (i % 2), [[0, i % 2 ? "#86b04f" : "#91ba57"], [1, i % 2 ? "#7aa447" : "#86ae4f"]])}"/>`;
+    if (tief > 4) k += `<path d="${glatt([...hinten, ...vorn.slice().reverse()], true, 0.6)}" fill="${GRAS}"/>`;
+    /* Schatten der höheren Mauer (vorn) auf dieser Stufe: Streifen am vorderen Rand? Nein — die Mauer fällt zur Stadt hin
+       ab: ihr Schatten liegt am HINTEREN Rand der Stufe davor; hier: dunkler Streifen direkt hinter der Kante */
+    const sch = hinten.map(([x, y]) => [x, y + Math.min(2.6, tief * 0.22)]);
+    if (i > 0) k += `<path d="${glatt([...hinten, ...sch.slice().reverse()], true, 0.6)}" fill="#33502a" opacity=".45"/>`;
+    TERR.push({ hinten, vorn });
+  }
+  /* Mauerkronen: helle Steinreihe mit Fugen auf jeder Kante */
+  for (let i = 1; i < kanten.length - 1; i++) {
+    const kk = kante(kanten[i], i), d = 0.5 + i * 0.32, zf = zufall(300 + i);
+    const unten = kk.map(([x, y]) => [x, y + d]);
+    k += `<path d="${glatt([...kk.map(([x, y]) => [x, y - d * 0.2]), ...unten.slice().reverse()], true, 0.6)}" fill="${S.lg("krone", [[0, "#f1e9d6"], [1, "#c9bfaa"]])}"/>`;
+    let f = "";
+    for (let x = 66; x < 336; x += d * (2.2 + zf() * 1.6)) f += `M${r(x)} ${r(profilY(kk, x) - d * 0.15)} l${r((zf() - 0.5) * 0.4)} ${r(d * 1.1)}`;
+    k += `<path d="${f}" stroke="#8f8574" stroke-width="${r(0.1 + i * 0.03)}" opacity=".75"/>`;
+  }
+  S.teil({ id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: 200, y: 230, kunst: um(200, 230, k),
     tipp: "Auf den Terrassen bauten die Inka Mais und Kartoffeln an. Die Mauern halten die Erde fest, auch bei starkem Regen." });
 }
 
@@ -508,7 +514,7 @@ const TERR = [];          /* Vorderkanten der Stufen (für Lamas und Besucher) *
    ===================================================================== */
 {
   /* wir stehen auf der Terrasse darüber: man sieht das Strohdach von oben, die Giebelseite rechts im Licht */
-  const X = -6, Y = 252, L = 78, H = 26, TIEF = [-16, -14], GI = 30;
+  const X = -14, Y = 256, L = 80, H = 24, TIEF = [15, -15], GI = 26;
   const A = [X, Y], Bq = [X + L, Y], A2 = [X + TIEF[0], Y + TIEF[1]], B2 = [X + L + TIEF[0], Y + TIEF[1]];
   const up = (p, v) => [p[0], p[1] - v];
   let k = "";
@@ -568,51 +574,47 @@ const TERR = [];          /* Vorderkanten der Stufen (für Lamas und Besucher) *
 /* =====================================================================
    10 — DAS LAMA und DAS FOHLEN (weiden auf den Terrassen)
    ===================================================================== */
-/* Lama von der Seite: Fußpunkt (0|0), H = Höhe bis zu den Ohrspitzen, dir = 1 schaut nach rechts */
+/* Lama von der Seite (Maße in Metern, nach rechts schauend): Widerrist 1,1 m, Kopf 1,75 m, dichte Wolle,
+   kräftiger Hals, Bananenohren, Zehen mit Polstern. Fußpunkt (0|0), H = Höhe bis zu den Ohrspitzen. */
 const lama = (H, dir, fell, fleck, seed, jung = false) => {
-  const u = H / 1.85, z = zufall(seed);
+  const u = H / 1.86, z = zufall(seed);
+  const Q = (pts) => pts.map(([a, b]) => [a * u * dir, -b * u]);
   const X = (v) => r(v * u * dir), Y = (v) => r(-v * u);
   let o = "";
-  /* Schatten: lang nach links (Sonne rechts) und etwas nach hinten */
-  o += `<path d="M${X(-0.6)} ${Y(0)} L${X(0.6)} ${Y(0)} L${r(-1.1 * u + (dir > 0 ? -0.2 : 0) * u)} ${r(-0.12 * u)} L${r(-2.1 * u)} ${r(-0.14 * u)} Z" fill="#253a18" opacity=".32"/>`;
-  /* ferne Beine (dunkler) */
-  const bein = (x, dx, c) => `<path d="M${X(x - 0.05)} ${Y(0.82)} L${X(x - 0.04)} ${Y(0.4)} L${X(x - 0.03 + dx)} ${Y(0.03)} L${X(x + 0.06 + dx)} ${Y(0)} L${X(x + 0.05 + dx)} ${Y(0.06)} L${X(x + 0.05)} ${Y(0.42)} L${X(x + 0.07)} ${Y(0.82)} Z" fill="${c}"/>`;
-  o += bein(-0.38, 0.04, "#7d6650") + bein(0.34, -0.03, "#7d6650");
-  /* Körper mit wolligem Rand */
-  const koerper = [];
-  for (let i = 0; i <= 14; i++) { const t = i / 14, a = Math.PI * (1 + t); const wolle = i % 2 ? 0.035 : 0; koerper.push([0.0 + Math.cos(a) * (0.62 + wolle), 0.98 + Math.sin(a) * -(0.22 + wolle)]); }
-  for (let i = 0; i <= 10; i++) { const t = i / 10, a = Math.PI * t; koerper.push([Math.cos(a) * 0.6, 0.98 - Math.sin(a) * 0.2 * -1 - 0.0]); }
-  const kp = [[-0.62, 0.98], [-0.6, 1.1], [-0.5, 1.18], [-0.3, 1.2], [-0.05, 1.19], [0.2, 1.2], [0.42, 1.22], [0.56, 1.16], [0.62, 1.02], [0.58, 0.86], [0.44, 0.78], [0.2, 0.76], [-0.1, 0.77], [-0.38, 0.78], [-0.56, 0.84]];
-  const kd = glatt(kp.map(([a, b]) => [a * u * dir, -b * u]), true, 0.9);
-  o += `<path d="${kd}" fill="${fell}"/>`;
-  if (fleck) o += `<path d="M${X(-0.1)} ${Y(1.19)} Q${X(0.25)} ${Y(1.25)} ${X(0.42)} ${Y(1.2)} Q${X(0.5)} ${Y(0.95)} ${X(0.2)} ${Y(0.86)} Q${X(-0.05)} ${Y(0.95)} ${X(-0.1)} ${Y(1.19)} Z" fill="${fleck}"/>`;
-  /* Wollbüschel */
+  /* Schatten am Boden: lang nach links, etwas in die Tiefe */
+  o += `<path d="${glatt(Q([[-0.5, 0.02], [0.55, 0.02], [0.4 - (dir > 0 ? 1.6 : 0.6), 0.14], [-0.7 - (dir > 0 ? 1.3 : 0.2), 0.12]]), true, 0.8)}" fill="#22361a" opacity=".3"/>`;
+  const bein = (x, knick, c, dicke = 0.13) => `<path d="${glatt(Q([[x - dicke / 2, 0.86], [x - dicke * 0.42, 0.5], [x - 0.04 + knick, 0.08], [x - 0.07 + knick, 0], [x + 0.08 + knick, 0], [x + 0.05 + knick, 0.08], [x + dicke * 0.38, 0.5], [x + dicke / 2, 0.86]]), true, 0.5)}" fill="${c}"/>`;
+  const dunkel = jung ? "#6d4c30" : "#a8987f";
+  o += bein(-0.34, 0.03, dunkel) + bein(0.48, -0.02, dunkel);
+  /* Körper: Wollkante als kleine Bögen */
+  const kp = [[-0.66, 0.98], [-0.62, 1.1], [-0.48, 1.16], [-0.2, 1.13], [0.1, 1.12], [0.36, 1.14], [0.56, 1.1], [0.66, 0.98], [0.64, 0.82], [0.5, 0.7], [0.2, 0.67], [-0.15, 0.68], [-0.45, 0.72], [-0.62, 0.82]];
+  o += `<path d="${glatt(Q(kp), true, 0.9)}" fill="${fell}"/>`;
+  if (fleck) o += `<path d="${glatt(Q([[-0.1, 1.12], [0.3, 1.14], [0.52, 1.06], [0.44, 0.86], [0.12, 0.84], [-0.08, 0.96]]), true, 0.9)}" fill="${fleck}"/>`;
   let wo = "";
-  for (let i = 0; i < 9; i++) { const x = -0.5 + i * 0.12, y = 1.18 - (i % 3) * 0.12 - z() * 0.08; wo += `M${X(x)} ${Y(y)} q${r(0.05 * u * dir)} ${r(0.06 * u)} ${r(0.1 * u * dir)} 0`; }
-  o += `<path d="${wo}" stroke="#fff" stroke-width="${r(0.03 * u)}" fill="none" opacity=".45"/>`;
+  for (let i = 0; i < 10; i++) { const x = -0.58 + i * 0.12; wo += `M${X(x)} ${Y(0.72 + (i % 2) * 0.03)} q${r(0.04 * u * dir)} ${r(0.06 * u)} ${r(0.09 * u * dir)} 0`; }
+  o += `<path d="${wo}" stroke="#5a4a3a" stroke-width="${r(0.025 * u)}" fill="none" opacity=".35"/>`;
   /* nahe Beine */
-  o += bein(-0.3, -0.05, fell) + bein(0.42, 0.05, fell);
-  o += `<path d="M${X(-0.3)} ${Y(0.03)} h${X(0.12)} M${X(0.42)} ${Y(0.03)} h${X(0.12)}" stroke="#3d3026" stroke-width="${r(0.05 * u)}"/>`;
-  /* Schwanz */
-  o += `<path d="M${X(-0.6)} ${Y(1.12)} q${X(-0.12)} ${Y(-0.02)} ${X(-0.1)} ${Y(-0.18)} q${X(0.06)} ${Y(0.06)} ${X(0.1)} ${Y(0.12)} Z" fill="${fell}"/>`;
-  /* Hals und Kopf */
-  const hals = jung ? [[0.4, 1.1], [0.46, 1.38], [0.5, 1.52], [0.62, 1.52], [0.6, 1.32], [0.58, 1.06]] : [[0.38, 1.12], [0.44, 1.46], [0.48, 1.62], [0.62, 1.62], [0.6, 1.4], [0.6, 1.08]];
-  o += `<path d="${glatt(hals.map(([a, b]) => [a * u * dir, -b * u]), true, 0.8)}" fill="${fell}"/>`;
-  const ko = jung ? 1.5 : 1.6;
-  o += `<path d="${glatt([[0.46, ko + 0.02], [0.52, ko + 0.12], [0.62, ko + 0.12], [0.74, ko + 0.06], [0.8, ko - 0.02], [0.76, ko - 0.06], [0.6, ko - 0.06]].map(([a, b]) => [a * u * dir, -b * u]), true, 0.8)}" fill="${fell}"/>`;
-  /* Bananenohren */
-  for (const [ox, kr] of [[0.5, -0.03], [0.57, 0.03]]) o += `<path d="M${X(ox)} ${Y(ko + 0.1)} Q${X(ox - 0.04 + kr)} ${Y(ko + 0.24)} ${X(ox + 0.02 + kr)} ${Y(ko + 0.3)} Q${X(ox + 0.06)} ${Y(ko + 0.2)} ${X(ox + 0.05)} ${Y(ko + 0.1)} Z" fill="${fell}"/>`;
-  o += `<circle cx="${X(0.62)}" cy="${Y(ko + 0.04)}" r="${r(0.025 * u)}" fill="#1d1712"/><path d="M${X(0.78)} ${Y(ko)} l${X(0.02)} ${Y(-0.03)}" stroke="#3a2e26" stroke-width="${r(0.02 * u)}"/>`;
+  o += bein(-0.46, -0.04, fell, 0.15) + bein(0.36, 0.04, fell, 0.15);
+  o += `<path d="M${X(-0.54)} ${Y(0.02)} h${X(0.14)} M${X(0.36)} ${Y(0.02)} h${X(0.14)}" stroke="#3d3026" stroke-width="${r(0.05 * u)}"/>`;
+  /* Schwanz (kurz, etwas angehoben) */
+  o += `<path d="${glatt(Q([[-0.6, 1.1], [-0.74, 1.08], [-0.78, 0.94], [-0.68, 0.96], [-0.62, 1.02]]), true, 0.8)}" fill="${fell}"/>`;
+  /* Hals (kräftig, leicht nach vorn) und Kopf */
+  const kh = jung ? 1.46 : 1.56;
+  o += `<path d="${glatt(Q([[0.36, 1.02], [0.44, 1.3], [0.52, kh], [0.72, kh + 0.02], [0.7, 1.32], [0.66, 0.98]]), true, 0.8)}" fill="${fell}"/>`;
+  o += `<path d="${glatt(Q([[0.5, kh + 0.04], [0.58, kh + 0.15], [0.72, kh + 0.16], [0.86, kh + 0.1], [0.94, kh + 0.02], [0.92, kh - 0.05], [0.78, kh - 0.07], [0.62, kh - 0.05]]), true, 0.8)}" fill="${fell}"/>`;
+  for (const [ox, kr] of [[0.58, -0.04], [0.66, 0.02]]) o += `<path d="${glatt(Q([[ox, kh + 0.13], [ox - 0.03 + kr, kh + 0.25], [ox + 0.01 + kr, kh + 0.33], [ox + 0.06, kh + 0.25], [ox + 0.06, kh + 0.13]]), true, 0.8)}" fill="${fell}"/>`;
+  o += `<circle cx="${X(0.74)}" cy="${Y(kh + 0.07)}" r="${r(0.028 * u)}" fill="#1d1712"/><path d="M${X(0.9)} ${Y(kh + 0.02)} l${X(0.03)} ${Y(-0.03)}" stroke="#3a2e26" stroke-width="${r(0.02 * u)}"/>`;
+  o += `<path d="M${X(0.86)} ${Y(kh - 0.04)} q${X(0.03)} ${Y(-0.02)} ${X(0.07)} ${Y(0.01)}" stroke="#4a3a2e" stroke-width="${r(0.018 * u)}" fill="none"/>`;
   return o;
 };
 {
-  /* großes Lama auf der dritten Stufe, schaut nach rechts zu uns ins Tal */
-  const t = TERR[3], x = 174, y = profilY(t.oben, 174) - 0.6;
-  const k = `<g filter="${VOL_FIGUR}">${lama(30, 1, S.lg("lamafell", [[0, "#f6f1e6"], [1, "#d8cdb9"]], 0, 0, 1, 0), "#9b6a3c", 5)}</g>`;
+  /* Mutter auf der zweiten großen Stufe, das Fohlen daneben */
+  const t = TERR[TERR.length - 2], x = 168, y = profilY(t.vorn, 168) - 3;
+  const k = `<g filter="${VOL_FIGUR}">${lama(29, 1, S.lg("lamafell", [[0, "#f7f2e8"], [1, "#d9cfbb"]], 0, 0, 1, 0), "#9b6a3c", 5)}</g>`;
   S.teil({ id: "lama", de: "das Lama", syl: "LA-ma", it: "il lama", itSyl: "LA-ma", en: "llama", x, y, steht: true, kunst: k,
     tipp: "Lamas tragen Lasten und geben Wolle. Hier halten sie das Gras auf den Terrassen kurz." });
-  const x2 = 204, y2 = profilY(t.oben, 204) - 0.4;
-  const k2 = `<g filter="${VOL_FIGUR}">${lama(18, -1, S.lg("fohlenfell", [[0, "#b98b5c"], [1, "#8d6440"]], 0, 0, 1, 0), "#f2ebdc", 6, true)}</g>`;
+  const x2 = 202, y2 = profilY(t.vorn, 202) - 4.5;
+  const k2 = `<g filter="${VOL_FIGUR}">${lama(18, -1, S.lg("fohlenfell", [[0, "#c39668"], [1, "#94693f"]], 0, 0, 1, 0), "#f2ebdc", 6, true)}</g>`;
   S.teil({ id: "fohlen", de: "das Fohlen", syl: "FOH-len", it: "il piccolo di lama", itSyl: "PIC-co-lo di LA-ma", en: "baby llama", x: x2, y: y2, steht: true, kunst: k2,
     tipp: "Ein junges Lama heißt Fohlen. Es bleibt fast ein Jahr bei seiner Mutter." });
 }
