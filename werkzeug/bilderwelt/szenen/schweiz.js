@@ -101,6 +101,38 @@ function kappe(svg) {
   return svg;
 }
 { const teil = S.teil; S.teil = (t) => { if (t.anker) { const [ax, ay] = t.anker; t.kunst = `<g transform="translate(${B.r(-ax)} ${B.r(-ay)})">${kappe(t.kunst)}</g>`; t.x = ax; t.y = ay; delete t.anker; } return teil(t); }; }
+/* Pfade relativ schreiben (Ladezeit): jede Koordinate absolut auf 0,1 gerundet, dann als Differenz — keine Drift */
+function relativ(svg) {
+  const f = (v) => { let s = String(Math.round(v * 10) / 10); if (s === "-0") s = "0"; return s.replace(/^(-?)0\./, "$1."); };
+  const R = (v) => Math.round(v * 10) / 10;
+  return svg.replace(/ d="([^"]*)"/g, (m0, d) => {
+    const tok = d.match(/[a-zA-Z]|-?(?:\d+\.?\d*|\.\d+)(?:e-?\d+)?/g) || [];
+    let i = 0, cx = 0, cy = 0, sx = 0, sy = 0, out = "", prev = "", letzter = "";
+    const zahl = (s) => { if (out && prev !== "" && !/^-/.test(s) && !(s[0] === "." && prev.includes("."))) out += " "; out += s; prev = s; };
+    const befehl = (c) => { if (c !== letzter || c === "m") { out += c; prev = ""; letzter = c; } };
+    const istZahl = () => i < tok.length && !/^[a-zA-Z]$/.test(tok[i]);
+    let cmd = "";
+    while (i < tok.length) {
+      if (/^[a-zA-Z]$/.test(tok[i])) cmd = tok[i++];
+      const rel = cmd === cmd.toLowerCase(), C = cmd.toUpperCase();
+      const n = () => parseFloat(tok[i++]);
+      const pkt = () => { let x = n(), y = n(); if (rel) { x += cx; y += cy; } return [R(x), R(y)]; };
+      if (C === "Z") { befehl("z"); cx = sx; cy = sy; if (!istZahl()) continue; else continue; }
+      if (!istZahl()) { i++; continue; }
+      if (C === "M") { const [x, y] = pkt(); befehl("m"); zahl(f(x - cx)); zahl(f(y - cy)); cx = sx = x; cy = sy = y; cmd = rel ? "l" : "L"; continue; }
+      if (C === "L" || C === "T") { const [x, y] = pkt(); befehl(C.toLowerCase()); zahl(f(x - cx)); zahl(f(y - cy)); cx = x; cy = y; continue; }
+      if (C === "H") { let x = n(); if (rel) x += cx; x = R(x); befehl("h"); zahl(f(x - cx)); cx = x; continue; }
+      if (C === "V") { let y = n(); if (rel) y += cy; y = R(y); befehl("v"); zahl(f(y - cy)); cy = y; continue; }
+      if (C === "C") { const a = pkt(), b = pkt(), e = pkt(); befehl("c"); for (const p of [a, b, e]) { zahl(f(p[0] - cx)); zahl(f(p[1] - cy)); } cx = e[0]; cy = e[1]; continue; }
+      if (C === "S" || C === "Q") { const a = pkt(), e = pkt(); befehl(C.toLowerCase()); for (const p of [a, e]) { zahl(f(p[0] - cx)); zahl(f(p[1] - cy)); } cx = e[0]; cy = e[1]; continue; }
+      if (C === "A") { const rx = n(), ry = n(), rot = n(), fa = n(), fs = n(); let x = n(), y = n(); if (rel) { x += cx; y += cy; } x = R(x); y = R(y); befehl("a"); zahl(f(rx)); zahl(f(ry)); zahl(f(rot)); zahl(String(fa)); zahl(String(fs)); zahl(f(x - cx)); zahl(f(y - cy)); cx = x; cy = y; continue; }
+      i++;
+    }
+    return ` d="${out}"`;
+  });
+}
+/* beim Schreiben alle Pfade relativ */
+{ const schreiben = S.schreiben; S.schreiben = (datei) => { for (const t of S.teile) { t.kunst = relativ(t.kunst); if (t.unter) for (const u of t.unter) u.kunst = relativ(u.kunst); } S.kulisse = S.kulisse.map(relativ); S.vorne = S.vorne.map(relativ); S.defs = S.defs.map(relativ); return schreiben(datei); }; }
 const rnd = zufall(1865);
 const r = B.r;
 

@@ -761,7 +761,7 @@ const ICON = {
 /* [Länge, Breite, Bildversatz dx/dy, Beschriftung (dx, dy, Ausrichtung), Knopf (dx, dy) vom Ortspunkt] */
 const STADT = {
   hamburg: { ll: [9.99, 53.55], lab: [0, 5.2, "m"] },
-  luebeck: { ll: [10.69, 53.87], bild: [4.6, 6.6], lab: [10.6, 6.4, "s"] },
+  luebeck: { ll: [10.69, 53.87], bild: [-5.2, -0.6], lab: [2, 4.6, "s"] },
   bremen: { ll: [8.81, 53.08], lab: [0, 5.2, "m"], gross: 1.2 },
   hannover: { ll: [9.74, 52.37], lab: [0, 5.2, "m"] },
   berlin: { ll: [13.40, 52.52], bild: [2.5, 0], lab: [9.5, -1.2, "s"] },
@@ -824,7 +824,6 @@ function stadtBild(id) {
   const geb = (lo, la, t, w = 0, gr = 3.1) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" font-style="italic" text-anchor="middle" fill="#6e5330" stroke="#f2ead2" stroke-width=".7" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" letter-spacing=".7" transform="rotate(${w} ${r(x)} ${r(y)})">${t}</text>`; };
   g += geb(10.62, 51.67, "Harz") + geb(8.42, 48.42, "Schwarzwald", -82) + geb(13.15, 50.52, "Erzgebirge", -12) + geb(6.62, 50.15, "Eifel");
   const insel = (lo, la, t, al = "middle") => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="2.7" font-style="italic" text-anchor="${al}" fill="#4d6b52" stroke="#f2f0de" stroke-width=".6" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">${t}</text>`; };
-  g += insel(13.45, 54.47, "Rügen") + insel(8.1, 54.93, "Sylt", "end") + insel(7.82, 54.13, "Helgoland", "end");
   { const [x, y] = P(9.28, 47.86); g += `<text x="${r(x)}" y="${r(y)}" font-size="2.9" font-style="italic" text-anchor="middle" fill="#2f6f93" stroke="#eef3ec" stroke-width=".6" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">Bodensee</text>`; }
   S.hinten(g);
 }
@@ -963,6 +962,8 @@ region(["heidelberg", "stuttgart", "freiburg", "rothenburg", "nuernberg", "regen
   let g = `<rect x="0" y="0" width="${BR}" height="${HO}" fill="${S.rg("vignette", [[0, "#fff", 0], [0.7, "#7a5a2a", 0], [1, "#7a5a2a", 0.22]], 0.5, 0.5, 0.75)}"/>`;
   S.def(`<pattern id="${S.id("korn")}" width="23" height="19" patternUnits="userSpaceOnUse">${Array.from({ length: 26 }, () => `<circle cx="${r(rnd() * 23)}" cy="${r(rnd() * 19)}" r="${r(0.12 + rnd() * 0.22)}" fill="${rnd() < 0.5 ? "#6b4f2a" : "#fff"}" opacity=".18"/>`).join("")}</pattern>`);
   g += `<rect x="0" y="0" width="${BR}" height="${HO}" fill="url(#${S.id("korn")})"/>`;
+  { const insel = (lo, la, t, al = "middle") => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="2.7" font-style="italic" text-anchor="${al}" fill="#3f6a7e" stroke="#e3f1f5" stroke-width=".6" paint-order="stroke" ${'font-family="Georgia,\'Times New Roman\',serif"'}>${t}</text>`; };
+    g += insel(13.9, 54.62, "Rügen", "start") + insel(8.18, 54.93, "Sylt", "end") + insel(7.8, 54.13, "Helgoland", "end"); }
   { const [x, y] = P(9.35, 55.27); g += text(x, y, "DÄNEMARK", 3.4, "#a38d6a", `letter-spacing=".8" stroke="#f1e9d6" stroke-width=".7" paint-order="stroke"`); }
   /* Kartusche unten rechts */
   const x = 324, y = 236, w = 72, h = 20;

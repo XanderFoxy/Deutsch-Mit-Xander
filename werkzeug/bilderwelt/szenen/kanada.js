@@ -47,7 +47,10 @@
      Park sehr häufig. MÜNZFERNROHRE stehen an der Mauer.
    KAMERA: Standpunkt Table Rock (≈ 10 m nördlich der Kante), Augenhöhe
    1,6 m über der Promenade (= Höhe des Flusses oberhalb der Fälle),
-   Blick nach 95° (Ost), Brennweite 240, Horizont y = 112. Welt in Metern:
+   Blick nach 101° (Ost), Brennweite 178, Horizont y = 112. So liegt rechts
+   der nahe Abbruch (Peilung bis 150°) im Bild und links die Südhälfte der
+   Amerikanischen Fälle (Peilung ≈ 55°); dahinter die Skyline von Niagara
+   Falls, NY (Seneca-Hotelturm, 26 Stockwerke, Peilung ≈ 63°). Welt in Metern:
    x Ost, y Nord, z oben, Ursprung an der Westecke der Kante (Table Rock).
    Der Fluss unterhalb der Fälle liegt 52 m tiefer.
    LICHT: 3. Oktober, gegen 18 Uhr (Sonnenuntergang 18:50) — Sonne im
@@ -68,7 +71,7 @@ const S = neueSzene({ id: "kanada", titel: "Kanada – Niagarafälle", emoji: "�
 { const lg = S.lg, rg = S.rg, schon = {}; S.lg = (n, ...a) => schon["l" + n] || (schon["l" + n] = lg(n, ...a)); S.rg = (n, ...a) => schon["r" + n] || (schon["r" + n] = rg(n, ...a)); }
 const rnd = zufall(1846);
 const r = B.r;
-const HOR = 112, F = 240, CX = 200;
+const HOR = 112, F = 178, CX = 200;
 const um = (ox, oy, svg) => `<g transform="translate(${r(-ox)} ${r(-oy)})">${svg}</g>`;
 const P = (pts, zu = true) => "M" + pts.map(([x, y]) => r(x) + " " + r(y)).join(" L") + (zu ? " Z" : "");
 const glatt = (pts, zu = true, k = 1) => {
@@ -94,7 +97,7 @@ const kappeRand = (svg, x0 = -0.5, x1 = 400.5, y1 = 260.5, y0 = -0.5) => kappeKr
 });
 
 /* ---------- Kamera (Welt in Metern → Bild) ---------------------------- */
-const V = [0, 10, 1.6], AZ = 95 * Math.PI / 180;
+const V = [0, 10, 1.6], AZ = 101 * Math.PI / 180;
 const FW = [Math.sin(AZ), Math.cos(AZ)], RE = [Math.sin(AZ + Math.PI / 2), Math.cos(AZ + Math.PI / 2)];
 const tiefe = (E, N) => (E - V[0]) * FW[0] + (N - V[1]) * FW[1];
 const W = (E, N, U) => { const dx = E - V[0], dy = N - V[1], d = dx * FW[0] + dy * FW[1], s = dx * RE[0] + dy * RE[1]; return [CX + F * s / d, HOR - F * (U - V[2]) / d]; };
@@ -143,8 +146,8 @@ const LAUB = `url(#${S.id("laub")})`;
 /* =====================================================================
    KULISSE — Nachmittagshimmel, ferner Horizont, Fluss oberhalb der Fälle
    ===================================================================== */
-S.hinten(`<rect width="400" height="160" fill="${S.lg("himmel", [[0, "#3b70b6"], [0.45, "#7aa6d4"], [0.78, "#cbd0dc"], [0.92, "#ecd3c6"], [1, "#f3d9bd"]])}"/>`);
-S.hinten(`<ellipse cx="420" cy="140" rx="230" ry="70" fill="${S.rg("abendschein", [[0, "#ffe2b8", 0.55], [1, "#ffe2b8", 0]])}"/>`);
+S.hinten(`<rect width="400" height="160" fill="${S.lg("himmel", [[0, "#4a78b2"], [0.4, "#7f9fc6"], [0.62, "#aab6cc"], [0.8, "#cfc5cc"], [0.93, "#e6cdc4"], [1, "#eed6c4"]])}"/>`);
+
 /* flaches Land am Horizont (Ontario und New York): dunstiger Waldsaum */
 {
   let h = `<path d="M-1 110.4 Q40 109.2 80 110 Q120 109.4 160 110.2 Q220 109.6 280 110.4 Q340 109.8 401 110.6 L401 113 L-1 113 Z" fill="#9fb0b6"/>`;
@@ -157,31 +160,52 @@ S.hinten(`<ellipse cx="420" cy="140" rx="230" ry="70" fill="${S.rg("abendschein"
 /* =====================================================================
    1 — DIE WOLKE
    ===================================================================== */
+/* Wolke als flaches, stilisiertes Band (wie in mexiko): wenige große Bögen oben, flache Unterseite, oben cremeweiß,
+   unten kühl lila; die Abendsonne in unserem Rücken vergoldet die Unterkante */
 const wolke = (name, cx, by, W0, H, seed) => {
-  const z = zufall(seed), kr = [];
-  const n = Math.round(W0 / (H * 0.42));
-  for (let i = 0; i <= n; i++) {
-    const t = i / n, x = cx - W0 / 2 + W0 * t, prof = Math.max(0.18, 1 - Math.pow(2 * t - 1, 2) * 0.82);
-    const rr = H * (0.2 + 0.26 * prof) * (0.75 + z() * 0.5);
-    kr.push([x, by - rr * 0.6 - H * 0.3 * prof * z(), rr]);
+  const z = zufall(seed), n = 4 + Math.floor(z() * 2), pts = [[cx - W0 / 2, by]];
+  for (let i = 0; i < n; i++) {
+    const t0 = i / n, t1 = (i + 1) / n, prof = 1 - Math.pow((t0 + t1) - 1, 2) * 0.9, hh = H * prof * (0.75 + z() * 0.35);
+    const xa = cx - W0 / 2 + W0 * t0, xb = cx - W0 / 2 + W0 * t1;
+    pts.push(`A${r((xb - xa) / 2)} ${r(hh)} 0 0 1 ${r(xb)} ${r(by - (i < n - 1 ? H * 0.25 * prof : 0))}`);
   }
-  for (let i = 0; i < 3; i++) { const t = 0.3 + z() * 0.4; kr.push([cx - W0 / 2 + W0 * t, by - H * (0.55 + z() * 0.25), H * (0.32 + z() * 0.14)]); }
-  const top = Math.min(...kr.map(([, y, rr]) => y - rr));
-  S.def(`<clipPath id="${S.id(name)}"><rect x="${r(cx - W0)}" y="${r(top - 5)}" width="${r(2 * W0)}" height="${r(by - top + 5)}"/></clipPath>`);
-  const g = S.lg(name + "g", [[0, "#fff3e2"], [0.5, "#efe2d8"], [1, "#aeb0c4"]], 0, r(top), 0, r(by), ' gradientUnits="userSpaceOnUse"');
-  const c = (dx, dy, f) => kr.map(([x, y, rr]) => `<circle cx="${r(x + dx)}" cy="${r(y + dy)}" r="${r(rr * f)}"/>`).join("");
-  return `<g clip-path="url(#${S.id(name)})"><g fill="${g}">${c(0, 0, 1)}</g><g fill="#fff6e6" opacity=".7">${c(H * 0.1, -H * 0.06, 0.78)}</g><g fill="#fffdf6" opacity=".85">${c(H * 0.16, -H * 0.1, 0.46)}</g></g>`;
+  let d = `M${r(cx - W0 / 2)} ${r(by)} ` + pts.slice(1).join(" ") + ` Q${r(cx)} ${r(by + H * 0.12)} ${r(cx - W0 / 2)} ${r(by)} Z`;
+  const g = S.lg(name + "g", [[0, "#fff6ea"], [0.55, "#f2e3dc"], [0.85, "#c9bccd"], [1, "#e9b98e"]], 0, r(by - H * 1.1), 0, r(by + H * 0.1), ' gradientUnits="userSpaceOnUse"');
+  return `<path d="${d}" fill="${g}"/><path d="M${r(cx - W0 * 0.42)} ${r(by + 0.2)} Q${r(cx)} ${r(by + H * 0.12 + 0.4)} ${r(cx + W0 * 0.44)} ${r(by + 0.1)}" stroke="#f3c48e" stroke-width=".7" fill="none" opacity=".9"/>`;
 };
 {
-  let k = wolke("w1", 196, 40, 56, 20, 3) + wolke("w2", 86, 70, 40, 13, 7) + wolke("w3", 300, 22, 34, 11, 11);
-  S.teil({ id: "wolke", de: "die Wolke", syl: "WOL-ke", it: "la nuvola", itSyl: "NU-vo-la", en: "cloud", x: 196, y: 30, kunst: um(196, 30, k) });
+  let k = wolke("w1", 210, 42, 70, 13, 3) + wolke("w2", 330, 20, 46, 8, 7);
+  S.teil({ id: "wolke", de: "die Wolke", syl: "WOL-ke", it: "la nuvola", itSyl: "NU-vo-la", en: "cloud", x: 210, y: 34, kunst: um(210, 34, k) });
+}
+
+/* =====================================================================
+   1a — DAS HOCHHAUS (Skyline von Niagara Falls, NY, hinter Goat Island)
+   ===================================================================== */
+{
+  let k = "";
+  /* Gebäude als Kästen im Raum: Westseite zu uns im Abendlicht, dunstig */
+  const bau = (E, N, b, t, h, farbe, licht) => {
+    const a = W(E, N, h), c = W(E + 0.0, N + b, h), a0 = W(E, N, 0), c0 = W(E, N + b, 0);
+    return `<path d="${P([a0, a, c, c0])}" fill="${farbe}"/><path d="${P([a, c, [c[0] + 0.6, c[1] - 0.4], [a[0] + 0.6, a[1] - 0.4]])}" fill="${licht}"/>`;
+  };
+  k += bau(1300, 560, 50, 20, 26, "#a9a8b0", "#d8cbbd") + bau(1720, 600, 70, 20, 24, "#a7a6b0", "#d4c8bc");
+  k += bau(1460, 1080, 40, 25, 56, "#9fa0aa", "#d2c4b6") + bau(1350, 940, 60, 20, 34, "#a3a3ad", "#d6c9bc");
+  /* Seneca-Hotelturm: 26 Stockwerke (≈ 82 m), Glas bronze, gestufte Krone */
+  const [sx0, sy0] = W(1575, 770, 0), [sx1, sy1] = W(1575, 830, 82), [sx2] = W(1575, 830, 0);
+  k += `<path d="${P([[sx0, sy0], [sx0, sy1 + 2], [sx0 + (sx2 - sx0) * 0.2, sy1], [sx2 - (sx2 - sx0) * 0.2, sy1], [sx2, sy1 + 2], [sx2, sy0]])}" fill="${S.lg("seneca", [[0, "#9c9089"], [0.6, "#c8b29c"], [1, "#a8968a"]], 0, 0, 1, 0)}"/>`;
+  for (let i = 1; i < 13; i++) { const y = sy1 + 2 + (sy0 - sy1 - 2) * i / 13; k += `<path d="M${r(sx0)} ${r(y)} H${r(sx2)}" stroke="#7f7672" stroke-width=".15" opacity=".7"/>`; }
+  k += `<path d="M${r(sx0)} ${r(sy0)} V${r(sy1 + 2)}" stroke="#ead8c2" stroke-width=".4" opacity=".8"/>`;
+  /* Dunst über allem (1,5–2 km entfernt) */
+  k = `<g opacity=".85">${k}</g>`;
+  S.teil({ id: "hochhaus", de: "das Hochhaus", syl: "HOCH-haus", it: "il grattacielo", itSyl: "grat-ta-CIE-lo", en: "high-rise", x: r(sx0), y: r(sy1 + 8), kunst: um(r(sx0), r(sy1 + 8), k),
+    tipp: "Hinter der Insel liegt die Stadt Niagara Falls in den USA. Das hohe Haus ist ein Hotel mit 26 Stockwerken." });
 }
 
 /* =====================================================================
    1b — DER FLUSS (unterhalb der Fälle, in der Schlucht)
    ===================================================================== */
 {
-  let k = `<path d="M-1 126 L401 126 L401 202 L-1 202 Z" fill="${S.lg("fluss", [[0, "#6f9c98"], [0.25, "#3f8079"], [0.65, "#2d6a64"], [1, "#245a56"]])}"/>`;
+  let k = `<path d="M-1 126 L401 126 L401 222 L-1 222 Z" fill="${S.lg("fluss", [[0, "#6f9c98"], [0.25, "#3f8079"], [0.65, "#2d6a64"], [1, "#245a56"]])}"/>`;
   k += `<path d="M-1 126 L401 126 L401 140 L-1 140 Z" fill="${S.lg("flussglanz", [[0, "#e9eef0", 0.45], [1, "#e9eef0", 0]])}"/>`;
   /* Schaum: weiche, breite Bahnen vom Becken nach links (weichgezeichnet), darüber wenige klare Linien */
   const zf = zufall(61); let weich = "", klar = "";
@@ -321,77 +345,99 @@ const AM = {};
 const HU = {};
 {
   const SONNE = [Math.sin(255 * Math.PI / 180), Math.cos(255 * Math.PI / 180)];
+  const N0 = KANTE.length;
+  /* Grün: am nahen Abbruch (Table Rock) und im Scheitel ist das Wasser tief — dort glasig grün, sonst weiß gebrochen */
+  const gruen = (i) => { const t = i / (N0 - 1); return Math.max(Math.max(0, 1 - t / 0.22), Math.max(0, 1 - Math.abs(t - 0.5) / 0.14)); };
   const seg = [];
-  for (let i = 0; i < KANTE.length - 1; i++) {
+  for (let i = 0; i < N0 - 1; i++) {
     const a = KANTE[i], b = KANTE[i + 1];
-    if (tiefe((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) < 30) continue;
+    if (tiefe((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) < 25) continue;
     const dE = b[0] - a[0], dN = b[1] - a[1], l = Math.hypot(dE, dN), n = [-dN / l, dE / l];
     const licht = Math.max(0, n[0] * SONNE[0] + n[1] * SONNE[1]);
-    const pA = W(a[0], a[1], 0.6), pB = W(b[0], b[1], 0.6), uA = W(a[0] + n[0] * 6, a[1] + n[1] * 6, UNTEN + 8), uB = W(b[0] + n[0] * 6, b[1] + n[1] * 6, UNTEN + 8);
-    seg.push({ i, a, b, pA, pB, uA, uB, licht, d: tiefe((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) });
+    const pA = W(a[0], a[1], 0.4), pB = W(b[0], b[1], 0.4), uA = W(a[0] + n[0] * 8, a[1] + n[1] * 8, UNTEN + 4), uB = W(b[0] + n[0] * 8, b[1] + n[1] * 8, UNTEN + 4);
+    if (pA[0] > 420 && pB[0] > 420) continue;
+    seg.push({ i, pA, pB, uA, uB, licht, g: (gruen(i) + gruen(i + 1)) / 2, d: tiefe((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) });
   }
   let k = "";
-  /* von hinten nach vorn: zuerst die fernen Abschnitte (Terrapin), zuletzt die nahen rechts */
+  /* Fluss oberhalb der Kante (nah rechts sichtbar): Stromschnellen laufen auf die Kante zu */
+  const ob = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, 0.4)).filter(([x]) => x < 430);
+  const hor = ob.map(([x]) => [x, HOR + 0.6]);
+  k += `<path d="${P([...ob, ...hor.reverse()])}" fill="${S.lg("oberwasser", [[0, "#a9c6c0"], [1, "#5f9a8a"]])}"/>`;
+  let ra = "";
+  for (let i = 0; i < 26; i++) { const t = rnd(), j = Math.floor(t * (ob.length - 1)), [x, y] = ob[j]; if (y < HOR + 2.2) continue; ra += `M${r(x - 3 - rnd() * 4)} ${r(HOR + 1 + (y - HOR) * 0.3)} L${r(x)} ${r(y - 0.6)}`; }
+  k += `<path d="${ra}" stroke="#ffffff" stroke-width=".35" opacity=".7"/>`;
+  /* Fallwände von hinten nach vorn */
   seg.sort((p, q) => q.d - p.d);
   for (const sg of seg) {
-    const L = sg.licht, oben = L > 0.3 ? "#fff8ec" : "#eef2f2", unten = L > 0.3 ? "#e9eef0" : "#bfcdd4";
+    const L = sg.licht, g = sg.g, h = sg.uA[1] - sg.pA[1];
     const id = "wv" + sg.i;
-    S.def(`<linearGradient id="${S.id(id)}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(sg.pA[1])}" x2="0" y2="${r(sg.uA[1])}"><stop offset="0" stop-color="${oben}"/><stop offset=".55" stop-color="${L > 0.3 ? "#f6f3ec" : "#dbe3e6"}"/><stop offset="1" stop-color="${unten}"/></linearGradient>`);
-    k += `<path d="${P([sg.pA, sg.pB, [sg.uB[0], sg.uB[1]], [sg.uA[0], sg.uA[1]]])}" fill="url(#${S.id(id)})" stroke="url(#${S.id(id)})" stroke-width=".3"/>`;
-    /* Wasserfäden: helle und kühle Bahnen verschiedener Breite, oben dichter (das Wasser beschleunigt) */
-    const n = Math.max(2, Math.round(Math.abs(sg.pB[0] - sg.pA[0]) / 1.1));
-    let hell = "", kuehl = "";
+    const oben = g > 0.4 ? "#2f7d63" : (L > 0.3 ? "#fffaf0" : "#eef2f2"), mitte = g > 0.4 ? "#7fbba2" : (L > 0.3 ? "#f8f4ea" : "#dfe6e8");
+    S.def(`<linearGradient id="${S.id(id)}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(sg.pA[1])}" x2="0" y2="${r(sg.uA[1])}"><stop offset="0" stop-color="${oben}"/><stop offset="${r(0.12 + g * 0.16)}" stop-color="${mitte}"/><stop offset="${r(0.3 + g * 0.15)}" stop-color="${L > 0.3 ? "#fbf7ee" : "#e6ecee"}"/><stop offset="1" stop-color="${L > 0.3 ? "#e9eef0" : "#c3d0d6"}"/></linearGradient>`);
+    k += `<path d="${P([sg.pA, sg.pB, sg.uB, sg.uA])}" fill="url(#${S.id(id)})" stroke="url(#${S.id(id)})" stroke-width=".3"/>`;
+    /* Stränge: breite helle Bahnen, dazwischen kühle Spalten; oben glatt gebündelt, unten zerfasert */
+    const breite = Math.abs(sg.pB[0] - sg.pA[0]), n = Math.max(1, Math.round(breite / 2.6));
     const zw = zufall(500 + sg.i);
+    let hell = "", spalt = "";
     for (let j = 0; j < n; j++) {
-      const t = (j + zw() * 0.8) / n, x = sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t, y = sg.pA[1] + (sg.pB[1] - sg.pA[1]) * t, x2 = sg.uA[0] + (sg.uB[0] - sg.uA[0]) * t, y2 = sg.uA[1] + (sg.uB[1] - sg.uA[1]) * t;
-      const l = 0.45 + zw() * 0.5, ya = y + 1 + zw() * (y2 - y) * 0.2;
-      if (zw() < 0.5) hell += `M${r(x)} ${r(ya)} L${r(x + (x2 - x) * l)} ${r(y + (y2 - y) * l)}`; else kuehl += `M${r(x)} ${r(ya)} L${r(x + (x2 - x) * l)} ${r(y + (y2 - y) * l)}`;
+      const t0 = j / n, t1 = (j + 0.55 + zw() * 0.3) / n, q = (t, v) => [sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t + (sg.uA[0] + (sg.uB[0] - sg.uA[0]) * t - (sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t)) * v, sg.pA[1] + (sg.pB[1] - sg.pA[1]) * t + h * v];
+      const lang = 0.55 + zw() * 0.4, v0 = 0.06 + g * 0.18;
+      const a1 = q(t0, v0), a2 = q(t1, v0), b1 = q(t0 - 0.08, lang), b2 = q(t1 + 0.12, lang), sp = q((t0 + t1) / 2, lang + 0.08);
+      hell += `M${r(a1[0])} ${r(a1[1])} L${r(a2[0])} ${r(a2[1])} L${r(b2[0])} ${r(b2[1])} L${r(sp[0])} ${r(sp[1])} L${r(b1[0])} ${r(b1[1])} Z`;
+      const c1 = q(t1 + 0.04, v0 + 0.05), c2 = q(t1 + 0.12, v0 + 0.05), d2 = q(t1 + 0.12, lang * 0.8);
+      spalt += `M${r(c1[0])} ${r(c1[1])} L${r(c2[0])} ${r(c2[1])} L${r(d2[0])} ${r(d2[1])} Z`;
     }
-    k += `<path d="${kuehl}" stroke="${L > 0.3 ? "#b9c9cc" : "#8fa6b2"}" stroke-width=".45" opacity=".55" stroke-linecap="round"/><path d="${hell}" stroke="#ffffff" stroke-width=".6" opacity=".7" stroke-linecap="round"/>`;
+    k += `<path d="${spalt}" fill="${L > 0.3 ? "#b9c8cc" : "#90a6b2"}" opacity=".45"/><path d="${hell}" fill="#ffffff" opacity="${L > 0.3 ? 0.55 : 0.38}"/>`;
+    /* glasige Kante: helle Lichtlinie auf der Kante, darunter der dunkle Bogen des überkippenden Wassers */
+    if (g > 0.2) k += `<path d="M${r(sg.pA[0])} ${r(sg.pA[1] + h * 0.05)} L${r(sg.pB[0])} ${r(sg.pB[1] + h * 0.05)}" stroke="#1e5c48" stroke-width="${r(Math.max(0.3, h * 0.025))}" opacity="${r(g * 0.7)}"/>`;
   }
-  /* grüne Kante: wo das Wasser tief ist (Mitte des Hufeisens), leuchtet sie grün */
-  const kante = KANTE.filter(([E, N]) => tiefe(E, N) > 30).map(([E, N]) => W(E, N, 0.6));
-  const kante2 = KANTE.filter(([E, N]) => tiefe(E, N) > 30).map(([E, N]) => W(E, N, -5));
-  k += `<path d="${P([...kante, ...kante2.slice().reverse()])}" fill="${S.lg("gruenkante", [[0, "#cfe6dc"], [0.35, "#4f9a82"], [0.65, "#3f8a74"], [1, "#d6ebe2"]], 0, 0, 1, 0)}" opacity=".85"/>`;
-  k += `<path d="${P(kante, false)}" stroke="#f4fbf6" stroke-width=".5" fill="none"/>`;
-  /* Gischt am Fuß der Fälle (weich) */
-  const fussL = KANTE.filter(([E, N]) => tiefe(E, N) > 30).map(([E, N]) => W(E, N, UNTEN + 10));
-  k += `<g filter="url(#${S.id("dunst")})"><path d="${P([...fussL.map(([x, y]) => [x, y - 4]), ...fussL.slice().reverse().map(([x, y]) => [x, y + 3])])}" fill="#f6f8f6" opacity=".9"/></g>`;
-  /* Terrapin Point: Aussichtsplattform mit Geländer und Besuchern (USA) */
+  const kante = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, 0.4)).filter(([x]) => x < 440);
+  k += `<path d="${P(kante, false)}" stroke="#f4fff8" stroke-width=".6" fill="none" opacity=".9"/>`;
+  /* Dunstsee über dem Becken: dicht und weiß, verdeckt die untere Hälfte der Wände */
+  const fussL = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, -26)).filter(([x]) => x < 440);
+  k += `<g filter="url(#${S.id("nebel2")})"><path d="${P([...fussL.map(([x, y]) => [x, y - 2]), [404, 200], [404, 226], [150, 226], [150, 150]])}" fill="${S.lg("dunstsee", [[0, "#fff6e6"], [0.5, "#f2f3f0"], [1, "#d9e2e6"]])}" opacity=".93"/></g>`;
+  /* Terrapin Point: Aussichtsplattform mit Geländer, Besuchern und US-Flagge */
   const [tx, ty] = W(552, 32, 2);
-  k += `<path d="M${r(tx - 5)} ${r(ty + 0.4)} h10 l-.6 -1 h-8.8 Z" fill="#b9b2a4"/><path d="M${r(tx - 5)} ${r(ty - 0.8)} h10" stroke="#3a3a3a" stroke-width=".18"/>`;
-  for (let i = 0; i < 6; i++) k += `<path d="M${r(tx - 4 + i * 1.5)} ${r(ty - 0.1)} v-1.3" stroke="${["#2f5f95", "#c0392b", "#f2f2f0", "#e0a020", "#3a3a3a", "#7a3a8a"][i]}" stroke-width=".5"/><circle cx="${r(tx - 4 + i * 1.5)}" cy="${r(ty - 1.6)}" r=".28" fill="#d9a77c"/>`;
-  HU.terrapin = [tx, ty - 1];
-  const ap = W(480, -108, 0);
-  HU.kante = [ap[0], ap[1] + 1.2];
+  k += `<path d="M${r(tx - 6)} ${r(ty + 0.5)} h12 l-.8 -1.1 h-10.4 Z" fill="#c9c0b0"/><path d="M${r(tx - 6)} ${r(ty - 0.9)} h12" stroke="#2a2a2a" stroke-width=".22"/>`;
+  for (let i = 0; i < 6; i++) k += `<path d="M${r(tx - 4.6 + i * 1.7)} ${r(ty - 0.1)} v-1.6" stroke="${["#2f5f95", "#c0392b", "#f2f2f0", "#e0a020", "#3a3a3a", "#7a3a8a"][i]}" stroke-width=".7"/><circle cx="${r(tx - 4.6 + i * 1.7)}" cy="${r(ty - 2)}" r=".38" fill="#d9a77c"/>`;
+  k += `<path d="M${r(tx + 5.4)} ${r(ty)} V${r(ty - 6)}" stroke="#666" stroke-width=".2"/><path d="M${r(tx + 5.4)} ${r(ty - 6)} h3 v1.8 h-3 Z" fill="#c8202a"/><path d="M${r(tx + 5.4)} ${r(ty - 5.4)} h3 M${r(tx + 5.4)} ${r(ty - 4.8)} h3" stroke="#fff" stroke-width=".22"/><path d="M${r(tx + 5.4)} ${r(ty - 6)} h1.3 v1 h-1.3 Z" fill="#2a3a7a"/>`;
+  HU.terrapin = [tx + 1, ty - 2];
+  const ap = W(300, -202, 0.4);
+  HU.kante = [ap[0], ap[1] + 2];
+  const nah = W(70, -88, -14);
+  HU.wasserfall = nah;
   const unter = [
-    { id: "kante", de: "die Kante", syl: "KAN-te", it: "il bordo", itSyl: "BOR-do", en: "brink", x: HU.kante[0], y: HU.kante[1], kunst: flaeche(-10, -2.2, 20, 4.4),
+    { id: "kante", de: "die Kante", syl: "KAN-te", it: "il bordo", itSyl: "BOR-do", en: "brink", x: HU.kante[0], y: HU.kante[1], kunst: flaeche(-10, -2.4, 20, 4.8),
       tipp: "In der Mitte des Hufeisens ist das Wasser an der Kante besonders tief – deshalb leuchtet es dort grün." },
-    { id: "aussichtspunkt", de: "der Aussichtspunkt", syl: "AUS-sichts-punkt", it: "il belvedere", itSyl: "bel-ve-DE-re", en: "viewpoint", x: HU.terrapin[0], y: HU.terrapin[1], kunst: flaeche(-6, -3, 12, 5),
+    { id: "wasserfall", de: "der Wasserfall", syl: "WAS-ser-fall", it: "la cascata", itSyl: "ca-SCA-ta", en: "waterfall", x: HU.wasserfall[0], y: HU.wasserfall[1], kunst: flaeche(-14, -14, 26, 26),
+      tipp: "Ein Wasserfall entsteht, wo ein Fluss über eine Felskante stürzt. Hier, ganz nah am Table Rock, donnert er direkt neben uns hinab." },
+    { id: "aussichtspunkt", de: "der Aussichtspunkt", syl: "AUS-sichts-punkt", it: "il belvedere", itSyl: "bel-ve-DE-re", en: "viewpoint", x: HU.terrapin[0], y: HU.terrapin[1], kunst: flaeche(-7, -4, 14, 6),
       tipp: "Gegenüber liegt Terrapin Point in den USA. Von dort sehen die Besucher die Fälle von der anderen Seite." },
   ];
-  S.teil({ id: "hufeisenfaelle", de: "die Hufeisenfälle", syl: "HUF-ei-sen-fäl-le", it: "le Cascate a Ferro di Cavallo", itSyl: "ca-SCA-te a FER-ro di ca-VAL-lo", en: "Horseshoe Falls", x: 300, y: 130, kunst: um(300, 130, kappeRand(k)),
-    zoom: { x: 168, y: 96, w: 96, h: 64 }, unter,
-    tipp: "Die Hufeisenfälle sind 51 Meter hoch. In jeder Sekunde stürzen hier mehr als 2000 Kubikmeter Wasser hinab." });
+  S.teil({ id: "hufeisenfaelle", de: "die Hufeisenfälle", syl: "HUF-ei-sen-fäl-le", it: "le Cascate a Ferro di Cavallo", itSyl: "ca-SCA-te a FER-ro di ca-VAL-lo", en: "Horseshoe Falls", x: 330, y: 124, kunst: um(330, 124, kappeRand(k)),
+    zoom: { x: 150, y: 92, w: 150, h: 100 }, unter,
+    tipp: "Die Hufeisenfälle sind mehr als 50 Meter hoch. In jeder Sekunde stürzen hier mehr als 2000 Kubikmeter Wasser hinab." });
 }
 
 /* =====================================================================
-   6 — DIE GISCHT (Wolke aus Wassertröpfchen über dem Becken)
+   6 — DIE GISCHT (Fahne über dem Becken: unten der Dunstsee, darüber schräg vom Westwind versetzte Schleier)
    ===================================================================== */
-const GISCHT = [];
+const SCHLEIER = [];
 {
-  const zg = zufall(71);
-  /* Ballen: breit über dem Becken, nach oben lockerer und vom Wind nach links (flussabwärts) über die Schlucht getrieben */
-  /* ein großer, quellender Haufen über dem Becken: unten breit und dicht, oben lockerer, leicht nach links geneigt */
-  const reihen = [[150, 232, 404, 16, 7], [128, 246, 350, 18, 5], [104, 250, 340, 19, 4], [80, 254, 334, 18, 4], [58, 258, 326, 16, 3], [40, 266, 318, 13, 3], [26, 276, 306, 10, 2]];
-  for (const [y, x0, x1, rr, n] of reihen) for (let i = 0; i < n; i++) { const t = n > 1 ? i / (n - 1) : 0.5; GISCHT.push([x0 + (x1 - x0) * t + (zg() - 0.5) * 10, y + (zg() - 0.5) * 8, rr * (0.8 + zg() * 0.4)]); }
-  const c = (dx, dy, f, sub = 1) => GISCHT.filter((_, i) => i % sub === 0).map(([x, y, rr]) => `<circle cx="${r(x + dx)}" cy="${r(y + dy)}" r="${r(rr * f)}"/>`).join("");
-  let k = `<g filter="url(#${S.id("nebel")})"><g fill="${S.lg("gischt", [[0, "#c9d0de"], [0.5, "#d9dfe8"], [1, "#efe6da"]], 0, 0, 1, 0)}" opacity=".78">${c(0, 0, 1.05)}</g></g>`;
-  k += `<g filter="url(#${S.id("nebel2")})"><g fill="#fff1dc" opacity=".7">${c(4, -2.5, 0.7)}</g></g>`;
-  k += `<g filter="url(#${S.id("dunst")})"><g fill="#fffaf2" opacity=".75">${c(7, -4.5, 0.38, 2)}</g></g>`;
-  /* untere, dichte Gischt über dem Becken (verdeckt den Fuß der Fälle) */
-  k += `<g filter="url(#${S.id("weich")})"><path d="M236 150 Q270 138 310 142 Q350 136 402 140 L402 158 Q350 164 300 160 Q262 162 236 158 Z" fill="#f4f6f6" opacity=".95"/></g>`;
-  S.teil({ id: "gischt", de: "die Gischt", syl: "GISCHT", it: "gli spruzzi", itSyl: "SPRUZ-zi", en: "spray", x: 320, y: 90, kunst: um(320, 90, kappeRand(k)),
+  /* Schleier: lange, weiche Formen, unten breit, oben durchscheinend und nach rechts geneigt */
+  const schleier = (x0, y0, b, hoch, neig, seed) => {
+    const z = zufall(seed), li = [], re = [];
+    for (let i = 0; i <= 6; i++) { const t = i / 6, w = b * (1 - t * 0.45) * (0.85 + z() * 0.3), x = x0 + neig * t * t, y = y0 - hoch * t; li.push([x - w / 2 - z() * 3, y]); re.push([x + w / 2 + z() * 3, y]); }
+    return glatt([...li, ...re.reverse()], true, 0.9);
+  };
+  const lagen = [[262, 136, 70, 92, 26, 0.55, 1], [290, 132, 54, 104, 36, 0.4, 2], [236, 138, 44, 70, 18, 0.35, 3], [318, 134, 50, 70, 30, 0.3, 4], [276, 120, 36, 112, 46, 0.18, 5]];
+  let k = "";
+  for (const [x, y, b, h, ne, a, sd] of lagen) { const d = schleier(x, y, b, h, ne, sd); SCHLEIER.push(d); k += `<path d="${d}" fill="${S.lg("schleier", [[0, "#fff0d6"], [0.45, "#f4ede4"], [1, "#c9d3dc"]], 0, 0, 1, 0)}" opacity="${a}"/>`; }
+  k = `<g filter="url(#${S.id("nebel")})">${k}</g>`;
+  /* oben ausfransende Fetzen */
+  let f = "";
+  for (const [x, y, w] of [[300, 44, 26], [322, 58, 20], [282, 32, 16]]) f += `<path d="M${x - w / 2} ${y} q${r(w * 0.3)} -5 ${r(w * 0.6)} -2 q${r(w * 0.3)} -3 ${r(w * 0.4)} 3 q${r(-w * 0.5)} 4 ${r(-w)} -1 Z" fill="#f6efe6" opacity=".35"/>`;
+  k += `<g filter="url(#${S.id("dunst")})">${f}</g>`;
+  S.teil({ id: "gischt", de: "die Gischt", syl: "GISCHT", it: "gli spruzzi", itSyl: "SPRUZ-zi", en: "spray", x: 290, y: 70, kunst: um(290, 70, kappeRand(k)),
     tipp: "Die Gischt steigt oft über 100 Meter hoch. Man sieht sie schon von Weitem – und man wird nass!" });
 }
 
@@ -404,18 +450,17 @@ const GISCHT = [];
   const norm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); };
   const u1 = norm(kreuz(A, [0, 0, 1])), u2 = kreuz(u1, A);
   const bild = (D) => { const d = D[0] * FW[0] + D[1] * FW[1], s = D[0] * RE[0] + D[1] * RE[1]; return [CX + F * s / d, HOR - F * D[2] / d]; };
-  const bogen = (grad) => { const o = []; for (let ph = 0; ph <= 360; ph += 1.5) { const c = Math.cos(grad * rad), sn = Math.sin(grad * rad), p = ph * rad; const D = A.map((a, i) => c * a + sn * (Math.cos(p) * u1[i] + Math.sin(p) * u2[i])); if (D[0] * FW[0] + D[1] * FW[1] > 0.2) o.push(bild(D)); } return o; };
+  const bogen = (grad) => { const o = []; for (let ph = -10; ph <= 90; ph += 1.5) { const c = Math.cos(grad * rad), sn = Math.sin(grad * rad), p = ph * rad; const D = A.map((a, i) => c * a + sn * (Math.cos(p) * u1[i] + Math.sin(p) * u2[i])); if (D[0] * FW[0] + D[1] * FW[1] > 0.2) o.push(bild(D)); } return o; };
   const farben = [[42.3, "#e8402a"], [41.9, "#f39a2a"], [41.5, "#f5e04a"], [41.1, "#5cc85a"], [40.7, "#3a8ae0"], [40.3, "#7a50c8"]];
-  /* nur im Bereich der Gischt sichtbar: rechts, zwischen y 70 und 182 */
+  /* sichtbar nur in der Gischt: Maske aus den Schleiern und dem Dunstsee, oben und unten weich ausgeblendet */
+  S.def(`<linearGradient id="${S.id("rbmaske")}" gradientUnits="userSpaceOnUse" x1="0" y1="34" x2="0" y2="176"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".25" stop-color="#fff" stop-opacity=".8"/><stop offset=".8" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="${S.id("rbm")}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="260"><g filter="url(#${S.id("dunst")})" fill="url(#${S.id("rbmaske")})">${SCHLEIER.map((d) => `<path d="${d}"/>`).join("")}<path d="M200 128 L320 128 L320 178 L200 178 Z"/></g></mask>`);
   let k = "";
-  S.def(`<linearGradient id="${S.id("rbmaske")}" gradientUnits="userSpaceOnUse" x1="0" y1="30" x2="0" y2="182"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".2" stop-color="#fff" stop-opacity=".75"/><stop offset=".8" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="${S.id("rbm")}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="260"><g filter="url(#${S.id("dunst")})" fill="url(#${S.id("rbmaske")})">${GISCHT.map(([x, y, rr]) => `<circle cx="${r(x)}" cy="${r(y)}" r="${r(rr * 0.9)}"/>`).join("")}<path d="M150 150 Q240 140 330 150 L330 186 L150 186 Z"/></g></mask>`);
-  let alle = [];
-  for (const [g, c] of farben) {
-    const pts = bogen(g).filter(([x, y]) => x > 200 && x < 330 && y > 24 && y < 186).sort((p, q) => p[1] - q[1]);
-    if (pts.length < 2) continue;
-    alle = alle.concat(pts);
-    k += `<path d="${glatt(pts.filter((_, i) => i % 3 === 0 || i === pts.length - 1), false)}" stroke="${c}" stroke-width="1.7" fill="none" opacity=".62"/>`;
-  }
+  const zug = (g) => bogen(g).filter(([x, y]) => x > 150 && x < 330 && y > 20 && y < 180).sort((p, q) => p[1] - q[1]);
+  /* Alexanders Dunkelband: innen ist der Himmel heller, außen dunkler */
+  const innen = zug(37.5), aussen = zug(45.5);
+  if (innen.length > 1) k += `<path d="${glatt(innen.filter((_, i) => i % 3 === 0), false)}" stroke="#ffffff" stroke-width="7" fill="none" opacity=".16"/>`;
+  if (aussen.length > 1) k += `<path d="${glatt(aussen.filter((_, i) => i % 3 === 0), false)}" stroke="#5a6a7a" stroke-width="5" fill="none" opacity=".08"/>`;
+  for (const [g, c] of farben) { const pts = zug(g); if (pts.length > 1) k += `<path d="${glatt(pts.filter((_, i) => i % 3 === 0 || i === pts.length - 1), false)}" stroke="${c}" stroke-width="1.5" fill="none" opacity=".66"/>`; }
   S.teil({ id: "regenbogen", de: "der Regenbogen", syl: "RE-gen-bo-gen", it: "l'arcobaleno", itSyl: "ar-co-ba-LE-no", en: "rainbow", x: 0, y: 0,
     kunst: `<g mask="url(#${S.id("rbm")})" filter="url(#${S.id("hauch")})">${k}</g>`,
     tipp: "Den Regenbogen sieht man nur, wenn die Sonne im Rücken steht. Hier am Table Rock also am Nachmittag und am Abend." });
@@ -542,7 +587,7 @@ const blatt = (x, y, s, w, farbe, ader = "#7a1a10") => {
 /* =====================================================================
    12 — DIE MAUER (Steinmauer an der Kante, wir schauen auf die Abdeckplatten)
    ===================================================================== */
-const KAPPE = 199, FRONT = 230;     /* Hinterkante der Abdeckplatten, Vorderkante (Oberkante der Mauerfront) */
+const KAPPE = 219, FRONT = 244;     /* Hinterkante der Abdeckplatten, Vorderkante (Oberkante der Mauerfront) */
 {
   /* Abdeckplatten aus Kalkstein (oben, im Nachmittagslicht), leicht überstehend */
   let k = `<path d="M-1 ${KAPPE} L401 ${KAPPE - 1.2} L401 ${FRONT + 1} L-1 ${FRONT + 2} Z" fill="${S.lg("kappe", [[0, "#f4dfbd"], [1, "#e0c79f"]])}"/>`;

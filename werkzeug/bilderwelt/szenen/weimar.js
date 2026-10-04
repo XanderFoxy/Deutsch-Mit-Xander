@@ -419,6 +419,9 @@ const denkmalUnter = [];
     let g = "";
     /* hintere Rockschöße */
     g += F("M-9.8 -62 Q-14.4 -40 -15.6 -18 L-9.6 -18.6 Q-8.8 -40 -6.6 -58 Z", BRZ2) + F("M9.6 -62 Q13.6 -40 14.6 -18.4 L9 -19 Q8.4 -40 6.4 -58 Z", BRZ2);
+    /* Oberschenkel in der Hose (zwischen den offenen Rockschößen sichtbar) */
+    g += F("M-6.8 -54 L-1 -54 Q-1.2 -38 -2.4 -24 L-7.4 -24 Q-7.6 -38 -6.8 -54 Z", BRZ) + F("M1 -54 L6.6 -54 Q6.8 -38 6.4 -24 L1.6 -24 Q1.2 -38 1 -54 Z", BRZ);
+    g += kante("M-6.9 -52 Q-7.4 -38 -7.2 -26", 0.4) + falte("M-2.6 -40 Q-3.6 -32 -4.6 -27", 0.35);
     /* Unterschenkel in Hose und Stiefeln: links Spielbein (gebeugt, Fuß weiter außen), rechts Standbein */
     g += F("M-7.4 -24 L-2.4 -24 Q-1.8 -15 -3.4 -6 L-6.8 -5 Q-7.9 -14 -7.4 -24 Z", BRZ) + F("M1.6 -24 L6.4 -24 Q6.8 -15 5.6 -5 L2.4 -5 Q1.4 -15 1.6 -24 Z", BRZ);
     g += F("M-7.5 -15.6 L-2.4 -15.6 L-2.6 -14.2 L-7.6 -14.2 Z", BRZ2) + F("M1.4 -15.6 L6.6 -15.6 L6.5 -14.2 L1.5 -14.2 Z", BRZ2);

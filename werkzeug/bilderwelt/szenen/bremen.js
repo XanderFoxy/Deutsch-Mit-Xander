@@ -189,8 +189,9 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   const m = (s0 + s1) / 2, w = s1 - s0;
   let g = pfad(fp(E, [[s0, 0], [s1, 0], [s1, h], [s1 - w * .12, h], [s1 - w * .12, h + gh * .3], [s1 - w * .26, h + gh * .3], [s1 - w * .26, h + gh * .62], [m + w * .1, h + gh * .62], [m + w * .1, h + gh], [m - w * .1, h + gh], [m - w * .1, h + gh * .62], [s0 + w * .26, h + gh * .62], [s0 + w * .26, h + gh * .3], [s0 + w * .12, h + gh * .3], [s0 + w * .12, h], [s0, h]]), farbe);
   const n = Math.max(2, Math.round(w / 2.6));
-  for (let e = 0; e < Math.floor(h / 3.2); e++) for (let i = 0; i < n; i++) { const c = s0 + (i + .5) * w / n, z = 1.2 + e * 3.2 + (e ? .4 : 0); g += pfad(fr(E, c - .45, z, c + .45, z + (e ? 1.7 : 2.2)), e ? fenster : "#3a3d40"); }
-  g += pfad(fr(E, m - .5, h + gh * .35, m + .5, h + gh * .55), fenster);
+  let fo = fr(E, m - .5, h + gh * .35, m + .5, h + gh * .55), fu = "";
+  for (let e = 0; e < Math.floor(h / 3.2); e++) for (let i = 0; i < n; i++) { const c = s0 + (i + .5) * w / n, z = 1.2 + e * 3.2 + (e ? .4 : 0); if (e) fo += fr(E, c - .45, z, c + .45, z + 1.7); else fu += fr(E, c - .45, z, c + .45, z + 2.2); }
+  g += pfad(fo, fenster) + pfad(fu, "#3a3d40");
   g += pfad(fr(E, s0, 0, s1, .7), "#5a524a") + pfad(fr(E, s0 - .3, -.25, s1 + .3, 0), "#3a342e", ` opacity=".5"`);
   return g;
 };
@@ -231,7 +232,7 @@ const amBoden = (svg) => { MP.kunst += svg; return ""; };
    1 — DER MARKTPLATZ (Pflaster, Fugen, Schatten des Schüttings)
    ===================================================================== */
 {
-  /* Granitpflaster in Reihen, vier Maßstäbe: am Horizont fein und im Dunst aufgelöst, vorn grob.
+  /* Granitpflaster in Reihen, drei Maßstäbe: am Horizont fein und im Dunst aufgelöst, vorn grob.
      Steine verschieden lang, Fugen nur wenig dunkler (Granit hat wenig Kontrast) */
   const setz = (a, b, nx, ny) => {
     const W = a * nx;
@@ -249,17 +250,16 @@ const amBoden = (svg) => { MP.kunst += svg; return ""; };
   S.def(`<pattern id="${S.id("pf0")}" width="2" height=".56" patternUnits="userSpaceOnUse">${setz(.5, .14, 4, 4)}</pattern>`);
   S.def(`<pattern id="${S.id("pf1")}" width="4.2" height="1.2" patternUnits="userSpaceOnUse">${setz(1.05, .3, 4, 4)}</pattern>`);
   S.def(`<pattern id="${S.id("pf2")}" width="9.6" height="3.2" patternUnits="userSpaceOnUse">${setz(2.4, .8, 4, 4)}</pattern>`);
-  S.def(`<pattern id="${S.id("pf3")}" width="21" height="7.2" patternUnits="userSpaceOnUse">${setz(5.25, 1.8, 4, 4)}</pattern>`);
   const maske = (n, y0, y1) => S.def(`<linearGradient id="${S.id(n + "g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${HOR + y0}" x2="0" y2="${HOR + y1}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id(n)}"><rect width="${BR}" height="${HO}" fill="url(#${S.id(n + "g")})"/></mask>`);
   /* Reihenhöhe im Bild ≈ 0,2 m · (y − Horizont)² / (Brennweite · Augenhöhe): fein → grob */
-  maske("m1", 9, 17); maske("m2", 24, 32); maske("m3", 38, 46);
+  maske("m1", 9, 17); maske("m2", 24, 32);
   const boden = `M0 ${HOR - 3} H${BR} V${HO} H0 Z`;
-  let k = `<path d="${boden}" fill="url(#${S.id("pf0")})"/><path d="${boden}" fill="url(#${S.id("pf1")})" mask="url(#${S.id("m1")})"/><path d="${boden}" fill="url(#${S.id("pf2")})" mask="url(#${S.id("m2")})"/><path d="${boden}" fill="url(#${S.id("pf3")})" mask="url(#${S.id("m3")})"/>`;
+  let k = `<path d="${boden}" fill="url(#${S.id("pf0")})"/><path d="${boden}" fill="url(#${S.id("pf1")})" mask="url(#${S.id("m1")})"/><path d="${boden}" fill="url(#${S.id("pf2")})" mask="url(#${S.id("m2")})"/>`;
   /* Bodenluft: in 50–100 m löst sich das Pflaster im Dunst auf, nach vorn wird es satter */
   k += `<path d="${boden}" fill="${S.lg("bodenluft", [[0, "#e6e4de", 0.78], [0.1, "#e6e4de", 0.5], [0.22, "#ebe7de", 0.2], [0.4, "#fff6e0", 0.05], [1, "#2a2218", 0.1]])}"/>`;
   /* helle Granitbänder quer über den Platz (5 m), fein und blass */
   let g = "";
-  for (let y = -54; y <= -4; y += 5) g += linie([[-13, y, 0], [56, y, 0]], 1.5);
+  for (let y = -54; y <= -4; y += 5) g += linie([[-13, y, 0], [56, y, 0]], 4);
   k += `<path d="${g.replace(/M/g, " M")}" stroke="#dcd7cc" stroke-width=".15" fill="none" opacity=".2"/>`;
   /* Schatten des Schüttings (Sonne 195°, 32° hoch → 1,6 m Schatten je Meter Höhe nach 15°) */
   const sv = (x, y, z) => [x + z * 0.414, y + z * 1.546, 0];
@@ -309,7 +309,7 @@ const domTeile = {};
     for (const s of [s0, s1 - 1.3]) g += pfad(fr(W, s, 0, s + 1.3, DOM.top), ST_D, ` opacity=".45"`);
     g += pfad(fr(W, s1 - .45, 0, s1, DOM.top), "#efe4c6");
     g += pfad(fr(W, s0, 0, s1, 24), S.lg("verwittert", [[0, "#5d5547", 0.75], [0.6, "#6f6655", 0.45], [1, "#8a806c", 0]], 0, 1, 0, 0));
-    for (let z = 3; z < DOM.top; z += 1.2) g += `<path d="${fl(W, [[s0, z], [s1, z]])}" stroke="${FUGE}" stroke-width=".1" opacity=".35" fill="none"/>`;
+    { let f = ""; for (let z = 3; z < DOM.top; z += 1.2) f += fl(W, [[s0, z], [s1, z]]) + " "; g += `<path d="${f}" stroke="${FUGE}" stroke-width=".1" opacity=".35" fill="none"/>`; }
     for (const z of [12, 22, 32, 42]) {
       g += pfad(fr(W, s0 - .25, z, s1 + .25, z + .7), "#e9dcbd") + pfad(fr(W, s0 - .25, z - .25, s1 + .25, z), "#8c7f66", ` opacity=".6"`);
       let fr2 = ""; for (let t = s0 + 1.3; t < s1 - 1.4; t += 1.15) fr2 += fl(W, bogen(t + .55, 1, z - 1.1, z - .7, 4).slice(1, -1)) + " ";
@@ -704,7 +704,7 @@ const SM = { x: -1.5, y: 6 };
     unter: [
       { id: "esel", de: "der Esel", syl: "E-sel", it: "l'asino", itSyl: "A-si-no", en: "donkey", x: ue[0], y: ue[1], kunst: flaeche(-4.4, -2.6, 8.4, 6, .3),
         tipp: "Wer die Vorderbeine des Esels mit beiden Händen hält, darf sich etwas wünschen. Darum glänzen sie golden." },
-      { id: "hund", de: "der Hund", syl: "HUND", it: "il cane", itSyl: "CA-ne", en: "dog", x: uh[0], y: uh[1], kunst: flaeche(-2.6, -1.4, 5.4, 2.2, .3),
+      { id: "hund", de: "der Hund", syl: "HUND", it: "il cane", itSyl: "CA-ne", en: "dog", x: uh[0], y: uh[1], kunst: flaeche(-1.5, -1.4, 4.3, 2.2, .3),
         tipp: "Der Hund steht auf dem Rücken des Esels." },
       { id: "katze", de: "die Katze", syl: "KAT-ze", it: "il gatto", itSyl: "GAT-to", en: "cat", x: uk[0], y: uk[1], kunst: flaeche(-1.8, -1, 3.8, 1.8, .3),
         tipp: "Auf dem Hund steht die Katze, ganz oben der Hahn." },
@@ -916,7 +916,7 @@ const vorlage = (name, spec, extra = {}) => {
   if (extra.schirm) { const [hx, hy] = [z.handR.x, z.handR.y]; o += `<path d="M${r(hx)} ${r(hy + 4)} L${r(hx + 2)} ${r(hy - 44)}" stroke="#2a2a2a" stroke-width="1.4"/><path d="M${r(hx - 16)} ${r(hy - 38)} Q${r(hx + 2)} ${r(hy - 66)} ${r(hx + 20)} ${r(hy - 38)} Q${r(hx + 2)} ${r(hy - 43)} ${r(hx - 16)} ${r(hy - 38)} Z" fill="#d23a30"/><path d="M${r(hx + 2)} ${r(hy - 53)} L${r(hx - 7)} ${r(hy - 40)} M${r(hx + 2)} ${r(hy - 53)} L${r(hx + 11)} ${r(hy - 40)}" stroke="#8e2018" stroke-width=".8" fill="none"/>`; }
   if (extra.handy) o += `<g transform="translate(${r(hm[0] + 2)} ${r(hm[1] - 7)}) rotate(-12)"><rect x="-3.6" y="-7" width="7.2" height="14" rx="1.2" fill="#1e2226"/><rect x="2" y="-6" width=".9" height="12" fill="#9fb4c8" opacity=".7"/></g>`;
   VZ[name] = { hand: [hm[0] * m.k, hm[1] * m.k] };
-  const fig = schlank(kleineFigur(m.svg).replace(/ d="([^"]*)"/g, (q0, d) => ` d="${d.replace(/-?\d+/g, (n) => String(Math.round(+n / 2) * 2))}"`));
+  const fig = schlank(kleineFigur(m.svg).replace(/ d="([^"]*)"/g, (q0, d) => ` d="${d.replace(/-?\d+/g, (n) => String(Math.round(+n / (extra.fein ? 2 : 4)) * (extra.fein ? 2 : 4)))}"`));
   S.def(`<g id="${S.id("fig_" + name)}">${o ? fig.replace(/<\/g>$/, `<g transform="scale(${m.k.toFixed(6)})">${o}</g></g>`) : fig}</g>`);
   VORLAGE[name] = `#${S.id("fig_" + name)}`;
 };
@@ -929,7 +929,7 @@ vorlage("zeigerin", { geschlecht: "w", blick: 205, frisur: "lang", haarfarbe: "d
 /* der Mann an der Bronze: vorgebeugt, beide Hände nach vorn unten an die goldenen Eselsbeine */
 vorlage("halter", { geschlecht: "m", blick: 250, frisur: "kurz", haarfarbe: "grau", haut: "hell", alter: "alt",
   pose: { kipp: 6, lende: 6, brust: 4, nacken: 2, kopf: 4, schulterL: { vor: 52, seit: 8 }, ellbogenL: 22, unterarmL: 30, handL: 0, fingerL: 0.6, schulterR: { vor: 48, seit: 9 }, ellbogenR: 24, unterarmR: 30, handR: 0, fingerR: 0.6, huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 6, fussL: 0, huefteR: { vor: -6, seit: 2.5, dreh: -6 }, knieR: 3, fussR: 0 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "grau" }, jacke: { stueck: "mantel", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } });
+  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "grau" }, jacke: { stueck: "mantel", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } }, { fein: true });
 vorlage("kind", { geschlecht: "m", alter: "kind", pose: "laufen", blick: 120, frisur: "kurz", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "gruen" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } });
 /* die Stadtführerin schaut zu ihrer Gruppe und hält den roten Schirm hoch */
 vorlage("fuehrerin", { geschlecht: "w", blick: 15, frisur: "kurz", haarfarbe: "grau", haut: "hell",
@@ -1018,10 +1018,8 @@ let STUHL = "";
   for (const [x0, x1] of [[-19, -21], [19, 21], [-12, -13], [12, 13]]) g += `<path d="M${x0} -46 L${r(x0 + (x1 - x0) * (46 + unten) / 46)} ${unten}" stroke="#1f1f1f" stroke-width="2.2"/>`;
   g += `<ellipse cx="0" cy="-46" rx="23" ry="${r(23 * t * 10) / 10}" fill="${RAT}" stroke="#1f1f1f" stroke-width="1.4"/>`;
   g += `<path d="M-21 ${r(-46 - 20 * t)} C-22 -64 -20 -84 -14 -88 C-6 -92 6 -92 14 -88 C20 -84 22 -64 21 ${r(-46 - 20 * t)}" fill="none" stroke="#1f1f1f" stroke-width="2.4"/>`;
-  g += `<path d="M-17 -68 C-17 -80 -13 -85 -8 -86.6 C-2 -88 2 -88 8 -86.6 C13 -85 17 -80 17 -68 C10 -70.6 -10 -70.6 -17 -68 Z" fill="${RAT}"/>`;
-  for (let i = -2; i <= 2; i++) g += `<path d="M${i * 6} -87.6 L${i * 6.4} -69.6" stroke="#6e4620" stroke-width=".8" opacity=".55"/>`;
-  for (const y of [-83, -78, -73]) g += `<path d="M-15 ${y} C-6 ${y - 2} 6 ${y - 2} 15 ${y}" stroke="#6e4620" stroke-width=".7" fill="none" opacity=".5"/>`;
-  g += `<path d="M-16 -79.6 C-6 -82 6 -82 16 -79.6" stroke="#e8c48a" stroke-width=".9" fill="none" opacity=".7"/>`;
+  /* Lehne aus gebogenem Holz: zwei Querstreben zwischen den Holmen */
+  for (const [y, d] of [[-84, 3.4], [-74, 3]]) g += `<path d="M${r(-19.6 + (y + 84) * .05)} ${y} C-8 ${y - d} 8 ${y - d} ${r(19.6 - (y + 84) * .05)} ${y}" stroke="#7a4a22" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M${r(-18 + (y + 84) * .05)} ${y - 1} C-8 ${y - d - 1} 8 ${y - d - 1} ${r(18 - (y + 84) * .05)} ${y - 1}" stroke="#c08a4a" stroke-width=".9" fill="none" opacity=".8"/>`;
   amBoden(figSchatten(X, Y, .9, .25));
   STUHL = `<g transform="translate(${t2(fu[0])} ${t2(fu[1])}) scale(${sk.toFixed(5)})">${g}</g>`;
 }
@@ -1043,9 +1041,11 @@ let STUHL = "";
     q += `<path d="M${x - 8.6} ${y + .4} C${x - 8.6} ${y - 4.6} ${x - 4} ${y - 5.4} ${x} ${y - 5.6} C${x + 5} ${y - 5.4} ${x + 8.8} ${y - 4.4} ${x + 8.6} ${y + .4} C${x + 4} ${y + 3} ${x - 4} ${y + 3} ${x - 8.6} ${y + .4} Z" fill="${S.rg("labskaus", [[0, "#ec9fa6"], [0.65, "#c9636f"], [1, "#a3465a"]], 0.45, 0.35, 0.7)}"/>`;
     for (let i = 0; i < 14; i++) q += `<circle cx="${r(x - 7 + rnd() * 14)}" cy="${r(y - 3.6 + rnd() * 4.4)}" r=".35" fill="#a8455a" opacity=".6"/>`;
     q += `<ellipse cx="${x - 1}" cy="${y - 4.6}" rx="5.6" ry="1.9" fill="#fffdf6"/><ellipse cx="${x - .6}" cy="${y - 4.9}" rx="2.1" ry="1.1" fill="${S.rg("dotter", [[0, "#ffd54a"], [1, "#e89a12"]], 0.4, 0.35, 0.7)}"/><ellipse cx="${x - 1.1}" cy="${y - 5.2}" rx=".7" ry=".3" fill="#fff" opacity=".7"/>`;
-    q += `<path d="M${x + 5.4} ${y - 2.6} C${x + 7.4} ${y - 4.4} ${x + 11} ${y - 3.6} ${x + 11.4} ${y - 1.4} C${x + 10} ${y} ${x + 7} ${y} ${x + 5.4} ${y - 2.6} Z" fill="${S.lg("rollmops", [[0, "#dfe4e6"], [1, "#9fb0b8"]])}"/><path d="M${x + 6.6} ${y - 2.4} C${x + 8} ${y - 3.2} ${x + 10} ${y - 2.8} ${x + 10.6} ${y - 1.6}" stroke="#4c6170" stroke-width=".5" fill="none"/><path d="M${x + 7.6} ${y - 3.9} l.2 2.8" stroke="#d9c79a" stroke-width=".35"/>`;
-    q += `<path d="M${x - 12} ${y + .2} C${x - 11.6} ${y - 1.6} ${x - 8.6} ${y - 2.2} ${x - 6.6} ${y - 1.2} C${x - 7} ${y + .6} ${x - 10.6} ${y + 1.2} ${x - 12} ${y + .2} Z" fill="${S.lg("gurke", [[0, "#8aa63a"], [1, "#4f6a1f"]])}"/>`;
-    for (const [dx, dy] of [[-4.6, 1.6], [-1.6, 2.2]]) q += `<ellipse cx="${x + dx}" cy="${y + dy}" rx="2" ry=".8" fill="#7a1f3a"/><ellipse cx="${x + dx - .3}" cy="${y + dy - .2}" rx="1" ry=".35" fill="#a8456a"/>`;
+    /* Rollmops: silberblaue Rolle, vorn die Spirale, ein Holzspießchen hindurch */
+    q += `<g transform="translate(${x + 7.6} ${y - 2.6}) rotate(-8)"><rect x="-3.6" y="-1.7" width="6.6" height="3.4" rx="1.6" fill="${S.lg("rollmops", [[0, "#e6ecef"], [0.5, "#a9bcc6"], [1, "#6f8794"]], 0, 0, 0, 1)}"/><path d="M-3.4 -1 Q-1 -1.5 2.6 -1.1" stroke="#fff" stroke-width=".35" fill="none" opacity=".8"/><ellipse cx="3" cy="0" rx="1.3" ry="1.7" fill="#d8c7b4"/><path d="M3 0 m-.2 -.1 a.35 .35 0 1 1 .4 .4 a.75 .75 0 1 1 -.9 -.9 a1.1 1.1 0 1 1 1.4 1.4" stroke="#7b6150" stroke-width=".3" fill="none"/><path d="M-.6 -3.2 L.4 2.6" stroke="#c9a46a" stroke-width=".45"/><circle cx="-.6" cy="-3.3" r=".35" fill="#a8743f"/></g>`;
+    /* Gewürzgurke vorn auf dem Tellerrand, grün mit Noppen */
+    q += `<g transform="translate(${x + 4.2} ${y + 1.6}) rotate(6)"><path d="M-4.4 0 Q-4.4 -1.5 -2 -1.5 L2.4 -1.4 Q4.6 -1.2 4.4 0 Q4.2 1.2 2.2 1.3 L-2 1.4 Q-4.4 1.4 -4.4 0 Z" fill="${S.lg("gurke", [[0, "#9ab64a"], [1, "#4f6a1f"]], 0, 0, 0, 1)}"/><path d="M-3.6 -.6 Q0 -1.3 3.6 -.5" stroke="#cfe08a" stroke-width=".3" fill="none" opacity=".8"/><path d="M-2.6 .4 h.01 M-.6 .7 h.01 M1.4 .5 h.01 M3 .1 h.01 M-1.6 -.2 h.01 M.6 0 h.01" stroke="#3a521a" stroke-width=".35" stroke-linecap="round"/></g>`;
+    for (const [dx, dy] of [[-5.6, 1.8], [-2.4, 2.4]]) q += `<ellipse cx="${x + dx}" cy="${y + dy}" rx="2" ry=".8" fill="#7a1f3a"/><ellipse cx="${x + dx - .3}" cy="${y + dy - .2}" rx="1" ry=".35" fill="#a8456a"/>`;
     return q;
   };
   const LX = 2, LY = -R * t * .38;
