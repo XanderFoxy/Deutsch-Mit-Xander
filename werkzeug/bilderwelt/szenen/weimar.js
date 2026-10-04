@@ -381,22 +381,37 @@ const denkmalUnter = [];
   const kante = (d, w = 0.5) => `<path d="${d}" stroke="${HL}" stroke-width="${w}" fill="none" stroke-linecap="round" opacity=".8"/>`;
   const falte = (d, w = 0.5) => `<path d="${d}" stroke="${DK}" stroke-width="${w}" fill="none" stroke-linecap="round" opacity=".5"/><path d="${d}" stroke="${PAT}" stroke-width="${r(w * 1.4)}" fill="none" opacity=".35" transform="translate(.4 0)"/>`;
   const F = (d, fill, extra = "") => `<path d="${d}" fill="${fill}"${extra}/>`;
-  /* Arm als gefülltes, verjüngtes Rohr mit Lichtkante auf der linken Seite und Ärmelaufschlag */
-  const arm = (pts, w1, w2, aufschlag = true) => {
-    const [a, b, c] = pts;
-    const nrm = (p, q) => { const dx = q[0] - p[0], dy = q[1] - p[1], l = Math.hypot(dx, dy); return [-dy / l, dx / l]; };
-    const n1 = nrm(a, b), n2 = nrm(b, c); let nb = [n1[0] + n2[0], n1[1] + n2[1]]; const nl = Math.hypot(nb[0], nb[1]); nb = [nb[0] / nl, nb[1] / nl];
-    const wb = (w1 + w2) / 2;
-    const P = (p, n, w, s) => `${r(p[0] + s * n[0] * w / 2)} ${r(p[1] + s * n[1] * w / 2)}`;
-    const L = [P(a, n1, w1, 1), P(b, nb, wb, 1), P(c, n2, w2, 1)], R = [P(a, n1, w1, -1), P(b, nb, wb, -1), P(c, n2, w2, -1)];
-    const lx = a[0] + n1[0] < a[0] - n1[0] ? L : R;
-    let g = F(`M${L[0]} L${L[1]} L${L[2]} L${R[2]} L${R[1]} L${R[0]} Z`, BRZ);
-    g += kante(`M${lx[0]} L${lx[1]} L${lx[2]}`, 0.45);
-    g += `<path d="M${R[1]} L${R[2]}" stroke="${PAT}" stroke-width="1" opacity=".35"/>`;
-    if (aufschlag) { const t = 0.8, q = [b[0] + (c[0] - b[0]) * t, b[1] + (c[1] - b[1]) * t]; g += F(`M${P(q, n2, w2 * 1.35, 1)} L${P(c, n2, w2 * 1.3, 1)} L${P(c, n2, w2 * 1.3, -1)} L${P(q, n2, w2 * 1.35, -1)} Z`, BRZL); }
+  /* Glied als weiche Form um eine Mittellinie: Lichtkante innen auf der Seite zur Sonne (links oben),
+     Kernschatten als Bahn auf der abgewandten Seite. */
+  const pt = (p) => `${r(p[0])} ${r(p[1])}`;
+  const kurve = (p, s = "M") => { let d = s + pt(p[0]); if (p.length === 2) return d + "L" + pt(p[1]);
+    for (let i = 1; i < p.length - 1; i++) { const e = i === p.length - 2 ? p[i + 1] : [(p[i][0] + p[i + 1][0]) / 2, (p[i][1] + p[i + 1][1]) / 2]; d += "Q" + pt(p[i]) + " " + pt(e); }
+    return d; };
+  const seiten = (c, w) => { const A = [], B2 = []; for (let i = 0; i < c.length; i++) { const a = c[Math.max(0, i - 1)], b = c[Math.min(c.length - 1, i + 1)];
+    const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, n = [-dy / l, dx / l];
+    A.push([c[i][0] + n[0] * w[i] / 2, c[i][1] + n[1] * w[i] / 2]); B2.push([c[i][0] - n[0] * w[i] / 2, c[i][1] - n[1] * w[i] / 2]); } return [A, B2]; };
+  const glied = (c, w, fill, licht = true) => {
+    const [A, B2] = seiten(c, w), m = c.length >> 1, li = A[m][0] + A[m][1] < B2[m][0] + B2[m][1];
+    const Lf = li ? A : B2, Rt = li ? B2 : A;
+    let g = F(kurve(Lf) + kurve([...Rt].reverse(), "L") + "Z", fill);
+    const [A2, B3] = seiten(c, w.map((v) => v * 0.2)), Rm = li ? B3 : A2;
+    g += F(kurve(Rt) + kurve([...Rm].reverse(), "L") + "Z", DK, ' opacity=".32"');
+    if (licht) { const [A4, B4] = seiten(c, w.map((v) => v * 0.66)); g += kante(kurve(li ? A4 : B4), 0.45); }
     return g;
   };
-  const hand = (x, y, rot, s2 = 1) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s2})"><path d="M-1.9 -1.1 Q0 -1.9 1.9 -1 Q2.5 .2 2.1 1.2 Q.4 2.3 -1.8 1.4 Q-2.3 .2 -1.9 -1.1 Z" fill="${BRZL}"/><path d="M-1.1 1.5 L-.9 .3 M0 1.8 L.1 .4 M1.1 1.6 L1.1 .4" stroke="${DK}" stroke-width=".28" opacity=".55"/><path d="M-1.8 -1 Q0 -1.8 1.8 -.9" stroke="${HL}" stroke-width=".35" fill="none" opacity=".7"/></g>`;
+  /* Falte als Linse: Schatten rechts, Licht links daneben */
+  const bahn = (x1, y1, x2, y2, b, w = 1.2) => { const mx = (x1 + x2) / 2 + b, my = r((y1 + y2) / 2);
+    return F(`M${x1} ${y1}Q${r(mx + w)} ${my} ${x2} ${y2}Q${r(mx)} ${my} ${x1} ${y1}Z`, DK, ' opacity=".4"') + F(`M${x1} ${y1}Q${r(mx)} ${my} ${x2} ${y2}Q${r(mx - w * 0.8)} ${my} ${x1} ${y1}Z`, HL, ' opacity=".26"'); };
+  /* Arm: Schulter, Ellbogen, Handgelenk; Ärmel weich, Beugefalten am Ellbogen, Aufschlag */
+  const arm = (pts, w1, w2, aufschlag = true) => {
+    const [a, b, c] = pts, mi = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+    let g = glied([a, mi(a, b, 0.5), b, mi(b, c, 0.5), c], [w1, w1 * 0.94, (w1 + w2) * 0.52, w2, w2 * 0.92], BRZ);
+    const e1 = mi(b, a, 0.18), e2 = mi(b, c, 0.18);
+    g += `<path d="M${pt(e1)}Q${pt(b)} ${pt(e2)}" stroke="${DK}" stroke-width=".55" fill="none" opacity=".5"/>`;
+    if (aufschlag) { const q = mi(b, c, 0.78); g += glied([q, c], [w2 * 1.3, w2 * 1.3], BRZL, false); }
+    return g;
+  };
+  const hand = (x, y, rot, s2 = 1) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s2})"><path d="M-2 -1.2 Q0 -2 2 -1.1 Q2.7 .3 2.2 1.3 Q.4 2.4 -1.8 1.5 Q-2.4 .2 -2 -1.2 Z" fill="${BRZL}"/><path d="M-2 -.6 Q-3.3 -.4 -3.2 .9 Q-2.4 1 -1.9 .5" fill="${BRZ}"/><path d="M-1.1 1.6 L-.9 .3 M0 1.9 L.1 .4 M1.1 1.7 L1.1 .4" stroke="${DK}" stroke-width=".28" opacity=".55"/><path d="M-1.8 -1.1 Q0 -1.9 1.8 -1" stroke="${HL}" stroke-width=".35" fill="none" opacity=".7"/></g>`;
   const gesicht = (cx, cy, rot, nx, alt) => `<g transform="rotate(${rot} ${cx} ${cy})">` +
     `<ellipse cx="${cx}" cy="${cy}" rx="4.6" ry="5.9" fill="${BRZ}"/>` +
     `<ellipse cx="${r(cx - 1.2 + nx * 0.3)}" cy="${r(cy - 3)}" rx="2.2" ry="1.5" fill="${HL}" opacity=".3"/>` +

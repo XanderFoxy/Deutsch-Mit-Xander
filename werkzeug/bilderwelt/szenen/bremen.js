@@ -232,7 +232,7 @@ const amBoden = (svg) => { MP.kunst += svg; return ""; };
    1 — DER MARKTPLATZ (Pflaster, Fugen, Schatten des Schüttings)
    ===================================================================== */
 {
-  /* Granitpflaster in Reihen, drei Maßstäbe: am Horizont fein und im Dunst aufgelöst, vorn grob.
+  /* Granitpflaster in Reihen, fünf Maßstäbe: am Horizont fein und im Dunst aufgelöst, vorn grob.
      Steine verschieden lang, Fugen nur wenig dunkler (Granit hat wenig Kontrast) */
   const setz = (a, b, nx, ny) => {
     const W = a * nx;
@@ -248,15 +248,17 @@ const amBoden = (svg) => { MP.kunst += svg; return ""; };
     return m;
   };
   S.def(`<pattern id="${S.id("pf0")}" width="2" height=".56" patternUnits="userSpaceOnUse">${setz(.5, .14, 4, 4)}</pattern>`);
+  S.def(`<pattern id="${S.id("pfa")}" width="2.8" height=".8" patternUnits="userSpaceOnUse">${setz(.7, .2, 4, 4)}</pattern>`);
   S.def(`<pattern id="${S.id("pf1")}" width="4.2" height="1.2" patternUnits="userSpaceOnUse">${setz(1.05, .3, 4, 4)}</pattern>`);
+  S.def(`<pattern id="${S.id("pfb")}" width="6.4" height="1.8" patternUnits="userSpaceOnUse">${setz(1.6, .45, 4, 4)}</pattern>`);
   S.def(`<pattern id="${S.id("pf2")}" width="9.6" height="3.2" patternUnits="userSpaceOnUse">${setz(2.4, .8, 4, 4)}</pattern>`);
   const maske = (n, y0, y1) => S.def(`<linearGradient id="${S.id(n + "g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${HOR + y0}" x2="0" y2="${HOR + y1}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id(n)}"><rect width="${BR}" height="${HO}" fill="url(#${S.id(n + "g")})"/></mask>`);
   /* Reihenhöhe im Bild ≈ 0,2 m · (y − Horizont)² / (Brennweite · Augenhöhe): fein → grob */
-  maske("m1", 9, 17); maske("m2", 24, 32);
+  maske("ma", 13, 16); maske("m1", 18, 21); maske("mb", 23, 27); maske("m2", 30, 35);
   const boden = `M0 ${HOR - 3} H${BR} V${HO} H0 Z`;
-  let k = `<path d="${boden}" fill="url(#${S.id("pf0")})"/><path d="${boden}" fill="url(#${S.id("pf1")})" mask="url(#${S.id("m1")})"/><path d="${boden}" fill="url(#${S.id("pf2")})" mask="url(#${S.id("m2")})"/>`;
+  let k = `<path d="${boden}" fill="url(#${S.id("pf0")})"/><path d="${boden}" fill="url(#${S.id("pfa")})" mask="url(#${S.id("ma")})"/><path d="${boden}" fill="url(#${S.id("pf1")})" mask="url(#${S.id("m1")})"/><path d="${boden}" fill="url(#${S.id("pfb")})" mask="url(#${S.id("mb")})"/><path d="${boden}" fill="url(#${S.id("pf2")})" mask="url(#${S.id("m2")})"/>`;
   /* Bodenluft: in 50–100 m löst sich das Pflaster im Dunst auf, nach vorn wird es satter */
-  k += `<path d="${boden}" fill="${S.lg("bodenluft", [[0, "#e6e4de", 0.78], [0.1, "#e6e4de", 0.5], [0.22, "#ebe7de", 0.2], [0.4, "#fff6e0", 0.05], [1, "#2a2218", 0.1]])}"/>`;
+  k += `<path d="${boden}" fill="${S.lg("bodenluft", [[0, "#e3e1db", 0.92], [0.12, "#e3e1db", 0.72], [0.22, "#e6e3dc", 0.42], [0.34, "#ebe7de", 0.14], [0.5, "#fff6e0", 0.04], [1, "#2a2218", 0.1]])}"/>`;
   /* helle Granitbänder quer über den Platz (5 m), fein und blass */
   let g = "";
   for (let y = -54; y <= -4; y += 5) g += linie([[-13, y, 0], [56, y, 0]], 4);
@@ -928,7 +930,7 @@ vorlage("zeigerin", { geschlecht: "w", blick: 205, frisur: "lang", haarfarbe: "d
   kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "rot" } } }, { hinten: { farbe: "#43302a", lang: true } });
 /* der Mann an der Bronze: vorgebeugt, beide Hände nach vorn unten an die goldenen Eselsbeine */
 vorlage("halter", { geschlecht: "m", blick: 250, frisur: "kurz", haarfarbe: "grau", haut: "hell", alter: "alt",
-  pose: { kipp: 6, lende: 6, brust: 4, nacken: 2, kopf: 4, schulterL: { vor: 52, seit: 8 }, ellbogenL: 22, unterarmL: 30, handL: 0, fingerL: 0.6, schulterR: { vor: 48, seit: 9 }, ellbogenR: 24, unterarmR: 30, handR: 0, fingerR: 0.6, huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 6, fussL: 0, huefteR: { vor: -6, seit: 2.5, dreh: -6 }, knieR: 3, fussR: 0 },
+  pose: { kipp: 16, lende: 16, brust: 10, nacken: -14, kopf: -10, schulterL: { vor: 34, seit: 8 }, ellbogenL: 16, unterarmL: 30, handL: 0, fingerL: 0.6, schulterR: { vor: 30, seit: 9 }, ellbogenR: 18, unterarmR: 30, handR: 0, fingerR: 0.6, huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 6, fussL: 0, huefteR: { vor: -6, seit: 2.5, dreh: -6 }, knieR: 3, fussR: 0 },
   kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "grau" }, jacke: { stueck: "mantel", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "schwarz" } } }, { fein: true });
 vorlage("kind", { geschlecht: "m", alter: "kind", pose: "laufen", blick: 120, frisur: "kurz", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "gruen" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } });
 /* die Stadtführerin schaut zu ihrer Gruppe und hält den roten Schirm hoch */
@@ -953,7 +955,7 @@ const fahrrad = (X, Y, sp) => {
   /* der Mann an der Bronze: so gestellt, dass seine Hände die goldenen Vorderbeine des Esels umfassen */
   const fuS = pr(SM.x, SM.y, 0), skS = mass(SM.x, SM.y) / 100;
   const ziel = [fuS[0] - 31 * .92 * skS, fuS[1] + (-30 - 30 * .92) * skS];
-  const Yh = SM.y - .5;
+  const Yh = SM.y - .35;
   let Xh = SM.x - .9;
   for (let i = 0; i < 30; i++) { const H = 1.74 * mass(Xh, Yh), hx = pr(Xh, Yh, 0)[0] - VZ.halter.hand[0] * H; Xh += (ziel[0] - hx) / mass(Xh, Yh) * .8; }
   const leute = [   // [Vorlage, x, y, Höhe m, gespiegelt]

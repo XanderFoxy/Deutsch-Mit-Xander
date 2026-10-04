@@ -375,7 +375,7 @@ const HU = {};
     S.def(`<linearGradient id="${S.id(id)}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(sg.pA[1])}" x2="0" y2="${r(sg.uA[1])}"><stop offset="0" stop-color="${oben}"/><stop offset="${r(0.12 + g * 0.16)}" stop-color="${mitte}"/><stop offset="${r(0.3 + g * 0.15)}" stop-color="${L > 0.3 ? "#fbf7ee" : "#e6ecee"}"/><stop offset="1" stop-color="${L > 0.3 ? "#e9eef0" : "#c3d0d6"}"/></linearGradient>`);
     k += `<path d="${P([sg.pA, sg.pB, sg.uB, sg.uA])}" fill="url(#${S.id(id)})" stroke="url(#${S.id(id)})" stroke-width=".3"/>`;
     /* Stränge: breite helle Bahnen, dazwischen kühle Spalten; oben glatt gebündelt, unten zerfasert */
-    const breite = Math.abs(sg.pB[0] - sg.pA[0]), n = Math.max(1, Math.round(breite / 2.6));
+    const breite = Math.abs(sg.pB[0] - sg.pA[0]), n = h > 60 ? 0 : Math.max(1, Math.round(breite / 2.6));
     const zw = zufall(500 + sg.i);
     let hell = "", spalt = "";
     for (let j = 0; j < n; j++) {
@@ -386,15 +386,25 @@ const HU = {};
       const c1 = q(t1 + 0.04, v0 + 0.05), c2 = q(t1 + 0.12, v0 + 0.05), d2 = q(t1 + 0.12, lang * 0.8);
       spalt += `M${r(c1[0])} ${r(c1[1])} L${r(c2[0])} ${r(c2[1])} L${r(d2[0])} ${r(d2[1])} Z`;
     }
-    k += `<path d="${spalt}" fill="${L > 0.3 ? "#b9c8cc" : "#90a6b2"}" opacity=".45"/><path d="${hell}" fill="#ffffff" opacity="${L > 0.3 ? 0.55 : 0.38}"/>`;
+    if (n) k += `<path d="${spalt}" fill="${L > 0.3 ? "#b9c8cc" : "#90a6b2"}" opacity=".45"/><path d="${hell}" fill="#ffffff" opacity="${L > 0.3 ? 0.55 : 0.38}"/>`;
+    else {
+      /* naher Abbruch, fast von der Seite gesehen: glatte, gebogene Bahnen — oben glasig grün, nach unten weiß aufgerissen */
+      let st = "", gr = "";
+      for (let j = 0; j < 4; j++) {
+        const t = (j + 0.3 + zw() * 0.4) / 4, x0 = sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t, y0 = sg.pA[1] + (sg.pB[1] - sg.pA[1]) * t, x1 = sg.uA[0] + (sg.uB[0] - sg.uA[0]) * t, y1 = Math.min(262, sg.uA[1] + (sg.uB[1] - sg.uA[1]) * t);
+        gr += `M${r(x0)} ${r(y0 + 1)} Q${r(x0 + (x1 - x0) * 0.1 + 1)} ${r(y0 + (y1 - y0) * 0.12)} ${r(x0 + (x1 - x0) * 0.2)} ${r(y0 + (y1 - y0) * 0.24)}`;
+        st += `M${r(x0 + (x1 - x0) * 0.2)} ${r(y0 + (y1 - y0) * 0.22)} Q${r(x0 + (x1 - x0) * 0.6 - 1)} ${r(y0 + (y1 - y0) * 0.6)} ${r(x1)} ${r(y1)}`;
+      }
+      k += `<path d="${gr}" stroke="#bfe6d2" stroke-width=".7" fill="none" opacity=".7"/><path d="${st}" stroke="#ffffff" stroke-width="1.3" fill="none" opacity=".55" stroke-linecap="round"/>`;
+    }
     /* glasige Kante: helle Lichtlinie auf der Kante, darunter der dunkle Bogen des überkippenden Wassers */
-    if (g > 0.2) k += `<path d="M${r(sg.pA[0])} ${r(sg.pA[1] + h * 0.05)} L${r(sg.pB[0])} ${r(sg.pB[1] + h * 0.05)}" stroke="#1e5c48" stroke-width="${r(Math.max(0.3, h * 0.025))}" opacity="${r(g * 0.7)}"/>`;
+    if (g > 0.2 && h < 60) k += `<path d="M${r(sg.pA[0])} ${r(sg.pA[1] + h * 0.05)} L${r(sg.pB[0])} ${r(sg.pB[1] + h * 0.05)}" stroke="#1e5c48" stroke-width=".5" opacity="${r(g * 0.6)}"/>`;
   }
   const kante = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, 0.4)).filter(([x]) => x < 440);
   k += `<path d="${P(kante, false)}" stroke="#f4fff8" stroke-width=".6" fill="none" opacity=".9"/>`;
   /* Dunstsee über dem Becken: dicht und weiß, verdeckt die untere Hälfte der Wände */
   const fussL = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, -26)).filter(([x]) => x < 440);
-  k += `<g filter="url(#${S.id("nebel2")})"><path d="${P([...fussL.map(([x, y]) => [x, y - 2]), [404, 200], [404, 226], [150, 226], [150, 150]])}" fill="${S.lg("dunstsee", [[0, "#fff6e6"], [0.5, "#f2f3f0"], [1, "#d9e2e6"]])}" opacity=".93"/></g>`;
+  k += `<g filter="url(#${S.id("nebel2")})"><path d="${P([...fussL.map(([x, y]) => [x, y - 3]), [404, 168], [404, 222], [380, 222], [340, 178], ...fussL.slice().reverse().filter(([x]) => x < 340).map(([x, y]) => [x - 4, y + 10])])}" fill="${S.lg("dunstsee", [[0, "#fff6e6"], [0.5, "#f2f3f0"], [1, "#d9e2e6"]])}" opacity=".93"/></g>`;
   /* Terrapin Point: Aussichtsplattform mit Geländer, Besuchern und US-Flagge */
   const [tx, ty] = W(552, 32, 2);
   k += `<path d="M${r(tx - 6)} ${r(ty + 0.5)} h12 l-.8 -1.1 h-10.4 Z" fill="#c9c0b0"/><path d="M${r(tx - 6)} ${r(ty - 0.9)} h12" stroke="#2a2a2a" stroke-width=".22"/>`;
@@ -458,8 +468,8 @@ const SCHLEIER = [];
   const zug = (g) => bogen(g).filter(([x, y]) => x > 150 && x < 330 && y > 20 && y < 180).sort((p, q) => p[1] - q[1]);
   /* Alexanders Dunkelband: innen ist der Himmel heller, außen dunkler */
   const innen = zug(37.5), aussen = zug(45.5);
-  if (innen.length > 1) k += `<path d="${glatt(innen.filter((_, i) => i % 3 === 0), false)}" stroke="#ffffff" stroke-width="7" fill="none" opacity=".16"/>`;
-  if (aussen.length > 1) k += `<path d="${glatt(aussen.filter((_, i) => i % 3 === 0), false)}" stroke="#5a6a7a" stroke-width="5" fill="none" opacity=".08"/>`;
+  if (innen.length > 1) k += `<path d="${glatt(innen.filter((_, i) => i % 3 === 0), false)}" stroke="#ffffff" stroke-width="7" fill="none" opacity=".07"/>`;
+  if (aussen.length > 1) k += `<path d="${glatt(aussen.filter((_, i) => i % 3 === 0), false)}" stroke="#5a6a7a" stroke-width="5" fill="none" opacity=".04"/>`;
   for (const [g, c] of farben) { const pts = zug(g); if (pts.length > 1) k += `<path d="${glatt(pts.filter((_, i) => i % 3 === 0 || i === pts.length - 1), false)}" stroke="${c}" stroke-width="1.5" fill="none" opacity=".66"/>`; }
   S.teil({ id: "regenbogen", de: "der Regenbogen", syl: "RE-gen-bo-gen", it: "l'arcobaleno", itSyl: "ar-co-ba-LE-no", en: "rainbow", x: 0, y: 0,
     kunst: `<g mask="url(#${S.id("rbm")})" filter="url(#${S.id("hauch")})">${k}</g>`,
