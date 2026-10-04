@@ -219,10 +219,13 @@ const SEE_Y0 = HOR + 0.7, SEE_Y1 = 201;
   let sp = "";
   /* Wellenbänder: je Zeile ein heller (links) und ein dunkler (rechts) Streifen, gegeneinander versetzt, nach unten breiter und blasser */
   const turmHalb = (h) => { let l = 0, rr = 0; for (const [s0, s1, top] of [...STREIFEN, ...NASE]) if (top >= h) { l = Math.min(l, s0); rr = Math.max(rr, s1); } return [l, rr]; };
-  for (let y = ySp + 0.3; y < SEE_Y1; y += 1.3 + rnd() * 0.7) {
-    const h = (y - ySp) / BU, q = (y - HOR) / (SEE_Y1 - HOR), [l, rr] = turmHalb(Math.min(h, 590)), dx = (rnd() - 0.5) * (0.6 + q * 3), sp2 = 1 + q * 0.5, hh = 0.6 + q * 0.6;
-    if (rr - l < 1) continue;
-    sp += `<rect x="${r(bx(l) + dx - q)}" y="${r(y)}" width="${r(-l * BQ * sp2)}" height="${r(hh)}" fill="#c9d6e2" opacity="${r(0.35 * (1 - q * 0.6))}"/><rect x="${r(BX + dx * 0.7)}" y="${r(y)}" width="${r(rr * BQ * sp2)}" height="${r(hh)}" fill="#4f6780" opacity="${r(0.45 * (1 - q * 0.5))}"/>`;
+  for (let y = ySp + 0.3; y < SEE_Y1;) {
+    const q = (y - HOR) / (SEE_Y1 - HOR), hh = 0.5 + q * 0.8, h = (y - ySp) / BU, [l, rr] = turmHalb(Math.min(h, 590)), sp2 = 1 + q * 0.5;
+    if (rr - l >= 1 && !(q > 0.6 && rnd() < 0.3)) {
+      const d1 = (rnd() - 0.5) * 1.2 * (0.6 + q * 2), d2 = (rnd() - 0.5) * 1.2 * (0.6 + q * 2), w1 = -l * BQ * sp2 * (0.75 + rnd() * 0.35), w2 = rr * BQ * sp2 * (0.75 + rnd() * 0.35);
+      sp += `<rect x="${r(BX - w1 + d1)}" y="${r(y)}" width="${r(w1)}" height="${r(hh * (0.7 + rnd() * 0.5))}" fill="#c9d6e2" opacity="${r(0.35 * (1 - q * 0.6))}"/><rect x="${r(BX + d2)}" y="${r(y + (rnd() - 0.5) * 0.4)}" width="${r(w2)}" height="${r(hh * (0.7 + rnd() * 0.5))}" fill="#4f6780" opacity="${r(0.45 * (1 - q * 0.5))}"/>`;
+    }
+    y += hh + 0.5 + rnd() * (0.4 + q * 0.8);
   }
   k += `<g clip-path="url(#${S.id("seeclip")})">${sp}</g>`;
   {
@@ -464,7 +467,6 @@ const FIG = {
   k += `<path d="${fu}" stroke="#fffaf0" stroke-width=".25" fill="none" opacity=".5" transform="translate(.35 .35)"/>`;
   /* Spiegelungen im polierten Stein: Pfosten, Menschen */
   const SP = S.lg("bodenspiegel", [[0, "#ffffff", 0.5], [1, "#ffffff", 0]]);
-  for (const [n, c, b, nr] of [["tourist", "#3f7fae", 3.2, 1], ["mann", "#ffffff", 3.4, 2], ["frau", "#1c1c21", 3, 3]]) { const f = FIG[n], y = yAt(f.d, DECK); k += `<rect x="${r(f.x - b)}" y="${r(y + 0.8)}" width="${r(2 * b)}" height="12" fill="${S.lg("bsp" + nr, [[0, c, 0.12], [1, c, 0]])}" ${W05}/>`; }
   k += `<rect x="0" y="${r(Y_KANTE)}" width="400" height="10" fill="${SP}" opacity=".35"/>`;
   /* Schlagschatten nach rechts (Sonne links): Pflanzkübel, Menschen, Tisch, Stühle */
   const sch = (x, y, l, b, a = 0.3) => `<path d="M${r(x - 2)} ${r(y)} Q${r(x + l * 0.5)} ${r(y - b)} ${r(x + l)} ${r(y - b * 0.3)} Q${r(x + l * 0.5)} ${r(y + b * 0.8)} ${r(x - 2)} ${r(y + 0.6)} Z" fill="#5a4630" opacity="${a}" ${W05}/>`;
@@ -545,7 +547,7 @@ const FIG = {
     const bx0 = kx + ox, by0 = ky + oy;
     k += `<path d="M${r(kx + ox * 0.3)} ${r(ky + 1)} Q${r(bx0 + sd * 2)} ${r(by0 - 2)} ${r(bx0)} ${r(by0 + 2)}" stroke="#c9a04a" stroke-width=".8" fill="none"/>`;
     for (let i = 0; i < 26; i++) { const t = rnd(), x = bx0 + (rnd() - 0.5) * (3 + 6 * t), y = by0 + 1 + t * 9; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx=".75" ry="1" fill="${rnd() < 0.5 ? "#e89a2a" : "#f2bf3c"}"/>`; }
-    k += `<ellipse cx="${r(bx0 - sd * 1.4)}" cy="${r(by0 + 4)}" rx="1.4" ry="2.6" fill="#ffe08a" opacity=".5"/>`;
+    k += `<circle cx="${r(bx0 - 1.6)}" cy="${r(by0 + 3)}" r=".3" fill="#fff4c4"/><circle cx="${r(bx0 - 0.4)}" cy="${r(by0 + 6)}" r=".25" fill="#fff4c4"/>`;
   }
   for (let i = 0; i < 8; i++) { const a = (-160 + i * 20) * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); k += `<path d="M${r(kx - sn * 1.6)} ${r(ky + 3 + c * 1)} L${r(kx + c * 5.5)} ${r(ky + 1 + sn * 3.5)} L${r(kx + sn * 1.6)} ${r(ky + 3 - c * 1)} Z" fill="${i % 2 ? "#b8934e" : "#8a6a3a"}"/>`; }
   S.teil({ anker: [55, 120], id: "palme", de: "die Palme", syl: "PAL-me", it: "la palma", itSyl: "PAL-ma", en: "palm tree", x: 0, y: 0, kunst: k,
@@ -638,7 +640,7 @@ const tischUnter = [];
    12 — DIE EINKAUFSTÜTE (Papier, neben dem rechten Stuhl)
    ===================================================================== */
 {
-  const d = 3.72, u = uAt(d), x = 388, yB = yAt(d, DECK), w = 0.3 * u, h = 0.36 * u, t = 2;
+  const d = 3.72, u = uAt(d), x = 383, yB = yAt(d, DECK), w = 0.3 * u, h = 0.36 * u, t = 2;
   let k = `<path d="M${r(x - w / 2)} ${r(yB)} L${r(x - w / 2)} ${r(yB - h)} L${r(x + w / 2)} ${r(yB - h)} L${r(x + w / 2)} ${r(yB)} Z" fill="${S.lg("tuete", [[0, "#fbf7ef"], [1, "#e5dccb"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M${r(x + w / 2)} ${r(yB)} L${r(x + w / 2)} ${r(yB - h)} L${r(x + w / 2 + t)} ${r(yB - h - 1)} L${r(x + w / 2 + t)} ${r(yB - 1)} Z" fill="#cfc4ae"/>`;
   k += `<rect x="${r(x - w / 2)}" y="${r(yB - h * 0.42)}" width="${r(w)}" height="1.6" fill="#b88a3a"/><rect x="${r(x - w / 2)}" y="${r(yB - h)}" width="${r(w)}" height=".6" fill="#ece3d2"/>`;
@@ -662,7 +664,13 @@ const tischUnter = [];
   k += `<path d="M${r(A[0] - 3)} ${r(A[1] + 1)} Q${r(xm - 10)} ${r(ym - 16)} ${r(xm + 6)} ${r(ym - 14)} Q${r(Bp[0] + 8)} ${r(ym - 8)} ${r(Bp[0] + 5)} ${r(Bp[1] + 1)} Z" fill="#2e4222"/>`;
   for (let i = 0; i < 14; i++) { const t = i / 13, x = A[0] - 2 + t * w, y = ym + 1 - Math.sin(t * Math.PI) * 8 + (rnd() - 0.5) * 4, g = [2.5, 4, 5.5][i % 3]; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${g}" fill="#3f5a2c"/>`; }
   for (let i = 0; i < 16; i++) { const t = rnd(), x = A[0] + t * w - 3, y = ym - 2 - Math.sin(t * Math.PI) * 9 + (rnd() - 0.5) * 6, a = rnd() * 6.28, l = 2 + rnd() * 1.5; k += `<path d="M${r(x)} ${r(y)} Q${r(x + Math.cos(a + 0.5) * l)} ${r(y + Math.sin(a + 0.5) * l)} ${r(x + Math.cos(a) * l * 1.6)} ${r(y + Math.sin(a) * l * 1.6)} Q${r(x + Math.cos(a - 0.5) * l)} ${r(y + Math.sin(a - 0.5) * l)} ${r(x)} ${r(y)} Z" fill="${rnd() < 0.5 ? "#6f8f46" : "#557538"}"/>`; }
-  for (let i = 0; i < 8; i++) { const t = i / 7, x = A[0] + 1 + t * (Bp[0] - A[0] - 2); k += `<circle cx="${r(x)}" cy="${r(A[1] - 1.5)}" r="${r(3 + rnd() * 1.5)}" fill="#46632f"/>`; }
+  for (let x = A[0] + 1; x < Bp[0] - 1;) { const g = 3.6 * (0.6 + rnd() * 0.7); k += `<circle cx="${r(x)}" cy="${r(A[1] - 1.2 - rnd() * 1.5)}" r="${r(g)}" fill="${rnd() < 0.5 ? "#46632f" : "#3c5629"}"/>`; x += g * (1 + rnd() * 0.9); }
+  let blt = "";
+  for (let i = 0; i < 10; i++) { const x = A[0] + 2 + rnd() * (Bp[0] - A[0] - 4), y = A[1] - 0.5 + rnd() * 1.5, a = 1.2 + rnd() * 0.8, l = 2.2 + rnd() * 1.5; blt += `M${r(x)} ${r(y)} Q${r(x + Math.cos(a + 0.4) * l * 0.6)} ${r(y + Math.sin(a + 0.4) * l * 0.6)} ${r(x + Math.cos(a) * l)} ${r(y + Math.sin(a) * l)} Q${r(x + Math.cos(a - 0.4) * l * 0.6)} ${r(y + Math.sin(a - 0.4) * l * 0.6)} ${r(x)} ${r(y)}Z `; }
+  k += `<path d="${blt}" fill="#557538"/>`;
+  /* zweite Ranke rechts mit Blättern */
+  { const x0 = Bp[0] - 12, y0 = A[1]; k += `<path d="M${r(x0)} ${r(y0)} Q${r(x0 + 4)} ${r(y0 + 6)} ${r(x0 + 1)} ${r(y0 + 12)}" stroke="#4a3a28" stroke-width=".7" fill="none"/>`;
+    for (const [dx, dy, a] of [[1.6, 3, 0.3], [3, 6, 2.6], [2.4, 9, 0.4], [1.2, 11.5, 2.8]]) k += `<path d="M${r(x0 + dx)} ${r(y0 + dy)} q${r(Math.cos(a) * 1.4)} ${r(Math.sin(a) * 1.4 - 0.8)} ${r(Math.cos(a) * 2.6)} ${r(Math.sin(a) * 2.6)} q${r(-Math.cos(a) * 1)} ${r(0.6)} ${r(-Math.cos(a) * 2.6)} ${r(-Math.sin(a) * 2.6)}Z" fill="#5f7d3e"/>`; }
   for (let i = 0; i < 7; i++) { const t = (i + 0.4) / 7, x = A[0] + t * w - 3, y = ym - 2 - Math.sin(t * Math.PI) * 8; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(3.6 + rnd() * 1.6)}" fill="#5f7d3e"/>`; }
   k += `<path d="M${r(A[0] + 6)} ${r(A[1])} Q${r(A[0] + 2)} ${r(A[1] + 8)} ${r(A[0] + 8)} ${r(A[1] + 15)}" stroke="#4a3a28" stroke-width=".8" fill="none"/>`;
   const bl = [];
@@ -741,7 +749,9 @@ const tischUnter = [];
   k += `<path d="M.3 ${r(ph / 2 - 0.5)} L.3 ${r(-ph / 2 + 0.5)} L.5 ${r(ph / 2 - 0.5)} Z" fill="#7d93a8"/>`;
   for (const [ox, h] of [[-1.6, 1.2], [-0.9, 1.6], [-0.2, 1.1], [1, 1.5], [1.7, 1]]) k += `<rect x="${r(ox)}" y="${r(ph / 2 - 0.45 - h)}" width=".3" height="${h}" fill="#ffffff"/>`;
   k += `<rect x="${r(-pw / 2 + 0.3)}" y="${r(-ph / 2 + 0.3)}" width=".8" height=".5" rx=".2" fill="#e0453a"/>`;
-  S.teil({ oben: true, id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: r(hx), y: r(hy - ph * 0.2), kunst: k + flaeche(-5, -4, 10, 8),
+  /* Hände greifen die Schmalseiten: Daumen und Finger legen sich über den Rand */
+  for (const sd of [-1, 1]) k += `<ellipse cx="${r(sd * (pw / 2 + 0.2))}" cy=".3" rx=".75" ry="1.15" fill="#e2b08c"/><path d="M${r(sd * (pw / 2 - 0.5))} ${r(-ph / 2 + 0.2)} l${r(sd * 0.9)} 0 M${r(sd * (pw / 2 - 0.4))} ${r(ph / 2 - 0.3)} l${r(sd * 0.8)} 0" stroke="#e2b08c" stroke-width=".55" stroke-linecap="round"/>`;
+  S.teil({ oben: true, id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: r(hx), y: r(hy - 2.3), kunst: k + flaeche(-5, -4, 10, 8),
     tipp: "Fast alle filmen die Show mit dem Handy." });
 }
 

@@ -211,7 +211,7 @@ function schlank(svg, stufe = 1) {
     /* Verläufe durch ihre mittlere Farbe ersetzen; Clip-Pfade bleiben (sonst laufen Schattierungen im Gesicht über) */
     svg = svg.replace(/<(linearGradient|radialGradient) id="[^"]+"[^>]*>.*?<\/\1>/g, "").replace(/<defs><\/defs>/g, "").replace(/url\(#([^)]+)\)/g, (m, id) => farbe[id] || m);
   }
-  return svg.split(/(transform="[^"]*"|offset="[^"]*"|opacity="[^"]*")/).map((t, i) => i % 2 ? t : t.replace(/(-?\d+\.\d+)/g, (m) => String(Math.round(parseFloat(m))))).join("");
+  return svg;   /* Zahlen bleiben fein: beim Schreiben werden alle Pfade relativ auf 0,1 gesetzt */
 }
 const mix = (c1, c2, f) => "#" + [1, 3, 5].map((i) => Math.round(parseInt(c1.substr(i, 2), 16) * (1 - f) + parseInt(c2.substr(i, 2), 16) * f).toString(16).padStart(2, "0")).join("");
 
@@ -246,6 +246,12 @@ const VOLF = `filter="url(#${S.id("volf")})"`;
    ===================================================================== */
 S.hinten(`<rect width="400" height="262" fill="${S.lg("himmel", [[0, "#2f63a8"], [0.35, "#5b8bc8"], [0.7, "#a9c6e2"], [1, "#dfe9f0"]])}"/>`);
 S.hinten(`<ellipse cx="-30" cy="40" rx="190" ry="120" fill="${S.rg("sonnenseite", [[0, "#fff4d8", 0.35], [1, "#fff4d8", 0]])}"/>`);
+/* Dunst über dem Talschluss und zwei kleine Schönwetterwolken an den Hängen */
+S.hinten(`<rect y="80" width="400" height="90" fill="${S.lg("taldunst", [[0, "#e6eef4", 0], [1, "#e6eef4", 0.55]])}"/>`);
+{
+  const w = (cx, cy, sk) => { let g = ""; for (const [dx, dy, rr] of [[-6, 0.5, 3], [-2, -1.5, 4.2], [3, -0.6, 3.6], [7, 0.8, 2.6]]) g += `<circle cx="${r(cx + dx * sk)}" cy="${r(cy + dy * sk)}" r="${r(rr * sk)}"/>`; return `<g fill="#fbfbfa">${g}</g><g fill="#c9d3e2" opacity=".6"><ellipse cx="${r(cx + 1 * sk)}" cy="${r(cy + 2.4 * sk)}" rx="${r(9 * sk)}" ry="${r(1.6 * sk)}"/></g>`; };
+  S.hinten(w(46, 40, 1.4) + w(352, 30, 1.1));
+}
 
 /* =====================================================================
    KULISSE 2 — ferne Berge links und rechts des Matterhorns (Dunst)
@@ -582,7 +588,7 @@ function fensterAuf(f, o, s) {
 /* Stadel: Steinsockel, Stützen mit runden Steinplatten, Blockbau, Steinplattendach (Giebel zu uns) */
 function stadel(o) {
   const { X0, X1, D0, D1, h0 } = o, Xm = (X0 + X1) / 2, Dm = (D0 + D1) / 2;
-  const hs = h0 + 1.5, hp = hs + 0.55, hk = hp + 0.12, he = hk + 2.8, hr = he + 1.8;
+  const hs = h0 + 1.3, hp = hs + 0.75, hk = hp + 0.14, he = hk + 2.8, hr = he + 1.8;
   let g = "";
   const zentrum = [Xm, Dm, hs / 2];
   /* Sockel (Bruchstein) */
@@ -605,7 +611,8 @@ function stadel(o) {
   for (const [xx, dd] of posten) {
     const a = proj([xx, dd, hs]), b = proj([xx, dd, hp]), ss = F / dd, w = 0.24 * ss;
     stuetzen += `<rect x="${r(a[0] - w / 2)}" y="${r(b[1])}" width="${r(w)}" height="${r(a[1] - b[1])}" fill="#5a3a22"/>`;
-    platten += `<ellipse cx="${r(b[0])}" cy="${r(b[1])}" rx="${r(0.42 * ss)}" ry="${r(0.11 * ss)}" fill="#8e8a82"/><ellipse cx="${r(b[0])}" cy="${r(b[1] - 0.04 * ss)}" rx="${r(0.4 * ss)}" ry="${r(0.07 * ss)}" fill="#b9b4aa"/>`;
+    /* dicke runde Steinplatte (≈ 10 cm) mit Kante, darunter dunkler Spalt */
+    platten += `<ellipse cx="${r(b[0] + 0.05 * ss)}" cy="${r(b[1] + 0.12 * ss)}" rx="${r(0.3 * ss)}" ry="${r(0.06 * ss)}" fill="#1a1008" opacity=".55"/><path d="M${r(b[0] - 0.46 * ss)} ${r(b[1] - 0.05 * ss)} L${r(b[0] - 0.46 * ss)} ${r(b[1] + 0.06 * ss)} A${r(0.46 * ss)} ${r(0.09 * ss)} 0 0 0 ${r(b[0] + 0.46 * ss)} ${r(b[1] + 0.06 * ss)} L${r(b[0] + 0.46 * ss)} ${r(b[1] - 0.05 * ss)} Z" fill="#7d786f"/><ellipse cx="${r(b[0])}" cy="${r(b[1] - 0.05 * ss)}" rx="${r(0.46 * ss)}" ry="${r(0.09 * ss)}" fill="#bdb7ab"/>`;
   }
   g += stuetzen + platten;
   /* Blockbau (Lärche, fast schwarz gebrannt) */
@@ -615,7 +622,11 @@ function stadel(o) {
   for (const p of [k1, k0]) {
     const f = flaecheInfo(p, [Xm, Dm, (hk + he) / 2]);
     if (!f.sicht) continue;
-    g += `<path d="${poly3(p)}" fill="${tönen("#4a2e1a", f.licht)}"/>`;
+    g += `<path d="${poly3(p)}" fill="${f.licht > 0.05 ? "#2e1c10" : "#4a4036"}"/>`;
+    /* Vorstösse an den Ecken */
+    { const a0 = p[0], a1 = p[1], L2 = Math.hypot(a1[0] - a0[0], a1[1] - a0[1]), u = [(a1[0] - a0[0]) / L2, (a1[1] - a0[1]) / L2]; let kp = "";
+      for (const [ec, sg] of [[a0, -1], [a1, 1]]) for (let hh = hk + 0.05; hh < he - 0.2; hh += 0.28) { const A = [ec[0] + u[0] * sg * 0.25, ec[1] + u[1] * sg * 0.25]; kp += "M" + [proj([ec[0], ec[1], hh]), proj([A[0], A[1], hh]), proj([A[0], A[1], hh + 0.22]), proj([ec[0], ec[1], hh + 0.22])].map(pt).join(" L") + " Z"; }
+      g += `<path d="${kp}" fill="#3a2414" stroke="#120a04" stroke-width=".15"/>`; }
     let balken = "";
     for (let h = hk + 0.28; h < he + 1.7; h += 0.28) { const z = bisHoehe(p, h, true), w = bisHoehe(z, h + 0.01, false); if (w.length >= 2) { const q = strecke(proj(w[0]), proj(w[w.length - 1])); if (q) balken += `M${pt(q[0])} L${pt(q[1])}`; } }
     g += `<path d="${balken}" stroke="#1c1008" stroke-width="${r(Math.max(0.15, 0.03 * s))}" opacity=".6"/>`;
@@ -628,9 +639,9 @@ function stadel(o) {
   const ov = 0.5, t = (hr - he) / ((X1 - X0) / 2);
   const dachS = X0 < 0 ? [[X1 + ov, D0 - ov, he - ov * t], [Xm, D0 - ov, hr], [Xm, D1 + ov, hr], [X1 + ov, D1 + ov, he - ov * t]] : [[X0 - ov, D0 - ov, he - ov * t], [Xm, D0 - ov, hr], [Xm, D1 + ov, hr], [X0 - ov, D1 + ov, he - ov * t]];
   const fd = flaecheInfo(dachS, [Xm, Dm, he - 2]);
-  if (fd.sicht) g += `<path d="${poly3(dachS)}" fill="${tönen("#8d8b86", fd.licht)}"/>`;
+  if (fd.sicht) g += `<path d="${poly3(dachS)}" fill="${tönen("#9a9892", fd.licht)}"/>`;
   const st = [[X0 - ov, D0 - ov, he - ov * t], [Xm, D0 - ov, hr], [X1 + ov, D0 - ov, he - ov * t]];
-  g += `<path d="M${st.map(proj).map(pt).join(" L")}" stroke="#77756f" stroke-width="${r(0.22 * s)}" fill="none" stroke-linejoin="round"/>`;
+  g += `<path d="M${st.map(proj).map(pt).join(" L")}" stroke="#8d8b86" stroke-width="${r(0.28 * s)}" fill="none" stroke-linejoin="round" stroke-dasharray="${r(0.45 * s)} ${r(0.05 * s)}"/>`;
   return { g, posten, hp, s };
 }
 
@@ -647,7 +658,7 @@ function laerche(X, D, h, seed, gold) {
       if (z() < 0.12) continue;
       const w = (W * Math.pow(1 - t, 0.8) * (0.55 + z() * 0.6) + 0.15 * s), xe = bx + sg * w, ye = y + (z() - 0.3) * 0.25 * s;
       aeste += `M${r(bx)} ${r(y)} Q${r(bx + sg * w * 0.6)} ${r(y + 0.15 * s)} ${r(xe)} ${r(ye - 0.15 * s)}`;
-      const n = 4 + Math.floor(w / s * 4.5);
+      const n = 3 + Math.floor(w / s * 3.5);
       for (let j = 0; j < n; j++) {
         const u = (j + 0.5) / n, x = bx + sg * w * u + (z() - 0.5) * 0.25 * s, yy = y + 0.12 * s * Math.sin(u * 3) - u * 0.12 * s + (z() - 0.5) * 0.4 * s;
         const k = sg < 0 ? (z() < 0.6 ? 2 : 1) : (z() < 0.6 ? 0 : 1);
@@ -783,10 +794,10 @@ let SCHATTEN_BODEN = "", SCHATTEN_WASSER = "", RAND_GELAENDER = "";
     while (f < 0.98) {
       const df = (0.08 + z() * 0.07);
       let D = 9 + z() * 0.6;
-      while (D < 60) {
+      while (D < 46) {
         const L = (0.5 + z() * 0.9) * (D > 30 ? 1.6 : 1), f1 = Math.min(0.99, f + df);
         const q = [P(Xw(f), D, hw(D) + f * 4.2), P(Xw(f), D + L, hw(D + L) + f * 4.2), P(Xw(f1), D + L, hw(D + L) + f1 * 4.2), P(Xw(f1), D, hw(D) + f1 * 4.2)];
-        if (q[0][1] < 262) { const d = "M" + q.map(pt).join(" L") + " Z"; fugen += d; const w = z(); if (w < 0.18) hell += d; else if (w < 0.34) dunkel += d; if (z() < 0.05 && D < 30) moos += `M${pt(q[3])} h${r(0.3 * F / D)}`; }
+        if (q[0][1] < 262) { const d = "M" + q.map(pt).join(" L") + " Z"; fugen += d; const w = z(); if (w < 0.18) hell += d; else if (w < 0.34) dunkel += d; if (z() < 0.05 && D < 30) moos += `M${pt(q[3])} L${r(Math.min(400, q[3][0] + 0.3 * F / D))} ${r(q[3][1])}`; }
         D += L;
       }
       f += df;
@@ -810,7 +821,7 @@ let SCHATTEN_BODEN = "", SCHATTEN_WASSER = "", RAND_GELAENDER = "";
   /* runde graue Steine: vorn groß, hinten klein und dicht (Texturgradient) */
   const imKies = (X, D) => { const t = (pts) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > D) !== (yj > D) && X < (xj - xi) * (D - yi) / (yj - yi) + xi) c = !c; } return c; }; return t(kiesL) || t(kiesR) || t(insel); };
   const stein = [[], [], []];
-  for (let i = 0; i < 520; i++) { const D = 9 + Math.pow(z(), 1.5) * 120, X = (z() * 2 - 1) * (UFER - 0.9); if (!imKies(X, D)) continue; const [x, y] = P(X, D, hw(D)), sz = (0.12 + z() * 0.2) * F / D; stein[Math.floor(z() * 3)].push(`M${r(x)} ${r(y)}h${r(sz * 0.4)}`); }
+  for (let i = 0; i < 330; i++) { const D = 9 + Math.pow(z(), 1.5) * 120, X = (z() * 2 - 1) * (UFER - 0.9); if (!imKies(X, D)) continue; const [x, y] = P(X, D, hw(D)), sz = (0.12 + z() * 0.2) * F / D; stein[Math.floor(z() * 3)].push(`M${r(x)} ${r(y)}h${r(sz * 0.4)}`); }
   ["#8f8c84", "#b6b1a6", "#6f6c66"].forEach((c, i) => { k += `<path d="${stein[i].join("")}" stroke="${c}" stroke-width="1.1" stroke-linecap="round" fill="none"/>`; });
   k += SCHATTEN_WASSER;
   /* Geländer der Uferwege auf den Mauerkronen */
@@ -1011,11 +1022,11 @@ const BANK = { X: -9.6, D: 27.5 };
   k += `<path d="${pz([q3(0.05, -0.95, 0.45), q3(0.05, 0.95, 0.45), q3(0.05, 0.95, 0.4), q3(0.05, -0.95, 0.4)])}" fill="#6e4a2c"/>`;
   for (const hh of [0.62, 0.8]) k += `<path d="${pz([q3(-0.45, -0.95, hh), q3(-0.45, 0.95, hh), q3(-0.45, 0.95, hh + 0.12), q3(-0.45, -0.95, hh + 0.12)])}" fill="#b07c48"/>`;
   /* Picknick auf der Bank: Taschenmesser (rot, Kreuz), Schokolade (Tafel, Papier), Brot */
-  const [mx, my] = q3(-0.12, -0.55, 0.47), ms = F / (BANK.D - 0.55);
+  const [mx, my] = q3(0.0, 0.3, 0.47), ms = F / (BANK.D + 0.3);
   let messer = `<rect x="${r(mx - 0.05 * ms)}" y="${r(my - 0.022 * ms)}" width="${r(0.1 * ms)}" height="${r(0.026 * ms)}" rx="${r(0.012 * ms)}" fill="#d52b1e"/><path d="M${r(mx + 0.05 * ms)} ${r(my - 0.016 * ms)} L${r(mx + 0.12 * ms)} ${r(my - 0.03 * ms)} L${r(mx + 0.12 * ms)} ${r(my - 0.018 * ms)} L${r(mx + 0.05 * ms)} ${r(my - 0.004 * ms)} Z" fill="#dfe5ea"/><path d="M${r(mx - 0.008 * ms)} ${r(my - 0.009 * ms)} h${r(0.016 * ms)} M${r(mx)} ${r(my - 0.017 * ms)} v${r(0.016 * ms)}" stroke="#fff" stroke-width="${r(0.005 * ms)}"/>`;
-  const [cx, cy] = q3(-0.15, 0.1, 0.47), cs = F / (BANK.D + 0.1);
+  const [cx, cy] = q3(-0.34, 0.5, 0.47), cs = F / (BANK.D + 0.5);
   let schoko = `<path d="M${r(cx - 0.09 * cs)} ${r(cy)} L${r(cx + 0.09 * cs)} ${r(cy)} L${r(cx + 0.07 * cs)} ${r(cy - 0.035 * cs)} L${r(cx - 0.11 * cs)} ${r(cy - 0.035 * cs)} Z" fill="#5a3418"/><path d="M${r(cx - 0.02 * cs)} ${r(cy)} L${r(cx + 0.09 * cs)} ${r(cy)} L${r(cx + 0.07 * cs)} ${r(cy - 0.035 * cs)} L${r(cx - 0.04 * cs)} ${r(cy - 0.035 * cs)} Z" fill="#d6c8a8"/><path d="M${r(cx - 0.06 * cs)} ${r(cy - 0.035 * cs)} L${r(cx - 0.05 * cs)} ${r(cy)} M${r(cx - 0.09 * cs)} ${r(cy - 0.018 * cs)} L${r(cx - 0.02 * cs)} ${r(cy - 0.018 * cs)}" stroke="#3a200c" stroke-width="${r(0.005 * cs)}"/>`;
-  const [ux, uy] = q3(-0.2, 0.45, 0.47), us = F / (BANK.D + 0.45);
+  const [ux, uy] = q3(-0.1, 0.9, 0.47), us = F / (BANK.D + 0.9);
   const brot = `<path d="M${r(ux - 0.1 * us)} ${r(uy)} Q${r(ux - 0.1 * us)} ${r(uy - 0.07 * us)} ${r(ux)} ${r(uy - 0.075 * us)} Q${r(ux + 0.1 * us)} ${r(uy - 0.07 * us)} ${r(ux + 0.1 * us)} ${r(uy)} Z" fill="#b8783a"/>`;
   k += `<g ${VOL}>${messer}${schoko}${brot}</g>`;
   /* Bodenschatten der Bank (Sonne links → nach rechts) */
@@ -1030,33 +1041,16 @@ const BANK = { X: -9.6, D: 27.5 };
         tipp: "Die Schweiz ist berühmt für ihre Schokolade." },
     ] });
   /* DIE WANDERIN sitzt auf der Bank (schaut zum Fluss) */
-  const [wx, wy] = q3(-0.18, 0.55, 0.0), ws = F / (BANK.D + 0.55);
+  const [wx, wy] = q3(-0.18, -0.45, 0.0), ws = F / (BANK.D - 0.45);
   const wi = B.mensch({ id: "chz_wi", geschlecht: "w", pose: "sitzen", blick: 270, frisur: "zopf", haarfarbe: "braun", haut: "hell", ohneSchatten: true,
     kleidung: { oberteil: { stueck: "pullover", farbe: "#2f8a8a" }, jacke: { stueck: "jacke", farbe: "#d0402e" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "stiefel", farbe: "braun" } } }, 1.66 * ws);
   S.teil({ id: "wanderin", de: "die Wanderin", syl: "WAN-de-rin", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker (woman)", x: wx, y: wy, kunst: `<g ${VOLF}>${schlank(wi.svg, 2)}</g>`,
     tipp: "Die Wanderin macht eine Pause und isst Schokolade." });
 }
 
-/* 17 — DAS SCHWARZNASENSCHAF (Walliser Rasse) auf der Wiese rechts beim Stadel */
-{
-  const schaf = (X, D, sg) => {
-    const [x, y] = P(X, D, hb(D)), s = F / D, q = (a, b) => `${r(x + sg * a * s)} ${r(y + b * s)}`;
-    let g = `<path d="M${q(-0.5, 0.02)} L${q(0.7, 0.02)} L${q(1.6, 0.18)} L${q(0.4, 0.18)} Z" fill="#1e2a48" opacity=".28"/>`;
-    g += `<path d="M${q(-0.42, -0.02)} L${q(-0.4, -0.3)} M${q(-0.22, 0)} L${q(-0.2, -0.3)} M${q(0.3, -0.02)} L${q(0.28, -0.3)} M${q(0.45, 0)} L${q(0.44, -0.3)}" stroke="#1a1a1a" stroke-width="${r(0.07 * s)}"/>`;
-    g += `<path d="M${q(-0.55, -0.45)} Q${q(-0.62, -0.8)} ${q(-0.3, -0.82)} Q${q(-0.1, -0.92)} ${q(0.1, -0.82)} Q${q(0.35, -0.9)} ${q(0.5, -0.75)} Q${q(0.62, -0.55)} ${q(0.5, -0.32)} Q${q(0.2, -0.24)} ${q(-0.1, -0.28)} Q${q(-0.45, -0.25)} ${q(-0.55, -0.45)} Z" fill="#f2ede2"/>`;
-    g += `<path d="M${q(-0.5, -0.6)} Q${q(-0.3, -0.85)} ${q(0.1, -0.82)}" stroke="#fff" stroke-width="${r(0.06 * s)}" fill="none" opacity=".8"/>`;
-    g += `<path d="M${q(0.5, -0.72)} Q${q(0.78, -0.82)} ${q(0.84, -0.6)} Q${q(0.82, -0.48)} ${q(0.7, -0.5)} Q${q(0.6, -0.55)} ${q(0.52, -0.55)} Z" fill="#141414"/><path d="M${q(0.6, -0.78)} Q${q(0.7, -0.92)} ${q(0.62, -0.92)} Q${q(0.55, -0.85)} ${q(0.62, -0.8)}" stroke="#c9b48a" stroke-width="${r(0.04 * s)}" fill="none"/><path d="M${q(0.55, -0.72)} L${q(0.46, -0.66)}" stroke="#141414" stroke-width="${r(0.06 * s)}"/>`;
-    return g;
-  };
-  const k = schaf(16.8, 63.5, 1) + schaf(19.6, 66.5, -1);
-  const [ax, ay] = P(16.8, 63.5, hb(63.5));
-  S.teil({ id: "schaf", de: "das Schwarznasenschaf", syl: "SCHWARZ-na-sen-schaf", it: "la pecora dal naso nero", itSyl: "PE-co-ra dal NA-so NE-ro", en: "Valais blacknose sheep", anker: [ax, ay], kunst: `<g ${VOL}>${k}</g>`,
-    tipp: "Das Schwarznasenschaf lebt im Wallis. Es hat weiße Wolle und ein schwarzes Gesicht." });
-}
-
 /* 18 — DAS GELÄNDER der Kirchbrücke (vorne, 10 m vor uns): Holzhandlauf auf dunklen Stahlpfosten */
 {
-  const D = 10, hd = 4.8, s = F / D;
+  const D = 11.5, hd = 4.8, s = F / D;
   let k = "", pf = "";
   for (let X = -10.4; X <= 10.4; X += 1.6) { const a2 = P(X, D, hd), b2 = P(X, D, hd + 1.0); pf += `<rect x="${r(a2[0] - 0.04 * s)}" y="${r(b2[1])}" width="${r(0.08 * s)}" height="${r(a2[1] - b2[1])}"/>`; }
   const y1 = P(0, D, hd + 1.0)[1], y2 = P(0, D, hd + 0.55)[1], y3 = P(0, D, hd + 0.15)[1];
@@ -1069,7 +1063,7 @@ const BANK = { X: -9.6, D: 27.5 };
 
 /* 19 — DER BERGSTEIGER am Brückengeländer (vorn rechts, 9 m): Helm, Seil, Pickel am Rucksack; fotografiert den Berg */
 {
-  const X = 3.6, D = 9, [x, y] = P(X, D, 4.8), s = F / D;
+  const X = 4.0, D = 10.6, [x, y] = P(X, D, 4.8), s = F / D;
   const foto = { lende: 1, brust: -3, nacken: -4, kopf: -6, schulterL: { vor: 64, seit: 16 }, ellbogenL: 104, unterarmL: 40, handL: 10, fingerL: 0.5, schulterR: { vor: 62, seit: 18 }, ellbogenR: 106, unterarmR: 40, handR: 10, fingerR: 0.5, huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
   const m = B.mensch({ id: "chz_berg", geschlecht: "m", pose: foto, blick: 196, frisur: "kurz", haarfarbe: "braun", haut: "hell", ohneSchatten: true,
     kleidung: { oberteil: { stueck: "pullover", farbe: "#2f5f95" }, jacke: { stueck: "jacke", farbe: "#c8352e" }, unterteil: { stueck: "hose", farbe: "#3a3c40" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "helm", farbe: "#f08a1c" } } }, 1.8 * s);
@@ -1078,7 +1072,8 @@ const BANK = { X: -9.6, D: 27.5 };
   let k = `<path d="M${r(ru[0] - 0.2 * s)} ${r(ru[1] - 0.28 * s)} Q${r(ru[0])} ${r(ru[1] - 0.36 * s)} ${r(ru[0] + 0.2 * s)} ${r(ru[1] - 0.28 * s)} L${r(ru[0] + 0.21 * s)} ${r(ru[1] + 0.22 * s)} Q${r(ru[0])} ${r(ru[1] + 0.3 * s)} ${r(ru[0] - 0.21 * s)} ${r(ru[1] + 0.22 * s)} Z" fill="${S.lg("rucksack", [[0, "#4a6a3a"], [1, "#2a4422"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M${r(ru[0] - 0.18 * s)} ${r(ru[1] - 0.1 * s)} H${r(ru[0] + 0.18 * s)}" stroke="#1a2a14" stroke-width="${r(0.02 * s)}"/>`;
   k += `<path d="M${r(ru[0] + 0.06 * s)} ${r(ru[1] + 0.2 * s)} L${r(ru[0] + 0.12 * s)} ${r(ru[1] - 0.55 * s)}" stroke="#2a2a2c" stroke-width="${r(0.03 * s)}"/><path d="M${r(ru[0] + 0.0 * s)} ${r(ru[1] - 0.55 * s)} Q${r(ru[0] + 0.12 * s)} ${r(ru[1] - 0.62 * s)} ${r(ru[0] + 0.26 * s)} ${r(ru[1] - 0.5 * s)}" stroke="#b9c1c7" stroke-width="${r(0.035 * s)}" fill="none" stroke-linecap="round"/>`;
-  k += `<ellipse cx="${r(ru[0] - 0.02 * s)}" cy="${r(ru[1] - 0.05 * s)}" rx="${r(0.24 * s)}" ry="${r(0.3 * s)}" transform="rotate(-25 ${r(ru[0])} ${r(ru[1])})" fill="none" stroke="#d8343c" stroke-width="${r(0.045 * s)}"/><ellipse cx="${r(ru[0] - 0.02 * s)}" cy="${r(ru[1] - 0.05 * s)}" rx="${r(0.2 * s)}" ry="${r(0.26 * s)}" transform="rotate(-25 ${r(ru[0])} ${r(ru[1])})" fill="none" stroke="#f2c62e" stroke-width="${r(0.02 * s)}"/>`;
+  /* Seil: aufgeschossen, oben unter dem Deckel des Rucksacks festgeschnallt */
+  for (let i = 0; i < 3; i++) k += `<ellipse cx="${r(ru[0] - 0.01 * s)}" cy="${r(ru[1] - 0.3 * s + i * 0.025 * s)}" rx="${r(0.17 * s)}" ry="${r(0.06 * s)}" fill="none" stroke="${i % 2 ? "#f2c62e" : "#d8343c"}" stroke-width="${r(0.028 * s)}"/>`;
   S.teil({ id: "bergsteiger", de: "der Bergsteiger", syl: "BERG-stei-ger", it: "l'alpinista", itSyl: "al-pi-NI-sta", en: "mountaineer", x, y, kunst: `<g ${VOLF}>${schlank(m.svg, 1)}${k}</g>`,
     tipp: "Bergsteiger brauchen Helm, Seil und Pickel. Auf das Matterhorn steigt man meist über den Hörnligrat." });
 }

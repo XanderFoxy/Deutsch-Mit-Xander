@@ -251,6 +251,12 @@ const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.15 ? baum(x, y, gr
     k += `<path d="${glatt(pt)}" fill="#5c4252"/><path d="M${r(x - ww * 0.55)} ${r(y - hh * 0.95)} Q${r(x)} ${r(y - hh * 1.35)} ${r(x + ww * 0.6)} ${r(y - hh * 0.85)} L${r(x + ww * 0.45)} ${r(y - hh * 0.62)} Q${r(x)} ${r(y - hh * 1.02)} ${r(x - ww * 0.42)} ${r(y - hh * 0.72)} Z" fill="#c9a888"/><path d="M${r(x - ww * 0.4)} ${r(y + 0.3)} L${r(x + ww * 0.42)} ${r(y + 0.2)}" stroke="#ecd0a2" stroke-width=".4"/>`;
   }
   for (let i = 0; i < 26; i++) { const t = rnd() * (OBEN.length - 1.01), i0 = Math.floor(t), f = t - i0, A = OBEN[i0], Bq = OBEN[i0 + 1]; const e = A[0] + (Bq[0] - A[0]) * f; const [x, y, u] = pr(e, A[1] - 8, fussZ(e) + 2 + rnd() * 8); if (x > 394 || x < 4) continue; k += baum(x, y, 2.2 * u * (0.7 + rnd() * 0.6), "oel"); }
+  /* große zusammenhängende helle Westflächen direkt unter dem Mauerfuß: Oberkante folgt dem Fuß, breiter als hoch, unregelmäßig */
+  for (const [t0, t1, tief] of [[0.06, 0.16, 3.5], [0.27, 0.34, 2.4], [0.45, 0.6, 4.2], [0.71, 0.76, 2], [0.83, 0.93, 3.2]]) {
+    const oben = [], unten2 = [];
+    for (let t = t0; t <= t1 + 1e-6; t += (t1 - t0) / 5) { const ti = t * (KRONE.length - 1.01), i0 = Math.floor(ti), f = ti - i0, A = FUSS[i0], Bq = FUSS[i0 + 1], e = A[0] + (Bq[0] - A[0]) * f, n = A[1] + (Bq[1] - A[1]) * f, z = A[2] + (Bq[2] - A[2]) * f; oben.push(pr(e, n, z + 0.6)); unten2.push(pr(e + (rnd() - 0.5) * 2, n - 2, z - tief * (0.6 + rnd() * 0.5))); }
+    k += `<path d="${P([...oben, ...unten2.reverse()].map(([x, y]) => [klemm(x, 0, 400), y]))}" fill="#d9b48a" opacity=".75"/>`;
+  }
   /* Südmauer (Kimon-Mauer) aus Quadern; darunter Roststreifen; Fuß mit dem Fels verzahnt */
   const mauer = [...KRONE.map(pp), ...FUSS.slice().reverse().map(pp)];
   k += `<path d="${P(mauer)}" fill="${S.lg("mauer", [[0, "#f3d4a2"], [0.25, "#e2bf98"], [1, "#bfa08e"]], 0, 0, 1, 0)}"/>`;
@@ -261,7 +267,6 @@ const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.15 ? baum(x, y, gr
   let rost = "";
   for (let i = 0; i < 26; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = FUSS[i0], Bq = FUSS[i0 + 1]; const [x, y, u] = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f, A[2] + (Bq[2] - A[2]) * f); if (x > 396) continue; const l = (2 + rnd() * 4) * u; rost += `M${r(x)} ${r(y - 1)} q${r((rnd() - 0.5) * 1.5)} ${r(l / 2)} ${r((rnd() - 0.5) * 1.2)} ${r(l)} `; }
   k += `<path d="${rost}" stroke="#b07a4a" stroke-width=".4" fill="none" opacity=".35"/>`;
-  for (let i = 0; i < 14; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = FUSS[i0], Bq = FUSS[i0 + 1]; const [x, y, u] = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f, A[2] + (Bq[2] - A[2]) * f); if (x > 396) continue; const w = (2.5 + rnd() * 4) * u, h1 = (1.2 + rnd() * 2.4) * u; k += `<path d="M${r(x - w)} ${r(y + 1)} L${r(x - w * 0.5)} ${r(y - h1)} L${r(x + w * 0.2)} ${r(y - h1 * (0.4 + rnd() * 0.5))} L${r(x + w)} ${r(y + 1)} Z" fill="#c8a886"/><path d="M${r(x - w)} ${r(y + 1)} L${r(x - w * 0.5)} ${r(y - h1)}" stroke="#f0d4a4" stroke-width=".35"/>`; }
   k += `<path d="M${KRONE.map((p) => { const [x, y] = pp(p); return `${r(x)} ${r(y)}`; }).join(" L")}" stroke="${M_HELL}" stroke-width=".6" fill="none"/>`;
   /* Bastion des Nike-Tempels: senkrechter Quaderturm, Westseite im Licht */
   const bas = [[-146, -10, 143.5], [-142, -22, 143.5], [-142, -22, 129], [-146, -10, 129]];
@@ -310,6 +315,7 @@ const erUnter = [];
   k += `<path d="${Q([[-11.5, N0 - 0.3, Z1 - 1.3], [-11.5, N1, Z1 - 1.3], [-11.5, N1, Z1], [-11.5, N0 - 0.3, Z1]])}" fill="#ead2b0"/><path d="${Q([[-15, N0 - 0.3, Z1 - 1.3], [-11.5, N0 - 0.3, Z1 - 1.3], [-11.5, N0 - 0.3, Z1], [-15, N0 - 0.3, Z1]])}" fill="#dcc0a0"/>`;
   /* Fundament und Terrasse vor der Südwand */
   k += `<path d="${Q([[E0 - 2, N0 - 4, Z0 - 2.6], [E1 + 4, N0 - 4, Z0 - 2.6], [E1 + 4, N0 - 4, Z0 - 0.2], [E0 - 2, N0 - 4, Z0 - 0.2]])}" fill="#d9bfa0"/><path d="${L3([E0 - 2, N0 - 4, Z0 - 0.2], [E1 + 4, N0 - 4, Z0 - 0.2])}" stroke="#fbe6c2" stroke-width=".4"/>`;
+  { let fz = ""; for (const z of [Z0 - 1.8, Z0 - 1]) fz += L3([E0 - 2, N0 - 4, z], [E1 + 4, N0 - 4, z]) + " "; for (let e = E0 - 0.5, j = 0; e < E1 + 4; e += 2.6, j++) { const z = j % 2 ? Z0 - 1.8 : Z0 - 1; fz += L3([e, N0 - 4, z], [e, N0 - 4, z + 0.8]) + " "; } k += `<path d="${fz}" stroke="#b8987c" stroke-width=".18"/>`; }
   /* Nordwand innen (über die Südwand sichtbar), Südwand aus hellem Marmor mit Quaderlagen */
   k += `<path d="${Q([[E0, N1, Z1], [E1, N1, Z1], [E1, N1, Z1 + 0.6], [E0, N1, Z1 + 0.6]])}" fill="#c9a890"/>`;
   k += `<path d="${Q([[E0, N0, Z0], [E1, N0, Z0], [E1, N0, Z1], [E0, N0, Z1]])}" fill="${MARMOR_S}"/>`;
@@ -332,7 +338,7 @@ const erUnter = [];
   /* Schlagschatten der vorspringenden Halle auf der Südwand (nach Osten, rechts) */
   k += `<path d="${Q([[KE1 + 5, N0, KZ], [KE1 + 9, N0, KZ], [KE1 + 9, N0, KD - 0.8], [KE1 + 7, N0, KD + 1.1], [KE1 + 5, N0, KD + 1.1]])}" fill="#7e6260" opacity=".45"/>`;
   /* Kore als Vorlage (Höhe 10 = 2,3 m): Korb, Kopf mit Haar bis zu den Schultern, Gewand mit Falten, rechtes Knie vor; links Licht */
-  S.def(`<g id="${S.id("kore")}"><path d="M-1.3 -9.4 L-1.5 -10 L1.5 -10 L1.3 -9.4 Z" fill="#f4dcb2"/><path d="M-1.1 -9.4 Q-1.4 -8 -1.6 -6.6 L1.6 -6.6 Q1.4 -8 1.1 -9.4 Z" fill="#c9a88c"/><ellipse cx="0" cy="-8.4" rx=".75" ry=".95" fill="#f6dcb4"/><path d="M-1.9 -6.8 Q-2 -3.4 -1.7 0 L1.7 0 Q2 -3.4 1.9 -6.8 Q1 -7.4 0 -7.4 Q-1 -7.4 -1.9 -6.8 Z" fill="#f9e2ba"/><path d="M0 -7.4 Q1 -7.4 1.9 -6.8 Q2 -3.4 1.7 0 L.2 0 Z" fill="#c4a088"/><path d="M-1.1 0 L-1.2 -5 M-.4 0 L-.4 -5.6 M.5 0 L.6 -4.6 M1.1 0 Q1.4 -1.6 1 -3.2" stroke="#b8957c" stroke-width=".18" fill="none"/></g>`);
+  S.def(`<g id="${S.id("kore")}"><path d="M-1.3 -9.4 L-1.5 -10 L1.5 -10 L1.3 -9.4 Z" fill="#f4dcb2"/><path d="M-1.1 -9.4 Q-1.4 -8 -1.6 -6.6 L1.6 -6.6 Q1.4 -8 1.1 -9.4 Z" fill="#c9a88c"/><ellipse cx="0" cy="-8.4" rx=".75" ry=".95" fill="#f6dcb4"/><path d="M-1.9 -6.8 Q-2 -3.4 -1.7 0 L1.7 0 Q2 -3.4 1.9 -6.8 Q1 -7.4 0 -7.4 Q-1 -7.4 -1.9 -6.8 Z" fill="#f6e3c8"/><path d="M0 -7.4 Q1 -7.4 1.9 -6.8 Q2 -3.4 1.7 0 L.2 0 Z" fill="#c9a98e"/><path d="M-.9 -9.2 Q-1.3 -7.4 -1.2 -6.8 L-.6 -7 Q-.7 -8.2 -.5 -9 Z M.9 -9.2 Q1.3 -7.4 1.2 -6.8 L.6 -7 Q.7 -8.2 .5 -9 Z" fill="#c9a88c"/><path d="M-1.4 -9.7 H1.4" stroke="#fff4dc" stroke-width=".3"/><path d="M-1.1 0 L-1.2 -5 M-.4 0 L-.4 -5.6 M.5 0 L.6 -4.6 M1.1 0 Q1.4 -1.6 1 -3.2" stroke="#a8856c" stroke-width=".28" fill="none"/></g>`);
   const kore = (e, n, hell) => { const a = pr(e, n, KZ + KH), b = pr(e, n, KD); const sc = (a[1] - b[1]) / 10; return `<use href="#${S.id("kore")}" transform="translate(${r(a[0])} ${r(a[1])}) scale(${sc.toFixed(3)})"${hell ? "" : ` opacity=".75"`}/>`; };
   k += kore(KE0 + 0.5, KN + 2.3, false) + kore(KE1 - 0.5, KN + 2.3, false);
   for (let i = 0; i < 4; i++) k += kore(KE0 + 0.5 + i * (KE1 - KE0 - 1) / 3, KN + 0.5, true);
@@ -351,7 +357,7 @@ const erUnter = [];
     tipp: "Die Karyatiden sind Mädchenfiguren, die das Dach tragen. Hier stehen Kopien – die echten sind im Museum." });
   const [ex, ey] = pr(-26, N0, Z0);
   S.teil({ anker: [ex, ey], id: "erechtheion", de: "das Erechtheion", syl: "e-rech-THEI-on", it: "l'Eretteo", itSyl: "e-ret-TE-o", en: "Erechtheion", x: 0, y: 0, kunst: k,
-    zoom: { x: 127, y: 96, w: 30, h: 20 }, unter: erUnter,
+    zoom: { x: 133, y: 99, w: 20, h: 13.3 }, unter: erUnter,
     tipp: "Das Erechtheion war ein Tempel für Athene und Poseidon. Hier soll Athene den ersten Olivenbaum geschenkt haben." });
 }
 
@@ -557,7 +563,6 @@ const parUnter = [];
   for (let i = 0; i < 16; i++) { const t = 0.04 + i * 0.061; if (zTop(t) > 120.6) k += oeff(t, 0.017, 115, 119.6); }
   for (let i = 0; i < 16; i++) { const t = 0.04 + i * 0.061; if (zTop(t) > 126) k += oeff(t, 0.016, 121.6, 125.4); }
   for (const z of [114.2, 120.8]) { let t1 = 0; while (t1 < 1 && zTop(t1) > z + 0.4) t1 += 0.01; k += `<path d="${L3(at(0.02, z), at(Math.min(t1, 1), z))}" stroke="#ecd5b0" stroke-width=".5"/>`; }
-  for (let i = 0; i < 10; i++) { const t = rnd(), z = 105 + rnd() * 16, a = pr(...at(t, z)); k += `<ellipse cx="${r(a[0])}" cy="${r(a[1])}" rx="${r(1 + rnd() * 2)}" ry="${r(2 + rnd() * 3)}" fill="#5e4e4c" opacity=".16"/>`; }
   /* Westende im Licht (kurze Seitenwand), keine geschlossene Seite rechts */
   const wa = pr(...at(0, Z0)), wb = pr(...at(0, 118.5)), wc = pr(W0[0], W0[1] + 6, 118.5), wd = pr(W0[0], W0[1] + 6, Z0);
   k += `<path d="${P([wd, wc, wb, wa])}" fill="#ecd2a6"/>`;
@@ -690,7 +695,7 @@ const SCHATTEN = [
   /* Borke nur im Stamm: Längsrisse und Platten (Clip mit dem Stammumriss) */
   S.def(`<clipPath id="${S.id("stammclip")}"><path d="${stammD}"/></clipPath>`);
   let bo = "";
-  for (let i = 0; i < 26; i++) { const t = rnd() * 0.95, seg = t * (STAMM.length - 1), j = Math.floor(seg), f = seg - j, A = STAMM[j], Bq = STAMM[j + 1], cx = A[0] + (Bq[0] - A[0]) * f + (rnd() - 0.5) * 7, cy = A[1] + (Bq[1] - A[1]) * f; bo += `M${r(cx)} ${r(cy)} l${r(0.6 + rnd() * 0.6)} ${r(-3 - rnd() * 5)} `; }
+  for (let i = 0; i < 16; i++) { const t = rnd() * 0.72, seg = t * (STAMM.length - 1), j = Math.floor(seg), f = seg - j, A = STAMM[j], Bq = STAMM[j + 1], cx = A[0] + (Bq[0] - A[0]) * f + (rnd() - 0.5) * 7, cy = A[1] + (Bq[1] - A[1]) * f; bo += `M${r(cx)} ${r(cy)} l${r(0.6 + rnd() * 0.6)} ${r(-3 - rnd() * 5)} `; }
   k += `<g clip-path="url(#${S.id("stammclip")})"><path d="${bo}" stroke="#3e3028" stroke-width=".55" fill="none" opacity=".8"/></g>`;
   /* Nadelbüschel: flach, breiter als hoch, Rand aus feinen Nadelstrichen; je Büschel ein Zweig */
   const buesch = (x, y, w, h, vonX, vonY) => {

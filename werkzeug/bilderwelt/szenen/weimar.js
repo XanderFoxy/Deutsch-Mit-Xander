@@ -653,9 +653,9 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
   /* DIE VERKÄUFERIN: vorn an der Theke, reicht mit der rechten Hand einen Zopf über die Theke */
   const V = mensch("V", { id: "wmr_verk", geschlecht: "w", blick: 14, frisur: "dutt", haarfarbe: "braun", haut: "hell", laecheln: true,
     pose: { lende: 1, brust: -2, nacken: 4, kopf: 2, schulterL: { vor: 10, seit: 12 }, ellbogenL: 70, unterarmL: 40, handL: 4, fingerL: 0.5,
-      schulterR: { vor: 50, seit: 36, dreh: 10 }, ellbogenR: 70, unterarmR: 40, handR: 0, fingerR: 0.85,
+      schulterR: { vor: 34, seit: 62, dreh: 10 }, ellbogenR: 40, unterarmR: 30, handR: 0, fingerR: 0.85,
       huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-    kleidung: { oberteil: { stueck: "bluse", farbe: "creme" }, schuerze: { stueck: "schuerze", farbe: "#e9dcc0" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "rot" } } }, 1.72, ZW.D + 0.42, (ZW.X0 + ZW.X1) / 2 + 0.1, 3, 0.9);
+    kleidung: { oberteil: { stueck: "bluse", farbe: "creme" }, schuerze: { stueck: "schuerze", farbe: "#e9dcc0" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "rot" } } }, 1.8, ZW.D + 0.42, (ZW.X0 + ZW.X1) / 2 + 0.1, 3, 0.9);
   const theke = yG(ZW.D, 0.95);
   S.def(`<clipPath id="${S.id("hinterTheke")}"><rect x="-60" y="-120" width="120" height="${r(theke - V.y + 120)}"/></clipPath>`);
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x: V.x, y: V.y,
@@ -714,7 +714,7 @@ const V2 = mensch("V2", { id: "wmr_grill", geschlecht: "m", blick: -14, frisur: 
   pose: { lende: 1, brust: -1, nacken: 8, kopf: 4, schulterL: { vor: 30, seit: 10 }, ellbogenL: 70, unterarmL: 40, handL: 4, fingerL: 0.6,
     schulterR: { vor: 42, seit: 20, dreh: 10 }, ellbogenR: 64, unterarmR: 30, handR: 0, fingerR: 0.9,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-  kleidung: { oberteil: { stueck: "tshirt", farbe: "schwarz" }, schuerze: { stueck: "schuerze", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.86, GR.D + 0.5, (GR.X0 + GR.X1) / 2 - 0.4, 3, 0.9);
+  kleidung: { oberteil: { stueck: "tshirt", farbe: "schwarz" }, schuerze: { stueck: "schuerze", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.92, GR.D + 0.4, (GR.X0 + GR.X1) / 2 - 0.4, 3, 0.9);
 {
   const theke = yG(GR.D, 0.95);
   S.def(`<clipPath id="${S.id("hinterGrill")}"><rect x="-60" y="-120" width="120" height="${r(theke - V2.y + 120)}"/></clipPath>`);
@@ -750,7 +750,7 @@ const V2 = mensch("V2", { id: "wmr_grill", geschlecht: "m", blick: -14, frisur: 
   const rp = (pts) => pts.map(([dx, dy], i) => (i ? (i % 2 ? "Q" : " ") : "M") + `${r(cx + dx * su)} ${r(cy - dy * su)}`).join("") + "Z";
   S.davor(`<g filter="url(#${S.id("rauch")})" opacity=".3" pointer-events="none"><path d="${rp([[-0.1, 0.2], [0.1, 1.1], [0.9, 1.6], [1.8, 2.1], [3, 2.3], [3.1, 1.9], [1.9, 1.7], [0.7, 1.0], [0.4, 0.2]])}" fill="#ece8e2"/>` +
     `<path d="${rp([[0.4, 0.2], [0.7, 1.0], [1.6, 1.3], [2.6, 1.6], [3.8, 1.6], [3.8, 1.3], [2.4, 1.2], [1.2, 0.7], [0.8, 0.2]])}" fill="#dcd8d0" opacity=".7"/></g>`);
-  S.teil({ oben: true, id: "rostbratwurst", de: "die Rostbratwurst", syl: "ROST-brat-wurst", it: "la salsiccia alla griglia", itSyl: "sal-SIC-cia AL-la GRI-glia", en: "grilled sausage", x: 0, y: 0, kunst: k,
+  S.teil({ id: "rostbratwurst", de: "die Rostbratwurst", syl: "ROST-brat-wurst", it: "la salsiccia alla griglia", itSyl: "sal-SIC-cia AL-la GRI-glia", en: "grilled sausage", x: 0, y: 0, kunst: k,
     tipp: "Die Thüringer Rostbratwurst isst man im Brötchen — mit Senf, ohne Ketchup." });
 }
 
