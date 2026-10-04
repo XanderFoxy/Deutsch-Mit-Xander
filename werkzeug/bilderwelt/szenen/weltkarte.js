@@ -380,7 +380,7 @@ const ORT = {
   italien: { ll: [11.2, 43.4], bild: [-2.9, -0.4], lab: [-2.9, 2.1, "m"], name: "Italien" },
   rom: { ll: [12.5, 41.9], bild: [2.6, 4.3], lab: [3.4, 6.4, "m"], name: "Rom" },
   spanien: { ll: [2.17, 41.4], lab: [-6.2, 2.6, "m"], name: "Spanien" },
-  griechenland: { ll: [23.73, 37.97], gr: 0.8, lab: [-3.3, 3.1, "m"], name: "Griechenland" },
+  griechenland: { ll: [23.73, 37.97], gr: 0.8, lab: [0.6, 3.1, "m"], name: "Griechenland" },
   tuerkei: { ll: [28.98, 41.01], bild: [1.6, -0.4], lab: [5.5, 2.9, "m"], name: "Türkei" },
   moskau: { ll: [37.62, 55.75], lab: [0, 2.8, "m"], name: "Moskau" },
   /* in der ganzen Karte (Maßstab 0,75) */
@@ -389,7 +389,7 @@ const ORT = {
   mexiko: { ll: [-88.57, 20.68], bild: [0.8, 8.2], lab: [0.8, 10.6, "m"], name: "Mexiko", knopf: P(-105, 14) },
   rio: { ll: [-43.21, -22.91], lab: [0, 3.3, "m"], name: "Rio de Janeiro", knopf: P(-30, -25) },
   kapstadt: { ll: [18.42, -33.92], lab: [0, 3.3, "m"], name: "Kapstadt", knopf: [193, 152] },
-  aegypten: { ll: [31.13, 29.98], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [229, 61] },
+  aegypten: { ll: [31.13, 29.98], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [228.5, 61] },
   dubai: { ll: [55.27, 25.2], lab: [-1.6, 3.3, "m"], name: "Dubai", knopf: P(62, 18) },
   indien: { ll: [78.04, 27.18], lab: [0, 3.3, "m"], name: "Indien", knopf: [287, 91] },
   peking: { ll: [116.4, 39.9], lab: [0, 3.3, "m"], name: "Peking", knopf: P(124, 32) },
