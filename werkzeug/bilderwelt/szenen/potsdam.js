@@ -494,15 +494,15 @@ const M2 = mensch("M2", { id: "pdm_tourist", geschlecht: "m", blick: 196, frisur
   pose: { lende: 1, brust: -4, nacken: -12, kopf: -10, kopfDreh: 12, schulterL: { vor: 3, seit: 7 }, ellbogenL: 12, unterarmL: 10, handL: 6, fingerL: 0.38,
     schulterR: { vor: 34, seit: 122, dreh: 0 }, ellbogenR: 4, unterarmR: 0, handR: 4, fingerR: "zeigen",
     huefteL: { vor: 5, seit: 3, dreh: -6 }, knieL: 5, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-  kleidung: { oberteil: { stueck: "tshirt", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh" }, zubehoer: { stueck: "rucksack", farbe: "orange" } } }, 1.82, 25, -0.6);
+  kleidung: { oberteil: { stueck: "tshirt", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh" } } }, 1.82, 25, -0.6);
 bodenSchatten(25, -0.6, 0.5, 1.82, 0.26);
 /* DAS KIND geht zur Treppe, die Kartoffel in der ausgestreckten Hand (Dreiviertel von hinten) */
 const K = mensch("K", { id: "pdm_kind", alter: "kind", geschlecht: "m", blick: 212, frisur: "kurz", haarfarbe: "hellblond", haut: "hell",
   pose: { lende: 2, brust: -2, nacken: 4, kopf: 0, schulterL: { vor: -14, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
     schulterR: { vor: 34, seit: 46, dreh: 0 }, ellbogenR: 22, unterarmR: 80, handR: 0, fingerR: 0.75,
     huefteL: { vor: 22, seit: 4, dreh: 0 }, knieL: 8, fussL: 2, huefteR: { vor: -16, seit: 4, dreh: 0 }, knieR: 24, fussR: 18 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "muetze", farbe: "blau" } } }, 1.22, 19, 0.7);
-bodenSchatten(19, 0.7, 0.4, 1.22, 0.26);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "muetze", farbe: "blau" } } }, 1.22, 19, 0.0);
+bodenSchatten(19, 0.0, 0.4, 1.22, 0.26);
 /* DAS PAAR spaziert um die Fontäne (mittlere Tiefe) */
 const P1 = mensch("P1", { id: "pdm_p1", geschlecht: "w", blick: 120, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", pose: "gehen",
   kleidung: { oberteil: { stueck: "pullover", farbe: "rosa" }, jacke: { stueck: "mantel", farbe: "beige" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" } } }, 1.66, 46, -6.1, 4, 1, true);
@@ -866,7 +866,13 @@ bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
   S.teil({ oben: true, id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: r(hx), y: r(hy - 0.6), kunst: g + flaeche(-2.6, -4.2, 5.2, 8, 0.5),
     tipp: "Mit dem Handy macht man schnell ein Foto." });
 }
-S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: M2.x, y: M2.y, kunst: M2.svg,
+/* Rucksack von hinten: abgerundet, Deckel, Träger über beiden Schultern */
+const rucksack = (f) => { const q = (n) => { const v = f.p({ x: f.m.z.punkte[n][0], y: f.m.z.punkte[n][1] }); return [v.x - f.x, v.y - f.y]; };
+  const [a, b] = [q("schulterL"), q("schulterR")], l = q("lende"), mx = (a[0] + b[0]) / 2, bw = Math.abs(a[0] - b[0]) * 0.4, top = Math.max(a[1], b[1]) + 0.6, bot = l[1] + 0.4;
+  return `<path d="M${r(Math.min(a[0], b[0]) + 0.2)} ${r(Math.min(a[1], b[1]) - 0.2)} Q${r(mx - bw * 0.6)} ${r(top - 0.4)} ${r(mx - bw * 0.8)} ${r(top + 0.6)} M${r(Math.max(a[0], b[0]) - 0.2)} ${r(Math.min(a[1], b[1]) - 0.2)} Q${r(mx + bw * 0.6)} ${r(top - 0.4)} ${r(mx + bw * 0.8)} ${r(top + 0.6)}" stroke="#7a3a12" stroke-width=".7" fill="none" stroke-linecap="round"/>` +
+    `<rect x="${r(mx - bw)}" y="${r(top)}" width="${r(bw * 2)}" height="${r(bot - top)}" rx="${r(bw * 0.45)}" fill="${S.lg("rucksack", [[0, "#f0a050"], [0.6, "#d8782a"], [1, "#9a4a14"]], 0, 0, 1, 0)}"/>` +
+    `<path d="M${r(mx - bw)} ${r(top + (bot - top) * 0.32)} Q${r(mx)} ${r(top + (bot - top) * 0.42)} ${r(mx + bw)} ${r(top + (bot - top) * 0.32)}" stroke="#8a4214" stroke-width=".35" fill="none"/><rect x="${r(mx - bw * 0.5)}" y="${r(top + (bot - top) * 0.55)}" width="${r(bw)}" height="${r((bot - top) * 0.3)}" rx=".4" fill="#c4682a"/>`; };
+S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: M2.x, y: M2.y, kunst: M2.svg + rucksack(M2),
   tipp: "Der Tourist zeigt nach oben: „Da ist das Schloss!“" });
 {
   S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: K.x, y: K.y, kunst: K.svg,
