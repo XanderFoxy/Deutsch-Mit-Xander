@@ -317,6 +317,9 @@ button:focus-visible,
 .clock-hand { stroke: var(--sky-ink, #1a1a1a); stroke-width: 2; stroke-linecap: round; transform-origin: 20px 20px; transition: stroke 1.5s ease; }
 .hand-minute { stroke-width: 1.6; opacity: 0.85; }
 .clock-center { fill: var(--coral-400); }
+/* FASSUNG 879 — beim ersten Himmel nach dem Laden keine Übergänge (siehe app.js „himmel-sofort"): sie liefen
+   sonst alle im Hauptfaden, genau während die Seite startet. */
+.himmel-sofort .weather-bar, .himmel-sofort .weather-bar *, .himmel-sofort .weather-bar *::before, .himmel-sofort .weather-bar *::after { transition: none !important; }
 
 .special-day {
   font-size: 0.75rem;

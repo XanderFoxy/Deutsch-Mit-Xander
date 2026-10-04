@@ -4823,8 +4823,20 @@
     return 0.2126 * kanal(rgb[0]) + 0.7152 * kanal(rgb[1]) + 0.0722 * kanal(rgb[2]);
   }
 
+  /* FASSUNG 879 — XANDER (Funk 263): „die Seite flüssig"; Puls-Regel Vorrang 1/2 (schnelle Seite, Ladezeiten).
+     GEMESSEN (Chromium, Telefon, Rechner ×4 gedrosselt): beim Start liefen die Farbübergänge der Wetterleiste
+     (Hintergrund 2 s, Schrift/Uhr 1,5 s – gedacht für das langsame Wandern des Himmels über den Tag) vom
+     Grundton zur echten Himmelsfarbe an. Farben, SVG-Striche und Schatten kann der Browser nicht auf der
+     Grafikkarte überblenden: das waren rund 80 Neuberechnungen aller Stile im Hauptfaden (≈ 550 ms), genau in
+     den Sekunden, in denen die Seite bereit werden soll. Beim ersten Himmel gibt es deshalb keinen Übergang
+     (Klasse „himmel-sofort", styles.css); sobald alle Stilblätter da sind, überblendet der Himmel wie bisher. */
+  document.documentElement.classList.add("himmel-sofort");
   updateClock();
   setInterval(updateClock, 15000);
+  {
+    const himmelLos = () => requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove("himmel-sofort")));
+    if (document.readyState === "complete") himmelLos(); else window.addEventListener("load", himmelLos, { once: true });
+  }
 
   /* ============ Feiertage & Geburtstag ============ */
   const GERMAN_HOLIDAYS = {

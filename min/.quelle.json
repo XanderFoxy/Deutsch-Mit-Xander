@@ -28,7 +28,6 @@
  "klassenzimmer.js": "71e58a392589c250a3651eaf6f47964ec9c2d523",
  "livechat.css": "00c0b7b0908e61bafab519e1d9d7b5dd9c2852ab",
  "quiz.js": "7884e008f38ef069fe65c18b2ddbaeb1ef9ba444",
- "styles.css": "6d9def5b08d90b41aa69a36db9adb3f20c33dd1f",
  "supabase-config.js": "825bb26f42e6feef78258e774112d4d7c05f4d54",
  "themes.css": "9529740c81dcc59ed2e16beebf5b22404b14c625",
  "ton-liste.js": "831b0bb2765251f631db9fe99ea48fc0c46de9c8",
@@ -56,6 +55,7 @@
  "korrekturen.css": "9086685ccd1866abb6c962f25d3cf67fa7ddf654",
  "spiel.css": "81257285594df053f230c3aa9d0a9519ae88cafd",
  "data-exercises.js": "b395f55eb9a5b0e9bc8b95aa97e72fe43ff8a253",
- "app.js": "e40f0cfba16c3a0b526d3982750503063dd617ff",
- "data-werkstatt.js": "3ca199bf5f0f544a3d713523850e9b92dcc1620f"
+ "data-werkstatt.js": "3ca199bf5f0f544a3d713523850e9b92dcc1620f",
+ "app.js": "8895e465b7f51dd9412e14ff71c270d6634be0a2",
+ "styles.css": "5794971a647adc6f59393313f66ecaf4a4ead4b6"
 }
