@@ -11,8 +11,6 @@
    für Bildpunkt; geschrieben wird nur, wenn höchstens 20 Bildpunkte deutlich abweichen (Kantenglättung). */
 "use strict";
 const fs = require("fs"), zlib = require("zlib");
-const datei = process.argv[2], pruefen = process.argv.includes("--pruefen");
-const text = fs.readFileSync(datei, "utf8");
 
 /* ---------- Pfade ---------- */
 const ZAHL = /[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/g;
@@ -63,6 +61,11 @@ function stueck(svg) {
   svg = svg.replace(/\sd="([^"]*)"/g, (g, d) => ' d="' + relativ(d) + '"');
   return svg;
 }
+
+module.exports = { relativ, stueck };
+if (require.main !== module) return;
+const datei = process.argv[2], pruefen = process.argv.includes("--pruefen");
+const text = fs.readFileSync(datei, "utf8");
 
 const w = {}; new Function("window", text)(w);
 const id = Object.keys(w.DMA_SZENE)[0], sz = w.DMA_SZENE[id];

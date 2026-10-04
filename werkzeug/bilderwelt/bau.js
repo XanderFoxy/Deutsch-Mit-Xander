@@ -84,6 +84,10 @@ function neueSzene(kopf) {
       teile,
     };
     if (S.vorne.length) sz.vorne = S.vorne.join("");
+    /* FASSUNG 878 — Pfade relativ schreiben (verdichten.js): gleiche Zeichnung, gepackt rund 15 % kleiner */
+    const { stueck } = require("./verdichten.js");
+    sz.kulisse = stueck(sz.kulisse); if (sz.vorne) sz.vorne = stueck(sz.vorne);
+    for (const t of teile) { t.kunst = stueck(t.kunst); for (const u of t.unter || []) u.kunst = stueck(u.kunst); }
     const kopfText = `/* ${kopf.titel} — gebaut von werkzeug/bilderwelt/szenen/${kopf.id}.js (FASSUNG ${kopf.fassung}).
    Nicht von Hand ändern: die Quelle ist die Bau-Datei. */
 `;
