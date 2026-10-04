@@ -1077,8 +1077,8 @@ let PUP = null;
   for (let i = 0; i < 14; i++) zu += `<circle cx="${r((rnd() - 0.5) * 2)}" cy="${r(-rnd() * 4.4)}" r=".14" fill="#f6e2b8"/>`;
   k += zu + `<ellipse cx="0" cy="-4.78" rx="1.3" ry=".42" fill="#c98a42"/><ellipse cx="0" cy="-4.74" rx=".86" ry=".26" fill="#5a2e10"/><path d="M-1.25 -4.7 Q0 -4.3 1.25 -4.7" stroke="#e8b56a" stroke-width=".18" fill="none"/>` +
     /* Runde 5: die Hand umfasst die Rolle sichtbar (Finger vorn, Daumen oben) */
-    `<path d="M-1.28 -2.75 Q-.3 -3.0 .55 -2.65 L.6 -1.8 Q-.3 -1.55 -1.2 -1.85Z" fill="#e6c09e"/><path d="M-.85 -2.8 v.95 M-.42 -2.86 v1 M.02 -2.82 v.98" stroke="#b98a6a" stroke-width=".1"/><ellipse cx="-1.05" cy="-2.95" rx=".45" ry=".25" fill="#efcdae"/></g>`;
-  S.teil({ oben: true, id: "trdelnik", de: "der Trdelník", syl: "TR-del-ník", it: "il trdelník", itSyl: "TR-del-nik", en: "chimney cake", x: r(hx), y: r(hy + 2.2 * ts), kunst: k + flaeche(-5, -6.5 * ts - 2, 10, 6.5 * ts + 3, 0.6),
+    `<path d="M1.25 -3.95 Q.75 -3.75 .7 -3.35 Q.75 -2.95 1.25 -2.85Z" fill="#e6c09e"/><ellipse cx=".85" cy="-3.95" rx=".35" ry=".2" fill="#efcdae"/></g>`;
+  S.teil({ oben: true, id: "trdelnik", de: "der Trdelník", syl: "TR-del-ník", it: "il trdelník", itSyl: "TR-del-nik", en: "chimney cake", x: r(hx - 0.7 * ts), y: r(hy + 2.9 * ts), kunst: k + flaeche(-5, -6.5 * ts - 2, 10, 6.5 * ts + 3, 0.6),
     tipp: "Der Trdelník ist ein süßes Gebäck vom Spieß, mit Zimt und Zucker. Viele Touristen essen ihn in Prag." });
 }
 

@@ -378,7 +378,7 @@ const ORT = {
   wien: { ll: [16.37, 48.21], bild: [1.4, -0.4], lab: [4, -0.6, "s"], name: "Wien" },
   venedig: { ll: [12.34, 45.43], bild: [3, 2.2], lab: [4.9, 1.6, "s"], name: "Venedig" },
   italien: { ll: [11.2, 43.4], bild: [-2.9, -0.4], lab: [-2.9, 2.1, "m"], name: "Italien" },
-  rom: { ll: [12.5, 41.9], bild: [3.4, 4.3], lab: [3.4, 6.4, "m"], name: "Rom" },
+  rom: { ll: [12.5, 41.9], bild: [2.6, 4.3], lab: [3.4, 6.4, "m"], name: "Rom" },
   spanien: { ll: [2.17, 41.4], lab: [-6.2, 2.6, "m"], name: "Spanien" },
   griechenland: { ll: [23.73, 37.97], lab: [1.4, 2.9, "m"], name: "Griechenland" },
   tuerkei: { ll: [28.98, 41.01], lab: [5.5, 2.9, "m"], name: "Türkei" },
@@ -400,8 +400,8 @@ const ORT = {
 /* Marken nach außen ins Meer (Irische See, Biskaya, Atlantik, westliches Mittelmeer, Tyrrhenisches Meer, Adria,
    Schwarzes Meer), Deutschland in der Nordsee, Wien und Moskau nach Norden; keine zwei Marken berühren sich */
 const MARKE_EU = {
-  grossbritannien: [185.6, 40.6], frankreich: [185.5, 47.4], spanien: [178.8, 55.4], italien: [195.4, 54.3], rom: [201, 57.8],
-  venedig: [209, 51.6], griechenland: [213.6, 52.2], tuerkei: [224.9, 51], moskau: [229.6, 31.6], deutschland: [195.6, 37.4], wien: [210.6, 38.6],
+  grossbritannien: [185.6, 40.6], frankreich: [185.5, 47.4], spanien: [178.8, 55.4], italien: [198, 56.8], rom: [201.6, 60],
+  venedig: [210.6, 52.6], griechenland: [210.2, 57], tuerkei: [224.9, 51], moskau: [229.6, 34.6], deutschland: [195.6, 37.4], wien: [210.6, 38.6],
 };
 function ortBild(id, mass, schrift) {
   const c = ORT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];
@@ -511,7 +511,7 @@ kontinent("australien", ton([[128, -25, 9, 5, 0, WUESTE, 0.6]]) + kontText(134, 
   extra += `<circle cx="${r(gx)}" cy="${r(gy)}" r="4.6" fill="none" stroke="#d9483a" stroke-width=".3" stroke-dasharray=".8 .5" opacity=".8"/>`;
   const EUORTE = ["grossbritannien", "frankreich", "spanien", "italien", "rom", "venedig", "wien", "deutschland", "griechenland", "tuerkei", "moskau"];
   for (const id of EUORTE) { if (id === "deutschland") continue; const [x, y] = P(...ORT[id].ll); extra += `<circle cx="${r(x)}" cy="${r(y)}" r=".7" fill="#c0392b" stroke="#fff8ea" stroke-width=".25"/>`; }
-  extra += kontText(23, 58.3, "EUROPA", 3.4, "#8a6a28", 1);
+  extra += kontText(23, 57.5, "EUROPA", 3.4, "#8a6a28", 1);
   const o = lupeUm(EUORTE, 0.45, 2, true, MARKE_EU, { x: 172, y: 30.5, w: 60, h: 31.6 });
   kontinent("europa", extra, { id: "europa", de: "Europa", syl: "eu-RO-pa", it: "l'Europa", itSyl: "eu-RO-pa", en: "Europe" },
     "Europa ist ein kleiner Kontinent mit vielen Ländern. Deutschland liegt in der Mitte.",
@@ -538,7 +538,7 @@ for (const id of ["san_francisco", "new_york", "mexiko", "rio", "aegypten", "kap
   g += `<rect x="${x + 0.6}" y="${y + 0.8}" width="${w}" height="${h}" rx="2" fill="#3b2a10" opacity=".22"/>`;
   g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${S.lg("kart", [[0, "#fbf3dc"], [1, "#efe1bb"]])}" stroke="#8a6d43" stroke-width=".5"/><rect x="${x + 1.2}" y="${y + 1.2}" width="${w - 2.4}" height="${h - 2.4}" rx="1.4" fill="none" stroke="#b8975e" stroke-width=".3"/>`;
   g += text(x + w / 2, y + 9.6, "Die Welt", 6, "#3a2716", `font-weight="bold"`) + text(x + w / 2, y + 16.2, "Kontinente und Ozeane", 3, "#5a4026", `font-style="italic"`);
-  { const [mx, my] = P(4, 37.8); g += halo(mx, my, "Mittelmeer", 2.2, "#3f7896", "#d6ecf2", `font-style="italic" letter-spacing=".3"`, 0.5); }
+  { const [mx, my] = P(-1, 37.6); g += halo(mx, my, "Mittelmeer", 2, "#3f7896", "#d6ecf2", `font-style="italic" letter-spacing=".3"`, 0.5); }
   S.davor(g);
 }
 

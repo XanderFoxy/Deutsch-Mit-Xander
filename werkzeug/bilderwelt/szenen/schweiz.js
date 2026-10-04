@@ -433,9 +433,13 @@ let HANG_L = "", HANG_R = "", WALD_MITTE = "";
   }
   WALD_MITTE += `<path d="${rh}" fill="#8fa66e" opacity=".26"/><path d="${rd}" fill="#1c3022" opacity=".3"/>`;
   /* Lichtungen am Hangfuß mit kleinen Stadeln: Maßstab für die Weite */
-  const lichtung = (cx, cy, w) => `M${r(cx - w)} ${r(cy + 0.6)} Q${r(cx - w * 0.4)} ${r(cy - 1.4)} ${r(cx + w * 0.3)} ${r(cy - 1.1)} Q${r(cx + w * 0.9)} ${r(cy - 0.6)} ${r(cx + w)} ${r(cy + 0.8)} Q${r(cx)} ${r(cy + 1.8)} ${r(cx - w)} ${r(cy + 0.6)} Z`;
-  WALD_MITTE += `<path d="${lichtung(204, 140, 5) + lichtung(226, 136, 4) + lichtung(214, 148, 4.5)}" fill="#8ea35e" opacity=".9"/>`;
-  WALD_MITTE += `<path d="M203 139.4 l1.4 0 l0 .9 l-1.4 0 Z M226.6 135.4 l1.2 0 l0 .8 l-1.2 0 Z M212.6 147.6 l1.3 0 l0 .9 l-1.3 0 Z" fill="#5a3e2a"/><path d="M202.8 139.4 l.9 -.7 l.9 .7 Z M226.4 135.4 l.8 -.6 l.8 .6 Z M212.4 147.6 l.85 -.65 l.85 .65 Z" fill="#76706a"/>`;
+  /* Lichtungen: breiter als hoch (≈ 4 : 1), Unterkante folgt der Hangneigung, Oberkante leicht gewellt, Rand weich;
+     die Stadel sitzen IN der Fläche */
+  const zl = zufall(77);
+  const lichtung = (cx, cy, w, neig) => { const h = w / 2, p = [[cx - w, cy - neig], [cx - w * 0.5, cy - neig * 0.5 + h * 0.18], [cx, cy + h * 0.22], [cx + w * 0.5, cy + neig * 0.5 + h * 0.15], [cx + w, cy + neig], [cx + w * 0.6, cy + neig * 0.6 - h * (0.7 + zl() * 0.2)], [cx + w * 0.15, cy - h * (0.95 + zl() * 0.15)], [cx - w * 0.35, cy - neig * 0.35 - h * (0.8 + zl() * 0.2)], [cx - w * 0.8, cy - neig * 0.8 - h * 0.45]]; return rund(p); };
+  WALD_MITTE += `<path d="${lichtung(204, 140.4, 5.6, -1.1) + lichtung(226.6, 136.2, 4.6, 0.9) + lichtung(214.6, 148.4, 5, 0.3)}" fill="#8ea35e" filter="url(#${S.id("weich")})"/>`;
+  const stadel = (x, y) => `M${r(x - 0.7)} ${r(y)} l1.4 0 l0 -.9 l-1.4 0 Z`, dach = (x, y) => `M${r(x - 0.9)} ${r(y - 0.9)} l.9 -.7 l.9 .7 Z`;
+  WALD_MITTE += `<path d="${stadel(204.4, 140.6) + stadel(227, 136.4) + stadel(214, 148.8)}" fill="#5a3e2a"/><path d="${dach(204.4, 140.6) + dach(227, 136.4) + dach(214, 148.8)}" fill="#76706a"/>`;
   WALD_MITTE += `<path d="${pp(mitte)}" fill="${S.lg("waldmittedunst", [[0, "#c8d8e6", 0.32], [1, "#c8d8e6", 0.06]])}"/>`;
   /* linker Hang (Schatten): Kuppen und Kerben, oben über der Waldgrenze Fels und Alpweide */
   const L = [[-2, 40], [10, 44.6], [18, 47], [24, 52], [32, 55.4], [40, 58], [46, 62.6], [54, 66], [62, 67.4], [70, 72.4], [80, 76], [90, 79.2], [98, 83.8], [108, 86.6], [116, 89], [124, 93.6], [134, 97.2], [144, 100], [152, 103.6], [160, 107], [168, 110.6], [176, 115.6], [184, 122.4], [190, 131], [196, 141], [203, 149], [211, 156], [219, 165], [226, 175], [-2, 175]];
