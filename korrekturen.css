@@ -35028,6 +35028,23 @@ svg.lc-mini-echt .lc-sobri-blitz, svg.lc-mini-echt .lc-eimer-strahl { display: n
 #inboxArea .inbox-liste > .order-toggle { display: flex; flex-wrap: nowrap; gap: 6px; margin-bottom: 10px !important; }
 #inboxArea .inbox-liste > .order-toggle > .order-pill { flex: 1 1 auto; min-width: 0; padding: 7px 8px; font-size: .76rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #inboxArea .inbox-row-compact { padding: 8px 12px !important; gap: 2px !important; min-height: 0 !important; }
+/* FASSUNG 879 — Walkie 296: „Nur ein Suchfeld; darunter die 5 zuletzt Angeschriebenen als Knöpfe, ‚Alle' als eigener
+   Knopf". Gewählte als kleine Chips mit ✕, Treffer erst beim Tippen als kompakte Liste (höchstens sechs). */
+.inbox-an-chips { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 6px; }
+.inbox-an-chips:empty { display: none; }
+.inbox-an-chip { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; padding: 3px 3px 3px 10px; border-radius: 999px;
+  background: var(--amber-400, #f2b84b); color: #241505; font: 600 .78rem/1.2 system-ui, sans-serif; overflow-wrap: anywhere; }
+.inbox-an-chip > button { flex: none; width: 22px; height: 22px; min-width: 0; min-height: 0; padding: 0; margin: 0; border: 0; border-radius: 50%;
+  background: rgba(36, 21, 5, .14); color: inherit; font: 700 .7rem/1 system-ui, sans-serif; cursor: pointer; }
+.inbox-an-treffer { display: flex; flex-direction: column; gap: 2px; margin: -2px 0 8px; padding: 3px; border: 1px solid rgba(0, 0, 0, .1);
+  border-radius: var(--radius-sm, 10px); background: var(--card-bg, #fff); }
+.inbox-an-treffer[hidden] { display: none; }
+.inbox-an-treffer-zeile { display: block; width: 100%; min-height: 0; margin: 0; padding: 7px 10px; border: 0; border-radius: 8px; background: none;
+  color: inherit; text-align: left; font: 600 .85rem/1.25 system-ui, sans-serif; cursor: pointer; overflow-wrap: anywhere; }
+.inbox-an-treffer-zeile:hover, .inbox-an-treffer-zeile:focus-visible { background: rgba(0, 0, 0, .05); }
+.inbox-an-treffer-zeile[aria-pressed="true"] { color: var(--amber-600, #a8690e); }
+.inbox-an-knoepfe { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 4px; }
+.inbox-an-knoepfe .inbox-wz { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* FASSUNG 749 — XANDER (Funk 180): „der makrobaten den wir gemacht haben zu wenig Animationen könnte man noch schicker
    machen so Siri Style mäßig dass die Animationen mehr Kontrast mehr mehr Sättigung mehr mehr Action hat dass die richtig

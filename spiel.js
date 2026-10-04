@@ -4842,7 +4842,7 @@
     }).join("");
     var mm = S.menueMeldung && S.menueMeldung.bis > Date.now() ? S.menueMeldung.text : "";
     var kopf = mm ? '<div class="sp-sm-kopf sp-sm-kopf-meldung">' + esc(mm) + "</div>"
-      : '<div class="sp-sm-kopf">Lv ' + (ich.level || 1) + (ich.klasse && KLASSEN[ich.klasse] ? " " + KLASSEN[ich.klasse].name : "") + " · " + ich.lp + "/" + ich.lp_max + " LP · " + (ich.punkte || 0) + " P"
+      : '<div class="sp-sm-kopf">Lv ' + (ich.level || 1) + (ich.klasse && KLASSEN[ich.klasse] ? " " + KLASSEN[ich.klasse].name : "") + '<span class="sp-lp-text"> · ' + ich.lp + "/" + ich.lp_max + " LP</span> · " + (ich.punkte || 0) + " P"
       + (ich.mana != null ? " · " + ich.mana + " Mana" : "") + "</div>";
     var inhaltM = "";
     if (r === "waffen") {
@@ -4949,7 +4949,10 @@
           + '<button type="button" data-s="zeigen" data-k="schutz" class="' + (z.schutz ? "sp-an" : "") + '" title="unfreundliche Chat-Effekte prallen an einer Mauer ab">Chat-Mauer</button>'
           + '<button type="button" data-s="haltwahl" class="' + (S.halten ? "sp-an" : "") + '" title="ohne Mitspielen: eine eigene Waffe in die Hand nehmen">' + (S.halten ? "Waffe: " + esc(haltName()) : "Waffe halten") + "</button>"
           /* FASSUNG 738 — Funk 153: die anderen stumm schalten, um sich aufs Spiel zu konzentrieren. */
-          + '<button type="button" data-s="nurspieler" class="' + (S.nurSpieler ? "sp-an" : "") + '" aria-pressed="' + S.nurSpieler + '" title="Beim Mitspielen nur die Mitspieler hören – die anderen sind nur für dich stumm">Nur Mitspieler hören</button></div>'
+          + '<button type="button" data-s="nurspieler" class="' + (S.nurSpieler ? "sp-an" : "") + '" aria-pressed="' + S.nurSpieler + '" title="Beim Mitspielen nur die Mitspieler hören – die anderen sind nur für dich stumm">Nur Mitspieler hören</button>'
+          /* FASSUNG 879 — Walkie 285 / Funk 160: „dass mein Lebens auch komplett aus haben kann". Nur für dich:
+             die Lebensanzeige (der Lebensbogen am Bild, die LP oben im Menü) verschwindet; gerechnet wird wie immer. */
+          + '<button type="button" data-s="lpaus" class="' + (S.lpAus ? "sp-an" : "") + '" aria-pressed="' + Boolean(S.lpAus) + '" title="Nur für dich: die Lebensanzeige ausblenden – das Spiel rechnet weiter wie immer">Lebensanzeige aus</button></div>'
           /* FASSUNG 683 — der letzte Knopf der Leiste ist frei belegbar. */
           + '<div class="sp-sm-laut sp-sm-zeigen sp-sm-makro"><span>Letzter Knopf</span>' + Object.keys(MAKROS).map(function (m) {
               return '<button type="button" data-s="makrowahl" data-m="' + m + '" class="' + (S.makro === m ? "sp-an" : "") + '">' + MAKROS[m] + "</button>"; }).join("") + "</div>"; })()
@@ -5092,6 +5095,13 @@
       try { localStorage.setItem("dma_spiel_nur_spieler", S.nurSpieler ? "1" : "0"); } catch (e) {}
       hoerFilterPflegen(true); zeichnen(); schnellZeichnen(true);
       hinweis(S.nurSpieler ? "🎮 Du hörst beim Mitspielen nur noch die Mitspieler – die anderen sind für dich stumm (sie hören dich weiter)." : "🔊 Du hörst wieder alle im Raum.");
+      return;
+    } else if (s === "lpaus") {
+      /* FASSUNG 879 — „dass mein Lebens auch komplett aus haben kann": wirkt sofort, ohne Neuladen. */
+      S.lpAus = !S.lpAus;
+      try { localStorage.setItem("dma_spiel_lp_aus", S.lpAus ? "1" : "0"); } catch (e) {}
+      lpAusAnwenden(); schnellZeichnen(true);
+      hinweis(S.lpAus ? "❤️ Die Lebensanzeige ist für dich aus – das Spiel rechnet weiter wie immer." : "❤️ Die Lebensanzeige ist wieder da.");
       return;
     } else if (s === "haltwahl") {
       haltenMenue();
@@ -5954,6 +5964,11 @@
     return Boolean(s && s.mitspielen);
   }
   try { S.nurSpieler = localStorage.getItem("dma_spiel_nur_spieler") === "1"; } catch (e) { S.nurSpieler = false; }
+  /* FASSUNG 879 — Walkie 285: „dass mein Lebens auch komplett aus haben kann". Merkt sich das Gerät; die Klasse
+     sitzt an <html>, damit sie schon vor dem ersten Zeichnen gilt. */
+  try { S.lpAus = localStorage.getItem("dma_spiel_lp_aus") === "1"; } catch (e) { S.lpAus = false; }
+  function lpAusAnwenden() { document.documentElement.classList.toggle("sp-lp-aus", Boolean(S.lpAus)); }
+  lpAusAnwenden();
   /* Nur Mitspieler hören: gilt, solange ich selbst mitspiele. Der Filter fragt bei jedem Ton neu. */
   function hoerFilterPflegen(zwingend) {
     var an = Boolean(S.nurSpieler && spielSichtbar());
@@ -6317,10 +6332,13 @@
        Mana: rechts, von 8° nach 82°. Unten in der Mitte eine Lücke. */
     var L0 = 172, L1 = 98, M0 = 8, M1 = 82;
     var lpBis = L0 - (L0 - L1) * anteil, schBis = lpBis - (L0 - L1) * schild;
-    var s = '<svg viewBox="0 0 100 100" aria-hidden="true">'
+    /* FASSUNG 879 — Walkie 285: „dass mein Lebens auch komplett aus haben kann". Der Lebensbogen (mit Schild)
+       steht in einer eigenen Gruppe, damit der Schalter „Lebensanzeige aus" nur ihn ausblendet. */
+    var s = '<svg viewBox="0 0 100 100" aria-hidden="true"><g class="sp-lp-bogen">'
       + '<path class="sp-ring-spur" d="' + bogen(L0, L1) + '"/>';
     if (anteil > 0.005) s += '<path class="sp-lp-voll" d="' + bogen(L0, lpBis) + '" stroke="' + farbe + '"/><path class="sp-flut" d="' + bogen(L0, lpBis) + '"/>';
     if (schild > 0.005) s += '<path class="sp-lp-schild" d="' + bogen(lpBis, schBis) + '"/>';
+    s += "</g>";
     if (mana >= 0) {
       s += '<path class="sp-ring-spur" d="' + bogen(M0, M1) + '"/>';
       if (mana > 0.005) s += '<path class="sp-mana-voll" d="' + bogen(M0, M0 + (M1 - M0) * mana) + '"/><path class="sp-flut" d="' + bogen(M0, M0 + (M1 - M0) * mana) + '"/>';

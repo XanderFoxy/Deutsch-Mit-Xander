@@ -95673,18 +95673,13 @@ An einem Morgen lief ein kleiner Fuchs los…
       <details class="question-card inbox-schreiben" id="inboxSchreiben"${inboxSchreibenOffen ? " open" : ""}>
         <summary class="inbox-schreiben-kopf">✏️ Neue Nachricht schreiben</summary>
         <div class="form-field">
-          <label class="empty-note" style="display:block; margin-bottom:8px;">An wen?</label>
-          <div class="order-toggle" id="inboxRecipientMode" style="margin-bottom:10px;">
-            <button type="button" class="order-pill" data-recipient-mode="select" aria-selected="true">👤 Bestimmte Personen</button>
-            ${isAdmin ? `<button type="button" class="order-pill" data-recipient-mode="broadcast" aria-selected="false">📢 Rundmail an alle</button>` : ""}
-          </div>
+          <label class="empty-note" style="display:block; margin-bottom:8px;" for="inboxRecipientSearch">An wen?</label>
+          <div class="inbox-an-chips" id="inboxAnChips"></div>
           <div id="inboxRecipientListWrap">
-            <input type="text" class="vocab-search" id="inboxRecipientSearch" placeholder="Freund suchen…" style="margin-bottom:8px;" />
-            <div id="inboxRecipientList" style="max-height:220px; overflow-y:auto; border:1px solid rgba(0,0,0,0.08); border-radius:var(--radius-sm); padding:4px;">
-              ${Backend.canModerate() ? `<label class="checkbox-list-row"><input type="checkbox" data-recipient-id="${Backend.currentUser()?.id}" /> <span>🔧 Ich selbst (für Punkte-Korrekturen am eigenen Konto)</span></label>` : ""}
-              ${friends.map((f) => `<label class="checkbox-list-row"><input type="checkbox" data-recipient-id="${f.id}" /> <span>${f.name}</span></label>`).join("") || '<p class="empty-note" style="padding:8px;">Noch keine Freunde — oben nach Namen suchen.</p>'}
-            </div>
+            <input type="search" class="vocab-search" id="inboxRecipientSearch" placeholder="Name suchen…" autocomplete="off" enterkeyhint="done" style="margin-bottom:6px;" />
+            <div class="inbox-an-treffer" id="inboxAnTreffer" hidden></div>
           </div>
+          <div class="inbox-an-knoepfe" id="inboxAnZuletzt"></div>
           <p class="empty-note" id="inboxBroadcastNote" style="display:none; margin-top:6px;">📢 Diese Nachricht geht an <strong>alle</strong> Nutzer der Seite — keine einzelne Auswahl nötig.</p>
         </div>
         <div class="form-field">
@@ -95827,10 +95822,56 @@ An einem Morgen lief ein kleiner Fuchs los…
       else if (draft.to) selectedRecipients = new Set([draft.to]); // alte Entwürfe (nur eine Person) weiterhin lesbar
       if (draft.body) { document.getElementById("inboxMessageInput").value = draft.body; inboxSchreibenOffen = true; const d = document.getElementById("inboxSchreiben"); if (d) d.open = true; }
     }
+    /* FASSUNG 879 — Walkie 296: „Nur ein Suchfeld; darunter die 5 zuletzt Angeschriebenen als Knöpfe, ‚Alle' als
+       eigener Knopf". Vorher eine Häkchen-Liste aller Freunde (bis 220 px hoch) und daneben „Rundmail an alle". Jetzt:
+       gewählte Personen als kleine Chips (✕ nimmt sie wieder heraus), Treffer erst beim Tippen (höchstens sechs),
+       darunter die fünf zuletzt Angeschriebenen und „Alle" (wie vorher die Rundmail, nur für das Team). Mehrere
+       Empfänger gehen weiterhin. Die Letzten kommen aus dem Postausgang und aus einer kleinen Liste auf dem Gerät,
+       die beim Senden nachgeführt wird. */
+    const anNamen = new Map();
+    if (Backend.canModerate()) anNamen.set(Backend.currentUser()?.id, "🔧 Ich selbst (für Punkte-Korrekturen am eigenen Konto)");
+    friends.forEach((f) => { if (f && f.id) anNamen.set(f.id, f.name || "Freund"); });
+    const anZuletzt = (() => {
+      const liste = [];
+      const dazu = (id, name) => { if (id && !liste.some((x) => x.id === id)) liste.push({ id, name: anNamen.get(id) || name || "Freund" }); };
+      let lokal = [];
+      try { lokal = JSON.parse(localStorage.getItem("dma_postfach_zuletzt") || "[]"); } catch (e) { lokal = []; }
+      if (Array.isArray(lokal)) lokal.forEach((x) => x && dazu(x.id, x.name));
+      // Rundmails (📢 …) stehen im Postausgang einmal je Nutzer — die zählen nicht als „angeschrieben".
+      messages.outbox.slice().sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
+        .forEach((m) => { if (!/^📢/.test(m.body || "")) dazu(m.to_user, m.to_user_name); });
+      return liste.slice(0, 5);
+    })();
+    anZuletzt.forEach((x) => { if (!anNamen.has(x.id)) anNamen.set(x.id, x.name); });
+    const anZuletztMerken = (ids) => {
+      try {
+        let alt = JSON.parse(localStorage.getItem("dma_postfach_zuletzt") || "[]");
+        if (!Array.isArray(alt)) alt = [];
+        const neu = ids.map((id) => ({ id, name: anNamen.get(id) || "Freund" }));
+        localStorage.setItem("dma_postfach_zuletzt", JSON.stringify(neu.concat(alt.filter((x) => x && !ids.includes(x.id))).slice(0, 10)));
+      } catch (e) {}
+    };
+    const anTrefferZeichnen = () => {
+      const box = document.getElementById("inboxAnTreffer"), feld = document.getElementById("inboxRecipientSearch");
+      if (!box || !feld) return;
+      const q = feld.value.trim().toLowerCase();
+      if (!q) { box.hidden = true; box.innerHTML = ""; return; }
+      const treffer = [...anNamen].filter(([, name]) => name.toLowerCase().includes(q)).slice(0, 6);
+      box.hidden = false;
+      box.innerHTML = treffer.length
+        ? treffer.map(([id, name]) => `<button type="button" class="inbox-an-treffer-zeile" data-an-id="${escapeHtml(id)}" aria-pressed="${selectedRecipients.has(id)}">${selectedRecipients.has(id) ? "✓" : "+"} ${escapeHtml(name)}</button>`).join("")
+        : `<p class="empty-note" style="margin:4px 6px;">${anNamen.size ? "Niemand mit diesem Namen." : "Noch keine Freunde — oben nach Namen suchen."}</p>`;
+    };
     const refreshRecipientChecks = () => {
-      area.querySelectorAll("[data-recipient-id]").forEach((cb) => {
-        cb.checked = selectedRecipients.has(cb.dataset.recipientId);
-      });
+      const chips = document.getElementById("inboxAnChips");
+      if (chips) chips.innerHTML = [...selectedRecipients].map((id) => `<span class="inbox-an-chip">${escapeHtml(anNamen.get(id) || "Freund")}<button type="button" data-an-weg="${escapeHtml(id)}" aria-label="${escapeHtml(anNamen.get(id) || "Freund")} entfernen">✕</button></span>`).join("");
+      const zu = document.getElementById("inboxAnZuletzt");
+      const alle = recipientMode === "broadcast";
+      if (chips) chips.hidden = alle;
+      if (zu) zu.innerHTML = (alle ? [] : anZuletzt).map((x) => `<button type="button" class="inbox-wz${selectedRecipients.has(x.id) ? " inbox-wz-an" : ""}" data-an-id="${escapeHtml(x.id)}" aria-pressed="${selectedRecipients.has(x.id)}">${escapeHtml(x.name)}</button>`).join("")
+        + (isAdmin ? `<button type="button" class="inbox-wz inbox-an-alle${alle ? " inbox-wz-an" : ""}" data-an-alle aria-pressed="${alle}" title="Rundmail an alle Nutzer der Seite">📢 Alle</button>` : "")
+        + (!alle && !anZuletzt.length && !friends.length ? '<p class="empty-note" style="margin:0;">Noch keine Freunde — oben nach Namen suchen.</p>' : "");
+      anTrefferZeichnen();
     };
     refreshRecipientChecks();
     const draftSave = () => {
@@ -95840,33 +95881,39 @@ An einem Morgen lief ein kleiner Fuchs los…
       else Backend.updateExtraProfileField("msgDraft", null);
     };
     // Klares Entweder-Oder: entweder bestimmte Personen auswählen ODER eine Rundmail an alle —
-    // beim Wechsel wird die Personen-Liste ein-/ausgeblendet, damit nie unklar ist, welcher Modus
-    // gerade aktiv ist.
-    document.querySelectorAll("#inboxRecipientMode [data-recipient-mode]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        recipientMode = btn.dataset.recipientMode;
-        document.querySelectorAll("#inboxRecipientMode [data-recipient-mode]").forEach((b) => {
-          b.setAttribute("aria-selected", String(b === btn));
-        });
-        document.getElementById("inboxRecipientListWrap").style.display = recipientMode === "select" ? "" : "none";
-        document.getElementById("inboxBroadcastNote").style.display = recipientMode === "broadcast" ? "" : "none";
-      });
-    });
-    area.querySelectorAll("[data-recipient-id]").forEach((cb) => {
-      cb.addEventListener("change", () => {
-        const id = cb.dataset.recipientId;
-        if (cb.checked) selectedRecipients.add(id); else selectedRecipients.delete(id);
-        draftSave();
-      });
+    // beim Wechsel wird die Personen-Auswahl ein-/ausgeblendet, damit nie unklar ist, welcher Modus
+    // gerade aktiv ist. FASSUNG 879 — der Knopf „📢 Alle" schaltet die Rundmail an und wieder aus.
+    const anModusSetzen = (modus) => {
+      recipientMode = modus;
+      document.getElementById("inboxRecipientListWrap").style.display = recipientMode === "select" ? "" : "none";
+      document.getElementById("inboxBroadcastNote").style.display = recipientMode === "broadcast" ? "" : "none";
+      refreshRecipientChecks();
+    };
+    const anUmschalten = (id) => {
+      if (!id) return;
+      if (selectedRecipients.has(id)) selectedRecipients.delete(id); else selectedRecipients.add(id);
+      refreshRecipientChecks();
+      draftSave();
+    };
+    /* Ein Zuhörer für die ganze Auswahl — Chips, Treffer und Knöpfe werden neu gezeichnet. */
+    document.getElementById("inboxSchreiben")?.addEventListener("click", (e) => {
+      const weg = e.target.closest("[data-an-weg]");
+      if (weg) { selectedRecipients.delete(weg.dataset.anWeg); refreshRecipientChecks(); draftSave(); return; }
+      if (e.target.closest("[data-an-alle]")) { anModusSetzen(recipientMode === "broadcast" ? "select" : "broadcast"); return; }
+      const k = e.target.closest("[data-an-id]");
+      if (k) anUmschalten(k.dataset.anId);
     });
     const recipientSearch = document.getElementById("inboxRecipientSearch");
-    if (recipientSearch) recipientSearch.addEventListener("input", () => {
-      const q = recipientSearch.value.trim().toLowerCase();
-      area.querySelectorAll(".checkbox-list-row").forEach((row) => {
-        const name = row.querySelector("span").textContent.toLowerCase();
-        row.style.display = name.includes(q) ? "" : "none";
+    if (recipientSearch) {
+      recipientSearch.addEventListener("input", anTrefferZeichnen);
+      // Enter nimmt den ersten Treffer, der noch nicht gewählt ist.
+      recipientSearch.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter") return;
+        e.preventDefault();
+        const erster = document.querySelector('#inboxAnTreffer [data-an-id][aria-pressed="false"]');
+        if (erster) anUmschalten(erster.dataset.anId);
       });
-    });
+    }
     document.getElementById("inboxMessageInput").addEventListener("input", draftSave);
     let pendingImageUrl = "";
     const imgInput = document.getElementById("inboxImageInput");
@@ -95944,6 +95991,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           // An alle ausgewählten Personen gleichzeitig verschicken -- dieselbe Nachricht, jeweils
           // als eigene, echte Nachricht an jede Person (nicht nur eine Kopie sichtbar für alle).
           await Promise.all([...selectedRecipients].map((id) => Backend.sendPrivateMessage(id, body, pendingImageUrl)));
+          anZuletztMerken([...selectedRecipients]);
           if (giftPoints !== 0) {
             // Sicherheitsabfrage vor jeder Punkteänderung — ein Regler kann auf einem Touch-
             // Bildschirm leicht unbeabsichtigt verschoben werden (z. B. beim Scrollen), und ohne
@@ -95968,8 +96016,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     area.querySelectorAll("[data-reply-to]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const targetId = btn.dataset.replyTo;
-        const checkbox = area.querySelector(`[data-recipient-id="${targetId}"]`);
-        if (checkbox) { selectedRecipients = new Set([targetId]); refreshRecipientChecks(); }
+        if (anNamen.has(targetId)) { selectedRecipients = new Set([targetId]); if (recipientMode !== "select") anModusSetzen("select"); else refreshRecipientChecks(); }
         { const d = document.getElementById("inboxSchreiben"); if (d) d.open = true; inboxSchreibenOffen = true; }
         document.getElementById("inboxMessageInput").focus();
         document.getElementById("inboxMessageInput").scrollIntoView({ behavior: "smooth", block: "center" });

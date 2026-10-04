@@ -13,6 +13,9 @@
 .sp-lp .sp-lp-schild { stroke: #5ab4ff; }
 .sp-lp .sp-mana-voll { stroke: #5a7bff; }
 .sp-lp .sp-lp-voll, .sp-lp .sp-mana-voll { filter: drop-shadow(0 0 1px rgba(255, 255, 255, .8)); }
+/* FASSUNG 879 — Walkie 285 / Funk 160: „dass mein Lebens auch komplett aus haben kann". Schalter Menü → Mehr →
+   „Lebensanzeige aus": nur für dich verschwindet der Lebensbogen (mit Schild) und die LP-Zahl oben im Menü. */
+.sp-lp-aus .sp-lp .sp-lp-bogen, .sp-lp-aus .sp-lp-text { display: none; }
 
 .sp-aura, .sp-mauer, .sp-tier, .sp-geschuetz, .sp-risse, .sp-waffenmarke {
   position: absolute; pointer-events: none; z-index: 7;
