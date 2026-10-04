@@ -894,7 +894,10 @@ const figSchatten = (X, Y, h, b = .22) => pfad(poly([[X - b, Y, 0], [X + b, Y, 0
 const VORLAGE = {}, VZ = {};
 /* schlank: nach dem Runden zusammengefallene Teilpfade (Brauen, Strähnen, Wimpern in 25 E Höhe) und data-Attribute weglassen */
 const schlank = (svg) => svg.replace(/ data-[\w-]+="[^"]*"/g, "").replace(/<path([^>]*?) d="([^"]*)"([^>]*?)\/>/g, (q, a, d, b) => {
-  const sub = d.split(/(?=M)/).filter((sp) => { const n = sp.match(/-?\d+/g) || []; for (let i = 2; i + 1 < n.length; i += 2) if (n[i] !== n[0] || n[i + 1] !== n[1]) return true; return false; });
+  d = d.replace(/(L-?\d+ -?\d+)(?:\1)+/g, "$1");
+  let sub = d.split(/(?=M)/).filter((sp) => { const n = sp.match(/-?\d+/g) || []; for (let i = 2; i + 1 < n.length; i += 2) if (n[i] !== n[0] || n[i + 1] !== n[1]) return true; return false; });
+  /* Haar- und Faserstriche (viele winzige Teilpfade) sind bei 25 E Figurenhöhe unsichtbar */
+  if (sub.length >= 8) { const aus = sub.map((sp) => { const n = (sp.match(/-?\d+/g) || []).map(Number), xs = n.filter((_, i) => !(i % 2)), ys = n.filter((_, i) => i % 2); return Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)); }); if (aus.reduce((x, y) => x + y, 0) / aus.length < 9) sub = []; }
   return sub.length ? `<path${a} d="${sub.join("")}"${b}/>` : "";
 });
 /* Vorlagen auf ganze Zentimeter gerundet (keine Treppen in der Lupe). Rückansicht: der Hinterkopf ist ganz Haar,
