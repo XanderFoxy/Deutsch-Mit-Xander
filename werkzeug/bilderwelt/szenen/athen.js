@@ -196,10 +196,14 @@ const akroUnter = [];
   let kie = `<path d="M-.4 0 Q-.2 -4 .8 -7.4 L1.4 -7.2 Q.6 -4 .5 0 Z" fill="#5a4232"/><path d="M.6 -6 Q-1.6 -7.6 -3.2 -8.2 M1 -6.8 Q3 -8.4 4.2 -8.6" stroke="#5a4232" stroke-width=".4" fill="none"/>`;
   for (const [x, y, w, h] of [[-3.2, -8.6, 3.4, 1.7], [0.8, -10.2, 4, 2], [3.8, -8.8, 3, 1.5], [-0.6, -8, 2.6, 1.2]]) kie += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${h}" fill="#3a4e2c"/><ellipse cx="${r(x - w * 0.25)}" cy="${r(y - h * 0.35)}" rx="${r(w * 0.6)}" ry="${r(h * 0.55)}" fill="#64783f"/><ellipse cx="${r(x - w * 0.45)}" cy="${r(y - h * 0.55)}" rx="${r(w * 0.28)}" ry="${r(h * 0.28)}" fill="#a9a85e"/>`;
   const zyp = `<path d="M-1.3 0 Q-1.8 -6 0 -12 Q1.8 -6 1.3 0 Z" fill="#2d3b25"/><path d="M-1.3 0 Q-1.8 -6 0 -12 Q-.5 -6 -.2 0 Z" fill="#6a7244"/>`;
-  S.def(`<g id="${S.id("t_oel")}">${oel}</g><g id="${S.id("t_kie")}">${kie}</g><g id="${S.id("t_zyp")}">${zyp}</g>`);
+  /* Kiefer 2: hoch, schief, zweiteilige Krone; Kiefer 3: klein, eine flache Krone */
+  let kie2 = `<path d="M-.3 0 Q.6 -6 2.6 -11 L3.1 -10.8 Q1.2 -6 .5 0 Z" fill="#5a4232"/><path d="M1.6 -8.4 Q-.6 -9.6 -2.4 -9.6" stroke="#5a4232" stroke-width=".35" fill="none"/>`;
+  for (const [x, y, w, h] of [[2.8, -12.4, 3.6, 1.6], [-2.2, -10, 2.8, 1.3]]) kie2 += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${h}" fill="#3a4e2c"/><ellipse cx="${r(x - w * 0.25)}" cy="${r(y - h * 0.35)}" rx="${r(w * 0.6)}" ry="${r(h * 0.5)}" fill="#64783f"/><ellipse cx="${r(x - w * 0.45)}" cy="${r(y - h * 0.55)}" rx="${r(w * 0.25)}" ry="${r(h * 0.25)}" fill="#a9a85e"/>`;
+  const kie3 = `<path d="M-.3 0 L-.1 -4 L.4 -4 L.5 0 Z" fill="#5a4232"/><ellipse cx="0" cy="-5" rx="4.4" ry="1.9" fill="#3a4e2c"/><ellipse cx="-1" cy="-5.6" rx="2.8" ry="1.1" fill="#64783f"/><ellipse cx="-1.8" cy="-6" rx="1.2" ry=".5" fill="#a9a85e"/>`;
+  S.def(`<g id="${S.id("t_oel")}">${oel}</g><g id="${S.id("t_kie")}">${kie}</g><g id="${S.id("t_zyp")}">${zyp}</g><g id="${S.id("t_kie2")}">${kie2}</g><g id="${S.id("t_kie3")}">${kie3}</g>`);
 }
 const baum = (x, y, gr, typ) => `<use href="#${S.id("t_" + typ)}" transform="translate(${r(x)} ${r(y)}) scale(${(gr / 10).toFixed(3)})"/>`;
-const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.17 ? baum(x, y, gr * 0.75, "zyp") : z < 0.6 ? baum(x, y, gr, "oel") : baum(x, y, gr * 1.1, "kie"); };
+const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.15 ? baum(x, y, gr * 0.75, "zyp") : z < 0.55 ? baum(x, y, gr * (0.8 + rnd() * 0.4), "oel") : z < 0.7 ? baum(x, y, gr * 1.1, "kie") : z < 0.85 ? baum(x, y, gr * 1.15, "kie2") : baum(x, y, gr, "kie3"); };
 {
   let k = "";
   /* Mauerkrone von West nach Ost; im Westen der Aufgang (Fels, Treppe, Beulé-Tor) */
@@ -218,33 +222,33 @@ const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.17 ? baum(x, y, gr
   /* Hang mit Bäumen bis unter die Kante des Hügels */
   const unten = UNTEN.map(pp);
   k += `<path d="${P([...unten, [400, unten[unten.length - 1][1]], [400, 216], [0, 216], [0, unten[0][1]]])}" fill="${S.lg("hang", [[0, "#7a7a4e"], [0.5, "#55603a"], [1, "#46522f"]])}"/>`;
-  /* Fels: grau-ockerfarbener Kalkstein; Westflächen warm-hell, Rücksprünge kühl-violett */
+  /* Fels: ockerfarbener Kalkstein; nach Westen gewandte Facetten warm, Rücksprünge kühl-violett */
   const fels = [...OBEN.map(pp), ...unten.slice().reverse()];
-  k += `<path d="${P(fels)}" fill="${S.lg("fels", [[0, "#e2c595"], [0.35, "#c9ae8e"], [0.7, "#ae9a8a"], [1, "#988a8c"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="${P(fels)}" fill="${S.lg("fels", [[0, "#e0b98a"], [0.35, "#caa686"], [0.7, "#b4998a"], [1, "#9e8a8c"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="${P(fels)}" fill="${S.lg("felslicht", [[0, "#ffcf8a", 0.16], [0.5, "#ffcf8a", 0], [1, "#3a2a3a", 0.22]])}"/>`;
-  /* senkrechte Klüfte mit Lichtkante links (Westseite der Felsrippe) */
-  for (let i = 0; i < 44; i++) {
-    const t = rnd() * (OBEN.length - 1.01), i0 = Math.floor(t), f = t - i0, A = OBEN[i0], Bq = OBEN[i0 + 1];
-    const e = A[0] + (Bq[0] - A[0]) * f, n = A[1] + (Bq[1] - A[1]) * f - 4, zt = (A[2] + (Bq[2] - A[2]) * f) - (i0 >= WEST.length ? mauerFuss(e) : 2), zb = Math.min(zt - 4, fussZ(e));
-    const zc = zt - (zt - zb) * (0.35 + rnd() * 0.5), a = pr(e, n, zt), c = pr(e + (rnd() - 0.5) * 1.5, n - 2, zc), m = [(a[0] + c[0]) / 2 + (rnd() - 0.5) * 0.8, (a[1] + c[1]) / 2];
-    if (a[0] > 396 || a[0] < 3) continue;
-    const w = (0.3 + rnd() * 0.5) * a[2];
-    k += `<path d="M${r(a[0])} ${r(a[1])} L${r(m[0])} ${r(m[1])} L${r(c[0])} ${r(c[1])} L${r(c[0] + w * 0.4)} ${r(c[1])} L${r(m[0] + w)} ${r(m[1])} L${r(a[0] + w * 0.8)} ${r(a[1])} Z" fill="#6c5e70" opacity=".45"/>`;
-    k += `<path d="M${r(a[0] - 0.25)} ${r(a[1])} L${r(m[0] - 0.25)} ${r(m[1])}" stroke="#f3dcae" stroke-width=".3" fill="none" opacity=".6"/>`;
+  const felsPunkt = (sp) => { const t = sp * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = KRONE[i0], Bq = KRONE[i0 + 1], e = A[0] + (Bq[0] - A[0]) * f, n = A[1] + (Bq[1] - A[1]) * f - 5, zt = A[2] + (Bq[2] - A[2]) * f - mauerFuss(e); return { e, n, zt, zb: Math.min(zt - 3, fussZ(e)) }; };
+  /* Facetten: Paare aus warmer Westfläche und violetter Schattenfläche, wie Felsrippen */
+  for (let i = 0; i < 36; i++) {
+    const { e, n, zt, zb } = felsPunkt(rnd()), z = zb + rnd() * (zt - zb - 1), [x, y, u] = pr(e, n, z);
+    if (x > 394 || x < 4) continue;
+    const w = (1.5 + rnd() * 3) * u, h = (1.5 + rnd() * 3) * u, kx = x + w * 0.45;
+    k += `<path d="M${r(x)} ${r(y)} L${r(kx - w * 0.1)} ${r(y - h)} L${r(kx)} ${r(y + h * 0.1)} Z" fill="#dcb486" opacity=".7"/><path d="M${r(kx - w * 0.1)} ${r(y - h)} L${r(x + w)} ${r(y - h * 0.2)} L${r(x + w * 0.9)} ${r(y + h * 0.15)} L${r(kx)} ${r(y + h * 0.1)} Z" fill="#8a7a8e" opacity=".5"/>`;
   }
-  /* Schichtung: flache, leicht geneigte Bänder; warme Westflächen */
-  for (let i = 0; i < 40; i++) {
-    const t = rnd() * (OBEN.length - 1.01), i0 = Math.floor(t), f = t - i0, A = OBEN[i0], Bq = OBEN[i0 + 1];
-    const e = A[0] + (Bq[0] - A[0]) * f, n = A[1] + (Bq[1] - A[1]) * f - 8, zt = (A[2] + (Bq[2] - A[2]) * f) - (i0 >= WEST.length ? 13 : 2), zb = Math.min(zt - 3, fussZ(e));
-    const z = zb + rnd() * (zt - zb), [x, y, u] = pr(e, n, z);
-    if (x > 396 || x < 3) continue;
-    const w = (2 + rnd() * 4) * u, h = (0.8 + rnd() * 1.6) * u;
-    k += rnd() < 0.6 ? `<path d="M${r(x)} ${r(y)} l${r(w * 0.25)} ${r(-h)} l${r(w * 0.75)} ${r(h * 0.15)} l${r(-w * 0.1)} ${r(h * 0.85)} Z" fill="#ecd4a6" opacity=".3"/><path d="M${r(x)} ${r(y)} l${r(w * 0.9)} ${r(h * 0.0)}" stroke="#7a6670" stroke-width=".3" opacity=".5"/>` : `<path d="M${r(x)} ${r(y)} q${r(w / 2)} ${r(-0.6)} ${r(w)} ${r(0.3)}" stroke="#7a6a72" stroke-width=".35" fill="none" opacity=".7"/>`;
+  /* Klüfte: dunkle unregelmäßige Risse, oben breiter, nach unten auslaufend; helle Kante nur westlich, oben */
+  for (let i = 0; i < 28; i++) {
+    const { e, n, zt, zb } = felsPunkt(rnd()), pts = [];
+    for (let j = 0; j <= 4; j++) { const z = zt - (zt - zb) * (0.85 * j / 4); pts.push(pr(e + (rnd() - 0.5) * 1.6 + j * 0.3, n - j * 0.5, z)); }
+    if (pts[0][0] > 394 || pts[0][0] < 4) continue;
+    const w0 = 0.55 * pts[0][2];
+    const li = pts.map(([x, y], j) => [x - w0 * (1 - j / 4) / 2, y]), re = pts.map(([x, y], j) => [x + w0 * (1 - j / 4) / 2, y]).reverse();
+    k += `<path d="${P([...li, ...re])}" fill="#5a4656" opacity=".7"/><path d="M${r(li[0][0] - 0.2)} ${r(li[0][1])} L${r(li[1][0] - 0.2)} ${r(li[1][1])} L${r(li[2][0] - 0.2)} ${r(li[2][1])}" stroke="#f3d7a8" stroke-width=".28" fill="none" opacity=".7"/>`;
   }
-  /* Höhlen und Nischen am Südhang (dunkel, unten Lichtkante), Grasbüschel und Feigensträucher in Rissen */
+  /* Höhlen: unregelmäßige Öffnungen mit überhängender Oberkante, innen warm-dunkelviolett */
   for (const [e, n, z, w, h] of [[-60, -66, 131, 5, 3.2], [-12, -68, 128.5, 3.4, 2.2], [48, -64, 133, 4.2, 2.6], [96, -60, 130, 3, 2]]) {
-    const [x, y, u] = pr(e, n, z), ww = w * u, hh = h * u;
-    k += `<path d="M${r(x - ww / 2)} ${r(y)} Q${r(x - ww * 0.55)} ${r(y - hh)} ${r(x)} ${r(y - hh * 1.05)} Q${r(x + ww * 0.6)} ${r(y - hh * 0.9)} ${r(x + ww / 2)} ${r(y)} Z" fill="#43363e"/><path d="M${r(x - ww / 2)} ${r(y)} H${r(x + ww / 2)}" stroke="#f0d7aa" stroke-width=".5"/>`;
+    const [x, y, u] = pr(e, n, z), ww = w * u, hh = h * u, pt = [];
+    for (let j = 0; j < 12; j++) { const a = Math.PI + j / 11 * Math.PI, rr = 0.8 + rnd() * 0.3; pt.push([x + Math.cos(a) * ww / 2 * rr, y + Math.sin(a) * hh * rr * (j > 3 && j < 9 ? 1 : 0.8)]); }
+    pt.push([x + ww * 0.45, y + 0.4], [x - ww * 0.4, y + 0.5]);
+    k += `<path d="${glatt(pt)}" fill="#5c4252"/><path d="M${r(x - ww * 0.55)} ${r(y - hh * 0.95)} Q${r(x)} ${r(y - hh * 1.35)} ${r(x + ww * 0.6)} ${r(y - hh * 0.85)} L${r(x + ww * 0.45)} ${r(y - hh * 0.62)} Q${r(x)} ${r(y - hh * 1.02)} ${r(x - ww * 0.42)} ${r(y - hh * 0.72)} Z" fill="#c9a888"/><path d="M${r(x - ww * 0.4)} ${r(y + 0.3)} L${r(x + ww * 0.42)} ${r(y + 0.2)}" stroke="#ecd0a2" stroke-width=".4"/>`;
   }
   for (let i = 0; i < 26; i++) { const t = rnd() * (OBEN.length - 1.01), i0 = Math.floor(t), f = t - i0, A = OBEN[i0], Bq = OBEN[i0 + 1]; const e = A[0] + (Bq[0] - A[0]) * f; const [x, y, u] = pr(e, A[1] - 8, fussZ(e) + 2 + rnd() * 8); if (x > 394 || x < 4) continue; k += baum(x, y, 2.2 * u * (0.7 + rnd() * 0.6), "oel"); }
   /* Südmauer (Kimon-Mauer) aus Quadern; darunter Roststreifen; Fuß mit dem Fels verzahnt */
@@ -254,15 +258,19 @@ const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.17 ? baum(x, y, gr
   for (let j = 1; j < 8; j++) { const q = j / 8; fu += "M" + KRONE.map((p) => { const [x, y] = pp([p[0], p[1] - 3 * q, p[2] - 11 * q]); return `${r(x)} ${r(y)}`; }).join(" L") + " "; }
   k += `<path d="${fu}" stroke="#93706a" stroke-width=".2" fill="none" opacity=".5"/>`;
   for (let i = 0; i < 70; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = KRONE[i0], Bq = KRONE[i0 + 1], q = Math.floor(rnd() * 7) / 8; const p = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f - 3 * q, A[2] + (Bq[2] - A[2]) * f - 11 * q); if (p[0] > 398) continue; k += `<rect x="${r(p[0])}" y="${r(p[1])}" width=".2" height="${r(1.4 * p[2])}" fill="#93706a" opacity=".4"/>`; }
-  for (let i = 0; i < 22; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = FUSS[i0], Bq = FUSS[i0 + 1]; const [x, y, u] = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f, A[2] + (Bq[2] - A[2]) * f); if (x > 396) continue; k += `<rect x="${r(x)}" y="${r(y - 4 * u)}" width="${r(1.6 + rnd() * 2)}" height="${r((4 + rnd() * 6) * u)}" fill="${S.lg("rost", [[0, "#a8704a", 0.4], [1, "#a8704a", 0]])}"/>`; }
-  for (let i = 0; i < 30; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = FUSS[i0], Bq = FUSS[i0 + 1]; const [x, y, u] = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f, A[2] + (Bq[2] - A[2]) * f); if (x > 396) continue; const w = (1.5 + rnd() * 3) * u; k += `<path d="M${r(x - w)} ${r(y + 1)} L${r(x - w * 0.5)} ${r(y - (0.6 + rnd()) * u)} L${r(x + w * 0.2)} ${r(y - (0.3 + rnd() * 1.6) * u)} L${r(x + w)} ${r(y + 1)} Z" fill="#c4b098"/>`; }
+  let rost = "";
+  for (let i = 0; i < 26; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = FUSS[i0], Bq = FUSS[i0 + 1]; const [x, y, u] = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f, A[2] + (Bq[2] - A[2]) * f); if (x > 396) continue; const l = (2 + rnd() * 4) * u; rost += `M${r(x)} ${r(y - 1)} q${r((rnd() - 0.5) * 1.5)} ${r(l / 2)} ${r((rnd() - 0.5) * 1.2)} ${r(l)} `; }
+  k += `<path d="${rost}" stroke="#b07a4a" stroke-width=".4" fill="none" opacity=".35"/>`;
+  for (let i = 0; i < 14; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = FUSS[i0], Bq = FUSS[i0 + 1]; const [x, y, u] = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f, A[2] + (Bq[2] - A[2]) * f); if (x > 396) continue; const w = (2.5 + rnd() * 4) * u, h1 = (1.2 + rnd() * 2.4) * u; k += `<path d="M${r(x - w)} ${r(y + 1)} L${r(x - w * 0.5)} ${r(y - h1)} L${r(x + w * 0.2)} ${r(y - h1 * (0.4 + rnd() * 0.5))} L${r(x + w)} ${r(y + 1)} Z" fill="#c8a886"/><path d="M${r(x - w)} ${r(y + 1)} L${r(x - w * 0.5)} ${r(y - h1)}" stroke="#f0d4a4" stroke-width=".35"/>`; }
   k += `<path d="M${KRONE.map((p) => { const [x, y] = pp(p); return `${r(x)} ${r(y)}`; }).join(" L")}" stroke="${M_HELL}" stroke-width=".6" fill="none"/>`;
   /* Bastion des Nike-Tempels: senkrechter Quaderturm, Westseite im Licht */
   const bas = [[-146, -10, 143.5], [-142, -22, 143.5], [-142, -22, 129], [-146, -10, 129]];
   k += `<path d="${Q(bas)}" fill="${S.lg("bastion", [[0, "#fbdba6"], [1, "#e7bd8c"]], 0, 0, 1, 0)}"/>`;
   for (let z = 131; z < 143; z += 1.5) k += `<path d="${L3([-146, -10, z], [-142, -22, z])}" stroke="#b48a6e" stroke-width=".2" opacity=".6"/>`;
   /* Westaufgang: Treppe zwischen Fels, unten das Beulé-Tor mit zwei Pylonen */
-  for (let i = 0; i < 10; i++) { const e = -168 + i * 2.2, z = 133.5 + i * 0.95; k += `<path d="${L3([e, -4, z], [e, 10, z])}" stroke="${i % 2 ? "#f9e0b8" : "#c99e80"}" stroke-width=".45"/>`; }
+  k += `<path d="${Q([[-168, -5, 132.5], [-146, -5, 142.5], [-146, 11, 142.5], [-168, 11, 132.5]])}" fill="#b8987e"/>`;
+  for (let i = 0; i < 10; i++) { const e = -168 + i * 2.2, z = 133.5 + i * 0.95; k += `<path d="${Q([[e, -4, z - 0.95], [e, 10, z - 0.95], [e, 10, z], [e, -4, z]])}" fill="#b08a74"/><path d="${Q([[e, -4, z], [e, 10, z], [e + 2.2, 10, z], [e + 2.2, -4, z]])}" fill="#f6dcb4"/>`; }
+  k += `<path d="${L3([-168, -4.5, 133.5], [-146, -4.5, 143])} ${L3([-168, 10.5, 133.5], [-146, 10.5, 143])}" stroke="#8a6a5a" stroke-width=".8"/>`;
   k += `<path d="${Q([[-176, -4, 128], [-168, -6, 128], [-168, -6, 135.5], [-176, -4, 135.5]])}" fill="#f2cc98"/><path d="${Q([[-176, 10, 128], [-168, 8, 128], [-168, 8, 135.5], [-176, 10, 135.5]])}" fill="#e9c08e"/>`;
   k += `<path d="${Q([[-172, -4, 128], [-172, 8, 128], [-172, 8, 133], [-172, -4, 133]])}" fill="#d9ad86"/><path d="${Q([[-172, 0.5, 128], [-172, 3.5, 128], [-172, 3.5, 131.5], [-172, 0.5, 131.5]])}" fill="#5e4648"/>`;
   /* Bäume am Hang: Ölbüsche, Aleppo-Kiefern, Zypressen gemischt; hinten klein, vorn größer; Odeion frei */
@@ -271,7 +279,8 @@ const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.17 ? baum(x, y, gr
   for (let i = 0; i < 230; i++) {
     const y0 = rnd(), gr = 6 + y0 * 12 + rnd() * 3, x = gr / 2 + 2 + rnd() * (396 - gr), yU = yUnten(x), y = yU + 1 + Math.pow(y0, 0.9) * (215 - yU - 1);
     if (x > 88 && x < 258 && y > 163 && y < 206) continue;
-    baeume.push([x, y, 6 + (y - 150) * 0.2 + rnd() * 3]);
+    if ((x > 300 && x < 318 && y < 175) || (x > 30 && x < 46 && y < 170) || (x > 262 && x < 272 && y < 168)) continue;   /* nackter Fels */
+    baeume.push([x + (rnd() - 0.5) * 4, y, 3.5 + (y - 150) * 0.3 + rnd() * 3]);
   }
   /* Büsche entlang des Felsfußes: die Kante wird unregelmäßig und grün */
   for (let i = 0; i < 70; i++) {
@@ -318,10 +327,10 @@ const erUnter = [];
   k += `<path d="${L3([E0, N0, Z1 + 0.3], [E1, N0, Z1 + 0.3])}" stroke="${M_HELL}" stroke-width=".4"/>`;
   /* Korenhalle am Westende der Südwand: hohe Brüstung, 4 Koren vorn + je eine dahinter, Gebälk mit Zahnschnitt, kein Giebel */
   const KE0 = -34.2, KE1 = -28.4, KN = 39.4, KZ = 149.6, KH = 1.8, MH = 2.3, KD = KZ + KH + MH;
-  k += `<path d="${Q([[KE0, KN + 3.4, KZ], [KE0, KN, KZ], [KE0, KN, KD + 1.1], [KE0, KN + 3.4, KD + 1.1]])}" fill="#f9dfb0"/>`;
+  k += `<path d="${Q([[KE0, KN + 3.4, KZ], [KE0, KN, KZ], [KE0, KN, KZ + KH], [KE0, KN + 3.4, KZ + KH]])}" fill="#fbe4b6"/><path d="${Q([[KE0, KN + 3.4, KD], [KE0, KN, KD], [KE0, KN, KD + 1.1], [KE0, KN + 3.4, KD + 1.1]])}" fill="#fbe4b6"/>`;
   k += `<path d="${Q([[KE0 + 0.4, KN + 3.4, KZ + KH], [KE1 - 0.4, KN + 3.4, KZ + KH], [KE1 - 0.4, KN + 3.4, KD], [KE0 + 0.4, KN + 3.4, KD]])}" fill="#d3b292"/>`;
   /* Schlagschatten der vorspringenden Halle auf der Südwand (nach Osten, rechts) */
-  k += `<path d="${Q([[KE1, N0, KZ], [KE1 + 3.2, N0, KZ], [KE1 + 3.2, N0, KD - 0.6], [KE1 + 1.2, N0, KD + 1.1], [KE1, N0, KD + 1.1]])}" fill="#7e6260" opacity=".45"/>`;
+  k += `<path d="${Q([[KE1 + 5, N0, KZ], [KE1 + 9, N0, KZ], [KE1 + 9, N0, KD - 0.8], [KE1 + 7, N0, KD + 1.1], [KE1 + 5, N0, KD + 1.1]])}" fill="#7e6260" opacity=".45"/>`;
   /* Kore als Vorlage (Höhe 10 = 2,3 m): Korb, Kopf mit Haar bis zu den Schultern, Gewand mit Falten, rechtes Knie vor; links Licht */
   S.def(`<g id="${S.id("kore")}"><path d="M-1.3 -9.4 L-1.5 -10 L1.5 -10 L1.3 -9.4 Z" fill="#f4dcb2"/><path d="M-1.1 -9.4 Q-1.4 -8 -1.6 -6.6 L1.6 -6.6 Q1.4 -8 1.1 -9.4 Z" fill="#c9a88c"/><ellipse cx="0" cy="-8.4" rx=".75" ry=".95" fill="#f6dcb4"/><path d="M-1.9 -6.8 Q-2 -3.4 -1.7 0 L1.7 0 Q2 -3.4 1.9 -6.8 Q1 -7.4 0 -7.4 Q-1 -7.4 -1.9 -6.8 Z" fill="#f9e2ba"/><path d="M0 -7.4 Q1 -7.4 1.9 -6.8 Q2 -3.4 1.7 0 L.2 0 Z" fill="#c4a088"/><path d="M-1.1 0 L-1.2 -5 M-.4 0 L-.4 -5.6 M.5 0 L.6 -4.6 M1.1 0 Q1.4 -1.6 1 -3.2" stroke="#b8957c" stroke-width=".18" fill="none"/><path d="M.2 -3.4 Q1 -3.1 1.4 -2.6" stroke="#fff2d8" stroke-width=".2" fill="none"/></g>`);
   const kore = (e, n, hell) => { const a = pr(e, n, KZ + KH), b = pr(e, n, KD); const sc = (a[1] - b[1]) / 10; return `<use href="#${S.id("kore")}" transform="translate(${r(a[0])} ${r(a[1])}) scale(${sc.toFixed(3)})"${hell ? "" : ` opacity=".75"`}/>`; };
@@ -424,11 +433,12 @@ const parUnter = [];
     return g;
   };
   /* Ostgiebel und Ostsäulen von innen: weiter weg, blasser und kühler (durch die Lücke zu sehen) */
-  k += `<path d="${Q([[e1, n0, zK], [e1, n1, zK], [e1, 0, zG]])}" fill="#ecd6b8"/><path d="${L3([e1, n0, zK], [e1, 0, zG])} ${L3([e1, 0, zG], [e1, n1, zK])}" stroke="#fbeedc" stroke-width=".4"/>`;
-  for (let i = 0; i < 8; i++) k += saeule(33.7, NCOL(i), zS, zC, 0.7);
-  k += gebaelk([e1, n1], [e1, n0], false, 1 / 14, [0, 0, 0], [0, 0, 0], true);
+  k += `<path d="${Q([[e1, n0, zK], [e1, n1, zK], [e1, 0, zG]])}" fill="#c9bfb6"/>`;
+  /* Ostsäulen von innen: schmaler und blasser als die Südsäulen davor */
+  for (let i = 0; i < 8; i++) { const a = pr(33.7, NCOL(i), zS), b = pr(33.7, NCOL(i), zC), w0 = 0.7 * a[2], w1 = 0.55 * b[2]; k += `<path d="M${r(a[0] - w0)} ${r(a[1])} L${r(b[0] - w1)} ${r(b[1])} L${r(b[0] + w1)} ${r(b[1])} L${r(a[0] + w0)} ${r(a[1])} Z" fill="#d9c8b6"/><path d="M${r(a[0])} ${r(a[1])} L${r(b[0])} ${r(b[1])} L${r(b[0] + w1)} ${r(b[1])} L${r(a[0] + w0)} ${r(a[1])} Z" fill="#b9a69a"/>`; }
+  k += `<path d="${Q([[e1, n1, zC], [e1, n0, zC], [e1, n0, zK], [e1, n1, zK]])}" fill="#c4b4a6"/>`;
   /* dunkler Innenraum: niedrige Reste der Cellawand im Schatten */
-  k += `<path d="${Q([[-14, -9.5, zS], [26, -9.5, zS], [26, -9.5, zS + 2.6], [18, -9.5, zS + 3.4], [6, -9.5, zS + 2.2], [-14, -9.5, zS + 3]])}" fill="#7e6260"/>`;
+  for (const [ea, eb, h] of [[-14, -6, 2.8], [-4, 4, 1.8], [6, 14, 3.2], [16, 26, 2.2]]) { k += `<path d="${Q([[ea, -9.5, zS], [eb, -9.5, zS], [eb, -9.5, zS + h], [ea, -9.5, zS + h]])}" fill="#7e6260"/><path d="${L3([ea, -9.5, zS + h], [eb, -9.5, zS + h])}" stroke="#e8c9a4" stroke-width=".3"/>`; }
   /* Inneres: Schatten hinter der Westhalle (Opisthodom), Reste der Cellawand */
   k += `<path d="${Q([[-29.5, -11, zS], [-29.5, 11, zS], [-29.5, 11, zC], [-29.5, -11, zC]])}" fill="${S.lg("innen", [[0, "#5e4648"], [1, "#8c6a62"]])}"/>`;
   k += `<path d="${Q([[-23, -9.5, zS], [-23, 9.5, zS], [-23, 9.5, zC - 1], [-23, -9.5, zC - 1]])}" fill="#a07c6e" opacity=".8"/>`;
@@ -695,7 +705,7 @@ const SCHATTEN = [
   const B2 = [
     [sx - 20, sy - 176, 30, 12, sx - 14, sy - 171], [sx - 6, sy - 168, 22, 10, sx + 2, sy - 165], [sx + 8, sy - 202, 26, 11, sx + 9, sy - 196],
     [sx + 18, sy - 186, 22, 10, sx + 15, sy - 180], [sx + 40, sy - 178, 30, 12, sx + 40, sy - 166], [sx + 62, sy - 176, 22, 10, sx + 58, sy - 171],
-    [sx + 54, sy - 140, 24, 10, sx + 52, sy - 136], [sx + 32, sy - 140, 18, 8, sx + 32, sy - 132], [sx - 32, sy - 168, 16, 8, sx - 22, sy - 172],
+    [sx + 54, sy - 140, 24, 10, sx + 52, sy - 136], [sx + 32, sy - 140, 18, 8, sx + 32, sy - 132], [sx - 24, sy - 168, 14, 7, sx - 18, sy - 171],
   ];
   for (const [x, y, w, h, vx, vy] of B2) k += buesch(x, y, w, h, vx, vy);
   for (const [dx, dy] of [[-12, -170], [44, -170], [56, -134]]) k += `<ellipse cx="${sx + dx}" cy="${r(sy + dy)}" rx=".9" ry="1.4" fill="#7a5236"/><ellipse cx="${sx + dx - 0.3}" cy="${r(sy + dy - 0.4)}" rx=".4" ry=".6" fill="#c08a5a"/>`;

@@ -42,8 +42,7 @@
      (Phalerae) am Riemengeschirr, Gürtel mit Lederstreifen, Schwert
      links, Querkamm am Helm, Stock aus Rebholz (vitis) als Rangzeichen, Caligae);
      der „Römer-Express“, eine kleine Stadtrundfahrt-Bahn, startet an der
-     Porta Nigra; Moselwein (Riesling) im „Römer“-Glas mit grünem Stiel;
-     Viez (Trierer Apfelwein) im weißen Porzellanbecher, der Viezporz;
+     Porta Nigra; Reibekuchen (in Trier „Gromperekichelcher“) mit Apfelmus;
      Touristen, Tauben, Radfahrer.
    UNSICHER (ohne Foto-Beleg, aus Fachwissen): die genaue Zahl der
    Fensterachsen (hier Türme je 3, Mittelbau 4), die Ausführung der Apsis,
@@ -858,7 +857,7 @@ const ROEM = { lat: 2.1, d: 21.6 };
 
 /* =====================================================================
    13 — DER SONNENSCHIRM, 14 — DER STUHL, 15 — DER GAST,
-   16 — DER TISCH mit VIEZ und MOSELWEIN (Café-Terrasse links vorn)
+   16 — DER TISCH mit Kaffee, Reibekuchen und Traubensaft (Café-Terrasse links vorn)
    ===================================================================== */
 const TISCH = { lat: -6.4, d: 18.2 };
 const [TX, TY] = proj(TISCH.lat, TISCH.d), TK = km(TY);
@@ -883,6 +882,7 @@ const stuhl = (s, dreh) => {
   k += `<path d="M${r(-w / 2 + 2.2 * o)} ${r(-lh + 0.08 * s)} L${r(w / 2 + 2.2 * o)} ${r(-lh + 0.08 * s)} L${r(w / 2 + 2.1 * o)} ${r(-lh + 0.18 * s)} L${r(-w / 2 + 2.1 * o)} ${r(-lh + 0.18 * s)} Z" fill="#b08850"/>`;
   return k;
 };
+let GASTHAND = null;
 const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
 {
   const [x1, y1] = proj(STUHL_L.lat, STUHL_L.d), [x2, y2] = proj(TISCH.lat + 0.8, TISCH.d + 0.6);
@@ -891,40 +891,46 @@ const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
   S.teil({ id: "stuhl", de: "der Stuhl", syl: "STUHL", it: "la sedia", itSyl: "SE-dia", en: "chair", x: TX, y: TY, kunst: licht(k) });
 }
 {
-  /* DER GAST: ein älterer Herr sitzt auf dem linken Stuhl und trinkt Viez (der Stuhl bleibt sichtbar) */
+  /* DER GAST: ein älterer Herr sitzt auf dem linken Stuhl und trinkt Kaffee (der Stuhl bleibt sichtbar) */
   const [x, y] = proj(STUHL_L.lat, STUHL_L.d), s = km(y);
-  const greif = Object.assign({}, POSEN.sitzen, { schulterR: { vor: 52, seit: 14 }, ellbogenR: 58, unterarmR: -40, handR: -6, fingerR: 0.55, kopf: -12, nacken: 2 });
+  const greif = Object.assign({}, POSEN.sitzen, { schulterR: { vor: 44, seit: 14 }, ellbogenR: 46, unterarmR: -40, handR: -6, fingerR: 0.6, kopf: -12, nacken: 2 });
   const m = figur({ id: "trr_gast", alter: "alt", geschlecht: "m", pose: greif, blick: 58, frisur: "glatze", haarfarbe: "grau", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "hemd", farbe: "#d8e4ec" }, unterteil: { stueck: "hose", farbe: "#5a5048" }, jacke: { stueck: "weste", farbe: "#6a5038" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, kopf: { stueck: "hut", farbe: "#8a7a5a" } } }, 1.72 * s);
   const sitzY = m.z.sitz.y * m.k;
   S.teil({ id: "gast", de: "der Gast", syl: "GAST", it: "l'ospite", itSyl: "O-spi-te", en: "guest", x, y: r(y - 0.2), kunst: `<g transform="translate(${r(0.1 * s)} ${r(-0.46 * s - sitzY)})">${m.svg}</g>`,
-    tipp: "Der Gast hat einen Viez bestellt. Er schaut zur Porta Nigra hinauf." });
+    tipp: "Der Gast trinkt einen Kaffee. Er schaut zur Porta Nigra hinauf." });
+  GASTHAND = { x: x + 0.1 * s + m.z.handR.x * m.k, y: r(y - 0.2) - 0.46 * s - sitzY + m.z.handR.y * m.k };
 }
 {
   const s = TK, TH = 0.74 * s, R = 0.36 * s;
   let k = `<path d="M${r(-0.18 * s)} 0 L${r(0.18 * s)} 0 L${r(0.03 * s)} ${r(-0.08 * s)} L${r(-0.03 * s)} ${r(-0.08 * s)} Z" fill="#2c3236"/><rect x="${r(-0.025 * s)}" y="${r(-TH)}" width="${r(0.05 * s)}" height="${r(TH - 0.06 * s)}" fill="#3a4045"/>`;
   k += `<ellipse cx="0" cy="${r(-TH)}" rx="${r(R)}" ry="${r(R * 0.2)}" fill="#8b9298"/><ellipse cx="0" cy="${r(-TH - 0.02 * s)}" rx="${r(R)}" ry="${r(R * 0.2)}" fill="${S.lg("marmor", [[0, "#f3f1ec"], [1, "#d6d2c8"]])}"/>`;
   const top = -TH - 0.02 * s;
-  const vx = -0.13 * s;
-  k += `<path d="M${r(vx - 0.045 * s)} ${r(top + 0.01 * s)} L${r(vx - 0.05 * s)} ${r(top - 0.11 * s)} L${r(vx + 0.05 * s)} ${r(top - 0.11 * s)} L${r(vx + 0.045 * s)} ${r(top + 0.01 * s)} Z" fill="${S.lg("porz", [[0, "#ffffff"], [0.7, "#eeece6"], [1, "#cfcbc2"]], 0, 0, 1, 0)}"/>`;
-  k += `<ellipse cx="${r(vx)}" cy="${r(top - 0.11 * s)}" rx="${r(0.05 * s)}" ry="${r(0.012 * s)}" fill="#d9b25a"/>`;
-  k += `<path d="M${r(vx + 0.048 * s)} ${r(top - 0.09 * s)} q${r(0.04 * s)} 0 ${r(0.035 * s)} ${r(0.035 * s)} q0 ${r(0.03 * s)} ${r(-0.038 * s)} ${r(0.03 * s)}" stroke="#f6f4ef" stroke-width="${r(0.012 * s)}" fill="none"/>`;
-  k += `<path d="M${r(vx - 0.03 * s)} ${r(top - 0.06 * s)} h${r(0.06 * s)}" stroke="#3a5a9a" stroke-width=".25"/>`;
-  const wx = 0.12 * s;
-  /* der Traubensaft im Glas (dunkelrot-violett), daneben eine Weintraube */
-  k += `<path d="M${r(wx - 0.035 * s)} ${r(top + 0.005 * s)} L${r(wx - 0.042 * s)} ${r(top - 0.12 * s)} L${r(wx + 0.042 * s)} ${r(top - 0.12 * s)} L${r(wx + 0.035 * s)} ${r(top + 0.005 * s)} Z" fill="#eef2f4" opacity=".6" stroke="#c9d2d6" stroke-width=".15"/>`;
-  k += `<path d="M${r(wx - 0.034 * s)} ${r(top - 0.005 * s)} L${r(wx - 0.039 * s)} ${r(top - 0.09 * s)} L${r(wx + 0.039 * s)} ${r(top - 0.09 * s)} L${r(wx + 0.034 * s)} ${r(top - 0.005 * s)} Z" fill="${S.lg("saft", [[0, "#6a1838"], [1, "#3a0a20"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${r(wx - 0.028 * s)} ${r(top - 0.11 * s)} v${r(0.09 * s)}" stroke="#fff" stroke-width=".35" opacity=".7"/>`;
-  for (const [dx, dy] of [[0.06, 0.012], [0.075, 0.012], [0.068, 0.026], [0.09, 0.012], [0.083, 0.026], [0.076, 0.04]]) k += `<circle cx="${r(wx + dx * s)}" cy="${r(top - dy * s)}" r="${r(0.009 * s)}" fill="#5a3a6a"/>`;
-  k += `<ellipse cx="${r(0.02 * s)}" cy="${r(top + 0.005 * s)}" rx="${r(0.05 * s)}" ry="${r(0.012 * s)}" fill="#c9a46a" opacity=".8"/>`;
+  /* die Kaffeetasse mit Untertasse genau unter der Hand des Gastes (der Henkel zeigt zu ihm) */
+  const vx = Math.max(-0.27 * s, Math.min(-0.16 * s, GASTHAND.x - TX + 0.03 * s));
+  k += `<ellipse cx="${r(vx)}" cy="${r(top - 0.004 * s)}" rx="${r(0.065 * s)}" ry="${r(0.014 * s)}" fill="#e9e6df" stroke="#c9c4b8" stroke-width=".15"/>`;
+  k += `<path d="M${r(vx - 0.04 * s)} ${r(top - 0.075 * s)} L${r(vx - 0.034 * s)} ${r(top - 0.01 * s)} Q${r(vx)} ${r(top + 0.002 * s)} ${r(vx + 0.034 * s)} ${r(top - 0.01 * s)} L${r(vx + 0.04 * s)} ${r(top - 0.075 * s)} Z" fill="${S.lg("porz", [[0, "#ffffff"], [0.7, "#eeece6"], [1, "#cfcbc2"]], 0, 0, 1, 0)}"/>`;
+  k += `<ellipse cx="${r(vx)}" cy="${r(top - 0.075 * s)}" rx="${r(0.04 * s)}" ry="${r(0.01 * s)}" fill="#5a3a22"/><ellipse cx="${r(vx + 0.008 * s)}" cy="${r(top - 0.077 * s)}" rx="${r(0.018 * s)}" ry="${r(0.004 * s)}" fill="#a07850"/>`;
+  k += `<path d="M${r(vx - 0.039 * s)} ${r(top - 0.062 * s)} q${r(-0.03 * s)} 0 ${r(-0.028 * s)} ${r(0.024 * s)} q0 ${r(0.016 * s)} ${r(0.031 * s)} ${r(0.014 * s)}" stroke="#f2f0ea" stroke-width="${r(0.01 * s)}" fill="none"/>`;
+  /* der Teller mit zwei Reibekuchen und Apfelmus (Mitte) */
+  const px = -0.02 * s;
+  k += `<ellipse cx="${r(px)}" cy="${r(top - 0.006 * s)}" rx="${r(0.1 * s)}" ry="${r(0.024 * s)}" fill="#fbfaf6" stroke="#cfcac0" stroke-width=".15"/>`;
+  for (const [dx, dy] of [[-0.035, 0.012], [0.025, 0.016]]) k += `<ellipse cx="${r(px + dx * s)}" cy="${r(top - dy * s)}" rx="${r(0.045 * s)}" ry="${r(0.014 * s)}" fill="#b8742c"/><ellipse cx="${r(px + dx * s + 0.006 * s)}" cy="${r(top - dy * s - 0.004 * s)}" rx="${r(0.032 * s)}" ry="${r(0.008 * s)}" fill="#dca052"/><path d="M${r(px + dx * s - 0.03 * s)} ${r(top - dy * s - 0.002 * s)} l${r(0.012 * s)} ${r(-0.004 * s)} m${r(0.02 * s)} ${r(0.006 * s)} l${r(0.014 * s)} ${r(-0.003 * s)}" stroke="#8a4e1c" stroke-width=".2"/>`;
+  k += `<ellipse cx="${r(px + 0.06 * s)}" cy="${r(top - 0.02 * s)}" rx="${r(0.022 * s)}" ry="${r(0.01 * s)}" fill="#ecd9a0"/><ellipse cx="${r(px + 0.064 * s)}" cy="${r(top - 0.023 * s)}" rx="${r(0.01 * s)}" ry="${r(0.004 * s)}" fill="#fff4cc"/>`;
+  /* der Traubensaft: gerader Saftbecher, helles Violett, Strohhalm (rechts, deutlich abgerückt) */
+  const wx = 0.2 * s;
+  k += `<path d="M${r(wx - 0.032 * s)} ${r(top + 0.004 * s)} L${r(wx - 0.036 * s)} ${r(top - 0.11 * s)} L${r(wx + 0.036 * s)} ${r(top - 0.11 * s)} L${r(wx + 0.032 * s)} ${r(top + 0.004 * s)} Z" fill="#eef2f4" opacity=".6" stroke="#c9d2d6" stroke-width=".15"/>`;
+  k += `<path d="M${r(wx - 0.031 * s)} ${r(top - 0.004 * s)} L${r(wx - 0.034 * s)} ${r(top - 0.085 * s)} L${r(wx + 0.034 * s)} ${r(top - 0.085 * s)} L${r(wx + 0.031 * s)} ${r(top - 0.004 * s)} Z" fill="${S.lg("saft", [[0, "#b46ab8"], [1, "#7a3a86"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${r(wx + 0.01 * s)} ${r(top - 0.03 * s)} L${r(wx + 0.03 * s)} ${r(top - 0.15 * s)} l${r(0.03 * s)} ${r(-0.012 * s)}" stroke="#e8463c" stroke-width="${r(0.012 * s)}" fill="none"/>`;
+  k += `<path d="M${r(wx - 0.026 * s)} ${r(top - 0.1 * s)} v${r(0.085 * s)}" stroke="#fff" stroke-width=".35" opacity=".7"/>`;
   schlag(TISCH.lat, TISCH.d, 0.74, 0.7, 0.3);
   S.teil({ oben: true, id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolino", itSyl: "ta-vo-LI-no", en: "table", x: TX, y: TY, steht: true, kunst: licht(k),
     zoom: { x: r(TX - 0.75 * s), y: r(TY - 1.15 * s), w: r(1.5 * s), h: r(1.0 * s) },
     unter: [
-      { id: "viez", de: "der Viez", syl: "VIEZ", it: "il sidro di Treviri", itSyl: "SI-dro di TRE-vi-ri", en: "Trier cider", x: r(TX + vx), y: r(TY + top + 0.01 * s), kunst: flaeche(-0.08 * s, -0.14 * s, 0.16 * s, 0.15 * s, 0.4),
-        tipp: "Viez ist ein saurer Apfelwein aus der Gegend von Trier, ein Getränk für Erwachsene. Man trinkt ihn aus einem Porzellanbecher. Der Becher heißt Viezporz." },
-      { id: "traubensaft", de: "der Traubensaft", syl: "TRAU-ben-saft", it: "il succo d'uva", itSyl: "SUC-co DU-va", en: "grape juice", x: r(TX + wx + 0.02 * s), y: r(TY + top + 0.01 * s), kunst: flaeche(-0.07 * s, -0.15 * s, 0.16 * s, 0.16 * s, 0.4),
-        tipp: "An der Mosel wachsen viele Trauben. Schon die Römer haben hier Wein angebaut." },
+      { id: "reibekuchen", de: "der Reibekuchen", syl: "REI-be-ku-chen", it: "la frittella di patate", itSyl: "frit-TEL-la di pa-TA-te", en: "potato pancake", x: r(TX + px), y: r(TY + top), kunst: flaeche(-0.1 * s, -0.06 * s, 0.2 * s, 0.08 * s, 0.4),
+        tipp: "In Trier sagt man zu Reibekuchen „Gromperekichelcher“. Man macht sie aus Kartoffeln." },
+      { id: "traubensaft", de: "der Traubensaft", syl: "TRAU-ben-saft", it: "il succo d'uva", itSyl: "SUC-co DU-va", en: "grape juice", x: r(TX + wx), y: r(TY + top + 0.01 * s), kunst: flaeche(-0.06 * s, -0.17 * s, 0.13 * s, 0.18 * s, 0.4),
+        tipp: "An der Mosel wachsen viele Trauben. Aus ihnen presst man Traubensaft." },
     ] });
 }
 

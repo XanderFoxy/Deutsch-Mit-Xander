@@ -136,6 +136,17 @@ function relativ(d, Q) {
 const kompakt2 = (svg, Q = 1) => svg.replace(/ d="([^"]+)"/g, (a, p) => ` d="${relativ(p, Q)}"`)
   .replace(/ (x|y|x1|y1|x2|y2|cx|cy|fx|fy)="(-?\d*\.?\d+)"/g, (a, k, n) => { const v = Math.round(+n / Q) * Q; return ` ${k}="${v === 0 ? 0 : Math.round(v * 100) / 100}"`; });
 
+/* Figuren: Kopf und Hände fein (0,2 cm), der Rest auf 1 cm — keine Pixeltreppen im Gesicht.
+   Kreis- und Ellipsen-Koordinaten (Augen) bleiben unverändert. */
+function kompaktFein(m, svg = m.svg) {
+  const z = m.z, kopfY = z.kopf.y + 24, haende = [z.handL, z.handR].filter(Boolean);
+  return svg.replace(/ d="([^"]+)"/g, (a, p) => {
+    const n = p.match(/-?\d*\.?\d+/g) || [];
+    let fein = false;
+    for (let i = 0; i + 1 < n.length && !fein; i += 2) { const x = +n[i], y = +n[i + 1]; if (y < kopfY || haende.some((h) => Math.abs(h.x - x) < 14 && Math.abs(h.y - y) < 14)) fein = true; }
+    return ` d="${relativ(p, fein ? 0.2 : 1)}"`;
+  });
+}
 /* vor dem Schreiben: alle Pfade der Szene relativ schreiben */
 function pfadeKlein(S) {
   const k = (s) => s.replace(/ d="([^"]+)"/g, (a, p) => ` d="${relativ(p, 0.001)}"`);
@@ -143,6 +154,9 @@ function pfadeKlein(S) {
   S.kulisse = S.kulisse.map(k); S.vorne = S.vorne.map(k); S.defs = S.defs.map(k);
 }
 
+/* Gegenlicht/Lichtkante für Figuren: Körper leicht abgedunkelt, eine warme Lichtkante INNEN an der
+   sonnenzugewandten Seite (Form minus verschobene Form) */
+S.def(`<filter id="${S.id("kante")}" x="-10%" y="-5%" width="120%" height="110%" color-interpolation-filters="sRGB"><feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0" result="k"/><feOffset in="SourceAlpha" dx=".7" dy="0" result="v"/><feComposite in="SourceAlpha" in2="v" operator="out" result="r"/><feFlood flood-color="#ffe2b0" flood-opacity=".75"/><feComposite in2="r" operator="in" result="l"/><feMerge><feMergeNode in="k"/><feMergeNode in="l"/></feMerge></filter>`);
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-5%" y="-30%" width="110%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".6"/></filter>`);
 S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".8 .3"/></filter>`);

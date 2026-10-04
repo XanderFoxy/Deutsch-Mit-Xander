@@ -250,6 +250,8 @@ const wolke = (name, cx, by, W0, H, seed) => {
     if (i % 3 === 0) klar += `M${r(x0 - 4)} ${r(y + b * 0.5)} Q${r(x0 - l * 0.45)} ${r(y - b)} ${r(x0 - l * 0.8)} ${r(y + b * 0.3)}`;
   }
   k += `<g filter="url(#${S.id("weich")})">${weich}</g><path d="${klar}" stroke="#f4faf6" stroke-width=".4" fill="none" opacity=".55" stroke-linecap="round"/>`;
+  /* warme Spiegelungen: die beleuchtete Felswand von Goat Island und die Gischt im Abendlicht */
+  k += `<g filter="url(#${S.id("dunst")})"><path d="M60 132 L200 131 L200 138 Q130 142 60 139 Z" fill="#e8b878" opacity=".35"/><path d="M200 156 Q260 150 330 154 L330 176 Q260 172 200 178 Z" fill="#f6e2c2" opacity=".35"/><path d="M150 186 Q230 182 300 188 L300 196 Q220 192 150 198 Z" fill="#f0d0a0" opacity=".2"/></g>`;
   /* weißes Wasser direkt unter den Fällen */
   k += `<g filter="url(#${S.id("dunst")})"><path d="M230 150 Q300 144 401 146 L401 168 Q320 170 240 162 Z" fill="#f2f6f4" opacity=".85"/></g>`;
   for (const [x, y, rr] of [[120, 176, 8], [40, 170, 6], [200, 182, 9]]) k += `<path d="M${x - rr} ${y} a${rr} ${r(rr * 0.22)} 0 1 1 ${r(rr * 1.6)} ${r(-rr * 0.06)} a${r(rr * 0.6)} ${r(rr * 0.14)} 0 1 1 ${r(-rr * 1.1)} ${r(-rr * 0.05)}" stroke="#cfe3dd" stroke-width=".5" fill="none" opacity=".45"/>`;
@@ -414,7 +416,9 @@ const HU = {};
   k += `<path d="${ra}" stroke="#ffffff" stroke-width=".35" opacity=".7"/>`;
   /* Fallwände von hinten nach vorn */
   seg.sort((p, q) => q.d - p.d);
+  let kHaupt = "";
   for (const sg of seg) {
+    if (sg.pA[0] > 336 && kHaupt === "") { kHaupt = k; k = ""; }
     const L = sg.licht, g = sg.g, h = sg.uA[1] - sg.pA[1];
     const id = "wv" + sg.i;
     const oben = g > 0.4 ? "#2f7d63" : (L > 0.3 ? "#fffaf0" : "#eef2f2"), mitte = g > 0.4 ? "#7fbba2" : (L > 0.3 ? "#f8f4ea" : "#dfe6e8");
@@ -447,7 +451,9 @@ const HU = {};
     if (g > 0.2 && h < 60) k += `<path d="M${r(sg.pA[0])} ${r(sg.pA[1] + h * 0.05)} L${r(sg.pB[0])} ${r(sg.pB[1] + h * 0.05)}" stroke="#1e5c48" stroke-width=".5" opacity="${r(g * 0.6)}"/>`;
   }
   const kante = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, 0.4)).filter(([x]) => x < 440);
-  k += `<path d="${P(kante, false)}" stroke="#f4fff8" stroke-width=".6" fill="none" opacity=".9"/>`;
+  let kNah = k + `<path d="${P(kante.filter(([x]) => x >= 330), false)}" stroke="#f4fff8" stroke-width=".6" fill="none" opacity=".9"/>`;
+  kNah += `<g filter="url(#${S.id("nebel2")})"><path d="M330 190 Q360 170 404 176 L404 224 L336 224 Z" fill="#f2f3f0" opacity=".85"/></g>`;
+  k = kHaupt + `<path d="${P(kante.filter(([x]) => x < 340), false)}" stroke="#f4fff8" stroke-width=".6" fill="none" opacity=".9"/>`;
   /* Dunstsee über dem Becken: dicht und weiß, verdeckt die untere Hälfte der Wände */
   const fussL = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, -26)).filter(([x]) => x < 440);
   k += `<g filter="url(#${S.id("nebel2")})"><path d="${P([...fussL.map(([x, y]) => [x, y - 3]), [404, 168], [404, 222], [380, 222], [340, 178], ...fussL.slice().reverse().filter(([x]) => x < 340).map(([x, y]) => [x - 4, y + 10])])}" fill="${S.lg("dunstsee", [[0, "#fff6e6"], [0.5, "#f2f3f0"], [1, "#d9e2e6"]])}" opacity=".93"/></g>`;
@@ -464,14 +470,14 @@ const HU = {};
   const unter = [
     { id: "kante", de: "die Kante", syl: "KAN-te", it: "il bordo", itSyl: "BOR-do", en: "brink", x: HU.kante[0], y: HU.kante[1], kunst: flaeche(-10, -2.4, 20, 4.8),
       tipp: "In der Mitte des Hufeisens ist das Wasser an der Kante besonders tief – deshalb leuchtet es dort grün." },
-    { id: "wasserfall", de: "der Wasserfall", syl: "WAS-ser-fall", it: "la cascata", itSyl: "ca-SCA-ta", en: "waterfall", x: HU.wasserfall[0], y: HU.wasserfall[1], kunst: flaeche(-14, -14, 26, 26),
-      tipp: "Ein Wasserfall entsteht, wo ein Fluss über eine Felskante stürzt. Hier, ganz nah am Table Rock, donnert er direkt neben uns hinab." },
     { id: "aussichtspunkt", de: "der Aussichtspunkt", syl: "AUS-sichts-punkt", it: "il belvedere", itSyl: "bel-ve-DE-re", en: "viewpoint", x: HU.terrapin[0], y: HU.terrapin[1], kunst: flaeche(-7, -4, 14, 6),
       tipp: "Gegenüber liegt Terrapin Point in den USA. Von dort sehen die Besucher die Fälle von der anderen Seite." },
   ];
-  S.teil({ id: "hufeisenfaelle", de: "die Hufeisenfälle", syl: "HUF-ei-sen-fäl-le", it: "le Cascate a Ferro di Cavallo", itSyl: "ca-SCA-te a FER-ro di ca-VAL-lo", en: "Horseshoe Falls", x: 330, y: 124, kunst: um(330, 124, kappeRand(k)),
+  S.teil({ id: "hufeisenfaelle", de: "die Hufeisenfälle", syl: "HUF-ei-sen-fäl-le", it: "le Cascate a Ferro di Cavallo", itSyl: "ca-SCA-te a FER-ro di ca-VAL-lo", en: "Horseshoe Falls", x: 252, y: 122, kunst: um(252, 122, kappeRand(k)),
     zoom: { x: 150, y: 92, w: 150, h: 100 }, unter,
     tipp: "Die Hufeisenfälle sind mehr als 50 Meter hoch. In jeder Sekunde stürzen hier mehr als 2000 Kubikmeter Wasser hinab." });
+  S.teil({ id: "wasserfall", de: "der Wasserfall", syl: "WAS-ser-fall", it: "la cascata", itSyl: "ca-SCA-ta", en: "waterfall", x: 372, y: 150, kunst: um(372, 150, kappeRand(kNah)),
+    tipp: "Ein Wasserfall entsteht, wo ein Fluss über eine Felskante stürzt. Hier am Table Rock donnert das Wasser direkt neben uns hinab." });
 }
 
 /* =====================================================================
@@ -807,7 +813,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   const fig = (spec, hoehe) => B.mensch(Object.assign({ ohneSchatten: true, laecheln: true }, spec), hoehe);
   const pk = (m, n) => [m.z.punkte[n][0] * m.k, m.z.punkte[n][1] * m.k];
   /* Tourist: hält das Handy hoch, Rücken halb zu uns */
-  const T = { x: 86, y: 270 };
+  const T = { x: 86, y: 263 };
   const poseFoto = { lende: 1, brust: -2, nacken: 2, kopf: -4, schulterL: { vor: 70, seit: 18 }, ellbogenL: 100, unterarmL: 60, handL: 10, fingerL: 0.6, schulterR: { vor: 68, seit: 20 }, ellbogenR: 104, unterarmR: 60, handR: 10, fingerR: 0.6,
     huefteL: { vor: 4, seit: 4, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -4, seit: 4, dreh: -6 }, knieR: 2, fussR: 0 };
   const mt = fig({ id: "kan_tourist", geschlecht: "m", alter: "erwachsen", pose: poseFoto, blick: 150, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
@@ -817,7 +823,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: T.x, y: T.y - 50, kunst: um(T.x, T.y - 50, kt),
     tipp: "Jedes Jahr kommen Millionen Menschen zu den Niagarafällen. Fast alle machen hier ein Foto." });
   /* Kind: rotes Regencape mit Kapuze, nass glänzend, zeigt mit dem rechten Arm zum Regenbogen */
-  const K = { x: 128, y: 268 };
+  const K = { x: 128, y: 263 };
   const poseZeig = { lende: 1, brust: -2, nacken: 2, kopf: -8, schulterL: { vor: 6, seit: 10 }, ellbogenL: 14, unterarmL: 0, handL: 0, fingerL: 0.4, schulterR: { vor: 120, seit: 34 }, ellbogenR: 8, unterarmR: 0, handR: 0, fingerR: 0.9,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
   const mk = fig({ id: "kan_kind", geschlecht: "w", alter: "kind", pose: poseZeig, blick: 140, frisur: "zopf", haarfarbe: "braun", haut: "hell",

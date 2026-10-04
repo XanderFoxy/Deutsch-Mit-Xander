@@ -675,8 +675,8 @@ function krone(cx, cy, rx, ry, seed, sonne, fern) {
       if (z() < 0.6) d3 += fransen(x + rc * 0.32, y - rc * 0.3, rc * 0.34, 8);
     }
   }
-  const sw = Math.max(0.3, Math.min(rx, ry) * 0.035);
-  return `<path d="${aeste}" stroke="#4a4038" stroke-width="${r(sw)}" fill="none" stroke-linecap="round"/><path d="${d1}" fill="${sonne ? "#6f8f30" : "#556f2c"}" opacity=".95"/><path d="${d2}" fill="${sonne ? "#a9c44a" : "#82a03e"}" opacity=".95"/><path d="${d3}" fill="${sonne ? "#e0e884" : "#b2c766"}" opacity=".85"/>`;
+  const sw = Math.max(0.25, Math.min(rx, ry) * 0.022);
+  return `<path d="${aeste}" stroke="#5e5248" stroke-width="${r(sw)}" fill="none" stroke-linecap="round"/><path d="${d1}" fill="${sonne ? "#6f8f30" : "#556f2c"}" opacity=".95"/><path d="${d2}" fill="${sonne ? "#a9c44a" : "#82a03e"}" opacity=".95"/><path d="${d3}" fill="${sonne ? "#e0e884" : "#b2c766"}" opacity=".85"/>`;
 }
 function ulme(X, D, seed) {
   const [bx, by] = P(X, D, KAI), s = F / D, z = zufall(seed), sonne = X < 0 && sonnig(X, D, 9);
@@ -687,7 +687,7 @@ function ulme(X, D, seed) {
   g += `<path d="M${r(bx - tw / 2)} ${r(by)} Q${r(bx - tw * 0.4 + lean * 0.3)} ${r(by - fork * 0.6)} ${r(bx - tw * 0.3 + lean * 0.5)} ${r(by - fork)} L${r(bx + tw * 0.3 + lean * 0.5)} ${r(by - fork)} Q${r(bx + tw * 0.4 + lean * 0.3)} ${r(by - fork * 0.6)} ${r(bx + tw / 2)} ${r(by)} Z" fill="${S.lg("stamm", [[0, "#3a352f"], [0.6, "#57514a"], [1, "#2c2824"]], 0, 0, 1, 0)}"/>`;
   let aeste = "";
   for (const [dx, dy] of [[-1.6, -4.2], [-0.4, -5.2], [1.3, -4.4], [2.2, -3]]) aeste += `M${r(bx + lean * 0.5)} ${r(by - fork)} Q${r(bx + lean * 0.7 + dx * 0.4 * s)} ${r(by - fork - dy * -0.4 * s)} ${r(bx + lean + dx * s)} ${r(by - fork + dy * s * 0.8)} `;
-  g += `<path d="${aeste}" stroke="#3a352f" stroke-width="${r(0.14 * s)}" fill="none" stroke-linecap="round"/>`;
+  g += `<path d="${aeste}" stroke="#4a4038" stroke-width="${r(0.1 * s)}" fill="none" stroke-linecap="round"/>`;
   const cx = bx + lean, cy = by - (KAI + 7.6 - KAI) * s;
   g += krone(cx, cy, 3.6 * s, 2.7 * s, seed, sonne, D > 100);
   return { g, bx, by, sonne };
@@ -722,6 +722,9 @@ function prisma(grund, h0, h1, farbe, dachFarbe, licht) {
   return g;
 }
 
+/* Fahrrad als Vorlage (1 Einheit = 1 m, Hinterrad-Aufstand bei 0|0, Fahrtrichtung +x), Farbe über color */
+S.def(`<g id="${S.id("rad")}" fill="none" stroke="currentColor" stroke-width=".04" stroke-linecap="round"><circle cx=".0" cy="-.34" r=".33"/><circle cx="1.1" cy="-.34" r=".33"/><path d="M0 -.34 L.42 -.36 L.36 -.8 M.42 -.36 L.98 -.78 L1.1 -.34 M.36 -.8 L.98 -.78 M.98 -.78 L.95 -1.0 L.8 -1.03" stroke-width=".05"/><path d="M.28 -.86 L.46 -.86" stroke="#3a2618" stroke-width=".06"/><path d="M-.05 -.5 L.3 -.5" stroke-width=".03"/></g>`);
+const radUse = (x, y, s, farbe, links) => `<use href="#${S.id("rad")}" transform="translate(${r(x)} ${r(y)}) scale(${(links ? -s : s).toFixed(3)} ${s.toFixed(3)})" color="${farbe}"/>`;
 /* =====================================================================
    TEILE — hinten zuerst
    ===================================================================== */
@@ -973,14 +976,16 @@ const LADEN = { d0: 37.2, d1: 44.6 };
       `<path d="M${q(-0.15, -0.1)} Q${q(-0.02, -0.098)} ${q(0.12, -0.082)} Q${q(0.18, -0.08)} ${q(0.2, -0.074)}" stroke="#fff8d8" stroke-width="${r(0.01 * ts)}" fill="none" opacity=".85"/><path d="M${q(-0.15, -0.006)} L${q(0.12, -0.006)}" stroke="#9a6a08" stroke-width="${r(0.014 * ts)}" opacity=".6"/>`; };
   /* ein Paar große Holzschuhe hängt am Türrahmen (wie bei den Souvenirläden): Seitenansicht, Spitze hochgezogen */
   const [hx0, hy0] = P(X - 0.2, LADEN.d1 - 0.3, 3.75), hs = F / (LADEN.d1 - 0.3);
+  /* Holzschuh in Seitenansicht (Spitze rechts, hochgezogen), 36 cm, an einer Schnur */
   const klomp2 = (dx, dy, f, f2) => { const q = (a, b) => `${r(hx0 + (dx + a) * hs)} ${r(hy0 + (dy + b) * hs)}`;
-    return `<path d="M${q(-0.02, 0)} L${q(0.04, 0)} L${q(0.07, 0.06)} Q${q(0.1, 0.25)} ${q(0.06, 0.36)} Q${q(0.035, 0.44)} ${q(-0.02, 0.45)} Q${q(-0.05, 0.4)} ${q(-0.04, 0.3)} Q${q(-0.07, 0.15)} ${q(-0.06, 0.06)} Z" fill="${f}"/>` +
-      `<path d="M${q(-0.06, 0.06)} Q${q(-0.07, 0.15)} ${q(-0.04, 0.3)} Q${q(-0.05, 0.4)} ${q(-0.02, 0.45)} Q${q(-0.03, 0.38)} ${q(-0.025, 0.3)} Q${q(-0.04, 0.16)} ${q(-0.03, 0.06)} Z" fill="${f2}"/>` +
-      `<path d="M${q(0.0, 0.02)} Q${q(0.035, 0.05)} ${q(0.03, 0.16)} Q${q(0.01, 0.12)} ${q(0.0, 0.02)} Z" fill="#3a220c"/>` +
-      `<path d="M${q(0.02, 0.36)} Q${q(0.01, 0.3)} ${q(0.025, 0.24)}" stroke="#3f7a2e" stroke-width="${r(0.012 * hs)}" fill="none"/><path d="M${q(0.012, 0.25)} L${q(0.008, 0.21)} L${q(0.022, 0.225)} L${q(0.036, 0.21)} L${q(0.034, 0.25)} Z" fill="#d0283a"/>`; };
-  k += `<path d="M${r(hx0)} ${r(hy0 - 0.25 * hs)} L${r(hx0 - 0.01 * hs)} ${r(hy0)} M${r(hx0)} ${r(hy0 - 0.25 * hs)} L${r(hx0 + 0.12 * hs)} ${r(hy0 + 0.01 * hs)}" stroke="#3a2a1c" stroke-width="${r(0.012 * hs)}"/>`;
-  k += klomp2(0.12, 0.01, "#e9b42a", "#c58a14") + klomp2(0, 0, "#f6cb3c", "#d49a1c");
-  const hx = hx0 + 0.06 * hs, hy = hy0 + 0.45 * hs;
+    return `<path d="M${q(-0.16, 0)} L${q(0.12, 0)} Q${q(0.19, -0.01)} ${q(0.215, -0.05)} Q${q(0.235, -0.085)} ${q(0.22, -0.1)} Q${q(0.18, -0.105)} ${q(0.12, -0.11)} Q${q(0.05, -0.12)} ${q(0.025, -0.15)} L${q(-0.13, -0.155)} Q${q(-0.18, -0.13)} ${q(-0.175, -0.07)} Q${q(-0.175, -0.02)} ${q(-0.16, 0)} Z" fill="${f}"/>` +
+      `<path d="M${q(-0.16, 0)} L${q(0.12, 0)} Q${q(0.19, -0.01)} ${q(0.215, -0.05)} L${q(0.18, -0.035)} Q${q(0.1, -0.02)} ${q(-0.15, -0.025)} Z" fill="${f2}"/>` +
+      `<path d="M${q(-0.125, -0.152)} Q${q(-0.05, -0.172)} ${q(0.022, -0.148)} Q${q(-0.05, -0.135)} ${q(-0.125, -0.152)} Z" fill="#3a220c"/>` +
+      `<path d="M${q(0.06, -0.025)} Q${q(0.07, -0.06)} ${q(0.09, -0.085)}" stroke="#3f7a2e" stroke-width="${r(0.012 * hs)}" fill="none"/><path d="M${q(0.078, -0.082)} L${q(0.073, -0.11)} L${q(0.092, -0.1)} L${q(0.11, -0.11)} L${q(0.106, -0.082)} Z" fill="#d0283a"/>` +
+      `<path d="M${q(-0.15, -0.12)} Q${q(-0.02, -0.118)} ${q(0.12, -0.1)} Q${q(0.19, -0.095)} ${q(0.215, -0.09)}" stroke="#fff6cc" stroke-width="${r(0.01 * hs)}" fill="none" opacity=".9"/>`; };
+  k += `<path d="M${r(hx0)} ${r(hy0 - 0.12 * hs)} L${r(hx0 - 0.05 * hs)} ${r(hy0 + 0.17 * hs)} M${r(hx0)} ${r(hy0 - 0.12 * hs)} L${r(hx0 + 0.05 * hs)} ${r(hy0 + 0.3 * hs)}" stroke="#3a2a1c" stroke-width="${r(0.01 * hs)}"/>`;
+  k += klomp2(0.05, 0.47, "#e2ac22", "#b8820e") + klomp2(-0.04, 0.33, "#f6cb3c", "#d49a1c");
+  const hx = hx0 + 0.0 * hs, hy = hy0 + 0.47 * hs;
   /* Sirupwaffeln: blaue Dose, eine Waffel lehnt davor (Gitter, Sirup) */
   const wx = tx + 0.68 * ts, wy = ty - 0.8 * ts, w2 = (a, b) => `${r(wx + a * ts)} ${r(wy + b * ts)}`;
   tisch += `<rect x="${r(wx - 0.08 * ts)}" y="${r(wy - 0.2 * ts)}" width="${r(0.16 * ts)}" height="${r(0.2 * ts)}" rx="${r(0.01 * ts)}" fill="#2a5aa0"/><rect x="${r(wx - 0.08 * ts)}" y="${r(wy - 0.13 * ts)}" width="${r(0.16 * ts)}" height="${r(0.05 * ts)}" fill="#f2efe6"/><ellipse cx="${r(wx)}" cy="${r(wy - 0.2 * ts)}" rx="${r(0.08 * ts)}" ry="${r(0.02 * ts)}" fill="#c9d3dc"/>`;
@@ -993,7 +998,7 @@ const LADEN = { d0: 37.2, d1: 44.6 };
   const unter = [
     { id: "kaese", de: "der Käse", syl: "KÄ-se", it: "il formaggio", itSyl: "for-MAG-gio", en: "cheese", x: kx, y: ky, kunst: flaeche(-0.3 * ts, -0.3 * ts, 0.6 * ts, 0.34 * ts, 0.3),
       tipp: "Gouda ist ein runder Käse aus den Niederlanden. Er hat eine gelbe Wachsrinde." },
-    { id: "holzschuh", de: "der Holzschuh", syl: "HOLZ-schuh", it: "lo zoccolo", itSyl: "ZOC-co-lo", en: "clog", x: hx, y: hy, kunst: flaeche(-0.14 * hs, -0.47 * hs, 0.3 * hs, 0.5 * hs, 0.3),
+    { id: "holzschuh", de: "der Holzschuh", syl: "HOLZ-schuh", it: "lo zoccolo", itSyl: "ZOC-co-lo", en: "clog", x: hx, y: hy, kunst: flaeche(-0.24 * hs, -0.33 * hs, 0.52 * hs, 0.35 * hs, 0.3),
       tipp: "Früher trugen die Bauern Holzschuhe. Heute kauft man sie als Souvenir." },
     { id: "sirupwaffel", de: "die Sirupwaffel", syl: "SI-rup-waf-fel", it: "la cialda allo sciroppo", itSyl: "CIAL-da AL-lo sci-ROP-po", en: "stroopwafel", x: wx, y: wy, kunst: flaeche(-0.09 * ts, -0.23 * ts, 0.3 * ts, 0.25 * ts, 0.3),
       tipp: "Die Sirupwaffel (niederländisch „stroopwafel“) legt man auf die heiße Teetasse — dann wird der Sirup weich." },
@@ -1045,9 +1050,6 @@ const LADEN = { d0: 37.2, d1: 44.6 };
     tipp: "Die Flagge von Amsterdam ist rot-schwarz-rot mit drei weißen Kreuzen." });
 }
 
-/* Fahrrad als Vorlage (1 Einheit = 1 m, Hinterrad-Aufstand bei 0|0, Fahrtrichtung +x), Farbe über color */
-S.def(`<g id="${S.id("rad")}" fill="none" stroke="currentColor" stroke-width=".04" stroke-linecap="round"><circle cx=".0" cy="-.34" r=".33"/><circle cx="1.1" cy="-.34" r=".33"/><path d="M0 -.34 L.42 -.36 L.36 -.8 M.42 -.36 L.98 -.78 L1.1 -.34 M.36 -.8 L.98 -.78 M.98 -.78 L.95 -1.0 L.8 -1.03" stroke-width=".05"/><path d="M.28 -.86 L.46 -.86" stroke="#3a2618" stroke-width=".06"/><path d="M-.05 -.5 L.3 -.5" stroke-width=".03"/></g>`);
-const radUse = (x, y, s, farbe, links) => `<use href="#${S.id("rad")}" transform="translate(${r(x)} ${r(y)}) scale(${(links ? -s : s).toFixed(3)} ${s.toFixed(3)})" color="${farbe}"/>`;
 /* 15a — DER FAHRRADSTÄNDER am rechten Kai: Bügel und eine Reihe angeschlossener Räder (quer zum Wasser, Vorderrad zur Gracht) */
 {
   const farben = ["#1d1e22", "#2a4a7a", "#1d1e22", "#7a2a2a", "#2a2a2a", "#3e6a4a", "#1d1e22", "#c9c2b0"];

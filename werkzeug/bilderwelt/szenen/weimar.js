@@ -633,6 +633,11 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
   /* Zwiebelkuchen-Bleche auf der Theke */
   for (let i = 0; i < 3; i++) { const X = ZK.X0 + 0.5 + i * 1.05; k += `<path d="M${P(ZK.D + 0.15, X, 0.98)} L${P(ZK.D + 0.15, X + 0.9, 0.98)} L${P(ZK.D + 0.5, X + 0.9, 0.98)} L${P(ZK.D + 0.5, X, 0.98)} Z" fill="#e2b45a" stroke="#8a5a20" stroke-width=".2"/>`; }
   k += stand(ZW.D, ZW.X0, ZW.X1, ZW.T, ZW.h, "#7a4a24", 1, "#f4ecd8", "Zwiebeln aus Heldrungen", 0.2);
+  /* Kiste mit losen Zwiebeln auf der Theke */
+  { const kx = xG(ZW.D + 0.3, ZW.X0 + 2.9), ky = yG(ZW.D + 0.3, 0.95), ku = sk(ZW.D + 0.3);
+    let g = `<path d="M-.36 0 L.36 0 L.38 -.22 L-.38 -.22 Z" fill="${HOLZ}"/><path d="M-.36 -.11 H.36" stroke="#5e3d20" stroke-width=".015"/><path d="M.22 0 L.36 0 L.38 -.22 L.24 -.22 Z" fill="#2e2a40" opacity=".25"/>`;
+    for (const [dx, dy, rt] of [[-.26, -.24, 0], [-.1, -.26, 1], [.06, -.25, 0], [.22, -.24, 0], [-.18, -.32, 0], [-.01, -.34, 1], [.15, -.32, 0], [.06, -.4, 0]]) g += `<use href="#${S.id("knolle")}" fill="url(#${S.id(rt ? "zwrot" : "zwgelb")})" transform="translate(${dx} ${dy}) scale(.15)"/>`;
+    k += `<g transform="translate(${r(kx)} ${r(ky)}) scale(${ku.toFixed(4)})">${g}</g>`; }
   /* Preisschild an der Theke */
   const px = xG(ZW.D, ZW.X0 + 0.9), py = yG(ZW.D, 0.62), pu = sk(ZW.D);
   k += `<rect x="${r(px - 0.5 * pu)}" y="${r(py - 0.17 * pu)}" width="${r(1.0 * pu)}" height="${r(0.32 * pu)}" fill="#f4ecd8"/><text x="${r(px)}" y="${r(py + 0.08 * pu)}" font-size="${r(0.2 * pu)}" text-anchor="middle" fill="#2f5a32" font-family="Georgia,serif" font-weight="bold">Zopf 8 €</text>`;
@@ -640,12 +645,12 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
     tipp: "Beim Zwiebelmarkt im Oktober stehen in der ganzen Altstadt Marktstände." });
 }
 {
-  /* DIE VERKÄUFERIN: frontal hinter der Theke, hält einen Zopf hoch */
+  /* DIE VERKÄUFERIN: vorn an der Theke, reicht mit der rechten Hand einen Zopf über die Theke */
   const V = mensch("V", { id: "wmr_verk", geschlecht: "w", blick: 14, frisur: "dutt", haarfarbe: "braun", haut: "hell", laecheln: true,
     pose: { lende: 1, brust: -2, nacken: 4, kopf: 2, schulterL: { vor: 10, seit: 12 }, ellbogenL: 70, unterarmL: 40, handL: 4, fingerL: 0.5,
       schulterR: { vor: 50, seit: 36, dreh: 10 }, ellbogenR: 70, unterarmR: 40, handR: 0, fingerR: 0.85,
       huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-    kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, schuerze: { stueck: "schuerze", farbe: "beige" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "rot" } } }, 1.64, ZW.D + 0.7, (ZW.X0 + ZW.X1) / 2 + 0.1, 2, 0.6);
+    kleidung: { oberteil: { stueck: "bluse", farbe: "creme" }, schuerze: { stueck: "schuerze", farbe: "#e9dcc0" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "rot" } } }, 1.72, ZW.D + 0.42, (ZW.X0 + ZW.X1) / 2 + 0.1, 1.5, 0.5);
   const theke = yG(ZW.D, 0.95);
   S.def(`<clipPath id="${S.id("hinterTheke")}"><rect x="-60" y="-120" width="120" height="${r(theke - V.y + 120)}"/></clipPath>`);
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x: V.x, y: V.y,
@@ -683,10 +688,9 @@ const zopf = (x, y, len, s2, rotAnteil, seed) => {
   const pos = [[0.22, 0.95, 0.2], [0.5, 0.8, 0.5], [0.78, 0.92, 0.1], [2.78, 0.88, 0.3], [3.08, 0.98, 0.0], [3.36, 0.82, 0.6]];
   pos.forEach(([dx, len, rot], i) => { k += zopf(xG(ZW.D - 0.2, ZW.X0 + dx), ya, len, u, rot, i * 7 + 3); });
   /* liegende Zöpfe auf der Theke (quer, von oben gesehen) */
-  for (const [dx, rot] of [[0.7, 0.3], [3.0, 0.1]]) k += `<g transform="translate(${r(xG(ZW.D + 0.3, ZW.X0 + dx))} ${r(yG(ZW.D + 0.3, 1.0))}) rotate(-84)">${zopf(0, 0, 0.6, u, rot, Math.round(dx * 10))}</g>`;
+  { const h = FIG.Vh; k += zopf(h.x, h.y - 0.2 * u, 0.62, u, 0.35, 91); }
   S.teil({ id: "zwiebelzopf", de: "der Zwiebelzopf", syl: "ZWIE-bel-zopf", it: "la treccia di cipolle", itSyl: "TREC-cia di ci-POL-le", en: "onion braid", x: 0, y: 0, kunst: k,
     tipp: "Zwiebelzöpfe sind das Wahrzeichen des Weimarer Zwiebelmarkts. Den Markt gibt es seit 1653." });
-  /* der Zopf in der Hand der Verkäuferin */
 }
 
 /* =====================================================================
@@ -705,7 +709,7 @@ const V2 = mensch("V2", { id: "wmr_grill", geschlecht: "m", blick: -14, frisur: 
   pose: { lende: 1, brust: -1, nacken: 8, kopf: 4, schulterL: { vor: 30, seit: 10 }, ellbogenL: 70, unterarmL: 40, handL: 4, fingerL: 0.6,
     schulterR: { vor: 42, seit: 20, dreh: 10 }, ellbogenR: 64, unterarmR: 30, handR: 0, fingerR: 0.9,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-  kleidung: { oberteil: { stueck: "tshirt", farbe: "schwarz" }, schuerze: { stueck: "schuerze", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.8, GR.D + 0.8, (GR.X0 + GR.X1) / 2 - 0.2, 2, 0.6);
+  kleidung: { oberteil: { stueck: "tshirt", farbe: "schwarz" }, schuerze: { stueck: "schuerze", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.86, GR.D + 0.5, (GR.X0 + GR.X1) / 2 - 0.4, 1.5, 0.5);
 {
   const theke = yG(GR.D, 0.95);
   S.def(`<clipPath id="${S.id("hinterGrill")}"><rect x="-60" y="-120" width="120" height="${r(theke - V2.y + 120)}"/></clipPath>`);
@@ -737,8 +741,10 @@ const V2 = mensch("V2", { id: "wmr_grill", geschlecht: "m", blick: -14, frisur: 
     k += `<rect x="${r(x - 0.12 * su)}" y="${r(y - 0.03 * su)}" width="${r(0.24 * su)}" height="${r(0.06 * su)}" rx="${r(0.03 * su)}" fill="${W}" transform="rotate(${-6 + i * 2.5} ${r(x)} ${r(y)})"/><path d="M${r(x - 0.06 * su)} ${r(y - 0.02 * su)} v${r(0.04 * su)} M${r(x + 0.04 * su)} ${r(y - 0.02 * su)} v${r(0.04 * su)}" stroke="#3a1a0a" stroke-width=".15"/>`;
   }
   const cx = xG(D, X1 - 0.5), cy = yG(D, 1.0), su = sk(D);
-  S.davor(`<g filter="url(#${S.id("rauch")})" opacity=".45" pointer-events="none"><path d="M${r(cx - 0.8 * su)} ${r(cy - 0.2 * su)} Q${r(cx - 0.6 * su)} ${r(cy - 1.4 * su)} ${r(cx + 0.6 * su)} ${r(cy - 2.4 * su)} Q${r(cx + 1.8 * su)} ${r(cy - 3.4 * su)} ${r(cx + 3.2 * su)} ${r(cy - 4.0 * su)} L${r(cx + 3.6 * su)} ${r(cy - 3.4 * su)} Q${r(cx + 1.6 * su)} ${r(cy - 2.4 * su)} ${r(cx + 0.6 * su)} ${r(cy - 1.4 * su)} Q${r(cx - 0.2 * su)} ${r(cy - 0.8 * su)} ${r(cx - 0.2 * su)} ${r(cy - 0.2 * su)} Z" fill="#ece8e2"/>` +
-    `<path d="M${r(cx + 0.4 * su)} ${r(cy - 0.2 * su)} Q${r(cx + 0.8 * su)} ${r(cy - 1.6 * su)} ${r(cx + 2 * su)} ${r(cy - 2.2 * su)} Q${r(cx + 3 * su)} ${r(cy - 2.8 * su)} ${r(cx + 4.2 * su)} ${r(cy - 2.9 * su)} L${r(cx + 4.2 * su)} ${r(cy - 2.4 * su)} Q${r(cx + 2.6 * su)} ${r(cy - 2.0 * su)} ${r(cx + 1.4 * su)} ${r(cy - 1.2 * su)} Q${r(cx + 0.8 * su)} ${r(cy - 0.6 * su)} ${r(cx + 0.8 * su)} ${r(cy - 0.2 * su)} Z" fill="#dcd8d0" opacity=".8"/></g>`);
+  /* Rauch: dünner Schleier vom rechten Grillende, zieht flach nach rechts weg (nicht über die Krone) */
+  const rp = (pts) => pts.map(([dx, dy], i) => (i ? (i % 2 ? "Q" : " ") : "M") + `${r(cx + dx * su)} ${r(cy - dy * su)}`).join("") + "Z";
+  S.davor(`<g filter="url(#${S.id("rauch")})" opacity=".3" pointer-events="none"><path d="${rp([[-0.1, 0.2], [0.1, 1.1], [0.9, 1.6], [1.8, 2.1], [3, 2.3], [3.1, 1.9], [1.9, 1.7], [0.7, 1.0], [0.4, 0.2]])}" fill="#ece8e2"/>` +
+    `<path d="${rp([[0.4, 0.2], [0.7, 1.0], [1.6, 1.3], [2.6, 1.6], [3.8, 1.6], [3.8, 1.3], [2.4, 1.2], [1.2, 0.7], [0.8, 0.2]])}" fill="#dcd8d0" opacity=".7"/></g>`);
   S.teil({ oben: true, id: "rostbratwurst", de: "die Rostbratwurst", syl: "ROST-brat-wurst", it: "la salsiccia alla griglia", itSyl: "sal-SIC-cia AL-la GRI-glia", en: "grilled sausage", x: 0, y: 0, kunst: k,
     tipp: "Die Thüringer Rostbratwurst isst man im Brötchen — mit Senf, ohne Ketchup." });
 }
@@ -786,20 +792,39 @@ const LS = { D: 8.6, X: -6.0 };
 }
 
 /* =====================================================================
-   12 — DAS FAHRRAD mit Zwiebelzopf am Lenker (an der Litfaßsäule)
+   12 — DAS FAHRRAD (Hollandrad) lehnt mit dem Hinterrad an der Litfaßsäule
    ===================================================================== */
 {
-  const D = 7.4, X = -3.6, u = sk(D), x = xG(D, X), y = yG(D);
+  const D = 7.85, X = -4.6, u = sk(D), x = xG(D, X), y = yG(D);
   bodenSchatten(D, X, 1.7, 1, 0.24);
+  const RAHMEN = "#c23a2a", CHROM = "#b9bfc4";
   let g = "";
-  const rad = (cx) => `<circle cx="${cx}" cy="-.34" r=".34" fill="none" stroke="#1d1d1d" stroke-width=".045"/><circle cx="${cx}" cy="-.34" r=".3" fill="none" stroke="#b9bfc4" stroke-width=".008"/><circle cx="${cx}" cy="-.34" r=".04" fill="#8a9196"/>`;
-  g += rad(-0.55) + rad(0.55);
-  g += `<path d="M-.55 -.34 L-.1 -.34 L-.25 -.82 L.42 -.82 L-.1 -.34 M.42 -.82 L.55 -.34 M-.25 -.82 L-.29 -.92 M.42 -.82 L.38 -.98" stroke="#c23a2a" stroke-width=".05" fill="none" stroke-linejoin="round"/>`;
-  g += `<path d="M-.4 -.95 L-.16 -.95" stroke="#2b2b2b" stroke-width=".07" stroke-linecap="round"/><path d="M.28 -1.0 Q.38 -1.05 .5 -.98" stroke="#2b2b2b" stroke-width=".04" fill="none"/>`;
-  g += `<rect x="-.75" y="-.72" width=".38" height=".18" fill="#c8a45e"/>`;
-  g += `<g transform="translate(.42 -.98) scale(.5)">${zopf(0, 0, 0.7, 1, 0.3, 77)}</g>`;
+  /* Räder: Reifen, Felge, 16 Speichen, Nabe; Licht von links oben */
+  const rad = (cx) => {
+    let sp = "";
+    for (let i = 0; i < 16; i++) { const w = i / 16 * Math.PI * 2, v = w + (i % 2 ? 0.35 : -0.35); sp += `M${r(cx + Math.cos(v) * 0.035)} ${r(-0.34 + Math.sin(v) * 0.035)} L${(cx + Math.cos(w) * 0.29).toFixed(3)} ${(-0.34 + Math.sin(w) * 0.29).toFixed(3)} `; }
+    return `<circle cx="${cx}" cy="-.34" r=".32" fill="none" stroke="#1d1d1d" stroke-width=".05"/><path d="M${cx - 0.3} -.4 A.31 .31 0 0 1 ${cx - 0.06} -.65" stroke="#6a6a6a" stroke-width=".012" fill="none"/>` +
+      `<circle cx="${cx}" cy="-.34" r=".29" fill="none" stroke="${CHROM}" stroke-width=".02"/><path d="${sp}" stroke="#9aa1a6" stroke-width=".006"/><circle cx="${cx}" cy="-.34" r=".035" fill="#8a9196" stroke="#4a4f53" stroke-width=".008"/>`;
+  };
+  g += rad(-0.55) + rad(0.56);
+  /* Schutzbleche */
+  g += `<path d="M-.92 -.36 A.38 .38 0 0 1 -.2 -.5 M.22 -.5 A.38 .38 0 0 1 .9 -.44" stroke="#2b2b2b" stroke-width=".03" fill="none"/>`;
+  /* Kette, Kettenblatt, Kurbel und Pedal */
+  g += `<path d="M-.08 -.43 L-.55 -.385 M-.08 -.21 L-.55 -.295" stroke="#5a5f63" stroke-width=".012"/>`;
+  g += `<circle cx="-.08" cy="-.32" r=".11" fill="none" stroke="#7a8084" stroke-width=".02" stroke-dasharray=".012 .008"/><circle cx="-.08" cy="-.32" r=".03" fill="#4a4f53"/>`;
+  g += `<path d="M-.08 -.32 L.04 -.17" stroke="${CHROM}" stroke-width=".025" stroke-linecap="round"/><rect x="-.01" y="-.19" width=".1" height=".035" fill="#1d1d1d"/>`;
+  /* Rahmen (Damenrahmen mit tiefem Einstieg), Lichtkante oben */
+  const rohr = "M-.55 -.34 L-.08 -.32 L-.22 -.82 M-.55 -.34 L-.22 -.8 M-.08 -.32 Q.18 -.42 .42 -.74 L.4 -.86 M-.12 -.42 Q.12 -.52 .41 -.8 M.42 -.74 Q.47 -.55 .56 -.34";
+  g += `<path d="${rohr}" stroke="${RAHMEN}" stroke-width=".045" fill="none" stroke-linejoin="round" stroke-linecap="round"/><path d="M-.5 -.37 L-.23 -.78 M-.08 -.36 Q.16 -.45 .38 -.74" stroke="#f08a72" stroke-width=".012" fill="none" opacity=".8"/>`;
+  /* Gepäckträger */
+  g += `<path d="M-.55 -.34 L-.66 -.66 M-.78 -.66 L-.26 -.66 M-.26 -.66 L-.22 -.78" stroke="#3a3d40" stroke-width=".018" fill="none"/>`;
+  /* Sattelstütze und schmaler Sattel */
+  g += `<path d="M-.22 -.82 L-.25 -.93" stroke="${CHROM}" stroke-width=".022"/><path d="M-.4 -.95 Q-.26 -.985 -.12 -.955 Q-.13 -.93 -.2 -.925 Q-.32 -.915 -.4 -.95 Z" fill="#2a1d14"/><path d="M-.38 -.955 Q-.26 -.98 -.14 -.958" stroke="#6a5444" stroke-width=".008" fill="none"/>`;
+  /* Vorbau, geschwungener Lenker, Griff, Lampe */
+  g += `<path d="M.4 -.86 L.38 -.98 Q.3 -1.01 .24 -.96" stroke="${CHROM}" stroke-width=".022" fill="none" stroke-linecap="round"/><path d="M.24 -.96 L.19 -.94" stroke="#1d1d1d" stroke-width=".04" stroke-linecap="round"/>`;
+  g += `<path d="M.44 -.8 L.5 -.8 L.52 -.77 L.44 -.76 Z" fill="#e8e2c8" stroke="#3a3d40" stroke-width=".008"/>`;
   S.teil({ id: "fahrrad", de: "das Fahrrad", syl: "FAHR-rad", it: "la bicicletta", itSyl: "bi-ci-CLET-ta", en: "bicycle", x: r(x), y: r(y), steht: true,
-    kunst: `<g transform="scale(${u.toFixed(4)})">${g}</g>`, tipp: "Am Lenker hängt ein Zwiebelzopf. Viele Studenten fahren in Weimar Fahrrad." });
+    kunst: `<g transform="scale(${u.toFixed(4)})">${g}</g>`, tipp: "Das Fahrrad lehnt an der Litfaßsäule. Viele Studenten fahren in Weimar Fahrrad." });
 }
 
 /* =====================================================================
@@ -843,20 +868,37 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
     tipp: "Goethe und Schiller haben in Weimar viele berühmte Bücher geschrieben." });
 }
 {
-  /* DIE FAMILIE: Mutter und Kind vom Zwiebelmarkt, das Kind trägt einen kleinen Zwiebelzopf um den Hals */
-  const MU = mensch("MU", { id: "wmr_mutter", geschlecht: "w", blick: -20, frisur: "pony", haarfarbe: "hellbraun", haut: "hell", laecheln: true, pose: "gehen",
-    kleidung: { oberteil: { stueck: "pullover", farbe: "rosa" }, jacke: { stueck: "mantel", farbe: "gruen_d" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.68, 7.0, 3.0, 2, 0.5);
-  const KI = mensch("KI", { id: "wmr_kind", alter: "kind", geschlecht: "w", blick: -26, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true, pose: "gehen",
-    kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "hose", farbe: "jeans" }, schuhe: { stueck: "gummistiefel" }, kopf: { stueck: "muetze", farbe: "blau" } } }, 1.18, 6.8, 3.9, 2, 0.5);
-  bodenSchatten(7.0, 3.0, 0.45, 1.68, 0.26);
-  bodenSchatten(6.8, 3.9, 0.35, 1.18, 0.26);
-  /* kleiner Zopf als Kette um den Hals des Kindes */
-  const hals = KI.p(KI.m.z.kopf);
-  const kette = `<path d="M${r(hals.x - KI.x - 2.2)} ${r(hals.y - KI.y + 4)} Q${r(hals.x - KI.x)} ${r(hals.y - KI.y + 9)} ${r(hals.x - KI.x + 2.2)} ${r(hals.y - KI.y + 4)}" stroke="#c4a86a" stroke-width=".4" fill="none"/>` +
-    [[-1.4, 6.6], [0, 7.6], [1.4, 6.6]].map(([dx, dy], i) => `<use href="#${S.id("knolle")}" fill="url(#${S.id(i === 1 ? "zwrot" : "zwgelb")})" transform="translate(${r(hals.x - KI.x + dx)} ${r(hals.y - KI.y + dy)}) scale(1.1)"/>`).join("");
+  /* DIE FAMILIE: Mutter und Kind kommen Hand in Hand vom Zwiebelmarkt. Die Mutter (senfgelber Mantel, Tasche)
+     trägt einen großen Zopf über dem rechten Unterarm; das Kind trägt einen kleinen Zopf als Kette. */
+  const MD = 7.0, MX = 2.9;
+  const MU = mensch("MU", { id: "wmr_mutter", geschlecht: "w", blick: -16, frisur: "pony", haarfarbe: "hellbraun", haut: "hell", laecheln: true,
+    pose: { roll: 1.4, lende: 3, brust: -1, brustDreh: 4, nacken: 5, kopf: 6,
+      schulterL: { vor: 4, seit: 16 }, ellbogenL: 10, unterarmL: 10, handL: 4, fingerL: 0.7,
+      schulterR: { vor: 22, seit: 9 }, ellbogenR: 78, unterarmR: 20, handR: 6, fingerR: 0.6,
+      huefteL: { vor: 12, seit: 2, dreh: -5 }, knieL: 6, fussL: 0, huefteR: { vor: -10, seit: 2, dreh: -5 }, knieR: 18, fussR: 10 },
+    kleidung: { oberteil: { stueck: "rollkragen", farbe: "creme" }, jacke: { stueck: "mantel", farbe: "#c99a34" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.68, MD, MX, 1.5, 0.45);
+  const KI = mensch("KI", { id: "wmr_kind", alter: "kind", geschlecht: "w", blick: -22, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true,
+    pose: { roll: -1, lende: 2, brust: -1, nacken: 0, kopf: -6,
+      schulterL: { vor: 10, seit: 7 }, ellbogenL: 18, unterarmL: 10, handL: 6, fingerL: 0.4,
+      schulterR: { vor: 6, seit: 34 }, ellbogenR: 8, unterarmR: 10, handR: 2, fingerR: 0.7,
+      huefteL: { vor: -12, seit: 2, dreh: -5 }, knieL: 16, fussL: 8, huefteR: { vor: 12, seit: 2, dreh: -5 }, knieR: 6, fussR: 0 },
+    kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "jeans" }, schuhe: { stueck: "gummistiefel" }, kopf: { stueck: "muetze", farbe: "rot" } } }, 1.18, MD - 0.05, MX + 0.6, 1.5, 0.45);
+  /* das Kind so stellen, dass seine rechte Hand in der linken Hand der Mutter liegt */
+  const hm = MU.p(MU.m.z.handL), hk = KI.p(KI.m.z.handR);
+  KI.x = r(KI.x + hm.x - hk.x + 0.15);
+  bodenSchatten(MD, MX, 0.45, 1.68, 0.26);
+  bodenSchatten(MD - 0.05, (KI.x - CX) / sk(MD - 0.05), 0.35, 1.18, 0.26);
+  /* großer Zopf über dem rechten Unterarm der Mutter */
+  const hr = MU.p(MU.m.z.handR), uk = sk(MD);
+  const armZopf = zopf(hr.x - KI.x + 0.6 * uk * 0.06, hr.y - KI.y - 0.02 * uk, 0.55, uk, 0.3, 57);
+  /* kleiner Zopf als Kette um den Hals des Kindes: 6 Zwiebeln, gelb und rot, an einer Bastschnur */
+  const hals = KI.p(KI.m.z.kopf), hx = hals.x - KI.x, hy = hals.y - KI.y;
+  const kette = `<path d="M${r(hx - 2.3)} ${r(hy + 3.8)} Q${r(hx)} ${r(hy + 10.4)} ${r(hx + 2.3)} ${r(hy + 3.8)}" stroke="#c4a86a" stroke-width=".45" fill="none"/>` +
+    [[-1.9, 5.8], [-1.1, 7.2], [0, 7.9], [1.1, 7.2], [1.9, 5.8], [0, 9.3]].map(([dx, dy], i) => `<use href="#${S.id("knolle")}" fill="url(#${S.id(i % 2 ? "zwrot" : "zwgelb")})" transform="translate(${r(hx + dx)} ${r(hy + dy)}) scale(1.05)"/>`).join("") +
+    `<circle cx="${r(hx - 0.5)}" cy="${r(hy + 8.4)}" r=".35" fill="#e8c34a"/><circle cx="${r(hx + 0.6)}" cy="${r(hy + 8.6)}" r=".35" fill="#c9354a"/>`;
   S.teil({ id: "familie", de: "die Familie", syl: "fa-MI-lie", it: "la famiglia", itSyl: "fa-MI-glia", en: "family", x: KI.x, y: KI.y,
-    kunst: `<g transform="translate(${r(MU.x - KI.x)} ${r(MU.y - KI.y)})">${MU.svg}</g>${KI.svg}${kette}`,
-    tipp: "Die Familie war auf dem Zwiebelmarkt. Das Kind trägt einen kleinen Zwiebelzopf als Kette." });
+    kunst: `<g transform="translate(${r(MU.x - KI.x)} ${r(MU.y - KI.y)})">${MU.svg}</g>${armZopf}${KI.svg}${kette}`,
+    tipp: "Mutter und Kind kommen Hand in Hand vom Zwiebelmarkt. Das Kind trägt einen kleinen Zwiebelzopf als Kette." });
 }
 
 /* Der Platz: Granitpflaster mit Fugen zum Fluchtpunkt, Steintextur, Lindenblätter, alle Schatten */
