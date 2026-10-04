@@ -439,7 +439,7 @@ const SCHLEIER = [];
     for (let i = 0; i <= 6; i++) { const t = i / 6, w = b * (1 - t * 0.45) * (0.85 + z() * 0.3), x = x0 + neig * t * t, y = y0 - hoch * t; li.push([x - w / 2 - z() * 3, y]); re.push([x + w / 2 + z() * 3, y]); }
     return glatt([...li, ...re.reverse()], true, 0.9);
   };
-  const lagen = [[262, 136, 70, 92, 26, 0.55, 1], [290, 132, 54, 104, 36, 0.4, 2], [236, 138, 44, 70, 18, 0.35, 3], [318, 134, 50, 70, 30, 0.3, 4], [276, 120, 36, 112, 46, 0.18, 5]];
+  const lagen = [[262, 138, 76, 92, 26, 0.8, 1], [292, 134, 58, 104, 36, 0.62, 2], [234, 140, 46, 70, 18, 0.55, 3], [322, 136, 54, 72, 30, 0.5, 4], [278, 122, 38, 114, 46, 0.32, 5]];
   let k = "";
   for (const [x, y, b, h, ne, a, sd] of lagen) { const d = schleier(x, y, b, h, ne, sd); SCHLEIER.push(d); k += `<path d="${d}" fill="${S.lg("schleier", [[0, "#fff0d6"], [0.45, "#f4ede4"], [1, "#c9d3dc"]], 0, 0, 1, 0)}" opacity="${a}"/>`; }
   k = `<g filter="url(#${S.id("nebel")})">${k}</g>`;
@@ -481,54 +481,53 @@ const SCHLEIER = [];
    ===================================================================== */
 const BOOT = {};
 {
-  /* Wasserlinie bei (E 270, N −40): Abstand ≈ 275 m, 30 m lang, Kurs nach Südosten (ins Hufeisen) */
-  const [bx, by] = W(270, -40, UNTEN);
-  const m = F / tiefe(270, -40);                   /* Einheiten je Meter ≈ 0,87 */
-  const L = 30 * m * 0.82, H1 = 3.2 * m, H2 = 2.6 * m, sch = 0.3;   /* von der Seite, leicht von hinten */
+  /* Katamaran, 30 m lang, 10 m breit, im Raum gebaut (wir schauen rund 15° von oben): Kurs vom Anleger in die Gischt */
+  const C = [185, 25], AX = [0.482, -0.877], QX = [0.877, 0.482];
+  const pt = (a, q, u) => W(C[0] + AX[0] * a + QX[0] * q, C[1] + AX[1] * a + QX[1] * q, UNTEN + u);
+  const umriss = (u, ein = 0) => { const o = []; for (const [a, q] of [[-15, -5], [9, -5], [13, -3.4], [15.5, 0], [13, 3.4], [9, 5], [-15, 5]]) o.push(pt(a - (a > 0 ? ein : -ein) * 0.2, q - Math.sign(q) * ein, u)); return o; };
   let k = "";
-  /* Kielwasser hinter dem Boot (nach links), Bugwelle */
-  k += `<g filter="url(#${S.id("weich")})"><path d="M${r(bx - L * 0.5)} ${r(by - 0.3)} Q${r(bx - L * 1.2)} ${r(by + 1.6)} ${r(bx - L * 2.2)} ${r(by + 5.4)} L${r(bx - L * 2.3)} ${r(by + 2.6)} Q${r(bx - L * 1.3)} ${r(by - 0.4)} ${r(bx - L * 0.5)} ${r(by - 1)} Z" fill="#eef6f2" opacity=".6"/></g>`;
-  k += `<path d="M${r(bx - L * 0.5)} ${r(by + 0.4)} Q${r(bx - L * 1.3)} ${r(by + 2.6)} ${r(bx - L * 2.1)} ${r(by + 5.8)} M${r(bx - L * 0.5)} ${r(by - 0.6)} Q${r(bx - L * 1.4)} ${r(by - 1)} ${r(bx - L * 2.2)} ${r(by + 0.8)}" stroke="#ffffff" stroke-width=".4" fill="none" opacity=".7"/>`;
-  k += `<path d="M${r(bx + L * 0.42)} ${r(by)} q${r(2)} ${r(-0.8)} ${r(4)} ${r(0.6)}" stroke="#fff" stroke-width=".7" fill="none"/>`;
-  /* Rümpfe (Katamaran): weiß mit dunkelblauem Streifen; Heckansicht links */
-  const x0 = bx - L / 2, x1 = bx + L / 2;
-  k += `<path d="M${r(x0)} ${r(by - H1)} L${r(x1 - 1.4)} ${r(by - H1)} Q${r(x1 + 0.6)} ${r(by - H1 * 0.6)} ${r(x1 - 0.6)} ${r(by)} L${r(x0 + 0.4)} ${r(by)} Z" fill="${S.lg("rumpf", [[0, "#ffffff"], [1, "#d8dde2"]])}"/>`;
-  k += `<path d="M${r(x0)} ${r(by - H1 * 0.36)} L${r(x1 - 0.2)} ${r(by - H1 * 0.36)} L${r(x1 - 0.4)} ${r(by - H1 * 0.12)} L${r(x0 + 0.3)} ${r(by - H1 * 0.12)} Z" fill="#1f3a6a"/>`;
-  k += `<path d="M${r(x0 - 2.4)} ${r(by - H1 + 0.5)} L${r(x0)} ${r(by - H1)} L${r(x0 + 0.4)} ${r(by)} L${r(x0 - 2.2)} ${r(by + 0.4)} Z" fill="#b9c2cc"/><path d="M${r(x0 - 2.3)} ${r(by - 0.6)} L${r(x0 + 0.3)} ${r(by - 0.9)}" stroke="#1f3a6a" stroke-width=".5"/>`;
-  /* Unterdeck: Fenster, Fahrgäste in roten Capes dicht an der Reling */
-  const yD = by - H1, yO = yD - H2;
-  k += `<path d="M${r(x0 + 0.6)} ${r(yD)} L${r(x1 - 2)} ${r(yD)} L${r(x1 - 2.6)} ${r(yO)} L${r(x0 + 0.6)} ${r(yO)} Z" fill="#f2f4f6"/>`;
-  const zb = zufall(81); let capes = "";
-  let koepfe = "";
-  for (let x = x0 + 1.2; x < x1 - 3; x += 0.9 + zb() * 0.4) { capes += `<path d="M${r(x - 0.42)} ${r(yD - 0.2)} L${r(x - 0.3)} ${r(yD - 1.5)} Q${r(x)} ${r(yD - 2.05)} ${r(x + 0.3)} ${r(yD - 1.5)} L${r(x + 0.42)} ${r(yD - 0.2)} Z"/>`; if (zb() < 0.4) koepfe += `<circle cx="${r(x + 0.05)}" cy="${r(yD - 1.75)}" r=".2"/>`; }
-  k += `<g fill="#d0242c">${capes}</g><g fill="#e2b48e">${koepfe}</g>`;
-  k += `<path d="M${r(x0 + 0.6)} ${r(yD - 0.9)} H${r(x1 - 2.2)}" stroke="#9aa3ab" stroke-width=".25"/>`;
-  /* Oberdeck: offen, Reling, noch mehr rote Capes */
-  const yT = yO - 2.2;
-  capes = "";
-  koepfe = "";
-  for (let x = x0 + 2; x < x1 - 4.2; x += 0.85 + zb() * 0.4) { capes += `<path d="M${r(x - 0.4)} ${r(yO - 0.1)} L${r(x - 0.28)} ${r(yO - 1.5)} Q${r(x)} ${r(yO - 2.05)} ${r(x + 0.28)} ${r(yO - 1.5)} L${r(x + 0.4)} ${r(yO - 0.1)} Z"/>`; if (zb() < 0.4) koepfe += `<circle cx="${r(x + 0.05)}" cy="${r(yO - 1.75)}" r=".19"/>`; }
-  k += `<g fill="#e0303a">${capes}</g><g fill="#e2b48e">${koepfe}</g>`;
-  /* Reling: Pfosten und Handlauf (Ober- und Unterdeck) */
-  let pf = "";
-  for (let x = x0 + 1; x < x1 - 2.4; x += 1.6) pf += `M${r(x)} ${r(yD)} v-1M${r(x + 0.8)} ${r(yO)} v-1`;
-  k += `<path d="${pf}" stroke="#ffffff" stroke-width=".14" opacity=".9"/>`;
-  k += `<path d="M${r(x0 + 1.4)} ${r(yO - 0.8)} H${r(x1 - 3.6)}" stroke="#fff" stroke-width=".3"/>`;
-  /* Steuerhaus vorn oben */
-  k += `<path d="M${r(x1 - 9)} ${r(yO)} L${r(x1 - 4.4)} ${r(yO)} L${r(x1 - 5.2)} ${r(yO - 2.6)} L${r(x1 - 9)} ${r(yO - 2.6)} Z" fill="#f6f7f8"/><path d="M${r(x1 - 8.6)} ${r(yO - 2.2)} h3.2 v1 h-3.2 Z" fill="#2c3e50"/>`;
-  /* Flagge am Heck: rot-weiß-rot mit Ahornblatt */
-  const fx = x0 + 0.6, fy = yO - 4.6;
-  k += `<path d="M${r(fx)} ${r(yO)} V${r(fy - 0.2)}" stroke="#555" stroke-width=".25"/>`;
-  k += `<path d="M${r(fx)} ${r(fy)} h3.4 v1.8 h-3.4 Z" fill="#fff"/><path d="M${r(fx)} ${r(fy)} h.85 v1.8 h-.85 Z M${r(fx + 2.55)} ${r(fy)} h.85 v1.8 h-.85 Z" fill="#d52b1e"/><circle cx="${r(fx + 1.7)}" cy="${r(fy + 0.9)}" r=".42" fill="#d52b1e"/>`;
-  BOOT.cape = [bx - 2, yD - 1]; BOOT.deck = [bx - 1, yO - 0.6];
+  /* Kielwasser (zwei Bahnen der Rümpfe) nach hinten, Bugwelle */
+  const kw = (q) => `M${pt(-15, q, 0).map(r).join(" ")} Q${pt(-40, q * 1.6, 0).map(r).join(" ")} ${pt(-70, q * 3, 0).map(r).join(" ")}`;
+  k += `<g filter="url(#${S.id("weich")})"><path d="${P([pt(-15, -5, 0), pt(-75, -16, 0), pt(-75, 16, 0), pt(-15, 5, 0)])}" fill="#eaf4f0" opacity=".45"/></g>`;
+  k += `<path d="${kw(-4)} ${kw(4)}" stroke="#ffffff" stroke-width=".55" fill="none" opacity=".8"/>`;
+  k += `<path d="M${pt(12, -6, 0).map(r).join(" ")} Q${pt(16.5, 0, 0).map(r).join(" ")} ${pt(12, 6.4, 0).map(r).join(" ")}" stroke="#ffffff" stroke-width=".8" fill="none"/>`;
+  /* Rumpf: weiß, dunkelblaues Band an der Wasserlinie */
+  const wl = umriss(0), dk = umriss(3.2), od = umriss(5.6, 0.6);
+  k += `<path d="${P(wl)}" fill="#1f3a6a"/><path d="${P(umriss(0.8))}" fill="${S.lg("rumpf", [[0, "#ffffff"], [1, "#d6dce2"]])}"/>`;
+  k += `<path d="${P(dk)}" fill="#f2f4f6"/>`;
+  /* Unterdeck-Fenster als dunkler Streifen an der Seite zu uns (Backbord) */
+  k += `<path d="${P([pt(-13, -5, 1.4), pt(8, -5, 1.4), pt(8, -5, 2.6), pt(-13, -5, 2.6)])}" fill="#2c3e50" opacity=".85"/>`;
+  /* Oberdeck von oben: hellgrauer Boden, dicht gedrängte Fahrgäste in roten Capes */
+  k += `<path d="${P(od)}" fill="#dfe3e6"/>`;
+  const zb = zufall(81); let capes = "", koepfe = "";
+  for (let a = -13; a < 9; a += 1.15) for (let q = -3.8; q <= 3.8; q += 1.2) {
+    if (zb() < 0.12 || (a > 3 && Math.abs(q) < 2)) continue;
+    const [x, y] = pt(a + (zb() - 0.5) * 0.4, q + (zb() - 0.5) * 0.3, 6.2);
+    capes += `<ellipse cx="${r(x)}" cy="${r(y)}" rx=".55" ry=".45"/>`;
+    if (zb() < 0.45) koepfe += `<circle cx="${r(x + 0.05)}" cy="${r(y - 0.35)}" r=".22"/>`;
+  }
+  k += `<g fill="#d8262e">${capes}</g><g fill="#a81a20" opacity=".5">${capes.replace(/ry="\.45"/g, 'ry=".2"').replace(/cy="([\d.]+)"/g, (m0, v) => `cy="${r(+v + 0.25)}"`)}</g><g fill="#e2b48e">${koepfe}</g>`;
+  /* Reling um das Oberdeck */
+  k += `<path d="${P(umriss(6.6, 0.6))}" fill="none" stroke="#ffffff" stroke-width=".3"/>`;
+  /* Steuerhaus vorn */
+  const sh = [pt(4, -2, 5.6), pt(8, -2, 5.6), pt(8, 2, 5.6), pt(4, 2, 5.6)], shO = [pt(4, -2, 8), pt(8, -2, 8), pt(8, 2, 8), pt(4, 2, 8)];
+  k += `<path d="${P([sh[0], sh[1], shO[1], shO[0]])}" fill="#f6f7f8"/><path d="${P(shO)}" fill="#e9ecef"/><path d="${P([pt(5, -2, 6.6), pt(7.6, -2, 6.6), pt(7.6, -2, 7.6), pt(5, -2, 7.6)])}" fill="#2c3e50"/>`;
+  /* Flagge am Heck: rot-weiß-rot, in der Mitte ein spitzes Ahornblatt */
+  const [fx, fy0] = pt(-14.6, 0, 6), fy = fy0 - 6;
+  k += `<path d="M${r(fx)} ${r(fy0)} V${r(fy - 0.2)}" stroke="#555" stroke-width=".3"/>`;
+  k += `<path d="M${r(fx)} ${r(fy)} h4.4 v2.2 h-4.4 Z" fill="#fff"/><path d="M${r(fx)} ${r(fy)} h1.1 v2.2 h-1.1 Z M${r(fx + 3.3)} ${r(fy)} h1.1 v2.2 h-1.1 Z" fill="#d52b1e"/>`;
+  k += `<path d="M${r(fx + 2.2)} ${r(fy + 0.25)} l.28 .5 l.32 -.12 l-.1 .56 l.3 .1 l-.42 .34 l.06 .3 h-.88 l.06 -.3 l-.42 -.34 l.3 -.1 l-.1 -.56 l.32 .12 Z" fill="#d52b1e"/>`;
+  const [cx, cy] = pt(-6, -4.6, 3.6), [dx, dy] = pt(-4, 0, 6.2);
+  BOOT.cape = [cx, cy]; BOOT.deck = [dx, dy];
   const unter = [
-    { id: "regencape", de: "das Regencape", syl: "RE-gen-cape", it: "la mantella", itSyl: "man-TEL-la", en: "rain poncho", x: BOOT.cape[0], y: BOOT.cape[1], kunst: flaeche(-9, -1.6, 18, 2.6),
+    { id: "regencape", de: "das Regencape", syl: "RE-gen-cape", it: "la mantella", itSyl: "man-TEL-la", en: "rain poncho", x: BOOT.cape[0], y: BOOT.cape[1], kunst: flaeche(-6, -2.4, 12, 3.2),
       tipp: "Auf den kanadischen Booten bekommen alle ein rotes Regencape, auf den amerikanischen ein blaues." },
-    { id: "deck", de: "das Deck", syl: "DECK", it: "il ponte", itSyl: "PON-te", en: "deck", x: BOOT.deck[0], y: BOOT.deck[1], kunst: flaeche(-8, -2.2, 16, 2.4),
+    { id: "deck", de: "das Deck", syl: "DECK", it: "il ponte", itSyl: "PON-te", en: "deck", x: BOOT.deck[0], y: BOOT.deck[1], kunst: flaeche(-5, -1.8, 10, 2.6),
       tipp: "Auf dem oberen Deck steht man im Freien. Dort wird man von der Gischt am nassesten." },
   ];
-  S.teil({ id: "boot", de: "das Boot", syl: "BOOT", it: "la barca", itSyl: "BAR-ca", en: "boat", x: bx, y: by - 4, kunst: um(bx, by - 4, k),
-    zoom: { x: bx - 26, y: by - 22, w: 48, h: 32 }, unter,
+  const [bx, by] = pt(0, 0, 3);
+  S.teil({ id: "boot", de: "das Boot", syl: "BOOT", it: "la barca", itSyl: "BAR-ca", en: "boat", x: bx, y: by, kunst: um(bx, by, k),
+    zoom: { x: bx - 30, y: by - 22, w: 60, h: 40 }, unter,
     tipp: "Das Boot fährt ganz nah an die Hufeisenfälle heran – mitten in die Gischt." });
 }
 
@@ -559,9 +558,9 @@ const BOOT = {};
     return o + `</g>`;
   };
   let k = "";
-  const keil = [[92, 60, 0], [83, 55.6, 1], [101, 55, 1], [74, 51.4, 0], [110, 50.4, 0], [65, 47.4, 1], [119, 46, 1]];
+  const keil = [[176, 62, 0], [168, 57.6, 1], [168, 66.4, 1], [160, 53.2, 0], [160, 70.8, 0], [152, 48.8, 1], [152, 75.2, 1], [144, 44.4, 0], [144, 79.6, 1]];
   for (const [x, y, fl] of keil) k += gans(x, y, 1.05, fl ? 1 : -0.6);
-  S.teil({ oben: true, id: "kanadagans", de: "die Kanadagans", syl: "KA-na-da-gans", it: "l'oca canadese", itSyl: "O-ca ca-na-DE-se", en: "Canada goose", x: 92, y: 54, kunst: um(92, 54, k),
+  S.teil({ oben: true, id: "kanadagans", de: "die Kanadagans", syl: "KA-na-da-gans", it: "l'oca canadese", itSyl: "O-ca ca-na-DE-se", en: "Canada goose", x: 162, y: 62, kunst: um(162, 62, k),
     tipp: "Im Herbst fliegen die Kanadagänse in einem Keil nach Süden. Dabei rufen sie laut." });
 }
 
@@ -629,7 +628,7 @@ const KAPPE = 219, FRONT = 244;     /* Hinterkante der Abdeckplatten, Vorderkant
   let pk = "";
   for (let i = 0; i < 70; i++) { const x = zm() * 400, yy = KAPPE + 2 + zm() * (FRONT - KAPPE - 2); pk += `<circle cx="${r(x)}" cy="${r(yy)}" r="${r(0.15 + zm() * 0.35)}"/>`; }
   k += `<g fill="#8f7f66" opacity=".5">${pk}</g>`;
-  for (const [x, yy, rr] of [[34, 214, 4], [252, 206, 2.4], [372, 222, 3.6]]) k += `<ellipse cx="${x}" cy="${yy}" rx="${rr}" ry="${r(rr * 0.5)}" fill="#c6bf86" opacity=".55"/>`;
+  for (const [x, yy, rr] of [[34, 232, 4], [262, 226, 2.4], [150, 238, 3.2]]) k += `<ellipse cx="${x}" cy="${yy}" rx="${rr}" ry="${r(rr * 0.5)}" fill="#c6bf86" opacity=".55"/>`;
   S.teil({ id: "mauer", de: "die Mauer", syl: "MAU-er", it: "il muretto", itSyl: "mu-RET-to", en: "wall", x: 200, y: 230, kunst: um(200, 230, kappeRand(k)),
     tipp: "Die Mauer schützt die Besucher an der Kante. Dahinter geht es 50 Meter in die Tiefe." });
 }
@@ -672,7 +671,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
    14 — DER AHORNSIRUP (Flasche in Blattform), 15 — DIE TÜTE, 16 — DIE FLAGGE
    ===================================================================== */
 {
-  const X = 286, Y = 214;
+  const X = 288, Y = 236;
   /* Flasche: Ahornblatt-Form aus Glas, darin goldbrauner Sirup, rote Kappe */
   const form = [[0, -30], [3, -26], [4, -24], [8, -26], [7, -21], [13, -22], [11, -17], [15, -14], [10, -12], [11, -6], [6, -7], [4, -1], [-4, -1], [-6, -7], [-11, -6], [-10, -12], [-15, -14], [-11, -17], [-13, -22], [-7, -21], [-8, -26], [-4, -24], [-3, -26]].map(([a, b]) => [a, b * 1.0]);
   let k = kappenSchatten(X - 13, X + 13, Y);
@@ -688,7 +687,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
     tipp: "Ahornsirup wird aus dem Saft des Zuckerahorns gekocht. Für einen Liter Sirup braucht man etwa 40 Liter Saft." });
 }
 {
-  const X = 334, Y = 217;
+  const X = 338, Y = 238;
   let k = kappenSchatten(X - 15, X + 15, Y);
   /* Papiertüte mit Ahornblatt, Kordelgriffe */
   let t = `<path d="M${X - 15} ${Y} L${X - 13.6} ${Y - 40} L${X + 12.6} ${Y - 40} L${X + 15} ${Y} Z" fill="${S.lg("tuete", [[0, "#e7e1d4"], [0.6, "#fbf8f2"], [1, "#ece6d8"]], 0, 0, 1, 0)}"/>`;
@@ -718,7 +717,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
    17 — DAS EICHHÖRNCHEN (schwarzes Grauhörnchen) auf der Mauer, rechts
    ===================================================================== */
 {
-  const X = 378, Y = 222;
+  const X = 382, Y = 242;
   let k = kappenSchatten(X - 9, X + 7, Y);
   /* buschiger Schwanz hinter dem Rücken, hoch aufgestellt und oben eingerollt */
   const schw = [[X + 3, Y - 2], [X + 11, Y - 6], [X + 15, Y - 16], [X + 14, Y - 28], [X + 9, Y - 37], [X + 2, Y - 40], [X - 2, Y - 37], [X + 1, Y - 34], [X + 6, Y - 33], [X + 8, Y - 26], [X + 7, Y - 16], [X + 2, Y - 8]];
@@ -747,11 +746,11 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
    ===================================================================== */
 {
   let k = "";
-  for (const [x, y, s0, w, c] of [[196, 214, 11, 0.4, "#d8301e"], [238, 206, 8.5, -0.9, "#f08a2c"]]) {
+  for (const [x, y, s0, w, c] of [[206, 234, 11, 0.4, "#d8301e"], [246, 228, 8.5, -0.9, "#f08a2c"]]) {
     k += `<g transform="translate(${x} ${y}) scale(1 .5) translate(${-x} ${-y})">${blatt(x, y, s0, w, c)}</g>`;
     k += `<ellipse cx="${x - 1}" cy="${y + 2.6}" rx="${r(s0 * 0.8)}" ry="${r(s0 * 0.16)}" fill="#5a3c22" opacity=".25"/>`;
   }
-  S.teil({ oben: true, id: "ahornblatt", de: "das Ahornblatt", syl: "A-horn-blatt", it: "la foglia d'acero", itSyl: "FO-glia d'A-ce-ro", en: "maple leaf", x: 216, y: 210, kunst: um(216, 210, `<g filter="${VOL_KLEIN}">${k}</g>`),
+  S.teil({ oben: true, id: "ahornblatt", de: "das Ahornblatt", syl: "A-horn-blatt", it: "la foglia d'acero", itSyl: "FO-glia d'A-ce-ro", en: "maple leaf", x: 226, y: 231, kunst: um(226, 231, `<g filter="${VOL_KLEIN}">${k}</g>`),
     tipp: "Das Ahornblatt ist das Zeichen Kanadas. Man sieht es auf der Flagge und auf vielen Andenken." });
 }
 
