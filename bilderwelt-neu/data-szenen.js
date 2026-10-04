@@ -2183,6 +2183,17 @@ window.DMA_SZENEN = [
   "stellen": 1
  },
  {
+  "id": "tiere_savanne",
+  "titel": "Tiere der Savanne",
+  "emoji": "🦒",
+  "thema": "Tiere",
+  "breite": 320,
+  "hoehe": 200,
+  "zahl": 18,
+  "lupen": [],
+  "stellen": 0
+ },
+ {
   "id": "viertel_innenstadt",
   "titel": "Die Innenstadt",
   "emoji": "🏬",

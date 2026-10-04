@@ -39,52 +39,53 @@ function pfote(T, fessel, spitze, breite, o = {}) {
   const L = (spitze[0] - fessel[0]) * (o.lang || 1) + wb * 0.5;
   const x0 = fessel[0] - wa * 1.05, xs = fessel[0] + L + wb * 0.15;     // Ballen hinten … Zehenspitze vorn
   const H = Math.max(h * 1.15, wb * 1.6);                    // Pfotenhöhe an den Zehen
-  /* drei Zehenwölbungen (vorn: Zehe III/IV am weitesten vorn, dahinter V) */
-  const k = [[0.28, 0.98], [0.56, 0.86], [0.86, 0.66]];     // [Anteil der Länge ab Fessel, Höhe der Wölbung]
+  /* Seitenansicht (Hund/Wolf): zwei Zehenknöchel sichtbar – vorn Zehe IV (davor verdeckt III), dahinter, etwas tiefer,
+     die äußere Zehe V; die Zehen sind gewölbt (Knöchel oben, Spitze fällt zum Boden), die Ballen liegen UNTER der Pfote
+     (man sieht nur einen dunklen Saum am Boden), die Krallen kommen vorn aus dem Fell und stoßen schräg in den Boden. */
+  const k = [[0.34, 0.9], [0.7, 0.98]];                    // [Anteil der Länge ab Fessel, Höhe des Knöchels]
   const P = (u, v) => [fessel[0] + (xs - fessel[0]) * u, -H * v];
   const pts = [[fessel[0] + wb, fessel[1] - wb * 0.3]];
-  pts.push(P(k[0][0] - 0.1, k[0][1] * 1.02), P(k[0][0], k[0][1]), P(k[0][0] + 0.11, k[0][1] - 0.18));
-  pts.push(P(k[1][0] - 0.06, k[1][1] * 1.01), P(k[1][0], k[1][1] * 0.98), P(k[1][0] + 0.11, k[1][1] - 0.2));
-  pts.push(P(k[2][0] - 0.05, k[2][1] * 1.0), P(k[2][0], k[2][1] * 0.95), P(1.0, 0.38), P(1.02, 0.16));
-  pts.push([xs - (xs - fessel[0]) * 0.04, 0, 1]);           // Zehenballen vorn am Boden (harte Ecke)
-  pts.push([x0 + wa * 0.35, 0, 1]);                          // Mittelhandballen hinten am Boden
-  pts.push([x0 - wa * 0.05, -H * 0.38], [x0 + wa * 0.15, -H * 0.85], [fessel[0] - wa, fessel[1] + wa * 0.1]);
+  pts.push(P(k[0][0] - 0.1, k[0][1] * 0.98), P(k[0][0] + 0.02, k[0][1]), P(k[0][0] + 0.15, k[0][1] - 0.16));   // Zehe V
+  pts.push(P(k[1][0] - 0.08, k[1][1] * 0.97), P(k[1][0] + 0.04, k[1][1] * 0.94), P(0.96, 0.62), P(1.02, 0.3));    // Zehe IV
+  pts.push([xs - (xs - fessel[0]) * 0.03, -H * 0.04]);       // Zehenballen vorn, knapp über dem Boden gerundet
+  pts.push([x0 + wa * 0.4, 0, 1]);                           // Mittelhandballen hinten am Boden
+  pts.push([x0 - wa * 0.02, -H * 0.36], [x0 + wa * 0.18, -H * 0.84], [fessel[0] - wa, fessel[1] + wa * 0.1]);
   let s = "";
   const kr = o.krallen === undefined ? "#16110c" : o.krallen;
-  /* Krallen: aus dem Fell an jeder Zehenspitze, kurz, dick, stumpf, schräg nach vorn unten zum Boden */
-  const kralle = (u, v, gr) => {
-    const [bx, by] = P(u, v), Lk = H * 0.55 * gr, w0 = H * 0.17 * gr;
-    return `M${Z(bx - w0 * 0.3)} ${Z(by - w0 * 0.5)}q${Z(Lk * 0.55)} ${Z(-w0 * 0.25)} ${Z(Lk * 0.85)} ${Z(Lk * 0.62)}l${Z(-Lk * 0.1)} ${Z(-Lk * 0.02)}q${Z(-Lk * 0.25)} ${Z(-Lk * 0.42)} ${Z(-Lk * 0.78)} ${Z(-Lk * 0.42)}z`;
+  /* Krallen: kurz, dick, stumpf – aus dem Fell vorn an der Zehe, schräg nach vorn unten bis in den Boden */
+  const kralle = (u, gr) => {
+    const [bx, by] = P(u, 0.36), Lk = H * 0.42 * gr, w0 = H * 0.13 * gr;
+    return `M${Z(bx - w0 * 0.2)} ${Z(by - w0)}q${Z(Lk * 0.55)} ${Z(w0 * 0.1)} ${Z(Lk * 0.8)} ${Z(-by + H * 0.01 + w0)}l${Z(-w0 * 0.9)} ${Z(-H * 0.01)}q${Z(-Lk * 0.08)} ${Z(-Lk * 0.35)} ${Z(-Lk * 0.55)} ${Z(by + w0 * 0.2 - H * 0.0)}z`;
   };
   if (kr) {
-    s += `<path d="${kralle(1.0, 0.42, 1) + kralle(k[1][0] + 0.12, k[1][1] * 0.5, 0.85) + (fein ? kralle(k[0][0] + 0.12, k[0][1] * 0.5, 0.7) : "")}" fill="${kr}" fill-opacity="${op2(op)}"/>`;
-    if (fein) s += `<path d="M${Z(P(1.0, 0.42)[0] + H * 0.05)} ${Z(P(1.0, 0.42)[1] - H * 0.04)}q${Z(H * 0.22)} ${Z(-H * 0.02)} ${Z(H * 0.32)} ${Z(H * 0.24)}" stroke="${o.licht || "#fff"}" stroke-width="${Z(H * 0.04)}" fill="none" stroke-opacity="${op2(0.5 * op)}" stroke-linecap="round"/>`;
+    s += `<path d="${kralle(0.97, 1) + kralle(k[0][0] + 0.17, 0.8)}" fill="${kr}" fill-opacity="${op2(op)}"/>`;
+    if (fein && !o.fern) s += `<path d="M${Z(P(0.97, 0.36)[0] + H * 0.04)} ${Z(P(0.97, 0.36)[1] - H * 0.06)}q${Z(H * 0.16)} ${Z(H * 0.01)} ${Z(H * 0.24)} ${Z(H * 0.2)}" stroke="${o.licht || "#fff"}" stroke-width="${Z(H * 0.035)}" fill="none" stroke-opacity="${op2(0.4 * op)}" stroke-linecap="round"/>`;
   }
-  if (!fein) return { pts, svg: s, boden: [x0, xs], spitze: [xs, 0] };
-  /* Zehenfugen: weiche dunkle Kerben zwischen den Wölbungen, von oben bis knapp über den Boden */
-  const fuge = (u0, v0) => { const a = P(u0, v0), b = P(u0 - 0.05, 0.12); return `M${Z(a[0])} ${Z(a[1])}Q${Z(a[0] - (xs - fessel[0]) * 0.04)} ${Z((a[1] + b[1]) / 2)} ${Z(b[0])} ${Z(b[1])}`; };
-  s += `<path d="${fuge(k[0][0] + 0.13, k[0][1] - 0.2) + fuge(k[1][0] + 0.13, k[1][1] - 0.22)}" stroke="#1a120a" stroke-width="${Z(H * 0.07)}" fill="none" stroke-opacity="${op2(0.5 * op)}" stroke-linecap="round"/>`;
-  /* Licht auf jeder Zehenwölbung (oben links) */
-  const lt = (u, v) => { const a = P(u - 0.08, v * 0.92), b = P(u + 0.06, v * 0.95); return `M${Z(a[0])} ${Z(a[1])}Q${Z((a[0] + b[0]) / 2)} ${Z(a[1] - H * 0.08)} ${Z(b[0])} ${Z(b[1])}`; };
-  s += `<path d="${lt(k[0][0], k[0][1]) + lt(k[1][0], k[1][1]) + lt(k[2][0], k[2][1])}" stroke="${o.licht || "#fff"}" stroke-width="${Z(H * 0.09)}" fill="none" stroke-opacity="${op2(0.22 * op)}" stroke-linecap="round"/>`;
-  /* Ballen: dunkle, leicht gewölbte Polster am Boden (Zehenballen vorn, Mittelhandballen hinten) */
-  const bal = o.ballen || "#16110e";
-  const ballen = (xa, xb, hh) => `M${Z(xa)} 0Q${Z(xa)} ${Z(-hh)} ${Z((xa + xb) / 2)} ${Z(-hh)}Q${Z(xb)} ${Z(-hh)} ${Z(xb)} 0z`;
-  const XL = xs - fessel[0];
-  s += `<path d="${ballen(fessel[0] + XL * 0.5, fessel[0] + XL * 0.96, H * 0.16) + ballen(fessel[0] + XL * 0.18, fessel[0] + XL * 0.5, H * 0.14) + ballen(x0 + wa * 0.3, fessel[0] + XL * 0.12, H * 0.2)}" fill="${bal}" fill-opacity="${op2(0.9 * op)}"/>`;
-  /* Fellbüschel über den Zehen (Haare fallen über die Zehenwurzeln) */
+  /* Sohlensaum: die Ballen tragen – ein flacher dunkler Saum am Boden (keine Einzel-„Kissen“ nebeneinander) */
+  const XL = xs - fessel[0], bal = o.ballen || "#16110e";
+  const saum = `M${Z(x0 + wa * 0.35)} 0Q${Z(x0 + wa * 0.3)} ${Z(-H * 0.12)} ${Z(fessel[0])} ${Z(-H * 0.1)}Q${Z(fessel[0] + XL * 0.55)} ${Z(-H * 0.07)} ${Z(fessel[0] + XL * 0.97)} ${Z(-H * 0.05)}L${Z(fessel[0] + XL * 0.97)} 0z`;
+  s += `<path d="${saum}" fill="${bal}" fill-opacity="${op2((fein ? 0.55 : 0.45) * op)}"/>`;
+  if (!fein || o.fern) return { pts, svg: s, boden: [x0, xs], spitze: [xs, 0] };
+  /* Zehenfuge zwischen V und IV: weiche dunkle Kerbe von oben bis knapp über den Boden */
+  const fa = P(k[0][0] + 0.17, k[0][1] - 0.2), fb = P(k[0][0] + 0.13, 0.14);
+  s += `<path d="M${Z(fa[0])} ${Z(fa[1])}Q${Z(fa[0] - XL * 0.05)} ${Z((fa[1] + fb[1]) / 2)} ${Z(fb[0])} ${Z(fb[1])}" stroke="#1a120a" stroke-width="${Z(H * 0.08)}" fill="none" stroke-opacity="${op2(0.42 * op)}" stroke-linecap="round"/>`;
+  /* Licht auf den Knöcheln (von links oben) und Schatten unter der Zehenwölbung */
+  const lt = (u, v) => { const a = P(u - 0.1, v * 0.9), b = P(u + 0.05, v * 0.94); return `M${Z(a[0])} ${Z(a[1])}Q${Z((a[0] + b[0]) / 2)} ${Z(a[1] - H * 0.09)} ${Z(b[0])} ${Z(b[1])}`; };
+  s += `<path d="${lt(k[0][0], k[0][1]) + lt(k[1][0], k[1][1])}" stroke="${o.licht || "#fff"}" stroke-width="${Z(H * 0.1)}" fill="none" stroke-opacity="${op2(0.2 * op)}" stroke-linecap="round"/>`;
+  s += `<path d="M${Z(P(0.05, 0.2)[0])} ${Z(-H * 0.2)}Q${Z(P(0.5, 0.3)[0])} ${Z(-H * 0.3)} ${Z(P(0.95, 0.22)[0])} ${Z(-H * 0.2)}" stroke="#1a120a" stroke-width="${Z(H * 0.16)}" fill="none" stroke-opacity="${op2(0.16 * op)}" stroke-linecap="round"/>`;
+  /* Fellbüschel über den Zehen: Haare fallen über die Zehenwurzeln (Farbe des Laufs, wenig Kontrast) */
   if (o.fell) {
     let d = "";
-    for (let i = 0; i < 9; i++) {
-      const u = 0.1 + i * 0.09, b = P(u, (u < 0.4 ? k[0][1] : u < 0.7 ? k[1][1] : k[2][1]) * 0.98 + 0.05), l = H * (0.3 + T.rnd() * 0.25);
-      d += `M${Z(b[0] - l * 0.4)} ${Z(b[1] - l * 0.5)}q${Z(l * 0.3)} ${Z(l * 0.25)} ${Z(l * 0.55)} ${Z(l * 0.75)}`;
+    for (let i = 0; i < 8; i++) {
+      const u = 0.08 + i * 0.11, b = P(u, (u < 0.52 ? k[0][1] : k[1][1]) * 0.96 + 0.04), l = H * (0.28 + T.rnd() * 0.22);
+      d += `M${Z(b[0] - l * 0.45)} ${Z(b[1] - l * 0.45)}q${Z(l * 0.3)} ${Z(l * 0.2)} ${Z(l * 0.6)} ${Z(l * 0.7)}`;
     }
-    s += `<path d="${d}" stroke="${o.fell}" stroke-width="${Z(H * 0.05)}" fill="none" stroke-opacity="${op2(0.55 * op)}" stroke-linecap="round"/>`;
+    s += `<path d="${d}" stroke="${o.fell}" stroke-width="${Z(H * 0.045)}" fill="none" stroke-opacity="${op2(0.45 * op)}" stroke-linecap="round"/>`;
   }
-  /* Afterkralle (Daumenkralle) innen am Vordermittelfuß – schaut hinten knapp hervor */
+  /* Afterkralle (Daumenkralle) innen am Vordermittelfuß – schaut hinten als kleiner Sporn knapp hervor */
   if (o.afterkralle) {
-    const ax = fessel[0] - wa * 0.95, ay = fessel[1] - H * 0.9;
-    s += `<path d="M${Z(ax)} ${Z(ay)}q${Z(-H * 0.18)} ${Z(H * 0.1)} ${Z(-H * 0.14)} ${Z(H * 0.42)}q${Z(H * 0.1)} ${Z(-H * 0.12)} ${Z(H * 0.2)} ${Z(-H * 0.24)}z" fill="${kr || "#16110c"}" fill-opacity="${op2(0.85 * op)}"/>`;
+    const ax = fessel[0] - wa * 0.98, ay = fessel[1] - H * 0.75;
+    s += `<path d="M${Z(ax)} ${Z(ay)}q${Z(-H * 0.12)} ${Z(H * 0.06)} ${Z(-H * 0.1)} ${Z(H * 0.26)}q${Z(H * 0.06)} ${Z(-H * 0.06)} ${Z(H * 0.13)} ${Z(-H * 0.15)}z" fill="${kr || "#16110c"}" fill-opacity="${op2(0.6 * op)}"/>`;
   }
   return { pts, svg: s, boden: [x0, xs], spitze: [xs, 0] };
 }

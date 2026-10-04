@@ -28,14 +28,16 @@ const Z = (v) => String(Math.round(v * 100) / 100).replace(/^(-?)0\./, "$1.");
    ohr: Basis hinten/vorn + Höhe/Breite/Neigung (Grad, + = nach vorn); jochbogen: Linie; ganasche: Kieferwinkel. */
 const VORLAGEN = {
   hund: {
-    oben: [[0, 0], [0.08, -0.038], [0.2, -0.056], [0.33, -0.046], [0.42, -0.018], [0.485, 0.024], [0.6, 0.052], [0.75, 0.074], [0.88, 0.094]],
-    nase: { oben: [0.94, 0.103], vorn: [1.0, 0.145], unten: [0.968, 0.205] },
-    lippe: [[0.978, 0.238], [0.955, 0.272]],
-    unten: [[0.915, 0.298], [0.875, 0.33], [0.72, 0.348], [0.52, 0.362], [0.34, 0.37], [0.2, 0.39], [0.1, 0.415]],
-    auge: { x: 0.43, y: 0.072, r: 0.032, winkel: 16, pupille: "rund", iris: "#d8a43a", iris2: "#7a4a12" },
-    ohr: { hinten: [0.1, -0.03], vorn: [0.27, -0.05], hoehe: 0.34, breite: 0.17, neigung: 6, form: "spitz" },
+    /* Wolf: breite flache Stirn (Wölbung 5 % der Kopflänge), flacher Stop (≈ 12° Knick vor dem Auge), gerader, tiefer Fang,
+       Kopf hinten hoch (≈ 0,45 L), Ohren breit an der Basis (≈ 75 % der Höhe), Spitze gerundet */
+    oben: [[0, 0], [0.07, -0.05], [0.18, -0.072], [0.3, -0.066], [0.4, -0.04], [0.47, 0.0], [0.53, 0.032], [0.65, 0.056], [0.78, 0.072], [0.89, 0.086]],
+    nase: { oben: [0.94, 0.094], vorn: [1.0, 0.15], unten: [0.975, 0.215] },
+    lippe: [[0.985, 0.25], [0.965, 0.29]],
+    unten: [[0.94, 0.33], [0.9, 0.385], [0.77, 0.415], [0.58, 0.43], [0.4, 0.44], [0.25, 0.46], [0.12, 0.49]],
+    auge: { x: 0.43, y: 0.064, r: 0.034, winkel: 15, pupille: "rund", iris: "#d9a53b", iris2: "#7a4a12" },
+    ohr: { hinten: [0.08, -0.03], vorn: [0.3, -0.06], hoehe: 0.31, breite: 0.25, neigung: 4, form: "spitz" },
     jochbogen: [[0.41, 0.135], [0.3, 0.13], [0.18, 0.105]],
-    ganasche: [0.24, 0.3],
+    ganasche: [0.24, 0.32],
     nasenloch: true, lefzeSchwarz: true,
   },
   katze: {
@@ -128,6 +130,8 @@ function kopf(T, bauplan, masse, o = {}) {
   const ohrNah = ohrPts(0, 1), ohrFern = ohrPts(0.045, 0.94);
   const res = {
     umrissSil, achse: { A, B }, w, L, rr, halb,
+    /* Profil oben (Hinterhaupt → Nasenspitze) und unten (Nase → Lippe → Kinn → Kehle) für den durchgehenden Rumpfstrang */
+    profilOben: oben.concat([nO, nV]), profilUnten: [nU].concat(lip, unten),
     punkte: { hinterhaupt: O, auge: aug, nase: nV, nasenOben: nO, nasenUnten: nU, mundwinkel: mw, lippeVorn: lipV, kinn: unten[1], kehlPunkt: unten[unten.length - 1],
       stop: w(0.485, 0.024), ganasche: w(...v.ganasche) },
     ohr: { nah: ohrNah, fern: ohrFern }, vorlage: v,
@@ -153,10 +157,11 @@ function kopf(T, bauplan, masse, o = {}) {
   };
   /* Lefze als FLÄCHE: schwarzer Lippenrand, vorn breiter, zum Mundwinkel schmal; darunter Unterlippe/Kinn */
   res.lefze = (lo = {}) => {
-    const farbe = lo.farbe || (v.lefzeSchwarz ? "#0f0b09" : "#3a2a22");
-    const a = lip[1], m = mw, k1 = lerp(a, m, 0.35), k2 = lerp(a, m, 0.7), dick = L * (lo.dicke || 0.014);
+    const farbe = lo.farbe || (v.lefzeSchwarz ? "#1a120c" : "#3a2a22");
+    const a = lip[1], m = mw, k1 = lerp(a, m, 0.35), k2 = lerp(a, m, 0.7), dick = L * (lo.dicke || 0.016);
     const ob = [a, [k1[0], k1[1] - dick * 0.1], [k2[0], k2[1] + dick * 0.05], m], un = [[m[0] + dick * 0.6, m[1] + dick * 0.5], [k2[0], k2[1] + dick * 1.0], [k1[0], k1[1] + dick * 1.1], [a[0] - dick * 0.3, a[1] + dick * 0.9]];
-    let s = `<path d="${glatt(ob.concat(un))}" fill="${farbe}"/>`;
+    const gid = T.lg("lefze" + farbe.slice(1), [[0, farbe, 1], [0.55, farbe, 0.85], [1, farbe, 0.35]], Math.round(a[0] * 10) / 10, 0, Math.round(m[0] * 10) / 10, 0, ' gradientUnits="userSpaceOnUse"');
+    let s = `<path d="${glatt(ob.concat(un))}" fill="${gid}"/>`;
     /* Mundwinkel: kleine Falte nach unten (Lippenwinkel), keine Aufwärtsbiegung */
     s += `<path d="${glatt([m, [m[0] - dick * 0.6, m[1] + dick * 0.9]], false)}" stroke="${farbe}" stroke-width="${Z(dick * 0.5)}" fill="none" stroke-linecap="round"/>`;
     if (T.fein !== false) s += `<path d="${glatt([lerp(a, m, 0.08), lerp(a, m, 0.6)].map((p) => [p[0], p[1] - dick * 0.25]), false)}" stroke="#fff" stroke-opacity=".18" stroke-width="${Z(dick * 0.3)}" fill="none"/>`;

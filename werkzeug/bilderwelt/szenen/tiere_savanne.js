@@ -386,7 +386,8 @@ const TH = Q(128, 11.4), TH_OBEN = 1.08;
 }
 {
   const p = Q(TH.x + 2, 11.4, TH_OBEN - 0.03);
-  tierTeil(S, "gepard", p.x, p.y, p.e, { dir: 1,
+  /* oben: klein und auf einem größeren Ding (ANLEITUNG) – der Tipp zwischen die Beine trifft trotzdem den Gepard */
+  tierTeil(S, "gepard", p.x, p.y, p.e, { dir: 1, oben: true,
     tipp: "Der Gepard ist das schnellste Landtier: Er läuft über 90 Kilometer pro Stunde – aber nur kurz." });
 }
 {
@@ -401,7 +402,7 @@ const TH = Q(128, 11.4), TH_OBEN = 1.08;
   dv += `<path d="M${r(-L * 0.62)} ${r(-tief + 0.1)} C${r(-L * 0.4)} ${r(-tief - 0.9)} ${r(L * 0.3)} ${r(-tief - 0.9)} ${r(L * 0.6)} ${r(-tief + 0.1)}" stroke="#f4f9f9" stroke-opacity=".75" stroke-width=".45" fill="none"/>`;
   dv += `<path d="M${r(-L * 0.75)} ${r(-tief + 1.4)}h${r(L * 0.35)}M${r(-L * 0.1)} ${r(-tief + 2.4)}h${r(L * 0.45)}M${r(L * 0.35)} ${r(-tief + 1.2)}h${r(L * 0.3)}" stroke="#e8f2f2" stroke-opacity=".5" stroke-width=".35"/></g>`;
   tierTeil(S, "nilpferd", hx, hy, w.e, { dir: -1, schatten: false, davor: dv,
-    tipp: "Am Tag bleibt das Nilpferd im Wasser, damit seine Haut nicht verbrennt. Nachts frisst es an Land Gras." });
+    tipp: "Am Tag bleibt das Nilpferd im Wasser, damit seine empfindliche Haut nicht austrocknet. Nachts frisst es an Land Gras." });
 }
 /* ---------- vorne links: der Kopje mit Löwe und Löwin ------------------- */
 const KO = Q(60, 9.4);
@@ -438,7 +439,8 @@ const AST = 3.3;             // der Ast liegt knapp unter Augenhöhe: der Leopar
 }
 {
   const p = Q(AK.x - 1.4 * AK.e, 11, AST + 0.12);
-  tierTeil(S, "leopard", p.x, p.y, p.e, { dir: -1,
+  /* oben: klein und im Baum (ANLEITUNG) – sonst fängt der Berg dahinter den Tipp zwischen seinen Beinen */
+  tierTeil(S, "leopard", p.x, p.y, p.e, { dir: -1, oben: true,
     tipp: "Der Leopard ist sehr stark: Er trägt seine Beute auf einen Baum. Dort können Löwen und Hyänen sie nicht stehlen." });
 }
 /* ---------- ganz vorne: die Hyäne und das Gras -------------------------- */

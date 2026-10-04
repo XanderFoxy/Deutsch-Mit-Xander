@@ -82,7 +82,7 @@ function tierTeil(S, id, x, y, epm, o = {}) {
     /* Herde: EINE Zeichnung in Zentimetern (epm 100 → Maßstab 1) mit Schatten in die defs,
        jedes Tier ein <use> mit eigenem Ort, Maßstab und Blickrichtung. */
     const t = setze(S, a, 0, 0, 100, { fein: false, dir: 1, praefix, seed: o.seed, schatten: o.schatten });
-    const bid = S.id(praefix + "_bild");
+    const bid = S.id(praefix + "_herdenbild");
     S.def(`<g id="${bid}">${t.roh}</g>`);
     const alle = [{ x, y, epm, dir: dir0 }, ...herde].sort((p, q) => p.y - q.y);
     kunst = alle.map((m) => {
