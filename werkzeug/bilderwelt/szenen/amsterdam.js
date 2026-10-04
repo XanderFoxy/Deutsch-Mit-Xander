@@ -88,6 +88,16 @@ function zuschnitt(pts, x0 = -2, y0 = -2, x1 = 402, y1 = 262) {
   }
   return out;
 }
+/* Strecke auf das Bild beschneiden (Liang–Barsky); null, wenn ganz draußen */
+function strecke(a, b, x0 = -1, y0 = -1, x1 = 401, y1 = 261) {
+  let t0 = 0, t1 = 1; const dx = b[0] - a[0], dy = b[1] - a[1];
+  for (const [p, q] of [[-dx, a[0] - x0], [dx, x1 - a[0]], [-dy, a[1] - y0], [dy, y1 - a[1]]]) {
+    if (p === 0) { if (q < 0) return null; continue; }
+    const t = q / p;
+    if (p < 0) { if (t > t1) return null; if (t > t0) t0 = t; } else { if (t < t0) return null; if (t < t1) t1 = t; }
+  }
+  return [[a[0] + dx * t0, a[1] + dy * t0], [a[0] + dx * t1, a[1] + dy * t1]];
+}
 /* Linie vereinfachen (Douglas–Peucker), fein — keine Treppen */
 function dp(pts, eps = 0.12) {
   if (pts.length < 3) return pts;
@@ -509,7 +519,10 @@ function lichtRechts() {
     const u = umriss(h);
     for (let i = 2; i < u.length - 1; i++) {
       const [a0, b0] = u[i - 1], [a1, b1] = u[i];
-      if (b1 > b0 + 0.05 || (Math.abs(b1 - b0) < 0.05 && b0 > h.He)) kanten += `M${pt(projU(1, h, a0, b0))} L${pt(projU(1, h, a1, b1))} `;
+      if (b1 > b0 + 0.05 || (Math.abs(b1 - b0) < 0.05 && b0 > h.He)) {
+        const z = strecke(projU(1, h, a0, b0), projU(1, h, a1, b1));
+        if (z) kanten += `M${pt(z[0])} L${pt(z[1])}`;
+      }
     }
   }
   return `<path d="${kanten}" stroke="#ffd79a" stroke-width=".5" fill="none" opacity=".85"/>`;

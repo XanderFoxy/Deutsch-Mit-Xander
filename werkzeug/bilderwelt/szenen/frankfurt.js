@@ -748,9 +748,11 @@ const ROM = {};
     const tp = F(u0 + w / 2, sp + 1.2); k += `<path d="M${P(F(u0 + w / 2 - 0.4, sp))} L${P(tp)} L${P(F(u0 + w / 2 + 0.4, sp))} Z" fill="#8f4c40"/>`;
     /* Sandsteingewände: Gesimse */
     for (const v of [4.6, 9.8, tr]) k += `<path d="M${P(F(u0, v))} L${P(F(u1, v))}" stroke="#b9695a" stroke-width="${r(0.3 * s)}"/>`;
+    /* Spitzbogen mit leicht gekrümmten Schenkeln (zwei Q-Bögen) */
+    const spitz = (ua, ub, vs, va) => `M${P(F(ua, 0))} L${P(F(ua, vs))} Q${P(F(ua + (ub - ua) * 0.08, vs + (va - vs) * 0.7))} ${P(F((ua + ub) / 2, va))} Q${P(F(ub - (ub - ua) * 0.08, vs + (va - vs) * 0.7))} ${P(F(ub, vs))} L${P(F(ub, 0))} Z`;
     if (hi === 1) {
       /* Haus zum Römer: Erdgeschoss zwei Spitzbogenportale, Kaiserbalkon, vier Kaiser in Nischen, Uhr mit zwei Wappen */
-      k += `<path d="${PF([[u0 + 1.6, 0], [u0 + 1.6, 2.6], [u0 + 3.2, 4], [u0 + 4.8, 2.6], [u0 + 4.8, 0]])}" fill="#2e2622"/><path d="${PF([[u1 - 4.8, 0], [u1 - 4.8, 2.6], [u1 - 3.2, 4], [u1 - 1.6, 2.6], [u1 - 1.6, 0]])}" fill="#2e2622"/>`;
+      k += `<path d="${spitz(u0 + 1.6, u0 + 4.8, 2.6, 4)}${spitz(u1 - 4.8, u1 - 1.6, 2.6, 4)}" fill="#2e2622"/>`;
       /* Balkon: Brüstung mit Maßwerk auf Konsolen, Fahnenstangen */
       k += `<path d="${PF([[u0 + 1.4, 5], [u1 - 1.4, 5], [u1 - 1.4, 6.4], [u0 + 1.4, 6.4]])}" fill="#c98a76"/>`;
       for (let i = 0; i < 8; i++) { const uu = u0 + 1.9 + i * (w - 3.8) / 7; k += `<path d="M${P(F(uu, 5.2))} L${P(F(uu, 6.2))}" stroke="#7d4135" stroke-width="${r(0.18 * s)}"/>`; }
@@ -789,7 +791,7 @@ const ROM = {};
       k += fenster(u0 + w / 2 - 0.6, 23.4, 1.2, 1.9, true);
     } else {
       /* Alt-Limpurg und Löwenstein: Laden-Arkaden, Fenstergruppen mit Spitzbögen */
-      for (let i = 0; i < 3; i++) k += `<path d="${PF([[u0 + 0.9 + i * (w - 1.8) / 3, 0], [u0 + 0.9 + i * (w - 1.8) / 3, 2.4], [u0 + 0.9 + (i + 0.5) * (w - 1.8) / 3, 3.6], [u0 + 0.9 + (i + 1) * (w - 1.8) / 3 - 0.5, 2.4], [u0 + 0.9 + (i + 1) * (w - 1.8) / 3 - 0.5, 0]])}" fill="#3a302a"/>`;
+      { let d = ""; for (let i = 0; i < 3; i++) d += spitz(u0 + 0.9 + i * (w - 1.8) / 3, u0 + 0.9 + (i + 1) * (w - 1.8) / 3 - 0.5, 2.4, 3.6); k += `<path d="${d}" fill="#3a302a"/>`; }
       for (const v of [5.4, 10.6]) for (let i = 0; i < 3; i++) k += fenster(u0 + 1.2 + i * (w - 2) / 3, v, (w - 2) / 3 - 0.8, 3.4, v > 10);
       k += fenster(u0 + w / 2 - 1.6, tr + 1.4, 1.2, 2.6, true) + fenster(u0 + w / 2 + 0.4, tr + 1.4, 1.2, 2.6, true) + fenster(u0 + w / 2 - 0.5, tr + 5.4, 1, 1.9, true);
     }

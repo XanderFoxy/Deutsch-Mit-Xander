@@ -336,6 +336,34 @@ const domTeile = {};
 }
 
 /* =====================================================================
+   2b — DAS NEUE RATHAUS (1909–1913, Gabriel von Seidl): schließt hinter
+        der Ostecke des alten Rathauses an, Neorenaissance aus Backstein
+        mit Sandsteingliederung, hohes Kupferdach mit Zwerchgiebel (Lage
+        und Einzelheiten vereinfacht, unsicher). Gibt dem hellen Roland
+        den dunklen Grund.
+   ===================================================================== */
+{
+  const Y = 4, E = ebene(41.5, Y, 1, 0), L = 28.5, ZE = 17.5;
+  let k = pfad(poly([[41.5, Y, ZE], [70, Y, ZE], [70, 12, 29], [41.5, 12, 29]], 2), S.lg("nrdach", [[0, "#4f8a75"], [1, "#6aa690"]]));
+  k += pfad(fr(E, 0, 0, L, ZE, 2), S.lg("nrback", [[0, "#6a3a2e"], [1, "#7a4434"]]));
+  k += pfad(fr(E, 0, 0, L, 4.2, 2), "#c9b896");
+  for (const z of [4.2, 10.4, ZE - .8]) k += pfad(fr(E, -.1, z, L + .1, z + .6, 2), "#d9c9a6") + pfad(fr(E, -.1, z - .2, L + .1, z, 2), "#3a2a20", ` opacity=".4"`);
+  for (let s2 = 2.2; s2 < L; s2 += 3.6) {
+    k += pfad(fp(E, bogen(s2, 1.4, .6, 3, 5)), "#2e2a28");
+    for (const [z0, z1] of [[5.6, 9.4], [11.8, 15.6]]) k += pfad(fr(E, s2 - .9, z0 - .3, s2 + .9, z1 + .3), "#d9c9a6") + pfad(fr(E, s2 - .7, z0, s2 + .7, z1), GLAS) + pfad(fr(E, s2 - .7, z1 - .25, s2 + .7, z1), "#1d2228", ` opacity=".45"`);
+  }
+  /* Zwerchgiebel mit Voluten über der Mitte des sichtbaren Teils */
+  const m = 18.6;
+  k += pfad(fp(E, [[m - 4.4, ZE], [m + 4.4, ZE], [m + 4.4, 21], [m + 3, 21], [m + 2.6, 23.6], [m + 1.2, 23.6], [m, 26], [m - 1.2, 23.6], [m - 2.6, 23.6], [m - 3, 21], [m - 4.4, 21]]), "#7a4434");
+  k += `<path d="${fl(E, [[m - 4.4, 21], [m - 3, 21], [m - 2.6, 23.6], [m - 1.2, 23.6], [m, 26], [m + 1.2, 23.6], [m + 2.6, 23.6], [m + 3, 21], [m + 4.4, 21]])}" stroke="#e2d2b0" stroke-width=".5" fill="none"/>`;
+  k += pfad(fr(E, m - 2.6, 18.2, m - .6, 20.4), GLAS) + pfad(fr(E, m + .6, 18.2, m + 2.6, 20.4), GLAS) + pfad(fp(E, bogen(m, 1, 21.6, 22.8, 4)), GLAS);
+  for (const x of [m - 4.4, m + 4.4, m]) k += pfad(fp(E, [[x - .2, x === m ? 26 : 21], [x + .2, x === m ? 26 : 21], [x, (x === m ? 26 : 21) + 1.4]]), "#e2d2b0");
+  for (const x of [6, 10, 26]) k += pfad(fp(ebene(41.5, 7, 1, 0), [[x - .7, 20.4], [x + .7, 20.4], [x + .7, 21.6], [x, 22.4], [x - .7, 21.6]]), "#7fb59e");
+  S.teil({ id: "neues_rathaus", de: "das Neue Rathaus", syl: "NEU-e RAT-haus", it: "il Nuovo Municipio", itSyl: "NUO-vo mu-ni-CI-pio", en: "New Town Hall", x: 0, y: 0, kunst: `<g ${LUFT1}>${k}</g>`,
+    tipp: "Hinter dem alten Rathaus steht das Neue Rathaus von 1913. Hier arbeitet der Bürgermeister." });
+}
+
+/* =====================================================================
    3 — DAS HAUS DER BÜRGERSCHAFT (Ostseite): das Parlament — Glas, helle
        Betonrippen, oben das Faltwerk
    ===================================================================== */

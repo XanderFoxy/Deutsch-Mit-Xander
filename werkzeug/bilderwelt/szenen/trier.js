@@ -199,7 +199,7 @@ let PFLASTER_TEIL;
     for (let i = -2; i <= 2; i++) f += `<path d="M${r(gx + i * 0.09 * s)} ${r(gy - 0.06 * s)} v${r(0.12 * s)}" stroke="#3a3733" stroke-width=".6"/>`;
   }
   /* Laub der Platanen */
-  for (let i = 0; i < 26; i++) { const [x, y] = proj(4 + z() * 12, 16 + z() * 26), s = km(y) * 0.06; f += `<path d="M${x} ${y} l${r(s)} ${r(-s * 0.5)} l${r(s * 0.5)} ${r(s * 0.6)} Z" fill="${z() < 0.5 ? "#b88a3a" : "#8a6a2a"}" opacity=".8"/>`; }
+  for (let i = 0; i < 26; i++) { const [x, y] = proj(1.5 + z() * 4.5, 16 + z() * 26), s = km(y) * 0.06; f += `<path d="M${x} ${y} l${r(s)} ${r(-s * 0.5)} l${r(s * 0.5)} ${r(s * 0.6)} Z" fill="${z() < 0.5 ? "#b88a3a" : "#8a6a2a"}" opacity=".8"/>`; }
   f += `<rect x="0" y="${HOR}" width="${W}" height="${HH - HOR}" fill="${S.lg("pfllicht", [[0, "#ffd9a0", 0.2], [0.55, "#000", 0], [1, "#000", 0.14]], 0, 0, 1, 0)}"/>`;
   PFLASTER_TEIL = S.teil({ id: "pflaster", de: "das Pflaster", syl: "PFLAS-ter", it: "il lastricato", itSyl: "la-stri-CA-to", en: "paving", x: 0, y: 0, kunst: f });
 }
@@ -209,7 +209,7 @@ let PFLASTER_TEIL;
    ===================================================================== */
 {
   let k = "";
-  for (const [lat, d, h, s] of [[24, 84, 15, 15], [31, 90, 16, 3], [37.5, 86, 14, 9]]) { const [x, y] = proj(lat, d); k += baum(x, y, h * F / d, s); }
+  for (const [lat, d, h, s] of [[23.5, 84, 15, 15], [29.5, 90, 15, 3], [34.5, 88, 12, 9]]) { const [x, y] = proj(lat, d); k += baum(x, y, h * F / d, s); }
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: licht(k) });
 }
 
@@ -217,7 +217,7 @@ let PFLASTER_TEIL;
    2 — DAS MUSEUM (Simeonstift, romanisch, westlich am Westturm)
    ===================================================================== */
 {
-  const d = 72, K = F / d, latR = -20.8, latL = -30, h = 12.5;
+  const d = 72, K = F / d, latR = -20.8, latL = -28.5, h = 12.5;
   const [xr, yb] = proj(latR, d), [xl] = proj(latL, d), top = r(yb - h * K);
   let k = `<rect x="${xl}" y="${top}" width="${r(xr - xl)}" height="${r(yb - top)}" fill="${S.lg("stift", [[0, "#e3d3ae"], [1, "#c9b78f"]], 0, 0, 1, 0)}"/>`;
   /* Quaderfugen (hell, regelmäßig), Sockel, Gesims */

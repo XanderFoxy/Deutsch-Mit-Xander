@@ -469,7 +469,153 @@ const STADT = {};
     tipp: "Machu Picchu heißt „alter Berg“. Die Inka bauten die Stadt vor über 500 Jahren auf 2 430 Metern Höhe." });
 }
 
+/* =====================================================================
+   8 — DIE TERRASSE (Landwirtschaftsbereich zwischen uns und der Stadt)
+   ===================================================================== */
+const TERR = [];          /* Vorderkanten der Stufen (für Lamas und Besucher) */
+{
+  let k = "";
+  /* Untergrund: der Hang unter uns, links fällt er in die Schlucht */
+  k += `<path d="M60 262 L66 228 Q120 210 200 209 Q280 210 336 222 L344 262 Z" fill="#6f9746"/>`;
+  /* Stufen von hinten (oben) nach vorn (unten): Lauffläche, darunter die Stützmauer (vorne sichtbar, weil der Hang sich krümmt) */
+  const stufen = [[211.5, 1.6, 2.6], [215.5, 1.9, 3.2], [220.5, 2.3, 4], [227, 2.8, 5], [235.5, 3.4, 6.2], [246.5, 4.2, 7.6], [260.5, 5, 9]];
+  let vorher = 209;
+  stufen.forEach(([y, wand, tief], i) => {
+    const lin = (yy, lift) => [[64 - i * 0.6, yy + 6 + lift], [110, yy + 0.8 + lift], [170, yy - 1.2 + lift], [230, yy - 0.8 + lift], [290, yy + 0.8 + lift], [340 + i * 0.4, yy + 5 + lift]];
+    const oben = lin(vorher, 0), unten = lin(y - wand, 0), fuss = lin(y, 0);
+    k += `<path d="${glatt([...oben, ...unten.slice().reverse()], true, 0.6)}" fill="${S.lg("lauf" + (i % 2), [[0, i % 2 ? "#8db655" : "#97bf5c"], [1, i % 2 ? "#7ba548" : "#86b04f"]])}"/>`;
+    k += `<path d="${glatt([...oben, ...unten.slice().reverse()], true, 0.6)}" fill="${GRAS}"/>`;
+    k += `<path d="${glatt([...unten, ...fuss.slice().reverse()], true, 0.6)}" fill="${S.lg("terrmauer", [[0, "#d8d0bf"], [1, "#a69e8e"]])}"/>`;
+    /* Steinfugen der Mauer: grobe Feldsteine */
+    let fugen = "";
+    const zf = zufall(300 + i);
+    for (let x = 70; x < 336; x += wand * (1.4 + zf())) { const yy = profilY(unten, x); fugen += `M${r(x)} ${r(yy + 0.2)} l${r((zf() - 0.5) * 0.6)} ${r(wand * 0.95)}`; }
+    k += `<path d="${fugen}" stroke="#857d6f" stroke-width="${r(0.12 + i * 0.03)}" opacity=".8"/>`;
+    k += `<path d="${glatt(unten, false)}" stroke="#f6efdf" stroke-width="${r(0.3 + i * 0.06)}" fill="none"/>`;
+    /* Schatten der Mauer auf der nächsten Stufe davor fällt nach links — die Mauer selbst steht im Licht */
+    TERR.push({ y, oben: unten, unten: fuss });
+    vorher = y;
+  });
+  S.teil({ id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: 200, y: 232, kunst: um(200, 232, k),
+    tipp: "Auf den Terrassen bauten die Inka Mais und Kartoffeln an. Die Mauern halten die Erde fest, auch bei starkem Regen." });
+}
+
+/* =====================================================================
+   9 — DAS WÄCHTERHAUS (Casa del Guardián) unten links, mit Lupe
+   ===================================================================== */
+{
+  /* wir stehen auf der Terrasse darüber: man sieht das Strohdach von oben, die Giebelseite rechts im Licht */
+  const X = -6, Y = 252, L = 78, H = 26, TIEF = [-16, -14], GI = 30;
+  const A = [X, Y], Bq = [X + L, Y], A2 = [X + TIEF[0], Y + TIEF[1]], B2 = [X + L + TIEF[0], Y + TIEF[1]];
+  const up = (p, v) => [p[0], p[1] - v];
+  let k = "";
+  /* Schlagschatten nach links auf die Terrasse */
+  k += `<path d="${P([A, [A[0] - 26, A[1] - 3], [A2[0] - 26, A2[1] - 3], A2])}" fill="#2a3a20" opacity=".3"/>`;
+  /* rechte Giebelwand (Nordost, im Morgenlicht) */
+  const gw = [Bq, B2, up(B2, H), [(Bq[0] + B2[0]) / 2, (Bq[1] + B2[1]) / 2 - H - GI], up(Bq, H)];
+  k += `<path d="${P(gw)}" fill="${S.lg("wgiebel", [[0, "#e3d9c4"], [1, "#c8bca4"]], 0, 0, 1, 0)}"/>`;
+  /* Vorderwand (Südost, zu uns) */
+  k += `<path d="${P([A, Bq, up(Bq, H), up(A, H)])}" fill="${S.lg("wfront", [[0, "#c1b7a3"], [1, "#a69c89"]])}"/>`;
+  /* Feldsteine mit Lehmfugen */
+  const zs = zufall(91);
+  let st = "";
+  for (let row = 0; row < 7; row++) {
+    const y0 = Y - 2 - row * (H / 7);
+    for (let x = X + 2 + (row % 2) * 2.6; x < X + L - 3; x += 4 + zs() * 3.4) { const w = 3 + zs() * 2.4, h = H / 7 - 0.7; st += `<path d="M${r(x)} ${r(y0)} l${r(0.3)} ${r(-h)} l${r(w)} ${r(-0.3 + zs() * 0.6)} l${r(0.2)} ${r(h)} Z"/>`; }
+  }
+  k += `<g fill="#cfc5b1" stroke="#8a7f6c" stroke-width=".3" opacity=".9">${st}</g>`;
+  st = "";
+  for (let row = 0; row < 7; row++) {
+    const t0 = row / 7;
+    for (let t = 0.08; t < 0.92; t += 0.16 + zs() * 0.1) { const p = [Bq[0] + (B2[0] - Bq[0]) * t, Bq[1] + (B2[1] - Bq[1]) * t - 2 - row * (H / 7)]; st += `<path d="M${r(p[0])} ${r(p[1])} l${r(TIEF[0] * 0.14)} ${r(TIEF[1] * 0.14)} l0 ${r(-H / 7 + 0.7)} l${r(-TIEF[0] * 0.14)} ${r(-TIEF[1] * 0.14)} Z"/>`; }
+  }
+  k += `<g fill="#efe6d2" stroke="#a89c86" stroke-width=".3" opacity=".9">${st}</g>`;
+  /* trapezförmige Tür in der Vorderwand und zwei Nischen */
+  const tuer = (cx, b, h, y0) => `<path d="M${r(cx - b / 2)} ${r(y0)} L${r(cx - b * 0.34)} ${r(y0 - h)} L${r(cx + b * 0.34)} ${r(y0 - h)} L${r(cx + b / 2)} ${r(y0)} Z"/>`;
+  k += `<g fill="#2d2721">${tuer(X + 48, 9, 19, Y)}${tuer(X + 22, 5, 7, Y - 9)}${tuer(X + 64, 5, 7, Y - 9)}</g>`;
+  k += `<path d="M${r(X + 48 - 3.2)} ${r(Y - 19.4)} h6.4 v1.6 h-6.4 Z" fill="#b3a68e"/>`;
+  /* Fenster im Giebel (trapezförmig) und Steinringe zum Festbinden des Dachs */
+  const gm = [(Bq[0] + B2[0]) / 2, (Bq[1] + B2[1]) / 2];
+  k += `<path d="M${r(gm[0] - 3)} ${r(gm[1] - H - 4)} L${r(gm[0] - 2.2)} ${r(gm[1] - H - 11)} L${r(gm[0] + 1.4)} ${r(gm[1] - H - 12.6)} L${r(gm[0] + 2)} ${r(gm[1] - H - 5.6)} Z" fill="#3a332b"/>`;
+  /* Strohdach: First von der Giebelspitze nach links; vordere Dachfläche (Südost) zu uns, oben im Licht */
+  const F1 = [gm[0], gm[1] - H - GI], F0 = [F1[0] - L, F1[1]];
+  const ue = 3.2;
+  const dachV = [[A[0] - ue, A[1] - H + ue], [Bq[0] + ue * 0.6, Bq[1] - H + ue], F1, F0];
+  k += `<path d="${P(dachV)}" fill="${S.lg("dachv", [[0, "#e4c27e"], [0.5, "#c9a463"], [1, "#9d7a40"]])}"/>`;
+  k += `<path d="${P(dachV)}" fill="${STROH}" opacity=".55"/>`;
+  /* Halme an der Traufe, Bindeschnüre */
+  let halme = "";
+  for (let x = A[0] - ue + 1; x < Bq[0]; x += 1.1) halme += `M${r(x)} ${r(A[1] - H + ue - 0.3)} l${r(0.2)} ${r(1.6 + (x * 7 % 3) * 0.3)}`;
+  k += `<path d="${halme}" stroke="#8a6a34" stroke-width=".45"/>`;
+  for (let i = 1; i < 6; i++) { const t = i / 6; k += `<path d="M${r(F0[0] + (F1[0] - F0[0]) * t)} ${r(F1[1])} L${r(A[0] - ue + (Bq[0] - A[0] + ue * 1.6) * t)} ${r(A[1] - H + ue)}" stroke="#7d6232" stroke-width=".35" opacity=".55"/>`; }
+  k += `<path d="M${r(F0[0])} ${r(F0[1])} L${r(F1[0])} ${r(F1[1])}" stroke="#6e5428" stroke-width="1.6" stroke-linecap="round"/><path d="M${r(F0[0])} ${r(F0[1] - 0.5)} L${r(F1[0])} ${r(F1[1] - 0.5)}" stroke="#f0d79c" stroke-width=".5"/>`;
+  /* Dachüberstand an der Giebelseite */
+  k += `<path d="M${r(F1[0])} ${r(F1[1])} L${r(Bq[0] + ue * 0.6)} ${r(Bq[1] - H + ue)} L${r(Bq[0] + ue * 0.6 + 1.6)} ${r(Bq[1] - H + ue - 0.4)} L${r(F1[0] + 1.4)} ${r(F1[1] - 0.3)} Z" fill="#7a5c2e"/>`;
+  const unter = [
+    { id: "strohdach", de: "das Strohdach", syl: "STROH-dach", it: "il tetto di paglia", itSyl: "TET-to di PA-glia", en: "thatched roof", x: X + 34, y: Y - H - 14, kunst: `<path d="M-38 17 L46 17 L44 -14 L-34 -14 Z" class="bw-flaeche" fill="rgba(255,255,255,0.001)"/>`,
+      tipp: "Das Dach ist aus Ichu, einem harten Gras der Anden. Es wird mit Seilen an Steinringen festgebunden." },
+    { id: "tuer", de: "die Tür", syl: "TÜR", it: "la porta", itSyl: "POR-ta", en: "door", x: X + 48, y: Y - 9, kunst: flaeche(-5, -10, 10, 10),
+      tipp: "Inka-Türen sind unten breiter als oben. So halten sie auch bei einem Erdbeben." },
+  ];
+  S.teil({ id: "waechterhaus", de: "das Wächterhaus", syl: "WÄCH-ter-haus", it: "la casa del guardiano", itSyl: "CA-sa del guar-DIA-no", en: "guardhouse", x: X + 40, y: Y - 20, kunst: um(X + 40, Y - 20, k),
+    zoom: { x: -4, y: 182, w: 105, h: 70 }, unter,
+    tipp: "Von hier oben bewachten die Inka die Wege in die Stadt. Hier entsteht das berühmte Foto von Machu Picchu." });
+}
+
+/* =====================================================================
+   10 — DAS LAMA und DAS FOHLEN (weiden auf den Terrassen)
+   ===================================================================== */
+/* Lama von der Seite: Fußpunkt (0|0), H = Höhe bis zu den Ohrspitzen, dir = 1 schaut nach rechts */
+const lama = (H, dir, fell, fleck, seed, jung = false) => {
+  const u = H / 1.85, z = zufall(seed);
+  const X = (v) => r(v * u * dir), Y = (v) => r(-v * u);
+  let o = "";
+  /* Schatten: lang nach links (Sonne rechts) und etwas nach hinten */
+  o += `<path d="M${X(-0.6)} ${Y(0)} L${X(0.6)} ${Y(0)} L${r(-1.1 * u + (dir > 0 ? -0.2 : 0) * u)} ${r(-0.12 * u)} L${r(-2.1 * u)} ${r(-0.14 * u)} Z" fill="#253a18" opacity=".32"/>`;
+  /* ferne Beine (dunkler) */
+  const bein = (x, dx, c) => `<path d="M${X(x - 0.05)} ${Y(0.82)} L${X(x - 0.04)} ${Y(0.4)} L${X(x - 0.03 + dx)} ${Y(0.03)} L${X(x + 0.06 + dx)} ${Y(0)} L${X(x + 0.05 + dx)} ${Y(0.06)} L${X(x + 0.05)} ${Y(0.42)} L${X(x + 0.07)} ${Y(0.82)} Z" fill="${c}"/>`;
+  o += bein(-0.38, 0.04, "#7d6650") + bein(0.34, -0.03, "#7d6650");
+  /* Körper mit wolligem Rand */
+  const koerper = [];
+  for (let i = 0; i <= 14; i++) { const t = i / 14, a = Math.PI * (1 + t); const wolle = i % 2 ? 0.035 : 0; koerper.push([0.0 + Math.cos(a) * (0.62 + wolle), 0.98 + Math.sin(a) * -(0.22 + wolle)]); }
+  for (let i = 0; i <= 10; i++) { const t = i / 10, a = Math.PI * t; koerper.push([Math.cos(a) * 0.6, 0.98 - Math.sin(a) * 0.2 * -1 - 0.0]); }
+  const kp = [[-0.62, 0.98], [-0.6, 1.1], [-0.5, 1.18], [-0.3, 1.2], [-0.05, 1.19], [0.2, 1.2], [0.42, 1.22], [0.56, 1.16], [0.62, 1.02], [0.58, 0.86], [0.44, 0.78], [0.2, 0.76], [-0.1, 0.77], [-0.38, 0.78], [-0.56, 0.84]];
+  const kd = glatt(kp.map(([a, b]) => [a * u * dir, -b * u]), true, 0.9);
+  o += `<path d="${kd}" fill="${fell}"/>`;
+  if (fleck) o += `<path d="M${X(-0.1)} ${Y(1.19)} Q${X(0.25)} ${Y(1.25)} ${X(0.42)} ${Y(1.2)} Q${X(0.5)} ${Y(0.95)} ${X(0.2)} ${Y(0.86)} Q${X(-0.05)} ${Y(0.95)} ${X(-0.1)} ${Y(1.19)} Z" fill="${fleck}"/>`;
+  /* Wollbüschel */
+  let wo = "";
+  for (let i = 0; i < 9; i++) { const x = -0.5 + i * 0.12, y = 1.18 - (i % 3) * 0.12 - z() * 0.08; wo += `M${X(x)} ${Y(y)} q${r(0.05 * u * dir)} ${r(0.06 * u)} ${r(0.1 * u * dir)} 0`; }
+  o += `<path d="${wo}" stroke="#fff" stroke-width="${r(0.03 * u)}" fill="none" opacity=".45"/>`;
+  /* nahe Beine */
+  o += bein(-0.3, -0.05, fell) + bein(0.42, 0.05, fell);
+  o += `<path d="M${X(-0.3)} ${Y(0.03)} h${X(0.12)} M${X(0.42)} ${Y(0.03)} h${X(0.12)}" stroke="#3d3026" stroke-width="${r(0.05 * u)}"/>`;
+  /* Schwanz */
+  o += `<path d="M${X(-0.6)} ${Y(1.12)} q${X(-0.12)} ${Y(-0.02)} ${X(-0.1)} ${Y(-0.18)} q${X(0.06)} ${Y(0.06)} ${X(0.1)} ${Y(0.12)} Z" fill="${fell}"/>`;
+  /* Hals und Kopf */
+  const hals = jung ? [[0.4, 1.1], [0.46, 1.38], [0.5, 1.52], [0.62, 1.52], [0.6, 1.32], [0.58, 1.06]] : [[0.38, 1.12], [0.44, 1.46], [0.48, 1.62], [0.62, 1.62], [0.6, 1.4], [0.6, 1.08]];
+  o += `<path d="${glatt(hals.map(([a, b]) => [a * u * dir, -b * u]), true, 0.8)}" fill="${fell}"/>`;
+  const ko = jung ? 1.5 : 1.6;
+  o += `<path d="${glatt([[0.46, ko + 0.02], [0.52, ko + 0.12], [0.62, ko + 0.12], [0.74, ko + 0.06], [0.8, ko - 0.02], [0.76, ko - 0.06], [0.6, ko - 0.06]].map(([a, b]) => [a * u * dir, -b * u]), true, 0.8)}" fill="${fell}"/>`;
+  /* Bananenohren */
+  for (const [ox, kr] of [[0.5, -0.03], [0.57, 0.03]]) o += `<path d="M${X(ox)} ${Y(ko + 0.1)} Q${X(ox - 0.04 + kr)} ${Y(ko + 0.24)} ${X(ox + 0.02 + kr)} ${Y(ko + 0.3)} Q${X(ox + 0.06)} ${Y(ko + 0.2)} ${X(ox + 0.05)} ${Y(ko + 0.1)} Z" fill="${fell}"/>`;
+  o += `<circle cx="${X(0.62)}" cy="${Y(ko + 0.04)}" r="${r(0.025 * u)}" fill="#1d1712"/><path d="M${X(0.78)} ${Y(ko)} l${X(0.02)} ${Y(-0.03)}" stroke="#3a2e26" stroke-width="${r(0.02 * u)}"/>`;
+  return o;
+};
+{
+  /* großes Lama auf der dritten Stufe, schaut nach rechts zu uns ins Tal */
+  const t = TERR[3], x = 174, y = profilY(t.oben, 174) - 0.6;
+  const k = `<g filter="${VOL_FIGUR}">${lama(30, 1, S.lg("lamafell", [[0, "#f6f1e6"], [1, "#d8cdb9"]], 0, 0, 1, 0), "#9b6a3c", 5)}</g>`;
+  S.teil({ id: "lama", de: "das Lama", syl: "LA-ma", it: "il lama", itSyl: "LA-ma", en: "llama", x, y, steht: true, kunst: k,
+    tipp: "Lamas tragen Lasten und geben Wolle. Hier halten sie das Gras auf den Terrassen kurz." });
+  const x2 = 204, y2 = profilY(t.oben, 204) - 0.4;
+  const k2 = `<g filter="${VOL_FIGUR}">${lama(18, -1, S.lg("fohlenfell", [[0, "#b98b5c"], [1, "#8d6440"]], 0, 0, 1, 0), "#f2ebdc", 6, true)}</g>`;
+  S.teil({ id: "fohlen", de: "das Fohlen", syl: "FOH-len", it: "il piccolo di lama", itSyl: "PIC-co-lo di LA-ma", en: "baby llama", x: x2, y: y2, steht: true, kunst: k2,
+    tipp: "Ein junges Lama heißt Fohlen. Es bleibt fast ein Jahr bei seiner Mutter." });
+}
+
 /* --- vorläufig: Rest folgt --- */
+
 
 const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang || /[À-ÖÙ-Ý]/.test(x)) ? x : x.toLowerCase()))).join(""); };
 for (const t of S.teile) for (const u of [t, ...(t.unter || [])]) { u.syl = silben(u.syl); u.itSyl = silben(u.itSyl); }
