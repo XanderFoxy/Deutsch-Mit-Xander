@@ -1121,7 +1121,7 @@ const BANK = { X: -9.6, D: 27.5 };
 
 /* 19 — DER BERGSTEIGER am Brückengeländer (vorn rechts, 9 m): Helm, Seil, Pickel am Rucksack; fotografiert den Berg */
 {
-  const X = 4.0, D = 10.6, [x, y] = P(X, D, 4.8), s = F / D;
+  const X = 4.5, D = 10.6, [x, y] = P(X, D, 4.8), s = F / D;
   const foto = { lende: 1, brust: -3, nacken: -4, kopf: -6, schulterL: { vor: 64, seit: 16 }, ellbogenL: 104, unterarmL: 40, handL: 10, fingerL: 0.5, schulterR: { vor: 62, seit: 18 }, ellbogenR: 106, unterarmR: 40, handR: 10, fingerR: 0.5, huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
   const m = B.mensch({ id: "chz_berg", geschlecht: "m", pose: foto, blick: 196, frisur: "kurz", haarfarbe: "braun", haut: "hell", ohneSchatten: true,
     kleidung: { oberteil: { stueck: "pullover", farbe: "#2f5f95" }, jacke: { stueck: "jacke", farbe: "#c8352e" }, unterteil: { stueck: "hose", farbe: "#3a3c40" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "helm", farbe: "#f08a1c" } } }, 1.8 * s);
@@ -1132,6 +1132,8 @@ const BANK = { X: -9.6, D: 27.5 };
   k += `<path d="M${r(ru[0] + 0.06 * s)} ${r(ru[1] + 0.2 * s)} L${r(ru[0] + 0.12 * s)} ${r(ru[1] - 0.55 * s)}" stroke="#2a2a2c" stroke-width="${r(0.03 * s)}"/><path d="M${r(ru[0] + 0.0 * s)} ${r(ru[1] - 0.55 * s)} Q${r(ru[0] + 0.12 * s)} ${r(ru[1] - 0.62 * s)} ${r(ru[0] + 0.26 * s)} ${r(ru[1] - 0.5 * s)}" stroke="#b9c1c7" stroke-width="${r(0.035 * s)}" fill="none" stroke-linecap="round"/>`;
   /* Seil: aufgeschossen, oben unter dem Deckel des Rucksacks festgeschnallt */
   for (let i = 0; i < 3; i++) k += `<ellipse cx="${r(ru[0] - 0.01 * s)}" cy="${r(ru[1] - 0.3 * s + i * 0.025 * s)}" rx="${r(0.17 * s)}" ry="${r(0.06 * s)}" fill="none" stroke="${i % 2 ? "#f2c62e" : "#d8343c"}" stroke-width="${r(0.028 * s)}"/>`;
+  /* in der erhobenen Hand: das Handy, mit dem er das Matterhorn fotografiert (wir sehen die Rückseite mit der Kamera) */
+  if (pu.handL) { const [hx, hy] = [pu.handL[0] * m.k, pu.handL[1] * m.k]; k += `<g transform="rotate(-8 ${r(hx)} ${r(hy)})"><rect x="${r(hx - 0.045 * s)}" y="${r(hy - 0.16 * s)}" width="${r(0.085 * s)}" height="${r(0.16 * s)}" rx="${r(0.012 * s)}" fill="#1c1e22" stroke="#4a4e54" stroke-width="${r(0.006 * s)}"/><circle cx="${r(hx - 0.02 * s)}" cy="${r(hy - 0.13 * s)}" r="${r(0.012 * s)}" fill="#3a5a7a"/></g>`; }
   S.teil({ id: "bergsteiger", de: "der Bergsteiger", syl: "BERG-stei-ger", it: "l'alpinista", itSyl: "al-pi-NI-sta", en: "mountaineer", x, y, kunst: `<g ${VOLF}>${schlank(m.svg, 1)}${k}</g>`,
     tipp: "Bergsteiger brauchen Helm, Seil und Pickel. Auf das Matterhorn steigt man meist über den Hörnligrat." });
 }

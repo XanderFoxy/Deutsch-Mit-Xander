@@ -921,8 +921,9 @@ const STAND = { d: 21, l0: -6.9, l1: -3.7, theke: 1.05 };
 const SCH = { dd: -1.45, dl: -2.51 };
 const schlag = (d, l, h, b, a = 0.68) => {
   /* am Fuß scharf und dunkel, zur Spitze hin heller und weicher */
-  const fuss = [P(d + 0.12, l + b), P(d - 0.12, l - b)], mitte = [P(d + SCH.dd * h * 0.55 - 0.08, l + SCH.dl * h * 0.55 - b * 0.7), P(d + SCH.dd * h * 0.55 + 0.08, l + SCH.dl * h * 0.55 + b * 0.7)];
-  const spitze = [P(d + SCH.dd * h - 0.06, l + SCH.dl * h - b * 0.4), P(d + SCH.dd * h + 0.06, l + SCH.dl * h + b * 0.4)];
+  /* Runde 4: die Breite liegt QUER zur Schattenrichtung (Einheit (−0,50; −0,87) → quer (0,87; −0,50)) */
+  const QD = 0.866, QL = -0.5, pq = (t, k) => [P(d + SCH.dd * h * t + QD * b * k, l + SCH.dl * h * t + QL * b * k), P(d + SCH.dd * h * t - QD * b * k, l + SCH.dl * h * t - QL * b * k)];
+  const fuss = pq(0, 1), m0 = pq(0.55, 1.1), mitte = [m0[1], m0[0]], s0 = pq(1, 0.55), spitze = [s0[1], s0[0]];
   return poly([fuss[0], fuss[1], mitte[0], mitte[1]], "#0d1230", ` opacity="${a}" pointer-events="none"`) + poly([mitte[1], mitte[0], spitze[0], spitze[1]], "#141a3a", ` opacity="${r(a * 0.7 * 100) / 100}" filter="url(#${S.id("weichs")})" pointer-events="none"`);
 };
 const BODEN_SCHATTEN = [];   /* werden in den Roten Platz gezeichnet (Bodenfläche) */

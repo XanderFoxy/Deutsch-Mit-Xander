@@ -472,12 +472,12 @@ const hang = (boegen, seite, breite = 1.2) => {
   return o;
 };
 /* Häuserzeile: aneinander gebaute Häuser (gemeinsame Wände), Giebel meist an den Seiten — das typische Zackenbild */
-const zeile = (x0, x1, y, hm, seed, dachAnteil = 0.06) => {
-  const z = zufall(seed), m = 330 / dAusY(y); let o = "", x = x0;
+const zeile = (x0, x1, y, hm, seed, dachAnteil = 0.06, versatz = 0, dreh = 0) => {
+  const z = zufall(seed), m = 330 / dAusY(y); let o = "", x = x0 + versatz * m;
   const teile = [];
   while (x < x1 - 2) {
     if (z() < 0.2) { x += (2 + z() * 4) * m; continue; }          /* Gasse / Hof (Kancha) */
-    const lang = z() < 0.7, b = Math.min(x1 - x, (lang ? 9 + z() * 5 : 5 + z() * 1.5) * m);
+    const lang = z() < 0.7, b = Math.min(x1 - x, (lang ? 11 : 6) * (0.7 + z() * 0.6) * m);
     if (b < 2.5 * m) break;
     teile.push([x, b, lang]);
     x += b + (z() < 0.4 ? 0.3 * m : 0);
@@ -488,7 +488,7 @@ const zeile = (x0, x1, y, hm, seed, dachAnteil = 0.06) => {
   teile.sort((p, q) => Math.abs(q[0] + q[1] / 2 - VP[0]) - Math.abs(p[0] + p[1] / 2 - VP[0]));
   teile.reverse();
   const xm = (x0 + x1) / 2, bw = Math.max(1, x1 - x0);
-  for (const [xx, b, lang] of teile.reverse()) { const yy = y + Math.pow((xx + b / 2 - xm) / bw * 2, 2) * 1.8 + (z() - 0.5) * 0.5; o += haus(xx, yy, b, (3.3 + z() * 1.1) * m * hm, lang ? 7 + z() * 2 : 10 + z() * 3, (z() < 0.2 ? 0 : (3 + z() * 1) * m), lang ? "seite" : "front", z() < dachAnteil, lang ? (z() < 0.5 ? 2 : 0) : 1); }
+  for (const [xx, b, lang] of teile.reverse()) { const yy = y + Math.pow((xx + b / 2 - xm) / bw * 2, 2) * 1.8 + (z() - 0.5) * 0.5, dr = z() < dreh ? (z() < 0.5 ? -1 : 1) * (2.5 + z() * 1.5) : 0; if (dr) o += `<g transform="rotate(${dr} ${xx + b / 2} ${yy})">`; o += haus(xx, yy, b, (3.3 + z() * 1.1) * m * hm, lang ? 7 + z() * 2 : 10 + z() * 3, (z() < 0.2 ? 0 : (3 + z() * 1) * m), lang ? "seite" : "front", z() < dachAnteil, lang ? (z() < 0.5 ? 2 : 0) : 1); if (dr) o += "</g>"; }
   return o;
 };
 const STADT = {};
@@ -496,12 +496,29 @@ const STADT = {};
   let k = "";
   const zl = zufall(77);
   /* --- Bergrücken unter der Stadt: schmaler Grat, die Flanken links und rechts fallen in Terrassenstufen ab --- */
-  const stufig = (pts, schritt, seed) => { const z = zufall(seed), o = []; for (let i = 0; i < pts.length - 1; i++) { const [x0, y0] = pts[i], [x1, y1] = pts[i + 1], n = Math.max(1, Math.round(Math.hypot(x1 - x0, y1 - y0) / schritt)); for (let j = 0; j < n; j++) { const t0 = j / n, t1 = (j + 1) / n, xa = x0 + (x1 - x0) * t0, ya = y0 + (y1 - y0) * t0, xb = x0 + (x1 - x0) * t1, yb = y0 + (y1 - y0) * t1; o.push([xa, ya], (y1 > y0) === (x1 < x0) ? [xa, yb] : [xb, ya]); } } o.push(pts[pts.length - 1]); return o; };
+  /* Stufenrand: die Kante folgt einer gekrümmten Höhenlinie; die Stufen werden nach unten (näher) höher;
+     jede zweite Stützmauer steht als heller Streifen im Licht */
+  const WAND = [];
+  const stufig = (pts, schritt, seed) => {
+    const z = zufall(seed), dicht = []; for (let i = 0; i < pts.length - 1; i++) for (let t = 0; t < 1; t += 0.1) { const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)], t2 = t * t, t3 = t2 * t; dicht.push([0, 1].map((q) => 0.5 * (2 * p1[q] + (-p0[q] + p2[q]) * t + (2 * p0[q] - 5 * p1[q] + 4 * p2[q] - p3[q]) * t2 + (-p0[q] + 3 * p1[q] - 3 * p2[q] + p3[q]) * t3))); }
+    dicht.push(pts[pts.length - 1]);
+    const o = [dicht[0]]; let rest = 0, n = 0;
+    for (let i = 1; i < dicht.length; i++) {
+      const [x0, y0] = o[o.length - 1], [x1, y1] = dicht[i], s0 = schritt * (0.55 + (Math.max(y0, y1) - 140) / 50) * (0.85 + z() * 0.3);
+      if (Math.abs(y1 - y0) < s0 && i < dicht.length - 1) continue;
+      const ecke = (y1 > y0) === (x1 < x0) ? [x0, y1] : [x1, y0];
+      o.push(ecke, [x1, y1]);
+      const senk = ecke[0] === x0 ? [[x0, y0], ecke] : [ecke, [x1, y1]];
+      if (n++ % 2 === 0) WAND.push(senk);
+    }
+    return o;
+  };
   const links = stufig([[88, 214], [94, 186], [106, 162], [126, 146]], 4, 1), rechts = stufig([[268, 142], [294, 149], [316, 160], [332, 178], [342, 205]], 4, 2);
   const ruecken = [[84, 262], ...links, [160, 141], [196, 143], [236, 141], ...rechts, [348, 262]];
   k += `<path d="${P(ruecken)}" fill="${S.lg("ruecken", [[0, "#2c4a30"], [0.12, "#3c5f37"], [0.3, "#6f9548"], [0.5, "#7ea052"], [0.75, "#6f9a48"], [0.9, "#4f7c3c"], [1, "#3c6534"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="${P(ruecken)}" fill="${WALD1}" opacity=".6"/>`;
   k += `<path d="${P(links, false)} M${P(rechts, false).slice(1)}" stroke="#b5ad9b" stroke-width=".5" fill="none" opacity=".8"/>`;
+  k += `<path d="${WAND.map(([[x0, y0], [x1, y1]]) => { const dx = x0 < 200 ? 1.1 : -1.1; return `M${r(x0)} ${r(y0)}L${r(x1)} ${r(y1)}L${r(x1 + dx)} ${r(y1 + 0.3)}L${r(x0 + dx)} ${r(y0 + 0.3)}Z`; }).join("")}" fill="#e2d9c4"/>`;
   /* Sektorflächen: Gras zwischen den Ruinen */
   k += `<path d="${glatt([[108, 168], [120, 152], [150, 147], [180, 150], [194, 160], [196, 200], [150, 206], [108, 204], [102, 186]], true, 0.6)}" fill="${S.lg("westflaeche", [[0, "#93a466"], [1, "#82995a"]])}"/>`;
   k += `<path d="${glatt([[236, 150], [262, 146], [288, 150], [300, 162], [306, 190], [300, 206], [246, 204], [240, 176]], true, 0.6)}" fill="${S.lg("ostflaeche", [[0, "#8fa364"], [1, "#7e9858"]])}"/>`;
@@ -531,8 +548,15 @@ const STADT = {};
     const x0 = 240 + (y - 150) * 0.33, x1 = 284 + (y - 150) * 0.62, m = 330 / dAusY(y);
     /* Stützmauer-Stirn der Stufe: dunklere Kante */
     ost += `<path d="M${r(x0 - 2)} ${r(y + 1.4)} L${r(x1 + 2)} ${r(y + 1.4)} L${r(x1 + 2)} ${r(y + 1.4 + 1.6 * m)} L${r(x0 - 2)} ${r(y + 1.4 + 1.6 * m)} Z" fill="${S.lg("ostmauer", [[0, "#a59d8e"], [1, "#6f685e"]])}"/><path d="M${r(x0 - 2)} ${r(y + 1.4)} H${r(x1 + 2)}" stroke="#ddd5c2" stroke-width=".3"/>`;
-    ost += zeile(x0, x1, y - 0.6, 1, 100 + i);
-    if (i < 4) ost += zeile(x0 + 2, x1 - 2, y + 4.2, 0.9, 120 + i);
+    /* jede zweite Zeile um eine halbe Hauslänge versetzt, einzelne Häuser leicht gedreht */
+    ost += zeile(x0, x1, y - 0.6, 1, 100 + i, 0.06, i % 2 ? 5.5 : 0, 0.18);
+    if (i === 1 || i === 3) {
+      /* Kancha: Hof mit gemeinsamer Umfassungsmauer zwischen der hinteren und der vorderen Zeile */
+      const xa = x0 + (i === 1 ? 4 : 14) * m, xb = xa + 30 * m, yf = y + 4.4, hw = 1.2 * m;
+      const ha = hinterPunkt([xa, yf], 9, dAusY(yf)), hb = hinterPunkt([xb, yf], 9, dAusY(yf));
+      ost += `<path d="${Pr([[xa, yf], [xb, yf], [xb, yf - hw], [xa, yf - hw]])}" fill="${GRANIT_F}"/><path d="${Pr([[xb, yf], hb, [hb[0], hb[1] - hw], [xb, yf - hw]])}" fill="${GRANIT_L}"/><path d="${Pr([[xa, yf], ha, [ha[0], ha[1] - hw], [xa, yf - hw]])}" fill="${GRANIT_S}"/><path d="M${r(ha[0])} ${r(ha[1] - hw)}L${r(xa)} ${r(yf - hw)}H${r(xb)}L${r(hb[0])} ${r(hb[1] - hw)}" stroke="#ece4d2" stroke-width=".25" fill="none"/>`;
+    }
+    if (i < 4) ost += zeile(x0 + 2, x1 - 2, y + 4.2, 0.9, 120 + i, 0.06, i % 2 ? 0 : 5.5, 0.18);
   });
   /* zwei Treppen und eine Gasse als helle Diagonalen durch die Stufen */
   for (const [xa, ya, xb, yb, w] of [[262, 152, 268, 200, 1.6], [286, 158, 296, 200, 1.4]]) {
@@ -619,7 +643,7 @@ const STADT = {};
     const bogen = (g0, g1, l) => { const o = []; for (let g = g0; g0 < g1 ? g <= g1 + 0.1 : g >= g1 - 0.1; g += g0 < g1 ? 15 : -15) o.push(pt(g, l)); return o; };
     st += `<ellipse cx="${r(cx)}" cy="${r(y0)}" rx="${rx}" ry="${ry}" fill="#a89f8e"/><path d="M${r(cx - 2)} ${r(y0 - 0.6)} l2.4 .8 M${r(cx + 1.4)} ${r(y0 + 0.4)} l1.6 -.6" stroke="#7d7568" stroke-width=".2"/>`;
     st += `<path d="${P([...bogen(180, 255, hw), ...bogen(255, 180, 0)])}" fill="${S.lg("torinnen", [[0, "#cfc6b3"], [1, "#efe7d5"]], 0, 0, 1, 0)}"/>`;
-    st += `<path d="${P([...bogen(30, 180, hw), ...bogen(180, 30, 0)])}" fill="${S.lg("torreon", [[0, "#a39a8a"], [0.45, "#ddd5c4"], [0.8, "#f0e8d6"], [1, "#d6ccb8"]], 1, 0, 0, 0)}"/>`;
+    st += `<path d="${P([...bogen(30, 180, hw), ...bogen(180, 30, 0)])}" fill="${S.lg("torreon", [[0, "#a39a8a"], [0.45, "#ddd5c4"], [0.8, "#f0e8d6"], [1, "#d6ccb8"]], 0, 0, 1, 0)}"/>`;
     let fu = ""; for (let l = 0.9; l < hw; l += 0.9) fu += P(bogen(30, 180, l), false);
     st += `<path d="${fu}" stroke="#aaa18f" stroke-width=".1" fill="none"/>`;
     /* zwei Trapezfenster in der Rundung */
@@ -730,21 +754,24 @@ const TERR = [];
   const wq = (t, v) => { const bx = Bq[0] + (B2[0] - Bq[0]) * t, by = Bq[1] + (B2[1] - Bq[1]) * t, hh = H * (1 - f * t); return [bx, by - hh * v]; };
   let st = "";
   {
-    const fs = ["#e1d4ba", "#d2c4a8", "#e8dcc4", "#cbbd9f"], seiteD = [];
-    let v0 = 0;
-    while (v0 < 1) {
-      const hv = [0.11, 0.16, 0.22][Math.floor(zs() * 3)];
-      for (let t = zs() * 0.05; t < 1; ) {
-        const w = hv * (0.5 + zs() * 0.6), j = () => (zs() - 0.5) * 0.02;
-        const pts = [[t + 0.012, v0 + 0.02], [t + w - 0.012, v0 + 0.02 + j()], [t + w - 0.01 + j(), v0 + hv * 0.5], [t + w - 0.014, v0 + hv - 0.02], [t + 0.014 + j(), v0 + hv - 0.025], [t + 0.01, v0 + hv * 0.5]].map(([tt, vv]) => wq(Math.min(1, tt), Math.min(1, vv)));
+    /* dasselbe Bruchsteinmauerwerk wie vorn (drei Steingrößen, breite Lehmfugen), in Wandkoordinaten erzeugt
+       (u: 0…83 = 8 m, v: 0…H) und auf die verkürzte Seitenwand gelegt; heller, weil die Morgensonne darauf fällt */
+    const fs = ["#cbbfa8", "#d6c9ae", "#c0b49e", "#ddd0b6", "#c6baa5", "#d1c4aa"], seiteD = [], LU = 83;
+    let v0 = 0.4;
+    while (v0 < H) {
+      const hh = [2.6, 3.8, 5.2][Math.floor(zs() * 3)];
+      for (let u = -1 + zs() * 2; u < LU; ) {
+        const w = hh * (0.9 + zs() * 0.9), j = () => (zs() - 0.5) * 0.9;
+        const pts = [[u + 0.5 + j(), v0 + 0.5], [u + w * 0.5 + j(), v0 + 0.4], [u + w - 0.5 + j(), v0 + 0.6], [u + w - 0.4 + j(), v0 + hh * 0.55], [u + w - 0.6 + j(), v0 + hh - 0.5], [u + w * 0.45 + j(), v0 + hh - 0.4], [u + 0.5 + j(), v0 + hh - 0.6], [u + 0.3 + j(), v0 + hh * 0.45]]
+          .map(([uu, vv]) => wq(Math.max(0, Math.min(1, uu / LU)), Math.max(0, Math.min(1, vv / H))));
         const c = Math.floor(zs() * fs.length); seiteD[c] = (seiteD[c] || "") + Pr(pts);
-        t += w + 0.01;
+        u += w + 0.9 + zs() * 0.6;
       }
-      v0 += hv + 0.02;
+      v0 += hh + 0.9;
     }
     st = seiteD.map((d0, c) => d0 ? `<path d="${d0}" fill="${fs[c]}"/>` : "").join("");
   }
-  k += `<path d="${P([Bq, B2, up(B2, H), up(Bq, H)])}" fill="#7a6a55" opacity=".9"/>${st}`;
+  k += `<path d="${P([Bq, B2, up(B2, H), up(Bq, H)])}" fill="#857560"/>${st}`;
   st = "";
   k += `<path d="${P([Be, [G[0] + 0.6, G[1] - 1.6], [G2[0] + 0.6, G2[1] - 1.6], B2e])}" fill="${S.lg("dachl", [[0, "#e9c985"], [0.55, "#cfa865"], [1, "#a8823f"]], 0, 0, 1, 0.3)}"/>`;
   k += `<path d="${P([Be, [G[0] + 0.6, G[1] - 1.6], [G2[0] + 0.6, G2[1] - 1.6], B2e])}" fill="${STROH}" opacity=".5"/>`;
@@ -783,8 +810,19 @@ const TERR = [];
   k += `<path d="${trapez(X + W / 2, 13, 20, Y)}" fill="#2a241e"/><path d="${trapez(X + W / 2, 13, 20, Y)}" fill="none" stroke="#efe5cf" stroke-width=".6" opacity=".7"/>`;
   k += `<path d="M${r(X + W / 2 - 4.6)} ${r(Y - 20.4)} h9.2 v1.8 h-9.2 Z" fill="#b5a88f"/>`;
   k += `<path d="${trapez(X + W / 2, 5.4, 6.6, Y - H - 7)}" fill="#2a241e"/>`;
-  /* Steinringe (Dachbinder) an der Giebelkante */
-  for (const t of [0.28, 0.6]) for (const sd of [-1, 1]) { const px = G[0] + sd * ((W / 2) * t + 2.6), py = G[1] + GI * t - 1.2; k += `<ellipse cx="${r(px)}" cy="${r(py)}" rx="1.5" ry="1.15" fill="#b3a68e" stroke="#5f5444" stroke-width=".35"/><ellipse cx="${r(px + 0.15)}" cy="${r(py + 0.1)}" rx=".6" ry=".45" fill="#3a3228"/>`; }
+  /* Steinzapfen (zum Festbinden des Daches): stecken IN der Giebelwand, gut 2 Einheiten innerhalb der Kante,
+     in drei Reihen, mit kleinem Schatten nach links unten */
+  {
+    const len = Math.hypot(W / 2, GI), nx = GI / len * 2.4, ny = (W / 2) / len * 2.4;
+    let za = "", zs2 = "", zl = "";
+    for (const t of [0.3, 0.56, 0.82]) for (const sd of [-1, 1]) {
+      const px = G[0] + sd * (W / 2) * t - sd * nx, py = G[1] + GI * t + ny;
+      zs2 += `<ellipse cx="${r(px - 0.7)}" cy="${r(py + 0.7)}" rx="1.1" ry=".8"/>`;
+      za += `<ellipse cx="${r(px)}" cy="${r(py)}" rx="1.05" ry=".85"/>`;
+      zl += `M${r(px - 0.2)} ${r(py - 0.7)} a1 .8 0 0 1 1 .6`;
+    }
+    k += `<g fill="#2e261e" opacity=".45">${zs2}</g><g fill="#b4a68d" stroke="#5f5444" stroke-width=".3">${za}</g><path d="${zl}" stroke="#efe4cc" stroke-width=".35" fill="none"/>`;
+  }
   /* Dachkante vorn (Halme stehen über) */
   k += `<path d="M${r(Ae[0])} ${r(Ae[1])} L${r(G[0])} ${r(G[1] - 2)} L${r(Be[0])} ${r(Be[1])}" stroke="#9d7b40" stroke-width="2" fill="none" stroke-linejoin="round"/>`;
   k += `<path d="M${r(Ae[0])} ${r(Ae[1] - 0.8)} L${r(G[0])} ${r(G[1] - 2.8)} L${r(Be[0])} ${r(Be[1] - 0.8)}" stroke="#ecd39a" stroke-width=".55" fill="none"/>`;
