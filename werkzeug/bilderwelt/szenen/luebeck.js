@@ -332,7 +332,7 @@ const SPEICHER = { x0: 290, d: 210 };
     p += `L${r(x + w)} ${r(top)} V${fuss} Z`;
     let t = `<path d="${p}" fill="${hs.f}"/>`;
     let zf = "";
-    for (let y = fuss - 1.2; y > top - g; y -= 1.2) zf += `M${r(x)} ${r(y)} h${r(w)} `;
+    for (let y = fuss - 1.2; y > top + 0.5; y -= 1.2) zf += `M${r(x)} ${r(y)} h${r(w)} `;
     t += `<path d="${zf}" stroke="#5a2418" stroke-width=".12" opacity=".6"/>`;
     t += `<path d="${ges}" stroke="#e3cfae" stroke-width=".45" fill="none"/>`;
     if (hs.art !== "treppe") t += `<path d="M${r(x + w / 2)} ${r(top - g)} V${r(top - g - 2.4)}" stroke="#3a2a20" stroke-width=".4"/><circle cx="${r(x + w / 2)}" cy="${r(top - g - 2.6)}" r=".6" fill="#3a2a20"/>`;
