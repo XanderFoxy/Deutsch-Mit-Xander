@@ -1094,5 +1094,39 @@ let STUHL = "";
 /* Licht über allem: warmes Licht von rechts hinten, leichte Vignette (fängt keinen Tipp ab) */
 S.davor(`<rect width="${BR}" height="${HO}" fill="${S.rg("sonne", [[0, "#fff1c8", 0.18], [0.5, "#fff1c8", 0.05], [1, "#fff1c8", 0]], 1, 0.9, 0.9)}"/><rect width="${BR}" height="${HO}" fill="${S.rg("vignette", [[0, "#000", 0], [0.74, "#000", 0], [1, "#1a1008", 0.2]], 0.5, 0.5, 0.75)}"/>`);
 
+/* Platz sparen: alle Pfade relativ schreiben (verlustfrei, gleiche Genauigkeit) */
+const relativ = (d) => {
+  const tok = d.match(/[a-zA-Z]|-?(?:\d+\.?\d*|\.\d+)(?:e-?\d+)?/g); if (!tok) return d;
+  const N = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 };
+  const dez = (n) => { const s = String(n); const i = s.indexOf("."); return i < 0 ? 0 : s.length - i - 1; };
+  let prec = 0; for (const t of tok) if (!/[a-zA-Z]/.test(t)) prec = Math.max(prec, dez(t)); prec = Math.min(prec, 3);
+  const f = (n) => { let s = (+n.toFixed(prec)).toString(); if (s === "-0") s = "0"; return s.replace(/^(-?)0\./, "$1."); };
+  let i = 0, cx = 0, cy = 0, sx = 0, sy = 0, out = "", cmd = "", first = true;
+  const num = () => +tok[i++];
+  while (i < tok.length) {
+    if (/[a-zA-Z]/.test(tok[i])) cmd = tok[i++];
+    const lc = cmd.toLowerCase(), abs = cmd !== lc, n = N[lc];
+    if (lc === "z") { out += "z"; cx = sx; cy = sy; continue; }
+    if (i + n > tok.length) return d;
+    const a = []; for (let k = 0; k < n; k++) a.push(num());
+    let r = [];
+    if (lc === "h") { const x = abs ? a[0] : cx + a[0]; r = [x - cx]; cx = x; }
+    else if (lc === "v") { const y = abs ? a[0] : cy + a[0]; r = [y - cy]; cy = y; }
+    else if (lc === "a") { const x = abs ? a[5] : cx + a[5], y = abs ? a[6] : cy + a[6]; r = [a[0], a[1], a[2], a[3], a[4], x - cx, y - cy]; cx = x; cy = y; }
+    else { const p = []; for (let k = 0; k < n; k += 2) p.push(abs ? [a[k], a[k + 1]] : [cx + a[k], cy + a[k + 1]]); for (const [x, y] of p) r.push(x - cx, y - cy); const e = p[p.length - 1];
+      if (lc === "m" && first) { out += "M" + f(e[0]) + " " + f(e[1]); cx = e[0]; cy = e[1]; sx = cx; sy = cy; first = false; if (cmd === "M") cmd = "L"; else cmd = "l"; continue; }
+      cx = e[0]; cy = e[1]; if (lc === "m") { sx = cx; sy = cy; } }
+    let s = lc;
+    for (const v of r) { const t = f(v); s += (/^-/.test(t) || /[a-z]$/.test(s) ? "" : " ") + t; }
+    out += s.replace(/ (?=\.)/g, " ").replace(/(\.\d+) (?=\.)/g, "$1");
+    if (lc === "m") cmd = abs ? "L" : "l";
+  }
+  return out;
+};
+{
+  const R = (x) => typeof x === "string" ? x.replace(/ d="([^"]*)"/g, (q, d) => ` d="${relativ(d)}"`) : x;
+  for (const L of [S.defs, S.kulisse, S.vorne]) for (let i = 0; i < L.length; i++) L[i] = R(L[i]);
+  for (const t of S.teile) { t.kunst = R(t.kunst); for (const u of t.unter || []) u.kunst = R(u.kunst); }
+}
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/bremen.js"));
 console.log(aus);
