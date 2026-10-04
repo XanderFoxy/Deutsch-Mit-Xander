@@ -920,7 +920,7 @@ function loewe(L, wach, dir) {
     /* Kinnbart: drei kurze, eingerollte Locken unter dem Kinn */
     h += `<path d="M${Q(0.15, -0.1)} Q${Q(0.155, -0.13)} ${Q(0.13, -0.128)} Q${Q(0.12, -0.14)} ${Q(0.1, -0.128)} Q${Q(0.085, -0.138)} ${Q(0.07, -0.122)} Q${Q(0.055, -0.125)} ${Q(0.05, -0.105)} Z" fill="${MI}" stroke="#0e0e10" stroke-width="${r(0.005 * L)}"/><path d="M${Q(0.13, -0.112)} q${r(dir * -0.004 * L)} ${r(0.012 * L)} ${r(dir * -0.012 * L)} ${r(0.014 * L)} M${Q(0.098, -0.112)} q${r(dir * -0.004 * L)} ${r(0.012 * L)} ${r(dir * -0.012 * L)} ${r(0.012 * L)}" stroke="#0e0e10" stroke-width="${r(0.004 * L)}" fill="none"/>`;
     /* Lockenkranz: einige Locken liegen über dem Hinterkopf und rahmen das Gesicht */
-    for (let i = 0; i < 9; i++) { const a = Math.PI * (0.42 + i * 0.13), [cx, cy] = Q(Math.cos(a) * 0.115 - 0.01, Math.sin(a) * 0.12 + 0.01).split(" ").map(Number); h += `<use href="#${S.id(i % 3 ? "lkd" : "lkh")}" transform="translate(${cx} ${cy}) rotate(${Math.round(dir * (Math.atan2(-Math.cos(a), -Math.sin(a) - 0.8) * 180 / Math.PI))}) scale(.8)"/>`; }
+    for (let i = 0; i < 7; i++) { const a = Math.PI * (0.64 + i * 0.13), [cx, cy] = Q(Math.cos(a) * 0.115 - 0.01, Math.sin(a) * 0.12 + 0.01).split(" ").map(Number); h += `<use href="#${S.id(i % 3 ? "lkd" : "lkh")}" transform="translate(${cx} ${cy}) rotate(${Math.round(Math.atan2(-dir * Math.cos(a), 1.3 - Math.sin(a)) * 180 / Math.PI)}) scale(.8)"/>`; }
     return h;
   };
   g += wach ? kopf(0.35, 0.45, 0.05) : kopf(0.37, 0.19, -0.14);

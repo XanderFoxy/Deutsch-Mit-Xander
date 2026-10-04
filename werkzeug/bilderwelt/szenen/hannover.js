@@ -134,7 +134,7 @@ const ballen = (lap, fam, ok = (x, rr) => rr) => {
   const [L, M, D] = KRONE[fam], u = (x, y, rr, f, v) => { const q = Math.min(ok(x, rr * 1.16), y + 1.5) / 1.16; return q > .8 ? `<use href="#${S.id("lap" + v)}" transform="translate(${r(x)} ${r(y)}) scale(${(q).toFixed(2)})" fill="${f}"/>` : ""; };
   let g = "";
   lap.sort((p, q) => p[1] - q[1]);
-  lap.forEach(([x, y, rr], i) => { g += u(x + rr * .12, y + rr * .16, rr, D, i % 3) + u(x, y, rr * .94, M, (i + 1) % 3) + u(x - rr * .26, y - rr * .28, rr * .5, L, (i + 2) % 3); });
+  lap.forEach(([x, y, rr], i) => { g += u(x + rr * .12, y + rr * .16, rr, D, i % 3) + u(x, y, rr * .94, M, (i + 1) % 3) + u(x - rr * .2, y - rr * .24, rr * .7, L, (i + 2) % 3); });
   return g;
 };
 /* Krone als Ellipse (rx, ry) aus Ballen; Ballen bleiben im Bild */
@@ -497,7 +497,7 @@ const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} $
     const glatt = (q) => { let d = `M${r(q[0][0])} ${r(q[0][1])}`; for (let i = 1; i < q.length - 1; i++) d += ` Q${r(q[i][0])} ${r(q[i][1])} ${r((q[i][0] + q[i + 1][0]) / 2)} ${r((q[i][1] + q[i + 1][1]) / 2)}`; return d + ` L${r(q[q.length - 1][0])} ${r(q[q.length - 1][1])}`; };
     const e = pts[pts.length - 1];
     const seite = (q) => q.reduce((s0, v) => s0 + v[1] + v[0] * .6, 0), oben = seite(L) < seite(R) ? L : R;
-    return `<path d="${glatt(L)} L${r(e[0])} ${r(e[1])} ${glatt(R.slice().reverse()).replace("M", "L")} Z" fill="${STAMM}"/><path d="${glatt(oben)}" stroke="#8c7460" stroke-width="${r(Math.max(.3, w1 * .25))}" fill="none" opacity=".7"/>`;
+    return `<path d="${glatt(L)} L${r(e[0])} ${r(e[1])} ${glatt(R.slice().reverse()).replace("M", "L")} Z" fill="${S.lg("ast", [[0, "#76604e"], [0.5, "#5a4838"], [1, "#43352a"]], 0, 0, 1, 0)}"/><path d="${glatt(oben)}" stroke="#8c7460" stroke-width="${r(Math.max(.3, w1 * .25))}" fill="none" opacity=".7"/>`;
   };
   /* Stamm mit Wurzelanlauf, oben gerundet an der Gabel */
   const STAMM = S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0);
@@ -526,7 +526,6 @@ const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} $
   k += ast([[p[0] - 12, 84], [p[0] - 30, 60], [p[0] - 56, 46], [p[0] - 84, 37], [p[0] - 112, 30]], 11, 2.4);
   k += ast([[p[0] - 7, 84], [p[0] - 10, 46], [p[0] - 5, 20], [p[0] + 2, -2]], 10, 4);
   k += ast([[p[0] - 2, 86], [p[0] + 10, 60], [p[0] + 26, 47], [p[0] + 30.6, 43.8]], 9, 4.6);
-  k += `<path d="M${r(p[0] - 15)} 74 q3 -2.6 5.6 -.4 M${r(p[0] - 6)} 74.6 q3 -2.4 5.4 .2" stroke="#9a8470" stroke-width=".6" fill="none" opacity=".7"/>`;
   k += ast([[p[0] - 56, 46], [p[0] - 70, 56], [p[0] - 90, 62], [p[0] - 103, 60]], 3.4, 1.2);
   /* schweres Laubdach von oben rechts über das obere Drittel, die Kuppel bleibt frei: innen gelbgrün, am Rand Ocker */
   for (const [cx, cy, R, sd, f] of [[300, 10, 30, 1, "linde"], [258, 6, 26, 2, "gruen"], [222, 14, 22, 3, "linde"], [196, 34, 14, 4, "orange"], [236, 44, 22, 5, "gruen"], [282, 46, 26, 6, "linde"], [310, 70, 18, 7, "orange"], [256, 74, 16, 8, "linde"], [214, 60, 14, 9, "orange"]]) k += masse(cx, cy, R, sd, f);
