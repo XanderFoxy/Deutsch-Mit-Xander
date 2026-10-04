@@ -870,7 +870,7 @@ let LINKS_BOOT = "";
 
 /* 8 — DAS RUNDFAHRTBOOT (kommt auf uns zu: flacher Rumpf, Kabine mit gewölbtem Glasdach) */
 {
-  const c = 1.45, D0 = 25, L = 20, w = 2.1;
+  const c = 1.45, D0 = 25, L = 24, w = 2.1;
   const runde = (w0, d0, tief, n = 10) => { const o = []; for (let i = 0; i <= n; i++) { const a = Math.PI * i / n; o.push([c - w0 * Math.cos(a), d0 + tief - tief * Math.sin(a)]); } return o; };
   const bug = runde(w, D0, 2.2);
   const rumpf = [[c - w, D0 + L], ...bug, [c + w, D0 + L]];
