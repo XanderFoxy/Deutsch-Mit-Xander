@@ -91,12 +91,27 @@ const sparen = (svg) => svg.replace(/ (stroke-linejoin|stroke-linecap)="round"/g
     const key = tag + at.replace(/="[^"]*"/g, "") + st;
     if (VERLAUF[key]) return `<${tag} id="${id}"${at} href="#${VERLAUF[key]}"/>`;
     VERLAUF[key] = id; return all; });
-const kompakt = (svg, Q = 1, min = 0.35) => {
+let KLEIN = 8;
+/* winzige Figuren in der Ferne: einfach grob runden */
+const kompaktAlt = (svg, Q, min) => { svg = schlank(svg, min); const rund = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : r(v)); };
+  return svg.replace(/<(path|ellipse|circle|rect|line|polygon)\b[^>]*>/g, (tag) => tag.replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, rund)}"`).replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${rund(n)}"`)); };
+const kompakt = (svg, Q = 1, min = 0.35, kopf = null) => {
   svg = schlank(svg, min);
   const rund = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : r(v)); };
-  return svg.replace(/<(path|ellipse|circle|rect|line|polygon)\b[^>]*>/g, (tag) => tag
-    .replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, rund)}"`)
-    .replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${rund(n)}"`));
+  /* kleine Formen (Gesicht, Hände, Augen) fein runden, große grob — keine Mosaik-Gesichter */
+  const fein = (n) => { const v = Math.round(+n / 0.4) * 0.4; return String(v === 0 ? 0 : r(v)); };
+  /* Alles am Kopf (Haar, Mütze, Pony, Zopf, Ohr) fein runden – sonst Treppen im Haar */
+  const ausdehnung = (p) => { const z = (p.match(/-?\d*\.?\d+/g) || []).map(Number), a = [Infinity, Infinity], b = [-Infinity, -Infinity];
+    z.forEach((v, i) => { a[i % 2] = Math.min(a[i % 2], v); b[i % 2] = Math.max(b[i % 2], v); });
+    if (kopf && Math.abs((a[0] + b[0]) / 2 - kopf.x) < 18 && (a[1] + b[1]) / 2 > kopf.y - 24 && (a[1] + b[1]) / 2 < kopf.y + 16 && b[1] - a[1] < 50) return 0;
+    return Math.max(b[0] - a[0], b[1] - a[1]); };
+  /* Umrisse in clipPath (Haar-/Gesichtsgrenzen) und relative Pfade immer fein, sonst verrutschen Kanten */
+  const tagRunden = (tag, immerFein) => tag
+    .replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, immerFein || /[a-df-z]/.test(p) || ausdehnung(p) < KLEIN ? fein : rund)}"`)
+    .replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${(immerFein || /^<(ellipse|circle)/.test(tag) ? fein : rund)(n)}"`);
+  const TAG = /<(path|ellipse|circle|rect|line|polygon)\b[^>]*>/g, clips = [];
+  svg = svg.replace(/<clipPath\b[\s\S]*?<\/clipPath>/g, (blk) => { clips.push(blk.replace(TAG, (t) => tagRunden(t, true))); return `\u0001${clips.length - 1}\u0001`; });
+  return svg.replace(TAG, (t) => tagRunden(t, false)).replace(/\u0001(\d+)\u0001/g, (a, i) => clips[+i]);
 };
 
 S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
@@ -327,7 +342,6 @@ const schlossUnter = [];
     k += `<g fill="#b6a684">${bb}</g>`;
     k += `<path d="M${x0} ${TOP - 2.6} ${bogen(x0, x1, TOP - 2.6, PC)} L${x1} ${TOP - 2.9} ${bogen(x1, x0, TOP - 2.9, PC)} Z" fill="#fbf4e3"/>`;
     k += `<use href="#${S.id("vase")}" transform="translate(${r(m)} ${ya(m, TOP - 2.9)})"/>`;
-    k += `<rect x="${r(x1 - 1.6)}" y="${ya(x1 - 0.8, TOP - 2.9)}" width="1.6" height="${r(-TOP + 3.3)}" fill="#3a2a5a" opacity=".12"/>`;
   }
   /* Attika über dem Mittelbau und die Kuppel */
   const TB = TOP - 2.65;
@@ -358,7 +372,7 @@ const schlossUnter = [];
   k += `<rect x="-.75" y="${r(LB - 1.0)}" width="1.5" height="1.0" fill="#86bfa5"/><rect x="-.35" y="${r(LB - 0.85)}" width=".25" height=".7" fill="#2c3a42"/><rect x=".15" y="${r(LB - 0.85)}" width=".25" height=".7" fill="#2c3a42"/>`;
   k += `<path d="M-.95 ${r(LB - 1.0)} Q0 ${r(LB - 1.7)} .95 ${r(LB - 1.0)} Z" fill="#6fa58d"/><circle cx="0" cy="${r(LB - 1.9)}" r=".24" fill="${GOLD}"/>`;
   /* Abendwärme auf der Fassade */
-  k += `<rect x="${-W - 0.6}" y="${TOP}" width="${2 * W + 1.2}" height="${-TOP + 0.4}" fill="${S.lg("warm", [[0, "#ffd29a", 0.24], [0.45, "#ffd29a", 0.06], [1, "#4a4a90", 0.16]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="${-PB}" y="${TOP}" width="${2 * PB}" height="${-TOP + 0.4}" fill="${S.lg("warm", [[0, "#ffd29a", 0.24], [0.45, "#ffd29a", 0.06], [1, "#4a4a90", 0.16]], 0, 0, 1, 0)}"/>`;
   S.teil({ id: "schloss", de: "das Schloss", syl: "SCHLOSS", it: "il palazzo", itSyl: "pa-LAZ-zo", en: "palace",
     x: CX, y: PY, kunst: `<g transform="scale(${PU})">${k}</g>`,
     tipp: "Das Schloss Sanssouci war das Sommerschloss von König Friedrich dem Großen. „Sans souci“ ist Französisch und heißt „ohne Sorge“.",
@@ -468,7 +482,7 @@ const flach = (svg) => {
 };
 const mensch = (name, spec, groesse, D, X, Q = 1, min = 0.35, einfach = false) => {
   const m = B.mensch(spec, 100);
-  S.def(`<g id="${S.id("fig" + name)}" stroke-linejoin="round" stroke-linecap="round">${sparen(kompakt(einfach ? flach(m.svg) : m.svg, Q, min))}</g>`);
+  S.def(`<g id="${S.id("fig" + name)}" stroke-linejoin="round" stroke-linecap="round">${sparen(einfach ? kompaktAlt(flach(m.svg), Q, min) : kompakt(m.svg, Q, min, m.z.kopf))}</g>`);
   const f = { m, D, X, x: r(xG(D, X)), y: r(yG(D)), u: sk(D), s: groesse * sk(D) / 100 };
   f.p = (q) => ({ x: f.x + q.x * m.k * f.s, y: f.y + q.y * m.k * f.s });
   f.svg = `<use href="#${S.id("fig" + name)}" transform="scale(${f.s.toFixed(5)})"/>`;
@@ -487,21 +501,21 @@ const T = mensch("T", { id: "pdm_tour", geschlecht: "w", blick: 160, frisur: "zo
   pose: { lende: 1, brust: -2, nacken: 2, kopf: -6, schulterL: { vor: 62, seit: 12, dreh: 10 }, ellbogenL: 96, unterarmL: 30, handL: 4, fingerL: 0.5,
     schulterR: { vor: 64, seit: 14, dreh: 10 }, ellbogenR: 92, unterarmR: 30, handR: 4, fingerR: 0.5,
     huefteL: { vor: 4, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -8 }, knieR: 10, fussR: 6 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.68, 22, -2.0);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.68, 22, -2.0, 2, 0.5);
 bodenSchatten(22, -2.0, 0.45, 1.68, 0.26);
 /* DER TOURIST zeigt mit gestrecktem Arm schräg hinauf zum Schloss */
 const M2 = mensch("M2", { id: "pdm_tourist", geschlecht: "m", blick: 196, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
   pose: { lende: 1, brust: -4, nacken: -12, kopf: -10, kopfDreh: 12, schulterL: { vor: 3, seit: 7 }, ellbogenL: 12, unterarmL: 10, handL: 6, fingerL: 0.38,
     schulterR: { vor: 34, seit: 122, dreh: 0 }, ellbogenR: 4, unterarmR: 0, handR: 4, fingerR: "zeigen",
     huefteL: { vor: 5, seit: 3, dreh: -6 }, knieL: 5, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-  kleidung: { oberteil: { stueck: "tshirt", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh" } } }, 1.82, 25, -0.6);
+  kleidung: { oberteil: { stueck: "tshirt", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh" } } }, 1.82, 25, -0.6, 2, 0.5);
 bodenSchatten(25, -0.6, 0.5, 1.82, 0.26);
 /* DAS KIND geht zur Treppe, die Kartoffel in der ausgestreckten Hand (Dreiviertel von hinten) */
 const K = mensch("K", { id: "pdm_kind", alter: "kind", geschlecht: "m", blick: 212, frisur: "kurz", haarfarbe: "hellblond", haut: "hell",
   pose: { lende: 2, brust: -2, nacken: 4, kopf: 0, schulterL: { vor: -14, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
     schulterR: { vor: 34, seit: 46, dreh: 0 }, ellbogenR: 22, unterarmR: 80, handR: 0, fingerR: 0.75,
     huefteL: { vor: 22, seit: 4, dreh: 0 }, knieL: 8, fussL: 2, huefteR: { vor: -16, seit: 4, dreh: 0 }, knieR: 24, fussR: 18 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "muetze", farbe: "blau" } } }, 1.22, 19, 0.0);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "muetze", farbe: "blau" } } }, 1.22, 19, 0.0, 2, 0.5);
 bodenSchatten(19, 0.0, 0.4, 1.22, 0.26);
 /* DAS PAAR spaziert um die Fontäne (mittlere Tiefe) */
 const P1 = mensch("P1", { id: "pdm_p1", geschlecht: "w", blick: 120, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", pose: "gehen",
@@ -764,7 +778,7 @@ const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c
 {
   let k = "";
   /* gelappte Kugelkronen (zwei Formen), unten eine dunklere Zone */
-  { const oz = zufall(5); for (const v of [0, 1]) S.def(`<path id="${S.id("ork" + v)}" d="${lappenPfad(0, -2.55, 0.8, 0.76, oz)}"/><clipPath id="${S.id("ork" + v)}c"><use href="#${S.id("ork" + v)}"/></clipPath>`); }
+  { const oz = zufall(5); for (const v of [0, 1]) S.def(`<path id="${S.id("ork" + v)}" d="${lappenPfad(0, -25.5, 8, 7.6, oz)}"/><clipPath id="${S.id("ork" + v)}c"><use href="#${S.id("ork" + v)}" transform="scale(.1)"/></clipPath>`); }
   let oi = 0;
   for (const o of ORANGEN) {
     const u = sk(o.D), x = xG(o.D, o.X), y = yG(o.D);
@@ -776,7 +790,7 @@ const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c
     g += `<circle cx="-.54" cy="-.98" r=".08" fill="#f2ede0"/><circle cx=".54" cy="-.98" r=".08" fill="#b8b09c"/>`;
     g += `<rect x="-.05" y="-1.9" width=".1" height="1.05" fill="#6b5236"/>`;
     const v = S.id("ork" + (oi++ % 2));
-    g += `<use href="#${v}" fill="${ORKRONE}"/><g clip-path="url(#${v}c)"><use href="#${v}" fill="#1c3618" opacity=".45" transform="translate(.06 .95)"/></g>`;
+    g += `<use href="#${v}" fill="${ORKRONE}" transform="scale(.1)"/><g clip-path="url(#${v}c)"><use href="#${v}" fill="#1c3618" opacity=".45" transform="translate(.06 .95) scale(.1)"/></g>`;
     const z = zufall(Math.round(o.D * 7 + o.X));
     let bl = "";
     for (let i = 0; i < 10; i++) { const a = z() * 6.28, d = Math.sqrt(z()) * 0.6, ox = r(Math.cos(a) * d), oy = r(-2.55 + Math.sin(a) * d); g += `<circle cx="${ox}" cy="${oy}" r="${i % 3 ? ".07" : ".05"}" fill="${Math.cos(a) < 0 ? "#f7a832" : "#d4781a"}"/>`; if (i % 3 === 1) bl += `<ellipse cx="${r(ox + 0.04)}" cy="${r(oy + 0.03)}" rx=".1" ry=".055" fill="#3f6e2c"/>`; }
@@ -869,7 +883,7 @@ bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x: T.x, y: T.y, kunst: T.svg,
     tipp: "Die Touristin macht ein Foto vom Schloss." });
   const g = `<rect x="-1.6" y="-3.1" width="3.2" height="5.6" rx=".6" fill="#1d2127" stroke="#8a9198" stroke-width=".25"/><rect x="-1.2" y="-2.6" width="2.4" height="4.6" rx=".3" fill="${S.lg("display", [[0, "#9cc0e2"], [0.55, "#f0c75e"], [1, "#9cbf63"]])}"/><circle cx="0" cy="-.9" r=".4" fill="#5f8f74"/>`;
-  S.teil({ oben: true, id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: r(hx), y: r(hy - 0.6), kunst: g + flaeche(-2.6, -4.2, 5.2, 8, 0.5),
+  S.teil({ oben: true, id: "handy", de: "das Handy", syl: "HAN-dy", it: "il cellulare", itSyl: "cel-lu-LA-re", en: "mobile phone", x: r(hx), y: r(hy - 0.6), kunst: `<g transform="scale(1.25)">${g}</g>` + flaeche(-3.2, -5, 6.4, 9.6, 0.5),
     tipp: "Mit dem Handy macht man schnell ein Foto." });
 }
 /* Rucksack von hinten: abgerundet, Deckel, Träger über beiden Schultern */
@@ -881,7 +895,10 @@ const rucksack = (f) => { const q = (n) => { const v = f.p({ x: f.m.z.punkte[n][
 S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: M2.x, y: M2.y, kunst: M2.svg + rucksack(M2),
   tipp: "Der Tourist zeigt nach oben: „Da ist das Schloss!“" });
 {
-  S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: K.x, y: K.y, kunst: K.svg,
+  /* Rückansicht: Hinterkopf mit Haar überdecken (die Figur zeigt dort sonst Haut) */
+const hinterkopf = (f, farbe, oben = 0) => { const c = f.p(f.m.z.kopf), R = 10.5 * f.m.k * f.s;
+  return `<ellipse cx="${r(c.x - f.x)}" cy="${r(c.y - f.y + R * (0.1 + oben))}" rx="${r(R * 0.8)}" ry="${r(R * (0.76 - oben))}" fill="${S.lg("hinterkopf", [[0, "#e6d29c"], [0.6, farbe], [1, "#b8995e"]], 0, 0, 1, 0)}"/>`; };
+S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: K.x, y: K.y, kunst: K.svg + hinterkopf(K, "#d9c08a", 0.12),
     tipp: "Das Kind bringt eine Kartoffel zum Grab des Königs." });
   const h = K.p(K.m.z.handR);
   let g = `<ellipse cx="0" cy="0" rx="2.1" ry="1.55" fill="${S.rg("knolle", [[0, "#ecd09a"], [0.6, "#c49a5c"], [1, "#8e6a3a"]], 0.38, 0.32, 0.75)}" transform="rotate(-18)"/>`;

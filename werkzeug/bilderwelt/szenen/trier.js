@@ -74,11 +74,13 @@ S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("licht")}" x="-5%" 
 const licht = (svg) => `<g filter="url(#${S.id("licht")})">${svg}</g>`;
 
 const GOLD = S.lg("gold", [[0, "#fff1b0"], [0.45, "#f0c64a"], [1, "#a8781a"]], 0, 0, 1, 1);
-const LAUF = S.lg("lauf", [[0, "#0b0a09", 0.75], [0.6, "#0b0a09", 0.35], [1, "#0b0a09", 0]]);            /* Laufspur, oben dunkel */
+const LAUF = S.lg("lauf", [[0, "#0b0a09", 0.6], [1, "#0b0a09", 0]]);            /* Laufspur, oben dunkel, unten ausgelaufen */
+/* Laufspur: setzt oben am Gesims an, wird nach unten schmaler und blasser (keine harten Seitenkanten) */
+const lauf = (x, y, w, h) => `<path d="M${r(x - w / 2)} ${r(y)} h${r(w)} q${r(-w * 0.1)} ${r(h * 0.5)} ${r(-w * 0.4)} ${r(h)} h${r(-w * 0.2)} q${r(-w * 0.2)} ${r(-h * 0.5)} ${r(-w * 0.4)} ${r(-h)} Z" fill="${LAUF}"/>`;
 const SCHATTENBAND = S.lg("schband", [[0, "#0b0a09", 0.65], [1, "#0b0a09", 0]]);
 const WASCH = S.lg("wasch", [[0, "#b3aa92", 0.32], [1, "#b3aa92", 0]]);              /* Auswaschung, oben hell */
 const TRICHTER = S.lg("trichter", [[0, "#060505"], [0.55, "#1e1b18"], [1, "#857b69"]]);
-const SSCHATTEN = S.lg("sschat", [[0, "#070606", 0.6], [1, "#070606", 0.15]], 0, 0, 1, 0);
+const SSCHATTEN = S.lg("sschat", [[0, "#070606", 0.45], [0.6, "#070606", 0.2], [1, "#070606", 0]], 0, 0, 1, 0);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wblur")}" x="-60%" y="-20%" width="220%" height="140%"><feGaussianBlur stdDeviation=".7"/></filter>`);
 
 /* Schlagschatten: Sonne hinten links (SW), Höhe ≈ 30° — lange Schatten nach rechts hinten.
@@ -175,15 +177,23 @@ function krone(x, cy, rx, ry, seed, o) {
   S.def(`<g id="${id}">${c}</g>`);
   const lage = (dx, dy, f, fill) => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(cy + dy)}) scale(${f}) translate(${r(-x)} ${r(-cy)})"/>`;
   let g = lage(0, 0, 1, farben[0]) + lage(lx * R * 0.06, -R * 0.07, 0.9, farben[1]) + lage(lx * R * 0.17, -R * 0.18, 0.68, farben[2]) + lage(lx * R * 0.28, -R * 0.3, 0.4, farben[3]);
-  /* Astlücken auf der Schattenseite und unten, mit einem Ast darin */
+  /* Astlücken: unregelmäßige dunkle Lücken auf der Schattenseite; ein Aststück kommt von unten und verschwindet im Laub,
+     zwei Blattbüschel brechen den Rand der Lücke */
   for (let i = 0; i < 3; i++) {
-    /* Lücken nur unten und auf der Schattenseite, wo die Krone ohnehin dunkel ist */
-    const a = Math.PI * (lx > 0 ? 0.45 + i * 0.22 + z() * 0.1 : 0.55 - i * 0.22 - z() * 0.1), gx = x + Math.cos(a) * rx * 0.68, gy = cy + Math.sin(a) * ry * 0.6, w = R * (0.07 + z() * 0.04);
-    g += `<path d="M${r(gx - w)} ${r(gy)} q${r(w * 0.3)} ${r(-w * 0.8)} ${r(w * 1.1)} ${r(-w * 0.6)} q${r(w * 0.9)} ${r(w * 0.1)} ${r(w * 0.8)} ${r(w * 0.7)} q${r(-w * 0.5)} ${r(w * 0.7)} ${r(-w * 1.2)} ${r(w * 0.5)} q${r(-w * 0.7)} ${r(-w * 0.2)} ${r(-w * 0.7)} ${r(-w * 0.6)} Z" fill="${farben[4] || "#16240f"}"/>`;
-    g += `<path d="M${r(gx - w * 0.7)} ${r(gy + w * 0.5)} Q${r(gx)} ${r(gy - w * 0.05)} ${r(gx + w * 0.7)} ${r(gy - w * 0.4)}" stroke="${rinde}" stroke-width="${r(Math.max(0.3, R * 0.035))}" fill="none"/>`;
+    const a = Math.PI * (lx > 0 ? 0.45 + i * 0.22 + z() * 0.1 : 0.55 - i * 0.22 - z() * 0.1), gx = x + Math.cos(a) * rx * 0.62, gy = cy + Math.sin(a) * ry * 0.55, w = R * (0.09 + z() * 0.04);
+    let gp = "";
+    for (let j = 0; j < 7; j++) { const b2 = j / 7 * Math.PI * 2, f = 0.55 + z() * 0.6; gp += `${j ? "L" : "M"}${r(gx + Math.cos(b2) * w * f)} ${r(gy + Math.sin(b2) * w * 0.75 * f)} `; }
+    g += `<path d="${gp}Z" fill="${farben[4] || "#16240f"}"/>`;
+    g += `<path d="M${r(gx - w * 0.5)} ${r(gy + w * 0.75)} L${r(gx - w * 0.35)} ${r(gy + w * 0.75)} L${r(gx + w * 0.15)} ${r(gy - w * 0.15)} L${r(gx + w * 0.08)} ${r(gy - w * 0.2)} Z" fill="${rinde}"/>`;
+    for (let j = 0; j < 2; j++) { const b2 = z() * Math.PI * 2; g += `<circle cx="${r(gx + Math.cos(b2) * w * 0.8)}" cy="${r(gy + Math.sin(b2) * w * 0.6)}" r="${r(w * 0.45)}" fill="${farben[1]}"/>`; }
   }
-  /* Kastanie: helle Blütenkerzen auf der Lichtseite */
-  if (bluete) for (let i = 0; i < 12; i++) { const a = -Math.PI * (0.05 + z() * 0.9), f = 0.3 + z() * 0.6, bx = r(x + Math.cos(a) * rx * f), by = r(cy + Math.sin(a) * ry * f), bh = r(R * 0.09); g += `<path d="M${r(bx - bh * 0.3)} ${by} Q${bx} ${r(by - bh * 1.4)} ${r(bx + bh * 0.3)} ${by} Z" fill="#f6f1e2"/>`; }
+  /* Blattbüschel brechen den Kronenrand an vier Stellen auf */
+  for (let i = 0; i < 4; i++) { const a = -Math.PI * (0.1 + i * 0.26 + z() * 0.08), bx = x + Math.cos(a) * rx * 1.02, by = cy + Math.sin(a) * ry * 1.0; for (let j = 0; j < 3; j++) g += `<circle cx="${r(bx + (j - 1) * R * 0.07)}" cy="${r(by - (j % 2) * R * 0.05)}" r="${r(R * 0.06)}" fill="${farben[j === 1 ? 2 : 1]}"/>`; }
+  /* Kastanie: Blütenkerzen in Gruppen auf der Lichtseite, schmal kegelig, cremeweiß mit rosa Hauch */
+  if (bluete) for (let i = 0; i < 5; i++) {
+    const a = -Math.PI * (lx > 0 ? 0.08 + z() * 0.45 : 0.47 + z() * 0.45), f = 0.45 + z() * 0.45, bx = x + Math.cos(a) * rx * f, by = cy + Math.sin(a) * ry * f, bh = R * 0.22;
+    for (let j = 0; j < 3; j++) { const cx2 = bx + (j - 1) * R * 0.08, cy2 = by + (j % 2) * R * 0.05; g += `<path d="M${r(cx2 - bh * 0.16)} ${r(cy2)} Q${r(cx2 - bh * 0.1)} ${r(cy2 - bh * 0.7)} ${r(cx2)} ${r(cy2 - bh)} Q${r(cx2 + bh * 0.1)} ${r(cy2 - bh * 0.7)} ${r(cx2 + bh * 0.16)} ${r(cy2)} Z" fill="#f6f0e2"/><circle cx="${r(cx2)}" cy="${r(cy2 - bh * 0.35)}" r="${r(bh * 0.07)}" fill="#e8a8b4"/>`; }
+  }
   return g;
 }
 /* Laubbaum (Platane): gefleckter Stamm, Äste verschwinden in der Krone, breite unregelmäßige Krone, Licht von links */
@@ -416,7 +426,7 @@ let PN_UNTER = [];
   const saeule = (cx, h0, h1) => {
     const cw = 0.82, xa = X(cx - cw / 2), xb = X(cx + cw / 2), ya = Y(h1 - 0.55), yb = Y(h0 + 0.45);
     /* Schlagschatten der Halbsäule nach rechts auf die Wand (Sonne links vorn) */
-    let g = `<path d="M${r(xb)} ${r(ya - M(0.55))} L${r(xb + M(0.7))} ${r(ya + 1.6)} L${r(xb + M(0.7))} ${yb} L${r(xb)} ${yb} Z" fill="${SSCHATTEN}"/>`;
+    let g = `<path d="M${r(xb)} ${r(ya - M(0.55))} L${r(xb + M(0.42))} ${r(ya + 1.2)} L${r(xb + M(0.42))} ${yb} L${r(xb)} ${yb} Z" fill="${SSCHATTEN}"/>`;
     /* Schaft: Umriss mit zwei, drei flachen Höckern (rohe Bosse), keine Zacken */
     let lk = `M${xa} ${yb} `, rk2 = "";
     const nh = 2 + (z() < 0.5 ? 1 : 0), st = (h1 - h0 - 1) / nh;
@@ -426,11 +436,13 @@ let PN_UNTER = [];
     g += `<path d="${lk}L${xa} ${ya} L${xb} ${ya} ${rk2}L${xb} ${yb} Z" fill="url(#${S.id("bosse")})"/>`;
     g += `<path d="M${r(xa + 0.35)} ${r(ya + 1)} V${r(yb - 1)}" stroke="#a39a86" stroke-width=".5" opacity=".55"/>`;
     g += `<path d="M${r(xb - 0.1)} ${ya} V${yb}" stroke="#050505" stroke-width=".5" opacity=".6"/>`;
-    for (const yy of [ya + 0.2, ya + M(1.4 + z())]) g += `<rect x="${r(xa + 0.3 + z() * 1.6)}" y="${r(yy)}" width="${r(0.6 + z() * 0.3)}" height="${r(4 + z() * 10)}" fill="${LAUF}"/>`;
+    g += lauf(xa + 0.8 + z() * 1.4, ya + 0.2, 1 + z() * 0.5, 5 + z() * 11);
     /* ausgewaschene Säulenvorderseite: oben hell, nach unten auslaufend */
     g += `<rect x="${r(xa + 0.6)}" y="${r(ya + 0.4)}" width="${r(xb - xa - 2)}" height="${r(M(1.5 + z() * 2.5))}" fill="${WASCH}" filter="url(#${S.id("wblur")})"/>`;
     /* unbehauenes Kapitell und Basis: rohe Blöcke mit abgeschrägten Kanten */
     g += `<path d="M${r(xa - M(0.24))} ${ya} L${r(xa - M(0.24))} ${r(ya - M(0.38))} L${r(xa - M(0.1))} ${r(ya - M(0.56))} L${r(xb + M(0.14))} ${r(ya - M(0.56))} L${r(xb + M(0.26))} ${r(ya - M(0.38))} L${r(xb + M(0.26))} ${ya} Z" fill="#5e574b"/><path d="M${r(xa - M(0.24))} ${r(ya - M(0.38))} L${r(xa - M(0.1))} ${r(ya - M(0.56))} L${r(xb + M(0.14))} ${r(ya - M(0.56))}" stroke="#aaa18b" stroke-width=".5" fill="none"/><path d="M${r(xa - M(0.24))} ${ya} H${r(xb + M(0.26))}" stroke="#0b0a09" stroke-width=".6"/>`;
+    /* Schattenkeil unter dem Kapitell (Licht von links oben) */
+    g += `<path d="M${r(xa - M(0.24))} ${r(ya + 0.2)} H${r(xb + M(0.26) + M(0.35))} L${r(xb + M(0.26))} ${r(ya + M(0.4))} H${r(xb)} Z" fill="#070606" opacity=".28"/>`;
     g += `<path d="M${r(xa - M(0.2))} ${r(yb + M(0.45))} L${r(xa - M(0.16))} ${yb} L${r(xb + M(0.18))} ${yb} L${r(xb + M(0.22))} ${r(yb + M(0.45))} Z" fill="#5d564b"/>`;
     return g;
   };
@@ -457,9 +469,7 @@ let PN_UNTER = [];
     /* Fensterbank, manchmal mit abgebrochener Ecke; darunter Laufspuren */
     const ecke = vari === 1 || z() < 0.15;
     g += `<rect x="${r(x0 - 1.1 + (ecke ? 0.9 : 0))}" y="${yb}" width="${r(x1 - x0 + 2.2 - (ecke ? 0.9 : 0))}" height="1" fill="#7d7464"/><rect x="${r(x0 - 1.1)}" y="${yb}" width="${r(x1 - x0 + 2.2)}" height=".3" fill="#b3aa92" opacity=".6"/>`;
-    for (let n = 0; n < 3; n++) g += `<rect x="${r(x0 - 0.6 + z() * (x1 - x0 + 0.8))}" y="${r(yb + 1)}" width="${r(0.5 + z() * 0.5)}" height="${r(M(0.8 + z() * 3.2))}" fill="${LAUF}"/>`;
-    /* Vogelkot-Spur unter manchem Sims */
-    if (vari === 2) g += `<rect x="${r(x0 + z() * (x1 - x0 - 1))}" y="${r(yb + 1)}" width=".7" height="${r(M(1.2 + z()))}" fill="${S.lg("kot", [[0, "#d9d4c4", 0.4], [1, "#d9d4c4", 0]])}"/>`;
+    for (let n = 0; n < 2 + (vari % 2); n++) g += lauf(x0 + z() * (x1 - x0), yb + 1, 0.9 + z() * 0.7, M(0.8 + z() * 3.4));
     FENSTER.push({ cx, s0, fw, fh });
     return g;
   };
@@ -534,15 +544,15 @@ let PN_UNTER = [];
       const sx = t.x0 < 0 ? xr : xl, dir = t.x0 < 0 ? 1 : -1;
       k += `<path d="M${sx} 0 V${Y(Math.min(t.h, G.mitte))} L${r(sx + dir * 1.6)} ${r(Y(Math.min(t.h, G.mitte)) + 0.8)} V0 Z" fill="${t.x0 < 0 ? "#1d1b18" : "#6a6255"}"/>`;
     }
+    if (t.seed === 11) k += `<path d="${ober}" fill="${S.rg("westlicht", [[0, "#ffcf86", 0.2], [0.55, "#ffcf86", 0.08], [1, "#ffcf86", 0]], 0.1, 0.05, 1.0)}"/>`;
     /* warmes Streiflicht von links, nach rechts schwächer */
     k += `<path d="${ober}" fill="${S.lg("pnlicht" + t.seed, [[0, "#ffc87a", t.x0 < 0 ? 0.3 : 0.12], [0.5, "#ffc87a", 0.05], [1, "#16203a", 0.2]], 0, 0, 1, 0.7)}"/>`;
   }
   /* der gezeigte Steinblock: ein normaler Quader im Verband; die Klammerlöcher sind ausgebrochene Trichter */
   {
     const bx0 = X(BLOCK.x - BLOCK.w / 2), bx1 = X(BLOCK.x + BLOCK.w / 2), by0 = Y(BLOCK.h + BLOCK.hh), by1 = Y(BLOCK.h);
-    /* Quader wie seine Nachbarn: etwas hellere Kante oben und links (Licht), tiefe Fuge rundum */
-    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" fill="#3e3b37"/><path d="M${r(bx0 + 0.5)} ${r(by1 - 0.5)} V${r(by0 + 0.5)} H${r(bx1 - 0.5)}" stroke="#8c8476" stroke-width=".3" fill="none" opacity=".5"/>`;
-    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" stroke="#0f0e0d" stroke-width=".4" fill="none"/>`;
+    /* Quader wie seine Nachbarn: dieselben Fugen, nur etwas wärmer und mit weichem Licht oben links */
+    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" fill="#8a6a40" opacity=".14"/><rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" fill="${S.lg("blocklicht", [[0, "#b3aa92", 0.22], [0.4, "#b3aa92", 0], [1, "#b3aa92", 0]], 0, 0, 1, 1)}"/>`;
     /* Trichter in den Stein: außen ausgebrochen (nach unten heller), innen tief und dunkel */
     const trichter = (lx, ly, w) => `<path d="M${r(lx - w)} ${r(ly - 0.1 * w)} q${r(0.1 * w)} ${r(-0.6 * w)} ${r(0.8 * w)} ${r(-0.7 * w)} q${r(0.8 * w)} ${r(-0.05 * w)} ${r(1.1 * w)} ${r(0.5 * w)} q${r(0.15 * w)} ${r(0.7 * w)} ${r(-0.7 * w)} ${r(0.95 * w)} q${r(-0.9 * w)} ${r(0.1 * w)} ${r(-1.2 * w)} ${r(-0.75 * w)} Z" fill="${TRICHTER}"/><ellipse cx="${r(lx)}" cy="${r(ly - 0.25 * w)}" rx="${r(0.45 * w)}" ry="${r(0.3 * w)}" fill="#050404"/>`;
     LOCH.x = r(bx1); LOCH.y = r(by0 + (by1 - by0) * 0.45);
@@ -660,7 +670,9 @@ const CAFE = { lat: -14.5, d0: 34.8, d1: 41, h: 14 };
     const [gx, gy] = P(d + 0.8, 1.15), s = F / (d + 0.8);
     /* ein Gast: Schultern, Hals, Kopf mit Haar, davor Tasse und Teller mit Kuchen */
     k += `<path d="M${r(gx - 0.24 * s)} ${r(gy + 0.1 * s)} Q${r(gx - 0.22 * s)} ${r(gy - 0.3 * s)} ${gx} ${r(gy - 0.32 * s)} Q${r(gx + 0.22 * s)} ${r(gy - 0.3 * s)} ${r(gx + 0.24 * s)} ${r(gy + 0.1 * s)} Z" fill="#6a4a7a"/>`;
-    k += `<rect x="${r(gx - 0.04 * s)}" y="${r(gy - 0.42 * s)}" width="${r(0.08 * s)}" height="${r(0.12 * s)}" fill="#c99a7a"/><ellipse cx="${gx}" cy="${r(gy - 0.52 * s)}" rx="${r(0.1 * s)}" ry="${r(0.12 * s)}" fill="#e0b090"/><path d="M${r(gx - 0.11 * s)} ${r(gy - 0.52 * s)} Q${r(gx - 0.1 * s)} ${r(gy - 0.68 * s)} ${gx} ${r(gy - 0.66 * s)} Q${r(gx + 0.1 * s)} ${r(gy - 0.66 * s)} ${r(gx + 0.1 * s)} ${r(gy - 0.56 * s)} Q${r(gx - 0.02 * s)} ${r(gy - 0.6 * s)} ${r(gx - 0.11 * s)} ${r(gy - 0.52 * s)} Z" fill="#3a2a20"/><path d="M${r(gx - 0.04 * s)} ${r(gy - 0.53 * s)} h.01 M${r(gx + 0.04 * s)} ${r(gy - 0.53 * s)} h.01" stroke="#2a1e18" stroke-width=".45" stroke-linecap="round"/><path d="M${r(gx - 0.03 * s)} ${r(gy - 0.46 * s)} q${r(0.03 * s)} ${r(0.015 * s)} ${r(0.06 * s)} 0" stroke="#9a4a3a" stroke-width=".3" fill="none"/>`;
+    k += `<rect x="${r(gx - 0.04 * s)}" y="${r(gy - 0.42 * s)}" width="${r(0.08 * s)}" height="${r(0.12 * s)}" fill="#c99a7a"/><ellipse cx="${gx}" cy="${r(gy - 0.52 * s)}" rx="${r(0.1 * s)}" ry="${r(0.12 * s)}" fill="#e0b090"/><path d="M${r(gx - 0.11 * s)} ${r(gy - 0.52 * s)} Q${r(gx - 0.1 * s)} ${r(gy - 0.68 * s)} ${gx} ${r(gy - 0.66 * s)} Q${r(gx + 0.1 * s)} ${r(gy - 0.66 * s)} ${r(gx + 0.1 * s)} ${r(gy - 0.56 * s)} Q${r(gx - 0.02 * s)} ${r(gy - 0.6 * s)} ${r(gx - 0.11 * s)} ${r(gy - 0.52 * s)} Z" fill="#3a2a20"/><path d="M${r(gx - 0.04 * s)} ${r(gy - 0.53 * s)} h.01 M${r(gx + 0.04 * s)} ${r(gy - 0.53 * s)} h.01" stroke="#2a1e18" stroke-width=".45" stroke-linecap="round"/><path d="M${r(gx - 0.015 * s)} ${r(gy - 0.465 * s)} h${r(0.03 * s)}" stroke="#7a3a2e" stroke-width=".22" fill="none"/>`;
+    /* der zweite Gast hält die Tasse am Mund (keine Zwillinge) */
+    if (d > d0 + 2) k += `<path d="M${r(gx + 0.18 * s)} ${r(gy - 0.05 * s)} L${r(gx + 0.1 * s)} ${r(gy - 0.42 * s)}" stroke="#6a4a7a" stroke-width="${r(0.07 * s)}" stroke-linecap="round"/><rect x="${r(gx + 0.02 * s)}" y="${r(gy - 0.5 * s)}" width="${r(0.08 * s)}" height="${r(0.07 * s)}" fill="#f6f4ef"/>`;
     k += `<rect x="${r(gx + 0.12 * s)}" y="${r(gy - 0.02 * s)}" width="${r(0.07 * s)}" height="${r(0.07 * s)}" fill="#f6f4ef"/><ellipse cx="${r(gx - 0.15 * s)}" cy="${r(gy + 0.04 * s)}" rx="${r(0.1 * s)}" ry="${r(0.025 * s)}" fill="#f6f4ef"/><path d="M${r(gx - 0.2 * s)} ${r(gy + 0.03 * s)} l${r(0.08 * s)} ${r(-0.05 * s)} l${r(0.04 * s)} ${r(0.05 * s)} Z" fill="#c98a4a"/>`;
     /* Kuchentheke: steht unten im Fenster (Holzsockel, Glasaufsatz mit drei Torten und Spiegelung) */
     const [kx, k0] = P(d + 1.9, 0.5), k1 = P(d + 1.9, 0.78)[1], k2 = P(d + 1.9, 1.08)[1];
@@ -951,8 +963,17 @@ const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
   /* der Teller mit zwei Reibekuchen und Apfelmus (Mitte) */
   const px = -0.04 * s;
   k += `<ellipse cx="${r(px)}" cy="${r(top - 0.006 * s)}" rx="${r(0.1 * s)}" ry="${r(0.024 * s)}" fill="#fbfaf6" stroke="#cfcac0" stroke-width=".15"/>`;
-  for (const [dx, dy] of [[-0.035, 0.012], [0.025, 0.016]]) k += `<ellipse cx="${r(px + dx * s)}" cy="${r(top - dy * s)}" rx="${r(0.045 * s)}" ry="${r(0.014 * s)}" fill="#b8742c"/><ellipse cx="${r(px + dx * s + 0.006 * s)}" cy="${r(top - dy * s - 0.004 * s)}" rx="${r(0.032 * s)}" ry="${r(0.008 * s)}" fill="#dca052"/><path d="M${r(px + dx * s - 0.03 * s)} ${r(top - dy * s - 0.002 * s)} l${r(0.012 * s)} ${r(-0.004 * s)} m${r(0.02 * s)} ${r(0.006 * s)} l${r(0.014 * s)} ${r(-0.003 * s)}" stroke="#8a4e1c" stroke-width=".2"/>`;
-  k += `<ellipse cx="${r(px + 0.06 * s)}" cy="${r(top - 0.02 * s)}" rx="${r(0.022 * s)}" ry="${r(0.01 * s)}" fill="#ecd9a0"/><ellipse cx="${r(px + 0.064 * s)}" cy="${r(top - 0.023 * s)}" rx="${r(0.01 * s)}" ry="${r(0.004 * s)}" fill="#fff4cc"/>`;
+  /* zwei flache, unregelmäßige Fladen ohne Loch: dunkler, ausgefranster Rand, goldbraune Fläche, helle Raspelstriche */
+  const zr = zufall(66);
+  for (const [dx, dy, rx] of [[-0.035, 0.012, 0.046], [0.022, 0.017, 0.042]]) {
+    const cx = px + dx * s, cy = top - dy * s, R1 = rx * s, R2 = R1 * 0.32;
+    let au = "", in2 = "";
+    for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, f = 0.86 + zr() * 0.2; au += `${i ? "L" : "M"}${r(cx + Math.cos(a) * R1 * f)} ${r(cy + Math.sin(a) * R2 * f)} `; in2 += `${i ? "L" : "M"}${r(cx + Math.cos(a) * R1 * 0.78 * f)} ${r(cy - 0.002 * s + Math.sin(a) * R2 * 0.7 * f)} `; }
+    k += `<path d="${au}Z" fill="#8a5420"/><path d="${in2}Z" fill="#cf9446"/>`;
+    k += `<path d="M${r(cx - R1 * 0.5)} ${r(cy - R2 * 0.2)} l${r(R1 * 0.28)} ${r(-R2 * 0.2)} M${r(cx - R1 * 0.1)} ${r(cy + R2 * 0.15)} l${r(R1 * 0.3)} ${r(-R2 * 0.25)} M${r(cx + R1 * 0.2)} ${r(cy - R2 * 0.35)} l${r(R1 * 0.25)} ${r(-R2 * 0.1)}" stroke="#f2c878" stroke-width=".22" fill="none"/>`;
+  }
+  /* Apfelmus im Schälchen am Tellerrand */
+  k += `<path d="M${r(px + 0.045 * s)} ${r(top - 0.024 * s)} Q${r(px + 0.068 * s)} ${r(top - 0.002 * s)} ${r(px + 0.091 * s)} ${r(top - 0.024 * s)} Z" fill="#f4f1ea" stroke="#cfcac0" stroke-width=".12"/><ellipse cx="${r(px + 0.068 * s)}" cy="${r(top - 0.024 * s)}" rx="${r(0.023 * s)}" ry="${r(0.006 * s)}" fill="#ecd590"/>`;
   /* der Traubensaft: gerader Saftbecher, helles Violett, Strohhalm (rechts, deutlich abgerückt) */
   const wx = 0.2 * s;
   k += `<path d="M${r(wx - 0.032 * s)} ${r(top + 0.004 * s)} L${r(wx - 0.036 * s)} ${r(top - 0.11 * s)} L${r(wx + 0.036 * s)} ${r(top - 0.11 * s)} L${r(wx + 0.032 * s)} ${r(top + 0.004 * s)} Z" fill="#eef2f4" opacity=".6" stroke="#c9d2d6" stroke-width=".15"/>`;
