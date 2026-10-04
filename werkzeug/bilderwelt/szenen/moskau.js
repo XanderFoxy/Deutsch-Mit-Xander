@@ -150,7 +150,7 @@ function abschneiden(svg, yCut) {
 }
 /* Figuren: Kopf und Hände fein (0,2 cm), der Rest auf 1 cm — keine Pixeltreppen im Gesicht.
    Kreis- und Ellipsen-Koordinaten (Augen) bleiben unverändert. */
-function kompaktFein(m, svg = m.svg, Qf = 0.4) {
+function kompaktFein(m, svg = m.svg, Qf = 0.5) {
   const z = m.z, kopfY = z.kopf.y + 13, haende = [z.handL, z.handR].filter(Boolean);
   const fein = (x, y) => y < kopfY || haende.some((h) => Math.abs(h.x - x) < 9 && Math.abs(h.y - y) < 9);
   return svg.replace(/ d="([^"]+)"/g, (a, p) => {
@@ -173,7 +173,7 @@ function pfadeKlein(S) {
 
 /* Gegenlicht/Lichtkante für Figuren: Körper leicht abgedunkelt, eine warme Lichtkante INNEN an der
    sonnenzugewandten Seite (Form minus verschobene Form) */
-S.def(`<filter id="${S.id("kante")}" x="-10%" y="-5%" width="120%" height="110%" color-interpolation-filters="sRGB"><feColorMatrix in="SourceGraphic" type="matrix" values=".86 0 0 0 0 0 .86 0 0 0 0 0 .86 0 0 0 0 0 1 0" result="k"/><feOffset in="SourceAlpha" dx="-.7" dy="0" result="v"/><feComposite in="SourceAlpha" in2="v" operator="out" result="r"/><feFlood flood-color="#ffe2b0" flood-opacity=".75"/><feComposite in2="r" operator="in" result="l"/><feMerge><feMergeNode in="k"/><feMergeNode in="l"/></feMerge></filter>`);
+S.def(`<filter id="${S.id("kante")}" x="-10%" y="-5%" width="120%" height="110%" color-interpolation-filters="sRGB"><feColorMatrix in="SourceGraphic" type="matrix" values=".86 0 0 0 0 0 .86 0 0 0 0 0 .86 0 0 0 0 0 1 0" result="k"/><feOffset in="SourceAlpha" dx="-.7" dy="0" result="v"/><feComposite in="SourceAlpha" in2="v" operator="out" result="r"/><feFlood flood-color="#ffd9a0" flood-opacity=".45"/><feComposite in2="r" operator="in" result="l"/><feMerge><feMergeNode in="k"/><feMergeNode in="l"/></feMerge></filter>`);
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("weichs")}" x="-20%" y="-60%" width="140%" height="220%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".35"/></filter>`);
 S.def(`<filter id="${S.id("luft")}" color-interpolation-filters="sRGB"><feColorMatrix type="matrix" values=".84 0 0 0 .125 0 .84 0 0 .132 0 0 .84 0 .145 0 0 0 1 0"/></filter>`);
@@ -215,7 +215,7 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
     }
     return g;
   };
-  S.hinten(schleier(110, 34, 120, 7) + schleier(320, 60, 90, 5) + `<g opacity=".95">${flocken(18, 46, 9, 3, 4.2) + flocken(250, 70, 7, 9, 3.6) + flocken(300, 24, 5, 21, 2.6)}</g>`);
+  S.hinten(schleier(110, 34, 120, 7) + schleier(150, 30, 60, 3) + schleier(320, 60, 90, 5) + schleier(350, 56, 40, 2.4) + `<g opacity=".7" filter="url(#${S.id("dunst")})">${flocken(40, 44, 6, 3, 4.6) + flocken(260, 68, 5, 9, 3.8)}</g>`);
   /* zarte Schleierwolken am Horizont */
   S.hinten(`<path d="M0 128 Q60 124 120 127 T240 125 T400 128 L400 132 Q300 130 200 132 T0 133 Z" fill="#fff" opacity=".35" filter="url(#${S.id("dunst")})"/>`);
 }
@@ -236,7 +236,7 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
   /* Hinter der Kremlmauer: verschneite Baumkronen und der gelbe Senatspalast (rechts) */
   let g = "";
   const rz = zufall(5);
-  for (let x = 262; x < 400; x += 2.5 + rz() * 3) {
+  for (let x = 262; x < 400; x += 4 + rz() * 4) {
     const y = 152 - (x - 262) * 0.12 - rz() * 5, rr = 2.5 + rz() * 3;
     g += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(rr)}" fill="#8b8a9a"/><circle cx="${r(x + 0.6)}" cy="${r(y - rr * 0.5)}" r="${r(rr * 0.6)}" fill="#e9eef6"/>`;
   }
@@ -312,7 +312,7 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
     for (let i = 0; i < 18; i++) { const d = d0 + z() * (d1 - d0), ll = l + b * z(), [x, y] = P(d, ll).split(" ").map(Number); if (x > 0 && x < 400 && y < 259) k2 += `M${r(x)} ${r(y)}h${r(0.2 + 10 / d)}`; }
     return g + `<path d="${k2}" stroke="#ffffff" stroke-width=".35" opacity=".8"/>`;
   };
-  k += rest(14, 40, -3.4, -1.2, 5) + rest(40, 90, -36, 2.2, 7) + rest(60, 120, 33, 2.4, 9) + rest(20, 32, 6.5, 1.1, 11);
+  k += rest(40, 95, -36, 2, 7) + rest(60, 130, 33.5, 2.2, 9) + rest(24, 34, -31, 1.2, 13);
   /* Schatten der Bude (3,6 m hoch) */
   k += poly([P(21, -3.7), P(23.6, -3.7), P(23.6 - 5.2, -3.7 - 9), P(21 - 5.2, -3.7 - 9), P(21 - 5.2, -6.9 - 9)], "#1b2247", ` opacity=".3" pointer-events="none"`);
   var PLATZ = S.teil({ id: "roter_platz", de: "der Rote Platz", syl: "RO-te PLATZ", it: "la Piazza Rossa", itSyl: "PIAZ-za ROS-sa", en: "Red Square", x: 0, y: 0, kunst: k,
@@ -942,7 +942,7 @@ const BODEN_SCHATTEN = [];   /* werden in den Roten Platz gezeichnet (Bodenfläc
   const kx = m.z.kopf.x, ky = m.z.kopf.y, fx = kx + 1.8;
   const TUCH = `M${r(kx - 11)} ${r(ky + 14)} Q${r(kx - 14)} ${r(ky - 4)} ${r(kx - 9)} ${r(ky - 13)} Q${r(kx)} ${r(ky - 20)} ${r(kx + 9)} ${r(ky - 13)} Q${r(kx + 14)} ${r(ky - 4)} ${r(kx + 11.5)} ${r(ky + 14)} L${r(kx + 18)} ${r(ky + 26)} L${r(kx + 3)} ${r(ky + 20)} L${r(kx - 16)} ${r(ky + 27)} Z`;
   const GESICHT = `M${r(fx - 6.6)} ${r(ky + 1)} a6.6 9.4 0 1 0 13.2 0 a6.6 9.4 0 1 0 -13.2 0Z`;
-  S.def(`<clipPath id="${S.id("tuchclip")}"><path d="${TUCH}"/></clipPath>`);
+  S.def(`<clipPath id="${S.id("tuchclip")}"><path d="${TUCH} ${GESICHT}" clip-rule="evenodd"/></clipPath>`);
   let tuch = `<path d="${TUCH} ${GESICHT}" fill="#1f1b1e" fill-rule="evenodd"/>`;
   let rosen = "";
   for (const [dx, dy, rr] of [[-8, -8, 3.4], [6, -12, 3], [-10, 6, 2.8], [10, 4, 2.6], [-6, 20, 3.2], [9, 20, 2.8], [0, -16, 2]]) {
@@ -1143,7 +1143,7 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
 {
   /* Nebelkrähe (Meter, 46 cm lang): kräftiger aschgrauer Rumpf, schwarzer Kopf mit schwarzem Kehllatz bis zur Brust,
      schwarze Flügel und Schwanz, dicker langer Schnabel, kräftige schwarze Beine. Licht von rechts vorn. */
-  const KR = S.lg("kraehe", [[0, "#6f727a"], [0.6, "#9a9da5"], [1, "#b7bac1"]], 0, 0, 1, 0);
+  const KR = S.lg("kraehe", [[0, "#5f626a"], [0.6, "#80838b"], [1, "#9a9da4"]], 0, 0, 1, 0);
   const kraehe = (d, l, sp, pick) => {
     const x = X(d, l), y = Y(d), s = F / d;
     BODEN_SCHATTEN.push(schlag(d, l, 0.32, 0.14, 0.5));

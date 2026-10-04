@@ -176,22 +176,35 @@ function wolke(x, y, w, h, seed) {
   const lage = (dx, dy, f, fill) => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(y + dy)}) scale(${f}) translate(${r(-x)} ${r(-y)})"/>`;
   return `<g filter="url(#${S.id("weich")})">${lage(0, 0, 1, "#e9cdb6")}${lage(0.8, -1.4, 0.94, "#f8efe6")}${lage(2.2, -2.8, 0.76, "#fffaf0")}</g>`;
 }
-/* Bäume: Linde (hoch, rund) und Kastanie (breit, gelappt, dunkler). Eine Kronenform, viermal per <use>
-   (Schatten, Mitte, Licht, Glanz – Licht von rechts), dunkle Astlücken mit Ästen */
-function baum(x, y, h, seed, art = "linde") {
-  const z = zufall(seed), li = art === "linde", kr = h * (li ? 0.3 : 0.37), cy = y - h * (li ? 0.66 : 0.6);
-  const t = li ? ["#2f4a26", "#4a6c32", "#7d9e48", "#a8c26a"] : ["#22371c", "#36552a", "#5f8238", "#8aa95a"];
-  let g = `<path d="M${r(x - h * 0.03)} ${y} L${r(x - h * 0.014)} ${r(y - h * 0.48)} L${r(x + h * 0.014)} ${r(y - h * 0.48)} L${r(x + h * 0.03)} ${y} Z" fill="#3e3226"/><path d="M${r(x + h * 0.005)} ${y} L${r(x + h * 0.006)} ${r(y - h * 0.46)} L${r(x + h * 0.014)} ${r(y - h * 0.46)} L${r(x + h * 0.03)} ${y} Z" fill="#6a5a46"/>`;
-  const c = [], n = li ? 12 : 15;
-  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + z() * 0.3, d = kr * (0.5 + z() * 0.3); c.push([x + Math.cos(a) * d * (li ? 1 : 1.2), cy + Math.sin(a) * d * (li ? 0.95 : 0.7), kr * (li ? 0.3 + z() * 0.14 : 0.24 + z() * 0.16)]); }
-  for (let i = 0; i < 4; i++) c.push([x + (z() - 0.5) * kr * 0.9, cy + (z() - 0.5) * kr * 0.6, kr * (0.34 + z() * 0.12)]);
+/* Laubkrone ohne Weichzeichner: Kern-Ellipse und Randbüschel (gekerbter Rand), eine Form, viermal per <use>
+   (Schatten, Mitte, Licht, Glanz, Licht von der Seite lx); dunkle Astlücken, in denen ein Ast verschwindet */
+function krone(x, cy, rx, ry, seed, o) {
+  const { n = 16, rb = 0.22, lappen = 4, farben, lx = 1, bluete = false, rinde = "#3e3226" } = o;
+  const z = zufall(seed), R = Math.min(rx, ry);
+  let c = `<ellipse cx="${r(x)}" cy="${r(cy)}" rx="${r(rx * 0.86)}" ry="${r(ry * 0.84)}"/>`;
+  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (z() - 0.5) * 0.4, f = 0.8 + z() * 0.22; c += `<circle cx="${r(x + Math.cos(a) * rx * f)}" cy="${r(cy + Math.sin(a) * ry * f)}" r="${r(R * rb * (0.7 + z() * 0.6))}"/>`; }
+  for (let i = 0; i < lappen; i++) { const a = -Math.PI * (0.1 + z() * 0.8), f = 0.7 + z() * 0.2; c += `<circle cx="${r(x + Math.cos(a) * rx * f)}" cy="${r(cy + Math.sin(a) * ry * f)}" r="${r(R * (0.28 + z() * 0.12))}"/>`; }
   const id = S.id("kr" + seed);
-  S.def(`<g id="${id}">${c.map(([a, b2, rr]) => `<circle cx="${r(a)}" cy="${r(b2)}" r="${r(rr)}"/>`).join("")}</g>`);
+  S.def(`<g id="${id}">${c}</g>`);
   const lage = (dx, dy, f, fill) => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(cy + dy)}) scale(${f}) translate(${r(-x)} ${r(-cy)})"/>`;
-  g += `<g filter="url(#${S.id("weich")})">${lage(0, 0, 1, t[0])}${lage(kr * 0.06, -kr * 0.06, 0.9, t[1])}${lage(kr * 0.16, -kr * 0.16, 0.7, t[2])}${lage(kr * 0.26, -kr * 0.26, 0.42, t[3])}</g>`;
-  for (let i = 0; i < 3; i++) { const a = -Math.PI * (0.15 + z() * 0.7), hx = x + Math.cos(a) * kr * 0.7, hy = cy + Math.sin(a) * kr * 0.6; g += `<path d="M${r(hx - kr * 0.07)} ${r(hy)} q${r(kr * 0.05)} ${r(-kr * 0.07)} ${r(kr * 0.12)} ${r(-kr * 0.01)} q${r(-kr * 0.02)} ${r(kr * 0.07)} ${r(-kr * 0.12)} ${r(kr * 0.01)} Z" fill="${t[0]}"/><path d="M${r(hx - kr * 0.06)} ${r(hy + kr * 0.03)} l${r(kr * 0.1)} ${r(-kr * 0.05)}" stroke="#3e3226" stroke-width="${r(kr * 0.02)}"/>`; }
-  g += `<path d="M${r(x)} ${r(y - h * 0.44)} L${r(x - kr * 0.35)} ${r(cy + kr * 0.25)} M${r(x)} ${r(y - h * 0.47)} L${r(x + kr * 0.3)} ${r(cy + kr * 0.2)}" stroke="#3e3226" stroke-width="${r(h * 0.012)}" opacity=".8"/>`;
+  let g = lage(0, 0, 1, farben[0]) + lage(lx * R * 0.06, -R * 0.07, 0.9, farben[1]) + lage(lx * R * 0.17, -R * 0.18, 0.68, farben[2]) + lage(lx * R * 0.28, -R * 0.3, 0.4, farben[3]);
+  /* Astlücken auf der Schattenseite und unten, mit einem Ast darin */
+  for (let i = 0; i < 3; i++) {
+    const a = Math.PI * (i === 0 ? 0.25 + z() * 0.3 : (lx > 0 ? 0.65 : 0.05) + z() * 0.3) + (i === 2 ? -Math.PI * 0.55 * lx : 0), gx = x + Math.cos(a) * rx * 0.55, gy = cy + Math.sin(a) * ry * 0.5, w = R * (0.07 + z() * 0.04);
+    g += `<path d="M${r(gx - w)} ${r(gy)} q${r(w * 0.3)} ${r(-w * 0.8)} ${r(w * 1.1)} ${r(-w * 0.6)} q${r(w * 0.9)} ${r(w * 0.1)} ${r(w * 0.8)} ${r(w * 0.7)} q${r(-w * 0.5)} ${r(w * 0.7)} ${r(-w * 1.2)} ${r(w * 0.5)} q${r(-w * 0.7)} ${r(-w * 0.2)} ${r(-w * 0.7)} ${r(-w * 0.6)} Z" fill="${farben[4] || "#16240f"}"/>`;
+    g += `<path d="M${r(gx - w * 0.7)} ${r(gy + w * 0.5)} Q${r(gx)} ${r(gy - w * 0.05)} ${r(gx + w * 0.7)} ${r(gy - w * 0.4)}" stroke="${rinde}" stroke-width="${r(Math.max(0.3, R * 0.035))}" fill="none"/>`;
+  }
+  /* Kastanie: helle Blütenkerzen auf der Lichtseite */
+  if (bluete) for (let i = 0; i < 12; i++) { const a = -Math.PI * (0.05 + z() * 0.9), f = 0.3 + z() * 0.6, bx = r(x + Math.cos(a) * rx * f), by = r(cy + Math.sin(a) * ry * f), bh = r(R * 0.09); g += `<path d="M${r(bx - bh * 0.3)} ${by} Q${bx} ${r(by - bh * 1.4)} ${r(bx + bh * 0.3)} ${by} Z" fill="#f6f1e2"/>`; }
   return g;
+}
+/* Bäume: Linde (eiförmig, fein gekerbt) und Kastanie (breit, grobe Lappen, dunkler, mit Blütenkerzen); Licht von rechts */
+function baum(x, y, h, seed, art = "linde") {
+  const li = art === "linde", kr = h * (li ? 0.3 : 0.37), cy = y - h * (li ? 0.66 : 0.6);
+  let g = `<path d="M${r(x)} ${r(y - h * 0.44)} L${r(x - kr * 0.4)} ${r(cy + kr * 0.2)} M${r(x)} ${r(y - h * 0.47)} L${r(x + kr * 0.35)} ${r(cy + kr * 0.15)}" stroke="#3e3226" stroke-width="${r(h * 0.014)}"/>`;
+  g += `<path d="M${r(x - h * 0.03)} ${y} L${r(x - h * 0.014)} ${r(y - h * 0.48)} L${r(x + h * 0.014)} ${r(y - h * 0.48)} L${r(x + h * 0.03)} ${y} Z" fill="#3e3226"/><path d="M${r(x + h * 0.005)} ${y} L${r(x + h * 0.006)} ${r(y - h * 0.46)} L${r(x + h * 0.014)} ${r(y - h * 0.46)} L${r(x + h * 0.03)} ${y} Z" fill="#6a5a46"/>`;
+  return g + (li ? krone(x, cy, kr * 0.88, kr * 1.08, seed, { n: 24, rb: 0.15, lappen: 3, farben: ["#2f4a26", "#4a6c32", "#7d9e48", "#a8c26a"], lx: 1 })
+    : krone(x, cy, kr * 1.22, kr * 0.8, seed, { n: 10, rb: 0.36, lappen: 5, farben: ["#1f3319", "#33502a", "#557a36", "#7c9c52", "#101a0b"], lx: 1, bluete: true }));
 }
 
 /* =====================================================================

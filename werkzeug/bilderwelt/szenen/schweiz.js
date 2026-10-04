@@ -458,7 +458,8 @@ function chalet(o) {
   let g = "";
   const sicht = fl.filter((f) => f.sicht).sort((a, b) => b.abstand - a.abstand);
   for (const f of sicht) {
-    g += `<path d="${poly3(f.pts)}" fill="${tönen(o.holz || "#6a4429", f.licht)}"/>`;
+    /* sonnenverbranntes Lärchenholz: Sonnenseite fast schwarzbraun, Schattenseite graubraun */
+    g += `<path d="${poly3(f.pts)}" fill="${f.licht > 0.05 ? mix("#3e2414", "#fff1d6", Math.min(0.2, f.licht * 0.22)) : (o.hotel ? "#5e5246" : "#6a5c4e")}"/>`;
     /* Balkenfugen (waagrecht) im Holz */
     const s = F / f.m[1];
     let fugen = "";
@@ -474,6 +475,29 @@ function chalet(o) {
     if (unten.length > 2) g += `<path d="${poly3(unten)}" fill="${tönen("#e6e1d6", f.licht)}"/>`;
     /* Fenster */
     g += fensterAuf(f, o, s);
+    /* Vorstösse (Gwätt): an den Hausecken stehen die Balkenköpfe des Blockbaus vor */
+    if (s > 3.2) {
+      const a0 = f.pts[0], a1 = f.pts[1], lang = Math.hypot(a1[0] - a0[0], a1[1] - a0[1]), u = [(a1[0] - a0[0]) / lang, (a1[1] - a0[1]) / lang];
+      let kp = "";
+      for (const [ec, sg] of [[a0, -1], [a1, 1]]) for (let hh = sockel + 0.05; hh < he - 0.3; hh += 0.38) {
+        const A = [ec[0] + u[0] * sg * 0.32, ec[1] + u[1] * sg * 0.32], q = [proj([ec[0], ec[1], hh]), proj([A[0], A[1], hh]), proj([A[0], A[1], hh + 0.3]), proj([ec[0], ec[1], hh + 0.3])];
+        kp += "M" + q.map(pt).join(" L") + " Z";
+      }
+      g += `<path d="${kp}" fill="${f.licht > 0.05 ? "#5a3820" : "#4a4036"}" stroke="#20140a" stroke-width="${r(Math.max(0.1, 0.02 * s))}"/>`;
+    }
+    /* Untersicht des Dachvorsprungs über der Traufseite: dunkles Band mit Sparrenköpfen */
+    if (f.art === "seite" && s > 2.5) {
+      const ov2 = 0.9, n2 = f.n, top = f.pts.filter((p) => p[2] > he - 0.01);
+      if (top.length === 2) {
+        const [A, Bq] = top, aus = (p) => [p[0] + n2[0] * ov2, p[1] + n2[1] * ov2, p[2] - 0.45];
+        g += `<path d="${poly3([A, Bq, aus(Bq), aus(A)])}" fill="#22160c"/>`;
+        let sp = "";
+        const L2 = Math.hypot(Bq[0] - A[0], Bq[1] - A[1]);
+        for (let t2 = 0.4; t2 < L2; t2 += 0.9) { const c = [A[0] + (Bq[0] - A[0]) * t2 / L2 + n2[0] * ov2, A[1] + (Bq[1] - A[1]) * t2 / L2 + n2[1] * ov2, he - 0.45], [x, y] = proj(c); sp += `M${r(x)} ${r(y)}v${r(Math.max(0.3, 0.14 * F / c[1]))}`; }
+        g += `<path d="${sp}" stroke="#8a6a4a" stroke-width="${r(Math.max(0.2, 0.1 * s))}"/>`;
+        g += `<path d="M${pt(proj(aus(A)))} L${pt(proj(aus(Bq)))}" stroke="#8d8b86" stroke-width="${r(Math.max(0.4, 0.14 * s))}" stroke-dasharray="${r(0.5 * s)} ${r(0.06 * s)}"/>`;
+      }
+    }
   }
   /* Dach: Steinplatten; sichtbare Dachflächen und die Stirnkanten der Giebel */
   const ov = 0.9, t = (hr - he) / ((first === "D" ? (X1 - X0) : (D1 - D0)) / 2);
@@ -529,18 +553,22 @@ function fensterAuf(f, o, s) {
       const hb2 = h - 0.25, aus = 1.1, u0 = 0.4, u1 = lang - 0.4;
       const br = [Qv(u0, hb2 + 1.05, aus), Qv(u1, hb2 + 1.05, aus), Qv(u1, hb2, aus), Qv(u0, hb2, aus)];
       const unterseite = [Q(u0, hb2), Q(u1, hb2), Qv(u1, hb2, aus), Qv(u0, hb2, aus)];
-      let latten = "";
-      const nl = Math.max(4, Math.round((u1 - u0) / 0.25));
-      if (s > 7) for (let i = 1; i < nl; i++) { const uu = u0 + (u1 - u0) * i / nl; latten += `M${pt(Qv(uu, hb2 + 1.0, aus))} L${pt(Qv(uu, hb2 + 0.05, aus))}`; }
+      let latten = "", ausschnitt = "";
+      const nl = Math.max(4, Math.round((u1 - u0) / 0.22));
+      if (s > 7) for (let i = 1; i < nl; i++) { const uu = u0 + (u1 - u0) * i / nl; latten += `M${pt(Qv(uu, hb2 + 1.0, aus))} L${pt(Qv(uu, hb2 + 0.05, aus))}`; const [cx, cy] = Qv(uu - (u1 - u0) / nl / 2, hb2 + 0.55, aus); ausschnitt += `<ellipse cx="${r(cx)}" cy="${r(cy)}" rx="${r(0.045 * s)}" ry="${r(0.11 * s)}"/>`; }
+      /* Schatten des Balkons auf der Wand darunter */
+      g += `<path d="${pz([Q(u0 - 0.2, hb2), Q(u1 + 0.2, hb2), Q(u1 + 0.2, hb2 - 0.7), Q(u0 - 0.2, hb2 - 0.7)])}" fill="#140a04" opacity=".35"/>`;
       let blumen = "", blaetter = "";
       const nb = Math.max(4, Math.round((u1 - u0) / (s > 8 ? 0.3 : 0.6)));
       const z = zufall(Math.round(h * 100 + o.D0));
       for (let i = 0; i < nb; i++) {
         const uu = u0 + (u1 - u0) * (i + 0.5) / nb, [x, y] = Qv(uu, hb2 + 1.12, aus + 0.08), rr = Math.max(0.3, 0.17 * s);
-        blaetter += `<ellipse cx="${r(x - rr * 0.5)}" cy="${r(y + rr * 0.4)}" rx="${r(rr * 0.9)}" ry="${r(rr * 0.6)}"/><ellipse cx="${r(x + rr * 0.6)}" cy="${r(y + rr * 0.5)}" rx="${r(rr * 0.8)}" ry="${r(rr * 0.55)}"/>`;
-        for (let j = 0; j < (s > 8 ? 3 : 1); j++) blumen += `<circle cx="${r(x + (z() - 0.5) * rr * 1.6)}" cy="${r(y - rr * (0.2 + z() * 0.7))}" r="${r(rr * (0.32 + z() * 0.2))}"/>`;
+        /* Hängegeranien: Polster fällt über das Brett, unregelmäßiger Rand */
+        const hang = rr * (1.2 + z() * 1.6);
+        blaetter += `<path d="M${r(x - rr * 1.1)} ${r(y)} Q${r(x - rr * 1.2)} ${r(y + hang)} ${r(x - rr * 0.3)} ${r(y + hang * 1.1)} Q${r(x + rr * 0.2)} ${r(y + hang * 0.7)} ${r(x + rr * 0.6)} ${r(y + hang * 0.95)} Q${r(x + rr * 1.2)} ${r(y + hang * 0.6)} ${r(x + rr * 1.1)} ${r(y)} Z"/>`;
+        for (let j = 0; j < (s > 8 ? 4 : 1); j++) blumen += `<circle cx="${r(x + (z() - 0.5) * rr * 1.8)}" cy="${r(y + (z() * 1.1 - 0.4) * hang)}" r="${r(rr * (0.28 + z() * 0.2))}"/>`;
       }
-      const bal = `<path d="${pz(unterseite)}" fill="#2a1a10"/><path d="${pz(br)}" fill="${tönen("#7a5030", f.licht + 0.1)}"/><path d="${latten}" stroke="#3a2414" stroke-width="${r(Math.max(0.12, 0.035 * s))}"/><path d="${pz([Qv(u0, hb2 + 1.0, aus + 0.02), Qv(u1, hb2 + 1.0, aus + 0.02), Qv(u1, hb2 + 1.12, aus + 0.12), Qv(u0, hb2 + 1.12, aus + 0.12)])}" fill="#6a4426"/><g fill="#3f6a2c">${blaetter}</g><g fill="#d8202e">${blumen}</g>${s > 8 ? `<g fill="#ff6a6a" opacity=".6">${blumen.replace(/r="([\d.]+)"/g, (m, v) => `r="${r(v * 0.45)}"`)}</g>` : ""}`;
+      const bal = `<path d="${pz(unterseite)}" fill="#2a1a10"/><path d="${pz(br)}" fill="${tönen("#7a5030", f.licht + 0.1)}"/><path d="${latten}" stroke="#3a2414" stroke-width="${r(Math.max(0.12, 0.035 * s))}"/>${ausschnitt ? `<g fill="#1e120a">${ausschnitt}</g>` : ""}<path d="${pz([Qv(u0, hb2 + 1.0, aus + 0.02), Qv(u1, hb2 + 1.0, aus + 0.02), Qv(u1, hb2 + 1.12, aus + 0.12), Qv(u0, hb2 + 1.12, aus + 0.12)])}" fill="#6a4426"/><g fill="#3f6a2c">${blaetter}</g><g fill="#d8202e">${blumen}</g>${s > 8 ? `<g fill="#ff6a6a" opacity=".6">${blumen.replace(/r="([\d.]+)"/g, (m, v) => `r="${r(v * 0.45)}"`)}</g>` : ""}`;
       g += bal;
       BALKONE.push({ o, h: hb2, s, Qv, u0, u1, aus });
     }

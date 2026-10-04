@@ -163,23 +163,35 @@ function wolke(x, y, w, h, seed) {
   const lage = (dx, dy, f, fill) => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(y + dy)}) scale(${f}) translate(${r(-x)} ${r(-y)})"/>`;
   return `<g filter="url(#${S.id("weich")})">${lage(0, 0, 1, "#e6cdbd")}${lage(-0.8, -1.4, 0.94, "#f6efe9")}${lage(-2.2, -2.8, 0.76, "#fffaf0")}</g>`;
 }
-/* Laubbaum (Platane): unregelmäßige, weich schattierte Krone aus Lappen (eine Form, dreimal per <use>:
-   Schattenseite, Mitte, Licht von links), Astlücken mit sichtbaren Ästen, Himmelslöcher in Himmelsfarbe */
-function baum(x, y, h, seed, himmel = "#d3d4cb") {
-  const z = zufall(seed), kr = h * 0.36, cy = y - h * 0.64;
-  let g = `<path d="M${r(x - h * 0.03)} ${y} L${r(x - h * 0.014)} ${r(y - h * 0.5)} L${r(x + h * 0.014)} ${r(y - h * 0.5)} L${r(x + h * 0.028)} ${y} Z" fill="#9a907c"/>`;
-  g += `<path d="M${r(x - h * 0.02)} ${r(y - h * 0.15)} h${r(h * 0.02)} v${r(-h * 0.06)} h${r(-h * 0.02)} Z M${r(x)} ${r(y - h * 0.32)} h${r(h * 0.015)} v${r(-h * 0.05)} h${r(-h * 0.015)} Z" fill="#d6cdb4"/>`;
-  const c = [];
-  for (let i = 0; i < 13; i++) { const a = i / 13 * Math.PI * 2 + z() * 0.3, d = kr * (0.45 + z() * 0.35); c.push([x + Math.cos(a) * d * 1.15, cy + Math.sin(a) * d * 0.8, kr * (0.22 + z() * 0.18)]); }
-  for (let i = 0; i < 5; i++) c.push([x + (z() - 0.5) * kr, cy + (z() - 0.5) * kr * 0.6, kr * (0.3 + z() * 0.15)]);
+/* Laubkrone ohne Weichzeichner: Kern-Ellipse und Randbüschel (gekerbter Rand), eine Form, viermal per <use>
+   (Schatten, Mitte, Licht, Glanz, Licht von der Seite lx); dunkle Astlücken, in denen ein Ast verschwindet */
+function krone(x, cy, rx, ry, seed, o) {
+  const { n = 16, rb = 0.22, lappen = 4, farben, lx = 1, bluete = false, rinde = "#3e3226" } = o;
+  const z = zufall(seed), R = Math.min(rx, ry);
+  let c = `<ellipse cx="${r(x)}" cy="${r(cy)}" rx="${r(rx * 0.86)}" ry="${r(ry * 0.84)}"/>`;
+  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (z() - 0.5) * 0.4, f = 0.8 + z() * 0.22; c += `<circle cx="${r(x + Math.cos(a) * rx * f)}" cy="${r(cy + Math.sin(a) * ry * f)}" r="${r(R * rb * (0.7 + z() * 0.6))}"/>`; }
+  for (let i = 0; i < lappen; i++) { const a = -Math.PI * (0.1 + z() * 0.8), f = 0.7 + z() * 0.2; c += `<circle cx="${r(x + Math.cos(a) * rx * f)}" cy="${r(cy + Math.sin(a) * ry * f)}" r="${r(R * (0.28 + z() * 0.12))}"/>`; }
   const id = S.id("kr" + seed);
-  S.def(`<g id="${id}">${c.map(([a, b2, rr]) => `<circle cx="${r(a)}" cy="${r(b2)}" r="${r(rr)}"/>`).join("")}</g>`);
+  S.def(`<g id="${id}">${c}</g>`);
   const lage = (dx, dy, f, fill) => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(cy + dy)}) scale(${f}) translate(${r(-x)} ${r(-cy)})"/>`;
-  g += `<g filter="url(#${S.id("weich")})">${lage(0, 0, 1, "#2f4a26")}${lage(-kr * 0.06, -kr * 0.06, 0.9, "#4a6c32")}${lage(-kr * 0.16, -kr * 0.16, 0.7, "#7d9e48")}${lage(-kr * 0.24, -kr * 0.26, 0.45, "#a8c26a")}</g>`;
-  /* dunkle Astlücken mit Ästen (hinter dem Baum stehen Häuser, also keine Himmelslöcher) */
-  for (let i = 0; i < 3; i++) { const a = -Math.PI * (0.15 + z() * 0.7), hx = x + Math.cos(a) * kr * 0.72, hy = cy + Math.sin(a) * kr * 0.62; g += `<path d="M${r(hx - kr * 0.07)} ${r(hy)} q${r(kr * 0.05)} ${r(-kr * 0.07)} ${r(kr * 0.12)} ${r(-kr * 0.01)} q${r(-kr * 0.02)} ${r(kr * 0.07)} ${r(-kr * 0.12)} ${r(kr * 0.01)} Z" fill="#2f4a26"/><path d="M${r(hx - kr * 0.06)} ${r(hy + kr * 0.03)} l${r(kr * 0.1)} ${r(-kr * 0.05)}" stroke="#6a604e" stroke-width="${r(kr * 0.02)}"/>`; }
-  g += `<path d="M${r(x)} ${r(y - h * 0.45)} L${r(x - kr * 0.35)} ${r(cy + kr * 0.25)} M${r(x)} ${r(y - h * 0.48)} L${r(x + kr * 0.3)} ${r(cy + kr * 0.2)}" stroke="#7a705e" stroke-width="${r(h * 0.012)}" opacity=".8"/>`;
+  let g = lage(0, 0, 1, farben[0]) + lage(lx * R * 0.06, -R * 0.07, 0.9, farben[1]) + lage(lx * R * 0.17, -R * 0.18, 0.68, farben[2]) + lage(lx * R * 0.28, -R * 0.3, 0.4, farben[3]);
+  /* Astlücken auf der Schattenseite und unten, mit einem Ast darin */
+  for (let i = 0; i < 3; i++) {
+    const a = Math.PI * (i === 0 ? 0.25 + z() * 0.3 : (lx > 0 ? 0.65 : 0.05) + z() * 0.3) + (i === 2 ? -Math.PI * 0.55 * lx : 0), gx = x + Math.cos(a) * rx * 0.55, gy = cy + Math.sin(a) * ry * 0.5, w = R * (0.07 + z() * 0.04);
+    g += `<path d="M${r(gx - w)} ${r(gy)} q${r(w * 0.3)} ${r(-w * 0.8)} ${r(w * 1.1)} ${r(-w * 0.6)} q${r(w * 0.9)} ${r(w * 0.1)} ${r(w * 0.8)} ${r(w * 0.7)} q${r(-w * 0.5)} ${r(w * 0.7)} ${r(-w * 1.2)} ${r(w * 0.5)} q${r(-w * 0.7)} ${r(-w * 0.2)} ${r(-w * 0.7)} ${r(-w * 0.6)} Z" fill="${farben[4] || "#16240f"}"/>`;
+    g += `<path d="M${r(gx - w * 0.7)} ${r(gy + w * 0.5)} Q${r(gx)} ${r(gy - w * 0.05)} ${r(gx + w * 0.7)} ${r(gy - w * 0.4)}" stroke="${rinde}" stroke-width="${r(Math.max(0.3, R * 0.035))}" fill="none"/>`;
+  }
+  /* Kastanie: helle Blütenkerzen auf der Lichtseite */
+  if (bluete) for (let i = 0; i < 12; i++) { const a = -Math.PI * (0.05 + z() * 0.9), f = 0.3 + z() * 0.6, bx = r(x + Math.cos(a) * rx * f), by = r(cy + Math.sin(a) * ry * f), bh = r(R * 0.09); g += `<path d="M${r(bx - bh * 0.3)} ${by} Q${bx} ${r(by - bh * 1.4)} ${r(bx + bh * 0.3)} ${by} Z" fill="#f6f1e2"/>`; }
   return g;
+}
+/* Laubbaum (Platane): gefleckter Stamm, Äste verschwinden in der Krone, breite unregelmäßige Krone, Licht von links */
+function baum(x, y, h, seed) {
+  const kr = h * 0.36, cy = y - h * 0.64;
+  let g = `<path d="M${r(x)} ${r(y - h * 0.42)} L${r(x - kr * 0.45)} ${r(cy + kr * 0.2)} M${r(x)} ${r(y - h * 0.46)} L${r(x + kr * 0.4)} ${r(cy + kr * 0.15)}" stroke="#7a705e" stroke-width="${r(h * 0.016)}"/>`;
+  g += `<path d="M${r(x - h * 0.03)} ${y} L${r(x - h * 0.014)} ${r(y - h * 0.5)} L${r(x + h * 0.014)} ${r(y - h * 0.5)} L${r(x + h * 0.028)} ${y} Z" fill="#9a907c"/>`;
+  g += `<path d="M${r(x - h * 0.02)} ${r(y - h * 0.15)} h${r(h * 0.02)} v${r(-h * 0.06)} h${r(-h * 0.02)} Z M${r(x)} ${r(y - h * 0.32)} h${r(h * 0.015)} v${r(-h * 0.05)} h${r(-h * 0.015)} Z" fill="#d6cdb4"/>`;
+  return g + krone(x, cy, kr * 1.15, kr * 0.85, seed, { n: 18, rb: 0.24, farben: ["#2f4a26", "#4a6c32", "#7d9e48", "#a8c26a"], lx: -1, rinde: "#6a604e" });
 }
 
 /* =====================================================================
@@ -402,7 +414,6 @@ let PN_UNTER = [];
     const cw = 0.82, xa = X(cx - cw / 2), xb = X(cx + cw / 2), ya = Y(h1 - 0.55), yb = Y(h0 + 0.45);
     /* Schlagschatten der Halbsäule nach rechts auf die Wand (Sonne links vorn) */
     let g = `<path d="M${r(xb)} ${r(ya - M(0.55))} L${r(xb + M(0.7))} ${r(ya + 1.6)} L${r(xb + M(0.7))} ${yb} L${r(xb)} ${yb} Z" fill="${SSCHATTEN}"/>`;
-    /* Schaft mit unruhigen Kanten auf beiden Seiten (nie fertig gemeißelte Bosse) */
     /* Schaft: Umriss mit zwei, drei flachen Höckern (rohe Bosse), keine Zacken */
     let lk = `M${xa} ${yb} `, rk2 = "";
     const nh = 2 + (z() < 0.5 ? 1 : 0), st = (h1 - h0 - 1) / nh;
@@ -445,7 +456,7 @@ let PN_UNTER = [];
     g += `<rect x="${r(x0 - 1.1 + (ecke ? 0.9 : 0))}" y="${yb}" width="${r(x1 - x0 + 2.2 - (ecke ? 0.9 : 0))}" height="1" fill="#7d7464"/><rect x="${r(x0 - 1.1)}" y="${yb}" width="${r(x1 - x0 + 2.2)}" height=".3" fill="#b3aa92" opacity=".6"/>`;
     for (let n = 0; n < 3; n++) g += `<rect x="${r(x0 - 0.6 + z() * (x1 - x0 + 0.8))}" y="${r(yb + 1)}" width="${r(0.5 + z() * 0.5)}" height="${r(M(0.8 + z() * 3.2))}" fill="${LAUF}"/>`;
     /* Vogelkot-Spur unter manchem Sims */
-    if (vari === 2) g += `<rect x="${r(x0 + z() * (x1 - x0 - 1))}" y="${r(yb + 1)}" width=".7" height="${r(M(1.2 + z()))}" fill="${S.lg("kot", [[0, "#d9d4c4", 0.75], [1, "#d9d4c4", 0]])}"/>`;
+    if (vari === 2) g += `<rect x="${r(x0 + z() * (x1 - x0 - 1))}" y="${r(yb + 1)}" width=".7" height="${r(M(1.2 + z()))}" fill="${S.lg("kot", [[0, "#d9d4c4", 0.4], [1, "#d9d4c4", 0]])}"/>`;
     FENSTER.push({ cx, s0, fw, fh });
     return g;
   };
@@ -478,7 +489,7 @@ let PN_UNTER = [];
     while (x < t.x1 - 0.2) {
       /* Türme: unregelmäßig abgebrochene Quaderstufen (keine Zinnen), Mittelbau: einzelne fehlende Blöcke */
       let bw, drop;
-      if (t.turm) { bw = Math.min(1.3 + z() * 2.2, t.x1 - x); if (z() < 0.5) stufe = Math.max(0, Math.min(3, stufe + (z() < 0.5 ? 1 : -1))); drop = stufe * 0.62; }
+      if (t.turm) { bw = Math.min(1.3 + z() * 2.2, t.x1 - x); const pIn = t.x0 < 0 ? (x - t.x0) / (t.x1 - t.x0) : (t.x1 - x - bw) / (t.x1 - t.x0); stufe = Math.max(stufe, Math.min(3, Math.round(Math.pow(Math.max(0, pIn), 1.4) * (t.x0 < 0 ? 2.2 : 3.2) + (z() - 0.5) * 0.9))); if (t.x0 > 0) stufe = Math.max(0, Math.min(3, Math.round(Math.pow(Math.max(0, pIn), 1.4) * 3.2 + (z() - 0.5) * 0.9))); drop = stufe * 0.62; }
       else { bw = Math.min(1.2 + z() * 0.7, t.x1 - x); const v = z(); drop = v < 0.22 ? 0.62 : (v < 0.3 ? 1.24 : 0); }
       ober += `H${X(x)} V${Y(t.h - drop)} H${X(x + bw)} V${Y(t.h)} `;
       x += bw;
@@ -523,8 +534,7 @@ let PN_UNTER = [];
     /* warmes Streiflicht von links, nach rechts schwächer */
     k += `<path d="${ober}" fill="${S.lg("pnlicht" + t.seed, [[0, "#ffc87a", t.x0 < 0 ? 0.3 : 0.12], [0.5, "#ffc87a", 0.05], [1, "#16203a", 0.2]], 0, 0, 1, 0.7)}"/>`;
   }
-  /* der gezeigte Steinblock: ein normaler Quader im Verband (hellere Fugen als Umriss);
-     die Klammerlöcher sitzen an Ober- und Stoßfuge: ausgebrochene Trichter, oben tief, unten helle Bruchkante */
+  /* der gezeigte Steinblock: ein normaler Quader im Verband; die Klammerlöcher sind ausgebrochene Trichter */
   {
     const bx0 = X(BLOCK.x - BLOCK.w / 2), bx1 = X(BLOCK.x + BLOCK.w / 2), by0 = Y(BLOCK.h + BLOCK.hh), by1 = Y(BLOCK.h);
     /* Quader wie seine Nachbarn: etwas hellere Kante oben und links (Licht), tiefe Fuge rundum */

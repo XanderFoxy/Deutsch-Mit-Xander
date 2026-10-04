@@ -81,7 +81,7 @@ const bodenSchatten = (D, X, w, h, a = 0.3) => {
 };
 /* Figuren klein halten: feine Linien weg, Formkoordinaten auf Q cm runden (Verläufe bleiben genau) */
 const schlank = (svg, min = 0.35) => svg.replace(/<path [^>]*fill="none"[^>]*\/>/g, (p) => { const m = p.match(/stroke-width="([\d.]+)"/); return m && +m[1] < min ? "" : p; });
-let KLEIN = 12;
+let KLEIN = 20;
 const kompakt = (svg, Q = 1, min = 0.35) => {
   svg = schlank(svg, min);
   const rund = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : r(v)); };
@@ -188,7 +188,7 @@ const PLATZ = S.teil({ id: "platz", de: "der Platz", syl: "PLATZ", it: "la piazz
     const u = sk(D), xa = xG(D, X0), xb = xG(D, X1), x0 = Math.max(0, xa), x1 = Math.min(400, xb), y0 = yG(D, 0), yt = yG(D, traufe), yf = yG(D, first);
     if (x1 - x0 < 1) return "";
     let g = `<rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(y0 - yt)}" fill="${farbe}"/>`;
-    g += `<rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(y0 - yt)}" fill="${S.lg("hauslicht", [[0, "#fff4dc", 0.22], [1, "#2e2a40", 0.14]], 0, 0, 1, 0)}"/>`;
+    g += `<rect x="${r(x0)}" y="${r(yt)}" width="${r(x1 - x0)}" height="${r(y0 - yt)}" fill="${S.lg("hauslicht", [[0, "#fff4dc", 0.26], [1, "#2e2a40", 0.2]], 0, 0, 1, 0)}"/>`;
     if (mansard) {
       const ym = yG(D, traufe + (first - traufe) * 0.65);
       g += `<path d="M${r(x0)} ${r(yt)} L${r(Math.max(0, x0 + 0.8 * u))} ${r(ym)} L${r(Math.max(0, x0 + 1.6 * u))} ${r(yf)} L${r(Math.min(400, x1 - 1.6 * u))} ${r(yf)} L${r(Math.min(400, x1 - 0.8 * u))} ${r(ym)} L${r(x1)} ${r(yt)} Z" fill="${DACH}"/>`;
@@ -281,7 +281,7 @@ const theaterUnter = [];
   for (let i = 0; i < 6; i++) k += `<rect x="-10.45" y="${r(-3.35 + i * 0.24)}" width="${i % 2 ? 0.6 : 0.75}" height=".06" fill="#c9a54a"/>`;
   /* Schaukasten rechts */
   k += `<rect x="9.5" y="-3.5" width="1.2" height="1.7" fill="#3a3632"/><rect x="9.6" y="-3.4" width="1" height="1.5" fill="#b8323a"/><rect x="9.7" y="-3.25" width=".8" height=".5" fill="#f2e3c4"/>`;
-  k += `<rect x="${-M - 0.2}" y="-5.9" width="${2 * M + 0.4}" height=".75" fill="#f8f1e2"/><rect x="${-M - 0.2}" y="-5.15" width="${2 * M + 0.4}" height=".4" fill="${KUEHL}" opacity=".28"/>`;
+  k += `<rect x="${-M - 0.2}" y="-5.9" width="${2 * M + 0.4}" height=".75" fill="#f8f1e2"/><rect x="${-M - 0.2}" y="-5.15" width="${2 * M + 0.4}" height=".5" fill="#3e3868" opacity=".34"/>`;
   /* hohe Fenster zwischen den Säulen */
   for (const x of [-8, -4, 0, 4, 8]) { k += fenster(x, -6.8, -13.4, 2.1); k += `<rect x="${x - 1.3}" y="-6.75" width="2.6" height=".35" fill="#f2e9d6"/>`; }
   /* sechs Säulen mit Basis, Kannelur, ionischem Kapitell; Schattenseite rechts, Schlagschatten auf die Wand */
@@ -298,13 +298,13 @@ const theaterUnter = [];
   k += `<rect x="${-M - 0.3}" y="-15.6" width="${2 * M + 0.6}" height="1" fill="#f2e8d4"/>`;
   k += `<rect x="${-M - 0.2}" y="-16.9" width="${2 * M + 0.4}" height="1.3" fill="${TRAV}"/>`;
   k += `<text x="0" y="-15.85" font-size=".95" text-anchor="middle" fill="#6f6250" font-family="'Times New Roman',Georgia,serif" letter-spacing=".22">DEUTSCHES NATIONALTHEATER</text>`;
-  k += `<rect x="${-M - 0.5}" y="-17.4" width="${2 * M + 1}" height=".55" fill="#fbf4e6"/><rect x="${-M - 0.3}" y="-16.85" width="${2 * M + 0.6}" height=".35" fill="${KUEHL}" opacity=".25"/>`;
+  k += `<rect x="${-M - 0.5}" y="-17.4" width="${2 * M + 1}" height=".55" fill="#fbf4e6"/><rect x="${-M - 0.3}" y="-16.85" width="${2 * M + 0.6}" height=".45" fill="#3e3868" opacity=".34"/>`;
   k += `<rect x="${-M}" y="-19" width="${2 * M}" height="1.6" fill="${S.lg("attika", [[0, "#f6ebd6"], [1, "#d9ccb0"]])}"/>`;
   k += `<rect x="${-M - 0.2}" y="-19.25" width="${2 * M + 0.4}" height=".3" fill="#fbf4e6"/>`;
   k += `<path d="M${-M + 0.3} -19.25 L${-M + 1.6} -19.9 L${M - 1.6} -19.9 L${M - 0.3} -19.25 Z" fill="${DACH}"/>`;
   /* Morgensonne: warm von links, rechte Seite kühler */
-  k += `<rect x="${-W}" y="-14.4" width="${2 * W}" height="14.6" fill="${S.lg("thwarm", [[0, "#ffcf8a", 0.14], [0.5, "#ffcf8a", 0.04], [1, "#5a5a9a", 0.08]], 0, 0, 1, 0)}"/>`;
-  k += `<rect x="${-M}" y="-19" width="${2 * M}" height="4.6" fill="${S.lg("thwarm2", [[0, "#ffcf8a", 0.12], [1, "#5a5a9a", 0.06]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="${-W}" y="-14.4" width="${2 * W}" height="14.6" fill="${S.lg("thwarm", [[0, "#ffcf8a", 0.22], [0.45, "#ffcf8a", 0.05], [1, "#4a4a90", 0.16]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="${-M}" y="-19" width="${2 * M}" height="4.6" fill="${S.lg("thwarm2", [[0, "#ffcf8a", 0.2], [1, "#4a4a90", 0.14]], 0, 0, 1, 0)}"/>`;
   S.teil({ id: "theater", de: "das Theater", syl: "the-A-ter", it: "il teatro", itSyl: "te-A-tro", en: "theatre", x: CX, y: TY, kunst: `<g transform="scale(${TU.toFixed(5)})">${k}</g>`,
     tipp: "Das Deutsche Nationaltheater: Hier wurde 1919 die erste demokratische Verfassung Deutschlands beschlossen.",
     zoom: { x: r(CX - 14 * TU), y: r(TY - 19 * TU), w: r(28 * TU), h: r(18.7 * TU) } });

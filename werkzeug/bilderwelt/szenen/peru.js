@@ -166,9 +166,9 @@ const WALD1 = waldMuster("wald1", 1, 7), WALD08 = waldMuster("wald08", 0.8, 8), 
 S.def(`<pattern id="${S.id("gras")}" width="5" height="2.6" patternUnits="userSpaceOnUse"><path d="M.6 2.3l.2-.9M1.9 1.4l-.2-.8M3.2 2.4l.3-1M4.3 1.1l-.25-.8M2.6.6l.1-.5" stroke="#d6e98a" stroke-width=".22" opacity=".45"/><path d="M1.2 2.5l-.1-.7M3.8 2.2l.2-.6" stroke="#2f5420" stroke-width=".25" opacity=".35"/></pattern>`);
 S.def(`<pattern id="${S.id("stroh")}" width="2" height="2.6" patternUnits="userSpaceOnUse"><rect width="2" height="2.6" fill="#b48e4e"/><path d="M.3 0 L.5 2.6 M1.1 0 L1.2 2.6 M1.7 0 L1.6 2.6" stroke="#d9b874" stroke-width=".28"/><path d="M.8 0 L.85 2.6" stroke="#7d5e2c" stroke-width=".22"/></pattern>`);
 const WALD = WALD05, WALDF = WALD1, GRAS = `url(#${S.id("gras")})`, STROH = `url(#${S.id("stroh")})`;
-const GRANIT_L = S.lg("granitl", [[0, "#f1ede4"], [1, "#d6d1c5"]]);         /* Ostflächen im Morgenlicht */
-const GRANIT_S = S.lg("granits", [[0, "#8a877f"], [1, "#74716a"]]);         /* Westflächen im Schatten */
-const GRANIT_F = S.lg("granitf", [[0, "#cdc9be"], [1, "#a9a598"]]);         /* Südflächen (zu uns), streifendes Licht */
+const GRANIT_L = S.lg("granitl", [[0, "#d8d0c0"], [1, "#beb6a6"]]);         /* Ostflächen im Morgenlicht */
+const GRANIT_S = S.lg("granits", [[0, "#8a8379"], [1, "#746d64"]]);         /* Westflächen im Schatten */
+const GRANIT_F = S.lg("granitf", [[0, "#bab3a5"], [1, "#9d968a"]]);         /* Südflächen (zu uns), streifendes Licht */
 const INNEN = "#3d3a34";
 const RASEN = S.lg("rasen", [[0, "#9cc35a"], [1, "#78a646"]]);
 const RASEN_D = S.lg("rasend", [[0, "#6f9a42"], [1, "#557f34"]]);
@@ -382,22 +382,26 @@ const haus = (x, y, b, h, t, g, giebel = "front", dach = false, tueren = 1, scha
   let o = "";
   /* Schlagschatten nach links auf den Boden (Sonne rechts, etwa 45° hoch) */
   if (schattenAn) o += `<path d="${P([A, [A[0] - h * 0.9, A[1] - h * 0.12], [A2[0] - h * 0.9, A2[1] - h * 0.12], A2])}" fill="#2a3320" opacity=".28"/>`;
-  if (giebel === "front") o += `<path d="${P([up(A2, h), [(A2[0] + B2[0]) / 2, A2[1] - h - g * 0.92], up(B2, h)])}" fill="#d9cfbc"/>`;
+  if (giebel === "front" && g > 0) o += `<path d="${P([up(A2, h), [(A2[0] + B2[0]) / 2, A2[1] - h - g * 0.92], up(B2, h)])}" fill="#b8b0a0"/>`;
   o += `<path d="${P([up(A, h), up(Bp, h), up(B2, h), up(A2, h)])}" fill="${INNEN}"/>`;
   /* Innenwand hinten im Licht (sichtbar über die Front hinweg) */
-  o += `<path d="${P([up(A2, h), up(B2, h), up(B2, h * 0.35), up(A2, h * 0.35)])}" fill="#b9ae99" opacity=".75"/>`;
+  o += `<path d="${P([up(A2, h), up(B2, h), up(B2, h * 0.35), up(A2, h * 0.35)])}" fill="#a39b8c" opacity=".75"/>`;
   if (rechtsSicht) o += `<path d="${P([Bp, B2, up(B2, h), up(Bp, h)])}" fill="${GRANIT_L}"/>`;
   else o += `<path d="${P([A, A2, up(A2, h), up(A, h)])}" fill="${GRANIT_S}"/>`;
   o += `<path d="${P([A, Bp, up(Bp, h), up(A, h)])}" fill="${GRANIT_F}"/>`;
-  if (giebel === "front") o += `<path d="${P([up(A, h - 0.05), [x + b / 2, y - h - g], up(Bp, h - 0.05)])}" fill="${GRANIT_F}"/>`;
+  const zh = zufall(Math.round(x * 13 + y * 7)), kaputt = zh() < 0.5;
+  /* Giebel: ganz oder abgebrochen (stufig) */
+  const giebelForm = (L0, R0, spitze) => kaputt ? [L0, [L0[0] + (spitze[0] - L0[0]) * 0.45, L0[1] + (spitze[1] - L0[1]) * 0.45], [L0[0] + (spitze[0] - L0[0]) * 0.55, L0[1] + (spitze[1] - L0[1]) * 0.6], [L0[0] + (spitze[0] - L0[0]) * 0.75, L0[1] + (spitze[1] - L0[1]) * 0.6], [L0[0] + (spitze[0] - L0[0]) * 0.75, L0[1] + (spitze[1] - L0[1]) * 0.8], [R0[0] + (spitze[0] - R0[0]) * 0.7, R0[1] + (spitze[1] - R0[1]) * 0.8], R0] : [L0, spitze, R0];
+  if (giebel === "front" && g > 0) o += `<path d="${P(giebelForm(up(A, h - 0.05), up(Bp, h - 0.05), [x + b / 2, y - h - g]))}" fill="${GRANIT_F}"/>`;
   else {
     const S1 = rechtsSicht ? Bp : A, S2 = rechtsSicht ? B2 : A2;
-    o += `<path d="${P([up(S1, h - 0.05), [(S1[0] + S2[0]) / 2, (S1[1] + S2[1]) / 2 - h - g], up(S2, h - 0.05)])}" fill="${rechtsSicht ? GRANIT_L : GRANIT_S}"/>`;
+    if (g > 0) o += `<path d="${P(giebelForm(up(S1, h - 0.05), up(S2, h - 0.05), [(S1[0] + S2[0]) / 2, (S1[1] + S2[1]) / 2 - h - g]))}" fill="${rechtsSicht ? GRANIT_L : GRANIT_S}"/>`;
     const S3 = rechtsSicht ? A : Bp, S4 = rechtsSicht ? A2 : B2;   /* Giebel der Gegenseite, nur die Spitze ragt über den Innenraum */
-    o += `<path d="${P([up(S3, h), [(S3[0] + S4[0]) / 2, (S3[1] + S4[1]) / 2 - h - g], up(S4, h)])}" fill="#d3c8b3"/>`;
+    if (g > 0) o += `<path d="${P([up(S3, h), [(S3[0] + S4[0]) / 2, (S3[1] + S4[1]) / 2 - h - g], up(S4, h)])}" fill="#b4ac9c"/>`;
   }
-  o += `<path d="M${r(x)} ${r(y - h)} H${r(x + b)}" stroke="#fbf4e4" stroke-width="${r(Math.max(0.2, 0.14 * m))}" opacity=".85"/>`;
-  if (b > 3) for (let i = 1; i < 3; i++) o += `<path d="M${r(x + 0.2)} ${r(y - h * i / 3)} H${r(x + b - 0.2)}" stroke="#9a907f" stroke-width=".12" opacity=".55"/>`;
+  o += `<path d="M${r(x)} ${r(y - h)} H${r(x + b)}" stroke="#ece4d2" stroke-width="${r(Math.max(0.2, 0.12 * m))}" opacity=".85"/>`;
+  if (zh() < 0.5) o += `<path d="M${r(x + b * zh() * 0.4)} ${r(y - h - 0.12)} h${r(b * (0.2 + zh() * 0.3))}" stroke="#7e9a4a" stroke-width="${r(Math.max(0.25, 0.16 * m))}" stroke-linecap="round"/>`;
+  if (b > 3) for (let i = 1; i < 4; i++) o += `<path d="M${r(x + 0.2)} ${r(y - h * i / 4)} H${r(x + b - 0.2)}" stroke="#7f786c" stroke-width=".1" opacity=".55"/>`;
   for (let i = 0; i < tueren; i++) {
     const cx = x + b * (i + 0.5) / tueren, tb = Math.min(b / tueren * 0.42, 0.95 * m), th = Math.min(h * 0.72, 1.9 * m);
     o += `<path d="M${r(cx - tb / 2)} ${r(y)} L${r(cx - tb * 0.34)} ${r(y - th)} L${r(cx + tb * 0.34)} ${r(y - th)} L${r(cx + tb / 2)} ${r(y)} Z" fill="#3a332b"/>`;
@@ -435,19 +439,19 @@ const zeile = (x0, x1, y, hm, seed, dachAnteil = 0.06) => {
   const z = zufall(seed), m = 330 / dAusY(y); let o = "", x = x0;
   const teile = [];
   while (x < x1 - 2) {
-    if (z() < 0.12) { x += (2 + z() * 3) * m; continue; }          /* Durchgang / Hof */
+    if (z() < 0.2) { x += (2 + z() * 4) * m; continue; }          /* Gasse / Hof (Kancha) */
     const lang = z() < 0.7, b = Math.min(x1 - x, (lang ? 9 + z() * 5 : 5 + z() * 1.5) * m);
     if (b < 2.5 * m) break;
     teile.push([x, b, lang]);
     x += b + (z() < 0.4 ? 0.3 * m : 0);
   }
   /* Stützmauer der Terrasse, auf der die Zeile steht (helle Krone, Schatten darunter) */
-  o += `<path d="M${r(x0 - 1.5)} ${r(y + 0.5)} L${r(x1 + 1.5)} ${r(y + 0.5)} L${r(x1 + 1.5)} ${r(y + 0.5 + 1.3 * m)} L${r(x0 - 1.5)} ${r(y + 0.5 + 1.3 * m)} Z" fill="${S.lg("zeilmauer", [[0, "#ddd5c4"], [1, "#a9a090"]])}"/><path d="M${r(x0 - 1.5)} ${r(y + 0.5 + 1.3 * m)} L${r(x1 + 1.5)} ${r(y + 0.5 + 1.3 * m)}" stroke="#3d4a2c" stroke-width="${r(0.5 * m)}" opacity=".35"/>`;
+  o += `<path d="M${r(x0 - 1.5)} ${r(y + 0.5)} L${r(x1 + 1.5)} ${r(y + 0.5)} L${r(x1 + 1.5)} ${r(y + 0.5 + 1.3 * m)} L${r(x0 - 1.5)} ${r(y + 0.5 + 1.3 * m)} Z" fill="${S.lg("zeilmauer", [[0, "#b9b1a2"], [1, "#857e72"]])}"/><path d="M${r(x0 - 1.5)} ${r(y + 0.5 + 1.3 * m)} L${r(x1 + 1.5)} ${r(y + 0.5 + 1.3 * m)}" stroke="#3d4a2c" stroke-width="${r(0.5 * m)}" opacity=".35"/>`;
   /* von der Mitte nach außen zeichnen: die äußeren verdecken die inneren richtig (Fluchtpunkt in der Mitte) */
   teile.sort((p, q) => Math.abs(q[0] + q[1] / 2 - VP[0]) - Math.abs(p[0] + p[1] / 2 - VP[0]));
   teile.reverse();
   const xm = (x0 + x1) / 2, bw = Math.max(1, x1 - x0);
-  for (const [xx, b, lang] of teile.reverse()) { const yy = y + Math.pow((xx + b / 2 - xm) / bw * 2, 2) * 1.8 + (z() - 0.5) * 0.5; o += haus(xx, yy, b, (3.3 + z() * 1.1) * m * hm, lang ? 7 + z() * 2 : 10 + z() * 3, (3 + z() * 1) * m, lang ? "seite" : "front", z() < dachAnteil, lang ? (z() < 0.5 ? 2 : 0) : 1); }
+  for (const [xx, b, lang] of teile.reverse()) { const yy = y + Math.pow((xx + b / 2 - xm) / bw * 2, 2) * 1.8 + (z() - 0.5) * 0.5; o += haus(xx, yy, b, (3.3 + z() * 1.1) * m * hm, lang ? 7 + z() * 2 : 10 + z() * 3, (z() < 0.2 ? 0 : (3 + z() * 1) * m), lang ? "seite" : "front", z() < dachAnteil, lang ? (z() < 0.5 ? 2 : 0) : 1); }
   return o;
 };
 const STADT = {};
