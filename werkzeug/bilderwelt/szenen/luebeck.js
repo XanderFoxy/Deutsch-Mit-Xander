@@ -787,72 +787,113 @@ let MARZ = null;
    17 — DIE LÖWEN (gusseisern, 1823): links der wachende, rechts der schlafende
    ===================================================================== */
 function loewe(L, wach, dir) {
-  /* Seitenansicht eines liegenden Löwen aus Gusseisen; Blick nach rechts (dir = 1) oder links (−1).
-     Fußpunkt: Mitte der Liegefläche. Licht von rechts oben. */
+  /* Liegender Löwe aus Gusseisen in Seitenansicht (Blick nach rechts bei dir = 1).
+     Klassizistische Lockenmähne in drei Reihen, kantige Schnauze, schwere Braue, Auge im Schatten,
+     geschlossener Mund mit Kinnbart. Licht von rechts oben: Spitzlichter auf Rücken, Locken und Pranken. */
   const P = (x, y) => `${r(dir * x * L)} ${r(-y * L)}`;
-  const DUNK = "#1c1c1e", MITT = "#2c2c2f", HELL = "#77746b";
+  const D = "#1d1d20", MI = "#2f2f32", HL = "#8a867c", SP = "#b9b4a6";
   const z = zufall(wach ? 5 : 9);
   let g = "";
-  /* Schwanz mit Quaste, um die Hinterpranke gelegt */
-  g += `<path d="M${P(-0.47, 0.1)} C${P(-0.62, 0.05)} ${P(-0.5, 0.0)} ${P(-0.3, 0.012)} S${P(-0.12, 0.02)} ${P(-0.08, 0.03)}" stroke="${MITT}" stroke-width="${r(0.028 * L)}" fill="none" stroke-linecap="round"/>`;
-  g += `<path d="M${P(-0.1, 0.03)} q${r(dir * 0.04 * L)} ${r(-0.025 * L)} ${r(dir * 0.07 * L)} ${r(0.005 * L)} q${r(-dir * 0.03 * L)} ${r(0.02 * L)} ${r(-dir * 0.07 * L)} ${r(0.002 * L)} Z" fill="${DUNK}"/>`;
-  /* Rumpf */
-  g += `<path d="M${P(-0.5, 0.02)} C${P(-0.53, 0.18)} ${P(-0.46, 0.3)} ${P(-0.3, 0.31)} C${P(-0.12, 0.31)} ${P(0.0, 0.33)} ${P(0.12, 0.36)} L${P(0.22, 0.3)} L${P(0.24, 0.08)} L${P(0.1, 0.02)} Z" fill="${EISEN}"/>`;
-  /* Hinterkeule und Hinterpranke */
-  g += `<path d="M${P(-0.47, 0.04)} C${P(-0.5, 0.2)} ${P(-0.38, 0.27)} ${P(-0.26, 0.24)} C${P(-0.15, 0.2)} ${P(-0.14, 0.08)} ${P(-0.2, 0.03)} Z" fill="${MITT}"/>`;
-  g += `<path d="M${P(-0.44, 0.22)} C${P(-0.36, 0.27)} ${P(-0.27, 0.25)} ${P(-0.22, 0.19)}" stroke="${HELL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
-  g += `<path d="M${P(-0.3, 0.0)} L${P(-0.06, 0.0)} Q${P(-0.03, 0.0)} ${P(-0.03, 0.03)} Q${P(-0.05, 0.055)} ${P(-0.1, 0.05)} L${P(-0.28, 0.05)} Z" fill="${MITT}"/>`;
-  /* Rippen und Flanke angedeutet */
-  for (const t of [-0.12, -0.04, 0.04]) g += `<path d="M${P(t, 0.27)} q${r(dir * 0.02 * L)} ${r(0.08 * L)} 0 ${r(0.15 * L)}" stroke="#121214" stroke-width="${r(0.006 * L)}" fill="none" opacity=".6"/>`;
-  g += `<path d="M${P(-0.3, 0.31)} C${P(-0.12, 0.3)} ${P(0.0, 0.32)} ${P(0.12, 0.355)}" stroke="${HELL}" stroke-width="${r(0.01 * L)}" fill="none" opacity=".8"/>`;
-  /* Vorderbeine: hinteres (dunkler) und vorderes, Pranken mit Zehen */
-  g += `<path d="M${P(0.14, 0.2)} L${P(0.2, 0.04)} L${P(0.5, 0.045)} Q${P(0.55, 0.05)} ${P(0.55, 0.08)} Q${P(0.53, 0.1)} ${P(0.46, 0.095)} L${P(0.24, 0.1)} Z" fill="${DUNK}"/>`;
-  g += `<path d="M${P(0.1, 0.2)} C${P(0.16, 0.1)} ${P(0.16, 0.04)} ${P(0.2, 0.0)} L${P(0.52, 0.0)} Q${P(0.58, 0.0)} ${P(0.58, 0.035)} Q${P(0.56, 0.06)} ${P(0.48, 0.058)} L${P(0.26, 0.065)} C${P(0.22, 0.12)} ${P(0.2, 0.18)} ${P(0.18, 0.22)} Z" fill="${EISEN}"/>`;
-  for (const t of [0.53, 0.555]) g += `<path d="M${P(t, 0.004)} L${P(t - 0.006, 0.04)}" stroke="#0e0e10" stroke-width="${r(0.006 * L)}"/>`;
-  g += `<path d="M${P(0.26, 0.062)} L${P(0.5, 0.056)}" stroke="${HELL}" stroke-width="${r(0.008 * L)}" opacity=".8"/>`;
-  /* Mähne: viele Locken in zwei Tönen */
-  const mx = wach ? 0.24 : 0.22, my = wach ? 0.38 : 0.22, mr = wach ? 0.19 : 0.15;
-  g += `<path d="M${P(mx - mr * 0.9, my - mr * 1.1)} C${P(mx - mr * 1.2, my + mr * 0.4)} ${P(mx - mr * 0.3, my + mr * 1.25)} ${P(mx + mr * 0.5, my + mr * 1.05)} C${P(mx + mr * 1.05, my + mr * 0.8)} ${P(mx + mr * 0.95, my - mr * 0.6)} ${P(mx + mr * 0.2, my - mr * 1.2)} Z" fill="${DUNK}"/>`;
-  for (let i = 0; i < 16; i++) {
-    const a = 1.5 + i * 0.27 + z() * 0.1, rr = mr * (0.75 + z() * 0.3);
-    const x0 = mx + Math.cos(a) * mr * 0.35, y0 = my + Math.sin(a) * mr * 0.35, x1 = mx + Math.cos(a) * rr, y1 = my + Math.sin(a) * rr;
-    const xs = mx + Math.cos(a + 0.18) * rr * 0.75, ys = my + Math.sin(a + 0.18) * rr * 0.75;
-    g += `<path d="M${P(x0, y0)} Q${P(xs, ys)} ${P(x1, y1)}" stroke="${Math.cos(a) > 0.1 || Math.sin(a) > 0.6 ? HELL : "#3a3a3d"}" stroke-width="${r(0.014 * L)}" fill="none" stroke-linecap="round" opacity=".85"/>`;
+  /* Schwanz mit Quaste um die Hinterpranke */
+  g += `<path d="M${P(-0.47, 0.1)} C${P(-0.62, 0.05)} ${P(-0.52, 0)} ${P(-0.3, 0.012)} S${P(-0.12, 0.02)} ${P(-0.06, 0.03)}" stroke="${MI}" stroke-width="${r(0.026 * L)}" fill="none" stroke-linecap="round"/>`;
+  g += `<path d="M${P(-0.09, 0.03)} c${r(dir * 0.03 * L)} ${r(-0.03 * L)} ${r(dir * 0.07 * L)} ${r(-0.01 * L)} c${r(-dir * 0.02 * L)} ${r(0.025 * L)} ${r(-dir * 0.06 * L)} ${r(0.02 * L)} Z" fill="${D}"/>`;
+  /* Rumpf: Schulterblatt, Senke vor der Kruppe, Kruppe, Bauchlinie */
+  g += `<path d="M${P(-0.5, 0.02)} C${P(-0.54, 0.2)} ${P(-0.46, 0.31)} ${P(-0.32, 0.32)} C${P(-0.2, 0.32)} ${P(-0.12, 0.28)} ${P(-0.02, 0.3)} C${P(0.06, 0.33)} ${P(0.1, 0.37)} ${P(0.16, 0.36)} L${P(0.24, 0.3)} L${P(0.26, 0.08)} L${P(0.1, 0.02)} Z" fill="${EISEN}"/>`;
+  g += `<path d="M${P(-0.44, 0.27)} C${P(-0.36, 0.33)} ${P(-0.24, 0.32)} ${P(-0.16, 0.29)} C${P(-0.08, 0.28)} ${P(0.02, 0.31)} ${P(0.1, 0.36)}" stroke="${HL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
+  g += `<path d="M${P(0.0, 0.31)} C${P(0.04, 0.24)} ${P(0.04, 0.16)} ${P(0.0, 0.1)}" stroke="#141416" stroke-width="${r(0.008 * L)}" fill="none" opacity=".7"/>`;
+  /* Hinterkeule und Hinterpranke mit Zehenballen */
+  g += `<path d="M${P(-0.47, 0.04)} C${P(-0.51, 0.2)} ${P(-0.38, 0.28)} ${P(-0.25, 0.24)} C${P(-0.14, 0.2)} ${P(-0.13, 0.08)} ${P(-0.2, 0.03)} Z" fill="${MI}"/>`;
+  g += `<path d="M${P(-0.43, 0.22)} C${P(-0.35, 0.27)} ${P(-0.26, 0.25)} ${P(-0.21, 0.19)}" stroke="${HL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
+  g += `<path d="M${P(-0.3, 0)} L${P(-0.06, 0)} Q${P(-0.025, 0)} ${P(-0.025, 0.03)} Q${P(-0.045, 0.055)} ${P(-0.1, 0.05)} L${P(-0.28, 0.05)} Z" fill="${MI}"/>`;
+  for (const t of [-0.07, -0.045]) g += `<circle cx="${r(dir * t * L)}" cy="${r(-0.018 * L)}" r="${r(0.012 * L)}" fill="${D}"/>`;
+  /* Vorderbeine: hinteres dunkler, vorderes mit Glanz; Pranken mit vier Zehenballen */
+  g += `<path d="M${P(0.14, 0.2)} L${P(0.2, 0.045)} L${P(0.5, 0.05)} Q${P(0.55, 0.055)} ${P(0.55, 0.085)} Q${P(0.53, 0.1)} ${P(0.46, 0.098)} L${P(0.24, 0.1)} Z" fill="${D}"/>`;
+  g += `<path d="M${P(0.08, 0.22)} C${P(0.15, 0.1)} ${P(0.16, 0.04)} ${P(0.2, 0)} L${P(0.53, 0)} Q${P(0.59, 0)} ${P(0.59, 0.035)} Q${P(0.57, 0.062)} ${P(0.49, 0.06)} L${P(0.26, 0.066)} C${P(0.22, 0.12)} ${P(0.2, 0.19)} ${P(0.18, 0.24)} Z" fill="${EISEN}"/>`;
+  for (let i = 0; i < 4; i++) g += `<ellipse cx="${r(dir * (0.535 + i * 0.016) * L)}" cy="${r(-(0.012 + (i % 2) * 0.012) * L)}" rx="${r(0.012 * L)}" ry="${r(0.016 * L)}" fill="${MI}" stroke="#121214" stroke-width="${r(0.004 * L)}"/>`;
+  g += `<path d="M${P(0.26, 0.064)} L${P(0.52, 0.058)}" stroke="${SP}" stroke-width="${r(0.008 * L)}" opacity=".8"/>`;
+  /* Mähne: dunkle Masse, darauf drei Reihen s-förmiger Locken (oben im Licht, unten im Schatten) */
+  const mx = wach ? 0.27 : 0.22, my = wach ? 0.4 : 0.22, mr = wach ? 0.21 : 0.17;
+  g += `<path d="M${P(mx - mr * 1.05, my - mr * 1.25)} C${P(mx - mr * 1.35, my + mr * 0.3)} ${P(mx - mr * 0.5, my + mr * 1.25)} ${P(mx + mr * 0.35, my + mr * 1.1)} C${P(mx + mr * 0.9, my + mr * 0.95)} ${P(mx + mr * 0.85, my - mr * 0.9)} ${P(mx + mr * 0.1, my - mr * 1.3)} Z" fill="${D}"/>`;
+  /* Locken als hängende Tropfen: Reihe für Reihe von außen nach innen, Spitze nach unten-hinten */
+  for (const [rr, n, w] of [[1.0, 11, 0.05], [0.78, 9, 0.046], [0.55, 7, 0.04]]) {
+    for (let i = 0; i < n; i++) {
+      const a = 1.3 + i / (n - 1) * 3.4 + (z() - 0.5) * 0.1;
+      const bx = mx + Math.cos(a) * mr * rr * 0.75, by = my + Math.sin(a) * mr * rr * 0.8;
+      const ta = a - 0.5 - 0.35, len = 0.07 + z() * 0.025;
+      const tx = bx + Math.cos(ta) * len, ty = by + Math.sin(ta) * len - 0.015;
+      const nx = -Math.sin(ta) * w * 0.5, ny = Math.cos(ta) * w * 0.5;
+      const oben = Math.sin(a) > 0.2 || Math.cos(a) > 0.35;
+      g += `<path d="M${P(bx + nx, by + ny)} Q${P(bx + nx * 1.6 + Math.cos(ta) * len * 0.6, by + ny * 1.6 + Math.sin(ta) * len * 0.6)} ${P(tx, ty)} Q${P(bx - nx * 1.2 + Math.cos(ta) * len * 0.5, by - ny * 1.2 + Math.sin(ta) * len * 0.5)} ${P(bx - nx, by - ny)} Z" fill="${oben ? "#3c3b38" : "#232325"}" stroke="#121214" stroke-width="${r(0.004 * L)}"/>`;
+      if (oben) g += `<path d="M${P(bx + nx, by + ny)} Q${P(bx + nx * 1.6 + Math.cos(ta) * len * 0.6, by + ny * 1.6 + Math.sin(ta) * len * 0.6)} ${P(tx, ty)}" stroke="${HL}" stroke-width="${r(0.007 * L)}" fill="none" opacity=".9"/>`;
+    }
   }
   /* Kopf */
-  if (wach) {
-    g += `<path d="M${P(0.28, 0.52)} C${P(0.36, 0.56)} ${P(0.44, 0.5)} ${P(0.47, 0.44)} L${P(0.51, 0.39)} Q${P(0.52, 0.35)} ${P(0.49, 0.33)} C${P(0.47, 0.3)} ${P(0.4, 0.29)} ${P(0.34, 0.31)} C${P(0.29, 0.35)} ${P(0.26, 0.45)} ${P(0.28, 0.52)} Z" fill="${EISEN}"/>`;
-    g += `<path d="M${P(0.3, 0.52)} C${P(0.37, 0.55)} ${P(0.44, 0.5)} ${P(0.47, 0.44)}" stroke="${HELL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
-    g += `<path d="M${P(0.38, 0.46)} q${r(dir * 0.025 * L)} ${r(-0.012 * L)} ${r(dir * 0.04 * L)} ${r(0.004 * L)}" stroke="#0e0e10" stroke-width="${r(0.01 * L)}" fill="none"/><circle cx="${r(dir * 0.405 * L)}" cy="${r(-0.452 * L)}" r="${r(0.007 * L)}" fill="#9a968a"/>`;
-    g += `<path d="M${P(0.495, 0.395)} L${P(0.52, 0.375)} L${P(0.5, 0.36)} Z" fill="#0e0e10"/><path d="M${P(0.5, 0.36)} Q${P(0.47, 0.34)} ${P(0.43, 0.345)}" stroke="#0e0e10" stroke-width="${r(0.007 * L)}" fill="none"/>`;
-    g += `<path d="M${P(0.29, 0.5)} q${r(dir * 0.01 * L)} ${r(0.05 * L)} ${r(dir * 0.05 * L)} ${r(0.03 * L)} Z" fill="${MITT}"/>`;
-  } else {
-    g += `<path d="M${P(0.26, 0.28)} C${P(0.34, 0.3)} ${P(0.43, 0.24)} ${P(0.46, 0.18)} L${P(0.5, 0.12)} Q${P(0.5, 0.08)} ${P(0.46, 0.075)} L${P(0.34, 0.08)} C${P(0.28, 0.12)} ${P(0.24, 0.2)} ${P(0.26, 0.28)} Z" fill="${EISEN}"/>`;
-    g += `<path d="M${P(0.28, 0.28)} C${P(0.35, 0.29)} ${P(0.43, 0.24)} ${P(0.46, 0.18)}" stroke="${HELL}" stroke-width="${r(0.012 * L)}" fill="none"/>`;
-    g += `<path d="M${P(0.36, 0.2)} q${r(dir * 0.02 * L)} ${r(0.01 * L)} ${r(dir * 0.04 * L)} 0" stroke="#0e0e10" stroke-width="${r(0.009 * L)}" fill="none"/>`;
-    g += `<path d="M${P(0.49, 0.125)} L${P(0.51, 0.1)} L${P(0.49, 0.09)} Z" fill="#0e0e10"/>`;
-  }
+  const kopf = (ox, oy, rot) => {
+    const Q = (x, y) => { const c = Math.cos(rot), sn = Math.sin(rot), X = x * c - y * sn + ox, Y = x * sn + y * c + oy; return P(X, Y); };
+    let h = `<path d="M${Q(-0.09, 0.08)} C${Q(-0.04, 0.15)} ${Q(0.05, 0.15)} ${Q(0.1, 0.1)} L${Q(0.16, 0.03)} L${Q(0.18, 0.0)} Q${Q(0.19, -0.03)} ${Q(0.17, -0.04)} L${Q(0.16, -0.07)} C${Q(0.13, -0.09)} ${Q(0.1, -0.09)} ${Q(0.09, -0.07)} L${Q(0.08, -0.1)} C${Q(0.05, -0.12)} ${Q(0.0, -0.12)} ${Q(-0.04, -0.09)} C${Q(-0.09, -0.05)} ${Q(-0.11, 0.02)} ${Q(-0.09, 0.08)} Z" fill="${EISEN}"/>`;
+    /* schwere Braue mit Spitzlicht, Auge tief im Schatten */
+    h += `<path d="M${Q(0.0, 0.085)} C${Q(0.04, 0.1)} ${Q(0.08, 0.09)} ${Q(0.11, 0.065)} L${Q(0.1, 0.045)} C${Q(0.07, 0.06)} ${Q(0.03, 0.06)} ${Q(0.0, 0.05)} Z" fill="#121214"/>`;
+    h += `<path d="M${Q(0.0, 0.088)} C${Q(0.04, 0.104)} ${Q(0.08, 0.094)} ${Q(0.11, 0.068)}" stroke="${SP}" stroke-width="${r(0.008 * L)}" fill="none"/>`;
+    h += wach ? `<path d="M${Q(0.045, 0.045)} q${r(dir * 0.016 * L)} ${r(-0.008 * L)} ${r(dir * 0.03 * L)} ${r(0.002 * L)} q${r(-dir * 0.014 * L)} ${r(0.008 * L)} ${r(-dir * 0.03 * L)} ${r(-0.002 * L)} Z" fill="#3a3a3c"/><circle cx="${r(dir * (ox + 0.06) * L)}" cy="${r(-(oy + 0.046) * L)}" r="${r(0.004 * L)}" fill="${SP}"/>`
+      : `<path d="M${Q(0.04, 0.042)} q${r(dir * 0.018 * L)} ${r(0.006 * L)} ${r(dir * 0.034 * L)} 0" stroke="#0e0e10" stroke-width="${r(0.007 * L)}" fill="none"/>`;
+    /* Nasenrücken mit Licht, Nase, geschlossener Mund, Kinnbart */
+    h += `<path d="M${Q(0.11, 0.07)} L${Q(0.17, 0.01)}" stroke="${HL}" stroke-width="${r(0.012 * L)}" stroke-linecap="round"/>`;
+    h += `<path d="M${Q(0.165, 0.005)} L${Q(0.19, -0.02)} L${Q(0.17, -0.035)} L${Q(0.15, -0.02)} Z" fill="#0e0e10"/>`;
+    h += `<path d="M${Q(0.165, -0.045)} C${Q(0.14, -0.06)} ${Q(0.11, -0.06)} ${Q(0.085, -0.05)}" stroke="#0e0e10" stroke-width="${r(0.007 * L)}" fill="none"/>`;
+    h += `<path d="M${Q(0.08, -0.095)} l${r(dir * -0.01 * L)} ${r(0.03 * L)} l${r(dir * -0.02 * L)} ${r(-0.02 * L)} l${r(dir * -0.01 * L)} ${r(0.025 * L)} l${r(dir * -0.02 * L)} ${r(-0.02 * L)}" stroke="#2a2a2c" stroke-width="${r(0.01 * L)}" fill="none"/>`;
+    h += `<path d="M${Q(0.03, 0.04)} C${Q(0.06, 0.0)} ${Q(0.1, -0.02)} ${Q(0.14, -0.02)}" stroke="#141416" stroke-width="${r(0.006 * L)}" fill="none" opacity=".7"/>`;
+    return h;
+  };
+  g += wach ? kopf(0.34, 0.43, 0.05) : kopf(0.33, 0.16, -0.32);
   return g;
 }
-const sockel = (L, Hs) => {
-  /* heller Sandsteinsockel mit Deck- und Fußplatte */
-  let g = `<rect x="${r(-0.62 * L)}" y="${r(-Hs)}" width="${r(1.24 * L)}" height="${r(Hs)}" fill="${S.lg("sockelst", [[0, "#9a8f78"], [0.6, "#cfc3a6"], [1, "#e6dcc2"]], 0, 0, 1, 0)}"/>`;
-  g += `<rect x="${r(-0.66 * L)}" y="${r(-Hs - 0.04 * L)}" width="${r(1.32 * L)}" height="${r(0.05 * L)}" fill="#e9dfc6"/><rect x="${r(-0.66 * L)}" y="${r(-Hs + 0.01 * L)}" width="${r(1.32 * L)}" height="${r(0.015 * L)}" fill="#7a705e" opacity=".6"/>`;
-  g += `<rect x="${r(-0.66 * L)}" y="${r(-0.06 * L)}" width="${r(1.32 * L)}" height="${r(0.06 * L)}" fill="#a89c82"/>`;
-  g += `<rect x="${r(-0.5 * L)}" y="${r(-Hs + 0.12 * L)}" width="${r(L)}" height="${r(Hs - 0.26 * L)}" fill="none" stroke="#a89c82" stroke-width=".5"/>`;
-  return g;
-};
+/* Sockel aus Sandstein in Perspektive: Vorderseite mit Quaderfugen, Flecken und bestoßenen Kanten,
+   profiliertes Deckgesims, die Oberseite (wir sehen von oben drauf) und die Seitenfläche zur Bildmitte */
+function sockelP(lat, d, breite, tiefe, hoehe) {
+  const [ox, oy] = proj(lat, d);
+  const Q = (la, dd, h) => { const [xx, yy] = proj(la, dd, h); return [r(xx - ox), r(yy - oy)]; };
+  const l0 = lat - breite / 2, l1 = lat + breite / 2, d0 = d, d1 = d + tiefe, innen = lat < 0 ? l1 : l0;
+  let g = "";
+  /* Seitenfläche zur Mitte hin (im Licht rechts bzw. Schatten links) */
+  g += `<path d="${pfad([Q(innen, d0, 0), Q(innen, d1, 0), Q(innen, d1, hoehe), Q(innen, d0, hoehe)])}" fill="${lat < 0 ? "#d9cdb0" : "#8f8670"}"/>`;
+  /* Vorderseite */
+  const vf = [Q(l0, d0, 0), Q(l1, d0, 0), Q(l1, d0, hoehe), Q(l0, d0, hoehe)];
+  g += `<path d="${pfad(vf)}" fill="${S.lg("sockelst", [[0, "#a49880"], [0.6, "#c9bd9f"], [1, "#ddd1b4"]], 0, 0, 1, 0)}"/>`;
+  const [ax, ay] = vf[0], [bx] = vf[1], [, cy] = vf[2];
+  const zz = zufall(Math.round(lat * 10) + 50);
+  let fu = `M${ax} ${r((ay + cy) / 2)} H${bx} `;
+  for (const t of [0.33, 0.7]) fu += `M${r(ax + (bx - ax) * t)} ${ay} V${r((ay + cy) / 2)} `;
+  fu += `M${r(ax + (bx - ax) * 0.5)} ${r((ay + cy) / 2)} V${cy} `;
+  g += `<path d="${fu}" stroke="#8a7e66" stroke-width=".35"/>`;
+  for (let i = 0; i < 6; i++) g += `<ellipse cx="${r(ax + zz() * (bx - ax))}" cy="${r(cy + zz() * (ay - cy))}" rx="${r(1 + zz() * 2.5)}" ry="${r(0.5 + zz())}" fill="${zz() < 0.6 ? "#7a705e" : "#efe6d0"}" opacity=".25"/>`;
+  g += `<path d="M${r(ax + 2)} ${cy} l1.2 1 l1 -.6 Z M${r(bx - 5)} ${ay} l1.4 -1 l.8 1 Z" fill="#6e6452"/>`;
+  /* Deckgesims (zwei Stufen) und Oberseite */
+  const tp = [Q(l0 - 0.06, d0 - 0.06, hoehe), Q(l1 + 0.06, d0 - 0.06, hoehe), Q(l1 + 0.06, d1 + 0.06, hoehe), Q(l0 - 0.06, d1 + 0.06, hoehe)];
+  g += `<path d="${pfad([Q(l0 - 0.06, d0 - 0.06, hoehe - 0.12), Q(l1 + 0.06, d0 - 0.06, hoehe - 0.12), tp[1], tp[0]])}" fill="#e6dcc2"/>`;
+  g += `<path d="M${Q(l0 - 0.06, d0 - 0.06, hoehe - 0.12).join(" ")} L${Q(l1 + 0.06, d0 - 0.06, hoehe - 0.12).join(" ")}" stroke="#6e6452" stroke-width=".5"/>`;
+  g += `<path d="${pfad(tp)}" fill="#d6cbb0"/>`;
+  /* Fußplatte */
+  g += `<path d="${pfad([Q(l0 - 0.05, d0 - 0.05, 0), Q(l1 + 0.05, d0 - 0.05, 0), Q(l1 + 0.05, d0 - 0.05, 0.1), Q(l0 - 0.05, d0 - 0.05, 0.1)])}" fill="#9a8f78"/>`;
+  return { svg: g, oben: r(Q(lat, d0 + tiefe * 0.4, hoehe)[1]) };
+}
 {
-  const d = 13.6, lat = -3.4, [x, y] = proj(lat, d), s = km(y), L = 2.0 * s, Hs = 0.8 * s;
-  const k = sockel(L, Hs) + `<g transform="translate(0 ${r(-Hs - 0.04 * L)})">${loewe(L, true, 1)}</g>`;
-  schlag(lat, d, 1.95, 2.4, 0.42);
+  const d = 13.6, lat = -3.4, [x, y] = proj(lat, d), s = km(y), L = 2.0 * s;
+  const so = sockelP(lat, d, 2.5, 1.1, 0.8);
+  /* ein Kind sitzt rittlings auf dem wachen Löwen (Kinder klettern gern auf die Löwen) */
+  const reit = Object.assign({}, POSEN.sitzen, { huefteL: { vor: 30, seit: 14, dreh: -4 }, knieL: 26, huefteR: { vor: 26, seit: 12, dreh: -6 }, knieR: 22, schulterL: { vor: 40, seit: 20 }, ellbogenL: 30, schulterR: { vor: 120, seit: 30 }, ellbogenR: 10, fingerR: 0.1 });
+  const kd = figur({ id: "lbk_reiter", alter: "kind", geschlecht: "m", pose: reit, blick: 70, frisur: "kurz", haarfarbe: "braun", haut: "mittel", laecheln: true,
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "#2f8fbf" }, unterteil: { stueck: "shorts", farbe: "#3d5f8c" }, schuhe: { stueck: "turnschuh" } } }, 1.1 * s);
+  const ry = so.oben - 0.3 * L, sitzY = kd.z.punkte.gesaess[1] * kd.k;
+  const k = so.svg + `<g transform="translate(0 ${so.oben})">${loewe(L, true, 1)}</g>` + `<g transform="translate(${r(-0.08 * L)} ${r(ry - sitzY)})">${kd.svg}</g>`;
+  schlag(lat, d, 1.95, 2.5, 0.5);
   S.teil({ id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", x, y, steht: true, kunst: licht(k),
-    tipp: "Vor dem Holstentor liegen zwei Löwen aus Eisen. Einer wacht, der andere schläft." });
+    tipp: "Vor dem Holstentor liegen zwei Löwen aus Eisen. Einer wacht, der andere schläft. Kinder klettern gern auf sie." });
 }
 {
-  const d = 13.6, lat = 4.6, [x, y] = proj(lat, d), s = km(y), L = 2.0 * s, Hs = 0.8 * s;
-  const k = sockel(L, Hs) + `<g transform="translate(0 ${r(-Hs - 0.04 * L)})">${loewe(L, false, -1)}</g>`;
-  schlag(lat, d, 1.6, 2.4, 0.42);
+  const d = 13.6, lat = 4.6, [x, y] = proj(lat, d), s = km(y), L = 2.0 * s;
+  const so = sockelP(lat, d, 2.5, 1.1, 0.8);
+  const k = so.svg + `<g transform="translate(0 ${so.oben})">${loewe(L, false, -1)}</g>`;
+  schlag(lat, d, 1.6, 2.5, 0.5);
   S.teil({ id: "loewe2", de: "der schlafende Löwe", syl: "SCHLA-fen-de LÖ-we", it: "il leone che dorme", itSyl: "le-O-ne che DOR-me", en: "sleeping lion", x, y, steht: true, kunst: licht(k),
     tipp: "Dieser Löwe schläft. Der andere Löwe passt auf ihn auf." });
 }

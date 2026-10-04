@@ -383,6 +383,7 @@ S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 
   k += `<path d="M13 -61.6 h12 M13.4 -59.4 v-2.2 M15.4 -59.4 v-2.2 M17.4 -59.4 v-2.2 M19.4 -59.4 v-2.2 M21.4 -59.4 v-2.2 M23.4 -59.4 v-2.2 M24.6 -59.4 v-2.2" stroke="#fffaf0" stroke-width=".45"/>`;
   k += `<path d="M14.2 -61.6 Q13.6 -66 17 -67.6 Q19 -68.4 21 -67.6 Q24.4 -66 23.8 -61.6 Z" fill="${KUPFER}"/><path d="M15 -62 Q14.8 -65.6 17.4 -67" stroke="#c8ecd8" stroke-width=".6" fill="none"/>`;
   k += `<rect x="17.4" y="-72" width="3.2" height="4.4" fill="#f6ead4"/><path d="M16.4 -72 Q19 -77.6 21.6 -72 Z" fill="${KUPFER}"/><path d="M19 -77.6 V-80.6" stroke="#d6a93a" stroke-width=".6"/>`;
+  k += `</g>`;
   /* der untere Teil steht hinter den Häusern der Kleinseite: dort abschneiden */
   S.def(`<clipPath id="${S.id("nikclip")}"><rect x="-40" y="-60" width="80" height="${r(60 + (98.2 - yb))}"/></clipPath>`);
   k = `<g clip-path="url(#${S.id("nikclip")})">${k}</g>`;
