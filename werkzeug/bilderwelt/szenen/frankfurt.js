@@ -630,7 +630,8 @@ const CBM = {};
       g += `<path d="M${P(s.at(0.08, z0))} L${P(s.at(0.92, z0))} L${P(s.at(0.92, z1))} L${P(s.at(0.08, z1))} Z" fill="${S.lg("garten", [[0, "#5d7a6a"], [1, "#3f5a4c"]])}"/>`;
       for (let i = 0; i < 7; i++) {
         const p = s.at(0.14 + i * 0.12, z0 + 3 + rnd() * 5), q = s.at(0.14 + i * 0.12, z0 + 0.2), rx = 0.55 + rnd() * 0.35, ry = 0.6 + rnd() * 0.45;
-        g += `<path d="M${P(q)} L${r(p[0])} ${r(p[1])}" stroke="#4a3a2a" stroke-width=".18"/><ellipse cx="${r(p[0])}" cy="${r(p[1])}" rx="${r(rx)}" ry="${r(ry)}" fill="#3f6638"/><ellipse cx="${r(p[0] - rx * 0.25)}" cy="${r(p[1] - ry * 0.25)}" rx="${r(rx * 0.6)}" ry="${r(ry * 0.55)}" fill="${rnd() < 0.3 ? "#b9a648" : "#86a95e"}"/>`;
+        const hb = rnd() < 0.3;
+        g += `<path d="M${P(q)} L${r(p[0])} ${r(p[1] + ry * 0.4)}" stroke="#4a3a2a" stroke-width=".2"/>` + krone(hb ? "k2" : i % 2 ? "k1" : "k3", p[0], p[1], rx + ry * 0.6);
       }
       g += `<path d="M${P(s.at(0.08, z0))} L${P(s.at(0.92, z0))} L${P(s.at(0.92, z1))} L${P(s.at(0.08, z1))} Z" fill="${S.lg("reflex", [[0, "#ffffff", 0.32], [0.35, "#ffffff", 0.04], [0.6, "#ffffff", 0.18], [1, "#ffffff", 0]], 0, 0, 1, 1)}"/>`;
       g += `<path d="M${P(s.at(0.08, z1))} L${P(s.at(0.92, z1))}" stroke="#e6eef2" stroke-width=".3" opacity=".7"/>`;

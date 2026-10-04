@@ -171,16 +171,20 @@ const wolke = (name, cx, by, W, H, seed) => {
   S.teil({ id: "wolke", de: "die Wolke", syl: "WOL-ke", it: "la nuvola", itSyl: "NU-vo-la", en: "cloud", x: 56, y: 30, kunst: um(56, 30, k) });
 }
 
-/* Fels: unregelmäßige Platte — Schattenfacette links, Lichtfacette rechts vom Grat, schräge Klüfte, oben Bewuchs */
+/* Fels: Felsband entlang des Hangs — unregelmäßiger Umriss, Verlauf von der Schatten- zur Lichtseite,
+   schräge Klüfte, Bewuchs wächst über die Ränder (so klebt der Fels nicht auf, sondern liegt im Hang) */
+let FELS_N = 0;
 const fels = (x, y, w, h, seed, hell = "#b3b2a4", dunkel = "#6f7671", gruen = "#4f7d48") => {
-  const z = zufall(seed), j = (v) => v * (0.8 + z() * 0.4);
-  const pts = [[x, y + j(h * 0.25)], [x + j(w * 0.22), y + j(h * 0.06)], [x + j(w * 0.5), y], [x + j(w * 0.78), y + j(h * 0.08)], [x + w, y + j(h * 0.3)], [x + j(w * 0.9), y + j(h * 0.72)], [x + j(w * 0.66), y + h], [x + j(w * 0.3), y + j(h * 0.9)], [x + j(w * 0.06), y + j(h * 0.62)]];
-  const g0 = pts[2], g1 = [x + w * (0.42 + z() * 0.12), y + h * 0.5], g2 = pts[6];
-  let o = `<path d="${P(pts)}" fill="${dunkel}"/>`;
-  o += `<path d="${P([g0, pts[3], pts[4], pts[5], g2, g1])}" fill="${hell}"/>`;
-  o += `<path d="M${r(g0[0])} ${r(g0[1])} L${r(g1[0])} ${r(g1[1])} L${r(g2[0])} ${r(g2[1])}" stroke="#ffffff" stroke-width=".3" fill="none" opacity=".35"/>`;
-  for (let i = 0; i < 2; i++) { const cx = x + w * (0.25 + 0.45 * i + z() * 0.1), cy = y + h * (0.2 + z() * 0.2); o += `<path d="M${r(cx)} ${r(cy)} l${r(w * (0.08 + z() * 0.1))} ${r(h * 0.25)} l${r(-w * 0.05)} ${r(h * 0.25)}" stroke="#2f3532" stroke-width=".3" fill="none" opacity=".6"/>`; }
-  o += `<path d="M${r(pts[1][0] - 1)} ${r(pts[1][1] + 0.6)} q${r(w * 0.2)} ${r(-1.4)} ${r(w * 0.45)} ${r(-0.6)} q${r(-w * 0.1)} ${r(1.6)} ${r(-w * 0.45)} ${r(1.4)} Z" fill="${gruen}" opacity=".9"/>`;
+  const z = zufall(seed), pts = [], n = 14;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * Math.PI * 2, rx = w / 2 * (0.75 + z() * 0.35), ry = h / 2 * (0.8 + z() * 0.3);
+    pts.push([x + w / 2 + Math.cos(a) * rx + (Math.sin(a) > 0 ? -w * 0.08 : w * 0.08), y + h / 2 + Math.sin(a) * ry]);
+  }
+  const g = S.lg("fels" + (FELS_N++), [[0, dunkel], [0.55, dunkel], [0.62, hell], [1, hell]], 0, 0, 1, 0.25);
+  let o = `<path d="${glatt(pts, true, 0.7)}" fill="${g}"/>`;
+  for (let i = 0; i < 3; i++) { const cx = x + w * (0.2 + 0.3 * i + z() * 0.1), cy = y + h * (0.15 + z() * 0.2); o += `<path d="M${r(cx)} ${r(cy)} l${r(w * 0.06)} ${r(h * 0.3)} l${r(-w * 0.04)} ${r(h * 0.3)}" stroke="#2f3532" stroke-width=".3" fill="none" opacity=".5"/>`; }
+  o += `<path d="M${r(x + w * 0.1)} ${r(y + h * 0.5)} q${r(w * 0.35)} ${r(-h * 0.08)} ${r(w * 0.75)} ${r(h * 0.06)}" stroke="#3a403c" stroke-width=".25" fill="none" opacity=".4"/>`;
+  for (let i = 0; i < 4; i++) { const t = z(); const px = x + w * (0.1 + t * 0.8), py = y + (i < 2 ? h * 0.05 : h * (0.85 + z() * 0.1)); o += `<ellipse cx="${r(px)}" cy="${r(py)}" rx="${r(w * (0.12 + z() * 0.08))}" ry="${r(h * 0.08 + 0.4)}" fill="${gruen}"/>`; }
   return o;
 };
 
@@ -193,23 +197,22 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
 {
   let k = "";
   /* Westkette: der Hang zu uns liegt halb im Licht, die Grate werfen Schatten nach links */
-  const westD = P([...KAMM_B, [168, 175], [-2, 175]]);
+  const westD = P([...KAMM_B, [170, 210], [110, 262], [-2, 262]]);
   k += `<path d="${westD}" fill="${S.lg("westkette", [[0, "#4f7564"], [0.5, "#456b56"], [1, "#6d8f84"]])}"/>`;
   k += `<path d="${westD}" fill="${WALD}"/>`;
-  /* Rippen und Rinnen: verzweigte Rinnen (dunkel, links) mit beleuchtetem Rücken rechts daneben */
-  const rinne = (x0, y0, len, seed) => {
-    const z = zufall(seed); let pts = [[x0, y0]], x = x0, y = y0, o = "";
-    for (let i = 0; i < 6; i++) { x += (z() - 0.65) * 5; y += len / 6; pts.push([x, y]); }
-    const li = pts.map(([a, b], i) => [a - 0.5 - i * 0.25, b]), re = pts.map(([a, b], i) => [a + 0.5 + i * 0.25, b]).reverse();
-    o += `<path d="${glatt([...li, ...re], true, 0.8)}" fill="#24433a" opacity=".38"/>`;
-    o += `<path d="${glatt(pts.map(([a, b], i) => [a + 2 + i * 0.4, b + 0.5]), false)}" stroke="#a6c79a" stroke-width="${r(1.2)}" fill="none" opacity=".22" stroke-linecap="round"/>`;
-    const [bx, by] = pts[2]; o += `<path d="M${r(bx)} ${r(by)} q${r(-4 - z() * 3)} ${r(6)} ${r(-7 - z() * 4)} ${r(16)}" stroke="#25443a" stroke-width=".6" fill="none" opacity=".3"/>`;
-    return o;
-  };
-  for (const [x0, l, sd] of [[14, 80, 1], [40, 74, 2], [66, 70, 3], [92, 64, 4], [118, 52, 5]]) k += rinne(x0, profilY(KAMM_B, x0) + 1, l, sd);
+  /* Relief: beleuchtete Rücken und dunkle Rinnen als weiche Flächen (weichgezeichnet, keine Linien) */
+  let rel = "";
+  for (const [x0, l, sd] of [[12, 92, 1], [38, 90, 2], [62, 84, 3], [88, 76, 4], [114, 60, 5]]) {
+    const z = zufall(sd), y0 = profilY(KAMM_B, x0) + 2, pts = [[x0, y0]];
+    let x = x0; for (let i = 1; i <= 5; i++) { x += (z() - 0.7) * 4; pts.push([x, y0 + l * i / 5]); }
+    const breite = (i) => 1.5 + i * 1.3;
+    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a - breite(i), b]), ...pts.map(([a, b], i) => [a + breite(i) * 0.3, b]).reverse()], true, 0.8)}" fill="#1f3a30" opacity=".45"/>`;
+    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a + 1 + breite(i) * 0.3, b]), ...pts.map(([a, b], i) => [a + 2 + breite(i) * 1.6, b + 1]).reverse()], true, 0.8)}" fill="#a9cba0" opacity=".3"/>`;
+  }
+  k += `<g filter="url(#${S.id("weich")})">${rel}</g>`;
   for (const [x, w, h, sd] of [[20, 10, 5, 21], [56, 8, 4, 22], [84, 9, 4.5, 23], [112, 7, 3.6, 24], [34, 7, 3.6, 25]]) k += `<g opacity=".7">${fels(x, profilY(KAMM_B, x) + 8 + sd % 3 * 9, w, h, sd, "#a9b0a5", "#6d7a72", "#4f7560")}</g>`;
   /* Dunst am Fuß der Kette (Tiefe der Schlucht) */
-  k += `<path d="${westD}" fill="${S.lg("westdunst", [[0, "#dfe9ef", 0.0], [0.45, "#dfe9ef", 0.15], [1, "#dfe9ef", 0.7]])}"/>`;
+  k += `<path d="${westD}" fill="${S.lg("westdunst", [[0, "#dfe9ef", 0.0], [0.35, "#dfe9ef", 0.12], [0.6, "#e6eef1", 0.75], [1, "#eef3f4", 0.95]])}"/>`;
   k += `<path d="M${KAMM_B.slice(0, 9).map(([x, y]) => r(x) + " " + r(y + 0.4)).join(" L")}" stroke="#cfe0d4" stroke-width=".8" fill="none" opacity=".6"/>`;
 
   /* Putucusi: Gegenlicht — dunkel, oben eine helle Kante, Felswände mit senkrechten Rissen */

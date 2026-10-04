@@ -209,7 +209,7 @@ let PFLASTER_TEIL;
    ===================================================================== */
 {
   let k = "";
-  for (const [lat, d, h, s] of [[23.5, 84, 15, 15], [29.5, 90, 15, 3], [34.5, 88, 12, 9]]) { const [x, y] = proj(lat, d); k += baum(x, y, h * F / d, s); }
+  for (const [lat, d, h, s] of [[23.5, 84, 15, 15], [29.5, 90, 15, 3], [32.5, 88, 11, 9]]) { const [x, y] = proj(lat, d); k += baum(x, y, h * F / d, s); }
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: licht(k) });
 }
 
@@ -227,7 +227,7 @@ let PFLASTER_TEIL;
   k += `<rect x="${xl}" y="${r(top - 2)}" width="${r(xr - xl + 1)}" height="2.4" fill="#efe2c4"/><path d="M${r(xl - 2)} ${r(top - 2)} L${r(xr + 1)} ${r(top - 2)} L${r(xr - 3)} ${r(top - 9)} L${xl} ${r(top - 9)} Z" fill="${S.lg("stiftdach", [[0, "#56606b"], [1, "#3a424b"]])}"/>`;
   /* Erdgeschoss: romanische Rundbogen-Arkade mit Säulchen; oben gekuppelte Rundbogenfenster */
   const aw = 3.4 * K;
-  for (let x = xr - 2 - aw; x > xl - aw; x -= aw + 1.6) {
+  for (let x = xr - 2 - aw; x > xl + 1; x -= aw + 1.6) {
     k += `<path d="M${r(x)} ${yb} V${r(yb - 2.6 * K)} A${r(aw / 2)} ${r(aw / 2)} 0 0 1 ${r(x + aw)} ${r(yb - 2.6 * K)} V${yb} Z" fill="#2c2620"/>`;
     k += `<path d="M${r(x + aw - 1)} ${yb} V${r(yb - 2.6 * K)} A${r(aw / 2)} ${r(aw / 2)} 0 0 0 ${r(x + aw / 2)} ${r(yb - 2.6 * K - aw / 2)}" stroke="#7a6a52" stroke-width="1" fill="none"/>`;
     k += `<path d="M${r(x - 0.9)} ${yb} V${r(yb - 2.6 * K)} A${r(aw / 2 + 0.9)} ${r(aw / 2 + 0.9)} 0 0 1 ${r(x + aw + 0.9)} ${r(yb - 2.6 * K)}" stroke="#f1e4c6" stroke-width=".7" fill="none"/>`;

@@ -923,7 +923,7 @@ const ZB = 12.2, ZP = 13.6;
   /* Abendschatten der Türme nach links auf die Häuser dahinter */
   k += `<path d="M${r(ost.cx - ost.R)} ${r(ost.f[1] - 3)} l-7 -2.6 l0 -15 l7 2.6 Z" fill="#1d140c" opacity=".14"/>`;
   /* der Brückenaffe (Bronze) auf Fahrbahnhöhe rechts neben der Durchfahrt, mit Spiegel; daneben zwei Mäuse */
-  const A = gp(...at(6.4, 4.6), ZB), sa = FOC / tief(...at(6.4, 4.6)) * GE * 1.5;
+  const A = gp(...at(11.5, 4.4), ZB), sa = FOC / tief(...at(11.5, 4.4)) * GE * 1.5;
   const BR = S.lg("bronze", [[0, "#3e2c18"], [0.5, "#7d5e32"], [1, "#d4ac62"]], 0, 0, 1, 0);
   k += `<rect x="${r(A[0] - .75 * sa)}" y="${r(A[1] - .45 * sa)}" width="${r(1.5 * sa)}" height="${r(.45 * sa)}" fill="#a89a88"/>`;
   k += `<ellipse cx="${r(A[0])}" cy="${r(A[1] - .95 * sa)}" rx="${r(.42 * sa)}" ry="${r(.52 * sa)}" fill="${BR}"/><circle cx="${r(A[0])}" cy="${r(A[1] - 1.66 * sa)}" r="${r(.3 * sa)}" fill="${BR}"/><ellipse cx="${r(A[0] + .05 * sa)}" cy="${r(A[1] - 1.58 * sa)}" rx="${r(.17 * sa)}" ry="${r(.13 * sa)}" fill="#a88450"/>`;

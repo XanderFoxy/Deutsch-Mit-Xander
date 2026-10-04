@@ -145,7 +145,6 @@ const lykUnter = [];
   }
   /* Felskuppe (grauer Kalk), Straße in Serpentinen, Kapelle mit Glockenturm, Terrasse */
   k += `<path d="M${r(x - 5)} ${r(yZ(266))} Q${r(x - 2)} ${r(y - 0.4)} ${r(x + 1)} ${r(y)} Q${r(x + 4)} ${r(y + 1)} ${r(x + 8)} ${r(yZ(265))} L${r(x + 6)} ${r(yZ(261))} L${r(x - 4)} ${r(yZ(262))} Z" fill="${S.lg("lykfels", [[0, "#f1d7bd"], [1, "#a9978f"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${r(x - 40)} ${r(yZ(230))} Q${r(x - 10)} ${r(yZ(236))} ${r(x + 26)} ${r(yZ(242))} M${r(x + 30)} ${r(yZ(232))} Q${r(x)} ${r(yZ(222))} ${r(x - 50)} ${r(yZ(214))}" stroke="#d9c8a8" stroke-width=".35" fill="none" opacity=".6"/>`;
   const cx = x + 0.6, cy = y + 0.6;
   k += `<rect x="${r(cx - 2.2)}" y="${r(cy - 1.6)}" width="4.4" height="1.7" fill="#fff4e6"/><rect x="${r(cx + 0.6)}" y="${r(cy - 1.6)}" width="1.6" height="1.7" fill="#d9c6cc"/>`;
   k += `<path d="M${r(cx - 2.4)} ${r(cy - 1.6)} L${r(cx - 0.4)} ${r(cy - 2.5)} L${r(cx + 2.4)} ${r(cy - 1.6)} Z" fill="#b8573e"/>`;
@@ -314,13 +313,16 @@ const erUnter = [];
   let k = "";
   const E0 = -37, E1 = -15, N0 = 43, N1 = 56, Z0 = 149, Z1 = 157.2, ZG = 159.4;
   /* Dachsilhouette mit Ostgiebel, Südwand (Streiflicht), Westfront (Licht) mit Halbsäulen und Fenstern */
-  k += `<path d="${Q([[E1, N0, Z1], [E1, (N0 + N1) / 2, ZG], [E0, (N0 + N1) / 2, ZG], [E0, N0, Z1]])}" fill="#d0a487"/>`;
+  /* Nordwand innen (im Schatten) über die Südwand hinweg sichtbar */
+  k += `<path d="${Q([[E0, N1, Z1], [E1, N1, Z1], [E1, N1, Z1 + 0.6], [E0, N1, Z1 + 0.6]])}" fill="#b98f80"/>`;
   k += `<path d="${Q([[E0, N0, Z0], [E1, N0, Z0], [E1, N0, Z1], [E0, N0, Z1]])}" fill="${S.lg("erechsued", [[0, "#e7bd94"], [1, "#c99c84"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="${L3([E0, N0, Z1 - 1.4], [E1, N0, Z1 - 1.4])}" stroke="#ad8470" stroke-width=".3"/>`;
   k += `<path d="${Q([[E0, N1, Z0 - 3], [E0, N0, Z0 - 3], [E0, N0, Z1], [E0, N1, Z1]])}" fill="${M_W}"/>`;
   for (const n of [45.5, 48.2, 50.8, 53.5]) { const a = pr(E0, n, Z0 + 1.2), b = pr(E0, n, Z1 - 1.4); k += `<rect x="${r(a[0] - 0.35)}" y="${r(b[1])}" width=".7" height="${r(a[1] - b[1])}" fill="#fff0cc"/>`; }
   for (const n of [46.8, 49.5, 52.1]) { const a = pr(E0, n, Z0 + 2.4), b = pr(E0, n, Z0 + 5.2); k += `<rect x="${r(a[0] - 0.5)}" y="${r(b[1])}" width="1" height="${r(a[1] - b[1])}" fill="#7a5a56"/>`; }
-  k += `<path d="${Q([[E0, N0 - 0.3, Z1], [E0, N1 + 0.3, Z1], [E0, (N0 + N1) / 2, ZG]])}" fill="#f0c896"/><path d="${L3([E0, N0 - 0.3, Z1], [E0, (N0 + N1) / 2, ZG])} ${L3([E0, (N0 + N1) / 2, ZG], [E0, N1 + 0.3, Z1])}" stroke="${M_HELL}" stroke-width=".4"/>`;
+  k += `<path d="${Q([[E0 - 0.2, N1 + 0.2, Z1 - 1.2], [E0 - 0.2, N0 - 0.2, Z1 - 1.2], [E0 - 0.2, N0 - 0.2, Z1 + 0.3], [E0 - 0.2, N1 + 0.2, Z1 + 0.3]])}" fill="#fbe2b4"/>`;
+  k += `<path d="${Q([[E0, N0, Z0 - 3], [E1, N0, Z0 - 3], [E1, N0, Z0], [E0, N0, Z0]])}" fill="#c99c84"/>`;
+  k += `<path d="${L3([E0, N0, Z1 + 0.3], [E1, N0, Z1 + 0.3])}" stroke="${M_HELL}" stroke-width=".4"/>`;
   /* Korenhalle: Sockel, vier Mädchen vorn (zwei dahinter im Schatten), Gebälk und flaches Dach */
   const KE0 = -34, KE1 = -28.5, KN = 39.2, KZ = 150.4, KH = 1.8, MH = 2.3;
   k += `<path d="${Q([[KE0, KN, KZ], [KE1, KN, KZ], [KE1, KN, KZ + KH], [KE0, KN, KZ + KH]])}" fill="${S.lg("korensockel", [[0, "#f3cf9e"], [1, "#d4a98a"]], 0, 0, 1, 0)}"/>`;
@@ -378,7 +380,8 @@ const parUnter = [];
   k += gebaelk([e0, n1], [e1, n1], false, 67.4 / 16 / 69.5 / 2);
   /* Ostgiebel von innen (Westseite der Giebelwand, im Abendlicht) */
   k += `<path d="${Q([[e1, n0, zK], [e1, n1, zK], [e1, 0, zG]])}" fill="#efc896"/><path d="${L3([e1, n0, zK], [e1, 0, zG])} ${L3([e1, 0, zG], [e1, n1, zK])}" stroke="${M_HELL}" stroke-width=".45"/>`;
-  k += `<path d="${Q([[e1, n0, zC], [e1, n1, zC], [e1, n1, zK], [e1, n0, zK]])}" fill="#e3b88e"/>`;
+  for (let i = 0; i < 8; i++) k += saeule(33.7, NCOL(i), zS, zC, 0.95);
+  k += gebaelk([e1, n1], [e1, n0], true, 1 / 14);
   /* Inneres: Schatten hinter der Westhalle (Opisthodom), Reste der Cellawand */
   k += `<path d="${Q([[-29.5, -11, zS], [-29.5, 11, zS], [-29.5, 11, zC], [-29.5, -11, zC]])}" fill="${S.lg("innen", [[0, "#5e4648"], [1, "#8c6a62"]])}"/>`;
   k += `<path d="${Q([[-23, -9.5, zS], [-23, 9.5, zS], [-23, 9.5, zC - 1], [-23, -9.5, zC - 1]])}" fill="#a07c6e" opacity=".8"/>`;
@@ -399,7 +402,8 @@ const parUnter = [];
   k += gebaelk([e0, n1], [e0, n0], true, 1 / 14);
   /* Westgiebel: Giebelfeld zurückgesetzt im Halbschatten, Figurenreste in den Ecken, Schräggesims hell */
   k += `<path d="${Q([[e0 + 0.5, n1 - 0.6, zK], [e0 + 0.5, n0 + 0.6, zK], [e0 + 0.5, 0, zG - 0.7]])}" fill="#d9ad8a"/>`;
-  for (const [n, h] of [[12.6, 0.9], [11.3, 1.3], [-11.6, 1.2], [-12.9, 0.8], [-1.8, 1.4]]) { const a = pr(e0 + 0.4, n, zK), b = pr(e0 + 0.4, n, zK + h); k += `<ellipse cx="${r(a[0])}" cy="${r((a[1] + b[1]) / 2)}" rx="${r(0.6 * a[2])}" ry="${r((a[1] - b[1]) / 2)}" fill="#f2d2a2"/>`; }
+  for (const [na, nb, h] of [[13.4, 10.2, 0.9], [-10.6, -13.6, 0.85]]) { const a = pr(e0 + 0.4, na, zK), b = pr(e0 + 0.4, nb, zK), c = pr(e0 + 0.4, (na + nb) / 2, zK + h); k += `<path d="M${r(a[0])} ${r(a[1])} Q${r(c[0])} ${r(c[1] - 0.4)} ${r(b[0])} ${r(b[1] - 0.3)} L${r(b[0])} ${r(b[1])} Z" fill="#f4d6a6"/>`; }
+  for (const n of [5.6, 4.4]) { const a = pr(e0 + 0.4, n, zK), b = pr(e0 + 0.4, n, zK + 2.3); k += `<path d="M${r(a[0] - 0.5)} ${r(a[1])} Q${r(b[0] - 0.6)} ${r((a[1] + b[1]) / 2)} ${r(b[0])} ${r(b[1])} Q${r(b[0] + 0.6)} ${r((a[1] + b[1]) / 2)} ${r(a[0] + 0.5)} ${r(a[1])} Z" fill="#f0cf9e"/>`; }
   k += `<path d="${L3([e0, n1 + 0.4, zK], [e0, 0, zG])} ${L3([e0, 0, zG], [e0, n0 - 0.4, zK])}" stroke="${M_HELL}" stroke-width="1.1" stroke-linecap="round"/>`;
   k += `<path d="${L3([e0, n1 + 0.4, zK - 0.15], [e0, 0, zG - 0.25])} ${L3([e0, 0, zG - 0.25], [e0, n0 - 0.4, zK - 0.15])}" stroke="#b58a70" stroke-width=".3"/>`;
   /* Kran der Restaurierung im Inneren (Gittermast, Ausleger nach Westen) */
@@ -497,15 +501,6 @@ const KANTE = (x) => 205 + 4 * Math.sin(x / 37) + 2.5 * Math.sin(x / 13 + 1);
   const pts = [];
   for (let x = 0; x <= 400; x += 10) pts.push([x, KANTE(x)]);
   let k = `<path d="M0 260 ${pts.map(([x, y]) => `L${x} ${r(y)}`).join(" ")} L400 260 Z" fill="${S.lg("kuppe", [[0, "#e6c79c"], [0.4, "#d4b088"], [1, "#b48f72"]])}"/>`;
-  /* Kalkfelsen: kantige Platten, Oberseite im Abendlicht, Stirnseite im Schatten, Risse */
-  for (let i = 0; i < 10; i++) {
-    const x = rnd() * 380 - 10, y = KANTE(x + 10) + 10 + Math.pow(rnd(), 0.8) * 44, sc = 0.6 + (y - 205) / 55, w = (16 + rnd() * 30) * sc, h = (2.2 + rnd() * 2.6) * sc, sk = (rnd() - 0.5) * 4;
-    const A = [x, y], Bq = [x + w * 0.15 + sk, y - h], C = [x + w * 0.8 + sk, y - h * 1.15], D = [x + w, y - h * 0.2], Dn = [x + w * 0.98, y + h * 0.5], An = [x + 0.5, y + h * 0.45];
-    k += `<path d="${P([A, Bq, C, D, Dn, An])}" fill="#a88674"/>`;
-    k += `<path d="${P([A, Bq, C, D])}" fill="${rnd() < 0.5 ? "#f2d8ae" : "#e5c599"}"/>`;
-    k += `<path d="M${r(A[0])} ${r(A[1])} L${r(Bq[0])} ${r(Bq[1])} L${r(C[0])} ${r(C[1])}" stroke="#fff3d8" stroke-width=".45" fill="none"/>`;
-    k += `<path d="M${r(x + w * 0.4)} ${r(y - h * 0.9)} l${r(w * 0.08)} ${r(h * 0.6)} l${r(-w * 0.04)} ${r(h * 0.5)}" stroke="#8e6c5e" stroke-width=".35" fill="none"/>`;
-  }
   /* große helle und dunkle Flecken im Fels (weich), niedrige Büsche (Thymian, Mastix) */
   for (let i = 0; i < 14; i++) { const x = rnd() * 400, y = KANTE(x) + 8 + rnd() * 46, w = 10 + rnd() * 26; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(w)}" ry="${r(w * 0.14)}" fill="${rnd() < 0.5 ? "#f3dcb4" : "#a98a70"}" opacity=".45" ${W15}/>`; }
   for (let i = 0; i < 9; i++) { const x = 20 + rnd() * 360, y = KANTE(x) + 4 + rnd() * 20, w = 4 + rnd() * 5; k += `<ellipse cx="${r(x + 1)}" cy="${r(y + 0.6)}" rx="${r(w * 0.6)}" ry="${r(w * 0.12)}" fill="#5a4030" opacity=".35"/>` + baumgruppe(x, y, w, w * 0.45, "#3e4a2a", "#5a6438", "#9c9a5a"); }
@@ -516,11 +511,48 @@ const KANTE = (x) => 205 + 4 * Math.sin(x / 37) + 2.5 * Math.sin(x / 13 + 1);
   }
   for (let i = 0; i < 26; i++) { const x = rnd() * 400, y = KANTE(x) + 4 + rnd() * 50, w = 0.8 + rnd() * 2.2; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(w)}" ry="${r(w * 0.5)}" fill="#b09078"/><ellipse cx="${r(x - w * 0.25)}" cy="${r(y - w * 0.2)}" rx="${r(w * 0.6)}" ry="${r(w * 0.3)}" fill="#efdcbc"/>`; }
   /* lange Schatten der Menschen: vom Betrachter weg, leicht nach rechts */
-  for (const [x, y, l] of [[286, 225.7, 14], [322, 228.3, 15], [196, 237, 6]]) k += `<path d="M${r(x - 2)} ${r(y)} L${r(x + 2)} ${r(y)} L${r(x + 5)} ${r(y - l * 0.35)} L${r(x + 3)} ${r(y - l * 0.38)} Z" fill="#6a4a3a" opacity=".3" ${W04}/>`;
+  for (const [x, y, l] of [[142, 238.6, 6]]) k += `<path d="M${r(x - 2)} ${r(y)} L${r(x + 2)} ${r(y)} L${r(x + 5)} ${r(y - l * 0.35)} L${r(x + 3)} ${r(y - l * 0.38)} Z" fill="#6a4a3a" opacity=".3" ${W04}/>`;
   /* Kante: Licht auf dem Grat */
   k += `<path d="M0 ${r(KANTE(0))} ${pts.map(([x, y]) => `L${x} ${r(y)}`).join(" ")}" stroke="#fbe6c0" stroke-width=".8" fill="none"/>`;
   S.teil({ anker: [200, 238], id: "huegel", de: "der Hügel", syl: "HÜ-gel", it: "la collina", itSyl: "col-LI-na", en: "hill", x: 0, y: 0, kunst: k,
     tipp: "Wir stehen auf dem Philopappos-Hügel. Von hier sieht man die Akropolis am schönsten – vor allem bei Sonnenuntergang." });
+}
+
+/* =====================================================================
+   9b — DER WEG: Pikionis-Pflaster (1954–57) aus unregelmäßigen Steinen
+   ===================================================================== */
+{
+  let k = "";
+  const MITTE = [[236, 264], [262, 246], [290, 234], [318, 225], [344, 213]];
+  const breite = (y) => 9 + Math.pow((y - 213) / 51, 1.3) * 84;
+  /* Mittellinie fein abtasten */
+  const ML = [];
+  for (let i = 0; i < MITTE.length - 1; i++) for (let t = 0; t < 1; t += 0.25) ML.push([MITTE[i][0] + (MITTE[i + 1][0] - MITTE[i][0]) * t, MITTE[i][1] + (MITTE[i + 1][1] - MITTE[i][1]) * t]);
+  ML.push(MITTE[MITTE.length - 1]);
+  const links = ML.map(([x, y]) => [x - breite(y) / 2, y]), rechts = ML.map(([x, y]) => [x + breite(y) / 2, y]);
+  k += `<path d="${P([...links, ...rechts.reverse()])}" fill="#8f7462"/>`;
+  /* Steine: Reihen quer zum Weg, jede Reihe in 3–5 ungleiche Platten geteilt */
+  const FARBEN = ["#efe2cb", "#e2cdb0", "#d2b597", "#c9a993", "#f3e8d6", "#bfa79a", "#e6c9a6", "#d8c2b4"];
+  for (let i = 0; i < ML.length - 1; i++) {
+    const [ax, ay] = ML[i], [bx, by] = ML[i + 1], n = 3 + Math.floor(rnd() * 3);
+    const ba = breite(ay), bb = breite(by);
+    let ta = 0;
+    for (let j = 0; j < n; j++) {
+      const tb = j === n - 1 ? 1 : Math.min(1, ta + (0.6 + rnd() * 0.8) / n);
+      const g = 0.35 + (ay - 214) * 0.012;
+      const p1 = [ax - ba / 2 + ba * ta + g, ay - g * 0.3], p2 = [ax - ba / 2 + ba * tb - g, ay - g * 0.3], p3 = [bx - bb / 2 + bb * tb - g, by + g * 0.3], p4 = [bx - bb / 2 + bb * ta + g, by + g * 0.3];
+      const f = FARBEN[Math.floor(rnd() * FARBEN.length)];
+      k += `<path d="${P([p1, p2, p3, p4])}" fill="${f}"/><path d="M${r(p4[0])} ${r(p4[1])} L${r(p1[0])} ${r(p1[1])} L${r(p2[0])} ${r(p2[1])}" stroke="#fff6e4" stroke-width="${r(0.2 + g * 0.3)}" fill="none" opacity=".8"/>`;
+      ta = tb;
+      if (ta >= 1) break;
+    }
+  }
+  /* Randsteine */
+  k += `<path d="${glatt(links, false)}" stroke="#c9a888" stroke-width="1.2" fill="none" opacity=".7"/>`;
+  /* lange Abendschatten der Menschen: vom Betrachter weg, leicht nach rechts */
+  for (const [x, y, l] of [[286, 225.7, 14], [322, 228.3, 15]]) k += `<path d="M${r(x - 2.4)} ${r(y)} L${r(x + 2.4)} ${r(y)} L${r(x + 6)} ${r(y - l * 0.4)} L${r(x + 3.4)} ${r(y - l * 0.42)} Z" fill="#5a3a30" opacity=".35" ${W04}/>`;
+  S.teil({ anker: [262, 246], id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", itSyl: "sen-TIE-ro", en: "path", x: 0, y: 0, kunst: k,
+    tipp: "Die Wege aus alten Steinen hat der Architekt Dimitris Pikionis in den 1950er-Jahren angelegt. Jeder Stein ist anders." });
 }
 
 /* =====================================================================
@@ -543,12 +575,13 @@ const KANTE = (x) => 205 + 4 * Math.sin(x / 37) + 2.5 * Math.sin(x / 13 + 1);
   k += `<g clip-path="url(#${S.id("hang")})">${h}</g>`;
   /* große Aleppo-Kiefer vorn links (45 m): schiefer Stamm, lockere Schirmkrone mit Himmelslöchern */
   const sx = 24, sy = KANTE(24) + 16;
-  k += `<path d="M${sx - 5.5} ${r(sy)} Q${sx - 2} ${r(sy - 70)} ${sx + 9} ${r(sy - 150)} Q${sx + 13} ${r(sy - 172)} ${sx + 21} ${r(sy - 190)} L${sx + 25.5} ${r(sy - 188)} Q${sx + 18} ${r(sy - 170)} ${sx + 15.5} ${r(sy - 150)} Q${sx + 5.5} ${r(sy - 70)} ${sx + 5.5} ${r(sy)} Z" fill="${S.lg("kiefernstamm", [[0, "#c79a6e"], [0.45, "#8a6046"], [1, "#4a3428"]], 0, 0, 1, 0)}"/>`;
-  for (let y = sy - 6; y > sy - 150; y -= 5 + rnd() * 4) { const t = (sy - y) / 190, x = sx + 10 * t * t * 1.5 - 1; k += `<path d="M${r(x - 2.4)} ${r(y)} q2 -1 4.8 .3" stroke="#3e2a20" stroke-width=".45" fill="none" opacity=".7"/>`; }
+  k += `<path d="M${sx - 8} ${r(sy + 1)} Q${sx - 4} ${r(sy - 4)} ${sx - 4.5} ${r(sy - 30)} Q${sx - 6} ${r(sy - 80)} ${sx + 4} ${r(sy - 125)} Q${sx + 12} ${r(sy - 160)} ${sx + 20} ${r(sy - 190)} L${sx + 25} ${r(sy - 188)} Q${sx + 18} ${r(sy - 158)} ${sx + 11} ${r(sy - 124)} Q${sx + 2} ${r(sy - 80)} ${sx + 4} ${r(sy - 30)} Q${sx + 4} ${r(sy - 4)} ${sx + 9} ${r(sy + 1)} Z" fill="${S.lg("kiefernstamm", [[0, "#c79a6e"], [0.45, "#8a6046"], [1, "#4a3428"]], 0, 0, 1, 0)}"/>`;
+  for (let y = sy - 5; y > sy - 160; y -= 4 + rnd() * 3) { const t = (sy - y) / 190, x = sx + (t < 0.4 ? -1 : -1 + (t - 0.4) * 30) ; k += `<path d="M${r(x - 3)} ${r(y)} q1.6 -1.2 3.4 -.4 q1.2 .6 2.6 -.2" stroke="#3e2a20" stroke-width=".5" fill="none" opacity=".7"/><path d="M${r(x - 3.4)} ${r(y - 1.6)} q1.4 -.6 2.4 0" stroke="#e2b98a" stroke-width=".4" fill="none" opacity=".6"/>`; }
+  k += `<ellipse cx="${sx + 6}" cy="${r(sy + 1)}" rx="14" ry="1.6" fill="#5a3e2e" opacity=".35"/>`;
   /* Äste */
   k += `<path d="M${sx + 9} ${r(sy - 140)} Q${sx + 30} ${r(sy - 160)} ${sx + 52} ${r(sy - 166)} M${sx + 12} ${r(sy - 160)} Q${sx - 4} ${r(sy - 178)} ${sx - 22} ${r(sy - 180)}" stroke="#5a3e2e" stroke-width="2.2" fill="none" stroke-linecap="round"/>`;
   /* Kronenbüschel: dunkle Nadelmassen, oben links golden angestrahlt, dazwischen Lücken */
-  const BUESCHEL = [[-24, -182, 24, 10], [4, -196, 28, 11], [32, -186, 24, 9.5], [54, -170, 20, 8], [-4, -172, 20, 8], [20, -206, 18, 7.5], [68, -158, 13, 6], [-40, -172, 15, 6.5], [40, -160, 14, 5.5], [-14, -200, 14, 6]];
+  const BUESCHEL = [[-30, -178, 26, 11], [-6, -186, 30, 12], [22, -192, 30, 12], [46, -180, 26, 10], [66, -166, 18, 8], [6, -204, 24, 9], [34, -208, 20, 8], [-18, -198, 20, 8], [12, -172, 24, 8], [-40, -166, 16, 7], [52, -160, 16, 6]];
   const nadeln = (x, y, w, h, farbe, zack) => {
     const pts = [];
     for (let i = 0; i < 30; i++) { const a = i / 30 * Math.PI * 2, rr = (i % 2 ? 1 : 1 + zack) * (0.9 + rnd() * 0.15); pts.push([klemm(x + Math.cos(a) * w / 2 * rr, 0, 400), Math.max(y + Math.sin(a) * h / 2 * rr * (Math.sin(a) > 0 ? 0.7 : 1), 0.5)]); }
@@ -590,7 +623,7 @@ const KANTE = (x) => 205 + 4 * Math.sin(x / 37) + 2.5 * Math.sin(x / 13 + 1);
    12 — DAS PICKNICK (Lupe: das Gyros, die Olive, die Wasserflasche)
    ===================================================================== */
 const pickUnter = [];
-const PK = { x: 214, d: 39 };
+const PK = { x: 186, d: 39 };
 {
   const u = F / PK.d, y = HOR + (EYE - 145.5) * u, x = PK.x;
   let k = "";
@@ -627,7 +660,7 @@ const PK = { x: 214, d: 39 };
    13 — DIE KATZE (getigert, sitzt auf dem Fels und schaut zur Burg)
    ===================================================================== */
 {
-  const u = F / 34, x = 166, y = HOR + (EYE - 146.2) * u, s = u / 100;   /* 1 Einheit hier = 1 cm */
+  const u = F / 34, x = 140, y = HOR + (EYE - 146.2) * u, s = u / 100;   /* 1 Einheit hier = 1 cm */
   const FELL = S.lg("katze", [[0, "#f0b878"], [0.5, "#c8823f"], [1, "#7a4a24"]], 0, 0, 1, 0);
   let k = `<ellipse cx="2" cy="0" rx="${r(18 * s)}" ry="${r(2.4 * s)}" fill="#5a3a2a" opacity=".3"/><g transform="scale(${s.toFixed(4)})">`;
   k += `<path d="M14 -2 Q26 0 25 -6 Q24 -10 20 -8" stroke="#a8652e" stroke-width="3.2" fill="none" stroke-linecap="round"/>`;

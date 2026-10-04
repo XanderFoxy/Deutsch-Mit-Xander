@@ -4,20 +4,19 @@
    ---------------------------------------------------------------------
    RECHERCHE (aus Fachwissen, die Websuche war in dieser Sitzung
    aufgebraucht — Unsicheres ist mit „(unsicher)“ markiert):
-   - STANDORT: der Westrand des Marktplatzes, wo die Obernstraße
-     einmündet (vor den Giebelhäusern der Westseite, auf der Terrasse
-     eines Cafés). Man schaut nach Nordosten bis Südosten über den Platz.
-     Echte Reihenfolge von links nach rechts (Peilung von hier, 0° =
-     Norden): das RATHAUS mit seiner Schaufront zum Markt (Süden) von
-     ≈ 13° bis 52°, links an seiner Westseite (≈ 10°) die STADTMUSIKANTEN;
-     vor dem Rathaus, nahe seinem Ostende, der ROLAND (≈ 55°); hinter der
-     Lücke zum Domshof der DOM ST. PETRI, dessen zwei Westtürme sich hinter
-     dem HAUS DER BÜRGERSCHAFT (Ostseite, 60°–90°) erheben (≈ 67°–84°);
-     in der Südostecke Giebelhäuser; rechts an der Südseite der SCHÜTTING
-     (105°–127°), gegenüber dem Rathaus. Zylinder-Panorama über 132°
-     (Weitwinkel wie bei Stuttgart): senkrechte Kanten bleiben senkrecht,
-     lange waagerechte Kanten biegen sich leicht. Die Abstände stammen aus
-     dem Stadtplan im Gedächtnis (Rathaus–Schütting ≈ 57 m, unsicher ±20 %).
+   - STANDORT: der Südwesten des Marktplatzes, stehend (Auge 1,6 m), bei
+     (−6 | −30) m vom Westende der Rathausfront. Man schaut nach Nordosten
+     bis Südosten. Echte Reihenfolge von links nach rechts (Peilung, 0° =
+     Norden): an der Westseite des Rathauses die STADTMUSIKANTEN (≈ 7°),
+     das RATHAUS mit seiner Schaufront zum Markt (11°–58°), dahinter an
+     seiner Ostecke das NEUE RATHAUS (58°–67°), davor der ROLAND (66°),
+     der DOM ST. PETRI mit den Westtürmen (65°–84°), das HAUS DER
+     BÜRGERSCHAFT (69°–102°), die Gasse zur Domsheide, ganz rechts der
+     Rand des SCHÜTTINGS (ab 120°). Zylinder-Panorama über 130°: kleiner
+     geht es nicht, sonst passen die 98 m hohen Domtürme nicht ins Bild.
+     Senkrechte Kanten bleiben senkrecht, lange waagerechte biegen sich
+     leicht. Die Abstände stammen aus dem Stadtplan im Gedächtnis
+     (Rathaus–Schütting ≈ 57 m, unsicher ±20 %).
    - RATHAUS: gotischer Saalbau (1405–1410, 41,5 m × 16 m), 1608–1612 von
      Lüder von Bentheim mit der Fassade der WESERRENAISSANCE geschmückt:
      unten die ARKADEN mit elf Rundbögen aus hellem Sandstein, darüber die
@@ -65,9 +64,8 @@
    Licht: Anfang Oktober, früher Nachmittag, Sonne im Südsüdwesten (rechts
    hinter uns, ≈ 32° hoch): Südseiten hell, die Nordseite des Schüttings
    im Schatten; sein Schatten fällt nach Nordnordosten auf den Platz.
-   Maßstab: echte Kamera, Auge 1,2 m (man sitzt am Cafétisch), Horizont y = 196, 173,6 Einheiten
-   je Bogenmaß: am Rathaus ≈ 3–4, am Roland 3,5, am Dom 1,9 Einheiten je
-   Meter. Bild 400 × 260, damit die 98 m hohen Domtürme ganz hineinpassen.
+   Maßstab: echte Kamera, Auge 1,6 m, Horizont y = 212, 176 Einheiten je
+   Bogenmaß: am Rathaus ≈ 3–6, am Roland 4,5, am Dom 2 Einheiten je Meter. Bild 400 × 260, damit die 98 m hohen Domtürme ganz hineinpassen.
    ===================================================================== */
 "use strict";
 const path = require("path");
@@ -150,7 +148,7 @@ const LUFT1 = luftFilter("luft1", .1), LUFT2 = luftFilter("luft2", .16), LUFT3 =
 /* ---------- Stoffe (Sonne von rechts hinten, Südsüdwest) ---------- */
 const SAND = S.lg("sand", [[0, "#efe3c6"], [1, "#e2d2b0"]]);                 // Sandstein in der Sonne
 const SAND_D = S.lg("sandd", [[0, "#c9b896"], [1, "#b3a17f"]]);              // Sandstein seitlich
-const BACK = S.lg("back", [[0, "#5f3330"], [0.5, "#55302c"], [1, "#4a2a27"]]);  // dunkler Backstein
+const BACK = S.lg("back", [[0, "#6e3a2e"], [0.5, "#663529"], [1, "#5f3328"]]);  // dunkler Backstein
 const KUPFER = S.lg("kupfer", [[0, "#5d9a85"], [0.5, "#72ad96"], [1, "#86bba3"]]);
 const KUPFER_D = S.lg("kupferd", [[0, "#4a7d6c"], [1, "#5d907d"]]);
 const GLAS = S.lg("glas", [[0, "#8fa9bd"], [0.4, "#40505e"], [1, "#2b3540"]]);
@@ -173,10 +171,9 @@ const wolke = (x, y, w, h, n, seed) => {
   let g = `<path d="M${r(x - w / 2 - h * .2)} ${r(y)} H${r(x + w / 2 + h * .2)} Q${r(x + w / 2)} ${r(y + h * .3)} ${r(x + w * .25)} ${r(y + h * .3)} H${r(x - w * .25)} Q${r(x - w / 2)} ${r(y + h * .3)} ${r(x - w / 2 - h * .2)} ${r(y)} Z" fill="#c4cfda"/>`;
   for (let i = 0; i < n; i++) { const t = i / (n - 1), cx = x - w / 2 + t * w, rr = h * (.35 + .65 * Math.sin(Math.PI * (.15 + .7 * t))) * (.75 + z() * .4); g += `<circle cx="${r(cx)}" cy="${r(y - rr * .5)}" r="${r(rr)}" fill="${WB}"/>`; }
   for (let i = 0; i < n - 2; i++) { const t = (i + .5) / (n - 1), cx = x - w / 2 + t * w + w * .05, rr = h * .5 * (.7 + z() * .4); g += `<circle cx="${r(cx)}" cy="${r(y - h * .9 - rr * .2)}" r="${r(rr)}" fill="${WB}"/>`; }
-  g += `<path d="M${r(x - w / 2)} ${r(y)} H${r(x + w / 2)}" stroke="#b9c5d1" stroke-width="${r(h * .12)}" opacity=".6"/>`;
   return `<g>${g}</g>`;
 };
-S.hinten(wolke(74, 38, 64, 14, 7, 3) + wolke(206, 24, 38, 9, 5, 7) + wolke(344, 66, 50, 12, 6, 11) + wolke(160, 92, 24, 6, 4, 5));
+S.hinten(wolke(80, 46, 92, 10, 9, 3) + wolke(206, 30, 30, 15, 4, 7) + wolke(346, 70, 22, 5, 3, 11));
 /* ferne Bauten in den Lücken: Liebfrauenkirche (Nordwesten), Domshof (Nordosten), Südostecke */
 const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   /* Giebelhaus in einer senkrechten Ebene E (s nach rechts im Bild), Treppengiebel */
@@ -239,7 +236,7 @@ const amBoden = (svg) => { MP.kunst += svg; return ""; };
   let g = "";
   for (let y = -54; y <= -4; y += 5) g += linie([[-13, y, 0], [56, y, 0]], 1.5);
   for (let x = -10; x <= 55; x += 5) g += linie([[x, -56, 0], [x, -1, 0]], 1.5);
-  k += `<path d="${g.replace(/M/g, " M")}" stroke="#dcd7cc" stroke-width=".45" fill="none" opacity=".5"/>`;
+  k += `<path d="${g.replace(/M/g, " M")}" stroke="#dcd7cc" stroke-width=".3" fill="none" opacity=".38"/>`;
   /* Schatten des Schüttings (Sonne 195°, 32° hoch → 1,6 m Schatten je Meter Höhe nach 15°) */
   const sv = (x, y, z) => [x + z * 0.414, y + z * 1.546, 0];
   k += pfad(poly([[8, -57, 0], sv(8, -57, 10.6), sv(8, -64.5, 19.5), sv(40, -64.5, 19.5), sv(40, -57, 10.6), [40, -57, 0]], 2), "#1f2430", ` opacity=".3"`);
@@ -261,7 +258,7 @@ const domTeile = {};
   const W = ebene(DOM.x, 8, 0, -1);           // Westfront: s = 0 (Nordecke) … 36 (Südecke), im Bild nach rechts
   const M = ebene(DOM.x + 0.8, 8, 0, -1);
   /* Stein: hell, nach rechts (Süden) zunehmend im Streiflicht der Südsonne */
-  const ST = S.lg("domst", [[0, "#cbbfa5"], [0.6, "#dccfb2"], [1, "#eadfc4"]], 0, 0, 1, 0);
+  const ST = S.lg("domst", [[0, "#b5aa92"], [0.7, "#bfb399"], [1, "#cabda2"]], 0, 0, 1, 0);
   const ST_D = "#a99c80", FUGE = "#9a8e74";
   /* Kirchenschiff dahinter: Kupferdach */
   k += pfad(poly([[DOM.x + 6, -16, 30], [DOM.x + 70, -16, 30], [DOM.x + 70, -10, 42], [DOM.x + 6, -10, 42]], 6), KUPFER_D);
@@ -284,6 +281,7 @@ const domTeile = {};
     const m = (s0 + s1) / 2;
     let g = pfad(fp(W, [[s0, 0], [s1, 0], [s1, DOM.top], [s0, DOM.top]]), ST);
     for (const s of [s0, s1 - 1.3]) g += pfad(fr(W, s, 0, s + 1.3, DOM.top), ST_D, ` opacity=".45"`);
+    g += pfad(fr(W, s1 - .45, 0, s1, DOM.top), "#efe4c6");
     g += pfad(fr(W, s0, 0, s1, 24), S.lg("verwittert", [[0, "#5d5547", 0.75], [0.6, "#6f6655", 0.45], [1, "#8a806c", 0]], 0, 1, 0, 0));
     for (let z = 3; z < DOM.top; z += 1.2) g += `<path d="${fl(W, [[s0, z], [s1, z]])}" stroke="${FUGE}" stroke-width=".1" opacity=".35" fill="none"/>`;
     for (const z of [12, 22, 32, 42]) {
@@ -436,6 +434,8 @@ const rhTeile = {};
   k += pfad(fp(West, [[0, 0], [RH.T, 0], [RH.T, 6.2], [0, 6.2]]), SAND_D);
   k += pfad(fp(West, [[4, 7.4], [6.2, 7.4], [6.2, 12.2], [5.1, 13.4], [4, 12.2]]), GLAS);
   k += pfad(fp(West, [[8.6, 7.4], [10.8, 7.4], [10.8, 12.2], [9.7, 13.4], [8.6, 12.2]]), GLAS);
+  for (const c of [5.1, 9.7]) k += `<path d="${fl(West, [[c, 7.4], [c, 13.2]])} ${fl(West, [[c - 1.1, 10.4], [c + 1.1, 10.4]])}" stroke="#d9c9a6" stroke-width=".35" fill="none"/>`;
+  k += pfad(fp(West, [[0, 0], [RH.T, 0], [RH.T, ZE], [0, ZE]]), "#ffe8c0", ` opacity=".1"`);
   k += pfad(fp(West, [[10.6, 0], [13.4, 0], [13.4, 3.6], [10.6, 3.6]]), "#d9c9a6") + pfad(fp(West, bogen(12, 1.8, 0, 2.3, 6)), "#3a2c24");
   k += pfad(fp(West, [[0, ZE], [RH.T - RH.WAND, ZE], [RH.T - RH.WAND, ZE + .6], [0, ZE + .6]]), "#c9b896");
   /* ---- Obergeschoss: dunkler Backstein, Kreuzstockfenster, acht Standbilder ---- */
@@ -443,7 +443,7 @@ const rhTeile = {};
   {
     let fug = "";
     let gl = "";
-    for (let z = 6.6, i = 0; z < ZE; z += 0.5, i++) { if (i % 3 === 2) gl += fl(Wd, [[0, z], [RH.L, z]], 2) + " "; else fug += fl(Wd, [[0, z], [RH.L, z]], 2) + " "; }
+    for (let z = 6.6, i = 0; z < ZE; z += 0.5, i++) { if (i % 4 === 3) gl += fl(Wd, [[0, z], [RH.L, z]], 5) + " "; else fug += fl(Wd, [[0, z], [RH.L, z]], 5) + " "; }
     k += `<path d="${fug}" stroke="#2e1c19" stroke-width=".14" fill="none" opacity=".5"/><path d="${gl}" stroke="#1f2a2a" stroke-width=".42" fill="none" opacity=".45"/>`;
   }
   k += pfad(fr(Wd, -.2, ZE - .7, RH.L + .2, ZE, 1.5), SAND);
@@ -496,13 +496,10 @@ const rhTeile = {};
   k += pfad(fr(A, -.1, 5.95, RH.L + .1, 6.2, 1.5), "#6f6048", ` opacity=".7"`);
   for (let i = 1; i < 11; i++) k += pfad(fr(A, i * BAY - .38, 3.2, i * BAY + .38, 3.55), "#f3e8cf") + pfad(fr(A, i * BAY - .32, 3.05, i * BAY + .32, 3.2), "#b3a17f");
   for (let i = 0; i < 11; i++) { const sm = (i + .5) * BAY; k += pfad(fp(A, [[sm - 1.375, 0], [sm - .2, 0], [sm - .9, 3.4], [sm - 1.375, 3.6]]), "#0f0b08", ` opacity=".35"`); }
-  /* Balustrade mit Docken und Obelisken */
+  /* Balustrade mit Docken und Obelisken: die Docken als gestrichelte Linie entlang der Brüstung (spart viele Einzelformen) */
   k += pfad(fr(A, -.1, 6.2, RH.L + .1, 6.45, 1.5), "#d7c6a2");
-  {
-    let d = "";
-    for (let s = .25; s < RH.L; s += .42) d += fp(A, [[s - .1, 6.45], [s + .1, 6.45], [s + .14, 6.85], [s + .06, 7.05], [s - .06, 7.05], [s - .14, 6.85]]);
-    k += pfad(d.replace(/Z M/g, "Z M"), "#e9dcbd");
-  }
+  k += pfad(fr(A, 0, 6.45, RH.L, 7.05, 1.5), "#6d6252", ` opacity=".55"`);
+  k += `<path d="${fl(A, [[0, 6.75], [RH.L, 6.75]], 1.5)}" stroke="#ece0c2" stroke-width="${r(.5 * mass(20, 0) * 10) / 10}" stroke-dasharray=".55 .55" fill="none"/>`;
   k += pfad(fr(A, -.1, 7.05, RH.L + .1, 7.35, 1.5), SAND);
   for (let i = 0; i <= 11; i++) {
     if (i >= 4 && i <= 7) continue;
@@ -585,7 +582,7 @@ const rhTeile = {};
   let zw = zx1 - zx0, zh = zy1 - zy0;
   if (zw < zh * 1.5) { const d = zh * 1.5 - zw; zx0 -= d / 2; zw = zh * 1.5; } else { const d = zw / 1.5 - zh; zy0 -= d * .7; zh = zw / 1.5; }
   RT = S.teil({ id: "rathaus", de: "das Rathaus", syl: "RAT-haus", it: "il municipio", itSyl: "mu-ni-CI-pio", en: "town hall", x: 0, y: 0, kunst: k,
-    tipp: "Das Rathaus ist über 600 Jahre alt und gehört zum Welterbe der UNESCO — zusammen mit dem Roland.",
+    tipp: "Das Rathaus ist über 600 Jahre alt. Zusammen mit dem Roland ist es Welterbe: ein Ort, den die ganze Welt schützt.",
     zoom: { x: r(zx0), y: r(zy0), w: r(zw), h: r(zh) },
     unter: [
       { id: "arkade", de: "die Arkade", syl: "ar-KA-de", it: "il portico", itSyl: "POR-ti-co", en: "arcade", x: zA[0], y: zA[1], kunst: flaeche(-5, -9, 10, 10),
@@ -662,7 +659,7 @@ const SM = { x: -1.5, y: 6 };
       { id: "hund", de: "der Hund", syl: "HUND", it: "il cane", itSyl: "CA-ne", en: "dog", x: uh[0], y: uh[1], kunst: flaeche(-2.6, -1.4, 5.4, 2.2, .3),
         tipp: "Der Hund steht auf dem Rücken des Esels." },
       { id: "katze", de: "die Katze", syl: "KAT-ze", it: "il gatto", itSyl: "GAT-to", en: "cat", x: uk[0], y: uk[1], kunst: flaeche(-1.8, -1, 3.8, 1.8, .3),
-        tipp: "Die Katze sitzt auf dem Hund — ganz oben steht der Hahn." },
+        tipp: "Auf dem Hund steht die Katze, ganz oben der Hahn." },
       { id: "hahn", de: "der Hahn", syl: "HAHN", it: "il gallo", itSyl: "GAL-lo", en: "rooster", x: ug[0], y: ug[1], kunst: flaeche(-1.4, -1.2, 3, 2.2, .3),
         tipp: "Im Märchen machen alle vier zusammen Musik: Der Esel schreit, der Hund bellt, die Katze miaut, der Hahn kräht — so laut, dass die Räuber fliehen." },
     ] });
@@ -763,7 +760,7 @@ const SCH = { x0: 8, x1: 40, y: -57, T: 15 };
   /* Ostgiebel als Umriss über dem Dach (fern, links) */
   {
     const E = ebene(SCH.x1, SCH.y, 0, -1);
-    k += pfad(fp(E, [[0, ZT], [1.4, ZT], [1.4, 12.6], [2.6, 13.2], [2.6, 14.6], [4, 14.6], [4, 16.4], [5, 17], [5, 18.4], [6.4, 18.4], [7.5, 21.4], [8.6, 18.4], [10, 18.4], [10, 17], [11, 16.4], [11, 14.6], [12.4, 14.6], [12.4, 13.2], [13.6, 12.6], [13.6, ZT], [15, ZT]]), "#a2988a");
+    k += pfad(fp(E, [[0, ZT], [1.2, ZT], [1.8, 12], [3, 12.6], [3.6, 14.4], [4.8, 15], [5.4, 16.8], [6.4, 17.4], [6.6, 19.2], [8.4, 19.2], [8.6, 17.4], [9.6, 16.8], [10.2, 15], [11.4, 14.4], [12, 12.6], [13.2, 12], [13.8, ZT], [15, ZT]]), "#a2988a") + pfad(fp(E, [[7.3, 19.2], [7.7, 19.2], [7.5, 21.6]]), "#a2988a");
   }
   /* Nordfront */
   k += pfad(fr(N, 0, 0, L, ZT, 2), SN);
@@ -771,13 +768,12 @@ const SCH = { x0: 8, x1: 40, y: -57, T: 15 };
   for (let i = 0; i < 10; i++) { const sm = 1.8 + i * 3.16; if (Math.abs(sm - 16) > 2.4) k += fenster(sm, 1.4, 4); k += fenster(sm, 5.6, 9.2); }
   for (const z of [4.7, 10]) k += pfad(fr(N, -.1, z, L + .1, z + .5, 2), SN_K);
   k += pfad(fr(N, -.1, 0, L + .1, .6, 2), SN_D);
-  /* Quaderfugen, Pilaster zwischen den Fensterachsen, Giebelchen über den Fenstern, Zahnschnitt unter der Traufe */
+  /* Quaderfugen, Pilaster zwischen den Fensterachsen, Zahnschnitt unter der Traufe */
   {
     let f = "";
     for (let z = 1.2; z < 10; z += .62) if (Math.abs(z - 4.9) > .4) f += fl(N, [[0, z], [L, z]], 2) + " ";
     k += `<path d="${f}" stroke="#8e8574" stroke-width=".14" fill="none" opacity=".55"/>`;
     for (let i = 0; i <= 10; i++) { const s0 = .22 + i * 3.16; if (s0 > 13.6 && s0 < 18.4) continue; k += pfad(fr(N, s0 - .2, .6, s0 + .2, 10), "#c4b9a2") + pfad(fr(N, s0 + .12, .6, s0 + .2, 10), "#8f8675"); }
-    for (let i = 0; i < 10; i++) { const sm = 1.8 + i * 3.16; k += pfad(fp(N, i % 2 ? [[sm - 1.05, 9.42], [sm + 1.05, 9.42], [sm, 9.95]] : [[sm - 1.05, 9.42], [sm + 1.05, 9.42], [sm + .8, 9.8], [sm, 9.92], [sm - .8, 9.8]]), "#cdbfa5"); if (Math.abs(sm - 16) > 2.4) k += pfad(fp(N, [[sm - 1, 4.22], [sm + 1, 4.22], [sm, 4.62]]), "#cdbfa5"); }
     k += `<path d="${fl(N, [[0, 10.32], [L, 10.32]], 2)}" stroke="#6f6758" stroke-width=".55" stroke-dasharray=".35 .45" fill="none"/>`;
   }
   /* das Portal mit Säulen und dem Wahlspruch */
@@ -846,8 +842,8 @@ const kleineFigur = (svg) => {
 /* Schlagschatten einer Figur der Höhe h (m) auf dem Pflaster, nach Nordnordosten */
 const figSchatten = (X, Y, h, b = .22) => pfad(poly([[X - b, Y, 0], [X + b, Y, 0], [X + b * .5 + h * .414, Y + h * 1.546, 0], [X - b * .5 + h * .414, Y + h * 1.546, 0]], 1), "#1f2430", ` opacity=".3"`);
 const VORLAGE = {};
-/* Vorlagen auf 3 cm gerundet (die Figuren sind im Bild höchstens 25 E hoch — unsichtbar, spart ein Viertel) */
-const vorlage = (name, spec) => { const m = B.mensch(Object.assign({ id: "hbr_" + name }, spec), 1); S.def(`<g id="${S.id("fig_" + name)}">${kleineFigur(m.svg).replace(/ d="([^"]*)"/g, (q, d) => ` d="${d.replace(/-?\d+/g, (n) => String(Math.round(+n / 3) * 3))}"`)}</g>`); VORLAGE[name] = `#${S.id("fig_" + name)}`; };
+/* Vorlagen auf 4 cm gerundet (die Figuren sind im Bild höchstens 25 E hoch — unsichtbar, spart ein Viertel) */
+const vorlage = (name, spec) => { const m = B.mensch(Object.assign({ id: "hbr_" + name }, spec), 1); S.def(`<g id="${S.id("fig_" + name)}">${kleineFigur(m.svg).replace(/ d="([^"]*)"/g, (q, d) => ` d="${d.replace(/-?\d+/g, (n) => String(Math.round(+n / 4) * 4))}"`)}</g>`); VORLAGE[name] = `#${S.id("fig_" + name)}`; };
 vorlage("frau", { geschlecht: "w", pose: "stehen", blick: 200, frisur: "lang", haarfarbe: "blond", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "weiss" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "rot" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "tasche", farbe: "braun" } } });
 vorlage("mann", { geschlecht: "m", pose: "stehen", blick: 170, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel", kleidung: { oberteil: { stueck: "hemd", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "beige" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } });
 vorlage("zeigerin", { geschlecht: "w", pose: "zeigen", blick: 205, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "blau" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "rot" } } });
