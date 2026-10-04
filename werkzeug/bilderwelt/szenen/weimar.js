@@ -81,11 +81,15 @@ const bodenSchatten = (D, X, w, h, a = 0.3) => {
 };
 /* Figuren klein halten: feine Linien weg, Formkoordinaten auf Q cm runden (Verläufe bleiben genau) */
 const schlank = (svg, min = 0.35) => svg.replace(/<path [^>]*fill="none"[^>]*\/>/g, (p) => { const m = p.match(/stroke-width="([\d.]+)"/); return m && +m[1] < min ? "" : p; });
+let KLEIN = 12;
 const kompakt = (svg, Q = 1, min = 0.35) => {
   svg = schlank(svg, min);
   const rund = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : r(v)); };
+  /* kleine Formen (Gesicht, Hände, Augen) fein runden, große grob — keine Mosaik-Gesichter */
+  const fein = (n) => { const v = Math.round(+n / 0.2) * 0.2; return String(v === 0 ? 0 : r(v)); };
+  const ausdehnung = (p) => { const z = (p.match(/-?\d*\.?\d+/g) || []).map(Number); let a = Infinity, b = -Infinity; for (const v of z) { if (v < a) a = v; if (v > b) b = v; } return b - a; };
   return svg.replace(/<(path|ellipse|circle|rect|line|polygon)\b[^>]*>/g, (tag) => tag
-    .replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, rund)}"`)
+    .replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, ausdehnung(p) < KLEIN ? fein : rund)}"`)
     .replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${rund(n)}"`));
 };
 const FIG = {};

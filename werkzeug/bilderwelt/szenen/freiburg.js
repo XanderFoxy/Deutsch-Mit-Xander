@@ -943,7 +943,7 @@ const CAFE = {};
     g += `<path d="M${r(f.x - sd * .1 * s)} ${r(f.y - .78 * s)} L${r(f.x + sd * .23 * s)} ${r(f.y - .82 * s)} L${r(f.x + sd * .22 * s)} ${r(f.y - .66 * s)} L${r(f.x - sd * .1 * s)} ${r(f.y - .62 * s)} Z" fill="#6a4a30"/>`;
     return g;
   };
-  const TX0 = 51, TY0 = -73.5, PX = 51.75, PY = -72.9;
+  const TX0 = 51, TY0 = -73.5, PX = 51.4, PY = -76.4;
   /* Schatten des Schirms (Dach rund 2,4 m hoch) */
   { const pts = []; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; pts.push([PX + Math.cos(a) * 1.5, PY + Math.sin(a) * 1.5, 2.3]); } k += wurf(pts.map(([x, y, z]) => [x + SCH[0] * z, y + SCH[1] * z, 0]), .2); }
   k += stuhl(51.9, -74.3, 1);
@@ -992,7 +992,7 @@ const CAFE = {};
     zoom: { x: 0, y: 168, w: 54, h: 36 },
     unter: [
       { id: "kirschtorte", de: "die Schwarzwälder Kirschtorte", syl: "SCHWARZ-wäl-der KIRSCH-tor-te", it: "la torta Foresta Nera", itSyl: "TOR-ta fo-RE-sta NE-ra", en: "Black Forest cake", x: Math.max(28, CAFE.torte.x), y: CAFE.torte.y, kunst: flaeche(CAFE.torte.x - Math.max(28, CAFE.torte.x) - 1.6, -1.6, 3.2, 2.6, 0.4),
-        tipp: "Schokoladenbiskuit, Sahne, Kirschen und ein Schuss Kirschwasser — die berühmteste Torte aus dem Schwarzwald." },
+        tipp: "Schokoladenbiskuit, Sahne und Kirschen — die berühmteste Torte aus dem Schwarzwald." },
       { id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x: Math.max(18, CAFE.schirm.x), y: CAFE.schirm.y, kunst: flaeche(CAFE.schirm.x - Math.max(18, CAFE.schirm.x) - CAFE.schirm.s * 1.4, -CAFE.schirm.s * .4, CAFE.schirm.s * 2.8, CAFE.schirm.s * .6, 0.5) },
     ] });
 }

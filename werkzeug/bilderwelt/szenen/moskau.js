@@ -539,7 +539,10 @@ const unterKathedrale = [];
   k += `<ellipse cx="-2.25" cy="-5.8" rx=".6" ry=".9" fill="#3d3022" stroke="#9aa572" stroke-width=".14"/>`;
   k += `<circle cx="-1.05" cy="-7.25" r=".4" fill="${BR}"/><path d="M-1.55 -6.9 L-.55 -6.9 L-.75 -5.3 L-1.65 -5.3 Z" fill="${BR}"/>`;
   k += `<path d="M.05 -4.7 L.35 -7.6 Q.6 -8.35 1.1 -8.25 L1.55 -7.6 L1.7 -4.7 Z" fill="${BR}"/><circle cx=".95" cy="-8.65" r=".42" fill="${BR}"/>`;
-  k += `<path d="M1.25 -7.75 L2.9 -8.6" stroke="#5a4630" stroke-width=".5" stroke-linecap="round"/><path d="M1.3 -7.85 L2.9 -8.7" stroke="#a3b07a" stroke-width=".14" stroke-linecap="round"/><path d="M.3 -7.4 L-.35 -6.3" stroke="#5a4630" stroke-width=".45" stroke-linecap="round"/>`;
+  /* Minins Arm: schlank, leicht angewinkelt, mit Hand und ausgestrecktem Zeigefinger; Poscharski mit Helm und Schild */
+  k += `<path d="M1.3 -7.8 Q2 -8.05 2.6 -8.5" stroke="#4e3c28" stroke-width=".28" stroke-linecap="round" fill="none"/><path d="M1.35 -7.9 Q2 -8.15 2.55 -8.6" stroke="#a3b07a" stroke-width=".08" fill="none"/><path d="M2.55 -8.55 l.35 -.2" stroke="#4e3c28" stroke-width=".12" stroke-linecap="round"/>`;
+  k += `<path d="M.3 -7.4 Q-.1 -6.9 -.35 -6.4" stroke="#4e3c28" stroke-width=".26" stroke-linecap="round" fill="none"/>`;
+  k += `<path d="M-1.45 -7.45 Q-1.05 -7.95 -.65 -7.45 Z" fill="#3d3022"/><path d="M-1.05 -7.95 V-8.2" stroke="#3d3022" stroke-width=".1"/><path d="M-2.25 -6.6 v1.6" stroke="#9aa572" stroke-width=".08"/>`;
   k += `<path d="M1.6 -7.6 L1.7 -4.8" stroke="#b9c48a" stroke-width=".2" opacity=".8"/></g>`;
   S.teil({ oben: true, id: "denkmal", de: "das Denkmal", syl: "DENK-mal", it: "il monumento", itSyl: "mo-nu-MEN-to", en: "monument", x: r(X(d, l)), y: r(Y(d)), steht: true, kunst: k + flaeche(-6, -17, 12, 17.5, 0.6),
     tipp: "Das Denkmal zeigt Minin und Poscharski. Es ist über 200 Jahre alt." });
@@ -984,15 +987,19 @@ const TD = STAND.d - 0.15, TS = F / TD, TY = r(Y(TD, STAND.theke + 0.03));
 const TX = (x) => ({ l: (x - 200) * TD / F, x });
 {
   const x = 26, MS = S.lg("messing", [[0, "#6b4a18"], [0.35, "#c9963c"], [0.6, "#ffe6a0"], [0.75, "#d9a446"], [1, "#7a5418"]], 0, 0, 1, 0);
+  /* Samowar als Urne: schmaler Fuß auf vier Füßchen, bauchiger Körper, zwei geschwungene Henkel, Hahn mit Tropfschale,
+     oben Krone mit Schornstein und aufgesetzter bemalter Teekanne (das Erkennungszeichen) */
   let k = `<g transform="scale(${(TS * 1.6).toFixed(4)})">`;
-  k += `<path d="M-.11 0 h.22 l.03 -.05 h-.28 Z M-.12 -.05 h.24 v-.03 h-.24 Z" fill="#7a5418"/>`;
-  k += `<path d="M-.16 -.08 Q-.2 -.2 -.15 -.3 Q-.18 -.38 -.12 -.42 h.24 Q.18 -.38 .15 -.3 Q.2 -.2 .16 -.08 Z" fill="${MS}"/>`;
-  k += `<path d="M-.15 -.2 h.3 M-.15 -.3 h.3" stroke="#8a6020" stroke-width=".008"/><circle cx="0" cy="-.25" r=".03" fill="#ffe6a0" stroke="#8a6020" stroke-width=".006"/>`;
-  k += `<path d="M-.13 -.42 h.26 v-.03 h-.26 Z" fill="#7a5418"/><path d="M-.06 -.45 Q-.08 -.53 0 -.55 Q.08 -.53 .06 -.45 Z" fill="#f2f0ea"/><path d="M-.05 -.5 q.05 -.02 .1 0" stroke="#2f5fa0" stroke-width=".012" fill="none"/>`;
-  k += `<path d="M.15 -.22 h.07 v.03 h-.02 v.03" stroke="#a37428" stroke-width=".018" fill="none"/>`;
-  k += `<path d="M-.19 -.33 q-.04 .02 -.02 .07 M.19 -.33 q.04 .02 .02 .07" stroke="#4a3418" stroke-width=".016" fill="none"/>`;
-  k += `<path d="M.1 -.38 Q.16 -.25 .12 -.1" stroke="#fffbe8" stroke-width=".02" opacity=".7" fill="none"/>`;
-  k += `<path d="M-.02 -.58 q-.03 -.06 0 -.12 q.03 -.06 0 -.12" stroke="#fff" stroke-width=".012" opacity=".6" fill="none"/></g>`;
+  k += `<path d="M-.1 0 l.02 -.03 h.16 l.02 .03 M-.07 -.03 l.02 -.05 h.1 l.02 .05 Z" fill="#7a5418" stroke="#7a5418" stroke-width=".012"/>`;
+  k += `<path d="M-.04 -.08 Q-.17 -.1 -.17 -.22 Q-.17 -.32 -.08 -.36 L.08 -.36 Q.17 -.32 .17 -.22 Q.17 -.1 .04 -.08 Z" fill="${MS}"/>`;
+  k += `<path d="M-.15 -.2 Q0 -.17 .15 -.2 M-.12 -.31 Q0 -.29 .12 -.31" stroke="#8a6020" stroke-width=".007" fill="none"/>`;
+  k += `<path d="M-.17 -.28 q-.07 .0 -.07 .05 q0 .05 .05 .06 M.17 -.28 q.07 0 .07 .05 q0 .05 -.05 .06" stroke="#4a3418" stroke-width=".016" fill="none"/>`;
+  k += `<path d="M.02 -.13 h.08 v.02 h-.03 v.03" stroke="#a37428" stroke-width=".014" fill="none"/><ellipse cx=".07" cy="-.06" rx=".035" ry=".008" fill="#a37428"/>`;
+  k += `<path d="M-.07 -.36 L-.05 -.4 H.05 L.07 -.36 Z" fill="#7a5418"/><rect x="-.015" y="-.47" width=".03" height=".07" fill="#6b4a18"/>`;
+  k += `<path d="M-.07 -.41 Q-.09 -.48 -.04 -.5 Q0 -.52 .04 -.5 Q.09 -.48 .07 -.41 Z" fill="#f4f1ea"/><path d="M.07 -.45 q.04 0 .05 -.03" stroke="#f4f1ea" stroke-width=".012" fill="none"/><path d="M-.07 -.45 q-.03 .02 -.03 .04" stroke="#f4f1ea" stroke-width=".01" fill="none"/>`;
+  k += `<path d="M-.04 -.47 q.04 -.02 .08 0" stroke="#2f5fa0" stroke-width=".012" fill="none"/><circle cx="0" cy="-.445" r=".012" fill="#c8302c"/><path d="M-.02 -.51 h.04 l-.01 -.015 h-.02 Z" fill="#f4f1ea"/>`;
+  k += `<path d="M.09 -.34 Q.15 -.24 .12 -.12" stroke="#fffbe8" stroke-width=".02" opacity=".75" fill="none"/>`;
+  k += `<path d="M0 -.53 q-.03 -.05 0 -.1 q.03 -.05 0 -.1" stroke="#fff" stroke-width=".01" opacity=".6" fill="none"/></g>`;
   S.teil({ oben: true, id: "samowar", de: "der Samowar", syl: "sa-mo-WAR", it: "il samovar", itSyl: "sa-mo-VAR", en: "samovar", x, y: TY, steht: true, kunst: k + flaeche(-7, -18, 14, 18.5, 0.6),
     tipp: "Im Samowar wird Wasser für den Tee heiß gemacht." });
 }
@@ -1066,14 +1073,24 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
   /* Kleinkind im blauen Schneeanzug, rote Bommelmütze, Schal, Fäustlinge — sitzt, Beine nach vorn */
   k += `<g transform="scale(${ss.toFixed(4)})">`;
   const SA = S.lg("anzug", [[0, "#5aa0d6"], [0.55, "#2f7fb3"], [1, "#1f5a85"]], 0, 0, 1, 0);
-  k += `<path d="M-.32 -.27 Q-.36 -.42 -.3 -.52 L.02 -.5 Q.22 -.42 .34 -.36 Q.42 -.33 .4 -.27 Z" fill="${SA}"/>`;           /* Beine nach vorn */
-  k += `<path d="M.32 -.36 Q.42 -.38 .44 -.3 Q.44 -.26 .36 -.27 Z" fill="#3a2a24"/>`;                                          /* Stiefel */
-  k += `<path d="M-.38 -.3 Q-.42 -.6 -.3 -.74 Q-.18 -.82 -.06 -.76 Q.04 -.64 .02 -.48 Q-.1 -.36 -.38 -.3 Z" fill="${SA}"/>`;     /* Oberkörper */
-  k += `<path d="M-.3 -.72 Q-.2 -.76 -.08 -.73" stroke="#7fbfe9" stroke-width=".03" fill="none"/><path d="M-.22 -.7 V-.4" stroke="#1f5a85" stroke-width=".015"/>`;
-  k += `<path d="M-.04 -.66 Q.1 -.6 .16 -.5" stroke="#2f7fb3" stroke-width=".09" stroke-linecap="round" fill="none"/><circle cx=".17" cy="-.48" r=".05" fill="#c8302c"/>`;  /* Arm, Fäustling */
-  k += `<path d="M-.3 -.74 Q-.18 -.8 -.04 -.76 L-.06 -.7 Q-.18 -.73 -.3 -.68 Z" fill="#f2f0ea"/><path d="M-.12 -.71 L-.1 -.58 L-.05 -.6 Z" fill="#f2f0ea"/>`;   /* Schal */
-  k += `<ellipse cx="-.15" cy="-.88" rx=".13" ry=".14" fill="#f3d2b8"/><circle cx="-.07" cy="-.86" r=".035" fill="#f0a0a0" opacity=".7"/><circle cx="-.09" cy="-.9" r=".013" fill="#2a1d14"/><path d="M-.1 -.84 q.03 .015 .05 0" stroke="#a0524a" stroke-width=".01" fill="none"/>`;
-  k += `<path d="M-.3 -.9 Q-.3 -1.06 -.15 -1.07 Q0 -1.06 .0 -.9 Z" fill="#c8302c"/><path d="M-.31 -.92 h.32 v.04 h-.32Z" fill="#f2f0ea"/><circle cx="-.15" cy="-1.1" r=".05" fill="#f2f0ea"/>`;
+  /* Beine in der Schneehose nach vorn, Knie leicht hoch, Stiefel an der Schlittenspitze */
+  k += `<path d="M-.3 -.27 Q-.32 -.4 -.18 -.43 Q.02 -.46 .14 -.42 Q.22 -.38 .3 -.36 L.32 -.28 Q.1 -.3 -.05 -.27 Z" fill="${SA}"/>`;
+  k += `<path d="M.04 -.44 Q.12 -.42 .2 -.38" stroke="#7fbfe9" stroke-width=".02" fill="none"/>`;
+  k += `<path d="M.27 -.39 Q.37 -.41 .4 -.33 Q.41 -.27 .3 -.27 Z" fill="#3a2a24"/><path d="M.3 -.38 q.05 -.01 .08 .02" stroke="#6a5444" stroke-width=".012" fill="none"/>`;
+  /* Oberkörper aufrecht, gepolstert */
+  k += `<path d="M-.36 -.28 Q-.42 -.55 -.32 -.72 Q-.2 -.8 -.06 -.75 Q.04 -.62 .02 -.42 Q-.1 -.3 -.36 -.28 Z" fill="${SA}"/>`;
+  k += `<path d="M-.31 -.7 Q-.2 -.75 -.08 -.72" stroke="#7fbfe9" stroke-width=".03" fill="none"/><path d="M-.18 -.7 V-.4" stroke="#1f5a85" stroke-width=".015"/>`;
+  /* Arm nach unten, Fäustling hält den Seitenholm */
+  k += `<path d="M-.08 -.66 Q-.02 -.5 0 -.34" stroke="#2f7fb3" stroke-width=".085" stroke-linecap="round" fill="none"/><ellipse cx="0" cy="-.3" rx=".05" ry=".04" fill="#c8302c"/>`;
+  /* Schal */
+  k += `<path d="M-.32 -.73 Q-.2 -.8 -.05 -.76 L-.06 -.69 Q-.18 -.73 -.31 -.67 Z" fill="#f2f0ea"/><path d="M-.1 -.71 L-.06 -.56 L-.01 -.6 Z" fill="#f2f0ea"/>`;
+  /* Kopf im Dreiviertelprofil nach rechts: Wange, zwei Augen, Nase, lachender Mund */
+  k += `<ellipse cx="-.13" cy="-.88" rx=".13" ry=".135" fill="#f3d2b8"/><ellipse cx="-.1" cy="-.875" rx=".1" ry=".11" fill="#f6dcc6"/>`;
+  k += `<circle cx="-.03" cy="-.84" r=".032" fill="#f19a9a" opacity=".75"/><circle cx="-.08" cy="-.9" r=".016" fill="#2a1d14"/><circle cx="-.02" cy="-.9" r=".014" fill="#2a1d14"/>`;
+  k += `<path d="M-.07 -.93 q.02 -.012 .04 0 M-.02 -.93 q.015 -.01 .03 0" stroke="#6a4a30" stroke-width=".008" fill="none"/><path d="M.005 -.88 q.02 .015 .0 .03" stroke="#d29a80" stroke-width=".01" fill="none"/>`;
+  k += `<path d="M-.07 -.83 q.03 .025 .06 0" stroke="#a0524a" stroke-width=".012" fill="none"/>`;
+  /* Bommelmütze mit Umschlag */
+  k += `<path d="M-.28 -.9 Q-.29 -1.06 -.14 -1.07 Q.0 -1.06 .0 -.92 Z" fill="#c8302c"/><path d="M-.29 -.93 Q-.14 -.96 .01 -.92 v.045 Q-.14 -.92 -.29 -.885 Z" fill="#f2f0ea"/><circle cx="-.15" cy="-1.1" r=".055" fill="#f2f0ea"/>`;
   k += `<path d="M-.56 -.2 H.42" stroke="#e8c48c" stroke-width=".012"/></g>`;
   /* die Schnur zur Hand der Mutter */
   const md = 12, ml = 0.25, mx = r(X(md, ml)), my = r(Y(md)), ms = F / md;
@@ -1114,22 +1131,26 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
    15 — DIE KRÄHEN (Nebelkrähen) streiten um einen heruntergefallenen Kringel
    ===================================================================== */
 {
-  const KR = S.lg("kraehe", [[0, "#7c7f86"], [1, "#b9bcc2"]], 0, 0, 0, 1);
-  const kraehe = (d, l, sp) => {
+  /* Nebelkrähe (Meter, 46 cm lang): kräftiger aschgrauer Rumpf, schwarzer Kopf mit schwarzem Kehllatz bis zur Brust,
+     schwarze Flügel und Schwanz, dicker langer Schnabel, kräftige schwarze Beine. Licht von rechts vorn. */
+  const KR = S.lg("kraehe", [[0, "#6f727a"], [0.6, "#9a9da5"], [1, "#b7bac1"]], 0, 0, 1, 0);
+  const kraehe = (d, l, sp, pick) => {
     const x = X(d, l), y = Y(d), s = F / d;
-    BODEN_SCHATTEN.push(schlag(d, l, 0.3, 0.12, 0.28));
+    BODEN_SCHATTEN.push(schlag(d, l, 0.32, 0.14, 0.5));
     let k = `<g transform="translate(${r(x)} ${r(y)}) scale(${(s * sp).toFixed(4)} ${s.toFixed(4)})">`;
-    k += `<path d="M-.02 -.01 L-.03 -.09 M.03 -.01 L.02 -.09" stroke="#2a2a2e" stroke-width=".012"/><path d="M-.05 0 h.05 M0 0 h.06" stroke="#2a2a2e" stroke-width=".01"/>`;
-    k += `<path d="M-.2 -.17 L-.1 -.15 Q-.02 -.08 .06 -.1 Q.13 -.12 .14 -.2 Q.12 -.25 .05 -.24 Q-.06 -.24 -.12 -.2 Z" fill="${KR}"/>`;
-    k += `<path d="M-.22 -.19 L-.1 -.16 L-.04 -.2 Q-.1 -.22 -.16 -.21 Z" fill="#1d1d22"/><path d="M-.1 -.205 Q-.02 -.24 .07 -.22 Q.02 -.17 -.06 -.155 Z" fill="#1d1d22"/>`;
-    k += `<circle cx=".12" cy="-.24" r=".045" fill="#1d1d22"/><path d="M.16 -.25 L.22 -.235 L.16 -.225 Z" fill="#1d1d22"/><circle cx=".135" cy="-.25" r=".008" fill="#ddd"/>`;
-    k += `<path d="M.08 -.21 Q.11 -.18 .14 -.2" stroke="#1d1d22" stroke-width=".03" fill="none"/><path d="M.06 -.235 Q.1 -.26 .14 -.25" stroke="#fff" stroke-width=".01" opacity=".5" fill="none"/></g>`;
+    k += `<path d="M-.03 -.12 L-.05 0 M.05 -.12 L.04 0" stroke="#17171b" stroke-width=".025"/><path d="M-.1 0 h.1 M-.01 0 h.1" stroke="#17171b" stroke-width=".018"/>`;
+    k += `<path d="M-.3 -.2 L-.13 -.17 Q-.06 -.08 .07 -.11 Q.15 -.14 .16 -.24 Q.13 -.3 .02 -.3 Q-.1 -.3 -.16 -.24 Z" fill="${KR}"/>`;
+    k += `<path d="M-.31 -.22 L-.12 -.18 L-.02 -.24 Q-.12 -.28 -.2 -.26 Z" fill="#17171b"/><path d="M-.14 -.26 Q-.02 -.31 .1 -.28 Q.04 -.2 -.08 -.18 Z" fill="#202024"/>`;
+    k += `<path d="M.08 -.27 Q.14 -.22 .17 -.17 Q.2 -.24 .19 -.3 Z" fill="#17171b"/>`;
+    const ky = pick ? -0.2 : -0.31, kxx = pick ? 0.2 : 0.17;
+    k += `<circle cx="${kxx}" cy="${ky}" r=".055" fill="#17171b"/><path d="M${r((kxx + 0.04) * 100) / 100} ${r((ky - 0.02) * 100) / 100} L${r((kxx + 0.15) * 100) / 100} ${r((ky + (pick ? 0.06 : 0.01)) * 100) / 100} L${r((kxx + 0.04) * 100) / 100} ${r((ky + 0.025) * 100) / 100} Z" fill="#17171b"/>`;
+    k += `<circle cx="${r((kxx + 0.015) * 1000) / 1000}" cy="${r((ky - 0.012) * 1000) / 1000}" r=".008" fill="#8a7a6a"/><path d="M.0 -.29 Q.08 -.29 .14 -.25" stroke="#c9ccd3" stroke-width=".012" fill="none" opacity=".6"/></g>`;
     return k;
   };
-  const d0 = 11.6, l0 = 1.3, x0 = r(X(d0, l0)), y0 = r(Y(d0));
-  let k = kraehe(11.5, 0.75, 1) + kraehe(11.9, 1.85, -1);
+  const d0 = 11.5, l0 = -0.75, x0 = r(X(d0, l0)), y0 = r(Y(d0));
+  let k = kraehe(11.4, -1.05, 1, true) + kraehe(11.7, -0.45, -1, false);
   /* Kringel (Baranka) auf dem Pflaster */
-  const bx = X(11.6, 1.3), by = Y(11.6), bs = F / 11.6;
+  const bx = X(11.5, -0.78), by = Y(11.5), bs = F / 11.5;
   k += `<ellipse cx="${r(bx)}" cy="${r(by - 0.3)}" rx="${r(0.07 * bs)}" ry="${r(0.03 * bs)}" fill="none" stroke="#c98a3e" stroke-width="${r(0.03 * bs)}"/><ellipse cx="${r(bx - 0.4)}" cy="${r(by - 0.5)}" rx="${r(0.04 * bs)}" ry=".3" fill="#f2c27a" opacity=".6"/>`;
   S.teil({ oben: true, id: "kraehe", de: "die Krähe", syl: "KRÄ-he", it: "la cornacchia", itSyl: "cor-NAC-chia", en: "crow", x: 0, y: 0, steht: true, kunst: k + flaeche(x0 - 13, y0 - 12, 26, 13, 0.6),
     tipp: "In Moskau leben viele graue Nebelkrähen. Hier streiten zwei um einen Kringel." });

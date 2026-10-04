@@ -160,11 +160,12 @@ const kronen = (w, h, n, seed, rmin, rmax) => {
   }
   return `<g fill="#0e1f14" opacity=".16">${a}</g><g fill="#e8f0b0" opacity=".11">${b}</g>`;
 };
-S.def(`<pattern id="${S.id("wald")}" width="19" height="13" patternUnits="userSpaceOnUse">${kronen(19, 13, 34, 7, 0.7, 1.4)}</pattern>`);
-S.def(`<pattern id="${S.id("waldfein")}" width="13" height="9" patternUnits="userSpaceOnUse">${kronen(13, 9, 30, 11, 0.55, 1.05)}</pattern>`);
+/* Waldtextur wächst mit der Nähe: nah 1,0 — Osthang 0,8 — Huayna Picchu 0,6 — Putucusi 0,5 — Westkette 0,35 */
+const waldMuster = (name, f, seed) => { S.def(`<pattern id="${S.id(name)}" width="${r(19 * f)}" height="${r(13 * f)}" patternUnits="userSpaceOnUse">${kronen(r(19 * f), r(13 * f), 34, seed, 0.7 * f, 1.4 * f)}</pattern>`); return `url(#${S.id(name)})`; };
+const WALD1 = waldMuster("wald1", 1, 7), WALD08 = waldMuster("wald08", 0.8, 8), WALD06 = waldMuster("wald06", 0.6, 9), WALD05 = waldMuster("wald05", 0.5, 10), WALD035 = waldMuster("wald035", 0.35, 11);
 S.def(`<pattern id="${S.id("gras")}" width="5" height="2.6" patternUnits="userSpaceOnUse"><path d="M.6 2.3l.2-.9M1.9 1.4l-.2-.8M3.2 2.4l.3-1M4.3 1.1l-.25-.8M2.6.6l.1-.5" stroke="#d6e98a" stroke-width=".22" opacity=".45"/><path d="M1.2 2.5l-.1-.7M3.8 2.2l.2-.6" stroke="#2f5420" stroke-width=".25" opacity=".35"/></pattern>`);
 S.def(`<pattern id="${S.id("stroh")}" width="2" height="2.6" patternUnits="userSpaceOnUse"><rect width="2" height="2.6" fill="#b48e4e"/><path d="M.3 0 L.5 2.6 M1.1 0 L1.2 2.6 M1.7 0 L1.6 2.6" stroke="#d9b874" stroke-width=".28"/><path d="M.8 0 L.85 2.6" stroke="#7d5e2c" stroke-width=".22"/></pattern>`);
-const WALD = `url(#${S.id("wald")})`, WALDF = `url(#${S.id("waldfein")})`, GRAS = `url(#${S.id("gras")})`, STROH = `url(#${S.id("stroh")})`;
+const WALD = WALD05, WALDF = WALD1, GRAS = `url(#${S.id("gras")})`, STROH = `url(#${S.id("stroh")})`;
 const GRANIT_L = S.lg("granitl", [[0, "#f1ede4"], [1, "#d6d1c5"]]);         /* Ostflächen im Morgenlicht */
 const GRANIT_S = S.lg("granits", [[0, "#8a877f"], [1, "#74716a"]]);         /* Westflächen im Schatten */
 const GRANIT_F = S.lg("granitf", [[0, "#cdc9be"], [1, "#a9a598"]]);         /* Südflächen (zu uns), streifendes Licht */
@@ -173,44 +174,34 @@ const RASEN = S.lg("rasen", [[0, "#9cc35a"], [1, "#78a646"]]);
 const RASEN_D = S.lg("rasend", [[0, "#6f9a42"], [1, "#557f34"]]);
 
 /* =====================================================================
-   KULISSE — Morgenhimmel, ferne Kämme, Dunst
+   KULISSE — Morgenhimmel (Sonne rechts außerhalb des Bildes), ferne Kämme
    ===================================================================== */
-S.hinten(`<rect width="400" height="200" fill="${S.lg("himmel", [[0, "#3d74b8"], [0.42, "#77a5d6"], [0.75, "#b9d2e6"], [1, "#e4ecee"]])}"/>`);
-S.hinten(`<ellipse cx="430" cy="-10" rx="190" ry="120" fill="${S.rg("sonnenschein", [[0, "#fff6dc", 0.75], [0.5, "#fff6dc", 0.18], [1, "#fff6dc", 0]])}"/>`);
-/* fernste Kämme (Cordillera Vilcabamba / Urubamba), sehr dunstig */
-const KAMM_A = [[-2, 76], [18, 70], [38, 64], [55, 69], [72, 66], [96, 78], [118, 74], [140, 86], [170, 96], [200, 100], [236, 96], [262, 88], [284, 82], [306, 78], [330, 84], [352, 80], [376, 72], [402, 78]];
-S.hinten(`<path d="${P([...KAMM_A, [402, 140], [-2, 140]])}" fill="${S.lg("kammA", [[0, "#9db3c9"], [1, "#c2d3df"]])}"/>`);
+S.hinten(`<rect width="400" height="200" fill="${S.lg("himmel", [[0, "#3569ae"], [0.45, "#6f9fd2"], [0.78, "#b3cde2"], [1, "#e9e9df"]])}"/>`);
+S.hinten(`<rect width="400" height="200" fill="${S.lg("himmelseite", [[0, "#ffffff", 0], [0.75, "#fff3dc", 0], [1, "#fff3dc", 0.22]], 0, 0, 1, 0)}"/>`);
+/* fernste Kämme (Cordillera Vilcabamba): gezackt, dunstig, Ostflanken mit feiner Lichtkante */
+const KAMM_A = [];
+{ const z = zufall(77); for (let x = -2; x <= 402; x += 5 + z() * 6) { const basis = 72 + 14 * Math.sin(x / 47) + 8 * Math.sin(x / 19 + 1); KAMM_A.push([x, basis + (z() - 0.5) * 7]); } }
+S.hinten(`<path d="${P([...KAMM_A, [402, 140], [-2, 140]])}" fill="${S.lg("kammA", [[0, "#a5b8cb"], [1, "#c7d6e0"]])}"/>`);
+{ let l = ""; for (let i = 0; i < KAMM_A.length - 1; i++) { const [x0, y0] = KAMM_A[i], [x1, y1] = KAMM_A[i + 1]; if (y1 > y0) l += `M${r(x0)} ${r(y0 + 0.5)} L${r(x1 - 0.3)} ${r(y1 + 0.3)}`; } S.hinten(`<path d="${l}" stroke="#eef2f4" stroke-width=".6" opacity=".7"/>`); }
 
 /* =====================================================================
-   1 — DIE WOLKE (Haufenwolken am Morgenhimmel, hinter den Bergen)
+   1 — DIE WOLKE (flache, stilisierte Bänder wie in mexiko; Sonne rechts: Rand rechts warm)
    ===================================================================== */
-/* Haufenwolke: viele Kreise verschiedener Größe (in der Mitte hoch, zu den Rändern flach), unten flach abgeschnitten.
-   Schattierung: senkrechter Verlauf (oben warmweiß, unten blaugrau), darüber die Lichtform nach rechts oben versetzt */
-const wolke = (name, cx, by, W, H, seed) => {
-  const z = zufall(seed), kr = [];
-  const n = Math.round(W / (H * 0.42));
-  for (let i = 0; i <= n; i++) {
-    const t = i / n, x = cx - W / 2 + W * t, prof = Math.max(0.18, 1 - Math.pow(2 * t - 1, 2) * 0.82);
-    const rr = H * (0.2 + 0.26 * prof) * (0.75 + z() * 0.5);
-    kr.push([x, by - rr * 0.6 - H * 0.3 * prof * z(), rr]);
-  }
-  for (let i = 0; i < 3; i++) { const t = 0.3 + z() * 0.4; kr.push([cx - W / 2 + W * t, by - H * (0.55 + z() * 0.25), H * (0.32 + z() * 0.14)]); }
-  const top = Math.min(...kr.map(([, y, rr]) => y - rr));
-  S.def(`<clipPath id="${S.id(name)}"><rect x="${r(cx - W)}" y="${r(top - 5)}" width="${r(2 * W)}" height="${r(by - top + 5)}"/></clipPath>`);
-  const g = S.lg(name + "g", [[0, "#f6f8fb"], [0.5, "#dfe6ee"], [1, "#a9b9cc"]], 0, r(top), 0, r(by), ' gradientUnits="userSpaceOnUse"');
-  const c = (dx, dy, f) => kr.map(([x, y, rr]) => `<circle cx="${r(x + dx)}" cy="${r(y + dy)}" r="${r(rr * f)}"/>`).join("");
-  return `<g clip-path="url(#${S.id(name)})"><g fill="${g}">${c(0, 0, 1)}</g><g fill="#fffaf0" opacity=".7">${c(H * 0.09, -H * 0.1, 0.78)}</g><g fill="#ffffff" opacity=".9">${c(H * 0.15, -H * 0.17, 0.48)}</g></g>`;
+const wolke = (name, cx, by, W0, H, seed) => {
+  const z = zufall(seed), n = 3 + Math.floor(z() * 2), teile = [];
+  let summe = 0; for (let i = 0; i < n; i++) { const w = 0.6 + z() * 0.8; teile.push(w); summe += w; }
+  let d = `M${r(cx - W0 / 2)} ${r(by)}`, x = cx - W0 / 2;
+  teile.forEach((w, i) => { const b = W0 * w / summe, t = (x + b / 2 - (cx - W0 / 2)) / W0, prof = 1 - Math.pow(2 * t - 1, 2) * 0.85, hh = H * prof * (0.8 + z() * 0.3); x += b; d += ` A${r(b / 2)} ${r(hh)} 0 0 1 ${r(x)} ${r(by - (i < n - 1 ? H * 0.22 * prof : 0))}`; });
+  d += ` Q${r(cx)} ${r(by + H * 0.1)} ${r(cx - W0 / 2)} ${r(by)} Z`;
+  const g = S.lg(name + "g", [[0, "#ffffff"], [0.6, "#eef3f8"], [1, "#b8c7d8"]], 0, r(by - H * 1.1), 0, r(by), ' gradientUnits="userSpaceOnUse"');
+  return `<path d="${d}" fill="${g}"/><path d="M${r(cx + W0 * 0.1)} ${r(by - H * 0.85)} Q${r(cx + W0 * 0.42)} ${r(by - H * 0.6)} ${r(cx + W0 * 0.48)} ${r(by - 0.5)}" stroke="#fff4d6" stroke-width=".8" fill="none" opacity=".8"/>`;
 };
 {
-  let k = wolke("w1", 58, 38, 54, 21, 3);
-  k += wolke("w2", 316, 28, 44, 17, 5);
-  k += wolke("w3", 140, 60, 22, 9, 9);
-  k += wolke("w4", 268, 47, 18, 7, 13);
-  S.teil({ id: "wolke", de: "die Wolke", syl: "WOL-ke", it: "la nuvola", itSyl: "NU-vo-la", en: "cloud", x: 56, y: 30, kunst: um(56, 30, k) });
+  let k = wolke("w1", 60, 34, 64, 12, 3) + wolke("w2", 318, 24, 50, 9, 5);
+  S.teil({ id: "wolke", de: "die Wolke", syl: "WOL-ke", it: "la nuvola", itSyl: "NU-vo-la", en: "cloud", x: 60, y: 28, kunst: um(60, 28, k) });
 }
 
-/* Fels: Felsband entlang des Hangs — unregelmäßiger Umriss, Verlauf von der Schatten- zur Lichtseite,
-   schräge Klüfte, Bewuchs wächst über die Ränder (so klebt der Fels nicht auf, sondern liegt im Hang) */
+/* Fels: Felsband entlang des Hangs (für Putucusi und kleine Platten) */
 let FELS_N = 0;
 const fels = (x, y, w, h, seed, hell = "#b3b2a4", dunkel = "#6f7671", gruen = "#4f7d48") => {
   const z = zufall(seed), pts = [], n = 14;
@@ -220,125 +211,158 @@ const fels = (x, y, w, h, seed, hell = "#b3b2a4", dunkel = "#6f7671", gruen = "#
   }
   const g = S.lg("fels" + (FELS_N++), [[0, dunkel], [0.55, dunkel], [0.62, hell], [1, hell]], 0, 0, 1, 0.25);
   let o = `<path d="${glatt(pts, true, 0.7)}" fill="${g}"/>`;
-  for (let i = 0; i < 3; i++) { const cx = x + w * (0.2 + 0.3 * i + z() * 0.1), cy = y + h * (0.15 + z() * 0.2); o += `<path d="M${r(cx)} ${r(cy)} l${r(w * 0.06)} ${r(h * 0.3)} l${r(-w * 0.04)} ${r(h * 0.3)}" stroke="#2f3532" stroke-width=".3" fill="none" opacity=".5"/>`; }
-  o += `<path d="M${r(x + w * 0.1)} ${r(y + h * 0.5)} q${r(w * 0.35)} ${r(-h * 0.08)} ${r(w * 0.75)} ${r(h * 0.06)}" stroke="#3a403c" stroke-width=".25" fill="none" opacity=".4"/>`;
-  for (let i = 0; i < 4; i++) { const t = z(); const px = x + w * (0.1 + t * 0.8), py = y + (i < 2 ? h * 0.05 : h * (0.85 + z() * 0.1)); o += `<ellipse cx="${r(px)}" cy="${r(py)}" rx="${r(w * (0.12 + z() * 0.08))}" ry="${r(h * 0.08 + 0.4)}" fill="${gruen}"/>`; }
+  let st = ""; for (let i = 0; i < 6; i++) { const cx = x + w * (0.12 + 0.15 * i + z() * 0.05); st += `M${r(cx)} ${r(y + h * 0.12)} l${r((z() - 0.5) * w * 0.05)} ${r(h * (0.55 + z() * 0.3))}`; }
+  o += `<path d="${st}" stroke="#2f3532" stroke-width=".28" opacity=".5"/>`;
+  for (let i = 0; i < 4; i++) { const t = z(); const px = x + w * (0.1 + t * 0.8), py = y + (i < 2 ? h * 0.05 : h * (0.85 + z() * 0.1)); o += `<ellipse cx="${r(px)}" cy="${r(py)}" rx="${r(w * (0.12 + z() * 0.08))}" ry="${r(h * 0.06 + 0.4)}" fill="${gruen}"/>`; }
   return o;
+};
+/* langes, schmales Granitband in Fall-Linie mit senkrechten Streifen (Huayna-Picchu-Wände) */
+const wand = (pts, breite, hell, dunkel, seed) => {
+  const z = zufall(seed), li = pts.map(([x, y], i) => [x - breite * (0.5 + 0.2 * Math.sin(i * 1.7)), y]), re = pts.map(([x, y], i) => [x + breite * (0.5 + 0.2 * Math.cos(i * 1.3)), y]).reverse();
+  let o = `<path d="${glatt([...li, ...re], true, 0.7)}" fill="${S.lg("wand" + seed, [[0, dunkel], [0.6, dunkel], [1, hell]], 0, 0, 1, 0)}"/>`;
+  let st = ""; for (let i = 0; i < 4; i++) { const t = (i + 0.5) / 4; st += `M${r(pts[0][0] - breite * 0.5 + breite * t)} ${r(pts[0][1] + 1)} L${r(pts[pts.length - 1][0] - breite * 0.5 + breite * t + (z() - 0.5))} ${r(pts[pts.length - 1][1] - 1)}`; }
+  return o + `<path d="${st}" stroke="#3a403c" stroke-width=".25" opacity=".55"/>`;
 };
 
 /* =====================================================================
-   2 — DER BERG: links die Bergkette jenseits der Schlucht (Westen),
-       rechts der Putucusi im Gegenlicht und der nahe Osthang
+   2 — DER BERG: links die Westkette (gestaffelte Grate, Luftperspektive), rechts der Putucusi im Gegenlicht
+       mit seiner großen Plattenwand, darunter der nahe Osthang zum Fluss
    ===================================================================== */
 const KAMM_B = [[-2, 44], [14, 41], [30, 44], [46, 50], [62, 52], [80, 60], [98, 66], [114, 74], [128, 84], [140, 96], [150, 108], [158, 120], [164, 134], [168, 150]];
 const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82], [356, 80], [368, 82], [382, 88], [394, 92], [402, 94]];
 {
   let k = "";
-  /* Westkette: der Hang zu uns liegt halb im Licht, die Grate werfen Schatten nach links */
-  const westD = P([...KAMM_B, [170, 210], [110, 262], [-2, 262]]);
-  k += `<path d="${westD}" fill="${S.lg("westkette", [[0, "#4f7564"], [0.5, "#456b56"], [1, "#6d8f84"]])}"/>`;
-  k += `<path d="${westD}" fill="${WALD}"/>`;
-  /* Relief: Seitenrücken laufen schräg vom Kamm nach links unten; jeder Rücken hat eine Lichtseite (rechts) und
-     daneben eine dunkle Rinne. Weich gezeichnet, schmal am Kamm, breit unten. */
-  let rel = "";
-  for (const [x0, l, sd] of [[40, 80, 1], [76, 80, 2], [110, 74, 3], [140, 60, 4]]) {
-    const z = zufall(sd), y0 = profilY(KAMM_B, x0) + 1.5, pts = [[x0, y0]];
-    for (let i = 1; i <= 5; i++) pts.push([x0 - i * (9 + z() * 3), y0 + l * i / 5 * 0.8]);
-    const br = (i) => 0.6 + i * 1.5;
-    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a, b]), ...pts.map(([a, b], i) => [a + br(i) * 1.2, b + br(i) * 1.6]).reverse()], true, 0.8)}" fill="#b6d3a6" opacity=".22"/>`;
-    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a - br(i) * 0.6, b - br(i) * 1.4]), ...pts.map(([a, b]) => [a - 0.4, b - 0.3]).reverse()], true, 0.8)}" fill="#1c362c" opacity=".28"/>`;
+  /* drei gestaffelte Grate: hinten blaugrau und flau, vorn etwas satter */
+  const grate = [
+    [KAMM_B, ["#7e9a99", "#6f8f8a", "#87a19c"], 1],
+    [[[-2, 70], [20, 66], [44, 72], [66, 80], [90, 92], [112, 104], [132, 118], [150, 136], [160, 160]], ["#6c8c80", "#5f8070", "#7a988a"], 2],
+    [[[-2, 108], [24, 104], [50, 112], [76, 124], [98, 140], [116, 160], [124, 180]], ["#5d7f68", "#4f735c", "#6d8c74"], 3],
+  ];
+  for (const [kamm, [c0, c1, c2], sd] of grate) {
+    const dk = P([...kamm, [kamm[kamm.length - 1][0] + 6, 262], [-2, 262]]);
+    k += `<path d="${dk}" fill="${S.lg("grat" + sd, [[0, c0], [0.5, c1], [1, c2]])}"/><path d="${dk}" fill="${sd === 1 ? WALD035 : WALD05}" opacity="${sd === 1 ? 0.6 : 0.8}"/>`;
+    /* Seitengrate schräg nach links unten: Lichtsaum rechts innen, Schattenrinne links */
+    const z = zufall(sd * 13);
+    for (let i = 0; i < 3; i++) {
+      const x0 = 20 + i * 42 + z() * 16, y0 = profilY(kamm, x0) + 1;
+      const pts = [[x0, y0]]; for (let j = 1; j <= 4; j++) pts.push([x0 - j * (7 + z() * 3), y0 + j * (9 + z() * 4)]);
+      k += `<path d="${glatt(pts, false)}" stroke="#d6e6d2" stroke-width=".55" fill="none" opacity="${0.55 - sd * 0.1}"/>`;
+      k += `<path d="${glatt(pts.map(([a, b]) => [a - 1.4, b + 0.6]), false)}" stroke="#203a30" stroke-width="1.2" fill="none" opacity="${0.22}"/>`;
+    }
+    k += `<path d="${P(kamm, false)}" stroke="#e6efe2" stroke-width=".5" fill="none" opacity=".5" transform="translate(0 .5)"/>`;
+    /* Luftperspektive: Dunst nach unten in die Schlucht */
+    k += `<path d="${dk}" fill="${S.lg("gratdunst" + sd, [[0, "#d9e5ec", 0.18 - sd * 0.03], [0.6, "#dfe9ef", 0.25], [1, "#eef3f4", 0.5]])}"/>`;
   }
-  k += `<g filter="url(#${S.id("weich")})">${rel}</g>`;
-  /* Dunst am Fuß der Kette (Tiefe der Schlucht) */
-  k += `<path d="${westD}" fill="${S.lg("westdunst", [[0, "#dfe9ef", 0.0], [0.35, "#dfe9ef", 0.1], [0.62, "#e6eef1", 0.45], [1, "#eef3f4", 0.55]])}"/>`;
-
-  /* Putucusi: Gegenlicht — dunkel, oben eine helle Kante, Felswände mit senkrechten Rissen */
+  /* Putucusi: Gegenlicht — dunkel, mit einer großen, nackten Plattenwand in der oberen Mitte */
   const putD = glatt([...PUTU, [402, 205], [300, 205], [284, 180]], true, 0.9);
   k += `<path d="${putD}" fill="${S.lg("putucusi", [[0, "#3c5e4f"], [0.6, "#355647"], [1, "#5c7d71"]])}"/>`;
-  k += `<path d="${putD}" fill="${WALD}"/>`;
-  for (const [x, y, w, h, sd] of [[326, 100, 11, 30, 31], [350, 88, 10, 28, 32], [376, 102, 9, 22, 35]]) k += `<g opacity=".7">${fels(x, y, w, h, sd, "#76817b", "#4f5b55", "#3d5e4f")}</g>`;
+  k += `<path d="${putD}" fill="${WALD05}"/>`;
+  k += wand([[340, 86], [337, 98], [334, 112], [333, 126]], 20, "#9aa39e", "#5b6862", 31);
+  k += wand([[362, 90], [364, 102], [366, 114]], 9, "#8d9792", "#56625c", 32) + wand([[318, 104], [316, 114]], 7, "#87918c", "#55615b", 33);
+  k += `<path d="M300 110 Q330 84 356 80.4 Q380 82 402 94" stroke="#fbeec8" stroke-width=".7" fill="none" opacity=".7" transform="translate(0 .7)"/>`;
   k += `<path d="${putD}" fill="${S.lg("putudunst", [[0, "#dfe9ef", 0], [0.55, "#dfe9ef", 0.1], [1, "#dfe9ef", 0.6]])}"/>`;
-  /* naher Osthang auf unserer Seite (rechts unten): bewaldet, im Morgenlicht */
-  const OST = [[314, 262], [318, 214], [326, 194], [342, 184], [362, 178], [384, 174], [402, 172], [402, 262]];
-  k += `<path d="${glatt(OST, true, 0.7)}" fill="${S.lg("osthang", [[0, "#5f8c45"], [1, "#3d6a36"]])}"/>`;
-  k += `<path d="${glatt(OST, true, 0.7)}" fill="${WALD}"/>`;
-  k += `<path d="${glatt(OST.slice(1, 7), false)}" stroke="#bcd88a" stroke-width=".8" fill="none" opacity=".7"/>`;
+  /* naher Osthang (unsere Seite) fällt von der Stadt nach rechts unten zum Fluss: kühler, dunstiger als der Vordergrund */
+  const OST = [[312, 262], [314, 210], [322, 186], [334, 172], [350, 170], [372, 178], [392, 186], [402, 190], [402, 246], [330, 250]];
+  k += `<path d="${glatt(OST, true, 0.6)}" fill="${S.lg("osthang", [[0, "#4d7454"], [1, "#2f5240"]])}"/><path d="${glatt(OST, true, 0.6)}" fill="${WALD08}" opacity=".85"/>`;
+  k += `<path d="${glatt(OST, true, 0.6)}" fill="${S.lg("ostdunst", [[0, "#e3ecf0", 0.25], [1, "#e3ecf0", 0.05]])}"/>`;
   S.teil({ id: "berg", de: "der Berg", syl: "BERG", it: "la montagna", itSyl: "mon-TA-gna", en: "mountain", x: 352, y: 80, kunst: um(352, 80, kappeRand(k)),
-    tipp: "Rechts gegenüber liegt der Berg Putucusi. Zwischen den Bergen fließt tief unten der Fluss Urubamba." });
+    tipp: "Rechts gegenüber liegt der Berg Putucusi mit seinen glatten Felswänden. Dazwischen fließt tief unten der Urubamba." });
 }
 
 /* =====================================================================
-   3 — DIE SCHLUCHT (links: das tiefe Tal des Urubamba im Morgendunst)
+   3 — DER FLUSS (Urubamba): rechts unten mit der Brücke Puente Ruinas, links unten im Talgrund
    ===================================================================== */
 {
-  /* der tiefe Einschnitt: kühler, dunkler Grund, darin waagrechte Dunstbänder */
-  let k = `<path d="M0 146 Q40 148 70 158 Q96 172 108 196 L112 226 L0 226 Z" fill="${S.lg("schlucht", [[0, "#2e4c42", 0.1], [0.3, "#2a4a3e", 0.7], [1, "#24443a", 0.85]])}"/>`;
-  k += `<path d="M0 146 Q40 148 70 158 Q96 172 108 196 L112 226 L0 226 Z" fill="${WALD}" opacity=".7"/>`;
-  k += `<g filter="url(#${S.id("dunst")})">`;
-  for (const [x, y, w, a] of [[4, 162, 50, 0.6], [40, 182, 60, 0.7], [8, 206, 70, 0.75]]) k += `<path d="M${x} ${y} q${r(w * 0.25)} -3 ${r(w * 0.5)} -1.6 q${r(w * 0.3)} -2.4 ${r(w * 0.5)} 1.2 q${r(-w * 0.5)} 4 ${r(-w)} .4 Z" fill="#eef3f4" opacity="${a}"/>`;
-  k += `</g>`;
-  S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 50, y: 180, kunst: um(50, 180, kappeRand(k)),
-    tipp: "Tief unten in der Schlucht fließt der Urubamba, rund 450 Meter unter der Stadt. Die Inka nannten ihn den heiligen Fluss." });
+  let k = `<path d="M318 252 Q350 246 378 247 Q394 248 402 244 L402 252 Q390 256 372 255 Q346 254 322 259 Z" fill="${S.lg("fluss", [[0, "#b8b29a"], [0.5, "#8e8a72"], [1, "#6f6e5c"]])}"/>`;
+  k += `<path d="M330 252.6 q12 -2 24 -1.4 M362 250.6 q14 .4 30 -2" stroke="#f4efe0" stroke-width=".45" fill="none" opacity=".85"/>`;
+  /* Puente Ruinas: Brücke mit zwei Pfeilern */
+  k += `<path d="M374 247.4 L382 246.6 L382.4 254.6 L374.4 255.4 Z" fill="none"/><path d="M372 247 L385 246 L385 247.2 L372 248.2 Z" fill="#d6d0c0"/><path d="M375 248 v5 M382 247.4 v5" stroke="#8a8474" stroke-width=".6"/>`;
+  /* links unten: Talgrund mit Flussschleife im Dunst */
+  k += `<path d="M30 214 Q56 208 84 210 Q100 211 108 206 L110 212 Q98 217 82 216 Q56 215 32 220 Z" fill="${S.lg("fluss2", [[0, "#c8c6b4"], [1, "#9a9884"]])}" opacity=".9"/>`;
+  k += `<path d="M42 214.4 q14 -2 30 -1" stroke="#fbf8ee" stroke-width=".4" fill="none" opacity=".8"/>`;
+  S.teil({ id: "fluss", de: "der Fluss", syl: "FLUSS", it: "il fiume", itSyl: "FIU-me", en: "river", x: 362, y: 250, kunst: um(362, 250, k),
+    tipp: "Der Urubamba fließt rund 450 Meter tiefer als die Stadt. Die Inka nannten ihn den heiligen Fluss." });
+}
+
+/* =====================================================================
+   3b — DIE SCHLUCHT (links: der tiefe Talgrund des Urubamba im Morgendunst)
+   ===================================================================== */
+{
+  let k = `<path d="M0 150 Q40 150 70 160 Q96 172 108 196 L112 226 L0 226 Z" fill="${S.lg("schlucht", [[0, "#3e5c56", 0.1], [0.3, "#33504a", 0.75], [1, "#2c4844", 0.9]])}"/>`;
+  k += `<path d="M0 150 Q40 150 70 160 Q96 172 108 196 L112 226 L0 226 Z" fill="${WALD05}" opacity=".6"/>`;
+  /* Dunstsee im Talgrund: oben weich, liegt über dem Fluss nur dünn */
+  k += `<g filter="url(#${S.id("dunst")})"><path d="M-2 196 Q30 190 60 194 Q90 198 112 192 L112 206 Q80 210 50 208 Q20 206 -2 210 Z" fill="#eef3f4" opacity=".75"/></g>`;
+  S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 56, y: 186, kunst: um(56, 186, kappeRand(k)),
+    tipp: "Die Schlucht ist ein tiefes, enges Tal. Unten fließt der Urubamba, darüber steigen morgens die Nebel auf." });
 }
 
 /* =====================================================================
    4 — DER HUAYNA PICCHU (mit dem kleinen Huchuy Picchu davor)
    ===================================================================== */
-const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181, 84], [185, 78], [189, 70], [194, 58], [199, 47], [204, 39], [208, 34], [212, 31], [216, 30.5], [219, 32], [221, 36], [223, 44], [225, 53], [228, 61], [233, 67], [241, 72], [251, 78], [262, 86], [273, 96], [284, 108], [294, 121], [301, 134], [305, 148]];
+const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181, 84], [185, 78], [188, 70], [191, 58], [195, 47], [200, 39], [205, 34], [210, 31], [215, 30.4], [219, 32], [221, 37], [223, 45], [226, 54], [230, 61], [235, 64], [241, 62.4], [247, 64], [252, 69], [260, 77], [270, 87], [281, 98], [291, 111], [299, 126], [304, 142]];
 {
   const d = glatt([...HUAYNA, [310, 160], [150, 160]], true, 0.85);
-  let k = `<path d="${d}" fill="${S.lg("huayna", [[0, "#24433a"], [0.42, "#355c44"], [0.6, "#4f7d48"], [1, "#6a9450"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="${d}" fill="${WALDF}"/>`;
-  /* Granitwände: links (Westen) im Schatten, rechts (Osten) im Morgenlicht */
-  for (const [x, y, w, h, sd, hell] of [[196, 50, 9, 24, 41, 0], [213, 36, 8, 16, 43, 1], [184, 80, 8, 16, 44, 0], [221, 54, 8, 16, 45, 1], [204, 66, 6, 12, 46, 0]])
-    k += `<g opacity=".8">${hell ? fels(x, y, w, h, sd, "#b9b8a6", "#7f8780", "#5f8a4a") : fels(x, y, w, h, sd, "#7f8780", "#56605a", "#36583f")}</g>`;
-  /* Bewuchs-Inseln auf den Platten */
-  for (let i = 0; i < 26; i++) { const x = 172 + rnd() * 90, y = 40 + rnd() * 70; if (y < profilY(HUAYNA, x) + 3) continue; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1 + rnd() * 1.6)}" ry="${r(0.7 + rnd())}" fill="${x > 214 ? "#6f9a4e" : "#2f5238"}" opacity=".9"/>`; }
-  /* Inka-Terrassen am Gipfel (feine Stützmauern) und die kleinen Bauten oben */
-  for (let i = 0; i < 6; i++) { const y = 34 + i * 2.4, x0 = 208 - i * 1.4, x1 = 222 + i * 1.3; k += `<path d="M${r(x0)} ${r(y)} Q${r((x0 + x1) / 2)} ${r(y + 0.9)} ${r(x1)} ${r(y - 0.2)}" stroke="#b9b2a0" stroke-width=".35" fill="none" opacity=".55"/>`; }
+  let k = `<path d="${d}" fill="${S.lg("huayna", [[0, "#26453b"], [0.4, "#355c44"], [0.62, "#4f7d48"], [1, "#6a9450"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="${d}" fill="${WALD06}"/>`;
+  /* Rinnen in Fall-Linie */
+  let ri = "";
+  for (const [x0, y0, x1, y1] of [[201, 44, 186, 112], [209, 38, 197, 118], [226, 60, 236, 116], [246, 68, 256, 118], [190, 62, 174, 110]]) ri += `M${x0} ${y0} Q${r((x0 + x1) / 2 + (x1 > x0 ? -2 : 2))} ${r((y0 + y1) / 2)} ${x1} ${y1}`;
+  k += `<path d="${ri}" stroke="#1d3a2e" stroke-width="1.1" fill="none" opacity=".35" stroke-linecap="round"/>`;
+  /* Granitwände: steile, lange Bänder an der Westflanke (im Schatten), eine im Licht an der Ostflanke */
+  k += wand([[198, 40], [195, 52], [192, 64], [190, 76]], 4.6, "#8e958f", "#5c6560", 41) + wand([[205, 37], [203, 48], [201, 60], [200, 70]], 3.4, "#8e958f", "#5a635e", 42);
+  k += wand([[187, 80], [184, 90], [181, 100]], 3.6, "#87908a", "#56605a", 43) + wand([[221, 40], [223, 50], [225, 58]], 3.2, "#c9c7b4", "#8f958c", 44);
+  /* Inka-Terrassen am Gipfel: 5 kurze, gebogene Stufen mit Mauerkante */
+  for (let i = 0; i < 5; i++) {
+    const y = 35 + i * 2.8, x0 = 207 - i * 1.6, x1 = 221 + i * 1.1;
+    k += `<path d="M${r(x0)} ${r(y)} Q${r((x0 + x1) / 2)} ${r(y + 1.2)} ${r(x1)} ${r(y)} L${r(x1)} ${r(y + 0.9)} Q${r((x0 + x1) / 2)} ${r(y + 2.1)} ${r(x0)} ${r(y + 0.9)} Z" fill="#a49d8b"/><path d="M${r(x0)} ${r(y - 0.6)} Q${r((x0 + x1) / 2)} ${r(y + 0.5)} ${r(x1)} ${r(y - 0.6)} L${r(x1)} ${r(y)} Q${r((x0 + x1) / 2)} ${r(y + 1.2)} ${r(x0)} ${r(y)} Z" fill="#7da354"/>`;
+  }
   k += `<path d="M210.4 31.2 l2 -1.2 l1.6 .9 v1.4 h-3.6 Z M216.2 31.6 l1.4 -.9 l1.3 .7 v1.1 h-2.7 Z" fill="#a39a88"/>`;
-  /* Rinnen in der Westflanke, Lichtkante an der Ostflanke */
-  for (const [x0, y0, x1, y1] of [[198, 52, 180, 112], [207, 44, 194, 116]]) k += `<path d="M${x0} ${y0} Q${r((x0 + x1) / 2 + 2)} ${r((y0 + y1) / 2)} ${x1} ${y1} L${x1 - 4} ${y1} Q${r((x0 + x1) / 2 - 1)} ${r((y0 + y1) / 2)} ${x0} ${y0} Z" fill="#1c342c" opacity=".22"/>`;
-  /* Huchuy Picchu: kleiner runder Hügel vor dem linken Fuß */
-  const hu = glatt([[156, 160], [160, 146], [168, 137], [178, 132], [188, 133], [196, 138], [202, 147], [205, 160]], true, 0.9);
-  k += `<path d="${hu}" fill="${S.lg("huchuy", [[0, "#3e6a40"], [1, "#6d9a4c"]], 0, 0, 1, 0)}"/><path d="${hu}" fill="${WALDF}"/>`;
-  k += `<path d="M184 132.4 Q194 133.6 200 141 Q203 150 205 160 L196 160 Q194 146 184 132.4 Z" fill="#b8d27a" opacity=".35"/>`;
   /* Morgendunst über dem Fuß */
-  k += `<path d="${d}" fill="${S.lg("huaynadunst", [[0, "#e3ecf0", 0], [0.6, "#e3ecf0", 0.05], [1, "#e3ecf0", 0.55]])}"/>`;
+  k += `<path d="${d}" fill="${S.lg("huaynadunst", [[0, "#e3ecf0", 0], [0.6, "#e3ecf0", 0.06], [1, "#e3ecf0", 0.5]])}"/>`;
+  /* Huchuy Picchu: deckend, dunkler und blaugrüner als der Stadtrasen, mit eigenem Wald und Felsfleck */
+  const hu = glatt([[156, 160], [160, 146], [168, 137], [178, 132], [188, 133], [196, 138], [202, 147], [205, 160]], true, 0.9);
+  k += `<path d="${hu}" fill="${S.lg("huchuy", [[0, "#2c4c3e"], [0.6, "#3d6448"], [1, "#557f52"]], 0, 0, 1, 0)}"/><path d="${hu}" fill="${WALD06}"/>`;
+  k += `<path d="M183 136 l4 -1 l2.4 3.4 l-1 4 l-4 .6 Z" fill="#8a918a"/><path d="M187 135 l2.4 3.4 l-1 4" stroke="#c8c8b8" stroke-width=".4" fill="none"/>`;
   S.teil({ id: "huayna_picchu", de: "der Huayna Picchu", syl: "HUAY-na PIC-chu", it: "lo Huayna Picchu", itSyl: "HUAY-na PIC-chu", en: "Huayna Picchu", x: 214, y: 60, kunst: um(214, 60, `<g filter="${VOL_BERG}">${k}</g>`),
     tipp: "Huayna Picchu heißt „junger Berg“. Ganz oben bauten die Inka Terrassen und kleine Tempel – der Weg hinauf ist sehr steil." });
 }
 
 /* =====================================================================
-   5 — DER NEBEL (Wolkenfetzen in der Schlucht)
+   5 — DER NEBEL: liegende, zerfaserte Bänder in den Schluchten, einzelne Fetzen ziehen am Fuß des Huayna hoch
    ===================================================================== */
 {
-  let k = "";
-  const fetzen = (x, y, w, h, a) => `<path d="M${x} ${y} q${r(w * 0.15)} ${r(-h * 0.9)} ${r(w * 0.35)} ${r(-h * 0.5)} q${r(w * 0.12)} ${r(-h * 0.8)} ${r(w * 0.3)} ${r(-h * 0.25)} q${r(w * 0.2)} ${r(-h * 0.2)} ${r(w * 0.35)} ${r(h * 0.75)} q${r(-w * 0.5)} ${r(h * 0.35)} ${r(-w)} 0 Z" fill="#f4f7f8" opacity="${a}"/>`;
-  k += `<g filter="url(#${S.id("weich")})">`;
-  k += fetzen(10, 122, 46, 9, 0.85) + fetzen(44, 132, 58, 10, 0.9) + fetzen(96, 128, 46, 8, 0.85) + fetzen(122, 140, 30, 7, 0.75);
-  k += fetzen(270, 146, 34, 7, 0.8) + fetzen(296, 156, 54, 9, 0.9) + fetzen(340, 162, 62, 8, 0.85);
+  const band = (x, y, w, h, a, seed) => {
+    const z = zufall(seed), oben = [], unten = [];
+    for (let i = 0; i <= 8; i++) { const t = i / 8, dick = Math.sin(Math.PI * t) * h * (0.7 + z() * 0.5); oben.push([x + w * t, y - dick * 0.6]); unten.push([x + w * t, y + dick * 0.4]); }
+    return `<path d="${glatt([...oben, ...unten.reverse()], true, 0.9)}" fill="#f4f7f8" opacity="${a}"/>`;
+  };
+  let k = `<g filter="url(#${S.id("dunst")})">`;
+  k += band(-4, 128, 80, 5, 0.75, 1) + band(40, 140, 96, 4.5, 0.85, 2) + band(98, 126, 60, 3.6, 0.7, 3) + band(4, 160, 70, 4, 0.7, 4);
+  k += band(272, 150, 70, 4, 0.75, 5) + band(300, 162, 102, 5, 0.85, 6) + band(250, 140, 40, 3, 0.6, 7);
+  k += `</g><g filter="url(#${S.id("weich")})">`;
+  /* Fetzen ziehen am Fuß des Huayna Picchu hoch */
+  k += `<path d="M150 132 Q156 120 152 110 Q160 116 162 126 Q166 118 164 106 Q172 118 168 134 Z" fill="#f6f8f8" opacity=".55"/>`;
+  k += `<path d="M266 132 Q272 120 268 108 Q276 116 278 128 Z" fill="#f6f8f8" opacity=".45"/>`;
   k += `</g>`;
-  /* helle Oberkanten (Sonne von rechts oben) */
-  S.teil({ id: "nebel", de: "der Nebel", syl: "NE-bel", it: "la nebbia", itSyl: "NEB-bia", en: "mist", x: 80, y: 128, kunst: um(80, 128, k),
+  S.teil({ id: "nebel", de: "der Nebel", syl: "NE-bel", it: "la nebbia", itSyl: "NEB-bia", en: "mist", x: 80, y: 136, kunst: um(80, 136, kappeRand(k)),
     tipp: "Morgens steigt der Nebel aus der feuchten Schlucht. Gegen Mittag ist er meist verschwunden." });
 }
 
 /* =====================================================================
-   6 — DIE SERPENTINE (Straße Hiram Bingham) mit dem Bus
+   6 — DIE SERPENTINE (Straße Hiram Bingham) — vom Stadteingang hinab zur Brücke; die Kehren werden nach unten enger
    ===================================================================== */
-const SERP = [[402, 182], [356, 186], [384, 194], [338, 198], [372, 207], [328, 212], [360, 222], [320, 228]];
+const SERP = [[326, 190], [372, 192], [338, 202], [378, 206], [346, 214], [380, 220], [354, 228], [382, 236], [362, 242], [378, 247]];
 {
   let pfad = `M${SERP[0][0]} ${SERP[0][1]}`;
   for (let i = 1; i < SERP.length; i++) {
-    const [x0, y0] = SERP[i - 1], [x1, y1] = SERP[i], dir = x1 < x0 ? -1 : 1;
-    pfad += ` L${r(x1 - dir * 3)} ${r(y1 - 0.4)} Q${r(x1 - dir * 0.2)} ${r(y1)} ${r(x1 + dir * 0.4)} ${r(y1 + 2.2)}`;
+    const [x0, y0] = SERP[i - 1], [x1, y1] = SERP[i], dir = x1 < x0 ? -1 : 1, kr = 1.6 - i * 0.1;
+    pfad += ` L${r(x1 - dir * kr)} ${r(y1 - 0.3)} Q${r(x1 + dir * 0.4)} ${r(y1 + 0.1)} ${r(x1 - dir * 0.2)} ${r(y1 + kr)}`;
   }
-  let k = `<path d="${pfad}" stroke="#6b5a3e" stroke-width="2.6" fill="none" stroke-linejoin="round" opacity=".55" transform="translate(-.5 .7)"/>`;
-  k += `<path d="${pfad}" stroke="${S.lg("strasse", [[0, "#e4d6b4"], [1, "#c9b78e"]])}" stroke-width="2" fill="none" stroke-linejoin="round"/>`;
-  k += `<path d="${pfad}" stroke="#fffaf0" stroke-width=".45" fill="none" opacity=".6" transform="translate(.1 -.5)"/>`;
-  S.teil({ id: "serpentine", de: "die Serpentine", syl: "ser-pen-TI-ne", it: "il tornante", itSyl: "tor-NAN-te", en: "hairpin bend", x: 360, y: 205, kunst: um(360, 205, k),
-    tipp: "Die Straße Hiram Bingham windet sich in vielen Kurven vom Fluss hinauf. Busse bringen die Besucher nach oben." });
+  let k = `<path d="${pfad}" stroke="#2c3a28" stroke-width="1.7" fill="none" stroke-linejoin="round" opacity=".45" transform="translate(-.4 .5)"/>`;
+  k += `<path d="${pfad}" stroke="${S.lg("strasse", [[0, "#d6ccb2"], [1, "#b9ae92"]])}" stroke-width="1.25" fill="none" stroke-linejoin="round"/>`;
+  k += `<path d="${pfad}" stroke="#f6f0e0" stroke-width=".3" fill="none" opacity=".6" transform="translate(.1 -.35)"/>`;
+  S.teil({ id: "serpentine", de: "die Serpentine", syl: "ser-pen-TI-ne", it: "il tornante", itSyl: "tor-NAN-te", en: "hairpin bend", x: 356, y: 218, kunst: um(356, 218, k),
+    tipp: "Die Straße Hiram Bingham windet sich in 13 Kehren vom Fluss hinauf. Busse bringen die Besucher nach oben." });
 }
 
 /* =====================================================================

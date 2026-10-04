@@ -587,7 +587,7 @@ const fm = (a, g, laeden) => {
     for (let x = -12 + rnd() * 10; x < 330; x += dx + rnd() * 9) {
       const by = Math.min(nordY(x) + y0 + rnd() * 1.6, 186), g = g0 * (1 + (by - 176) * .015);
       dinge.push({ y: by, f: () => villa(x, by, g, 10 + rnd() * 5, 7.5 + rnd() * 1.5, 7.5 + rnd() * 1.2, 3 + rnd() * .9, WAND[Math.floor(rnd() * WAND.length)], DACH[Math.floor(rnd() * DACH.length)]) });
-      for (let t = 0; t < 2; t++) { const bx = Math.min(316, Math.max(4, x + dx * (.5 + rnd() * .4))), bb = by + 1.5 + rnd() * 1.6; dinge.push({ y: bb, f: () => baum(bx, bb, g * (.8 + rnd() * .4), rnd() < .3) }); }
+      for (let t = 0; t < 2; t++) { const bx = Math.min(316, Math.max(4, x + dx * (.5 + rnd() * .4))), bb = by - 2 - rnd() * 1.5; dinge.push({ y: bb, f: () => baum(bx, bb, g * (.8 + rnd() * .4), rnd() < .3) }); }
     }
   }
   { let hs = ""; dinge.sort((p, q) => p.y - q.y).forEach((o) => { hs += o.f(); }); k += `<path d="${SCHATTEN}" fill="#1e2a14" opacity=".3"/>` + hs; }
@@ -1050,7 +1050,7 @@ const WT = {};
     zoom: { x: 232, y: 158, w: 66, h: 44 },
     unter: [
       { id: "weintraube", de: "die Weintraube", syl: "WEIN-trau-be", it: "il grappolo d'uva", itSyl: "GRAP-po-lo DU-va", en: "bunch of grapes", x: WT.x, y: WT.y, kunst: flaeche(-2.4, -3, 4.8, 6.6, 0.6),
-        tipp: "Aus den Trauben vom Neckarhang wird Wein gemacht." },
+        tipp: "Im Herbst werden die Trauben am steilen Hang von Hand geerntet." },
     ] });
 }
 
