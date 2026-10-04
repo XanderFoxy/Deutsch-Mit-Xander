@@ -39,7 +39,16 @@ const BILD = process.env.BILD || "";
    Abschnitten von app.js — jede ist in SPIELSYSTEM.md (Fassung 840)
    einzeln aufgeführt. Eine weitere Stelle ist eine undokumentierte
    Änderung an der alten Bilderwelt. */
-const WEICHE_STELLEN = 15;   // FASSUNG 851: + Glas-Ebene „vorne“ in bwBildHtml; FASSUNG 852: + Mindest-Fangfläche in der Lupe (zwei Stellen), echte Umrisse über den Rändern
+const WEICHE_STELLEN = 25;   // FASSUNG 851: + Glas-Ebene „vorne“ in bwBildHtml; FASSUNG 852: + Mindest-Fangfläche in der Lupe (zwei Stellen), echte Umrisse über den Rändern
+/* FASSUNG 881 — XANDER (Funk 225): „an der alten Version soll nichts geändert werden“. 877/878 hatten
+   Bilderwelt-Stellen in app.js ohne Weiche geändert (Artikel-Modus, Lupenmarken, Zurück-Spur, Fangflächen,
+   Marken-Dach, Hinweis in der Lupe) – sie wirkten auch in der alten Bilderwelt. Jetzt ist jede davon eine
+   Weiche: alter Zweig wörtlich 53eaa31, neuer Zweig = 877/878. Zwei hängen an bestehenden Stellen
+   („Alle Szenen“ löscht die Lupe → renderBilderwelt; 8-%-Regel → MINDEST), zehn sind neu:
+   bwArtikelTrennen, teilHtml, bwDetailOeffnen, bwEinsZurueck, Artikel-Knopf, Lupenhinweis,
+   zweimal getBBox in bwBinden, Marken-Dach, bwNeueRunde. 15 + 10 = 25, einzeln aufgeführt in
+   SPIELSYSTEM.md (Fassung 840, Nachtrag „Weichenstellen seit 877/878“). Die Prüfung selbst ist
+   unverändert streng: jede Änderung markiert, jede alte Zeile wörtlich im ALT-Zweig. */
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
 
 let fehler = 0;
@@ -92,8 +101,11 @@ const lies = (f) => { const p = path.join(WURZEL, f); return fs.existsSync(p) ? 
   /* Die Abschnitte im alten app.js, von Kopfkommentar zu Kopfkommentar */
   const BEREICHE = [[zeileVon("DIE BILDERWELT — Räume, in denen jedes Ding anklickbar ist") - 1, zeileVon("DIE SAUBERE STIMME — ueberall da") - 2],
                     [zeileVon("     DAS BILDERRÄTSEL") - 1, zeileVon("WAS DIE APP KOSTET — offen aufgeschrieben") - 2],
-                    /* FASSUNG 852 — die Treffer-Ebenen der Bilderwelt stehen in bwBinden (hinter „DIE SAUBERE STIMME“) */
-                    [zeileVon("  function bwBinden(area) {"), zeileVon("  function bwAlleVorlesen() {") - 1]];
+                    /* FASSUNG 852 — die Treffer-Ebenen der Bilderwelt stehen in bwBinden (hinter „DIE SAUBERE STIMME“)
+                       FASSUNG 881 — der Abschnitt reicht jetzt bis vor „DER LERNWEG“: dahinter liegen noch Bilderwelt-
+                       Funktionen (bwAlleVorlesen, bwNeueRunde, bwFindenAntwort, bwArtikelAntwort, bwErgebnisZeichnen).
+                       877 hatte bwNeueRunde ungeprüft geändert (Artikel-Runde); die Prüfung ist damit strenger, nicht weicher. */
+                    [zeileVon("  function bwBinden(area) {"), zeileVon("     DER LERNWEG — „wo fange ich an") - 2]];
   const stuecke = [];
   diff.split("\n").forEach((z) => {
     const m = /^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@/.exec(z);

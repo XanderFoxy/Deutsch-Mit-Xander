@@ -2749,6 +2749,39 @@ XANDER (Funk 225, wörtlich): „für die Bilderwelt möchte ich meine alte Vers
 - **Sonde** `werkzeug/pruefe-840-bilderwelt-alt-neu.js` (`BILD=`, `WURZEL=`), 34 Punkte: 215 Dateien byte-gleich mit `53eaa31`, nichts Neues im alten Pfad, neue Bilderwelt vollständig, `.bk-chip` wie 812; `app.js` gegen `53eaa31` (Abschnitte „DIE BILDERWELT“ bis vor „DIE SAUBERE STIMME“ und „DAS BILDERRÄTSEL“): jede Änderung markiert, jede alte Zeile erhalten, genau 11 Stellen, die Weiche reicht nicht in andere Teile; im Browser bei 360 px: Standard alt (alte Figuren, keine Anfrage an `bilderwelt-neu/`, kein `mensch.js`), Szene, Lupe (Badezimmer → Dusche), Baukasten, Bilderrätsel; Link → neu (Bilderwelt öffnet sich wieder, Muskeltafel, Szene aus `bilderwelt-neu/` mit Iris, Baukasten mit `mensch.js`, Rätsel mit neuen Plätzen), die Wahl hält beim Neuladen, zurück auf alt, hält wieder; Link ≥ 30 px, nichts überlappt, kein Querscrollen, keine Seitenfehler. Gegenprobe am Stand vor 840 (`70d95f4`, Hardlink-Kopie): 9 rot, der Browser-Teil bricht ab (kein Link).
 - **Die Sonden 834/836/838** laden jetzt `index.html?bilderwelt=neu` und lesen `bilderwelt-neu/…`; alle drei grün. `pruefe-plaetze` (alt, Standard) 34/34.
 
+### Nachtrag (Fassung 881): Weichenstellen seit 877/878
+
+XANDER (Funk 225, wörtlich): „an der alten Version soll nichts geändert werden die möchte ich wieder genauso haben wie sie war“.
+
+- **Befund**: 877/878 hatten Bilderwelt-Stellen in `app.js` ohne Weiche geändert. Sie wirkten auch in der alten Bilderwelt: Artikel-Trennung, Artikel-Knopf und Artikel-Runde, Lupenmarken (`marke: [x, y]`, Marken in der Lupe), Zurück-Spur mit Lupe, „Alle Szenen“ löscht die Lupe, Fangflächen ohne Lupenmarke, 8-%-Regel, Marken-Dach, Hinweis in der Lupe. Gemessen am Arbeitsbaum von `53eaa31`: Die alte Bilderwelt hatte andere Fangflächen, zum Beispiel Dusche 61,1 statt 62,2 breit und den Küchentisch ab y 152 statt 121. Die Sonde 840 war rot (32 Stellen gefunden).
+- **Jetzt**: Jede dieser Stellen ist eine Weiche. Der alte Zweig steht wörtlich wie in `53eaa31`, der neue Zweig verhält sich wie 877/878. Der neue Code steht jeweils an seiner Stelle in den Funktionen, die 876 ohnehin auslagert. Der Start (min/app.js) wird dadurch nicht größer.
+- **Die vollständige Liste der Weichenstellen in `app.js`** (Zeilennummern des alten `app.js` von `53eaa31`, so wie die Sonde sie ausgibt): **25**.
+  - 1–11 aus 840 (siehe oben): alt Z. 88324, 88360, 88395, 88577, 88604, 88837, 96905, 96952, 96956, 96980, 97145.
+  - 12 aus 851: alt Z. 88841 (`szene.vorne`).
+  - 13–15 aus 852: alt Z. 89376 (`MINDEST`), 89426 (`MINDEST_OBEN`), 89437 (echte Umrisse über `oben`-Teilen).
+  - An bestehende Stellen angehängt (881, keine neue Stelle):
+    - alt Z. 88577 `renderBilderwelt`: `if (DMA_BILDERWELT_NEU && !bwSzene) bwZoom = null;` – „Alle Szenen“ löscht die Lupe. Die Zeile in `bwBinden` ist wieder wie in 812.
+    - alt Z. 89376: Die 8-%-Regel für Übersichtskarten steht jetzt direkt vor `MINDEST`.
+  - 16–25 neu (881):
+    16. alt Z. 88533 `bwArtikelTrennen`: `if (DMA_BILDERWELT_NEU) { … }` mit der Regel aus 877 („Indien“, „Italien“, „Leipzig“ werden nicht zerlegt). Darunter steht die alte Regel aus 812.
+    17. alt Z. 88774 `teilHtml` (in `bwBildHtml`): `const teilHtml = DMA_BILDERWELT_NEU ? (neuer Körper: marke: [x, y], Lupenmarken auch in der Lupe, um 1/k verkleinert) : ‹alter Körper wörtlich›`.
+    18. alt Z. 88865 `bwDetailOeffnen`: Nur neu merkt sich die Spur die Lupe in `bwSpur.lupen[i]`. `bwSpur` bleibt wie in 812 eine Liste von Szenen-Namen, deshalb sind `bwSpurHtml` und der Zurück-Knopf wieder wie in 812.
+    19. alt Z. 88878 `bwEinsZurueck`: Nur neu setzt „Zurück“ die gemerkte Lupe wieder.
+    20. alt Z. 88921 Artikel-Knopf: `${!DMA_BILDERWELT_NEU || ‹mindestens vier Wörter mit Artikel› ? ‹alter Knopf› : ""}`.
+    21. alt Z. 88940–88941 Hinweis in der Lupe: `${DMA_BILDERWELT_NEU ? ‹Hinweis mit „Tipp auf die Lupe an einem Ort …“› : `‹alter Ausdruck wörtlich›`}`.
+    22. alt Z. 89352 `bwBinden`, Fangflächen: `DMA_BILDERWELT_NEU ? (g > .bw-kunst).getBBox() : g.getBBox()`.
+    23. alt Z. 89413 `bwBinden`, obere Fangflächen: ebenso.
+    24. alt Z. 89439 `bwBinden`, Marken-Dach (877/878): `const marken = DMA_BILDERWELT_NEU ? … : []`.
+    25. alt Z. 89514 `bwNeueRunde`: Die Artikel-Runde nimmt nur in der neuen Bilderwelt nur Wörter mit Artikel.
+- **Sonde 840** (`werkzeug/pruefe-840-bilderwelt-alt-neu.js`), mit „FASSUNG 881 —“ markiert:
+  - Sie erwartet jetzt 25 Stellen.
+  - Der dritte geprüfte Abschnitt reicht jetzt von `bwBinden` bis vor „DER LERNWEG“ statt nur bis `bwAlleVorlesen`. Dahinter liegen weitere Bilderwelt-Funktionen (`bwNeueRunde`, `bwFindenAntwort`, `bwArtikelAntwort`, `bwErgebnisZeichnen`); 877 hatte `bwNeueRunde` dort ungeprüft geändert. Die Prüfung ist damit strenger.
+  - Die Regeln sind unverändert: Jede Änderung muss markiert sein, und jede alte Zeile muss wörtlich im ALT-Zweig stehen.
+- **Gegenprobe im Browser** (Arbeitsbaum `53eaa31` gegen jetzt, ohne `?bilderwelt=neu`): Badezimmer öffnen, Teil antippen, Artikel-Modus (mit festem Zufall), Antwort, Lupe Dusche, Zurück, „Alle Szenen“, Küche mit Lupe „Herd“.
+  - Der Inhalt von `#bilderweltArea` ist in jedem Schritt Zeichen für Zeichen gleich. Die einzige Ausnahme ist der italienische Satz in der Übersicht, der seit 843 fehlt.
+  - Derselbe Vergleich mit dem Stand vor 881 ergab 9 abweichende Schritte.
+- **Neue Bilderwelt unverändert**: Stand vor 881 gegen jetzt, mit `?bilderwelt=neu` und echten Mausklicks: Weltkarte → Rio → Zurück → Lupe Europa → Deutschland → Lupe Süden → München → Artikel → Zurück (Süden-Lupe) → Zurück (Europa-Lupe) → Alle Szenen → Weltkarte ganz; dazu Badezimmer, Teil, Artikel. In allen Schritten gleich.
+
 ## Fassung 818 — Italienischer Satzbaukasten (839) und Bilderwelt alt als Standard, neu per Link (838/840)
 
 - Enthält 839: Satzbaukasten nach italienischer Grammatik im Italienisch-Raum, Unsinn-Sperre mit Vorschlägen in beiden Sprachen, deutscher Baukasten aufgefüllt.

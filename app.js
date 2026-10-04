@@ -88820,14 +88820,18 @@
   const BW_ART_DE = ["der", "die", "das"];
   const BW_ART_IT = ["il", "lo", "la", "l'", "i", "gli", "le"];
   function bwArtikelTrennen(wort) {
-    /* FASSUNG 877 — Der Artikel braucht ein Leerzeichen dahinter (nur l'
-       klebt am Wort). Vorher wurde „Indien" zu „i | ndien", „Italien" zu
-       „i | talien" und „Leipzig" zu „le | ipzig" (Kritik der Übersichtskarten). */
-    const m = String(wort).match(/^(?:(der|die|das|il|lo|la|i|gli|le)\s+|(l'))(.+)$/i);
+    if (window.DMA_BILDERWELT_NEU) {   // FASSUNG 840: Weiche — FASSUNG 881 (Funk 225): die Regel aus 877 gilt nur in der neuen Bilderwelt
+      /* FASSUNG 877 — Der Artikel braucht ein Leerzeichen dahinter (nur l'
+         klebt am Wort). Vorher wurde „Indien" zu „i | ndien", „Italien" zu
+         „i | talien" und „Leipzig" zu „le | ipzig" (Kritik der Übersichtskarten). */
+      const n = String(wort).match(/^(?:(der|die|das|il|lo|la|i|gli|le)\s+|(l'))(.+)$/i);
+      return n ? { artikel: (n[1] || n[2]).toLowerCase(), rest: n[3] } : { artikel: null, rest: wort };
+    }
+    const m = String(wort).match(/^(der|die|das|il|lo|la|l'|i|gli|le)\s*(.+)$/i);
     if (!m) return { artikel: null, rest: wort };
     // l' klebt am Wort: „l'armadio"
-    const artikel = (m[1] || m[2]).toLowerCase();
-    return { artikel, rest: m[3] };
+    const artikel = m[1].toLowerCase();
+    return { artikel, rest: m[2] };
   }
   function bwArtikelAuswahl(richtig) {
     /* Nur Artikel anbieten, die es in dieser Sprache gibt — und im
@@ -88868,6 +88872,7 @@
     const area = document.getElementById("bilderweltArea");
     if (!area) return;
     bwVersionSchalter(area);   // FASSUNG 840: Weiche alte/neue Bilderwelt
+    if (window.DMA_BILDERWELT_NEU && !bwSzene) bwZoom = null;   // FASSUNG 840: Weiche — FASSUNG 877/881: „Alle Szenen“ löscht in der neuen Bilderwelt die Lupe, sonst öffnete die Karte beim nächsten Mal wieder in der alten Lupe
     if (!window.DMA_SZENEN) {
       area.innerHTML = '<p class="empty-note">Die Bilderwelt wird geladen …</p>';
       const ok = await szenenLaden();
@@ -89093,7 +89098,7 @@
       bwZoom.k = k; bwZoom.mx = mx; bwZoom.my = my;
     }
     const alleTeile = [...(szene.teile || []), ...bwZoomTeile(szene)];
-    const teilHtml = (t, istUnter) => {
+    const teilHtml = window.DMA_BILDERWELT_NEU ? (t, istUnter) => {   // FASSUNG 840: Weiche — FASSUNG 881 (Funk 225): die Lupenmarken aus 877/878 (marke: [x, y], Marken auch IN der Lupe) nur in der neuen Bilderwelt; darunter der alte Zweig wie in 812
       const klassen = ["bw-teil"];
       if (istUnter) klassen.push("bw-teil-unter");
       if (bwGewaehlt && bwGewaehlt.id === t.id) klassen.push("bw-teil-aktiv");
@@ -89128,6 +89133,51 @@
                    <line x1="17.8" y1="-14.2" x2="21.4" y2="-10.6" stroke="#8a5f2a" stroke-width="2.2" stroke-linecap="round"/>
                  </g>` : ""}
                 ${t.lupe && (!bwZoom || istUnter) ? `<g class="bw-lupenmarke" role="button" tabindex="0"${(bwZoom && bwZoom.k) || markeVersatz ? ` transform="${[bwZoom && bwZoom.k ? `scale(${(1 / bwZoom.k).toFixed(3)})` : "", markeVersatz].filter(Boolean).join(" ")}"` /* FASSUNG 877 — auch in der Lupe: Stadt in der Regionen-Lupe führt direkt in ihre Szene; fingerbreit trotz Vergrößerung */ : ""}
+                   data-bw-lupe-sofort="${t.lupe}"
+                   aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
+                   <title>🔍 Antippen: ${escapeHtml(bwWort(t))} ganz nah</title>
+                   <circle class="bw-lupen-tipp" cx="16" cy="-16" r="15" fill="transparent"/>
+                   <circle class="bw-lupen-puls" cx="16" cy="-16" r="10" fill="none" stroke="#f2b84b" stroke-width="2"/>
+                   <circle cx="16" cy="-16" r="8.5" fill="rgba(255,253,246,0.96)" stroke="#8a5f2a" stroke-width="2"/>
+                   <circle cx="14.8" cy="-17.2" r="4.2" fill="none" stroke="#8a5f2a" stroke-width="1.6"/>
+                   <line x1="17.8" y1="-14.2" x2="21.4" y2="-10.6" stroke="#8a5f2a" stroke-width="2.2" stroke-linecap="round"/>
+                 </g>` : ""}
+                ${eigenesBild
+                  ? `<image class="bw-eigenbild" href="${eigenesBild}" x="-22" y="-22"
+                            width="44" height="44" preserveAspectRatio="xMidYMid meet" />`
+                  : ""}
+              </g>`;
+    } : (t, istUnter) => {
+      const klassen = ["bw-teil"];
+      if (istUnter) klassen.push("bw-teil-unter");
+      if (bwGewaehlt && bwGewaehlt.id === t.id) klassen.push("bw-teil-aktiv");
+      if (treffer.has(t.id)) klassen.push("bw-teil-treffer");
+      else if (bwEntdeckt.has(t.id) && bwModus === "entdecken") klassen.push("bw-teil-entdeckt");
+      /* Hat jemand für dieses Ding ein eigenes Bild hochgeladen, wird
+         es darübergelegt — die Zeichnung bleibt in der Datei und kommt
+         zurück, sobald das eigene Bild wieder herausgenommen wird. */
+      const eigen = bildSchluessel(szene.id, t.id);
+      const eigenesBild = (typeof Bildverwaltung !== "undefined" && Bildverwaltung.hat(eigen))
+        ? Bildverwaltung.bild(eigen) : null;
+      if (eigenesBild) klassen.push("bw-teil-eigen");
+      const zeigtLupe = t.zoom && !bwZoom;
+      return `<g class="${klassen.join(" ")}" data-bw-teil="${t.id}"${t.oben ? ' data-bw-oben="1"' : ""}
+                 transform="translate(${t.x},${t.y})"
+                 role="button" tabindex="0"
+                 aria-label="${escapeHtml(bwWort(t))}">
+                <title>${escapeHtml(bwWort(t))}</title>
+                <g class="bw-kunst">${t.kunst || ""}</g>
+                ${zeigtLupe ? `<g class="bw-lupenmarke" role="button" tabindex="0"
+                   data-bw-zoom="${t.id}"
+                   aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
+                   <title>🔍 Antippen: näher an ${escapeHtml(bwWort(t))}</title>
+                   <circle class="bw-lupen-tipp" cx="16" cy="-16" r="15" fill="transparent"/>
+                   <circle class="bw-lupen-puls" cx="16" cy="-16" r="10" fill="none" stroke="#f2b84b" stroke-width="2"/>
+                   <circle cx="16" cy="-16" r="8.5" fill="rgba(255,253,246,0.96)" stroke="#8a5f2a" stroke-width="2"/>
+                   <circle cx="14.8" cy="-17.2" r="4.2" fill="none" stroke="#8a5f2a" stroke-width="1.6"/>
+                   <line x1="17.8" y1="-14.2" x2="21.4" y2="-10.6" stroke="#8a5f2a" stroke-width="2.2" stroke-linecap="round"/>
+                 </g>` : ""}
+                ${t.lupe && !bwZoom ? `<g class="bw-lupenmarke" role="button" tabindex="0"
                    data-bw-lupe-sofort="${t.lupe}"
                    aria-label="${escapeHtml(bwWort(t))} genauer ansehen">
                    <title>🔍 Antippen: ${escapeHtml(bwWort(t))} ganz nah</title>
@@ -89189,10 +89239,12 @@
   async function bwDetailOeffnen(zielId) {
     const ziel = await szeneUndLupenLaden(zielId);
     if (!ziel) return;
-    /* FASSUNG 877 — Die Spur merkt sich auch die Lupe: „Zurück" aus Lübeck
-       führt wieder in den Norden der Deutschlandkarte, nicht auf die ganze Karte. */
-    if (bwSzene) bwSpur.push({ id: bwSzene.id, zoom: bwZoom ? { teil: bwZoom.teil, box: bwZoom.box } : null });
+    /* FASSUNG 840: Weiche — FASSUNG 877/881 (Funk 225): nur in der neuen Bilderwelt merkt sich die Spur auch
+       die Lupe: „Zurück" aus Lübeck führt wieder in den Norden der Deutschlandkarte, nicht auf die ganze Karte.
+       bwSpur bleibt wie in 812 eine Liste von Szenen-Namen; die Lupe dazu steht an derselben Stelle in bwSpur.lupen. */
+    if (window.DMA_BILDERWELT_NEU) (bwSpur.lupen = bwSpur.lupen || [])[bwSpur.length] = bwSzene && bwZoom ? { id: bwSzene.id, teil: bwZoom.teil, box: bwZoom.box } : null;
     bwZoom = null;
+    if (bwSzene) bwSpur.push(bwSzene.id);
     bwSzene = ziel;
     bwModus = "entdecken";
     bwRunde = null;
@@ -89203,9 +89255,12 @@
   async function bwEinsZurueck() {
     bwZoom = null;
     const vorher = bwSpur.pop();
-    const vorherId = vorher && typeof vorher === "object" ? vorher.id : vorher;
-    bwSzene = vorherId ? await szeneLaden(vorherId) : null;
-    if (vorher && vorher.zoom) bwZoom = { teil: vorher.zoom.teil, box: vorher.zoom.box };
+    bwSzene = vorher ? await szeneLaden(vorher) : null;
+    if (window.DMA_BILDERWELT_NEU && bwSpur.lupen) {   // FASSUNG 840: Weiche — FASSUNG 877/881: „Zurück" landet wieder in der Lupe, aus der man kam (nur neue Bilderwelt)
+      const l = bwSpur.lupen[bwSpur.length];
+      bwSpur.lupen.length = bwSpur.length;
+      if (l && l.id === vorher && bwSzene && bwSzene.id === vorher) bwZoom = { teil: l.teil, box: l.box };
+    }
     bwModus = "entdecken";
     bwRunde = null;
     bwGewaehlt = null;
@@ -89214,7 +89269,7 @@
 
   function bwSpurHtml() {
     if (!bwSpur.length) return "";
-    const kette = bwSpur.map((e) => { const id = e && typeof e === "object" ? e.id : e; return (szeneMitId(id) || {}).titel || id; });
+    const kette = bwSpur.map((id) => (szeneMitId(id) || {}).titel || id);
     return `<p class="bw-spur">🔍 ${kette.map((t) => escapeHtml(t)).join(" › ")} › <strong>${escapeHtml(bwSzene.titel)}</strong></p>`;
   }
 
@@ -89241,14 +89296,14 @@
     area.innerHTML = `
       <div class="question-card bw-karte">
         <div class="bw-kopf">
-          <button type="button" class="btn btn-ghost bw-zurueck" id="bwZurueck">${bwSpur.length ? "← Zurück zu " + escapeHtml((szeneMitId((bwSpur[bwSpur.length - 1] || {}).id || bwSpur[bwSpur.length - 1]) || {}).titel || "") : "← Alle Szenen"}</button>
+          <button type="button" class="btn btn-ghost bw-zurueck" id="bwZurueck">${bwSpur.length ? "← Zurück zu " + escapeHtml((szeneMitId(bwSpur[bwSpur.length - 1]) || {}).titel || "") : "← Alle Szenen"}</button>
           <p class="eyebrow" style="margin:0;">${s.emoji} ${escapeHtml(s.titel)}</p>
         </div>
         ${bwSpurHtml()}
         <div class="order-toggle bw-modi">
           <button type="button" class="order-pill" data-bw-modus="entdecken" aria-selected="${bwModus === "entdecken"}">👆 Entdecken</button>
           <button type="button" class="order-pill" data-bw-modus="finden" aria-selected="${bwModus === "finden"}">🔍 Finden</button>
-          ${bwArtikelTeile(bwSzene).length >= 4 ? `<button type="button" class="order-pill" data-bw-modus="artikel" aria-selected="${bwModus === "artikel"}">🏷️ Artikel</button>` : "" /* FASSUNG 877 — erst ab vier Wörtern mit Artikel */}
+          ${!window.DMA_BILDERWELT_NEU || (bwSzene.teile || []).filter((t) => bwArtikelTrennen(bwWort(t)).artikel).length >= 4 ? `<button type="button" class="order-pill" data-bw-modus="artikel" aria-selected="${bwModus === "artikel"}">🏷️ Artikel</button>` : "" /* FASSUNG 840: Weiche — FASSUNG 877/881: in der neuen Bilderwelt erst ab vier Wörtern mit Artikel (Karten: Länder und Regionen haben keinen) */}
         </div>
         ${bwAnsichtReiheHtml(bwSzene)}
         ${/* GEWUENSCHT: „…und mit dem Baukasten der Bilderwelt, dass
@@ -89267,8 +89322,8 @@
                 Teilbereiche anklicken kann." Deshalb steht hier jetzt
                 ausdrücklich, was die blinkenden Lupen bedeuten — und wie
                 viele es in diesem Bild sind. */ ""}
-          ${bwZoom ? `<p class="bw-lupenhinweis">🔍 Du bist ganz nah dran. ${bwZoomTeile(s).some((u) => u.lupe) ? "Tipp auf die Lupe an einem Ort – dann gehst du hinein" /* FASSUNG 877 — Karten: Städte in der Regionen-Lupe führen weiter */ : "Tipp die Einzelteile an"} — oder auf den grauen Rand, um wieder das ganze Bild zu sehen.
-            <span class="bw-lupenliste"><button type="button" class="bw-lupenchip" id="bwZoomRaus">← Wieder herauszoomen</button></span></p>` : ""}
+          ${window.DMA_BILDERWELT_NEU /* FASSUNG 840: Weiche — FASSUNG 877/881: in der neuen Bilderwelt führen auf den Karten die Orte in der Regionen-Lupe weiter */ ? (bwZoom ? `<p class="bw-lupenhinweis">🔍 Du bist ganz nah dran. ${bwZoomTeile(s).some((u) => u.lupe) ? "Tipp auf die Lupe an einem Ort – dann gehst du hinein" : "Tipp die Einzelteile an"} — oder auf den grauen Rand, um wieder das ganze Bild zu sehen.\n            <span class="bw-lupenliste"><button type="button" class="bw-lupenchip" id="bwZoomRaus">← Wieder herauszoomen</button></span></p>` : "") : `${bwZoom ? `<p class="bw-lupenhinweis">🔍 Du bist ganz nah dran. Tipp die Einzelteile an — oder auf den grauen Rand, um wieder das ganze Bild zu sehen.
+            <span class="bw-lupenliste"><button type="button" class="bw-lupenchip" id="bwZoomRaus">← Wieder herauszoomen</button></span></p>` : ""}` /* FASSUNG 840: Weiche */}
           ${!bwZoom && bwLupenZahl(s) ? `<p class="bw-lupenhinweis">🔍 ${bwLupenZahl(s) === 1
               ? "In diesem Bild blinkt eine Lupe. Tipp direkt darauf — dann gehst du hinein und siehst die Einzelteile."
               : `In diesem Bild blinken ${bwLupenZahl(s)} Lupen. Tipp direkt auf eine — dann gehst du hinein und siehst die Einzelteile.`}
@@ -89562,9 +89617,7 @@
     umgangsSchalterBinden(area, renderBilderwelt);
     document.getElementById("bwZurueck")?.addEventListener("click", () => {
       if (bwSpur.length) { bwEinsZurueck(); return; }
-      bwSzene = null; bwRunde = null; bwGewaehlt = null;
-      bwZoom = null; // FASSUNG 877 — sonst öffnete die Karte beim nächsten Mal wieder in der alten Lupe
-      renderBilderwelt();
+      bwSzene = null; bwRunde = null; bwGewaehlt = null; renderBilderwelt();
     });
     area.querySelectorAll("[data-bw-lupe]").forEach((b) => b.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -89681,7 +89734,7 @@
       const kaesten = [];
       svg.querySelectorAll("[data-bw-teil]").forEach((g) => {
         try {
-          const k = (g.querySelector(":scope > .bw-kunst") || g).getBBox();   // FASSUNG 877 — ohne Lupenmarke messen, sonst wächst das Fangrechteck um die Marke und stößt an Nachbarn (Karten-Kritik A1)
+          const k = window.DMA_BILDERWELT_NEU ? (g.querySelector(":scope > .bw-kunst") || g).getBBox() : g.getBBox();   // FASSUNG 840: Weiche — FASSUNG 877/881: in der neuen Bilderwelt ohne Lupenmarke messen, sonst wächst das Fangrechteck um die Marke und stößt an Nachbarn (Karten-Kritik A1)
           if (!(k.width > 0 && k.height > 0)) return;
           const m = (g.getAttribute("transform") || "").match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
           const vx = m ? +m[1] : 0, vy = m ? +m[2] : 0;
@@ -89690,18 +89743,6 @@
         } catch (e) { /* ohne Trefferfläche geht es auch, nur fummeliger */ }
       });
       kaesten.sort((a, b) => b.gross - a.gross);
-      /* FASSUNG 877 — Sehr große Teile (mehr als 8 % des Bildes: Regionen,
-         Meere, Kontinente) bekommen kein Ersatzrechteck: ihr Rechteck fing
-         das Ausland („Straßburg → der Süden", „Groningen → die Nordsee").
-         Sie fangen nur mit ihrer echten Form.
-         FASSUNG 878 — nur auf Übersichtskarten (Szene mit nurForm oder Name auf „karte"):
-         im Supermarkt ist das Regal genauso groß, aber von den Waren zugedeckt — ohne
-         sein Rechteck war es gar nicht mehr anzutippen. */
-      if (window.DMA_BILDERWELT_NEU && bwSzene && (bwSzene.nurForm || /karte$/.test(bwSzene.id))) {
-        const vbx = (svg.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
-        const bildFl = (vbx[2] || 0) * (vbx[3] || 0);
-        if (bildFl > 0) for (let i = kaesten.length - 1; i >= 0; i--) if (kaesten[i].gross > bildFl * 0.08) kaesten.splice(i, 1);
-      }
       /* JEDE FANGFLÄCHE IST MINDESTENS FINGERBREIT.
          ---------------------------------------------------------
          GEMELDET: „Die Sachen sollen auswählbar sein und sich nicht
@@ -89717,6 +89758,19 @@
          deshalb auf ein Mindestmass gebracht, um ihre Mitte herum. Am
          Bild ändert sich nichts; nur der Bereich, in dem ein Tipp noch
          zählt, ist so gross, wie eine Fingerkuppe nun einmal ist. */
+      /* FASSUNG 840: Weiche — FASSUNG 881: steht seit 881 hier bei der Weiche MINDEST (nur neue Bilderwelt).
+         FASSUNG 877 — Sehr große Teile (mehr als 8 % des Bildes: Regionen,
+         Meere, Kontinente) bekommen kein Ersatzrechteck: ihr Rechteck fing
+         das Ausland („Straßburg → der Süden", „Groningen → die Nordsee").
+         Sie fangen nur mit ihrer echten Form.
+         FASSUNG 878 — nur auf Übersichtskarten (Szene mit nurForm oder Name auf „karte"):
+         im Supermarkt ist das Regal genauso groß, aber von den Waren zugedeckt — ohne
+         sein Rechteck war es gar nicht mehr anzutippen. */
+      if (window.DMA_BILDERWELT_NEU && bwSzene && (bwSzene.nurForm || /karte$/.test(bwSzene.id))) {
+        const vbx = (svg.getAttribute("viewBox") || "").split(/[\s,]+/).map(Number);
+        const bildFl = (vbx[2] || 0) * (vbx[3] || 0);
+        if (bildFl > 0) for (let i = kaesten.length - 1; i >= 0; i--) if (kaesten[i].gross > bildFl * 0.08) kaesten.splice(i, 1);
+      }
       const MINDEST = window.DMA_BILDERWELT_NEU ? Math.max(14, Math.round(sgBreite(svg) * 0.055)) / (svg.classList.contains("bw-bild-zoom") && bwZoom && bwZoom.k > 1 ? bwZoom.k : 1) : Math.max(14, Math.round(sgBreite(svg) * 0.055));   // FASSUNG 840: Weiche — FASSUNG 852: die Flächen liegen in der vergrößerten Gruppe; in der Lupe wuchsen sie mit und deckten sich gegenseitig zu (Funk 286: „dass sich nichts mehr blockiert“). Geteilt durch die Vergrößerung bleiben sie fingerbreit.
       kaesten.forEach((o) => {
         const feld = document.createElementNS(ns, "rect");
@@ -89754,7 +89808,7 @@
       const obenTeile = [];
       svg.querySelectorAll("[data-bw-teil][data-bw-oben]").forEach((g) => {
         try {
-          const k = (g.querySelector(":scope > .bw-kunst") || g).getBBox();   // FASSUNG 877 — ohne Lupenmarke messen, sonst wächst das Fangrechteck um die Marke und stößt an Nachbarn (Karten-Kritik A1)
+          const k = window.DMA_BILDERWELT_NEU ? (g.querySelector(":scope > .bw-kunst") || g).getBBox() : g.getBBox();   // FASSUNG 840: Weiche — FASSUNG 877/881: in der neuen Bilderwelt ohne Lupenmarke messen, sonst wächst das Fangrechteck um die Marke und stößt an Nachbarn (Karten-Kritik A1)
           if (!(k.width > 0 && k.height > 0)) return;
           const m = (g.getAttribute("transform") || "").match(/translate\(([-\d.]+),\s*([-\d.]+)\)/);
           const vx = m ? +m[1] : 0, vy = m ? +m[2] : 0;
@@ -89782,11 +89836,12 @@
         if (window.DMA_BILDERWELT_NEU) obenTeile.forEach((o) => { const echt = document.createElementNS(ns, "rect"); echt.setAttribute("data-bw-treff", o.id); echt.setAttribute("x", o.x.toFixed(1)); echt.setAttribute("y", o.y.toFixed(1)); echt.setAttribute("width", o.w.toFixed(1)); echt.setAttribute("height", o.h.toFixed(1)); echt.setAttribute("fill", "transparent"); dach.appendChild(echt); });   // FASSUNG 840: Weiche — FASSUNG 852: über den fingerbreiten Rändern noch die echten Umrisse (groß unten, klein oben): wer auf die Tischplatte tippt, bekommt die Tischplatte, nicht die Kante daneben, deren Rand darüber reicht
         heim.appendChild(dach);
       }
-      /* FASSUNG 877 — Lupenmarken gewinnen immer: eine dritte Ebene ganz oben
+      /* FASSUNG 840: Weiche — FASSUNG 881 (Funk 225): das Marken-Dach gibt es nur in der neuen Bilderwelt.
+         FASSUNG 877 — Lupenmarken gewinnen immer: eine dritte Ebene ganz oben
          mit einem durchsichtigen Kreis über jeder sichtbaren Marke. Vorher
          lag das „oben"-Rechteck eines Lupen-Teils über seiner eigenen Marke,
          der Tipp öffnete nur die Wortkarte statt die Stadt (Karten-Kritik A1). */
-      const marken = svg.querySelectorAll(".bw-lupenmarke[data-bw-lupe-sofort] .bw-lupen-tipp");
+      const marken = window.DMA_BILDERWELT_NEU ? svg.querySelectorAll(".bw-lupenmarke[data-bw-lupe-sofort] .bw-lupen-tipp") : [];
       if (marken.length && heim.getCTM) {
         const markenDach = document.createElementNS(ns, "g");
         markenDach.setAttribute("class", "bw-marken-dach");
@@ -89896,14 +89951,8 @@
     });
   }
 
-  /* FASSUNG 877 — Im Artikel-Spiel nur Wörter mit Artikel. Auf den Karten
-     haben Kontinente, Länder und Regionen keinen; vorher hieß die Lösung
-     dann „Richtig ist null Amerika". */
-  function bwArtikelTeile(szene) {
-    return (szene.teile || []).filter((t) => bwArtikelTrennen(bwWort(t)).artikel);
-  }
   function bwNeueRunde() {
-    const teile = bwModus === "artikel" ? bwArtikelTeile(bwSzene) : bwSzene.teile.slice();
+    const teile = window.DMA_BILDERWELT_NEU && bwModus === "artikel" ? bwSzene.teile.filter((t) => bwArtikelTrennen(bwWort(t)).artikel) : bwSzene.teile.slice();   // FASSUNG 840: Weiche — FASSUNG 877/881: im Artikel-Spiel der neuen Bilderwelt nur Wörter mit Artikel (sonst „Richtig ist null Amerika")
     // Durchmischen und auf die Rundenlänge kürzen — bei kleinen Szenen
     // eben so viele Aufgaben, wie es Dinge gibt.
     for (let i = teile.length - 1; i > 0; i--) {
