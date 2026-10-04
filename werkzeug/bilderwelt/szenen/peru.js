@@ -611,14 +611,27 @@ const STADT = {};
   let st = `<path d="M${T.x - 8.4} ${T.y} Q${T.x - 9} ${T.y - 4} ${T.x - 5} ${T.y - 7} Q${T.x - 1} ${T.y - 8.6} ${T.x + 4} ${T.y - 7.6} Q${T.x + 8} ${T.y - 6} ${T.x + 9} ${T.y} Z" fill="${S.lg("torreonfels", [[0, "#6f685e"], [0.6, "#a39a8a"], [1, "#c9bfac"]], 0, 0, 1, 0)}"/>`;
   st += `<path d="M${T.x - 3} ${T.y} L${T.x - 2.2} ${T.y - 3.4} Q${T.x} ${T.y - 4.4} ${T.x + 2} ${T.y - 3.2} L${T.x + 2.6} ${T.y} Z" fill="#2a2520"/>`;
   st += `<path d="M${T.x - 4.4} ${T.y - 2.6} l1.4 -.6 M${T.x + 4.4} ${T.y - 2.2} l-1.2 -1" stroke="#4a443c" stroke-width=".3"/>`;
-  /* halbrunde Mauer: Innenseite (dunkler) oben sichtbar, Außenseite hell und fein gefugt */
-  st += `<path d="M${T.x - 5.6} ${T.y - 12.2} Q${T.x + 0.4} ${T.y - 16.4} ${T.x + 6.4} ${T.y - 12.2} Q${T.x + 0.4} ${T.y - 13.6} ${T.x - 5.6} ${T.y - 12.2} Z" fill="#6b645a"/>`;
-  st += `<path d="M${T.x - 5.6} ${T.y - 6.4} L${T.x - 5.6} ${T.y - 12.2} Q${T.x + 0.4} ${T.y - 13.6} ${T.x + 6.4} ${T.y - 12.2} L${T.x + 6.4} ${T.y - 5.4} Q${T.x + 0.4} ${T.y - 8} ${T.x - 5.6} ${T.y - 6.4} Z" fill="${S.lg("torreon", [[0, "#a39a8a"], [0.45, "#ddd5c4"], [0.8, "#f0e8d6"], [1, "#d6ccb8"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 1; i < 7; i++) { const yy = T.y - 6.4 - i * 0.85; st += `<path d="M${T.x - 5.6} ${r(yy)} Q${T.x + 0.4} ${r(yy - 1.6)} ${T.x + 6.4} ${r(yy + 0.9)}" stroke="#aaa18f" stroke-width=".1" fill="none"/>`; }
-  for (const [x0, x1] of [[-1.4, -0.3], [2.4, 3.4]]) st += `<path d="M${r(T.x + x0)} ${r(T.y - 8.8)} L${r(T.x + x0 + 0.16)} ${r(T.y - 10.7)} L${r(T.x + x1 - 0.16)} ${r(T.y - 10.8)} L${r(T.x + x1)} ${r(T.y - 8.9)} Z" fill="#3a332b"/>`;
-  st += `<path d="M${T.x - 5.6} ${T.y - 12.2} Q${T.x + 0.4} ${T.y - 13.6} ${T.x + 6.4} ${T.y - 12.2}" stroke="#fffaf0" stroke-width=".3" fill="none"/>`;
+  /* halbrunde Mauer, nach hinten rechts offen: vorn links die gewölbte Außenseite, hinten links sieht man
+     die Innenseite im Morgenlicht, innen liegt der Granitfelsen frei */
+  {
+    const cx = T.x + 0.4, y0 = T.y - 6.6, rx = 6, ry = 2, hw = 6.2;
+    const pt = (g, l) => [cx + rx * Math.cos(g * Math.PI / 180), y0 + ry * Math.sin(g * Math.PI / 180) - l];
+    const bogen = (g0, g1, l) => { const o = []; for (let g = g0; g0 < g1 ? g <= g1 + 0.1 : g >= g1 - 0.1; g += g0 < g1 ? 15 : -15) o.push(pt(g, l)); return o; };
+    st += `<ellipse cx="${r(cx)}" cy="${r(y0)}" rx="${rx}" ry="${ry}" fill="#a89f8e"/><path d="M${r(cx - 2)} ${r(y0 - 0.6)} l2.4 .8 M${r(cx + 1.4)} ${r(y0 + 0.4)} l1.6 -.6" stroke="#7d7568" stroke-width=".2"/>`;
+    st += `<path d="${P([...bogen(180, 255, hw), ...bogen(255, 180, 0)])}" fill="${S.lg("torinnen", [[0, "#cfc6b3"], [1, "#efe7d5"]], 0, 0, 1, 0)}"/>`;
+    st += `<path d="${P([...bogen(30, 180, hw), ...bogen(180, 30, 0)])}" fill="${S.lg("torreon", [[0, "#a39a8a"], [0.45, "#ddd5c4"], [0.8, "#f0e8d6"], [1, "#d6ccb8"]], 1, 0, 0, 0)}"/>`;
+    let fu = ""; for (let l = 0.9; l < hw; l += 0.9) fu += P(bogen(30, 180, l), false);
+    st += `<path d="${fu}" stroke="#aaa18f" stroke-width=".1" fill="none"/>`;
+    /* zwei Trapezfenster in der Rundung */
+    let fe = ""; for (const g of [72, 122]) { const [fx, fy] = pt(g, 2.6); fe += `M${r(fx - 0.55)} ${r(fy + 0.9)}l.16 -1.9h.78l.16 1.9Z`; }
+    st += `<path d="${fe}" fill="#3a332b"/>`;
+    /* Mauerkrone und das helle Mauerende vorn rechts */
+    st += `<path d="${P(bogen(30, 255, hw), false)}" stroke="#fbf4e2" stroke-width=".45" fill="none"/>`;
+    const e0 = pt(30, 0), e1 = pt(30, hw);
+    st += `<path d="${P([e0, e1, [e1[0] - 0.5, e1[1] - 0.3], [e0[0] - 0.5, e0[1] - 0.3]])}" fill="#f6efdf"/>`;
+  }
   /* rechteckige Wand mit Trapezfenster daneben */
-  st += `<path d="M${T.x + 6.4} ${T.y - 5.4} h6 v-5.4 h-6 Z" fill="${GRANIT_F}"/><path d="M${T.x + 8.6} ${T.y - 6.8} l.3 -2.4 h1.4 l.3 2.4 Z" fill="#3a332b"/><path d="M${T.x + 6.4} ${T.y - 10.8} h6" stroke="#ece4d2" stroke-width=".3"/>`;
+  st += `<path d="M${T.x + 7.4} ${T.y - 5.4} h6 v-5.4 h-6 Z" fill="${GRANIT_F}"/><path d="M${T.x + 9.6} ${T.y - 6.8} l.3 -2.4 h1.4 l.3 2.4 Z" fill="#3a332b"/><path d="M${T.x + 7.4} ${T.y - 10.8} h6" stroke="#ece4d2" stroke-width=".3"/>`;
   st += haus(T.x + 13, T.y - 0.6, 7.4, 3.6, 6, 2.6, "front", false, 1) + haus(T.x - 16, T.y + 1.4, 7.4, 3.8, 6, 2.8, "seite", false, 1);
   STADT.sonne = { x: T.x + 0.4, y: T.y - 9 };
   /* Treppe zwischen Westsektor und Platz: nicht schnurgerade, mit Absatz */

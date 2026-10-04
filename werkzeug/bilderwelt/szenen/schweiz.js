@@ -365,20 +365,23 @@ let MITTE = "";
   MITTE += `<path d="${pp([...rand, [300, 140], [110, 140]])}" fill="${S.lg("hirli", [[0, "#9a9a92"], [0.4, "#868a7a"], [1, "#6c7660"]])}"/>`;
   /* drei Felsrippen (Licht links, Schatten rechts) laufen vom Grat ins Tal */
   let rl = "", rs = "";
+  const zr = zufall(612);
   for (const [x0, y0, x1, w] of [[150, 100.6, 140, 4.4], [176, 97.2, 168, 4.8], [198, 92.8, 196, 4.2], [240, 96, 248, 4.6], [262, 101.6, 274, 4.4]]) {
-    const y1 = 130, mx = (x0 + x1) / 2 + (x0 < 216 ? -2 : 2);
-    rl += `M${x0} ${y0} Q${r(mx - w * 0.5)} ${r((y0 + y1) / 2)} ${r(x1 - w)} ${y1} L${r(x1)} ${y1} Q${r(mx + 0.2)} ${r((y0 + y1) / 2)} ${x0 + 0.3} ${y0} Z`;
-    rs += `M${x0 + 0.3} ${y0} Q${r(mx + 0.2)} ${r((y0 + y1) / 2)} ${r(x1)} ${y1} L${r(x1 + w * 0.9)} ${y1} Q${r(mx + w * 0.6)} ${r((y0 + y1) / 2)} ${x0 + 0.6} ${y0} Z`;
+    /* Rippe als gewundener Grat: Mittellinie mit Knicken, Lichtseite links, Schattenseite rechts, nach unten breiter */
+    const mL = [], lL = [], rR = [];
+    for (let i = 0; i <= 6; i++) { const t = i / 6, x = x0 + (x1 - x0) * t + Math.sin(t * 5 + x0) * 1.6 + (zr() - 0.5) * 0.8, y = y0 + (130 - y0) * t, ww = w * (0.15 + 0.85 * t) * (0.7 + zr() * 0.5); mL.push([x, y]); lL.push([x - ww, y + ww * 0.3]); rR.push([x + ww * 0.9, y + ww * 0.2]); }
+    rl += "M" + mL.map(pt).join(" L") + " L" + lL.slice().reverse().map(pt).join(" L") + " Z";
+    rs += "M" + mL.map(pt).join(" L") + " L" + rR.slice().reverse().map(pt).join(" L") + " Z";
   }
-  MITTE += `<path d="${rl}" fill="#cfc9b8" opacity=".7"/><path d="${rs}" fill="#43474a" opacity=".5"/>`;
+  MITTE += `<path d="${rl}" fill="#c9c4b4" opacity=".55"/><path d="${rs}" fill="#43474a" opacity=".42"/>`;
   /* Gletscher: Furgggletscher links, Matterhorngletscher rechts — blaugraue Zunge, Spalten, graue Moräne */
   const gl = (pts, spalten) => `<path d="${pp(pts)}" fill="${S.lg("gletscher", [[0, "#f2f5fa"], [0.7, "#d3dfec"], [1, "#a9bccf"]])}"/><path d="${spalten}" stroke="#8ea4bc" stroke-width=".35" fill="none"/>`;
   MITTE += gl([[226, 92.4], [238, 93.2], [250, 95.6], [262, 98.6], [276, 102.4], [270, 104.4], [258, 102.2], [244, 99.8], [232, 97.6]], "M236 95.2 Q240 96.4 238 97.8 M246 97 Q250 98.4 248 99.8 M256 99.4 Q259 100.6 258 101.8 M265 101 Q268 102 266 103");
   MITTE += gl([[160, 96.6], [172, 94.6], [184, 93.4], [196, 91.8], [206, 91.2], [204, 93.4], [194, 95.6], [180, 97.6], [166, 98.6]], "M172 95.6 Q170 96.8 172 97.6 M182 94.6 Q180 95.8 182 96.8 M192 93.4 Q190 94.6 192 95.4");
   MITTE += `<path d="M164 98.6 Q182 97.8 196 95.8 L206 93.6 L206 94.8 Q190 98 166 100 Z M232 97.8 Q252 101 270 104.6 L268 105.6 Q250 102.4 230 99 Z" fill="#7d7a72" opacity=".55"/>`;
-  /* Moränenwälle unter den Gletscherzungen: heller Kamm, Schatten darunter */
-  const mor = "M158 103.4 Q180 100.6 206 97.2 M228 100.6 Q250 104.4 274 108.6 M170 106.8 Q188 104.6 204 101.6";
-  MITTE += `<path d="${mor}" stroke="#4e4c48" stroke-width="1.1" fill="none" opacity=".35" transform="translate(0 .6)"/><path d="${mor}" stroke="#cfcac0" stroke-width=".7" fill="none" opacity=".8"/>`;
+  /* Moränenwälle: geschwungene Kämme unter den Gletscherzungen (heller Kamm, Schatten darunter) */
+  const mor = "M160 101.4 Q172 104.6 186 101.6 Q196 99.6 205 96.4 M230 100 Q246 106 262 105.4 Q270 105.6 276 108.4";
+  MITTE += `<path d="${mor}" stroke="#4e4c48" stroke-width="1.3" fill="none" opacity=".3" transform="translate(0 .7)"/><path d="${mor}" stroke="#bdb8ad" stroke-width=".8" fill="none" opacity=".75"/>`;
   /* Luftperspektive: Sockel blauer und heller */
   MITTE += `<path d="${pp([...rand, [300, 140], [110, 140]])}" fill="${S.lg("hirlidunst", [[0, "#bccbe0", 0.18], [0.5, "#bccbe0", 0.35], [1, "#c4d2e6", 0.62]])}"/>`;
 }
@@ -419,7 +422,7 @@ let HANG_L = "", HANG_R = "", WALD_MITTE = "";
   WALD_MITTE = `<path d="${pp(mitte)}" fill="${S.lg("waldmitte", [[0, "#5f7652"], [1, "#3e5a38"]])}"/><path d="${pp(mitte)}" fill="url(#${S.id("waldK")})" opacity=".6"/>`;
   /* Großform: Rippen (heller) und Rinnen (dunkler) laufen den Hang hinab; unten größere Bäume (Texturgradient) */
   WALD_MITTE += `<path d="M150 172 L282 172 L282 146 Q212 138 150 146 Z" fill="url(#${S.id("waldG")})" opacity=".45"/>`;
-  WALD_MITTE += `<path d="M184 113 Q180 136 172 172 L180 172 Q186 138 189 112.6 Z M226 109.6 Q232 136 244 172 L252 172 Q240 136 231 110 Z" fill="#8aa070" opacity=".35"/><path d="M204 110.4 Q206 140 204 172 L208 172 Q210 140 207 110.2 Z M252 114 Q258 140 268 172 L271 172 Q262 140 255 115 Z" fill="#1e3424" opacity=".4"/>`;
+  WALD_MITTE += `<path d="M184 113 Q180 136 172 172 L180 172 Q186 138 189 112.6 Z M226 109.6 Q232 136 244 172 L252 172 Q240 136 231 110 Z" fill="#9ab07e" opacity=".55"/><path d="M204 110.4 Q206 140 204 172 L208 172 Q210 140 207 110.2 Z M252 114 Q258 140 268 172 L271 172 Q262 140 255 115 Z" fill="#1e3424" opacity=".55"/>`;
   /* goldene Lärchen in den Hang eingebettet: ihr unterer Rand verschwindet im Wald davor */
   WALD_MITTE += gruppe(178, 124, 12, 4, 16, 31, 1.3, false) + gruppe(238, 122, 14, 4, 18, 32, 1.3, true);
   WALD_MITTE += `<path d="M170 125.4 Q178 124.2 186 125.6 L186 128 L170 128 Z M229 123.6 Q238 122 247 123.8 L247 126.4 L229 126.4 Z" fill="#45603e"/><path d="M170 125.4 Q178 124.2 186 125.6 L186 128 L170 128 Z M229 123.6 Q238 122 247 123.8 L247 126.4 L229 126.4 Z" fill="url(#${S.id("waldK")})" opacity=".6"/>`;
