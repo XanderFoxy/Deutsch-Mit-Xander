@@ -231,8 +231,8 @@ const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.15 ? baum(x, y, gr
   for (let i = 0; i < 36; i++) {
     const { e, n, zt, zb } = felsPunkt(rnd()), z = zb + rnd() * (zt - zb - 1), [x, y, u] = pr(e, n, z);
     if (x > 394 || x < 4) continue;
-    const w = (1.5 + rnd() * 3) * u, h = (1.5 + rnd() * 3) * u, kx = x + w * 0.45;
-    k += `<path d="M${r(x)} ${r(y)} L${r(kx - w * 0.1)} ${r(y - h)} L${r(kx)} ${r(y + h * 0.1)} Z" fill="#dcb486" opacity=".7"/><path d="M${r(kx - w * 0.1)} ${r(y - h)} L${r(x + w)} ${r(y - h * 0.2)} L${r(x + w * 0.9)} ${r(y + h * 0.15)} L${r(kx)} ${r(y + h * 0.1)} Z" fill="#8a7a8e" opacity=".5"/>`;
+    const w = (2.5 + rnd() * 4) * u, h = (0.8 + rnd() * 1.5) * u, q = rnd();
+    k += `<path d="M${r(x)} ${r(y)} L${r(x + w * 0.12)} ${r(y - h * (0.5 + q * 0.3))} L${r(x + w * (0.45 + q * 0.2))} ${r(y - h)} L${r(x + w * 0.78)} ${r(y - h * 0.45)} L${r(x + w * 0.7)} ${r(y + h * 0.12)} Z" fill="#dcb486" opacity=".6"/><path d="M${r(x + w * 0.78)} ${r(y - h * 0.45)} L${r(x + w)} ${r(y - h * 0.2)} L${r(x + w * 0.95)} ${r(y + h * 0.25)} L${r(x + w * 0.7)} ${r(y + h * 0.12)} Z" fill="#8a7a8e" opacity=".45"/>`;
   }
   /* Klüfte: dunkle unregelmäßige Risse, oben breiter, nach unten auslaufend; helle Kante nur westlich, oben */
   for (let i = 0; i < 28; i++) {

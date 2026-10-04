@@ -177,7 +177,8 @@ function krone(x, cy, rx, ry, seed, o) {
   let g = lage(0, 0, 1, farben[0]) + lage(lx * R * 0.06, -R * 0.07, 0.9, farben[1]) + lage(lx * R * 0.17, -R * 0.18, 0.68, farben[2]) + lage(lx * R * 0.28, -R * 0.3, 0.4, farben[3]);
   /* Astlücken auf der Schattenseite und unten, mit einem Ast darin */
   for (let i = 0; i < 3; i++) {
-    const a = Math.PI * (i === 0 ? 0.25 + z() * 0.3 : (lx > 0 ? 0.65 : 0.05) + z() * 0.3) + (i === 2 ? -Math.PI * 0.55 * lx : 0), gx = x + Math.cos(a) * rx * 0.55, gy = cy + Math.sin(a) * ry * 0.5, w = R * (0.07 + z() * 0.04);
+    /* Lücken nur unten und auf der Schattenseite, wo die Krone ohnehin dunkel ist */
+    const a = Math.PI * (lx > 0 ? 0.45 + i * 0.22 + z() * 0.1 : 0.55 - i * 0.22 - z() * 0.1), gx = x + Math.cos(a) * rx * 0.68, gy = cy + Math.sin(a) * ry * 0.6, w = R * (0.07 + z() * 0.04);
     g += `<path d="M${r(gx - w)} ${r(gy)} q${r(w * 0.3)} ${r(-w * 0.8)} ${r(w * 1.1)} ${r(-w * 0.6)} q${r(w * 0.9)} ${r(w * 0.1)} ${r(w * 0.8)} ${r(w * 0.7)} q${r(-w * 0.5)} ${r(w * 0.7)} ${r(-w * 1.2)} ${r(w * 0.5)} q${r(-w * 0.7)} ${r(-w * 0.2)} ${r(-w * 0.7)} ${r(-w * 0.6)} Z" fill="${farben[4] || "#16240f"}"/>`;
     g += `<path d="M${r(gx - w * 0.7)} ${r(gy + w * 0.5)} Q${r(gx)} ${r(gy - w * 0.05)} ${r(gx + w * 0.7)} ${r(gy - w * 0.4)}" stroke="${rinde}" stroke-width="${r(Math.max(0.3, R * 0.035))}" fill="none"/>`;
   }
@@ -540,7 +541,7 @@ let PN_UNTER = [];
   {
     const bx0 = X(BLOCK.x - BLOCK.w / 2), bx1 = X(BLOCK.x + BLOCK.w / 2), by0 = Y(BLOCK.h + BLOCK.hh), by1 = Y(BLOCK.h);
     /* Quader wie seine Nachbarn: etwas hellere Kante oben und links (Licht), tiefe Fuge rundum */
-    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" fill="#3e3b37"/><path d="M${r(bx0 + 0.5)} ${r(by1 - 0.5)} V${r(by0 + 0.5)} H${r(bx1 - 0.5)}" stroke="#8c8476" stroke-width=".5" fill="none" opacity=".7"/>`;
+    k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" fill="#3e3b37"/><path d="M${r(bx0 + 0.5)} ${r(by1 - 0.5)} V${r(by0 + 0.5)} H${r(bx1 - 0.5)}" stroke="#8c8476" stroke-width=".3" fill="none" opacity=".5"/>`;
     k += `<rect x="${bx0}" y="${by0}" width="${r(bx1 - bx0)}" height="${r(by1 - by0)}" stroke="#0f0e0d" stroke-width=".4" fill="none"/>`;
     /* Trichter in den Stein: außen ausgebrochen (nach unten heller), innen tief und dunkel */
     const trichter = (lx, ly, w) => `<path d="M${r(lx - w)} ${r(ly - 0.1 * w)} q${r(0.1 * w)} ${r(-0.6 * w)} ${r(0.8 * w)} ${r(-0.7 * w)} q${r(0.8 * w)} ${r(-0.05 * w)} ${r(1.1 * w)} ${r(0.5 * w)} q${r(0.15 * w)} ${r(0.7 * w)} ${r(-0.7 * w)} ${r(0.95 * w)} q${r(-0.9 * w)} ${r(0.1 * w)} ${r(-1.2 * w)} ${r(-0.75 * w)} Z" fill="${TRICHTER}"/><ellipse cx="${r(lx)}" cy="${r(ly - 0.25 * w)}" rx="${r(0.45 * w)}" ry="${r(0.3 * w)}" fill="#050404"/>`;
