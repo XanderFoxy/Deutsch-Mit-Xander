@@ -200,7 +200,7 @@ const burjUnter = [
     tipp: "Die Spitze ist aus Stahl und allein rund 240 Meter lang. Sie wurde von innen nach oben geschoben." },
   { id: "aussichtsplattform", de: "die Aussichtsplattform", syl: "AUS-sichts-platt-form", it: "la terrazza panoramica", itSyl: "ter-RAZ-za pa-no-RA-mi-ca", en: "observation deck", x: BX, y: r(by(546)), kunst: flaeche(-4.6, -(by(546) - by(574)), 9.2, by(546) - by(574)),
     tipp: "Die höchste Aussichtsplattform liegt 555 Meter hoch. Von dort sieht man das Meer und die Wüste." },
-  { id: "fassade", de: "die Fassade", syl: "fas-SA-de", it: "la facciata", itSyl: "fac-CIA-ta", en: "facade", x: BX, y: r(by(380)), kunst: flaeche(-6, -(by(380) - by(450)), 12, by(380) - by(450)),
+  { id: "fassade", de: "die Fassade", syl: "fas-SA-de", it: "la facciata", itSyl: "fac-CIA-ta", en: "facade", x: BX, y: r(by(425)), kunst: flaeche(-5.5, -(by(425) - by(495)), 11, by(425) - by(495)),
     tipp: "Die Fassade hat Tausende Glasscheiben mit Rippen aus Edelstahl. Das Glas hält die Hitze draußen." },
 ];
 S.teil({ anker: [BX, 120], id: "burj_khalifa", de: "der Burj Khalifa", syl: "burdsch ka-LI-fa", it: "il Burj Khalifa", itSyl: "burj ka-LI-fa", en: "Burj Khalifa", x: 0, y: 0, kunst: burjKlick,

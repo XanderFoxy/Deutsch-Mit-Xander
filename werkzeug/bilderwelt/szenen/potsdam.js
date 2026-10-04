@@ -99,7 +99,7 @@ S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("dunst")}" x="-20%"
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("gischt")}" x="-60%" y="-10%" width="220%" height="120%"><feGaussianBlur stdDeviation=".6 .25"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("schw")}" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation=".6"/></filter>`);
 /* Laubrand: gezackte, gelappte Kanten statt Kreisbögen */
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("laub")}" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".32" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4.2" xChannelSelector="R" yChannelSelector="G"/></filter>`);
+void (`<filter color-interpolation-filters="sRGB" id="${S.id("laub")}" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".32" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4.2" xChannelSelector="R" yChannelSelector="G"/></filter>`);
 /* Wolkenrand: weich ausgefranst */
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-15%" y="-30%" width="130%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation=".7"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("schleier")}" x="-10%" y="-300%" width="120%" height="700%"><feTurbulence type="fractalNoise" baseFrequency=".04 .5" numOctaves="2" seed="5" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".7"/></filter>`);
@@ -142,37 +142,47 @@ S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.rg("sonne", [[0, "#ff
 S.hinten(`<rect x="0" y="${HOR - 70}" width="400" height="72" fill="${S.lg("dunst", [[0, "#efe6d6", 0], [1, "#efe6d6", 0.6]])}"/>`);
 /* Boden des Parterres (unter allem) */
 S.hinten(`<rect x="0" y="${HOR - 2}" width="400" height="${260 - HOR + 2}" fill="#6f8f45"/>`);
-/* Kronen-Werkzeug: große gelappte Silhouette in drei Tonstufen, Himmelslöcher, Herbstfarbe als Verlauf */
+/* Kronen-Werkzeug: Krone aus 3–4 großen Laubmassen (Pfade mit gezackter Blattkante in
+   zwei bis drei Größen). Jede Masse: dunkle, kühle Unterseite, Mittelton, helle Kappe
+   links oben (Sonne im Südwesten) — die Tonstufen sind per <use> dieselbe Form, in die
+   Masse geschnitten. Herbstfarbe als Verlauf (oben/außen gelber). Himmelslöcher mit Ästen. */
 let bz = 0;
-const krone = (cx, cy, w, h, seed, T, loecher = 3, dunst = 0) => {
-  /* Krone aus 9–12 Laublappen; jeder Lappen hat Schattenseite (rechts unten),
-     Mittelton und Lichtkante (links oben, Sonne im Südwesten). Hinten zuerst. */
-  const z = zufall(seed);
-  const lap = [];
-  const n = 11;
-  for (let i = 0; i < n; i++) {
-    const a = z() * Math.PI * 2, d = Math.sqrt(z()) * 0.34;
-    lap.push([cx + Math.cos(a) * w * d, cy + Math.sin(a) * h * d * 0.95, (0.17 + z() * 0.09) * w, (0.15 + z() * 0.08) * h]);
+const lappenPfad = (cx, cy, rx, ry, z) => {
+  const n = 15 + Math.round(z() * 6), P = [];
+  for (let k = 0; k < n; k++) { const t = (k + z() * 0.4) / n * Math.PI * 2, f = 1 - z() * 0.07; P.push([t, f]); }
+  const pt = ([t, f], g = 1) => `${r(cx + Math.cos(t) * rx * f * g)} ${r(cy + Math.sin(t) * ry * f * g)}`;
+  let d = `M${pt(P[0])}`;
+  for (let k = 0; k < n; k++) {
+    const a = P[k], b = P[(k + 1) % n], tm = a[0] + (((b[0] - a[0]) + Math.PI * 2) % (Math.PI * 2)) / 2;
+    const amp = z() < 0.2 ? 0.34 : 0.16 + z() * 0.12;
+    d += ` Q${pt([tm, (a[1] + b[1]) / 2], 1 + amp)} ${pt(b)}`;
   }
-  lap.sort((p, q) => p[1] - q[1] || p[0] - q[0]);
-  const grad = (name, a, b) => S.lg(name + seed, [[0, a], [1, b]], cx, cy - h / 2, cx, cy + h / 2, ' gradientUnits="userSpaceOnUse"');
-  const GD = grad("kd", T[0], T[1]), GM = grad("km", T[2], T[3]), GL = grad("kl", T[4], T[5]);
-  let basis = `<ellipse cx="${cx}" cy="${r(cy + h * 0.06)}" rx="${r(w * 0.42)}" ry="${r(h * 0.4)}"/>`;
-  let lappen = "";
-  for (const [x, y, rx, ry] of lap) {
-    lappen += `<ellipse cx="${r(x + rx * 0.08)}" cy="${r(y + ry * 0.1)}" rx="${r(rx)}" ry="${r(ry)}" fill="${GD}"/>`;
-    lappen += `<ellipse cx="${r(x - rx * 0.12)}" cy="${r(y - ry * 0.12)}" rx="${r(rx * 0.78)}" ry="${r(ry * 0.74)}" fill="${GM}"/>`;
-    lappen += `<ellipse cx="${r(x - rx * 0.32)}" cy="${r(y - ry * 0.34)}" rx="${r(rx * 0.4)}" ry="${r(ry * 0.36)}" fill="${GL}"/>`;
+  return d + " Z";
+};
+const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
+  const z = zufall(seed), id = S.id("kr" + bz++);
+  const grad = (name, a, b) => S.lg(name + id, [[0, a], [1, b]], cx, cy - h / 2, cx, cy + h / 2, ' gradientUnits="userSpaceOnUse"');
+  const GD = grad("d", T[0], T[1]), GM = grad("m", T[2], T[3]), GL = grad("l", T[4], T[5]);
+  const massen = [[cx - w * 0.2, cy - h * 0.2, w * 0.27, h * 0.25], [cx + w * 0.17, cy - h * 0.22, w * 0.26, h * 0.24], [cx + w * 0.02, cy - h * 0.36, w * 0.2, h * 0.16], [cx, cy + h * 0.1, w * 0.44, h * 0.34]];
+  let g = "";
+  massen.forEach(([mx, my, rx, ry], i) => {
+    const mid = `${id}_${i}`;
+    S.def(`<path id="${mid}" d="${lappenPfad(mx, my, rx, ry, z)}"/><clipPath id="${mid}c"><use href="#${mid}"/></clipPath>`);
+    const um = (dx, dy, f) => `transform="translate(${r(mx + dx)} ${r(my + dy)}) scale(${f}) translate(${r(-mx)} ${r(-my)})"`;
+    g += `<use href="#${mid}" fill="${GD}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" ${um(-rx * 0.08, -ry * 0.12, 0.86)}/><use href="#${mid}" fill="${GL}" ${um(-rx * 0.3, -ry * 0.34, 0.5)}/></g>`;
+  });
+  for (let i = 0; i < loecher; i++) {
+    const a = -Math.PI * (0.12 + z() * 0.76), d = 0.3 + z() * 0.08, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.8;
+    g += `<path d="${lappenPfad(hx, hy, 1.2 + z() * 1.1, 0.9 + z() * 0.8, z)}" fill="#a9c4de"/><path d="M${r(hx - 2)} ${r(hy + 1.6)} L${r(hx + 1.6)} ${r(hy - 1.2)}" stroke="#4a3b2c" stroke-width=".55" stroke-linecap="round"/>`;
   }
-  let g = `<g filter="url(#${S.id("laub")})"${dunst ? ` opacity="${dunst}"` : ""}><g fill="${GD}">${basis}</g>${lappen}`;
-  for (let i = 0; i < loecher; i++) { const a = -Math.PI * (0.1 + z() * 0.8), d = 0.28 + z() * 0.1; g += `<ellipse cx="${r(cx + Math.cos(a) * w * d * 1.2)}" cy="${r(cy + Math.sin(a) * h * d)}" rx="${r(0.9 + z() * 1.2)}" ry="${r(0.7 + z() * 0.9)}" fill="#a9c4de"/>`; }
-  return g + `</g>`;
+  return g;
 };
 /* ferner Baumbestand des Parks hinter dem Schloss: durchgehend, blass (Luftperspektive) */
 {
   let k = "";
   const T = ["#93a68f", "#8a9c84", "#a3b49c", "#98ab92", "#b8c6b0", "#aebfa6"];
   for (const [x, y, w, h, sd] of [[34, 122, 70, 46, 81], [96, 118, 60, 30, 82], [304, 118, 60, 30, 83], [366, 120, 72, 48, 84], [200, 126, 140, 22, 85]]) k += krone(x, y, w, h, sd, T, 0);
+  k = `<g opacity=".85">${k}</g>`;
   S.hinten(k);
 }
 
@@ -182,16 +192,18 @@ const krone = (cx, cy, w, h, seed, T, loecher = 3, dunst = 0) => {
 const stamm = (x, y0, y1, w) => `<path d="M${r(x - w)} ${y0} Q${r(x - w * 0.5)} ${r((y0 + y1) / 2)} ${r(x - w * 0.45)} ${y1} L${r(x + w * 0.45)} ${y1} Q${r(x + w * 0.5)} ${r((y0 + y1) / 2)} ${r(x + w)} ${y0} Z" fill="${S.lg("stamm", [[0, "#8a7458"], [0.5, "#5b4836"], [1, "#2f261d"]], 0, 0, 1, 0)}"/>` +
   `<path d="M${x} ${r(y1 + 8)} q${r(w * 2.4)} -6 ${r(w * 3.4)} -15 M${x} ${r(y1 + 5)} q${r(-w * 2.2)} -5 ${r(-w * 3.2)} -13" stroke="#3f3226" stroke-width="${r(w * 0.45)}" fill="none" stroke-linecap="round"/>`;
 {
-  const T = ["#3d5a2c", "#22381c", "#7e9a40", "#4e7032", "#d9cf6a", "#9fbd58"];
+  /* der grünere Baum (Linde/Buche, erst wenig Herbstfarbe) */
+  const T = ["#3e5a2a", "#1f3418", "#7c9a3e", "#4a6e30", "#d8d870", "#a6c45e"];
   let k = stamm(18, 196, 140, 3.2) + stamm(48, 194, 152, 2.3);
-  k += krone(24, 118, 56, 86, 21, T, 4) + krone(52, 152, 36, 44, 22, ["#42602e", "#263f1e", "#8aa042", "#56783a", "#e6d26a", "#a8c25a"], 2);
+  k += krone(24, 118, 56, 86, 21, T, 4) + krone(52, 152, 36, 44, 22, ["#4a6430", "#22381c", "#8aa042", "#56783a", "#ecd56a", "#a8c25a"], 2);
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: k,
     tipp: "Im Park Sanssouci stehen viele alte Bäume." });
 }
 {
-  const T = ["#5a5a24", "#2e3a1c", "#b08a30", "#6e7a34", "#f2c45a", "#c9be5a"];
+  /* der gelbere Baum (Ahorn): außen und oben Gelb-Orange, innen Grün */
+  const T = ["#9a6a22", "#3a4420", "#d89a30", "#6e7a34", "#ffd46a", "#d6b850"];
   let k = stamm(382, 197, 140, 3.2) + stamm(352, 194, 152, 2.2);
-  k += krone(376, 116, 54, 88, 23, T, 4) + krone(348, 152, 36, 44, 24, ["#4a5a28", "#2a3a1c", "#b8742a", "#6a7a34", "#f0a04a", "#c2b85a"], 2);
+  k += krone(376, 116, 54, 88, 23, T, 4) + krone(348, 152, 36, 44, 24, ["#a0581e", "#3a3a1c", "#d8782a", "#7a7a34", "#ffb054", "#d0b850"], 2);
   S.teil({ id: "laub", de: "das Laub", syl: "LAUB", it: "il fogliame", itSyl: "fo-GLIA-me", en: "foliage", x: 0, y: 0, kunst: k,
     tipp: "Im Herbst färbt sich das Laub gelb und rot. Bald fallen die Blätter." });
 }

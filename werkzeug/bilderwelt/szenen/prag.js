@@ -10,8 +10,9 @@
    „Lesser Town Bridge Tower“, „St. Vitus Cathedral“, „Prague Castle“,
    „Church of St. Nicholas (Malá Strana)“, „Petřín Lookout Tower“;
    prague.eu; praguecitytourism.cz):
-   - STANDORT: erhöht am ALTSTÄDTER BRÜCKENTURM (etwa 7 m über der
-     Fahrbahn), Blick nach Westen über die KARLSBRÜCKE (1357–1402,
+   - STANDORT: am ALTSTÄDTER BRÜCKENTURM, Augenhöhe 3 m über der Fahrbahn
+     (wie auf der Treppenstufe am Turmtor; Runde 2: tiefer, damit die
+     Menschen vorn groß werden), Blick nach Westen über die KARLSBRÜCKE (1357–1402,
      516 m lang, 9,5 m breit, 16 Bögen aus Sandstein, 13 m über der
      Moldau). Die Brücke läuft leicht nach links (Westsüdwest) zur
      Kleinseite. Echte Richtungen von links nach rechts: der Petřín
@@ -44,12 +45,17 @@
      hinter dem Betrachter (links hinten, 35° hoch). Alles, was zu uns
      und nach links (Süden) schaut, ist hell; Schatten fallen nach vorn
      und leicht nach rechts (Länge 1,4 × Höhe).
-   Maßstab: Augenhöhe 7 m über der Brücke, Horizont y = 100, F = 440.
+   Maßstab: Augenhöhe 3 m über der Brücke, Horizont y = 100, F = 440.
    Brückenkoordinaten s (entlang der Brücke) und q (quer, rechts +);
    der Blick ist 11° nach rechts gedreht: d = s·cos11° + q·sin11°,
    l = −s·sin11° + q·cos11°, x = 200 + F·l/d, y = 100 + F·(7 − h)/d.
    Burg in 1050 m, Nikolauskirche 744 m, Petřín 1340 m, Brückentürme
-   510 m, Musiker in 24 m (1,75 m ≈ 31 Einheiten).
+   510 m, Touristin in 10 m, Musiker in 11 m (1,75 m ≈ 73 Einheiten).
+   STATUEN vorn nach dem echten Bestand: rechts die Madonna mit dem
+   heiligen Bernhard (Madonna mit Kind auf Wolken, Bernhard kniet, Putto),
+   dann Dominikus und Thomas von Aquin mit der Madonna; links der heilige
+   Ivo (mit Birett und Buch, eine Witwe mit Kind zu seinen Füßen), dann
+   Barbara, Margareta und Elisabeth.
    ===================================================================== */
 "use strict";
 const path = require("path");
@@ -466,7 +472,7 @@ S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 
   k += `<rect x="-.9" y="-1.25" width="1.5" height=".3" fill="#d14a3a"/>`;
   k += `<circle cx="-.4" cy="-1.7" r=".2" fill="#d8a986"/><path d="M-.62 -1.5 h.44 v.4 h-.44Z" fill="#2f6fb3"/><circle cx=".2" cy="-1.72" r=".2" fill="#6b4a32"/><path d="M-.02 -1.52 h.44 v.4 h-.44Z" fill="#e3b23c"/>`;
   k += `<path d="M-2.2 .1 q1 .3 2 0 q1 -.3 2.4 0" stroke="#e8f2f6" stroke-width=".08" fill="none"/></g>`;
-  S.teil({ id: "tretboot", de: "das Tretboot", syl: "TRET-boot", it: "il pedalò", itSyl: "pe-da-LÒ", en: "pedal boat", x, y, steht: true, kunst: k,
+  S.teil({ oben: true, id: "tretboot", de: "das Tretboot", syl: "TRET-boot", it: "il pedalò", itSyl: "pe-da-LÒ", en: "pedal boat", x, y, steht: true, kunst: k,
     tipp: "Auf der Moldau kann man Tretboote ausleihen – manche sehen aus wie ein Schwan." });
 }
 {
@@ -485,7 +491,7 @@ S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 
   };
   let k = schwan(92, 47, 1, SW) + schwan(94, 49.5, 0.55, "#8f8a80") + schwan(95.5, 51.2, 0.55, "#9a9488") + schwan(97, 52.8, 0.55, "#8f8a80") + schwan(100, 56, 1, SW, -1);
   const xa = X(92, 47), xb = X(100, 56), yy = Y(96, 51, -13);
-  S.teil({ id: "schwan", de: "der Schwan", syl: "SCHWAN", it: "il cigno", itSyl: "CI-gno", en: "swan", x: 0, y: 0, steht: true, kunst: k + flaeche(Math.min(xa, xb) - 3, yy - 8, Math.abs(xb - xa) + 8, 10, 0.6),
+  S.teil({ oben: true, id: "schwan", de: "der Schwan", syl: "SCHWAN", it: "il cigno", itSyl: "CI-gno", en: "swan", x: 0, y: 0, steht: true, kunst: k + flaeche(Math.min(xa, xb) - 4, yy - 10, Math.abs(xb - xa) + 10, 12.5, 0.6),
     tipp: "An der Karlsbrücke schwimmen viele Schwäne. Die Jungen sind graubraun, erst später werden sie weiß." });
 }
 
