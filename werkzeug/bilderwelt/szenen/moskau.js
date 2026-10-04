@@ -984,7 +984,7 @@ let KUNDE_HAND = null;
   const d = 19, l = -2.45, x = r(X(d, l)), y = r(Y(d));
   BODEN_SCHATTEN.push(schlag(d, l, 1.8, 0.28));
   const pose = { kipp: 0, lende: 1, brust: 0, nacken: 4, kopf: -4, schulterL: { vor: 4, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.4,
-    schulterR: { vor: 22, seit: 6, dreh: 30 }, ellbogenR: 112, unterarmR: 40, handR: 0, fingerR: 0.95,
+    schulterR: { vor: 22, seit: 6, dreh: 30 }, ellbogenR: 112, unterarmR: 40, handR: 0, fingerR: 0.6,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -6 }, knieR: 6, fussR: 2 };
   const m = B.mensch({ id: "msk_kunde", geschlecht: "m", blick: -50, neigung: 3, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true, pose,
     kleidung: { jacke: { stueck: "jacke", farbe: "#2e3a4c" }, unterteil: { stueck: "hose", farbe: "#3a3a40" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "#c8402c" } } }, r(1.8 * F / d));
@@ -1082,7 +1082,7 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
 }
 {
   /* Teeglas im silbernen Halter (Podstakannik), vor der Brust des Kunden */
-  const x = r(KUNDE_HAND.x), y = r(KUNDE_HAND.y + 2.2), s = F / 19 * 1.25;
+  const x = r(KUNDE_HAND.x - 1.6), y = r(KUNDE_HAND.y - 0.1), s = F / 19 * 1.25;
   let k = `<g transform="scale(${s.toFixed(4)})">`;
   k += `<path d="M-.036 -.13 L-.033 -.06 H.033 L.036 -.13 Z" fill="#8a3412" opacity=".9"/><path d="M-.036 -.13 H.036 L.035 -.12 H-.035 Z" fill="#e9eef2" opacity=".85"/><path d="M-.028 -.125 L-.026 -.07" stroke="#fff" stroke-width=".006" opacity=".6"/>`;
   k += `<path d="M-.034 -.075 L-.03 0 H.03 L.034 -.075 Z" fill="${S.lg("silber", [[0, "#7c8088"], [0.4, "#e8ebef"], [1, "#8a8e96"]], 0, 0, 1, 0)}"/>`;
@@ -1186,13 +1186,15 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
     k += `<circle cx="${r((kxx + 0.015) * 1000) / 1000}" cy="${r((ky - 0.012) * 1000) / 1000}" r=".008" fill="#8a7a6a"/><path d="M.0 -.29 Q.08 -.29 .14 -.25" stroke="#c9ccd3" stroke-width=".012" fill="none" opacity=".6"/></g>`;
     return k;
   };
-  const d0 = 11.45, l0 = 0.84, x0 = r(X(d0, l0)), y0 = r(Y(d0));
-  let k = kraehe(11.3, 0.7, 1, true) + kraehe(11.6, 1.02, -1, false);
+  /* Runde 5: zwei Teile mit demselben Wort — jedes Fangfeld nur so groß wie eine Krähe, nicht „oben“,
+     damit die Schuhe der Touristin „die Touristin“ melden */
+  let k = kraehe(11.0, 0.98, 1, true), k2 = kraehe(11.6, 1.88, -1, false);
   /* Kringel (Baranka) auf dem Pflaster */
-  const bx = X(11.45, 0.86), by = Y(11.45), bs = F / 11.45;
-  k += `<ellipse cx="${r(bx)}" cy="${r(by - 0.3)}" rx="${r(0.07 * bs)}" ry="${r(0.03 * bs)}" fill="none" stroke="#c98a3e" stroke-width="${r(0.03 * bs)}"/><ellipse cx="${r(bx - 0.4)}" cy="${r(by - 0.5)}" rx="${r(0.04 * bs)}" ry=".3" fill="#f2c27a" opacity=".6"/>`;
-  S.teil({ oben: true, id: "kraehe", de: "die Krähe", syl: "KRÄ-he", it: "la cornacchia", itSyl: "cor-NAC-chia", en: "crow", x: 0, y: 0, steht: true, kunst: k + flaeche(x0 - 13, y0 - 12, 26, 13, 0.6),
-    tipp: "In Moskau leben viele graue Nebelkrähen. Hier streiten zwei um einen Kringel." });
+  const bx = X(11.3, 1.42), by = Y(11.3), bs = F / 11.3;
+  k2 += `<ellipse cx="${r(bx)}" cy="${r(by - 0.3)}" rx="${r(0.07 * bs)}" ry="${r(0.03 * bs)}" fill="none" stroke="#c98a3e" stroke-width="${r(0.03 * bs)}"/><ellipse cx="${r(bx - 0.4)}" cy="${r(by - 0.5)}" rx="${r(0.04 * bs)}" ry=".3" fill="#f2c27a" opacity=".6"/>`;
+  const T = "In Moskau leben viele graue Nebelkrähen. Hier streiten zwei um einen Kringel.";
+  S.teil({ id: "kraehe", de: "die Krähe", syl: "KRÄ-he", it: "la cornacchia", itSyl: "cor-NAC-chia", en: "crow", x: 0, y: 0, steht: true, kunst: k, tipp: T });
+  S.teil({ id: "kraehe2", de: "die Krähe", syl: "KRÄ-he", it: "la cornacchia", itSyl: "cor-NAC-chia", en: "crow", x: 0, y: 0, steht: true, kunst: k2, tipp: T });
 }
 
 /* =====================================================================

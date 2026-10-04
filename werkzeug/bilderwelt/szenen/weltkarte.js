@@ -380,20 +380,20 @@ const ORT = {
   italien: { ll: [11.2, 43.4], bild: [-2.9, -0.4], lab: [-2.9, 2.1, "m"], name: "Italien" },
   rom: { ll: [12.5, 41.9], bild: [2.6, 4.3], lab: [3.4, 6.4, "m"], name: "Rom" },
   spanien: { ll: [2.17, 41.4], lab: [-6.2, 2.6, "m"], name: "Spanien" },
-  griechenland: { ll: [23.73, 37.97], lab: [1.4, 2.9, "m"], name: "Griechenland" },
-  tuerkei: { ll: [28.98, 41.01], lab: [5.5, 2.9, "m"], name: "Türkei" },
+  griechenland: { ll: [23.73, 37.97], gr: 0.8, lab: [-3.3, 3.1, "m"], name: "Griechenland" },
+  tuerkei: { ll: [28.98, 41.01], bild: [1.6, -0.4], lab: [5.5, 2.9, "m"], name: "Türkei" },
   moskau: { ll: [37.62, 55.75], lab: [0, 2.8, "m"], name: "Moskau" },
   /* in der ganzen Karte (Maßstab 0,75) */
   san_francisco: { ll: [-122.42, 37.77], lab: [0, 3.3, "m"], name: "San Francisco", knopf: [48, 62] },
   new_york: { ll: [-74.0, 40.71], lab: [2.6, 1.3, "s"], name: "New York", knopf: [135.5, 51.5] },
-  mexiko: { ll: [-88.57, 20.68], bild: [0.8, 8.2], lab: [0.8, 10.6, "m"], name: "Mexiko", knopf: P(-95, 27.5) },
-  rio: { ll: [-43.21, -22.91], lab: [0, 3.3, "m"], name: "Rio de Janeiro", knopf: [160, 128] },
+  mexiko: { ll: [-88.57, 20.68], bild: [0.8, 8.2], lab: [0.8, 10.6, "m"], name: "Mexiko", knopf: P(-105, 14) },
+  rio: { ll: [-43.21, -22.91], lab: [0, 3.3, "m"], name: "Rio de Janeiro", knopf: P(-30, -25) },
   kapstadt: { ll: [18.42, -33.92], lab: [0, 3.3, "m"], name: "Kapstadt", knopf: [193, 152] },
-  aegypten: { ll: [31.13, 29.98], lab: [0, 3.3, "m"], name: "Ägypten", knopf: P(37.5, 21) },
-  dubai: { ll: [55.27, 25.2], lab: [-1.6, 3.3, "m"], name: "Dubai", knopf: [247, 88] },
-  indien: { ll: [78.04, 27.18], lab: [0, 3.3, "m"], name: "Indien", knopf: [288, 88] },
-  peking: { ll: [116.4, 39.9], lab: [0, 3.3, "m"], name: "Peking", knopf: [318, 63.5] },
-  japan: { ll: [138.73, 35.36], bild: [7.2, 0.6], lab: [7.2, 3.6, "m"], name: "Japan", knopf: [338, 71] },
+  aegypten: { ll: [31.13, 29.98], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [229, 61] },
+  dubai: { ll: [55.27, 25.2], lab: [-1.6, 3.3, "m"], name: "Dubai", knopf: P(62, 18) },
+  indien: { ll: [78.04, 27.18], lab: [0, 3.3, "m"], name: "Indien", knopf: [287, 91] },
+  peking: { ll: [116.4, 39.9], lab: [0, 3.3, "m"], name: "Peking", knopf: P(124, 32) },
+  japan: { ll: [138.73, 35.36], bild: [7.2, 0.6], lab: [7.2, 3.6, "m"], name: "Japan", knopf: [352, 65] },
   sydney: { ll: [151.21, -33.87], lab: [0, 3.3, "m"], name: "Sydney", knopf: P(147, -47) },
 };
 /* Mitte der Lupenmarke je Ort in der Europa-Lupe (Bildkoordinaten) */
@@ -406,10 +406,10 @@ const MARKE_EU = {
 function ortBild(id, mass, schrift) {
   const c = ORT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];
   const bx = dx0 + bdx, by = dy0 + bdy - (c.bild ? 0 : mass * 0.9);
-  const [W0, H0, f] = ICON[id], W = W0 * mass, H = H0 * mass;
+  const [W0, H0, f] = ICON[id], gm = mass * (c.gr || 1), W = W0 * gm, H = H0 * gm;
   let k = `<ellipse cx="${r(bx)}" cy="${r(by - H * 0.45)}" rx="${r(W * 0.72)}" ry="${r(H * 0.64)}" fill="${GLOW}"/>`;
   if (c.bild) { const seit = Math.abs(bdx) > W / 2, ex = seit ? bx - Math.sign(bdx) * W * 0.4 : bx, ey = seit ? by - H * 0.15 : bdy > 1 ? by - H - 0.15 : by + 0.1; k += `<path d="M${r(dx0)} ${r(dy0)} L${+ex.toFixed(2)} ${+ey.toFixed(2)}" stroke="#7a5a32" stroke-width="${r(mass * 0.45) || 0.2}" stroke-dasharray="${r(mass * 1.2)} ${r(mass * 0.8)}"/>`; }
-  k += `<g transform="translate(${+bx.toFixed(3)} ${+by.toFixed(3)}) scale(${mass})">${f()}</g>`;
+  k += `<g transform="translate(${+bx.toFixed(3)} ${+by.toFixed(3)}) scale(${+gm.toFixed(3)})">${f()}</g>`;
   k += `<circle cx="${r(dx0)}" cy="${r(dy0)}" r="${r(mass * 1.15) || 0.5}" fill="#c0392b" stroke="#fff8ea" stroke-width="${+(mass * 0.45).toFixed(2)}"/>`;
   const [lx, ly, al] = c.lab, anchor = { m: "middle", s: "start", e: "end" }[al];
   const n = `<text x="${+(dx0 + lx).toFixed(2)}" y="${+(dy0 + ly).toFixed(2)}" font-size="${schrift}" font-weight="bold" text-anchor="${anchor}" fill="${c.rot ? "#a8261c" : "#3a2716"}" stroke="#fbf5e6" stroke-width="${+(schrift * 0.26).toFixed(2)}" stroke-linejoin="round" paint-order="stroke" ${SERIF}>${c.name}</text>`;
