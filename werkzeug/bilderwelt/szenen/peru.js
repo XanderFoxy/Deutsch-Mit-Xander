@@ -362,7 +362,7 @@ const SERP = [[326, 190], [372, 192], [338, 202], [378, 206], [346, 214], [380, 
   k += `<path d="${pfad}" stroke="${S.lg("strasse", [[0, "#d6ccb2"], [1, "#b9ae92"]])}" stroke-width="1.25" fill="none" stroke-linejoin="round"/>`;
   k += `<path d="${pfad}" stroke="#f6f0e0" stroke-width=".3" fill="none" opacity=".6" transform="translate(.1 -.35)"/>`;
   S.teil({ id: "serpentine", de: "die Serpentine", syl: "ser-pen-TI-ne", it: "il tornante", itSyl: "tor-NAN-te", en: "hairpin bend", x: 356, y: 218, kunst: um(356, 218, k),
-    tipp: "Die Straße Hiram Bingham windet sich in 13 Kehren vom Fluss hinauf. Busse bringen die Besucher nach oben." });
+    tipp: "Die Straße Hiram Bingham windet sich in vielen engen Kehren vom Fluss hinauf. Busse bringen die Besucher nach oben." });
 }
 
 /* =====================================================================
@@ -739,7 +739,7 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
   for (let i = 0; i < 5; i++) k += `<path d="M${r(-5.2 + i * 2.1)} -3 h1.6 v1.2 h-1.6 Z" fill="#3c5566"/>`;
   k += `<path d="M5 -3.3 h1.2 v1.6 h-1.2 Z" fill="#6b8696"/><circle cx="-3.6" cy=".5" r=".75" fill="#1d1d1d"/><circle cx="3.8" cy=".2" r=".75" fill="#1d1d1d"/>`;
   k += `<path d="M-6 -3.4 L5.6 -3.8" stroke="#fff" stroke-width=".35"/>`;
-  S.teil({ oben: true, id: "bus", de: "der Bus", syl: "BUS", it: "l'autobus", itSyl: "AU-to-bus", en: "bus", x: 350, y: 197.6, kunst: k,
+  S.teil({ oben: true, id: "bus", de: "der Bus", syl: "BUS", it: "l'autobus", itSyl: "AU-to-bus", en: "bus", x: 352, y: 196.6, kunst: `<g transform="rotate(4) scale(.42)">${k}</g>`,
     tipp: "Die Busse fahren in etwa 25 Minuten vom Ort Aguas Calientes zur Ruinenstadt hinauf." });
 }
 

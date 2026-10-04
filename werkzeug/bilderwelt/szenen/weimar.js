@@ -90,7 +90,7 @@ const kompakt = (svg, Q = 1, min = 0.35) => {
   const ausdehnung = (p) => { const z = (p.match(/-?\d*\.?\d+/g) || []).map(Number); let a = Infinity, b = -Infinity; for (const v of z) { if (v < a) a = v; if (v > b) b = v; } return b - a; };
   return svg.replace(/<(path|ellipse|circle|rect|line|polygon)\b[^>]*>/g, (tag) => tag
     .replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, ausdehnung(p) < KLEIN ? fein : rund)}"`)
-    .replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${rund(n)}"`));
+    .replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${(/^<(ellipse|circle)/.test(tag) ? fein : rund)(n)}"`));
 };
 const FIG = {};
 const mensch = (name, spec, groesse, D, X, Q = 1, min = 0.35) => {
@@ -654,7 +654,7 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
     pose: { lende: 1, brust: -2, nacken: 4, kopf: 2, schulterL: { vor: 10, seit: 12 }, ellbogenL: 70, unterarmL: 40, handL: 4, fingerL: 0.5,
       schulterR: { vor: 50, seit: 36, dreh: 10 }, ellbogenR: 70, unterarmR: 40, handR: 0, fingerR: 0.85,
       huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-    kleidung: { oberteil: { stueck: "bluse", farbe: "creme" }, schuerze: { stueck: "schuerze", farbe: "#e9dcc0" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "rot" } } }, 1.72, ZW.D + 0.42, (ZW.X0 + ZW.X1) / 2 + 0.1, 1.5, 0.5);
+    kleidung: { oberteil: { stueck: "bluse", farbe: "creme" }, schuerze: { stueck: "schuerze", farbe: "#e9dcc0" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "rot" } } }, 1.72, ZW.D + 0.42, (ZW.X0 + ZW.X1) / 2 + 0.1, 2.2, 0.5);
   const theke = yG(ZW.D, 0.95);
   S.def(`<clipPath id="${S.id("hinterTheke")}"><rect x="-60" y="-120" width="120" height="${r(theke - V.y + 120)}"/></clipPath>`);
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x: V.x, y: V.y,
@@ -713,7 +713,7 @@ const V2 = mensch("V2", { id: "wmr_grill", geschlecht: "m", blick: -14, frisur: 
   pose: { lende: 1, brust: -1, nacken: 8, kopf: 4, schulterL: { vor: 30, seit: 10 }, ellbogenL: 70, unterarmL: 40, handL: 4, fingerL: 0.6,
     schulterR: { vor: 42, seit: 20, dreh: 10 }, ellbogenR: 64, unterarmR: 30, handR: 0, fingerR: 0.9,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-  kleidung: { oberteil: { stueck: "tshirt", farbe: "schwarz" }, schuerze: { stueck: "schuerze", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.86, GR.D + 0.5, (GR.X0 + GR.X1) / 2 - 0.4, 1.5, 0.5);
+  kleidung: { oberteil: { stueck: "tshirt", farbe: "schwarz" }, schuerze: { stueck: "schuerze", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.86, GR.D + 0.5, (GR.X0 + GR.X1) / 2 - 0.4, 2.2, 0.5);
 {
   const theke = yG(GR.D, 0.95);
   S.def(`<clipPath id="${S.id("hinterGrill")}"><rect x="-60" y="-120" width="120" height="${r(theke - V2.y + 120)}"/></clipPath>`);
@@ -838,7 +838,7 @@ const ST = mensch("ST", { id: "wmr_stud", geschlecht: "w", blick: 40, frisur: "l
   pose: { lende: 1, brust: -1, nacken: 22, kopf: 14, schulterL: { vor: 26, seit: 12 }, ellbogenL: 96, unterarmL: 50, handL: 4, fingerL: 0.5,
     schulterR: { vor: 24, seit: 13 }, ellbogenR: 98, unterarmR: 50, handR: 4, fingerR: 0.5,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -5, seit: 4, dreh: -10 }, knieR: 9, fussR: 5 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "schal", farbe: "gelb" } } }, 1.68, 8.6, -1.5, 1.5, 0.45);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "schal", farbe: "gelb" } } }, 1.68, 8.6, -1.5, 2.2, 0.5);
 bodenSchatten(8.6, -1.5, 0.45, 1.68, 0.26);
 S.teil({ id: "studentin", de: "die Studentin", syl: "stu-DEN-tin", it: "la studentessa", itSyl: "stu-den-TES-sa", en: "student", x: ST.x, y: ST.y, kunst: ST.svg,
   tipp: "Die Studentin liest „Faust“ von Goethe." });
@@ -846,7 +846,7 @@ const TO = mensch("TO", { id: "wmr_tour", geschlecht: "m", blick: -32, frisur: "
   pose: { lende: 1, brust: -2, nacken: 6, kopf: 4, schulterL: { vor: 3, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
     schulterR: { vor: 40, seit: 18, dreh: 20 }, ellbogenR: 110, unterarmR: 40, handR: 10, fingerR: 0.7,
     huefteL: { vor: 6, seit: 3, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
-  kleidung: { oberteil: { stueck: "tshirt", farbe: "grau" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } }, 1.8, 8.4, 1.6, 1.5, 0.45);
+  kleidung: { oberteil: { stueck: "tshirt", farbe: "grau" }, jacke: { stueck: "jacke", farbe: "rot" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "blau" } } }, 1.8, 8.4, 1.6, 2.2, 0.5);
 bodenSchatten(8.4, 1.6, 0.5, 1.8, 0.26);
 S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: TO.x, y: TO.y, kunst: TO.svg,
   tipp: "Der Tourist isst eine Rostbratwurst. Lecker!" });
@@ -880,13 +880,13 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
       schulterL: { vor: 4, seit: 16 }, ellbogenL: 10, unterarmL: 10, handL: 4, fingerL: 0.7,
       schulterR: { vor: 22, seit: 9 }, ellbogenR: 78, unterarmR: 20, handR: 6, fingerR: 0.6,
       huefteL: { vor: 12, seit: 2, dreh: -5 }, knieL: 6, fussL: 0, huefteR: { vor: -10, seit: 2, dreh: -5 }, knieR: 18, fussR: 10 },
-    kleidung: { oberteil: { stueck: "rollkragen", farbe: "creme" }, jacke: { stueck: "mantel", farbe: "#c99a34" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.68, MD, MX, 1.5, 0.45);
+    kleidung: { oberteil: { stueck: "rollkragen", farbe: "creme" }, jacke: { stueck: "mantel", farbe: "#c99a34" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.68, MD, MX, 2.2, 0.5);
   const KI = mensch("KI", { id: "wmr_kind", alter: "kind", geschlecht: "w", blick: -22, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true,
     pose: { roll: -1, lende: 2, brust: -1, nacken: 0, kopf: -6,
       schulterL: { vor: 10, seit: 7 }, ellbogenL: 18, unterarmL: 10, handL: 6, fingerL: 0.4,
       schulterR: { vor: 6, seit: 34 }, ellbogenR: 8, unterarmR: 10, handR: 2, fingerR: 0.7,
       huefteL: { vor: -12, seit: 2, dreh: -5 }, knieL: 16, fussL: 8, huefteR: { vor: 12, seit: 2, dreh: -5 }, knieR: 6, fussR: 0 },
-    kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "jeans" }, schuhe: { stueck: "gummistiefel" }, kopf: { stueck: "muetze", farbe: "rot" } } }, 1.18, MD - 0.05, MX + 0.6, 1.5, 0.45);
+    kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "jeans" }, schuhe: { stueck: "gummistiefel" }, kopf: { stueck: "muetze", farbe: "rot" } } }, 1.18, MD - 0.05, MX + 0.6, 2.2, 0.5);
   /* das Kind so stellen, dass seine rechte Hand in der linken Hand der Mutter liegt */
   const hm = MU.p(MU.m.z.handL), hk = KI.p(KI.m.z.handR);
   KI.x = r(KI.x + hm.x - hk.x + 0.15);

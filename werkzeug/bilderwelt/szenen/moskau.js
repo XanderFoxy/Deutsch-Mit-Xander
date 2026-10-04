@@ -156,7 +156,7 @@ function kompaktFein(m, svg = m.svg) {
     const n = p.match(/-?\d*\.?\d+/g) || [];
     let fein = false;
     for (let i = 0; i + 1 < n.length && !fein; i += 2) { const x = +n[i], y = +n[i + 1]; if (y < kopfY || haende.some((h) => Math.abs(h.x - x) < 14 && Math.abs(h.y - y) < 14)) fein = true; }
-    return ` d="${relativ(p, fein ? 0.2 : 1)}"`;
+    return ` d="${relativ(p, fein ? 0.5 : 1)}"`;
   });
 }
 /* vor dem Schreiben: alle Pfade der Szene relativ schreiben */

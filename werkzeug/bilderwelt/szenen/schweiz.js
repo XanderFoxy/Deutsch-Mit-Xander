@@ -275,7 +275,7 @@ const nordPoly = [...HOERNLI, [218, 112], [306, 112], ...RECHTSK.slice().reverse
 const pp = (pts) => "M" + pts.map(pt).join(" L") + " Z";
 const drin = (poly) => (x, y) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
 /* Schnittpunkt einer Linie y(x) mit dem Hörnligrat bzw. der linken Kante: Bänder laufen zwischen beiden */
-S.def(`<clipPath id="${S.id("ost")}"><path d="${pp(ostPoly)}"/></clipPath><clipPath id="${S.id("nord")}"><path d="${pp(nordPoly)}"/></clipPath>`);
+S.def(fern(`<clipPath id="${S.id("ost")}"><path d="${pp(ostPoly)}"/></clipPath><clipPath id="${S.id("nord")}"><path d="${pp(nordPoly)}"/></clipPath>`));
 let BERG = "";
 {
   const z = zufall(4478);
@@ -368,9 +368,6 @@ function baeumchen(poly, n, seed, groesse, farben, hellRechts) {
   }
   return wege.map((d, i) => `<path d="${d}" fill="${farben[i]}"/>`).join("") + (lichter.length ? `<path d="${lichter.join("")}" fill="#fff" opacity=".12"/>` : "");
 }
-/* Waldtextur: kleine Nadelbäume (Arven dunkel, Lärchen golden) als Muster */
-S.def(`<pattern id="${S.id("waldS")}" width="4.6" height="3.9" patternUnits="userSpaceOnUse" patternTransform="rotate(-8)"><path d="M1.2 0.4 L2.2 3.6 L0.2 3.6 Z M4.4 1.6 L5.5 4.9 L3.3 4.9 Z" fill="#1c3024"/><path d="M3 -0.6 L3.7 1.8 L2.3 1.8 Z" fill="#8a7030"/><path d="M1.2 0.4 L2.2 3.6 L1.2 3.6 Z" fill="#2c4636" opacity=".8"/></pattern>`);
-S.def(`<pattern id="${S.id("waldL")}" width="4.6" height="3.9" patternUnits="userSpaceOnUse" patternTransform="rotate(6)"><path d="M1.2 0.4 L2.2 3.6 L0.2 3.6 Z M4.4 1.6 L5.5 4.9 L3.3 4.9 Z" fill="#2c4a2a"/><path d="M3 -0.6 L3.8 1.9 L2.2 1.9 Z" fill="#e0ae40"/><path d="M1.2 0.4 L0.2 3.6 L1.2 3.6 Z M4.4 1.6 L3.3 4.9 L4.4 4.9 Z" fill="#6f9446" opacity=".9"/></pattern>`);
 /* goldene Lärchengruppen: kleine Kegel in Flecken */
 function gruppe(cx, cy, w, h, n, seed, gr, licht) {
   const z = zufall(seed); let d = "", d2 = "";
@@ -391,7 +388,7 @@ let HANG_L = "", HANG_R = "", WALD_MITTE = "";
   /* Waldgrenze: oben Alpweide/Fels (über ≈ 2200 m) */
   HANG_L += `<path d="M-2 40 L10 44.6 L18 47 L24 52 L32 55.4 L40 58 L46 62.6 L54 66 L62 67.4 L56 72 L44 70 L32 66 L20 62 L8 58 L-2 56 Z" fill="#6f7a66"/><path d="M14 50 L20 53 L18 57 Z M36 58 L42 61 L38 64 Z" fill="#8a8a84"/>`;
   HANG_L += `<path d="${pp(L)}" fill="url(#${S.id("waldK")})" clip-path="url(#${S.id("hangLunten")})"/>`;
-  S.def(`<clipPath id="${S.id("hangLunten")}"><path d="M-2 56 L8 58 L20 62 L32 66 L44 70 L56 72 L62 67.4 L70 72.4 L80 76 L90 79.2 L98 83.8 L108 86.6 L116 89 L124 93.6 L134 97.2 L144 100 L152 103.6 L160 107 L168 110.6 L176 115.6 L184 122.4 L191 133 L195 175 L-2 175 Z"/></clipPath>`);
+  S.def(fern(`<clipPath id="${S.id("hangLunten")}"><path d="M-2 56 L8 58 L20 62 L32 66 L44 70 L56 72 L62 67.4 L70 72.4 L80 76 L90 79.2 L98 83.8 L108 86.6 L116 89 L124 93.6 L134 97.2 L144 100 L152 103.6 L160 107 L168 110.6 L176 115.6 L184 122.4 L191 133 L195 175 L-2 175 Z"/></clipPath>`));
   /* Lawinenzüge: hellere, waldfreie Schneisen */
   HANG_L += `<path d="M28 64 Q34 82 36 104 L42 104 Q40 82 34 64 Z M88 82 Q94 98 96 118 L100 118 Q98 98 93 82 Z" fill="#56664e" opacity=".9"/>`;
   HANG_L += gruppe(60, 96, 16, 8, 26, 51, 2.2, false) + gruppe(118, 110, 14, 6, 20, 52, 2.0, false) + gruppe(150, 124, 10, 6, 14, 53, 2.2, false);
@@ -400,7 +397,7 @@ let HANG_L = "", HANG_R = "", WALD_MITTE = "";
   const R = [[402, 18], [388, 26], [380, 30.6], [372, 38], [362, 42.4], [352, 50.6], [344, 54], [336, 60.4], [326, 65.6], [318, 70.2], [308, 74.6], [300, 81.6], [292, 86], [284, 91.6], [276, 96.6], [268, 101], [261, 106.4], [254, 112.4], [246, 120], [240, 128], [236, 138], [234, 175], [402, 175]];
   HANG_R = `<path d="${pp(R)}" fill="${S.lg("hangR", [[0, "#b8b47a"], [0.25, "#7f9a52"], [0.6, "#6b8a44"], [1, "#4f6e38"]])}"/>`;
   HANG_R += `<path d="M402 18 L388 26 L380 30.6 L372 38 L362 42.4 L352 50.6 L344 54 L350 60 L364 54 L378 46 L392 40 L402 38 Z" fill="#c2bd84"/><path d="M380 34 L386 37 L382 40 Z M362 46 L368 49 L364 52 Z" fill="#a49a88"/>`;
-  S.def(`<clipPath id="${S.id("hangRunten")}"><path d="M402 38 L392 40 L378 46 L364 54 L350 60 L344 54 L336 60.4 L326 65.6 L318 70.2 L308 74.6 L300 81.6 L292 86 L284 91.6 L276 96.6 L268 101 L261 106.4 L254 112.4 L246 120 L240 128 L236 138 L234 175 L402 175 Z"/></clipPath>`);
+  S.def(fern(`<clipPath id="${S.id("hangRunten")}"><path d="M402 38 L392 40 L378 46 L364 54 L350 60 L344 54 L336 60.4 L326 65.6 L318 70.2 L308 74.6 L300 81.6 L292 86 L284 91.6 L276 96.6 L268 101 L261 106.4 L254 112.4 L246 120 L240 128 L236 138 L234 175 L402 175 Z"/></clipPath>`));
   HANG_R += `<g clip-path="url(#${S.id("hangRunten")})"><path d="${pp(R)}" fill="url(#${S.id("waldKs")})" opacity=".85"/><path d="M300 110 L402 70 L402 175 L250 175 Z" fill="url(#${S.id("waldGs")})" opacity=".8"/></g>`;
   /* Rippen (Licht) und Rinnen (Schatten), Lawinenzug */
   HANG_R += `<path d="M370 50 Q356 80 344 112 L350 112 Q360 82 376 50 Z M320 74 Q306 100 296 128 L300 128 Q310 100 326 72 Z" fill="#e8d890" opacity=".35"/><path d="M356 54 Q342 84 330 116 L334 116 Q346 84 360 54 Z M300 84 Q290 104 282 126 L285 126 Q294 104 304 84 Z" fill="#2a3e26" opacity=".45"/>`;
