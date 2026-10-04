@@ -226,7 +226,7 @@ const wolke = (name, cx, by, W0, H, seed) => {
   k += bau(1300, 560, 50, 20, 26, "#a9a8b0", "#d8cbbd") + bau(1720, 600, 70, 20, 24, "#a7a6b0", "#d4c8bc");
   k += bau(1460, 1080, 40, 25, 56, "#9fa0aa", "#d2c4b6") + bau(1350, 940, 60, 20, 34, "#a3a3ad", "#d6c9bc");
   /* Seneca-Hotelturm: 26 Stockwerke (≈ 82 m), Glas bronze, gestufte Krone */
-  const [sx0, sy0] = W(1575, 770, 0), [sx1, sy1] = W(1575, 830, 82), [sx2] = W(1575, 830, 0);
+  const [sx0, sy0] = W(1575, 785, 0), [sx1, sy1] = W(1575, 815, 82), [sx2] = W(1575, 815, 0);
   k += `<path d="${P([[sx0, sy0], [sx0, sy1 + 2], [sx0 + (sx2 - sx0) * 0.2, sy1], [sx2 - (sx2 - sx0) * 0.2, sy1], [sx2, sy1 + 2], [sx2, sy0]])}" fill="${S.lg("seneca", [[0, "#9c9089"], [0.6, "#c8b29c"], [1, "#a8968a"]], 0, 0, 1, 0)}"/>`;
   for (let i = 1; i < 13; i++) { const y = sy1 + 2 + (sy0 - sy1 - 2) * i / 13; k += `<path d="M${r(sx0)} ${r(y)} H${r(sx2)}" stroke="#7f7672" stroke-width=".15" opacity=".7"/>`; }
   k += `<path d="M${r(sx0)} ${r(sy0)} V${r(sy1 + 2)}" stroke="#ead8c2" stroke-width=".4" opacity=".8"/>`;
@@ -293,9 +293,9 @@ const wolke = (name, cx, by, W0, H, seed) => {
      dunklere Schichten, unten die Schutthalde mit Büschen. Nachmittagslicht von rechts hinten. */
   const lin = (u, dE = 0) => USUFER.map(([E, N]) => W(E + dE, N, u));
   const oben = lin(2), unten = lin(UNTEN + 12);
-  let k = `<path d="${P([...oben, ...unten.slice().reverse()])}" fill="${S.lg("felswand", [[0, "#cdb795"], [0.3, "#a99173"], [0.6, "#8a7764"], [1, "#776757"]])}"/>`;
+  let k = `<path d="${P([...oben, ...unten.slice().reverse()])}" fill="${S.lg("felswand", [[0, "#e6c08a"], [0.3, "#c49a6c"], [0.6, "#a07c5e"], [1, "#86684f"]])}"/>`;
   /* Dolomitbank oben: hell, mit Überhang-Schatten darunter */
-  k += `<path d="${P([...lin(2), ...lin(-7).reverse()])}" fill="${S.lg("dolomit", [[0, "#efe1c4"], [1, "#d3c09c"]])}"/>`;
+  k += `<path d="${P([...lin(2), ...lin(-7).reverse()])}" fill="${S.lg("dolomit", [[0, "#f8dfae"], [1, "#e0bd88"]])}"/>`;
   k += `<path d="${P([...lin(-7), ...lin(-9.5).reverse()])}" fill="#5e4f40" opacity=".55"/>`;
   /* Blöcke und Klüfte: unregelmäßige Kanten, nicht gleichmäßig */
   const zk = zufall(33);
@@ -324,7 +324,7 @@ const wolke = (name, cx, by, W0, H, seed) => {
    ===================================================================== */
 const AM = {};
 {
-  const kr = AMFALL.map(([E, N]) => W(E, N, 3)), fu = AMFALL.map(([E, N]) => W(E - 6, N, -20)), fl = AMFALL.map(([E, N]) => W(E - 40, N - 6, UNTEN + 1));
+  const kr = AMFALL.map(([E, N]) => W(E, N, 3)), fu = AMFALL.map(([E, N]) => W(E - 6, N, -32)), fl = AMFALL.map(([E, N]) => W(E - 34, N - 6, UNTEN + 1));
   /* Ufer der USA dahinter: Bäume und ein paar Dächer */
   let k = `<path d="${P([...AMFALL.map(([E, N]) => W(E + 30, N, 14)), ...kr.slice().reverse()])}" fill="#7a5a32"/>`;
   {
@@ -342,10 +342,10 @@ const AM = {};
   for (let i = 0; i < 30; i++) { const t = zt(), [x, y] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t); const yy = y + zt() * 8; k += `<path d="M${r(x - 1.4)} ${r(yy + 0.8)} l${r(0.4)} ${r(-1.4)} l${r(1.6)} ${r(-0.3)} l${r(0.7)} ${r(1.5)} Z" fill="${zt() < 0.5 ? "#b2aa9c" : "#7d766b"}"/>`; }
   /* Wasser über die Brocken: weiße Schleier */
   let schl = "";
-  for (let i = 0; i < 18; i++) { const t = zt(), [x, y] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t); schl += `<path d="M${r(x - 0.8)} ${r(y)} Q${r(x - 1.4)} ${r(y + 4)} ${r(x - 1.6)} ${r(y + 8 + zt() * 3)} L${r(x + 0.6)} ${r(y + 8)} Q${r(x + 0.4)} ${r(y + 4)} ${r(x + 0.8)} ${r(y)} Z" fill="#f6f4ee" opacity="${r(0.45 + zt() * 0.35)}"/>`; }
+  for (let i = 0; i < 34; i++) { const t = zt(), [x, y] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t); schl += `<path d="M${r(x - 0.8)} ${r(y)} Q${r(x - 1.4)} ${r(y + 4)} ${r(x - 1.6)} ${r(y + 8 + zt() * 3)} L${r(x + 0.6)} ${r(y + 8)} Q${r(x + 0.4)} ${r(y + 4)} ${r(x + 0.8)} ${r(y)} Z" fill="#f6f4ee" opacity="${r(0.45 + zt() * 0.35)}"/>`; }
   k += `<g filter="url(#${S.id("hauch")})">${schl}</g>`;
   /* Fallendes Wasser (Westseite, im Nachmittagslicht) */
-  k += `<path d="${P([...kr, ...fu.slice().reverse()])}" fill="${S.lg("amwasser", [[0, "#fffaf0"], [0.6, "#f4efe6"], [1, "#dfe3e4"]])}"/>`;
+  k += `<path d="${P([...kr, ...fu.map(([x, y]) => [x, y + 1.2]).reverse()])}" fill="${S.lg("amwasser", [[0, "#fff6e4"], [0.6, "#fbf0de"], [1, "#e9e6de"]])}"/>`;
   let st = "";
   for (let i = 0; i < 40; i++) { const t = i / 40 + zt() * 0.02, [x, y] = kr[0].map((v, q) => v + (kr[kr.length - 1][q] - v) * t), [, y2] = fu[0].map((v, q) => v + (fu[fu.length - 1][q] - v) * t); st += `M${r(x)} ${r(y + 0.4)} L${r(x - 0.2)} ${r(y2)}`; }
   k += `<path d="${st}" stroke="#c9d3d6" stroke-width=".22" opacity=".8"/>`;
@@ -522,8 +522,8 @@ const BOOT = {};
   const umriss = (u, ein = 0) => { const o = []; for (const [a, q] of [[-15, -5], [9, -5], [13, -3.4], [15.5, 0], [13, 3.4], [9, 5], [-15, 5]]) o.push(pt(a - (a > 0 ? ein : -ein) * 0.2, q - Math.sign(q) * ein, u)); return o; };
   let k = "";
   /* Kielwasser (zwei Bahnen der Rümpfe) nach hinten, Bugwelle */
-  const kw = (q) => `M${pt(-15, q, 0).map(r).join(" ")} Q${pt(-40, q * 1.6, 0).map(r).join(" ")} ${pt(-70, q * 3, 0).map(r).join(" ")}`;
-  k += `<g filter="url(#${S.id("weich")})"><path d="${P([pt(-15, -5, 0), pt(-75, -16, 0), pt(-75, 16, 0), pt(-15, 5, 0)])}" fill="#eaf4f0" opacity=".45"/></g>`;
+  const kw = (q) => `M${pt(-15, q, 0).map(r).join(" ")} Q${pt(-28, q * 1.5, 0).map(r).join(" ")} ${pt(-42, q * 2.4, 0).map(r).join(" ")}`;
+  k += `<g filter="url(#${S.id("weich")})"><path d="${P([pt(-15, -5, 0), pt(-45, -12, 0), pt(-45, 12, 0), pt(-15, 5, 0)])}" fill="#eaf4f0" opacity=".4"/></g>`;
   k += `<path d="${kw(-4)} ${kw(4)}" stroke="#ffffff" stroke-width=".55" fill="none" opacity=".8"/>`;
   k += `<path d="M${pt(12, -6, 0).map(r).join(" ")} Q${pt(16.5, 0, 0).map(r).join(" ")} ${pt(12, 6.4, 0).map(r).join(" ")}" stroke="#ffffff" stroke-width=".8" fill="none"/>`;
   /* Rumpf: weiß, dunkelblaues Band an der Wasserlinie */
@@ -674,7 +674,7 @@ const kappenSchatten = (x0, x1, yb) => {
   const t = (yb - KAPPE) / Math.max(1, yb - HOR), m = (x0 + x1) / 2, w = (x1 - x0) * 0.42, xm = m + (CX - m) * t - 3;
   return `<path d="M${r(m - w)} ${r(yb + 0.6)} Q${r(m)} ${r(yb + 1.6)} ${r(m + w)} ${r(yb + 0.6)} L${r(xm + w * 0.6)} ${KAPPE + 0.8} L${r(xm - w * 0.6)} ${KAPPE + 0.8} Z" fill="url(#${S.id("kschatten")})" filter="url(#${S.id("weich")})"/>`;
 };
-S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4a3420" stop-opacity=".38"/><stop offset="1" stop-color="#4a3420" stop-opacity=".1"/></linearGradient>`);
+S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4a3420" stop-opacity=".55"/><stop offset="1" stop-color="#4a3420" stop-opacity=".2"/></linearGradient>`);
 
 /* =====================================================================
    13 — DAS FERNROHR (Münzfernrohr an der Mauer, links)
@@ -684,7 +684,6 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   /* Münzfernrohr in Dreiviertelansicht (wie die Tower-Optical-Geräte): runder Kopf mit kurzem Schnabel,
      schaut nach rechts zu den Fällen; Okulare seitlich, Preisschild an der Säule */
   const X = 46, Y = 190;
-  let k = "";
   k += `<path d="M${X - 3} 261 L${X - 2.4} ${Y + 20} L${X + 2.4} ${Y + 20} L${X + 3} 261 Z" fill="${S.lg("saeule", [[0, "#1a3328"], [0.55, "#2c5440"], [0.8, "#4c7c64"], [1, "#22433a"]], 0, 0, 1, 0)}"/>`;
   k += `<rect x="${X - 4.6}" y="${Y + 30}" width="9.2" height="7" rx="1" fill="#24463a"/><rect x="${X - 3.4}" y="${Y + 31.4}" width="6.8" height="3.4" rx=".4" fill="#d9c98a"/><text x="${X}" y="${Y + 34.1}" font-size="2.4" text-anchor="middle" fill="#3a2a10" font-family="Arial,sans-serif">$ 1</text>`;
   /* Gabel */
@@ -797,7 +796,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   const fig = (spec, hoehe) => B.mensch(Object.assign({ ohneSchatten: true, laecheln: true }, spec), hoehe);
   const pk = (m, n) => [m.z.punkte[n][0] * m.k, m.z.punkte[n][1] * m.k];
   /* Tourist: hält das Handy hoch, Rücken halb zu uns */
-  const T = { x: 158, y: 268 };
+  const T = { x: 86, y: 270 };
   const poseFoto = { lende: 1, brust: -2, nacken: 2, kopf: -4, schulterL: { vor: 70, seit: 18 }, ellbogenL: 100, unterarmL: 60, handL: 10, fingerL: 0.6, schulterR: { vor: 68, seit: 20 }, ellbogenR: 104, unterarmR: 60, handR: 10, fingerR: 0.6,
     huefteL: { vor: 4, seit: 4, dreh: -6 }, knieL: 4, fussL: 0, huefteR: { vor: -4, seit: 4, dreh: -6 }, knieR: 2, fussR: 0 };
   const mt = fig({ id: "kan_tourist", geschlecht: "m", alter: "erwachsen", pose: poseFoto, blick: 150, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
@@ -807,7 +806,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: T.x, y: T.y - 50, kunst: um(T.x, T.y - 50, kt),
     tipp: "Jedes Jahr kommen Millionen Menschen zu den Niagarafällen. Fast alle machen hier ein Foto." });
   /* Kind: rotes Regencape mit Kapuze, nass glänzend, zeigt mit dem rechten Arm zum Regenbogen */
-  const K = { x: 112, y: 270 };
+  const K = { x: 128, y: 268 };
   const poseZeig = { lende: 1, brust: -2, nacken: 2, kopf: -8, schulterL: { vor: 6, seit: 10 }, ellbogenL: 14, unterarmL: 0, handL: 0, fingerL: 0.4, schulterR: { vor: 120, seit: 34 }, ellbogenR: 8, unterarmR: 0, handR: 0, fingerR: 0.9,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
   const mk = fig({ id: "kan_kind", geschlecht: "w", alter: "kind", pose: poseZeig, blick: 140, frisur: "zopf", haarfarbe: "braun", haut: "hell",
@@ -820,7 +819,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
   cape += `<path d="M${r((xa + xb) / 2 - 2)} ${r(sly + 6)} l-1.5 ${r(yu - sly - 9)} M${r((xa + xb) / 2 + 3)} ${r(sly + 7)} l1 ${r(yu - sly - 10)}" stroke="#7a1016" stroke-width=".5" opacity=".6"/>`;
   for (const [dx, dy] of [[-2, 10], [4, 16], [1, 24], [-4, 20]]) cape += `<circle cx="${r(cx + dx)}" cy="${r(sly + dy)}" r=".55" fill="#ffffff" opacity=".7"/>`;
   const kk = `<g transform="translate(${K.x} ${K.y})"><g filter="${VOL}">${vereinfache(mk.svg, 0.3)}${cape}</g></g>`;
-  S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "la bambina", itSyl: "bam-BI-na", en: "child", x: K.x, y: K.y - 40, kunst: um(K.x, K.y - 40, kappeRand(kk)),
+  S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "la bambina", itSyl: "bam-BI-na", en: "child", x: K.x, y: K.y - 40, kunst: um(K.x, K.y - 40, kk),
     tipp: "Das Mädchen kommt gerade vom Boot. Es trägt noch das nasse rote Regencape und zeigt auf den Regenbogen." });
 }
 

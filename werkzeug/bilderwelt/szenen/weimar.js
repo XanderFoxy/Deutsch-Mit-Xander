@@ -44,7 +44,7 @@
      auch auf dem Theaterplatz): Bauern aus Heldrungen verkaufen
      geflochtene ZWIEBELZÖPFE (gelbe und rote Zwiebeln, nach unten
      schmaler, oben eine Schlaufe, mit Strohblumen), Trockenblumen,
-     Zwiebelkuchen und Federweißer; die THÜRINGER
+     Zwiebelkuchen und Apfelsaft; die THÜRINGER
      ROSTBRATWURST vom Holzkohlegrill im Brötchen mit Senf; Studenten der
      Bauhaus-Universität mit dem Fahrrad; ein gelbes Reclam-Heft
      („Faust“) — Weimar ist die Stadt der Dichter.
@@ -102,7 +102,6 @@ const mensch = (name, spec, groesse, D, X, Q = 1, min = 0.35) => {
 S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("schw")}" x="-30%" y="-80%" width="160%" height="260%"><feGaussianBlur stdDeviation=".6"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("rauch")}" x="-50%" y="-50%" width="200%" height="200%"><feTurbulence type="fractalNoise" baseFrequency=".18" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation="1.3"/></filter>`);
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("laub")}" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".32" numOctaves="2" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="4.2" xChannelSelector="R" yChannelSelector="G"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-15%" y="-30%" width="130%" height="160%"><feTurbulence type="fractalNoise" baseFrequency=".09" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation=".7"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("schleier")}" x="-10%" y="-300%" width="120%" height="700%"><feTurbulence type="fractalNoise" baseFrequency=".04 .5" numOctaves="2" seed="5" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".7"/></filter>`);
 
@@ -133,31 +132,46 @@ S.hinten(`<rect width="400" height="${HOR + 14}" fill="${S.rg("sonne", [[0, "#ff
     const id = S.id("wk" + seed);
     S.def(`<g id="${id}">${c.map(([a, b, rr]) => `<circle cx="${r(a)}" cy="${r(b)}" r="${r(rr)}"/>`).join("")}<ellipse cx="${x}" cy="${r(y - h * 0.12)}" rx="${r(w * 0.5)}" ry="${r(h * 0.16)}"/></g>`);
     const lage = (dx, dy, f, fill, op = 1) => `<use href="#${id}" fill="${fill}" opacity="${op}" transform="translate(${r(x + dx)} ${r(y + dy)}) scale(${f}) translate(${-x} ${-y})"/>`;
-    return `<g filter="url(#${S.id("wolke")})">${lage(1, 1.4, 1, "#a9a6bf", 0.9)}${lage(-0.3, -0.6, 0.94, "#eef0f5")}${lage(-1.4, -2.4, 0.74, "#fff8ec")}</g>`;
+    return `<g filter="url(#${S.id("wolke")})">${lage(0.5, 0.8, 0.97, "#c4c8d4", 0.85)}${lage(-0.3, -0.6, 0.94, "#eef0f5")}${lage(-1.4, -2.4, 0.74, "#fff8ec")}</g>`;
   };
   S.hinten(wolke(60, 34, 62, 18, 5) + wolke(334, 26, 54, 15, 9) + wolke(236, 52, 22, 5, 12) + wolke(150, 62, 14, 3, 14));
   S.hinten(`<g filter="url(#${S.id("schleier")})" opacity=".55"><path d="M120 10 Q210 4 320 9 Q220 11 120 13 Z M230 20 Q300 16 390 19 Q310 22 230 22 Z" fill="#f6f2ec"/></g>`);
 }
 S.hinten(`<rect x="0" y="${HOR - 60}" width="400" height="62" fill="${S.lg("dunst", [[0, "#efe6d6", 0], [1, "#efe6d6", 0.55]])}"/>`);
 S.hinten(`<rect x="0" y="${HOR}" width="400" height="${260 - HOR}" fill="#a49b8f"/>`);
-/* Kronen-Werkzeug (wie Potsdam): gelappte Kronen, drei Tonstufen je Lappen, Himmelslöcher */
-const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
-  const z = zufall(seed);
-  const lap = [];
-  for (let i = 0; i < 12; i++) { const a = z() * Math.PI * 2, d = Math.sqrt(z()) * 0.34; lap.push([cx + Math.cos(a) * w * d, cy + Math.sin(a) * h * d * 0.95, (0.17 + z() * 0.09) * w, (0.15 + z() * 0.08) * h]); }
-  lap.sort((p, q) => p[1] - q[1] || p[0] - q[0]);
-  const grad = (name, a, b) => S.lg(name + seed, [[0, a], [1, b]], cx, cy - h / 2, cx, cy + h / 2, ' gradientUnits="userSpaceOnUse"');
-  const GD = grad("kd", T[0], T[1]), GM = grad("km", T[2], T[3]), GL = grad("kl", T[4], T[5]);
-  let g = `<g filter="url(#${S.id("laub")})"><ellipse cx="${cx}" cy="${r(cy + h * 0.06)}" rx="${r(w * 0.42)}" ry="${r(h * 0.42)}" fill="${GD}"/>`;
-  for (const [x, y, rx, ry] of lap) {
-    g += `<ellipse cx="${r(x + rx * 0.08)}" cy="${r(y + ry * 0.1)}" rx="${r(rx)}" ry="${r(ry)}" fill="${GD}"/>`;
-    g += `<ellipse cx="${r(x - rx * 0.12)}" cy="${r(y - ry * 0.12)}" rx="${r(rx * 0.78)}" ry="${r(ry * 0.74)}" fill="${GM}"/>`;
-    g += `<ellipse cx="${r(x - rx * 0.32)}" cy="${r(y - ry * 0.34)}" rx="${r(rx * 0.4)}" ry="${r(ry * 0.36)}" fill="${GL}"/>`;
+/* Kronen-Werkzeug (wie Potsdam): 3–4 Laubmassen als gezackte Pfade; dunkle Unterseite, Mittelton und helle Kappe
+   links oben per <use> in die Masse geschnitten; Himmelslöcher mit Ästen. */
+let bz = 0;
+const lappenPfad = (cx, cy, rx, ry, z) => {
+  const n = 15 + Math.round(z() * 6), P = [];
+  for (let k = 0; k < n; k++) { const t = (k + z() * 0.4) / n * Math.PI * 2, f = 1 - z() * 0.07; P.push([t, f]); }
+  const pt = ([t, f], g = 1) => `${r(cx + Math.cos(t) * rx * f * g)} ${r(cy + Math.sin(t) * ry * f * g)}`;
+  let d = `M${pt(P[0])}`;
+  for (let k = 0; k < n; k++) {
+    const a = P[k], b = P[(k + 1) % n], tm = a[0] + (((b[0] - a[0]) + Math.PI * 2) % (Math.PI * 2)) / 2;
+    const amp = z() < 0.2 ? 0.34 : 0.16 + z() * 0.12;
+    d += ` Q${pt([tm, (a[1] + b[1]) / 2], 1 + amp)} ${pt(b)}`;
   }
-  for (let i = 0; i < loecher; i++) { const a = -Math.PI * (0.1 + z() * 0.8), d = 0.28 + z() * 0.1; g += `<ellipse cx="${r(cx + Math.cos(a) * w * d * 1.2)}" cy="${r(cy + Math.sin(a) * h * d)}" rx="${r(0.9 + z() * 1.1)}" ry="${r(0.7 + z() * 0.8)}" fill="#adc6de"/>`; }
-  return g + `</g>`;
+  return d + " Z";
 };
-
+const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
+  const z = zufall(seed), id = S.id("kr" + bz++);
+  const grad = (name, a, b) => S.lg(name + id, [[0, a], [1, b]], cx, cy - h / 2, cx, cy + h / 2, ' gradientUnits="userSpaceOnUse"');
+  const GD = grad("d", T[0], T[1]), GM = grad("m", T[2], T[3]), GL = grad("l", T[4], T[5]);
+  const massen = [[cx - w * 0.2, cy - h * 0.2, w * 0.27, h * 0.25], [cx + w * 0.17, cy - h * 0.22, w * 0.26, h * 0.24], [cx + w * 0.02, cy - h * 0.36, w * 0.2, h * 0.16], [cx, cy + h * 0.1, w * 0.44, h * 0.34]];
+  let g = "";
+  massen.forEach(([mx, my, rx, ry], i) => {
+    const mid = `${id}_${i}`;
+    S.def(`<path id="${mid}" d="${lappenPfad(mx, my, rx, ry, z)}"/><clipPath id="${mid}c"><use href="#${mid}"/></clipPath>`);
+    const um = (dx, dy, f) => `transform="translate(${r(mx + dx)} ${r(my + dy)}) scale(${f}) translate(${r(-mx)} ${r(-my)})"`;
+    g += `<use href="#${mid}" fill="${GD}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" ${um(-rx * 0.08, -ry * 0.12, 0.86)}/><use href="#${mid}" fill="${GL}" ${um(-rx * 0.42, -ry * 0.46, 0.36)}/></g>`;
+  });
+  for (let i = 0; i < loecher; i++) {
+    const a = -Math.PI * (0.12 + z() * 0.76), d = 0.3 + z() * 0.08, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.8;
+    g += `<ellipse cx="${r(hx)}" cy="${r(hy)}" rx="${r(0.9 + z() * 0.7)}" ry="${r(0.6 + z() * 0.5)}" fill="#9fbcdc"/><path d="M${r(hx - 1.6)} ${r(hy + 1.1)} L${r(hx + 0.9)} ${r(hy - 0.5)}" stroke="#4a3b2c" stroke-width=".35" stroke-linecap="round"/>`;
+  }
+  return g;
+};
 /* =====================================================================
    4 — DER PLATZ (Bodenfläche, Inhalt am Ende) und 1 — DIE HÄUSER
    ===================================================================== */
@@ -297,9 +311,6 @@ const theaterUnter = [];
     x: r(CX + 6 * TU), y: r(TY - 5.8 * TU), kunst: flaeche(-0.55 * TU, -8.8 * TU, 1.1 * TU, 8.8 * TU, 0.4) });
   theaterUnter.push({ id: "tuer", de: "die Tür", syl: "TÜR", it: "la porta", itSyl: "POR-ta", en: "door",
     x: r(CX + 8 * TU), y: r(TY - 0.6 * TU), kunst: flaeche(-1.2 * TU, -3.9 * TU, 2.4 * TU, 3.9 * TU, 0.4) });
-  theaterUnter.push({ id: "schriftzug", de: "der Schriftzug", syl: "SCHRIFT-zug", it: "la scritta", itSyl: "SCRIT-ta", en: "lettering",
-    x: r(CX + 4.5 * TU), y: r(TY - 15.6 * TU), kunst: flaeche(-5.5 * TU, -1.3 * TU, 11 * TU, 1.3 * TU, 0.4),
-    tipp: "Über den Säulen steht „Deutsches Nationaltheater“." });
 }
 S.teile[S.teile.length - 1].unter = theaterUnter;
 
@@ -307,18 +318,19 @@ S.teile[S.teile.length - 1].unter = theaterUnter;
    3 — DIE BÄUME (Linden am Platz: ovale, dichte Kronen, Herbstgelb)
    ===================================================================== */
 {
-  let k = "";
   const STAMM = S.lg("stamm", [[0, "#8a7458"], [0.5, "#5b4836"], [1, "#2f261d"]], 0, 0, 1, 0);
-  const T1 = ["#7a6a24", "#3e4a1c", "#c9a032", "#7d8a32", "#f6d86a", "#d8cc5a"];
-  const T2 = ["#6e6a26", "#3a461c", "#d0a83a", "#869036", "#f8e07a", "#e0d468"];
-  for (const [D, X, w, T, sd] of [[34, -20.8, 0.5, T1, 31], [28, -18.0, 0.55, T2, 32], [33, 20.4, 0.5, T2, 33], [27, 17.6, 0.55, T1, 34]]) {
+  const T1 = ["#7a6a24", "#3e4a1c", "#c9a032", "#7d8a32", "#e2c056", "#b8b04a"];
+  const T2 = ["#6e6a26", "#3a461c", "#d0a83a", "#869036", "#e6c862", "#c0b854"];
+  const baeume = (liste) => { let k = ""; for (const [D, X, w, T, sd] of liste) {
     const x = xG(D, X), y0 = yG(D), y1 = yG(D, 9), bw = w * sk(D), u = sk(D);
     k += `<path d="M${r(x - bw)} ${r(y0)} Q${r(x - bw * 0.5)} ${r((y0 + y1) / 2)} ${r(x - bw * 0.4)} ${r(y1)} L${r(x + bw * 0.4)} ${r(y1)} Q${r(x + bw * 0.5)} ${r((y0 + y1) / 2)} ${r(x + bw)} ${r(y0)} Z" fill="${STAMM}"/>`;
     k += `<path d="M${r(x)} ${r(yG(D, 6))} q${r(1.1 * u)} ${r(-0.7 * u)} ${r(1.8 * u)} ${r(-2.4 * u)} M${r(x)} ${r(yG(D, 6.6))} q${r(-1 * u)} ${r(-0.6 * u)} ${r(-1.6 * u)} ${r(-2.2 * u)}" stroke="#4a3b2c" stroke-width="${r(0.2 * u)}" fill="none" stroke-linecap="round"/>`;
     bodenSchatten(D, X, 1, 10, 0.16);
     k += krone(r(x), r(yG(D, 10.5)), r(6.4 * u), r(9.2 * u), sd, T, 3);
-  }
-  S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: k,
+  } return k; };
+  S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: baeume([[34, -20.8, 0.5, T1, 31], [28, -18.0, 0.55, T2, 32]]),
+    tipp: "Bäume geben im Sommer Schatten. Im Herbst fallen die Blätter." });
+  S.teil({ id: "linde", de: "die Linde", syl: "LIN-de", it: "il tiglio", itSyl: "TI-glio", en: "lime tree", x: 0, y: 0, kunst: baeume([[33, 20.4, 0.5, T2, 33], [27, 17.6, 0.55, T1, 34]]),
     tipp: "Am Platz stehen Linden. Im Oktober werden ihre Blätter gelb." });
 }
 
@@ -617,7 +629,7 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
 {
   bodenSchatten(ZW.D + 0.9, (ZW.X0 + ZW.X1) / 2, 3.6, 2.6, 0.26);
   bodenSchatten(ZK.D + 0.9, (ZK.X0 + ZK.X1) / 2, 3.6, 2.6, 0.22);
-  let k = stand(ZK.D, ZK.X0, ZK.X1, ZK.T, ZK.h, "#3d6b48", -1, "#f4ecd8", "Zwiebelkuchen · Federweißer", 0.2);
+  let k = stand(ZK.D, ZK.X0, ZK.X1, ZK.T, ZK.h, "#3d6b48", -1, "#f4ecd8", "Zwiebelkuchen · Apfelsaft", 0.2);
   /* Zwiebelkuchen-Bleche auf der Theke */
   for (let i = 0; i < 3; i++) { const X = ZK.X0 + 0.5 + i * 1.05; k += `<path d="M${P(ZK.D + 0.15, X, 0.98)} L${P(ZK.D + 0.15, X + 0.9, 0.98)} L${P(ZK.D + 0.5, X + 0.9, 0.98)} L${P(ZK.D + 0.5, X, 0.98)} Z" fill="#e2b45a" stroke="#8a5a20" stroke-width=".2"/>`; }
   k += stand(ZW.D, ZW.X0, ZW.X1, ZW.T, ZW.h, "#7a4a24", 1, "#f4ecd8", "Zwiebeln aus Heldrungen", 0.2);

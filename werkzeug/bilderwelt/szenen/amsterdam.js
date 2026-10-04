@@ -561,7 +561,7 @@ function bruecke(D, tiefe, nr) {
   /* Durchblick: Wasser unter der Brücke (dunkel), Seitenwände */
   const vorn = bogenPkt(D), hinten = bogenPkt(rueck);
   const loch = (pts, Dd) => "M" + pt(P(-BOGEN.b, Dd, -0.05)) + " L" + pts.map(pt).join(" L") + " L" + pt(P(BOGEN.b, Dd, -0.05)) + " Z";
-  g += `<path d="${loch(vorn, D)} ${loch(hinten, rueck)}" fill="#1c2427" fill-rule="evenodd"/>`;
+  g += `<path d="${loch(vorn, D)} ${loch(hinten, rueck)}" fill="${S.lg("tunnel", [[0, "#2a2a26"], [0.6, "#3c3a2e"], [1, "#4a4636"]])}" fill-rule="evenodd"/>`;
   /* Stirnseite mit Bogenöffnung */
   const L = [];
   for (let X = -11; X <= 11.01; X += 1) L.push(P(X, D, deckH(X)));
@@ -575,7 +575,7 @@ function bruecke(D, tiefe, nr) {
   g += `<path d="${fug}" stroke="#3a2018" stroke-width="${r(Math.max(0.12, 0.03 * s))}" opacity=".45"/>`;
   /* Bogenring aus hellem Stein mit Fugen (Keilsteine) */
   const aussen = bogenPkt(D, 16, BOGEN.b + 0.55, BOGEN.s, BOGEN.k + 0.5);
-  g += `<path d="M${aussen.map(pt).join(" L")} L${vorn.slice().reverse().map(pt).join(" L")} Z" fill="${licht ? "#efe2c8" : "#b8b0a3"}"/>`;
+  g += `<path d="M${aussen.map(pt).join(" L")} L${vorn.slice().reverse().map(pt).join(" L")} Z" fill="${licht ? "#f4e4c4" : nr === 0 ? "#c4baa8" : "#e2d2b4"}"/>`;
   let keil = "";
   if (!fern) for (let i = 1; i < 16; i++) keil += `M${pt(vorn[i])} L${pt(aussen[i])} `;
   g += `<path d="${keil}" stroke="#6d655c" stroke-width="${r(Math.max(0.1, 0.025 * s))}"/>`;
@@ -657,20 +657,26 @@ function krone(cx, cy, rx, ry, seed, sonne, fern) {
     /* ferne Kronen (wenige Einheiten groß): einfache Ballen */
     let c1 = "", c2 = "";
     for (let i = 0; i < 6; i++) { const a = i * 1.05 + z(), dd = i ? 0.55 : 0, x = cx + Math.cos(a) * dd * rx, y = cy + Math.sin(a) * dd * ry * 0.8, rc = Math.min(rx, ry) * (0.5 + z() * 0.15); c1 += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(rc)}"/>`; c2 += `<circle cx="${r(x + rc * 0.2)}" cy="${r(y - rc * 0.25)}" r="${r(rc * 0.6)}"/>`; }
-    return `<g fill="${sonne ? "#55732f" : "#3d5a30"}">${c1}</g><g fill="${sonne ? "#93ad4c" : "#64874a"}">${c2}</g>`;
+    return `<g fill="${sonne ? "#7c9a3a" : "#627d36"}">${c1}</g><g fill="${sonne ? "#b6cc5a" : "#90ab4e"}">${c2}</g>`;
   }
-  let d1 = "", d2 = "", d3 = "", punkte = "";
-  const n = rx > 60 ? 9 : 7;
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 + z() * 0.5, dd = i === 0 ? 0 : 0.35 + z() * 0.55;
-    const yy = Math.sin(a) * dd, x = cx + Math.cos(a) * dd * rx * (0.85 - 0.15 * yy), y = cy + yy * ry * 0.85;
-    const rc = Math.min(rx, ry) * (0.34 + z() * 0.14) * (1.15 - 0.35 * dd);
-    d1 += ballen(x - rc * 0.08, y + rc * 0.12, rc, z);
-    d2 += ballen(x + rc * 0.12, y - rc * 0.14, rc * 0.7, z, 6);
-    if (yy < 0.35) d3 += ballen(x + rc * 0.3, y - rc * 0.34, rc * 0.36, z, 5);
-    for (let j = 0; j < 2; j++) { const t = -Math.PI * 0.9 + z() * Math.PI * 0.9; punkte += `<circle cx="${r(x + Math.cos(t) * rc * 0.95)}" cy="${r(y + Math.sin(t) * rc * 0.82)}" r="${r(rc * (0.06 + z() * 0.05))}"/>`; }
+  /* April: junges, lockeres Laub in gefransten Büscheln an den Astenden, Äste sichtbar, Himmel und Giebel scheinen durch */
+  const fransen = (x, y, rr, n = 12) => rund(Array.from({ length: n }, (_, i) => { const a = i * Math.PI * 2 / n, q = rr * (i % 2 ? 0.7 + z() * 0.12 : 0.95 + z() * 0.15); return [x + Math.cos(a) * q, y + Math.sin(a) * q * 0.85]; }), rr > 4);
+  const N = rx > 60 ? 13 : 10, gx = cx, gy = cy + ry * 0.95;
+  let aeste = "", d1 = "", d2 = "", d3 = "";
+  for (let i = 0; i < N; i++) {
+    const t = i / (N - 1), ang = -Math.PI * (0.06 + 0.88 * t) + (z() - 0.5) * 0.25, dist = 0.55 + 0.45 * z();
+    const tx = cx + Math.cos(ang) * rx * dist, ty = cy + Math.sin(ang) * ry * dist * 0.95 + ry * 0.12;
+    aeste += `M${r(gx)} ${r(gy)} Q${r(gx + (tx - gx) * 0.3)} ${r(gy + (ty - gy) * 0.75)} ${r(tx)} ${r(ty)}`;
+    const k = 2 + Math.floor(z() * 2);
+    for (let j = 0; j < k; j++) {
+      const rc = Math.min(rx, ry) * (0.16 + z() * 0.1), x = tx + (z() - 0.5) * rc * 1.6, y = ty + (z() - 0.5) * rc * 1.2;
+      d1 += fransen(x - rc * 0.12, y + rc * 0.16, rc);
+      d2 += fransen(x + rc * 0.1, y - rc * 0.12, rc * 0.72, 10);
+      if (z() < 0.6) d3 += fransen(x + rc * 0.32, y - rc * 0.3, rc * 0.34, 8);
+    }
   }
-  return `<path d="${d1}" fill="${sonne ? "#46622a" : "#2f4a28"}"/><path d="${d2}" fill="${sonne ? "#76953a" : "#476a33"}"/><path d="${d3}" fill="${sonne ? "#b7cc5e" : "#759452"}" opacity="${sonne ? 0.9 : 0.7}"/><g fill="${sonne ? "#d6e48a" : "#8fae68"}" opacity=".8">${punkte}</g>`;
+  const sw = Math.max(0.3, Math.min(rx, ry) * 0.035);
+  return `<path d="${aeste}" stroke="#4a4038" stroke-width="${r(sw)}" fill="none" stroke-linecap="round"/><path d="${d1}" fill="${sonne ? "#6f8f30" : "#556f2c"}" opacity=".95"/><path d="${d2}" fill="${sonne ? "#a9c44a" : "#82a03e"}" opacity=".95"/><path d="${d3}" fill="${sonne ? "#e0e884" : "#b2c766"}" opacity=".85"/>`;
 }
 function ulme(X, D, seed) {
   const [bx, by] = P(X, D, KAI), s = F / D, z = zufall(seed), sonne = X < 0 && sonnig(X, D, 9);
@@ -683,7 +689,7 @@ function ulme(X, D, seed) {
   for (const [dx, dy] of [[-1.6, -4.2], [-0.4, -5.2], [1.3, -4.4], [2.2, -3]]) aeste += `M${r(bx + lean * 0.5)} ${r(by - fork)} Q${r(bx + lean * 0.7 + dx * 0.4 * s)} ${r(by - fork - dy * -0.4 * s)} ${r(bx + lean + dx * s)} ${r(by - fork + dy * s * 0.8)} `;
   g += `<path d="${aeste}" stroke="#3a352f" stroke-width="${r(0.14 * s)}" fill="none" stroke-linecap="round"/>`;
   const cx = bx + lean, cy = by - (KAI + 7.6 - KAI) * s;
-  g += krone(cx, cy, 3.9 * s, 3.0 * s, seed, sonne, D > 100);
+  g += krone(cx, cy, 3.6 * s, 2.7 * s, seed, sonne, D > 100);
   return { g, bx, by, sonne };
 }
 
@@ -726,7 +732,8 @@ function prisma(grund, h0, h1, farbe, dachFarbe, licht) {
   S.def(`<pattern id="${S.id("baender")}" width="400" height="2.6" patternUnits="userSpaceOnUse"><rect width="400" height="1.9" fill="#fff"/><rect x="-6" y="1.9" width="140" height=".7" fill="#fff" opacity=".5"/></pattern>`);
   S.def(`<pattern id="${S.id("baender2")}" width="400" height="5.2" patternUnits="userSpaceOnUse"><rect width="400" height="3.1" fill="#fff"/><rect x="220" y="3.1" width="120" height="2.1" fill="#fff" opacity=".6"/></pattern>`);
   S.def(`<mask id="${S.id("spmaske")}" maskUnits="userSpaceOnUse" x="0" y="${HOR}" width="400" height="${262 - HOR}"><rect y="${HOR}" width="400" height="40" fill="url(#${S.id("baender")})"/><rect y="${HOR + 40}" width="400" height="${222 - HOR}" fill="url(#${S.id("baender2")})"/><rect y="${HOR}" width="400" height="${262 - HOR}" fill="${S.lg("spfade", [[0, "#000", 0.1], [0.35, "#000", 0.35], [1, "#000", 0.82]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${HOR}" x2="0" y2="262"`)}"/></mask>`);
-  k += `<g clip-path="url(#${S.id("wasserclip")})"><g mask="url(#${S.id("spmaske")})" opacity=".85">${SPIEGEL}</g><g mask="url(#${S.id("spmaske")})">${SPIEGEL_B}</g></g>`;
+  S.def(`<mask id="${S.id("spmaske2")}" maskUnits="userSpaceOnUse" x="0" y="${HOR}" width="400" height="${262 - HOR}"><rect y="${HOR}" width="400" height="${262 - HOR}" fill="url(#${S.id("baender")})" opacity=".9"/></mask>`);
+  k += `<g clip-path="url(#${S.id("wasserclip")})"><g mask="url(#${S.id("spmaske")})" opacity=".85">${SPIEGEL}</g><g mask="url(#${S.id("spmaske2")})">${SPIEGEL_B}</g></g>`;
   /* Abendsonne durch die Lücke der Herengracht: warmes Licht auf dem nahen Wasser bis zur Schattenkante */
   const kante = []; for (let X = -KX; X <= KX + 0.01; X += 2) kante.push(P(X, 12 + (FX - X) * 0.839, 0));
   k += `<path d="${pz([P(-KX, 9, 0), P(KX, 9, 0), ...kante.reverse()])}" fill="${S.lg("sonnestreif", [[0, "#ffb860", 0.45], [1, "#ffc77a", 0.12]])}"/>`;

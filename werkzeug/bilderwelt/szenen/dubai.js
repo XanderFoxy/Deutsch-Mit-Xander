@@ -125,19 +125,19 @@ S.hinten(`<rect y="${HOR - 34}" width="400" height="36" fill="${S.lg("dunst", [[
   /* The Address Downtown (306 m, gleich neben der Mall, etwa 500 m): schlank, oben in Stufen zur schmalen Krone */
   {
     const AX = 266, AW = 10, u = F / 500, yb = HOR + 1, H = 306 * u;
-    const stufen = [[0, 0.8, 1], [0.8, 0.86, 0.82], [0.86, 0.91, 0.64], [0.91, 0.95, 0.46], [0.95, 0.985, 0.28]];
-    for (const [h0, h1, wq] of stufen) {
-      const w = AW * wq, x0 = AX + (AW - w) / 2, ya = yb - H * h1, ye = yb - H * h0;
-      k += `<rect x="${r(x0)}" y="${r(ya)}" width="${r(w)}" height="${r(ye - ya)}" fill="#7d91a6"/><rect x="${r(x0)}" y="${r(ya)}" width="${r(w * 0.42)}" height="${r(ye - ya)}" fill="#d6e0e8"/><rect x="${r(x0)}" y="${r(ya)}" width="${r(w)}" height=".35" fill="#eef3f6"/>`;
-    }
-    k += `<path d="M${r(AX + AW / 2)} ${r(yb - H * 0.985)} V${r(yb - H * 1.06)}" stroke="#8e9fb0" stroke-width=".4"/>`;
+    const yK = yb - H * 0.8, yS = yb - H * 1.03;
+    k += `<rect x="${AX}" y="${r(yK)}" width="${AW}" height="${r(yb - yK)}" fill="#7d91a6"/><rect x="${AX}" y="${r(yK)}" width="${r(AW * 0.42)}" height="${r(yb - yK)}" fill="#d6e0e8"/>`;
+    /* Krone: links steil, rechts eine lange Schräge, Spitze außermittig */
+    k += `<path d="M${AX} ${r(yK)} L${r(AX + AW * 0.3)} ${r(yS)} L${r(AX + AW)} ${r(yK - H * 0.02)} L${r(AX + AW)} ${r(yK)} Z" fill="#7d91a6"/><path d="M${AX} ${r(yK)} L${r(AX + AW * 0.3)} ${r(yS)} L${r(AX + AW * 0.42)} ${r(yS + H * 0.04)} L${r(AX + AW * 0.42)} ${r(yK)} Z" fill="#dbe4eb"/>`;
+    k += `<path d="M${r(AX + AW * 0.3)} ${r(yS)} L${r(AX + AW)} ${r(yK - H * 0.02)}" stroke="#eef3f6" stroke-width=".35"/>`;
     for (let i = 1; i < 6; i++) k += `<rect x="${r(AX + AW * 0.42 + i * AW * 0.58 / 6)}" y="${r(yb - H * 0.8)}" width=".2" height="${r(H * 0.8)}" fill="#c4d2de" opacity=".6"/>`;
     for (const q of [0.25, 0.5, 0.75]) k += `<rect x="${AX}" y="${r(yb - H * q)}" width="${AW}" height=".4" fill="#5d7088" opacity=".5"/>`;
   }
   /* niedrige Häuser davor */
   for (let x = 104; x < 352; x += 5 + rnd() * 6) { const h = 3 + rnd() * 6, w = 4 + rnd() * 6; if (x > 210 && x < 240) continue; k += `<rect x="${r(x)}" y="${r(yb - h)}" width="${r(w)}" height="${r(h)}" fill="${rnd() < 0.5 ? "#c8d0d6" : "#d8dcdc"}"/><rect x="${r(x)}" y="${r(yb - h)}" width="${r(w * 0.35)}" height="${r(h)}" fill="#e4e6e2"/>`; }
   /* Dunst über allem Fernen */
-  k += `<rect x="100" y="${HOR - 50}" width="256" height="51" fill="${S.lg("ferndunst", [[0, "#ebe6da", 0], [1, "#ebe4d4", 0.45]])}"/>`;
+  S.def(`<mask id="${S.id("dunstmaske")}" maskUnits="userSpaceOnUse" x="96" y="${HOR - 52}" width="264" height="55"><rect x="96" y="${HOR - 52}" width="264" height="55" fill="${S.lg("dunstrand", [[0, "#000"], [0.14, "#fff"], [0.86, "#fff"], [1, "#000"]], 0, 0, 1, 0)}"/></mask>`);
+  k += `<rect x="100" y="${HOR - 50}" width="256" height="51" fill="${S.lg("ferndunst", [[0, "#ebe6da", 0], [1, "#ebe4d4", 0.45]])}" mask="url(#${S.id("dunstmaske")})"/>`;
   S.teil({ anker: [271, 120], id: "wolkenkratzer", de: "der Wolkenkratzer", syl: "WOL-ken-krat-zer", it: "il grattacielo", itSyl: "grat-ta-CIE-lo", en: "skyscraper", x: 0, y: 0, kunst: k,
     tipp: "Rund um den Burj Khalifa stehen viele Wolkenkratzer, zum Beispiel das Hotel „The Address“. Das Viertel heißt Downtown Dubai." });
 }
@@ -177,7 +177,7 @@ let burjKlick = "";
   S.def(`<pattern id="${S.id("fugen")}" width=".62" height="20" patternUnits="userSpaceOnUse"><rect width=".1" height="20" fill="#5d7690" opacity=".35"/></pattern>`);
   k += `<g ${CL}><rect x="${r(bx(-50))}" y="10" width="${r(BX - bx(-50))}" height="150" fill="url(#${S.id("fugen")})"/><rect x="${BX}" y="10" width="${r(bx(50) - BX)}" height="150" fill="url(#${S.id("rippen")})"/>`;
   /* der Himmel spiegelt sich als blaue Bänder im Glas der Mitte */
-  for (const [s0, w, o] of [[-8, 2.4, 0.45], [-3.5, 1.6, 0.35], [2, 2.2, 0.3], [-12.5, 1.4, 0.3]]) k += `<rect x="${r(bx(s0))}" y="10" width="${r(w * BQ)}" height="150" fill="${S.lg("himmelband", [[0, "#6f9bd0", 0.9], [0.6, "#8db3dc", 0.6], [1, "#8db3dc", 0.2]])}" opacity="${o}"/>`;
+  for (const [s0, w, o] of [[-8, 2.4, 0.45], [-3.5, 1.6, 0.35], [2, 2.2, 0.35], [-12.5, 1.4, 0.3], [11, 1.8, 0.35], [22, 2, 0.32], [31, 1.6, 0.3]]) k += `<rect x="${r(bx(s0))}" y="10" width="${r(w * BQ)}" height="150" fill="${S.lg("himmelband", [[0, "#6f9bd0", 0.9], [0.6, "#8db3dc", 0.6], [1, "#8db3dc", 0.2]])}" opacity="${o}"/>`;
   for (const h of [74, 158, 242, 326, 410, 456, 494, 555]) k += `<rect x="${r(bx(-50))}" y="${r(by(h))}" width="${r(100 * BQ)}" height="${h === 555 || h === 456 ? 1.1 : 0.6}" fill="#2c3f52" opacity="${h === 555 || h === 456 ? 0.65 : 0.55}"/>`;
   k += `<rect x="${r(bx(-50))}" y="10" width="${r(100 * BQ)}" height="150" fill="${S.lg("burjglanz", [[0, "#ffffff", 0], [0.42, "#ffffff", 0.0], [0.5, "#ffffff", 0.22], [0.58, "#ffffff", 0], [1, "#ffffff", 0]], 0, 0, 1, 0.35)}"/>`;
   k += `<rect x="${r(bx(-50))}" y="10" width="${r(100 * BQ)}" height="150" fill="${S.lg("burjluft", [[0, "#d8e8f6", 0.15], [0.5, "#d8e8f6", 0], [0.85, "#efe4cf", 0.04], [1, "#efe4cf", 0.13]])}"/></g>`;
@@ -189,8 +189,8 @@ let burjKlick = "";
     for (let s = s0 + 1.6; s < s1 - 0.5; s += 2.2) k += `<rect x="${r(bx(s))}" y="${r(by(top) - 1.1)}" width=".14" height="1" fill="${licht ? "#e9eef1" : "#93a6b8"}"/>`;
   }
   /* Lichtgrat an der linken Turmkante */
-  k += `<rect x="${r(bx(-48))}" y="${r(by(104))}" width=".35" height="${r(by(-1) - by(104))}" fill="#ffffff" opacity=".9"/>`;
-  for (const [s0, , top] of STREIFEN.slice(1, 7)) k += `<rect x="${r(bx(s0))}" y="${r(by(top))}" width=".3" height="${r(by(-1) - by(top))}" fill="#ffffff" opacity=".7"/>`;
+  for (const [s0, , top] of STREIFEN.slice(0, 7)) k += `<rect x="${r(bx(s0))}" y="${r(by(top))}" width=".4" height="${r(by(-1) - by(top))}" fill="#ffffff" opacity=".95"/>`;
+  for (const [h0, h1, hw] of SPITZE) k += `<rect x="${r(bx(-hw))}" y="${r(by(h1))}" width=".3" height="${r(by(h0) - by(h1))}" fill="#ffffff" opacity=".9"/>`;
   /* Aussichtsplattformen: Glasbrüstung als heller Streif */
   for (const h of [456, 555]) k += `<rect x="${r(bx(-9))}" y="${r(by(h) - 0.35)}" width="${r(18 * BQ)}" height=".3" fill="#ffffff" opacity=".85"/>`;
   burjKlick = k;
@@ -217,11 +217,14 @@ const SEE_Y0 = HOR + 0.7, SEE_Y1 = 201;
   /* Spiegelbild des Turms: an der Wasserlinie (y ≈ 158,9) gespiegelt, gebrochen von Wellen */
   const ySp = by(0);
   let sp = "";
-  for (const [s0, s1, top] of [...STREIFEN, ...NASE]) {
-    const f = s1 <= 0 ? "#9fb6cc" : "#2f4560";
-    for (let y = ySp; y < ySp + by(0) - by(top) && y < SEE_Y1; y += 1.4 + rnd() * 1.2) { const dx = (rnd() - 0.5) * 0.9 * (y - HOR) / 20; sp += `<rect x="${r(bx(s0) + dx)}" y="${r(y)}" width="${r((s1 - s0) * BQ * (0.7 + rnd() * 0.3))}" height="${r(0.8 + rnd() * 0.8)}" fill="${f}"/>`; }
+  /* Wellenbänder: je Zeile ein heller (links) und ein dunkler (rechts) Streifen, gegeneinander versetzt, nach unten breiter und blasser */
+  const turmHalb = (h) => { let l = 0, rr = 0; for (const [s0, s1, top] of [...STREIFEN, ...NASE]) if (top >= h) { l = Math.min(l, s0); rr = Math.max(rr, s1); } return [l, rr]; };
+  for (let y = ySp + 0.3; y < SEE_Y1; y += 1.3 + rnd() * 0.7) {
+    const h = (y - ySp) / BU, q = (y - HOR) / (SEE_Y1 - HOR), [l, rr] = turmHalb(Math.min(h, 590)), dx = (rnd() - 0.5) * (0.6 + q * 3), sp2 = 1 + q * 0.5, hh = 0.6 + q * 0.6;
+    if (rr - l < 1) continue;
+    sp += `<rect x="${r(bx(l) + dx - q)}" y="${r(y)}" width="${r(-l * BQ * sp2)}" height="${r(hh)}" fill="#c9d6e2" opacity="${r(0.35 * (1 - q * 0.6))}"/><rect x="${r(BX + dx * 0.7)}" y="${r(y)}" width="${r(rr * BQ * sp2)}" height="${r(hh)}" fill="#4f6780" opacity="${r(0.45 * (1 - q * 0.5))}"/>`;
   }
-  k += `<g clip-path="url(#${S.id("seeclip")})" opacity=".6">${sp}</g>`;
+  k += `<g clip-path="url(#${S.id("seeclip")})">${sp}</g>`;
   {
     const yU = HOR + E * F / 520;
   /* Fuß: der Sockelbau, der Park mit Palmen am anderen Ufer (500 m) */
@@ -289,7 +292,7 @@ const SEE_Y0 = HOR + 0.7, SEE_Y1 = 201;
     for (let j = 0; j < 5; j++) k += `<circle cx="${r(e[0] + neig * (2 + j * 1.3) + (rnd() - 0.5) * 2)}" cy="${r(e[1] + 1.5 + j * 1.8 + rnd())}" r="${r(0.25 + rnd() * 0.25)}" fill="#ffffff" opacity=".8"/>`;
   }
   /* Super Shooter: schlanke Säule, oben eine weite Nebelkrone, Nebel sinkt seitlich ab */
-  for (const [x, H, lean] of [[166, 58, -0.04], [192, 66, -0.02], [262, 64, 0.02], [292, 55, 0.04]]) {
+  for (const [x, H, lean] of [[166, 58, -0.04], [192, 66, -0.02], [253, 64, 0.02], [296, 55, 0.04]]) {
     const yb = ybase(x), pts = [];
     for (let t = 0; t <= 1.001; t += 0.25) pts.push([x + lean * H * t, yb - H * t]);
     const tx = x + lean * H, ty = yb - H;
@@ -304,7 +307,9 @@ const SEE_Y0 = HOR + 0.7, SEE_Y1 = 201;
   }
   /* aufgewühltes Wasser und Spiegelung der Strahlen */
   for (let i = 0; i < 60; i++) { const x = xL + rnd() * (xR - xL), y = ybase(x) + 0.2 + rnd() * 1.4; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1 + rnd() * 2.4)}" ry=".45" fill="#ffffff" opacity=".85"/>`; }
-  for (let i = 0; i <= 24; i++) { const x = xL + 4 + i * 8.8, y0 = ybase(x) + 1.6; for (let j = 0; j < 4; j++) k += `<rect x="${r(x - 0.8)}" y="${r(y0 + j * 3.2)}" width="1.6" height="${r(1.8 - j * 0.3)}" fill="#ffffff" opacity="${r(0.36 - j * 0.08)}"/>`; }
+  let sp = "";
+  for (let i = 0; i <= 24; i++) { const x = xL + 4 + i * 8.8, y0 = ybase(x) + 1.6; for (let j = 0; j < 5; j++) { const l = 1.6 + j * 0.7 + rnd(), dx = (rnd() - 0.5) * 1.6; sp += `M${r(x - l / 2 + dx)} ${r(y0 + j * 2.4)} h${r(l)} `; } }
+  k += `<path d="${sp}" stroke="#ffffff" stroke-width=".55" opacity=".35"/>`;
   S.teil({ anker: [226, 150], id: "fontaene", de: "die Fontäne", syl: "fon-TÄ-ne", it: "la fontana", itSyl: "fon-TA-na", en: "fountain", x: 0, y: 0, kunst: k,
     tipp: "Die Fontänen der Dubai Fountain schießen bis zu 150 Meter hoch – im Takt der Musik." });
 }
@@ -459,14 +464,12 @@ const FIG = {
   k += `<path d="${fu}" stroke="#fffaf0" stroke-width=".25" fill="none" opacity=".5" transform="translate(.35 .35)"/>`;
   /* Spiegelungen im polierten Stein: Pfosten, Menschen */
   const SP = S.lg("bodenspiegel", [[0, "#ffffff", 0.5], [1, "#ffffff", 0]]);
-  for (let s = -7.5; s <= 7.6; s += 1.5) { const x = klemm(xAt(s, 4), 0.9, 399.1); k += `<rect x="${r(x - 0.9)}" y="${r(Y_KANTE)}" width="1.8" height="7" fill="#8d969c" opacity=".22"/>`; }
-  for (const [n, c, b] of [["tourist", "#3f7fae", 4], ["mann", "#ffffff", 4], ["frau", "#1c1c21", 3.4]]) { const f = FIG[n], y = yAt(f.d, DECK); k += `<rect x="${r(f.x - b)}" y="${r(y + 0.6)}" width="${2 * b}" height="9" fill="${c}" opacity=".12" ${W05}/>`; }
+  for (const [n, c, b, nr] of [["tourist", "#3f7fae", 3.2, 1], ["mann", "#ffffff", 3.4, 2], ["frau", "#1c1c21", 3, 3]]) { const f = FIG[n], y = yAt(f.d, DECK); k += `<rect x="${r(f.x - b)}" y="${r(y + 0.8)}" width="${r(2 * b)}" height="12" fill="${S.lg("bsp" + nr, [[0, c, 0.12], [1, c, 0]])}" ${W05}/>`; }
   k += `<rect x="0" y="${r(Y_KANTE)}" width="400" height="10" fill="${SP}" opacity=".35"/>`;
   /* Schlagschatten nach rechts (Sonne links): Pflanzkübel, Menschen, Tisch, Stühle */
   const sch = (x, y, l, b, a = 0.3) => `<path d="M${r(x - 2)} ${r(y)} Q${r(x + l * 0.5)} ${r(y - b)} ${r(x + l)} ${r(y - b * 0.3)} Q${r(x + l * 0.5)} ${r(y + b * 0.8)} ${r(x - 2)} ${r(y + 0.6)} Z" fill="#5a4630" opacity="${a}" ${W05}/>`;
-  for (const [n, l] of [["tourist", 46], ["mann", 38], ["frau", 24]]) { const f = FIG[n]; k += sch(f.x, yAt(f.d, DECK), l, 2.4); }
-  k += sch(TN_X - 6, yAt(TN_D, DECK), 52, 3.6, 0.26) + sch(TN_X - 49, yAt(2.0, DECK), 30, 2.6, 0.2) + sch(TN_X + 37, yAt(2.0, DECK), 30, 2.6, 0.2);
-  k += `<path d="M84 200 L126 200 L120 212 L60 212 Z" fill="#5a4630" opacity=".22" ${W05}/>`;
+  for (const [n, l] of [["tourist", 14], ["mann", 13], ["frau", 12]]) { const f = FIG[n], y = yAt(f.d, DECK); k += sch(f.x - 2, y, l, 2.2, 0.4) + `<ellipse cx="${r(f.x + 1.5)}" cy="${r(y + 0.3)}" rx="4.6" ry="1.1" fill="#3a2a1a" opacity=".38" ${W05}/>`; }
+  k += sch(TN_X - 4, yAt(TN_D, DECK), 26, 3.2, 0.34) + sch(TN_X - 50, yAt(2.0, DECK), 18, 2.4, 0.3) + sch(TN_X + 36, yAt(2.0, DECK), 18, 2.4, 0.3);
   S.teil({ anker: [200, 238], id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: 0, y: 0, kunst: k,
     tipp: "Von der Terrasse der Dubai Mall sieht man die Show am besten. Die Mall ist eines der größten Einkaufszentren der Welt." });
 }
@@ -484,7 +487,7 @@ const FIG = {
   k += `<rect x="0" y="${r(yU - 2.2)}" width="400" height="2.2" fill="#8d969c"/><rect x="0" y="${r(yU - 2.2)}" width="400" height=".5" fill="#d9dee1"/>`;
   k += `<rect x="0" y="${r(yO - 1.6)}" width="400" height="2.2" rx="1" fill="${S.lg("handlauf", [[0, "#ffffff"], [0.35, "#c8d0d5"], [1, "#6d777e"]])}"/>`;
   S.teil({ anker: [200, yO], id: "gelaender", de: "das Geländer", syl: "ge-LÄN-der", it: "la ringhiera", itSyl: "rin-GHIE-ra", en: "railing", x: 0, y: 0, kunst: k,
-    tipp: "Das Geländer aus Glas schützt. Dahinter geht es drei Meter tief ins Wasser." });
+    tipp: "Das Geländer aus Glas schützt. Dahinter geht es drei Meter hinunter zum Wasser." });
 }
 
 /* =====================================================================
@@ -495,6 +498,7 @@ const FIG = {
   const d0 = 3.2, d1 = 3.95, s0 = -5.7, s1 = -4.3, hK = DECK + 0.55;
   const A = [xAt(s0, d0), yAt(d0, hK)], Bp = [xAt(s1, d0), yAt(d0, hK)], C = [xAt(s1, d1), yAt(d1, hK)], D = [xAt(s0, d1), yAt(d1, hK)];
   const Au = [A[0], yAt(d0, DECK)], Bu = [Bp[0], yAt(d0, DECK)], Cu = [C[0], yAt(d1, DECK)];
+  k += `<path d="M${r(Bu[0] - 1)} ${r(Bu[1])} L${r(Bu[0] + 16)} ${r(Bu[1] - 1)} L${r(Cu[0] + 12)} ${r(Cu[1] - 0.6)} L${r(Cu[0])} ${r(Cu[1])} Z" fill="#4a3a28" opacity=".34" ${W05}/>`;
   k += `<path d="${P([Bp, C, Cu, Bu])}" fill="#b49a74"/>`;
   k += `<path d="${P([A, Bp, Bu, Au])}" fill="${S.lg("kuebel", [[0, "#efe1c6"], [1, "#d2bd98"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="${P([A, Bp, C, D])}" fill="#7a5a3a"/><path d="${P([A, Bp, C, D])}" fill="none" stroke="#f6ead4" stroke-width=".8"/>`;
@@ -510,7 +514,7 @@ const FIG = {
   const kx = tx, ky = ty - 2;
   const wedel = (a, L, haeng, hell, dunkel, alt) => {
     const rad = a * Math.PI / 180, c = Math.cos(rad), sn = Math.sin(rad);
-    const p0 = [kx, ky], p2 = [kx + c * L, ky + sn * L + haeng * L * 0.75], p1 = [kx + c * L * 0.55, ky + sn * L * 0.55 - L * 0.16];
+    const p0 = [kx + c * 3, ky + sn * 2], p2 = [kx + c * L, ky + sn * L + haeng * L * 0.75], p1 = [kx + c * L * 0.55, ky + sn * L * 0.55 - L * 0.16];
     const Q = (t) => [(1 - t) * (1 - t) * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0], (1 - t) * (1 - t) * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1]];
     const kl = ([x, y]) => `${r(klemm(x, 0, 400))} ${r(klemm(y, 0, 260))}`;
     const seite = { "-1": "", "1": "" }, spitze = { "-1": "", "1": "" };
@@ -543,7 +547,7 @@ const FIG = {
     for (let i = 0; i < 26; i++) { const t = rnd(), x = bx0 + (rnd() - 0.5) * (3 + 6 * t), y = by0 + 1 + t * 9; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx=".75" ry="1" fill="${rnd() < 0.5 ? "#e89a2a" : "#f2bf3c"}"/>`; }
     k += `<ellipse cx="${r(bx0 - sd * 1.4)}" cy="${r(by0 + 4)}" rx="1.4" ry="2.6" fill="#ffe08a" opacity=".5"/>`;
   }
-  k += `<ellipse cx="${r(kx)}" cy="${r(ky + 1)}" rx="4.5" ry="3" fill="#5e4a30"/>`;
+  for (let i = 0; i < 8; i++) { const a = (-160 + i * 20) * Math.PI / 180, c = Math.cos(a), sn = Math.sin(a); k += `<path d="M${r(kx - sn * 1.6)} ${r(ky + 3 + c * 1)} L${r(kx + c * 5.5)} ${r(ky + 1 + sn * 3.5)} L${r(kx + sn * 1.6)} ${r(ky + 3 - c * 1)} Z" fill="${i % 2 ? "#b8934e" : "#8a6a3a"}"/>`; }
   S.teil({ anker: [55, 120], id: "palme", de: "die Palme", syl: "PAL-me", it: "la palma", itSyl: "PAL-ma", en: "palm tree", x: 0, y: 0, kunst: k,
     tipp: "Die Dattelpalme wächst gut in der Hitze der Wüste. Unter der Krone hängen ihre Früchte: die Datteln." });
 }
@@ -634,13 +638,13 @@ const tischUnter = [];
    12 — DIE EINKAUFSTÜTE (Papier, neben dem rechten Stuhl)
    ===================================================================== */
 {
-  const d = 2.25, u = uAt(d), x = 336, yB = yAt(d, DECK), w = 0.3 * u, h = 0.36 * u, t = 3;
+  const d = 3.72, u = uAt(d), x = 388, yB = yAt(d, DECK), w = 0.3 * u, h = 0.36 * u, t = 2;
   let k = `<path d="M${r(x - w / 2)} ${r(yB)} L${r(x - w / 2)} ${r(yB - h)} L${r(x + w / 2)} ${r(yB - h)} L${r(x + w / 2)} ${r(yB)} Z" fill="${S.lg("tuete", [[0, "#fbf7ef"], [1, "#e5dccb"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M${r(x + w / 2)} ${r(yB)} L${r(x + w / 2)} ${r(yB - h)} L${r(x + w / 2 + t)} ${r(yB - h - 1)} L${r(x + w / 2 + t)} ${r(yB - 1)} Z" fill="#cfc4ae"/>`;
   k += `<rect x="${r(x - w / 2)}" y="${r(yB - h * 0.42)}" width="${r(w)}" height="1.6" fill="#b88a3a"/><rect x="${r(x - w / 2)}" y="${r(yB - h)}" width="${r(w)}" height=".6" fill="#ece3d2"/>`;
   k += `<path d="M${r(x - w * 0.25)} ${r(yB - h)} Q${r(x)} ${r(yB - h - 6)} ${r(x + w * 0.25)} ${r(yB - h)}" stroke="#7a5a2a" stroke-width=".6" fill="none"/>`;
   S.teil({ anker: [x, yB], id: "einkaufstuete", de: "die Einkaufstüte", syl: "EIN-kaufs-tü-te", it: "la borsa della spesa", itSyl: "BOR-sa DEL-la SPE-sa", en: "shopping bag", x: 0, y: 0, kunst: k,
-    tipp: "In Dubai kann man viel einkaufen: Gold, Gewürze, Stoffe – und alles in großen Einkaufszentren." });
+    tipp: "In Dubai kann man viel einkaufen: Gold und Gewürze in den alten Souks, fast alles andere in riesigen Einkaufszentren." });
 }
 
 /* =====================================================================
@@ -650,12 +654,14 @@ const tischUnter = [];
   const d0 = 1.9, d1 = 2.35, s0 = -2.7, s1 = -1.35, hK = DECK + 0.42;
   const A = [xAt(s0, d0), yAt(d0, hK)], Bp = [xAt(s1, d0), yAt(d0, hK)], C = [xAt(s1, d1), yAt(d1, hK)], D = [xAt(s0, d1), yAt(d1, hK)];
   const Au = [A[0], yAt(d0, DECK)], Bu = [Bp[0], yAt(d0, DECK)], Cu = [C[0], yAt(d1, DECK)];
-  let k = `<path d="M${r(Bu[0] - 2)} ${r(Bu[1])} L${r(Bu[0] + 44)} ${r(Bu[1] - 3)} L${r(Cu[0] + 30)} ${r(Cu[1] - 2)} L${r(Cu[0])} ${r(Cu[1])} Z" fill="#5a4630" opacity=".22" ${W05}/>`;
+  let k = `<path d="M${r(Bu[0] - 1)} ${r(Bu[1] + 0.3)} L${r(Bu[0] + 22)} ${r(Bu[1] - 1)} L${r(Cu[0] + 16)} ${r(Cu[1] - 0.8)} L${r(Cu[0])} ${r(Cu[1])} Z" fill="#4a3a28" opacity=".34" ${W05}/>`;
   k += `<path d="${P([Bp, C, Cu, Bu])}" fill="#b9a07a"/><path d="${P([A, Bp, Bu, Au])}" fill="${S.lg("kuebel", [[0, "#efe1c6"], [1, "#d2bd98"]], 0, 0, 1, 0)}"/><path d="${P([A, Bp, C, D])}" fill="#4a3a28"/>`;
   k += `<path d="M${r(A[0])} ${r(A[1])} L${r(Bp[0])} ${r(Bp[1])} L${r(C[0])} ${r(C[1])}" stroke="#fbf1de" stroke-width=".9" fill="none"/>`;
   /* Laub: gelappte Polster, darüber Blütenbüschel in Pink, Licht von links oben; ein Zweig hängt vorn über */
   const xm = (A[0] + C[0]) / 2, ym = (A[1] + D[1]) / 2, w = Bp[0] - A[0] + 8;
-  for (let i = 0; i < 9; i++) { const t = i / 8, x = A[0] - 2 + t * w, y = ym + 1 - Math.sin(t * Math.PI) * 8 + (rnd() - 0.5) * 3; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(6 + rnd() * 3)}" fill="#3f5a2c"/>`; }
+  k += `<path d="M${r(A[0] - 3)} ${r(A[1] + 1)} Q${r(xm - 10)} ${r(ym - 16)} ${r(xm + 6)} ${r(ym - 14)} Q${r(Bp[0] + 8)} ${r(ym - 8)} ${r(Bp[0] + 5)} ${r(Bp[1] + 1)} Z" fill="#2e4222"/>`;
+  for (let i = 0; i < 14; i++) { const t = i / 13, x = A[0] - 2 + t * w, y = ym + 1 - Math.sin(t * Math.PI) * 8 + (rnd() - 0.5) * 4, g = [2.5, 4, 5.5][i % 3]; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${g}" fill="#3f5a2c"/>`; }
+  for (let i = 0; i < 16; i++) { const t = rnd(), x = A[0] + t * w - 3, y = ym - 2 - Math.sin(t * Math.PI) * 9 + (rnd() - 0.5) * 6, a = rnd() * 6.28, l = 2 + rnd() * 1.5; k += `<path d="M${r(x)} ${r(y)} Q${r(x + Math.cos(a + 0.5) * l)} ${r(y + Math.sin(a + 0.5) * l)} ${r(x + Math.cos(a) * l * 1.6)} ${r(y + Math.sin(a) * l * 1.6)} Q${r(x + Math.cos(a - 0.5) * l)} ${r(y + Math.sin(a - 0.5) * l)} ${r(x)} ${r(y)} Z" fill="${rnd() < 0.5 ? "#6f8f46" : "#557538"}"/>`; }
   for (let i = 0; i < 8; i++) { const t = i / 7, x = A[0] + 1 + t * (Bp[0] - A[0] - 2); k += `<circle cx="${r(x)}" cy="${r(A[1] - 1.5)}" r="${r(3 + rnd() * 1.5)}" fill="#46632f"/>`; }
   for (let i = 0; i < 7; i++) { const t = (i + 0.4) / 7, x = A[0] + t * w - 3, y = ym - 2 - Math.sin(t * Math.PI) * 8; k += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(3.6 + rnd() * 1.6)}" fill="#5f7d3e"/>`; }
   k += `<path d="M${r(A[0] + 6)} ${r(A[1])} Q${r(A[0] + 2)} ${r(A[1] + 8)} ${r(A[0] + 8)} ${r(A[1] + 15)}" stroke="#4a3a28" stroke-width=".8" fill="none"/>`;
@@ -672,7 +678,7 @@ const tischUnter = [];
    12b — DER VOGEL: ein Hirtenmaina pickt Krümel unter dem Tisch
    ===================================================================== */
 {
-  const d = 2.05, u = uAt(d), x = 247, y = yAt(d, DECK), s = u / 100;   /* 1 Einheit hier = 1 cm */
+  const d = 2.05, u = uAt(d), x = 247, y = yAt(d, DECK), s = u / 100 * 0.8;   /* 1 Einheit hier = 1 cm */
   let v = `<ellipse cx="1" cy=".3" rx="${r(13 * s)}" ry="${r(1.6 * s)}" fill="#3a2a1a" opacity=".3"/>`;
   for (const [cx, cy] of [[-9, 0.2], [-11.5, 0.5], [-7, 0.6], [12, 0.4]]) v += `<circle cx="${r(cx * s)}" cy="${r(cy)}" r=".35" fill="#e9c98e"/>`;
   v += `<g transform="scale(${s.toFixed(4)})">`;
@@ -692,7 +698,7 @@ const tischUnter = [];
    ===================================================================== */
 {
   const W = "#f5f4ef";
-  const mann = B.mensch({ id: "dxb_mann", geschlecht: "m", blick: 205, pose: "zeigen", frisur: "kurz", haarfarbe: "schwarz", haut: "mittel",
+  const mann = B.mensch({ id: "dxb_mann", geschlecht: "m", blick: 205, pose: "stehen", frisur: "kurz", haarfarbe: "schwarz", haut: "mittel",
     kleidung: { oberteil: { stueck: "hemd", farbe: W }, kleid: { stueck: "abendkleid", farbe: W }, kopf: { stueck: "kopftuch", farbe: W }, schuhe: { stueck: "sandale", farbe: "braun" } } }, 1.76 * uAt(FIG.mann.d));
   const frau = B.mensch({ id: "dxb_frau", geschlecht: "w", blick: 200, pose: "kontrapost", frisur: "dutt", haarfarbe: "schwarz", haut: "mittel",
     kleidung: { oberteil: { stueck: "bluse", farbe: "#1c1c21" }, kleid: { stueck: "abendkleid", farbe: "#1c1c21" }, kopf: { stueck: "kopftuch", farbe: "#18181c" }, zubehoer: { stueck: "tasche", farbe: "#b08a4a" } } }, 1.62 * uAt(FIG.frau.d));
@@ -718,12 +724,12 @@ const tischUnter = [];
   const f = FIG.tourist, u = uAt(f.d), y = yAt(f.d, DECK);
   const foto = {
     lende: 1, brust: -3, nacken: 2, kopf: -6,
-    schulterL: { vor: 66, seit: 14 }, ellbogenL: 98, unterarmL: 40, handL: 10, fingerL: 0.5,
-    schulterR: { vor: 64, seit: 16 }, ellbogenR: 100, unterarmR: 40, handR: 10, fingerR: 0.5,
+    schulterL: { vor: 150, seit: 12 }, ellbogenL: 20, unterarmL: 40, handL: 10, fingerL: 0.5,
+    schulterR: { vor: 148, seit: 14 }, ellbogenR: 22, unterarmR: 40, handR: 10, fingerR: 0.5,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -10 }, knieR: 6, fussR: 4,
   };
   const m = B.mensch({ id: "dxb_tour", geschlecht: "m", pose: foto, blick: 186, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell",
-    kleidung: { oberteil: { stueck: "tshirt", farbe: "#3f7fae" }, unterteil: { stueck: "hose", farbe: "#d9cdb4" }, kopf: { stueck: "kappe", farbe: "#f2f0ea" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#b8452e" } } }, 1.8 * u);
+    kleidung: { oberteil: { stueck: "tshirt", farbe: "#3f7fae" }, unterteil: { stueck: "hose", farbe: "#d9cdb4" }, kopf: { stueck: "kappe", farbe: "#f2f0ea" }, schuhe: { stueck: "turnschuh" } } }, 1.8 * u);
   S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x: f.x, y: r(y), kunst: vereinfache(m.svg, 1.8),
     tipp: "Der Tourist trägt eine lange Hose. In der Mall sollen Schultern und Knie bedeckt sein – aus Respekt." });
   /* Das Handy (quer, 15 × 7,5 cm): der Bildschirm zeigt zu uns – darauf Turm und Fontänen */
