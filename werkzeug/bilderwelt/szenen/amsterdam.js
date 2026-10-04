@@ -66,7 +66,44 @@ const S = neueSzene({ id: "amsterdam", titel: "Amsterdam", emoji: "🚲", thema:
 /* Verläufe nur einmal anlegen (keine doppelten ids) */
 { const lg = S.lg, rg = S.rg, schon = {}; S.lg = (n, ...a) => schon["l" + n] || (schon["l" + n] = lg(n, ...a)); S.rg = (n, ...a) => schon["r" + n] || (schon["r" + n] = rg(n, ...a)); }
 /* anker: Kunst in Bildkoordinaten, Bezugspunkt (x, y) für die App */
-{ const teil = S.teil; S.teil = (t) => { if (t.anker) { const [ax, ay] = t.anker; t.kunst = `<g transform="translate(${B.r(-ax)} ${B.r(-ay)})">${t.kunst}</g>`; t.x = ax; t.y = ay; delete t.anker; } return teil(t); }; }
+/* Alles, was über den Bildrand hinausragt, auf den Rand setzen (unsichtbar dort, aber die Trefferfläche bleibt im Bild) */
+function kappe(svg) {
+  const X0 = -1, Y0 = -1, X1 = 401, Y1 = 261, kx = (v) => Math.min(X1, Math.max(X0, v)), ky = (v) => Math.min(Y1, Math.max(Y0, v));
+  const zahl = (v) => String(Math.round(v * 10) / 10);
+  svg = svg.replace(/ d="([^"]*)"/g, (m0, d) => {
+    let out = "", cmd = "", idx = 0;
+    const tok = d.match(/[MLCQSTHVAZmlcqsthvaz]|-?\d*\.?\d+(?:e-?\d+)?/g) || [];
+    for (const t of tok) {
+      if (/[A-Za-z]/.test(t)) { cmd = t; idx = 0; out += t; continue; }
+      let v = parseFloat(t);
+      if ("MLCQST".includes(cmd)) v = idx % 2 ? ky(v) : kx(v);
+      else if (cmd === "H") v = kx(v); else if (cmd === "V") v = ky(v);
+      else if (cmd === "A") { const j = idx % 7; if (j === 5) v = kx(v); if (j === 6) v = ky(v); }
+      out += (out && /[\d.]$/.test(out) ? " " : "") + zahl(v); idx++;
+    }
+    return ` d="${out}"`;
+  });
+  /* Kreise und Ellipsen am Rand: als Vieleck, dann begrenzt */
+  svg = svg.replace(/<(circle|ellipse)([^>]*?)\/>/g, (el, typ, at) => {
+    const g = (n) => { const m = at.match(new RegExp(" " + n + '="([-\\d.]+)"')); return m ? parseFloat(m[1]) : 0; };
+    const cx = g("cx"), cy = g("cy"), rx = typ === "circle" ? g("r") : g("rx"), ry = typ === "circle" ? g("r") : g("ry");
+    if (cx - rx >= X0 - 4 && cx + rx <= X1 + 4 && cy - ry >= Y0 - 4 && cy + ry <= Y1 + 4) return el;
+    if (cx + rx < X0 || cx - rx > X1 || cy + ry < Y0 || cy - ry > Y1) return "";
+    const pts = Array.from({ length: 16 }, (_, i) => [kx(cx + Math.cos(i * Math.PI / 8) * rx), ky(cy + Math.sin(i * Math.PI / 8) * ry)]);
+    const rest = at.replace(/ (cx|cy|r|rx|ry)="[^"]*"/g, "");
+    return `<path d="M${pts.map(([a, b]) => zahl(a) + " " + zahl(b)).join(" L")} Z"${rest}/>`;
+  });
+  svg = svg.replace(/<rect([^>]*?)\/>/g, (el, at) => {
+    const g = (n) => { const m = at.match(new RegExp(" " + n + '="([-\\d.]+)"')); return m ? parseFloat(m[1]) : 0; };
+    if (/transform=/.test(at)) return el;
+    const x = g("x"), y = g("y"), w = g("width"), h = g("height");
+    const xa = kx(x), ya = ky(y), xb = kx(x + w), yb = ky(y + h);
+    if (xb <= xa || yb <= ya) return "";
+    return `<rect${at.replace(/ (x|y|width|height)="[^"]*"/g, "")} x="${zahl(xa)}" y="${zahl(ya)}" width="${zahl(xb - xa)}" height="${zahl(yb - ya)}"/>`;
+  });
+  return svg;
+}
+{ const teil = S.teil; S.teil = (t) => { if (t.anker) { const [ax, ay] = t.anker; t.kunst = `<g transform="translate(${B.r(-ax)} ${B.r(-ay)})">${kappe(t.kunst)}</g>`; t.x = ax; t.y = ay; delete t.anker; } return teil(t); }; }
 const rnd = zufall(1612);
 const r = B.r;
 
@@ -973,7 +1010,7 @@ const GEL = { D: 2.4, h: 3.62 };
 
 /* 19 — DAS FAHRRAD vorn links am Geländer: Lenker mit KLINGEL, Korb mit TULPEN */
 {
-  const pp = (X, D, h) => P(X, D, h), q = (X, D, h) => pt(pp(X, D, h)), HL = 3.74;
+  const pp = (X, D, h) => P(X + 0.17, D, h), q = (X, D, h) => pt(pp(X, D, h)), HL = 3.74;
   let k = "";
   /* Steuerrohr und Gabel (verschwinden nach unten), Oberrohr nach rechts unten */
   k += `<path d="M${q(-0.62, 2.2, HL - 0.06)} L${q(-0.6, 2.2, 3.0)} M${q(-0.6, 2.2, HL - 0.22)} L${q(-0.05, 2.2, 3.05)}" stroke="${S.lg("lack", [[0, "#3a3d42"], [0.5, "#101114"], [1, "#2a2c30"]])}" stroke-width="${r(0.042 * F / 2.2)}" stroke-linecap="round" fill="none"/>`;
@@ -1010,7 +1047,7 @@ const GEL = { D: 2.4, h: 3.62 };
   S.teil({ oben: true, id: "tulpe", de: "die Tulpe", syl: "TUL-pe", it: "il tulipano", itSyl: "tu-LI-pa-no", en: "tulip", anker: [pp(-0.83, 2, HL)[0], pp(-0.83, 2, HL)[1]], kunst: tk,
     tipp: "Im Frühling blühen in Holland Millionen Tulpen. Die ersten kamen im 16. Jahrhundert aus der Türkei." });
   /* die Klingel am Lenker (fernes Ende) */
-  const [kx, kyy] = pp(-0.5, 2.42, HL + 0.035), ks = F / 2.42;
+  const [kx, kyy] = P(-0.33, 2.42, HL + 0.035), ks = F / 2.42;
   const kl = `<ellipse cx="${r(kx)}" cy="${r(kyy)}" rx="${r(0.032 * ks)}" ry="${r(0.022 * ks)}" fill="${S.rg("klingel", [[0, "#ffffff"], [0.4, "#d6dde2"], [1, "#6d777f"]], 0.65, 0.3, 0.8)}"/><rect x="${r(kx - 0.006 * ks)}" y="${r(kyy + 0.015 * ks)}" width="${r(0.012 * ks)}" height="${r(0.025 * ks)}" fill="#8a949b"/><path d="M${r(kx + 0.02 * ks)} ${r(kyy - 0.005 * ks)} l${r(0.03 * ks)} ${r(-0.012 * ks)}" stroke="#4a525a" stroke-width="${r(0.008 * ks)}"/>`;
   S.teil({ oben: true, id: "fahrradklingel", de: "die Fahrradklingel", syl: "FAHR-rad-klin-gel", it: "il campanello della bici", itSyl: "cam-pa-NEL-lo DEL-la BI-ci", en: "bicycle bell", x: kx, y: kyy + 0.04 * ks, kunst: `<g transform="translate(${r(-kx)} ${r(-kyy - 0.04 * ks)})">${kl}</g>`,
     tipp: "Ring, ring! In Amsterdam klingelt man oft — auf den Radwegen ist viel los." });

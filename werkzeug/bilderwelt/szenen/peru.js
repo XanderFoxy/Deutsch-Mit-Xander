@@ -200,14 +200,15 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   const westD = P([...KAMM_B, [170, 210], [110, 262], [-2, 262]]);
   k += `<path d="${westD}" fill="${S.lg("westkette", [[0, "#4f7564"], [0.5, "#456b56"], [1, "#6d8f84"]])}"/>`;
   k += `<path d="${westD}" fill="${WALD}"/>`;
-  /* Relief: beleuchtete Rücken und dunkle Rinnen als weiche Flächen (weichgezeichnet, keine Linien) */
+  /* Relief: Seitenrücken laufen schräg vom Kamm nach links unten; jeder Rücken hat eine Lichtseite (rechts) und
+     daneben eine dunkle Rinne. Weich gezeichnet, schmal am Kamm, breit unten. */
   let rel = "";
-  for (const [x0, l, sd] of [[12, 92, 1], [38, 90, 2], [62, 84, 3], [88, 76, 4], [114, 60, 5]]) {
-    const z = zufall(sd), y0 = profilY(KAMM_B, x0) + 2, pts = [[x0, y0]];
-    let x = x0; for (let i = 1; i <= 5; i++) { x += (z() - 0.7) * 4; pts.push([x, y0 + l * i / 5]); }
-    const breite = (i) => 1.5 + i * 1.3;
-    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a - breite(i), b]), ...pts.map(([a, b], i) => [a + breite(i) * 0.3, b]).reverse()], true, 0.8)}" fill="#1f3a30" opacity=".45"/>`;
-    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a + 1 + breite(i) * 0.3, b]), ...pts.map(([a, b], i) => [a + 2 + breite(i) * 1.6, b + 1]).reverse()], true, 0.8)}" fill="#a9cba0" opacity=".3"/>`;
+  for (const [x0, l, sd] of [[18, 96, 1], [46, 92, 2], [74, 86, 3], [102, 74, 4], [128, 56, 5]]) {
+    const z = zufall(sd), y0 = profilY(KAMM_B, x0) + 1.5, pts = [[x0, y0]];
+    for (let i = 1; i <= 5; i++) pts.push([x0 - i * (2.6 + z() * 1.6), y0 + l * i / 5]);
+    const br = (i) => 0.6 + i * 1.5;
+    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a, b]), ...pts.map(([a, b], i) => [a + br(i) * 1.8, b + 1]).reverse()], true, 0.8)}" fill="#b6d3a6" opacity=".26"/>`;
+    rel += `<path d="${glatt([...pts.map(([a, b], i) => [a - br(i) * 1.2, b + 2]), ...pts.map(([a, b]) => [a - 0.4, b]).reverse()], true, 0.8)}" fill="#1c362c" opacity=".34"/>`;
   }
   k += `<g filter="url(#${S.id("weich")})">${rel}</g>`;
   for (const [x, w, h, sd] of [[20, 10, 5, 21], [56, 8, 4, 22], [84, 9, 4.5, 23], [112, 7, 3.6, 24], [34, 7, 3.6, 25]]) k += `<g opacity=".7">${fels(x, profilY(KAMM_B, x) + 8 + sd % 3 * 9, w, h, sd, "#a9b0a5", "#6d7a72", "#4f7560")}</g>`;
@@ -219,7 +220,7 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   const putD = glatt([...PUTU, [402, 205], [300, 205], [284, 180]], true, 0.9);
   k += `<path d="${putD}" fill="${S.lg("putucusi", [[0, "#3c5e4f"], [0.6, "#355647"], [1, "#5c7d71"]])}"/>`;
   k += `<path d="${putD}" fill="${WALD}"/>`;
-  for (const [x, y, w, h, sd] of [[316, 104, 14, 22, 31], [340, 90, 12, 28, 32], [362, 96, 13, 20, 33], [332, 130, 10, 13, 34], [380, 108, 10, 18, 35]]) k += fels(x, y, w, h, sd, "#7b8680", "#55625c", "#3d5e4f");
+  for (const [x, y, w, h, sd] of [[322, 98, 22, 34, 31], [352, 88, 18, 26, 32], [374, 104, 14, 22, 35]]) k += `<g opacity=".85">${fels(x, y, w, h, sd, "#7f8a84", "#56625c", "#3d5e4f")}</g>`;
   k += `<path d="${glatt(PUTU.slice(1), false)}" stroke="#f3e2b4" stroke-width=".9" fill="none" opacity=".75"/>`;
   k += `<path d="${putD}" fill="${S.lg("putudunst", [[0, "#dfe9ef", 0], [0.55, "#dfe9ef", 0.1], [1, "#dfe9ef", 0.6]])}"/>`;
   /* naher Osthang auf unserer Seite (rechts unten): bewaldet, im Morgenlicht */
@@ -235,9 +236,12 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
    3 — DIE SCHLUCHT (links: das tiefe Tal des Urubamba im Morgendunst)
    ===================================================================== */
 {
-  let k = `<path d="M30 150 Q62 156 84 176 Q100 196 106 226 L70 226 Q56 196 30 176 Z" fill="${S.lg("schlucht", [[0, "#3c5d50", 0.0], [0.4, "#2e4c42", 0.55], [1, "#2a463c", 0.75]], 0, 0, 1, 0)}"/>`;
-  k += `<g filter="url(#${S.id("dunst")})"><path d="M36 182 Q70 174 104 186 L104 196 Q70 188 36 194 Z" fill="#eef3f4" opacity=".85"/><path d="M50 206 Q80 198 108 210 L108 218 Q80 210 50 216 Z" fill="#eef3f4" opacity=".9"/><path d="M26 160 Q52 156 76 166 L74 171 Q52 164 28 167 Z" fill="#f4f7f8" opacity=".8"/></g>`;
-  S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 70, y: 190, kunst: um(70, 190, k),
+  /* der tiefe Einschnitt: kühler, dunkler Grund, darin waagrechte Dunstbänder */
+  let k = `<path d="M0 150 Q40 150 70 160 Q96 172 108 196 L112 226 L0 226 Z" fill="${S.lg("schlucht", [[0, "#2e4c42", 0.0], [0.35, "#2b473d", 0.5], [1, "#2a463c", 0.7]])}"/>`;
+  k += `<g filter="url(#${S.id("dunst")})">`;
+  for (const [x, y, w, a] of [[4, 158, 60, 0.75], [30, 172, 70, 0.85], [8, 188, 90, 0.9], [40, 204, 70, 0.95]]) k += `<path d="M${x} ${y} q${r(w * 0.25)} -3 ${r(w * 0.5)} -1.6 q${r(w * 0.3)} -2.4 ${r(w * 0.5)} 1.2 q${r(-w * 0.5)} 4 ${r(-w)} .4 Z" fill="#eef3f4" opacity="${a}"/>`;
+  k += `</g>`;
+  S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 50, y: 180, kunst: um(50, 180, k),
     tipp: "Tief unten in der Schlucht fließt der Urubamba, rund 450 Meter unter der Stadt. Die Inka nannten ihn den heiligen Fluss." });
 }
 
@@ -250,7 +254,7 @@ const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181,
   let k = `<path d="${d}" fill="${S.lg("huayna", [[0, "#24433a"], [0.42, "#355c44"], [0.6, "#4f7d48"], [1, "#6a9450"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="${d}" fill="${WALDF}"/>`;
   /* Granitwände: links (Westen) im Schatten, rechts (Osten) im Morgenlicht */
-  for (const [x, y, w, h, sd, hell] of [[192, 58, 11, 20, 41, 0], [201, 40, 10, 16, 42, 0], [212, 36, 9, 14, 43, 1], [182, 80, 10, 16, 44, 0], [222, 50, 9, 15, 45, 1], [236, 70, 8, 10, 46, 1], [171, 100, 9, 12, 47, 0], [206, 64, 8, 13, 48, 0]])
+  for (const [x, y, w, h, sd, hell] of [[194, 46, 15, 30, 41, 0], [210, 34, 12, 22, 43, 1], [180, 82, 12, 20, 44, 0], [222, 52, 11, 18, 45, 1]])
     k += hell ? fels(x, y, w, h, sd, "#b9b8a6", "#7f8780", "#5f8a4a") : fels(x, y, w, h, sd, "#8a918a", "#59615d", "#36583f");
   /* Bewuchs-Inseln auf den Platten */
   for (let i = 0; i < 26; i++) { const x = 172 + rnd() * 90, y = 40 + rnd() * 70; if (y < profilY(HUAYNA, x) + 3) continue; k += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(1 + rnd() * 1.6)}" ry="${r(0.7 + rnd())}" fill="${x > 214 ? "#6f9a4e" : "#2f5238"}" opacity=".9"/>`; }
@@ -392,9 +396,9 @@ const STADT = {};
   let k = "";
   const zl = zufall(77);
   /* --- Bergrücken unter der Stadt: links und rechts fällt er steil in die Schlucht --- */
-  const ruecken = [[78, 232], [96, 186], [110, 160], [128, 146], [160, 141], [196, 143], [236, 141], [268, 142], [296, 150], [318, 162], [334, 180], [344, 205], [340, 232]];
-  k += `<path d="${glatt(ruecken, true, 0.7)}" fill="${S.lg("ruecken", [[0, "#7e9f52"], [1, "#5d8240"]])}"/>`;
-  k += `<path d="${glatt(ruecken, true, 0.7)}" fill="${WALDF}" opacity=".6"/>`;
+  const ruecken = [[84, 262], [88, 214], [94, 186], [106, 162], [126, 146], [160, 141], [196, 143], [236, 141], [268, 142], [294, 149], [316, 160], [332, 178], [342, 205], [348, 262]];
+  k += `<path d="${glatt(ruecken, true, 0.6)}" fill="${S.lg("ruecken", [[0, "#3f6236"], [0.18, "#5f8645"], [0.5, "#7ea052"], [0.85, "#6d9a48"], [1, "#55813e"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="${glatt(ruecken, true, 0.6)}" fill="${WALDF}" opacity=".8"/>`;
   /* Westhang: Terrassenbögen wandern nach links unten in die Schlucht */
   const westB = [];
   for (let i = 0; i < 11; i++) westB.push([[132 - i * 3.3, 146 + i * 1.3], [118 - i * 3.6, 165 + i * 2.3], [110 - i * 3.2, 189 + i * 2.6], [106 - i * 2.4, 214 + i * 1.5]]);
