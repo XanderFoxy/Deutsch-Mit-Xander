@@ -309,6 +309,89 @@ kontinent("asien", "", { id: "asien", de: "Asien", syl: "A-si-en", it: "l'Asia",
 kontinent("australien", "", { id: "australien", de: "Australien", syl: "aus-TRA-li-en", it: "l'Australia", itSyl: "au-STRA-lia", en: "Australia" }, "Australien ist der kleinste Kontinent. Dort leben Kängurus.");
 kontinent("europa", `<path d="${weg(DEUTSCHLAND)}" fill="#d9483a" stroke="#f5c542" stroke-width=".35"/>`, { id: "europa", de: "Europa", syl: "eu-RO-pa", it: "l'Europa", itSyl: "eu-RO-pa", en: "Europe" }, "Europa ist ein kleiner Kontinent mit vielen Ländern.");
 
+/* =====================================================================
+   WAHRZEICHEN — Entwurfsgröße etwa 10 Einheiten hoch, Fußpunkt (0,0)
+   ===================================================================== */
+const G = {
+  sand: S.lg("sand", [[0, "#f6e8c6"], [0.55, "#e3cb9b"], [1, "#b89766"]], 0, 0, 1, 0),
+  stein: S.lg("stein", [[0, "#e9e2d2"], [0.55, "#cbbfa6"], [1, "#9a8c72"]], 0, 0, 1, 0),
+  marmor: S.lg("marmor", [[0, "#ffffff"], [0.6, "#eef0f2"], [1, "#c3c8cf"]], 0, 0, 1, 0),
+  ziegel: S.lg("ziegel", [[0, "#c8724f"], [0.55, "#a2513a"], [1, "#713322"]], 0, 0, 1, 0),
+  kupfer: S.lg("kupfer", [[0, "#b5e0c9"], [0.45, "#79b79c"], [1, "#3f7562"]], 0, 0, 1, 0),
+  schiefer: S.lg("schiefer", [[0, "#7b8791"], [0.5, "#4c5761"], [1, "#2a3138"]], 0, 0, 1, 0),
+  eisen: S.lg("eisen", [[0, "#a07a58"], [0.5, "#6f4f36"], [1, "#46301f"]], 0, 0, 1, 0),
+  glas: S.lg("glas", [[0, "#eaf4fa"], [0.5, "#a9c6db"], [1, "#6c8ea9"]], 0, 0, 1, 0),
+  wueste: S.lg("wueste", [[0, "#f6dca0"], [1, "#e0b56a"]]),
+  pyr: S.lg("pyr", [[0, "#f3d79a"], [0.5, "#e2bb73"], [1, "#b98b4a"]], 0, 0, 1, 0),
+  gruen: S.lg("gruen", [[0, "#a9cf86"], [1, "#5f8d47"]]),
+  wasser: S.lg("wasser", [[0, "#b3dcec"], [1, "#5f9fbe"]]),
+  orange: S.lg("gg", [[0, "#e8664a"], [0.5, "#c0392b"], [1, "#8e2a1f"]], 0, 0, 1, 0),
+  fuji: S.lg("fujig", [[0, "#9db3d6"], [0.5, "#7189bd"], [1, "#4e6597"]], 0, 0, 1, 0),
+  berg: S.lg("bergg", [[0, "#a7b49a"], [0.5, "#7f8d74"], [1, "#56634f"]], 0, 0, 1, 0),
+};
+const GLOW = S.rg("glow", [[0, "#fffbec", 0.9], [0.6, "#fffbec", 0.5], [1, "#fffbec", 0]]);
+const kegel = (cx, y, w, h, f) => `<path d="M${r(cx - w / 2)} ${y} L${cx} ${r(y - h)} L${r(cx + w / 2)} ${y} Z" fill="${f}"/>`;
+const reihe = (x0, y, n, dx, w, h, f, rr = 0) => { let s = ""; for (let i = 0; i < n; i++) s += `<rect x="${r(x0 + i * dx)}" y="${y}" width="${w}" height="${h}" rx="${rr}" fill="${f}"/>`; return s; };
+const ICON = {
+  /* Eiffelturm: Gitterturm, zwei Plattformen, Bogen unten */
+  frankreich: [7, 11.4, () => `<path d="M-3.3 0 L-1.7 -3.1 L-1.05 -6.1 L-.45 -9.7 L0 -11.4 L.45 -9.7 L1.05 -6.1 L1.7 -3.1 L3.3 0 L2.1 0 Q0 -2.7 -2.1 0 Z" fill="${G.eisen}"/>
+    <path d="M-2.1 -3.1 H2.1 M-1.3 -6.1 H1.3 M-.6 -9.5 H.6" stroke="#3a2516" stroke-width=".45"/><path d="M-2.6 -.6 L-1.2 -3 M2.6 -.6 L1.2 -3 M-1.5 -3.4 L-.6 -5.8 M1.5 -3.4 L.6 -5.8 M-.9 -6.5 L-.2 -9 M.9 -6.5 L.2 -9" stroke="#c49a6a" stroke-width=".2"/>`],
+  /* Big Ben (Elizabeth Tower) */
+  grossbritannien: [3.4, 12.2, () => `<rect x="-1.3" y="-8.6" width="2.6" height="8.6" fill="${G.sand}"/><rect x="-1.5" y="-9.6" width="3" height="1" fill="${G.sand}"/>
+    <circle cx="0" cy="-7.2" r=".95" fill="#fdfbf2" stroke="#6b5531" stroke-width=".22"/><path d="M0 -7.2 V-7.85 M0 -7.2 L.45 -7" stroke="#2a1d10" stroke-width=".16"/>
+    <path d="M-1.3 -9.6 L0 -12.2 L1.3 -9.6 Z" fill="${G.schiefer}"/><path d="M0 -12.2 v-.4" stroke="#d9a520" stroke-width=".2"/>${reihe(-0.9, -5.6, 3, 0.7, 0.35, 4.8, "#8a6a3a")}`],
+  /* Sagrada Família: spindelförmige Türme */
+  spanien: [7.4, 11.6, () => { let k = `<rect x="-3.4" y="-3.4" width="6.8" height="3.4" fill="${G.stein}"/>`; for (const [x, h, w] of [[-2.5, 8.6, 1.1], [-1, 10.4, 1.2], [1, 11.6, 1.3], [2.6, 9, 1.1]]) k += `<path d="M${r(x - w / 2)} -3 C${r(x - w / 2)} ${r(-h * 0.6)} ${r(x - w * 0.15)} ${r(-h * 0.9)} ${x} ${-h} C${r(x + w * 0.15)} ${r(-h * 0.9)} ${r(x + w / 2)} ${r(-h * 0.6)} ${r(x + w / 2)} -3 Z" fill="${G.stein}"/><path d="M${x} ${r(-h * 0.85)} v-.9" stroke="#d24a3a" stroke-width=".3"/>` + `<path d="M${r(x - w * 0.25)} ${r(-h * 0.45)} h${r(w * 0.5)} M${r(x - w * 0.3)} ${r(-h * 0.35)} h${r(w * 0.6)}" stroke="#7d6d55" stroke-width=".15"/>`; return k + `<path d="M-.6 0 V-2 Q0 -2.8 .6 -2 V0 Z" fill="#5a4a3a"/>`; }],
+  /* Toskana: Hügel, Zypressen, Landhaus */
+  italien: [10, 7.6, () => `<path d="M-5 0 Q-2 -4.2 1.5 -4 Q4 -3.6 5 0 Z" fill="${G.gruen}"/><path d="M-4.2 -.6 Q0 -2.4 4.3 -.6" fill="none" stroke="#e7d38a" stroke-width=".35"/>
+    <rect x=".2" y="-5.6" width="2.6" height="1.8" fill="#e8b46a"/><path d="M0 -5.6 L1.5 -6.6 L3 -5.6 Z" fill="#b8502e"/><rect x="1.1" y="-5" width=".45" height=".6" fill="#6b4020"/>
+    ${[-3.6, -2.7, -1.8, -0.9].map((x, i) => `<path d="M${x} ${r(-1.4 - i * 0.55)} q-.45 -1.8 0 -${r(3.1 + i * 0.3)} q.45 ${r(1.3 + i * 0.15)} 0 ${r(3.1 + i * 0.3)} Z" fill="#2f5a2d"/>`).join("")}`],
+  /* Kolosseum: drei Bogenreihen, oben auf einer Seite eingestürzt */
+  rom: [10, 6.8, () => { let k = `<path d="M-5 0 V-5.4 Q0 -6.9 5 -5.4 L5 -3.6 Q4 -3.6 3.4 -4.4 V0 Z" fill="${G.sand}"/><path d="M-5 0 V-5.4 Q0 -6.9 5 -5.4 L5 -3.6" fill="none" stroke="#9a7a4a" stroke-width=".2"/>`; for (const [y, h] of [[-0.3, 1.5], [-2.1, 1.4], [-3.8, 1.2]]) for (let x = -4.6; x < 3.6; x += 0.95) k += `<path d="M${r(x)} ${y} V${r(y - h * 0.6)} Q${r(x + 0.32)} ${r(y - h)} ${r(x + 0.64)} ${r(y - h * 0.6)} V${y} Z" fill="#6b4f2c"/>`; return k + `<path d="M-5 -5.4 Q0 -6.9 5 -5.4" fill="none" stroke="#fff4dc" stroke-width=".25"/>`; }],
+  /* Venedig: Campanile von San Marco und eine Gondel */
+  venedig: [7, 11.6, () => `<rect x="-3.5" y="-.8" width="7" height=".8" fill="${G.wasser}"/><rect x="-1.4" y="-9.2" width="2" height="8.4" fill="${G.ziegel}"/><rect x="-1.55" y="-10.4" width="2.3" height="1.2" fill="#efe4cc"/>${reihe(-1.25, -10.2, 3, 0.65, 0.35, 0.8, "#6b5a46")}
+    <path d="M-1.55 -10.4 L-.4 -11.9 L.75 -10.4 Z" fill="${G.kupfer}"/><path d="M-.4 -11.9 v-.45" stroke="#d9a520" stroke-width=".25"/><path d="M-3.4 -1.1 Q0 -.4 3.4 -1.5 L3.6 -2.3 Q3.1 -1.3 2.6 -1.4 Q0 -1.0 -2.8 -1.4 Z" fill="#1f1b1a"/><path d="M2.2 -1.5 L2.7 -3.9" stroke="#3a2a1a" stroke-width=".18"/>`],
+  /* Wiener Riesenrad im Prater */
+  wien: [9.4, 10.8, () => { let k = `<path d="M-2.6 0 L0 -5.4 L2.6 0" fill="none" stroke="#7a3a2a" stroke-width=".45"/><circle cx="0" cy="-5.4" r="4.5" fill="none" stroke="#9a3428" stroke-width=".45"/><circle cx="0" cy="-5.4" r="3.9" fill="none" stroke="#9a3428" stroke-width=".2"/>`; for (let i = 0; i < 15; i++) { const a = i * Math.PI * 2 / 15, x = Math.sin(a) * 4.5, y = -5.4 - Math.cos(a) * 4.5; k += `<path d="M0 -5.4 L${r(x)} ${r(y)}" stroke="#b4574a" stroke-width=".12"/>`; if (i % 2 === 0) k += `<rect x="${r(x - 0.55)}" y="${r(y)}" width="1.1" height=".75" rx=".15" fill="#c0392b"/>`; } return k + `<circle cx="0" cy="-5.4" r=".45" fill="#5a2a20"/>`; }],
+  /* Deutschland: Brandenburger Tor mit Quadriga */
+  deutschland: [8, 7.6, () => { let k = `<rect x="-4" y="-.5" width="8" height=".5" fill="${G.sand}"/><rect x="-3.8" y="-4.4" width="7.6" height="3.9" fill="#5d5145" opacity=".55"/>`; for (let i = 0; i < 6; i++) k += `<rect x="${r(-3.65 + i * 1.4)}" y="-4.4" width=".62" height="3.9" fill="${G.sand}"/>`; return k + `<rect x="-4.1" y="-5.4" width="8.2" height="1" fill="${G.sand}"/><rect x="-2.2" y="-6.2" width="4.4" height=".8" fill="${G.sand}"/><path d="M-1.5 -6.2 L-1.2 -6.9 L-.8 -6.7 L-.5 -7.3 L0 -7.6 L.5 -7.3 L.8 -6.7 L1.2 -6.9 L1.5 -6.2 Z" fill="#5f7e66"/>`; }],
+  /* Akropolis mit dem Parthenon */
+  griechenland: [10.4, 7.4, () => { let k = `<path d="M-5.2 0 L-4.4 -2.6 L-2 -3.1 L2.6 -3 L4.6 -2.4 L5.2 0 Z" fill="${S.lg("fels", [[0, "#d8b98a"], [1, "#a8855a"]], 0, 0, 1, 0)}"/><rect x="-3.6" y="-3.6" width="7.2" height=".6" fill="${G.marmor}"/>`; for (let i = 0; i < 8; i++) k += `<rect x="${r(-3.4 + i * 0.93)}" y="-6.2" width=".5" height="2.6" fill="${G.marmor}"/>`; return k + `<rect x="-3.7" y="-6.8" width="7.4" height=".6" fill="${G.marmor}"/><path d="M-3.7 -6.8 L0 -7.6 L3.7 -6.8 Z" fill="${G.marmor}"/><path d="M-3.7 -6.8 L0 -7.6 L3.7 -6.8" fill="none" stroke="#9aa1aa" stroke-width=".15"/>`; }],
+  /* Istanbul: Moschee mit Kuppeln und vier Minaretten */
+  tuerkei: [10.4, 10.6, () => { let k = `<rect x="-4" y="-2.6" width="8" height="2.6" fill="${G.stein}"/><path d="M-2.6 -2.6 Q-2.6 -4.4 -1.6 -4.6 Q-.6 -4.4 -.6 -2.6 Z M.6 -2.6 Q.6 -4.4 1.6 -4.6 Q2.6 -4.4 2.6 -2.6 Z" fill="#8d9aa8"/><rect x="-2" y="-4.4" width="4" height="1.8" fill="${G.stein}"/><path d="M-2.2 -4.4 Q-2.2 -7 0 -7.4 Q2.2 -7 2.2 -4.4 Z" fill="#7f8e9e"/><path d="M0 -7.4 v-.7" stroke="#d9a520" stroke-width=".22"/>`; for (const x of [-4.6, -3.4, 3.4, 4.6]) k += `<rect x="${r(x - 0.25)}" y="-8.4" width=".5" height="8.4" fill="${G.marmor}"/>` + kegel(x, -8.4, 0.6, 2.2, "#7f8e9e"); return k + reihe(-3.4, -1.8, 7, 1.05, 0.45, 1, "#5a6470", 0.2); }],
+  /* Moskau: Basiliuskathedrale mit bunten Zwiebelkuppeln */
+  moskau: [9.4, 11.4, () => { let k = `<rect x="-4.2" y="-3.2" width="8.4" height="3.2" fill="${G.ziegel}"/>`; const tuerme = [[-3.2, 6, "#3f8f5a"], [-1.6, 7.2, "#e2b23a"], [0, 9.6, "#3d6ab0"], [1.6, 7.4, "#c94336"], [3.2, 6.2, "#4a9a8a"]]; for (const [x, h, f] of tuerme) { const w = x === 0 ? 1.1 : 0.85; k += `<rect x="${r(x - w * 0.6)}" y="${r(-h + 0.8)}" width="${r(w * 1.2)}" height="${r(h - 4)}" fill="${x === 0 ? "#e9dcc4" : G.ziegel}"/>`; k += `<path d="M${r(x - w)} ${r(-h + 1)} C${r(x - w * 1.25)} ${r(-h - 0.4)} ${r(x - 0.2)} ${r(-h - 1.1)} ${x} ${r(-h - 1.6)} C${r(x + 0.2)} ${r(-h - 1.1)} ${r(x + w * 1.25)} ${r(-h - 0.4)} ${r(x + w)} ${r(-h + 1)} Z" fill="${f}"/><path d="M${r(x - w * 0.7)} ${r(-h + 0.5)} Q${x} ${r(-h - 0.4)} ${r(x + w * 0.8)} ${r(-h)}" fill="none" stroke="#fff" stroke-width=".22" opacity=".7"/><path d="M${x} ${r(-h - 1.6)} v-.6" stroke="#d9a520" stroke-width=".2"/>`; } return k + `<path d="M-.6 0 V-1.6 Q0 -2.3 .6 -1.6 V0 Z" fill="#3a1a12"/>`; }],
+  /* Pyramiden von Gizeh mit Sphinx */
+  aegypten: [12.4, 7.4, () => { let k = `<path d="M-6.2 0 Q0 -.8 6.2 0 Z" fill="${G.wueste}"/>`; for (const [x, w, h] of [[-2.8, 7, 7.2], [2.4, 6.4, 6.6], [5.2, 3, 3]]) k += `<path d="M${r(x - w / 2)} -.2 L${x} ${-h} L${r(x + w / 2)} -.2 Z" fill="${G.pyr}"/><path d="M${x} ${-h} L${r(x + w / 2)} -.2 L${r(x + w * 0.1)} -.2 Z" fill="#b98545" opacity=".75"/>`; return k + `<path d="M-6 -.2 V-.9 Q-5.6 -1.7 -5 -1.6 L-4.9 -1 L-3.6 -1 L-3.4 -.2 Z" fill="#c99a5a"/>`; }],
+  /* Burj Khalifa */
+  dubai: [4.4, 13, () => `<path d="M-2 0 Q0 -.5 2 0 Z" fill="${G.wueste}"/><path d="M-1.4 0 L-1.4 -3 L-1 -3 L-1 -6 L-.65 -6 L-.65 -8.6 L-.38 -8.6 L-.3 -10.6 L-.1 -10.6 L0 -13 L.1 -10.6 L.3 -10.6 L.38 -8.6 L.65 -8.6 L.65 -6 L1 -6 L1 -3 L1.4 -3 L1.4 0 Z" fill="${G.glas}"/><path d="M0 -12.5 V-.2" stroke="#fff" stroke-width=".16" opacity=".8"/>`],
+  /* Taj Mahal: weißer Marmor, Zwiebelkuppel, vier Minarette, Wasserbecken */
+  indien: [11.4, 9.6, () => { let k = `<rect x="-5.4" y="-.7" width="10.8" height=".7" fill="${G.wasser}"/><rect x="-4.6" y="-1.6" width="9.2" height=".9" fill="${G.marmor}"/><rect x="-2.8" y="-4.6" width="5.6" height="3" fill="${G.marmor}"/><path d="M-.7 -1.6 V-3.6 Q0 -4.4 .7 -3.6 V-1.6 Z" fill="#9aa6b6"/>`; k += `<path d="M-1.9 -4.6 C-2.4 -6.2 -1.1 -7.4 0 -8.4 C1.1 -7.4 2.4 -6.2 1.9 -4.6 Z" fill="${G.marmor}"/><path d="M0 -8.4 v-.9" stroke="#d9a520" stroke-width=".22"/>`; for (const x of [-2.2, 2.2]) k += `<path d="M${r(x - 0.6)} -4.6 Q${x} -5.8 ${r(x + 0.6)} -4.6 Z" fill="${G.marmor}"/>`; for (const x of [-4.4, 4.4]) k += `<rect x="${r(x - 0.25)}" y="-6.4" width=".5" height="4.8" fill="${G.marmor}"/><path d="M${r(x - 0.4)} -6.4 Q${x} -7.2 ${r(x + 0.4)} -6.4 Z" fill="${G.marmor}"/>`; return k; }],
+  /* Große Mauer auf grünen Bergkämmen mit Wachturm */
+  peking: [12.4, 7, () => { let k = `<path d="M-6.2 0 L-4 -3.8 L-1.5 -1.8 L1.4 -5 L4.2 -2.6 L6.2 -4 L6.2 0 Z" fill="${G.gruen}"/>`; k += `<path d="M-6 -1.6 L-4 -4.4 L-1.5 -2.4 L1.4 -5.6 L4.2 -3.2 L6.2 -4.6" fill="none" stroke="#a89474" stroke-width=".9" stroke-linejoin="round"/><path d="M-6 -2.1 L-4 -4.9 L-1.5 -2.9 L1.4 -6.1 L4.2 -3.7 L6.2 -5.1" fill="none" stroke="#a89474" stroke-width=".35" stroke-dasharray=".3 .3"/>`; return k + `<rect x=".7" y="-7" width="1.4" height="1.6" fill="#b49c78"/><path d="M.5 -7 L1.4 -7.6 L2.3 -7 Z" fill="#7a3a2a"/>`; }],
+  /* Fuji mit Schneehaube, davor ein rotes Torii */
+  japan: [12, 7.6, () => `<path d="M-6 0 L-1.2 -6.4 Q0 -7 1.2 -6.4 L6 0 Z" fill="${G.fuji}"/><path d="M-2.4 -4.8 L-1.2 -6.4 Q0 -7 1.2 -6.4 L2.5 -4.7 L1.7 -5 L1.1 -4.3 L.4 -5 L-.3 -4.2 L-1 -4.9 L-1.7 -4.4 Z" fill="#fff"/>
+    <path d="M-5.2 -2.6 H-2.4 M-5 -2.1 H-2.6" stroke="#c0392b" stroke-width=".35"/><path d="M-4.6 0 V-2.6 M-3 0 V-2.6" stroke="#c0392b" stroke-width=".35"/>`],
+  /* Opernhaus von Sydney: weiße Segelschalen */
+  sydney: [11, 6.4, () => { let k = `<rect x="-5.5" y="-.7" width="11" height=".7" fill="${G.wasser}"/><rect x="-4.6" y="-1.5" width="9.2" height=".9" fill="#d9c7a4"/>`; for (const [x, h, w] of [[-3.4, 3.4, 2.2], [-1.4, 4.8, 2.6], [1, 5.6, 2.9], [3.2, 3.8, 2.1]]) k += `<path d="M${r(x - w / 2)} -1.5 Q${r(x - w * 0.2)} ${r(-1.5 - h)} ${r(x + w / 2)} ${r(-1.5 - h)} Q${r(x + w * 0.3)} ${r(-1.5 - h * 0.4)} ${r(x + w / 2)} -1.5 Z" fill="${G.marmor}" stroke="#a9b0b8" stroke-width=".15"/>`; return k; }],
+  /* Tafelberg mit dem „Tischtuch“ aus Wolken */
+  kapstadt: [13, 6.6, () => `<path d="M-6.5 0 L-5.2 -2.6 L-4.4 -4.6 L4 -4.6 L5 -2.8 L6.5 0 Z" fill="${G.berg}"/><path d="M5 -2.8 L6.5 0 L2 0 Z" fill="#56634f" opacity=".6"/>
+    <path d="M-4.6 -4.5 Q-4 -5.6 -2.8 -5.2 Q-1.6 -6.2 -.2 -5.4 Q1.2 -6.3 2.4 -5.3 Q3.8 -5.8 4.2 -4.5 Z" fill="#fff"/><path d="M-6.5 0 L-6 -1.6 L-5.4 -.6" fill="${G.berg}"/>`],
+  /* Rio: Christusstatue auf dem Corcovado, daneben der Zuckerhut */
+  rio: [11, 10.4, () => `<path d="M-5.5 0 L-1.6 -6.2 L-.6 -6.6 L.6 -6.4 L4 -1.6 L5.5 0 Z" fill="${G.gruen}"/><path d="M3.6 0 Q4.2 -3.6 5 -3.8 Q5.8 -3.4 6 0 Z" fill="#6f8a5c"/>
+    <rect x="-.5" y="-7.3" width="1" height=".7" fill="#d9d3c3"/><path d="M-.4 -7.3 L-.35 -9.4 L.35 -9.4 L.4 -7.3 Z" fill="${G.marmor}"/><path d="M-2.3 -9.3 H2.3" stroke="${G.marmor}" stroke-width=".55" stroke-linecap="round"/><circle cx="0" cy="-9.85" r=".38" fill="#fff"/>`],
+  /* Chichén Itzá: Stufenpyramide El Castillo mit Tempel */
+  mexiko: [11, 7.6, () => { let k = ""; for (let i = 0; i < 5; i++) { const w = 10.4 - i * 1.6, y = -i * 1.15; k += `<rect x="${r(-w / 2)}" y="${r(y - 1.15)}" width="${r(w)}" height="1.15" fill="${G.stein}"/><path d="M${r(-w / 2)} ${r(y - 1.15)} H${r(w / 2)}" stroke="#fff" stroke-width=".18" opacity=".7"/>`; } return k + `<rect x="-.9" y="-5.75" width="1.8" height="5.75" fill="#b7aa90"/>${reihe(-0.8, -5.5, 10, 0, 1.6, 0.12, "#8a7d64")}<rect x="-1.5" y="-7.6" width="3" height="1.85" fill="${G.stein}"/><rect x="-.4" y="-7.1" width=".8" height="1.3" fill="#4a3a2a"/>`; }],
+  /* Freiheitsstatue mit Fackel und Strahlenkrone */
+  new_york: [5, 12.4, () => `<path d="M-1.8 0 L-1.4 -3.2 H1.4 L1.8 0 Z" fill="#b8ab95"/><rect x="-1.2" y="-4" width="2.4" height=".8" fill="#cdbfa6"/>
+    <path d="M-1 -4 L-.8 -7.8 Q0 -8.6 .9 -7.6 L1 -4 Z" fill="${G.kupfer}"/><circle cx="0" cy="-8.6" r=".55" fill="${G.kupfer}"/><path d="M-.6 -9 L-.9 -9.7 M-.2 -9.1 L-.2 -9.9 M.3 -9.1 L.5 -9.8 M.6 -8.9 L1 -9.4" stroke="#79b79c" stroke-width=".22"/>
+    <path d="M.6 -7.6 L1.1 -11" stroke="#5f9a80" stroke-width=".5" stroke-linecap="round"/><path d="M1.1 -11 Q.8 -11.8 1.2 -12.4 Q1.6 -11.8 1.3 -11 Z" fill="#f2b43a"/><path d="M-1 -6.4 L-1.5 -5.4 L-.8 -5.2 Z" fill="#5f9a80"/>`],
+  /* Golden Gate Bridge: zwei Türme, Tragseil, Fahrbahn */
+  san_francisco: [13, 7.6, () => `<rect x="-6.5" y="-.7" width="13" height=".7" fill="${G.wasser}"/><path d="M-6.5 -2.4 H6.5" stroke="#b5342a" stroke-width=".6"/>
+    <path d="M-6.5 -5.2 Q-4.8 -3.4 -3.4 -7 Q0 -2.4 3.4 -7 Q4.8 -3.4 6.5 -5.2" fill="none" stroke="#c0392b" stroke-width=".3"/>
+    ${[-3.4, 3.4].map((x) => `<rect x="${r(x - 0.55)}" y="-7.6" width="1.1" height="7" fill="${G.orange}"/><path d="M${r(x - 0.55)} -5.6 h1.1 M${r(x - 0.55)} -3.6 h1.1" stroke="#8e2a1f" stroke-width=".25"/>`).join("")}`],
+};
+
 /*@@TEILE@@*/
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/weltkarte.js"));

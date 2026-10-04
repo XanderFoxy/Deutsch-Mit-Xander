@@ -249,24 +249,34 @@ const schlossUnter = [];
   k += `<path d="M7.7 ${TOP} L8.2 ${TOP} L8.2 .4 L7.7 .4 Z" fill="#a8792f" opacity=".55"/>`;
   /* runde Eckpavillons: Zylinder, links hell, rechts im Eigenschatten */
   const PAV = S.lg("pav", [[0, "#fbe39e"], [0.35, "#f1c962"], [0.8, "#c18e36"], [1, "#9a6c28"]], 0, 0, 1, 0);
+  /* der Pavillon tritt halbrund vor: Fuß und Gesims als Bogen (näher = höher über Augenhöhe) */
+  const PA = 37.6, PB = 46.6, PC = 0.9;
+  const bogen = (x0, x1, y, c) => `Q${r((x0 + x1) / 2)} ${r(y - 2 * c)} ${x1} ${y}`;
   for (const s of [-1, 1]) {
-    const x0 = s < 0 ? -W - 0.6 : 37.8;
-    k += `<path d="M${x0} ${TOP} Q${r(x0 + 4.3)} ${TOP - 0.5} ${r(x0 + 8.6)} ${TOP} L${r(x0 + 8.6)} .4 L${x0} .4 Z" fill="${PAV}"/>`;
+    const x0 = s < 0 ? -PB : PA, x1 = s < 0 ? -PA : PB;
+    k += `<path d="M${x0} ${TOP} ${bogen(x0, x1, TOP, PC)} L${x1} .4 ${bogen(x1, x0, 0.4, PC)} Z" fill="${PAV}"/>`;
+    k += `<path d="M${x0} .4 ${bogen(x0, x1, 0.4, PC)}" stroke="#9a6c28" stroke-width=".25" fill="none"/>`;
+    if (s < 0) k += `<rect x="${-PA}" y="${TOP}" width=".7" height="${-TOP + 0.4}" fill="#5a4070" opacity=".22"/>`;
   }
   /* Fenstertüren */
   const fenster = [-5.3, 0, 5.3];
   for (let i = 1; i <= 5; i++) fenster.push(8 + (i - 0.5) * 5.96, -(8 + (i - 0.5) * 5.96));
-  fenster.push(39.9, 43.6, -39.9, -43.6);
+  fenster.push(42.1, -42.1);
   for (const x of fenster) k += `<use href="#${S.id("fenster")}" x="${r(x)}" y="0"/>`;
   /* Hermen paarweise an den Pfeilern: 4 + 2·5 + 2·2 Pfeiler = 18 Paare = 36 Figuren, mit Schlagschatten nach rechts */
   const pfeiler = [-8, -2.65, 2.65, 8];
   for (let i = 1; i <= 5; i++) pfeiler.push(8 + i * 5.96, -(8 + i * 5.96));
-  pfeiler.push(41.75, 45.3, -41.75, -45.6);
   let sch = "", hermen = "";
   for (const p of pfeiler) for (const s of [-1, 1]) {
     const x = r(p + s * 0.5);
     sch += `<path d="M${r(x + 0.25)} -.5 L${r(x + 0.7)} -.5 L${r(x + 0.85)} -7.6 L${r(x + 0.4)} -7.6 Z"/>`;
     hermen += `<use href="#${S.id("herme")}" transform="translate(${x} 0) scale(${-s} 1)"/>`;
+  }
+  /* zwei Hermenpaare auf jeder Rundung, zur Außenkante schmaler (Verkürzung), etwas höher (vortretend) */
+  for (const sp of [-1, 1]) for (const [p, f] of [[39.9, 0.95], [44.3, 0.72]]) for (const s of [-1, 1]) {
+    const x = r(sp * p + s * 0.45 * f), dy = -0.75 * (p < 42 ? 1 : 0.7);
+    sch += `<path d="M${r(x + 0.2)} ${r(dy - 0.5)} L${r(x + 0.6)} ${r(dy - 0.5)} L${r(x + 0.75)} ${r(dy - 7.6)} L${r(x + 0.35)} ${r(dy - 7.6)} Z"/>`;
+    hermen += `<use href="#${S.id("herme")}" transform="translate(${x} ${r(dy)}) scale(${r(-s * f)} 1)"/>`;
   }
   k += `<g fill="#7a5418" opacity=".3" filter="url(#${S.id("schw")})">${sch}</g>` + hermen;
   /* Gebälk mit Fries und Kranzgesims; unter dem Gesims ein Schattenband */
@@ -287,7 +297,22 @@ const schlossUnter = [];
   for (let x = -W + 0.4; x < W - 0.2; x += 0.55) if (Math.abs(x) > 8.6) bal += `<rect x="${r(x)}" y="${r(TOP - 2.45)}" width=".26" height=".8" rx=".1"/>`;
   k += `<g fill="#b6a684">${bal}</g>`;
   k += `<rect x="${-W}" y="${TOP - 2.75}" width="${2 * W - 0}" height=".3" fill="#fbf4e3"/>`;
-  for (const x of [-44, -38, -32, -26.2, -20.3, -14.4, 14.4, 20.3, 26.2, 32, 38, 44]) k += `<use href="#${S.id("vase")}" transform="translate(${x} ${r(TOP - 2.75)})"/>`;
+  for (const x of [-32, -26.2, -20.3, -14.4, 14.4, 20.3, 26.2, 32]) k += `<use href="#${S.id("vase")}" transform="translate(${x} ${r(TOP - 2.75)})"/>`;
+  /* Pavillons: eigenes gebogenes Gebälk mit Schattenband und die Balustrade, die über die Rundung läuft */
+  for (const s of [-1, 1]) {
+    const x0 = s < 0 ? -PB - 0.3 : PA, x1 = s < 0 ? -PA : PB + 0.3, m = (x0 + x1) / 2, hw = (x1 - x0) / 2;
+    const ya = (x, y) => r(y - PC * (1 - ((x - m) / hw) ** 2));
+    k += `<path d="M${x0} ${TOP + 0.6} ${bogen(x0, x1, TOP + 0.6, PC)} L${x1} ${TOP - 1.1} ${bogen(x1, x0, TOP - 1.1, PC)} Z" fill="${GEB}"/>`;
+    k += `<path d="M${x0} ${TOP + 0.6} ${bogen(x0, x1, TOP + 0.6, PC)} L${x1} ${TOP} ${bogen(x1, x0, TOP, PC)} Z" fill="#4a4070" opacity=".3"/>`;
+    k += `<path d="M${r(x0 - 0.2)} ${TOP - 1.1} ${bogen(x0 - 0.2, x1 + 0.2, TOP - 1.1, PC)} L${r(x1 + 0.2)} ${TOP - 1.55} ${bogen(x1 + 0.2, x0 - 0.2, TOP - 1.55, PC)} Z" fill="#fbf4e3"/>`;
+    k += `<path d="M${x0} ${TOP - 1.55} ${bogen(x0, x1, TOP - 1.55, PC)} L${x1} ${TOP - 2.6} ${bogen(x1, x0, TOP - 2.6, PC)} Z" fill="#e9dcc0"/>`;
+    let bb = "";
+    for (let x = x0 + 0.3; x < x1 - 0.2; x += 0.55) bb += `<rect x="${r(x)}" y="${ya(x, TOP - 2.45)}" width=".26" height=".8" rx=".1"/>`;
+    k += `<g fill="#b6a684">${bb}</g>`;
+    k += `<path d="M${x0} ${TOP - 2.6} ${bogen(x0, x1, TOP - 2.6, PC)} L${x1} ${TOP - 2.9} ${bogen(x1, x0, TOP - 2.9, PC)} Z" fill="#fbf4e3"/>`;
+    k += `<use href="#${S.id("vase")}" transform="translate(${r(m)} ${ya(m, TOP - 2.9)})"/>`;
+    k += `<rect x="${r(x1 - 1.6)}" y="${ya(x1 - 0.8, TOP - 2.9)}" width="1.6" height="${r(-TOP + 3.3)}" fill="#3a2a5a" opacity=".12"/>`;
+  }
   /* Attika über dem Mittelbau und die Kuppel */
   const TB = TOP - 2.65;
   k += `<path d="M-7.6 ${r(TB + 0.2)} L7.6 ${r(TB + 0.2)} L7.6 ${r(TB - 1.3)} L-7.6 ${r(TB - 1.3)} Z" fill="${S.lg("attika", [[0, "#f8dc8a"], [0.55, "#eec35c"], [1, "#c99a3e"]], 0, 0, 1, 0)}"/>`;
@@ -539,7 +564,7 @@ const WEG = S.teil({ id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", it
 const statuen = [];
 for (let a = 15; a < 360; a += 30) {
   const w = a * Math.PI / 180, X = RS * Math.sin(w), D = FD - RS * Math.cos(w), x = xG(D, X);
-  if (x > 8 && x < 392) statuen.push({ a, X, D, x, y: yG(D), u: sk(D) });
+  if (x > 14 && x < 386) statuen.push({ a, X, D, x, y: yG(D), u: sk(D) });
 }
 statuen.sort((p, q) => q.D - p.D);
 const SOCKEL = S.lg("sockel", [[0, "#faf7f0"], [0.5, "#dcd6ca"], [1, "#9c958a"]], 0, 0, 1, 0);
@@ -630,24 +655,34 @@ const figur = (u, a) => {
   const vorn = [], vorn2 = [];
   for (let i = 0; i <= 40; i++) { const w = Math.PI / 2 + i / 40 * Math.PI, X = RB * Math.sin(w), D = FD - RB * Math.cos(w); vorn.push(`${r(xG(D, X))} ${r(yG(D, 0.55))}`); vorn2.push(`${r(xG(D, X))} ${r(yG(D, 0))}`); }
   k += `<path d="M${vorn.join(" L")} L${vorn2.reverse().join(" L")} Z" fill="${S.lg("rand", [[0, "#f6f0e2"], [1, "#b2a690"]])}"/>`;
-  /* die Wassersäule: heller Kern, versetzte Stränge, blau-graue Schattenseite rechts */
-  k += `<g filter="url(#${S.id("gischt")})">`;
-  k += `<path d="M${CX - 3.2} ${r(yb)} Q${CX - 2} ${r(yb - H * 0.5)} ${CX - 1.3} ${r(yb - H)} L${CX + 1.6} ${r(yb - H)} Q${CX + 2.4} ${r(yb - H * 0.5)} ${CX + 3.6} ${r(yb)} Z" fill="#dfe8ee" opacity=".55"/>`;
-  k += `<path d="M${CX - 1.7} ${r(yb)} Q${CX - 1} ${r(yb - H * 0.55)} ${CX - 0.6} ${r(yb - H - 1)} L${CX + 0.9} ${r(yb - H - 1)} Q${CX + 1.3} ${r(yb - H * 0.55)} ${CX + 2} ${r(yb)} Z" fill="${S.lg("strahl", [[0, "#ffffff"], [0.55, "#f4f8fb"], [0.75, "#b9c9d6"], [1, "#8ea3b4"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${CX - 1} ${r(yb - 2)} Q${CX - 0.7} ${r(yb - H * 0.5)} ${CX - 0.3} ${r(yb - H + 2)}" stroke="#ffffff" stroke-width=".6" fill="none"/>`;
-  /* Krone: oben fächert der Strahl auf und fällt als Tropfenvorhang zurück */
-  k += `<path d="M${CX - 0.8} ${r(yb - H - 0.6)} Q${CX - 5} ${r(yb - H - 4.2)} ${CX - 8.6} ${r(yb - H + 3)} Q${CX - 10.8} ${r(yb - H * 0.5)} ${CX - 11.6} ${r(yb - 1)} L${CX - 9.2} ${r(yb - 1)} Q${CX - 8.4} ${r(yb - H * 0.5)} ${CX - 6.2} ${r(yb - H + 4.4)} Q${CX - 3.4} ${r(yb - H - 1)} ${CX - 0.5} ${r(yb - H + 1.4)} Z" fill="#ffffff" opacity=".75"/>`;
-  k += `<path d="M${CX + 1} ${r(yb - H - 0.6)} Q${CX + 5.2} ${r(yb - H - 4.2)} ${CX + 8.8} ${r(yb - H + 3)} Q${CX + 11} ${r(yb - H * 0.5)} ${CX + 11.8} ${r(yb - 1)} L${CX + 9.4} ${r(yb - 1)} Q${CX + 8.6} ${r(yb - H * 0.5)} ${CX + 6.4} ${r(yb - H + 4.4)} Q${CX + 3.6} ${r(yb - H - 1)} ${CX + 0.7} ${r(yb - H + 1.4)} Z" fill="#d2dee6" opacity=".75"/>`;
-  k += `<ellipse cx="${CX}" cy="${r(yb - H - 1.4)}" rx="5" ry="2.6" fill="#ffffff" opacity=".9"/>`;
-  for (const sx of [-1, 1]) for (let i = 0; i < 6; i++) k += `<path d="M${r(CX + sx * (2 + i * 1.5))} ${r(yb - H + i * 1.2)} q${r(sx * 1.2)} ${r(H * 0.3)} ${r(sx * (1.6 + i * 0.25))} ${r(H - i * 1.2 - 2)}" stroke="#ffffff" stroke-width=".3" fill="none" opacity=".6"/>`;
-  k += `<ellipse cx="${CX}" cy="${r(yb - 1.2)}" rx="13" ry="2.6" fill="#ffffff" opacity=".85"/>`;
-  k += `<ellipse cx="${CX}" cy="${r(yb - 3)}" rx="7" ry="4" fill="#ffffff" opacity=".45"/>`;
+  k += `<path d="M${vorn.join(" L")}" stroke="#fffaf0" stroke-width=".5" fill="none"/>`;
+  /* Nassstreifen auf der Treppe hinter dem Strahl (dunkler), damit der Strahl frei steht */
+  k += `<path d="M${CX - 5} ${r(yb - H - 3)} L${CX + 5} ${r(yb - H - 3)} L${CX + 6.5} ${r(yb - 4)} L${CX - 6.5} ${r(yb - 4)} Z" fill="#5e5442" opacity=".28"/>`;
+  /* Sprühschleier, vom Wind nach rechts gezogen */
+  k += `<g filter="url(#${S.id("gischt")})"><ellipse cx="${CX + 6}" cy="${r(yb - H * 0.35)}" rx="9" ry="${r(H * 0.36)}" fill="#ffffff" opacity=".22"/>`;
+  /* durchsichtige Seitenstränge */
+  for (const [dx, op] of [[-2.8, 0.38], [3.0, 0.32]]) k += `<path d="M${r(CX + dx - 1.2)} ${r(yb)} Q${r(CX + dx * 0.6 - 0.6)} ${r(yb - H * 0.5)} ${r(CX + dx * 0.3 - 0.4)} ${r(yb - H * 0.92)} L${r(CX + dx * 0.3 + 0.4)} ${r(yb - H * 0.92)} Q${r(CX + dx * 0.6 + 0.6)} ${r(yb - H * 0.5)} ${r(CX + dx + 1.2)} ${r(yb)} Z" fill="#e8f0f4" opacity="${op}"/>`;
   k += `</g>`;
-  /* fallende Tropfen und Glitzern im Gegenlicht oben links */
-  let tr = "";
-  for (let i = 0; i < 70; i++) { const t = rnd(), sx = rnd() < 0.5 ? -1 : 1, x = CX + sx * (1 + Math.sqrt(t) * 10.5) + (rnd() - 0.5) * 1.2, y = yb - H * (1 - t * t) * 1.02 + rnd() * 3; tr += `<ellipse cx="${r(x)}" cy="${r(y)}" rx=".22" ry="${r(0.3 + rnd() * 0.5)}"/>`; }
-  k += `<g fill="#ffffff" opacity=".85">${tr}</g>`;
-  for (const [x, y, s2] of [[-3.2, -H - 2.2, 1.3], [-6.6, -H + 1, 1], [-1.4, -H + 6, 0.8]]) k += `<path d="M${r(CX + x - s2)} ${r(yb + y)} H${r(CX + x + s2)} M${r(CX + x)} ${r(yb + y - s2)} V${r(yb + y + s2)}" stroke="#fffbe6" stroke-width=".25"/>`;
+  /* deckender Kern: weiß-bläulich, rechts blaugraue Schattenkante (Sonne SW) */
+  k += `<path d="M${CX - 2.4} ${r(yb)} Q${CX - 1.4} ${r(yb - H * 0.55)} ${CX - 0.9} ${r(yb - H - 1)} L${CX + 1.1} ${r(yb - H - 1)} Q${CX + 1.7} ${r(yb - H * 0.55)} ${CX + 2.6} ${r(yb)} Z" fill="${S.lg("strahl", [[0, "#f6fafc"], [0.5, "#ffffff"], [0.72, "#dfe9f0"], [1, "#93a8ba"]], 0, 0, 1, 0)}" opacity=".93"/>`;
+  k += `<path d="M${CX - 1.2} ${r(yb - 2)} Q${CX - 0.8} ${r(yb - H * 0.5)} ${CX - 0.4} ${r(yb - H + 1)}" stroke="#ffffff" stroke-width=".7" fill="none"/>`;
+  k += `<path d="M${CX + 1.6} ${r(yb - 3)} Q${CX + 1.4} ${r(yb - H * 0.5)} ${CX + 0.9} ${r(yb - H + 2)}" stroke="#7d93a6" stroke-width=".5" fill="none" opacity=".8"/>`;
+  /* Krone: der Strahl verliert Kraft und fällt in Bögen nach außen und unten zurück;
+     die Bögen zerfallen in Tropfenreihen (gestrichelt), links glitzern sie im Gegenlicht */
+  let krone2 = "", tropfen = "";
+  const zz = zufall(808);
+  for (let i = 0; i < 12; i++) {
+    const s2 = i % 2 ? 1 : -1, st = i >> 1, w = 2.6 + st * 2 + zz() * 1.2, top = yb - H - 1.2 - zz() * 1.4;
+    const x0 = CX + s2 * (0.3 + zz() * 0.4), xm = CX + s2 * w * (0.5 + zz() * 0.15), x1 = CX + s2 * (w + 1 + zz() * 1.5), y1 = top + H * (0.16 + st * 0.07 + zz() * 0.06);
+    const op = r(0.55 + zz() * 0.4), col = s2 < 0 ? "#ffffff" : "#e2ebf1";
+    krone2 += `<path d="M${r(x0)} ${r(top + 1.2)} Q${r(xm)} ${r(top - 2.2)} ${r(x1)} ${r(y1)}" stroke="${col}" stroke-width="${r(0.9 - st * 0.08)}" fill="none" stroke-linecap="round" opacity="${op}"/>`;
+    tropfen += `<path d="M${r(x1)} ${r(y1)} Q${r(x1 + s2 * 0.9)} ${r(y1 + H * 0.12)} ${r(x1 + s2 * 1.2)} ${r(y1 + H * (0.22 + zz() * 0.2))}" stroke="${col}" stroke-width=".42" stroke-dasharray=".4 1.1" fill="none" stroke-linecap="round" opacity="${op}"/>`;
+  }
+  k += `<g>${krone2}${tropfen}</g>`;
+  k += `<g filter="url(#${S.id("gischt")})"><ellipse cx="${CX}" cy="${r(yb - H - 1.4)}" rx="2.4" ry="1.5" fill="#ffffff" opacity=".85"/></g>`;
+  for (const [x, y, s3] of [[-6.2, -H + 3, 1.1], [-9.4, -H + 9, 0.9], [-3.4, -H - 2.4, 0.8]]) k += `<path d="M${r(CX + x - s3)} ${r(yb + y)} H${r(CX + x + s3)} M${r(CX + x)} ${r(yb + y - s3)} V${r(yb + y + s3)}" stroke="#fff4d2" stroke-width=".28"/>`;
+  /* Fuß: Schaumhügel und Gischtring */
+  k += `<g filter="url(#${S.id("gischt")})"><ellipse cx="${CX}" cy="${r(yb - 1.2)}" rx="13" ry="2.6" fill="#ffffff" opacity=".9"/><ellipse cx="${CX}" cy="${r(yb - 3.2)}" rx="6.5" ry="4" fill="#ffffff" opacity=".55"/></g>`;
   /* die Statuen vor dem Becken bleiben vorn: Becken dort ausschneiden */
   let loch = "";
   for (const p of statuen) if (p.D < FD - Math.sqrt(Math.max(0, RB * RB - p.X * p.X)) + 1.5) loch += ` M${r(p.x - 0.9 * p.u)} ${r(p.y + 1)} L${r(p.x + 0.9 * p.u)} ${r(p.y + 1)} L${r(p.x + 0.9 * p.u)} ${r(p.y - 4.4 * p.u)} L${r(p.x - 0.9 * p.u)} ${r(p.y - 4.4 * p.u)} Z`;

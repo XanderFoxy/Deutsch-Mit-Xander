@@ -97,8 +97,8 @@ S.def(`<pattern id="${S.id("schuppen")}" patternUnits="userSpaceOnUse" width="1.
 /* Schlagschatten: Sonne hinten rechts (SW), Höhe ≈ 30° — lange Schatten vom Betrachter weg nach links.
    Sie liegen auf dem Boden (Rasen/Weg) und werden dort beschnitten. */
 const SCHATTEN = [];
-const SONNE = { az: 40 * Math.PI / 180, lang: 1.8 };
-const schlag = (lat, d, hoeheM, breiteM = 0.5, a = 0.45) => {
+const SONNE = { az: 40 * Math.PI / 180, lang: 3.0 };
+const schlag = (lat, d, hoeheM, breiteM = 0.5, a = 0.52) => {
   const L = SONNE.lang * hoeheM, dl = -Math.sin(SONNE.az) * L, dd = Math.cos(SONNE.az) * L;
   const p = [[lat - breiteM / 2, d], [lat + breiteM / 2, d], [lat + dl + breiteM * 0.25, d + dd], [lat + dl - breiteM * 0.25, d + dd]].map(([a1, b1]) => proj(a1, b1));
   SCHATTEN.push(`<path d="${pfad(p)}" fill="#2a2a20" opacity="${a}"/>`);
@@ -274,7 +274,7 @@ let WEG_TEIL, RASEN_TEIL;
   for (let y = fuss - 2; y > fuss - 46 * K; y -= 1.4) fu += `M40 ${r(y)} H52 `;
   k += `<path d="${fu}" stroke="#6a2a1c" stroke-width=".18"/>`;
   k += `<path d="M43.6 ${r(fuss - 18 * K)} V${r(fuss - 36 * K)} L46 ${r(fuss - 42 * K)} L48.4 ${r(fuss - 36 * K)} V${r(fuss - 18 * K)} Z" fill="#2c1a16"/><path d="M46 ${r(fuss - 18 * K)} V${r(fuss - 40 * K)} M43.6 ${r(fuss - 30 * K)} H48.4" stroke="#a87a62" stroke-width=".3"/>`;
-  k += `<circle cx="46" cy="${r(fuss - 52 * K)}" r="1.6" fill="#2c1a16" stroke="#a87a62" stroke-width=".3"/>`;
+  k += `<circle cx="46" cy="${r(fuss - 52 * K)}" r="1.6" fill="#2c1a16" stroke="#a87a62" stroke-width=".3"/><path d="M44.8 ${r(fuss - 30 * K)} V${r(fuss - 36 * K)} M47.2 ${r(fuss - 30 * K)} V${r(fuss - 36 * K)}" stroke="#a87a62" stroke-width=".25"/><circle cx="46" cy="${r(fuss - 38.5 * K)}" r=".9" fill="none" stroke="#a87a62" stroke-width=".25"/>`;
   for (const cx of [34, 58]) {
     const w = 13.5 * K, mh = 74 * K, sp = 51 * K, top = fuss - mh;
     k += `<rect x="${r(cx - w / 2)}" y="${r(top)}" width="${r(w)}" height="${r(mh)}" fill="${MAR}"/>`;
@@ -336,13 +336,14 @@ const SPEICHER = { x0: 290, d: 210 };
   const K = F / SPEICHER.d, fuss = r(HOR + AUGE * K);
   let k = "";
   const haeuser = [
-    { w: 10, h: 11.5, g: 10, art: "treppe", f: "#9c4a30", achsen: 3, lean: -1.2, stufen: 6 },
-    { w: 13, h: 12, g: 11, art: "schweif", f: "#a5553a", achsen: 4, lean: 0.6, stufen: 3 },
-    { w: 10.5, h: 10.5, g: 9.5, art: "treppe", f: "#8e4229", achsen: 2, lean: 1.4, stufen: 5 },
-    { w: 13.5, h: 12.5, g: 11.5, art: "schweif", f: "#ab5a3c", achsen: 4, lean: -0.6, stufen: 3 },
+    { w: 10, h: 11.5, g: 10, art: "treppe", f: "#9c4a30", achsen: 3, lean: -1.4, stufen: 6, fw: 1.4, fh: 2.0, rh: 3.2, auf: "" },
+    { w: 13, h: 12, g: 11, art: "schweif", f: "#a5553a", achsen: 4, lean: 1.2, stufen: 3, fw: 1.2, fh: 2.6, rh: 3.6, auf: "obelisk" },
+    { w: 10.5, h: 10.5, g: 9.5, art: "treppe", f: "#8e4229", achsen: 2, lean: -1.0, stufen: 5, fw: 1.7, fh: 1.8, rh: 3.0, auf: "" },
+    { w: 13.5, h: 12.5, g: 11.5, art: "schweif", f: "#ab5a3c", achsen: 5, lean: 1.5, stufen: 3, fw: 1.1, fh: 2.3, rh: 3.4, auf: "muschel" },
   ];
   let x = SPEICHER.x0;
   let TG = null;
+  const dirK = (hs) => (hs.lean > 0 ? 1 : -1);
   haeuser.forEach((hs) => {
     const w = hs.w * K, h = hs.h * K, g = hs.g * K, top = fuss - h;
     let p = `M${r(x)} ${fuss} V${r(top)} `, ges = "";
@@ -368,7 +369,7 @@ const SPEICHER = { x0: 290, d: 210 };
         p += `L${r(xb)} ${r(yb)} C${r(xb)} ${r(ya - (ya - yb) * 0.55)} ${r(xb + (xa - xb) * 0.05)} ${r(ya - (ya - yb) * 0.1)} ${r(xa - (xa - xb) * 0.25)} ${r(ya)} L${r(xa)} ${r(ya)} `;
       }
       ges += `M${r(x + w * 0.4)} ${r(top - g)} H${r(x + w * 0.6)} `;
-      for (const [rx, ry] of rollen) ges += `M${r(rx + 0.8)} ${r(ry)} a.8 .8 0 1 1 -1.6 0 a.8 .8 0 1 1 1.6 0 `;
+      for (const [rx, ry] of rollen) ges += `M${r(rx + 1)} ${r(ry)} a1 1 0 1 0 -1.4 .9 a.7 .7 0 1 0 .6 -1.2 a.4 .4 0 1 0 .1 .6 `;
     }
     p += `L${r(x + w)} ${r(top)} V${fuss} Z`;
     let t = `<path d="${p}" fill="${hs.f}"/>`;
@@ -376,23 +377,27 @@ const SPEICHER = { x0: 290, d: 210 };
     for (let y = fuss - 1.2; y > top + 0.5; y -= 1.2) zf += `M${r(x)} ${r(y)} h${r(w)} `;
     t += `<path d="${zf}" stroke="#5a2418" stroke-width=".12" opacity=".6"/>`;
     t += `<path d="${ges}" stroke="#e3cfae" stroke-width=".45" fill="none"/>`;
-    if (hs.art !== "treppe") t += `<path d="M${r(x + w / 2)} ${r(top - g)} V${r(top - g - 2.4)}" stroke="#3a2a20" stroke-width=".4"/><circle cx="${r(x + w / 2)}" cy="${r(top - g - 2.6)}" r=".6" fill="#3a2a20"/>`;
+    if (hs.auf === "obelisk") t += `<path d="M${r(x + w / 2 - 0.9)} ${r(top - g)} L${r(x + w / 2)} ${r(top - g - 4)} L${r(x + w / 2 + 0.9)} ${r(top - g)} Z" fill="#c9b08a"/><circle cx="${r(x + w / 2)}" cy="${r(top - g - 4.3)}" r=".5" fill="#c9b08a"/>`;
+    if (hs.auf === "muschel") t += `<path d="M${r(x + w / 2 - 2)} ${r(top - g)} A2 2 0 0 1 ${r(x + w / 2 + 2)} ${r(top - g)} Z" fill="#c9b08a"/><path d="M${r(x + w / 2)} ${r(top - g)} l-1.4 -1.4 M${r(x + w / 2)} ${r(top - g)} v-2 M${r(x + w / 2)} ${r(top - g)} l1.4 -1.4" stroke="#8a6a4a" stroke-width=".25"/>`;
     /* Licht von rechts auf der Giebelwand */
     t += `<path d="${p}" fill="${S.lg("spl", [[0, "#2a0f08", 0.28], [0.5, "#000", 0], [1, "#ffcf8f", 0.2]], 0, 0, 1, 0)}"/>`;
     /* Ladeluken (rotbraune Holzläden) in der Mittelachse, je Speicher eigene Achszahl, unten Tore */
-    for (let row = 0; row < 7; row++) {
-      const yy = fuss - 4.4 - row * 3.4;
-      if (yy < top - g * 0.75) break;
+    let oberst = fuss;
+    for (let row = 0; row < 8; row++) {
+      const yy = fuss - 4.6 - row * hs.rh;
+      if (yy < top - g * 0.7) break;
       const im = yy < top, na = im ? 1 : hs.achsen;
       for (let j = 0; j < na; j++) {
         const xx = na === 1 ? x + w / 2 : x + w * ((j + 0.5) / na);
-        const mitte = na === 1 || Math.abs(xx - (x + w / 2)) < w / (na * 1.5);
-        t += `<rect x="${r(xx - 0.8)}" y="${r(yy - 2.3)}" width="1.6" height="2.3" fill="${mitte ? "#5a2418" : "#2a1d18"}"/>`;
-        if (mitte) t += `<path d="M${r(xx)} ${r(yy - 2.3)} V${r(yy)}" stroke="#2a1410" stroke-width=".2"/>`;
-        t += `<rect x="${r(xx - 0.9)}" y="${r(yy - 2.5)}" width="1.8" height=".35" fill="#e3cfae"/>`;
+        if (Math.abs(xx - (x + w / 2)) < w / (na * 2) && na % 2 === 1 && !im) continue;
+        t += `<rect x="${r(xx - hs.fw / 2)}" y="${r(yy - hs.fh)}" width="${hs.fw}" height="${hs.fh}" fill="#2a1d18"/><rect x="${r(xx - hs.fw / 2 - 0.2)}" y="${r(yy - hs.fh - 0.3)}" width="${r(hs.fw + 0.4)}" height=".35" fill="#e3cfae"/>`;
       }
+      /* Ladeluke in der Mittelachse: breiter, dunkelrote Holzläden mit hellem Rahmen */
+      if (!im || row % 2 === 0) { const lb = 2.2; t += `<rect x="${r(x + w / 2 - lb / 2 - 0.25)}" y="${r(yy - 2.65)}" width="${r(lb + 0.5)}" height="2.9" fill="#e3cfae"/><rect x="${r(x + w / 2 - lb / 2)}" y="${r(yy - 2.4)}" width="${lb}" height="2.4" fill="#6a1e14"/><path d="M${r(x + w / 2)} ${r(yy - 2.4)} V${yy}" stroke="#2a0e08" stroke-width=".3"/>`; oberst = yy - 2.65; }
     }
-    t += `<path d="M${r(x + w / 2 - 1.6)} ${fuss} V${r(fuss - 2.6)} Q${r(x + w / 2)} ${r(fuss - 3.6)} ${r(x + w / 2 + 1.6)} ${r(fuss - 2.6)} V${fuss} Z" fill="#3a2418"/>`;
+    /* Kranbalken über der obersten Luke */
+    t += `<path d="M${r(x + w / 2)} ${r(oberst - 0.6)} h${r(dirK(hs) * 2.4)}" stroke="#3a2418" stroke-width=".8"/><path d="M${r(x + w / 2 + dirK(hs) * 2.2)} ${r(oberst - 0.6)} v1.6" stroke="#2a2a2a" stroke-width=".25"/>`;
+    t += `<path d="M${r(x + w / 2 - 2)} ${fuss} V${r(fuss - 2.4)} A2 2 0 0 1 ${r(x + w / 2 + 2)} ${r(fuss - 2.4)} V${fuss} Z" fill="#e3cfae"/><path d="M${r(x + w / 2 - 1.6)} ${fuss} V${r(fuss - 2.4)} A1.6 1.6 0 0 1 ${r(x + w / 2 + 1.6)} ${r(fuss - 2.4)} V${fuss} Z" fill="#4a2a18"/><path d="M${r(x + w / 2)} ${r(fuss - 4)} V${fuss}" stroke="#2a160c" stroke-width=".3"/>`;
     for (const ax of [0.2, 0.5, 0.8]) t += `<path d="M${r(x + w * ax - 0.5)} ${r(top + 1)} h1" stroke="#2a2420" stroke-width=".3"/>`;
     k += `<g transform="rotate(${hs.lean} ${r(x + w / 2)} ${fuss})">${t}</g>`;
     if (hs.art === "treppe" && !TG) TG = { x: x + w / 2, y: top, w, g, lean: hs.lean };
@@ -436,14 +441,15 @@ const TURM = { R: 5.8, cx: 10.4, H: 20, kegel: 12.4, Rk: 6.45 };
 const NEIG = 1.8;                                /* Grad, bewusst übertrieben */
 const bogen = (h, R) => r((h - AUGE) * F * R / (GD * GD));
 /* Punkt auf dem geneigten Südturm (lokal x, Höhe h in m) → Bild */
-const sued = (xm, hm) => { const a = NEIG * Math.PI / 180, x = M(xm), y = -M(hm); return { x: r(GX + M(TURM.cx) + x * Math.cos(a) - y * Math.sin(a)), y: r(GY + x * Math.sin(a) + y * Math.cos(a)) }; };
+const sued = (xm, hm) => { const a = NEIG * Math.PI / 180, x = M(xm) + M(TURM.R), y = -M(hm); return { x: r(GX + M(TURM.cx) - M(TURM.R) + x * Math.cos(a) - y * Math.sin(a)), y: r(GY + x * Math.sin(a) + y * Math.cos(a)) }; };
 let TOR_UNTER = [];
 const SCHARTE = { nord: [[-50, 2.4], [6, 2.7], [56, 2.5], [-46, 8.1], [8, 7.9], [58, 8.2], [-54, 14.9], [2, 15.0], [50, 14.8]], sued: [[-58, 2.6], [-4, 2.4], [48, 2.7], [-52, 8.0], [-2, 8.2], [52, 7.9], [-48, 14.8], [4, 15.0], [54, 14.9]] };
 {
   let k = "";
   /* ---------- Mittelbau (liegt 3,5 m hinter den Turmfronten) ---------- */
   const mw = 4.7, mh = 19.2, gh = 7.6;
-  let mb = `<rect x="${-M(mw)}" y="${-M(mh)}" width="${M(2 * mw)}" height="${M(mh)}" fill="${ZIEGEL_M}"/>`;
+  let mb = `<rect x="${-M(mw + 1.6)}" y="${-M(mh)}" width="${M(2 * mw + 3.2)}" height="${M(mh)}" fill="#5e2419"/>`;
+  mb += `<rect x="${-M(mw)}" y="${-M(mh)}" width="${M(2 * mw)}" height="${M(mh)}" fill="${ZIEGEL_M}"/>`;
   mb += `<rect x="${-M(mw)}" y="${-M(mh)}" width="${M(2 * mw)}" height="${M(mh)}" fill="url(#${S.id("verband")})" opacity=".35"/>`;
   mb += `<rect x="${-M(mw)}" y="${-M(mh)}" width="${M(2 * mw)}" height="${M(mh)}" fill="url(#${S.id("brand")})"/>`;
   for (const [h, d] of [[3.2, 0.42], [10.4, 0.36], [11.9, 0.48], [17.2, 0.4]]) mb += `<rect x="${-M(mw)}" y="${-M(h + d)}" width="${M(2 * mw)}" height="${M(d)}" fill="${GLASUR}"/><rect x="${-M(mw)}" y="${-M(h + d)}" width="${M(2 * mw)}" height="${M(d)}" fill="url(#${S.id("glanz")})"/>`;
@@ -515,29 +521,37 @@ const SCHARTE = { nord: [[-50, 2.4], [6, 2.7], [56, 2.5], [-46, 8.1], [8, 7.9], 
     }
     /* Geschützscharten: tiefe, nach innen enger werdende Nische (linke Laibung im Licht), kleine Öffnung,
        darüber ein Kalksteinsturz mit Schatten; oben Granitkonsolen; im 2. OG eine Kanonenmündung */
-    const scharte = (a, h, w, hgt, art, kanone) => {
+    const scharte = (a, h, w, hgt, art, kanone, sturz) => {
       const s = Math.sin(a * Math.PI / 180), c = Math.cos(a * Math.PI / 180);
-      const x = R * s, y = -M(h) - ring(h) * c, ww = M(w) * c, hh = M(hgt), iw = ww * 0.42, ih = hh * 0.55;
+      const x = R * s, y = -M(h) - ring(h) * c, ww = M(w) * c, hh = M(hgt), iw = ww * 0.3, ih = hh * 0.45;
+      /* Nische: breiter als hoch, Laibung läuft nach innen enger zu (linke Laibung im Licht) */
       let g = `<path d="M${r(x - ww / 2)} ${r(y)} V${r(y - hh)} H${r(x + ww / 2)} V${r(y)} Z" fill="#3a1610"/>`;
-      g += `<path d="M${r(x - ww / 2)} ${r(y)} V${r(y - hh)} L${r(x - iw / 2)} ${r(y - hh / 2 - ih / 2)} V${r(y - hh / 2 + ih / 2)} Z" fill="#c8704a" opacity=".85"/>`;
+      g += `<path d="M${r(x - ww / 2)} ${r(y)} V${r(y - hh)} L${r(x - iw / 2)} ${r(y - hh / 2 - ih / 2)} V${r(y - hh / 2 + ih / 2)} Z" fill="#b8643e"/>`;
       g += `<path d="M${r(x + ww / 2)} ${r(y)} V${r(y - hh)} L${r(x + iw / 2)} ${r(y - hh / 2 - ih / 2)} V${r(y - hh / 2 + ih / 2)} Z" fill="#1a0a07"/>`;
+      g += `<path d="M${r(x - ww / 2)} ${r(y - hh)} H${r(x + ww / 2)} L${r(x + iw / 2)} ${r(y - hh / 2 - ih / 2)} H${r(x - iw / 2)} Z" fill="#240d08"/>`;
       g += `<rect x="${r(x - iw / 2)}" y="${r(y - hh / 2 - ih / 2)}" width="${r(iw)}" height="${r(ih)}" fill="#0a0605"/>`;
-      if (kanone) g += `<circle cx="${r(x)}" cy="${r(y - hh / 2)}" r="${r(Math.min(iw, ih) * 0.42)}" fill="#2e2e30"/><circle cx="${r(x)}" cy="${r(y - hh / 2)}" r="${r(Math.min(iw, ih) * 0.22)}" fill="#050505"/><path d="M${r(x - Math.min(iw, ih) * 0.3)} ${r(y - hh / 2 - Math.min(iw, ih) * 0.2)} a.6 .6 0 0 1 .8 -.4" stroke="#8a8a8a" stroke-width=".2" fill="none"/>`;
-      if (art === "kalk") g += `<rect x="${r(x - ww / 2 - 0.7 * c)}" y="${r(y - hh - 1.1)}" width="${r(ww + 1.4 * c)}" height="1.1" fill="${S.lg("kalk", [[0, "#efe6d2"], [1, "#c9bea6"]])}"/><rect x="${r(x - ww / 2 - 0.4 * c)}" y="${r(y - hh)}" width="${r(ww + 0.8 * c)}" height=".35" fill="#1a0a07" opacity=".55"/>`;
-      if (art === "granit") g += `<rect x="${r(x - ww / 2 - 0.5 * c)}" y="${r(y)}" width="${r(ww + c)}" height=".8" fill="#9a968c"/><rect x="${r(x - ww / 2 - 0.5 * c)}" y="${r(y + 0.8)}" width="${r(ww + c)}" height=".3" fill="#1a0a07" opacity=".5"/>`;
+      if (kanone) g += `<circle cx="${r(x)}" cy="${r(y - hh / 2)}" r="${r(Math.min(iw, ih) * 0.48)}" fill="#2e2e30"/><circle cx="${r(x)}" cy="${r(y - hh / 2)}" r="${r(Math.min(iw, ih) * 0.25)}" fill="#050505"/>`;
+      if (art === "bogen") {
+        /* Stichbogen aus Formziegeln über der Kammer */
+        const rb = ww * 0.75, yc = y - hh + rb * 0.75;
+        g += `<path d="M${r(x - ww / 2 - 0.5)} ${r(y - hh)} A${r(rb + 0.6)} ${r(rb + 0.6)} 0 0 1 ${r(x + ww / 2 + 0.5)} ${r(y - hh)} L${r(x + ww / 2)} ${r(y - hh)} A${r(rb)} ${r(rb)} 0 0 0 ${r(x - ww / 2)} ${r(y - hh)} Z" fill="#7a2c1c"/>`;
+        for (let i = 1; i < 6; i++) { const t2 = -Math.PI / 2 + (i / 6 - 0.5) * 1.15; g += `<path d="M${r(x + Math.cos(t2) * rb)} ${r(yc + Math.sin(t2) * rb)} L${r(x + Math.cos(t2) * (rb + 0.6))} ${r(yc + Math.sin(t2) * (rb + 0.6))}" stroke="#3a120a" stroke-width=".2"/>`; }
+      }
+      if (sturz) g += `<rect x="${r(x - ww / 2 - 0.6 * c)}" y="${r(y - hh - 1.0)}" width="${r(ww + 1.2 * c)}" height="1" fill="${S.lg("kalk", [[0, "#e6dcc6"], [1, "#b9ae96"]])}"/><rect x="${r(x - ww / 2)}" y="${r(y - hh)}" width="${r(ww)}" height=".45" fill="#1a0a07" opacity=".6"/>`;
+      if (art === "granit") g += `<rect x="${r(x - ww / 2 - 0.5 * c)}" y="${r(y)}" width="${r(ww + c)}" height=".8" fill="#8f8b82"/><rect x="${r(x - ww / 2 - 0.5 * c)}" y="${r(y + 0.8)}" width="${r(ww + c)}" height=".3" fill="#1a0a07" opacity=".5"/>`;
       return g;
     };
     const liste = seite < 0 ? SCHARTE.nord : SCHARTE.sued;
     liste.forEach(([a, h], i) => {
       const og2 = h > 14;
-      t += scharte(a, h, og2 ? 0.9 : 1.05, og2 ? 0.85 : 1.15, og2 ? "granit" : "kalk", og2 && Math.abs(a) < 10);
+      t += og2 ? scharte(a, h, 0.95, 0.8, "granit", Math.abs(a) < 10, false) : scharte(a, h, 1.45, 0.85, i === 1 || i === 5 ? "" : "bogen", false, i === 1 || i === 5);
     });
-    /* oberstes Geschoss: schmale hochkant Schlitze */
-    for (const a of seite < 0 ? [-36, 28] : [-30, 34]) { const s = Math.sin(a * Math.PI / 180), c = Math.cos(a * Math.PI / 180), x = R * s, y = -M(17.6) - ring(17.6) * c; t += `<rect x="${r(x - M(0.16) * c)}" y="${r(y - M(1.3))}" width="${r(M(0.32) * c)}" height="${M(1.3)}" fill="#0a0605"/><rect x="${r(x - M(0.4) * c)}" y="${r(y - M(1.3) - 0.6)}" width="${r(M(0.8) * c)}" height=".6" fill="${KALK}"/>`; }
+    /* oberstes Geschoss: schmale hochkant Lichtschlitze ohne Sturz */
+    for (const a of seite < 0 ? [-36, 28] : [-30, 34]) { const s = Math.sin(a * Math.PI / 180), c = Math.cos(a * Math.PI / 180), x = R * s, y = -M(17.6) - ring(17.6) * c; t += `<rect x="${r(x - M(0.14) * c)}" y="${r(y - M(1.3))}" width="${r(M(0.28) * c)}" height="${M(1.3)}" fill="#0a0605"/>`; }
     t += band(TURM.H - 0.5, TURM.H, "#d9c9a8", 0.9);
     t += band(TURM.H - 2.2, TURM.H - 0.5, S.lg("grau", [[0, "#2a2a2a", 0.32], [1, "#2a2a2a", 0]]));
     /* Rundung: Schatten links, warmes Licht rechts */
-    t += `<path d="${koerper}" fill="${S.lg("rund", [[0, "#1a0805", 0.6], [0.3, "#1a0805", 0.14], [0.62, "#fff", 0], [0.86, "#ffc884", 0.22], [1, "#1a0805", 0.1]], 0, 0, 1, 0)}"/>`;
+    t += `<path d="${koerper}" fill="${S.lg("rund", [[0, "#140c24", 0.6], [0.3, "#1a1020", 0.16], [0.6, "#fff", 0], [0.85, "#ffc480", 0.3], [1, "#1a0805", 0.08]], 0, 0, 1, 0)}"/>`;
     /* Kegeldach aus Schiefer mit Schuppenreihen und einer kleinen Gaube */
     const Rk = M(TURM.Rk), kh = M(TURM.kegel), rk = bogen(TURM.H, TURM.Rk);
     const kegel = `M${-Rk} ${r(-Hh + 0.6)} A${Rk} ${rk} 0 0 1 ${Rk} ${r(-Hh + 0.6)} L0 ${r(-Hh - kh)} Z`;
@@ -549,12 +563,15 @@ const SCHARTE = { nord: [[-50, 2.4], [6, 2.7], [56, 2.5], [-46, 8.1], [8, 7.9], 
     t += `<path d="M${-Rk} ${r(-Hh + 0.6)} A${Rk} ${rk} 0 0 1 ${Rk} ${r(-Hh + 0.6)}" stroke="#141a1f" stroke-width=".9" fill="none"/>`;
     t += `<path d="M0 ${r(-Hh - kh)} V${r(-Hh - kh - 6)}" stroke="#2a2420" stroke-width=".45"/><circle cx="0" cy="${r(-Hh - kh - 1.4)}" r=".9" fill="${GOLD}"/>`;
     t += `<path d="M0 ${r(-Hh - kh - 5.6)} L${seite * 3} ${r(-Hh - kh - 5)} L${seite * 3} ${r(-Hh - kh - 3.8)} L0 ${r(-Hh - kh - 4.2)} Z" fill="${GOLD}"/>`;
-    return `<g transform="translate(${cx} 0)${seite > 0 ? ` rotate(${NEIG} 0 0)` : ""}">${t}</g>`;
+    return `<g transform="translate(${cx} 0)${seite > 0 ? ` rotate(${NEIG} ${-R} 0)` : ""}">${t}</g>`;
   };
   k += turm(-1) + turm(1);
   k += passant(M(-1.2), 0, M(1.75), { hemd: "#c9b28a" }) + passant(M(0.9), 0, M(1.68), { hemd: "#3d5a80", hose: "#4a4a52", schritt: 0.15 });
   S.MOEWE_KNAUF = true;
-  const torSvg = `<g filter="url(#${S.id("licht")})">${k}</g>` + "%%KNAUFMOEWE%%";
+  /* der abgesackte Südturm schneidet am Fuß in den Boden ein: Rasen deckt die gesunkene Kante */
+  const fa = sued(-TURM.R, 0), fb = sued(TURM.R + 0.4, 0);
+  const boden = `<path d="M${r(fa.x - GX)} 0 L${r(fb.x - GX)} ${r(fb.y - GY)} L${r(fb.x - GX + 1)} 1.6 L${r(fa.x - GX)} 1.6 Z" fill="#6d8a3f"/><path d="M${r(fa.x - GX)} 0 L${r(fb.x - GX)} ${r(fb.y - GY)}" stroke="#4f6a2c" stroke-width=".4"/>`;
+  const torSvg = `<g filter="url(#${S.id("licht")})">${k}</g>` + boden + "%%KNAUFMOEWE%%";
   const TL = GX - M(TURM.cx), TR = GX + M(TURM.cx);
   /* Unterteile auf dem geneigten Südturm folgen der Neigung */
   const sTurm = [sued(-TURM.R, 0), sued(-TURM.R, TURM.H), sued(TURM.R, TURM.H), sued(TURM.R, 0)];
@@ -585,7 +602,9 @@ const SCHARTE = { nord: [[-50, 2.4], [6, 2.7], [56, 2.5], [-46, 8.1], [8, 7.9], 
   /* Schatten des Tores fällt links nach hinten auf den Rasen */
   {
     const L = SONNE.lang * 30, dl = -Math.sin(SONNE.az) * L, dd = Math.cos(SONNE.az) * L;
-    SCHATTEN.unshift(`<path d="${pfad([proj(-16.2, GD), proj(-6, GD), proj(-6 + dl * 0.6, GD + dd * 0.6), proj(-16.2 + dl, GD + dd)])}" fill="#1e2a12" opacity=".35"/>`);
+    const torSchatten = pfad([proj(-16.2, GD), proj(-6, GD), proj(-6 + dl * 0.4, GD + dd * 0.4), proj(-16.2 + dl * 0.7, GD + dd * 0.7)]);
+    SCHATTEN.unshift(`<path d="${torSchatten}" fill="#1e2a12" opacity=".4"/>`);
+    S.TORSCHATTEN = torSchatten;
   }
   S.teil({ id: "holstentor", de: "das Holstentor", syl: "HOL-sten-tor", it: "la Porta di Holsten", itSyl: "POR-ta di HOL-sten", en: "Holsten Gate",
     x: GX, y: GY, kunst: torSvg.replace("%%KNAUFMOEWE%%", (() => { const kn = sued(0, TURM.H + TURM.kegel + 1.4), q = GK * 0.12; return `<g transform="translate(${r(kn.x - GX + 0.6)} ${r(kn.y - GY - 1)}) scale(-1 1)"><path d="M${r(-1.6 * q)} ${r(-0.9 * q)} Q${r(-0.4 * q)} ${r(-1.6 * q)} ${r(1.2 * q)} ${r(-1.1 * q)} L${r(1.9 * q)} ${r(-1 * q)} L${r(1.2 * q)} ${r(-0.75 * q)} Q${r(0.2 * q)} ${r(-0.1 * q)} ${r(-1 * q)} ${r(-0.5 * q)} Z" fill="#f5f4ef"/><path d="M${r(-1.9 * q)} ${r(-0.75 * q)} Q${r(-0.6 * q)} ${r(-1.15 * q)} ${r(0.7 * q)} ${r(-0.92 * q)} L${r(0.4 * q)} ${r(-0.68 * q)} Z" fill="#9aa3ab"/><circle cx="${r(1.05 * q)}" cy="${r(-1.48 * q)}" r="${r(0.42 * q)}" fill="#f8f7f2"/><path d="M${r(1.4 * q)} ${r(-1.5 * q)} L${r(1.95 * q)} ${r(-1.42 * q)} L${r(1.4 * q)} ${r(-1.34 * q)} Z" fill="#e8b830"/></g>`; })()), tipp: "Das Holstentor wurde 1478 fertig. Früher schützte es die reiche Hansestadt, heute ist darin ein Museum.",
@@ -839,7 +858,7 @@ function loewe(L, wach, dir) {
     /* Nasenrücken mit Licht, Nase, geschlossener Mund, Kinnbart */
     h += `<path d="M${Q(0.11, 0.07)} L${Q(0.17, 0.01)}" stroke="${HL}" stroke-width="${r(0.012 * L)}" stroke-linecap="round"/>`;
     h += `<path d="M${Q(0.165, 0.005)} L${Q(0.19, -0.02)} L${Q(0.17, -0.035)} L${Q(0.15, -0.02)} Z" fill="#0e0e10"/>`;
-    h += `<path d="M${Q(0.165, -0.045)} C${Q(0.14, -0.06)} ${Q(0.11, -0.06)} ${Q(0.085, -0.05)}" stroke="#0e0e10" stroke-width="${r(0.007 * L)}" fill="none"/>`;
+    h += `<path d="M${Q(0.165, -0.045)} C${Q(0.14, -0.045)} ${Q(0.11, -0.047)} ${Q(0.085, -0.052)}" stroke="#0e0e10" stroke-width="${r(0.007 * L)}" fill="none"/>`;
     h += `<path d="M${Q(0.08, -0.095)} l${r(dir * -0.01 * L)} ${r(0.03 * L)} l${r(dir * -0.02 * L)} ${r(-0.02 * L)} l${r(dir * -0.01 * L)} ${r(0.025 * L)} l${r(dir * -0.02 * L)} ${r(-0.02 * L)}" stroke="#2a2a2c" stroke-width="${r(0.01 * L)}" fill="none"/>`;
     h += `<path d="M${Q(0.03, 0.04)} C${Q(0.06, 0.0)} ${Q(0.1, -0.02)} ${Q(0.14, -0.02)}" stroke="#141416" stroke-width="${r(0.006 * L)}" fill="none" opacity=".7"/>`;
     return h;

@@ -579,7 +579,7 @@ const BRUECKE_SCHATTEN = [];
   let sch = "";
   for (const [s, sei] of STATUEN) if (sei < 0 && s < 260) {
     const q = -QI, h1 = 2.6 - BRH, h2 = 5.9 - BRH;
-    sch += poly([P(s - 1.05, q), P(s + 1.05, q), P(s + 1.05 + h1 * SDS, q + h1 * SDQ), P(s + 0.55 + h1 * SDS, q + h1 * SDQ), P(s + 0.4 + h2 * SDS, q + h2 * SDQ), P(s - 0.3 + h2 * SDS, q + h2 * SDQ), P(s - 0.5 + h1 * SDS, q + h1 * SDQ), P(s - 1.05 + h1 * SDS, q + h1 * SDQ)], "#2b2a3a", ` opacity=".3"`);
+    sch += poly([P(s - 1.05, q), P(s + 1.05, q), P(s + 1.05 + h1 * SDS, q + h1 * SDQ), P(s + 0.55 + h1 * SDS, q + h1 * SDQ), P(s + 0.4 + h2 * SDS, q + h2 * SDQ), P(s - 0.3 + h2 * SDS, q + h2 * SDQ), P(s - 0.5 + h1 * SDS, q + h1 * SDQ), P(s - 1.05 + h1 * SDS, q + h1 * SDQ)], "#2b2a3a", ` opacity=".38"`);
   }
   /* Schatten der linken Laternen: dünne Striche */
   let ls = "";
@@ -630,7 +630,7 @@ const NEPO = { s: 34 + 7 * 31, sei: 1 };
     if (opt.mantel) g += `<path d="M${p(0.12, -0.8)} C${p(0.26, -0.6)} ${p(0.24, -0.25)} ${p(0.1, -0.12)} C${p(0, -0.2)} ${p(-0.12, -0.24)} ${p(-0.18, -0.3)} C${p(-0.02, -0.4)} ${p(0.08, -0.6)} ${p(0.08, -0.78)} Z" fill="${SF2}"/>`;
     g += `<path d="M${p(-0.1, -0.05)} Q${p(-0.13, -0.4)} ${p(-0.08, -0.72)} M${p(0.02, -0.04)} Q${p(0.04, -0.35)} ${p(0.01, -0.62)} M${p(0.12, -0.08)} Q${p(0.16, -0.3)} ${p(0.1, -0.55)}" stroke="#1d1b19" stroke-width="${q2(H * 0.018)}" fill="none" opacity=".75"/>`;
     g += `<path d="M${p(-0.06, -0.06)} Q${p(-0.09, -0.4)} ${p(-0.04, -0.7)}" stroke="#a49a8e" stroke-width="${q2(H * 0.012)}" fill="none" opacity=".55"/>`;
-    g += `<path d="M${p(-0.19, 0)} C${p(-0.23, -0.35)} ${p(-0.2, -0.62)} ${p(-0.13, -0.8)} L${p(-0.06, -0.86)}" stroke="#b3a99c" stroke-width="${q2(H * 0.014)}" fill="none" opacity=".7"/>`;
+    g += `<path transform="translate(${q2(H * 0.009)} 0)" d="M${p(-0.19, 0)} C${p(-0.23, -0.35)} ${p(-0.2, -0.62)} ${p(-0.13, -0.8)} L${p(-0.06, -0.86)}" stroke="#b3a99c" stroke-width="${q2(H * 0.014)}" fill="none" opacity=".7"/>`;
     for (const [sx, sy, hx, hy] of arme) g += `<path d="M${p(sx, sy)} Q${p((sx + hx) / 2 - 0.03, (sy + hy) / 2 + 0.04)} ${p(hx, hy)}" stroke="${SF2}" stroke-width="${q2(H * 0.075)}" stroke-linecap="round" fill="none"/><circle cx="${p(hx, hy).split(" ")[0]}" cy="${p(hx, hy).split(" ")[1]}" r="${q2(H * 0.03)}" fill="${HAUT}"/>`;
     const [kx, ky] = p(0, -0.93).split(" ");
     g += `<ellipse cx="${kx}" cy="${ky}" rx="${q2(H * 0.055)}" ry="${q2(H * 0.07)}" fill="${HAUT}"/><path d="M${q2(+kx + H * 0.012)} ${q2(+ky - H * 0.05)} q${q2(H * 0.04)} ${q2(H * 0.04)} ${q2(H * 0.01)} ${q2(H * 0.11)}" stroke="#2a2622" stroke-width="${q2(H * 0.03)}" fill="none" opacity=".6"/>`;
