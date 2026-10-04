@@ -74,8 +74,11 @@ S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("licht")}" x="-5%" 
 const licht = (svg) => `<g filter="url(#${S.id("licht")})">${svg}</g>`;
 
 const GOLD = S.lg("gold", [[0, "#fff1b0"], [0.45, "#f0c64a"], [1, "#a8781a"]], 0, 0, 1, 1);
-const LAUF = S.lg("lauf", [[0, "#0b0a09", 0.5], [1, "#0b0a09", 0]]);            /* Laufspur, oben dunkel */
-const SCHATTENBAND = S.lg("schband", [[0, "#0b0a09", 0.55], [1, "#0b0a09", 0]]);
+const LAUF = S.lg("lauf", [[0, "#0b0a09", 0.75], [0.6, "#0b0a09", 0.35], [1, "#0b0a09", 0]]);            /* Laufspur, oben dunkel */
+const SCHATTENBAND = S.lg("schband", [[0, "#0b0a09", 0.65], [1, "#0b0a09", 0]]);
+const WASCH = S.lg("wasch", [[0, "#b3aa92", 0.32], [1, "#b3aa92", 0]]);              /* Auswaschung, oben hell */
+const SSCHATTEN = S.lg("sschat", [[0, "#070606", 0.6], [1, "#070606", 0.15]], 0, 0, 1, 0);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wblur")}" x="-60%" y="-20%" width="220%" height="140%"><feGaussianBlur stdDeviation=".7"/></filter>`);
 
 /* Schlagschatten: Sonne hinten links (SW), Höhe ≈ 30° — lange Schatten nach rechts hinten.
    Sie liegen auf dem Pflaster (Bodenfläche), nicht am Ding. */
@@ -389,23 +392,28 @@ let PN_UNTER = [];
   {
     const zb = zufall(12);
     let pb = "";
-    for (let i = 0; i < 26; i++) { const x = zb() * 6, y = zb() * 9, w = 0.3 + zb() * 0.7; pb += `<path d="M${r(x)} ${r(y)} l${r(w)} ${r(-w * 0.4)} l${r(w * 0.2)} ${r(w * 0.6)} Z" fill="${zb() < 0.55 ? "#0c0b0a" : "#b3aa92"}" opacity="${r(0.3 + zb() * 0.3)}"/>`; }
+    /* grob gespitzte Fläche: flache Punkte und kurze Hiebe in alle Richtungen, wenig Kontrast */
+    for (let i = 0; i < 40; i++) { const x = r(zb() * 6), y = r(zb() * 9), l = r(0.12 + zb() * 0.3), dunkel = zb() < 0.55; pb += `<ellipse cx="${x}" cy="${y}" rx="${l}" ry="${r(l * (zb() < 0.6 ? 0.8 : 0.35))}" transform="rotate(${Math.round(zb() * 180)} ${x} ${y})" fill="${dunkel ? "#0c0b0a" : "#a39a86"}" opacity="${r(dunkel ? 0.16 + zb() * 0.14 : 0.1 + zb() * 0.1)}"/>`; }
     S.def(`<pattern id="${S.id("bosse")}" patternUnits="userSpaceOnUse" width="6" height="9">${pb}</pattern>`);
   }
   const SAEULE = S.lg("saeule", [[0, "#6a6253"], [0.3, "#4a443a"], [0.7, "#2a2723"], [1, "#161412"]], 0, 0, 1, 0);
   const saeule = (cx, h0, h1) => {
     const cw = 0.82, xa = X(cx - cw / 2), xb = X(cx + cw / 2), ya = Y(h1 - 0.55), yb = Y(h0 + 0.45);
     /* Schlagschatten der Halbsäule nach rechts auf die Wand (Sonne links vorn) */
-    let g = `<path d="M${r(xb)} ${r(ya - M(0.55))} L${r(xb + M(0.6))} ${r(ya + 1.6)} L${r(xb + M(0.6))} ${yb} L${r(xb)} ${yb} Z" fill="#070606" opacity=".45"/>`;
+    let g = `<path d="M${r(xb)} ${r(ya - M(0.55))} L${r(xb + M(0.7))} ${r(ya + 1.6)} L${r(xb + M(0.7))} ${yb} L${r(xb)} ${yb} Z" fill="${SSCHATTEN}"/>`;
     /* Schaft mit unruhigen Kanten auf beiden Seiten (nie fertig gemeißelte Bosse) */
+    /* Schaft: Umriss mit zwei, drei flachen Höckern (rohe Bosse), keine Zacken */
     let lk = `M${xa} ${yb} `, rk2 = "";
-    for (let hh = h0 + 0.45; hh < h1 - 0.55; hh += 0.6) lk += `L${r(xa - z() * 0.6)} ${Y(hh + 0.3)} `;
-    for (let hh = h1 - 0.55; hh > h0 + 0.45; hh -= 0.6) rk2 += `L${r(xb + z() * 0.5)} ${Y(hh - 0.3)} `;
+    const nh = 2 + (z() < 0.5 ? 1 : 0), st = (h1 - h0 - 1) / nh;
+    for (let j = 0; j < nh; j++) { const hA = h0 + 0.45 + j * st; lk += `Q${r(xa - 0.4 - z() * 0.5)} ${Y(hA + st / 2)} ${r(xa - z() * 0.15)} ${Y(hA + st)} `; }
+    for (let j = nh - 1; j >= 0; j--) { const hA = h0 + 0.45 + j * st; rk2 += `Q${r(xb + 0.3 + z() * 0.4)} ${Y(hA + st / 2)} ${r(xb + z() * 0.1)} ${Y(hA)} `; }
     g += `<path d="${lk}L${xa} ${ya} L${xb} ${ya} ${rk2}L${xb} ${yb} Z" fill="${SAEULE}"/>`;
     g += `<path d="${lk}L${xa} ${ya} L${xb} ${ya} ${rk2}L${xb} ${yb} Z" fill="url(#${S.id("bosse")})"/>`;
     g += `<path d="M${r(xa + 0.35)} ${r(ya + 1)} V${r(yb - 1)}" stroke="#a39a86" stroke-width=".5" opacity=".55"/>`;
     g += `<path d="M${r(xb - 0.1)} ${ya} V${yb}" stroke="#050505" stroke-width=".5" opacity=".6"/>`;
-    for (const yy of [ya + M(0.4), ya + M(1.6)]) g += `<rect x="${r(xa + 0.2 + z())}" y="${r(yy)}" width=".5" height="${r(3 + z() * 6)}" fill="${LAUF}"/>`;
+    for (const yy of [ya + 0.2, ya + M(1.4 + z())]) g += `<rect x="${r(xa + 0.3 + z() * 1.6)}" y="${r(yy)}" width="${r(0.6 + z() * 0.3)}" height="${r(4 + z() * 10)}" fill="${LAUF}"/>`;
+    /* ausgewaschene Säulenvorderseite: oben hell, nach unten auslaufend */
+    g += `<rect x="${r(xa + 0.6)}" y="${r(ya + 0.4)}" width="${r(xb - xa - 2)}" height="${r(M(1.5 + z() * 2.5))}" fill="${WASCH}" filter="url(#${S.id("wblur")})"/>`;
     /* unbehauenes Kapitell und Basis: rohe Blöcke mit abgeschrägten Kanten */
     g += `<path d="M${r(xa - M(0.24))} ${ya} L${r(xa - M(0.24))} ${r(ya - M(0.38))} L${r(xa - M(0.1))} ${r(ya - M(0.56))} L${r(xb + M(0.14))} ${r(ya - M(0.56))} L${r(xb + M(0.26))} ${r(ya - M(0.38))} L${r(xb + M(0.26))} ${ya} Z" fill="#5e574b"/><path d="M${r(xa - M(0.24))} ${r(ya - M(0.38))} L${r(xa - M(0.1))} ${r(ya - M(0.56))} L${r(xb + M(0.14))} ${r(ya - M(0.56))}" stroke="#aaa18b" stroke-width=".5" fill="none"/><path d="M${r(xa - M(0.24))} ${ya} H${r(xb + M(0.26))}" stroke="#0b0a09" stroke-width=".6"/>`;
     g += `<path d="M${r(xa - M(0.2))} ${r(yb + M(0.45))} L${r(xa - M(0.16))} ${yb} L${r(xb + M(0.18))} ${yb} L${r(xb + M(0.22))} ${r(yb + M(0.45))} Z" fill="#5d564b"/>`;
@@ -423,17 +431,20 @@ let PN_UNTER = [];
     const ia = links ? r(x0 + rw) : x0, ib = links ? x1 : r(x1 - rw), ir = r((ib - ia) / 2);
     g += `<path d="M${ia} ${yb} V${ys} A${ir} ${rr} 0 0 1 ${ib} ${ys} V${yb} Z" fill="${S.lg("innen", [[0, "#1c1a17"], [0.55, "#34302b"], [1, "#46413a"]])}"/>`;
     g += `<path d="M${r(ia + 0.4)} ${r(yb - 0.6)} V${r(ys + 1)} M${r(ib - 1.2)} ${r(yb - 0.6)} V${r(ys + 1)}" stroke="#3a3530" stroke-width=".5" opacity=".7"/>`;
-    if (z() < 0.4) g += `<path d="M${ia} ${yb} V${ys} A${ir} ${rr} 0 0 1 ${ib} ${ys} V${yb} Z" fill="#000" opacity=".3"/>`;   /* tiefere Schatten */
+    const vari = FENSTER.length % 4, tief = r(z() * 0.4);
+    if (tief > 0.05) g += `<path d="M${ia} ${yb} V${ys} A${ir} ${rr} 0 0 1 ${ib} ${ys} V${yb} Z" fill="#000" opacity="${tief}"/>`;   /* je Fenster andere Tiefe */
     /* schwarze Kruste oben in der Bogenlaibung */
     g += `<path d="M${r(x0 + 0.3)} ${r(ys + 0.5)} A${r(rr - 0.3)} ${r(rr - 0.3)} 0 0 1 ${r(x1 - 0.3)} ${r(ys + 0.5)}" stroke="#050505" stroke-width="1.1" fill="none" opacity=".7"/>`;
     if (leute) g += leute(r((x0 + x1) / 2), yb);
     else if (z() < 0.12) { const tx = r(x0 + rr * 0.6 + z() * rr * 0.6); g += `<ellipse cx="${tx}" cy="${r(yb - 0.7)}" rx="1.1" ry=".6" fill="#8c939c"/><circle cx="${r(tx + 0.9)}" cy="${r(yb - 1.3)}" r=".42" fill="#6f7680"/>`; }
     /* ausgebrochener Bogenstein */
-    if (z() < 0.35) { const a = Math.PI * (1.2 + z() * 0.6), bx = r((x0 + x1) / 2 + Math.cos(a) * (rr + 0.6)), by = r(ys + Math.sin(a) * (rr + 0.6)); g += `<path d="M${r(bx - 0.7)} ${r(by - 0.3)} l1.2 -.5 l.4 1 l-1 .7 Z" fill="#0d0c0b"/>`; }
+    if (vari === 0 || z() < 0.15) { const a = Math.PI * (1.15 + z() * 0.7), bx = r((x0 + x1) / 2 + Math.cos(a) * (rr + 0.55)), by = r(ys + Math.sin(a) * (rr + 0.55)); g += `<path d="M${r(bx - 1.1)} ${r(by - 0.4)} l1.7 -.8 l.7 1.5 l-1.6 1 Z" fill="#0d0c0b"/><path d="M${r(bx - 1.1)} ${r(by - 0.4)} l1.7 -.8" stroke="#9a907c" stroke-width=".35"/>`; }
     /* Fensterbank, manchmal mit abgebrochener Ecke; darunter Laufspuren */
-    const ecke = z() < 0.35;
+    const ecke = vari === 1 || z() < 0.15;
     g += `<rect x="${r(x0 - 1.1 + (ecke ? 0.9 : 0))}" y="${yb}" width="${r(x1 - x0 + 2.2 - (ecke ? 0.9 : 0))}" height="1" fill="#7d7464"/><rect x="${r(x0 - 1.1)}" y="${yb}" width="${r(x1 - x0 + 2.2)}" height=".3" fill="#b3aa92" opacity=".6"/>`;
-    for (let n = 0; n < 3; n++) g += `<rect x="${r(x0 - 0.6 + z() * (x1 - x0 + 0.8))}" y="${r(yb + 1)}" width="${r(0.3 + z() * 0.5)}" height="${r(M(1 + z() * 3))}" fill="${LAUF}"/>`;
+    for (let n = 0; n < 3; n++) g += `<rect x="${r(x0 - 0.6 + z() * (x1 - x0 + 0.8))}" y="${r(yb + 1)}" width="${r(0.5 + z() * 0.5)}" height="${r(M(0.8 + z() * 3.2))}" fill="${LAUF}"/>`;
+    /* Vogelkot-Spur unter manchem Sims */
+    if (vari === 2) g += `<rect x="${r(x0 + z() * (x1 - x0 - 1))}" y="${r(yb + 1)}" width=".7" height="${r(M(1.2 + z()))}" fill="${S.lg("kot", [[0, "#d9d4c4", 0.75], [1, "#d9d4c4", 0]])}"/>`;
     FENSTER.push({ cx, s0, fw, fh });
     return g;
   };
@@ -443,7 +454,8 @@ let PN_UNTER = [];
     let g = `<path d="M${r(x - 0.24 * s)} ${yb} L${r(x - 0.2 * s)} ${r(yb - 0.42 * s)} Q${r(x)} ${r(yb - 0.5 * s)} ${r(x + 0.2 * s)} ${r(yb - 0.42 * s)} L${r(x + 0.24 * s)} ${yb} Z" fill="${hemd}"/>`;
     g += `<circle cx="${x}" cy="${r(yb - 0.62 * s)}" r="${r(0.13 * s)}" fill="#e3b796"/><path d="M${r(x - 0.13 * s)} ${r(yb - 0.64 * s)} Q${x} ${r(yb - 0.84 * s)} ${r(x + 0.13 * s)} ${r(yb - 0.64 * s)} Z" fill="#4a3426"/>`;
     g += `<path d="M${r(x - 0.22 * s)} ${r(yb - 0.36 * s)} L${r(x - 0.34 * s)} ${r(yb - 0.05 * s)} L${r(x + 0.05 * s)} ${r(yb - 0.05 * s)} M${r(x + 0.22 * s)} ${r(yb - 0.36 * s)} L${r(x + 0.32 * s)} ${r(yb - 0.05 * s)}" stroke="${hemd}" stroke-width="${r(0.09 * s)}" stroke-linecap="round" fill="none"/>`;
-    if (kamera) g += `<rect x="${r(x - 0.12 * s)}" y="${r(yb - 0.7 * s)}" width="${r(0.24 * s)}" height="${r(0.14 * s)}" rx=".3" fill="#1d1f22"/><circle cx="${x}" cy="${r(yb - 0.63 * s)}" r="${r(0.04 * s)}" fill="#7fa6cf"/>`;
+    g += `<path d="M${r(x - 0.05 * s)} ${r(yb - 0.63 * s)} h.01 M${r(x + 0.05 * s)} ${r(yb - 0.63 * s)} h.01" stroke="#2a1e18" stroke-width=".35" stroke-linecap="round"/>`;
+    if (kamera) g += `<rect x="${r(x + 0.16 * s)}" y="${r(yb - 0.5 * s)}" width="${r(0.14 * s)}" height="${r(0.09 * s)}" rx=".2" fill="#1d1f22"/>`;
     return g;
   };
 
@@ -461,30 +473,34 @@ let PN_UNTER = [];
     const xl = X(t.x0), xr = X(t.x1);
     let ober = `M${xl} 0 V${Y(t.h)} `;
     let x = t.x0;
+    let stufe = 0;
     while (x < t.x1 - 0.2) {
-      const bw = Math.min(1.2 + z() * 0.7, t.x1 - x), v = z(), drop = v < 0.22 ? 0.62 : (v < 0.3 ? 1.24 : 0);
+      /* Türme: unregelmäßig abgebrochene Quaderstufen (keine Zinnen), Mittelbau: einzelne fehlende Blöcke */
+      let bw, drop;
+      if (t.turm) { bw = Math.min(1.3 + z() * 2.2, t.x1 - x); if (z() < 0.5) stufe = Math.max(0, Math.min(3, stufe + (z() < 0.5 ? 1 : -1))); drop = stufe * 0.62; }
+      else { bw = Math.min(1.2 + z() * 0.7, t.x1 - x); const v = z(); drop = v < 0.22 ? 0.62 : (v < 0.3 ? 1.24 : 0); }
       ober += `H${X(x)} V${Y(t.h - drop)} H${X(x + bw)} V${Y(t.h)} `;
       x += bw;
     }
     ober += `H${xr} V0 Z`;
-    k += `<path d="${ober}" fill="${S.lg("stein" + t.seed, [[0, "#383836"], [0.5, "#2a2a29"], [1, "#1d1d1c"]], 0, 0, 1, 0)}"/>`;
+    k += `<path d="${ober}" fill="${S.lg("stein" + t.seed, [[0, "#4a4743"], [0.5, "#383633"], [1, "#272624"]], 0, 0, 1, 0)}"/>`;
     /* ausgewaschene hellere Flächen und Laufspuren je Achse */
     const bay = (t.x1 - t.x0) / t.n;
     let wasch = "";
     for (let i = 0; i <= t.n; i++) {
       const cx = t.x0 + i * bay;
-      if (z() < 0.6) wasch += `<rect x="${X(cx - 0.6)}" y="${Y(t.h - 0.3)}" width="${M(1.2 + z())}" height="${M(t.h * (0.4 + z() * 0.5))}" fill="${S.lg("wasch", [[0, "#b3aa92", 0.3], [1, "#b3aa92", 0]])}"/>`;
-      for (let j = 0; j < 2; j++) wasch += `<ellipse cx="${X(cx - bay * 0.4 + z() * bay * 0.8)}" cy="${Y(z() * t.h)}" rx="${M(0.6 + z() * 1.4)}" ry="${M(0.4 + z() * 0.8)}" fill="#a9a089" opacity="${r(0.12 + z() * 0.12)}"/>`;
+      /* helle Auswaschung: weiche, senkrecht auslaufende Bahnen unter den Gesimsen */
+      for (const h of [G.eg, G.og1, G.og2, G.og3, t.h - 0.2]) if (h < t.h && z() < 0.55) wasch += `<rect x="${X(cx - bay * 0.45 + z() * bay * 0.7)}" y="${r(Y(h) + 2)}" width="${M(0.8 + z() * 1.4)}" height="${M(1.5 + z() * 3)}" fill="${WASCH}"/>`;
     }
     wasch += `<rect x="${xl}" y="${Y(t.h)}" width="${r(xr - xl)}" height="${M(1.6)}" fill="${S.lg("oberkante", [[0, "#b3aa92", 0.35], [1, "#b3aa92", 0]])}"/>`;
-    k += mauer(t, ober, wasch);
+    k += mauer(t, ober, `<g filter="url(#${S.id("wblur")})">${wasch}</g>`);
     /* Gesimse mit Schattenband darunter (schwarze Kruste) */
     const hs = [G.eg, G.og1, G.og2, G.og3].filter((h) => h < t.h - 0.5);
     for (const h of hs) {
       k += `<rect x="${xl}" y="${r(Y(h) - 1)}" width="${r(xr - xl)}" height="2" fill="#3e3a34"/><rect x="${xl}" y="${r(Y(h) - 1)}" width="${r(xr - xl)}" height=".55" fill="#aaa18b"/>`;
       k += `<rect x="${xl}" y="${r(Y(h) + 1)}" width="${r(xr - xl)}" height="1" fill="#0b0a09" opacity=".55"/><rect x="${xl}" y="${r(Y(h) + 2)}" width="${r(xr - xl)}" height="${M(0.9)}" fill="${SCHATTENBAND}"/>`;
       /* abgebrochene Gesimskanten */
-      for (let n = 0; n < 2; n++) if (z() < 0.55) { const bx = r(xl + z() * (xr - xl - 4)), bw2 = r(1.5 + z() * 2.5); k += `<path d="M${bx} ${r(Y(h) - 1)} l${r(bw2 * 0.3)} 1.3 l${r(bw2 * 0.5)} -.3 l${r(bw2 * 0.2)} -1 Z" fill="#141312"/><path d="M${bx} ${r(Y(h) - 1)} l${r(bw2 * 0.3)} 1.3" stroke="#8c8476" stroke-width=".25"/>`; }
+      for (let n = 0; n < 2; n++) if (z() < 0.55) { const bx = r(xl + z() * (xr - xl - 6)), bw2 = r(2.5 + z() * 3.5); k += `<path d="M${bx} ${r(Y(h) - 1)} l${r(bw2 * 0.25)} 1.9 l${r(bw2 * 0.55)} -.4 l${r(bw2 * 0.2)} -1.5 Z" fill="#141312"/><path d="M${bx} ${r(Y(h) - 1)} l${r(bw2 * 0.25)} 1.9 l${r(bw2 * 0.55)} -.4" stroke="#9a907c" stroke-width=".3" fill="none"/>`; }
     }
     /* Achsen: Halbsäulen und Bogenöffnungen */
     const etagen = [[0, G.eg], [G.eg, G.og1], [G.og1, G.og2], [G.og2, G.og3]].slice(0, t.geschosse);
@@ -504,7 +520,7 @@ let PN_UNTER = [];
       k += `<path d="M${sx} 0 V${Y(Math.min(t.h, G.mitte))} L${r(sx + dir * 1.6)} ${r(Y(Math.min(t.h, G.mitte)) + 0.8)} V0 Z" fill="${t.x0 < 0 ? "#1d1b18" : "#6a6255"}"/>`;
     }
     /* warmes Streiflicht von links, nach rechts schwächer */
-    k += `<path d="${ober}" fill="${S.lg("pnlicht" + t.seed, [[0, "#ffc87a", t.x0 < 0 ? 0.24 : 0.14], [0.55, "#ffc87a", 0.04], [1, "#16203a", 0.16]], 0, 0, 1, 0.6)}"/>`;
+    k += `<path d="${ober}" fill="${S.lg("pnlicht" + t.seed, [[0, "#ffc87a", t.x0 < 0 ? 0.3 : 0.12], [0.5, "#ffc87a", 0.05], [1, "#16203a", 0.2]], 0, 0, 1, 0.7)}"/>`;
   }
   /* der gezeigte Steinblock: ein normaler Quader im Verband (hellere Fugen als Umriss);
      die Klammerlöcher sitzen an Ober- und Stoßfuge: ausgebrochene Trichter, oben tief, unten helle Bruchkante */

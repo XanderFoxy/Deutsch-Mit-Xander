@@ -280,32 +280,33 @@ let BERG = "";
 {
   const z = zufall(4478);
   /* Ostwand: Morgensonne, oben warm und hell, unten kühler (drei Tonstufen) */
-  BERG += `<path d="${pp(ostPoly)}" fill="${S.lg("ostwand", [[0, "#f3dcb8"], [0.3, "#dcc09a"], [0.6, "#bba68e"], [1, "#a39c98"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${r(T(0, 42)[1])}" x2="0" y2="${r(T(0, 104)[1])}"`)}"/>`;
+  BERG += `<path d="${pp(ostPoly)}" fill="${S.lg("ostwand", [[0, "#f6dcb0"], [0.3, "#e2c196"], [0.6, "#c4a888"], [1, "#a8a09a"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${r(T(0, 42)[1])}" x2="0" y2="${r(T(0, 104)[1])}"`)}"/>`;
   BERG += `<path d="${pp(nordPoly)}" fill="${S.lg("nordwand", [[0, "#6f7f98"], [0.5, "#58687f"], [1, "#56677c"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${r(T(0, 42)[1])}" x2="0" y2="${r(T(0, 110)[1])}"`)}"/>`;
   /* Gneis-Schichtbänder: 8 durchgehende Bänder, leicht nach links fallend; dunkle Unterkante, darauf Neuschnee als lange dünne Streifen */
   let unterkante = "", schnee = "", band = "";
   for (let i = 0; i < 9; i++) {
     const yr = 48.5 + i * 6.2 + (z() - 0.5) * 1.2, pts = [];
-    for (let x = 226; x >= 116; x -= 5) pts.push([x, yr + (226 - x) * 0.3 + (z() - 0.5) * 0.9]);
+    for (let x = 226; x >= 116; x -= 3.2) pts.push([x, yr + (226 - x) * 0.3 + (z() - 0.5) * 1.1]);
     const d = "M" + pts.map(pt).join(" L");
     unterkante += d;
     band += "M" + pts.map(pt).join(" L") + " L" + pts.slice().reverse().map(([x, y]) => pt([x, y - 1.6 - z() * 0.6])).join(" L") + " Z";
     /* Schnee liegt in Stücken auf dem Band (Lücken, wo der Fels steil ist) */
     let s0 = 0;
-    while (s0 < pts.length - 1) { const l = 1 + Math.floor(z() * 3); const seg = pts.slice(s0, Math.min(pts.length, s0 + l + 1)); if (seg.length > 1 && z() < 0.8) schnee += "M" + seg.map(([x, y]) => pt([x, y - 0.55])).join(" L"); s0 += l + 1; }
+    while (s0 < pts.length - 1) { const l = 1 + Math.floor(z() * 2); const seg = pts.slice(s0, Math.min(pts.length, s0 + l + 1)); if (seg.length > 1 && z() < 0.65) { const dy = -0.4 - z() * 0.5; schnee += "M" + seg.map(([x, y]) => pt([x + (z() - 0.5), y + dy])).join(" L"); } s0 += l + (z() < 0.5 ? 1 : 2); }
   }
   /* Couloirs: drei Schneerinnen, die zur Mitte der Wand zusammenlaufen */
   let rinnen = "";
   for (const [x0, y0, x1, y1, w] of [[214, 50, 206, 84, 1.6], [204, 64, 202, 92, 1.3], [192, 74, 199, 98, 1.2]]) rinnen += `M${x0 - w * 0.3} ${y0} Q${(x0 + x1) / 2 - w} ${(y0 + y1) / 2} ${x1 - w} ${y1} L${x1 + w} ${y1} Q${(x0 + x1) / 2 + w * 0.6} ${(y0 + y1) / 2} ${x0 + w * 0.3} ${y0} Z`;
-  BERG += `<g clip-path="url(#${S.id("ost")})"><path d="${band}" fill="#8f7a66" opacity=".22"/><path d="${unterkante}" stroke="#5e4c40" stroke-width=".7" fill="none" opacity=".55"/><path d="${rinnen}" fill="#eef0f6" opacity=".8"/><path d="${schnee}" stroke="#fdfdff" stroke-width="1" fill="none" stroke-linecap="round" opacity=".95"/>` +
+  BERG += `<g clip-path="url(#${S.id("ost")})"><path d="${band}" fill="#8f7a66" opacity=".16"/><path d="${unterkante}" stroke="#5e4c40" stroke-width=".45" fill="none" opacity=".45"/><path d="${rinnen}" fill="#eef0f6" opacity=".5"/><path d="${schnee}" stroke="#fdfdff" stroke-width=".6" fill="none" stroke-linecap="round" opacity=".85"/>` +
     `<path d="${pp(HOERNLI.map(([x, y]) => [x - 2.2, y]).concat(HOERNLI.slice().reverse()))}" fill="#6e5e52" opacity=".35"/>` +
     `<path d="M120 97 Q150 90 176 85 L200 84 L216 86 L216 106 L120 106 Z" fill="${S.lg("ostdunst", [[0, "#b8c8dc", 0], [1, "#b8c8dc", 0.55]])}"/></g>`;
   /* Nordwand: Eisfelder und Schneebänder schräg nach rechts unten, dazwischen dunkle Felsrippen */
   let eis = "", fels = "", baender = "";
-  for (let i = 0; i < 8; i++) { const y0 = 47 + i * 6.5, x0 = 223 + (z() - 0.3) * 3, L = 10 + z() * 12; eis += `M${r(x0)} ${r(y0)} L${r(x0 + L)} ${r(y0 + L * 0.62)} L${r(x0 + L - 1.5)} ${r(y0 + L * 0.62 + 1.6 + z())} L${r(x0 - 0.5)} ${r(y0 + 1.4 + z())} Z`; }
+  const imNord = drin(nordPoly);
+  for (let i = 0; i < 16; i++) { const y0 = 46 + z() * 52, x0 = 223 + z() * 26; if (!imNord(x0 + 1, y0 + 1)) continue; const L = 4 + z() * 9, d = 0.6 + z() * 1.0; eis += `M${r(x0)} ${r(y0)} L${r(x0 + L)} ${r(y0 + L * (0.5 + z() * 0.3))} L${r(x0 + L - 0.8)} ${r(y0 + L * 0.65 + d)} L${r(x0 - 0.4)} ${r(y0 + d)} Z`; }
   for (let i = 0; i < 10; i++) { const x0 = 226 + z() * 22, y0 = 50 + z() * 40, L = 6 + z() * 10; fels += `M${r(x0)} ${r(y0)} L${r(x0 + 0.9)} ${r(y0 + 0.2)} L${r(x0 + L * 0.45 + 0.9)} ${r(y0 + L)} L${r(x0 + L * 0.45)} ${r(y0 + L)} Z`; }
   for (let i = 0; i < 14; i++) { const x0 = 224 + z() * 30, y0 = 50 + z() * 50, L = 3 + z() * 6; baender += `M${r(x0)} ${r(y0)} L${r(x0 + L)} ${r(y0 + L * 0.55)}`; }
-  BERG += `<g clip-path="url(#${S.id("nord")})"><path d="${eis}" fill="#c3d0e2" opacity=".7"/><path d="${fels}" fill="#33405a" opacity=".55"/><path d="${baender}" stroke="#d6e0ee" stroke-width=".7" fill="none" opacity=".7"/>` +
+  BERG += `<g clip-path="url(#${S.id("nord")})"><path d="${eis}" fill="#c3d0e2" opacity=".55"/><path d="${fels}" fill="#33405a" opacity=".55"/><path d="${baender}" stroke="#d6e0ee" stroke-width=".7" fill="none" opacity=".7"/>` +
     `<path d="M222 92 Q250 86 268 92 Q286 98 306 106 L306 112 L222 112 Z" fill="${S.lg("norddunst", [[0, "#c4d2e2", 0.2], [1, "#c4d2e2", 0.6]])}"/></g>`;
   /* Lichtkanten (innen, nur sonnenzugewandt): linke Silhouette oben, Hörnligrat; Gipfelschnee */
   BERG += `<g clip-path="url(#${S.id("ost")})"><path d="M${LINKS.slice(0, 14).map(pt).join(" L")}" stroke="#fff4e0" stroke-width="1.1" fill="none" opacity=".9"/><path d="M${HOERNLI.slice(0, 17).map(pt).join(" L")}" stroke="#ffeedd" stroke-width=".9" fill="none" opacity=".8"/></g>`;

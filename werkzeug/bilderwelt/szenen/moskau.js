@@ -150,13 +150,18 @@ function abschneiden(svg, yCut) {
 }
 /* Figuren: Kopf und Hände fein (0,2 cm), der Rest auf 1 cm — keine Pixeltreppen im Gesicht.
    Kreis- und Ellipsen-Koordinaten (Augen) bleiben unverändert. */
-function kompaktFein(m, svg = m.svg) {
-  const z = m.z, kopfY = z.kopf.y + 24, haende = [z.handL, z.handR].filter(Boolean);
+function kompaktFein(m, svg = m.svg, Qf = 0.4) {
+  const z = m.z, kopfY = z.kopf.y + 13, haende = [z.handL, z.handR].filter(Boolean);
+  const fein = (x, y) => y < kopfY || haende.some((h) => Math.abs(h.x - x) < 9 && Math.abs(h.y - y) < 9);
   return svg.replace(/ d="([^"]+)"/g, (a, p) => {
     const n = p.match(/-?\d*\.?\d+/g) || [];
-    let fein = false;
-    for (let i = 0; i + 1 < n.length && !fein; i += 2) { const x = +n[i], y = +n[i + 1]; if (y < kopfY || haende.some((h) => Math.abs(h.x - x) < 14 && Math.abs(h.y - y) < 14)) fein = true; }
-    return ` d="${relativ(p, fein ? 0.5 : 1)}"`;
+    let f = false;
+    for (let i = 0; i + 1 < n.length && !f; i += 2) f = fein(+n[i], +n[i + 1]);
+    return ` d="${relativ(p, f ? Qf : 1)}"`;
+  }).replace(/<(circle|ellipse) ([^>]*?)\/>/g, (a, t, at) => {
+    const cx = +((at.match(/ cx="(-?[\d.]+)"/) || [])[1] || 0), cy = +((at.match(/ cy="(-?[\d.]+)"/) || [])[1] || 0);
+    if (fein(cx, cy)) return a;
+    return `<${t} ` + at.replace(/ (cx|cy)="(-?[\d.]+)"/g, (q, k, v) => ` ${k}="${Math.round(+v)}"`) + "/>";
   });
 }
 /* vor dem Schreiben: alle Pfade der Szene relativ schreiben */
