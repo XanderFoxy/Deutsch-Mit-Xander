@@ -434,15 +434,17 @@ const denkmalUnter = [];
     let g = "";
     /* hintere Rockschöße */
     g += F("M-9.8 -62 Q-14.4 -40 -15.6 -18 L-9.6 -18.6 Q-8.8 -40 -6.6 -58 Z", BRZ2) + F("M9.6 -62 Q13.6 -40 14.6 -18.4 L9 -19 Q8.4 -40 6.4 -58 Z", BRZ2);
-    /* Oberschenkel in der Hose (zwischen den offenen Rockschößen sichtbar) */
-    g += F("M-6.8 -54 L-1 -54 Q-1.2 -38 -2.4 -24 L-7.4 -24 Q-7.6 -38 -6.8 -54 Z", BRZ) + F("M1 -54 L6.6 -54 Q6.8 -38 6.4 -24 L1.6 -24 Q1.2 -38 1 -54 Z", BRZ);
-    g += kante("M-6.9 -52 Q-7.4 -38 -7.2 -26", 0.4) + falte("M-2.6 -40 Q-3.6 -32 -4.6 -27", 0.35);
-    /* Unterschenkel in Hose und Stiefeln: links Spielbein (gebeugt, Fuß weiter außen), rechts Standbein */
-    g += F("M-7.4 -24 L-2.4 -24 Q-1.8 -15 -3.4 -6 L-6.8 -5 Q-7.9 -14 -7.4 -24 Z", BRZ) + F("M1.6 -24 L6.4 -24 Q6.8 -15 5.6 -5 L2.4 -5 Q1.4 -15 1.6 -24 Z", BRZ);
-    g += F("M-7.5 -15.6 L-2.4 -15.6 L-2.6 -14.2 L-7.6 -14.2 Z", BRZ2) + F("M1.4 -15.6 L6.6 -15.6 L6.5 -14.2 L1.5 -14.2 Z", BRZ2);
-    g += kante("M-7.2 -22 Q-7.6 -14 -6.6 -6") + kante("M1.8 -22 Q1.6 -14 2.6 -6");
-    g += F("M-7 -5.4 L-3.2 -5.4 Q-2.8 -2 -3.4 0 L-9.6 0 Q-9.6 -2.6 -7 -5.4 Z", BRZ2) + F("M2.4 -5.4 L5.8 -5.4 Q8.6 -2.4 9.4 0 L2 0 Q1.8 -2.6 2.4 -5.4 Z", BRZ2);
-    g += kante("M-9.2 -.6 Q-8.8 -3 -7 -5", 0.4);
+    /* Beine in der Hose: Standbein rechts im Bild (Hüfte höher, Knie durchgedrückt), Spielbein links:
+       Knie leicht gebeugt und nach innen, Unterschenkel schräg nach außen, Ferse leicht gehoben */
+    g += glied([[3.9, -52.4], [4.2, -40], [3.4, -28.6], [4.3, -17], [3.8, -8]], [7, 6.3, 5.2, 5.6, 4.3], BRZ);
+    g += glied([[-3.7, -50.6], [-3.5, -39], [-2.6, -27.4], [-4.6, -17.6], [-6.2, -8.4]], [7, 6.3, 5.4, 5.6, 4.3], BRZ);
+    g += `<ellipse cx="-2.8" cy="-28.6" rx="1.9" ry="1.5" fill="${HL}" opacity=".28"/><path d="M-4.9 -25.6 Q-2.6 -24.2 -.6 -26" stroke="${DK}" stroke-width=".5" fill="none" opacity=".55"/>`;
+    g += bahn(-1.2, -37, -4.4, -29.4, 0.6, 0.9) + bahn(-.8, -24.4, -4.8, -19.6, 0.4, 0.8) + bahn(5.6, -48, 5.4, -33, 0.5, 0.8) + bahn(1.6, -22, 5.6, -19, -0.4, 0.7);
+    /* Stiefel mit Schaft */
+    g += glied([[3.9, -13], [3.8, -6.6], [3.7, -3.6]], [5.2, 4.8, 4.4], BRZ2) + glied([[-5.6, -13.4], [-6.4, -7], [-6.8, -4]], [5.2, 4.8, 4.4], BRZ2);
+    g += `<path d="M1.3 -13 Q3.9 -14 6.5 -13 M-8.2 -13.6 Q-5.6 -14.6 -3 -13.2" stroke="${HL}" stroke-width=".5" fill="none" opacity=".6"/>`;
+    g += F("M1.6 -.1 Q1.3 -2.8 2 -4.4 L5.6 -4.4 Q6.6 -2.4 6.6 -.1 Z", BRZ2) + F("M-9 -.6 Q-9.8 -2.6 -8.4 -4.8 L-5.2 -4.6 Q-4.6 -2.6 -4.4 -.1 Z", BRZ2);
+    g += kante("M-8.8 -1 Q-8.9 -3 -8 -4.4", 0.4) + kante("M1.9 -.6 Q1.7 -2.6 2.3 -4", 0.4);
     /* Weste und Hemd mit offenem Kragen (Kragenspitzen liegen über dem Rock) */
     g += F("M-5.2 -80 L5.2 -80 L5.6 -55 Q3 -51.6 0 -52 Q-3 -51.6 -5.6 -55 Z", BRZ2);
     for (let y = -77; y > -56; y -= 3.8) g += `<circle cx=".2" cy="${y}" r=".5" fill="${HL}" opacity=".75"/>`;
@@ -479,18 +481,18 @@ const denkmalUnter = [];
   {
     let g = "";
     g += F("M-9.6 -62 Q-13 -46 -14 -30 L-8.4 -30.6 Q-8 -46 -6.4 -58 Z", BRZ2) + F("M9.2 -62 Q12.8 -46 13.8 -30.4 L8.8 -31 Q8.2 -46 6.2 -58 Z", BRZ2);
-    /* Kniebundhosen */
-    g += F("M-6.8 -54 L-.6 -54 L-1.2 -40 Q-1.4 -30 -1.6 -26 L-6.2 -26 Q-6.6 -32 -7 -40 Z", BRZ);
-    g += F("M.8 -54 L7 -54 Q7.4 -40 8 -27.4 L3.6 -26.8 Q2.6 -40 .8 -54 Z", BRZ);
-    g += F("M-6.4 -26.8 L-1.4 -26.8 L-1.5 -25.2 L-6.3 -25.2 Z", BRZ2) + F("M3.5 -27.2 L8.1 -27.8 L8.2 -26.3 L3.6 -25.7 Z", BRZ2);
-    g += `<rect x="-2.8" y="-26.6" width="1" height="1.2" fill="${HL}" opacity=".8"/><rect x="6.8" y="-27.4" width="1" height="1.2" fill="${HL}" opacity=".8"/>`;
-    /* helle Strümpfe mit Wadenform, schlanke Fesseln */
-    g += F("M-6.1 -25.2 L-1.6 -25.2 Q-1 -19 -1.9 -12 Q-2.2 -7 -2.4 -4.6 L-4.4 -4.6 Q-4.6 -8 -5 -12 Q-6.9 -18 -6.1 -25.2 Z", BRZL);
-    g += F("M3.7 -25.8 L8.1 -26.4 Q8.7 -19 7.6 -12 Q7.4 -8 7.6 -4.6 L5.6 -4.6 Q5.4 -9 4.8 -12 Q3 -19 3.7 -25.8 Z", BRZL);
-    g += kante("M-6.2 -23.6 Q-6.8 -18 -5 -12", 0.45) + kante("M3.6 -24.6 Q3.2 -19 4.6 -12", 0.45) + kante("M4.2 -27.6 Q5.6 -28.4 7.2 -27.8", 0.5);
-    /* Schnallenschuhe: links nach vorn, rechts nach außen gedreht */
-    g += F("M-5 -5 L-1.8 -5 Q-1.2 -2 -1.8 0 L-7 0 Q-7.2 -2.4 -5 -5 Z", BRZ2) + F("M5.4 -5 L8 -5 Q10.6 -2.4 11.2 0 L4.8 0 Q4.6 -2.6 5.4 -5 Z", BRZ2);
-    g += `<rect x="-4.4" y="-4.2" width="1.6" height=".9" fill="${HL}"/><rect x="6.2" y="-4.2" width="1.6" height=".9" fill="${HL}"/>`;
+    /* Standbein links im Bild (Hüfte höher), Spielbein rechts: Knie gebeugt und nach innen, Fuß nach außen.
+       Helle Strümpfe mit Wade, darüber die Kniebundhose mit Band und Schnalle */
+    const GSt = [[-3.9, -52.4], [-4.2, -40], [-3.4, -28.6], [-4.4, -16.4], [-3.6, -4.6]], GSp = [[3.7, -50.6], [3.5, -39], [2.6, -27.4], [4.7, -16.6], [6.6, -5.4]];
+    g += glied(GSt, [6.8, 6, 4.3, 4.9, 2.4], BRZL) + glied(GSp, [6.8, 6, 4.4, 4.9, 2.4], BRZL);
+    g += glied(GSt.slice(0, 3).concat([[-3.5, -25.4]]), [7.2, 6.5, 5.3, 5], BRZ) + glied(GSp.slice(0, 3).concat([[2.9, -24.2]]), [7.2, 6.5, 5.4, 5], BRZ);
+    g += glied([[-3.5, -26.2], [-3.5, -24.6]], [5.2, 5.1], BRZ2, false) + glied([[2.8, -25], [3, -23.4]], [5.2, 5.1], BRZ2, false);
+    g += `<rect x="-2.2" y="-26" width="1" height="1.2" fill="${HL}" opacity=".8"/><rect x="4.1" y="-24.8" width="1" height="1.2" fill="${HL}" opacity=".8"/>`;
+    g += bahn(1.2, -37, 4.4, -30, -0.6, 0.9) + bahn(-6, -48, -5.6, -34, 0.5, 0.8) + bahn(-1.4, -46, -1.8, -34, 0.3, 0.6);
+    g += `<ellipse cx="2.9" cy="-21.6" rx="1.3" ry="1.1" fill="${HL}" opacity=".3"/>`;
+    /* Schnallenschuhe: links nach vorn, rechts nach außen gedreht mit gehobener Ferse */
+    g += F("M-6.3 -.1 Q-6.6 -3 -5 -4.9 L-2.3 -4.9 Q-.9 -3 -1.1 -.1 Z", BRZ2) + F("M5.2 -5.6 L7.9 -5.6 Q10.6 -3 11.4 -.1 L6.2 -.1 Q4.9 -2.6 5.2 -5.6 Z", BRZ2);
+    g += kante("M-6 -.6 Q-6.2 -3 -4.8 -4.5", 0.4) + `<rect x="-4.5" y="-4.2" width="1.8" height=".9" fill="${HL}"/><rect x="6.4" y="-4.6" width="1.8" height=".9" fill="${HL}"/>`;
     /* lange Weste mit Knöpfen und Taschenpatten, Halsbinde mit Jabot */
     g += F("M-5.8 -82 L5.6 -82 L6.2 -56 Q4 -51.5 0 -52 Q-4 -51.5 -6.4 -56 Z", BRZ2);
     for (let y = -79; y > -55; y -= 3.2) g += `<circle cx=".1" cy="${y}" r=".48" fill="${HL}" opacity=".75"/>`;
