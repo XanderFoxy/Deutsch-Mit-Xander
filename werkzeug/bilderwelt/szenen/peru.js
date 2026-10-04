@@ -909,7 +909,7 @@ const fohlenBild = (H, dir, fell, fleck) => {
     { id: "panfloete", de: "die Panflöte", syl: "PAN-flö-te", it: "il flauto di Pan", itSyl: "FLAU-to di PAN", en: "pan flute", x: STADT.floete.x, y: STADT.floete.y, kunst: flaeche(-3.2, -3, 6.4, 6),
       tipp: "Die Panflöte heißt in den Anden Siku. Jedes Rohr hat einen anderen Ton." },
   ];
-  S.teil({ id: "familie", de: "die Familie", syl: "fa-MI-li-e", it: "la famiglia", itSyl: "fa-MI-glia", en: "family", x: 304, y: 236,
+  S.teil({ id: "familie", de: "die Familie", syl: "fa-MI-lie", it: "la famiglia", itSyl: "fa-MI-glia", en: "family", x: 304, y: 236,
     kunst: um(304, 236, `<g pointer-events="none">${sch}</g>` + k), zoom: { x: 258, y: 206, w: 84, h: 56 }, unter,
     tipp: "Eine Familie besucht Machu Picchu. Jeden Tag kommen Tausende Menschen – man darf nur mit Eintrittskarte und auf festen Wegen hinein." });
 }

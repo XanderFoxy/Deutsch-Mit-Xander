@@ -271,7 +271,7 @@ const wolke = (name, cx, by, W0, H, seed) => {
   /* weißes Wasser direkt unter den Fällen */
   k += `<g filter="url(#${S.id("dunst")})"><path d="M230 150 Q300 144 401 146 L401 168 Q320 170 240 162 Z" fill="#f2f6f4" opacity=".85"/></g>`;
   for (const [x, y, rr] of [[120, 176, 8], [40, 170, 6], [200, 182, 9]]) k += `<path d="M${x - rr} ${y} a${rr} ${r(rr * 0.22)} 0 1 1 ${r(rr * 1.6)} ${r(-rr * 0.06)} a${r(rr * 0.6)} ${r(rr * 0.14)} 0 1 1 ${r(-rr * 1.1)} ${r(-rr * 0.05)}" stroke="#cfe3dd" stroke-width=".5" fill="none" opacity=".45"/>`;
-  S.teil({ id: "fluss", de: "der Fluss", syl: "FLUSS", it: "il fiume", itSyl: "FIU-me", en: "river", x: 120, y: 170, kunst: um(120, 170, k),
+  S.teil({ id: "fluss", de: "der Fluss", syl: "FLUSS", it: "il fiume", itSyl: "FIU-me", en: "river", x: 232, y: 190, kunst: um(232, 190, k),
     tipp: "Der Niagara verbindet den Eriesee mit dem Ontariosee. Unterhalb der Fälle ist er bis zu 50 Meter tief." });
 }
 
