@@ -233,18 +233,19 @@ const WASSER = S.lg("wasser", [[0, "#7f9aa4"], [0.12, "#4f6a6c"], [0.55, "#344b4
 S.hinten(`<rect width="400" height="${HOR + 30}" fill="${S.lg("himmel", [[0, "#5d8fc6"], [0.45, "#93b6d8"], [0.8, "#dcd8cf"], [1, "#f2d9b6"]])}"/>`);
 S.hinten(`<ellipse cx="420" cy="${HOR - 10}" rx="200" ry="70" fill="${S.rg("abendglanz", [[0, "#ffd9a0", 0.55], [1, "#ffd9a0", 0]])}"/>`);
 /* Wolken: klare Kumulus-Formen, Licht von rechts (warm), Schatten unten links (bläulich) */
+S.def(`<filter id="${S.id("wolkweich")}"${CIF} x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.3"/></filter>`);
 function wolke(cx, cy, s, seed, form) {
   const z = zufall(seed), teile = form.map(([dx, dy, rr]) => [cx + dx * s, cy + dy * s, rr * s * (0.92 + z() * 0.16)]);
   const fuss = cy + s * 1.6, xl = cx + form[0][0] * s - 6 * s, xr = cx + form[form.length - 1][0] * s + 6 * s;
   let umr = "", hl = "", sch = "";
   for (const [x, y, rr] of teile) umr += `M${r(x - rr)} ${r(y)} a${r(rr)} ${r(rr)} 0 1 1 ${r(2 * rr)} 0 a${r(rr)} ${r(rr)} 0 1 1 ${r(-2 * rr)} 0 Z`;
-  /* flacher Boden: ein breiter, niedriger Sockel zwischen den äußeren Ballen */
   umr += `M${r(teile[0][0])} ${r(fuss)} L${r(teile[0][0])} ${r(teile[0][1])} L${r(teile[teile.length - 1][0])} ${r(teile[teile.length - 1][1])} L${r(teile[teile.length - 1][0])} ${r(fuss)} Z`;
-  for (const [x, y, rr] of teile) { hl += `<circle cx="${r(x + rr * 0.35)}" cy="${r(y - rr * 0.35)}" r="${r(rr * 0.62)}"/>`; sch += `<circle cx="${r(x - rr * 0.3)}" cy="${r(y + rr * 0.45)}" r="${r(rr * 0.75)}"/>`; }
-  const id = S.id("wk" + seed), idb = S.id("wb" + seed);
-  return `<clipPath id="${id}"><path d="${umr}"/></clipPath><clipPath id="${idb}"><rect x="${r(xl)}" y="${r(cy - 12 * s)}" width="${r(xr - xl)}" height="${r(fuss - cy + 12 * s)}"/></clipPath>` +
-    `<g clip-path="url(#${idb})"><g clip-path="url(#${id})"><rect x="${r(xl)}" y="${r(cy - 8 * s)}" width="${r(xr - xl)}" height="${r(10 * s)}" fill="${S.lg("wolke" + seed, [[0, "#fffaf0"], [0.55, "#eef0f4"], [1, "#b7c2d8"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${r(cy - 5 * s)}" x2="0" y2="${r(fuss)}"`)}"/>` +
-    `<g fill="#9fb0cc" opacity=".45" filter="url(#${S.id("weich")})">${sch}</g><g fill="#fff3dc" opacity=".95" filter="url(#${S.id("weich")})">${hl}</g></g></g>`;
+  for (const [x, y, rr] of teile) { hl += `<circle cx="${r(x + rr * 0.3)}" cy="${r(y - rr * 0.3)}" r="${r(rr * 0.55)}"/>`; sch += `<circle cx="${r(x - rr * 0.25)}" cy="${r(y + rr * 0.35)}" r="${r(rr * 0.85)}"/>`; }
+  const id = S.id("wk" + seed), idb = S.id("wb" + seed), oben = cy - 14 * s;
+  return `<clipPath id="${id}"><path d="${umr}"/></clipPath><clipPath id="${idb}"><rect x="${r(xl)}" y="${r(oben)}" width="${r(xr - xl)}" height="${r(fuss - oben)}"/></clipPath>` +
+    `<g clip-path="url(#${idb})"><g clip-path="url(#${id})"><rect x="${r(xl)}" y="${r(oben)}" width="${r(xr - xl)}" height="${r(fuss - oben)}" fill="${S.lg("wolke" + seed, [[0, "#fffaf2"], [0.6, "#f1f0f2"], [1, "#aab6cf"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${r(cy - 6 * s)}" x2="0" y2="${r(fuss)}"`)}"/>` +
+    `<g fill="#8fa2c4" opacity=".32" filter="url(#${S.id("wolkweich")})">${sch}</g><g fill="#fff2d8" opacity=".75" filter="url(#${S.id("wolkweich")})">${hl}</g>` +
+    `<rect x="${r(xl)}" y="${r(oben)}" width="${r(xr - xl)}" height="${r(fuss - oben)}" fill="${S.lg("wolkeseite", [[0, "#7f93b8", 0.22], [0.55, "#fff", 0], [1, "#ffd9a0", 0.22]], 0, 0, 1, 0)}"/></g></g>`;
 }
 const WOLKE_A = [[-9, 0.6, 3.2], [-4.5, -1.6, 4.4], [1, -2.6, 5.2], [6.4, -1, 4], [10.6, 0.8, 2.8]];
 const WOLKE_B = [[-6, 0.4, 2.6], [-2, -1.2, 3.6], [2.6, -0.4, 3.2], [6.2, 0.8, 2.2]];
@@ -313,7 +314,7 @@ function baueZeile(seite, liste) {
     } else {
       out += `<path d="${pz([P(seite * FX, h.d0 + 0.3, h.Ht - 0.4), P(seite * FX, h.d1 - 0.3, h.Ht - 0.4), P(seite * (FX + 3), h.d1 - 1, h.Ht + 2.6), P(seite * (FX + 3), h.d0 + 1, h.Ht + 2.6)])}" fill="#3a3533"/>`;
       /* Dachgaube mit Lastenhaken */
-      out += `<path d="${pz([Q(dm - 1, h.Ht), Q(dm + 1, h.Ht), Q(dm + 1, h.Ht + 2.2), Q(dm - 1, h.Ht + 2.2)])}" fill="${RAHMEN}"/>`;
+      out += `<path d="${pz([Q(dm - 1, h.Ht), Q(dm + 1, h.Ht), Q(dm + 1, h.Ht + 2.2), Q(dm - 1, h.Ht + 2.2)])}" fill="#2c2a2a" stroke="${RAHMEN}" stroke-width=".5"/>`;
     }
     const fass = pz(u.map(([a, b]) => Q(a, b)));
     /* Licht in der Grundfarbe: links Abendsonne (warm), rechts Gegenlicht-Schatten (kühl) */
@@ -636,7 +637,7 @@ function prisma(grund, h0, h1, farbe, dachFarbe, licht) {
   const zw = zufall(91);
   let wl = "";
   for (let i = 0; i < 46; i++) { const D = 14 + Math.pow(zw(), 1.6) * 90, X = (zw() * 2 - 1) * KX * 0.95, [x, y] = P(X, D, 0), L = (0.6 + zw() * 1.4) * F / D; wl += `M${r(x - L / 2)} ${r(y)} q${r(L / 2)} ${r(-0.12 * F / D)} ${r(L)} 0`; }
-  k += `<path d="${wl}" stroke="#dfeaee" stroke-width=".35" fill="none" opacity=".45" clip-path="url(#${S.id("wasserclip")})"/>`;
+  k += `<path d="${wl}" stroke="#dfeaee" stroke-width=".3" fill="none" opacity=".3" clip-path="url(#${S.id("wasserclip")})"/>`;
   S.teil({ id: "gracht", de: "die Gracht", syl: "GRACHT", it: "il canale", itSyl: "ca-NA-le", en: "canal", anker: [200, 200], kunst: k,
     tipp: "Die Grachten wurden im 17. Jahrhundert gegraben. Der Grachtengürtel ist UNESCO-Welterbe." });
 }
@@ -991,7 +992,7 @@ const GEL = { D: 2.4, h: 3.62 };
   let stiele = "", blaetter = "", blueten = "";
   const farben = [["#d81e34", "#f2707a", "#8e0f1e"], ["#f4c22e", "#ffe48a", "#c8901a"], ["#e8558a", "#ffa6c8", "#a82a5a"], ["#e33a2a", "#ff8a6a", "#9a1a10"]];
   const tul = [];
-  for (let i = 0; i < 15; i++) tul.push({ X: -0.96 + z() * 0.28, D: 1.93 + z() * 0.16, h: HL + 0.1 + z() * 0.22, f: farben[Math.floor(z() * 4)] });
+  for (let i = 0; i < 15; i++) tul.push({ X: -0.96 + z() * 0.28, D: 1.93 + z() * 0.16, h: HL - 0.02 + z() * 0.16, f: farben[Math.floor(z() * 4)] });
   tul.sort((a, b) => b.D - a.D || a.h - b.h);
   for (const t of tul) {
     const [bx, by] = pp(t.X, t.D, t.h), [sx, sy] = pp(-0.83 + (t.X + 0.83) * 0.4, 2.0, HL - 0.1), ss = F / t.D;
@@ -999,7 +1000,7 @@ const GEL = { D: 2.4, h: 3.62 };
     const [f, hlc, d] = t.f, w = 0.021 * ss, hh = 0.038 * ss;
     blueten += `<path d="M${r(bx - w)} ${r(by - hh)} Q${r(bx - w * 1.1)} ${r(by + hh * 0.25)} ${r(bx)} ${r(by + hh * 0.3)} Q${r(bx + w * 1.1)} ${r(by + hh * 0.25)} ${r(bx + w)} ${r(by - hh)} L${r(bx + w * 0.45)} ${r(by - hh * 0.62)} L${r(bx)} ${r(by - hh * 1.08)} L${r(bx - w * 0.45)} ${r(by - hh * 0.62)} Z" fill="${f}"/><path d="M${r(bx + w * 0.15)} ${r(by - hh * 0.85)} Q${r(bx + w * 0.8)} ${r(by - hh * 0.3)} ${r(bx + w * 0.55)} ${r(by + hh * 0.15)}" stroke="${hlc}" stroke-width="${r(0.008 * ss)}" fill="none"/><path d="M${r(bx)} ${r(by - hh * 1.0)} L${r(bx)} ${r(by + hh * 0.25)}" stroke="${d}" stroke-width="${r(0.005 * ss)}" opacity=".6"/>`;
   }
-  for (let i = 0; i < 6; i++) { const [sx, sy] = pp(-0.94 + i * 0.05, 2.0, HL - 0.1), ss = F / 2; blaetter += `<path d="M${r(sx)} ${r(sy)} Q${r(sx + (i - 2.5) * 0.035 * ss)} ${r(sy - 0.1 * ss)} ${r(sx + (i - 2.5) * 0.03 * ss)} ${r(sy - 0.2 * ss)} Q${r(sx + 0.012 * ss)} ${r(sy - 0.08 * ss)} ${r(sx + 0.018 * ss)} ${r(sy)} Z" fill="${i % 2 ? "#5f8f3e" : "#4a7a32"}"/>`; }
+  for (let i = 0; i < 6; i++) { const [sx, sy] = pp(-0.94 + i * 0.05, 2.0, HL - 0.1), ss = F / 2; blaetter += `<path d="M${r(sx)} ${r(sy)} Q${r(sx + (i - 2.5) * 0.03 * ss)} ${r(sy - 0.06 * ss)} ${r(sx + (i - 2.5) * 0.028 * ss)} ${r(sy - 0.13 * ss)} Q${r(sx + 0.012 * ss)} ${r(sy - 0.08 * ss)} ${r(sx + 0.018 * ss)} ${r(sy)} Z" fill="${i % 2 ? "#5f8f3e" : "#4a7a32"}"/>`; }
   /* Seidenpapier um den Strauß */
   const [pa, pb] = [pp(-0.98, 1.98, HL - 0.05), pp(-0.68, 1.98, HL - 0.05)];
   const papier = `<path d="M${r(pa[0])} ${r(pa[1])} L${r(pa[0] - 4)} ${r(pa[1] - 22)} L${r((pa[0] + pb[0]) / 2)} ${r(pa[1] - 10)} L${r(pb[0] + 5)} ${r(pb[1] - 24)} L${r(pb[0])} ${r(pb[1])} Z" fill="#f4efe2" opacity=".85"/>`;
