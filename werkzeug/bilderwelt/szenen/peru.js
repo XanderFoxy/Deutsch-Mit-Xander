@@ -92,7 +92,7 @@ const zacken = (a, b, n, amp, seed) => {
 };
 const lerp = (a, b, t) => a + (b - a) * t;
 /* Pfade mit absoluten Befehlen an den Bildrand klemmen (0…400 × …260), damit kein Teil aus dem Bild ragt */
-const kappeRand = (svg, x0 = -0.5, x1 = 400.5, y1 = 260.5) => svg.replace(/ d="([MLCQSZ\d\s.,-]+)"/g, (m0, d) => {
+const kappeRand = (svg, x0 = -0.5, x1 = 400.5, y1 = 260.5) => svg.replace(/<path d="M(-?[\d.]+)[ ,](-?[\d.]+)[^"]*[a-df-z][^"]*"[^>]*\/>/g, (el, x, y) => (+x < -1 || +x > 401 || +y > 261 ? "" : el)).replace(/ d="([MLCQSZ\d\s.,-]+)"/g, (m0, d) => {
   let i = 0; return ` d="${d.replace(/-?\d*\.?\d+/g, (z) => { const v = +z, o = i++ % 2 ? Math.min(y1, v) : Math.max(x0, Math.min(x1, v)); return String(r(o)); })}"`;
 });
 /* Höhenlinie eines Profils (Punkte von links nach rechts) an der Stelle x */
@@ -164,10 +164,10 @@ S.def(`<pattern id="${S.id("waldfein")}" width="13" height="9" patternUnits="use
 S.def(`<pattern id="${S.id("gras")}" width="5" height="2.6" patternUnits="userSpaceOnUse"><path d="M.6 2.3l.2-.9M1.9 1.4l-.2-.8M3.2 2.4l.3-1M4.3 1.1l-.25-.8M2.6.6l.1-.5" stroke="#d6e98a" stroke-width=".22" opacity=".45"/><path d="M1.2 2.5l-.1-.7M3.8 2.2l.2-.6" stroke="#2f5420" stroke-width=".25" opacity=".35"/></pattern>`);
 S.def(`<pattern id="${S.id("stroh")}" width="2" height="2.6" patternUnits="userSpaceOnUse"><rect width="2" height="2.6" fill="#b48e4e"/><path d="M.3 0 L.5 2.6 M1.1 0 L1.2 2.6 M1.7 0 L1.6 2.6" stroke="#d9b874" stroke-width=".28"/><path d="M.8 0 L.85 2.6" stroke="#7d5e2c" stroke-width=".22"/></pattern>`);
 const WALD = `url(#${S.id("wald")})`, WALDF = `url(#${S.id("waldfein")})`, GRAS = `url(#${S.id("gras")})`, STROH = `url(#${S.id("stroh")})`;
-const GRANIT_L = S.lg("granitl", [[0, "#f2ede2"], [1, "#d9d2c3"]]);         /* Ostflächen im Morgenlicht */
-const GRANIT_S = S.lg("granits", [[0, "#8f8b82"], [1, "#7a766d"]]);         /* Westflächen im Schatten */
-const GRANIT_F = S.lg("granitf", [[0, "#d3cec2"], [1, "#b5afa2"]]);         /* Südflächen (zu uns), streifendes Licht */
-const INNEN = "#46423b";
+const GRANIT_L = S.lg("granitl", [[0, "#f1ede4"], [1, "#d6d1c5"]]);         /* Ostflächen im Morgenlicht */
+const GRANIT_S = S.lg("granits", [[0, "#8a877f"], [1, "#74716a"]]);         /* Westflächen im Schatten */
+const GRANIT_F = S.lg("granitf", [[0, "#cdc9be"], [1, "#a9a598"]]);         /* Südflächen (zu uns), streifendes Licht */
+const INNEN = "#3d3a34";
 const RASEN = S.lg("rasen", [[0, "#9cc35a"], [1, "#78a646"]]);
 const RASEN_D = S.lg("rasend", [[0, "#6f9a42"], [1, "#557f34"]]);
 
@@ -351,7 +351,7 @@ const SERP = [[402, 182], [356, 186], [384, 194], [338, 198], [372, 207], [328, 
    ===================================================================== */
 const VP = [CX, HOR];
 const dAusY = (y, tief = 70) => 330 * tief / Math.max(4, y - HOR);
-const hinterPunkt = ([x, y], t, d) => { const f = d / (d + t); return [VP[0] + (x - VP[0]) * f, VP[1] + (y - VP[1]) * f]; };
+const hinterPunkt = ([x, y], t, d) => { const f = d / (d + t * 1.7); return [VP[0] + (x - VP[0]) * f, VP[1] + (y - VP[1]) * f]; };
 /* ein Haus: (x, y) = vorne links unten, b = Breite der Front, h = Wandhöhe (Einheiten), t = Tiefe (m), g = Giebelhöhe,
    giebel: "front" (Giebel vorn und hinten) oder "seite" (Giebel an den Seiten), dach: rekonstruiertes Strohdach */
 const haus = (x, y, b, h, t, g, giebel = "front", dach = false, tueren = 1, schattenAn = true) => {
@@ -426,7 +426,8 @@ const zeile = (x0, x1, y, hm, seed, dachAnteil = 0.06) => {
   /* von der Mitte nach außen zeichnen: die äußeren verdecken die inneren richtig (Fluchtpunkt in der Mitte) */
   teile.sort((p, q) => Math.abs(q[0] + q[1] / 2 - VP[0]) - Math.abs(p[0] + p[1] / 2 - VP[0]));
   teile.reverse();
-  for (const [xx, b, lang] of teile.reverse()) o += haus(xx, y + (z() - 0.5) * 0.4, b, (3.3 + z() * 0.9) * m * hm, lang ? 5 + z() : 9 + z() * 3, (2.6 + z() * 0.8) * m, lang ? "seite" : "front", z() < dachAnteil, lang ? (z() < 0.5 ? 2 : 0) : 1);
+  const xm = (x0 + x1) / 2, bw = Math.max(1, x1 - x0);
+  for (const [xx, b, lang] of teile.reverse()) { const yy = y + Math.pow((xx + b / 2 - xm) / bw * 2, 2) * 1.8 + (z() - 0.5) * 0.5; o += haus(xx, yy, b, (3.3 + z() * 1.1) * m * hm, lang ? 7 + z() * 2 : 10 + z() * 3, (3 + z() * 1) * m, lang ? "seite" : "front", z() < dachAnteil, lang ? (z() < 0.5 ? 2 : 0) : 1); }
   return o;
 };
 const STADT = {};
@@ -453,7 +454,8 @@ const STADT = {};
   k += haus(190, 147, 5, 1.9, 6, 1.6, "front", true, 1) + haus(219, 147, 5, 1.9, 6, 1.6, "front", true, 1);
   /* --- der HAUPTPLATZ: lange Wiese in drei Stufen --- */
   const platz = [[190, 195], [244, 197], [229, 151], [206, 151]];
-  k += `<path d="${P(platz)}" fill="${S.lg("platz", [[0, "#94b956"], [1, "#7fa94a"]])}"/>`;
+  k += `<path d="${P(platz)}" fill="${S.lg("platz", [[0, "#84a856"], [1, "#6c9343"]])}"/>`;
+  for (let i = 0; i < 6; i++) { const t0 = i / 6, t1 = t0 + 1 / 12; const q = (t, u) => [platz[0][0] + (platz[1][0] - platz[0][0]) * t + ((platz[3][0] + (platz[2][0] - platz[3][0]) * t) - (platz[0][0] + (platz[1][0] - platz[0][0]) * t)) * u, platz[0][1] + (platz[1][1] - platz[0][1]) * t + ((platz[3][1] + (platz[2][1] - platz[3][1]) * t) - (platz[0][1] + (platz[1][1] - platz[0][1]) * t)) * u]; k += `<path d="${P([q(t0, 0), q(t1, 0), q(t1, 1), q(t0, 1)])}" fill="#a6c76a" opacity=".22"/>`; }
   for (const [ya, yb, xa, xb] of [[180, 181.4, 192.6, 238.6], [166, 167, 197, 234], [157.4, 158, 201, 231.6]]) k += `<path d="M${xa} ${ya} L${xb} ${yb} L${xb} ${yb + 1} L${xa} ${ya + 1} Z" fill="#9b917f"/><path d="M${xa} ${ya} L${xb} ${yb}" stroke="#f1e8d4" stroke-width=".35"/>`;
   k += `<path d="${P(platz)}" fill="${GRAS}"/>`;
   /* --- OSTSEKTOR: Zeilen aneinander gebauter Wohnhäuser, dazwischen schmale Gassen und Höfe --- */

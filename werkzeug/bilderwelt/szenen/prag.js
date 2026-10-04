@@ -59,7 +59,7 @@ const B = require("../bau");
 const S = neueSzene({ id: "prag", titel: "Prag", emoji: "🌉", thema: "Länder", kuerzel: "prg", fassung: 854, breite: 400, hoehe: 260 });
 const rnd = zufall(1357);
 const r = B.r;
-const F = 440, HOR = 100, E = 7, W = 11 * Math.PI / 180, CA = Math.cos(W), SA = Math.sin(W);
+const F = 440, HOR = 100, E = 3, W = 11 * Math.PI / 180, CA = Math.cos(W), SA = Math.sin(W);
 const Dd = (s, q) => s * CA + q * SA, Ll = (s, q) => -s * SA + q * CA;
 const X = (s, q) => 200 + F * Ll(s, q) / Dd(s, q);
 const Y = (s, q, h = 0) => HOR + F * (E - h) / Dd(s, q);
@@ -153,87 +153,99 @@ const PUTZ = "#eadfca";
 /* =====================================================================
    KULISSE — Morgenhimmel, Petřín, Hradschin-Hang, Kleinseite, Kampa
    ===================================================================== */
-S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"], [0.5, "#9fc2e2"], [0.85, "#dbe7ef"], [1, "#f2eadc"]])}"/>`);
+/* Morgenhimmel: oben kräftig blau, am Horizont warm und dunstig */
+S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#4f86c6"], [0.45, "#8db6df"], [0.8, "#e2e6e4"], [1, "#f6e6cc"]])}"/>`);
+S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 0.7], [1, "#fff1d0", 0]], 0, 0.95, 0.6)}"/>`);
 {
-  /* Kumuluswolken: runde Ballen, Licht von links hinten, kühle Unterseite */
-  const WS = S.lg("wks", [[0, "#b9c4d8"], [1, "#d3d9e6"]]), WL = S.lg("wkl", [[0, "#fffaf0"], [0.5, "#ffffff"], [1, "#eef1f7"]], 0, 0, 1, 0);
+  /* flache Sommer-Kumuli: flache, leicht violette Unterseite, Sonnenrand links (Sonne links hinten) */
+  const WS = S.lg("wks", [[0, "#c6c3d8"], [1, "#b3b2cc"]]), WL = S.lg("wkl", [[0, "#fff8ea"], [0.6, "#ffffff"], [1, "#e9ecf4"]], 0, 0, 1, 0);
   const wolke = (x, y, w, h, seed) => {
-    const z = zufall(seed), n = 7 + Math.floor(z() * 4), ball = [];
-    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, rr = h * (0.22 + 0.5 * Math.pow(Math.sin(Math.PI * t), 1.5)) * (0.7 + z() * 0.6); ball.push([x - w / 2 + t * w + (z() - 0.5) * 2, y - rr * (0.6 + z() * 0.4), rr]); }
-    for (let i = 0; i < 3; i++) { const t = 0.3 + z() * 0.4, rr = h * (0.3 + z() * 0.25); ball.push([x - w / 2 + t * w, y - h * 0.55 - rr * 0.5, rr]); }
-    const kreise = (dx, dy, f) => ball.map(([cx, cy, rr]) => `M${r(cx + dx - rr * f)} ${r(cy + dy)} a${r(rr * f)} ${r(rr * f)} 0 1 0 ${r(2 * rr * f)} 0 a${r(rr * f)} ${r(rr * f)} 0 1 0 ${r(-2 * rr * f)} 0`).join("");
-    let g = `<path d="${kreise(0, 0, 1)}M${r(x - w / 2)} ${r(y - h * 0.3)} h${w} v${r(h * 0.3)} h${-w}Z" fill="${WS}"/>`;
-    g += `<path d="${kreise(-h * 0.12, -h * 0.12, 0.86)}" fill="${WL}"/>`;
-    g += `<path d="${kreise(-h * 0.2, -h * 0.2, 0.55)}" fill="#fff" opacity=".7"/>`;
+    const z = zufall(seed), n = 6 + Math.floor(z() * 3), ball = [];
+    for (let i = 0; i < n; i++) { const t = (i + 0.5) / n, rr = h * (0.3 + 0.55 * Math.pow(Math.sin(Math.PI * t), 1.2)) * (0.75 + z() * 0.5); ball.push([x - w / 2 + t * w, y - rr * 0.55, rr]); }
+    const kreise = (dx, dy, f) => ball.map(([cx, cy, rr]) => `M${r(cx + dx - rr * f)} ${r(cy + dy)} a${r(rr * f)} ${r(rr * f)} 0 1 1 ${r(2 * rr * f)} 0 a${r(rr * f)} ${r(rr * f)} 0 1 1 ${r(-2 * rr * f)} 0`).join("");
+    /* Körper bis zur flachen Basis abgeschnitten */
+    const id = S.id("wc" + seed);
+    S.def(`<clipPath id="${id}"><rect x="${r(x - w)}" y="${r(y - h * 3)}" width="${r(2 * w)}" height="${r(h * 3)}"/></clipPath>`);
+    let g = `<g clip-path="url(#${id})"><path d="${kreise(0, 0, 1)}" fill="${WL}"/><path d="${kreise(h * 0.18, h * 0.12, 0.9)}" fill="${WS}" opacity=".55"/></g>`;
+    g += `<path d="M${r(x - w / 2 - h * 0.2)} ${r(y)} H${r(x + w / 2 + h * 0.2)}" stroke="#aaa8c4" stroke-width="${r(h * 0.18)}" opacity=".5"/>`;
     return g;
   };
-  S.hinten(wolke(110, 30, 44, 9, 4) + wolke(250, 18, 30, 6, 12) + wolke(372, 36, 34, 7, 27) + wolke(30, 14, 22, 5, 41));
+  S.hinten(wolke(112, 30, 40, 7, 4) + wolke(252, 18, 26, 5, 12) + wolke(368, 38, 30, 6, 27) + wolke(32, 16, 20, 4, 41));
 }
 {
   /* Petřín: bewaldeter Hügel links, Kuppe bei x 13, fällt nach rechts zur Kleinseite */
   const kuppe = YD(1340, 128);
-  const huegel = `M0 ${r(kuppe + 2)} C8 ${r(kuppe - 1)} 22 ${r(kuppe - 0.5)} 40 ${r(kuppe + 4)} C70 ${r(kuppe + 12)} 110 88 150 98 L170 104 L170 130 L0 130 Z`;
+  const huegel = `M0 ${r(kuppe + 2)} C8 ${r(kuppe - 1)} 22 ${r(kuppe - 0.5)} 40 ${r(kuppe + 4)} C70 ${r(kuppe + 12)} 110 85 150 95 L170 101 L170 130 L0 130 Z`;
   let g = `<path d="${huegel}" fill="${S.lg("petrin", [[0, "#7f9a78"], [1, "#5d7a5a"]])}"/>`;
-  /* Baumkronen als Rand (gelappt), Dunst darüber */
-  /* Wald auf dem Petřín: viele Kronen, oben links von der Sonne gestreift */
   /* Kammlinie genau aus den Bézierkurven des Hügels */
   const bez = (p0, p1, p2, p3, t) => { const u = 1 - t; return [u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0], u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1]]; };
   const kamm = [];
   for (let t = 0; t <= 1.001; t += 0.02) kamm.push(bez([0, kuppe + 2], [8, kuppe - 1], [22, kuppe - 0.5], [40, kuppe + 4], t));
-  for (let t = 0; t <= 1.001; t += 0.02) kamm.push(bez([40, kuppe + 4], [70, kuppe + 12], [110, 88], [150, 98], t));
-  kamm.push([170, 104]);
-  const rand = (x) => { for (let i = 1; i < kamm.length; i++) if (kamm[i][0] >= x) { const [a, b] = [kamm[i - 1], kamm[i]]; return a[1] + (b[1] - a[1]) * (x - a[0]) / Math.max(0.01, b[0] - a[0]); } return 104; };
+  for (let t = 0; t <= 1.001; t += 0.02) kamm.push(bez([40, kuppe + 4], [70, kuppe + 12], [110, 85], [150, 95], t));
+  kamm.push([170, 101]);
+  const rand = (x) => { for (let i = 1; i < kamm.length; i++) if (kamm[i][0] >= x) { const [a, b] = [kamm[i - 1], kamm[i]]; return a[1] + (b[1] - a[1]) * (x - a[0]) / Math.max(0.01, b[0] - a[0]); } return 101; };
+  /* Baumgruppen: je drei Kronen, unten dunkel, oben links von der Sonne gestreift; nach oben kleiner */
   let kd = "", kh = "";
   const z = zufall(8);
-  for (let i = 0; i < 650; i++) {
-    const x = z() * 168, y = rand(x) + 0.9 + z() * 30, rr = 0.9 + z() * 1.1;
-    if (y > 121) continue;
-    if (y - rr * 0.6 < rand(x)) continue;
-    kd += `M${r(x - rr)} ${r(y)} a${r(rr)} ${r(rr * 0.9)} 0 1 1 ${r(2 * rr)} 0 a${r(rr)} ${r(rr * 0.9)} 0 1 1 ${r(-2 * rr)} 0Z`;
-    kh += `M${r(x - rr * 0.7)} ${r(y - rr * 0.3)} a${r(rr * 0.5)} ${r(rr * 0.45)} 0 0 1 ${r(rr * 0.9)} 0Z`;
+  for (let i = 0; i < 150; i++) {
+    const x = z() * 168, t = z(), y = rand(x) + 1.5 + t * 26, rr = 1.1 + t * 1.6;
+    if (y > 118 || y - rr < rand(x)) continue;
+    for (const [dx, dy, f] of [[-rr * 0.7, 0.3, 0.8], [rr * 0.6, 0.2, 0.75], [0, -rr * 0.35, 1]]) {
+      const q = rr * f;
+      kd += `M${r(x + dx - q)} ${r(y + dy)} a${r(q)} ${r(q * 0.9)} 0 1 1 ${r(2 * q)} 0 a${r(q)} ${r(q * 0.9)} 0 1 1 ${r(-2 * q)} 0Z`;
+    }
+    kh += `M${r(x - rr * 0.9)} ${r(y - rr * 0.45)} a${r(rr * 0.6)} ${r(rr * 0.5)} 0 0 1 ${r(rr * 1.1)} ${r(-rr * 0.2)}Z`;
   }
-  g += `<path d="${kd}" fill="#68865f"/><path d="${kh}" fill="#8fa982" opacity=".55"/>`;
-  g += `<path d="${huegel}" fill="${S.lg("petdunst", [[0, "#dfe8ef", 0.3], [1, "#dfe8ef", 0.12]])}"/>`;
+  g += `<path d="${kd}" fill="#5e7c56"/><path d="${kh}" fill="#9ab88a" opacity=".6"/>`;
+  g += `<path d="${huegel}" fill="${S.lg("petdunst", [[0, "#e8ecef", 0.25], [1, "#f4e6cc", 0.3]])}"/>`;
   /* Kloster Strahov und Häuser am Hang (helle Fassaden, rote Dächer) */
-  for (const [x, y, w] of [[96, 93, 6], [104, 95, 5], [118, 97, 7], [130, 99, 6], [141, 100, 6], [152, 102, 7]]) g += `<rect x="${x}" y="${y}" width="${w}" height="3" fill="#e7dcc6"/><path d="M${x - 0.3} ${y} L${x + w / 2} ${y - 1.6} L${x + w + 0.3} ${y}Z" fill="#b65a3c"/>`;
+  for (const [x, y, w] of [[96, 90, 6], [104, 92, 5], [118, 94, 7], [130, 96, 6], [141, 97, 6], [152, 99, 7]]) g += `<rect x="${x}" y="${y}" width="${w}" height="3" fill="#efe3c9"/><rect x="${x + w * 0.75}" y="${y}" width="${r(w * 0.25)}" height="3" fill="#b9aec4"/><path d="M${x - 0.3} ${y} L${x + w / 2} ${y - 1.6} L${x + w + 0.3} ${y}Z" fill="#b65a3c"/>`;
   S.hinten(g);
 }
 {
-  /* Hradschin-Hang rechts: Gärten unter der Burg, Kleinseite mit roten Dächern */
-  let g = `<path d="M178 104 C210 98 240 92 262 90 L400 84 L400 130 L178 130 Z" fill="${S.lg("hang", [[0, "#7d9a6e"], [1, "#5a7652"]])}"/>`;
+  /* Hradschin-Hang rechts: die Dächer der Kleinseite steigen zur Burg hinauf, dazwischen terrassierte Gärten
+     mit weißen Mäuerchen und die Schlossstiege; Licht von links hinten: Fassaden warm, Nordseiten kühl-violett */
+  let g = `<path d="M176 101 C210 95 240 89 262 87 L400 81 L400 130 L176 130 Z" fill="${S.lg("hang", [[0, "#7f9c6c"], [1, "#5d7a54"]])}"/>`;
+  S.def(`<g id="${S.id("haus")}"><rect x="0" y="-3" width="4" height="3" fill="#f1e2c6"/><rect x="3" y="-3" width="1" height="3" fill="#b7aec8"/><path d="M-.3 -3 L.8 -4.8 L3.4 -4.8 L4.3 -3Z" fill="#b8573a"/><path d="M.8 -4.8 L3.4 -4.8 L3.8 -4.2 L1.2 -4.2Z" fill="#d07a58"/><path d="M.7 -2.3h.7v1h-.7Z M2 -2.3h.7v1h-.7Z" fill="#6a6f80"/></g>`);
+  const zh = zufall(31);
+  let hs = "";
+  for (const [x0, x1, y0, dy] of [[184, 300, 99, -0.05], [200, 330, 95, -0.06], [226, 296, 91, -0.05]]) {
+    for (let x = x0; x < x1; x += 4.2 + zh() * 2) { const y = y0 + (x - x0) * dy + zh() * 1.2, sk = (0.85 + zh() * 0.4).toFixed(2); hs += `<use href="#${S.id("haus")}" transform="translate(${r(x)} ${r(y)}) scale(${sk})"/>`; }
+  }
+  g += hs;
+  g += `<path d="M296 93 L398 88.4 M306 96.6 L398 92.6 M318 100 L398 97" stroke="#efe6d2" stroke-width=".55"/><path d="M296 93.4 L398 88.8 M306 97 L398 93 M318 100.4 L398 97.4" stroke="#4f6a46" stroke-width=".35" opacity=".6"/>`;
+  g += `<path d="M262 99 L296 92.4" stroke="#e6dcc8" stroke-width=".9"/><path d="M262 99 L296 92.4" stroke="#b9ad96" stroke-width=".3" stroke-dasharray=".5 .5"/>`;
   const z = zufall(19);
   let kr = "";
-  for (let x = 236; x < 400; x += 2 + z() * 2.4) { const y = 90 + (x > 262 ? -(x - 262) * 0.04 : (262 - x) * 0.07) + z() * 3; kr += `M${r(x)} ${r(y + 2)} a${r(1.5 + z())} ${r(1.3 + z())} 0 0 1 ${r(2.8 + z())} 0Z`; }
-  g += `<path d="${kr}" fill="#6f8d62"/>`;
-  /* Terrassen der Burggärten */
-  g += `<path d="M300 93.4 L398 89.5 M318 97 L398 94" stroke="#d9cdb4" stroke-width=".45" opacity=".6"/>`;
+  for (let x = 300; x < 400; x += 3 + z() * 3) { const y = 90 + (x - 300) * -0.045 + z() * 7; kr += `M${r(x)} ${r(y)} a${r(1.3 + z())} ${r(1.1 + z())} 0 1 1 ${r(2.6 + z())} 0Z`; }
+  g += `<path d="${kr}" fill="#64824f"/>`;
   S.hinten(g);
   /* Häuserzeilen der Kleinseite (rechts, am Ufer in ~430 m) und auf Kampa (links): 3–5 Stockwerke,
-     helle Barockfassaden, Ziegeldächer mit Gauben; davor Uferbäume */
+     helle Barockfassaden (zu uns warm beleuchtet, Nordseiten kühl), Ziegeldächer mit Gauben; davor Uferbäume */
   let d = "";
   const zd = zufall(23);
   const zeile = (x0, x1, yb, hmin, hmax) => {
-    let g = "";
+    let g = "", fen = "", schatten = "", lichter = "";
     for (let x = x0; x < x1;) {
       const w = 5 + zd() * 8, h = hmin + zd() * (hmax - hmin), dach = 2.4 + zd() * 2.6;
-      const fc = ["#efe4cf", "#e8d6b8", "#f1e9da", "#ddc9a8", "#ecd3c3", "#e2d8b0", "#f3dcc8"][Math.floor(zd() * 7)];
+      const fc = ["#f6e3c4", "#efd3ac", "#f8ead6", "#e6cda4", "#f2d4bf", "#ead9a8", "#f8dcc2"][Math.floor(zd() * 7)];
       g += `<rect x="${r(x)}" y="${r(yb - h)}" width="${r(w + 0.2)}" height="${r(h)}" fill="${fc}"/>`;
-      g += `<rect x="${r(x)}" y="${r(yb - h)}" width="${r(w * 0.12)}" height="${r(h)}" fill="#fff" opacity=".25"/>`;
+      schatten += `M${r(x + w * 0.86)} ${r(yb - h)} h${r(w * 0.14 + 0.2)} v${r(h)} h${r(-w * 0.14 - 0.2)}Z`;
       g += `<path d="M${r(x - 0.2)} ${r(yb - h)} L${r(x + w * 0.2)} ${r(yb - h - dach)} L${r(x + w * 0.8)} ${r(yb - h - dach)} L${r(x + w + 0.4)} ${r(yb - h)}Z" fill="${zd() < 0.5 ? "#b8573a" : "#a24a35"}"/>`;
-      let fen = "";
-      for (let fy = yb - h + 1.4; fy < yb - 2; fy += 2.6) for (let fx = x + 1; fx < x + w - 0.9; fx += 1.8) fen += `M${r(fx)} ${r(fy)} h.8 v1.2 h-.8Z`;
-      g += `<path d="${fen}" fill="#6a6f80" opacity=".8"/>`;
+      lichter += `M${r(x + w * 0.2)} ${r(yb - h - dach)} L${r(x + w * 0.8)} ${r(yb - h - dach)} L${r(x + w * 0.86)} ${r(yb - h - dach * 0.7)} L${r(x + w * 0.26)} ${r(yb - h - dach * 0.7)}Z`;
+      for (let fy = yb - h + 1.4; fy < yb - 2; fy += 2.6) for (let fx = x + 1; fx < x + w - 0.9; fx += 1.8) fen += `M${r(fx)} ${r(fy)}h.8v1.2h-.8Z`;
       if (zd() < 0.4) g += `<path d="M${r(x + w / 2 - 0.6)} ${r(yb - h - dach * 0.5)} h1.2 v-1 l-.6 -.6 l-.6 .6Z" fill="#eadfca"/>`;
       x += w;
     }
-    return g;
+    return g + `<path d="${schatten}" fill="#8a84a8" opacity=".38"/><path d="${lichter}" fill="#e69a72" opacity=".55"/><path d="${fen}" fill="#5f6478" opacity=".8"/>`;
   };
-  d += zeile(140, 400, 119.5, 10, 17) + zeile(0, 110, 122.5, 6, 11);
+  d += zeile(140, 400, 115.7, 10, 17) + zeile(0, 110, 118, 6, 11);
   /* Uferbäume (gelappt, Himmelslücken zwischen den Kronen) */
-  for (let x = 2; x < 108; x += 5 + zd() * 6) { const y = 123 - zd(); d += `<path d="M${r(x)} ${r(y)} a2.6 2.9 0 1 1 5.2 0Z" fill="${zd() < 0.5 ? "#4f7a46" : "#5f8a50"}"/><path d="M${r(x + 1)} ${r(y - 2.4)} a1.2 1 0 0 1 2 0" stroke="#86a870" stroke-width=".5" fill="none"/>`; }
-  for (let x = 266; x < 398; x += 7 + zd() * 9) { const y = 120.4 - zd(); d += `<path d="M${r(x)} ${r(y)} a2.4 2.7 0 1 1 4.8 0Z" fill="#557f4a"/>`; }
+  for (let x = 2; x < 108; x += 5 + zd() * 6) { const y = 118.6 - zd(); d += `<path d="M${r(x)} ${r(y)} a2.6 2.9 0 1 1 5.2 0Z" fill="${zd() < 0.5 ? "#4f7a46" : "#5f8a50"}"/><path d="M${r(x + 0.6)} ${r(y - 2.4)} a1.2 1 0 0 1 2 0" stroke="#9ab88a" stroke-width=".5" fill="none"/>`; }
+  for (let x = 266; x < 398; x += 7 + zd() * 9) { const y = 116.6 - zd(); d += `<path d="M${r(x)} ${r(y)} a2.4 2.7 0 1 1 4.8 0Z" fill="#557f4a"/>`; }
   S.hinten(d);
-  S.hinten(`<rect x="0" y="100" width="400" height="24" fill="${S.lg("ferne", [[0, "#e6edf2", 0.0], [1, "#e6edf2", 0.35]])}"/>`);
+  /* Morgendunst: warm-golden am Fuß des Hradschin und über dem Fluss */
+  S.hinten(`<rect x="0" y="84" width="400" height="38" fill="${S.lg("ferne", [[0, "#f3e6cc", 0], [0.6, "#f5e4c4", 0.32], [1, "#f1e6d4", 0.5]])}"/>`);
 }
 
 /* =====================================================================
@@ -361,26 +373,28 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
    5 — DIE MOLDAU (Wasser mit Himmelsspiegelung, Wellen, Wehr)
    ===================================================================== */
 {
-  const WY = (s, q) => Y(s, q, -13);
-  let k = `<path d="M0 124 L110 121.5 L150 120 L400 118.5 L400 260 L0 260 Z" fill="${S.lg("wasser", [[0, "#9bb3bf"], [0.25, "#7d9aa5"], [0.7, "#5c7a84"], [1, "#4a6670"]])}"/>`;
+  let k = `<path d="M0 120.2 L110 117.7 L150 116.2 L400 114.7 L400 260 L0 260 Z" fill="${S.lg("wasser", [[0, "#a9bcc2"], [0.12, "#86a2aa"], [0.5, "#5f7d86"], [1, "#4a6670"]])}"/>`;
   /* Spiegelung der hellen Ufer und des Himmels (weich) */
-  k += `<g filter="url(#${S.id("spiegel")})" opacity=".45"><path d="M150 120 L400 118.5 L400 126 L150 127 Z" fill="#e8dcc4"/><path d="M0 124 L110 121.5 L110 128 L0 131 Z" fill="#9fb48e"/></g>`;
+  k += `<g filter="url(#${S.id("spiegel")})" opacity=".45"><path d="M150 116.2 L400 114.7 L400 122 L150 123 Z" fill="#efe0c4"/><path d="M0 120.2 L110 117.7 L110 124 L0 127 Z" fill="#9fb48e"/></g>`;
   /* Spiegelbild der Kleinseitner Häuser: senkrechte, weiche Farbstreifen unter dem Ufer */
   let sp = "";
   const zs = zufall(23);
-  for (let x = 140; x < 400; x += 4 + zs() * 6) sp += `<rect x="${r(x)}" y="121" width="${r(3 + zs() * 4)}" height="${r(5 + zs() * 6)}" fill="${["#e8d6b8", "#ecd3c3", "#b8573a", "#f1e9da", "#e2d8b0"][Math.floor(zs() * 5)]}"/>`;
-  k += `<g filter="url(#${S.id("spiegel")})" opacity=".3">${sp}</g>`;
-  /* Wellen: kurze helle und dunkle Striche, nach vorn größer */
-  let hell = "", dunkel = "";
-  for (let i = 0; i < 520; i++) {
-    const y = 122 + Math.pow(rnd(), 1.6) * 137, w = 0.8 + (y - 120) * 0.05 + rnd() * 1.5, x = rnd() * (399 - w);
-    if (rnd() < 0.55) hell += `M${r(x)} ${r(y)} h${r(w)}`; else dunkel += `M${r(x)} ${r(y)} h${r(w)}`;
+  for (let x = 140; x < 400; x += 4 + zs() * 6) sp += `<rect x="${r(x)}" y="117" width="${r(3 + zs() * 4)}" height="${r(5 + zs() * 7)}" fill="${["#efd3ac", "#f2d4bf", "#b8573a", "#f8ead6", "#ead9a8"][Math.floor(zs() * 5)]}"/>`;
+  k += `<g filter="url(#${S.id("spiegel")})" opacity=".32">${sp}</g>`;
+  /* Wellen: kurze helle (Himmel) und dunkle Striche, nach vorn größer; Sonnenglitzer links (zur Sonne hin) */
+  let hell = "", dunkel = "", glitz = "";
+  for (let i = 0; i < 360; i++) {
+    const y = 118 + Math.pow(rnd(), 1.5) * 90, w = 0.8 + (y - 116) * 0.06 + rnd() * 1.5, x = rnd() * (399 - w);
+    if (rnd() < 0.55) hell += `M${r(x)} ${r(y)}h${r(w)}`; else dunkel += `M${r(x)} ${r(y)}h${r(w)}`;
+    if (x < 120 && rnd() < 0.3) glitz += `M${r(x)} ${r(y - 0.3)}h${r(w * 0.5)}`;
   }
-  k += `<path d="${hell}" stroke="#d8e6ee" stroke-width=".35" opacity=".55"/><path d="${dunkel}" stroke="#36515b" stroke-width=".35" opacity=".45"/>`;
+  k += `<path d="${hell}" stroke="#dbe9f0" stroke-width=".35" opacity=".6"/><path d="${dunkel}" stroke="#36515b" stroke-width=".35" opacity=".45"/><path d="${glitz}" stroke="#fff6dc" stroke-width=".45" opacity=".9"/>`;
+  /* Morgendunst über dem Wasser */
+  k += `<rect x="0" y="114" width="400" height="22" fill="${S.lg("wdunst", [[0, "#f6ead2", 0.55], [1, "#f6ead2", 0]])}" pointer-events="none"/>`;
   /* das Altstädter Wehr: schäumende schräge Linie links */
-  k += `<path d="M0 168 Q40 150 100 126 L104 127 Q46 152 0 176 Z" fill="${S.lg("wehr", [[0, "#ffffff", 0.55], [1, "#dfe9ee", 0.1]])}"/><path d="M0 168 Q40 150 100 126" stroke="#f4f8fa" stroke-width=".5" stroke-dasharray="1 .7" opacity=".9" fill="none"/>`;
+  k += `<path d="M0 140 Q40 132 100 121.5 L103 122.3 Q44 135 0 146 Z" fill="${S.lg("wehr", [[0, "#ffffff", 0.6], [1, "#dfe9ee", 0.1]])}"/><path d="M0 140 Q40 132 100 121.5" stroke="#f4f8fa" stroke-width=".5" stroke-dasharray="1 .7" opacity=".9" fill="none"/>`;
   /* Kampa: Ufermauer links, Kleinseitner Ufermauer rechts */
-  k += `<path d="M0 124 L110 121.5 L110 122.6 L0 125.4 Z" fill="#b9ad96"/><path d="M150 120 L400 118.5 L400 119.6 L150 121.2 Z" fill="#c9bea8"/>`;
+  k += `<path d="M0 120.2 L110 117.7 L110 118.8 L0 121.4 Z" fill="#c4b79e"/><path d="M150 116.2 L400 114.7 L400 115.8 L150 117.4 Z" fill="#d3c7ae"/>`;
   S.teil({ id: "moldau", de: "die Moldau", syl: "MOL-dau", it: "la Moldava", itSyl: "mol-DA-va", en: "Vltava", x: 0, y: 0, kunst: k,
     tipp: "Die Moldau fließt mitten durch Prag. Der Komponist Smetana hat ein berühmtes Stück über sie geschrieben." });
 }
@@ -408,14 +422,17 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
   k += `<path d="M${A(qa + 1.2, 4.4)} L${A(qb - 4.6, 4.4)} L${A(qb - 5.2, 5.1)} L${A(qa + 1.8, 5.1)}Z" fill="#cfe2ee" opacity=".9"/>`;
   k += `<path d="M${A(qb - 4, 2.2)} L${A(qb - 2, 2.2)} L${A(qb - 2, 4.6)} L${A(qb - 4, 4.6)}Z" fill="#f6f6f2"/><path d="M${A(qb - 3.6, 3.4)} L${A(qb - 2.4, 3.4)} L${A(qb - 2.4, 4.2)} L${A(qb - 3.6, 4.2)}Z" fill="#3b5266"/>`;
   k += `<path d="M${A(qa + 0.6, 4.4)} L${A(qa + 0.6, 6.6)}" stroke="#c0392b" stroke-width=".4"/><path d="M${A(qa + 0.6, 6.6)} L${A(qa - 1.2, 6.2)} L${A(qa + 0.6, 5.8)}Z" fill="#fff"/><path d="M${A(qa + 0.6, 6.2)} L${A(qa - 1.2, 6.2)} L${A(qa + 0.6, 5.8)}Z" fill="#11457e"/>`;
+  /* offenes Oberdeck hinten mit Geländer und Fahrgästen */
+  k += `<path d="M${A(qa + 1.5, 5.1)} L${A(qa + 9, 5.1)} M${A(qa + 1.5, 5.9)} L${A(qa + 9, 5.9)}" stroke="#f4f4f0" stroke-width=".35"/>`;
+  for (const [q, c] of [[qa + 3, "#c0392b"], [qa + 4.6, "#f2c230"], [qa + 6.8, "#2f5f95"], [qa + 8, "#e8e4dc"]]) { const [x, y] = A(q, 5.1).split(" ").map(Number); k += `<rect x="${r(x - 0.5)}" y="${r(y - 2.2)}" width="1" height="2" rx=".3" fill="${c}"/><circle cx="${r(x)}" cy="${r(y - 2.6)}" r=".5" fill="#d8a986"/>`; }
   /* Bugwelle und Kielwasser */
-  k += `<path d="M${A(qb + 1, 0)} Q${A(qb + 3, -0.6)} ${A(qb + 6, 0)}" stroke="#fff" stroke-width=".7" fill="none" opacity=".8"/><path d="M${A(qa - 0.5, 0)} L${A(qa - 9, -0.4)} M${A(qa - 0.5, 0.2)} L${A(qa - 7, 0.6)}" stroke="#e8f2f6" stroke-width=".5" opacity=".7"/>`;
+  k += `<path d="M${A(qb + 1, 0)} Q${A(qb + 3, -0.6)} ${A(qb + 6, 0)}" stroke="#fff" stroke-width=".7" fill="none" opacity=".8"/><path d="M${A(qa - 0.5, 0)} L${A(qa - 22, -0.8)} M${A(qa - 0.5, 0.2)} L${A(qa - 18, 1)} M${A(qa - 2, 0.1)} L${A(qa - 26, 0.1)}" stroke="#e8f2f6" stroke-width=".5" opacity=".7"/>`;
   S.teil({ id: "ausflugsschiff", de: "das Ausflugsschiff", syl: "AUS-flugs-schiff", it: "il battello turistico", itSyl: "bat-TEL-lo tu-RI-sti-co", en: "sightseeing boat", x: 0, y: 0, kunst: k,
     tipp: "Mit dem Ausflugsschiff fährt man unter der Karlsbrücke hindurch." });
 }
 {
   /* Tretboot in Schwanenform */
-  const s0 = 88, q0 = 30, sc = F / Dd(s0, q0), x = r(X(s0, q0)), y = r(Y(s0, q0, -13));
+  const s0 = 112, q0 = 47, sc = F / Dd(s0, q0), x = r(X(s0, q0)), y = r(Y(s0, q0, -13));
   let k = `<g transform="scale(${sc.toFixed(4)})">`;
   k += `<ellipse cx="0" cy=".15" rx="1.9" ry=".3" fill="#2f4a55" opacity=".35"/>`;
   k += `<path d="M-1.6 0 Q-1.8 -.9 -1.1 -1 L1 -1 Q1.6 -.9 1.6 0 Z" fill="${S.lg("tret", [[0, "#ffffff"], [1, "#d5dade"]])}"/>`;
@@ -429,15 +446,22 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
 }
 {
   /* Schwan auf dem Wasser */
-  const s0 = 62, q0 = 20, sc = F / Dd(s0, q0), x = r(X(s0, q0)), y = r(Y(s0, q0, -13));
-  let k = `<g transform="scale(${sc.toFixed(4)})">`;
-  k += `<ellipse cx="0" cy=".05" rx=".7" ry=".1" fill="#2f4a55" opacity=".3"/>`;
-  k += `<path d="M-.6 0 Q-.75 -.32 -.45 -.38 Q-.1 -.45 .25 -.3 Q.4 -.22 .4 0 Z" fill="${S.lg("schwan", [[0, "#ffffff"], [1, "#dfe4e8"]])}"/>`;
-  k += `<path d="M-.55 -.32 Q-.75 -.5 -.5 -.55 Q-.3 -.42 -.2 -.38 Z" fill="#fff"/>`;
-  k += `<path d="M.25 -.28 Q.42 -.5 .34 -.75 Q.3 -.92 .44 -.94 Q.56 -.93 .58 -.86 L.7 -.82 L.57 -.79 Q.5 -.8 .48 -.74 Q.56 -.5 .4 -.24 Z" fill="#fff"/><path d="M.58 -.86 L.71 -.82 L.57 -.78 Z" fill="#e36a2a"/><circle cx=".5" cy="-.88" r=".02" fill="#1d1d22"/>`;
-  k += `<path d="M-.8 .06 q.4 .1 .8 0 q.4 -.1 .8 0" stroke="#e8f2f6" stroke-width=".04" fill="none"/></g>`;
-  S.teil({ id: "schwan", de: "der Schwan", syl: "SCHWAN", it: "il cigno", itSyl: "CI-gno", en: "swan", x, y, steht: true, kunst: k + flaeche(-3, -6, 7, 6.5, 0.6),
-    tipp: "An der Karlsbrücke schwimmen viele weiße Schwäne." });
+  /* Schwanenfamilie: zwei weiße Altvögel und drei graubraune Junge, in einer Reihe */
+  const SW = S.lg("schwan", [[0, "#ffffff"], [1, "#d9dfe4"]]);
+  const schwan = (s0, q0, gross, farbe, dreh = 1) => {
+    const sc = F / Dd(s0, q0) * gross, x = X(s0, q0), y = Y(s0, q0, -13);
+    let g = `<g transform="translate(${r(x)} ${r(y)}) scale(${(sc * dreh).toFixed(4)} ${sc.toFixed(4)})">`;
+    g += `<ellipse cx="0" cy=".05" rx=".75" ry=".1" fill="#2f4a55" opacity=".3"/><path d="M-.9 .06 q.45 .12 .9 0 q.45 -.12 .9 0" stroke="#e8f2f6" stroke-width=".05" fill="none"/>`;
+    g += `<path d="M-.6 0 Q-.75 -.32 -.45 -.38 Q-.1 -.45 .25 -.3 Q.4 -.22 .4 0 Z" fill="${farbe}"/>`;
+    if (gross > 0.8) g += `<path d="M-.55 -.32 Q-.75 -.52 -.48 -.56 Q-.28 -.44 -.18 -.38 Z" fill="#fff"/><path d="M-.45 -.36 Q-.2 -.42 .1 -.32" stroke="#c9d2da" stroke-width=".03" fill="none"/>`;
+    g += `<path d="M.25 -.28 Q.42 -.5 .34 -.75 Q.3 -.92 .44 -.94 Q.56 -.93 .58 -.86 L.7 -.82 L.57 -.79 Q.5 -.8 .48 -.74 Q.56 -.5 .4 -.24 Z" fill="${farbe}"/>`;
+    g += `<path d="M.58 -.86 L.71 -.82 L.57 -.78 Z" fill="${gross > 0.8 ? "#e36a2a" : "#4a4a4a"}"/><circle cx=".5" cy="-.88" r=".025" fill="#1d1d22"/></g>`;
+    return g;
+  };
+  let k = schwan(92, 47, 1, SW) + schwan(94, 49.5, 0.55, "#8f8a80") + schwan(95.5, 51.2, 0.55, "#9a9488") + schwan(97, 52.8, 0.55, "#8f8a80") + schwan(100, 56, 1, SW, -1);
+  const xa = X(92, 47), xb = X(100, 56), yy = Y(96, 51, -13);
+  S.teil({ id: "schwan", de: "der Schwan", syl: "SCHWAN", it: "il cigno", itSyl: "CI-gno", en: "swan", x: 0, y: 0, steht: true, kunst: k + flaeche(Math.min(xa, xb) - 3, yy - 8, Math.abs(xb - xa) + 8, 10, 0.6),
+    tipp: "An der Karlsbrücke schwimmen viele Schwäne. Die Jungen sind graubraun, erst später werden sie weiß." });
 }
 
 /* =====================================================================
@@ -477,47 +501,64 @@ S.hinten(`<rect width="400" height="130" fill="${S.lg("himmel", [[0, "#6d9fd2"],
 const BR = 4.75, BRH = 1.1, BRD = 0.6;   /* halbe Breite, Brüstungshöhe, -dicke */
 const STATUEN = [];   /* [s, Seite(-1/+1)] — über den Pfeilern, alle ~30 m */
 for (let i = 0; i < 15; i++) { STATUEN.push([34 + i * 31, 1]); STATUEN.push([30 + i * 31.4, -1]); }
+/* Sonne links hinten (Ostsüdost, 35° hoch): Schatten fallen nach vorn und 27° nach rechts, Länge 1,43 × Höhe */
+const SDS = 0.89 * 1.43, SDQ = 0.45 * 1.43;
+const BRUECKE_SCHATTEN = [];
 {
-  const S0 = 18, S1 = 505;
+  const S0 = 4, S1 = 505, QI = BR - BRD;
   let k = "";
   /* Pflaster: Grundfläche in Flucht, nach hinten heller (Dunst) */
-  k += poly([P(S0, -BR + BRD, 0), P(S1, -BR + BRD, 0), P(S1, BR - BRD, 0), P(S0, BR - BRD, 0)], S.lg("pflaster", [[0, "#b6a998"], [0.4, "#9a8d7c"], [1, "#857868"]]));
-  /* Pflasterfugen: Längsreihen und Querreihen (nah dicht) */
+  k += poly([P(S0, -QI, 0), P(S1, -QI, 0), P(S1, QI, 0), P(S0, QI, 0)], S.lg("pflaster", [[0, "#c2b29c"], [0.35, "#a5967f"], [1, "#857868"]]));
+  /* Kopfsteinpflaster vorn: Reihen kleiner Granitsteine (Strich mit Lücken = Fugen), weiter hinten Linien */
+  let reihen = "";
+  for (let s = 5, i = 0; s < 24; s += 0.2, i++) {
+    const a = P(s + 0.1, -QI).split(" ").map(Number), b = P(s + 0.1, QI).split(" ").map(Number), dd = Dd(s, 0), w = 0.16 * F / dd;
+    const hh = Math.abs(Y(s, 0) - Y(s + 0.2, 0)) * 0.78;
+    const seg = strecke(`${a[0]} ${a[1]}`, `${b[0]} ${b[1]}`);
+    if (seg) reihen += `<path d="${seg}" stroke="${["#9c8d78", "#a99a84", "#958671", "#b0a18a"][i % 4]}" stroke-width="${r(hh * 100) / 100}" stroke-dasharray="${r(w * 0.84 * 100) / 100} ${r(w * 0.16 * 100) / 100}" stroke-dashoffset="${r(rnd() * w * 100) / 100}"/>`;
+  }
+  k += `<g pointer-events="none">${reihen}</g>`;
   let fu = "";
-  for (let q = -BR + BRD + 0.35; q < BR - BRD; q += 0.35) fu += strecke(P(S0, q), P(160, q));
-  k += `<path d="${fu}" stroke="#6d6253" stroke-width=".18" opacity=".45"/>`;
+  for (let q = -QI + 0.35; q < QI; q += 0.35) fu += strecke(P(24, q), P(160, q));
+  k += `<path d="${fu}" stroke="#6d6253" stroke-width=".16" opacity=".4"/>`;
   let qu = "";
-  for (let s = S0; s < 160; s += s < 40 ? 0.32 : s < 80 ? 0.7 : 1.5) qu += strecke(P(s, -BR + BRD), P(s, BR - BRD));
+  for (let s = 24; s < 160; s += s < 40 ? 0.4 : s < 80 ? 0.8 : 1.6) qu += strecke(P(s, -QI), P(s, QI));
   k += `<path d="${qu}" stroke="#6d6253" stroke-width=".14" opacity=".35"/>`;
-  /* Lichtflecken auf den Steinen (Rundungen), nur vorn */
+  /* Lichtkuppen auf den Steinen, nur vorn */
   let st = "";
-  for (let i = 0; i < 220; i++) { const s = S0 + Math.pow(rnd(), 1.5) * 30, q = -BR + BRD + rnd() * (2 * BR - 2 * BRD); const [x, y] = P(s, q).split(" ").map(Number); if (y < 259 && x > 1) st += `M${r(x)} ${r(y)} h${r(0.3 + 18 / s)}`; }
-  k += `<path d="${st}" stroke="#d9cdb9" stroke-width=".4" opacity=".5"/>`;
-  /* Brüstungen: Innenseite (links im Schatten, rechts in der Sonne) und Oberseite */
+  for (let i = 0; i < 200; i++) { const s = 5 + Math.pow(rnd(), 1.6) * 20, q = -QI + rnd() * 2 * QI; const [x, y] = P(s, q).split(" ").map(Number); if (y < 259 && x > 1 && x < 398) st += `M${r(x)} ${r(y)}h${r(0.3 + 12 / s)}`; }
+  k += `<path d="${st}" stroke="#eadfcb" stroke-width=".45" opacity=".55"/>`;
+  /* Brüstungen: Innenseite (links im Schatten, rechts in der Sonne), Oberseite mit Lichtkante, Quaderfugen */
   const bruestung = (q0, innen, seite) => {
     let g = poly([P(S0, innen, 0), P(S1, innen, 0), P(S1, innen, BRH), P(S0, innen, BRH)], seite < 0 ? SAND_S : SAND_L);
-    g += poly([P(S0, innen, BRH), P(S1, innen, BRH), P(S1, q0, BRH), P(S0, q0, BRH)], seite < 0 ? "#8c8275" : "#b3a691");
-    /* Fugen der Quader */
-    let f = "";
-    for (let s = S0; s < 200; s += 1.6) f += strecke(P(s, innen, 0), P(s, innen, BRH));
-    f += strecke(P(S0, innen, 0.55), P(S1, innen, 0.55));
-    g += `<path d="${f}" stroke="${seite < 0 ? "#3e3833" : "#6d6253"}" stroke-width=".2" opacity=".55"/>`;
-    g += `<path d="${strecke(P(S0, innen, BRH), P(S1, innen, BRH))}" stroke="${seite < 0 ? "#a39784" : "#d8cbb4"}" stroke-width=".45"/>`;
+    g += poly([P(S0, innen, BRH), P(S1, innen, BRH), P(S1, q0, BRH), P(S0, q0, BRH)], seite < 0 ? "#9a8f80" : "#c3b59d");
+    let f = "", v = "";
+    for (let s = S0 + 0.8; s < 200; s += s < 30 ? 1.2 : 1.6) f += strecke(P(s, innen, 0), P(s, innen, BRH));
+    f += strecke(P(S0, innen, 0.37), P(S1, innen, 0.37)) + strecke(P(S0, innen, 0.74), P(S1, innen, 0.74));
+    /* verwitterte helle Flecken und dunkle Rinnspuren auf dem Sandstein, nur nah */
+    for (let s = S0 + 1; s < 40; s += 1.3 + rnd() * 2) v += strecke(P(s, innen, 0.95), P(s + 0.05, innen, 0.1 + rnd() * 0.4));
+    g += `<path d="${f}" stroke="${seite < 0 ? "#3e3833" : "#6d6253"}" stroke-width=".22" opacity=".55"/><path d="${v}" stroke="#3a332c" stroke-width=".5" opacity=".25"/>`;
+    g += `<path d="${strecke(P(S0, innen, BRH), P(S1, innen, BRH))}" stroke="${seite < 0 ? "#c9bca6" : "#f0e4cc"}" stroke-width=".55"/>`;
     return g;
   };
-  k += bruestung(-BR, -BR + BRD, -1) + bruestung(BR, BR - BRD, 1);
-  /* Schatten der Statuen und Laternen fallen nach vorn rechts auf das Pflaster */
+  k += bruestung(-BR, -QI, -1) + bruestung(BR, QI, 1);
+  /* Schatten der linken Brüstung als schmaler Streifen auf dem Pflaster */
+  k += poly([P(S0, -QI), P(S1, -QI), P(S1 + BRH * SDS, -QI + BRH * SDQ), P(S0 + BRH * SDS, -QI + BRH * SDQ)], "#2b2a3a", ` opacity=".28" pointer-events="none"`);
+  /* lange Schatten der Statuen links (Sockel 2,6 m breit, Figur schmaler, zusammen 6 m hoch) quer über die Fahrbahn */
   let sch = "";
-  for (const [s, sei] of STATUEN) if (s < 200) {
-    const q0 = sei * (BR - BRD), dq = 0.48, ds = 0.93;   /* Richtung: 27° nach rechts */
-    if (sei < 0) sch += poly([P(s - 1, q0, 0), P(s + 1, q0, 0), P(s + 1 + ds * 7, q0 + dq * 7, 0), P(s - 1 + ds * 7, q0 + dq * 7, 0)], "#2b2a3a", ` opacity=".22"`);
+  for (const [s, sei] of STATUEN) if (sei < 0 && s < 260) {
+    const q = -QI, h1 = 2.6 - BRH, h2 = 5.9 - BRH;
+    sch += poly([P(s - 1.05, q), P(s + 1.05, q), P(s + 1.05 + h1 * SDS, q + h1 * SDQ), P(s + 0.55 + h1 * SDS, q + h1 * SDQ), P(s + 0.4 + h2 * SDS, q + h2 * SDQ), P(s - 0.3 + h2 * SDS, q + h2 * SDQ), P(s - 0.5 + h1 * SDS, q + h1 * SDQ), P(s - 1.05 + h1 * SDS, q + h1 * SDQ)], "#2b2a3a", ` opacity=".3"`);
   }
-  /* Schlagschatten der Menschen und des Standes (Sonne links hinten, 35° hoch) */
-  const schatten = (s, q, h, b) => { const L = h * 1.43, ds = 0.89 * L, dq = 0.45 * L; return poly([P(s - 0.1, q - b), P(s + 0.1, q + b), P(s + ds, q + dq + b * 0.6), P(s + ds - 0.15, q + dq - b * 0.6)], "#2b2a3a", ` opacity=".26" filter="url(#bw_weich)"`); };
-  sch = schatten(26, -3.4, 1.76, 0.24) + schatten(31, 2.4, 1.78, 0.24) + schatten(21.6, 1.3, 1.66, 0.22) + schatten(40, -3.2, 1.9, 0.8) + schatten(30.4, 1.6, 0.55, 0.08);
-  k += sch;
-  S.teil({ id: "karlsbruecke", de: "die Karlsbrücke", syl: "KARLS-brü-cke", it: "il Ponte Carlo", itSyl: "PON-te CAR-lo", en: "Charles Bridge", x: 0, y: 0, kunst: k,
-    tipp: "Die Karlsbrücke ist über 650 Jahre alt und 516 Meter lang. Autos dürfen nicht darüber fahren." });
+  /* Schatten der linken Laternen: dünne Striche */
+  let ls = "";
+  for (let i = 0; i < 8; i++) { const s = 46 + i * 31.4, h = 4.6 - BRH; ls += strecke(P(s, -QI), P(s + h * SDS, -QI + h * SDQ)); }
+  k += `<g pointer-events="none">${sch}<path d="${ls}" stroke="#2b2a3a" stroke-width=".35" opacity=".3"/></g>`;
+  var BRUECKE = S.teil({ id: "karlsbruecke", de: "die Karlsbrücke", syl: "KARLS-brü-cke", it: "il Ponte Carlo", itSyl: "PON-te CAR-lo", en: "Charles Bridge", x: 0, y: 0, kunst: k,
+    zoom: { x: 276, y: 170, w: 105, h: 70 },
+    unter: [{ id: "bruestung", de: "die Brüstung", syl: "BRÜS-tung", it: "il parapetto", itSyl: "pa-ra-PET-to", en: "parapet", x: r(X(8.5, BR - 0.3)), y: r(Y(8.5, BR - 0.3, BRH)),
+      kunst: flaeche(-14, -4, 28, 18, 0.6), tipp: "Die Brüstung ist aus Sandstein. Sie schützt die Menschen vor dem Fall in die Moldau." }],
+    tipp: "Die Karlsbrücke ist über 650 Jahre alt und 516 Meter lang. Hinter uns, in der Altstadt, steht die berühmte Astronomische Uhr." });
 }
 
 /* =====================================================================
@@ -768,6 +809,7 @@ let PUP = null;
     tipp: "Der Trdelník ist ein süßes Gebäck. Der Teig wird um einen Spieß gewickelt und über dem Feuer gebacken." });
 }
 
+BRUECKE.kunst += `<g pointer-events="none">${BRUECKE_SCHATTEN.join("")}</g>`;
 pfadeKlein(S);
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/prag.js"));
 console.log(aus);

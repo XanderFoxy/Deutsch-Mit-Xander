@@ -50,11 +50,16 @@
      Metallhalter, PELMENI mit Schmand, Tulaer LEBKUCHEN (Prjanik),
      Kringel (Baranki); die PELZMÜTZE mit Ohrenklappen (Uschanka), das
      bunte Kopftuch aus Pawlowski Possad; graue NEBELKRÄHEN.
-   - LICHT: Ende Februar, früher Nachmittag; die Sonne steht tief im
-     Südwesten (rechts, knapp hinter dem Betrachter, 20° hoch): Was nach
-     rechts schaut, leuchtet; die Kremlmauer zeigt zum Platz und liegt
-     im Schatten, ihr Schatten fällt nach links auf den Platz. Schnee auf
-     Dächern, Simsen, Zinnen und Fichten; der Platz ist geräumt.
+   - LICHT (Runde 2 nachgerechnet): Ende Februar, etwa 14:30 Uhr; der Blick
+     geht nach etwa 150°, die Sonne steht im Südsüdwesten (Azimut 210°,
+     19° hoch), also 60° rechts VOR dem Betrachter. Was nach rechts/Westen
+     schaut (GUM-Fassade, Westseiten der Kapellen), leuchtet warm; was zu
+     uns schaut, liegt im Gegenlicht. Schatten fallen nach links zum
+     Betrachter (2,9 × Höhe): der Schatten der 14 m hohen Kremlmauer
+     bedeckt die rechte Hälfte des Platzes. Luftdunst über allem ab 150 m.
+     Schnee auf Dächern, Simsen, Zinnen und Fichten; der Platz ist
+     geräumt, nur am Rand liegen Haufen.
+   - BRUSČATKA: der Platz ist mit kleinen dunklen Granitquadern gepflastert.
    Maßstab: Augenhöhe 1,7 m, Horizont y = 172, Brennweite F = 560
    (d = Entfernung, l = seitlich, Meter): x = 200 + F·l/d,
    y = 172 + F·(1,7 − h)/d. Kathedrale in 365 m (1,53 Einheiten je

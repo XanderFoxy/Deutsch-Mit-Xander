@@ -116,31 +116,46 @@ S.hinten(`<rect width="${BR}" height="${HOR + 6}" fill="${S.lg("sonnenseite", [[
 /* =====================================================================
    1 — DER MASCHPARK (alte Bäume links und rechts, Rasen am Nordufer)
    ===================================================================== */
-/* gelappte Baumkrone mit Himmelslöchern und Ästen (Licht von links) */
-const baumKrone = (cx, cy, R, farben, seed) => {
-  const z = zufall(seed);
+/* Himmel in Bildkoordinaten: Lücken im Laub zeigen genau die Himmelsfarbe ihrer Höhe */
+S.def(`<linearGradient id="${S.id("himmelU")}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${HOR + 6}"><stop offset="0" stop-color="#4278bb"/><stop offset=".55" stop-color="#8ab3da"/><stop offset=".9" stop-color="#d0e0ec"/><stop offset="1" stop-color="#e9ede8"/></linearGradient>`);
+const HIMMEL_U = `url(#${S.id("himmelU")})`;
+/* unregelmäßige Lücke im Laub (gezackt, vom Laub umrandet) */
+const luecke = (x, y, w, h, seed) => { const z = zufall(seed); let d = ""; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5, f = i % 2 ? .55 + z() * .2 : .9 + z() * .25; d += (i ? " L" : "M") + `${r(x + Math.cos(a) * w * f)} ${r(y + Math.sin(a) * h * f)}`; } return `<path d="${d} Z" fill="${HIMMEL_U}"/>`; };
+/* weich schattierte Laubballen: Licht oben links (Sonne Südwest), Schatten unten rechts, darunter ein dunkler Kontaktschatten */
+const KRONE = {
+  buche: [S.rg("krBuche", [[0, "#e8ad62"], [0.45, "#b9692f"], [1, "#6a3519"]], 0.36, 0.32, 0.72), "#4e2814"],
+  linde: [S.rg("krLinde", [[0, "#f6e07e"], [0.45, "#d6ab3c"], [1, "#8c6a20"]], 0.36, 0.32, 0.72), "#6a5016"],
+  gruen: [S.rg("krGruen", [[0, "#d4d27c"], [0.45, "#9ea242"], [1, "#55602a"]], 0.36, 0.32, 0.72), "#3a461c"],
+  orange: [S.rg("krOrange", [[0, "#f2b066"], [0.45, "#cc742f"], [1, "#7c3a18"]], 0.36, 0.32, 0.72), "#562812"],
+};
+/* Krone als Ellipse (rx, ry) aus Ballen; Ballen bleiben im Bild */
+const baumKrone = (cx, cy, rx, ry, fam, seed, herz) => {
+  const z = zufall(seed), [F, D] = KRONE[fam];
+  const lap = [];
+  for (let i = 0; i < 11; i++) { const a = -Math.PI / 2 + i * Math.PI * 2 / 11 + (z() - .5) * .3; let ex = Math.cos(a) * .72, ey = Math.sin(a) * .74; if (herz && ey < -.4) ex *= 1 + (Math.abs(ex) > .2 ? .25 : -.4); const rr = Math.min(rx, ry) * (.34 + z() * .12); lap.push([cx + ex * (rx - rr * .6), cy + ey * (ry - rr * .6), rr]); }
+  for (let i = 0; i < 4; i++) lap.push([cx + (z() - .5) * rx * .7, cy + (z() - .5) * ry * .7, Math.min(rx, ry) * (.38 + z() * .1)]);
+  lap.sort((p, q) => p[1] - q[1]);
+  const ok = (x, rr) => Math.min(rr, x + 1, BR + 1 - x);
   let g = "";
-  const lappen = [];
-  for (let i = 0; i < 9; i++) { const a = -Math.PI * .95 + i * Math.PI * 1.9 / 8, d = R * (.55 + z() * .25); lappen.push([cx + Math.cos(a) * d, cy + Math.sin(a) * d * .82, R * (.42 + z() * .18)]); }
-  lappen.push([cx, cy + R * .1, R * .62]);
-  for (const [x, y, rr] of lappen) g += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(rr)}" fill="${farben[2]}"/>`;
-  for (const [x, y, rr] of lappen) g += `<circle cx="${r(x - rr * .18)}" cy="${r(y - rr * .2)}" r="${r(rr * .78)}" fill="${farben[1]}"/>`;
-  for (const [x, y, rr] of lappen.slice(0, 6)) g += `<circle cx="${r(x - rr * .32)}" cy="${r(y - rr * .36)}" r="${r(rr * .42)}" fill="${farben[0]}"/>`;
-  /* Himmelslöcher und Äste darin */
-  for (let i = 0; i < 2; i++) { const x = cx + (z() - .5) * R * .7, y = cy + (z() - .5) * R * .5; g += `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${r(R * .07)}" ry="${r(R * .05)}" fill="#a9c6df" opacity=".8"/>`; }
+  for (const [x, y, rr] of lap) { const q = ok(x + rr * .12, rr); if (q > .8) g += `<circle cx="${r(x + rr * .12)}" cy="${r(y + rr * .14)}" r="${r(q)}" fill="${D}"/>`; }
+  for (const [x, y, rr] of lap) { const q = ok(x, rr * .96); if (q > .8) g += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(q)}" fill="${F}"/>`; }
   return g;
 };
-const LAUBF = [["#e6c25a", "#c9962e", "#946a22"], ["#b7bd5a", "#8a9a3a", "#5f6f2a"], ["#e09848", "#c06a2a", "#8a4420"], ["#9fb05a", "#748a3a", "#4f6228"]];
 {
   let k = "";
   k += `<rect x="0" y="${r(pr(0, -2, 0)[1])}" width="${BR}" height="${r(pr(0, -24, 0)[1] - pr(0, -2, 0)[1] + .5)}" fill="${S.lg("rasenfern", [[0, "#7f9a50"], [1, "#94a85e"]])}"/>`;
-  const baum = (x, y, h, fam, seed) => {
-    const p = pr(x, y, 0), m = mass(y), R = h * .36 * m, cy = p[1] - h * .64 * m;
-    let g = `<path d="M${r(p[0] - .5 * m)} ${r(p[1])} L${r(p[0] - .3 * m)} ${r(cy + R * .3)} L${r(p[0] + .3 * m)} ${r(cy + R * .3)} L${r(p[0] + .5 * m)} ${r(p[1])} Z" fill="#4a3a2c"/>`;
-    g += `<path d="M${r(p[0])} ${r(cy + R * .4)} L${r(p[0] - R * .5)} ${r(cy - R * .2)} M${r(p[0])} ${r(cy + R * .2)} L${r(p[0] + R * .45)} ${r(cy - R * .3)}" stroke="#4a3a2c" stroke-width="${r(.25 * m)}"/>`;
-    return g + baumKrone(p[0], cy, R, LAUBF[fam], seed);
+  /* [x, y, Höhe m, Kronenbreite m, Art, Saat, herzförmig] — die Krone bleibt neben dem Rathaus (es steht weiter hinten) */
+  const baum = (x, y, h, b, fam, seed, herz, luecken) => {
+    const p = pr(x, y, 0), m = mass(y), ry = h * .36 * m, rx = Math.min(b * m / 2, x < 0 ? 47 - p[0] : p[0] - 272), cy = p[1] - h * .62 * m;
+    const st = "#4a3a2c";
+    let g = `<path d="M${r(p[0] - .55 * m)} ${r(p[1])} Q${r(p[0] - .3 * m)} ${r(p[1] - 2 * m)} ${r(p[0] - .35 * m)} ${r(cy + ry * .3)} L${r(p[0] + .35 * m)} ${r(cy + ry * .3)} Q${r(p[0] + .3 * m)} ${r(p[1] - 2 * m)} ${r(p[0] + .55 * m)} ${r(p[1])} Z" fill="${st}"/>`;
+    g += baumKrone(p[0], cy, rx, ry, fam, seed, herz);
+    /* echte Lücken im Laub, durch die man Himmel und zwei Äste sieht */
+    const zz = zufall(seed + 50);
+    for (const [u, v, s] of luecken) { const lx = p[0] + u * rx, ly = cy + v * ry; g += luecke(lx, ly, rx * .16 * s, ry * .1 * s, seed + u * 10); g += `<path d="M${r(lx - rx * .2 * s)} ${r(ly + ry * .14 * s)} Q${r(lx)} ${r(ly - ry * .02)} ${r(lx + rx * .22 * s)} ${r(ly - ry * .12 * s + zz())}" stroke="${st}" stroke-width="${r(.22 * m)}" fill="none" stroke-linecap="round"/>`; }
+    return g;
   };
-  for (const [x, y, h, f, sd] of [[-66, -6, 36, 1, 3], [-61, -14, 30, 0, 5], [-58, -21, 22, 2, 8], [66, -7, 37, 3, 4], [62, -14, 31, 0, 6], [59, -21, 22, 2, 9]]) k += baum(x, y, h, f, sd);
+  for (const t of [[-74, -12, 30, 15, "buche", 3, false, [[.35, -.15, 1]]], [-52, -44, 33, 16, "linde", 5, true, [[-.25, .05, 1.1], [.3, -.35, .8]]], [64, -6, 34, 16, "gruen", 4, false, [[-.3, .1, 1]]], [56, -40, 31, 15, "orange", 9, false, []]]) k += baum(...t);
   const A = anker(18, 150, `<g ${LUFT}>${k}</g>`);
   S.teil({ id: "maschpark", de: "der Maschpark", syl: "MASCH-park", it: "il parco Masch", itSyl: "PAR-co MASCH", en: "Maschpark", x: A.x, y: A.y, kunst: A.kunst,
     tipp: "Der ganze Park um den Teich heißt Maschpark. Hannover ist eine der grünsten Großstädte Deutschlands." });

@@ -200,7 +200,7 @@ S.def(`<filter id="${S.id("weich")}"${CIF} x="-20%" y="-20%" width="140%" height
 S.def(`<filter id="${S.id("dunst")}"${CIF} x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
 S.def(`<filter id="${S.id("wasser")}"${CIF} x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".05 .35" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="3" xChannelSelector="R" yChannelSelector="G"/></filter>`);
 /* Volumen: Lichtkante links (Sonne links), Eigenschatten rechts */
-S.def(`<filter id="${S.id("vol")}"${CIF} x="-10%" y="-5%" width="120%" height="110%"><feOffset in="SourceAlpha" dx=".5" dy=".2" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="k"/><feFlood flood-color="#fff2d0" flood-opacity=".85"/><feComposite in2="k" operator="in" result="licht"/><feOffset in="SourceAlpha" dx="-1.3" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="s"/><feGaussianBlur in="s" stdDeviation=".6" result="sb"/><feFlood flood-color="#1a2440" flood-opacity=".38"/><feComposite in2="sb" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="schatten"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="schatten"/><feMergeNode in="licht"/></feMerge></filter>`);
+S.def(`<filter id="${S.id("vol")}"${CIF} x="-10%" y="-5%" width="120%" height="110%"><feOffset in="SourceAlpha" dx=".22" dy=".1" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="k"/><feFlood flood-color="#fff2d0" flood-opacity=".45"/><feComposite in2="k" operator="in" result="licht"/><feOffset in="SourceAlpha" dx="-1.3" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="s"/><feGaussianBlur in="s" stdDeviation=".6" result="sb"/><feFlood flood-color="#1a2440" flood-opacity=".38"/><feComposite in2="sb" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="schatten"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="schatten"/><feMergeNode in="licht"/></feMerge></filter>`);
 const VOL = `filter="url(#${S.id("vol")})"`;
 
 /* =====================================================================
@@ -254,7 +254,7 @@ let BERG = "";
     rippen += `M${r(x0)} ${r(y0)} L${r(x0 + w)} ${r(y0 + 0.4)} L${r(x0 + dx + w * 0.6)} ${r(y0 + L)} L${r(x0 + dx - w * 0.3)} ${r(y0 + L - 0.5)} Z`;
     rippenL += `M${r(x0 - 0.35)} ${r(y0)} L${r(x0)} ${r(y0)} L${r(x0 + dx - w * 0.3)} ${r(y0 + L - 0.5)} L${r(x0 + dx - w * 0.6)} ${r(y0 + L - 0.6)} Z`;
   }
-  for (let i = 0; i < 115; i++) {
+  for (let i = 0; i < 95; i++) {
     const q = zufallPunkt(imOst, 44, 100, 120, 224); if (!q) continue;
     const [x0, y0] = q, L = 1.2 + z() * 4.5 * (y0 > 75 ? 1.5 : 1), hh = 0.3 + z() * 0.5;
     const pts = [[x0, y0], [x0 - L * 0.5, y0 + L * 0.18 - hh * 0.3], [x0 - L, y0 + L * 0.36], [x0 - L * 0.6, y0 + L * 0.3 + hh * 0.6], [x0 - L * 0.1, y0 + hh]];
@@ -484,12 +484,16 @@ function fensterAuf(f, o, s) {
       const unterseite = [Q(u0, hb2), Q(u1, hb2), Qv(u1, hb2, aus), Qv(u0, hb2, aus)];
       let latten = "";
       const nl = Math.max(4, Math.round((u1 - u0) / 0.25));
-      if (s > 5) for (let i = 1; i < nl; i++) { const uu = u0 + (u1 - u0) * i / nl; latten += `M${pt(Qv(uu, hb2 + 1.0, aus))} L${pt(Qv(uu, hb2 + 0.05, aus))}`; }
+      if (s > 7) for (let i = 1; i < nl; i++) { const uu = u0 + (u1 - u0) * i / nl; latten += `M${pt(Qv(uu, hb2 + 1.0, aus))} L${pt(Qv(uu, hb2 + 0.05, aus))}`; }
       let blumen = "", blaetter = "";
-      const nb = Math.max(4, Math.round((u1 - u0) / 0.3));
+      const nb = Math.max(4, Math.round((u1 - u0) / (s > 8 ? 0.3 : 0.6)));
       const z = zufall(Math.round(h * 100 + o.D0));
-      for (let i = 0; i < nb; i++) { const uu = u0 + (u1 - u0) * (i + 0.5) / nb, [x, y] = Qv(uu, hb2 + 1.12, aus + 0.08), rr = Math.max(0.35, 0.16 * s); blaetter += `<circle cx="${r(x)}" cy="${r(y + rr * 0.3)}" r="${r(rr * 1.1)}"/>`; blumen += `<circle cx="${r(x + (z() - 0.5) * rr)}" cy="${r(y - rr * 0.4)}" r="${r(rr * 0.75)}"/>`; }
-      const bal = `<path d="${pz(unterseite)}" fill="#2a1a10"/><path d="${pz(br)}" fill="${tönen("#7a5030", f.licht + 0.1)}"/><path d="${latten}" stroke="#3a2414" stroke-width="${r(Math.max(0.12, 0.035 * s))}"/><g fill="#3f6a2c">${blaetter}</g><g fill="#d8202e">${blumen}</g>`;
+      for (let i = 0; i < nb; i++) {
+        const uu = u0 + (u1 - u0) * (i + 0.5) / nb, [x, y] = Qv(uu, hb2 + 1.12, aus + 0.08), rr = Math.max(0.3, 0.13 * s);
+        blaetter += `<ellipse cx="${r(x - rr * 0.5)}" cy="${r(y + rr * 0.4)}" rx="${r(rr * 0.9)}" ry="${r(rr * 0.6)}"/><ellipse cx="${r(x + rr * 0.6)}" cy="${r(y + rr * 0.5)}" rx="${r(rr * 0.8)}" ry="${r(rr * 0.55)}"/>`;
+        for (let j = 0; j < (s > 8 ? 3 : 1); j++) blumen += `<circle cx="${r(x + (z() - 0.5) * rr * 1.6)}" cy="${r(y - rr * (0.2 + z() * 0.7))}" r="${r(rr * (0.32 + z() * 0.2))}"/>`;
+      }
+      const bal = `<path d="${pz(unterseite)}" fill="#2a1a10"/><path d="${pz(br)}" fill="${tönen("#7a5030", f.licht + 0.1)}"/><path d="${latten}" stroke="#3a2414" stroke-width="${r(Math.max(0.12, 0.035 * s))}"/><path d="${pz([Qv(u0, hb2 + 1.0, aus + 0.02), Qv(u1, hb2 + 1.0, aus + 0.02), Qv(u1, hb2 + 1.12, aus + 0.12), Qv(u0, hb2 + 1.12, aus + 0.12)])}" fill="#6a4426"/><g fill="#3f6a2c">${blaetter}</g><g fill="#d8202e">${blumen}</g>${s > 8 ? `<g fill="#ff6a6a" opacity=".6">${blumen.replace(/r="([\d.]+)"/g, (m, v) => `r="${r(v * 0.45)}"`)}</g>` : ""}`;
       g += bal;
       BALKONE.push({ o, h: hb2, s, Qv, u0, u1, aus });
     }
@@ -505,7 +509,13 @@ function stadel(o) {
   const zentrum = [Xm, Dm, hs / 2];
   /* Sockel (Bruchstein) */
   const sockel = [[[X0, D0, h0], [X1, D0, h0], [X1, D0, hs], [X0, D0, hs]], [[X0 < 0 ? X1 : X0, D0, h0], [X0 < 0 ? X1 : X0, D1, h0], [X0 < 0 ? X1 : X0, D1, hs], [X0 < 0 ? X1 : X0, D0, hs]]];
-  for (const p of sockel) { const f = flaecheInfo(p, zentrum); if (f.sicht) g += `<path d="${poly3(p)}" fill="${tönen("#9a958c", f.licht)}"/>`; }
+  for (const p of sockel) {
+    const f = flaecheInfo(p, zentrum); if (!f.sicht) continue;
+    g += `<path d="${poly3(p)}" fill="${tönen("#9a958c", f.licht)}"/>`;
+    const zz = zufall(Math.round(D0 * 10)); let fu = "";
+    for (let h = h0 + 0.3; h < hs; h += 0.35) { const a = p[0], b = p[1]; for (let t = zz() * 0.2; t < 1; t += 0.18 + zz() * 0.12) { const t2 = Math.min(1, t + 0.12 + zz() * 0.1); const A = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, h], Bq = [a[0] + (b[0] - a[0]) * t2, a[1] + (b[1] - a[1]) * t2, h + (zz() - 0.5) * 0.05]; fu += `M${pt(proj(A))} L${pt(proj(Bq))} M${pt(proj(Bq))} L${pt(proj([Bq[0], Bq[1], h + 0.33]))}`; } }
+    g += `<path d="${fu}" stroke="#5e5a54" stroke-width=".3" opacity=".6"/>`;
+  }
   /* Stützen und Steinplatten: vorne drei, an der Flussseite drei */
   const s = F / D0;
   let stuetzen = "", platten = "";
@@ -606,7 +616,7 @@ S.teil({ id: "wald", de: "der Wald", syl: "WALD", it: "il bosco", itSyl: "BO-sco
    ===================================================================== */
 const HAEUSER = [
   /* fern (Talboden 120–300 m): kleine Chalets */
-  ...[[-24, 260, 9], [-14, 240, 8], [12, 250, 9], [22, 230, 8], [-20, 200, 10], [16, 190, 9], [30, 170, 11], [-32, 165, 10], [-16, 150, 10], [13, 140, 9], [24, 130, 10], [-26, 125, 12]].map(([X, D, h], i) => ({ X0: X < 0 ? X - 9 : X, X1: X < 0 ? X : X + 9, D0: D, D1: D + 10, he: h, first: i % 2 ? "X" : "D", fern: true })),
+  ...[[-18, 240, 9], [16, 235, 9], [-20, 195, 10], [16, 190, 9], [30, 170, 11], [-16, 150, 10], [13, 140, 9], [-26, 125, 12]].map(([X, D, h], i) => ({ X0: X < 0 ? X - 9 : X, X1: X < 0 ? X : X + 9, D0: D, D1: D + 10, he: h, first: i % 2 ? "X" : "D", fern: true })),
   { X0: -26, X1: -13, D0: 96, D1: 108, he: 13, first: "D", balkon: true },
   { X0: 13, X1: 24, D0: 104, D1: 114, he: 11, first: "X" },
   { X0: -24, X1: -12.5, D0: 74, D1: 86, he: 12.5, first: "D", balkon: true, kamin: [-20, 80] },
@@ -662,7 +672,7 @@ let BODEN = "";
     for (const D of [9, 12, 16, 22, 30, 40, 55, 80, 120]) { const hh = hw(D) + f * 4.2, X = sg * (UFER - 0.9 * (1 - f)); pts.push(P(X, D, hh + (z() - 0.5) * 0.06)); }
     const q = zuschnitt(pts.concat(pts.slice().reverse()));
     lagen += "M" + pts.filter((p) => p[1] < 262 && p[1] > 0).map(pt).join(" L");
-    for (let D = 9.5 + z(); D < 45; D += 0.5 + z() * 0.7) { const hh = hw(D) + f * 4.2, X = sg * (UFER - 0.9 * (1 - f)), a2 = P(X, D, hh), b2 = P(X, D, hh + 0.42); if (a2[1] < 262) stoss += `M${pt(a2)} L${pt(b2)}`; }
+    for (let D = 9.5 + z(); D < 32; D += 0.7 + z() * 0.8) { const hh = hw(D) + f * 4.2, X = sg * (UFER - 0.9 * (1 - f)), a2 = P(X, D, hh), b2 = P(X, D, hh + 0.42); if (a2[1] < 262) stoss += `M${pt(a2)} L${pt(b2)}`; }
   }
   k += `<path d="${lagen}" stroke="#3a3632" stroke-width=".4" fill="none" opacity=".45"/><path d="${stoss}" stroke="#3a3632" stroke-width=".35" opacity=".4"/>`;
   k += `<path d="M${Lm.map(pt).join(" L")} M${Rm.map(pt).join(" L")}" stroke="#e6e1d8" stroke-width="1.1" fill="none"/>`;
@@ -699,7 +709,7 @@ let BODEN = "";
 
 /* 7 — die Häuser im Dorf (nah), Stadel und Lärchen */
 const STADEL = [{ X0: 10.4, X1: 14.2, D0: 60, D1: 64.5 }, { X0: 11, X1: 14.6, D0: 70, D1: 74 }];
-const LAERCHEN = [[16.5, 56, 17, 61, true], [9.8, 77, 15, 62, true], [17.5, 66, 13, 63, false], [-9.4, 69, 16, 64, true], [-9.6, 50, 18, 65, false], [10.4, 54, 14, 66, true]];
+const LAERCHEN = [[18.5, 57, 17, 61, true], [9.8, 79, 15, 62, true], [17.8, 68, 13, 63, false], [-9.4, 69, 16, 64, true], [-9.6, 50, 18, 65, false]];
 const STADEL_DATA = [];
 {
   const items = [...DORF_NAH];
@@ -717,7 +727,7 @@ const STADEL_DATA = [];
   const [plx, ply] = P(pl[0], pl[1], sd.hp), ps = F / pl[1];
   S.teil({ id: "stadel", de: "der Stadel", syl: "STA-del", it: "il granaio", itSyl: "gra-NA-io", en: "granary", anker: [sx, sy], kunst: STADEL_DATA.map((d) => d.g).join(""),
     tipp: "Im Stadel lagerten die Bauern früher Getreide und Heu.",
-    zoom: { x: r(sx - 14), y: r(sy - 22), w: 33, h: 22 },
+    zoom: { x: r(sx - 26), y: r(sy - 34), w: 54, h: 36 },
     unter: [
       { id: "steinplatte", de: "die Steinplatte", syl: "STEIN-plat-te", it: "la lastra di pietra", itSyl: "LA-stra di PIE-tra", en: "stone slab", x: plx, y: ply + 0.1 * ps, kunst: flaeche(-0.5 * ps, -0.3 * ps, 1.0 * ps, 0.45 * ps, 0.3),
         tipp: "Die runden Steinplatten halten die Mäuse ab: Sie können nicht um die Platte herumklettern." },
@@ -744,7 +754,8 @@ const STADEL_DATA = [];
   if (bal.length) {
     const b = bal[Math.min(1, bal.length - 1)], um = (b.u0 + b.u1) / 2;
     const [bx, by] = b.Qv(um, b.h, b.aus), [bx2] = b.Qv(b.u1, b.h, b.aus), [bx1] = b.Qv(b.u0, b.h, b.aus), [, byo] = b.Qv(um, b.h + 1.05, b.aus);
-    unter.push({ id: "balkon", de: "der Balkon", syl: "bal-KON", it: "il balcone", itSyl: "bal-CO-ne", en: "balcony", x: bx, y: by, kunst: flaeche(Math.min(bx1, bx2) - bx, byo - by, Math.abs(bx2 - bx1), by - byo, 0.4),
+    const xa = Math.min(bx1, bx2), xb = Math.min(398, Math.max(bx1, bx2)), xm = (xa + xb) / 2;
+    unter.push({ id: "balkon", de: "der Balkon", syl: "bal-KON", it: "il balcone", itSyl: "bal-CO-ne", en: "balcony", x: xm, y: by, kunst: flaeche(xa - xm, byo - by, xb - xa, by - byo, 0.4),
       tipp: "Fast jedes Chalet hat Holzbalkone voller Blumen." });
     const b2 = bal[0], [gx, gy] = b2.Qv(b2.u0 + (b2.u1 - b2.u0) * 0.3, b2.h + 1.12, b2.aus + 0.08), gs = b2.s;
     unter.push({ id: "geranie", de: "die Geranie", syl: "ge-RA-nie", it: "il geranio", itSyl: "ge-RA-nio", en: "geranium", x: gx, y: gy + 0.3 * gs, kunst: flaeche(-0.8 * gs, -0.6 * gs, 1.6 * gs, 0.8 * gs, 0.3),
@@ -753,7 +764,7 @@ const STADEL_DATA = [];
   const zx0 = P(h.X0, h.D0, 0)[0], zx1 = P(h.X1, h.D1, 0)[0];
   S.teil({ id: "chalet", de: "das Chalet", syl: "scha-LEE", it: "lo chalet", itSyl: "scia-LÈ", en: "chalet", anker: [cx, cy], kunst: c.g,
     tipp: "Ein Chalet ist ein Holzhaus in den Bergen. Unten ist es aus Stein.",
-    zoom: { x: r(Math.min(zx0, zx1) - 4), y: r(P(0, h.D0, hb(h.D0) + h.he + 3)[1]), w: 48, h: 32 }, unter });
+    zoom: { x: 318, y: 96, w: 82, h: 55 }, unter });
 }
 
 /* 10 — DAS ELEKTROTAXI auf dem linken Uferweg */
@@ -768,7 +779,7 @@ const STADEL_DATA = [];
   k += `<rect x="${r(x - 0.62 * s)}" y="${r(y - 0.62 * s)}" width="${r(0.2 * s)}" height="${r(0.1 * s)}" rx="${r(0.03 * s)}" fill="#fff7d8"/><rect x="${r(x + 0.42 * s)}" y="${r(y - 0.62 * s)}" width="${r(0.2 * s)}" height="${r(0.1 * s)}" rx="${r(0.03 * s)}" fill="#fff7d8"/>`;
   k += `<rect x="${r(x - 0.3 * s)}" y="${r(y - 0.55 * s)}" width="${r(0.6 * s)}" height="${r(0.14 * s)}" fill="#c9d0d6"/><text x="${r(x)}" y="${r(y - 0.44 * s)}" font-size="${r(0.1 * s)}" text-anchor="middle" fill="#2a2a2a" font-family="Arial">ZERMATT</text>`;
   k += `<rect x="${r(x - 0.66 * s)}" y="${r(y - 0.3 * s)}" width="${r(0.22 * s)}" height="${r(0.3 * s)}" rx="${r(0.05 * s)}" fill="#1b1b1d"/><rect x="${r(x + 0.44 * s)}" y="${r(y - 0.3 * s)}" width="${r(0.22 * s)}" height="${r(0.3 * s)}" rx="${r(0.05 * s)}" fill="#1b1b1d"/>`;
-  S.teil({ id: "elektrotaxi", de: "das Elektrotaxi", syl: "e-LEK-tro-ta-xi", it: "il taxi elettrico", itSyl: "TA-xi e-LET-tri-co", en: "electric taxi", x, y, kunst: `<g ${VOL}>${k}</g>`,
+  S.teil({ id: "elektrotaxi", de: "das Elektrotaxi", syl: "e-LEK-tro-ta-xi", it: "il taxi elettrico", itSyl: "TA-xi e-LET-tri-co", en: "electric taxi", anker: [x, y], kunst: `<g ${VOL}>${k}</g>`,
     tipp: "In Zermatt sind Autos verboten. Taxis und Lieferwagen fahren mit Strom." });
 }
 
@@ -817,7 +828,7 @@ const TER = { X0: 7.6, X1: 11.6, D0: 31.5, D1: 37 };
   const [ax, ay] = P((TER.X0 + TER.X1) / 2, TER.D0, h0);
   S.teil({ id: "terrasse", de: "die Terrasse", syl: "ter-RAS-se", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", anker: [ax, ay], kunst: k,
     tipp: "Auf der Terrasse essen die Gäste mit Blick auf das Matterhorn.",
-    zoom: { x: r(tx - 14), y: r(ty - 15), w: 30, h: 20 },
+    zoom: { x: r(tx - 15), y: r(ty - 22), w: 45, h: 30 },
     unter: [
       { id: "fondue", de: "das Fondue", syl: "fon-DÜ", it: "la fonduta", itSyl: "fon-DU-ta", en: "fondue", x: fx, y: fy, kunst: flaeche(-0.16 * ts, -0.32 * ts, 0.32 * ts, 0.34 * ts, 0.3),
         tipp: "Beim Käsefondue taucht man Brotwürfel in geschmolzenen Käse." },
@@ -842,7 +853,7 @@ const TER = { X0: 7.6, X1: 11.6, D0: 31.5, D1: 37 };
 }
 
 /* 13 — DIE BANK am linken Uferweg mit Picknick (Lupe: Taschenmesser, Schokolade) und 14/15 — DIE WANDERER */
-const BANK = { X: -8.0, D: 30.5 };
+const BANK = { X: -9.6, D: 31.5 };
 {
   const s = F / BANK.D, h0 = hb(BANK.D), [bx, by] = P(BANK.X, BANK.D, h0);
   /* Bank längs zum Fluss (Sitz zeigt zum Wasser): von uns aus seitlich, 1,8 m lang */
@@ -878,7 +889,7 @@ const BANK = { X: -8.0, D: 30.5 };
   S.teil({ id: "wanderin", de: "die Wanderin", syl: "WAN-de-rin", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker (woman)", x: wx, y: wy, kunst: `<g ${VOL}>${schlank(wi.svg, 2)}</g>`,
     tipp: "Die Wanderin macht eine Pause und isst Schokolade." });
   /* DER WANDERER steht daneben und schaut zum Matterhorn (Rucksack, Wanderstöcke) */
-  const Dw = BANK.D - 1.6, Xw = BANK.X + 0.4, [hx, hy] = P(Xw, Dw, h0), hs = F / Dw;
+  const Dw = 27.6, Xw = -7.3, [hx, hy] = P(Xw, Dw, hb(Dw)), hs = F / Dw;
   const halt = { lende: 1, brust: -2, nacken: -6, kopf: -10, schulterL: { vor: 18, seit: 12 }, ellbogenL: 20, unterarmL: 0, handL: 0, fingerL: 0.8, schulterR: { vor: 18, seit: 12 }, ellbogenR: 22, unterarmR: 0, handR: 0, fingerR: 0.8, huefteL: { vor: 6, seit: 4, dreh: -4 }, knieL: 6, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -4 }, knieR: 3, fussR: 0 };
   const wa = B.mensch({ id: "chz_wa", geschlecht: "m", pose: halt, blick: 200, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", ohneSchatten: true,
     kleidung: { oberteil: { stueck: "pullover", farbe: "#e0802e" }, jacke: { stueck: "jacke", farbe: "#2f5f95" }, unterteil: { stueck: "hose", farbe: "#4a4a40" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "muetze", farbe: "#c8352e" } } }, 1.78 * hs);
@@ -889,9 +900,9 @@ const BANK = { X: -8.0, D: 30.5 };
   const ru = (wa.z.punkte && wa.z.punkte.ruecken) ? [wa.z.punkte.ruecken[0] * wa.k, wa.z.punkte.ruecken[1] * wa.k] : [0, -1.25 * hs];
   const rucksack = `<path d="M${r(ru[0] - 0.19 * hs)} ${r(ru[1] - 0.26 * hs)} Q${r(ru[0])} ${r(ru[1] - 0.34 * hs)} ${r(ru[0] + 0.19 * hs)} ${r(ru[1] - 0.26 * hs)} L${r(ru[0] + 0.2 * hs)} ${r(ru[1] + 0.2 * hs)} Q${r(ru[0])} ${r(ru[1] + 0.27 * hs)} ${r(ru[0] - 0.2 * hs)} ${r(ru[1] + 0.2 * hs)} Z" fill="${S.lg("rucksack", [[0, "#3e8a4a"], [1, "#24562e"]], 0, 0, 1, 0)}"/><path d="M${r(ru[0] - 0.17 * hs)} ${r(ru[1] - 0.12 * hs)} L${r(ru[0] + 0.17 * hs)} ${r(ru[1] - 0.12 * hs)}" stroke="#1a3a1e" stroke-width="${r(0.02 * hs)}"/><rect x="${r(ru[0] - 0.1 * hs)}" y="${r(ru[1] + 0.02 * hs)}" width="${r(0.2 * hs)}" height="${r(0.12 * hs)}" rx="${r(0.02 * hs)}" fill="#2f6a3a"/>`;
   const schatten = `<path d="M${r(-0.18 * hs)} 0 L${r(0.18 * hs)} 0 L${r(2.45 * hs)} ${r(-0.12 * hs)} L${r(2.3 * hs)} ${r(-0.22 * hs)} Z" fill="#1c2638" opacity=".3" filter="url(#${S.id("weich")})"/>`;
-  S.teil({ id: "wanderer", de: "der Wanderer", syl: "WAN-de-rer", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker", x: hx, y: hy, kunst: schatten + `<g ${VOL}>${schlank(wa.svg, 2)}${rucksack}${stoecke}</g>`,
+  S.teil({ id: "wanderer", de: "der Wanderer", syl: "WAN-de-rer", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker", x: hx, y: hy, kunst: schatten + `<g ${VOL}>${schlank(wa.svg, 2)}${rucksack}</g>${stoecke}`,
     tipp: "Rund um Zermatt gibt es über 400 Kilometer Wanderwege.",
-    zoom: { x: r(hx - 12), y: r(hy - 2.1 * hs), w: 24, h: 16 + r(0.2 * hs) },
+    zoom: { x: r(hx - 16), y: r(hy - 2.2 * hs), w: 36, h: 24 },
     unter: [
       { id: "rucksack", de: "der Rucksack", syl: "RUCK-sack", it: "lo zaino", itSyl: "ZAI-no", en: "backpack", x: hx + ru[0], y: hy + ru[1] + 0.25 * hs, kunst: flaeche(-0.22 * hs, -0.6 * hs, 0.44 * hs, 0.62 * hs, 0.3),
         tipp: "Im Rucksack sind Regenjacke, Wasser und Proviant." },
