@@ -64,6 +64,8 @@ const B = require("../bau");
 
 const S = neueSzene({ id: "amsterdam", titel: "Amsterdam", emoji: "🚲", thema: "Länder", kuerzel: "ams", fassung: 854, breite: 400, hoehe: 260 });
 /* Verläufe nur einmal anlegen (keine doppelten ids) */
+/* Verläufe in Bildkoordinaten: die Koordinaten aus "extra" ersetzen die Vorgaben (sonst stünden x1/y1 doppelt da, und der Browser nähme die ersten) */
+{ const lg0 = S.lg; S.lg = (n, st, x1 = 0, y1 = 0, x2 = 0, y2 = 1, ex = "") => { if (!/ x1=/.test(ex)) return lg0(n, st, x1, y1, x2, y2, ex); const m = (k) => ex.match(new RegExp(" " + k + '="([^"]*)"'))[1]; return lg0(n, st, m("x1"), m("y1"), m("x2"), m("y2"), ex.replace(/ (x1|y1|x2|y2)="[^"]*"/g, "")); }; }
 { const lg = S.lg, rg = S.rg, schon = {}; S.lg = (n, ...a) => schon["l" + n] || (schon["l" + n] = lg(n, ...a)); S.rg = (n, ...a) => schon["r" + n] || (schon["r" + n] = rg(n, ...a)); }
 /* anker: Kunst in Bildkoordinaten, Bezugspunkt (x, y) für die App */
 /* Alles, was über den Bildrand hinausragt, auf den Rand setzen (unsichtbar dort, aber die Trefferfläche bleibt im Bild) */

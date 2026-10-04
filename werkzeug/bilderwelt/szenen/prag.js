@@ -645,7 +645,7 @@ function bruecke(S0, S1) {
     /* Fleckung des Sandsteins (nur nah) */
     if (nah) {
       let fl = "";
-      for (let s = S0 + 2; s < 40; s += 1.5 + rnd() * 2.5) { const h = 0.1 + rnd() * 0.5, l = 0.5 + rnd() * 1.2, d = 0.15 + rnd() * 0.25; fl += `M${P(s, innen, h)} L${P(s + l, innen, h + d * 0.4)} L${P(s + l * 0.8, innen, h + d)} L${P(s - 0.2, innen, h + d * 0.7)}Z`; }
+      for (let s = S0 + 2; s < 40; s += 1.5 + rnd() * 2.5) { const h = 0.1 + rnd() * 0.5, l = 0.5 + rnd() * 1.2, d = 0.15 + rnd() * 0.25; const qd = klipp([P(s, innen, h), P(s + l, innen, h + d * 0.4), P(s + l * 0.8, innen, h + d), P(s - 0.2, innen, h + d * 0.7)]); if (qd.length > 2) fl += `M${qd.join(" L")}Z`; }
       g += `<path d="${fl}" fill="${L ? "#7a6d5c" : "#2e2924"}" opacity=".16"/>`;
     }
     g += poly([P(S0, innen, HP), P(S1, innen, HP), P(S1, innen, HP + 0.03), P(S0, innen, HP + 0.03)], "#2e2924", ` opacity=".55"`);

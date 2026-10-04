@@ -514,7 +514,7 @@ const denkmalUnter = [];
     g += F("M4.8 -22 Q5.6 -13 4.9 -5.4 L5.9 -5.2 Q6.7 -13 6.2 -22 Z", DK, ' opacity=".4"') + F("M-3.2 -21.6 Q-4.4 -13 -6.4 -6.2 L-5.4 -6 Q-2.8 -13 -1.9 -22 Z", DK, ' opacity=".4"');
     g += kante("M1.7 -21 Q1.4 -13 2.2 -5.6", 0.45) + kante("M-6.4 -21 Q-8.2 -14 -9.1 -6.4", 0.45) + `<path d="M1.6 -12.6 L6.3 -12.6 M-8.4 -13 L-3.4 -12.4" stroke="${HL}" stroke-width=".55" opacity=".6"/>`;
     /* Hose zwischen den offenen Rockflügeln */
-    g += F("M-5.4 -58 L5.4 -58 L5.8 -22.6 L-5.6 -21.8 Z", BRZ) + `<path d="M.2 -48 Q-.2 -34 -1 -22" stroke="${DK}" stroke-width=".9" fill="none" opacity=".6"/>` + F("M2.2 -50 L5.4 -50 L5.8 -22.6 L3 -22.6 Z", DK, ' opacity=".3"');
+    g += F("M-6.4 -58 L6.4 -58 L7 -22.8 L-6.8 -21.6 Z", BRZL) + `<path d="M.2 -48 Q-.2 -34 -1 -22" stroke="${DK}" stroke-width=".9" fill="none" opacity=".6"/>` + F("M2.2 -50 L5.4 -50 L5.8 -22.6 L3 -22.6 Z", DK, ' opacity=".3"');
     g += bahn(-1.6, -40, -4.4, -28, .5, .8) + kante("M-5 -54 Q-5.4 -38 -5.2 -23", 0.4);
     /* Weste mit Knöpfen, offener Hemdkragen (Bronze, nicht hell) */
     g += F("M-5.6 -82 L5.6 -82 L5.4 -56.6 Q2.6 -54.4 0 -55.6 Q-2.6 -55 -5.6 -57.6 Z", BRZ2);
@@ -522,16 +522,16 @@ const denkmalUnter = [];
     g += F("M3.4 -80 L5.6 -80 L5.4 -57 L3.4 -55.4 Z", DK, ' opacity=".3"');
     g += F("M-3.2 -87.2 L0 -81.6 L-1 -86.4 Z", BRZL) + F("M3.2 -87.2 L0 -81.6 L1 -86.4 Z", "#5a5238") + patina("M-.9 -86.2 L0 -82.2 L.9 -86.2 Z", 0.55);
     /* der lange Rock als geschlossene Form: Schultern, Revers, Taille, ausgestellter Saum bis unter das Knie (Saum kippt) */
-    const RK = "M-3.2 -86.8 Q-8.2 -86.8 -10.8 -84.4 Q-12.6 -82.4 -12.2 -78 L-11 -66 Q-10.2 -60.6 -10 -57.4 Q-13.2 -40 -14.8 -21 Q-10 -20 -4.6 -20.8 L-2.8 -40 Q-2.4 -50 -3.4 -58 L-6 -73.6 L-2.2 -82 L2.2 -82 L6 -73.6 L3.4 -58 Q2.6 -50 3 -40 L5 -23.2 Q10 -22.6 14.4 -23.6 Q12.8 -40 9.8 -57.4 Q10.2 -60.6 10.8 -66 L12.1 -78 Q12.4 -82.4 10.6 -84.4 Q8 -86.8 3.2 -86.8 Q0 -88.6 -3.2 -86.8 Z";
+    const RK = "M-3.2 -86.8 Q-8.2 -86.8 -10.8 -84.4 Q-12.6 -82.4 -12.2 -78 L-11 -66 Q-10.2 -60.6 -10 -57.4 Q-13.2 -40 -14.8 -21 Q-10.4 -20 -6.4 -20.8 L-3.4 -40 Q-2.6 -50 -3.4 -58 L-6 -73.6 L-2.2 -82 L2.2 -82 L6 -73.6 L3.4 -58 Q2.8 -50 3.6 -40 L6.6 -23.4 Q10.4 -22.8 14.4 -23.6 Q12.8 -40 9.8 -57.4 Q10.2 -60.6 10.8 -66 L12.1 -78 Q12.4 -82.4 10.6 -84.4 Q8 -86.8 3.2 -86.8 Q0 -88.6 -3.2 -86.8 Z";
     g += F(RK, BRZ);
     g += F("M6.4 -82 Q11 -82 11.4 -76 L10.2 -64 Q9.6 -60 9.2 -57.6 Q11.8 -40 13 -23.4 L14.4 -23.6 Q12.8 -40 9.8 -57.4 Q10.2 -60.6 10.8 -66 L12.1 -78 Q12.4 -82.4 10.6 -84.4 Z", DK, ' opacity=".38"');
     /* Revers: links im Licht, rechts im Schatten */
     g += F("M-2.2 -82 L-6 -73.6 L-4.4 -66 L-5.6 -76 L-2.8 -84 Z", BRZL) + F("M2.2 -82 L6 -73.6 L4.4 -66 L5.6 -76 L2.8 -84 Z", "#2e2a1e");
     g += bahn(-11.4, -54, -13.6, -22, -.6, 1.2) + bahn(-7.4, -48, -8.8, -21.4, -.3, 1) + bahn(10.6, -54, 12.6, -24, .6, 1.2) + bahn(7, -46, 8, -23.4, .3, .9);
     g += patina("M-10.6 -57 Q-12.6 -40 -13.6 -23 L-12.4 -23 Q-11.6 -40 -9.8 -56 Z") + patina("M9.4 -56 Q11.4 -40 12 -24 L13.2 -24 Q12.2 -40 10.2 -57 Z", 0.45) + patina("M-10.4 -80 Q-11.4 -74 -10.8 -68 L-9.6 -68 Q-10 -74 -9.4 -80 Z", 0.45);
-    g += kante("M-10.6 -83.4 Q-11.9 -78 -11.2 -70 Q-10.4 -63 -10 -58.4 Q-13 -40 -14.4 -22", 0.6) + kante("M-4.2 -66 L-3.4 -58 Q-2.6 -50 -3 -40 L-4.8 -21.6", 0.6);
+    g += kante("M-10.6 -83.4 Q-11.9 -78 -11.2 -70 Q-10.4 -63 -10 -58.4 Q-13 -40 -14.4 -22", 0.6) + kante("M-4.2 -66 L-3.4 -58 Q-2.8 -50 -3.6 -40 L-6.4 -21.4", 0.6);
     /* Vorderkanten der Rockflügel: der rechte wirft einen Schatten auf die Hose */
-    g += `<path d="M3.4 -58 Q2.6 -50 3 -40 L5 -23.2" stroke="${DK}" stroke-width="1.1" fill="none" opacity=".55" transform="translate(-.7 0)"/>`;
+    g += `<path d="M3.4 -58 Q2.8 -50 3.6 -40 L6.6 -23.4" stroke="${DK}" stroke-width="1.4" fill="none" opacity=".55" transform="translate(-.7 0)"/>`;
     /* linker Arm (rechts im Bild) hängt mit der Schriftrolle am Oberschenkel */
     g += arm([[10.6, -82], [13.4, -66], [12.4, -53.4]], 5.8, 4.4);
     g += `<rect x="11.2" y="-54" width="2.8" height="16" rx="1.2" fill="${BRZL}" transform="rotate(-6 12.6 -46)"/><path d="M11.6 -53 L10.2 -38.4" stroke="${HL}" stroke-width=".5" opacity=".7"/><ellipse cx="12.4" cy="-54" rx="1.4" ry=".8" fill="${HL}" opacity=".6"/>`;
