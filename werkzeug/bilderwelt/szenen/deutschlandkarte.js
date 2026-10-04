@@ -127,7 +127,7 @@ const INSELN_NORD = {
   foehr: "8.4,54.73 8.47,54.765 8.58,54.755 8.6,54.69 8.52,54.67 8.42,54.69",
   amrum: "8.33,54.62 8.35,54.7 8.39,54.69 8.38,54.63 8.35,54.61",
   pellworm: "8.58,54.5 8.65,54.54 8.7,54.51 8.64,54.48",
-  helgoland: "7.87,54.175 7.88,54.19 7.895,54.183 7.89,54.172",
+  helgoland: "7.85,54.172 7.865,54.2 7.9,54.19 7.895,54.168",
   borkum: "6.65,53.58 6.72,53.62 6.8,53.6 6.75,53.56",
   juist: "6.9,53.675 7.0,53.69 7.1,53.695 7.08,53.68 6.95,53.67",
   norderney: "7.1,53.7 7.2,53.725 7.3,53.715 7.28,53.7 7.15,53.695",
@@ -417,8 +417,11 @@ const GEBIRGE = [
 const text = (x, y, t, gr, farbe, extra = "") => `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" text-anchor="middle" fill="${farbe}" font-family="Georgia,'Times New Roman',serif" ${extra}>${t}</text>`;
 const halo = (x, y, t, gr, farbe, hf = "#fbf6e8", extra = "", hb = 0.9) => `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" text-anchor="middle" fill="${farbe}" stroke="${hf}" stroke-width="${hb}" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" ${extra}>${t}</text>`;
 S.def(`<pattern id="${S.id("wellen")}" width="9" height="5" patternUnits="userSpaceOnUse"><path d="M.5 3 q1.1 -1.1 2.2 0 t2.2 0" fill="none" stroke="#fff" stroke-width=".28" opacity=".55"/></pattern>`);
+/* Punkte außerhalb des Bildes an den Rand legen (als Ecke), damit das Meer nicht übersteht */
+const imBild = (pts) => pts.map((q) => { const x = Math.max(-0.4, Math.min(BR + 0.4, q.x)), y = Math.max(-0.4, Math.min(HO + 0.4, q.y)); return x !== q.x || y !== q.y ? { x, y, hart: true } : q; })
+  .filter((q, i, a) => !i || Math.hypot(q.x - a[i - 1].x, q.y - a[i - 1].y) > 0.05);
 function meer(id, aussen, inseln, label, tipp, worte) {
-  const d = weg(aussen) + Object.values(inseln).map((t) => weg(t)).join("");
+  const d = weg(imBild(pkt(aussen))) + Object.values(inseln).map((t) => weg(t)).join("");
   S.def(`<path id="${S.id(id)}" d="${d}" fill-rule="evenodd" clip-rule="evenodd"/>`);
   S.def(`<clipPath id="${S.id(id + "clip")}">${USE(id)}</clipPath>`);
   let k = USE(id, `fill="${MEER}"`);
@@ -771,8 +774,8 @@ const STADT = {
   heidelberg: { ll: [8.69, 49.40], lab: [-7.4, -1, "e"] },
   stuttgart: { ll: [9.18, 48.78], lab: [0, 5.2, "m"] },
   freiburg: { ll: [7.85, 47.99], lab: [0, 5.2, "m"], sub: "im Breisgau" },
-  duesseldorf: { ll: [6.78, 51.23], bild: [-5, 0], lab: [-8, -3, "e"] },
-  koeln: { ll: [6.96, 50.94], lab: [6, -0.5, "s"] },
+  duesseldorf: { ll: [6.78, 51.23], bild: [2.6, 0], lab: [-3, -3, "e"] },
+  koeln: { ll: [6.96, 50.94], bild: [-3.6, 0], lab: [3, 3.6, "s"] },
   aachen: { ll: [6.08, 50.78], lab: [0, 5.2, "m"] },
   rothenburg: { ll: [10.18, 49.38], lab: [-3.5, 5.2, "m"], sub: "ob der Tauber" },
   nuernberg: { ll: [11.08, 49.45], lab: [0.5, 5.2, "m"] },
@@ -816,7 +819,7 @@ function stadtBild(id) {
   const haupt = (lo, la, t, dx = 0, dy = 4, al = "middle") => { const [x, y] = P(lo, la); return `<circle cx="${r(x)}" cy="${r(y)}" r=".85" fill="#8c7a5c" stroke="#fbf5e6" stroke-width=".35"/>` + `<text x="${r(x + dx)}" y="${r(y + dy)}" font-size="3.1" font-style="italic" text-anchor="${al}" fill="#7c6a4e" font-family="Georgia,'Times New Roman',serif">${t}</text>`; };
   g += haupt(4.9, 52.37, "Amsterdam") + haupt(4.35, 50.85, "Brüssel") + haupt(6.13, 49.61, "Luxemburg", -1.5, 4.2, "end") + haupt(2.35, 48.86, "Paris") + haupt(14.42, 50.08, "Prag") + haupt(16.37, 48.21, "Wien", 0, -2.2);
   const fl = (lo, la, t, w = 0, gr = 3.3) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" font-style="italic" text-anchor="middle" fill="#2f6f93" stroke="#eef6f4" stroke-width=".7" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" transform="rotate(${w} ${r(x)} ${r(y)})" letter-spacing=".3">${t}</text>`; };
-  g += fl(14.85, 48.12, "Donau", -4, 3.6) + fl(10.5, 50.13, "Main", 8) + fl(9.02, 52.78, "Weser", 62) + fl(7.02, 49.98, "Mosel", 18) + fl(8.93, 48.36, "Neckar", -48, 3) + fl(14.85, 52.6, "Oder", 80);
+  g += fl(14.85, 48.12, "Donau", -4, 3.6) + fl(10.5, 50.13, "Main", 8) + fl(9.0, 52.56, "Weser", 62) + fl(7.02, 49.98, "Mosel", 18) + fl(8.93, 48.36, "Neckar", -48, 3) + fl(14.85, 52.6, "Oder", 80);
   const geb = (lo, la, t, w = 0, gr = 3.1) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" font-style="italic" text-anchor="middle" fill="#6e5330" stroke="#f2ead2" stroke-width=".7" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" letter-spacing=".7" transform="rotate(${w} ${r(x)} ${r(y)})">${t}</text>`; };
   g += geb(10.62, 51.67, "Harz") + geb(8.42, 48.42, "Schwarzwald", -82) + geb(13.15, 50.52, "Erzgebirge", -12) + geb(6.62, 50.15, "Eifel");
   const insel = (lo, la, t, al = "middle") => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="2.7" font-style="italic" text-anchor="${al}" fill="#4d6b52" stroke="#f2f0de" stroke-width=".6" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">${t}</text>`; };
@@ -856,15 +859,15 @@ S.def(`<g id="${S.id("berg3")}"><path d="M-3 0 C-2.2 -1.6 -1 -2.3 0 -2.3 C1.1 -2
   const nordY = (x) => { for (let i = 1; i < NORD.length; i++) if (x <= NORD[i].x) { const a = NORD[i - 1], b = NORD[i], t = (x - a.x) / (b.x - a.x); return a.y + t * (b.y - a.y); } return NORD[NORD.length - 1].y; };
   let k = `<path d="${weg(poly)}" fill="${S.lg("alpenband", [[0, "#cfd6b8", 0.75], [0.35, "#c6c9b3", 0.8], [1, "#b7b8a6", 0.85]])}"/>`;
   const rz = zufall(77), berge = [];
-  for (let y = 236; y < 270; y += 2.7) for (let x = 146; x < 326; x += 6.2) {
-    const p = { x: x + (rz() - 0.5) * 4.2, y: y + (rz() - 0.5) * 1.6 };
+  for (let y = 236; y < 272; y += 3.3) for (let x = 146; x < 326; x += 7.6) {
+    const p = { x: x + (rz() - 0.5) * 5 + (Math.round(y / 3.3) % 2) * 3.8, y: y + (rz() - 0.5) * 1.8 };
     const t = p.y - nordY(p.x);
     if (t < 2.2 || !inPoly({ x: p.x, y: p.y - 1 }, poly)) continue;
     p.t = t; berge.push(p);
   }
   berge.sort((a, b) => a.y - b.y);
   for (const p of berge) {
-    const art = p.t < 5 ? "berg3" : rz() < 0.55 ? "berg1" : "berg2", s = Math.min(1.55, 0.7 + p.t / 16) * (0.85 + rz() * 0.3);
+    const art = p.t < 4.5 ? "berg3" : rz() < 0.55 ? "berg1" : "berg2", s = Math.min(2.0, 0.95 + p.t / 13) * (0.85 + rz() * 0.3);
     k += `<use href="#${S.id(art)}" transform="${tr(p.x, p.y, s, rz() < 0.35 ? -s : s)}"/>`;
   }
   /* Zugspitze */

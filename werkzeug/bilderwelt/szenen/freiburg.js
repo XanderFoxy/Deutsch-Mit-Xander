@@ -1264,7 +1264,7 @@ const MANN = { w: [53.5, -49.6] };
   /* eine Stadttaube, etwa 32 cm lang: kleiner Kopf, grau-blauer Körper, zwei dunkle Flügelbinden,
      grün-violett schillernder Hals, dunkler Schnabel mit heller Wachshaut, rote Füße */
   const taube = (dx, dy, sp, pick) => {
-    const g = s * .32, q = (a, b) => `${r(dx + sp * a * g)} ${r(dy + b * g)}`;
+    const g = s * .37, q = (a, b) => `${r(dx + sp * a * g)} ${r(dy + b * g)}`;
     let t = `<ellipse cx="${r(dx)}" cy="${r(dy + .01 * g)}" rx="${r(.36 * g)}" ry="${r(.05 * g)}" fill="#2a1e14" opacity=".25"/>`;
     /* kurze rote Beine und Zehen */
     t += `<path d="M${q(-.02, -.12)} L${q(-.03, 0)} M${q(.08, -.12)} L${q(.09, 0)} M${q(-.1, 0)} L${q(0, 0)} M${q(.04, 0)} L${q(.15, 0)}" stroke="#c8484a" stroke-width="${r(.03 * g)}" stroke-linecap="round"/>`;
@@ -1286,7 +1286,7 @@ const MANN = { w: [53.5, -49.6] };
   for (let i = 0; i < 9; i++) k += `<circle cx="${r((rnd() - .5) * 1.4 * s)}" cy="${r((rnd() - .5) * .1 * s)}" r="${r(.012 * s)}" fill="#e8c890"/>`;
   k += taube(-.42 * s, -.02 * s, 1, true) + taube(.22 * s, .04 * s, -1, false) + taube(.62 * s, -.05 * s, 1, true);
   /* eine vierte Taube landet gerade: Flügel hoch */
-  { const x = -.05 * s, y = -.32 * s, g = s * .32;
+  { const x = -.05 * s, y = -.34 * s, g = s * .37;
     k += `<path d="M${r(x - .3 * g)} ${r(y)} Q${r(x)} ${r(y + .12 * g)} ${r(x + .32 * g)} ${r(y - .02 * g)} Q${r(x + .1 * g)} ${r(y - .14 * g)} ${r(x - .3 * g)} ${r(y)} Z" fill="#8a94a6"/>`;
     k += `<path d="M${r(x - .05 * g)} ${r(y - .04 * g)} L${r(x - .45 * g)} ${r(y - .5 * g)} L${r(x - .1 * g)} ${r(y - .3 * g)} Z M${r(x + .08 * g)} ${r(y - .04 * g)} L${r(x + .3 * g)} ${r(y - .55 * g)} L${r(x + .2 * g)} ${r(y - .2 * g)} Z" fill="#a8b0c0"/>`;
     k += `<circle cx="${r(x + .36 * g)}" cy="${r(y - .06 * g)}" r="${r(.06 * g)}" fill="#6a7a8a"/><path d="M${r(x + .41 * g)} ${r(y - .05 * g)} l${r(.07 * g)} ${r(.02 * g)}" stroke="#2a2a2e" stroke-width="${r(.025 * g)}"/>`; }

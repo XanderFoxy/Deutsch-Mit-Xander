@@ -106,6 +106,8 @@ const AMFALL = [[712, 400], [722, 450], [735, 510], [748, 570], [760, 630], [770
 /* ---------- Filter und Stoffe ---------------------------------------- */
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="2.4"/></filter>`);
+S.def(`<filter id="${S.id("nebel")}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="5"/></filter>`);
+S.def(`<filter id="${S.id("nebel2")}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="3.2"/></filter>`);
 S.def(`<filter id="${S.id("weich")}" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".9"/></filter>`);
 S.def(`<filter id="${S.id("hauch")}" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".35"/></filter>`);
 const volumen = (name, licht, schat, dx = 0.35, a1 = 0.75, a2 = 0.35) => {
@@ -346,18 +348,13 @@ const GISCHT = [];
 {
   const zg = zufall(71);
   /* Ballen: breit über dem Becken, nach oben lockerer und vom Wind nach links (flussabwärts) über die Schlucht getrieben */
-  const quellen = [[400, 138, 22], [374, 142, 22], [348, 146, 21], [322, 146, 19], [298, 148, 16], [274, 150, 13]];
-  for (const [x, y, rr] of quellen) GISCHT.push([x, y, rr]);
-  /* aufsteigende Säule über dem Becken */
-  for (let i = 0; i < 12; i++) { const t = i / 11, x = 352 - t * 40 + (zg() - 0.5) * 34, y = 128 - t * 96 + (zg() - 0.5) * 10, rr = 12 + (1 - t) * 10 + zg() * 7; GISCHT.push([x, y, rr]); }
-  /* vom Wind nach links über die Schlucht getriebene Schwaden */
-  for (let i = 0; i < 10; i++) { const t = i / 9, x = 300 - t * 110 + (zg() - 0.5) * 16, y = 104 + t * 34 + (zg() - 0.5) * 16, rr = 10 + zg() * 7 - t * 3; GISCHT.push([x, y, rr]); }
+  /* ein großer, quellender Haufen über dem Becken: unten breit und dicht, oben lockerer, leicht nach links geneigt */
+  const reihen = [[150, 236, 404, 16, 7], [128, 252, 372, 18, 5], [104, 256, 362, 20, 4], [80, 258, 352, 19, 4], [58, 262, 342, 17, 3], [40, 270, 330, 14, 3], [26, 280, 314, 11, 2]];
+  for (const [y, x0, x1, rr, n] of reihen) for (let i = 0; i < n; i++) { const t = n > 1 ? i / (n - 1) : 0.5; GISCHT.push([x0 + (x1 - x0) * t + (zg() - 0.5) * 10, y + (zg() - 0.5) * 8, rr * (0.8 + zg() * 0.4)]); }
   const c = (dx, dy, f, sub = 1) => GISCHT.filter((_, i) => i % sub === 0).map(([x, y, rr]) => `<circle cx="${r(x + dx)}" cy="${r(y + dy)}" r="${r(rr * f)}"/>`).join("");
-  let k = `<g filter="url(#${S.id("dunst")})">`;
-  k += `<g fill="${S.lg("gischt", [[0, "#dfe6ee"], [0.6, "#cdd8e2"], [1, "#e3e9ee"]], 0, 0, 1, 0)}" opacity=".72">${c(0, 0, 1)}</g>`;
-  k += `<g fill="#fff8ec" opacity=".7">${c(4, -3, 0.7)}</g>`;
-  k += `<g fill="#ffffff" opacity=".75">${c(7, -5, 0.4, 2)}</g>`;
-  k += `</g>`;
+  let k = `<g filter="url(#${S.id("nebel")})"><g fill="${S.lg("gischt", [[0, "#c9d0de"], [0.5, "#d9dfe8"], [1, "#efe6da"]], 0, 0, 1, 0)}" opacity=".78">${c(0, 0, 1.05)}</g></g>`;
+  k += `<g filter="url(#${S.id("nebel2")})"><g fill="#fff1dc" opacity=".7">${c(4, -2.5, 0.7)}</g></g>`;
+  k += `<g filter="url(#${S.id("dunst")})"><g fill="#fffaf2" opacity=".75">${c(7, -4.5, 0.38, 2)}</g></g>`;
   /* untere, dichte Gischt über dem Becken (verdeckt den Fuß der Fälle) */
   k += `<g filter="url(#${S.id("weich")})"><path d="M236 150 Q270 138 310 142 Q350 136 402 140 L402 158 Q350 164 300 160 Q262 162 236 158 Z" fill="#f4f6f6" opacity=".95"/></g>`;
   S.teil({ id: "gischt", de: "die Gischt", syl: "GISCHT", it: "la nebulizzazione", itSyl: "ne-bu-liz-za-ZIO-ne", en: "spray", x: 320, y: 90, kunst: um(320, 90, kappeRand(k)),
@@ -377,13 +374,13 @@ const GISCHT = [];
   const farben = [[42.3, "#e8402a"], [41.9, "#f39a2a"], [41.5, "#f5e04a"], [41.1, "#5cc85a"], [40.7, "#3a8ae0"], [40.3, "#7a50c8"]];
   /* nur im Bereich der Gischt sichtbar: rechts, zwischen y 70 und 182 */
   let k = "";
-  S.def(`<linearGradient id="${S.id("rbmaske")}" gradientUnits="userSpaceOnUse" x1="0" y1="66" x2="0" y2="186"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".3" stop-color="#fff" stop-opacity=".9"/><stop offset=".75" stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="${S.id("rbm")}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="260"><g filter="url(#${S.id("dunst")})" fill="url(#${S.id("rbmaske")})">${GISCHT.map(([x, y, rr]) => `<circle cx="${r(x)}" cy="${r(y)}" r="${r(rr * 0.9)}"/>`).join("")}<path d="M150 150 Q240 140 330 150 L330 186 L150 186 Z"/></g></mask>`);
+  S.def(`<linearGradient id="${S.id("rbmaske")}" gradientUnits="userSpaceOnUse" x1="0" y1="30" x2="0" y2="182"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".2" stop-color="#fff" stop-opacity=".75"/><stop offset=".8" stop-color="#fff" stop-opacity=".95"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="${S.id("rbm")}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="260"><g filter="url(#${S.id("dunst")})" fill="url(#${S.id("rbmaske")})">${GISCHT.map(([x, y, rr]) => `<circle cx="${r(x)}" cy="${r(y)}" r="${r(rr * 0.9)}"/>`).join("")}<path d="M150 150 Q240 140 330 150 L330 186 L150 186 Z"/></g></mask>`);
   let alle = [];
   for (const [g, c] of farben) {
-    const pts = bogen(g).filter(([x, y]) => x > 150 && x < 380 && y > 60 && y < 190).sort((p, q) => p[1] - q[1]);
+    const pts = bogen(g).filter(([x, y]) => x > 200 && x < 330 && y > 24 && y < 186).sort((p, q) => p[1] - q[1]);
     if (pts.length < 2) continue;
     alle = alle.concat(pts);
-    k += `<path d="${P(pts, false)}" stroke="${c}" stroke-width="1.6" fill="none" opacity=".55"/>`;
+    k += `<path d="${glatt(pts.filter((_, i) => i % 3 === 0 || i === pts.length - 1), false)}" stroke="${c}" stroke-width="1.7" fill="none" opacity=".62"/>`;
   }
   S.teil({ id: "regenbogen", de: "der Regenbogen", syl: "RE-gen-bo-gen", it: "l'arcobaleno", itSyl: "ar-co-ba-LE-no", en: "rainbow", x: 0, y: 0,
     kunst: `<g mask="url(#${S.id("rbm")})" filter="url(#${S.id("hauch")})">${k}</g>`,
@@ -401,7 +398,8 @@ const BOOT = {};
   const L = 30 * m * 0.82, H1 = 3.2 * m, H2 = 2.6 * m, sch = 0.3;   /* von der Seite, leicht von hinten */
   let k = "";
   /* Kielwasser hinter dem Boot (nach links), Bugwelle */
-  k += `<path d="M${r(bx - L * 0.5)} ${r(by + 0.2)} Q${r(bx - L * 1.4)} ${r(by + 3.4)} ${r(bx - L * 2.6)} ${r(by + 6)} L${r(bx - L * 2.6)} ${r(by + 3.4)} Q${r(bx - L * 1.4)} ${r(by + 1.2)} ${r(bx - L * 0.5)} ${r(by - 0.2)} Z" fill="#e8f2ee" opacity=".55"/>`;
+  k += `<g filter="url(#${S.id("weich")})"><path d="M${r(bx - L * 0.5)} ${r(by - 0.3)} Q${r(bx - L * 1.2)} ${r(by + 1.6)} ${r(bx - L * 2.2)} ${r(by + 5.4)} L${r(bx - L * 2.3)} ${r(by + 2.6)} Q${r(bx - L * 1.3)} ${r(by - 0.4)} ${r(bx - L * 0.5)} ${r(by - 1)} Z" fill="#eef6f2" opacity=".6"/></g>`;
+  k += `<path d="M${r(bx - L * 0.5)} ${r(by + 0.4)} Q${r(bx - L * 1.3)} ${r(by + 2.6)} ${r(bx - L * 2.1)} ${r(by + 5.8)} M${r(bx - L * 0.5)} ${r(by - 0.6)} Q${r(bx - L * 1.4)} ${r(by - 1)} ${r(bx - L * 2.2)} ${r(by + 0.8)}" stroke="#ffffff" stroke-width=".4" fill="none" opacity=".7"/>`;
   k += `<path d="M${r(bx + L * 0.42)} ${r(by)} q${r(2)} ${r(-0.8)} ${r(4)} ${r(0.6)}" stroke="#fff" stroke-width=".7" fill="none"/>`;
   /* Rümpfe (Katamaran): weiß mit dunkelblauem Streifen; Heckansicht links */
   const x0 = bx - L / 2, x1 = bx + L / 2;
@@ -507,7 +505,7 @@ const blatt = (x, y, s, w, farbe, ader = "#7a1a10") => {
 const KAPPE = 199, FRONT = 230;     /* Hinterkante der Abdeckplatten, Vorderkante (Oberkante der Mauerfront) */
 {
   /* Abdeckplatten aus Kalkstein (oben, im Nachmittagslicht), leicht überstehend */
-  let k = `<path d="M-1 ${KAPPE} L401 ${KAPPE - 1.2} L401 ${FRONT + 1} L-1 ${FRONT + 2} Z" fill="${S.lg("kappe", [[0, "#efe6d4"], [1, "#d9ccb4"]])}"/>`;
+  let k = `<path d="M-1 ${KAPPE} L401 ${KAPPE - 1.2} L401 ${FRONT + 1} L-1 ${FRONT + 2} Z" fill="${S.lg("kappe", [[0, "#f4dfbd"], [1, "#e0c79f"]])}"/>`;
   k += `<path d="M-1 ${KAPPE} L401 ${KAPPE - 1.2}" stroke="#fff8ea" stroke-width=".8"/>`;
   for (const xb of [-60, 150, 330]) k += `<path d="M${r(CX + (xb - CX) * 0.82)} ${r(KAPPE + 0.1)} L${xb} ${FRONT + 1.5}" stroke="#a8987e" stroke-width=".5"/>`;
   /* Vorderkante der Platte: runde Fase im Licht, darunter Schattenfuge */
@@ -541,7 +539,123 @@ const KAPPE = 199, FRONT = 230;     /* Hinterkante der Abdeckplatten, Vorderkant
     tipp: "Die Mauer schützt die Besucher an der Kante. Dahinter geht es 50 Meter in die Tiefe." });
 }
 
-/* --- vorläufig: Rest folgt --- */
+/* Schatten auf der Abdeckplatte: Sonne tief hinter uns — lange Schatten laufen nach vorn (zum Fluchtpunkt hin)
+   und fallen über die Hinterkante in die Schlucht; hier nur bis zur Kante */
+const kappenSchatten = (x0, x1, yb) => {
+  const t = (yb - KAPPE) / Math.max(1, yb - HOR), xa = x0 + (CX - x0) * t - 4 * t, xb = x1 + (CX - x1) * t - 4 * t;
+  return `<path d="M${r(x0)} ${r(yb)} L${r(x1)} ${r(yb)} L${r(xb)} ${KAPPE + 0.6} L${r(xa)} ${KAPPE + 0.6} Z" fill="url(#${S.id("kschatten")})"/>`;
+};
+S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#4a3420" stop-opacity=".42"/><stop offset="1" stop-color="#4a3420" stop-opacity=".22"/></linearGradient>`);
+
+/* =====================================================================
+   13 — DAS FERNROHR (Münzfernrohr an der Mauer, links)
+   ===================================================================== */
+{
+  let k = "";
+  const X = 82, Y = 166;     /* Mitte des Kopfes */
+  /* Säule (kommt von unten aus dem Bild) und Joch */
+  k += `<path d="M${X - 4} 261 L${X - 3.4} ${Y + 30} L${X + 3.4} ${Y + 30} L${X + 4} 261 Z" fill="${S.lg("saeule", [[0, "#1d3a2c"], [0.55, "#2f5a44"], [0.8, "#4f8068"], [1, "#24463a"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${X - 7} ${Y + 32} Q${X} ${Y + 27} ${X + 7} ${Y + 32} L${X + 6} ${Y + 35} Q${X} ${Y + 31} ${X - 6} ${Y + 35} Z" fill="#2a4a3a"/>`;
+  k += `<path d="M${X - 2.2} ${Y + 30} L${X - 16} ${Y + 14} L${X - 13} ${Y + 12} L${X} ${Y + 26} L${X + 13} ${Y + 12} L${X + 16} ${Y + 14} L${X + 2.2} ${Y + 30} Z" fill="#26473a"/>`;
+  /* Münzkasten unter dem Kopf */
+  k += `<path d="M${X - 9} ${Y + 10} h18 l-1.4 10 h-15.2 Z" fill="${S.lg("kasten", [[0, "#2e5a46"], [1, "#1f4032"]])}"/><rect x="${X - 2}" y="${Y + 13}" width="4" height="1.2" rx=".4" fill="#0f1f18"/><circle cx="${X + 5}" cy="${Y + 16}" r="1.2" fill="#b9b39a"/>`;
+  /* Kopf: abgerundeter Kasten mit Schirm, zwei Okulare zu uns, Chromrand */
+  k += `<path d="M${X - 30} ${Y - 10} Q${X - 31} ${Y - 18} ${X - 22} ${Y - 19} L${X + 22} ${Y - 19} Q${X + 31} ${Y - 18} ${X + 30} ${Y - 10} L${X + 28} ${Y + 8} Q${X + 26} ${Y + 12} ${X + 18} ${Y + 12} L${X - 18} ${Y + 12} Q${X - 26} ${Y + 12} ${X - 28} ${Y + 8} Z" fill="${S.lg("kopf", [[0, "#24493a"], [0.5, "#376a52"], [0.85, "#5c947a"], [1, "#2b5544"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M${X - 26} ${Y - 18} L${X + 26} ${Y - 18}" stroke="#a9d4bc" stroke-width="1" opacity=".55"/>`;
+  k += `<path d="M${X - 24} ${Y - 9} Q${X} ${Y - 15} ${X + 24} ${Y - 9} L${X + 22} ${Y - 5} Q${X} ${Y - 10} ${X - 22} ${Y - 5} Z" fill="#183428"/>`;
+  for (const ox of [-11, 11]) k += `<ellipse cx="${X + ox}" cy="${Y - 1}" rx="7.2" ry="6" fill="#c9cfcf"/><ellipse cx="${X + ox}" cy="${Y - 1}" rx="5.6" ry="4.6" fill="#1a1c1e"/><ellipse cx="${X + ox}" cy="${Y - 1}" rx="3.4" ry="2.8" fill="#2c4a5a"/><path d="M${X + ox - 1.6} ${Y - 3} q1.6 -1 3.2 0" stroke="#bfe4f4" stroke-width=".7" fill="none" opacity=".8"/>`;
+  k += `<path d="M${X - 2} ${Y + 4} h4 v4 h-4 Z" fill="#183428"/><text x="${X}" y="${Y + 10.4}" font-size="2.6" text-anchor="middle" fill="#d9e8de" font-family="Arial,sans-serif">25¢</text>`;
+  /* Schatten auf der Mauerfront (Sonne hinten: der Schatten der Säule fällt nach vorn auf die Platte) */
+  k = kappenSchatten(X - 4, X + 4, FRONT + 1) + `<g filter="${VOL}">${k}</g>`;
+  S.teil({ id: "fernrohr", de: "das Fernrohr", syl: "FERN-rohr", it: "il cannocchiale", itSyl: "can-noc-CHIA-le", en: "telescope", x: X, y: Y, kunst: um(X, Y, kappeRand(k)),
+    tipp: "Für eine Münze kann man durch das Fernrohr schauen. Dann sieht man das Boot ganz nah." });
+}
+
+/* =====================================================================
+   14 — DER AHORNSIRUP (Flasche in Blattform), 15 — DIE TÜTE, 16 — DIE FLAGGE
+   ===================================================================== */
+{
+  const X = 286, Y = 214;
+  /* Flasche: Ahornblatt-Form aus Glas, darin goldbrauner Sirup, rote Kappe */
+  const form = [[0, -30], [3, -26], [4, -24], [8, -26], [7, -21], [13, -22], [11, -17], [15, -14], [10, -12], [11, -6], [6, -7], [4, -1], [-4, -1], [-6, -7], [-11, -6], [-10, -12], [-15, -14], [-11, -17], [-13, -22], [-7, -21], [-8, -26], [-4, -24], [-3, -26]].map(([a, b]) => [a, b * 1.0]);
+  let k = kappenSchatten(X - 13, X + 13, Y);
+  k += `<path d="${glatt(form, true, 0.35)}" fill="${S.lg("sirup", [[0, "#7a3a0e"], [0.45, "#c8741e"], [0.75, "#e9a23a"], [1, "#9a4a14"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="${glatt(form.map(([a, b]) => [a * 0.9, b * 0.9 - 2.4]), true, 0.35)}" fill="none" stroke="#ffd896" stroke-width=".6" opacity=".5"/>`;
+  k += `<path d="M-1.6 -31 h3.2 v-3 h-3.2 Z" fill="#e8d9b0" transform="translate(${X} ${Y})"/>`;
+  k = k.replace(`transform="translate(${X} ${Y})"`, "");
+  k = `<g transform="translate(${X} ${Y})">` + k.replace(kappenSchatten(X - 13, X + 13, Y), "") + `<path d="M-2.4 -34 h4.8 v-4.6 q-2.4 -1 -4.8 0 Z" fill="#c8202a"/><path d="M-2 -38 h1.2 v4" stroke="#ff8a8a" stroke-width=".5"/>` +
+    `<path d="M-6 -16 h12 v7 h-12 Z" fill="#f6f0e2"/><path d="M-4 -12.4 l1 -1.6 l.6 .8 l1 -1.6 l.8 1.6 l.6 -.8 l1 1.6 Z" fill="#c8202a"/><path d="M-5 -10.4 h10" stroke="#7a5a3a" stroke-width=".35"/>` +
+    `<path d="M-9 -22 Q-8 -14 -7 -8" stroke="#fff" stroke-width="1.2" fill="none" opacity=".55" stroke-linecap="round"/></g>`;
+  k = kappenSchatten(X - 13, X + 13, Y) + `<g filter="${VOL_KLEIN}">${k}</g>`;
+  S.teil({ id: "ahornsirup", de: "der Ahornsirup", syl: "A-horn-si-rup", it: "lo sciroppo d'acero", itSyl: "sci-ROP-po d'A-ce-ro", en: "maple syrup", x: X, y: Y - 16, kunst: um(X, Y - 16, k),
+    tipp: "Ahornsirup wird aus dem Saft des Zuckerahorns gekocht. Für einen Liter Sirup braucht man etwa 40 Liter Saft." });
+}
+{
+  const X = 334, Y = 217;
+  let k = kappenSchatten(X - 15, X + 15, Y);
+  /* Papiertüte mit Ahornblatt, Kordelgriffe */
+  let t = `<path d="M${X - 15} ${Y} L${X - 13.6} ${Y - 40} L${X + 12.6} ${Y - 40} L${X + 15} ${Y} Z" fill="${S.lg("tuete", [[0, "#e7e1d4"], [0.6, "#fbf8f2"], [1, "#ece6d8"]], 0, 0, 1, 0)}"/>`;
+  t += `<path d="M${X - 13.6} ${Y - 40} L${X - 10} ${Y - 43} L${X + 15.6} ${Y - 43} L${X + 12.6} ${Y - 40} Z" fill="#d8d0c0"/>`;
+  t += `<path d="M${X - 8} ${Y - 40} q4 -12 9 0 M${X + 2} ${Y - 40} q4 -11 8 0" stroke="#8a6a44" stroke-width=".9" fill="none"/>`;
+  t += blatt(X, Y - 20, 8.5, 0, "#d52b1e", "#8a1a10").replace(/<path d="([^"]*)" stroke[^>]*\/>$/, "");
+  t += `<text x="${X}" y="${Y - 6}" font-size="3.2" text-anchor="middle" fill="#9a2a20" font-family="Georgia,serif" font-weight="bold">NIAGARA</text>`;
+  k += `<g filter="${VOL_KLEIN}">${t}</g>`;
+  S.teil({ id: "tuete", de: "die Tüte", syl: "TÜ-te", it: "il sacchetto", itSyl: "sac-CHET-to", en: "bag", x: X, y: Y - 20, kunst: um(X, Y - 20, k),
+    tipp: "In der Tüte sind Andenken aus dem Laden am Table Rock." });
+  /* Fähnchen: steckt in der Tüte, Stab schräg, Flagge Kanadas (rot-weiß-rot, Ahornblatt mit 11 Spitzen) */
+  const sx = X + 4, sy = Y - 38, ex = X + 13, ey = Y - 74;
+  let f = `<path d="M${sx} ${sy} L${ex} ${ey}" stroke="#a8875a" stroke-width="1" stroke-linecap="round"/>`;
+  const fl = [[ex, ey], [ex + 26, ey - 3], [ex + 27, ey + 11], [ex + 1.6, ey + 14]];
+  const m = (a, b, t2) => [a[0] + (b[0] - a[0]) * t2, a[1] + (b[1] - a[1]) * t2];
+  const q = (u, v) => { const o = m(fl[0], fl[1], u), un = m(fl[3], fl[2], u); return m(o, un, v); };
+  f += `<path d="M${r(fl[0][0])} ${r(fl[0][1])} Q${r(ex + 13)} ${r(ey - 4.4)} ${r(fl[1][0])} ${r(fl[1][1])} L${r(fl[2][0])} ${r(fl[2][1])} Q${r(ex + 14)} ${r(ey + 10)} ${r(fl[3][0])} ${r(fl[3][1])} Z" fill="#ffffff"/>`;
+  for (const [u0, u1] of [[0, 0.25], [0.75, 1]]) { const a = q(u0, 0), b = q(u1, 0), c = q(u1, 1), d = q(u0, 1); f += `<path d="${P([a, b, c, d])}" fill="#d52b1e"/>`; }
+  const [cx, cy] = q(0.5, 0.5);
+  f += blatt(cx, cy + 0.6, 4.4, -0.06, "#d52b1e", "#d52b1e").replace(/<path d="([^"]*)" stroke[^>]*\/>$/, "");
+  f += `<path d="M${r(fl[0][0] + 6)} ${r(fl[0][1] + 2)} Q${r(ex + 13)} ${r(ey + 4)} ${r(ex + 20)} ${r(ey + 2)}" stroke="#000" stroke-width="2.4" fill="none" opacity=".05"/>`;
+  S.teil({ oben: true, id: "flagge", de: "die Flagge", syl: "FLAG-ge", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag", x: ex + 13, y: ey + 6, kunst: um(ex + 13, ey + 6, `<g filter="${VOL_KLEIN}">${f}</g>`),
+    tipp: "Die Flagge Kanadas ist rot und weiß. In der Mitte ist ein rotes Ahornblatt." });
+}
+
+/* =====================================================================
+   17 — DAS EICHHÖRNCHEN (schwarzes Grauhörnchen) auf der Mauer, rechts
+   ===================================================================== */
+{
+  const X = 378, Y = 222;
+  let k = kappenSchatten(X - 9, X + 7, Y);
+  let e = `<path d="M${X + 4} ${Y - 4} Q${X + 15} ${Y - 10} ${X + 12} ${Y - 26} Q${X + 10} ${Y - 38} ${X + 1} ${Y - 40} Q${X + 8} ${Y - 34} ${X + 7} ${Y - 26} Q${X + 6} ${Y - 16} ${X} ${Y - 10} Z" fill="${S.lg("schwanz", [[0, "#2a2622"], [1, "#4a423a"]], 0, 0, 1, 0)}"/>`;
+  let haar = "";
+  for (let i = 0; i < 12; i++) { const t = i / 11, x = X + 10 + Math.sin(t * 3) * 3, y = Y - 8 - t * 30; haar += `M${r(x)} ${r(y)} l${r(1.6)} ${r(-0.6)}`; }
+  e += `<path d="${haar}" stroke="#6a5e52" stroke-width=".5" opacity=".7"/>`;
+  e += `<path d="M${X - 8} ${Y} Q${X - 10} ${Y - 12} ${X - 6} ${Y - 18} Q${X - 2} ${Y - 22} ${X + 3} ${Y - 18} Q${X + 7} ${Y - 10} ${X + 5} ${Y} Z" fill="${S.lg("hoernchen", [[0, "#1d1a17"], [0.6, "#2f2a25"], [1, "#4a4038"]], 0, 0, 1, 0)}"/>`;
+  e += `<path d="M${X - 6} ${Y - 18} Q${X - 9} ${Y - 26} ${X - 3} ${Y - 28} Q${X + 3} ${Y - 28} ${X + 2} ${Y - 21} Q${X} ${Y - 17} ${X - 6} ${Y - 18} Z" fill="#2a2520"/>`;
+  e += `<path d="M${X - 5} ${Y - 27} l-1 -3.2 l2.4 2 Z M${X} ${Y - 28} l.4 -3.2 l1.6 2.6 Z" fill="#2a2520"/>`;
+  e += `<circle cx="${X - 5.4}" cy="${Y - 24.4}" r="1" fill="#0b0a09"/><circle cx="${X - 5.7}" cy="${Y - 24.8}" r=".35" fill="#fff"/><circle cx="${X - 8.6}" cy="${Y - 22}" r=".6" fill="#111"/>`;
+  /* Pfoten halten eine Nuss */
+  e += `<ellipse cx="${X - 8.4}" cy="${Y - 15}" rx="2.4" ry="2" fill="#a0723c"/><path d="M${X - 9.6} ${Y - 15.6} q1.2 -.8 2.4 0" stroke="#d9a868" stroke-width=".4" fill="none"/><path d="M${X - 6} ${Y - 16} q-2 1 -3.4 2.4 M${X - 5} ${Y - 14} q-2 .6 -3 2" stroke="#1d1a17" stroke-width="1.1" fill="none" stroke-linecap="round"/>`;
+  e += `<path d="M${X - 7} ${Y} q2 -1.2 4 0 M${X} ${Y} q2 -1.2 4 0" stroke="#1d1a17" stroke-width="1.2" fill="none"/>`;
+  k += `<g filter="${VOL}">${e}</g>`;
+  S.teil({ id: "eichhoernchen", de: "das Eichhörnchen", syl: "EICH-hörn-chen", it: "lo scoiattolo", itSyl: "sco-IAT-to-lo", en: "squirrel", x: X, y: Y - 20, kunst: um(X, Y - 20, k),
+    tipp: "In Kanada gibt es viele schwarze Eichhörnchen. Es sind Grauhörnchen mit dunklem Fell." });
+}
+
+/* =====================================================================
+   18 — DAS AHORNBLATT (zwei Blätter liegen auf der Mauer)
+   ===================================================================== */
+{
+  let k = "";
+  for (const [x, y, s0, w, c] of [[196, 214, 11, 0.4, "#d8301e"], [238, 206, 8.5, -0.9, "#f08a2c"]]) {
+    k += `<g transform="translate(${x} ${y}) scale(1 .5) translate(${-x} ${-y})">${blatt(x, y, s0, w, c)}</g>`;
+    k += `<ellipse cx="${x - 1}" cy="${y + 2.6}" rx="${r(s0 * 0.8)}" ry="${r(s0 * 0.16)}" fill="#5a3c22" opacity=".25"/>`;
+  }
+  S.teil({ oben: true, id: "ahornblatt", de: "das Ahornblatt", syl: "A-horn-blatt", it: "la foglia d'acero", itSyl: "FO-glia d'A-ce-ro", en: "maple leaf", x: 216, y: 210, kunst: um(216, 210, `<g filter="${VOL_KLEIN}">${k}</g>`),
+    tipp: "Das Ahornblatt ist das Zeichen Kanadas. Es ist auf der Flagge und auf vielen Münzen." });
+}
+
+/* Abendlicht: warmer Schein von hinten rechts, fängt keinen Tipp ab */
+S.davor(`<rect width="400" height="260" fill="${S.rg("abendlicht", [[0, "#ffb860", 0.2], [0.6, "#ffcf8a", 0.06], [1, "#ffcf8a", 0]], 1, 1, 0.9)}"/>`);
+
+
 
 
 const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang || /[À-ÖÙ-Ý]/.test(x)) ? x : x.toLowerCase()))).join(""); };
