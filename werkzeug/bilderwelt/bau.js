@@ -34,7 +34,12 @@ function neueSzene(kopf) {
   /* eindeutige Namen für Verläufe innerhalb der Szene */
   S.id = (name) => P + "_" + name;
   S.lg = (name, stops, x1 = 0, y1 = 0, x2 = 0, y2 = 1, extra = "") => {
-    S.defs.push(`<linearGradient id="${S.id(name)}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"${extra}>` +
+    /* FASSUNG 877 — Stehen x1/y1/x2/y2 schon in extra (Bildkoordinaten), werden
+       die Vorgaben weggelassen: doppelte Attribute nimmt der Browser beim ERSTEN,
+       der Verlauf wirkte dann nie (Frankfurt: Main, Glanz, Pflaster). */
+    const eigen = (k) => new RegExp("\\s" + k + "=").test(extra);
+    const ko = [["x1", x1], ["y1", y1], ["x2", x2], ["y2", y2]].filter(([k]) => !eigen(k)).map(([k, v]) => ` ${k}="${v}"`).join("");
+    S.defs.push(`<linearGradient id="${S.id(name)}"${ko}${extra}>` +
       stops.map(([o, c, a]) => `<stop offset="${o}" stop-color="${c}"${a != null ? ` stop-opacity="${a}"` : ""}/>`).join("") + "</linearGradient>");
     return `url(#${S.id(name)})`;
   };

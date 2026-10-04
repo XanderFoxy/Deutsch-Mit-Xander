@@ -125,7 +125,7 @@ S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-15%"
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("schleier")}" x="-10%" y="-300%" width="120%" height="700%"><feTurbulence type="fractalNoise" baseFrequency=".04 .5" numOctaves="2" seed="5" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation=".7"/></filter>`);
 
 /* Stoffe */
-const TRAV = S.lg("trav", [[0, "#f8ecd2"], [0.5, "#ecdcbc"], [1, "#d1bf9b"]], 0, 0, 1, 0);
+const TRAV = S.lg("trav", [[0, "#fcedcc"], [0.5, "#ecdcbc"], [1, "#c8bea8"]], 0, 0, 1, 0);
 const TRAV_S = S.lg("travs", [[0, "#cdbd9e"], [1, "#a99a7e"]], 0, 0, 1, 0);
 const GOLD = S.lg("gold", [[0, "#fff3b0"], [0.45, "#e7bd4a"], [1, "#9a6c10"]], 0, 0, 1, 1);
 const GLAS = S.lg("glas", [[0, "#b4c8d6"], [0.5, "#5a6a78"], [1, "#2f3b46"]]);
@@ -190,12 +190,6 @@ const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
        unten die dunkle Unterseite – gleiche gelappte Kante, weicher Übergang */
     g += `<use href="#${mid}" fill="${GL}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" opacity=".55" ${um(rx * 0.06, ry * 0.12, 1)}/><use href="#${mid}" fill="${GM}" ${um(rx * 0.1, ry * 0.24, 0.98)}/><use href="#${mid}" fill="${GD}" ${um(rx * 0.05, ry * 0.86, 1)}/></g>`;
   });
-  /* Himmelslöcher: unregelmäßig, 12–20 px groß, mit Ast aus dem dunklen Inneren */
-  for (let i = 0; i < loecher; i++) {
-    const a = -Math.PI * (0.15 + (i + z() * 0.6) / Math.max(1, loecher) * 0.7), d = 0.3 + z() * 0.06, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.75, s = Math.min(w, h) * 0.05 + 1.2;
-    let p = ""; for (let k = 0; k < 6; k++) { const t = k / 6 * Math.PI * 2, f = 0.6 + z() * 0.5; p += (k ? "L" : "M") + `${r(hx + Math.cos(t) * s * f)} ${r(hy + Math.sin(t) * s * f * 0.75)}`; }
-    g += `<path d="${p}Z" fill="#9fbcdc" stroke="#9fbcdc" stroke-width=".4" stroke-linejoin="round"/><path d="M${r(hx - s * 0.4)} ${r(hy + s * 1.3)} L${r(hx + s * 0.15)} ${r(hy - s * 0.1)}" stroke="#3a3424" stroke-width="${r(0.15 + s * 0.06)}" fill="none" stroke-linecap="round"/>`;
-  }
   return g;
 };
 /* =====================================================================
@@ -369,7 +363,7 @@ S.teile[S.teile.length - 1].unter = theaterUnter;
   const GUSS = S.lg("guss", [[0, "#6a7074"], [0.4, "#2f3438"], [1, "#1a1d20"]], 0, 0, 1, 0);
   for (const [D, X] of [[27, -6.4], [27, 6.4]]) {
     const u = sk(D), x = xG(D, X), y = yG(D);
-    bodenSchatten(D, X, 0.3, 4.4, 0.18);
+    bodenSchatten(D, X, 0.5, 4.4, 0.3);
     let g = `<path d="M-.24 0 L-.2 -.5 L-.09 -.62 L-.06 -3.5 L.06 -3.5 L.09 -.62 L.2 -.5 L.24 0 Z" fill="${GUSS}"/>`;
     g += `<path d="M-.2 -3.5 L.2 -3.5 L.28 -3.62 L-.28 -3.62 Z" fill="#2f3438"/>`;
     g += `<path d="M-.26 -3.62 L.26 -3.62 L.38 -4.42 L-.38 -4.42 Z" fill="#f8f2da" opacity=".95"/><path d="M0 -3.62 L0 -4.42 M-.26 -3.62 L-.38 -4.42 M.26 -3.62 L.38 -4.42" stroke="#2f3438" stroke-width=".035"/>`;
@@ -466,26 +460,26 @@ const denkmalUnter = [];
       (alt ? `<path d="M${P2(-2.2, 5.6)}Q${P2(0, 6.8)} ${P2(2.4, 5.5)}" stroke="${DK}" stroke-width=".45" fill="none" opacity=".45"/>` : "");
   };
   const patina = (d, op = 0.5) => `<path d="${d}" fill="${PAT}" opacity="${op}"/>`;
-  const GO = -11.5, SC = 11.5, KX = -4, KY = -57, KR = 5.4;
+  const GO = -11.5, SC = 11.5, KX = -4, KY = -65, KR = 5.4;
   let fig = "";
   /* ================= GOETHE (links): Hofrock tailliert mit Schößen, lange Weste, Kniehose mit Bund und Schnalle,
      Strümpfe mit Wade, Schnallenschuhe. Standbein links im Bild (Hüfte höher), Spielbein rechts nach außen gestellt ================= */
   {
     let g = "";
     /* Rockschöße hinter den Beinen (setzen an der Taille an) */
-    g += F("M-9.4 -58.5 Q-12.8 -46 -13.8 -31 Q-11.4 -29.6 -8.6 -30.8 Q-7.8 -44 -6.8 -54 Z", BRZ2) + F("M9.2 -58.5 Q12.6 -46 13.6 -31 Q11.2 -29.6 8.4 -30.8 Q7.6 -44 6.6 -54 Z", BRZ2);
+    
     /* Strümpfe mit Wade; Spielbein (rechts) mit gebeugtem Knie schräg nach außen */
-    g += F("M-6.6 -27 Q-7.8 -19 -6.3 -12 Q-5.4 -7.6 -5.2 -4.6 L-2.6 -4.6 Q-2.4 -8 -1.8 -12 Q-.8 -19 -1.4 -27 Z", BRZL);
-    g += F("M2.8 -27 L7.6 -27.6 Q9 -20 8.7 -13 Q8.6 -8.6 8.9 -5.2 L6.6 -5.2 Q6 -8.4 5.1 -12 Q2.3 -19 2.8 -27 Z", BRZL);
+    g += F("M-6.6 -27 Q-7.8 -19 -6.3 -12 Q-5.4 -7.6 -5.2 -4.6 L-2.6 -4.6 Q-2.4 -8 -1.8 -12 Q-.2 -19 -1.4 -27 Z", BRZL);
+    g += F("M2.8 -27 L7.6 -27.6 Q9 -20 8.9 -13 Q9.2 -8.6 9.8 -5.2 L7.5 -5.2 Q6.6 -8.4 5.1 -12 Q1.7 -19 2.8 -27 Z", BRZL);
     g += F("M-2.6 -24 Q-1.4 -18 -2.2 -11 Q-2.6 -7 -2.6 -4.8 L-3.6 -4.8 Q-3.4 -9 -3 -12 Q-2.3 -18 -2.6 -24 Z", DK, ' opacity=".35"') + F("M7.4 -25 Q8.4 -19 7.8 -12 Q7.6 -8 7.9 -5.4 L7 -5.4 Q6.8 -9 6.8 -12 Q7.4 -19 7.4 -25 Z", DK, ' opacity=".35"');
     g += kante("M-6.9 -24 Q-7.6 -18 -6.2 -12 Q-5.6 -8 -5.3 -5", 0.45) + kante("M3 -25 Q3.2 -19 5.2 -12.4", 0.45);
     /* Schnallenschuhe: links nach vorn, rechts nach außen gedreht */
-    g += F("M-6.4 0 Q-6.9 -2.9 -5.3 -4.9 L-2.4 -4.9 Q-.9 -3 -.8 0 Z", BRZ2) + F("M6.4 -5.4 L9.1 -5.4 Q10.8 -3 11 0 L5.8 0 Q5.2 -2.8 6.4 -5.4 Z", BRZ2);
-    g += `<rect x="-4.6" y="-4.1" width="1.9" height=".9" fill="${HL}"/><rect x="7" y="-4.4" width="1.9" height=".9" fill="${HL}"/>`;
+    g += F("M-6.4 0 Q-6.9 -2.9 -5.3 -4.9 L-2.4 -4.9 Q-.9 -3 -.8 0 Z", BRZ2) + F("M7.3 -5.4 L10 -5.4 Q11.8 -3.2 12.2 0 L6.7 0 Q6.1 -2.8 7.3 -5.4 Z", BRZ2);
+    g += `<rect x="-4.6" y="-4.1" width="1.9" height=".9" fill="${HL}"/><rect x="8" y="-4.4" width="1.9" height=".9" fill="${HL}"/>`;
     /* Kniehose: Bund unter dem Knie, Spielbein-Knie tiefer und nach außen */
     g += F("M-7.4 -58 L7.6 -58 Q8.4 -42 7.9 -28 L2.6 -27.2 Q1.6 -37 .3 -44 Q-.7 -37 -1.2 -27.4 L-6.8 -27.4 Q-7.8 -42 -7.4 -58 Z", BRZ);
-    g += F("M-6.9 -28.4 L-1.2 -28.4 L-1.3 -26.6 L-6.8 -26.6 Z M2.6 -28 L7.9 -28.7 L8 -26.9 L2.7 -26.3 Z", BRZ2);
-    g += `<rect x="-2.6" y="-28.2" width="1" height="1.4" fill="${HL}" opacity=".85"/><rect x="6.4" y="-28.6" width="1" height="1.4" fill="${HL}" opacity=".85"/>`;
+    g += F("M-6.9 -28 L-1.2 -28 L-1.3 -27 L-6.8 -27 Z M2.6 -27.6 L7.9 -28.3 L8 -27.3 L2.7 -26.7 Z", BRZ);
+    g += `<rect x="-2.4" y="-28" width=".6" height=".9" fill="${HL}" opacity=".5"/><rect x="6.6" y="-28.4" width=".6" height=".9" fill="${HL}" opacity=".5"/>`;
     g += bahn(.2, -44, .6, -28, .3, .8) + bahn(1.4, -40, 5.4, -30.4, -.8, 1) + bahn(-5.8, -52, -5.4, -32, .6, .9) + F("M5.6 -50 Q7.4 -40 7.4 -29 L6.2 -28.6 Q6.4 -40 5 -50 Z", DK, ' opacity=".35"');
     g += kante("M-7.3 -55 Q-7.8 -42 -7 -29", 0.45) + `<ellipse cx="4.6" cy="-30.6" rx="1.6" ry="1.2" fill="${HL}" opacity=".3"/>`;
     /* lange Weste; Saum kippt mit der Hüfte (links höher) */
@@ -493,7 +487,7 @@ const denkmalUnter = [];
     for (let y = -79; y > -53; y -= 3.2) g += `<circle cx=".1" cy="${y}" r=".5" fill="${HL}" opacity=".7"/>`;
     g += `<path d="M-5.6 -61.6 h3.4 M2 -60.8 h3.4" stroke="${HL}" stroke-width=".5" opacity=".55"/>` + F("M3.6 -80 L6.2 -80 L6.8 -54 L4.6 -50 Z", DK, ' opacity=".3"');
     /* Hofrock: Schultern, Taille, vorn zurückgeschnittene Kanten bis in die Schöße – eine geschlossene Form */
-    const HR = "M-3 -86.4 Q-8 -86.6 -10.8 -84.4 Q-12.6 -82.6 -12.3 -78 L-11 -66 Q-10.2 -61 -9.4 -58.5 Q-12.8 -46 -13.8 -31 Q-11.4 -29.6 -8.6 -30.8 Q-7.6 -44 -6.6 -54 Q-5.2 -64 -4.4 -76 L-2.2 -82.4 L2.2 -82.4 L4.2 -76 Q5 -64 6.4 -54 Q7.4 -44 8.4 -30.8 Q11.2 -29.6 13.6 -31 Q12.6 -46 9.2 -58.5 Q9.8 -61 10.8 -66 L12.1 -78 Q12.3 -82.6 10.6 -84.4 Q7.8 -86.6 3 -86.4 Q0 -88 -3 -86.4 Z";
+    const HR = "M-3 -86.4 Q-8 -86.6 -10.8 -84.4 Q-12.6 -82.6 -12.3 -78 L-11 -66 Q-10.2 -61 -9.4 -58.5 Q-12.8 -46 -13.6 -31 Q-12.6 -29.8 -11.4 -30.4 Q-8.8 -42 -6.6 -54 Q-5.2 -64 -4.4 -76 L-2.2 -82.4 L2.2 -82.4 L4.2 -76 Q5 -64 6.4 -54 Q8.8 -42 11.4 -30.4 Q12.6 -29.8 13.6 -31 Q12.6 -46 9.2 -58.5 Q9.8 -61 10.8 -66 L12.1 -78 Q12.3 -82.6 10.6 -84.4 Q7.8 -86.6 3 -86.4 Q0 -88 -3 -86.4 Z";
     g += F(HR, BRZ);
     g += F("M6.2 -82 Q10.8 -82 11.4 -76 L10.2 -64 Q9 -60 8.4 -58 Q11 -46 12.4 -31.2 L13.6 -31 Q12.6 -46 9.2 -58.5 Q9.8 -61 10.8 -66 L12.1 -78 Q12.3 -82.6 10.6 -84.4 Z", DK, ' opacity=".38"');
     g += bahn(-10.6, -56, -12.6, -32, -.5, 1.1) + bahn(10, -56, 11.8, -32, .5, 1.1) + bahn(-7.6, -50, -8.8, -31.6, -.3, .8);
@@ -518,35 +512,40 @@ const denkmalUnter = [];
     let g = "";
     /* Stiefel unter dem Rocksaum: Standbein senkrecht, Spielbein schräg nach außen mit gebeugtem Knie */
     g += F("M1.4 -23 L6.2 -23 Q6.7 -13 5.9 -5.2 L6.5 -1.2 Q6.7 0 5.6 0 L1.1 0 Q.5 -.6 1.3 -2.4 L1.9 -5.2 Q1.1 -13 1.4 -23 Z", BRZ2);
-    g += F("M-6.6 -22.4 L-1.9 -22.4 Q-2.8 -13 -5.4 -6 L-5 -2 Q-5 0 -6.4 0 L-12 0 Q-12.4 -1.4 -10.2 -2.6 L-9.4 -6 Q-8.6 -14 -6.6 -22.4 Z", BRZ2);
+    /* hinterer Rockschoß zwischen den Beinen (hinten länger als vorn) */
+    g += F("M-12 -44 L12 -44 L13.8 -20.6 Q0 -18.8 -14.8 -19.6 Z", BRZ2);
+    g += F("M-6.6 -22.4 L-1.9 -22.4 Q-2.8 -13 -5.4 -6 L-5 -2 Q-5 0 -6.4 0 L-12 0 Q-12.4 -1.4 -10.2 -2.6 L-9.4 -6 Q-8.6 -14 -6.6 -22.4 Z", BRZ2, ' transform="translate(-.6 0)"');
     g += F("M4.8 -22 Q5.6 -13 4.9 -5.4 L5.9 -5.2 Q6.7 -13 6.2 -22 Z", DK, ' opacity=".4"') + F("M-3.2 -21.6 Q-4.4 -13 -6.4 -6.2 L-5.4 -6 Q-2.8 -13 -1.9 -22 Z", DK, ' opacity=".4"');
     g += kante("M1.7 -21 Q1.4 -13 2.2 -5.6", 0.45) + kante("M-6.4 -21 Q-8.2 -14 -9.1 -6.4", 0.45) + `<path d="M1.6 -12.6 L6.3 -12.6 M-8.4 -13 L-3.4 -12.4" stroke="${HL}" stroke-width=".55" opacity=".6"/>`;
     /* Hose zwischen den offenen Rockflügeln */
-    g += F("M-6.4 -58 L6.4 -58 L7 -22.8 L-6.8 -21.6 Z", BRZL) + `<path d="M.2 -48 Q-.2 -34 -1 -22" stroke="${DK}" stroke-width=".9" fill="none" opacity=".6"/>` + F("M2.2 -50 L5.4 -50 L5.8 -22.6 L3 -22.6 Z", DK, ' opacity=".3"');
+    /* zwei Hosenbeine in der Öffnung bis unter das Knie: Spielbein (links) mit Knie nach vorn-außen */
+    g += F("M-7.2 -60 L.6 -60 L-.6 -42 Q-1 -30 -1.8 -22.2 L-7.4 -22.2 Q-8 -30 -7.6 -42 Z", BRZL) + F("M-.2 -60 L7.4 -60 Q7.6 -40 6.8 -22.8 L1.2 -22.8 Q1 -40 -.2 -60 Z", BRZL);
+    g += F("M3.6 -52 L7.4 -52 Q7.6 -40 6.8 -22.8 L4.6 -22.8 Q5 -40 3.6 -52 Z", DK, ' opacity=".32"') + `<ellipse cx="-4.6" cy="-28.6" rx="1.8" ry="1.4" fill="${HL}" opacity=".35"/>`;
     g += bahn(-1.6, -40, -4.4, -28, .5, .8) + kante("M-5 -54 Q-5.4 -38 -5.2 -23", 0.4);
     /* Weste mit Knöpfen, offener Hemdkragen (Bronze, nicht hell) */
     g += F("M-5.6 -82 L5.6 -82 L5.4 -56.6 Q2.6 -54.4 0 -55.6 Q-2.6 -55 -5.6 -57.6 Z", BRZ2);
     for (let y = -78; y > -57; y -= 3.6) g += `<circle cx=".2" cy="${y}" r=".5" fill="${HL}" opacity=".7"/>`;
     g += F("M3.4 -80 L5.6 -80 L5.4 -57 L3.4 -55.4 Z", DK, ' opacity=".3"');
-    g += F("M-3.2 -87.2 L0 -81.6 L-1 -86.4 Z", BRZL) + F("M3.2 -87.2 L0 -81.6 L1 -86.4 Z", "#5a5238") + patina("M-.9 -86.2 L0 -82.2 L.9 -86.2 Z", 0.55);
+    g += F("M-3.4 -87.4 L0 -81.4 L-.8 -86.4 Z", "#c9b884") + F("M3.4 -87.4 L0 -81.4 L.8 -86.4 Z", "#8f8058") + patina("M-.9 -86.2 L0 -82.2 L.9 -86.2 Z", 0.55);
     /* der lange Rock als geschlossene Form: Schultern, Revers, Taille, ausgestellter Saum bis unter das Knie (Saum kippt) */
-    const RK = "M-3.2 -86.8 Q-8.2 -86.8 -10.8 -84.4 Q-12.6 -82.4 -12.2 -78 L-11 -66 Q-10.2 -60.6 -10 -57.4 Q-13.2 -40 -14.8 -21 Q-10.4 -20 -6.4 -20.8 L-3.4 -40 Q-2.6 -50 -3.4 -58 L-6 -73.6 L-2.2 -82 L2.2 -82 L6 -73.6 L3.4 -58 Q2.8 -50 3.6 -40 L6.6 -23.4 Q10.4 -22.8 14.4 -23.6 Q12.8 -40 9.8 -57.4 Q10.2 -60.6 10.8 -66 L12.1 -78 Q12.4 -82.4 10.6 -84.4 Q8 -86.8 3.2 -86.8 Q0 -88.6 -3.2 -86.8 Z";
+    /* Gehrock: breite Schultern, vorn offen (Kanten laufen von der Brust schräg nach außen), vorn bis zum Knie, seitlich bis zur Wade */
+    const RK = "M-3.2 -86.8 Q-8.8 -86.8 -11.6 -84.6 Q-13.4 -82.6 -12.9 -78 L-11.4 -66 Q-10.4 -60.6 -10.2 -57.4 Q-13.4 -40 -15 -19.6 Q-12.2 -22 -9.8 -29.6 L-5.4 -58 L-6 -73.6 L-2.2 -82 L2.2 -82 L6 -73.6 L5.4 -58 L10.2 -30.6 Q12.4 -23 14.6 -21 Q13 -40 10 -57.4 Q10.4 -60.6 11.2 -66 L12.8 -78 Q13.2 -82.6 11.4 -84.6 Q8.6 -86.8 3.2 -86.8 Q0 -88.6 -3.2 -86.8 Z";
     g += F(RK, BRZ);
-    g += F("M6.4 -82 Q11 -82 11.4 -76 L10.2 -64 Q9.6 -60 9.2 -57.6 Q11.8 -40 13 -23.4 L14.4 -23.6 Q12.8 -40 9.8 -57.4 Q10.2 -60.6 10.8 -66 L12.1 -78 Q12.4 -82.4 10.6 -84.4 Z", DK, ' opacity=".38"');
+    g += F("M6.4 -82 Q11.6 -82 12 -76 L10.6 -64 Q9.8 -60 9.4 -57.6 Q12 -40 13.2 -21.6 L14.6 -21 Q13 -40 10 -57.4 Q10.4 -60.6 11.2 -66 L12.8 -78 Q13.2 -82.6 11.4 -84.6 Z", DK, ' opacity=".38"');
     /* Revers: links im Licht, rechts im Schatten */
-    g += F("M-2.2 -82 L-6 -73.6 L-4.4 -66 L-5.6 -76 L-2.8 -84 Z", BRZL) + F("M2.2 -82 L6 -73.6 L4.4 -66 L5.6 -76 L2.8 -84 Z", "#2e2a1e");
-    g += bahn(-11.4, -54, -13.6, -22, -.6, 1.2) + bahn(-7.4, -48, -8.8, -21.4, -.3, 1) + bahn(10.6, -54, 12.6, -24, .6, 1.2) + bahn(7, -46, 8, -23.4, .3, .9);
+    g += F("M-2.2 -82 L-6 -73.6 L-5 -64 L-7.4 -75 L-3 -84.4 Z", "#b0a170") + F("M2.2 -82 L6 -73.6 L5 -64 L7.4 -75 L3 -84.4 Z", "#3a3424");
+    g += bahn(-11.4, -54, -13.8, -21, -.6, 1.2) + bahn(-8.4, -48, -10.6, -26, -.3, 1) + bahn(10.6, -54, 12.8, -22.4, .6, 1.2) + bahn(8.2, -46, 10, -28, .3, .9);
     g += patina("M-10.6 -57 Q-12.6 -40 -13.6 -23 L-12.4 -23 Q-11.6 -40 -9.8 -56 Z") + patina("M9.4 -56 Q11.4 -40 12 -24 L13.2 -24 Q12.2 -40 10.2 -57 Z", 0.45) + patina("M-10.4 -80 Q-11.4 -74 -10.8 -68 L-9.6 -68 Q-10 -74 -9.4 -80 Z", 0.45);
-    g += kante("M-10.6 -83.4 Q-11.9 -78 -11.2 -70 Q-10.4 -63 -10 -58.4 Q-13 -40 -14.4 -22", 0.6) + kante("M-4.2 -66 L-3.4 -58 Q-2.8 -50 -3.6 -40 L-6.4 -21.4", 0.6);
+    g += kante("M-10.6 -83.4 Q-11.9 -78 -11.2 -70 Q-10.4 -63 -10 -58.4 Q-13 -40 -14.4 -22", 0.6) + kante("M-5.4 -66 L-5.4 -58 L-9.4 -30", 0.6);
     /* Vorderkanten der Rockflügel: der rechte wirft einen Schatten auf die Hose */
-    g += `<path d="M3.4 -58 Q2.8 -50 3.6 -40 L6.6 -23.4" stroke="${DK}" stroke-width="1.4" fill="none" opacity=".55" transform="translate(-.7 0)"/>`;
+    g += `<path d="M5.4 -58 L10.2 -30.6" stroke="${DK}" stroke-width="1.4" fill="none" opacity=".55" transform="translate(-.7 0)"/>`;
     /* linker Arm (rechts im Bild) hängt mit der Schriftrolle am Oberschenkel */
-    g += arm([[10.6, -82], [13.4, -66], [12.4, -53.4]], 5.8, 4.4);
+    g += arm([[11.2, -82], [14, -66], [12.6, -53.4]], 5.8, 4.4);
     g += `<rect x="11.2" y="-54" width="2.8" height="16" rx="1.2" fill="${BRZL}" transform="rotate(-6 12.6 -46)"/><path d="M11.6 -53 L10.2 -38.4" stroke="${HL}" stroke-width=".5" opacity=".7"/><ellipse cx="12.4" cy="-54" rx="1.4" ry=".8" fill="${HL}" opacity=".6"/>`;
     g += hand(12.6, -51.6, 84, 0.95);
     /* Kopf um 10° gehoben, Blick nach rechts oben: lange Nase mit Höcker als Profilkante, Haar aus der Stirn nach hinten bis in den Nacken */
     g += F("M-2.2 -91.6 L2.2 -91.6 L2.5 -86 L-2.5 -86 Z", "#4a4230") + kante("M-2 -91 L-2.3 -86.4", 0.4) + patina("M.6 -91 L2.2 -91 L2.5 -86.4 L.8 -86.4 Z", 0.45);
-    const kopf = `<path d="M-4.8 -96 Q-4.6 -101.8 .6 -102 Q5.8 -101.6 5.8 -95.6 Q6.6 -91.6 5.4 -89.4 Q4.6 -90.6 4.2 -92.4 Q4.4 -94.4 3.8 -96.6 Q.6 -99 -3.6 -96.8 Q-4.2 -94 -4.4 -92.4 Q-5.3 -93.6 -4.8 -96 Z" fill="${BRZ2}"/>` +
+    const kopf = `<path d="M-4.8 -96 Q-4.6 -101.8 .6 -102 Q5.8 -101.6 5.8 -95.6 Q6 -93.6 5.3 -93 Q4.6 -94.6 3.8 -96.6 Q.6 -99 -3.6 -96.8 Q-4.2 -94 -4.4 -92.4 Q-5.3 -93.6 -4.8 -96 Z" fill="${BRZ2}"/>` +
       kopfB(0.4, -95, 0.8, 0.9, false) +
       `<path d="M-4.4 -96.8 Q-3.6 -101 .6 -101.2 Q4.8 -101 5.4 -97.4 Q2.8 -99.6 .4 -99.4 Q-2.6 -99.2 -4.4 -96.8 Z" fill="${BRZ2}"/>` +
       `<path d="M-3.6 -98.6 Q-5 -97.4 -5 -94.6 M-1.6 -100.2 Q-4.2 -99.6 -4.6 -96.8 M2.6 -100.4 Q5.4 -99.6 5.6 -96" stroke="${HL}" stroke-width=".4" fill="none" opacity=".65"/>`;
@@ -558,8 +557,8 @@ const denkmalUnter = [];
     `<path d="M-1.9 1 L-1.8 3.6 M-.6 1.3 L-.5 4 M.7 1.3 L.8 4 M1.9 1.1 L2 3.4" stroke="${BRZL}" stroke-width="1.1" stroke-linecap="round"/><path d="M-1.3 1.3 L-1.2 3.6 M0 1.4 L.1 3.9 M1.3 1.3 L1.4 3.6" stroke="${DK}" stroke-width=".25" opacity=".55"/>` +
     `<path d="M-2.4 -.9 Q0 -2 2.6 -.9" stroke="${HL}" stroke-width=".4" fill="none" opacity=".75"/></g>`;
   /* Goethes rechter Arm kreuzt vor dem Körper zum Kranz, Schillers rechter Arm greift von rechts dazu */
-  fig += `<g transform="translate(${GO} 0)">${arm([[-10.6, -83], [-12.8, -66], [2.4, -57.6]], 5.8, 4.5)}</g>`;
-  fig += `<g transform="translate(${SC} 0)">${arm([[-10.6, -82.6], [-13.8, -67], [-10.6, -57]], 5.8, 4.4)}</g>`;
+  fig += `<g transform="translate(${GO} 0)">${arm([[-10.6, -83], [-13, -70], [2.4, -65.6]], 5.8, 4.5)}</g>`;
+  fig += `<g transform="translate(${SC} 0)">${arm([[-11.2, -82.6], [-14.8, -74], [-10.6, -65]], 5.8, 4.4)}</g>`;
   /* der Lorbeerkranz auf Brusthöhe: spitze Blätter paarweise, zwei Bänder hängen herab */
   let kranz = `<path d="M${KX - 0.8} ${KY + KR - 0.4} Q${KX - 2.4} ${KY + KR + 5} ${KX - 1.8} ${KY + KR + 10} L${KX - 1} ${KY + KR + 9} L${KX - 0.7} ${KY + KR + 10.4} Q${KX - 1.2} ${KY + KR + 5} ${KX + 0.2} ${KY + KR - 0.2} Z" fill="${BRZL}"/>`;
   kranz += `<path d="M${KX + 0.8} ${KY + KR - 0.4} Q${KX + 2.2} ${KY + KR + 4.4} ${KX + 2} ${KY + KR + 9} L${KX + 1.3} ${KY + KR + 8.2} L${KX + 0.9} ${KY + KR + 9.4} Q${KX + 1} ${KY + KR + 4} ${KX - 0.1} ${KY + KR - 0.2} Z" fill="${BRZ}"/>`;
@@ -571,8 +570,8 @@ const denkmalUnter = [];
     for (const sp of [-35, 35]) kranz += `<use href="#${S.id("blatt")}" fill="${hell ? "#a49464" : "#4a4430"}" transform="translate(${r(x)} ${r(y)}) rotate(${deg + sp})"/>`;
   }
   fig += kranz;
-  fig += `<g transform="translate(${GO} 0)">${hand(2.4, -57.2, 60, 1)}</g>`;
-  fig += `<g transform="translate(${SC} 0)">${hand(-10.6, -56.2, 100, 1)}</g>`;
+  fig += `<g transform="translate(${GO} 0)">${hand(2.4, -65.2, 60, 1)}</g>`;
+  fig += `<g transform="translate(${SC} 0)">${hand(-10.6, -64.2, 100, 1)}</g>`;
   /* Schlagschatten der Figuren auf der Plinthe nach rechts */
   fig = `<path d="M-14 0 L14 0 L24 -1.4 L-4 -1.4 Z" fill="#14120d" opacity=".45"/>` + fig;
   k += `<g transform="translate(0 ${r(fussY)}) scale(${FS.toFixed(5)})">${fig}</g>`;
@@ -670,10 +669,10 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
     }
     for (let i = 0; i < 4; i++) {
       const X = ZK.X0 + 2.62 + i * 0.22, x = xG(ZK.D + 0.25, X), y = yG(ZK.D + 0.25, 0.95), u = sk(ZK.D + 0.25);
-      k += `<path d="M${r(x - 0.04 * u)} ${r(y)} L${r(x - 0.04 * u)} ${r(y - 0.2 * u)} Q${r(x - 0.04 * u)} ${r(y - 0.25 * u)} ${r(x - 0.015 * u)} ${r(y - 0.27 * u)} L${r(x - 0.015 * u)} ${r(y - 0.31 * u)} L${r(x + 0.015 * u)} ${r(y - 0.31 * u)} L${r(x + 0.015 * u)} ${r(y - 0.27 * u)} Q${r(x + 0.04 * u)} ${r(y - 0.25 * u)} ${r(x + 0.04 * u)} ${r(y - 0.2 * u)} L${r(x + 0.04 * u)} ${r(y)} Z" fill="#d48a26"/>` +
-        `<rect x="${r(x - 0.04 * u)}" y="${r(y - 0.15 * u)}" width="${r(0.08 * u)}" height="${r(0.07 * u)}" fill="#f2ead2"/><rect x="${r(x - 0.017 * u)}" y="${r(y - 0.33 * u)}" width="${r(0.034 * u)}" height="${r(0.03 * u)}" fill="#2f5a32"/><path d="M${r(x - 0.025 * u)} ${r(y - 0.02 * u)} V${r(y - 0.19 * u)}" stroke="#ffe0a0" stroke-width=".25" opacity=".7"/>`;
+      k += `<path d="M${r(x - 0.04 * u)} ${r(y)} L${r(x - 0.04 * u)} ${r(y - 0.2 * u)} Q${r(x - 0.04 * u)} ${r(y - 0.25 * u)} ${r(x - 0.015 * u)} ${r(y - 0.27 * u)} L${r(x - 0.015 * u)} ${r(y - 0.29 * u)} L${r(x + 0.015 * u)} ${r(y - 0.29 * u)} L${r(x + 0.015 * u)} ${r(y - 0.27 * u)} Q${r(x + 0.04 * u)} ${r(y - 0.25 * u)} ${r(x + 0.04 * u)} ${r(y - 0.2 * u)} L${r(x + 0.04 * u)} ${r(y)} Z" fill="#e9b949"/>` +
+        `<rect x="${r(x - 0.04 * u)}" y="${r(y - 0.15 * u)}" width="${r(0.08 * u)}" height="${r(0.07 * u)}" fill="#f2ead2"/><rect x="${r(x - 0.017 * u)}" y="${r(y - 0.31 * u)}" width="${r(0.034 * u)}" height="${r(0.03 * u)}" fill="#2f5a32"/><path d="M${r(x - 0.025 * u)} ${r(y - 0.02 * u)} V${r(y - 0.19 * u)}" stroke="#ffe0a0" stroke-width=".25" opacity=".7"/>`;
     }
-    for (let i = 0; i < 2; i++) { const x = xG(ZK.D + 0.15, ZK.X0 + 2.5 + i * 0.95), y = yG(ZK.D + 0.15, 0.95), u = sk(ZK.D + 0.15); k += `<path d="M${r(x - 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.03 * u)} ${r(y)} L${r(x - 0.03 * u)} ${r(y)} Z" fill="#f4f1ea"/><ellipse cx="${r(x)}" cy="${r(y - 0.11 * u)}" rx="${r(0.04 * u)}" ry="${r(0.012 * u)}" fill="#d48a26"/>`; }
+    for (let i = 0; i < 2; i++) { const x = xG(ZK.D + 0.15, ZK.X0 + 2.5 + i * 0.95), y = yG(ZK.D + 0.15, 0.95), u = sk(ZK.D + 0.15); k += `<path d="M${r(x - 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.03 * u)} ${r(y)} L${r(x - 0.03 * u)} ${r(y)} Z" fill="#f4f1ea"/><ellipse cx="${r(x)}" cy="${r(y - 0.11 * u)}" rx="${r(0.04 * u)}" ry="${r(0.012 * u)}" fill="#e9b949"/>`; }
   }
   k += stand(ZW.D, ZW.X0, ZW.X1, ZW.T, ZW.h, "#7a4a24", 1, "#f4ecd8", "Zwiebeln aus Heldrungen", 0.2);
   /* Kiste mit losen Zwiebeln auf der Theke */
@@ -687,6 +686,7 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
   S.teil({ id: "marktstand", de: "der Marktstand", syl: "MARKT-stand", it: "la bancarella", itSyl: "ban-ca-REL-la", en: "market stall", x: 0, y: 0, kunst: k,
     tipp: "Beim Zwiebelmarkt im Oktober stehen in der ganzen Altstadt Marktstände." });
 }
+let VK;
 {
   /* DIE VERKÄUFERIN: vorn an der Theke, reicht mit der rechten Hand einen Zopf über die Theke */
   const V = mensch("V", { id: "wmr_verk", geschlecht: "w", blick: 14, frisur: "lang", haarfarbe: "braun", haut: "hell", laecheln: true,
@@ -696,7 +696,7 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
     kleidung: { oberteil: { stueck: "bluse", farbe: "creme" }, schuerze: { stueck: "schuerze", farbe: "#b8473a" }, unterteil: { stueck: "hose", farbe: "braun" }, schuhe: { stueck: "stiefel" } } }, 1.8, ZW.D + 0.42, (ZW.X0 + ZW.X1) / 2 + 0.1, 3, 0.9);
   const theke = yG(ZW.D, 0.95);
   S.def(`<clipPath id="${S.id("hinterTheke")}"><rect x="-60" y="-120" width="120" height="${r(theke - V.y + 120)}"/></clipPath>`);
-  S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x: V.x, y: V.y,
+  VK = S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x: V.x, y: V.y,
     kunst: `<g clip-path="url(#${S.id("hinterTheke")})">${V.svg}</g>`, tipp: "Die Verkäuferin sagt: „Ein Zwiebelzopf bringt Glück in die Küche!“" });
   FIG.Vh = V.p(V.m.z.handR);
 }
@@ -731,7 +731,8 @@ const zopf = (x, y, len, s2, rotAnteil, seed) => {
   const pos = [[0.22, 0.95, 0.2], [0.5, 0.8, 0.5], [0.78, 0.92, 0.1], [2.78, 0.88, 0.3], [3.08, 0.98, 0.0], [3.36, 0.82, 0.6]];
   pos.forEach(([dx, len, rot], i) => { k += zopf(xG(ZW.D - 0.2, ZW.X0 + dx), ya, len, u, rot, i * 7 + 3); });
   /* liegende Zöpfe auf der Theke (quer, von oben gesehen) */
-  { const h = FIG.Vh; k += zopf(h.x, h.y + 0.04 * u, 0.62, u, 0.35, 91); }
+  /* der gereichte Zopf gehört zur Verkäuferin (ihre Trefferfläche) */
+  { const h = FIG.Vh; VK.kunst += zopf(h.x - VK.x, h.y + 0.04 * u - VK.y, 0.62, u, 0.35, 91); }
   S.teil({ id: "zwiebelzopf", de: "der Zwiebelzopf", syl: "ZWIE-bel-zopf", it: "la treccia di cipolle", itSyl: "TREC-cia di ci-POL-le", en: "onion braid", x: 0, y: 0, kunst: k,
     tipp: "Zwiebelzöpfe sind das Wahrzeichen des Weimarer Zwiebelmarkts. Den Markt gibt es seit 1653." });
 }
@@ -811,7 +812,7 @@ const V2 = mensch("V2", { id: "wmr_grill", geschlecht: "m", blick: -14, frisur: 
 const LS = { D: 8.6, X: -6.0 };
 {
   const u = sk(LS.D), x = xG(LS.D, LS.X), y = yG(LS.D);
-  bodenSchatten(LS.D, LS.X, 1.2, 3.6, 0.28);
+  bodenSchatten(LS.D, LS.X, 1.2, 3.6, 0.38);
   let g = "";
   const R = 0.6;
   g += `<rect x="${-R - 0.05}" y="-.3" width="${2 * R + 0.1}" height=".3" fill="#2f4a3a"/>`;
@@ -867,7 +868,7 @@ const LS = { D: 8.6, X: -6.0 };
   g += `<path d="M.4 -.86 L.38 -.98 Q.3 -1.01 .24 -.96" stroke="${CHROM}" stroke-width=".022" fill="none" stroke-linecap="round"/><path d="M.24 -.96 L.19 -.94" stroke="#1d1d1d" stroke-width=".04" stroke-linecap="round"/>`;
   g += `<path d="M.44 -.8 L.5 -.8 L.52 -.77 L.44 -.76 Z" fill="#e8e2c8" stroke="#3a3d40" stroke-width=".008"/>`;
   S.teil({ id: "fahrrad", de: "das Fahrrad", syl: "FAHR-rad", it: "la bicicletta", itSyl: "bi-ci-CLET-ta", en: "bicycle", x: r(x), y: r(y), steht: true,
-    kunst: `<g transform="scale(${u.toFixed(4)}) skewX(4)">${g}</g>`, tipp: "Das Fahrrad lehnt an der Litfaßsäule. Viele Studenten fahren in Weimar Fahrrad." });
+    kunst: `<g transform="scale(${u.toFixed(4)}) skewX(9)">${g}</g>`, tipp: "Das Fahrrad lehnt an der Litfaßsäule. Viele Studenten fahren in Weimar Fahrrad." });
 }
 
 /* =====================================================================

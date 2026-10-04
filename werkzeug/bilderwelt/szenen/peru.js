@@ -280,9 +280,9 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   /* reißender Bergfluss: graugrün bis lehmbraun, kurze Schaumflecken schräg zur Strömung, dunkle Ufer mit Blöcken */
   const ob = (x) => 249.5 - (x - 318) * 0.115 + Math.sin(x / 9) * 0.5, br = (x) => 9 + (x - 318) * 0.09;
   const oben = [], unten = [];
-  for (let x = 316; x <= 404; x += 4) { oben.push([x, ob(x)]); unten.push([x, ob(x) + br(x)]); }
+  for (const x of [316, 324, 332, 340, 348, 356, 364, 372, 380, 388, 396, 401]) { oben.push([x, ob(x)]); unten.push([x, ob(x) + br(x)]); }
   const wasser = glatt([...oben, ...unten.slice().reverse()], true, 0.6);
-  let k = `<path d="${glatt([...unten.map(([x, y]) => [x, y - 1]), [404, 263], [316, 263]], true, 0.6)}" fill="#2c4733"/><path d="${glatt([...unten.map(([x, y]) => [x, y - 1]), [404, 263], [316, 263]], true, 0.6)}" fill="${WALD1}" opacity=".7"/>`;
+  let k = `<path d="${glatt([...unten.map(([x, y]) => [x, y - 1]), [401, 260.6], [316, 260.6]], true, 0.6)}" fill="#2c4733"/><path d="${glatt([...unten.map(([x, y]) => [x, y - 1]), [401, 260.6], [316, 260.6]], true, 0.6)}" fill="${WALD1}" opacity=".7"/>`;
   k += `<path d="${wasser}" fill="${S.lg("fluss", [[0, "#8d8068"], [0.45, "#7f8a6e"], [1, "#6c7660"]], 0, 0, 0, 1)}"/>`;
   /* Strömungsbänder (etwas heller) und Schaumflecken */
   const zf = zufall(57);
@@ -429,9 +429,12 @@ const haus = (x, y, b, h, t, g, giebel = "front", dach = false, tueren = 1, scha
      darunter der Grasboden mit einer schmalen Schattenkante an der Wand — kein Dach */
   const vis = up(A, h)[1] - up(A2, h)[1], wv = Math.min(vis * 0.56, h * 0.9);
   o += `<path d="${Pr([up(A, h), up(Bp, h), up(B2, h), up(A2, h)])}" fill="#7f8a52"/>`;
-  o += `<path d="${Pr([up(A2, h), up(B2, h), up(B2, h - wv), up(A2, h - wv)])}" fill="#d6cdb9"/><path d="${Pr([up(A2, h - wv), up(B2, h - wv), up(B2, h - wv * 1.22), up(A2, h - wv * 1.22)])}" fill="#4b5233" opacity=".6"/>`;
+  o += `<path d="${Pr([up(A2, h), up(B2, h), up(B2, h - wv), up(A2, h - wv)])}" fill="#d6cdb9"/>`;
+  /* Schattenkante am Fuß der Rückwand und die Nischen: eine dunkle Form */
   const iw = B2[0] - A2[0];
-  if (iw > 2.6 && wv > 0.7) { let ni = ""; const nn = iw > 5 ? 3 : 2; for (let i = 0; i < nn; i++) { const cx = A2[0] + iw * (i + 0.5) / nn, cy = A2[1] - h + wv * 0.55, nb = Math.min(0.7, iw * 0.07), nh = wv * 0.42; ni += `M${r(cx - nb)} ${r(cy + nh / 2)}l${r(nb * 0.3)} ${r(-nh)}h${r(nb * 1.4)}l${r(nb * 0.3)} ${r(nh)}Z`; } o += `<path d="${ni}" fill="#5c5446"/>`; }
+  let ni = Pr([up(A2, h - wv), up(B2, h - wv), up(B2, h - wv * 1.22), up(A2, h - wv * 1.22)]);
+  if (iw > 2.6 && wv > 0.7) { const nn = iw > 5 ? 3 : 2; for (let i = 0; i < nn; i++) { const cx = A2[0] + iw * (i + 0.5) / nn, cy = A2[1] - h + wv * 0.55, nb = Math.min(0.7, iw * 0.07), nh = wv * 0.42; ni += `M${r(cx - nb)} ${r(cy + nh / 2)}l${r(nb * 0.3)} ${r(-nh)}h${r(nb * 1.4)}l${r(nb * 0.3)} ${r(nh)}Z`; } }
+  o += `<path d="${ni}" fill="#57523e"/>`;
   if (rechtsSicht) o += `<path d="${Pr([Bp, B2, up(B2, h), up(Bp, h)])}" fill="${GRANIT_L}"/>`;
   else o += `<path d="${Pr([A, A2, up(A2, h), up(A, h)])}" fill="${GRANIT_S}"/>`;
   o += `<path d="${Pr([A, Bp, up(Bp, h), up(A, h)])}" fill="${GRANIT_F}"/>`;
@@ -447,7 +450,7 @@ const haus = (x, y, b, h, t, g, giebel = "front", dach = false, tueren = 1, scha
   }
   o += `<path d="M${r(x)} ${r(y - h)} H${r(x + b)}" stroke="#ece4d2" stroke-width="${r(Math.max(0.2, 0.12 * m))}" opacity=".85"/>`;
   if (zh() < 0.5) o += `<path d="M${r(x + b * zh() * 0.4)} ${r(y - h - 0.12)} h${r(b * (0.2 + zh() * 0.3))}" stroke="#7e9a4a" stroke-width="${r(Math.max(0.25, 0.16 * m))}" stroke-linecap="round"/>`;
-  if (b > 3) for (let i = 1; i < 4; i++) o += `<path d="M${r(x + 0.2)} ${r(y - h * i / 4)} H${r(x + b - 0.2)}" stroke="#7f786c" stroke-width=".1" opacity=".55"/>`;
+  if (b > 3) { let lg = ""; for (let i = 1; i < 4; i++) lg += `M${r(x + 0.2)} ${r(y - h * i / 4)}H${r(x + b - 0.2)}`; o += `<path d="${lg}" stroke="#7f786c" stroke-width=".1" opacity=".55"/>`; }
   for (let i = 0; i < tueren; i++) {
     const cx = x + b * (i + 0.5) / tueren, tb = Math.min(b / tueren * 0.42, 0.95 * m), th = Math.min(h * 0.72, 1.9 * m);
     o += `<path d="M${r(cx - tb / 2)} ${r(y)} L${r(cx - tb * 0.34)} ${r(y - th)} L${r(cx + tb * 0.34)} ${r(y - th)} L${r(cx + tb / 2)} ${r(y)} Z" fill="#3a332b"/>`;
@@ -1082,5 +1085,11 @@ const fohlenBild = (H, dir, fell, fleck) => {
 
 const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang || /[À-ÖÙ-Ý]/.test(x)) ? x : x.toLowerCase()))).join(""); };
 for (const t of S.teile) for (const u of [t, ...(t.unter || [])]) { u.syl = silben(u.syl); u.itSyl = silben(u.itSyl); }
+/* Zahlen in Pfaden knapp schreiben (0.5 → .5, kein Leerzeichen vor dem Minus) — spart Ladezeit, ändert nichts am Bild */
+{
+  const knapp = (t) => t.replace(/ d="([^"]*)"/g, (m0, d) => ` d="${d.replace(/(^|[\s,a-zA-Z-])0\.(\d)/g, "$1.$2").replace(/ -/g, "-").replace(/([a-zA-Z]) /g, "$1")}"`);
+  for (const t of S.teile) { t.kunst = knapp(t.kunst || ""); for (const u of t.unter || []) u.kunst = knapp(u.kunst || ""); }
+  S.defs.forEach((d, i) => { S.defs[i] = knapp(d); });
+}
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/peru.js"));
 console.log(aus);

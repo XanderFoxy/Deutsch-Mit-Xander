@@ -576,7 +576,8 @@ S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 
     zoom: { x: 84, y: 65, w: 64, h: 43 },
     unter: [{ id: "tor", de: "das Tor", syl: "TOR", it: "la porta", itSyl: "POR-ta", en: "gate", x: x0, y: yb, kunst: flaeche(-3.4 * s, -12 * s, 6.8 * s, 12 * s, 0.3),
       tipp: "Durch das Tor zwischen den beiden Türmen kommt man in die Kleinseite." }],
-    tipp: "An beiden Enden der Karlsbrücke steht ein Brückenturm. Der hohe Turm hier ist über 500 Jahre alt." });
+    tipp: "An beiden Enden der Karlsbrücke steht ein Brückenturm. Davor, auf der Brücke, steht der heilige Nepomuk mit fünf goldenen Sternen." });
+  var TURM_TEIL = S.teile[S.teile.length - 1];
 }
 
 /* =====================================================================
@@ -599,8 +600,10 @@ const SAND_L = S.lg("sandl", [[0, "#b9ab94"], [0.2, "#a59782"], [1, "#8c7e6b"]],
 const SAND_S = S.lg("sands", [[0, "#857b6f"], [0.2, "#5e564f"], [1, "#4a443f"]], 0, 102, 0, 260, ' gradientUnits="userSpaceOnUse"');
 /* Schatten einer Statue (Sockel 2,6 m, Figur bis 5,6 m) auf der Fahrbahn: breites Band schräg nach vorn rechts */
 const statuenSchatten = (s) => {
-  const sh = (ds, h) => P(s + ds + h * SDS, -BR - 0.2 + h * SDQ);
-  return poly([sh(-1.15, 1.25), sh(1.15, 1.25), sh(1.15, 2.6), sh(0.62, 2.6), sh(0.55, 4.5), sh(0.28, 5.6), sh(-0.3, 5.6), sh(-0.55, 4.5), sh(-0.65, 2.6), sh(-1.15, 2.6)], "#2b2a3a", ` opacity=".45"`);
+  /* Runde 4: Sockelblock (2,3 m lang, Innenseite bündig mit der Brüstung, 2,6 m hoch) und Figurenkeil (bis 5,6 m);
+     beide in einer Gruppe, damit die Überdeckung nicht doppelt dunkel wird */
+  const sk = (ds, h) => P(s + ds + h * SDS, -QI + h * SDQ), fg = (ds, h) => P(s + ds + h * SDS, -BR - 0.2 + h * SDQ);
+  return `<g opacity=".42">${poly([sk(-1.15, 0), sk(1.15, 0), sk(1.15, 2.6), sk(-1.15, 2.6)], "#2b2a3a")}${poly([fg(-0.7, 2.6), fg(0.7, 2.6), fg(0.55, 4.5), fg(0.3, 5.6), fg(-0.3, 5.6), fg(-0.55, 4.5)], "#2b2a3a")}</g>`;
 };
 const laternenSchatten = (s) => strecke(P(s + BRH * SDS, -QI + 0.4), P(s + 4.3 * SDS, -BR + 0.3 + 4.3 * SDQ));
 function bruecke(S0, S1) {
@@ -683,7 +686,7 @@ function kopf(kx, ky, s, art = "", blick = 0) {
   g += `<ellipse cx="${q2(kx)}" cy="${q2(ky)}" rx="${q2(s * 0.78)}" ry="${q2(s)}" fill="${HAUT}"/>`;
   const nx = kx + blick * s * 0.3;
   g += `<path d="M${pt(nx, ky - s)} A${q2(s * 0.78)} ${q2(s)} 0 0 1 ${pt(nx, ky + s)} Q${pt(nx + s * 0.28, ky)} ${pt(nx, ky - s)}Z" fill="${STD}" opacity=".42"/>`;
-  g += `<path d="M${pt(nx - s * 0.45, ky - s * 0.22)} h${q2(s * 0.85)}" stroke="${STD}" stroke-width="${q2(s * 0.12)}" opacity=".45"/>`;
+  g += `<ellipse cx="${q2(nx - s * 0.3)}" cy="${q2(ky - s * 0.15)}" rx="${q2(s * 0.2)}" ry="${q2(s * 0.12)}" fill="${STD}" opacity=".5"/><ellipse cx="${q2(nx + s * 0.3)}" cy="${q2(ky - s * 0.15)}" rx="${q2(s * 0.18)}" ry="${q2(s * 0.12)}" fill="${STD}" opacity=".6"/><path d="M${pt(nx - s * 0.5, ky - s * 0.32)} q${q2(s * 0.2)} ${q2(-s * 0.1)} ${q2(s * 0.42)} 0" stroke="${STW}" stroke-width="${q2(s * 0.08)}" fill="none" opacity=".7"/><path d="M${pt(nx - s * 0.18, ky + s * 0.45)} h${q2(s * 0.34)}" stroke="${STD}" stroke-width="${q2(s * 0.07)}" opacity=".55"/>`;
   g += `<path d="M${pt(nx + s * 0.04, ky - s * 0.2)} l${q2(s * 0.16)} ${q2(s * 0.45)} l${q2(-s * 0.16)} ${q2(s * 0.06)}" stroke="${STW}" stroke-width="${q2(s * 0.1)}" fill="none" opacity=".8"/>`;
   if (art === "schleier" || art === "kapuze") g += `<path d="M${pt(kx - s * 0.82, ky - s * 0.2)} Q${pt(kx, ky - s * 1.5)} ${pt(kx + s * 0.82, ky - s * 0.2)} Q${pt(kx, ky - s * 0.85)} ${pt(kx - s * 0.82, ky - s * 0.2)}Z" fill="${SF2}"/><path d="M${pt(kx - s * 1.1, ky + s)} Q${pt(kx - s * 1.2, ky - s * 0.6)} ${pt(kx - s * 0.2, ky - s * 1.3)}" stroke="${STW}" stroke-width="${q2(s * 0.12)}" fill="none" opacity=".6"/>`;
   else if (art === "birett") g += `<path d="M${pt(kx - s * 0.86, ky - s * 0.5)} L${pt(kx - s * 0.8, ky - s * 1.42)} L${pt(kx + s * 0.8, ky - s * 1.42)} L${pt(kx + s * 0.86, ky - s * 0.5)} Q${pt(kx, ky - s * 0.72)} ${pt(kx - s * 0.86, ky - s * 0.5)}Z" fill="#2c2824"/><path d="M${pt(kx - s * 0.32, ky - s * 1.42)} v${q2(-s * 0.45)} M${pt(kx + s * 0.3, ky - s * 1.42)} v${q2(-s * 0.4)}" stroke="#3a3530" stroke-width="${q2(s * 0.22)}"/><circle cx="${q2(kx)}" cy="${q2(ky - s * 1.62)}" r="${q2(s * 0.22)}" fill="#2c2824"/><path d="M${pt(kx - s * 0.84, ky - s * 0.55)} L${pt(kx - s * 0.79, ky - s * 1.4)} H${q2(kx)}" stroke="${STW}" stroke-width="${q2(s * 0.1)}" fill="none" opacity=".7"/>`;
@@ -694,10 +697,17 @@ function kopf(kx, ky, s, art = "", blick = 0) {
 }
 /* Arm als Ärmel (am Handgelenk weit, barock) mit heller Oberkante, Hand als helle Form */
 function arm(ax, ay, bx, by, w) {
-  const mx = (ax + bx) / 2 - w * 0.4, my = (ay + by) / 2 + w * 0.5, ex = bx + (bx - mx) * 0.22, ey = by + (by - my) * 0.22;
-  return `<path d="M${pt(ax, ay)} Q${pt(mx, my)} ${pt(bx, by)}" stroke="${SF2}" stroke-width="${q2(w)}" stroke-linecap="round" fill="none"/>` +
-    `<path d="M${pt(ax - w * 0.15, ay - w * 0.3)} Q${pt(mx - w * 0.2, my - w * 0.45)} ${pt(bx, by - w * 0.4)}" stroke="${STW}" stroke-width="${q2(w * 0.15)}" fill="none" opacity=".55"/>` +
-    `<ellipse cx="${q2(ex)}" cy="${q2(ey)}" rx="${q2(w * 0.4)}" ry="${q2(w * 0.5)}" fill="${HAUT}"/>`;
+  /* Ärmel als Stoff: an der Schulter schmal, zum Handgelenk weit, dunkle Öffnung, zwei Falten nach unten;
+     die Hand als helle Form mit abgesetztem Daumen */
+  const dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy) || 1, ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  const P2 = (t, o) => pt(ax + dx * t + nx * o, ay + dy * t + ny * o);
+  let g = `<path d="M${P2(0, -w * 0.5)} Q${P2(0.5, -w * 0.7)} ${P2(0.92, -w * 0.85)} L${P2(1.02, w * 0.85)} Q${P2(0.5, w * 0.75)} ${P2(0, w * 0.5)}Z" fill="${SF2}"/>`;
+  g += `<path d="M${P2(0.25, -w * 0.15)} Q${P2(0.6, 0)} ${P2(0.9, w * 0.35)} M${P2(0.4, w * 0.45)} Q${P2(0.7, w * 0.5)} ${P2(0.98, w * 0.75)}" stroke="${STD}" stroke-width="${q2(w * 0.14)}" fill="none" opacity=".6"/>`;
+  g += `<path d="M${P2(0.05, -w * 0.5)} Q${P2(0.5, -w * 0.72)} ${P2(0.9, -w * 0.84)}" stroke="${STW}" stroke-width="${q2(w * 0.14)}" fill="none" opacity=".6"/>`;
+  g += `<ellipse cx="${q2(bx + ux * w * 0.02)}" cy="${q2(by + uy * w * 0.02)}" rx="${q2(w * 0.32)}" ry="${q2(w * 0.8)}" transform="rotate(${q2(Math.atan2(uy, ux) * 180 / Math.PI + 90)} ${q2(bx)} ${q2(by)})" fill="#1c1a17"/>`;
+  const hx = bx + ux * w * 0.55, hy = by + uy * w * 0.55;
+  g += `<ellipse cx="${q2(hx)}" cy="${q2(hy)}" rx="${q2(w * 0.36)}" ry="${q2(w * 0.5)}" fill="${HAUT}"/><ellipse cx="${q2(hx - nx * w * 0.35 - ux * w * 0.1)}" cy="${q2(hy - ny * w * 0.35 - uy * w * 0.1)}" rx="${q2(w * 0.13)}" ry="${q2(w * 0.24)}" fill="${HAUT}"/>`;
+  return g;
 }
 /* stehende Gestalt im langen Gewand: Mitte cx, Höhe H, Neigung n (Kopf versetzt), Arme [Schulter→Hand] in H */
 function gestalt(cx, H, n, arme = [], opt = {}) {
@@ -734,6 +744,7 @@ function kniend(cx, H, dir, opt = {}) {
 /* Engelskopf mit zwei Flügeln in der Wolke (barockes Motiv) */
 const engel = (cx, cy, s) => [-1, 1].map((d) => `<path d="M${pt(cx + d * s * 0.6, cy + s * 0.2)} q${q2(d * s * 1.4)} ${q2(-s * 0.2)} ${q2(d * s * 2.3)} ${q2(-s * 1.6)} q${q2(-d * s * 0.5)} ${q2(s * 1.4)} ${q2(-d * s * 2.2)} ${q2(s * 1.9)}Z" fill="#59534a"/><path d="M${pt(cx + d * s * 0.7, cy - s * 0.1)} q${q2(d * s * 1.2)} ${q2(-s * 0.3)} ${q2(d * s * 2)} ${q2(-s * 1.3)}" stroke="${STW}" stroke-width="${q2(s * 0.15)}" fill="none" opacity=".6"/>`).join("") + kopf(cx, cy, s, "", 0.4);
 /* Wolkenbank (gewellter Sockel der Madonna) */
+const WBK = S.lg("wbk", [[0, "#6a6359"], [0.6, "#4d4740"], [1, "#35302b"]]);
 function wolkenbank(x0, x1, h, hr, n = 5) {
   const pk = [];
   for (let i = 0; i <= n; i++) { const t = i / n; pk.push([x0 + (x1 - x0) * t, -(h + (hr - h) * t) * (i % 2 ? 1.1 : 0.9)]); }
@@ -748,7 +759,7 @@ function wolkenbank(x0, x1, h, hr, n = 5) {
   const [xe, ye] = pk[n], re = Math.abs(ye) * 0.55;
   d += ` A${q2(re)} ${q2(re)} 0 0 1 ${pt(x1 + re * 0.3, -0.05)} L${pt(x1, 0)}Z`;
   li += `M${pt(xe, ye)} A${q2(re)} ${q2(re)} 0 0 1 ${pt(xe + re * 0.7, ye + re * 0.3)}`;
-  return `<path d="${d}" fill="#4d4740"/><path d="${du}" stroke="${STD}" stroke-width="${q2((x1 - x0) / n * 0.07)}" fill="none" opacity=".6"/><path d="${li}" stroke="${STW}" stroke-width="${q2((x1 - x0) / n * 0.07)}" fill="none" opacity=".75"/>`;
+  return `<path d="${d}" fill="${WBK}"/><path d="${du}" stroke="${STD}" stroke-width="${q2((x1 - x0) / n * 0.07)}" fill="none" opacity=".6"/><path d="${li}" stroke="${STW}" stroke-width="${q2((x1 - x0) / n * 0.07)}" fill="none" opacity=".75"/>`;
 }
 /* Sockel: Plinthe, Schaft mit Inschrifttafel, Gesims; Sonnenseite links */
 const SOCKEL_D = (nah, hoch = 2.35) => {
@@ -766,7 +777,7 @@ const GRUPPEN = {
      davor und schaut zu ihr hinauf, ein Putto hält das Kreuz (Leidenswerkzeuge) */
   bernhard: () => {
     let g = `<path d="M1.0 -.4 L1.13 -2.1 M.9 -1.72 L1.34 -1.68" stroke="#2c2824" stroke-width=".08"/><path d="M.98 -.4 L1.11 -2.1 M.9 -1.74 L1.3 -1.71" stroke="${STW}" stroke-width=".02" opacity=".6"/>`;
-    g += wolkenbank(-0.45, 1.0, 0.35, 0.95, 4) + engel(0.78, -0.42, 0.11);
+    g += wolkenbank(-0.45, 1.0, 0.35, 0.95, 4) + `<g transform="translate(.1 0)">${wolkenbank(-0.3, 0.9, 0.22, 0.42, 4)}</g>` + engel(0.78, -0.42, 0.11);
     /* Madonna sitzt auf der Wolke: Mantel über dem Rücken, Oberkörper, Schoß mit dem Kind, Beine nach links */
     g += `<circle cx=".5" cy="-2.16" r=".24" fill="none" stroke="#b49a50" stroke-width=".035"/>`;
     g += `<path d="M.6 -2.04 C.92 -1.78 .98 -1.3 .92 -.86 Q.8 -1.02 .74 -1.28 Q.7 -1.64 .54 -1.96Z" fill="${SF2}"/>`;
@@ -834,10 +845,12 @@ const statueSvg = (s, sei, i) => {
   return `<use href="#${S.id("st" + art)}" transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})"/>`;
 };
 /* Gaslaterne auf der Brüstung: Sockel, schlanker Mast mit Ring, Laternenkopf aus Glas, Dach mit Spitze (3,25 m) */
-S.def(`<g id="${S.id("lat")}"><path d="M-.2 0 h.4 v-.35 h-.4Z" fill="#33363c"/><path d="M-.09 -.35 L-.06 -2.1 h.12 L.09 -.35Z" fill="#26282c"/><path d="M-.13 -1.0 h.26 v-.1 h-.26Z M-.2 -2.1 h.4 l-.06 -.14 h-.28Z" fill="#33363c"/>` +
+S.def(`<g id="${S.id("latu")}"><path d="M-.2 0 h.4 v-.35 h-.4Z" fill="#33363c"/><path d="M-.09 -.35 L-.08 -1.05 h.16 L.09 -.35Z" fill="#26282c"/><path d="M-.07 -.4 L-.065 -1.05" stroke="#8a8c92" stroke-width=".025"/></g>`);
+S.def(`<g id="${S.id("lato")}"><path d="M-.08 -1.0 L-.06 -2.1 h.12 L.08 -1.0Z" fill="#26282c"/><path d="M-.13 -1.0 h.26 v-.1 h-.26Z M-.2 -2.1 h.4 l-.06 -.14 h-.28Z" fill="#33363c"/>` +
   `<path d="M-.16 -2.24 L-.26 -2.86 H.26 L.16 -2.24Z" fill="#efe6c8"/><path d="M.02 -2.24 L.04 -2.86 H.26 L.16 -2.24Z" fill="#b9b4a0"/><path d="M-.16 -2.24 L-.26 -2.86 M0 -2.24 V-2.86 M.16 -2.24 L.26 -2.86 M-.2 -2.5 H.2" stroke="#26282c" stroke-width=".035"/>` +
-  `<path d="M-.33 -2.86 H.33 L0 -3.12Z" fill="#26282c"/><path d="M0 -3.12 V-3.26" stroke="#26282c" stroke-width=".05"/><path d="M-.07 -.4 L-.05 -2.05" stroke="#8a8c92" stroke-width=".025"/></g>`);
-const laterneSvg = (s, sei) => { const q = sei * (BR - BRD / 2), sc = F / Dd(s, q); return `<use href="#${S.id("lat")}" transform="translate(${r(X(s, q))} ${r(Y(s, q, BRH))}) scale(${sc.toFixed(4)})"/>`; };
+  `<path d="M-.33 -2.86 H.33 L0 -3.12Z" fill="#26282c"/><path d="M0 -3.12 V-3.26" stroke="#26282c" stroke-width=".05"/><path d="M-.065 -1.1 L-.05 -2.05" stroke="#8a8c92" stroke-width=".025"/></g>`);
+S.def(`<g id="${S.id("lat")}"><use href="#${S.id("latu")}"/><use href="#${S.id("lato")}"/></g>`);
+const laterneSvg = (s, sei, teil = "lat") => { const q = sei * (BR - BRD / 2), sc = F / Dd(s, q); return `<use href="#${S.id(teil)}" transform="translate(${r(X(s, q))} ${r(Y(s, q, BRH))}) scale(${sc.toFixed(4)})"/>`; };
 
 /* ferner Teil der Brücke mit Statuen und Laternen: Kulisse (von hinten nach vorn gezeichnet).
    Die Statuen und Laternen vor den Kleinseitner Brückentürmen stanzen die Türme aus (Maske), damit
@@ -880,18 +893,17 @@ S.teil({ id: "heiliger", de: "der Heilige", syl: "HEI-li-ge", it: "il santo", it
 {
   const nx = r(X(NEPO.s, BR + 0.2)), ny = r(Y(NEPO.s, BR + 0.2)), ns = F / Dd(NEPO.s, BR + 0.2);
   S.teil({ id: "statue", de: "die Statue", syl: "STA-tu-e", it: "la statua", itSyl: "STA-tu-a", en: "statue", x: 0, y: 0, kunst: `<g filter="url(#${S.id("kante")})">${statueSvg(34, 1, 0)}</g>`,
-    zoom: { x: r(nx - 15), y: r(ny - 16), w: 27, h: 18 },
-    unter: [
-      { id: "nepomuk", de: "der heilige Nepomuk", syl: "der HEI-li-ge NE-po-muk", it: "san Giovanni Nepomuceno", itSyl: "san gio-VAN-ni ne-po-mu-CE-no", en: "St John of Nepomuk", x: nx, y: ny,
-        kunst: flaeche(-1.2 * ns, -6.8 * ns, 2.4 * ns, 6.8 * ns, 0.3), tipp: "Wer die blanke Bronzetafel am Nepomuk berührt, kommt wieder nach Prag – so sagt man." },
-      { id: "heiligenschein", de: "der Heiligenschein", syl: "HEI-li-gen-schein", it: "l'aureola", itSyl: "au-RE-o-la", en: "halo", x: nx, y: r(ny - 7.4 * ns),
-        kunst: flaecheEllipse(0, 0, 0.9 * ns, 0.7 * ns), tipp: "Um den Kopf des Nepomuk leuchten fünf goldene Sterne." },
-    ],
     tipp: "Auf der Karlsbrücke stehen 30 Statuen. Diese zeigt Maria mit dem Kind auf einer Wolke." });
+  /* Runde 4: Nepomuk und sein Sternenkranz sind Lupen-Teile des Brückenturms — dessen Lupe zeigt ihn mittig */
+  TURM_TEIL.unter.push(
+    { id: "nepomuk", de: "der heilige Nepomuk", syl: "der HEI-li-ge NE-po-muk", it: "san Giovanni Nepomuceno", itSyl: "san gio-VAN-ni ne-po-mu-CE-no", en: "St John of Nepomuk", x: nx, y: ny,
+      kunst: flaeche(-1.2 * ns, -6.8 * ns, 2.4 * ns, 6.8 * ns, 0.3), tipp: "Wer die blanke Bronzetafel am Nepomuk berührt, kommt wieder nach Prag – so sagt man." },
+    { id: "heiligenschein", de: "der Heiligenschein", syl: "HEI-li-gen-schein", it: "l'aureola", itSyl: "au-RE-o-la", en: "halo", x: nx, y: r(ny - 7.4 * ns),
+      kunst: flaecheEllipse(0, 0, 0.9 * ns, 0.7 * ns), tipp: "Um den Kopf des Nepomuk leuchten fünf goldene Sterne." });
 }
-S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: 0, y: 0, kunst: laterneSvg(20, -1),
+S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: 0, y: 0, kunst: laterneSvg(20, -1, "lato"),
   tipp: "Am Abend zündet ein Laternenanzünder einige Gaslaternen auf der Brücke noch von Hand an." });
-S.davor(laterneSvg(40, -1) + laterneSvg(46, 1));
+S.davor(laterneSvg(20, -1, "latu") + laterneSvg(40, -1) + laterneSvg(46, 1));
 
 /* =====================================================================
    11 — DER STAND eines Künstlers (Böhmisches Glas, Bilder)

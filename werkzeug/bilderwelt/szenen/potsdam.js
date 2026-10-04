@@ -76,10 +76,11 @@ const xG = (D, X) => CX + X * F / D;
 const kl = (x) => Math.min(400, Math.max(0, x));
 const schattenListe = [];
 /* Sonne im Südwesten (hinter uns, links), etwa 28° hoch: Schatten 1,9 × Höhe, nach Nordosten (rechts hinten) */
-const bodenSchatten = (D, X, w, h, a = 0.3) => {
+const bodenSchatten = (D, X, w, h, a = 0.3, zurueck = false) => {
   const L = 1.9 * h, dx = 0.6 * L, dz = 0.8 * L;
   const p = [[X - w / 2, D], [X + w / 2, D], [X + dx + w * 0.3, D + dz], [X + dx - w * 0.3, D + dz]];
-  schattenListe.push(`<path d="M${p.map(([x2, d2]) => `${r(kl(xG(d2, x2)))} ${r(yG(d2))}`).join(" L")} Z" fill="#35304a" opacity="${a}"/>`);
+  const t = `<path d="M${p.map(([x2, d2]) => `${r(kl(xG(d2, x2)))} ${r(yG(d2))}`).join(" L")} Z" fill="#35304a" opacity="${a}"/>`;
+  if (zurueck) return t; schattenListe.push(t);
 };
 /* Figuren klein halten: feine Linien weg, Koordinaten der Formen auf Q cm runden
    (die Verläufe bleiben unangetastet, sonst werden Gesichter fleckig) */
@@ -198,12 +199,6 @@ const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
        unten die dunkle Unterseite – gleiche gelappte Kante, weicher Übergang */
     g += `<use href="#${mid}" fill="${GL}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" opacity=".55" ${um(rx * 0.06, ry * 0.12, 1)}/><use href="#${mid}" fill="${GM}" ${um(rx * 0.1, ry * 0.24, 0.98)}/><use href="#${mid}" fill="${GD}" ${um(rx * 0.05, ry * 0.86, 1)}/></g>`;
   });
-  /* Himmelslöcher: unregelmäßig, 12–20 px groß, mit Ast aus dem dunklen Inneren */
-  for (let i = 0; i < loecher; i++) {
-    const a = -Math.PI * (0.15 + (i + z() * 0.6) / Math.max(1, loecher) * 0.7), d = 0.3 + z() * 0.06, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.75, s = Math.min(w, h) * 0.05 + 1.2;
-    let p = ""; for (let k = 0; k < 6; k++) { const t = k / 6 * Math.PI * 2, f = 0.6 + z() * 0.5; p += (k ? "L" : "M") + `${r(hx + Math.cos(t) * s * f)} ${r(hy + Math.sin(t) * s * f * 0.75)}`; }
-    g += `<path d="${p}Z" fill="#9fbcdc" stroke="#9fbcdc" stroke-width=".4" stroke-linejoin="round"/><path d="M${r(hx - s * 0.4)} ${r(hy + s * 1.3)} L${r(hx + s * 0.15)} ${r(hy - s * 0.1)}" stroke="#3a3424" stroke-width="${r(0.15 + s * 0.06)}" fill="none" stroke-linecap="round"/>`;
-  }
   return g;
 };
 /* ferner Baumbestand des Parks hinter dem Schloss: durchgehend, blass (Luftperspektive) */
@@ -271,7 +266,7 @@ const schlossUnter = [];
 {
   let k = "";
   const W = 45.8, TOP = -8.6;
-  const GELB = S.lg("gelb", [[0, "#fae09a"], [0.5, "#f0c862"], [1, "#d8a645"]], 0, 0, 1, 0);
+  const GELB = S.lg("gelb", [[0, "#fde4a0"], [0.5, "#f0c862"], [1, "#c9a252"]], 0, 0, 1, 0);
   /* Flügel */
   k += `<rect x="-37.8" y="${TOP}" width="75.6" height="${-TOP + 0.4}" fill="${GELB}"/>`;
   /* Mittelbau (ovaler Marmorsaal) — springt vor */
@@ -332,7 +327,7 @@ const schlossUnter = [];
   for (const x of [-32, -26.2, -20.3, -14.4, 14.4, 20.3, 26.2, 32]) k += `<use href="#${S.id("vase")}" transform="translate(${x} ${r(TOP - 2.75)})"/>`;
   /* Pavillons: eigenes gebogenes Gebälk mit Schattenband und die Balustrade, die über die Rundung läuft */
   for (const s of [-1, 1]) {
-    const x0 = s < 0 ? -PB - 0.3 : PA, x1 = s < 0 ? -PA : PB + 0.3, m = (x0 + x1) / 2, hw = (x1 - x0) / 2;
+    const x0 = s < 0 ? -PB : PA, x1 = s < 0 ? -PA : PB, m = (x0 + x1) / 2, hw = (x1 - x0) / 2;
     const ya = (x, y) => r(y - PC * (1 - ((x - m) / hw) ** 2));
     k += `<path d="M${x0} ${TOP + 0.6} ${bogen(x0, x1, TOP + 0.6, PC)} L${x1} ${TOP - 1.1} ${bogen(x1, x0, TOP - 1.1, PC)} Z" fill="${GEB}"/>`;
     k += `<path d="M${r(x0 - 0.2)} ${TOP - 1.1} ${bogen(x0 - 0.2, x1 + 0.2, TOP - 1.1, PC)} L${r(x1 + 0.2)} ${TOP - 1.55} ${bogen(x1 + 0.2, x0 - 0.2, TOP - 1.55, PC)} Z" fill="#fbf4e3"/>`;
@@ -447,7 +442,7 @@ const TERRGRAS = S.lg("terrgras", [[0, "#5d7d38"], [1, "#3d5a26"]]);
       }
       k += `<path d="${nische}" fill="${NISCHE}" stroke="#f4f0e4" stroke-width="${r(0.14 * u)}"/><path d="${nische}" fill="url(#${S.id("sprossen")})" opacity=".75"/>`;
       /* Schlagschatten der Mauerkrone (Sonne SW: nach unten rechts) */
-      k += `<path d="M${xs.map((X) => P(i, X, h1 - 0.08)).join(" L")} L${xs.slice().reverse().map((X) => P(i, X, h1 - 0.6)).join(" L")} Z" fill="${MSCH}"/>`;
+      k += `<path d="M${xs.map((X) => P(i, X, h1 - 0.08)).join(" L")} L${xs.slice().reverse().map((X) => P(i, X, h1 - 0.9)).join(" L")} Z" fill="${MSCH}"/>`;
       /* Mauerkrone (Sandstein), oben angestrahlt */
       k += `<path d="M${xs.map((X) => P(i, X, h1 + 0.25)).join(" L")} L${xs.slice().reverse().map((X) => P(i, X, h1 - 0.1)).join(" L")} Z" fill="#fbf3e0"/>`;
     }
@@ -494,8 +489,8 @@ const G = mensch("G", { id: "pdm_gaert", geschlecht: "m", blick: -62, frisur: "k
   pose: { kipp: 8, lende: 4, brust: 4, nacken: 10, kopf: 6, schulterL: { vor: 34, seit: 8, dreh: 10 }, ellbogenL: 46, unterarmL: 40, handL: 0, fingerL: 0.95,
     schulterR: { vor: 20, seit: 10, dreh: 10 }, ellbogenR: 28, unterarmR: 40, handR: 0, fingerR: 0.95,
     huefteL: { vor: 18, seit: 4, dreh: -6 }, knieL: 14, fussL: 4, huefteR: { vor: -12, seit: 4, dreh: -6 }, knieR: 6, fussR: 0 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "arbeitshose" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kappe", farbe: "gruen_d" } } }, 1.78, 34, 2.5, 2, 0.5);
-bodenSchatten(34, 2.5, 0.5, 1.78, 0.26);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "arbeitshose" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kappe", farbe: "gruen_d" } } }, 1.78, 34, 1.9, 2, 0.5);
+bodenSchatten(34, 1.9, 0.5, 1.78, 0.26);
 /* DIE TOURISTIN fotografiert mit dem Handy (von hinten, etwas schräg) */
 const T = mensch("T", { id: "pdm_tour", geschlecht: "w", blick: 160, frisur: "zopf", haarfarbe: "blond", haut: "hell",
   pose: { lende: 1, brust: -2, nacken: 2, kopf: -6, schulterL: { vor: 62, seit: 12, dreh: 10 }, ellbogenL: 96, unterarmL: 30, handL: 4, fingerL: 0.5,
@@ -724,7 +719,7 @@ const figur = (u, a) => {
   aussen += `<path d="${band(0, 60)} ${band(340, 400)}" fill="${RAND}"/><path d="${linie(vorn, AUS)}" stroke="#fffaf0" stroke-width=".5" fill="none"/>`;
   BECKEN_AUSSEN = aussen;
   /* Nassstreifen auf der Treppe hinter dem Strahl (dunkler), damit der Strahl frei steht */
-  k += `<path d="M${CX - 5} ${r(yb - H - 3)} L${CX + 5} ${r(yb - H - 3)} L${CX + 6.5} ${r(yb - 4)} L${CX - 6.5} ${r(yb - 4)} Z" fill="#5e5442" opacity=".3"/><path d="M${CX - 3} ${r(yb - H - 2)} L${CX + 3} ${r(yb - H - 2)} L${CX + 3.8} ${r(yb - 4)} L${CX - 3.8} ${r(yb - 4)} Z" fill="#4e4436" opacity=".25"/>`;
+  k += `<path d="M${CX - 5} ${r(yb - H * 0.72)} L${CX + 5} ${r(yb - H * 0.72)} L${CX + 6.5} ${r(yb - 4)} L${CX - 6.5} ${r(yb - 4)} Z" fill="#5e5442" opacity=".3"/><path d="M${CX - 3} ${r(yb - H * 0.72)} L${CX + 3} ${r(yb - H * 0.72)} L${CX + 3.8} ${r(yb - 4)} L${CX - 3.8} ${r(yb - 4)} Z" fill="#4e4436" opacity=".25"/>`;
   /* Sprühschleier, vom Wind nach rechts gezogen */
   k += `<g filter="url(#${S.id("gischt")})"><ellipse cx="${CX + 6}" cy="${r(yb - H * 0.35)}" rx="9" ry="${r(H * 0.36)}" fill="#ffffff" opacity=".22"/>`;
   /* durchsichtige Seitenstränge */
@@ -748,7 +743,7 @@ const figur = (u, a) => {
   }
   k += `<g>${krone2}${tropfen}</g>`;
   k += `<g filter="url(#${S.id("gischt")})"><ellipse cx="${CX}" cy="${r(yb - H - 1.4)}" rx="2.4" ry="1.5" fill="#ffffff" opacity=".85"/></g>`;
-  for (const [x, y, s3] of [[-6.2, -H + 3, 1.1], [-9.4, -H + 9, 0.9], [-3.4, -H - 2.4, 0.8]]) k += `<path d="M${r(CX + x - s3)} ${r(yb + y)} H${r(CX + x + s3)} M${r(CX + x)} ${r(yb + y - s3)} V${r(yb + y + s3)}" stroke="#fff4d2" stroke-width=".28"/>`;
+  for (const [x, y] of [[-4.6, -H + 2.6], [-6.4, -H + 5], [-3, -H - 0.6]]) k += `<circle cx="${r(CX + x)}" cy="${r(yb + y)}" r=".3" fill="#fff"/>`;
   /* Fuß: Schaumhügel und Gischtring */
   k += `<g filter="url(#${S.id("gischt")})"><ellipse cx="${CX}" cy="${r(yb - 1.2)}" rx="13" ry="2.6" fill="#ffffff" opacity=".9"/><ellipse cx="${CX}" cy="${r(yb - 3.2)}" rx="6.5" ry="4" fill="#ffffff" opacity=".55"/></g>`;
   /* die Statuen vor dem Becken bleiben vorn: Becken dort ausschneiden */
@@ -782,7 +777,8 @@ const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c
   let oi = 0;
   for (const o of ORANGEN) {
     const u = sk(o.D), x = xG(o.D, o.X), y = yG(o.D);
-    bodenSchatten(o.D, o.X, 1.1, 3.4, 0.34);
+    /* Schatten der Kübel und Kronen liegt auf dem Rasen: darum im eigenen Teil, ohne Treffer */
+    k += `<g pointer-events="none" filter="url(#${S.id("schw")})">${bodenSchatten(o.D, o.X, 1.1, 3.4, 0.34, true)}</g>`;
     let g = "";
     g += `<path d="M-.5 0 L-.55 -.85 L.55 -.85 L.5 0 Z" fill="${KUEBEL}"/>`;
     g += `<path d="M-.5 -.28 H.5 M-.53 -.56 H.53" stroke="#203a28" stroke-width=".04"/>`;
@@ -793,7 +789,7 @@ const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c
     g += `<use href="#${v}" fill="${ORKRONE}" transform="scale(.1)"/><g clip-path="url(#${v}c)"><use href="#${v}" fill="#1c3618" opacity=".45" transform="translate(.06 .95) scale(.1)"/></g>`;
     const z = zufall(Math.round(o.D * 7 + o.X));
     let bl = "";
-    for (let i = 0; i < 10; i++) { const a = z() * 6.28, d = Math.sqrt(z()) * 0.6, ox = r(Math.cos(a) * d), oy = r(-2.55 + Math.sin(a) * d); g += `<circle cx="${ox}" cy="${oy}" r="${i % 3 ? ".07" : ".05"}" fill="${Math.cos(a) < 0 ? "#f7a832" : "#d4781a"}"/>`; if (i % 3 === 1) bl += `<ellipse cx="${r(ox + 0.04)}" cy="${r(oy + 0.03)}" rx=".1" ry=".055" fill="#3f6e2c"/>`; }
+    for (let i = 0; i < 10; i++) { const a = z() * 6.28, d = Math.sqrt(z()) * 0.6, ox = r(Math.cos(a) * d), oy = r(-2.55 + Math.sin(a) * d); g += `<circle cx="${ox}" cy="${oy}" r="${i % 3 ? ".07" : ".05"}" fill="${Math.cos(a) < 0 ? "#f7a832" : "#d4781a"}"/>`; if (i % 3 === 1) bl += `<path d="M${r(ox - 0.06)} ${r(oy + 0.05)} q.08 -.07 .16 -.02 q-.08 .06 -.16 .02 Z" fill="#3f6e2c"/>`; }
     g += bl;
     k += `<g transform="translate(${r(x)} ${r(y)}) scale(${u.toFixed(4)})">${g}</g>`;
   }
@@ -828,7 +824,7 @@ S.teil({ id: "paar", de: "das Paar", syl: "PAAR", it: "la coppia", itSyl: "COP-p
    11 — WEGWEISER, SCHUBKARRE, GÄRTNER, TOURISTIN, HANDY, TOURIST, KIND, KARTOFFEL
    ===================================================================== */
 const WW = { D: 24, X: -5.2 };
-const SK = { D: 32, X: 3.6 };
+const SK = { D: 33, X: 3.2 };
 bodenSchatten(WW.D, WW.X, 0.12, 2.7, 0.2);
 bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
 {
@@ -897,13 +893,13 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
 {
   /* Rückansicht: Hinterkopf mit Haar überdecken (die Figur zeigt dort sonst Haut) */
 const hinterkopf = (f, farbe, oben = 0) => { const c = f.p(f.m.z.kopf), R = 10.5 * f.m.k * f.s;
-  return `<ellipse cx="${r(c.x - f.x)}" cy="${r(c.y - f.y + R * (0.1 + oben))}" rx="${r(R * 0.8)}" ry="${r(R * (0.76 - oben))}" fill="${S.lg("hinterkopf", [[0, "#e6d29c"], [0.6, farbe], [1, "#b8995e"]], 0, 0, 1, 0)}"/>`; };
-S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: K.x, y: K.y, kunst: K.svg + hinterkopf(K, "#d9c08a", 0.12),
+  return `<ellipse cx="${r(c.x - f.x)}" cy="${r(c.y - f.y + R * (0.1 + oben))}" rx="${r(R * 0.8)}" ry="${r(R * (0.76 - oben))}" fill="${S.lg("hinterkopf", [[0, "#dcb86e"], [0.6, farbe], [1, "#8a6a34"]], 0, 0, 1, 0)}"/>`; };
+S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "il bambino", itSyl: "bam-BI-no", en: "child", x: K.x, y: K.y, kunst: K.svg + hinterkopf(K, "#b8914a", 0.12),
     tipp: "Das Kind bringt eine Kartoffel zum Grab des Königs." });
   const h = K.p(K.m.z.handR);
   let g = `<ellipse cx="0" cy="0" rx="2.1" ry="1.55" fill="${S.rg("knolle", [[0, "#ecd09a"], [0.6, "#c49a5c"], [1, "#8e6a3a"]], 0.38, 0.32, 0.75)}" transform="rotate(-18)"/>`;
   g += `<circle cx="-.7" cy="-.3" r=".14" fill="#7a5530"/><circle cx=".8" cy=".25" r=".14" fill="#7a5530"/><circle cx=".1" cy=".7" r=".12" fill="#7a5530"/><path d="M-1.2 -.8 q.7 -.6 1.6 -.5" stroke="#f6e6c2" stroke-width=".3" fill="none" opacity=".75"/>`;
-  S.teil({ oben: true, id: "kartoffel", de: "die Kartoffel", syl: "kar-TOF-fel", it: "la patata", itSyl: "pa-TA-ta", en: "potato", x: r(h.x + 0.6), y: r(h.y - 1), kunst: `<g transform="scale(1.2)">${g}</g>` + flaeche(-3.6, -3.6, 7.2, 7.2, 0.6),
+  S.teil({ oben: true, id: "kartoffel", de: "die Kartoffel", syl: "kar-TOF-fel", it: "la patata", itSyl: "pa-TA-ta", en: "potato", x: r(h.x + 1.1), y: r(h.y - 0.5), kunst: `<g transform="scale(1.2)">${g}</g>` + flaeche(-3.6, -3.6, 7.2, 7.2, 0.6),
     tipp: "Friedrich der Große machte die Kartoffel in Preußen bekannt. Darum legen Besucher Kartoffeln auf sein Grab." });
 }
 

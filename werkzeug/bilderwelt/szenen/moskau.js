@@ -202,20 +202,25 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
      von der Sonne (rechts vorn) warm angeleuchtet, unten scharf begrenzt */
   /* zwei breite, flache Schleier (weich) und darunter eine Reihe unregelmäßiger Altocumulus-Flocken mit
      ausgefranstem Oberrand, scharfer Unterkante und warm angeleuchteter Unterseite (Sonne rechts vorn) */
-  const schleier = (x, y, w, h) => `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${h}" fill="#fbfcff" opacity=".55" filter="url(#${S.id("dunst")})"/>`;
-  const FL = S.lg("flocke", [[0, "#ffffff"], [0.6, "#f1f0f4"], [1, "#f5cfb6"]]);
-  const flocken = (x0, y0, n, seed, gr) => {
-    const z = zufall(seed); let g = "";
-    for (let i = 0; i < n; i++) {
-      const x = x0 + i * gr * 2.6 + (z() - 0.5) * gr, y = y0 + (z() - 0.5) * gr * 0.6 + i * 0.25, w = gr * (0.7 + z() * 0.8), h = w * (0.32 + z() * 0.2);
-      let top = `M${r(x - w)} ${r(y)}`;
-      const m = 4 + Math.floor(z() * 3);
-      for (let j = 1; j <= m; j++) { const t = j / m, xx = x - w + 2 * w * t, hh = h * Math.sin(Math.PI * t) * (0.7 + z() * 0.6); top += ` Q${r(xx - w / m)} ${r(y - hh * 1.6)} ${r(xx)} ${r(y - (j === m ? 0 : hh * (0.5 + z() * 0.4)))}`; }
-      g += `<path d="${top} Q${r(x)} ${r(y + h * 0.2)} ${r(x - w)} ${r(y)}Z" fill="${FL}"/>`;
-    }
-    return g;
-  };
-  S.hinten(schleier(110, 34, 120, 7) + schleier(150, 30, 60, 3) + schleier(320, 60, 90, 5) + schleier(350, 56, 40, 2.4) + `<g opacity=".7" filter="url(#${S.id("dunst")})">${flocken(40, 44, 6, 3, 4.6) + flocken(260, 68, 5, 9, 3.8)}</g>`);
+  /* Runde 4: EIN breiter Cirrostratus-Schleier mit unregelmäßigem, weichem Rand (keine Ellipsen) und darunter
+     eine lockere Reihe Altocumulus-Flocken in verschiedenen Größen, die zur Sonne (rechts) wärmer werden */
+  const zs = zufall(91);
+  let ob = "M-4 36", un = "";
+  for (let x = 0; x <= 404; x += 16) ob += ` Q${r(x + 8)} ${r(22 + zs() * 10 + x * 0.03)} ${r(x + 16)} ${r(28 + zs() * 8 + x * 0.04)}`;
+  for (let x = 404; x >= 0; x -= 20) un += ` Q${r(x - 10)} ${r(50 + zs() * 12 + x * 0.05)} ${r(x - 20)} ${r(44 + zs() * 8 + x * 0.05)}`;
+  const SL = S.lg("schleier", [[0, "#ffffff", 0.26], [0.6, "#fbf6f0", 0.3], [1, "#ffe6cc", 0.38]], 0, 0, 1, 0);
+  let wo = `<path d="${ob} L404 ${r(46 + 404 * 0.05)}${un} Z" fill="${SL}" filter="url(#${S.id("wolkweich")})"/>`;
+  let fl = "";
+  for (let i = 0; i < 22; i++) {
+    const x = 14 + i * 17.5 + (zs() - 0.5) * 12, y = 66 + Math.sin(i * 1.3) * 7 + zs() * 12 + i * 0.5, w = 1.4 + Math.pow(zs(), 1.6) * 8, h = w * (0.3 + zs() * 0.18);
+    const t = Math.min(1, x / 400), c = t < 0.4 ? "#ffffff" : t < 0.7 ? "#fff6ec" : "#ffe9d6";
+    let p = `M${r(x - w)} ${r(y)}`;
+    const m = 3 + Math.floor(zs() * 3);
+    for (let j = 1; j <= m; j++) { const xx = x - w + 2 * w * j / m, hh = h * Math.sin(Math.PI * (j - 0.5) / m) * (0.7 + zs() * 0.6); p += ` Q${r(xx - w / m)} ${r(y - hh * 1.7)} ${r(xx)} ${r(y - (j === m ? 0 : hh * 0.5))}`; }
+    fl += `<path d="${p} Q${r(x)} ${r(y + h * 0.25)} ${r(x - w)} ${r(y)}Z" fill="${c}"/><path d="M${r(x - w * 0.8)} ${r(y + h * 0.05)} Q${r(x)} ${r(y + h * 0.25)} ${r(x + w * 0.85)} ${r(y)}" stroke="#d6cfd8" stroke-width="${r(h * 0.25)}" fill="none" opacity=".55"/>`;
+  }
+  S.def(`<filter id="${S.id("wolkweich")}" x="-5%" y="-40%" width="110%" height="180%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="3.2 1.8"/></filter>`);
+  S.hinten(wo + `<g opacity=".82" filter="url(#${S.id("dunst")})">${fl}</g>`);
   /* zarte Schleierwolken am Horizont */
   S.hinten(`<path d="M0 128 Q60 124 120 127 T240 125 T400 128 L400 132 Q300 130 200 132 T0 133 Z" fill="#fff" opacity=".35" filter="url(#${S.id("dunst")})"/>`);
 }
@@ -714,28 +719,27 @@ const unterKathedrale = [];
 {
   let k = "";
   const FI = S.lg("fichte", [[0, "#1d3a3c"], [0.6, "#2f5a58"], [1, "#4f7e78"]], 0, 0, 1, 0), FS = S.lg("fs", [[0, "#9fb0cc", 0.6], [0.5, "#fff", 0], [1, "#fff", 0]], 0, 0, 1, 0);
-  const baum = (d, h, seed) => {
+  const baum = (d, h, seed, bf = 0.24, n = 7, spitze = 0) => {
     const z = zufall(seed);
     let g = `<g>`;
     g += `<rect x="-.18" y="-.9" width=".36" height=".9" fill="#3a2a24"/>`;
     /* gelappter Kegel: Astlagen, die unteren breiter, Himmelslücken dazwischen */
     let ast = "", schnee = "";
-    const n = 7;
     for (let i = 0; i < n; i++) {
       const t0 = i / n, y0 = -0.6 - t0 * (h - 0.6), y1 = y0 - (h - 0.6) / n * 1.5;
-      const w = (1 - t0) * h * 0.24 + 0.25, j = (z() - 0.5) * 0.3;
+      const w = (1 - t0) * h * bf + 0.25, j = (z() - 0.5) * 0.3;
       ast += `M${r(-w + j)} ${r(y0)} Q${r(-w * 0.55)} ${r(y0 - 0.5)} ${r(-w * 0.2)} ${r(y1 + 0.3)} L0 ${r(y1)} L${r(w * 0.2)} ${r(y1 + 0.3)} Q${r(w * 0.55)} ${r(y0 - 0.5)} ${r(w + j)} ${r(y0)} Q${r(w * 0.5)} ${r(y0 - 0.25)} ${r(w * 0.3)} ${r(y0 + 0.15)} Q0 ${r(y0 - 0.2)} ${r(-w * 0.3)} ${r(y0 + 0.15)} Q${r(-w * 0.5)} ${r(y0 - 0.25)} ${r(-w + j)} ${r(y0)}Z`;
       schnee += `M${r(-w * 0.15)} ${r(y1 + 0.45)} Q${r(w * 0.4)} ${r(y0 - 0.7)} ${r(w * 0.95 + j)} ${r(y0 - 0.1)} Q${r(w * 0.5)} ${r(y0 - 0.35)} ${r(w * 0.1)} ${r(y0 - 0.1)} Q${r(-w * 0.4)} ${r(y0 - 0.5)} ${r(-w * 0.8)} ${r(y0 - 0.05)} Q${r(-w * 0.45)} ${r(y0 - 0.8)} ${r(-w * 0.15)} ${r(y1 + 0.45)}Z`;
     }
     g += `<path d="${ast}" fill="${FI}"/>`;
     g += `<path d="${schnee}" fill="${SCHNEE}" opacity=".92"/>`;
     g += `<path d="${schnee}" fill="${FS}"/>`;
-    g += `<path d="M0 ${r(-h)} V${r(-h - 0.5)}" stroke="#2f5a58" stroke-width=".18"/></g>`;
+    g += spitze ? `<path d="M0 ${r(-h + 0.2)} L-.25 ${r(-h - 0.7)} M0 ${r(-h + 0.2)} L.2 ${r(-h - 0.5)}" stroke="#2f5a58" stroke-width=".16"/></g>` : `<path d="M0 ${r(-h)} V${r(-h - 0.5)}" stroke="#2f5a58" stroke-width=".18"/></g>`;
     return g;
   };
   /* drei Baumformen als Symbole (Höhe 10 m), mit <use> in verschiedenen Größen und Neigungen gesetzt */
-  for (let v = 0; v < 3; v++) S.def(`<g id="${S.id("fi" + v)}">${baum(0, 10, 40 + v * 7)}</g>`);
-  const reihe = [[105.5, 8.4, 0], [112, 11.4, 1], [119, 9.2, 2], [126, 12, 0], [133, 8.8, 1], [140, 11, 2], [147, 9.6, 0]];
+  [[0.24, 7, 0], [0.3, 6, 0], [0.18, 8, 1]].forEach(([bf, n, sp], v) => S.def(`<g id="${S.id("fi" + v)}">${baum(0, 10, 40 + v * 7, bf, n, sp)}</g>`));
+  const reihe = [[105.5, 8, 1], [112, 12, 2], [119, 9.2, 0], [126, 13, 2], [133, 7.4, 1], [140, 11.2, 0], [147, 9.4, 2]];
   for (let i = reihe.length - 1; i >= 0; i--) {
     const [d, h, v] = reihe[i], s = F / d * h / 10, x = X(d, 34.6), y = Y(d), b = 0.85 + ((i * 37) % 10) / 25;
     k += `<use href="#${S.id("fi" + v)}" transform="translate(${r(x)} ${r(y)}) scale(${(s * b).toFixed(4)} ${s.toFixed(4)}) rotate(${((i % 3) - 1) * 1.5})"/>`;
@@ -750,7 +754,7 @@ const unterKathedrale = [];
 {
   const D0 = 150, D1 = 174, L0 = 23, L1 = 36.5;
   const GR = S.lg("granit", [[0, "#7a3a33"], [1, "#8e4a3f"]], 0, 0, 1, 0), GRS = "#4e2a28", LAB = S.lg("labr", [[0, "#2a2a33"], [0.5, "#3b3e4c"], [1, "#24242b"]], 0, 0, 1, 0);
-  const stufen = [[0, 0.8, -0.3, "#5c5a60", "#47454b"], [0.8, 3.6, 0, GR, GRS], [3.6, 4.9, 0.3, LAB, "#1b1b21"], [4.9, 6.2, 1.1, GR, GRS], [6.2, 7.3, 1.4, LAB, "#1b1b21"], [7.3, 8.6, 2.1, GR, GRS], [8.6, 11, 3.2, "#1f1d24", "#17161b"], [11, 12, 2.9, GR, GRS]];
+  const stufen = [[0, 0.8, -0.3, "#5c5a60", "#47454b"], [0.8, 3.6, 0, GR, GRS], [3.6, 4.9, 0.3, LAB, "#1b1b21"], [4.9, 6.2, 1.1, GR, GRS], [6.2, 7.3, 1.4, LAB, "#1b1b21"], [7.3, 8.6, 2.1, GR, GRS], [8.6, 11, 3.2, "#3f3d46", "#2c2b31"], [11, 12, 2.9, GR, GRS]];
   let k = "";
   for (const [h0, h1, i, fv, fs] of stufen) {
     /* Seite zum Platz (Schatten) und Stirnseite zum Betrachter (Streiflicht) */
@@ -767,7 +771,13 @@ const unterKathedrale = [];
   k += poly([P(160, L0, 0.8), P(164, L0, 0.8), P(164, L0, 3.4), P(160, L0, 3.4)], "#111015");
   /* Pfeiler im Portikus oben und Schneekanten auf den Stufen */
   let pf = "";
-  for (let j = 0; j < 5; j++) { const l = 23 + 3.4 + j * 1.75; pf += poly([P(D0 + 3.3, l, 8.6), P(D0 + 3.3, l + 0.7, 8.6), P(D0 + 3.3, l + 0.7, 11), P(D0 + 3.3, l, 11)], "#a8705e") + poly([P(D0 + 3.3, l, 8.6), P(D0 + 3.3, l + 0.22, 8.6), P(D0 + 3.3, l + 0.22, 11), P(D0 + 3.3, l, 11)], "#d09a84"); }
+  for (let j = 0; j < 5; j++) {
+    const l = 23 + 3.4 + j * 1.75, dv = D0 + 3.3;
+    pf += poly([P(dv, l + 0.7, 8.6), P(dv + 0.5, l + 0.7, 8.6), P(dv + 0.5, l + 0.7, 10.6), P(dv, l + 0.7, 10.6)], "#5e2f29");
+    pf += poly([P(dv, l, 8.6), P(dv, l + 0.7, 8.6), P(dv, l + 0.7, 10.6), P(dv, l, 10.6)], "#a8705e") + poly([P(dv, l, 8.6), P(dv, l + 0.2, 8.6), P(dv, l + 0.2, 10.6), P(dv, l, 10.6)], "#d09a84");
+    pf += poly([P(dv - 0.1, l - 0.12, 10.6), P(dv - 0.1, l + 0.82, 10.6), P(dv - 0.1, l + 0.82, 10.85), P(dv - 0.1, l - 0.12, 10.85)], "#c08a76");
+  }
+  pf += poly([P(D0 + 3.2, 26.2, 10.85), P(D0 + 3.2, 34.6, 10.85), P(D0 + 3.2, 34.6, 11), P(D0 + 3.2, 26.2, 11)], "#8e4a3f");
   k += pf;
   let sn = "";
   for (const [h, i] of [[4, 0], [6.4, 1.1], [8.6, 2.2], [12, 3]]) sn += `M${P(D1 - i, L0 + i, h)} L${P(D0 + i, L0 + i, h)} L${P(D0 + i, L1 - i, h)}`;
@@ -841,7 +851,8 @@ const unterKathedrale = [];
     /* kurzes Türmchen: Kasten mit Bogenfenster, Kranz aus drei Kielbögen, Zeltdach, kleiner Goldknauf */
     const t0 = hoch ? 5.2 : 3.6, t1 = t0 + (hoch ? 5.5 : 4.2), w = hoch ? 1.6 : 1.3;
     let g = `<g transform="translate(${r(x)} ${r(y)}) scale(${s.toFixed(4)})"><rect x="${-w}" y="${-t0}" width="${2 * w}" height="${t0}" fill="#f4dcb0"/><rect x="${-w}" y="${-t0}" width="${r(w * 0.45)}" height="${t0}" fill="#d9c09a"/>`;
-    g += `<path d="M-.4 -.6 v${r(-t0 * 0.45)} q.4 -.6 .8 0 v${r(t0 * 0.45)} Z" fill="#3b4660"/>`;
+    g += `<path d="M${r(-w * 0.72)} -.6 v${r(-t0 * 0.32)} q${r(w * 0.3)} -.5 ${r(w * 0.6)} 0 v${r(t0 * 0.32)} Z M${r(w * 0.12)} -.6 v${r(-t0 * 0.32)} q${r(w * 0.3)} -.5 ${r(w * 0.6)} 0 v${r(t0 * 0.32)} Z M${r(-w * 0.5)} ${r(-t0 * 0.62)} v${r(-t0 * 0.18)} q${r(w * 0.5)} -.6 ${r(w)} 0 v${r(t0 * 0.18)} Z" fill="#3b4660"/>`;
+    g += `<rect x="${r(-w - 0.15)}" y="${r(-t0 * 0.5 - 0.3)}" width="${r(2 * w + 0.3)}" height=".3" fill="#fff4dc"/><rect x="${r(-w - 0.15)}" y="${r(-t0 * 0.5)}" width="${r(2 * w + 0.3)}" height=".15" fill="#a8916c"/>`;
     let kb = "";
     for (let i = 0; i < 3; i++) { const a = -w + i * 2 * w / 3, b = a + 2 * w / 3, m = (a + b) / 2; kb += `M${r(a)} ${-t0} Q${r(a)} ${r(-t0 - 0.6)} ${r(m)} ${r(-t0 - 1.1)} Q${r(b)} ${r(-t0 - 0.6)} ${r(b)} ${-t0}`; }
     g += `<path d="${kb}Z" fill="#fff4dc" stroke="#d9c09a" stroke-width=".15"/><path d="M${-w} ${-t0} h${2 * w}" stroke="${SCHNEE}" stroke-width=".4"/>`;
@@ -1167,10 +1178,10 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
     k += `<circle cx="${r((kxx + 0.015) * 1000) / 1000}" cy="${r((ky - 0.012) * 1000) / 1000}" r=".008" fill="#8a7a6a"/><path d="M.0 -.29 Q.08 -.29 .14 -.25" stroke="#c9ccd3" stroke-width=".012" fill="none" opacity=".6"/></g>`;
     return k;
   };
-  const d0 = 11.55, l0 = 0.82, x0 = r(X(d0, l0)), y0 = r(Y(d0));
-  let k = kraehe(11.4, 0.58, 1, true) + kraehe(11.7, 1.08, -1, false);
+  const d0 = 11.55, l0 = 1.02, x0 = r(X(d0, l0)), y0 = r(Y(d0));
+  let k = kraehe(11.4, 0.8, 1, true) + kraehe(11.7, 1.3, -1, false);
   /* Kringel (Baranka) auf dem Pflaster */
-  const bx = X(11.5, 0.8), by = Y(11.5), bs = F / 11.5;
+  const bx = X(11.5, 1.02), by = Y(11.5), bs = F / 11.5;
   k += `<ellipse cx="${r(bx)}" cy="${r(by - 0.3)}" rx="${r(0.07 * bs)}" ry="${r(0.03 * bs)}" fill="none" stroke="#c98a3e" stroke-width="${r(0.03 * bs)}"/><ellipse cx="${r(bx - 0.4)}" cy="${r(by - 0.5)}" rx="${r(0.04 * bs)}" ry=".3" fill="#f2c27a" opacity=".6"/>`;
   S.teil({ oben: true, id: "kraehe", de: "die Krähe", syl: "KRÄ-he", it: "la cornacchia", itSyl: "cor-NAC-chia", en: "crow", x: 0, y: 0, steht: true, kunst: k + flaeche(x0 - 13, y0 - 12, 26, 13, 0.6),
     tipp: "In Moskau leben viele graue Nebelkrähen. Hier streiten zwei um einen Kringel." });
@@ -1182,7 +1193,8 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
 {
   /* weicher Hügel in Bildkoordinaten (rechts unten), Sonne rechts vorn: rechte Seite hell, links kühl blau */
   const cx = 364, cy = 254;
-  let g = `<path d="M${cx - 34} ${cy + 4} Q${cx - 30} ${cy - 6} ${cx - 18} ${cy - 9} Q${cx - 10} ${cy - 17} ${cx} ${cy - 15} Q${cx + 9} ${cy - 21} ${cx + 18} ${cy - 15} Q${cx + 28} ${cy - 13} ${cx + 32} ${cy - 4} L${cx + 34} ${cy + 8} L${cx - 36} ${cy + 8} Z" fill="${S.lg("haufen", [[0, "#8297bb"], [0.4, "#c9d6ea"], [0.72, "#ffffff"], [1, "#fff3e2"]], 0, 0, 1, 0)}"/>`;
+  let g = `<path d="M${cx - 30} ${cy + 3} Q${cx - 50} ${cy + 2} ${cx - 62} ${cy + 7} L${cx - 20} ${cy + 9} Z" fill="#0d1230" opacity=".35" filter="url(#${S.id("weichs")})"/><path d="M${cx - 36} ${cy + 5.5} Q${cx} ${cy + 3.5} ${cx + 34} ${cy + 6} L${cx + 34} ${cy + 8} L${cx - 36} ${cy + 8} Z" fill="#1a2245" opacity=".5"/>`;
+  g += `<path d="M${cx - 34} ${cy + 4} Q${cx - 30} ${cy - 6} ${cx - 18} ${cy - 9} Q${cx - 10} ${cy - 17} ${cx} ${cy - 15} Q${cx + 9} ${cy - 21} ${cx + 18} ${cy - 15} Q${cx + 28} ${cy - 13} ${cx + 32} ${cy - 4} L${cx + 34} ${cy + 8} L${cx - 36} ${cy + 8} Z" fill="${S.lg("haufen", [[0, "#8297bb"], [0.4, "#c9d6ea"], [0.72, "#ffffff"], [1, "#fff3e2"]], 0, 0, 1, 0)}"/>`;
   g += `<path d="M${cx - 16} ${cy - 8} Q${cx - 6} ${cy - 12} ${cx + 4} ${cy - 10} M${cx - 12} ${cy - 3} Q${cx} ${cy - 7} ${cx + 12} ${cy - 5} M${cx + 6} ${cy - 16} Q${cx + 14} ${cy - 15} ${cx + 22} ${cy - 10}" stroke="#a9b9d4" stroke-width=".7" fill="none" opacity=".75"/>`;
   g += `<path d="M${cx - 34} ${cy + 4} Q${cx - 20} ${cy + 1} ${cx} ${cy + 2} Q${cx + 20} ${cy + 1} ${cx + 34} ${cy + 6}" stroke="#8a9ab8" stroke-width="1.6" fill="none" opacity=".5"/>`;
   g += `<path d="M${cx + 2} ${cy - 15.5} Q${cx + 10} ${cy - 20} ${cx + 17} ${cy - 15.5}" stroke="#fff" stroke-width="1" fill="none"/>`;

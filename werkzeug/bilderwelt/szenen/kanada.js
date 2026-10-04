@@ -479,15 +479,16 @@ const HU = {};
     const oben = [], unten = [];
     for (const sg of nahSeg) { oben.push(sg.pA, sg.pB); unten.push([sg.uA[0], Math.min(266, sg.uA[1])], [sg.uB[0], Math.min(266, sg.uB[1])]); }
     oben.sort((p, q) => p[0] - q[0]); unten.sort((p, q) => p[0] - q[0]);
-    oben[0] = [oben[0][0] - 0.6, oben[0][1]]; unten[0] = [unten[0][0] - 0.6, unten[0][1]];
+    oben[0] = [oben[0][0] - 5, oben[0][1] + 0.1]; unten[0] = [unten[0][0] - 5, unten[0][1] - 4];
     const top = (x) => profilY(oben, x), bot = (x) => profilY(unten, x);
     const x0 = oben[0][0], unterK = [];
     for (let x = 406; x > x0; x -= 2) unterK.push([x, bot(x)]);
     const flaecheN = P([...oben, [406, top(406)], ...unterK, [x0, bot(x0)]]);
     S.def(`<linearGradient id="${S.id("nahweiss")}" gradientUnits="userSpaceOnUse" x1="0" y1="113" x2="0" y2="236"><stop offset="0" stop-color="#d9e9e0"/><stop offset=".35" stop-color="#eef3ee"/><stop offset="1" stop-color="#f7f5ef"/></linearGradient>`);
     S.def(`<linearGradient id="${S.id("nahgruen")}" gradientUnits="userSpaceOnUse" x1="0" y1="113" x2="0" y2="214"><stop offset="0" stop-color="#1c6a52"/><stop offset=".1" stop-color="#2a8165"/><stop offset=".32" stop-color="#5eaa8c" stop-opacity=".9"/><stop offset=".62" stop-color="#b4dcc8" stop-opacity=".45"/><stop offset="1" stop-color="#e8f2ec" stop-opacity="0"/></linearGradient>`);
-    S.def(`<linearGradient id="${S.id("nahfade")}" gradientUnits="userSpaceOnUse" x1="${r(x0)}" y1="0" x2="${r(x0 + 26)}" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("nahm")}" maskUnits="userSpaceOnUse" x="300" y="100" width="110" height="170"><rect x="300" y="100" width="110" height="170" fill="url(#${S.id("nahfade")})"/></mask>`);
-    let n = `<path d="${flaecheN}" fill="url(#${S.id("nahweiss")})"/>`;
+    S.def(`<linearGradient id="${S.id("nahfade")}" gradientUnits="userSpaceOnUse" x1="${r(x0 + 3)}" y1="0" x2="${r(x0 + 29)}" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("nahm")}" maskUnits="userSpaceOnUse" x="300" y="100" width="110" height="170"><rect x="300" y="100" width="110" height="170" fill="url(#${S.id("nahfade")})"/></mask>`);
+    S.def(`<linearGradient id="${S.id("nahlf")}" gradientUnits="userSpaceOnUse" x1="${r(x0)}" y1="0" x2="${r(x0 + 6)}" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("nahl")}" maskUnits="userSpaceOnUse" x="300" y="100" width="110" height="170"><rect x="300" y="100" width="110" height="170" fill="url(#${S.id("nahlf")})"/></mask>`);
+    let n = `<path d="${flaecheN}" fill="url(#${S.id("nahweiss")})" mask="url(#${S.id("nahl")})"/>`;
     let gr = `<path d="${flaecheN}" fill="url(#${S.id("nahgruen")})"/>`;
     /* dunkle Spalten zwischen den Strängen (nur oben, im grünen Teil) */
     const zs = zufall(733);
@@ -521,7 +522,7 @@ const HU = {};
     const mist = []; for (let x = x0 - 2; x <= 406; x += 4) mist.push([x, top(x) + (bot(x) - top(x)) * 0.52]);
     n += `<g filter="url(#${S.id("nebel2")})"><path d="${P([...mist, [406, 268], [x0 - 2, 268]])}" fill="#f6f5f0" opacity=".85"/></g>`;
     /* weicher Übergang zum weißen Mittelteil: Gischtschleier über der linken Naht */
-    n += `<g filter="url(#${S.id("dunst")})"><path d="M${r(x0 - 4)} ${r(top(x0) + 6)} L${r(x0 + 5)} ${r(top(x0 + 5) + 8)} L${r(x0 + 4)} ${r(bot(x0 + 4) - 4)} L${r(x0 - 6)} ${r(bot(x0) - 4)} Z" fill="#f4f4ee" opacity=".7"/></g>`;
+    n += `<g filter="url(#${S.id("dunst")})"><path d="M${r(x0 - 7)} ${r(top(x0) + 5)} L${r(x0 + 7)} ${r(top(x0 + 7) + 7)} L${r(x0 + 6)} ${r(bot(x0 + 6) - 4)} L${r(x0 - 8)} ${r(bot(x0) - 4)} Z" fill="#f1f2ec" opacity=".85"/></g>`;
     /* die Lippe: gewölbter Glanzstreifen auf der Kante, darunter die dunkle Kehle des überkippenden Wassers */
     const lippe = (dy) => oben.map(([x, y]) => [x, y + dy * (0.7 + (x - x0) / 60)]);
     let lp = `<path d="${P([...lippe(0), ...lippe(3.4).reverse()])}" fill="${S.lg("lippe", [[0, "#9fdcc2"], [0.35, "#3f9a7a"], [1, "#1a5c47"]], 0, 0, 0, 1)}"/>`;

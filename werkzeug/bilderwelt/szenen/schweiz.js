@@ -422,7 +422,7 @@ let HANG_L = "", HANG_R = "", WALD_MITTE = "";
   WALD_MITTE = `<path d="${pp(mitte)}" fill="${S.lg("waldmitte", [[0, "#5f7652"], [1, "#3e5a38"]])}"/><path d="${pp(mitte)}" fill="url(#${S.id("waldK")})" opacity=".6"/>`;
   /* Großform: Rippen (heller) und Rinnen (dunkler) laufen den Hang hinab; unten größere Bäume (Texturgradient) */
   WALD_MITTE += `<path d="M150 172 L282 172 L282 146 Q212 138 150 146 Z" fill="url(#${S.id("waldG")})" opacity=".45"/>`;
-  WALD_MITTE += `<path d="M184 113 Q180 136 172 172 L180 172 Q186 138 189 112.6 Z M226 109.6 Q232 136 244 172 L252 172 Q240 136 231 110 Z" fill="#9ab07e" opacity=".55"/><path d="M204 110.4 Q206 140 204 172 L208 172 Q210 140 207 110.2 Z M252 114 Q258 140 268 172 L271 172 Q262 140 255 115 Z" fill="#1e3424" opacity=".55"/>`;
+  WALD_MITTE += `<path d="M184 113 Q180 136 172 172 L180 172 Q186 138 189 112.6 Z M226 109.6 Q232 136 244 172 L252 172 Q240 136 231 110 Z" fill="#9ab07e" opacity=".32"/><path d="M204 110.4 Q206 140 204 172 L208 172 Q210 140 207 110.2 Z M252 114 Q258 140 268 172 L271 172 Q262 140 255 115 Z" fill="#1e3424" opacity=".55"/>`;
   /* goldene Lärchen in den Hang eingebettet: ihr unterer Rand verschwindet im Wald davor */
   WALD_MITTE += gruppe(178, 124, 12, 4, 16, 31, 1.3, false) + gruppe(238, 122, 14, 4, 18, 32, 1.3, true);
   WALD_MITTE += `<path d="M170 125.4 Q178 124.2 186 125.6 L186 128 L170 128 Z M229 123.6 Q238 122 247 123.8 L247 126.4 L229 126.4 Z" fill="#45603e"/><path d="M170 125.4 Q178 124.2 186 125.6 L186 128 L170 128 Z M229 123.6 Q238 122 247 123.8 L247 126.4 L229 126.4 Z" fill="url(#${S.id("waldK")})" opacity=".6"/>`;
@@ -845,7 +845,17 @@ let SCHATTEN_BODEN = "", SCHATTEN_WASSER = "", RAND_GELAENDER = "";
   /* nasser Streifen am Wasser */
   { const nl = [], nr = []; for (const D of Ds) { nl.push(P(-UFER + 0.9 - 0.12, D, hw(D) + 0.5)); nr.push(P(UFER - 0.9 + 0.12, D, hw(D) + 0.5)); }
     k += `<path d="${pz([...Lw, ...nl.slice().reverse()])} ${pz([...Rw, ...nr.slice().reverse()])}" fill="#2a3230" opacity=".35"/>`; }
-  k += `<path d="M${Lm.map(pt).join(" L")} M${Rm.map(pt).join(" L")}" stroke="#e6e1d8" stroke-width="1.1" fill="none"/>`;
+  /* Mauerkrone: Abdeckplatte (überstehend), darunter ein Schattenstreif nach innen; am Weg eine Pflasterzeile als Rand */
+  { let platte = "", schat = "", pfl = "", fug = "";
+    for (const sg of [-1, 1]) {
+      const a1 = [], a2 = [], b1 = [], p1 = [];
+      for (const D of Ds) { a1.push(P(sg * (UFER + 0.15), D, hb(D) + 0.12)); a2.push(P(sg * (UFER - 0.3), D, hb(D) + 0.12)); b1.push(P(sg * (UFER - 0.3), D, hb(D) - 0.12)); p1.push(P(sg * (UFER + 1.1), D, hb(D))); }
+      platte += pz([...a1, ...a2.slice().reverse()]);
+      schat += "M" + b1.map(pt).join(" L");
+      pfl += pz([...a1, ...p1.slice().reverse()]);
+      for (let D = 10; D < 60; D += D < 24 ? 0.9 : 1.8) fug += `M${pt(P(sg * (UFER + 0.15), D, hb(D)))} L${pt(P(sg * (UFER + 1.1), D, hb(D)))}`;
+    }
+    k += `<path d="${pfl}" fill="#a39a8c"/><path d="${fug}" stroke="#7a7266" stroke-width=".35" opacity=".7"/><path d="${schat}" stroke="#2e2a26" stroke-width=".8" fill="none" opacity=".4"/><path d="${platte}" fill="#e2ddd2"/>`; }
   /* Wasser: milchig grau-türkis (Gletschermilch), wenig Wasser im Herbst */
   const wasser = pz([...Lw, ...Rw.slice().reverse()]);
   k += `<path d="${wasser}" fill="${S.lg("vispa", [[0, "#d6e2dc"], [0.35, "#b6cac2"], [0.7, "#9eb7ae"], [1, "#8aa79e"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${HOR}" x2="0" y2="262"`)}"/>`;
@@ -941,7 +951,8 @@ const STADEL_DATA = [];
     unter: [
       { id: "steinplatte", de: "die Steinplatte", syl: "STEIN-plat-te", it: "la lastra di pietra", itSyl: "LA-stra di PIE-tra", en: "stone slab", x: plx, y: ply + 0.1 * ps, kunst: flaeche(-0.5 * ps, -0.3 * ps, 1.0 * ps, 0.45 * ps, 0.3),
         tipp: "Die runden Steinplatten halten die Mäuse ab: Sie können nicht um die Platte herumklettern." },
-      { id: "stuetze", de: "die Stütze", syl: "STÜT-ze", it: "il pilastrino", itSyl: "pi-la-STRI-no", en: "post", x: plx, y: ply + 0.6 * ps, kunst: flaeche(-0.22 * ps, -0.45 * ps, 0.44 * ps, 0.6 * ps, 0.2) },
+      { id: "stuetze", de: "die Stütze", syl: "STÜT-ze", it: "il pilastrino", itSyl: "pi-la-STRI-no", en: "post", x: plx, y: ply + 0.6 * ps, kunst: flaeche(-0.22 * ps, -0.45 * ps, 0.44 * ps, 0.6 * ps, 0.2),
+        tipp: "Auf den Stützen steht der Stadel – wie auf Beinen." },
     ] });
 }
 
@@ -952,7 +963,7 @@ const STADEL_DATA = [];
   for (const l of L) k += l.g;
   const ref = L.find((l) => l.bx > 300) || L[0];
   S.teil({ id: "laerche", de: "die Lärche", syl: "LÄR-che", it: "il larice", itSyl: "LA-ri-ce", en: "larch", anker: [ref.bx, ref.by], kunst: k,
-    tipp: "Die Lärche ist der einzige heimische Nadelbaum, der im Winter seine Nadeln verliert. Im Herbst werden sie golden." });
+    tipp: "Die Lärche ist der einzige heimische Nadelbaum, der im Winter seine Nadeln verliert. Im Herbst werden die Nadeln golden." });
 }
 
 /* 9 — DAS CHALET (rechts, mit Balkonen und Geranien — Lupe) */
@@ -1088,6 +1099,7 @@ const BANK = { X: -10.0, D: 26 };
   let schoko = `<path d="M${r(cx - 0.09 * cs)} ${r(cy)} L${r(cx + 0.09 * cs)} ${r(cy)} L${r(cx + 0.07 * cs)} ${r(cy - 0.035 * cs)} L${r(cx - 0.11 * cs)} ${r(cy - 0.035 * cs)} Z" fill="#5a3418"/><path d="M${r(cx - 0.02 * cs)} ${r(cy)} L${r(cx + 0.09 * cs)} ${r(cy)} L${r(cx + 0.07 * cs)} ${r(cy - 0.035 * cs)} L${r(cx - 0.04 * cs)} ${r(cy - 0.035 * cs)} Z" fill="#d6c8a8"/><path d="M${r(cx - 0.06 * cs)} ${r(cy - 0.035 * cs)} L${r(cx - 0.05 * cs)} ${r(cy)} M${r(cx - 0.09 * cs)} ${r(cy - 0.018 * cs)} L${r(cx - 0.02 * cs)} ${r(cy - 0.018 * cs)}" stroke="#3a200c" stroke-width="${r(0.005 * cs)}"/>`;
   const [ux, uy] = q3(0.82, 0.32, 0.47), us = F / (BANK.D + 0.32);
   const brot = `<path d="M${r(ux - 0.1 * us)} ${r(uy)} Q${r(ux - 0.1 * us)} ${r(uy - 0.07 * us)} ${r(ux)} ${r(uy - 0.075 * us)} Q${r(ux + 0.1 * us)} ${r(uy - 0.07 * us)} ${r(ux + 0.1 * us)} ${r(uy)} Z" fill="#b8783a"/>`;
+  k += `<g ${VOL}>${messer}${schoko}${brot}</g>`;
   /* Bodenschatten der Bank (Sonne links → nach rechts) */
   const [o1x] = sch(0.45);
   k = `<path d="${pz([q3(-0.95, -0.05, 0), q3(0.95 + o1x, -0.05, 0), q3(0.95 + o1x, 0.5, 0), q3(-0.95, 0.5, 0)])}" fill="#1c2638" opacity=".28" filter="url(#${S.id("weich")})"/>` + k;
@@ -1140,11 +1152,7 @@ const BANK = { X: -10.0, D: 26 };
     tipp: "Bergsteiger brauchen Helm, Seil und Pickel. Auf das Matterhorn steigt man meist über den Hörnligrat." });
 }
 
-/* Alpendohlen (schwarz, gelber Schnabel) am Himmel — Kulisse */
-{
-  const dohle = (x, y, s, f) => `<path d="M${r(x - 3 * s)} ${r(y - 1.4 * s * f)} Q${r(x - 1.4 * s)} ${r(y - 0.6 * s)} ${r(x)} ${r(y)} Q${r(x + 1.4 * s)} ${r(y - 0.6 * s)} ${r(x + 3 * s)} ${r(y - 1.4 * s * f)} Q${r(x + 1.2 * s)} ${r(y + 0.1 * s)} ${r(x)} ${r(y + 0.5 * s)} Q${r(x - 1.2 * s)} ${r(y + 0.1 * s)} ${r(x - 3 * s)} ${r(y - 1.4 * s * f)} Z" fill="#141416"/><path d="M${r(x + 0.15 * s)} ${r(y + 0.2 * s)} L${r(x + 0.7 * s)} ${r(y + 0.28 * s)} L${r(x + 0.15 * s)} ${r(y + 0.45 * s)} Z" fill="#f2c62e"/>`;
-  S.hinten(dohle(80, 36, 1.7, 1) + dohle(100, 26, 1.35, -0.4) + dohle(64, 22, 1.1, 0.6));
-}
+/* (Alpendohlen weggelassen: Vögel, die man nicht antippen kann, verwirren Kinder) */
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/schweiz.js"));
 console.log(aus);
