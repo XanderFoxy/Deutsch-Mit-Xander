@@ -41,8 +41,8 @@ const r = B.r;
 const HOR = 104;
 const km = (y) => (y - HOR) * 0.4;
 
-S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
+S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".35"/></filter>`);
 const BACKSTEIN = S.lg("backstein", [[0, "#8a3d29"], [0.45, "#a9553a"], [0.8, "#97472f"], [1, "#6e2f1f"]], 0, 0, 1, 0);
 const KUPFER = S.lg("kupfer", [[0, "#4f8a72"], [0.4, "#8cc3aa"], [0.7, "#6aa58b"], [1, "#3e6f5c"]], 0, 0, 1, 0);
 const STEIN = S.lg("rathausstein", [[0, "#6f6c66"], [0.45, "#a39f96"], [0.8, "#8c887f"], [1, "#5f5c56"]], 0, 0, 1, 0);
@@ -105,7 +105,7 @@ S.hinten(`<rect width="320" height="${HOR + 1}" fill="${S.lg("himmel", [[0, "#2f
     for (const x0 of lst) {
       for (let i = 0; i < 7; i++) c += gast(x0 + 6 * s + i * 9.2 * s, y - 2.6 * s, s, i + x0);
       c += `<rect x="${x0}" y="${r(y - 3.4 * s)}" width="${r(tw)}" height="${r(0.9 * s)}" fill="#b98a52"/><rect x="${x0}" y="${r(y - 2.5 * s)}" width="${r(tw)}" height="${r(0.5 * s)}" fill="#7a5530"/>`;
-      for (let i = 0; i < 6; i++) c += `<rect x="${r(x0 + 4 * s + i * 11 * s)}" y="${r(y - 5.6 * s)}" width="${r(1.2 * s)}" height="${r(2.2 * s)}" fill="#7a3210" opacity=".9"/><rect x="${r(x0 + 4 * s + i * 11 * s)}" y="${r(y - 5.9 * s)}" width="${r(1.2 * s)}" height="${r(0.5 * s)}" fill="#e6c49c"/>`;
+      for (let i = 0; i < 6; i++) c += `<rect x="${r(x0 + 4 * s + i * 11 * s)}" y="${r(y - 5.6 * s)}" width="${r(1.2 * s)}" height="${r(2.2 * s)}" fill="#f2b73a" opacity=".9"/><rect x="${r(x0 + 4 * s + i * 11 * s)}" y="${r(y - 5.9 * s)}" width="${r(1.2 * s)}" height="${r(0.5 * s)}" fill="#fff"/>`;
       c += `<path d="M${r(x0 + 6 * s)} ${y} L${r(x0 + 8 * s)} ${r(y - 2.5 * s)} L${r(x0 + 10 * s)} ${y} M${r(x0 + tw - 10 * s)} ${y} L${r(x0 + tw - 8 * s)} ${r(y - 2.5 * s)} L${r(x0 + tw - 6 * s)} ${y}" stroke="#4b5257" stroke-width="${r(0.4 * s)}" fill="none"/>`;
       c += `<ellipse cx="${r(x0 + tw / 2)}" cy="${r(y + 0.3)}" rx="${r(tw / 2)}" ry="${r(0.8 * s)}" fill="#000" opacity=".12"/>`;
     }
@@ -244,7 +244,7 @@ S.hinten(`<rect width="320" height="${HOR + 1}" fill="${S.lg("himmel", [[0, "#2f
 }
 
 /* =====================================================================
-   6 — DAS FESTZELT (mit Tortürmen) — Lupe: Fahne, Eingang (FASSUNG 879: Wort „Festzelt“ statt „Bierzelt“)
+   6 — DAS BIERZELT (Festzelt mit Tortürmen) — Lupe: Fahne, Eingang
    ===================================================================== */
 {
   const ZX = 192, ZY = 110, ZS = 0.88;
@@ -268,7 +268,7 @@ S.hinten(`<rect width="320" height="${HOR + 1}" fill="${S.lg("himmel", [[0, "#2f
   for (let i = 0; i < 7; i++) { const t = (i + 0.5) / 7; k += `<path d="M${r(-15 + 15 * t - 0.8)} ${r(-30 - 14 * t)} l.8 -1 .8 1 -.8 1 Z" fill="#fff"/><path d="M${r(15 - 15 * t - 0.8)} ${r(-30 - 14 * t)} l.8 -1 .8 1 -.8 1 Z" fill="#fff"/>`; }
   k += `<rect x="-12" y="-34" width="24" height="7" rx="1" fill="#1f4f8f"/><rect x="-11.4" y="-33.4" width="22.8" height="5.8" rx=".7" fill="none" stroke="#f2c62f" stroke-width=".3"/>`;
   k += `<text x="0" y="-29.2" font-size="3.6" text-anchor="middle" fill="#fff" font-family="Georgia,serif" font-weight="bold" letter-spacing=".3">FESTZELT</text>`;
-  k += `<text x="0" y="-36.8" font-size="2.3" text-anchor="middle" fill="#8a5a1f" font-family="Georgia,serif" font-style="italic">Servus!</text>`;
+  k += `<text x="0" y="-36.8" font-size="2.3" text-anchor="middle" fill="#8a5a1f" font-family="Georgia,serif" font-style="italic">O'zapft is!</text>`;
   k += `<rect x="-12" y="-22" width="24" height="1.2" fill="#7a4f2a"/>`;
   for (let x = -11.5; x < 12; x += 1.6) k += `<rect x="${r(x)}" y="-25" width=".4" height="3" fill="#7a4f2a"/>`;
   k += `<rect x="-12" y="-25.4" width="24" height=".6" fill="#7a4f2a"/>`;
@@ -293,8 +293,8 @@ S.hinten(`<rect width="320" height="${HOR + 1}" fill="${S.lg("himmel", [[0, "#2f
     return g;
   };
   k += fahne(-21, -59.6) + fahne(21, -59.6);
-  S.teil({ id: "festzelt", de: "das Festzelt", syl: "FEST-zelt", it: "il tendone della festa", itSyl: "ten-DO-ne del-la FE-sta", en: "festival tent",
-    x: ZX, y: ZY, kunst: `<g transform="scale(${ZS})">${k}</g>`, tipp: "In einem Festzelt auf dem Oktoberfest haben Tausende Menschen Platz. Dort spielt eine Blaskapelle.",
+  S.teil({ id: "bierzelt", de: "das Bierzelt", syl: "BIER-zelt", it: "il tendone della birra", itSyl: "ten-DO-ne del-la BIR-ra", en: "beer tent",
+    x: ZX, y: ZY, kunst: `<g transform="scale(${ZS})">${k}</g>`, tipp: "Im Bierzelt auf dem Oktoberfest haben Tausende Menschen Platz.",
     zoom: { x: ZX - 54, y: ZY - 60, w: 108, h: 66 },
     unter: [
       { id: "fahne", de: "die Fahne", syl: "FAH-ne", it: "la bandiera", itSyl: "ban-DIE-ra", en: "flag", x: ZX - 21 * ZS, y: ZY - 52 * ZS, kunst: flaeche(-0.4, -7.6, 9.6, 7.6),
@@ -316,20 +316,19 @@ S.hinten(`<rect width="320" height="${HOR + 1}" fill="${S.lg("himmel", [[0, "#2f
   k += `<ellipse cx="0" cy="${r(-H + 0.3)}" rx="2.4" ry=".7" fill="#4a2c14"/>`;
   k += `<ellipse cx="-4" cy="${r(-H * 0.5)}" rx="3" ry="3.4" fill="#f6efe0" opacity=".9"/><text x="-4" y="${r(-H * 0.5 + 1)}" font-size="2.6" text-anchor="middle" fill="${BLAU}" font-family="Georgia,serif" font-weight="bold">M</text>`;
   S.teil({ id: "fass", de: "das Fass", syl: "FASS", it: "la botte", itSyl: "BOT-te", en: "barrel", x: 290, y: Y, steht: true, kunst: k,
-    tipp: "Das alte Holzfass hat Eisenreifen. Heute steht es hier als Stehtisch." });
+    tipp: "Früher kam das Bier im Holzfass. Heute steht das Fass hier als Stehtisch." });
 }
 
-/* Maßkrug: Glas, Henkel, Spezi (Cola mit Orangenlimo), heller Schaumrand — Fuß = Ursprung, h = Höhe.
-   FASSUNG 879 — alkoholfrei wie alle Szenen (Funk 296 „Ja mach alles weiter"): vorher goldenes Bier. */
+/* Maßkrug: Glas, Henkel, goldenes Bier, Schaum — Fuß = Ursprung, h = Höhe */
 const MASS_GLAS = S.lg("massglas", [[0, "#cfe1e6", 0.85], [0.25, "#ffffff", 0.95], [0.6, "#d9e8ec", 0.7], [1, "#a9c2c9", 0.9]], 0, 0, 1, 0);
-const MASS_BIER = S.lg("massspezi", [[0, "#8e3f14"], [0.5, "#6f2c0c"], [1, "#4f1d08"]], 0, 0, 1, 0);
+const MASS_BIER = S.lg("massbier", [[0, "#f6c13a"], [0.5, "#e8a21c"], [1, "#c97f0f"]], 0, 0, 1, 0);
 const massKrug = (x, y, h, henkel = 1) => {
   const w = h * 0.62;
   let g = `<path d="M${r(x - w / 2)} ${r(y)} L${r(x - w / 2 + h * 0.03)} ${r(y - h)} L${r(x + w / 2 - h * 0.03)} ${r(y - h)} L${r(x + w / 2)} ${r(y)} Z" fill="${MASS_GLAS}"/>`;
   g += `<path d="M${r(x - w / 2 + h * 0.07)} ${r(y - h * 0.08)} L${r(x - w / 2 + h * 0.08)} ${r(y - h * 0.84)} L${r(x + w / 2 - h * 0.08)} ${r(y - h * 0.84)} L${r(x + w / 2 - h * 0.07)} ${r(y - h * 0.08)} Z" fill="${MASS_BIER}"/>`;
-  g += `<rect x="${r(x - w / 2 + h * 0.06)}" y="${r(y - h * 0.9)}" width="${r(w - h * 0.12)}" height="${r(h * 0.08)}" rx="${r(h * 0.04)}" fill="#e6c49c"/>`;
-  g += `<path d="M${r(x - w / 2 + h * 0.08)} ${r(y - h * 0.89)} q${r(w * 0.25)} ${r(-h * 0.04)} ${r(w * 0.5)} 0" fill="#f2dcc0"/>`;
-  for (let i = 0; i < 5; i++) g += `<circle cx="${r(x - w * 0.25 + rnd() * w * 0.5)}" cy="${r(y - h * (0.2 + rnd() * 0.55))}" r="${r(h * 0.015 + 0.08)}" fill="#c9733a" opacity=".8"/>`;
+  g += `<rect x="${r(x - w / 2 + h * 0.06)}" y="${r(y - h * 0.98)}" width="${r(w - h * 0.12)}" height="${r(h * 0.16)}" rx="${r(h * 0.06)}" fill="#fffaf0"/>`;
+  g += `<path d="M${r(x - w / 2 + h * 0.08)} ${r(y - h * 0.96)} q${r(w * 0.25)} ${r(-h * 0.1)} ${r(w * 0.5)} 0" fill="#fffdf7"/>`;
+  for (let i = 0; i < 5; i++) g += `<circle cx="${r(x - w * 0.25 + rnd() * w * 0.5)}" cy="${r(y - h * (0.2 + rnd() * 0.55))}" r="${r(h * 0.015 + 0.08)}" fill="#fff6d0" opacity=".8"/>`;
   g += `<path d="M${r(x + henkel * w / 2 - henkel * h * 0.02)} ${r(y - h * 0.8)} q${r(henkel * h * 0.38)} 0 ${r(henkel * h * 0.38)} ${r(h * 0.32)} q0 ${r(h * 0.3)} ${r(-henkel * h * 0.38)} ${r(h * 0.3)}" stroke="#d9e8ec" stroke-width="${r(h * 0.1)}" fill="none" opacity=".9"/>`;
   g += `<rect x="${r(x - w * 0.36)}" y="${r(y - h * 0.82)}" width="${r(h * 0.07)}" height="${r(h * 0.7)}" fill="#fff" opacity=".55"/>`;
   g += `<ellipse cx="${r(x)}" cy="${r(y - h * 0.45)}" rx="${r(w * 0.2)}" ry="${r(h * 0.12)}" fill="${BLAU}" opacity=".75"/>`;
@@ -379,7 +378,7 @@ const TS = km(TISCH.y), PLATTE = TISCH.y - 0.77 * TS;
   for (const sx of [-1, 1]) { const x = sx * (W / 2 - 10); k += `<path d="M${r(x - 4)} 0 L${r(x)} ${r(-0.45 * s)} L${r(x + 4)} 0" stroke="#4b5257" stroke-width="1.2" fill="none"/>`; }
   k += `<path d="M${r(-W / 2 + 1)} ${r(-0.47 * s - 2)} L${r(W / 2 - 1)} ${r(-0.47 * s - 2)} L${r(W / 2)} ${r(-0.47 * s)} L${r(-W / 2)} ${r(-0.47 * s)} Z" fill="${S.lg("bankplatte", [[0, "#cfa46a"], [1, "#b2834a"]])}"/>`;
   k += `<rect x="${r(-W / 2)}" y="${r(-0.47 * s)}" width="${r(W)}" height="2.2" fill="${HOLZ_V}"/>`;
-  S.teil({ id: "bank", de: "die Bank", syl: "BANK", it: "la panca", itSyl: "PAN-ca", en: "bench", x: (TISCH.x0 + TISCH.x1) / 2, y: Y, steht: true, kunst: k });
+  S.teil({ id: "bank", de: "die Bierbank", syl: "BIER-bank", it: "la panca", itSyl: "PAN-ca", en: "beer bench", x: (TISCH.x0 + TISCH.x1) / 2, y: Y, steht: true, kunst: k });
 }
 
 /* =====================================================================
@@ -388,8 +387,8 @@ const TS = km(TISCH.y), PLATTE = TISCH.y - 0.77 * TS;
 {
   const h = 0.26 * TS;
   let k = schatten(0, 0.2, h * 0.45, h * 0.08, 0.3) + massKrug(0, 0, h, 1);
-  S.teil({ oben: true, id: "bierkrug", de: "der Maßkrug", syl: "MASS-krug", it: "il boccale", itSyl: "boc-CA-le", en: "one-litre mug", x: 118, y: PLATTE - 1, steht: true, kunst: k,
-    tipp: "In einen Maßkrug passt ein Liter. Hier ist Spezi drin: Cola mit Orangenlimo." });
+  S.teil({ oben: true, id: "bierkrug", de: "der Maßkrug", syl: "MASS-krug", it: "il boccale", itSyl: "boc-CA-le", en: "beer mug", x: 118, y: PLATTE - 1, steht: true, kunst: k,
+    tipp: "In einen Maßkrug passt ein Liter." });
 }
 {
   /* Wiesn-Brezn auf einem Holzbrett */

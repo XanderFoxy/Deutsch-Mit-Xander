@@ -69,11 +69,9 @@
      Leonhardskirche (zwei achteckige Türme), Platanen, Kaimauer aus
      rotem Sandstein. Sachsenhäuser Ufer: Mauer, Straße mit parkenden
      Autos, Platanen, Gründerzeithäuser mit Mansarddächern.
-   - TYPISCH (alkoholfrei, FASSUNG 879): der BEMBEL (graues Salzglasur-
-     Steinzeug, kobaltblau bemalt) und das GERIPPTE (Rautenschliff) mit
-     naturtrübem APFELSAFT von den Streuobstwiesen rund um Frankfurt;
-     HANDKÄSE „mit Musik“ (Sauermilchkäse, Zwiebeln in Essig und Öl,
-     Kümmel); GRÜNE SOSSE
+   - TYPISCH: Apfelwein („Äppler“, „Ebbelwoi“) aus dem BEMBEL (graues
+     Salzglasur-Steinzeug, kobaltblau bemalt) im GERIPPTEN (Rautenschliff),
+     der grüne KRANZ (Fichtenkranz) zeigt den Ausschank an; GRÜNE SOSSE
      aus sieben Kräutern mit Eiern und Kartoffeln; FRANKFURTER WÜRSTCHEN
      (reines Schweinefleisch, im heißen Wasser nur erhitzt) mit Senf und
      Brot. Ausflugsschiffe, Höckerschwäne.
@@ -213,11 +211,11 @@ const anX = (L, x) => { for (let i = 1; i < L.length; i++) if (x >= L[i][0]) { c
 }
 /* Fensterraster als Muster (für ferne Häuser, spart Tausende Einzelteile) */
 S.def(`<pattern id="ffm_fenster" width="1.7" height="1.9" patternUnits="userSpaceOnUse"><rect x=".45" y=".5" width=".7" height=".95" fill="#55616c"/></pattern>`);
-S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("dunst")}" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation=".45"/></filter>`);
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation=".35 .15"/></filter>`);
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("weich2")}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation=".5"/></filter>`);
+S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
+S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation=".45"/></filter>`);
+S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%"><feGaussianBlur stdDeviation=".35 .15"/></filter>`);
+S.def(`<filter id="${S.id("weich2")}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation=".5"/></filter>`);
 S.def(`<pattern id="ffm_vierpass" width="1.1" height="1.1" patternUnits="userSpaceOnUse"><g fill="none" stroke="#6e3529" stroke-width=".09"><circle cx=".55" cy=".33" r=".2"/><circle cx=".55" cy=".77" r=".2"/><circle cx=".33" cy=".55" r=".2"/><circle cx=".77" cy=".55" r=".2"/></g><path d="M0 0 H1.1 M0 1.1 H1.1" stroke="#6e3529" stroke-width=".08"/></pattern>`);
 /* Werkstoffe: Sonne von links (Südwesten) — Südseiten hell, Ostseiten im Schatten */
 const ROT_L = S.lg("rotl", [[0, "#dc9670"], [1, "#c0704f"]], 0, 0, 1, 0);       /* roter Mainsandstein, Sonnenseite */
@@ -1326,7 +1324,7 @@ const KELLNER = (() => { const th = -95.5 * Math.PI / 180, d = 9; return [CAM[0]
   /* Steinkante am Wasser */
   k += `<path d="${linie(kante.map(([x, y]) => [x, y - 0.3, PROM]))}" stroke="#e1d5c0" stroke-width="1" fill="none"/>`;
   S.teil({ id: "mainufer", de: "das Mainufer", syl: "MAIN-u-fer", it: "la riva del Meno", itSyl: "RI-va del ME-no", en: "Main riverbank", x: 0, y: 0, kunst: k,
-    tipp: "Am Mainufer gehen die Frankfurter spazieren, joggen, fahren Rad und machen Picknick." });
+    tipp: "Am Mainufer gehen die Frankfurter spazieren, joggen, fahren Rad und trinken Apfelwein." });
 }
 
 /* =====================================================================
@@ -1371,7 +1369,7 @@ const BANK_K = (() => {
 })();
 
 /* =====================================================================
-   16 — DIE GARTENWIRTSCHAFT (Ausschank am Ufer, Gartengarnituren)
+   16 — DIE APFELWEINWIRTSCHAFT (Ausschank am Ufer, Gartengarnituren, der grüne Kranz)
    ===================================================================== */
 {
   const c = HUT.c, w = HUT.w, d = HUT.d;
@@ -1405,8 +1403,35 @@ const BANK_K = (() => {
     k += `<path d="${poly([B(0.5, -0.25), B(0.66, -0.25), B(0.68, 0.12), B(0.48, 0.12)])}" fill="#e9dcae"/><path d="${poly([B(0.51, -0.2), B(0.65, -0.2), B(0.66, 0.02), B(0.5, 0.02)])}" fill="#d9b24a"/>`;
     k += `<path d="${poly([[xF, c[1] + 0.8, PROM + 2.55], [xF, c[1] + 2, PROM + 2.55], [xF, c[1] + 2, PROM + 3.35], [xF, c[1] + 0.8, PROM + 3.35]])}" fill="none" stroke="#c9a44a" stroke-width=".25"/>`;
   }
-  S.teil({ id: "wirtschaft", de: "die Gartenwirtschaft", syl: "GAR-ten-wirt-schaft", it: "l'osteria con giardino", itSyl: "o-ste-RI-a con giar-DI-no", en: "garden restaurant", x: 0, y: 0, kunst: k,
-    tipp: "In Sachsenhausen gibt es viele Gartenwirtschaften. Man sitzt draußen an langen Tischen." });
+  /* der grüne Kranz aus Fichtenzweigen am Ausleger: dicht, Zweigspitzen nach außen, rot-weiße Bänder */
+  const kz = pr(c[0] + w / 2 + 0.62, c[1] + d / 2 + 0.28, PROM + 2.22), ks = mass(c[0] + w / 2, c[1] + d / 2);
+  const ka = pr(c[0] + w / 2, c[1] + d / 2, PROM + 2.55), kb2 = pr(c[0] + w / 2 + 0.7, c[1] + d / 2 + 0.3, PROM + 2.55);
+  k += `<path d="M${P(ka)} L${P(kb2)}" stroke="#3a2a1a" stroke-width="${r(0.06 * ks)}"/>`;
+  k += `<path d="M${r(kb2[0] - 0.2 * ks)} ${r(kb2[1])} L${r(kz[0] - 0.12 * ks)} ${r(kz[1] - 0.2 * ks)} M${r(kb2[0] + 0.05 * ks)} ${r(kb2[1])} L${r(kz[0] + 0.12 * ks)} ${r(kz[1] - 0.2 * ks)}" stroke="#6b5a40" stroke-width=".15"/>`;
+  {
+    const R = 0.23 * ks, zz = zufall(4242);
+    k += `<ellipse cx="${r(kz[0])}" cy="${r(kz[1])}" rx="${r(R)}" ry="${r(R * 0.95)}" fill="none" stroke="#1f3a1e" stroke-width="${r(0.13 * ks)}"/>`;
+    for (const [dr, f, sw, da] of [[0.05, "#2f5a2c", 0.05, "0.4 0.25"], [-0.04, "#3f6e36", 0.045, "0.3 0.3"], [0.0, "#5f8f4c", 0.03, "0.15 0.35"], [0.06, "#6fa05a", 0.02, "0.1 0.5"]])
+      k += `<ellipse cx="${r(kz[0])}" cy="${r(kz[1])}" rx="${r(R + dr * ks)}" ry="${r((R + dr * ks) * 0.95)}" fill="none" stroke="${f}" stroke-width="${r(sw * ks)}" stroke-dasharray="${da.split(" ").map((v) => r(+v * ks * 0.2)).join(" ")}" stroke-linecap="round"/>`;
+    let z1 = "", z2 = "", z3 = "";
+    for (let i = 0; i < 80; i++) {
+      const a = i / 80 * Math.PI * 2 + zz() * 0.1, rr = R + (zz() - 0.5) * 0.12 * ks, x0 = kz[0] + Math.cos(a) * rr, y0 = kz[1] + Math.sin(a) * rr * 0.95;
+      const aus = (zz() < 0.68 ? 1 : -1) * (0.035 + zz() * 0.06) * ks, wi = a + (zz() - 0.5) * 0.9;
+      const seg = `M${r(x0)} ${r(y0)} l${r(Math.cos(wi) * aus)} ${r(Math.sin(wi) * aus)} `;
+      if (i % 3 === 0) z1 += seg; else if (i % 3 === 1) z2 += seg; else z3 += seg;
+    }
+    k += `<path d="${z1}" stroke="#24461f" stroke-width="${r(0.014 * ks)}" stroke-linecap="round"/><path d="${z2}" stroke="#35602e" stroke-width="${r(0.012 * ks)}" stroke-linecap="round"/><path d="${z3}" stroke="#7fae64" stroke-width="${r(0.009 * ks)}" stroke-linecap="round"/>`;
+    const bx = kz[0], by = kz[1] + R * 0.95;
+    k += `<path d="M${r(bx)} ${r(by)} l${r(-0.1 * ks)} ${r(-0.05 * ks)} l0 ${r(0.1 * ks)} Z M${r(bx)} ${r(by)} l${r(0.1 * ks)} ${r(-0.05 * ks)} l0 ${r(0.1 * ks)} Z" fill="#c62d2a"/><path d="M${r(bx - 0.02 * ks)} ${r(by)} q${r(-0.04 * ks)} ${r(0.08 * ks)} ${r(-0.02 * ks)} ${r(0.16 * ks)} M${r(bx + 0.02 * ks)} ${r(by)} q${r(0.04 * ks)} ${r(0.08 * ks)} ${r(0.02 * ks)} ${r(0.16 * ks)}" stroke="#f4f1ea" stroke-width="${r(0.03 * ks)}" fill="none"/>`;
+  }
+  S.teil({ id: "wirtschaft", de: "die Apfelweinwirtschaft", syl: "AP-fel-wein-wirt-schaft", it: "l'osteria del sidro", itSyl: "o-ste-RI-a del SI-dro", en: "cider tavern", x: 0, y: 0, kunst: k,
+    tipp: "In der Apfelweinwirtschaft sitzt man an langen Tischen und trinkt Apfelwein aus dem Bembel.",
+    zoom: { x: r(Math.max(0, kz[0] - 18)), y: r(kz[1] - 12), w: 36, h: 24 },
+    unter: [
+      { id: "kranz", de: "der Kranz", syl: "KRANZ", it: "la ghirlanda", itSyl: "ghir-LAN-da", en: "wreath",
+        x: kz[0], y: kz[1], kunst: flaeche(-0.34 * ks, -0.32 * ks, 0.68 * ks, 0.62 * ks, 0.4),
+        tipp: "Hängt ein grüner Kranz aus Fichtenzweigen draußen, gibt es hier selbst gekelterten Apfelwein." },
+    ] });
 }
 
 /* =====================================================================
@@ -1425,17 +1450,16 @@ const BANK_K = (() => {
   const schattenK = `<path d="M${r(a[0] - 0.25 * s)} ${r(a[1])} L${r(b[0] - 0.12 * s)} ${r(b[1])} L${r(b[0] + 0.25 * s)} ${r(b[1] + 0.1 * s)} L${r(a[0] + 0.25 * s)} ${r(a[1])} Z" fill="#2e2418" opacity=".25"/>`;
   S.teil({ id: "kellner", de: "der Kellner", syl: "KELL-ner", it: "il cameriere", itSyl: "ca-me-RIE-re", en: "waiter", x: r(f[0]), y: r(f[1]),
     kunst: rundeFigurFein(m.svg) + bem + (() => { const kp = m.z.kopf, q = m.k; return `<g transform="scale(${q.toFixed(4)}) translate(${r(kp.x + 1.5)} ${r(kp.y)})"><path d="M-12 22.5 L-12.3 14.5 Q-3 17 6.3 16 L6 21.5 Q-3 24.5 -12 22.5 Z" fill="#f4f1ea" stroke="#c9c2b4" stroke-width=".5"/><path d="M-3.4 19.4 L0 21 L-3.4 22.6 Z M3.4 19.4 L0 21 L3.4 22.6 Z" fill="#1d1d22"/></g>`; })(),
-    tipp: "Der Kellner bringt den Bembel an den Tisch und schenkt ein." });
+    tipp: "Der Kellner bringt den Apfelwein im Bembel an den Tisch." });
 }
 
 /* =====================================================================
-   19 — DER TISCH (langer Holztisch in der Gartenwirtschaft) und das Essen
+   19 — DER TISCH (langer Holztisch im Apfelweingarten) und das Essen
    ===================================================================== */
 const TC = [CAM[0] + FV[0] * 1.5, CAM[1] + FV[1] * 1.5], TZ = PROM + 0.75;
 const T = (u, v, z = TZ) => [TC[0] + RV[0] * u + FV[0] * v, TC[1] + RV[1] * u + FV[1] * v, z];   /* u nach rechts, v nach hinten (Meter) */
 const TP = (u, v, z = TZ) => pr(...T(u, v, z));
 const TS = (v) => FOC / (1.5 + v);
-const HK = [-0.86, 0.1];   /* Lage des Handkäses auf dem Tisch (u, v) */
 /* Ding auf dem Tisch: Fußpunkt, Maßstab und Schlagschatten nach rechts vorn */
 const aufTisch = (u, v) => ({ p: TP(u, v), s: TS(v) });
 const tischSchatten = (u, v, h, breit) => {
@@ -1453,9 +1477,9 @@ const tischSchatten = (u, v, h, breit) => {
   k += `<path d="${poly([T(-L, -D, TZ), T(L, -D, TZ), T(L, -D, TZ - 0.05), T(-L, -D, TZ - 0.05)])}" fill="#6b4524"/>`;
   /* Licht von links; die Schlagschatten aller Dinge auf dem Tisch (damit ihre Trefferflächen klein bleiben) */
   k += `<path d="${poly([T(-L, -D), T(L, -D), T(L, D), T(-L, D)])}" fill="${S.lg("tischlicht", [[0, "#fff3d6", 0.2], [0.5, "#fff3d6", 0], [1, "#000", 0.08]], 0, 0, 1, 0)}"/>`;
-  k += tischSchatten(-0.6, 0.24, 0.28, 0.16) + tischSchatten(-0.22, 0.02, 0.13, 0.08) + tischSchatten(0.36, 0.3, 0.13, 0.08) + tischSchatten(0.6, 0.22, 0.03, 0.24) + tischSchatten(0.16, -0.12, 0.04, 0.28) + tischSchatten(0.9, 0.3, 0.12, 0.3) + tischSchatten(HK[0], HK[1], 0.03, 0.22);
+  k += tischSchatten(-0.6, 0.24, 0.28, 0.16) + tischSchatten(-0.22, 0.02, 0.13, 0.08) + tischSchatten(0.36, 0.3, 0.13, 0.08) + tischSchatten(0.6, 0.22, 0.03, 0.24) + tischSchatten(0.16, -0.12, 0.04, 0.28) + tischSchatten(0.9, 0.3, 0.12, 0.3);
   S.teil({ id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolo", itSyl: "TA-vo-lo", en: "table", x: 0, y: 0, kunst: k,
-    tipp: "In der Gartenwirtschaft sitzt man an langen Holztischen – oft mit fremden Leuten zusammen." });
+    tipp: "Im Apfelweinlokal sitzt man an langen Holztischen – oft mit fremden Leuten zusammen." });
 }
 {
   /* DER BEMBEL: graues Steinzeug, Kobaltmalerei, Henkel, Ausguss */
@@ -1470,29 +1494,29 @@ const tischSchatten = (u, v, h, breit) => {
   g += `<path d="M0 -10.6 q-1.6 -1.6 0 -2.6 q1.6 1 0 2.6 Z" fill="#2c4fa0"/><path d="M-3 -19.6 L3 -19.6" stroke="#2c4fa0" stroke-width=".45"/>`;
   g += `<path d="M-6 -12 Q-6.6 -6 -4.4 -1.4" stroke="#fff" stroke-width=".8" opacity=".5" fill="none"/><rect x="-4" y="-23.4" width="8" height=".8" rx=".4" fill="#c9cdd0"/>`;
   k += `<g transform="translate(${r(p[0])} ${r(p[1])}) scale(${r(q * 100) / 100})">${g}</g>`;
-  S.teil({ oben: true, id: "bembel", de: "der Bembel", syl: "BEM-bel", it: "la brocca di gres", itSyl: "BROC-ca di GRES", en: "stoneware jug", x: 0, y: 0, kunst: k,
-    tipp: "Der Bembel ist ein grau-blauer Krug aus Steinzeug. Darin bleiben Getränke lange kühl." });
+  S.teil({ oben: true, id: "bembel", de: "der Bembel", syl: "BEM-bel", it: "la brocca del sidro", itSyl: "BROC-ca del SI-dro", en: "cider jug", x: 0, y: 0, kunst: k,
+    tipp: "Aus dem Bembel, einem grau-blauen Steinkrug, schenkt man Apfelwein aus." });
 }
 {
-  /* DAS GERIPPTE: Glas mit Rautenschliff (0,3 l), darin naturtrüber Apfelsaft */
+  /* DAS GERIPPTE: Apfelweinglas mit Rautenschliff (0,3 l), darin der Apfelwein */
   const { p, s } = aufTisch(-0.22, 0.02);
   const w = 0.037 * s, h = 0.13 * s;
   let k = "";
   k += `<path d="M${r(p[0] - w)} ${r(p[1])} L${r(p[0] - w * 1.06)} ${r(p[1] - h)} L${r(p[0] + w * 1.06)} ${r(p[1] - h)} L${r(p[0] + w)} ${r(p[1])} Z" fill="#e8f0ee" opacity=".45"/>`;
-  k += `<path d="M${r(p[0] - w * 0.97)} ${r(p[1] - 0.6)} L${r(p[0] - w * 1.04)} ${r(p[1] - h * 0.82)} L${r(p[0] + w * 1.04)} ${r(p[1] - h * 0.82)} L${r(p[0] + w * 0.97)} ${r(p[1] - 0.6)} Z" fill="${S.lg("aeppler", [[0, "#f0c46a"], [1, "#c98a32"]])}" opacity=".92"/>`;
-  k += `<ellipse cx="${r(p[0])}" cy="${r(p[1] - h * 0.82)}" rx="${r(w * 1.04)}" ry="${r(w * 0.3)}" fill="#f6d896"/>`;
+  k += `<path d="M${r(p[0] - w * 0.97)} ${r(p[1] - 0.6)} L${r(p[0] - w * 1.04)} ${r(p[1] - h * 0.82)} L${r(p[0] + w * 1.04)} ${r(p[1] - h * 0.82)} L${r(p[0] + w * 0.97)} ${r(p[1] - 0.6)} Z" fill="${S.lg("aeppler", [[0, "#f2d77e"], [1, "#d8b24a"]])}" opacity=".9"/>`;
+  k += `<ellipse cx="${r(p[0])}" cy="${r(p[1] - h * 0.82)}" rx="${r(w * 1.04)}" ry="${r(w * 0.3)}" fill="#f7e7a8"/>`;
   for (let j = 0; j < 6; j++) for (let i = 0; i < 4; i++) {
     const cx = p[0] - w * 0.75 + i * w * 0.5, cy = p[1] - h * 0.1 - j * h * 0.15, d = h * 0.07;
     k += `<path d="M${r(cx)} ${r(cy - d)} L${r(cx + d * 0.75)} ${r(cy)} L${r(cx)} ${r(cy + d)} L${r(cx - d * 0.75)} ${r(cy)} Z" fill="none" stroke="#ffffff" stroke-width=".22" opacity=".75"/>`;
   }
   k += `<ellipse cx="${r(p[0])}" cy="${r(p[1] - h)}" rx="${r(w * 1.06)}" ry="${r(w * 0.32)}" fill="none" stroke="#f4f8f7" stroke-width=".3"/>`;
   k += `<path d="M${r(p[0] - w * 0.8)} ${r(p[1] - h * 0.9)} L${r(p[0] - w * 0.72)} ${r(p[1] - 1)}" stroke="#fff" stroke-width=".45" opacity=".6"/>`;
-  S.teil({ oben: true, id: "geripptes", de: "das Gerippte", syl: "ge-RIPP-te", it: "il bicchiere a rombi", itSyl: "bic-CHIE-re a ROM-bi", en: "ribbed glass", x: 0, y: 0, kunst: k,
-    tipp: "Das Glas heißt „Geripptes“ – wegen seines Rautenmusters. So rutscht es nicht aus der Hand.",
+  S.teil({ oben: true, id: "geripptes", de: "das Gerippte", syl: "ge-RIPP-te", it: "il bicchiere a rombi", itSyl: "bic-CHIE-re a ROM-bi", en: "ribbed cider glass", x: 0, y: 0, kunst: k,
+    tipp: "Das Apfelweinglas heißt „Geripptes“ – wegen seines Rautenmusters.",
     zoom: { x: r(p[0] - 18), y: 151, w: 36, h: 24 },
     unter: [
-      { id: "apfelsaft", de: "der Apfelsaft", syl: "AP-fel-saft", it: "il succo di mela", itSyl: "SUC-co di ME-la", en: "apple juice",
-        x: r(p[0]), y: r(p[1] - 0.6), kunst: flaeche(-w, -h * 0.8, 2 * w, h * 0.8, 0.3), tipp: "Rund um Frankfurt stehen viele Apfelbäume auf Streuobstwiesen. Aus ihren Äpfeln presst man Saft." },
+      { id: "apfelwein", de: "der Apfelwein", syl: "AP-fel-wein", it: "il sidro", itSyl: "SI-dro", en: "cider",
+        x: r(p[0]), y: r(p[1] - 0.6), kunst: flaeche(-w, -h * 0.8, 2 * w, h * 0.8, 0.3), tipp: "Die Frankfurter sagen „Äppler“ oder „Ebbelwoi“." },
     ] });
 }
 {
@@ -1501,12 +1525,12 @@ const tischSchatten = (u, v, h, breit) => {
   {
     const q = TP(0.36, 0.3), t = TS(0.3), w2 = 0.037 * t, h2 = 0.13 * t;
     k += `<path d="M${r(q[0] - w2)} ${r(q[1])} L${r(q[0] - w2 * 1.06)} ${r(q[1] - h2)} L${r(q[0] + w2 * 1.06)} ${r(q[1] - h2)} L${r(q[0] + w2)} ${r(q[1])} Z" fill="#e8f0ee" opacity=".55"/>`;
-    k += `<path d="M${r(q[0] - w2 * 0.97)} ${r(q[1] - 0.4)} L${r(q[0] - w2)} ${r(q[1] - h2 * 0.4)} L${r(q[0] + w2)} ${r(q[1] - h2 * 0.4)} L${r(q[0] + w2 * 0.97)} ${r(q[1] - 0.4)} Z" fill="${S.lg("aeppler2", [[0, "#f0c46a"], [1, "#c98a32"]])}" opacity=".92"/><ellipse cx="${r(q[0])}" cy="${r(q[1] - h2 * 0.4)}" rx="${r(w2)}" ry="${r(w2 * 0.3)}" fill="#f6d896"/>`;
+    k += `<path d="M${r(q[0] - w2 * 0.97)} ${r(q[1] - 0.4)} L${r(q[0] - w2)} ${r(q[1] - h2 * 0.4)} L${r(q[0] + w2)} ${r(q[1] - h2 * 0.4)} L${r(q[0] + w2 * 0.97)} ${r(q[1] - 0.4)} Z" fill="${S.lg("aeppler2", [[0, "#f2d77e"], [1, "#d8b24a"]])}" opacity=".9"/><ellipse cx="${r(q[0])}" cy="${r(q[1] - h2 * 0.4)}" rx="${r(w2)}" ry="${r(w2 * 0.3)}" fill="#f7e7a8"/>`;
     for (let j = 0; j < 6; j++) for (let i = 0; i < 4; i++) { const cx = q[0] - w2 * 0.75 + i * w2 * 0.5, cy = q[1] - h2 * 0.1 - j * h2 * 0.15, d = h2 * 0.07; k += `<path d="M${r(cx)} ${r(cy - d)} L${r(cx + d * 0.75)} ${r(cy)} L${r(cx)} ${r(cy + d)} L${r(cx - d * 0.75)} ${r(cy)} Z" fill="none" stroke="#ffffff" stroke-width=".2" opacity=".7"/>`; }
     k += `<ellipse cx="${r(q[0])}" cy="${r(q[1] - h2)}" rx="${r(w2 * 1.06)}" ry="${r(w2 * 0.32)}" fill="none" stroke="#f4f8f7" stroke-width=".3"/>`;
   }
-  S.teil({ id: "geripptes2", de: "das Gerippte", syl: "ge-RIPP-te", it: "il bicchiere a rombi", itSyl: "bic-CHIE-re a ROM-bi", en: "ribbed glass", x: 0, y: 0, kunst: k,
-    tipp: "Das Glas heißt „Geripptes“ – wegen seines Rautenmusters. So rutscht es nicht aus der Hand." });
+  S.teil({ id: "geripptes2", de: "das Gerippte", syl: "ge-RIPP-te", it: "il bicchiere a rombi", itSyl: "bic-CHIE-re a ROM-bi", en: "ribbed cider glass", x: 0, y: 0, kunst: k,
+    tipp: "Das Apfelweinglas heißt „Geripptes“ – wegen seines Rautenmusters." });
 }
 {
   /* DIE FRANKFURTER WÜRSTCHEN: ein Paar, Senf, Brot */
@@ -1544,37 +1568,6 @@ const tischSchatten = (u, v, h, breit) => {
   k += `<ellipse cx="${r(p[0])}" cy="${r(p[1])}" rx="${r(14 * q)}" ry="${r(4.2 * q)}" fill="none" stroke="#c9c9c2" stroke-width=".3"/>`;
   S.teil({ oben: true, id: "gruenesosse", de: "die Grüne Soße", syl: "GRÜ-ne SO-ße", it: "la salsa verde", itSyl: "SAL-sa VER-de", en: "green sauce", x: 0, y: 0, kunst: k,
     tipp: "Grüne Soße macht man aus sieben Kräutern. Dazu gibt es Eier und Kartoffeln." });
-}
-
-{
-  /* DER HANDKÄSE „mit Musik“ (FASSUNG 879, statt des Apfelwein-Kranzes): kleiner Teller, ein runder, glasig-gelber
-     Sauermilchkäse (≈ 8 cm, 2,5 cm hoch), darüber und daneben gehackte Zwiebeln in Essig und Öl, Kümmel */
-  const { p, s } = aufTisch(HK[0], HK[1]), q = s / 100;
-  const X = (u) => r(p[0] + u * q), Y = (v) => r(p[1] + v * q);
-  let k = "";
-  k += `<ellipse cx="${X(0)}" cy="${Y(0)}" rx="${r(10.5 * q)}" ry="${r(3.2 * q)}" fill="${S.lg("teller3", [[0, "#ffffff"], [1, "#d8d8d0"]])}"/>`;
-  k += `<ellipse cx="${X(0)}" cy="${Y(-0.2)}" rx="${r(8 * q)}" ry="${r(2.3 * q)}" fill="#e9e6da"/>`;
-  /* Marinade: Essig und Öl glänzen auf dem Teller */
-  k += `<ellipse cx="${X(0.6)}" cy="${Y(-0.1)}" rx="${r(7 * q)}" ry="${r(1.8 * q)}" fill="${S.rg("marinade", [[0, "#f3e3a0", 0.85], [1, "#d9c070", 0.5]])}"/>`;
-  /* der Käse: flacher Zylinder, Rinde gelb-glasig, Mantel und Deckel */
-  const KS = S.lg("handkaes", [[0, "#f2d68c"], [0.45, "#dcae58"], [1, "#a8782c"]], 0, 0, 1, 0);
-  k += `<path d="M${X(-4.6)} ${Y(-1.2)} L${X(-4.6)} ${Y(-3.6)} A${r(4.6 * q)} ${r(1.45 * q)} 0 0 1 ${X(4.6)} ${Y(-3.6)} L${X(4.6)} ${Y(-1.2)} A${r(4.6 * q)} ${r(1.45 * q)} 0 0 1 ${X(-4.6)} ${Y(-1.2)} Z" fill="${KS}"/>`;
-  k += `<ellipse cx="${X(0)}" cy="${Y(-3.6)}" rx="${r(4.6 * q)}" ry="${r(1.45 * q)}" fill="${S.rg("handkaes2", [[0, "#f8ecc4"], [0.6, "#eed49a"], [1, "#d6ad5e"]], 0.4, 0.4, 0.7)}"/>`;
-  k += `<path d="M${X(-4.2)} ${Y(-3.2)} L${X(-4.2)} ${Y(-1.6)}" stroke="#fff6d8" stroke-width="${r(0.5 * q)}" opacity=".6" stroke-linecap="round"/>`;
-  /* „Musik“: Zwiebelwürfel (weiß, leicht violett, durchscheinend) und Kümmel */
-  const zz = zufall(1879);
-  let zw = "", zv = "", ku = "";
-  for (let i = 0; i < 34; i++) {
-    const oben = i < 22, u = oben ? (zz() - 0.5) * 7.4 : (zz() < 0.5 ? -1 : 1) * (5 + zz() * 2.4), v = oben ? -3.6 + (zz() - 0.5) * 1.8 : -0.4 + (zz() - 0.5) * 1.6, g = (0.55 + zz() * 0.35) * q;
-    const d = `M${X(u)} ${Y(v)} l${r(g)} ${r(-g * 0.35)} l${r(g * 0.2)} ${r(g * 0.55)} l${r(-g)} ${r(g * 0.3)} Z `;
-    if (i % 3 === 0) zv += d; else zw += d;
-  }
-  for (let i = 0; i < 16; i++) { const u = (zz() - 0.5) * 7.4, v = -3.6 + (zz() - 0.5) * 2; ku += `M${X(u)} ${Y(v)} l${r(0.35 * q)} ${r(0.1 * q)} `; }
-  k += `<path d="${zw}" fill="#fbf8f0" stroke="#e2dccb" stroke-width=".08"/><path d="${zv}" fill="#ead6e4" stroke="#cdb3c6" stroke-width=".08"/>`;
-  k += `<path d="${ku}" stroke="#5a3b1e" stroke-width="${r(0.18 * q)}" stroke-linecap="round"/>`;
-  k += `<ellipse cx="${X(0)}" cy="${Y(0)}" rx="${r(10.5 * q)}" ry="${r(3.2 * q)}" fill="none" stroke="#c9c9c2" stroke-width=".3"/>`;
-  S.teil({ oben: true, id: "handkaese", de: "der Handkäse", syl: "HAND-kä-se", it: "il formaggio di latte acido", itSyl: "for-MAG-gio di LAT-te A-ci-do", en: "sour milk cheese", x: 0, y: 0, kunst: k,
-    tipp: "„Handkäs mit Musik“: Der kleine Käse liegt in Essig und Öl, darauf kommen viele Zwiebeln." });
 }
 
 /* warmes Licht des späten Nachmittags von links (liegt über allem, fängt keinen Tipp) */

@@ -46,15 +46,14 @@
      roter Klinker; vorspringende Kastenfenster.
    - RHEINKNIEBRÜCKE (1969): Schrägseilbrücke in Harfenform, zwei 114 m
      hohe Pylone links des Rheins, 319 m Hauptöffnung, 14 Seile.
-   - TYPISCH (alkoholfrei, FASSUNG 879): altes Gasthaus mit Ausleger-
-     Schild und Tischen draußen; rheinische Küche („Himmel un Ääd“:
-     Kartoffelbrei, Apfelmus, Blutwurst); REIBEKUCHEN (rheinisch für
-     Kartoffelpuffer) mit APFELMUS; der Köbes (rheinisch für Jakob) in Blau
-     (Strickjacke, lange blaue Schürze, Ledertasche) bringt Saft, Schorle
-     und Wasser auf dem runden Tablett. Alte Holzfässer als Stehtische. Halve Hahn = Röggelchen (doppeltes Roggenbrötchen) mit
+   - TYPISCH: Brauhaus mit Ausleger-Schild und Biergarten; Altbier im
+     0,25-l-„Becher“; der Köbes in Blau (Strickjacke, lange blaue Schürze,
+     Ledertasche) bringt es auf dem runden Tablett, macht Striche auf den
+     Bierdeckel; wer genug hat, legt den Deckel aufs Glas. Alte Bierfässer
+     als Stehtische. Halve Hahn = Röggelchen (doppeltes Roggenbrötchen) mit
      dicker Scheibe Gouda, Senf und Zwiebeln. Senf heißt auf Platt
      „Mostert“, man isst ihn aus dem grauen Steinzeug-„Mostertpöttche“.
-     Die Altstadt liegt direkt am Rhein: Gasthäuser, Cafés, kleine Läden.
+     Die Altstadt mit rund 260 Kneipen heißt „längste Theke der Welt“.
      Die Radschläger (Kinder, die Rad schlagen) sind das Stadtsymbol —
      auch auf den Kanaldeckeln. Die Königsallee („Kö“) liegt östlich
      der Altstadt (nur der Wegweiser zeigt hin).
@@ -168,23 +167,6 @@ const KUPFER = S.lg("kupfer", [[0, "#5f9c86"], [1, "#3f7564"]]);
 const GOLD = S.lg("gold", [[0, "#fff1a8"], [0.4, "#f1c74a"], [1, "#a8781a"]], 0, 0, 1, 1);
 const HOLZ = S.lg("holz", [[0, "#5e3b1f"], [0.35, "#8f5f34"], [0.7, "#b07a46"], [1, "#7a4c28"]], 0, 0, 1, 0);
 const DUNST = S.lg("dunstblau", [[0, "#b8c6d3"], [1, "#a3b2c0"]]);
-/* FASSUNG 879 — alkoholfreie Getränke im kleinen Becher: Apfelschorle (bernstein), Orangensaft, Wasser mit Zitrone */
-const SAFT = {
-  schorle: S.lg("schorle", [[0, "#d98e2a"], [0.55, "#f2bf5a"], [1, "#c97f22"]], 0, 0, 1, 0),
-  orange: S.lg("osaft", [[0, "#e8761a"], [0.55, "#ffa83a"], [1, "#d96a14"]], 0, 0, 1, 0),
-  wasser: S.lg("wasser1", [[0, "#bcd6dc"], [0.55, "#e6f3f5"], [1, "#b2ccd3"]], 0, 0, 1, 0),
-};
-/* Becher (Fuß = x, y; Breite w, Höhe h; voll 0..1): Glas, Getränk, heller Rand oben, Lichtkante, Bläschen bzw. Zitrone */
-const becher = (x, y, w, h, art, voll = 0.85) => {
-  const hw = w / 2, top = y - h, fl = y - h * voll;
-  let g = `<path d="M${r(x - hw)} ${r(y)} L${r(x - hw * 1.06)} ${r(top)} L${r(x + hw * 1.06)} ${r(top)} L${r(x + hw)} ${r(y)} Z" fill="#e7f0f2" opacity=".5" stroke="#b8c8cc" stroke-width=".08"/>`;
-  g += `<path d="M${r(x - hw * 0.97)} ${r(y - 0.05)} L${r(x - hw * 1.03)} ${r(fl)} L${r(x + hw * 1.03)} ${r(fl)} L${r(x + hw * 0.97)} ${r(y - 0.05)} Z" fill="${SAFT[art]}"${art === "wasser" ? ` opacity=".8"` : ""}/>`;
-  g += `<rect x="${r(x - hw * 1.03)}" y="${r(fl - 0.08)}" width="${r(w * 1.03)}" height=".16" fill="${art === "orange" ? "#ffc875" : art === "schorle" ? "#fbe2a0" : "#f6fbfc"}"/>`;
-  if (art === "wasser") g += `<path d="M${r(x - hw * 0.5)} ${r(fl + 0.1)} a${r(hw * 0.5)} ${r(hw * 0.5)} 0 0 0 ${r(hw)} 0 Z" fill="#f2df5a" opacity=".9"/>`;
-  else g += `<circle cx="${r(x - hw * 0.35)}" cy="${r(y - h * 0.3)}" r=".1" fill="#fff" opacity=".7"/><circle cx="${r(x + hw * 0.1)}" cy="${r(y - h * 0.55)}" r=".08" fill="#fff" opacity=".7"/>`;
-  g += `<rect x="${r(x + hw * 0.25)}" y="${r(top + h * 0.12)}" width="${r(w * 0.16)}" height="${r(h * 0.75)}" fill="#fff" opacity=".45"/>`;
-  return g;
-};
 
 /* =====================================================================
    KULISSE — Himmel, ferne Stadt, Ufer gegenüber, Kirmes
@@ -742,7 +724,7 @@ const LB = { x: 86, y: 120.3, u: 1.24 };
 }
 
 /* =====================================================================
-   9 — DIE ALTSTADT (Häuserzeile am Rhein)
+   9 — DIE ALTSTADT (Häuserzeile am Rhein, „längste Theke der Welt“)
    ===================================================================== */
 const haeuser = [];
 {
@@ -819,11 +801,11 @@ const hausZeichnen = (hs, L) => {
     for (const [dl, c] of [[-1.1, "#3d5a80"], [1, "#b8473a"]]) { const p = P(dd + dl, HAUS_L + 3.4 + dl, 0); k += passant(p[0], p[1], 1.7 * F / (dd + dl), { hemd: c, haar: dl < 0 ? "#3a2a20" : "#c9a466" }); }
   }
   S.teil({ id: "altstadt", de: "die Altstadt", syl: "ALT-stadt", it: "il centro storico", itSyl: "CEN-tro STO-ri-co", en: "old town",
-    x: 0, y: 0, kunst: k, tipp: "Die Altstadt liegt direkt am Rhein. Hier gibt es alte Gasthäuser, Cafés und kleine Läden." });
+    x: 0, y: 0, kunst: k, tipp: "In der Altstadt gibt es rund 260 Kneipen. Man nennt sie „die längste Theke der Welt“." });
 }
 
 /* =====================================================================
-   10 — DAS GASTHAUS (vorn links) mit Ausleger-Schild, offener Tür, Blumenkübel
+   10 — DAS BRAUHAUS (vorn links) mit Ausleger-Schild, offener Tür, Ausschank
    ===================================================================== */
 {
   const L = HAUS_L, d0 = 47.5, d1 = 66, h = 15.4;
@@ -845,38 +827,37 @@ const hausZeichnen = (hs, L) => {
   /* Schriftzug über dem Erdgeschoss */
   const s1 = P(d0 + 5.6, L, 4), s2 = P(d1 - 0.6, L, 4);
   const sw = s2[0] - s1[0], sh = (s1[1] - s2[1]);
-  k += `<g transform="matrix(${r(sw / 40)} ${r(-sh / 40)} 0 ${r(F / ((d0 + d1) / 2) / 4)} ${s1[0]} ${s1[1]})"><text x="20" y="0" font-size="3.6" text-anchor="middle" fill="#8a6418" font-family="Georgia,serif" font-weight="bold" letter-spacing=".3">GASTHAUS</text></g>`;
+  k += `<g transform="matrix(${r(sw / 40)} ${r(-sh / 40)} 0 ${r(F / ((d0 + d1) / 2) / 4)} ${s1[0]} ${s1[1]})"><text x="20" y="0" font-size="3.6" text-anchor="middle" fill="#8a6418" font-family="Georgia,serif" font-weight="bold" letter-spacing=".3">BRAUHAUS</text></g>`;
   /* Erdgeschoss: offene Tür mit warmem Licht, Fenster mit Butzenglas */
   k += vieleck([P(50.4, L, 0), P(53, L, 0), P(53, L, 2.8), P(51.7, L, 3.3), P(50.4, L, 2.8)], "#5a3a1f");
   k += vieleck([P(50.8, L, 0), P(52.6, L, 0), P(52.6, L, 2.6), P(50.8, L, 2.6)], S.lg("tuerlicht", [[0, "#ffd88a"], [1, "#c98a3a"]]));
   for (const dm of [56.4, 61.2]) { k += vieleck([P(dm - 1.5, L, 0.9), P(dm + 1.5, L, 0.9), P(dm + 1.5, L, 2.8), P(dm - 1.5, L, 2.8)], S.lg("butzen", [[0, "#e8c27a"], [1, "#9a7038"]])); k += vieleck([P(dm - 0.05, L, 0.9), P(dm + 0.05, L, 0.9), P(dm + 0.05, L, 2.8), P(dm - 0.05, L, 2.8)], "#4a3324"); }
-  /* Ausleger-Schild: geschmiedeter Arm mit hängendem Schild (Teller mit Messer und Gabel) */
+  /* Ausleger-Schild: geschmiedeter Arm mit hängendem Schild (Fass und Hopfen) */
   const ar0 = P(49, L, 4.6), ar1 = P(49, L + 1.9, 4.6), ar2 = P(49, L, 3.6);
   k += `<path d="M${ar0.join(" ")} L${ar1.join(" ")} M${ar2.join(" ")} Q${r((ar0[0] + ar1[0]) / 2)} ${r(ar2[1] - 0.2)} ${ar1.join(" ")}" stroke="#1f1a16" stroke-width=".7" fill="none"/>`;
   const sk = F / 49, sx = (ar0[0] + ar1[0]) / 2, sy = ar1[1] + 0.6;
   k += `<line x1="${r(sx - 0.25 * sk)}" y1="${r(ar1[1])}" x2="${r(sx - 0.25 * sk)}" y2="${r(sy)}" stroke="#1f1a16" stroke-width=".3"/><line x1="${r(sx + 0.25 * sk)}" y1="${r(ar1[1])}" x2="${r(sx + 0.25 * sk)}" y2="${r(sy)}" stroke="#1f1a16" stroke-width=".3"/>`;
   k += `<rect x="${r(sx - 0.45 * sk)}" y="${r(sy)}" width="${r(0.9 * sk)}" height="${r(0.75 * sk)}" rx=".4" fill="#1f3d2c" stroke="#c9a24a" stroke-width=".35"/>`;
-  k += `<circle cx="${r(sx)}" cy="${r(sy + 0.37 * sk)}" r="${r(0.2 * sk)}" fill="none" stroke="#c9a24a" stroke-width=".3"/><circle cx="${r(sx)}" cy="${r(sy + 0.37 * sk)}" r="${r(0.12 * sk)}" fill="none" stroke="#c9a24a" stroke-width=".15"/>`;
-  k += `<path d="M${r(sx - 0.31 * sk)} ${r(sy + 0.14 * sk)} v${r(0.48 * sk)} M${r(sx - 0.35 * sk)} ${r(sy + 0.14 * sk)} v${r(0.14 * sk)} M${r(sx - 0.27 * sk)} ${r(sy + 0.14 * sk)} v${r(0.14 * sk)} M${r(sx + 0.31 * sk)} ${r(sy + 0.14 * sk)} q${r(0.06 * sk)} ${r(0.14 * sk)} 0 ${r(0.24 * sk)} v${r(0.24 * sk)}" stroke="#c9a24a" stroke-width=".25" fill="none" stroke-linecap="round"/>`;
+  k += `<ellipse cx="${r(sx)}" cy="${r(sy + 0.37 * sk)}" rx="${r(0.2 * sk)}" ry="${r(0.24 * sk)}" fill="${HOLZ}" stroke="#c9a24a" stroke-width=".25"/><path d="M${r(sx - 0.2 * sk)} ${r(sy + 0.3 * sk)} h${r(0.4 * sk)} M${r(sx - 0.2 * sk)} ${r(sy + 0.45 * sk)} h${r(0.4 * sk)}" stroke="#c9a24a" stroke-width=".22"/>`;
+  for (const [dx, dy] of [[-0.32, 0.15], [0.32, 0.15], [-0.32, 0.55], [0.32, 0.55]]) k += `<ellipse cx="${r(sx + dx * sk)}" cy="${r(sy + dy * sk)}" rx="${r(0.06 * sk)}" ry="${r(0.09 * sk)}" fill="#8db35a"/>`;
   /* Laterne an der Wand */
   const lw = P(54.6, L + 0.3, 3.7);
   k += `<path d="M${r(lw[0] - 0.6)} ${r(lw[1])} h1.2 l-.2 1.6 h-.8 Z" fill="#f6dc95" stroke="#2b2420" stroke-width=".2"/>`;
-  /* Blumenkübel aus Holz neben der Tür (Buchsbaumkugel) */
+  /* Ausschank: Fass auf dem Fassbock neben der Tür */
   const fb = P(54, L + 0.9, 0), fs = F / 54;
-  k += `<path d="M${r(fb[0] - 0.4 * fs)} ${r(fb[1])} L${r(fb[0] - 0.45 * fs)} ${r(fb[1] - 0.6 * fs)} L${r(fb[0] + 0.45 * fs)} ${r(fb[1] - 0.6 * fs)} L${r(fb[0] + 0.4 * fs)} ${r(fb[1])} Z" fill="${HOLZ}"/><path d="M${r(fb[0] - 0.43 * fs)} ${r(fb[1] - 0.15 * fs)} h${r(0.86 * fs)} M${r(fb[0] - 0.45 * fs)} ${r(fb[1] - 0.5 * fs)} h${r(0.9 * fs)}" stroke="#2c2c2c" stroke-width=".3"/>`;
-  k += `<circle cx="${r(fb[0])}" cy="${r(fb[1] - 0.98 * fs)}" r="${r(0.42 * fs)}" fill="${S.rg("buchs", [[0, "#7fa55a"], [0.7, "#3f6a2e"], [1, "#2c4f22"]], 0.35, 0.3, 0.75)}"/>`;
+  k += `<rect x="${r(fb[0] - 0.4 * fs)}" y="${r(fb[1] - 0.75 * fs)}" width="${r(0.8 * fs)}" height="${r(0.75 * fs)}" fill="#4a3220"/><ellipse cx="${r(fb[0])}" cy="${r(fb[1] - 1.05 * fs)}" rx="${r(0.45 * fs)}" ry="${r(0.36 * fs)}" fill="${HOLZ}"/><ellipse cx="${r(fb[0] - 0.1 * fs)}" cy="${r(fb[1] - 1.05 * fs)}" rx="${r(0.2 * fs)}" ry="${r(0.3 * fs)}" fill="#8f5f34"/><rect x="${r(fb[0] - 0.5 * fs)}" y="${r(fb[1] - 1.1 * fs)}" width="${r(0.15 * fs)}" height="${r(0.18 * fs)}" fill="#c9a24a"/>`;
   k += vieleck([a0, P(d0 + 0.4, L, 0), P(d0 + 0.4, L, h), b0], "#000", ` opacity=".12"`);
-  /* zweiter Fass-Tisch draußen vor dem Gasthaus, mit Orangensaft und Wasser */
+  /* zweiter Fass-Tisch im Biergarten vor dem Brauhaus, mit zwei Altbiergläsern */
   {
     const q = P(36, -8.2, 0), t = F / 36, H2 = 1.05 * t, R2 = 0.33 * t;
     k += schlag(q[0], q[1], 2 * R2, H2, 0.28);
     k += `<path d="M${r(q[0] - R2 * 0.9)} ${q[1]} Q${r(q[0] - R2 * 1.12)} ${r(q[1] - H2 / 2)} ${r(q[0] - R2 * 0.9)} ${r(q[1] - H2)} L${r(q[0] + R2 * 0.9)} ${r(q[1] - H2)} Q${r(q[0] + R2 * 1.12)} ${r(q[1] - H2 / 2)} ${r(q[0] + R2 * 0.9)} ${q[1]} Z" fill="${HOLZ}"/>`;
     for (const f of [0.15, 0.85]) k += `<rect x="${r(q[0] - R2 * 1.02)}" y="${r(q[1] - H2 * f - 0.35)}" width="${r(2.04 * R2)}" height=".7" fill="#3a3a3a"/>`;
     k += `<ellipse cx="${q[0]}" cy="${r(q[1] - H2 - 0.3)}" rx="${r(R2 * 1.2)}" ry="${r(R2 * 0.22)}" fill="${S.lg("platte2", [[0, "#b7834f"], [1, "#8c5d33"]])}"/>`;
-    k += becher(q[0] - 1.4, q[1] - H2 - 0.3, 0.8, 2.1, "orange") + becher(q[0] + 1, q[1] - H2 - 0.3, 0.8, 2.1, "wasser");
+    for (const dx of [-1.4, 1]) k += `<rect x="${r(q[0] + dx - 0.4)}" y="${r(q[1] - H2 - 2.2)}" width=".8" height="1.9" fill="#6d3a17"/><rect x="${r(q[0] + dx - 0.4)}" y="${r(q[1] - H2 - 2.4)}" width=".8" height=".35" fill="#f4ead6"/>`;
   }
-  S.teil({ id: "gasthaus", de: "das Gasthaus", syl: "GAST-haus", it: "la trattoria", itSyl: "trat-to-RI-a", en: "inn", x: 0, y: 0, kunst: k,
-    tipp: "Im Gasthaus gibt es rheinische Küche, zum Beispiel „Himmel un Ääd“: Kartoffelbrei mit Apfelmus und Blutwurst." });
+  S.teil({ id: "brauhaus", de: "das Brauhaus", syl: "BRAU-haus", it: "la birreria", itSyl: "bir-re-RI-a", en: "brewpub", x: 0, y: 0, kunst: k,
+    tipp: "Im Brauhaus wird das Altbier selbst gebraut und direkt aus dem Holzfass gezapft." });
 }
 
 /* =====================================================================
@@ -946,7 +927,7 @@ const hausZeichnen = (hs, L) => {
 }
 
 /* =====================================================================
-   20 — DER KÖBES, DER GAST und DAS FASS (Tische draußen vor dem Gasthaus)
+   20 — DER KÖBES, DER GAST und DAS FASS (Biergarten vor dem Brauhaus)
    ===================================================================== */
 const FASS = { d: 21.5, l: -1.9 };
 {
@@ -960,25 +941,27 @@ const FASS = { d: 21.5, l: -1.9 };
   for (const x of [-1.8, 0.4, 2.6]) schuerze += `<path d="M${x} ${r(sy + 2)} Q${r(x + 0.3)} ${r((sy + sb) / 2)} ${r(x + 0.45)} ${r(sb)}" stroke="#102449" stroke-width=".3" fill="none" opacity=".7"/>`;
   schuerze += `<rect x="-3.6" y="${r(sy - 0.5)}" width="7.6" height=".7" rx=".3" fill="#102449"/>`;
   const tasche = `<rect x="-2.8" y="${r(sy - 0.3)}" width="3" height="2.6" rx=".4" fill="#5a3a1f" stroke="#3a2412" stroke-width=".2"/><line x1="-1.3" y1="${r(sy - 0.3)}" x2="-1.3" y2="${r(sy - 1.7)}" stroke="#3a2412" stroke-width=".25"/>`;
-  /* rundes Tablett mit Saft, Schorle und Wasser (Becher) auf der erhobenen Hand */
+  /* rundes Tablett mit Altbiergläsern (Becher) auf der erhobenen Hand */
   const hand = m.z.handR, hx = hand.x * m.k, hy = hand.y * m.k;
   let t = `<g transform="translate(${r(hx + 0.4)} ${r(hy - 0.6)})">`;
   t += `<ellipse cx="0" cy="0" rx="5.4" ry="1.35" fill="#8f979e"/><ellipse cx="0" cy="-.2" rx="5.1" ry="1.15" fill="#cfd5da"/>`;
-  for (const [gx, gy, art] of [[-3.5, -0.3, "schorle"], [-1.2, -0.6, "orange"], [1.1, -0.55, "wasser"], [3.4, -0.2, "schorle"], [-2.3, 0.3, "wasser"], [0, 0.4, "schorle"], [2.3, 0.3, "orange"]]) t += becher(gx, gy, 1.16, 3, art, 0.88);
+  for (const [gx, gy] of [[-3.5, -0.3], [-1.2, -0.6], [1.1, -0.55], [3.4, -0.2], [-2.3, 0.3], [0, 0.4], [2.3, 0.3]]) {
+    t += `<rect x="${r(gx - 0.58)}" y="${r(gy - 2.7)}" width="1.16" height="2.7" fill="${S.lg("altglas", [[0, "#5a2c10"], [0.6, "#8a4a1c"], [1, "#6d3a17"]], 0, 0, 1, 0)}"/><rect x="${r(gx - 0.58)}" y="${r(gy - 3)}" width="1.16" height=".5" rx=".2" fill="#f4ead6"/><rect x="${r(gx + 0.15)}" y="${r(gy - 2.4)}" width=".25" height="2" fill="#fff" opacity=".4"/>`;
+  }
   t += `</g>`;
-  S.teil({ id: "koebes", de: "der Köbes", syl: "KÖ-bes", it: "il cameriere renano", itSyl: "ca-me-RIE-re re-NA-no", en: "Rhineland waiter",
+  S.teil({ id: "koebes", de: "der Köbes", syl: "KÖ-bes", it: "il cameriere della birreria", itSyl: "ca-me-RIE-re del-la bir-re-RI-a", en: "brewery waiter",
     x: p[0], y: p[1], kunst: schlag(0, 0.3, 6, H, 0.45) + gegen(m.svg + schuerze + tasche) + t,
-    tipp: "In den alten Gasthäusern der Altstadt heißt der Kellner „Köbes“ – rheinisch für Jakob. Er trägt Blau und eine lange Schürze." });
+    tipp: "Im Brauhaus heißt der Kellner „Köbes“. Er trägt Blau und bringt das Altbier, ohne dass man fragt." });
 }
 {
-  /* DER GAST — eine Frau am Fass, eine Apfelschorle in der Hand */
+  /* DER GAST — eine Frau am Fass, ein Altbier in der Hand */
   const p = P(22.2, -1.15, 0), s = F / 22.2;
   const m = figur({ id: "dus_gast", geschlecht: "w", pose: "halten", blick: -62, frisur: "lang", haarfarbe: "blond", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "#f3efe6" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#b8473a" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.68 * s, 1, SCHUHE_LINKS("#6b4528"));
   const hand = m.z.handL.y < m.z.handR.y ? m.z.handL : m.z.handR, hx = hand.x * m.k, hy = hand.y * m.k;
-  const glas = becher(r(hx), r(hy + 0.4), 1.2, 2.9, "schorle", 0.8);
+  const glas = `<g transform="translate(${r(hx)} ${r(hy + 0.4)})"><rect x="-.6" y="-2.6" width="1.2" height="2.6" fill="#7a3e17"/><rect x="-.6" y="-2.9" width="1.2" height=".5" rx=".2" fill="#f4ead6"/><rect x=".15" y="-2.3" width=".25" height="1.9" fill="#fff" opacity=".4"/></g>`;
   S.teil({ id: "gast", de: "der Gast", syl: "GAST", it: "l'ospite", itSyl: "O-spi-te", en: "guest", x: p[0], y: p[1], kunst: schlag(0, 0.3, 5, 1.68 * s, 0.45) + gegen(m.svg) + glas,
-    tipp: "Der Gast steht am Fass und bestellt beim Köbes: „Einmal Reibekuchen, bitte!“" });
+    tipp: "Die Gäste stehen am Fass und trinken Altbier. Im Brauhaus sagt man: „Ein Alt, bitte!“" });
 }
 {
   const p = P(FASS.d, FASS.l, 0), s = F / FASS.d, H = 1.05 * s, R = 0.33 * s, ry = R * 0.16;
@@ -995,21 +978,17 @@ const FASS = { d: 21.5, l: -1.9 };
   /* Tischplatte (rundes Brett) */
   k += `<ellipse cx="0" cy="${r(-H)}" rx="${r(R * 1.2)}" ry="${r(ry * 1.4 + 0.6)}" fill="#5a3a1f"/><ellipse cx="0" cy="${r(-H - 0.5)}" rx="${r(R * 1.2)}" ry="${r(ry * 1.4 + 0.5)}" fill="${S.lg("platte", [[0, "#b7834f"], [1, "#8c5d33"]])}"/>`;
   const top = -H - 0.5;
-  /* FASSUNG 879 — Reibekuchen mit Apfelmus (statt Altbier und Bierdeckel): weißer Teller, drei goldbraun gebratene
-     Reibekuchen mit knusprigem, ausgefranstem Rand, daneben ein Schälchen Apfelmus */
-  const rk = { x: -3.7, y: top + 0.35 };
-  k += `<ellipse cx="${rk.x}" cy="${r(rk.y + 0.1)}" rx="2.1" ry=".62" fill="#cfcac0"/><ellipse cx="${rk.x}" cy="${r(rk.y)}" rx="2" ry=".56" fill="${S.lg("rteller", [[0, "#ffffff"], [1, "#e2ded4"]])}"/>`;
-  const RKF = S.rg("reibek", [[0, "#e9b860"], [0.6, "#c98632"], [1, "#9a5a1e"]], 0.45, 0.4, 0.7);
-  for (const [dx, dy, rx2] of [[-0.7, -0.12, 0.95], [0.55, -0.18, 0.9], [-0.05, 0.05, 1]]) {
-    const cx = rk.x + dx, cy = rk.y + dy - 0.12;
-    let rand = "";
-    for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, rr = rx2 * (1 + (i % 2 ? 0.08 : -0.04)); rand += `${i ? "L" : "M"}${r(cx + Math.cos(a) * rr)} ${r(cy + Math.sin(a) * rr * 0.3)} `; }
-    k += `<path d="${rand}Z" fill="${RKF}" stroke="#7e4a18" stroke-width=".05"/>`;
-    k += `<path d="M${r(cx - rx2 * 0.5)} ${r(cy - 0.05)} l.25 -.04 M${r(cx + rx2 * 0.1)} ${r(cy - 0.12)} l.3 .03 M${r(cx - rx2 * 0.1)} ${r(cy + 0.1)} l.22 -.02" stroke="#f3d48a" stroke-width=".07" stroke-linecap="round"/>`;
-  }
-  const am = { x: -1.3, y: top - 0.2 };
-  k += `<path d="M${r(am.x - 0.75)} ${r(am.y - 0.45)} Q${r(am.x - 0.7)} ${r(am.y + 0.05)} ${r(am.x)} ${r(am.y + 0.08)} Q${r(am.x + 0.7)} ${r(am.y + 0.05)} ${r(am.x + 0.75)} ${r(am.y - 0.45)} Z" fill="${S.lg("schale", [[0, "#f7f4ec"], [1, "#d6d1c4"]], 0, 0, 1, 0)}"/>`;
-  k += `<ellipse cx="${r(am.x)}" cy="${r(am.y - 0.45)}" rx=".75" ry=".2" fill="${S.rg("apfelmus", [[0, "#f4e2a4"], [1, "#dcbf6a"]])}"/><ellipse cx="${r(am.x - 0.15)}" cy="${r(am.y - 0.5)}" rx=".25" ry=".06" fill="#fff6d8" opacity=".7"/>`;
+  /* zwei Altbiergläser: eins voll auf dem Bierdeckel (Deckel vorn sichtbar), eins halb leer daneben */
+  const glas = (x, y, voll) => {
+    let g = `<path d="M${r(x - 0.75)} ${r(y)} L${r(x - 0.8)} ${r(y - 3.4)} L${r(x + 0.8)} ${r(y - 3.4)} L${r(x + 0.75)} ${r(y)} Z" fill="#e7f0f2" opacity=".55" stroke="#b8c8cc" stroke-width=".08"/>`;
+    g += `<path d="M${r(x - 0.74)} ${r(y - 0.05)} L${r(x - 0.79)} ${r(y - 3.4 * voll)} L${r(x + 0.79)} ${r(y - 3.4 * voll)} L${r(x + 0.74)} ${r(y - 0.05)} Z" fill="${S.lg("alt", [[0, "#8a4a1c"], [0.5, "#5a2c10"], [1, "#7a3e17"]], 0, 0, 1, 0)}"/>`;
+    g += `<rect x="${r(x - 0.76)}" y="${r(y - 3.4 * voll - 0.55)}" width="1.52" height=".6" rx=".25" fill="#f4ead6"/><rect x="${r(x + 0.15)}" y="${r(y - 3.1)}" width=".22" height="2.6" fill="#fff" opacity=".45"/>`;
+    return g;
+  };
+  const bd = { x: -4.4, y: top + 0.25 };
+  k += `<ellipse cx="${bd.x}" cy="${r(bd.y + 0.15)}" rx="1.55" ry=".5" fill="#f6f1e4" stroke="#c9bfa8" stroke-width=".1"/>`;
+  for (let i = 0; i < 4; i++) k += `<line x1="${r(bd.x - 1 + i * 0.3)}" y1="${r(bd.y + 0.55)}" x2="${r(bd.x - 0.92 + i * 0.3)}" y2="${r(bd.y + 0.28)}" stroke="#333" stroke-width=".08"/>`;
+  k += glas(bd.x + 0.3, bd.y, 0.86) + glas(-1.9, top - 0.25, 0.5);
   /* Halve Hahn: Röggelchen (zwei bemehlte Hälften), dicke Scheibe Gouda, Senfklecks, Zwiebelringe — auf dem Brettchen */
   const hx2 = 1.4, hy2 = top + 0.85;
   k += `<ellipse cx="${hx2}" cy="${r(hy2)}" rx="2.7" ry=".6" fill="#d9b886"/>`;
@@ -1030,13 +1009,13 @@ const FASS = { d: 21.5, l: -1.9 };
   k += `<ellipse cx="${sx}" cy="${r(sy - 1.6)}" rx=".85" ry=".22" fill="#7d8286"/><path d="M${sx + 0.2} ${r(sy - 1.7)} L${sx + 0.55} ${r(sy - 3)} L${sx + 0.8} ${r(sy - 2.95)} L${sx + 0.4} ${r(sy - 1.65)} Z" fill="#d8b47a"/>`;
   const zy = p[1] + top;
   S.teil({ id: "fass", de: "das Fass", syl: "FASS", it: "la botte", itSyl: "BOT-te", en: "barrel", x: p[0], y: p[1], steht: true, kunst: k,
-    tipp: "Vor den alten Gasthäusern der Altstadt stehen Holzfässer als Stehtische.",
+    tipp: "Vor den Brauhäusern stehen alte Bierfässer als Stehtische.",
     zoom: { x: p[0] - 12, y: zy - 7, w: 24, h: 16 },
     unter: [
-      { id: "reibekuchen", de: "der Reibekuchen", syl: "REI-be-ku-chen", it: "la frittella di patate", itSyl: "frit-TEL-la di pa-TA-te", en: "potato fritter", x: p[0] + rk.x, y: zy + 0.6, kunst: flaeche(-2.1, -0.9, 4.2, 1.5, 0.4),
-        tipp: "Reibekuchen macht man aus geriebenen Kartoffeln und brät sie in Öl. So heißen Kartoffelpuffer im Rheinland." },
-      { id: "apfelmus", de: "das Apfelmus", syl: "AP-fel-mus", it: "la purea di mele", itSyl: "pu-RE-a di ME-le", en: "apple sauce", x: p[0] + am.x, y: zy + 0.1, kunst: flaeche(-0.85, -0.75, 1.7, 0.95, 0.3),
-        tipp: "Apfelmus ist aus gekochten Äpfeln. Im Rheinland isst man es zu Reibekuchen." },
+      { id: "altbier", de: "das Altbier", syl: "ALT-bier", it: "la birra Altbier", itSyl: "BIR-ra ALT-bier", en: "altbier", x: p[0] - 1.6, y: zy, kunst: flaeche(-3.9, -4.1, 5.1, 3.8, 0.3),
+        tipp: "Altbier ist dunkel und kommt aus Düsseldorf. Man trinkt es aus kleinen Gläsern mit 0,25 Litern." },
+      { id: "bierdeckel", de: "der Bierdeckel", syl: "BIER-de-ckel", it: "il sottobicchiere", itSyl: "sot-to-bic-CHIE-re", en: "beer mat", x: p[0] + bd.x, y: zy + 0.6, kunst: flaeche(-2.3, -0.5, 4.6, 1.3, 0.4),
+        tipp: "Für jedes Altbier macht der Köbes einen Strich auf den Bierdeckel. Wer kein Bier mehr will, legt den Deckel auf das Glas." },
       { id: "senf", de: "der Senf", syl: "SENF", it: "la senape", itSyl: "SE-na-pe", en: "mustard", x: p[0] + sx, y: zy + 0.3, kunst: flaeche(-1.1, -3.2, 2.2, 3.3, 0.3),
         tipp: "Auf Düsseldorfer Platt heißt Senf „Mostert“. Man isst ihn aus dem grauen „Mostertpöttche“." },
       { id: "halvehahn", de: "der Halve Hahn", syl: "HAL-ve HAHN", it: "il panino con formaggio", itSyl: "pa-NI-no con for-MAG-gio", en: "rye roll with cheese", x: p[0] + hx2, y: zy + 0.9, kunst: flaeche(-2.4, -1.6, 5, 2.2, 0.3),

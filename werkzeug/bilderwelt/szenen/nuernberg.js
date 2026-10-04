@@ -51,7 +51,7 @@
      Stoffdächern, Lichterketten, viele Besucher; eine Bratwurstbude
      raucht (Rostbratwürste über Buchenholz).
    - VORNE auf der Fensterbank: Adventskranz (zwei Kerzen brennen),
-     Kinderpunsch in der Markttasse (FASSUNG 879, alkoholfrei), „Drei im Weggla“ (drei Rostbratwürste im
+     Glühwein in der Markttasse, „Drei im Weggla“ (drei Rostbratwürste im
      Brötchen), Elisenlebkuchen in der Dose, Zwetschgenmännchen,
      Rauschgoldengel; am Fensterrahmen hängt ein Lebkuchenherz.
    Maßstab: Augenhöhe y = 92, Auge 12 m über dem Platz, Brennweite 270:
@@ -761,7 +761,7 @@ const MARKT = { bude: null, lichter: null, leute: null, wurst: null, christkind:
     if (i % 2) g += `<path d="M${r(x - 0.12 * s)} ${r(fuss - 0.93 * h)} Q${r(x)} ${r(fuss - 1.06 * h)} ${r(x + 0.12 * s)} ${r(fuss - 0.93 * h)} Z" fill="${m}"/>`;
     return g;
   };
-  /* Ware in den vorderen Buden: Lebkuchenherzen, Christbaumkugeln, Holzspielzeug, Punschtassen, Rostbratwürste */
+  /* Ware in den vorderen Buden: Lebkuchenherzen, Christbaumkugeln, Holzspielzeug, Glühweintassen, Rostbratwürste */
   let budeNr = 0;
   const ware = (art, x, y, w, h, s) => {
     let g = "";
@@ -773,7 +773,7 @@ const MARKT = { bude: null, lichter: null, leute: null, wurst: null, christkind:
       g += `<path d="M${r(x + w * 0.08)} ${r(b)} l0 ${r(-0.3 * s)} l${r(0.5 * s)} 0 l0 ${r(0.3 * s)} Z M${r(x + w * 0.08 + 0.55 * s)} ${r(b)} l0 ${r(-0.22 * s)} l${r(0.35 * s)} 0 l0 ${r(0.22 * s)} Z" fill="#c8232c"/><circle cx="${r(x + w * 0.08 + 0.15 * s)}" cy="${r(b)}" r="${r(0.07 * s)}" fill="#2a2a2a"/><circle cx="${r(x + w * 0.08 + 0.75 * s)}" cy="${r(b)}" r="${r(0.07 * s)}" fill="#2a2a2a"/>`;
       g += `<path d="M${r(x + w * 0.62)} ${r(b)} l${r(0.12 * s)} ${r(-0.45 * s)} l${r(0.12 * s)} ${r(0.45 * s)} Z M${r(x + w * 0.8)} ${r(b)} l${r(0.1 * s)} ${r(-0.36 * s)} l${r(0.1 * s)} ${r(0.36 * s)} Z" fill="#3a7a3a"/><rect x="${r(x + w * 0.44)}" y="${r(b - 0.3 * s)}" width="${r(0.28 * s)}" height="${r(0.3 * s)}" fill="#d8b07a"/><path d="M${r(x + w * 0.44 - 0.05 * s)} ${r(b - 0.3 * s)} l${r(0.19 * s)} ${r(-0.16 * s)} l${r(0.19 * s)} ${r(0.16 * s)} Z" fill="#a83a2a"/>`; }
     if (art === 3) { for (let i = 0; i < 6; i++) { const cx = x + (i + 0.5) * w / 6, b = y + h * 0.95; g += `<path d="M${r(cx - 0.09 * s)} ${r(b)} l0 ${r(-0.22 * s)} l${r(0.18 * s)} 0 l0 ${r(0.22 * s)} Z" fill="${i % 2 ? "#b8323e" : "#2f4a8a"}"/><path d="M${r(cx + 0.09 * s)} ${r(b - 0.17 * s)} q${r(0.07 * s)} ${r(0.06 * s)} 0 ${r(0.12 * s)}" stroke="${i % 2 ? "#b8323e" : "#2f4a8a"}" stroke-width=".25" fill="none"/>`; }
-      g += `<rect x="${r(x + w * 0.18)}" y="${r(y + h * 0.1)}" width="${r(w * 0.64)}" height="${r(h * 0.32)}" fill="#7a1a28"/><text x="${r(x + w / 2)}" y="${r(y + h * 0.34)}" font-size="${r(0.2 * s)}" text-anchor="middle" fill="#ffe8b0" font-family="Georgia,serif">Kinderpunsch</text>`; }
+      g += `<rect x="${r(x + w * 0.3)}" y="${r(y + h * 0.1)}" width="${r(w * 0.4)}" height="${r(h * 0.32)}" fill="#7a1a28"/><text x="${r(x + w / 2)}" y="${r(y + h * 0.34)}" font-size="${r(0.2 * s)}" text-anchor="middle" fill="#ffe8b0" font-family="Georgia,serif">Glühwein</text>`; }
     if (art === 4) { const b = y + h * 0.95;
       g += `<rect x="${r(x + w * 0.1)}" y="${r(b - 0.16 * s)}" width="${r(w * 0.8)}" height="${r(0.16 * s)}" fill="#2a2420"/><rect x="${r(x + w * 0.1)}" y="${r(b - 0.04 * s)}" width="${r(w * 0.8)}" height="${r(0.05 * s)}" fill="#ff8a3a" opacity=".8"/>`;
       for (let i = 0; i < 6; i++) g += `<rect x="${r(x + w * (0.14 + i * 0.12))}" y="${r(b - 0.24 * s)}" width="${r(0.3 * s)}" height="${r(0.07 * s)}" rx="${r(0.035 * s)}" fill="#8a4a1e"/>`;
@@ -946,18 +946,18 @@ const DS = 190;        /* Einheiten je Meter für die Dinge */
     tipp: "Jeden Adventssonntag zündet man eine Kerze mehr an. Zwei Kerzen brennen: Wir sind in der zweiten Adventswoche." });
 }
 {
-  /* DER KINDERPUNSCH in der Christkindlesmarkt-Tasse, dampfend (FASSUNG 879: statt Glühwein) */
+  /* DER GLÜHWEIN in der Christkindlesmarkt-Tasse, dampfend */
   const X = 96, h = 0.105 * DS, w = 0.08 * DS;
   let k = schatten(0, 0.5, w * 0.7, 1.6, 0.35);
   k += `<path d="M${r(-w / 2)} ${r(-h)} L${r(w / 2)} ${r(-h)} L${r(w * 0.44)} 0 L${r(-w * 0.44)} 0 Z" fill="${S.lg("tasse", [[0, "#7a1a28"], [0.4, "#b8323e"], [1, "#6a1420"]], 0, 0, 1, 0)}"/>`;
-  k += `<ellipse cx="0" cy="${r(-h)}" rx="${r(w / 2)}" ry="1.8" fill="#4a0e14"/><ellipse cx="0" cy="${r(-h + 0.3)}" rx="${r(w / 2 - 0.8)}" ry="1.2" fill="#b0342c"/><ellipse cx="-1" cy="${r(-h + 0.1)}" rx="1.6" ry=".35" fill="#e8705a" opacity=".6"/>`;
+  k += `<ellipse cx="0" cy="${r(-h)}" rx="${r(w / 2)}" ry="1.8" fill="#4a0e14"/><ellipse cx="0" cy="${r(-h + 0.3)}" rx="${r(w / 2 - 0.8)}" ry="1.2" fill="#6a1a20"/>`;
   k += `<path d="M${r(w / 2 - 0.4)} ${r(-h * 0.75)} q6 .4 5.4 6 q-.6 4.6 -5.6 4.2" stroke="#9a2430" stroke-width="2.2" fill="none"/>`;
   k += `<rect x="${r(-w * 0.32)}" y="${r(-h * 0.62)}" width="${r(w * 0.64)}" height="${r(h * 0.36)}" rx="1" fill="#f4e8c8"/><text x="0" y="${r(-h * 0.36)}" font-size="2.6" text-anchor="middle" fill="#7a1a28" font-family="Georgia,serif" font-weight="bold">2026</text>`;
   k += `<path d="M-2.6 ${r(-h * 0.66)} L-2.6 ${r(-h * 0.74)} L-1.8 ${r(-h * 0.74)} L-1.8 ${r(-h * 0.79)} L-1 ${r(-h * 0.79)} L-1 ${r(-h * 0.84)} L-.3 ${r(-h * 0.84)} L0 ${r(-h * 0.93)} L.3 ${r(-h * 0.84)} L1 ${r(-h * 0.84)} L1 ${r(-h * 0.79)} L1.8 ${r(-h * 0.79)} L1.8 ${r(-h * 0.74)} L2.6 ${r(-h * 0.74)} L2.6 ${r(-h * 0.66)} Z" fill="#f6e8d8"/>`;
   k += `<path d="M${r(-w * 0.4)} ${r(-h + 1)} L${r(-w * 0.36)} -1" stroke="#fff" stroke-width=".9" opacity=".25"/>`;
   k += `<g filter="url(#${S.id("glimm")})" opacity=".55"><path d="M-2 ${r(-h - 2)} q-3 -5 1 -9 q4 -4 0 -9 M3 ${r(-h - 2)} q3 -4 -1 -8" stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round"/></g>`;
-  S.teil({ oben: true, id: "kinderpunsch", de: "der Kinderpunsch", syl: "KIN-der-punsch", it: "il punch analcolico", itSyl: "PUNCH a-nal-CO-li-co", en: "children's punch", x: X, y: BANK, steht: true, kunst: k,
-    tipp: "Kinderpunsch ist heißer Früchtetee mit Saft, Zimt und Nelken. Auf dem Markt gibt es jedes Jahr eine neue Tasse." });
+  S.teil({ oben: true, id: "gluehwein", de: "der Glühwein", syl: "GLÜH-wein", it: "il vin brulé", itSyl: "vin bru-LÈ", en: "mulled wine", x: X, y: BANK, steht: true, kunst: k,
+    tipp: "Glühwein ist heißer Rotwein mit Zimt und Nelken. Auf dem Markt gibt es jedes Jahr eine neue Tasse." });
 }
 {
   /* DIE BRATWURST: „Drei im Weggla“ — drei kleine Rostbratwürste im aufgeschnittenen Brötchen, Senf darauf */
