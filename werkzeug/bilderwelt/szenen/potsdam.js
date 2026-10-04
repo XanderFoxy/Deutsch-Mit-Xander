@@ -169,11 +169,11 @@ const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
     const mid = `${id}_${i}`;
     S.def(`<path id="${mid}" d="${lappenPfad(mx, my, rx, ry, z)}"/><clipPath id="${mid}c"><use href="#${mid}"/></clipPath>`);
     const um = (dx, dy, f) => `transform="translate(${r(mx + dx)} ${r(my + dy)}) scale(${f}) translate(${r(-mx)} ${r(-my)})"`;
-    g += `<use href="#${mid}" fill="${GD}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" ${um(-rx * 0.08, -ry * 0.12, 0.86)}/><use href="#${mid}" fill="${GL}" ${um(-rx * 0.34, -ry * 0.38, 0.44)}/></g>`;
+    g += `<use href="#${mid}" fill="${GD}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" ${um(-rx * 0.08, -ry * 0.12, 0.86)}/><use href="#${mid}" fill="${GL}" ${um(-rx * 0.42, -ry * 0.46, 0.36)}/></g>`;
   });
   for (let i = 0; i < loecher; i++) {
     const a = -Math.PI * (0.12 + z() * 0.76), d = 0.3 + z() * 0.08, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.8;
-    g += `<path d="${lappenPfad(hx, hy, 1.2 + z() * 1.1, 0.9 + z() * 0.8, z)}" fill="#a9c4de"/><path d="M${r(hx - 2)} ${r(hy + 1.6)} L${r(hx + 1.6)} ${r(hy - 1.2)}" stroke="#4a3b2c" stroke-width=".55" stroke-linecap="round"/>`;
+    g += `<ellipse cx="${r(hx)}" cy="${r(hy)}" rx="${r(0.9 + z() * 0.7)}" ry="${r(0.6 + z() * 0.5)}" fill="#9fbcdc"/><path d="M${r(hx - 1.6)} ${r(hy + 1.1)} L${r(hx + 0.9)} ${r(hy - 0.5)}" stroke="#4a3b2c" stroke-width=".35" stroke-linecap="round"/>`;
   }
   return g;
 };
@@ -193,7 +193,7 @@ const stamm = (x, y0, y1, w) => `<path d="M${r(x - w)} ${y0} Q${r(x - w * 0.5)} 
   `<path d="M${x} ${r(y1 + 8)} q${r(w * 2.4)} -6 ${r(w * 3.4)} -15 M${x} ${r(y1 + 5)} q${r(-w * 2.2)} -5 ${r(-w * 3.2)} -13" stroke="#3f3226" stroke-width="${r(w * 0.45)}" fill="none" stroke-linecap="round"/>`;
 {
   /* der grünere Baum (Linde/Buche, erst wenig Herbstfarbe) */
-  const T = ["#3e5a2a", "#1f3418", "#7c9a3e", "#4a6e30", "#d8d870", "#a6c45e"];
+  const T = ["#3e5a2a", "#1f3418", "#7c9a3e", "#4a6e30", "#c6cf6a", "#9aba56"];
   let k = stamm(18, 196, 140, 3.2) + stamm(48, 194, 152, 2.3);
   k += krone(24, 118, 56, 86, 21, T, 4) + krone(52, 152, 36, 44, 22, ["#4a6430", "#22381c", "#8aa042", "#56783a", "#ecd56a", "#a8c25a"], 2);
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: k,
@@ -201,7 +201,7 @@ const stamm = (x, y0, y1, w) => `<path d="M${r(x - w)} ${y0} Q${r(x - w * 0.5)} 
 }
 {
   /* der gelbere Baum (Ahorn): außen und oben Gelb-Orange, innen Grün */
-  const T = ["#9a6a22", "#3a4420", "#d89a30", "#6e7a34", "#ffd46a", "#d6b850"];
+  const T = ["#9a6a22", "#3a4420", "#d89a30", "#6e7a34", "#f6c862", "#ccb04c"];
   let k = stamm(382, 197, 140, 3.2) + stamm(352, 194, 152, 2.2);
   k += krone(376, 116, 54, 88, 23, T, 4) + krone(348, 152, 36, 44, 24, ["#a0581e", "#3a3a1c", "#d8782a", "#7a7a34", "#ffb054", "#d0b850"], 2);
   S.teil({ id: "laub", de: "das Laub", syl: "LAUB", it: "il fogliame", itSyl: "fo-GLIA-me", en: "foliage", x: 0, y: 0, kunst: k,

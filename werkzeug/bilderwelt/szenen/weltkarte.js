@@ -284,7 +284,7 @@ ozean([[[-68, -60], [-68, -55], [-65, -45], [-62, -30], [-58, -10], [-70, 2], [-
   "Der Atlantik liegt zwischen Europa, Afrika und Amerika.");
 ozean([[[CM - 180, 66], [CM - 180, -60], [-68, -60], [-68, -55], [-70, -40], [-72, -15], [-78, 0], [-79, 8.5], [-84, 10], [-87, 14], [-91, 15.5], [-94.8, 17], [-100, 22], [-104, 28], [-115, 40], [-125, 55], [-150, 64], [-165, 66]],
   [[CM + 180, 66], [CM + 180, -60], [147, -60], [147, -44], [145, -25], [140, -12], [130, -8], [125, -9], [116, -8.5], [110, -7], [104, -2], [101, 4], [101, 10], [105, 15], [110, 25], [120, 40], [130, 45], [140, 60], [160, 65], [180, 66]]],
-  [[-128, 10, ["Pazifischer", "Ozean"], 3.6], [176, 12, ["Pazifik"], 3.2]],
+  [[-142, 3, ["Pazifischer", "Ozean"], 3.6], [176, 12, ["Pazifik"], 3.2]],
   { id: "pazifik", de: "der Pazifik", syl: "pa-ZI-fik", it: "l'oceano Pacifico", itSyl: "o-CE-a-no pa-CI-fi-co", en: "Pacific Ocean" },
   "Der Pazifik ist der größte Ozean der Erde.");
 ozean([[[20, -60], [20, -35], [30, -25], [35, -10], [40, 5], [45, 10], [38, 20], [32.5, 30], [40, 28], [55, 30], [65, 28], [78, 20], [90, 24], [96, 20], [100, 12], [101, 5], [102, 0], [110, -7], [116, -8.5],
@@ -416,7 +416,9 @@ function ortBild(id, mass, schrift) {
   k += `<circle cx="${r(dx0)}" cy="${r(dy0)}" r="${r(mass * 1.15) || 0.5}" fill="#c0392b" stroke="#fff8ea" stroke-width="${+(mass * 0.45).toFixed(2)}"/>`;
   const [lx, ly, al] = c.lab, anchor = { m: "middle", s: "start", e: "end" }[al];
   k += `<text x="${+(dx0 + lx).toFixed(2)}" y="${+(dy0 + ly).toFixed(2)}" font-size="${schrift}" font-weight="bold" text-anchor="${anchor}" fill="${c.rot ? "#a8261c" : "#3a2716"}" stroke="#fbf5e6" stroke-width="${+(schrift * 0.26).toFixed(2)}" stroke-linejoin="round" paint-order="stroke" ${SERIF}>${c.name}</text>`;
-  return { k, punkt: [dx0, dy0] };
+  const lw = c.name.length * schrift * 0.56 + 0.6, lx0 = al === "m" ? dx0 + lx - lw / 2 : al === "s" ? dx0 + lx - 0.3 : dx0 + lx - lw + 0.3;
+  const box = { x0: Math.min(bx - W / 2, lx0, dx0 - 1), x1: Math.max(bx + W / 2, lx0 + lw, dx0 + 1), y0: Math.min(by - H, dy0 + ly - schrift), y1: Math.max(by + 0.4, dy0 + ly + schrift * 0.3, dy0 + 1) };
+  return { k, punkt: [dx0, dy0], box };
 }
 const WORT = {
   frankreich: ["Frankreich", "FRANK-reich", "la Francia", "FRAN-cia", "France", "Der Eiffelturm in Paris ist 330 Meter hoch."],
@@ -460,15 +462,38 @@ function kontinent(id, extra, worte, tipp, mehr = {}) {
 /* Gebirge und Wüsten als weiche Tönung */
 const ton = (lst) => lst.map(([lo, la, rx, ry, w, farbe, a]) => { const [x, y] = P(lo, la); return `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${rx}" ry="${ry}" transform="rotate(${w} ${r(x)} ${r(y)})" fill="${farbe}" opacity="${a}"/>`; }).join("");
 const BERGTON = S.rg("bergton", [[0, "#8b6a3e", 0.55], [1, "#8b6a3e", 0]]), WUESTE = S.rg("wuesteton", [[0, "#fff1c6", 0.8], [1, "#fff1c6", 0]]), WALD = S.rg("waldton", [[0, "#3f7a3a", 0.45], [1, "#3f7a3a", 0]]);
-kontinent("amerika", ton([[-112, 45, 5, 14, 25, BERGTON, 0.7], [-70, -25, 2.2, 16, 5, BERGTON, 0.7], [-60, -5, 14, 7, 0, WALD, 0.7]])
-  + kontText(-100, 50, "NORDAMERIKA", 3.4, "#55703a") + kontText(-60, -14, "SÜDAMERIKA", 3, "#55703a", 0.8),
-  { id: "amerika", de: "Amerika", syl: "a-ME-ri-ka", it: "l'America", itSyl: "a-ME-ri-ca", en: "America" }, "Amerika besteht aus Nordamerika und Südamerika.");
-kontinent("afrika", ton([[12, 22, 18, 7, 0, WUESTE, 0.9], [22, 0, 9, 5, 0, WALD, 0.6]]) + kontText(18, 6, "AFRIKA", 3.6, "#8a5a28"),
-  { id: "afrika", de: "Afrika", syl: "A-fri-ka", it: "l'Africa", itSyl: "A-fri-ca", en: "Africa" }, "In Afrika liegt die Sahara, die größte heiße Wüste der Welt.");
-kontinent("asien", ton([[85, 32, 14, 3.4, -8, BERGTON, 0.75], [45, 24, 8, 4, -20, WUESTE, 0.7]]) + kontText(100, 63, "ASIEN", 4.2, "#8a4a30", 2),
-  { id: "asien", de: "Asien", syl: "A-si-en", it: "l'Asia", itSyl: "A-sia", en: "Asia" }, "Asien ist der größte Kontinent. Hier wohnen die meisten Menschen.");
-kontinent("australien", ton([[128, -25, 9, 5, 0, WUESTE, 0.6]]) + kontText(134, -24, "AUSTRALIEN", 3, "#6a4a7a", 0.6),
-  { id: "australien", de: "Australien", syl: "aus-TRA-li-en", it: "l'Australia", itSyl: "au-STRA-lia", en: "Australia" }, "Australien ist der kleinste Kontinent. Dort leben Kängurus.");
+/* Orte als Lupen-Teile eines Kontinents: der Kontinent zeichnet ihre Bilder */
+function orteVon(ids) {
+  let k = "";
+  const unter = ids.map((id) => { const b = ortBild(id, 0.9, 3.3), { x0, x1, y0, y1 } = b.box; k += b.k; return Object.assign(wort(id), { x: (x0 + x1) / 2, y: y1, kunst: flaeche(-(x1 - x0) / 2, -(y1 - y0), x1 - x0, y1 - y0, 0.8) }); });
+  return { k, unter };
+}
+const knopf = (x, y) => ({ x: x - 16, y: y + 16 });
+{
+  const o = orteVon(["san_francisco", "new_york", "mexiko", "rio"]);
+  kontinent("amerika", ton([[-112, 45, 5, 14, 25, BERGTON, 0.7], [-70, -25, 2.2, 16, 5, BERGTON, 0.7], [-60, -5, 14, 7, 0, WALD, 0.7]])
+    + kontText(-100, 50, "NORDAMERIKA", 3.4, "#55703a") + kontText(-60, -14, "SÜDAMERIKA", 3, "#55703a", 0.8) + o.k,
+    { id: "amerika", de: "Amerika", syl: "a-ME-ri-ka", it: "l'America", itSyl: "a-ME-ri-ca", en: "America" }, "Amerika besteht aus Nordamerika und Südamerika.",
+    Object.assign(knopf(68, 96), { zoom: { x: 30, y: 42, w: 147, h: 98 }, unter: o.unter }));
+}
+{
+  const o = orteVon(["dubai", "indien", "peking", "japan"]);
+  kontinent("asien", ton([[85, 32, 14, 3.4, -8, BERGTON, 0.75], [45, 24, 8, 4, -20, WUESTE, 0.7]]) + kontText(100, 63, "ASIEN", 4.2, "#8a4a30", 2) + o.k,
+    { id: "asien", de: "Asien", syl: "A-si-en", it: "l'Asia", itSyl: "A-sia", en: "Asia" }, "Asien ist der größte Kontinent. Hier wohnen die meisten Menschen.",
+    Object.assign(knopf(262, 93), { zoom: { x: 240, y: 26, w: 110, h: 73 }, unter: o.unter }));
+}
+{
+  const o = orteVon(["aegypten", "kapstadt"]);
+  kontinent("afrika", ton([[12, 22, 18, 7, 0, WUESTE, 0.9], [22, 0, 9, 5, 0, WALD, 0.6]]) + kontText(18, 6, "AFRIKA", 3.6, "#8a5a28") + o.k,
+    { id: "afrika", de: "Afrika", syl: "A-fri-ka", it: "l'Africa", itSyl: "A-fri-ca", en: "Africa" }, "In Afrika liegt die Sahara, die größte heiße Wüste der Welt.",
+    Object.assign(knopf(176, 106), { zoom: { x: 140, y: 58, w: 145, h: 97 }, unter: o.unter }));
+}
+{
+  const o = orteVon(["sydney"]);
+  kontinent("australien", ton([[128, -25, 9, 5, 0, WUESTE, 0.6]]) + kontText(134, -24, "AUSTRALIEN", 3, "#6a4a7a", 0.6) + o.k,
+    { id: "australien", de: "Australien", syl: "aus-TRA-li-en", it: "l'Australia", itSyl: "au-STRA-lia", en: "Australia" }, "Australien ist der kleinste Kontinent. Dort leben Kängurus.",
+    Object.assign(knopf(322, 168), { zoom: { x: 304, y: 112, w: 84, h: 56 }, unter: o.unter }));
+}
 {
   /* Europa: Land, Grenzen (für die Lupe), Deutschland rot hervorgehoben, Punkte der elf Orte */
   let extra = ton([[10, 46.5, 3.4, 1.1, -8, BERGTON, 0.6]]);
@@ -485,15 +510,6 @@ kontinent("australien", ton([[128, -25, 9, 5, 0, WUESTE, 0.6]]) + kontText(134, 
   kontinent("europa", extra, { id: "europa", de: "Europa", syl: "eu-RO-pa", it: "l'Europa", itSyl: "eu-RO-pa", en: "Europe" },
     "Europa ist ein kleiner Kontinent mit vielen Ländern. Deutschland liegt in der Mitte.",
     { x: ox, y: oy, zoom: { x: 178, y: 28, w: 56, h: 37 }, unter });
-}
-
-/* =====================================================================
-   TEILE — 3: die Orte außerhalb Europas
-   ===================================================================== */
-for (const id of ["san_francisco", "new_york", "mexiko", "rio", "kapstadt", "aegypten", "dubai", "indien", "peking", "japan", "sydney"]) {
-  const b = ortBild(id, 0.75, 3.3), c = ORT[id];
-  const ox = c.knopf[0] - 16, oy = c.knopf[1] + 16;
-  S.teil(Object.assign(wort(id), { x: ox, y: oy, kunst: verschiebe(ox, oy, b.k) }));
 }
 
 /* =====================================================================
