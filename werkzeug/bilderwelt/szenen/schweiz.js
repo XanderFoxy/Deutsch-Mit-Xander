@@ -1069,38 +1069,40 @@ const TER = { X0: 7.6, X1: 11.6, D0: 31.5, D1: 37 };
 }
 
 /* 13 — DIE BANK am linken Uferweg mit Picknick (Lupe: Taschenmesser, Schokolade) und 14/15 — DIE WANDERER */
-const BANK = { X: -9.6, D: 27.5 };
+const BANK = { X: -10.0, D: 26 };
 {
   const s = F / BANK.D, h0 = hb(BANK.D), [bx, by] = P(BANK.X, BANK.D, h0);
-  /* Bank längs zum Fluss (Sitz zeigt zum Wasser): von uns aus seitlich, 1,8 m lang */
+  /* Bank quer zum Weg, die Sitzfläche zeigt zu uns (Rücken zum Berg … die Wanderin schaut zur Brücke): 1,8 m breit, gut zu treffen;
+     der Handlauf vorn verdeckt nur die Füße */
   const q3 = (dX, dD, h) => P(BANK.X + dX, BANK.D + dD, h0 + h);
   let k = "";
-  for (const dD of [-0.8, 0.8]) k += `<path d="M${pt(q3(0, dD, 0))} L${pt(q3(0, dD, 0.45))} M${pt(q3(-0.45, dD, 0))} L${pt(q3(-0.45, dD, 0.9))}" stroke="#2a2a2c" stroke-width="${r(0.05 * s)}"/>`;
-  k += `<path d="${pz([q3(0.05, -0.95, 0.45), q3(0.05, 0.95, 0.45), q3(-0.4, 0.95, 0.45), q3(-0.4, -0.95, 0.45)])}" fill="#9a6a3c"/>`;
-  k += `<path d="${pz([q3(0.05, -0.95, 0.45), q3(0.05, 0.95, 0.45), q3(0.05, 0.95, 0.4), q3(0.05, -0.95, 0.4)])}" fill="#6e4a2c"/>`;
-  for (const hh of [0.62, 0.8]) k += `<path d="${pz([q3(-0.45, -0.95, hh), q3(-0.45, 0.95, hh), q3(-0.45, 0.95, hh + 0.12), q3(-0.45, -0.95, hh + 0.12)])}" fill="#b07c48"/>`;
-  /* Picknick auf der Bank: Taschenmesser (rot, Kreuz), Schokolade (Tafel, Papier), Brot */
-  const [mx, my] = q3(0.0, 0.3, 0.47), ms = F / (BANK.D + 0.3);
-  let messer = `<rect x="${r(mx - 0.05 * ms)}" y="${r(my - 0.022 * ms)}" width="${r(0.1 * ms)}" height="${r(0.026 * ms)}" rx="${r(0.012 * ms)}" fill="#d52b1e"/><path d="M${r(mx + 0.05 * ms)} ${r(my - 0.016 * ms)} L${r(mx + 0.12 * ms)} ${r(my - 0.03 * ms)} L${r(mx + 0.12 * ms)} ${r(my - 0.018 * ms)} L${r(mx + 0.05 * ms)} ${r(my - 0.004 * ms)} Z" fill="#dfe5ea"/><path d="M${r(mx - 0.008 * ms)} ${r(my - 0.009 * ms)} h${r(0.016 * ms)} M${r(mx)} ${r(my - 0.017 * ms)} v${r(0.016 * ms)}" stroke="#fff" stroke-width="${r(0.005 * ms)}"/>`;
-  const [cx, cy] = q3(-0.34, 0.5, 0.47), cs = F / (BANK.D + 0.5);
+  /* Lehne hinten (zwei Latten), Beine, Sitz (Oberseite + Vorderkante) */
+  for (const dX of [-0.85, 0.85]) k += `<path d="M${pt(q3(dX, 0.45, 0))} L${pt(q3(dX, 0.45, 0.95))} M${pt(q3(dX, 0, 0))} L${pt(q3(dX, 0, 0.45))}" stroke="#2a2a2c" stroke-width="${r(0.05 * s)}"/>`;
+  for (const hh of [0.62, 0.8]) k += `<path d="${pz([q3(-0.95, 0.47, hh), q3(0.95, 0.47, hh), q3(0.95, 0.47, hh + 0.12), q3(-0.95, 0.47, hh + 0.12)])}" fill="#8e6036"/>`;
+  k += `<path d="${pz([q3(-0.95, 0, 0.45), q3(0.95, 0, 0.45), q3(0.95, 0.45, 0.45), q3(-0.95, 0.45, 0.45)])}" fill="#b07c48"/>`;
+  k += `<path d="${pz([q3(-0.95, 0, 0.45), q3(0.95, 0, 0.45), q3(0.95, 0, 0.39), q3(-0.95, 0, 0.39)])}" fill="#6e4a2c"/>`;
+  /* Picknick auf der Bank: Taschenmesser (rot, Kreuz) links, Schokolade (Tafel, Papier) rechts, Brot */
+  const [mx, my] = q3(-0.68, 0.18, 0.47), ms = F / (BANK.D + 0.18);
+  let messer = `<rect x="${r(mx - 0.05 * ms)}" y="${r(my - 0.022 * ms)}" width="${r(0.1 * ms)}" height="${r(0.026 * ms)}" rx="${r(0.012 * ms)}" fill="#d52b1e"/><path d="M${r(mx + 0.05 * ms)} ${r(my - 0.016 * ms)} L${r(mx + 0.12 * ms)} ${r(my - 0.03 * ms)} L${r(mx + 0.12 * ms)} ${r(my - 0.018 * ms)} L${r(mx + 0.05 * ms)} ${r(my - 0.004 * ms)} Z" fill="#dfe5ea"/><path d="M${r(mx - 0.008 * ms)} ${r(my - 0.009 * ms)} L${r(mx + 0.008 * ms)} ${r(my - 0.009 * ms)} M${r(mx)} ${r(my - 0.017 * ms)} L${r(mx)} ${r(my - 0.001 * ms)}" stroke="#fff" stroke-width="${r(0.005 * ms)}"/>`;
+  const [cx, cy] = q3(0.62, 0.15, 0.47), cs = F / (BANK.D + 0.15);
   let schoko = `<path d="M${r(cx - 0.09 * cs)} ${r(cy)} L${r(cx + 0.09 * cs)} ${r(cy)} L${r(cx + 0.07 * cs)} ${r(cy - 0.035 * cs)} L${r(cx - 0.11 * cs)} ${r(cy - 0.035 * cs)} Z" fill="#5a3418"/><path d="M${r(cx - 0.02 * cs)} ${r(cy)} L${r(cx + 0.09 * cs)} ${r(cy)} L${r(cx + 0.07 * cs)} ${r(cy - 0.035 * cs)} L${r(cx - 0.04 * cs)} ${r(cy - 0.035 * cs)} Z" fill="#d6c8a8"/><path d="M${r(cx - 0.06 * cs)} ${r(cy - 0.035 * cs)} L${r(cx - 0.05 * cs)} ${r(cy)} M${r(cx - 0.09 * cs)} ${r(cy - 0.018 * cs)} L${r(cx - 0.02 * cs)} ${r(cy - 0.018 * cs)}" stroke="#3a200c" stroke-width="${r(0.005 * cs)}"/>`;
-  const [ux, uy] = q3(-0.1, 0.9, 0.47), us = F / (BANK.D + 0.9);
+  const [ux, uy] = q3(0.82, 0.32, 0.47), us = F / (BANK.D + 0.32);
   const brot = `<path d="M${r(ux - 0.1 * us)} ${r(uy)} Q${r(ux - 0.1 * us)} ${r(uy - 0.07 * us)} ${r(ux)} ${r(uy - 0.075 * us)} Q${r(ux + 0.1 * us)} ${r(uy - 0.07 * us)} ${r(ux + 0.1 * us)} ${r(uy)} Z" fill="#b8783a"/>`;
-  k += `<g ${VOL}>${messer}${schoko}${brot}</g>`;
   /* Bodenschatten der Bank (Sonne links → nach rechts) */
   const [o1x] = sch(0.45);
-  k = `<path d="${pz([q3(0.05, -0.95, 0), q3(0.05, 0.95, 0), q3(0.05 + o1x, 0.95, 0), q3(0.05 + o1x, -0.95, 0)])}" fill="#1c2638" opacity=".28" filter="url(#${S.id("weich")})"/>` + k;
+  k = `<path d="${pz([q3(-0.95, -0.05, 0), q3(0.95 + o1x, -0.05, 0), q3(0.95 + o1x, 0.5, 0), q3(-0.95, 0.5, 0)])}" fill="#1c2638" opacity=".28" filter="url(#${S.id("weich")})"/>` + k;
   S.teil({ id: "bank", de: "die Bank", syl: "BANK", it: "la panchina", itSyl: "pan-CHI-na", en: "bench", anker: [bx, by], kunst: k,
-    zoom: { x: r(bx - 15), y: r(by - 20), w: 30, h: 20 },
+    tipp: "Auf der Bank macht die Wanderin eine Pause.",
+    zoom: { x: r(bx - 19), y: r(by - 24), w: 38, h: 25.3 },
     unter: [
       { id: "taschenmesser", de: "das Taschenmesser", syl: "TA-schen-mes-ser", it: "il coltellino svizzero", itSyl: "col-tel-LI-no SVIZ-ze-ro", en: "pocket knife", x: mx, y: my, kunst: flaeche(-0.08 * ms, -0.06 * ms, 0.22 * ms, 0.08 * ms, 0.3),
         tipp: "Das rote Schweizer Taschenmesser hat viele Werkzeuge: Messer, Schere, Dosenöffner …" },
       { id: "schokolade", de: "die Schokolade", syl: "scho-ko-LA-de", it: "il cioccolato", itSyl: "cioc-co-LA-to", en: "chocolate", x: cx, y: cy, kunst: flaeche(-0.12 * cs, -0.07 * cs, 0.23 * cs, 0.09 * cs, 0.3),
         tipp: "Die Schweiz ist berühmt für ihre Schokolade." },
     ] });
-  /* DIE WANDERIN sitzt auf der Bank (schaut zum Fluss) */
-  const [wx, wy] = q3(-0.18, -0.45, 0.0), ws = F / (BANK.D - 0.45);
-  const wi = B.mensch({ id: "chz_wi", geschlecht: "w", pose: "sitzen", blick: 270, frisur: "zopf", haarfarbe: "braun", haut: "hell", ohneSchatten: true,
+  /* DIE WANDERIN sitzt auf der Bank und schaut zu uns (zur Brücke) */
+  const [wx, wy] = q3(-0.05, -0.12, 0.0), ws = F / (BANK.D - 0.12);
+  const wi = B.mensch({ id: "chz_wi", geschlecht: "w", pose: "sitzen", blick: 20, frisur: "zopf", haarfarbe: "braun", haut: "hell", ohneSchatten: true,
     kleidung: { oberteil: { stueck: "pullover", farbe: "#2f8a8a" }, jacke: { stueck: "jacke", farbe: "#d0402e" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "stiefel", farbe: "braun" } } }, 1.66 * ws);
   S.teil({ id: "wanderin", de: "die Wanderin", syl: "WAN-de-rin", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker (woman)", x: wx, y: wy, kunst: `<g ${VOLF}>${schlank(wi.svg, 2)}</g>`,
     tipp: "Die Wanderin macht eine Pause und isst Schokolade." });

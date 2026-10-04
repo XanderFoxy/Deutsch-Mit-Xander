@@ -145,7 +145,7 @@ const volumen = (name, licht, schat, dx = 0.35, a1 = 0.75, a2 = 0.35) => {
   S.def(`<filter id="${S.id(name)}" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB"><feOffset in="SourceAlpha" dx="${-dx}" dy="${dx * 0.55}" result="v"/><feComposite in="SourceAlpha" in2="v" operator="out" result="kante"/><feFlood flood-color="${licht}" flood-opacity="${a1}"/><feComposite in2="kante" operator="in" result="l"/><feOffset in="SourceAlpha" dx="${dx * 1.6}" dy="${-dx}" result="w"/><feComposite in="SourceAlpha" in2="w" operator="out" result="kante2"/><feFlood flood-color="${schat}" flood-opacity="${a2}"/><feComposite in2="kante2" operator="in" result="s"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="s"/><feMergeNode in="l"/></feMerge></filter>`);
   return `url(#${S.id(name)})`;
 };
-const VOL_FIGUR = volumen("volfigur", "#fff1cf", "#1d2a3a", 0.45, 0.7, 0.3);
+const VOL_FIGUR = volumen("volfigur", "#ffd892", "#1d2a3a", 0.55, 0.85, 0.3);
 const VOL_STEIN = volumen("volstein", "#fff4dc", "#2e2a24", 0.3, 0.8, 0.3);
 const VOL_KLEIN = volumen("volklein", "#fff3d6", "#203040", 0.18, 0.75, 0.3);
 const VOL_BERG = volumen("volberg", "#f6eab8", "#10241c", 0.9, 0.55, 0.25);
@@ -168,7 +168,7 @@ const WALD1 = waldMuster("wald1", 1, 7), WALD08 = waldMuster("wald08", 0.8, 8), 
 S.def(`<pattern id="${S.id("gras")}" width="5" height="2.6" patternUnits="userSpaceOnUse"><path d="M.6 2.3l.2-.9M1.9 1.4l-.2-.8M3.2 2.4l.3-1M4.3 1.1l-.25-.8M2.6.6l.1-.5" stroke="#d6e98a" stroke-width=".22" opacity=".45"/><path d="M1.2 2.5l-.1-.7M3.8 2.2l.2-.6" stroke="#2f5420" stroke-width=".25" opacity=".35"/></pattern>`);
 S.def(`<pattern id="${S.id("stroh")}" width="2" height="2.6" patternUnits="userSpaceOnUse"><rect width="2" height="2.6" fill="#b48e4e"/><path d="M.3 0 L.5 2.6 M1.1 0 L1.2 2.6 M1.7 0 L1.6 2.6" stroke="#d9b874" stroke-width=".28"/><path d="M.8 0 L.85 2.6" stroke="#7d5e2c" stroke-width=".22"/></pattern>`);
 const WALD = WALD05, WALDF = WALD1, GRAS = `url(#${S.id("gras")})`, STROH = `url(#${S.id("stroh")})`;
-const GRANIT_L = S.lg("granitl", [[0, "#d8d0c0"], [1, "#beb6a6"]]);         /* Ostflächen im Morgenlicht */
+const GRANIT_L = S.lg("granitl", [[0, "#e8d9bb"], [1, "#c9b99d"]]);         /* Ostflächen im Morgenlicht */
 const GRANIT_S = S.lg("granits", [[0, "#8a8379"], [1, "#746d64"]]);         /* Westflächen im Schatten */
 const GRANIT_F = S.lg("granitf", [[0, "#bab3a5"], [1, "#9d968a"]]);         /* Südflächen (zu uns), streifendes Licht */
 const INNEN = "#3d3a34";
@@ -252,7 +252,8 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
       k += `<path d="${glatt(pts, false)}" stroke="#c8dcc4" stroke-width=".45" fill="none" opacity=".3"/>`;
       k += `<path d="${glatt(pts.map(([a, b]) => [a - 1.4, b + 0.6]), false)}" stroke="#203a30" stroke-width="1.2" fill="none" opacity="${0.22}"/>`;
     }
-    if (sd === 1) k += `<path d="${P(kamm, false)}" stroke="#dfeadb" stroke-width=".45" fill="none" opacity=".45" transform="translate(0 .5)"/>`;
+    /* Morgenlicht von rechts: warmer Saum auf den nach Osten gewandten (rechts abfallenden) Gratstücken */
+    { let sa = ""; for (let i = 0; i < kamm.length - 1; i++) if (kamm[i + 1][1] > kamm[i][1]) sa += `M${r(kamm[i][0])} ${r(kamm[i][1] + 0.5)}L${r(kamm[i + 1][0])} ${r(kamm[i + 1][1] + 0.5)}`; k += `<path d="${sa}" stroke="#f4d89c" stroke-width="${sd === 1 ? 0.5 : 0.7}" fill="none" opacity="${sd === 1 ? 0.55 : 0.45}"/>`; }
     /* Luftperspektive: Dunst nach unten in die Schlucht */
     k += `<path d="${dk}" fill="${S.lg("gratdunst" + sd, [[0, "#d9e5ec", 0.2 - sd * 0.05], [0.6, "#dfe9ef", 0.15], [1, "#eef3f4", 0.35]])}"/>`;
   }
@@ -332,8 +333,10 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
 const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181, 84], [185, 78], [188, 70], [191, 58], [195, 47], [200, 39], [205, 34], [210, 31], [215, 30.4], [219, 32], [221, 37], [223, 45], [226, 54], [230, 61], [235, 64], [241, 62.4], [247, 64], [252, 69], [260, 77], [270, 87], [281, 98], [291, 111], [299, 126], [304, 142]];
 {
   const d = glatt([...HUAYNA, [310, 160], [150, 160]], true, 0.85);
-  let k = `<path d="${d}" fill="${S.lg("huayna", [[0, "#26453b"], [0.4, "#355c44"], [0.62, "#4f7d48"], [1, "#6a9450"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="${d}" fill="${WALD06}"/>`;
+  let k = `<path d="${d}" fill="${S.lg("huayna", [[0, "#26453b"], [0.4, "#355c44"], [0.6, "#5a8c4c"], [1, "#7fae5a"]], 0, 0, 1, 0)}"/>`;
+  /* Waldtextur: unten (nah, bei der Stadt) gröber, zum Gipfel hin (300 m weiter weg) feiner */
+  S.def(`<linearGradient id="${S.id("hwm")}" gradientUnits="userSpaceOnUse" x1="0" y1="62" x2="0" y2="104"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("hwunten")}" maskUnits="userSpaceOnUse" x="140" y="20" width="180" height="150"><rect x="140" y="20" width="180" height="150" fill="url(#${S.id("hwm")})"/></mask>`);
+  k += `<path d="${d}" fill="${WALD035}"/><path d="${d}" fill="${WALD06}" mask="url(#${S.id("hwunten")})"/>`;
   /* Rinnen in Fall-Linie */
   let ri = "";
   for (const [x0, y0, x1, y1] of [[201, 44, 186, 112], [209, 38, 197, 118], [226, 60, 236, 116], [246, 68, 256, 118], [190, 62, 174, 110]]) ri += `M${x0} ${y0} Q${r((x0 + x1) / 2 + (x1 > x0 ? -2 : 2))} ${r((y0 + y1) / 2)} ${x1} ${y1}`;
@@ -341,12 +344,18 @@ const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181,
   /* Granitwände: steile, lange Bänder an der Westflanke (im Schatten), eine im Licht an der Ostflanke */
   k += wand([[198, 40], [195, 52], [192, 64], [190, 76]], 4.6, "#8e958f", "#5c6560", 41) + wand([[205, 37], [203, 48], [201, 60], [200, 70]], 3.4, "#8e958f", "#5a635e", 42);
   k += wand([[187, 80], [184, 90], [181, 100]], 3.6, "#87908a", "#56605a", 43) + wand([[221, 40], [223, 50], [225, 58]], 3.2, "#c9c7b4", "#8f958c", 44);
-  /* Inka-Terrassen am Gipfel: 5 kurze, gebogene Stufen mit Mauerkante */
-  for (let i = 0; i < 5; i++) {
-    const y = 35 + i * 2.6, x0 = 208 - i * 1.5, x1 = 220 + i * 1;
-    k += `<path d="M${r(x0)} ${r(y)} Q${r((x0 + x1) / 2)} ${r(y + 1.2)} ${r(x1)} ${r(y)} L${r(x1)} ${r(y + 0.9)} Q${r((x0 + x1) / 2)} ${r(y + 2.1)} ${r(x0)} ${r(y + 0.9)} Z" fill="#7d796b" opacity=".6"/><path d="M${r(x0)} ${r(y - 0.6)} Q${r((x0 + x1) / 2)} ${r(y + 0.5)} ${r(x1)} ${r(y - 0.6)} L${r(x1)} ${r(y)} Q${r((x0 + x1) / 2)} ${r(y + 1.2)} ${r(x0)} ${r(y)} Z" fill="#5f8a46"/>`;
+  /* Inka-Terrassen am Gipfel: sie folgen der Kuppe (gebogen) und werden nach oben kürzer; auf zweien kleine Ruinen */
+  let tm = "", tg = "";
+  for (const [y, x0, x1] of [[32.6, 210.6, 217.4], [35.6, 207.8, 219.6], [38.8, 205, 220.8], [42.2, 202.2, 221.8], [45.8, 199.6, 222.8]]) {
+    const bw = (x1 - x0) * 0.13, xm = (x0 + x1) / 2;
+    tg += `M${x0} ${r(y - 0.6)}Q${r(xm)} ${r(y - 0.6 + bw * 2)} ${x1} ${r(y - 0.6)}L${x1} ${y}Q${r(xm)} ${r(y + bw * 2)} ${x0} ${y}Z`;
+    tm += `M${x0} ${y}Q${r(xm)} ${r(y + bw * 2)} ${x1} ${y}L${x1} ${r(y + 0.9)}Q${r(xm)} ${r(y + 0.9 + bw * 2)} ${x0} ${r(y + 0.9)}Z`;
   }
-  k += `<path d="M210.4 31.4 l1.8 -1 l1.4 .8 v1.2 h-3.2 Z M216.2 31.8 l1.3 -.8 l1.2 .6 v1 h-2.5 Z" fill="#8f8879"/>`;
+  k += `<path d="${tm}" fill="#8a8577" opacity=".75"/><path d="${tg}" fill="#6a9a4c"/>`;
+  /* kleine Ruinen: Wände mit Giebel, Lichtseite rechts */
+  k += `<path d="M211.8 33 v-1.5 l1.3 -1 l1.3 1 v1.5 Z M216.4 39.6 v-1.4 l1.1 -.9 l1.1 .9 v1.4 Z" fill="#a49d8d"/><path d="M213.1 30.5 l1.3 1 v1.5 h-1.3 Z M217.5 37.3 l1.1 .9 v1.4 h-1.1 Z" fill="#d9d2c0"/>`;
+  /* goldene Lichtkante am rechten Grat (Morgensonne) */
+  k += `<path d="${glatt(HUAYNA.slice(13), false)}" stroke="${S.lg("gratgold", [[0, "#f6d98f"], [0.5, "#f3d58e", 0.6], [1, "#f3d58e", 0.1]], 0, 0, 0, 1)}" stroke-width=".8" fill="none" opacity=".8" transform="translate(-.45 .55)"/>`;
   /* Morgendunst über dem Fuß */
   k += `<path d="${d}" fill="${S.lg("huaynadunst", [[0, "#e3ecf0", 0], [0.6, "#e3ecf0", 0.06], [1, "#e3ecf0", 0.5]])}"/>`;
   /* Huchuy Picchu: deckend, dunkler und blaugrüner als der Stadtrasen, mit eigenem Wald und Felsfleck */
