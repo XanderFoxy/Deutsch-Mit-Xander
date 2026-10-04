@@ -776,7 +776,7 @@ let SCHATTEN_BODEN = "", SCHATTEN_WASSER = "", RAND_GELAENDER = "";
   for (const [X, D, hh] of LAERCHEN) { const h0 = hb(D), L = 1.416 * hh, w = 1.2; boden += pz([P(X, D - 0.3, h0), P(X + L * 0.5, D + 0.174 * hh * 0.5 - w, h0), P(X + L, D + 0.174 * hh, h0), P(X + L * 0.5, D + 0.174 * hh * 0.5 + w, h0), P(X, D + 0.3, h0)]); }
   for (const st of STADEL) { const h0 = hb(st.D0), top = 6.5; boden += pz(wurf3([[st.X0, st.D0, h0], [st.X1, st.D0, h0], [st.X0, st.D1, h0], [st.X1, st.D1, h0], [st.X0, st.D0, h0 + top - 1.8], [st.X1, st.D1, h0 + top - 1.8], [(st.X0 + st.X1) / 2, st.D0, h0 + top], [(st.X0 + st.X1) / 2, st.D1, h0 + top]], h0).map(([X, D]) => P(X, D, h0))); }
   SCHATTEN_BODEN = `<path d="${boden}" fill="#1e2a48" opacity=".28"/>`;
-  SCHATTEN_WASSER = `<path d="${wasser}" fill="#22364a" opacity=".3"/>`;
+  SCHATTEN_WASSER = `<path d="${wasser}" fill="#22364a" opacity=".2" filter="url(#${S.id("weich")})"/>`;
 }
 
 /* 5 — DER FLUSS (Matter Vispa) mit Ufermauern */
@@ -814,18 +814,36 @@ let SCHATTEN_BODEN = "", SCHATTEN_WASSER = "", RAND_GELAENDER = "";
   /* Wasser: milchig grau-türkis (Gletschermilch), wenig Wasser im Herbst */
   const wasser = pz([...Lw, ...Rw.slice().reverse()]);
   k += `<path d="${wasser}" fill="${S.lg("vispa", [[0, "#d6e2dc"], [0.35, "#b6cac2"], [0.7, "#9eb7ae"], [1, "#8aa79e"]], 0, 0, 0, 1, ` gradientUnits="userSpaceOnUse" x1="0" y1="${HOR}" x2="0" y2="262"`)}"/>`;
-  /* Kiesbänke an beiden Ufern und eine Insel in der Mitte: das Wasser fließt in Rinnen dazwischen */
-  const bank = (pts) => pz(pts.map(([X, D]) => P(X, D, hw(D) + 0.05)));
-  const kiesL = [[-UFER + 0.9, 9], [-UFER + 0.9, 140], [-4.6, 140], [-4.4, 90], [-3.6, 60], [-4.8, 36], [-3.4, 22], [-4.2, 9]];
-  const kiesR = [[UFER - 0.9, 9], [UFER - 0.9, 140], [5.0, 140], [4.6, 80], [5.4, 48], [4.2, 26], [5.2, 9]];
-  const insel = [[-1.4, 70], [-0.4, 38], [0.6, 24], [1.4, 30], [1.6, 52], [0.6, 80]];
-  const kies = bank(kiesL) + bank(kiesR) + bank(insel);
-  k += `<path d="${kies}" fill="${S.lg("kies", [[0, "#cfcabd"], [1, "#a9a396"]], 0, 0, 0, 1)}"/>`;
-  /* runde graue Steine: vorn groß, hinten klein und dicht (Texturgradient) */
-  const imKies = (X, D) => { const t = (pts) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > D) !== (yj > D) && X < (xj - xi) * (D - yi) / (yj - yi) + xi) c = !c; } return c; }; return t(kiesL) || t(kiesR) || t(insel); };
-  const stein = [[], [], []];
-  for (let i = 0; i < 330; i++) { const D = 9 + Math.pow(z(), 1.5) * 120, X = (z() * 2 - 1) * (UFER - 0.9); if (!imKies(X, D)) continue; const [x, y] = P(X, D, hw(D)), sz = (0.12 + z() * 0.2) * F / D; stein[Math.floor(z() * 3)].push(`M${r(x)} ${r(y)}L${r(Math.min(400, x + sz * 0.4))} ${r(y)}`); }
-  ["#8f8c84", "#b6b1a6", "#6f6c66"].forEach((c, i) => { k += `<path d="${stein[i].join("")}" stroke="${c}" stroke-width="1.1" stroke-linecap="round" fill="none"/>`; });
+  /* Kiesbänke: organische Linsen und Zungen (weiche Ränder, nicht im Raster); das Wasser fließt in 2–3 gewundenen Rinnen dazwischen */
+  const WL = UFER - 0.9;
+  const kiesL = [[-WL, 9], [-WL, 34], [-WL, 62], [-WL, 96], [-5.2, 92], [-4.7, 72], [-3.4, 55], [-3.9, 40], [-2.6, 26], [-3.3, 16], [-4.6, 9]];
+  const kiesR = [[WL, 9], [WL, 22], [WL, 44], [5.6, 42], [4.6, 30], [3.7, 19], [4.4, 9]];
+  const kiesR2 = [[WL, 58], [WL, 84], [WL, 118], [5.5, 112], [4.2, 92], [3.6, 76], [4.8, 63]];
+  const insel = [[0.2, 21], [1.3, 26], [1.9, 37], [1.4, 50], [0.5, 56], [-0.4, 46], [-0.6, 33]];
+  const insel2 = [[0.9, 66], [2.0, 78], [1.6, 100], [0.4, 110], [-0.5, 92], [-0.3, 76]];
+  const BAENKE = [kiesL, kiesR, kiesR2, insel, insel2];
+  const bankD = (pts) => rund(pts.map(([X, D]) => P(X, D, hw(D) + 0.05)));
+  const kies = BAENKE.map(bankD).join("");
+  /* dunklerer Wasserrand an den Bänken (das Wasser wird dort flach und grau), dann die Bank selbst */
+  k += `<path d="${kies}" fill="none" stroke="#8aa29a" stroke-width="2.2" stroke-linejoin="round"/><path d="${kies}" fill="${S.lg("kies", [[0, "#d2cdc0"], [1, "#aca698"]], 0, 0, 0, 1)}"/>`;
+  /* Glanz zur Mitte der Rinnen: lange, weich geschwungene helle Bahnen */
+  const rinnen = [[[-1.8, 10], [-1.3, 18], [-1.7, 28], [-2.1, 40], [-1.8, 52], [-1.6, 66], [-2.2, 84], [-2.6, 104], [-1.2, 130]],
+    [[2.6, 10], [2.9, 18], [3.0, 30], [2.6, 46], [2.6, 62], [2.7, 80], [2.5, 104], [1.2, 130]]];
+  let glanz = "";
+  for (const rn of rinnen) glanz += "M" + rn.map(([X, D]) => pt(P(X, D, hw(D)))).join(" L");
+  k += `<path d="${glanz}" stroke="#eef6f2" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="none" opacity=".35"/><path d="${glanz}" stroke="#fbfefc" stroke-width=".7" stroke-linejoin="round" fill="none" opacity=".5"/>`;
+  /* runde graue Steine in drei Größen: vorn größer; auf den Bänken dicht, im Wasser vereinzelt */
+  const drin = (pts, X, D) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > D) !== (yj > D) && X < (xj - xi) * (D - yi) / (yj - yi) + xi) c = !c; } return c; };
+  const imKies = (X, D) => BAENKE.some((b) => drin(b, X, D));
+  const stein = [[], [], []], sLicht = [];
+  for (let i = 0; i < 300; i++) {
+    const D = 9 + Math.pow(z(), 1.6) * 100, X = (z() * 2 - 1) * WL; if (!imKies(X, D)) continue;
+    const [x, y] = P(X, D, hw(D)), gr = (0.1 + z() * 0.25) * F / D, kl = gr < 0.9 ? 0 : gr < 1.8 ? 1 : 2;
+    stein[kl].push(`M${r(x)} ${r(y)}h${r(Math.max(0.1, gr * 0.35))}`);
+    if (kl === 2) sLicht.push(`M${r(x - gr * 0.12)} ${r(y - gr * 0.16)}h${r(gr * 0.15)}`);
+  }
+  [[0.8, "#8e8a82"], [1.5, "#7f7c75"], [2.6, "#77736c"]].forEach(([w, c], i) => { k += `<path d="${stein[i].join("")}" stroke="${c}" stroke-width="${w}" stroke-linecap="round" fill="none"/>`; });
+  k += `<path d="${sLicht.join("")}" stroke="#d8d3c8" stroke-width=".9" stroke-linecap="round" fill="none"/>`;
   k += SCHATTEN_WASSER;
   /* Geländer der Uferwege auf den Mauerkronen */
   { let st = "", ho = ""; for (const sg of [-1, 1]) { const top = []; for (let D = 10; D <= 120; D += D < 30 ? 2 : 4) { const a2 = P(sg * UFER, D, hb(D)), b2 = P(sg * UFER, D, hb(D) + 1.0); st += `M${pt(a2)} L${pt(b2)}`; top.push(b2); } ho += "M" + top.map(pt).join(" L"); }
@@ -834,18 +852,18 @@ let SCHATTEN_BODEN = "", SCHATTEN_WASSER = "", RAND_GELAENDER = "";
   const schattenW = [];
   for (const D of Ds) schattenW.push(P(-UFER + 0.9 + 1.7, D, hw(D)));
   k += `<path d="${pz([...Lw, ...schattenW.slice().reverse()])}" fill="#2a3a48" opacity=".32"/>`;
-  /* große Steine in den Rinnen: Schaumkragen stromauf (von uns weg), V-förmige Kielwelle zu uns; stehende Wellen quer */
+  /* einzelne große Steine in den Rinnen: Schaumkragen auf der Oberstromseite (von uns weg), dahinter kurze, unregelmäßige Wirbel */
   let steine = "", steinLicht = "", schaum = "", kiel = "", wellen = "";
-  for (let i = 0; i < 26; i++) {
-    const D = 10 + Math.pow(z(), 1.3) * 80, X = (z() * 2 - 1) * (UFER - 1.6); if (imKies(X, D)) continue;
-    const [x, y] = P(X, D, hw(D)), s2 = F / D, rr = (0.18 + z() * 0.22) * s2;
+  for (let i = 0; i < 22; i++) {
+    const D = 10 + Math.pow(z(), 1.3) * 70, X = (z() * 2 - 1) * (WL - 0.5); if (imKies(X, D)) continue;
+    const [x, y] = P(X, D, hw(D)), s2 = F / D, rr = (0.18 + z() * 0.24) * s2;
     steine += `M${r(x - rr)} ${r(y)} Q${r(x - rr)} ${r(y - rr * 0.7)} ${r(x)} ${r(y - rr * 0.75)} Q${r(x + rr)} ${r(y - rr * 0.7)} ${r(x + rr)} ${r(y)} Q${r(x)} ${r(y + rr * 0.2)} ${r(x - rr)} ${r(y)} Z`;
     steinLicht += `M${r(x - rr * 0.85)} ${r(y - rr * 0.1)} Q${r(x - rr * 0.8)} ${r(y - rr * 0.6)} ${r(x - rr * 0.1)} ${r(y - rr * 0.68)} Q${r(x - rr * 0.45)} ${r(y - rr * 0.35)} ${r(x - rr * 0.85)} ${r(y - rr * 0.1)} Z`;
-    schaum += `M${r(x - rr * 1.25)} ${r(y - rr * 0.35)} Q${r(x)} ${r(y - rr * 1.3)} ${r(x + rr * 1.25)} ${r(y - rr * 0.35)} Q${r(x)} ${r(y - rr * 0.85)} ${r(x - rr * 1.25)} ${r(y - rr * 0.35)} Z`;
-    kiel += `M${r(x - rr * 0.8)} ${r(y + rr * 0.1)} L${r(x - rr * 2.2)} ${r(y + rr * 1.6)} M${r(x + rr * 0.8)} ${r(y + rr * 0.1)} L${r(x + rr * 2.2)} ${r(y + rr * 1.6)}`;
+    schaum += `M${r(x - rr * 1.2)} ${r(y - rr * 0.3)} Q${r(x - rr * 0.2)} ${r(y - rr * (1.1 + z() * 0.4))} ${r(x + rr * 1.15)} ${r(y - rr * 0.35)} Q${r(x)} ${r(y - rr * 0.8)} ${r(x - rr * 1.2)} ${r(y - rr * 0.3)} Z`;
+    for (const sg of [-1, 1]) if (z() < 0.8) { const L = rr * (0.8 + z() * 1.0); kiel += `M${r(x + sg * rr * 0.8)} ${r(y + rr * 0.1)} q${r(sg * L * 0.3)} ${r(L * 0.5)} ${r(sg * L * (0.5 + z() * 0.4))} ${r(L * (0.6 + z() * 0.3))}`; }
   }
-  for (let i = 0; i < 34; i++) { const D = 10 + Math.pow(z(), 1.4) * 110, X = (z() * 2 - 1) * (UFER - 1.4); if (imKies(X, D)) continue; const [x, y] = P(X, D, hw(D)), L = (0.8 + z() * 1.4) * F / D; wellen += `<path d="M${r(x - L / 2)} ${r(y)} Q${r(x)} ${r(y - 0.25 * F / D)} ${r(x + L / 2)} ${r(y)}" stroke-width="${r(Math.max(0.3, 0.05 * F / D))}"/>`; }
-  k += `<g stroke="#f4f8f6" fill="none" opacity=".75">${wellen}</g><path d="${kiel}" stroke="#eef5f2" stroke-width=".6" fill="none" opacity=".75"/><path d="${schaum}" fill="#fbfdfc"/><path d="${steine}" fill="#8f8c86"/><path d="${steinLicht}" fill="#d6d2c8"/>`;
+  for (let i = 0; i < 26; i++) { const D = 10 + Math.pow(z(), 1.4) * 100, X = (z() * 2 - 1) * (WL - 0.5); if (imKies(X, D)) continue; const [x, y] = P(X, D, hw(D)), L = (0.5 + z() * 1.1) * F / D; wellen += `M${r(x - L / 2)} ${r(y)} q${r(L * (0.4 + z() * 0.2))} ${r(-0.2 * F / D)} ${r(L)} ${r((z() - 0.5) * 0.1 * F / D)}`; }
+  k += `<path d="${wellen}" stroke="#f4f8f6" stroke-width=".5" fill="none" opacity=".6"/><path d="${kiel}" stroke="#eef5f2" stroke-width=".45" stroke-linecap="round" fill="none" opacity=".6"/><path d="${schaum}" fill="#fbfdfc"/><path d="${steine}" fill="#8f8c86"/><path d="${steinLicht}" fill="#d6d2c8"/>`;
   k += RAND_GELAENDER;
   S.teil({ id: "fluss", de: "der Fluss", syl: "FLUSS", it: "il fiume", itSyl: "FIU-me", en: "river", anker: [200, 240], kunst: k,
     tipp: "Die Matter Vispa kommt aus den Gletschern. Darum ist ihr Wasser milchig und kalt. Im Herbst führt sie wenig Wasser." });

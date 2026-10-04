@@ -187,7 +187,7 @@ const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
   for (let i = 0; i < loecher; i++) {
     const a = -Math.PI * (0.15 + (i + z() * 0.6) / Math.max(1, loecher) * 0.7), d = 0.3 + z() * 0.06, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.75, s = Math.min(w, h) * 0.05 + 1.2;
     let p = ""; for (let k = 0; k < 6; k++) { const t = k / 6 * Math.PI * 2, f = 0.6 + z() * 0.5; p += (k ? "L" : "M") + `${r(hx + Math.cos(t) * s * f)} ${r(hy + Math.sin(t) * s * f * 0.75)}`; }
-    g += `<path d="${p}Z" fill="#9fbcdc" stroke="#9fbcdc" stroke-width=".4" stroke-linejoin="round"/><path d="M${r(hx - s * 0.5)} ${r(hy + s * 1.6)} L${r(hx + s * 0.1)} ${r(hy + s * 0.1)} M${r(hx - s * 0.1)} ${r(hy + s * 0.6)} L${r(hx - s * 0.7)} ${r(hy - s * 0.2)}" stroke="#3a2e22" stroke-width="${r(0.2 + s * 0.1)}" fill="none" stroke-linecap="round"/>`;
+    g += `<path d="${p}Z" fill="#9fbcdc" stroke="#9fbcdc" stroke-width=".4" stroke-linejoin="round"/><path d="M${r(hx - s * 0.4)} ${r(hy + s * 1.3)} L${r(hx + s * 0.15)} ${r(hy - s * 0.1)}" stroke="#3a3424" stroke-width="${r(0.15 + s * 0.06)}" fill="none" stroke-linecap="round"/>`;
   }
   return g;
 };
@@ -350,7 +350,7 @@ const schlossUnter = [];
   /* Ochsenaugen: hochovales dunkles Glas im Sandsteinrahmen, Schlussstein oben (kein Bogen darunter – sonst wirkt es wie ein Gesicht) */
   for (const [x, f] of [[-5.5, 0.5], [-2.9, 0.78], [0, 0.88], [2.9, 0.78], [5.5, 0.5]]) {
     const y = KB - 1.05 - (1 - f) * 0.4;
-    k += `<ellipse cx="${x}" cy="${r(y - 0.08)}" rx="${r(0.42 * f)}" ry="${r(0.66 * f)}" fill="#2c3a42" stroke="#e8dcbd" stroke-width=".24"/><ellipse cx="${r(x - 0.12 * f)}" cy="${r(y - 0.3)}" rx="${r(0.1 * f)}" ry="${r(0.22 * f)}" fill="#8fb0c0" opacity=".45"/>`;
+    k += `<ellipse cx="${x}" cy="${r(y - 0.08)}" rx="${r(0.42 * f)}" ry="${r(0.66 * f)}" fill="#5e7f78" stroke="#cfc4a4" stroke-width=".14"/><ellipse cx="${r(x - 0.12 * f)}" cy="${r(y - 0.3)}" rx="${r(0.1 * f)}" ry="${r(0.22 * f)}" fill="#a9c8c4" opacity=".4"/>`;
     k += `<path d="M${r(x - 0.16 * f)} ${r(y - 0.08 - 0.66 * f)} L${r(x + 0.16 * f)} ${r(y - 0.08 - 0.66 * f)} L${r(x + 0.22 * f)} ${r(y - 0.08 - 0.98 * f)} L${r(x - 0.22 * f)} ${r(y - 0.08 - 0.98 * f)} Z" fill="#efe4c8"/>`;
   }
   /* kleine schlichte Laterne mit goldener Kugel — kein Kreuz */
