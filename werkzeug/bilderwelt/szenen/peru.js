@@ -469,7 +469,7 @@ const STADT = {};
   /* Intihuatana: Stufenhügel (hinten links) mit dem Sonnenstein oben */
   for (let i = 0; i < 5; i++) {
     const w = 22 - i * 4.4, y = 158 - i * 3.8, cx = 158 + i * 0.6;
-    west += `<path d="M${r(cx - w)} ${r(y)} Q${r(cx)} ${r(y + 1.8)} ${r(cx + w)} ${r(y)} L${r(cx + w * 0.84)} ${r(y - 3.8)} Q${r(cx)} ${r(y - 2.2)} ${r(cx - w * 0.84)} ${r(y - 3.8)} Z" fill="${i % 2 ? "#92b759" : "#86ac51"}"/>`;
+    west += `<path d="M${r(cx - w)} ${r(y)} Q${r(cx)} ${r(y + 1.8)} ${r(cx + w)} ${r(y)} L${r(cx + w * 0.84)} ${r(y - 3.8)} Q${r(cx)} ${r(y - 2.2)} ${r(cx - w * 0.84)} ${r(y - 3.8)} Z" fill="${i % 2 ? "#86a856" : "#7b9e4e"}"/>`;
     west += `<path d="M${r(cx - w)} ${r(y)} Q${r(cx)} ${r(y + 1.8)} ${r(cx + w)} ${r(y)} L${r(cx + w)} ${r(y + 1.3)} Q${r(cx)} ${r(y + 3.1)} ${r(cx - w)} ${r(y + 1.3)} Z" fill="${S.lg("intimauer", [[0, "#8f8677"], [0.55, "#cfc5b1"], [1, "#efe5d0"]], 0, 0, 1, 0)}"/>`;
   }
   west += `<path d="M158.8 140.2 l1.2 -2.2 h1.6 l.8 1.2 l.5 1 Z" fill="#e1d8c5"/><path d="M160.4 138 l.5 -1.8 h.7 l.3 1.8 Z" fill="#b8ae9b"/>`;

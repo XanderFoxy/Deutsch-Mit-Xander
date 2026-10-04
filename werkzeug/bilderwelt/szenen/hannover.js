@@ -653,7 +653,7 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
   k += `<path d="M${P(L(.86, 0))} L${P(b)} L${P(L(1, .2))} Z" fill="#efe6d8"/><path d="M${P(L(.86, 0))} L${P(L(1, .2))}" stroke="#b8a890" stroke-width=".4"/><path d="M${P(a)} L${P(L(.86, 0))}" stroke="#a83a40" stroke-width=".8"/>`;
   const auf = (u, v) => L(u, v), mdt = (v) => mass(Y0 + (Y1 - Y0) * v) / 100;
   /* DER BUTTERKEKS: offene Packung, ein Keks herausgezogen, zwei Kekse daneben, Krümel */
-  const K = auf(.4, .4), km = mdt(.4);
+  const K = auf(.43, .4), km = mdt(.4);
   const keks = (cx, cy, rot) => {
     const Lk = 6.5, Bk = 5.4, n1 = 14, n2 = 12, pts = [];
     for (let i = 0; i < n1; i++) pts.push([-Lk / 2 + (i + .5) * Lk / n1, -Bk / 2]);
@@ -691,7 +691,7 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
   pg += `<text x="0" y="-3.2" font-size="1.4" text-anchor="middle" fill="#fff" font-family="Georgia" font-weight="bold">Hannover</text></g>`;
   k += `<g transform="translate(${t2(PK[0])} ${t2(PK[1])}) scale(${pm.toFixed(5)})">${pg}</g>`;
   /* DIE KASTANIE: gesammelte Rosskastanien und eine aufgeplatzte Stachelschale auf der Decke */
-  const KA = auf(.29, .68), mm = mdt(.68);
+  const KA = auf(.25, .7), mm = mdt(.7);
   let kgz = "";
   const nuss = (x, y, rr, rot) => `<g transform="translate(${x} ${y}) rotate(${rot})"><ellipse cx="1" cy="1.2" rx="${rr * 1.1}" ry="${rr * .45}" fill="#2a3418" opacity=".3"/><path d="M${-rr} 0 Q${-rr} ${-rr * 1.15} 0 ${-rr * 1.05} Q${rr * 1.05} ${-rr} ${rr} 0 Q${rr * .7} ${rr * .55} 0 ${rr * .55} Q${-rr * .7} ${rr * .55} ${-rr} 0 Z" fill="${S.rg("kastanie", [[0, "#b8642c"], [0.55, "#7a3814"], [1, "#4a220c"]], 0.35, 0.3, 0.8)}"/><path d="M${-rr * .9} ${rr * .05} Q0 ${rr * .7} ${rr * .9} ${rr * .05} Q0 ${rr * .3} ${-rr * .9} ${rr * .05} Z" fill="#d8c09a"/><ellipse cx="${-rr * .35}" cy="${-rr * .55}" rx="${rr * .3}" ry="${rr * .14}" fill="#fff" opacity=".55"/></g>`;
   /* aufgeplatzte Schale: drei Klappen, innen weich weiß, außen grün mit Stacheln */

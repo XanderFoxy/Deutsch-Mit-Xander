@@ -222,6 +222,7 @@ const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.17 ? baum(x, y, gr
   /* Fels: grau-ockerfarbener Kalkstein; Westflächen warm-hell, Rücksprünge kühl-violett */
   const fels = [...OBEN.map(pp), ...unten.slice().reverse()];
   k += `<path d="${P(fels)}" fill="${S.lg("fels", [[0, "#e2c595"], [0.35, "#c9ae8e"], [0.7, "#ae9a8a"], [1, "#988a8c"]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="${P(fels)}" fill="${S.lg("felslicht", [[0, "#ffcf8a", 0.16], [0.5, "#ffcf8a", 0], [1, "#3a2a3a", 0.22]])}"/>`;
   /* senkrechte Klüfte mit Lichtkante links (Westseite der Felsrippe) */
   for (let i = 0; i < 44; i++) {
     const t = rnd() * (OBEN.length - 1.01), i0 = Math.floor(t), f = t - i0, A = OBEN[i0], Bq = OBEN[i0 + 1];
@@ -239,7 +240,7 @@ const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.17 ? baum(x, y, gr
     const z = zb + rnd() * (zt - zb), [x, y, u] = pr(e, n, z);
     if (x > 396 || x < 3) continue;
     const w = (2 + rnd() * 4) * u, h = (0.8 + rnd() * 1.6) * u;
-    k += rnd() < 0.6 ? `<path d="M${r(x)} ${r(y)} l${r(w * 0.25)} ${r(-h)} l${r(w * 0.75)} ${r(h * 0.15)} l${r(-w * 0.1)} ${r(h * 0.85)} Z" fill="#ecd4a6" opacity=".55"/>` : `<path d="M${r(x)} ${r(y)} q${r(w / 2)} ${r(-0.6)} ${r(w)} ${r(0.3)}" stroke="#7a6a72" stroke-width=".35" fill="none" opacity=".7"/>`;
+    k += rnd() < 0.6 ? `<path d="M${r(x)} ${r(y)} l${r(w * 0.25)} ${r(-h)} l${r(w * 0.75)} ${r(h * 0.15)} l${r(-w * 0.1)} ${r(h * 0.85)} Z" fill="#ecd4a6" opacity=".3"/><path d="M${r(x)} ${r(y)} l${r(w * 0.9)} ${r(h * 0.0)}" stroke="#7a6670" stroke-width=".3" opacity=".5"/>` : `<path d="M${r(x)} ${r(y)} q${r(w / 2)} ${r(-0.6)} ${r(w)} ${r(0.3)}" stroke="#7a6a72" stroke-width=".35" fill="none" opacity=".7"/>`;
   }
   /* Höhlen und Nischen am Südhang (dunkel, unten Lichtkante), Grasbüschel und Feigensträucher in Rissen */
   for (const [e, n, z, w, h] of [[-60, -66, 131, 5, 3.2], [-12, -68, 128.5, 3.4, 2.2], [48, -64, 133, 4.2, 2.6], [96, -60, 130, 3, 2]]) {
@@ -254,7 +255,7 @@ const baumMix = (x, y, gr) => { const z = rnd(); return z < 0.17 ? baum(x, y, gr
   for (let j = 1; j < 8; j++) { const q = j / 8; fu += "M" + KRONE.map((p) => { const [x, y] = pp([p[0], p[1] - 3 * q, p[2] - 11 * q]); return `${r(x)} ${r(y)}`; }).join(" L") + " "; }
   k += `<path d="${fu}" stroke="#93706a" stroke-width=".2" fill="none" opacity=".5"/>`;
   for (let i = 0; i < 70; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = KRONE[i0], Bq = KRONE[i0 + 1], q = Math.floor(rnd() * 7) / 8; const p = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f - 3 * q, A[2] + (Bq[2] - A[2]) * f - 11 * q); if (p[0] > 398) continue; k += `<rect x="${r(p[0])}" y="${r(p[1])}" width=".2" height="${r(1.4 * p[2])}" fill="#93706a" opacity=".4"/>`; }
-  for (let i = 0; i < 22; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = FUSS[i0], Bq = FUSS[i0 + 1]; const [x, y, u] = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f, A[2] + (Bq[2] - A[2]) * f); if (x > 396) continue; k += `<rect x="${r(x)}" y="${r(y - 4 * u)}" width="${r(0.5 + rnd() * 0.8)}" height="${r((4 + rnd() * 6) * u)}" fill="#a8704a" opacity=".35"/>`; }
+  for (let i = 0; i < 22; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = FUSS[i0], Bq = FUSS[i0 + 1]; const [x, y, u] = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f, A[2] + (Bq[2] - A[2]) * f); if (x > 396) continue; k += `<rect x="${r(x)}" y="${r(y - 4 * u)}" width="${r(1.6 + rnd() * 2)}" height="${r((4 + rnd() * 6) * u)}" fill="${S.lg("rost", [[0, "#a8704a", 0.4], [1, "#a8704a", 0]])}"/>`; }
   for (let i = 0; i < 30; i++) { const t = rnd() * (KRONE.length - 1.01), i0 = Math.floor(t), f = t - i0, A = FUSS[i0], Bq = FUSS[i0 + 1]; const [x, y, u] = pr(A[0] + (Bq[0] - A[0]) * f, A[1] + (Bq[1] - A[1]) * f, A[2] + (Bq[2] - A[2]) * f); if (x > 396) continue; const w = (1.5 + rnd() * 3) * u; k += `<path d="M${r(x - w)} ${r(y + 1)} L${r(x - w * 0.5)} ${r(y - (0.6 + rnd()) * u)} L${r(x + w * 0.2)} ${r(y - (0.3 + rnd() * 1.6) * u)} L${r(x + w)} ${r(y + 1)} Z" fill="#c4b098"/>`; }
   k += `<path d="M${KRONE.map((p) => { const [x, y] = pp(p); return `${r(x)} ${r(y)}`; }).join(" L")}" stroke="${M_HELL}" stroke-width=".6" fill="none"/>`;
   /* Bastion des Nike-Tempels: senkrechter Quaderturm, Westseite im Licht */

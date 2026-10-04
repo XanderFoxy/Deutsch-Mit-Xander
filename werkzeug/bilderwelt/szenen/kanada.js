@@ -439,19 +439,25 @@ const BOOT = {};
   const x0 = bx - L / 2, x1 = bx + L / 2;
   k += `<path d="M${r(x0)} ${r(by - H1)} L${r(x1 - 1.4)} ${r(by - H1)} Q${r(x1 + 0.6)} ${r(by - H1 * 0.6)} ${r(x1 - 0.6)} ${r(by)} L${r(x0 + 0.4)} ${r(by)} Z" fill="${S.lg("rumpf", [[0, "#ffffff"], [1, "#d8dde2"]])}"/>`;
   k += `<path d="M${r(x0)} ${r(by - H1 * 0.36)} L${r(x1 - 0.2)} ${r(by - H1 * 0.36)} L${r(x1 - 0.4)} ${r(by - H1 * 0.12)} L${r(x0 + 0.3)} ${r(by - H1 * 0.12)} Z" fill="#1f3a6a"/>`;
-  k += `<path d="M${r(x0 - sch * L)} ${r(by - H1 + 0.6)} L${r(x0)} ${r(by - H1)} L${r(x0 + 0.4)} ${r(by)} L${r(x0 - sch * L + 0.4)} ${r(by + 0.6)} Z" fill="#c9d0d8"/>`;
+  k += `<path d="M${r(x0 - 2.4)} ${r(by - H1 + 0.5)} L${r(x0)} ${r(by - H1)} L${r(x0 + 0.4)} ${r(by)} L${r(x0 - 2.2)} ${r(by + 0.4)} Z" fill="#b9c2cc"/><path d="M${r(x0 - 2.3)} ${r(by - 0.6)} L${r(x0 + 0.3)} ${r(by - 0.9)}" stroke="#1f3a6a" stroke-width=".5"/>`;
   /* Unterdeck: Fenster, Fahrgäste in roten Capes dicht an der Reling */
   const yD = by - H1, yO = yD - H2;
   k += `<path d="M${r(x0 + 0.6)} ${r(yD)} L${r(x1 - 2)} ${r(yD)} L${r(x1 - 2.6)} ${r(yO)} L${r(x0 + 0.6)} ${r(yO)} Z" fill="#f2f4f6"/>`;
   const zb = zufall(81); let capes = "";
-  for (let x = x0 + 1.2; x < x1 - 3; x += 0.9 + zb() * 0.4) capes += `<path d="M${r(x - 0.42)} ${r(yD - 0.2)} L${r(x - 0.3)} ${r(yD - 1.5)} Q${r(x)} ${r(yD - 1.9)} ${r(x + 0.3)} ${r(yD - 1.5)} L${r(x + 0.42)} ${r(yD - 0.2)} Z"/>`;
-  k += `<g fill="#d0242c">${capes}</g>`;
+  let koepfe = "";
+  for (let x = x0 + 1.2; x < x1 - 3; x += 0.9 + zb() * 0.4) { capes += `<path d="M${r(x - 0.42)} ${r(yD - 0.2)} L${r(x - 0.3)} ${r(yD - 1.5)} Q${r(x)} ${r(yD - 2.05)} ${r(x + 0.3)} ${r(yD - 1.5)} L${r(x + 0.42)} ${r(yD - 0.2)} Z"/>`; if (zb() < 0.4) koepfe += `<circle cx="${r(x + 0.05)}" cy="${r(yD - 1.75)}" r=".2"/>`; }
+  k += `<g fill="#d0242c">${capes}</g><g fill="#e2b48e">${koepfe}</g>`;
   k += `<path d="M${r(x0 + 0.6)} ${r(yD - 0.9)} H${r(x1 - 2.2)}" stroke="#9aa3ab" stroke-width=".25"/>`;
   /* Oberdeck: offen, Reling, noch mehr rote Capes */
   const yT = yO - 2.2;
   capes = "";
-  for (let x = x0 + 2; x < x1 - 4.2; x += 0.85 + zb() * 0.4) capes += `<path d="M${r(x - 0.4)} ${r(yO - 0.1)} L${r(x - 0.28)} ${r(yO - 1.5)} Q${r(x)} ${r(yO - 1.9)} ${r(x + 0.28)} ${r(yO - 1.5)} L${r(x + 0.4)} ${r(yO - 0.1)} Z"/>`;
-  k += `<g fill="#e0303a">${capes}</g>`;
+  koepfe = "";
+  for (let x = x0 + 2; x < x1 - 4.2; x += 0.85 + zb() * 0.4) { capes += `<path d="M${r(x - 0.4)} ${r(yO - 0.1)} L${r(x - 0.28)} ${r(yO - 1.5)} Q${r(x)} ${r(yO - 2.05)} ${r(x + 0.28)} ${r(yO - 1.5)} L${r(x + 0.4)} ${r(yO - 0.1)} Z"/>`; if (zb() < 0.4) koepfe += `<circle cx="${r(x + 0.05)}" cy="${r(yO - 1.75)}" r=".19"/>`; }
+  k += `<g fill="#e0303a">${capes}</g><g fill="#e2b48e">${koepfe}</g>`;
+  /* Reling: Pfosten und Handlauf (Ober- und Unterdeck) */
+  let pf = "";
+  for (let x = x0 + 1; x < x1 - 2.4; x += 1.6) pf += `M${r(x)} ${r(yD)} v-1M${r(x + 0.8)} ${r(yO)} v-1`;
+  k += `<path d="${pf}" stroke="#ffffff" stroke-width=".14" opacity=".9"/>`;
   k += `<path d="M${r(x0 + 1.4)} ${r(yO - 0.8)} H${r(x1 - 3.6)}" stroke="#fff" stroke-width=".3"/>`;
   /* Steuerhaus vorn oben */
   k += `<path d="M${r(x1 - 9)} ${r(yO)} L${r(x1 - 4.4)} ${r(yO)} L${r(x1 - 5.2)} ${r(yO - 2.6)} L${r(x1 - 9)} ${r(yO - 2.6)} Z" fill="#f6f7f8"/><path d="M${r(x1 - 8.6)} ${r(yO - 2.2)} h3.2 v1 h-3.2 Z" fill="#2c3e50"/>`;

@@ -270,36 +270,48 @@ S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 
    ===================================================================== */
 {
   const d = 1050, s = F / d, x0 = r(XA(19)), yb = r(YD(d, 56));
-  /* Koordinaten in Metern, Ursprung: Südturm am Boden (Burghof, 56 m über der Brücke) */
+  /* Koordinaten in Metern, Ursprung: Südturm am Boden (Burghof, 56 m über der Brücke).
+     Licht von links vorn (Sonne im Ostsüdosten): linke und vordere Flächen hell, rechte Seiten im Schatten. */
   let k = `<g transform="scale(${s.toFixed(4)})">`;
-  /* Langhaus und Chor: steiles Dach (dunkles Kupfer/Schiefer mit Rautenmuster) */
-  k += `<path d="M-62 -4 L-62 -32 L60 -32 L60 -4 Z" fill="${S.lg("domwand", [[0, "#8f8a80"], [1, "#a8a196"]])}"/>`;
-  k += `<path d="M-64 -32 L-56 -58 L56 -58 L64 -32 Z" fill="${S.lg("domdach", [[0, "#3e5a52"], [1, "#2c3f3a"]])}"/>`;
-  let dr = "";
-  for (let i = -60; i < 62; i += 4) dr += `M${i} -32 L${i + 4} -45 L${i} -58`;
-  k += `<path d="${dr}" stroke="#5f7d72" stroke-width=".7" fill="none" opacity=".6"/>`;
-  /* Strebebögen und Fialen am Chor (rechts) */
-  let sb = "";
-  for (let i = 0; i < 6; i++) { const x = 18 + i * 7.5; sb += `M${x} -4 V-30 M${x} -24 Q${x + 3} -32 ${x + 6} -34 M${x - 0.9} -30 L${x} -38 L${x + 0.9} -30`; }
-  k += `<path d="${sb}" stroke="#6f6a62" stroke-width="1.3" fill="none"/>`;
-  let ff = "";
-  for (let i = 0; i < 9; i++) { const x = -56 + i * 8; ff += `M${x} -10 v-14 q2 -4 4 0 v14 Z`; }
-  k += `<path d="${ff}" fill="#4a4e5c"/>`;
-  /* zwei Westtürme (82 m) mit durchbrochenen Helmen — links */
-  for (const x of [-60, -50]) {
-    k += `<rect x="${x - 4}" y="-62" width="8" height="58" fill="${x < -55 ? "#7f7a71" : "#9a958b"}"/>`;
-    k += `<path d="M${x - 4.4} -62 L${x} -82 L${x + 4.4} -62 Z" fill="#3f4a48"/><path d="M${x - 2} -66 L${x} -78 L${x + 2} -66" stroke="#788783" stroke-width=".7" fill="none"/>`;
-    k += `<path d="M${x - 3} -40 v-12 q3 -5 6 0 v12 Z" fill="#4a4e5c"/>`;
-    for (const dx of [-4, 4]) k += `<path d="M${x + dx - 0.8} -62 L${x + dx} -67 L${x + dx + 0.8} -62 Z" fill="#7f7a71"/>`;
+  const STEIN_L = "#d6ccb8", STEIN_M = "#b3a996", STEIN_S = "#857d70";
+  /* Langhaus und Chor: Wand mit hohen Maßwerkfenstern, Strebepfeiler mit Fialen */
+  k += `<path d="M-62 -4 L-62 -32 L60 -32 L60 -4 Z" fill="${S.lg("domwand", [[0, STEIN_L], [0.5, STEIN_M], [1, STEIN_S]], 0, 0, 1, 0)}"/>`;
+  let ff = "", pf = "";
+  for (let i = 0; i < 12; i++) { const x = -56 + i * 9.6; if (Math.abs(x) < 9) continue; ff += `M${r(x)} -9 v-15 q2.2 -4.4 4.4 0 v15 Z`; pf += `M${r(x - 2.2)} -4 v-30 l1 -4 l1 4 v30 Z`; }
+  k += `<path d="${ff}" fill="#3f4658"/><path d="${ff}" fill="none" stroke="#e8e0cc" stroke-width=".5"/><path d="${pf}" fill="${STEIN_M}"/><path d="${pf.replace(/v30 Z/g, "")}" stroke="#efe8d8" stroke-width=".35" fill="none"/>`;
+  /* Dach: steiles dunkelgrünes Kupfer mit feinen Längsrippen, oben im Licht heller */
+  k += `<path d="M-64 -32 L-56 -58 L56 -58 L64 -32 Z" fill="${S.lg("domdach", [[0, "#5f8a78"], [0.5, "#3e5f53"], [1, "#2a3f38"]])}"/>`;
+  let rp = "";
+  for (let x = -62; x < 63; x += 2.6) rp += `M${r(x)} -32 L${r(x * 0.875)} -58`;
+  k += `<path d="${rp}" stroke="#7fa898" stroke-width=".3" opacity=".55"/><path d="M-56 -58 H56" stroke="#9cc4b2" stroke-width=".8"/>`;
+  /* Strebebögen mit Fialen am Chor (rechts) gegen den Himmel */
+  let sb = "", fi = "";
+  for (let i = 0; i < 6; i++) { const x = 18 + i * 7.2; sb += `M${r(x)} -4 V-36 M${r(x)} -26 Q${r(x + 2.5)} -34 ${r(x + 5.6)} -40`; fi += `M${r(x - 1.1)} -36 L${r(x)} -45 L${r(x + 1.1)} -36 Z`; }
+  k += `<path d="${sb}" stroke="${STEIN_S}" stroke-width="1.5" fill="none"/><path d="${sb}" stroke="${STEIN_L}" stroke-width=".5" fill="none" transform="translate(-.4 0)"/><path d="${fi}" fill="${STEIN_M}"/>`;
+  /* zwei Westtürme (82 m), heller Stein, durchbrochene Helme mit Krabben — links */
+  for (const [x, f] of [[-60, STEIN_L], [-50, STEIN_M]]) {
+    k += `<rect x="${x - 4}" y="-62" width="8" height="58" fill="${f}"/><rect x="${x + 2.5}" y="-62" width="1.5" height="58" fill="${STEIN_S}"/>`;
+    k += `<path d="M${x - 3} -24 v-14 q3 -5 6 0 v14 Z M${x - 2.4} -46 v-10 q2.4 -4 4.8 0 v10 Z" fill="#3f4658" stroke="#efe8d8" stroke-width=".4"/>`;
+    k += `<path d="M${x - 4.4} -62 L${x} -82 L${x + 4.4} -62 Z" fill="#8f8a7e"/><path d="M${x - 4.4} -62 L${x} -82 L${x - 1.2} -62 Z" fill="${STEIN_L}"/>`;
+    let kr = "";
+    for (let j = 1; j < 6; j++) { const t = j / 6; kr += `M${r(x - 4.4 * (1 - t))} ${r(-62 - 20 * t)} l-.9 -.4 M${r(x + 4.4 * (1 - t))} ${r(-62 - 20 * t)} l.9 -.4`; }
+    k += `<path d="${kr}" stroke="#6f685e" stroke-width=".5"/><path d="M${x - 1.6} -66 L${x} -76 L${x + 1.6} -66 Z" fill="#3f4658" opacity=".6"/>`;
+    for (const dx of [-4, 4]) k += `<path d="M${x + dx - 0.8} -62 L${x + dx} -68 L${x + dx + 0.8} -62 Z" fill="${f}"/>`;
   }
-  /* Südturm (96,5 m): gotischer Schaft, Renaissance-Galerie, grüne Haube mit Laterne */
-  k += `<rect x="-7" y="-58" width="14" height="58" fill="${S.lg("sturm", [[0, "#b8b1a4"], [0.6, "#a39c90"], [1, "#878177"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M-3 -16 v-24 q3 -6 6 0 v24 Z" fill="#4a4e5c"/><path d="M-3 -16 v-24 q3 -6 6 0 v24" stroke="#c9c1b2" stroke-width=".6" fill="none"/>`;
-  k += `<rect x="-6" y="-12" width="12" height="3" fill="#c9a24a"/>`;
-  k += `<rect x="-8" y="-60" width="16" height="2.6" fill="#d8d0c0"/><path d="M-8 -62.5 h16 M-7 -60 v-2.5 M-4 -60 v-2.5 M-1 -60 v-2.5 M2 -60 v-2.5 M5 -60 v-2.5 M7 -60 v-2.5" stroke="#d8d0c0" stroke-width=".6"/>`;
-  k += `<path d="M-7 -62.5 Q-7.5 -70 -3.5 -73 Q0 -76 3.5 -73 Q7.5 -70 7 -62.5 Z" fill="${KUPFER}"/>`;
-  k += `<rect x="-2.6" y="-79" width="5.2" height="6" fill="${KUPFER}"/><path d="M-3.4 -79 Q0 -86 3.4 -79 Z" fill="${KUPFER}"/><path d="M-1.4 -86 Q0 -92 1.4 -86 Z" fill="${KUPFER}"/><path d="M0 -92 V-96.5" stroke="#d6a93a" stroke-width=".9"/>`;
-  k += `<path d="M-1.6 -77.6 v-3 h1.2 v3 Z M.4 -77.6 v-3 h1.2 v3 Z" fill="#2f4a42"/>`;
+  /* Goldene Pforte (Mosaik des Jüngsten Gerichts) am Fuß des Südturms, rechts daneben */
+  k += `<path d="M8 -4 V-16 Q12 -21 16 -16 V-4 Z" fill="#7a6a4a"/><path d="M8.6 -15.2 Q12 -19.6 15.4 -15.2 V-10 H8.6 Z" fill="${GOLD}"/><path d="M9.6 -13 h4.8 M10 -11.5 h4" stroke="#b07a20" stroke-width=".3"/>`;
+  /* Südturm (96,5 m): gotischer Schaft mit Goldgitter im großen Fenster, zwei Zifferblätter, Renaissance-Galerie, grüne Haube, goldene Spitze */
+  k += `<rect x="-7" y="-58" width="14" height="58" fill="${S.lg("sturm", [[0, STEIN_L], [0.55, STEIN_M], [1, STEIN_S]], 0, 0, 1, 0)}"/>`;
+  k += `<path d="M-3.4 -16 v-24 q3.4 -7 6.8 0 v24 Z" fill="#3f4658"/><path d="M-3.4 -16 v-24 q3.4 -7 6.8 0 v24" stroke="#efe8d8" stroke-width=".6" fill="none"/>`;
+  let gg = "";
+  for (let y = -18; y > -40; y -= 2.6) gg += `M-3.2 ${y} h6.4`;
+  for (let x = -2.2; x < 3; x += 1.5) gg += `M${x} -16.5 v-23`;
+  k += `<path d="${gg}" stroke="#e9c35a" stroke-width=".45"/>`;
+  for (const [cy, rr] of [[-46, 2.6], [-52.5, 2.2]]) k += `<circle cx="0" cy="${cy}" r="${rr}" fill="#1f2a3a" stroke="${GOLD}" stroke-width=".7"/><path d="M0 ${cy} v${-rr * 0.7} M0 ${cy} l${rr * 0.5} ${rr * 0.2}" stroke="#e9c35a" stroke-width=".4"/>`;
+  k += `<rect x="-8" y="-60" width="16" height="2.6" fill="#ece4d2"/><path d="M-8 -62.5 h16 M-7 -60 v-2.5 M-4.6 -60 v-2.5 M-2.2 -60 v-2.5 M.2 -60 v-2.5 M2.6 -60 v-2.5 M5 -60 v-2.5 M7 -60 v-2.5" stroke="#ece4d2" stroke-width=".6"/>`;
+  k += `<path d="M-7 -62.5 Q-7.5 -70 -3.5 -73 Q0 -76 3.5 -73 Q7.5 -70 7 -62.5 Z" fill="${KUPFER}"/><path d="M-6.5 -63 Q-6.6 -69 -3.4 -72" stroke="#bfe6d2" stroke-width=".7" fill="none"/>`;
+  k += `<rect x="-2.6" y="-79" width="5.2" height="6" fill="${KUPFER}"/><path d="M-3.4 -79 Q0 -86 3.4 -79 Z" fill="${KUPFER}"/><path d="M-1.4 -86 Q0 -92 1.4 -86 Z" fill="${KUPFER}"/>`;
+  k += `<path d="M-1.6 -77.6 v-3 h1.2 v3 Z M.4 -77.6 v-3 h1.2 v3 Z" fill="#2f4a42"/><path d="M0 -92 V-96.5" stroke="${GOLD}" stroke-width="1"/><circle cx="0" cy="-92.6" r=".9" fill="${GOLD}"/>`;
   k += `</g>`;
   S.teil({ id: "veitsdom", de: "der Veitsdom", syl: "VEITS-dom", it: "la Cattedrale di San Vito", itSyl: "cat-te-DRA-le di san VI-to", en: "St Vitus Cathedral", x: x0, y: yb, steht: true, kunst: k,
     zoom: { x: 314, y: 35, w: 72, h: 48 },
@@ -318,20 +330,26 @@ S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 
 {
   const d = 1050, s = F / d, x0 = r(XA(19)), yb = r(YD(d, 36));
   let k = `<g transform="scale(${s.toFixed(4)})">`;
-  /* Südflügel: drei Abschnitte, Walmdächer, viele Fensterreihen */
+  /* Südflügel (Theresianischer Umbau): lange helle Fassade, Mittelrisalit mit Giebel, zwei Geschossgesimse,
+     regelmäßige Fensterachsen mit Schatten in den Laibungen, Dachgauben; Licht von links vorn */
   const fl = [[-170, -70, 22, 0], [-70, 60, 26, 1], [60, 112, 20, 2]];
+  let fen = "", lai = "", gauben = "";
   for (const [a, b, h, i] of fl) {
-    k += `<rect x="${a}" y="${-h}" width="${b - a}" height="${h}" fill="${["#ece3d2", "#f3ecdf", "#e6dcc8"][i]}"/>`;
-    k += `<path d="M${a - 2} ${-h} L${a + 6} ${-h - 9} L${b - 6} ${-h - 9} L${b + 2} ${-h} Z" fill="${["#8d4a38", "#5b7b6f", "#97553f"][i]}"/>`;
-    let fen = "";
-    for (let x = a + 4; x < b - 3; x += 5.2) for (let y = -h + 4; y < -3; y += 6) fen += `M${r(x)} ${r(y)} h2.2 v3.2 h-2.2Z`;
-    k += `<path d="${fen}" fill="#6a6f80"/>`;
-    k += `<rect x="${a}" y="${-h}" width="${b - a}" height="1.4" fill="#fffaf0"/>`;
+    k += `<rect x="${a}" y="${-h}" width="${b - a}" height="${h}" fill="${["#f4ead6", "#faf3e6", "#efe4ce"][i]}"/>`;
+    k += `<path d="M${a - 2} ${-h} L${a + 6} ${-h - 9} L${b - 6} ${-h - 9} L${b + 2} ${-h} Z" fill="${["#9a5240", "#6a8a7c", "#a05a44"][i]}"/><path d="M${a + 6} ${-h - 9} L${b - 6} ${-h - 9} L${b - 3} ${-h - 6} L${a + 3} ${-h - 6} Z" fill="#fff" opacity=".18"/>`;
+    for (let x = a + 4; x < b - 3; x += 5.2) for (let y = -h + 4; y < -3; y += 6.4) { fen += `M${r(x)} ${r(y)}h2.2v3.4h-2.2Z`; lai += `M${r(x + 1.6)} ${r(y)}h.6v3.4h-.6Z`; }
+    for (let x = a + 8; x < b - 8; x += 10.4) gauben += `M${r(x)} ${-h - 3} h2.4 v-2.2 l-1.2 -1.2 l-1.2 1.2 Z`;
+    k += `<path d="M${a} ${r(-h * 0.5)} H${b}" stroke="#e2d4ba" stroke-width="1"/><path d="M${a} ${r(-h * 0.5 + 0.8)} H${b}" stroke="#b8aa92" stroke-width=".6" opacity=".6"/>`;
+    k += `<rect x="${a}" y="${-h}" width="${b - a}" height="1.6" fill="#fffaf0"/><rect x="${a}" y="${-h + 1.6}" width="${b - a}" height="1" fill="#c9bba2" opacity=".6"/>`;
   }
-  /* Schatten der Dachüberstände und die Gartenmauer mit Terrassen */
-  k += `<rect x="-172" y="-1" width="286" height="8" fill="#cfc4ad"/><path d="M-172 7 L114 7" stroke="#a89c86" stroke-width="1.2"/>`;
-  /* rechts: die Basilika St. Georg (zwei helle Türme) und der Schwarze Turm */
-  k += `<rect x="96" y="-44" width="5" height="22" fill="#f2ead8"/><rect x="104" y="-41" width="5" height="19" fill="#e9dfca"/><path d="M95.6 -44 L98.5 -50 L101.4 -44 Z M103.6 -41 L106.5 -47 L109.4 -41 Z" fill="#7d4a3a"/>`;
+  k += `<path d="${fen}" fill="#5c6274"/><path d="${lai}" fill="#2e3242" opacity=".6"/><path d="${gauben}" fill="#efe4ce"/>`;
+  /* Mittelrisalit mit Dreiecksgiebel */
+  k += `<rect x="-12" y="-28" width="24" height="28" fill="#fdf8ee"/><rect x="9" y="-28" width="3" height="28" fill="#d9ccb4"/><path d="M-13 -28 L0 -34 L13 -28 Z" fill="#fdf8ee" stroke="#c9bba2" stroke-width=".6"/>`;
+  k += `<path d="M-8 -6 h4 v-10 h-4 Z M4 -6 h4 v-10 h-4 Z M-2 -6 h4 v-12 q-2 -3 -4 0 Z" fill="#5c6274"/>`;
+  /* Gartenmauer mit Terrassen, Licht oben */
+  k += `<rect x="-172" y="-1" width="286" height="8" fill="#d9ceb6"/><path d="M-172 -.6 H114" stroke="#fff8ea" stroke-width=".8"/><path d="M-172 7 L114 7" stroke="#a89c86" stroke-width="1.2"/>`;
+  /* rechts: die Basilika St. Georg (zwei helle Türme, rote Fassade) */
+  k += `<rect x="94" y="-26" width="16" height="6" fill="#c9644a"/><rect x="96" y="-44" width="5" height="22" fill="#f6efe0"/><rect x="104" y="-41" width="5" height="19" fill="#e2d6be"/><path d="M95.6 -44 L98.5 -50 L101.4 -44 Z M103.6 -41 L106.5 -47 L109.4 -41 Z" fill="#7d4a3a"/>`;
   k += `</g>`;
   S.teil({ id: "prager_burg", de: "die Prager Burg", syl: "PRA-ger BURG", it: "il Castello di Praga", itSyl: "ca-STEL-lo di PRA-ga", en: "Prague Castle", x: x0, y: yb, steht: true, kunst: k,
     tipp: "Die Prager Burg ist eine der größten Burganlagen der Welt." });
@@ -343,24 +361,30 @@ S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 
 {
   const d = 744, s = F / d, x0 = r(XA(5)), yb = r(YD(d, -4));
   let k = `<g transform="scale(${s.toFixed(4)})">`;
-  /* Kirchenschiff (rosa-heller Putz), Tambour, große grüne Kuppel mit Laterne */
-  k += `<rect x="-34" y="-30" width="44" height="30" fill="${S.lg("nikw", [[0, "#f6ead6"], [1, "#e2cfb4"]], 0, 0, 1, 0)}"/><path d="M-36 -30 L-28 -37 L8 -37 L12 -30 Z" fill="#7a9a88"/>`;
-  k += `<path d="M-34 -30 H10 V-28 H-34 Z" fill="#fffaf0"/><path d="M-30 -28 V-4 M-20 -28 V-4 M-10 -28 V-4 M0 -28 V-4" stroke="#fff8ea" stroke-width="1.4"/>`;
-  k += `<path d="M-27 -10 V-22 Q-25 -25.5 -23 -22 V-10 Z M-17 -10 V-22 Q-15 -25.5 -13 -22 V-10 Z M-7 -10 V-22 Q-5 -25.5 -3 -22 V-10 Z" fill="#7c8296"/>`;
-  k += `<rect x="-24" y="-48" width="20" height="12" fill="${S.lg("tamb", [[0, "#fff6e6"], [1, "#d9c6ac"]], 0, 0, 1, 0)}"/>`;
+  /* Kirchenschiff: warmer heller Putz mit weißen Doppelpilastern, Balustrade mit Figuren; Tambour mit ovalen
+     Fenstern; große Kupferkuppel mit Rippen und Patina-Lichtern, hohe Laterne. Licht von links vorn. */
+  k += `<rect x="-34" y="-30" width="44" height="30" fill="${S.lg("nikw", [[0, "#fbf0dc"], [0.7, "#f0dfc4"], [1, "#d8c4a6"]], 0, 0, 1, 0)}"/><path d="M-36 -30 L-28 -37 L8 -37 L12 -30 Z" fill="#7a9a88"/>`;
+  k += `<path d="M-34 -30 H10 V-28 H-34 Z" fill="#fffaf0"/><path d="M-31 -28 V-4 M-29.6 -28 V-4 M-21 -28 V-4 M-19.6 -28 V-4 M-11 -28 V-4 M-9.6 -28 V-4 M-1 -28 V-4 M.4 -28 V-4" stroke="#fffaf0" stroke-width=".9"/>`;
+  k += `<path d="M-27 -10 V-22 Q-25 -25.5 -23 -22 V-10 Z M-17 -10 V-22 Q-15 -25.5 -13 -22 V-10 Z M-7 -10 V-22 Q-5 -25.5 -3 -22 V-10 Z" fill="#6c7288"/>`;
+  let fig = "";
+  for (const x of [-30, -20, -10, 0]) fig += `M${x - 0.6} -37 v-2.6 q.6 -1.4 1.2 0 v2.6 Z`;
+  k += `<path d="M-34 -37 H10" stroke="#fffaf0" stroke-width="1"/><path d="${fig}" fill="#e6dcc8"/>`;
+  k += `<rect x="-24.5" y="-49" width="21" height="12" fill="${S.lg("tamb", [[0, "#fff8ea"], [0.6, "#efe0c6"], [1, "#cdb898"]], 0, 0, 1, 0)}"/>`;
   let tf = "";
-  for (const x of [-21, -16, -11, -7]) tf += `M${x} -40 v-5 q1 -1.5 2 0 v5 Z`;
-  k += `<path d="${tf}" fill="#5c6274"/><rect x="-25" y="-49" width="22" height="1.6" fill="#fffaf0"/>`;
-  k += `<path d="M-25 -49 Q-25 -66 -14 -68 Q-3 -66 -3 -49 Z" fill="${KUPFER}"/>`;
-  k += `<path d="M-19 -50 Q-19 -63 -14 -67 M-9 -50 Q-9 -63 -14 -67" stroke="#a8d8c0" stroke-width=".5" fill="none" opacity=".7"/>`;
-  k += `<rect x="-16" y="-73" width="4" height="5" fill="#f2e6d0"/><path d="M-16.8 -73 Q-14 -78 -11.2 -73 Z" fill="${KUPFER}"/><path d="M-14 -78 V-82 M-15.2 -80.6 h2.4" stroke="#d6a93a" stroke-width=".6"/>`;
-  /* Glockenturm rechts (79 m): heller Schaft, grüne Barockhaube in Stufen */
-  k += `<rect x="14" y="-58" width="10" height="58" fill="${S.lg("glt", [[0, "#fbf3e3"], [1, "#d8c7aa"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M16 -50 v-5 q3 -3 6 0 v5 Z M16.6 -36 v-5 q2.4 -2.4 4.8 0 v5 Z" fill="#5c6274"/><rect x="13" y="-59" width="12" height="1.6" fill="#fffaf0"/>`;
-  k += `<path d="M14 -59 Q14 -66 19 -67 Q24 -66 24 -59 Z" fill="${KUPFER}"/><rect x="17.4" y="-71" width="3.2" height="4" fill="#f2e6d0"/><path d="M16.6 -71 Q19 -76 21.4 -71 Z" fill="${KUPFER}"/><path d="M19 -76 V-79" stroke="#d6a93a" stroke-width=".6"/>`;
-  k += `</g>`;
+  for (const x of [-21, -16.5, -12, -7.5]) tf += `M${x + 1} -43 m-1.1 0 a1.1 2 0 1 0 2.2 0 a1.1 2 0 1 0 -2.2 0`;
+  k += `<path d="${tf}" fill="#5c6274" stroke="#fffaf0" stroke-width=".4"/><path d="M-24 -38 V-48.5 M-23 -38 V-48.5 M-5 -38 V-48.5 M-4 -38 V-48.5" stroke="#fffaf0" stroke-width=".6"/><rect x="-25.5" y="-50" width="23" height="1.8" fill="#fffaf0"/>`;
+  k += `<path d="M-25 -50 Q-25 -67 -14 -69 Q-3 -67 -3 -50 Z" fill="${KUPFER}"/>`;
+  k += `<path d="M-21 -50.5 Q-21 -64 -14 -68.5 M-17.5 -50.5 Q-17.5 -64 -14 -68.5 M-10.5 -50.5 Q-10.5 -64 -14 -68.5 M-7 -50.5 Q-7 -64 -14 -68.5" stroke="#3f7562" stroke-width=".5" fill="none"/><path d="M-23.5 -51 Q-23 -63 -16 -67.5" stroke="#c8ecd8" stroke-width=".9" fill="none" opacity=".8"/>`;
+  k += `<rect x="-16.2" y="-76" width="4.4" height="7" fill="#f6ead4"/><rect x="-16.2" y="-76" width="1.2" height="7" fill="#fffaf0"/><path d="M-15 -73.5 v-1.6 q.5 -.8 1 0 v1.6 Z M-13.2 -73.5 v-1.6 q.5 -.8 1 0 v1.6 Z" fill="#5c6274"/>`;
+  k += `<path d="M-17 -76 Q-14 -81 -11 -76 Z" fill="${KUPFER}"/><path d="M-14 -81 V-85 M-15.2 -83.6 h2.4" stroke="#d6a93a" stroke-width=".6"/><circle cx="-14" cy="-81.2" r=".6" fill="#d6a93a"/>`;
+  /* Glockenturm rechts (79 m): heller Schaft mit Pilastern, Galerie mit Balustrade, geschwungene Barockhaube */
+  k += `<rect x="14" y="-58" width="10" height="58" fill="${S.lg("glt", [[0, "#fffaf0"], [0.6, "#efdfc2"], [1, "#cdb898"]], 0, 0, 1, 0)}"/><path d="M14.6 -58 V-4 M23.4 -58 V-4" stroke="#fffaf0" stroke-width=".7"/>`;
+  k += `<path d="M16 -48 v-5.5 q3 -3.4 6 0 v5.5 Z M16.6 -34 v-5 q2.4 -2.4 4.8 0 v5 Z" fill="#5c6274"/><rect x="12.6" y="-59.4" width="12.8" height="1.8" fill="#fffaf0"/>`;
+  k += `<path d="M13 -61.6 h12 M13.4 -59.4 v-2.2 M15.4 -59.4 v-2.2 M17.4 -59.4 v-2.2 M19.4 -59.4 v-2.2 M21.4 -59.4 v-2.2 M23.4 -59.4 v-2.2 M24.6 -59.4 v-2.2" stroke="#fffaf0" stroke-width=".45"/>`;
+  k += `<path d="M14.2 -61.6 Q13.6 -66 17 -67.6 Q19 -68.4 21 -67.6 Q24.4 -66 23.8 -61.6 Z" fill="${KUPFER}"/><path d="M15 -62 Q14.8 -65.6 17.4 -67" stroke="#c8ecd8" stroke-width=".6" fill="none"/>`;
+  k += `<rect x="17.4" y="-72" width="3.2" height="4.4" fill="#f6ead4"/><path d="M16.4 -72 Q19 -77.6 21.6 -72 Z" fill="${KUPFER}"/><path d="M19 -77.6 V-80.6" stroke="#d6a93a" stroke-width=".6"/>`;
   /* der untere Teil steht hinter den Häusern der Kleinseite: dort abschneiden */
-  S.def(`<clipPath id="${S.id("nikclip")}"><rect x="-40" y="-60" width="80" height="${r(60 + (101.5 - yb))}"/></clipPath>`);
+  S.def(`<clipPath id="${S.id("nikclip")}"><rect x="-40" y="-60" width="80" height="${r(60 + (98.2 - yb))}"/></clipPath>`);
   k = `<g clip-path="url(#${S.id("nikclip")})">${k}</g>`;
   S.teil({ id: "nikolauskirche", de: "die Nikolauskirche", syl: "NI-ko-laus-kir-che", it: "la chiesa di San Nicola", itSyl: "CHIE-sa di san ni-CO-la", en: "St Nicholas Church", x: x0, y: yb, steht: true, kunst: k,
     zoom: { x: 204, y: 54, w: 60, h: 40 },
@@ -623,7 +647,7 @@ const NEPO = { s: 34 + 7 * 31, sei: 1 };
   /* die echten Gruppen am Altstädter Ende */
   const GRUPPEN = {
     /* rechts 1: Madonna mit dem heiligen Bernhard — Madonna mit Kind auf Wolken, Bernhard kniet, Putten mit Leidenswerkzeugen */
-    bernhard: () => wolke(0.15, 1.5, 1.7) + gestalt(0.25, 1.75, 0.02, [[0.08, -0.65, -0.12, -0.5]], { kopf: "schleier", heil: true }).replace(/(<path d="M)/, `<g transform="translate(0 -1.45)">$1`) + `<ellipse cx=".08" cy="-2.35" rx=".17" ry=".13" fill="${SF2}"/><circle cx=".0" cy="-2.48" r=".09" fill="${HAUT}"/></g>` + kniend(-0.55, 1.5, 1) + putto(0.75, -0.05, 0.75) + `<path d="M.9 -.4 L1.05 -1.35 M.85 -1.05 L1.2 -1.0" stroke="#2a2724" stroke-width=".07"/>`,
+    bernhard: () => wolke(0.15, 1.5, 1.7) + gestalt(0.25, 1.75, 0.02, [[0.08, -0.65, -0.12, -0.5]], { kopf: "schleier", heil: true }).replace(/(<path d="M)/, `<g transform="translate(0 -1.45)">$1`) + `<ellipse cx=".05" cy="-.95" rx=".2" ry=".14" fill="${SF2}"/><circle cx="-.06" cy="-1.1" r=".1" fill="${HAUT}"/></g>` + kniend(-0.55, 1.5, 1) + putto(0.75, -0.05, 0.75) + `<path d="M.9 -.4 L1.05 -1.35 M.85 -1.05 L1.2 -1.0" stroke="#2a2724" stroke-width=".07"/>`,
     /* links 1: der heilige Ivo — stehend mit Birett und Buch, zu seinen Füßen eine Witwe mit Kind */
     ivo: () => gestalt(0.1, 3.1, -0.01, [[0.12, -0.72, 0.26, -0.55], [-0.12, -0.72, -0.2, -0.86]], { kopf: "birett", mantel: true }) + `<path d="M.6 -1.75 L.95 -1.62 L.9 -1.38 L.55 -1.5 Z" fill="#2c2926"/><path d="M.6 -1.75 L.95 -1.62" stroke="#9a9084" stroke-width=".04"/>` + kniend(-0.6, 1.25, 1) + `<ellipse cx="-1" cy="-.3" rx=".17" ry=".3" fill="${SF2}"/><circle cx="-1" cy="-.68" r=".12" fill="${HAUT}"/>`,
     /* rechts 2: Dominikus und Thomas von Aquin, darüber die Madonna */
