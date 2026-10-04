@@ -755,15 +755,6 @@ const V2 = mensch("V2", { id: "wmr_grill", geschlecht: "m", blick: -14, frisur: 
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
   kleidung: { oberteil: { stueck: "tshirt", farbe: "schwarz" }, schuerze: { stueck: "schuerze", farbe: "weiss" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "halbschuh" }, kopf: { stueck: "kappe", farbe: "rot" } } }, 1.92, GR.D + 0.4, (GR.X0 + GR.X1) / 2 - 0.4, 3, 0.9);
 {
-  const theke = yG(GR.D, 0.95);
-  S.def(`<clipPath id="${S.id("hinterGrill")}"><rect x="-60" y="-120" width="120" height="${r(theke - V2.y + 120)}"/></clipPath>`);
-  /* Grillzange in der rechten Hand, sie greift eine Wurst auf dem Rost */
-  const h = V2.p(V2.m.z.handR), zx = xG(GR.D - 0.15, GR.X0 + 1.1), zy = yG(GR.D - 0.15, 1.02);
-  const zange = `<path d="M${r(h.x - V2.x)} ${r(h.y - V2.y)} L${r(zx - V2.x)} ${r(zy - V2.y)} M${r(h.x - V2.x + 0.4)} ${r(h.y - V2.y + 0.2)} L${r(zx - V2.x + 0.5)} ${r(zy - V2.y)}" stroke="#b9c1c6" stroke-width=".35" stroke-linecap="round"/>`;
-  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "salesman", x: V2.x, y: V2.y,
-    kunst: `<g clip-path="url(#${S.id("hinterGrill")})">${V2.svg}</g>${zange}`, tipp: "Der Verkäufer wendet die Würste mit der Grillzange und fragt: „Mit Senf?“" });
-}
-{
   /* Holzkohlegrill vor der Theke: Wanne, glühende Kohlen, Rost mit Würsten; Rauch zieht nach rechts oben */
   let k = "";
   const X0 = GR.X0 + 0.25, X1 = GR.X1 - 0.25, D = GR.D - 0.3;
@@ -791,6 +782,16 @@ const V2 = mensch("V2", { id: "wmr_grill", geschlecht: "m", blick: -14, frisur: 
     `<path d="${rp([[0.4, 0.2], [0.7, 1.0], [1.6, 1.3], [2.6, 1.6], [3.8, 1.6], [3.8, 1.3], [2.4, 1.2], [1.2, 0.7], [0.8, 0.2]])}" fill="#dcd8d0" opacity=".7"/></g>`);
   S.teil({ id: "rostbratwurst", de: "die Rostbratwurst", syl: "ROST-brat-wurst", it: "la salsiccia alla griglia", itSyl: "sal-SIC-cia AL-la GRI-glia", en: "grilled sausage", x: 0, y: 0, kunst: k,
     tipp: "Die Thüringer Rostbratwurst isst man im Brötchen — mit Senf, ohne Ketchup." });
+}
+{
+  /* nach dem Grill gezeichnet: Hände und Zange liegen über dem Rost, der Körper endet an der Hinterkante des Grills */
+  const theke = yG(GR.D + 0.2, 1.0);
+  S.def(`<clipPath id="${S.id("hinterGrill")}"><rect x="-60" y="-120" width="120" height="${r(theke - V2.y + 120)}"/></clipPath>`);
+  /* Grillzange in der rechten Hand, sie greift eine Wurst auf dem Rost */
+  const h = V2.p(V2.m.z.handR), zx = xG(GR.D - 0.15, GR.X0 + 1.1), zy = yG(GR.D - 0.15, 1.02);
+  const zange = `<path d="M${r(h.x - V2.x)} ${r(h.y - V2.y)} L${r(zx - V2.x)} ${r(zy - V2.y)} M${r(h.x - V2.x + 0.4)} ${r(h.y - V2.y + 0.2)} L${r(zx - V2.x + 0.5)} ${r(zy - V2.y)}" stroke="#b9c1c6" stroke-width=".35" stroke-linecap="round"/>`;
+  S.teil({ id: "verkaeufer", de: "der Verkäufer", syl: "ver-KÄU-fer", it: "il venditore", itSyl: "ven-di-TO-re", en: "salesman", x: V2.x, y: V2.y,
+    kunst: `<g clip-path="url(#${S.id("hinterGrill")})">${V2.svg}</g>${zange}`, tipp: "Der Verkäufer wendet die Würste mit der Grillzange und fragt: „Mit Senf?“" });
 }
 
 /* =====================================================================
@@ -925,7 +926,7 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
       huefteL: { vor: 12, seit: 2, dreh: -5 }, knieL: 6, fussL: 0, huefteR: { vor: -10, seit: 2, dreh: -5 }, knieR: 18, fussR: 10 },
     kleidung: { oberteil: { stueck: "rollkragen", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "#c99a34" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "tasche", farbe: "braun" } } }, 1.68, MD, MX, 2.4, 0.9);
   KLEIN = 8;
-  const KI = mensch("KI", { id: "wmr_kind", alter: "kind", geschlecht: "w", blick: -22, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: true,
+  const KI = mensch("KI", { id: "wmr_kind", alter: "kind", geschlecht: "w", blick: -22, frisur: "zopf", haarfarbe: "blond", haut: "hell", laecheln: false,
     pose: { roll: -1, lende: 2, brust: -1, nacken: 0, kopf: -6,
       schulterL: { vor: 10, seit: 7 }, ellbogenL: 18, unterarmL: 10, handL: 6, fingerL: 0.4,
       schulterR: { vor: 8, seit: 56 }, ellbogenR: 8, unterarmR: 10, handR: 2, fingerR: 0.7,
@@ -933,7 +934,7 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
     kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, jacke: { stueck: "jacke", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "jeans" }, schuhe: { stueck: "gummistiefel" }, kopf: { stueck: "muetze", farbe: "rot" } } }, 1.18, MD - 0.05, MX + 0.6, 2.4, 0.9);
   /* das Kind so stellen, dass seine rechte Hand in der linken Hand der Mutter liegt */
   const hm = MU.p(MU.m.z.handL), hk = KI.p(KI.m.z.handR);
-  KI.x = r(KI.x + hm.x - hk.x - 0.1);
+  KI.x = r(KI.x + hm.x - hk.x - 0.6);
   bodenSchatten(MD, MX, 0.45, 1.68, 0.26);
   bodenSchatten(MD - 0.05, (KI.x - CX) / sk(MD - 0.05), 0.35, 1.18, 0.26);
   /* großer Zopf über dem rechten Unterarm der Mutter */
