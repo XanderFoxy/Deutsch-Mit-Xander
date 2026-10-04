@@ -171,7 +171,7 @@ const wolke = (name, cx, by, W0, H, seed) => {
    1b — DER FLUSS (unterhalb der Fälle, in der Schlucht)
    ===================================================================== */
 {
-  let k = `<path d="M-1 126 L401 126 L401 192 L-1 192 Z" fill="${S.lg("fluss", [[0, "#6f9c98"], [0.25, "#3f8079"], [0.65, "#2d6a64"], [1, "#245a56"]])}"/>`;
+  let k = `<path d="M-1 126 L401 126 L401 202 L-1 202 Z" fill="${S.lg("fluss", [[0, "#6f9c98"], [0.25, "#3f8079"], [0.65, "#2d6a64"], [1, "#245a56"]])}"/>`;
   k += `<path d="M-1 126 L401 126 L401 140 L-1 140 Z" fill="${S.lg("flussglanz", [[0, "#e9eef0", 0.45], [1, "#e9eef0", 0]])}"/>`;
   /* Schaum: weiche, breite Bahnen vom Becken nach links (weichgezeichnet), darüber wenige klare Linien */
   const zf = zufall(61); let weich = "", klar = "";

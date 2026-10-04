@@ -529,7 +529,7 @@ const ICON = {
   /* Brandenburger Tor (sechs Säulen, Quadriga) vor dem Fernsehturm */
   berlin: [11, 14.6, () => {
     const tx = 3.9;
-    let k = `<path d="M${tx - 0.48} -4 L${tx - 0.26} -9.7 L${tx + 0.26} -9.7 L${tx + 0.48} -4 Z" fill="${G.beton}"/>`;
+    let k = `<path d="M${tx - 0.48} -4 L${tx - 0.26} -9.7 L${tx + 0.26} -9.7 L${tx + 0.48} -4 Z" fill="${G.beton}" stroke="#77776f" stroke-width=".16"/>`;
     k += `<circle cx="${tx}" cy="-10.6" r="1.3" fill="${G.silber}"/><path d="M${tx - 1.28} -10.5 H${tx + 1.28}" stroke="#7c8790" stroke-width=".18"/>`;
     k += `<rect x="${tx - 0.18}" y="-12.6" width=".36" height="0.75" fill="${G.beton}"/><path d="M${tx} -14.6 V-11.9" stroke="#c43a2c" stroke-width=".22" stroke-dasharray=".45 .35"/>`;
     const x0 = -1.3;
@@ -603,9 +603,9 @@ const ICON = {
   }],
   /* Rheinturm Düsseldorf: schlanker Schaft, Kanzel mit schrägen Fenstern, Antenne */
   duesseldorf: [3.6, 14.4, () => {
-    let k = `<path d="M-0.6 0 L-0.27 -8.8 L0.27 -8.8 L0.6 0 Z" fill="${G.beton}"/>`;
+    let k = `<path d="M-0.6 0 L-0.27 -8.8 L0.27 -8.8 L0.6 0 Z" fill="${G.beton}" stroke="#77776f" stroke-width=".18"/>`;
     for (let i = 0; i < 7; i++) k += `<circle cx="0" cy="${r(-1.2 - i * 1.05)}" r=".13" fill="#f2c94c"/>`;
-    k += `<path d="M-1.55 -9.0 L1.55 -9.0 L1.2 -10.1 L-1.2 -10.1 Z" fill="${G.beton}"/><path d="M-1.45 -9.25 L1.45 -9.25 L1.25 -9.85 L-1.25 -9.85 Z" fill="#3b4b58"/>`;
+    k += `<path d="M-1.55 -9.0 L1.55 -9.0 L1.2 -10.1 L-1.2 -10.1 Z" fill="${G.beton}" stroke="#77776f" stroke-width=".18"/><path d="M-1.45 -9.25 L1.45 -9.25 L1.25 -9.85 L-1.25 -9.85 Z" fill="#3b4b58"/>`;
     k += `<path d="M-0.22 -10.1 L-0.15 -11.4 L0.15 -11.4 L0.22 -10.1 Z" fill="${G.beton}"/><path d="M0 -14.4 V-11.4" stroke="#c43a2c" stroke-width=".2" stroke-dasharray=".45 .35"/>`;
     return k;
   }],
@@ -675,8 +675,8 @@ const ICON = {
   stuttgart: [9, 14.8, () => {
     let k = `<path d="M-4.5 0 Q-2 -2.5 0 -2.6 Q2.2 -2.4 4.5 0 Z" fill="${G.gruen}"/>`;
     for (let i = 0; i < 5; i++) k += `<path d="M${r(-3.6 + i * 0.4)} ${r(-0.3 - i * 0.45)} Q0 ${r(-1.3 - i * 0.5)} ${r(3.6 - i * 0.4)} ${r(-0.3 - i * 0.45)}" fill="none" stroke="#5e8a3e" stroke-width=".2" stroke-dasharray=".3 .25"/>`;
-    k += `<path d="M-0.62 -2.4 L-0.3 -10 L0.3 -10 L0.62 -2.4 Z" fill="${G.beton}"/>`;
-    k += `<rect x="-1.15" y="-11.9" width="2.3" height="1.9" rx=".2" fill="${G.beton}"/><rect x="-1.15" y="-11.55" width="2.3" height=".45" fill="#3b4b58"/><rect x="-1.15" y="-10.85" width="2.3" height=".45" fill="#3b4b58"/>`;
+    k += `<path d="M-0.62 -2.4 L-0.3 -10 L0.3 -10 L0.62 -2.4 Z" fill="${G.beton}" stroke="#77776f" stroke-width=".18"/>`;
+    k += `<rect x="-1.15" y="-11.9" width="2.3" height="1.9" rx=".2" fill="${G.beton}" stroke="#77776f" stroke-width=".18"/><rect x="-1.15" y="-11.55" width="2.3" height=".45" fill="#3b4b58"/><rect x="-1.15" y="-10.85" width="2.3" height=".45" fill="#3b4b58"/>`;
     k += `<path d="M0 -14.8 V-11.9" stroke="#c43a2c" stroke-width=".26" stroke-dasharray=".5 .4"/>`;
     return k;
   }],
@@ -818,7 +818,7 @@ function stadtBild(id) {
   const fl = (lo, la, t, w = 0, gr = 3.3) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" font-style="italic" text-anchor="middle" fill="#2f6f93" stroke="#eef6f4" stroke-width=".7" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" transform="rotate(${w} ${r(x)} ${r(y)})" letter-spacing=".3">${t}</text>`; };
   g += fl(14.85, 48.12, "Donau", -4, 3.6) + fl(10.5, 50.13, "Main", 8) + fl(9.02, 52.78, "Weser", 62) + fl(7.02, 49.98, "Mosel", 18) + fl(8.93, 48.36, "Neckar", -48, 3) + fl(14.85, 52.6, "Oder", 80);
   const geb = (lo, la, t, w = 0, gr = 3.1) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="${gr}" font-style="italic" text-anchor="middle" fill="#6e5330" stroke="#f2ead2" stroke-width=".7" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" letter-spacing=".7" transform="rotate(${w} ${r(x)} ${r(y)})">${t}</text>`; };
-  g += geb(10.62, 51.67, "Harz") + geb(8.02, 48.35, "Schwarzwald", -82) + geb(13.15, 50.52, "Erzgebirge", -12) + geb(6.62, 50.15, "Eifel");
+  g += geb(10.62, 51.67, "Harz") + geb(8.42, 48.42, "Schwarzwald", -82) + geb(13.15, 50.52, "Erzgebirge", -12) + geb(6.62, 50.15, "Eifel");
   const insel = (lo, la, t, al = "middle") => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="2.7" font-style="italic" text-anchor="${al}" fill="#4d6b52" stroke="#f2f0de" stroke-width=".6" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">${t}</text>`; };
   g += insel(13.45, 54.47, "Rügen") + insel(8.1, 54.93, "Sylt", "end") + insel(7.82, 54.13, "Helgoland", "end");
   { const [x, y] = P(9.28, 47.86); g += `<text x="${r(x)}" y="${r(y)}" font-size="2.9" font-style="italic" text-anchor="middle" fill="#2f6f93" stroke="#eef3ec" stroke-width=".6" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">Bodensee</text>`; }
@@ -887,7 +887,7 @@ function fluss(id, linien, breite, label, worte, tipp) {
   S.teil(Object.assign({ x: 0, y: 0, kunst: k, tipp }, worte));
 }
 const flussText = (lo, la, t, w) => { const [x, y] = P(lo, la); return `<text x="${r(x)}" y="${r(y)}" font-size="3.9" font-style="italic" font-weight="bold" text-anchor="middle" fill="#245f86" stroke="#eef6f4" stroke-width=".8" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif" letter-spacing=".4" transform="rotate(${w} ${r(x)} ${r(y)})">${t}</text>`; };
-fluss("rhein", [FLUESSE.rhein, FLUESSE.alpenrhein], 1.25, flussText(5.75, 51.93, "Rhein", -2),
+fluss("rhein", [FLUESSE.rhein, FLUESSE.alpenrhein], 1.25, flussText(7.66, 48.86, "Rhein", -62),
   { id: "rhein", de: "der Rhein", syl: "RHEIN", it: "il Reno", itSyl: "RE-no", en: "Rhine" },
   "Der Rhein kommt aus den Alpen und fließt durch den Bodensee bis in die Nordsee.");
 S.def(`<path id="${S.id("f_elbe")}" d="${weg(FLUESSE.elbe, false)}"/>`);

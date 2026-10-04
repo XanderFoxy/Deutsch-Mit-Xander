@@ -1285,6 +1285,11 @@ const MANN = { w: [53.5, -49.6] };
   /* Brotkrümel */
   for (let i = 0; i < 9; i++) k += `<circle cx="${r((rnd() - .5) * 1.4 * s)}" cy="${r((rnd() - .5) * .1 * s)}" r="${r(.012 * s)}" fill="#e8c890"/>`;
   k += taube(-.42 * s, -.02 * s, 1, true) + taube(.22 * s, .04 * s, -1, false) + taube(.62 * s, -.05 * s, 1, true);
+  /* eine vierte Taube landet gerade: Flügel hoch */
+  { const x = -.05 * s, y = -.32 * s, g = s * .32;
+    k += `<path d="M${r(x - .3 * g)} ${r(y)} Q${r(x)} ${r(y + .12 * g)} ${r(x + .32 * g)} ${r(y - .02 * g)} Q${r(x + .1 * g)} ${r(y - .14 * g)} ${r(x - .3 * g)} ${r(y)} Z" fill="#8a94a6"/>`;
+    k += `<path d="M${r(x - .05 * g)} ${r(y - .04 * g)} L${r(x - .45 * g)} ${r(y - .5 * g)} L${r(x - .1 * g)} ${r(y - .3 * g)} Z M${r(x + .08 * g)} ${r(y - .04 * g)} L${r(x + .3 * g)} ${r(y - .55 * g)} L${r(x + .2 * g)} ${r(y - .2 * g)} Z" fill="#a8b0c0"/>`;
+    k += `<circle cx="${r(x + .36 * g)}" cy="${r(y - .06 * g)}" r="${r(.06 * g)}" fill="#6a7a8a"/><path d="M${r(x + .41 * g)} ${r(y - .05 * g)} l${r(.07 * g)} ${r(.02 * g)}" stroke="#2a2a2e" stroke-width="${r(.025 * g)}"/>`; }
   S.teil({ id: "taube", de: "die Taube", syl: "TAU-be", it: "il piccione", itSyl: "pic-CIO-ne", en: "pigeon", x: f.x, y: f.y, kunst: k + flaeche(-.62 * s, -.62 * s, 1.5 * s, .7 * s, 0.4),
     tipp: "Die Tauben warten auf Krümel. Wenn jemand ein Brötchen isst, kommen sie sofort." });
 }
