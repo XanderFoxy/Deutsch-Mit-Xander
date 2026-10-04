@@ -429,28 +429,32 @@ const NAH = -138;           // Uferkante vorn (12 m vor uns)
    7 — DER WEG am Südufer und 8 — DER RASEN davor
    ===================================================================== */
 const WEGRAND = -140.6;
+let WEG = null, RASEN = null;
+/* Schatten und Streulaub gehören zum Boden (Weg oder Rasen): sie fangen keinen Tipp ab */
+const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} ${t2(-T.y)})">${svg}</g>`; };
 {
   const kante = pr(0, NAH, 0)[1], rand = pr(0, WEGRAND, 0)[1];
   let k = `<rect x="0" y="${r(kante)}" width="${BR}" height="${r(rand - kante + .5)}" fill="${S.lg("weg", [[0, "#cdbd9c"], [1, "#bba684"]])}"/>`;
   k += `<rect x="0" y="${r(kante - .6)}" width="${BR}" height="1.2" fill="#e8e0cc"/><rect x="0" y="${r(kante + .6)}" width="${BR}" height=".5" fill="#8f8674" opacity=".5"/>`;
   for (let i = 0; i < 70; i++) k += `<circle cx="${r(rnd() * BR)}" cy="${r(kante + 1 + rnd() * (rand - kante - 1))}" r="${r(.15 + rnd() * .35)}" fill="${rnd() < .5 ? "#8f7c5e" : "#efe4cc"}" opacity=".7"/>`;
   const A = anker(40, r((kante + rand) / 2), k);
-  S.teil({ id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", itSyl: "sen-TIE-ro", en: "path", x: A.x, y: A.y, kunst: A.kunst,
+  WEG = S.teil({ id: "weg", de: "der Weg", syl: "WEG", it: "il sentiero", itSyl: "sen-TIE-ro", en: "path", x: A.x, y: A.y, kunst: A.kunst,
     tipp: "Auf dem Weg um den Maschteich gehen die Leute spazieren und joggen." });
 }
 {
   const rand = pr(0, WEGRAND, 0)[1];
   const gras = (name, w, h, n, l, b) => { const z = zufall(w * 100); let m = `<rect width="${w}" height="${h}" fill="#6c8c3c"/>`; for (let i = 0; i < n; i++) { const x = r(z() * w), y = r(z() * h), dx = r((z() - .5) * l * .5); m += `<path d="M${x} ${y} l${dx} ${-l} M${r(+x + b)} ${y} l${r(dx * .6)} ${r(-l * .8)}" stroke="${["#93b04e", "#56742c", "#7f9e44", "#a6bd5e"][Math.floor(z() * 4)]}" stroke-width="${r(b * .6)}"/>`; } S.def(`<pattern id="${S.id(name)}" width="${w}" height="${h}" patternUnits="userSpaceOnUse">${m}</pattern>`); return `url(#${S.id(name)})`; };
-  const G1 = gras("gras1", 2.3, 1.1, 14, .5, .2), G2 = gras("gras2", 4.7, 2.3, 16, 1.1, .35), G3 = gras("gras3", 9.1, 4.3, 18, 2.2, .6);
+  const G1 = gras("gras1", 2.3, 1.1, 14, .5, .2), G2 = gras("gras2", 7, 3.3, 30, 1.1, .35), G3 = gras("gras3", 11, 5.2, 34, 2.2, .6);
   S.def(`<linearGradient id="${S.id("gm2g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(rand + 6)}" x2="0" y2="${r(rand + 16)}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("gm2")}"><rect width="${BR}" height="${HO}" fill="url(#${S.id("gm2g")})"/></mask>`);
   S.def(`<linearGradient id="${S.id("gm3g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(rand + 22)}" x2="0" y2="${r(rand + 34)}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("gm3")}"><rect width="${BR}" height="${HO}" fill="url(#${S.id("gm3g")})"/></mask>`);
   const R0 = `x="0" y="${r(rand)}" width="${BR}" height="${r(HO - rand)}"`;
   let k = `<rect ${R0} fill="${G1}"/><rect ${R0} fill="${G2}" mask="url(#${S.id("gm2")})"/><rect ${R0} fill="${G3}" mask="url(#${S.id("gm3")})"/>`;
-  for (let i = 0; i < 9; i++) k += `<ellipse cx="${r(rnd() * BR)}" cy="${r(rand + 4 + rnd() * (HO - rand - 4))}" rx="${r(14 + rnd() * 24)}" ry="${r(2 + rnd() * 3)}" fill="${i % 2 ? "#3f5a20" : "#d8e08a"}" opacity="${i % 2 ? .16 : .12}"/>`;
+  const FL1 = S.rg("grasfleck1", [[0, "#2f4818", 0.22], [1, "#2f4818", 0]]), FL2 = S.rg("grasfleck2", [[0, "#e4e89a", 0.2], [1, "#e4e89a", 0]]);
+  for (let i = 0; i < 12; i++) { const x = r(rnd() * BR), y = r(rand + 4 + rnd() * (HO - rand - 6)), w = 20 + rnd() * 22; k += `<ellipse cx="${x}" cy="${y}" rx="${r(Math.min(w, x + 4, BR + 4 - x))}" ry="${r(3 + (y - rand) * .12)}" fill="${i % 2 ? FL1 : FL2}"/>`; }
   k += `<rect ${R0} fill="${S.lg("rasenlicht", [[0, "#000", 0.06], [1, "#fff2b0", 0.08]])}"/><path d="M0 ${r(rand)} H${BR}" stroke="#56742c" stroke-width=".8"/>`;
   const A = anker(200, 228, k);
-  S.teil({ id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: A.x, y: A.y, kunst: A.kunst,
-    tipp: "Auf dem Rasen machen die Leute Picknick." });
+  RASEN = S.teil({ id: "rasen", de: "der Rasen", syl: "RA-sen", it: "il prato", itSyl: "PRA-to", en: "lawn", x: A.x, y: A.y, kunst: A.kunst,
+    tipp: "Der Rasen ist im Herbst voller bunter Blätter." });
 }
 
 /* =====================================================================
@@ -517,16 +521,21 @@ const kleineFigur = (svg) => {
 }
 
 /* =====================================================================
-   12 — DAS LAUB auf Weg und Rasen (mit kleinen Schatten)
+   12 — DAS LAUB: ein Laubhaufen am Stammfuß (das Wort); Streublätter
+        liegen auf Weg und Rasen und gehören zu diesen
    ===================================================================== */
+const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .3)} q${r(1.2 * s)} ${r(-1.2 * s)} ${r(2.4 * s)} 0 q${r(-1.2 * s)} ${r(1.2 * s)} ${r(-2.4 * s)} 0 Z" fill="#2a3418" opacity=".25" transform="rotate(${rot} ${r(x + s)} ${r(y)})"/><path d="M${r(x)} ${r(y)} q${r(1.2 * s)} ${r(-1.2 * s)} ${r(2.4 * s)} 0 q${r(-1.2 * s)} ${r(1.2 * s)} ${r(-2.4 * s)} 0 Z" fill="${f}" transform="rotate(${rot} ${r(x + s)} ${r(y)})"/>`;
 {
-  let k = "";
-  for (let i = 0; i < 46; i++) {
-    const x = 110 + rnd() * 200, y = 196 + rnd() * 36, s = .6 + (y - 190) * .05, rot = Math.round(rnd() * 360), f = ["#d9a53a", "#c7702c", "#e0b84a", "#b8542a", "#a8862e"][Math.floor(rnd() * 5)];
-    k += `<path d="M${r(x + s * .5)} ${r(y + s * .3)} q${r(1.2 * s)} ${r(-1.2 * s)} ${r(2.4 * s)} 0 q${r(-1.2 * s)} ${r(1.2 * s)} ${r(-2.4 * s)} 0 Z" fill="#2a3418" opacity=".25" transform="rotate(${rot} ${r(x + s)} ${r(y)})"/><path d="M${r(x)} ${r(y)} q${r(1.2 * s)} ${r(-1.2 * s)} ${r(2.4 * s)} 0 q${r(-1.2 * s)} ${r(1.2 * s)} ${r(-2.4 * s)} 0 Z" fill="${f}" transform="rotate(${rot} ${r(x + s)} ${r(y)})"/>`;
-  }
-  const A = anker(268, 226, k + flaeche(240, 220, 56, 14));
-  S.teil({ oben: true, id: "laub", de: "das Laub", syl: "LAUB", it: "le foglie", itSyl: "FO-glie", en: "fallen leaves", x: A.x, y: A.y, kunst: A.kunst,
+  const LF = ["#d9a53a", "#c7702c", "#e0b84a", "#b8542a", "#a8862e"];
+  let streu = "";
+  for (let i = 0; i < 40; i++) { const x = 110 + rnd() * 200, y = 196 + rnd() * 36, sz = .6 + (y - 190) * .05; streu += blattForm(x, y, sz, Math.round(rnd() * 360), LF[Math.floor(rnd() * 5)]); }
+  aufBoden(RASEN, streu);
+  /* der Haufen am Stammfuß */
+  const p0 = pr(3.4, -141.4, 0);
+  let k = `<ellipse cx="${r(p0[0])}" cy="${r(p0[1] + 1)}" rx="16" ry="3.4" fill="#2a3418" opacity=".22"/>`;
+  for (let i = 0; i < 46; i++) { const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()); const x = p0[0] + Math.cos(a) * d * 14, y = p0[1] + Math.sin(a) * d * 3 - (1 - d) * 2.6; k += blattForm(x, y, .9 + rnd() * .5, Math.round(rnd() * 360), LF[Math.floor(rnd() * 5)]); }
+  const A = anker(p0[0], p0[1] - 2, k);
+  S.teil({ id: "laub", de: "das Laub", syl: "LAUB", it: "le foglie", itSyl: "FO-glie", en: "fallen leaves", x: A.x, y: A.y, kunst: A.kunst,
     tipp: "Im Oktober färbt sich das Laub gelb, orange und rot." });
 }
 
