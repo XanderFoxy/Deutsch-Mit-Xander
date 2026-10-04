@@ -236,7 +236,7 @@ const kuTeile = {};
       { id: "turmspitze", de: "die Turmspitze", syl: "TURM-spit-ze", it: "la guglia", itSyl: "GU-glia", en: "spire", x: kuTeile.spitze[0], y: kuTeile.spitze[1], kunst: flaeche(-3, -8, 6, 9),
         tipp: "Ganz oben auf dem kleinen Türmchen über der Kuppel sitzt die Turmspitze." },
       { id: "eckturm", de: "der Eckturm", syl: "ECK-turm", it: "la torretta", itSyl: "tor-RET-ta", en: "corner turret", x: kuTeile.turm[0], y: kuTeile.turm[1], kunst: flaeche(-4.4, -9, 8.8, 14),
-        tipp: "Vier kleine Türme stehen an den Ecken um die große Kuppel." },
+        tipp: "Dieser kleine Turm steht an einer Ecke der Kuppel. Es gibt vier davon." },
     ] });
 }
 
@@ -671,9 +671,9 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
   /* DIE APFELSCHORLE: Glasflasche mit Etikett und ein Glas mit Bläschen */
   const L0 = auf(.6, .62), lm = mdt(.62);
   let lg = `<path d="M-9 1.2 L9 1.2 L10.4 -.8 L-7.6 -.8 Z" fill="#2a3418" opacity=".25"/>`;
-  lg += `<path d="M-7.4 0 L-1.4 0 L-1.4 -15 Q-1.4 -17.6 -3.2 -19 L-3.2 -22.6 L-5.6 -22.6 L-5.6 -19 Q-7.4 -17.6 -7.4 -15 Z" fill="#dcebd8" opacity=".55"/>`;
+  lg += `<path d="M-7.6 0 L-1.2 0 L-1.2 -14 Q-1.2 -17 -3.2 -18.2 L-3.2 -19.6 L-5.6 -19.6 L-5.6 -18.2 Q-7.6 -17 -7.6 -14 Z" fill="#dcebd8" opacity=".55"/>`;
   lg += `<path d="M-7.1 -.3 L-1.7 -.3 L-1.7 -14.6 L-7.1 -14.6 Z" fill="#e2a43a" opacity=".9"/><rect x="-7.4" y="-10.6" width="6" height="5.2" fill="#f4efe2"/><circle cx="-4.4" cy="-8" r="1.5" fill="#c8323a"/><path d="M-4.4 -9.5 q.4 -.8 1 -.9" stroke="#3f6e2a" stroke-width=".4" fill="none"/>`;
-  lg += `<rect x="-5.8" y="-24" width="2.8" height="1.6" rx=".3" fill="#3f7a3a"/><path d="M-6.6 -14 L-6.6 -1.2" stroke="#fff" stroke-width=".6" opacity=".55"/><path d="M-2.2 -14 L-2.2 -1" stroke="#7a4a12" stroke-width=".5" opacity=".35"/>`;
+  lg += `<rect x="-5.9" y="-21.4" width="3" height="2" rx=".4" fill="#c8323a"/><path d="M-5.6 -20.8 h2.4 M-5.6 -20.1 h2.4" stroke="#8e1f22" stroke-width=".25"/><path d="M-6.6 -14 L-6.6 -1.2" stroke="#fff" stroke-width=".6" opacity=".55"/><path d="M-2.2 -14 L-2.2 -1" stroke="#7a4a12" stroke-width=".5" opacity=".35"/>`;
   lg += `<path d="M1.2 0 L6.6 0 L7.2 -10.4 L.6 -10.4 Z" fill="#eef4f4" opacity=".45"/><path d="M1.4 -.3 L6.4 -.3 L6.9 -8 L.9 -8 Z" fill="#e8b04a" opacity=".88"/><ellipse cx="3.9" cy="-8" rx="3" ry=".55" fill="#f6d27a"/><ellipse cx="3.9" cy="-10.4" rx="3.3" ry=".6" fill="none" stroke="#f4f8f8" stroke-width=".25" opacity=".8"/>`;
   for (const [x, y] of [[2.6, -2], [4.8, -3.4], [3.4, -5.2], [5.6, -6.4], [2.2, -6.8], [4.2, -1.2]]) lg += `<circle cx="${x}" cy="${y}" r=".28" fill="#fff8e0" opacity=".85"/>`;
   lg += `<path d="M1.6 -9.6 L2 -1" stroke="#fff" stroke-width=".5" opacity=".6"/>`;
@@ -708,11 +708,11 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
     /* Lupe am unteren Bildrand: die Decke füllt zwei Drittel, die vier Dinge liegen dicht beisammen */
     zoom: (() => { const xs = [K[0] - 7 * km, L0[0] + 8 * lm, PK[0], KA[0] - 5 * mm], x0 = Math.min(...xs) - 5, x1 = Math.max(...xs) + 5, w = Math.max(42, x1 - x0), h = w * 2 / 3; return { x: r((x0 + x1) / 2 - w / 2), y: r(HO - h), w: r(w), h: r(h) }; })(),
     unter: [
-      { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 1.5 * km * 1.15, y: K[1] - 2 * km * 1.15, kunst: flaeche(-15 * km, -5 * km, 34 * km, 8 * km, .3),
+      { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 1.5 * km * 1.15, y: K[1] - 2 * km * 1.15, kunst: flaeche(-19 * km, -5 * km, 38 * km, 10.5 * km, .3),
         tipp: "Der Leibniz-Keks kommt aus Hannover und hat genau 52 Zähne." },
-      { id: "apfelschorle", de: "die Apfelschorle", syl: "AP-fel-schor-le", it: "l'Apfelschorle (succo di mela e acqua frizzante)", itSyl: "AP-fel-schor-le", en: "apple spritzer", x: L0[0] - 1 * lm, y: L0[1] - 9 * lm, kunst: flaeche(-9 * lm, -16 * lm, 18 * lm, 18 * lm, .3),
+      { id: "apfelschorle", de: "die Apfelschorle", syl: "AP-fel-schor-le", it: "l'Apfelschorle (succo di mela e acqua frizzante)", itSyl: "AP-fel-schor-le", en: "apple spritzer", x: L0[0] - 1 * lm, y: L0[1] - 9 * lm, kunst: flaeche(-8.5 * lm, -18 * lm, 18 * lm, 28.5 * lm, .3),
         tipp: "Apfelschorle ist Apfelsaft mit Sprudelwasser. Beim Picknick im Maschpark ist sie schön kalt." },
-      { id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "la castagna d'India", itSyl: "ca-STA-gna d'IN-dia", en: "conker", x: KA[0] + 1.5 * mm, y: KA[1] - 1.5 * mm, kunst: flaeche(-8 * mm, -6 * mm, 18 * mm, 9 * mm, .3),
+      { id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "la castagna d'India", itSyl: "ca-STA-gna d'IN-dia", en: "conker", x: KA[0] + 1.5 * mm, y: KA[1] - 1.5 * mm, kunst: flaeche(-9 * mm, -6.5 * mm, 21 * mm, 14 * mm, .3),
         tipp: "Im Herbst sammeln Kinder Kastanien und basteln daraus Tiere." },
       { id: "postkarte", de: "die Postkarte", syl: "POST-kar-te", it: "la cartolina", itSyl: "car-to-LI-na", en: "postcard", x: PK[0], y: PK[1], kunst: flaeche(-7.6 * pm, -3 * pm, 15.2 * pm, 6 * pm, .3),
         tipp: "Auf der Karte: die bunten Nanas von Niki de Saint Phalle. Sie stehen am Leineufer." },

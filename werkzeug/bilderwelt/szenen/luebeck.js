@@ -866,17 +866,17 @@ function loewe(L, wach, dir) {
   };
   g += pranke(-0.32, -0.04, 0, 0.055, MI, true);
   /* Vorderbeine: hinteres dunkler; vorderes mit Ellbogen, Handgelenk und Lichtkante */
-  const bein = (dy, fill, licht, x1 = 0.6) => {
-    let o = `<path d="M${P(0.08, 0.25 + dy)} C${P(0.09, 0.15 + dy)} ${P(0.09, 0.07 + dy)} ${P(0.13, 0.03 + dy)} Q${P(0.15, dy)} ${P(0.21, dy)} L${P(0.42, dy)} L${P(0.42, 0.065 + dy)} L${P(0.28, 0.068 + dy)} C${P(0.23, 0.085 + dy)} ${P(0.2, 0.16 + dy)} ${P(0.19, 0.25 + dy)} Z" fill="${fill}"/>`;
+  const bein = (dy, fill, licht, x1 = 0.6, nurPfote = false) => {
+    let o = nurPfote ? `<path d="M${P(0.22, dy)} L${P(0.42, dy)} L${P(0.42, 0.065 + dy)} L${P(0.28, 0.068 + dy)} Q${P(0.22, 0.07 + dy)} ${P(0.22, dy)} Z" fill="${fill}"/>` : `<path d="M${P(0.08, 0.25 + dy)} C${P(0.09, 0.15 + dy)} ${P(0.09, 0.07 + dy)} ${P(0.13, 0.03 + dy)} Q${P(0.15, dy)} ${P(0.21, dy)} L${P(0.42, dy)} L${P(0.42, 0.065 + dy)} L${P(0.28, 0.068 + dy)} C${P(0.23, 0.085 + dy)} ${P(0.2, 0.16 + dy)} ${P(0.19, 0.25 + dy)} Z" fill="${fill}"/>`;
     o += pranke(0.4, x1, dy, 0.075, fill, licht);
-    if (licht) o += `<path d="M${P(0.28, 0.07 + dy)} L${P(0.42, 0.068 + dy)}" stroke="${SP}" stroke-width="${r(0.008 * L)}"/><path d="M${P(0.13, 0.03 + dy)} q${r(dir * 0.004 * L)} ${r(-0.02 * L)} ${r(dir * 0.03 * L)} ${r(-0.025 * L)}" stroke="${HL}" stroke-width="${r(0.007 * L)}" fill="none"/>`;
+    if (licht) o += `<path d="M${P(0.28, 0.07 + dy)} L${P(0.42, 0.068 + dy)}" stroke="${SP}" stroke-width="${r(0.008 * L)}"/>` + (nurPfote ? "" : `<path d="M${P(0.13, 0.03 + dy)} q${r(dir * 0.004 * L)} ${r(-0.02 * L)} ${r(dir * 0.03 * L)} ${r(-0.025 * L)}" stroke="${HL}" stroke-width="${r(0.007 * L)}" fill="none"/>`);
     return o;
   };
   g += bein(0.035, D, false, 0.57);
   if (wach) g += bein(0, EISEN, true);
   /* Mähne: Lockenkranz um den Kopf, Zotteln fallen schräg über Schulter und Brust bis auf das Vorderbein */
   const poly = wach ? [[0.24, 0.66], [0.15, 0.58], [0.09, 0.46], [0.06, 0.34], [0.08, 0.25], [0.15, 0.2], [0.23, 0.16], [0.31, 0.135], [0.37, 0.17], [0.4, 0.28], [0.38, 0.45], [0.36, 0.62], [0.31, 0.67]]
-    : [[0.2, 0.44], [0.1, 0.4], [0.02, 0.3], [0.0, 0.19], [0.06, 0.12], [0.16, 0.09], [0.26, 0.1], [0.31, 0.2], [0.31, 0.34], [0.27, 0.43]];
+    : [[0.2, 0.43], [0.1, 0.39], [0.02, 0.3], [0.0, 0.19], [0.06, 0.12], [0.16, 0.09], [0.25, 0.1], [0.28, 0.2], [0.27, 0.32], [0.25, 0.41]];
   const mx = wach ? 0.2 : 0.16, my = wach ? 0.36 : 0.26;
   const innen = (x, y) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) { const [xi, yi] = poly[i], [xj, yj] = poly[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
   let m = "";
@@ -925,7 +925,7 @@ function loewe(L, wach, dir) {
   };
   g += wach ? kopf(0.35, 0.45, 0.05) : kopf(0.37, 0.19, -0.14);
   /* der schlafende Löwe legt den Kopf auf die gekreuzten Pranken: die vordere liegt über dem Unterkiefer */
-  if (!wach) g += `<g transform="translate(${r(dir * 0.05 * L)} ${r(-0.022 * L)})">${bein(0, EISEN, true, 0.58)}</g>`;
+  if (!wach) g += `<g transform="translate(${r(dir * 0.05 * L)} ${r(-0.022 * L)})">${bein(0, EISEN, true, 0.58, true)}</g>`;
   return g;
 }
 /* Sockel aus Sandstein in Perspektive: Vorderseite mit Quaderfugen, Flecken und bestoßenen Kanten,
