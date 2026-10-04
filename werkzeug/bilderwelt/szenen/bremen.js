@@ -214,29 +214,36 @@ const amBoden = (svg) => { MP.kunst += svg; return ""; };
    1 — DER MARKTPLATZ (Pflaster, Fugen, Schatten des Schüttings)
    ===================================================================== */
 {
-  /* Granitpflaster in Reihen (Läuferverband), drei Maßstäbe: hinten fein, vorn grob */
+  /* Granitpflaster in Reihen, vier Maßstäbe: am Horizont fein und im Dunst aufgelöst, vorn grob.
+     Steine verschieden lang, Fugen nur wenig dunkler (Granit hat wenig Kontrast) */
   const setz = (a, b, nx, ny) => {
-    let m = `<rect width="${r(a * nx)}" height="${r(b * ny)}" fill="#6f6a62"/>`;
-    for (let j = 0; j < ny; j++) for (let i = -1; i < nx; i++) {
-      const x = i * a + (j % 2 ? a / 2 : 0), f = ["#a39e95", "#958f86", "#b2ada3", "#8b867d", "#a8a196", "#9c978e", "#b9b3a8"][Math.floor(rnd() * 7)];
-      if (x + a < 0 || x > a * nx) continue;
-      m += `<rect x="${r(x + a * .06)}" y="${r(j * b + b * .1)}" width="${r(a * .88)}" height="${r(b * .8)}" rx="${r(b * .25)}" fill="${f}"/><rect x="${r(x + a * .12)}" y="${r(j * b + b * .14)}" width="${r(a * .6)}" height="${r(b * .22)}" rx="${r(b * .1)}" fill="#fff" opacity=".12"/>`;
+    const W = a * nx;
+    let m = `<rect width="${r(W)}" height="${r(b * ny)}" fill="#837e75"/>`;
+    for (let j = 0; j < ny; j++) {
+      let x = -rnd() * a;
+      while (x < W) {
+        const w = a * (.7 + rnd() * .55), f = ["#a39e95", "#9a958c", "#aaa59b", "#958f86", "#a59f94", "#9e998f", "#b0aaa0"][Math.floor(rnd() * 7)];
+        for (const dx of x + w > W ? [0, -W] : [0]) m += `<rect x="${r(x + dx + w * .05)}" y="${r(j * b + b * .1)}" width="${r(w * .9)}" height="${r(b * .8)}" rx="${r(b * .25)}" fill="${f}"/>`;
+        x += w;
+      }
     }
     return m;
   };
+  S.def(`<pattern id="${S.id("pf0")}" width="2" height=".56" patternUnits="userSpaceOnUse">${setz(.5, .14, 4, 4)}</pattern>`);
   S.def(`<pattern id="${S.id("pf1")}" width="4.2" height="1.2" patternUnits="userSpaceOnUse">${setz(1.05, .3, 4, 4)}</pattern>`);
   S.def(`<pattern id="${S.id("pf2")}" width="9.6" height="3.2" patternUnits="userSpaceOnUse">${setz(2.4, .8, 4, 4)}</pattern>`);
   S.def(`<pattern id="${S.id("pf3")}" width="21" height="7.2" patternUnits="userSpaceOnUse">${setz(5.25, 1.8, 4, 4)}</pattern>`);
-  S.def(`<linearGradient id="${S.id("m2g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${HOR + 7}" x2="0" y2="${HOR + 16}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("m2")}"><rect width="${BR}" height="${HO}" fill="url(#${S.id("m2g")})"/></mask>`);
-  S.def(`<linearGradient id="${S.id("m3g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${HOR + 22}" x2="0" y2="${HOR + 36}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("m3")}"><rect width="${BR}" height="${HO}" fill="url(#${S.id("m3g")})"/></mask>`);
+  const maske = (n, y0, y1) => S.def(`<linearGradient id="${S.id(n + "g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${HOR + y0}" x2="0" y2="${HOR + y1}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id(n)}"><rect width="${BR}" height="${HO}" fill="url(#${S.id(n + "g")})"/></mask>`);
+  /* Reihenhöhe im Bild ≈ 0,2 m · (y − Horizont)² / (Brennweite · Augenhöhe): fein → grob */
+  maske("m1", 9, 17); maske("m2", 24, 32); maske("m3", 38, 46);
   const boden = `M0 ${HOR - 3} H${BR} V${HO} H0 Z`;
-  let k = `<path d="${boden}" fill="url(#${S.id("pf1")})"/><path d="${boden}" fill="url(#${S.id("pf2")})" mask="url(#${S.id("m2")})"/><path d="${boden}" fill="url(#${S.id("pf3")})" mask="url(#${S.id("m3")})"/>`;
-  k += `<path d="${boden}" fill="${S.lg("bodenluft", [[0, "#e9e6df", 0.6], [0.1, "#e9e6df", 0.18], [0.45, "#fff6e0", 0.06], [1, "#2a2218", 0.1]])}"/>`;
-  /* helle Granitbänder im Raster (5 m), gebogen wie im Panorama */
+  let k = `<path d="${boden}" fill="url(#${S.id("pf0")})"/><path d="${boden}" fill="url(#${S.id("pf1")})" mask="url(#${S.id("m1")})"/><path d="${boden}" fill="url(#${S.id("pf2")})" mask="url(#${S.id("m2")})"/><path d="${boden}" fill="url(#${S.id("pf3")})" mask="url(#${S.id("m3")})"/>`;
+  /* Bodenluft: in 50–100 m löst sich das Pflaster im Dunst auf, nach vorn wird es satter */
+  k += `<path d="${boden}" fill="${S.lg("bodenluft", [[0, "#e6e4de", 0.78], [0.1, "#e6e4de", 0.5], [0.22, "#ebe7de", 0.2], [0.4, "#fff6e0", 0.05], [1, "#2a2218", 0.1]])}"/>`;
+  /* helle Granitbänder quer über den Platz (5 m), fein und blass */
   let g = "";
   for (let y = -54; y <= -4; y += 5) g += linie([[-13, y, 0], [56, y, 0]], 1.5);
-  for (let x = -10; x <= 55; x += 5) g += linie([[x, -56, 0], [x, -1, 0]], 1.5);
-  k += `<path d="${g.replace(/M/g, " M")}" stroke="#dcd7cc" stroke-width=".3" fill="none" opacity=".38"/>`;
+  k += `<path d="${g.replace(/M/g, " M")}" stroke="#dcd7cc" stroke-width=".15" fill="none" opacity=".2"/>`;
   /* Schatten des Schüttings (Sonne 195°, 32° hoch → 1,6 m Schatten je Meter Höhe nach 15°) */
   const sv = (x, y, z) => [x + z * 0.414, y + z * 1.546, 0];
   k += pfad(poly([[8, -57, 0], sv(8, -57, 10.6), sv(8, -64.5, 19.5), sv(40, -64.5, 19.5), sv(40, -57, 10.6), [40, -57, 0]], 2), "#1f2430", ` opacity=".3"`);

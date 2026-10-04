@@ -250,7 +250,7 @@ S.def(`<path id="${S.id("land")}" d="${LAND_D}"/>`);
 {
   let g = "";
   const wl = (lo, la, t, gr = 3, extra = "") => { const [x, y] = P(lo, la); return halo(x, y, t, gr, "#3f7896", "#d6ecf2", `font-style="italic" letter-spacing=".5" ${extra}`, 0.6); };
-  g += wl(-30, 79.5, "N o r d p o l a r m e e r", 3.2) + wl(10, -63, "S ü d p o l a r m e e r", 3.2) + wl(18, 34.6, "Mittelmeer", 2.2);
+  g += wl(-150, 77.5, "N o r d p o l a r m e e r", 3) + wl(10, -63, "S ü d p o l a r m e e r", 3.2) + wl(18, 34.6, "Mittelmeer", 2.2);
   { const [x, y] = P(-140, 1.2); g += text(x, y, "Äquator", 2.6, "#a8453a", `font-style="italic" letter-spacing=".4"`); }
   { const [x, y] = P(10, -82.5); g += text(x, y, "A N T A R K T I S", 3.4, "#7f98a6", `letter-spacing=".8"`); }
   S.hinten(g);
@@ -292,22 +292,6 @@ ozean([[[20, -60], [20, -35], [30, -25], [35, -10], [40, 5], [45, 10], [38, 20],
   [[78, -20, ["Indischer", "Ozean"], 3.6]],
   { id: "indischer_ozean", de: "der Indische Ozean", syl: "IN-di-sche O-ze-an", it: "l'oceano Indiano", itSyl: "o-CE-a-no in-DIA-no", en: "Indian Ocean" },
   "Der Indische Ozean liegt zwischen Afrika, Asien und Australien.");
-
-/* =====================================================================
-   TEILE — 2: die Kontinente
-   ===================================================================== */
-const KONT_D = {};
-for (const [k, ringe] of Object.entries(LAND)) KONT_D[k] = ringe.map((t) => weg(t)).join("");
-function kontinent(id, extra, worte, tipp, mehr = {}) {
-  const [f, rand] = FARBE[id];
-  let k = `<path d="${KONT_D[id]}" fill="${f}" stroke="${rand}" stroke-width=".45" stroke-linejoin="round"/>` + extra;
-  S.teil(Object.assign({ x: 0, y: 0, kunst: k, tipp }, worte, mehr));
-}
-kontinent("amerika", "", { id: "amerika", de: "Amerika", syl: "a-ME-ri-ka", it: "l'America", itSyl: "a-ME-ri-ca", en: "America" }, "Amerika besteht aus Nordamerika und Südamerika.");
-kontinent("afrika", "", { id: "afrika", de: "Afrika", syl: "A-fri-ka", it: "l'Africa", itSyl: "A-fri-ca", en: "Africa" }, "In Afrika liegt die Sahara, die größte heiße Wüste der Welt.");
-kontinent("asien", "", { id: "asien", de: "Asien", syl: "A-si-en", it: "l'Asia", itSyl: "A-sia", en: "Asia" }, "Asien ist der größte Kontinent. Hier wohnen die meisten Menschen.");
-kontinent("australien", "", { id: "australien", de: "Australien", syl: "aus-TRA-li-en", it: "l'Australia", itSyl: "au-STRA-lia", en: "Australia" }, "Australien ist der kleinste Kontinent. Dort leben Kängurus.");
-kontinent("europa", `<path d="${weg(DEUTSCHLAND)}" fill="#d9483a" stroke="#f5c542" stroke-width=".35"/>`, { id: "europa", de: "Europa", syl: "eu-RO-pa", it: "l'Europa", itSyl: "eu-RO-pa", en: "Europe" }, "Europa ist ein kleiner Kontinent mit vielen Ländern.");
 
 /* =====================================================================
    WAHRZEICHEN — Entwurfsgröße etwa 10 Einheiten hoch, Fußpunkt (0,0)
@@ -392,7 +376,140 @@ const ICON = {
     ${[-3.4, 3.4].map((x) => `<rect x="${r(x - 0.55)}" y="-7.6" width="1.1" height="7" fill="${G.orange}"/><path d="M${r(x - 0.55)} -5.6 h1.1 M${r(x - 0.55)} -3.6 h1.1" stroke="#8e2a1f" stroke-width=".25"/>`).join("")}`],
 };
 
-/*@@TEILE@@*/
+/* =====================================================================
+   ORTE — Lage, Bildversatz, Beschriftung, Lupenknopf
+   ===================================================================== */
+/* ll: Länge/Breite; bild: Versatz des Bildes; lab: [dx, dy, Ausrichtung]; knopf: Mitte des Lupenknopfs (Bildkoordinaten) */
+const ORT = {
+  /* in der Lupe Europa (Maßstab 0,4) */
+  grossbritannien: { ll: [-0.13, 51.5], lab: [-4.5, -6, "m"], name: "Großbritannien" },
+  frankreich: { ll: [2.35, 48.86], bild: [0.6, 0], lab: [0, 2.3, "m"], name: "Frankreich" },
+  deutschland: { ll: [10.4, 51.2], lab: [0, -3.6, "m"], name: "Deutschland", rot: true },
+  wien: { ll: [16.37, 48.21], lab: [2.2, -0.2, "s"], name: "Wien" },
+  venedig: { ll: [12.34, 45.43], lab: [1.6, 0.9, "s"], name: "Venedig" },
+  italien: { ll: [11.2, 43.4], bild: [-4.6, -0.2], lab: [-4.6, 1.5, "m"], name: "Italien" },
+  rom: { ll: [12.5, 41.9], bild: [-2.3, 3.1], lab: [-2.3, 4.6, "m"], name: "Rom" },
+  spanien: { ll: [2.17, 41.4], lab: [-5.6, 2, "m"], name: "Spanien" },
+  griechenland: { ll: [23.73, 37.97], lab: [0, 2.1, "m"], name: "Griechenland" },
+  tuerkei: { ll: [28.98, 41.01], lab: [5, 2.3, "m"], name: "Türkei" },
+  moskau: { ll: [37.62, 55.75], lab: [0, 2.1, "m"], name: "Moskau" },
+  /* in der ganzen Karte (Maßstab 0,75) */
+  san_francisco: { ll: [-122.42, 37.77], lab: [0, 3.3, "m"], name: "San Francisco", knopf: [46, 58] },
+  new_york: { ll: [-74.0, 40.71], lab: [2.6, 1.3, "s"], name: "New York", knopf: [133, 44] },
+  mexiko: { ll: [-88.57, 20.68], lab: [0, 3.3, "m"], name: "Mexiko", knopf: [78, 86] },
+  rio: { ll: [-43.21, -22.91], lab: [0, 3.3, "m"], name: "Rio de Janeiro", knopf: [160, 128] },
+  kapstadt: { ll: [18.42, -33.92], lab: [0, 3.3, "m"], name: "Kapstadt", knopf: [193, 152] },
+  aegypten: { ll: [31.13, 29.98], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [207, 72] },
+  dubai: { ll: [55.27, 25.2], lab: [-1.6, 3.3, "m"], name: "Dubai", knopf: [254, 88] },
+  indien: { ll: [78.04, 27.18], lab: [0, 3.3, "m"], name: "Indien", knopf: [288, 88] },
+  peking: { ll: [116.4, 39.9], lab: [0, 3.3, "m"], name: "Peking", knopf: [300, 40] },
+  japan: { ll: [138.73, 35.36], lab: [5.2, 1.4, "s"], name: "Japan", knopf: [350, 52] },
+  sydney: { ll: [151.21, -33.87], lab: [0, 3.3, "m"], name: "Sydney", knopf: [362, 140] },
+};
+function ortBild(id, mass, schrift) {
+  const c = ORT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];
+  const bx = dx0 + bdx, by = dy0 + bdy - (c.bild ? 0 : mass * 0.9);
+  const [W0, H0, f] = ICON[id], W = W0 * mass, H = H0 * mass;
+  let k = `<ellipse cx="${r(bx)}" cy="${r(by - H * 0.45)}" rx="${r(W * 0.72)}" ry="${r(H * 0.64)}" fill="${GLOW}"/>`;
+  if (c.bild) { const ey = bdy > 1 ? by - H - 0.15 : by + 0.1; k += `<path d="M${r(dx0)} ${r(dy0)} L${r(bx)} ${r(ey)}" stroke="#7a5a32" stroke-width="${r(mass * 0.45) || 0.2}" stroke-dasharray="${r(mass * 1.2)} ${r(mass * 0.8)}"/>`; }
+  k += `<g transform="translate(${+bx.toFixed(3)} ${+by.toFixed(3)}) scale(${mass})">${f()}</g>`;
+  k += `<circle cx="${r(dx0)}" cy="${r(dy0)}" r="${r(mass * 1.15) || 0.5}" fill="#c0392b" stroke="#fff8ea" stroke-width="${+(mass * 0.45).toFixed(2)}"/>`;
+  const [lx, ly, al] = c.lab, anchor = { m: "middle", s: "start", e: "end" }[al];
+  k += `<text x="${+(dx0 + lx).toFixed(2)}" y="${+(dy0 + ly).toFixed(2)}" font-size="${schrift}" font-weight="bold" text-anchor="${anchor}" fill="${c.rot ? "#a8261c" : "#3a2716"}" stroke="#fbf5e6" stroke-width="${+(schrift * 0.26).toFixed(2)}" stroke-linejoin="round" paint-order="stroke" ${SERIF}>${c.name}</text>`;
+  return { k, punkt: [dx0, dy0] };
+}
+const WORT = {
+  frankreich: ["Frankreich", "FRANK-reich", "la Francia", "FRAN-cia", "France", "Der Eiffelturm in Paris ist 330 Meter hoch."],
+  grossbritannien: ["Großbritannien", "groß-bri-TAN-ni-en", "la Gran Bretagna", "GRAN bre-TA-gna", "Great Britain", "Big Ben ist die große Glocke im Uhrturm in London."],
+  spanien: ["Spanien", "SPA-ni-en", "la Spagna", "SPA-gna", "Spain", "An der Sagrada Família in Barcelona baut man seit über 140 Jahren."],
+  italien: ["Italien", "i-TA-li-en", "l'Italia", "i-TA-lia", "Italy", "In der Toskana wachsen Zypressen, Oliven und Wein."],
+  rom: ["Rom", "ROM", "Roma", "RO-ma", "Rome", "Im Kolosseum kämpften vor fast 2000 Jahren die Gladiatoren."],
+  venedig: ["Venedig", "ve-NE-dig", "Venezia", "ve-NE-zia", "Venice", "In Venedig gibt es keine Autos. Man fährt mit Booten und Gondeln."],
+  wien: ["Wien", "WIEN", "Vienna", "VIEN-na", "Vienna", "Wien ist die Hauptstadt von Österreich. Im Prater steht das Riesenrad."],
+  deutschland: ["Deutschland", "DEUTSCH-land", "la Germania", "ger-MA-nia", "Germany", "Hier ist Deutschland. Die Lupe führt zur Deutschlandkarte."],
+  griechenland: ["Griechenland", "GRIE-chen-land", "la Grecia", "GRE-cia", "Greece", "Auf der Akropolis in Athen steht der Parthenon, ein Tempel aus Marmor."],
+  tuerkei: ["die Türkei", "tür-KEI", "la Turchia", "tur-CHI-a", "Turkey", "Istanbul liegt in Europa und in Asien. Dazwischen fließt der Bosporus."],
+  moskau: ["Moskau", "MOS-kau", "Mosca", "MO-sca", "Moscow", "Die Basiliuskathedrale am Roten Platz hat bunte Zwiebeltürme."],
+  aegypten: ["Ägypten", "ä-GYP-ten", "l'Egitto", "e-GIT-to", "Egypt", "Die Pyramiden von Gizeh sind über 4500 Jahre alt."],
+  dubai: ["Dubai", "du-BAI", "Dubai", "du-BAI", "Dubai", "Der Burj Khalifa ist das höchste Gebäude der Welt: 828 Meter."],
+  indien: ["Indien", "IN-di-en", "l'India", "IN-dia", "India", "Der Taj Mahal ist ein Grabmal aus weißem Marmor."],
+  peking: ["Peking", "PE-king", "Pechino", "pe-CHI-no", "Beijing", "Die Große Mauer in China ist Tausende Kilometer lang."],
+  japan: ["Japan", "JA-pan", "il Giappone", "giap-PO-ne", "Japan", "Der Fuji ist mit 3776 Metern der höchste Berg Japans."],
+  sydney: ["Sydney", "SYD-ney", "Sydney", "SYD-ney", "Sydney", "Das Opernhaus von Sydney sieht aus wie Segel im Wind."],
+  kapstadt: ["Kapstadt", "KAP-stadt", "Città del Capo", "cit-TÀ del CA-po", "Cape Town", "Über Kapstadt steht der Tafelberg. Oben ist er ganz flach."],
+  rio: ["Rio de Janeiro", "RI-o de Ja-NEI-ro", "Rio de Janeiro", "RI-o de Ja-NEI-ro", "Rio de Janeiro", "Die Christusstatue steht auf dem Berg Corcovado."],
+  mexiko: ["Mexiko", "ME-xi-ko", "il Messico", "MES-si-co", "Mexico", "In Chichén Itzá bauten die Maya eine Pyramide mit 365 Stufen."],
+  new_york: ["New York", "New YORK", "New York", "New YORK", "New York", "Die Freiheitsstatue begrüßt die Schiffe im Hafen von New York."],
+  san_francisco: ["San Francisco", "San Fran-CIS-co", "San Francisco", "San Fran-CI-sco", "San Francisco", "Die Golden Gate Bridge ist rot-orange, damit man sie im Nebel sieht."],
+};
+const wort = (id) => { const [de, syl, it, itSyl, en, tipp] = WORT[id]; return { id, de, syl, it, itSyl, en, tipp, lupe: id === "deutschland" ? "deutschlandkarte" : id }; };
+const verschiebe = (ox, oy, svg) => `<g transform="translate(${+(-ox).toFixed(3)} ${+(-oy).toFixed(3)})">${svg}</g>`;
+
+/* =====================================================================
+   TEILE — 2: die Kontinente (Europa ist die Lupe mit den elf Orten)
+   ===================================================================== */
+const KONT_D = {};
+for (const [k, ringe] of Object.entries(LAND)) KONT_D[k] = ringe.map((t) => weg(t)).join("");
+const kontText = (lo, la, t, gr, farbe, sp = 1.2) => { const [x, y] = P(lo, la); return halo(x, y, t, gr, farbe, "#fbf3df", `font-weight="bold" letter-spacing="${sp}" opacity=".85"`, 0.5); };
+function kontinent(id, extra, worte, tipp, mehr = {}) {
+  const [f, rand] = FARBE[id];
+  const k = `<path d="${KONT_D[id]}" fill="${f}" stroke="${rand}" stroke-width=".45" stroke-linejoin="round"/>` + extra;
+  const x = mehr.x || 0, y = mehr.y || 0;
+  S.teil(Object.assign({ kunst: verschiebe(x, y, k), tipp }, worte, mehr, { x, y }));
+}
+/* Gebirge und Wüsten als weiche Tönung */
+const ton = (lst) => lst.map(([lo, la, rx, ry, w, farbe, a]) => { const [x, y] = P(lo, la); return `<ellipse cx="${r(x)}" cy="${r(y)}" rx="${rx}" ry="${ry}" transform="rotate(${w} ${r(x)} ${r(y)})" fill="${farbe}" opacity="${a}"/>`; }).join("");
+const BERGTON = S.rg("bergton", [[0, "#8b6a3e", 0.55], [1, "#8b6a3e", 0]]), WUESTE = S.rg("wuesteton", [[0, "#fff1c6", 0.8], [1, "#fff1c6", 0]]), WALD = S.rg("waldton", [[0, "#3f7a3a", 0.45], [1, "#3f7a3a", 0]]);
+kontinent("amerika", ton([[-112, 45, 5, 14, 25, BERGTON, 0.7], [-70, -25, 2.2, 16, 5, BERGTON, 0.7], [-60, -5, 14, 7, 0, WALD, 0.7]])
+  + kontText(-100, 50, "NORDAMERIKA", 3.4, "#55703a") + kontText(-60, -14, "SÜDAMERIKA", 3, "#55703a", 0.8),
+  { id: "amerika", de: "Amerika", syl: "a-ME-ri-ka", it: "l'America", itSyl: "a-ME-ri-ca", en: "America" }, "Amerika besteht aus Nordamerika und Südamerika.");
+kontinent("afrika", ton([[12, 22, 18, 7, 0, WUESTE, 0.9], [22, 0, 9, 5, 0, WALD, 0.6]]) + kontText(18, 6, "AFRIKA", 3.6, "#8a5a28"),
+  { id: "afrika", de: "Afrika", syl: "A-fri-ka", it: "l'Africa", itSyl: "A-fri-ca", en: "Africa" }, "In Afrika liegt die Sahara, die größte heiße Wüste der Welt.");
+kontinent("asien", ton([[85, 32, 14, 3.4, -8, BERGTON, 0.75], [45, 24, 8, 4, -20, WUESTE, 0.7]]) + kontText(100, 63, "ASIEN", 4.2, "#8a4a30", 2),
+  { id: "asien", de: "Asien", syl: "A-si-en", it: "l'Asia", itSyl: "A-sia", en: "Asia" }, "Asien ist der größte Kontinent. Hier wohnen die meisten Menschen.");
+kontinent("australien", ton([[128, -25, 9, 5, 0, WUESTE, 0.6]]) + kontText(134, -24, "AUSTRALIEN", 3, "#6a4a7a", 0.6),
+  { id: "australien", de: "Australien", syl: "aus-TRA-li-en", it: "l'Australia", itSyl: "au-STRA-lia", en: "Australia" }, "Australien ist der kleinste Kontinent. Dort leben Kängurus.");
+{
+  /* Europa: Land, Grenzen (für die Lupe), Deutschland rot hervorgehoben, Punkte der elf Orte */
+  let extra = ton([[10, 46.5, 3.4, 1.1, -8, BERGTON, 0.6]]);
+  extra += `<path d="${GRENZEN_EU.map((t) => weg(t, false)).join("")}" fill="none" stroke="#a8853a" stroke-width=".18" stroke-dasharray=".6 .35" opacity=".85"/>`;
+  extra += `<path d="${weg(DEUTSCHLAND)}" fill="#d9483a" stroke="#f5c542" stroke-width=".3"/>`;
+  const [gx, gy] = P(10.4, 51.2);
+  extra += `<circle cx="${r(gx)}" cy="${r(gy)}" r="4.6" fill="none" stroke="#d9483a" stroke-width=".3" stroke-dasharray=".8 .5" opacity=".8"/>`;
+  const EUORTE = ["grossbritannien", "frankreich", "spanien", "italien", "rom", "venedig", "wien", "deutschland", "griechenland", "tuerkei", "moskau"];
+  for (const id of EUORTE) { if (id === "deutschland") continue; const [x, y] = P(...ORT[id].ll); extra += `<circle cx="${r(x)}" cy="${r(y)}" r=".7" fill="#c0392b" stroke="#fff8ea" stroke-width=".25"/>`; }
+  extra += kontText(25, 63.5, "EUROPA", 3.4, "#8a6a28", 1);
+  const unter = EUORTE.map((id) => { const b = ortBild(id, 0.4, 1.55); return Object.assign(wort(id), { x: 0, y: 0, kunst: b.k }); });
+  /* Lupenknopf über dem Atlantik westlich von Irland */
+  const ox = 170 - 16, oy = 36 + 16;
+  kontinent("europa", extra, { id: "europa", de: "Europa", syl: "eu-RO-pa", it: "l'Europa", itSyl: "eu-RO-pa", en: "Europe" },
+    "Europa ist ein kleiner Kontinent mit vielen Ländern. Deutschland liegt in der Mitte.",
+    { x: ox, y: oy, zoom: { x: 178, y: 28, w: 56, h: 37 }, unter });
+}
+
+/* =====================================================================
+   TEILE — 3: die Orte außerhalb Europas
+   ===================================================================== */
+for (const id of ["san_francisco", "new_york", "mexiko", "rio", "kapstadt", "aegypten", "dubai", "indien", "peking", "japan", "sydney"]) {
+  const b = ortBild(id, 0.75, 3.3), c = ORT[id];
+  const ox = c.knopf[0] - 16, oy = c.knopf[1] + 16;
+  S.teil(Object.assign(wort(id), { x: ox, y: oy, kunst: verschiebe(ox, oy, b.k) }));
+}
+
+/* =====================================================================
+   DAVOR — Papier und Kartusche
+   ===================================================================== */
+{
+  let g = `<rect x="0" y="0" width="${BR}" height="${HO}" fill="${S.rg("vignette", [[0, "#fff", 0], [0.72, "#7a5a2a", 0], [1, "#7a5a2a", 0.2]], 0.5, 0.5, 0.75)}"/>`;
+  S.def(`<pattern id="${S.id("korn")}" width="23" height="19" patternUnits="userSpaceOnUse">${Array.from({ length: 24 }, () => `<circle cx="${r(rnd() * 23)}" cy="${r(rnd() * 19)}" r="${r(0.12 + rnd() * 0.2)}" fill="${rnd() < 0.5 ? "#6b4f2a" : "#fff"}" opacity=".16"/>`).join("")}</pattern>`);
+  g += `<rect x="0" y="0" width="${BR}" height="${HO}" fill="url(#${S.id("korn")})"/>`;
+  const x = 330, y = 183, w = 66, h = 23;
+  g += `<rect x="${x + 0.6}" y="${y + 0.8}" width="${w}" height="${h}" rx="2" fill="#3b2a10" opacity=".22"/>`;
+  g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${S.lg("kart", [[0, "#fbf3dc"], [1, "#efe1bb"]])}" stroke="#8a6d43" stroke-width=".5"/><rect x="${x + 1.2}" y="${y + 1.2}" width="${w - 2.4}" height="${h - 2.4}" rx="1.4" fill="none" stroke="#b8975e" stroke-width=".3"/>`;
+  g += text(x + w / 2, y + 9.6, "Die Welt", 6, "#3a2716", `font-weight="bold"`) + text(x + w / 2, y + 16.2, "5 Kontinente · 3 Ozeane", 3, "#5a4026", `font-style="italic"`);
+  S.davor(g);
+}
+
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/weltkarte.js"));
 console.log(aus);

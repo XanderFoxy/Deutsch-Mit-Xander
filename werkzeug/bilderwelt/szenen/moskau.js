@@ -875,14 +875,15 @@ const BODEN_SCHATTEN = [];   /* werden in den Roten Platz gezeichnet (Bodenfläc
 {
   const d = 22.2, l = -5.3, x = r(X(d, l)), y = r(Y(d, 0.35));
   const m = B.mensch({ id: "msk_verk", geschlecht: "w", blick: 30, neigung: 3, frisur: "dutt", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true, pose: "stehen",
-    kleidung: { oberteil: { stueck: "pullover", farbe: "#e9e1cf" }, jacke: { stueck: "weste", farbe: "#6a2a2a" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kopftuch", farbe: "#1f1b1e" } } }, r(1.64 * F / d));
+    kleidung: { oberteil: { stueck: "pullover", farbe: "#e9e1cf" }, jacke: { stueck: "weste", farbe: "#6a2a2a" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "muetze", farbe: "#e9e1cf" } } }, r(1.64 * F / d));
   const theke = Y(STAND.d, STAND.theke) - y;
   const clip = S.id("verkclip");
   S.def(`<clipPath id="${clip}"><rect x="-40" y="-80" width="80" height="${r(80 + theke)}"/></clipPath>`);
-  /* große rote Rosen mit grünen Blättern auf schwarzem Grund (in Figur-Zentimetern) */
+  /* Pawlowo-Possader Tuch über den Schultern: schwarzer Grund, große rote Rosen, grüne Blätter, Fransen (Figur-Zentimeter) */
   const kx = m.z.kopf.x, ky = m.z.kopf.y;
-  let tuch = "";
-  for (const [dx, dy, rr] of [[-6, -6, 3.4], [5, -9, 3], [1, 3, 3.6], [-8, 6, 2.8], [8, 4, 2.6]]) {
+  let tuch = `<path d="M${r(kx - 23)} ${r(ky + 23)} Q${r(kx)} ${r(ky + 13)} ${r(kx + 23)} ${r(ky + 23)} L${r(kx + 20)} ${r(ky + 33)} L${r(kx + 2)} ${r(ky + 52)} L${r(kx - 18)} ${r(ky + 34)} Z" fill="#1f1b1e"/>`;
+  tuch += `<path d="M${r(kx + 20)} ${r(ky + 33)} L${r(kx + 2)} ${r(ky + 52)} L${r(kx - 18)} ${r(ky + 34)}" stroke="#c4232c" stroke-width="1.2" fill="none" stroke-dasharray="1 .8"/>`;
+  for (const [dx, dy, rr] of [[-11, 26, 3.6], [9, 25, 3.2], [-1, 36, 4], [-9, 33, 2.4], [8, 33, 2.4]]) {
     tuch += `<path d="M${r(kx + dx - rr * 1.6)} ${r(ky + dy + rr * 0.3)} q${r(rr * 0.6)} ${r(-rr * 0.9)} ${r(rr * 0.9)} 0 M${r(kx + dx + rr * 0.8)} ${r(ky + dy - rr * 0.9)} q${r(rr * 0.9)} ${r(-rr * 0.2)} ${r(rr * 0.9)} ${r(rr * 0.6)}" stroke="#2f7a3e" stroke-width="${r(rr * 0.5)}" fill="none" stroke-linecap="round"/>`;
     tuch += `<circle cx="${r(kx + dx)}" cy="${r(ky + dy)}" r="${rr}" fill="#c4232c"/><circle cx="${r(kx + dx - rr * 0.2)}" cy="${r(ky + dy - rr * 0.2)}" r="${r(rr * 0.55)}" fill="#e8454a"/><path d="M${r(kx + dx - rr * 0.4)} ${r(ky + dy)} q${r(rr * 0.4)} ${r(-rr * 0.5)} ${r(rr * 0.7)} 0" stroke="#8a1018" stroke-width=".5" fill="none"/>`;
   }
@@ -890,8 +891,8 @@ const BODEN_SCHATTEN = [];   /* werden in den Roten Platz gezeichnet (Bodenfläc
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la venditrice", itSyl: "ven-di-TRI-ce", en: "saleswoman", x, y,
     kunst: `<g clip-path="url(#${clip})"><g transform="scale(${m.k.toFixed(4)})">${kompakt2(abschneiden(m.svg, theke / m.k + 4), 1).replace(/^<g transform="scale\([^)]*\)">/, "<g>")}${tuch}</g></g>`,
     zoom: { x: x - 21, y: y - 52, w: 42, h: 28 },
-    unter: [{ id: "kopftuch", de: "das Kopftuch", syl: "KOPF-tuch", it: "il foulard", itSyl: "fu-LAR", en: "headscarf", x: r(x + kx * m.k), y: r(y + ky * m.k),
-      kunst: flaecheEllipse(0, 0, 4.4, 4.8), tipp: "Schwarze Tücher mit großen roten Rosen kommen aus der Stadt Pawlowski Possad." }] });
+    unter: [{ id: "tuch", de: "das Tuch", syl: "TUCH", it: "lo scialle", itSyl: "SCIAL-le", en: "shawl", x: r(x + kx * m.k), y: r(y + (ky + 32) * m.k),
+      kunst: flaecheEllipse(0, 0, 6, 5), tipp: "Schwarze Tücher mit großen roten Rosen kommen aus der Stadt Pawlowski Possad." }] });
 }
 
 /* =====================================================================

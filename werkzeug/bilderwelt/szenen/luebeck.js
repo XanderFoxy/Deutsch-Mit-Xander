@@ -176,20 +176,21 @@ function wolke(x, y, w, h, seed) {
   const lage = (dx, dy, f, fill) => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(y + dy)}) scale(${f}) translate(${r(-x)} ${r(-y)})"/>`;
   return `<g filter="url(#${S.id("weich")})">${lage(0, 0, 1, "#e9cdb6")}${lage(0.8, -1.4, 0.94, "#f8efe6")}${lage(2.2, -2.8, 0.76, "#fffaf0")}</g>`;
 }
-/* Bäume: Linde (hoch, rund) und Kastanie (breit, gelappt), mit Himmelslöchern und Astwerk */
+/* Bäume: Linde (hoch, rund) und Kastanie (breit, gelappt, dunkler). Eine Kronenform, viermal per <use>
+   (Schatten, Mitte, Licht, Glanz – Licht von rechts), dunkle Astlücken mit Ästen */
 function baum(x, y, h, seed, art = "linde") {
-  const z = zufall(seed), kr = h * (art === "linde" ? 0.3 : 0.38), cy = y - h * (art === "linde" ? 0.66 : 0.6);
-  const t = art === "linde" ? ["#2f4a26", "#4a6c32", "#86a24e"] : ["#243a1e", "#3a5a2a", "#6e8e3e"];
-  let g = `<path d="M${r(x - h * 0.03)} ${y} L${r(x - h * 0.014)} ${r(y - h * 0.48)} L${r(x + h * 0.014)} ${r(y - h * 0.48)} L${r(x + h * 0.03)} ${y} Z" fill="#3e3226"/>`;
-  g += `<path d="M${r(x)} ${r(y - h * 0.42)} L${r(x - kr * 0.7)} ${r(cy - kr * 0.1)} M${r(x)} ${r(y - h * 0.46)} L${r(x + kr * 0.6)} ${r(cy - kr * 0.35)} M${r(x)} ${r(y - h * 0.5)} L${r(x + kr * 0.1)} ${r(cy - kr * 0.7)}" stroke="#3e3226" stroke-width="${r(h * 0.014)}"/>`;
-  const lappen = [];
-  const nl = art === "linde" ? 8 : 11;
-  for (let i = 0; i < nl; i++) { const a = i / nl * Math.PI * 2 + z() * 0.5, rr = kr * (0.5 + z() * 0.25); lappen.push([x + Math.cos(a) * kr * 0.62, cy + Math.sin(a) * kr * (art === "linde" ? 0.75 : 0.5), rr * 0.62]); }
-  lappen.push([x, cy, kr * 0.55]);
-  for (const [a, b, rr] of lappen) g += `<circle cx="${r(a)}" cy="${r(b)}" r="${r(rr)}" fill="${t[0]}"/>`;
-  for (const [a, b, rr] of lappen) g += `<circle cx="${r(a + rr * 0.25)}" cy="${r(b - rr * 0.22)}" r="${r(rr * 0.7)}" fill="${t[1]}"/>`;
-  for (const [a, b, rr] of lappen) if (a > x - kr * 0.2) g += `<circle cx="${r(a + rr * 0.42)}" cy="${r(b - rr * 0.4)}" r="${r(rr * 0.34)}" fill="${t[2]}"/>`;
-  for (let i = 0; i < 3; i++) { const a = -Math.PI * (0.15 + z() * 0.7); g += `<ellipse cx="${r(x + Math.cos(a) * kr * 0.5)}" cy="${r(cy + Math.sin(a) * kr * 0.45)}" rx="${r(kr * 0.06)}" ry="${r(kr * 0.04)}" fill="#a3bfd8" opacity=".85"/>`; }
+  const z = zufall(seed), li = art === "linde", kr = h * (li ? 0.3 : 0.37), cy = y - h * (li ? 0.66 : 0.6);
+  const t = li ? ["#2f4a26", "#4a6c32", "#7d9e48", "#a8c26a"] : ["#22371c", "#36552a", "#5f8238", "#8aa95a"];
+  let g = `<path d="M${r(x - h * 0.03)} ${y} L${r(x - h * 0.014)} ${r(y - h * 0.48)} L${r(x + h * 0.014)} ${r(y - h * 0.48)} L${r(x + h * 0.03)} ${y} Z" fill="#3e3226"/><path d="M${r(x + h * 0.005)} ${y} L${r(x + h * 0.006)} ${r(y - h * 0.46)} L${r(x + h * 0.014)} ${r(y - h * 0.46)} L${r(x + h * 0.03)} ${y} Z" fill="#6a5a46"/>`;
+  const c = [], n = li ? 12 : 15;
+  for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + z() * 0.3, d = kr * (0.5 + z() * 0.3); c.push([x + Math.cos(a) * d * (li ? 1 : 1.2), cy + Math.sin(a) * d * (li ? 0.95 : 0.7), kr * (li ? 0.3 + z() * 0.14 : 0.24 + z() * 0.16)]); }
+  for (let i = 0; i < 4; i++) c.push([x + (z() - 0.5) * kr * 0.9, cy + (z() - 0.5) * kr * 0.6, kr * (0.34 + z() * 0.12)]);
+  const id = S.id("kr" + seed);
+  S.def(`<g id="${id}">${c.map(([a, b2, rr]) => `<circle cx="${r(a)}" cy="${r(b2)}" r="${r(rr)}"/>`).join("")}</g>`);
+  const lage = (dx, dy, f, fill) => `<use href="#${id}" fill="${fill}" transform="translate(${r(x + dx)} ${r(cy + dy)}) scale(${f}) translate(${r(-x)} ${r(-cy)})"/>`;
+  g += `<g filter="url(#${S.id("weich")})">${lage(0, 0, 1, t[0])}${lage(kr * 0.06, -kr * 0.06, 0.9, t[1])}${lage(kr * 0.16, -kr * 0.16, 0.7, t[2])}${lage(kr * 0.26, -kr * 0.26, 0.42, t[3])}</g>`;
+  for (let i = 0; i < 3; i++) { const a = -Math.PI * (0.15 + z() * 0.7), hx = x + Math.cos(a) * kr * 0.7, hy = cy + Math.sin(a) * kr * 0.6; g += `<path d="M${r(hx - kr * 0.07)} ${r(hy)} q${r(kr * 0.05)} ${r(-kr * 0.07)} ${r(kr * 0.12)} ${r(-kr * 0.01)} q${r(-kr * 0.02)} ${r(kr * 0.07)} ${r(-kr * 0.12)} ${r(kr * 0.01)} Z" fill="${t[0]}"/><path d="M${r(hx - kr * 0.06)} ${r(hy + kr * 0.03)} l${r(kr * 0.1)} ${r(-kr * 0.05)}" stroke="#3e3226" stroke-width="${r(kr * 0.02)}"/>`; }
+  g += `<path d="M${r(x)} ${r(y - h * 0.44)} L${r(x - kr * 0.35)} ${r(cy + kr * 0.25)} M${r(x)} ${r(y - h * 0.47)} L${r(x + kr * 0.3)} ${r(cy + kr * 0.2)}" stroke="#3e3226" stroke-width="${r(h * 0.012)}" opacity=".8"/>`;
   return g;
 }
 
@@ -924,6 +925,13 @@ WEG_TEIL.kunst += `<g clip-path="url(#${S.id("wegclip")})">${SCH}</g>`;
 
 /* warmes Nachmittagslicht über allem (fängt keinen Tipp ab) */
 S.davor(`<rect width="${W}" height="${HH}" fill="${S.rg("abend", [[0, "#ffd9a0", 0.16], [0.6, "#ffd9a0", 0], [1, "#000", 0.08]], 0.95, 0.55, 1.1)}" pointer-events="none"/>`);
+
+/* Schlagschatten des Tores auch über Hecke und Baumfüße (nur unten, Kronen bleiben hell) */
+{
+  const bt = S.teile.find((t) => t.id === "baum");
+  S.def(`<clipPath id="${S.id("fussclip")}"><rect x="0" y="${HOR - 6}" width="${W}" height="20"/></clipPath>`);
+  bt.kunst += `<g clip-path="url(#${S.id("fussclip")})"><path d="${S.TORSCHATTEN}" fill="#1e2a12" opacity=".4" filter="url(#${S.id("schw")})"/></g>`;
+}
 
 /* Ladezeit: alle Pfade relativ und auf 0,1 gerundet */
 for (const t of S.teile) { t.kunst = verdichteSVG(t.kunst, 0.1); for (const u of t.unter || []) u.kunst = verdichteSVG(u.kunst, 0.1); }

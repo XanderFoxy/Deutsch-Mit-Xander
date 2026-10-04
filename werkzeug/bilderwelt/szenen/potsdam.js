@@ -132,7 +132,7 @@ S.hinten(`<rect width="400" height="${HOR + 12}" fill="${S.rg("sonne", [[0, "#ff
     const id = S.id("wk" + seed);
     S.def(`<g id="${id}">${c.map(([a, b, rr]) => `<circle cx="${r(a)}" cy="${r(b)}" r="${r(rr)}"/>`).join("")}<ellipse cx="${x}" cy="${r(y - h * 0.12)}" rx="${r(w * 0.5)}" ry="${r(h * 0.16)}"/></g>`);
     const lage = (dx, dy, f, fill, op = 1) => `<use href="#${id}" fill="${fill}" opacity="${op}" transform="translate(${r(x + dx)} ${r(y + dy)}) scale(${f}) translate(${-x} ${-y})"/>`;
-    return `<g filter="url(#${S.id("wolke")})">${lage(1, 1.4, 1, "#a9a6bf", 0.9)}${lage(-0.3, -0.6, 0.94, "#eef0f5")}${lage(-1.4, -2.4, 0.74, "#fff8ec")}</g>`;
+    return `<g filter="url(#${S.id("wolke")})">${lage(0.5, 0.8, 0.97, "#c4c8d4", 0.85)}${lage(-0.3, -0.6, 0.94, "#eef0f5")}${lage(-1.4, -2.4, 0.74, "#fff8ec")}</g>`;
   };
   S.hinten(wolke(74, 40, 70, 20, 3) + wolke(318, 30, 58, 17, 7) + wolke(196, 56, 26, 6, 11) + wolke(268, 72, 18, 4, 13) + wolke(122, 80, 14, 3, 17));
   /* lange Schleierwolken hoch oben */
@@ -169,7 +169,7 @@ const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
     const mid = `${id}_${i}`;
     S.def(`<path id="${mid}" d="${lappenPfad(mx, my, rx, ry, z)}"/><clipPath id="${mid}c"><use href="#${mid}"/></clipPath>`);
     const um = (dx, dy, f) => `transform="translate(${r(mx + dx)} ${r(my + dy)}) scale(${f}) translate(${r(-mx)} ${r(-my)})"`;
-    g += `<use href="#${mid}" fill="${GD}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" ${um(-rx * 0.08, -ry * 0.12, 0.86)}/><use href="#${mid}" fill="${GL}" ${um(-rx * 0.3, -ry * 0.34, 0.5)}/></g>`;
+    g += `<use href="#${mid}" fill="${GD}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" ${um(-rx * 0.08, -ry * 0.12, 0.86)}/><use href="#${mid}" fill="${GL}" ${um(-rx * 0.34, -ry * 0.38, 0.44)}/></g>`;
   });
   for (let i = 0; i < loecher; i++) {
     const a = -Math.PI * (0.12 + z() * 0.76), d = 0.3 + z() * 0.08, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.8;
@@ -232,6 +232,7 @@ S.def(`<g id="${S.id("fenster")}">` +
   `<path d="M-1.05 0 L-1.05 -5.0 Q-1.05 -6.05 0 -6.05 Q1.05 -6.05 1.05 -5.0 L1.05 0 Z" fill="${GLAS}"/>` +
   `<path d="M-1.05 0 L-1.05 -5.0 Q-1.05 -6.05 0 -6.05 Q1.05 -6.05 1.05 -5.0 L.8 -5.0 Q.8 -5.75 0 -5.75 Q-.75 -5.75 -.75 -5.0 L-.75 0 Z" fill="#3a3530" opacity=".45"/>` +
   `<path d="M0 0 V-5.8 M-.9 -1.6 H.95 M-.9 -3.2 H.95 M-.9 -4.8 H.95" stroke="#f6f0e2" stroke-width=".12"/>` +
+  `<rect x=".84" y="-5.1" width=".21" height="5.1" fill="#2e2a40" opacity=".35"/>` +
   `<path d="M-.6 -5.4 L-.1 -5.6 L-.6 -2.2 Z" fill="#fff" opacity=".25"/>` +
   `<path d="M-.5 -6.35 L.5 -6.35 L.3 -7.0 L-.3 -7.0 Z" fill="#f2e7cf"/>` +
   `</g>`);
@@ -282,7 +283,7 @@ const schlossUnter = [];
   /* Gebälk mit Fries und Kranzgesims; unter dem Gesims ein Schattenband */
   const GEB = S.lg("gebaelk", [[0, "#f7edd5"], [1, "#d8c7a0"]]);
   k += `<rect x="${-W - 0.6}" y="${TOP - 1.1}" width="${2 * W + 1.2}" height="1.1" fill="${GEB}"/>`;
-  k += `<rect x="${-W - 0.6}" y="${TOP - 0.05}" width="${2 * W + 1.2}" height=".6" fill="#7a5418" opacity=".22"/>`;
+  k += `<rect x="${-W - 0.6}" y="${TOP - 0.05}" width="${2 * W + 1.2}" height=".6" fill="#3e3868" opacity=".32"/>`;
   k += `<rect x="${-W - 0.8}" y="${TOP - 1.5}" width="${2 * W + 1.6}" height=".45" fill="#fbf4e3"/>`;
   /* Mittelbau: gekrümmtes Gebälk (ovaler Saal) mit der Inschrift im Fries */
   const MB = (y, d) => `M-8.2 ${y} Q0 ${r(y - d)} 8.2 ${y}`;
@@ -315,8 +316,9 @@ const schlossUnter = [];
   }
   /* Attika über dem Mittelbau und die Kuppel */
   const TB = TOP - 2.65;
-  k += `<path d="M-7.6 ${r(TB + 0.2)} L7.6 ${r(TB + 0.2)} L7.6 ${r(TB - 1.3)} L-7.6 ${r(TB - 1.3)} Z" fill="${S.lg("attika", [[0, "#f8dc8a"], [0.55, "#eec35c"], [1, "#c99a3e"]], 0, 0, 1, 0)}"/>`;
-  k += `<rect x="-7.9" y="${r(TB - 1.6)}" width="15.8" height=".35" fill="#fbf4e3"/>`;
+  k += `<path d="M-7.6 ${r(TB + 0.2)} L7.6 ${r(TB + 0.2)} L7.6 ${r(TB - 1.3)} L-7.6 ${r(TB - 1.3)} Z" fill="${S.lg("attika", [[0, "#f6dc90"], [0.55, "#ecc866"], [1, "#c99a48"]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="-7.9" y="${r(TB - 1.6)}" width="15.8" height=".35" fill="#fbf4e3"/><rect x="-7.6" y="${r(TB - 1.25)}" width="15.2" height=".2" fill="#3e3868" opacity=".25"/>`;
+  for (const x of [-7.2, -3.6, 0, 3.6, 7.2]) k += `<rect x="${x - 0.3}" y="${r(TB - 1.25)}" width=".6" height="1.45" fill="${x < 0 ? "#f6e8c4" : "#e0cfa6"}"/>`;
   for (const s of [-1, 1]) k += `<use href="#${S.id("vase")}" transform="translate(${s * 8.5} ${r(TB + 0.1)}) scale(1.1)"/>`;
   /* Kuppel: flach und breit, glatt mit grüner Patina (fleckig), Licht von links */
   const KB = TB - 1.6, KH = 5.9;
@@ -341,7 +343,7 @@ const schlossUnter = [];
   k += `<rect x="-.75" y="${r(LB - 1.0)}" width="1.5" height="1.0" fill="#86bfa5"/><rect x="-.35" y="${r(LB - 0.85)}" width=".25" height=".7" fill="#2c3a42"/><rect x=".15" y="${r(LB - 0.85)}" width=".25" height=".7" fill="#2c3a42"/>`;
   k += `<path d="M-.95 ${r(LB - 1.0)} Q0 ${r(LB - 1.7)} .95 ${r(LB - 1.0)} Z" fill="#6fa58d"/><circle cx="0" cy="${r(LB - 1.9)}" r=".24" fill="${GOLD}"/>`;
   /* Abendwärme auf der Fassade */
-  k += `<rect x="${-W - 0.6}" y="${TOP}" width="${2 * W + 1.2}" height="${-TOP + 0.4}" fill="${S.lg("warm", [[0, "#ffd29a", 0.18], [0.6, "#ffd29a", 0.05], [1, "#7a6aa0", 0.1]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="${-W - 0.6}" y="${TOP}" width="${2 * W + 1.2}" height="${-TOP + 0.4}" fill="${S.lg("warm", [[0, "#ffd29a", 0.24], [0.45, "#ffd29a", 0.06], [1, "#4a4a90", 0.16]], 0, 0, 1, 0)}"/>`;
   S.teil({ id: "schloss", de: "das Schloss", syl: "SCHLOSS", it: "il palazzo", itSyl: "pa-LAZ-zo", en: "palace",
     x: CX, y: PY, kunst: `<g transform="scale(${PU})">${k}</g>`,
     tipp: "Das Schloss Sanssouci war das Sommerschloss von König Friedrich dem Großen. „Sans souci“ ist Französisch und heißt „ohne Sorge“.",
@@ -368,6 +370,7 @@ const NN = 14, ABST = (HALB - TREPPE - 1) / NN;
 const terrUnter = [];
 S.def(`<pattern id="${S.id("sprossen")}" patternUnits="userSpaceOnUse" width="1.5" height="1.6"><path d="M0 0 H1.5 M0 0 V1.6" stroke="#eef0e8" stroke-width=".22"/></pattern>`);
 const NISCHE = S.lg("nischeglas", [[0, "#c3d6dc"], [0.3, "#6a877b"], [0.6, "#2f4a37"], [1, "#22362a"]]);
+const MSCH = S.lg("mauersch", [[0, "#2a2030", 0.34], [1, "#2a2030", 0]]);
 const TERRGRAS = S.lg("terrgras", [[0, "#5d7d38"], [1, "#3d5a26"]]);
 {
   let k = "";
@@ -387,17 +390,23 @@ const TERRGRAS = S.lg("terrgras", [[0, "#5d7d38"], [1, "#3d5a26"]]);
       const wand = `M${xs.map((X) => P(i, X, h1)).join(" L")} L${xs.slice().reverse().map((X) => P(i, X, h0)).join(" L")} Z`;
       const Hh = TH * u, A = ABST * u, X0 = s * (TREPPE + 1.2), x0 = xG(wandD(i, X0), X0), yt = yG(wandD(i, s * 20), h1);
       const z = zufall(100 + i * 7 + (s > 0 ? 3 : 0)), pid = S.id("sp" + pz++);
-      let t = "";
-      for (const zx of [0, A, 2 * A]) {
-        t += `<path d="M${r(zx)} ${r(Hh * 0.98)} Q${r(zx + 0.3)} ${r(Hh * 0.6)} ${r(zx - 0.2)} ${r(Hh * 0.2)}" stroke="#6b5636" stroke-width="${r(0.12 * u)}" fill="none"/>`;
-        for (const wy of [0.3, 0.62]) for (let m = 0; m < 5; m++) {
-          const lx = zx + (z() - 0.5) * A * 0.7, ly = Hh * wy + (z() - 0.6) * Hh * 0.18, gelb = z() < 0.12;
-          t += `<ellipse cx="${r(lx)}" cy="${r(ly)}" rx="${r((0.35 + z() * 0.2) * u)}" ry="${r((0.28 + z() * 0.12) * u)}" fill="${gelb ? "#b9a640" : z() < 0.5 ? "#5f8a3a" : "#7aa04a"}"/>`;
+      /* Rebe als Kandelaber: kurzer Stamm, zwei waagerechte Arme an hellen Drähten, Laub als Band
+         entlang der Arme, Trauben als kleine Kegel darunter. Vier Felder je Kachel, Gelb je Terrasse anders. */
+      let t = `<path d="M0 ${r(Hh * 0.3)} H${r(4 * A)} M0 ${r(Hh * 0.62)} H${r(4 * A)}" stroke="#efe6cc" stroke-width=".14"/>`;
+      const gelbAnteil = 0.04 + i * 0.035;
+      for (let f = 0; f <= 4; f++) {
+        const zx = f * A;
+        t += `<path d="M${r(zx)} ${r(Hh)} L${r(zx)} ${r(Hh * 0.3)} M${r(zx - A * 0.42)} ${r(Hh * 0.62)} H${r(zx + A * 0.42)} M${r(zx - A * 0.4)} ${r(Hh * 0.3)} H${r(zx + A * 0.4)}" stroke="#6b5636" stroke-width="${r(0.1 * u)}" fill="none"/>`;
+        for (const wy of [0.3, 0.62]) for (let m = 0; m < 7; m++) {
+          const lx = zx + (m / 6 - 0.5) * A * 0.84 + (z() - 0.5) * 0.4, ly = Hh * wy - (0.15 + z() * 0.25) * u, g2 = z() < gelbAnteil;
+          t += `<ellipse cx="${r(lx)}" cy="${r(ly)}" rx="${r((0.3 + z() * 0.12) * u)}" ry="${r((0.24 + z() * 0.08) * u)}" fill="${g2 ? "#c2a842" : z() < 0.5 ? "#5a8436" : "#76a046"}"/>`;
         }
-        if (z() < 0.8) t += `<path d="M${r(zx + 0.4)} ${r(Hh * 0.36)} l${r(0.25 * u)} 0 l${r(-0.12 * u)} ${r(0.42 * u)} Z" fill="#4a3566"/>`;
+        for (const wy of [0.3, 0.62]) if (z() < 0.85) {
+          const gx = zx + (z() - 0.5) * A * 0.6, gy = Hh * wy + 0.1 * u, d = 0.07 * u;
+          t += `<g fill="#4a3566"><circle cx="${r(gx - d)}" cy="${r(gy)}" r="${r(d)}"/><circle cx="${r(gx + d)}" cy="${r(gy)}" r="${r(d)}"/><circle cx="${r(gx)}" cy="${r(gy + 1.6 * d)}" r="${r(d)}"/><circle cx="${r(gx)}" cy="${r(gy + 3 * d)}" r="${r(d * 0.9)}"/></g>`;
+        }
       }
-      t += `<path d="M0 ${r(Hh * 0.3)} H${r(2 * A)} M0 ${r(Hh * 0.62)} H${r(2 * A)}" stroke="#7a6e5a" stroke-width=".12" opacity=".7"/>`;
-      S.def(`<pattern id="${pid}" patternUnits="userSpaceOnUse" width="${r(2 * A)}" height="${r(Hh * 1.4)}" patternTransform="translate(${r(x0 + (s > 0 ? 0 : -2 * A))} ${r(yt)})">${t}</pattern>`);
+      S.def(`<pattern id="${pid}" patternUnits="userSpaceOnUse" width="${r(4 * A)}" height="${r(Hh * 1.4)}" patternTransform="translate(${r(x0 + (s > 0 ? A * 0.0 : -4 * A))} ${r(yt)})">${t}</pattern>`);
       k += `<path d="${wand}" fill="${MAUER}"/><path d="${wand}" fill="url(#${pid})"/>`;
       /* verglaste Nischen */
       let nische = "";
@@ -409,7 +418,7 @@ const TERRGRAS = S.lg("terrgras", [[0, "#5d7d38"], [1, "#3d5a26"]]);
       }
       k += `<path d="${nische}" fill="${NISCHE}" stroke="#f4f0e4" stroke-width="${r(0.14 * u)}"/><path d="${nische}" fill="url(#${S.id("sprossen")})" opacity=".75"/>`;
       /* Schlagschatten der Mauerkrone (Sonne SW: nach unten rechts) */
-      k += `<path d="M${xs.map((X) => P(i, X, h1 - 0.08)).join(" L")} L${xs.slice().reverse().map((X) => P(i, X, h1 - 0.55)).join(" L")} Z" fill="#4a3a2a" opacity=".28"/>`;
+      k += `<path d="M${xs.map((X) => P(i, X, h1 - 0.08)).join(" L")} L${xs.slice().reverse().map((X) => P(i, X, h1 - 0.6)).join(" L")} Z" fill="${MSCH}"/>`;
       /* Mauerkrone (Sandstein), oben angestrahlt */
       k += `<path d="M${xs.map((X) => P(i, X, h1 + 0.25)).join(" L")} L${xs.slice().reverse().map((X) => P(i, X, h1 - 0.1)).join(" L")} Z" fill="#fbf3e0"/>`;
     }
@@ -456,8 +465,8 @@ const G = mensch("G", { id: "pdm_gaert", geschlecht: "m", blick: -62, frisur: "k
   pose: { kipp: 8, lende: 4, brust: 4, nacken: 10, kopf: 6, schulterL: { vor: 34, seit: 8, dreh: 10 }, ellbogenL: 46, unterarmL: 40, handL: 0, fingerL: 0.95,
     schulterR: { vor: 20, seit: 10, dreh: 10 }, ellbogenR: 28, unterarmR: 40, handR: 0, fingerR: 0.95,
     huefteL: { vor: 18, seit: 4, dreh: -6 }, knieL: 14, fussL: 4, huefteR: { vor: -12, seit: 4, dreh: -6 }, knieR: 6, fussR: 0 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "arbeitshose" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kappe", farbe: "gruen_d" } } }, 1.78, 31, 5.4, 2, 0.5);
-bodenSchatten(31, 5.4, 0.5, 1.78, 0.26);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "gruen_d" }, unterteil: { stueck: "arbeitshose" }, schuhe: { stueck: "stiefel" }, kopf: { stueck: "kappe", farbe: "gruen_d" } } }, 1.78, 34, 3.4, 2, 0.5);
+bodenSchatten(34, 3.4, 0.5, 1.78, 0.26);
 /* DIE TOURISTIN fotografiert mit dem Handy (von hinten, etwas schräg) */
 const T = mensch("T", { id: "pdm_tour", geschlecht: "w", blick: 160, frisur: "zopf", haarfarbe: "blond", haut: "hell",
   pose: { lende: 1, brust: -2, nacken: 2, kopf: -6, schulterL: { vor: 62, seit: 12, dreh: 10 }, ellbogenL: 96, unterarmL: 30, handL: 4, fingerL: 0.5,
@@ -473,19 +482,19 @@ const M2 = mensch("M2", { id: "pdm_tourist", geschlecht: "m", blick: 196, frisur
   kleidung: { oberteil: { stueck: "tshirt", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh" }, zubehoer: { stueck: "rucksack", farbe: "orange" } } }, 1.82, 25, -0.6);
 bodenSchatten(25, -0.6, 0.5, 1.82, 0.26);
 /* DAS KIND geht zur Treppe, die Kartoffel in der ausgestreckten Hand (Dreiviertel von hinten) */
-const K = mensch("K", { id: "pdm_kind", alter: "kind", geschlecht: "m", blick: 148, frisur: "kurz", haarfarbe: "hellblond", haut: "hell",
+const K = mensch("K", { id: "pdm_kind", alter: "kind", geschlecht: "m", blick: 212, frisur: "kurz", haarfarbe: "hellblond", haut: "hell",
   pose: { lende: 2, brust: -2, nacken: 4, kopf: 0, schulterL: { vor: -14, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.38,
     schulterR: { vor: 34, seit: 46, dreh: 0 }, ellbogenR: 22, unterarmR: 80, handR: 0, fingerR: 0.75,
-    huefteL: { vor: 18, seit: 3, dreh: -4 }, knieL: 10, fussL: 4, huefteR: { vor: -14, seit: 3, dreh: -4 }, knieR: 18, fussR: 14 },
-  kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "muetze", farbe: "blau" } } }, 1.22, 19, 1.3);
-bodenSchatten(19, 1.3, 0.4, 1.22, 0.26);
+    huefteL: { vor: 22, seit: 4, dreh: 0 }, knieL: 8, fussL: 2, huefteR: { vor: -16, seit: 4, dreh: 0 }, knieR: 24, fussR: 18 },
+  kleidung: { oberteil: { stueck: "pullover", farbe: "gelb" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" }, kopf: { stueck: "muetze", farbe: "blau" } } }, 1.22, 19, 0.7);
+bodenSchatten(19, 0.7, 0.4, 1.22, 0.26);
 /* DAS PAAR spaziert um die Fontäne (mittlere Tiefe) */
 const P1 = mensch("P1", { id: "pdm_p1", geschlecht: "w", blick: 120, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", pose: "gehen",
-  kleidung: { oberteil: { stueck: "pullover", farbe: "rosa" }, jacke: { stueck: "mantel", farbe: "beige" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" } } }, 1.66, 50, -6.4, 4, 1, true);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "rosa" }, jacke: { stueck: "mantel", farbe: "beige" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" } } }, 1.66, 46, -6.1, 4, 1, true);
 const P2 = mensch("P2", { id: "pdm_p2", geschlecht: "m", blick: 118, frisur: "glatze", haarfarbe: "grau", haut: "hell", pose: "gehen",
-  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, jacke: { stueck: "jacke", farbe: "braun" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "halbschuh" } } }, 1.8, 50.6, -7.2, 4, 1, true);
-bodenSchatten(50, -6.4, 0.45, 1.66, 0.22);
-bodenSchatten(50.6, -7.2, 0.5, 1.8, 0.22);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, jacke: { stueck: "jacke", farbe: "braun" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "halbschuh" } } }, 1.8, 46.6, -6.8, 4, 1, true);
+bodenSchatten(46, -6.1, 0.45, 1.66, 0.24);
+bodenSchatten(46.6, -6.8, 0.5, 1.8, 0.24);
 
 /* =====================================================================
    4 — DIE TREPPE (Freitreppe, 132 Stufen in sechs Läufen, Sandstein)
@@ -571,21 +580,29 @@ const SOCKEL = S.lg("sockel", [[0, "#faf7f0"], [0.5, "#dcd6ca"], [1, "#9c958a"]]
 const MARMOR_S = S.lg("marmors", [[0, "#ffffff"], [0.5, "#eeebe4"], [0.8, "#c9c3b8"], [1, "#a39d92"]], 0, 0, 1, 0);
 const FALTE = "#b3ad a2".replace(" ", "");
 /* Gewandkörper der Göttinnen: Kontrapost (Standbein links im Bild, Hüfte hoch), Faltenbahnen */
-const GEWAND = `<path d="M-.32 0 L-.3 -.5 Q-.32 -.95 -.3 -1.22 Q-.2 -1.38 -.19 -1.45 Q-.24 -1.66 -.25 -1.86 Q-.14 -1.93 -.05 -1.96 L.06 -1.96 Q.16 -1.93 .25 -1.84 Q.24 -1.64 .19 -1.46 Q.22 -1.32 .24 -1.14 Q.28 -.85 .27 -.55 Q.31 -.25 .37 -.03 L.35 0 Z" fill="${MARMOR_S}"/>` +
-  `<path d="M.06 -1.12 Q.16 -.6 .12 -.02 L.2 -.02 Q.24 -.6 .14 -1.1 Z M-.12 -1.2 Q-.06 -.6 -.1 -.02 L-.04 -.02 Q.0 -.6 -.06 -1.2 Z" fill="${FALTE}" opacity=".7"/>` +
-  `<path d="M.27 -.55 Q.31 -.25 .37 -.03 L.35 0 L.22 0 Q.22 -.4 .2 -.8 Q.24 -1.0 .24 -1.14 Z" fill="#9f998e" opacity=".55"/>` +
-  `<path d="M-.19 -1.45 Q0 -1.52 .19 -1.46 M-.22 -1.7 Q0 -1.62 .21 -1.76" stroke="#bdb7ac" stroke-width=".03" fill="none"/>`;
-const KOPF = (helm) => `<rect x="-.045" y="-2.04" width=".09" height=".11" fill="#e6e2da"/><ellipse cx=".015" cy="-2.14" rx=".1" ry=".125" fill="#f8f6f1"/>` +
-  `<path d="M.06 -2.22 Q.12 -2.14 .07 -2.04 L.115 -2.1 Q.12 -2.2 .1 -2.24 Z" fill="#b9b3a8"/><path d="M-.04 -2.17 h.035 M.04 -2.17 h.03" stroke="#b9b3a8" stroke-width=".02"/>` +
-  (helm ? `<path d="M-.11 -2.14 Q-.12 -2.3 .015 -2.31 Q.14 -2.3 .13 -2.14 Z" fill="#ece8e0"/><path d="M-.08 -2.29 Q.0 -2.48 .14 -2.4 Q.06 -2.36 .02 -2.3 Z" fill="#dcd7ce"/>`
-    : `<path d="M-.09 -2.16 Q-.06 -2.3 .03 -2.29 Q.12 -2.28 .11 -2.16 Q.05 -2.23 -.09 -2.16 Z" fill="#dedad1"/><circle cx="-.06" cy="-2.27" r=".055" fill="#dedad1"/>`);
-S.def(`<g id="${S.id("diana")}">${GEWAND}` +
-  /* rechter Arm greift zum Köcher über der Schulter, linker hält den Bogen */
-  `<path d="M-.32 -1.95 L-.18 -1.5" stroke="#cfc9be" stroke-width=".07" stroke-linecap="round"/>` +
-  `<path d="M-.25 -1.84 Q-.38 -1.6 -.32 -1.5 Q-.24 -1.66 -.24 -1.9" stroke="#f6f4ef" stroke-width=".09" fill="none" stroke-linecap="round"/>` +
-  `<path d="M.24 -1.84 Q.33 -1.6 .34 -1.4 Q.36 -1.25 .37 -1.15" stroke="#d6d1c7" stroke-width=".09" fill="none" stroke-linecap="round"/>` +
-  `<path d="M.42 -1.78 Q.6 -1.2 .38 -.62" stroke="#c9c3b8" stroke-width=".04" fill="none"/><path d="M.42 -1.78 L.38 -.62" stroke="#ddd8cf" stroke-width=".01"/>` +
-  KOPF(false) + `</g>`);
+const SCHATTEN_R = "#8f97a2";   /* kühle Schattenseite rechts */
+const GEWAND = `<path d="M-.31 0 L-.32 -.5 Q-.35 -.95 -.32 -1.2 Q-.22 -1.38 -.2 -1.47 Q-.25 -1.66 -.26 -1.86 Q-.15 -1.93 -.05 -1.96 L.06 -1.96 Q.16 -1.93 .24 -1.84 Q.23 -1.64 .18 -1.47 Q.2 -1.3 .22 -1.1 Q.27 -.8 .3 -.6 Q.28 -.4 .32 -.1 L.36 -.02 L.33 0 Z" fill="${MARMOR_S}"/>` +
+  /* Schattenseite rechts, kühl */
+  `<path d="M.06 -1.95 L.24 -1.84 Q.23 -1.64 .18 -1.47 Q.2 -1.3 .22 -1.1 Q.27 -.8 .3 -.6 Q.28 -.4 .32 -.1 L.36 -.02 L.2 0 Q.17 -.5 .15 -1 Q.12 -1.5 .06 -1.95 Z" fill="${SCHATTEN_R}" opacity=".38"/>` +
+  /* Spielbein: das Knie zeichnet sich ab, zwei Faltenschatten laufen vom Knie nach unten */
+  `<path d="M.19 -.58 Q.16 -.3 .13 -.02 M.28 -.55 Q.31 -.3 .3 -.04 M-.18 -1.12 Q-.14 -.6 -.19 -.02 M-.06 -1.2 Q-.02 -.6 -.06 -.02" stroke="#9f998e" stroke-width=".028" fill="none"/>` +
+  `<path d="M.22 -.66 Q.26 -.62 .24 -.56" stroke="#fff" stroke-width=".03" fill="none"/>` +
+  /* Gürtel kippt zur Standbeinseite (links höher), Lichtkante links */
+  `<path d="M-.21 -1.5 Q0 -1.47 .19 -1.42" stroke="#bdb7ac" stroke-width=".035" fill="none"/>` +
+  `<path d="M-.31 -.1 L-.32 -.5 Q-.35 -.95 -.32 -1.2 Q-.22 -1.38 -.2 -1.47 Q-.25 -1.66 -.26 -1.86" stroke="#ffffff" stroke-width=".03" fill="none"/>`;
+const KOPF = (helm, dreh = 0) => `<g transform="translate(${dreh} 0)"><rect x="-.045" y="-2.04" width=".09" height=".11" fill="#e6e2da"/><ellipse cx=".015" cy="-2.14" rx=".1" ry=".125" fill="#f8f6f1"/>` +
+  `<path d="M.06 -2.24 Q.13 -2.14 .07 -2.03 L.115 -2.1 Q.12 -2.2 .1 -2.26 Z" fill="${SCHATTEN_R}" opacity=".6"/><path d="M-.05 -2.17 h.04 M.04 -2.17 h.035" stroke="#a9a49a" stroke-width=".02"/><path d="M-.04 -2.06 q.05 .03 .1 0" stroke="#b9b3a8" stroke-width=".015" fill="none"/>` +
+  (helm ? `<path d="M-.11 -2.14 Q-.12 -2.3 .015 -2.31 Q.14 -2.3 .13 -2.14 Z" fill="#ece8e0"/><path d="M-.13 -2.24 Q-.02 -2.5 .2 -2.42 Q.1 -2.36 .02 -2.3 Z" fill="#dcd7ce"/><path d="M-.12 -2.28 Q.0 -2.52 .2 -2.44" stroke="#f8f6f2" stroke-width=".02" fill="none"/>`
+    : `<path d="M-.09 -2.16 Q-.06 -2.3 .03 -2.29 Q.12 -2.28 .11 -2.16 Q.05 -2.23 -.09 -2.16 Z" fill="#dedad1"/><circle cx="-.06" cy="-2.27" r=".055" fill="#dedad1"/>`) + `</g>`;
+S.def(`<g id="${S.id("diana")}">` +
+  /* Köcher über der rechten Schulter, Riemen schräg über die Brust */
+  `<path d="M-.31 -1.7 L-.13 -2.24 L-.05 -2.21 L-.23 -1.66 Z" fill="#dcd7cd"/><path d="M-.14 -2.24 l-.03 -.08 M-.1 -2.23 l0 -.09 M-.07 -2.22 l.03 -.08" stroke="#cfc9be" stroke-width=".02"/>` +
+  GEWAND + `<path d="M-.25 -1.86 L.17 -1.44" stroke="#cfc9be" stroke-width=".03"/>` +
+  /* rechter Arm greift zum Köcher, linker hält den Bogen */
+  `<path d="M-.25 -1.84 Q-.4 -1.98 -.36 -2.08 Q-.28 -2.16 -.19 -2.14" stroke="#f4f2ed" stroke-width=".085" fill="none" stroke-linecap="round"/><ellipse cx="-.18" cy="-2.15" rx=".045" ry=".04" fill="#f8f6f1"/>` +
+  `<path d="M.44 -1.9 Q.63 -1.27 .44 -.66" stroke="#d6d1c7" stroke-width=".035" fill="none"/><path d="M.44 -1.9 L.44 -.66" stroke="#e2ddd4" stroke-width=".008"/>` +
+  `<path d="M.24 -1.84 Q.33 -1.6 .35 -1.48 Q.38 -1.36 .44 -1.28" stroke="#d2cdc3" stroke-width=".085" fill="none" stroke-linecap="round"/><ellipse cx=".45" cy="-1.27" rx=".05" ry=".06" fill="#dcd7ce"/>` +
+  KOPF(false, 0.02) + `</g>`);
 S.def(`<g id="${S.id("minerva")}">${GEWAND}` +
   `<ellipse cx=".33" cy="-1.05" rx=".2" ry=".34" fill="${MARMOR_S}"/><ellipse cx=".33" cy="-1.05" rx=".14" ry=".26" fill="none" stroke="#b9b3a8" stroke-width=".02"/>` +
   `<path d="M-.36 -2.5 L-.32 -.02" stroke="#d6d1c7" stroke-width=".035"/><path d="M-.25 -1.84 Q-.38 -1.95 -.36 -2.1" stroke="#f6f4ef" stroke-width=".09" fill="none" stroke-linecap="round"/>` +
@@ -595,14 +612,20 @@ S.def(`<g id="${S.id("juno")}">${GEWAND}` +
   `<path d="M.24 -1.84 Q.34 -1.62 .33 -1.42 Q.36 -1.25 .36 -1.12" stroke="#d6d1c7" stroke-width=".09" fill="none" stroke-linecap="round"/>` +
   `<path d="M-.06 -2.25 L.015 -2.36 L.09 -2.25 Z" fill="#e6e2da"/>` + KOPF(false) + `</g>`);
 S.def(`<g id="${S.id("mars")}">` +
-  `<path d="M-.16 -1.12 L-.13 -.62 L-.12 -.05 L-.02 -.05 L-.02 -.62 L.0 -1.1 Z" fill="${MARMOR_S}"/>` +
-  `<path d="M.04 -1.1 L.14 -.64 L.17 -.1 L.24 -.03 L.3 -.05 L.24 -.14 L.24 -.62 L.17 -1.1 Z" fill="#d2cdc3"/>` +
-  `<path d="M-.19 -1.12 Q-.2 -1.4 -.22 -1.55 Q-.29 -1.75 -.3 -1.86 L-.08 -1.95 L.08 -1.95 L.3 -1.86 Q.29 -1.72 .22 -1.55 Q.2 -1.38 .2 -1.12 Z" fill="${MARMOR_S}"/>` +
-  `<path d="M-.32 -1.88 Q-.36 -1.4 -.28 -.7 L-.08 -.72 Q.05 -.95 .22 -1.08 Q.12 -1.4 -.02 -1.6 Q-.12 -1.78 -.18 -1.94 Z" fill="#f1eee8"/>` +
-  `<path d="M-.26 -1.7 Q-.22 -1.2 -.2 -.78 M-.14 -1.6 Q-.1 -1.2 -.12 -.76" stroke="#bdb7ac" stroke-width=".03" fill="none"/>` +
-  `<path d="M.2 -1.12 Q.2 -1.38 .22 -1.55 Q.29 -1.72 .3 -1.86 L.22 -1.86 Q.14 -1.5 .12 -1.12 Z" fill="#a39d92" opacity=".5"/>` +
-  `<path d="M.27 -1.86 Q.38 -2.05 .4 -2.3" stroke="#e8e4dc" stroke-width=".1" fill="none" stroke-linecap="round"/><path d="M.42 -2.7 L.38 -.2" stroke="#d8d3c9" stroke-width=".035"/><path d="M.42 -2.82 L.45 -2.68 L.39 -2.68 Z" fill="#d8d3c9"/>` +
-  `<ellipse cx="-.36" cy="-1.3" rx=".2" ry=".22" fill="${MARMOR_S}"/><circle cx="-.36" cy="-1.3" r=".05" fill="#c9c3b8"/>` +
+  /* Beine: links Standbein, rechts vorgesetztes Spielbein mit gebeugtem Knie, Waden */
+  `<path d="M-.17 -1.12 Q-.19 -.85 -.14 -.62 Q-.17 -.35 -.13 -.05 L-.03 -.05 Q-.03 -.35 -.02 -.62 L.0 -1.1 Z" fill="${MARMOR_S}"/>` +
+  `<path d="M.03 -1.1 Q.1 -.85 .17 -.62 Q.13 -.38 .17 -.1 L.25 -.02 L.3 -.04 L.24 -.12 Q.25 -.38 .25 -.62 Q.22 -.86 .17 -1.1 Z" fill="#dcd8cf"/>` +
+  /* Rumpf mit Brustpanzer, Mantel über der linken Schulter */
+  `<path d="M-.2 -1.12 Q-.21 -1.4 -.23 -1.55 Q-.3 -1.75 -.3 -1.86 L-.08 -1.95 L.08 -1.95 L.3 -1.86 Q.29 -1.72 .22 -1.55 Q.2 -1.38 .2 -1.12 Z" fill="${MARMOR_S}"/>` +
+  `<path d="M-.14 -1.6 Q0 -1.52 .14 -1.6 M-.12 -1.38 Q0 -1.32 .12 -1.38 M0 -1.85 V-1.2" stroke="#bdb7ac" stroke-width=".025" fill="none"/>` +
+  `<path d="M-.22 -1.12 L.22 -1.12 L.24 -.95 Q0 -.9 -.24 -.95 Z" fill="#e6e2da"/><path d="M-.18 -1.1 V-.96 M-.06 -1.1 V-.92 M.06 -1.1 V-.92 M.18 -1.1 V-.96" stroke="#b9b3a8" stroke-width=".02"/>` +
+  `<path d="M.1 -1.95 L.3 -1.86 Q.29 -1.72 .22 -1.55 Q.2 -1.38 .2 -1.12 L.12 -1.12 Q.14 -1.5 .1 -1.95 Z" fill="${SCHATTEN_R}" opacity=".4"/>` +
+  `<path d="M-.3 -1.86 Q-.38 -1.3 -.3 -.75 L-.24 -.8 Q-.3 -1.3 -.22 -1.8 Z" fill="#ece8e1"/>` +
+  /* rechte Hand am Speerschaft, linker Unterarm trägt den Schild */
+  `<path d="M.42 -2.82 L.37 -.12" stroke="#d8d3c9" stroke-width=".035"/><path d="M.42 -2.94 L.46 -2.78 L.38 -2.78 Z" fill="#d8d3c9"/>` +
+  `<path d="M.27 -1.86 Q.38 -1.96 .4 -2.08" stroke="#e8e4dc" stroke-width=".09" fill="none" stroke-linecap="round"/><ellipse cx=".405" cy="-2.1" rx=".05" ry=".065" fill="#e2ded6"/>` +
+  `<path d="M-.27 -1.84 Q-.36 -1.62 -.34 -1.46 Q-.3 -1.36 -.24 -1.34" stroke="#f6f4ef" stroke-width=".09" fill="none" stroke-linecap="round"/>` +
+  `<ellipse cx="-.34" cy="-1.36" rx=".2" ry=".23" fill="${MARMOR_S}"/><ellipse cx="-.34" cy="-1.36" rx=".15" ry=".18" fill="none" stroke="#b9b3a8" stroke-width=".02"/><circle cx="-.34" cy="-1.36" r=".045" fill="#c9c3b8"/>` +
   KOPF(true) + `</g>`);
 /* sitzend: so sind Venus und Merkur von Pigalle gearbeitet */
 S.def(`<g id="${S.id("sitzend")}">` +
@@ -723,7 +746,7 @@ const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c
     for (let i = 0; i < 9; i++) { const a = z() * 6.28, d = Math.sqrt(z()) * 0.62; g += `<circle cx="${r(Math.cos(a) * d)}" cy="${r(-2.55 + Math.sin(a) * d)}" r=".075" fill="${Math.cos(a) < 0 ? "#f7a832" : "#d4781a"}"/>`; }
     k += `<g transform="translate(${r(x)} ${r(y)}) scale(${u.toFixed(4)})">${g}</g>`;
   }
-  const o = ORANGEN.filter((q) => q.D === 54 && q.X < 0)[0], u = sk(o.D);
+  const o = ORANGEN.filter((q) => q.D === 54 && q.X > 0)[0], u = sk(o.D);
   kuebelUnter = { x: r(xG(o.D, o.X)), y: r(yG(o.D)), u };
   S.teil({ id: "orangenbaum", de: "der Orangenbaum", syl: "o-RAN-gen-baum", it: "l'arancio", itSyl: "a-RAN-cio", en: "orange tree", x: 0, y: 0, kunst: k,
     tipp: "Im Sommer stehen die Orangenbäume draußen im Park. Im Winter kommen sie in die Orangerie.",
@@ -736,11 +759,13 @@ const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c
    10 — DIE BANK am Platzrand (links)
    ===================================================================== */
 {
-  const D = 57, X = -10.4, u = sk(D), x = xG(D, X), y = yG(D);
-  bodenSchatten(D, X, 1.8, 0.9, 0.24);
-  let g = `<path d="M-.85 0 L-.8 -.42 M.85 0 L.8 -.42 M-.8 -.42 L-.82 -.88 M.8 -.42 L.82 -.88" stroke="#2a2d31" stroke-width=".07"/>`;
-  for (let i = 0; i < 3; i++) g += `<rect x="-.95" y="${r(-0.46 - i * 0.07)}" width="1.9" height=".05" fill="${i ? "#f2eee6" : "#d8d2c4"}"/>`;
-  for (let i = 0; i < 3; i++) g += `<rect x="-.9" y="${r(-0.86 + i * 0.12)}" width="1.8" height=".08" fill="#ece7dc"/>`;
+  const D = 57, X = 9.3, u = sk(D), x = xG(D, X), y = yG(D);
+  bodenSchatten(D, X, 1.9, 0.9, 0.28);
+  /* weiße Parkbank: Seitenwangen mit Füßen, Sitzlatten, Lehne; Licht von links */
+  let g = "";
+  for (const sx of [-0.88, 0.88]) g += `<path d="M${r(sx - 0.06)} 0 L${r(sx - 0.04)} -.44 L${r(sx - 0.02)} -.92 L${r(sx + 0.05)} -.92 L${r(sx + 0.05)} -.48 L${r(sx + 0.06)} 0 Z" fill="${sx < 0 ? "#f4f1ea" : "#b9b6ae"}"/><rect x="${r(sx - 0.1)}" y="-.04" width=".2" height=".04" fill="#8a8780"/>`;
+  g += `<rect x="-.98" y="-.5" width="1.96" height=".1" fill="#f6f3ec"/><rect x="-.98" y="-.4" width="1.96" height=".05" fill="#9e9b94"/>`;
+  for (let i = 0; i < 3; i++) g += `<rect x="-.94" y="${r(-0.9 + i * 0.13)}" width="1.88" height=".08" fill="${S.lg("banklatte", [[0, "#ffffff"], [1, "#d2cec6"]], 0, 0, 1, 0)}"/>`;
   g += `<path d="M-.4 -.53 l.12 -.05 l.06 .07 Z M.3 -.52 l.1 -.06 l.05 .08 Z" fill="#c98a2a"/>`;
   S.teil({ id: "bank", de: "die Bank", syl: "BANK", it: "la panchina", itSyl: "pan-CHI-na", en: "bench", x: r(x), y: r(y), steht: true,
     kunst: `<g transform="scale(${u.toFixed(4)})">${g}</g>`, tipp: "Auf der Bank kann man sich ausruhen und auf die Fontäne schauen." });
@@ -751,8 +776,8 @@ S.teil({ id: "paar", de: "das Paar", syl: "PAAR", it: "la coppia", itSyl: "COP-p
 /* =====================================================================
    11 — WEGWEISER, SCHUBKARRE, GÄRTNER, TOURISTIN, HANDY, TOURIST, KIND, KARTOFFEL
    ===================================================================== */
-const WW = { D: 24, X: -4.7 };
-const SK = { D: 29, X: 6.9 };
+const WW = { D: 24, X: -5.2 };
+const SK = { D: 32, X: 4.7 };
 bodenSchatten(WW.D, WW.X, 0.12, 2.7, 0.2);
 bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
 {
@@ -762,10 +787,10 @@ bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
   /* wir schauen nach Norden: Westen zeigt nach links, Osten (Stadt) nach rechts */
   const schilder = [[-2.5, -1, "Neues Palais 1,7 km"], [-2.18, -1, "Orangerieschloss 0,7 km"], [-1.86, 1, "Brandenburger Tor 1,3 km"], [-1.54, 1, "Holländisches Viertel 2,3 km"]];
   for (const [y, s, t] of schilder) {
-    const w = 1.62;
+    const w = 1.3;
     const p = s > 0 ? `M.06 ${y} L${w} ${y} L${w + 0.14} ${r(y + 0.13)} L${w} ${r(y + 0.26)} L.06 ${r(y + 0.26)} Z` : `M-.06 ${y} L${-w} ${y} L${-w - 0.14} ${r(y + 0.13)} L${-w} ${r(y + 0.26)} L-.06 ${r(y + 0.26)} Z`;
     g += `<path d="${p}" fill="#f7f5ee" stroke="#2f5a3c" stroke-width=".025"/><path d="${p}" fill="#3a3550" opacity=".08" transform="translate(.02 .03)"/>`;
-    g += `<text x="${s > 0 ? 0.13 : -0.13}" y="${r(y + 0.185)}" font-size=".108" ${s > 0 ? "" : `text-anchor="end" `}fill="#2f5a3c" font-family="Arial,sans-serif" font-weight="bold">${t}</text>`;
+    g += `<text x="${s > 0 ? 0.13 : -0.13}" y="${r(y + 0.185)}" font-size=".092" ${s > 0 ? "" : `text-anchor="end" `}fill="#2f5a3c" font-family="Arial,sans-serif" font-weight="bold">${t}</text>`;
   }
   S.teil({ id: "wegweiser", de: "der Wegweiser", syl: "WEG-wei-ser", it: "il cartello stradale", itSyl: "car-TEL-lo stra-DA-le", en: "signpost", x: r(xG(WW.D, WW.X)), y: r(yG(WW.D)), steht: true,
     kunst: `<g transform="scale(${u.toFixed(4)})">${g}</g>`, tipp: "Potsdam hat auch ein Brandenburger Tor. Es ist älter als das Tor in Berlin." });
@@ -798,7 +823,7 @@ bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
   const z = zufall(77);
   for (let i = 0; i < 26; i++) { const x = fx - 6 + z() * 7 - G.x, y = gy + 0.4 - z() * 1.4 - G.y; laub += `<path d="M${r(x)} ${r(y)} q.4 -.5 .9 0 q-.4 .4 -.9 0 Z" fill="${["#c98a2a", "#a4642a", "#d9b23a", "#b8502a"][i % 4]}" transform="rotate(${Math.round(z() * 180)} ${r(x)} ${r(y)})"/>`; }
   S.teil({ id: "gaertner", de: "der Gärtner", syl: "GÄRT-ner", it: "il giardiniere", itSyl: "giar-di-NIE-re", en: "gardener", x: G.x, y: G.y, kunst: laub + G.svg + g,
-    tipp: "Der Gärtner recht das Laub zusammen. Im Park Sanssouci arbeiten viele Gärtner." });
+    tipp: "Der Gärtner sammelt das Laub mit dem Rechen. Im Park Sanssouci arbeiten viele Gärtner." });
 }
 {
   const hs = [T.m.z.handL, T.m.z.handR].map((h) => T.p(h));
