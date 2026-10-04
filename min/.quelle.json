@@ -45,17 +45,17 @@
  "data-vocab.js": "4d1c59095b00c2be502216599ba8328d5402a7fe",
  "backend.js": "c6b366da16e1a5ec6e9a4f97c52686c9c151c7ed",
  "data-lesetexte.js": "3896db02514c24a24d57d055e51b388a8730fd3b",
- "spiel.js": "3ed8ffe780b33b144ad8b6c790955341fc899769",
  "data-italienisch.js": "705ae2d7e61ddf90c9fd83e7c653602b299bd710",
  "data-tutor.js": "8ac5d581188aabfe22784be7260db93d01265aba",
  "livechat.js": "bc5a211006ff3ef1e13d98b2ff19503697d4aa29",
  "data-kreuzwort.js": "43c15d7eba41a436b8545908b0567ffb5d0161f8",
  "data-minibilder.js": "11474463be41cbe95be5093573363f4920ea0c80",
  "app-styles.css": "7d605bfdf31485176dc4813ea5790e198dcb6d39",
- "korrekturen.css": "9086685ccd1866abb6c962f25d3cf67fa7ddf654",
- "spiel.css": "81257285594df053f230c3aa9d0a9519ae88cafd",
  "data-exercises.js": "b395f55eb9a5b0e9bc8b95aa97e72fe43ff8a253",
  "data-werkstatt.js": "3ca199bf5f0f544a3d713523850e9b92dcc1620f",
- "app.js": "8895e465b7f51dd9412e14ff71c270d6634be0a2",
- "styles.css": "5794971a647adc6f59393313f66ecaf4a4ead4b6"
+ "styles.css": "5794971a647adc6f59393313f66ecaf4a4ead4b6",
+ "app.js": "1b82cd31776a04d708a50b066a1e97611c05bea6",
+ "korrekturen.css": "e528183acce1cc106597a6660977484b26441f15",
+ "spiel.css": "41d4e516cb1a83f200d61582a1f895d92e361c38",
+ "spiel.js": "5c43a11ad13289f2701f7a755512e514f4f7ed06"
 }
