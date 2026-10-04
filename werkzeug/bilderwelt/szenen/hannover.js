@@ -525,12 +525,15 @@ const kleineFigur = (svg) => {
 {
   const m = mass(BANK.y), p = pr(BANK.x + .5, BANK.y + .15, 0);
   const f = B.mensch({ id: "han_spaz", geschlecht: "w", pose: "sitzen", blick: 184, frisur: "dutt", haarfarbe: "grau", haut: "hell", alter: "alt",
-    kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "grau" }, jacke: { stueck: "mantel", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, zubehoer: { stueck: "schal", farbe: "rot" } } }, 1.64 * m);
+    kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, unterteil: { stueck: "hose", farbe: "grau" }, jacke: { stueck: "mantel", farbe: "beige" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.64 * m);
   const sitz = f.z.sitz ? f.z.sitz.y * f.k : -.45 * m;
   S.def(`<clipPath id="${S.id("sitz")}"><rect x="-60" y="-200" width="120" height="${r(200 + sitz + 1)}"/></clipPath>`);
   const kopf = [p[0], p[1] - 1.25 * m];
+  /* Rückansicht: Hinterkopf ganz mit grauem Haar, Dutt tief am Hinterkopf, schmaler Nacken, roter Schal als Ring um den Hals */
+  const hk = [f.z.kopf.x * f.k, f.z.kopf.y * f.k], cm = f.k;
+  const hinterkopf = `<ellipse cx="${r(hk[0])}" cy="${r(hk[1] + 1 * cm)}" rx="${r(9.6 * cm)}" ry="${r(11.4 * cm)}" fill="${S.lg("grauhaar", [[0, "#d9d6d0"], [1, "#9e9a92"]], 0, 0, 1, 0)}"/><path d="M${r(hk[0] - 6 * cm)} ${r(hk[1] - 4 * cm)} Q${r(hk[0])} ${r(hk[1] - 9 * cm)} ${r(hk[0] + 6 * cm)} ${r(hk[1] - 3 * cm)}" stroke="#f2f0ec" stroke-width="${r(1.2 * cm * 10) / 10}" fill="none" opacity=".7"/><circle cx="${r(hk[0] + .5 * cm)}" cy="${r(hk[1] + 5 * cm)}" r="${r(4.6 * cm)}" fill="#a8a49c"/><circle cx="${r(hk[0] - .6 * cm)}" cy="${r(hk[1] + 4 * cm)}" r="${r(1.8 * cm)}" fill="#d9d6d0"/><rect x="${r(hk[0] - 3.4 * cm)}" y="${r(hk[1] + 10.4 * cm)}" width="${r(6.8 * cm)}" height="${r(2.2 * cm)}" fill="#e2b48e"/><ellipse cx="${r(hk[0])}" cy="${r(hk[1] + 13.6 * cm)}" rx="${r(8 * cm)}" ry="${r(2.8 * cm)}" fill="#c8323a"/>`;
   S.teil({ id: "spaziergaengerin", de: "die Spaziergängerin", syl: "spa-ZIER-gän-ge-rin", it: "la signora a passeggio", itSyl: "si-GNO-ra a pas-SEG-gio", en: "walker", x: kopf[0], y: kopf[1],
-    kunst: `<g transform="translate(${t2(p[0] - kopf[0])} ${t2(p[1] - kopf[1])})"><g clip-path="url(#${S.id("sitz")})">${kleineFigur(f.svg)}</g></g>`,
+    kunst: `<g transform="translate(${t2(p[0] - kopf[0])} ${t2(p[1] - kopf[1])})"><g clip-path="url(#${S.id("sitz")})">${kleineFigur(f.svg)}</g>${hinterkopf}</g>`,
     tipp: "Sie macht eine Pause und schaut über den Teich zum Rathaus." });
 }
 {
@@ -636,7 +639,7 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
   const A = anker(L(.5, .1)[0], L(.5, .1)[1], k);
   S.teil({ oben: true, id: "decke", de: "die Decke", syl: "DE-cke", it: "la coperta", itSyl: "co-PER-ta", en: "picnic blanket", x: A.x, y: A.y, kunst: A.kunst,
     tipp: "Bei schönem Wetter machen viele ein Picknick im Maschpark.",
-    zoom: { x: r(Math.max(0, L(.05, .5)[0] - 3)), y: HO - 60, w: 90, h: 60 },
+    zoom: (() => { const xs = [K[0], L0[0], PK[0], KA[0]], ys = [K[1], L0[1] - 8 * lm, PK[1], KA[1]]; const x0 = Math.min(...xs) - 7, x1 = Math.max(...xs) + 7, w = Math.max(54, x1 - x0), h = w * 2 / 3, my = (Math.min(...ys) + Math.max(...ys)) / 2; return { x: r(Math.max(0, x0)), y: r(Math.max(0, Math.min(HO - h, my - h / 2))), w: r(w), h: r(h) }; })(),
     unter: [
       { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 1.5 * km * 1.15, y: K[1] - 2 * km * 1.15, kunst: flaeche(-15 * km, -5 * km, 34 * km, 8 * km, .3),
         tipp: "Der Leibniz-Keks kommt aus Hannover und hat genau 52 Zähne." },

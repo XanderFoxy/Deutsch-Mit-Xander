@@ -288,16 +288,15 @@ const schlossUnter = [];
   {
     const z = zufall(71);
     let fl = "";
-    for (let i = 0; i < 16; i++) { const t = z() * 2 - 1, v = z(); fl += `<ellipse cx="${r(t * 6)}" cy="${r(KB - 0.6 - v * (KH - 1.2) * (1 - t * t * 0.6))}" rx="${r(0.4 + z() * 0.8)}" ry="${r(0.25 + z() * 0.4)}" fill="${z() < 0.5 ? "#4f8670" : "#b8e0cc"}" opacity=".35"/>`; }
+    for (let i = 0; i < 16; i++) { const t = z() * 2 - 1, v = z(); fl += `<ellipse cx="${r(t * 6)}" cy="${r(KB - 0.6 - v * (KH - 1.2) * (1 - t * t * 0.6))}" rx="${r(0.4 + z() * 0.8)}" ry="${r(0.25 + z() * 0.4)}" fill="${z() < 0.5 ? "#5a917a" : "#a9d6c0"}" opacity=".18"/>`; }
     k += fl;
   }
   k += `<path d="M-2.6 ${r(KB)} Q-2.4 ${r(KB - KH * 0.8)} 0 ${r(KB - KH)} M2.6 ${r(KB)} Q2.4 ${r(KB - KH * 0.8)} 0 ${r(KB - KH)}" stroke="#4a7d68" stroke-width=".06" fill="none" opacity=".6"/>`;
   k += `<path d="M-6.6 ${r(KB - 0.4)} C-6.4 ${r(KB - KH * 0.6)} -3.6 ${r(KB - KH * 0.94)} -.8 ${r(KB - KH * 0.98)}" stroke="#e2f5ea" stroke-width=".4" fill="none" opacity=".5"/>`;
   /* Ochsenaugen mit Sandsteinrahmen, Kartusche oben und Girlande unten */
-  for (const [x, f] of [[-4.6, 0.8], [0, 0.9], [4.6, 0.8]]) {
-    const y = KB - 1.2;
+  for (const [x, f] of [[-5.5, 0.5], [-2.9, 0.78], [0, 0.88], [2.9, 0.78], [5.5, 0.5]]) {
+    const y = KB - 1.05 - (1 - f) * 0.4;
     k += `<ellipse cx="${x}" cy="${r(y)}" rx="${r(0.5 * f)}" ry="${r(0.58 * f)}" fill="#55786c" stroke="#e8dcbd" stroke-width=".26"/>`;
-    k += `<path d="M${r(x - 0.3 * f)} ${r(y - 0.95)} q${r(0.3 * f)} -.55 ${r(0.6 * f)} 0 Z" fill="#efe3c6"/>`;
     k += `<path d="M${r(x - 0.75 * f)} ${r(y + 0.4)} q${r(0.75 * f)} .7 ${r(1.5 * f)} 0" stroke="#e8dcbd" stroke-width=".16" fill="none"/>`;
   }
   /* kleine schlichte Laterne mit goldener Kugel — kein Kreuz */
