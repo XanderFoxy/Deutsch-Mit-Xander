@@ -170,17 +170,24 @@ const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
   const z = zufall(seed), id = S.id("kr" + bz++);
   const grad = (name, a, b) => S.lg(name + id, [[0, a], [1, b]], cx, cy - h / 2, cx, cy + h / 2, ' gradientUnits="userSpaceOnUse"');
   const GD = grad("d", T[0], T[1]), GM = grad("m", T[2], T[3]), GL = grad("l", T[4], T[5]);
-  const massen = [[cx - w * 0.2, cy - h * 0.2, w * 0.27, h * 0.25], [cx + w * 0.17, cy - h * 0.22, w * 0.26, h * 0.24], [cx + w * 0.02, cy - h * 0.36, w * 0.2, h * 0.16], [cx, cy + h * 0.1, w * 0.44, h * 0.34]];
+  /* Massen leicht verschoben je Baum (kein Spiegelbild); ungerader Seed: eine Masse mehr, Krone flacher */
+  const j = () => (z() - 0.5);
+  const massen = [[cx - w * (0.2 + j() * 0.08), cy - h * (0.2 + j() * 0.06), w * 0.27, h * 0.25], [cx + w * (0.17 + j() * 0.08), cy - h * (0.22 + j() * 0.06), w * 0.26, h * 0.24], [cx + w * j() * 0.1, cy - h * 0.36, w * 0.2, h * 0.16], [cx, cy + h * 0.1, w * 0.44, h * 0.34]];
+  if (seed % 2) massen.splice(2, 0, [cx + w * 0.3, cy - h * 0.02, w * 0.17, h * 0.2]);
   let g = "";
   massen.forEach(([mx, my, rx, ry], i) => {
     const mid = `${id}_${i}`;
     S.def(`<path id="${mid}" d="${lappenPfad(mx, my, rx, ry, z)}"/><clipPath id="${mid}c"><use href="#${mid}"/></clipPath>`);
     const um = (dx, dy, f) => `transform="translate(${r(mx + dx)} ${r(my + dy)}) scale(${f}) translate(${r(-mx)} ${r(-my)})"`;
-    g += `<use href="#${mid}" fill="${GD}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" ${um(-rx * 0.08, -ry * 0.12, 0.86)}/><use href="#${mid}" fill="${GL}" ${um(-rx * 0.42, -ry * 0.46, 0.36)}/></g>`;
+    /* Lichtkappe als Halbmond an der Oberkante: helle Masse, darüber nach rechts unten versetzt Zwischen- und Mittelton,
+       unten die dunkle Unterseite – gleiche gelappte Kante, weicher Übergang */
+    g += `<use href="#${mid}" fill="${GL}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" opacity=".55" ${um(rx * 0.06, ry * 0.12, 1)}/><use href="#${mid}" fill="${GM}" ${um(rx * 0.1, ry * 0.24, 0.98)}/><use href="#${mid}" fill="${GD}" ${um(rx * 0.05, ry * 0.86, 1)}/></g>`;
   });
+  /* Himmelslöcher: unregelmäßig, 12–20 px groß, mit Ast aus dem dunklen Inneren */
   for (let i = 0; i < loecher; i++) {
-    const a = -Math.PI * (0.12 + z() * 0.76), d = 0.3 + z() * 0.08, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.8;
-    g += `<ellipse cx="${r(hx)}" cy="${r(hy)}" rx="${r(0.9 + z() * 0.7)}" ry="${r(0.6 + z() * 0.5)}" fill="#9fbcdc"/><path d="M${r(hx - 1.6)} ${r(hy + 1.1)} L${r(hx + 0.9)} ${r(hy - 0.5)}" stroke="#4a3b2c" stroke-width=".35" stroke-linecap="round"/>`;
+    const a = -Math.PI * (0.15 + (i + z() * 0.6) / Math.max(1, loecher) * 0.7), d = 0.3 + z() * 0.06, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.75, s = Math.min(w, h) * 0.05 + 1.2;
+    let p = ""; for (let k = 0; k < 6; k++) { const t = k / 6 * Math.PI * 2, f = 0.6 + z() * 0.5; p += (k ? "L" : "M") + `${r(hx + Math.cos(t) * s * f)} ${r(hy + Math.sin(t) * s * f * 0.75)}`; }
+    g += `<path d="${p}Z" fill="#9fbcdc" stroke="#9fbcdc" stroke-width=".4" stroke-linejoin="round"/><path d="M${r(hx - s * 0.3)} ${r(hy + s * 1.7)} Q${r(hx - s * 0.1)} ${r(hy + s * 0.5)} ${r(hx + s * 0.5)} ${r(hy - s * 0.2)}" stroke="#3a2e22" stroke-width="${r(0.2 + s * 0.1)}" fill="none" stroke-linecap="round"/>`;
   }
   return g;
 };

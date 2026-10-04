@@ -258,18 +258,24 @@ function umriss(h) {
     o.push([n * sw, Ht]); o.push([w - n * sw, Ht]);
     for (let k = n - 1; k >= 0; k--) { o.push([w - (k + 1) * sw, He + (k + 1) * dh]); o.push([w - k * sw, He + (k + 1) * dh]); }
   } else if (typ === "hals") {
-    /* Halsgiebel: Klauenstücke (Viertelkreis-Voluten) an den Schultern, gerader Hals, Dreiecksfronton mit Gesims */
-    const a = 0.3 * w, kh = 2.3, top = Ht - 1.4;
+    /* Halsgiebel: Klauenstücke (Viertelkreis-Voluten) an den Schultern, gerader Hals, oben ein flacher Segmentbogen-Fronton
+       mit vorspringendem Gesims (breite, flache Abdeckung, keine Spitze) */
+    const a = 0.3 * w, kh = 2.3, top = Ht - 0.85;
     for (let i = 0; i <= 6; i++) { const t = i / 6 * Math.PI / 2; o.push([a * Math.sin(t), He + 0.25 + kh * (1 - Math.cos(t))]); }
-    o.push([a, top]); o.push([a - 0.3, top]); o.push([a - 0.3, top + 0.25]); o.push([w / 2, Ht]); o.push([w - a + 0.3, top + 0.25]); o.push([w - a + 0.3, top]); o.push([w - a, top]);
+    o.push([a, top]); o.push([a - 0.45, top]); o.push([a - 0.45, top + 0.3]);
+    for (let i = 1; i < 6; i++) { const t = i / 6; o.push([a - 0.45 + (w - 2 * a + 0.9) * t, top + 0.3 + 0.55 * Math.sin(Math.PI * t)]); }
+    o.push([w - a + 0.45, top + 0.3]); o.push([w - a + 0.45, top]); o.push([w - a, top]);
     for (let i = 6; i >= 0; i--) { const t = i / 6 * Math.PI / 2; o.push([w - a * Math.sin(t), He + 0.25 + kh * (1 - Math.cos(t))]); }
     o.push([w, He + 0.25]);
   } else if (typ === "klok") {
-    /* Glockengiebel: S-förmige Flanken (unten hohl, oben gewölbt), oben kleiner Rundbogen */
-    const prof = [[0, 0], [0.11, 0.04], [0.18, 0.15], [0.205, 0.32], [0.2, 0.5], [0.23, 0.68], [0.3, 0.82], [0.38, 0.91], [0.44, 0.95]];
-    for (const [u, v] of prof.slice(1)) o.push([u * w, He + v * (Ht - 0.4 - He)]);
-    for (let i = 1; i < 6; i++) { const t = Math.PI * i / 6; o.push([w / 2 - 0.06 * w * Math.cos(t), Ht - 0.4 + 0.4 * Math.sin(t) + 0.02]); }
-    for (const [u, v] of prof.slice(1).reverse()) o.push([w - u * w, He + v * (Ht - 0.4 - He)]);
+    /* Glockengiebel: S-förmige Flanken (unten hohl, oben gewölbt), oben Gesims und ein kleiner Rundbogen */
+    const prof = [[0, 0], [0.11, 0.04], [0.18, 0.15], [0.205, 0.32], [0.2, 0.5], [0.23, 0.68], [0.29, 0.83], [0.35, 0.94], [0.39, 1]];
+    const top = Ht - 0.75, hoch = top - He, rb = 0.12 * w;
+    for (const [u, v] of prof.slice(1)) o.push([u * w, He + v * hoch]);
+    o.push([0.36 * w, top]); o.push([0.36 * w, top + 0.18]);
+    for (let i = 0; i <= 6; i++) { const t = Math.PI * i / 6; o.push([w / 2 - rb * Math.cos(t), top + 0.18 + 0.57 * Math.sin(t)]); }
+    o.push([0.64 * w, top + 0.18]); o.push([0.64 * w, top]);
+    for (const [u, v] of prof.slice(1).reverse()) o.push([w - u * w, He + v * hoch]);
   } else if (typ === "tuit") {
     const a = 0.3 * w;
     o.push([a * 0.6, He + 1.2]); o.push([a, Ht - 1]); o.push([w / 2, Ht]); o.push([w - a, Ht - 1]); o.push([w - a * 0.6, He + 1.2]);
@@ -406,7 +412,10 @@ function baueZeile(seite, liste) {
       for (let i = 0; i <= 6; i++) { const t = i / 6 * Math.PI / 2; kl.push(Q(a * Math.sin(t), h.He + 0.25 + kh * (1 - Math.cos(t)))); kr.push(Q(h.w - a * Math.sin(t), h.He + 0.25 + kh * (1 - Math.cos(t)))); }
       const stein = seite < 0 ? "#f3dfb4" : "#9a958a";
       out += `<path d="${pz([Q(0, h.He), ...kl, Q(a, h.He)])} ${pz([Q(h.w, h.He), ...kr, Q(h.w - a, h.He)])}" fill="${stein}"/>`;
-      out += `<path d="M${pt(Q(a * 0.35, h.He + 0.6))} Q${pt(Q(a * 0.75, h.He + 0.9))} ${pt(Q(a * 0.7, h.He + 1.6))} M${pt(Q(h.w - a * 0.35, h.He + 0.6))} Q${pt(Q(h.w - a * 0.75, h.He + 0.9))} ${pt(Q(h.w - a * 0.7, h.He + 1.6))}" stroke="#8a6a40" stroke-width=".35" fill="none"/>`;
+      /* Volute: Schnecke aus dunkler Linie, Umriss der Klaue mit Schattenkante */
+      const schnecke = (sp) => { const o = []; for (let i = 0; i <= 14; i++) { const t = i / 14, w2 = -Math.PI / 2 + t * Math.PI * 3.2, rr = 0.6 * (1 - t * 0.82); o.push(Q(sp(a * 0.34 + Math.cos(w2) * rr), h.He + 1.0 + Math.sin(w2) * rr * 1.1)); } return "M" + o.map(pt).join(" L"); };
+      out += `<path d="${schnecke((u) => u)} ${schnecke((u) => h.w - u)}" stroke="${seite < 0 ? "#6a4524" : "#3e3a34"}" stroke-width=".38" fill="none" stroke-linejoin="round"/>`;
+      out += `<path d="M${kl.map(pt).join(" L")} M${kr.map(pt).join(" L")}" stroke="${seite < 0 ? "#b48a52" : "#6a665e"}" stroke-width=".3" fill="none"/>`;
     }
     /* Spiegelbild (vereinfachte Fassade, dunkler) */
     if (h.d0 < 260) spiegel += `<path d="${pz(u.map(([a, b]) => P(seite * FX, h.d0 + a, -b)))}" fill="${mix(h.farbe, seite < 0 ? "#ffb36a" : "#1c2a33", seite < 0 ? 0.12 : 0.35)}"/>`;
@@ -667,24 +676,27 @@ function krone(cx, cy, rx, ry, seed, sonne, fern) {
     for (let i = 0; i < 6; i++) { const a = i * 1.05 + z(), dd = i ? 0.55 : 0, x = cx + Math.cos(a) * dd * rx, y = cy + Math.sin(a) * dd * ry * 0.8, rc = Math.min(rx, ry) * (0.5 + z() * 0.15); c1 += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(rc)}"/>`; c2 += `<circle cx="${r(x + rc * 0.2)}" cy="${r(y - rc * 0.25)}" r="${r(rc * 0.6)}"/>`; }
     return `<g fill="${sonne ? "#7c9a3a" : "#627d36"}">${c1}</g><g fill="${sonne ? "#b6cc5a" : "#90ab4e"}">${c2}</g>`;
   }
-  /* April: junges, lockeres Laub in gefransten Büscheln an den Astenden, Äste sichtbar, Himmel und Giebel scheinen durch */
-  const fransen = (x, y, rr, n = 12) => rund(Array.from({ length: n }, (_, i) => { const a = i * Math.PI * 2 / n, q = rr * (i % 2 ? 0.7 + z() * 0.12 : 0.95 + z() * 0.15); return [x + Math.cos(a) * q, y + Math.sin(a) * q * 0.85]; }), rr > 4);
-  const N = rx > 60 ? 13 : 10, gx = cx, gy = cy + ry * 0.95;
-  let aeste = "", d1 = "", d2 = "", d3 = "";
+  /* April: junges, lockeres Laub in weich gelappten Büscheln an den Astenden; Äste gabeln sich (Y), Himmel scheint durch.
+     Jedes Büschel: warmer Gegenlicht-Saum oben rechts (Sonne hinten rechts), Hauptgrün, Eigenschatten unten links */
+  const lappen = (x, y, rr, n) => { const w0 = z() * 6.3; return rund(Array.from({ length: 2 * n }, (_, i) => { const a = w0 + i * Math.PI / n, q = rr * (i % 2 ? 0.72 : 0.96 + z() * 0.1); return [x + Math.cos(a) * q, y + Math.sin(a) * q * 0.86]; })); };
+  const N = rx > 60 ? 6 : 5, gx = cx, gy = cy + ry * 0.95, sw = Math.max(0.25, Math.min(rx, ry) * 0.022);
+  let aeste = "", zweige = "", saum = "", gruen = "", schatten = "";
   for (let i = 0; i < N; i++) {
-    const t = i / (N - 1), ang = -Math.PI * (0.06 + 0.88 * t) + (z() - 0.5) * 0.25, dist = 0.55 + 0.45 * z();
-    const tx = cx + Math.cos(ang) * rx * dist, ty = cy + Math.sin(ang) * ry * dist * 0.95 + ry * 0.12;
-    aeste += `M${r(gx)} ${r(gy)} Q${r(gx + (tx - gx) * 0.3)} ${r(gy + (ty - gy) * 0.75)} ${r(tx)} ${r(ty)}`;
-    const k = 2 + Math.floor(z() * 2);
+    const t = i / (N - 1), ang = -Math.PI * (0.1 + 0.8 * t) + (z() - 0.5) * 0.2;
+    const fx = gx + Math.cos(ang) * rx * 0.42, fy = gy - ry * (0.5 + 0.15 * z()) + Math.sin(ang) * ry * 0.1;
+    aeste += `M${r(gx)} ${r(gy)} Q${r(gx + (fx - gx) * 0.25)} ${r(gy + (fy - gy) * 0.7)} ${r(fx)} ${r(fy)}`;
+    const k = 2 + (z() < 0.5 ? 1 : 0);
     for (let j = 0; j < k; j++) {
-      const rc = Math.min(rx, ry) * (0.16 + z() * 0.1), x = tx + (z() - 0.5) * rc * 1.6, y = ty + (z() - 0.5) * rc * 1.2;
-      d1 += fransen(x - rc * 0.12, y + rc * 0.16, rc);
-      d2 += fransen(x + rc * 0.1, y - rc * 0.12, rc * 0.72, 10);
-      if (z() < 0.6) d3 += fransen(x + rc * 0.32, y - rc * 0.3, rc * 0.34, 8);
+      const a2 = ang + (j - (k - 1) / 2) * 0.42 + (z() - 0.5) * 0.15, d = 0.62 + 0.36 * z();
+      const tx = cx + Math.cos(a2) * rx * d, ty = cy + Math.sin(a2) * ry * d * 0.95 + ry * 0.1;
+      zweige += `M${r(fx)} ${r(fy)} Q${r((fx + tx) / 2 + (z() - 0.5) * rx * 0.08)} ${r((fy + ty) / 2 - ry * 0.06)} ${r(tx)} ${r(ty)}`;
+      const rc = Math.min(rx, ry) * (0.17 + z() * 0.08), n = 4 + (z() < 0.5 ? 1 : 0);
+      saum += lappen(tx + rc * 0.14, ty - rc * 0.14, rc, n);
+      gruen += lappen(tx, ty, rc, n);
+      schatten += lappen(tx - rc * 0.2, ty + rc * 0.24, rc * 0.62, 3);
     }
   }
-  const sw = Math.max(0.25, Math.min(rx, ry) * 0.022);
-  return `<path d="${aeste}" stroke="#5e5248" stroke-width="${r(sw)}" fill="none" stroke-linecap="round"/><path d="${d1}" fill="${sonne ? "#6f8f30" : "#556f2c"}" opacity=".95"/><path d="${d2}" fill="${sonne ? "#a9c44a" : "#82a03e"}" opacity=".95"/><path d="${d3}" fill="${sonne ? "#e0e884" : "#b2c766"}" opacity=".85"/>`;
+  return `<path d="${aeste}" stroke="#5e5248" stroke-width="${r(sw * 1.7)}" fill="none" stroke-linecap="round"/><path d="${zweige}" stroke="#655a50" stroke-width="${r(sw)}" fill="none" stroke-linecap="round"/><path d="${saum}" fill="${sonne ? "#f2df86" : "#cfd889"}"/><path d="${gruen}" fill="${sonne ? "#93b444" : "#7c9a3c"}"/><path d="${schatten}" fill="${sonne ? "#64822e" : "#56722c"}" opacity=".85"/>`;
 }
 function ulme(X, D, seed) {
   const [bx, by] = P(X, D, KAI), s = F / D, z = zufall(seed), sonne = X < 0 && sonnig(X, D, 9);

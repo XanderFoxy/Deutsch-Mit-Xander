@@ -86,8 +86,8 @@ const FARBE = {
   amerika: [S.lg("f_am", [[0, "#d7e7b2"], [1, "#bcd496"]]), "#7d9a52"],
   europa: [S.lg("f_eu", [[0, "#f6dd9a"], [1, "#ecc979"]]), "#a8853a"],
   afrika: [S.lg("f_af", [[0, "#f3cf9b"], [1, "#e6b37a"]]), "#a8743a"],
-  asien: [S.lg("f_as", [[0, "#f1c6ab"], [1, "#e3a988"]]), "#a86a4a"],
-  australien: [S.lg("f_au", [[0, "#e2cde9"], [1, "#cdb2d8"]]), "#8a6a98"],
+  asien: [S.lg("f_as", [[0, "#efc5d3"], [1, "#dba4ba"]]), "#9a5a78"],
+  australien: [S.lg("f_au", [[0, "#cfd0ef"], [1, "#b2b4e0"]]), "#6a6aa0"],
 };
 
 /* =====================================================================
@@ -124,33 +124,14 @@ const LAND = {
     /* Kuba */ `-85,21.9 -82.5,23.1 -80,23 -77.5,21.8 -74.2,20.2 -77.5,19.9 -80.5,21.8 -83,22`,
     /* Hispaniola */ `-74.4,19.8 -72.8,19.9 -69.9,19.6 -68.3,18.6 -71.4,17.6 -74.4,18.3`,
     /* Vancouver Island */ `-128.4,50.8 -125,50.2 -123.4,48.4 -124.7,48.6 -127,49.6`],
-  europa: [`66.5,68.8 64,69.3 60.5,69.9 58.5,68.9 54,68.5 50,68 46.5,68.2 43.5,68.6 44,66.5 41,66 40.5,64.5 37.5,64 35,64.3 34.5,65.5 33,66.6 36,66.5 40,66.2
-    41.2,66.8 39.5,68 37,68.7 33,69.2 28.5,70 25.8,71.1 23,70.5 19,69.8 16,69 13.5,68.1 14.4,67.3 12.5,66 10.5,64.5 10.4,63.4 8,63.2 6.2,62.5 5,61.6 5.3,60.4
-    5.6,59 6,58.2 7,58 8.5,58.3 10,59 10.6,59.7 11,59.1 11.9,57.7 12.7,56.5 13,55.6 14.3,55.5 14.5,56.2 16.4,56.6 16.6,57.9 18,59 18.5,59.6 17.5,60.6
-    17.3,62.4 18.6,63.2 20.3,63.8 21.5,64.5 22.1,65.6 24,65.8 25.5,65 24.6,64.4 22.5,63.6 21.6,63.1 21.5,61.5 21.4,60.8 22.3,60.4 23.5,59.95 25,60.2 27,60.5
-    28.7,60.6 30.3,59.9 28,59.5 26.5,59.5 24.7,59.4 23.5,59.2 23.6,58.5 24.4,57.9 24.1,57 23.3,57 22,57.6 21,56.8 21.1,55.7 21,55.2 20,54.9 19.6,54.45
-    18.7,54.4 17.5,54.8 16.5,54.5 14.6,54 13.4,54.3 12,54.2 11,54 10.8,54.6 10.1,54.4 10,55 10.3,56 10.9,56.3 10.6,57.7 9.6,57.2 8.5,57.1 8.1,56.5 8.1,55.6
-    8.6,55 8.6,54 8.9,53.9 8,53.6 7,53.4 6,53.4 4.8,53 4.6,52.4 4,51.9 3.4,51.4 2.5,51.1 1.6,50.9 1.6,50.2 0.2,49.7 -1.2,49.4 -1.4,49.6 -1.9,49.7 -1.6,48.7
-    -3,48.8 -4.7,48.5 -4.4,48 -3,47.5 -2.2,47.2 -1.2,46.2 -1.2,45 -1.4,44 -1.6,43.4 -3,43.4 -3.8,43.5 -5.7,43.6 -7.7,43.75 -8.3,43.4 -9.3,42.9 -8.9,42
-    -8.7,41.2 -8.9,40 -9.4,39.4 -9.2,38.7 -8.8,38.5 -8.8,37.9 -9,37 -7.9,37 -6.3,36.5 -5.6,36 -5,36.4 -4.4,36.7 -2.2,36.7 -1.3,37.5 -0.6,37.7 -0.3,38.4
-    0.2,38.8 -0.3,39.5 0.8,40.7 1,41 2.2,41.4 3.2,41.9 3.1,42.8 3,43.3 4,43.5 5.4,43.2 6.4,43.1 7.3,43.7 8.2,43.9 8.9,44.4 9.8,44.1 10.3,43.5 10.5,42.9
-    11.1,42.4 12.2,41.8 13,41.3 14,40.9 14.3,40.6 15,40.2 15.6,40 15.6,38.9 15.65,37.95 16.2,38.4 16.6,38.8 17.1,39 17.1,39.4 16.6,39.7 16.5,40.1 17.2,40.4
-    17.9,40.3 18.5,40.1 18.4,40.6 17.9,40.8 16.9,41.1 16,41.4 15.9,41.9 15,42.1 14,42.6 13.6,43.5 12.6,44.1 12.3,44.6 12.5,44.9 12.3,45.4 13.1,45.7
-    13.8,45.6 13.6,45.1 13.9,44.8 14.5,45.2 15.2,44.3 15.9,43.6 16.4,43.5 17.5,43 18.1,42.6 18.6,42.4 19.4,41.9 19.5,41.3 19.4,40.4 20,39.6 20.7,39
-    21.1,38.3 21.6,37.7 21.7,36.8 22.5,36.4 23.2,36.5 22.8,37.6 23.4,37.4 24,37.7 23.6,38.2 24.3,38.5 22.8,39 23.3,39.2 22.6,40 22.9,40.6 23.8,40
-    24.4,40.9 25.5,40.9 26,40.6 26.6,40.4 26.9,40.6 27.5,41 28.6,41 29,41 29.1,41.2 28.1,41.6 27.5,42.5 27.9,43.2 28.6,43.8 28.8,44.5 29.7,45.2 30.2,45.9
-    30.7,46.5 31.8,46.6 32.6,46.1 33.6,46.2 32.5,45.5 33.5,44.5 34.5,44.8 35.5,45 36.5,45.3 35.5,45.5 35,46.2 36.5,46.7 38.2,47.1 39.3,47.2 38.5,46.6
-    38,46 37.5,45.4 37,45.1 37.3,44.7 38.1,44.3 39,44 39.7,43.6 40,43.4 41.5,43.3 43,43 44.5,42.7 46,42.2 47,41.9 48.5,41.4 49,41.3 48.3,42.05 47.5,43
-    47.4,44 47,44.6 47.6,45.6 47.8,46 49,46.6 50.5,46.9 51.9,47 51.6,48.5 51.4,51.2 53.5,51.6 55.1,51.8 57.5,51.6 58.8,52 59.5,54 59.2,56.5 59,58 59.3,60
-    59.6,61.5 60,63.5 61.5,65 64,66.5 65.5,67.5`,
-    /* Großbritannien */ `-5.7,50.1 -3.5,50.3 -1,50.7 1.4,51.2 1.7,52.6 0.3,53.1 -0.1,54.1 -1.6,55.6 -2.2,56.6 -1.8,57.6 -3.4,58.6 -5,58.6 -6.2,57.3 -5.7,56.3
-    -5,55.8 -4.9,54.8 -3.2,54.9 -3,53.4 -4.6,53.3 -4.2,52.8 -5.2,51.8 -3.2,51.4 -4.2,51.2`,
-    /* Irland */ `-6,52.2 -6,53.5 -5.5,54.5 -6.5,55.2 -8.3,55.2 -10,54.2 -9.5,53.3 -10.3,51.9 -9.5,51.5 -8,51.8`,
+  europa: [`66.5,68.8 64,69.3 60.5,69.9 58.5,68.9 54,68.5 50,68 46.5,68.2 43.5,68.6 44,66.5 41,66 40.5,64.5 37.5,64 35,64.3 34.5,65.5 33,66.6 36,66.5 40,66.2 41.2,66.8 39.5,68 37,68.7 33,69.2 28.5,70 25.8,71.1 23,70.5 19,69.8 16,69 13.5,68.1 14.4,67.3 12.5,66 10.5,64.5 10.4,63.4 8,63.2 6.2,62.5 5,61.6 5.3,60.4 5.6,59 6,58.2 7,58 8.5,58.3 10,59 10.6,59.7 11,59.1 11.9,57.7 12.7,56.5 13,55.6 14.3,55.5 14.5,56.2 16.4,56.6 16.6,57.9 18,59 18.5,59.6 17.5,60.6 17.3,62.4 18.6,63.2 20.3,63.8 21.5,64.5 22.1,65.6 24,65.8 25.5,65 24.6,64.4 22.5,63.6 21.6,63.1 21.5,61.5 21.4,60.8 22.3,60.4 23.5,59.95 25,60.2 27,60.5 28.7,60.6 30.3,59.9 28,59.5 26.5,59.5 24.7,59.4 23.5,59.2 23.6,58.5 24.4,57.9 24.1,57 23.3,57 22,57.6 21,56.8 21.1,55.7 21,55.2 20,54.9 19.6,54.45 18.7,54.4 17.5,54.8 16.5,54.5 14.6,54 13.4,54.3 12,54.2 11,54 10.8,54.6 10.1,54.4 10,55 10.3,56 10.9,56.3 10.6,57.7 9.6,57.2 8.5,57.1 8.1,56.5 8.1,55.6 8.6,55 8.6,54 8.9,53.9 8,53.6 7,53.4 6,53.4 4.8,53 4.6,52.4 4,51.9 3.4,51.4 2.5,51.1 1.6,50.95 1.58,50.5 1.4,50.1 0.2,49.7 -0.3,49.32 -1.25,49.38 -1.3,49.65 -1.95,49.72 -1.8,49.35 -1.55,48.75 -2.0,48.65 -3.0,48.82 -4.0,48.72 -4.78,48.33 -4.35,48.2 -4.73,48.04 -4.2,47.8 -3.0,47.5 -2.2,47.27 -2.1,46.8 -1.15,46.15 -1.25,45.0 -1.4,44.0 -1.55,43.45 -3,43.4 -3.8,43.5 -5.7,43.6 -7.7,43.75 -8.3,43.4 -9.3,42.9 -8.9,42 -8.7,41.2 -8.9,40 -9.4,39.4 -9.2,38.7 -8.8,38.5 -8.8,37.9 -9,37 -7.9,37 -6.3,36.5 -5.6,36 -5,36.4 -4.4,36.7 -2.2,36.7 -1.3,37.5 -0.6,37.7 -0.3,38.4 0.2,38.8 -0.3,39.5 0.8,40.7 1,41 2.2,41.4 3.2,41.9 3.1,42.8 3,43.3 4,43.5 5.4,43.2 6.4,43.1 7.5,43.78 8.2,43.92 8.9,44.4 9.85,44.07 10.3,43.55 10.5,42.95 11.2,42.45 11.8,42.1 12.25,41.75 12.6,41.45 13.55,41.2 14.25,40.83 14.35,40.6 14.75,40.65 15.3,40.03 15.8,39.5 16.0,38.75 15.65,38.0 15.65,38.1 16.05,37.93 16.55,38.4 16.6,38.82 17.15,39.08 16.6,39.6 16.9,40.1 17.22,40.47 17.98,40.05 18.36,39.8 18.5,40.15 17.95,40.65 16.87,41.13 16.28,41.32 15.92,41.63 16.18,41.9 15.6,41.93 15.0,42.0 14.22,42.47 13.5,43.62 12.57,44.06 12.5,44.9 12.33,45.44 13.1,45.75 13.77,45.65 13.6,45.1 13.9,44.8 14.5,45.2 15.2,44.3 15.9,43.6 16.4,43.5 17.5,43 18.1,42.6 18.6,42.4 19.4,41.9 19.5,41.3 19.4,40.4 19.9,39.7 20.25,39.5 20.75,38.95 21.1,38.4 21.4,38.2 21.1,37.8 21.7,36.8 22.1,37.0 22.48,36.39 22.8,36.8 23.2,36.45 22.9,37.55 23.2,37.95 23.6,37.95 24.02,37.65 24.0,38.15 23.4,38.45 22.95,39.35 23.3,39.15 22.95,40.62 23.35,40.25 23.7,39.95 24.0,40.35 24.4,40.94 25.5,40.9 26,40.6 26.6,40.4 26.9,40.6 27.5,41 28.6,41 29,41 29.1,41.2 28.1,41.6 27.5,42.5 27.9,43.2 28.6,43.8 28.8,44.5 29.7,45.2 30.2,45.9 30.7,46.5 31.8,46.6 32.6,46.1 33.6,46.2 32.5,45.5 33.6,44.4 34.5,44.75 35.4,45.05 36.6,45.4 35.5,45.5 35,46.2 36.5,46.7 38.2,47.1 39.3,47.2 38.5,46.6 38,46 37.5,45.4 37,45.1 37.3,44.7 38.1,44.3 39,44 39.7,43.6 40,43.4 41.5,43.3 43,43 44.5,42.7 46,42.2 47,41.9 48.5,41.4 49,41.3 48.3,42.05 47.5,43 47.4,44 47,44.6 47.6,45.6 47.8,46 49,46.6 50.5,46.9 51.9,47 51.6,48.5 51.4,51.2 53.5,51.6 55.1,51.8 57.5,51.6 58.8,52 59.5,54 59.2,56.5 59,58 59.3,60 59.6,61.5 60,63.5 61.5,65 64,66.5 65.5,67.5`,
+    /* Großbritannien */ `-5.7,50.05 -5.2,49.96 -4.1,50.35 -2.45,50.52 -1.3,50.75 -0.14,50.82 0.25,50.74 0.98,50.91 1.35,51.13 1.45,51.38 0.9,51.45 0.55,51.48 0.9,51.55 0.95,51.6 1.15,51.78 1.3,51.95 1.58,52.08 1.75,52.48 1.73,52.62 1.3,52.93 0.5,52.95 0.2,52.8 0.35,53.15 0.1,53.6 -0.08,54.12 -0.6,54.49 -1.4,55.0 -2.0,55.77 -2.6,56.0 -3.2,56.05 -2.7,56.2 -2.1,57.15 -2.0,57.68 -3.5,57.65 -3.03,58.64 -5.0,58.62 -5.6,57.9 -5.8,57.3 -5.6,56.6 -5.7,55.3 -4.9,55.7 -4.6,55.3 -5.0,54.75 -3.6,54.9 -3.4,54.4 -2.9,54.0 -3.0,53.4 -3.3,53.35 -4.5,53.4 -4.75,52.8 -4.1,52.5 -5.3,51.88 -3.95,51.6 -3.0,51.5 -4.2,51.2 -4.55,51.0 -5.0,50.55`,
+    /* Irland */ `-6.0,52.2 -6.1,53.0 -6.0,53.6 -5.5,54.4 -5.9,55.2 -7.3,55.35 -8.3,55.15 -8.5,54.3 -10.0,54.2 -9.9,53.5 -9.5,53.2 -9.9,52.6 -10.3,51.9 -9.5,51.5 -8.4,51.65 -7.0,52.1`,
     /* Island */ `-22,64 -24,65.5 -22.5,66.4 -16,66.5 -13.6,65.2 -15,64.2 -18.7,63.4`,
     /* Spitzbergen */ `11,78.5 11.5,79.8 17,80 22,79.5 27,80 22,78 17,77 14,77.5`,
     /* Nowaja Semlja */ `52,71 55,73 58,75.5 68,77 64,75.5 58,73 55,71.5`,
-    /* Korsika */ `8.6,41.4 9.5,42 9.4,43 8.6,42.5`, /* Sardinien */ `8.2,39 9.6,39.1 9.8,41.1 8.2,40.9`,
-    /* Sizilien */ `12.4,38.1 15.6,38.3 15.1,36.7 12.6,37.6`, /* Kreta */ `23.5,35.3 26.3,35.2 26,35 23.6,35.1`,
+    /* Korsika */ `8.6,41.42 9.2,41.38 9.5,42.0 9.45,42.75 9.33,43.0 8.7,42.6 8.6,42.0`, /* Sardinien */ `8.4,39.1 8.65,38.88 9.05,39.15 9.6,39.15 9.65,40.1 9.8,40.6 9.45,41.15 8.8,41.05 8.2,40.95 8.4,40.3 8.45,39.65`,
+    /* Sizilien */ `12.42,38.1 13.3,38.2 14.2,38.02 15.25,38.25 15.65,38.25 15.1,37.4 15.3,37.0 15.08,36.65 14.3,36.8 13.2,37.45 12.6,37.65`, /* Kreta */ `23.52,35.55 23.85,35.52 24.3,35.36 25.0,35.42 25.75,35.33 26.3,35.28 26.15,35.0 25.5,34.98 24.75,34.95 24.0,35.22 23.55,35.25`,
     /* Seeland */ `11.1,55.3 12.6,56 12.4,55.2`],
   afrika: [`-5.8,35.8 -2,35.1 1,36.5 3,36.8 6.5,37 8.6,36.9 10.2,37 11,37.1 10.5,36.3 11.1,35.2 10.1,33.9 11.5,33.1 13.2,32.9 15.3,32.2 18.5,30.3 20,30.9
     20,32.1 23,32.6 24,32.1 25.3,31.6 29.9,31.2 31.5,31.5 32.3,31.3 32.5,30 32.6,29.9 33.8,27.2 35.5,23.5 37.2,19.6 38.5,18 39.5,15.6 41.7,13.4 43.2,11.6
@@ -192,7 +173,7 @@ const LAND = {
     /* Sumatra */ `95.3,5.6 98.5,3.7 101,1 104,-1 106,-3 106,-5.9 103.5,-5 102,-3.5 100.2,-1 98.5,1.5 97.5,2.1`,
     /* Java */ `105.2,-6.8 108.5,-6.3 112,-6.8 114.5,-7.8 110.5,-8.2 106,-7.4`,
     /* Sulawesi */ `119.4,-5.5 120.4,-2.8 119.8,0 121,1.3 124.8,1.5 122,0.5 120.9,-1.3 123.3,-0.9 121.5,-2.5 122.5,-4.8 121.2,-4.3 120.4,-5.5`,
-    /* Zypern */ `32.3,34.7 33.5,34.9 34.6,35.7 33,35.2`],
+    /* Zypern */ `32.3,34.75 32.4,35.05 33.0,35.38 34.0,35.5 34.58,35.69 34.0,35.12 33.9,34.95 33.0,34.6 32.6,34.65`],
   australien: [`142.5,-10.7 143.5,-14 145.3,-15 145.8,-16.9 146.3,-19 149,-21 150.8,-22.6 153,-25.5 153.4,-27.5 153.6,-28.6 153,-31 152.5,-32.5 151.2,-33.9
     150.2,-35.8 150,-37.5 148,-37.8 146.3,-39 144.9,-38.2 143.5,-38.8 140.5,-38 139.5,-37 138.5,-35.5 138,-34.4 137.8,-33 137.4,-34.8 135.8,-34.8 135,-33
     134,-32.5 131,-31.5 129,-31.7 126,-32.3 124,-33.9 121.9,-33.9 119,-34.5 117.9,-35 115.1,-34.4 115.7,-32 115,-30 114,-26 113.5,-24.5 114.1,-21.8 116.5,-20.7
@@ -251,7 +232,7 @@ S.def(`<g id="${S.id("land")}">${Object.keys(LAND).map((k) => USE("k_" + k)).joi
 {
   let g = "";
   const wl = (lo, la, t, gr = 3, extra = "") => { const [x, y] = P(lo, la); return halo(x, y, t, gr, "#3f7896", "#d6ecf2", `font-style="italic" letter-spacing=".5" ${extra}`, 0.6); };
-  g += wl(-150, 77.5, "N o r d p o l a r m e e r", 3) + wl(10, -63, "S ü d p o l a r m e e r", 3.2) + wl(4, 38.3, "Mittelmeer", 1.9);
+  g += wl(-150, 77.5, "N o r d p o l a r m e e r", 3) + wl(10, -63, "S ü d p o l a r m e e r", 3.2);
   { const [x, y] = P(-25, 1.2); g += text(x, y, "Äquator", 2.6, "#a8453a", `font-style="italic" letter-spacing=".4"`); }
   { const [x, y] = P(10, -82.5); g += text(x, y, "A N T A R K T I S", 3.4, "#7f98a6", `letter-spacing=".8"`); }
   S.hinten(g);
@@ -287,16 +268,16 @@ function ozean(polys, labels, worte, tipp) {
   S.teil(Object.assign({ x: 0, y: 0, kunst: k, tipp }, worte));
 }
 ozean([[[-68, -60], [-68, -55], [-65, -45], [-62, -30], [-58, -10], [-70, 2], [-79, 8.5], [-84, 10], [-87, 14], [-91, 15.5], [-94.8, 17], [-100, 22], [-104, 28], [-100, 40], [-95, 55], [-65, 58], [-60, 65], [-40, 66], [-20, 65], [5, 62],
-  [2, 50], [-4, 40], [-5.6, 36], [-5, 30], [0, 20], [15, 5], [20, -15], [20, -35], [20, -60]]],
-  [[-38, 31, ["Atlantischer", "Ozean"], 3.6], [-14, -21, ["Atlantik"], 3]],
+  [2, 50], [-4, 40], [0, 41], [3, 43.6], [7, 44.6], [12, 46], [16, 45.8], [20, 42.5], [24, 42.5], [28, 45], [30, 47], [38, 47.4], [42, 44], [41.6, 41], [36, 40.8], [32, 40.6], [29, 40.7], [27, 40.2], [30, 39.2], [34, 37.5], [36.5, 36.5], [36, 33], [32.5, 30.5], [25, 31], [15, 31.8], [10, 34], [2, 35.8], [-2, 35], [-5.6, 36], [-5, 30], [0, 20], [15, 5], [20, -15], [20, -35], [20, -60]]],
+  [[-38, 31, ["Atlantik"], 3.8], [-14, -21, ["Atlantik"], 3.2]],
   { id: "atlantik", de: "der Atlantik", syl: "at-LAN-tik", it: "l'oceano Atlantico", itSyl: "o-CE-a-no at-LAN-ti-co", en: "Atlantic Ocean" },
   "Der Atlantik liegt zwischen Europa, Afrika und Amerika.");
 ozean([[[CM - 180, 66], [CM - 180, -60], [-68, -60], [-68, -55], [-70, -40], [-72, -15], [-78, 0], [-79, 8.5], [-84, 10], [-87, 14], [-91, 15.5], [-94.8, 17], [-100, 22], [-104, 28], [-115, 40], [-125, 55], [-150, 64], [-165, 66]],
   [[CM + 180, 66], [CM + 180, -60], [147, -60], [147, -44], [145, -25], [140, -12], [130, -8], [125, -9], [116, -8.5], [110, -7], [104, -2], [101, 4], [101, 10], [105, 15], [110, 25], [120, 40], [130, 45], [140, 60], [160, 65], [180, 66]]],
-  [[-142, 3, ["Pazifischer", "Ozean"], 3.6], [176, 12, ["Pazifik"], 3.2]],
+  [[-142, 3, ["Pazifik"], 3.8], [176, 12, ["Pazifik"], 3.2]],
   { id: "pazifik", de: "der Pazifik", syl: "pa-ZI-fik", it: "l'oceano Pacifico", itSyl: "o-CE-a-no pa-CI-fi-co", en: "Pacific Ocean" },
   "Der Pazifik ist der größte Ozean der Erde.");
-ozean([[[20, -60], [20, -35], [30, -25], [35, -10], [40, 5], [45, 10], [38, 20], [32.5, 30], [40, 28], [55, 30], [65, 28], [78, 20], [90, 24], [96, 20], [100, 12], [101, 5], [102, 0], [110, -7], [116, -8.5],
+ozean([[[20, -60], [20, -35], [30, -25], [35, -10], [40, 5], [45, 10], [36.4, 20], [33.6, 26.5], [32.5, 30], [35, 29.5], [40, 28], [55, 30], [65, 28], [78, 20], [90, 24], [96, 20], [100, 12], [101, 5], [102, 0], [110, -7], [116, -8.5],
   [125, -9], [130, -8], [140, -12], [135, -25], [145, -38], [147, -44], [147, -60]]],
   [[78, -20, ["Indischer", "Ozean"], 3.6]],
   { id: "indischer_ozean", de: "der Indische Ozean", syl: "IN-di-sche O-ze-an", it: "l'oceano Indiano", itSyl: "o-CE-a-no in-DIA-no", en: "Indian Ocean" },
@@ -391,43 +372,45 @@ const ICON = {
 /* ll: Länge/Breite; bild: Versatz des Bildes; lab: [dx, dy, Ausrichtung]; knopf: Mitte des Lupenknopfs (Bildkoordinaten) */
 const ORT = {
   /* in der Lupe Europa (Maßstab 0,4) */
-  grossbritannien: { ll: [-0.13, 51.5], lab: [-4.5, -6, "m"], name: "Großbritannien" },
-  frankreich: { ll: [2.35, 48.86], bild: [0.6, 0], lab: [0, 2.3, "m"], name: "Frankreich" },
-  deutschland: { ll: [10.4, 51.2], lab: [0, -3.6, "m"], name: "Deutschland", rot: true },
+  grossbritannien: { ll: [-0.13, 51.5], lab: [-3.5, -6.6, "m"], name: "Großbritannien" },
+  frankreich: { ll: [2.35, 48.86], bild: [0.6, 0], lab: [0, 3, "m"], name: "Frankreich" },
+  deutschland: { ll: [10.4, 51.2], lab: [0, -3.9, "m"], name: "Deutschland", rot: true },
   wien: { ll: [16.37, 48.21], lab: [2.2, -0.2, "s"], name: "Wien" },
-  venedig: { ll: [12.34, 45.43], bild: [1.9, 2.9], lab: [3.4, 2.4, "s"], name: "Venedig" },
-  italien: { ll: [11.2, 43.4], bild: [-4.6, -0.2], lab: [-4.6, 1.5, "m"], name: "Italien" },
-  rom: { ll: [12.5, 41.9], bild: [-2.3, 3.1], lab: [-2.3, 4.6, "m"], name: "Rom" },
-  spanien: { ll: [2.17, 41.4], lab: [-5.6, 2, "m"], name: "Spanien" },
-  griechenland: { ll: [23.73, 37.97], lab: [0, 2.1, "m"], name: "Griechenland" },
-  tuerkei: { ll: [28.98, 41.01], lab: [5, 2.3, "m"], name: "Türkei" },
-  moskau: { ll: [37.62, 55.75], lab: [0, 2.1, "m"], name: "Moskau" },
+  venedig: { ll: [12.34, 45.43], bild: [3, 1.6], lab: [4.8, 0.9, "s"], name: "Venedig" },
+  italien: { ll: [11.2, 43.4], bild: [-2.9, -0.4], lab: [-5.2, -0.9, "e"], name: "Italien" },
+  rom: { ll: [12.5, 41.9], bild: [3.4, 4.3], lab: [3.4, 6.5, "m"], name: "Rom" },
+  spanien: { ll: [2.17, 41.4], lab: [-6.2, 2.6, "m"], name: "Spanien" },
+  griechenland: { ll: [23.73, 37.97], lab: [0, 3, "m"], name: "Griechenland" },
+  tuerkei: { ll: [28.98, 41.01], lab: [5.5, 3, "m"], name: "Türkei" },
+  moskau: { ll: [37.62, 55.75], lab: [0, 3, "m"], name: "Moskau" },
   /* in der ganzen Karte (Maßstab 0,75) */
-  san_francisco: { ll: [-122.42, 37.77], lab: [0, 3.3, "m"], name: "San Francisco", knopf: [46, 58] },
-  new_york: { ll: [-74.0, 40.71], lab: [2.6, 1.3, "s"], name: "New York", knopf: [133, 44] },
-  mexiko: { ll: [-88.57, 20.68], lab: [0, 3.3, "m"], name: "Mexiko", knopf: [78, 86] },
+  san_francisco: { ll: [-122.42, 37.77], lab: [0, 3.3, "m"], name: "San Francisco", knopf: [48, 62] },
+  new_york: { ll: [-74.0, 40.71], lab: [2.6, 1.3, "s"], name: "New York", knopf: [132, 48] },
+  mexiko: { ll: [-88.57, 20.68], lab: [0, 3.3, "m"], name: "Mexiko", knopf: [78, 92] },
   rio: { ll: [-43.21, -22.91], lab: [0, 3.3, "m"], name: "Rio de Janeiro", knopf: [160, 128] },
   kapstadt: { ll: [18.42, -33.92], lab: [0, 3.3, "m"], name: "Kapstadt", knopf: [193, 152] },
-  aegypten: { ll: [31.13, 29.98], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [207, 72] },
+  aegypten: { ll: [31.13, 29.98], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [208, 74] },
   dubai: { ll: [55.27, 25.2], lab: [-1.6, 3.3, "m"], name: "Dubai", knopf: [254, 88] },
   indien: { ll: [78.04, 27.18], lab: [0, 3.3, "m"], name: "Indien", knopf: [288, 88] },
   peking: { ll: [116.4, 39.9], lab: [0, 3.3, "m"], name: "Peking", knopf: [300, 40] },
-  japan: { ll: [138.73, 35.36], lab: [5.2, 1.4, "s"], name: "Japan", knopf: [350, 52] },
-  sydney: { ll: [151.21, -33.87], lab: [0, 3.3, "m"], name: "Sydney", knopf: [362, 140] },
+  japan: { ll: [138.73, 35.36], bild: [2.6, -0.4], lab: [8, 1.2, "s"], name: "Japan", knopf: [350, 52] },
+  sydney: { ll: [151.21, -33.87], lab: [0, 3.3, "m"], name: "Sydney", knopf: [362, 150] },
 };
+/* Mitte der Lupenmarke je Ort in der Europa-Lupe (Bildkoordinaten) */
+const MARKE_EU = {};
 function ortBild(id, mass, schrift) {
   const c = ORT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];
   const bx = dx0 + bdx, by = dy0 + bdy - (c.bild ? 0 : mass * 0.9);
   const [W0, H0, f] = ICON[id], W = W0 * mass, H = H0 * mass;
   let k = `<ellipse cx="${r(bx)}" cy="${r(by - H * 0.45)}" rx="${r(W * 0.72)}" ry="${r(H * 0.64)}" fill="${GLOW}"/>`;
-  if (c.bild) { const ey = bdy > 1 ? by - H - 0.15 : by + 0.1; k += `<path d="M${r(dx0)} ${r(dy0)} L${r(bx)} ${r(ey)}" stroke="#7a5a32" stroke-width="${r(mass * 0.45) || 0.2}" stroke-dasharray="${r(mass * 1.2)} ${r(mass * 0.8)}"/>`; }
+  if (c.bild) { const seit = Math.abs(bdx) > W / 2, ex = seit ? bx - Math.sign(bdx) * W * 0.4 : bx, ey = seit ? by - H * 0.15 : bdy > 1 ? by - H - 0.15 : by + 0.1; k += `<path d="M${r(dx0)} ${r(dy0)} L${+ex.toFixed(2)} ${+ey.toFixed(2)}" stroke="#7a5a32" stroke-width="${r(mass * 0.45) || 0.2}" stroke-dasharray="${r(mass * 1.2)} ${r(mass * 0.8)}"/>`; }
   k += `<g transform="translate(${+bx.toFixed(3)} ${+by.toFixed(3)}) scale(${mass})">${f()}</g>`;
   k += `<circle cx="${r(dx0)}" cy="${r(dy0)}" r="${r(mass * 1.15) || 0.5}" fill="#c0392b" stroke="#fff8ea" stroke-width="${+(mass * 0.45).toFixed(2)}"/>`;
   const [lx, ly, al] = c.lab, anchor = { m: "middle", s: "start", e: "end" }[al];
-  k += `<text x="${+(dx0 + lx).toFixed(2)}" y="${+(dy0 + ly).toFixed(2)}" font-size="${schrift}" font-weight="bold" text-anchor="${anchor}" fill="${c.rot ? "#a8261c" : "#3a2716"}" stroke="#fbf5e6" stroke-width="${+(schrift * 0.26).toFixed(2)}" stroke-linejoin="round" paint-order="stroke" ${SERIF}>${c.name}</text>`;
+  const n = `<text x="${+(dx0 + lx).toFixed(2)}" y="${+(dy0 + ly).toFixed(2)}" font-size="${schrift}" font-weight="bold" text-anchor="${anchor}" fill="${c.rot ? "#a8261c" : "#3a2716"}" stroke="#fbf5e6" stroke-width="${+(schrift * 0.26).toFixed(2)}" stroke-linejoin="round" paint-order="stroke" ${SERIF}>${c.name}</text>`;
   const lw = c.name.length * schrift * 0.56 + 0.6, lx0 = al === "m" ? dx0 + lx - lw / 2 : al === "s" ? dx0 + lx - 0.3 : dx0 + lx - lw + 0.3;
   const box = { x0: Math.min(bx - W / 2, lx0, dx0 - 1), x1: Math.max(bx + W / 2, lx0 + lw, dx0 + 1), y0: Math.min(by - H, dy0 + ly - schrift), y1: Math.max(by + 0.4, dy0 + ly + schrift * 0.3, dy0 + 1) };
-  return { k, punkt: [dx0, dy0], box };
+  return { k, n, punkt: [dx0, dy0], box, bild: [bx, by, W, H] };
 }
 const WORT = {
   frankreich: ["Frankreich", "FRANK-reich", "la Francia", "FRAN-cia", "France", "Der Eiffelturm in Paris ist 330 Meter hoch."],
@@ -460,9 +443,9 @@ const verschiebe = (ox, oy, svg) => `<g transform="translate(${+(-ox).toFixed(3)
    TEILE — 2: die Kontinente (Europa ist die Lupe mit den elf Orten)
    ===================================================================== */
 const kontText = (lo, la, t, gr, farbe, sp = 1.2) => { const [x, y] = P(lo, la); return halo(x, y, t, gr, farbe, "#fbf3df", `font-weight="bold" letter-spacing="${sp}" opacity=".85"`, 0.5); };
-function kontinent(id, extra, worte, tipp, mehr = {}) {
-  const [f, rand] = FARBE[id];
-  const k = USE("k_" + id, `fill="${f}" stroke="${rand}" stroke-width=".45" stroke-linejoin="round"`) + extra;
+function kontinent(id, extra, worte, tipp, mehr = {}, rand = 0.45) {
+  const [f, randf] = FARBE[id];
+  const k = USE("k_" + id, `fill="${f}" stroke="${randf}" stroke-width="${rand}" stroke-linejoin="round"`) + extra;
   const x = mehr.x || 0, y = mehr.y || 0;
   S.teil(Object.assign({ kunst: verschiebe(x, y, k), tipp }, worte, mehr, { x, y }));
 }
@@ -472,55 +455,69 @@ const BERGTON = S.rg("bergton", [[0, "#8b6a3e", 0.3], [1, "#8b6a3e", 0]]), WUEST
 /* kleine Bergzeichen auf den großen Gebirgen */
 S.def(`<g id="${S.id("berg")}"><path d="M-1.6 0 L0 -2.2 L1.6 0 Z" fill="#c9b48e"/><path d="M0 -2.2 L1.6 0 H.2 Z" fill="#8f7754"/><path d="M-.5 -1.5 L0 -2.2 L.5 -1.5 L.15 -1.65 L-.15 -1.45 Z" fill="#fff"/></g>`);
 const gebirge = (pts, n, s0 = 1) => { let k = ""; const a = pkt(pts.map((q) => q.join(",")).join(" ")); for (let i = 0; i < n; i++) { const t = i / (n - 1) * (a.length - 1), j = Math.min(a.length - 2, Math.floor(t)), u = t - j; const x = a[j].x + (a[j + 1].x - a[j].x) * u + (rnd() - 0.5) * 1.2, y = a[j].y + (a[j + 1].y - a[j].y) * u + (rnd() - 0.5) * 1.2; k += `<use href="#${S.id("berg")}" transform="translate(${+x.toFixed(2)} ${+y.toFixed(2)}) scale(${+(s0 * (0.8 + rnd() * 0.4)).toFixed(2)})"/>`; } return k; };
-/* Orte als Lupen-Teile eines Kontinents: der Kontinent zeichnet ihre Bilder */
-function orteVon(ids) {
-  let k = "";
-  const unter = ids.map((id) => { const b = ortBild(id, 1, 3.3), { x0, x1, y0, y1 } = b.box; k += b.k; return Object.assign(wort(id), { x: (x0 + x1) / 2, y: y1, kunst: flaeche(-(x1 - x0) / 2, -(y1 - y0), x1 - x0, y1 - y0, 0.8) }); });
-  return { k, unter };
-}
+/* Flüsse und Seen, Namen großer Landschaften */
+const fluss = (t, b = 0.55) => `<path d="${weg(t, false)}" fill="none" stroke="#4a90bf" stroke-width="${b}" stroke-linecap="round" stroke-linejoin="round"/>`;
+const see = (t) => `<path d="${weg(t)}" fill="#a9d3e2" stroke="#4a90bf" stroke-width=".2"/>`;
+const landName = (lo, la, t, gr = 2.8, farbe = "#7a5a32") => { const [x, y] = P(lo, la); return halo(x, y, t, gr, farbe, "#fbf3df", `font-style="italic" letter-spacing=".8" opacity=".9"`, 0.45); };
 const knopf = (x, y) => ({ x: x - 16, y: y + 16 });
-{
-  const o = orteVon(["san_francisco", "new_york", "mexiko", "rio"]);
-  kontinent("amerika", ton([[-112, 45, 5, 14, 25, BERGTON, 0.7], [-70, -25, 2.2, 16, 5, BERGTON, 0.7], [-60, -5, 14, 7, 0, WALD, 0.7]])
-    + gebirge([[-125, 58], [-115, 50], [-110, 42], [-107, 35]], 8, 1.5) + gebirge([[-78, 2], [-76, -10], [-70, -20], [-70, -32], [-72, -45]], 9, 1.3)
-    + kontText(-97, 57.5, "NORDAMERIKA", 3.2, "#55703a", 1) + kontText(-60, -14, "SÜDAMERIKA", 3, "#55703a", 0.8) + o.k,
-    { id: "amerika", de: "Amerika", syl: "a-ME-ri-ka", it: "l'America", itSyl: "a-ME-ri-ca", en: "America" }, "Amerika besteht aus Nordamerika und Südamerika.",
-    Object.assign(knopf(68, 96), { zoom: { x: 30, y: 42, w: 147, h: 98 }, unter: o.unter }));
+/* Lupe um eine Gruppe von Orten: Kasten auf 3:2, Lupenmarke je Ort (die App setzt sie bei Ursprung + (16, −16)/k) */
+function lupeUm(ids, mass, schrift, mitBild, marke) {
+  const bs = ids.map((id) => ortBild(id, mass, schrift));
+  let x0 = Math.min(...bs.map((b) => b.box.x0)) - 3, x1 = Math.max(...bs.map((b) => b.box.x1)) + 3, y0 = Math.min(...bs.map((b) => b.box.y0)) - 3, y1 = Math.max(...bs.map((b) => b.box.y1)) + 3;
+  let w = x1 - x0, h = y1 - y0;
+  if (w / h < 1.5) { const nw = h * 1.5; x0 -= (nw - w) / 2; w = nw; } else { const nh = w / 1.5; y0 -= (nh - h) / 2; h = nh; }
+  const zoom = { x: r(x0), y: r(y0), w: r(w), h: r(h) }, kz = Math.min(BR / w, HO / h) * 0.76;
+  const unter = ids.map((id, i) => {
+    const b = bs[i], [bx, by, W, H] = b.bild, m = marke[id] || [bx + W / 2 + 13 / kz, by - H * 0.6];
+    const ox = m[0] - 16 / kz, oy = m[1] + 16 / kz, { x0, x1, y0, y1 } = b.box;
+    return Object.assign(wort(id), { x: ox, y: oy, kunst: verschiebe(ox, oy, (mitBild ? b.k : "") + b.n + flaeche(x0, y0, x1 - x0, y1 - y0, 0.6)) });
+  });
+  return { k: bs.map((b) => b.k).join(""), unter, zoom };
 }
+kontinent("amerika", ton([[-112, 45, 5, 14, 25, BERGTON, 0.7], [-70, -25, 2.2, 16, 5, BERGTON, 0.7], [-60, -5, 14, 7, 0, WALD, 0.7]])
+  + gebirge([[-125, 58], [-115, 50], [-110, 42], [-107, 35]], 8, 1.5) + gebirge([[-78, 2], [-76, -10], [-70, -20], [-70, -32], [-72, -45]], 9, 1.3)
+  + see("-92.1,46.7 -89.5,48.0 -86.5,48.7 -84.6,47.0 -87.5,46.5 -90.5,46.6") + see("-87.8,42.0 -87.0,45.8 -85.6,45.8 -86.4,43.5 -86.8,42.0") + see("-84.5,45.8 -81.7,45.9 -80.0,44.6 -81.7,43.3 -82.5,43.0 -83.5,44.0")
+  + see("-83.4,41.7 -81.0,42.2 -78.9,42.9 -79.8,42.4 -82.5,41.4") + see("-79.8,43.3 -76.2,44.1 -76.3,43.5 -79.2,43.1")
+  + fluss("-95.2,47.2 -93.3,45 -91.2,43 -90.2,38.6 -90,35.1 -91.1,32.3 -90.1,29.95 -89.3,29.1") + fluss("-73.5,-4.4 -70,-3.5 -65,-3.3 -60,-3.1 -55,-2.2 -52,-1.5 -50,-0.5", 0.7)
+  + kontText(-97, 57.5, "NORDAMERIKA", 3.2, "#55703a", 1) + kontText(-60, -14, "SÜDAMERIKA", 3, "#55703a", 0.8),
+  { id: "amerika", de: "Amerika", syl: "a-ME-ri-ka", it: "l'America", itSyl: "a-ME-ri-ca", en: "America" }, "Amerika besteht aus Nordamerika und Südamerika.");
 {
-  const o = orteVon(["dubai", "indien", "peking", "japan"]);
-  kontinent("asien", ton([[85, 32, 14, 3.4, -8, BERGTON, 0.75], [45, 24, 8, 4, -20, WUESTE, 0.7]]) + gebirge([[80, 34.5], [86, 32.2], [93, 31.2], [99, 31.5]], 6, 1.4) + gebirge([[60, 52], [59.5, 58], [60, 64]], 4, 0.9) + kontText(100, 63, "ASIEN", 4.2, "#8a4a30", 2) + o.k,
+  const o = lupeUm(["dubai", "indien", "peking", "japan"], 1, 3.3, false, {});
+  kontinent("asien", ton([[87, 30, 12, 3, -6, BERGTON, 0.6], [45, 24, 8, 4, -20, WUESTE, 0.7]]) + gebirge([[80.5, 29.8], [84, 28.5], [88, 27.9], [92, 27.9], [95.5, 28.5]], 6, 1.4)
+    + gebirge([[60, 52], [59.5, 58], [60, 64]], 4, 0.9) + landName(90, 31.6, "Himalaya", 2.6) + kontText(100, 63, "ASIEN", 4.2, "#8a4a68", 2) + o.k,
     { id: "asien", de: "Asien", syl: "A-si-en", it: "l'Asia", itSyl: "A-sia", en: "Asia" }, "Asien ist der größte Kontinent. Hier wohnen die meisten Menschen.",
-    Object.assign(knopf(262, 93), { zoom: { x: 240, y: 26, w: 110, h: 73 }, unter: o.unter }));
+    Object.assign(knopf(...P(62, 8)), { zoom: o.zoom, unter: o.unter }));
 }
+kontinent("afrika", ton([[12, 22, 18, 7, 0, WUESTE, 0.9], [22, 0, 9, 5, 0, WALD, 0.6]]) + gebirge([[-7, 31.2], [-1, 33], [5, 35.2]], 4, 1)
+  + fluss("31.0,31.4 31.2,30.0 32.9,24.1 31.3,21.8 32.5,15.6 31.7,9.5 31.6,4.8 33,0.3", 0.6) + fluss("32.5,15.6 34.5,13.5 37.3,12", 0.45) + see("31.8,-0.2 33,0.4 34.1,-0.3 33.7,-2.5 32,-2.3")
+  + landName(8, 24.5, "Sahara", 3) + kontText(18, 6, "AFRIKA", 3.6, "#8a5a28"),
+  { id: "afrika", de: "Afrika", syl: "A-fri-ka", it: "l'Africa", itSyl: "A-fri-ca", en: "Africa" }, "In Afrika liegt die Sahara, die größte heiße Wüste der Welt.");
+kontinent("australien", ton([[128, -25, 9, 5, 0, WUESTE, 0.6]]) + kontText(134, -24, "AUSTRALIEN", 3, "#4f4f8a", 0.6),
+  { id: "australien", de: "Australien", syl: "aus-TRA-li-en", it: "l'Australia", itSyl: "au-STRA-lia", en: "Australia" }, "Australien ist der kleinste Kontinent. Dort leben Kängurus.");
 {
-  const o = orteVon(["aegypten", "kapstadt"]);
-  kontinent("afrika", ton([[12, 22, 18, 7, 0, WUESTE, 0.9], [22, 0, 9, 5, 0, WALD, 0.6]]) + gebirge([[-7, 31.2], [-1, 33], [5, 35.2]], 4, 1) + kontText(18, 6, "AFRIKA", 3.6, "#8a5a28") + o.k,
-    { id: "afrika", de: "Afrika", syl: "A-fri-ka", it: "l'Africa", itSyl: "A-fri-ca", en: "Africa" }, "In Afrika liegt die Sahara, die größte heiße Wüste der Welt.",
-    Object.assign(knopf(176, 106), { zoom: { x: 140, y: 58, w: 145, h: 97 }, unter: o.unter }));
-}
-{
-  const o = orteVon(["sydney"]);
-  kontinent("australien", ton([[128, -25, 9, 5, 0, WUESTE, 0.6]]) + kontText(134, -24, "AUSTRALIEN", 3, "#6a4a7a", 0.6) + o.k,
-    { id: "australien", de: "Australien", syl: "aus-TRA-li-en", it: "l'Australia", itSyl: "au-STRA-lia", en: "Australia" }, "Australien ist der kleinste Kontinent. Dort leben Kängurus.",
-    Object.assign(knopf(322, 168), { zoom: { x: 304, y: 112, w: 84, h: 56 }, unter: o.unter }));
-}
-{
-  /* Europa: Land, Grenzen (für die Lupe), Deutschland rot hervorgehoben, Punkte der elf Orte */
+  /* Europa: Land, Grenzen (für die Lupe), Deutschland rot hervorgehoben, Punkte der elf Orte;
+     Bilder und Namen der Orte erscheinen erst in der Lupe (Lupen-Teile mit eigener Zeichnung) */
   let extra = ton([[10, 46.5, 3.4, 1.1, -8, BERGTON, 0.6]]);
-  extra += `<path d="${GRENZEN_EU.map((t) => weg(t, false)).join("")}" fill="none" stroke="#a8853a" stroke-width=".18" stroke-dasharray=".6 .35" opacity=".85"/>`;
-  extra += `<path d="${weg(DEUTSCHLAND)}" fill="#d9483a" stroke="#f5c542" stroke-width=".3"/>`;
+  extra += `<path d="${GRENZEN_EU.map((t) => weg(t, false)).join("")}" fill="none" stroke="#a8853a" stroke-width=".14" stroke-dasharray=".5 .3" opacity=".85"/>`;
+  extra += `<path d="${weg(DEUTSCHLAND)}" fill="#d9483a" stroke="#f5c542" stroke-width=".25"/>`;
   const [gx, gy] = P(10.4, 51.2);
   extra += `<circle cx="${r(gx)}" cy="${r(gy)}" r="4.6" fill="none" stroke="#d9483a" stroke-width=".3" stroke-dasharray=".8 .5" opacity=".8"/>`;
   const EUORTE = ["grossbritannien", "frankreich", "spanien", "italien", "rom", "venedig", "wien", "deutschland", "griechenland", "tuerkei", "moskau"];
   for (const id of EUORTE) { if (id === "deutschland") continue; const [x, y] = P(...ORT[id].ll); extra += `<circle cx="${r(x)}" cy="${r(y)}" r=".7" fill="#c0392b" stroke="#fff8ea" stroke-width=".25"/>`; }
-  extra += kontText(25, 63.5, "EUROPA", 3.4, "#8a6a28", 1);
-  const unter = EUORTE.map((id) => { const b = ortBild(id, 0.4, 1.55); return Object.assign(wort(id), { x: 0, y: 0, kunst: b.k }); });
-  /* Lupenknopf über dem Atlantik westlich von Irland */
-  const ox = 170 - 16, oy = 36 + 16;
+  extra += kontText(25, 61.2, "EUROPA", 3.4, "#8a6a28", 1);
+  const o = lupeUm(EUORTE, 0.4, 2.4, true, MARKE_EU);
   kontinent("europa", extra, { id: "europa", de: "Europa", syl: "eu-RO-pa", it: "l'Europa", itSyl: "eu-RO-pa", en: "Europe" },
     "Europa ist ein kleiner Kontinent mit vielen Ländern. Deutschland liegt in der Mitte.",
-    { x: ox, y: oy, zoom: { x: 178, y: 28, w: 56, h: 37 }, unter });
+    Object.assign(knopf(...P(-25, 47)), { zoom: o.zoom, unter: o.unter }), 0.2);
+}
+
+/* =====================================================================
+   TEILE — 3: Orte außerhalb Europas und Asiens direkt mit Lupe (ein Tipp führt hinein)
+   ===================================================================== */
+for (const id of ["san_francisco", "new_york", "mexiko", "rio", "aegypten", "kapstadt", "sydney"]) {
+  const b = ortBild(id, 1, 3.3), c = ORT[id], { x0, x1, y0, y1 } = b.box;
+  const ox = c.knopf[0] - 16, oy = c.knopf[1] + 16;
+  S.teil(Object.assign(wort(id), { x: ox, y: oy, kunst: verschiebe(ox, oy, b.k) }));
 }
 
 /* =====================================================================
@@ -533,7 +530,8 @@ const knopf = (x, y) => ({ x: x - 16, y: y + 16 });
   const x = 330, y = 183, w = 66, h = 23;
   g += `<rect x="${x + 0.6}" y="${y + 0.8}" width="${w}" height="${h}" rx="2" fill="#3b2a10" opacity=".22"/>`;
   g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="${S.lg("kart", [[0, "#fbf3dc"], [1, "#efe1bb"]])}" stroke="#8a6d43" stroke-width=".5"/><rect x="${x + 1.2}" y="${y + 1.2}" width="${w - 2.4}" height="${h - 2.4}" rx="1.4" fill="none" stroke="#b8975e" stroke-width=".3"/>`;
-  g += text(x + w / 2, y + 9.6, "Die Welt", 6, "#3a2716", `font-weight="bold"`) + text(x + w / 2, y + 16.2, "5 Kontinente · 3 Ozeane", 3, "#5a4026", `font-style="italic"`);
+  g += text(x + w / 2, y + 9.6, "Die Welt", 6, "#3a2716", `font-weight="bold"`) + text(x + w / 2, y + 16.2, "Kontinente und Ozeane", 3, "#5a4026", `font-style="italic"`);
+  { const [mx, my] = P(18.5, 34.6); g += halo(mx, my, "Mittelmeer", 2.4, "#3f7896", "#d6ecf2", `font-style="italic" letter-spacing=".3"`, 0.5); }
   S.davor(g);
 }
 

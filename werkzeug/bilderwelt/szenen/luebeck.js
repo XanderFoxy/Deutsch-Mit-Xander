@@ -1004,7 +1004,6 @@ function sockelP(lat, d, breite, tiefe, hoehe) {
   REITER = { x: x + sx + sitzX, y: y + sy + sitzY, hand: [kd.z.handL, kd.z.handR].map((h2) => [r(x + sx + h2.x * kd.k), r(y + sy + h2.y * kd.k)]), L, ox: x, oy: y + so.oben };
   const k = so.svg + `<g transform="translate(0 ${so.oben})">${loewe(L, true, 1)}</g>` + `<g transform="translate(${sx} ${sy})">${kd.svg}</g>`;
   schlag(lat, d, 1.95, 2.5, 0.5);
-  if (process.env.DBG) console.error("REITER", JSON.stringify(REITER));
   S.teil({ id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", x, y, steht: true, kunst: k,
     tipp: "Vor dem Holstentor liegen zwei Löwen aus Eisen. Einer wacht, der andere schläft. Kinder setzen sich gern auf sie." });
 }

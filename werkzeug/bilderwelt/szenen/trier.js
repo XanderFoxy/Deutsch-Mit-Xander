@@ -949,7 +949,7 @@ const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
   k += `<ellipse cx="${r(vx)}" cy="${r(top - 0.075 * s)}" rx="${r(0.04 * s)}" ry="${r(0.01 * s)}" fill="#5a3a22"/><ellipse cx="${r(vx + 0.008 * s)}" cy="${r(top - 0.077 * s)}" rx="${r(0.018 * s)}" ry="${r(0.004 * s)}" fill="#a07850"/>`;
   k += `<path d="M${r(vx - 0.039 * s)} ${r(top - 0.062 * s)} q${r(-0.03 * s)} 0 ${r(-0.028 * s)} ${r(0.024 * s)} q0 ${r(0.016 * s)} ${r(0.031 * s)} ${r(0.014 * s)}" stroke="#f2f0ea" stroke-width="${r(0.01 * s)}" fill="none"/>`;
   /* der Teller mit zwei Reibekuchen und Apfelmus (Mitte) */
-  const px = -0.02 * s;
+  const px = -0.04 * s;
   k += `<ellipse cx="${r(px)}" cy="${r(top - 0.006 * s)}" rx="${r(0.1 * s)}" ry="${r(0.024 * s)}" fill="#fbfaf6" stroke="#cfcac0" stroke-width=".15"/>`;
   for (const [dx, dy] of [[-0.035, 0.012], [0.025, 0.016]]) k += `<ellipse cx="${r(px + dx * s)}" cy="${r(top - dy * s)}" rx="${r(0.045 * s)}" ry="${r(0.014 * s)}" fill="#b8742c"/><ellipse cx="${r(px + dx * s + 0.006 * s)}" cy="${r(top - dy * s - 0.004 * s)}" rx="${r(0.032 * s)}" ry="${r(0.008 * s)}" fill="#dca052"/><path d="M${r(px + dx * s - 0.03 * s)} ${r(top - dy * s - 0.002 * s)} l${r(0.012 * s)} ${r(-0.004 * s)} m${r(0.02 * s)} ${r(0.006 * s)} l${r(0.014 * s)} ${r(-0.003 * s)}" stroke="#8a4e1c" stroke-width=".2"/>`;
   k += `<ellipse cx="${r(px + 0.06 * s)}" cy="${r(top - 0.02 * s)}" rx="${r(0.022 * s)}" ry="${r(0.01 * s)}" fill="#ecd9a0"/><ellipse cx="${r(px + 0.064 * s)}" cy="${r(top - 0.023 * s)}" rx="${r(0.01 * s)}" ry="${r(0.004 * s)}" fill="#fff4cc"/>`;
@@ -965,7 +965,7 @@ const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
     unter: [
       { id: "reibekuchen", de: "der Reibekuchen", syl: "REI-be-ku-chen", it: "la frittella di patate", itSyl: "frit-TEL-la di pa-TA-te", en: "potato pancake", x: r(TX + px), y: r(TY + top), kunst: flaeche(-0.1 * s, -0.06 * s, 0.2 * s, 0.08 * s, 0.4),
         tipp: "In Trier sagt man zu Reibekuchen „Gromperekichelcher“. Man macht sie aus Kartoffeln." },
-      { id: "traubensaft", de: "der Traubensaft", syl: "TRAU-ben-saft", it: "il succo d'uva", itSyl: "SUC-co DU-va", en: "grape juice", x: r(TX + wx), y: r(TY + top + 0.01 * s), kunst: flaeche(-0.06 * s, -0.17 * s, 0.13 * s, 0.18 * s, 0.4),
+      { id: "traubensaft", de: "der Traubensaft", syl: "TRAU-ben-saft", it: "il succo d'uva", itSyl: "SUC-co DU-va", en: "grape juice", x: r(TX + wx), y: r(TY + top - 0.15 * s), kunst: flaeche(-0.06 * s, -0.01 * s, 0.13 * s, 0.18 * s, 0.4),
         tipp: "An der Mosel wachsen viele Trauben. Aus ihnen presst man Traubensaft." },
     ] });
 }

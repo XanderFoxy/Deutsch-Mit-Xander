@@ -177,17 +177,24 @@ const krone = (cx, cy, w, h, seed, T, loecher = 3) => {
   const z = zufall(seed), id = S.id("kr" + bz++);
   const grad = (name, a, b) => S.lg(name + id, [[0, a], [1, b]], cx, cy - h / 2, cx, cy + h / 2, ' gradientUnits="userSpaceOnUse"');
   const GD = grad("d", T[0], T[1]), GM = grad("m", T[2], T[3]), GL = grad("l", T[4], T[5]);
-  const massen = [[cx - w * 0.2, cy - h * 0.2, w * 0.27, h * 0.25], [cx + w * 0.17, cy - h * 0.22, w * 0.26, h * 0.24], [cx + w * 0.02, cy - h * 0.36, w * 0.2, h * 0.16], [cx, cy + h * 0.1, w * 0.44, h * 0.34]];
+  /* Massen leicht verschoben je Baum (kein Spiegelbild); ungerader Seed: eine Masse mehr, Krone flacher */
+  const j = () => (z() - 0.5);
+  const massen = [[cx - w * (0.2 + j() * 0.08), cy - h * (0.2 + j() * 0.06), w * 0.27, h * 0.25], [cx + w * (0.17 + j() * 0.08), cy - h * (0.22 + j() * 0.06), w * 0.26, h * 0.24], [cx + w * j() * 0.1, cy - h * 0.36, w * 0.2, h * 0.16], [cx, cy + h * 0.1, w * 0.44, h * 0.34]];
+  if (seed % 2) massen.splice(2, 0, [cx + w * 0.3, cy - h * 0.02, w * 0.17, h * 0.2]);
   let g = "";
   massen.forEach(([mx, my, rx, ry], i) => {
     const mid = `${id}_${i}`;
     S.def(`<path id="${mid}" d="${lappenPfad(mx, my, rx, ry, z)}"/><clipPath id="${mid}c"><use href="#${mid}"/></clipPath>`);
     const um = (dx, dy, f) => `transform="translate(${r(mx + dx)} ${r(my + dy)}) scale(${f}) translate(${r(-mx)} ${r(-my)})"`;
-    g += `<use href="#${mid}" fill="${GD}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" ${um(-rx * 0.08, -ry * 0.12, 0.86)}/><use href="#${mid}" fill="${GL}" ${um(-rx * 0.42, -ry * 0.46, 0.36)}/></g>`;
+    /* Lichtkappe als Halbmond an der Oberkante: helle Masse, darüber nach rechts unten versetzt Zwischen- und Mittelton,
+       unten die dunkle Unterseite – gleiche gelappte Kante, weicher Übergang */
+    g += `<use href="#${mid}" fill="${GL}"/><g clip-path="url(#${mid}c)"><use href="#${mid}" fill="${GM}" opacity=".55" ${um(rx * 0.06, ry * 0.12, 1)}/><use href="#${mid}" fill="${GM}" ${um(rx * 0.1, ry * 0.24, 0.98)}/><use href="#${mid}" fill="${GD}" ${um(rx * 0.05, ry * 0.86, 1)}/></g>`;
   });
+  /* Himmelslöcher: unregelmäßig, 12–20 px groß, mit Ast aus dem dunklen Inneren */
   for (let i = 0; i < loecher; i++) {
-    const a = -Math.PI * (0.12 + z() * 0.76), d = 0.3 + z() * 0.08, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.8;
-    g += `<ellipse cx="${r(hx)}" cy="${r(hy)}" rx="${r(0.9 + z() * 0.7)}" ry="${r(0.6 + z() * 0.5)}" fill="#9fbcdc"/><path d="M${r(hx - 1.6)} ${r(hy + 1.1)} L${r(hx + 0.9)} ${r(hy - 0.5)}" stroke="#4a3b2c" stroke-width=".35" stroke-linecap="round"/>`;
+    const a = -Math.PI * (0.15 + (i + z() * 0.6) / Math.max(1, loecher) * 0.7), d = 0.3 + z() * 0.06, hx = cx + Math.cos(a) * w * d, hy = cy + Math.sin(a) * h * d * 0.75, s = Math.min(w, h) * 0.05 + 1.2;
+    let p = ""; for (let k = 0; k < 6; k++) { const t = k / 6 * Math.PI * 2, f = 0.6 + z() * 0.5; p += (k ? "L" : "M") + `${r(hx + Math.cos(t) * s * f)} ${r(hy + Math.sin(t) * s * f * 0.75)}`; }
+    g += `<path d="${p}Z" fill="#9fbcdc" stroke="#9fbcdc" stroke-width=".4" stroke-linejoin="round"/><path d="M${r(hx - s * 0.3)} ${r(hy + s * 1.7)} Q${r(hx - s * 0.1)} ${r(hy + s * 0.5)} ${r(hx + s * 0.5)} ${r(hy - s * 0.2)}" stroke="#3a2e22" stroke-width="${r(0.2 + s * 0.1)}" fill="none" stroke-linecap="round"/>`;
   }
   return g;
 };
@@ -319,6 +326,7 @@ const theaterUnter = [];
   k += `<path d="M${-M + 0.3} -19.25 L${-M + 1.6} -19.9 L${M - 1.6} -19.9 L${M - 0.3} -19.25 Z" fill="${DACH}"/>`;
   /* Morgensonne: warm von links, rechte Seite kühler */
   k += `<rect x="${-W}" y="-14.4" width="${2 * W}" height="14.6" fill="${S.lg("thwarm", [[0, "#ffcf8a", 0.22], [0.45, "#ffcf8a", 0.05], [1, "#4a4a90", 0.16]], 0, 0, 1, 0)}"/>`;
+  k += `<rect x="${-M}" y="-14.4" width="${2 * M}" height="14.6" fill="${S.lg("thwarm3", [[0, "#ffcf8a", 0.1], [1, "#4a4a90", 0.1]], 0, 0, 1, 0)}"/>`;
   k += `<rect x="${-M}" y="-19" width="${2 * M}" height="4.6" fill="${S.lg("thwarm2", [[0, "#ffcf8a", 0.2], [1, "#4a4a90", 0.14]], 0, 0, 1, 0)}"/>`;
   S.teil({ id: "theater", de: "das Theater", syl: "the-A-ter", it: "il teatro", itSyl: "te-A-tro", en: "theatre", x: CX, y: TY, kunst: `<g transform="scale(${TU.toFixed(5)})">${k}</g>`,
     tipp: "Das Deutsche Nationaltheater: Hier wurde 1919 die erste demokratische Verfassung Deutschlands beschlossen.",
@@ -647,8 +655,26 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
   bodenSchatten(ZW.D + 0.9, (ZW.X0 + ZW.X1) / 2, 3.6, 2.6, 0.26);
   bodenSchatten(ZK.D + 0.9, (ZK.X0 + ZK.X1) / 2, 3.6, 2.6, 0.22);
   let k = stand(ZK.D, ZK.X0, ZK.X1, ZK.T, ZK.h, "#3d6b48", -1, "#f4ecd8", "Zwiebelkuchen · Apfelsaft", 0.2);
-  /* Zwiebelkuchen-Bleche auf der Theke */
-  for (let i = 0; i < 3; i++) { const X = ZK.X0 + 0.5 + i * 1.05; k += `<path d="M${P(ZK.D + 0.15, X, 0.98)} L${P(ZK.D + 0.15, X + 0.9, 0.98)} L${P(ZK.D + 0.5, X + 0.9, 0.98)} L${P(ZK.D + 0.5, X, 0.98)} Z" fill="#e2b45a" stroke="#8a5a20" stroke-width=".2"/>`; }
+  /* Zwiebelkuchen: zwei Bleche schräg auf einem Ständer (gelb, braune Röststellen, in Stücke geschnitten), Apfelsaft in Flaschen und Bechern */
+  { const zr = zufall(41);
+    for (let i = 0; i < 2; i++) {
+      const X = ZK.X0 + 0.3 + i * 1.15, X2 = X + 1.0, Dv = ZK.D + 0.12, Dh = ZK.D + 0.42;
+      k += `<path d="M${P(Dv, X - 0.03, 0.95)} L${P(Dv, X2 + 0.03, 0.95)} L${P(Dh, X2 + 0.03, 1.4)} L${P(Dh, X - 0.03, 1.4)} Z" fill="#8a5a20"/>`;
+      k += `<path d="M${P(Dv, X, 0.98)} L${P(Dv, X2, 0.98)} L${P(Dh, X2, 1.38)} L${P(Dh, X, 1.38)} Z" fill="${S.lg("kuchen", [[0, "#f0cc6a"], [1, "#d9a446"]])}"/>`;
+      let sch = "";
+      for (let c = 1; c < 4; c++) { const Xc = X + c * 0.25; sch += `M${P(Dv, Xc, 0.98)} L${P(Dh, Xc, 1.38)} `; }
+      sch += `M${P((Dv + Dh) / 2, X, 1.18)} L${P((Dv + Dh) / 2, X2, 1.18)}`;
+      k += `<path d="${sch}" stroke="#a8742c" stroke-width=".22"/>`;
+      let fl = ""; for (let f = 0; f < 14; f++) { const t = zr(), Xf = X + 0.06 + zr() * 0.88, Df = Dv + t * (Dh - Dv); fl += `<ellipse cx="${r(xG(Df, Xf))}" cy="${r(yG(Df, 0.98 + t * 0.4))}" rx=".45" ry=".28" fill="${f % 3 ? "#9a5a1e" : "#6e3a12"}"/>`; }
+      k += fl;
+    }
+    for (let i = 0; i < 4; i++) {
+      const X = ZK.X0 + 2.62 + i * 0.22, x = xG(ZK.D + 0.25, X), y = yG(ZK.D + 0.25, 0.95), u = sk(ZK.D + 0.25);
+      k += `<path d="M${r(x - 0.04 * u)} ${r(y)} L${r(x - 0.04 * u)} ${r(y - 0.2 * u)} Q${r(x - 0.04 * u)} ${r(y - 0.25 * u)} ${r(x - 0.015 * u)} ${r(y - 0.27 * u)} L${r(x - 0.015 * u)} ${r(y - 0.31 * u)} L${r(x + 0.015 * u)} ${r(y - 0.31 * u)} L${r(x + 0.015 * u)} ${r(y - 0.27 * u)} Q${r(x + 0.04 * u)} ${r(y - 0.25 * u)} ${r(x + 0.04 * u)} ${r(y - 0.2 * u)} L${r(x + 0.04 * u)} ${r(y)} Z" fill="#d48a26"/>` +
+        `<rect x="${r(x - 0.04 * u)}" y="${r(y - 0.15 * u)}" width="${r(0.08 * u)}" height="${r(0.07 * u)}" fill="#f2ead2"/><rect x="${r(x - 0.017 * u)}" y="${r(y - 0.33 * u)}" width="${r(0.034 * u)}" height="${r(0.03 * u)}" fill="#2f5a32"/><path d="M${r(x - 0.025 * u)} ${r(y - 0.02 * u)} V${r(y - 0.19 * u)}" stroke="#ffe0a0" stroke-width=".25" opacity=".7"/>`;
+    }
+    for (let i = 0; i < 2; i++) { const x = xG(ZK.D + 0.15, ZK.X0 + 2.5 + i * 0.95), y = yG(ZK.D + 0.15, 0.95), u = sk(ZK.D + 0.15); k += `<path d="M${r(x - 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.03 * u)} ${r(y)} L${r(x - 0.03 * u)} ${r(y)} Z" fill="#f4f1ea"/><ellipse cx="${r(x)}" cy="${r(y - 0.11 * u)}" rx="${r(0.04 * u)}" ry="${r(0.012 * u)}" fill="#d48a26"/>`; }
+  }
   k += stand(ZW.D, ZW.X0, ZW.X1, ZW.T, ZW.h, "#7a4a24", 1, "#f4ecd8", "Zwiebeln aus Heldrungen", 0.2);
   /* Kiste mit losen Zwiebeln auf der Theke */
   { const kx = xG(ZW.D + 0.3, ZW.X0 + 2.9), ky = yG(ZW.D + 0.3, 0.95), ku = sk(ZW.D + 0.3);
@@ -841,7 +867,7 @@ const LS = { D: 8.6, X: -6.0 };
   g += `<path d="M.4 -.86 L.38 -.98 Q.3 -1.01 .24 -.96" stroke="${CHROM}" stroke-width=".022" fill="none" stroke-linecap="round"/><path d="M.24 -.96 L.19 -.94" stroke="#1d1d1d" stroke-width=".04" stroke-linecap="round"/>`;
   g += `<path d="M.44 -.8 L.5 -.8 L.52 -.77 L.44 -.76 Z" fill="#e8e2c8" stroke="#3a3d40" stroke-width=".008"/>`;
   S.teil({ id: "fahrrad", de: "das Fahrrad", syl: "FAHR-rad", it: "la bicicletta", itSyl: "bi-ci-CLET-ta", en: "bicycle", x: r(x), y: r(y), steht: true,
-    kunst: `<g transform="scale(${u.toFixed(4)})">${g}</g>`, tipp: "Das Fahrrad lehnt an der Litfaßsäule. Viele Studenten fahren in Weimar Fahrrad." });
+    kunst: `<g transform="scale(${u.toFixed(4)}) skewX(4)">${g}</g>`, tipp: "Das Fahrrad lehnt an der Litfaßsäule. Viele Studenten fahren in Weimar Fahrrad." });
 }
 
 /* =====================================================================

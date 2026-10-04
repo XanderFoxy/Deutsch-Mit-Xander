@@ -423,9 +423,11 @@ const HU = {};
   /* Fallwände von hinten nach vorn */
   seg.sort((p, q) => q.d - p.d);
   let kHaupt = "";
+  const nahSeg = [];
   for (const sg of seg) {
     if (sg.pA[0] > 336 && kHaupt === "") { kHaupt = k; k = ""; }
     const L = sg.licht, g = sg.g, h = sg.uA[1] - sg.pA[1];
+    if (h > 60) { nahSeg.push(sg); continue; }
     const id = "wv" + sg.i;
     const oben = g > 0.4 ? "#2f7d63" : (L > 0.3 ? "#fffaf0" : "#eef2f2"), mitte = g > 0.4 ? "#7fbba2" : (L > 0.3 ? "#f8f4ea" : "#dfe6e8");
     S.def(`<linearGradient id="${S.id(id)}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(sg.pA[1])}" x2="0" y2="${r(sg.uA[1])}"><stop offset="0" stop-color="${oben}"/><stop offset="${r(0.12 + g * 0.16)}" stop-color="${mitte}"/><stop offset="${r(0.3 + g * 0.15)}" stop-color="${L > 0.3 ? "#fbf7ee" : "#e6ecee"}"/><stop offset="1" stop-color="${L > 0.3 ? "#e9eef0" : "#c3d0d6"}"/></linearGradient>`);
@@ -443,18 +445,66 @@ const HU = {};
       spalt += `M${r(c1[0])} ${r(c1[1])} L${r(c2[0])} ${r(c2[1])} L${r(d2[0])} ${r(d2[1])} Z`;
     }
     if (n) k += `<path d="${spalt}" fill="${L > 0.3 ? "#b9c8cc" : "#90a6b2"}" opacity=".45"/><path d="${hell}" fill="#ffffff" opacity="${L > 0.3 ? 0.55 : 0.38}"/>`;
-    else {
-      /* naher Abbruch, fast von der Seite gesehen: glatte, gebogene Bahnen — oben glasig grün, nach unten weiß aufgerissen */
-      let st = "", gr = "";
-      for (let j = 0; j < 4; j++) {
-        const t = (j + 0.3 + zw() * 0.4) / 4, x0 = sg.pA[0] + (sg.pB[0] - sg.pA[0]) * t, y0 = sg.pA[1] + (sg.pB[1] - sg.pA[1]) * t, x1 = sg.uA[0] + (sg.uB[0] - sg.uA[0]) * t, y1 = Math.min(262, sg.uA[1] + (sg.uB[1] - sg.uA[1]) * t);
-        gr += `M${r(x0)} ${r(y0 + 1)} Q${r(x0 + (x1 - x0) * 0.1 + 1)} ${r(y0 + (y1 - y0) * 0.12)} ${r(x0 + (x1 - x0) * 0.2)} ${r(y0 + (y1 - y0) * 0.24)}`;
-        st += `M${r(x0 + (x1 - x0) * 0.2)} ${r(y0 + (y1 - y0) * 0.22)} Q${r(x0 + (x1 - x0) * 0.6 - 1)} ${r(y0 + (y1 - y0) * 0.6)} ${r(x1)} ${r(y1)}`;
-      }
-      k += `<path d="${gr}" stroke="#bfe6d2" stroke-width=".7" fill="none" opacity=".7"/><path d="${st}" stroke="#ffffff" stroke-width="1.3" fill="none" opacity=".55" stroke-linecap="round"/>`;
-    }
     /* glasige Kante: helle Lichtlinie auf der Kante, darunter der dunkle Bogen des überkippenden Wassers */
     if (g > 0.2 && h < 60) k += `<path d="M${r(sg.pA[0])} ${r(sg.pA[1] + h * 0.05)} L${r(sg.pB[0])} ${r(sg.pB[1] + h * 0.05)}" stroke="#1e5c48" stroke-width=".5" opacity="${r(g * 0.6)}"/>`;
+  }
+  /* Der nahe Abbruch (Table Rock), fast von der Seite: oben eine gewölbte, glasig grüne Lippe, darunter wird das Grün
+     heller und weißer, die Stränge reißen ab halber Höhe zu Schaum auf. Nach links läuft das Grün weich in Weiß aus. */
+  {
+    const oben = [], unten = [];
+    for (const sg of nahSeg) { oben.push(sg.pA, sg.pB); unten.push([sg.uA[0], Math.min(266, sg.uA[1])], [sg.uB[0], Math.min(266, sg.uB[1])]); }
+    oben.sort((p, q) => p[0] - q[0]); unten.sort((p, q) => p[0] - q[0]);
+    oben[0] = [oben[0][0] - 0.6, oben[0][1]]; unten[0] = [unten[0][0] - 0.6, unten[0][1]];
+    const top = (x) => profilY(oben, x), bot = (x) => profilY(unten, x);
+    const x0 = oben[0][0], unterK = [];
+    for (let x = 406; x > x0; x -= 2) unterK.push([x, bot(x)]);
+    const flaecheN = P([...oben, [406, top(406)], ...unterK, [x0, bot(x0)]]);
+    S.def(`<linearGradient id="${S.id("nahweiss")}" gradientUnits="userSpaceOnUse" x1="0" y1="113" x2="0" y2="236"><stop offset="0" stop-color="#d9e9e0"/><stop offset=".35" stop-color="#eef3ee"/><stop offset="1" stop-color="#f7f5ef"/></linearGradient>`);
+    S.def(`<linearGradient id="${S.id("nahgruen")}" gradientUnits="userSpaceOnUse" x1="0" y1="113" x2="0" y2="214"><stop offset="0" stop-color="#1c6a52"/><stop offset=".1" stop-color="#2a8165"/><stop offset=".32" stop-color="#5eaa8c" stop-opacity=".9"/><stop offset=".62" stop-color="#b4dcc8" stop-opacity=".45"/><stop offset="1" stop-color="#e8f2ec" stop-opacity="0"/></linearGradient>`);
+    S.def(`<linearGradient id="${S.id("nahfade")}" gradientUnits="userSpaceOnUse" x1="${r(x0)}" y1="0" x2="${r(x0 + 26)}" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".55" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("nahm")}" maskUnits="userSpaceOnUse" x="300" y="100" width="110" height="170"><rect x="300" y="100" width="110" height="170" fill="url(#${S.id("nahfade")})"/></mask>`);
+    let n = `<path d="${flaecheN}" fill="url(#${S.id("nahweiss")})"/>`;
+    let gr = `<path d="${flaecheN}" fill="url(#${S.id("nahgruen")})"/>`;
+    /* dunkle Spalten zwischen den Strängen (nur oben, im grünen Teil) */
+    const zs = zufall(733);
+    let spalt = "", faser = "";
+    const str = {};
+    for (let x = x0 + 0.4; x < 404;) {
+      const b = 0.6 + Math.pow(zs(), 1.6) * 2.2, gap = 0.25 + zs() * 1.1, yt = top(x + b / 2) + 3.4, yb = bot(x + b / 2), h = yb - yt;
+      if (zs() < 0.4) spalt += `M${r(x + b)} ${r(yt)} h${r(gap)} l${r(-0.2)} ${r(h * (0.25 + zs() * 0.2))} Z`;
+      /* Strang: oben glatt, ab etwa halber Höhe in 2–3 Fasern aufgelöst */
+      const ym = yt + h * (0.38 + zs() * 0.18), dr = (zs() - 0.4) * 1.2, ys = yt + h * Math.pow(zs(), 1.5) * 0.22;
+      const kb = Math.floor((x - x0) / 7);
+      str[kb] = (str[kb] || "") + `M${r(x + 0.2)} ${r(ys)} h${r(b * 0.6)} L${r(x + b + dr + 0.3)} ${r(ym)} L${r(x + dr - 0.3)} ${r(ym)} Z`;
+      const nf = b > 1.4 ? 3 : 2;
+      for (let f = 0; f < nf; f++) {
+        const fx = x + dr - 0.3 + (b + 0.6) * (f + 0.5) / nf, fl = h * (0.25 + zs() * 0.3), fw = (b + 0.6) / nf * (0.5 + zs() * 0.3);
+        faser += `M${r(fx - fw / 2)} ${r(ym - 0.5)} h${r(fw)} L${r(fx + dr * 0.6 + fw * 0.2)} ${r(ym + fl)} L${r(fx + dr * 0.6 - fw * 0.2)} ${r(ym + fl)} Z`;
+      }
+      x += b + gap;
+    }
+    gr += `<path d="${spalt}" fill="#134a3a" opacity=".35"/>`;
+    /* Stränge in Streifen von 7 Einheiten: je Streifen ein Verlauf über dessen eigene Fallhöhe (oben glasig, unten weiß) */
+    let strS = "";
+    for (const kb of Object.keys(str)) {
+      const xm = x0 + kb * 7 + 3.5, yt = top(xm) + 3.4, h = bot(xm) - yt;
+      S.def(`<linearGradient id="${S.id("strang" + kb)}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(yt)}" x2="0" y2="${r(yt + h * 0.5)}"><stop offset="0" stop-color="#ffffff" stop-opacity=".08"/><stop offset=".45" stop-color="#ffffff" stop-opacity=".45"/><stop offset="1" stop-color="#ffffff" stop-opacity=".9"/></linearGradient>`);
+      strS += `<path d="${str[kb]}" fill="url(#${S.id("strang" + kb)})"/>`;
+    }
+    n += `<g mask="url(#${S.id("nahm")})">${gr}</g>`;
+    n += `<g filter="url(#${S.id("hauch")})">${strS}<path d="${faser}" fill="#fbfcf8" opacity=".6"/></g>`;
+    /* untere Hälfte: alles löst sich in Schaum und Gischt auf */
+    const mist = []; for (let x = x0 - 2; x <= 406; x += 4) mist.push([x, top(x) + (bot(x) - top(x)) * 0.52]);
+    n += `<g filter="url(#${S.id("nebel2")})"><path d="${P([...mist, [406, 268], [x0 - 2, 268]])}" fill="#f6f5f0" opacity=".85"/></g>`;
+    /* weicher Übergang zum weißen Mittelteil: Gischtschleier über der linken Naht */
+    n += `<g filter="url(#${S.id("dunst")})"><path d="M${r(x0 - 4)} ${r(top(x0) + 6)} L${r(x0 + 5)} ${r(top(x0 + 5) + 8)} L${r(x0 + 4)} ${r(bot(x0 + 4) - 4)} L${r(x0 - 6)} ${r(bot(x0) - 4)} Z" fill="#f4f4ee" opacity=".7"/></g>`;
+    /* die Lippe: gewölbter Glanzstreifen auf der Kante, darunter die dunkle Kehle des überkippenden Wassers */
+    const lippe = (dy) => oben.map(([x, y]) => [x, y + dy * (0.7 + (x - x0) / 60)]);
+    let lp = `<path d="${P([...lippe(0), ...lippe(3.4).reverse()])}" fill="${S.lg("lippe", [[0, "#9fdcc2"], [0.35, "#3f9a7a"], [1, "#1a5c47"]], 0, 0, 0, 1)}"/>`;
+    lp += `<path d="${P(lippe(0.7), false)}" stroke="#effff6" stroke-width=".7" fill="none" opacity=".85"/><path d="${P(lippe(3.4), false)}" stroke="#123f32" stroke-width=".6" fill="none" opacity=".55"/>`;
+    n += `<g mask="url(#${S.id("nahm")})">${lp}</g>`;
+    /* weißer Teil der Lippe links (dort ist das Wasser flach und schäumt schon an der Kante) */
+    n += `<path d="${P(lippe(0.8), false)}" stroke="#ffffff" stroke-width="1.2" fill="none" opacity=".6"/>`;
+    k += n;
   }
   const kante = KANTE.filter(([E, N]) => tiefe(E, N) > 25).map(([E, N]) => W(E, N, 0.4)).filter(([x]) => x < 440);
   let kNah = k + `<path d="${P(kante.filter(([x]) => x >= 330), false)}" stroke="#f4fff8" stroke-width=".6" fill="none" opacity=".9"/>`;
