@@ -84,7 +84,11 @@ const seite = (teile, zoom, unterIds) => {
      (über 8 %: Meere, Kontinente, Himmel) und das eigene Bild werden nur als Hinweis gemeldet. */
   const markenPruefen = () => pg.evaluate(() => {
     const svg = document.getElementById("s"), bildFl = svg.viewBox.baseVal.width * svg.viewBox.baseVal.height;
-    const gross = {}; svg.querySelectorAll("[data-bw-teil]").forEach((g) => { const k = (g.querySelector(":scope > .bw-kunst") || g).getBBox(); gross[g.dataset.bwTeil] = k.width * k.height > bildFl * 0.08; });
+    const gross = {}, kasten = {}; svg.querySelectorAll("[data-bw-teil]").forEach((g) => { const k = (g.querySelector(":scope > .bw-kunst") || g).getBoundingClientRect(), b = (g.querySelector(":scope > .bw-kunst") || g).getBBox(); gross[g.dataset.bwTeil] = b.width * b.height > bildFl * 0.08; kasten[g.dataset.bwTeil] = k; });
+    /* umgebend: das fremde Teil schließt die Mitte des eigenen Bildes ein (Afrika um Ägypten) – darüber darf die Marke liegen */
+    const umgibt = (h, id) => { const b = kasten[id]; if (!b) return false;
+      /* was unter der Mitte des eigenen Bildes gezeichnet ist (Afrika unter den Pyramiden) */
+      return document.elementsFromPoint(b.left + b.width / 2, b.top + b.height / 2).some((el) => { const t = el.closest && el.closest("[data-bw-teil]"); return t && t.dataset.bwTeil === h && !(el.getAttribute && el.getAttribute("data-bw-treff")); }); };
     const dach = svg.querySelector(".bw-marken-dach"); if (!dach) return [];
     const kreise = [...dach.children];
     /* wie der Klick in app.js (FASSUNG 878): Fangrechtecke und Marken-Dach zählen nicht, die oberste ZEICHNUNG entscheidet.
@@ -106,7 +110,8 @@ const seite = (teile, zoom, unterIds) => {
       const pz = (o) => Object.entries(o).map(([h, z]) => [h, Math.round(100 * z / n)]).filter(([, a]) => a >= 3).sort((a, b) => b[1] - a[1]);
       const d = pz(deckt);
       const versteckt = Object.values(verdeckt).reduce((a, b) => a + b, 0);
-      return { id, mitte: !m0 || m0 === eigen, sieg: Math.round(100 * (n - versteckt) / n), fremd: d.filter(([h]) => !gross[h]), gross: d.filter(([h]) => gross[h]), verdeckt: pz(verdeckt) };
+      d.forEach((e) => { if (umgibt(e[0], id)) e[0] += " (umgebend)"; });
+      return { id, mitte: !m0 || m0 === eigen, sieg: Math.round(100 * (n - versteckt) / n), fremd: d.filter(([h]) => !gross[h.split(" ")[0]] && !/umgebend/.test(h)), gross: d.filter(([h]) => gross[h.split(" ")[0]] || /umgebend/.test(h)), verdeckt: pz(verdeckt) };
     });
     return aus;
   });
@@ -125,7 +130,9 @@ const seite = (teile, zoom, unterIds) => {
        Übersichtskarte liegt sie über fremdem Land. Sonst Hinweis: in Stadtvierteln sitzt die Marke eines
        Hauses oft sichtbar auf dem Nachbarhaus, der Tipp geht dorthin, wo man den Knopf sieht. */
     const karte = !!(sz.nurForm || /karte$/.test(sz.id));
-    const fehl = m.sieg < 40 || (karte && m.fremd.some(([, a]) => a >= 12));
+    /* auf Karten: auch über einem großen fremden LAND (nicht Meer, nicht die eigene Umgebung) höchstens 30 % */
+    const meer = (h) => /meer|see\b|ozean|atlantik|pazifik|bucht|golf/i.test(((sz.teile.find((t) => t.id === h) || {}).de || "") + " " + h);
+    const fehl = m.sieg < 40 || (karte && (m.fremd.some(([, a]) => a >= 12) || m.gross.some(([h, a]) => !/umgebend/.test(h) && h.split(" ")[0] !== m.in && !meer(h.split(" ")[0]) && a >= 30)));
     if (fehl) schlecht++;
     const wo = (m.in ? m.in + " › " : "") + m.id;
     console.log((fehl ? "  MARKE " : "  marke ") + wo.padEnd(24) + (m.sieg < 40 ? " gewinnt nur auf " + m.sieg + " % ihres Kreises;" : "") + (m.mitte ? "" : " Mitte liegt unter einem anderen Ding;") +
