@@ -43,7 +43,8 @@ const LAERCHEN = [[18.5, 57, 17, 61, true], [9.8, 79, 15, 62, true], [17.8, 68, 
      zwischen gemauerten Ufern; daneben Wege mit Bänken.
    - Typisches: KÄSEFONDUE und RACLETTE auf der Terrasse, die KUHGLOCKE als
      Schmuck, das rote TASCHENMESSER und SCHOKOLADE im Picknick der
-     WANDERER, die Schweizer FLAGGE, ALPENDOHLEN. Bernhardiner nicht: das
+     WANDERIN auf der Bank, der BERGSTEIGER (Helm, Seil, Pickel) am Geländer
+     der Kirchbrücke, die Schweizer FLAGGE, ALPENDOHLEN. Bernhardiner nicht: das
      Fotografieren mit den Hunden ist in Zermatt seit 2015 verboten.
      Die Gornergratbahn ist von hier nicht zu sehen (UNSICHER) — weggelassen.
    ZEIT/LICHT: Ende September, 10 Uhr: Sonne im Südosten (Azimut 135°,
@@ -821,7 +822,7 @@ let SCHATTEN_BODEN = "", SCHATTEN_WASSER = "", RAND_GELAENDER = "";
   /* runde graue Steine: vorn groß, hinten klein und dicht (Texturgradient) */
   const imKies = (X, D) => { const t = (pts) => { let c = false; for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) { const [xi, yi] = pts[i], [xj, yj] = pts[j]; if ((yi > D) !== (yj > D) && X < (xj - xi) * (D - yi) / (yj - yi) + xi) c = !c; } return c; }; return t(kiesL) || t(kiesR) || t(insel); };
   const stein = [[], [], []];
-  for (let i = 0; i < 330; i++) { const D = 9 + Math.pow(z(), 1.5) * 120, X = (z() * 2 - 1) * (UFER - 0.9); if (!imKies(X, D)) continue; const [x, y] = P(X, D, hw(D)), sz = (0.12 + z() * 0.2) * F / D; stein[Math.floor(z() * 3)].push(`M${r(x)} ${r(y)}h${r(sz * 0.4)}`); }
+  for (let i = 0; i < 330; i++) { const D = 9 + Math.pow(z(), 1.5) * 120, X = (z() * 2 - 1) * (UFER - 0.9); if (!imKies(X, D)) continue; const [x, y] = P(X, D, hw(D)), sz = (0.12 + z() * 0.2) * F / D; stein[Math.floor(z() * 3)].push(`M${r(x)} ${r(y)}L${r(Math.min(400, x + sz * 0.4))} ${r(y)}`); }
   ["#8f8c84", "#b6b1a6", "#6f6c66"].forEach((c, i) => { k += `<path d="${stein[i].join("")}" stroke="${c}" stroke-width="1.1" stroke-linecap="round" fill="none"/>`; });
   k += SCHATTEN_WASSER;
   /* Geländer der Uferwege auf den Mauerkronen */
@@ -894,7 +895,7 @@ const STADEL_DATA = [];
   for (const l of L) k += l.g;
   const ref = L.find((l) => l.bx > 300) || L[0];
   S.teil({ id: "laerche", de: "die Lärche", syl: "LÄR-che", it: "il larice", itSyl: "LA-ri-ce", en: "larch", anker: [ref.bx, ref.by], kunst: k,
-    tipp: "Die Lärche ist ein Nadelbaum. Im Herbst färben sich ihre Nadeln gelb." });
+    tipp: "Die Lärche ist der einzige heimische Nadelbaum, der im Winter seine Nadeln verliert. Im Herbst werden sie golden." });
 }
 
 /* 9 — DAS CHALET (rechts, mit Balkonen und Geranien — Lupe) */

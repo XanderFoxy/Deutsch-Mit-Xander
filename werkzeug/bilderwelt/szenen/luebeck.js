@@ -146,11 +146,11 @@ function verdichteSVG(svg, q) {
   return svg.replace(/ d="([^"]+)"/g, (m, d) => ` d="${pfadKurz(d, q)}"`);
 }
 /* Mensch aus dem Baukasten, ohne runden Bodenschatten und ohne feinste Linien; Pfade fein (0,4 cm) und relativ */
-function figur(spec, hoehe) {
+function figur(spec, hoehe, q = 0.8) {
   const m = B.mensch(spec, hoehe);
   let z = m.z.svg.replace(/(<g class="mensch">(?:<defs>.*?<\/defs>)?)<ellipse[^>]*\/>/s, "$1");
   z = z.replace(/<path [^>]*\/>/g, (t) => (/fill="none"/.test(t) && +((t.match(/stroke-width="([\d.]+)"/) || [])[1] || 9) < 0.4) ? "" : t);
-  z = verdichteSVG(z, 0.4);
+  z = verdichteSVG(z, q);
   return { svg: `<g transform="scale(${m.k.toFixed(4)})">${z}</g>`, inner: z, k: m.k, z: m.z };
 }
 /* kleine Figur in der Ferne, Lichtseite rechts, Körperschatten links */
