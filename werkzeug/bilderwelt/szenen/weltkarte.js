@@ -389,10 +389,10 @@ const ORT = {
   mexiko: { ll: [-88.57, 20.68], bild: [0.8, 8.2], lab: [0.8, 10.6, "m"], name: "Mexiko", knopf: P(-105, 14) },
   rio: { ll: [-43.21, -22.91], lab: [0, 3.3, "m"], name: "Rio de Janeiro", knopf: P(-30, -25) },
   kapstadt: { ll: [18.42, -33.92], lab: [0, 3.3, "m"], name: "Kapstadt", knopf: [193, 152] },
-  aegypten: { ll: [31.13, 29.98], bild: [-1.5, 8.8], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [228.5, 61] },
+  aegypten: { ll: [31.13, 29.98], bild: [-2, 2.6], lab: [0, 3.3, "m"], name: "Ägypten", knopf: [219, 80] },
   dubai: { ll: [55.27, 25.2], lab: [-1.6, 3.3, "m"], name: "Dubai", knopf: P(62, 18) },
   indien: { ll: [78.04, 27.18], lab: [0, 3.3, "m"], name: "Indien", knopf: [287, 91] },
-  peking: { ll: [116.4, 39.9], lab: [0, 3.3, "m"], name: "Peking", knopf: P(124, 32) },
+  peking: { ll: [116.4, 39.9], lab: [0, 3.3, "m"], name: "Peking", knopf: P(124.5, 28.8) },
   japan: { ll: [138.73, 35.36], bild: [7.2, 0.6], lab: [7.2, 3.6, "m"], name: "Japan", knopf: [352, 65] },
   sydney: { ll: [151.21, -33.87], lab: [0, 3.3, "m"], name: "Sydney", knopf: P(147, -47) },
 };
@@ -402,13 +402,13 @@ const ORT = {
    Rom unter das Kolosseum (nicht über Tunesien); keine zwei Marken berühren sich (Runde 4) */
 const MARKE_EU = {
   grossbritannien: [185.6, 40.6], frankreich: [185.5, 47.4], spanien: [178.8, 55.4], italien: [198, 56.8], rom: [204.3, 59.6],
-  venedig: [215.7, 47.8], griechenland: [218.4, 57.4], tuerkei: [224.9, 51], moskau: [229.6, 34.6], deutschland: [195.6, 37.4], wien: [210.6, 38.6],
+  venedig: [215.7, 47.8], griechenland: [210, 56.8], tuerkei: [224.9, 51], moskau: [229.6, 34.6], deutschland: [195.6, 37.4], wien: [210.6, 38.6],
 };
 function ortBild(id, mass, schrift) {
   const c = ORT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];
   const bx = dx0 + bdx, by = dy0 + bdy - (c.bild ? 0 : mass * 0.9);
   const [W0, H0, f] = ICON[id], gm = mass * (c.gr || 1), W = W0 * gm, H = H0 * gm;
-  let k = `<ellipse cx="${r(bx)}" cy="${r(by - H * 0.45)}" rx="${r(W * 0.72)}" ry="${r(H * 0.64)}" fill="${GLOW}"/>`;
+  let k = `<ellipse cx="${r(bx)}" cy="${r(by - H * 0.45)}" rx="${r(W * 0.72)}" ry="${r(H * 0.64)}" fill="${GLOW}" pointer-events="none"/>`;
   if (c.bild) { const seit = Math.abs(bdx) > W / 2, ex = seit ? bx - Math.sign(bdx) * W * 0.4 : bx, ey = seit ? by - H * 0.15 : bdy > 1 ? by - H - 0.15 : by + 0.1; k += `<path d="M${r(dx0)} ${r(dy0)} L${+ex.toFixed(2)} ${+ey.toFixed(2)}" stroke="#7a5a32" stroke-width="${r(mass * 0.45) || 0.2}" stroke-dasharray="${r(mass * 1.2)} ${r(mass * 0.8)}"/>`; }
   k += `<g transform="translate(${+bx.toFixed(3)} ${+by.toFixed(3)}) scale(${+gm.toFixed(3)})">${f()}</g>`;
   k += `<circle cx="${r(dx0)}" cy="${r(dy0)}" r="${r(mass * 1.15) || 0.5}" fill="#c0392b" stroke="#fff8ea" stroke-width="${+(mass * 0.45).toFixed(2)}"/>`;
