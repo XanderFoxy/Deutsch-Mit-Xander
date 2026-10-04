@@ -4,9 +4,9 @@
    Puls-Regel (CLAUDE.md, Vorrang 2 „Ladezeiten"): die Körperbau-Tafel war gepackt 148 KB.
    - Pfade (d="…") werden in relative Schritte umgeschrieben (c/l/m … statt C/L/M), genau auf die
      Nachkommastellen des Originals gerechnet – keine Rundung, nur eine andere Schreibweise.
-   - Gleiche Verläufe INNERHALB eines Teils (oder der Kulisse) werden einmal behalten, die übrigen
-     verweisen darauf. Über Teilgrenzen hinweg wird nichts zusammengelegt: ein Teil kann allein
-     gezeigt werden (Tafel, Baukasten) und muss dann alles mitbringen.
+   - Verläufe werden NICHT zusammengelegt: versucht und verworfen – dieselbe id steht in manchen Szenen in
+     mehreren Teilen, der Browser nimmt die erste; fällt eine weg, greift eine andere (Zoo II: 5 326
+     abweichende Bildpunkte). Nur die Pfade umzuschreiben ergab dort 0.
    --pruefen: zeichnet vorher/nachher (Chromium, dreifach groß, jede Lupe einzeln) und vergleicht Bildpunkt
    für Bildpunkt; geschrieben wird nur, wenn höchstens 20 Bildpunkte deutlich abweichen (Kantenglättung). */
 "use strict";
@@ -58,27 +58,10 @@ function relativ(d) {
 }
 /* Bogen-Flags müssen 0/1 bleiben: oben als F (=1·F) gesetzt und von zeig() zu „1" formatiert. */
 
-/* ---------- Verläufe innerhalb eines Stücks zusammenlegen ---------- */
-function verlaeufeZusammen(svg) {
-  const re = /<(linearGradient|radialGradient)\b([^>]*?)\sid="([^"]+)"([^>]*)>([\s\S]*?)<\/\1>/g;
-  const seen = new Map(), ersetze = new Map();
-  let m;
-  while ((m = re.exec(svg))) {
-    const schluessel = m[1] + "|" + m[2] + "|" + m[4] + "|" + m[5];
-    if (/href=/.test(m[2] + m[4])) continue;   // erbt von einem anderen – unverändert lassen
-    if (seen.has(schluessel)) ersetze.set(m[3], seen.get(schluessel)); else seen.set(schluessel, m[3]);
-  }
-  if (!ersetze.size) return svg;
-  let s = svg.replace(re, (ganz, tag, a, id) => (ersetze.has(id) ? "" : ganz));
-  s = s.replace(/url\(#([^)]+)\)/g, (g, id) => (ersetze.has(id) ? "url(#" + ersetze.get(id) + ")" : g));
-  s = s.replace(/href="#([^"]+)"/g, (g, id) => (ersetze.has(id) ? 'href="#' + ersetze.get(id) + '"' : g));
-  return s.replace(/<defs><\/defs>/g, "");
-}
-
 function stueck(svg) {
   if (!svg) return svg;
   svg = svg.replace(/\sd="([^"]*)"/g, (g, d) => ' d="' + relativ(d) + '"');
-  return verlaeufeZusammen(svg);
+  return svg;
 }
 
 const w = {}; new Function("window", text)(w);
