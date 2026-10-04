@@ -64,7 +64,9 @@
      über 400 Treppen („Stäffele“).
    - TYPISCH: Maultaschen in der Brühe, Linsen mit Spätzle und
      Saitenwürstle, die schwäbische Brezel (dünne Ärmchen, dicker Bauch),
-     ein Viertele Trollinger im Henkelglas.
+     ein Glas MINERALWASSER (FASSUNG 879, statt des Viertele): Stuttgart hat
+     nach Budapest das größte Mineralwasser-Vorkommen Europas (Quellen in
+     Bad Cannstatt und Berg).
    UNSICHER außerdem: Breite und Trittmaß der Freitreppe (hier ≈ 34 m, Tritt
    0,9 m), Abstand des Kunstmuseums, genaue Stellung von Pavillon und
    Brunnen auf dem Platz.
@@ -176,10 +178,10 @@ figurDef("concordia", { bronze: true, geschlecht: "w", pose: KONTRA, blick: 20, 
 figurDef("sitzt", { bronze: true, geschlecht: "w", pose: "sitzen", blick: 40, frisur: "dutt", haarfarbe: "blond", haut: "hell", kleidung: { kleid: { stueck: "abendkleid", farbe: "#c8b89a" } } });
 
 /* ---------- Farben ---------- */
-S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
-S.def(`<filter id="${S.id("dunst")}" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation=".45"/></filter>`);
-S.def(`<filter id="${S.id("sanft")}" x="-50%" y="-150%" width="200%" height="400%"><feGaussianBlur stdDeviation=".35"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("dunst")}" x="-10%" y="-30%" width="120%" height="160%"><feGaussianBlur stdDeviation=".45"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("sanft")}" x="-50%" y="-150%" width="200%" height="400%"><feGaussianBlur stdDeviation=".35"/></filter>`);
 const PUTZ = S.lg("putz", [[0, "#f1e4c6"], [0.5, "#ead9b5"], [1, "#dcc8a0"]]);
 const STEIN = S.lg("stein", [[0, "#f6efdd"], [1, "#e1d4b6"]]);
 const SCHIEFER = S.lg("schiefer", [[0, "#7c8794"], [0.5, "#636f7c"], [1, "#4c5764"]]);
@@ -1226,17 +1228,19 @@ const teller = (rx, ry, id) => `<ellipse cx="0" cy="0" rx="${rx}" ry="${ry}" fil
     x: 247, y: 179.5, steht: true, kunst: k, tipp: "Die schwäbische Brezel hat dünne Ärmchen und einen dicken Bauch." });
 }
 {
-  /* DAS VIERTELE: Henkelglas mit Trollinger */
-  let k = `<path d="M-2.6 0 Q-6 -1.6 -9 -3.6 L-6.6 -4.4 Q-3.4 -2.4 2.6 -.4 Z" fill="#3a3024" opacity=".18" filter="url(#${S.id("sanft")})"/><ellipse cx="-3.4" cy="-1.6" rx="2.4" ry=".6" fill="#b5303d" opacity=".25"/>`;
-  k += `<path d="M-2.7 0 Q-3.3 -5 -3.15 -10.2 L3.15 -10.2 Q3.3 -5 2.7 0 Q0 .7 -2.7 0 Z" fill="#eef5f5" opacity=".45"/>`;
-  k += `<path d="M-2.55 -.55 Q-3.1 -4 -3 -7.2 L3 -7.2 Q3.1 -4 2.55 -.55 Q0 .1 -2.55 -.55 Z" fill="${S.lg("trollinger", [[0, "#c4434f"], [0.5, "#9e2534"], [1, "#741826"]], 0, 0, 1, 0)}" opacity=".93"/>`;
-  k += `<ellipse cx="0" cy="-7.2" rx="3" ry=".55" fill="#c95562"/><ellipse cx="0" cy="-7.2" rx="3" ry=".55" fill="none" stroke="#e8a3ab" stroke-width=".15"/>`;
+  /* DAS MINERALWASSER (FASSUNG 879, statt des Viertele): Wasserglas mit Sprudel, Bläschen und einer Zitronenscheibe */
+  let k = `<path d="M-2.6 0 Q-6 -1.6 -9 -3.6 L-6.6 -4.4 Q-3.4 -2.4 2.6 -.4 Z" fill="#3a3024" opacity=".18" filter="url(#${S.id("sanft")})"/><ellipse cx="-3.4" cy="-1.6" rx="2.4" ry=".6" fill="#9cc8dc" opacity=".3"/>`;
+  k += `<path d="M-2.7 0 Q-3.1 -5 -3.15 -10.2 L3.15 -10.2 Q3.1 -5 2.7 0 Q0 .7 -2.7 0 Z" fill="#eef5f5" opacity=".45"/>`;
+  k += `<path d="M-2.6 -.55 Q-3 -4 -3.05 -7.8 L3.05 -7.8 Q3 -4 2.6 -.55 Q0 .1 -2.6 -.55 Z" fill="${S.lg("sprudel", [[0, "#cfe6ee"], [0.5, "#e8f4f8"], [1, "#b8d8e4"]], 0, 0, 1, 0)}" opacity=".85"/>`;
+  k += `<ellipse cx="0" cy="-7.8" rx="3.05" ry=".55" fill="#f2fafc"/><ellipse cx="0" cy="-7.8" rx="3.05" ry=".55" fill="none" stroke="#a9cfdc" stroke-width=".15"/>`;
+  /* Zitronenscheibe im Glas, schräg */
+  k += `<g transform="translate(.6 -5.2) rotate(-22)"><ellipse rx="1.7" ry="1.6" fill="#f1d54a"/><ellipse rx="1.4" ry="1.3" fill="#fbeea0"/><path d="M0 0 L0 -1.3 M0 0 L1.2 -.5 M0 0 L1.1 .7 M0 0 L0 1.3 M0 0 L-1.1 .7 M0 0 L-1.2 -.5" stroke="#f1d54a" stroke-width=".18"/></g>`;
+  for (const [bx, by, br] of [[-1.6, -1.6, 0.2], [-1, -3.4, 0.16], [-1.9, -5.4, 0.18], [1.8, -2.2, 0.17], [1.3, -6.8, 0.15], [-0.6, -6.4, 0.14], [0.2, -1.2, 0.15], [2, -4.4, 0.13]]) k += `<circle cx="${bx}" cy="${by}" r="${br}" fill="none" stroke="#ffffff" stroke-width=".1" opacity=".9"/>`;
   k += `<path d="M-2.7 0 Q0 .7 2.7 0 L2.6 -.9 Q0 -.3 -2.6 -.9 Z" fill="#dfeeee" opacity=".8"/>`;
-  k += `<path d="M3.1 -8.6 Q6.6 -8.4 6.2 -5 Q5.9 -2.6 2.8 -2.5" stroke="#f3f8f8" stroke-width="1.1" fill="none" opacity=".75"/><path d="M3.2 -8.2 Q6 -8 5.7 -5.1" stroke="#ffffff" stroke-width=".35" fill="none"/>`;
-  for (const x of [-1.9, -0.6, 0.7, 1.9]) k += `<path d="M${x} -9.8 Q${r(x * 1.05)} -5 ${r(x * 0.9)} -.6" stroke="#ffffff" stroke-width=".22" fill="none" opacity="${x < 0 ? 0.55 : 0.3}"/>`;
+  for (const x of [-1.9, -0.6, 0.7, 1.9]) k += `<path d="M${x} -9.8 Q${r(x * 1.02)} -5 ${r(x * 0.9)} -.6" stroke="#ffffff" stroke-width=".22" fill="none" opacity="${x < 0 ? 0.55 : 0.3}"/>`;
   k += `<ellipse cx="0" cy="-10.2" rx="3.15" ry=".65" fill="none" stroke="#f4f8f8" stroke-width=".35"/>`;
-  S.teil({ oben: true, id: "viertele", de: "das Viertele", syl: "VIER-te-le", it: "il quartino di vino", itSyl: "quar-TI-no di VI-no", en: "quarter litre of wine",
-    x: 298, y: 178.5, steht: true, kunst: k, tipp: "Ein Viertele ist ein Viertelliter Wein im Henkelglas – oft Trollinger aus Württemberg." });
+  S.teil({ oben: true, id: "mineralwasser", de: "das Mineralwasser", syl: "mi-ne-RAL-was-ser", it: "l'acqua minerale", itSyl: "AC-qua mi-ne-RA-le", en: "mineral water",
+    x: 298, y: 178.5, steht: true, kunst: k, tipp: "Nach Budapest hat Stuttgart das größte Mineralwasser-Vorkommen in Europa. Viele Quellen sind in Bad Cannstatt." });
 }
 {
   /* DIE MAULTASCHEN im tiefen Teller mit klarer Brühe und Schnittlauch */

@@ -26,7 +26,7 @@
      Terrassenufer unter der Brühlschen Terrasse.
    - STOLLEN: Dresdner Christstollen mit Puderzucker; im Advent auf den
      Weihnachtsmärkten (Augustusmarkt in der Neustadt) an Buden, dazu
-     Glühwein in der Tasse.
+     Kinderpunsch in der Tasse (FASSUNG 879, alkoholfrei).
    Maßstab: Augenhöhe y = 100 (man steht oben auf der Uferpromenade).
    Vorne gilt: Einheiten je Meter = (y − 100) · 0,36.
    ===================================================================== */
@@ -41,9 +41,9 @@ const r = B.r;
 const HOR = 100;
 const km = (y) => (y - HOR) * 0.36;
 
-S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
-S.def(`<filter id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
-S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1 .45"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("wolke")}" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="2.2"/></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("spiegel")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="1 .45"/></filter>`);
 /* Elbsandstein: hell, mit dunkler Patina */
 const SAND = S.lg("sand", [[0, "#cdbf9f"], [0.5, "#e2d6ba"], [1, "#b3a483"]], 0, 0, 1, 0);
 const SAND_D = S.lg("sandd", [[0, "#7c7360"], [0.5, "#a39881"], [1, "#6b6352"]], 0, 0, 1, 0);
@@ -385,7 +385,7 @@ S.hinten(`<rect width="320" height="${HOR + 10}" fill="${S.lg("himmel", [[0, "#6
 
 /* =====================================================================
    13 — DER MARKTSTAND (Weihnachtsbude) mit 14 — DER VERKÄUFERIN,
-        15 — DEM STOLLEN und 16 — DEM GLÜHWEIN
+        15 — DEM STOLLEN und 16 — DEM KINDERPUNSCH
    ===================================================================== */
 const BUDE = { x: 52, y: 194 };
 const BS = km(BUDE.y), THEKE = BUDE.y - 1.05 * BS;
@@ -410,7 +410,7 @@ const BS = km(BUDE.y), THEKE = BUDE.y - 1.05 * BS;
   /* Theke */
   k += `<rect x="${r(-W / 2 - 1)}" y="${r(ty - 1.2)}" width="${r(W + 2)}" height="2" rx=".4" fill="#c79a62"/>`;
   k += `<rect x="${r(-W / 2 + 4)}" y="${r(ty + 4)}" width="${r(W - 8)}" height="7" rx=".6" fill="#f4ecd8" opacity=".9"/>`;
-  k += `<text x="0" y="${r(ty + 9.2)}" font-size="3" text-anchor="middle" fill="#2f5a32" font-family="Georgia,serif" font-weight="bold">Stollen · Glühwein</text>`;
+  k += `<text x="0" y="${r(ty + 9.2)}" font-size="3" text-anchor="middle" fill="#2f5a32" font-family="Georgia,serif" font-weight="bold">Stollen · Kinderpunsch</text>`;
   S.teil({ id: "marktstand", de: "der Marktstand", syl: "MARKT-stand", it: "la bancarella", itSyl: "ban-ca-REL-la", en: "market stall", x: BUDE.x, y: BUDE.y, steht: true, kunst: k,
     tipp: "Im Advent gibt es in Dresden viele Weihnachtsmärkte — der berühmteste ist der Striezelmarkt." });
 }
@@ -420,7 +420,7 @@ const BS = km(BUDE.y), THEKE = BUDE.y - 1.05 * BS;
     kleidung: { oberteil: { stueck: "pullover", farbe: "creme" }, schuerze: { stueck: "schuerze", farbe: "rot" }, unterteil: { stueck: "hose", farbe: "schwarz" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "muetze", farbe: "rot" } } }, 1.66 * km(Y));
   S.def(`<clipPath id="${S.id("hinterTheke")}"><rect x="-50" y="-90" width="100" height="${r(THEKE - 1.2 - Y + 90)}"/></clipPath>`);
   S.teil({ id: "verkaeuferin", de: "die Verkäuferin", syl: "ver-KÄU-fe-rin", it: "la commessa", itSyl: "com-MES-sa", en: "shop assistant", x: BUDE.x - 6, y: Y,
-    kunst: `<g clip-path="url(#${S.id("hinterTheke")})">${m.svg}</g>`, tipp: "Die Verkäuferin sagt: „Ein Stück Stollen und einen Glühwein?“" });
+    kunst: `<g clip-path="url(#${S.id("hinterTheke")})">${m.svg}</g>`, tipp: "Die Verkäuferin sagt: „Ein Stück Stollen und einen Kinderpunsch?“" });
 }
 {
   /* DER STOLLEN mit Puderzucker, angeschnitten auf dem Brett */
@@ -436,15 +436,15 @@ const BS = km(BUDE.y), THEKE = BUDE.y - 1.05 * BS;
     x: BUDE.x - 16, y: THEKE - 1.2, steht: true, kunst: k, tipp: "Der Dresdner Christstollen ist ein Weihnachtsgebäck mit Rosinen, Mandeln und viel Puderzucker." });
 }
 {
-  /* DER GLÜHWEIN in der Markttasse */
+  /* DER KINDERPUNSCH in der Markttasse (heißer Früchtetee mit Saft, hellrot) */
   const s = BS / 30;
   let k = `<path d="M${r(-2.4 * s)} ${r(-5.6 * s)} L${r(2.4 * s)} ${r(-5.6 * s)} L${r(2 * s)} 0 L${r(-2 * s)} 0 Z" fill="${S.lg("tasse", [[0, "#2f5a9a"], [0.5, "#4a7ac0"], [1, "#22437a"]], 0, 0, 1, 0)}"/>`;
-  k += `<ellipse cx="0" cy="${r(-5.6 * s)}" rx="${r(2.4 * s)}" ry="${r(0.6 * s)}" fill="#6a1420"/>`;
+  k += `<ellipse cx="0" cy="${r(-5.6 * s)}" rx="${r(2.4 * s)}" ry="${r(0.6 * s)}" fill="#b0342c"/><ellipse cx="${r(-0.6 * s)}" cy="${r(-5.65 * s)}" rx="${r(1 * s)}" ry="${r(0.18 * s)}" fill="#e8705a" opacity=".6"/>`;
   k += `<path d="M${r(2.3 * s)} ${r(-4.6 * s)} q${r(1.8 * s)} 0 ${r(1.6 * s)} ${r(1.6 * s)} q-.2 ${r(1.4 * s)} ${r(-1.8 * s)} ${r(1.4 * s)}" stroke="#2f5a9a" stroke-width="${r(0.7 * s)}" fill="none"/>`;
   k += `<path d="M${r(-1.6 * s)} ${r(-3.4 * s)} l.6 -.6 .6 .6 -.6 .6 Z" fill="#fff"/><text x="0" y="${r(-1.6 * s)}" font-size="${r(1.2 * s)}" text-anchor="middle" fill="#fff" font-family="Arial">2026</text>`;
   k += `<path d="M0 ${r(-6.6 * s)} q-1 -1.6 0 -3 q1 -1.4 0 -2.8" stroke="#fff" stroke-width=".4" opacity=".5" fill="none"/>`;
-  S.teil({ oben: true, id: "gluehwein", de: "der Glühwein", syl: "GLÜH-wein", it: "il vin brulé", itSyl: "vin bru-LÈ", en: "mulled wine",
-    x: BUDE.x + 18, y: THEKE - 1.2, steht: true, kunst: k, tipp: "Glühwein ist heißer Wein mit Zimt und Nelken." });
+  S.teil({ oben: true, id: "kinderpunsch", de: "der Kinderpunsch", syl: "KIN-der-punsch", it: "il punch analcolico", itSyl: "PUNCH a-nal-CO-li-co", en: "children's punch",
+    x: BUDE.x + 18, y: THEKE - 1.2, steht: true, kunst: k, tipp: "Kinderpunsch ist heißer Früchtetee mit Saft, Zimt und Nelken. Er wärmt im Winter die Hände." });
 }
 
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/dresden.js"));
