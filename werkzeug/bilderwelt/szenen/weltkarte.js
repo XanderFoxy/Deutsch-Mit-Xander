@@ -250,8 +250,8 @@ S.def(`<path id="${S.id("land")}" d="${LAND_D}"/>`);
 {
   let g = "";
   const wl = (lo, la, t, gr = 3, extra = "") => { const [x, y] = P(lo, la); return halo(x, y, t, gr, "#3f7896", "#d6ecf2", `font-style="italic" letter-spacing=".5" ${extra}`, 0.6); };
-  g += wl(-150, 77.5, "N o r d p o l a r m e e r", 3) + wl(10, -63, "S ü d p o l a r m e e r", 3.2) + wl(18, 34.6, "Mittelmeer", 2.2);
-  { const [x, y] = P(-140, 1.2); g += text(x, y, "Äquator", 2.6, "#a8453a", `font-style="italic" letter-spacing=".4"`); }
+  g += wl(-150, 77.5, "N o r d p o l a r m e e r", 3) + wl(10, -63, "S ü d p o l a r m e e r", 3.2) + wl(16, 34.2, "Mittelmeer", 2.2);
+  { const [x, y] = P(-25, 1.2); g += text(x, y, "Äquator", 2.6, "#a8453a", `font-style="italic" letter-spacing=".4"`); }
   { const [x, y] = P(10, -82.5); g += text(x, y, "A N T A R K T I S", 3.4, "#7f98a6", `letter-spacing=".8"`); }
   S.hinten(g);
 }
@@ -386,7 +386,7 @@ const ORT = {
   frankreich: { ll: [2.35, 48.86], bild: [0.6, 0], lab: [0, 2.3, "m"], name: "Frankreich" },
   deutschland: { ll: [10.4, 51.2], lab: [0, -3.6, "m"], name: "Deutschland", rot: true },
   wien: { ll: [16.37, 48.21], lab: [2.2, -0.2, "s"], name: "Wien" },
-  venedig: { ll: [12.34, 45.43], lab: [1.6, 0.9, "s"], name: "Venedig" },
+  venedig: { ll: [12.34, 45.43], bild: [1.9, 2.9], lab: [3.4, 2.4, "s"], name: "Venedig" },
   italien: { ll: [11.2, 43.4], bild: [-4.6, -0.2], lab: [-4.6, 1.5, "m"], name: "Italien" },
   rom: { ll: [12.5, 41.9], bild: [-2.3, 3.1], lab: [-2.3, 4.6, "m"], name: "Rom" },
   spanien: { ll: [2.17, 41.4], lab: [-5.6, 2, "m"], name: "Spanien" },

@@ -164,16 +164,26 @@ const ROLSTEIN = S.lg("rolstein", [[0, "#cfc6b3"], [0.5, "#ebe4d3"], [1, "#d8cfb
    ===================================================================== */
 S.hinten(`<rect width="${BR}" height="${HOR + 4}" fill="${S.lg("himmel", [[0, "#3f78bd"], [0.45, "#7aa8d6"], [0.8, "#bcd3e6"], [1, "#e4ebee"]])}"/>`);
 S.hinten(`<rect width="${BR}" height="${HOR + 4}" fill="${S.lg("sonnenseite", [[0, "#fff3d6", 0], [0.6, "#fff3d6", 0], [1, "#fff0cf", 0.3]], 0, 0, 1, 0)}"/>`);
-/* Oktober-Cumulus: gewölbte, sonnige Oberseite, flache graue Unterseite — jede Wolke anders */
-const WB = S.rg("wolkenball", [[0, "#ffffff"], [0.55, "#f7f9fb"], [1, "#d3dce6"]], 0.38, 0.3, 0.75);
-const wolke = (x, y, w, h, n, seed) => {
+/* Oktober-Cumulus: zwei bis drei große Massen, oben unregelmäßig gewölbt, weich schattiert (Licht oben rechts),
+   unten eine flache, kühle graublaue Basis — jede Wolke anders */
+const WB = S.rg("wolkenmasse", [[0, "#ffffff"], [0.5, "#f6f8fa"], [0.85, "#dfe6ee"], [1, "#c9d3de"]], 0.66, 0.3, 0.85);
+const wolke = (x, y, w, h, massen, seed) => {
   const z = zufall(seed);
-  let g = `<path d="M${r(x - w / 2 - h * .2)} ${r(y)} H${r(x + w / 2 + h * .2)} Q${r(x + w / 2)} ${r(y + h * .3)} ${r(x + w * .25)} ${r(y + h * .3)} H${r(x - w * .25)} Q${r(x - w / 2)} ${r(y + h * .3)} ${r(x - w / 2 - h * .2)} ${r(y)} Z" fill="#c4cfda"/>`;
-  for (let i = 0; i < n; i++) { const t = i / (n - 1), cx = x - w / 2 + t * w, rr = h * (.35 + .65 * Math.sin(Math.PI * (.15 + .7 * t))) * (.75 + z() * .4); g += `<circle cx="${r(cx)}" cy="${r(y - rr * .5)}" r="${r(rr)}" fill="${WB}"/>`; }
-  for (let i = 0; i < n - 2; i++) { const t = (i + .5) / (n - 1), cx = x - w / 2 + t * w + w * .05, rr = h * .5 * (.7 + z() * .4); g += `<circle cx="${r(cx)}" cy="${r(y - h * .9 - rr * .2)}" r="${r(rr)}" fill="${WB}"/>`; }
+  let g = `<path d="M${r(x - w / 2)} ${r(y)} Q${r(x - w / 2 - h * .5)} ${r(y)} ${r(x - w / 2 - h * .2)} ${r(y - h * .45)} L${r(x + w / 2 + h * .2)} ${r(y - h * .45)} Q${r(x + w / 2 + h * .5)} ${r(y)} ${r(x + w / 2)} ${r(y)} Z" fill="#bccada"/>`;
+  const kreise = [];
+  massen.forEach(([t, s]) => {
+    const cx = x - w / 2 + t * w, R = h * s;
+    kreise.push([cx, y - R * .55, R]);
+    kreise.push([cx - R * (.75 + z() * .2), y - R * .3, R * (.55 + z() * .15)]);
+    kreise.push([cx + R * (.7 + z() * .2), y - R * .35, R * (.6 + z() * .15)]);
+    kreise.push([cx + R * (.15 + z() * .2), y - R * (1.15 + z() * .15), R * (.5 + z() * .12)]);
+  });
+  for (const [cx, cy, R] of kreise.sort((p, q) => q[2] - p[2])) g += `<circle cx="${r(cx)}" cy="${r(Math.min(cy, y - R * .45))}" r="${r(R)}" fill="${WB}"/>`;
+  g += `<path d="M${r(x - w / 2 - h * .3)} ${r(y - h * .2)} H${r(x + w / 2 + h * .3)} V${r(y)} H${r(x - w / 2 - h * .3)} Z" fill="${S.lg("wolkenbasis", [[0, "#bccada", 0], [1, "#b4c2d2", 0.85]], 0, 0, 0, 1)}"/>`;
   return `<g>${g}</g>`;
 };
-S.hinten(wolke(80, 46, 92, 10, 9, 3) + wolke(206, 30, 30, 15, 4, 7) + wolke(344, 68, 36, 8, 4, 11));
+S.hinten(wolke(84, 46, 70, 12, [[.15, .95], [.5, 1.35], [.85, .85]], 3) + wolke(206, 30, 26, 14, [[.35, 1.05], [.8, .8]], 7) + wolke(344, 68, 30, 8, [[.3, 1], [.75, .8]], 11));
+let FERN = "", FERN_DOMSHOF = "";
 /* ferne Bauten in den Lücken: Liebfrauenkirche (Nordwesten), Domshof (Nordosten), Südostecke */
 const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   /* Giebelhaus in einer senkrechten Ebene E (s nach rechts im Bild), Treppengiebel */
@@ -182,6 +192,7 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   const n = Math.max(2, Math.round(w / 2.6));
   for (let e = 0; e < Math.floor(h / 3.2); e++) for (let i = 0; i < n; i++) { const c = s0 + (i + .5) * w / n, z = 1.2 + e * 3.2 + (e ? .4 : 0); g += pfad(fr(E, c - .45, z, c + .45, z + (e ? 1.7 : 2.2)), e ? fenster : "#3a3d40"); }
   g += pfad(fr(E, m - .5, h + gh * .35, m + .5, h + gh * .55), fenster);
+  g += pfad(fr(E, s0, 0, s1, .7), "#5a524a") + pfad(fr(E, s0 - .3, -.25, s1 + .3, 0), "#3a342e", ` opacity=".5"`);
   return g;
 };
 {
@@ -190,21 +201,28 @@ const giebelhaus = (E, s0, s1, h, gh, farbe, dach, fenster = "#4c5257") => {
   let c = pfad(fr(E, 0, 0, 30, 17, 3), S.lg("kirche", [[0, "#8a4a3a"], [1, "#9e5644"]]));
   c += pfad(poly([[-22, 52, 17], [8, 52, 17], [8, 60, 31], [-22, 60, 31]], 3), S.lg("kirchdach", [[0, "#3f6e5e"], [1, "#5a917c"]]));
   c += pfad(poly([[8, 52, 17], [8, 68, 17], [8, 60, 31]], 3), "#7e4333");
-  c += `<path d="${linie([[-22, 60, 31], [8, 60, 31]], 3)}" stroke="#2f5548" stroke-width=".8" fill="none"/><path d="${linie([[8, 52, 17], [8, 60, 31]], 3)}" stroke="#c9b8a4" stroke-width=".5" fill="none"/>`;
+  { let f = ""; for (let x = -21; x < 8; x += 1.2) f += linie([[x, 52, 17], [x, 60, 31]], 99) + " "; c += `<path d="${f}" stroke="#355e50" stroke-width=".25" fill="none" opacity=".6"/>`; }
+  c += `<path d="${linie([[-22, 60, 31], [8, 60, 31]], 3)}" stroke="#9cc8b4" stroke-width="1" fill="none"/>`;
+  /* Querhausgiebel nach Süden (Backstein, Blenden, Kreuz) — Form unsicher */
+  { const G = ebene(-18, 51.6, 1, 0); c += pfad(poly([[-18, 51.6, 17], [-18, 58, 28.6], [-6, 58, 28.6], [-6, 51.6, 17]], 3), "#3f6e5e") + pfad(fp(G, [[0, 15], [12, 15], [12, 17.4], [6, 28.6], [0, 17.4]]), S.lg("kgiebel", [[0, "#9a5442"], [1, "#84463a"]], 0, 0, 1, 0));
+    c += `<path d="${fl(G, [[-.2, 17.2], [6, 28.8], [12.2, 17.2]])}" stroke="#c9a58e" stroke-width=".6" fill="none"/>`;
+    for (const s of [3.4, 6, 8.6]) c += pfad(fp(G, [[s - .7, 17.6], [s + .7, 17.6], [s + .7, 17.6 + (6 - Math.abs(s - 6)) * 1.3], [s, 18.4 + (6 - Math.abs(s - 6)) * 1.5], [s - .7, 17.6 + (6 - Math.abs(s - 6)) * 1.3]]), "#5e2f25");
+    c += `<path d="${fl(G, [[6, 28.8], [6, 30.6]])} ${fl(G, [[5.4, 30], [6.6, 30]])}" stroke="#4d4a44" stroke-width=".35" fill="none"/>`; }
   for (const s of [3, 9, 15, 21, 27]) c += pfad(fp(E, [[s - 1, 3], [s + 1, 3], [s + 1, 11.5], [s, 13.6], [s - 1, 11.5]]), "#33302f") + pfad(fr(E, s - .08, 3, s + .08, 12.6), "#b88a74") + pfad(fr(E, s - 1, 8, s + 1, 8.2), "#b88a74");
   for (const s of [0, 6, 12, 18, 24, 30]) c += pfad(fr(E, s - .6, 0, s + .6, 14), "#743d2f");
-  S.hinten(`<g ${LUFT3}>${c}</g>`);
+  FERN += `<g ${LUFT3}>${c}</g>`;
   let k = "";
   /* Gasse zur Domsheide (Südostecke): Rückfassaden und Giebel in 80–100 m schließen die Lücke */
   const GA = ebene(92, -66, -1, 0);
-  k += giebelhaus(GA, 0, 8, 14, 7, "#a99b86", "#5a4a44", "#3f4448") + giebelhaus(GA, 8, 15, 15, 7, "#b8a993", "#5a4a44", "#3f4448") + giebelhaus(GA, 15, 22, 13, 6, "#9f927e", "#5a4a44", "#3f4448") + giebelhaus(GA, 22, 30, 14, 7, "#ae9f88", "#5a4a44", "#3f4448") + giebelhaus(GA, 30, 36, 13.4, 6.6, "#a49681", "#5a4a44", "#3f4448");
+  k += pfad(fr(ebene(92, -60, -1, 0), 14.6, 0, 17.6, 13), "#6f675e") + pfad(fr(ebene(92, -60, -1, 0), 14.6, 0, 15.4, 13), "#4f4943");
+  k += giebelhaus(GA, 0, 8, 14, 7, "#a99b86", "#5a4a44", "#3f4448") + giebelhaus(GA, 8, 14.6, 15, 7, "#b8a993", "#5a4a44", "#3f4448") + giebelhaus(GA, 17.6, 22, 13, 6, "#9f927e", "#5a4a44", "#3f4448") + giebelhaus(GA, 22, 30, 14, 7, "#ae9f88", "#5a4a44", "#3f4448") + giebelhaus(GA, 30, 36, 13.4, 6.6, "#a49681", "#5a4a44", "#3f4448");
   /* Südostecke: Giebelhäuser an der Südseite östlich des Schüttings (Nordseiten im Schatten) */
   const SO = ebene(57, -57, -1, 0);
   k += giebelhaus(SO, 0, 5.6, 12.4, 7, "#b9a891", "#5a4a44", "#3f4448") + giebelhaus(SO, 5.6, 11.2, 13.4, 7.6, "#a88f7a", "#5a4a44", "#3f4448") + giebelhaus(SO, 11.2, 17, 12, 6.6, "#bcae98", "#5a4a44", "#3f4448");
   /* Ostseite südlich der Bürgerschaft: ein Giebelhaus quer (Westseite, Streiflicht) */
   const OS = ebene(57.4, -44, 0, -1);
   k += giebelhaus(OS, 0, 7, 13, 7, "#d2c3a6", "#5a4a44");
-  S.hinten(`<g ${LUFT3}>${k}</g>`);
+  FERN += `<g ${LUFT3}>${k}</g>`;
 }
 
 /* Schlagschatten am Boden gehören zum Marktplatz: sie fangen keinen Tipp für das Ding ab, das sie wirft */
@@ -251,6 +269,8 @@ const amBoden = (svg) => { MP.kunst += svg; return ""; };
   k += pfad(poly([[40, -57, 0], sv(40, -57, 13), sv(50, -57, 13), sv(57, -46, 13), [57, -46, 0]], 2), "#1f2430", ` opacity=".2"`);
   MP = S.teil({ id: "marktplatz", de: "der Marktplatz", syl: "MARKT-platz", it: "la piazza del mercato", itSyl: "PIAZ-za del mer-CA-to", en: "market square", x: 0, y: 0, kunst: k,
     tipp: "Vom Marktplatz geht man in die Böttcherstraße und in den Schnoor, das älteste Viertel der Stadt." });
+  /* die fernen Häuser stehen auf dem Pflaster: sie gehören zum Boden und werden nicht vom Pflaster überdeckt */
+  MP.kunst += FERN;
 }
 
 /* =====================================================================
@@ -322,6 +342,8 @@ const domTeile = {};
   };
   const tn = turm(0, 12), ts = turm(24, 36);
   k += tn.g + ts.g;
+  /* der Unterbau des Nordturms hinter dem Roland liegt im Schatten der Häuser davor: kühler, dunkler */
+  k += pfad(fr(W, 0, 0, 12.4, 21, 2), S.lg("domschatten", [[0, "#3a4656", 0.34], [0.75, "#3a4656", 0.26], [1, "#3a4656", 0]], 0, 1, 0, 0));
   /* Luftperspektive: ein Hauch Himmelsblau über dem ganzen Dom (90 m entfernt) */
   k = `<g ${LUFT2}>${k}</g>`;
   domTeile.spitze = ts.spitze;
@@ -341,31 +363,51 @@ const domTeile = {};
 }
 
 /* =====================================================================
-   2b — DAS NEUE RATHAUS (1909–1913, Gabriel von Seidl): schließt hinter
-        der Ostecke des alten Rathauses an, Neorenaissance aus Backstein
-        mit Sandsteingliederung, hohes Kupferdach mit Zwerchgiebel (Lage
-        und Einzelheiten vereinfacht, unsicher). Gibt dem hellen Roland
-        den dunklen Grund.
+   2b — DAS NEUE RATHAUS (1909–1913, Gabriel von Seidl): nimmt die
+        Weserrenaissance des alten Rathauses auf — Backstein mit hellen
+        Sandsteinbändern, Eckquadern und Kreuzstockfenstern, ein großer
+        Zwerchgiebel mit Schnecken (Voluten) und kleinen Obelisken. Es
+        steht zurückgesetzt hinter der Ostecke des alten Rathauses; zum Dom
+        bleibt eine schmale Lücke (Lage und Einzelheiten unsicher).
    ===================================================================== */
 {
-  const Y = 4, E = ebene(41.5, Y, 1, 0), L = 28.5, ZE = 17.5;
-  let k = pfad(poly([[41.5, Y, ZE], [70, Y, ZE], [70, 12, 29], [41.5, 12, 29]], 2), S.lg("nrdach", [[0, "#4f8a75"], [1, "#6aa690"]]));
+  const Y = 6, X0 = 41.5, X1 = 61, E = ebene(X0, Y, 1, 0), L = X1 - X0, ZE = 17.5, FI = 27;
+  const BS = "#e4d4b0", BS_D = "#b9a682";
+  /* eigenes Dach: eine Stufe dunkler und kühler als das alte, mit First- und Traufkante */
+  let k = pfad(poly([[X0, Y, ZE], [X1, Y, ZE], [X1 - 4, Y + 7, FI], [X0, Y + 7, FI]], 2), S.lg("nrdach", [[0, "#3f7464"], [1, "#57907b"]]));
+  { let f = ""; for (let x = X0 + 1; x < X1 - 1; x += 1.1) f += linie([[x, Y, ZE], [Math.min(x, X1 - 4), Y + 7, FI]], 99) + " "; k += `<path d="${f}" stroke="#345f52" stroke-width=".2" fill="none" opacity=".6"/>`; }
+  k += `<path d="${linie([[X0, Y + 7, FI], [X1 - 4, Y + 7, FI]], 2)}" stroke="#86b8a2" stroke-width=".5" fill="none"/><path d="${linie([[X1, Y, ZE], [X1 - 4, Y + 7, FI]], 2)}" stroke="#86b8a2" stroke-width=".4" fill="none"/>`;
+  /* Wand: Backstein mit Sandsteinsockel, Gesimsbändern, Eckquadern */
   k += pfad(fr(E, 0, 0, L, ZE, 2), S.lg("nrback", [[0, "#6a3a2e"], [1, "#7a4434"]]));
-  k += pfad(fr(E, 0, 0, L, 4.2, 2), "#c9b896");
-  for (const z of [4.2, 10.4, ZE - .8]) k += pfad(fr(E, -.1, z, L + .1, z + .6, 2), "#d9c9a6") + pfad(fr(E, -.1, z - .2, L + .1, z, 2), "#3a2a20", ` opacity=".4"`);
-  for (let s2 = 2.2; s2 < L; s2 += 3.6) {
-    k += pfad(fp(E, bogen(s2, 1.4, .6, 3, 5)), "#2e2a28");
-    for (const [z0, z1] of [[5.6, 9.4], [11.8, 15.6]]) k += pfad(fr(E, s2 - .9, z0 - .3, s2 + .9, z1 + .3), "#d9c9a6") + pfad(fr(E, s2 - .7, z0, s2 + .7, z1), GLAS) + pfad(fr(E, s2 - .7, z1 - .25, s2 + .7, z1), "#1d2228", ` opacity=".45"`);
-  }
-  /* Zwerchgiebel mit Voluten über der Mitte des sichtbaren Teils */
-  const m = 18.6;
-  k += pfad(fp(E, [[m - 4.4, ZE], [m + 4.4, ZE], [m + 4.4, 21], [m + 3, 21], [m + 2.6, 23.6], [m + 1.2, 23.6], [m, 26], [m - 1.2, 23.6], [m - 2.6, 23.6], [m - 3, 21], [m - 4.4, 21]]), "#7a4434");
-  k += `<path d="${fl(E, [[m - 4.4, 21], [m - 3, 21], [m - 2.6, 23.6], [m - 1.2, 23.6], [m, 26], [m + 1.2, 23.6], [m + 2.6, 23.6], [m + 3, 21], [m + 4.4, 21]])}" stroke="#e2d2b0" stroke-width=".5" fill="none"/>`;
-  k += pfad(fr(E, m - 2.6, 18.2, m - .6, 20.4), GLAS) + pfad(fr(E, m + .6, 18.2, m + 2.6, 20.4), GLAS) + pfad(fp(E, bogen(m, 1, 21.6, 22.8, 4)), GLAS);
-  for (const x of [m - 4.4, m + 4.4, m]) k += pfad(fp(E, [[x - .2, x === m ? 26 : 21], [x + .2, x === m ? 26 : 21], [x, (x === m ? 26 : 21) + 1.4]]), "#e2d2b0");
-  for (const x of [6, 10, 26]) k += pfad(fp(ebene(41.5, 7, 1, 0), [[x - .7, 20.4], [x + .7, 20.4], [x + .7, 21.6], [x, 22.4], [x - .7, 21.6]]), "#7fb59e");
+  k += pfad(fr(E, 0, 0, L, 3.6, 2), BS_D) + pfad(fr(E, 0, 3.6, L, 4.2, 2), BS);
+  for (const z of [10.2, ZE - .8]) k += pfad(fr(E, -.1, z, L + .1, z + .6, 2), BS) + pfad(fr(E, -.1, z - .25, L + .1, z, 2), "#3a2a20", ` opacity=".45"`);
+  for (let z = 4.2, i = 0; z < ZE - .8; z += .7, i++) k += pfad(fr(E, L - (i % 2 ? 1.4 : .9), z + .06, L, z + .64), BS);
+  k += pfad(fr(E, L - .25, 0, L, ZE), "#8c7a5c", ` opacity=".5"`);
+  /* Kreuzstockfenster in Sandsteinrahmen, oben höher als unten */
+  const kreuz = (sm, z0, z1, w = 1.7) => pfad(fr(E, sm - w / 2 - .25, z0 - .3, sm + w / 2 + .25, z1 + .25), BS) + pfad(fr(E, sm - w / 2, z0, sm + w / 2, z1), GLAS) + pfad(fr(E, sm - .09, z0, sm + .09, z1), BS) + pfad(fr(E, sm - w / 2, z0 + (z1 - z0) * .66, sm + w / 2, z0 + (z1 - z0) * .66 + .18), BS) + pfad(fr(E, sm - w / 2, z1 - .25, sm + w / 2, z1), "#1d2228", ` opacity=".45"`);
+  for (let sm = 2.2; sm < L - 1.5; sm += 3.2) { k += pfad(fp(E, bogen(sm, 1.4, .6, 2.6, 5)), "#2e2a28") + kreuz(sm, 5.2, 9.2); k += kreuz(sm, 11.2, 16); }
+  /* der Zwerchgiebel: vier Stufen, jede mit einer Schnecke außen und einem Obelisken auf dem Absatz */
+  const m = 14.2, st = [[ZE, 5], [20.8, 3.8], [23.8, 2.6], [26.6, 1.4]], ZT = 29.2;
+  const umriss = [[m - 5, ZE]];
+  st.forEach(([z, w], i) => { const [z1, w1] = st[i + 1] || [ZT, 0]; if (!w1) return; umriss.push([m - w, z + .5]); for (let j = 1; j <= 4; j++) { const t = j / 4, a = t * Math.PI / 2; umriss.push([m - w + (w - w1) * (1 - Math.cos(a)), z + .5 + (z1 - z - .5) * Math.sin(a)]); } });
+  umriss.push([m - 1.4, ZT - .4]); for (let j = 0; j <= 6; j++) { const a = Math.PI * (1 - j / 6); umriss.push([m + Math.cos(a) * 1.4, ZT - .4 + Math.sin(a) * 1.1]); }
+  const voll = umriss.concat(umriss.slice(0, -7).reverse().map(([sx, z]) => [2 * m - sx, z]));
+  k += pfad(fp(E, voll), S.lg("nrgiebel", [[0, "#6c3b2f"], [1, "#7c4535"]], 0, 0, 1, 0));
+  k += `<path d="${fl(E, voll)}" stroke="${BS}" stroke-width=".55" fill="none"/>`;
+  st.forEach(([z, w], i) => {
+    if (i) k += pfad(fr(E, m - w, z - .1, m + w, z + .35), BS);
+    for (const sg of [-1, 1]) { k += pfad(fp(E, [[m + sg * (w + .05) - .22, z + .35], [m + sg * (w + .05) + .22, z + .35], [m + sg * (w + .05), z + 2.1]]), BS); k += `<circle cx="${r(pr(...E(m + sg * (w - .45), z + .9))[0])}" cy="${r(pr(...E(m + sg * (w - .45), z + .9))[1])}" r=".32" fill="${BS_D}"/>`; }
+  });
+  k += kreuz(m - 1.6, 18.2, 20.2, 1.3) + kreuz(m + 1.6, 18.2, 20.2, 1.3) + kreuz(m, 21.4, 23.2, 1.2);
+  k += pfad(fp(E, bogen(m, .9, 24.4, 25.2, 5)), GLAS) + pfad(fp(E, [[m - .12, ZT + .7], [m + .12, ZT + .7], [m, ZT + 2]]), BS);
+  /* schmale Schattenfuge, wo das neue Haus an das alte stößt */
+  k += pfad(fr(E, 8.6, 0, 9.6, ZE), "#1f1612", ` opacity=".45"`);
+  /* ferne Häuser am Domshof in der Lücke zwischen Neuem Rathaus und Dom (Dunst) */
+  { const p = (b, d) => [CAM[0] + d * Math.sin(b * GRAD), CAM[1] + d * Math.cos(b * GRAD)]; const a1 = p(60, 150), a2 = p(67, 150);
+    FERN_DOMSHOF = `<g ${LUFT3}>${pfad(poly([[...a1, 0], [...a2, 0], [...a2, 17], [...a1, 17]], 4), "#a99d8a")}${pfad(poly([[...a1, 17], [...a2, 17], [...a2, 21], [...a1, 21]], 4), "#6f6a64")}</g>`; }
   S.teil({ id: "neues_rathaus", de: "das Neue Rathaus", syl: "NEU-e RAT-haus", it: "il Nuovo Municipio", itSyl: "NUO-vo mu-ni-CI-pio", en: "New Town Hall", x: 0, y: 0, kunst: `<g ${LUFT1}>${k}</g>`,
     tipp: "Hinter dem alten Rathaus steht das Neue Rathaus von 1913. Hier arbeitet der Bürgermeister." });
+  MP.kunst += FERN_DOMSHOF;
 }
 
 /* =====================================================================
@@ -428,7 +470,7 @@ const rhTeile = {};
     }
     k += `<path d="${n.replace(/M/g, " M")}" stroke="#4f8673" stroke-width=".2" fill="none" opacity=".7"/>`;
     k += `<path d="${linie([[7, 9.3, FIRST], [RH.L - 7, 9.3, FIRST]], 1.5)}" stroke="#a7d3bd" stroke-width=".5" fill="none"/>`;
-    k += `<path d="${linie([[0, RH.WAND, ZE], [7, 9.3, FIRST]])}" stroke="#a7d3bd" stroke-width=".4" fill="none"/>`;
+    k += `<path d="${linie([[0, RH.WAND, ZE], [7, 9.3, FIRST]])} ${linie([[RH.L, RH.WAND, ZE], [RH.L - 7, 9.3, FIRST]])}" stroke="#a7d3bd" stroke-width=".45" fill="none"/>`;
   }
   const gaube = (x, z) => {
     const y = RH.WAND + (z - ZE) / 10.2 * 6.7 - .3, G = ebene(0, y, 1, 0);
@@ -684,7 +726,7 @@ const RO = { x: 30, y: -14 };
   /* Schlagschatten nach Nordnordosten auf dem Pflaster (Höhe 10,2 m → 16 m lang) */
   const SV = (z) => [RO.x + z * .414, RO.y + z * 1.546, 0];
   let sch = pfad(poly([[RO.x - 2, RO.y - .6, 0], [RO.x + 2, RO.y - .6, 0], [SV(1.2)[0] + 1.6, SV(1.2)[1], 0], [SV(7.4)[0] + .4, SV(7.4)[1], 0], [SV(10)[0], SV(10)[1], 0], [SV(7.4)[0] - .4, SV(7.4)[1], 0], [SV(1.2)[0] - 1.6, SV(1.2)[1], 0]], 1), "#1f2430", ` opacity=".28"`);
-  const LS = S.lg("rolstein2", [[0, "#f4efe4"], [0.5, "#ddd5c4"], [1, "#a39a88"]], 0, 0, 1, 0);   // Licht links vorn, Schatten rechts hinten
+  const LS = S.lg("rolstein2", [[0, "#f4efe4"], [0.4, "#d8cfbe"], [0.75, "#a39a88"], [1, "#8e8676"]], 0, 0, 1, 0);   // Licht links vorn, Schatten rechts hinten
   const DK = "#8e8676", HL = "#fbf8f0";
   let g = "";
   /* Stufen und Podest */
@@ -704,7 +746,7 @@ const RO = { x: 30, y: -14 };
   g += `<path d="M-4.4 -46.6 L5 -45.6 L5 -44.4 L-4.5 -45.4 Z" fill="#8e8676"/>`;
   for (const x of [-3, -1, 1, 3]) g += `<circle cx="${x}" cy="${r(-45.9 + (x + 4.4) * .1)}" r=".42" fill="#e8e1d2"/>`;
   /* Mantel über den Rücken (wir sehen ihn von hinten) */
-  g += `<path d="M-4 -65 C-6.4 -60 -7 -52 -6.6 -42 L-5.6 -38.4 L-2.4 -38.8 L-.4 -40 C-.8 -48 .2 -56 1.6 -63.6 Q-1 -66 -4 -65 Z" fill="${S.lg("mantel", [[0, "#ede7da"], [1, "#b8af9d"]], 0, 0, 1, 0)}"/>`;
+  g += `<path d="M-4 -65 C-6.4 -60 -7 -52 -6.6 -42 L-5.6 -38.4 L-2.4 -38.8 L-.4 -40 C-.8 -48 .2 -56 1.6 -63.6 Q-1 -66 -4 -65 Z" fill="${S.lg("mantel", [[0, "#ede7da"], [0.45, "#c6bdab"], [1, "#958c7b"]], 0, 0, 1, 0)}"/>`;
   g += `<path d="M-5 -60 C-5.6 -54 -5.6 -46 -5 -39.4 M-3 -62 C-3.4 -54 -3.4 -46 -2.8 -39 M-.8 -62 C-1.2 -55 -1.4 -48 -1 -40.2" stroke="${DK}" stroke-width=".32" fill="none" opacity=".75"/>`;
   /* rechter Arm im Kettenhemd, die Hand am Schwertgriff */
   S.def(`<pattern id="${S.id("kette")}" width=".7" height=".6" patternUnits="userSpaceOnUse"><rect width=".7" height=".6" fill="#cfc7b6"/><circle cx=".35" cy=".3" r=".2" fill="none" stroke="#8e8676" stroke-width=".09"/></pattern>`);
@@ -717,8 +759,10 @@ const RO = { x: 30, y: -14 };
   /* Kopf von hinten rechts: Nacken, lange Locken bis auf die Schultern, Wange und Ohr rechts */
   g += `<path d="M.4 -67 L2.6 -66.8 L2.8 -63.8 L.4 -64 Z" fill="#d6cebe"/>`;
   g += `<path d="M1.8 -74.4 Q4.4 -74.8 4.6 -71.4 Q4.4 -68.4 2.8 -67.4 L1.6 -68 Z" fill="#e8e1d2"/><ellipse cx="2.6" cy="-71" rx=".5" ry=".8" fill="#c9c1ae"/>`;
-  g += `<path d="M-2.8 -68 Q-3.8 -74.6 .2 -76.6 Q3.6 -77.4 4.4 -74.6 Q2 -74.8 1.6 -72.4 Q1.4 -69.6 2 -66 Q0 -63.6 -2.4 -64 Q-3.6 -65.6 -2.8 -68 Z" fill="#d4ccb9"/>`;
-  for (const [x, y] of [[-2.8, -65.4], [-3.2, -67.8], [-3, -70.4], [-2.4, -72.8], [-1.2, -75], [.6, -76.2], [2.4, -76.2], [.6, -64.6]]) g += `<circle cx="${x}" cy="${y}" r=".8" fill="#bfb6a2"/><circle cx="${x - .25}" cy="${y - .25}" r=".32" fill="${HL}"/>`;
+  g += `<path d="M-2.8 -68 Q-3.8 -74.6 .2 -76.6 Q3.6 -77.4 4.4 -74.6 Q2 -74.8 1.6 -72.4 Q1.4 -69.6 2 -66 Q0 -63.6 -2.4 -64 Q-3.6 -65.6 -2.8 -68 Z" fill="#b9b09c"/>`;
+  /* Locken als Masse: dunkle Zwischenräume, helle C-Bögen */
+  g += `<path d="M-2.6 -66.4 q1 .6 2 -.2 M-3.2 -69.2 q1.2 .4 1.8 -.6 M-2.6 -72.2 q1.2 .2 1.6 -.8 M-1 -74.6 q1 .4 1.8 -.4 M1 -75.6 q.8 .6 1.8 0" stroke="#8e8676" stroke-width=".55" fill="none"/>`;
+  g += `<path d="M-3 -65 q-.6 -1.2 .4 -2 M-3.4 -67.8 q-.4 -1.4 .7 -2 M-2.8 -70.8 q-.3 -1.4 .9 -1.8 M-1.6 -73.4 q0 -1.4 1.2 -1.6 M.4 -74.8 q.4 -1.2 1.6 -1.2" stroke="#f4efe4" stroke-width=".45" fill="none"/>`;
   /* DER BALDACHIN: achteckiges gotisches Gehäuse — drei Seiten sichtbar, je Spitzbogen mit Wimperg, Fialen an den Ecken, Helm mit Krabben und Kreuzblume */
   const BAL = S.lg("bal", [[0, "#f2ede2"], [0.55, "#d9d1c0"], [1, "#a8a08e"]], 0, 0, 1, 0);
   g += `<path d="M-10 -77 L10 -77 L10 -86 L-10 -86 Z" fill="${BAL}"/>`;
@@ -759,7 +803,7 @@ const SCH = { x0: 8, x1: 40, y: -57, T: 15 };
   const Wg = ebene(SCH.x0, SCH.y, 0, -1);    // Westgiebel: s = 0 (Nordecke) … 15 (Süden)
   const L = SCH.x1 - SCH.x0, ZT = 10.6, FI = 19.4;
   /* Farben der Nordseite: Sandstein im Schatten (kühl), Westgiebel im Streiflicht */
-  const SN = S.lg("schnord", [[0, "#b9ae98"], [1, "#a69c88"]]), SN_D = "#948a77", SN_K = "#c7bca5", GLAS_N = S.lg("glasn", [[0, "#6f8496"], [0.5, "#38434d"], [1, "#2a3138"]]);
+  const SN = S.lg("schnord", [[0, "#9c9381"], [1, "#8c8473"]]), SN_D = "#7a7263", SN_K = "#aaa08c", GLAS_N = S.lg("glasn", [[0, "#3e4852"], [0.5, "#2c343c"], [1, "#22282e"]]);
   /* Dach (dunkel, unsicher), Gauben */
   k += pfad(poly([[SCH.x1, SCH.y, ZT], [SCH.x0, SCH.y, ZT], [SCH.x0, SCH.y - SCH.T / 2, FI], [SCH.x1, SCH.y - SCH.T / 2, FI]], 2), S.lg("schdach", [[0, "#3c4246"], [1, "#545b60"]], 0, 0, 1, 0));
   k += `<path d="${linie([[SCH.x0, SCH.y - SCH.T / 2, FI], [SCH.x1, SCH.y - SCH.T / 2, FI]], 2)}" stroke="#7d868c" stroke-width=".5" fill="none"/>`;

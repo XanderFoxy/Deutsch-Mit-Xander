@@ -805,7 +805,7 @@ bodenSchatten(SK.D, SK.X, 1.3, 0.8, 0.22);
   const z = zufall(9);
   for (let i = 0; i < 22; i++) { const x = -0.65 + z() * 1.2, y = -0.76 - z() * 0.26 * (1 - Math.abs(x) * 0.9); g += `<path d="M${r(x)} ${r(y)} q.05 -.06 .12 0 q-.05 .05 -.12 0 Z" fill="${["#c98a2a", "#a4642a", "#d9b23a", "#7c8d3a", "#b8502a"][i % 5]}" transform="rotate(${Math.round(z() * 180)} ${r(x)} ${r(y)})"/>`; }
   g += `<path d="M.55 -.62 L1.15 -.68" stroke="#6b5236" stroke-width=".06" stroke-linecap="round"/>`;
-  S.teil({ oben: true, id: "schubkarre", de: "die Schubkarre", syl: "SCHUB-kar-re", it: "la carriola", itSyl: "car-RIO-la", en: "wheelbarrow", x: r(xG(SK.D, SK.X)), y: r(yG(SK.D)), steht: true,
+  S.teil({ id: "schubkarre", de: "die Schubkarre", syl: "SCHUB-kar-re", it: "la carriola", itSyl: "car-RIO-la", en: "wheelbarrow", x: r(xG(SK.D, SK.X)), y: r(yG(SK.D)), steht: true,
     kunst: `<g transform="scale(${u.toFixed(4)})">${g}</g>`, tipp: "Der Gärtner sammelt das Laub in der Schubkarre." });
 }
 {

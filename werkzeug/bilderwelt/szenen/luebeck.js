@@ -769,7 +769,7 @@ const [BX0, BY] = proj(BANK.lat0, BANK.d), [BX1] = proj(BANK.lat1, BANK.d), BK =
     tipp: "Die Mutter macht eine Pause auf der Bank. Sie hat Marzipan gekauft." });
 }
 {
-  const s = BK;
+  const s = BK * 1.25;
   let k = `<path d="M${r(-0.13 * s)} 0 L${r(0.13 * s)} 0 L${r(0.12 * s)} ${r(-0.3 * s)} L${r(-0.12 * s)} ${r(-0.3 * s)} Z" fill="${S.lg("tuete", [[0, "#9e1a20"], [0.6, "#c8282e"], [1, "#a01c22"]], 0, 0, 1, 0)}"/>`;
   k += `<path d="M${r(-0.12 * s)} ${r(-0.3 * s)} L${r(0.12 * s)} ${r(-0.3 * s)} L${r(0.1 * s)} ${r(-0.33 * s)} L${r(-0.1 * s)} ${r(-0.33 * s)} Z" fill="#7a1418"/>`;
   k += `<path d="M${r(-0.06 * s)} ${r(-0.3 * s)} Q0 ${r(-0.44 * s)} ${r(0.06 * s)} ${r(-0.3 * s)}" stroke="#c9a640" stroke-width=".5" fill="none"/>`;
@@ -794,7 +794,7 @@ let MARZ = null;
 }
 {
   /* DAS MARZIPAN: Marzipanbrot in roter Hülle mit goldenem Band, angebrochen */
-  const s = KK * 1.7;
+  const s = KK * 2;
   let k = `<rect x="${r(-0.09 * s)}" y="${r(-0.09 * s)}" width="${r(0.18 * s)}" height="${r(0.09 * s)}" rx="${r(0.015 * s)}" fill="${S.lg("hulle", [[0, "#d63036"], [1, "#8e161c"]])}"/><rect x="${r(-0.09 * s)}" y="${r(-0.09 * s)}" width="${r(0.18 * s)}" height="${r(0.02 * s)}" fill="#ff7a7a" opacity=".5"/>`;
   k += `<rect x="${r(-0.03 * s)}" y="${r(-0.09 * s)}" width="${r(0.05 * s)}" height="${r(0.09 * s)}" fill="${GOLD}"/>`;
   k += `<rect x="${r(0.09 * s)}" y="${r(-0.046 * s)}" width="${r(0.035 * s)}" height="${r(0.042 * s)}" fill="#5a3420"/><rect x="${r(0.1 * s)}" y="${r(-0.04 * s)}" width="${r(0.022 * s)}" height="${r(0.03 * s)}" fill="#f1dcae"/>`;
