@@ -275,10 +275,11 @@ S.hinten(`<ellipse cx="420" cy="${HOR - 10}" rx="200" ry="70" fill="${S.rg("aben
 S.def(`<filter id="${S.id("wolkweich")}"${CIF} x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.3"/></filter>`);
 function wolke(cx, cy, s, seed, form) {
   const z = zufall(seed), teile = form.map(([dx, dy, rr]) => [cx + dx * s, cy + dy * s, rr * s * (0.92 + z() * 0.16)]);
-  const fuss = cy + s * 1.6, xl = cx + form[0][0] * s - 6 * s, xr = cx + form[form.length - 1][0] * s + 6 * s;
+  const fuss = cy + s * 1.6, xs = form.map((f) => f[0]), xl = cx + Math.min(...xs) * s - 6 * s, xr = cx + Math.max(...xs) * s + 6 * s;
+  const li = teile.reduce((a, b) => (b[0] < a[0] ? b : a)), re = teile.reduce((a, b) => (b[0] > a[0] ? b : a));
   let umr = "", hl = "", sch = "";
   for (const [x, y, rr] of teile) umr += `M${r(x - rr)} ${r(y)} a${r(rr)} ${r(rr)} 0 1 1 ${r(2 * rr)} 0 a${r(rr)} ${r(rr)} 0 1 1 ${r(-2 * rr)} 0 Z`;
-  umr += `M${r(teile[0][0])} ${r(fuss)} L${r(teile[0][0])} ${r(teile[0][1])} L${r(teile[teile.length - 1][0])} ${r(teile[teile.length - 1][1])} L${r(teile[teile.length - 1][0])} ${r(fuss)} Z`;
+  umr += `M${r(li[0])} ${r(fuss)} L${r(li[0])} ${r(li[1])} L${r(re[0])} ${r(re[1])} L${r(re[0])} ${r(fuss)} Z`;
   for (const [x, y, rr] of teile) { hl += `<circle cx="${r(x + rr * 0.3)}" cy="${r(y - rr * 0.3)}" r="${r(rr * 0.55)}"/>`; sch += `<circle cx="${r(x - rr * 0.25)}" cy="${r(y + rr * 0.35)}" r="${r(rr * 0.85)}"/>`; }
   const id = S.id("wk" + seed), idb = S.id("wb" + seed), oben = cy - 14 * s;
   return `<clipPath id="${id}"><path d="${umr}"/></clipPath><clipPath id="${idb}"><rect x="${r(xl)}" y="${r(oben)}" width="${r(xr - xl)}" height="${r(fuss - oben)}"/></clipPath>` +
@@ -675,7 +676,7 @@ function prisma(grund, h0, h1, farbe, dachFarbe, licht) {
   /* kleine Wellen: helle Striche, vorn länger */
   const zw = zufall(91);
   let wl = "";
-  for (let i = 0; i < 46; i++) { const D = 14 + Math.pow(zw(), 1.6) * 90, X = (zw() * 2 - 1) * KX * 0.95, [x, y] = P(X, D, 0), L = (0.6 + zw() * 1.4) * F / D; wl += `M${r(x - L / 2)} ${r(y)} q${r(L / 2)} ${r(-0.12 * F / D)} ${r(L)} 0`; }
+  for (let i = 0; i < 46; i++) { const D = 14 + Math.pow(zw(), 1.6) * 90, X = (zw() * 2 - 1) * KX * 0.95, [x, y] = P(X, D, 0), L = (0.6 + zw() * 1.4) * F / D; wl += `M${r(x - L / 2)} ${r(y)} Q${r(x)} ${r(y - 0.12 * F / D)} ${r(x + L / 2)} ${r(y)}`; }
   k += `<path d="${wl}" stroke="#dfeaee" stroke-width=".3" fill="none" opacity=".3" clip-path="url(#${S.id("wasserclip")})"/>`;
   S.teil({ id: "gracht", de: "die Gracht", syl: "GRACHT", it: "il canale", itSyl: "ca-NA-le", en: "canal", anker: [200, 200], kunst: k,
     tipp: "Die Grachten wurden im 17. Jahrhundert gegraben. Der Grachtengürtel ist UNESCO-Welterbe." });
@@ -874,7 +875,7 @@ const LADEN = { d0: 37.2, d1: 44.6 };
   let kaese = "";
   for (let reihe = 0; reihe < 3; reihe++) for (let d = LADEN.d0 + 0.8; d < LADEN.d1 - 2.3; d += 0.62) {
     const [x, y] = Q(d, 2.0 + reihe * 0.6), s = F / d;
-    for (let j = 0; j < 2; j++) { const yy = y - j * 0.1 * s; kaese += `<path d="M${r(x - 0.1 * s)} ${r(yy)} q0 ${r(-0.1 * s)} ${r(0.1 * s)} ${r(-0.1 * s)} q${r(0.1 * s)} 0 ${r(0.1 * s)} ${r(0.1 * s)} q0 ${r(0.02 * s)} ${r(-0.1 * s)} ${r(0.02 * s)} q${r(-0.1 * s)} 0 ${r(-0.1 * s)} ${r(-0.02 * s)} Z" fill="${(reihe + j) % 3 ? "#f2bf36" : "#e39a22"}"/>`; }
+    for (let j = 0; j < 2; j++) { const yy = y - j * 0.09 * s, w = 0.11 * s, hh = 0.08 * s; kaese += `<rect x="${r(x - w)}" y="${r(yy - hh)}" width="${r(2 * w)}" height="${r(hh)}" rx="${r(hh * 0.45)}" fill="${(reihe + j) % 3 ? "#efb52e" : "#d98f1c"}"/><rect x="${r(x - w * 0.8)}" y="${r(yy - hh)}" width="${r(1.6 * w)}" height="${r(hh * 0.3)}" rx="${r(hh * 0.15)}" fill="#ffe08a" opacity=".7"/>`; }
   }
   k += kaese;
   for (let reihe = 0; reihe < 3; reihe++) k += `<path d="M${pt(Q(LADEN.d0 + 0.4, 2.0 + reihe * 0.6))} L${pt(Q(LADEN.d1 - 2, 2.0 + reihe * 0.6))}" stroke="#7a5230" stroke-width=".5"/>`;
@@ -899,22 +900,29 @@ const LADEN = { d0: 37.2, d1: 44.6 };
   tisch += laib(0, 0.26, 0.1, S.lg("gouda", [[0, "#f7cf4a"], [0.6, "#eaa924"], [1, "#c97f16"]], 0, 0, 1, 0)) + laib(-0.1, 0.24, 0.1, S.lg("gouda", []));
   tisch += `<path d="M${m(0.02, -0.21)} L${m(0.2, -0.205)} L${m(0.21, -0.13)} L${m(0.05, -0.14)} Z" fill="#fbe7a2"/><path d="M${m(0.02, -0.21)} L${m(0.05, -0.14)}" stroke="#e8c870" stroke-width="${r(0.008 * ts)}"/>`;
   tisch += `<path d="M${m(-0.18, -0.2)} Q${m(-0.05, -0.235)} ${m(0.1, -0.2)}" stroke="#fff4c0" stroke-width="${r(0.012 * ts)}" fill="none" opacity=".8"/>`;
-  /* Holzschuhe: ein Paar, gelb lackiert, mit roter Tulpe bemalt (Seitenansicht, Spitze rechts) */
+  /* Holzschuhe: ein Paar, gelb lackiert, mit roter Tulpe bemalt (Seitenansicht, Spitze rechts, 36 cm) */
   const hx = tx + 0.3 * ts, hy = ty - 0.8 * ts;
-  const klomp = (x0, dy, f) => { const q = (a, b) => `${r(hx + (x0 + a) * ts)} ${r(hy + (dy + b) * ts)}`;
-    return `<path d="M${q(-0.14, 0)} L${q(0.12, 0)} Q${q(0.19, 0)} ${q(0.2, -0.05)} Q${q(0.16, -0.075)} ${q(0.08, -0.08)} L${q(0.0, -0.09)} L${q(-0.12, -0.1)} Q${q(-0.16, -0.06)} ${q(-0.14, 0)} Z" fill="${f}"/><path d="M${q(-0.11, -0.095)} Q${q(-0.05, -0.115)} ${q(0.01, -0.092)}" stroke="#5a3a14" stroke-width="${r(0.018 * ts)}" fill="none"/><path d="M${q(0.04, -0.03)} q${r(0.02 * ts)} ${r(-0.03 * ts)} ${r(0.04 * ts)} 0" stroke="#3f7a2e" stroke-width="${r(0.008 * ts)}" fill="none"/><circle cx="${r(hx + (x0 + 0.06) * ts)}" cy="${r(hy + (dy - 0.045) * ts)}" r="${r(0.016 * ts)}" fill="#d0283a"/><path d="M${q(-0.12, -0.08)} Q${q(0.0, -0.075)} ${q(0.12, -0.055)}" stroke="#fff6c8" stroke-width="${r(0.007 * ts)}" fill="none" opacity=".8"/>`; };
-  tisch += klomp(-0.04, 0, "#f1c535") + klomp(0.05, 0.015, "#e9b82a");
+  const klomp = (x0, dy, f, k = 1.25) => { const q = (a, b) => `${r(hx + (x0 + a * k) * ts)} ${r(hy + (dy + b * k) * ts)}`;
+    return `<path d="M${q(-0.15, 0)} L${q(0.1, 0)} Q${q(0.16, -0.005)} ${q(0.19, -0.035)} Q${q(0.215, -0.07)} ${q(0.2, -0.08)} Q${q(0.17, -0.088)} ${q(0.12, -0.09)} Q${q(0.06, -0.095)} ${q(0.03, -0.122)} L${q(-0.12, -0.13)} Q${q(-0.17, -0.125)} ${q(-0.17, -0.07)} Q${q(-0.17, -0.02)} ${q(-0.15, 0)} Z" fill="${f}"/>` +
+      `<path d="M${q(-0.12, -0.128)} Q${q(-0.05, -0.15)} ${q(0.03, -0.122)} Q${q(-0.05, -0.112)} ${q(-0.12, -0.128)} Z" fill="#3a220c"/>` +
+      `<path d="M${q(0.05, -0.02)} Q${q(0.06, -0.05)} ${q(0.08, -0.07)}" stroke="#3f7a2e" stroke-width="${r(0.012 * ts)}" fill="none"/><path d="M${q(0.065, -0.068)} L${q(0.06, -0.093)} L${q(0.08, -0.083)} L${q(0.1, -0.093)} L${q(0.095, -0.068)} Z" fill="#d0283a"/>` +
+      `<path d="M${q(-0.15, -0.1)} Q${q(-0.02, -0.098)} ${q(0.12, -0.082)} Q${q(0.18, -0.08)} ${q(0.2, -0.074)}" stroke="#fff8d8" stroke-width="${r(0.01 * ts)}" fill="none" opacity=".85"/><path d="M${q(-0.15, -0.006)} L${q(0.12, -0.006)}" stroke="#9a6a08" stroke-width="${r(0.014 * ts)}" opacity=".6"/>`; };
+  tisch += klomp(0.02, -0.012, "#d9a420") + klomp(-0.05, 0.01, "#f6cb3c");
   /* Sirupwaffeln: blaue Dose, eine Waffel lehnt davor (Gitter, Sirup) */
   const wx = tx + 0.68 * ts, wy = ty - 0.8 * ts, w2 = (a, b) => `${r(wx + a * ts)} ${r(wy + b * ts)}`;
   tisch += `<rect x="${r(wx - 0.08 * ts)}" y="${r(wy - 0.2 * ts)}" width="${r(0.16 * ts)}" height="${r(0.2 * ts)}" rx="${r(0.01 * ts)}" fill="#2a5aa0"/><rect x="${r(wx - 0.08 * ts)}" y="${r(wy - 0.13 * ts)}" width="${r(0.16 * ts)}" height="${r(0.05 * ts)}" fill="#f2efe6"/><ellipse cx="${r(wx)}" cy="${r(wy - 0.2 * ts)}" rx="${r(0.08 * ts)}" ry="${r(0.02 * ts)}" fill="#c9d3dc"/>`;
-  tisch += `<ellipse cx="${r(wx - 0.11 * ts)}" cy="${r(wy - 0.05 * ts)}" rx="${r(0.045 * ts)}" ry="${r(0.05 * ts)}" fill="#c78a3c" stroke="#8a5222" stroke-width="${r(0.006 * ts)}"/><path d="M${w2(-0.14, -0.08)} L${w2(-0.08, -0.02)} M${w2(-0.15, -0.05)} L${w2(-0.1, 0.0)} M${w2(-0.13, -0.095)} L${w2(-0.07, -0.04)} M${w2(-0.08, -0.08)} L${w2(-0.14, -0.02)} M${w2(-0.07, -0.05)} L${w2(-0.12, 0.0)}" stroke="#9a6028" stroke-width="${r(0.005 * ts)}"/>`;
+  { const cx2 = wx + 0.13 * ts, cy2 = wy - 0.06 * ts, rw = 0.06 * ts;
+    let gitter = "";
+    for (let i = -2; i <= 2; i++) gitter += `M${r(cx2 + i * rw * 0.35 - rw * 0.6)} ${r(cy2 - rw * 0.8)} L${r(cx2 + i * rw * 0.35 + rw * 0.6)} ${r(cy2 + rw * 0.8)} M${r(cx2 + i * rw * 0.35 + rw * 0.6)} ${r(cy2 - rw * 0.8)} L${r(cx2 + i * rw * 0.35 - rw * 0.6)} ${r(cy2 + rw * 0.8)} `;
+    const id = S.id("waffel");
+    tisch += `<clipPath id="${id}"><circle cx="${r(cx2)}" cy="${r(cy2)}" r="${r(rw * 0.9)}"/></clipPath><circle cx="${r(cx2)}" cy="${r(cy2)}" r="${r(rw)}" fill="#a8682a"/><circle cx="${r(cx2)}" cy="${r(cy2)}" r="${r(rw * 0.9)}" fill="#d49a4c"/><path d="${gitter}" stroke="#9a5e24" stroke-width="${r(0.008 * ts)}" clip-path="url(#${id})"/><path d="M${r(cx2 - rw * 0.5)} ${r(cy2 - rw * 0.55)} Q${r(cx2)} ${r(cy2 - rw * 0.85)} ${r(cx2 + rw * 0.5)} ${r(cy2 - rw * 0.55)}" stroke="#f4cf8a" stroke-width="${r(0.006 * ts)}" fill="none"/>`; }
   k += `<g ${VOLS}>${tisch}</g>`;
   const unter = [
     { id: "kaese", de: "der Käse", syl: "KÄ-se", it: "il formaggio", itSyl: "for-MAG-gio", en: "cheese", x: kx, y: ky, kunst: flaeche(-0.3 * ts, -0.3 * ts, 0.6 * ts, 0.34 * ts, 0.3),
       tipp: "Gouda ist ein runder Käse aus Holland. Er hat eine gelbe Wachsrinde." },
     { id: "holzschuh", de: "der Holzschuh", syl: "HOLZ-schuh", it: "lo zoccolo", itSyl: "ZOC-co-lo", en: "clog", x: hx, y: hy, kunst: flaeche(-0.22 * ts, -0.13 * ts, 0.46 * ts, 0.15 * ts, 0.3),
       tipp: "Früher trugen die Bauern Holzschuhe. Heute kauft man sie als Souvenir." },
-    { id: "sirupwaffel", de: "die Sirupwaffel", syl: "SI-rup-waf-fel", it: "la cialda allo sciroppo", itSyl: "CIAL-da AL-lo sci-ROP-po", en: "stroopwafel", x: wx, y: wy, kunst: flaeche(-0.17 * ts, -0.23 * ts, 0.27 * ts, 0.25 * ts, 0.3),
+    { id: "sirupwaffel", de: "die Sirupwaffel", syl: "SI-rup-waf-fel", it: "la cialda allo sciroppo", itSyl: "CIAL-da AL-lo sci-ROP-po", en: "stroopwafel", x: wx, y: wy, kunst: flaeche(-0.09 * ts, -0.23 * ts, 0.3 * ts, 0.25 * ts, 0.3),
       tipp: "Die Sirupwaffel (niederländisch „stroopwafel“) legt man auf die heiße Teetasse — dann wird der Sirup weich." },
   ];
   S.teil({ id: "laden", de: "der Laden", syl: "LA-den", it: "il negozio", itSyl: "ne-GO-zio", en: "shop", anker: [tx, ty], kunst: k,

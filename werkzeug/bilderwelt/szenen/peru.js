@@ -517,61 +517,72 @@ const TERR = [];
    9 — DAS WÄCHTERHAUS (Casa del Guardián) unten links, mit Lupe
    ===================================================================== */
 {
-  /* wir stehen auf der Terrasse darüber: man sieht das Strohdach von oben, die Giebelseite rechts im Licht */
-  const X = -14, Y = 256, L = 80, H = 24, TIEF = [15, -15], GI = 26;
-  const A = [X, Y], Bq = [X + L, Y], A2 = [X + TIEF[0], Y + TIEF[1]], B2 = [X + L + TIEF[0], Y + TIEF[1]];
+  /* wir stehen auf der Terrasse darüber und sehen schräg von oben auf die Giebelseite (zu uns) und die lange
+     Seitenwand rechts (Nordost, im Morgenlicht); das Haus ist 8 m lang, 5 m breit, die Wände 2,4 m hoch. */
+  const X = -4, Y = 258, W = 52, H = 25, GI = 28, f = 0.22;
+  const hin = (p) => [p[0] + (VP[0] - p[0]) * f, p[1] + (VP[1] - p[1]) * f];
   const up = (p, v) => [p[0], p[1] - v];
+  const A = [X, Y], Bq = [X + W, Y], A2 = hin(A), B2 = hin(Bq);
+  const G = [X + W / 2, Y - H - GI], G2 = hin(G);
   let k = "";
   /* Schlagschatten nach links auf die Terrasse */
-  k += `<path d="${P([A, [A[0] - 26, A[1] - 3], [A2[0] - 26, A2[1] - 3], A2])}" fill="#2a3a20" opacity=".3"/>`;
-  /* rechte Giebelwand (Nordost, im Morgenlicht) */
-  const gw = [Bq, B2, up(B2, H), [(Bq[0] + B2[0]) / 2, (Bq[1] + B2[1]) / 2 - H - GI], up(Bq, H)];
-  k += `<path d="${P(gw)}" fill="${S.lg("wgiebel", [[0, "#e3d9c4"], [1, "#c8bca4"]], 0, 0, 1, 0)}"/>`;
-  /* Vorderwand (Südost, zu uns) */
-  k += `<path d="${P([A, Bq, up(Bq, H), up(A, H)])}" fill="${S.lg("wfront", [[0, "#c1b7a3"], [1, "#a69c89"]])}"/>`;
-  /* Feldsteine mit Lehmfugen */
+  k += `<path d="${P([A, [A[0] - 20, A[1] - 4], [A2[0] - 20, A2[1] - 4], A2])}" fill="#22361a" opacity=".3"/>`;
+  /* linke Dachfläche (im Schatten), rechte Seitenwand, rechte Dachfläche (im Licht), Giebelwand vorn */
+  const ue = 3.4;
+  const Ae = [A[0] - ue, A[1] - H + ue * 0.6], A2e = [A2[0] - ue, A2[1] - H + ue * 0.6], Be = [Bq[0] + ue, Bq[1] - H + ue * 0.6], B2e = [B2[0] + ue, B2[1] - H + ue * 0.6];
+  k += `<path d="${P([Ae, [G[0] - 1, G[1] - 1.4], [G2[0] - 1, G2[1] - 1.4], A2e])}" fill="${S.lg("dachs", [[0, "#8e6c36"], [1, "#6c5026"]])}"/>`;
+  k += `<path d="${P([Bq, B2, up(B2, H), up(Bq, H)])}" fill="${S.lg("wseite", [[0, "#e9dfca"], [1, "#d2c6ad"]], 0, 0, 1, 0)}"/>`;
+  /* Feldsteine der Seitenwand */
   const zs = zufall(91);
   let st = "";
-  for (let row = 0; row < 7; row++) {
-    const y0 = Y - 2 - row * (H / 7);
-    for (let x = X + 2 + (row % 2) * 2.6; x < X + L - 3; x += 4 + zs() * 3.4) { const w = 3 + zs() * 2.4, h = H / 7 - 0.7; st += `<path d="M${r(x)} ${r(y0)} l${r(0.3)} ${r(-h)} l${r(w)} ${r(-0.3 + zs() * 0.6)} l${r(0.2)} ${r(h)} Z"/>`; }
+  for (let row = 0; row < 6; row++) for (let t = 0.04 + (row % 2) * 0.06; t < 0.94; t += 0.13 + zs() * 0.08) {
+    const p0 = [Bq[0] + (B2[0] - Bq[0]) * t, Bq[1] + (B2[1] - Bq[1]) * t], s0 = 1 - f * t, hh = H * s0 / 6;
+    const dt = 0.1, p1 = [Bq[0] + (B2[0] - Bq[0]) * (t + dt), Bq[1] + (B2[1] - Bq[1]) * (t + dt)];
+    st += `<path d="M${r(p0[0])} ${r(p0[1] - row * hh - 0.4)} L${r(p1[0])} ${r(p1[1] - row * hh - 0.4)} L${r(p1[0])} ${r(p1[1] - (row + 1) * hh + 0.3)} L${r(p0[0])} ${r(p0[1] - (row + 1) * hh + 0.3)} Z"/>`;
   }
-  k += `<g fill="#cfc5b1" stroke="#8a7f6c" stroke-width=".3" opacity=".9">${st}</g>`;
-  st = "";
-  for (let row = 0; row < 7; row++) {
-    const t0 = row / 7;
-    for (let t = 0.08; t < 0.92; t += 0.16 + zs() * 0.1) { const p = [Bq[0] + (B2[0] - Bq[0]) * t, Bq[1] + (B2[1] - Bq[1]) * t - 2 - row * (H / 7)]; st += `<path d="M${r(p[0])} ${r(p[1])} l${r(TIEF[0] * 0.14)} ${r(TIEF[1] * 0.14)} l0 ${r(-H / 7 + 0.7)} l${r(-TIEF[0] * 0.14)} ${r(-TIEF[1] * 0.14)} Z"/>`; }
-  }
-  k += `<g fill="#efe6d2" stroke="#a89c86" stroke-width=".3" opacity=".9">${st}</g>`;
-  /* trapezförmige Tür in der Vorderwand und zwei Nischen */
-  const tuer = (cx, b, h, y0) => `<path d="M${r(cx - b / 2)} ${r(y0)} L${r(cx - b * 0.34)} ${r(y0 - h)} L${r(cx + b * 0.34)} ${r(y0 - h)} L${r(cx + b / 2)} ${r(y0)} Z"/>`;
-  k += `<g fill="#2d2721">${tuer(X + 48, 9, 19, Y)}${tuer(X + 22, 5, 7, Y - 9)}${tuer(X + 64, 5, 7, Y - 9)}</g>`;
-  k += `<path d="M${r(X + 48 - 3.2)} ${r(Y - 19.4)} h6.4 v1.6 h-6.4 Z" fill="#b3a68e"/>`;
-  /* Fenster im Giebel (trapezförmig) und Steinringe zum Festbinden des Dachs */
-  const gm = [(Bq[0] + B2[0]) / 2, (Bq[1] + B2[1]) / 2];
-  k += `<path d="M${r(gm[0] - 3)} ${r(gm[1] - H - 4)} L${r(gm[0] - 2.2)} ${r(gm[1] - H - 11)} L${r(gm[0] + 1.4)} ${r(gm[1] - H - 12.6)} L${r(gm[0] + 2)} ${r(gm[1] - H - 5.6)} Z" fill="#3a332b"/>`;
-  /* Strohdach: First von der Giebelspitze nach links; vordere Dachfläche (Südost) zu uns, oben im Licht */
-  const F1 = [gm[0], gm[1] - H - GI], F0 = [F1[0] - L, F1[1]];
-  const ue = 3.2;
-  const dachV = [[A[0] - ue, A[1] - H + ue], [Bq[0] + ue * 0.6, Bq[1] - H + ue], F1, F0];
-  k += `<path d="${P(dachV)}" fill="${S.lg("dachv", [[0, "#e4c27e"], [0.5, "#c9a463"], [1, "#9d7a40"]])}"/>`;
-  k += `<path d="${P(dachV)}" fill="${STROH}" opacity=".55"/>`;
-  /* Halme an der Traufe, Bindeschnüre */
+  k += `<g fill="#f4ecdb" stroke="#a89c86" stroke-width=".3" opacity=".85">${st}</g>`;
+  k += `<path d="${P([Be, [G[0] + 0.6, G[1] - 1.6], [G2[0] + 0.6, G2[1] - 1.6], B2e])}" fill="${S.lg("dachl", [[0, "#e9c985"], [0.55, "#cfa865"], [1, "#a8823f"]], 0, 0, 1, 0.3)}"/>`;
+  k += `<path d="${P([Be, [G[0] + 0.6, G[1] - 1.6], [G2[0] + 0.6, G2[1] - 1.6], B2e])}" fill="${STROH}" opacity=".5"/>`;
+  /* Bindeschnüre quer über die Dachfläche und Halme an der Traufe */
+  for (let i = 1; i < 6; i++) { const t = i / 6; k += `<path d="M${r(G[0] + (G2[0] - G[0]) * t + 0.6)} ${r(G[1] + (G2[1] - G[1]) * t - 1.6)} L${r(Be[0] + (B2e[0] - Be[0]) * t)} ${r(Be[1] + (B2e[1] - Be[1]) * t)}" stroke="#7d6232" stroke-width=".4" opacity=".6"/>`; }
   let halme = "";
-  for (let x = A[0] - ue + 1; x < Bq[0]; x += 1.1) halme += `M${r(x)} ${r(A[1] - H + ue - 0.3)} l${r(0.2)} ${r(1.6 + (x * 7 % 3) * 0.3)}`;
+  for (let t = 0; t <= 1.001; t += 0.035) { const p0 = [Be[0] + (B2e[0] - Be[0]) * t, Be[1] + (B2e[1] - Be[1]) * t]; halme += `M${r(p0[0])} ${r(p0[1] - 0.4)} l${r(0.6)} ${r(2 - t)}`; }
   k += `<path d="${halme}" stroke="#8a6a34" stroke-width=".45"/>`;
-  for (let i = 1; i < 6; i++) { const t = i / 6; k += `<path d="M${r(F0[0] + (F1[0] - F0[0]) * t)} ${r(F1[1])} L${r(A[0] - ue + (Bq[0] - A[0] + ue * 1.6) * t)} ${r(A[1] - H + ue)}" stroke="#7d6232" stroke-width=".35" opacity=".55"/>`; }
-  k += `<path d="M${r(F0[0])} ${r(F0[1])} L${r(F1[0])} ${r(F1[1])}" stroke="#6e5428" stroke-width="1.6" stroke-linecap="round"/><path d="M${r(F0[0])} ${r(F0[1] - 0.5)} L${r(F1[0])} ${r(F1[1] - 0.5)}" stroke="#f0d79c" stroke-width=".5"/>`;
-  /* Dachüberstand an der Giebelseite */
-  k += `<path d="M${r(F1[0])} ${r(F1[1])} L${r(Bq[0] + ue * 0.6)} ${r(Bq[1] - H + ue)} L${r(Bq[0] + ue * 0.6 + 1.6)} ${r(Bq[1] - H + ue - 0.4)} L${r(F1[0] + 1.4)} ${r(F1[1] - 0.3)} Z" fill="#7a5c2e"/>`;
+  /* Giebelwand (Südost, zu uns): grobe Feldsteine mit Lehm, streifendes Morgenlicht */
+  const giebel = [A, Bq, up(Bq, H), G, up(A, H)];
+  k += `<path d="${P(giebel)}" fill="${S.lg("wfront", [[0, "#cbc1ad"], [1, "#ada38f"]])}"/>`;
+  st = "";
+  for (let row = 0; row < 10; row++) {
+    const y0 = Y - 1 - row * 5.1, hh = 4.2;
+    const breite = (yy) => yy > Y - H ? W : W * (1 - (Y - H - yy) / GI);
+    for (let x = X + 1 + (row % 2) * 2.5; x < X + W - 2; x += 5 + zs() * 3) {
+      const yy = y0 - hh, bw = breite(yy), x0 = X + (W - bw) / 2, x1 = x0 + bw;
+      if (x < x0 + 0.6 || x + 4 > x1 - 0.6) continue;
+      const w = Math.min(3.6 + zs() * 2.6, x1 - 0.6 - x);
+      st += `<path d="M${r(x + 0.3)} ${r(y0)} Q${r(x)} ${r(y0 - hh / 2)} ${r(x + 0.4)} ${r(y0 - hh)} L${r(x + w - 0.3)} ${r(y0 - hh + (zs() - 0.5) * 0.6)} Q${r(x + w + 0.2)} ${r(y0 - hh / 2)} ${r(x + w)} ${r(y0)} Z"/>`;
+    }
+  }
+  k += `<g fill="#d4cab6" stroke="#8a7f6c" stroke-width=".35" opacity=".9">${st}</g>`;
+  /* Lichtkante rechts innen, Mauerkrone */
+  k += `<path d="M${r(Bq[0] - 0.4)} ${r(Bq[1])} L${r(Bq[0] - 0.4)} ${r(Bq[1] - H)}" stroke="#f3ead6" stroke-width=".8"/>`;
+  /* trapezförmige Tür und Fenster im Giebel */
+  const trapez = (cx, b, h, y0) => `M${r(cx - b / 2)} ${r(y0)} L${r(cx - b * 0.33)} ${r(y0 - h)} L${r(cx + b * 0.33)} ${r(y0 - h)} L${r(cx + b / 2)} ${r(y0)} Z`;
+  k += `<path d="${trapez(X + W / 2, 13, 20, Y)}" fill="#2a241e"/><path d="${trapez(X + W / 2, 13, 20, Y)}" fill="none" stroke="#efe5cf" stroke-width=".6" opacity=".7"/>`;
+  k += `<path d="M${r(X + W / 2 - 4.6)} ${r(Y - 20.4)} h9.2 v1.8 h-9.2 Z" fill="#b5a88f"/>`;
+  k += `<path d="${trapez(X + W / 2, 5.4, 6.6, Y - H - 7)}" fill="#2a241e"/>`;
+  /* Steinringe (Dachbinder) an der Giebelkante */
+  for (const t of [0.3, 0.62]) for (const sd of [-1, 1]) { const px = G[0] + sd * (W / 2) * t, py = G[1] + GI * t; k += `<ellipse cx="${r(px + sd * 1.2)}" cy="${r(py)}" rx="1.1" ry=".8" fill="#9a8f7b" stroke="#6e6556" stroke-width=".3"/>`; }
+  /* Dachkante vorn (Halme stehen über) */
+  k += `<path d="M${r(Ae[0])} ${r(Ae[1])} L${r(G[0])} ${r(G[1] - 2)} L${r(Be[0])} ${r(Be[1])}" stroke="#9d7b40" stroke-width="2" fill="none" stroke-linejoin="round"/>`;
+  k += `<path d="M${r(Ae[0])} ${r(Ae[1] - 0.8)} L${r(G[0])} ${r(G[1] - 2.8)} L${r(Be[0])} ${r(Be[1] - 0.8)}" stroke="#ecd39a" stroke-width=".55" fill="none"/>`;
   const unter = [
-    { id: "strohdach", de: "das Strohdach", syl: "STROH-dach", it: "il tetto di paglia", itSyl: "TET-to di PA-glia", en: "thatched roof", x: X + 34, y: Y - H - 14, kunst: `<path d="M-38 17 L46 17 L44 -14 L-34 -14 Z" class="bw-flaeche" fill="rgba(255,255,255,0.001)"/>`,
+    { id: "strohdach", de: "das Strohdach", syl: "STROH-dach", it: "il tetto di paglia", itSyl: "TET-to di PA-glia", en: "thatched roof", x: G[0] + 14, y: G[1] + 14, kunst: `<path d="${P([[Be[0] - G[0] - 14, Be[1] - G[1] - 14], [-14, -16], [G2[0] - G[0] - 14, G2[1] - G[1] - 16], [B2e[0] - G[0] - 14, B2e[1] - G[1] - 14]])}" class="bw-flaeche" fill="rgba(255,255,255,0.001)"/>`,
       tipp: "Das Dach ist aus Ichu, einem harten Gras der Anden. Es wird mit Seilen an Steinringen festgebunden." },
-    { id: "tuer", de: "die Tür", syl: "TÜR", it: "la porta", itSyl: "POR-ta", en: "door", x: X + 48, y: Y - 9, kunst: flaeche(-5, -10, 10, 10),
+    { id: "tuer", de: "die Tür", syl: "TÜR", it: "la porta", itSyl: "POR-ta", en: "door", x: X + W / 2, y: Y - 10, kunst: flaeche(-7, -11, 14, 21),
       tipp: "Inka-Türen sind unten breiter als oben. So halten sie auch bei einem Erdbeben." },
   ];
-  S.teil({ id: "waechterhaus", de: "das Wächterhaus", syl: "WÄCH-ter-haus", it: "la casa del guardiano", itSyl: "CA-sa del guar-DIA-no", en: "guardhouse", x: X + 40, y: Y - 20, kunst: um(X + 40, Y - 20, k),
-    zoom: { x: -4, y: 182, w: 105, h: 70 }, unter,
+  S.teil({ id: "waechterhaus", de: "das Wächterhaus", syl: "WÄCH-ter-haus", it: "la casa del guardiano", itSyl: "CA-sa del guar-DIA-no", en: "guardhouse", x: X + W / 2, y: Y - 26, kunst: um(X + W / 2, Y - 26, k),
+    zoom: { x: -2, y: 176, w: 96, h: 64 }, unter,
     tipp: "Von hier oben bewachten die Inka die Wege in die Stadt. Hier entsteht das berühmte Foto von Machu Picchu." });
 }
 
