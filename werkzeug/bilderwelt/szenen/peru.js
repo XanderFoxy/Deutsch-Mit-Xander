@@ -146,6 +146,7 @@ const volumen = (name, licht, schat, dx = 0.35, a1 = 0.75, a2 = 0.35) => {
 const VOL_FIGUR = volumen("volfigur", "#fff1cf", "#1d2a3a", 0.45, 0.7, 0.3);
 const VOL_STEIN = volumen("volstein", "#fff4dc", "#2e2a24", 0.3, 0.8, 0.3);
 const VOL_KLEIN = volumen("volklein", "#fff3d6", "#203040", 0.18, 0.75, 0.3);
+const VOL_BERG = volumen("volberg", "#f6eab8", "#10241c", 0.9, 0.55, 0.25);
 /* Waldkronen als unregelmäßige Kachel: jede Krone mit Lichtseite rechts oben und Schatten links unten */
 const kronen = (w, h, n, seed, rmin, rmax) => {
   const z = zufall(seed); let a = "", b = "";
@@ -249,15 +250,13 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
   }
   k += `<g filter="url(#${S.id("weich")})">${rel}</g>`;
   /* Dunst am Fuß der Kette (Tiefe der Schlucht) */
-  k += `<path d="${westD}" fill="${S.lg("westdunst", [[0, "#dfe9ef", 0.0], [0.35, "#dfe9ef", 0.12], [0.6, "#e6eef1", 0.75], [1, "#eef3f4", 0.95]])}"/>`;
-  k += `<path d="M${KAMM_B.slice(0, 9).map(([x, y]) => r(x) + " " + r(y + 0.4)).join(" L")}" stroke="#cfe0d4" stroke-width=".8" fill="none" opacity=".6"/>`;
+  k += `<path d="${westD}" fill="${S.lg("westdunst", [[0, "#dfe9ef", 0.0], [0.35, "#dfe9ef", 0.1], [0.62, "#e6eef1", 0.45], [1, "#eef3f4", 0.55]])}"/>`;
 
   /* Putucusi: Gegenlicht — dunkel, oben eine helle Kante, Felswände mit senkrechten Rissen */
   const putD = glatt([...PUTU, [402, 205], [300, 205], [284, 180]], true, 0.9);
   k += `<path d="${putD}" fill="${S.lg("putucusi", [[0, "#3c5e4f"], [0.6, "#355647"], [1, "#5c7d71"]])}"/>`;
   k += `<path d="${putD}" fill="${WALD}"/>`;
   for (const [x, y, w, h, sd] of [[326, 100, 11, 30, 31], [350, 88, 10, 28, 32], [376, 102, 9, 22, 35]]) k += `<g opacity=".7">${fels(x, y, w, h, sd, "#76817b", "#4f5b55", "#3d5e4f")}</g>`;
-  k += `<path d="${glatt(PUTU.slice(1), false)}" stroke="#f3e2b4" stroke-width=".9" fill="none" opacity=".75"/>`;
   k += `<path d="${putD}" fill="${S.lg("putudunst", [[0, "#dfe9ef", 0], [0.55, "#dfe9ef", 0.1], [1, "#dfe9ef", 0.6]])}"/>`;
   /* naher Osthang auf unserer Seite (rechts unten): bewaldet, im Morgenlicht */
   const OST = [[314, 262], [318, 214], [326, 194], [342, 184], [362, 178], [384, 174], [402, 172], [402, 262]];
@@ -273,9 +272,10 @@ const PUTU = [[278, 150], [290, 126], [300, 110], [312, 98], [326, 88], [342, 82
    ===================================================================== */
 {
   /* der tiefe Einschnitt: kühler, dunkler Grund, darin waagrechte Dunstbänder */
-  let k = `<path d="M0 146 Q40 148 70 158 Q96 172 108 196 L112 226 L0 226 Z" fill="${S.lg("schlucht", [[0, "#2e4c42", 0.1], [0.3, "#24403a", 0.75], [1, "#1f3a33", 0.9]])}"/>`;
+  let k = `<path d="M0 146 Q40 148 70 158 Q96 172 108 196 L112 226 L0 226 Z" fill="${S.lg("schlucht", [[0, "#2e4c42", 0.1], [0.3, "#2a4a3e", 0.7], [1, "#24443a", 0.85]])}"/>`;
+  k += `<path d="M0 146 Q40 148 70 158 Q96 172 108 196 L112 226 L0 226 Z" fill="${WALD}" opacity=".7"/>`;
   k += `<g filter="url(#${S.id("dunst")})">`;
-  for (const [x, y, w, a] of [[4, 160, 54, 0.7], [36, 176, 64, 0.8], [6, 194, 74, 0.85], [44, 212, 60, 0.9]]) k += `<path d="M${x} ${y} q${r(w * 0.25)} -3 ${r(w * 0.5)} -1.6 q${r(w * 0.3)} -2.4 ${r(w * 0.5)} 1.2 q${r(-w * 0.5)} 4 ${r(-w)} .4 Z" fill="#eef3f4" opacity="${a}"/>`;
+  for (const [x, y, w, a] of [[4, 162, 50, 0.6], [40, 182, 60, 0.7], [8, 206, 70, 0.75]]) k += `<path d="M${x} ${y} q${r(w * 0.25)} -3 ${r(w * 0.5)} -1.6 q${r(w * 0.3)} -2.4 ${r(w * 0.5)} 1.2 q${r(-w * 0.5)} 4 ${r(-w)} .4 Z" fill="#eef3f4" opacity="${a}"/>`;
   k += `</g>`;
   S.teil({ id: "schlucht", de: "die Schlucht", syl: "SCHLUCHT", it: "la gola", itSyl: "GO-la", en: "gorge", x: 50, y: 180, kunst: um(50, 180, kappeRand(k)),
     tipp: "Tief unten in der Schlucht fließt der Urubamba, rund 450 Meter unter der Stadt. Die Inka nannten ihn den heiligen Fluss." });
@@ -299,14 +299,13 @@ const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181,
   k += `<path d="M210.4 31.2 l2 -1.2 l1.6 .9 v1.4 h-3.6 Z M216.2 31.6 l1.4 -.9 l1.3 .7 v1.1 h-2.7 Z" fill="#a39a88"/>`;
   /* Rinnen in der Westflanke, Lichtkante an der Ostflanke */
   for (const [x0, y0, x1, y1] of [[198, 52, 180, 112], [207, 44, 194, 116]]) k += `<path d="M${x0} ${y0} Q${r((x0 + x1) / 2 + 2)} ${r((y0 + y1) / 2)} ${x1} ${y1} L${x1 - 4} ${y1} Q${r((x0 + x1) / 2 - 1)} ${r((y0 + y1) / 2)} ${x0} ${y0} Z" fill="#1c342c" opacity=".22"/>`;
-  k += `<path d="${glatt(HUAYNA.slice(12, 24), false)}" stroke="#f7e6b2" stroke-width="1" fill="none" opacity=".75" transform="translate(-.4 .6)"/>`;
   /* Huchuy Picchu: kleiner runder Hügel vor dem linken Fuß */
   const hu = glatt([[156, 160], [160, 146], [168, 137], [178, 132], [188, 133], [196, 138], [202, 147], [205, 160]], true, 0.9);
   k += `<path d="${hu}" fill="${S.lg("huchuy", [[0, "#3e6a40"], [1, "#6d9a4c"]], 0, 0, 1, 0)}"/><path d="${hu}" fill="${WALDF}"/>`;
   k += `<path d="M184 132.4 Q194 133.6 200 141 Q203 150 205 160 L196 160 Q194 146 184 132.4 Z" fill="#b8d27a" opacity=".35"/>`;
   /* Morgendunst über dem Fuß */
   k += `<path d="${d}" fill="${S.lg("huaynadunst", [[0, "#e3ecf0", 0], [0.6, "#e3ecf0", 0.05], [1, "#e3ecf0", 0.55]])}"/>`;
-  S.teil({ id: "huayna_picchu", de: "der Huayna Picchu", syl: "HUAY-na PIC-chu", it: "lo Huayna Picchu", itSyl: "HUAY-na PIC-chu", en: "Huayna Picchu", x: 214, y: 60, kunst: um(214, 60, k),
+  S.teil({ id: "huayna_picchu", de: "der Huayna Picchu", syl: "HUAY-na PIC-chu", it: "lo Huayna Picchu", itSyl: "HUAY-na PIC-chu", en: "Huayna Picchu", x: 214, y: 60, kunst: um(214, 60, `<g filter="${VOL_BERG}">${k}</g>`),
     tipp: "Huayna Picchu heißt „junger Berg“. Ganz oben bauten die Inka Terrassen und kleine Tempel – der Weg hinauf ist sehr steil." });
 }
 
@@ -321,7 +320,6 @@ const HUAYNA = [[150, 138], [156, 128], [163, 117], [170, 105], [176, 93], [181,
   k += fetzen(270, 146, 34, 7, 0.8) + fetzen(296, 156, 54, 9, 0.9) + fetzen(340, 162, 62, 8, 0.85);
   k += `</g>`;
   /* helle Oberkanten (Sonne von rechts oben) */
-  k += `<path d="M54 125.5 q8 -4 16 -2.4 M108 121.6 q7 -3 13 -1 M310 149 q9 -3.5 18 -1.6 M356 156 q10 -3 20 -1" stroke="#fff" stroke-width=".9" fill="none" opacity=".75" stroke-linecap="round"/>`;
   S.teil({ id: "nebel", de: "der Nebel", syl: "NE-bel", it: "la nebbia", itSyl: "NEB-bia", en: "mist", x: 80, y: 128, kunst: um(80, 128, k),
     tipp: "Morgens steigt der Nebel aus der feuchten Schlucht. Gegen Mittag ist er meist verschwunden." });
 }
@@ -507,7 +505,7 @@ const STADT = {};
     tipp: "Der Sonnentempel ist halbrund. Seine Steine passen so genau, dass kein Messer dazwischenpasst – ganz ohne Mörtel." });
   unter.push({ id: "hauptplatz", de: "der Hauptplatz", syl: "HAUPT-platz", it: "la piazza principale", itSyl: "PIAZ-za prin-ci-PA-le", en: "main square",
     x: 214, y: 172, kunst: `<path d="M-25 20 L26 22 L14 -19 L-8 -19 Z" class="bw-flaeche" fill="rgba(255,255,255,0.001)"/>`,
-    tipp: "Der große, grüne Platz teilt die Stadt in zwei Hälften: oben die Tempel, unten die Wohnhäuser." });
+    tipp: "Der große, grüne Platz teilt die Stadt in zwei Hälften: links die Tempel, rechts die Wohnhäuser." });
   unter.push({ id: "sonnenstein", de: "der Sonnenstein", syl: "SON-nen-stein", it: "l'Intihuatana", itSyl: "in-ti-hua-TA-na", en: "Intihuatana stone",
     x: 160, y: 140, kunst: flaeche(-4, -4, 8, 6),
     tipp: "Oben auf dem Hügel steht der Intihuatana, der „Ort, an dem die Sonne angebunden wird“." });
@@ -678,7 +676,7 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
   const x2 = 202, y2 = profilY(t.vorn, 202) - 4.5;
   const k2 = `<g filter="${VOL_FIGUR}">${lama(18, -1, S.lg("fohlenfell", [[0, "#c39668"], [1, "#94693f"]], 0, 0, 1, 0), "#f2ebdc", 6, true)}</g>`;
   S.teil({ id: "fohlen", de: "das Fohlen", syl: "FOH-len", it: "il piccolo di lama", itSyl: "PIC-co-lo di LA-ma", en: "baby llama", x: x2, y: y2, steht: true, kunst: k2,
-    tipp: "Ein junges Lama heißt Fohlen. Es bleibt fast ein Jahr bei seiner Mutter." });
+    tipp: "Ein junges Lama heißt Fohlen. Es trinkt etwa sechs Monate lang Milch bei seiner Mutter." });
 }
 
 /* =====================================================================
@@ -787,7 +785,7 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
   const unter = [
     { id: "muetze", de: "die Mütze", syl: "MÜT-ze", it: "il berretto", itSyl: "ber-RET-to", en: "hat", x: STADT.muetze.x, y: STADT.muetze.y, kunst: flaeche(-3, -3.5, 6, 7),
       tipp: "Die Mütze aus den Anden heißt Chullo. Sie hat Ohrenklappen und hält in der Höhe schön warm." },
-    { id: "poncho", de: "der Poncho", syl: "PON-cho", it: "il poncho", itSyl: "PON-cio", en: "poncho", x: STADT.poncho.x, y: STADT.poncho.y, kunst: flaeche(-7, -8, 14, 16),
+    { id: "poncho", de: "der Poncho", syl: "PON-cho", it: "il poncho", itSyl: "PON-cho", en: "poncho", x: STADT.poncho.x, y: STADT.poncho.y, kunst: flaeche(-7, -8, 14, 16),
       tipp: "Der Poncho ist ein großes Tuch mit einem Loch für den Kopf. Er ist oft aus warmer Alpakawolle." },
     { id: "panfloete", de: "die Panflöte", syl: "PAN-flö-te", it: "il flauto di Pan", itSyl: "FLAU-to di PAN", en: "pan flute", x: STADT.floete.x, y: STADT.floete.y, kunst: flaeche(-3.2, -3, 6.4, 6),
       tipp: "Die Panflöte heißt in den Anden Siku. Jedes Rohr hat einen anderen Ton." },

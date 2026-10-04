@@ -805,5 +805,61 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
 S.davor(`<rect width="400" height="260" fill="${S.lg("abendlicht", [[0, "#ffcf8a", 0.16], [0.55, "#ffcf8a", 0.04], [1, "#6a6aa8", 0.08]], 0, 0, 1, 0)}" pointer-events="none"/>`);
 S.davor(`<rect width="400" height="260" fill="${S.rg("abend", [[0, "#ffe7b8", 0.12], [0.6, "#ffe7b8", 0], [1, "#000", 0.05]], 0.0, 0.85, 1.1)}" pointer-events="none"/>`);
 
+/* Pfade relativ schreiben, ohne Drift gerundet — Genauigkeit nach Größe des Pfads
+   (große Bildpfade 0,1; kleine, in Metern gezeichnete Formen 0,01 bzw. 0,001) */
+const relativ = (d) => {
+  if (/[AaSsTt]/.test(d)) return d;
+  const tok = d.match(/[MLHVCQZmlhvcqz]|-?\d*\.?\d+(?:e-?\d+)?/g);
+  if (!tok) return d;
+  const N = { M: 2, L: 2, H: 1, V: 1, C: 6, Q: 4, Z: 0 };
+  /* erst absolut auflösen, um die Größe zu kennen */
+  const segs = [];
+  let i = 0, cx = 0, cy = 0, sx = 0, sy = 0, cmd = null;
+  while (i < tok.length) {
+    const t = tok[i];
+    if (/[A-Za-z]/.test(t)) { cmd = t; i++; if (/[Zz]/.test(cmd)) { segs.push(["z"]); cx = sx; cy = sy; continue; } }
+    if (!cmd) return d;
+    const C = cmd.toUpperCase(), rel = cmd !== C, n = N[C];
+    const a = tok.slice(i, i + n).map(Number); i += n;
+    if (a.length < n || a.some(isNaN)) return d;
+    if (C === "H") { cx = rel ? cx + a[0] : a[0]; segs.push(["h", cx]); continue; }
+    if (C === "V") { cy = rel ? cy + a[0] : a[0]; segs.push(["v", cy]); continue; }
+    const abs = [];
+    for (let k = 0; k < n; k += 2) abs.push(rel ? cx + a[k] : a[k], rel ? cy + a[k + 1] : a[k + 1]);
+    segs.push([C === "M" ? "m" : C.toLowerCase(), ...abs]);
+    cx = abs[n - 2]; cy = abs[n - 1];
+    if (C === "M") { sx = cx; sy = cy; cmd = rel ? "l" : "L"; }
+  }
+  let xs = [], ys = [];
+  for (const s of segs) { if (s[0] === "h") xs.push(s[1]); else if (s[0] === "v") ys.push(s[1]); else for (let k = 1; k < s.length; k += 2) { xs.push(s[k]); ys.push(s[k + 1]); } }
+  if (!xs.length) xs = [0]; if (!ys.length) ys = [0];
+  const ext = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+  const dez = ext >= 60 ? 1 : ext >= 6 ? 2 : 3, p = Math.pow(10, dez);
+  const R = (v) => Math.round(v * p) / p;
+  const zahl = (v) => { let s = (Math.round(v * p) / p).toFixed(dez).replace(/\.?0+$/, ""); if (s === "-0" || s === "") s = "0"; return s.replace(/^(-?)0\./, "$1."); };
+  let out = "", last = "", rx = 0, ry = 0, rsx = 0, rsy = 0;
+  const put = (c, nums) => {
+    let s = "";
+    nums.forEach((n, k) => { const t = zahl(n); if (k === 0 && c === last) s += (t.startsWith("-") ? "" : " ") + t; else if (k === 0) s += c + t; else s += (t.startsWith("-") ? "" : " ") + t; });
+    out += s; last = c === "m" ? "l" : c;
+  };
+  for (const s of segs) {
+    if (s[0] === "z") { out += "z"; last = "z"; rx = rsx; ry = rsy; continue; }
+    if (s[0] === "h") { const X = R(s[1]); put("h", [X - rx]); rx = X; continue; }
+    if (s[0] === "v") { const Y = R(s[1]); put("v", [Y - ry]); ry = Y; continue; }
+    const absR = s.slice(1).map(R);
+    put(s[0], absR.map((v, k) => v - (k % 2 ? ry : rx)));
+    rx = absR[absR.length - 2]; ry = absR[absR.length - 1];
+    if (s[0] === "m") { rsx = rx; rsy = ry; }
+  }
+  return out;
+};
+const relativAlles = (svg) => svg.replace(/ d="([^"]+)"/g, (m, d) => ` d="${relativ(d)}"`);
+/* vor dem Schreiben alle Zeichnungen einer Szene umformen */
+const szeneRelativ = (S) => {
+  S.defs = S.defs.map(relativAlles); S.kulisse = S.kulisse.map(relativAlles); S.vorne = S.vorne.map(relativAlles);
+  for (const t of S.teile) { t.kunst = relativAlles(t.kunst); if (t.unter) for (const u of t.unter) u.kunst = relativAlles(u.kunst); }
+};
+szeneRelativ(S);
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/potsdam.js"));
 console.log(aus);

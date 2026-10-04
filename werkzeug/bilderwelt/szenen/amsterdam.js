@@ -55,7 +55,7 @@
    1,3 m, Kaimauer bei ±8 m, Fassaden bei ±14,5 m. Punkt X quer, D
    Abstand, h Höhe: x = 200 + 480·X/D, y = 112 − (h − 4,25)·480/D.
    Erste Brücke 102 m (4,7 Einheiten je Meter), Laden 37–45 m, Menschen
-   am Kai 31–40 m, Geländer 3 m vor uns.
+   am Kai 31–44 m, Geländer 2,4 m vor uns, Fahrrad 2–2,5 m.
    ===================================================================== */
 "use strict";
 const path = require("path");
@@ -152,7 +152,8 @@ function schlank(svg, stufe = 1) {
   if (stufe >= 2) {
     const farbe = {};
     svg.replace(/<(linearGradient|radialGradient) id="([^"]+)"[^>]*>(.*?)<\/\1>/g, (_, t, id, inn) => { const st = [...inn.matchAll(/stop-color="([^"]+)"/g)].map((m) => m[1]); farbe[id] = st[Math.floor(st.length / 2)] || "#888"; return ""; });
-    svg = svg.replace(/<defs>.*?<\/defs>/g, "").replace(/ clip-path="url\(#[^)]+\)"/g, "").replace(/url\(#([^)]+)\)/g, (_, id) => farbe[id] || "#888");
+    /* Verläufe durch ihre mittlere Farbe ersetzen; Clip-Pfade bleiben (sonst laufen Schattierungen im Gesicht über) */
+    svg = svg.replace(/<(linearGradient|radialGradient) id="[^"]+"[^>]*>.*?<\/\1>/g, "").replace(/<defs><\/defs>/g, "").replace(/url\(#([^)]+)\)/g, (m, id) => farbe[id] || m);
   }
   return svg.split(/(transform="[^"]*"|offset="[^"]*"|opacity="[^"]*")/).map((t, i) => i % 2 ? t : t.replace(/(-?\d+\.\d+)/g, (m) => String(Math.round(parseFloat(m))))).join("");
 }

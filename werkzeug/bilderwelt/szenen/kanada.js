@@ -362,17 +362,17 @@ const HU = {};
   k += `<path d="M${r(tx - 5)} ${r(ty + 0.4)} h10 l-.6 -1 h-8.8 Z" fill="#b9b2a4"/><path d="M${r(tx - 5)} ${r(ty - 0.8)} h10" stroke="#3a3a3a" stroke-width=".18"/>`;
   for (let i = 0; i < 6; i++) k += `<path d="M${r(tx - 4 + i * 1.5)} ${r(ty - 0.1)} v-1.3" stroke="${["#2f5f95", "#c0392b", "#f2f2f0", "#e0a020", "#3a3a3a", "#7a3a8a"][i]}" stroke-width=".5"/><circle cx="${r(tx - 4 + i * 1.5)}" cy="${r(ty - 1.6)}" r=".28" fill="#d9a77c"/>`;
   HU.terrapin = [tx, ty - 1];
-  const ap = W(330, -200, 0);
-  HU.kante = [ap[0], ap[1] + 1.4];
+  const ap = W(480, -108, 0);
+  HU.kante = [ap[0], ap[1] + 1.2];
   const unter = [
-    { id: "kante", de: "die Kante", syl: "KAN-te", it: "il bordo", itSyl: "BOR-do", en: "brink", x: HU.kante[0], y: HU.kante[1], kunst: flaeche(-14, -2.4, 28, 4.8),
-      tipp: "In der Mitte ist das Wasser an der Kante etwa zwei Meter tief – deshalb sieht es dort grün aus." },
+    { id: "kante", de: "die Kante", syl: "KAN-te", it: "il bordo", itSyl: "BOR-do", en: "brink", x: HU.kante[0], y: HU.kante[1], kunst: flaeche(-10, -2.2, 20, 4.4),
+      tipp: "In der Mitte des Hufeisens ist das Wasser an der Kante besonders tief – deshalb leuchtet es dort grün." },
     { id: "aussichtspunkt", de: "der Aussichtspunkt", syl: "AUS-sichts-punkt", it: "il belvedere", itSyl: "bel-ve-DE-re", en: "viewpoint", x: HU.terrapin[0], y: HU.terrapin[1], kunst: flaeche(-6, -3, 12, 5),
       tipp: "Gegenüber liegt Terrapin Point in den USA. Von dort sehen die Besucher die Fälle von der anderen Seite." },
   ];
   S.teil({ id: "hufeisenfaelle", de: "die Hufeisenfälle", syl: "HUF-ei-sen-fäl-le", it: "le Cascate a Ferro di Cavallo", itSyl: "ca-SCA-te a FER-ro di ca-VAL-lo", en: "Horseshoe Falls", x: 300, y: 130, kunst: um(300, 130, kappeRand(k)),
-    zoom: { x: 190, y: 98, w: 120, h: 80 }, unter,
-    tipp: "Die Hufeisenfälle sind 51 Meter hoch. In jeder Sekunde stürzen hier bis zu 2800 Kubikmeter Wasser hinab." });
+    zoom: { x: 168, y: 96, w: 96, h: 64 }, unter,
+    tipp: "Die Hufeisenfälle sind 51 Meter hoch. In jeder Sekunde stürzen hier mehr als 2000 Kubikmeter Wasser hinab." });
 }
 
 /* =====================================================================
@@ -391,7 +391,7 @@ const GISCHT = [];
   k += `<g filter="url(#${S.id("dunst")})"><g fill="#fffaf2" opacity=".75">${c(7, -4.5, 0.38, 2)}</g></g>`;
   /* untere, dichte Gischt über dem Becken (verdeckt den Fuß der Fälle) */
   k += `<g filter="url(#${S.id("weich")})"><path d="M236 150 Q270 138 310 142 Q350 136 402 140 L402 158 Q350 164 300 160 Q262 162 236 158 Z" fill="#f4f6f6" opacity=".95"/></g>`;
-  S.teil({ id: "gischt", de: "die Gischt", syl: "GISCHT", it: "la nebulizzazione", itSyl: "ne-bu-liz-za-ZIO-ne", en: "spray", x: 320, y: 90, kunst: um(320, 90, kappeRand(k)),
+  S.teil({ id: "gischt", de: "die Gischt", syl: "GISCHT", it: "gli spruzzi", itSyl: "SPRUZ-zi", en: "spray", x: 320, y: 90, kunst: um(320, 90, kappeRand(k)),
     tipp: "Die Gischt steigt oft über 100 Meter hoch. Man sieht sie schon von Weitem – und man wird nass!" });
 }
 
@@ -691,7 +691,7 @@ S.def(`<linearGradient id="${S.id("kschatten")}" x1="0" y1="1" x2="0" y2="0"><st
     k += `<ellipse cx="${x - 1}" cy="${y + 2.6}" rx="${r(s0 * 0.8)}" ry="${r(s0 * 0.16)}" fill="#5a3c22" opacity=".25"/>`;
   }
   S.teil({ oben: true, id: "ahornblatt", de: "das Ahornblatt", syl: "A-horn-blatt", it: "la foglia d'acero", itSyl: "FO-glia d'A-ce-ro", en: "maple leaf", x: 216, y: 210, kunst: um(216, 210, `<g filter="${VOL_KLEIN}">${k}</g>`),
-    tipp: "Das Ahornblatt ist das Zeichen Kanadas. Es ist auf der Flagge und auf vielen Münzen." });
+    tipp: "Das Ahornblatt ist das Zeichen Kanadas. Man sieht es auf der Flagge und auf vielen Andenken." });
 }
 
 /* Abendlicht: warmer Schein von hinten rechts, fängt keinen Tipp ab */

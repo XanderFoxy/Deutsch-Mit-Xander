@@ -68,7 +68,7 @@ S.def(`<filter color-interpolation-filters="sRGB" id="bw_weich" x="-50%" y="-50%
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("weich")}" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation=".3"/></filter>`);
 S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("schw")}" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation=".6"/></filter>`);
 /* Streiflicht von rechts (Sonne im Südwesten): Lichtkante INNEN an der rechten Kontur, Eigenschatten links */
-S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("licht")}" x="-5%" y="-5%" width="110%" height="110%"><feOffset in="SourceAlpha" dx="-.3" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="rk"/><feFlood flood-color="#ffd9a0" flood-opacity=".75"/><feComposite in2="rk" operator="in" result="kante"/><feOffset in="SourceAlpha" dx=".9" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="lk"/><feGaussianBlur in="lk" stdDeviation=".35" result="lk2"/><feFlood flood-color="#1f1a24" flood-opacity=".38"/><feComposite in2="lk2" operator="in" result="eigen"/><feComposite in="eigen" in2="SourceAlpha" operator="in" result="eigen2"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="eigen2"/><feMergeNode in="kante"/></feMerge></filter>`);
+S.def(`<filter color-interpolation-filters="sRGB" id="${S.id("licht")}" x="-5%" y="-5%" width="110%" height="110%"><feOffset in="SourceAlpha" dx="-.15" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="rk"/><feFlood flood-color="#ffd9a0" flood-opacity=".75"/><feComposite in2="rk" operator="in" result="kante"/><feOffset in="SourceAlpha" dx=".5" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="lk"/><feGaussianBlur in="lk" stdDeviation=".35" result="lk2"/><feFlood flood-color="#1f1a24" flood-opacity=".38"/><feComposite in2="lk2" operator="in" result="eigen"/><feComposite in="eigen" in2="SourceAlpha" operator="in" result="eigen2"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="eigen2"/><feMergeNode in="kante"/></feMerge></filter>`);
 const licht = (svg) => `<g filter="url(#${S.id("licht")})">${svg}</g>`;
 
 /* Stoffe: Lübecker Backstein (tiefrot), schwarz glasierte Lagen, Schiefer, Kupfer */
@@ -104,13 +104,54 @@ const schlag = (lat, d, hoeheM, breiteM = 0.5, a = 0.45) => {
   SCHATTEN.push(`<path d="${pfad(p)}" fill="#2a2a20" opacity="${a}"/>`);
 };
 
-/* Mensch aus dem Baukasten, ohne runden Bodenschatten, feine Linien weg, Pfade gerundet (Ladezeit) */
+/* Pfade verdichten: absolut runden (Raster q), dann relativ schreiben — keine Drift, kürzere Zahlen */
+function pfadKurz(d, q) {
+  const tok = d.match(/[a-zA-Z]|-?(?:\d+\.?\d*|\.\d+)(?:e-?\d+)?/g);
+  if (!tok) return d;
+  const N = { M: 2, L: 2, H: 1, V: 1, C: 6, S: 4, Q: 4, T: 2, A: 7, Z: 0 };
+  const rd = (v) => Math.round(v / q) * q;
+  const fmt = (v) => { let s = (Math.round(v * 1000) / 1000).toString(); if (s.startsWith("0.")) s = s.slice(1); else if (s.startsWith("-0.")) s = "-" + s.slice(2); return s; };
+  let i = 0, cx = 0, cy = 0, sx = 0, sy = 0, out = "", cmd = null;
+  /* aktuelle Position im gerundeten Raster */
+  let rx = 0, ry = 0, rsx = 0, rsy = 0;
+  const num = () => parseFloat(tok[i++]);
+  const join = (arr) => { let s = ""; for (const v of arr) { const t = fmt(v); s += (s && !t.startsWith("-") ? " " : "") + t; } return s; };
+  while (i < tok.length) {
+    if (/[a-zA-Z]/.test(tok[i])) cmd = tok[i++];
+    else if (cmd === null) return d;
+    const C = cmd.toUpperCase(), rel = cmd !== C;
+    if (C === "Z") { out += "z"; cx = sx; cy = sy; rx = rsx; ry = rsy; if (i < tok.length && !/[a-zA-Z]/.test(tok[i])) return d; continue; }
+    const n = N[C]; if (n === undefined) return d;
+    const a = []; for (let k = 0; k < n; k++) { if (i >= tok.length || /[a-zA-Z]/.test(tok[i])) return d; a.push(num()); }
+    let p;
+    if (C === "H") { const x = rel ? cx + a[0] : a[0]; cx = x; const X = rd(x); out += "h" + fmt(X - rx); rx = X; }
+    else if (C === "V") { const y = rel ? cy + a[0] : a[0]; cy = y; const Y = rd(y); out += "v" + fmt(Y - ry); ry = Y; }
+    else if (C === "A") {
+      const x = rel ? cx + a[5] : a[5], y = rel ? cy + a[6] : a[6]; cx = x; cy = y; const X = rd(x), Y = rd(y);
+      out += "a" + join([rd(a[0]), rd(a[1]), Math.round(a[2])]) + " " + (a[3] ? 1 : 0) + " " + (a[4] ? 1 : 0) + " " + join([X - rx, Y - ry]); rx = X; ry = Y;
+    } else {
+      const pts = [];
+      for (let k = 0; k < n; k += 2) { const x = rel ? cx + a[k] : a[k], y = rel ? cy + a[k + 1] : a[k + 1]; pts.push([x, y]); }
+      const end = pts[pts.length - 1];
+      const R = pts.map(([x, y]) => [rd(x) - rx, rd(y) - ry]);
+      out += (C === "M" ? "m" : C.toLowerCase()) + join(R.flat());
+      cx = end[0]; cy = end[1]; rx = rd(cx); ry = rd(cy);
+      if (C === "M") { sx = cx; sy = cy; rsx = rx; rsy = ry; cmd = rel ? "l" : "L"; }
+    }
+  }
+  /* das erste m ist relativ zu 0,0 — das ist dasselbe wie absolut */
+  return out;
+}
+function verdichteSVG(svg, q) {
+  return svg.replace(/ d="([^"]+)"/g, (m, d) => ` d="${pfadKurz(d, q)}"`);
+}
+/* Mensch aus dem Baukasten, ohne runden Bodenschatten und ohne feinste Linien; Pfade fein (0,4 cm) und relativ */
 function figur(spec, hoehe) {
   const m = B.mensch(spec, hoehe);
   let z = m.z.svg.replace(/(<g class="mensch">(?:<defs>.*?<\/defs>)?)<ellipse[^>]*\/>/s, "$1");
   z = z.replace(/<path [^>]*\/>/g, (t) => (/fill="none"/.test(t) && +((t.match(/stroke-width="([\d.]+)"/) || [])[1] || 9) < 0.4) ? "" : t);
-  z = z.replace(/ d="([^"]*)"/g, (a, v) => ` d="${v.replace(/-?\d+\.\d+/g, (x) => String(Math.round(+x)))}"`).replace(/ (x1|y1|x2|y2)="(-?\d+\.\d+)"/g, (a, n, v) => ` ${n}="${Math.round(+v)}"`);
-  return { svg: `<g transform="scale(${m.k.toFixed(4)})">${z}</g>`, k: m.k, z: m.z };
+  z = verdichteSVG(z, 0.4);
+  return { svg: `<g transform="scale(${m.k.toFixed(4)})">${z}</g>`, inner: z, k: m.k, z: m.z };
 }
 /* kleine Figur in der Ferne, Lichtseite rechts, Körperschatten links */
 function passant(x, y, h, o = {}) {
@@ -381,7 +422,7 @@ const SPEICHER = { x0: 290, d: 210 };
   let z2 = `<path d="M400 2 Q384 8 366 6 M388 6 Q380 14 372 18" stroke="#2e241a" stroke-width="1.2" fill="none"/>`;
   const zz = zufall(91);
   for (let i = 0; i < 26; i++) { const t = zz(), xx = 400 - t * 36, yy = 4 + t * 6 + (zz() - 0.5) * 14; if (yy < 1) continue; z2 += `<ellipse cx="${r(xx)}" cy="${r(yy)}" rx="${r(2.4 + zz() * 1.4)}" ry="1.3" fill="${zz() < 0.5 ? "#2f4a22" : "#4a6c32"}" transform="rotate(${r(-30 + zz() * 60)} ${r(xx)} ${r(yy)})"/>`; }
-  k += z2;
+  S.davor(z2);
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: k });
 }
 
@@ -535,9 +576,9 @@ const SCHARTE = { nord: [[-50, 2.4], [6, 2.7], [56, 2.5], [-46, 8.1], [8, 7.9], 
     { id: "schiessscharte", de: "die Schießscharte", syl: "SCHIESS-schar-te", it: "la feritoia", itSyl: "fe-ri-TO-ia", en: "loophole", x: nScharte.x, y: nScharte.y, kunst: flaeche(-M(0.9), -M(1.6), M(1.8), M(1.8), 0.4),
       tipp: "Aus den Schießscharten konnten die Soldaten mit Kanonen schießen." },
     { id: "kanone", de: "die Kanone", syl: "ka-NO-ne", it: "il cannone", itSyl: "can-NO-ne", en: "cannon", x: kanone.x, y: kanone.y, kunst: flaeche(-M(0.7), -M(1.0), M(1.4), M(1.2), 0.4),
-      tipp: "Im zweiten Stock stehen heute noch alte Kanonen. Man sieht ihre Mündung in der Scharte." },
+      tipp: "Im zweiten Obergeschoss stehen heute noch alte Kanonen. Man sieht ihre Mündung in der Scharte." },
     { id: "fries", de: "der Fries", syl: "FRIES", it: "il fregio", itSyl: "FRE-gio", en: "frieze", x: TL - M(3.4), y: GY - M(13.6), kunst: flaeche(-M(1.9), -M(1.2), M(3.8), M(1.6), 0.4),
-      tipp: "Der Fries ist ein Band aus Platten aus gebranntem Ton. Er läuft rund um die Türme." },
+      tipp: "Der Fries ist ein Band aus Tonplatten. Es läuft rund um die Türme." },
     { id: "backstein", de: "der Backstein", syl: "BACK-stein", it: "il mattone", itSyl: "mat-TO-ne", en: "brick", x: sBack.x, y: sBack.y, kunst: flaeche(-M(1.4), -M(1.4), M(2.8), M(2.4), 0.4),
       tipp: "Das Tor ist aus rotem Backstein. Manche Steine sind schwarz glasiert und glänzen." },
   ];
@@ -591,17 +632,17 @@ const SCHARTE = { nord: [[-50, 2.4], [6, 2.7], [56, 2.5], [-46, 8.1], [8, 7.9], 
   const hs = [m.z.handL, m.z.handR].sort((a, b) => a.y - b.y)[0], hx = hs.x * m.k, hy = hs.y * m.k;
   const ph = `<g transform="translate(${r(hx)} ${r(hy - 1.4)})"><rect x="-1.3" y="-2.2" width="2.6" height="1.7" rx=".3" fill="#1d1f22"/><rect x="-1.1" y="-2" width="2.2" height="1.3" fill="#7fa6cf"/><path d="M-.9 -.8 L-.4 -1.7 L.1 -.8 Z M.1 -.8 L.6 -1.7 L1 -.8 Z" fill="#8a3f2b"/></g>`;
   schlag(lat, d, 1.8, 0.5);
-  S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: licht(m.svg) + ph,
+  S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: m.svg + ph,
     tipp: "Der Tourist macht ein Foto vom Holstentor. Das Tor war früher auf dem 50-Mark-Schein." });
 }
 {
   const d = 25, lat = 3.0, [x, y] = proj(lat, d), s = km(y);
-  const zeig = Object.assign({}, POSEN.zeigen, { schulterR: { vor: 150, seit: 12, dreh: 0 }, ellbogenR: 4, nacken: -10, kopf: -14 });
+  const zeig = Object.assign({}, POSEN.zeigen, { schulterR: { vor: 135, seit: 32, dreh: 0 }, ellbogenR: 4, nacken: -10, kopf: -14 });
   const m = figur({ id: "lbk_tourin", geschlecht: "w", pose: zeig, blick: 200, frisur: "zopf", haarfarbe: "blond", haut: "hell",
     kleidung: { oberteil: { stueck: "pullover", farbe: "#e9dfcf" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#b0523c" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#2f5a35" } } }, 1.66 * s);
   schlag(lat, d, 1.66, 0.5);
-  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: licht(m.svg),
-    tipp: "Die Touristin zeigt auf die Inschrift über dem Tor." });
+  S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y, kunst: m.svg,
+    tipp: "Die Touristin zeigt auf den schiefen Turm. Er hat sich geneigt, weil der Boden weich ist." });
 }
 
 /* =====================================================================
@@ -631,7 +672,7 @@ const SCHARTE = { nord: [[-50, 2.4], [6, 2.7], [56, 2.5], [-46, 8.1], [8, 7.9], 
 /* =====================================================================
    10 — DIE LATERNE mit der MÖWE, 11 — DAS FAHRRAD (lehnt daran)
    ===================================================================== */
-const LAT = { lat: 9.4, d: 24 };
+const LAT = { lat: 5.4, d: 30 };
 const [LX, LY] = proj(LAT.lat, LAT.d), LK = km(LY);
 {
   const H = 4.0 * LK;
@@ -675,7 +716,8 @@ const [LX, LY] = proj(LAT.lat, LAT.d), LK = km(LY);
   };
   const s = LK * 0.16;
   const kn = S.SUED_KNAUF;
-  let extra = `<g transform="translate(${r(332 - LX)} ${r(70 - S.LAT_TOP)})"><path d="M-6 -1 Q-3 -3.4 0 0 Q3 -3.4 6 -1.6 Q3 -2 0 1 Q-3 -1.8 -6 -1 Z" fill="#f8f7f2"/><path d="M-6 -1 Q-5.2 -1.6 -4.6 -1.4 M6 -1.6 Q5.2 -2 4.6 -1.8" stroke="#2a2a2c" stroke-width=".5"/><ellipse cx="0" cy=".2" rx="1.1" ry=".55" fill="#f8f7f2"/><path d="M1 0 L1.8 .2 L1 .4 Z" fill="#e8b830"/></g>`;
+  S.hinten(`<g transform="translate(332 70)"><path d="M-6 -1 Q-3 -3.4 0 0 Q3 -3.4 6 -1.6 Q3 -2 0 1 Q-3 -1.8 -6 -1 Z" fill="#f8f7f2"/><path d="M-6 -1 Q-5.2 -1.6 -4.6 -1.4 M6 -1.6 Q5.2 -2 4.6 -1.8" stroke="#2a2a2c" stroke-width=".5"/><ellipse cx="0" cy=".2" rx="1.1" ry=".55" fill="#f8f7f2"/><path d="M1 0 L1.8 .2 L1 .4 Z" fill="#e8b830"/></g>`);
+  let extra = "";
   S.teil({ oben: true, id: "moewe", de: "die Möwe", syl: "MÖ-we", it: "il gabbiano", itSyl: "gab-BIA-no", en: "seagull", x: LX, y: r(S.LAT_TOP), kunst: licht(moewe(s)) + extra,
     tipp: "Lübeck liegt nah an der Ostsee. Darum fliegen hier viele Möwen." });
 }
@@ -699,11 +741,11 @@ const [BX0, BY] = proj(BANK.lat0, BANK.d), [BX1] = proj(BANK.lat1, BANK.d), BK =
 }
 {
   /* DIE FRAU sitzt links auf der Bank, die Hände auf den Knien, und schaut zum Kind (rechts) */
-  const sitz = Object.assign({}, POSEN.sitzen, { schulterL: { vor: 30, seit: 8 }, ellbogenL: 52, unterarmL: -60, handL: 4, schulterR: { vor: 30, seit: 9 }, ellbogenR: 54, unterarmR: -60, handR: 4, kopf: 2 });
-  const m = figur({ id: "lbk_frau", geschlecht: "w", pose: sitz, blick: 62, frisur: "lang", haarfarbe: "hellbraun", haut: "hell", laecheln: true,
+  const sitz = Object.assign({}, POSEN.sitzen, { schulterL: { vor: 24, seit: 8 }, ellbogenL: 62, unterarmL: -60, handL: 4, schulterR: { vor: 58, seit: 22 }, ellbogenR: 22, unterarmR: -20, handR: 8, fingerR: 0.3, kopf: 2 });
+  const m = figur({ id: "lbk_frau", geschlecht: "w", pose: sitz, blick: 62, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "#f3efe6" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#2f5f95" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.66 * BK);
   const sitzY = m.z.sitz.y * m.k;
-  S.teil({ id: "frau", de: "die Frau", syl: "FRAU", it: "la donna", itSyl: "DON-na", en: "woman", x: r(BXM - 0.4 * BK), y: BY, kunst: licht(`<g transform="translate(0 ${r(-0.46 * BK - sitzY)})">${m.svg}</g>`),
+  S.teil({ id: "frau", de: "die Frau", syl: "FRAU", it: "la donna", itSyl: "DON-na", en: "woman", x: r(BXM - 0.4 * BK), y: BY, kunst: `<g transform="translate(0 ${r(-0.46 * BK - sitzY)})">${m.svg}</g>`,
     tipp: "Die Mutter macht eine Pause auf der Bank. Sie hat Marzipan gekauft." });
 }
 {
@@ -714,7 +756,7 @@ const [BX0, BY] = proj(BANK.lat0, BANK.d), [BX1] = proj(BANK.lat1, BANK.d), BK =
   k += `<text x="0" y="${r(-0.16 * s)}" font-size="${r(0.045 * s)}" text-anchor="middle" fill="#f0c64a" font-family="Georgia,serif" font-style="italic" font-weight="bold">Marzipan</text>`;
   k += `<text x="0" y="${r(-0.105 * s)}" font-size="${r(0.03 * s)}" text-anchor="middle" fill="#f0c64a" font-family="Georgia,serif">LÜBECK</text>`;
   k += `<rect x="${r(-0.13 * s)}" y="${r(-0.3 * s)}" width="${r(0.06 * s)}" height="${r(0.3 * s)}" fill="#000" opacity=".15"/>`;
-  S.teil({ oben: true, id: "tuete", de: "die Tüte", syl: "TÜ-te", it: "il sacchetto", itSyl: "sac-CHET-to", en: "bag", x: r(BXM + 0.55 * BK), y: r(BY - 0.46 * BK), steht: true, kunst: licht(k) });
+  S.teil({ id: "tuete", de: "die Tüte", syl: "TÜ-te", it: "il sacchetto", itSyl: "sac-CHET-to", en: "bag", x: r(BXM + 0.55 * BK), y: r(BY - 0.46 * BK), steht: true, kunst: licht(k) });
 }
 const KIND = { lat: -7.6, d: 20 };
 const [KX, KY] = proj(KIND.lat, KIND.d), KK = km(KY);
@@ -727,17 +769,17 @@ let MARZ = null;
   const hd = [m.z.handL, m.z.handR];
   MARZ = { x: r(KX + (hd[0].x + hd[1].x) / 2 * m.k), y: r(KY + Math.min(hd[0].y, hd[1].y) * m.k) };
   schlag(KIND.lat, KIND.d, 1.15, 0.4);
-  S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "la bambina", itSyl: "bam-BI-na", en: "child", x: KX, y: KY, kunst: licht(m.svg),
+  S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "la bambina", itSyl: "bam-BI-na", en: "child", x: KX, y: KY, kunst: m.svg,
     tipp: "Das Kind zeigt seiner Mutter das Marzipan." });
 }
 {
   /* DAS MARZIPAN: Marzipanbrot in roter Hülle mit goldenem Band, angebrochen */
-  const s = KK * 1.6;
-  let k = `<rect x="${r(-0.09 * s)}" y="${r(-0.05 * s)}" width="${r(0.18 * s)}" height="${r(0.05 * s)}" rx="${r(0.015 * s)}" fill="${S.lg("hulle", [[0, "#d63036"], [1, "#8e161c"]])}"/>`;
-  k += `<rect x="${r(-0.03 * s)}" y="${r(-0.05 * s)}" width="${r(0.05 * s)}" height="${r(0.05 * s)}" fill="${GOLD}"/>`;
+  const s = KK * 1.7;
+  let k = `<rect x="${r(-0.09 * s)}" y="${r(-0.09 * s)}" width="${r(0.18 * s)}" height="${r(0.09 * s)}" rx="${r(0.015 * s)}" fill="${S.lg("hulle", [[0, "#d63036"], [1, "#8e161c"]])}"/><rect x="${r(-0.09 * s)}" y="${r(-0.09 * s)}" width="${r(0.18 * s)}" height="${r(0.02 * s)}" fill="#ff7a7a" opacity=".5"/>`;
+  k += `<rect x="${r(-0.03 * s)}" y="${r(-0.09 * s)}" width="${r(0.05 * s)}" height="${r(0.09 * s)}" fill="${GOLD}"/>`;
   k += `<rect x="${r(0.09 * s)}" y="${r(-0.046 * s)}" width="${r(0.035 * s)}" height="${r(0.042 * s)}" fill="#5a3420"/><rect x="${r(0.1 * s)}" y="${r(-0.04 * s)}" width="${r(0.022 * s)}" height="${r(0.03 * s)}" fill="#f1dcae"/>`;
   k += `<path d="M${r(-0.08 * s)} ${r(-0.045 * s)} h${r(0.15 * s)}" stroke="#ff8a8a" stroke-width=".3" opacity=".6"/>`;
-  S.teil({ oben: true, id: "marzipan", de: "das Marzipan", syl: "mar-zi-PAN", it: "il marzapane", itSyl: "mar-za-PA-ne", en: "marzipan", x: MARZ.x, y: r(MARZ.y + 0.3), kunst: k,
+  S.teil({ id: "marzipan", de: "das Marzipan", syl: "mar-zi-PAN", it: "il marzapane", itSyl: "mar-za-PA-ne", en: "marzipan", x: MARZ.x, y: r(MARZ.y + 0.3), kunst: k,
     tipp: "Lübecker Marzipan ist berühmt. Man macht es aus Mandeln und Zucker." });
 }
 
@@ -808,7 +850,7 @@ const sockel = (L, Hs) => {
     tipp: "Vor dem Holstentor liegen zwei Löwen aus Eisen. Einer wacht, der andere schläft." });
 }
 {
-  const d = 13.6, lat = 3.6, [x, y] = proj(lat, d), s = km(y), L = 2.0 * s, Hs = 0.8 * s;
+  const d = 13.6, lat = 4.6, [x, y] = proj(lat, d), s = km(y), L = 2.0 * s, Hs = 0.8 * s;
   const k = sockel(L, Hs) + `<g transform="translate(0 ${r(-Hs - 0.04 * L)})">${loewe(L, false, -1)}</g>`;
   schlag(lat, d, 1.6, 2.4, 0.42);
   S.teil({ id: "loewe2", de: "der schlafende Löwe", syl: "SCHLA-fen-de LÖ-we", it: "il leone che dorme", itSyl: "le-O-ne che DOR-me", en: "sleeping lion", x, y, steht: true, kunst: licht(k),
@@ -823,5 +865,8 @@ WEG_TEIL.kunst += `<g clip-path="url(#${S.id("wegclip")})">${SCH}</g>`;
 /* warmes Nachmittagslicht über allem (fängt keinen Tipp ab) */
 S.davor(`<rect width="${W}" height="${HH}" fill="${S.rg("abend", [[0, "#ffd9a0", 0.16], [0.6, "#ffd9a0", 0], [1, "#000", 0.08]], 0.95, 0.55, 1.1)}" pointer-events="none"/>`);
 
+/* Ladezeit: alle Pfade relativ und auf 0,1 gerundet */
+for (const t of S.teile) { t.kunst = verdichteSVG(t.kunst, 0.1); for (const u of t.unter || []) u.kunst = verdichteSVG(u.kunst, 0.1); }
+S.kulisse = S.kulisse.map((x) => verdichteSVG(x, 0.1)); S.defs = S.defs.map((x) => verdichteSVG(x, 0.1)); S.vorne = S.vorne.map((x) => verdichteSVG(x, 0.1));
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/luebeck.js"));
 console.log(aus);

@@ -49,10 +49,11 @@
    Hang leuchten, Nordwand und linker Hang im Schatten; Schatten fallen
    nach rechts. Die Lärchen werden schon golden.
    KAMERA: Augenhöhe 6,5 m über dem Fluss (Brücke 4,8 m + 1,7 m),
-   Horizont y = 170, Brennweite 380, Fluchtpunkt x = 200. Ufer 4,2 m über
-   dem Wasser, Talboden steigt 2 %. Punkt X quer, D Abstand, h Höhe:
-   x = 200 + 380·X/D, y = 170 − (h − 6,5)·380/D. Ferne: Matterhorn in
-   8,57 km = 0,0443 Einheiten je Meter (1000 m = 44 Einheiten).
+   Horizont y = 196, Fluchtpunkt x = 200. Ufer 4,2 m über dem Wasser,
+   Talboden steigt 2 %. Nah (Dorf): x = 200 + 380·X/D, y = 196 − (h − 6,5)·
+   380/D. Ferne (Berge): Teleblick wie auf den bekannten Fotos, Matterhorn
+   in 8,57 km = 0,0607 Einheiten je Meter (1000 m = 61 Einheiten; die
+   Ferne wird mit T() um den Horizont auf das 1,368-Fache gerechnet).
    ===================================================================== */
 "use strict";
 const path = require("path");
@@ -173,7 +174,8 @@ function schlank(svg, stufe = 1) {
   if (stufe >= 2) {
     const farbe = {};
     svg.replace(/<(linearGradient|radialGradient) id="([^"]+)"[^>]*>(.*?)<\/\1>/g, (_, t, id, inn) => { const st = [...inn.matchAll(/stop-color="([^"]+)"/g)].map((m) => m[1]); farbe[id] = st[Math.floor(st.length / 2)] || "#888"; return ""; });
-    svg = svg.replace(/<defs>.*?<\/defs>/g, "").replace(/ clip-path="url\(#[^)]+\)"/g, "").replace(/url\(#([^)]+)\)/g, (_, id) => farbe[id] || "#888");
+    /* Verläufe durch ihre mittlere Farbe ersetzen; Clip-Pfade bleiben (sonst laufen Schattierungen im Gesicht über) */
+    svg = svg.replace(/<(linearGradient|radialGradient) id="[^"]+"[^>]*>.*?<\/\1>/g, "").replace(/<defs><\/defs>/g, "").replace(/url\(#([^)]+)\)/g, (m, id) => farbe[id] || m);
   }
   return svg.split(/(transform="[^"]*"|offset="[^"]*"|opacity="[^"]*")/).map((t, i) => i % 2 ? t : t.replace(/(-?\d+\.\d+)/g, (m) => String(Math.round(parseFloat(m))))).join("");
 }
@@ -202,6 +204,8 @@ S.def(`<filter id="${S.id("wasser")}"${CIF} x="-5%" y="-5%" width="110%" height=
 /* Volumen: Lichtkante links (Sonne links), Eigenschatten rechts */
 S.def(`<filter id="${S.id("vol")}"${CIF} x="-10%" y="-5%" width="120%" height="110%"><feOffset in="SourceAlpha" dx=".22" dy=".1" result="o"/><feComposite in="SourceAlpha" in2="o" operator="out" result="k"/><feFlood flood-color="#fff2d0" flood-opacity=".45"/><feComposite in2="k" operator="in" result="licht"/><feOffset in="SourceAlpha" dx="-1.3" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="s"/><feGaussianBlur in="s" stdDeviation=".6" result="sb"/><feFlood flood-color="#1a2440" flood-opacity=".38"/><feComposite in2="sb" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="schatten"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="schatten"/><feMergeNode in="licht"/></feMerge></filter>`);
 const VOL = `filter="url(#${S.id("vol")})"`;
+S.def(`<filter id="${S.id("volf")}"${CIF} x="-10%" y="-5%" width="120%" height="110%"><feOffset in="SourceAlpha" dx="-1.1" result="o2"/><feComposite in="SourceAlpha" in2="o2" operator="out" result="s"/><feGaussianBlur in="s" stdDeviation=".5" result="sb"/><feFlood flood-color="#1a2440" flood-opacity=".35"/><feComposite in2="sb" operator="in"/><feComposite in2="SourceAlpha" operator="in" result="schatten"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="schatten"/></feMerge></filter>`);
+const VOLF = `filter="url(#${S.id("volf")})"`;
 
 /* =====================================================================
    KULISSE 1 — Himmel (klarer Herbstmorgen, tiefblau oben)
@@ -347,7 +351,7 @@ let HANG_L = "", HANG_R = "", WALD_MITTE = "";
   /* linker Hang (Schatten) */
   const L = [[-2, 44], [20, 54], [38, 63], [54, 70], [76, 78], [100, 86], [122, 93], [141, 100], [158, 106], [171, 113], [184, 122], [192, 134], [195, 175], [-2, 175]];
   HANG_L = `<path d="${pp(L)}" fill="${S.lg("hangL", [[0, "#3c5240"], [0.5, "#2c4234"], [1, "#22362b"]])}"/>`;
-  HANG_L += `<path d="${pp(L)}" fill="url(#${S.id("waldS")})"/>` + baeumchen(L, 120, 5, (y) => 2.4 + (y - 50) * 0.05, ["#1d3027", "#8a6a2c", "#2a3e2e"], false);
+  HANG_L += `<path d="${pp(L)}" fill="url(#${S.id("waldS")})"/>` + baeumchen(L, 95, 5, (y) => 2.4 + (y - 50) * 0.05, ["#1d3027", "#8a6a2c", "#2a3e2e"], false);
   HANG_L += `<path d="M${L.slice(0, 11).map(pt).join(" L")}" stroke="#a9bccc" stroke-width="1" fill="none" opacity=".3"/>`;
   HANG_L += `<path d="${pp(L)}" fill="${S.lg("hangLdunst", [[0, "#9db4cc", 0.35], [0.6, "#9db4cc", 0.08], [1, "#9db4cc", 0]])}"/>`;
   /* rechter Hang (Sonne) */
@@ -355,7 +359,7 @@ let HANG_L = "", HANG_R = "", WALD_MITTE = "";
   HANG_R = `<path d="${pp(R)}" fill="${S.lg("hangR", [[0, "#7f9a52"], [0.5, "#6b8a44"], [1, "#4f6e38"]])}"/>`;
   /* Wiesen (heller) zwischen den Wäldern */
   HANG_R += `<path d="M346 57 L330 66 L322 72 L340 76 L360 64 L374 50 Z M286 94 L278 101 L286 105 L300 98 L304 90 Z" fill="#b4c070" opacity=".75"/>`;
-  HANG_R += `<path d="${pp(R)}" fill="url(#${S.id("waldL")})" opacity=".9"/>` + baeumchen(R, 130, 7, (y) => 2.4 + (y - 20) * 0.045, ["#2f4a2c", "#e2b44a", "#d49a2e", "#3c5a32"], true);
+  HANG_R += `<path d="${pp(R)}" fill="url(#${S.id("waldL")})" opacity=".9"/>` + baeumchen(R, 100, 7, (y) => 2.4 + (y - 20) * 0.045, ["#2f4a2c", "#e2b44a", "#d49a2e", "#3c5a32"], true);
   HANG_R += `<path d="M${R.slice(0, 10).map(pt).join(" L")}" stroke="#f6edc8" stroke-width="1" fill="none" opacity=".4"/>`;
   HANG_R += `<path d="${pp(R)}" fill="${S.lg("hangRdunst", [[0, "#cfe0ee", 0.3], [0.5, "#cfe0ee", 0.05], [1, "#cfe0ee", 0]])}"/>`;
 }
@@ -466,7 +470,7 @@ function fensterAuf(f, o, s) {
   for (let h = o.h0 + 1.2; h < o.he - 1.6; h += 2.8) geschosse.push(h);
   const nf = Math.max(1, Math.floor(lang / 3.4));
   for (const h of geschosse) for (let i = 0; i < nf; i++) {
-    const holz = h > o.sockel - 0.2, uc = lang * (i + 0.5) / nf, fw = holz ? 0.45 : 0.6, fh = holz ? 1.15 : 1.4;
+    const holz = h > o.sockel - 0.2, tuer = holz && f.art === "giebel" && o.balkon, uc = lang * (i + 0.5) / nf, fw = holz ? (tuer ? 0.5 : 0.45) : 0.6, fh = tuer ? 2.0 : holz ? 1.15 : 1.4;
     const q = [Q(uc - fw, h + fh), Q(uc + fw, h + fh), Q(uc + fw, h), Q(uc - fw, h)];
     gl += "M" + q.map(pt).join(" L") + " Z";
     const m1 = Q(uc, h + fh), m2 = Q(uc, h), l1 = Q(uc - fw, h + fh / 2), l2 = Q(uc + fw, h + fh / 2);
@@ -489,7 +493,7 @@ function fensterAuf(f, o, s) {
       const nb = Math.max(4, Math.round((u1 - u0) / (s > 8 ? 0.3 : 0.6)));
       const z = zufall(Math.round(h * 100 + o.D0));
       for (let i = 0; i < nb; i++) {
-        const uu = u0 + (u1 - u0) * (i + 0.5) / nb, [x, y] = Qv(uu, hb2 + 1.12, aus + 0.08), rr = Math.max(0.3, 0.13 * s);
+        const uu = u0 + (u1 - u0) * (i + 0.5) / nb, [x, y] = Qv(uu, hb2 + 1.12, aus + 0.08), rr = Math.max(0.3, 0.17 * s);
         blaetter += `<ellipse cx="${r(x - rr * 0.5)}" cy="${r(y + rr * 0.4)}" rx="${r(rr * 0.9)}" ry="${r(rr * 0.6)}"/><ellipse cx="${r(x + rr * 0.6)}" cy="${r(y + rr * 0.5)}" rx="${r(rr * 0.8)}" ry="${r(rr * 0.55)}"/>`;
         for (let j = 0; j < (s > 8 ? 3 : 1); j++) blumen += `<circle cx="${r(x + (z() - 0.5) * rr * 1.6)}" cy="${r(y - rr * (0.2 + z() * 0.7))}" r="${r(rr * (0.32 + z() * 0.2))}"/>`;
       }
@@ -886,7 +890,7 @@ const BANK = { X: -9.6, D: 31.5 };
   const [wx, wy] = q3(-0.18, 0.55, 0.0), ws = F / (BANK.D + 0.55);
   const wi = B.mensch({ id: "chz_wi", geschlecht: "w", pose: "sitzen", blick: 270, frisur: "zopf", haarfarbe: "braun", haut: "hell", ohneSchatten: true,
     kleidung: { oberteil: { stueck: "pullover", farbe: "#2f8a8a" }, jacke: { stueck: "jacke", farbe: "#d0402e" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "stiefel", farbe: "braun" } } }, 1.66 * ws);
-  S.teil({ id: "wanderin", de: "die Wanderin", syl: "WAN-de-rin", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker (woman)", x: wx, y: wy, kunst: `<g ${VOL}>${schlank(wi.svg, 2)}</g>`,
+  S.teil({ id: "wanderin", de: "die Wanderin", syl: "WAN-de-rin", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker (woman)", x: wx, y: wy, kunst: `<g ${VOLF}>${schlank(wi.svg, 2)}</g>`,
     tipp: "Die Wanderin macht eine Pause und isst Schokolade." });
   /* DER WANDERER steht daneben und schaut zum Matterhorn (Rucksack, Wanderstöcke) */
   const Dw = 27.6, Xw = -7.3, [hx, hy] = P(Xw, Dw, hb(Dw)), hs = F / Dw;
@@ -900,7 +904,7 @@ const BANK = { X: -9.6, D: 31.5 };
   const ru = (wa.z.punkte && wa.z.punkte.ruecken) ? [wa.z.punkte.ruecken[0] * wa.k, wa.z.punkte.ruecken[1] * wa.k] : [0, -1.25 * hs];
   const rucksack = `<path d="M${r(ru[0] - 0.19 * hs)} ${r(ru[1] - 0.26 * hs)} Q${r(ru[0])} ${r(ru[1] - 0.34 * hs)} ${r(ru[0] + 0.19 * hs)} ${r(ru[1] - 0.26 * hs)} L${r(ru[0] + 0.2 * hs)} ${r(ru[1] + 0.2 * hs)} Q${r(ru[0])} ${r(ru[1] + 0.27 * hs)} ${r(ru[0] - 0.2 * hs)} ${r(ru[1] + 0.2 * hs)} Z" fill="${S.lg("rucksack", [[0, "#3e8a4a"], [1, "#24562e"]], 0, 0, 1, 0)}"/><path d="M${r(ru[0] - 0.17 * hs)} ${r(ru[1] - 0.12 * hs)} L${r(ru[0] + 0.17 * hs)} ${r(ru[1] - 0.12 * hs)}" stroke="#1a3a1e" stroke-width="${r(0.02 * hs)}"/><rect x="${r(ru[0] - 0.1 * hs)}" y="${r(ru[1] + 0.02 * hs)}" width="${r(0.2 * hs)}" height="${r(0.12 * hs)}" rx="${r(0.02 * hs)}" fill="#2f6a3a"/>`;
   const schatten = `<path d="M${r(-0.18 * hs)} 0 L${r(0.18 * hs)} 0 L${r(2.45 * hs)} ${r(-0.12 * hs)} L${r(2.3 * hs)} ${r(-0.22 * hs)} Z" fill="#1c2638" opacity=".3" filter="url(#${S.id("weich")})"/>`;
-  S.teil({ id: "wanderer", de: "der Wanderer", syl: "WAN-de-rer", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker", x: hx, y: hy, kunst: schatten + `<g ${VOL}>${schlank(wa.svg, 2)}${rucksack}</g>${stoecke}`,
+  S.teil({ id: "wanderer", de: "der Wanderer", syl: "WAN-de-rer", it: "l'escursionista", itSyl: "e-scur-sio-NI-sta", en: "hiker", x: hx, y: hy, kunst: schatten + `<g ${VOLF}>${schlank(wa.svg, 2)}${rucksack}</g>${stoecke}`,
     tipp: "Rund um Zermatt gibt es über 400 Kilometer Wanderwege.",
     zoom: { x: r(hx - 16), y: r(hy - 2.2 * hs), w: 36, h: 24 },
     unter: [

@@ -33,9 +33,8 @@
    - MASCHTEICH und MASCHPARK: der Teich liegt südlich vor dem Rathaus,
      ringsum alte Buchen, Linden und Rosskastanien; Stockenten, Schwäne.
    - TYPISCHES: der LEIBNIZ-BUTTERKEKS (Bahlsen, Hannover, seit 1891,
-     52 Zähne), die LÜTTJE LAGE (ein Glas dunkles Bier und ein Korn,
-     gleichzeitig aus einer Hand getrunken — gehört zum Schützenfest, dem
-     größten der Welt; als Lernwort mit Alkohol — Frage an Xander offen),
+     52 Zähne), eine APFELSCHORLE auf der Decke (die Lüttje Lage — Bier und
+     Korn — ist als Lernwort mit Alkohol ersetzt, Runde 4),
      eine POSTKARTE mit den NANAS von Niki de Saint Phalle am Leibnizufer
      (1974; die Figuren selbst stehen an der Leine, von hier nicht zu
      sehen), Rosskastanien im Oktober.
@@ -120,7 +119,7 @@ S.hinten(`<rect width="${BR}" height="${HOR + 6}" fill="${S.lg("sonnenseite", [[
 S.def(`<linearGradient id="${S.id("himmelU")}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${HOR + 6}"><stop offset="0" stop-color="#4278bb"/><stop offset=".55" stop-color="#8ab3da"/><stop offset=".9" stop-color="#d0e0ec"/><stop offset="1" stop-color="#e9ede8"/></linearGradient>`);
 const HIMMEL_U = `url(#${S.id("himmelU")})`;
 /* unregelmäßige Lücke im Laub (gezackt, vom Laub umrandet) */
-const luecke = (x, y, w, h, seed) => { const z = zufall(seed); let d = ""; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5, f = i % 2 ? .55 + z() * .2 : .9 + z() * .25; d += (i ? " L" : "M") + `${r(x + Math.cos(a) * w * f)} ${r(y + Math.sin(a) * h * f)}`; } return `<path d="${d} Z" fill="${HIMMEL_U}"/>`; };
+const luecke = (x, y, w, h, seed) => { const z = zufall(seed); let d = ""; for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5, f = i % 2 ? .72 + z() * .12 : .9 + z() * .2; d += (i ? " L" : "M") + `${r(x + Math.cos(a) * w * f)} ${r(y + Math.sin(a) * h * f)}`; } return `<path d="${d} Z" fill="${HIMMEL_U}"/>`; };
 /* weich schattierte Laubballen: Licht oben links (Sonne Südwest), Schatten unten rechts, darunter ein dunkler Kontaktschatten */
 const KRONE = {
   buche: [S.rg("krBuche", [[0, "#e8ad62"], [0.45, "#b9692f"], [1, "#6a3519"]], 0.36, 0.32, 0.72), "#4e2814"],
@@ -232,7 +231,7 @@ const kuTeile = {};
       { id: "aussichtsplattform", de: "die Aussichtsplattform", syl: "AUS-sichts-platt-form", it: "la terrazza panoramica", itSyl: "ter-RAZ-za pa-no-RA-mi-ca", en: "viewing platform", x: kuTeile.platt[0], y: kuTeile.platt[1], kunst: flaeche(-7.5, -6, 15, 8),
         tipp: "Von der Plattform oben auf der Kuppel sieht man bei klarem Wetter bis zum Harz." },
       { id: "turmspitze", de: "die Turmspitze", syl: "TURM-spit-ze", it: "la guglia", itSyl: "GU-glia", en: "spire", x: kuTeile.spitze[0], y: kuTeile.spitze[1], kunst: flaeche(-3, -8, 6, 9),
-        tipp: "Ganz oben auf der kleinen Laterne über der Kuppel sitzt die Turmspitze." },
+        tipp: "Ganz oben auf dem kleinen Türmchen über der Kuppel sitzt die Turmspitze." },
       { id: "eckturm", de: "der Eckturm", syl: "ECK-turm", it: "la torretta", itSyl: "tor-RET-ta", en: "corner turret", x: kuTeile.turm[0], y: kuTeile.turm[1], kunst: flaeche(-4.4, -9, 8.8, 14),
         tipp: "Vier kleine Türme stehen an den Ecken um die große Kuppel." },
     ] });
@@ -387,7 +386,7 @@ const rhTeile = {};
     zoom: { x: r(zx0 - 15), y: r(pr(0, -4, 0)[1] - zh + 4), w: r(zw), h: r(zh) },
     unter: [
       { id: "portal", de: "das Portal", syl: "por-TAL", it: "il portale", itSyl: "por-TA-le", en: "portal", x: rhTeile.portal[0], y: rhTeile.portal[1], kunst: flaeche(-10, -6, 20, 8),
-        tipp: "Das ist die Gartenseite. Der Haupteingang liegt auf der anderen Seite, am Trammplatz." },
+        tipp: "Das Portal ist ein großer, schöner Eingang. Das hier ist die Gartenseite; der Haupteingang liegt am Trammplatz." },
       { id: "balkon", de: "der Balkon", syl: "bal-KON", it: "il balcone", itSyl: "bal-CO-ne", en: "balcony", x: rhTeile.balkon[0], y: rhTeile.balkon[1], kunst: flaeche(-15, -3, 30, 4),
         tipp: "Vom Balkon schaut man über den Maschteich in den Park." },
       { id: "fenster", de: "das Fenster", syl: "FENS-ter", it: "la finestra", itSyl: "fi-NE-stra", en: "window", x: rhTeile.fenster[0], y: rhTeile.fenster[1], kunst: flaeche(-2.4, -7, 4.8, 11),
@@ -435,10 +434,10 @@ const NAH = -138;           // Uferkante vorn (12 m vor uns)
     tipp: "Der Schwan ist weiß und hat einen langen Hals." });
 }
 {
-  const ente = (x, Y, sp, erpel) => { const p = pr(x, Y, WASSER), m = mass(Y) / 100; return `<g transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(sp * m).toFixed(5)} ${m.toFixed(5)})"><path d="M-24 2 Q0 6 26 2" stroke="#e6f0f2" stroke-width="1.6" fill="none" opacity=".7"/><g transform="translate(0 3) scale(1 -.5)" opacity=".3"><path d="M-20 -2 Q-22 -14 -6 -14 L10 -12 Q16 -22 24 -20 Q30 -18 28 -12 L20 -2 Z" fill="${erpel ? "#2f6b3a" : "#7a6248"}"/></g><path d="M-20 -2 Q-22 -14 -6 -14 L10 -12 Q16 -22 24 -20 Q30 -18 28 -12 L34 -10 L27 -8 Q22 -6 20 -2 Q0 4 -20 -2 Z" fill="${erpel ? "#b7b2a8" : "#8a6c4c"}"/>` + (erpel ? `<path d="M10 -12 Q16 -22 24 -20 Q30 -18 28 -12 Q22 -9 14 -9 Z" fill="#1f6b3a"/><path d="M12 -9 Q18 -7 22 -9" stroke="#fff" stroke-width="1.6" fill="none"/><path d="M-2 -6 Q8 -12 14 -8 Q8 -4 -2 -4 Z" fill="#6a4030"/><path d="M-20 -6 Q-24 -9 -26 -6" stroke="#1d1d1d" stroke-width="1.6" fill="none"/>` : `<path d="M-14 -8 Q0 -12 12 -8" stroke="#5a442e" stroke-width="1" fill="none"/>`) + `<path d="M-8 -10 Q2 -13 10 -9" stroke="#3a5a8a" stroke-width="2.2"/><path d="M27 -12 L34 -10 L27 -9 Z" fill="${erpel ? "#e8c82a" : "#d89a3a"}"/><circle cx="23" cy="-16" r="1" fill="#111"/></g>`; };
+  const ente = (x, Y, sp, erpel) => { const p = pr(x, Y, WASSER), m = mass(Y) / 100; return `<g transform="translate(${t2(p[0])} ${t2(p[1])}) scale(${(sp * m).toFixed(5)} ${m.toFixed(5)})"><path d="M-24 2 Q0 6 26 2" stroke="#e6f0f2" stroke-width="1.6" fill="none" opacity=".7"/><g transform="translate(0 3) scale(1 -.5)" opacity=".3"><path d="M-20 -2 Q-22 -14 -6 -14 L10 -12 Q16 -22 24 -20 Q30 -18 28 -12 L20 -2 Z" fill="${erpel ? "#2f6b3a" : "#7a6248"}"/></g><path d="M-20 -2 Q-22 -14 -6 -14 L10 -12 Q16 -22 24 -20 Q30 -18 28 -12 L34 -10 L27 -8 Q22 -6 20 -2 Q0 4 -20 -2 Z" fill="${erpel ? "#b7b2a8" : "#8a6c4c"}"/>` + (erpel ? `<path d="M10 -12 Q16 -22 24 -20 Q30 -18 28 -12 Q22 -9 14 -9 Z" fill="#1f6b3a"/><path d="M-2 -4 Q4 -12 15 -10 Q17 -5 -2 -2 Z" fill="#6a3a2a"/><path d="M11 -11 Q17 -8.6 24 -11" stroke="#fff" stroke-width="2.2" fill="none"/><path d="M-20 -6 Q-24 -9 -26 -6" stroke="#1d1d1d" stroke-width="1.6" fill="none"/>` : `<path d="M-14 -8 Q0 -12 12 -8" stroke="#5a442e" stroke-width="1" fill="none"/>`) + `<path d="M-8 -10 Q2 -13 10 -9" stroke="#3a5a8a" stroke-width="2.2"/><path d="M27 -12 L34 -10 L27 -9 Z" fill="${erpel ? "#e8c82a" : "#d89a3a"}"/><circle cx="23" cy="-16" r="1" fill="#111"/></g>`; };
   const k = ente(-2.8, -131.6, -1, true) + ente(-1.2, -130.6, -1, false);
   const e0 = pr(-2.8, -131.6, WASSER);
-  const A = anker(e0[0], e0[1], k + flaeche(e0[0] - 5, e0[1] - 5, 13, 6, .5));
+  const A = anker(e0[0], e0[1], k + flaeche(e0[0] - 5, e0[1] - 17, 13, 17.6, .5));
   S.teil({ oben: true, id: "ente", de: "die Ente", syl: "EN-te", it: "l'anatra", itSyl: "A-na-tra", en: "duck", x: A.x, y: A.y, kunst: A.kunst,
     tipp: "Auf dem Maschteich schwimmen Stockenten. Das Männchen hat einen grünen Kopf und einen weißen Ring am Hals." });
 }
@@ -463,8 +462,8 @@ const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} $
   const rand = pr(0, WEGRAND, 0)[1];
   const gras = (name, w, h, n, l, b) => { const z = zufall(w * 100); let m = `<rect width="${w}" height="${h}" fill="#6c8c3c"/>`; for (let i = 0; i < n; i++) { const x = r(z() * w), y = r(z() * h), dx = r((z() - .5) * l * .5); m += `<path d="M${x} ${y} l${dx} ${-l} M${r(+x + b)} ${y} l${r(dx * .6)} ${r(-l * .8)}" stroke="${["#93b04e", "#56742c", "#7f9e44", "#a6bd5e"][Math.floor(z() * 4)]}" stroke-width="${r(b * .6)}"/>`; } S.def(`<pattern id="${S.id(name)}" width="${w}" height="${h}" patternUnits="userSpaceOnUse">${m}</pattern>`); return `url(#${S.id(name)})`; };
   const G1 = gras("gras1", 2.3, 1.1, 14, .5, .2), G2 = gras("gras2", 7, 3.3, 30, 1.1, .35), G3 = gras("gras3", 11, 5.2, 34, 2.2, .6);
-  S.def(`<linearGradient id="${S.id("gm2g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(rand + 6)}" x2="0" y2="${r(rand + 16)}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("gm2")}"><rect width="${BR}" height="${HO}" fill="url(#${S.id("gm2g")})"/></mask>`);
-  S.def(`<linearGradient id="${S.id("gm3g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(rand + 22)}" x2="0" y2="${r(rand + 34)}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("gm3")}"><rect width="${BR}" height="${HO}" fill="url(#${S.id("gm3g")})"/></mask>`);
+  S.def(`<linearGradient id="${S.id("gm2g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(rand + 1)}" x2="0" y2="${r(rand + 21)}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("gm2")}"><rect width="${BR}" height="${HO}" fill="url(#${S.id("gm2g")})"/></mask>`);
+  S.def(`<linearGradient id="${S.id("gm3g")}" gradientUnits="userSpaceOnUse" x1="0" y1="${r(rand + 12)}" x2="0" y2="${r(rand + 38)}"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient><mask id="${S.id("gm3")}"><rect width="${BR}" height="${HO}" fill="url(#${S.id("gm3g")})"/></mask>`);
   const R0 = `x="0" y="${r(rand)}" width="${BR}" height="${r(HO - rand)}"`;
   let k = `<rect ${R0} fill="${G1}"/><rect ${R0} fill="${G2}" mask="url(#${S.id("gm2")})"/><rect ${R0} fill="${G3}" mask="url(#${S.id("gm3")})"/>`;
   const FL1 = S.rg("grasfleck1", [[0, "#2f4818", 0.22], [1, "#2f4818", 0]]), FL2 = S.rg("grasfleck2", [[0, "#e4e89a", 0.2], [1, "#e4e89a", 0]]);
@@ -484,41 +483,80 @@ const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} $
   const Y = -141, p = pr(4.2, Y, 0), m = mass(Y);
   let k = "";
   RASEN_SCHATTEN = bodenSchatten(4.2, Y, .9, 9, .28).replace(/(-?\d+\.?\d*) (-?\d+\.?\d*)/g, (q, x, y) => `${Math.min(+x, BR + 4)} ${y}`);
-  /* Stamm mit Längsrissen und Wurzelanlauf */
+  /* glatter, sich verjüngender Ast: Umriss über die Normalen, Licht oben links */
+  const ast = (pts, w0, w1) => {
+    const L = [], R = [];
+    for (let i = 0; i < pts.length; i++) {
+      const t = i / (pts.length - 1), w = (w0 + (w1 - w0) * t) / 2;
+      const a = pts[Math.max(0, i - 1)], c = pts[Math.min(pts.length - 1, i + 1)], dx = c[0] - a[0], dy = c[1] - a[1], l = Math.hypot(dx, dy) || 1;
+      L.push([pts[i][0] + dy / l * w, pts[i][1] - dx / l * w]); R.push([pts[i][0] - dy / l * w, pts[i][1] + dx / l * w]);
+    }
+    const glatt = (q) => { let d = `M${r(q[0][0])} ${r(q[0][1])}`; for (let i = 1; i < q.length - 1; i++) d += ` Q${r(q[i][0])} ${r(q[i][1])} ${r((q[i][0] + q[i + 1][0]) / 2)} ${r((q[i][1] + q[i + 1][1]) / 2)}`; return d + ` L${r(q[q.length - 1][0])} ${r(q[q.length - 1][1])}`; };
+    const e = pts[pts.length - 1];
+    const seite = (q) => q.reduce((s0, v) => s0 + v[1] + v[0] * .6, 0), oben = seite(L) < seite(R) ? L : R;
+    return `<path d="${glatt(L)} L${r(e[0])} ${r(e[1])} ${glatt(R.slice().reverse()).replace("M", "L")} Z" fill="#54402f"/><path d="${glatt(oben)}" stroke="#8c7460" stroke-width="${r(Math.max(.3, w1 * .25))}" fill="none" opacity=".7"/>`;
+  };
+  /* Stamm mit Wurzelanlauf */
   k += `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .3 * m)} ${r(p[1] - 4 * m)} ${r(p[0] - .6 * m)} ${r(p[1] - 6 * m)} ${r(p[0] - 22)} 52 L${r(p[0] - 10)} 50 C${r(p[0] + .1 * m)} ${r(p[1] - 6 * m)} ${r(p[0] + .38 * m)} ${r(p[1] - 4 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0)}"/>`;
-  { let d = ""; for (let i = 0; i < 9; i++) { const x = p[0] + (-.32 + i * .09) * m, y0 = p[1] - (1 + rnd() * 2) * m, y1 = 70 + rnd() * 30; d += `M${r(x)} ${r(y0)} C${r(x + 1)} ${r((y0 + y1) / 2)} ${r(x - 1)} ${r((y0 + y1) / 2)} ${r(x + .4)} ${r(y1)} `; } k += `<path d="${d}" stroke="#2a1f17" stroke-width=".55" fill="none" opacity=".55"/>`; }
-  /* Gabelung bei y ≈ 72: drei starke Äste laufen nach links oben, nach oben und nach rechts aus dem Bild */
-  const ast = (pts, w0, w1) => { let d = "", e = ""; for (let i = 0; i < pts.length; i++) { const t = i / (pts.length - 1), w = w0 + (w1 - w0) * t; d += (i ? " L" : "M") + `${r(pts[i][0] - w / 2)} ${r(pts[i][1])}`; e = ` L${r(pts[i][0] + w / 2)} ${r(pts[i][1])}` + e; } return `<path d="${d}${e} Z" fill="#4a3a2c"/>`; };
-  k += ast([[p[0] - 12, 74], [p[0] - 30, 58], [p[0] - 56, 44], [p[0] - 84, 36], [p[0] - 110, 30]], 9, 2.4);
-  k += ast([[p[0] - 8, 72], [p[0] - 10, 46], [p[0] - 4, 20], [p[0] + 2, 1]], 8, 4);
-  k += ast([[p[0] - 4, 76], [p[0] + 10, 58], [p[0] + 26, 46]], 7, 4);
-  k += ast([[p[0] - 56, 44], [p[0] - 70, 56], [p[0] - 92, 64], [p[0] - 104, 60]], 3, 1.2);
-  /* schweres Laubdach von oben rechts über das obere Drittel, die Kuppel bleibt frei;
-     gelappte Massen (Licht links oben, Schatten rechts unten), Himmelslücken */
-  const masse = (cx, cy, R, seed) => {
-    const z = zufall(seed); let g = "";
+  /* Borke der Rosskastanie: leicht gedreht, schuppig — schräge, gegeneinander versetzte Risse, Licht links */
+  {
+    const yU = p[1] - 1.2 * m, yO = 78;
+    let dunkel = "", hell = "";
+    for (let j = 0, y = yU; y > yO; j++, y -= 3.4 + rnd() * 1.2) {
+      const t = (yU - y) / (yU - yO), xl = p[0] - .4 * m + (-.2 * m - 4) * t * .3 + 1.4, xr = p[0] + .46 * m - (.46 * m + 2) * t * .45 - 1.4;
+      for (let x = xl + (j % 2 ? 2.2 : 0) + rnd(); x < xr - 1; x += 4.4 + rnd() * 1.6) {
+        const l = 2.6 + rnd() * 1.8, sk = .9 + rnd() * .5;
+        dunkel += `M${r(x)} ${r(y)} q${r(sk * .4)} ${r(-l / 2)} ${r(sk)} ${r(-l)} `;
+        hell += `M${r(x - .5)} ${r(y - .2)} q${r(sk * .4)} ${r(-l / 2)} ${r(sk)} ${r(-l + .4)} `;
+      }
+    }
+    k += `<path d="${hell}" stroke="#a48e78" stroke-width=".35" fill="none" opacity=".45"/><path d="${dunkel}" stroke="#2a1f17" stroke-width=".6" fill="none" opacity=".6" stroke-linecap="round"/>`;
+  }
+  /* Gabelung bei y ≈ 72: runde Äste mit Wulst, nach links oben, nach oben und nach rechts aus dem Bild */
+  const LAUB_HINTER = [[292, 96, 12, 10, "gruen"]];
+  const masse = (cx, cy, R, seed, fam) => {
+    const z = zufall(seed), [F, D] = KRONE[fam];
     const lap = []; for (let i = 0; i < 8; i++) { const a = z() * Math.PI * 2, d = R * (.35 + z() * .45); lap.push([cx + Math.cos(a) * d, cy + Math.sin(a) * d * .7, R * (.38 + z() * .2)]); }
     lap.push([cx, cy, R * .6]);
+    lap.sort((p1, q1) => p1[1] - q1[1]);
     const ok = (x, y, rr) => { rr = Math.min(rr, x + 1, BR + 1 - x, y + 1); return rr > .8 ? rr : 0; };
-    for (const [x, y, rr] of lap) { const q = ok(x, y, rr); if (q) g += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(q)}" fill="#8a6222"/>`; }
-    for (const [x, y, rr] of lap) { const q = ok(x - rr * .15, y - rr * .18, rr * .78); if (q) g += `<circle cx="${r(x - rr * .15)}" cy="${r(y - rr * .18)}" r="${r(q)}" fill="#b98330"/>`; }
-    for (const [x, y, rr] of lap.slice(0, 5)) { const q = ok(x - rr * .3, y - rr * .34, rr * .4); if (q) g += `<circle cx="${r(x - rr * .3)}" cy="${r(y - rr * .34)}" r="${r(q * .8)}" fill="#e2b24a" opacity=".55"/>`; }
+    let g = "";
+    for (const [x, y, rr] of lap) { const q = ok(x + rr * .12, y + rr * .14, rr); if (q) g += `<circle cx="${r(x + rr * .12)}" cy="${r(y + rr * .14)}" r="${r(q)}" fill="${D}"/>`; }
+    for (const [x, y, rr] of lap) { const q = ok(x, y, rr * .96); if (q) g += `<circle cx="${r(x)}" cy="${r(y)}" r="${r(q)}" fill="${F}"/>`; }
     return g;
   };
-  for (const [cx, cy, R, sd] of [[300, 10, 30, 1], [258, 6, 26, 2], [222, 14, 22, 3], [196, 34, 14, 4], [236, 44, 22, 5], [282, 46, 26, 6], [310, 70, 18, 7], [256, 74, 16, 8], [214, 60, 14, 9], [292, 96, 12, 10]]) k += masse(cx, cy, R, sd);
-  for (const [x, y, w] of [[240, 26, 4], [276, 32, 3.4], [222, 40, 3], [300, 56, 3.2], [264, 60, 2.6]]) k += `<ellipse cx="${x}" cy="${y}" rx="${w}" ry="${r(w * .7)}" fill="#a9c6df"/>`;
-  /* gefingerte Rosskastanienblätter am Rand des Laubdachs, durchhängende Zweige */
+  /* ein Laubballen hängt hinter dem Stamm (am rechten Ast), nicht frei davor */
+  k = LAUB_HINTER.map(([cx, cy, R, sd, f]) => masse(cx, cy, R, sd, f)).join("") + k;
+  k += ast([[p[0] - 13, 76], [p[0] - 30, 60], [p[0] - 56, 46], [p[0] - 84, 37], [p[0] - 112, 30]], 10, 2.4);
+  k += ast([[p[0] - 10, 74], [p[0] - 11, 46], [p[0] - 5, 20], [p[0] + 2, -2]], 9, 4);
+  k += ast([[p[0] - 6, 78], [p[0] + 10, 60], [p[0] + 26, 47], [p[0] + 30.6, 43.8]], 8, 4.6);
+  k += ast([[p[0] - 56, 46], [p[0] - 70, 56], [p[0] - 90, 62], [p[0] - 103, 60]], 3.4, 1.2);
+  /* schweres Laubdach von oben rechts über das obere Drittel, die Kuppel bleibt frei: innen gelbgrün, am Rand Ocker */
+  for (const [cx, cy, R, sd, f] of [[300, 10, 30, 1, "linde"], [258, 6, 26, 2, "gruen"], [222, 14, 22, 3, "linde"], [196, 34, 14, 4, "orange"], [236, 44, 22, 5, "gruen"], [282, 46, 26, 6, "linde"], [310, 70, 18, 7, "orange"], [256, 74, 16, 8, "linde"], [214, 60, 14, 9, "orange"]]) k += masse(cx, cy, R, sd, f);
+  for (const [x, y, w, sd] of [[240, 26, 5, 21], [276, 32, 4.2, 22], [222, 40, 3.6, 23], [300, 56, 3.8, 24], [264, 60, 3.2, 25]]) k += luecke(x, y, w, w * .7, sd);
+  /* gefingerte Rosskastanienblätter: kurzer heller Stiel zeigt zum Ast (nach oben), die Blättchen hängen */
   const blatt = (x, y, sz, rot, f) => {
-    let g = `<g transform="translate(${t2(x)} ${t2(y)}) rotate(${rot}) scale(${sz.toFixed(3)})"><path d="M0 0 L0 9" stroke="#7a5a2a" stroke-width=".5"/>`;
+    let g = `<g transform="translate(${t2(x)} ${t2(y)}) rotate(${rot}) scale(${sz.toFixed(3)})"><path d="M0 0 L0 4" stroke="#8a6a3a" stroke-width=".45"/>`;
     for (const [a, l] of [[-78, 5.6], [-42, 8], [-12, 9.6], [18, 9], [50, 7.2], [82, 5]]) g += `<path d="M0 0 C-1 ${r(-l * .35)} ${r(-2.6)} ${r(-l * .8)} 0 ${-l} C${r(2.6)} ${r(-l * .8)} 1 ${r(-l * .35)} 0 0 Z" fill="${f}" stroke="#8a5a22" stroke-width=".35" transform="rotate(${a})"/>`;
     return g + `</g>`;
   };
-  const rand = [[190, 46], [200, 62], [208, 74], [222, 82], [238, 88], [254, 92], [270, 98], [286, 106], [298, 110], [304, 104], [204, 30], [212, 20]];
-  for (const [x, y] of rand) for (let j = 0; j < 2; j++) k += blatt(x + (rnd() - .5) * 8, y + (rnd() - .5) * 6, .55 + rnd() * .35, Math.round(150 + rnd() * 60), ["#e2b24a", "#d39a32", "#c4862e", "#b9a040", "#e8c25a"][Math.floor(rnd() * 5)]);
-  for (let i = 0; i < 26; i++) { const x = 200 + rnd() * 100, y = 10 + rnd() * 74; k += blatt(x, y, .5 + rnd() * .35, Math.round(rnd() * 360), ["#e2b24a", "#d39a32", "#c4862e", "#e8c25a"][Math.floor(rnd() * 4)]); }
-  /* aufgeplatzte Stachelschalen mit glänzender Kastanie an kurzen Stielen */
-  const schale = (x, y) => { let g = `<path d="M${x} ${r(y - 3.2)} V${y}" stroke="#5a4a2a" stroke-width=".35"/><g transform="translate(${x} ${r(y + 1.4)})"><circle r="1.9" fill="#7f8f34"/><path d="M-1.9 0 Q0 -.6 1.9 0" stroke="#f4eedc" stroke-width=".6" fill="none"/>`; for (let a = 0; a < 10; a++) { const w = a * Math.PI / 5; g += `<path d="M${r(Math.cos(w) * 1.8)} ${r(Math.sin(w) * 1.8)} l${r(Math.cos(w) * .8)} ${r(Math.sin(w) * .8)}" stroke="#5f6f2a" stroke-width=".22"/>`; } return g + `<ellipse cx=".2" cy=".5" rx="1.1" ry=".9" fill="#7a3814"/><ellipse cx="-.2" cy=".2" rx=".4" ry=".22" fill="#fff" opacity=".6"/></g>`; };
-  for (const [x, y] of [[226, 86], [262, 96], [298, 108], [212, 70], [244, 90], [280, 102]]) k += schale(x, y);
+  const BF = ["#e2b24a", "#d39a32", "#c4862e", "#b5b04a", "#e8c25a", "#a8a650", "#7a4a22"];
+  const rand = [[190, 46], [200, 62], [208, 74], [222, 82], [238, 88], [254, 92], [270, 98], [286, 106], [298, 110], [304, 104], [204, 30], [212, 20], [181, 31], [187, 60]];
+  for (const [x, y] of rand) for (let j = 0; j < 2; j++) k += blatt(x + (rnd() - .5) * 8, y + (rnd() - .5) * 6, .55 + rnd() * .35, Math.round(155 + rnd() * 50), BF[Math.floor(rnd() * 7)]);
+  for (let i = 0; i < 22; i++) { const x = 200 + rnd() * 100, y = 12 + rnd() * 72; k += blatt(x, y, .5 + rnd() * .3, Math.round(150 + rnd() * 60), BF[Math.floor(rnd() * 6)]); }
+  /* Stachelschalen am kurzen Stiel: die Hälfte geschlossen (grüne Stachelkugel), die anderen mit drei
+     aufgebogenen Klappen — innen cremefarbene Schale, darin die runde, glänzende Kastanie, der matte Nabel seitlich */
+  S.def(`<g id="${S.id("schaleZu")}"><path d="M0 -3.4 V-1.6" stroke="#6a5a30" stroke-width=".35"/><circle r="1.9" fill="${S.rg("stachel", [[0, "#c2cc62"], [0.5, "#8a9a3a"], [1, "#56641f"]], 0.4, 0.35, 0.7)}"/><path d="${Array.from({ length: 16 }, (_, i) => { const w = i * Math.PI / 8 + .2; return `M${r(Math.cos(w) * 1.7)} ${r(Math.sin(w) * 1.7)} l${r(Math.cos(w) * .75)} ${r(Math.sin(w) * .75)}`; }).join(" ")}" stroke="#6a7a2a" stroke-width=".22"/></g>`);
+  {
+    let g = `<path d="M0 -3.4 V-1.4" stroke="#6a5a30" stroke-width=".35"/>`;
+    for (const rot of [-150, -30, 90]) {
+      g += `<g transform="rotate(${rot})"><path d="M0 -.3 Q1.2 -1.2 3 -.9 Q3.6 0 3 .9 Q1.2 1.2 0 .3 Z" fill="#7f8f34"/><path d="M.4 -.15 Q1.4 -.6 2.5 -.4 Q2.75 0 2.5 .4 Q1.4 .6 .4 .15 Z" fill="#e8dcb8"/><path d="M.4 .15 Q1.4 .7 2.6 .55" stroke="#c9b48a" stroke-width=".3" fill="none"/><path d="M3 -.9 Q3.6 0 3 .9" stroke="#8a5a22" stroke-width=".25" fill="none"/>`;
+      g += `<path d="M2.2 -1 l.2 -.6 M2.9 -.7 l.5 -.4 M3.3 0 l.6 0 M2.9 .7 l.5 .4 M2.2 1 l.2 .6" stroke="#5f6f2a" stroke-width=".2"/></g>`;
+    }
+    g += `<circle r="1.3" fill="${S.rg("kastanie", [[0, "#b8642c"], [0.55, "#7a3814"], [1, "#4a220c"]], 0.35, 0.3, 0.8)}"/><ellipse cx=".55" cy=".5" rx=".7" ry=".5" fill="#c9a878" transform="rotate(-35 .55 .5)"/><ellipse cx="-.5" cy="-.55" rx=".38" ry=".2" fill="#fff" opacity=".6" transform="rotate(-30 -.5 -.55)"/>`;
+    S.def(`<g id="${S.id("schaleAuf")}">${g}</g>`);
+  }
+  [[226, 86], [262, 96], [298, 108], [212, 70], [244, 90], [280, 102]].forEach(([x, y], i) => { k += `<use href="#${S.id(i % 2 ? "schaleZu" : "schaleAuf")}" transform="translate(${x} ${y + 1.4})"/>`; });
   /* am Stammfuß: Kastanien und offene Schalen auf dem Weg */
   for (const [dx, dy] of [[-22, 2], [-15, 4], [-9, 1.4]]) k += `<ellipse cx="${r(p[0] + dx)}" cy="${r(p[1] + dy)}" rx="1.3" ry=".9" fill="#7a3814"/><ellipse cx="${r(p[0] + dx - .3)}" cy="${r(p[1] + dy - .3)}" rx=".4" ry=".2" fill="#fff" opacity=".6"/>`;
   aufBoden(RASEN, RASEN_SCHATTEN);
@@ -546,7 +584,16 @@ const kleineFigur = (svg) => {
   const kopf = [p[0], p[1] - 1.25 * m];
   /* Rückansicht: Hinterkopf ganz mit grauem Haar, Dutt tief am Hinterkopf, schmaler Nacken, roter Schal als Ring um den Hals */
   const hk = [f.z.kopf.x * f.k, f.z.kopf.y * f.k], cm = f.k;
-  const hinterkopf = `<ellipse cx="${r(hk[0])}" cy="${r(hk[1] + 1 * cm)}" rx="${r(9.6 * cm)}" ry="${r(11.4 * cm)}" fill="${S.lg("grauhaar", [[0, "#d9d6d0"], [1, "#9e9a92"]], 0, 0, 1, 0)}"/><path d="M${r(hk[0] - 6 * cm)} ${r(hk[1] - 4 * cm)} Q${r(hk[0])} ${r(hk[1] - 9 * cm)} ${r(hk[0] + 6 * cm)} ${r(hk[1] - 3 * cm)}" stroke="#f2f0ec" stroke-width="${r(1.2 * cm * 10) / 10}" fill="none" opacity=".7"/><circle cx="${r(hk[0] + .5 * cm)}" cy="${r(hk[1] + 5 * cm)}" r="${r(4.6 * cm)}" fill="#a8a49c"/><circle cx="${r(hk[0] - .6 * cm)}" cy="${r(hk[1] + 4 * cm)}" r="${r(1.8 * cm)}" fill="#d9d6d0"/><rect x="${r(hk[0] - 3.4 * cm)}" y="${r(hk[1] + 10.4 * cm)}" width="${r(6.8 * cm)}" height="${r(2.2 * cm)}" fill="#e2b48e"/><ellipse cx="${r(hk[0])}" cy="${r(hk[1] + 13.6 * cm)}" rx="${r(8 * cm)}" ry="${r(2.8 * cm)}" fill="#c8323a"/>`;
+  const H = (x, y) => `${r(hk[0] + x * cm)} ${r(hk[1] + y * cm)}`;
+  let hinterkopf = `<ellipse cx="${r(hk[0])}" cy="${r(hk[1] + 1 * cm)}" rx="${r(9.4 * cm)}" ry="${r(11.2 * cm)}" fill="#b9b6b0"/><ellipse cx="${r(hk[0] + 2.4 * cm)}" cy="${r(hk[1] + 3 * cm)}" rx="${r(6.6 * cm)}" ry="${r(8.6 * cm)}" fill="#a29e97" opacity=".55"/>`;
+  /* Ohren: ein Hauch Haut links und rechts */
+  hinterkopf += `<ellipse cx="${r(hk[0] - 9.6 * cm)}" cy="${r(hk[1] + 3 * cm)}" rx="${r(1.3 * cm)}" ry="${r(2.6 * cm)}" fill="#e2b48e"/><ellipse cx="${r(hk[0] + 9.6 * cm)}" cy="${r(hk[1] + 3 * cm)}" rx="${r(1.2 * cm)}" ry="${r(2.6 * cm)}" fill="#c99a76"/>`;
+  /* matte Strähnen von der Stirn nach hinten zum Dutt */
+  hinterkopf += `<path d="M${H(-7, -6)} Q${H(-4, 0)} ${H(-1.4, 5)} M${H(-3.4, -9.4)} Q${H(-1.6, -2)} ${H(-.4, 4.6)} M${H(0, -10.2)} Q${H(.4, -3)} ${H(.6, 4.4)} M${H(3.6, -9.2)} Q${H(2.6, -2)} ${H(1.6, 4.6)} M${H(7, -5.6)} Q${H(4.4, 0)} ${H(2.6, 5)}" stroke="#8f8b85" stroke-width="${r(.7 * cm * 10) / 10 || .1}" fill="none"/>`;
+  /* der Dutt: kleiner, dunkler Knoten tief am Hinterkopf, mit Schatten darunter */
+  hinterkopf += `<ellipse cx="${r(hk[0] + .6 * cm)}" cy="${r(hk[1] + 8.6 * cm)}" rx="${r(4.6 * cm)}" ry="${r(2 * cm)}" fill="#5e5a54" opacity=".5"/><ellipse cx="${r(hk[0])}" cy="${r(hk[1] + 6.4 * cm)}" rx="${r(4 * cm)}" ry="${r(3.4 * cm)}" fill="#8f8b85"/><path d="M${H(-2.6, 5.4)} Q${H(0, 4.2)} ${H(2.6, 5.6)}" stroke="#76726c" stroke-width="${r(.6 * cm * 10) / 10 || .1}" fill="none"/>`;
+  /* schmaler Nacken über dem roten Schal */
+  hinterkopf += `<rect x="${r(hk[0] - 3.4 * cm)}" y="${r(hk[1] + 10.4 * cm)}" width="${r(6.8 * cm)}" height="${r(2.2 * cm)}" fill="#d9a882"/><ellipse cx="${r(hk[0])}" cy="${r(hk[1] + 13.6 * cm)}" rx="${r(8 * cm)}" ry="${r(2.8 * cm)}" fill="#c8323a"/><path d="M${H(-7.4, 13)} Q${H(0, 11)} ${H(7.4, 13)}" stroke="#e45a5a" stroke-width="${r(.8 * cm * 10) / 10 || .1}" fill="none"/>`;
   S.teil({ id: "spaziergaengerin", de: "die Spaziergängerin", syl: "spa-ZIER-gän-ge-rin", it: "la signora a passeggio", itSyl: "si-GNO-ra a pas-SEG-gio", en: "walker", x: kopf[0], y: kopf[1],
     kunst: `<g transform="translate(${t2(p[0] - kopf[0])} ${t2(p[1] - kopf[1])})"><g clip-path="url(#${S.id("sitz")})">${kleineFigur(f.svg)}</g>${hinterkopf}</g>`,
     tipp: "Sie macht eine Pause und schaut über den Teich zum Rathaus." });
@@ -560,6 +607,8 @@ const kleineFigur = (svg) => {
   for (const sg of [-1, 1]) g += `<path d="M${r(sg * (W / 2 - 4))} 0 L${r(sg * (W / 2 - 4))} ${r(-.45 * m)} L${r(sg * (W / 2 - 3))} ${r(-.92 * m)} L${r(sg * (W / 2 - 5))} ${r(-.92 * m)} L${r(sg * (W / 2 - 5))} ${r(-.45 * m)} L${r(sg * (W / 2 - 7))} 0 Z" fill="#2c2a28"/>`;
   g += `<rect x="${r(-W / 2)}" y="${r(-.47 * m)}" width="${r(W)}" height="1.4" rx=".3" fill="${HOLZ}"/>`;
   for (let i = 0; i < 3; i++) g += `<rect x="${r(-W / 2 + .4)}" y="${r(-.92 * m + i * 3.4)}" width="${r(W - .8)}" height="2.3" rx=".5" fill="${HOLZ}"/><rect x="${r(-W / 2 + .4)}" y="${r(-.92 * m + i * 3.4)}" width="${r(W - .8)}" height=".6" fill="#c0905a" opacity=".6"/><rect x="${r(-W / 2 + .4)}" y="${r(-.92 * m + i * 3.4 + 1.9)}" width="${r(W - .8)}" height=".4" fill="#2e1c0c" opacity=".4"/>`;
+  /* Fangfläche über den ganzen Umriss (Lehne, Sitz, zwischen den Beinen): unsichtbar, aber sie fängt den Tipp */
+  g += `<rect x="${r(-W / 2)}" y="${r(-.93 * m)}" width="${r(W)}" height="${r(.93 * m)}" fill="rgba(255,255,255,0.001)"/>`;
   k += `<g transform="translate(${t2(p[0])} ${t2(p[1])})">${g}</g>`;
   const A = anker(p[0] + W * .3, p[1] - .6 * m, k);
   S.teil({ id: "bank", de: "die Bank", syl: "BANK", it: "la panchina", itSyl: "pan-CHI-na", en: "bench", x: A.x, y: A.y, kunst: A.kunst,
@@ -586,13 +635,14 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
 }
 
 /* =====================================================================
-   13 — DIE DECKE (Picknick links vorn) — Lupe: Butterkeks, Lüttje Lage,
+   13 — DIE DECKE (Picknick links vorn) — Lupe: Butterkeks, Apfelschorle,
         Kastanie, Postkarte
    ===================================================================== */
 {
   const Y0 = -144.65, Y1 = -143.1, X0 = -2.5, X1 = -.3;
   const a = pr(X0, Y0, 0), b = pr(X1, Y0, 0), c = pr(X1, Y1, 0), d = pr(X0, Y1, 0);
-  const L = (u, v) => [a[0] + (b[0] - a[0]) * u + (d[0] - a[0]) * v + (c[0] - b[0] - d[0] + a[0]) * u * v, a[1] + (b[1] - a[1]) * u + (d[1] - a[1]) * v + (c[1] - b[1] - d[1] + a[1]) * u * v];
+  /* echte Projektion: die Karoreihen werden nach hinten flacher (vorn ≈ 30 % höher als hinten) */
+  const L = (u, v) => pr(X0 + (X1 - X0) * u, Y0 + (Y1 - Y0) * v, 0);
   let k = bodenSchatten(-1.4, -143.1, 2.2, .05, .2);
   /* Vichy-Karo: weiß, hellrot, dunkelrot an den Kreuzungen */
   k += `<path d="M${P(a)} L${P(b)} L${P(c)} L${P(d)} Z" fill="#f6f1e8"/>`;
@@ -603,7 +653,7 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
   k += `<path d="M${P(L(.86, 0))} L${P(b)} L${P(L(1, .2))} Z" fill="#efe6d8"/><path d="M${P(L(.86, 0))} L${P(L(1, .2))}" stroke="#b8a890" stroke-width=".4"/><path d="M${P(a)} L${P(L(.86, 0))}" stroke="#a83a40" stroke-width=".8"/>`;
   const auf = (u, v) => L(u, v), mdt = (v) => mass(Y0 + (Y1 - Y0) * v) / 100;
   /* DER BUTTERKEKS: offene Packung, ein Keks herausgezogen, zwei Kekse daneben, Krümel */
-  const K = auf(.24, .5), km = mdt(.5);
+  const K = auf(.4, .4), km = mdt(.4);
   const keks = (cx, cy, rot) => {
     const Lk = 6.5, Bk = 5.4, n1 = 14, n2 = 12, pts = [];
     for (let i = 0; i < n1; i++) pts.push([-Lk / 2 + (i + .5) * Lk / n1, -Bk / 2]);
@@ -621,23 +671,27 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
   kg += keks(-11.4, -3.2, -20) + keks(9.4, -.2, -8) + keks(14.4, .8, 14);
   for (let i = 0; i < 8; i++) kg += `<circle cx="${r(6 + rnd() * 10)}" cy="${r(1.6 + rnd() * 1.6)}" r=".25" fill="#d9a85a"/>`;
   k += `<g transform="translate(${t2(K[0])} ${t2(K[1])}) scale(${(km * 1.15).toFixed(5)})">${kg}</g>`;
-  /* DIE LÜTTJE LAGE: dunkles Bier und Korn auf dem Holzbrettchen */
-  const L0 = auf(.66, .62), lm = mdt(.62);
-  let lg = `<path d="M-6 1.2 L6 1.2 L7 -.6 L-5 -.6 Z" fill="#2a3418" opacity=".25"/><path d="M-5 0 L5 0 L5.6 -.8 L-4.4 -.8 Z" fill="#a8743f"/>`;
-  lg += `<path d="M-3.6 -.6 L-1 -.6 L-.8 -8 L-3.8 -8 Z" fill="#e8eef0" opacity=".5"/><path d="M-3.5 -.8 L-1.1 -.8 L-.9 -6.6 L-3.7 -6.6 Z" fill="#3a1e0e"/><path d="M-3.7 -6.6 L-.9 -6.6 L-.85 -7.4 L-3.75 -7.4 Z" fill="#e8d8b8"/><path d="M-3.3 -6.4 L-3 -1.2" stroke="#fff" stroke-width=".3" opacity=".6"/>`;
-  lg += `<path d="M1 -.6 L3.2 -.6 L3.4 -4.6 L.8 -4.6 Z" fill="#eef4f6" opacity=".6"/><path d="M1.1 -.8 L3.1 -.8 L3.25 -3.6 L.95 -3.6 Z" fill="#f4f8f8" opacity=".85"/>`;
+  /* DIE APFELSCHORLE: Glasflasche mit Etikett und ein Glas mit Bläschen */
+  const L0 = auf(.6, .62), lm = mdt(.62);
+  let lg = `<path d="M-9 1.2 L9 1.2 L10.4 -.8 L-7.6 -.8 Z" fill="#2a3418" opacity=".25"/>`;
+  lg += `<path d="M-7.4 0 L-1.4 0 L-1.4 -15 Q-1.4 -17.6 -3.2 -19 L-3.2 -22.6 L-5.6 -22.6 L-5.6 -19 Q-7.4 -17.6 -7.4 -15 Z" fill="#dcebd8" opacity=".55"/>`;
+  lg += `<path d="M-7.1 -.3 L-1.7 -.3 L-1.7 -14.6 L-7.1 -14.6 Z" fill="#e2a43a" opacity=".9"/><rect x="-7.4" y="-10.6" width="6" height="5.2" fill="#f4efe2"/><circle cx="-4.4" cy="-8" r="1.5" fill="#c8323a"/><path d="M-4.4 -9.5 q.4 -.8 1 -.9" stroke="#3f6e2a" stroke-width=".4" fill="none"/>`;
+  lg += `<rect x="-5.8" y="-24" width="2.8" height="1.6" rx=".3" fill="#3f7a3a"/><path d="M-6.6 -14 L-6.6 -1.2" stroke="#fff" stroke-width=".6" opacity=".55"/><path d="M-2.2 -14 L-2.2 -1" stroke="#7a4a12" stroke-width=".5" opacity=".35"/>`;
+  lg += `<path d="M1.2 0 L6.6 0 L7.2 -10.4 L.6 -10.4 Z" fill="#eef4f4" opacity=".45"/><path d="M1.4 -.3 L6.4 -.3 L6.9 -8 L.9 -8 Z" fill="#e8b04a" opacity=".88"/><ellipse cx="3.9" cy="-8" rx="3" ry=".55" fill="#f6d27a"/><ellipse cx="3.9" cy="-10.4" rx="3.3" ry=".6" fill="none" stroke="#f4f8f8" stroke-width=".25" opacity=".8"/>`;
+  for (const [x, y] of [[2.6, -2], [4.8, -3.4], [3.4, -5.2], [5.6, -6.4], [2.2, -6.8], [4.2, -1.2]]) lg += `<circle cx="${x}" cy="${y}" r=".28" fill="#fff8e0" opacity=".85"/>`;
+  lg += `<path d="M1.6 -9.6 L2 -1" stroke="#fff" stroke-width=".5" opacity=".6"/>`;
   k += `<g transform="translate(${t2(L0[0])} ${t2(L0[1])}) scale(${(lm * 1.1).toFixed(5)})">${lg}</g>`;
   /* Thermoskanne und Becher */
-  const T0 = auf(.86, .7), tm = mdt(.7);
+  const T0 = auf(.88, .78), tm = mdt(.78);
   k += `<g transform="translate(${t2(T0[0])} ${t2(T0[1])}) scale(${tm.toFixed(5)})"><path d="M-3 1 L8 1 L10 -.6 L-1 -.6 Z" fill="#2a3418" opacity=".25"/><rect x="-2.4" y="-22" width="5" height="22" rx="1" fill="#2f6b4a"/><rect x="-2.4" y="-22" width="1.4" height="22" fill="#5a9a72" opacity=".6"/><rect x="-2.6" y="-25" width="5.4" height="3.4" rx=".6" fill="#3a3a38"/><path d="M5 -.2 L5.4 -6 L9.2 -6 L9.6 -.2 Z" fill="#ece8e0"/><ellipse cx="7.3" cy="-6" rx="2" ry=".6" fill="#6a4020"/></g>`;
   /* DIE POSTKARTE mit den Nanas am Leineufer */
-  const PK = auf(.42, .22), pm = mdt(.22);
+  const PK = auf(.53, .2), pm = mdt(.2);
   let pg = `<g transform="rotate(-8) scale(1 .5)"><rect x="-7.4" y="-5" width="14.8" height="10" fill="#fff" stroke="#c9c6be" stroke-width=".2"/><rect x="-6.8" y="-4.4" width="13.6" height="8.8" fill="#9cc6e4"/><rect x="-6.8" y="1.6" width="13.6" height="2.8" fill="#7f9a50"/>`;
   for (const [x, f1, f2] of [[-4, "#e8443a", "#2f6fd0"], [0, "#f2c230", "#e8443a"], [4, "#2fa86a", "#f2c230"]]) pg += `<ellipse cx="${x}" cy="0" rx="1.6" ry="2.2" fill="${f1}"/><circle cx="${x}" cy="-2.8" r=".8" fill="#4a2a1a"/><path d="M${x - 1.4} -1.4 L${x - 2.4} -3 M${x + 1.4} -1.4 L${x + 2.6} -2.6" stroke="${f2}" stroke-width=".7"/><path d="M${x - .8} 1.8 L${x - 1.2} 3.4 M${x + .8} 1.8 L${x + 1.4} 3.4" stroke="${f2}" stroke-width=".7"/>`;
   pg += `<text x="0" y="-3.2" font-size="1.4" text-anchor="middle" fill="#fff" font-family="Georgia" font-weight="bold">Hannover</text></g>`;
   k += `<g transform="translate(${t2(PK[0])} ${t2(PK[1])}) scale(${pm.toFixed(5)})">${pg}</g>`;
   /* DIE KASTANIE: gesammelte Rosskastanien und eine aufgeplatzte Stachelschale auf der Decke */
-  const KA = auf(.1, .7), mm = mdt(.7);
+  const KA = auf(.29, .68), mm = mdt(.68);
   let kgz = "";
   const nuss = (x, y, rr, rot) => `<g transform="translate(${x} ${y}) rotate(${rot})"><ellipse cx="1" cy="1.2" rx="${rr * 1.1}" ry="${rr * .45}" fill="#2a3418" opacity=".3"/><path d="M${-rr} 0 Q${-rr} ${-rr * 1.15} 0 ${-rr * 1.05} Q${rr * 1.05} ${-rr} ${rr} 0 Q${rr * .7} ${rr * .55} 0 ${rr * .55} Q${-rr * .7} ${rr * .55} ${-rr} 0 Z" fill="${S.rg("kastanie", [[0, "#b8642c"], [0.55, "#7a3814"], [1, "#4a220c"]], 0.35, 0.3, 0.8)}"/><path d="M${-rr * .9} ${rr * .05} Q0 ${rr * .7} ${rr * .9} ${rr * .05} Q0 ${rr * .3} ${-rr * .9} ${rr * .05} Z" fill="#d8c09a"/><ellipse cx="${-rr * .35}" cy="${-rr * .55}" rx="${rr * .3}" ry="${rr * .14}" fill="#fff" opacity=".55"/></g>`;
   /* aufgeplatzte Schale: drei Klappen, innen weich weiß, außen grün mit Stacheln */
@@ -652,14 +706,15 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
   k += `<g transform="translate(${t2(KA[0])} ${t2(KA[1])}) scale(${(mm * 1.2).toFixed(5)})">${kgz}</g>`;
   const zw = 66, zh = 44;
   const A = anker(L(.5, .1)[0], L(.5, .1)[1], k);
-  S.teil({ oben: true, id: "decke", de: "die Decke", syl: "DE-cke", it: "la coperta", itSyl: "co-PER-ta", en: "picnic blanket", x: A.x, y: A.y, kunst: A.kunst,
+  S.teil({ id: "decke", de: "die Decke", syl: "DE-cke", it: "la coperta", itSyl: "co-PER-ta", en: "picnic blanket", x: A.x, y: A.y, kunst: A.kunst,
     tipp: "Bei schönem Wetter machen viele ein Picknick im Maschpark.",
-    zoom: (() => { const xs = [K[0], L0[0], PK[0], KA[0]], ys = [K[1], L0[1] - 8 * lm, PK[1], KA[1]]; const x0 = Math.min(...xs) - 7, x1 = Math.max(...xs) + 7, w = Math.max(54, x1 - x0), h = w * 2 / 3, my = (Math.min(...ys) + Math.max(...ys)) / 2; return { x: r(Math.max(0, x0)), y: r(Math.max(0, Math.min(HO - h, my - h / 2))), w: r(w), h: r(h) }; })(),
+    /* Lupe am unteren Bildrand: die Decke füllt zwei Drittel, die vier Dinge liegen dicht beisammen */
+    zoom: (() => { const xs = [K[0] - 7 * km, L0[0] + 8 * lm, PK[0], KA[0] - 5 * mm], x0 = Math.min(...xs) - 5, x1 = Math.max(...xs) + 5, w = Math.max(42, x1 - x0), h = w * 2 / 3; return { x: r((x0 + x1) / 2 - w / 2), y: r(HO - h), w: r(w), h: r(h) }; })(),
     unter: [
       { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 1.5 * km * 1.15, y: K[1] - 2 * km * 1.15, kunst: flaeche(-15 * km, -5 * km, 34 * km, 8 * km, .3),
         tipp: "Der Leibniz-Keks kommt aus Hannover und hat genau 52 Zähne." },
-      { id: "luettje_lage", de: "die Lüttje Lage", syl: "LÜTT-je LA-ge", it: "la Lüttje Lage (birra e acquavite di grano)", itSyl: "LÜTT-je LA-ge", en: "Lüttje Lage (beer and schnapps)", x: L0[0], y: L0[1] - 4 * lm, kunst: flaeche(-6.5 * lm, -5.5 * lm, 13 * lm, 10 * lm, .3),
-        tipp: "Bier und Korn trinkt man gleichzeitig aus zwei Gläsern in einer Hand. Das gehört zum Schützenfest, dem größten der Welt." },
+      { id: "apfelschorle", de: "die Apfelschorle", syl: "AP-fel-schor-le", it: "l'Apfelschorle (succo di mela e acqua frizzante)", itSyl: "AP-fel-schor-le", en: "apple spritzer", x: L0[0] - 1 * lm, y: L0[1] - 9 * lm, kunst: flaeche(-9 * lm, -16 * lm, 18 * lm, 18 * lm, .3),
+        tipp: "Apfelschorle ist Apfelsaft mit Sprudelwasser. Beim Picknick im Maschpark ist sie schön kalt." },
       { id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "la castagna d'India", itSyl: "ca-STA-gna d'IN-dia", en: "conker", x: KA[0] + 1.5 * mm, y: KA[1] - 1.5 * mm, kunst: flaeche(-8 * mm, -6 * mm, 18 * mm, 9 * mm, .3),
         tipp: "Im Herbst sammeln Kinder Kastanien und basteln daraus Tiere." },
       { id: "postkarte", de: "die Postkarte", syl: "POST-kar-te", it: "la cartolina", itSyl: "car-to-LI-na", en: "postcard", x: PK[0], y: PK[1], kunst: flaeche(-7.6 * pm, -3 * pm, 15.2 * pm, 6 * pm, .3),

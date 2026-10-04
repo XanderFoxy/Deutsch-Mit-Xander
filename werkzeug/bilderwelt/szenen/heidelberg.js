@@ -190,6 +190,8 @@ const kammY = (x) => { for (let i = 1; i < kamm.length; i++) if (x <= kamm[i][0]
   g += `<path d="M104 72 Q128 62 160 64 Q184 66 196 78 Q206 94 214 112 L92 112 Q96 86 104 72 Z" fill="#f2d890" opacity=".14" filter="url(#${S.id("weichberg")})"/>`;
   g += `<path d="${d}" fill="${S.lg("waldluft", [[0, "#e0ccbc", 0.7], [0.28, "#d8c8c0", 0.34], [0.6, "#c8c8c8", 0.08], [1, "#c8c8c8", 0]], 0, 14, 0, 110, ' gradientUnits="userSpaceOnUse"')}"/>`;
   g += `<path d="${d}" fill="${S.lg("waldlicht", [[0, "#10200c", 0.32], [0.45, "#10200c", 0.04], [0.75, "#ffc070", 0.1], [1, "#ffb860", 0.24]], 0, 0, 1, 0)}"/>`;
+  /* warmer Abenddunst unten am Hang: löst Schloss und Altstadt vom Wald */
+  g += `<rect x="0" y="40" width="320" height="80" fill="${S.lg("hangdunst", [[0, "#f6d8b0", 0], [0.5, "#f6d8b0", .2], [1, "#f6d8b0", .08]], 0, 0, 0, 1)}"/>`;
   k += `<g clip-path="url(#${S.id("berg")})">${g}</g>`;
   /* Herbstlaub: ganze Baumgruppen in Herbstfarben — dieselben Kronen wie im grünen Wald, nur gelb, orange
      und rot; gruppenweise verteilt, nach oben kleiner und blasser */
@@ -364,7 +366,7 @@ const SL = {};
     const N = 16, oben = [], unten = [];
     for (let i = 0; i <= N; i++) { const a = a0 + (a1 - a0) * i / N; unten.push(sp(cx + Math.cos(a) * R, cy + Math.sin(a) * R, zFuss)); }
     for (let i = N; i >= 0; i--) { const a = a0 + (a1 - a0) * i / N; oben.push(sp(cx + Math.cos(a) * R, cy + Math.sin(a) * R, zKrone(a) + (i % 3 === 1 ? -1.6 : i % 4 === 2 ? .8 : 0))); }
-    k += `<path d="${pfad([...unten, ...oben])}" fill="${RUINE}"/><path d="${pfad([...unten, ...oben])}" fill="${QUADER}"/>`;
+    k += `<path d="${pfad([...unten, ...oben])}" fill="${RUINE}"/><path d="${pfad([...unten, ...oben])}" fill="${QUADER}"/><path d="${pfad([...unten, ...oben])}" fill="${S.lg("dickglanz", [[0, "#ffc080", 0], [0.55, "#ffc080", 0], [0.85, "#ffd090", .45], [1, "#ffb070", .2]], 0, 0, 1, 0)}"/>`;
     /* die Bruchflächen (7 m Mauerstärke) als Bänder links (Schatten) und rechts (Abendlicht) */
     const band = (a, innen, f) => { const L = [], U = []; for (let z = zFuss; z <= zKrone(a) - 1; z += 4) { const j = (Math.sin(z * 1.7) * .8); L.push(sp(cx + Math.cos(a) * (R + j * .3), cy + Math.sin(a) * (R + j * .3), z)); U.push(sp(cx + Math.cos(a) * (R - d + j), cy + Math.sin(a) * (R - d + j), z)); } return `<path d="${pfad([...L, ...U.reverse()])}" fill="${f}"/>`; };
     /* Bruchflächen: 7 m dicke Mauer im Anschnitt — gestufte, unregelmäßige Kanten, Steinlagen; links im Schatten, rechts in der Abendsonne */
@@ -419,7 +421,7 @@ const SL = {};
       { id: "glockenturm", de: "der Glockenturm", syl: "GLO-cken-turm", it: "il campanile", itSyl: "cam-pa-NI-le", en: "bell tower", x: SL.glocke[0], y: SL.glocke[1], kunst: flaeche(-3.8, -18, 7.6, 30),
         tipp: "Im Glockenturm hing früher die Glocke, die vor Gefahr warnte." },
       { id: "friedrichsbau", de: "der Friedrichsbau", syl: "FRIED-richs-bau", it: "il Friedrichsbau", itSyl: "FRIED-richs-bau", en: "Friedrich Building", x: SL.fried[0], y: SL.fried[1], kunst: flaeche(-8, -12, 16, 18),
-        tipp: "Der Friedrichsbau hat als einziger großer Bau wieder ein Dach. An der Hofseite stehen 16 Fürstenfiguren (die Originale sind drinnen)." },
+        tipp: "Der Friedrichsbau wurde um 1900 wieder aufgebaut und hat wieder ein Dach. An der Hofseite stehen 16 Fürstenfiguren (die Originale sind drinnen)." },
       { id: "altan", de: "der Altan", syl: "al-TAN", it: "la terrazza", itSyl: "ter-RAZ-za", en: "terrace", x: SL.altan[0], y: SL.altan[1], kunst: flaeche(-15, -5, 30, 10),
         tipp: "Vom Altan, der großen Terrasse, sieht man über die ganze Altstadt bis zum Philosophenweg." },
       { id: "dicker_turm", de: "der Dicke Turm", syl: "DI-cke TURM", it: "la Torre Grossa", itSyl: "TOR-re GROS-sa", en: "Thick Tower", x: SL.dick[0], y: SL.dick[1], kunst: flaeche(-7, -12, 14, 20),
@@ -724,11 +726,14 @@ const VORNE = [];                          // Umrisse der Häuser vor der Kirche
     const p = proj(e, nn, z);
     k += `<path d="M${r(p[0] - s)} ${r(p[1] + s * .9)} V${r(p[1])} L${r(p[0])} ${r(p[1] - s * .8)} L${r(p[0] + s)} ${r(p[1])} V${r(p[1] + s * .9)} Z" fill="#7c8691"/><rect x="${r(p[0] - s * .45)}" y="${r(p[1] + s * .05)}" width="${r(s * .9)}" height="${r(s * .8)}" fill="#252a30"/>`;
   }
+  /* langer Schatten des Turms nach links (Osten) über das Kirchendach */
+  k += `<path d="${q([[TO, NW - .5, zT], [TO + 15, NW - .5, zT], [TO + 15, NM, zF], [TO, NM, zF]])}" fill="#141820" opacity=".28"/>`;
   /* Westturm: Vierkant mit Eckstrebepfeilern, Achteck mit Galerie, geschweifte Haube, Laterne, kleine Haube */
   const zV = 52, zA = 63;
   k += `<path d="${q([[TO, -412, z0], [TW, -412, z0], [TW, -412, zV], [TO, -412, zV]])}" fill="${ROT_N}"/><path d="${q([[TO, -412, z0], [TW, -412, z0], [TW, -412, zV], [TO, -412, zV]])}" fill="${QUADER}"/>`;
   k += `<path d="${q([[TW, -412, z0], [TW, -422, z0], [TW, -422, zV], [TW, -412, zV]])}" fill="${ROT_W}"/><path d="${q([[TW, -412, z0], [TW, -422, z0], [TW, -422, zV], [TW, -412, zV]])}" fill="${QUADER}"/>`;
   for (const z of [24, 36]) k += `<path d="${pfad([proj(TO, -412, z), proj(TW, -412, z), proj(TW, -422, z)], false)}" stroke="#e8a283" stroke-width=".45" fill="none"/>`;
+  k += `<path d="${pfad([proj(TW, -421.6, z0), proj(TW, -421.6, zV)], false)}" stroke="#ffd9a0" stroke-width=".7"/>`;
   for (const [e, n, f] of [[283.5, -412, "#2c1d1a"], [TW, -417, "#3a2420"]]) {
     for (const z of [38, 27]) { const p = proj(e, n, z), s = FOC / tief(e, n); k += `<path d="M${r(p[0] - s * 1)} ${r(p[1])} V${r(p[1] - s * 5)} Q${r(p[0])} ${r(p[1] - s * 6.6)} ${r(p[0] + s * 1)} ${r(p[1] - s * 5)} V${r(p[1])} Z" fill="${f}"/>`; }
   }
@@ -806,6 +811,8 @@ const ZB = 12.2, ZP = 13.6;
   { const o = [], u = [], fu = []; for (let i = 0; i <= 30; i++) { const s = -0.02 + i / 30 * 1.08; o.push(bp(s, ZP + .3)); u.push(bp(s, ZB - .3)); }
     for (let i = 1; i < 60; i++) { const s = -0.02 + i / 60 * 1.08; fu.push(`M${P(bp(s, ZB - .2))} L${P(bp(s, ZP + .2))}`); }
     k += `<path d="${pfad([...o, ...u.reverse()])}" fill="#c4684c"/><path d="${fu.join(" ")}" stroke="#7a3428" stroke-width=".12" opacity=".6"/>`; }
+  /* Schatten des Gesimses auf die Bogenzwickel */
+  { const g = []; for (let i = 0; i <= 30; i++) { const s = -0.02 + i / 30 * 1.08; g.push(bp(s, ZB - .7)); } k += `<path d="${pfad(g, false)}" stroke="#4a1e14" stroke-width=".55" opacity=".3" fill="none"/>`; }
   /* Gesims und Brüstungskrone */
   { const g = [], t = []; for (let i = 0; i <= 30; i++) { const s = -0.02 + i / 30 * 1.08; g.push(bp(s, ZB)); t.push(bp(s, ZP)); } k += `<path d="${pfad(g, false)}" stroke="#f0aa88" stroke-width=".6" fill="none"/><path d="${pfad(t, false)}" stroke="#ffd0b0" stroke-width=".5" fill="none"/>`; }
   /* Laternen auf der Brüstung */
@@ -821,7 +828,7 @@ const ZB = 12.2, ZP = 13.6;
     zoom: { x: 84, y: 112, w: 78, h: 52 },
     unter: [
       { id: "bogen", de: "der Bogen", syl: "BO-gen", it: "l'arco", itSyl: "AR-co", en: "arch", x: bM[0], y: bM[1], kunst: flaeche(-5, -3, 10, 6),
-        tipp: "Die Brücke hat neun Bögen. Bei Hochwasser fließt das Wasser durch alle." },
+        tipp: "Die Brücke hat neun Bögen. Durch die Bögen fließt der Neckar." },
       { id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: LAT[3][0], y: LAT[3][1], kunst: LAT.slice(2, 6).map(([x, y]) => flaeche(x - LAT[3][0] - 1.3, y - LAT[3][1] - 1.6, 2.6, 5, 0.4)).join(""),
         tipp: "Am Abend leuchten die Laternen auf der Brücke." },
     ] });
@@ -911,6 +918,10 @@ const ZB = 12.2, ZP = 13.6;
     g += `<path d="M${r(cx - .24 * R)} ${r(hz(5.25))} H${r(cx + .24 * R)}" stroke="#e8c35a" stroke-width=".25"/>`;
     const kn = hz(8.4);
     g += `<circle cx="${r(cx)}" cy="${r(kn - .45)}" r=".5" fill="#e8c35a"/><path d="M${r(cx)} ${r(kn - .9)} V${r(kn - 2.6)}" stroke="#3a4049" stroke-width=".3"/>`;
+    g += `<path d="M${r(cx + R - .35)} ${r(t[1] + .8)} V${r(f[1] - 1.6)}" stroke="#ffd9a0" stroke-width=".7" stroke-opacity=".85"/>`;
+    /* langer Abendschatten des Turms nach links über die Fahrbahn */
+    const yb = y(ZB);
+    g += `<path d="M${r(cx - R)} ${r(yb)} H${r(cx + R)} l-10 2.6 H${r(cx - R - 10)} Z" fill="#1d140c" opacity=".2"/>`;
     return { g, haube: [cx, hz(2.4)], w: 2 * R, cx, R, f };
   };
   /* Ostturm (links, weiter weg) */
