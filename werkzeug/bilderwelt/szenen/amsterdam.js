@@ -551,61 +551,67 @@ let GRACHT_KUNST = "";
 /* =====================================================================
    DIE BRÜCKEN — gemauerte Bögen hintereinander, mit Lichterketten
    ===================================================================== */
-const BOGEN = { b: 4.0, s: 0.5, k: 2.55 };   /* halbe Spannweite, Kämpfer, Scheitel */
+const BOGEN = { b: 4.5, s: 0.5, k: 3.0, dh: 0.3 };   /* Brücke 1: halbe Spannweite, Kämpfer, Scheitel, Fahrbahn höher */
+const BOGEN_R = { b: 3.6, s: 0.5, k: 2.35, dh: -0.1 };   /* die Brücken über die Reguliersgracht */
 const bogenPkt = (D, n = 16, b = BOGEN.b, s = BOGEN.s, k = BOGEN.k) => { const o = []; for (let i = 0; i <= n; i++) { const a = Math.PI * i / n; o.push(P(-b * Math.cos(a), D, s + (k - s) * Math.sin(a))); } return o; };
 const deckH = (X) => 3.2 + 0.25 * (1 - (X / 10) * (X / 10));
 let BRUECKEN_SVG = "", BRUECKE1 = "", LICHTER_UNTER = null;
 function bruecke(D, tiefe, nr) {
+  /* Brücke 1 (Keizersgracht) ist höher und weiter gespannt; die Reguliersgracht-Brücken dahinter sind niedriger —
+     so steht der Bogen der zweiten ganz im ersten, und die Schenkel der hinteren schauen unten heraus */
+  const G = nr === 0 ? BOGEN : BOGEN_R, dH = (X) => deckH(X) + G.dh;
   const s = F / D, licht = sonnig(0, D - 0.5, 2), rueck = D + tiefe;
   let g = "";
   /* Durchblick: Wasser unter der Brücke (dunkel), Seitenwände */
-  const vorn = bogenPkt(D), hinten = bogenPkt(rueck);
-  const loch = (pts, Dd) => "M" + pt(P(-BOGEN.b, Dd, -0.05)) + " L" + pts.map(pt).join(" L") + " L" + pt(P(BOGEN.b, Dd, -0.05)) + " Z";
+  const vorn = bogenPkt(D, 16, G.b, G.s, G.k), hinten = bogenPkt(rueck, 16, G.b, G.s, G.k);
+  const loch = (pts, Dd) => "M" + pt(P(-G.b, Dd, -0.05)) + " L" + pts.map(pt).join(" L") + " L" + pt(P(G.b, Dd, -0.05)) + " Z";
   g += `<path d="${loch(vorn, D)} ${loch(hinten, rueck)}" fill="${S.lg("tunnel", [[0, "#2a2a26"], [0.6, "#3c3a2e"], [1, "#4a4636"]])}" fill-rule="evenodd"/>`;
+  /* Wasser unter der Brücke: es spiegelt die helle Öffnung dahinter — kein schwarzer Balken */
+  g += `<path d="${pz([P(-G.b, D, 0), P(G.b, D, 0), P(G.b, rueck, 0), P(-G.b, rueck, 0)])}" fill="#8a8670" opacity=".6"/>`;
   /* Stirnseite mit Bogenöffnung */
   const L = [];
-  for (let X = -11; X <= 11.01; X += 1) L.push(P(X, D, deckH(X)));
+  for (let X = -11; X <= 11.01; X += 1) L.push(P(X, D, dH(X)));
   const stirn = "M" + pt(P(-11, D, 0)) + " L" + L.map(pt).join(" L") + " L" + pt(P(11, D, 0)) + " Z " + loch(vorn, D);
   const farbe = licht ? "#a35a3c" : "#6e4234";
   g += `<path d="${stirn}" fill="${farbe}" fill-rule="evenodd"/>`;
   /* Ziegelfugen: waagerechte Linien (sparsam) */
   const fern = D > 180;
   let fug = "";
-  if (!fern) for (let h = 0.6; h < 2.7; h += 0.42) fug += `M${pt(P(-11, D, h))} L${pt(P(-BOGEN.b - 0.2, D, h))} M${pt(P(BOGEN.b + 0.2, D, h))} L${pt(P(11, D, h))} `;
+  if (!fern) for (let h = 0.6; h < 2.7; h += 0.42) fug += `M${pt(P(-11, D, h))} L${pt(P(-G.b - 0.2, D, h))} M${pt(P(G.b + 0.2, D, h))} L${pt(P(11, D, h))} `;
   g += `<path d="${fug}" stroke="#3a2018" stroke-width="${r(Math.max(0.12, 0.03 * s))}" opacity=".45"/>`;
   /* Bogenring aus hellem Stein mit Fugen (Keilsteine) */
-  const aussen = bogenPkt(D, 16, BOGEN.b + 0.55, BOGEN.s, BOGEN.k + 0.5);
+  const aussen = bogenPkt(D, 16, G.b + 0.55, G.s, G.k + 0.5);
   g += `<path d="M${aussen.map(pt).join(" L")} L${vorn.slice().reverse().map(pt).join(" L")} Z" fill="${licht ? "#f4e4c4" : nr === 0 ? "#c4baa8" : "#e2d2b4"}"/>`;
   let keil = "";
   if (!fern) for (let i = 1; i < 16; i++) keil += `M${pt(vorn[i])} L${pt(aussen[i])} `;
   g += `<path d="${keil}" stroke="#6d655c" stroke-width="${r(Math.max(0.1, 0.025 * s))}"/>`;
   /* Schlussstein im Scheitel */
-  if (!fern) { const k1 = vorn[7], k2 = vorn[9], a1 = aussen[7], a2 = aussen[9], top = P(0, D, BOGEN.k + 0.62); g += `<path d="M${pt(k1)} L${pt(k2)} L${pt([a2[0], top[1]])} L${pt([a1[0], top[1]])} Z" fill="${licht ? "#fff4dc" : "#d6cfc2"}" stroke="#6d655c" stroke-width="${r(Math.max(0.1, 0.025 * s))}"/>`; }
+  if (!fern) { const k1 = vorn[7], k2 = vorn[9], a1 = aussen[7], a2 = aussen[9], top = P(0, D, G.k + 0.62); g += `<path d="M${pt(k1)} L${pt(k2)} L${pt([a2[0], top[1]])} L${pt([a1[0], top[1]])} Z" fill="${licht ? "#fff4dc" : "#d6cfc2"}" stroke="#6d655c" stroke-width="${r(Math.max(0.1, 0.025 * s))}"/>`; }
   /* Gesims (Naturstein) und Geländer */
   g += `<path d="M${L.map(pt).join(" L")} L${L.slice().reverse().map((q) => pt([q[0], q[1] + 0.32 * s])).join(" L")} Z" fill="${licht ? "#f6e8cc" : "#d2c6b2"}"/>`;
   /* Pfosten im festen Takt (alle 2 m) */
   let pf = "";
-  for (let X = -10; X <= 10.01; X += 2) { const a = P(X, D, deckH(X)); pf += `M${pt(a)} L${pt([a[0], a[1] - 1.05 * s])} `; }
+  for (let X = -10; X <= 10.01; X += 2) { const a = P(X, D, dH(X)); pf += `M${pt(a)} L${pt([a[0], a[1] - 1.05 * s])} `; }
   g += `<path d="${pf}" stroke="#141c18" stroke-width="${r(Math.max(0.3, 0.09 * s))}"/>`;
   const gel = L.map((q) => [q[0], q[1] - 1.0 * s]);
   let staebe = "";
-  for (let X = -10.5; X <= 10.5; X += fern ? 1.5 : 0.5) { const a = P(X, D, deckH(X)); staebe += `M${pt(a)} L${pt([a[0], a[1] - 1.0 * s])} `; }
+  for (let X = -10.5; X <= 10.5; X += fern ? 1.5 : 0.5) { const a = P(X, D, dH(X)); staebe += `M${pt(a)} L${pt([a[0], a[1] - 1.0 * s])} `; }
   g += `<path d="M${gel.map(pt).join(" L")}" stroke="#1f2a26" stroke-width="${r(Math.max(0.25, 0.06 * s))}" fill="none"/><path d="${staebe}" stroke="#1f2a26" stroke-width="${r(Math.max(0.1, 0.022 * s))}" opacity=".9"/>`;
   /* Sonne aus den Querkanälen: warme Kante oben */
   if (licht) g += `<path d="M${L.map(pt).join(" L")}" stroke="#ffd9a0" stroke-width="${r(0.08 * s)}" fill="none"/>`;
   /* Lichterkette: Birnen im Bogen und am Gesims — als gepunktete Linie (eine Birne alle 0,45 m) */
   const pd = (pts) => "M" + pts.map(pt).join(" L");
-  const kette = bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, BOGEN.s, BOGEN.k + 0.28), deckK = [];
-  for (let X = -10; X <= 10; X += 1) deckK.push(P(X, D - 0.05, deckH(X) - 0.05));
+  const kette = bogenPkt(D - 0.05, 22, G.b + 0.3, G.s, G.k + 0.28), deckK = [];
+  for (let X = -10; X <= 10; X += 1) deckK.push(P(X, D - 0.05, dH(X) - 0.05));
   const lp = `${pd(kette)} ${pd(deckK)}`, gap = r(Math.max(0.9, 0.45 * s)), bw = r(Math.max(0.5, 0.09 * s));
   g += `<path d="${lp}" fill="none" stroke="#ffcf7a" stroke-width="${r(Math.max(0.7, 0.2 * s))}" opacity=".35" filter="url(#${S.id("glimm")})"/><path d="${lp}" fill="none" stroke="#fff6d8" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
   /* Spiegelung der Brücke: der gespiegelte Bogenring mit seinen Lichtern ergibt mit dem Bogen ein geschlossenes Oval */
   const sp = [];
-  for (let X = -11; X <= 11.01; X += 1) sp.push(P(X, D, -deckH(X)));
-  const vornS = bogenPkt(D, 16, BOGEN.b, -BOGEN.s, -BOGEN.k), aussenS = bogenPkt(D, 16, BOGEN.b + 0.55, -BOGEN.s, -BOGEN.k - 0.5);
-  SPIEGEL_B += `<path d="M${pt(P(-11, D, 0))} L${sp.map(pt).join(" L")} L${pt(P(11, D, 0))} Z M${pt(P(-BOGEN.b, D, 0))} L${vornS.map(pt).join(" L")} L${pt(P(BOGEN.b, D, 0))} Z" fill="${mix(farbe, "#262a2a", 0.35)}" fill-rule="evenodd"/>`;
+  for (let X = -11; X <= 11.01; X += 1) sp.push(P(X, D, -dH(X)));
+  const vornS = bogenPkt(D, 16, G.b, -G.s, -G.k), aussenS = bogenPkt(D, 16, G.b + 0.55, -G.s, -G.k - 0.5);
+  SPIEGEL_B += `<path d="M${pt(P(-11, D, 0))} L${sp.map(pt).join(" L")} L${pt(P(11, D, 0))} Z M${pt(P(-G.b, D, 0))} L${vornS.map(pt).join(" L")} L${pt(P(G.b, D, 0))} Z" fill="${mix(farbe, "#262a2a", 0.35)}" fill-rule="evenodd"/>`;
   SPIEGEL_B += `<path d="M${aussenS.map(pt).join(" L")} L${vornS.slice().reverse().map(pt).join(" L")} Z" fill="${licht ? "#cbbd9e" : "#8f887c"}"/>`;
-  SPIEGEL_B += `<path d="${pd(bogenPkt(D - 0.05, 22, BOGEN.b + 0.3, -BOGEN.s, -BOGEN.k - 0.28))}" fill="none" stroke="#ffe2a0" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
+  SPIEGEL_B += `<path d="${pd(bogenPkt(D - 0.05, 22, G.b + 0.3, -G.s, -G.k - 0.28))}" fill="none" stroke="#ffe2a0" stroke-width="${bw}" stroke-linecap="round" stroke-dasharray="0 ${gap}"/>`;
   if (nr === 0) LICHTER_UNTER = { pts: kette, s, D };
   return g;
 }
@@ -798,7 +804,7 @@ S.teil({ id: "grachtenhaus", de: "das Grachtenhaus", syl: "GRACH-ten-haus", it: 
   const [bx, by] = P(0, BRUECKEN[0], 0);
   for (const u of ULMEN.fern) FERN.push({ D: u.D, g: ulme(u.X, u.D, u.seed).g });
   /* drei Räder lehnen am Geländer der ersten Brücke */
-  for (const [X, f] of [[-7.2, "#1d1e22"], [-5.6, "#2a4a7a"], [6.0, "#1d1e22"]]) { const D = BRUECKEN[0] + 0.4, [x, y] = P(X, D, deckH(X)); BRUECKE1 += radUse(x, y, F / D, f, X > 0); }
+  for (const [X, f] of [[-7.2, "#1d1e22"], [-5.6, "#2a4a7a"], [6.0, "#1d1e22"]]) { const D = BRUECKEN[0] + 0.4, [x, y] = P(X, D, deckH(X) + BOGEN.dh); BRUECKE1 += radUse(x, y, F / D, f, X > 0); }
   BRUECKEN_SVG = FERN.sort((a, b) => b.D - a.D).map((f) => f.g).join("");
   S.teil({ id: "bruecke", de: "die Brücke", syl: "BRÜ-cke", it: "il ponte", itSyl: "PON-te", en: "bridge", anker: [bx, by], kunst: BRUECKEN_SVG + BRUECKE1,
     tipp: "Hinter dieser Brücke liegen sechs weitere hintereinander — man sieht ihre Bögen und Lichter. Amsterdam hat über 1500 Brücken.",
@@ -807,7 +813,7 @@ S.teil({ id: "grachtenhaus", de: "das Grachtenhaus", syl: "GRACH-ten-haus", it: 
 
 /* 4 — DER RADFAHRER auf der ersten Brücke (fährt nach rechts; klein: eigene, schlanke Zeichnung) */
 {
-  const D = BRUECKEN[0] + 2.2, X = -2.4, [fx, fy] = P(X, D, deckH(X)), s = F / D;
+  const D = BRUECKEN[0] + 2.2, X = -2.4, [fx, fy] = P(X, D, deckH(X) + BOGEN.dh), s = F / D;
   const q = (a, b) => `${r(a * s)} ${r(b * s)}`, rr = 0.34;
   let k = `<g fill="none" stroke="#1b1d1f" stroke-width="${r(0.05 * s)}"><circle cx="${r(-0.55 * s)}" cy="${r(-rr * s)}" r="${r(rr * s)}"/><circle cx="${r(0.55 * s)}" cy="${r(-rr * s)}" r="${r(rr * s)}"/></g>`;
   k += `<path d="M${q(-0.55, -rr)} L${q(-0.1, -rr)} L${q(0.38, -0.82)} M${q(-0.1, -rr)} L${q(-0.18, -0.84)} L${q(0.38, -0.82)} L${q(0.55, -rr)} M${q(0.38, -0.82)} L${q(0.33, -1.02)} L${q(0.24, -1.04)}" stroke="#2d5a8a" stroke-width="${r(0.05 * s)}" fill="none"/>`;
