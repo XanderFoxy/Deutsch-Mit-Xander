@@ -3600,3 +3600,33 @@ XANDER (Funk 296, wörtlich): „Ja mach alles weiter keine Fragen stellen dann 
 - Aussprache-Funktion hochladen (wartet auf OK).
 - Tier-Bibliothek: Weg A, weiter zeichnen.
 - livechat.js und backend.js stehen weiter ganz in der Startliste.
+
+## Fassung 880 — Städte authentisch: Bier, Wein und Spezialitäten wieder da (Funk 299)
+
+XANDER (Funk 299, wörtlich): „Lass den Quatsch und stell den Alkohol wieder her das sind nur Bilder und die Länder sollen authentisch dargestellt werden bzw die Städte … es ist eine Seite um Deutsch zu lernen und zu verstehen und da können wir nicht irgendwelche Sachen verfälschen die im Original so sind … wenn wir was über Bier wissen wollen und übersetzen wollen dann wollen wir was über Bier wissen oder Wein oder was es gibt das sind Sachen die es in der Realität gibt die kannst du nicht verfälschen“.
+
+Damit gilt: Die Bilderwelt zeigt Städte und Länder so, wie sie sind – auch mit Bier, Wein und Schnaps als Lernwörtern. Die Regel „neue Szenen sind alkoholfrei“ aus 877/878 (Abschnitt 878) ist aufgehoben.
+
+### Ältere Städte: Ersetzungen aus 879 zurückgenommen
+- Frankfurt (Apfelwein), Düsseldorf (Altbier, Brauhaus), Nürnberg und Dresden (Glühwein), Regensburg (Biergarten, die Halbe), Stuttgart (Viertele), München (Bierzelt, „O'zapft is!“, Maß mit Bier, Bierbank) sind wieder genau wie vor 879 (Revert 31aace7).
+
+### Neue Städte aus 877: die echten Spezialitäten zurückgeholt
+Je Szene ein Zeichner, der gezielt nur das zurückholt, was wegen Alkohol ersetzt worden war. Danach ein unabhängiger Prüfer, der mit der alten Fassung vergleicht. Ein Suchlauf über die Geschichte aller 182 Szenen hat zusätzlich Potsdam gefunden.
+- **Hannover:** „die Lüttje Lage“ (Bier und Korn aus zwei Gläsern in einer Hand, Schützenfest) statt der Apfelschorle auf der Picknickdecke. Die Gläser sind nach den echten Maßen neu gezeichnet: Bierglas ≈ 8 cm, Ø 5,4 cm; Kornglas ≈ 8 cm, schmal.
+- **Trier:**
+  - Auf der Tafel steht wieder „Viez 0,25 l · Riesling · Flammkuchen“, auf dem Sonnenschirm „Riesling“.
+  - Die Lupen „der Viez“ (Viezporz) und „der Moselwein“ (Riesling im Römerglas) sind wieder da. Das Glanzlicht am Römerglas wächst jetzt mit der Glasgröße.
+- **Athen:** Der Kiefern-Tipp nennt wieder den Retsina (Harz der Aleppo-Kiefer).
+- **Weimar:** Am Marktstand steht wieder „Zwiebelkuchen · Federweißer“.
+- **Freiburg:** Schwarzwälder Kirschtorte wieder „mit einem Schuss Kirschwasser“.
+- **Heidelberg:** „Aus den Trauben vom Neckarhang wird Wein gemacht.“
+- **Potsdam:** Die Hermen von Sanssouci sind wieder „Begleiter des Weingottes Bacchus“.
+- Alle sieben Szenen: „alle Teile gut erreichbar“, gepackt 41–70 KB, frisch aus der Quelle gebaut.
+
+### Sonden
+- 878 grün, 876 grün.
+- 840 (alte Bilderwelt unverändert): 3 Prüfungen rot. Das ist NICHT neu in 880: Die Bilderwelt-Änderungen aus 877/878 in app.js wirken auch im Zweig der alten Bilderwelt; dort sind sie nicht als „nur neue Bilderwelt“-Weiche gebaut (Artikel-Modus, Lupenmarken, Zurück-Spur, Fangflächen). Das wird in 881 behoben: Der alte Zweig wird wieder Zeile für Zeile wie 812, die neuen Regeln gelten nur für die neue Bilderwelt.
+
+**Offen**
+- Tier-Bibliothek: neues Werkzeug (Skelett, Umriss, Licht, Fell, Füße, Köpfe, Vorprüfung) und Brücke in die App mit der ersten Szene „Tiere der Savanne“ sind im Bau.
+- Weiche der alten Bilderwelt (Sonde 840) – Fassung 881.

@@ -49,24 +49,22 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 879 — schnellerer Start, Lebensanzeige aus, Postfach, alkoholfreie Städte",
+  stand: "Fassung 880 — Städte authentisch: Bier, Wein und Spezialitäten wieder da",
 
   inArbeit: [
-    { seit: "2026-10-04T12:42",
+    { seit: "2026-10-04T14:50",
+      text: "Tier-Bibliothek: neues Werkzeug und Szene „Tiere der Savanne“" },
+    { seit: "2026-10-04T14:50",
+      text: "Alte Bilderwelt wieder genau wie 812 (Sonde 840)" },
+    { seit: "2026-10-04T14:50",
       text: "Aussprache-Funktion mit Wortliste hochladen (wartet auf OK)" },
-    { seit: "2026-10-04T12:42",
-      text: "Tier-Bibliothek weiter zeichnen" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-04T12:42",
-      text: "Start ohne Farbwellen, Übungen erst beim Öffnen" },
-    { seit: "2026-10-04T12:42",
-      text: "Schalter „Lebensanzeige aus“" },
-    { seit: "2026-10-04T12:42",
-      text: "Postfach: Suche, 5 Zuletzt, Alle" },
-    { seit: "2026-10-04T12:42",
-      text: "Ältere Stadtszenen alkoholfrei" },
+    { seit: "2026-10-04T14:50",
+      text: "Glühwein, Bier, Altbier, Apfelwein, Maß wieder in den älteren Städten" },
+    { seit: "2026-10-04T14:50",
+      text: "Lüttje Lage, Viez, Riesling, Retsina, Federweißer, Kirschwasser zurück" },
   ],
 };
