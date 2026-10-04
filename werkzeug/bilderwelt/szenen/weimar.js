@@ -469,7 +469,7 @@ const denkmalUnter = [];
     g += hand(10.8, -49.6, 80, 0.9);
     /* Kopf gehoben, Blick nach oben rechts: langer Hals, Adlernase, Haar aus der Stirn nach hinten gestrichen, kurze Koteletten */
     g += F("M-2.1 -91.6 L2.1 -91.6 L2.4 -86 L-2.4 -86 Z", "#4a4230") + kante("M-2 -91 L-2.3 -86.4", 0.4);
-    const kopf = `<path d="M-4.8 -96 Q-4.6 -101.8 .6 -102 Q5.8 -101.6 5.6 -95.6 Q6.4 -92 5.6 -89.6 Q4.6 -89 4.2 -90.2 Q4.8 -93.2 3.8 -96.6 Q.6 -99 -3.6 -96.8 Q-4.4 -93.4 -3.8 -90.2 Q-4.6 -89 -5.6 -89.8 Q-6 -92.8 -4.8 -96 Z" fill="${BRZ2}"/>` +
+    const kopf = `<path d="M-4.8 -96 Q-4.6 -101.8 .6 -102 Q5.8 -101.6 5.6 -95.6 Q5.9 -93.4 5 -92.4 Q4.4 -94 3.8 -96.6 Q.6 -99 -3.6 -96.8 Q-4.2 -94 -4.4 -92.4 Q-5.3 -93.6 -4.8 -96 Z" fill="${BRZ2}"/>` +
       gesicht(0.4, -95, 0, 0.7, false) +
       `<path d="M.9 -96.2 Q2.6 -94.2 2.2 -92.4 L1.2 -92.6 Z" fill="${HL}" opacity=".35"/>` +
       `<path d="M-4.4 -96.8 Q-3.6 -101 .6 -101.2 Q4.8 -101 5.4 -97.4 Q2.8 -99.6 .4 -99.4 Q-2.6 -99.2 -4.4 -96.8 Z" fill="${BRZ2}"/><path d="M-3.8 -97.6 Q-1.6 -100.4 2.8 -100" stroke="${HL}" stroke-width=".5" fill="none" opacity=".75"/>` +
