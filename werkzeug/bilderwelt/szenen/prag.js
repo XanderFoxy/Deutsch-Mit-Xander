@@ -161,14 +161,12 @@ function pfadeKlein(S) {
 
 /* Gegenlicht/Lichtkante für Figuren: Körper leicht abgedunkelt, eine warme Lichtkante INNEN an der
    sonnenzugewandten Seite (Form minus verschobene Form) */
-S.def(`<filter id="${S.id("kante")}" x="-10%" y="-5%" width="120%" height="110%" color-interpolation-filters="sRGB"><feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0" result="k"/><feOffset in="SourceAlpha" dx=".7" dy="0" result="v"/><feComposite in="SourceAlpha" in2="v" operator="out" result="r"/><feFlood flood-color="#ffe2b0" flood-opacity=".75"/><feComposite in2="r" operator="in" result="l"/><feMerge><feMergeNode in="k"/><feMergeNode in="l"/></feMerge></filter>`);
+S.def(`<filter id="${S.id("kante")}" x="-10%" y="-5%" width="120%" height="110%" color-interpolation-filters="sRGB"><feColorMatrix in="SourceGraphic" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 1 0" result="k"/><feOffset in="SourceAlpha" dx=".7" dy="0" result="v"/><feComposite in="SourceAlpha" in2="v" operator="out" result="r"/><feFlood flood-color="#ffe0b2" flood-opacity=".5"/><feComposite in2="r" operator="in" result="l"/><feMerge><feMergeNode in="k"/><feMergeNode in="l"/></feMerge></filter>`);
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 S.def(`<filter id="${S.id("dunst")}" x="-5%" y="-30%" width="110%" height="160%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".6"/></filter>`);
 S.def(`<filter id="${S.id("spiegel")}" x="-10%" y="-20%" width="120%" height="140%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation=".8 .3"/></filter>`);
 
 /* Stoffe */
-const SAND_L = S.lg("sandl", [[0, "#a59782"], [1, "#8c7e6b"]]);     /* Sandstein, zur Sonne */
-const SAND_S = S.lg("sands", [[0, "#5e564f"], [1, "#4a443f"]]);     /* Sandstein, Schatten */
 const SOCKEL = S.lg("sockel", [[0, "#a39582"], [0.6, "#8a7d6b"], [1, "#6f6456"]], 0, 0, 1, 0);
 const KUPFER = S.lg("kupfer", [[0, "#8fc7ad"], [0.5, "#5f9f83"], [1, "#3f7562"]], 0, 0, 1, 0);
 const SCHIEFER = S.lg("schiefer", [[0, "#5a5f6a"], [1, "#3a3e47"]], 0, 0, 1, 0);
@@ -547,192 +545,300 @@ S.hinten(`<rect width="400" height="130" fill="${S.rg("morgen", [[0, "#fff1d0", 
 
 /* =====================================================================
    8 — DIE KARLSBRÜCKE (Fahrbahn mit Pflaster, Brüstungen aus Sandstein)
+   Runde 3 (Antippbarkeit): Nur der nahe Teil bis 60 m ist das Teil „die Karlsbrücke“.
+   Der ferne Teil mit den fernen Statuen und Laternen gehört zur Kulisse – so meldet
+   weder der Himmel noch die Häuserzeile am Ufer ein falsches Wort.
    ===================================================================== */
-const BR = 4.75, BRH = 1.1, BRD = 0.6;   /* halbe Breite, Brüstungshöhe, -dicke */
-const STATUEN = [];   /* [s, Seite(-1/+1)] — über den Pfeilern, alle ~30 m */
+const BR = 4.75, BRH = 1.1, BRD = 0.6, QI = BR - BRD, NAHE = 60;   /* halbe Breite, Brüstungshöhe, -dicke */
+const STATUEN = [];   /* [s, Seite(-1/+1)] — über den Pfeilern, alle ~31 m */
 for (let i = 0; i < 15; i++) { STATUEN.push([34 + i * 31, 1]); STATUEN.push([30 + i * 31.4, -1]); }
+/* Laternen auf der Brüstung, je etwa 10 m hinter einer Statue (nie hinter einem Statuenkopf) */
+const LATERNEN = [[20, -1], [40, -1], [46, 1]];
+for (let i = 1; i < 15; i++) { if (30 + i * 31.4 + 10 < 500) LATERNEN.push([30 + i * 31.4 + 10, -1]); if (34 + i * 31 + 12 < 500) LATERNEN.push([34 + i * 31 + 12, 1]); }
 /* Sonne links hinten (Ostsüdost, 35° hoch): Schatten fallen nach vorn und 27° nach rechts, Länge 1,43 × Höhe */
 const SDS = 0.89 * 1.43, SDQ = 0.45 * 1.43;
 const BRUECKE_SCHATTEN = [];
-{
-  const S0 = 4, S1 = 505, QI = BR - BRD;
-  let k = "";
-  /* Pflaster: Grundfläche in Flucht, nach hinten heller (Dunst) */
-  k += poly([P(S0, -QI, 0), P(S1, -QI, 0), P(S1, QI, 0), P(S0, QI, 0)], S.lg("pflaster", [[0, "#c2b29c"], [0.35, "#a5967f"], [1, "#857868"]]));
-  /* Kopfsteinpflaster vorn: Reihen kleiner Granitsteine (Strich mit Lücken = Fugen), weiter hinten Linien */
-  let reihen = "";
-  for (let s = 5, i = 0; s < 24; s += 0.2, i++) {
-    const a = P(s + 0.1, -QI).split(" ").map(Number), b = P(s + 0.1, QI).split(" ").map(Number), dd = Dd(s, 0), w = 0.16 * F / dd;
-    const hh = Math.abs(Y(s, 0) - Y(s + 0.2, 0)) * 0.78;
-    const seg = strecke(`${a[0]} ${a[1]}`, `${b[0]} ${b[1]}`);
-    if (seg) reihen += `<path d="${seg}" stroke="${["#9c8d78", "#a99a84", "#958671", "#b0a18a"][i % 4]}" stroke-width="${r(hh * 100) / 100}" stroke-dasharray="${r(w * 0.84 * 100) / 100} ${r(w * 0.16 * 100) / 100}" stroke-dashoffset="${r(rnd() * w * 100) / 100}"/>`;
+const PFL = S.lg("pflaster", [[0, "#cbbba3"], [0.07, "#b9a88f"], [0.3, "#a5967f"], [1, "#857868"]], 0, 102, 0, 260, ' gradientUnits="userSpaceOnUse"');
+const SAND_L = S.lg("sandl", [[0, "#b9ab94"], [0.2, "#a59782"], [1, "#8c7e6b"]], 0, 102, 0, 260, ' gradientUnits="userSpaceOnUse"');
+const SAND_S = S.lg("sands", [[0, "#857b6f"], [0.2, "#5e564f"], [1, "#4a443f"]], 0, 102, 0, 260, ' gradientUnits="userSpaceOnUse"');
+/* Schatten einer Statue (Sockel 2,6 m, Figur bis 5,6 m) auf der Fahrbahn: breites Band schräg nach vorn rechts */
+const statuenSchatten = (s) => {
+  const sh = (ds, h) => P(s + ds + h * SDS, -BR - 0.2 + h * SDQ);
+  return poly([sh(-1.15, 1.25), sh(1.15, 1.25), sh(1.15, 2.6), sh(0.62, 2.6), sh(0.55, 4.5), sh(0.28, 5.6), sh(-0.3, 5.6), sh(-0.55, 4.5), sh(-0.65, 2.6), sh(-1.15, 2.6)], "#2b2a3a", ` opacity=".45"`);
+};
+const laternenSchatten = (s) => strecke(P(s + BRH * SDS, -QI + 0.4), P(s + 4.3 * SDS, -BR + 0.3 + 4.3 * SDQ));
+function bruecke(S0, S1) {
+  const nah = S0 < 10;
+  let k = poly([P(S0, -QI, 0), P(S1, -QI, 0), P(S1, QI, 0), P(S0, QI, 0)], PFL);
+  if (nah) {
+    /* Kopfsteinpflaster vorn: Reihen kleiner Granitsteine (Strich mit Lücken = Fugen) */
+    let reihen = "";
+    for (let s = 5, i = 0; s < 24; s += 0.2, i++) {
+      const a = P(s + 0.1, -QI).split(" ").map(Number), b = P(s + 0.1, QI).split(" ").map(Number), dd = Dd(s, 0), w = 0.16 * F / dd;
+      const hh = Math.abs(Y(s, 0) - Y(s + 0.2, 0)) * 0.78;
+      const seg = strecke(`${a[0]} ${a[1]}`, `${b[0]} ${b[1]}`);
+      if (seg) reihen += `<path d="${seg}" stroke="${["#9c8d78", "#a99a84", "#958671", "#b0a18a"][i % 4]}" stroke-width="${r(hh * 100) / 100}" stroke-dasharray="${r(w * 0.84 * 100) / 100} ${r(w * 0.16 * 100) / 100}" stroke-dashoffset="${r(rnd() * w * 100) / 100}"/>`;
+    }
+    k += `<g pointer-events="none">${reihen}</g>`;
   }
-  k += `<g pointer-events="none">${reihen}</g>`;
-  let fu = "";
-  for (let q = -QI + 0.35; q < QI; q += 0.35) fu += strecke(P(24, q), P(160, q));
-  k += `<path d="${fu}" stroke="#6d6253" stroke-width=".16" opacity=".4"/>`;
-  let qu = "";
-  for (let s = 24; s < 160; s += s < 40 ? 0.4 : s < 80 ? 0.8 : 1.6) qu += strecke(P(s, -QI), P(s, QI));
-  k += `<path d="${qu}" stroke="#6d6253" stroke-width=".14" opacity=".35"/>`;
-  /* Lichtkuppen auf den Steinen, nur vorn */
-  let st = "";
-  for (let i = 0; i < 200; i++) { const s = 5 + Math.pow(rnd(), 1.6) * 20, q = -QI + rnd() * 2 * QI; const [x, y] = P(s, q).split(" ").map(Number); if (y < 259 && x > 1 && x < 398) st += `M${r(x)} ${r(y)}h${r(0.3 + 12 / s)}`; }
-  k += `<path d="${st}" stroke="#eadfcb" stroke-width=".45" opacity=".55"/>`;
-  /* Brüstungen: Innenseite (links im Schatten, rechts in der Sonne), Oberseite mit Lichtkante, Quaderfugen */
+  /* Längs- und Querfugen in der Flucht */
+  const a = Math.max(S0, 24), b = Math.min(S1, 160);
+  if (a < b) {
+    let fu = "", qu = "";
+    for (let q = -QI + 0.35; q < QI; q += 0.35) fu += strecke(P(a, q), P(b, q));
+    for (let s = 24; s < 160; s += s < 40 ? 0.4 : s < 80 ? 0.8 : 1.6) if (s >= S0 && s <= S1) qu += strecke(P(s, -QI), P(s, QI));
+    k += `<path d="${fu}" stroke="#6d6253" stroke-width=".16" opacity=".4"/><path d="${qu}" stroke="#6d6253" stroke-width=".14" opacity=".35"/>`;
+  }
+  if (nah) {
+    /* Lichtkuppen auf den Steinen, nur vorn */
+    let st = "";
+    for (let i = 0; i < 200; i++) { const s = 5 + Math.pow(rnd(), 1.6) * 20, q = -QI + rnd() * 2 * QI; const [x, y] = P(s, q).split(" ").map(Number); if (y < 259 && x > 1 && x < 398) st += `M${r(x)} ${r(y)}h${r(0.3 + 12 / s)}`; }
+    k += `<path d="${st}" stroke="#eadfcb" stroke-width=".45" opacity=".55"/>`;
+  }
+  /* Brüstungen: drei Quaderlagen mit versetzten Stoßfugen, darüber die Abdeckplatte (Stirnkante steht vor,
+     dunkle Schattenfuge darunter, Oberseite hell); links Schattenseite, rechts Sonnenseite */
   const bruestung = (q0, innen, seite) => {
-    let g = poly([P(S0, innen, 0), P(S1, innen, 0), P(S1, innen, BRH), P(S0, innen, BRH)], seite < 0 ? SAND_S : SAND_L);
-    g += poly([P(S0, innen, BRH), P(S1, innen, BRH), P(S1, q0, BRH), P(S0, q0, BRH)], seite < 0 ? "#9a8f80" : "#c3b59d");
-    let f = "", v = "";
-    for (let s = S0 + 0.8; s < 200; s += s < 30 ? 1.2 : 1.6) f += strecke(P(s, innen, 0), P(s, innen, BRH));
-    f += strecke(P(S0, innen, 0.37), P(S1, innen, 0.37)) + strecke(P(S0, innen, 0.74), P(S1, innen, 0.74));
-    /* verwitterte helle Flecken und dunkle Rinnspuren auf dem Sandstein, nur nah */
-    for (let s = S0 + 1; s < 40; s += 1.3 + rnd() * 2) v += strecke(P(s, innen, 0.95), P(s + 0.05, innen, 0.1 + rnd() * 0.4));
-    g += `<path d="${f}" stroke="${seite < 0 ? "#3e3833" : "#6d6253"}" stroke-width=".22" opacity=".55"/><path d="${v}" stroke="#3a332c" stroke-width=".5" opacity=".25"/>`;
-    g += `<path d="${strecke(P(S0, innen, BRH), P(S1, innen, BRH))}" stroke="${seite < 0 ? "#c9bca6" : "#f0e4cc"}" stroke-width=".55"/>`;
+    const L = seite > 0, qv = innen - seite * 0.05, HP = BRH - 0.16;
+    let g = poly([P(S0, innen, 0), P(S1, innen, 0), P(S1, innen, HP), P(S0, innen, HP)], L ? SAND_L : SAND_S);
+    let f = strecke(P(S0, innen, 0.32), P(S1, innen, 0.32)) + strecke(P(S0, innen, 0.64), P(S1, innen, 0.64));
+    for (let c = 0; c < 3; c++) {
+      const h0 = c * 0.32, h1 = Math.min(HP, h0 + 0.32), L0 = 1.3;
+      for (let s = S0 + (c % 2 ? L0 / 2 : 0.2); s < Math.min(S1, nah ? 60 : 120); s += s < 40 ? L0 : 1.8) if (nah || c === 1) f += strecke(P(s, innen, h0), P(s, innen, c === 1 && !nah ? HP : h1));
+    }
+    g += `<path d="${f}" stroke="${L ? "#6d6253" : "#3e3833"}" stroke-width=".22" opacity=".5"/>`;
+    /* Fleckung des Sandsteins (nur nah) */
+    if (nah) {
+      let fl = "";
+      for (let s = S0 + 2; s < 40; s += 1.5 + rnd() * 2.5) { const h = 0.1 + rnd() * 0.5, l = 0.5 + rnd() * 1.2, d = 0.15 + rnd() * 0.25; fl += `M${P(s, innen, h)} L${P(s + l, innen, h + d * 0.4)} L${P(s + l * 0.8, innen, h + d)} L${P(s - 0.2, innen, h + d * 0.7)}Z`; }
+      g += `<path d="${fl}" fill="${L ? "#7a6d5c" : "#2e2924"}" opacity=".16"/>`;
+    }
+    g += poly([P(S0, innen, HP), P(S1, innen, HP), P(S1, innen, HP + 0.03), P(S0, innen, HP + 0.03)], "#2e2924", ` opacity=".55"`);
+    g += poly([P(S0, qv, HP + 0.02), P(S1, qv, HP + 0.02), P(S1, qv, BRH), P(S0, qv, BRH)], L ? "#c8baa2" : "#837a6d");
+    g += poly([P(S0, qv, BRH), P(S1, qv, BRH), P(S1, q0, BRH), P(S0, q0, BRH)], L ? "#ddd0b8" : "#b2a794");
+    g += `<path d="${strecke(P(S0, qv, BRH), P(S1, qv, BRH))}" stroke="${L ? "#f6ead2" : "#d6cab4"}" stroke-width=".5"/>`;
     return g;
   };
   k += bruestung(-BR, -QI, -1) + bruestung(BR, QI, 1);
   /* Schatten der linken Brüstung als schmaler Streifen auf dem Pflaster */
-  k += poly([P(S0, -QI), P(S1, -QI), P(S1 + BRH * SDS, -QI + BRH * SDQ), P(S0 + BRH * SDS, -QI + BRH * SDQ)], "#2b2a3a", ` opacity=".28" pointer-events="none"`);
-  /* lange Schatten der Statuen links (Sockel 2,6 m breit, Figur schmaler, zusammen 6 m hoch) quer über die Fahrbahn */
-  let sch = "";
-  for (const [s, sei] of STATUEN) if (sei < 0 && s < 260) {
-    const q = -QI, h1 = 2.6 - BRH, h2 = 5.9 - BRH;
-    sch += poly([P(s - 1.05, q), P(s + 1.05, q), P(s + 1.05 + h1 * SDS, q + h1 * SDQ), P(s + 0.55 + h1 * SDS, q + h1 * SDQ), P(s + 0.4 + h2 * SDS, q + h2 * SDQ), P(s - 0.3 + h2 * SDS, q + h2 * SDQ), P(s - 0.5 + h1 * SDS, q + h1 * SDQ), P(s - 1.05 + h1 * SDS, q + h1 * SDQ)], "#2b2a3a", ` opacity=".38"`);
+  k += poly([P(S0, -QI), P(S1, -QI), P(S1 + BRH * SDS, -QI + BRH * SDQ), P(S0 + BRH * SDS, -QI + BRH * SDQ)], "#2b2a3a", ` opacity=".28"`);
+  /* Schatten der linken Statuen und Laternen */
+  let sch = "", ls = "";
+  for (const [s, sei] of STATUEN) if (sei < 0 && s >= S0 - 6 && s < Math.min(S1, 300)) sch += statuenSchatten(s);
+  for (const [s, sei] of LATERNEN) if (sei < 0 && s >= S0 - 4 && s < Math.min(S1, 300)) ls += laternenSchatten(s);
+  k += `<g pointer-events="none">${sch}<path d="${ls}" stroke="#2b2a3a" stroke-width="${nah ? 0.5 : 0.35}" opacity=".35"/></g>`;
+  return k;
+}
+
+/* =====================================================================
+   9 — STATUEN-WERKSTATT: Barockfiguren in Metern (Ursprung am Fuß, y nach oben negativ).
+   Geschwärzter Sandstein mit hellgrauen verwitterten Kanten (Nase, Schultern, Faltenkämme);
+   Licht von links hinten: linke Kanten hell, rechte Seiten dunkel.
+   ===================================================================== */
+const SF = S.lg("stf", [[0, "#7d756a"], [0.28, "#575149"], [0.7, "#36322d"], [1, "#221f1c"]], 0, 0, 1, 0);
+const SF2 = S.lg("stf2", [[0, "#6c655b"], [0.5, "#433e38"], [1, "#272421"]], 0, 0, 1, 0);
+const HAUT = S.rg("sthaut", [[0, "#b4aa9b"], [0.55, "#746b61"], [1, "#3a3631"]], 0.3, 0.35, 0.8);
+const STW = "#aaa093", STD = "#191715";
+const q2 = (v) => Math.round(v * 100) / 100;
+const pt = (x, y) => `${q2(x)} ${q2(y)}`;
+/* Kopf mit Gesichtsfläche: Lichthälfte links, Schattenhälfte rechts, Nasenkante; Kopfbedeckung */
+function kopf(kx, ky, s, art = "", blick = 0) {
+  let g = "";
+  if (art === "schleier" || art === "kapuze") g += `<path d="M${pt(kx - s * 1.05, ky + s * (art === "kapuze" ? 1.4 : 2))} C${pt(kx - s * 1.4, ky + s * 0.2)} ${pt(kx - s * 1.1, ky - s * 1.35)} ${pt(kx, ky - s * 1.35)} C${pt(kx + s * 1.1, ky - s * 1.35)} ${pt(kx + s * 1.45, ky + s * 0.2)} ${pt(kx + s * 1.15, ky + s * (art === "kapuze" ? 1.5 : 2.1))}Z" fill="${SF2}"/>`;
+  g += `<ellipse cx="${q2(kx)}" cy="${q2(ky)}" rx="${q2(s * 0.78)}" ry="${q2(s)}" fill="${HAUT}"/>`;
+  const nx = kx + blick * s * 0.3;
+  g += `<path d="M${pt(nx, ky - s)} A${q2(s * 0.78)} ${q2(s)} 0 0 1 ${pt(nx, ky + s)} Q${pt(nx + s * 0.28, ky)} ${pt(nx, ky - s)}Z" fill="${STD}" opacity=".42"/>`;
+  g += `<path d="M${pt(nx - s * 0.45, ky - s * 0.22)} h${q2(s * 0.85)}" stroke="${STD}" stroke-width="${q2(s * 0.12)}" opacity=".45"/>`;
+  g += `<path d="M${pt(nx + s * 0.04, ky - s * 0.2)} l${q2(s * 0.16)} ${q2(s * 0.45)} l${q2(-s * 0.16)} ${q2(s * 0.06)}" stroke="${STW}" stroke-width="${q2(s * 0.1)}" fill="none" opacity=".8"/>`;
+  if (art === "schleier" || art === "kapuze") g += `<path d="M${pt(kx - s * 0.82, ky - s * 0.2)} Q${pt(kx, ky - s * 1.5)} ${pt(kx + s * 0.82, ky - s * 0.2)} Q${pt(kx, ky - s * 0.85)} ${pt(kx - s * 0.82, ky - s * 0.2)}Z" fill="${SF2}"/><path d="M${pt(kx - s * 1.1, ky + s)} Q${pt(kx - s * 1.2, ky - s * 0.6)} ${pt(kx - s * 0.2, ky - s * 1.3)}" stroke="${STW}" stroke-width="${q2(s * 0.12)}" fill="none" opacity=".6"/>`;
+  else if (art === "birett") g += `<path d="M${pt(kx - s * 0.86, ky - s * 0.5)} L${pt(kx - s * 0.8, ky - s * 1.42)} L${pt(kx + s * 0.8, ky - s * 1.42)} L${pt(kx + s * 0.86, ky - s * 0.5)} Q${pt(kx, ky - s * 0.72)} ${pt(kx - s * 0.86, ky - s * 0.5)}Z" fill="#2c2824"/><path d="M${pt(kx - s * 0.32, ky - s * 1.42)} v${q2(-s * 0.45)} M${pt(kx + s * 0.3, ky - s * 1.42)} v${q2(-s * 0.4)}" stroke="#3a3530" stroke-width="${q2(s * 0.22)}"/><circle cx="${q2(kx)}" cy="${q2(ky - s * 1.62)}" r="${q2(s * 0.22)}" fill="#2c2824"/><path d="M${pt(kx - s * 0.84, ky - s * 0.55)} L${pt(kx - s * 0.79, ky - s * 1.4)} H${q2(kx)}" stroke="${STW}" stroke-width="${q2(s * 0.1)}" fill="none" opacity=".7"/>`;
+  else if (art === "krone") g += `<path d="M${pt(kx - s * 0.75, ky - s * 0.62)} l${q2(s * 0.08)} ${q2(-s * 0.62)} l${q2(s * 0.3)} ${q2(s * 0.3)} l${q2(s * 0.35)} ${q2(-s * 0.45)} l${q2(s * 0.35)} ${q2(s * 0.45)} l${q2(s * 0.3)} ${q2(-s * 0.3)} l${q2(s * 0.08)} ${q2(s * 0.62)} Q${pt(kx, ky - s * 0.82)} ${pt(kx - s * 0.75, ky - s * 0.62)}Z" fill="#4a4339"/>`;
+  else if (art === "tonsur") g += `<path d="M${pt(kx - s * 0.8, ky - s * 0.1)} Q${pt(kx - s * 0.85, ky - s * 0.8)} ${pt(kx - s * 0.3, ky - s * 0.92)} L${pt(kx - s * 0.2, ky - s * 0.7)} Q${pt(kx - s * 0.6, ky - s * 0.5)} ${pt(kx - s * 0.6, ky - s * 0.05)}Z" fill="${SF2}"/>`;
+  else g += `<path d="M${pt(kx - s * 0.8, ky - s * 0.05)} A${q2(s * 0.8)} ${q2(s)} 0 0 1 ${pt(kx + s * 0.8, ky - s * 0.05)} Q${pt(kx + s * 0.2, ky - s * 0.65)} ${pt(kx - s * 0.8, ky - s * 0.05)}Z" fill="${SF2}"/>`;
+  return g;
+}
+/* Arm als Ärmel (am Handgelenk weit, barock) mit heller Oberkante, Hand als helle Form */
+function arm(ax, ay, bx, by, w) {
+  const mx = (ax + bx) / 2 - w * 0.4, my = (ay + by) / 2 + w * 0.5, ex = bx + (bx - mx) * 0.22, ey = by + (by - my) * 0.22;
+  return `<path d="M${pt(ax, ay)} Q${pt(mx, my)} ${pt(bx, by)}" stroke="${SF2}" stroke-width="${q2(w)}" stroke-linecap="round" fill="none"/>` +
+    `<path d="M${pt(ax - w * 0.15, ay - w * 0.3)} Q${pt(mx - w * 0.2, my - w * 0.45)} ${pt(bx, by - w * 0.4)}" stroke="${STW}" stroke-width="${q2(w * 0.15)}" fill="none" opacity=".55"/>` +
+    `<ellipse cx="${q2(ex)}" cy="${q2(ey)}" rx="${q2(w * 0.4)}" ry="${q2(w * 0.5)}" fill="${HAUT}"/>`;
+}
+/* stehende Gestalt im langen Gewand: Mitte cx, Höhe H, Neigung n (Kopf versetzt), Arme [Schulter→Hand] in H */
+function gestalt(cx, H, n, arme = [], opt = {}) {
+  const pp = (x, y) => [cx + x * H + (y < -0.45 ? n * H * (-y - 0.45) * 2 : 0), y * H];
+  const p = (x, y) => pt(...pp(x, y));
+  const [kx, ky] = pp(0, -0.925), ks = H * 0.07;
+  let g = "";
+  if (opt.heil) g += `<circle cx="${q2(kx)}" cy="${q2(ky - ks * 0.2)}" r="${q2(ks * 1.75)}" fill="none" stroke="#b49a50" stroke-width="${q2(H * 0.014)}"/>`;
+  g += `<path d="M${p(-0.12, -0.84)} C${p(-0.2, -0.62)} ${p(-0.25, -0.3)} ${p(-0.235, 0)} Q${p(-0.12, 0.035)} ${p(-0.02, 0.005)} Q${p(0.1, 0.04)} ${p(0.225, 0)} C${p(0.25, -0.3)} ${p(0.2, -0.62)} ${p(0.12, -0.84)} Q${p(0, -0.875)} ${p(-0.12, -0.84)}Z" fill="${SF}"/>`;
+  /* Mantel: diagonale Bahn von der linken Schulter zur rechten Hüfte */
+  if (opt.mantel) g += `<path d="M${p(-0.12, -0.82)} C${p(-0.02, -0.62)} ${p(0.12, -0.5)} ${p(0.235, -0.42)} L${p(0.245, -0.2)} C${p(0.06, -0.3)} ${p(-0.12, -0.48)} ${p(-0.22, -0.58)}Z" fill="${SF2}"/><path d="M${p(-0.1, -0.8)} C${p(0, -0.62)} ${p(0.12, -0.51)} ${p(0.22, -0.43)}" stroke="${STW}" stroke-width="${q2(H * 0.012)}" fill="none" opacity=".6"/>`;
+  /* Schulterkragen (Mozzetta) */
+  if (opt.kragen) g += `<path d="M${p(-0.13, -0.84)} Q${p(-0.2, -0.75)} ${p(-0.19, -0.66)} Q${p(0, -0.6)} ${p(0.19, -0.66)} Q${p(0.2, -0.75)} ${p(0.13, -0.84)}Z" fill="${SF2}"/><path d="M${p(-0.18, -0.67)} Q${p(0, -0.61)} ${p(0.18, -0.67)}" stroke="${STW}" stroke-width="${q2(H * 0.01)}" fill="none" opacity=".6"/>`;
+  /* vier bis sechs schräg fallende Faltenbahnen: dunkle Täler, helle Kämme */
+  let fd = "", fl = "";
+  for (const [a, b, c, d, e, f] of [[-0.15, -0.52, -0.09, -0.26, -0.15, 0], [-0.05, -0.44, 0.01, -0.22, -0.04, 0.01], [0.07, -0.4, 0.12, -0.2, 0.08, 0.02], [0.16, -0.32, 0.2, -0.15, 0.18, 0], [-0.08, -0.78, 0, -0.68, 0.08, -0.6]]) {
+    fd += `M${p(a, b)} Q${p(c, d)} ${p(e, f)}`; fl += `M${p(a - 0.028, b)} Q${p(c - 0.028, d)} ${p(e - 0.028, f)}`;
   }
-  /* Schatten der linken Laternen: dünne Striche */
-  let ls = "";
-  for (let i = 0; i < 8; i++) { const s = 46 + i * 31.4, h = 4.6 - BRH; ls += strecke(P(s, -QI), P(s + h * SDS, -QI + h * SDQ)); }
-  k += `<g pointer-events="none">${sch}<path d="${ls}" stroke="#2b2a3a" stroke-width=".35" opacity=".3"/></g>`;
-  var BRUECKE = S.teil({ id: "karlsbruecke", de: "die Karlsbrücke", syl: "KARLS-brü-cke", it: "il Ponte Carlo", itSyl: "PON-te CAR-lo", en: "Charles Bridge", x: 0, y: 0, kunst: k,
-    zoom: { x: 276, y: 170, w: 105, h: 70 },
-    unter: [{ id: "bruestung", de: "die Brüstung", syl: "BRÜS-tung", it: "il parapetto", itSyl: "pa-ra-PET-to", en: "parapet", x: r(X(8.5, BR - 0.3)), y: r(Y(8.5, BR - 0.3, BRH)),
-      kunst: flaeche(-14, -4, 28, 18, 0.6), tipp: "Die Brüstung ist aus Sandstein. Sie schützt die Menschen vor dem Fall in die Moldau." }],
-    tipp: "Die Karlsbrücke ist über 650 Jahre alt und 516 Meter lang. Hinter uns, in der Altstadt, steht die berühmte Astronomische Uhr." });
+  g += `<path d="${fd}" stroke="${STD}" stroke-width="${q2(H * 0.02)}" fill="none" opacity=".7"/><path d="${fl}" stroke="${STW}" stroke-width="${q2(H * 0.011)}" fill="none" opacity=".55"/>`;
+  g += `<path d="M${p(-0.115, -0.83)} C${p(-0.195, -0.62)} ${p(-0.24, -0.3)} ${p(-0.225, -0.01)}" stroke="${STW}" stroke-width="${q2(H * 0.014)}" fill="none" opacity=".6"/>`;
+  for (const [sx, sy, hx, hy] of arme) g += arm(...pp(sx, sy), ...pp(hx, hy), H * 0.072);
+  return g + kopf(kx, ky, ks, opt.kopf, opt.blick || 0);
 }
-
-/* =====================================================================
-   9 — DIE LATERNEN auf der Brüstung (Gaslaternen)
-   ===================================================================== */
-{
-  let k = "";
-  const lat = (s, sei) => {
-    const q = sei * (BR - BRD / 2), sc = F / Dd(s, q), x = X(s, q), y = Y(s, q, BRH);
-    let g = `<g transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})">`;
-    g += `<path d="M-.14 0 V-3 h.28 V0 Z" fill="#26282c"/><path d="M-.22 0 h.44 v-.35 h-.44Z" fill="#33363c"/>`;
-    g += `<path d="M-.3 -3 L-.22 -3.6 h.44 L.3 -3 Z" fill="#2b2e33"/><path d="M-.24 -3.6 L-.3 -4.2 h.6 L.24 -3.6 Z" fill="#f2e8c8" opacity=".9"/>`;
-    g += `<path d="M-.36 -4.2 L0 -4.55 L.36 -4.2 Z" fill="#26282c"/><path d="M0 -4.55 V-4.7" stroke="#26282c" stroke-width=".06"/>`;
-    g += `<path d="M-.3 -4.2 L-.24 -3.6 M.3 -4.2 L.24 -3.6 M0 -4.2 V-3.6" stroke="#26282c" stroke-width=".04"/></g>`;
+/* kniende Gestalt im Profil, Blick nach dir (+1 rechts): Knie vorn, Rücken hinten, Hände erhoben */
+function kniend(cx, H, dir, opt = {}) {
+  const pp = (x, y) => [cx + x * H * dir, y * H], p = (x, y) => pt(...pp(x, y));
+  let g = `<path d="M${p(-0.28, 0)} L${p(0.26, 0)} Q${p(0.31, -0.12)} ${p(0.2, -0.2)} Q${p(0.06, -0.22)} ${p(0.04, -0.3)} Q${p(0.11, -0.45)} ${p(0.08, -0.58)} Q${p(0, -0.66)} ${p(-0.09, -0.6)} Q${p(-0.15, -0.4)} ${p(-0.18, -0.25)} Q${p(-0.31, -0.15)} ${p(-0.28, 0)}Z" fill="${SF}"/>`;
+  g += `<path d="M${p(-0.2, -0.05)} Q${p(-0.04, -0.15)} ${p(0.2, -0.11)} M${p(-0.06, -0.55)} Q${p(-0.11, -0.4)} ${p(-0.06, -0.26)} M${p(0.02, -0.5)} Q${p(0, -0.38)} ${p(0.04, -0.3)}" stroke="${STD}" stroke-width="${q2(H * 0.022)}" fill="none" opacity=".7"/>`;
+  g += `<path d="M${p(dir > 0 ? -0.27 : 0.25, -0.02)} Q${p(dir > 0 ? -0.29 : 0.3, -0.13)} ${p(dir > 0 ? -0.17 : 0.19, -0.24)}" stroke="${STW}" stroke-width="${q2(H * 0.014)}" fill="none" opacity=".6"/>`;
+  const [kx, ky] = pp(0.05, opt.hoch ? -0.74 : -0.72);
+  g += arm(...pp(0.0, -0.56), ...pp(opt.hoch ? 0.2 : 0.17, opt.hoch ? -0.86 : -0.74), H * 0.075);
+  return g + kopf(kx, ky, H * 0.075, opt.kopf, dir * (opt.hoch ? 1.2 : 0.8));
+}
+/* Putto (kleiner Engel) mit Flügel */
+const putto = (cx, y, H) => `<path d="M${pt(cx - H * 0.1, y - H * 0.55)} q${q2(-H * 0.5)} ${q2(-H * 0.15)} ${q2(-H * 0.4)} ${q2(-H * 0.55)} q${q2(H * 0.2)} ${q2(H * 0.05)} ${q2(H * 0.45)} ${q2(H * 0.4)}Z" fill="#5a544b"/><ellipse cx="${q2(cx)}" cy="${q2(y - H * 0.32)}" rx="${q2(H * 0.2)}" ry="${q2(H * 0.32)}" fill="${SF}"/>` + kopf(cx + H * 0.02, y - H * 0.78, H * 0.16, "", 0.5);
+/* Wolkenbank (gewellter Sockel der Madonna) */
+function wolkenbank(x0, x1, h, hr) {
+  const n = 5, w = (x1 - x0) / n;
+  let d = `M${pt(x0, 0)}`, li = "";
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.5) / n, y = -(h + (hr - h) * t) * (0.9 + 0.12 * Math.sin(i * 2.1)), xa = x0 + i * w;
+    d += ` Q${pt(xa - w * 0.15, y + w * 0.1)} ${pt(xa + w * 0.5, y)} Q${pt(xa + w * 1.1, y - w * 0.1)} ${pt(xa + w, y + w * 0.35)}`;
+    li += `M${pt(xa + w * 0.05, y + w * 0.2)} Q${pt(xa + w * 0.15, y)} ${pt(xa + w * 0.55, y + w * 0.02)}`;
+  }
+  d += ` L${pt(x1, 0)}Z`;
+  return `<path d="${d}" fill="${SF2}"/><path d="${li}" stroke="${STW}" stroke-width="${q2(w * 0.07)}" fill="none" opacity=".65"/>`;
+}
+/* Sockel: Plinthe, Schaft mit Inschrifttafel, Gesims; Sonnenseite links */
+const SOCKEL_D = (nah, hoch = 2.35) => {
+  const H = -hoch;
+  let g = `<path d="M-1.15 0 V-.35 H1.15 V0 Z M-1.05 -.35 V${H} H1.05 V-.35 Z" fill="${SOCKEL}"/>`;
+  g += `<path d="M-1.05 -.35 V${H} H-.75 V-.35 Z" fill="#d2c3a9" opacity=".5"/><path d="M.7 -.35 V${H} H1.05 V-.35 Z" fill="#3e3833" opacity=".45"/>`;
+  g += `<path d="M-1.3 ${H} H1.3 L1.2 ${q2(H - 0.25)} H-1.2 Z" fill="#c4b59c"/><path d="M-1.3 ${H} H1.3 V${q2(H + 0.08)} H-1.3 Z" fill="#5e564f"/><path d="M-1.2 ${q2(H - 0.25)} H1.2" stroke="#e6dac4" stroke-width=".05"/>`;
+  if (nah) g += `<path d="M-.55 -1.85 Q-.6 -1.35 -.55 -.85 H.55 Q.6 -1.35 .55 -1.85 Z" fill="#6f6556" stroke="#e0d2b8" stroke-width=".04"/><path d="M-.38 -1.55 h.76 M-.42 -1.35 h.84 M-.36 -1.15 h.72" stroke="#3e3833" stroke-width=".04"/><path d="M-.2 -2.1 q.2 -.15 .4 0 q-.2 .1 -.4 0Z" fill="#8a7e6c"/>`;
+  else g += `<rect x="-.5" y="-1.8" width="1" height=".9" fill="#6f6556"/>`;
+  return g;
+};
+/* die echten Gruppen am Altstädter Ende */
+const GRUPPEN = {
+  /* rechts 1: Madonna mit dem heiligen Bernhard — Madonna mit Kind sitzt auf der Wolkenbank, Bernhard kniet
+     davor und schaut zu ihr hinauf, ein Putto hält das Kreuz (Leidenswerkzeuge) */
+  bernhard: () => {
+    let g = `<path d="M1.02 -.15 L1.22 -2.05 M.92 -1.62 L1.36 -1.56" stroke="#2c2824" stroke-width=".08"/><path d="M1.0 -.15 L1.2 -2.05" stroke="${STW}" stroke-width=".02" opacity=".6"/>`;
+    g += wolkenbank(-1.2, 1.2, 0.45, 1.35);
+    /* Madonna: Schoß und Beine nach links, Oberkörper, Mantel über der rechten Schulter */
+    g += `<circle cx=".47" cy="-2.53" r=".19" fill="none" stroke="#b49a50" stroke-width=".035"/>`;
+    g += `<path d="M.66 -2.38 C.92 -2.1 .98 -1.7 .92 -1.32 Q.8 -1.5 .74 -1.72 Q.7 -2.02 .58 -2.28Z" fill="${SF2}"/>`;
+    g += `<path d="M.38 -1.6 C.33 -1.9 .32 -2.15 .36 -2.32 L.64 -2.36 C.72 -2.1 .76 -1.8 .82 -1.45Z" fill="${SF}"/>`;
+    g += `<path d="M.82 -1.36 C.52 -1.64 .2 -1.68 .0 -1.6 Q-.1 -1.52 -.12 -1.3 Q-.14 -1.1 -.24 -.98 Q.08 -.88 .36 -1.0 Q.62 -1.12 .82 -1.36Z" fill="${SF}"/>`;
+    g += `<path d="M.66 -1.5 Q.4 -1.5 .05 -1.45 M.5 -1.36 Q.2 -1.3 -.02 -1.12 M.3 -1.12 Q.12 -1.06 -.12 -1.0 M.5 -2.2 Q.46 -1.95 .5 -1.7" stroke="${STD}" stroke-width=".04" fill="none" opacity=".7"/>`;
+    g += `<path d="M.8 -1.4 C.52 -1.66 .2 -1.7 .0 -1.62 Q-.1 -1.52 -.12 -1.3 M.36 -1.62 C.32 -1.9 .32 -2.15 .36 -2.3" stroke="${STW}" stroke-width=".025" fill="none" opacity=".7"/>`;
+    /* das Kind auf dem Schoß, segnend; der Arm der Mutter hält es */
+    g += `<ellipse cx=".2" cy="-1.78" rx=".13" ry=".17" fill="${SF}"/>` + kopf(0.16, -2.0, 0.075, "", -0.6) + arm(0.13, -1.86, 0.0, -1.98, 0.06);
+    g += arm(0.52, -2.22, 0.24, -1.66, 0.1);
+    g += kopf(0.47, -2.5, 0.1, "schleier", -1);
+    /* Bernhard kniet, Gesicht nach oben, Hände zur Madonna */
+    g += kniend(-0.62, 2.0, 1, { kopf: "tonsur", hoch: true });
+    g += putto(0.88, -0.05, 0.62);
     return g;
-  };
-  for (let i = 9; i >= 0; i--) { k += lat(46 + i * 31.4, -1) + lat(49.5 + i * 31, 1); }
-  S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: 0, y: 0, kunst: k,
-    tipp: "Am Abend zündet ein Laternenanzünder einige Gaslaternen auf der Brücke noch von Hand an." });
-}
-
-/* =====================================================================
-   10 — DIE STATUEN (30 dunkle Barockfiguren), Lupe auf den heiligen Nepomuk
-   ===================================================================== */
+  },
+  /* links 1: der heilige Ivo — Birett auf dem Kopf, offenes Buch in der Linken; zu seinen Füßen eine kniende
+     Witwe, daneben ihr Kind */
+  ivo: () => {
+    let g = gestalt(0.2, 3.0, 0.02, [[-0.12, -0.78, -0.26, -0.5], [0.12, -0.78, 0.17, -0.62]], { kopf: "birett", kragen: true, blick: 0.6 });
+    /* offenes Buch: zwei Seiten im flachen V, Schnitt und Zeilen */
+    g += `<path d="M.42 -1.98 L.7 -1.9 L.7 -1.62 L.42 -1.72Z M.7 -1.9 L.98 -2.0 L.98 -1.72 L.7 -1.62Z" fill="#8f877a"/><path d="M.42 -1.72 L.7 -1.62 L.98 -1.72 L.98 -1.67 L.7 -1.57 L.42 -1.67Z" fill="#2c2824"/>`;
+    g += `<path d="M.47 -1.9 L.65 -1.85 M.47 -1.83 L.65 -1.78 M.75 -1.85 L.93 -1.91 M.75 -1.78 L.93 -1.84" stroke="#3a3530" stroke-width=".02"/><path d="M.42 -1.98 L.7 -1.9" stroke="#d6ccbc" stroke-width=".025"/>`;
+    g += kniend(-0.62, 2.0, 1, { kopf: "schleier" });
+    g += gestalt(-1.08, 1.0, 0, [[0.12, -0.76, 0.24, -0.62]], {});
+    return g;
+  },
+  /* rechts 2: Dominikus und Thomas von Aquin (Kapuzen), darüber die Madonna auf einer Wolke */
+  dominikus: () => gestalt(-0.5, 2.4, 0.02, [[0.11, -0.72, 0.22, -0.84]], { heil: true, kopf: "kapuze", mantel: true }) + gestalt(0.55, 2.3, -0.02, [[-0.11, -0.72, -0.24, -0.6]], { heil: true, kopf: "kapuze", mantel: true }) +
+    `<g transform="translate(0 -2.15)">${wolkenbank(-0.5, 0.55, 0.25, 0.4)}</g>` + `<g transform="translate(0 -2.4)">` + gestalt(0.05, 1.3, 0, [[0.1, -0.7, 0.26, -0.82]], { kopf: "schleier", heil: true }) + `</g>`,
+  /* links 2: die heiligen Barbara (Krone, Turm), Margareta und Elisabeth */
+  barbara: () => gestalt(-0.72, 2.5, 0.02, [[0.11, -0.7, 0.2, -0.56]], { kopf: "schleier" }) + gestalt(0.82, 2.45, -0.02, [[-0.11, -0.7, -0.22, -0.56]], { kopf: "krone", mantel: true }) +
+    gestalt(0.05, 2.8, 0, [[0.12, -0.74, 0.26, -0.8]], { kopf: "krone", mantel: true }) + `<path d="M.66 -2.1 h.3 v-.55 h-.3Z M.68 -2.65 l.13 -.2 l.13 .2Z" fill="#2c2824"/><path d="M.66 -2.1 v-.55" stroke="${STW}" stroke-width=".03"/>`,
+};
+/* einfache Typen für die übrigen Statuen (fern): als <use> wiederverwendet */
+const TYPEN = [
+  () => gestalt(0, 3, 0.02, [[0.12, -0.74, 0.24, -1.02]], { heil: true, mantel: true }) + `<path d="M.75 -2.9 V-1.6 M.6 -2.6 H.9" stroke="#2a2724" stroke-width=".08"/>`,
+  () => gestalt(0, 3, -0.02, [[-0.12, -0.74, -0.2, -0.6]], { kopf: "krone" }) + `<path d="M-.62 -.2 V-3.3" stroke="#2a2724" stroke-width=".07"/>`,
+  () => gestalt(0, 3, 0.02, [[0.12, -0.74, 0.18, -0.6]], { kopf: "schleier", heil: true, mantel: true }),
+  () => gestalt(0, 3, 0, [[-0.12, -0.75, -0.3, -1.02], [0.12, -0.75, 0.3, -1.02]], { heil: true, kopf: "kapuze" }),
+  () => kniend(-0.45, 1.8, 1, { kopf: "schleier" }) + gestalt(0.4, 2.8, 0, [[-0.1, -0.72, -0.22, -0.6]], { heil: true, mantel: true }),
+];
+TYPEN.forEach((f, i) => S.def(`<g id="${S.id("st" + i)}">${SOCKEL_D(false)}<g transform="translate(0 -2.6)">${f()}</g></g>`));
 const NEPO = { s: 34 + 7 * 31, sei: 1 };
-{
-  let k = "";
-  /* Barockfiguren in Metern, geschwärzter Sandstein mit hellen, verwitterten Kanten.
-     Licht von vorn links: linke Konturen hell, rechte Seiten dunkel; Falten als dunkle und helle Bahnen. */
-  const SF = S.lg("stf", [[0, "#8a8278"], [0.3, "#5e5850"], [0.75, "#38342f"], [1, "#24211e"]], 0, 0, 1, 0);
-  const SF2 = S.lg("stf2", [[0, "#746c63"], [0.5, "#4a453f"], [1, "#2a2724"]], 0, 0, 1, 0);
-  const HAUT = S.rg("sthaut", [[0, "#a49a8e"], [0.6, "#6e665d"], [1, "#3e3a35"]], 0.35, 0.35, 0.7);
-  const q2 = (v) => Math.round(v * 100) / 100;
-  /* stehende Gestalt: Mitte cx, Höhe H, Neigung n (Kopf versetzt), Arme als Liste [Schulter→Hand] */
-  const gestalt = (cx, H, n, arme = [], opt = {}) => {
-    const p = (x, y) => `${q2(cx + x * H + (y < -0.5 ? n * (-y - 0.5) * 2 : 0))} ${q2(y * H)}`;
-    let g = `<path d="M${p(-0.19, 0)} C${p(-0.23, -0.35)} ${p(-0.2, -0.62)} ${p(-0.13, -0.8)} L${p(-0.06, -0.86)} L${p(0.06, -0.86)} L${p(0.13, -0.8)} C${p(0.2, -0.62)} ${p(0.23, -0.35)} ${p(0.19, 0)} Z" fill="${opt.farbe || SF}"/>`;
-    if (opt.mantel) g += `<path d="M${p(0.12, -0.8)} C${p(0.26, -0.6)} ${p(0.24, -0.25)} ${p(0.1, -0.12)} C${p(0, -0.2)} ${p(-0.12, -0.24)} ${p(-0.18, -0.3)} C${p(-0.02, -0.4)} ${p(0.08, -0.6)} ${p(0.08, -0.78)} Z" fill="${SF2}"/>`;
-    g += `<path d="M${p(-0.1, -0.05)} Q${p(-0.13, -0.4)} ${p(-0.08, -0.72)} M${p(0.02, -0.04)} Q${p(0.04, -0.35)} ${p(0.01, -0.62)} M${p(0.12, -0.08)} Q${p(0.16, -0.3)} ${p(0.1, -0.55)}" stroke="#1d1b19" stroke-width="${q2(H * 0.018)}" fill="none" opacity=".75"/>`;
-    g += `<path d="M${p(-0.06, -0.06)} Q${p(-0.09, -0.4)} ${p(-0.04, -0.7)}" stroke="#a49a8e" stroke-width="${q2(H * 0.012)}" fill="none" opacity=".55"/>`;
-    g += `<path transform="translate(${q2(H * 0.009)} 0)" d="M${p(-0.19, 0)} C${p(-0.23, -0.35)} ${p(-0.2, -0.62)} ${p(-0.13, -0.8)} L${p(-0.06, -0.86)}" stroke="#b3a99c" stroke-width="${q2(H * 0.014)}" fill="none" opacity=".7"/>`;
-    for (const [sx, sy, hx, hy] of arme) g += `<path d="M${p(sx, sy)} Q${p((sx + hx) / 2 - 0.03, (sy + hy) / 2 + 0.04)} ${p(hx, hy)}" stroke="${SF2}" stroke-width="${q2(H * 0.075)}" stroke-linecap="round" fill="none"/><circle cx="${p(hx, hy).split(" ")[0]}" cy="${p(hx, hy).split(" ")[1]}" r="${q2(H * 0.03)}" fill="${HAUT}"/>`;
-    const [kx, ky] = p(0, -0.93).split(" ");
-    g += `<ellipse cx="${kx}" cy="${ky}" rx="${q2(H * 0.055)}" ry="${q2(H * 0.07)}" fill="${HAUT}"/><path d="M${q2(+kx + H * 0.012)} ${q2(+ky - H * 0.05)} q${q2(H * 0.04)} ${q2(H * 0.04)} ${q2(H * 0.01)} ${q2(H * 0.11)}" stroke="#2a2622" stroke-width="${q2(H * 0.03)}" fill="none" opacity=".6"/>`;
-    if (opt.kopf === "birett") g += `<rect x="${q2(+kx - H * 0.06)}" y="${q2(+ky - H * 0.11)}" width="${q2(H * 0.12)}" height="${q2(H * 0.05)}" fill="#2a2724"/>`;
-    if (opt.kopf === "schleier") g += `<path d="M${q2(+kx - H * 0.08)} ${q2(+ky + H * 0.08)} Q${q2(+kx - H * 0.09)} ${q2(+ky - H * 0.1)} ${kx} ${q2(+ky - H * 0.09)} Q${q2(+kx + H * 0.09)} ${q2(+ky - H * 0.1)} ${q2(+kx + H * 0.08)} ${q2(+ky + H * 0.1)}" fill="${SF2}"/>`;
-    if (opt.krone) g += `<path d="M${q2(+kx - H * 0.05)} ${q2(+ky - H * 0.06)} l${q2(H * 0.02)} ${q2(-H * 0.05)} l${q2(H * 0.03)} ${q2(H * 0.03)} l${q2(H * 0.03)} ${q2(-H * 0.03)} l${q2(H * 0.02)} ${q2(H * 0.05)} Z" fill="#3a3530"/>`;
-    if (opt.heil) g += `<circle cx="${kx}" cy="${q2(+ky - H * 0.01)}" r="${q2(H * 0.09)}" fill="none" stroke="#4a443c" stroke-width="${q2(H * 0.012)}"/>`;
-    return g;
-  };
-  /* kniende Gestalt (Bittsteller, Mönch) */
-  const kniend = (cx, H, dir) => {
-    const p = (x, y) => `${q2(cx + x * H * dir)} ${q2(y * H)}`;
-    let g = `<path d="M${p(-0.28, 0)} Q${p(-0.3, -0.25)} ${p(-0.1, -0.3)} L${p(-0.05, -0.62)} Q${p(0.02, -0.72)} ${p(0.12, -0.66)} L${p(0.2, -0.3)} Q${p(0.3, -0.1)} ${p(0.25, 0)} Z" fill="${SF}"/>`;
-    g += `<path d="M${p(0.08, -0.6)} Q${p(0.22, -0.66)} ${p(0.3, -0.82)}" stroke="${SF2}" stroke-width="${q2(H * 0.09)}" stroke-linecap="round" fill="none"/><circle cx="${p(0.3, -0.84).split(" ")[0]}" cy="${p(0.3, -0.84).split(" ")[1]}" r="${q2(H * 0.04)}" fill="${HAUT}"/>`;
-    g += `<path d="M${p(-0.2, -0.05)} Q${p(-0.18, -0.2)} ${p(-0.05, -0.28)} M${p(0.02, -0.35)} Q${p(0.1, -0.5)} ${p(0.06, -0.6)}" stroke="#1d1b19" stroke-width="${q2(H * 0.02)}" fill="none" opacity=".7"/>`;
-    g += `<ellipse cx="${p(0.06, -0.76).split(" ")[0]}" cy="${p(0.06, -0.76).split(" ")[1]}" rx="${q2(H * 0.07)}" ry="${q2(H * 0.085)}" fill="${HAUT}"/>`;
-    return g;
-  };
-  const wolke = (cx, w, h) => `<path d="M${q2(cx - w / 2)} 0 Q${q2(cx - w / 2 - 0.1)} ${q2(-h * 0.6)} ${q2(cx - w / 4)} ${q2(-h * 0.7)} Q${q2(cx - w / 6)} ${q2(-h * 1.05)} ${cx} ${q2(-h * 0.85)} Q${q2(cx + w / 5)} ${q2(-h * 1.1)} ${q2(cx + w / 3)} ${q2(-h * 0.7)} Q${q2(cx + w / 2 + 0.1)} ${q2(-h * 0.5)} ${q2(cx + w / 2)} 0 Z" fill="${SF2}"/><path d="M${q2(cx - w / 2.4)} ${q2(-h * 0.62)} Q${q2(cx - w / 4)} ${q2(-h * 0.9)} ${q2(cx - w / 10)} ${q2(-h * 0.8)}" stroke="#958b7f" stroke-width=".05" fill="none"/>`;
-  const putto = (cx, y, H) => `<ellipse cx="${cx}" cy="${q2(y - H * 0.35)}" rx="${q2(H * 0.22)}" ry="${q2(H * 0.33)}" fill="${SF}"/><circle cx="${cx}" cy="${q2(y - H * 0.8)}" r="${q2(H * 0.17)}" fill="${HAUT}"/><path d="M${q2(cx - H * 0.15)} ${q2(y - H * 0.6)} q${q2(-H * 0.35)} ${q2(-H * 0.25)} ${q2(-H * 0.3)} ${q2(-H * 0.5)} q${q2(H * 0.15)} ${q2(H * 0.15)} ${q2(H * 0.3)} ${q2(H * 0.35)}" fill="#4a453f"/>`;
-  /* die echten Gruppen am Altstädter Ende */
-  const GRUPPEN = {
-    /* rechts 1: Madonna mit dem heiligen Bernhard — Madonna mit Kind auf Wolken, Bernhard kniet, Putten mit Leidenswerkzeugen */
-    bernhard: () => wolke(0.15, 1.5, 1.7) + gestalt(0.25, 1.75, 0.02, [[0.08, -0.65, -0.12, -0.5]], { kopf: "schleier", heil: true }).replace(/(<path d="M)/, `<g transform="translate(0 -1.45)">$1`) + `<ellipse cx=".05" cy="-.95" rx=".2" ry=".14" fill="${SF2}"/><circle cx="-.06" cy="-1.1" r=".1" fill="${HAUT}"/></g>` + kniend(-0.55, 1.5, 1) + putto(0.75, -0.05, 0.75) + `<path d="M.9 -.4 L1.05 -1.35 M.85 -1.05 L1.2 -1.0" stroke="#2a2724" stroke-width=".07"/>`,
-    /* links 1: der heilige Ivo — stehend mit Birett und Buch, zu seinen Füßen eine Witwe mit Kind */
-    ivo: () => gestalt(0.1, 3.1, -0.01, [[0.12, -0.72, 0.26, -0.55], [-0.12, -0.72, -0.2, -0.86]], { kopf: "birett", mantel: true }) + `<path d="M.6 -1.75 L.95 -1.62 L.9 -1.38 L.55 -1.5 Z" fill="#2c2926"/><path d="M.6 -1.75 L.95 -1.62" stroke="#9a9084" stroke-width=".04"/>` + kniend(-0.6, 1.25, 1) + `<ellipse cx="-1" cy="-.3" rx=".17" ry=".3" fill="${SF2}"/><circle cx="-1" cy="-.68" r=".12" fill="${HAUT}"/>`,
-    /* rechts 2: Dominikus und Thomas von Aquin, darüber die Madonna */
-    dominikus: () => gestalt(-0.45, 2.4, 0.01, [[0.1, -0.7, 0.2, -0.82]], { heil: true }) + gestalt(0.5, 2.3, -0.01, [[-0.1, -0.7, -0.22, -0.6]], { heil: true, mantel: true }) + `<g transform="translate(0 -2.3)">${wolke(0.05, 0.9, 1.0)}</g>` + `<g transform="translate(0 -2.4)">` + gestalt(0.05, 1.3, 0, [], { kopf: "schleier", heil: true }) + `</g>`,
-    /* links 2: die heiligen Barbara, Margareta und Elisabeth */
-    barbara: () => gestalt(-0.7, 2.5, 0.02, [[0.1, -0.68, 0.2, -0.55]], { krone: true }) + gestalt(0.05, 2.8, 0, [[0.12, -0.72, 0.25, -0.78]], { krone: true, mantel: true }) + gestalt(0.8, 2.45, -0.02, [[-0.1, -0.68, -0.2, -0.56]], { kopf: "schleier" }) + `<path d="M.2 -2.05 h.2 v-.35 h-.2Z" fill="#2c2926"/><path d="M-1.05 -.05 q.2 -.3 .45 -.15 q-.1 .12 -.45 .15Z" fill="#2a2724"/>`,
-  };
-  /* einfache Typen für die übrigen Statuen (fern): als <use> wiederverwendet */
-  const TYPEN = [
-    () => gestalt(0, 3, 0.02, [[0.12, -0.72, 0.24, -1.05]], { heil: true, mantel: true }) + `<path d="M.75 -2.9 V-1.6 M.6 -2.6 H.9" stroke="#2a2724" stroke-width=".08"/>`,
-    () => gestalt(0, 3, -0.01, [[-0.12, -0.72, -0.2, -0.6]], { krone: true }) + `<path d="M-.62 -.2 V-3.3" stroke="#2a2724" stroke-width=".07"/>`,
-    () => gestalt(0, 3, 0.01, [], { kopf: "schleier", heil: true }) + `<ellipse cx="-.32" cy="-1.85" rx=".2" ry=".3" fill="${SF2}"/>`,
-    () => gestalt(0, 3, 0, [[-0.12, -0.75, -0.3, -1.02], [0.12, -0.75, 0.3, -1.02]], { heil: true }),
-    () => kniend(-0.35, 1.5, 1) + gestalt(0.4, 2.8, 0, [[-0.1, -0.7, -0.2, -0.6]], { heil: true }),
-  ];
-  const SOCKEL_D = (lit, nah) => {
-    let g = `<path d="M-1.15 0 V-.35 H1.15 V0 Z M-1.05 -.35 V-2.35 H1.05 V-.35 Z" fill="${SOCKEL}"/>`;
-    g += `<path d="M-1.05 -.35 V-2.35 H-.75 V-.35 Z" fill="#d2c3a9" opacity=".55"/><path d="M.7 -.35 V-2.35 H1.05 V-.35 Z" fill="#3e3833" opacity=".45"/>`;
-    g += `<path d="M-1.3 -2.35 H1.3 L1.2 -2.6 H-1.2 Z" fill="#c4b59c"/><path d="M-1.3 -2.35 H1.3 V-2.28 H-1.3 Z" fill="#5e564f"/>`;
-    if (nah) g += `<path d="M-.55 -1.85 Q-.6 -1.35 -.55 -.85 H.55 Q.6 -1.35 .55 -1.85 Z" fill="#6f6556" stroke="#e0d2b8" stroke-width=".04"/><path d="M-.38 -1.55 h.76 M-.42 -1.35 h.84 M-.36 -1.15 h.72" stroke="#3e3833" stroke-width=".04"/><path d="M-.2 -2.1 q.2 -.15 .4 0 q-.2 .1 -.4 0Z" fill="#8a7e6c"/>`;
-    else g += `<rect x="-.5" y="-1.8" width="1" height=".9" fill="#6f6556"/>`;
-    /* dunkle Wetterspuren am Sockel */
-    g += `<path d="M-.9 -2.3 v1.2 M.3 -2.3 v.8 M.85 -2.3 v1.6" stroke="#4a443c" stroke-width=".08" opacity=".35"/>`;
-    return g;
-  };
-  TYPEN.forEach((f, i) => S.def(`<g id="${S.id("st" + i)}">${SOCKEL_D(true, false)}<g transform="translate(0 -2.6)">${f()}</g></g>`));
-  const NAH = { "34,1": "bernhard", "30,-1": "ivo", "65,1": "dominikus", "61.4,-1": "barbara" };
-  const liste = STATUEN.map(([s, sei], i) => [s, sei, i]).sort((a, b) => b[0] - a[0]);
-  for (const [s, sei, i] of liste) {
-    const q = sei * (BR + 0.2), sc = F / Dd(s, q), x = X(s, q), y = Y(s, q, 0);
-    if (s === NEPO.s && sei === NEPO.sei) {
-      /* der heilige Nepomuk (Bronze, barhäuptig, Chorhemd): Kruzifix senkrecht an der Brust, Palmzweig,
-         fünf goldene Sterne mit Glanzhof; am Sockel zwei Bronzereliefs, eines blank gerieben (golden) */
-      let g = `<g transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})">`;
-      g += `<path d="M-1.15 0 V-.35 H1.15 V0 Z M-1.05 -.35 V-3.35 H1.05 V-.35 Z" fill="${SOCKEL}"/><path d="M-1.3 -3.35 H1.3 L1.2 -3.6 H-1.2 Z" fill="#c4b59c"/>`;
-      g += `<rect x="-.95" y="-2.9" width=".85" height=".85" fill="#3f3a2a" stroke="#8a7a4a" stroke-width=".06"/><rect x=".1" y="-2.9" width=".85" height=".85" fill="#d8b34a" stroke="#8a7a4a" stroke-width=".06"/><rect x=".2" y="-2.8" width=".65" height=".65" fill="#f3d878"/>`;
-      g += `<g transform="translate(0 -3.6) scale(1.15)"><path d="M-.5 0 Q-.6 -1.5 -.4 -2.4 Q-.25 -2.75 0 -2.8 Q.25 -2.75 .4 -2.4 Q.6 -1.5 .5 0 Z" fill="#2c2f2a"/>`;
-      g += `<path d="M-.42 -2.4 Q-.25 -2.75 0 -2.8 Q.25 -2.75 .42 -2.4 L.36 -1.7 L-.36 -1.7 Z" fill="#e8e2d0"/><path d="M-.2 -2.2 V-1.8 M.1 -2.3 V-1.75" stroke="#b9b2a0" stroke-width=".04"/>`;
-      g += `<circle cx="0" cy="-3.05" r=".24" fill="#3a3a32"/><path d="M.02 -2.65 V-1.75 M-.18 -2.4 H.22" stroke="#d8b34a" stroke-width=".09"/><path d="M-.3 -1.8 Q-.6 -2.3 -.5 -2.9" stroke="#3a4a2a" stroke-width=".07" fill="none"/>`;
-      let st = "";
-      for (let j = 0; j < 5; j++) { const a = (-60 + j * 30) * Math.PI / 180, cx = r(Math.sin(a) * 0.58 * 100) / 100, cy = r((-3.1 - Math.cos(a) * 0.58) * 100) / 100; st += `<circle cx="${cx}" cy="${cy}" r=".24" fill="#fff3b0" opacity=".35"/><path d="M${cx} ${r((cy - 0.13) * 100) / 100} l.04 .09 .09 .01 -.07 .06 .02 .09 -.08 -.05 -.08 .05 .02 -.09 -.07 -.06 .09 -.01Z" fill="#ffe25a"/>`; }
-      g += st + `</g></g>`;
-      /* kleine Gruppe Touristen davor, eine Hand an der Tafel */
-      for (const [ds, dq, c] of [[-2.2, -1.2, "#c0392b"], [-2.8, -0.4, "#2f5f95"], [-1.6, -0.6, "#e8e4dc"], [-3.4, -1.4, "#f2c230"]]) {
-        const tx = X(s + ds, q + dq), ty = Y(s + ds, q + dq), ts = F / Dd(s + ds, q + dq);
-        g += `<g transform="translate(${r(tx)} ${r(ty)}) scale(${ts.toFixed(3)})"><path d="M-.12 0 V-.8 h.1 V0 Z M.02 0 V-.8 h.1 V0 Z" fill="#33353d"/><rect x="-.22" y="-1.5" width=".44" height=".75" rx=".12" fill="${c}"/><circle cy="-1.65" r=".13" fill="#d8a986"/></g>`;
-      }
-      const [hx, hy] = [X(s - 1.3, q - 0.5), Y(s - 1.3, q - 0.5, 1.3)];
-      g += `<path d="M${r(X(s - 1.6, q - 0.6))} ${r(Y(s - 1.6, q - 0.6, 1.25))} L${r(hx)} ${r(hy)}" stroke="#d8a986" stroke-width=".3"/>`;
-      k += g;
-    } else if (NAH[`${s},${sei}`]) {
-      k += `<g transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})">${SOCKEL_D(sei > 0, true)}<g transform="translate(0 -2.6)">${GRUPPEN[NAH[`${s},${sei}`]]()}</g></g>`;
-    } else {
-      const art = sei === NEPO.sei && s === NEPO.s - 31 ? 4 : i % 5;
-      k += `<use href="#${S.id("st" + art)}" transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})"/>`;
+const NAH = { "34,1": "bernhard", "30,-1": "ivo", "65,1": "dominikus", "61.4,-1": "barbara" };
+const statueSvg = (s, sei, i) => {
+  const q = sei * (BR + 0.2), sc = F / Dd(s, q), x = X(s, q), y = Y(s, q, 0);
+  if (s === NEPO.s && sei === NEPO.sei) {
+    /* der heilige Nepomuk (Bronze, barhäuptig, Chorhemd): Kruzifix an der Brust, Palmzweig, fünf goldene Sterne;
+       am Sockel zwei Bronzereliefs, das rechte blank gerieben (hellgold mit Glanz) */
+    let g = `<g transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})">`;
+    g += `<path d="M-1.15 0 V-.35 H1.15 V0 Z M-1.05 -.35 V-3.35 H1.05 V-.35 Z" fill="${SOCKEL}"/><path d="M-1.3 -3.35 H1.3 L1.2 -3.6 H-1.2 Z" fill="#c4b59c"/>`;
+    g += `<rect x="-.95" y="-2.9" width=".85" height=".85" fill="#3f3a2a" stroke="#2a2618" stroke-width=".08"/><rect x=".1" y="-2.9" width=".85" height=".85" fill="#2a2618"/><rect x=".17" y="-2.83" width=".71" height=".71" fill="${GOLD}"/><path d="M.22 -2.2 L.8 -2.78" stroke="#fffbe6" stroke-width=".07" opacity=".85"/>`;
+    g += `<g transform="translate(0 -3.6) scale(1.15)"><path d="M-.5 0 Q-.6 -1.5 -.4 -2.4 Q-.25 -2.75 0 -2.8 Q.25 -2.75 .4 -2.4 Q.6 -1.5 .5 0 Z" fill="#2c2f2a"/>`;
+    g += `<path d="M-.42 -2.4 Q-.25 -2.75 0 -2.8 Q.25 -2.75 .42 -2.4 L.36 -1.7 L-.36 -1.7 Z" fill="#e8e2d0"/><path d="M-.2 -2.2 V-1.8 M.1 -2.3 V-1.75" stroke="#b9b2a0" stroke-width=".04"/>`;
+    g += `<circle cx="0" cy="-3.05" r=".24" fill="#3a3a32"/><path d="M.02 -2.65 V-1.75 M-.18 -2.4 H.22" stroke="#d8b34a" stroke-width=".09"/><path d="M-.3 -1.8 Q-.6 -2.3 -.5 -2.9" stroke="#3a4a2a" stroke-width=".07" fill="none"/>`;
+    for (let j = 0; j < 5; j++) { const a = (-60 + j * 30) * Math.PI / 180, cx = q2(Math.sin(a) * 0.58), cy = q2(-3.1 - Math.cos(a) * 0.58); g += `<circle cx="${cx}" cy="${cy}" r=".24" fill="#fff3b0" opacity=".35"/><path d="M${cx} ${q2(cy - 0.13)} l.04 .09 .09 .01 -.07 .06 .02 .09 -.08 -.05 -.08 .05 .02 -.09 -.07 -.06 .09 -.01Z" fill="#ffe25a"/>`; }
+    g += `</g></g>`;
+    /* kleine Gruppe Touristen davor, eine Hand an der Tafel */
+    for (const [ds, dq, c] of [[-2.2, -1.2, "#c0392b"], [-2.8, -0.4, "#2f5f95"], [-1.6, -0.6, "#e8e4dc"], [-3.4, -1.4, "#f2c230"]]) {
+      const tx = X(s + ds, q + dq), ty = Y(s + ds, q + dq), ts = F / Dd(s + ds, q + dq);
+      g += `<g transform="translate(${r(tx)} ${r(ty)}) scale(${ts.toFixed(3)})"><path d="M-.12 0 V-.8 h.1 V0 Z M.02 0 V-.8 h.1 V0 Z" fill="#33353d"/><rect x="-.22" y="-1.5" width=".44" height=".75" rx=".12" fill="${c}"/><circle cy="-1.65" r=".13" fill="#d8a986"/></g>`;
     }
+    g += `<path d="M${r(X(s - 1.6, q - 0.6))} ${r(Y(s - 1.6, q - 0.6, 1.25))} L${r(X(s - 1.3, q - 0.5))} ${r(Y(s - 1.3, q - 0.5, 1.3))}" stroke="#d8a986" stroke-width=".3"/>`;
+    return g;
   }
+  if (NAH[`${s},${sei}`]) return `<g transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})">${SOCKEL_D(true)}<g transform="translate(0 -2.6)">${GRUPPEN[NAH[`${s},${sei}`]]()}</g></g>`;
+  const art = sei === NEPO.sei && s === NEPO.s - 31 ? 4 : i % 5;
+  return `<use href="#${S.id("st" + art)}" transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})"/>`;
+};
+/* Gaslaterne auf der Brüstung: Sockel, schlanker Mast mit Ring, Laternenkopf aus Glas, Dach mit Spitze (3,25 m) */
+S.def(`<g id="${S.id("lat")}"><path d="M-.2 0 h.4 v-.35 h-.4Z" fill="#33363c"/><path d="M-.09 -.35 L-.06 -2.1 h.12 L.09 -.35Z" fill="#26282c"/><path d="M-.13 -1.0 h.26 v-.1 h-.26Z M-.2 -2.1 h.4 l-.06 -.14 h-.28Z" fill="#33363c"/>` +
+  `<path d="M-.16 -2.24 L-.26 -2.86 H.26 L.16 -2.24Z" fill="#efe6c8"/><path d="M.02 -2.24 L.04 -2.86 H.26 L.16 -2.24Z" fill="#b9b4a0"/><path d="M-.16 -2.24 L-.26 -2.86 M0 -2.24 V-2.86 M.16 -2.24 L.26 -2.86 M-.2 -2.5 H.2" stroke="#26282c" stroke-width=".035"/>` +
+  `<path d="M-.33 -2.86 H.33 L0 -3.12Z" fill="#26282c"/><path d="M0 -3.12 V-3.26" stroke="#26282c" stroke-width=".05"/><path d="M-.07 -.4 L-.05 -2.05" stroke="#8a8c92" stroke-width=".025"/></g>`);
+const laterneSvg = (s, sei) => { const q = sei * (BR - BRD / 2), sc = F / Dd(s, q); return `<use href="#${S.id("lat")}" transform="translate(${r(X(s, q))} ${r(Y(s, q, BRH))}) scale(${sc.toFixed(4)})"/>`; };
+
+/* ferner Teil der Brücke mit Statuen und Laternen: Kulisse (von hinten nach vorn gezeichnet) */
+{
+  let k = bruecke(NAHE - 2, 505);
+  const dinge = [];
+  STATUEN.forEach(([s, sei], i) => { if (!(s < NAHE - 20)) dinge.push([s, statueSvg(s, sei, i)]); });
+  for (const [s, sei] of LATERNEN) if (s > NAHE) dinge.push([s, laterneSvg(s, sei)]);
+  dinge.sort((a, b) => b[0] - a[0]);
+  k += dinge.map((d) => d[1]).join("");
+  S.hinten(k);
+}
+/* Wasser darf den fernen Teil der Brücke und die Sockel der zweiten Statuen nicht übermalen: Aussparungen */
+const AUSSPARUNG = [];
+{
+  const rahmen = "M0 0H400V260H0Z";
+  const sil = `M${[P(NAHE - 2, -BR, BRH), P(510, -BR, BRH), P(510, BR, BRH), P(NAHE - 2, BR, BRH), P(NAHE - 2, QI, 0), P(NAHE - 2, -QI, 0)].join(" L")}Z`;
+  const kasten = (sa, sb, sei) => { const q = sei * (BR + 0.2), xa = X(sa, q), xb = X(sb, q), ca = 1.25 * F / Dd(sa, q), cb = 1.25 * F / Dd(sb, q); return `M${r(Math.min(xa - ca, xb - cb))} 100H${r(Math.max(xa + ca, xb + cb))}V${r(Y(sa, q, 0) + 0.4)}H${r(Math.min(xa - ca, xb - cb))}Z`; };
+  [sil, kasten(30 + 31.4, 30 + 2 * 31.4, -1), kasten(34 + 31, 34 + 2 * 31, 1)].forEach((d, i) => {
+    S.def(`<clipPath id="${S.id("aus" + i)}"><path d="${rahmen}${d}" clip-rule="evenodd"/></clipPath>`);
+    AUSSPARUNG.push(S.id("aus" + i));
+  });
+}
+const ausgespart = (svg) => AUSSPARUNG.reduce((g, id) => `<g clip-path="url(#${id})">${g}</g>`, svg);
+
+/* =====================================================================
+   10 — DIE NAHE KARLSBRÜCKE, DIE STATUE (Madonna mit Bernhard; Lupe: der heilige Nepomuk),
+        DER HEILIGE (Ivo), DIE LATERNE
+   ===================================================================== */
+var BRUECKE = S.teil({ id: "karlsbruecke", de: "die Karlsbrücke", syl: "KARLS-brü-cke", it: "il Ponte Carlo", itSyl: "PON-te CAR-lo", en: "Charles Bridge", x: 0, y: 0, kunst: bruecke(4, NAHE),
+  zoom: { x: 276, y: 170, w: 105, h: 70 },
+  unter: [{ id: "bruestung", de: "die Brüstung", syl: "BRÜS-tung", it: "il parapetto", itSyl: "pa-ra-PET-to", en: "parapet", x: r(X(8.5, BR - 0.3)), y: r(Y(8.5, BR - 0.3, BRH)),
+    kunst: flaeche(-14, -4, 28, 18, 0.6), tipp: "Die Brüstung ist aus Sandstein. Sie schützt die Menschen vor dem Fall in die Moldau." }],
+  tipp: "Die Karlsbrücke ist über 650 Jahre alt und 516 Meter lang. Hinter uns, in der Altstadt, steht die berühmte Astronomische Uhr." });
+S.teil({ id: "heiliger", de: "der Heilige", syl: "HEI-li-ge", it: "il santo", itSyl: "SAN-to", en: "saint", x: 0, y: 0, kunst: `<g filter="url(#${S.id("kante")})">${statueSvg(30, -1, 1)}</g>`,
+  tipp: "Das ist der heilige Ivo mit seinem Buch. Er hat armen Menschen vor Gericht geholfen." });
+{
   const nx = r(X(NEPO.s, BR + 0.2)), ny = r(Y(NEPO.s, BR + 0.2)), ns = F / Dd(NEPO.s, BR + 0.2);
-  S.teil({ id: "statue", de: "die Statue", syl: "STA-tu-e", it: "la statua", itSyl: "STA-tu-a", en: "statue", x: 0, y: 0, kunst: k,
+  S.teil({ id: "statue", de: "die Statue", syl: "STA-tu-e", it: "la statua", itSyl: "STA-tu-a", en: "statue", x: 0, y: 0, kunst: `<g filter="url(#${S.id("kante")})">${statueSvg(34, 1, 0)}</g>`,
     zoom: { x: r(nx - 15), y: r(ny - 16), w: 27, h: 18 },
     unter: [
       { id: "nepomuk", de: "der heilige Nepomuk", syl: "der HEI-li-ge NE-po-muk", it: "san Giovanni Nepomuceno", itSyl: "san gio-VAN-ni ne-po-mu-CE-no", en: "St John of Nepomuk", x: nx, y: ny,
@@ -740,8 +846,11 @@ const NEPO = { s: 34 + 7 * 31, sei: 1 };
       { id: "heiligenschein", de: "der Heiligenschein", syl: "HEI-li-gen-schein", it: "l'aureola", itSyl: "au-RE-o-la", en: "halo", x: nx, y: r(ny - 7.4 * ns),
         kunst: flaecheEllipse(0, 0, 0.9 * ns, 0.7 * ns), tipp: "Um den Kopf des Nepomuk leuchten fünf goldene Sterne." },
     ],
-    tipp: "Auf der Karlsbrücke stehen 30 Statuen und Figurengruppen. Die meisten zeigen Heilige." });
+    tipp: "Auf der Karlsbrücke stehen 30 Statuen. Diese zeigt Maria mit dem Kind auf einer Wolke." });
 }
+S.teil({ id: "laterne", de: "die Laterne", syl: "la-TER-ne", it: "il lampione", itSyl: "lam-PIO-ne", en: "street lamp", x: 0, y: 0, kunst: laterneSvg(20, -1),
+  tipp: "Am Abend zündet ein Laternenanzünder einige Gaslaternen auf der Brücke noch von Hand an." });
+S.davor(laterneSvg(40, -1) + laterneSvg(46, 1));
 
 /* =====================================================================
    11 — DER STAND eines Künstlers (Böhmisches Glas, Bilder)
@@ -895,6 +1004,7 @@ let PUP = null;
 }
 
 BRUECKE.kunst += `<g pointer-events="none">${BRUECKE_SCHATTEN.join("")}</g>`;
+{ const md = S.teile.find((t) => t.id === "moldau"); md.kunst = ausgespart(md.kunst); }
 pfadeKlein(S);
 const aus = S.schreiben(path.join(__dirname, "../../../bilderwelt-neu/szenen/prag.js"));
 console.log(aus);

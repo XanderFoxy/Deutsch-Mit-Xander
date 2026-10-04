@@ -779,7 +779,7 @@ const [BX0, BY] = proj(BANK.lat0, BANK.d), [BX1] = proj(BANK.lat1, BANK.d), BK =
 }
 {
   /* DIE FRAU sitzt links auf der Bank, die Hände auf den Knien, und schaut zum Kind (rechts) */
-  const sitz = Object.assign({}, POSEN.sitzen, { schulterL: { vor: 24, seit: 8 }, ellbogenL: 62, unterarmL: -60, handL: 4, schulterR: { vor: 58, seit: 22 }, ellbogenR: 22, unterarmR: -20, handR: 8, fingerR: 0.3, kopf: 2 });
+  const sitz = Object.assign({}, POSEN.sitzen, { schulterR: { vor: 46, seit: 16 }, ellbogenR: 28, unterarmR: -30, handR: 10, fingerR: 0.55, kopf: 4 });   /* eine Hand auf dem Oberschenkel, eine greift nach dem Marzipan */
   const m = figur({ id: "lbk_frau", geschlecht: "w", pose: sitz, blick: 62, frisur: "zopf", haarfarbe: "hellbraun", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "bluse", farbe: "#f3efe6" }, unterteil: { stueck: "jeans" }, jacke: { stueck: "jacke", farbe: "#2f5f95" }, schuhe: { stueck: "halbschuh", farbe: "braun" } } }, 1.66 * BK);
   const sitzY = m.z.sitz.y * m.k;
@@ -794,30 +794,30 @@ const [BX0, BY] = proj(BANK.lat0, BANK.d), [BX1] = proj(BANK.lat1, BANK.d), BK =
   k += `<text x="0" y="${r(-0.16 * s)}" font-size="${r(0.045 * s)}" text-anchor="middle" fill="#f0c64a" font-family="Georgia,serif" font-style="italic" font-weight="bold">Marzipan</text>`;
   k += `<text x="0" y="${r(-0.105 * s)}" font-size="${r(0.03 * s)}" text-anchor="middle" fill="#f0c64a" font-family="Georgia,serif">LÜBECK</text>`;
   k += `<rect x="${r(-0.13 * s)}" y="${r(-0.3 * s)}" width="${r(0.06 * s)}" height="${r(0.3 * s)}" fill="#000" opacity=".15"/>`;
-  S.teil({ id: "tuete", de: "die Tüte", syl: "TÜ-te", it: "il sacchetto", itSyl: "sac-CHET-to", en: "bag", x: r(BXM + 0.55 * BK), y: r(BY - 0.46 * BK), steht: true, kunst: licht(k) });
+  S.teil({ id: "tuete", de: "die Tüte", syl: "TÜ-te", it: "il sacchetto", itSyl: "sac-CHET-to", en: "bag", x: r(BXM + 0.55 * BK), y: r(BY - 0.46 * BK), steht: true, kunst: licht(k),
+    tipp: "In der Tüte ist Marzipan aus Lübeck. Viele Touristen nehmen es als Geschenk mit." });
 }
 const KIND = { lat: -7.6, d: 20 };
 const [KX, KY] = proj(KIND.lat, KIND.d), KK = km(KY);
 let MARZ = null;
 {
   /* DAS KIND (etwa sechs Jahre, 1,15 m), Kleid und Rucksack, dreht sich zur Mutter und hält das Marzipan hoch */
-  const halt = Object.assign({}, POSEN.halten, { schulterL: { vor: 40, seit: 10 }, ellbogenL: 70, schulterR: { vor: 40, seit: 11 }, ellbogenR: 72, kopf: -6 });
+  const halt = Object.assign({}, POSEN.stehen, { schulterL: { vor: 68, seit: 8 }, ellbogenL: 18, unterarmL: -20, handL: 0, fingerL: 0.6, schulterR: { vor: 4, seit: 9 }, ellbogenR: 12, kopf: -6 });
   const m = figur({ id: "lbk_kind", alter: "kind", geschlecht: "w", pose: halt, blick: -75, frisur: "zopf", haarfarbe: "hellblond", haut: "hell", laecheln: true,
     kleidung: { kleid: { stueck: "sommerkleid", farbe: "#f2c230" }, schuhe: { stueck: "turnschuh" }, zubehoer: { stueck: "rucksack", farbe: "#e6889f" } } }, 1.15 * KK);
-  const hd = [m.z.handL, m.z.handR];
-  MARZ = { x: r(KX + (hd[0].x + hd[1].x) / 2 * m.k), y: r(KY + Math.min(hd[0].y, hd[1].y) * m.k) };
+  const hd = [m.z.handL, m.z.handR].sort((a, b) => a.y - b.y)[0];
+  MARZ = { x: r(KX + hd.x * m.k), y: r(KY + hd.y * m.k) };
   schlag(KIND.lat, KIND.d, 1.15, 0.4);
   S.teil({ id: "kind", de: "das Kind", syl: "KIND", it: "la bambina", itSyl: "bam-BI-na", en: "child", x: KX, y: KY, kunst: m.svg,
-    tipp: "Das Kind zeigt seiner Mutter das Marzipan." });
+    tipp: "Das Kind gibt seiner Mutter ein Stück Marzipan." });
 }
 {
-  /* DAS MARZIPAN: Marzipanbrot in roter Hülle mit goldenem Band, angebrochen */
-  const s = KK * 2;
-  let k = `<rect x="${r(-0.09 * s)}" y="${r(-0.09 * s)}" width="${r(0.18 * s)}" height="${r(0.09 * s)}" rx="${r(0.015 * s)}" fill="${S.lg("hulle", [[0, "#d63036"], [1, "#8e161c"]])}"/><rect x="${r(-0.09 * s)}" y="${r(-0.09 * s)}" width="${r(0.18 * s)}" height="${r(0.02 * s)}" fill="#ff7a7a" opacity=".5"/>`;
-  k += `<rect x="${r(-0.03 * s)}" y="${r(-0.09 * s)}" width="${r(0.05 * s)}" height="${r(0.09 * s)}" fill="${GOLD}"/>`;
-  k += `<rect x="${r(0.09 * s)}" y="${r(-0.046 * s)}" width="${r(0.035 * s)}" height="${r(0.042 * s)}" fill="#5a3420"/><rect x="${r(0.1 * s)}" y="${r(-0.04 * s)}" width="${r(0.022 * s)}" height="${r(0.03 * s)}" fill="#f1dcae"/>`;
-  k += `<path d="M${r(-0.08 * s)} ${r(-0.045 * s)} h${r(0.15 * s)}" stroke="#ff8a8a" stroke-width=".3" opacity=".6"/>`;
-  S.teil({ id: "marzipan", de: "das Marzipan", syl: "mar-zi-PAN", it: "il marzapane", itSyl: "mar-za-PA-ne", en: "marzipan", x: MARZ.x, y: r(MARZ.y + 0.3), kunst: k,
+  /* DAS MARZIPAN: ein kleines Marzipanbrot (etwa 13 cm) in roter Hülle mit goldenem Band, in einer Hand;
+     die Trefferfläche ist größer als die Zeichnung (oben, damit das kleine Wort sicher antippbar bleibt) */
+  const s = KK * 0.75;
+  let k = `<rect x="${r(-0.09 * s)}" y="${r(-0.07 * s)}" width="${r(0.18 * s)}" height="${r(0.08 * s)}" rx="${r(0.015 * s)}" fill="${S.lg("hulle", [[0, "#d63036"], [1, "#8e161c"]])}"/><rect x="${r(-0.03 * s)}" y="${r(-0.07 * s)}" width="${r(0.05 * s)}" height="${r(0.08 * s)}" fill="${GOLD}"/>`;
+  k += flaeche(-4, -4, 8, 6, 0.4);
+  S.teil({ oben: true, id: "marzipan", de: "das Marzipan", syl: "mar-zi-PAN", it: "il marzapane", itSyl: "mar-za-PA-ne", en: "marzipan", x: MARZ.x, y: r(MARZ.y + 0.3), kunst: k,
     tipp: "Lübecker Marzipan ist berühmt. Man macht es aus Mandeln und Zucker." });
 }
 

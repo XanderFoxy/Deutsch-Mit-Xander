@@ -497,11 +497,11 @@ const aufBoden = (T, svg) => { T.kunst += `<g transform="translate(${t2(-T.x)} $
     const glatt = (q) => { let d = `M${r(q[0][0])} ${r(q[0][1])}`; for (let i = 1; i < q.length - 1; i++) d += ` Q${r(q[i][0])} ${r(q[i][1])} ${r((q[i][0] + q[i + 1][0]) / 2)} ${r((q[i][1] + q[i + 1][1]) / 2)}`; return d + ` L${r(q[q.length - 1][0])} ${r(q[q.length - 1][1])}`; };
     const e = pts[pts.length - 1];
     const seite = (q) => q.reduce((s0, v) => s0 + v[1] + v[0] * .6, 0), oben = seite(L) < seite(R) ? L : R;
-    return `<path d="${glatt(L)} L${r(e[0])} ${r(e[1])} ${glatt(R.slice().reverse()).replace("M", "L")} Z" fill="${S.lg("ast", [[0, "#76604e"], [0.5, "#5a4838"], [1, "#43352a"]], 0, 0, 1, 0)}"/><path d="${glatt(oben)}" stroke="#8c7460" stroke-width="${r(Math.max(.3, w1 * .25))}" fill="none" opacity=".7"/>`;
+    return `<path d="${glatt(L)} L${r(e[0])} ${r(e[1])} ${glatt(R.slice().reverse()).replace("M", "L")} Z" fill="${S.lg("ast", [[0, "#806a58"], [0.45, "#5a4838"], [1, "#3a2e24"]], 0, 0, 1, 0)}"/><path d="${glatt(oben)}" stroke="#8c7460" stroke-width="${r(Math.max(.3, w1 * .25))}" fill="none" opacity=".7"/>`;
   };
   /* Stamm mit Wurzelanlauf, oben gerundet an der Gabel */
   const STAMM = S.lg("stamm", [[0, "#8a7462"], [0.45, "#5a4838"], [1, "#2e241c"]], 0, 0, 1, 0);
-  k += "AESTE" + `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .32 * m)} ${r(p[1] - 3 * m)} ${r(p[0] - .52 * m)} 100 ${r(p[0] - 17)} 76 Q${r(p[0] - 7)} 70 ${r(p[0] + 4)} 77 C${r(p[0] + .3 * m)} 100 ${r(p[0] + .38 * m)} ${r(p[1] - 3 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${STAMM}"/>`;
+  k += "AESTE" + `<path d="M${r(p[0] - .9 * m)} ${r(p[1] + .2)} Q${r(p[0] - .5 * m)} ${r(p[1] - .4 * m)} ${r(p[0] - .42 * m)} ${r(p[1] - 1.4 * m)} C${r(p[0] - .32 * m)} ${r(p[1] - 3 * m)} ${r(p[0] - .52 * m)} 100 ${r(p[0] - 19)} 74 L${r(p[0] - 25)} 64 Q${r(p[0] - 17)} 68 ${r(p[0] - 12.5)} 66 L${r(p[0] - 12)} 52 L${r(p[0] - 5)} 52 L${r(p[0] - 3.4)} 68 Q${r(p[0] + 2)} 66 ${r(p[0] + 6)} 61 L${r(p[0] + 5)} 76 C${r(p[0] + .3 * m)} 100 ${r(p[0] + .38 * m)} ${r(p[1] - 3 * m)} ${r(p[0] + .48 * m)} ${r(p[1] - 1.4 * m)} Q${r(p[0] + .6 * m)} ${r(p[1] - .4 * m)} ${r(p[0] + .95 * m)} ${r(p[1] + .2)} Z" fill="${STAMM}"/>`;
   /* Borke der Rosskastanie: sechs lange, leicht gedrehte Rippen; Risse versetzt und verschieden lang, Licht links */
   {
     const yU = p[1] - 1.3 * m, yO = 84, xl = (t) => p[0] - .42 * m + (p[0] - 15 - (p[0] - .42 * m)) * t, xr = (t) => p[0] + .48 * m + (p[0] + 2 - (p[0] + .48 * m)) * t;

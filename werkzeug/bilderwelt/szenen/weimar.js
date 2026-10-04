@@ -89,13 +89,16 @@ const sparen = (svg) => svg.replace(/ (stroke-linejoin|stroke-linecap)="round"/g
     const key = tag + at.replace(/="[^"]*"/g, "") + st;
     if (VERLAUF[key]) return `<${tag} id="${id}"${at} href="#${VERLAUF[key]}"/>`;
     VERLAUF[key] = id; return all; });
-const kompakt = (svg, Q = 1, min = 0.35) => {
+const kompakt = (svg, Q = 1, min = 0.35, kopf = null) => {
   svg = schlank(svg, min);
   const rund = (n) => { const v = Math.round(+n / Q) * Q; return String(v === 0 ? 0 : r(v)); };
   /* kleine Formen (Gesicht, Hände, Augen) fein runden, große grob — keine Mosaik-Gesichter */
   const fein = (n) => { const v = Math.round(+n / 0.4) * 0.4; return String(v === 0 ? 0 : r(v)); };
+  /* Alles am Kopf (Haar, Mütze, Pony, Zopf, Ohr) fein runden – sonst Treppen im Haar */
   const ausdehnung = (p) => { const z = (p.match(/-?\d*\.?\d+/g) || []).map(Number), a = [Infinity, Infinity], b = [-Infinity, -Infinity];
-    z.forEach((v, i) => { a[i % 2] = Math.min(a[i % 2], v); b[i % 2] = Math.max(b[i % 2], v); }); return Math.max(b[0] - a[0], b[1] - a[1]); };
+    z.forEach((v, i) => { a[i % 2] = Math.min(a[i % 2], v); b[i % 2] = Math.max(b[i % 2], v); });
+    if (kopf && Math.abs((a[0] + b[0]) / 2 - kopf.x) < 18 && (a[1] + b[1]) / 2 > kopf.y - 24 && (a[1] + b[1]) / 2 < kopf.y + 16 && b[1] - a[1] < 50) return 0;
+    return Math.max(b[0] - a[0], b[1] - a[1]); };
   return svg.replace(/<(path|ellipse|circle|rect|line|polygon)\b[^>]*>/g, (tag) => tag
     .replace(/ d="([^"]+)"/g, (a, p) => ` d="${p.replace(/-?\d*\.?\d+/g, ausdehnung(p) < KLEIN ? fein : rund)}"`)
     .replace(/ (x|y|x1|y1|x2|y2|cx|cy)="(-?\d*\.?\d+)"/g, (a, k, n) => ` ${k}="${(/^<(ellipse|circle)/.test(tag) ? fein : rund)(n)}"`));
@@ -103,7 +106,7 @@ const kompakt = (svg, Q = 1, min = 0.35) => {
 const FIG = {};
 const mensch = (name, spec, groesse, D, X, Q = 1, min = 0.35) => {
   const m = B.mensch(spec, 100);
-  S.def(`<g id="${S.id("fig" + name)}" stroke-linejoin="round" stroke-linecap="round">${sparen(kompakt(m.svg, Q, min))}</g>`);
+  S.def(`<g id="${S.id("fig" + name)}" stroke-linejoin="round" stroke-linecap="round">${sparen(kompakt(m.svg, Q, min, m.z.kopf))}</g>`);
   const f = { m, D, X, x: r(xG(D, X)), y: r(yG(D)), u: sk(D), s: groesse * sk(D) / 100 };
   f.p = (q) => ({ x: f.x + q.x * m.k * f.s, y: f.y + q.y * m.k * f.s });
   f.svg = `<use href="#${S.id("fig" + name)}" transform="scale(${f.s.toFixed(5)})"/>`;
@@ -842,7 +845,7 @@ const LS = { D: 8.6, X: -6.0 };
 /* =====================================================================
    13 — DIE STUDENTIN mit dem BUCH, DER TOURIST mit dem BRÖTCHEN, DIE FAMILIE
    ===================================================================== */
-KLEIN = 16;
+KLEIN = 8;
 const ST = mensch("ST", { id: "wmr_stud", geschlecht: "w", blick: 40, frisur: "locken", haarfarbe: "dunkelbraun", haut: "mittel",
   pose: { lende: 1, brust: -1, nacken: 22, kopf: 14, schulterL: { vor: 26, seit: 12 }, ellbogenL: 96, unterarmL: 50, handL: 4, fingerL: 0.5,
     schulterR: { vor: 24, seit: 13 }, ellbogenR: 98, unterarmR: 50, handR: 4, fingerR: 0.5,
@@ -885,7 +888,7 @@ S.teil({ id: "tourist", de: "der Tourist", syl: "tou-RIST", it: "il turista", it
   /* DIE FAMILIE: Mutter und Kind kommen Hand in Hand vom Zwiebelmarkt. Die Mutter (senfgelber Mantel, Tasche)
      trägt einen großen Zopf über dem rechten Unterarm; das Kind trägt einen kleinen Zopf als Kette. */
   const MD = 7.0, MX = 2.9;
-  KLEIN = 24; /* Pony-Haar und Gesicht der Mutter fein, sonst wirkt das Gesicht gestückelt */
+  KLEIN = 8;
   const MU = mensch("MU", { id: "wmr_mutter", geschlecht: "w", blick: -16, frisur: "pony", haarfarbe: "hellbraun", haut: "hell", laecheln: true,
     pose: { roll: 1.4, lende: 3, brust: -1, brustDreh: 4, nacken: 5, kopf: 6,
       schulterL: { vor: 4, seit: 9 }, ellbogenL: 10, unterarmL: 10, handL: 4, fingerL: 0.7,
