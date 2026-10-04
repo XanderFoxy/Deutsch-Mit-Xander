@@ -44,7 +44,7 @@
      auch auf dem Theaterplatz): Bauern aus Heldrungen verkaufen
      geflochtene ZWIEBELZÖPFE (gelbe und rote Zwiebeln, nach unten
      schmaler, oben eine Schlaufe, mit Strohblumen), Trockenblumen,
-     Zwiebelkuchen und Apfelsaft; die THÜRINGER
+     Zwiebelkuchen und Federweißer; die THÜRINGER
      ROSTBRATWURST vom Holzkohlegrill im Brötchen mit Senf; Studenten der
      Bauhaus-Universität mit dem Fahrrad; ein gelbes Reclam-Heft
      („Faust“) — Weimar ist die Stadt der Dichter.
@@ -655,8 +655,10 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
 {
   bodenSchatten(ZW.D + 0.9, (ZW.X0 + ZW.X1) / 2, 3.6, 2.6, 0.26);
   bodenSchatten(ZK.D + 0.9, (ZK.X0 + ZK.X1) / 2, 3.6, 2.6, 0.22);
-  let k = stand(ZK.D, ZK.X0, ZK.X1, ZK.T, ZK.h, "#3d6b48", -1, "#f4ecd8", "Zwiebelkuchen · Apfelsaft", 0.2);
-  /* Zwiebelkuchen: zwei Bleche schräg auf einem Ständer (gelb, braune Röststellen, in Stücke geschnitten), Apfelsaft in Flaschen und Bechern */
+  /* FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden‘
+     — wieder „Zwiebelkuchen · Federweißer“ (wie in Runde 2): Federweißer und Zwiebelkuchen gehören auf dem Zwiebelmarkt zusammen. */
+  let k = stand(ZK.D, ZK.X0, ZK.X1, ZK.T, ZK.h, "#3d6b48", -1, "#f4ecd8", "Zwiebelkuchen · Federweißer", 0.2);
+  /* Zwiebelkuchen: zwei Bleche schräg auf einem Ständer (gelb, braune Röststellen, in Stücke geschnitten), Federweißer (milchig-trüb, hellgelb) in Flaschen und Bechern */
   { const zr = zufall(41);
     for (let i = 0; i < 2; i++) {
       const X = ZK.X0 + 0.3 + i * 1.15, X2 = X + 1.0, Dv = ZK.D + 0.12, Dh = ZK.D + 0.42;
@@ -671,10 +673,10 @@ const ZK = { D: 16, X0: 8.2, X1: 11.8, T: 1.8, h: 2.55 };
     }
     for (let i = 0; i < 4; i++) {
       const X = ZK.X0 + 2.62 + i * 0.22, x = xG(ZK.D + 0.25, X), y = yG(ZK.D + 0.25, 0.95), u = sk(ZK.D + 0.25);
-      k += `<path d="M${r(x - 0.04 * u)} ${r(y)} L${r(x - 0.04 * u)} ${r(y - 0.2 * u)} Q${r(x - 0.04 * u)} ${r(y - 0.25 * u)} ${r(x - 0.015 * u)} ${r(y - 0.27 * u)} L${r(x - 0.015 * u)} ${r(y - 0.29 * u)} L${r(x + 0.015 * u)} ${r(y - 0.29 * u)} L${r(x + 0.015 * u)} ${r(y - 0.27 * u)} Q${r(x + 0.04 * u)} ${r(y - 0.25 * u)} ${r(x + 0.04 * u)} ${r(y - 0.2 * u)} L${r(x + 0.04 * u)} ${r(y)} Z" fill="#e9b949"/>` +
+      k += `<path d="M${r(x - 0.04 * u)} ${r(y)} L${r(x - 0.04 * u)} ${r(y - 0.2 * u)} Q${r(x - 0.04 * u)} ${r(y - 0.25 * u)} ${r(x - 0.015 * u)} ${r(y - 0.27 * u)} L${r(x - 0.015 * u)} ${r(y - 0.29 * u)} L${r(x + 0.015 * u)} ${r(y - 0.29 * u)} L${r(x + 0.015 * u)} ${r(y - 0.27 * u)} Q${r(x + 0.04 * u)} ${r(y - 0.25 * u)} ${r(x + 0.04 * u)} ${r(y - 0.2 * u)} L${r(x + 0.04 * u)} ${r(y)} Z" fill="#e3d08a"/>` +
         `<rect x="${r(x - 0.04 * u)}" y="${r(y - 0.15 * u)}" width="${r(0.08 * u)}" height="${r(0.07 * u)}" fill="#f2ead2"/><rect x="${r(x - 0.017 * u)}" y="${r(y - 0.31 * u)}" width="${r(0.034 * u)}" height="${r(0.03 * u)}" fill="#2f5a32"/><path d="M${r(x - 0.025 * u)} ${r(y - 0.02 * u)} V${r(y - 0.19 * u)}" stroke="#ffe0a0" stroke-width=".25" opacity=".7"/>`;
     }
-    for (let i = 0; i < 2; i++) { const x = xG(ZK.D + 0.15, ZK.X0 + 2.5 + i * 0.95), y = yG(ZK.D + 0.15, 0.95), u = sk(ZK.D + 0.15); k += `<path d="M${r(x - 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.03 * u)} ${r(y)} L${r(x - 0.03 * u)} ${r(y)} Z" fill="#f4f1ea"/><ellipse cx="${r(x)}" cy="${r(y - 0.11 * u)}" rx="${r(0.04 * u)}" ry="${r(0.012 * u)}" fill="#e9b949"/>`; }
+    for (let i = 0; i < 2; i++) { const x = xG(ZK.D + 0.15, ZK.X0 + 2.5 + i * 0.95), y = yG(ZK.D + 0.15, 0.95), u = sk(ZK.D + 0.15); k += `<path d="M${r(x - 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.04 * u)} ${r(y - 0.11 * u)} L${r(x + 0.03 * u)} ${r(y)} L${r(x - 0.03 * u)} ${r(y)} Z" fill="#f4f1ea"/><ellipse cx="${r(x)}" cy="${r(y - 0.11 * u)}" rx="${r(0.04 * u)}" ry="${r(0.012 * u)}" fill="#e3d08a"/>`; }
   }
   k += stand(ZW.D, ZW.X0, ZW.X1, ZW.T, ZW.h, "#7a4a24", 1, "#f4ecd8", "Zwiebeln aus Heldrungen", 0.2);
   /* Kiste mit losen Zwiebeln auf der Theke */

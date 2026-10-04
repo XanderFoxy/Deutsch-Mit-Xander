@@ -1049,8 +1049,10 @@ const WT = {};
     tipp: "Der Philosophenweg führte früher durch Weinberge. Im Oktober ist Weinlese.",
     zoom: { x: 232, y: 158, w: 66, h: 44 },
     unter: [
+      /* FASSUNG 880 — XANDER (Funk 299): „stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden“
+         — der ursprüngliche Tipp zur Weintraube ist wieder da. */
       { id: "weintraube", de: "die Weintraube", syl: "WEIN-trau-be", it: "il grappolo d'uva", itSyl: "GRAP-po-lo DU-va", en: "bunch of grapes", x: WT.x, y: WT.y, kunst: flaeche(-2.4, -3, 4.8, 6.6, 0.6),
-        tipp: "Im Herbst werden die Trauben am steilen Hang von Hand geerntet." },
+        tipp: "Aus den Trauben vom Neckarhang wird Wein gemacht." },
     ] });
 }
 

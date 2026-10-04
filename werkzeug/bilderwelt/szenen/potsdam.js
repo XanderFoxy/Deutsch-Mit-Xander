@@ -380,8 +380,10 @@ const schlossUnter = [];
   schlossUnter.push({ id: "inschrift", de: "die Inschrift", syl: "IN-schrift", it: "l'iscrizione", itSyl: "i-scri-ZIO-ne", en: "inscription", x: ix, y: iy,
     kunst: flaeche(-8 * PU, -1.9 * PU, 16 * PU, 2 * PU, 0.6), tipp: "Die Inschrift heißt „SANS, SOUCI.“ — mit Komma und Punkt. Warum, weiß bis heute niemand genau." });
   const [hx, hy] = M(-13.96 - 0.5, 0);
+  /* FASSUNG 880 — XANDER (Funk 299): „stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden“
+     → Originaltipp zurück: die Hermen sind Begleiter des Weingottes Bacchus. */
   schlossUnter.push({ id: "figur", de: "die Figur", syl: "fi-GUR", it: "la figura", itSyl: "fi-GU-ra", en: "figure", x: hx, y: hy,
-    kunst: flaeche(-0.55 * PU, -8.7 * PU, 1.6 * PU, 8.5 * PU, 0.5), tipp: "36 Figuren aus Sandstein stützen das Dach. Sie tragen Trauben und Blätter – sie gehören zum Weinberg." });
+    kunst: flaeche(-0.55 * PU, -8.7 * PU, 1.6 * PU, 8.5 * PU, 0.5), tipp: "36 Figuren aus Sandstein stützen das Dach. Sie feiern den Wein: Es sind Begleiter des Weingottes Bacchus." });
 }
 S.teile[S.teile.length - 1].unter = schlossUnter;
 

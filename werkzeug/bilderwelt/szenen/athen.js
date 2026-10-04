@@ -41,7 +41,7 @@
      28 m hoch, drei Geschosse mit Bogenöffnungen; heute Bühne des
      Athen-Festivals.
    - TYPISCHES: die griechische Flagge auf der Akropolis, Olivenbäume
-     (heiliger Baum der Athene), Aleppo-Kiefern (ihr Harz duftet in der Hitze),
+     (heiliger Baum der Athene), Aleppo-Kiefern (Harz für Retsina),
      Katzen an den Ausgrabungen, Picknick mit Gyros-Pita und Oliven,
      Touristen mit Sonnenhut und Kamera.
    Maßstab: Punkt (O, N, Z) in Metern (Osten/Norden vom Parthenon aus,
@@ -714,8 +714,9 @@ const SCHATTEN = [
   ];
   for (const [x, y, w, h, vx, vy] of B2) k += buesch(x, y, w, h, vx, vy);
   for (const [dx, dy] of [[-12, -170], [44, -170], [56, -134]]) k += `<ellipse cx="${sx + dx}" cy="${r(sy + dy)}" rx=".9" ry="1.4" fill="#7a5236"/><ellipse cx="${sx + dx - 0.3}" cy="${r(sy + dy - 0.4)}" rx=".4" ry=".6" fill="#c08a5a"/>`;
+  /* FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden‘ */
   S.teil({ anker: [sx + 10, sy - 90], id: "kiefer", de: "die Kiefer", syl: "KIE-fer", it: "il pino", itSyl: "PI-no", en: "pine tree", x: 0, y: 0, kunst: k,
-    tipp: "Auf den Hügeln von Athen wachsen Aleppo-Kiefern. An heißen Tagen duftet ihr Harz in der ganzen Luft." });
+    tipp: "Auf den Hügeln von Athen wachsen Aleppo-Kiefern. Mit ihrem Harz macht man den griechischen Wein Retsina." });
 }
 
 /* =====================================================================

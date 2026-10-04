@@ -991,8 +991,10 @@ const CAFE = {};
     tipp: "Rund um den Münsterplatz sitzt man im Café und schaut auf den Markt.",
     zoom: { x: 0, y: 168, w: 54, h: 36 },
     unter: [
+      /* FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden‘
+         – das Kirschwasser gehört zum Originalrezept und steht wieder im Tipp. */
       { id: "kirschtorte", de: "die Schwarzwälder Kirschtorte", syl: "SCHWARZ-wäl-der KIRSCH-tor-te", it: "la torta Foresta Nera", itSyl: "TOR-ta fo-RE-sta NE-ra", en: "Black Forest cake", x: Math.max(28, CAFE.torte.x), y: CAFE.torte.y, kunst: flaeche(CAFE.torte.x - Math.max(28, CAFE.torte.x) - 1.6, -1.6, 3.2, 2.6, 0.4),
-        tipp: "Schokoladenbiskuit, Sahne und Kirschen — die berühmteste Torte aus dem Schwarzwald." },
+        tipp: "Schokoladenbiskuit, Sahne, Kirschen und ein Schuss Kirschwasser — die berühmteste Torte aus dem Schwarzwald." },
       { id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x: Math.max(18, CAFE.schirm.x), y: CAFE.schirm.y, kunst: flaeche(CAFE.schirm.x - Math.max(18, CAFE.schirm.x) - CAFE.schirm.s * 1.4, -CAFE.schirm.s * .4, CAFE.schirm.s * 2.8, CAFE.schirm.s * .6, 0.5) },
     ] });
 }

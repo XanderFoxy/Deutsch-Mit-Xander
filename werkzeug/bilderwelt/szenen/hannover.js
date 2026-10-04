@@ -33,8 +33,10 @@
    - MASCHTEICH und MASCHPARK: der Teich liegt südlich vor dem Rathaus,
      ringsum alte Buchen, Linden und Rosskastanien; Stockenten, Schwäne.
    - TYPISCHES: der LEIBNIZ-BUTTERKEKS (Bahlsen, Hannover, seit 1891,
-     52 Zähne), eine APFELSCHORLE auf der Decke (die Lüttje Lage — Bier und
-     Korn — ist als Lernwort mit Alkohol ersetzt, Runde 4),
+     52 Zähne), die LÜTTJE LAGE (ein Glas dunkles Bier und ein Korn,
+     gleichzeitig aus einer Hand getrunken — gehört zum Schützenfest, dem
+     größten der Welt; FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol
+     wieder her … die Städte sollen authentisch dargestellt werden‘),
      eine POSTKARTE mit den NANAS von Niki de Saint Phalle am Leibnizufer
      (1974; die Figuren selbst stehen an der Leine, von hier nicht zu
      sehen), Rosskastanien im Oktober.
@@ -634,7 +636,7 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
 }
 
 /* =====================================================================
-   13 — DIE DECKE (Picknick links vorn) — Lupe: Butterkeks, Apfelschorle,
+   13 — DIE DECKE (Picknick links vorn) — Lupe: Butterkeks, Lüttje Lage,
         Kastanie, Postkarte
    ===================================================================== */
 {
@@ -670,15 +672,18 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
   kg += keks(-11.4, -3.2, -20) + keks(9.4, -.2, -8) + keks(14.4, .8, 14);
   for (let i = 0; i < 8; i++) kg += `<circle cx="${r(6 + rnd() * 10)}" cy="${r(1.6 + rnd() * 1.6)}" r=".25" fill="#d9a85a"/>`;
   k += `<g transform="translate(${t2(K[0])} ${t2(K[1])}) scale(${(km * 1.15).toFixed(5)})">${kg}</g>`;
-  /* DIE APFELSCHORLE: Glasflasche mit Etikett und ein Glas mit Bläschen */
+  /* DIE LÜTTJE LAGE: dunkles Bier und Korn auf dem Holzbrettchen (Maße in cm: Bierglas ≈ 11 hoch,
+     Korngläschen ≈ 6,5 hoch; Ränder und Glaskanten fein umrissen, damit beide Gläser auch auf dem Karo zu lesen sind).
+     FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden‘ */
   const L0 = auf(.6, .62), lm = mdt(.62);
-  let lg = `<path d="M-9 1.2 L9 1.2 L10.4 -.8 L-7.6 -.8 Z" fill="#2a3418" opacity=".25"/>`;
-  lg += `<path d="M-7.6 0 L-1.2 0 L-1.2 -14 Q-1.2 -17 -3.2 -18.2 L-3.2 -19.6 L-5.6 -19.6 L-5.6 -18.2 Q-7.6 -17 -7.6 -14 Z" fill="#dcebd8" opacity=".55"/>`;
-  lg += `<path d="M-7.1 -.3 L-1.7 -.3 L-1.7 -14.6 L-7.1 -14.6 Z" fill="#e2a43a" opacity=".9"/><rect x="-7.4" y="-10.6" width="6" height="5.2" fill="#f4efe2"/><circle cx="-4.4" cy="-8" r="1.5" fill="#c8323a"/><path d="M-4.4 -9.5 q.4 -.8 1 -.9" stroke="#3f6e2a" stroke-width=".4" fill="none"/>`;
-  lg += `<rect x="-5.9" y="-21.4" width="3" height="2" rx=".4" fill="#c8323a"/><path d="M-5.6 -20.8 h2.4 M-5.6 -20.1 h2.4" stroke="#8e1f22" stroke-width=".25"/><path d="M-6.6 -14 L-6.6 -1.2" stroke="#fff" stroke-width=".6" opacity=".55"/><path d="M-2.2 -14 L-2.2 -1" stroke="#7a4a12" stroke-width=".5" opacity=".35"/>`;
-  lg += `<path d="M1.2 0 L6.6 0 L7.2 -10.4 L.6 -10.4 Z" fill="#eef4f4" opacity=".45"/><path d="M1.4 -.3 L6.4 -.3 L6.9 -8 L.9 -8 Z" fill="#e8b04a" opacity=".88"/><ellipse cx="3.9" cy="-8" rx="3" ry=".55" fill="#f6d27a"/><ellipse cx="3.9" cy="-10.4" rx="3.3" ry=".6" fill="none" stroke="#f4f8f8" stroke-width=".25" opacity=".8"/>`;
-  for (const [x, y] of [[2.6, -2], [4.8, -3.4], [3.4, -5.2], [5.6, -6.4], [2.2, -6.8], [4.2, -1.2]]) lg += `<circle cx="${x}" cy="${y}" r=".28" fill="#fff8e0" opacity=".85"/>`;
-  lg += `<path d="M1.6 -9.6 L2 -1" stroke="#fff" stroke-width=".5" opacity=".6"/>`;
+  let lg = `<path d="M-8.4 1.8 L9 1.8 L10.4 -.8 L-7 -.8 Z" fill="#2a3418" opacity=".25"/><path d="M-7.5 0 L7.5 0 L8.4 -1.2 L-6.6 -1.2 Z" fill="#a8743f"/><path d="M-7.5 0 L7.5 0 L7.5 .7 L-7.5 .7 Z" fill="#7e5228"/><path d="M-5.6 -.5 L6.8 -.5 M-4 -.9 L4.6 -.9" stroke="#8e5c2e" stroke-width=".15" opacity=".7"/>`;
+  /* Bierglas: dickes Glas unten, dunkles Bier, Schaumkrone, Rand */
+  lg += `<path d="M-4.6 -.6 L-.6 -.6 L-.3 -11.6 L-4.9 -11.6 Z" fill="#e8eef0" opacity=".45" stroke="#9fb2b8" stroke-width=".2"/><path d="M-4.58 -.6 L-.62 -.6 L-.64 -1.6 L-4.56 -1.6 Z" fill="#dfe8ea" opacity=".75"/>`;
+  lg += `<path d="M-4.56 -1.6 L-.64 -1.6 L-.42 -9.4 L-4.78 -9.4 Z" fill="#3a1e0e"/><path d="M-4.4 -1.8 L-3.6 -1.8 L-3.5 -9.2 L-4.6 -9.2 Z" fill="#6a3416" opacity=".7"/>`;
+  lg += `<path d="M-4.78 -9.4 L-.42 -9.4 L-.38 -10.5 L-4.82 -10.5 Z" fill="#e8d8b8"/><ellipse cx="-2.6" cy="-10.5" rx="2.22" ry=".38" fill="#f4e8cc"/><ellipse cx="-2.6" cy="-11.6" rx="2.3" ry=".4" fill="none" stroke="#9fb2b8" stroke-width=".2"/><path d="M-4.2 -10.8 L-4 -2" stroke="#fff" stroke-width=".35" opacity=".55"/>`;
+  /* Korngläschen: klarer Korn, dicker Boden, Rand */
+  lg += `<path d="M1.2 -.6 L4 -.6 L4.2 -7 L1 -7 Z" fill="#eef4f6" opacity=".55" stroke="#9fb2b8" stroke-width=".2"/><path d="M1.2 -.6 L4 -.6 L4.03 -1.8 L1.17 -1.8 Z" fill="#dfe9ec" opacity=".85"/>`;
+  lg += `<path d="M1.17 -1.8 L4.03 -1.8 L4.13 -5.2 L1.07 -5.2 Z" fill="#f2f6ee" opacity=".6"/><ellipse cx="2.6" cy="-5.2" rx="1.53" ry=".3" fill="#fbfdf6" opacity=".9" stroke="#b4c2c0" stroke-width=".12"/><ellipse cx="2.6" cy="-7" rx="1.6" ry=".32" fill="none" stroke="#9fb2b8" stroke-width=".2"/><path d="M1.5 -6.5 L1.6 -2.2" stroke="#fff" stroke-width=".3" opacity=".8"/>`;
   k += `<g transform="translate(${t2(L0[0])} ${t2(L0[1])}) scale(${(lm * 1.1).toFixed(5)})">${lg}</g>`;
   /* Thermoskanne und Becher */
   const T0 = auf(.88, .78), tm = mdt(.78);
@@ -712,8 +717,8 @@ const blattForm = (x, y, s, rot, f) => `<path d="M${r(x + s * .5)} ${r(y + s * .
     unter: [
       { id: "butterkeks", de: "der Butterkeks", syl: "BUT-ter-keks", it: "il biscotto al burro", itSyl: "bi-SCOT-to al BUR-ro", en: "butter biscuit", x: K[0] + 1.5 * km * 1.15, y: K[1] - 2 * km * 1.15, kunst: flaeche(-19 * km, -5 * km, 38 * km, 10.5 * km, .3),
         tipp: "Der Leibniz-Keks kommt aus Hannover und hat genau 52 Zähne." },
-      { id: "apfelschorle", de: "die Apfelschorle", syl: "AP-fel-schor-le", it: "l'Apfelschorle (succo di mela e acqua frizzante)", itSyl: "AP-fel-schor-le", en: "apple spritzer", x: L0[0] - 1 * lm, y: L0[1] - 9 * lm, kunst: flaeche(-8.5 * lm, -18 * lm, 18 * lm, 28.5 * lm, .3),
-        tipp: "Apfelschorle ist Apfelsaft mit Sprudelwasser. Beim Picknick im Maschpark ist sie schön kalt." },
+      { id: "luettje_lage", de: "die Lüttje Lage", syl: "LÜTT-je LA-ge", it: "la Lüttje Lage (birra e acquavite di grano)", itSyl: "LÜTT-je LA-ge", en: "Lüttje Lage (beer and schnapps)", x: L0[0], y: L0[1] - 6 * lm, kunst: flaeche(-9.5 * lm, -8.5 * lm, 20 * lm, 17 * lm, .3),
+        tipp: "Bier und Korn trinkt man gleichzeitig aus zwei Gläsern in einer Hand. Das gehört zum Schützenfest, dem größten der Welt." },
       { id: "kastanie", de: "die Kastanie", syl: "kas-TA-nie", it: "la castagna d'India", itSyl: "ca-STA-gna d'IN-dia", en: "conker", x: KA[0] + 1.5 * mm, y: KA[1] - 1.5 * mm, kunst: flaeche(-9 * mm, -6.5 * mm, 21 * mm, 14 * mm, .3),
         tipp: "Im Herbst sammeln Kinder Kastanien und basteln daraus Tiere." },
       { id: "postkarte", de: "die Postkarte", syl: "POST-kar-te", it: "la cartolina", itSyl: "car-to-LI-na", en: "postcard", x: PK[0], y: PK[1], kunst: flaeche(-7.6 * pm, -3 * pm, 15.2 * pm, 6 * pm, .3),

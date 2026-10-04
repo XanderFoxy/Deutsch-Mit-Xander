@@ -42,8 +42,12 @@
      (Phalerae) am Riemengeschirr, Gürtel mit Lederstreifen, Schwert
      links, Querkamm am Helm, Stock aus Rebholz (vitis) als Rangzeichen, Caligae);
      der „Römer-Express“, eine kleine Stadtrundfahrt-Bahn, startet an der
-     Porta Nigra; Reibekuchen (in Trier „Gromperekichelcher“) mit Apfelmus;
+     Porta Nigra; Moselwein (Riesling) im „Römer“-Glas mit grünem Stiel;
+     Viez (Trierer Apfelwein) im weißen Porzellanbecher, der Viezporz;
+     Reibekuchen (in Trier „Gromperekichelcher“) mit Apfelmus;
      Touristen, Tauben, Radfahrer.
+     FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden‘:
+     Viez, Moselwein und Riesling (Tafel, Schirm, Tisch, Gast) sind wieder da.
    UNSICHER (ohne Foto-Beleg, aus Fachwissen): die genaue Zahl der
    Fensterachsen (hier Türme je 3, Mittelbau 4), die Ausführung der Apsis,
    wie viel vom Simeonstift von hier zu sehen ist, die Farben der Bahn.
@@ -693,15 +697,17 @@ const CAFE = { lat: -14.5, d0: 34.8, d1: 41, h: 14 };
     tipp: "In der Simeonstraße gibt es viele Cafés. Von hier sieht man direkt auf die Porta Nigra." });
 }
 {
-  /* DIE TAFEL (Kundenstopper) vor dem Café: Kuchen und Apfelschorle (rechts vom Schirmmast, gut lesbar) */
+  /* DIE TAFEL (Kundenstopper) vor dem Café: Viez, Riesling und Flammkuchen (rechts vom Schirmmast, gut lesbar)
+     FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden‘ */
   const lat = -9.6, d = 34, [x, y] = proj(lat, d), s = km(y), H = 1.0 * s, Wd = 0.58 * s;
   let k = `<path d="M${r(-Wd / 2 - 0.6)} 0 L${r(-Wd / 2 + 1)} ${r(-H)} L${r(Wd / 2 - 1)} ${r(-H)} L${r(Wd / 2 + 0.6)} 0" stroke="#5b3a1f" stroke-width=".9" fill="none"/>`;
   k += `<path d="M${r(-Wd / 2 + 0.1)} -2 L${r(-Wd / 2 + 1.2)} ${r(-H + 1.4)} L${r(Wd / 2 - 1.2)} ${r(-H + 1.4)} L${r(Wd / 2 - 0.1)} -2 Z" fill="${S.lg("tafel", [[0, "#2e3a33"], [1, "#212a25"]])}"/>`;
-  const t = (yy, f, txt, c = "#f4f0e6", w = "normal") => `<text x="0" y="${r(yy)}" font-size="${f}" text-anchor="middle" fill="${c}" font-family="'Comic Sans MS','Segoe Print',cursive" font-weight="${w}">${txt}</text>`;
-  k += t(-H + 4.2, 2.1, "Heute:", "#f6e7a1", "bold") + t(-H + 7, 1.7, "Apfelkuchen") + t(-H + 9.4, 1.7, "Käsekuchen") + t(-H + 11.9, 1.6, "Apfelschorle", "#ffc9b8");
+  /* L: feste Zeilenbreite, damit lange Zeilen in jeder Schrift auf der Tafel bleiben */
+  const t = (yy, f, txt, c = "#f4f0e6", w = "normal", L = 0) => `<text x="0" y="${r(yy)}" font-size="${f}" text-anchor="middle" fill="${c}" font-family="'Comic Sans MS','Segoe Print',cursive" font-weight="${w}"${L ? ` textLength="${r(L)}" lengthAdjust="spacingAndGlyphs"` : ""}>${txt}</text>`;
+  k += t(-H + 4.2, 2.1, "Heute:", "#f6e7a1", "bold") + t(-H + 7, 1.7, "Viez 0,25 l", undefined, undefined, 0.43 * s) + t(-H + 9.4, 1.7, "Riesling") + t(-H + 11.9, 1.6, "Flammkuchen", "#ffc9b8", undefined, 0.48 * s);
   schlag(lat, d, 1, 0.6, 0.3);
   S.teil({ id: "tafel", de: "die Tafel", syl: "TA-fel", it: "la lavagna", itSyl: "la-VA-gna", en: "chalkboard", x, y, steht: true, kunst: licht(k),
-    tipp: "Auf der Tafel steht, was es heute gibt: Apfelkuchen, Käsekuchen und Apfelschorle." });
+    tipp: "Auf der Tafel steht, was es heute gibt: Viez, Riesling und Flammkuchen." });
 }
 
 /* =====================================================================
@@ -905,7 +911,8 @@ const ROEM = { lat: 2.1, d: 21.6 };
 
 /* =====================================================================
    13 — DER SONNENSCHIRM, 14 — DER STUHL, 15 — DER GAST,
-   16 — DER TISCH mit Kaffee, Reibekuchen und Traubensaft (Café-Terrasse links vorn)
+   16 — DER TISCH mit VIEZ, REIBEKUCHEN und MOSELWEIN (Café-Terrasse links vorn)
+   FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden‘
    ===================================================================== */
 const TISCH = { lat: -6.4, d: 18.2 };
 const [TX, TY] = proj(TISCH.lat, TISCH.d), TK = km(TY);
@@ -918,7 +925,7 @@ const [TX, TY] = proj(TISCH.lat, TISCH.d), TK = km(TY);
   let vol = `M${r(-Wd)} ${r(-H + 0.42 * s)} `;
   for (let i = 0; i < 8; i++) vol += `q${r(Wd * 0.125)} ${r(0.08 * s)} ${r(Wd * 0.25)} 0 `;
   k += `<path d="${vol}" fill="#9b2b30"/>`;
-  k += `<text x="${r(Wd * 0.2)}" y="${r(-H + 0.32 * s)}" font-size="${r(0.13 * s)}" text-anchor="middle" fill="#9b2b30" font-family="Georgia,serif" font-style="italic">Kaffee &amp; Kuchen</text>`;
+  k += `<text x="${r(Wd * 0.2)}" y="${r(-H + 0.32 * s)}" font-size="${r(0.17 * s)}" text-anchor="middle" fill="#9b2b30" font-family="Georgia,serif" font-style="italic">Riesling</text>`;
   schlag(lat, d, 2.4, 2.4, 0.25);
   S.teil({ id: "sonnenschirm", de: "der Sonnenschirm", syl: "SON-nen-schirm", it: "l'ombrellone", itSyl: "om-brel-LO-ne", en: "parasol", x, y, kunst: licht(k) });
 }
@@ -939,14 +946,14 @@ const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
   S.teil({ id: "stuhl", de: "der Stuhl", syl: "STUHL", it: "la sedia", itSyl: "SE-dia", en: "chair", x: TX, y: TY, kunst: licht(k) });
 }
 {
-  /* DER GAST: ein älterer Herr sitzt auf dem linken Stuhl und trinkt Kaffee (der Stuhl bleibt sichtbar) */
+  /* DER GAST: ein älterer Herr sitzt auf dem linken Stuhl und trinkt Viez (der Stuhl bleibt sichtbar) */
   const [x, y] = proj(STUHL_L.lat, STUHL_L.d), s = km(y);
   const greif = Object.assign({}, POSEN.sitzen, { schulterR: { vor: 44, seit: 14 }, ellbogenR: 46, unterarmR: -40, handR: -6, fingerR: 0.6, kopf: -12, nacken: 2 });
   const m = figur({ id: "trr_gast", alter: "alt", geschlecht: "m", pose: greif, blick: 58, frisur: "glatze", haarfarbe: "grau", haut: "hell", laecheln: true,
     kleidung: { oberteil: { stueck: "hemd", farbe: "#d8e4ec" }, unterteil: { stueck: "hose", farbe: "#5a5048" }, jacke: { stueck: "weste", farbe: "#6a5038" }, schuhe: { stueck: "halbschuh", farbe: "braun" }, kopf: { stueck: "hut", farbe: "#8a7a5a" } } }, 1.72 * s, 0.6);
   const sitzY = m.z.sitz.y * m.k;
   S.teil({ id: "gast", de: "der Gast", syl: "GAST", it: "l'ospite", itSyl: "O-spi-te", en: "guest", x, y: r(y - 0.2), kunst: `<g transform="translate(${r(0.1 * s)} ${r(-0.46 * s - sitzY)})">${m.svg}</g>`,
-    tipp: "Der Gast trinkt einen Kaffee. Er schaut zur Porta Nigra hinauf." });
+    tipp: "Der Gast trinkt einen Viez. Er schaut zur Porta Nigra hinauf." });
   GASTHAND = { x: x + 0.1 * s + m.z.handR.x * m.k, y: r(y - 0.2) - 0.46 * s - sitzY + m.z.handR.y * m.k };
 }
 {
@@ -954,12 +961,13 @@ const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
   let k = `<path d="M${r(-0.18 * s)} 0 L${r(0.18 * s)} 0 L${r(0.03 * s)} ${r(-0.08 * s)} L${r(-0.03 * s)} ${r(-0.08 * s)} Z" fill="#2c3236"/><rect x="${r(-0.025 * s)}" y="${r(-TH)}" width="${r(0.05 * s)}" height="${r(TH - 0.06 * s)}" fill="#3a4045"/>`;
   k += `<ellipse cx="0" cy="${r(-TH)}" rx="${r(R)}" ry="${r(R * 0.2)}" fill="#8b9298"/><ellipse cx="0" cy="${r(-TH - 0.02 * s)}" rx="${r(R)}" ry="${r(R * 0.2)}" fill="${S.lg("marmor", [[0, "#f3f1ec"], [1, "#d6d2c8"]])}"/>`;
   const top = -TH - 0.02 * s;
-  /* die Kaffeetasse mit Untertasse genau unter der Hand des Gastes (der Henkel zeigt zu ihm) */
+  /* FASSUNG 880 — XANDER (Funk 299): ‚stell den Alkohol wieder her … die Städte sollen authentisch dargestellt werden‘
+     DER VIEZ im Viezporz (weißer Porzellanbecher mit blauem Strich, goldgelber Viez) genau unter der Hand des Gastes, der Henkel zeigt zu ihm */
   const vx = Math.max(-0.27 * s, Math.min(-0.16 * s, GASTHAND.x - TX + 0.03 * s));
-  k += `<ellipse cx="${r(vx)}" cy="${r(top - 0.004 * s)}" rx="${r(0.065 * s)}" ry="${r(0.014 * s)}" fill="#e9e6df" stroke="#c9c4b8" stroke-width=".15"/>`;
-  k += `<path d="M${r(vx - 0.04 * s)} ${r(top - 0.075 * s)} L${r(vx - 0.034 * s)} ${r(top - 0.01 * s)} Q${r(vx)} ${r(top + 0.002 * s)} ${r(vx + 0.034 * s)} ${r(top - 0.01 * s)} L${r(vx + 0.04 * s)} ${r(top - 0.075 * s)} Z" fill="${S.lg("porz", [[0, "#ffffff"], [0.7, "#eeece6"], [1, "#cfcbc2"]], 0, 0, 1, 0)}"/>`;
-  k += `<ellipse cx="${r(vx)}" cy="${r(top - 0.075 * s)}" rx="${r(0.04 * s)}" ry="${r(0.01 * s)}" fill="#5a3a22"/><ellipse cx="${r(vx + 0.008 * s)}" cy="${r(top - 0.077 * s)}" rx="${r(0.018 * s)}" ry="${r(0.004 * s)}" fill="#a07850"/>`;
-  k += `<path d="M${r(vx - 0.039 * s)} ${r(top - 0.062 * s)} q${r(-0.03 * s)} 0 ${r(-0.028 * s)} ${r(0.024 * s)} q0 ${r(0.016 * s)} ${r(0.031 * s)} ${r(0.014 * s)}" stroke="#f2f0ea" stroke-width="${r(0.01 * s)}" fill="none"/>`;
+  k += `<path d="M${r(vx - 0.045 * s)} ${r(top + 0.01 * s)} L${r(vx - 0.05 * s)} ${r(top - 0.11 * s)} L${r(vx + 0.05 * s)} ${r(top - 0.11 * s)} L${r(vx + 0.045 * s)} ${r(top + 0.01 * s)} Z" fill="${S.lg("porz", [[0, "#ffffff"], [0.7, "#eeece6"], [1, "#cfcbc2"]], 0, 0, 1, 0)}"/>`;
+  k += `<ellipse cx="${r(vx)}" cy="${r(top - 0.11 * s)}" rx="${r(0.05 * s)}" ry="${r(0.012 * s)}" fill="#d9b25a"/>`;
+  k += `<path d="M${r(vx - 0.048 * s)} ${r(top - 0.09 * s)} q${r(-0.04 * s)} 0 ${r(-0.035 * s)} ${r(0.035 * s)} q0 ${r(0.03 * s)} ${r(0.038 * s)} ${r(0.03 * s)}" stroke="#f6f4ef" stroke-width="${r(0.012 * s)}" fill="none"/>`;
+  k += `<path d="M${r(vx - 0.03 * s)} ${r(top - 0.06 * s)} h${r(0.06 * s)}" stroke="#3a5a9a" stroke-width=".25"/>`;
   /* der Teller mit zwei Reibekuchen und Apfelmus (Mitte) */
   const px = -0.04 * s;
   k += `<ellipse cx="${r(px)}" cy="${r(top - 0.006 * s)}" rx="${r(0.1 * s)}" ry="${r(0.024 * s)}" fill="#fbfaf6" stroke="#cfcac0" stroke-width=".15"/>`;
@@ -974,20 +982,23 @@ const STUHL_L = { lat: TISCH.lat - 0.8, d: TISCH.d + 0.5 };
   }
   /* Apfelmus im Schälchen am Tellerrand */
   k += `<path d="M${r(px + 0.045 * s)} ${r(top - 0.024 * s)} Q${r(px + 0.068 * s)} ${r(top - 0.002 * s)} ${r(px + 0.091 * s)} ${r(top - 0.024 * s)} Z" fill="#f4f1ea" stroke="#cfcac0" stroke-width=".12"/><ellipse cx="${r(px + 0.068 * s)}" cy="${r(top - 0.024 * s)}" rx="${r(0.023 * s)}" ry="${r(0.006 * s)}" fill="#ecd590"/>`;
-  /* der Traubensaft: gerader Saftbecher, helles Violett, Strohhalm (rechts, deutlich abgerückt) */
+  /* DER MOSELWEIN: Riesling im „Römer“ (grüner, hohler Stiel mit Noppen, helle Kelchschale mit hellgelbem Wein; rechts, deutlich abgerückt) */
   const wx = 0.2 * s;
-  k += `<path d="M${r(wx - 0.032 * s)} ${r(top + 0.004 * s)} L${r(wx - 0.036 * s)} ${r(top - 0.11 * s)} L${r(wx + 0.036 * s)} ${r(top - 0.11 * s)} L${r(wx + 0.032 * s)} ${r(top + 0.004 * s)} Z" fill="#eef2f4" opacity=".6" stroke="#c9d2d6" stroke-width=".15"/>`;
-  k += `<path d="M${r(wx - 0.031 * s)} ${r(top - 0.004 * s)} L${r(wx - 0.034 * s)} ${r(top - 0.085 * s)} L${r(wx + 0.034 * s)} ${r(top - 0.085 * s)} L${r(wx + 0.031 * s)} ${r(top - 0.004 * s)} Z" fill="${S.lg("saft", [[0, "#b46ab8"], [1, "#7a3a86"]], 0, 0, 1, 0)}"/>`;
-  k += `<path d="M${r(wx + 0.01 * s)} ${r(top - 0.03 * s)} L${r(wx + 0.03 * s)} ${r(top - 0.15 * s)} l${r(0.03 * s)} ${r(-0.012 * s)}" stroke="#e8463c" stroke-width="${r(0.012 * s)}" fill="none"/>`;
-  k += `<path d="M${r(wx - 0.026 * s)} ${r(top - 0.1 * s)} v${r(0.085 * s)}" stroke="#fff" stroke-width=".35" opacity=".7"/>`;
+  k += `<path d="M${r(wx - 0.035 * s)} ${r(top + 0.005 * s)} L${r(wx + 0.035 * s)} ${r(top + 0.005 * s)} L${r(wx + 0.01 * s)} ${r(top - 0.012 * s)} L${r(wx + 0.008 * s)} ${r(top - 0.07 * s)} L${r(wx - 0.008 * s)} ${r(top - 0.07 * s)} L${r(wx - 0.01 * s)} ${r(top - 0.012 * s)} Z" fill="#3f7a3a"/>`;
+  for (const t of [0.02, 0.04, 0.06]) k += `<circle cx="${r(wx)}" cy="${r(top - t * s)}" r="${r(0.012 * s)}" fill="#5c9a52"/>`;
+  k += `<path d="M${r(wx - 0.045 * s)} ${r(top - 0.15 * s)} Q${r(wx - 0.05 * s)} ${r(top - 0.07 * s)} ${r(wx)} ${r(top - 0.068 * s)} Q${r(wx + 0.05 * s)} ${r(top - 0.07 * s)} ${r(wx + 0.045 * s)} ${r(top - 0.15 * s)} Z" fill="#eef4e8" opacity=".55" stroke="#c9d6c4" stroke-width=".15"/>`;
+  k += `<path d="M${r(wx - 0.043 * s)} ${r(top - 0.115 * s)} Q${r(wx - 0.045 * s)} ${r(top - 0.075 * s)} ${r(wx)} ${r(top - 0.072 * s)} Q${r(wx + 0.045 * s)} ${r(top - 0.075 * s)} ${r(wx + 0.043 * s)} ${r(top - 0.115 * s)} Z" fill="#f2df8a" opacity=".85"/>`;
+  k += `<path d="M${r(wx - 0.03 * s)} ${r(top - 0.14 * s)} q.3 1.6 .3 3" stroke="#fff" stroke-width=".35" opacity=".8" fill="none"/>`;
   schlag(TISCH.lat, TISCH.d, 0.74, 0.7, 0.3);
   S.teil({ oben: true, id: "tisch", de: "der Tisch", syl: "TISCH", it: "il tavolino", itSyl: "ta-vo-LI-no", en: "table", x: TX, y: TY, steht: true, kunst: licht(k),
     zoom: { x: r(TX - 0.75 * s), y: r(TY - 1.15 * s), w: r(1.5 * s), h: r(1.0 * s) },
     unter: [
+      { id: "viez", de: "der Viez", syl: "VIEZ", it: "il sidro di Treviri", itSyl: "SI-dro di TRE-vi-ri", en: "Trier cider", x: r(TX + vx), y: r(TY + top + 0.01 * s), kunst: flaeche(-0.08 * s, -0.14 * s, 0.16 * s, 0.15 * s, 0.4),
+        tipp: "Viez ist ein saurer Apfelwein aus der Gegend von Trier. Man trinkt ihn aus einem Porzellanbecher. Der Becher heißt Viezporz." },
       { id: "reibekuchen", de: "der Reibekuchen", syl: "REI-be-ku-chen", it: "la frittella di patate", itSyl: "frit-TEL-la di pa-TA-te", en: "potato pancake", x: r(TX + px), y: r(TY + top), kunst: flaeche(-0.1 * s, -0.06 * s, 0.2 * s, 0.08 * s, 0.4),
         tipp: "In Trier sagt man zu Reibekuchen „Gromperekichelcher“. Man macht sie aus Kartoffeln." },
-      { id: "traubensaft", de: "der Traubensaft", syl: "TRAU-ben-saft", it: "il succo d'uva", itSyl: "SUC-co DU-va", en: "grape juice", x: r(TX + wx), y: r(TY + top - 0.15 * s), kunst: flaeche(-0.06 * s, -0.01 * s, 0.13 * s, 0.18 * s, 0.4),
-        tipp: "An der Mosel wachsen viele Trauben. Aus ihnen presst man Traubensaft." },
+      { id: "moselwein", de: "der Moselwein", syl: "MO-sel-wein", it: "il vino della Mosella", itSyl: "VI-no del-la mo-SEL-la", en: "Moselle wine", x: r(TX + wx), y: r(TY + top - 0.15 * s), kunst: flaeche(-0.06 * s, -0.01 * s, 0.13 * s, 0.18 * s, 0.4),
+        tipp: "An der Mosel wächst viel Riesling. Schon die Römer haben hier Wein angebaut." },
     ] });
 }
 
