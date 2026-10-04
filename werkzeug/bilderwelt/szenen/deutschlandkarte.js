@@ -451,7 +451,7 @@ meerTeil("nordsee", N_TEIL, ohne(INSELN_NORD, ["texel", "vlieland", "terschellin
   "Die Nordsee hat Ebbe und Flut. Vor der Küste liegt das Wattenmeer.",
   { id: "nordsee", de: "die Nordsee", syl: "NORD-see", it: "il Mare del Nord", itSyl: "MA-re del NORD", en: "North Sea" });
 meerTeil("ostsee", O_TEIL, { fehmarn: INSELN_OST.fehmarn, poel: INSELN_OST.poel, ruegen: INSELN_OST.ruegen, hiddensee: INSELN_OST.hiddensee },
-  (() => { const [x, y] = P(12.0, 54.68); return halo(x, y, "O s t s e e", 5.6, "#2f6f93", "#cfe6ee", `font-style="italic" letter-spacing=".6"`, 0.6); })(),
+  (() => { const [x, y] = P(13.4, 54.93); return halo(x, y, "O s t s e e", 5.6, "#2f6f93", "#cfe6ee", `font-style="italic" letter-spacing=".6"`, 0.6); })(),
   "Die Ostsee ist ein Binnenmeer. Ihr Wasser ist wenig salzig.",
   { id: "ostsee", de: "die Ostsee", syl: "OST-see", it: "il Mar Baltico", itSyl: "MAR BAL-ti-co", en: "Baltic Sea" });
 
@@ -774,28 +774,28 @@ const ICON = {
    ===================================================================== */
 /* [Länge, Breite, Bildversatz dx/dy, Beschriftung (dx, dy, Ausrichtung), Knopf (dx, dy) vom Ortspunkt] */
 const STADT = {
-  hamburg: { ll: [9.99, 53.55], lab: [0, 5.2, "m"] },
+  hamburg: { ll: [9.99, 53.55], lab: [0, 6.4, "m"] },
   luebeck: { ll: [10.69, 53.87], bild: [-5.4, -2.6], lab: [2, 4.6, "s"] },
-  bremen: { ll: [8.81, 53.08], lab: [0, 5.2, "m"], gross: 1.2 },
-  hannover: { ll: [9.74, 52.37], lab: [0, 5.2, "m"] },
+  bremen: { ll: [8.81, 53.08], lab: [0, 6.4, "m"], gross: 1.2 },
+  hannover: { ll: [9.74, 52.37], lab: [0, 6.4, "m"] },
   berlin: { ll: [13.40, 52.52], bild: [2.5, 0], lab: [9.5, -1.2, "s"] },
-  potsdam: { ll: [13.03, 52.385], bild: [-3, 9.6], lab: [-3, 14.8, "m"] },
-  magdeburg: { ll: [11.63, 52.13], lab: [0, 5.2, "m"] },
-  leipzig: { ll: [12.37, 51.34], lab: [0, 5.2, "m"] },
-  dresden: { ll: [13.74, 51.05], lab: [0, 5.2, "m"] },
-  weimar: { ll: [11.33, 50.98], lab: [0, 5.2, "m"], gross: 1.1 },
+  potsdam: { ll: [13.03, 52.385], bild: [-3, 9.6], lab: [4.2, 10.6, "s"] },
+  magdeburg: { ll: [11.63, 52.13], lab: [0, 6.4, "m"] },
+  leipzig: { ll: [12.37, 51.34], lab: [0, 6.4, "m"] },
+  dresden: { ll: [13.74, 51.05], lab: [0, 6.4, "m"] },
+  weimar: { ll: [11.33, 50.98], lab: [0, 6.4, "m"], gross: 1.1 },
   frankfurt: { ll: [8.68, 50.11], lab: [-7, -2.4, "e"], sub: "am Main" },
-  trier: { ll: [6.64, 49.75], lab: [0, 5.2, "m"] },
+  trier: { ll: [6.64, 49.75], lab: [0, 6.4, "m"] },
   heidelberg: { ll: [8.69, 49.40], lab: [-7.4, -1, "e"] },
-  stuttgart: { ll: [9.18, 48.78], lab: [0, 5.2, "m"] },
-  freiburg: { ll: [7.85, 47.99], lab: [0, 5.2, "m"], sub: "im Breisgau" },
+  stuttgart: { ll: [9.18, 48.78], lab: [0, 6.4, "m"] },
+  freiburg: { ll: [7.85, 47.99], lab: [0, 6.4, "m"], sub: "im Breisgau" },
   duesseldorf: { ll: [6.78, 51.23], bild: [2.8, -0.2], lab: [-2.4, 1.4, "e"] },
   koeln: { ll: [6.96, 50.94], bild: [8.2, 3.2], lab: [8.2, 7.6, "m"] },
-  aachen: { ll: [6.08, 50.78], lab: [0, 5.2, "m"] },
-  rothenburg: { ll: [10.18, 49.38], lab: [-3.5, 5.2, "m"], sub: "ob der Tauber" },
-  nuernberg: { ll: [11.08, 49.45], lab: [0.5, 5.2, "m"] },
+  aachen: { ll: [6.08, 50.78], lab: [0, 6.4, "m"] },
+  rothenburg: { ll: [10.18, 49.38], lab: [-9, 6.4, "m"], sub: "ob der Tauber" },
+  nuernberg: { ll: [11.08, 49.45], lab: [1.5, 6.4, "m"] },
   regensburg: { ll: [12.10, 49.02], lab: [6.5, -0.6, "s"] },
-  muenchen: { ll: [11.58, 48.14], lab: [0, 5.2, "m"] },
+  muenchen: { ll: [11.58, 48.14], lab: [0, 6.4, "m"] },
   neuschwanstein: { ll: [10.75, 47.56], bild: [-4, 0], lab: [5.6, -1.2, "s"] },
 };
 const NAME = { hamburg: "Hamburg", luebeck: "Lübeck", bremen: "Bremen", hannover: "Hannover", berlin: "Berlin", potsdam: "Potsdam", magdeburg: "Magdeburg",
@@ -816,11 +816,11 @@ function stadtBild(id) {
     : `<circle cx="${r(dx0)}" cy="${r(dy0)}" r="1.15" fill="#c0392b" stroke="#fff8ea" stroke-width=".5"/>`;
   const [lx, ly, al] = c.lab, anchor = { m: "middle", s: "start", e: "end" }[al];
   const name = c.name || NAME[id];
-  let n = `<text x="${r(dx0 + lx)}" y="${r(dy0 + ly)}" font-size="4.3" font-weight="bold" text-anchor="${anchor}" fill="#3a2716" stroke="#fbf5e6" stroke-width="1.1" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">${name}</text>`;
-  if (c.sub) n += `<text x="${r(dx0 + lx)}" y="${r(dy0 + ly + 3.2)}" font-size="2.9" font-style="italic" text-anchor="${anchor}" fill="#5a4026" stroke="#fbf5e6" stroke-width=".8" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">${c.sub}</text>`;
+  let n = `<text x="${r(dx0 + lx)}" y="${r(dy0 + ly)}" font-size="5.5" font-weight="bold" text-anchor="${anchor}" fill="#3a2716" stroke="#fbf5e6" stroke-width="1.1" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">${name}</text>`;
+  if (c.sub) n += `<text x="${r(dx0 + lx)}" y="${r(dy0 + ly + 4.1)}" font-size="3.7" font-style="italic" text-anchor="${anchor}" fill="#5a4026" stroke="#fbf5e6" stroke-width=".8" stroke-linejoin="round" paint-order="stroke" font-family="Georgia,'Times New Roman',serif">${c.sub}</text>`;
   /* ungefährer Kasten: Bild + Beschriftung */
-  const lw = name.length * 2.45 + 1, lx0 = al === "m" ? dx0 + lx - lw / 2 : al === "s" ? dx0 + lx - 0.5 : dx0 + lx - lw + 0.5;
-  const box = { x0: Math.min(bx - W / 2, lx0, dx0 - 1.5), x1: Math.max(bx + W / 2, lx0 + lw, dx0 + 1.5), y0: Math.min(by - H, dy0 + ly - 4), y1: Math.max(by + 0.6, dy0 + ly + (c.sub ? 4.4 : 1.2), dy0 + 1.5) };
+  const lw = name.length * 3.1 + 1, lx0 = al === "m" ? dx0 + lx - lw / 2 : al === "s" ? dx0 + lx - 0.5 : dx0 + lx - lw + 0.5;
+  const box = { x0: Math.min(bx - W / 2, lx0, dx0 - 1.5), x1: Math.max(bx + W / 2, lx0 + lw, dx0 + 1.5), y0: Math.min(by - H, dy0 + ly - 5), y1: Math.max(by + 0.6, dy0 + ly + (c.sub ? 5.4 : 1.4), dy0 + 1.5) };
   return { k, n, box, punkt: [dx0, dy0], bild: [bx, by, W, H] };
 }
 
@@ -1015,9 +1015,9 @@ const PK = (lo, la) => P(lo, la);
 /* Mitte der Lupenmarke je Stadt (Bildkoordinaten): neben dem Bild, nicht auf Namen oder Nachbarn */
 const MARKE = {
   hamburg: [179.3, 50], luebeck: [208.5, 37], bremen: [157.6, 62], hannover: [197, 86],
-  berlin: [271, 82], potsdam: [236, 98], magdeburg: [214, 93], leipzig: [247, 119], weimar: [209, 130], dresden: [272.5, 127],
-  duesseldorf: [137, 120], koeln: [148.5, 133], aachen: [104, 137], trier: [113.5, 169], frankfurt: [175, 155],
-  heidelberg: [176.6, 182.5], stuttgart: [165, 197], freiburg: [136.5, 222], rothenburg: [194.5, 171], nuernberg: [212.8, 169.5],
+  berlin: [270, 74.5], potsdam: [236, 98], magdeburg: [214, 93], leipzig: [247, 119], weimar: [209, 130], dresden: [272.5, 127],
+  duesseldorf: [137, 120], koeln: [148.5, 133], aachen: [102.3, 137.5], trier: [113.5, 169], frankfurt: [175, 155],
+  heidelberg: [176.6, 180], stuttgart: [165, 197], freiburg: [136.5, 222], rothenburg: [194.5, 171], nuernberg: [212.8, 169.5],
   regensburg: [245, 186.5], muenchen: [232.5, 218], neuschwanstein: [198, 226],
 };
 region("norden", ["hamburg", "luebeck", "bremen", "hannover"], [121, 44],
@@ -1029,7 +1029,7 @@ region("osten", ["berlin", "potsdam", "magdeburg", "leipzig", "weimar", "dresden
 region("westen", ["duesseldorf", "koeln", "aachen", "trier", "frankfurt"], PK(5.0, 50.3),
   { id: "westen", de: "der Westen", syl: "WES-ten", it: "l'Ovest", itSyl: "O-vest", en: "the West",
     tipp: "Im Westen fließt der Rhein. Hier liegen Köln, Düsseldorf und Frankfurt." });
-region("sueden", ["heidelberg", "stuttgart", "freiburg", "rothenburg", "nuernberg", "regensburg", "muenchen", "neuschwanstein"], PK(14.0, 49.1),
+region("sueden", ["heidelberg", "stuttgart", "freiburg", "rothenburg", "nuernberg", "regensburg", "muenchen", "neuschwanstein"], [PK(14.0, 49.1)[0] + 5.5, PK(14.0, 49.1)[1]],
   { id: "sueden", de: "der Süden", syl: "SÜ-den", it: "il Sud", itSyl: "SUD", en: "the South",
     tipp: "Im Süden liegen Bayern und Baden-Württemberg. Ganz im Süden sind die Alpen." });
 

@@ -220,7 +220,7 @@ S.hinten(`<rect width="400" height="182" fill="${S.rg("sonne", [[0, "#fff1d2", 0
     fl += `<path d="${p} Q${r(x)} ${r(y + h * 0.25)} ${r(x - w)} ${r(y)}Z" fill="${c}"/><path d="M${r(x - w * 0.8)} ${r(y + h * 0.05)} Q${r(x)} ${r(y + h * 0.25)} ${r(x + w * 0.85)} ${r(y)}" stroke="#d6cfd8" stroke-width="${r(h * 0.25)}" fill="none" opacity=".55"/>`;
   }
   S.def(`<filter id="${S.id("wolkweich")}" x="-5%" y="-40%" width="110%" height="180%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="3.2 1.8"/></filter>`);
-  S.hinten(wo + `<g opacity=".82" filter="url(#${S.id("dunst")})">${fl}</g>`);
+  S.hinten(wo);   /* Runde 5: nur der Schleier trägt den Himmel */
   /* zarte Schleierwolken am Horizont */
   S.hinten(`<path d="M0 128 Q60 124 120 127 T240 125 T400 128 L400 132 Q300 130 200 132 T0 133 Z" fill="#fff" opacity=".35" filter="url(#${S.id("dunst")})"/>`);
 }
@@ -984,7 +984,7 @@ let KUNDE_HAND = null;
   const d = 19, l = -2.45, x = r(X(d, l)), y = r(Y(d));
   BODEN_SCHATTEN.push(schlag(d, l, 1.8, 0.28));
   const pose = { kipp: 0, lende: 1, brust: 0, nacken: 4, kopf: -4, schulterL: { vor: 4, seit: 8 }, ellbogenL: 14, unterarmL: 10, handL: 6, fingerL: 0.4,
-    schulterR: { vor: 22, seit: 6, dreh: 30 }, ellbogenR: 112, unterarmR: 40, handR: 0, fingerR: 0.72,
+    schulterR: { vor: 22, seit: 6, dreh: 30 }, ellbogenR: 112, unterarmR: 40, handR: 0, fingerR: 0.95,
     huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -6 }, knieR: 6, fussR: 2 };
   const m = B.mensch({ id: "msk_kunde", geschlecht: "m", blick: -50, neigung: 3, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "hell", laecheln: true, pose,
     kleidung: { jacke: { stueck: "jacke", farbe: "#2e3a4c" }, unterteil: { stueck: "hose", farbe: "#3a3a40" }, schuhe: { stueck: "stiefel" }, zubehoer: { stueck: "schal", farbe: "#c8402c" } } }, r(1.8 * F / d));
@@ -998,6 +998,14 @@ let KUNDE_HAND = null;
   hut += `<path d="M${r(hx - 11)} ${r(hy - 10)} Q${r(hx)} ${r(hy - 13.6)} ${r(hx + 11)} ${r(hy - 10)}" stroke="#a78058" stroke-width="1" fill="none" opacity=".7"/>`;
   hut += `<path d="M${r(hx - 8)} ${r(hy - 17)} Q${r(hx + 2)} ${r(hy - 21)} ${r(hx + 10)} ${r(hy - 13)}" stroke="#b08a60" stroke-width="1.4" opacity=".55" fill="none"/>`;
   KUNDE_HAND = { x: x + m.z.handR.x * m.k, y: y + m.z.handR.y * m.k };
+  /* Runde 5: der hängende linke Ärmel als ein glatter Stoffpfad (überdeckt die lose Platte der Figur) */
+  {
+    const pk = m.z.punkte, [sx, sy] = pk.schulterL, [ex, ey] = pk.ellbogenL, [wx, wy] = pk.handgelenkL;
+    const nrm = (ax, ay, bx, by) => { const l = Math.hypot(bx - ax, by - ay) || 1; return [-(by - ay) / l, (bx - ax) / l]; };
+    const [n1x, n1y] = nrm(sx, sy, ex, ey), [n2x, n2y] = nrm(ex, ey, wx, wy), a = 6.8, b = 6.6, c = 5.6;
+    const p = (X0, Y0) => `${r(X0)} ${r(Y0)}`;
+    hut = `<path d="M${p(sx + n1x * a, sy + n1y * a - 2)} Q${p(sx + n1x * a * 1.15, sy + 3)} ${p(ex + n1x * b, ey + n1y * b)} L${p(wx + n2x * c, wy + n2y * c)} Q${p(wx, wy + 1.5)} ${p(wx - n2x * c, wy - n2y * c)} L${p(ex - n1x * b, ey - n1y * b)} Q${p(sx - n1x * a * 0.4, sy + 4)} ${p(sx - n1x * a, sy - n1y * a)}Z" fill="#2b3647"/><path d="M${p(sx + n1x * a * 0.9, sy + n1y * a)} Q${p(sx + n1x * a * 1.2, sy + 8)} ${p(ex + n1x * b * 0.9, ey + n1y * b)} L${p(wx + n2x * c * 0.9, wy + n2y * c)}" stroke="#6d7c94" stroke-width=".7" fill="none" opacity=".45"/>` + hut;
+  }
   const hutP = { x: r(x + hx * m.k), y: r(y + (hy - 9) * m.k) };
   S.teil({ id: "kunde", de: "der Kunde", syl: "KUN-de", it: "il cliente", itSyl: "cli-EN-te", en: "customer", x, y,
     kunst: `<g transform="scale(${m.k.toFixed(4)})" filter="url(#${S.id("kante")})">${kompaktFein(m).replace(/^<g transform="scale\([^)]*\)">/, "<g>")}${hut}</g>`,
@@ -1115,7 +1123,7 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
   k += `<ellipse cx="-.13" cy="-.88" rx=".13" ry=".135" fill="#f3d2b8"/><ellipse cx="-.1" cy="-.875" rx=".1" ry=".11" fill="#f6dcc6"/>`;
   k += `<circle cx="-.03" cy="-.84" r=".032" fill="#f19a9a" opacity=".75"/><circle cx="-.085" cy="-.895" r=".021" fill="#2a1d14"/><circle cx="-.02" cy="-.895" r=".019" fill="#2a1d14"/><circle cx="-.079" cy="-.901" r=".006" fill="#fff"/>`;
   k += `<path d="M-.07 -.93 q.02 -.012 .04 0 M-.02 -.93 q.015 -.01 .03 0" stroke="#6a4a30" stroke-width=".008" fill="none"/><path d="M.005 -.88 q.02 .015 .0 .03" stroke="#d29a80" stroke-width=".01" fill="none"/>`;
-  k += `<path d="M-.075 -.835 q.035 .035 .07 0 q-.035 .015 -.07 0Z" fill="#a0524a"/>`;
+  k += `<path d="M-.075 -.835 q.035 .035 .07 0 q-.035 .015 -.07 0Z" fill="#a0524a"/><path d="M-.06 -.832 q.025 .018 .045 0" stroke="#5a2a24" stroke-width=".012" fill="none"/>`;
   /* Bommelmütze mit Umschlag */
   k += `<path d="M-.28 -.94 Q-.29 -1.1 -.14 -1.11 Q.0 -1.1 .0 -.96 Z" fill="#c8302c"/><path d="M-.29 -.97 Q-.14 -1.0 .01 -.96 v.04 Q-.14 -.96 -.29 -.93 Z" fill="#f2f0ea"/><circle cx="-.15" cy="-1.14" r=".055" fill="#f2f0ea"/>`;
   k += `<path d="M-.56 -.2 H.42" stroke="#e8c48c" stroke-width=".012"/></g>`;
@@ -1151,7 +1159,7 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
   k += `<circle cx=".3" cy=".3" r="1.8" fill="#3a3f48"/><circle cx=".3" cy=".3" r="1.15" fill="#14202c"/><circle cx=".7" cy="-.1" r=".35" fill="#9fc0ff"/><rect x="-3" y="-1.2" width="1.1" height="2.8" rx=".3" fill="#33373e"/>`;
   /* Runde 4: die Kamera ist ein Lupen-Teil der Touristin (kein 22-E-Rechteck mehr über ihrem Kopf) */
   S.teil({ id: "touristin", de: "die Touristin", syl: "tou-RIS-tin", it: "la turista", itSyl: "tu-RI-sta", en: "tourist", x, y,
-    kunst: `<g filter="url(#${S.id("kante")})">${kompaktFein(m, m.svg, 1)}</g><g transform="translate(${r(hx - x)} ${r(hy - y)})">${k}</g>`,
+    kunst: `<g filter="url(#${S.id("kante")})">${kompaktFein(m, m.svg, 1)}</g><g transform="translate(${r(hx - x)} ${r(hy - y - 1.5)}) scale(1.25)">${k}</g>`,
     zoom: { x: r(hx - 22), y: r(hy - 12), w: 42, h: 28 },
     unter: [{ id: "kamera", de: "die Kamera", syl: "KA-me-ra", it: "la macchina fotografica", itSyl: "MAC-chi-na fo-to-GRA-fi-ca", en: "camera", x: r(hx), y: r(hy),
       kunst: flaeche(-4.5, -3.8, 8.5, 6.5, 0.6), tipp: "Mit der Kamera macht man Fotos." }],
@@ -1178,10 +1186,10 @@ const TX = (x) => ({ l: (x - 200) * TD / F, x });
     k += `<circle cx="${r((kxx + 0.015) * 1000) / 1000}" cy="${r((ky - 0.012) * 1000) / 1000}" r=".008" fill="#8a7a6a"/><path d="M.0 -.29 Q.08 -.29 .14 -.25" stroke="#c9ccd3" stroke-width=".012" fill="none" opacity=".6"/></g>`;
     return k;
   };
-  const d0 = 11.55, l0 = 1.02, x0 = r(X(d0, l0)), y0 = r(Y(d0));
-  let k = kraehe(11.4, 0.8, 1, true) + kraehe(11.7, 1.3, -1, false);
+  const d0 = 11.45, l0 = 0.72, x0 = r(X(d0, l0)), y0 = r(Y(d0));
+  let k = kraehe(11.3, 0.55, 1, true) + kraehe(11.6, 0.92, -1, false);
   /* Kringel (Baranka) auf dem Pflaster */
-  const bx = X(11.5, 1.02), by = Y(11.5), bs = F / 11.5;
+  const bx = X(11.45, 0.74), by = Y(11.45), bs = F / 11.45;
   k += `<ellipse cx="${r(bx)}" cy="${r(by - 0.3)}" rx="${r(0.07 * bs)}" ry="${r(0.03 * bs)}" fill="none" stroke="#c98a3e" stroke-width="${r(0.03 * bs)}"/><ellipse cx="${r(bx - 0.4)}" cy="${r(by - 0.5)}" rx="${r(0.04 * bs)}" ry=".3" fill="#f2c27a" opacity=".6"/>`;
   S.teil({ oben: true, id: "kraehe", de: "die Krähe", syl: "KRÄ-he", it: "la cornacchia", itSyl: "cor-NAC-chia", en: "crow", x: 0, y: 0, steht: true, kunst: k + flaeche(x0 - 13, y0 - 12, 26, 13, 0.6),
     tipp: "In Moskau leben viele graue Nebelkrähen. Hier streiten zwei um einen Kringel." });
