@@ -375,11 +375,18 @@ let MITTE = "";
   MITTE += `<path d="${rl}" fill="#c4bfae" opacity=".32"/><path d="${rs}" fill="#4a4c4c" opacity=".26"/>`;
   /* Gletscherzungen: oben breit an den Wandfuß geschmiegt (die Couloir-Kegel laufen hinein), unten schmaler mit gewölbtem,
      dunklerem Rand; Spalten quer zum Fließen; sie enden in grauer Moräne (Geröll) */
-  const zunge = (pts, spalten, moraene) => `<path d="${rund(pts)}" fill="${S.lg("gletscher", [[0, "#f4f7fb"], [0.6, "#dae4ef"], [1, "#b4c5d6"]])}" stroke="#93a8bf" stroke-width=".5"/><path d="${spalten}" stroke="#7d97b6" stroke-width=".4" fill="none" stroke-linecap="round"/><path d="${moraene}" fill="#77736a"/>`;
-  MITTE += zunge([[156, 100.2], [168, 98.2], [184, 95.8], [198, 93], [210, 90.2], [212.6, 92.6], [208, 96.6], [199, 100.4], [191, 103.6], [183, 104.2], [175, 102.8], [165, 101.4]],
+  const zz = zufall(808);
+  const zunge = (oben, unten, spalten, moraene) => {
+    /* Stirn und Seitenränder gezackt (Séracs), nur dort ein dunklerer Rand; oben geht das Eis ohne Umriss in Wand und Couloir-Kegel über */
+    const zack = [];
+    for (let i = 0; i < unten.length - 1; i++) { const [x0, y0] = unten[i], [x1, y1] = unten[i + 1]; zack.push([x0, y0]); for (let t = 1; t <= 2; t++) zack.push([x0 + (x1 - x0) * t / 3 + (zz() - 0.5) * 0.8, y0 + (y1 - y0) * t / 3 + (t % 2 ? 0.55 : -0.35) * (0.6 + zz() * 0.6)]); }
+    zack.push(unten[unten.length - 1]);
+    return `<path d="M${oben.map(pt).join(" L")} L${zack.map(pt).join(" L")} Z" fill="${S.lg("gletscher", [[0, "#f4f7fb"], [0.6, "#dae4ef"], [1, "#b4c5d6"]])}"/><path d="M${zack.map(pt).join(" L")}" stroke="#93a8bf" stroke-width=".5" fill="none" stroke-linejoin="round"/><path d="${spalten}" stroke="#7d97b6" stroke-width=".4" fill="none" stroke-linecap="round"/><path d="${moraene}" fill="#77736a"/>`;
+  };
+  MITTE += zunge([[156, 100.2], [168, 98.2], [184, 95.8], [198, 93], [210, 90.2]], [[210, 90.2], [212.6, 92.6], [208, 96.6], [199, 100.4], [191, 103.6], [183, 104.2], [175, 102.8], [165, 101.4], [156, 100.2]],
     "M170 99.6 Q175 100.6 180 99.6 M186 97.4 Q192 98.8 198 97 M178 101.4 Q183 102.4 187 101.2 M196 95.2 Q200 96 204 94.4 M190 100.4 Q194 101.2 197 100 M202 92.6 Q205 93.4 207.6 92.2",
     "M180 104 l1.4 -1 l1.2 1.2 Z M184.6 104.6 l1.6 -1.2 l1.2 1.2 Z M188.8 104 l1.2 -1 l1.2 .9 Z M176.4 103.4 l1 -.9 l1 .9 Z M192.6 103 l1 -.9 l1 .8 Z");
-  MITTE += zunge([[225, 91.2], [234, 93.6], [242, 96.6], [250, 99], [258, 100.6], [266, 103], [276, 105.6], [280, 107.6], [272, 108.6], [262, 109], [254, 110.6], [246, 109.2], [238, 105.6], [230, 100.6]],
+  MITTE += zunge([[225, 91.2], [234, 93.6], [242, 96.6], [250, 99], [258, 100.6], [266, 103], [276, 105.6]], [[276, 105.6], [280, 107.6], [272, 108.6], [262, 109], [254, 110.6], [246, 109.2], [238, 105.6], [230, 100.6], [225, 91.2]],
     "M236 97.4 Q241 98.8 246 97.8 M248 101.4 Q254 103 259 102 M240 101 Q244 102.2 247 101.4 M256 105 Q261 106.4 266 105.4 M266 106 Q270 106.8 274 106.6 M250 106.4 Q254 107.4 257 106.8",
     "M250 111 l1.4 -1.1 l1.2 1.2 Z M254.6 111.6 l1.6 -1.3 l1.3 1.3 Z M259 110.6 l1.2 -1 l1.2 1 Z M246.6 110.2 l1 -.9 l1 .9 Z");
   /* die Hörnlihütte auf einer kleinen Felsstufe am Fuß des Grats */
@@ -884,9 +891,23 @@ let SCHATTEN_BODEN = "", SCHATTEN_WASSER = "", RAND_GELAENDER = "";
   /* Glanz zur Mitte der Rinnen: lange, weich geschwungene helle Bahnen */
   const rinnen = [[[-1.8, 10], [-1.3, 18], [-1.7, 28], [-2.1, 40], [-1.8, 52], [-1.6, 66], [-2.2, 84], [-2.6, 104], [-1.2, 130]],
     [[2.6, 10], [2.9, 18], [3.0, 30], [2.6, 46], [2.6, 62], [2.7, 80], [2.5, 104], [1.2, 130]]];
-  let glanz = "";
-  for (const rn of rinnen) glanz += "M" + rn.map(([X, D]) => pt(P(X, D, hw(D)))).join(" L");
-  k += `<path d="${glanz}" stroke="#eef6f2" stroke-width="2" stroke-linecap="round" fill="none" opacity=".35" stroke-dasharray="7 5 3 6 10 4 4 7"/><path d="${glanz}" stroke="#fbfefc" stroke-width=".6" stroke-linecap="round" fill="none" opacity=".55" stroke-dasharray="3 8 5 6 2 9" stroke-dashoffset="4"/>`;
+  /* Strömungsglanz: kurze Striche in drei Längen, leicht gebogen entlang der Rinne, seitlich versetzt; manche enden im Schaum */
+  let glanz = "", gSchaum = "";
+  const zg = zufall(55);
+  for (const rn of rinnen) {
+    const N = 11;
+    for (let i = 0; i < N; i++) {
+      const u = Math.min(rn.length - 1.3, (i + 0.2 + zg() * 0.6) / N * (rn.length - 1)), j = Math.floor(u), f = u - j;
+      const at = (v) => { const jj = Math.min(rn.length - 2, Math.floor(v)), ff = v - jj; return [rn[jj][0] + (rn[jj + 1][0] - rn[jj][0]) * ff, rn[jj][1] + (rn[jj + 1][1] - rn[jj][1]) * ff]; };
+      const [X0, D0] = at(j + f), L = [1.2, 2.4, 3.8][Math.floor(zg() * 3)], seit = (i % 2 ? 1 : -1) * (0.25 + zg() * 0.45);
+      const [X1, D1] = at(Math.min(rn.length - 1.01, j + f + L / ((rn[j + 1][1] - rn[j][1]) || 1)));
+      const a0 = P(X0 + seit, D0, hw(D0)), a1 = P(X1 + seit + (zg() - 0.5) * 0.3, D1, hw(D1)), c = P((X0 + X1) / 2 + seit + (i % 2 ? 0.3 : -0.3), (D0 + D1) / 2, hw((D0 + D1) / 2));
+      if (a0[1] > 261) continue;
+      glanz += `M${pt(a0)} Q${pt(c)} ${pt(a1)}`;
+      if (i % 3 === 1) gSchaum += `M${pt(a1)} L${r(a1[0] + 0.1)} ${r(a1[1])}`;
+    }
+  }
+  k += `<path d="${glanz}" stroke="#eef6f2" stroke-width="1.6" stroke-linecap="round" fill="none" opacity=".4"/><path d="${glanz}" stroke="#fbfefc" stroke-width=".55" stroke-linecap="round" fill="none" opacity=".6"/><path d="${gSchaum}" stroke="#fbfdfc" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>`;
   /* dunklerer Wasserrand an den Bänken (das Wasser wird dort flach und grau), dann die Bank selbst */
   S.def(`<clipPath id="${S.id("wclip")}"><path d="${wasser}"/></clipPath>`);
   k += `<g clip-path="url(#${S.id("wclip")})"><path d="${kies}" fill="none" stroke="#8aa29a" stroke-width="2.2" stroke-linejoin="round"/><path d="${kies}" fill="${S.lg("kies", [[0, "#d2cdc0"], [1, "#aca698"]], 0, 0, 0, 1)}"/></g>`;
