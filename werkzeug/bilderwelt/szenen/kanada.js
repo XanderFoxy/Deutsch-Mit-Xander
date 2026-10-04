@@ -229,16 +229,26 @@ const wolke = (name, cx, by, W0, H, seed) => {
     const a = W(E, N, h), c = W(E + 0.0, N + b, h), a0 = W(E, N, 0), c0 = W(E, N + b, 0);
     return `<path d="${P([a0, a, c, c0])}" fill="${farbe}"/><path d="${P([a, c, [c[0] + 0.6, c[1] - 0.4], [a[0] + 0.6, a[1] - 0.4]])}" fill="${licht}"/>`;
   };
-  k += bau(1300, 560, 50, 20, 26, "#a9a8b0", "#d8cbbd") + bau(1720, 600, 70, 20, 24, "#a7a6b0", "#d4c8bc");
-  k += bau(1460, 1080, 40, 25, 56, "#9fa0aa", "#d2c4b6") + bau(1350, 940, 60, 20, 34, "#a3a3ad", "#d6c9bc");
-  /* Seneca-Hotelturm: 26 Stockwerke (≈ 82 m), Glas bronze, gestufte Krone */
-  const [sx0, sy0] = W(1575, 785, 0), [sx1, sy1] = W(1575, 815, 82), [sx2] = W(1575, 815, 0);
-  k += `<path d="${P([[sx0, sy0], [sx0, sy1 + 2], [sx0 + (sx2 - sx0) * 0.2, sy1], [sx2 - (sx2 - sx0) * 0.2, sy1], [sx2, sy1 + 2], [sx2, sy0]])}" fill="${S.lg("seneca", [[0, "#9c9089"], [0.6, "#c8b29c"], [1, "#a8968a"]], 0, 0, 1, 0)}"/>`;
-  for (let i = 1; i < 13; i++) { const y = sy1 + 2 + (sy0 - sy1 - 2) * i / 13; k += `<path d="M${r(sx0)} ${r(y)} H${r(sx2)}" stroke="#7f7672" stroke-width=".15" opacity=".7"/>`; }
-  k += `<path d="M${r(sx0)} ${r(sy0)} V${r(sy1 + 2)}" stroke="#ead8c2" stroke-width=".4" opacity=".8"/>`;
+  /* niedrigere Blöcke (Hotels, Kongresszentrum) im Dunst */
+  k += bau(1300, 520, 90, 20, 30, "#a9a9b2", "#d8cbbd") + bau(1720, 600, 90, 20, 30, "#a7a7b1", "#d4c8bc");
+  k += bau(1460, 1060, 70, 25, 52, "#a2a3ad", "#d2c4b6") + bau(1350, 900, 80, 20, 40, "#a5a5af", "#d6c9bc") + bau(1640, 700, 60, 20, 24, "#aaaab3", "#d9ccbf");
+  /* Seneca-Hotelturm (26 Stockwerke): hohe, schlanke Scheibe. Die Westseite (zu uns) spiegelt das Abendgold,
+     die Südfront ist leicht gewölbt und bläulich verglast, oben ein schräger Abschluss. */
+  const NA = 776, NB = 824, ED = 18, HA = 112, HB = 120;
+  const wA0 = W(1575, NA, 0), wB0 = W(1575, NB, 0), wA1 = W(1575, NA, HA), wB1 = W(1575, NB, HB), sA0 = W(1575 + ED, NA, 0), sA1 = W(1575 + ED, NA, HA - 3);
+  /* Südfront (rechts, schmal): gewölbt */
+  k += `<path d="M${r(wA0[0])} ${r(wA0[1])} L${r(wA1[0])} ${r(wA1[1])} L${r(sA1[0])} ${r(sA1[1])} Q${r(sA1[0] + 0.5)} ${r((sA1[1] + sA0[1]) / 2)} ${r(sA0[0])} ${r(sA0[1])} Z" fill="${S.lg("senecaS", [[0, "#8fa6c0"], [0.5, "#a9bdd2"], [1, "#7d90a8"]], 0, 0, 1, 0)}"/>`;
+  /* Westseite: Glas mit warmer Spiegelung, oben heller */
+  k += `<path d="${P([wA0, wA1, wB1, wB0])}" fill="${S.lg("senecaW", [[0, "#f2cf98"], [0.35, "#d9b07e"], [0.7, "#a59aa0"], [1, "#9a98a8"]], 0, 0, 0, 1)}"/>`;
+  /* Geschossbänder, ganz fein */
+  let gb = ""; for (let i = 1; i < 26; i++) { const t = i / 26, a1 = [wA0[0], wA0[1] + (wA1[1] - wA0[1]) * t], b1 = [wB0[0], wB0[1] + (wB1[1] - wB0[1]) * t]; gb += `M${r(a1[0])} ${r(a1[1])} L${r(b1[0])} ${r(b1[1])}`; }
+  k += `<path d="${gb}" stroke="#7f7480" stroke-width=".1" opacity=".55"/>`;
+  /* schräger Abschluss und helle Kante */
+  k += `<path d="${P([wA1, wB1, [wB1[0], wB1[1] + 0.8], [wA1[0], wA1[1] + 0.8]])}" fill="#efe2cf"/><path d="M${r(wA1[0])} ${r(wA1[1])} V${r(wA0[1])}" stroke="#fff1d8" stroke-width=".3" opacity=".8"/>`;
+  const [sx0, sy1] = [(wA1[0] + wB1[0]) / 2, Math.min(wA1[1], wB1[1])];
   /* Dunst über allem (1,5–2 km entfernt) */
   k = `<g opacity=".85">${k}</g>`;
-  S.teil({ id: "hochhaus", de: "das Hochhaus", syl: "HOCH-haus", it: "il grattacielo", itSyl: "grat-ta-CIE-lo", en: "high-rise", x: r(sx0), y: r(sy1 + 8), kunst: um(r(sx0), r(sy1 + 8), k),
+  S.teil({ id: "hochhaus", de: "das Hochhaus", syl: "HOCH-haus", it: "il grattacielo", itSyl: "grat-ta-CIE-lo", en: "high-rise", x: r(sx0), y: r(sy1 + 2), kunst: um(r(sx0), r(sy1 + 2), k),
     tipp: "Hinter der Insel liegt die Stadt Niagara Falls in den USA. Das hohe Haus ist ein Hotel mit 26 Stockwerken." });
 }
 
@@ -380,7 +390,7 @@ const AM = {};
   const [sx, sy] = W(686, 372, -30);
   k += `<path d="M${r(sx - 6)} ${r(sy)} h8 v.6 h-8 Z M${r(sx - 3)} ${r(sy - 2.4)} h6 v.5 h-6 Z" fill="#9a7a4a"/>`;
   for (let i = 0; i < 5; i++) k += `<path d="M${r(sx - 5.4 + i * 1.6)} ${r(sy - 0.1)} l.35 -1.2 l.35 1.2 Z" fill="#f2d02c"/>`;
-  AM.brautschleier = [(bv[0][0] + bv[1][0]) / 2, (bv[0][1] + bvU[0][1]) / 2];
+  AM.brautschleier = [(bv[0][0] + bv[1][0]) / 2, bv[0][1] + (bvU[0][1] - bv[0][1]) * 0.8];
   AM.felsen = fu[2];
   const unter = [
     { id: "brautschleier", de: "der Brautschleier", syl: "BRAUT-schlei-er", it: "il Velo della Sposa", itSyl: "VE-lo del-la SPO-sa", en: "Bridal Veil Falls", x: AM.brautschleier[0], y: AM.brautschleier[1], kunst: flaeche(-3, -6, 6, 12),
@@ -568,16 +578,15 @@ const SCHLEIER = [];
   const norm = (v) => { const l = Math.hypot(...v); return v.map((x) => x / l); };
   const u1 = norm(kreuz(A, [0, 0, 1])), u2 = kreuz(u1, A);
   const bild = (D) => { const d = D[0] * FW[0] + D[1] * FW[1], s = D[0] * RE[0] + D[1] * RE[1]; return [CX + F * s / d, HOR - F * D[2] / d]; };
-  const bogen = (grad) => { const o = []; for (let ph = -10; ph <= 90; ph += 1.5) { const c = Math.cos(grad * rad), sn = Math.sin(grad * rad), p = ph * rad; const D = A.map((a, i) => c * a + sn * (Math.cos(p) * u1[i] + Math.sin(p) * u2[i])); if (D[0] * FW[0] + D[1] * FW[1] > 0.2) o.push(bild(D)); } return o; };
+  const bogen = (grad) => { const o = []; for (let ph = -40; ph <= 90; ph += 1.5) { const c = Math.cos(grad * rad), sn = Math.sin(grad * rad), p = ph * rad; const D = A.map((a, i) => c * a + sn * (Math.cos(p) * u1[i] + Math.sin(p) * u2[i])); if (D[0] * FW[0] + D[1] * FW[1] > 0.2) o.push(bild(D)); } return o; };
   const farben = [[42.3, "#e8402a"], [41.9, "#f39a2a"], [41.5, "#f5e04a"], [41.1, "#5cc85a"], [40.7, "#3a8ae0"], [40.3, "#7a50c8"]];
   /* sichtbar nur in der Gischt: Maske aus den Schleiern und dem Dunstsee, oben und unten weich ausgeblendet */
-  S.def(`<linearGradient id="${S.id("rbmaske")}" gradientUnits="userSpaceOnUse" x1="0" y1="34" x2="0" y2="176"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".25" stop-color="#fff" stop-opacity=".8"/><stop offset=".8" stop-color="#fff" stop-opacity="1"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="${S.id("rbm")}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="260"><g filter="url(#${S.id("dunst")})" fill="url(#${S.id("rbmaske")})">${SCHLEIER.map((d) => `<path d="${d}"/>`).join("")}<path d="M200 128 L320 128 L320 178 L200 178 Z"/></g></mask>`);
+  S.def(`<linearGradient id="${S.id("rbmaske")}" gradientUnits="userSpaceOnUse" x1="0" y1="34" x2="0" y2="176"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".25" stop-color="#fff" stop-opacity=".8"/><stop offset=".6" stop-color="#fff" stop-opacity="1"/><stop offset=".72" stop-color="#fff" stop-opacity=".75"/><stop offset=".88" stop-color="#fff" stop-opacity="0"/></linearGradient><mask id="${S.id("rbm")}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="260"><g filter="url(#${S.id("dunst")})" fill="url(#${S.id("rbmaske")})">${SCHLEIER.map((d) => `<path d="${d}"/>`).join("")}<path d="M200 128 L320 128 L320 178 L200 178 Z"/></g></mask>`);
   let k = "";
   const zug = (g) => bogen(g).filter(([x, y]) => x > 150 && x < 330 && y > 20 && y < 180).sort((p, q) => p[1] - q[1]);
-  /* Alexanders Dunkelband: innen ist der Himmel heller, außen dunkler */
-  const innen = zug(37.5), aussen = zug(45.5);
-  if (innen.length > 1) k += `<path d="${glatt(innen.filter((_, i) => i % 3 === 0), false)}" stroke="#ffffff" stroke-width="7" fill="none" opacity=".07"/>`;
-  if (aussen.length > 1) k += `<path d="${glatt(aussen.filter((_, i) => i % 3 === 0), false)}" stroke="#5a6a7a" stroke-width="5" fill="none" opacity=".04"/>`;
+  /* Alexanders Dunkelband als Tonfläche ohne eigene Kante: innen ist die Gischt ein wenig heller, außen ein wenig dunkler */
+  const band = (g1, g2) => { const a = zug(g1).filter((_, i) => i % 3 === 0), b = zug(g2).filter((_, i) => i % 3 === 0); return a.length > 1 && b.length > 1 ? P([...a, ...b.reverse()]) : ""; };
+  k += `<g filter="url(#${S.id("nebel")})"><path d="${band(34, 40.2)}" fill="#ffffff" opacity=".2"/><path d="${band(42.6, 49)}" fill="#3e4c5c" opacity=".14"/></g>`;
   for (const [g, c] of farben) { const pts = zug(g); if (pts.length > 1) k += `<path d="${glatt(pts.filter((_, i) => i % 3 === 0 || i === pts.length - 1), false)}" stroke="${c}" stroke-width="1.5" fill="none" opacity=".66"/>`; }
   S.teil({ id: "regenbogen", de: "der Regenbogen", syl: "RE-gen-bo-gen", it: "l'arcobaleno", itSyl: "ar-co-ba-LE-no", en: "rainbow", x: 0, y: 0,
     kunst: `<g mask="url(#${S.id("rbm")})" filter="url(#${S.id("hauch")})">${k}</g>`,
@@ -647,7 +656,7 @@ const BOOT = {};
     const k = (v) => r(v * s);
     return `<g transform="translate(${r(x)} ${r(y)})"><path d="M${k(-4)} ${k(-0.6 * fl)} Q${k(-2)} ${k(-1.6 * fl)} ${k(-0.4)} 0 Q${k(0)} ${k(0.3)} ${k(0.4)} 0 Q${k(2)} ${k(-1.6 * fl)} ${k(4)} ${k(-0.6 * fl)} Q${k(2.2)} ${k(-0.9 * fl)} ${k(0.6)} ${k(0.5)} Q0 ${k(0.9)} ${k(-0.6)} ${k(0.5)} Q${k(-2.2)} ${k(-0.9 * fl)} ${k(-4)} ${k(-0.6 * fl)} Z" fill="#f7f7f4"/><path d="M${k(-4)} ${k(-0.6 * fl)} l${k(0.9)} ${k(-0.2)} M${k(4)} ${k(-0.6 * fl)} l${k(-0.9)} ${k(-0.2)}" stroke="#2a2a2a" stroke-width="${k(0.35)}"/><path d="M${k(-0.3)} ${k(0.2)} Q0 ${k(1.1)} ${k(0.3)} ${k(0.2)}" fill="#c9ccd0"/><path d="M${k(0.3)} ${k(0.2)} l${k(0.6)} ${k(-0.1)}" stroke="#e8c030" stroke-width="${k(0.25)}"/></g>`;
   };
-  let k = moewe(214, 138, 2.2, 1) + moewe(236, 112, 1.2, -0.6) + moewe(176, 128, 0.9, 0.8) + moewe(206, 168, 1.4, -0.4);
+  let k = moewe(214, 138, 2.2, 1) + moewe(240, 98, 1.2, -0.6) + moewe(176, 128, 0.9, 0.8) + moewe(206, 168, 1.4, -0.4);
   S.teil({ oben: true, id: "moewe", de: "die Möwe", syl: "MÖ-we", it: "il gabbiano", itSyl: "gab-BIA-no", en: "seagull", x: 214, y: 138, kunst: um(214, 138, k),
     tipp: "Am Niagara leben viele Möwen. Sie fangen Fische, die mit dem Wasser die Fälle hinabstürzen." });
 }

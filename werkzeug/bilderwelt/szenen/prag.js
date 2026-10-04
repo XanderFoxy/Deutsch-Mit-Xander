@@ -590,7 +590,7 @@ const STATUEN = [];   /* [s, Seite(-1/+1)] — über den Pfeilern, alle ~31 m */
 for (let i = 0; i < 15; i++) { STATUEN.push([34 + i * 31, 1]); STATUEN.push([30 + i * 31.4, -1]); }
 /* Laternen auf der Brüstung, je etwa 10 m hinter einer Statue (nie hinter einem Statuenkopf) */
 const LATERNEN = [[20, -1], [40, -1], [46, 1]];
-for (let i = 1; i < 15; i++) { if (30 + i * 31.4 + 10 < 500) LATERNEN.push([30 + i * 31.4 + 10, -1]); if (34 + i * 31 + 12 < 500) LATERNEN.push([34 + i * 31 + 12, 1]); }
+for (let i = 1; i < 15; i++) { if (30 + i * 31.4 + 10 < 500) LATERNEN.push([30 + i * 31.4 + 10, -1]); if (34 + i * 31 + 12 < 500 && i !== 6) LATERNEN.push([34 + i * 31 + 12, 1]); }   /* vor Nepomuk keine Laterne: die Tafel bleibt frei */
 /* Sonne links hinten (Ostsüdost, 35° hoch): Schatten fallen nach vorn und 27° nach rechts, Länge 1,43 × Höhe */
 const SDS = 0.89 * 1.43, SDQ = 0.45 * 1.43;
 const BRUECKE_SCHATTEN = [];
@@ -812,10 +812,10 @@ const statueSvg = (s, sei, i) => {
   const q = sei * (BR + 0.2), sc = F / Dd(s, q), x = X(s, q), y = Y(s, q, 0);
   if (s === NEPO.s && sei === NEPO.sei) {
     /* der heilige Nepomuk (Bronze, barhäuptig, Chorhemd): Kruzifix an der Brust, Palmzweig, fünf goldene Sterne;
-       am Sockel zwei Bronzereliefs, das rechte blank gerieben (hellgold mit Glanz) */
+       am Sockel zwei Bronzereliefs, das linke (von hier sichtbar) blank gerieben (hellgold mit Glanz) */
     let g = `<g transform="translate(${r(x)} ${r(y)}) scale(${sc.toFixed(4)})">`;
     g += `<path d="M-1.15 0 V-.35 H1.15 V0 Z M-1.05 -.35 V-3.35 H1.05 V-.35 Z" fill="${SOCKEL}"/><path d="M-1.3 -3.35 H1.3 L1.2 -3.6 H-1.2 Z" fill="#c4b59c"/>`;
-    g += `<rect x="-.95" y="-2.9" width=".85" height=".85" fill="#3f3a2a" stroke="#2a2618" stroke-width=".08"/><rect x=".1" y="-2.9" width=".85" height=".85" fill="#2a2618"/><rect x=".17" y="-2.83" width=".71" height=".71" fill="${GOLD}"/><path d="M.22 -2.2 L.8 -2.78" stroke="#fffbe6" stroke-width=".07" opacity=".85"/>`;
+    g += `<rect x=".1" y="-2.9" width=".85" height=".85" fill="#3f3a2a" stroke="#2a2618" stroke-width=".08"/><rect x="-.95" y="-2.9" width=".85" height=".85" fill="#2a2618"/><rect x="-.88" y="-2.83" width=".71" height=".71" fill="${GOLD}"/><path d="M-.83 -2.2 L-.25 -2.78" stroke="#fffbe6" stroke-width=".07" opacity=".85"/>`;
     g += `<g transform="translate(0 -3.6) scale(1.15)"><path d="M-.5 0 Q-.6 -1.5 -.4 -2.4 Q-.25 -2.75 0 -2.8 Q.25 -2.75 .4 -2.4 Q.6 -1.5 .5 0 Z" fill="#2c2f2a"/>`;
     g += `<path d="M-.42 -2.4 Q-.25 -2.75 0 -2.8 Q.25 -2.75 .42 -2.4 L.36 -1.7 L-.36 -1.7 Z" fill="#e8e2d0"/><path d="M-.2 -2.2 V-1.8 M.1 -2.3 V-1.75" stroke="#b9b2a0" stroke-width=".04"/>`;
     g += `<circle cx="0" cy="-3.05" r=".24" fill="#3a3a32"/><path d="M.02 -2.65 V-1.75 M-.18 -2.4 H.22" stroke="#d8b34a" stroke-width=".09"/><path d="M-.3 -1.8 Q-.6 -2.3 -.5 -2.9" stroke="#3a4a2a" stroke-width=".07" fill="none"/>`;

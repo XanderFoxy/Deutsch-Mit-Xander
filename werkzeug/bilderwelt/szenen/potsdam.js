@@ -346,11 +346,11 @@ const schlossUnter = [];
   }
   k += `<path d="M-2.6 ${r(KB)} Q-2.4 ${r(KB - KH * 0.8)} 0 ${r(KB - KH)} M2.6 ${r(KB)} Q2.4 ${r(KB - KH * 0.8)} 0 ${r(KB - KH)}" stroke="#4a7d68" stroke-width=".06" fill="none" opacity=".6"/>`;
   k += `<path d="M-6.6 ${r(KB - 0.4)} C-6.4 ${r(KB - KH * 0.6)} -3.6 ${r(KB - KH * 0.94)} -.8 ${r(KB - KH * 0.98)}" stroke="#e2f5ea" stroke-width=".4" fill="none" opacity=".5"/>`;
-  /* Ochsenaugen mit Sandsteinrahmen, Kartusche oben und Girlande unten */
+  /* Ochsenaugen: hochovales dunkles Glas im Sandsteinrahmen, Schlussstein oben (kein Bogen darunter – sonst wirkt es wie ein Gesicht) */
   for (const [x, f] of [[-5.5, 0.5], [-2.9, 0.78], [0, 0.88], [2.9, 0.78], [5.5, 0.5]]) {
     const y = KB - 1.05 - (1 - f) * 0.4;
-    k += `<ellipse cx="${x}" cy="${r(y)}" rx="${r(0.5 * f)}" ry="${r(0.58 * f)}" fill="#55786c" stroke="#e8dcbd" stroke-width=".26"/>`;
-    k += `<path d="M${r(x - 0.75 * f)} ${r(y + 0.4)} q${r(0.75 * f)} .7 ${r(1.5 * f)} 0" stroke="#e8dcbd" stroke-width=".16" fill="none"/>`;
+    k += `<ellipse cx="${x}" cy="${r(y - 0.08)}" rx="${r(0.42 * f)}" ry="${r(0.66 * f)}" fill="#2c3a42" stroke="#e8dcbd" stroke-width=".24"/><ellipse cx="${r(x - 0.12 * f)}" cy="${r(y - 0.3)}" rx="${r(0.1 * f)}" ry="${r(0.22 * f)}" fill="#8fb0c0" opacity=".45"/>`;
+    k += `<path d="M${r(x - 0.16 * f)} ${r(y - 0.08 - 0.66 * f)} L${r(x + 0.16 * f)} ${r(y - 0.08 - 0.66 * f)} L${r(x + 0.22 * f)} ${r(y - 0.08 - 0.98 * f)} L${r(x - 0.22 * f)} ${r(y - 0.08 - 0.98 * f)} Z" fill="#efe4c8"/>`;
   }
   /* kleine schlichte Laterne mit goldener Kugel — kein Kreuz */
   const LB = KB - KH + 0.1;
@@ -371,7 +371,7 @@ const schlossUnter = [];
     kunst: flaeche(-8 * PU, -1.9 * PU, 16 * PU, 2 * PU, 0.6), tipp: "Die Inschrift heißt „SANS, SOUCI.“ — mit Komma und Punkt. Warum, weiß bis heute niemand genau." });
   const [hx, hy] = M(-13.96 - 0.5, 0);
   schlossUnter.push({ id: "figur", de: "die Figur", syl: "fi-GUR", it: "la figura", itSyl: "fi-GU-ra", en: "figure", x: hx, y: hy,
-    kunst: flaeche(-0.55 * PU, -8.7 * PU, 1.6 * PU, 8.5 * PU, 0.5), tipp: "36 Figuren aus Sandstein stützen das Dach. Sie feiern den Wein: Es sind Begleiter des Weingottes Bacchus." });
+    kunst: flaeche(-0.55 * PU, -8.7 * PU, 1.6 * PU, 8.5 * PU, 0.5), tipp: "36 Figuren aus Sandstein stützen das Dach. Sie tragen Trauben und Blätter – sie gehören zum Weinberg." });
 }
 S.teile[S.teile.length - 1].unter = schlossUnter;
 
@@ -605,15 +605,16 @@ const GEWAND = `<path d="M-.31 0 L-.32 -.5 Q-.35 -.95 -.32 -1.2 Q-.22 -1.38 -.2 
   `<path d="M-.21 -1.5 Q0 -1.47 .19 -1.42" stroke="#bdb7ac" stroke-width=".035" fill="none"/>` +
   `<path d="M-.31 -.1 L-.32 -.5 Q-.35 -.95 -.32 -1.2 Q-.22 -1.38 -.2 -1.47 Q-.25 -1.66 -.26 -1.86" stroke="#ffffff" stroke-width=".03" fill="none"/>`;
 const KOPF = (helm, dreh = 0) => `<g transform="translate(${dreh} 0)"><rect x="-.045" y="-2.04" width=".09" height=".11" fill="#e6e2da"/><ellipse cx=".015" cy="-2.14" rx=".1" ry=".125" fill="#f8f6f1"/>` +
-  `<path d="M.06 -2.24 Q.13 -2.14 .07 -2.03 L.115 -2.1 Q.12 -2.2 .1 -2.26 Z" fill="${SCHATTEN_R}" opacity=".6"/><path d="M-.05 -2.17 h.04 M.04 -2.17 h.035" stroke="#a9a49a" stroke-width=".02"/><path d="M-.04 -2.06 q.05 .03 .1 0" stroke="#b9b3a8" stroke-width=".015" fill="none"/>` +
+  `<path d="M.06 -2.24 Q.13 -2.14 .07 -2.03 L.115 -2.1 Q.12 -2.2 .1 -2.26 Z" fill="${SCHATTEN_R}" opacity=".6"/><path d="M.035 -2.2 L.05 -2.11 L.02 -2.1 Z" fill="${SCHATTEN_R}" opacity=".55"/><ellipse cx=".02" cy="-2.02" rx=".07" ry=".018" fill="${SCHATTEN_R}" opacity=".55"/>` +
   (helm ? `<path d="M-.11 -2.14 Q-.12 -2.3 .015 -2.31 Q.14 -2.3 .13 -2.14 Z" fill="#ece8e0"/><path d="M-.13 -2.24 Q-.02 -2.5 .2 -2.42 Q.1 -2.36 .02 -2.3 Z" fill="#dcd7ce"/><path d="M-.12 -2.28 Q.0 -2.52 .2 -2.44" stroke="#f8f6f2" stroke-width=".02" fill="none"/>`
     : `<path d="M-.09 -2.16 Q-.06 -2.3 .03 -2.29 Q.12 -2.28 .11 -2.16 Q.05 -2.23 -.09 -2.16 Z" fill="#dedad1"/><circle cx="-.06" cy="-2.27" r=".055" fill="#dedad1"/>`) + `</g>`;
 S.def(`<g id="${S.id("diana")}">` +
   /* Köcher über der rechten Schulter, Riemen schräg über die Brust */
-  `<path d="M-.31 -1.7 L-.13 -2.24 L-.05 -2.21 L-.23 -1.66 Z" fill="#dcd7cd"/><path d="M-.14 -2.24 l-.03 -.08 M-.1 -2.23 l0 -.09 M-.07 -2.22 l.03 -.08" stroke="#cfc9be" stroke-width=".02"/>` +
+  `<path d="M-.4 -1.6 L-.25 -2.36 L-.13 -2.33 L-.27 -1.56 Z" fill="#d6d1c6"/><path d="M-.36 -1.7 L-.22 -2.3" stroke="#f6f4ef" stroke-width=".02"/>` +
+  `<path d="M-.24 -2.36 l-.06 -.13 l.05 .02 Z M-.19 -2.35 l-.01 -.15 l.04 .04 Z M-.14 -2.34 l.04 -.13 l.02 .05 Z" fill="#e8e4dc" stroke="#bdb7ac" stroke-width=".01"/>` +
   GEWAND + `<path d="M-.25 -1.86 L.17 -1.44" stroke="#cfc9be" stroke-width=".03"/>` +
   /* rechter Arm greift zum Köcher, linker hält den Bogen */
-  `<path d="M-.25 -1.84 Q-.4 -1.98 -.36 -2.08 Q-.28 -2.16 -.19 -2.14" stroke="#f4f2ed" stroke-width=".085" fill="none" stroke-linecap="round"/><ellipse cx="-.18" cy="-2.15" rx=".045" ry=".04" fill="#f8f6f1"/>` +
+  `<path d="M-.25 -1.84 Q-.44 -1.98 -.4 -2.16 Q-.36 -2.28 -.28 -2.3" stroke="#f4f2ed" stroke-width=".085" fill="none" stroke-linecap="round"/><ellipse cx="-.25" cy="-2.3" rx=".045" ry=".04" fill="#f8f6f1"/>` +
   `<path d="M.44 -1.9 Q.63 -1.27 .44 -.66" stroke="#d6d1c7" stroke-width=".035" fill="none"/><path d="M.44 -1.9 L.44 -.66" stroke="#e2ddd4" stroke-width=".008"/>` +
   `<path d="M.24 -1.84 Q.33 -1.6 .35 -1.48 Q.38 -1.36 .44 -1.28" stroke="#d2cdc3" stroke-width=".085" fill="none" stroke-linecap="round"/><ellipse cx=".45" cy="-1.27" rx=".05" ry=".06" fill="#dcd7ce"/>` +
   KOPF(false, 0.02) + `</g>`);
@@ -785,7 +786,7 @@ const ORKRONE = S.rg("orkrone", [[0, "#8fbf5e"], [0.55, "#4a7a33"], [1, "#24461c
     kunst: `<g transform="scale(${u.toFixed(4)})">${g}</g>`, tipp: "Auf der Bank kann man sich ausruhen und auf die Fontäne schauen." });
 }
 S.teil({ id: "paar", de: "das Paar", syl: "PAAR", it: "la coppia", itSyl: "COP-pia", en: "couple", x: P1.x, y: P1.y,
-  kunst: P1.svg + `<g transform="translate(${r(P2.x - P1.x)} ${r(P2.y - P1.y)})">${P2.svg}</g>`, tipp: "Das Paar spaziert um die Fontäne." });
+  kunst: P1.svg + `<g transform="translate(${r(P2.x - P1.x)} ${r(P2.y - P1.y)})">${P2.svg}</g>`, tipp: "Das Paar schaut sich die Fontäne an." });
 
 /* =====================================================================
    11 — WEGWEISER, SCHUBKARRE, GÄRTNER, TOURISTIN, HANDY, TOURIST, KIND, KARTOFFEL

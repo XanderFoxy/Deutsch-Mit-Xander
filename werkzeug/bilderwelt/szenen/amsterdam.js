@@ -237,6 +237,12 @@ function zeile(seite, seed) {
   return liste;
 }
 const RECHTS = zeile(1, 31), LINKS = zeile(-1, 77);
+/* rechte Zeile: jedes Haus ein eigener Ton (Backstein rot, dunkelbraun, grau gestrichen, ocker, schwarzgrün, creme) — kein durchgehender Block */
+{
+  const TOENE = [["#8e4632", true], ["#4e3a30", true], ["#a4a8a6", false], ["#c69a58", false], ["#7d3a2a", true], ["#2e3a3d", false], ["#ddd2bf", false], ["#9a5639", true]];
+  const z = zufall(44); let vor = -1;
+  for (const h of RECHTS) { let i; do i = Math.floor(z() * TOENE.length); while (i === vor); vor = i; [h.farbe, h.ziegel] = TOENE[i]; }
+}
 /* Die Häuser der Lupe (links, 66–100 m) gezielt festlegen: Hals-, Treppen-, Glockengiebel, Gesims, Treppengiebel */
 {
   const fest = [["hals", 66, 72.6, "#7d3a2a", true], ["trap", 72.6, 79.4, "#9a5639", true], ["klok", 79.4, 85.4, "#e8e0cf", false], ["lijst", 85.4, 92.6, "#2e3a3d", false], ["trap", 92.6, 102, "#74402f", true]];
@@ -387,6 +393,7 @@ const haeuserSVG = { 1: "", "-1": "" };
 const dachSVG = { 1: "", "-1": "" };
 const fensterTeile = { 1: [], "-1": [] };
 const giebelInfo = [];
+const FERNF = { 1: "", "-1": "" };
 let SCHATTEN_LINKS = "";
 function baueZeile(seite, liste) {
   let out = "", spiegel = "";
@@ -406,7 +413,9 @@ function baueZeile(seite, liste) {
     }
     const fass = pz(u.map(([a, b]) => Q(a, b)));
     /* Licht in der Grundfarbe: links Abendsonne (warm), rechts Gegenlicht-Schatten (kühl) */
-    out += `<path d="${fass}" fill="${seite < 0 ? mix(h.farbe, "#ff9a3a", 0.24) : mix(h.farbe, "#26304a", 0.36)}"/>`;
+    out += `<path d="${fass}" fill="${seite < 0 ? mix(h.farbe, "#ff9a3a", 0.24) : mix(h.farbe, "#26304a", 0.3)}"/>`;
+    /* Trennfuge zum Nachbarhaus */
+    out += `<path d="M${pt(Q(0, KAI))} L${pt(Q(0, h.He))}" stroke="#1a1414" stroke-width="${r(Math.max(0.2, 0.1 * F / h.d0))}" opacity=".45"/>`;
     if (h.typ === "hals") {
       const a = 0.3 * h.w, kh = 2.3, kl = [], kr = [];
       for (let i = 0; i <= 6; i++) { const t = i / 6 * Math.PI / 2; kl.push(Q(a * Math.sin(t), h.He + 0.25 + kh * (1 - Math.cos(t)))); kr.push(Q(h.w - a * Math.sin(t), h.He + 0.25 + kh * (1 - Math.cos(t)))); }
@@ -422,7 +431,7 @@ function baueZeile(seite, liste) {
     /* Steinbänder (weißer Naturstein) auf Geschosshöhe und Sockel */
     const sw = (D) => r(Math.max(0.2, 0.12 * F / D));
     let baender = "";
-    for (const hb of [4.9, 8.4, 11.6]) if (hb < h.He - 0.5) baender += `M${pt(Q(0, hb))} L${pt(Q(h.w, hb))} `;
+    for (const hb0 of [4.9, 8.4, 11.6]) { const hb = hb0 + (h.z - 0.5) * 0.9; if (hb < h.He - 0.5) baender += `M${pt(Q(0, hb))} L${pt(Q(h.w, hb))} `; }
     out += `<path d="${baender}" stroke="${h.ziegel ? "#e9e1d0" : mix(h.farbe, "#000", 0.18)}" stroke-width="${sw(h.d0 + dm)}" opacity="${h.ziegel ? 0.85 : 0.5}"/>`;
     out += `<path d="${pz([Q(0, KAI), Q(h.w, KAI), Q(h.w, 2.1), Q(0, 2.1)])}" fill="#2b2826" opacity=".55"/>`;
     /* Giebelkante (Abdeckung aus hellem Stein) */
@@ -430,9 +439,15 @@ function baueZeile(seite, liste) {
     const fern = h.d0 > 140;
     if (fern) {
       /* ferne Häuser: Fensterreihen nur als dunkle Linien (sie sind nur wenige Einheiten breit) */
-      let fl = "";
-      for (const hb of [3.4, 6.6, 9.9]) if (hb < h.He - 0.5) fl += `M${pt(Q(0.6, hb))} L${pt(Q(h.w - 0.6, hb))} `;
-      out += `<path d="${fl}" stroke="#20262c" stroke-width="${r(1.6 * F / (h.d0 + dm))}" stroke-dasharray="${r(0.5 * F / (h.d0 + dm))} ${r(0.4 * F / (h.d0 + dm))}" opacity=".55"/>`;
+      if (h.d0 < 262) {
+        /* bis zur Prinsengracht: echte kleine Fenster (dunkle Scheibe, heller Rahmen), perspektivisch */
+        const nn = h.n, fw = Math.min(1.25, h.w / (nn * 1.75)), abst = h.w / nn;
+        for (const [a, b] of [[2.3, 4.5], [5.5, 7.6], [8.9, 10.8]]) if (b < h.He - 0.3) for (let i = 0; i < nn; i++) { const uc = abst * (i + 0.5); FERNF[seite] += "M" + [Q(uc - fw / 2, a), Q(uc + fw / 2, a), Q(uc + fw / 2, b), Q(uc - fw / 2, b)].map(pt).join(" L") + "Z"; }
+      } else {
+        let fl = "";
+        for (const hb of [3.4, 6.6, 9.9]) if (hb < h.He - 0.5) fl += `M${pt(Q(0.6, hb))} L${pt(Q(h.w - 0.6, hb))} `;
+        out += `<path d="${fl}" stroke="#20262c" stroke-width="${r(1.6 * F / (h.d0 + dm))}" opacity=".35"/>`;
+      }
       continue;
     }
     /* Fenster: Geschosse */
@@ -451,6 +466,10 @@ function baueZeile(seite, liste) {
     }
     /* Tür mit Stoep (Treppe zum Hochparterre) */
     const ut = seite > 0 ? 0.35 : h.w - 1.45;
+    if (seite > 0 && h.z > 0.3 && h.d0 < 140) {
+      const Dn = h.d0 + ut - 0.1, st = [[FX, KAI], [FX - 1.3, KAI], [FX - 1.3, 1.5], [FX - 0.85, 1.5], [FX - 0.85, 1.7], [FX - 0.4, 1.7], [FX - 0.4, 1.9], [FX, 1.9]];
+      out += `<path d="${pz(st.map(([X, hh]) => P(X, Dn, hh)))}" fill="#6a605a"/><path d="${pz([P(FX - 1.3, Dn, 1.5), P(FX - 1.3, Dn + 1.3, 1.5), P(FX - 0.4, Dn + 1.3, 1.9), P(FX, Dn + 1.3, 1.9), P(FX, Dn, 1.9), P(FX - 0.4, Dn, 1.9)])}" fill="#8a807a"/>`;
+    }
     out += `<path d="${pz([Q(ut, 1.9), Q(ut + 1.1, 1.9), Q(ut + 1.1, 4.4), Q(ut, 4.4)])}" fill="${h.z < 0.4 ? "#1f3a2e" : h.z < 0.7 ? "#2a2a2c" : "#5a2a22"}"/>`;
     out += `<path d="${pz([Q(ut, 4.4), Q(ut + 1.1, 4.4), Q(ut + 1.1, 4.9), Q(ut, 4.9)])}" fill="#efe9dc"/>`;
     /* Lastenhaken: Balken ragt 1 m zur Gracht, Haken hängt darunter */
@@ -485,7 +504,7 @@ function fensterSVG(seite, sonne) {
     const l1 = [(g[0][0] + g[3][0]) / 2, (g[0][1] + g[3][1]) / 2], l2 = [(g[1][0] + g[2][0]) / 2, (g[1][1] + g[2][1]) / 2];
     rah += `M${pt(l1)} L${pt(l2)} M${pt(m1)} L${pt(m2)}`;
   }
-  return `<path d="${lai}" fill="${sonne ? "#5a463c" : "#1d1a1a"}" opacity=".85"/><path d="${glas}" fill="${sonne ? GLAS_L : GLAS}" stroke="${RAHMEN}" stroke-width=".42" stroke-linejoin="round"/><path d="${luk}" fill="${sonne ? "#2f4a3a" : "#203328"}" stroke="${RAHMEN}" stroke-width=".3"/><path d="${rah}" fill="none" stroke="${RAHMEN}" stroke-width=".3"/>`;
+  return `<path d="${FERNF[seite]}" fill="${sonne ? "#4a4a52" : "#262c34"}" stroke="${sonne ? "#d8c8ac" : "#a8a49c"}" stroke-width=".09"/><path d="${lai}" fill="${sonne ? "#5a463c" : "#1d1a1a"}" opacity=".85"/><path d="${glas}" fill="${sonne ? GLAS_L : GLAS}" stroke="${RAHMEN}" stroke-width=".42" stroke-linejoin="round"/><path d="${luk}" fill="${sonne ? "#2f4a3a" : "#203328"}" stroke="${RAHMEN}" stroke-width=".3"/><path d="${rah}" fill="none" stroke="${RAHMEN}" stroke-width=".3"/>`;
 }
 
 /* Querkanal-Häuser (frontal, hinter den Lücken): Keizersgracht und Prinsengracht Südseite */

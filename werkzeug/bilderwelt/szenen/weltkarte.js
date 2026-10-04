@@ -239,7 +239,7 @@ S.def(`<g id="${S.id("land")}">${Object.keys(LAND).map((k) => USE("k_" + k)).joi
 }
 /* Bilderbuch: ein Segelschiff im Südatlantik, ein Wal im Pazifik */
 {
-  let [x, y] = P(-28, -40);
+  let [x, y] = P(-36, -50);
   let g = `<g transform="translate(${r(x)} ${r(y)})"><path d="M-3.4 -.6 L3.6 -.6 L2.6 .9 L-2.6 .9 Z" fill="#7a5232"/><path d="M-.2 -.6 V-6" stroke="#5a3a22" stroke-width=".3"/><path d="M0 -5.8 Q2.6 -3.6 0 -1.1 Z" fill="#fbf6ea"/><path d="M-.4 -5.4 Q-2.8 -3.4 -.4 -1.2 Z" fill="#efe6d2"/><path d="M-.2 -6 l1.2 .4 l-1.2 .4 Z" fill="#c0392b"/><path d="M-4.2 1.2 q1 -.6 2 0 t2 0 t2 0 t2 0" fill="none" stroke="#fff" stroke-width=".3" opacity=".8"/></g>`;
   [x, y] = P(-150, -38);
   g += `<g transform="translate(${r(x)} ${r(y)})"><path d="M-4.2 0 Q-3.6 -2.4 -.4 -2.3 Q2.6 -2.2 3.4 -.4 Q4.4 -.9 5 -2 Q5.2 -.6 4.6 .2 Q2.8 .8 -1.6 .7 Q-3.6 .6 -4.2 0 Z" fill="#5d7f99"/><path d="M-3.8 .1 Q-1 .9 3.4 -.3" fill="none" stroke="#dbe8f0" stroke-width=".35"/><circle cx="-2.8" cy="-.9" r=".25" fill="#1d2b36"/><path d="M-1.6 -2.3 q-.4 -1.2 -1.2 -1.6 M-1.6 -2.3 q.3 -1.3 1.1 -1.6" fill="none" stroke="#e8f4fa" stroke-width=".3"/></g>`;
@@ -269,7 +269,7 @@ function ozean(polys, labels, worte, tipp) {
 }
 ozean([[[-68, -60], [-68, -55], [-65, -45], [-62, -30], [-58, -10], [-70, 2], [-79, 8.5], [-84, 10], [-87, 14], [-91, 15.5], [-94.8, 17], [-100, 22], [-104, 28], [-100, 40], [-95, 55], [-65, 58], [-60, 65], [-40, 66], [-20, 65], [5, 62],
   [2, 50], [-4, 40], [0, 41], [3, 43.6], [7, 44.6], [12, 46], [16, 45.8], [20, 42.5], [24, 42.5], [28, 45], [30, 47], [38, 47.4], [42, 44], [41.6, 41], [36, 40.8], [32, 40.6], [29, 40.7], [27, 40.2], [30, 39.2], [34, 37.5], [36.5, 36.5], [36, 33], [32.5, 30.5], [25, 31], [15, 31.8], [10, 34], [2, 35.8], [-2, 35], [-5.6, 36], [-5, 30], [0, 20], [15, 5], [20, -15], [20, -35], [20, -60]]],
-  [[-38, 31, ["Atlantik"], 3.8], [-14, -21, ["Atlantik"], 3.2]],
+  [[-38, 31, ["Atlantik"], 3.8], [-15, -30, ["Atlantik"], 3.2]],
   { id: "atlantik", de: "der Atlantik", syl: "at-LAN-tik", it: "l'oceano Atlantico", itSyl: "o-CE-a-no at-LAN-ti-co", en: "Atlantic Ocean" },
   "Der Atlantik liegt zwischen Europa, Afrika und Amerika.");
 ozean([[[CM - 180, 66], [CM - 180, -60], [-68, -60], [-68, -55], [-70, -40], [-72, -15], [-78, 0], [-79, 8.5], [-84, 10], [-87, 14], [-91, 15.5], [-94.8, 17], [-100, 22], [-104, 28], [-115, 40], [-125, 55], [-150, 64], [-165, 66]],
@@ -372,17 +372,17 @@ const ICON = {
 /* ll: Länge/Breite; bild: Versatz des Bildes; lab: [dx, dy, Ausrichtung]; knopf: Mitte des Lupenknopfs (Bildkoordinaten) */
 const ORT = {
   /* in der Lupe Europa (Maßstab 0,4) */
-  grossbritannien: { ll: [-0.13, 51.5], lab: [-3.5, -6.6, "m"], name: "Großbritannien" },
-  frankreich: { ll: [2.35, 48.86], bild: [0.6, 0], lab: [0, 3, "m"], name: "Frankreich" },
-  deutschland: { ll: [10.4, 51.2], lab: [0, -3.9, "m"], name: "Deutschland", rot: true },
-  wien: { ll: [16.37, 48.21], lab: [2.2, -0.2, "s"], name: "Wien" },
-  venedig: { ll: [12.34, 45.43], bild: [3, 1.6], lab: [4.8, 0.9, "s"], name: "Venedig" },
-  italien: { ll: [11.2, 43.4], bild: [-2.9, -0.4], lab: [-5.2, -0.9, "e"], name: "Italien" },
-  rom: { ll: [12.5, 41.9], bild: [3.4, 4.3], lab: [3.4, 6.5, "m"], name: "Rom" },
+  grossbritannien: { ll: [-0.13, 51.5], lab: [-1.9, -3.9, "e"], name: "Großbritannien" },
+  frankreich: { ll: [2.35, 48.86], bild: [0.6, 0], lab: [0, 3.2, "m"], name: "Frankreich" },
+  deutschland: { ll: [10.4, 51.2], lab: [0, -5.2, "m"], name: "Deutschland", rot: true },
+  wien: { ll: [16.37, 48.21], lab: [2.6, -0.3, "s"], name: "Wien" },
+  venedig: { ll: [12.34, 45.43], bild: [3, 2.2], lab: [4.9, 1.6, "s"], name: "Venedig" },
+  italien: { ll: [11.2, 43.4], bild: [-2.9, -0.4], lab: [-2.9, 2.1, "m"], name: "Italien" },
+  rom: { ll: [12.5, 41.9], bild: [3.4, 4.3], lab: [3.4, 6.4, "m"], name: "Rom" },
   spanien: { ll: [2.17, 41.4], lab: [-6.2, 2.6, "m"], name: "Spanien" },
-  griechenland: { ll: [23.73, 37.97], lab: [0, 3, "m"], name: "Griechenland" },
-  tuerkei: { ll: [28.98, 41.01], lab: [5.5, 3, "m"], name: "Türkei" },
-  moskau: { ll: [37.62, 55.75], lab: [0, 3, "m"], name: "Moskau" },
+  griechenland: { ll: [23.73, 37.97], lab: [0, 2.9, "m"], name: "Griechenland" },
+  tuerkei: { ll: [28.98, 41.01], lab: [5.5, 2.9, "m"], name: "Türkei" },
+  moskau: { ll: [37.62, 55.75], lab: [0, 2.8, "m"], name: "Moskau" },
   /* in der ganzen Karte (Maßstab 0,75) */
   san_francisco: { ll: [-122.42, 37.77], lab: [0, 3.3, "m"], name: "San Francisco", knopf: [48, 62] },
   new_york: { ll: [-74.0, 40.71], lab: [2.6, 1.3, "s"], name: "New York", knopf: [132, 48] },
@@ -397,7 +397,10 @@ const ORT = {
   sydney: { ll: [151.21, -33.87], lab: [0, 3.3, "m"], name: "Sydney", knopf: [362, 150] },
 };
 /* Mitte der Lupenmarke je Ort in der Europa-Lupe (Bildkoordinaten) */
-const MARKE_EU = {};
+const MARKE_EU = {
+  grossbritannien: [190.5, 33.6], frankreich: [188.6, 43], deutschland: [196.6, 39.3], wien: [209.4, 41.6], venedig: [205.3, 52.9], italien: [199.9, 45.7],
+  rom: [201.6, 56.6], spanien: [188.4, 50.6], griechenland: [209.5, 55], tuerkei: [223.6, 51], moskau: [229.6, 33],
+};
 function ortBild(id, mass, schrift) {
   const c = ORT[id], [dx0, dy0] = P(...c.ll), [bdx, bdy] = c.bild || [0, 0];
   const bx = dx0 + bdx, by = dy0 + bdy - (c.bild ? 0 : mass * 0.9);
@@ -461,11 +464,13 @@ const see = (t) => `<path d="${weg(t)}" fill="#a9d3e2" stroke="#4a90bf" stroke-w
 const landName = (lo, la, t, gr = 2.8, farbe = "#7a5a32") => { const [x, y] = P(lo, la); return halo(x, y, t, gr, farbe, "#fbf3df", `font-style="italic" letter-spacing=".8" opacity=".9"`, 0.45); };
 const knopf = (x, y) => ({ x: x - 16, y: y + 16 });
 /* Lupe um eine Gruppe von Orten: Kasten auf 3:2, Lupenmarke je Ort (die App setzt sie bei Ursprung + (16, −16)/k) */
-function lupeUm(ids, mass, schrift, mitBild, marke) {
+function lupeUm(ids, mass, schrift, mitBild, marke, festZoom) {
   const bs = ids.map((id) => ortBild(id, mass, schrift));
   let x0 = Math.min(...bs.map((b) => b.box.x0)) - 3, x1 = Math.max(...bs.map((b) => b.box.x1)) + 3, y0 = Math.min(...bs.map((b) => b.box.y0)) - 3, y1 = Math.max(...bs.map((b) => b.box.y1)) + 3;
   let w = x1 - x0, h = y1 - y0;
-  if (w / h < 1.5) { const nw = h * 1.5; x0 -= (nw - w) / 2; w = nw; } else { const nh = w / 1.5; y0 -= (nh - h) / 2; h = nh; }
+  const V = BR / HO;
+  if (w / h < V) { const nw = h * V; x0 -= (nw - w) / 2; w = nw; } else { const nh = w / V; y0 -= (nh - h) / 2; h = nh; }
+  if (festZoom) ({ x: x0, y: y0, w, h } = festZoom);
   const zoom = { x: r(x0), y: r(y0), w: r(w), h: r(h) }, kz = Math.min(BR / w, HO / h) * 0.76;
   const unter = ids.map((id, i) => {
     const b = bs[i], [bx, by, W, H] = b.bild, m = marke[id] || [bx + W / 2 + 13 / kz, by - H * 0.6];
@@ -484,13 +489,13 @@ kontinent("amerika", ton([[-112, 45, 5, 14, 25, BERGTON, 0.7], [-70, -25, 2.2, 1
 {
   const o = lupeUm(["dubai", "indien", "peking", "japan"], 1, 3.3, false, {});
   kontinent("asien", ton([[87, 30, 12, 3, -6, BERGTON, 0.6], [45, 24, 8, 4, -20, WUESTE, 0.7]]) + gebirge([[80.5, 29.8], [84, 28.5], [88, 27.9], [92, 27.9], [95.5, 28.5]], 6, 1.4)
-    + gebirge([[60, 52], [59.5, 58], [60, 64]], 4, 0.9) + landName(90, 31.6, "Himalaya", 2.6) + kontText(100, 63, "ASIEN", 4.2, "#8a4a68", 2) + o.k,
+    + gebirge([[60, 52], [59.5, 58], [60, 64]], 4, 0.9) + landName(92, 32.4, "Himalaya", 2.6) + kontText(100, 63, "ASIEN", 4.2, "#8a4a68", 2) + o.k,
     { id: "asien", de: "Asien", syl: "A-si-en", it: "l'Asia", itSyl: "A-sia", en: "Asia" }, "Asien ist der größte Kontinent. Hier wohnen die meisten Menschen.",
     Object.assign(knopf(...P(62, 8)), { zoom: o.zoom, unter: o.unter }));
 }
 kontinent("afrika", ton([[12, 22, 18, 7, 0, WUESTE, 0.9], [22, 0, 9, 5, 0, WALD, 0.6]]) + gebirge([[-7, 31.2], [-1, 33], [5, 35.2]], 4, 1)
   + fluss("31.0,31.4 31.2,30.0 32.9,24.1 31.3,21.8 32.5,15.6 31.7,9.5 31.6,4.8 33,0.3", 0.6) + fluss("32.5,15.6 34.5,13.5 37.3,12", 0.45) + see("31.8,-0.2 33,0.4 34.1,-0.3 33.7,-2.5 32,-2.3")
-  + landName(8, 24.5, "Sahara", 3) + kontText(18, 6, "AFRIKA", 3.6, "#8a5a28"),
+  + landName(-3, 21, "Sahara", 3) + kontText(18, 6, "AFRIKA", 3.6, "#8a5a28"),
   { id: "afrika", de: "Afrika", syl: "A-fri-ka", it: "l'Africa", itSyl: "A-fri-ca", en: "Africa" }, "In Afrika liegt die Sahara, die größte heiße Wüste der Welt.");
 kontinent("australien", ton([[128, -25, 9, 5, 0, WUESTE, 0.6]]) + kontText(134, -24, "AUSTRALIEN", 3, "#4f4f8a", 0.6),
   { id: "australien", de: "Australien", syl: "aus-TRA-li-en", it: "l'Australia", itSyl: "au-STRA-lia", en: "Australia" }, "Australien ist der kleinste Kontinent. Dort leben Kängurus.");
@@ -505,7 +510,7 @@ kontinent("australien", ton([[128, -25, 9, 5, 0, WUESTE, 0.6]]) + kontText(134, 
   const EUORTE = ["grossbritannien", "frankreich", "spanien", "italien", "rom", "venedig", "wien", "deutschland", "griechenland", "tuerkei", "moskau"];
   for (const id of EUORTE) { if (id === "deutschland") continue; const [x, y] = P(...ORT[id].ll); extra += `<circle cx="${r(x)}" cy="${r(y)}" r=".7" fill="#c0392b" stroke="#fff8ea" stroke-width=".25"/>`; }
   extra += kontText(25, 61.2, "EUROPA", 3.4, "#8a6a28", 1);
-  const o = lupeUm(EUORTE, 0.4, 2.4, true, MARKE_EU);
+  const o = lupeUm(EUORTE, 0.45, 2, true, MARKE_EU, { x: 172, y: 30.5, w: 60, h: 31.6 });
   kontinent("europa", extra, { id: "europa", de: "Europa", syl: "eu-RO-pa", it: "l'Europa", itSyl: "eu-RO-pa", en: "Europe" },
     "Europa ist ein kleiner Kontinent mit vielen Ländern. Deutschland liegt in der Mitte.",
     Object.assign(knopf(...P(-25, 47)), { zoom: o.zoom, unter: o.unter }), 0.2);

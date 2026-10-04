@@ -356,7 +356,7 @@ S.teile[S.teile.length - 1].unter = theaterUnter;
     k += krone(r(x), r(yG(D, 10.5)), r(6.4 * u), r(9.2 * u), sd, T, 3);
   } return k; };
   S.teil({ id: "baum", de: "der Baum", syl: "BAUM", it: "l'albero", itSyl: "AL-be-ro", en: "tree", x: 0, y: 0, kunst: baeume([[34, -20.8, 0.5, T1, 31], [28, -18.0, 0.55, T2, 32]]),
-    tipp: "Bäume geben im Sommer Schatten. Im Herbst fallen die Blätter." });
+    tipp: "Das ist ein Baum. Auch er ist eine Linde. Am Theaterplatz stehen viele Linden." });
   S.teil({ id: "linde", de: "die Linde", syl: "LIN-de", it: "il tiglio", itSyl: "TI-glio", en: "lime tree", x: 0, y: 0, kunst: baeume([[33, 20.4, 0.5, T2, 33], [27, 17.6, 0.55, T1, 34]]),
     tipp: "Am Platz stehen Linden. Im Oktober werden ihre Blätter gelb." });
 }
