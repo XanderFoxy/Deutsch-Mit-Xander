@@ -774,7 +774,7 @@ const STADT = {
   heidelberg: { ll: [8.69, 49.40], lab: [-7.4, -1, "e"] },
   stuttgart: { ll: [9.18, 48.78], lab: [0, 5.2, "m"] },
   freiburg: { ll: [7.85, 47.99], lab: [0, 5.2, "m"], sub: "im Breisgau" },
-  duesseldorf: { ll: [6.78, 51.23], bild: [2.6, 0], lab: [-3, -3, "e"] },
+  duesseldorf: { ll: [6.78, 51.23], bild: [2.6, 0], lab: [-3.6, -7.2, "e"] },
   koeln: { ll: [6.96, 50.94], bild: [-3.6, 0], lab: [3, 3.6, "s"] },
   aachen: { ll: [6.08, 50.78], lab: [0, 5.2, "m"] },
   rothenburg: { ll: [10.18, 49.38], lab: [-3.5, 5.2, "m"], sub: "ob der Tauber" },

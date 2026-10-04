@@ -892,6 +892,11 @@ const kleineFigur = (svg) => {
 /* Schlagschatten einer Figur der Höhe h (m) auf dem Pflaster, nach Nordnordosten */
 const figSchatten = (X, Y, h, b = .22) => pfad(poly([[X - b, Y, 0], [X + b, Y, 0], [X + b * .5 + h * .414, Y + h * 1.546, 0], [X - b * .5 + h * .414, Y + h * 1.546, 0]], 1), "#1f2430", ` opacity=".3"`);
 const VORLAGE = {}, VZ = {};
+/* schlank: nach dem Runden zusammengefallene Teilpfade (Brauen, Strähnen, Wimpern in 25 E Höhe) und data-Attribute weglassen */
+const schlank = (svg) => svg.replace(/ data-[\w-]+="[^"]*"/g, "").replace(/<path([^>]*?) d="([^"]*)"([^>]*?)\/>/g, (q, a, d, b) => {
+  const sub = d.split(/(?=M)/).filter((sp) => { const n = sp.match(/-?\d+/g) || []; for (let i = 2; i + 1 < n.length; i += 2) if (n[i] !== n[0] || n[i + 1] !== n[1]) return true; return false; });
+  return sub.length ? `<path${a} d="${sub.join("")}"${b}/>` : "";
+});
 /* Vorlagen auf ganze Zentimeter gerundet (keine Treppen in der Lupe). Rückansicht: der Hinterkopf ist ganz Haar,
    nur im Nacken ein schmaler Hautstreifen; langes Haar fällt bis auf die Schultern. Zubehör (Schirm, Handy) in der Hand. */
 const vorlage = (name, spec, extra = {}) => {
@@ -907,7 +912,7 @@ const vorlage = (name, spec, extra = {}) => {
   if (extra.schirm) { const [hx, hy] = [z.handR.x, z.handR.y]; o += `<path d="M${r(hx)} ${r(hy + 4)} L${r(hx + 2)} ${r(hy - 44)}" stroke="#2a2a2a" stroke-width="1.4"/><path d="M${r(hx - 16)} ${r(hy - 38)} Q${r(hx + 2)} ${r(hy - 66)} ${r(hx + 20)} ${r(hy - 38)} Q${r(hx + 2)} ${r(hy - 43)} ${r(hx - 16)} ${r(hy - 38)} Z" fill="#d23a30"/><path d="M${r(hx + 2)} ${r(hy - 53)} L${r(hx - 7)} ${r(hy - 40)} M${r(hx + 2)} ${r(hy - 53)} L${r(hx + 11)} ${r(hy - 40)}" stroke="#8e2018" stroke-width=".8" fill="none"/>`; }
   if (extra.handy) o += `<g transform="translate(${r(hm[0] + 2)} ${r(hm[1] - 7)}) rotate(-12)"><rect x="-3.6" y="-7" width="7.2" height="14" rx="1.2" fill="#1e2226"/><rect x="2" y="-6" width=".9" height="12" fill="#9fb4c8" opacity=".7"/></g>`;
   VZ[name] = { hand: [hm[0] * m.k, hm[1] * m.k] };
-  const fig = kleineFigur(m.svg).replace(/ d="([^"]*)"/g, (q0, d) => ` d="${d.replace(/-?\d+/g, (n) => String(Math.round(+n / 5) * 5))}"`);
+  const fig = schlank(kleineFigur(m.svg).replace(/ d="([^"]*)"/g, (q0, d) => ` d="${d.replace(/-?\d+/g, (n) => String(Math.round(+n / 2) * 2))}"`));
   S.def(`<g id="${S.id("fig_" + name)}">${o ? fig.replace(/<\/g>$/, `<g transform="scale(${m.k.toFixed(6)})">${o}</g></g>`) : fig}</g>`);
   VORLAGE[name] = `#${S.id("fig_" + name)}`;
 };
