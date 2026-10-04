@@ -296,7 +296,7 @@ const schlossUnter = [];
   /* Ochsenaugen mit Sandsteinrahmen, Kartusche oben und Girlande unten */
   for (const [x, f] of [[-4.6, 0.8], [0, 0.9], [4.6, 0.8]]) {
     const y = KB - 1.2;
-    k += `<ellipse cx="${x}" cy="${r(y)}" rx="${r(0.62 * f)}" ry="${r(0.7 * f)}" fill="${S.lg("ochsglas" + (x < 0 ? "l" : x > 0 ? "r" : "m"), [[0, "#c9dbe6"], [1, "#6d8496"]])}" stroke="#f4ead2" stroke-width=".34"/>`;
+    k += `<ellipse cx="${x}" cy="${r(y)}" rx="${r(0.5 * f)}" ry="${r(0.58 * f)}" fill="#55786c" stroke="#e8dcbd" stroke-width=".26"/>`;
     k += `<path d="M${r(x - 0.3 * f)} ${r(y - 0.95)} q${r(0.3 * f)} -.55 ${r(0.6 * f)} 0 Z" fill="#efe3c6"/>`;
     k += `<path d="M${r(x - 0.75 * f)} ${r(y + 0.4)} q${r(0.75 * f)} .7 ${r(1.5 * f)} 0" stroke="#e8dcbd" stroke-width=".16" fill="none"/>`;
   }
@@ -396,9 +396,19 @@ S.teile[S.teile.length - 1].unter = terrUnter;
    MENSCHEN (einmal in <defs>, gezeichnet über <use>)
    ===================================================================== */
 const FIG = {};
-const mensch = (name, spec, groesse, D, X, Q = 1, min = 0.35) => {
+/* sehr kleine Figuren: Verläufe durch ihre Mittelfarbe ersetzen (spart Platz, sieht man nicht) */
+const flach = (svg) => {
+  const farbe = {};
+  svg = svg.replace(/<(linear|radial)Gradient id="([^"]+)"[^>]*>(.*?)<\/(linear|radial)Gradient>/g, (a, t, id, stops) => {
+    const c = [...stops.matchAll(/stop-color="([^"]+)"/g)].map((m) => m[1]);
+    farbe[id] = c[Math.floor(c.length / 2)] || "#888";
+    return "";
+  });
+  return svg.replace(/url\(#([^)]+)\)/g, (a, id) => farbe[id] || a);
+};
+const mensch = (name, spec, groesse, D, X, Q = 1, min = 0.35, einfach = false) => {
   const m = B.mensch(spec, 100);
-  S.def(`<g id="${S.id("fig" + name)}">${kompakt(m.svg, Q, min)}</g>`);
+  S.def(`<g id="${S.id("fig" + name)}">${kompakt(einfach ? flach(m.svg) : m.svg, Q, min)}</g>`);
   const f = { m, D, X, x: r(xG(D, X)), y: r(yG(D)), u: sk(D), s: groesse * sk(D) / 100 };
   f.p = (q) => ({ x: f.x + q.x * m.k * f.s, y: f.y + q.y * m.k * f.s });
   f.svg = `<use href="#${S.id("fig" + name)}" transform="scale(${f.s.toFixed(5)})"/>`;
@@ -422,7 +432,7 @@ bodenSchatten(22, -2.0, 0.45, 1.68, 0.26);
 /* DER TOURIST zeigt mit gestrecktem Arm schräg hinauf zum Schloss */
 const M2 = mensch("M2", { id: "pdm_tourist", geschlecht: "m", blick: 196, frisur: "kurz", haarfarbe: "dunkelbraun", haut: "mittel",
   pose: { lende: 1, brust: -4, nacken: -12, kopf: -10, kopfDreh: 12, schulterL: { vor: 3, seit: 7 }, ellbogenL: 12, unterarmL: 10, handL: 6, fingerL: 0.38,
-    schulterR: { vor: 58, seit: 62, dreh: 0 }, ellbogenR: 4, unterarmR: 0, handR: 4, fingerR: "zeigen",
+    schulterR: { vor: 34, seit: 122, dreh: 0 }, ellbogenR: 4, unterarmR: 0, handR: 4, fingerR: "zeigen",
     huefteL: { vor: 5, seit: 3, dreh: -6 }, knieL: 5, fussL: 0, huefteR: { vor: -3, seit: 2.5, dreh: -6 }, knieR: 2, fussR: 0 },
   kleidung: { oberteil: { stueck: "tshirt", farbe: "hellblau" }, jacke: { stueck: "jacke", farbe: "gruen_d" }, unterteil: { stueck: "hose", farbe: "beige" }, schuhe: { stueck: "halbschuh" }, zubehoer: { stueck: "rucksack", farbe: "orange" } } }, 1.82, 25, -0.6);
 bodenSchatten(25, -0.6, 0.5, 1.82, 0.26);
@@ -435,9 +445,9 @@ const K = mensch("K", { id: "pdm_kind", alter: "kind", geschlecht: "m", blick: 1
 bodenSchatten(19, 1.3, 0.4, 1.22, 0.26);
 /* DAS PAAR spaziert um die Fontäne (mittlere Tiefe) */
 const P1 = mensch("P1", { id: "pdm_p1", geschlecht: "w", blick: 120, frisur: "lang", haarfarbe: "dunkelbraun", haut: "hell", pose: "gehen",
-  kleidung: { oberteil: { stueck: "pullover", farbe: "rosa" }, jacke: { stueck: "mantel", farbe: "beige" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" } } }, 1.66, 50, -6.4, 4, 1);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "rosa" }, jacke: { stueck: "mantel", farbe: "beige" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel" } } }, 1.66, 50, -6.4, 4, 1, true);
 const P2 = mensch("P2", { id: "pdm_p2", geschlecht: "m", blick: 118, frisur: "glatze", haarfarbe: "grau", haut: "hell", pose: "gehen",
-  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, jacke: { stueck: "jacke", farbe: "braun" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "halbschuh" } } }, 1.8, 50.6, -7.2, 4, 1);
+  kleidung: { oberteil: { stueck: "pullover", farbe: "blau" }, jacke: { stueck: "jacke", farbe: "braun" }, unterteil: { stueck: "hose", farbe: "grau" }, schuhe: { stueck: "halbschuh" } } }, 1.8, 50.6, -7.2, 4, 1, true);
 bodenSchatten(50, -6.4, 0.45, 1.66, 0.22);
 bodenSchatten(50.6, -7.2, 0.5, 1.8, 0.22);
 

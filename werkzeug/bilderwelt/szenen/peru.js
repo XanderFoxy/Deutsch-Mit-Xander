@@ -634,7 +634,149 @@ const lama = (H, dir, fell, fleck, seed, jung = false) => {
     tipp: "Ein junges Lama heißt Fohlen. Es bleibt fast ein Jahr bei seiner Mutter." });
 }
 
-/* --- vorläufig: Rest folgt --- */
+/* =====================================================================
+   11 — DIE TREPPE (Inka-Treppe durch die Terrassen hinab zur Stadt)
+   ===================================================================== */
+{
+  let k = "";
+  const unten = 262, oben = 211, xl = (y) => 214 + (unten - y) * 0.24, xr = (y) => 246 - (unten - y) * 0.2;
+  /* Wangen (niedrige Mauern links und rechts) */
+  k += `<path d="M${r(xl(unten) - 4)} ${unten} L${r(xl(oben) - 1.2)} ${oben} L${r(xl(oben))} ${oben} L${r(xl(unten))} ${unten} Z" fill="#9b9283"/>`;
+  k += `<path d="M${r(xr(unten))} ${unten} L${r(xr(oben))} ${oben} L${r(xr(oben) + 1.4)} ${oben} L${r(xr(unten) + 4.4)} ${unten} Z" fill="#ece3cf"/>`;
+  k += `<path d="M${r(xl(unten))} ${unten} L${r(xl(oben))} ${oben} L${r(xr(oben))} ${oben} L${r(xr(unten))} ${unten} Z" fill="${S.lg("treppe", [[0, "#ddd4c1"], [1, "#c4baa5"]])}"/>`;
+  /* Stufen: Kante hell, dahinter der Schatten (die Stufe fällt von uns weg) */
+  let y = unten, n = 0;
+  while (y > oben + 0.8) {
+    const h = 1 + (y - oben) * 0.085;
+    k += `<path d="M${r(xl(y))} ${r(y - h)} L${r(xr(y))} ${r(y - h)}" stroke="#fbf5e6" stroke-width="${r(0.22 + h * 0.12)}"/>`;
+    k += `<path d="M${r(xl(y - h))} ${r(y - h - h * 0.28)} L${r(xr(y - h))} ${r(y - h - h * 0.28)}" stroke="#6f6658" stroke-width="${r(h * 0.32)}" opacity=".55"/>`;
+    y -= h; n++;
+  }
+  /* einzelne Steinfugen */
+  const zt = zufall(57); let f = "";
+  for (let i = 0; i < 26; i++) { const yy = oben + 2 + zt() * (unten - oben - 4), x = xl(yy) + zt() * (xr(yy) - xl(yy)); f += `M${r(x)} ${r(yy)} l0 ${r(0.6 + (yy - oben) * 0.03)}`; }
+  k += `<path d="${f}" stroke="#8f8676" stroke-width=".25"/>`;
+  S.teil({ id: "treppe", de: "die Treppe", syl: "TREP-pe", it: "la scala", itSyl: "SCA-la", en: "stairs", x: 230, y: 240, kunst: um(230, 240, k),
+    tipp: "In Machu Picchu gibt es über 100 Treppen aus Stein. Manche Stufen sind aus einem einzigen Felsblock gehauen." });
+}
+
+/* =====================================================================
+   12 — DER BUS auf der Serpentine
+   ===================================================================== */
+{
+  let k = `<path d="M-6.4 .6 L6.2 -.6 L6.2 .4 L-6.4 1.6 Z" fill="#2a2c20" opacity=".35"/>`;
+  k += `<path d="M-6 -3.4 L5.6 -3.8 Q6.4 -3.8 6.4 -3 L6.4 .1 L-6 .6 Z" fill="${S.lg("bus", [[0, "#ffffff"], [1, "#d9dcd8"]])}"/>`;
+  k += `<path d="M-6 -1.3 L6.4 -1.7 L6.4 -1 L-6 -.6 Z" fill="#2f8a4a"/>`;
+  for (let i = 0; i < 5; i++) k += `<path d="M${r(-5.2 + i * 2.1)} -3 h1.6 v1.2 h-1.6 Z" fill="#3c5566"/>`;
+  k += `<path d="M5 -3.3 h1.2 v1.6 h-1.2 Z" fill="#6b8696"/><circle cx="-3.6" cy=".5" r=".75" fill="#1d1d1d"/><circle cx="3.8" cy=".2" r=".75" fill="#1d1d1d"/>`;
+  k += `<path d="M-6 -3.4 L5.6 -3.8" stroke="#fff" stroke-width=".35"/>`;
+  S.teil({ oben: true, id: "bus", de: "der Bus", syl: "BUS", it: "l'autobus", itSyl: "AU-to-bus", en: "bus", x: 350, y: 197.6, kunst: k,
+    tipp: "Die Busse fahren in etwa 25 Minuten vom Ort Aguas Calientes zur Ruinenstadt hinauf." });
+}
+
+/* =====================================================================
+   13 — DIE TOURISTEN (Familie auf der vorderen Terrasse), mit Lupe:
+        die Mütze (Chullo), der Poncho, die Panflöte
+   ===================================================================== */
+{
+  const dunkel = (svg) => vereinfache(svg, 0.2);
+  const schattenFigur = (x, y, h) => `<path d="M${r(x - 2.6)} ${r(y + 0.6)} L${r(x + 2.4)} ${r(y + 0.4)} L${r(x - h * 0.95)} ${r(y - h * 0.12)} L${r(x - h * 1.05)} ${r(y - h * 0.06)} Z" fill="${S.lg("figschatten", [[0, "#1d3014", 0], [0.15, "#1d3014", 0.18], [1, "#1d3014", 0.38]], 0, 0, 1, 0)}"/>`;
+  const fig = (spec, hoehe) => B.mensch(Object.assign({ ohneSchatten: true, laecheln: true }, spec), hoehe);
+  const pk = (m, n) => [m.z.punkte[n][0] * m.k, m.z.punkte[n][1] * m.k];
+  let k = "", sch = "";
+  /* Vater: schaut zur Stadt (Rücken zu uns), trägt den roten Poncho aus Alpakawolle */
+  const V = { x: 302, y: 254 };
+  const mv = fig({ id: "per_vater", geschlecht: "m", alter: "erwachsen", pose: "stehen", blick: 158, frisur: "kurz", haarfarbe: "braun", haut: "hell",
+    kleidung: { oberteil: { stueck: "pullover", farbe: "#3f4a5a" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "stiefel", farbe: "braun" } } }, 42);
+  {
+    const [slx, sly] = pk(mv, "schulterL"), [srx, sry] = pk(mv, "schulterR"), [hx, hy] = pk(mv, "hals"), [hlx, hly] = pk(mv, "huefteL"), [hrx] = pk(mv, "huefteR");
+    const xa = Math.min(slx, srx) - 2.2, xb = Math.max(slx, srx) + 2.2, yS = Math.min(sly, sry), yu = hly + 3.4, xm = (xa + xb) / 2;
+    let po = `<path d="M${r(hx - 1.6)} ${r(hy - 0.4)} Q${r(xa + 0.6)} ${r(yS - 0.6)} ${r(xa - 0.6)} ${r(yS + 2.4)} L${r(xa - 2.2)} ${r(yu)} Q${r(xm)} ${r(yu + 1.6)} ${r(xb + 2.2)} ${r(yu)} L${r(xb + 0.6)} ${r(yS + 2.4)} Q${r(xb - 0.6)} ${r(yS - 0.6)} ${r(hx + 1.6)} ${r(hy - 0.4)} Z" fill="${S.lg("poncho", [[0, "#8e1c22"], [0.55, "#b8282f"], [1, "#d8453c"]], 0, 0, 1, 0)}"/>`;
+    /* Streifenbänder (gelb, grün, schwarz) und Fransen am Saum */
+    for (const [dy, c, w] of [[-3.2, "#f2c230", 0.45], [-2.5, "#1f6b3a", 0.4], [-1.9, "#f2c230", 0.3], [-6.6, "#1d1d22", 0.3]]) po += `<path d="M${r(xa - 2 + 0.2)} ${r(yu + dy)} Q${r(xm)} ${r(yu + dy + 1.6)} ${r(xb + 2 - 0.2)} ${r(yu + dy)}" stroke="${c}" stroke-width="${w}" fill="none"/>`;
+    for (let x = xa - 1.8; x < xb + 1.8; x += 0.7) po += `<path d="M${r(x)} ${r(yu + 1.2 - Math.pow((x - xm) / (xb - xa + 4), 2) * 6)} l0 1.2" stroke="#9c2128" stroke-width=".25"/>`;
+    po += `<path d="M${r(xb + 0.2)} ${r(yS + 2.6)} L${r(xb + 1.6)} ${r(yu - 0.4)}" stroke="#f07a5a" stroke-width=".6" opacity=".7"/>`;
+    k += `<g transform="translate(${V.x} ${V.y})"><g filter="${VOL_FIGUR}">${dunkel(mv.svg)}</g>${po}</g>`;
+    sch += schattenFigur(V.x, V.y, 42);
+    STADT.poncho = { x: V.x + xm, y: V.y + (yS + yu) / 2 };
+  }
+  /* Mutter: fotografiert die Stadt (Rücken zu uns), mit Rucksack und Sonnenhut */
+  const M = { x: 328, y: 251 };
+  const poseFoto = { lende: 1, brust: -2, nacken: 4, kopf: 0, schulterL: { vor: 58, seit: 22 }, ellbogenL: 118, unterarmL: 60, handL: 10, fingerL: 0.6, schulterR: { vor: 56, seit: 24 }, ellbogenR: 120, unterarmR: 60, handR: 10, fingerR: 0.6,
+    huefteL: { vor: 10, seit: 4, dreh: -6 }, knieL: 8, fussL: 0, huefteR: { vor: -6, seit: 4, dreh: -6 }, knieR: 2, fussR: 0 };
+  const mm = fig({ id: "per_mutter", geschlecht: "w", alter: "erwachsen", pose: poseFoto, blick: 172, frisur: "zopf", haarfarbe: "dunkelbraun", haut: "hell",
+    kleidung: { oberteil: { stueck: "hemd", farbe: "#e9e4d6" }, unterteil: { stueck: "hose", farbe: "#6a6f52" }, schuhe: { stueck: "stiefel", farbe: "braun" }, kopf: { stueck: "hut", farbe: "#e8dcc0" }, zubehoer: { stueck: "rucksack", farbe: "#2f6f8f" } } }, 39);
+  k = `<g transform="translate(${M.x} ${M.y})"><g filter="${VOL_FIGUR}">${dunkel(mm.svg)}</g></g>` + k;
+  sch += schattenFigur(M.x, M.y, 39);
+  /* Mädchen: schaut zu uns, trägt den Chullo und hält eine Panflöte */
+  const Mä = { x: 278, y: 257 };
+  const poseHalt = { lende: 1, brust: -1, nacken: 4, kopf: -4, schulterL: { vor: 34, seit: 12 }, ellbogenL: 100, unterarmL: 70, handL: 6, fingerL: 0.55, schulterR: { vor: 32, seit: 12 }, ellbogenR: 98, unterarmR: 70, handR: 6, fingerR: 0.55,
+    huefteL: { vor: 3, seit: 3, dreh: -6 }, knieL: 3, fussL: 0, huefteR: { vor: -3, seit: 3, dreh: -6 }, knieR: 2, fussR: 0 };
+  const mk = fig({ id: "per_kind", geschlecht: "w", alter: "kind", pose: poseHalt, blick: -22, frisur: "zopf", haarfarbe: "braun", haut: "hell",
+    kleidung: { oberteil: { stueck: "pullover", farbe: "#e0802e" }, unterteil: { stueck: "jeans" }, schuhe: { stueck: "turnschuh" } } }, 31);
+  let chullo = "", floete = "";
+  {
+    const [sx, sy] = pk(mk, "scheitel"), [stx, sty] = pk(mk, "stirn"), [ox, oy] = pk(mk, "ohr"), [hkx, hky] = pk(mk, "hinterkopf"), [kx, ky] = pk(mk, "kinn");
+    const cx = (stx + hkx) / 2, br = Math.abs(stx - hkx) / 2 + 1.1, yT = sy - 0.5, yB = sty + 0.4;
+    const fl = (side) => { const ex = cx + side * (br - 0.2); return `<path d="M${r(ex - side * 0.9)} ${r(yB - 0.2)} L${r(ex + side * 0.15)} ${r(yB - 0.1)} L${r(ex + side * 0.1)} ${r(ky - 0.2)} Q${r(ex - side * 0.4)} ${r(ky + 0.5)} ${r(ex - side * 0.9)} ${r(ky - 0.4)} Z" fill="#b8262e"/><path d="M${r(ex - side * 0.4)} ${r(ky + 0.2)} l${r(side * 0.1)} 3.2" stroke="#f2c230" stroke-width=".35"/><circle cx="${r(ex - side * 0.3)}" cy="${r(ky + 3.6)}" r=".55" fill="#2f6fb0"/>`; };
+    chullo += fl(-1) + fl(1);
+    chullo += `<path d="M${r(cx - br)} ${r(yB)} Q${r(cx - br)} ${r(yT - 1.2)} ${r(cx)} ${r(yT - 1.4)} Q${r(cx + br)} ${r(yT - 1.2)} ${r(cx + br)} ${r(yB)} Z" fill="${S.lg("chullo", [[0, "#c22d33"], [1, "#e05040"]], 0, 0, 1, 0)}"/>`;
+    /* Muster: weißes Zickzackband, blaues und gelbes Band */
+    let zz = `M${r(cx - br + 0.3)} ${r(yB - 1.6)}`;
+    for (let x = cx - br + 0.3, i = 0; x < cx + br - 0.3; x += 0.55, i++) zz += ` L${r(x + 0.55)} ${r(yB - 1.6 + (i % 2 ? 0 : -0.6))}`;
+    chullo += `<path d="${zz}" stroke="#fbf6ea" stroke-width=".32" fill="none"/>`;
+    chullo += `<path d="M${r(cx - br + 0.1)} ${r(yB - 0.4)} H${r(cx + br - 0.1)}" stroke="#2f6fb0" stroke-width=".55"/><path d="M${r(cx - br + 0.5)} ${r(yB - 2.8)} Q${r(cx)} ${r(yB - 3.4)} ${r(cx + br - 0.5)} ${r(yB - 2.8)}" stroke="#f2c230" stroke-width=".4" fill="none"/>`;
+    chullo += `<circle cx="${r(cx + 0.2)}" cy="${r(yT - 2.1)}" r="1.05" fill="#f2c230"/><circle cx="${r(cx + 0.5)}" cy="${r(yT - 2.4)}" r=".45" fill="#fff4b8"/>`;
+    STADT.muetze = { x: Mä.x + cx, y: Mä.y + (yT + yB) / 2 };
+    /* Panflöte (Siku): sieben Rohre, nach rechts kürzer, mit Schnur gebunden — vor der Brust */
+    const hx = (mk.z.handL.x + mk.z.handR.x) / 2 * mk.k, hy = (mk.z.handL.y + mk.z.handR.y) / 2 * mk.k;
+    const fx = hx - 2.4, fy = hy - 2.8;
+    for (let i = 0; i < 7; i++) floete += `<rect x="${r(fx + i * 0.68)}" y="${r(fy)}" width=".6" height="${r(5.2 - i * 0.5)}" rx=".28" fill="${i % 2 ? "#d9b56c" : "#e8c98a"}" stroke="#8a6a34" stroke-width=".12"/>`;
+    floete += `<path d="M${r(fx - 0.1)} ${r(fy + 1.6)} H${r(fx + 4.8)}" stroke="#c22d33" stroke-width=".45"/>`;
+    STADT.floete = { x: Mä.x + fx + 2.3, y: Mä.y + fy + 2.2 };
+  }
+  k += `<g transform="translate(${Mä.x} ${Mä.y})"><g filter="${VOL_FIGUR}">${dunkel(mk.svg)}</g>${chullo}${floete}</g>`;
+  sch += schattenFigur(Mä.x, Mä.y, 31);
+  const unter = [
+    { id: "muetze", de: "die Mütze", syl: "MÜT-ze", it: "il berretto", itSyl: "ber-RET-to", en: "hat", x: STADT.muetze.x, y: STADT.muetze.y, kunst: flaeche(-3, -3.5, 6, 7),
+      tipp: "Die Mütze aus den Anden heißt Chullo. Sie hat Ohrenklappen und hält in der Höhe schön warm." },
+    { id: "poncho", de: "der Poncho", syl: "PON-cho", it: "il poncho", itSyl: "PON-cio", en: "poncho", x: STADT.poncho.x, y: STADT.poncho.y, kunst: flaeche(-7, -8, 14, 16),
+      tipp: "Der Poncho ist ein großes Tuch mit einem Loch für den Kopf. Er ist oft aus warmer Alpakawolle." },
+    { id: "panfloete", de: "die Panflöte", syl: "PAN-flö-te", it: "il flauto di Pan", itSyl: "FLAU-to di PAN", en: "pan flute", x: STADT.floete.x, y: STADT.floete.y, kunst: flaeche(-3.2, -3, 6.4, 6),
+      tipp: "Die Panflöte heißt in den Anden Siku. Jedes Rohr hat einen anderen Ton." },
+  ];
+  S.teil({ id: "touristen", de: "die Touristen", syl: "tou-RIS-ten", it: "i turisti", itSyl: "tu-RI-sti", en: "tourists", x: 304, y: 236,
+    kunst: um(304, 236, `<g pointer-events="none">${sch}</g>` + k), zoom: { x: 258, y: 206, w: 84, h: 56 }, unter,
+    tipp: "Jeden Tag besuchen Tausende Menschen Machu Picchu. Man darf nur mit einer Eintrittskarte und auf festen Wegen hinein." });
+}
+
+/* =====================================================================
+   14 — DIE ORCHIDEE (Wiñay Wayna) und DER KOLIBRI am Rand der Treppe
+   ===================================================================== */
+{
+  let k = "";
+  const stiele = [[0, 0, -1.6, -13], [1.2, 0, 2.2, -10.5], [-1, 0, -4, -8.6]];
+  for (const [x0, y0, x1, y1] of stiele) k += `<path d="M${x0} ${y0} Q${r((x0 + x1) / 2 + 1)} ${r((y0 + y1) / 2)} ${x1} ${y1}" stroke="#4f7a32" stroke-width=".45" fill="none"/>`;
+  k += `<path d="M-1 0 Q-5 -2 -7 -1.2 Q-4 -.4 -1 .4 Z M1 0 Q5 -2.6 7.4 -1.6 Q4.4 -.2 1 .4 Z" fill="#3f6e2c"/>`;
+  for (const [, , x1, y1] of stiele) {
+    const z = zufall(Math.round(x1 * 10 + 200));
+    for (let i = 0; i < 9; i++) {
+      const a = i / 9 * Math.PI * 2, rr = i ? 1.3 : 0, cx = x1 + Math.cos(a) * rr * (0.8 + z() * 0.3), cy = y1 + Math.sin(a) * rr * 0.8;
+      k += `<g transform="translate(${r(cx)} ${r(cy)})"><path d="M0 -.75 L.22 -.2 L.75 -.1 L.3 .25 L.45 .75 L0 .45 L-.45 .75 L-.3 .25 L-.75 -.1 L-.22 -.2 Z" fill="${i % 3 ? "#d6408f" : "#b8327a"}"/><circle r=".22" fill="#f6d34a"/></g>`;
+    }
+  }
+  S.teil({ oben: true, id: "orchidee", de: "die Orchidee", syl: "or-chi-DE-e", it: "l'orchidea", itSyl: "or-chi-DE-a", en: "orchid", x: 208, y: 247, kunst: k,
+    tipp: "Diese Orchidee heißt Wiñay Wayna – „ewig jung“. In Machu Picchu wachsen über 400 Orchideenarten." });
+  /* Kolibri: schwirrt vor den Blüten, Flügel verwischt */
+  let ko = `<path d="M-2.2 .2 Q-1 -1.2 1 -.8 Q2.2 -.6 2.6 .2 Q1.6 1.1 -.4 1 Q-1.6 .9 -2.2 .2 Z" fill="${S.lg("kolibri", [[0, "#1f8a5a"], [1, "#3fc08a"]], 0, 0, 1, 0)}"/>`;
+  ko += `<path d="M-2.1 .4 L-4.2 1.4 L-3.8 .3 Z" fill="#1b5f3e"/><path d="M1.6 -.2 Q2.6 .4 2.4 1 Q1.6 .9 1.2 .3 Z" fill="#d8344a"/>`;
+  ko += `<circle cx="1.9" cy="-.25" r=".25" fill="#111"/><path d="M2.6 0 L5.4 .6" stroke="#2a2a2a" stroke-width=".3"/>`;
+  ko += `<path d="M-.4 -.6 Q-1.6 -4.2 .6 -4.6 Q.8 -2.4 .4 -.6 Z" fill="#9fd8c0" opacity=".55"/><path d="M-.2 -.6 Q.4 -3.4 2.2 -3.2 Q1.2 -1.6 .5 -.5 Z" fill="#c8f0de" opacity=".45"/>`;
+  S.teil({ oben: true, id: "kolibri", de: "der Kolibri", syl: "KO-li-bri", it: "il colibrì", itSyl: "co-li-BRÌ", en: "hummingbird", x: 197, y: 233, kunst: ko,
+    tipp: "Der Kolibri schlägt bis zu 50-mal in der Sekunde mit den Flügeln. So kann er in der Luft stehen bleiben." });
+}
+
+
 
 
 const silben = (t) => { if (!t) return t; const st = t.split(/([- ])/); const gross = (x) => x.length && x === x.toUpperCase() && x !== x.toLowerCase(); const lang = st.some((x) => gross(x) && x.length > 1); return st.map((x) => (/^[- ]$/.test(x) ? x : (gross(x) && (x.length > 1 || !lang || /[À-ÖÙ-Ý]/.test(x)) ? x : x.toLowerCase()))).join(""); };
