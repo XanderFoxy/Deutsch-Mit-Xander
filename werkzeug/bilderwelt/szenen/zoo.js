@@ -619,6 +619,14 @@ const S = neueSzene({ id: "zoo", titel: "Der Zoo", emoji: "🐘", thema: "Natur"
 const rnd = zufall(1907);
 const T = tierBaukasten(S);
 const HOR = 50, M = (y) => 0.1655 * (y - HOR);
+/* FASSUNG 883 — XANDER (Funk 302): „schaue auch was du mit den anderen Tieren machst dass sie wirklich realistisch
+   sind“. Wo die Tier-Bibliothek (werkzeug/bilderwelt/tiere, Werkzeug 880, wie „Tiere der Savanne“) eine Art hat und
+   sie HIER in der Szene klar besser aussieht, kommt das Tier aus der Bibliothek (tierKunst: gleiche Zeichnung wie
+   tierTeil, Szenen-Modus ohne Filter, eigener Boden- und Kontaktschatten). Maßstab: epm = M(y) Einheiten je Meter
+   an der Stelle der Hufe/Pfoten – dieselbe Perspektive wie beim Baukasten. Wort, Tipp und Ort jedes Teils bleiben. */
+const { tierKunst } = require("../tiere/szene.js");
+const AUS_BIB = new Set((process.env.BIB_883 || "").split(",").filter(Boolean));
+const bib = (id, x, y, epm, o = {}) => tierKunst(S, id, x, y, epm, o).kunst;
 /* Menschen: Pfaddaten auf 0,5 cm gerundet — unsichtbar, spart ein Drittel der Ladezeit */
 const zahl = (x, st) => String(+(Math.round(+x / st) * st).toFixed(1)).replace(/^(-?)0\./, "$1.");
 const schlank = (svg) => svg.replace(/ d="([^"]*)"/g, (a, d) => ` d="${d.replace(/-?\d*\.?\d+/g, (x) => zahl(x, 1)).replace(/\s*,\s*/g, " ").replace(/\s*([A-Za-z])\s*/g, "$1").replace(/ -/g, "-")}"`)
@@ -701,17 +709,17 @@ S.hinten(`<rect x="8" y="49" width="30" height="10" fill="#b48d5c"/><rect x="18"
    SAVANNE: Giraffe, Elefant, Nashorn, Zebras
    ===================================================================== */
 S.teil({ id: "giraffe", de: "die Giraffe", syl: "Gi-RAF-fe", it: "la giraffa", itSyl: "gi-RAF-fa", en: "giraffe", x: 52, y: 98,
-  kunst: schatten(1, 0, 10, 1.2, 0.25) + T.giraffe(M(98)),
+  kunst: AUS_BIB.has("giraffe") ? bib("giraffe", 52, 98, M(98), { dir: 1 }) : schatten(1, 0, 10, 1.2, 0.25) + T.giraffe(M(98)),
   tipp: "Fünf Meter hoch — das höchste Tier der Erde. Ihr Hals hat genauso viele Wirbel wie deiner: sieben." });
 S.teil({ id: "zebra", de: "das Zebra", syl: "ZE-bra", it: "la zebra", itSyl: "ZE-bra", en: "zebra", x: 104, y: 95,
   /* Funk 302: altes Zebra (Kopf höher und länger) – die zwei stehen Rücken an Rücken, damit sich die Köpfe nicht überdecken */
   kunst: `<g transform="translate(-11 -3)">${schatten(0, 0, 8, 0.9, 0.2)}${T.zebra(M(92), -1)}</g>` + schatten(0, 0, 8, 1, 0.25) + T.zebra(M(95)),
   tipp: "Ein Zebra ist weiß mit schwarzen Streifen — und jedes Muster gibt es nur einmal." });
 S.teil({ id: "elefant", de: "der Elefant", syl: "E-le-fant", it: "l'elefante", itSyl: "e-le-FAN-te", en: "elephant", x: 158, y: 101,
-  kunst: schatten(0, 0, 16, 1.6, 0.28) + T.elefant(M(101), -1),
+  kunst: AUS_BIB.has("elefant") ? bib("elefant", 158, 101, M(101), { dir: -1 }) : schatten(0, 0, 16, 1.6, 0.28) + T.elefant(M(101), -1),
   tipp: "Der Rüssel ist Nase und Hand zugleich." });
 S.teil({ id: "nashorn", de: "das Nashorn", syl: "NAS-horn", it: "il rinoceronte", itSyl: "ri-no-ce-RON-te", en: "rhinoceros", x: 208, y: 107,
-  kunst: schatten(0, 0, 15, 1.4, 0.28) + T.nashorn(M(107), -1),
+  kunst: AUS_BIB.has("nashorn") ? bib("nashorn", 208, 107, M(107), { dir: -1 }) : schatten(0, 0, 15, 1.4, 0.28) + T.nashorn(M(107), -1),
   tipp: "Zwei Hörner — das vordere ist größer. Es steht dem Elefanten knapp bis an den Bauch." });
 
 /* =====================================================================
@@ -731,8 +739,18 @@ S.teil({ id: "nashorn", de: "das Nashorn", syl: "NAS-horn", it: "il rinoceronte"
   S.teil({ id: "graben", de: "der Graben", syl: "GRA-ben", it: "il fossato", itSyl: "fos-SA-to", en: "moat", x: 0, y: 0, kunst: k,
     tipp: "Ein Graben statt eines Zauns: das Tier kommt nicht herüber, und man sieht es ohne Gitter davor." });
 }
+/* Nilpferd im Graben: wie beim Baukasten nur, was über dem Wasserspiegel liegt (0,82 m über den Füßen), dazu die
+   Wasserlinie davor. Kein Bodenschatten (es steht im Wasser). */
+function nilpferdImGraben() {
+  const e = M(126), w = 0.82 * e, L = 3 * e;
+  const ausschnitt = `<rect x="${r(-L)}" y="${r(-3 * e)}" width="${r(2 * L)}" height="${r(3 * e - w)}"/>`;
+  const davor = `<path d="M${r(-2.3 * e)} ${r(-w)} q${r(1.1 * e)} -.5 ${r(2.2 * e)} 0 t${r(2.4 * e)} 0" stroke="#e2eee8" stroke-width=".35" opacity=".8" fill="none"/>` +
+    `<path d="M${r(-2.5 * e)} ${r(-w + 0.7)} q${r(1.2 * e)} -.4 ${r(2.4 * e)} 0 t${r(2.5 * e)} 0" stroke="#e2eee8" stroke-width=".25" opacity=".5" fill="none"/>` +
+    `<ellipse cx="0" cy="${r(-w + 0.4)}" rx="${r(2.3 * e)}" ry=".8" fill="#2f4a40" opacity=".25"/>`;
+  return bib("nilpferd", 124, 126, e, { dir: -1, schatten: false, ausschnitt, davor });
+}
 S.teil({ id: "nilpferd", de: "das Nilpferd", syl: "NIL-pferd", it: "l'ippopotamo", itSyl: "ip-po-PO-ta-mo", en: "hippopotamus", x: 124, y: 126,
-  kunst: T.nilpferd(M(126), -1, 8.2),
+  kunst: AUS_BIB.has("nilpferd") ? nilpferdImGraben() : T.nilpferd(M(126), -1, 8.2),
   tipp: "Kein Horn, dafür ein riesiges Maul." });
 
 /* =====================================================================
@@ -761,12 +779,13 @@ S.teil({ id: "nilpferd", de: "das Nilpferd", syl: "NIL-pferd", it: "l'ippopotamo
 {
   let k = `<path d="M-22 18 Q-24 6 -16 2 Q-6 -2 6 1 Q16 3 18 12 L20 18 Z" fill="${S.lg("loefels", [[0, "#c2a98a"], [1, "#8d7559"]])}"/>`;
   k += `<path d="M-14 3 Q-10 10 -12 18 M4 1.6 Q8 9 6 18" stroke="#6e5a44" stroke-width=".5" fill="none" opacity=".6"/><path d="M-18 4 Q-8 -.6 4 .8" stroke="#e3d6c4" stroke-width=".7" fill="none" opacity=".5"/>`;
-  k += `<g transform="translate(-2 1.6)">${T.katze("loewe", M(140), 1, "liegen")}</g>`;
+  /* Bibliotheks-Löwe steht (die Bibliothek hat keinen liegenden): Pfoten auf der flachen Kuppe des Felsens */
+  k += AUS_BIB.has("loewe") ? `<g transform="translate(-5 .5)">${bib("loewe", 0, 0, M(140), { dir: 1 })}</g>` : `<g transform="translate(-2 1.6)">${T.katze("loewe", M(140), 1, "liegen")}</g>`;
   S.teil({ id: "loewe", de: "der Löwe", syl: "LÖ-we", it: "il leone", itSyl: "le-O-ne", en: "lion", x: 24, y: 122, kunst: k,
     tipp: "Nur das Männchen hat eine Mähne." });
 }
 S.teil({ id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI-gre", en: "tiger", x: 74, y: 147,
-  kunst: schatten(0, 0, 14, 1.2, 0.25) + T.katze("tiger", M(147), -1),
+  kunst: AUS_BIB.has("tiger") ? bib("tiger", 74, 147, M(147), { dir: -1 }) : schatten(0, 0, 14, 1.2, 0.25) + T.katze("tiger", M(147), -1),
   tipp: "Die größte Katze der Welt — und jede hat ihr eigenes Streifenmuster." });
 /* Der Zaun: Stahlnetz mit Überhang; das Netz lässt Tipps zu den Katzen durch */
 {
@@ -788,10 +807,10 @@ S.teil({ id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI
    MENSCHENAFFEN hinter der Glasscheibe: Gorilla, Schimpanse
    ===================================================================== */
 S.teil({ id: "gorilla", de: "der Gorilla", syl: "Go-RIL-la", it: "il gorilla", itSyl: "go-RIL-la", en: "gorilla", x: 290, y: 147,
-  kunst: schatten(0, 0, 11, 1, 0.3) + T.gorilla(M(147), -1),
+  kunst: AUS_BIB.has("gorilla") ? bib("gorilla", 290, 147, M(147), { dir: -1 }) : schatten(0, 0, 11, 1, 0.3) + T.gorilla(M(147), -1),
   tipp: "Der Silberrücken ist das alte Männchen: nur er hat den grauen Sattel auf dem Rücken." });
 S.teil({ id: "schimpanse", de: "der Schimpanse", syl: "Schim-PAN-se", it: "lo scimpanzé", itSyl: "scim-pan-ZÉ", en: "chimpanzee", x: 262, y: 130,
-  kunst: T.schimpanse(M(142), -1),
+  kunst: AUS_BIB.has("schimpanse") ? bib("schimpanse", 262, 130, M(142), { dir: -1 }) : T.schimpanse(M(142), -1),
   tipp: "Kleiner und schlanker als der Gorilla, mit großen abstehenden Ohren." });
 /* Rahmen der Glasscheiben (Kulisse) und Spiegelung (davor) */
 S.hinten(``);
