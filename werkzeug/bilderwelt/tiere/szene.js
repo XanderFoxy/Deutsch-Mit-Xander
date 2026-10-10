@@ -83,10 +83,12 @@ function ohneFilter(S, ab, svg) {
   return svg.replace(re, "");
 }
 
-function tierTeil(S, id, x, y, epm, o = {}) {
+/* FASSUNG 883 (Funk 302: „dass sie wirklich realistisch sind“) — tierKunst: dieselbe Zeichnung wie tierTeil, aber
+   OHNE eigenes Teil. Für Szenen, die eine Art in ein vorhandenes Teil (eigenes Wort, eigener Tipp: Zoo, Zoo II) oder in
+   ein großes Bild (Diorama in „Tiere der Welt“) setzen. Gleiche Argumente wie tierTeil (x, y, epm, o; tipp nicht nötig).
+   Liefert { kunst, box, art }: kunst relativ zum Fußpunkt (x, y), box = Umriss relativ dazu (Szeneneinheiten). */
+function tierKunst(S, id, x, y, epm, o = {}) {
   const a = art(id);
-  const tipp = a.tipp || o.tipp;
-  if (!tipp) throw new Error("tierTeil: „" + id + "“ braucht einen tipp (die Art hat keinen)");
   if (!(epm > 0)) throw new Error("tierTeil: epm fehlt für „" + id + "“");
   const z = zaehler.get(S) || {}; zaehler.set(S, z);
   z[id] = (z[id] || 0) + 1;
@@ -124,6 +126,14 @@ function tierTeil(S, id, x, y, epm, o = {}) {
     kunst = `<g clip-path="url(#${cid})">${kunst}</g>`;
   }
   kunst = (o.hinter || "") + kunst + (o.davor || "");
+  return { kunst, box, art: a };
+}
+
+function tierTeil(S, id, x, y, epm, o = {}) {
+  const a = art(id);
+  const tipp = a.tipp || o.tipp;
+  if (!tipp) throw new Error("tierTeil: „" + id + "“ braucht einen tipp (die Art hat keinen)");
+  const { kunst, box } = tierKunst(S, id, x, y, epm, o);
   const teil = { id: o.teilId || a.id, de: a.de, syl: a.syl, it: a.it, itSyl: a.itSyl, en: a.en, x, y, kunst, tipp };
   if (o.oben) teil.oben = true;
   const t = S.teil(teil);
@@ -136,4 +146,4 @@ function tierTeil(S, id, x, y, epm, o = {}) {
 /* Maße einer Art (Meter), ohne sie zu zeichnen – zum Planen einer Szene */
 function masse(id) { const a = art(id); return { laenge: a.laenge, hoehe: a.hoehe }; }
 
-module.exports = { tierTeil, masse };
+module.exports = { tierTeil, tierKunst, masse };
