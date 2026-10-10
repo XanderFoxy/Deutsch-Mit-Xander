@@ -3700,3 +3700,42 @@ XANDER (Funk 299): „die nächste Priorität sollte der Abschluss der Tiere sei
 - Die schwächsten Arten neu aufbauen (Braunbär, Panda, Jaguar, Gazelle, Säbelzahnkatze, Riesenhirsch, Katta, Kobra, Python, Wellensittich, Diplodocus, Velociraptor, Pteranodon).
 - Je Lebensraum eine Tier-Szene (Polar, Meer, Wald, Bauernhof, Haustiere, Dinosaurier, Eiszeit, Regenwald, Greifvögel …).
 - Ehrlich zum Maßstab: Mit Vektorgrafik ist eine Naturführer-Illustration erreichbar, Fotorealismus nicht (Fotos/Bild-KI sind von hier nicht verfügbar).
+
+## Fassung 882 — Big-Ben-Glocke klar und ausklingend, Aussprache „z“, Tafel-Ordner und Schieber, Zoo-Tiere (Funk 302/303)
+
+XANDER (Funk 303): „Der Westminster Sound … ist ganz leise und abgehakt … die Glockenklänge sollen ausklingen und nicht nur so stakkato … offenbar hast du da jetzt zwei Sounds“ · (Funk 302): „die Schriften teilweise außerhalb der Ordner … geht dann in den falschen Ordner“ · „dass man das Bild … einfacher verschieben kann mit einem Handle“ · „die Tiere im Zoo sehen so gut wie unmöglich aus … bei dem Zebra sind die Streifen total unrealistisch … dann nimm das alte Zebra wieder“ · „die Aussprache ist immer noch nicht gut … wenn z gesprochen wird“.
+
+### Rathausuhr (Westminster) – ein Klang, deutlich, ausklingend
+- **Zwei Klänge:** Zur vollen Stunde läutete im Spiel zusätzlich die alte Dorfkirche (`spiel.js` `dorfGlocken`), obwohl die neue Stadt im Dorf-Fenster stand. Sie schweigt jetzt, solange `.sp-dl-neustadt` im Bild ist (`dorfNeustadtImBild`). Das alte gemalte Dorf behält seine Kirchenglocken.
+- **Stakkato:** Jeder Teilton fiel in 0,4–2 s auf Stille (Schlagton 1,4 s). Jetzt hat jeder Teilton seinen eigenen Nachklang (Viertelglocken: Unterton 18 s, Prime 12 s, Schlagton 8 s; Stundenglocke noch länger), als leicht verstimmter Doppelton (schwebt, bricht nie ganz weg), dazu ein Nachhall wie über dem Marktplatz.
+- **Zu leise:** Fern vom Rathaus fiel die Uhr auf 1/20 (0,014). Jetzt fern ≈ 0,21, nah ≈ 0,47 – überall deutlich, nah lauter.
+- **Technik:** Die fünf Glocken (gis′ fis′ e′ h + Stundenglocke E) werden einmal „gegossen“ (OfflineAudioContext → AudioBuffer, 22 kHz, mit Nachhall, Ende weich ausgeblendet; ≈ 0,5 s beim ersten Mal, ≈ 5 MB) und danach nur abgespielt: 19 Pufferquellen um 15 Uhr statt Hunderter Oszillatoren. Ohne OfflineAudioContext klingen dieselben Teiltöne direkt.
+- Takt wie Big Ben: Viertel 4 Töne, halb 8, dreiviertel 12, volle Stunde 16 + Stundenschläge (alle 3,6 s); nachts (22–7 Uhr) still.
+
+### Aussprache: „z“, „s“, „sch“ kamen verfälscht bei Azure an
+- **Ursache:** `aussprache-pruefung.js` rechnete die Aufnahme (48 / 44,1 kHz) ohne Tiefpass auf 16 kHz. Alles über 8 kHz faltete zurück ins Sprachband: ein 11-kHz-Zischen kam mit voller Stärke als 5 kHz an (gemessen 0,50 bzw. 0,41). Genau die Zischlaute (s, z = ts, sch, f) wurden dadurch verwaschen. Die Stadt-Quests rechnen seit 836 sauber; Aussprache-Trainer, Spiel-Aussprache und Wörterbuch gingen noch über die alte Stelle.
+- **Jetzt:** derselbe Weg wie in 836 – Tiefpass bei 7 kHz (Sinc mit Blackman-Fenster), Zwischenwerte an der genauen Stelle. Faltung 0,0000, Sprachband unverändert, 12 s Aufnahme ≈ 0,1–0,2 s Rechenzeit. Wirkt auch auf den Vergleich mit der Vorlage (DTW).
+- Die Wortliste für die Erkennung in den Stadt-Quests (Fast Transcription mit phraseList, Fassung 879) liegt fertig in `supabase/functions/aussprache/index.ts`, ist aber noch NICHT hochgeladen: Das Hochladen der Funktion braucht Xanders ausdrückliches OK.
+
+### Tafel: Ordnernamen und Schieber
+- **Ordnernamen:** Die Ordnerliste ist ein Raster in einem festen, scrollenden Kasten. Die Zeilen wurden auf die Mindesthöhe (44 px) gestaucht, Symbol + Name + „n Bilder“ brauchen ≈ 82 px – der Rest hing über die Lücke auf das Symbol der nächsten Zeile („Alltag / 6 Bilder“ lag auf „Behörden“). Jetzt: Zeilen so hoch wie ihr Inhalt, jede Kachel EINE Karte mit Rahmen (ganze Karte tippbar), 10 px Abstand, Namen nach zwei Zeilen mit „…“ (ganz im title). Ebenso Aussprache-Kacheln und gesicherte Tafeln.
+- **Schieber:** Ist ein Bild herangeholt, erscheint links unten ein runder Griff mit Vier-Wege-Pfeil (Gegenstück zum ⌄ rechts). Festhalten und ziehen: das Bild geht 1 : 1 mit, in jede Richtung, nie über den Blattrand hinaus; Pfeiltasten gehen auch. Die anderen sehen es über denselben „blick“ wie beim Aufziehen (höchstens alle 200 ms, beim Loslassen sofort).
+- **Fehler nebenbei:** `lcTafelBlickSetzen` machte aus dem Rand (0) die Mitte (`|| 0.5`) – wer das Bild in die linke/obere Ecke schob, sprang zurück. Behoben.
+
+### Zoo: das alte Zebra ist zurück
+- Jede Fassung des Zebras im gleichen Bild nebeneinander verglichen (alte Bilderwelt 13./14./17.09., Zoo-Baukasten 03.10. zwei Fassungen, Tier-Bibliothek 880 acht Fassungen). Der Zoo-Baukasten zeichnete einen „Strichcode“ (gleich breite Balken über den ganzen Rumpf, Linien quer über den Bauch) – das schlechteste von allen.
+- Ehrlich zu Xanders Frage: Die Bibliotheks-Zebras hatten beim Kritiker nie ein OK (Streifen 3/10, dann 4/10 „NICHT OK“).
+- Jetzt zeichnet der Zoo-Baukasten (`werkzeug/bilderwelt/szenen/zoo.js`, `altesZebra()`) wieder das Zebra der alten Bilderwelt vom 17.09., Strich für Strich aus der eingefrorenen `szenen/zoo.js` gelesen (ohne Bodenschatten, Farbfilter fest eingerechnet, einmal in den defs, jedes Zebra ein `<use>`). Es steht damit in „Zoo“, „Zoo II“ und „Tiere der Welt“. Im Zoo stehen die zwei Zebras jetzt Rücken an Rücken (das alte Zebra trägt den Kopf höher; Kopf an Kopf hätten sie sich überdeckt).
+- „Tiere der Savanne“ behält das Bibliotheks-Zebra (kein Strichcode, bessere Anatomie; Mangel: Beine zu fein gestreift).
+- Gepackt: Zoo 53 → 59 KB, Zoo II 17 → 24 KB, Tiere der Welt 26 → 32 KB (alle unter 70 KB). Die alte Bilderwelt ist unverändert (Sonde 840 grün).
+- Die übrigen Zoo-Tiere: jede jetzige Baukasten-Fassung ist gleich gut oder besser als ihre Vorgänger – aber Elefant (Kastenkörper), Nashorn, Nilpferd, Gorilla und Schimpanse bleiben schwach. Die Bibliotheks-Tiere (wie in „Tiere der Savanne“) sind dort deutlich näher am echten Tier. Nächster Schritt (883): diese Zoo-Tiere aus der Bibliothek holen, nur wo der Vergleich klar besser ist. Das Blatt alt/neu je Tier liegt bei.
+
+### Sonden
+- Neu und grün: `pruefe-882-glocke.js` (ein Klang, Ausklang, Lautstärke), `pruefe-882-aussprache-z.js` (keine Faltung bei 48/44,1 kHz; Gegenprobe mit dem alten Stand rot), `pruefe-882-tafel-ordner-griff.js` (Namen in ihrer Kachel bei 360 und 1280 px, Tipp öffnet genau diesen Ordner, Schieber 1 : 1 in 8 Richtungen und frei, Rand bleibt Rand, „blick“ geht hin und her; Gegenprobe rot).
+- Grün: 840, 872 (alle Szenen), 768, 771, 772, 783, 837, 725, 753, 749; `pruefe-szene` für Zoo, Zoo II, Tiere der Welt.
+- 825: alle Glocken-Prüfungen grün (angepasst: gegossene Glocken statt Oszillatoren; „fern deutlich, nah lauter“ statt „fern fast stumm“). Rot bleibt dort die Laternen-Messung um 1:30 (4,63 statt < 4,6) – sie war schon vor 882 rot (4,65) und hat mit dem Klang nichts zu tun.
+
+**Offen**
+- Zoo-Tiere aus der Tier-Bibliothek (Elefant, Nashorn, Nilpferd, Gorilla, Schimpanse, Giraffe, Großkatzen) – 883.
+- Aussprache-Funktion mit Wortliste hochladen – wartet auf Xanders OK.
+- Tier-Bibliothek: fehlende Gruppen, schwächste Arten, Tier-Szenen je Lebensraum.

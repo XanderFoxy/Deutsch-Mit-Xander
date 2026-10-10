@@ -22,6 +22,40 @@ const r = B.r;
    so stimmen die Größenverhältnisse von selbst (Giraffe 5 m, Elefant
    3,2 m Schulterhöhe, Nashorn 1,7 m, Zebra 1,3 m, Löwe 1,2 m …).
    ===================================================================== */
+/* Das alte Zebra aus der alten Bilderwelt (szenen/zoo.js, eingefroren – Sonde 840) holen und für die neue Szene
+   aufbereiten (siehe T.zebra). praefix: Szenen-Präfix für alle ids. Liefert SVG in alten Einheiten (≈ dm, Blick rechts,
+   Hufe auf y = 0). */
+let ALT_ZEBRA = null;
+function altesZebra(praefix) {
+  if (!ALT_ZEBRA) {
+    const fs = require("fs");
+    const datei = path.join(__dirname, "../../../szenen/zoo.js");
+    const w = {}; new Function("window", fs.readFileSync(datei, "utf8"))(w);
+    const t = ((w.DMA_SZENE && w.DMA_SZENE.zoo && w.DMA_SZENE.zoo.teile) || []).find((q) => q.id === "zebra");
+    if (!t || !t.kunst) throw new Error("altesZebra: Teil „zebra“ fehlt in szenen/zoo.js");
+    let k = t.kunst;
+    /* Bodenschatten (Kulissen-Verlauf der alten Szene) und eigener Kontaktschatten heraus */
+    k = k.replace(/<ellipse class="bw-bodenschatten"[^>]*\/>/g, "");
+    k = k.replace(/<defs><radialGradient id="bs\d+">[\s\S]*?<\/defs><ellipse [^>]*fill="url\(#bs\d+\)"\/>/, "");
+    /* Farbfilter (Sättigung 0,888, dann 0,924·c + 0,054) als feste Farben einrechnen */
+    const filt = /<defs><filter id="(tf\d+)"[\s\S]*?<\/filter><\/defs>/.exec(k);
+    if (filt) {
+      k = k.replace(filt[0], "").replace(`<g filter="url(#${filt[1]})">`, "<g>");
+      const s = 0.888, M = [[0.213 + 0.787 * s, 0.715 - 0.715 * s, 0.072 - 0.072 * s], [0.213 - 0.213 * s, 0.715 + 0.285 * s, 0.072 - 0.072 * s], [0.213 - 0.213 * s, 0.715 - 0.715 * s, 0.072 + 0.928 * s]];
+      k = k.replace(/#([0-9a-fA-F]{6})\b/g, (_, h) => {
+        const c = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+        return "#" + M.map((z) => Math.round(Math.min(1, Math.max(0, 0.924 * (z[0] * c[0] + z[1] * c[1] + z[2] * c[2]) + 0.054)) * 255).toString(16).padStart(2, "0")).join("");
+      });
+    }
+    /* Pfadzahlen auf 0,1 runden (nur Geometrie, keine Deckkraft/Verlaufsstopps) */
+    const rund = (v) => v.replace(/-?\d*\.\d+/g, (x) => String(Math.round(+x * 10) / 10));
+    k = k.replace(/ d="([^"]*)"/g, (_, d) => ` d="${rund(d)}"`).replace(/ (cx|cy|rx|ry)="(-?[\d.]+)"/g, (_, a, v) => ` ${a}="${rund(v)}"`);
+    ALT_ZEBRA = k;
+  }
+  /* ids eindeutig machen */
+  return ALT_ZEBRA.replace(/ id="([^"]+)"/g, ` id="${praefix}_$1"`).replace(/url\(#([^)]+)\)/g, `url(#${praefix}_$1)`).replace(/href="#([^"]+)"/g, `href="#${praefix}_$1"`);
+}
+
 function tierBaukasten(S) {
   const done = new Set();
   const einmal = (n, f) => { if (!done.has(n)) { done.add(n); f(); } };
@@ -117,40 +151,21 @@ function tierBaukasten(S) {
     return gr(m, dir, k);
   };
 
-  /* ---------------- ZEBRA (Steppenzebra), Schulterhöhe 1,3 m ---------------- */
+  /* ---------------- ZEBRA (Steppenzebra), Schulterhöhe 1,3 m ----------------
+     XANDER (Funk 302), wörtlich: „bei dem Zebra sind die Streifen total unrealistisch da hatten wir die alte Version des
+     Zebras da hatten wir das schon mal gelöst und die war viel besser wenn du das nicht authentisch hinbekommst dann nimm
+     das alte Zebra wieder“.
+     Darum zeichnet T.zebra wieder das ALTE Zebra der alten Bilderwelt (szenen/zoo.js, Stand 17.09.): senkrechte
+     Rumpfstreifen, die nach unten spitz auslaufen, waagerechte Bänder über der Keule, Querstreifen an den Beinen,
+     gestreifte Stehmähne, Halsstreifen quer zum Hals, dunkles Maul. Die Baukasten-Fassung (852) hatte gleich breite
+     senkrechte Balken über den ganzen Rumpf und waagerechte Linien am Bauch („Strichcode“) – sie ist zurückgenommen.
+     Die Zeichnung kommt unverändert aus der eingefrorenen alten Szene (Sonde 840 hält sie fest), nur: Bodenschatten
+     heraus (die Szene legt ihren eigenen), der Farbfilter der alten Szene als feste Farben eingerechnet (kein Filter in
+     der Szene), Pfadzahlen auf 0,1 gerundet (≈ 0,07 Szeneneinheiten, unsichtbar), ids mit Szenen-Präfix. Sie steht EINMAL
+     in den defs, jedes Zebra ist ein <use>. Maßstab: alte Einheiten ≈ dm, × 0,92 → Widerrist ≈ 1,4 m wie vorher. */
   T.zebra = (m, dir = 1) => {
-    const leib = "M-8.6 -13.2 C-5 -13.6 -0.5 -13.2 3 -13.8 Q6.4 -15.4 8.6 -18.2 Q9.4 -18.4 9.8 -17.6 L12.2 -14.2 Q12.6 -13.2 11.9 -12.9 L11.1 -13 Q10.2 -13.6 9.5 -14.3 Q8.6 -15.4 7.9 -15.2 C7 -13.2 6 -10.8 5.4 -9.6 Q5 -7.8 3.6 -7 C1 -6.3 -2.5 -6.3 -4.8 -6.9 Q-6.8 -7.4 -8.4 -8.6 C-9.6 -10.2 -9.6 -12.4 -8.6 -13.2 Z";
-    const vn = [[3.9, -9.5, 1.3, 1.4], [3.8, -7, 1.15, 1.0], [4.0, -5, 0.62, 0.7], [4.1, -3.6, 0.55, 0.55], [4.1, -2.6, 0.36, 0.42], [4.15, -1.05, 0.44, 0.46], [4.35, -0.5, 0.36, 0.42], [4.45, 0, 0.5, 0.62]];
-    const hn = [[-7, -11, 1.8, 1.6], [-6.9, -8.4, 1.9, 1.7], [-7.4, -5.9, 0.95, 0.85], [-7.35, -4.3, 0.78, 0.42], [-7.15, -2.7, 0.36, 0.38], [-7.05, -1.05, 0.44, 0.42], [-6.9, -0.5, 0.36, 0.4], [-6.8, 0, 0.5, 0.6]];
-    const vf = versch(vn, -1.5), hf = versch(hn, -1.2);
-    einmal("zeb", () => {
-      let st = "";
-      for (let x = -3.4; x < 4.4; x += 1.0) st += `<path d="M${f(x)} -14.5 Q${f(x + 0.5)} -10.5 ${f(x - 0.1)} -6" stroke="#161210" stroke-width=".52" fill="none"/>`;
-      for (let i = 0; i < 6; i++) { const t = i / 5; const x0 = 4.4 + t * 3.6, y0 = -14.4 - t * 3.8; st += `<path d="M${f(x0 - 0.6)} ${f(y0 - 0.6)} L${f(x0 + 1.9)} ${f(y0 + 2.6 - t * 0.4)}" stroke="#161210" stroke-width=".5"/>`; }
-      for (let i = 0; i < 5; i++) st += `<path d="M${f(-4.4 - i * 0.9)} -14.6 Q${f(-4.8 - i * 0.7)} ${f(-10.5 + i * 0.3)} -11 ${f(-12.6 + i * 1.3)}" stroke="#161210" stroke-width=".48" fill="none"/>`;
-      st += `<path d="M-4.4 -9.2 Q-7 -10 -9.8 -9.2 M-4.6 -7.8 Q-7 -8.6 -9.6 -8" stroke="#161210" stroke-width=".42" fill="none"/>`;
-      for (let i = 0; i < 4; i++) st += `<path d="M${f(9.4 + i * 0.6)} ${f(-17.4 + i * 1)} L${f(8.8 + i * 0.5)} ${f(-14.8 + i * 0.5)}" stroke="#161210" stroke-width=".28"/>`;
-      for (let y = -7.4; y < -1.2; y += 0.6) st += `<path d="M-12 ${f(y)} L8 ${f(y)}" stroke="#161210" stroke-width="${f(0.22 + (y + 7.4) * 0.012)}"/>`;
-      S.def(`<clipPath id="${S.id("tw_zebclip")}"><path d="${leib}"/><path d="${glied(vn)}"/><path d="${glied(vf)}"/><path d="${glied(hn)}"/><path d="${glied(hf)}"/></clipPath>`);
-      S.def(`<g id="${S.id("tw_zebst")}">${st}</g>`);
-    });
-    const WEISS = U("tw_zebw", [[0, "#fbfaf6"], [1, "#e9e6de"]], -18, 0);
-    const streifen = `<g clip-path="url(#${S.id("tw_zebclip")})"><use href="#${S.id("tw_zebst")}"/></g>`;
-    let k = "";
-    for (const p of [vf, hf]) k += `<path d="${glied(p)}" fill="${WEISS}"/>`;
-    k += streifen;
-    for (const p of [vf, hf]) k += `<path d="${glied(p)}" fill="#000" opacity=".22"/>` + huf(p, "#1a1614", 0.5);
-    k += `<path d="M-9 -12.8 Q-10 -10 -9.8 -7.4" stroke="#efece5" stroke-width=".4" fill="none"/><path d="M-9.9 -8.4 q-.4 1.4 0 2.6 q.5 .2 .6 -.3 q0 -1.4 -.3 -2.4 Z" fill="#141010"/>`;
-    for (const d of [glied(hn), glied(vn), leib]) k += `<path d="${d}" fill="${WEISS}"/>`;
-    k += streifen;
-    for (const d of [glied(hn), glied(vn), leib]) k += `<path d="${d}" fill="${VOLH(18)}"/>`;
-    k += huf(vn, "#1a1614", 0.5) + huf(hn, "#1a1614", 0.5);
-    k += `<path d="M11.4 -14 Q12.7 -13.6 12.1 -12.9 L11.1 -13 Q10.6 -13.4 11.4 -14 Z" fill="#141010"/>`;
-    k += `<path d="M3.2 -14 Q6.4 -15.6 8.6 -18.3 L8.4 -19.2 Q6 -16.6 2.9 -14.7 Z" fill="#efebe2"/>`;
-    for (let i = 0; i < 9; i++) { const t = i / 8; k += `<path d="M${f(3.3 + t * 5)} ${f(-14.2 - t * 4)} l${f(-0.25)} ${f(-0.85)}" stroke="#151110" stroke-width=".3"/>`; }
-    k += `<path d="M8.8 -18 Q8.4 -20.4 9.1 -20.7 Q9.7 -19.5 9.5 -17.9 Z" fill="#f3f0ea" stroke="#151110" stroke-width=".15"/><path d="M9 -20.2 L9.1 -18.5" stroke="#151110" stroke-width=".28"/>`;
-    k += auge(10.1, -16.4, 0.3);
-    return gr(m, dir, k);
+    einmal("zebalt", () => S.def(`<g id="${S.id("tw_zebalt")}" transform="translate(1.25 0) scale(.92)">${altesZebra(S.id("za"))}</g>`));
+    return gr(m, dir, `<use href="#${S.id("tw_zebalt")}"/>`);
   };
 
   /* ---------------- ELEFANT (Afrikanischer), Schulterhöhe 3,2 m ---------------- */
@@ -689,7 +704,8 @@ S.teil({ id: "giraffe", de: "die Giraffe", syl: "Gi-RAF-fe", it: "la giraffa", i
   kunst: schatten(1, 0, 10, 1.2, 0.25) + T.giraffe(M(98)),
   tipp: "Fünf Meter hoch — das höchste Tier der Erde. Ihr Hals hat genauso viele Wirbel wie deiner: sieben." });
 S.teil({ id: "zebra", de: "das Zebra", syl: "ZE-bra", it: "la zebra", itSyl: "ZE-bra", en: "zebra", x: 104, y: 95,
-  kunst: `<g transform="translate(9 -3)">${schatten(0, 0, 8, 0.9, 0.2)}${T.zebra(M(92), -1)}</g>` + schatten(0, 0, 8, 1, 0.25) + T.zebra(M(95)),
+  /* Funk 302: altes Zebra (Kopf höher und länger) – die zwei stehen Rücken an Rücken, damit sich die Köpfe nicht überdecken */
+  kunst: `<g transform="translate(-11 -3)">${schatten(0, 0, 8, 0.9, 0.2)}${T.zebra(M(92), -1)}</g>` + schatten(0, 0, 8, 1, 0.25) + T.zebra(M(95)),
   tipp: "Ein Zebra ist weiß mit schwarzen Streifen — und jedes Muster gibt es nur einmal." });
 S.teil({ id: "elefant", de: "der Elefant", syl: "E-le-fant", it: "l'elefante", itSyl: "e-le-FAN-te", en: "elephant", x: 158, y: 101,
   kunst: schatten(0, 0, 16, 1.6, 0.28) + T.elefant(M(101), -1),
