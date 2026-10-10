@@ -35301,3 +35301,56 @@ body > .lc-tafel-mappe { position: fixed; inset: auto; left: 12px; right: 12px; 
   cursor: pointer;
 }
 .lc-aeltere:hover { opacity: 1; background: rgba(224, 150, 74, 0.15); }
+
+/* FASSUNG 882 — XANDER (Funk 302): „Wenn man das Whiteboard aufmacht und in die Ordner geht hat man z.B bei der
+   Bilderwelt die Schriften teilweise außerhalb der Ordner … eine Schrift die unten am Ordner sein sollte um den richtig
+   zu benennen da wirkt irgendwie so als wenn sie über einem anderen wäre und dann denkt man … die Schrift gehört zur
+   Kachel darunter und geht dann in den falschen Ordner".
+   DIE URSACHE: die Liste im Tafel-Ordner ist ein Raster in einem Kasten mit FESTER Höhe, der selbst scrollt
+   (flex: 1, overflow: auto). Ist der Inhalt höher als der Kasten – und das ist er immer, auf dem Handy erst recht –,
+   gibt ein Raster seinen „auto"-Reihen nur die MINDESThöhe der Kacheln: das waren 44 px (Fassung 771, davor 20 px,
+   nur das Polster). Ordnerbild, Name und „n Bilder" brauchen aber rund 80 px. Der Rest hing UNTER der Kachel heraus,
+   über die Lücke hinweg auf das Ordnerbild der nächsten Reihe: „Alltag / 6 Bilder" stand auf dem Ordner von
+   „Behörden". Gemessen bei 360 px und am Rechner: 44 px hohe Kacheln, Name 13 px, Zeile darunter 28 px außerhalb.
+   JETZT: (1) die Reihen sind so hoch wie ihr Inhalt (grid-auto-rows: max-content) – egal, wie hoch der Kasten ist;
+   (2) jede Kachel ist EINE Karte mit sichtbarem Rand, Zeichen und Name liegen innen, nichts ragt hinaus
+   (overflow: hidden); (3) zwischen den Reihen 10 px Luft; (4) ein langer Name wird nach zwei Zeilen mit „…"
+   gekürzt, die Zeile darunter nach einer; (5) die ganze Karte ist der Knopf. Aussehen und Größe sonst wie bisher. */
+.lc-tafel-bildmappe .lc-tafel-bm-liste { grid-auto-rows: max-content; row-gap: 10px; column-gap: 8px; }
+.lc-tafel-bildmappe .lc-tafel-bm-ordner, .lc-tafel-bildmappe .lc-tafel-bm-bild {
+  justify-content: flex-start; gap: 4px; min-width: 0; height: auto; min-height: 44px; max-height: none; overflow: hidden;
+  padding: 8px 6px 9px; line-height: 1.15; border: 1px solid rgba(255, 255, 255, .16); background: rgba(255, 255, 255, .07); }
+.lc-tafel-bildmappe .lc-tafel-bm-ordner:hover, .lc-tafel-bildmappe .lc-tafel-bm-bild:hover,
+.lc-tafel-bildmappe .lc-tafel-bm-ordner:focus-visible, .lc-tafel-bildmappe .lc-tafel-bm-bild:focus-visible { border-color: rgba(127, 212, 245, .7); }
+.lc-tafel-bildmappe .lc-tafel-bm-ordner span, .lc-tafel-bildmappe .lc-tafel-bm-bild span {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+  max-width: 100%; flex: 0 0 auto; overflow-wrap: anywhere; hyphens: auto; }
+.lc-tafel-bildmappe .lc-tafel-bm-ordner small { display: block; max-width: 100%; flex: 0 0 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lc-tafel-bildmappe .lc-tafel-bm-bild i { line-height: 1.15; }
+/* Die Aussprache-Kacheln hatten eine feste Höhe (138 px) – ein zweizeiliger Name wurde unten abgeschnitten. */
+.lc-tafel-bildmappe .lc-tafel-bm-bild.lc-tafel-bm-laut { height: auto; background: #fbf6ec; border-color: rgba(58, 50, 41, .25); }
+.lc-tafel-bildmappe .lc-tafel-bm-bild.lc-tafel-bm-laut:hover, .lc-tafel-bildmappe .lc-tafel-bm-bild.lc-tafel-bm-laut:focus-visible { border-color: #2f7fae; }
+/* Der große Ordner (Kategorien und gesicherte Tafeln): die Gruppen dürfen nie unter ihren Inhalt schrumpfen,
+   und auch die gesicherten Tafeln bekommen einen sichtbaren Rand. */
+.lc-tafel-mappe .lc-mappe-kategorien, .lc-tafel-mappe .lc-mappe-reihe { flex: 0 0 auto; row-gap: 10px; }
+.lc-mappe-kat { min-width: 0; overflow: hidden; }
+.lc-mappe-kat span, .lc-mappe-kat small { min-width: 0; overflow-wrap: anywhere; }
+.lc-mappe-blatt { border: 1px solid rgba(127, 212, 245, .22); min-width: 0; }
+
+/* FASSUNG 882 — der Schieber: „das Bild … einfacher verschieben … mit einem Handle". Klein, rund, halbdurchsichtig
+   wie der Griff rechts, aber links – und nur zu sehen, wenn herangeholt ist (hidden sonst). Sichtbar 1,9 rem, die
+   Tippfläche ist mit dem unsichtbaren Rand 44 px groß. Beim Ziehen wird er blau wie ein gewähltes Werkzeug. */
+.lc-tafel-schieber {
+  position: absolute; left: .3rem; bottom: calc(var(--lc-leiste-h, 1.8rem) + 4px); z-index: 4;
+  width: 1.9rem; height: 1.9rem; min-height: 0; padding: 0; display: grid; place-items: center;
+  border: 1px solid rgba(15, 30, 55, .25); border-radius: 50%; background: rgba(255, 255, 255, .92); color: #1b2740;
+  box-shadow: 0 1px 3px rgba(8, 16, 32, .25); cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none;
+  transition: bottom .22s ease, background-color .15s ease, transform .15s ease;
+}
+.lc-tafel-schieber::before { content: ""; position: absolute; inset: -7px; border-radius: 50%; }
+.lc-tafel-schieber svg { width: 1.2rem; height: 1.2rem; display: block; pointer-events: none; }
+.lc-tafel-schieber[hidden] { display: none; }
+.lc-tafel-schieber:hover, .lc-tafel-schieber:focus-visible { border-color: #1b6ef3; }
+.lc-tafel-schieber.lc-tafel-schieber-zieht { background: #1b6ef3; border-color: #1b6ef3; color: #fff; cursor: grabbing; transform: scale(1.12); }
+.lc-tafel-ohne-werkzeug .lc-tafel-schieber { bottom: .3rem; }
+@media (prefers-reduced-motion: reduce) { .lc-tafel-schieber { transition: none; } }

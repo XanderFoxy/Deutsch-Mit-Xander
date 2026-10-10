@@ -39977,7 +39977,18 @@
          Er liegt AUSSERHALB der Leiste — sonst verschwaende er
          zusammen mit ihr, und man kaeme nie wieder heran. */
       + '<button type="button" class="lc-tafel-griff" id="lcTafelGriff"'
-      + ' title="Werkzeuge ein- oder ausblenden" aria-label="Werkzeuge ein- oder ausblenden">⌄</button>';
+      + ' title="Werkzeuge ein- oder ausblenden" aria-label="Werkzeuge ein- oder ausblenden">⌄</button>'
+      /* FASSUNG 882 — XANDER (Funk 302): „schön wäre es auch wenn man das Bild was man sich zurechtzoomt auf dem
+         Whiteboard dass man das auch einfacher verschieben kann mit einem Handle also dass man das nach links rechts
+         nach links oben nach rechts oben nach links unten … verschieben kann ohne dass die Lupe so schwerfällig ist".
+         DER SCHIEBER: ein kleiner runder Griff mit Vier-Wege-Pfeil, links unten – das Gegenstück zum Griff rechts. Er
+         erscheint nur, wenn herangeholt ist (vorher gibt es nichts zu verschieben). Festhalten und ziehen: das Bild
+         geht mit dem Finger oder der Maus mit, in jede Richtung, 1 : 1 (siehe lcTafelSchieberEinhaengen). Er liegt
+         AUSSERHALB des Blatts – sonst würde er beim Heranholen mit vergrößert. */
+      + '<button type="button" class="lc-tafel-schieber" id="lcTafelSchieber" hidden'
+      + ' title="Bild verschieben: festhalten und in jede Richtung ziehen" aria-label="Bild verschieben (auch mit den Pfeiltasten)">'
+      + '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.2 L15.6 6 H13.1 V10.9 H18 V8.4 L21.8 12 L18 15.6 V13.1 H13.1 V18 H15.6 L12 21.8 L8.4 18 H10.9 V13.1 H6 V15.6 L2.2 12 L6 8.4 V10.9 H10.9 V6 H8.4 Z" fill="currentColor"/></svg>'
+      + "</button>";
     plaetze.appendChild(tafel);
 
     /* Die Farbtupfer */
@@ -40025,7 +40036,10 @@
       setTimeout(() => { lcTafelGroesseStellen(); lcTafelMalenNeu(); }, 240);
     });
     lcTafelStiftEinhaengen();
+    lcTafelSchieberEinhaengen(tafel);
     lcTafelSchritteStellen();
+    /* FASSUNG 882: steht schon ein Blick (Nachzügler, wieder geöffnet), zeigt sich der Schieber gleich richtig. */
+    lcTafelSchieberStellen();
     return tafel;
   }
 
@@ -40084,6 +40098,10 @@
       });
     }
     const esc = (t) => escapeHtml(String(t || ""));
+    /* FASSUNG 882 — XANDER (Funk 302): „die Schriften teilweise außerhalb der Ordner … eine Schrift die unten am Ordner
+       sein sollte … wirkt irgendwie so als wenn sie über einem anderen wäre … und geht dann in den falschen Ordner".
+       Jede Kachel ist jetzt EINE Karte (Rahmen, Zeichen und Name innen, siehe korrekturen.css, Fassung 882); ein zu
+       langer Name wird nach zwei Zeilen mit „…" gekürzt und steht ganz im title (Maus). */
     let h = '<div class="lc-tafel-bm-kopf"><b>' + (ordner === "welten" ? "🏞️ Bilderwelten" : /^welten:/.test(ordner) ? "🏞️ " + esc(ordner.slice(7)) : ordner === "laute" ? "👄 Aussprache" : "🖼️ Bild auf die Tafel")
       + "</b>" + (ordner ? '<button type="button" data-mappe="ordner" data-o="' + (/^welten:/.test(ordner) ? "welten" : "") + '">‹ zurück</button>' : "")
       + '<button type="button" data-mappe="zu" aria-label="Schließen">✕</button></div><div class="lc-tafel-bm-liste">';
@@ -40098,19 +40116,19 @@
         const themen = {};
         szenenListe().forEach((sz) => { const t = sz.thema || "Sonstiges"; themen[t] = (themen[t] || 0) + 1; });
         m.querySelector(".lc-tafel-bm-liste").innerHTML = Object.keys(themen).sort((a, b) => a.localeCompare(b, "de")).map((t) =>
-          '<button type="button" class="lc-tafel-bm-ordner" data-mappe="ordner" data-o="welten:' + esc(t) + '">📁<span>' + esc(t) + "</span><small>" + themen[t] + " Bilder</small></button>").join("");
+          '<button type="button" class="lc-tafel-bm-ordner" data-mappe="ordner" data-o="welten:' + esc(t) + '" title="' + esc(t) + '">📁<span>' + esc(t) + "</span><small>" + themen[t] + " Bilder</small></button>").join("");
       });
     } else if (/^welten:/.test(ordner)) {
       const thema = ordner.slice(7);
       h += szenenListe().filter((sz) => (sz.thema || "Sonstiges") === thema).map((sz) =>
-        '<button type="button" class="lc-tafel-bm-bild" data-mappe="szene" data-id="' + esc(sz.id) + '"><i>' + esc(sz.emoji || "🖼️") + "</i><span>" + esc(sz.titel) + "</span></button>").join("");
+        '<button type="button" class="lc-tafel-bm-bild" data-mappe="szene" data-id="' + esc(sz.id) + '" title="' + esc(sz.titel) + '"><i>' + esc(sz.emoji || "🖼️") + "</i><span>" + esc(sz.titel) + "</span></button>").join("");
     } else if (ordner === "laute") {
       h += '<p class="lc-tafel-bm-warte">Einen Moment …</p>';
       ausspracheKursLaden().then(() => {
         if (!m.isConnected) return;
         const G = (window.DMA_AUSSPRACHE || {}).GRAFIK || {};
         m.querySelector(".lc-tafel-bm-liste").innerHTML = LC_TAFEL_LAUTE.filter((l) => G[l[0]]).map((l) =>
-          '<button type="button" class="lc-tafel-bm-bild lc-tafel-bm-laut" data-mappe="laut" data-k="' + l[0] + '">' + G[l[0]] + "<span>" + esc(l[1]) + "</span></button>").join("")
+          '<button type="button" class="lc-tafel-bm-bild lc-tafel-bm-laut" data-mappe="laut" data-k="' + l[0] + '" title="' + esc(l[1]) + '">' + G[l[0]] + "<span>" + esc(l[1]) + "</span></button>").join("")
           || '<p class="lc-tafel-bm-warte">Die Aussprache-Bilder ließen sich gerade nicht laden.</p>';
       });
     }
@@ -40626,16 +40644,100 @@
   }
 
   function lcTafelBlickSetzen(blick, senden) {
+    /* FASSUNG 882: „|| 0.5" machte aus dem linken bzw. oberen Rand (0) die Mitte – wer das Bild ganz in die Ecke
+       schob, sprang zurück in die Mitte. Jetzt gilt 0 als Zahl; nur was gar keine Zahl ist, wird zur Mitte. */
+    const anteil = (v) => { const n = Number(v); return Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.5; };
     lcTafelBlick = { z: Math.min(4, Math.max(1, Number(blick.z) || 1)),
-                     x: Math.min(1, Math.max(0, Number(blick.x))) || 0.5,
-                     y: Math.min(1, Math.max(0, Number(blick.y))) || 0.5 };
+                     x: anteil(blick.x),
+                     y: anteil(blick.y) };
     const blatt = document.getElementById("lcTafelBlatt");
     if (blatt) {
       blatt.style.setProperty("--tz", lcTafelBlick.z.toFixed(3));
-      blatt.style.transformOrigin = (lcTafelBlick.x * 100).toFixed(1) + "% "
-                                  + (lcTafelBlick.y * 100).toFixed(1) + "%";
+      /* FASSUNG 882: zwei statt einer Nachkommastelle – beim Schieben soll das Bild dem Finger ohne Ruckeln folgen. */
+      blatt.style.transformOrigin = (lcTafelBlick.x * 100).toFixed(2) + "% "
+                                  + (lcTafelBlick.y * 100).toFixed(2) + "%";
     }
+    lcTafelSchieberStellen();
     if (senden) lcTafelSenden({ t: "blick", z: lcTafelBlick.z, x: lcTafelBlick.x, y: lcTafelBlick.y });
+  }
+
+  /* --- FASSUNG 882: DER SCHIEBER ---------------------------------------
+     XANDER (Funk 302): „… dass man das nach links rechts nach links oben nach rechts oben nach links unten nach links
+     nach rechts unten verschieben kann ohne dass die Lupe so schwerfällig ist und irgendwann dann die Lupe benutzen
+     muss um das irgendwie in diese Ecke zu bringen und dann so in entgegengesetzte Richtung führen muss … total
+     sperrig".
+     WARUM ES SPERRIG WAR: verschoben wurde bisher nur über den Mittelpunkt der zwei Finger beim Aufziehen. Der setzt
+     den Drehpunkt der Vergrößerung – das Bild springt dorthin, und wer eine Ecke sehen will, muss die Finger in die
+     GEGENRICHTUNG führen. Mit der Maus ging es gar nicht.
+     JETZT: der Schieber. Festhalten und ziehen, in jede Richtung (frei, nicht nur acht) – das Bild geht mit dem Finger
+     mit, Punkt für Punkt, wie ein Foto, das man auf dem Tisch schiebt.
+     DIE RECHNUNG: das Blatt ist um den Drehpunkt (x, y) mit z vergrößert. Ein Punkt p des Blatts steht damit bei
+     p·z·B − x·B·(z − 1). Soll das Bild um dx Bildpunkte wandern, muss x um −dx / (B·(z − 1)) gehen (y ebenso mit
+     der Höhe H). x und y bleiben zwischen 0 und 1 – genau dann sieht man nie über den Rand des Blatts hinaus.
+     WAS ÜBER DIE LEITUNG GEHT: derselbe „blick" wie beim Aufziehen und bei ➕/➖ – während des Ziehens höchstens
+     alle 200 ms einer (die anderen sehen das Bild mitwandern), beim Loslassen sofort der letzte. */
+  function lcTafelSchieberStellen() {
+    const s = document.getElementById("lcTafelSchieber");
+    if (!s) return;
+    const zu = !(lcTafelBlick.z > 1.001);
+    if (s.hidden !== zu) s.hidden = zu;
+  }
+  function lcTafelSchieben(dx, dy) {
+    const blatt = document.getElementById("lcTafelBlatt");
+    const z = lcTafelBlick.z;
+    if (!blatt || !(z > 1.001)) return false;
+    /* offsetWidth/-Height sind die Maße OHNE die Vergrößerung – genau die braucht die Rechnung. */
+    const b = blatt.offsetWidth || 1, h = blatt.offsetHeight || 1;
+    lcTafelBlickSetzen({ z: z, x: lcTafelBlick.x - dx / (b * (z - 1)), y: lcTafelBlick.y - dy / (h * (z - 1)) }, false);
+    return true;
+  }
+  function lcTafelSchieberEinhaengen(tafel) {
+    const s = tafel && tafel.querySelector("#lcTafelSchieber");
+    if (!s || s.dataset.lcBereit === "1") return;
+    s.dataset.lcBereit = "1";
+    let zug = null, zuletztGesendet = 0;
+    const senden = (sofort) => {
+      const jetzt = Date.now();
+      if (!sofort && jetzt - zuletztGesendet < 200) { lcTafelBlickTakt(); return; }
+      clearTimeout(lcTafelBlickUhr);
+      zuletztGesendet = jetzt;
+      lcTafelSenden({ t: "blick", z: lcTafelBlick.z, x: lcTafelBlick.x, y: lcTafelBlick.y });
+    };
+    s.addEventListener("pointerdown", (ev) => {
+      if (ev.button !== undefined && ev.button > 0) return;
+      ev.preventDefault(); ev.stopPropagation();
+      zug = { id: ev.pointerId, x: ev.clientX, y: ev.clientY };
+      try { s.setPointerCapture(ev.pointerId); } catch (e) {}
+      s.classList.add("lc-tafel-schieber-zieht");
+    });
+    s.addEventListener("pointermove", (ev) => {
+      if (!zug || ev.pointerId !== zug.id) return;
+      ev.preventDefault();
+      const dx = ev.clientX - zug.x, dy = ev.clientY - zug.y;
+      if (!dx && !dy) return;
+      zug.x = ev.clientX; zug.y = ev.clientY;
+      if (lcTafelSchieben(dx, dy)) senden(false);
+    });
+    const los = (ev) => {
+      if (!zug || (ev && ev.pointerId !== undefined && ev.pointerId !== zug.id)) return;
+      zug = null;
+      s.classList.remove("lc-tafel-schieber-zieht");
+      senden(true);
+    };
+    s.addEventListener("pointerup", los);
+    s.addEventListener("pointercancel", los);
+    s.addEventListener("lostpointercapture", los);
+    /* Ein Tipp allein tut nichts (und löst auch sonst nichts an der Tafel aus). */
+    s.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); });
+    /* Mit der Tastatur: Pfeiltasten schieben um ein Zehntel der Tafel. */
+    s.addEventListener("keydown", (ev) => {
+      const r = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] }[ev.key];
+      if (!r) return;
+      ev.preventDefault();
+      const blatt = document.getElementById("lcTafelBlatt");
+      const schritt = blatt ? Math.max(blatt.offsetWidth, blatt.offsetHeight) / 10 : 30;
+      if (lcTafelSchieben(r[0] * schritt, r[1] * schritt)) senden(true);
+    });
   }
 
   function lcTafelBildSetzen(daten) {

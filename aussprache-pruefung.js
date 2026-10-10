@@ -260,15 +260,48 @@ window.AusspracheP = (function () {
     return raus;
   }
 
+  /* FASSUNG 882 — XANDER (Funk 302): „die Aussprache ist immer noch nicht gut bei vielen Sachen wenn z gesprochen wird
+     oder dann reagiert Azure ganz komisch und klingt gar nicht nach dem deutschen Wort". Ursache: Hier wurde die
+     Aufnahme (48 oder 44,1 kHz) OHNE Filter auf 16 kHz gerechnet – nur zwischen zwei Nachbarwerten gemittelt. Alles über
+     8 kHz faltete dabei zurück ins Sprachband: das Zischen von s, z (ts), sch und f kam verschoben und verwaschen bei
+     Azure an (ein 11-kHz-Anteil bei 48 kHz als 5 kHz, voll laut). Die Stadt-Quests rechnen seit Fassung 836 sauber
+     (stadt-leicht/quests.js auf16k); der Aussprache-Trainer, die Spiel-Aussprache und das Wörterbuch gehen über diese
+     Stelle und hatten den Fehler noch. Jetzt derselbe Weg: Tiefpass bei 7 kHz (Sinc mit Blackman-Fenster, 24 Ziel-
+     Abtastwerte breit, Tabelle je Gerätefrequenz einmal gebaut) und Zwischenwerte an der genauen Stelle. */
+  var SINC = {};
   function umrechnen(daten, vonRate, nachRate) {
     if (vonRate === nachRate) return daten;
-    var faktor = vonRate / nachRate;
-    var n = Math.floor(daten.length / faktor);
+    var faktor = vonRate / nachRate, len = daten.length;
+    var n = Math.floor(len / faktor);
     var raus = new Float32Array(n);
+    /* hochrechnen (selten): kein Falten möglich, Nachbarwerte genügen */
+    if (faktor < 1) {
+      for (var u = 0; u < n; u++) {
+        var p0 = u * faktor, a0 = Math.floor(p0), b0 = Math.min(a0 + 1, len - 1);
+        raus[u] = daten[a0] + (daten[b0] - daten[a0]) * (p0 - a0);
+      }
+      return raus;
+    }
+    var R = 32, N = Math.ceil(12 * faktor), fc = Math.min(0.4375 * nachRate, 0.44 * vonRate) / vonRate;
+    var schluessel = vonRate + ">" + nachRate, h = SINC[schluessel], j, k;
+    if (!h) {
+      h = SINC[schluessel] = new Float32Array(2 * N * R + 2);
+      for (j = 0; j < h.length; j++) {
+        var t = j / R - N;
+        if (Math.abs(t) > N) continue;
+        var s0 = t === 0 ? 2 * fc : Math.sin(2 * Math.PI * fc * t) / (Math.PI * t);
+        h[j] = s0 * (0.42 + 0.5 * Math.cos(Math.PI * t / N) + 0.08 * Math.cos(2 * Math.PI * t / N));
+      }
+    }
     for (var i = 0; i < n; i++) {
-      var p = i * faktor;
-      var a = Math.floor(p), b = Math.min(a + 1, daten.length - 1);
-      raus[i] = daten[a] + (daten[b] - daten[a]) * (p - a);
+      var pos = i * faktor, k0 = Math.floor(pos), fr = pos - k0, s = 0, ws = 0;
+      for (k = 1 - N; k <= N; k++) {
+        j = k0 + k;
+        if (j < 0 || j >= len) continue;
+        var tt = (k - fr + N) * R, ti = tt | 0, w = h[ti] + (h[ti + 1] - h[ti]) * (tt - ti);
+        s += daten[j] * w; ws += w;
+      }
+      raus[i] = ws > 1e-6 ? s / ws : 0;
     }
     return raus;
   }

@@ -331,61 +331,143 @@
   };
 
   /* ---------------- Rathausuhr: Westminster-Schlag ---------------- */
-  /* Teiltöne einer Glocke, bezogen auf den Schlagton (Nominal): [Verhältnis, Stärke, Anteil am Nachklang] */
-  const GL_TEILE = [[0.25, 0.2, 1.0], [0.5, 0.32, 0.72], [0.6, 0.24, 0.5], [0.75, 0.1, 0.36], [1, 0.42, 0.34], [1.25, 0.1, 0.22], [1.5, 0.1, 0.18], [2, 0.07, 0.13], [2.61, 0.05, 0.09], [3.23, 0.03, 0.06]];
+  /* FASSUNG 882 — XANDER (Funk 303): „Der Westminster Sound der kommt manchmal um viertel nach … und er ist ganz leise und
+     abgehakt … der soll natürlich schön und deutlich schön sein und die Glockenklänge sollen ausklingen und nicht nur so
+     stakkato und so mega leise … offenbar hast du da jetzt zwei Sounds". Drei Ursachen, drei Änderungen:
+     1. Zwei Klänge: Im Spiel läutete zur vollen Stunde zusätzlich die alte Dorfkirche (spiel.js dorfGlocken), obwohl die
+        neue Stadt im Bild war. Dort schweigt sie jetzt – es bleibt nur diese Rathausuhr.
+     2. Stakkato: Jeder Teilton fiel in 0,4–2 s auf Stille (der Schlagton nach 1,4 s). Eine echte Glocke klingt viele
+        Sekunden nach. Jetzt hat jeder Teilton seinen eigenen Nachklang (bei der Stundenglocke Unterton bis 29 s, Prime bis 19 s,
+        Schlagton bis 10 s), jeweils als leicht verstimmter Doppelton (die Glocke „singt" und schwebt), dazu ein Nachhall wie über dem
+        Marktplatz.
+     3. Zu leise: Fern vom Rathaus fiel die Uhr auf ein Zwanzigstel (0,014). Jetzt ist sie in der ganzen Stadt deutlich
+        zu hören, nah am Rathaus etwa doppelt so laut wie am anderen Ende.
+     Die fünf Glocken (gis', fis', e', h und die große Stundenglocke E) werden einmal „gegossen" (OfflineAudioContext →
+     AudioBuffer mit Nachhall, sobald die Tonanlage läuft) und danach nur noch abgespielt: kein Knacken, keine
+     Hunderte Oszillatoren auf einmal, kaum Rechenzeit. Ohne OfflineAudioContext klingen dieselben Teiltöne direkt.
+     Wann sie schlägt, bleibt wie beim echten Big Ben: Viertel 4 Töne, halb 8, dreiviertel 12, volle Stunde 16 und die
+     Stundenschläge; nachts (22–7 Uhr) still. */
+  /* Teiltöne, bezogen auf den Schlagton (Nominal) = WM_TOENE:
+     [Verhältnis, Stärke, Nachklang T60 in s bei einer Viertelglocke, Schwebung in Hz] */
+  const GL_TEILE = [
+    [0.25, 0.4, 18, 0.32],    // Unterton
+    [0.5, 0.48, 12, 0.55],    // Prime
+    [0.595, 0.36, 9, 0.7],    // kleine Terz (macht den Glockenklang)
+    [0.75, 0.13, 5, 0.85],    // Quinte
+    [1, 0.6, 8, 1.0],         // Schlagton (Nominal)
+    [1.255, 0.16, 4, 1.2],    // große Terz darüber
+    [1.33, 0.08, 3.4, 1.3],   // Quarte
+    [1.505, 0.11, 3, 1.5],    // Duodezime
+    [2.05, 0.055, 1.9, 1.9],
+    [2.7, 0.032, 1.2, 2.4],
+    [3.35, 0.02, 0.8, 2.9]
+  ];
   const WM_TOENE = { gis: 415.3, fis: 369.99, e: 329.63, h: 246.94, E: 164.81 };
   /* die fünf Wechsel des Westminster-Schlags */
   const WM_WECHSEL = [null, ["gis", "fis", "e", "h"], ["e", "gis", "fis", "h"], ["e", "fis", "gis", "e"], ["gis", "e", "fis", "h"], ["h", "fis", "gis", "e"]];
   /* Viertel (1 = Viertel nach, 2 = halb, 3 = dreiviertel, 0 = volle Stunde) → Wechsel */
   const WM_VIERTEL = { 1: [1], 2: [2, 3], 3: [4, 5, 1], 0: [2, 3, 4, 5] };
   T.WESTMINSTER = { toene: WM_TOENE, wechsel: WM_WECHSEL, viertel: WM_VIERTEL };
-  const NOTE = 0.8, WECHSEL_PAUSE = 1.6, STUNDE_ABSTAND = 2.9;
+  /* Takt wie Big Ben: Viertelnoten, die vierte gehalten; die Stundenglocke mit Zeit zum Ausklingen */
+  const NOTE = 0.82, WECHSEL_PAUSE = 1.7, STUNDE_ABSTAND = 3.6;
   T.glockenPlan = function (h, viertel) {
     const plan = [];
     let t = 0;
     for (const w of WM_VIERTEL[viertel]) {
-      WM_WECHSEL[w].forEach((n, i) => plan.push({ t: t + i * NOTE, ton: n, f: WM_TOENE[n], laut: i === 3 ? 1 : 0.88, nach: i === 3 ? 5.5 : 4, art: "viertel", wechsel: w }));
+      WM_WECHSEL[w].forEach((n, i) => plan.push({ t: t + i * NOTE, ton: n, f: WM_TOENE[n], laut: i === 3 ? 1 : 0.9, nach: 7, art: "viertel", wechsel: w }));
       t += 4 * NOTE + WECHSEL_PAUSE;
     }
     if (viertel === 0) {
       const n = h % 12 || 12;
-      t += 1.4;
-      for (let i = 0; i < n; i++) plan.push({ t: t + i * STUNDE_ABSTAND, ton: "E", f: WM_TOENE.E, laut: 1.3, nach: 10, art: "stunde" });
+      t += 1.6;
+      for (let i = 0; i < n; i++) plan.push({ t: t + i * STUNDE_ABSTAND, ton: "E", f: WM_TOENE.E, laut: 1.25, nach: 13, art: "stunde" });
     }
     return plan;
   };
   T.glockeNachts = (h) => h >= 22 || h < 7;
-  function glockeSchlag(k, ziel, t0, f, laut, nach) {
-    for (const [r, a, d] of GL_TEILE) {
+  /* eine Glocke anschlagen – in einen beliebigen Kontext (offline zum Gießen oder live als Ersatz).
+     gross: 1 = Viertelglocke, 1.6 = Stundenglocke (klingt länger, mehr Unterton). */
+  function glockeKlang(k, ziel, t0, f, laut, gross) {
+    GL_TEILE.forEach(([r, a, t60, sw], i) => {
       const fr = f * r;
-      if (fr > 9000) continue;
-      const o = k.createOscillator(), g = k.createGain(), dauer = Math.max(0.35, nach * d);
-      o.type = "sine"; o.frequency.value = fr * (1 + (Math.random() - 0.5) * 0.0016);
-      g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(laut * a, t0 + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dauer);
-      o.connect(g); g.connect(ziel); o.start(t0); o.stop(t0 + dauer + 0.05);
+      if (fr > 7000) return;
+      const tau = (t60 * (i < 3 ? gross : Math.sqrt(gross))) / 6.9;   // e^(-t/tau): nach T60 Sekunden 60 dB leiser
+      const st = a * (i === 0 ? Math.min(1.4, gross) : 1);
+      const ein = t0 + 0.002 + i * 0.0006;
+      /* Doppelton: zwei ungleich starke Hälften, um die Schwebung auseinander – so „singt" der Ton beim Ausklingen
+         (er schwillt sacht an und ab, bricht aber nie ganz weg) */
+      for (const [d, an] of [[-0.5, 0.64], [0.5, 0.36]]) {
+        const o = k.createOscillator(), g = k.createGain();
+        o.type = "sine"; o.frequency.value = fr + d * sw;
+        g.gain.setValueAtTime(0, t0);
+        g.gain.linearRampToValueAtTime(laut * st * an, ein);
+        g.gain.setTargetAtTime(0, ein, tau);
+        o.connect(g); g.connect(ziel); o.start(t0); o.stop(ein + tau * 7.5);
+      }
+    });
+    /* Anschlag des Klöppels: ein kurzes, helles Klingen aus Rauschen */
+    const n = k.createBuffer(1, Math.floor(k.sampleRate * 0.06), k.sampleRate), d = n.getChannelData(0);
+    for (let j = 0; j < d.length; j++) d[j] = (Math.random() * 2 - 1) * Math.pow(1 - j / d.length, 4);
+    const q = k.createBufferSource(), bp = k.createBiquadFilter(), gn = k.createGain();
+    q.buffer = n; bp.type = "bandpass"; bp.frequency.value = Math.min(5000, f * 4.2); bp.Q.value = 1.6; gn.gain.value = laut * 0.16;
+    q.connect(bp); bp.connect(gn); gn.connect(ziel); q.start(t0);
+  }
+  /* Nachhall eines offenen Platzes: 2,4 s abklingendes Rauschen, oben dunkler werdend */
+  function hallAntwort(k, dauer) {
+    const len = Math.floor(k.sampleRate * dauer), b = k.createBuffer(1, len, k.sampleRate), d = b.getChannelData(0);
+    let tief = 0;
+    for (let j = 0; j < len; j++) {
+      const t = j / k.sampleRate, w = Math.random() * 2 - 1, mit = Math.min(0.9, 0.25 + t * 0.35);
+      tief = mit * tief + (1 - mit) * w;
+      d[j] = tief * Math.exp(-t / 0.42) * (j < k.sampleRate * 0.012 ? j / (k.sampleRate * 0.012) : 1);
     }
-    /* Schwebung im Unterton (die Glocke „wummert") */
-    const o2 = k.createOscillator(), g2 = k.createGain();
-    o2.type = "sine"; o2.frequency.value = f * 0.25 + 0.9;
-    g2.gain.setValueAtTime(0.0001, t0); g2.gain.exponentialRampToValueAtTime(laut * 0.12, t0 + 0.02); g2.gain.exponentialRampToValueAtTime(0.0001, t0 + nach * 0.9);
-    o2.connect(g2); g2.connect(ziel); o2.start(t0); o2.stop(t0 + nach);
-    /* Anschlag des Klöppels: ein kurzes, helles Klicken */
-    const n = rauschQuelle(k, t0), bp = k.createBiquadFilter(), gn = k.createGain();
-    bp.type = "bandpass"; bp.frequency.value = Math.min(6000, f * 5); bp.Q.value = 1.4;
-    gn.gain.setValueAtTime(0.0001, t0); gn.gain.exponentialRampToValueAtTime(laut * 0.22, t0 + 0.002); gn.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.035);
-    n.connect(bp); bp.connect(gn); gn.connect(ziel); n.stop(t0 + 0.06);
+    return b;
+  }
+  const GUSS = {};   // Ton → AudioBuffer
+  let gussLaeuft = null;
+  T.glockenGuss = GUSS;
+  function giessen() {
+    if (gussLaeuft) return gussLaeuft;
+    const OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    if (!OAC) return (gussLaeuft = Promise.resolve(false));
+    const RATE = 22050;
+    const eine = (ton) => {
+      const gross = ton === "E" ? 1.6 : 1, dauer = ton === "E" ? 17 : 11.5;
+      const k = new OAC(1, Math.floor(RATE * dauer), RATE);
+      const trocken = k.createGain(), hall = k.createConvolver(), nass = k.createGain();
+      trocken.gain.value = 1; nass.gain.value = 0.22;
+      hall.normalize = true; hall.buffer = hallAntwort(k, 2.4);
+      trocken.connect(k.destination); trocken.connect(hall); hall.connect(nass); nass.connect(k.destination);
+      glockeKlang(k, trocken, 0.01, WM_TOENE[ton], 1, gross);
+      const fertig = (b) => {
+        /* auf einen festen Spitzenwert bringen, damit jede Glocke gleich deutlich ist */
+        const d = b.getChannelData(0); let sp = 0;
+        for (let j = 0; j < d.length; j++) { const v = Math.abs(d[j]); if (v > sp) sp = v; }
+        if (sp > 0) { const m = 0.9 / sp; for (let j = 0; j < d.length; j++) d[j] *= m; }
+        /* die letzten 2,5 s weich ausblenden – der Puffer endet nie mitten im Klang */
+        const ab = Math.floor(b.sampleRate * 2.5), st0 = d.length - ab;
+        for (let j = Math.max(0, st0); j < d.length; j++) { const x = (j - st0) / ab; d[j] *= 0.5 + 0.5 * Math.cos(Math.PI * x); }
+        GUSS[ton] = b; return b;
+      };
+      const p = k.startRendering();
+      if (p && p.then) return p.then(fertig);
+      return new Promise((ok) => { k.oncomplete = (e) => ok(fertig(e.renderedBuffer)); });
+    };
+    gussLaeuft = Object.keys(WM_TOENE).reduce((kette, ton) => kette.then(() => eine(ton)), Promise.resolve())
+      .then(() => true).catch(() => false);
+    return gussLaeuft;
   }
   function rathaus() {
     const SZ = ST.szene; if (!SZ) return null;
     for (const o of SZ.objekte) if (o.spiel === "rathaus" && !o.versteckt && !(o.bau && o.bau.p < 1)) return o;
     return null;
   }
-  /* Lautstärke der Glocken nach dem Abstand Kamera–Rathaus (über die ganze Stadt hörbar, aber leiser) */
+  /* Lautstärke nach dem Abstand Kamera–Rathaus: überall in der Stadt deutlich, nah am Rathaus am lautesten */
   function glockeLaut(o) {
     const K = ST.kamera, c = ST.aufBoden(K.W / 2, K.H / 2), d = Math.hypot(o.x - c[0], o.y - c[1]);
-    const sc = K.s / (K.dpr || 1), nah = Math.pow(klemm(1 - d / 300, 0, 1), 1.4), zoom = klemm(0.55 + sc / 40, 0.55, 1);
+    const sc = K.s / (K.dpr || 1), nah = Math.pow(klemm(1 - d / 320, 0, 1), 1.3), zoom = klemm(0.8 + sc / 50, 0.8, 1);
     const P = ST.proj(o.x, o.y, 0);
-    return { laut: 0.5 * (0.05 + 0.95 * nah) * zoom, pan: klemm((P[0] / K.W - 0.5) * 1.2, -0.7, 0.7), abstand: d };
+    return { laut: 0.5 * (0.45 + 0.55 * nah) * zoom, pan: klemm((P[0] / K.W - 0.5) * 1.1, -0.6, 0.6), abstand: d };
   }
   T.glockeLaut = function () { const o = rathaus(); return o ? glockeLaut(o) : null; };
   T.glockenLog = [];
@@ -400,21 +482,39 @@
     if (T.glockeNachts(h)) { e.grund = "nachts still"; return; }
     const o = rathaus(); if (!o) { e.grund = "kein Rathaus"; return; }
     const k = bereit(); if (!k) { e.grund = "Ton aus"; return; }
-    const L = glockeLaut(o);
-    e.laut = Math.round(L.laut * 1000) / 1000;
-    const g = k.createGain(); g.gain.value = Math.max(0.0001, L.laut * T.faktor());
-    let p = null;
-    try { if (k.createStereoPanner) { p = k.createStereoPanner(); p.pan.value = L.pan; g.connect(p); p.connect(master); } else g.connect(master); } catch (x) { g.connect(master); }
-    const t0 = k.currentTime + 0.05;
-    for (const s of plan) glockeSchlag(k, g, t0 + s.t, s.f, s.laut * 0.24, s.nach);
-    if (glG) try { glG.disconnect(); } catch (x) {}
-    glG = g; glP = p; glO = o; glBis = performance.now() + (plan[plan.length - 1].t + 12) * 1000;
-    e.gespielt = true;
-    merk(viertel === 0 ? "glocke-stunde" : "glocke-viertel" + viertel, L.laut * T.faktor());
+    const los = () => {
+      const L = glockeLaut(o);
+      e.laut = Math.round(L.laut * 1000) / 1000;
+      const g = k.createGain(); g.gain.value = Math.max(0.0001, L.laut * T.faktor());
+      let p = null;
+      try { if (k.createStereoPanner) { p = k.createStereoPanner(); p.pan.value = L.pan; g.connect(p); p.connect(master); } else g.connect(master); } catch (x) { g.connect(master); }
+      const t0 = k.currentTime + 0.05;
+      e.art = GUSS.E ? "gegossen" : "direkt";
+      for (const s of plan) {
+        const b = GUSS[s.ton];
+        if (b) {
+          const q = k.createBufferSource(), gs = k.createGain();
+          q.buffer = b; gs.gain.value = s.laut * 0.78;
+          q.connect(gs); gs.connect(g); q.start(t0 + s.t);
+        } else glockeKlang(k, g, t0 + s.t, s.f, s.laut * 0.6, s.art === "stunde" ? 1.6 : 1);
+      }
+      if (glG) try { glG.disconnect(); } catch (x) {}
+      glG = g; glP = p; glO = o; glBis = performance.now() + (plan[plan.length - 1].t + (plan[plan.length - 1].art === "stunde" ? 16 : 11)) * 1000;
+      e.gespielt = true;
+      merk(viertel === 0 ? "glocke-stunde" : "glocke-viertel" + viertel, L.laut * T.faktor());
+    };
+    /* noch nicht gegossen: kurz darauf warten (höchstens 1,5 s), sonst direkt anschlagen */
+    if (GUSS.E) return los();
+    let fertig = false;
+    const einmal = () => { if (!fertig) { fertig = true; los(); } };
+    giessen().then(einmal);
+    setTimeout(einmal, 1500);
   }
   T.glockeTesten = function (h, viertel) { glockeLaeuten({ h: h, m: viertel ? viertel * 15 : 0, s: 0 }, viertel); };
   function glockenTakt() {
     if (!ST.uhr) return;
+    /* die Glocken früh gießen, sobald die Tonanlage läuft (nur wenn ein Rathaus steht) */
+    if (!gussLaeuft && T.ctx && T.ctx.state === "running" && rathaus()) giessen();
     const u = ST.uhr(), slot = Math.floor(u.sek / 900);
     if (glSlot !== slot) {
       const erst = glSlot == null;
@@ -425,7 +525,7 @@
     /* während sie läuft: der Kamera folgen */
     if (glG && glO) {
       if (performance.now() > glBis) { const alt = glG; setTimeout(() => { try { alt.disconnect(); } catch (x) {} }, 100); glG = glP = glO = null; return; }
-      if (T.ctx) try { const L = glockeLaut(glO); glG.gain.setTargetAtTime(Math.max(0.0001, L.laut * T.faktor()), T.ctx.currentTime, 0.3); if (glP) glP.pan.setTargetAtTime(L.pan, T.ctx.currentTime, 0.3); } catch (x) {}
+      if (T.ctx) try { const L = glockeLaut(glO); glG.gain.setTargetAtTime(Math.max(0.0001, L.laut * T.faktor()), T.ctx.currentTime, 0.4); if (glP) glP.pan.setTargetAtTime(L.pan, T.ctx.currentTime, 0.4); } catch (x) {}
     }
   }
 

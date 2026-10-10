@@ -13536,8 +13536,14 @@
     if (rathaus) { t += 4.5; for (i = 0; i < zahl; i++) { plan.push([t, "rathaus", 330, .55, 6]); t += 2.1; } }
     return plan;
   }
+  /* FASSUNG 882 — XANDER (Funk 303): „offenbar hast du da jetzt zwei Sounds … offenbar korreliert er da mit dem alten
+     Sound". Steht im Dorf-Fenster die neue Stadt (Platzhalter .sp-dl-neustadt), läutet dort ihre eigene Rathausuhr
+     (Westminster, stadt-leicht/ton.js) – die alte Dorfkirche schweigt dann, sonst klangen zur vollen Stunde beide
+     übereinander. Das alte gemalte Dorf behält seine Kirchenglocken. */
+  function dorfNeustadtImBild() { return !!(schnellEl && schnellEl.querySelector(".sp-dl-neustadt")); }
   function dorfGlocken(w) {
     var u = berlinUhr(), schl = u.tag + "-" + u.h;
+    if (dorfNeustadtImBild()) { if (DW.glocken) dorfGlockenAus(); return; }
     if (u.m !== 0 || u.s > 25 || DW.glockeStunde === schl) return;
     DW.glockeStunde = schl;
     var d = (S.ich && S.ich.dorf) || {}, rathaus = Boolean(d.rathaus && d.rathaus.stufe > 0);

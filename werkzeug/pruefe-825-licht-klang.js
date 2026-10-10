@@ -257,17 +257,18 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
     if (plan) {
       /* Uhr kurz vor die Viertelstunde stellen und warten, bis die Uhr schlägt (höchstens ms + 8 s, falls die Seite unter Last hängt) */
       const warte = async (uhr, ms) => {
-        await pk.evaluate((u) => { window.__osz0 = window.__osz; window.__log0 = window.STADT.ton.log.length; window.__gl0 = window.STADT.ton.glockenLog.length; window.STADT.uhrStellen(u); }, uhr);
+        await pk.evaluate((u) => { window.__osz0 = window.__osz; window.__q0 = window.__quellen; window.__log0 = window.STADT.ton.log.length; window.__gl0 = window.STADT.ton.glockenLog.length; window.STADT.uhrStellen(u); }, uhr);
         await pk.waitForTimeout(ms);
         await pk.waitForFunction(() => window.STADT.ton.glockenLog.length > window.__gl0, null, { timeout: 8000 }).catch(() => {});
         await pk.waitForTimeout(300);
       };
       await pk.evaluate(() => { const ST = window.STADT, o = ST.szene.objekte.find((o) => o.spiel === "rathaus"); ST.kamera.x = o.x + 5; ST.kamera.y = o.y + 12; ST.kamera.s = 12 * ST.kamera.dpr; });
       await warte("14:59:57", 4800);
-      const g15 = await pk.evaluate(() => { const T = window.STADT.ton; return { neu: T.glockenLog.slice(window.__gl0), osz: window.__osz - window.__osz0, log: T.log.slice(window.__log0).map((e) => e.name) }; });
+      const g15 = await pk.evaluate(() => { const T = window.STADT.ton; return { neu: T.glockenLog.slice(window.__gl0), osz: window.__osz - window.__osz0, quellen: window.__quellen - window.__q0, log: T.log.slice(window.__log0).map((e) => e.name) }; });
       const e15 = g15.neu[g15.neu.length - 1] || {};
-      sage(e15.stunde === 15 && e15.viertel === 0 && e15.gespielt === true && e15.folge === plan.h15 && g15.log.indexOf("glocke-stunde") >= 0 && g15.osz > 150,
-        "15:00 – die Rathausuhr schlägt: vier Wechsel und drei Stundenschläge, wirklich angestoßen", JSON.stringify({ eintrag: e15.uhr, gespielt: e15.gespielt, laut: e15.laut, oszillatoren: g15.osz }));
+      sage(e15.stunde === 15 && e15.viertel === 0 && e15.gespielt === true && e15.folge === plan.h15 && g15.log.indexOf("glocke-stunde") >= 0 && (g15.osz > 150 || g15.quellen >= 19),   // FASSUNG 882: gegossene Glocken (19 Pufferquellen) oder direkt (Oszillatoren)
+        
+        "15:00 – die Rathausuhr schlägt: vier Wechsel und drei Stundenschläge, wirklich angestoßen", JSON.stringify({ eintrag: e15.uhr, gespielt: e15.gespielt, laut: e15.laut, oszillatoren: g15.osz, quellen: g15.quellen, art: e15.art }));
       await warte("16:14:57", 4200);
       const g1615 = await pk.evaluate(() => window.STADT.ton.glockenLog.slice(window.__gl0));
       const e1615 = g1615[g1615.length - 1] || {};
@@ -281,7 +282,8 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
         K.x = o.x; K.y = o.y + 5; const nah = ST.ton.glockeLaut().laut; K.x = o.x + 200; K.y = o.y + 160; const fern = ST.ton.glockeLaut().laut; K.x = o.x; K.y = o.y + 5;
         return { nah: nah, fern: fern };
       });
-      sage(lautNahFern.nah > lautNahFern.fern * 3 && lautNahFern.fern > 0, "leiser, je weiter die Kamera vom Rathaus weg ist", JSON.stringify(lautNahFern));
+      /* FASSUNG 882 — XANDER (Funk 303): „ganz leise … mega leise". Fern bleibt sie deutlich (früher 1/20), nah am Rathaus lauter. */
+      sage(lautNahFern.nah > lautNahFern.fern * 1.6 && lautNahFern.fern >= 0.15, "nah am Rathaus lauter, aber überall in der Stadt deutlich zu hören", JSON.stringify(lautNahFern));
     }
 
     /* ---- Baustelle ---- */
