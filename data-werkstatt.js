@@ -49,26 +49,24 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 882 — Big-Ben-Glocke, Aussprache „z“, Tafel-Ordner und Schieber, altes Zebra",
+  stand: "Fassung 883 — Zoo-Tiere aus der Tier-Bibliothek (nur wo klar besser)",
 
   inArbeit: [
-    { seit: "2026-10-10T12:04",
-      text: "Zoo-Tiere aus der Tier-Bibliothek (Elefant, Nashorn, Nilpferd, Gorilla …)" },
-    { seit: "2026-10-10T12:04",
+    { seit: "2026-10-10T13:11",
+      text: "Schimpanse und Nashorn im Zoo (Größengrenze)" },
+    { seit: "2026-10-10T13:11",
       text: "Tier-Bibliothek: fehlende Gruppen und Tier-Szenen" },
-    { seit: "2026-10-10T12:04",
+    { seit: "2026-10-10T13:11",
       text: "Aussprache-Funktion mit Wortliste hochladen (wartet auf OK)" },
   ],
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-10-10T12:04",
-      text: "Rathausuhr: nur noch Big Ben, deutlich und ausklingend" },
-    { seit: "2026-10-10T12:04",
-      text: "Aussprache: z, s, sch kommen sauber bei Azure an" },
-    { seit: "2026-10-10T12:04",
-      text: "Tafel: Ordnernamen in ihrer Kachel, Schieber für herangeholte Bilder" },
-    { seit: "2026-10-10T12:04",
-      text: "Zoo: das alte Zebra ist zurück" },
+    { seit: "2026-10-10T13:11",
+      text: "Zoo: Elefant, Gorilla, Giraffe, Löwe aus der Bibliothek" },
+    { seit: "2026-10-10T13:11",
+      text: "Zoo II: Giraffe, Löwin, Bär, Krokodil, Tiger, Leopard" },
+    { seit: "2026-10-10T13:11",
+      text: "Tiere der Welt: Giraffe, Elefant, Nashorn, Löwe, Krokodil, Bär, Schimpanse" },
   ],
 };

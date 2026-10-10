@@ -41,13 +41,12 @@ const HOR = 34, M = (y) => 0.15 * (y - HOR);
    Szene klar besser aussieht, kommt das Tier aus der Bibliothek (tierKunst, Szenen-Modus ohne Filter, eigener Boden-
    und Kontaktschatten). Maßstab epm = M(y) wie beim Baukasten; Wort, Tipp und Ort jedes Teils bleiben. */
 const { tierKunst } = require("../tiere/szene.js");
-/* Je Tier vorher/nachher im echten Szenenausschnitt verglichen (Telefonbreite und dreifach groß), dazu ein zweiter
-   Blick als Blindvergleich A/B. Aus der Bibliothek: Giraffe, Löwin, Bär (Braunbär), die drei Paviane (EINE Zeichnung,
-   drei <use>), Krokodil. Baukasten bleibt: Löwe (er LIEGT auf dem Felsen, der Tipp sagt es – die Bibliothek hat nur
-   stehende Tiere), Tiger (Bibliotheks-Kopf wirkt fremd, Streifen nur oben), Leopard (in der Szene nur wenige Punkte
-   statt Rosetten – liegend im Baukasten eher als Leopard zu erkennen), Puma, Pelikan, Flamingo (keine Art in der
-   Bibliothek), Zebra (das alte, Funk 302). */
-const AUS_BIB = new Set(["giraffe", "loewin", "baer", "affe", "krokodil"]);
+/* Je Tier vorher/nachher im echten Szenenausschnitt verglichen (Telefonbreite und dreifach groß) und unabhängig
+   blind geprüft (A/B, je zwei Prüfer in vertauschter Reihenfolge). Klar besser, aus der Bibliothek: Giraffe, Löwin,
+   Bär (Braunbär), Krokodil, Tiger (steht jetzt am Badebecken), Leopard (steht auf dem waagrechten Ast).
+   Baukasten bleibt: Paviane (Bibliothek nicht klar besser, 2 : 1), Löwe (er LIEGT auf dem Felsen, der Tipp sagt es –
+   die Bibliothek hat nur stehende Tiere), Puma, Pelikan, Flamingo (keine Art in der Bibliothek), Zebra (das alte). */
+const AUS_BIB = new Set(["giraffe", "loewin", "baer", "krokodil", "tiger", "leopard"]);
 const bib = (id, x, y, epm, o = {}) => tierKunst(S, id, x, y, epm, o).kunst;
 /* x eines Punkts, der vorne (y = 200) bei x liegt, in der Tiefe y (Fluchtpunkt 160/34) */
 const X = (x, y) => 160 + (x - 160) * (y - HOR) / (200 - HOR);
@@ -259,10 +258,11 @@ S.davor(`<g pointer-events="none"><rect x="244" y="88.8" width="76" height="${R2
     tipp: "Flamingos sind rosa, weil sie kleine Krebse fressen — mit dem Kopf nach unten." });
 }
 S.teil({ id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI-gre", en: "tiger", x: 150, y: 180,
-  kunst: schatten(0, 0, 18, 1.4, 0.3) + T.katze("tiger", M(180), 1, "liegen"),
+  kunst: AUS_BIB.has("tiger") ? bib("tiger", 150, 180, M(180), { dir: 1 }) : schatten(0, 0, 18, 1.4, 0.3) + T.katze("tiger", M(180), 1, "liegen"),
   tipp: "Tiger baden gern — anders als die meisten Katzen." });
 {
-  let k = `<g transform="translate(0 0)">${T.katze("leopard", M(172), -1, "liegen")}</g>`;
+  /* Bibliothek: der Leopard steht auf dem waagrechten Ast (Oberkante y ≈ 167,8), ohne Bodenschatten */
+  let k = AUS_BIB.has("leopard") ? `<g transform="translate(0 -1.2)">${bib("leopard", 0, 0, M(172), { dir: -1, schatten: false })}</g>` : `<g transform="translate(0 0)">${T.katze("leopard", M(172), -1, "liegen")}</g>`;
   S.teil({ id: "leopard", de: "der Leopard", syl: "Leo-PARD", it: "il leopardo", itSyl: "leo-PAR-do", en: "leopard", x: 222, y: 169, kunst: k,
     tipp: "Der Leopard ruht gern auf einem Ast. Seine Flecken sind Ringe — man nennt sie Rosetten." });
 }

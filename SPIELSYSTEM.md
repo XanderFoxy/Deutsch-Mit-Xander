@@ -3739,3 +3739,34 @@ XANDER (Funk 303): „Der Westminster Sound … ist ganz leise und abgehakt … 
 - Zoo-Tiere aus der Tier-Bibliothek (Elefant, Nashorn, Nilpferd, Gorilla, Schimpanse, Giraffe, Großkatzen) – 883.
 - Aussprache-Funktion mit Wortliste hochladen – wartet auf Xanders OK.
 - Tier-Bibliothek: fehlende Gruppen, schwächste Arten, Tier-Szenen je Lebensraum.
+
+## Fassung 883 — Zoo-Tiere aus der Tier-Bibliothek (Funk 302: „dass sie wirklich realistisch sind“)
+
+XANDER (Funk 302): „die Tiere im Zoo sehen so gut wie unmöglich aus … schaue auch was du mit den anderen Tieren machst dass sie wirklich realistisch sind“.
+
+### Was sich geändert hat (nur neue Bilderwelt)
+- Die Zoo-Szenen holen die Tiere jetzt aus der Tier-Bibliothek (Werkzeug 880, wie „Tiere der Savanne“) – aber nur dort, wo das Bibliotheks-Tier im echten Szenenausschnitt KLAR realistischer und besser erkennbar ist:
+  - **Zoo:** Elefant, Gorilla, Giraffe, Löwe.
+  - **Zoo II:** Giraffe, Löwin, Braunbär, Krokodil, Tiger (steht am Badebecken), Leopard (steht mit allen vier Pfoten auf dem Ast).
+  - **Tiere der Welt:** Giraffe, Elefant, Nashorn, Löwe (steht), Krokodil (3,6 m), Braunbär, Schimpanse (auf allen vieren am Ast).
+- Bleiben beim Baukasten: Zebra (das alte, Funk 302), Nilpferd (im Wasser liest sich der Baukasten-Kopf besser; in „Tiere der Welt“ verdeckte das längere Bibliotheks-Nilpferd den Nashornkopf), Paviane (nur knapp besser, nicht klar), Puma, Flamingo, Pelikan (keine Bibliotheks-Art).
+- Bereit, aber aus: Schimpanse und Nashorn im Zoo – die Szene käme über 72 KB (74,8 bzw. 77,3 KB).
+- Brücke `werkzeug/bilderwelt/tiere/szene.js`: neu `tierKunst(S, id, x, y, epm, o)` gibt Zeichnung + Rahmen zurück (ohne eigenes Teil), so behält jedes Zoo-Teil sein Wort und seinen Tipp. `tierTeil` nutzt es; Savanne und Meer bauen sich bitgleich.
+- Größen nach dem Maßstab der Szene am Fuß des Tiers (Meter → Einheiten), keine Baukasten-Vergrößerung mehr. Kein Kopf verdeckt; die Fangflächen in den Lupen folgen dem Umriss. Nebenbei: Die Fangfläche des Nilpferds in „Tiere der Welt“ lag im Wasser darunter – jetzt auf dem Tier.
+- Die sechs Menschen im Zoo sind leichter gebaut (haarfeine Striche unter 0,1 px weg, gemeinsame Verläufe einmal, Strich-Enden je Figur einmal): 4,9 KB weniger, im Bild gleich (mittlere Abweichung 0,01–0,05 von 255, kein Bildpunkt > 24).
+
+### Wie entschieden wurde
+- Jede der 24 Tier-Stellen im echten Szenenausschnitt vorher/nachher gerendert (Telefonbreite und dreifach groß).
+- **Blindprüfung:** je Paar zwei unabhängige Richter in vertauschter Reihenfolge, ohne Dateinamen; bei Uneinigkeit ein dritter (54 Urteile). Übernommen nur „klar besser“ (Mehrheit und mindestens zwei „deutlich“). Ergebnis: 19 Stellen klar besser (17 jetzt in der App, 2 über der Größengrenze), Paviane nur knapp besser (bleiben), Nilpferd in „Tiere der Welt“ alt klar besser (bleibt).
+
+### Größe und Tempo (gepackt; Zeichnen bei 4× gedrosseltem Rechner)
+- Zoo 59 → 71 KB, Zeichnen ≈ gleich (168–179 ms; die leichteren Menschen gleichen aus).
+- Zoo II 24 → 44 KB, 115–139 ms; Tiere der Welt 32 → 59 KB, 138–143 ms – damit auf dem Stand von Savanne (135 ms) und Bäckerei (116–119 ms).
+
+### Sonden
+- `pruefe-szene`: Zoo, Zoo II, Tiere der Welt „alle Teile gut erreichbar“.
+- Grün: 840 (alte Bilderwelt unverändert), 872 (alle Szenen).
+
+**Offen**
+- Schimpanse und Nashorn im Zoo (über der Größengrenze) – nach einer weiteren Entschlackung der Szene.
+- Tier-Bibliothek: fehlende Gruppen, schwächste Arten, Tier-Szenen je Lebensraum.

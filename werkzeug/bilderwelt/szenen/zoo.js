@@ -625,24 +625,77 @@ const HOR = 50, M = (y) => 0.1655 * (y - HOR);
    tierTeil, Szenen-Modus ohne Filter, eigener Boden- und Kontaktschatten). Maßstab: epm = M(y) Einheiten je Meter
    an der Stelle der Hufe/Pfoten – dieselbe Perspektive wie beim Baukasten. Wort, Tipp und Ort jedes Teils bleiben. */
 const { tierKunst } = require("../tiere/szene.js");
-/* Je Tier vorher/nachher im echten Szenenausschnitt verglichen (Telefonbreite 1170 px und dreifach groß), dazu ein
-   zweiter Blick als Blindvergleich A/B. Ergebnis:
-   - aus der Bibliothek: Gorilla (vorher ein schwarzer Klotz, kaum zu erkennen), Elefant.
-   - ebenfalls klar besser, aber NICHT eingeschaltet, weil die Szene sonst über 70 KB gepackt käme (Ladezeit hat
-     Vorrang): Nashorn (+3,0 KB), Giraffe (+3,7 KB), Löwe (+4,2 KB, steht dann auf dem Felsen). Alle drei sind fertig
-     verdrahtet – Name hier eintragen, sobald Platz ist (z. B. wenn die sechs Menschen der Szene leichter werden:
-     sie sind die Hälfte der Datei).
-   - Baukasten bleibt: Nilpferd (im Wasser liest sich der Baukasten-Kopf besser), Tiger (Bibliotheks-Kopf wirkt fremd,
-     Streifen nur oben), Schimpanse (in der Größe ist der sitzende Baukasten-Schimpanse besser zu erkennen), Zebra (das
-     alte, Funk 302), Flamingo (keine Art in der Bibliothek). */
-const AUS_BIB = new Set(["elefant", "gorilla"]);
+/* Je Tier vorher/nachher im echten Szenenausschnitt verglichen (Telefonbreite 1170 px und dreifach groß) und
+   unabhängig blind geprüft (A/B, je zwei Prüfer in vertauschter Reihenfolge). Klar besser und eingeschaltet:
+   Elefant, Gorilla (vorher ein schwarzer Klotz), Giraffe, Löwe (steht jetzt auf dem Felsen).
+   Ebenfalls klar besser, aber AUS, weil die Szene gepackt über 72 KB käme (Ladezeit hat Vorrang; die Menschen sind
+   schon leichter, siehe leicht()): Schimpanse (+3,4 KB → 74,8 KB), danach Nashorn (+2,6 KB). Beide sind fertig
+   verdrahtet – Name eintragen, sobald Platz ist.
+   Baukasten bleibt: Nilpferd und Tiger (Bibliothek nur wenig besser), Zebra (das alte, Funk 302), Flamingo (keine
+   Art in der Bibliothek). */
+const AUS_BIB = new Set(["elefant", "gorilla", "giraffe", "loewe"]);
 const bib = (id, x, y, epm, o = {}) => tierKunst(S, id, x, y, epm, o).kunst;
 /* Menschen: Pfaddaten auf 0,5 cm gerundet — unsichtbar, spart ein Drittel der Ladezeit */
 const zahl = (x, st) => String(+(Math.round(+x / st) * st).toFixed(1)).replace(/^(-?)0\./, "$1.");
 const schlank = (svg) => svg.replace(/ d="([^"]*)"/g, (a, d) => ` d="${d.replace(/-?\d*\.?\d+/g, (x) => zahl(x, 1)).replace(/\s*,\s*/g, " ").replace(/\s*([A-Za-z])\s*/g, "$1").replace(/ -/g, "-")}"`)
   .replace(/ (c[xy]|x[12]?|y[12]?|width|height)="(-?[\d.]+)"/g, (a, n, v) => ` ${n}="${zahl(v, 0.5)}"`)
   .replace(/ (r[xy]?)="(-?[\d.]+)"/g, (a, n, v) => ` ${n}="${zahl(v, 0.1)}"`);
-const mensch = (spec, groesse, y) => schlank(B.mensch(spec, groesse * M(y)).svg);
+/* FASSUNG 883 — Menschen leichter, gleiches Bild am Telefon (Platz für die Bibliotheks-Tiere, Ziel ≤ 72 KB gepackt).
+   Die sechs Menschen waren die Hälfte der Datei. Geprüft mit Bildpunkt-Vergleich vorher/nachher bei 1170 px Breite
+   (Telefon 390 px × 3). Vier Schritte, nur außerhalb der <defs> (Schnittmasken bleiben unberührt):
+   1. Haarfeine Striche weg: Strichbreite × Deckkraft am Telefon unter 0,1 Bildpunkt (Stofffalten-Linien, die dort
+      weniger als ein Zehntel eines Bildpunkts decken). Das Gesicht (86–95 % der Figurenhöhe) bleibt ganz: Wimpern,
+      Brauen und Lidlinien sind einzeln haarfein, ergeben aber zusammen das Auge (ohne diese Ausnahme wurde das Auge
+      der Tierpflegerin am Telefon heller). Striche ganz ohne Strichfarbe zeichnen ohnehin nichts.
+   2. Gleiche Farbverläufe einmal: Verläufe mit derselben Stopp-Liste erben sie per href von EINEM Grundverlauf.
+   3. stroke-linejoin/linecap="round" einmal an der Figur statt an jedem Strich (andere Striche bekommen ihren
+      Standardwert ausdrücklich – nichts ändert sich).
+   4. Nachbar-Pfade mit genau gleichen Angaben (ohne Deckkraft, ohne Verlauf, ohne data-teil) werden EIN Pfad.
+   Schritte 2–4 ändern keinen Bildpunkt. Messung nur der Menschen, Fassung 882 → 883 bei 1170 px: mittlere
+   Abweichung höchstens 0,05 von 255, höchstens 0,2 % der Bildpunkte weichen um mehr als 8 ab; gepackt –4,9 KB. */
+const PX_TEL = 1170 / 320;
+const GRUND = new Map();
+const leicht = (svg, k, hoehe) => {
+  const defs = [];
+  let t = svg.replace(/<defs>[\s\S]*?<\/defs>/g, (d) => { defs.push(d); return `\u0000${defs.length - 1}\u0000`; });
+  /* 1 */
+  t = t.replace(/<path [^>]*\/>/g, (e) => {
+    if (!/ fill="none"/.test(e)) return e;
+    if (!/ stroke="(?!none)/.test(e)) return "";
+    /* Das Gesicht bleibt ganz (Wimpern, Brauen, Lidlinien: einzeln haarfein, zusammen das Auge) */
+    const d = (/ d="([^"]*)"/.exec(e) || [])[1] || "";
+    if (/[HhVvAa]/.test(d) || /data-teil/.test(e)) return e;
+    const zahlen = d.match(/-?\d*\.?\d+/g) || [];
+    for (let i = 1; i < zahlen.length; i += 2) if (+zahlen[i] < -0.86 * hoehe && +zahlen[i] > -0.95 * hoehe) return e;
+    const sw = +((/ stroke-width="([\d.]+)"/.exec(e) || [])[1] || 1), op = +((/ opacity="([\d.]+)"/.exec(e) || [])[1] || 1);
+    return sw * k * PX_TEL * op < 0.1 ? "" : e;
+  });
+  /* 3 */
+  t = t.replace(/<(path|ellipse|circle|rect)\b([^>]*?)\/>/g, (e, tag, at) => {
+    const strich = / stroke="(?!none)/.test(at), lj = / stroke-linejoin="round"/.test(at), lc = / stroke-linecap="round"/.test(at);
+    let a = at.replace(/ stroke-linejoin="round"/, "").replace(/ stroke-linecap="round"/, "");
+    if (strich && !lj && !/stroke-linejoin=/.test(a)) a += ` stroke-linejoin="miter"`;
+    if (strich && !lc && !/stroke-linecap=/.test(a)) a += ` stroke-linecap="butt"`;
+    return `<${tag}${a}/>`;
+  }).replace(`<g class="mensch">`, `<g class="mensch" stroke-linejoin="round" stroke-linecap="round">`);
+  /* 4 */
+  t = t.replace(/(?:<path d="M[^"]*"[^>]*\/>){2,}/g, (folge) => {
+    const aus = [];
+    for (const e of folge.match(/<path d="[^"]*"[^>]*\/>/g)) {
+      const [, d, rest] = /^<path d="([^"]*)"([^>]*)\/>$/.exec(e), ok = !/opacity|url\(|data-teil/.test(rest), l = aus[aus.length - 1];
+      if (l && ok && l.ok && l.rest === rest) l.d += d; else aus.push({ d, rest, ok });
+    }
+    return aus.map((q) => `<path d="${q.d}"${q.rest}/>`).join("");
+  });
+  /* 2 */
+  t = t.replace(/\u0000(\d+)\u0000/g, (m, i) => defs[+i].replace(/<(linearGradient|radialGradient)( id="[^"]+")([^>]*)>((?:<stop [^>]*\/>)+)<\/\1>/g, (all, typ, id, at, stops) => {
+    const key = typ + stops;
+    if (!GRUND.has(key)) { const g = S.id("mg" + GRUND.size.toString(36)); GRUND.set(key, g); S.def(`<${typ} id="${g}">${stops}</${typ}>`); }
+    return `<${typ}${id}${at} href="#${GRUND.get(key)}"/>`;
+  }));
+  return t;
+};
+const mensch = (spec, groesse, y) => { const m = B.mensch(spec, groesse * M(y)); return leicht(schlank(m.svg), m.k, (m.z && m.z.hoehe) || 170); };
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
 
 /* =====================================================================
@@ -811,7 +864,7 @@ S.teil({ id: "gorilla", de: "der Gorilla", syl: "Go-RIL-la", it: "il gorilla", i
   kunst: AUS_BIB.has("gorilla") ? `<g transform="translate(5 0)">${bib("gorilla", 0, 0, M(147), { dir: -1 })}</g>` : schatten(0, 0, 11, 1, 0.3) + T.gorilla(M(147), -1),
   tipp: "Der Silberrücken ist das alte Männchen: nur er hat den grauen Sattel auf dem Rücken." });
 S.teil({ id: "schimpanse", de: "der Schimpanse", syl: "Schim-PAN-se", it: "lo scimpanzé", itSyl: "scim-pan-ZÉ", en: "chimpanzee", x: 262, y: 130,
-  kunst: T.schimpanse(M(142), -1),
+  kunst: AUS_BIB.has("schimpanse") ? bib("schimpanse", 262, 130, M(142), { dir: -1 }) : T.schimpanse(M(142), -1),
   tipp: "Kleiner und schlanker als der Gorilla, mit großen abstehenden Ohren." });
 /* Rahmen der Glasscheiben (Kulisse) und Spiegelung (davor) */
 S.hinten(``);

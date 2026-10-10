@@ -46,13 +46,13 @@ const tr = (x, y, inner) => `<g transform="translate(${r(x)} ${r(y)})">${inner}<
    Boden- und Kontaktschatten). Maßstab: genau M(y) des Dioramas an den Füßen (keine Vergrößerung wie früher beim
    Pavian/Schimpansen). Die Fangfläche in der Lupe (BOX) folgt dem echten Umriss der Art. */
 const { tierKunst } = require("../tiere/szene.js");
-/* Je Tier vorher/nachher im echten Ausschnitt verglichen (Telefonbreite und dreifach groß), dazu ein Blindvergleich
-   A/B. Aus der Bibliothek: Giraffe, Elefant, Nashorn, Löwe (steht jetzt), Krokodil, Bär (Braunbär). Elefant 3 Einheiten
-   nach rechts und Nashorn 6 nach links, damit Nashorn- und Nilpferdkopf frei bleiben. Baukasten bleibt: Pavian (in
-   echter Größe auf dem Termitenhügel zu klein, um klar besser zu sein), Schimpanse (sitzend besser zu erkennen),
-   Nilpferd (im Wasserloch liest sich der Baukasten-Kopf besser; das längere Bibliotheks-Nilpferd verdeckte die
-   Flamingos), Tiger, Leopard (siehe Zoo II), Zebra (das alte, Funk 302), Flamingo, Pelikan, Puma, Wolf, Fuchs, Adler. */
-const AUS_BIB = new Set(["giraffe", "elefant", "nashorn", "loewe", "krokodil", "baer"]);
+/* Je Tier vorher/nachher im echten Ausschnitt verglichen (Telefonbreite und dreifach groß) und unabhängig blind
+   geprüft (A/B, je zwei Prüfer in vertauschter Reihenfolge). Aus der Bibliothek: Giraffe, Elefant, Nashorn, Löwe
+   (steht jetzt), Krokodil, Bär (Braunbär), Schimpanse (echte Größe, auf allen vieren auf dem Ast). Elefant 3 Einheiten
+   nach rechts und Nashorn 6 nach links, damit Nashorn- und Nilpferdkopf frei bleiben. Baukasten bleibt: Pavian und
+   Nilpferd (der Baukasten ist hier besser), Tiger, Leopard, Zebra (das alte, Funk 302), Flamingo, Pelikan, Puma,
+   Wolf, Fuchs, Adler (nicht Teil des Auftrags). */
+const AUS_BIB = new Set(["giraffe", "elefant", "nashorn", "loewe", "krokodil", "baer", "schimpanse"]);
 const BOX = {};
 /* bt: Art an (x, y) zeichnen; die Fangfläche gilt relativ zum Lupen-Teil an (ax, ay) */
 const bt = (teilId, art, x, y, epm, o = {}, ax = x, ay = y) => {
@@ -165,12 +165,12 @@ const D2 = { x0: 174, y0: 62, x1: 240, y1: 140 };
   k += `<path d="M${x0 + 2} 130 L${x0 + 22} 128" stroke="#5a4232" stroke-width="3.4" stroke-linecap="round"/>`;
   const M2 = (y) => 6 + (y - 100) * 0.2;
   k += tr(x0 + 30, 103, T.katze("leopard", M2(103) * 1.4, -1, "liegen"));
-  k += tr(x0 + 13, 128.6, T.schimpanse(M2(128) * 1.25));
+  k += AUS_BIB.has("schimpanse") ? bt("schimpanse", "schimpanse", x0 + 12, 128.6, M2(128), { dir: 1 }) : tr(x0 + 13, 128.6, T.schimpanse(M2(128) * 1.25));
   k += tr(x0 + 40, 138, schatten(0, 0, 13, 1, 0.3) + T.katze("tiger", M2(138), -1));
   k = k.slice(0, k0) + `<g clip-path="url(#${cid})">` + k.slice(k0) + licht(x0, y0, x1, y1) + `</g>`;
   const u = [
     tier("leopard", "der Leopard", "Leo-PARD", "il leopardo", "leo-PAR-do", "leopard", x0 + 30, 103, [-14, -9, 26, 9], "Der Leopard lebt in Afrika und Asien und ruht gern auf einem Ast."),
-    tier("schimpanse", "der Schimpanse", "Schim-PAN-se", "lo scimpanzé", "scim-pan-ZÉ", "chimpanzee", x0 + 12, 128.6, [-4, -12, 9, 12], "Afrika. Der Schimpanse ist unser nächster Verwandter."),
+    tier("schimpanse", "der Schimpanse", "Schim-PAN-se", "lo scimpanzé", "scim-pan-ZÉ", "chimpanzee", x0 + 12, 128.6, BOX.schimpanse || [-4, -12, 9, 12], "Afrika. Der Schimpanse ist unser nächster Verwandter."),
     tier("tiger", "der Tiger", "TI-ger", "la tigre", "TI-gre", "tiger", x0 + 40, 138, [-16, -12, 32, 12], "Asien. Die größte Katze der Welt.")
   ];
   S.teil({ id: "regenwald", de: "der Regenwald", syl: "RE-gen-wald", it: "la foresta pluviale", itSyl: "fo-RE-sta plu-VIA-le", en: "rainforest", x: 0, y: 0, kunst: k,
