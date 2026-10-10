@@ -625,7 +625,17 @@ const HOR = 50, M = (y) => 0.1655 * (y - HOR);
    tierTeil, Szenen-Modus ohne Filter, eigener Boden- und Kontaktschatten). Maßstab: epm = M(y) Einheiten je Meter
    an der Stelle der Hufe/Pfoten – dieselbe Perspektive wie beim Baukasten. Wort, Tipp und Ort jedes Teils bleiben. */
 const { tierKunst } = require("../tiere/szene.js");
-const AUS_BIB = new Set((process.env.BIB_883 || "").split(",").filter(Boolean));
+/* Je Tier vorher/nachher im echten Szenenausschnitt verglichen (Telefonbreite 1170 px und dreifach groß), dazu ein
+   zweiter Blick als Blindvergleich A/B. Ergebnis:
+   - aus der Bibliothek: Gorilla (vorher ein schwarzer Klotz, kaum zu erkennen), Elefant.
+   - ebenfalls klar besser, aber NICHT eingeschaltet, weil die Szene sonst über 70 KB gepackt käme (Ladezeit hat
+     Vorrang): Nashorn (+3,0 KB), Giraffe (+3,7 KB), Löwe (+4,2 KB, steht dann auf dem Felsen). Alle drei sind fertig
+     verdrahtet – Name hier eintragen, sobald Platz ist (z. B. wenn die sechs Menschen der Szene leichter werden:
+     sie sind die Hälfte der Datei).
+   - Baukasten bleibt: Nilpferd (im Wasser liest sich der Baukasten-Kopf besser), Tiger (Bibliotheks-Kopf wirkt fremd,
+     Streifen nur oben), Schimpanse (in der Größe ist der sitzende Baukasten-Schimpanse besser zu erkennen), Zebra (das
+     alte, Funk 302), Flamingo (keine Art in der Bibliothek). */
+const AUS_BIB = new Set(["elefant", "gorilla"]);
 const bib = (id, x, y, epm, o = {}) => tierKunst(S, id, x, y, epm, o).kunst;
 /* Menschen: Pfaddaten auf 0,5 cm gerundet — unsichtbar, spart ein Drittel der Ladezeit */
 const zahl = (x, st) => String(+(Math.round(+x / st) * st).toFixed(1)).replace(/^(-?)0\./, "$1.");
@@ -739,18 +749,8 @@ S.teil({ id: "nashorn", de: "das Nashorn", syl: "NAS-horn", it: "il rinoceronte"
   S.teil({ id: "graben", de: "der Graben", syl: "GRA-ben", it: "il fossato", itSyl: "fos-SA-to", en: "moat", x: 0, y: 0, kunst: k,
     tipp: "Ein Graben statt eines Zauns: das Tier kommt nicht herüber, und man sieht es ohne Gitter davor." });
 }
-/* Nilpferd im Graben: wie beim Baukasten nur, was über dem Wasserspiegel liegt (0,82 m über den Füßen), dazu die
-   Wasserlinie davor. Kein Bodenschatten (es steht im Wasser). */
-function nilpferdImGraben() {
-  const e = M(126), w = 0.82 * e, L = 3 * e;
-  const ausschnitt = `<rect x="${r(-L)}" y="${r(-3 * e)}" width="${r(2 * L)}" height="${r(3 * e - w)}"/>`;
-  const davor = `<path d="M${r(-2.3 * e)} ${r(-w)} q${r(1.1 * e)} -.5 ${r(2.2 * e)} 0 t${r(2.4 * e)} 0" stroke="#e2eee8" stroke-width=".35" opacity=".8" fill="none"/>` +
-    `<path d="M${r(-2.5 * e)} ${r(-w + 0.7)} q${r(1.2 * e)} -.4 ${r(2.4 * e)} 0 t${r(2.5 * e)} 0" stroke="#e2eee8" stroke-width=".25" opacity=".5" fill="none"/>` +
-    `<ellipse cx="0" cy="${r(-w + 0.4)}" rx="${r(2.3 * e)}" ry=".8" fill="#2f4a40" opacity=".25"/>`;
-  return bib("nilpferd", 124, 126, e, { dir: -1, schatten: false, ausschnitt, davor });
-}
 S.teil({ id: "nilpferd", de: "das Nilpferd", syl: "NIL-pferd", it: "l'ippopotamo", itSyl: "ip-po-PO-ta-mo", en: "hippopotamus", x: 124, y: 126,
-  kunst: AUS_BIB.has("nilpferd") ? nilpferdImGraben() : T.nilpferd(M(126), -1, 8.2),
+  kunst: T.nilpferd(M(126), -1, 8.2),
   tipp: "Kein Horn, dafür ein riesiges Maul." });
 
 /* =====================================================================
@@ -785,7 +785,7 @@ S.teil({ id: "nilpferd", de: "das Nilpferd", syl: "NIL-pferd", it: "l'ippopotamo
     tipp: "Nur das Männchen hat eine Mähne." });
 }
 S.teil({ id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI-gre", en: "tiger", x: 74, y: 147,
-  kunst: AUS_BIB.has("tiger") ? bib("tiger", 74, 147, M(147), { dir: -1 }) : schatten(0, 0, 14, 1.2, 0.25) + T.katze("tiger", M(147), -1),
+  kunst: schatten(0, 0, 14, 1.2, 0.25) + T.katze("tiger", M(147), -1),
   tipp: "Die größte Katze der Welt — und jede hat ihr eigenes Streifenmuster." });
 /* Der Zaun: Stahlnetz mit Überhang; das Netz lässt Tipps zu den Katzen durch */
 {
@@ -807,10 +807,11 @@ S.teil({ id: "tiger", de: "der Tiger", syl: "TI-ger", it: "la tigre", itSyl: "TI
    MENSCHENAFFEN hinter der Glasscheibe: Gorilla, Schimpanse
    ===================================================================== */
 S.teil({ id: "gorilla", de: "der Gorilla", syl: "Go-RIL-la", it: "il gorilla", itSyl: "go-RIL-la", en: "gorilla", x: 290, y: 147,
-  kunst: AUS_BIB.has("gorilla") ? bib("gorilla", 290, 147, M(147), { dir: -1 }) : schatten(0, 0, 11, 1, 0.3) + T.gorilla(M(147), -1),
+  /* Bibliothek: 5 Einheiten weiter rechts, sonst steht das Gesicht genau hinter dem Fensterpfosten (x ≈ 280) */
+  kunst: AUS_BIB.has("gorilla") ? `<g transform="translate(5 0)">${bib("gorilla", 0, 0, M(147), { dir: -1 })}</g>` : schatten(0, 0, 11, 1, 0.3) + T.gorilla(M(147), -1),
   tipp: "Der Silberrücken ist das alte Männchen: nur er hat den grauen Sattel auf dem Rücken." });
 S.teil({ id: "schimpanse", de: "der Schimpanse", syl: "Schim-PAN-se", it: "lo scimpanzé", itSyl: "scim-pan-ZÉ", en: "chimpanzee", x: 262, y: 130,
-  kunst: AUS_BIB.has("schimpanse") ? bib("schimpanse", 262, 130, M(142), { dir: -1 }) : T.schimpanse(M(142), -1),
+  kunst: T.schimpanse(M(142), -1),
   tipp: "Kleiner und schlanker als der Gorilla, mit großen abstehenden Ohren." });
 /* Rahmen der Glasscheiben (Kulisse) und Spiegelung (davor) */
 S.hinten(``);

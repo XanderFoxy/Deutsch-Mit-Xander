@@ -36,6 +36,19 @@ const S = neueSzene({ id: "zoo2", titel: "Der Zoo — große Tiere", emoji: "�
 const rnd = zufall(1863);
 const T = tierBaukasten(S);
 const HOR = 34, M = (y) => 0.15 * (y - HOR);
+/* FASSUNG 883 — XANDER (Funk 302): „schaue auch was du mit den anderen Tieren machst dass sie wirklich realistisch
+   sind“. Wo die Tier-Bibliothek (werkzeug/bilderwelt/tiere, wie „Tiere der Savanne“) eine Art hat und sie HIER in der
+   Szene klar besser aussieht, kommt das Tier aus der Bibliothek (tierKunst, Szenen-Modus ohne Filter, eigener Boden-
+   und Kontaktschatten). Maßstab epm = M(y) wie beim Baukasten; Wort, Tipp und Ort jedes Teils bleiben. */
+const { tierKunst } = require("../tiere/szene.js");
+/* Je Tier vorher/nachher im echten Szenenausschnitt verglichen (Telefonbreite und dreifach groß), dazu ein zweiter
+   Blick als Blindvergleich A/B. Aus der Bibliothek: Giraffe, Löwin, Bär (Braunbär), die drei Paviane (EINE Zeichnung,
+   drei <use>), Krokodil. Baukasten bleibt: Löwe (er LIEGT auf dem Felsen, der Tipp sagt es – die Bibliothek hat nur
+   stehende Tiere), Tiger (Bibliotheks-Kopf wirkt fremd, Streifen nur oben), Leopard (in der Szene nur wenige Punkte
+   statt Rosetten – liegend im Baukasten eher als Leopard zu erkennen), Puma, Pelikan, Flamingo (keine Art in der
+   Bibliothek), Zebra (das alte, Funk 302). */
+const AUS_BIB = new Set(["giraffe", "loewin", "baer", "affe", "krokodil"]);
+const bib = (id, x, y, epm, o = {}) => tierKunst(S, id, x, y, epm, o).kunst;
 /* x eines Punkts, der vorne (y = 200) bei x liegt, in der Tiefe y (Fluchtpunkt 160/34) */
 const X = (x, y) => 160 + (x - 160) * (y - HOR) / (200 - HOR);
 S.def(`<filter id="bw_weich" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.4"/></filter>`);
@@ -191,7 +204,7 @@ const W3 = [0, 112, 196, 258, 320];
    REIHE 1 — Giraffe und Zebras auf der Savanne
    ===================================================================== */
 S.teil({ id: "giraffe", de: "die Giraffe", syl: "Gi-RAF-fe", it: "la giraffa", itSyl: "gi-RAF-fa", en: "giraffe", x: 70, y: 80,
-  kunst: schatten(2, 0, 9, 1, 0.25) + T.giraffe(M(80)),
+  kunst: AUS_BIB.has("giraffe") ? bib("giraffe", 70, 80, M(80), { dir: 1 }) : schatten(2, 0, 9, 1, 0.25) + T.giraffe(M(80)),
   tipp: "Die Giraffe frisst Blätter ganz oben in den Akazien — ihre Zunge ist fast einen halben Meter lang." });
 S.teil({ id: "zebra", de: "das Zebra", syl: "ZE-bra", it: "la zebra", itSyl: "ZE-bra", en: "zebra", x: 146, y: 80,
   kunst: `<g transform="translate(13 -4)">${schatten(0, 0, 6, 0.7, 0.22)}${T.zebra(M(76), -1)}</g>` + `<g transform="translate(-12 -2)">${schatten(0, 0, 6, 0.7, 0.22)}${T.zebra(M(78), 1)}</g>` + schatten(0, 0, 7, 0.8, 0.25) + T.zebra(M(80)),
@@ -207,21 +220,23 @@ S.teil({ id: "zebra", de: "das Zebra", syl: "ZE-bra", it: "la zebra", itSyl: "ZE
     tipp: "Der Löwe liegt oben auf dem Felsen — Löwen schlafen bis zu zwanzig Stunden am Tag." });
 }
 S.teil({ id: "loewin", de: "die Löwin", syl: "LÖ-win", it: "la leonessa", itSyl: "le-o-NES-sa", en: "lioness", x: 64, y: 129,
-  kunst: schatten(0, 0, 13, 1.2, 0.28) + T.katze("loewin", M(129), -1),
+  kunst: AUS_BIB.has("loewin") ? bib("loewin", 64, 129, M(129), { dir: -1 }) : schatten(0, 0, 13, 1.2, 0.28) + T.katze("loewin", M(129), -1),
   tipp: "Die Löwin hat keine Mähne. Meistens jagen die Löwinnen." });
 S.teil({ id: "baer", de: "der Bär", syl: "BÄR", it: "l'orso", itSyl: "OR-so", en: "bear", x: 134, y: 127,
-  kunst: schatten(0, 0, 14, 1.2, 0.3) + T.baer(M(127), -1),
+  kunst: AUS_BIB.has("baer") ? bib("braunbaer", 134, 127, M(127), { dir: -1 }) : schatten(0, 0, 14, 1.2, 0.3) + T.baer(M(127), -1),
   tipp: "Ein Braunbär: der Buckel über den Schultern ist ein starker Muskel zum Graben." });
 {
   /* Pavianfelsen: Felsinsel mit drei Pavianen */
   let k = felsen(0, 0, 54, 26, 9) + felsen(-14, 2, 26, 10, 13) + felsen(16, 2, 22, 8, 17);
   const g = (x, y, dir, s = 1) => `<g transform="translate(${x} ${y})">${T.affe(M(124) * s, dir)}</g>`;
-  k += g(-3, -24.4, 1) + g(-16, -9.6, -1, 0.9) + g(14, -7.4, 1, 0.85);
+  /* Bibliothek: EINE Pavian-Zeichnung, drei <use> (Weibchen kleiner); Ort und Blickrichtung wie bisher */
+  k += AUS_BIB.has("affe") ? `<g transform="translate(-3 -24.4)">${bib("pavian", 203, 99.6, M(124), { dir: 1,
+    herde: [{ x: 190, y: 114.4, dir: -1, groesse: 0.9 }, { x: 220, y: 116.6, dir: 1, groesse: 0.85 }] })}</g>` : g(-3, -24.4, 1) + g(-16, -9.6, -1, 0.9) + g(14, -7.4, 1, 0.85);
   S.teil({ id: "affe", de: "der Affe", syl: "AF-fe", it: "la scimmia", itSyl: "SCIM-mia", en: "monkey", x: 206, y: 124, kunst: k,
     tipp: "Paviane leben in großen Gruppen auf Felsen. Sie können nicht schwimmen — darum reicht das Wasser rundherum." });
 }
 S.teil({ id: "krokodil", de: "das Krokodil", syl: "Kro-ko-DIL", it: "il coccodrillo", itSyl: "coc-co-DRIL-lo", en: "crocodile", x: 286, y: 127,
-  kunst: T.krokodil(M(127)),
+  kunst: AUS_BIB.has("krokodil") ? bib("krokodil", 286, 127, M(127), { dir: 1 }) : T.krokodil(M(127)),
   tipp: "Das Krokodil liegt stundenlang still in der Wärme — im Zoo wohnt es im warmen Krokodilhaus." });
 /* Glasfront des Krokodilhauses (Spiegelung, fängt nichts) */
 S.davor(`<g pointer-events="none"><rect x="244" y="88.8" width="76" height="${R2.y1 - 88.8}" fill="${S.lg("glas2", [[0, "#ffffff", 0.2], [0.5, "#ffffff", 0.04], [1, "#e0f0f4", 0.16]], 0, 0, 1, 1)}"/>` +

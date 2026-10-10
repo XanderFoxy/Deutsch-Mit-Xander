@@ -40,6 +40,26 @@ const schlank = (svg) => svg.replace(/ d="([^"]*)"/g, (a, d) => ` d="${d.replace
   .replace(/ (c[xy]|x[12]?|y[12]?|width|height)="(-?[\d.]+)"/g, (a, n, v) => ` ${n}="${zahl(v, 0.5)}"`)
   .replace(/ (r[xy]?)="(-?[\d.]+)"/g, (a, n, v) => ` ${n}="${zahl(v, 0.1)}"`);
 const tr = (x, y, inner) => `<g transform="translate(${r(x)} ${r(y)})">${inner}</g>`;
+/* FASSUNG 883 — XANDER (Funk 302): „schaue auch was du mit den anderen Tieren machst dass sie wirklich realistisch
+   sind“. Wo die Tier-Bibliothek (werkzeug/bilderwelt/tiere, wie „Tiere der Savanne“) eine Art hat und sie HIER im
+   Diorama klar besser aussieht, kommt das Tier aus der Bibliothek (tierKunst, Szenen-Modus ohne Filter, eigener
+   Boden- und Kontaktschatten). Maßstab: genau M(y) des Dioramas an den Füßen (keine Vergrößerung wie früher beim
+   Pavian/Schimpansen). Die Fangfläche in der Lupe (BOX) folgt dem echten Umriss der Art. */
+const { tierKunst } = require("../tiere/szene.js");
+/* Je Tier vorher/nachher im echten Ausschnitt verglichen (Telefonbreite und dreifach groß), dazu ein Blindvergleich
+   A/B. Aus der Bibliothek: Giraffe, Elefant, Nashorn, Löwe (steht jetzt), Krokodil, Bär (Braunbär). Elefant 3 Einheiten
+   nach rechts und Nashorn 6 nach links, damit Nashorn- und Nilpferdkopf frei bleiben. Baukasten bleibt: Pavian (in
+   echter Größe auf dem Termitenhügel zu klein, um klar besser zu sein), Schimpanse (sitzend besser zu erkennen),
+   Nilpferd (im Wasserloch liest sich der Baukasten-Kopf besser; das längere Bibliotheks-Nilpferd verdeckte die
+   Flamingos), Tiger, Leopard (siehe Zoo II), Zebra (das alte, Funk 302), Flamingo, Pelikan, Puma, Wolf, Fuchs, Adler. */
+const AUS_BIB = new Set(["giraffe", "elefant", "nashorn", "loewe", "krokodil", "baer"]);
+const BOX = {};
+/* bt: Art an (x, y) zeichnen; die Fangfläche gilt relativ zum Lupen-Teil an (ax, ay) */
+const bt = (teilId, art, x, y, epm, o = {}, ax = x, ay = y) => {
+  const t = tierKunst(S, art, x, y, epm, o), [a, b, c, d] = t.box;
+  BOX[teilId] = [r(a + x - ax), r(b + y - ay), r(c - a), r(d - b)];
+  return tr(x, y, t.kunst);
+};
 
 /* =====================================================================
    KULISSE: dunkler Saal, Decke mit Strahlern, Steinboden
@@ -95,28 +115,29 @@ const D1 = { x0: 6, y0: 62, x1: 166, y1: 140 };
   k += `<path d="M${x0 + 124} 110 Q${x0 + 128} 94 ${x0 + 132} 92 Q${x0 + 136} 96 ${x0 + 138} 110 Z" fill="${S.lg("termite", [[0, "#c08a52"], [1, "#8a5a30"]])}"/>`;
   /* Tiere: hinten zuerst */
   const M1 = (y) => 6 + (y - 106) * 0.24;
-  k += tr(x0 + 24, 112, schatten(0, 0, 7, 0.8, 0.25) + T.giraffe(M1(112)));
+  k += AUS_BIB.has("giraffe") ? bt("giraffe", "giraffe", x0 + 24, 112, M1(112), { dir: 1 }) : tr(x0 + 24, 112, schatten(0, 0, 7, 0.8, 0.25) + T.giraffe(M1(112)));
   k += tr(x0 + 100, 110, schatten(0, 0, 5, 0.6, 0.25) + T.zebra(M1(110), -1)) + tr(x0 + 110, 112, schatten(0, 0, 5, 0.6, 0.25) + T.zebra(M1(112), -1));
   k += tr(x0 + 131, 96, T.affe(M1(110) * 1.3, -1));
-  k += tr(x0 + 62, 118, schatten(0, 0, 13, 1.2, 0.25) + T.elefant(M1(118), -1));
+  k += AUS_BIB.has("elefant") ? bt("elefant", "elefant", x0 + 65, 118, M1(118), { dir: -1 }, x0 + 62) : tr(x0 + 62, 118, schatten(0, 0, 13, 1.2, 0.25) + T.elefant(M1(118), -1));
   k += tr(x1 - 14, 125.6, T.flamingo(M1(126))) + tr(x1 - 6, 126.4, T.flamingo(M1(126), -1, true));
-  k += tr(x0 + 92, 128, schatten(0, 0, 14, 1.2, 0.3) + T.nashorn(M1(128)));
+  k += AUS_BIB.has("nashorn") ? bt("nashorn", "nashorn", x0 + 86, 128, M1(128), { dir: 1 }, x0 + 92) : tr(x0 + 92, 128, schatten(0, 0, 14, 1.2, 0.3) + T.nashorn(M1(128)));
   k += tr(x1 - 22, 133, T.nilpferd(M1(133), -1, 8.4));
-  k += tr(x0 + 32, 137, schatten(0, 0, 13, 1, 0.3) + T.katze("loewe", M1(137), 1, "liegen"));
+  k += AUS_BIB.has("loewe") ? bt("loewe", "loewe", x0 + 32, 137, M1(137), { dir: 1 }) : tr(x0 + 32, 137, schatten(0, 0, 13, 1, 0.3) + T.katze("loewe", M1(137), 1, "liegen"));
   k += tr(x1 - 10, 138.6, T.pelikan(M1(138)));
-  k += tr(x1 - 64, 139.6, T.krokodil(M1(139) * 0.8, 1));
+  /* Krokodil: ein 3,6-m-Tier (0,8 × die 4,5 m der Bibliothek – ein ausgewachsenes Nilkrokodil, nicht das größte) */
+  k += AUS_BIB.has("krokodil") ? bt("krokodil", "krokodil", x1 - 64, 139.6, M1(139) * 0.8, { dir: 1 }) : tr(x1 - 64, 139.6, T.krokodil(M1(139) * 0.8, 1));
   k = k.slice(0, k0) + `<g clip-path="url(#${cid})">` + k.slice(k0) + licht(x0, y0, x1, y1) + `</g>`;
   const u = [
-    tier("giraffe", "die Giraffe", "Gi-RAF-fe", "la giraffa", "gi-RAF-fa", "giraffe", x0 + 24, 112, [-8, -36, 22, 37], "Afrika. Mit fünf Metern das höchste Tier der Erde."),
+    tier("giraffe", "die Giraffe", "Gi-RAF-fe", "la giraffa", "gi-RAF-fa", "giraffe", x0 + 24, 112, BOX.giraffe || [-8, -36, 22, 37], "Afrika. Mit fünf Metern das höchste Tier der Erde."),
     tier("zebra", "das Zebra", "ZE-bra", "la zebra", "ZE-bra", "zebra", x0 + 104, 112, [-9, -13, 22, 13]),
     tier("affe", "der Affe", "AF-fe", "la scimmia", "SCIM-mia", "monkey", x0 + 131, 96, [-4, -9, 9, 9], "Ein Pavian auf dem Termitenhügel — Affen haben einen Schwanz, Menschenaffen nicht."),
-    tier("elefant", "der Elefant", "E-le-FANT", "l'elefante", "e-le-FAN-te", "elephant", x0 + 62, 118, [-15, -30, 32, 30], "Der Afrikanische Elefant ist das größte Landtier."),
+    tier("elefant", "der Elefant", "E-le-FANT", "l'elefante", "e-le-FAN-te", "elephant", x0 + 62, 118, BOX.elefant || [-15, -30, 32, 30], "Der Afrikanische Elefant ist das größte Landtier."),
     tier("flamingo", "der Flamingo", "Fla-MIN-go", "il fenicottero", "fe-ni-COT-te-ro", "flamingo", x1 - 10, 126, [-6, -13, 12, 13]),
-    tier("nashorn", "das Nashorn", "NAS-horn", "il rinoceronte", "ri-no-ce-RON-te", "rhinoceros", x0 + 92, 128, [-14, -14, 32, 14]),
-    tier("nilpferd", "das Nilpferd", "NIL-pferd", "l'ippopotamo", "ip-po-PO-ta-mo", "hippopotamus", x1 - 22, 133, [-18, -10, 34, 9]),
-    tier("loewe", "der Löwe", "LÖ-we", "il leone", "le-O-ne", "lion", x0 + 32, 137, [-16, -12, 30, 12]),
+    tier("nashorn", "das Nashorn", "NAS-horn", "il rinoceronte", "ri-no-ce-RON-te", "rhinoceros", x0 + 92, 128, BOX.nashorn || [-14, -14, 32, 14]),
+    tier("nilpferd", "das Nilpferd", "NIL-pferd", "l'ippopotamo", "ip-po-PO-ta-mo", "hippopotamus", x1 - 22, 133, [-25, -21, 45, 11]),   // 883: Fangfläche auf das sichtbare Nilpferd über dem Wasser (vorher lag sie im Wasser darunter)
+    tier("loewe", "der Löwe", "LÖ-we", "il leone", "le-O-ne", "lion", x0 + 32, 137, BOX.loewe || [-16, -12, 30, 12]),
     tier("pelikan", "der Pelikan", "PE-li-kan", "il pellicano", "pel-li-CA-no", "pelican", x1 - 10, 138.6, [-6, -12, 13, 12]),
-    tier("krokodil", "das Krokodil", "Kro-ko-DIL", "il coccodrillo", "coc-co-DRIL-lo", "crocodile", x1 - 64, 139.6, [-20, -5, 32, 5.6])
+    tier("krokodil", "das Krokodil", "Kro-ko-DIL", "il coccodrillo", "coc-co-DRIL-lo", "crocodile", x1 - 64, 139.6, BOX.krokodil || [-20, -5, 32, 5.6])
   ];
   S.teil({ id: "savanne", de: "die Savanne", syl: "sa-VAN-ne", it: "la savana", itSyl: "sa-VA-na", en: "savanna", x: 0, y: 0, kunst: k,
     zoom: { x: x0 - 2, y: y0 - 14, w: x1 - x0 + 4, h: 109 }, unter: u,
@@ -180,14 +201,14 @@ const D3 = { x0: 248, y0: 62, x1: 314, y1: 140 };
   k += tr(x1 - 12, 112, T.katze("puma", M3(112), -1));
   k += tr(x0 + 40, 125, schatten(0, 0, 8, 0.8, 0.25) + T.hund("wolf", M3(125), -1));
   k += tr(x1 - 10, 134, schatten(0, 0, 5, 0.6, 0.25) + T.hund("fuchs", M3(134), -1));
-  k += tr(x0 + 16, 139, schatten(0, 0, 12, 1, 0.3) + T.baer(M3(139)));
+  k += AUS_BIB.has("baer") ? bt("baer", "braunbaer", x0 + 16, 139, M3(139), { dir: 1 }) : tr(x0 + 16, 139, schatten(0, 0, 12, 1, 0.3) + T.baer(M3(139)));
   k = k.slice(0, k0) + `<g clip-path="url(#${cid})">` + k.slice(k0) + licht(x0, y0, x1, y1) + `</g>`;
   const u = [
     tier("adler", "der Adler", "AD-ler", "l'aquila", "A-qui-la", "eagle", x0 + 10, 90.4, [-4, -8, 8, 9], "Der Steinadler brütet hoch oben in den Felsen."),
     tier("puma", "der Puma", "PU-ma", "il puma", "PU-ma", "puma", x1 - 12, 112, [-10, -8, 19, 8], "Amerika. Der Puma lebt von Kanada bis Südamerika."),
     tier("wolf", "der Wolf", "WOLF", "il lupo", "LU-po", "wolf", x0 + 40, 125, [-11, -9, 21, 9], "Wölfe leben im Rudel — auch wieder in Deutschland."),
     tier("fuchs", "der Fuchs", "FUCHS", "la volpe", "VOL-pe", "fox", x1 - 10, 134, [-7, -6, 13, 6], "Der Rotfuchs lebt fast auf der ganzen Nordhalbkugel."),
-    tier("baer", "der Bär", "BÄR", "l'orso", "OR-so", "bear", x0 + 16, 139, [-14, -12, 28, 12], "Der Braunbär lebt in Nordamerika, Europa und Asien.")
+    tier("baer", "der Bär", "BÄR", "l'orso", "OR-so", "bear", x0 + 16, 139, BOX.baer || [-14, -12, 28, 12], "Der Braunbär lebt in Nordamerika, Europa und Asien.")
   ];
   S.teil({ id: "gebirge", de: "das Gebirge", syl: "ge-BIR-ge", it: "la montagna", itSyl: "mon-TA-gna", en: "mountains", x: 0, y: 0, kunst: k,
     zoom: { x: 210, y: 61, w: 110, h: 80 }, unter: u,
