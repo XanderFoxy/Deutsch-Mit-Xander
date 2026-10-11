@@ -13,12 +13,19 @@
    Aufbau: echter Chromium, Telefonbreite 412 px, die Seite aus den
    QUELLEN (index.html?quelle) und danach aus min/ (vorher
    „node werkzeug/fassung-setzen.js --nur-stempel“). Nachgebaut:
-     - Spracherkennung des Browsers (zählt Starts: __rfRunden),
+     - Spracherkennung des Browsers (zählt Starts: __rfRunden, liefert
+       „alter weg“),
      - Backend (Betreiber, Funk-Mitschrift),
-     - AusspracheP.zentralErkennen (merkt sich jede WAV, antwortet nach
-       einer einstellbaren Zeit mit Success/„Satz k.“; je Fall abgewandelt),
+     - die ZENTRALE im Netz: die Seite ruft die echte Kette
+       (AusspracheP.zentralErkennen → alsBase64 → zentralRufen →
+       JSON → fetch); abgefangen wird erst der Aufruf von
+       …/functions/v1/aussprache – hier in Node: WAV lesen, nach einer
+       einstellbaren Zeit wie Azure antworten (Success/„Satz k.“, je Fall
+       abgewandelt, auch 429 „kontingent“ und „tagesgrenze“). Dafür ein
+       Ersatz für window.supabase, der nur die Anmeldemarke liefert.
      - die Live-Spur: eine WebAudio-Quelle mit 48 kHz spricht „Sätze“
-       (1 kHz + 5,5 kHz + 11 kHz, Silbentakt 4 Hz) – über
+       (1 kHz + 5,5 kHz + 11 kHz, Silbentakt 4 Hz) über ein leises
+       Grundrauschen (wie ein echtes Mikrofon) – über
        MediaStreamDestination in LiveChat.pruefEigenerStrom / „drin“,
      - „die anderen“: dieselbe Spur geht über eine lokale Leitung A→B;
        gemessen wird totalAudioEnergy von inbound-rtp bei B alle 100 ms.
@@ -27,8 +34,9 @@
         tonAn bleibt, Original-Spur lebt und ist an, kein „stumm“ hinaus
      2  HÖRBAR: bei B kommt in jedem Satz Ton an, keine Lücke > 1 s
      3  drei Sätze (Pausen 2,2 s) = drei Anfragen; WAV RIFF/16 kHz/mono/
-        16 Bit, ≤ 55 s, ≤ 0,45 s Stille vorn; mit 1,2-s-Pausen werden die
-        ersten beiden zusammengefasst (Stück < 4 s)
+        16 Bit, ≤ 55 s, ≤ 0,45 s Stille vorn; Aufruf „erkennen“, de-DE,
+        mit Anmeldemarke; mit 1,0-s-Pausen werden die ersten beiden
+        zusammengefasst (Stück < 4 s)
      4  kein Falten: 5-kHz-Rest < 1 % von 1 kHz; 1 kHz und 5,5 kHz ≥ 95 %
         – mit 16-kHz-Kontext und mit Gerätefrequenz (rate16k = false)
      5  Feld „Satz 1. Satz 2. Satz 3.“ in Reihenfolge (Antwortzeiten 1,5 /
@@ -37,25 +45,51 @@
         dann „✓ Steht im Feld …“, Knopf 🎤, Kontext zu, Klon beendet,
         Original lebt
      7  harter Schnitt: stueckMaxMs = 3000, 7 s Dauerrede → ≥ 3 Stücke,
-        jedes ≤ 3 s; im Original stueckMaxMs ≤ 55000
+        jedes ≤ 3 s; im Original stueckMaxMs = 55000
      8  Nachschub: deckt die Antwort nur die erste Hälfte ab, folgt eine
         zweite, kürzere Anfrage, beide Texte stehen im Feld
-     9  Fehler „tagesgrenze“: endet sichtbar mit Grund, Text bleibt,
-        „[automatisch] Diktat-Fehler: strom-tagesgrenze …“ im Funk
+     8b NACHBESSERUNG: Nachschub ohne Fortschritt (Antwort deckt 0,1 s) –
+        genau EINE Anfrage, „Ja.“ einmal
+     8c NACHBESSERUNG: Azures Ende 0,1 s vor dem hörbaren Ende (Nachhall)
+        – drei Sätze bleiben drei Anfragen
+     8d NACHBESSERUNG: Grenze von 4 Nachschüben erreicht, es bleibt
+        Sprache – Meldung „strom-nachschub-grenze“
+     9  NACHBESSERUNG: „tagesgrenze“ – der Text bis dahin bleibt, das
+        Diktat geht auf dem ALTEN Weg weiter, Meldung im Funk, der
+        nächste 🎤 nimmt gleich den alten Weg
+     9b NACHBESSERUNG: einmal 429 „kontingent“ – nach 2,5 s noch einmal,
+        nichts geht verloren, das Diktat läuft weiter, keine Meldung
+     9c NACHBESSERUNG: dauernd „kontingent“ – nach 3 Versuchen der alte
+        Weg, Meldung
+     9d NACHBESSERUNG: Tagesmenge (hier 4 s) – das Gesprochene wird noch
+        aufgeschrieben, dann der alte Weg; der nächste 🎤 ebenso
      10 kein Block in 3 s (addModule hängt): Rückfall auf den alten Weg
         (__rfRunden === 1), Meldung strom-kein-start
+     10b NACHBESSERUNG: die Kopie liefert nur Nullen – alter Weg, Meldung
+        strom-nullen; zu leise (keine 0,012) – nach 6 s alter Weg,
+        Meldung strom-still mit max rms
+     10c NACHBESSERUNG: ⏹ ohne Gesprochenes – „Ich habe nichts gehört …“
      11 außerhalb des Livestreams: wie bisher, Browser-Erkennung, keine
         Anfrage an die Zentrale
      12 stumm geschaltet (tonUmschalten): das Diktat hört trotzdem, B hört
         weiter nichts
-     13 Leistung: 30-s-Diktat, keine lange Aufgabe > 100 ms; alsWav-Zeit je
-        Stück wird ausgegeben
+     12b NACHBESSERUNG: Walkie zugeklappt (✕) – das Diktat endet, keine
+        Anfrage mehr für das danach Gesprochene, Klon und Kontext zu, nach
+        dem Aufklappen steht der Text im Feld, Knopf 🎤
+     12c NACHBESSERUNG: Raum verlassen – ebenso
+     13 Leistung: 30-s-Diktat über die echte Kette, keine lange Aufgabe
+        > 100 ms; alsWav-Zeit je Stück; im Quellen-Lauf zusätzlich EIN
+        Stück von ~50 s: Zeit von zentralErkennen bis fetch (Base64 +
+        JSON auf dem Hauptfaden) und lange Aufgaben dabei
      14 keine Seitenfehler
-   GEGENPROBE: ALT=1 (oder ALT_REV=<rev>) – der kleine Server liefert
-   rueckfrage.js, livechat.js und aussprache-pruefung.js aus
-   „git show <rev>:<datei>“ (Standard a043c20, der Stand direkt vor diesem
-   Punkt), nur der Quellen-Lauf. Enthält die Revision den Bau schon,
-   bricht die Sonde ab. Erwartet rot: 1, 2, 3–9, 12 (keine Anfrage).
+   GEGENPROBE: ALT=1 – der kleine Server liefert rueckfrage.js,
+   livechat.js und aussprache-pruefung.js aus „git show a043c20:<datei>“
+   (der Stand direkt vor diesem Punkt), nur der Quellen-Lauf. Enthält die
+   Revision den Bau schon, bricht die Sonde ab. Erwartet rot: 1, 2, 3–9d,
+   12b/c (keine Anfrage).
+   ALT=vorbau – dieselben Dateien aus 7cbc825 (der erste Bau, VOR der
+   Nachbesserung). Erwartet rot genau dort, wo nachgebessert wurde: 8b, 8c,
+   8d, 9–9d, 10b, 10c, 12b, 12c.
    EHRLICH: echtes Azure, Samsung Internet und ein Gespräch über zwei
    Geräte sind hier nicht nachstellbar; die lokale Leitung zeigt nur, dass
    die unveränderte Spur weiter Ton liefert.
@@ -64,13 +98,15 @@ const http = require("http"), fs = require("fs"), path = require("path"), { exec
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const WURZEL = process.env.WURZEL || path.join(__dirname, "..");
 const VOR_884_DIKTAT = "a043c20";   // der Stand direkt vor „WIP 884 diktat"
-const ALT = (process.env.ALT || process.env.ALT_REV) ? (process.env.ALT_REV || (process.env.ALT === "1" ? VOR_884_DIKTAT : process.env.ALT)) : "";
+const VORBAU = "7cbc825";           // der erste Bau, vor der Nachbesserung
+const ALT = process.env.ALT_REV || (process.env.ALT === "1" ? VOR_884_DIKTAT : process.env.ALT === "vorbau" ? VORBAU : (process.env.ALT || ""));
 const DATEIEN = ["rueckfrage.js", "livechat.js", "aussprache-pruefung.js"];
 const ERSATZ = {};
 if (ALT) {
   DATEIEN.forEach((d) => { ERSATZ["/" + d] = execFileSync("git", ["-C", WURZEL, "show", ALT + ":" + d], { maxBuffer: 1 << 28 }).toString("utf8"); });
-  if (/tonSpurKlon/.test(ERSATZ["/livechat.js"]) || /diktatAusStrom/.test(ERSATZ["/rueckfrage.js"])) {
-    console.log("GEGENPROBE UNGÜLTIG: " + ALT + " enthält den Bau schon – sie wäre grün und bewiese nichts. ALT=1 (= " + VOR_884_DIKTAT + ") nehmen.");
+  const gebaut = /tonSpurKlon/.test(ERSATZ["/livechat.js"]) || /diktatAusStrom/.test(ERSATZ["/rueckfrage.js"]);
+  if (gebaut && ALT !== VORBAU && process.env.VORBAU !== "1") {
+    console.log("GEGENPROBE UNGÜLTIG: " + ALT + " enthält den Bau schon – sie wäre grün und bewiese nichts. ALT=1 (= " + VOR_884_DIKTAT + ") nehmen, oder ALT=vorbau für den Stand vor der Nachbesserung.");
     process.exit(3);
   }
 }
@@ -81,6 +117,11 @@ const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css"
 let fehler = 0;
 const sage = (gut, text, dazu) => { if (!gut) fehler++; console.log((gut ? "  ok   " : "  FEHL ") + text + (dazu ? "   " + dazu : "")); };
 const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
+async function warteBis(f, ms) {
+  const ende = Date.now() + ms;
+  while (Date.now() < ende) { if (await f()) return true; await schlaf(60); }
+  return Boolean(await f());
+}
 
 /* --- WAV lesen und messen (in Node) --- */
 function wavLesen(b64) {
@@ -89,7 +130,7 @@ function wavLesen(b64) {
     kanaele: b.readUInt16LE(22), rate: b.readUInt32LE(24), bits: b.readUInt16LE(34), data: b.toString("ascii", 36, 40) };
   const n = (b.length - 44) >> 1, x = new Float32Array(n);
   for (let i = 0; i < n; i++) x[i] = b.readInt16LE(44 + 2 * i) / 32768;
-  return { kopf, x, dauer: n / 16000 };
+  return { kopf, x, dauer: n / 16000, bytes: b.length };
 }
 function goertzel(x, f, rate) {
   const w = 2 * Math.PI * f / rate, c = 2 * Math.cos(w);
@@ -99,6 +140,7 @@ function goertzel(x, f, rate) {
   return 2 * Math.sqrt(re * re + im * im) / x.length;
 }
 function anfang(x) { for (let i = 0; i < x.length; i++) if (Math.abs(x[i]) > 0.02) return i; return -1; }
+function hoerbarEnde(x) { for (let i = x.length - 1; i >= 0; i--) if (Math.abs(x[i]) > 0.02) return (i + 1) / 16000; return 0; }
 /* Spektrum 1 s ab 0,3 s nach dem Einsatz (mitten im ersten Satz) */
 function spektrum(w) {
   const a = anfang(w.x);
@@ -126,19 +168,43 @@ function spektrum(w) {
   const laeufe = ALT ? ["quelle"] : (NUR ? [NUR] : ["quelle", "min"]);
   for (const lauf of laeufe) {
     console.log("\n=== Lauf: " + (lauf === "quelle" ? "Quellen (index.html?quelle)" : "min/ (index.html)") + " ===");
-    await einLauf(br, lauf === "quelle" ? basis + "?quelle" : basis);
+    await einLauf(br, lauf === "quelle" ? basis + "?quelle" : basis, lauf);
   }
   await br.close(); srv.close();
   console.log("\n" + (fehler ? fehler + " FEHLER" : "alles grün"));
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.log("ABBRUCH: " + (e && e.stack || e)); process.exit(2); });
 
-async function einLauf(br, url) {
+async function einLauf(br, url, lauf) {
   const ctx = await br.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
   const pg = await ctx.newPage();
   const seitenfehler = [];
   pg.on("pageerror", (e) => seitenfehler.push(String(e.message || e)));
   await pg.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+  /* Die Zentrale (später angemeldet = hat Vorrang vor dem Abbruch oben) */
+  const Z = { anfr: [], antworter: null };
+  const CORS = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS" };
+  await pg.route(/\/functions\/v1\/aussprache/, async (route) => {
+    const q = route.request();
+    if (q.method() === "OPTIONS") return route.fulfill({ status: 200, headers: CORS, body: "" });
+    let k = {};
+    try { k = JSON.parse(q.postData() || "{}"); } catch (e) {}
+    if (k.aktion !== "erkennen" || !k.wav) {
+      return route.fulfill({ status: 400, headers: Object.assign({ "Content-Type": "application/json" }, CORS), body: JSON.stringify({ fehler: "unbekannte-aktion" }) });
+    }
+    const w = wavLesen(k.wav);
+    const nr = Z.anfr.length;
+    const e = { t: Date.now(), dauerS: w.dauer, w, aktion: k.aktion, sprache: k.sprache, zeitgrenze: k.zeitgrenze,
+      marke: (q.headers()["authorization"] || ""), b64Laenge: k.wav.length };
+    Z.anfr.push(e);
+    const std = { ms: 300, status: 200, antw: { RecognitionStatus: "Success", DisplayText: "Satz " + (nr + 1) + ".", Offset: 0, Duration: Math.round(w.dauer * 1e7) } };
+    const r = Z.antworter ? Z.antworter(nr, e, std) : std;
+    await schlaf(r.ms);
+    try {
+      await route.fulfill({ status: r.status || 200, headers: Object.assign({ "Content-Type": "application/json" }, CORS), body: JSON.stringify(r.antw) });
+    } catch (x) {}
+  });
   await pg.addInitScript(() => {
     try { localStorage.setItem("dma_tour_seen", "1"); localStorage.removeItem("dma_funk_offen"); } catch (e) {}
     /* Spracherkennung des Browsers: zählt Starts, liefert „alter weg“ */
@@ -193,8 +259,20 @@ async function einLauf(br, url) {
   });
   await pg.waitForSelector(".rf-vorschlag .rf-mik", { timeout: 8000 });
 
-  /* Live-Ton, die Leitung zu „den anderen“, die nachgebaute Zentrale */
+  /* Live-Ton, die Leitung zu „den anderen“, die Anmeldung für die Zentrale */
   await pg.evaluate(async () => {
+    /* supabase-js kommt im Netz von außen und ist hier gesperrt. Für die Zentrale braucht AusspracheP nur die
+       Anmeldemarke; alles andere antwortet leer (Ketten, die nie etwas tun). Erst JETZT gesetzt – Backend und
+       LiveChat sind längst ohne ihn gestartet. */
+    const leer = () => Promise.resolve({ data: null, error: null });
+    const kette = () => { const f = function () { return p; }; const p = new Proxy(f, {
+      get(t, k) { if (k === "then") return (a, b) => leer().then(a, b); if (k === "catch") return (b) => leer().catch(b);
+        if (k === Symbol.toPrimitive) return () => ""; return p; },
+      apply() { return p; } }); return p; };
+    window.supabase = { createClient: () => new Proxy({}, { get(t, k) {
+      if (k === "auth") return { getSession: () => Promise.resolve({ data: { session: { access_token: "sonde-marke" } } }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe() {} } } }) };
+      return kette(); } }) };
     const ac = new window.__OAC({ sampleRate: 48000 });
     try { await ac.resume(); } catch (e) {}
     const summe = ac.createGain();
@@ -208,10 +286,18 @@ async function einLauf(br, url) {
     summe.connect(silbe);
     const huelle = ac.createGain(); huelle.gain.value = 0;
     silbe.connect(huelle);
-    window.__ton = { ac, huelle, saetze: [] };
+    /* Grundrauschen wie bei einem echten Mikrofon (rms ≈ 0,0002) – nie exakt null */
+    const rb = ac.createBuffer(1, 48000 * 2, 48000), rd = rb.getChannelData(0);
+    for (let i = 0; i < rd.length; i++) rd[i] = (Math.random() * 2 - 1) * 3.5e-4;
+    const rauschen = ac.createBufferSource(); rauschen.buffer = rb; rauschen.loop = true; rauschen.start();
+    const mix = ac.createGain(); huelle.connect(mix); rauschen.connect(mix);
+    window.__ton = { ac, huelle, saetze: [], t0: 0 };
+    /* jeder Fall beginnt still: was ein voriger Fall noch geplant hatte (ein dritter Satz), fällt weg */
+    window.__still = () => { huelle.gain.cancelScheduledValues(0); huelle.gain.setValueAtTime(0, ac.currentTime); window.__ton.saetze = []; };
     /* plan: [[ab s, dauer s], …] ab jetzt */
     window.__sprich = (plan) => {
       const t0 = ac.currentTime + 0.05, p0 = performance.now() + 50;
+      window.__ton.t0 = Date.now() + 50;
       huelle.gain.cancelScheduledValues(0); huelle.gain.setValueAtTime(0, t0);
       window.__ton.saetze = plan.map(([ab, dauer]) => {
         huelle.gain.setValueAtTime(0, t0 + ab); huelle.gain.linearRampToValueAtTime(1, t0 + ab + 0.01);
@@ -228,7 +314,7 @@ async function einLauf(br, url) {
       const el = new Audio(); el.srcObject = e.streams[0] || new MediaStream([e.track]); el.volume = 1;
       el.play().catch(() => {}); window.__bEl = el;
     };
-    const ziel = ac.createMediaStreamDestination(); huelle.connect(ziel);
+    const ziel = ac.createMediaStreamDestination(); mix.connect(ziel);
     const spur = ziel.stream.getAudioTracks()[0];
     window.__sender = a.addTrack(spur, ziel.stream);
     const angebot = await a.createOffer(); await a.setLocalDescription(angebot); await b.setRemoteDescription(angebot);
@@ -243,9 +329,11 @@ async function einLauf(br, url) {
         if (window.__bMess.length > 3000) window.__bMess.shift();
       } catch (x) {}
     }, 100);
-    /* eine frische Live-Spur je Fall (der alte Weg stoppt sie) */
-    window.__neueSpur = () => {
-      const z = ac.createMediaStreamDestination(); huelle.connect(z);
+    /* eine frische Live-Spur je Fall (der alte Weg stoppt sie); art: "normal" | "tot" (nur Nullen) | "leise" */
+    window.__neueSpur = (art) => {
+      const z = ac.createMediaStreamDestination();
+      if (art === "leise") { const g = ac.createGain(); g.gain.value = 0.05; silbe.connect(g); g.connect(z); rauschen.connect(z); }
+      else if (art !== "tot") mix.connect(z);
       const t = z.stream.getAudioTracks()[0];
       window.__live = t;
       window.LiveChat.pruefEigenerStrom(new MediaStream([t]), true);
@@ -256,56 +344,53 @@ async function einLauf(br, url) {
     /* Ausgehendes abfangen (kein „stumm“) */
     window.__raus = [];
     window.LiveChat.pruefAbfangen((p) => { try { window.__raus.push({ art: p.art, tonAn: p.tonAn }); } catch (e) {} });
-    /* Spion: jede Kopie der Live-Spur merken (Fall C: ist sie danach beendet?) */
+    /* Spion: jede Kopie der Live-Spur merken (ist sie danach beendet?) */
     window.__klone = [];
     if (window.LiveChat.tonSpurKlon) {
       const oK = window.LiveChat.tonSpurKlon;
       window.LiveChat.tonSpurKlon = function () { const k = oK.apply(this, arguments); if (k) window.__klone.push(k); return k; };
     }
-    /* die Zentrale */
-    window.__anfr = [];
-    window.__antworter = null;
+    /* Zeiten: alsWav je Stück; zentralErkennen → fetch (Base64 + JSON auf dem Hauptfaden) */
     window.__wavZeit = [];
-    window.AusspracheP.zentralMoeglich = () => true;
     if (window.AusspracheP.alsWav) {
       const oW = window.AusspracheP.alsWav;
       window.AusspracheP.alsWav = function (p) { const t = performance.now(); const r = oW(p); window.__wavZeit.push([p.sampleRate, p.length, performance.now() - t]); return r; };
     }
-    window.AusspracheP.zentralErkennen = (wav, o) => wav.arrayBuffer().then((buf) => {
-      const k = window.__anfr.length;
-      const dauerS = (buf.byteLength - 44) / 2 / 16000;
-      const e = { t: performance.now(), dauerS, o, b64: null, buf };
-      window.__anfr.push(e);
-      const std = { ms: 300, antw: { RecognitionStatus: "Success", DisplayText: "Satz " + (k + 1) + ".", Offset: 0, Duration: Math.round(dauerS * 1e7) } };
-      const r = window.__antworter ? window.__antworter(k, e, std) : std;
-      return new Promise((fertig) => setTimeout(() => fertig(r.antw), r.ms));
-    });
-    window.__wavB64 = (k) => {
-      const b = new Uint8Array(window.__anfr[k].buf); let s = "";
-      for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000));
-      return btoa(s);
+    window.__kette = [];
+    if (window.AusspracheP.zentralErkennen) {
+      const oE = window.AusspracheP.zentralErkennen;
+      window.AusspracheP.zentralErkennen = function (wav, o) { window.__kette.push({ ruf: performance.now(), bytes: wav && wav.size }); return oE.apply(this, arguments); };
+    }
+    const oF = window.fetch;
+    window.fetch = function (u, o) {
+      if (/functions\/v1\/aussprache/.test(String(u))) { const k = window.__kette[window.__kette.length - 1]; if (k && !k.fetch) { k.fetch = performance.now(); k.body = (o && o.body && o.body.length) || 0; } }
+      return oF.apply(this, arguments);
     };
   });
   await pg.waitForFunction(() => window.__bMess.some((m) => m[1] !== null), null, { timeout: 8000 }).catch(() => {});
   const strom = await pg.evaluate(() => window.Rueckfrage.diktatStrom ? Object.assign({}, window.Rueckfrage.diktatStrom) : null);
 
-  const feld = () => pg.evaluate(() => document.querySelector(".rf-vorschlag-text").value);
-  const stand = () => pg.evaluate(() => ({
-    knopf: document.querySelector(".rf-vorschlag .rf-mik").textContent,
-    live: (document.querySelector(".rf-vorschlag .rf-live") || {}).textContent || "",
-    feld: document.querySelector(".rf-vorschlag-text").value,
-    anfr: window.__anfr.length, runden: window.__rfRunden }));
+  const feld = () => pg.evaluate(() => (document.querySelector(".rf-vorschlag-text") || {}).value);
+  const stand = async () => Object.assign(await pg.evaluate(() => {
+    const k = document.querySelector(".rf-vorschlag .rf-mik");
+    return { knopf: k ? k.textContent : "", live: (document.querySelector(".rf-vorschlag .rf-live") || {}).textContent || "",
+      feld: (document.querySelector(".rf-vorschlag-text") || {}).value, runden: window.__rfRunden };
+  }), { anfr: Z.anfr.length });
   const tipp = () => pg.locator(".rf-vorschlag .rf-mik").click();
+  const meldungen = (re) => pg.evaluate((q) => window.__rf.funk.map((f) => f.text).filter((t) => new RegExp(q).test(t)), re);
   /* Ein Fall: frische Spur, Feld leer, Zentrale zurücksetzen, Zahlen merken */
-  async function vorbereiten(einst) {
-    await pg.evaluate((einst) => {
-      window.__neueSpur();
+  async function vorbereiten(einst, art) {
+    Z.anfr = []; Z.antworter = null;
+    await pg.evaluate(([einst, art]) => {
+      try { localStorage.removeItem("dma_diktat_strom_tag"); localStorage.removeItem("dma_diktat_strom_sperre"); } catch (e) {}
+      window.__still();
+      window.__neueSpur(art);
       const t = document.querySelector(".rf-vorschlag-text"); t.value = ""; t.dispatchEvent(new Event("input"));
-      window.__anfr = []; window.__antworter = null; window.__wavZeit = []; window.__raus = []; window.__rfRunden = 0; window.__klone = [];
+      window.__wavZeit = []; window.__kette = []; window.__raus = []; window.__rfRunden = 0; window.__klone = [];
       window.__ctxVorher = window.__ctxe.length;
       if (window.Rueckfrage.diktatStrom && einst) Object.assign(window.Rueckfrage.diktatStrom, einst);
-    }, einst || null);
-    await schlaf(150);
+    }, [einst || null, art || "normal"]);
+    await schlaf(400);
   }
   async function zuruecksetzen() {
     if (strom) await pg.evaluate((s) => Object.assign(window.Rueckfrage.diktatStrom, s), strom);
@@ -315,7 +400,9 @@ async function einLauf(br, url) {
     return pg.waitForFunction(() => document.querySelector(".rf-vorschlag .rf-mik").textContent === "🎤", null, { timeout: ms || 8000 })
       .then(() => true, () => false);
   }
-  async function stoppen() { const s = await stand(); if (s.knopf !== "🎤") { await tipp(); if (!(await bisEnde(4000))) { await tipp(); await bisEnde(2000); } } }
+  async function stoppen() { const s = await stand(); if (s.knopf && s.knopf !== "🎤") { await tipp(); if (!(await bisEnde(4000))) { await tipp(); await bisEnde(2000); } } }
+  /* nach dem alten Weg: das Mikrofon kommt nicht zurück in eine Spur, die der nächste Fall schon ersetzt hat */
+  async function altAufraeumen() { await stoppen(); await pg.evaluate(() => window.LiveChat.pruefLageSetzen("aus")); await schlaf(600); }
   /* Hören die anderen in den Sätzen etwas? (B: totalAudioEnergy steigt) */
   async function hoerbar() {
     return pg.evaluate(() => {
@@ -333,13 +420,14 @@ async function einLauf(br, url) {
       return { je, luecke: Math.round(luecke) };
     });
   }
+  const DREI = [[0.5, 2.5], [5.2, 2.5], [9.9, 2.5]];
 
   /* ---------- Fall A: drei Sätze, Pausen 2,2 s, 16-kHz-Kontext ---------- */
   console.log("\nA  drei Sätze (2,5 s, Pause 2,2 s), Antwortzeiten 1,5 / 0,2 / 0,7 s");
   await vorbereiten({ rate16k: true });
-  await pg.evaluate(() => { window.__antworter = (k, e, std) => ({ ms: [1500, 200, 700][k] || 300, antw: std.antw }); });
+  Z.antworter = (k, e, std) => ({ ms: [1500, 200, 700][k] || 300, antw: std.antw });
   await tipp();
-  await pg.evaluate(() => window.__sprich([[0.5, 2.5], [5.2, 2.5], [9.9, 2.5]]));
+  await pg.evaluate((p) => window.__sprich(p), DREI);
   await schlaf(1500);
   const a1 = await pg.evaluate(() => {
     const t = window.__live, l = window.LiveChat.lage();
@@ -353,40 +441,43 @@ async function einLauf(br, url) {
   sage(a1.spur === "live" && a1.an === true, "1  Die Original-Spur lebt und ist an", a1.spur + "/" + a1.an);
   sage(a1.stumm === 0, "1  Kein „stumm“ an die anderen", a1.stumm + " Pakete");
   sage(/höre zu/.test(a1.live), "1  „Ich höre zu …“ steht da", a1.live + " · Kontext " + a1.ctx);
-  await pg.waitForFunction(() => window.__anfr.length >= 3 && /Satz 3/.test(document.querySelector(".rf-vorschlag-text").value), null, { timeout: 16000 }).catch(() => {});
+  await warteBis(async () => Z.anfr.length >= 3 && /Satz 3/.test(await feld()), 16000);
   await schlaf(400);
   const aH = await hoerbar();
   sage(aH.je.length === 3 && aH.je.every((x) => x > 0) && aH.luecke <= 1000,
     "2  HÖRBAR: bei B kommt in jedem Satz Ton an, keine Lücke > 1 s", "Energie je Satz " + aH.je.map((x) => x.toExponential(2)).join(" / ") + ", längste Lücke " + aH.luecke + " ms");
   const aS = await stand();
   sage(aS.anfr === 3, "3  Drei Sätze = drei Anfragen (geschnitten an den Pausen)", aS.anfr + " Anfragen");
-  const aW = [];
-  for (let k = 0; k < aS.anfr; k++) aW.push(wavLesen(await pg.evaluate((k) => window.__wavB64(k), k)));
+  const aW = Z.anfr.map((e) => e.w);
   const kopfOk = aW.length && aW.every((w) => w.kopf.riff === "RIFF" && w.kopf.wave === "WAVE" && w.kopf.pcm === 1 && w.kopf.kanaele === 1 && w.kopf.rate === 16000 && w.kopf.bits === 16 && w.kopf.data === "data");
   sage(kopfOk && aW.every((w) => w.dauer <= 55), "3  Jede WAV: RIFF, 16 kHz, mono, 16 Bit, ≤ 55 s", aW.map((w) => w.dauer.toFixed(2) + " s").join(", "));
   const vorn = aW.map((w) => anfang(w.x) / 16000);
   sage(vorn.length && vorn.every((v) => v >= 0 && v <= 0.45), "3  Höchstens ~0,4 s Stille vorn", vorn.map((v) => v.toFixed(2) + " s").join(", "));
+  const aK = Z.anfr[0] || {};
+  sage(Z.anfr.length && Z.anfr.every((e) => e.aktion === "erkennen" && e.sprache === "de-DE" && e.zeitgrenze === 40000 && e.marke === "Bearer sonde-marke"),
+    "3  Echte Kette bis ins Netz: „erkennen“, de-DE, Zeitgrenze 40 s, mit Anmeldemarke", aK.aktion + " / " + aK.sprache + " / " + aK.zeitgrenze + " / " + aK.marke);
   const aSp = aW.length ? spektrum(aW[0]) : null;
   sage(aSp && aSp.falten < 0.01 && aSp.tief >= 0.95 && aSp.hoch >= 0.95,
     "4  16-kHz-Kontext: kein Falten (5-kHz-Rest < 1 %), 1 kHz und 5,5 kHz ≥ 95 %",
     aSp ? "5 kHz/1 kHz " + aSp.falten.toFixed(5) + ", 1 kHz " + (aSp.tief * 100).toFixed(1) + " %, 5,5 kHz " + (aSp.hoch * 100).toFixed(1) + " %" : "keine WAV");
   sage(aS.feld === "Satz 1. Satz 2. Satz 3.", "5  Feld in der richtigen Reihenfolge (Antwortzeiten verschieden)", JSON.stringify(aS.feld));
   sage(aS.knopf === "⏹", "   Das Diktat läuft weiter (Knopf ⏹)", aS.knopf);
+  const aZ = await pg.evaluate(() => { try { return JSON.parse(localStorage.getItem("dma_diktat_strom_tag")); } catch (e) { return null; } });
+  sage(aZ && Math.abs(aZ.s - aW.reduce((s, w) => s + w.dauer, 0)) < 0.3, "   Die gesendeten Sekunden werden gezählt (Tagesmenge)", JSON.stringify(aZ) + " · gesendet " + aW.reduce((s, w) => s + w.dauer, 0).toFixed(1) + " s");
   await stoppen();
   const aE = await stand();
   sage(aE.knopf === "🎤" && /Steht im Feld/.test(aE.live), "   ⏹ ohne offenes Stück: sofort „✓ Steht im Feld …“", aE.live);
 
-  /* ---------- Fall B: Gerätefrequenz, Pausen 1,2 s ---------- */
+  /* ---------- Fall B: Gerätefrequenz, Pausen 1,0 s ---------- */
   console.log("\nB  Gerätefrequenz (rate16k = false), drei Sätze mit 1,0 s Pause");
   await vorbereiten({ rate16k: false });
   await tipp();
   await pg.evaluate(() => window.__sprich([[0.5, 2.5], [4.0, 2.5], [7.5, 2.5]]));
-  await pg.waitForFunction(() => window.__anfr.length >= 2 && /Satz 2/.test(document.querySelector(".rf-vorschlag-text").value), null, { timeout: 16000 }).catch(() => {});
+  await warteBis(async () => Z.anfr.length >= 2 && /Satz 2/.test(await feld()), 16000);
   await schlaf(300);
   const bS = await stand();
   const bRate = await pg.evaluate(() => window.__ctxe.slice(window.__ctxVorher).map((c) => c.sampleRate).join(","));
-  const bW = [];
-  for (let k = 0; k < bS.anfr; k++) bW.push(wavLesen(await pg.evaluate((k) => window.__wavB64(k), k)));
+  const bW = Z.anfr.map((e) => e.w);
   sage(bS.anfr === 2 && bW.length === 2 && bW[0].dauer > 6 && bW[1].dauer < 4,
     "3  Mit 1,0 s Pause: Satz 1+2 in einem Stück (unter 4 s wird an keiner Pause geschnitten), Satz 3 allein",
     bS.anfr + " Anfragen: " + bW.map((w) => w.dauer.toFixed(2) + " s").join(", ") + " · Kontext " + bRate + " Hz");
@@ -394,8 +485,8 @@ async function einLauf(br, url) {
   sage(bSp && bW.every((w) => w.kopf.rate === 16000) && bSp.falten < 0.01 && bSp.tief >= 0.95 && bSp.hoch >= 0.95,
     "4  Gerätefrequenz + alsWav (Tiefpass 882): kein Falten, 1 kHz und 5,5 kHz ≥ 95 %",
     bSp ? "5 kHz/1 kHz " + bSp.falten.toFixed(5) + ", 1 kHz " + (bSp.tief * 100).toFixed(1) + " %, 5,5 kHz " + (bSp.hoch * 100).toFixed(1) + " %" : "keine WAV");
-  const bT = await pg.evaluate(() => window.__anfr.map((a) => ((a.t - window.__ton.saetze[0][0]) / 1000).toFixed(2)).join(", "));
-  console.log("       Anfragen bei " + bT + " s nach Satz 1 · Stille vorn " + bW.map((w) => (anfang(w.x) / 16000).toFixed(2)).join(", ") + " s");
+  const bT0 = await pg.evaluate(() => window.__ton.t0);
+  console.log("       Anfragen bei " + Z.anfr.map((e) => ((e.t - bT0) / 1000).toFixed(2)).join(", ") + " s nach dem Plan-Start · Stille vorn " + bW.map((w) => (anfang(w.x) / 16000).toFixed(2)).join(", ") + " s");
   const bZeit = await pg.evaluate(() => window.__wavZeit.map((z) => z[0] + " Hz " + (z[1] / z[0]).toFixed(1) + " s → " + z[2].toFixed(1) + " ms").join("; "));
   console.log("       alsWav: " + (bZeit || "–"));
   await stoppen();
@@ -406,9 +497,9 @@ async function einLauf(br, url) {
   await vorbereiten();
   await tipp();
   const klonVorher = await pg.evaluate(() => window.__live.id);
-  await pg.evaluate(() => window.__sprich([[0.5, 2.5], [5.2, 2.5], [9.9, 2.5]]));
+  await pg.evaluate((p) => window.__sprich(p), DREI);
   await schlaf(9900 + 50 + 1200);
-  await pg.waitForFunction(() => window.__anfr.length >= 2, null, { timeout: 3000 }).catch(() => {});
+  await warteBis(() => Z.anfr.length >= 2, 3000);
   await tipp();
   await schlaf(60);
   const cMitte = await stand();
@@ -424,23 +515,20 @@ async function einLauf(br, url) {
   sage(cS.knopf === "🎤" && /✓ Steht im Feld/.test(cS.live), "6  Danach „✓ Steht im Feld …“, Knopf wieder 🎤", cS.live);
   sage(cE.ctx.length >= 1 && cE.ctx.every((s) => s === "closed"), "6  Der Kontext des Diktats ist geschlossen", cE.ctx.join(","));
   sage(cE.live === "live/true" && cE.lc === "false/true", "6  Die Original-Spur lebt weiter, nichts ausgeliehen", cE.live + " · geliehen/tonAn " + cE.lc + " · " + klonVorher.slice(0, 8));
-  /* Klon beendet? Der Klon ist eine eigene Spur – über die Liste der Live-Spuren nicht zu sehen; nachgemessen über
-     einen Tonspur-Spion: jede von tonSpurKlon gelieferte Spur wird gemerkt. */
   const cK = await pg.evaluate(() => (window.__klone || []).map((k) => k.readyState).join(","));
   if (cK) sage(cK.split(",").every((s) => s === "ended"), "6  Der Klon ist beendet", cK);
 
   /* ---------- Fall D: harter Schnitt ---------- */
   console.log("\nD  harter Schnitt: stueckMaxMs = 3000, 7 s Dauerrede");
-  sage(strom && strom.stueckMaxMs <= 55000 && strom.stueckMaxMs === 55000, "7  Im Original: stueckMaxMs ≤ 55000", strom ? String(strom.stueckMaxMs) : "kein diktatStrom");
+  sage(strom && strom.stueckMaxMs === 55000, "7  Im Original: stueckMaxMs = 55000", strom ? String(strom.stueckMaxMs) : "kein diktatStrom");
   await vorbereiten({ stueckMaxMs: 3000 });
   await tipp();
   await pg.evaluate(() => window.__sprich([[0.5, 7]]));
   await schlaf(500 + 7000 + 2600);
-  await pg.waitForFunction(() => !document.querySelector(".rf-vorschlag-text").value.endsWith("…") && window.__anfr.length >= 3, null, { timeout: 4000 }).catch(() => {});
+  await warteBis(() => Z.anfr.length >= 3, 4000);
   await schlaf(500);
   const dS = await stand();
-  const dW = [];
-  for (let k = 0; k < dS.anfr; k++) dW.push(wavLesen(await pg.evaluate((k) => window.__wavB64(k), k)));
+  const dW = Z.anfr.map((e) => e.w);
   sage(dS.anfr >= 3 && dW.every((w) => w.dauer <= 3.0), "7  ≥ 3 Stücke, jedes ≤ 3 s", dS.anfr + " Stücke: " + dW.map((w) => w.dauer.toFixed(2)).join(" / ") + " s");
   await stoppen();
   await zuruecksetzen();
@@ -448,36 +536,202 @@ async function einLauf(br, url) {
   /* ---------- Fall E: Nachschub ---------- */
   console.log("\nE  Nachschub: die Antwort deckt nur die erste Hälfte ab");
   await vorbereiten();
-  await pg.evaluate(() => {
-    window.__antworter = (k, e, std) => k === 0
-      ? { ms: 300, antw: { RecognitionStatus: "Success", DisplayText: "Teil A.", Offset: 0, Duration: Math.round(e.dauerS / 2 * 1e7) } }
-      : { ms: 300, antw: { RecognitionStatus: "Success", DisplayText: "Teil B.", Offset: 0, Duration: Math.round(e.dauerS * 1e7) } };
-  });
+  Z.antworter = (k, e, std) => k === 0
+    ? { ms: 300, antw: { RecognitionStatus: "Success", DisplayText: "Teil A.", Offset: 0, Duration: Math.round(e.dauerS / 2 * 1e7) } }
+    : { ms: 300, antw: { RecognitionStatus: "Success", DisplayText: "Teil B.", Offset: 0, Duration: Math.round(e.dauerS * 1e7) } };
   await tipp();
   await pg.evaluate(() => window.__sprich([[0.5, 4]]));
-  await pg.waitForFunction(() => window.__anfr.length >= 2 && /Teil B/.test(document.querySelector(".rf-vorschlag-text").value), null, { timeout: 12000 }).catch(() => {});
+  await warteBis(async () => Z.anfr.length >= 2 && /Teil B/.test(await feld()), 12000);
   await schlaf(300);
   const eS = await stand();
-  const eD = await pg.evaluate(() => window.__anfr.map((a) => a.dauerS.toFixed(2)).join(" → "));
-  const eDz = await pg.evaluate(() => window.__anfr.map((a) => a.dauerS));
-  sage(eS.anfr === 2 && eDz[1] < eDz[0] && eS.feld === "Teil A. Teil B.", "8  Zweite Anfrage mit dem Rest, beide Texte im Feld", eS.anfr + " Anfragen (" + eD + " s), " + JSON.stringify(eS.feld));
+  const eD = Z.anfr.map((a) => a.dauerS);
+  sage(eS.anfr === 2 && eD[1] < eD[0] && eS.feld === "Teil A. Teil B.", "8  Zweite Anfrage mit dem Rest, beide Texte im Feld", eS.anfr + " Anfragen (" + eD.map((x) => x.toFixed(2)).join(" → ") + " s), " + JSON.stringify(eS.feld));
   await stoppen();
 
-  /* ---------- Fall F: Tagesgrenze ---------- */
-  console.log("\nF  Fehler „tagesgrenze“ beim zweiten Stück");
+  /* ---------- Fall E2: Nachschub ohne Fortschritt ---------- */
+  console.log("\nE2 Nachschub ohne Fortschritt: die Antwort deckt nur 0,1 s ab");
   await vorbereiten();
-  await pg.evaluate(() => {
-    window.__antworter = (k, e, std) => k === 0 ? std : { ms: 200, antw: { fehler: "tagesgrenze", grenze: 300 } };
-  });
+  Z.antworter = () => ({ ms: 200, antw: { RecognitionStatus: "Success", DisplayText: "Ja.", Offset: 0, Duration: 1000000 } });
   await tipp();
-  await pg.evaluate(() => window.__sprich([[0.5, 2.5], [5.2, 2.5]]));
-  await bisEnde(14000);
-  await schlaf(200);
+  await pg.evaluate(() => window.__sprich([[0.5, 2.5]]));
+  await warteBis(async () => /Ja\./.test(await feld()), 9000);
+  await schlaf(2500);
+  const e2S = await stand();
+  sage(e2S.anfr === 1 && e2S.feld === "Ja.", "8b Genau EINE Anfrage, „Ja.“ steht einmal da (kein Stück mehrfach hinaus)", e2S.anfr + " Anfragen (" + Z.anfr.map((a) => a.dauerS.toFixed(2)).join(" / ") + " s), " + JSON.stringify(e2S.feld));
+  await stoppen();
+
+  /* ---------- Fall E3: Azures Ende 0,1 s vor dem hörbaren Ende ---------- */
+  console.log("\nE3 Azures Zeitangabe endet 0,1 s vor dem hörbaren Ende (Endkonsonant, Nachhall)");
+  await vorbereiten();
+  Z.antworter = (k, e, std) => {
+    const von = Math.max(0, anfang(e.w.x) / 16000), bis = Math.max(von, hoerbarEnde(e.w.x) - 0.1);
+    return { ms: 300, antw: { RecognitionStatus: "Success", DisplayText: "Satz " + (k + 1) + ".", Offset: Math.round(von * 1e7), Duration: Math.round((bis - von) * 1e7) } };
+  };
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI);
+  await warteBis(async () => /Satz 3/.test(await feld()), 16000);
+  await schlaf(1500);
+  const e3S = await stand();
+  sage(e3S.anfr === 3 && e3S.feld === "Satz 1. Satz 2. Satz 3.", "8c Drei Sätze bleiben drei Anfragen (kein Nachschub aus Nachhall)", e3S.anfr + " Anfragen (" + Z.anfr.map((a) => a.dauerS.toFixed(2)).join(" / ") + " s), " + JSON.stringify(e3S.feld));
+  await stoppen();
+
+  /* ---------- Fall E4: Grenze von 4 Nachschüben ---------- */
+  console.log("\nE4 Nachschub-Grenze: jede Antwort deckt nur 1 s ab, 7 s Rede");
+  await vorbereiten();
+  Z.antworter = (k) => ({ ms: 150, antw: { RecognitionStatus: "Success", DisplayText: "Teil " + (k + 1) + ".", Offset: 0, Duration: 10000000 } });
+  await tipp();
+  await pg.evaluate(() => window.__sprich([[0.5, 7]]));
+  await warteBis(async () => Z.anfr.length >= 5 && /Teil 5/.test(await feld()), 16000);
+  await schlaf(1200);
+  const e4S = await stand();
+  const e4M = await meldungen("strom-nachschub-grenze");
+  sage(e4S.anfr === 5 && e4S.feld === "Teil 1. Teil 2. Teil 3. Teil 4. Teil 5.", "8d Höchstens 4 Nachschübe (5 Anfragen), jeder kürzer", e4S.anfr + " Anfragen (" + Z.anfr.map((a) => a.dauerS.toFixed(2)).join(" → ") + " s), " + JSON.stringify(e4S.feld));
+  sage(e4M.length === 1, "8d … und bleibt danach Sprache übrig: Meldung strom-nachschub-grenze", (e4M[0] || "keine").slice(0, 110));
+  await stoppen();
+
+  /* ---------- Fall M: Walkie zugeklappt ---------- */
+  console.log("\nM  Walkie mitten im 2. Satz zugeklappt (✕)");
+  await vorbereiten();
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI);
+  await schlaf(6500);
+  await pg.locator(".rf-zu").click();
+  await schlaf(13500 - 6500);
+  const mE = await pg.evaluate(() => ({
+    klon: (window.__klone || []).map((k) => k.readyState).join(","),
+    ctx: window.__ctxe.slice(window.__ctxVorher).map((c) => c.state).join(","),
+    live: window.__live.readyState }));
+  const mN = Z.anfr.length;
+  sage(mN === 2, "12b Nach ✕ geht nur noch das schon Gesprochene hinaus (Satz 3 nicht mehr)", mN + " Anfragen");
+  sage(/^(ended,?)+$/.test(mE.klon) && /^(closed,?)+$/.test(mE.ctx) && mE.live === "live", "12b Klon beendet, Kontext zu, Original lebt", "Klon " + mE.klon + ", Kontext " + mE.ctx + ", Original " + mE.live);
+  await pg.evaluate(() => window.Rueckfrage.aufzu(true));
+  await pg.waitForSelector(".rf-vorschlag .rf-mik", { timeout: 5000 });
+  const mS = await stand();
+  sage(mS.feld === "Satz 1. Satz 2." && mS.knopf === "🎤", "12b Nach dem Aufklappen: der Text steht im Feld, Knopf 🎤", JSON.stringify(mS.feld) + " · " + mS.knopf);
+
+  /* ---------- Fall N: Raum verlassen ---------- */
+  console.log("\nN  Raum mitten im 2. Satz verlassen");
+  await vorbereiten();
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI);
+  await schlaf(6500);
+  await pg.evaluate(() => window.LiveChat.pruefLageSetzen("aus"));
+  await schlaf(13500 - 6500);
+  const nE = await pg.evaluate(() => (window.__klone || []).map((k) => k.readyState).join(","));
+  const nS = await stand();
+  sage(nS.anfr === 2 && nS.feld === "Satz 1. Satz 2.", "12c Nach dem Verlassen: nur noch das schon Gesprochene, dann Ende", nS.anfr + " Anfragen, " + JSON.stringify(nS.feld));
+  sage(nS.knopf === "🎤" && /^(ended,?)+$/.test(nE), "12c Knopf 🎤, Klon beendet", nS.knopf + " · Klon " + nE);
+  await stoppen();
+
+  /* ---------- Fall R: ⏹ ohne Gesprochenes ---------- */
+  console.log("\nR  ⏹ nach 1,5 s, ohne zu sprechen");
+  await vorbereiten();
+  await tipp();
+  await schlaf(1500);
+  await tipp();
+  await bisEnde(3000);
+  const rS = await stand();
+  sage(rS.anfr === 0 && rS.knopf === "🎤" && /Ich habe nichts gehört – nochmal 🎤 und gleich sprechen\./.test(rS.live),
+    "10c Ohne Gesprochenes: „Ich habe nichts gehört – nochmal 🎤 …“ (wie beim Browser-Diktat)", rS.anfr + " Anfragen · " + JSON.stringify(rS.live));
+
+  /* ---------- Fall K: einmal „kontingent“ ---------- */
+  console.log("\nK  einmal 429 „kontingent“ beim 2. Stück");
+  await vorbereiten();
+  Z.antworter = (k, e, std) => k === 1 ? { ms: 100, status: 429, antw: { fehler: "kontingent" } }
+    : { ms: 300, antw: Object.assign({}, std.antw, { DisplayText: "Satz " + (k === 0 ? 1 : k) + "." }) };
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI);
+  await warteBis(async () => /Satz 3/.test(await feld()), 20000);
+  await schlaf(300);
+  const kS = await stand();
+  const kM = await meldungen("strom-kontingent");
+  sage(kS.feld === "Satz 1. Satz 2. Satz 3." && kS.anfr === 4 && kS.runden === 0, "9b Nach 2,5 s noch einmal: nichts verloren, kein alter Weg", kS.anfr + " Anfragen, " + JSON.stringify(kS.feld) + ", " + kS.runden + " Starts");
+  sage(kS.knopf === "⏹" && kM.length === 0, "9b Das Diktat läuft weiter, keine Meldung", kS.knopf + " · " + kM.length + " Meldungen");
+  if (Z.anfr.length >= 3) console.log("       Wiederholung nach " + ((Z.anfr[2].t - Z.anfr[1].t) / 1000).toFixed(2) + " s");
+  await stoppen();
+
+  /* ---------- Fall O1: die Kopie liefert nur Nullen ---------- */
+  console.log("\nO1 die Live-Spur liefert nur Nullen");
+  await vorbereiten(null, "tot");
+  await tipp();
+  await schlaf(4300);
+  const o1S = await stand();
+  const o1M = await meldungen("strom-nullen");
+  sage(o1S.runden === 1 && o1S.anfr === 0, "10b Nur Nullen: nach 3 s der alte Weg", o1S.runden + " Starts, " + o1S.anfr + " Anfragen, Feld " + JSON.stringify(o1S.feld));
+  sage(o1M.length === 1, "10b Meldung strom-nullen", (o1M[0] || "keine").slice(0, 140));
+  await altAufraeumen();
+
+  /* ---------- Fall O2: zu leise ---------- */
+  console.log("\nO2 die Live-Spur ist zu leise (Sprache unter der Schwelle 0,012)");
+  await vorbereiten(null, "leise");
+  await tipp();
+  await schlaf(7200);
+  const o2S = await stand();
+  const o2M = await meldungen("strom-still");
+  sage(o2S.runden === 1 && o2S.anfr === 0, "10b 6 s nichts Lautes: der alte Weg", o2S.runden + " Starts, " + o2S.anfr + " Anfragen");
+  sage(o2M.length === 1 && /max rms=0\.0\d+/.test(o2M[0]), "10b Meldung strom-still mit max rms", (o2M[0] || "keine").slice(0, 140));
+  await altAufraeumen();
+
+  /* ---------- Fall F: Tagesgrenze ---------- */
+  console.log("\nF  „tagesgrenze“ beim zweiten Stück");
+  await vorbereiten();
+  Z.antworter = (k, e, std) => k === 0 ? std : { ms: 200, status: 429, antw: { fehler: "tagesgrenze", grenze: 300 } };
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI);
+  await warteBis(async () => (await stand()).runden >= 1, 14000);
+  await schlaf(400);
   const fS = await stand();
-  const fF = await pg.evaluate(() => window.__rf.funk.map((f) => f.text).filter((t) => /strom-tagesgrenze/.test(t)));
-  sage(fS.knopf === "🎤" && /aufgebraucht/.test(fS.live), "9  Endet sichtbar mit Grund", fS.live);
-  sage(fS.feld === "Satz 1.", "9  Der Text bis dahin bleibt", JSON.stringify(fS.feld));
-  sage(fF.length === 1 && /^\[automatisch\] Diktat-Fehler: strom-tagesgrenze \(nr=1/.test(fF[0]), "9  Meldung im Funk", (fF[0] || "keine").slice(0, 110));
+  const fF = await meldungen("strom-tagesgrenze");
+  const fSp = await pg.evaluate(() => { try { return JSON.parse(localStorage.getItem("dma_diktat_strom_sperre")); } catch (e) { return null; } });
+  sage(fS.runden === 1 && fS.knopf === "⏹", "9  Das Diktat geht auf dem alten Weg weiter", fS.runden + " Starts · " + fS.knopf + " · " + JSON.stringify(fS.live));
+  sage(fS.feld === "Satz 1. Alter weg", "9  Der Text bis dahin bleibt und ist der Anfang", JSON.stringify(fS.feld));
+  sage(fF.length === 1 && /^\[automatisch\] Diktat-Fehler: strom-tagesgrenze \(nr=1/.test(fF[0]), "9  Meldung im Funk", (fF[0] || "keine").slice(0, 120));
+  sage(fSp && fSp.grund === "tagesgrenze" && fSp.bis > Date.now(), "9  Der Strom-Weg ruht bis Mitternacht (UTC)", fSp ? new Date(fSp.bis).toISOString() : "keine Sperre");
+  await stoppen();
+  const fVor = Z.anfr.length;
+  await pg.evaluate(() => { window.__rfRunden = 0; window.LiveChat.pruefLageSetzen("drin"); });
+  await tipp();
+  await schlaf(500);
+  const fN = await stand();
+  sage(fN.runden === 1 && Z.anfr.length === fVor, "9  Der nächste 🎤 nimmt gleich den alten Weg", fN.runden + " Starts, " + (Z.anfr.length - fVor) + " neue Anfragen");
+  await altAufraeumen();
+
+  /* ---------- Fall K2: dauernd „kontingent“ ---------- */
+  console.log("\nK2 dauernd 429 „kontingent“ (Pause hier 0,5 s statt 2,5 s)");
+  await vorbereiten({ kontingentMs: 500 });
+  Z.antworter = (k, e, std) => k === 0 ? std : { ms: 100, status: 429, antw: { fehler: "kontingent" } };
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI.slice(0, 2));
+  await warteBis(async () => (await stand()).runden >= 1, 16000);
+  await schlaf(400);
+  const k2S = await stand();
+  const k2M = await meldungen("strom-kontingent");
+  sage(k2S.runden === 1 && Z.anfr.length === 4 && k2S.feld === "Satz 1. Alter weg", "9c Nach 3 Versuchen der alte Weg, der Text bleibt", k2S.runden + " Starts, " + Z.anfr.length + " Anfragen, " + JSON.stringify(k2S.feld));
+  sage(k2M.length === 1 && /versuche=3/.test(k2M[0]), "9c Meldung strom-kontingent", (k2M[0] || "keine").slice(0, 130));
+  await altAufraeumen();
+  await zuruecksetzen();
+
+  /* ---------- Fall L: Tagesmenge ---------- */
+  console.log("\nL  Tagesmenge (hier 4 s statt 300 s)");
+  await vorbereiten({ tagesSekunden: 4 });
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI);
+  await warteBis(async () => (await stand()).runden >= 1, 16000);
+  await schlaf(400);
+  const lS = await stand();
+  const lM = await meldungen("strom-tagesmenge");
+  sage(lS.runden === 1 && Z.anfr.length === 2 && lS.feld === "Satz 1. Satz 2. Alter weg", "9d Das schon Gesprochene wird noch aufgeschrieben, dann der alte Weg", lS.runden + " Starts, " + Z.anfr.length + " Anfragen, " + JSON.stringify(lS.feld));
+  sage(lM.length === 1, "9d Meldung strom-tagesmenge", (lM[0] || "keine").slice(0, 120));
+  await stoppen();
+  const lVor = Z.anfr.length;
+  await pg.evaluate(() => { window.__rfRunden = 0; window.LiveChat.pruefLageSetzen("drin"); });
+  await tipp();
+  await schlaf(500);
+  const lN = await stand();
+  sage(lN.runden === 1 && Z.anfr.length === lVor, "9d Der nächste 🎤 nimmt gleich den alten Weg", lN.runden + " Starts, " + (Z.anfr.length - lVor) + " neue Anfragen");
+  await altAufraeumen();
+  await zuruecksetzen();
+  sage(strom && strom.tagesSekunden === 300, "9d Im Original: 300 s (5 min) gesendete Sprache am Tag", strom ? String(strom.tagesSekunden) : "–");
 
   /* ---------- Fall G: stumm geschaltet ---------- */
   console.log("\nG  stumm geschaltet (tonUmschalten), dann diktieren");
@@ -486,7 +740,7 @@ async function einLauf(br, url) {
   const gV = await pg.evaluate(() => window.__live.enabled + "/" + window.LiveChat.lage().tonAn);
   await tipp();
   await pg.evaluate(() => window.__sprich([[0.5, 2.5]]));
-  await pg.waitForFunction(() => /Satz 1/.test(document.querySelector(".rf-vorschlag-text").value), null, { timeout: 9000 }).catch(() => {});
+  await warteBis(async () => /Satz 1/.test(await feld()), 9000);
   const gH = await hoerbar();
   const gS = await stand();
   sage(gV === "false/false" && gS.feld === "Satz 1.", "12 Stumm: das Diktat hört trotzdem (Klon an)", "Original an/tonAn " + gV + ", Feld " + JSON.stringify(gS.feld));
@@ -495,7 +749,7 @@ async function einLauf(br, url) {
   await pg.evaluate(() => window.LiveChat.tonUmschalten());
 
   /* ---------- Fall H: 30 s Leistung ---------- */
-  console.log("\nH  Leistung: 30-s-Diktat (16-kHz-Kontext)");
+  console.log("\nH  Leistung: 30-s-Diktat (16-kHz-Kontext), echte Kette bis zum Netz");
   await vorbereiten();
   const hT0 = await pg.evaluate(() => performance.now());
   await tipp();
@@ -506,9 +760,32 @@ async function einLauf(br, url) {
   const hT1 = await pg.evaluate(() => performance.now());
   const hL = await pg.evaluate(([a, b]) => window.__lange.filter((l) => l.t >= a && l.t <= b).map((l) => Math.round(l.d)), [hT0, hT1]);
   const hZ = await pg.evaluate(() => window.__wavZeit.map((z) => z[2]));
+  const hK = await pg.evaluate(() => window.__kette.filter((k) => k.fetch).map((k) => k.fetch - k.ruf));
   const hS = await stand();
-  sage(hL.every((d) => d <= 100), "13 Keine lange Aufgabe > 100 ms während des Diktats", (hL.length ? hL.join(", ") + " ms" : "keine langen Aufgaben") + " · " + hS.anfr + " Stücke");
+  sage(hS.anfr >= 3 && hL.every((d) => d <= 100), "13 Keine lange Aufgabe > 100 ms während des Diktats", (hL.length ? hL.join(", ") + " ms" : "keine langen Aufgaben") + " · " + hS.anfr + " Stücke");
   console.log("       alsWav je Stück (16 kHz): " + (hZ.length ? hZ.map((z) => z.toFixed(1)).join(" / ") + " ms" : "–"));
+  console.log("       zentralErkennen → fetch (Base64 + JSON): " + (hK.length ? hK.map((z) => z.toFixed(1)).join(" / ") + " ms" : "–"));
+
+  /* ---------- Fall H2: EIN großes Stück (nur im Quellen-Lauf) ---------- */
+  if (lauf === "quelle") {
+    console.log("\nH2 Leistung: 50 s Dauerrede = EIN Stück von ~50 s");
+    await vorbereiten();
+    const h2T0 = await pg.evaluate(() => performance.now());
+    await tipp();
+    await pg.evaluate(() => window.__sprich([[0.5, 50]]));
+    await warteBis(() => Z.anfr.length >= 1, 60000);
+    await schlaf(1500);
+    await stoppen();
+    const h2T1 = await pg.evaluate(() => performance.now());
+    const h2L = await pg.evaluate(([a, b]) => window.__lange.filter((l) => l.t >= a && l.t <= b).map((l) => Math.round(l.d)), [h2T0, h2T1]);
+    const h2K = await pg.evaluate(() => window.__kette.map((k) => ({ ms: k.fetch ? k.fetch - k.ruf : null, wav: k.bytes, body: k.body })));
+    const h2Z = await pg.evaluate(() => window.__wavZeit.map((z) => z[2]));
+    const e0 = Z.anfr[0] || { dauerS: 0, b64Laenge: 0 };
+    sage(Z.anfr.length >= 1 && e0.dauerS > 45 && e0.dauerS <= 55 && h2L.every((d) => d <= 100),
+      "13 Ein Stück von ~50 s: keine lange Aufgabe > 100 ms (alsWav + Base64 + JSON)",
+      "Stück " + e0.dauerS.toFixed(1) + " s, WAV " + ((h2K[0] || {}).wav / 1e6).toFixed(2) + " MB, Körper " + (((h2K[0] || {}).body || 0) / 1e6).toFixed(2) + " MB · lange Aufgaben " + (h2L.length ? h2L.join(", ") + " ms" : "keine"));
+    console.log("       alsWav " + (h2Z[0] !== undefined ? h2Z[0].toFixed(1) : "–") + " ms · zentralErkennen → fetch " + (h2K[0] && h2K[0].ms !== null ? h2K[0].ms.toFixed(1) : "–") + " ms");
+  }
 
   /* ---------- Fall J: außerhalb des Livestreams ---------- */
   console.log("\nJ  außerhalb des Livestreams");
@@ -525,14 +802,13 @@ async function einLauf(br, url) {
   await vorbereiten();
   await pg.evaluate(() => { window.__wHaengt = true; });
   await tipp();
-  await schlaf(3700);
+  await schlaf(4200);
   const iS = await stand();
-  const iF = await pg.evaluate(() => window.__rf.funk.map((f) => f.text).filter((t) => /strom-kein-start/.test(t)));
+  const iF = await meldungen("strom-kein-start");
   sage(iS.runden === 1, "10 Rückfall auf den alten Weg (Browser-Erkennung startet)", iS.runden + " Starts, Feld " + JSON.stringify(iS.feld));
   sage(iF.length === 1, "10 Meldung strom-kein-start im Funk", (iF[0] || "keine").slice(0, 110));
   await pg.evaluate(() => { window.__wHaengt = false; });
-  await stoppen();
-  await schlaf(500);
+  await altAufraeumen();
 
   sage(seitenfehler.length === 0, "14 Keine Seitenfehler", seitenfehler.slice(0, 3).join(" | "));
   await ctx.close();

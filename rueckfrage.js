@@ -150,6 +150,7 @@ window.Rueckfrage = (function () {
   }
 
   function weg() {
+    stromBeimZuklappen();   /* FASSUNG 884 (Nachbesserung) */
     if (reiter) { reiter.remove(); reiter = null; }
     if (leiste) { leiste.remove(); leiste = null; }
   }
@@ -247,6 +248,8 @@ window.Rueckfrage = (function () {
     document.body.classList.toggle("rf-leiste-auf", istOffen());
 
     if (!istOffen()) {
+      /* FASSUNG 884 (Nachbesserung): zugeklappt – ein Diktat aus dem Strom hört nicht unsichtbar weiter */
+      stromBeimZuklappen();
       if (leiste) { leiste.remove(); leiste = null; }
       return;
     }
@@ -538,12 +541,26 @@ window.Rueckfrage = (function () {
     diktat = null;
     if (!d) return;
     /* FASSUNG 884: Diktat aus dem Strom – Kontext, Klon und Uhren freigeben (siehe unten) */
-    if (d.strom) { stromAufraeumen(d); clearTimeout(d.bremseUhr); }
+    if (d.strom) {
+      stromAufraeumen(d);
+      clearTimeout(d.bremseUhr);
+      clearTimeout(d.spaeterUhr);
+      if (window.__dmaDiktatMik === d.mik) window.__dmaDiktatMik = null;
+      /* Nichts aufgeschrieben: derselbe Satz wie beim Browser-Diktat („no-speech") – und einmal die Zahlen an mich,
+         damit ich sehe, ob überhaupt Ton kam (Nachbesserung, siehe unten). */
+      if (hinweis === undefined && !d.gehoert && !d.danachAlt) {
+        hinweis = STROM_NICHTS;
+        if (d.an && Date.now() - d.anSeit >= 2000) diktatFehlerMelden("strom-nichts", stromZahlen(d));
+      }
+    }
     /* FASSUNG 698: hat der Livestream sein Mikrofon ausgeliehen, bekommt er es jetzt zurück. */
     if (d.geliehen) { try { window.LiveChat.mikrofonZurueck(); } catch (e) {} }
     var feld = diktatFeld(d.klasse);
     diktatKnopfZeigen(d.klasse, false,
       hinweis !== undefined ? hinweis : (feld && feld.value.trim() ? "\u2713 Steht im Feld \u2013 jetzt \u201eSenden\u201c." : ""));
+    /* FASSUNG 884 (Nachbesserung): trägt der Strom-Weg gerade nicht (Tagesmenge, Grenze, Kontingent …), geht das Diktat
+       gleich auf dem alten Weg weiter – der Text bis hier steht schon im Feld und wird dessen Anfang. */
+    if (d.strom && d.danachAlt) diktatStarten(d.klasse, true);
   }
   /* =====================================================================
      FASSUNG 884 — DIKTAT IM LIVESTREAM: AUS DEM LAUFENDEN STROM
@@ -564,16 +581,35 @@ window.Rueckfrage = (function () {
          der letzten 3 s, der Rest beginnt das nächste Stück.
        - An die Zentrale eins nach dem anderen: die Reihenfolge stimmt, Upload und Rechenlast verteilen sich.
        - Schreibt Azure nur bis zur ersten Pause auf (Offset + Duration vor dem Ende), geht der Rest nach (höchstens 4×).
-       - Was keine 0,3 s Sprache hat, geht gar nicht erst hinaus (schont die Tagesgrenze von 300 je Tag).
-       - Kommt aus dem Klon in 3 s kein einziger Block, gilt der alte Weg (Browser-Erkennung, Mikrofon ausleihen) –
-         schlechter als bis hier wird es also nie.
+       - Was keine 0,3 s Sprache hat, geht gar nicht erst hinaus (schont Kontingent und Tagesgrenze).
      Gleich bleiben 🎤 (er erscheint wie bisher nur, wo es die Browser-Erkennung gibt), ⏹, das Feld und die Hinweiszeile.
      Anders: der Text kommt satzweise nach einer kurzen Pause statt Wort für Wort, und nach ⏹ steht kurz „Einen Moment –
      ich schreibe noch auf …“. Außerhalb des Livestreams (oder ohne Live-Tonspur, ohne Zentrale) bleibt alles wie bisher.
+     NACHBESSERUNG (Prüfung desselben Abends) – fünf Lücken, alle ohne sichtbare Änderung geschlossen:
+       1. Das GEMEINSAME Azure-Kontingent. Das Diktat läuft über denselben zentralen Schlüssel wie der Aussprache-Trainer
+          und die Stadt-Quests aller Lernenden (Tarif F0: 5 Audiostunden im Monat, eine Anfrage zur Zeit; welcher Tarif
+          gilt, lässt sich von hier nicht prüfen). Deshalb höchstens 5 Minuten gesendete Sprache am Tag
+          (STROM.tagesSekunden, im Gerät gezählt): höchstens 2,5 h im Monat und rund 60 Anfragen am Tag – von der
+          Tagesgrenze 300 bleibt der größte Teil für den Trainer. Gemessen (azure_nutzung): September 381 Anfragen von
+          3 Personen, Höchststand 173 an einem Tag. Ist die Tagesmenge voll, und bei „tagesgrenze“, bei „kontingent“
+          nach zwei Wiederholungen (2,5 s / 5 s), ohne Anmeldung oder ohne Schlüssel: der ALTE Weg (Browser-Erkennung,
+          Mikrofon leihen) – das Diktat geht weiter, der Text bis hier bleibt, eine Meldung geht an mich, und der
+          Strom-Weg ruht (bis Mitternacht UTC bzw. 30 min).
+       2. Walkie zu (✕), Feld weg oder Raum verlassen: das Diktat endet sofort (das schon Gesprochene wird noch
+          aufgeschrieben, auch ins zugeklappte Feld) – es hört nicht mehr unsichtbar bis zu 5 min weiter.
+       3. Nachschub nur mit echtem Fortschritt: erst ab 0,5 s Erkanntem, geschnitten genau am Ende des Erkannten, und nur,
+          wenn danach (ab 0,2 s Abstand – der Nachhall des letzten Worts zählt nicht) noch ≥ 0,3 s Sprache kommt. Wird
+          die Grenze (4) erreicht und es bleibt Sprache übrig: Meldung „strom-nachschub-grenze“.
+       4. Stille Fehlschläge: liefert die Kopie 3 s lang nur Nullen, kommt in 6 s kein einziger lauter Block, oder stockt
+          der Strom 6 s lang (sichtbare Seite) – alter Weg bzw. Ende, immer mit Meldung (max rms …). ⏹ ohne Erkanntes:
+          „Ich habe nichts gehört …“ wie beim Browser-Diktat.
+       5. Fehler zeigen dieselben Sätze wie das Browser-Diktat; neu ist nur „Einen Moment – ich schreibe noch auf …“.
      ===================================================================== */
   var STROM = { blockMs: 100, pauseMs: 700, langePauseMs: 2000, stueckMinMs: 4000, stueckMaxMs: 55000,
                 vorlaufMs: 300, nachlaufMs: 300, mindestSprechMs: 300, hoechstMs: 300000, rate16k: true, schwelle: 0.012,
-                startMs: 3000, zeitgrenze: 40000, bremseMs: 45000 };
+                startMs: 3000, stillMs: 6000, stocktMs: 6000, zeitgrenze: 40000, bremseMs: 45000,
+                tagesSekunden: 300, kontingentMs: 2500, sperreMs: 1800000,
+                nachschubAbS: 0.5, nachschubAbstandS: 0.2, nachschubHoechst: 4 };
   /* Der Worklet-Baustein als Text (Blob-Adresse): keine eigene Datei, nichts lädt nach. Er sammelt n Abtastwerte und
      reicht sie als ganzen Block an die Seite (übertragen, nicht kopiert). */
   var STROM_WORKLET = "registerProcessor('dma-diktat',class extends AudioWorkletProcessor{" +
@@ -582,12 +618,14 @@ window.Rueckfrage = (function () {
     "if(this.i===this.n){this.port.postMessage(this.b,[this.b.buffer]);this.b=new Float32Array(this.n);this.i=0}}}" +
     "return true}})";
   var STROM_NETZ = ["netz", "zeit-abgelaufen", "dienst", "antwort-unlesbar"];
-  var STROM_WEG = "Die Spracherkennung ist gerade nicht verfügbar – bitte tippen.";
-  var STROM_AUS = {
-    "tagesgrenze": "Für heute ist die Spracherkennung aufgebraucht – bitte tippen.",
-    "nicht-angemeldet": "Zum Diktieren im Livestream bitte anmelden.",
-    "kein-zentraler-schluessel": STROM_WEG, "kontingent": STROM_WEG, "schluessel-falsch": STROM_WEG, "keine-verbindung": STROM_WEG
-  };
+  /* Hier trägt der Strom-Weg gerade nicht: weiter auf dem alten Weg (und eine Weile gesperrt, siehe stromSperren) */
+  var STROM_ALT = ["tagesgrenze", "kontingent", "nicht-angemeldet", "kein-zentraler-schluessel", "schluessel-falsch",
+                   "keine-verbindung"];
+  /* Dieselben Sätze wie beim Browser-Diktat (mik.onerror) – keine neuen Texte */
+  var STROM_NICHTS = "Ich habe nichts gehört – nochmal 🎤 und gleich sprechen.";
+  var STROM_KEIN_NETZ = "Die Spracherkennung braucht Netz – gerade keins.";
+  var SPEICHER_STROM_TAG = "dma_diktat_strom_tag";       /* { tag, s } – gesendete Sekunden heute */
+  var SPEICHER_STROM_SPERRE = "dma_diktat_strom_sperre"; /* { bis, grund } */
   function diktatStromMoeglich() {
     var A = window.AusspracheP;
     try {
@@ -595,14 +633,45 @@ window.Rueckfrage = (function () {
         A.zentralErkennen && A.zentralMoeglich && A.zentralMoeglich());
     } catch (e) { return false; }
   }
+  function stromHeute() { var t = new Date(); return t.getFullYear() + "-" + (t.getMonth() + 1) + "-" + t.getDate(); }
+  function stromVerbraucht() {
+    var w = lesen(SPEICHER_STROM_TAG, null);
+    return w && w.tag === stromHeute() ? Number(w.s) || 0 : 0;
+  }
+  function stromZaehlen(s) {
+    merken(SPEICHER_STROM_TAG, { tag: stromHeute(), s: Math.round((stromVerbraucht() + s) * 10) / 10 });
+  }
+  /* Die Tagesgrenze der Zentrale zählt nach dem Datum der Datenbank (UTC) – bis dahin ruht der Strom-Weg; sonst 30 min. */
+  function stromSperren(code) {
+    var bis = Date.now() + STROM.sperreMs;
+    if (code === "tagesgrenze") { var m = new Date(); m.setUTCHours(24, 0, 0, 0); bis = m.getTime(); }
+    merken(SPEICHER_STROM_SPERRE, { bis: bis, grund: code });
+  }
+  function stromFrei() {
+    var s = lesen(SPEICHER_STROM_SPERRE, null);
+    if (s && Date.now() < Number(s.bis)) return false;
+    var v = stromVerbraucht();
+    if (v >= STROM.tagesSekunden) {
+      diktatFehlerMelden("strom-tagesmenge", "s=" + Math.round(v) + " von " + STROM.tagesSekunden + ", alter Weg");
+      return false;
+    }
+    return true;
+  }
+  function stromZahlen(d) {
+    return "rate=" + d.rate + ", max rms=" + (d.hoechst || 0).toFixed(4) + ", schwelle=" + STROM.schwelle +
+      ", laut=" + (d.lautJe ? 1 : 0) + ", nullen=" + (d.nurNullen ? 1 : 0) + ", stuecke=" + d.nr + ", ms=" + (Date.now() - d.seit);
+  }
   function stromLeise(p) { if (p && p.catch) p.catch(function () {}); }
   function diktatAusStrom(klasse, feld, klon) {
     var AC = window.AudioContext || window.webkitAudioContext;
-    var d = { strom: true, mik: null, klasse: klasse, anfang: feld.value.replace(/\s*$/, ""), an: false, gehoert: false,
-              seit: Date.now(), teile: [], schlange: [], laeuft: 0, nr: 0, vorrat: [], vorratMs: 0, spitze: 0,
-              stueck: null, stoppen: false, klon: klon, rate: 0 };
-    /* ⏹ ruft mik.stop(), ein neuer Start mik.abort() – wie bei der Browser-Erkennung */
-    d.mik = { stop: function () { stromStoppen(d); }, abort: function () { stromStoppen(d, true); } };
+    var d = { strom: true, mik: null, klasse: klasse, feld: feld, anfang: feld.value.replace(/\s*$/, ""), an: false,
+              anSeit: 0, gehoert: false, seit: Date.now(), teile: [], schlange: [], laeuft: 0, nr: 0, vorrat: [],
+              vorratMs: 0, spitze: 0, hoechst: 0, lautJe: false, nurNullen: true, letzterBlock: 0, stueck: null,
+              stoppen: false, danachAlt: false, klon: klon, rate: 0 };
+    /* ⏹ ruft mik.stop(), ein neuer Start mik.abort() – wie bei der Browser-Erkennung. Wer selbst stoppt, will nicht
+       auf dem alten Weg weiter. */
+    d.mik = { stop: function () { d.danachAlt = false; stromStoppen(d); },
+              abort: function () { d.danachAlt = false; stromStoppen(d, true); } };
     diktat = d;
     window.__dmaDiktatMik = d.mik;
     diktatKnopfZeigen(klasse, true, "Mikrofon wird eingeschaltet …");
@@ -650,20 +719,59 @@ window.Rueckfrage = (function () {
         }).catch(ersatz);
       } catch (e) { ersatz(); }
     } else ersatz();
-    /* Wächter: kommt in 3 s kein einziger Block, der alte Weg */
-    d.waechterUhr = setTimeout(function () {
-      if (diktat !== d || d.an || d.aufgeraeumt) return;
-      stromRueckfall(d, "strom-kein-start", "rate=" + d.rate + ", knoten=" +
-        (d.knoten ? (d.knoten.port ? "worklet" : "ersatz") : "keiner") + ", ctx=" + d.ctx.state);
-    }, STROM.startMs);
+    /* Die Wache (alle 0,5 s): Start, Nullen, Stille, Stocken, Raum und Feld – siehe stromWache */
+    d.wacheUhr = setInterval(function () { stromWache(d); }, 500);
     d.hoechstUhr = setTimeout(function () { if (diktat === d) stromStoppen(d); }, STROM.hoechstMs);
     klon.onended = function () { if (diktat === d) stromStoppen(d); };
+  }
+  /* NACHBESSERUNG 2 und 4: was der Wächter (3 s ohne Block) nicht sah – Nullen, Stille, ein stockender Strom, der Raum
+     ist verlassen, das Walkie zu. Kein Fall bleibt mehr stumm: entweder der alte Weg oder ein Ende, immer mit Meldung. */
+  function stromWache(d) {
+    if (diktat !== d || d.aufgeraeumt) { clearInterval(d.wacheUhr); return; }
+    var jetzt = Date.now();
+    if (!d.an) {
+      /* kein einziger Block in 3 s: der alte Weg */
+      if (jetzt - d.seit >= STROM.startMs) {
+        stromRueckfall(d, "strom-kein-start", "rate=" + d.rate + ", knoten=" +
+          (d.knoten ? (d.knoten.port ? "worklet" : "ersatz") : "keiner") + ", ctx=" + d.ctx.state);
+      }
+      return;
+    }
+    if (d.stoppen) return;
+    /* Die Kopie liefert nur Nullen (Spur an der Quelle stumm, Mikrofon von einer anderen App belegt): der alte Weg */
+    if (d.nurNullen && jetzt - d.anSeit >= STROM.startMs) { stromRueckfall(d, "strom-nullen", stromZahlen(d)); return; }
+    /* 6 s kein einziger lauter Block – zu leise, oder es kommt kein Ton an: der alte Weg (so war es bis hier immer) */
+    if (!d.lautJe && jetzt - d.anSeit >= STROM.stillMs) { stromRueckfall(d, "strom-still", stromZahlen(d)); return; }
+    /* Raum verlassen, Walkie zu, Feld weg: Ende – das schon Gesprochene wird noch aufgeschrieben */
+    var drin = true;
+    try { drin = !(window.LiveChat && LiveChat.istDrin) || Boolean(LiveChat.istDrin()); } catch (e) {}
+    if (!drin || !diktatFeld(d.klasse)) { stromStoppen(d); return; }
+    /* Der Strom stockt (Kontext angehalten): wecken; bleibt er bei sichtbarer Seite 6 s aus, Ende mit Meldung */
+    var stille = jetzt - d.letzterBlock;
+    if (stille > 1500) { try { if (d.ctx && d.ctx.state === "suspended") stromLeise(d.ctx.resume()); } catch (e) {} }
+    if (stille > STROM.stocktMs && !document.hidden) {
+      diktatFehlerMelden("strom-stockt", "ctx=" + (d.ctx ? d.ctx.state : "-") + ", " + stromZahlen(d));
+      stromStoppen(d);
+    }
   }
   function stromRueckfall(d, code, text) {
     stromAufraeumen(d);
     if (diktat === d) diktat = null;
+    if (window.__dmaDiktatMik === d.mik) window.__dmaDiktatMik = null;
     diktatFehlerMelden(code, text);
     diktatStarten(d.klasse, true);
+  }
+  /* NACHBESSERUNG 1: der Strom-Weg trägt gerade nicht. Was schon gesprochen ist, wird – wenn es noch geht – zu Ende
+     aufgeschrieben (verwerfen = es ginge doch nicht mehr), dann geht das Diktat auf dem alten Weg weiter. Hat man
+     selbst schon gestoppt (⏹, ✕, Raum verlassen), bleibt es beim Ende. */
+  function stromWechsel(d, code, info, verwerfen) {
+    if (verwerfen) {
+      info += ", verworfen=" + (d.schlange.length + (d.stueck ? 1 : 0));
+      d.stueck = null; d.schlange = [];
+    }
+    diktatFehlerMelden(code, info);
+    if (!d.stoppen) d.danachAlt = true;
+    stromStoppen(d);
   }
   function stromStueck(d, bloecke, laut, pegel) {
     var st = { bloecke: bloecke, laut: laut, pegel: pegel, n: 0, sprechMs: 0, stillMs: 0 };
@@ -677,17 +785,21 @@ window.Rueckfrage = (function () {
   function stromBlock(d, daten) {
     if (diktat !== d || d.aufgeraeumt || !daten || !daten.length) return;
     var ms = daten.length / d.rate * 1000;
+    d.letzterBlock = Date.now();
     if (!d.an) {
       d.an = true;
-      clearTimeout(d.waechterUhr);
+      d.anSeit = d.letzterBlock;
       diktatKnopfZeigen(d.klasse, true, "Ich höre zu … sprich einfach.");
     }
     var s = 0;
     for (var i = 0; i < daten.length; i++) s += daten[i] * daten[i];
     var rms = Math.sqrt(s / daten.length);
+    if (rms > 0) d.nurNullen = false;
+    if (rms > d.hoechst) d.hoechst = rms;
     /* Die Spitze sinkt langsam (Halbwert 20 s): ein einzelner Knall hebt die Schwelle nicht für den Rest. */
     d.spitze = Math.max(rms, d.spitze * Math.pow(0.5, ms / 20000));
     var laut = rms > Math.max(STROM.schwelle, d.spitze * 0.1);
+    if (laut) d.lautJe = true;
     var st = d.stueck;
     if (!st) {
       if (!laut) {
@@ -762,6 +874,12 @@ window.Rueckfrage = (function () {
     window.AusspracheP.zentralErkennen(wav, { zeitgrenze: STROM.zeitgrenze }).then(function (antw) {
       stromAntwort(d, a, antw);
     }, function () { stromAntwort(d, a, { fehler: "netz" }); });
+    /* NACHBESSERUNG 1: jede gesendete Sekunde zählt (Wiederholungen nicht doppelt). Ist die Tagesmenge voll, wird das
+       schon Gesprochene noch aufgeschrieben, dann geht es auf dem alten Weg weiter. */
+    if (!a.gezaehlt) { a.gezaehlt = 1; stromZaehlen(a.daten.length / d.rate); }
+    if (!d.stoppen && stromVerbraucht() >= STROM.tagesSekunden) {
+      stromWechsel(d, "strom-tagesmenge", "s=" + Math.round(stromVerbraucht()) + " von " + STROM.tagesSekunden + ", alter Weg", false);
+    }
   }
   function stromAntwort(d, a, antw) {
     d.laeuft = 0;
@@ -775,50 +893,72 @@ window.Rueckfrage = (function () {
       d.gehoert = true;
       stromSchreiben(d);
     }
-    /* Nachschub: liegt hinter dem, was Azure aufgeschrieben hat, noch ≥ 0,3 s Sprache, geht der Rest nach. */
-    if (antw.RecognitionStatus === "Success" && a.nachschub < 4) {
-      var ende = (Number(antw.Offset) || 0) + (Number(antw.Duration) || 0);
-      var ab = Math.round(Math.max(0, ende / 1e7 - 0.15) * d.rate);
-      if (ende > 0 && ab < a.daten.length) {
-        var rest = [], sprech = 0;
+    /* Nachschub: liegt hinter dem, was Azure aufgeschrieben hat, noch Sprache, geht der Rest nach.
+       NACHBESSERUNG 3: nur mit echtem Fortschritt (≥ 0,5 s erkannt, Schnitt genau am Ende des Erkannten – vorher
+       begann er 0,15 s davor, mitten im letzten Wort, und bei „Ende ≤ 0,15 s“ ging dasselbe Stück bis zu 4× hinaus),
+       und Sprache zählt erst 0,2 s hinter dem Erkannten (der Nachhall des letzten Worts ist keine neue Rede). */
+    if (antw.RecognitionStatus === "Success" && text) {
+      var ende = ((Number(antw.Offset) || 0) + (Number(antw.Duration) || 0)) / 1e7;
+      var ab = Math.round(ende * d.rate), spaet = ab + Math.round(STROM.nachschubAbstandS * d.rate);
+      var rest = [], sprech = 0;
+      if (ende >= STROM.nachschubAbS && ab < a.daten.length) {
         a.laut.forEach(function (z) {
           var von = Math.max(z[0], ab), bis = z[0] + z[1];
           if (bis <= von) return;
           rest.push([von - ab, bis - von, z[2]]);
-          if (z[2]) sprech += (bis - von) / d.rate * 1000;
+          if (z[2]) sprech += Math.max(0, bis - Math.max(von, spaet)) / d.rate * 1000;
         });
-        if (sprech >= STROM.mindestSprechMs) {
-          d.schlange.unshift({ nr: a.nr, daten: a.daten.subarray(ab), laut: rest, nachschub: a.nachschub + 1 });
+      }
+      if (sprech >= STROM.mindestSprechMs) {
+        if (a.nachschub < STROM.nachschubHoechst) {
+          d.schlange.unshift({ nr: a.nr, daten: a.daten.subarray(ab), laut: rest, nachschub: a.nachschub + 1, gezaehlt: 0 });
+        } else {
+          diktatFehlerMelden("strom-nachschub-grenze", "nr=" + a.nr + ", rest=" + Math.round(sprech) + " ms Sprache, rate=" + d.rate);
         }
       }
     }
     stromWeiter(d);
   }
+  function stromSpaeter(d, a, ms) {
+    d.laeuft = 1;
+    d.spaeterUhr = setTimeout(function () { d.laeuft = 0; if (diktat !== d) return; d.schlange.unshift(a); stromWeiter(d); }, ms);
+  }
   function stromFehler(d, a, code) {
     var info = "nr=" + a.nr + (a.nachschub ? "." + a.nachschub : "") + ", rate=" + d.rate + ", ms=" +
       Math.round(a.daten.length / d.rate * 1000);
-    /* Netz: einmal nach 1 s noch einmal; bleibt es dabei, einmal sagen und weiter diktieren */
-    if (STROM_NETZ.indexOf(code) >= 0 && !a.wieder) {
-      a.wieder = 1;
-      d.laeuft = 1;
-      setTimeout(function () { d.laeuft = 0; if (diktat !== d) return; d.schlange.unshift(a); stromWeiter(d); }, 1000);
+    /* Netz: einmal nach 1 s noch einmal */
+    if (STROM_NETZ.indexOf(code) >= 0 && !a.wieder) { a.wieder = 1; stromSpaeter(d, a, 1000); return; }
+    /* NACHBESSERUNG 1: „kontingent“ (429) ist meist vorübergehend – bei F0 genügt EIN anderer, der gerade im Trainer
+       übt. Also nach 2,5 s und nach 5 s noch einmal, erst dann gilt es. */
+    if (code === "kontingent" && (a.kontingent || 0) < 2) {
+      a.kontingent = (a.kontingent || 0) + 1;
+      stromSpaeter(d, a, STROM.kontingentMs * a.kontingent);
+      return;
+    }
+    /* Tagesgrenze, Kontingent, Anmeldung, Schlüssel: der alte Weg (bis hier endete das Diktat mit „bitte tippen“) */
+    if (STROM_ALT.indexOf(code) >= 0) {
+      stromSperren(code);
+      stromWechsel(d, "strom-" + code, info + (a.kontingent ? ", versuche=" + (a.kontingent + 1) : "") + ", alter Weg", true);
       return;
     }
     diktatFehlerMelden("strom-" + code, info);
-    if (STROM_AUS[code]) { d.stoppen = true; stromAufraeumen(d); diktatEnde(STROM_AUS[code]); return; }
+    /* Ein Stück ging verloren (Netz, Dienst): einmal sagen – mit dem Satz des Browser-Diktats –, weiter diktieren */
     if (!d.verlorenGesagt) {
       d.verlorenGesagt = true;
-      diktatKnopfZeigen(d.klasse, true, STROM_NETZ.indexOf(code) >= 0 ? "Ein Stück kam nicht an (Netz)." : "Ein Stück kam nicht an.");
+      diktatKnopfZeigen(d.klasse, true, STROM_NETZ.indexOf(code) >= 0 ? STROM_KEIN_NETZ : "Die Spracherkennung meldet: " + code);
     }
     stromWeiter(d);
   }
   /* wie bei der Browser-Erkennung: Anfang + alles Erkannte, groß beginnen nach Satzende; immer ins Feld, das GERADE
-     auf dem Bildschirm ist (auch wenn das Walkie inzwischen neu gebaut wurde) */
+     auf dem Bildschirm ist (auch wenn das Walkie inzwischen neu gebaut wurde). NACHBESSERUNG 2: ist das Walkie
+     zugeklappt, in das zuletzt benutzte Feld – sein „input“ legt den Text in den Entwurf, und beim Aufklappen steht
+     er wieder da. */
   function stromSchreiben(d) {
     var neu = d.teile.filter(Boolean).join(" ");
     if (neu && (!d.anfang || /[.!?]$/.test(d.anfang))) neu = neu.charAt(0).toUpperCase() + neu.slice(1);
-    var ziel = diktatFeld(d.klasse);
+    var ziel = diktatFeld(d.klasse) || d.feld;
     if (ziel) {
+      d.feld = ziel;
       ziel.value = (d.anfang ? d.anfang + (neu ? " " : "") : "") + neu;
       ziel.dispatchEvent(new Event("input"));
     }
@@ -834,10 +974,14 @@ window.Rueckfrage = (function () {
     diktatKnopfZeigen(d.klasse, true, "Einen Moment – ich schreibe noch auf …");
     d.bremseUhr = setTimeout(function () { if (diktat === d) diktatEnde(); }, STROM.bremseMs);
   }
+  /* NACHBESSERUNG 2: zugeklappt (✕, Reiter) oder kein Betreiber mehr – ein laufendes Diktat aus dem Strom endet */
+  function stromBeimZuklappen() {
+    if (diktat && diktat.strom && !diktat.stoppen) stromStoppen(diktat);
+  }
   function stromAufraeumen(d) {
     if (d.aufgeraeumt) return;
     d.aufgeraeumt = true;
-    clearTimeout(d.waechterUhr);
+    clearInterval(d.wacheUhr);
     clearTimeout(d.hoechstUhr);
     try { if (d.knoten) { if (d.knoten.port) d.knoten.port.onmessage = null; d.knoten.onaudioprocess = null; d.knoten.disconnect(); } } catch (e) {}
     try { if (d.quelle) d.quelle.disconnect(); } catch (e) {}
@@ -860,7 +1004,8 @@ window.Rueckfrage = (function () {
     if (!ohneStrom) {
       var klon = null;
       try { klon = window.LiveChat && LiveChat.tonSpurKlon ? LiveChat.tonSpurKlon() : null; } catch (e) {}
-      if (klon && diktatStromMoeglich()) { diktatAusStrom(klasse, feld, klon); return; }
+      /* Nachbesserung 1: nur solange die Tagesmenge reicht und der Strom-Weg nicht ruht (stromFrei) */
+      if (klon && diktatStromMoeglich() && stromFrei()) { diktatAusStrom(klasse, feld, klon); return; }
       if (klon) { try { klon.stop(); } catch (e) {} }
     }
     var mik = new Erkenner();
@@ -1029,7 +1174,8 @@ window.Rueckfrage = (function () {
     var Erkenner = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (Erkenner) {
       var laeuft = Boolean(diktat && diktat.klasse === klasse);
-      var live = el("div", "rf-live", laeuft ? "Ich h\u00f6re zu \u2026" : "");
+      /* FASSUNG 884: wird das Walkie während des Nachschreibens neu gebaut, steht dort weiter „Einen Moment …“ */
+      var live = el("div", "rf-live", laeuft ? (diktat.strom && diktat.stoppen ? "Einen Moment \u2013 ich schreibe noch auf \u2026" : "Ich h\u00f6re zu \u2026") : "");
       var b = knopf("rf-mik" + (laeuft ? " rf-hoert" : ""), laeuft ? "\u23f9" : "\ud83c\udfa4", function () {
         if (diktat) {
           var d = diktat;
