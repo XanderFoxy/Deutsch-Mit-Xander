@@ -3770,3 +3770,72 @@ XANDER (Funk 302): „die Tiere im Zoo sehen so gut wie unmöglich aus … schau
 **Offen**
 - Schimpanse und Nashorn im Zoo (über der Größengrenze) – nach einer weiteren Entschlackung der Szene.
 - Tier-Bibliothek: fehlende Gruppen, schwächste Arten, Tier-Szenen je Lebensraum.
+
+## Fassung 884 — Messung bei echten Nutzern (Funk 255, Zusage Funk 258 Punkt 5)
+
+XANDER (Funk 255): „… dass auf beiden Seiten immer alles spielbar ist und niemals abstürzt und alles optimiert ist“. Zugesagt (Funk 258, Punkt 5): „Echte Messung bei echten Nutzern (Ladezeit, Abbrüche) statt nur bei mir.“
+
+Für Xander ändert sich nichts Sichtbares. Bisher kannten wir nur die Leitungs-Zeitleisten (`spiel_diagnose` „leitung“/„verbindung“). Wie lange die Seite bei seinen Leuten bis „bereit“ braucht, welche Fehler dort auftreten, ob eine Seite abstürzt und ob das Klassenzimmer ruckelt, wusste niemand. Die ersten Zahlen gibt es nach 2–3 Tagen.
+
+### Wie es gebaut ist (livechat.js und app.js unberührt)
+- **Mitschreiber in index.html** (Block direkt nach `DMA_STEMPEL`, ES5): `window.DMA_MESS` sammelt nur, sendet nichts und fasst weder Leitung noch DOM an.
+  - JS-Fehler (`error`, Capture-Phase), Ladefehler von SCRIPT/LINK und `unhandledrejection` – ohne `preventDefault`, die Konsole und `pageerror` sehen alles wie vorher.
+  - Langläufer per `PerformanceObserver('longtask')`, nur wenn der Browser den Typ kennt (sonst warnt Firefox).
+  - Echte Tipps auf „Wissen“ und „Klassenzimmer“ (`isTrusted`, höchstens 10): vom Tipp bis zum ersten Bild, in dem die Ansicht steht (rAF, dann `setTimeout 0`); nach 600 Bildern ohne Ansicht `-1`.
+  - Ab DOMContentLoaded ein Zuhörer `LiveChat.beiAenderung`: nur Lage, Zeit, Leute, Kamera, Hauptraum – nie das Lage-Objekt (es trägt alle Nachrichten). Damit zählt auch die Rückkehr in den Raum gleich nach dem Laden.
+  - `pagehide` vor DOMContentLoaded → Merker `dma-mess-abbruch` (Abbruch beim Laden). Eigenes Neuladen (`dmaMinFehlt`, neue Fassung über `fassung.json`) setzt vorher `DMA_MESS.selbst` und zählt nicht.
+- **Nachlader** im Startlisten-Block: `messung.js` kommt 4 s nach `load` in einer Ruhepause (`requestIdleCallback`), ohne `dmaMinFehlt` – fehlt die Messung, lädt die Seite deswegen nicht neu. min/messung.js und Stempel baut `fassung-setzen.js`.
+- **messung.js** wertet aus und sendet über `spiel_diagnose_senden` (wie `leitungSenden`, Fehler still geschluckt, nie `console.*`):
+  - `mess-start` (einmal je Seite, 20 s nach messung.js): `t` = ttfb, fcp, lcp, bereit (domContentLoadedEventEnd), load, drinAb; `tipp` (wissen/kz, je höchstens 3: [ab, ms, vor-bereit]); `kb`, `n`, `cache` (eigene Dateien bis „bereit“); `lt` = Langläufer bis bereit+5 s [Anzahl, Summe, längster]; `teile` (DMA_TEIL_SOFORT/FEHLER); `netz`, `ger`; `typ`, `neu`, `sw`, `hinten`; `bau` (Stempel von min/app.js oder „quelle“); `ua`; `vorher` (siehe unten); `fehler` bis dahin; `kosten` [Mitschreiber µs, Einrichten messung.js ms]. Typisch 0,5–0,6 KB.
+  - `mess-fehler` (gebündelt, 20 s nach dem ersten Fehler nach der Startzeile; eine zweite nur bei neuen Fehlern und frühestens 5 min später): je Fehler [Anzahl, Art, Text, Ort, erstes Mal ms]; Arten js/versprechen/laden/fremd („Script error.“); höchstens 8 verschiedene je Seite, der Rest nur gezählt (`fehlerMehr`). ResizeObserver-Schleifen zählen nicht. Ort = „Datei:Zeile:Spalte“ (bei Versprechen der erste eigene Rahmen im Stack).
+  - `mess-raum` (je Aufenthalt, beim Verlassen oder Raumwechsel; im Hintergrund als Teilzeile, wenn ≥ 2 min drin und die letzte Zeile ≥ 10 min her): `drin` (Betreten bis drin), `ab`, `dauer`, `kz` (Tipp ≤ 60 s davor), `fenster` = je 30 s [i, Summe, längster, Anzahl] (nur nicht-leere, höchstens 60), `anzahl`, `zaeh` (Fenster mit Summe ≥ 300 ms oder einem ≥ 200 ms), `ges`, `loaf` (die 3 längsten Bilder mit Datei, Zeichenstelle, Auslöser – nur Chrome), `inp` (die 3 langsamsten Eingaben ≥ 104 ms – nur Chrome), `uhr` (1 = ohne longtask: Ersatzmessung über den Versatz eines 500-ms-Takts, iPhone/Firefox), `luecke`, `mb`, `leute`, `bild`, `haupt`, `teil`, `spaet`.
+- **Absturz-Indiz (Laufbuch `dma-mess-lauf`)**: jede Seite schreibt alle 30 s (nur sichtbar), bei Sichtwechsel und bei `pagehide` (`zu: 1`), höchstens 6 Einträge. Die nächste Seite ordnet jeden nie geschlossenen Eintrag ein:
+  - dieselbe Registerkarte (`sessionStorage dma-mess-tab` überlebt „Aw, Snap“ + Neuladen) → sicher tot;
+  - fremde Registerkarte, sichtbar und 3 min still → tot; im Hintergrund → Frage über `BroadcastChannel("dma-mess")`, ohne Antwort in 1 s tot (ohne BroadcastChannel erst nach 12 h).
+  - Meldung in `vorher`: `weg` (war sichtbar: Absturz, Akku, Zwangsbeenden), `hinten` (im Hintergrund weggeräumt, meist kein Absturz), `laden` (Abbruch vor DOMContentLoaded), mit Dauer, Minuten seitdem, ob im Raum, Speicher (Chrome), `verworfen` (`document.wasDiscarded`).
+  - Eine offene Raumzusammenfassung der toten oder geschlossenen Seite wird als `mess-raum` mit `spaet: 1` nachgesendet.
+
+### Was bewusst NICHT gesendet wird
+Namen, Raumnamen, Chat-Inhalte, Kennungen, Adressen. Fehlertexte werden gereinigt: E-Mail → ‹mail›, UUID → ‹id›, ≥ 5 Ziffern → ‹zahl›, Adressen → nur Dateiname, data:-Adressen → ‹data›, höchstens 140 Zeichen.
+
+### Tagesmengen
+- Je Seite höchstens 1 Start-, 2 Fehler-, 3 Raumzeilen. Je Gerät und Kalendertag höchstens 8 „mess-*“-Zeilen – aber nur, wenn der Server mit eigenem Zähler antwortet (`"mess": 12`). Antwortet der alte Server, bleibt der Client von selbst bei **3** am Tag, damit die Leitungs-Zeilen nicht verdrängt werden (der alte Server zählt 40 je Konto und 24 h über alle Arten; erreicht am 25.09., 02.10. und 03.10.).
+- „genug für heute“ vom Server stoppt das Senden bis zum nächsten Kalendertag.
+- Gäste senden nichts (die RPC verlangt eine Anmeldung). Ihre Zeilen warten in `dma-mess-kiste` (höchstens 3, höchstens 3 Tage) und gehen mit der nächsten Startzeile nach dem Anmelden raus (Feld `alt` = Minuten).
+- Prüfläufe (`navigator.webdriver`) senden nur mit `localStorage dma-mess-pruef`; alle anderen Sonden bleiben unberührt.
+
+### Datenbank (NICHT eingespielt – diese Sitzung darf nur lesen)
+- `supabase/fassung-884-messung.sql`: `spiel_diagnose_senden` zählt „mess-*“ (höchstens 12 je Konto und 24 h) und alles andere (wie bisher 40) getrennt und antwortet mit `"mess": 12`. Sonst unverändert (SECURITY DEFINER, Anmeldung nötig, > 6000 Zeichen → `zu_lang`, Rechte nur `authenticated`). Geprüft: `spiel_diagnose` hat keinen Constraint auf `art`, RLS an ohne Policies, nur die RPC schreibt.
+- Auswerte-Abfragen stehen am Ende derselben Datei (lesend gegen die echte Datenbank geprüft). Echter Beweis nach dem Ausliefern: `select art, count(*), max(zeit) from spiel_diagnose where art like 'mess-%' group by art`.
+
+### Kosten
+- Mitschreiber: ungebremst 0,1–0,3 ms, Rechner 4× gebremst Median ≈ 1 ms (0,2–2,4 ms). index.html wird 4,4 KB roh bzw. 1,6 KB gepackt größer (geschätzt waren 0,6 KB; den Großteil macht die Tipp-Messung, die vor messung.js laufen muss).
+- messung.js: 11,7 KB verkleinert, 5,1 KB gepackt, erst 4 s nach `load`; Einrichten 1,3–2,6 ms; kein langes Bild (LoAF) mit messung.js; kein DOM.
+- Dauerkosten: ein Zeitgeber alle 30 s (nur sichtbar, ~1 KB localStorage), ein O(1)-Zuhörer je `melden()`, im Klassenzimmer die Beobachter für longtask/LoAF/event.
+- Neu gegen alt (Sonde, Rechner 4× gebremst, je 9 Läufe): FCP 292 gegen 288 ms, DCL 648 gegen 681 ms (Median) – innerhalb der Streuung (FCP je Lauf 240–364 ms). Die geforderten „3 % oder 20 ms“ sind bei dieser Streuung nicht auflösbar; die Sonde prüft deshalb einseitig (nicht langsamer als 20 ms/3 %/halbe Streuung) und misst den Mitschreiber direkt.
+- `ladezeit-messen.js 4g` (je 2 Durchgänge, ein Lauf je Fall, Profiler an), neu gegen alt: kalt „bereit“ 1206/1085 gegen 1129/1056 ms, erstes Bild 440/500 gegen 448/448 ms, 564 gegen 562 KB bis „bereit“; warm 858/870 gegen 769/743 ms; wieder 780/873 gegen 761/787 ms. In allen sechs Paaren lag neu hinten (Mittel +71 ms). Das war Anlass für eine genauere Nachmessung (messung.js wird in diesen Läufen nie geladen – die Seite schließt vor load + 4 s; der einzige Unterschied ist der Mitschreiber):
+  - verschränkt je 8 Läufe, 4G, Rechner 4×, warm, ohne Profiler, „bereit“ in der Seite gemessen: Median 845 gegen 819 ms, paarweise +14 ms bei ±12 ms Standardfehler und ~140 ms Streuung je Lauf; DCL 701 gegen 681 ms, FCP 352 gegen 360 ms.
+  - longtask-Beobachter allein: 300 Aufgaben 2361 gegen 2374 ms (+0,5 %, im Rauschen).
+  - Ehrlich: ein Unterschied unter ~15 ms ist mit diesen Mitteln nicht auszuschließen; direkt gemessen kostet der Mitschreiber 0,7–1,3 ms bei 4× gebremstem Rechner, dazu 1,6 KB mehr index.html (gepackt).
+
+### Ehrliche Grenzen
+- Gäste werden nicht gemessen, solange sie sich nicht anmelden – gerade der kalte Erststart neuer Besucher fehlt damit. Gäste schreiben zu lassen hieße, `anon` schreiben zu lassen (Spam-Gefahr); nicht empfohlen.
+- longtask, LoAF, Event-Timing und `performance.memory` gibt es nur in Chromium (Android-Chrome, Samsung Internet, Edge, Desktop-Chrome). iPhone und Firefox bekommen nur die grobe Ersatzuhr (`uhr: 1`), ohne Datei.
+- Das Absturz-Indiz ist eine Schätzung: „hinten“ ist meist das System, das im Hintergrund aufräumt; „weg“ kann Absturz, Akku oder Zwangsbeenden sein. Eingefrorene Hintergrund-Tabs und Rechner, die ohne `visibilitychange` schlafen, können falsche Meldungen erzeugen. Privater Modus ohne localStorage: kein Laufbuch. Ein Absturz in den ersten 4 s nach dem Laden (vor messung.js) wird nicht erkannt. Die Sonde stellt einen Absturz nur mit `Page.crash` nach – ob ein Android-Speicherabsturz genauso aussieht, ist nicht beweisbar.
+- Seiten, die keine ~25 s offen bleiben, liefern keine Startzeile.
+- „Tipp bis Bild“ misst bis zum nächsten Bild nach dem Zeichnen (rAF + `setTimeout 0`), nicht bis zur Anzeige auf dem Glas. Programmklicks (z. B. aus dem Newsticker) werden nicht gemessen.
+- Fehlertexte können in seltenen Fällen eingesetzte Werte enthalten; die Reinigung senkt das Risiko, schließt es nicht ganz aus. In min-Dateien steht fast alles in Zeile 1: der Ort lässt sich nur über Spalte und `bau` (Stempel) dem genauen min-Stand in git zuordnen.
+- BroadcastChannel fehlt in Safari vor 15.4: dort wird ein verlorener Hintergrund-Tab erst nach 12 h gemeldet.
+
+### Sonden
+- Neu: `werkzeug/pruefe-884-messung.js` (A–J, 53 Prüfungen mit `ALT`, 49 ohne): Start unverändert (messung.js erst nach load + 3 s, vor DCL dieselben 41 Dateien wie vorher, Mitschreiber < 500 µs, messung.js < 5 ms, kein DOM, keine Konsolenfehler), Startzeile, echte Tipps, Fehler (50× derselbe → ein Eintrag n = 50, gereinigt, Ort; Versprechen; 8 + fehlerMehr; 63 Seitenfehler weiter sichtbar; ResizeObserver nicht gezählt), Klassenzimmer (zwei 1-s-Fenster mit je 180 ms, LoAF, „zäh“ erst bei 350 ms; Raum vor messung.js betreten/verlassen wird nachgespielt), Absturz (dieselbe Karte sichtbar → weg, im Hintergrund → hinten, fremde nach der Frist → weg, sauber geschlossen und lebende fremde Seite → nichts), Abbruch beim Laden (laden; neue Fassung zählt nicht), ohne Anmeldung (Kiste, danach genau einmal), Tagesdeckel 3/8 und „genug für heute“, Prüfläufe ohne Schalter senden nichts. Mit `ALT=<alter Stand>` zusätzlich FCP/DCL neu gegen alt. Grün.
+- Gegenprobe mit dem Stand vor 884 (`WURZEL=` index.html aus HEAD, Rest verlinkt): 42 rot (B–J und alles, was die Messung braucht), die Sonde läuft durch; grün bleiben nur die Erhaltungs-Prüfungen (keine Seitenfehler, nichts verschluckt).
+- Gegenprobe für einen beim Bauen gefundenen Fehler: wurden die gepufferten Raumwechsel vor dem Laufbuch nachgespielt, entstand ein Eintrag „undefined“ – jetzt nicht mehr (eigener Fall in E).
+- Grün geblieben: 876 (Start schlank), 867 (Spiel nach dem Start), 858 (Ladeweg), 861 und 871 (Leitungs-Zeilen weiter da), 859 (Kanal sofort), 840 (alte Bilderwelt; app.js unberührt).
+
+**Offen**
+- `supabase/fassung-884-messung.sql` von jemandem mit Schreibrecht einspielen (bis dahin sendet der Client höchstens 3 Zeilen am Tag).
+- Stadtseiten (`stadt.html`, `stadt-leicht.html`) werden nicht gemessen.
+- Gäste (siehe oben).
+- Source-Map bzw. Vorschlag `werkzeug/fehler-ort.js`: „Datei:Zeile:Spalte“ + Stempel über `git log` dem min-Stand und der nächsten Quellfunktion zuordnen.
+- Nach 2–3 Tagen die Auswerte-Abfragen laufen lassen und die ersten Zahlen an Xander funken.
