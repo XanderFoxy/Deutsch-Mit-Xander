@@ -4144,3 +4144,69 @@ XANDER (Walkie 313 / Funk 252): Klassenzimmer – kein Schwarzbild beim Öffnen 
 5. Werkstatt-Eintrag und Fassungsnummer beim Ausliefern von 884 (WIP-Stand).
 
 **Funk-Antwort (Entwurf)**: „Vollbild im Klassenzimmer (Walkie 313 / Funk 252): Wenn du das Klassenzimmer verlässt, ging bisher zuerst das Rollen zum neuen Bereich los und erst danach das Vollbild aus – Android baut dabei das ganze Fenster um, mitten in der Bewegung. Jetzt geht das Vollbild sofort beim Tippen aus, und gerollt wird erst, wenn es wirklich aus ist. Im Walkie-Talkie rollt das Schreibfeld beim Antippen jetzt von selbst über die Tastatur, statt darunter zu verschwinden; Größe und Aussehen der Leiste bleiben gleich. Ob das Schwarz damit ganz weg ist, kann ich hier nicht sehen – das zeigt nur dein Telefon. Wenn noch ein dunkler Streifen bleibt, hätte ich zwei Ideen, die man aber sieht: (1) die untere Android-Leiste im Vollbild stehen lassen, (2) das Vollbild erst kurz nach dem Umschalten beenden. Sag mir, was ich davon versuchen soll. Das Hängen im Gespräch („Warten oder Schließen“) ist ein anderer Fehler; den gehe ich bei der Verbindung an.“
+
+## Fassung 884 — Mikro rauscht: erst messen (Funk 191)
+
+XANDER (Funk 191, 27.09.): „außerdem rauscht das Mikro jetzt so komisch … schau doch mal bitte, was da los ist“. Seitdem nie untersucht – es gab keine einzige Zahl. Dieser Punkt ändert am Klang NICHTS (die Mikrofon-Einstellungen bleiben, wie sie sind: Live-Mikro mit `echoCancellation/noiseSuppression/autoGainControl: true`, Tor-Strom seit 829 per `applyConstraints` nachgezogen). Er misst nur – damit die nächste Änderung auf Zahlen steht. Aussehen, Größe und Bedienung bleiben; neu sind nur zwei Textstücke in der Antwort auf den Diagnosebefehl `/verbindung`.
+
+### Was geändert ist (nur livechat.js; app.js, index.html außer Stempel, DB unberührt)
+- **Wache je Leitung** (`leitungsWacheStarten`): liest aus ihrem ohnehin laufenden `getStats` (alle 2,5 s) zusätzlich die Empfangs-Tonspur (`inbound-rtp` audio, die mit den meisten Paketen) und das eigene Mikrofon (`media-source` audio) und reicht beides an `tonGueteMerken` weiter. Kein neuer `getStats`-Aufruf, kein neuer Zeitgeber, die 8-s-Warnung unverändert.
+- **Neuer Block** zwischen `wacheBeenden` und `verbindungsBericht`: `tonGueteMerken` (merkt die letzten Zähler je Leitung und je 2,5 s eine Pegelprobe – nicht bei stummem Gegenüber oder stummem Abspiel-Element, das meldet Pegel 0; das eigene Mikrofon höchstens eine Probe je 2 s, nur wenn es an ist; je 24 Proben ≈ 60 s), `tonGueteJe`, `mikEinstellungen` (`getSettings()` der eigenen Live-Spur), `mikNeben`, `tonGuete` (höchstens 8 Leitungen), Klartext `tonGueteText`/`mikText`. Alles mit try/catch: ein Fehler macht `null` bzw. `{da:-1}`, die Berichte gehen trotzdem.
+- **Bericht „verbindung“** (30 s nach dem Betreten, `aufbauSenden`): neues Feld `ton: { mik, je: { <id>: güte } }`.
+- **Bericht „leitung“** (`leitungSenden`): neues Feld `mik` (nur die Einstellungen, ~120 Zeichen). So kommen die Einstellungen auch von der Seite, die schon im Raum war. Die Tongüte gehört nicht hinein: der Bericht geht 1,5 s nach „connected“, die Zähler wären fast leer.
+- **`/verbindung`**: je Leitung „… / Güte: verdeckt 0,4 % · Jitter 6 ms · verloren 2 · Pegel 0,041 · Ruhe 0,003 · Puffer 40 ms“, nach der Tonserver-Zeile „Dein Mikrofon: Echo an · Rauschunterdrückung an · Pegelautomatik an · 48 kHz · Bluetooth nicht erkannt · Pegel 0,05 · Ruhepegel 0,002“ („?“ = der Browser sagt nichts; „AUS“ groß, wenn er etwas abgeschaltet meldet). Alles Bisherige wortgleich.
+- Prüf-Zugänge: `LiveChat.tonGuete()`, `LiveChat.pruefAufbauSenden()`.
+
+### Messgrößen
+| Feld | Bedeutung |
+|---|---|
+| `je.<id>.s` / `pk` / `vl` | Sekunden Ton / empfangene / verlorene Pakete seit Beginn dieser Leitung |
+| `je.<id>.v` | verdeckt in % = (concealedSamples − silentConcealedSamples) / totalSamplesReceived – Aussetzer, „Roboter“, Knacken |
+| `je.<id>.j` / `puf` | Jitter (ms) / mittlere Pufferverzögerung (ms) |
+| `je.<id>.pm` | mittlerer Pegel seit Leitungsbeginn (√(totalAudioEnergy/Dauer)); wird durch stumme Zeiten kleiner |
+| `je.<id>.ruhe` | 20-%-Wert der Pegelproben der letzten ~60 s = **Pegel in den Pausen = Rauschen**, das eigentliche Maß |
+| `je.<id>.sfu` | 1 = seine Stimme kam über den Tonserver; die Netz-Zahlen der Direktleitung gelten dann nicht |
+| `mik.da` / `an` / `sys` | Live-Mikro vorhanden (0 = keins, -1 = Fehler) / nicht stumm geschaltet / vom System stumm (`track.muted`) |
+| `mik.ec` / `ns` / `agc` / `vi` | Echo-, Rauschunterdrückung, Pegelautomatik, Stimmisolierung laut `getSettings()` (1/0/null = sagt nichts) |
+| `mik.sr` / `ch` | Abtastrate / Kanäle |
+| `mik.art` | `bt` / `kabel` / `standard` / `leer` – nur Kategorie aus dem Gerätenamen; **nie** Name, deviceId, groupId |
+| `mik.pm` / `ruhe` / `erle` | eigener Pegel hinaus (Mittel / Pausen-Pegel ~60 s) / Echo-Dämpfung in dB (falls gemeldet) |
+| `mik.neben` | weitere offene Mikrofon-Spuren („Dauernd an“, warm gehaltene Sprachnachricht) |
+
+### So liest man es (Pegel linear wie im Browser, 1 = Vollaussteuerung)
+- `ruhe` < 0,003 (≈ −50 dBFS): still. ≈ 0,01 (≈ −40 dBFS): hörbares Rauschen. > 0,03: deutlich.
+- `v` > 2 %: knackt/zerhackt hörbar (Netz oder Gerät zu langsam), kein Rauschen im engeren Sinn.
+- `j` > 30 ms: unruhiges Netz.
+- `ns` 0 oder `agc` 1 zusammen mit hoher `ruhe` beim Sender: die Pegelautomatik zieht in den Pausen das Grundrauschen hoch.
+- `art` `bt`: Bluetooth-Freisprechprofil (8/16 kHz) – ein typischer „komischer“ Klang. `standard` heißt „nicht erkannt“, nicht „eingebaut“.
+- Rauschen des Senders steht als `mik.ruhe` bei ihm UND als `je.<er>.ruhe` beim Hörer; ist nur das zweite hoch, liegt es auf dem Weg bzw. beim Abspielen.
+
+### Sonden
+- Neu: `werkzeug/pruefe-884-mikro.js` (zwei echte Chromium-Seiten aus `index.html?quelle`, Test-Mikrofon, Pakete von Hand getragen, `Backend.zugang().rpc` abgefangen; `ALT=1` bzw. `ALT_REV=<rev>` liefert livechat.js aus git). A Tongüte beidseitig (pk 492/494, s 10, v 0, j 0, pm 0,508/0,489, ruhe 0,016 ≤ pm), B Einstellungen (ec/ns/agc 1, 48 kHz, art `standard`) und Datenschutz (Label „Fake Default Audio Input“, groupId, „deviceId“ nirgends), C beide „leitung“ mit `mik` (667/654 Zeichen), D genau ein „verbindung“ mit `ton` (445 Zeichen), nur Arten leitung/verbindung, E `/verbindung` mit „Güte: verdeckt“ und „Dein Mikrofon: … Rauschunterdrückung an“, „kommt an (“ bleibt, F `getStats` auf Seite B in ruhigen 10 s: **4** (Leitung) + 0 (Empfänger/Sender), keine Seitenfehler. Alles grün.
+- Gegenprobe `ALT=1` (livechat.js aus HEAD vor diesem Punkt): rot A (2), B (2), C (mik), D (2), E – 8 rot; grün die Kontrollen (Mikro, Leitung steht, „kommt an (“), C-Größe, keine neue Art, keine Seitenfehler und **F mit derselben Zahl 4** – also kein zusätzlicher `getStats`-Aufruf.
+- Grün nach `fassung-setzen.js --nur-stempel` (nacheinander, nicht gleichzeitig): 884-mikro, 861 (Leitungsbericht < 6000), 871, 659, 827 (Texte von `/verbindung` und Tonserver unverändert), 811-leitung, leitung, 856, 859, jeder-befehl (`/verbindung` tut weiter etwas).
+- Nicht nötig: 840 (app.js unberührt).
+
+### Ehrlich
+- Das Rauschen selbst ist hier nicht nachstellbar – das Test-Mikrofon piept und rauscht nicht. Bewiesen ist nur, dass die Messung richtig erhoben, klein und ohne Mehrkosten mitgeschickt wird. Die Ursache zeigen erst echte Berichte von Xanders Gerät.
+- Kein Fix: für Xander klingt es gleich. Seit Funk 191 hat sich viel geändert (u. a. Tor-Strom mit `{audio:true}` + `applyConstraints` seit 829) – es kann sein, dass das Rauschen heute nicht mehr auftritt; die Messung beantwortet das.
+- Grenzen: Stimmen über den Tonserver (ab 4 Personen) sind nur mit `sfu:1` markiert, nicht gemessen. Die Seite, die schon im Raum ist, schickt keine Empfangsgüte (nur ihr `mik` im „leitung“-Bericht). Im 30-s-Fenster stecken Anlauf und nur ~20–28 s Ton. Safari meldet AGC/NS teils nicht (`null`/„?“), Firefox kennt kein `media-source`-Pegel (`mik.pm`/`ruhe` fehlen), Android-Namen sind oft allgemein (Bluetooth nicht sicher erkennbar), Chrome meldet meist 48000 auch bei Bluetooth-Schmalband.
+- Sprachnachricht und „Dauernd an“ nehmen mit Browser-Vorgaben auf (`{audio:true}`) und werden NICHT gemessen; `mik.neben` zeigt nur, ob solche Spuren gleichzeitig offen waren.
+- Kontingent: kein neuer Eintrag, nur ~120–1100 Zeichen mehr in vorhandenen (Grenze 6000, darüber verwirft der Server den ganzen Bericht – deshalb höchstens 8 Leitungen). Stand 04.–11.10. (nur gelesen): „verbindung“ 2–16 am Tag, längster 499 Zeichen; „leitung“ bis 42 am Tag, längster 830.
+
+### Auslesen nach dem Ausliefern (nur lesen)
+```sql
+select zeit, daten->'ton'->'mik' as mik, daten->'ton'->'je' as je, left(daten->>'ua',60) as ua
+  from spiel_diagnose where art='verbindung' and daten ? 'ton' order by id desc limit 50;
+select zeit, daten->>'mit' as mit, daten->'mik' as mik, left(daten->>'ua',60) as ua
+  from spiel_diagnose where art='leitung' and daten ? 'mik' order by id desc limit 50;
+```
+
+**Offen**
+1. Auswerten, sobald Berichte von Xanders Gerät da sind (ein paar Tage, einmal ins Klassenzimmer). Erst danach eine Änderung an den Mikrofon-Einstellungen vorschlagen – im Funk, nicht gebaut.
+2. Reichen die 30-s-Werte nicht: zusätzlich einen Wert ~3 min nach dem Betreten nehmen (kostet einen Eintrag je Betreten, Kontingent 40/Tag beachten).
+3. Stimmen über den Tonserver messen (Empfänger-Statistik der SFU-Spur).
+4. Meinte Xander das Rauschen in Sprachnachrichten oder „Dauernd an“ (Browser-Vorgaben), misst das hier nichts – nachfragen.
+5. Werkstatt-Eintrag und Fassungsnummer beim Ausliefern von 884 (WIP-Stand).
+
+**Funk-Antwort (Entwurf)**: „Mikro rauscht (Funk 191): Ich habe noch nichts am Mikrofon verstellt, weil ich nicht raten will. Ab dieser Fassung misst die Seite mit, wie deine Stimme bei den anderen ankommt (Aussetzer, Rauschen in den Pausen, verlorene Pakete) und ob bei deinem Mikrofon Rauschunterdrückung und Pegelautomatik wirklich an sind und ob es ein Bluetooth-Gerät ist – ohne Gerätenamen und ohne Ton aufzunehmen, nur Zahlen. Bitte geh einfach wie immer ein paar Mal ins Klassenzimmer, am besten wenn noch jemand drin ist. In ein paar Tagen sage ich dir, woran es liegt. Wenn du selbst nachsehen willst: Tippe im Chat /verbindung, dann steht unten „Dein Mikrofon: …“.“

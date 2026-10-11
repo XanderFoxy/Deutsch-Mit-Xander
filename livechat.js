@@ -3124,9 +3124,10 @@ window.LiveChat = (function () {
       w.zustand = pc.iceConnectionState || "";
       if (!pc.getStats) return;
       pc.getStats(null).then(function (berichte) {
-        var bytes = 0, paare = {}, kandidaten = {};
+        var bytes = 0, paare = {}, kandidaten = {}, ein = null, quelle = null;   // FASSUNG 884 — ein/quelle: Tongüte
         berichte.forEach(function (b) {
-          if (b.type === "inbound-rtp" && b.kind === "audio") bytes += b.bytesReceived || 0;
+          if (b.type === "inbound-rtp" && b.kind === "audio") { bytes += b.bytesReceived || 0; if (!ein || (b.packetsReceived || 0) > (ein.packetsReceived || 0)) ein = b; }
+          if (b.type === "media-source" && b.kind === "audio") quelle = b;   // FASSUNG 884 — das eigene Mikrofon, wie es hinausgeht
           if (b.type === "candidate-pair" && (b.selected || b.state === "succeeded")) paare[b.id] = b;
           if (b.type === "local-candidate" || b.type === "remote-candidate") kandidaten[b.id] = b;
         });
@@ -3138,6 +3139,7 @@ window.LiveChat = (function () {
           }
         });
         w.bytes = bytes;
+        tonGueteMerken(anderId, w, ein, quelle);   // FASSUNG 884
         if (bytes > w.letzte) { w.letzte = bytes; w.tonDa = true; }
         /* Acht Sekunden ohne ein einziges Tonpaket: das ist kein
            Zufall mehr, das ist eine tote Strecke. */
@@ -3159,18 +3161,123 @@ window.LiveChat = (function () {
     if (w && w.uhr) clearInterval(w.uhr);
     delete wache[id];
   }
+  /* FASSUNG 884 — XANDER (Funk 191): „außerdem rauscht das Mikro jetzt so komisch … schau doch mal bitte, was da los
+     ist". Nie untersucht – es gab keine einzige Zahl. Erst messen, nichts verstellen: Die Wache je Leitung holt ihre
+     Statistik ohnehin alle 2,5 s; daraus wird jetzt mitgeschrieben, wie seine Stimme hier ankommt (Anteil verdeckter
+     Stücke = Aussetzer/„Roboter", Jitter, verlorene Pakete, mittlerer Pegel, Ruhepegel = Rauschen in den Pausen) und
+     wie das eigene Mikrofon hinausgeht. Dazu die Einstellungen des eigenen Mikrofons (Echo-/Rauschunterdrückung,
+     Pegelautomatik wirklich an? Abtastrate, Bluetooth ja/nein – ohne Gerätenamen). Kein zusätzlicher getStats-Aufruf,
+     keine eigene Meldung: es reist im 30-s-Bericht („verbindung") mit, die Einstellungen auch im Leitungsbericht.
+     Pegel wie im Browser: linear, 1 = Vollaussteuerung (0,003 ≈ −50 dBFS still, 0,01 ≈ −40 dBFS hörbares Rauschen). */
+  var mikRing = [], mikRingUm = 0, mikQuelle = null;
+  function ringLeise(r) {   // 20-%-Wert der letzten Proben: der Pegel in den Pausen, unempfindlich gegen einzelne Ausreißer
+    if (!r || r.length < 4) return null;
+    var s = r.slice().sort(function (a, b) { return a - b; });
+    return Math.round(s[Math.floor(s.length * 0.2)] * 1000) / 1000;
+  }
+  function tonGueteMerken(anderId, w, ein, quelle) {
+    try {
+      if (ein) {
+        w.q = ein;   // Zähler laufen seit Beginn dieser Leitung
+        var p = zustand.leute[anderId], el = tonJe[anderId];
+        /* ein stummes Abspiel-Element meldet Pegel 0 (gemessen) – dann keine Probe */
+        if (typeof ein.audioLevel === "number" && !(p && p.tonAn === false) && !(el && el.muted)) {
+          (w.ring = w.ring || []).push(ein.audioLevel); if (w.ring.length > 24) w.ring.shift();
+        }
+      }
+      if (quelle && zustand.tonAn && Date.now() - mikRingUm > 2000) {   // bei mehreren Leitungen nur eine Probe je 2 s
+        mikRingUm = Date.now(); mikQuelle = quelle;
+        if (typeof quelle.audioLevel === "number") { mikRing.push(quelle.audioLevel); if (mikRing.length > 24) mikRing.shift(); }
+      }
+    } catch (e) {}
+  }
+  function tonGueteJe(w) {
+    var b = w && w.q;
+    if (!b) return null;
+    var d = b.totalSamplesDuration || 0;
+    var g = { s: Math.round(d), pk: b.packetsReceived || 0, vl: b.packetsLost || 0,
+              j: b.jitter != null ? Math.round(b.jitter * 1000) : null,
+              v: b.totalSamplesReceived ? Math.round(1000 * Math.max(0, (b.concealedSamples || 0) - (b.silentConcealedSamples || 0)) / b.totalSamplesReceived) / 10 : null,
+              pm: d ? Math.round(1000 * Math.sqrt((b.totalAudioEnergy || 0) / d)) / 1000 : null,
+              ruhe: ringLeise(w.ring) };
+    if (b.jitterBufferEmittedCount) g.puf = Math.round(1000 * b.jitterBufferDelay / b.jitterBufferEmittedCount);
+    return g;
+  }
+  function mikNeben() {   // weitere offene Mikrofon-Spuren: „Dauernd an" und die warm gehaltene Sprachnachricht (oft dieselbe)
+    var n = 0, lebt = function (s) {
+      try { return Boolean(s && s.getTracks && s.getTracks().some(function (t) { return t.readyState === "live"; })); } catch (e) { return false; }
+    };
+    if (frei && frei.an && lebt(frei.spur)) n++;
+    if (lebt(sprachSpur) && !(frei && frei.spur === sprachSpur)) n++;
+    return n;
+  }
+  function mikEinstellungen() {
+    try {
+      var t = zustand.eigenerStrom && zustand.eigenerStrom.getAudioTracks ? zustand.eigenerStrom.getAudioTracks()[0] : null;
+      if (!t) return { da: 0, neben: mikNeben() };
+      var s = {}; try { s = t.getSettings ? t.getSettings() : {}; } catch (e) {}
+      var ja = function (x) { return x === true ? 1 : x === false ? 0 : null; };
+      var l = String(t.label || "");
+      var m = { da: 1, an: zustand.tonAn ? 1 : 0, ec: ja(s.echoCancellation), ns: ja(s.noiseSuppression), agc: ja(s.autoGainControl),
+                sr: s.sampleRate || null, ch: s.channelCount || null, sys: t.muted ? 1 : 0,
+                art: !l ? "leer" : /bluetooth|airpods|buds|hands-?free|freisprech|\bbt\b|\bsco\b/i.test(l) ? "bt"
+                   : /usb|headset|headphone|kopfh|earpods|wired/i.test(l) ? "kabel" : "standard",
+                neben: mikNeben() };
+      if (s.voiceIsolation != null) m.vi = ja(s.voiceIsolation);
+      if (mikQuelle && mikQuelle.totalSamplesDuration) {
+        m.pm = Math.round(1000 * Math.sqrt((mikQuelle.totalAudioEnergy || 0) / mikQuelle.totalSamplesDuration)) / 1000;
+        if (mikQuelle.echoReturnLossEnhancement != null) m.erle = Math.round(mikQuelle.echoReturnLossEnhancement);
+      }
+      var r = ringLeise(mikRing); if (r != null) m.ruhe = r;
+      return m;   // nie: label, deviceId, groupId
+    } catch (e) { return { da: -1 }; }
+  }
+  function tonGuete() {
+    try {
+      var je = {}, n = 0;
+      Object.keys(wache).forEach(function (id) {
+        if (n >= 8) return;   // Grenze des Servers: 6000 Zeichen je Bericht
+        var g = tonGueteJe(wache[id]); if (!g) return;
+        if (sfuHoertIhn(id)) g.sfu = 1;   // seine Stimme kommt über den Tonserver – die Netz-Zahlen gelten dann nicht
+        je[String(id).slice(0, 10)] = g; n++;
+      });
+      return { mik: mikEinstellungen(), je: je };
+    } catch (e) { return null; }
+  }
+  /* Klartext für /verbindung (nur Text, Komma wie im Deutschen; „?" = der Browser sagt nichts) */
+  function zahlDe(x) { return x == null ? "?" : String(x).replace(".", ","); }
+  function tonGueteText(g) {
+    if (!g) return "";
+    return "verdeckt " + (g.v == null ? "?" : zahlDe(g.v) + " %") + " · Jitter " + (g.j == null ? "?" : g.j + " ms")
+      + " · verloren " + (g.vl || 0) + " · Pegel " + zahlDe(g.pm) + " · Ruhe " + zahlDe(g.ruhe)
+      + (g.puf != null ? " · Puffer " + g.puf + " ms" : "");
+  }
+  function mikText(m) {
+    if (!m || m.da === -1) return "Dein Mikrofon: ?";
+    if (!m.da) return "Dein Mikrofon: kein Mikrofon" + (m.neben ? " (aber " + m.neben + " für Sprachnachrichten offen)" : "");
+    var an = function (x) { return x === 1 ? "an" : x === 0 ? "AUS" : "?"; };
+    return "Dein Mikrofon: " + (m.an ? "" : "stumm geschaltet · ") + (m.sys ? "vom Gerät stumm · " : "")
+      + "Echo " + an(m.ec) + " · Rauschunterdrückung " + an(m.ns) + " · Pegelautomatik " + an(m.agc)
+      + (m.vi === 1 ? " · Stimmisolierung an" : "")   // nie verlangt – nur nennen, wenn der Browser sie selbst zuschaltet
+      + " · " + (m.sr ? zahlDe(Math.round(m.sr / 100) / 10) + " kHz" : "? kHz")
+      + " · Bluetooth " + (m.art === "bt" ? "ja" : m.art === "kabel" ? "nein (Kabel/USB)" : m.art === "leer" ? "?" : "nicht erkannt")
+      + (m.pm != null ? " · Pegel " + zahlDe(m.pm) : "") + " · Ruhepegel " + zahlDe(m.ruhe)   // erle nur im Bericht
+      + (m.neben ? " · dazu " + m.neben + " weitere Mikrofon-Spur offen" : "");
+  }
   function verbindungsBericht() {
     var zeilen = [];
     Object.keys(brueckeJe).forEach(function (id) {
       var p = zustand.leute[id], w = wache[id] || {};
-      var pc = brueckeJe[id];
+      var pc = brueckeJe[id], g = tonGueteJe(w);   // FASSUNG 884 — Tongüte (Funk 191)
       zeilen.push(((p && p.name) || id.slice(0, 6))
         + ": " + (pc ? (pc.connectionState || "?") : "keine Leitung")
         + " / Weg " + (w.weg || "noch keiner")
-        + " / Ton " + (w.tonDa ? "kommt an (" + Math.round((w.bytes || 0) / 1024) + " kB)" : "KEINER"));
+        + " / Ton " + (w.tonDa ? "kommt an (" + Math.round((w.bytes || 0) / 1024) + " kB)" : "KEINER")
+        + (g ? " / Güte: " + tonGueteText(g) : ""));
     });
     if (!zeilen.length) zeilen.push("Es besteht gerade keine Leitung zu jemandem.");
     if (sfuErlaubt()) zeilen.push(sfuBericht());  /* FASSUNG 827 */
+    zeilen.push(mikText(mikEinstellungen()));   // FASSUNG 884 — wie das eigene Mikrofon eingestellt ist (Funk 191)
     /* Und was ueberhaupt zur Verfuegung steht. */
     var relais = VERMITTLER.filter(function (v) {
       var u = v.urls;
@@ -7331,7 +7438,8 @@ window.LiveChat = (function () {
       var d = { mit: String(id).slice(0, 10), anrufer: zustand.ichId < id, raum: zustand.raum, ev: m.ev, kr: m.kr, kd: m.kd,
                 sichtbar: m.sichtbar, jetzt: pc ? [pc.signalingState, pc.iceConnectionState, pc.connectionState] : null,
                 weg: (aufbau && aufbau.je[id] && aufbau.je[id].weg) || m.weg || "", relais: relaisStand.quelle || "",
-                ua: (navigator.userAgent || "").slice(0, 120), fassung: (window.DMA_VERSION || "") };
+                ua: (navigator.userAgent || "").slice(0, 120), fassung: (window.DMA_VERSION || ""),
+                mik: mikEinstellungen() };   // FASSUNG 884 — nur die Einstellungen (Funk 191); die Tongüte wäre 1,5 s nach dem Aufbau noch leer
       /* FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". Damit ein Abgang ohne Abschied nicht als
          Fehlschlag der Leitung zählt: fort = er ist nicht mehr im Raum; still = ms seit seinem letzten Paket (gehoertJe,
          auch wenn er fort ist; -1: nie eins); lebt = ms ab Beginn der Zeitleiste bis zu seinem letzten Paket darin
@@ -7403,7 +7511,8 @@ window.LiveChat = (function () {
       var k = be && be.zugang && be.zugang();
       if (!k || !k.rpc) return;
       var d = { raum: a.raum, ua: a.ua, relais: a.relais, kanal: a.kanal, kanalOffen: a.kanalOffen, je: a.je, fassung: (window.DMA_VERSION || ""),
-                joinTO: a.joinTO || 0, wsTot: a.wsTot || 0, halloNochmal: a.halloNochmal || 0 };   // FASSUNG 852 — was beim Aufbau nachhelfen musste
+                joinTO: a.joinTO || 0, wsTot: a.wsTot || 0, halloNochmal: a.halloNochmal || 0,   // FASSUNG 852 — was beim Aufbau nachhelfen musste
+                ton: tonGuete() };   // FASSUNG 884 — Tongüte je Leitung und das eigene Mikrofon (Funk 191)
       k.rpc("spiel_diagnose_senden", { p_art: "verbindung", p_daten: d }).then(function () {}, function () {});
     } catch (e) {}
   }
@@ -17867,6 +17976,7 @@ window.LiveChat = (function () {
        Beruehrung, denn nur dann zaehlt es. */
     tonFreischalten: tonFreischalten,
     verbindungsBericht: verbindungsBericht,
+    tonGuete: tonGuete,   // FASSUNG 884 — nur zum Nachprüfen (Sonde 884-mikro)
     pruefTonVorrat: function () { return tonVorrat.length; },
     pruefPost: function (f) {
       kanal = { send: function (p) { try { f(p && p.payload); } catch (e) {} } };
@@ -17946,6 +18056,7 @@ window.LiveChat = (function () {
     },
     pruefVordergrund: function () { vordergrundHalloUm = 0; zurueckImVordergrund(); },
     pruefVersuch: function (id) { return JSON.parse(JSON.stringify(versuchJe[id] || null)); },
+    pruefAufbauSenden: function () { if (!aufbau || aufbau.gesendet) aufbauStart(); aufbauSenden(aufbau); },   // FASSUNG 884 — den 30-s-Bericht sofort (Sonde 884-mikro)
     pruefKanal: function () { return { bereit: Object.keys(kanalBereit), offen: Object.keys(kanalJe).filter(function (id) { return kanalJe[id].readyState === "open"; }) }; },
     /* FASSUNG 884 — nur zum Nachprüfen (Sonde 884-sitz): die Sitz-Messung ansehen bzw. sofort senden; ein Gegenüber
        als „noch nicht bereit“ behandeln (wie ein verlorenes dc-hallo), auf Wunsch mit neuem Hallo. */
