@@ -4028,3 +4028,58 @@ Lesart: viel `s` in `ein` bei offenen Kanälen (`kan`) bzw. `raus.ohne.bereit` >
 - **klein – Lücke beim Hallo**: das zweite Hallo (nach 1,5 s, nur wenn noch nicht bereit) trägt `bitte: 1` und wird immer beantwortet; ein schlichtes Hallo weiter nur einmal je Kanal. Kein Hin und Her: `bitte` geht je Kanal höchstens einmal hinaus, `zurueck` wird nie beantwortet. Sonde 8: nach einer ersten Antwort bleibt ein schlichtes zweites Hallo unbeantwortet (A unbereit), eines mit `bitte` macht A bereit.
 - Sonde nach der Nachbesserung: 37 Prüfungen, zweimal ganz grün (12 im zweiten Lauf: CPU 6× ms − belegt 0,0,0,0,0, z. B. `["bbb",34,"d",34,35]`). Gegenprobe `ALT=` livechat.js + app.js aus HEAD (= erster 884-sitz-Commit 7596d10): 15 rot – belegt/bild (3, 9, 12), „bitte“ (8), Tageszähler und Kontingent (9 ×8), Verhalten Streifen/Ring (10 ×3, dort fehlt der Prüf-Haken) –, alles andere grün. Gegenprobe mit dem Stand vor dem Punkt (HEAD~1): 30 rot, 7 grün (nur Kontrollen: Leitung, Wechsel kommt an, nichts doppelt gezeichnet, Chatzeile einmal, kein Bericht vorab, volle Meldung schreibt den Streifen, keine Seitenfehler).
 - Grün geblieben nach der Nachbesserung (min/ vorher frisch gestempelt): 856, 659, 667, 679, 816, 850, 859, 861, 876, 884-leitung, 884-messung, 773 und 840 (alte Bilderwelt). 848-sprechen wie zuvor 1 rot („mit Lexical „… zwei …“ → falsch“) – lädt nur `stadt-leicht.html` (dort weder livechat.js noch app.js), kann also nicht von diesem Punkt kommen.
+
+## Fassung 884 — Gespräch zuerst, Foto danach (Funk 288/296)
+
+XANDER (Funk 296, zum Vorschlag „Profilfoto erst nach dem Gruß“ aus Funk 288): „Ja mach alles weiter“. Ein Profilfoto aus der Galerie ist eine Datenadresse (bis 140 000 Zeichen). Seit 811 fuhr es nur noch beim Hereinkommen voll mit – aber genau dort: im `hallo` des Neuen und im `auch-da` jedes Anwesenden, also in dem Fenster, in dem Angebot, Antwort und Wege-Kandidaten durch denselben Raumkanal müssen. Bei N Leuten N+1 Fotos vor dem ersten Angebot, dazu das Nachfassen (1,2 s / 3 s), die Wache und das `auch-da` im Puls. Sichtbar ändert sich nur, dass das Galeriefoto eines Neuen (bzw. der anderen beim Neuen) etwa 1 s nach „Leitung steht“ erscheint, spätestens etwa 4 s nach der Frage; bis dahin steht der bisherige Platzhalter (Anfangsbuchstabe). Aussehen, Größe und Bedienung bleiben.
+
+### Was geändert ist (livechat.js, 811-Block)
+- `BILD_VOLL_ARTEN = { "bild-voll": 1 }`: auch `hallo` und `auch-da` tragen nur noch den Fingerabdruck `bildH`. Damit werden Nachfassen, Wache, Vordergrund-Gruss und Puls-`auch-da` von selbst schlank (über `bildKuerzen`); ihr Code ist unverändert. Die 20-s-Regel nach dem Ändern bleibt.
+- **Ausnahme Auftritt** (Funk 140 / 698): ein `hallo` mit `auftritt` und ohne `wieder` behält das Foto, damit der Wagen nicht ohne Gesicht einfährt. Für diese Leute (auch ihr Nachfassen und ihre Wache) gibt es keinen Gewinn.
+- **Antwort nach „Leitung steht“**: `bild-bitte` wird wie bisher sofort gestellt (winzig). Die Antwort merkt sich den Fragenden (`bildWartend`) und geht 1 s nachdem die Leitung zu ihm steht hinaus (`bildLeitungSteht` im `connected`-Zweig von `onconnectionstatechange`, nur für die aktuelle Leitung: `l.pc === brueckeJe[id]`), höchstens 4 s nach der Frage (ohne Leitung: Raum voll, nur Tonserver, Firefox ohne `connectionState`). Alle im Fenster Fragenden bekommen EIN Paket: eine Frage → `bild-voll` mit `an`, mehrere → ohne `an` (über den Raumkanal geht ohnehin jedes Paket an alle). Die 10-s-Sperre je Fragendem bleibt; gesendet wird nur bei `lage === "drin"`.
+- **Empfang `bild-voll`**: eine Unbekannte wird nicht mehr angelegt (bisher legte `personMerken` jeden Absender als Person an – bei einem gebündelten Foto ohne Anschrift wären das Geister); das Lager hat das Foto trotzdem (über `bildH`), ihr späterer Gruss holt es dort ab, ohne Nachfrage. Wer das Foto schon hat, zeichnet nicht neu (kein `melden()`).
+- Prüf-Haken: `pruefSitz({ ichBild })` setzt ein „altes“ Foto (ohne `bildGeaendertUm`), `pruefHallo` trägt `auftritt` wie der echte Gruss.
+- Unverändert: `hallo`-Zweig, `halloNutz`, Nachfassen, Wache, Vordergrund, app.js, alte Bilderwelt.
+- Ältere Fassungen (811–883) bleiben verträglich: sie fragen selbst nach (Sonde 884-bild C), verstehen `bild-voll` auch ohne `an`, und ihr eigenes `hallo`/`auch-da` trägt weiter das Foto – das füllt hier das Lager.
+
+### Messung (Modell, Sonde 884-bild B: zwei echte Seiten, echte RTCPeerConnection, Relais je Richtung als Warteschlange 1 Mbit/s + 50 ms, Testfoto 360 px JPEG 0,9 ≈ 70 000 Zeichen)
+
+| | Zeichen bis „steht“ (beide Richtungen) | Gruss → beide Leitungen stehen | Foto der anderen da |
+|---|---|---|---|
+| alt ↔ alt (HEAD vor dem Punkt bzw. 883) | 149 235 (2 Fotos à ~70 000 + SDP) | 1 426 / 1 435 ms | mit dem Gruss bzw. `auch-da` (vor „steht“) |
+| neu ↔ neu | ~9 360 (Angebot/Antwort je ~4 000, Rest < 300) | 278–375 ms (4 Läufe) | „steht“ + 1,6 s (1 605–1 633 ms) |
+| aaa neu, bbb alt | bbb's Gruss mit Foto | 841 / 855 ms | aaa: aus bbb's Gruss; bbb: „steht“ + 1,6 s |
+
+Im Modell steht das Gespräch also rund 1,1 s früher; das Foto des Gegenübers erscheint beim Neuen dafür etwa 0,7 s später als bisher (bisher ~1,2 s nach dem Gruss, jetzt ~1,9–2,0 s). Je Foto spart der Aufbau ~0,56 s bei 1 Mbit/s, ~0,1 s bei 5 Mbit/s – mal 1 + N (Gruss + jedes `auch-da`).
+
+### Sonden
+- Neu: `werkzeug/pruefe-884-bild.js` (lädt `index.html?quelle`; `ALT_LIVECHAT=<datei>` leitet livechat.js um). A Paketebene (A1 Gruss 149 Zeichen mit `bildH`; A2 `auch-da` 282 Zeichen; A3 Auftritt trägt das Foto; A4 nach 0,3 s nichts, nach 4,3 s genau 1× an „bea“, zweite Frage in 10 s nichts; A5 zwei Fragende → 1 Paket ohne `an`; A6 eine Nachfrage, keine Unbekannte angelegt, ihr Gruss hat das Foto aus dem Lager, bekanntes Foto zeichnet nicht neu / neues schon). B zwei Seiten (B1 bis „steht“ kein Foto und außer Angebot/Antwort kein Paket über 3 000 Zeichen; B2 `bild-voll` bei +1 000/+1 001 ms nach „steht“; B3 Foto bei „steht“ + 1,6 s; B4 jedes Foto genau einmal). C (nur mit `ALT_LIVECHAT`) gemischt. **Abweichung vom Plan**: B1 sollte „kein Paket über 3 000 Zeichen“ prüfen – Angebot und Antwort (SDP) sind aber selbst je ~4 000 Zeichen und SIND der Verbindungsaufbau; B1 zählt sie deshalb nicht mit und prüft zusätzlich, dass kein Foto fährt.
+- Gegenprobe mit livechat.js aus HEAD (vor diesem Punkt) und aus 876cc04 (883): je rot A1, A2, A4 (Antwort sofort), A5 (zwei Pakete mit `an`), A6 (Unbekannte angelegt, bekanntes Foto zeichnet neu), B1 (Gruss 69 947 und `auch-da` 70 497 Zeichen vor „steht“), B2 (kein `bild-voll`); grün C (aaa hat bbb's Foto 245 ms vor „steht“ ohne Nachfrage, das alte bbb fragt, aaa antwortet nach +1 000 ms, bbb hat es bei „steht“ + 1,6 s).
+- Angepasst (gewollt anders, kein Rückschritt): **Sonde 811** – `auch-da` trägt jetzt nur `bildH`; die Antwort auf `bild-bitte` kommt ohne Leitung nach 4 s (die Sonde wartet 4,3 s). **Sonde 884-messung** E/K löste `melden()` über ein `bild-voll` einer Unbekannten aus (das legte nebenbei eine Person an); jetzt über `LiveChat.spielSitzeNeu()` (ruft nur `melden()`): mit diesem Punkt und der alten Sonde 15 rot (E und K: „drin“ kam nicht an), mit der angepassten grün.
+- Grün (min/ vorher frisch gestempelt): 811, 861, 659, 856, 859, 866, 871, 842, sprechbild-reist, geschlecht, leitung, bild-fluestern, 884-leitung, 884-messung, 884-sitz, 642 und 840 (alte Bilderwelt; app.js unverändert). 862: 1 rot – „D: die Rückkehr nach dem Neuladen gibt das Konto mit“ ist eine Quelltext-Prüfung an **app.js**, die dieser Punkt nicht anfasst (`git diff HEAD -- app.js` leer); also schon vorher rot. 884-sitz 12 (6-fach gedrosselt, „ms − belegt ≤ 5 in 4 von 5“) war einmal rot, als drei Sonden gleichzeitig liefen (3 von 5), allein grün (4 von 5) – lastabhängig.
+
+### Ehrlich
+- Teil B beweist, dass die Fotobytes aus dem Fenster des Verbindungsaufbaus verschwinden, und zeigt den Zeitgewinn in einem nachgebauten langsamen Kanal. Echtes 4G mit zwei Geräten und der Supabase-Server sind hier nicht nachstellbar.
+- Wirkung heute klein: betroffen sind nur Galeriefotos als `data:`-Adresse; laut der Untersuchung zu diesem Punkt hatte seit dem 20.09. kein angemeldeter Nutzer eines (hier nicht erneut abgefragt). Kontobilder (http/Aufkleber, höchstens 165 Zeichen) laufen unverändert. Der Gewinn wächst mit der Zahl der Leute und bei Verbindungsärger (Wache-`hallo`, Puls-`auch-da` wiederholen das Foto nicht mehr).
+- Den Feldwert zeigen erst die Berichte `spiel_diagnose` „leitung“/„verbindung“ nach dem Ausliefern – und nur, wenn jemand ein Galeriefoto benutzt; die Berichte sagen bisher nicht, ob ein Foto im Spiel war.
+- Verlust: geht `bild-bitte` oder `bild-voll` verloren, kommt das Foto erst mit der nächsten Nachfrage (Sperre 15 s, ausgelöst vom nächsten Puls), also nach etwa 15–21 s. Bisher kam es gleich mit dem Gruss.
+- Ein gebündeltes `bild-voll` ohne `an` legt bei älteren Fassungen (811–883) eine noch unbekannte Person an und zeichnet einmal neu – nur, wenn im 1–4-s-Fenster ein Dritter hereinkommt; Übergangsfrage.
+
+### Auslesen nach dem Ausliefern (nur lesen)
+```sql
+select date_trunc('day', zeit) tag, count(*) n,
+       percentile_cont(0.5) within group (order by (e->>1)::numeric) median_ms_bis_connected
+  from spiel_diagnose, jsonb_array_elements(daten->'ev') e
+ where art = 'leitung' and e->>0 = 'pc' and e->>2 = 'connected' and zeit > now() - interval '14 days'
+ group by 1 order by 1;
+```
+
+**Offen**
+1. `raumHg` (Raum-Hintergrund, bis 140 000 Zeichen) fährt weiter in jedem `auch-da` von jedem im Raum mit – genau im Fenster des Verbindungsaufbaus. Gleiches Muster wie hier (Fingerabdruck + Nachfrage) wäre der nächste Schritt; eigener Punkt.
+2. Fotolager über das Neuladen hinaus (IndexedDB je `von|bildH`): nach jedem Neuladen ist das Lager leer, der Neue fragt jeden Anwesenden und bekommt N Fotos.
+3. Fotos später über den Datenkanal statt über den Server (der Raumkanal schickt jedes Paket an alle, auch ein `bild-voll` mit `an`).
+4. Auftritt mit Galeriefoto behält das volle Foto im Gruss. Die Alternative (Auftritt beim Empfänger bis zum Foto verzögern) ändert den Zeitpunkt der Animation – nur mit Xanders OK.
+5. Ein Merkmal im Bericht „leitung“, ob beim Aufbau ein Galeriefoto im Spiel war (z. B. `fb: 1`), damit sich der Feldwert trennen lässt – Vorschlag, nicht gebaut.
+6. Verlorene Fragen: falls es im Feld auffällt, die 15-s-Sperre für unbeantwortete `bild-bitte` verkürzen.
+
+**Funk-Antwort (Entwurf)**: „Profilfoto erst nach dem Gruß (Funk 288/296): Wenn jemand hereinkommt, schickt das Handy beim Begrüßen jetzt nur noch einen kleinen Fingerabdruck des Profilfotos statt des ganzen Fotos. So kommt die Verbindung zuerst zustande, und das Foto folgt etwa eine Sekunde danach. In meinem Testmodell mit langsamem Netz stand das Gespräch dadurch nach 0,3 statt 1,4 Sekunden. Sichtbar ist nur: Das Galeriefoto eines Neuen erscheint kurz nach ihm, bis dahin steht wie bisher sein Anfangsbuchstabe. Wer einen eigenen Auftritt hat (Sportwagen …), schickt sein Foto weiter gleich mit, damit der Wagen mit Gesicht einfährt. Echtes 4G mit zwei Handys konnte ich hier nicht testen. Das zeigen erst deine nächsten Verbindungen, und auch nur, wenn jemand ein Foto aus der Galerie benutzt.“

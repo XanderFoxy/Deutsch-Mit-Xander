@@ -370,8 +370,9 @@ function server(wurzel) {
     const pg = await ctx.newPage();
     await laden(pg);
     const da = await messDa(pg);
-    /* melden() auslösen, ohne eine Leitung aufzubauen: ein Bild einer Person kommt an */
-    const melde = (n) => pg.evaluate((n) => window.LiveChat.pruefEmpfangen({ art: "bild-voll", von: "p" + n, name: "P", bild: "data:image/png;base64,AA" + n }), n).catch(() => {});
+    /* melden() auslösen, ohne eine Leitung aufzubauen. FASSUNG 884 (bild): bisher über ein „bild-voll" einer Unbekannten –
+       das legt jetzt gewollt niemanden mehr an und zeichnet nicht (Sonde 884-bild); spielSitzeNeu() ruft nur melden(). */
+    const melde = (n) => pg.evaluate((n) => window.LiveChat.spielSitzeNeu(), n).catch(() => {});
     async function aufenthalt(blocke, n) {
       await pg.evaluate(() => window.LiveChat.pruefSitz({ lage: "verbindet", ichId: "ich", ichName: "Zuzana Testperson", seit: 1000, zuruecksetzen: true, leute: {} })).catch(() => {});
       await melde(n);
@@ -420,7 +421,7 @@ function server(wurzel) {
     const pg = await ctx.newPage();
     await laden(pg);
     const vorMessung = await pg.evaluate(async () => {
-      const melde = (n) => window.LiveChat.pruefEmpfangen({ art: "bild-voll", von: "q" + n, name: "Q", bild: "data:image/png;base64,BB" + n });
+      const melde = (n) => window.LiveChat.spielSitzeNeu();
       window.LiveChat.pruefSitz({ lage: "verbindet", ichId: "ich", ichName: "Zuzana Testperson", seit: 1000, zuruecksetzen: true, leute: {} }); melde(1);
       await new Promise((r) => setTimeout(r, 150));
       window.LiveChat.pruefSitz({ lage: "drin" }); melde(2);
@@ -622,11 +623,11 @@ function server(wurzel) {
   /* Die Prüfung fand: wer ≥ 2 min im Raum war und dann schloss oder neu lud, verlor die Raumzeile (sie wartete auf eine
      Ruhepause, die beim Entladen nie kommt), und die nächste Seite schickte stattdessen eine leere Zeile, die den
      Tagesplatz der Startzeile fraß. Hier: Schnellmodus, Teilzeile ab 2 s im Raum. */
-  async function raumRein(pg, n) {
+  async function raumRein(pg, n) {   // FASSUNG 884 (bild): melden() über spielSitzeNeu() statt „bild-voll" einer Unbekannten (siehe E)
     await pg.evaluate((n) => { LiveChat.pruefSitz({ lage: "verbindet", ichId: "ich", ichName: "Zuzana Testperson", seit: 1000, zuruecksetzen: true, leute: {} });
-      LiveChat.pruefEmpfangen({ art: "bild-voll", von: "k" + n, name: "K", bild: "data:image/png;base64,KK" + n }); }, n).catch(() => {});
+      LiveChat.spielSitzeNeu(); }, n).catch(() => {});
     await schlaf(120);
-    await pg.evaluate((n) => { LiveChat.pruefSitz({ lage: "drin" }); LiveChat.pruefEmpfangen({ art: "bild-voll", von: "k" + (n + 1), name: "K", bild: "data:image/png;base64,KK" + (n + 1) }); }, n).catch(() => {});
+    await pg.evaluate((n) => { LiveChat.pruefSitz({ lage: "drin" }); LiveChat.spielSitzeNeu(); }, n).catch(() => {});
   }
   const blockiere = (pg, ms) => pg.evaluate((ms) => new Promise((f) => setTimeout(() => { const t = performance.now(); while (performance.now() - t < ms) {} f(); }, 10)), ms).catch(() => {});
   const zweiLanglaeufer = async (pg) => { await blockiere(pg, 220); await schlaf(1100); await blockiere(pg, 260); await schlaf(1200); };
@@ -694,7 +695,7 @@ function server(wurzel) {
     const mitte = await stand(pg);
     await verstecken(pg, false);
     await blockiere(pg, 210); await schlaf(400);
-    await pg.evaluate(() => { LiveChat.pruefSitz({ lage: "aus" }); LiveChat.pruefEmpfangen({ art: "bild-voll", von: "k9", name: "K", bild: "data:image/png;base64,KK9" }); }).catch(() => {});
+    await pg.evaluate(() => { LiveChat.pruefSitz({ lage: "aus" }); LiveChat.spielSitzeNeu(); }).catch(() => {});
     await schlaf(900);
     const raeume = (await rpcAlle(pg)).filter((x) => x.art === "mess-raum"), st = await stand(pg);
     console.log("   rpc: " + kurz(raeume));

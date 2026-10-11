@@ -3373,7 +3373,7 @@ window.LiveChat = (function () {
     leitungsWacheStarten(anderId, pc);
     pc.onconnectionstatechange = function () {
       /* FASSUNG 836 — Messung: wann die Leitung steht und über welchen Weg */
-      if (pc.connectionState === "connected" && brueckeJe[anderId] === pc) { aufbauMerk(anderId, "steht"); aufbauWeg(anderId, pc); }
+      if (pc.connectionState === "connected" && brueckeJe[anderId] === pc) { aufbauMerk(anderId, "steht"); aufbauWeg(anderId, pc); bildLeitungSteht(anderId, pc); }   // 884: Foto danach (siehe bildAntwortPlanen)
       if (brueckeJe[anderId] === pc) {   // FASSUNG 840 — Zeitleiste je Gegenüber; steht sie, nach 1,5 s (Weg) melden
         leitungMerk(anderId, "pc", pc.connectionState);
         var lm = leitungMess[anderId];
@@ -5442,7 +5442,17 @@ window.LiveChat = (function () {
      setzt das Foto aus seinem Lager wieder ein und fragt einmal nach,
      wenn es ihm fehlt. Netzadressen und Aufkleber sind kurz und
      fahren weiter wie bisher. */
-  var BILD_VOLL_ARTEN = { "hallo": 1, "auch-da": 1, "bild-voll": 1 };
+  /* FASSUNG 884 — XANDER (Funk 288/296, Vorschlag „Profilfoto erst nach dem Gruß“ – „Ja mach alles weiter“): Bisher fuhr
+     das Foto voll in „hallo" und „auch-da" – also genau dann, wenn Angebot, Antwort und Wege-Kandidaten durch dieselbe
+     Leitung müssen. Bei N Leuten waren das N+1 Fotos (bis 140 000 Zeichen je Foto) vor dem ersten Angebot, dazu das
+     Nachfassen (1,2 s / 3 s), die Wache und das „auch-da" im Puls. Auf einem schwachen 4G-Upload ist das bis zu einer
+     Sekunde je Foto, um die das Gespräch später steht. Jetzt tragen auch Gruss und „auch-da" nur den Fingerabdruck. Wer
+     das Foto nicht im Lager hat, fragt wie bisher sofort („bild-bitte", winzig); die Antwort geht erst 1 s nachdem die
+     Leitung zu ihm steht hinaus, höchstens 4 s nach der Frage, und mehrere Fragen in diesem Fenster werden zu EINEM
+     Paket. Ausnahme: ein Gruss mit eigenem Auftritt (Sportwagen, Rakete …) behält das Foto – der Wagen soll nicht ohne
+     Gesicht einfahren (Funk 140 / Fassung 698). Ältere Fassungen (811–883) fragen selbst nach und verstehen „bild-voll"
+     auch ohne Anschrift; ihr eigener Gruss trägt weiter das Foto und füllt hier das Lager. */
+  var BILD_VOLL_ARTEN = { "bild-voll": 1 };
   var bildGeaendertUm = 0, fingerFuer = "", fingerWert = "";
   var bildLager = {}, bildGefragt = {}, bildAntwortUm = {};
   function bildFinger(s) {
@@ -5457,7 +5467,8 @@ window.LiveChat = (function () {
     var aus = {};
     for (var k in n) if (Object.prototype.hasOwnProperty.call(n, k)) aus[k] = n[k];
     aus.bildH = bildFinger(n.bild);
-    if (!BILD_VOLL_ARTEN[n.art] && Date.now() - bildGeaendertUm > 20000) delete aus.bild;
+    var vollGruss = n.art === "hallo" && n.auftritt && !n.wieder;   // FASSUNG 884 — der Auftritt zeigt das Gesicht (Funk 140)
+    if (!BILD_VOLL_ARTEN[n.art] && !vollGruss && Date.now() - bildGeaendertUm > 20000) delete aus.bild;
     return aus;
   }
   /* Empfang: das Foto aus dem Lager wieder einsetzen – oder einmal nachfragen */
@@ -5470,6 +5481,32 @@ window.LiveChat = (function () {
       senden({ art: "bild-bitte", an: n.von, h: n.bildH });
     }
   }
+  /* FASSUNG 884 — die Antwort auf „bild-bitte" wartet, bis die Leitung zum Fragenden steht (+1 s, damit Kandidaten und
+     erste Datenkanal-Pakete durch sind), höchstens 4 s nach der Frage (ohne Leitung: Raum voll, nur Tonserver, Firefox
+     ohne connectionState). Alle in diesem Fenster Fragenden bekommen EIN Paket. Der Vergleich mit brueckeJe hält den
+     „steht"-Zeitpunkt einer schon abgebauten alten Leitung heraus. */
+  var BILD_NACH_LEITUNG_MS = 1000, BILD_WARTEN_MS = 4000;
+  var bildWartend = {}, bildLeitungUm = {}, bildAntwortUhr = null;
+  function bildLeitungSteht(id, pc) { bildLeitungUm[id] = { pc: pc, t: Date.now() }; if (bildWartend[id]) bildAntwortPlanen(); }
+  function bildAntwortPlanen() {
+    if (bildAntwortUhr) { clearTimeout(bildAntwortUhr); bildAntwortUhr = null; }
+    var ids = Object.keys(bildWartend); if (!ids.length) return;
+    var bereit = 0, spaetestens = Infinity;
+    ids.forEach(function (id) {
+      var gefragt = bildWartend[id], l = bildLeitungUm[id], grenze = gefragt + BILD_WARTEN_MS;
+      var frei = (l && l.pc === brueckeJe[id] && steht(l.pc)) ? l.t + BILD_NACH_LEITUNG_MS : grenze;
+      bereit = Math.max(bereit, Math.min(frei, grenze)); spaetestens = Math.min(spaetestens, grenze);
+    });
+    bildAntwortUhr = setTimeout(bildAntwortRaus, Math.max(0, Math.min(bereit, spaetestens) - Date.now()));
+  }
+  function bildAntwortRaus() {
+    bildAntwortUhr = null; var ids = Object.keys(bildWartend); bildWartend = {};
+    if (!ids.length || !zustand.ichBild || zustand.lage !== "drin") return;
+    var jetzt = Date.now(); ids.forEach(function (id) { bildAntwortUm[id] = jetzt; });
+    var p = { art: "bild-voll", name: zustand.ichName, bild: zustand.ichBild };
+    if (ids.length === 1) p.an = ids[0];          // mehrere: ein Paket ohne Anschrift (über den Raumkanal kostet das dasselbe)
+    senden(p);
+  }
 
   function empfangen(n) {
     if (!n || n.von === zustand.ichId) return;             // die eigene Post nicht lesen
@@ -5478,13 +5515,17 @@ window.LiveChat = (function () {
     if (typeof n.bildH === "string" && n.bildH) bildEinsetzen(n);
     if (n.art === "bild-bitte") {
       if (zustand.ichBild && (!bildAntwortUm[n.von] || Date.now() - bildAntwortUm[n.von] > 10000)) {
-        bildAntwortUm[n.von] = Date.now();
-        senden({ art: "bild-voll", an: n.von, name: zustand.ichName, bild: zustand.ichBild });
+        if (!bildWartend[n.von]) bildWartend[n.von] = Date.now();   // FASSUNG 884 — erst wenn die Leitung zu ihm steht
+        bildAntwortPlanen();
       }
       return;
     }
     if (n.art === "bild-voll") {
       if (typeof n.bild === "string" && n.bild) {
+        /* FASSUNG 884 — ein gebündeltes Foto (ohne Anschrift) erreicht auch Leute, die nicht gefragt haben. Eine
+           Unbekannte wird davon nicht angelegt (das Lager hat das Foto schon über bildEinsetzen/bildH, ihr Gruss holt
+           es dort ab), und wer das Foto schon hat, zeichnet nicht neu. */
+        var bp = zustand.leute[n.von]; if (!bp || bp.bild === n.bild) return;
         personMerken(n.von, n.name, n.bild);
         /* Zeilen, die vor der Antwort ankamen, bekommen ihr Foto nachträglich */
         zustand.nachrichten.forEach(function (z) { if (z && z.von === n.von && !z.bild) z.bild = n.bild; });
@@ -17700,6 +17741,7 @@ window.LiveChat = (function () {
         if (typeof lage.buehne === "boolean") zustand.buehne = lage.buehne;
         if (lage.leute) zustand.leute = lage.leute;
         if (lage.seit) zustand.seit = lage.seit;
+        if (typeof lage.ichBild === "string") zustand.ichBild = lage.ichBild;   // FASSUNG 884 — ein „altes" Foto (ohne bildGeaendertUm)
         if (lage.zuruecksetzen) {
           platzJe = {}; sitzTausch = {}; spielSitz = {};
           /* Auch die Zeilen leeren: sonst haelt der Doppel-Schutz eine
@@ -17885,7 +17927,7 @@ window.LiveChat = (function () {
     /* FASSUNG 842 — nur zum Nachprüfen: ein „hallo" wie beim (Wieder-)
        Verbinden des Raumkanals schicken. */
     pruefHallo: function (wieder) {
-      senden({ art: "hallo", name: zustand.ichName, bild: zustand.ichBild, tonAn: zustand.tonAn, bildAn: zustand.bildAn,
+      senden({ art: "hallo", auftritt: eigenerAuftritt(), name: zustand.ichName, bild: zustand.ichBild, tonAn: zustand.tonAn, bildAn: zustand.bildAn,   // 884: auftritt wie im echten Gruss
                seit: zustand.seit, buehne: zustand.buehne, konto: kontoId || "", wieder: wieder ? true : undefined });
     },
     sfuBericht: sfuBericht,

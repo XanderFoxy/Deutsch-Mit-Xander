@@ -9,15 +9,17 @@
    Stummschalten mit – von jedem an alle.
    Geprüft wird:
    1. Puls und Chatzeile tragen nur den Fingerabdruck (bildH), nicht
-      das Foto; „hallo"/„auch-da" tragen es voll; 20 s nach dem Ändern
-      fährt es noch voll mit.
+      das Foto; 20 s nach dem Ändern fährt es noch voll mit.
+      FASSUNG 884: auch „hallo"/„auch-da" tragen nur noch den
+      Fingerabdruck (Profilfoto erst nach dem Gruss, Sonde 884-bild).
    2. Wer einen Fingerabdruck bekommt, den er nicht kennt, fragt EINMAL
       nach („bild-bitte"); die Antwort („bild-voll") setzt das Foto bei
       der Person und in ihren früheren Zeilen ein.
    3. Ein späteres Paket mit bekanntem Fingerabdruck bekommt sein Foto
       aus dem Lager zurück.
    4. Auf „bild-bitte" antwortet man mit dem vollen Foto – höchstens
-      alle 10 s an dieselbe Person.
+      alle 10 s an dieselbe Person. FASSUNG 884: erst 1 s nachdem die
+      Leitung zu ihr steht, ohne Leitung nach 4 s.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -63,7 +65,8 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   });
   const puls = r.find((n) => n.art === "puls"), auchDa = r.find((n) => n.art === "auch-da");
   sage(puls && !puls.bild && /^[0-9a-z]+-[0-9a-z]+$/.test(puls.bildH || ""), "der Puls trägt nur den Fingerabdruck, nicht das Foto", puls ? JSON.stringify(puls).length + " Zeichen, bildH " + puls.bildH : "kein Puls");
-  sage(auchDa && auchDa.bild && auchDa.bild.length > 2000, "wer neu hereinkommt, bekommt das Foto einmal voll („auch-da“)", auchDa ? (auchDa.bild || "").length + " Zeichen" : "kein auch-da: " + r.map((n) => n.art).join(","));
+  /* FASSUNG 884 — gewollt anders: „auch-da" trägt nur den Fingerabdruck; das Foto holt sich der Neue mit „bild-bitte" */
+  sage(auchDa && !auchDa.bild && auchDa.bildH, "wer neu hereinkommt, bekommt im „auch-da“ nur den Fingerabdruck (Foto danach, 884)", auchDa ? JSON.stringify(auchDa).length + " Zeichen, bildH " + auchDa.bildH : "kein auch-da: " + r.map((n) => n.art).join(","));
   const zeile = await pg.evaluate(() => { window.__raus = []; try { window.LiveChat.schreiben("Hallo zusammen"); } catch (e) {} return window.__raus.slice(); });
   const text = zeile.find((n) => n.art === "text" || n.art === "chat");
   if (text) sage(!text.bild && text.bildH, "eine Chatzeile trägt nur den Fingerabdruck", JSON.stringify(text).length + " Zeichen");
@@ -91,12 +94,14 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
   sage(e.zurueck > 2000, "ein späteres Paket mit bekanntem Abdruck bekommt sein Foto aus dem Lager", e.zurueck + " Zeichen");
 
   console.log("\n  3) AUF NACHFRAGE ANTWORTEN");
-  const a = await pg.evaluate(() => {
+  await pg.evaluate(() => {
     window.__raus = [];
     window.LiveChat.pruefEmpfangen({ art: "bild-bitte", von: "bea", an: "ich", h: "x" });
     window.LiveChat.pruefEmpfangen({ art: "bild-bitte", von: "bea", an: "ich", h: "x" });
-    return window.__raus.filter((n) => n.art === "bild-voll").map((n) => ({ an: n.an, l: (n.bild || "").length }));
   });
+  /* FASSUNG 884 — die Antwort wartet auf die Leitung; hier gibt es keine, also höchstens 4 s */
+  await pg.waitForTimeout(4300);
+  const a = await pg.evaluate(() => window.__raus.filter((n) => n.art === "bild-voll").map((n) => ({ an: n.an, l: (n.bild || "").length })));
   sage(a.length === 1 && a[0].an === "bea" && a[0].l > 2000, "auf „bild-bitte“ kommt EINMAL das volle Foto zurück (nicht bei jeder Frage)", JSON.stringify(a));
   sage(!seitenFehler.length, "ohne Seitenfehler", seitenFehler.slice(0, 2).join(" | "));
 
