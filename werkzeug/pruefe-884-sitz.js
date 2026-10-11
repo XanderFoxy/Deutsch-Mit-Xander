@@ -14,7 +14,8 @@
      1  Leitung steht, Kanal beidseitig bereit
      2  A nimmt einen freien Platz (Server zurückgehalten): B sieht ihn
         in unter 300 ms
-     3  A hat die Quittung: rtt ["bbb", ms, "d"], 0 ≤ ms < 150
+     3  A hat die Quittung: rtt ["bbb", ms, "d", belegt, bild], 0 ≤ ms < 150,
+        0 ≤ belegt ≤ bild (ab wann der Absender selbst wieder frei war)
      4  B hat die Probe ["d", dom, mo, bild, vor, 1], 0 ≤ dom ≤ mo ≤ bild
      5  Server-Kopie freigegeben: vor > 0 in derselben Probe, nichts neu
         gezeichnet, Chatzeile genau einmal, Nachsendungen ohne Quittung
@@ -26,15 +27,27 @@
         (Probe "s") und quittiert über den Server (A: rtt "s"); ein zweiter
         Wechsel in 10 s → kein zweites Server-Echo
      8  Antwort auf das Hallo: beide vergessen, B schickt ein Hallo →
-        A für bbb UND B für aaa bereit (das zweite nur durch die Antwort)
-     9  Bericht „sitz“: Tagesgrenze (heute|4 → nichts), genau ein rpc,
-        < 6000 Zeichen, Felder rtt/ein/raus/kan, raus.srv.kein ≥ 1, höchstens
+        A für bbb UND B für aaa bereit (das zweite nur durch die Antwort);
+        „bitte“: hat B schon einmal geantwortet, bleibt ein schlichtes
+        zweites Hallo unbeantwortet (kein Hin und Her), eines mit „bitte“
+        wird beantwortet
+     9  Bericht „sitz“: genau ein rpc, < 6000 Zeichen, Felder rtt/ein/raus/
+        kan, raus.srv.kein ≥ 1; Tageszähler nur für Angenommenes: alter
+        Server (Antwort ohne „sitz“) 1 je Tag, ohne Anmeldung (ok:false)
+        nicht gezählt und kein zweiter Versuch, „genug für heute“ → heute
+        nichts mehr, neuer Server (Antwort mit „sitz“) 4 je Tag; höchstens
         2 je Betreten
-    10  Quelltext: eigenes Sprechen meldet „plaetze“, app.js zeichnet den
-        Streifen nur bei art !== "plaetze", direktSenden wandelt einmal um
+    10  Quelltext (wie vorher) und VERHALTEN: der Streifen wird bei
+        „plaetze“ (eigenes Sprechen, empfangenes „redet“) nicht neu
+        geschrieben, bei einer vollen Meldung schon; eigenes Sprechen
+        meldet nur „plaetze“ und der Ring steht (und geht) am eigenen
+        Platz im echten Klassenzimmer
     11  keine Fehler in der Konsole
-   Ausgegeben (nicht geprüft): die Probe bei 4-fach gedrosselter CPU, mit
-   dem kleinen #lcPlaetze und mit dem echten Klassenzimmer.
+   Ausgegeben (nicht geprüft): die Probe bei 4-fach gedrosselter CPU beim
+   EMPFÄNGER (kleines #lcPlaetze, echtes Klassenzimmer).
+    12  ABSENDER mit echtem Klassenzimmer 6-fach gedrosselt: die Quittung
+        wartet auf seine eigene Arbeit, und genau die steht in belegt
+        (ms − belegt ≤ 5 in mindestens 4 von 5)
    GEGENPROBE: ALT=<Ordner> – Dateien, die dort liegen (livechat.js,
    app.js), liefert der Sonden-Server statt der Repo-Dateien aus; auch die
    Quelltext-Prüfungen lesen sie. Erwartet: rot.
@@ -91,9 +104,10 @@ const datei = (name) => {
       window.DMA_SPIEL.empfangen = () => {};
       /* Berichte an den Betreiber abfangen (statt Supabase) */
       window.__berichte = [];
+      window.__rpcAntwort = { ok: true };                  // wie der alte Server (ohne „sitz“)
       (typeof Backend !== "undefined" ? Backend : window.Backend).zugang = () => ({ rpc: (name, a) => {
         window.__berichte.push({ name, art: a && a.p_art, d: a && JSON.parse(JSON.stringify(a.p_daten)) });
-        return Promise.resolve({ data: { ok: true } }); } });
+        return Promise.resolve({ data: JSON.parse(JSON.stringify(window.__rpcAntwort)) }); } });
       /* Ein kleines #lcPlaetze: 8 Plätze, data-lc-id wie im Klassenzimmer (livechatPlaetzeAuffrischen) */
       const schon = Boolean(document.getElementById("lcPlaetze"));
       const box = document.createElement("div");
@@ -136,7 +150,7 @@ const datei = (name) => {
   const vergessen = (pg, id, hallo) => pg.evaluate(([id, hallo]) => {
     if (!window.LiveChat.pruefKanalVergessen) return false;
     window.LiveChat.pruefKanalVergessen(id, hallo); return true;
-  }, [id, Boolean(hallo)]);
+  }, [id, hallo === "bitte" ? "bitte" : Boolean(hallo)]);
   const bereit = async (pg, id) => (await pg.evaluate(() => window.LiveChat.pruefKanal())).bereit.indexOf(id) >= 0;
   const platzVon = (pg, id) => pg.evaluate((id) => { const p = window.LiveChat.pruefSitz().plaetze.find((x) => x.id === id); return p ? p.nummer : null; }, id);
   const freierPlatz = (pg) => pg.evaluate(() => { const p = window.LiveChat.pruefSitz().plaetze.filter((x) => x.leer); return p.length ? p[p.length - 1].nummer : null; });
@@ -159,9 +173,12 @@ const datei = (name) => {
   let da = -1;
   for (let i = 0; i < 200; i++) { if ((await platzVon(B, "aaa")) === ziel) { da = Date.now() - t0; break; } await schlaf(5); }
   sage(erg && erg.ok && da >= 0 && da < 300, "2: A nimmt Platz " + ziel + ", B sieht ihn über den Datenkanal in unter 300 ms", da + " ms");
-  const mA = await warteAuf(async () => { const m = await mess(A); return m && m.rtt.length ? m : null; }, 1500);
+  const mA = await warteAuf(async () => { const m = await mess(A); return m && m.rtt.length && m.rtt[0][4] != null ? m : null; }, 1500)
+    || await mess(A);
   const q1 = mA && mA.rtt[0];
-  sage(!!(q1 && q1[0] === "bbb" && q1[2] === "d" && q1[1] >= 0 && q1[1] < 150), "3: A hat die Quittung über den Datenkanal: rtt [\"bbb\", ms, \"d\"], 0 ≤ ms < 150", JSON.stringify(mA && mA.rtt));
+  sage(!!(q1 && q1[0] === "bbb" && q1[2] === "d" && q1[1] >= 0 && q1[1] < 150), "3: A hat die Quittung über den Datenkanal: rtt [\"bbb\", ms, \"d\", …], 0 ≤ ms < 150", JSON.stringify(mA && mA.rtt));
+  sage(!!(q1 && q1.length === 5 && typeof q1[3] === "number" && typeof q1[4] === "number" && q1[3] >= 0 && q1[3] <= q1[4]),
+    "3: dazu, ab wann A selbst wieder frei war: belegt (setTimeout 0) und bild (nächstes Bild), 0 ≤ belegt ≤ bild", JSON.stringify(q1));
   const mB = await warteAuf(async () => { const m = await mess(B); return m && m.ein.length && m.ein[0][3] != null ? m : null; }, 1500);
   const p1 = mB && mB.ein[0];
   sage(!!(p1 && p1[0] === "d" && p1[1] >= 0 && p1[1] <= p1[2] && p1[2] <= p1[3] && p1[5] === 1),
@@ -220,37 +237,87 @@ const datei = (name) => {
   const beide = await warteAuf(async () => (await bereit(A, "bbb")) && (await bereit(B, "aaa")), 2000);
   const aB = await bereit(A, "bbb"), bA = await bereit(B, "aaa");
   sage(v8 && !!beide, "8: B schickt ein Hallo → A ist für bbb UND B für aaa bereit (das zweite nur durch die Antwort)", "A→bbb " + aB + ", B→aaa " + bA);
+  /* „bitte“: A grüßt, B antwortet (B hat seine eine Antwort auf diesem Kanal damit vergeben). A vergisst noch einmal:
+     ein schlichtes Hallo bleibt jetzt unbeantwortet (kein Hin und Her) – eines mit „bitte“ (wie das zweite Hallo nach
+     1,5 s) wird beantwortet. */
+  await vergessen(A, "bbb", true);
+  const g1 = await warteAuf(() => bereit(A, "bbb"), 1500);
+  await vergessen(A, "bbb", true);
+  await schlaf(700);
+  const ohneBitte = await bereit(A, "bbb");
+  await vergessen(A, "bbb", "bitte");
+  const mitBitte = await warteAuf(() => bereit(A, "bbb"), 1500);
+  sage(!!g1 && !ohneBitte && !!mitBitte, "8: ein zweites schlichtes Hallo bleibt unbeantwortet, eines mit „bitte“ wird beantwortet",
+    "erste Antwort " + !!g1 + ", ohne bitte bereit " + ohneBitte + ", mit bitte " + !!mitBitte);
 
   console.log("\n9  DER BERICHT „sitz“\n");
   const heute = await A.evaluate(() => { const d0 = new Date(); return d0.getFullYear() + "-" + ("0" + (d0.getMonth() + 1)).slice(-2) + "-" + ("0" + d0.getDate()).slice(-2); });
-  const vorBer = (await sitzBerichte(A)).length;
-  sage(vorBer === 0, "9: vor dem ersten Aufruf ging noch kein Bericht hinaus (keine 12 Werte, keine 90 s)", String(vorBer));
-  await A.evaluate((h) => localStorage.setItem("dma_sitz_mess", h + "|4"), heute);
-  const s0 = await mess(A, { senden: true });
-  sage(!!s0 && s0.gesendetJetzt === false && (await sitzBerichte(A)).length === vorBer && (s0.rtt.length + s0.ein.length) > 0,
-    "9: mit „dma_sitz_mess“ = heute|4 geht nichts hinaus (obwohl Werte da sind)", s0 ? "rtt " + s0.rtt.length + ", ein " + s0.ein.length : "kein pruefSitzMess");
-  await A.evaluate(() => localStorage.removeItem("dma_sitz_mess"));
-  const s1 = await mess(A, { senden: true });
-  const b1 = await sitzBerichte(A), d1 = b1[0] && b1[0].d;
-  sage(!!s1 && s1.gesendetJetzt === true && b1.length === 1 && b1[0].name === "spiel_diagnose_senden", "9: pruefSitzMess({ senden: true }) → genau ein rpc spiel_diagnose_senden mit p_art „sitz“", String(b1.length));
-  sage(!!d1 && JSON.stringify(d1).length < 6000 && Array.isArray(d1.rtt) && Array.isArray(d1.ein) && d1.raus && d1.kan && d1.kan.bbb,
-    "9: unter 6000 Zeichen, mit rtt, ein, raus, kan", d1 ? JSON.stringify(d1).length + " Zeichen: " + JSON.stringify(d1).slice(0, 420) : "");
-  sage(!!(d1 && d1.raus.srv && d1.raus.srv.kein >= 1), "9: raus.srv.kein ≥ 1 (die Sonde hat keinen echten Raumkanal)", d1 && JSON.stringify(d1.raus.srv));
-  sage((await A.evaluate(() => localStorage.getItem("dma_sitz_mess"))) === heute + "|1", "9: der Tageszähler steht auf heute|1");
-  /* zweiter Bericht: neue Werte (A wechselt, B quittiert direkt), dann senden */
+  const antwort = (a) => A.evaluate((a) => { window.__rpcAntwort = a; }, a);
+  const zaehler = () => A.evaluate(() => localStorage.getItem("dma_sitz_mess"));
+  const zahl = async () => (await sitzBerichte(A)).length;
   const wechselMitQuittung = async () => {
     const vor = (await mess(A) || { rtt: [] }).rtt.length;
     const z = await freierPlatz(A);
     await A.evaluate((n) => window.LiveChat.platzNehmen(n), z);
     return warteAuf(async () => { const m = await mess(A); return m && m.rtt.length > vor ? m : null; }, 1500);
   };
+  const vorBer = await zahl();
+  sage(vorBer === 0, "9: vor dem ersten Aufruf ging noch kein Bericht hinaus (keine 12 Werte, keine 90 s)", String(vorBer));
+  /* a) alter Server: 1 je Tag – mit heute|1 geht nichts hinaus, obwohl Werte da sind */
+  await A.evaluate((h) => localStorage.setItem("dma_sitz_mess", h + "|1"), heute);
+  const s0 = await mess(A, { senden: true });
+  sage(!!s0 && s0.gesendetJetzt === false && (await zahl()) === vorBer && (s0.rtt.length + s0.ein.length) > 0,
+    "9: solange der Server „sitz“ mit allen Arten zählt: mit heute|1 geht nichts hinaus (1 je Tag – die Leitungsberichte haben Vorrang)",
+    s0 ? "rtt " + s0.rtt.length + ", ein " + s0.ein.length : "kein pruefSitzMess");
+  /* b) der erste Bericht */
+  await A.evaluate(() => localStorage.removeItem("dma_sitz_mess"));
+  const s1 = await mess(A, { senden: true });
+  const b1 = await sitzBerichte(A), d1 = b1[0] && b1[0].d;
+  sage(!!s1 && s1.gesendetJetzt === true && b1.length === 1 && b1[0].name === "spiel_diagnose_senden", "9: pruefSitzMess({ senden: true }) → genau ein rpc spiel_diagnose_senden mit p_art „sitz“", String(b1.length));
+  sage(!!d1 && JSON.stringify(d1).length < 6000 && Array.isArray(d1.rtt) && Array.isArray(d1.ein) && d1.raus && d1.kan && d1.kan.bbb,
+    "9: unter 6000 Zeichen, mit rtt, ein, raus, kan", d1 ? JSON.stringify(d1).length + " Zeichen: " + JSON.stringify(d1).slice(0, 420) : "");
+  sage(!!(d1 && d1.rtt.length && d1.rtt.every((x) => x.length === 5 && typeof x[3] === "number")), "9: jede Quittung im Bericht trägt belegt und bild", d1 && JSON.stringify(d1.rtt));
+  sage(!!(d1 && d1.raus.srv && d1.raus.srv.kein >= 1), "9: raus.srv.kein ≥ 1 (die Sonde hat keinen echten Raumkanal)", d1 && JSON.stringify(d1.raus.srv));
+  await schlaf(50);
+  sage((await zaehler()) === heute + "|1|0", "9: angenommen (alter Server) → Tageszähler heute|1|0", await zaehler());
   await wechselMitQuittung();
   const s2 = await mess(A, { senden: true });
+  sage(!!(s2 && s2.gesendetJetzt === false && s2.rtt.length > 0 && (await zahl()) === 1), "9: alter Server: der zweite Bericht am selben Tag geht nicht hinaus", "Berichte " + (await zahl()));
+  /* c) ohne Anmeldung: der Server sagt ok:false ohne Grund → nicht gezählt, in diesem Betreten kein zweiter Versuch */
+  await A.evaluate(() => localStorage.removeItem("dma_sitz_mess"));
+  await antwort({ ok: false });
+  const s3 = await mess(A, { senden: true, neu: true });
+  await schlaf(50);
+  const z3 = await zaehler();
   await wechselMitQuittung();
-  const s3 = await mess(A, { senden: true });
-  const b3 = await sitzBerichte(A);
-  sage(!!(s2 && s2.gesendetJetzt === true && s3 && s3.gesendetJetzt === false && s3.rtt.length > 0 && b3.length === 2),
-    "9: der zweite Aufruf sendet, der dritte nicht (höchstens 2 je Betreten, obwohl Werte da sind)", "Berichte " + b3.length);
+  const s3b = await mess(A, { senden: true });
+  sage(!!(s3 && s3.gesendetJetzt === true && z3 === heute + "|0|0" && s3b && s3b.gesendetJetzt === false && (await zahl()) === 2),
+    "9: ohne Anmeldung (ok:false) zählt der Bericht nicht, und in diesem Betreten wird es nicht noch einmal versucht", "Zähler " + z3 + ", Berichte " + (await zahl()));
+  /* d) „genug für heute“ → heute nichts mehr */
+  await antwort({ ok: false, grund: "genug für heute" });
+  const s4 = await mess(A, { senden: true, neu: true });
+  await schlaf(50);
+  const z4 = await zaehler();
+  await wechselMitQuittung();
+  const s4b = await mess(A, { senden: true, neu: true });
+  sage(!!(s4 && s4.gesendetJetzt === true && z4 === heute + "|99|0" && s4b && s4b.gesendetJetzt === false && (await zahl()) === 3),
+    "9: „genug für heute“ → Zähler heute|99, heute geht kein „sitz“ mehr hinaus", "Zähler " + z4 + ", Berichte " + (await zahl()));
+  /* e) neuer Server (antwortet mit „sitz“): 4 je Tag, aber weiter höchstens 2 je Betreten */
+  await A.evaluate(() => localStorage.removeItem("dma_sitz_mess"));
+  await antwort({ ok: true, mess: 12, sitz: 8 });
+  const s5 = await mess(A, { senden: true, neu: true });
+  await schlaf(50);
+  const z5 = await zaehler();
+  await wechselMitQuittung();
+  const s6 = await mess(A, { senden: true });
+  await schlaf(50);
+  const z6 = await zaehler();
+  await wechselMitQuittung();
+  const s7 = await mess(A, { senden: true });
+  sage(!!(s5 && s5.gesendetJetzt === true && z5 === heute + "|1|1" && s6 && s6.gesendetJetzt === true && z6 === heute + "|2|1"),
+    "9: der Server zählt „sitz“ getrennt (Antwort mit „sitz“) → s = 1, ein zweiter Bericht am Tag geht hinaus", z5 + " → " + z6);
+  sage(!!(s7 && s7.gesendetJetzt === false && s7.rtt.length > 0 && (await zahl()) === 5),
+    "9: der dritte im selben Betreten nicht (höchstens 2 je Betreten, obwohl Werte da sind)", "Berichte " + (await zahl()));
   await schlaf(1300);   // Nachsendungen vorbei
 
   console.log("\n10  QUELLTEXT\n");
@@ -262,6 +329,60 @@ const datei = (name) => {
     "10: app.js zeichnet den Streifen im Zuhörer nur bei art !== \"plaetze\"");
   const ds = (/function direktSenden\(p\) \{[\s\S]*?\n  \}/.exec(lc) || [""])[0];
   sage(!!ds && !/dc\.send\(JSON\.stringify/.test(ds) && (ds.match(/JSON\.stringify/g) || []).length === 1, "10: direktSenden wandelt einmal in Text um (nicht je Gegenüber)");
+
+  /* Verhalten: der Streifen (Raum, Personenzahl, Stumm, Halten) – bei „plaetze“ bleibt er unberührt, bei einer vollen
+     Meldung wird er neu geschrieben. „plaetze“ allein (ohne Chatzeile) kommt hier vom eigenen Sprechen bei B und vom
+     „redet“, das A dabei schickt. (Ein Sitzwechsel MIT Chatzeile ruft nach dem nächsten Bild ohnehin eine volle
+     Meldung für die Zeile – unverändert seit 836.) */
+  const streifen = (pg) => pg.evaluate(() => { const t = document.getElementById("kzStreifenText"); return t ? t.textContent : null; });
+  const st0 = await streifen(B);
+  await B.evaluate(() => { const t = document.getElementById("kzStreifenText"); if (t) t.textContent = "SONDE"; window.__arten.length = 0; });
+  const sprB = await B.evaluate(() => Boolean(window.LiveChat.pruefSelbstSpricht));
+  if (sprB) {
+    await B.evaluate(() => window.LiveChat.pruefSelbstSpricht(true));
+    await A.evaluate(() => window.LiveChat.pruefSelbstSpricht && window.LiveChat.pruefSelbstSpricht(true));
+    await schlaf(300);
+    await B.evaluate(() => window.LiveChat.pruefSelbstSpricht(false));
+    await A.evaluate(() => window.LiveChat.pruefSelbstSpricht && window.LiveChat.pruefSelbstSpricht(false));
+    await schlaf(300);
+  }
+  const st1 = await streifen(B), ar10 = await B.evaluate(() => window.__arten.slice());
+  await B.evaluate(() => window.LiveChat.spielSitzeNeu());       // ruft melden() ohne Art (volle Meldung)
+  await schlaf(100);
+  const st2 = await streifen(B);
+  sage(sprB && st0 !== null && st1 === "SONDE" && ar10.length === 4 && ar10.every((a) => a === "plaetze"),
+    "10: Verhalten – eigenes Sprechen und ein empfangenes „redet“ (je an/aus: 4× „plaetze“) schreiben den Streifen bei B nicht neu",
+    "vorher " + JSON.stringify(st0) + ", danach " + JSON.stringify(st1) + ", Arten " + JSON.stringify(ar10));
+  sage(!!st2 && st2 !== "SONDE" && /da/.test(st2), "10: Verhalten – eine volle Meldung schreibt ihn weiter neu", JSON.stringify(st2));
+
+  /* Verhalten: eigenes Sprechen an/aus – nur „plaetze“, und der Ring steht am eigenen Platz im echten Klassenzimmer */
+  const echtZeichnen = (pg) => pg.evaluate(() => {
+    const klein = document.querySelector('#lcPlaetze[data-sonde="1"]'); if (klein) klein.remove();
+    document.querySelectorAll(".view,.subview").forEach((v) => { v.dataset.active = "false"; });
+    let e = document.getElementById("livechatArea");
+    while (e && e !== document.body) { if (e.dataset && "active" in e.dataset) e.dataset.active = "true"; e = e.parentElement; }
+    if (window.DMA_PRUEF && window.DMA_PRUEF.neuZeichnen) window.DMA_PRUEF.neuZeichnen();
+    return document.querySelectorAll("#lcPlaetze .lc-platz").length;
+  });
+  const echtA = await echtZeichnen(A);
+  await schlaf(500);
+  const ring = () => A.evaluate(() => { const k = document.querySelector("#lcPlaetze .lc-platz-ich"); return k ? k.classList.contains("lc-platz-spricht") : null; });
+  const kannSprechen = await A.evaluate(() => Boolean(window.LiveChat.pruefSelbstSpricht));
+  let ri0 = null, ri1 = null, ri2 = null, ar11 = [], ar12 = [];
+  if (kannSprechen && echtA) {
+    ri0 = await ring();
+    await A.evaluate(() => { window.__arten.length = 0; window.LiveChat.pruefSelbstSpricht(true); });
+    ri1 = await warteAuf(ring, 1000);
+    ar11 = await A.evaluate(() => window.__arten.slice());
+    await A.evaluate(() => { window.__arten.length = 0; window.LiveChat.pruefSelbstSpricht(false); });
+    ri2 = await warteAuf(async () => (await ring()) === false, 2000);
+    ar12 = await A.evaluate(() => window.__arten.slice());
+  }
+  sage(kannSprechen && echtA > 0 && ri0 === false && ri1 === true && JSON.stringify(ar11) === '["plaetze"]',
+    "10: Verhalten – eigenes Sprechen an: nur „plaetze“, der Ring steht am eigenen Platz (echtes Klassenzimmer, " + echtA + " Plätze)",
+    "vorher " + ri0 + ", an " + ri1 + ", Arten " + JSON.stringify(ar11));
+  sage(kannSprechen && ri2 === true && JSON.stringify(ar12) === '["plaetze"]', "10: Verhalten – eigenes Sprechen aus: nur „plaetze“, der Ring geht wieder",
+    "aus " + ri2 + ", Arten " + JSON.stringify(ar12));
 
   const f = A.__fehler.concat(B.__fehler);
   sage(f.length === 0, "11: keine Fehler in der Konsole", f.slice(0, 3).join(" | "));
@@ -304,6 +425,33 @@ const datei = (name) => {
     const f2 = B.__fehler.slice(fB);
     if (f2.length) console.log("   Seitenfehler dabei (nicht gezählt): " + f2.slice(0, 3).join(" | "));
   } catch (e) { console.log("   (nicht messbar: " + String(e.message || e).slice(0, 160) + ")"); }
+
+  /* ---------- 12: der ABSENDER gedrosselt (Nachprüfung) – die Quittung wartet auf seine eigene Arbeit ---------- */
+  console.log("\n12  QUITTUNG BEI GEDROSSELTEM ABSENDER (A mit echtem Klassenzimmer, " + echtA + " Plätze), [wer, ms, Weg, belegt, bild]\n");
+  const quittungBeiA = async () => {
+    const vor = (await mess(A) || { rtt: [] }).rtt.length;
+    const z = await freierPlatz(A);
+    await A.evaluate((n) => window.LiveChat.platzNehmen(n), z);
+    const m = await warteAuf(async () => { const x = await mess(A); return x && x.rtt.length > vor && x.rtt[x.rtt.length - 1][4] != null ? x : null; }, 3000);
+    await schlaf(1400);
+    return m ? m.rtt[m.rtt.length - 1] : null;
+  };
+  try {
+    const cdpA = await A.context().newCDPSession(A);
+    let w6 = [];
+    for (const rate of [1, 6]) {
+      await cdpA.send("Emulation.setCPUThrottlingRate", { rate });
+      const w = [];
+      for (let i = 0; i < 5; i++) w.push(await quittungBeiA());
+      console.log("   CPU " + rate + "×: " + w.map((q) => JSON.stringify(q)).join(" ") + "   ms − belegt: " + w.map((q) => (q ? q[1] - q[3] : "?")).join(", "));
+      if (rate === 6) w6 = w;
+    }
+    await cdpA.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+    /* Geprüft (Nachprüfung): bei 6-fach gedrosseltem Absender und Netz ~1 ms ist die Quittungszeit seine eigene Arbeit –
+       genau die steht in belegt. Ohne dieses Feld läse man ms als Netz. */
+    const erklaert = w6.filter((q) => q && typeof q[3] === "number" && q[1] - q[3] <= 5).length;
+    sage(erklaert >= 4, "12: Absender 6-fach gedrosselt: ms − belegt ≤ 5 in mindestens 4 von 5 (die Wartezeit auf ihn selbst steht in belegt)", erklaert + " von " + w6.length);
+  } catch (e) { sage(false, "12: Absender gedrosselt – nicht messbar", String(e.message || e).slice(0, 160)); }
 
   if (ALT) console.log("\nAus ALT geliefert: " + (ausAlt.join(", ") || "nichts"));
   laeuft = false;

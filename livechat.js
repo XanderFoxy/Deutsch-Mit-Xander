@@ -816,8 +816,9 @@ window.LiveChat = (function () {
        Tauschpartners, der vor dem Tausch abging, dessen alten Platz zurückholen (zwei auf einem Platz, bis zum nächsten Puls). */
     if (p.ordnung) Object.keys(p.ordnung).forEach(function (id) { sitzGeaendertUm[p.art + "|" + id] = Date.now(); });
     /* FASSUNG 884 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Gemessen wird nur die
-       Erstmeldung (nicht die Nachsendungen): wen der direkte Weg erreichte, wen nicht und warum, und was der Server zum
-       Senden sagt (siehe Messblock unten). Gesendet wird genau wie vorher – zuerst direkt, dann über den Server. */
+       Erstmeldung (nicht die Nachsendungen): wen der direkte Weg erreichte, wen nicht und warum, ab wann der Absender
+       selbst wieder frei ist, und was kanal.send zurückgibt (siehe Messblock unten). Gesendet wird genau wie vorher –
+       zuerst direkt, dann über den Server. */
     var tRaus = performance.now(), direkt = direktSenden(p);
     if (!p.nach) sitzRausMessen(p, direkt, tRaus);
     var r = senden(p);
@@ -858,20 +859,37 @@ window.LiveChat = (function () {
      XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Seit 836 geht jede Sitzmeldung direkt
      (Datenkanal) und über den Server – wie lange sie beim ANDEREN braucht, stand nirgends. Gemessen wird jetzt:
        - Laufzeit: der Empfänger schickt auf jede Erstmeldung sofort eine Quittung „sitz-q“ zurück (noch vor dem
-         Zeichnen); der Absender misst Hin und zurück (rtt: [wer, ms, Weg d/s]). Die Hälfte davon ist die Laufzeit –
-         ohne Uhrenabgleich zwischen den Geräten. Über den Server quittiert der Empfänger nur, wenn er keinen bereiten
+         Zeichnen); der Absender misst Hin und zurück, ohne Uhrenabgleich zwischen den Geräten:
+         rtt: [wer, ms, Weg d/s, belegt, bild]. Nachgeprüft: ms ist NICHT nur das Netz. Die Quittung kann erst
+         verarbeitet werden, wenn der Absender selbst wieder frei ist – und der schickt mitten in platzNehmen, danach
+         laufen auf derselben Aufgabe noch spielGewechselt, melden("plaetze") und das Neuzeichnen der Plätze, dann das
+         nächste Bild (6-fach gedrosselt mit echtem Klassenzimmer: ms 55 bei 55 ms eigener Bildzeit, Spitzen bis 298;
+         gedrosselt nur beim EMPFÄNGER: 2 ms). Deshalb misst der Absender mit: belegt = ms bis zu einem setTimeout 0,
+         das beim Senden eingereiht wird (so früh hätte eine sofort angekommene Quittung frühestens drankommen
+         können), bild = ms bis nach dem nächsten Bild (rAF + setTimeout 0). Lesart: ms ist eine Obergrenze für das
+         Netz (Hin und zurück, samt Warten beim Empfänger, bis er die Meldung annimmt); das Netz liegt zwischen
+         ms − bild und ms. Liegt ms bei belegt/bild, kann es ganz am eigenen Gerät liegen; erst ms deutlich über bild
+         ist sicher Netz (bzw. der Empfänger). Über den Server quittiert der Empfänger nur, wenn er keinen bereiten
          Datenkanal zum Absender hat, und höchstens alle 10 s je Absender (der Server schickt jede Meldung an alle).
        - Beim Empfänger je Erstmeldung eine Probe ein: [Weg, dom, mo, bild, vor, gez] in ms ab Ankunft – dom: Plätze im
          DOM (direkt nach melden), mo: nach den MutationObservern (spiel.js, Kleider), bild: nach dem nächsten Bild,
          vor: um wie viel der erste Weg vor der zweiten Kopie lag, gez: der Platz steht wirklich im DOM (1/0).
        - Beim Absender je Erstmeldung (raus): wie viele direkt erreicht wurden, und warum die anderen nicht (keine
-         Leitung pc / Kanal nicht offen dc / Kanal offen, aber noch kein „dc-hallo“ bereit), was der Server zum Senden
-         sagt (srv: ok, timed out, error …; kein = kein Raumkanal) und die größte Warteschlange im Datenkanal (buf).
+         Leitung pc / Kanal nicht offen dc / Kanal offen, aber noch kein „dc-hallo“ bereit), was kanal.send
+         zurückgibt (srv) und die größte Warteschlange im Datenkanal (buf). srv sagt wenig über den Server: der
+         Raumkanal läuft ohne broadcast.ack, dann löst realtime-js kanal.send auf dem Gerät sofort mit „ok“ auf, sobald
+         der Kanal verbunden ist – auch wenn der Server die Meldung verwirft. Nur auf dem REST-Notweg (Kanal nicht
+         verbunden) stammt die Antwort vom Server („ok“/„error“/„timed out“); kein = kein Raumkanal, fehler =
+         abgelehnt. Den Server-WEG misst allein die Server-Quittung (Weg s).
      Gesendet wird gebündelt als spiel_diagnose „sitz“: nach 12 Werten (+3 s, damit die letzte Probe ihr Bild hat) oder
-     90 s nach dem ersten, höchstens 2 je Betreten und 4 je Tag und Gerät (das Kontingent – 40 je Konto und Tag für
-     alle Arten – ist an Xanders Tagen schon voll). Nur Zahlen, keine Inhalte; für Xander nichts sichtbar. */
+     90 s nach dem ersten, höchstens 2 je Betreten. Je Tag und Gerät (dma_sitz_mess = „JJJJ-MM-TT|n|s“) höchstens 1,
+     solange der Server „sitz“ mit allen anderen Arten zählt (40 je Konto und 24 h – an Xanders Tagen schon voll, und
+     „leitung“ hat Vorrang); 4, sobald er „sitz“ getrennt zählt und das mit „sitz“ in der Antwort sagt (s = 1, SQL im
+     Logbuch). Gezählt wird nur, was der Server annimmt: „genug für heute“ → heute keiner mehr; ohne Anmeldung
+     (ok:false ohne Grund) → nicht gezählt und in diesem Betreten kein weiterer Versuch. Nur Zahlen, keine Inhalte;
+     für Xander nichts sichtbar. */
   var sitzMess = null, sitzRausUm = {}, sitzErst = {}, sitzEchoUm = {};
-  var SITZ_MESS_ZAHL = 12, SITZ_MESS_MS = 90000, SITZ_JE_BETRETEN = 2, SITZ_JE_TAG = 4;
+  var SITZ_MESS_ZAHL = 12, SITZ_MESS_MS = 90000, SITZ_JE_BETRETEN = 2, SITZ_JE_TAG = 4, SITZ_JE_TAG_ALT = 1;
   function sitzRausLeer() { return { n: 0, peers: 0, direkt: 0, ohne: { pc: 0, dc: 0, bereit: 0 }, srv: {}, buf: 0 }; }
   function sitzMessStand() {
     if (!sitzMess || sitzMess.raum !== zustand.raum || sitzMess.seit !== zustand.seit) {
@@ -893,7 +911,15 @@ window.LiveChat = (function () {
   function sitzRausMessen(p, direkt, t) {
     var j = performance.now();
     Object.keys(sitzRausUm).forEach(function (sn) { if (j - sitzRausUm[sn].t > 10000) delete sitzRausUm[sn]; });
-    sitzRausUm[p.sn] = { t: t || j, q: {} };
+    var e = sitzRausUm[p.sn] = { t: t || j, q: {}, b: null, f: null, z: [] };
+    /* Ab wann ist der Absender selbst wieder frei (belegt), und wann ist das nächste Bild durch (bild)? Kam die
+       Quittung schon vorher an, trägt sitzQuittung die Werte hier nach (e.z). Im Hintergrund kommt kein Bild. */
+    setTimeout(function () { e.b = Math.round(performance.now() - e.t); e.z.forEach(function (x) { x[3] = e.b; }); }, 0);
+    if (document.visibilityState === "visible") {
+      (window.requestAnimationFrame || setTimeout)(function () {
+        setTimeout(function () { e.f = Math.round(performance.now() - e.t); e.z.forEach(function (x) { x[4] = e.f; }); }, 0);
+      });
+    }
     var r = sitzMessStand().raus;
     var ids = Object.keys(zustand.leute).filter(function (id) { return !istPuppe(id); });
     r.n++; r.peers += ids.length; r.direkt += direkt || 0;
@@ -914,7 +940,9 @@ window.LiveChat = (function () {
     var e = sitzRausUm[sn];
     if (!e || e.q[id]) return;
     e.q[id] = 1;
-    sitzMessMerk("rtt", [String(id).slice(0, 4), Math.round(performance.now() - e.t), w]);
+    var x = [String(id).slice(0, 4), Math.round(performance.now() - e.t), w, e.b, e.f];
+    e.z.push(x);
+    sitzMessMerk("rtt", x);
   }
   /* Beim Empfänger, direkt nach melden("plaetze"). Im Hintergrund kommt kein Bild – dann keine Probe. */
   function sitzEinMessen(n, ein, weg, ziel) {
@@ -934,12 +962,28 @@ window.LiveChat = (function () {
     var e = sitzErst[n.von + "|" + n.sn];
     if (e && e.w !== weg && e.p[4] == null) e.p[4] = Math.round(ein - e.t);
   }
+  /* Tageszähler je Gerät: n = heute angenommene Berichte (99 = der Server sagte „genug für heute“), s = 1, sobald
+     der Server „sitz“ getrennt zählt (bleibt über den Tag hinaus gemerkt). */
+  function sitzTag() {
+    var d0 = new Date(), t = { tag: d0.getFullYear() + "-" + ("0" + (d0.getMonth() + 1)).slice(-2) + "-" + ("0" + d0.getDate()).slice(-2), n: 0, s: 0 };
+    try {
+      var a = String(localStorage.getItem("dma_sitz_mess") || "").split("|");
+      t.s = a[2] === "1" ? 1 : 0;
+      if (a[0] === t.tag) t.n = Number(a[1]) || 0;
+    } catch (e) {}
+    return t;
+  }
+  function sitzTagSetzen(f) {
+    var t = sitzTag(); f(t);
+    try { localStorage.setItem("dma_sitz_mess", t.tag + "|" + t.n + "|" + t.s); } catch (e) {}
+  }
+  function sitzTagZurueck() { sitzTagSetzen(function (t) { if (t.n > 0 && t.n < 99) t.n--; }); }
   function sitzMessSenden(m) {
     if (m.uhr) { clearTimeout(m.uhr); m.uhr = 0; }
     if ((!m.rtt.length && !m.ein.length) || m.gesendet >= SITZ_JE_BETRETEN) return false;
-    var d0 = new Date(), heute = d0.getFullYear() + "-" + ("0" + (d0.getMonth() + 1)).slice(-2) + "-" + ("0" + d0.getDate()).slice(-2), schon = 0;
-    try { var t = String(localStorage.getItem("dma_sitz_mess") || "").split("|"); if (t[0] === heute) schon = Number(t[1]) || 0; } catch (e) {}
-    if (schon >= SITZ_JE_TAG) return false;
+    var tag = sitzTag();
+    if (tag.n >= (tag.s ? SITZ_JE_TAG : SITZ_JE_TAG_ALT)) return false;
+    var gezaehlt = false;
     try {
       var be = (typeof Backend !== "undefined" && Backend) || window.Backend;
       var k = be && be.zugang && be.zugang();
@@ -953,9 +997,19 @@ window.LiveChat = (function () {
       var d = { fassung: (window.DMA_VERSION || ""), ua: (navigator.userAgent || "").slice(0, 80), raum: String(m.raum || "").slice(0, 24),
                 rtt: m.rtt, ein: m.ein, raus: m.raus, kan: kan };
       if (JSON.stringify(d).length >= 6000) { d.rtt = d.rtt.slice(-12); d.ein = d.ein.slice(-12); }
-      k.rpc("spiel_diagnose_senden", { p_art: "sitz", p_daten: d }).then(function () {}, function () {});
-    } catch (e) { return false; }
-    try { localStorage.setItem("dma_sitz_mess", heute + "|" + (schon + 1)); } catch (e) {}
+      /* Vorher zählen (zwei Aufrufe kurz hintereinander gehen so nicht beide durch), nach der Antwort berichtigen. */
+      sitzTagSetzen(function (t) { t.n++; }); gezaehlt = true;
+      k.rpc("spiel_diagnose_senden", { p_art: "sitz", p_daten: d }).then(function (a) {
+        var r = a && a.data;
+        if (!a || a.error || !r) return sitzTagZurueck();
+        if (r.ok === false) {
+          if (r.grund) sitzTagSetzen(function (t) { t.n = 99; });              // „genug für heute“ – die Leitung hat Vorrang
+          else { sitzTagZurueck(); m.gesendet = SITZ_JE_BETRETEN; }              // keine Anmeldung: nicht weiter versuchen
+          return;
+        }
+        if (r.sitz && !sitzTag().s) sitzTagSetzen(function (t) { t.s = 1; });   // der Server zählt „sitz“ getrennt
+      }, sitzTagZurueck);
+    } catch (e) { if (gezaehlt) sitzTagZurueck(); return false; }
     m.gesendet++;
     m.rtt = []; m.ein = []; m.raus = sitzRausLeer(); m.bald = 0;
     return true;
@@ -4291,12 +4345,16 @@ window.LiveChat = (function () {
          jede Sitz- und Spielmeldung nur über den Server, obwohl der Kanal offen war. Jetzt: nach 1,5 s noch nicht
          bereit → ein zweites Hallo; ein Hallo wird einmal je Kanal beantwortet (mit „zurueck“, das selbst nicht
          beantwortet wird – kein Hin und Her); und JEDE Nachricht auf dem Kanal macht bereit (jede Fassung, die über
-         Kanal 7 spricht, kennt ihn seit 659). Nur der aktuelle Kanal zählt (kanalJe), kein schon ersetzter. */
+         Kanal 7 spricht, kennt ihn seit 659). Nur der aktuelle Kanal zählt (kanalJe), kein schon ersetzter.
+         Nachprüfung: das zweite Hallo trägt „bitte“ und wird IMMER beantwortet. Sonst blieb eine Lücke: kam das erste
+         Hallo an, war die eine Antwort schon vergeben – gingen dann die Antwort und das Hallo der Gegenseite beide
+         verloren, blieb man unbereit, bis drüben zufällig etwas über den Kanal ging. Auch so kein Hin und Her: „bitte“
+         geht je Kanal höchstens einmal hinaus, „zurueck“ wird nie beantwortet. */
       dc.onopen = function () {
         try { dc.send(JSON.stringify({ art: "dc-hallo" })); } catch (e) {}
         setTimeout(function () {
           if (dc.readyState !== "open" || kanalJe[anderId] !== dc || kanalBereit[anderId]) return;
-          try { dc.send(JSON.stringify({ art: "dc-hallo" })); } catch (e) {}
+          try { dc.send(JSON.stringify({ art: "dc-hallo", bitte: 1 })); } catch (e) {}
         }, 1500);
       };
       dc.onmessage = function (e) {
@@ -4307,7 +4365,7 @@ window.LiveChat = (function () {
         n.von = anderId;
         if (kanalJe[anderId] === dc) kanalBereit[anderId] = true;   // FASSUNG 884 — jede Nachricht macht bereit
         if (n.art === "dc-hallo") {
-          if (!n.zurueck && !dc.__hz) { dc.__hz = 1; try { dc.send(JSON.stringify({ art: "dc-hallo", zurueck: 1 })); } catch (x) {} }
+          if (!n.zurueck && (n.bitte || !dc.__hz)) { dc.__hz = 1; try { dc.send(JSON.stringify({ art: "dc-hallo", zurueck: 1 })); } catch (x) {} }
           return;
         }
         /* FASSUNG 884 — die Quittung auf eine eigene Sitzmeldung (siehe sitzQuittung) */
@@ -4318,8 +4376,9 @@ window.LiveChat = (function () {
         if (n.art === "spiel" && n.ereignis) empfangen(n);
         /* FASSUNG 836 — die Sitzordnung kommt auch auf diesem schnellen Weg (siehe sitzSenden) */
         else if ((n.art === "sitzplatz" || n.art === "spielsitz") && typeof n.sn === "number" && n.ordnung) {
-          /* FASSUNG 884 — die Quittung geht SOFORT zurück, noch vor dem Zeichnen: so misst der Absender nur das Netz.
-             Nachsendungen bekommen keine. Ankunft und Weg reisen für die Probe beim Empfänger mit (sitzEinMessen). */
+          /* FASSUNG 884 — die Quittung geht SOFORT zurück, noch vor dem eigenen Zeichnen (das steckt also nicht darin;
+             was der Absender selbst zu tun hat, misst er als belegt/bild mit, siehe sitzRausMessen). Nachsendungen
+             bekommen keine. Ankunft und Weg reisen für die Probe beim Empfänger mit (sitzEinMessen). */
           if (!n.nach) { try { dc.send(JSON.stringify({ art: "sitz-q", sn: n.sn })); } catch (x) {} }
           n.__weg = "d"; n.__ein = ein;
           empfangen(n);
@@ -16804,21 +16863,24 @@ window.LiveChat = (function () {
            zwei Sätzen zugehen. */
         var nachlauf = zustand.sprechbild === "bluete2" ? 300 : STILL_MS;
         var neu = redet || (stillSeit && Date.now() - stillSeit < nachlauf);
-        neu = Boolean(neu);
-        if (neu !== zustand.spricht) {
-          zustand.spricht = neu;
-          senden({ art: "redet", spricht: neu });
-          /* FASSUNG 884 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Eigenes Sprechen
-             an/aus ändert nur den eigenen Platz (den Ring) – wie beim Empfänger seit 836 nur die Plätze neu zeichnen,
-             nicht das ganze Klassenzimmer samt aller Chatzeilen (bei jedem Satzanfang und jeder Pause). */
-          melden("plaetze");
-          /* FASSUNG 773 — XANDER (Funk 199): „die Töne des Spiels werden immer noch nicht stumm geschalten wenn ich mit
-             dir spreche innerhalb des Livestreams". Das Spiel hört hier mit und schaltet seinen Klang still, solange man
-             selbst spricht. */
-          try { window.dispatchEvent(new CustomEvent("dma-selbst-spricht", { detail: { an: neu } })); } catch (e) {}
-        }
+        selbstSprichtSetzen(Boolean(neu));
       }, 120);
     } catch (e) { lautstaerkeStoppen(); }
+  }
+  /* FASSUNG 884 (Nachprüfung) — unverändert aus der Messschleife oben herausgezogen, damit die Sonde 884-sitz das
+     eigene Sprechen am Verhalten prüfen kann (Ring am eigenen Platz, nur „plaetze“), ohne Mikrofon. */
+  function selbstSprichtSetzen(neu) {
+    if (neu === zustand.spricht) return;
+    zustand.spricht = neu;
+    senden({ art: "redet", spricht: neu });
+    /* FASSUNG 884 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Eigenes Sprechen
+       an/aus ändert nur den eigenen Platz (den Ring) – wie beim Empfänger seit 836 nur die Plätze neu zeichnen,
+       nicht das ganze Klassenzimmer samt aller Chatzeilen (bei jedem Satzanfang und jeder Pause). */
+    melden("plaetze");
+    /* FASSUNG 773 — XANDER (Funk 199): „die Töne des Spiels werden immer noch nicht stumm geschalten wenn ich mit
+       dir spreche innerhalb des Livestreams". Das Spiel hört hier mit und schaltet seinen Klang still, solange man
+       selbst spricht. */
+    try { window.dispatchEvent(new CustomEvent("dma-selbst-spricht", { detail: { an: neu } })); } catch (e) {}
   }
   function lautstaerkeStoppen() {
     if (hoerUhr) { clearInterval(hoerUhr); hoerUhr = null; }
@@ -17847,15 +17909,20 @@ window.LiveChat = (function () {
        als „noch nicht bereit“ behandeln (wie ein verlorenes dc-hallo), auf Wunsch mit neuem Hallo. */
     pruefSitzMess: function (o) {
       o = o || {};
-      var m = sitzMessStand(), raus = o.senden ? sitzMessSenden(m) : null;
+      var m = sitzMessStand();
+      if (o.neu) m.gesendet = 0;                            // wie ein neues Betreten (nur für die Berichtsgrenzen)
+      var raus = o.senden ? sitzMessSenden(m) : null;
       return JSON.parse(JSON.stringify({ rtt: m.rtt, ein: m.ein, raus: m.raus, gesendet: m.gesendet, gesendetJetzt: raus }));
     },
     pruefKanalVergessen: function (id, hallo) {
       delete kanalBereit[id];
       var dc = kanalJe[id];
       if (dc) delete dc.__hz;
-      if (hallo && dc && dc.readyState === "open") { try { dc.send(JSON.stringify({ art: "dc-hallo" })); } catch (e) {} }
+      var h = hallo === "bitte" ? { art: "dc-hallo", bitte: 1 } : { art: "dc-hallo" };
+      if (hallo && dc && dc.readyState === "open") { try { dc.send(JSON.stringify(h)); } catch (e) {} }
     },
+    /* FASSUNG 884 (Nachprüfung) — eigenes Sprechen an/aus wie aus der Lautstärke-Messung (selbstSprichtSetzen) */
+    pruefSelbstSpricht: function (an) { selbstSprichtSetzen(Boolean(an)); return Boolean(zustand.spricht); },
     pruefBuendelVergessen: function (id) { delete buendelFaehig[id]; },
     pruefWarteschlange: function () { return liveWarteschlange.map(function (w) { return w.id; }); },
     /* Nur zum Nachmessen: Stuecke einsortieren und ansehen, in
