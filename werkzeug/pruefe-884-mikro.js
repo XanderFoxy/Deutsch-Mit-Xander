@@ -2,8 +2,11 @@
 /* =====================================================================
    SONDE 884 — MIKRO RAUSCHT: ERST MESSEN (FASSUNG 884, Funk 191)
    ---------------------------------------------------------------------
-   XANDER (Funk 191): „außerdem rauscht das Mikro jetzt so komisch …
-   schau doch mal bitte, was da los ist". Es gab keine einzige Zahl.
+   XANDER (Funk 191, Diktat wörtlich): „aus dem Rausch das Mikro jetzt
+   so komisch schau doch mal bitte was da los ist" (Lesart: „außerdem
+   rauscht das Mikro …"). Funk 192 nannte er selbst die Dorfklänge in der
+   Sprachnachricht als Grund (seit 769 still) – die Sprachnachricht misst
+   diese Sonde NICHT. Für das Live-Gespräch gab es keine einzige Zahl.
    Gebaut ist nur die Messung (an den Mikrofon-Einstellungen ändert sich
    nichts): die Wache je Leitung liest aus ihrer ohnehin laufenden
    Statistik (alle 2,5 s) die Tongüte mit; sie reist im 30-s-Bericht
@@ -21,6 +24,8 @@
      C  beide „leitung"-Berichte tragen d.mik (ec 1), < 6000 Zeichen
      D  pruefAufbauSenden(): genau ein „verbindung"-Bericht mit d.ton.mik
         und d.ton.je[<anderer>], < 6000 Zeichen; keine neue Meldungsart
+        (Größe wie der Server sie misst: length(p_daten::text) – jsonb-Text
+        mit Leerzeichen nach „:" und „,", nicht JSON.stringify)
      E  /verbindung (verbindungsBericht) zeigt „Güte: verdeckt" und
         „Dein Mikrofon: … Rauschunterdrückung an"; „kommt an (" bleibt
      F  Leistung: in einem ruhigen 10-s-Fenster ruft Seite B getStats
@@ -30,17 +35,36 @@
    EHRLICH: Das Rauschen selbst lässt sich hier nicht nachstellen – das
    Test-Mikrofon rauscht nicht. Bewiesen wird nur, dass die Messung
    richtig erhoben, klein und ohne Mehrkosten gesendet wird.
-   GEGENPROBE: ALT=1 (Stand HEAD) oder ALT_REV=<rev> bzw. ALT=<rev> – der
-   kleine Server liefert /livechat.js dann aus „git show <rev>:livechat.js"
-   (das Arbeitsverzeichnis bleibt unberührt). Erwartet: A–E rot, F grün
-   mit derselben Zahl wie im neuen Lauf.
+   GEGENPROBE: ALT=1 nimmt 295f13c (der Stand direkt vor diesem Punkt;
+   NICHT HEAD – seit dem Commit 3686a1b steckt der Bau in HEAD), oder
+   ALT_REV=<rev> bzw. ALT=<rev> – der kleine Server liefert /livechat.js
+   dann aus „git show <rev>:livechat.js" (das Arbeitsverzeichnis bleibt
+   unberührt). Enthält die Revision den Bau schon, bricht die Sonde ab
+   (sonst wäre die Gegenprobe grün und bewiese nichts). Erwartet: A–E
+   rot, F grün mit derselben Zahl wie im neuen Lauf.
+   BERICHTE=<datei> schreibt die abgefangenen Berichte als JSON hinaus
+   (zum Nachrechnen der Größe in Postgres, nur lesend).
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
 const WURZEL = process.env.WURZEL || path.join(__dirname, "..");
-const ALT = (process.env.ALT || process.env.ALT_REV) ? (process.env.ALT_REV || (process.env.ALT === "1" ? "HEAD" : process.env.ALT)) : "";
+const VOR_884_MIKRO = "295f13c";   // der Stand direkt vor „WIP 884 mikro" (3686a1b)
+const ALT = (process.env.ALT || process.env.ALT_REV) ? (process.env.ALT_REV || (process.env.ALT === "1" ? VOR_884_MIKRO : process.env.ALT)) : "";
 const LC = ALT ? execFileSync("git", ["-C", WURZEL, "show", ALT + ":livechat.js"], { maxBuffer: 1 << 28 }).toString("utf8")
                : fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
+if (ALT && /function tonGueteMerken/.test(LC)) {
+  console.log("GEGENPROBE UNGÜLTIG: livechat.js aus " + ALT + " enthält den Bau schon (tonGueteMerken) – sie wäre grün und bewiese nichts. ALT=1 (= " + VOR_884_MIKRO + ") nehmen.");
+  process.exit(3);
+}
+/* Der Server misst length(p_daten::text) (spiel_diagnose_senden: über 6000 → nur {zu_lang:true}). jsonb-Text schreibt
+   ein Leerzeichen nach jedem „:" und „,", ist also länger als JSON.stringify. So nachgerechnet: */
+function jsonbText(v) {
+  if (v === null || typeof v !== "object") return v === undefined ? "null" : JSON.stringify(v);
+  if (Array.isArray(v)) return "[" + v.map((x) => (x === undefined || typeof x === "function" ? "null" : jsonbText(x))).join(", ") + "]";
+  return "{" + Object.keys(v).filter((k) => v[k] !== undefined && typeof v[k] !== "function")
+    .map((k) => JSON.stringify(k) + ": " + jsonbText(v[k])).join(", ") + "}";
+}
+const jsonbLaenge = (v) => jsonbText(v).length;
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".opus": "audio/ogg", ".m4a": "audio/mp4", ".mp3": "audio/mpeg" };
 let fehler = 0;
@@ -153,8 +177,8 @@ const zahl = (x) => typeof x === "number" && isFinite(x);
   const lA = leitA[0] && leitA[0].d, lB = leitB[0] && leitB[0].d;
   sage(lA && lA.mik && lA.mik.ec === 1 && lB && lB.mik && lB.mik.ec === 1, "C: beide „leitung“-Berichte tragen mik (Echo an)",
     lA && JSON.stringify(lA.mik));
-  sage(leitA.length && leitB.length && leitA.concat(leitB).every((b) => JSON.stringify(b.d).length < 6000), "C: jeder Leitungsbericht < 6000 Zeichen",
-    leitA.concat(leitB).map((b) => JSON.stringify(b.d).length).join(" / "));
+  sage(leitA.length && leitB.length && leitA.concat(leitB).every((b) => jsonbLaenge(b.d) < 6000), "C: jeder Leitungsbericht < 6000 Zeichen (wie der Server misst)",
+    leitA.concat(leitB).map((b) => jsonbLaenge(b.d) + " (JSON " + JSON.stringify(b.d).length + ")").join(" / "));
 
   /* D — der 30-s-Bericht „verbindung" */
   await B.evaluate(() => { window.__berichte.length = 0; if (window.LiveChat.pruefAufbauSenden) window.LiveChat.pruefAufbauSenden(); });
@@ -163,8 +187,9 @@ const zahl = (x) => typeof x === "number" && isFinite(x);
   const dv = verB[0] && verB[0].d;
   sage(verB.length === 1 && dv && dv.ton && dv.ton.mik && dv.ton.mik.da === 1 && dv.ton.je && dv.ton.je.aaa && dv.ton.je.aaa.pk > 0,
     "D: genau ein „verbindung“-Bericht mit ton.mik und ton.je[aaa]", dv && dv.ton ? JSON.stringify(dv.ton).slice(0, 400) : String(verB.length));
-  sage(dv && JSON.stringify(dv).length < 6000, "D: Bericht „verbindung“ < 6000 Zeichen", dv && String(JSON.stringify(dv).length));
+  sage(dv && jsonbLaenge(dv) < 6000, "D: Bericht „verbindung“ < 6000 Zeichen (wie der Server misst)", dv && (jsonbLaenge(dv) + " (JSON " + JSON.stringify(dv).length + ")"));
   const alleBer = berA.concat(berB).concat(verB);
+  if (process.env.BERICHTE) fs.writeFileSync(process.env.BERICHTE, JSON.stringify(alleBer.map((b) => ({ art: b.art, d: b.d, jsonb: jsonbLaenge(b.d) })), null, 1));
   const arten = Array.from(new Set(alleBer.map((b) => b.art)));
   sage(arten.every((a) => a === "leitung" || a === "verbindung"), "D: keine neue Meldungsart (nur leitung/verbindung)", arten.join(","));
   /* Datenschutz über alles, was hinausging (B) */

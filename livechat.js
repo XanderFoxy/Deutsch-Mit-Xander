@@ -3161,8 +3161,11 @@ window.LiveChat = (function () {
     if (w && w.uhr) clearInterval(w.uhr);
     delete wache[id];
   }
-  /* FASSUNG 884 — XANDER (Funk 191): „außerdem rauscht das Mikro jetzt so komisch … schau doch mal bitte, was da los
-     ist". Nie untersucht – es gab keine einzige Zahl. Erst messen, nichts verstellen: Die Wache je Leitung holt ihre
+  /* FASSUNG 884 — XANDER (Funk 191, Diktat wörtlich): „aus dem Rausch das Mikro jetzt so komisch schau doch mal bitte
+     was da los ist" (Lesart: „außerdem rauscht das Mikro …"). 23 Minuten später (Funk 192) nannte er selbst einen
+     Grund: die Dorfklänge in der Sprachnachricht – seit 769 ist das Spiel beim Aufnehmen still, seit 773 auch, solange
+     man am offenen Mikrofon spricht. Das Live-Gespräch selbst wurde nie gemessen – es gab keine einzige Zahl.
+     Sprachnachricht und „Dauernd an" misst dieser Block NICHT. Erst messen, nichts verstellen: Die Wache je Leitung holt ihre
      Statistik ohnehin alle 2,5 s; daraus wird jetzt mitgeschrieben, wie seine Stimme hier ankommt (Anteil verdeckter
      Stücke = Aussetzer/„Roboter", Jitter, verlorene Pakete, mittlerer Pegel, Ruhepegel = Rauschen in den Pausen) und
      wie das eigene Mikrofon hinausgeht. Dazu die Einstellungen des eigenen Mikrofons (Echo-/Rauschunterdrückung,
@@ -3273,7 +3276,8 @@ window.LiveChat = (function () {
         + ": " + (pc ? (pc.connectionState || "?") : "keine Leitung")
         + " / Weg " + (w.weg || "noch keiner")
         + " / Ton " + (w.tonDa ? "kommt an (" + Math.round((w.bytes || 0) / 1024) + " kB)" : "KEINER")
-        + (g ? " / Güte: " + tonGueteText(g) : ""));
+        + (sfuHoertIhn(id) ? " / Güte: über den Tonserver, nicht gemessen"   // dann gälten die Zahlen der Direktleitung nicht
+           : g ? " / Güte: " + tonGueteText(g) : ""));
     });
     if (!zeilen.length) zeilen.push("Es besteht gerade keine Leitung zu jemandem.");
     if (sfuErlaubt()) zeilen.push(sfuBericht());  /* FASSUNG 827 */

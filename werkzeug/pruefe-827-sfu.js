@@ -283,6 +283,11 @@ window.FAKE = (() => {
   sage(Boolean(kb && kb.offen.indexOf("bbb") >= 0), "der Spielkanal zu B ist offen", JSON.stringify(kb));
   const bericht = await A.evaluate(() => window.LiveChat.sfuBericht());
   sage(/läuft/.test(bericht), "/verbindung sagt, dass der Tonserver läuft", bericht);
+  /* FASSUNG 884 (Sonde 884-mikro, Nachbesserung): kommt seine Stimme über den Tonserver, gilt die Tongüte der
+     Direktleitung nicht – /verbindung sagt das, statt Zahlen der leeren Netz-Tonspur zu zeigen. */
+  const vb3 = await A.evaluate(() => window.LiveChat.verbindungsBericht());
+  sage(/Güte: über den Tonserver, nicht gemessen/.test(vb3) && !/Güte: verdeckt/.test(vb3), "/verbindung: Güte über den Tonserver nicht als Direktleitung ausgewiesen (884)",
+    (vb3.split("\n")[0] || "").slice(0, 200));
   const puls = await A.evaluate(() => window.LiveChat.pruefSfuPuls());
   sage(puls && puls.ok && aufrufeVon("aaa").some((a) => a.aktion === "puls"), "der Puls geht an die Funktion", JSON.stringify(puls));
 
