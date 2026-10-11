@@ -537,19 +537,332 @@ window.Rueckfrage = (function () {
     var d = diktat;
     diktat = null;
     if (!d) return;
+    /* FASSUNG 884: Diktat aus dem Strom – Kontext, Klon und Uhren freigeben (siehe unten) */
+    if (d.strom) { stromAufraeumen(d); clearTimeout(d.bremseUhr); }
     /* FASSUNG 698: hat der Livestream sein Mikrofon ausgeliehen, bekommt er es jetzt zurück. */
     if (d.geliehen) { try { window.LiveChat.mikrofonZurueck(); } catch (e) {} }
     var feld = diktatFeld(d.klasse);
     diktatKnopfZeigen(d.klasse, false,
       hinweis !== undefined ? hinweis : (feld && feld.value.trim() ? "\u2713 Steht im Feld \u2013 jetzt \u201eSenden\u201c." : ""));
   }
-  function diktatStarten(klasse) {
+  /* =====================================================================
+     FASSUNG 884 — DIKTAT IM LIVESTREAM: AUS DEM LAUFENDEN STROM
+     ---------------------------------------------------------------------
+     XANDER (Funk 163): „hast du mal geschaut warum ich mit niemanden mehr sprechen kann auch das Mikrofon im Chat wenn
+     ich dir etwas übers Walkie-Talkie schicken will sobald ich da mit jemanden spreche irgendwie und dich aktiviere das
+     aber hier schaltet sich das wieder aus wenn jemand da ist das soll generell immer aktiv sein um dass ich dir eine
+     Nachricht schicken kann".
+     Bis hier lieh sich das Diktat im Livestream das Mikrofon aus (698/718): Android gibt es nur EINEM Nutzer, also
+     wurde die Live-Spur abgegeben – die anderen sahen „stumm“ und hörten ihn nicht, bis das Diktat vorbei war. Genau
+     das ist „schaltet sich das wieder aus“.
+     Jetzt, wenn man im Raum ist und eine lebende Live-Tonspur hat: keine Browser-Erkennung, kein Ausleihen. Eine KOPIE
+     der Live-Spur (LiveChat.tonSpurKlon) läuft in ein AudioWorklet; geschnitten wird an den Sprechpausen, jedes Stück
+     geht als WAV 16 kHz (mit Tiefpass, AusspracheP.alsWav seit 882) an die Zentrale („erkennen“, Azure – derselbe Weg
+     wie die Stadt-Quests), der Text kommt ins Feld. Die Live-Spur, ihre Leitungen und „tonAn“ bleiben unberührt.
+       - Ein Stück endet nach ≥ 0,7 s Pause, wenn es ≥ 4 s lang ist, oder nach ≥ 2 s Pause (auch ein kurzes „Ja.“).
+         Länger als 55 s wird keins (Azures Kurz-Audio nimmt höchstens 60 s): harter Schnitt an der leisesten Stelle
+         der letzten 3 s, der Rest beginnt das nächste Stück.
+       - An die Zentrale eins nach dem anderen: die Reihenfolge stimmt, Upload und Rechenlast verteilen sich.
+       - Schreibt Azure nur bis zur ersten Pause auf (Offset + Duration vor dem Ende), geht der Rest nach (höchstens 4×).
+       - Was keine 0,3 s Sprache hat, geht gar nicht erst hinaus (schont die Tagesgrenze von 300 je Tag).
+       - Kommt aus dem Klon in 3 s kein einziger Block, gilt der alte Weg (Browser-Erkennung, Mikrofon ausleihen) –
+         schlechter als bis hier wird es also nie.
+     Gleich bleiben 🎤 (er erscheint wie bisher nur, wo es die Browser-Erkennung gibt), ⏹, das Feld und die Hinweiszeile.
+     Anders: der Text kommt satzweise nach einer kurzen Pause statt Wort für Wort, und nach ⏹ steht kurz „Einen Moment –
+     ich schreibe noch auf …“. Außerhalb des Livestreams (oder ohne Live-Tonspur, ohne Zentrale) bleibt alles wie bisher.
+     ===================================================================== */
+  var STROM = { blockMs: 100, pauseMs: 700, langePauseMs: 2000, stueckMinMs: 4000, stueckMaxMs: 55000,
+                vorlaufMs: 300, nachlaufMs: 300, mindestSprechMs: 300, hoechstMs: 300000, rate16k: true, schwelle: 0.012,
+                startMs: 3000, zeitgrenze: 40000, bremseMs: 45000 };
+  /* Der Worklet-Baustein als Text (Blob-Adresse): keine eigene Datei, nichts lädt nach. Er sammelt n Abtastwerte und
+     reicht sie als ganzen Block an die Seite (übertragen, nicht kopiert). */
+  var STROM_WORKLET = "registerProcessor('dma-diktat',class extends AudioWorkletProcessor{" +
+    "constructor(o){super();this.n=o.processorOptions.n;this.b=new Float32Array(this.n);this.i=0}" +
+    "process(e){var c=e[0]&&e[0][0];if(c){for(var k=0;k<c.length;k++){this.b[this.i++]=c[k];" +
+    "if(this.i===this.n){this.port.postMessage(this.b,[this.b.buffer]);this.b=new Float32Array(this.n);this.i=0}}}" +
+    "return true}})";
+  var STROM_NETZ = ["netz", "zeit-abgelaufen", "dienst", "antwort-unlesbar"];
+  var STROM_WEG = "Die Spracherkennung ist gerade nicht verfügbar – bitte tippen.";
+  var STROM_AUS = {
+    "tagesgrenze": "Für heute ist die Spracherkennung aufgebraucht – bitte tippen.",
+    "nicht-angemeldet": "Zum Diktieren im Livestream bitte anmelden.",
+    "kein-zentraler-schluessel": STROM_WEG, "kontingent": STROM_WEG, "schluessel-falsch": STROM_WEG, "keine-verbindung": STROM_WEG
+  };
+  function diktatStromMoeglich() {
+    var A = window.AusspracheP;
+    try {
+      return Boolean((window.AudioContext || window.webkitAudioContext) && window.MediaStream && A && A.alsWav &&
+        A.zentralErkennen && A.zentralMoeglich && A.zentralMoeglich());
+    } catch (e) { return false; }
+  }
+  function stromLeise(p) { if (p && p.catch) p.catch(function () {}); }
+  function diktatAusStrom(klasse, feld, klon) {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var d = { strom: true, mik: null, klasse: klasse, anfang: feld.value.replace(/\s*$/, ""), an: false, gehoert: false,
+              seit: Date.now(), teile: [], schlange: [], laeuft: 0, nr: 0, vorrat: [], vorratMs: 0, spitze: 0,
+              stueck: null, stoppen: false, klon: klon, rate: 0 };
+    /* ⏹ ruft mik.stop(), ein neuer Start mik.abort() – wie bei der Browser-Erkennung */
+    d.mik = { stop: function () { stromStoppen(d); }, abort: function () { stromStoppen(d, true); } };
+    diktat = d;
+    window.__dmaDiktatMik = d.mik;
+    diktatKnopfZeigen(klasse, true, "Mikrofon wird eingeschaltet …");
+    /* Den Kontext NOCH IM TIPP anlegen – sonst bleibt er auf manchen Telefonen „suspended“. Zuerst gleich mit 16 kHz
+       (der Browser rechnet die Spur selbst um, mit Filter); lehnt er das ab (Firefox, ältere Safari), in
+       Gerätefrequenz – dann rechnet alsWav herunter (Tiefpass seit 882). „playback“: große Puffer, wenig Weckrufe –
+       hörbar wird ohnehin nichts. */
+    var strom = new MediaStream([klon]);
+    if (STROM.rate16k) {
+      try { d.ctx = new AC({ sampleRate: 16000, latencyHint: "playback" }); d.quelle = d.ctx.createMediaStreamSource(strom); }
+      catch (e) { try { if (d.ctx) stromLeise(d.ctx.close()); } catch (x) {} d.ctx = null; d.quelle = null; }
+    }
+    if (!d.ctx) {
+      try { d.ctx = new AC({ latencyHint: "playback" }); d.quelle = d.ctx.createMediaStreamSource(strom); }
+      catch (e) { stromRueckfall(d, "strom-kein-kontext", String((e && e.message) || e)); return; }
+    }
+    try { if (d.ctx.resume) stromLeise(d.ctx.resume()); } catch (e) {}
+    d.rate = d.ctx.sampleRate;
+    var n = Math.max(128, Math.round(d.rate * STROM.blockMs / 1000));
+    /* Quelle → Sammler → stumm (0) → Ausgang: so läuft der Knoten sicher, hörbar wird nichts. */
+    d.stumm = d.ctx.createGain();
+    d.stumm.gain.value = 0;
+    d.stumm.connect(d.ctx.destination);
+    var modulFrei = function () { try { if (d.modul) URL.revokeObjectURL(d.modul); } catch (e) {} d.modul = null; };
+    /* Ersatz ohne AudioWorklet (ältere Browser, oder das Modul lädt nicht): ScriptProcessor, 4096 je Block */
+    var ersatz = function () {
+      modulFrei();
+      if (d.aufgeraeumt || d.knoten) return;
+      try {
+        var p = d.ctx.createScriptProcessor(4096, 1, 1);
+        p.onaudioprocess = function (ev) { stromBlock(d, new Float32Array(ev.inputBuffer.getChannelData(0))); };
+        d.quelle.connect(p); p.connect(d.stumm); d.knoten = p;
+      } catch (e) {}
+    };
+    if (d.ctx.audioWorklet && window.AudioWorkletNode && window.Blob && window.URL && URL.createObjectURL) {
+      try {
+        d.modul = URL.createObjectURL(new Blob([STROM_WORKLET], { type: "application/javascript" }));
+        d.ctx.audioWorklet.addModule(d.modul).then(function () {
+          modulFrei();
+          if (d.aufgeraeumt || d.knoten) return;
+          var w = new AudioWorkletNode(d.ctx, "dma-diktat", { numberOfInputs: 1, numberOfOutputs: 1,
+            outputChannelCount: [1], processorOptions: { n: n } });
+          w.port.onmessage = function (ev) { stromBlock(d, ev.data); };
+          d.quelle.connect(w); w.connect(d.stumm); d.knoten = w;
+        }).catch(ersatz);
+      } catch (e) { ersatz(); }
+    } else ersatz();
+    /* Wächter: kommt in 3 s kein einziger Block, der alte Weg */
+    d.waechterUhr = setTimeout(function () {
+      if (diktat !== d || d.an || d.aufgeraeumt) return;
+      stromRueckfall(d, "strom-kein-start", "rate=" + d.rate + ", knoten=" +
+        (d.knoten ? (d.knoten.port ? "worklet" : "ersatz") : "keiner") + ", ctx=" + d.ctx.state);
+    }, STROM.startMs);
+    d.hoechstUhr = setTimeout(function () { if (diktat === d) stromStoppen(d); }, STROM.hoechstMs);
+    klon.onended = function () { if (diktat === d) stromStoppen(d); };
+  }
+  function stromRueckfall(d, code, text) {
+    stromAufraeumen(d);
+    if (diktat === d) diktat = null;
+    diktatFehlerMelden(code, text);
+    diktatStarten(d.klasse, true);
+  }
+  function stromStueck(d, bloecke, laut, pegel) {
+    var st = { bloecke: bloecke, laut: laut, pegel: pegel, n: 0, sprechMs: 0, stillMs: 0 };
+    for (var k = 0; k < bloecke.length; k++) {
+      var ms = bloecke[k].length / d.rate * 1000;
+      st.n += bloecke[k].length;
+      if (laut[k]) { st.sprechMs += ms; st.stillMs = 0; } else st.stillMs += ms;
+    }
+    return st;
+  }
+  function stromBlock(d, daten) {
+    if (diktat !== d || d.aufgeraeumt || !daten || !daten.length) return;
+    var ms = daten.length / d.rate * 1000;
+    if (!d.an) {
+      d.an = true;
+      clearTimeout(d.waechterUhr);
+      diktatKnopfZeigen(d.klasse, true, "Ich höre zu … sprich einfach.");
+    }
+    var s = 0;
+    for (var i = 0; i < daten.length; i++) s += daten[i] * daten[i];
+    var rms = Math.sqrt(s / daten.length);
+    /* Die Spitze sinkt langsam (Halbwert 20 s): ein einzelner Knall hebt die Schwelle nicht für den Rest. */
+    d.spitze = Math.max(rms, d.spitze * Math.pow(0.5, ms / 20000));
+    var laut = rms > Math.max(STROM.schwelle, d.spitze * 0.1);
+    var st = d.stueck;
+    if (!st) {
+      if (!laut) {
+        /* still und kein Stück offen: nur die letzten 0,3 s als Vorlauf halten (kein Anlaut geht verloren) */
+        d.vorrat.push(daten); d.vorratMs += ms;
+        while (d.vorrat.length && d.vorratMs > STROM.vorlaufMs) d.vorratMs -= d.vorrat.shift().length / d.rate * 1000;
+        return;
+      }
+      st = d.stueck = stromStueck(d, d.vorrat, d.vorrat.map(function () { return false; }), d.vorrat.map(function () { return 0; }));
+      d.vorrat = []; d.vorratMs = 0;
+    }
+    st.bloecke.push(daten); st.laut.push(laut); st.pegel.push(rms); st.n += daten.length;
+    if (laut) { st.sprechMs += ms; st.stillMs = 0; } else st.stillMs += ms;
+    var dauer = st.n / d.rate * 1000;
+    if ((st.stillMs >= STROM.pauseMs && dauer >= STROM.stueckMinMs) || st.stillMs >= STROM.langePauseMs) {
+      stueckAbschicken(d);
+      /* die letzten 0,3 s der Pause bleiben Vorlauf für den nächsten Satz (ein leiser Anlaut geht nicht verloren) */
+      for (var k = st.bloecke.length - 1; k >= 0 && !st.laut[k]; k--) {
+        var bms = st.bloecke[k].length / d.rate * 1000;
+        if (d.vorratMs + bms > STROM.vorlaufMs) break;
+        d.vorrat.unshift(st.bloecke[k]); d.vorratMs += bms;
+      }
+      return;
+    }
+    if (dauer >= STROM.stueckMaxMs - STROM.vorlaufMs) stromSchnitt(d);
+  }
+  /* Harter Schnitt (Dauerrede): an der leisesten Stelle der letzten 3 s (nie vor der Hälfte des Stücks) */
+  function stromSchnitt(d) {
+    var st = d.stueck, b = st.bloecke, beste = b.length - 1, leiseste = Infinity, hinten = 0;
+    for (var k = b.length - 1; k >= Math.ceil(b.length / 2) && hinten < 3000; k--) {
+      hinten += b[k].length / d.rate * 1000;
+      if (st.pegel[k] < leiseste) { leiseste = st.pegel[k]; beste = k; }
+    }
+    var rest = stromStueck(d, b.slice(beste + 1), st.laut.slice(beste + 1), st.pegel.slice(beste + 1));
+    d.stueck = stromStueck(d, b.slice(0, beste + 1), st.laut.slice(0, beste + 1), st.pegel.slice(0, beste + 1));
+    stueckAbschicken(d);
+    if (rest.bloecke.length) d.stueck = rest;
+  }
+  function stueckAbschicken(d) {
+    var st = d.stueck;
+    d.stueck = null;
+    if (!st || st.sprechMs < STROM.mindestSprechMs) return;
+    var letzt = st.laut.lastIndexOf(true);
+    if (letzt < 0) return;
+    /* Stille am Ende auf 0,3 s kürzen */
+    var bis = letzt + 1, nach = 0, n = 0, k;
+    while (bis < st.bloecke.length && nach < STROM.nachlaufMs) { nach += st.bloecke[bis].length / d.rate * 1000; bis++; }
+    for (k = 0; k < bis; k++) n += st.bloecke[k].length;
+    var daten = new Float32Array(n), o = 0, laut = [];
+    for (k = 0; k < bis; k++) {
+      laut.push([o, st.bloecke[k].length, st.laut[k]]);
+      daten.set(st.bloecke[k], o);
+      o += st.bloecke[k].length;
+    }
+    var nr = d.nr++;
+    d.teile[nr] = "";
+    d.schlange.push({ nr: nr, daten: daten, laut: laut, nachschub: 0 });
+    stromWeiter(d);
+  }
+  function stromWeiter(d) {
+    if (d.laeuft || diktat !== d) return;
+    var a = d.schlange.shift();
+    if (!a) { if (d.stoppen) diktatEnde(); return; }
+    d.laeuft = 1;
+    var wav = null;
+    try {
+      /* bei 16-kHz-Kontext nur das WAV-Gerüst, sonst der Sinc-Tiefpass aus 882 */
+      wav = window.AusspracheP.alsWav({ numberOfChannels: 1, sampleRate: d.rate, length: a.daten.length,
+        getChannelData: function () { return a.daten; } });
+    } catch (e) {}
+    if (!wav) { stromAntwort(d, a, { fehler: "wav" }); return; }
+    window.AusspracheP.zentralErkennen(wav, { zeitgrenze: STROM.zeitgrenze }).then(function (antw) {
+      stromAntwort(d, a, antw);
+    }, function () { stromAntwort(d, a, { fehler: "netz" }); });
+  }
+  function stromAntwort(d, a, antw) {
+    d.laeuft = 0;
+    if (diktat !== d) return;
+    if (!antw || antw.fehler) { stromFehler(d, a, (antw && antw.fehler) || "netz"); return; }
+    /* NoMatch / InitialSilenceTimeout: kein Text, kein Fehler */
+    var nb = Array.isArray(antw.NBest) && antw.NBest[0] ? antw.NBest[0] : {};
+    var text = String(antw.DisplayText || nb.Display || nb.Lexical || "").trim();
+    if (text) {
+      d.teile[a.nr] = d.teile[a.nr] ? d.teile[a.nr] + " " + text : text;
+      d.gehoert = true;
+      stromSchreiben(d);
+    }
+    /* Nachschub: liegt hinter dem, was Azure aufgeschrieben hat, noch ≥ 0,3 s Sprache, geht der Rest nach. */
+    if (antw.RecognitionStatus === "Success" && a.nachschub < 4) {
+      var ende = (Number(antw.Offset) || 0) + (Number(antw.Duration) || 0);
+      var ab = Math.round(Math.max(0, ende / 1e7 - 0.15) * d.rate);
+      if (ende > 0 && ab < a.daten.length) {
+        var rest = [], sprech = 0;
+        a.laut.forEach(function (z) {
+          var von = Math.max(z[0], ab), bis = z[0] + z[1];
+          if (bis <= von) return;
+          rest.push([von - ab, bis - von, z[2]]);
+          if (z[2]) sprech += (bis - von) / d.rate * 1000;
+        });
+        if (sprech >= STROM.mindestSprechMs) {
+          d.schlange.unshift({ nr: a.nr, daten: a.daten.subarray(ab), laut: rest, nachschub: a.nachschub + 1 });
+        }
+      }
+    }
+    stromWeiter(d);
+  }
+  function stromFehler(d, a, code) {
+    var info = "nr=" + a.nr + (a.nachschub ? "." + a.nachschub : "") + ", rate=" + d.rate + ", ms=" +
+      Math.round(a.daten.length / d.rate * 1000);
+    /* Netz: einmal nach 1 s noch einmal; bleibt es dabei, einmal sagen und weiter diktieren */
+    if (STROM_NETZ.indexOf(code) >= 0 && !a.wieder) {
+      a.wieder = 1;
+      d.laeuft = 1;
+      setTimeout(function () { d.laeuft = 0; if (diktat !== d) return; d.schlange.unshift(a); stromWeiter(d); }, 1000);
+      return;
+    }
+    diktatFehlerMelden("strom-" + code, info);
+    if (STROM_AUS[code]) { d.stoppen = true; stromAufraeumen(d); diktatEnde(STROM_AUS[code]); return; }
+    if (!d.verlorenGesagt) {
+      d.verlorenGesagt = true;
+      diktatKnopfZeigen(d.klasse, true, STROM_NETZ.indexOf(code) >= 0 ? "Ein Stück kam nicht an (Netz)." : "Ein Stück kam nicht an.");
+    }
+    stromWeiter(d);
+  }
+  /* wie bei der Browser-Erkennung: Anfang + alles Erkannte, groß beginnen nach Satzende; immer ins Feld, das GERADE
+     auf dem Bildschirm ist (auch wenn das Walkie inzwischen neu gebaut wurde) */
+  function stromSchreiben(d) {
+    var neu = d.teile.filter(Boolean).join(" ");
+    if (neu && (!d.anfang || /[.!?]$/.test(d.anfang))) neu = neu.charAt(0).toUpperCase() + neu.slice(1);
+    var ziel = diktatFeld(d.klasse);
+    if (ziel) {
+      ziel.value = (d.anfang ? d.anfang + (neu ? " " : "") : "") + neu;
+      ziel.dispatchEvent(new Event("input"));
+    }
+  }
+  /* ⏹: das offene Stück geht noch hinaus, dann wird zu Ende geschrieben (höchstens 45 s). Ein zweites ⏹ beendet sofort. */
+  function stromStoppen(d, sofort) {
+    if (d.stoppen) { if (diktat === d) diktatEnde(); return; }
+    d.stoppen = true;
+    if (sofort) d.stueck = null; else stueckAbschicken(d);
+    stromAufraeumen(d);
+    if (diktat !== d) return;
+    if (sofort || (!d.laeuft && !d.schlange.length)) { diktatEnde(); return; }
+    diktatKnopfZeigen(d.klasse, true, "Einen Moment – ich schreibe noch auf …");
+    d.bremseUhr = setTimeout(function () { if (diktat === d) diktatEnde(); }, STROM.bremseMs);
+  }
+  function stromAufraeumen(d) {
+    if (d.aufgeraeumt) return;
+    d.aufgeraeumt = true;
+    clearTimeout(d.waechterUhr);
+    clearTimeout(d.hoechstUhr);
+    try { if (d.knoten) { if (d.knoten.port) d.knoten.port.onmessage = null; d.knoten.onaudioprocess = null; d.knoten.disconnect(); } } catch (e) {}
+    try { if (d.quelle) d.quelle.disconnect(); } catch (e) {}
+    try { if (d.stumm) d.stumm.disconnect(); } catch (e) {}
+    try { if (d.ctx && d.ctx.state !== "closed") stromLeise(d.ctx.close()); } catch (e) {}
+    try { if (d.klon) { d.klon.onended = null; d.klon.stop(); } } catch (e) {}
+    try { if (d.modul) URL.revokeObjectURL(d.modul); } catch (e) {}
+    d.modul = null;
+    d.vorrat = [];
+  }
+
+  function diktatStarten(klasse, ohneStrom) {
     var Erkenner = window.SpeechRecognition || window.webkitSpeechRecognition;
     var feld = diktatFeld(klasse);
     if (!Erkenner || !feld) return;
     /* FASSUNG 721 — Funk 166 (automatisch, Samsung Internet, nach Fassung 718): wieder „aborted". Läuft noch eine ältere
        Erkennung (z. B. ein schneller zweiter Tipp), bricht der Browser die neue ab – die alte wird jetzt vorher beendet. */
     try { if (window.__dmaDiktatMik) window.__dmaDiktatMik.abort(); } catch (e) {}
+    /* FASSUNG 884 — im Livestream: aus dem laufenden Strom statt Mikrofon leihen (siehe oben). ohneStrom = Rückfall. */
+    if (!ohneStrom) {
+      var klon = null;
+      try { klon = window.LiveChat && LiveChat.tonSpurKlon ? LiveChat.tonSpurKlon() : null; } catch (e) {}
+      if (klon && diktatStromMoeglich()) { diktatAusStrom(klasse, feld, klon); return; }
+      if (klon) { try { klon.stop(); } catch (e) {} }
+    }
     var mik = new Erkenner();
     window.__dmaDiktatMik = mik;
     mik.lang = "de-DE";
@@ -723,7 +1036,8 @@ window.Rueckfrage = (function () {
           try { d.mik.stop(); } catch (e) { diktatEnde(); }
           /* Kommt nach ⏹ kein Ende, haengt es nicht fest: nach 0,8 s
              ist es trotzdem aus, und der naechste Tipp startet neu. */
-          setTimeout(function () { if (diktat === d) diktatEnde(); }, 800);
+          /* FASSUNG 884: nicht beim Diktat aus dem Strom – dort schreibt es nach ⏹ noch zu Ende (stromStoppen) */
+          setTimeout(function () { if (diktat === d && !d.strom) diktatEnde(); }, 800);
           return;
         }
         diktatStarten(klasse);
@@ -825,6 +1139,8 @@ window.Rueckfrage = (function () {
   return {
     holen: holen,
     aufzu: aufzu,
-    stand: function () { return fragen.slice(); }
+    stand: function () { return fragen.slice(); },
+    /* FASSUNG 884 — nur für die Sonde (Zeiten verkürzen, rate16k umschalten) */
+    diktatStrom: STROM
   };
 })();

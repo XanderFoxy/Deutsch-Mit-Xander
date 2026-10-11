@@ -18425,6 +18425,17 @@ window.LiveChat = (function () {
     mikrofonLeihen: function () { return mikrofonLeihen(); },
     mikrofonZurueck: function () { return mikrofonZurueck(); },
     mikrofonGeliehen: function () { return Boolean(mikGeliehen); },
+    /* FASSUNG 884 — XANDER (Funk 163): „… schaltet sich das wieder aus wenn jemand da ist das soll generell immer aktiv
+       sein“. Für das Walkie-Diktat eine KOPIE der Live-Tonspur: die Spur selbst, ihre Leitungen und „tonAn“ bleiben
+       unberührt, die anderen hören einen weiter. Der Klon ist eigenständig an (auch wenn man für die anderen stumm ist).
+       null = nicht im Raum oder keine lebende Tonspur – dann bleibt das Diktat beim alten Weg (mikrofonLeihen).
+       Bewusst nicht über lage(): die baut die ganze Platzliste und gibt die Spur nur auf der Bühne heraus. */
+    tonSpurKlon: function () {
+      if (zustand.lage !== "drin" || !zustand.eigenerStrom) return null;
+      var t = zustand.eigenerStrom.getAudioTracks().filter(function (s) { return s.readyState === "live"; })[0];
+      if (!t || !t.clone) return null;
+      try { var k = t.clone(); k.enabled = true; return k; } catch (e) { return null; }
+    },
     /* Die Lieder — app.js braucht sie fuer die Kachel und fuer den
        Waehler, gelesen werden sie hier. */
     /* Wer ist gerade dran? Die Oberflaeche schreibt es an die Tafel. */

@@ -1153,6 +1153,17 @@ window.AusspracheP = (function () {
     });
   }
 
+  /* FASSUNG 884 — XANDER (Funk 163): „… das soll generell immer aktiv sein …“. Freie Erkennung über dieselbe Zentrale
+     (Aktion „erkennen“, ohne Referenztext) für das Walkie-Diktat im Livestream (rueckfrage.js). Azures Antwort kommt
+     unverändert zurück (RecognitionStatus, Offset, Duration, DisplayText/NBest), ein Fehler als { fehler }. */
+  function zentralErkennen(wav, optionen) {
+    var o = optionen || {};
+    if (!wav) return Promise.resolve({ fehler: "keine-aufnahme" });
+    return alsBase64(wav).then(function (b64) {
+      return zentralRufen({ aktion: "erkennen", wav: b64, sprache: o.sprache || "de-DE", zeitgrenze: o.zeitgrenze || 25000 });
+    });
+  }
+
   /* --- Vorlesen mit Azures neuronaler Stimme ---
      Was einmal geholt wurde, bleibt für diese Sitzung im
      Speicher. Ohne das kostet jedes „noch einmal vorsprechen"
@@ -1316,6 +1327,7 @@ window.AusspracheP = (function () {
     zentralDa: zentralDa,
     zentralVergessen: zentralVergessen,
     zentralVorlesen: zentralVorlesen,
+    zentralErkennen: zentralErkennen,
     zentralSchluesselSetzen: zentralSchluesselSetzen,
     zentralSchluesselLoeschen: zentralSchluesselLoeschen,
     /* Stufe 1 — eigener Schlüssel im Gerät */
