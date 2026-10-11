@@ -815,8 +815,17 @@ window.LiveChat = (function () {
     /* FASSUNG 836 — Gegenprüfung: auch ein HIER gesetzter Platz gilt als frisch geändert. Sonst konnte ein Puls des
        Tauschpartners, der vor dem Tausch abging, dessen alten Platz zurückholen (zwei auf einem Platz, bis zum nächsten Puls). */
     if (p.ordnung) Object.keys(p.ordnung).forEach(function (id) { sitzGeaendertUm[p.art + "|" + id] = Date.now(); });
-    direktSenden(p);
-    senden(p);
+    /* FASSUNG 884 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Gemessen wird nur die
+       Erstmeldung (nicht die Nachsendungen): wen der direkte Weg erreichte, wen nicht und warum, und was der Server zum
+       Senden sagt (siehe Messblock unten). Gesendet wird genau wie vorher – zuerst direkt, dann über den Server. */
+    var tRaus = performance.now(), direkt = direktSenden(p);
+    if (!p.nach) sitzRausMessen(p, direkt, tRaus);
+    var r = senden(p);
+    if (!p.nach) {
+      var srv = sitzMessStand().raus.srv;
+      if (r && r.then) r.then(function (s) { s = String(s).slice(0, 12); srv[s] = (srv[s] || 0) + 1; }, function () { srv.fehler = (srv.fehler || 0) + 1; });
+      else srv.kein = (srv.kein || 0) + 1;
+    }
   }
   /* FASSUNG 829 — XANDER (Funk 255): „wenn ich den Platz tauschen will dauert es manchmal 5 Sekunden von einer Position zur
      anderen". Bei mir selbst steht der neue Platz sofort (gemessen 20–400 ms). Bei den anderen kommt er mit EINER Meldung
@@ -841,6 +850,115 @@ window.LiveChat = (function () {
         if (etwas) sitzSenden({ art: art, ordnung: teil, nach: 1 });
       }, ms);
     });
+  }
+
+  /* =========================================================
+     FASSUNG 884 — DER PLATZWECHSEL WIRD BEIM GEGENÜBER GEMESSEN
+     ---------------------------------------------------------
+     XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Seit 836 geht jede Sitzmeldung direkt
+     (Datenkanal) und über den Server – wie lange sie beim ANDEREN braucht, stand nirgends. Gemessen wird jetzt:
+       - Laufzeit: der Empfänger schickt auf jede Erstmeldung sofort eine Quittung „sitz-q“ zurück (noch vor dem
+         Zeichnen); der Absender misst Hin und zurück (rtt: [wer, ms, Weg d/s]). Die Hälfte davon ist die Laufzeit –
+         ohne Uhrenabgleich zwischen den Geräten. Über den Server quittiert der Empfänger nur, wenn er keinen bereiten
+         Datenkanal zum Absender hat, und höchstens alle 10 s je Absender (der Server schickt jede Meldung an alle).
+       - Beim Empfänger je Erstmeldung eine Probe ein: [Weg, dom, mo, bild, vor, gez] in ms ab Ankunft – dom: Plätze im
+         DOM (direkt nach melden), mo: nach den MutationObservern (spiel.js, Kleider), bild: nach dem nächsten Bild,
+         vor: um wie viel der erste Weg vor der zweiten Kopie lag, gez: der Platz steht wirklich im DOM (1/0).
+       - Beim Absender je Erstmeldung (raus): wie viele direkt erreicht wurden, und warum die anderen nicht (keine
+         Leitung pc / Kanal nicht offen dc / Kanal offen, aber noch kein „dc-hallo“ bereit), was der Server zum Senden
+         sagt (srv: ok, timed out, error …; kein = kein Raumkanal) und die größte Warteschlange im Datenkanal (buf).
+     Gesendet wird gebündelt als spiel_diagnose „sitz“: nach 12 Werten (+3 s, damit die letzte Probe ihr Bild hat) oder
+     90 s nach dem ersten, höchstens 2 je Betreten und 4 je Tag und Gerät (das Kontingent – 40 je Konto und Tag für
+     alle Arten – ist an Xanders Tagen schon voll). Nur Zahlen, keine Inhalte; für Xander nichts sichtbar. */
+  var sitzMess = null, sitzRausUm = {}, sitzErst = {}, sitzEchoUm = {};
+  var SITZ_MESS_ZAHL = 12, SITZ_MESS_MS = 90000, SITZ_JE_BETRETEN = 2, SITZ_JE_TAG = 4;
+  function sitzRausLeer() { return { n: 0, peers: 0, direkt: 0, ohne: { pc: 0, dc: 0, bereit: 0 }, srv: {}, buf: 0 }; }
+  function sitzMessStand() {
+    if (!sitzMess || sitzMess.raum !== zustand.raum || sitzMess.seit !== zustand.seit) {
+      sitzMess = { raum: zustand.raum, seit: zustand.seit, rtt: [], ein: [], raus: sitzRausLeer(), gesendet: 0, uhr: 0, bald: 0 };
+    }
+    return sitzMess;
+  }
+  function sitzMessMerk(liste, wert) {
+    var m = sitzMessStand(), l = m[liste];
+    if (l.length >= 40) return;
+    l.push(wert);
+    if (m.gesendet >= SITZ_JE_BETRETEN) return;          // nichts mehr hinaus – keine Uhr
+    if (!m.uhr) m.uhr = setTimeout(function () { sitzMessSenden(m); }, SITZ_MESS_MS);
+    if (!m.bald && m.rtt.length + m.ein.length >= SITZ_MESS_ZAHL) {
+      m.bald = 1; clearTimeout(m.uhr);
+      m.uhr = setTimeout(function () { sitzMessSenden(m); }, 3000);
+    }
+  }
+  function sitzRausMessen(p, direkt, t) {
+    var j = performance.now();
+    Object.keys(sitzRausUm).forEach(function (sn) { if (j - sitzRausUm[sn].t > 10000) delete sitzRausUm[sn]; });
+    sitzRausUm[p.sn] = { t: t || j, q: {} };
+    var r = sitzMessStand().raus;
+    var ids = Object.keys(zustand.leute).filter(function (id) { return !istPuppe(id); });
+    r.n++; r.peers += ids.length; r.direkt += direkt || 0;
+    ids.forEach(function (id) {
+      var dc = kanalJe[id], offen = Boolean(dc && dc.readyState === "open");
+      if (offen && kanalBereit[id]) return;              // direkt erreicht
+      if (!brueckeJe[id]) r.ohne.pc++;
+      else if (!offen) r.ohne.dc++;
+      else r.ohne.bereit++;
+    });
+    Object.keys(kanalJe).forEach(function (id) {
+      var b = (kanalJe[id] && kanalJe[id].bufferedAmount) || 0;
+      if (b > r.buf) r.buf = b;
+    });
+  }
+  /* Die Quittung des Gegenübers (direkt oder über den Server) – je Meldung und Gegenüber nur die erste. */
+  function sitzQuittung(id, sn, w) {
+    var e = sitzRausUm[sn];
+    if (!e || e.q[id]) return;
+    e.q[id] = 1;
+    sitzMessMerk("rtt", [String(id).slice(0, 4), Math.round(performance.now() - e.t), w]);
+  }
+  /* Beim Empfänger, direkt nach melden("plaetze"). Im Hintergrund kommt kein Bild – dann keine Probe. */
+  function sitzEinMessen(n, ein, weg, ziel) {
+    if (n.nach || typeof n.sn !== "number" || document.visibilityState !== "visible") return;
+    var p = [weg, Math.round(performance.now() - ein), null, null, null, null], el = null;
+    try { el = document.querySelector('#lcPlaetze .lc-platz[data-lc-id="' + String(ziel).replace(/["\\]/g, "") + '"]'); } catch (e) {}
+    if (el) p[5] = (n.art === "sitzplatz" && !spielSicht()) ? (Number(el.dataset.lcPlatz) === n.ordnung[ziel] + 1 ? 1 : 0) : 1;
+    Promise.resolve().then(function () { p[2] = Math.round(performance.now() - ein); });
+    (window.requestAnimationFrame || setTimeout)(function () { setTimeout(function () { p[3] = Math.round(performance.now() - ein); }, 0); });
+    var jetzt = performance.now();
+    Object.keys(sitzErst).forEach(function (k) { if (jetzt - sitzErst[k].t > 5000) delete sitzErst[k]; });
+    sitzErst[n.von + "|" + n.sn] = { t: ein, w: weg, p: p };
+    sitzMessMerk("ein", p);
+  }
+  /* Die zweite Kopie derselben Meldung (der andere Weg): um wie viel war der erste Weg schneller? */
+  function sitzZweiteKopie(n, ein, weg) {
+    var e = sitzErst[n.von + "|" + n.sn];
+    if (e && e.w !== weg && e.p[4] == null) e.p[4] = Math.round(ein - e.t);
+  }
+  function sitzMessSenden(m) {
+    if (m.uhr) { clearTimeout(m.uhr); m.uhr = 0; }
+    if ((!m.rtt.length && !m.ein.length) || m.gesendet >= SITZ_JE_BETRETEN) return false;
+    var d0 = new Date(), heute = d0.getFullYear() + "-" + ("0" + (d0.getMonth() + 1)).slice(-2) + "-" + ("0" + d0.getDate()).slice(-2), schon = 0;
+    try { var t = String(localStorage.getItem("dma_sitz_mess") || "").split("|"); if (t[0] === heute) schon = Number(t[1]) || 0; } catch (e) {}
+    if (schon >= SITZ_JE_TAG) return false;
+    try {
+      var be = (typeof Backend !== "undefined" && Backend) || window.Backend;
+      var k = be && be.zugang && be.zugang();
+      if (!k || !k.rpc) return false;
+      var kan = {};
+      Object.keys(zustand.leute).filter(function (id) { return !istPuppe(id); }).slice(0, 12).forEach(function (id) {
+        var pc = brueckeJe[id], dc = kanalJe[id];
+        kan[String(id).slice(0, 4)] = [pc ? pc.connectionState : "", dc ? dc.readyState : "", kanalBereit[id] ? 1 : 0,
+          (aufbau && aufbau.je[id] && aufbau.je[id].weg) || (leitungMess[id] && leitungMess[id].weg) || ""];
+      });
+      var d = { fassung: (window.DMA_VERSION || ""), ua: (navigator.userAgent || "").slice(0, 80), raum: String(m.raum || "").slice(0, 24),
+                rtt: m.rtt, ein: m.ein, raus: m.raus, kan: kan };
+      if (JSON.stringify(d).length >= 6000) { d.rtt = d.rtt.slice(-12); d.ein = d.ein.slice(-12); }
+      k.rpc("spiel_diagnose_senden", { p_art: "sitz", p_daten: d }).then(function () {}, function () {});
+    } catch (e) { return false; }
+    try { localStorage.setItem("dma_sitz_mess", heute + "|" + (schon + 1)); } catch (e) {}
+    m.gesendet++;
+    m.rtt = []; m.ein = []; m.raus = sitzRausLeer(); m.bald = 0;
+    return true;
   }
 
   function plaetzeBauen() {
@@ -4167,19 +4285,45 @@ window.LiveChat = (function () {
     try {
       var dc = pc.createDataChannel("spiel", { negotiated: true, id: 7, ordered: false, maxRetransmits: 1 });
       kanalJe[anderId] = dc;
-      dc.onopen = function () { try { dc.send(JSON.stringify({ art: "dc-hallo" })); } catch (e) {} };
+      /* FASSUNG 884 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Direkt geschickt
+         wird nur an Bereite, und bereit machte bisher NUR das eine „dc-hallo“ beim Öffnen. Der Kanal ist ungeordnet mit
+         höchstens einer Wiederholung (maxRetransmits 1): ging dieses eine Paket verloren, lief für die ganze Leitung
+         jede Sitz- und Spielmeldung nur über den Server, obwohl der Kanal offen war. Jetzt: nach 1,5 s noch nicht
+         bereit → ein zweites Hallo; ein Hallo wird einmal je Kanal beantwortet (mit „zurueck“, das selbst nicht
+         beantwortet wird – kein Hin und Her); und JEDE Nachricht auf dem Kanal macht bereit (jede Fassung, die über
+         Kanal 7 spricht, kennt ihn seit 659). Nur der aktuelle Kanal zählt (kanalJe), kein schon ersetzter. */
+      dc.onopen = function () {
+        try { dc.send(JSON.stringify({ art: "dc-hallo" })); } catch (e) {}
+        setTimeout(function () {
+          if (dc.readyState !== "open" || kanalJe[anderId] !== dc || kanalBereit[anderId]) return;
+          try { dc.send(JSON.stringify({ art: "dc-hallo" })); } catch (e) {}
+        }, 1500);
+      };
       dc.onmessage = function (e) {
+        var ein = performance.now();
         var n; try { n = JSON.parse(e.data); } catch (x) { return; }
         if (!n || typeof n !== "object") return;
         /* Wer über diesen Kanal spricht, ist sicher der, zu dem er führt. */
         n.von = anderId;
-        if (n.art === "dc-hallo") { kanalBereit[anderId] = true; return; }
+        if (kanalJe[anderId] === dc) kanalBereit[anderId] = true;   // FASSUNG 884 — jede Nachricht macht bereit
+        if (n.art === "dc-hallo") {
+          if (!n.zurueck && !dc.__hz) { dc.__hz = 1; try { dc.send(JSON.stringify({ art: "dc-hallo", zurueck: 1 })); } catch (x) {} }
+          return;
+        }
+        /* FASSUNG 884 — die Quittung auf eine eigene Sitzmeldung (siehe sitzQuittung) */
+        if (n.art === "sitz-q") { sitzQuittung(anderId, n.sn, "d"); return; }
         /* FASSUNG 842 — „ich höre dich nicht mehr über den Server" kommt
            auch auf diesem schnellen Weg (siehe sfuHoereSagen). */
         if (n.art === "sfu-hoere") { if (!n.an || n.an === zustand.ichId) sfuPaket(n); return; }
         if (n.art === "spiel" && n.ereignis) empfangen(n);
         /* FASSUNG 836 — die Sitzordnung kommt auch auf diesem schnellen Weg (siehe sitzSenden) */
-        else if ((n.art === "sitzplatz" || n.art === "spielsitz") && typeof n.sn === "number" && n.ordnung) empfangen(n);
+        else if ((n.art === "sitzplatz" || n.art === "spielsitz") && typeof n.sn === "number" && n.ordnung) {
+          /* FASSUNG 884 — die Quittung geht SOFORT zurück, noch vor dem Zeichnen: so misst der Absender nur das Netz.
+             Nachsendungen bekommen keine. Ankunft und Weg reisen für die Probe beim Empfänger mit (sitzEinMessen). */
+          if (!n.nach) { try { dc.send(JSON.stringify({ art: "sitz-q", sn: n.sn })); } catch (x) {} }
+          n.__weg = "d"; n.__ein = ein;
+          empfangen(n);
+        }
       };
       dc.onclose = function () { if (kanalJe[anderId] === dc) { delete kanalBereit[anderId]; } };
     } catch (e) {}
@@ -4196,12 +4340,14 @@ window.LiveChat = (function () {
     }
     return true;
   }
+  /* FASSUNG 884 — (Funk 268) einmal in Text verwandeln, nicht je Gegenüber (Sitz- und Spielmeldungen), und nur, wenn
+     überhaupt ein Kanal offen ist. */
   function direktSenden(p) {
-    var raus = 0;
+    var raus = 0, s = null;
     Object.keys(kanalBereit).forEach(function (id) {
       var dc = kanalJe[id];
       if (!dc || dc.readyState !== "open") return;
-      try { dc.send(JSON.stringify(p)); raus++; } catch (e) {}
+      try { if (s === null) s = JSON.stringify(p); dc.send(s); raus++; } catch (e) {}
     });
     return raus;
   }
@@ -5212,7 +5358,8 @@ window.LiveChat = (function () {
       }
       return;
     }
-    try { kanal.send({ type: "broadcast", event: "raum", payload: nutzlast }); }
+    /* FASSUNG 884 — das Versprechen von kanal.send geht zurück (nur sitzSenden liest es: was der Server zum Senden sagt) */
+    try { return kanal.send({ type: "broadcast", event: "raum", payload: nutzlast }); }
     catch (e) {
       if (wartetAufLeitung(nutzlast)) wartendePakete.push(nutzlast);
     }
@@ -5318,6 +5465,8 @@ window.LiveChat = (function () {
     if (n.kf) buendelFaehig[n.von] = true;
     /* FASSUNG 827 — Tonserver-Pakete. Ohne Freischaltung überhört. */
     if (n.art === "sfu-spuren" || n.art === "sfu-hoere") { sfuPaket(n); return; }
+    /* FASSUNG 884 — Quittung auf eine eigene Sitzmeldung über den Server (nur „an“ uns, siehe oben; sitzQuittung) */
+    if (n.art === "sitz-q") { sitzQuittung(n.von, n.sn, "s"); return; }
     if (n.art === "spiel" && n.ereignis) {
       /* Fassung 659: kam es schon über den Datenkanal? Dann nicht noch einmal. */
       if (!gidNeu(n.gid)) return;
@@ -5617,10 +5766,24 @@ window.LiveChat = (function () {
          ein Platz wirklich ändert – vorher zeichnete jede Meldung samt Nachsendungen das ganze Klassenzimmer neu (mit
          allen Chatzeilen, im Hauptraum über 7 000), viermal je Wechsel. Die Chatzeile („… setzt sich auf Platz 3")
          kommt erst nach dem nächsten Bild: zuerst steht der Platz, dann wird der Verlauf gespeichert. */
+      /* FASSUNG 884 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Ankunft und Weg
+         (d = Datenkanal, s = Server) für die Probe beim Empfänger; die zweite Kopie sagt, um wie viel der erste Weg
+         schneller war (sitzEinMessen, sitzZweiteKopie). */
+      var sEin = n.__ein || performance.now(), sWeg = n.__weg || "s";
       if (typeof n.sn === "number") {
         var snSchl = n.art + "|" + n.von;
-        if (sitzSnVon[snSchl] && n.sn <= sitzSnVon[snSchl]) return;
+        if (sitzSnVon[snSchl] && n.sn <= sitzSnVon[snSchl]) { sitzZweiteKopie(n, sEin, sWeg); return; }
         sitzSnVon[snSchl] = n.sn;
+        /* FASSUNG 884 — kam die Erstmeldung über den Server und gibt es zum Absender keinen bereiten Datenkanal,
+           quittieren wir über den Server (vor dem Zeichnen) – höchstens alle 10 s je Absender, denn der Server schickt
+           jede Meldung an alle im Raum. So misst der Absender den Server-Weg genau dann, wenn der direkte fehlt.
+           Ältere Fassungen überhören „sitz-q“ (unbekannte Art). */
+        var sDc = kanalJe[n.von];
+        if (sWeg === "s" && !n.nach && !(kanalBereit[n.von] && sDc && sDc.readyState === "open")
+            && Date.now() - (sitzEchoUm[n.von] || 0) > 10000) {
+          sitzEchoUm[n.von] = Date.now();
+          senden({ art: "sitz-q", an: n.von, sn: n.sn });
+        }
       }
       sitzAnkunftVon[n.art + "|" + n.von] = Date.now();
       var tabelle = n.art === "spielsitz" ? spielSitz : sitzTausch, anders = false;
@@ -5633,7 +5796,10 @@ window.LiveChat = (function () {
           }
         });
       }
-      if (anders) melden("plaetze");
+      if (anders) {
+        melden("plaetze");
+        sitzEinMessen(n, sEin, sWeg, typeof n.ordnung[n.von] === "number" ? n.von : Object.keys(n.ordnung)[0]);   // FASSUNG 884
+      }
       if (n.art === "sitzplatz" && n.text) {
         var satz = n.text;
         (window.requestAnimationFrame || setTimeout)(function () { setTimeout(function () { systemZeile(satz); }, 0); });
@@ -16642,7 +16808,10 @@ window.LiveChat = (function () {
         if (neu !== zustand.spricht) {
           zustand.spricht = neu;
           senden({ art: "redet", spricht: neu });
-          melden();
+          /* FASSUNG 884 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Eigenes Sprechen
+             an/aus ändert nur den eigenen Platz (den Ring) – wie beim Empfänger seit 836 nur die Plätze neu zeichnen,
+             nicht das ganze Klassenzimmer samt aller Chatzeilen (bei jedem Satzanfang und jeder Pause). */
+          melden("plaetze");
           /* FASSUNG 773 — XANDER (Funk 199): „die Töne des Spiels werden immer noch nicht stumm geschalten wenn ich mit
              dir spreche innerhalb des Livestreams". Das Spiel hört hier mit und schaltet seinen Klang still, solange man
              selbst spricht. */
@@ -17674,6 +17843,19 @@ window.LiveChat = (function () {
     pruefVordergrund: function () { vordergrundHalloUm = 0; zurueckImVordergrund(); },
     pruefVersuch: function (id) { return JSON.parse(JSON.stringify(versuchJe[id] || null)); },
     pruefKanal: function () { return { bereit: Object.keys(kanalBereit), offen: Object.keys(kanalJe).filter(function (id) { return kanalJe[id].readyState === "open"; }) }; },
+    /* FASSUNG 884 — nur zum Nachprüfen (Sonde 884-sitz): die Sitz-Messung ansehen bzw. sofort senden; ein Gegenüber
+       als „noch nicht bereit“ behandeln (wie ein verlorenes dc-hallo), auf Wunsch mit neuem Hallo. */
+    pruefSitzMess: function (o) {
+      o = o || {};
+      var m = sitzMessStand(), raus = o.senden ? sitzMessSenden(m) : null;
+      return JSON.parse(JSON.stringify({ rtt: m.rtt, ein: m.ein, raus: m.raus, gesendet: m.gesendet, gesendetJetzt: raus }));
+    },
+    pruefKanalVergessen: function (id, hallo) {
+      delete kanalBereit[id];
+      var dc = kanalJe[id];
+      if (dc) delete dc.__hz;
+      if (hallo && dc && dc.readyState === "open") { try { dc.send(JSON.stringify({ art: "dc-hallo" })); } catch (e) {} }
+    },
     pruefBuendelVergessen: function (id) { delete buendelFaehig[id]; },
     pruefWarteschlange: function () { return liveWarteschlange.map(function (w) { return w.id; }); },
     /* Nur zum Nachmessen: Stuecke einsortieren und ansehen, in

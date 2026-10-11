@@ -69648,7 +69648,11 @@
           livechatGrossAuffrischen(l);
         } else renderLiveChat();
       }
-      klassenzimmerStreifen();
+      /* FASSUNG 884 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Der Streifen zeigt
+         Raum, Personenzahl, Stumm und Halten – nichts davon ändert sich bei „plaetze“ (Sitzwechsel, Sprechen an/aus).
+         Bisher rechnete jede solche Meldung trotzdem eine ganze lage() (samt Kopie aller Chatzeilen) und schrieb den
+         Streifen neu. */
+      if (art !== "plaetze") klassenzimmerStreifen();
     });
     /* Jeder Ansichtswechsel entscheidet neu, ob der Streifen zu
        sehen ist: im Klassenzimmer selbst wäre er nur im Weg. */

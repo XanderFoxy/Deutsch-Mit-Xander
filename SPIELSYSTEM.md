@@ -3932,3 +3932,61 @@ from l group by 1, 2 order by 1, 3 desc;
 - **klein – „neu“/„neustart“**: hängt jetzt daran, ob es VOR dem Anruf schon eine Leitung gab (vorher an `remoteDescription`: ein zweites Angebot auf einer unbeantworteten Leitung hieß „neu“).
 - **klein – Zählweisen**: Befund und Abfrage zählen beide `jetzt[2]` ≠ connected (siehe Befund); die Abfrage gibt die Grundlinie 881–883 mit aus.
 - **klein – Funk-Entwurf und Einleitung**: Wirkung als erwartet formuliert, nicht als Tatsache (Teil D und „taub“ sind nur als Logik geprüft).
+
+## Fassung 884 — Platzwechsel beim Gegenüber messen (Funk 268)
+
+XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Seit 836 geht jede Sitzmeldung zuerst direkt (Datenkanal), dann über den Server; beim Wechsler selbst steht der Platz sofort. Wie lange es beim ANDEREN dauert, stand nirgends. Jetzt wird es dort gemessen, wo Xander es sieht – und drei eindeutige Bremsen sind behoben. Für Xander ändert sich nichts Sichtbares (Aussehen, Größe, Bedienung unverändert).
+
+### Was gemessen wird (livechat.js, Messblock hinter `sitzNachsenden`)
+- **Laufzeit (`rtt`)**: der Empfänger schickt auf jede Erstmeldung (nicht auf Nachsendungen `nach:1`) sofort eine Quittung `sitz-q` zurück – noch vor dem Zeichnen, damit nur das Netz zählt. Der Absender misst Hin und zurück: `[wer (4 Zeichen), ms, Weg]`, Weg `d` = Datenkanal, `s` = Server. Laufzeit ≈ rtt/2 (ohne Uhrenabgleich; nimmt einen symmetrischen Weg an). Über den Server quittiert der Empfänger nur, wenn er zum Absender **keinen bereiten Datenkanal** hat, und höchstens alle 10 s je Absender (der Server schickt jede Meldung an alle im Raum).
+- **Probe beim Empfänger (`ein`)**: `[Weg, dom, mo, bild, vor, gez]`, ms ab Ankunft des Pakets: `dom` = Plätze im DOM (direkt nach `melden("plaetze")`), `mo` = nach den MutationObservern (spiel.js, Kleider-Beobachter), `bild` = nach dem nächsten Bild (rAF + setTimeout 0), `vor` = um wie viel die zweite Kopie (anderer Weg) später kam, `gez` = 1, wenn der Platz mit dieser Person wirklich am neuen Platz im DOM steht (0: anderer Platz; null: kein `#lcPlaetze`, z. B. Klassenzimmer nicht offen). Nur bei sichtbarer Seite (im Hintergrund kommt kein Bild).
+- **Absender (`raus`)**: je Erstmeldung `n` Meldungen, `peers` Gegenüber, `direkt` direkt erreicht; `ohne.pc` (keine Leitung), `ohne.dc` (Kanal nicht offen), `ohne.bereit` (Kanal offen, aber nicht bereit); `srv` = was `kanal.send` antwortet (`ok`, `timed out`, `error` …; `kein` = kein Raumkanal, `fehler` = abgelehnt); `buf` = größte Warteschlange im Datenkanal (Bytes).
+- **`kan`** (beim Senden): je Gegenüber `[Leitungszustand, Kanalzustand, bereit 1/0, Weg aus aufbau/leitungMess]`.
+- Bericht `spiel_diagnose` art **„sitz“**: `{fassung, ua (80), raum (24), rtt, ein, raus, kan}`, je Liste höchstens 40, typisch 0,3–1,5 KB (Grenze 6000; darüber werden die Listen auf die letzten 12 gekürzt). Gesendet nach 12 Werten (+3 s, damit die letzte Probe ihr Bild hat) oder 90 s nach dem ersten Wert; **höchstens 2 je Betreten und 4 je Tag und Gerät** (`localStorage dma_sitz_mess = JJJJ-MM-TT|n`). Gäste ohne Anmeldung melden nichts (der Server verlangt `auth.uid()`).
+
+### Was behoben ist (eindeutig, ohne Sichtbares)
+1. **Bereitschaft des Datenkanals** (`datenkanalAnlegen`): direkt geschickt wird nur an „bereite“ Gegenüber, und bereit machte bisher NUR das eine `dc-hallo` beim Öffnen. Der Kanal ist ungeordnet mit `maxRetransmits: 1` – ging dieses eine Paket verloren, lief für die ganze Leitung jede Sitz- und Spielmeldung nur über den Server, obwohl der Kanal offen war. Jetzt: zweites Hallo nach 1,5 s, falls noch nicht bereit; ein Hallo wird einmal je Kanal beantwortet (`zurueck: 1`, selbst unbeantwortet – kein Hin und Her); jede Nachricht auf dem aktuellen Kanal (`kanalJe[id] === dc`) macht bereit. Ob ein verlorenes Hallo in der Praxis vorkommt, ist nicht belegt – die Lücke im Code ist eindeutig; `raus.ohne.bereit` in den Berichten zeigt künftig, wie oft ein offener Kanal nicht benutzt wurde.
+2. **Eigenes Sprechen an/aus** meldet nur noch `plaetze` (wie beim Empfänger seit 836): vorher zeichnete jeder Satzanfang und jede Pause des EIGENEN Mikrofons das ganze Klassenzimmer neu (`renderLiveChat`). Der eigene Sprechring kommt aus `livechatPlaetzeAuffrischen` (`plaetzeBauen` trägt `ich.spricht`).
+3. **app.js-Zuhörer**: bei `plaetze` wird der Streifen (Raum, Personenzahl, Stumm, Halten) nicht mehr neu geschrieben – nichts davon ändert sich dabei. Spart je Sitz- und Sprechmeldung eine ganze `lage()` (Kopie aller Chatzeilen) und das Neuschreiben des Streifens. Geprüft an allen `melden("plaetze")`-Aufrufern (Puls-Heilung, Sitz-Empfang, redet, platzNehmen, platzTauschenMit): keiner ändert Lage, Personenzahl oder Stumm. Die alte Bilderwelt ist unberührt.
+4. Klein: `direktSenden` wandelt eine Meldung einmal in Text um statt je Gegenüber (gilt auch für Spielereignisse) und nur, wenn überhaupt ein Kanal offen ist.
+- `senden()` gibt jetzt das Versprechen von `kanal.send` zurück (nur `sitzSenden` liest es; geprüft: kein anderer Aufrufer nutzt den Rückgabewert).
+- Ältere Fassungen auf der Gegenseite: `sitz-q` und `dc-hallo` mit `zurueck` laufen dort ohne Wirkung durch (unbekannte Art in `empfangen`; `dc.onmessage` kennt nur feste Arten).
+- Nicht gefunden: kein Warten auf eine Server-Bestätigung (der Platz steht beim Wechsler sofort, gesendet wird vor der Spiel-Nacharbeit, seit 836); unveränderte Kopien und Nachsendungen zeichnen nichts (Sonde 856).
+
+### Auslesen (nur lesen)
+```sql
+select zeit, daten->>'fassung' fassung, daten->'raus' raus, daten->'rtt' rtt, daten->'ein' ein, daten->'kan' kan
+  from spiel_diagnose where art = 'sitz' order by zeit desc limit 20;
+```
+Verdichtet (Laufzeit = rtt/2 je Weg, Zeit bis zum Bild je Weg):
+```sql
+select r->>2 weg, count(*) n, percentile_cont(0.5) within group (order by (r->>1)::numeric / 2) laufzeit_median_ms,
+       percentile_cont(0.9) within group (order by (r->>1)::numeric / 2) laufzeit_p90_ms
+  from spiel_diagnose, jsonb_array_elements(daten->'rtt') r where art = 'sitz' group by 1;
+select e->>0 weg, count(*) n, percentile_cont(0.5) within group (order by (e->>3)::numeric) bild_median_ms,
+       percentile_cont(0.9) within group (order by (e->>3)::numeric) bild_p90_ms,
+       percentile_cont(0.5) within group (order by (e->>4)::numeric) vorsprung_median_ms,
+       count(*) filter (where e->>5 = '0') nicht_am_platz
+  from spiel_diagnose, jsonb_array_elements(daten->'ein') e where art = 'sitz' and e->>3 is not null group by 1;
+```
+Lesart: viel `s` in `ein` bei offenen Kanälen (`kan`) bzw. `raus.ohne.bereit` > 0 → der direkte Weg wird nicht benutzt; großes `bild` − `dom` → das Zeichnen bremst (Gerät); großes rtt/2 bei `d` → das Netz (Relais) bremst; `srv` ≠ `ok` → der Server-Weg hakt.
+
+### Sonden
+- Neu: `werkzeug/pruefe-884-sitz.js` (lädt `index.html?quelle`, zwei echte Seiten mit echter Leitung, der Server wird von der Sonde gespielt, Berichte über einen nachgebauten rpc, ein kleines `#lcPlaetze` für `gez`). Grün (25 Prüfungen): Leitung; Wechsel über den Datenkanal in 4 ms; Quittung `["bbb",1,"d"]`; Probe `["d",0,1,13,…,1]`; nach Freigabe der Server-Kopie `vor` ≈ 1 500 ms (so lange hielt die Sonde sie zurück), nichts neu gezeichnet, Chatzeile einmal, Nachsendungen ohne Quittung/Probe; Selbstheilung; Server-Weg (`ohne.bereit` +1, Probe `s`, Server-Quittung `["bbb",34,"s"]`, zweiter Wechsel ohne zweites Echo); Antwort auf das Hallo; Bericht (Tagesgrenze, genau ein rpc, 337 Zeichen, `srv.kein`, 2 je Betreten); Quelltext; keine Seitenfehler. `ALT=<Ordner>` liefert livechat.js/app.js aus diesem Ordner.
+- Nur ausgegeben (nicht geprüft), Labor-Chromium, zwei Läufe: kleines `#lcPlaetze` CPU 1× `bild` 7–8 ms, CPU 4× 11–13 ms; **echtes Klassenzimmer** (wie Sonde 816 gezeichnet, ohne Chatverlauf und ohne Kameras) CPU 1× `["d",1,1,6–14,…]`, CPU 4× `["d",7–9,9–13,31–48,…]` – auch 4-fach gedrosselt steht der Platz nach unter 10 ms im DOM und nach 31–48 ms im Bild; Quittung (Hin und zurück) 1–5 ms. Ein echtes Samsung mit vollem Raum ist das nicht – dafür sind die Berichte da.
+- Gegenprobe `ALT=` mit livechat.js und app.js aus HEAD (vor dem Punkt): 19 rot (kein pruefSitzMess, keine Quittung, keine Probe, kein Server-Echo, kein Bericht, Quelltext ×3), die Sonde läuft durch; grün bleiben nur die Kontrollen (Leitung, Wechsel kommt an, nichts doppelt gezeichnet, Chatzeile einmal, keine Seitenfehler).
+- Zweite, schärfere Gegenprobe: heutige livechat.js, nur die Bereitschafts-Änderung zurückgenommen (altes `dc-hallo`, kein zweites Hallo, keine Bereitschaft durch jede Nachricht): genau 2 rot – 7 (nach dem Vergessen nicht wieder bereit) und 8 (B→aaa false: ohne Antwort bleibt die Seite, deren Hallo verloren ging, unbereit).
+- Grün geblieben (min/ vorher frisch gestempelt): 856, 659, 667, 679, 816, 850, 859, 861, 876, 884-leitung, 884-messung, 773 (Spiel still beim eigenen Sprechen) und 840 (alte Bilderwelt). 848-sprechen: 1 rot („mit Lexical „… zwei …“ → falsch“) – diese Sonde lädt nur `stadt-leicht.html` (Azure-Antworten in der Stadt), weder livechat.js noch app.js; da sie keine der geänderten Dateien lädt, kann der Fehler nicht von diesem Punkt kommen (nicht eigens gegen HEAD nachgelaufen; laut Kopf der Sonde gehört vorher `werkzeug/leicht-packen.js` dazu, hier nicht ausgeführt). Für „eigenes Sprechen → plaetze“ gibt es keine Verhaltens-Sonde (das Mikrofon-Pegel-Messen ist nicht von außen erreichbar); geprüft ist der Quelltext (Sonde 884-sitz, 10).
+
+### Ehrlich
+- Lokal ist die Laufzeit 1–5 ms. Was bei Xander wirklich bremst (Netz/Relais, Server-Weg oder Zeichnen auf dem Samsung), zeigen erst die „sitz“-Berichte aus echten Sitzungen. Noch keine Zahlen – sie kommen, wenn Xander mit jemandem die Plätze wechselt.
+- Ein verlorenes `dc-hallo` ist im Feld nicht belegt (Lücke im Code eindeutig, Sonde 7/8 beweist, dass sie geschlossen ist).
+
+**Offen**
+1. Erste Kamerabilder am neuen Platz misst rAF nicht (`bild` = nächstes Bild der Seite, nicht der erste Videorahmen); dafür käme `requestVideoFrameCallback` in Frage.
+2. Der Aufwand von spiel.js-`zeichnen` (MutationObserver) steht in `mo − dom`; ob dort etwas zu tun ist, erst nach echten Werten entscheiden.
+3. Ob realtime-js im Browser beim Senden drosselt, ist hier nicht prüfbar (CDN im Container gesperrt) – sichtbar in `raus.srv` (`ok` / `timed out` / `rate limited`).
+4. Kontingent: `spiel_diagnose` nimmt je Konto 40 Zeilen in 24 h für alle Arten (außer „mess-*“, sobald `fassung-884-messung.sql` eingespielt ist), Xanders Konto erreichte das am 02. und 03.10. An vollen Tagen antwortet der Server `ok:false`, und der „sitz“-Bericht fehlt still. Falls das nach den ersten Tagen stört: eigener Zähler für „sitz“ (SQL im Bericht dieses Punkts, baut auf `fassung-884-messung.sql` auf; nicht eingespielt).
+5. Mehr Verkehr: je Erstmeldung ein winziges Echo je Gegenüber über den Datenkanal; über den Server höchstens 1 je 10 s je Absender und nur ohne bereiten Kanal.
+
+**Funk-Antwort (Entwurf)**: „Platzwechsel (Funk 268): Ab jetzt misst das Gerät deines Gegenübers, wie lange dein Platzwechsel bei ihm braucht – Netz, Weg (direkt oder über den Server) und bis er auf dem Bildschirm steht. Dabei habe ich eine Lücke geschlossen: Ging beim Verbinden ein einziges kleines Paket verloren, liefen alle Platzwechsel nur über den Server, obwohl der direkte Weg offen war. Außerdem zeichnet dein eigenes Sprechen nicht mehr jedes Mal das ganze Klassenzimmer neu. Sichtbar ändert sich nichts. Zahlen habe ich noch keine – die kommen, sobald du mit jemandem die Plätze wechselst; dann sage ich dir, ob es am Netz, am Server oder am Handy liegt.“
