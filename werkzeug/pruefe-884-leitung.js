@@ -24,6 +24,15 @@
         frisch angerufen; eine junge bleibt (Fall aus 841); haelt:true und
         ohne haelt (ältere Fassung) wie bisher – nur als LOGIK geprüft
      E  der Gruss der Wache geht nur an das eine Gegenüber („an")
+     F  NACHBESSERUNG (Prüfung): „zuletzt gehört" am Angebot ist sein
+        letztes PAKET – nicht der eigene Neuaufbau (bruecke → personMerken
+        frischte „gesehen" auf: „wache|0|neu" nach 4 s Stille); ein
+        Angebot auf der schon bestehenden Leitung heisst „neustart";
+        nach 12,5 s Stille ruft die Wache nicht mehr an
+     Dazu (Nachbesserung): ein Gruss mit „taub" ruft nicht an (auch wenn
+     der Absender neu für uns ist), der nächste ohne „taub" sofort (B);
+     höchstens 2 Neuaufbauten wegen haelt:false in 60 s (D); „still" im
+     Bericht auch für einen, der fort ist (A).
    Dazu: Berichte unter 6000 Zeichen, keine Seitenfehler.
    GEGENPROBE: ALT=<rev> (z. B. ALT=HEAD~1) – der kleine Server liefert
    /livechat.js dann aus „git show <rev>:livechat.js", und auch die
@@ -168,8 +177,8 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
       bbb.length + " Berichte: " + bbb.map((b) => JSON.stringify(b.d.jetzt)).join(" | "));
     sage(bbb[0] && Array.isArray(bbb[0].d.vorher) && bbb[0].d.fort === false && bbb[0].d.lebt >= 0 && typeof bbb[0].d.still === "number",
       "A: der Bericht trägt vorher, fort:false, lebt, still", bbb[0] && JSON.stringify({ vorher: bbb[0].d.vorher, fort: bbb[0].d.fort, lebt: bbb[0].d.lebt, still: bbb[0].d.still }));
-    sage(bccc.length === 1 && bccc[0].d.fort === true && bccc[0].d.lebt >= 0,
-      "A: ccc (ging nach dem Anruf) steht nach 30 s mit fort:true und seinem letzten Lebenszeichen im Bericht",
+    sage(bccc.length === 1 && bccc[0].d.fort === true && bccc[0].d.lebt >= 0 && bccc[0].d.still >= 25000,
+      "A: ccc (ging nach dem Anruf) steht nach 30 s mit fort:true, seinem letzten Lebenszeichen und still (ms seit seinem letzten Paket) im Bericht",
       bccc[0] && JSON.stringify({ fort: bccc[0].d.fort, lebt: bccc[0].d.lebt, still: bccc[0].d.still, ev: bccc[0].d.ev }));
     sage(bbb[0] && /host|srflx|relay|prflx/.test(bbb[0].d.weg || ""), "Kontrolle: „weg“ ist weiter der Weg der Leitung", bbb[0] && bbb[0].d.weg);
     allesBerichte.push(...ba, ...(await B.evaluate(() => window.__berichte)));
@@ -195,6 +204,18 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
     await schlaf(1000);
     const r4 = await P.evaluate(() => ({ n: window.__raus.filter((p) => p.art === "angebot" && p.an === "ccc").length, m: window.LiveChat.pruefLeitungMess().ccc || null }));
     sage(r4.n >= 1 && /^puls\|0\|neu/.test(zusatzVon(r4.m, "angebotRaus") || ""), "B: hört ccc wieder (Puls ohne „taub“) → sofort ein Anruf", r4.n + " Angebote, " + zusatzVon(r4.m, "angebotRaus"));
+    /* NACHBESSERUNG: das „hallo wieder" beim Zurückkommen geht oft noch über den REST-Notweg hinaus – mit „taub" ruft
+       niemand an, auch wenn der Absender (nach dem Verfall) neu für uns ist und die Wache läuft; der nächste Gruss ohne
+       „taub" (nach dem Neubeitritt) sofort. */
+    await P.evaluate(() => { window.__raus.length = 0; window.LiveChat.pruefEmpfangen({ art: "hallo", von: "ddd", name: "DDD", seit: 4000, kf: 1, wieder: true, taub: 1 }); });
+    await schlaf(1000);
+    const r5 = await P.evaluate(() => ({ n: window.__raus.filter((p) => p.art === "angebot" && p.an === "ddd").length, m: window.LiveChat.pruefLeitungMess().ddd || null }));
+    sage(r5.n === 0 && zusatzVon(r5.m, "hallo") === "taub", "B: ein Gruss mit „taub“ → kein Anruf (auch nicht von der Wache), die Zeitleiste sagt [„hallo“, 0, „taub“]",
+      r5.n + " Angebote, " + JSON.stringify(r5.m && r5.m.ev.slice(0, 3)));
+    await P.evaluate(() => { window.__raus.length = 0; window.LiveChat.pruefEmpfangen({ art: "hallo", von: "ddd", name: "DDD", seit: 4000, kf: 1, wieder: true }); });
+    await schlaf(1000);
+    const r6 = await P.evaluate(() => ({ n: window.__raus.filter((p) => p.art === "angebot" && p.an === "ddd").length, m: window.LiveChat.pruefLeitungMess().ddd || null }));
+    sage(r6.n >= 1 && /^hallo\|0\|neu/.test(zusatzVon(r6.m, "angebotRaus") || ""), "B: der nächste Gruss ohne „taub“ → sofort ein Anruf („hallo|0|neu“)", r6.n + " Angebote, " + zusatzVon(r6.m, "angebotRaus"));
     sage(/var STUMM_MS = 2 \* PULS_MS \+ 500/.test(LC), "B: Quelltext – stumm heisst zwei verpasste Pulse");
     sage(/var GEIST_MS = 90000;/.test(LC), "Kontrolle: GEIST_MS unverändert (Sonde 866)");
     allesBerichte.push(...(await P.evaluate(() => window.__berichte)));
@@ -257,6 +278,17 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
     let neu = null;
     for (let i = 0; i < 75 && !neu; i++) { const mm = await leiste(A, "bbb"); if (mm && mm.t0 >= tVor && mm.ev.some((x) => x[0] === "pc" && x[2] === "connected")) neu = mm; else await schlaf(40); }
     sage(Boolean(neu), "D: danach steht die (neue) Leitung binnen 3 s wieder", neu ? JSON.stringify(neu.ev.filter((x) => x[0] === "pc")) : "nein");
+    /* NACHBESSERUNG: höchstens 2 Neuaufbauten wegen haelt:false in 60 s – sonst riefe die kleinere Kennung bei einem
+       Gegenüber, dessen Annahme jedes Mal scheitert, alle ~12 s frisch an (an der Wache und GEIST_MS vorbei). */
+    console.log("       … 2 × 8,6 s warten (Obergrenze der haelt-Neuaufbauten)");
+    await schlaf(Math.max(0, 8600 - (Date.now() - tVor)));
+    const tVor2 = Date.now();
+    const n4 = await angeboteNach(() => auch(false));
+    sage(n4 >= 1, "Kontrolle: der zweite Neuaufbau wegen haelt:false (wieder über 8 s) ist erlaubt", n4 + " Angebote");
+    await kanalSteht(A, B, "aaa", "bbb", 4000);
+    await schlaf(Math.max(0, 8600 - (Date.now() - tVor2)));
+    const n5 = await angeboteNach(() => auch(false));
+    sage(n5 === 0, "D: der dritte binnen 60 s wird gebremst (höchstens 2 in 60 s) – kein neues Angebot", n5 + " Angebote");
     allesBerichte.push(...(await A.evaluate(() => window.__berichte)), ...(await B.evaluate(() => window.__berichte)));
   }
 
@@ -278,6 +310,30 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
     sage(hallos.length >= 1, "Kontrolle: die Wache der grösseren Kennung grüsst, wenn die Leitung nicht zustande kommt", hallos.length + "");
     sage(hallos.length >= 1 && hallos.every((h) => h.an === "aaa"), "E: der Gruss geht nur an „aaa“ (andere bauen ihre stehenden Leitungen nicht ab)", hallos.map((h) => h.an).join(","));
     allesBerichte.push(...(await Z.evaluate(() => window.__berichte)));
+  }
+
+  /* ------------------------------------------------------------- F */
+  console.log("\nF) „ZULETZT GEHÖRT“ IST SEIN LETZTES PAKET, NICHT DER EIGENE ANRUF (Nachbesserung)\n");
+  {
+    const P = await seite("aaa", { bbb: {} });
+    const t0 = await P.evaluate(() => { window.LiveChat.pruefEmpfangen({ art: "handweg", von: "bbb", kf: 1 }); return Date.now(); });   // sein letztes Paket
+    await schlaf(4000);
+    /* geist: 300 – sonst bremst schon die Geisterregel (848) nach vier Angeboten; so zählt nur „stumm" */
+    await P.evaluate(() => { window.__raus.length = 0; window.LiveChat.pruefWache({ geduld: 300, takt: 100, geist: 300 }); });
+    const rufe = async () => { const m = await leiste(P, "bbb"); return (m ? m.ev.filter((x) => x[0] === "angebotRaus" || x[0] === "angebotGebuendelt") : []).map((x) => String(x[2])); };
+    let auf = [];
+    for (let i = 0; i < 80; i++) { auf = await rufe(); if (auf.some((z) => /^wache-abriss/.test(z))) break; await schlaf(50); }
+    const zu = (re) => auf.find((z) => re.test(z)) || "";
+    sage(/^wache\|[3-6]\|neu$/.test(zu(/^wache\|/)), "F: nach 4 s Stille ruft die Wache an – am Angebot steht „wache|4|neu“ (nicht 0: der eigene Neuaufbau ist kein Lebenszeichen)", auf.slice(0, 4).join("  "));
+    sage(/^wache-neustart\|[3-6]\|neustart$/.test(zu(/^wache-neustart\|/)), "F: ein Angebot auf der schon bestehenden (unbeantworteten) Leitung heisst „neustart“", zu(/^wache-neustart\|/) || "keins");
+    sage(/^wache-abriss\|[3-7]\|neu$/.test(zu(/^wache-abriss\|/)), "F: nach dem Abriss (neue Leitung) zählt die Stille weiter („wache-abriss|5|neu“)", zu(/^wache-abriss\|/) || "keins");
+    /* nach 12,5 s Stille: kein Angebot mehr (gemessen von 13 bis 17 s nach seinem letzten Paket) */
+    await schlaf(Math.max(0, 13000 - (Date.now() - t0)));
+    await P.evaluate(() => { window.__raus.length = 0; });
+    await schlaf(4000);
+    const n = await P.evaluate(() => window.__raus.filter((p) => p.art === "angebot" || p.art === "hallo").length);
+    sage(n === 0, "F: 13–17 s nach seinem letzten Paket ruft die Wache nicht mehr an (stumm zählt ab seinem Paket, nicht ab dem eigenen Neuaufbau)", n + " Angebote");
+    allesBerichte.push(...(await P.evaluate(() => window.__berichte)));
   }
 
   /* ------------------------------------------------------------- Rest */

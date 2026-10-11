@@ -3858,10 +3858,10 @@ Namen, Raumnamen, Chat-Inhalte, Kennungen, Adressen. Fehlertexte werden gereinig
 
 ## Fassung 884 — Leitung: das Gespräch baut sich zuverlässig auf (Funk 263)
 
-XANDER (Funk 263): „die Verbindung … hat Priorität“. Für Xander ändert sich nichts Sichtbares (keine Anzeige, keine Sitzordnung, Verfall bleibt 20 s). Die Leitung steht schneller, wenn man aus dem Hintergrund zurückkommt und nach einem Doppelangebot; mit drei und mehr Leuten reißt ein hängendes Gegenüber die anderen nicht mehr mit.
+XANDER (Funk 263): „die Verbindung … hat Priorität“. Für Xander ändert sich nichts Sichtbares (keine Anzeige, keine Sitzordnung, Verfall bleibt 20 s). Erwartet – im Labor als Logik geprüft, der Beleg aus dem Feld folgt erst mit der Messung unten: die Leitung sollte schneller stehen, wenn man aus dem Hintergrund zurückkommt und nach einem Doppelangebot; mit drei und mehr Leuten sollte ein hängendes Gegenüber die anderen nicht mehr mitreißen; die Wache ruft niemanden mehr an, von dem seit 12,5 s kein Paket kam oder dessen Kanal nach eigener Angabe taub ist (ins Leere ruft sie damit noch bis zu 12,5 s lang).
 
 ### Befund (Telemetrie seit 881, nur lesend)
-- 126 Zeitleisten „leitung“, Median bis „connected“ 1 888 ms, 16 nicht verbunden.
+- 126 Zeitleisten „leitung“, Median bis „connected“ 1 888 ms, 16 nicht verbunden. „Nicht verbunden“ heißt hier und in der Abfrage unten: Leitungszustand beim Senden (`jetzt[2]`) ist nicht „connected“. Ohne „connected“-EREIGNIS in `ev` sind es 25 – 9 davon waren beim Senden verbunden (ein neues Angebot auf einer schon stehenden Leitung, es gab keinen Übergang mehr). Die Abfrage gibt beide Zahlen aus; verglichen wird mit 16.
 - Alle 16 ohne Gruss (kein „hallo“, kein „auchDa“) und ohne Kandidaten von drüben (`kd = {}`): Anrufe der Wache bzw. beim Zurückkommen an ein Gegenüber, das wohl ohne Abschied ging oder im Hintergrund schlief. Das ist eine Hypothese – wer angerufen hat, stand bisher nicht in der Leiste. Erst die neuen Felder unten beweisen es.
 - Belege für die Schritte 3 und 4: Leisten 587/588 (Antwort auf das ältere Angebot zuerst), 543/544 und 608/609 (zurück aus dem Hintergrund, Leitung erst nach 8–9 s durch die Wache).
 
@@ -3870,13 +3870,13 @@ XANDER (Funk 263): „die Verbindung … hat Priorität“. Für Xander ändert 
 2. **Wache-Gruss nur an den einen**: das „hallo“ der Wache (größere Kennung, Leitung kommt nicht zustande) trägt `an`. Vorher las jeder im Raum es als Neuladen: alle bauten ihre stehende Leitung zu uns ab und schickten den Verlauf nach.
 3. **Die Antwort gehört zum Angebot**: Angebot mit `nr` (zufälliger Start), Antwort mit `zu`. Eine Antwort auf ein älteres Angebot wird verworfen (`antwortAlt`), vor der Zeile, die die Wache zurücksetzt. Ohne nr/zu (ältere Fassung) wie bisher.
 4. **„auch-da“ sagt `haelt`**: ob drüben eine Leitung zu uns stehen blieb. Bei `haelt: false` baut die kleinere Kennung eine über 8 s alte Leitung ab und ruft sofort frisch an (statt nach 6–8 s Wache). Jünger als 8 s bleibt sie (Fall aus 841). Ohne `haelt` wie bisher. Im Puls-Zweig steht der echte Wert (`Boolean(brueckeJe[…])`, praktisch immer false); auch das Abbauen geschieht nur, wenn danach angerufen werden darf (`belegt() <= PLAETZE`).
-5. **Kein Anruf ins Leere**: `nichtErreichbar(id)` – „stumm“ (zwei Pulse verpasst, `STUMM_MS = 2 * PULS_MS + 500` = 12,5 s) oder „taub“ (sein Puls sagt es, 15 s). Die Wache ruft dann nicht an, grüßt nicht und zählt nicht hoch; meldet er sich, handelt der nächste Takt sofort. Stehende Leitungen, der Neustart bei „disconnected“ und der Verfall nach 20 s bleiben unverändert. `GEIST_MS = 90000` unverändert.
-6. **„taub“ im Puls**: `kanalTaub()` – der eigene Raumkanal hört nichts (Websocket tot oder Kanal closed/errored/joining/leaving), der Puls geht über den REST-Notweg von supabase-js trotzdem hinaus. Nur sicher Bekanntes zählt: fehlt eine Angabe (andere supabase-js-Fassung), gilt der Tab als hörend. Drüben: kein Anruf aus dem Puls, die Wache wartet; jedes „hallo“ hebt „taub“ sofort auf.
+5. **Kein Anruf ins Leere**: `nichtErreichbar(id)` – „stumm“ (seit seinem letzten Paket 12,5 s, also zwei Pulse verpasst, `STUMM_MS = 2 * PULS_MS + 500`; gezählt ab `gehoertJe`, siehe Nachbesserung) oder „taub“ (sein Puls oder Gruss sagt es, 15 s). Die Wache ruft dann nicht an, grüßt nicht und zählt nicht hoch; meldet er sich, handelt der nächste Takt sofort. Stehende Leitungen, der Neustart bei „disconnected“ und der Verfall nach 20 s bleiben unverändert. `GEIST_MS = 90000` unverändert.
+6. **„taub“ im Puls**: `kanalTaub()` – der eigene Raumkanal hört nichts (Websocket tot oder Kanal closed/errored/joining/leaving), der Puls geht über den REST-Notweg von supabase-js trotzdem hinaus. Nur sicher Bekanntes zählt: fehlt eine Angabe (andere supabase-js-Fassung), gilt der Tab als hörend. Drüben: kein Anruf aus dem Puls, die Wache wartet. Auch das „hallo wieder“ beim Zurückkommen und der Gruss der Wache tragen `taub` (sie gehen oft noch über den REST-Notweg hinaus): mit `taub` ruft drüben niemand an, ohne `taub` (nach dem Neubeitritt) hebt jedes „hallo“ es sofort auf.
 
 ### Messfelder (spiel_diagnose „leitung“)
-- Am Angebot (`angebotRaus`, `angebotGebuendelt`) als drittes Feld: `Auslöser|zuletzt gehört vor s|neu oder neustart[|taub][|vg]` – z. B. `["angebotRaus", 0, "ice-weg|7|neustart"]`. `vg` = wir kamen in den letzten 10 s aus dem Hintergrund.
-- `["abbau", t, Grund]`, `["antwortAlt", t, nr]`.
-- Im Bericht: `fort` (er ist nicht mehr im Raum), `still` (ms seit seinem letzten Paket; -1 wenn fort), `lebt` (ms ab Beginn der Leiste bis zu seinem letzten Paket darin; -1: nie), `vorher` = [Ereignisse, letztes Ereignis, Alter ms] der überholten Leiste.
+- Am Angebot (`angebotRaus`, `angebotGebuendelt`) als drittes Feld: `Auslöser|zuletzt gehört vor s|neu oder neustart[|taub][|vg]` – z. B. `["angebotRaus", 0, "ice-weg|7|neustart"]`. „zuletzt gehört“ = Sekunden seit seinem letzten Paket (`gehoertJe`, „-“: nie eins). `neu` = neue Leitung, `neustart` = Angebot auf einer schon bestehenden (ICE-Neustart/Neuverhandlung). `vg` = wir kamen in den letzten 10 s aus dem Hintergrund.
+- `["abbau", t, Grund]`, `["antwortAlt", t, nr]`, `["hallo", t, "taub"]` (Gruss mit taub, kein Anruf), `["haeltGebremst", t]` (dritter haelt-Neuaufbau in 60 s).
+- Im Bericht: `fort` (er ist nicht mehr im Raum), `still` (ms seit seinem letzten Paket, auch wenn er fort ist; -1: nie eins), `lebt` (ms ab Beginn der Leiste bis zu seinem letzten Paket darin; -1: nie), `vorher` = [Ereignisse, letztes Ereignis, Alter ms] der überholten Leiste.
 - **Abweichung vom Plan**: das Feld heißt `fort`, nicht `weg` – `weg` ist schon der Weg der Leitung (host/srflx/relay, Sonde 861 C prüft ihn).
 - **Abweichung vom Plan**: „abbau“ landet nur in einer noch nicht gesendeten Leiste und nur, wenn es schon eine gibt (keine Leiste, die nur aus „abbau“ besteht und nach 30 s Kontingent frisst). Beim Abbau wegen „auch-da“ ist die Leiste meist schon gesendet; dann sagt das Angebot der neuen Leiste `auch-da|…|neu`, was geschah.
 - Ab 884 gehen überholte Leisten nicht mehr hinaus: Zahlen vor und nach 884 sind nicht 1:1 vergleichbar (weniger scheinbare Fehlschläge). Das Kontingent (40 je Konto in 24 h) wird eher entlastet. Bericht typisch ~0,7 KB (Grenze 6000).
@@ -3884,6 +3884,7 @@ XANDER (Funk 263): „die Verbindung … hat Priorität“. Für Xander ändert 
 ### Sonden
 - Neu: `werkzeug/pruefe-884-leitung.js` (lädt `index.html?quelle`; `ALT=<rev>` liefert /livechat.js und die Quelltext-Prüfungen aus `git show <rev>:livechat.js`). A Messung (Auslöser hallo/puls, nr/zu, „abbau tschuess“, überholte Leiste → genau EIN Bericht mit `vorher`, ccc nach 30 s mit `fort: true`), B stumm/taub (kein Angebot an ein 20 s stummes bzw. taubes Gegenüber, frischer Puls → sofort), C alte Antwort (antwortAlt, Leitung scheitert nicht erst), D haelt (junge Leitung bleibt; haelt:true/ohne → nichts; haelt:false über 8 s → sofort frisch, steht binnen 3 s), E Wache-Gruss mit `an`, dazu < 6000 Zeichen und keine Seitenfehler. Grün (32 Prüfungen).
 - Gegenprobe `ALT=HEAD` (Stand vor dem Punkt): 19 rot (A 8, B 5, C 2, D 2, E 2), 13 grün – nur die Kontrollen (Leitung steht, Weg im Bericht, GEIST_MS, junge Leitung bleibt, haelt:true/ohne, Wache grüßt überhaupt, keine Seitenfehler, < 6000).
+- Nach der Nachbesserung (unten): 40 Prüfungen, alle grün. Gegenprobe `ALT=HEAD` (= erster 884-Leitung-Commit 1b15f03): 7 rot – genau die neuen (A still bei fort, B Gruss mit taub, D Obergrenze, F ×4: „wache|0|neu“, „wache-neustart|0|neu“, „wache-abriss|0|neu“, 5 Angebote 13–17 s nach seinem letzten Paket). Gegenprobe `ALT=HEAD~1` (vor 884-Leitung): 27 rot, 13 grün (Kontrollen; dazu „D: dritter haelt-Neuaufbau gebremst“, weil die alte Fassung auf haelt gar nicht neu baut). Nach der Nachbesserung erneut (min/ frisch gestempelt): 659, 811, 842, 856, 859, 861, 866, 871, pruefe-leitung, runde94 grün; 862 wie zuvor nur die app.js-Quelltextprüfung rot.
 - Ehrlich: Im Labor heilt die alte Fassung auch C in 0,6 s – die falsche Antwort lässt die Leitung auf 127.0.0.1 sofort scheitern, und der schnelle Neuanruf aus 836 baut nach 0,4 s neu. Im Feld (kein ICMP) dauert dieses Scheitern Sekunden. Die Sonde prüft deshalb, dass die Leitung gar nicht erst scheitert (kein „failed“, kein zweites Angebot); die Zeit ist nur Kontrolle.
 - Sonde 861: der Anruf im Gruss wird jetzt als Muster `anrufen(n.von[,)]` gesucht (er heißt `anrufen(n.von, "hallo")`).
 - Grün geblieben: 659, 811, 842, 856, 859, 861, 866, 871, pruefe-leitung, runde94. 862: alle Leitungs-Prüfungen grün; rot ist nur „D: die Rückkehr nach dem Neuladen gibt das Konto mit“ – eine Quelltext-Prüfung auf app.js, die schon vor diesem Punkt rot war (HEAD: der Abstand zwischen `rueckkehrOffen` und `konto: (Backend.currentUser() || {}).id` ist größer als die 600 Zeichen der Sonde). app.js ist hier unberührt.
@@ -3892,29 +3893,42 @@ XANDER (Funk 263): „die Verbindung … hat Priorität“. Für Xander ändert 
 - Der echte Hintergrund-Schlaf auf Android (toter Websocket, Puls läuft über REST weiter) und ICE „disconnected“ ohne Netzsteuerung. Teil D und „taub“ sind nur als Logik geprüft; der Feldbeleg sind 543/544, 608/609 und danach die neue Telemetrie.
 
 ### Feldbeweis (nach 3–5 Tagen, nur lesen)
-Erkennt 884-Leisten an `fort` (unabhängig von DMA_VERSION):
+Erkennt 884-Leisten an `fort` (unabhängig von DMA_VERSION) und gibt die Grundlinie 881–883 mit denselben Zählweisen daneben aus. „nicht_verbunden“ wie im Befund (`jetzt[2]` ≠ connected), „ohne_connected_ereignis“ nur zur Einordnung:
 ```sql
 with l as (
-  select id, zeit, daten d,
+  select id, daten d,
+         coalesce(daten->'jetzt'->>2, '') <> 'connected' as nv,
          (select e->>2 from jsonb_array_elements(daten->'ev') e where e->>0 = 'angebotRaus' limit 1) as erstes_angebot,
          (select (e->>1)::int from jsonb_array_elements(daten->'ev') e where e->>0 = 'angebotRaus' limit 1) as t_angebot,
          (select (e->>1)::int from jsonb_array_elements(daten->'ev') e where e->>0 = 'pc' and e->>2 = 'connected' limit 1) as t_connected
-  from spiel_diagnose where art = 'leitung' and daten ? 'fort')
-select split_part(coalesce(erstes_angebot, '-'), '|', 1) as ausloeser, count(*) as leisten,
-       count(*) filter (where t_connected is null) as nicht_verbunden,
-       count(*) filter (where t_connected is null and (d->>'fort')::boolean) as davon_fort,
-       count(*) filter (where t_connected is null and not (d->>'fort')::boolean and (d->>'lebt')::int > coalesce(t_angebot, 0)) as echte_fehlschlaege,
+  from spiel_diagnose where art = 'leitung' and (daten ? 'fort' or coalesce(daten->>'fassung', '') between '881' and '883'))
+select (d ? 'fort') as ab_884, split_part(coalesce(erstes_angebot, '-'), '|', 1) as ausloeser, count(*) as leisten,
+       count(*) filter (where nv) as nicht_verbunden,
+       count(*) filter (where t_connected is null) as ohne_connected_ereignis,
+       count(*) filter (where nv and coalesce((d->>'fort')::boolean, false)) as davon_fort,
+       count(*) filter (where nv and not coalesce((d->>'fort')::boolean, false) and coalesce((d->>'lebt')::int, -1) > coalesce(t_angebot, 0)) as echte_fehlschlaege,
        percentile_cont(0.5) within group (order by t_connected) as median_connected_ms,
        count(*) filter (where erstes_angebot like '%|vg%') as aus_vordergrund,
        count(*) filter (where exists (select 1 from jsonb_array_elements(d->'ev') e where e->>0 = 'antwortAlt')) as mit_antwort_alt
-from l group by 1 order by 2 desc;
+from l group by 1, 2 order by 1, 3 desc;
 ```
-(Gegen den heutigen Stand geprüft: läuft, noch 0 Zeilen.) Vergleich: Zeit bis connected bei `auch-da|…` bzw. `|vg` gegen 543/544 und 608/609 (8–9 s).
+(Gegen den heutigen Stand geprüft, nur lesend: Grundlinie `ab_884 = false` → 126 Leisten, 16 nicht verbunden, 25 ohne connected-Ereignis, Median 1 888 ms – deckt sich mit dem Befund; 884-Zeilen noch keine.) Vergleich: Zeit bis connected bei `auch-da|…` bzw. `|vg` gegen 543/544 und 608/609 (8–9 s).
 
 **Offen**
-1. Nach 3–5 Tagen auswerten (Abfrage oben): Auslöser der Anrufe ohne Antwort; Anteil `fort` unter den nicht verbundenen; echter Fehlschlag = nicht connected und `fort = false` und `lebt` > erstes Angebot.
+1. Nach 3–5 Tagen auswerten (Abfrage oben): Auslöser der Anrufe ohne Antwort; Anteil `fort` unter den nicht verbundenen; echter Fehlschlag = nicht connected (`jetzt[2]`) und `fort = false` und `lebt` > erstes Angebot. Erst dann an Xander melden, ob die Hypothese („Abgang ohne Abschied“) stimmt.
 2. Ob beim Zurückkommen (visibilitychange) ein ICE-Neustart statt Neuaufbau etwas bringt, erst nach dieser Messung entscheiden (Zusatz „neu“ gegen „neustart“, mit `|vg`). Heute: zurück im Vordergrund geht „hallo wieder“; drüben bleibt eine stehende Leitung, eine hängende wird neu gebaut, und mit Schritt 4 ruft die kleinere Kennung sofort frisch an.
 3. „taub“ wirkt nur, solange supabase-js den REST-Notweg hat (als „deprecated“ markiert). Fällt er weg, pulst ein tauber Tab gar nicht mehr, und Schritt 5 („stumm“) übernimmt.
 4. Die 8-s-Sperre in Schritt 4 ist eine Schätzung; laufen die Zustände auseinander (hier „steht“, drüben haelt:false), wird die eigene Leitung neu gebaut (heilt sich selbst, ~1–2 s).
 5. Hört das EIGENE Gerät kurz nichts, pausiert die Wache für alle bis zum nächsten Paket (der ICE-Neustart bei „disconnected“ läuft weiter).
 6. Beim Ausliefern DMA_VERSION auf 884 setzen; die Abfrage oben braucht das nicht (sie erkennt `fort`).
+7. „gesehen“ wird weiter auch von `bruecke()` → `personMerken` aufgefrischt (vor 884 schon so): ein eigener Neuaufbau schiebt den Verfall nach 20 s hinaus. Bewusst nicht geändert (Verfall bleibt, Sitzordnung/Ein- und Austragen unberührt); für Messung und „stumm“ zählt jetzt `gehoertJe`.
+8. Ein verspäteter Puls mit `taub` (REST, abgeschickt vor dem Neubeitritt) kann ein späteres „hallo“ ohne `taub` überholen; dann wartet die Wache bis zu seinem nächsten Puls (≤ 6 s). Der Anruf aus dem Gruss ist da schon draußen. Hingenommen; eine Paketnummer je Absender gibt es nicht.
+
+### Nachbesserung nach der Prüfung (zweiter WIP-Commit)
+- **wichtig – „zuletzt gehört“ war bei jeder neuen Leitung 0**: `anrufen()` las `gesehen` erst nach `bruecke()`, und `bruecke()` trägt beim Anlegen über `personMerken` „gesehen = jetzt“ ein. Nachgestellt (Sonde F): er schwieg 4 s, am Angebot stand „wache|0|neu“. Jetzt eigener Zeitstempel `gehoertJe[id]`, gesetzt nur in `empfangen`, genommen für den Zusatz am Angebot, für `still` im Bericht und für `nichtErreichbar` (Fallback `gesehen`, wenn nie ein Paket kam – von Hand eingetragene Leute, Sonden).
+- **klein – „stumm“ hieß nicht „zwei Pulse verpasst“**: dieselbe Ursache; jeder eigene Neuaufbau startete die 12,5 s neu. Jetzt ab seinem letzten Paket (Sonde F: 13–17 s nach seinem Paket kein Angebot mehr; vorher 5).
+- **klein – „hallo wieder“ über den REST-Notweg hob „taub“ auf**: das „hallo wieder“ (Vordergrund) und der Gruss der Wache tragen jetzt `taub: kanalTaub() || undefined`; drüben setzt ein Gruss mit `taub` „taub“ (auch für einen, der nach dem Verfall neu ist) und ruft nicht an; nur ein Gruss ohne `taub` hebt es auf. Der Rest (verspäteter REST-Puls) steht unter Offen 8.
+- **klein – haelt-Neuaufbau ohne Obergrenze**: höchstens 2 je Gegenüber in 60 s (`haeltNeuErlaubt`, wie `schnellNeuJe`), danach `haeltGebremst` und die Wache mit ihren Abständen.
+- **klein – „neu“/„neustart“**: hängt jetzt daran, ob es VOR dem Anruf schon eine Leitung gab (vorher an `remoteDescription`: ein zweites Angebot auf einer unbeantworteten Leitung hieß „neu“).
+- **klein – Zählweisen**: Befund und Abfrage zählen beide `jetzt[2]` ≠ connected (siehe Befund); die Abfrage gibt die Grundlinie 881–883 mit aus.
+- **klein – Funk-Entwurf und Einleitung**: Wirkung als erwartet formuliert, nicht als Tatsache (Teil D und „taub“ sind nur als Logik geprüft).
