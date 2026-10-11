@@ -381,7 +381,7 @@ window.LiveChat = (function () {
       try { pcx.setConfiguration(pcKonfig()); } catch (e) {}
       if (!neuSuchen || steht(pcx) || pcx.signalingState !== "stable" || !pcx.restartIce) return;
       try { pcx.restartIce(); } catch (e) {}
-      if (zustand.ichId < id) setTimeout(function () { if (brueckeJe[id] === pcx && !steht(pcx)) anrufen(id); }, 150);
+      if (zustand.ichId < id) setTimeout(function () { if (brueckeJe[id] === pcx && !steht(pcx)) anrufen(id, "relais"); }, 150);
     });
   }
   function relaisInsGeraet(server) {
@@ -3176,7 +3176,7 @@ window.LiveChat = (function () {
         /* FASSUNG 659 — restartIce() allein tut nichts: erst ein neues
            Angebot trägt den Neustart hinüber. Anrufen tut wie immer
            nur die Seite mit der kleineren Kennung. */
-        if (zustand.ichId < anderId) setTimeout(function () { if (brueckeJe[anderId] === pc) anrufen(anderId); }, 150);
+        if (zustand.ichId < anderId) setTimeout(function () { if (brueckeJe[anderId] === pc) anrufen(anderId, "ice-weg"); }, 150);
       }
       /* „failed" heisst: es gibt keinen Weg. Genau dann ist ein Relais
          noetig — einmal neu suchen, und wenn das auch nichts wird,
@@ -3191,7 +3191,7 @@ window.LiveChat = (function () {
             if (brueckeJe[anderId] !== pc) return;
             try { pc.setConfiguration(pcKonfig()); } catch (e) {}
             try { pc.restartIce(); } catch (e) {}
-            if (zustand.ichId < anderId) setTimeout(function () { if (brueckeJe[anderId] === pc) anrufen(anderId); }, 150);
+            if (zustand.ichId < anderId) setTimeout(function () { if (brueckeJe[anderId] === pc) anrufen(anderId, "ice-fehl"); }, 150);
           };
           if (relaisStand.quelle === "cloudflare" && Date.now() - relaisStand.geholt > RELAIS_FRISCH_MS) relaisHolen(true).then(weiter, weiter);
           else weiter();
@@ -3225,7 +3225,7 @@ window.LiveChat = (function () {
           if (sf.length < 2) {
             sf.push(jetztF);
             setTimeout(function () {
-              if (zustand.lage === "drin" && !brueckeJe[anderId] && zustand.leute[anderId] && belegt() <= PLAETZE) anrufen(anderId);
+              if (zustand.lage === "drin" && !brueckeJe[anderId] && zustand.leute[anderId] && belegt() <= PLAETZE) anrufen(anderId, "pc-fehl");
             }, 400);
           }
         }
@@ -3672,7 +3672,7 @@ window.LiveChat = (function () {
   function verbindungenNeu() {
     var wieviele = 0;
     Object.keys(brueckeJe).forEach(function (id) {
-      brueckeAbbauen(id);
+      brueckeAbbauen(id, "knopf");
       wieviele++;
     });
     /* Die Stroeme der anderen sind damit tot — weg damit, sonst
@@ -3689,7 +3689,7 @@ window.LiveChat = (function () {
     Object.keys(zustand.leute || {}).forEach(function (id) {
       if (id === zustand.ichId) return;
       if (zustand.ichId >= id) return;      /* die kleinere Kennung ruft an */
-      try { anrufen(id); } catch (e) {}
+      try { anrufen(id, "knopf"); } catch (e) {}
     });
     return wieviele;
   }
@@ -4215,7 +4215,10 @@ window.LiveChat = (function () {
   }
 
   var schnellNeuJe = {};   /* FASSUNG 836 — schnelle Neuanrufe nach „failed“ je Gegenüber (Zeitpunkte) */
-  function brueckeAbbauen(id) {
+  function brueckeAbbauen(id, grund) {
+    /* FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". Wer die Leitung abbaut (Gruss, Abschied,
+       Verfall, Wache, Knopf), stand bisher nirgends; nur in eine laufende Zeitleiste, nie in eine neue. */
+    if (brueckeJe[id] && leitungMess[id]) leitungMerk(id, "abbau", grund || brueckeJe[id].connectionState);
     wacheBeenden(id);
     tonAbklemmen(id);
     var pc = brueckeJe[id];
@@ -4257,22 +4260,36 @@ window.LiveChat = (function () {
      „disconnected"/„failed" oder von der Wache nach 6 s, also nie innerhalb dieser 1,5 s. */
   var angebotRaus = {};
   var sitzungVon = {};
-  function anrufen(anderId) {
+  /* FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". Jedes Angebot trägt eine Nummer (nr), die
+     Antwort sagt, zu welchem sie gehört (zu). Zeitleisten 587/588: nach einem zweiten Angebot kam zuerst die Antwort auf
+     das ERSTE an; sie wurde in die neue Leitung gesetzt, die passende zweite scheiterte dann („stable"), und es stand
+     nichts, bis die Wache nach 6 s neu anfing. Zufälliger Start, damit es nach dem Neuladen keinen Zusammenstoß gibt.
+     Ältere Fassungen ohne nr/zu verhalten sich wie bisher. */
+  var angebotNr = Math.floor(Math.random() * 1e9);
+  function anrufen(anderId, grund) {
     var pc = bruecke(anderId, true);
+    /* FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". Die 16 Fehlschläge seit 881 hatten alle keinen
+       Gruss – WER da anrief, sagte die Zeitleiste nicht. Jetzt steht am Angebot: Auslöser | zuletzt von ihm gehört vor
+       s | neue Leitung oder Neustart | taub (sein Kanal ist weg) | vg (wir kamen eben aus dem Hintergrund). */
+    var pr = zustand.leute[anderId];
+    var ruf = (grund || "?") + "|" + (pr ? Math.round((Date.now() - (pr.gesehen || 0)) / 1000) : "-") + "|"
+            + (pc.remoteDescription ? "neustart" : "neu") + (pr && pr.taubUm ? "|taub" : "")
+            + (Date.now() - vordergrundHalloUm < 10000 ? "|vg" : "");
     var vorher = angebotRaus[anderId];
     /* gebündelt wird, solange das Angebot noch entsteht (auf einem langsamen Handy gemessen bis 1,5 s) oder seit dem
        Hinausgehen keine 1,5 s vergangen sind und noch keine Antwort kam */
     if (vorher && vorher.pc === pc && (vorher.laeuft
         || (pc.signalingState === "have-local-offer" && Date.now() - vorher.t < 1500))) {
-      leitungMerk(anderId, "angebotGebuendelt");
+      leitungMerk(anderId, "angebotGebuendelt", ruf);
       return vorher.laeuft || Promise.resolve();
     }
     var eintrag = angebotRaus[anderId] = { pc: pc, t: Date.now(), laeuft: null };
     aufbauMerk(anderId, "angebot");   // FASSUNG 836 — Messung
     eintrag.laeuft = pc.createOffer().then(function (angebot) {
       return pc.setLocalDescription(angebot).then(function () {
-        senden({ art: "angebot", an: anderId, name: zustand.ichName, beschreibung: alsDaten(pc.localDescription) });
-        leitungMerk(anderId, "angebotRaus");   // FASSUNG 840
+        pc.__angebot = ++angebotNr;   // FASSUNG 884 — siehe angebotNr
+        senden({ art: "angebot", an: anderId, name: zustand.ichName, nr: pc.__angebot, beschreibung: alsDaten(pc.localDescription) });
+        leitungMerk(anderId, "angebotRaus", ruf);   // FASSUNG 840 / 884: mit Auslöser
       });
     }).catch(function () {}).then(function () { eintrag.laeuft = null; eintrag.t = Date.now(); });
     return eintrag.laeuft;
@@ -4282,7 +4299,7 @@ window.LiveChat = (function () {
      binnen 17 ms; alle liefen gleichzeitig in dieselbe Leitung, die erste Antwort ging erst nach 3,2 s hinaus und passte
      nicht mehr zum letzten Angebot drüben. */
   var annahmeJe = {};
-  function angebotAnnehmen(vonId, beschreibung) {
+  function angebotAnnehmen(vonId, beschreibung, nr) {
     aufbauMerk(vonId, "angebotDa");   // FASSUNG 836 — Messung
     leitungMerk(vonId, "angebotDa");  // FASSUNG 840
     var a = annahmeJe[vonId] || (annahmeJe[vonId] = { kette: Promise.resolve(), nr: 0, fp: "" });
@@ -4300,7 +4317,7 @@ window.LiveChat = (function () {
     a.kette = a.kette.then(function () {
       if (meine !== a.nr) { leitungMerk(vonId, "angebotUeberholt"); return; }
       /* höchstens 4 s je Angebot – danach geht die Reihe weiter, auch wenn der Browser nie antwortet */
-      return Promise.race([angebotVerarbeiten(vonId, beschreibung), new Promise(function (r) { setTimeout(r, 4000); })]);
+      return Promise.race([angebotVerarbeiten(vonId, beschreibung, nr), new Promise(function (r) { setTimeout(r, 4000); })]);
     }).catch(function () {});
     return a.kette;
   }
@@ -4309,13 +4326,13 @@ window.LiveChat = (function () {
      bis zur Wache nach 6–12 s nichts. So kam es bei älteren Fassungen nach mehreren „hallo" und wenn ein Gruss verloren
      ging. Dann wird hier frisch angefangen. */
   function fingerabdruck(sdp) { var m = /a=fingerprint:(\S+ \S+)/.exec(String(sdp || "")); return m ? m[1] : ""; }
-  function angebotVerarbeiten(vonId, beschreibung) {
+  function angebotVerarbeiten(vonId, beschreibung, nr) {
     var pc = bruecke(vonId, false);
     return pc.setRemoteDescription(new RTCSessionDescription(beschreibung))
       .then(function () { spurenNachtragen(vonId, pc); return pc.createAnswer(); })
       .then(function (antwort) {
         return pc.setLocalDescription(antwort).then(function () {
-          senden({ art: "antwort", an: vonId, beschreibung: alsDaten(pc.localDescription) });
+          senden({ art: "antwort", an: vonId, zu: nr, beschreibung: alsDaten(pc.localDescription) });   // FASSUNG 884 — zu: siehe angebotNr
           leitungMerk(vonId, "antwortRaus");   // FASSUNG 840
           wartendeKerzenNachreichen(vonId);
         });
@@ -5258,6 +5275,9 @@ window.LiveChat = (function () {
     /* Jedes Lebenszeichen zählt — auch eine Kerze oder ein Satz im
        Chat sagt: der ist noch da. */
     if (zustand.leute[n.von]) zustand.leute[n.von].gesehen = Date.now();
+    /* FASSUNG 884 — das letzte Lebenszeichen im Messfenster der Zeitleiste: scheitert die Leitung, sagt es, ob er
+       überhaupt noch da war (sonst ist es kein Fehlschlag der Leitung, sondern ein Abgang ohne Abschied). */
+    var lmL = leitungMess[n.von]; if (lmL && !lmL.gesendet) lmL.lebt = Date.now() - lmL.t0;
     /* UND JEDES SAGT AUCH, WIE DIESER MENSCH BEIM SPRECHEN AUSSIEHT.
        Die Wahl faehrt in der Chatzeile, im Puls und in der Begruessung
        mit. Sie hier EINMAL zu lesen ist die einzige Fassung, die nicht
@@ -5331,15 +5351,16 @@ window.LiveChat = (function () {
       }
       var neuDa = !zustand.leute[n.von], pulsVorher = pulsBild(n.von);
       personMerken(n.von, n.name, n.bild);
+      zustand.leute[n.von].taubUm = n.taub ? Date.now() : 0;   // FASSUNG 884 — sein Kanal hört nichts (siehe kanalTaub)
       ankunftUebernehmen(n.von, n.seit);
       if (typeof n.tonAn === "boolean") zustand.leute[n.von].tonAn = n.tonAn;
       if (typeof n.bildAn === "boolean") zustand.leute[n.von].bildAn = n.bildAn;
       personEintragen(n);
       /* Steht noch keine Leitung zu ihm, wird sie jetzt aufgebaut —
          so findet man auch jemanden, dessen Gruss man verpasst hat. */
-      if (neuDa || !brueckeJe[n.von]) {
-        if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von);
-        else senden({ art: "auch-da", an: n.von, name: zustand.ichName,
+      if ((neuDa || !brueckeJe[n.von]) && !n.taub) {   // FASSUNG 884 — einen tauben Tab nicht anrufen
+        if (zustand.ichId < n.von && belegt() <= PLAETZE) anrufen(n.von, "puls");
+        else senden({ art: "auch-da", an: n.von, haelt: Boolean(brueckeJe[n.von]), name: zustand.ichName,   // FASSUNG 884 — haelt: siehe „auch-da"
                       geschlecht: zustand.geschlecht || "", konto: kontoId || "",
                       tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild,
                       seit: zustand.seit, buehne: zustand.buehne });
@@ -5373,10 +5394,21 @@ window.LiveChat = (function () {
         && halloPc.connectionState !== "failed" && halloPc.connectionState !== "closed"
         && Date.now() - (halloPc.__seit || 0) < 8000);
       if (n.sitzung) sitzungVon[n.von] = n.sitzung;
+      if (zustand.leute[n.von]) zustand.leute[n.von].taubUm = 0;   // FASSUNG 884 — sein Kanal geht wieder (siehe kanalTaub)
       if (halloErinnerung) { leitungMerk(n.von, "halloErinnerung"); return; }
       if (versuchJe[n.von]) versuchJe[n.von].ohneAntwort = 0;   // FASSUNG 848 — sie meldet sich: wieder normales Tempo
-      if (brueckeJe[n.von] && !(n.wieder === true && steht(brueckeJe[n.von]))) brueckeAbbauen(n.von);
-      if (!(n.wieder === true && brueckeJe[n.von])) { delete leitungMess[n.von]; leitungMerk(n.von, "hallo"); }   // FASSUNG 840
+      if (brueckeJe[n.von] && !(n.wieder === true && steht(brueckeJe[n.von]))) brueckeAbbauen(n.von, "hallo");
+      /* FASSUNG 840 — mit dem Gruss beginnt eine neue Zeitleiste. FASSUNG 884: die alte, noch nicht gesendete ging
+         bisher nach 30 s als scheinbarer Fehlschlag hinaus (sie war nur überholt) – jetzt steht sie kurz in der neuen
+         (vorher: Ereignisse, letztes Ereignis, Alter in ms). Das spart auch Kontingent. */
+      if (!(n.wieder === true && brueckeJe[n.von])) {
+        var altLm = leitungMess[n.von];
+        delete leitungMess[n.von]; leitungMerk(n.von, "hallo");
+        if (altLm && !altLm.gesendet) {
+          altLm.gesendet = true;
+          if (leitungMess[n.von]) leitungMess[n.von].vorher = [altLm.ev.length, (altLm.ev[altLm.ev.length - 1] || [""])[0], Date.now() - altLm.t0];
+        }
+      }
       sfuNeustartVon(n.von, n);  /* FASSUNG 827/842 */
       /* Abgeschlossener Raum: wer nicht auf der Einladungsliste steht,
          kommt nicht herein. So steht es in RFC 2811 für +i — „new
@@ -5403,6 +5435,7 @@ window.LiveChat = (function () {
          leer, fängt er wieder beim Standard an — das ist ehrlicher
          als ein Hintergrund, der jemandem gehört, der längst weg ist. */
       senden({ art: "auch-da", an: n.von, name: zustand.ichName, tonAn: zustand.tonAn,
+               haelt: Boolean(brueckeJe[n.von]),   // FASSUNG 884 — blieb hier eine stehende Leitung zu ihm? (siehe „auch-da")
                bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
                /* Damit ein Ankoemmling nicht sechs Sekunden lang bei
                   allen den gruenen Standardring sieht. */
@@ -5418,7 +5451,7 @@ window.LiveChat = (function () {
          lief vor dem Anruf noch die Begrüssungszeile und der ganze Auftritt (Sportwagen, Rakete …) – auf einem
          langsamen Handy spürbar – und die Aufgabe ging vor dem Angebot über den Kanal. Jetzt: erst „auch-da" (der Neue
          muss uns kennen, sonst verwirft er die Spur), dann sofort der Anruf, danach alles andere. */
-      var halloRuf = (zustand.ichId < n.von && belegt() <= PLAETZE) ? anrufen(n.von) : null;
+      var halloRuf = (zustand.ichId < n.von && belegt() <= PLAETZE) ? anrufen(n.von, "hallo") : null;
       /* FASSUNG 841 — Begrüssungszeile und Auftritt erst, wenn das Angebot draussen ist (höchstens 0,5 s warten): auf dem
          Samsung brauchte das Angebot 1,5 s, weil der Auftritt im selben Augenblick rechnete. */
       var halloNachher = function () {
@@ -5543,8 +5576,14 @@ window.LiveChat = (function () {
          „auch-da" 0,2 s nach dem ersten Angebot; der zweite Anruf machte das erste Angebot wertlos, die Antwort darauf
          passte nicht mehr, und die Wegesuche begann erst nach 5 s. */
       var auchPc = brueckeJe[n.von];
+      /* FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". „auch-da" sagt jetzt, ob drüben eine
+         Leitung zu uns stehen blieb (haelt). Kamen wir aus dem Hintergrund zurück („hallo wieder"), hatte er seine
+         hängende Leitung abgebaut – unsere hing weiter, und erst die Wache rief nach 6–8 s neu an (Zeitleisten 543/544,
+         608/609). Jetzt: hat er keine mehr, ruft die kleinere Kennung sofort frisch an. Eine Leitung jünger als 8 s
+         bleibt (Fall aus 841: „auch-da" 0,2 s nach dem ersten Angebot). Ohne haelt (ältere Fassung) wie bisher. */
+      if (auchPc && n.haelt === false && zustand.ichId < n.von && belegt() <= PLAETZE && Date.now() - (auchPc.__seit || 0) > 8000) { brueckeAbbauen(n.von, "auchDa"); auchPc = null; }
       if (zustand.ichId < n.von && belegt() <= PLAETZE
-          && (!auchPc || auchPc.connectionState === "failed" || auchPc.connectionState === "closed")) anrufen(n.von);
+          && (!auchPc || auchPc.connectionState === "failed" || auchPc.connectionState === "closed")) anrufen(n.von, "auch-da");
       melden();
       return;
     }
@@ -5653,16 +5692,20 @@ window.LiveChat = (function () {
         kommtUndGeht(zustand.leute[n.von].name || "Jemand", false,
                      n.wohinName || (n.wohin ? raumKlartext(n.wohin) : ""));
       }
-      brueckeAbbauen(n.von);
+      brueckeAbbauen(n.von, "tschuess");
       delete zustand.leute[n.von];
       telefonatWegDa(n.von);  /* FASSUNG 718 */
       grossVergessen(n.von);
       melden();
       return;
     }
-    if (n.art === "angebot") { personMerken(n.von, n.name, n.bild); angebotAnnehmen(n.von, n.beschreibung); return; }
+    if (n.art === "angebot") { personMerken(n.von, n.name, n.bild); angebotAnnehmen(n.von, n.beschreibung, n.nr); return; }
     if (n.art === "antwort") {
       var pc = brueckeJe[n.von];
+      /* FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". Eine Antwort auf ein ÄLTERES Angebot (siehe
+         angebotNr) gehört nicht in diese Leitung: gesetzt, liesse sie die passende Antwort danach scheitern. Sie ist auch
+         kein Fortschritt für die Wache – darum vor der vAntwort-Zeile. */
+      if (pc && typeof n.zu === "number" && typeof pc.__angebot === "number" && n.zu !== pc.__angebot) { leitungMerk(n.von, "antwortAlt", n.zu); return; }
       var vAntwort = versuchJe[n.von];   // FASSUNG 843 — Fortschritt: die Wache wartet wieder volle 6 s
       if (vAntwort) { vAntwort.seit = Date.now(); vAntwort.ohneAntwort = 0; }
       leitungMerk(n.von, pc ? "antwortDa" : "antwortOhneLeitung");   // FASSUNG 840
@@ -6295,6 +6338,20 @@ window.LiveChat = (function () {
   var PULS_MS = 6000;
   var VERFALL_MS = 20000;
   var pulsUhr = null;
+  /* FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". Ist der eigene Raumkanal tot (Android hält den
+     Websocket im Hintergrund an), geht der Puls über den Notweg von supabase-js (REST) trotzdem hinaus – hören kann der
+     Tab aber nichts. Die anderen riefen ihn deshalb immer wieder an, und kein Angebot kam an. Jetzt sagt der Puls
+     „taub"; die Wache drüben wartet dann (siehe nichtErreichbar), bis sein „hallo wieder" kommt.
+     Nur was sicher bekannt ist, zählt: fehlt eine Angabe (andere Fassung von supabase-js), gilt der Tab als hörend –
+     sonst riefe niemand mehr irgendwen an. */
+  function kanalTaub() {
+    try {
+      if (!kanal) return false;
+      var s = kanal.socket;
+      if (s && typeof s.isConnected === "function" && !s.isConnected()) return true;
+      return /^(closed|errored|joining|leaving)$/.test(String(kanal.state || ""));
+    } catch (e) { return false; }
+  }
   function pulsStarten() {
     pulsStoppen();
     pulsUhr = setInterval(function () {
@@ -6302,6 +6359,7 @@ window.LiveChat = (function () {
       senden({ art: "puls", name: zustand.ichName, tonAn: zustand.tonAn,
                bildAn: zustand.bildAn, bild: zustand.ichBild,
                seit: zustand.seit, buehne: zustand.buehne, spricht: zustand.spricht,
+               taub: kanalTaub() || undefined,   // FASSUNG 884 — siehe kanalTaub
                /* Damit die anderen wissen, ob sie „sie" oder „er"
                   schreiben muessen, wenn dieser Mensch spricht. */
                geschlecht: zustand.geschlecht || "",
@@ -6341,7 +6399,7 @@ window.LiveChat = (function () {
       var jetzt = Date.now(), weg = false;
       Object.keys(zustand.leute).forEach(function (id) {
         if (jetzt - (zustand.leute[id].gesehen || 0) > VERFALL_MS) {
-          brueckeAbbauen(id);
+          brueckeAbbauen(id, "verfall");
           delete zustand.leute[id];
           telefonatWegDa(id);  /* FASSUNG 718 */
           grossVergessen(id);
@@ -6393,6 +6451,20 @@ window.LiveChat = (function () {
   var WACHE_MS = 2000;
   var GEDULD_MS = 6000;        // so lange darf eine Leitung brauchen
   var GEIST_MS = 90000;        // FASSUNG 848 — Abstand bei einer Gegenseite, die nie antwortet
+  /* FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". Die 16 echten Fehlschläge seit 881 waren alle
+     Anrufe der Wache (oder beim Zurückkommen) an ein Gegenüber, von dem nichts mehr kam – kein Gruss, keine Kandidaten:
+     wohl weg ohne Abschied oder im Hintergrund eingeschlafen. Jedes solche Angebot ist eine neue Wegesuche über das
+     Relais. Jetzt ruft die Wache niemanden an, der zwei Pulse verpasst hat (stumm) oder dessen Kanal gerade taub ist
+     (sein Puls sagt es, siehe kanalTaub). Zähler bleiben stehen; meldet er sich, handelt der nächste Takt sofort.
+     Eine stehende Leitung, der Neustart bei „disconnected" und der Verfall nach 20 s bleiben wie sie sind. */
+  var STUMM_MS = 2 * PULS_MS + 500;   // zwei Pulse verpasst
+  var TAUB_MS = 15000;
+  function nichtErreichbar(id, jetzt) {
+    var p = zustand.leute[id];
+    if (!p) return "";
+    if (p.taubUm && jetzt - p.taubUm < TAUB_MS) return "taub";
+    return jetzt - (p.gesehen || 0) > STUMM_MS ? "stumm" : "";
+  }
   var wacheUhr = null;
   var versuchJe = {};          // Kennung -> { seit, stufe, anlaeufe }
   var letzterLeitungsstand = "";
@@ -6434,11 +6506,12 @@ window.LiveChat = (function () {
         /* Nur die Seite mit der kleineren Kennung ruft an — sonst
            rufen beide gleichzeitig, und die Aushandlung zerbricht. */
         if (zustand.ichId >= id) return;
+        if (nichtErreichbar(id, jetzt)) return;   // FASSUNG 884 — kein Anruf ins Leere
         var v = versuchJe[id] || (versuchJe[id] = { seit: 0, stufe: 0, anlaeufe: 0 });
         var wartezeit = Math.min(30000, GEDULD_MS * (1 + v.anlaeufe));
         if (jetzt - v.seit < wartezeit) return;
         v.seit = jetzt; v.stufe = 0; v.anlaeufe++;
-        anrufen(id);
+        anrufen(id, "wache");
       });
 
       /* 2. und 3. Leitungen, die nicht zustande kommen. */
@@ -6447,6 +6520,7 @@ window.LiveChat = (function () {
         if (steht(pc)) { delete versuchJe[id]; return; }
         var v = versuchJe[id] || (versuchJe[id] = { seit: jetzt, stufe: 0, anlaeufe: 0 });
         if (!v.seit) v.seit = jetzt;
+        if (nichtErreichbar(id, jetzt)) return;   // FASSUNG 884 — kein Anruf ins Leere, kein Gruss an niemanden
         /* FASSUNG 843 — Zeitleisten vom 02.10., 23:55–23:57 (Oppo ruft das Samsung): lag das andere Gerät im
            Hintergrund, ging alle 6–7 s ein neues Angebot hinaus (Wegesuche neu, Angebot neu). Kam die Antwort dann
            doch, war sie für ein älteres Angebot – oder die Wache riss 2 s nach der Antwort wieder alles neu an. Jetzt:
@@ -6467,20 +6541,23 @@ window.LiveChat = (function () {
           /* Erst das Billige: die Wegesuche neu starten. */
           v.stufe = 1;
           try { if (pc.restartIce) pc.restartIce(); } catch (e) {}
-          if (zustand.ichId < id) anrufen(id);
+          if (zustand.ichId < id) anrufen(id, "wache-neustart");
           return;
         }
         /* Dann das Gründliche: abreissen und neu aufbauen. */
         v.stufe = 0;
         v.anlaeufe++;
-        brueckeAbbauen(id);
+        brueckeAbbauen(id, "wache");
         if (zustand.ichId < id) {
           setTimeout(function () {
-            if (zustand.lage === "drin" && !brueckeJe[id]) anrufen(id);
+            if (zustand.lage === "drin" && !brueckeJe[id]) anrufen(id, "wache-abriss");
           }, 400);
         } else {
-          /* Die andere Seite ruft an — ihr sagen, dass sie es soll. */
-          senden({ art: "hallo", auftritt: eigenerAuftritt(), name: zustand.ichName, tonAn: zustand.tonAn,
+          /* Die andere Seite ruft an — ihr sagen, dass sie es soll.
+             FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". Nur an DIESE Seite (an): ohne „an" las
+             jeder im Raum den Gruss als Neuladen – alle bauten ihre stehende Leitung zu uns ab und schickten den
+             Verlauf nach. Mit drei und mehr Leuten riss so ein hängendes Gegenüber alle anderen mit. */
+          senden({ art: "hallo", an: id, auftritt: eigenerAuftritt(), name: zustand.ichName, tonAn: zustand.tonAn,
                    bildAn: zustand.bildAn, bild: zustand.ichBild, farbe: zustand.farbe, farbeName: zustand.farbeName,
                    seit: zustand.seit, buehne: zustand.buehne,
                    geschlecht: zustand.geschlecht || "", konto: kontoId || "" });
@@ -6965,6 +7042,13 @@ window.LiveChat = (function () {
                 sichtbar: m.sichtbar, jetzt: pc ? [pc.signalingState, pc.iceConnectionState, pc.connectionState] : null,
                 weg: (aufbau && aufbau.je[id] && aufbau.je[id].weg) || m.weg || "", relais: relaisStand.quelle || "",
                 ua: (navigator.userAgent || "").slice(0, 120), fassung: (window.DMA_VERSION || "") };
+      /* FASSUNG 884 — XANDER (Funk 263): „die Verbindung … hat Priorität". Damit ein Abgang ohne Abschied nicht als
+         Fehlschlag der Leitung zählt: fort = er ist nicht mehr im Raum; still = ms seit seinem letzten Paket; lebt = ms ab
+         Beginn der Zeitleiste bis zu seinem letzten Paket darin (-1: nie); vorher = die überholte Leiste (siehe „hallo").
+         („fort" statt „weg": „weg" ist schon der Weg der Leitung.) */
+      var pg = zustand.leute[id];
+      d.fort = !pg; d.still = pg ? Date.now() - (pg.gesehen || 0) : -1; d.lebt = m.lebt == null ? -1 : m.lebt;
+      if (m.vorher) d.vorher = m.vorher;
       k.rpc("spiel_diagnose_senden", { p_art: "leitung", p_daten: d }).then(function () {}, function () {});
     } catch (e) {}
   }

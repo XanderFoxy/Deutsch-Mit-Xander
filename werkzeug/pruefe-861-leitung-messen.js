@@ -104,8 +104,8 @@ const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
   /* E: Reihenfolge im Quelltext des Grusses */
   const lc = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
   const h = lc.indexOf('if (n.art === "hallo") {'), hs = lc.slice(h, h + 9000);
-  const iAuch = hs.indexOf('senden({ art: "auch-da"'), iRuf = hs.indexOf("anrufen(n.von)"), iAuftritt = hs.indexOf("auftrittZeigen(n.von"), iAufgabe = hs.indexOf("aufgabeVerkuenden(n.von)");
-  sage(iAuch > 0 && iRuf > iAuch && iRuf < iAuftritt && iRuf < iAufgabe && hs.split("anrufen(n.von)").length === 2, "E: der Anruf beginnt gleich nach „auch-da“, vor Auftritt und Aufgabe (und nur einmal)");
+  const iAuch = hs.indexOf('senden({ art: "auch-da"'), iRuf = hs.search(/anrufen\(n\.von[,)]/), iAuftritt = hs.indexOf("auftrittZeigen(n.von"), iAufgabe = hs.indexOf("aufgabeVerkuenden(n.von)");
+  sage(iAuch > 0 && iRuf > iAuch && iRuf < iAuftritt && iRuf < iAufgabe && (hs.match(/anrufen\(n\.von[,)]/g) || []).length === 1, "E: der Anruf beginnt gleich nach „auch-da“, vor Auftritt und Aufgabe (und nur einmal)");
   /* ein zweiter Gruss desselben (Neuladen) startet eine neue Messung */
   await A.evaluate(() => { window.__berichte.length = 0; window.LiveChat.pruefEmpfangen({ art: "hallo", von: "bbb", name: "BBB", seit: 2000, kf: 1 }); });
   let neu = [];
