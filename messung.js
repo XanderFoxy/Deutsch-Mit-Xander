@@ -35,17 +35,28 @@
    oder „laden" (die Seite brach schon beim Laden ab). Das ist eine
    Schätzung, kein Beweis (siehe SPIELSYSTEM.md, Fassung 884).
 
+   RAUMZEILE BEIM WEGGEHEN (nachgebessert nach der Prüfung): geht die
+   Seite in den Hintergrund oder weg, geht die Raumzeile SOFORT raus –
+   mit keepalive wie sfuAbschied in livechat.js, damit sie das Ende der
+   Seite überlebt (eine Ruhepause kommt beim Entladen nie mehr). Bis der
+   Server sie bestätigt, steht sie im Laufbuch („ru"); stirbt die Seite
+   vorher, schickt die nächste sie nach – außer sie ging schon mit
+   keepalive raus. Eine Zeile ohne neue Daten wird nie gesendet.
+
    WAS BEWUSST NICHT GESENDET WIRD: Namen, Raumnamen, Chat-Inhalte,
    Kennungen, Adressen. Fehlertexte werden gereinigt (E-Mail, IDs, lange
-   Zahlen, Adressen → Platzhalter, höchstens 140 Zeichen). Gäste senden
-   nichts (der Server verlangt eine Anmeldung); ihre Zeilen warten in
-   einer kleinen Kiste, bis sie sich anmelden.
+   Zahlen, Adressen, Zitate und Ausschnitte aus JSON und Selektoren →
+   Platzhalter, höchstens 140 Zeichen). Gäste senden nichts (der Server
+   verlangt eine Anmeldung); ihre Zeilen warten in einer kleinen Kiste,
+   bis sich jemand anmeldet, und tragen dann „gast: 1" (wem sie gehören,
+   ist auf einem geteilten Gerät nicht sicher).
 
-   SPARSAM: höchstens 8 Zeilen „mess-*" je Kalendertag und Gerät (3,
-   solange der Server sie noch mit den Leitungs-Zeilen zusammenzählt –
-   siehe supabase/fassung-884-messung.sql), je Seite höchstens 1 Start,
-   2 Fehler-, 3 Raumzeilen. Gesendet wird in Ruhepausen; Fehler beim
-   Senden werden still geschluckt. Nie console.*.
+   SPARSAM: höchstens 8 Zeilen „mess-*" je Kalendertag und Gerät – aber
+   nur 1, solange der Server sie noch mit den Leitungs-Zeilen zusammen-
+   zählt (siehe TAG_ALT und supabase/fassung-884-messung.sql). Je Seite
+   höchstens 1 Start-, 2 Fehler-, 3 Raumzeilen. Gezählt wird, wenn ein
+   Aufruf wirklich losgeht; schlägt er fehl, wird zurückgezählt. Fehler
+   beim Senden werden still geschluckt. Nie console.*.
    ===================================================================== */
 (function () {
   "use strict";
@@ -60,7 +71,11 @@
   var ZEIT = PRUEF === "schnell"
     ? { start: 500, fenster: 1000, herz: 500, tot: 3000, teil: 2000, ping: 300, fehler: 1000, fehler2: 3000, zeile: 2000, warte: [0, 300, 900] }
     : { start: 20000, fenster: 30000, herz: 30000, tot: 180000, teil: 120000, ping: 1000, fehler: 20000, fehler2: 300000, zeile: 600000, warte: [0, 30000, 90000] };
-  var TAG = 8, TAG_ALT = 3;
+  /* Tagesdeckel je Gerät: 8, sobald der Server „mess-*" getrennt zählt (fassung-884-messung.sql antwortet mit „mess").
+     Bis dahin 1: der alte Server zählt 40 Zeilen je Konto und 24 h über ALLE Arten, und an starken Tagen (lesend
+     gezählt: 3 Konto-Tage mit 40 in 30 Tagen) verdrängt jede Mess-Zeile eine Leitungs-Zeile – genau die Diagnosen, die
+     Vorrang haben. Die eine Zeile verrät zugleich, welcher Server antwortet. MV = Fassung des Zeilenformats. */
+  var TAG = 8, TAG_ALT = 1, MV = 1;
   var JE_SEITE = { "mess-start": 1, "mess-fehler": 2, "mess-raum": 3 };
 
   function jetzt() { return P.now(); }
@@ -77,13 +92,21 @@
   /* =========================================================
      SENDEN — wie leitungSenden (livechat.js), nur angemeldet
      ========================================================= */
-  var gesendet = [], jeSeite = {}, tagMerk = null;
+  var gesendet = [], jeSeite = {}, tagMerk = null, marke = "", markeBis = 0, markeUm = 0, ende = false;
+  function konto() { try { return (typeof Backend !== "undefined" && Backend) || window.Backend || null; } catch (e) { return null; } }
   function zugang() {
     try {
-      var be = (typeof Backend !== "undefined" && Backend) || window.Backend;
-      var k = be && be.zugang && be.zugang();
+      var be = konto(), k = be && be.zugang && be.zugang();
       return k && k.rpc && be.currentUser && be.currentUser() ? k : null;
     } catch (e) { return null; }
+  }
+  /* kurzer Fingerabdruck des angemeldeten Kontos – bleibt auf dem Gerät (Kiste), wird nie gesendet */
+  function wer() {
+    try {
+      var u = konto().currentUser(), s = String((u && u.id) || ""), h = 5381;
+      for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+      return s ? h.toString(36) : "";
+    } catch (e) { return ""; }
   }
   function tagStand() {
     var t = lesen("dma-mess-tag") || tagMerk || {};
@@ -93,46 +116,98 @@
   }
   function tagSetzen(f) { var t = tagStand(); f(t); tagMerk = t; schreiben("dma-mess-tag", t); }
   function tagFrei() { var t = tagStand(); return t.n < (t.srv ? TAG : TAG_ALT); }
-  function kisteRein(art, d) {
-    var k = kisteLesen();
-    if (k.length >= 3) return;
-    k.push({ a: art, d: d, t: Date.now() });
-    schreiben("dma-mess-kiste", k);
-  }
   function kisteLesen() {
     var k = lesen("dma-mess-kiste");
     return (k && k.filter ? k : []).filter(function (x) { return x && x.a && Date.now() - x.t < 3 * 864e5; });
   }
-  function senden(art, d, ausKiste) {
-    if (!PRUEF) return false;
-    if (!ausKiste) {
-      if ((jeSeite[art] || 0) >= (JE_SEITE[art] || 1)) return false;
+  function kisteRein(art, d) {
+    var k = kisteLesen();
+    if (k.length >= 3) return;
+    k.push({ a: art, d: d, t: Date.now(), u: wer() });
+    schreiben("dma-mess-kiste", k);
+  }
+  /* Zugangsmarke für das Senden beim Weggehen (keepalive): nur im Speicher, geholt beim Betreten des Raums und danach
+     höchstens alle 10 min, solange man drin ist – nie beim Start. supabase-js holt sie sonst erst asynchron, und beim
+     Entladen der Seite läuft nichts Asynchrones mehr. */
+  function markeHolen() {
+    var k = zugang();
+    if (!PRUEF || !k || !k.auth || typeof k.auth.getSession !== "function" || Date.now() - markeUm < 600000) return;
+    markeUm = Date.now();
+    try {
+      k.auth.getSession().then(function (a) {
+        var s = a && a.data && a.data.session;
+        if (s && s.access_token) { marke = s.access_token; markeBis = s.expires_at ? s.expires_at * 1000 - 120000 : Date.now() + 3e6; }
+      }, function () {});
+    } catch (e) {}
+  }
+  function markeGut() { return Boolean(marke) && Date.now() < markeBis; }
+  function keepalive(art, d) {
+    var cfg = window.SUPABASE_CONFIG || {};
+    if (!markeGut() || !cfg.url || typeof fetch !== "function") return null;
+    return fetch(String(cfg.url).replace(/\/+$/, "") + "/rest/v1/rpc/spiel_diagnose_senden", {
+      method: "POST", keepalive: true,
+      headers: { "Authorization": "Bearer " + marke, "apikey": cfg.anonKey || "", "Content-Type": "application/json" },
+      body: JSON.stringify({ p_art: art, p_daten: d })
+    }).then(function (r) {
+      return r.json().then(function (j) { return r.ok ? { data: j } : { error: j || r.status }; },
+                           function () { return r.ok ? { data: null } : { error: r.status }; });
+    });
+  }
+  /* o.sofort: ohne Ruhepause (die Seite geht in den Hintergrund oder weg); o.weg: mit keepalive, falls eine Marke da
+     ist (o.ka() meldet das); o.fertig(ok): die Antwort, solange die Seite lebt; o.frei: zählt nicht gegen die Höchstzahl
+     je Seite (Kiste, Nachsenden). Rückgabe: "raus" (unterwegs oder in der Ruhepause), "kiste" oder "" (verworfen). */
+  function senden(art, d, o) {
+    o = o || {};
+    if (!PRUEF) return "";
+    if (!o.frei) {
+      if ((jeSeite[art] || 0) >= (JE_SEITE[art] || 1)) return "";
       jeSeite[art] = (jeSeite[art] || 0) + 1;
     }
     d.f = d.f || FASSUNG;
+    d.mv = MV;
     var k = zugang();
-    if (!k) { kisteRein(art, d); return false; }
-    if (!tagFrei()) return false;
-    tagSetzen(function (t) { t.n++; });
-    gesendet.push(art);
-    ruhig(function () {
+    if (!k) { kisteRein(art, d); return "kiste"; }
+    if (!tagFrei()) return "";
+    function fertig(ok) { if (o.fertig) { try { o.fertig(ok); } catch (e) {} } }
+    function zurueck() { tagSetzen(function (t) { if (t.n > 0 && t.n < 99) t.n--; }); kisteRein(art, d); fertig(false); }
+    function antwort(a) {
+      var r = a && a.data;
+      if (!a || a.error) return zurueck();
+      if (r && r.ok === false) {
+        if (!r.grund) return zurueck();                          /* der Server sah keine Anmeldung */
+        tagSetzen(function (t) { t.n = 99; });                   /* „genug für heute" */
+        return fertig(false);
+      }
+      /* Der Server mit eigenem Zähler für „mess-*" (fassung-884-messung.sql) sagt es mit „mess" – erst dann 8 am Tag. */
+      if (r && r.mess && !tagStand().srv) tagSetzen(function (t) { t.srv = 1; });
+      fertig(true);
+    }
+    function los() {
+      if (!tagFrei()) return fertig(false);
+      tagSetzen(function (t) { t.n++; });
+      gesendet.push(art);
       try {
-        k.rpc("spiel_diagnose_senden", { p_art: art, p_daten: d }).then(function (a) {
-          var r = a && a.data;
-          if (!a || a.error) { kisteRein(art, d); return; }
-          if (r && r.ok === false) { if (r.grund) tagSetzen(function (t) { t.n = 99; }); else kisteRein(art, d); return; }
-          /* Der Server mit eigenem Zähler für „mess-*" (fassung-884-messung.sql) sagt es mit „mess" – erst dann 8 am Tag. */
-          if (r && r.mess && !tagStand().srv) tagSetzen(function (t) { t.srv = 1; });
-        }, function () {});
-      } catch (e) {}
-    });
-    return true;
+        var w = o.weg ? keepalive(art, d) : null;
+        if (w && o.ka) o.ka();
+        /* Beim Entladen lehnt Chrome das Versprechen eines keepalive-Aufrufs ab, die Anfrage selbst läuft weiter (in der
+           Sonde nachgestellt: sonst kam die Zeile ein zweites Mal aus der Kiste). Nach pagehide also nichts zurücknehmen. */
+        if (w) w.then(antwort, function () { if (!ende) zurueck(); });
+        else k.rpc("spiel_diagnose_senden", { p_art: art, p_daten: d }).then(antwort, zurueck);
+      } catch (e) { zurueck(); }
+    }
+    if (o.sofort || o.weg) los(); else ruhig(los);
+    return "raus";
   }
   function kisteLeeren() {
-    var k = kisteLesen();
+    var k = kisteLesen(), ich = wer();
     if (!k.length) return;
     schreiben("dma-mess-kiste", null);
-    k.forEach(function (x) { x.d.alt = Math.round((Date.now() - x.t) / 60000); senden(x.a, x.d, true); });
+    k.forEach(function (x) {
+      if (x.u && x.u !== ich) return;          /* unter einem anderen Konto auf diesem Gerät gesammelt: verwerfen */
+      x.d.alt = Math.round((Date.now() - x.t) / 60000);
+      if (!x.u) x.d.gast = 1;                  /* ohne Anmeldung gesammelt: wem die Zeile gehört, ist nicht sicher */
+      senden(x.a, x.d, { frei: true });
+    });
   }
 
   /* =========================================================
@@ -146,10 +221,17 @@
     var s = String(u || "").split(/[?#]/)[0].split("/");
     return s[s.length - 1] || s[2] || "";
   }
+  /* Chrome hängt bei JSON.parse und bei ungültigen Selektoren einen Ausschnitt der Eingabe an, Safari setzt sie in
+     Anführungszeichen – darin können Namen oder Chat stehen. Bezeichner in einfachen Anführungszeichen ('foo') bleiben,
+     sie sagen, was kaputt war. Das senkt das Risiko, schließt es aber nicht ganz aus (siehe SPIELSYSTEM.md). */
   function sauber(t) {
     t = String(t == null ? "" : t)
       .replace(/data:[^\s'"]+/g, "‹data›")
       .replace(/\b(?:https?|wss?|blob|file):\/\/[^\s'"<>()]+/g, function (u) { return "‹" + (datei(u) || "url") + "›"; })
+      .replace(/(^|, )(?:\.\.\.)?"[\s\S]*(?= is not valid JSON)/, "$1‹json›")
+      .replace(/(^|: )'[\s\S]*(?=' is not a valid selector)'/, "$1‹selektor›")
+      .replace(/"[^"]*"/g, function (z) { return z.length > 3 ? "‹text›" : z; })
+      .replace(/„[^“”"]*[“”"]/g, "‹text›")
       .replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, "‹mail›")
       .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "‹id›")
       .replace(/\d{5,}/g, "‹zahl›");
@@ -207,7 +289,7 @@
   var mitLongtask = TYPEN.indexOf("longtask") >= 0, loafObs = null, evObs = null, uhr = null;
   function neuerRaum(t, haupt) {
     return { v: t, ab: null, seit: null, drin: null, haupt: haupt, f: {}, ges: [0, 0, 0], loaf: [], inp: [], leute: 0, bild: 0,
-             uhr: mitLongtask ? 0 : 1, luecke: lueckeAnfang ? 1 : 0, teil: 0 };
+             uhr: mitLongtask ? 0 : 1, luecke: lueckeAnfang ? 1 : 0, folge: 0 };
   }
   function lang(s, d) {
     if (s < bereitT + 5000) { startLt[0]++; startLt[1] += d; if (d > startLt[2]) startLt[2] = d; }
@@ -268,8 +350,11 @@
     loafObs = evObs = null;
     if (uhr) { clearInterval(uhr); uhr = null; }
   }
-  function raumBauen() {
+  /* grund: aus | wechsel | hidden (Teilzeile im Hintergrund) | weg (pagehide) | offen (Zusammenfassung im Laufbuch).
+     folge = wie viele Zeilen dieses Aufenthalts schon raus sind; eine Folgezeile ohne neue Daten gibt es nicht (null). */
+  function raumBauen(grund) {
     var r = raum, t = jetzt(), fen = [], zaeh = 0, kz = null;
+    if (r.folge && t - r.seit < 2000 && !r.ges[0] && !r.loaf.length && !r.inp.length) return null;
     Object.keys(r.f).forEach(function (i) {
       var w = r.f[i];
       fen.push([+i, rund(w[0]), rund(w[1]), w[2]]);
@@ -278,23 +363,34 @@
     if (fen.length > 60) fen = fen.sort(function (a, b) { return b[1] - a[1]; }).slice(0, 60);
     fen.sort(function (a, b) { return a[0] - b[0]; });
     (M.tipp.kz || []).forEach(function (x) { if (x[0] <= r.ab && x[0] >= (r.v != null ? r.v : r.ab) - 60000) kz = x; });
-    return { haupt: r.haupt, dauer: rund((t - r.seit) / 1000), drin: rund(r.drin), ab: rund(r.ab), kz: kz,
+    return { k: zufall(6), grund: grund, folge: r.folge, teil: grund === "hidden" ? 1 : 0,
+             haupt: r.haupt, dauer: rund((t - r.seit) / 1000), drin: rund(r.drin), ab: rund(r.ab), kz: kz,
              fenster: fen, anzahl: Math.max(1, Math.ceil((t - r.seit) / ZEIT.fenster)), zaeh: zaeh,
              ges: [r.ges[0], rund(r.ges[1]), rund(r.ges[2])], uhr: r.uhr, luecke: r.luecke, loaf: r.loaf, inp: r.inp,
-             mb: speicherMb(), leute: r.leute, bild: r.bild, teil: r.teil, f: FASSUNG };
+             mb: speicherMb(), leute: r.leute, bild: r.bild, f: FASSUNG };
   }
+  /* Die Zeile steht als „unterwegs" im Laufbuch, BEVOR sie losgeht, und erst die Antwort des Servers streicht sie.
+     Stirbt die Seite dazwischen, schickt die nächste sie nach (spaet) – außer sie ging mit keepalive raus (ka): die
+     trägt der Browser über das Ende der Seite hinaus. */
   function raumSenden(grund) {
     if (!raum || raum.seit == null) return;
-    var t = jetzt();
-    if (grund === "hidden") {
-      if (t - raum.seit < ZEIT.teil || t - raumZuletzt < ZEIT.zeile) return;
-      raum.teil = 1;
-    }
-    senden("mess-raum", raumBauen());
+    var t = jetzt(), weg = grund === "hidden" || grund === "weg";
+    if (grund === "hidden" && (t - raum.seit < ZEIT.teil || t - raumZuletzt < ZEIT.zeile)) return;
+    /* Ohne Marke kommt die Zeile beim Entladen nicht sicher raus (supabase-js holt die Marke erst asynchron) – dann
+       bleibt sie als offene Zusammenfassung im Laufbuch (pagehide schreibt sie), und die nächste Seite schickt sie
+       genau einmal nach. Beim Entladen kommt pagehide VOR visibilitychange: „hidden" danach gilt genauso. */
+    if (weg && ende && !markeGut()) return;
+    var d = raumBauen(grund);
+    if (!d) return;
+    unterwegs(d, "rein");
+    var s = senden("mess-raum", d, { sofort: weg, weg: weg, ka: function () { unterwegs(d, "ka"); }, fertig: function () { unterwegs(d, "raus"); } });
+    if (s !== "raus") unterwegs(d, "raus");
+    if (!s && weg) return;                    /* nicht gesendet (Tag voll): weiter sammeln, das Laufbuch behält sie */
     raumZuletzt = t;
-    /* Nach einer Teilzeile zählt das nächste Mal nur die Zeit seitdem. */
+    /* Nach einer Zeile zählt das nächste Mal nur die Zeit seitdem. */
+    raum.folge++;
     raum.seit = t; raum.f = {}; raum.ges = [0, 0, 0]; raum.loaf = []; raum.inp = [];
-    eigen({ ro: null });
+    eigen({ ro: offenerRaum() });
   }
   function hoch(leute, bild) {
     if (!raum) return;
@@ -315,6 +411,7 @@
         raum.haupt = haupt;
         if (drinAb == null) drinAb = rund(t);
         beobachterAn();
+        markeHolen();
       }
       hoch(leute, bild);
       return;
@@ -340,17 +437,27 @@
     if (aendern) schreiben("dma-mess-lauf", b);
     return b;
   }
-  function eigen(felder) {
+  function eigen(felder, f) {
     buch(function (b) {
       var e = b[pid] || (b[pid] = { tab: tab, t0: startT0, f: FASSUNG, zu: 0, kz: 0 });
       for (var k in felder) if (Object.prototype.hasOwnProperty.call(felder, k)) e[k] = felder[k];
+      if (f) f(e);
       e.z = Date.now();
       e.s = sichtbar() ? "v" : "h";
       e.mb = speicherMb();
       e.kz = raum && raum.ab != null ? 1 : 0;
     });
   }
-  function offenerRaum() { return raum && raum.seit != null ? raumBauen() : null; }
+  /* „ru": Raumzeilen, die raus sind, aber noch nicht bestätigt (höchstens 2); ka = ging mit keepalive */
+  function unterwegs(d, was) {
+    eigen({}, function (e) {
+      var ru = (e.ru || []).filter(function (x) { return x && x.d && (was !== "raus" || x.d.k !== d.k); });
+      if (was === "rein") ru = ru.concat([{ d: d }]).slice(-2);
+      if (was === "ka") ru.forEach(function (x) { if (x.d.k === d.k) x.ka = 1; });
+      if (ru.length) e.ru = ru; else delete e.ru;
+    });
+  }
+  function offenerRaum() { return raum && raum.seit != null ? raumBauen("offen") : null; }
   function einordnen() {
     var b = buch(), fremd = [], ab = Date.now();
     Object.keys(b).forEach(function (id) { if (id !== pid) fremd.push(id); });
@@ -364,11 +471,16 @@
     } catch (e) {}
     setTimeout(function () {
       var raus = [], spaet = [];
+      /* was die tote oder geschlossene Seite nicht mehr loswurde: die offene Zusammenfassung und unbestätigte Zeilen */
+      function nach(e) {
+        if (e.ro) spaet.push(e.ro);
+        (e.ru || []).forEach(function (x) { if (x && x.d && !x.ka) spaet.push(x.d); });
+      }
       buch(function (b2) {
         fremd.forEach(function (id) {
           var e = b2[id];
           if (!e || leben[id]) return;
-          if (e.zu === 1) { if (e.ro) spaet.push(e.ro); delete b2[id]; return; }
+          if (e.zu === 1) { nach(e); delete b2[id]; return; }
           var alt = ab - (e.z || 0), tot = e.tab === tab
             || (e.s === "v" && alt > ZEIT.tot)
             || (e.s === "h" && (kanal ? true : alt > 12 * 36e5));
@@ -376,12 +488,12 @@
           raus.push({ ende: e.s === "v" ? "weg" : "hinten", dauer: rund(((e.z || 0) - (e.t0 || 0)) / 1000), vor: rund(alt / 60000),
                       kz: e.kz || 0, mb: e.mb == null ? null : e.mb, f: e.f || "", eigen: e.tab === tab ? 1 : 0,
                       verworfen: e.tab === tab && document.wasDiscarded ? 1 : 0 });
-          if (e.ro) spaet.push(e.ro);
+          nach(e);
           delete b2[id];
         });
       });
       raus.forEach(function (x) { if (vorher.length < 3) vorher.push(x); });
-      spaet.slice(0, 2).forEach(function (ro) { ro.spaet = 1; senden("mess-raum", ro); });
+      spaet.slice(0, 3).forEach(function (d) { d.spaet = 1; senden("mess-raum", d, { frei: true }); });
     }, ZEIT.ping);
   }
   try {
@@ -404,13 +516,17 @@
   M.raumNeu = hoch;
   M.lage = lageWechsel;
   M.lg.splice(0).forEach(function (a) { lageWechsel.apply(null, a); });
-  setInterval(function () { if (sichtbar()) eigen({ ro: offenerRaum() }); }, ZEIT.herz);
+  setInterval(function () {
+    if (!sichtbar()) return;
+    eigen({ ro: offenerRaum() });
+    if (raum && raum.ab != null) markeHolen();
+  }, ZEIT.herz);
   document.addEventListener("visibilitychange", function () {
     if (!sichtbar()) raumSenden("hidden");
     eigen({ ro: offenerRaum() });
   });
-  window.addEventListener("pagehide", function () { eigen({ zu: 1, ro: offenerRaum() }); });
-  window.addEventListener("pageshow", function (e) { if (e.persisted) eigen({ zu: 0 }); });
+  window.addEventListener("pagehide", function () { ende = true; raumSenden("weg"); eigen({ zu: 1, ro: offenerRaum() }); });
+  window.addEventListener("pageshow", function (e) { if (e.persisted) { ende = false; eigen({ zu: 0 }); } });
   document.addEventListener("resume", function () { eigen({}); });
 
   /* =========================================================
@@ -469,8 +585,9 @@
 
   /* Prüfhaken für die Sonde (pruefe-884-messung.js) */
   M.stand = function () {
-    return { tab: tab, pid: pid, buch: buch(), fehler: fehler, fehlerMehr: fehlerMehr, raum: raum ? raumBauen() : null, raumRoh: raum,
-             gesendet: gesendet.slice(), kiste: kisteLesen(), tag: tagStand(), vorher: vorher.slice(), zeit: ZEIT, startRaus: startRaus };
+    return { tab: tab, pid: pid, buch: buch(), fehler: fehler, fehlerMehr: fehlerMehr, raum: raum && raum.seit != null ? raumBauen("offen") : null, raumRoh: raum,
+             gesendet: gesendet.slice(), kiste: kisteLesen(), tag: tagStand(), vorher: vorher.slice(), zeit: ZEIT, startRaus: startRaus,
+             marke: markeGut(), sauber: sauber };
   };
   var kostenInit = jetzt() - tInit;
 })();

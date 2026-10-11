@@ -18,8 +18,12 @@
 --               Gerät und Kalendertag höchstens 8)
 --   alles andere wie bisher höchstens 40 je Konto und 24 h
 -- Die Antwort trägt zusätzlich „mess": 12. Daran erkennt messung.js den
--- neuen Server und erlaubt sich 8 statt 3 Zeilen am Tag. Solange diese
--- Datei NICHT eingespielt ist, bleibt der Client von selbst bei 3.
+-- neuen Server und erlaubt sich 8 statt 1 Zeile am Tag. Solange diese
+-- Datei NICHT eingespielt ist, bleibt der Client von selbst bei 1 Zeile
+-- je Gerät und Tag – und auch die kann an Tagen, an denen ein Konto die
+-- 40 erreicht, eine Leitungs-Zeile verdrängen (lesend gezählt: 3 Konto-
+-- Tage mit 40 in 30 Tagen, z. B. 03.10.: leitung 25 + verbindung 8 +
+-- tonstand 7). Deshalb: VOR dem Ausliefern von Fassung 884 einspielen.
 --
 -- Sonst unverändert: SECURITY DEFINER, fester search_path, Anmeldung
 -- nötig (auth.uid()), > 6000 Zeichen → {"zu_lang": true}, RLS auf der
@@ -58,6 +62,15 @@ grant execute on function public.spiel_diagnose_senden(text, jsonb) to authentic
 -- =====================================================================
 -- AUSWERTEN (nur lesen) — die ersten Zahlen nach 2–3 Tagen
 -- =====================================================================
+-- Felder, die beim Auswerten zählen: „mv" = Fassung des Zeilenformats (1);
+-- „gast": 1 = ohne Anmeldung gesammelt und später unter dem nächsten
+-- Konto gesendet (Konto unsicher); „alt" = Minuten in der Kiste.
+-- mess-raum: „k" = Kennung der Zeile (wird sie von der nächsten Seite
+-- nachgeschickt, behält sie „k" – Doppelte so herausfiltern), „folge" =
+-- wie viele Zeilen desselben Aufenthalts schon vorher raus sind (nur
+-- folge = 0 trägt ein gültiges „drin"), „grund" = aus | wechsel |
+-- hidden (Teilzeile, teil = 1) | weg (pagehide, keepalive) | offen
+-- (Zusammenfassung, von der nächsten Seite mit spaet = 1 nachgeschickt).
 -- Kommt überhaupt etwas an?
 --   select art, count(*), count(distinct spieler) konten, max(zeit) from spiel_diagnose
 --    where art like 'mess-%' group by art;
@@ -84,7 +97,13 @@ grant execute on function public.spiel_diagnose_senden(text, jsonb) to authentic
 --     from spiel_diagnose, jsonb_array_elements(daten->'fehler') e
 --    where art in ('mess-start', 'mess-fehler') group by 1, 2, 3 order by n desc limit 30;
 --
--- Klassenzimmer: wie oft zäh (Fenster mit ≥ 300 ms Langläufer oder einem ≥ 200 ms)?
---   select count(*) aufenthalte, sum((daten->>'zaeh')::int) zaehe_fenster, sum((daten->>'anzahl')::int) fenster,
---          max((daten->'ges'->>2)::int) laengster_ms, sum((daten->>'uhr')::int) nur_ersatzuhr
---     from spiel_diagnose where art = 'mess-raum';
+-- Klassenzimmer: wie oft zäh (Fenster mit ≥ 300 ms Langläufer oder einem ≥ 200 ms)? Doppelte (gleiches „k")
+-- nur einmal; Aufenthalte = Zeilen mit folge = 0:
+--   with r as (select distinct on (spieler, coalesce(daten->>'k', id::text)) daten from spiel_diagnose
+--               where art = 'mess-raum' order by spieler, coalesce(daten->>'k', id::text), zeit)
+--   select count(*) filter (where coalesce((daten->>'folge')::int, 0) = 0) aufenthalte, count(*) zeilen,
+--          sum((daten->>'zaeh')::int) zaehe_fenster, sum((daten->>'anzahl')::int) fenster,
+--          max((daten->'ges'->>2)::int) laengster_ms, sum((daten->>'uhr')::int) nur_ersatzuhr,
+--          percentile_cont(0.5) within group (order by (daten->>'drin')::numeric)
+--            filter (where coalesce((daten->>'folge')::int, 0) = 0) betreten_bis_drin_median
+--     from r;
