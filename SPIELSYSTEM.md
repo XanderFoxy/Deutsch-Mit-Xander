@@ -2856,7 +2856,7 @@ Xander (Walkie 313, 29.09., Auszüge wörtlich): (a) „übrigens scheint der Li
 
 - **(a) Einrasten — die Ursache**: `lcPlatzZiel` (seit 17.09. unverändert) zentriert die Karte, wenn sie passt, sonst legt es die Schreibzeile an den unteren Rand. Nachgemessen (390 px): die Karte ist 778–832 px hoch (Kopf 62, Plätze 205, Knöpfe 61, Zeile „Die Leitung zu …" 54, Chat-Kopf 38, Verlauf 240, Schreibzeile 61, Einladen 29). Frei sind mit Adresszeile ≈ 716 px, ohne ≈ 772 px. Die Überschrift stand bei −79 px (mit) bzw. −23 px (ohne Adresszeile) — genau „etwas höher". Ohne Vollbild (Adresszeile sichtbar) und mit der Leitungszeile passt die Karte nicht mehr.
 - **(a) Jetzt**: `lcVerlaufPassen` (app.js, vor `lcPlatzZiel`) lässt am Telefon (≤ 760 px) den Chatverlauf nachgeben (240 → bis 120 px, CSS-Variable `--lc-verlauf-h`, korrekturen.css), bis Überschrift und Schreibzeile auf den Schirm passen. Gemessen wird an `innerHeight`, nicht am sichtbaren Ausschnitt, und nicht, solange das Schreibfeld den Fokus hat — die Tastatur verändert die Höhe also nicht (sonst wackelt beim Tippen alles). Nachher: Überschrift bei +41 px (390 × 716), +97 px (390 × 772), +35 px (360 × 708); bei 360 × 652 (sehr kleines Telefon mit Leitungszeile) noch −21 px.
-- **(a) Offen**: das Schwarzbild beim Öffnen der Tastatur und der schwarze Rand oben beim Verlassen ließen sich hier (Chromium ohne echtes Android, ohne Vollbild-Übergang) nicht nachstellen. Verdacht: der Vollbild-Übergang des Kino-Modus (`lcKinoAn`/`lcKinoAus`, Runde 87) — beim Verlassen läuft `exitFullscreen` zugleich mit dem weichen Rollen des Reiterwechsels; beim Tippen auf das Schreibfeld im Vollbild ändert Android beide Viewports. Nicht angefasst.
+- **(a) Offen**: das Schwarzbild beim Öffnen der Tastatur und der schwarze Rand oben beim Verlassen ließen sich hier (Chromium ohne echtes Android, ohne Vollbild-Übergang) nicht nachstellen. Verdacht: der Vollbild-Übergang des Kino-Modus (`lcKinoAn`/`lcKinoAus`, Runde 87) — beim Verlassen läuft `exitFullscreen` zugleich mit dem weichen Rollen des Reiterwechsels; beim Tippen auf das Schreibfeld im Vollbild ändert Android beide Viewports. Nicht angefasst. **→ 884** („Vollbild: erst aus, dann rollen; Walkie-Feld bleibt über der Tastatur“).
 - **(b) Einzug — die Ursache**: Auto und Bild liefen auf zwei Uhren. Das Auto wird per `requestAnimationFrame` auf die Leinwand gemalt (Hauptfaden), das Bild hatte eine eigene WAAPI-Animation, die der Compositor weiterlaufen lässt, wenn der Hauptfaden hängt (beim Betreten: Verbindung, Plätze, Töne). Auf dem Telefon sprang das Bild also schon zum Platz, während das Auto noch stand.
 - **(b) Jetzt** (`lcAuftrittAuto3d`, `bildSetzen`): keine eigene Animation mehr am Bild. Dieselbe Schleife, die das Auto malt, setzt im selben Takt `transform`/`opacity` des Bildes — hängt das Gerät, hängen beide gemeinsam. Im Wagen sitzt das Bild kleiner (0,46 m) und 0,16 m tiefer im Fahrerplatz, Klasse `lc-im-wagen` (korrekturen.css): Scheibe davor (Tönung, zwei Lichtstreifen, heller Kuppelrand), unten von der Karosserie verdeckt (`clip-path: inset(0 0 17% 0)`); erst beim Aussteigen springt es heraus. Der Halt ist so gelegt, dass der Kopf im Auto auf Höhe des Platzes bleibt (812). Gilt für Batmobil und Viper. Die Blätter wurden schon vorab geladen (811/812); das Batmobil fährt weiter vorn über die Köpfe (841).
 - **(c) Gleise — die Ursache**: eine Folge (776: Runde ×2, dann Weiter-Weg) ist EINE Kette. Der ganze Gleisplan lag vom ersten Bild an da; wo der Weiter-Weg über die Runde lief, lagen Kurve (Runde) und Gerade (Weiter-Weg) übereinander — für das Auge eine Kurve, aus der das Gleis gerade herausbricht. Dazu bekam dieselbe Ecke bei jedem Durchgang einen anderen Bogen (Radius hing an der Länge der nächsten Geraden): zwei Kurven wie ein Fächer.
@@ -2885,7 +2885,7 @@ XANDER (Walkie 313, 29.09.): „es sollte ein Dach vom vom Turm aus nach rechts 
 ## Fassung 822 — Klassenzimmer, Einzug und Gleise aus 845 ausgeliefert (Walkie 313)
 
 - Enthält 845: Das Klassenzimmer passt mit Überschrift auf den Schirm, auch mit sichtbarer Adresszeile (der Chatverlauf wird am Telefon dafür niedriger, beim Tippen wird nichts neu bemessen). Beim Einzug sitzt das Profilbild von Anfang an hinter der Scheibe von Batmobil und Viper und fährt im selben Takt mit. Gleise einer Folge bauen sich erst auf, wenn die Lok hinkommt, mit durchgehenden Bögen.
-- Noch nicht dabei: die Stadt-Punkte aus Walkie 313 (844), weil die neuen Kornfelder in manchen Dörfern über Häusern liegen. Offen: Schwarzbild bei Tastatur/Verlassen (headless nicht nachstellbar).
+- Noch nicht dabei: die Stadt-Punkte aus Walkie 313 (844), weil die neuen Kornfelder in manchen Dörfern über Häusern liegen. Offen: Schwarzbild bei Tastatur/Verlassen (headless nicht nachstellbar) **→ 884**.
 
 ## Fassung 823 — Chatfenster wieder in alter Höhe, Rathausdach ohne Giebel nach vorn
 
@@ -4083,3 +4083,64 @@ select date_trunc('day', zeit) tag, count(*) n,
 6. Verlorene Fragen: falls es im Feld auffällt, die 15-s-Sperre für unbeantwortete `bild-bitte` verkürzen.
 
 **Funk-Antwort (Entwurf)**: „Profilfoto erst nach dem Gruß (Funk 288/296): Wenn jemand hereinkommt, schickt das Handy beim Begrüßen jetzt nur noch einen kleinen Fingerabdruck des Profilfotos statt des ganzen Fotos. So kommt die Verbindung zuerst zustande, und das Foto folgt etwa eine Sekunde danach. In meinem Testmodell mit langsamem Netz stand das Gespräch dadurch nach 0,3 statt 1,4 Sekunden. Sichtbar ist nur: Das Galeriefoto eines Neuen erscheint kurz nach ihm, bis dahin steht wie bisher sein Anfangsbuchstabe. Wer einen eigenen Auftritt hat (Sportwagen …), schickt sein Foto weiter gleich mit, damit der Wagen mit Gesicht einfährt. Echtes 4G mit zwei Handys konnte ich hier nicht testen. Das zeigen erst deine nächsten Verbindungen, und auch nur, wenn jemand ein Foto aus der Galerie benutzt.“
+
+## Fassung 884 — Vollbild: erst aus, dann rollen; Walkie-Feld bleibt über der Tastatur (Walkie 313, Funk 252)
+
+XANDER (Walkie 313 / Funk 252): Klassenzimmer – kein Schwarzbild beim Öffnen der Tastatur, kein schwarzer Rand beim Verlassen. Seit 845/822 offen, weil headless nicht nachstellbar. Die Seite selbst ist nachweislich hell; das Schwarz entsteht im Android-Fenster, wenn es beim Vollbild-Wechsel bzw. beim Aufgehen der Tastatur umgebaut wird. Nachstellbar ist die REIHENFOLGE dessen, was die Seite in diesem Moment tut – und die war beim Verlassen falsch. Aussehen, Größe und Bedienung bleiben; livechat.js ist unberührt.
+
+### Befund (alter Stand, Android-Kontext 390×844, Sonde 884-vollbild)
+- Verlassen des Klassenzimmers (Tipp auf „Kompass“ oder „Lernen“): ZUERST startete das weiche Rollen zum neuen Bereich (`scrollIntoView` per rAF in `wireSubnav`, +11 bis +13 ms nach dem Tipp), erst +60,4 bis +62,4 ms später kam `exitFullscreen` (60-ms-Zeitgeber im Fang-Hörer „RUNDE 87 — wer das Klassenzimmer verlaesst“), `fullscreenchange` bei +74 bis +88 ms. Android baut beim Vollbild-Ende das ganze Fenster um (Adress- und Systemleiste kommen zurück) – mitten in einer laufenden Rollbewegung.
+- Walkie (Betreiber): die Leiste ist 326×709 (360×780: 296×655), das Feld „An Claude“ steht ganz unten – ganz hinuntergerollt mit der Unterkante bei 707,8 px (649,3 px). Mit offener Tastatur bleiben rund 506 px (468 px) frei: das Feld liegt unter der Tastatur, Android schiebt das ganze Fenster.
+- Chatfeld im Klassenzimmer: im Vollbild fokussiert, Fenster 844 → 520 – die Seite ruft in 1,5 s weder `scrollTo` noch `scrollIntoView` (alt wie neu). Seitenseitig tut das Chatfeld beim Öffnen der Tastatur also nichts.
+
+### Was geändert ist
+**app.js** (drei Stellen über Anker, alles im Kern, nicht in `werkzeug/app-teile.json`):
+- Neu hinter `lcVollbildAus`: `lcVollbildVerlassen()` beendet das Vollbild und gibt ein Versprechen, das nach `fullscreenchange` + zwei Bildern erfüllt wird (ohne `fullscreenchange`: Uhr 450 ms; versteckte Seite: `setTimeout(120)`); `lcVollbildEndet` (bewusst `var`, keine TDZ); `lcNachVollbild(f)`; `lcKlickVerlaesst(reiter)` (anderer Hauptreiter als „Wissen“ oder anderer Unterreiter von „Wissen“ als „Klassenzimmer“).
+- `lcKinoAus` nutzt `lcVollbildVerlassen()`.
+- Fang-Hörer (capture, läuft vor `wireSubnav`): führt der Tipp hinaus, geht das Vollbild SOFORT aus; der 60-ms-Zeitgeber bleibt als Netz für alle anderen Wege. Nicht bei einem Tipp aufs ⓘ in einer Pille (der eigene Fang-Hörer der ⓘ-Symbole verhindert dort das Umschalten) – gefunden beim Bauen: ohne diese Ausnahme wäre das Vollbild beim ⓘ von „Kompass“ ausgegangen, obwohl man im Klassenzimmer bleibt (Sonde A8).
+- `wireSubnav` (else-Zweig): `lcNachVollbild(() => rAF(scrollIntoView))` – gerollt wird erst, wenn das Vollbild aus ist; Endlage und weiches Rollen bleiben. Zusätzlich (nicht im Plan): ist der Bereich bis dahin schon wieder gewechselt (schnell zurück ins Klassenzimmer), rollt er nicht mehr hinterher (`activeView.dataset.active === "true"`).
+- `lcKinoAn`: tippt man innerhalb des Übergangs wieder aufs Klassenzimmer, steht `lcImVollbild()` noch auf wahr – jetzt wird das Ende abgewartet und das Vollbild neu angefordert (die Fingerbewegung gilt noch).
+
+**rueckfrage.js** (Walkie): `tastaturLuft()` – steht das fokussierte Feld (Notiz oder „An Claude“) unter der Tastatur, rollt die Leiste ihren eigenen Inhalt so, dass es darüber steht. Dafür bekommt sie unten Polster (nur so viel, wie das Rollen braucht) und ihre Höhe wird solange auf der jetzigen festgehalten (`style.maxHeight`), damit eine kürzere Leiste nicht mit dem Polster wächst. Beim Antippen am Telefon (grober Zeiger) wird vorab gerechnet, als läge die Tastatur über der unteren Hälfte (55 %); nach 350 ms und bei jedem `visualViewport`-resize mit echten Werten nachgerechnet – steht das Feld dann schon frei, ruckelt nichts nach. Verdeckt die Tastatur nichts von der Leiste (Rechner, kurze Leiste, Tastatur wieder zu) oder verlässt das Feld den Fokus: Polster und Höhe zurück. **Abweichung vom Plan**: Plan war Polster = 12 + verdeckte Höhe; gemessen wuchs eine kürzere Leiste damit sichtbar nach unten, und das eigene Polster rechnete sich bei der nächsten Messung mit. Darum festgehaltene Höhe + Polster nur fürs Rollen, und am Rechner (nichts verdeckt) wird gar nicht gerollt.
+
+### Messung (Sonde 884-vollbild, Chromium, Android-Kontext; alt = app.js/rueckfrage.js aus HEAD)
+
+| | alt | neu |
+|---|---|---|
+| `exitFullscreen` nach dem Tipp (Kompass / Lernen) | +60,4 bis +62,4 ms | +0,1 bis +1,6 ms |
+| `fullscreenchange` | +71 bis +88 ms | +12 bis +25 ms |
+| erstes Rollen | +11 bis +13 ms (VOR dem Vollbild-Ende) | +45 bis +59 ms (nach `fullscreenchange` + 2 Bildern) |
+| Endlage Kompass | Anfang oben (Rollstand 660) | gleich (660) |
+| ohne `fullscreenchange` (Netz) | +9 bis +13 ms | +495 bis +499 ms |
+| ohne Vollbild (iPhone) | +6,5 ms | +7 bis +16,5 ms |
+| Walkie-Feld, Tastatur offen (390×844 / 360×780) | 707,8 / 649,3 px (unter der Tastatur) | 451,8 / 417,3 px (frei bei 506 / 468) |
+| kürzere Leiste (513 / 564 px hoch) | 511,7 / 558,8 px | 451,7 / 416,8 px, Höhe gleich |
+
+### Sonden
+- Neu: `werkzeug/pruefe-884-vollbild.js` (eigener Server, `index.html?quelle=1`, `MIN=1` für min/, `GEGEN=<ordner>` legt app.js/rueckfrage.js darüber). A1–A8 Vollbild (echte Tipps rein, `el.click()` raus; A8 = ⓘ in der Pille), B1–B5 + B2m/B4m Walkie (nachgebautes `visualViewport`), C Wächter Chatfeld, keine Seitenfehler. Neu: alles grün (?quelle und min/). Gegenprobe (HEAD-Fassung von app.js und rueckfrage.js): rot A2a, A2b, A3a, A5, B2 (beide Größen), B2m (beide) – 8 rot; grün A1, A2c, A2d, A3b, A4, A6, A7, B1, B3, B4, B5, C.
+- Gegenprobe A8 (ⓘ) mit dem alten Stand grün – die Prüfung fängt einen Fehler ab, den erst der neue Fang-Hörer hätte machen können.
+- Grün nach `fassung-setzen.js --nur-stempel` (Endstand): runde87-kino, 840 (alte Bilderwelt), 873, 876, tutor, tutorreiter, einladungslink. Grün mit dem Stand kurz vor der ⓘ-Ausnahme (die nur seltener ausschaltet): 845, 850, 856 (Einrasten unverändert), runde99-rueckfrage (einmal 1 rot „⏹ beendet es …“, als sechs Sonden gleichzeitig liefen; allein grün – Diktat-Zeitgeber, lastabhängig). 876 war zwischendurch rot („min/app.js ist aus der jetzigen Quelle gebaut“), weil app.js nach dem Stempeln noch geändert war – nach neuem Stempel grün.
+
+### Ehrlich
+- Bewiesen sind die Reihenfolge (Vollbild-Ende vor dem Rollen) und die Lage des Walkie-Felds – nicht das Ausbleiben des Android-Schwarz. Chromium ändert beim Vollbild keine Größe; das Schwarz zeigt nur ein echtes Telefon.
+- Beim Verlassen aus dem Vollbild beginnt das Rollen zum neuen Bereich je nach Gerät 100–450 ms später als bisher (hier +45 bis +59 ms). Ohne Vollbild (iPhone) unverändert.
+- Der eigene Aufbau von „Lernen“ (65 + 158 ms bei 4× Drosselung) fällt weiter in den Übergang – ein kurzer dunkler Streifen kann bleiben (dann Vorschlag V2).
+- Teil B ist eine Deutung: „dir schreiben“ = Walkie. Ist das Chatfeld gemeint, hilft B dort nicht (dort tut die Seite nachweislich nichts) – dann bleibt V1.
+- Am Telefon rollt der Inhalt der Walkie-Leiste beim Antippen eines Feldes jetzt von selbst, sodass das Feld über der Tastatur steht. Größe, Lage und Aussehen bleiben. Betrifft nur Xander (Betreiber).
+- Funk 252 („Warten oder Schließen“, Hänger im Gespräch) wird hiermit NICHT behoben – Hauptfaden im Gespräch, hier nicht nachstellbar, gehört zu Funk 263 B.
+- Kein DB-Eingriff, keine Diagnose-Sendung (die 40-am-Tag-Grenze von `spiel_diagnose_senden` wird von leitung/tonstand schon erreicht).
+
+**Vorschläge an Xander (sichtbar, nicht gebaut)**
+- V1 `requestFullscreen({ navigationUI: "show" })` statt `"hide"` (app.js `lcVollbildAn`): die untere Android-Leiste bliebe im Vollbild stehen; Android müsste das Fenster beim Aufgehen der Tastatur vermutlich nicht umbauen. Unbelegt.
+- V2 Bleibt der schwarze Streifen beim Verlassen: das Vollbild erst ~300 ms nach dem Umschalten beenden, wenn die Seite ruhig ist. Die Adresszeile käme dann einen Moment später.
+- V3 Eine Mess-Zeile vom Telefon (rAF-Lücke, lange Aufgaben je Übergang) über `spiel_diagnose_senden('vollbild')` – nur selten (höchstens 2 am Tag), weil die 40er-Grenze schon erreicht wird. Nicht in dieser Fassung.
+- Nicht gebaut (C): Rollen beim BETRETEN erst nach `fullscreenchange` – würde den Sprung ins Klassenzimmer auf Android um bis zu 450 ms verzögern; das Betreten ist der heiße Weg („sofort im Livestream“). Erst, wenn Xander Wackeln beim Betreten meldet.
+
+**Offen**
+1. Gegenprobe auf echtem Android (Verlassen per Kompass/Lernen, Walkie-Feld antippen).
+2. Rechenblöcke von „Lernen“ im Übergang (65 + 158 ms bei 4× Drosselung).
+3. Funk-252-Hänger im Gespräch → 263 B.
+4. Vorschläge V1–V3 (Antwort Xanders).
+5. Werkstatt-Eintrag und Fassungsnummer beim Ausliefern von 884 (WIP-Stand).
+
+**Funk-Antwort (Entwurf)**: „Vollbild im Klassenzimmer (Walkie 313 / Funk 252): Wenn du das Klassenzimmer verlässt, ging bisher zuerst das Rollen zum neuen Bereich los und erst danach das Vollbild aus – Android baut dabei das ganze Fenster um, mitten in der Bewegung. Jetzt geht das Vollbild sofort beim Tippen aus, und gerollt wird erst, wenn es wirklich aus ist. Im Walkie-Talkie rollt das Schreibfeld beim Antippen jetzt von selbst über die Tastatur, statt darunter zu verschwinden; Größe und Aussehen der Leiste bleiben gleich. Ob das Schwarz damit ganz weg ist, kann ich hier nicht sehen – das zeigt nur dein Telefon. Wenn noch ein dunkler Streifen bleibt, hätte ich zwei Ideen, die man aber sieht: (1) die untere Android-Leiste im Vollbild stehen lassen, (2) das Vollbild erst kurz nach dem Umschalten beenden. Sag mir, was ich davon versuchen soll. Das Hängen im Gespräch („Warten oder Schließen“) ist ein anderer Fehler; den gehe ich bei der Verbindung an.“

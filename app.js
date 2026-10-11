@@ -691,7 +691,12 @@
                 && typeof livechatAnSeinenPlatz === "function") {
               livechatAnSeinenPlatz();
             } else {
-              requestAnimationFrame(() => activeView.scrollIntoView({ behavior: "smooth", block: "start" }));
+              /* FASSUNG 884 — geht gerade das Vollbild des Klassenzimmers aus, wird erst danach gerollt (siehe
+                 lcVollbildVerlassen); Endlage und weiches Rollen bleiben. Ist der Bereich bis dahin schon wieder
+                 gewechselt (schnell zurück ins Klassenzimmer), rollt er nicht mehr hinterher. */
+              lcNachVollbild(() => requestAnimationFrame(() => {
+                if (activeView.dataset.active === "true") activeView.scrollIntoView({ behavior: "smooth", block: "start" });
+              }));
             }
           }
         }
@@ -28337,6 +28342,53 @@
     } catch (e) {}
     return Promise.resolve();
   }
+  /* FASSUNG 884 — XANDER (Walkie 313 / Funk 252): Klassenzimmer – „kein Schwarzbild", „kein schwarzer Rand beim
+     Verlassen". GEMESSEN (werkzeug/pruefe-884-vollbild.js, Android-Kontext 390×844): wer das Klassenzimmer verließ,
+     bekam ZUERST das weiche Rollen zum neuen Bereich (+13 ms, rAF in wireSubnav) und erst +61 ms nach dem Tipp das
+     Ende des Vollbilds (60-ms-Zeitgeber im Fang-Hörer unten). Android baut beim Vollbild-Ende das ganze Fenster um
+     (Adress- und Systemleiste kommen zurück) – mitten in einer laufenden Rollbewegung; dort entsteht der Streifen.
+     Jetzt: führt ein Tipp hinaus, geht das Vollbild SOFORT aus, und gerollt wird erst, wenn es wirklich aus ist
+     (fullscreenchange, dann zwei Bilder Luft). Kommt kein fullscreenchange (alte WebViews), begrenzt eine Uhr
+     (450 ms); auf versteckter Seite ohne Bilder reicht setTimeout(120). Ohne Vollbild (iPhone, abgelehnt) bleibt
+     alles wie bisher, gerollt wird sofort.
+     lcVollbildEndet ist var, nicht let: so gibt es keine TDZ, falls ein Reitertipp schon im Aufbau kommt. */
+  var lcVollbildEndet = null;
+  function lcVollbildVerlassen() {
+    if (!lcImVollbild()) return Promise.resolve();
+    if (lcVollbildEndet) return lcVollbildEndet;
+    let fertig = null, aus = false, uhr = 0;
+    const p = new Promise((f) => { fertig = f; });
+    const ende = () => {
+      if (aus) return;
+      aus = true;
+      document.removeEventListener("fullscreenchange", ende);
+      document.removeEventListener("webkitfullscreenchange", ende);
+      clearTimeout(uhr);
+      let los = false;
+      const weiter = () => {
+        if (los) return;
+        los = true;
+        if (lcVollbildEndet === p) lcVollbildEndet = null;
+        fertig();
+      };
+      requestAnimationFrame(() => requestAnimationFrame(weiter));
+      setTimeout(weiter, 120);   // versteckte Seite: keine Bilder
+    };
+    document.addEventListener("fullscreenchange", ende);
+    document.addEventListener("webkitfullscreenchange", ende);
+    uhr = setTimeout(ende, 450);
+    lcVollbildEndet = p;
+    lcVollbildAus().then(null, ende);
+    return p;
+  }
+  /* Was nach dem Vollbild-Ende geschehen soll (das Rollen in wireSubnav): läuft es gerade aus, danach – sonst sofort. */
+  function lcNachVollbild(f) { if (lcVollbildEndet) lcVollbildEndet.then(f, f); else f(); }
+  /* Führt dieser Tipp aus dem Klassenzimmer hinaus? Ein anderer Hauptreiter als „Wissen" oder ein anderer
+     Unterreiter von „Wissen" als „Klassenzimmer". Irrt die Vorhersage, greift weiter der 60-ms-Zeitgeber. */
+  function lcKlickVerlaesst(r) {
+    if (r.classList.contains("tape-tab")) return r.dataset.target !== "view-knowledge";
+    return Boolean(r.closest("#knowledgeSubnav")) && r.dataset.sub !== "sub-livechat";
+  }
   /* Der Bildschirm-an-Teil. Die Sperre geht von selbst verloren,
      sobald das Fenster in den Hintergrund geht — deshalb wird sie bei
      der Rueckkehr neu geholt (siehe visibilitychange weiter unten). */
@@ -28376,6 +28428,15 @@
     if (vomNutzer) lcKinoMerken(true);
     const fertig = () => { lcKinoKnopfPflegen(); };
     lcWachAn().then(fertig);
+    /* FASSUNG 884 — wer innerhalb des Übergangs wieder aufs Klassenzimmer tippt, steht noch im alten Vollbild
+       (lcImVollbild() ist bis zum fullscreenchange wahr) – es käme sonst nicht wieder. Also das Ende abwarten und
+       dann neu anfordern (die Fingerbewegung gilt in Chrome noch ein paar Sekunden). */
+    if (lcVollbildEndet && lcVollbildKann()) {
+      lcVollbildEndet.then(() => {
+        if (lcKinoLaeuft && lcKinoOffen() && !lcImVollbild()) lcVollbildAn().then(fertig, fertig);
+      });
+      return;
+    }
     if (lcVollbildKann() && !lcImVollbild()) {
       lcVollbildAn().then(fertig, () => {
         /* Vollbild darf nur aus einer echten Fingerbewegung heraus
@@ -28389,7 +28450,7 @@
     lcKinoLaeuft = false;
     if (vomNutzer) lcKinoMerken(false);
     lcWachAus();
-    lcVollbildAus().then(lcKinoKnopfPflegen, lcKinoKnopfPflegen);
+    lcVollbildVerlassen().then(lcKinoKnopfPflegen, lcKinoKnopfPflegen);   // FASSUNG 884 — wireSubnav rollt erst danach
     lcKinoKnopfPflegen();
   }
   document.addEventListener("fullscreenchange", lcKinoKnopfPflegen);
@@ -69657,6 +69718,13 @@
     /* Jeder Ansichtswechsel entscheidet neu, ob der Streifen zu
        sehen ist: im Klassenzimmer selbst wäre er nur im Weg. */
     document.addEventListener("click", (e) => {
+      /* FASSUNG 884 — führt der Tipp hinaus, geht das Vollbild JETZT aus (vor Umschalten und Rollen); der
+         60-ms-Zeitgeber darunter bleibt als Netz für alle anderen Wege. Dieser Hörer fängt (capture) und läuft vor
+         wireSubnav – lcVollbildEndet steht also schon, wenn der Reiter rollen will. Ein Tipp aufs ⓘ in einer Pille
+         wechselt nichts (eigener Fang-Hörer: preventDefault + stopPropagation) – dann bleibt das Vollbild. */
+      const reiter = e.target.closest(".subnav-pill, .tape-tab");
+      if (reiter && !e.defaultPrevented && !e.target.closest(".subnav-info-icon")
+          && lcKinoLaeuft && lcKinoOffen() && lcKlickVerlaesst(reiter)) { try { lcKinoAus(false); } catch (x) {} }
       if (e.target.closest(".subnav-pill, .tape-tab")) setTimeout(() => {
         klassenzimmerStreifen();
         /* RUNDE 87 — wer das Klassenzimmer verlaesst, braucht weder

@@ -310,8 +310,54 @@ window.Rueckfrage = (function () {
     leiste.appendChild(vorschlagBauen());
 
     abschirmen(leiste);
+    leiste.addEventListener("focusin", function () { tastaturLuft(true); setTimeout(tastaturLuft, 350); });
+    leiste.addEventListener("focusout", function () { setTimeout(tastaturLuft, 150); });
     if (alt) alt.replaceWith(leiste); else document.body.appendChild(leiste);
     leiste.scrollTop = hoehe;
+  }
+
+  /* FASSUNG 884 — XANDER (Walkie 313): „kein Schwarzbild beim Öffnen der Tastatur" – (Funk 252) beim Schreiben
+     an Claude. GEMESSEN (werkzeug/pruefe-884-vollbild.js, 390×844): die Leiste ist 326×709 groß, das Feld
+     „An Claude" steht ganz unten in ihr – 1035 px tief im Inhalt, ganz hinuntergerollt bei 707 px auf dem
+     Bildschirm. Geht die Tastatur auf, bleiben rund 506 px frei: das Feld liegt UNTER ihr. Dann schiebt Android
+     das ganze Fenster hoch (im Vollbild samt Umbau) – und man schreibt blind.
+     Jetzt rollt die Leiste ihren eigenen Inhalt so, dass das Feld über der Tastatur steht. Damit so weit gerollt
+     werden kann, bekommt sie unten Polster (nur so viel, wie das Rollen braucht), und ihre Höhe wird solange genau
+     auf der jetzigen festgehalten – sonst wüchse eine kürzere Leiste mit dem Polster nach unten. Das Polster liegt
+     unter der Tastatur und ist nicht zu sehen. Lage, Größe, Farbe und Breite der Leiste bleiben gleich.
+     Beim Antippen ist die Tastatur noch nicht offen. Am Telefon (grober Zeiger) wird deshalb schon gerechnet, als
+     läge sie über der unteren Hälfte – sonst schiebt Android die Seite, bevor wir es können. Nach 350 ms und bei
+     jedem visualViewport-resize wird mit den echten Werten nachgerechnet; steht das Feld dann schon frei, ruckelt
+     nichts nach. Am Rechner passiert nichts: kein grober Zeiger, und die sichtbare Höhe ist die ganze Fensterhöhe.
+     Gilt für beide Felder (Notiz und „An Claude"). */
+  function fingerGeraet() {
+    try { return window.matchMedia("(pointer: coarse)").matches; } catch (e) { return false; }
+  }
+  function luftWeg() {
+    if (leiste && (leiste.style.paddingBottom || leiste.style.maxHeight)) {
+      leiste.style.paddingBottom = "";
+      leiste.style.maxHeight = "";
+    }
+  }
+  function tastaturLuft(vorab) {
+    if (!leiste) return;
+    var feld = document.activeElement, vv = window.visualViewport;
+    if (!vv || !feld || feld.tagName !== "TEXTAREA" || !leiste.contains(feld)) { luftWeg(); return; }
+    var unten = vv.offsetTop + vv.height;
+    if (vorab === true && vv.height > window.innerHeight * 0.8 && fingerGeraet()) unten = vv.offsetTop + window.innerHeight * 0.55;
+    /* Mit festgehaltener Höhe ist das immer die echte Größe der Leiste – das eigene Polster rechnet sich nicht mit. */
+    var lr = leiste.getBoundingClientRect();
+    /* Nichts von ihr verdeckt (Rechner, kurze Leiste, Tastatur wieder zu): kein Polster, kein Rollen. */
+    if (lr.bottom <= unten) { luftWeg(); return; }
+    var zuTief = Math.round(feld.getBoundingClientRect().bottom + 12 - unten);
+    if (zuTief <= 0) return;   // das Feld steht schon frei
+    if (!leiste.style.maxHeight) leiste.style.maxHeight = lr.height + "px";
+    var platz = leiste.scrollHeight - leiste.clientHeight - leiste.scrollTop;
+    if (platz < zuTief) {
+      /* 12 = unteres Polster aus korrekturen.css .rf-leiste */
+      leiste.style.paddingBottom = ((parseFloat(leiste.style.paddingBottom) || 12) + zuTief - platz) + "px";
+    }
+    leiste.scrollTop += zuTief;
   }
 
   function wannText(iso) {
@@ -763,6 +809,8 @@ window.Rueckfrage = (function () {
   function start() {
     holen();
     planen();
+    /* FASSUNG 884 — geht die Tastatur auf oder zu, das Walkie-Feld neu ausrichten (tastaturLuft) */
+    try { if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { tastaturLuft(); }); } catch (e) {}
     document.addEventListener("visibilitychange", function () {
       if (!document.hidden) holen();
     });

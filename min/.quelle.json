@@ -34,7 +34,6 @@
  "werkstatt.js": "6b16574f10d08259b581e0e9f4d0c0e0cbdbf42d",
  "data-geraeusche.js": "ccd3574681544074a3055b3060bf92461b4883f7",
  "data-aussprache.js": "5504f23f236025427e0dc8ad05f1739436691384",
- "rueckfrage.js": "7de87f6e8e1dfd76fa649df2080351a71b2fa0f3",
  "satzbau.js": "9976917dd889b45f1b1075effde36a4836c72e92",
  "satzbau-it.js": "fb6467aeb56ac4ab8615e29de2e64f6b6535f44f",
  "baukasten.js": "68a7fd488976c5e284185cbf3fa4d52e01379c6e",
@@ -57,6 +56,7 @@
  "spiel.js": "da19df2bc41008b912a5f42b0c4a595940b759e5",
  "data-werkstatt.js": "8f9f710a2e3aa5bac7e460a0d618550bb61c5c1e",
  "messung.js": "9672a71d10621dc35c9dd990ff7bc57d5615dbc7",
- "app.js": "98136b7469319315d005e95ceb8739594091644f",
- "livechat.js": "2610d6f4b36cdee1972906c5b5592379f2fd193c"
+ "livechat.js": "2610d6f4b36cdee1972906c5b5592379f2fd193c",
+ "rueckfrage.js": "f27d1952c1bcc2c601e9fb9aecdec4b32265e238",
+ "app.js": "a37b08501893ee288380c509ad4417506e2e2a53"
 }
