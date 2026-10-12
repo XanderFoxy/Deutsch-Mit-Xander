@@ -546,9 +546,11 @@ window.Rueckfrage = (function () {
       clearTimeout(d.bremseUhr);
       clearTimeout(d.spaeterUhr);
       if (window.__dmaDiktatMik === d.mik) window.__dmaDiktatMik = null;
+      /* FASSUNG 884b: trug der Strom-Weg nicht mehr (Tagesmenge, Tagesgrenze, Kontingent …), steht am Ende der Grund */
+      if (hinweis === undefined && d.endeText) hinweis = d.endeText;
       /* Nichts aufgeschrieben: derselbe Satz wie beim Browser-Diktat („no-speech") – und einmal die Zahlen an mich,
          damit ich sehe, ob überhaupt Ton kam (Nachbesserung, siehe unten). */
-      if (hinweis === undefined && !d.gehoert && !d.danachAlt) {
+      if (hinweis === undefined && !d.gehoert) {
         hinweis = STROM_NICHTS;
         if (d.an && Date.now() - d.anSeit >= 2000) diktatFehlerMelden("strom-nichts", stromZahlen(d));
       }
@@ -558,9 +560,8 @@ window.Rueckfrage = (function () {
     var feld = diktatFeld(d.klasse);
     diktatKnopfZeigen(d.klasse, false,
       hinweis !== undefined ? hinweis : (feld && feld.value.trim() ? "\u2713 Steht im Feld \u2013 jetzt \u201eSenden\u201c." : ""));
-    /* FASSUNG 884 (Nachbesserung): trägt der Strom-Weg gerade nicht (Tagesmenge, Grenze, Kontingent …), geht das Diktat
-       gleich auf dem alten Weg weiter – der Text bis hier steht schon im Feld und wird dessen Anfang. */
-    if (d.strom && d.danachAlt) diktatStarten(d.klasse, true);
+    /* FASSUNG 884b: hier ging es bis eben „auf dem alten Weg weiter“ (diktatStarten ohne Strom = Mikrofon leihen) – das
+       nahm im Livestream wieder das Mikrofon weg. Ein Diktat aus dem Strom endet jetzt immer hier; siehe oben. */
   }
   /* =====================================================================
      FASSUNG 884 — DIKTAT IM LIVESTREAM: AUS DEM LAUFENDEN STROM
@@ -604,12 +605,35 @@ window.Rueckfrage = (function () {
           der Strom 6 s lang (sichtbare Seite) – alter Weg bzw. Ende, immer mit Meldung (max rms …). ⏹ ohne Erkanntes:
           „Ich habe nichts gehört …“ wie beim Browser-Diktat.
        5. Fehler zeigen dieselben Sätze wie das Browser-Diktat; neu ist nur „Einen Moment – ich schreibe noch auf …“.
+     FASSUNG 884b — DER RÜCKFALL NIMMT DAS LIVE-MIKRO NIE MEHR WEG (zweite Prüfung). Die Nachbesserung schickte das
+     Diktat bei Stille (6 s nichts Lautes), Nullen, „kein Start“, Tagesmenge, Tagesgrenze, Kontingent … „auf den alten
+     Weg“ – und der leiht das Mikrofon aus: die Live-Spur wird gestoppt, „stumm“ geht an alle. Genau Funk 163. Und
+     auslösbar ganz normal: 🎤 tippen, dem Gegenüber noch zuhören oder 6 s überlegen (die Echounterdrückung nimmt
+     dessen Stimme aus dem eigenen Mikrofon) – schon war man bis zum Ende des Diktats für alle stumm. Jetzt:
+       1. Im Livestream mit lebender Live-Spur wird NIE ausgeliehen und keine Browser-Erkennung gestartet (Android gibt
+          sie neben dem Livestream ohnehin nicht her, Funk 139: „aborted“). Kein Weg führt von hier mehr in den alten.
+       2. Stille: einmal melden (max rms) und weiter aus der Live-Spur hören – wer nach 7 s spricht, wird erkannt. Kommt
+          30 s lang nichts Lautes, endet es sauber mit „Ich habe nichts gehört …“ (wie das Browser-Diktat bei Stille).
+       3. Geht der Strom-Weg nicht (Tagesmenge, Tagesgrenze, Kontingent, Anmeldung, Schlüssel; Nullen; kein Start):
+          das schon Gesprochene steht im Feld, das Diktat endet mit dem Grund (die Sätze aus dem ersten Bau bzw. des
+          Browser-Diktats), der nächste 🎤 sagt ihn gleich. Hängt das Worklet, übernimmt nach 1,5 s der ScriptProcessor.
+       4. Antworten des Gateways ohne Azure-Ergebnis (401 „Invalid JWT“, 503 BOOT_ERROR, 546 WORKER_LIMIT – JSON, aber
+          ohne „fehler“ und ohne RecognitionStatus) galten als „nichts gesagt“: das Stück verschwand still. Jetzt sind
+          sie ein Fehler („antwort-unlesbar“ mit dem Grund des Gateways): einmal wiederholt, dann gemeldet.
+       5. Ein kurzer Aussetzer des Raumkanals (lage „fehler“, WebRTC läuft weiter) beendet das Diktat nicht mehr; nur
+          „aus“ (Raum verlassen) sofort, sonst erst nach 30 s ohne Raum.
+       6. Nachschub in Teilen: der Rest hinter Azures Ende ging mit jedem Nachschub GANZ noch einmal hinaus (28,5 s Ton
+          für 7,7 s Rede). Jetzt wird er an den Pausen geteilt (siehe stromRestTeile) – jedes Teil geht einmal hinaus.
+       7. Das erste ⏹ während eines Ausklangs, den das System begonnen hat (Tagesmenge, ✕), verwirft nichts mehr;
+          erst ein zweites beendet sofort. Die Meldung „verworfen=…“ zählt das fehlgeschlagene Stück mit.
      ===================================================================== */
   var STROM = { blockMs: 100, pauseMs: 700, langePauseMs: 2000, stueckMinMs: 4000, stueckMaxMs: 55000,
                 vorlaufMs: 300, nachlaufMs: 300, mindestSprechMs: 300, hoechstMs: 300000, rate16k: true, schwelle: 0.012,
                 startMs: 3000, stillMs: 6000, stocktMs: 6000, zeitgrenze: 40000, bremseMs: 45000,
                 tagesSekunden: 300, kontingentMs: 2500, sperreMs: 1800000,
-                nachschubAbS: 0.5, nachschubAbstandS: 0.2, nachschubHoechst: 4 };
+                nachschubAbS: 0.5, nachschubAbstandS: 0.2, nachschubHoechst: 4,
+                /* 884b: Stille-Ende, Ersatz fürs hängende Worklet, kleinste Teilpause im Nachschub, Gnadenfrist Raumkanal */
+                stillEndeMs: 30000, ersatzMs: 1500, teilPauseMs: 300, raumWegMs: 30000 };
   /* Der Worklet-Baustein als Text (Blob-Adresse): keine eigene Datei, nichts lädt nach. Er sammelt n Abtastwerte und
      reicht sie als ganzen Block an die Seite (übertragen, nicht kopiert). */
   var STROM_WORKLET = "registerProcessor('dma-diktat',class extends AudioWorkletProcessor{" +
@@ -618,12 +642,20 @@ window.Rueckfrage = (function () {
     "if(this.i===this.n){this.port.postMessage(this.b,[this.b.buffer]);this.b=new Float32Array(this.n);this.i=0}}}" +
     "return true}})";
   var STROM_NETZ = ["netz", "zeit-abgelaufen", "dienst", "antwort-unlesbar"];
-  /* Hier trägt der Strom-Weg gerade nicht: weiter auf dem alten Weg (und eine Weile gesperrt, siehe stromSperren) */
+  /* Hier trägt der Strom-Weg gerade nicht: Ende mit dem Grund (884b; bis dahin der alte Weg) und eine Weile gesperrt
+     (siehe stromSperren) */
   var STROM_ALT = ["tagesgrenze", "kontingent", "nicht-angemeldet", "kein-zentraler-schluessel", "schluessel-falsch",
                    "keine-verbindung"];
   /* Dieselben Sätze wie beim Browser-Diktat (mik.onerror) – keine neuen Texte */
   var STROM_NICHTS = "Ich habe nichts gehört – nochmal 🎤 und gleich sprechen.";
   var STROM_KEIN_NETZ = "Die Spracherkennung braucht Netz – gerade keins.";
+  /* FASSUNG 884b: Ende statt „alter Weg“ (Mikrofon leihen). Die Sätze des Browser-Diktats bzw. die aus dem ersten Bau
+     (7cbc825); nur „im Livestream“ ist dazugekommen – die Tagesmenge gilt nur hier, draußen diktiert man wie immer. */
+  var STROM_START = "Die Spracherkennung ließ sich nicht starten.";
+  var STROM_BELEGT = "Das Mikrofon ist nicht angesprungen. Ist es gerade in einer anderen App belegt? Dann dort freigeben und nochmal 🎤.";
+  var STROM_WEG = "Die Spracherkennung ist gerade nicht verfügbar – bitte tippen.";
+  var STROM_HEUTE = "Für heute ist die Spracherkennung aufgebraucht – bitte tippen.";
+  var STROM_HEUTE_LIVE = "Für heute ist die Spracherkennung im Livestream aufgebraucht – bitte tippen.";
   var SPEICHER_STROM_TAG = "dma_diktat_strom_tag";       /* { tag, s } – gesendete Sekunden heute */
   var SPEICHER_STROM_SPERRE = "dma_diktat_strom_sperre"; /* { bis, grund } */
   function diktatStromMoeglich() {
@@ -647,15 +679,20 @@ window.Rueckfrage = (function () {
     if (code === "tagesgrenze") { var m = new Date(); m.setUTCHours(24, 0, 0, 0); bis = m.getTime(); }
     merken(SPEICHER_STROM_SPERRE, { bis: bis, grund: code });
   }
-  function stromFrei() {
+  /* FASSUNG 884b: statt ja/nein der Grund ("" = frei) – im Livestream gibt es keinen anderen Weg mehr, also sagt der
+     🎤 gleich, warum nicht. */
+  function stromSperrgrund() {
     var s = lesen(SPEICHER_STROM_SPERRE, null);
-    if (s && Date.now() < Number(s.bis)) return false;
+    if (s && Date.now() < Number(s.bis)) return String(s.grund || "sperre");
     var v = stromVerbraucht();
     if (v >= STROM.tagesSekunden) {
-      diktatFehlerMelden("strom-tagesmenge", "s=" + Math.round(v) + " von " + STROM.tagesSekunden + ", alter Weg");
-      return false;
+      diktatFehlerMelden("strom-tagesmenge", "s=" + Math.round(v) + " von " + STROM.tagesSekunden + ", Ende");
+      return "tagesmenge";
     }
-    return true;
+    return "";
+  }
+  function stromGrundText(grund) {
+    return grund === "tagesmenge" ? STROM_HEUTE_LIVE : grund === "tagesgrenze" ? STROM_HEUTE : STROM_WEG;
   }
   function stromZahlen(d) {
     return "rate=" + d.rate + ", max rms=" + (d.hoechst || 0).toFixed(4) + ", schwelle=" + STROM.schwelle +
@@ -667,11 +704,13 @@ window.Rueckfrage = (function () {
     var d = { strom: true, mik: null, klasse: klasse, feld: feld, anfang: feld.value.replace(/\s*$/, ""), an: false,
               anSeit: 0, gehoert: false, seit: Date.now(), teile: [], schlange: [], laeuft: 0, nr: 0, vorrat: [],
               vorratMs: 0, spitze: 0, hoechst: 0, lautJe: false, nurNullen: true, letzterBlock: 0, stueck: null,
-              stoppen: false, danachAlt: false, klon: klon, rate: 0 };
-    /* ⏹ ruft mik.stop(), ein neuer Start mik.abort() – wie bei der Browser-Erkennung. Wer selbst stoppt, will nicht
-       auf dem alten Weg weiter. */
-    d.mik = { stop: function () { d.danachAlt = false; stromStoppen(d); },
-              abort: function () { d.danachAlt = false; stromStoppen(d, true); } };
+              stoppen: false, endeText: "", klon: klon, rate: 0 };
+    /* ⏹ ruft mik.stop(), ein neuer Start mik.abort() – wie bei der Browser-Erkennung.
+       FASSUNG 884b (Prüfung): hat das SYSTEM den Ausklang schon begonnen (Tagesmenge, ✕, Raum verlassen), ist Xanders
+       erstes ⏹ sein erstes – nicht das „zweite ⏹“, das sofort beendet und die Antworten unterwegs verwirft (der zuletzt
+       gesprochene Satz fehlte). Erst ein weiteres ⏹ beendet sofort. */
+    d.mik = { stop: function () { if (d.stoppen && !d.selbst) { d.selbst = true; return; } d.selbst = true; stromStoppen(d); },
+              abort: function () { d.selbst = true; stromStoppen(d, true); } };
     diktat = d;
     window.__dmaDiktatMik = d.mik;
     diktatKnopfZeigen(klasse, true, "Mikrofon wird eingeschaltet …");
@@ -686,7 +725,7 @@ window.Rueckfrage = (function () {
     }
     if (!d.ctx) {
       try { d.ctx = new AC({ latencyHint: "playback" }); d.quelle = d.ctx.createMediaStreamSource(strom); }
-      catch (e) { stromRueckfall(d, "strom-kein-kontext", String((e && e.message) || e)); return; }
+      catch (e) { stromRueckfall(d, "strom-kein-kontext", String((e && e.message) || e), STROM_START); return; }
     }
     try { if (d.ctx.resume) stromLeise(d.ctx.resume()); } catch (e) {}
     d.rate = d.ctx.sampleRate;
@@ -706,6 +745,7 @@ window.Rueckfrage = (function () {
         d.quelle.connect(p); p.connect(d.stumm); d.knoten = p;
       } catch (e) {}
     };
+    d.ersatz = ersatz;   /* FASSUNG 884b: die Wache greift darauf zurück, wenn das Worklet-Modul nicht lädt */
     if (d.ctx.audioWorklet && window.AudioWorkletNode && window.Blob && window.URL && URL.createObjectURL) {
       try {
         d.modul = URL.createObjectURL(new Blob([STROM_WORKLET], { type: "application/javascript" }));
@@ -725,27 +765,49 @@ window.Rueckfrage = (function () {
     klon.onended = function () { if (diktat === d) stromStoppen(d); };
   }
   /* NACHBESSERUNG 2 und 4: was der Wächter (3 s ohne Block) nicht sah – Nullen, Stille, ein stockender Strom, der Raum
-     ist verlassen, das Walkie zu. Kein Fall bleibt mehr stumm: entweder der alte Weg oder ein Ende, immer mit Meldung. */
+     ist verlassen, das Walkie zu. Kein Fall bleibt mehr stumm: immer mit Meldung.
+     FASSUNG 884b: und keiner führt mehr auf den alten Weg (Mikrofon leihen) – siehe oben. */
   function stromWache(d) {
     if (diktat !== d || d.aufgeraeumt) { clearInterval(d.wacheUhr); return; }
     var jetzt = Date.now();
     if (!d.an) {
-      /* kein einziger Block in 3 s: der alte Weg */
+      /* FASSUNG 884b: noch kein Block nach 1,5 s – lädt das Worklet-Modul nicht, übernimmt der ScriptProcessor (ersatz
+         prüft selbst, ob schon ein Knoten läuft); ein angehaltener Kontext wird geweckt. Bis hier half nur der alte Weg. */
+      if (jetzt - d.seit >= STROM.ersatzMs) {
+        if (!d.knoten && d.ersatz) d.ersatz();
+        try { if (d.ctx && d.ctx.state === "suspended") stromLeise(d.ctx.resume()); } catch (e) {}
+      }
+      /* kein einziger Block in 3 s: Ende mit dem Satz des Browser-Diktats (bis 884b: der alte Weg) */
       if (jetzt - d.seit >= STROM.startMs) {
         stromRueckfall(d, "strom-kein-start", "rate=" + d.rate + ", knoten=" +
-          (d.knoten ? (d.knoten.port ? "worklet" : "ersatz") : "keiner") + ", ctx=" + d.ctx.state);
+          (d.knoten ? (d.knoten.port ? "worklet" : "ersatz") : "keiner") + ", ctx=" + d.ctx.state, STROM_START);
       }
       return;
     }
     if (d.stoppen) return;
-    /* Die Kopie liefert nur Nullen (Spur an der Quelle stumm, Mikrofon von einer anderen App belegt): der alte Weg */
-    if (d.nurNullen && jetzt - d.anSeit >= STROM.startMs) { stromRueckfall(d, "strom-nullen", stromZahlen(d)); return; }
-    /* 6 s kein einziger lauter Block – zu leise, oder es kommt kein Ton an: der alte Weg (so war es bis hier immer) */
-    if (!d.lautJe && jetzt - d.anSeit >= STROM.stillMs) { stromRueckfall(d, "strom-still", stromZahlen(d)); return; }
-    /* Raum verlassen, Walkie zu, Feld weg: Ende – das schon Gesprochene wird noch aufgeschrieben */
-    var drin = true;
-    try { drin = !(window.LiveChat && LiveChat.istDrin) || Boolean(LiveChat.istDrin()); } catch (e) {}
-    if (!drin || !diktatFeld(d.klasse)) { stromStoppen(d); return; }
+    /* Die Kopie liefert nur Nullen (Spur an der Quelle stumm, Mikrofon von einer anderen App belegt): Ende mit Grund */
+    if (d.nurNullen && jetzt - d.anSeit >= STROM.startMs) { stromRueckfall(d, "strom-nullen", stromZahlen(d), STROM_BELEGT); return; }
+    /* 6 s kein einziger lauter Block – er überlegt, hört dem anderen zu (dessen Stimme nimmt die Echounterdrückung aus
+       dem eigenen Mikrofon), oder es ist zu leise. FASSUNG 884b: nur EINMAL melden (max rms) und weiter aus der Live-Spur
+       hören – bis eben ging es hier auf den alten Weg, und man war für alle stumm (Prüfung, wichtig). Nach 30 s ohne
+       etwas Lautes ein sauberes Ende: „Ich habe nichts gehört …“ (diktatEnde, mit strom-nichts an mich). */
+    if (!d.lautJe && jetzt - d.anSeit >= STROM.stillMs) {
+      if (!d.stillGemeldet) { d.stillGemeldet = true; diktatFehlerMelden("strom-still", stromZahlen(d) + ", weiter"); }
+      if (jetzt - d.anSeit >= STROM.stillEndeMs) { stromStoppen(d); return; }
+    }
+    /* Raum verlassen, Walkie zu, Feld weg: Ende – das schon Gesprochene wird noch aufgeschrieben.
+       FASSUNG 884b: ein kurzer Aussetzer des Raumkanals (CHANNEL_ERROR → lage „fehler“, bis zum nächsten SUBSCRIBED)
+       ist kein Verlassen – WebRTC und die Live-Spur laufen weiter, man sitzt noch im Raum. Sofort endet es nur bei
+       „aus“; sonst erst, wenn der Raum 30 s lang weg bleibt. lage() (teuer) nur in diesen seltenen Augenblicken. */
+    var raus = false;
+    try {
+      if (window.LiveChat && LiveChat.istDrin && !LiveChat.istDrin()) {
+        if (!d.rausSeit) d.rausSeit = jetzt;
+        var l = LiveChat.lage ? LiveChat.lage() : null;
+        raus = !l || l.lage === "aus" || jetzt - d.rausSeit >= STROM.raumWegMs;
+      } else d.rausSeit = 0;
+    } catch (e) {}
+    if (raus || !diktatFeld(d.klasse)) { stromStoppen(d); return; }
     /* Der Strom stockt (Kontext angehalten): wecken; bleibt er bei sichtbarer Seite 6 s aus, Ende mit Meldung */
     var stille = jetzt - d.letzterBlock;
     if (stille > 1500) { try { if (d.ctx && d.ctx.state === "suspended") stromLeise(d.ctx.resume()); } catch (e) {} }
@@ -754,23 +816,26 @@ window.Rueckfrage = (function () {
       stromStoppen(d);
     }
   }
-  function stromRueckfall(d, code, text) {
-    stromAufraeumen(d);
-    if (diktat === d) diktat = null;
-    if (window.__dmaDiktatMik === d.mik) window.__dmaDiktatMik = null;
+  /* FASSUNG 884b: Kein Start, nur Nullen, kein Kontext – bis eben hieß das „diktatStarten(klasse, true)“, also Mikrofon
+     leihen und für alle stumm. Jetzt: Meldung und Ende mit dem Grund (das Feld bleibt, wie es ist). */
+  function stromRueckfall(d, code, text, hinweis) {
     diktatFehlerMelden(code, text);
-    diktatStarten(d.klasse, true);
+    if (diktat === d) diktatEnde(hinweis);
+    else stromAufraeumen(d);
   }
   /* NACHBESSERUNG 1: der Strom-Weg trägt gerade nicht. Was schon gesprochen ist, wird – wenn es noch geht – zu Ende
-     aufgeschrieben (verwerfen = es ginge doch nicht mehr), dann geht das Diktat auf dem alten Weg weiter. Hat man
-     selbst schon gestoppt (⏹, ✕, Raum verlassen), bleibt es beim Ende. */
-  function stromWechsel(d, code, info, verwerfen) {
-    if (verwerfen) {
-      info += ", verworfen=" + (d.schlange.length + (d.stueck ? 1 : 0));
+     aufgeschrieben. FASSUNG 884b: danach Ende mit dem Grund (endeText) statt des alten Wegs. dazu = null: nichts
+     verwerfen (Tagesmenge); sonst wird verworfen, was noch wartet, und „verworfen=“ zählt das fehlgeschlagene Stück
+     (dazu = 1) mit – bis hier stand bei der Tagesgrenze „verworfen=0“, obwohl „Satz 2“ fehlte (Prüfung). */
+  function stromWechsel(d, code, info, dazu, endeText) {
+    if (dazu !== null) {
+      var weg = d.schlange.concat(d.stueck ? [{ daten: { length: d.stueck.n } }] : []);
+      info += ", verworfen=" + (weg.length + dazu) + ", wartend=" +
+        Math.round(weg.reduce(function (s, a) { return s + a.daten.length; }, 0) / d.rate * 1000) + " ms";
       d.stueck = null; d.schlange = [];
     }
     diktatFehlerMelden(code, info);
-    if (!d.stoppen) d.danachAlt = true;
+    if (!d.endeText) d.endeText = endeText;
     stromStoppen(d);
   }
   function stromStueck(d, bloecke, laut, pegel) {
@@ -864,6 +929,7 @@ window.Rueckfrage = (function () {
     var a = d.schlange.shift();
     if (!a) { if (d.stoppen) diktatEnde(); return; }
     d.laeuft = 1;
+    a.grund = "";   /* 884b: der Grund des Gateways gilt nur für den Versuch, der ihn bekam */
     var wav = null;
     try {
       /* bei 16-kHz-Kontext nur das WAV-Gerüst, sonst der Sinc-Tiefpass aus 882 */
@@ -875,16 +941,25 @@ window.Rueckfrage = (function () {
       stromAntwort(d, a, antw);
     }, function () { stromAntwort(d, a, { fehler: "netz" }); });
     /* NACHBESSERUNG 1: jede gesendete Sekunde zählt (Wiederholungen nicht doppelt). Ist die Tagesmenge voll, wird das
-       schon Gesprochene noch aufgeschrieben, dann geht es auf dem alten Weg weiter. */
+       schon Gesprochene noch aufgeschrieben, dann endet das Diktat (884b: mit dem Grund, nicht mehr der alte Weg). */
     if (!a.gezaehlt) { a.gezaehlt = 1; stromZaehlen(a.daten.length / d.rate); }
     if (!d.stoppen && stromVerbraucht() >= STROM.tagesSekunden) {
-      stromWechsel(d, "strom-tagesmenge", "s=" + Math.round(stromVerbraucht()) + " von " + STROM.tagesSekunden + ", alter Weg", false);
+      stromWechsel(d, "strom-tagesmenge", "s=" + Math.round(stromVerbraucht()) + " von " + STROM.tagesSekunden + ", Ende", null, STROM_HEUTE_LIVE);
     }
   }
   function stromAntwort(d, a, antw) {
     d.laeuft = 0;
     if (diktat !== d) return;
     if (!antw || antw.fehler) { stromFehler(d, a, (antw && antw.fehler) || "netz"); return; }
+    /* FASSUNG 884b (Prüfung): Azures Antwort reicht die Zentrale unverändert durch – sie hat IMMER RecognitionStatus.
+       Fehlt er, kam die Antwort vom Gateway vor der Funktion (401 „Invalid JWT“ bei falsch gehender Geräteuhr, 503
+       BOOT_ERROR, 546 WORKER_LIMIT: JSON, aber ohne „fehler“). Bis hier galt das als NoMatch – das Stück verschwand
+       still, und am Ende stand nur „strom-nichts“ mit gutem Pegel. Jetzt ein Fehler mit dem Grund des Gateways. */
+    if (typeof antw.RecognitionStatus !== "string") {
+      a.grund = String(antw.code || antw.error || antw.msg || antw.message || "ohne Status").slice(0, 60);
+      stromFehler(d, a, "antwort-unlesbar");
+      return;
+    }
     /* NoMatch / InitialSilenceTimeout: kein Text, kein Fehler */
     var nb = Array.isArray(antw.NBest) && antw.NBest[0] ? antw.NBest[0] : {};
     var text = String(antw.DisplayText || nb.Display || nb.Lexical || "").trim();
@@ -900,18 +975,17 @@ window.Rueckfrage = (function () {
     if (antw.RecognitionStatus === "Success" && text) {
       var ende = ((Number(antw.Offset) || 0) + (Number(antw.Duration) || 0)) / 1e7;
       var ab = Math.round(ende * d.rate), spaet = ab + Math.round(STROM.nachschubAbstandS * d.rate);
-      var rest = [], sprech = 0;
+      var sprech = 0;
       if (ende >= STROM.nachschubAbS && ab < a.daten.length) {
         a.laut.forEach(function (z) {
           var von = Math.max(z[0], ab), bis = z[0] + z[1];
-          if (bis <= von) return;
-          rest.push([von - ab, bis - von, z[2]]);
-          if (z[2]) sprech += Math.max(0, bis - Math.max(von, spaet)) / d.rate * 1000;
+          if (bis > von && z[2]) sprech += Math.max(0, bis - Math.max(von, spaet)) / d.rate * 1000;
         });
       }
       if (sprech >= STROM.mindestSprechMs) {
         if (a.nachschub < STROM.nachschubHoechst) {
-          d.schlange.unshift({ nr: a.nr, daten: a.daten.subarray(ab), laut: rest, nachschub: a.nachschub + 1, gezaehlt: 0 });
+          /* FASSUNG 884b: in Teilen (stromRestTeile), vorn in die Schlange, in ihrer Reihenfolge */
+          Array.prototype.unshift.apply(d.schlange, stromRestTeile(d, a, ab, spaet));
         } else {
           diktatFehlerMelden("strom-nachschub-grenze", "nr=" + a.nr + ", rest=" + Math.round(sprech) + " ms Sprache, rate=" + d.rate);
         }
@@ -919,13 +993,61 @@ window.Rueckfrage = (function () {
     }
     stromWeiter(d);
   }
+  /* FASSUNG 884b — NACHSCHUB IN TEILEN (Prüfung: „jeder Nachschub schickt den ganzen Rest des Stücks noch einmal“).
+     Hört Azure an jeder Pause auf, ging der Schluss eines langen Stücks bis zu fünfmal zur Zentrale (Sonde E4: 28,5 s
+     Ton für 7,7 s Rede) – das kostet die Tagesmenge und die gemeinsamen Azure-Minuten mehrfach, und was nach der
+     vierten Pause kam, fehlte. Jetzt wird der Rest an jeder Pause geteilt, die so lang ist wie die, an der Azure
+     aufgehört hat (eine Blocklänge Spiel, 0,3–0,7 s): jedes Teil geht EINMAL hinaus, alle schreiben an dieselbe Stelle
+     (nr), in ihrer Reihenfolge. Geteilt wird nur, wo davor und dahinter ≥ 0,3 s Sprache liegen; jedes Teil behält
+     0,3 s Vor- und Nachlauf, kein Ton geht doppelt. Hört Azure innerhalb eines Teils noch früher auf, geht nur DESSEN
+     Rest nach (höchstens 4 Stufen wie bisher). Ohne Pause im Rest (Dauerrede) bleibt es EIN Teil – wie bisher. */
+  function stromRestTeile(d, a, ab, spaet) {
+    var ms = function (n) { return n / d.rate * 1000; };
+    /* Blöcke ab „ab“: [von, bis, laut, Sprache in ms] – laut zählt erst hinter „spaet“ (Nachhall, s. o.) */
+    var bl = [], block = 0, i;
+    a.laut.forEach(function (z) {
+      block = Math.max(block, z[1]);
+      var von = Math.max(z[0], ab), bis = z[0] + z[1];
+      if (bis > von) bl.push([von, bis, Boolean(z[2]) && bis > spaet, z[2] ? Math.max(0, ms(bis - Math.max(von, spaet))) : 0]);
+    });
+    /* die Pause, an der Azure aufgehört hat: still ab „ab“ bis zur nächsten Sprache */
+    var erst = -1, p = 0;
+    for (i = 0; i < bl.length; i++) { if (bl[i][2]) { erst = i; break; } p += ms(bl[i][1] - bl[i][0]); }
+    if (erst < 0) return [];
+    var schwelle = Math.max(STROM.teilPauseMs, Math.min(STROM.pauseMs, p) - ms(block));
+    var danach = [], summe = 0;
+    for (i = bl.length - 1; i >= 0; i--) { if (bl[i][2]) summe += bl[i][3]; danach[i] = summe; }   /* Sprache ab Block i */
+    var vor = Math.round(STROM.vorlaufMs * d.rate / 1000), nach = Math.round(STROM.nachlaufMs * d.rate / 1000);
+    var grenzen = [], von0 = Math.max(ab, bl[erst][0] - vor), teilSprech = 0, stillVon = -1, still = 0;
+    for (i = erst; i < bl.length; i++) {
+      var b = bl[i];
+      if (!b[2]) { if (stillVon < 0) stillVon = b[0]; still += ms(b[1] - b[0]); continue; }
+      if (stillVon >= 0 && still >= schwelle && teilSprech >= STROM.mindestSprechMs && danach[i] >= STROM.mindestSprechMs) {
+        var ende = Math.min(stillVon + nach, b[0]);
+        grenzen.push([von0, ende]);
+        von0 = Math.max(ende, b[0] - vor);
+        teilSprech = 0;
+      }
+      stillVon = -1; still = 0;
+      teilSprech += b[3];
+    }
+    grenzen.push([von0, a.daten.length]);
+    return grenzen.map(function (g) {
+      var laut = [];
+      a.laut.forEach(function (z) {
+        var v = Math.max(z[0], g[0]), e = Math.min(z[0] + z[1], g[1]);
+        if (e > v) laut.push([v - g[0], e - v, z[2]]);
+      });
+      return { nr: a.nr, daten: a.daten.subarray(g[0], g[1]), laut: laut, nachschub: a.nachschub + 1, gezaehlt: 0 };
+    });
+  }
   function stromSpaeter(d, a, ms) {
     d.laeuft = 1;
     d.spaeterUhr = setTimeout(function () { d.laeuft = 0; if (diktat !== d) return; d.schlange.unshift(a); stromWeiter(d); }, ms);
   }
   function stromFehler(d, a, code) {
     var info = "nr=" + a.nr + (a.nachschub ? "." + a.nachschub : "") + ", rate=" + d.rate + ", ms=" +
-      Math.round(a.daten.length / d.rate * 1000);
+      Math.round(a.daten.length / d.rate * 1000) + (a.grund ? ", grund=" + a.grund : "");
     /* Netz: einmal nach 1 s noch einmal */
     if (STROM_NETZ.indexOf(code) >= 0 && !a.wieder) { a.wieder = 1; stromSpaeter(d, a, 1000); return; }
     /* NACHBESSERUNG 1: „kontingent“ (429) ist meist vorübergehend – bei F0 genügt EIN anderer, der gerade im Trainer
@@ -935,10 +1057,11 @@ window.Rueckfrage = (function () {
       stromSpaeter(d, a, STROM.kontingentMs * a.kontingent);
       return;
     }
-    /* Tagesgrenze, Kontingent, Anmeldung, Schlüssel: der alte Weg (bis hier endete das Diktat mit „bitte tippen“) */
+    /* Tagesgrenze, Kontingent, Anmeldung, Schlüssel: der Strom-Weg ruht (stromSperren). FASSUNG 884b: Ende mit dem Grund
+       – der alte Weg (Nachbesserung 1) nahm das Live-Mikro weg. Der Text bis hier bleibt im Feld. */
     if (STROM_ALT.indexOf(code) >= 0) {
       stromSperren(code);
-      stromWechsel(d, "strom-" + code, info + (a.kontingent ? ", versuche=" + (a.kontingent + 1) : "") + ", alter Weg", true);
+      stromWechsel(d, "strom-" + code, info + (a.kontingent ? ", versuche=" + (a.kontingent + 1) : "") + ", Ende", 1, stromGrundText(code));
       return;
     }
     diktatFehlerMelden("strom-" + code, info);
@@ -993,20 +1116,33 @@ window.Rueckfrage = (function () {
     d.vorrat = [];
   }
 
-  function diktatStarten(klasse, ohneStrom) {
+  function diktatStarten(klasse) {
     var Erkenner = window.SpeechRecognition || window.webkitSpeechRecognition;
     var feld = diktatFeld(klasse);
     if (!Erkenner || !feld) return;
     /* FASSUNG 721 — Funk 166 (automatisch, Samsung Internet, nach Fassung 718): wieder „aborted". Läuft noch eine ältere
        Erkennung (z. B. ein schneller zweiter Tipp), bricht der Browser die neue ab – die alte wird jetzt vorher beendet. */
     try { if (window.__dmaDiktatMik) window.__dmaDiktatMik.abort(); } catch (e) {}
-    /* FASSUNG 884 — im Livestream: aus dem laufenden Strom statt Mikrofon leihen (siehe oben). ohneStrom = Rückfall. */
-    if (!ohneStrom) {
-      var klon = null;
-      try { klon = window.LiveChat && LiveChat.tonSpurKlon ? LiveChat.tonSpurKlon() : null; } catch (e) {}
-      /* Nachbesserung 1: nur solange die Tagesmenge reicht und der Strom-Weg nicht ruht (stromFrei) */
-      if (klon && diktatStromMoeglich() && stromFrei()) { diktatAusStrom(klasse, feld, klon); return; }
-      if (klon) { try { klon.stop(); } catch (e) {} }
+    /* FASSUNG 884 — im Livestream: aus dem laufenden Strom statt Mikrofon leihen (siehe oben). */
+    var klon = null;
+    try { klon = window.LiveChat && LiveChat.tonSpurKlon ? LiveChat.tonSpurKlon() : null; } catch (e) {}
+    if (klon) {
+      /* Nachbesserung 1: nur solange die Tagesmenge reicht und der Strom-Weg nicht ruht */
+      var grund = diktatStromMoeglich() ? stromSperrgrund() : "unmoeglich";
+      if (!grund) { diktatAusStrom(klasse, feld, klon); return; }
+      try { klon.stop(); } catch (e) {}
+      /* FASSUNG 884b — XANDER (Funk 163): „… schaltet sich das wieder aus wenn jemand da ist das soll generell immer
+         aktiv sein“. Im Livestream mit lebender Live-Spur wird NIE ausgeliehen: bis hier ging es bei voller Tagesmenge,
+         gesperrtem Strom-Weg oder ohne Zentrale auf den alten Weg (mikrofonLeihen → Live-Spur gestoppt, „stumm“ an
+         alle). Neben dem Livestream bekommt die Browser-Erkennung auf Android das Mikrofon ohnehin nicht (Funk 139,
+         „aborted“) – also kein Versuch, sondern gleich der Grund. Draußen (kein Klon) bleibt alles wie bisher. */
+      if (grund === "unmoeglich") {
+        var A = window.AusspracheP;
+        diktatFehlerMelden("strom-unmoeglich", "ac=" + (window.AudioContext || window.webkitAudioContext ? 1 : 0) +
+          ", aussprache=" + (A ? 1 : 0) + ", zentrale=" + (A && A.zentralMoeglich ? (A.zentralMoeglich() ? 1 : 0) : "-"));
+      }
+      diktatKnopfZeigen(klasse, false, stromGrundText(grund));
+      return;
     }
     var mik = new Erkenner();
     window.__dmaDiktatMik = mik;
@@ -1017,7 +1153,9 @@ window.Rueckfrage = (function () {
                an: false, gehoert: false, fehler: "", seit: Date.now() };
     /* FASSUNG 698 — XANDER (Funk 139): „bei dem Walkie-Talkie funktioniert die Spracheingabe
        nicht, wenn ich im Livestream-Modus bin". Der Livestream gibt sein Mikrofon fürs Diktat
-       her und bekommt es danach zurück (livechat.js: mikrofonLeihen/-Zurueck). */
+       her und bekommt es danach zurück (livechat.js: mikrofonLeihen/-Zurueck).
+       FASSUNG 884b: hierher kommt man nur noch OHNE lebende Live-Spur (draußen, oder die Spur ist schon tot) – dann
+       nimmt das Leihen niemandem etwas weg („Dauernd an“, die warme Sprachnachricht-Spur, eine tote Spur). */
     try { if (window.LiveChat && LiveChat.mikrofonLeihen && LiveChat.mikrofonLeihen()) diktat.geliehen = true; } catch (e) {}
     diktatKnopfZeigen(klasse, true, diktat.geliehen ? "Livestream-Mikro kurz pausiert \u2026 Mikrofon wird eingeschaltet \u2026" : "Mikrofon wird eingeschaltet \u2026");
     /* RUNDE 100 — XANDER (Walkie-Talkie, Frage Diktat): „🎤 startet gar

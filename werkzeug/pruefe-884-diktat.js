@@ -54,21 +54,39 @@
         – drei Sätze bleiben drei Anfragen
      8d NACHBESSERUNG: Grenze von 4 Nachschüben erreicht, es bleibt
         Sprache – Meldung „strom-nachschub-grenze“
-     9  NACHBESSERUNG: „tagesgrenze“ – der Text bis dahin bleibt, das
-        Diktat geht auf dem ALTEN Weg weiter, Meldung im Funk, der
-        nächste 🎤 nimmt gleich den alten Weg
-     9b NACHBESSERUNG: einmal 429 „kontingent“ – nach 2,5 s noch einmal,
-        nichts geht verloren, das Diktat läuft weiter, keine Meldung
-     9c NACHBESSERUNG: dauernd „kontingent“ – nach 3 Versuchen der alte
-        Weg, Meldung
-     9d NACHBESSERUNG: Tagesmenge (hier 4 s) – das Gesprochene wird noch
-        aufgeschrieben, dann der alte Weg; der nächste 🎤 ebenso
-     10 kein Block in 3 s (addModule hängt): Rückfall auf den alten Weg
-        (__rfRunden === 1), Meldung strom-kein-start
-     10b NACHBESSERUNG: die Kopie liefert nur Nullen – alter Weg, Meldung
-        strom-nullen; zu leise (keine 0,012) – nach 6 s alter Weg,
-        Meldung strom-still mit max rms
-     10c NACHBESSERUNG: ⏹ ohne Gesprochenes – „Ich habe nichts gehört …“
+     8e 884b: Nachschub in Teilen – 6 Sätze mit 0,6-s-Pausen in EINEM
+        Stück, Azure hört an jeder Pause auf: alle 6 Sätze, 6 Anfragen,
+        gesendeter Ton ≤ 2,1× das Stück (vorher 5 Anfragen, der 6. Satz
+        fehlte, ~3,3× Ton)
+     9  „tagesgrenze“ – der Text bis dahin bleibt, 884b: Ende mit Grund
+        („Für heute …“), KEIN alter Weg, nichts ausgeliehen; Meldung mit
+        „verworfen=“ ≥ 1; der nächste 🎤 (mit FRISCHER Live-Spur, sonst
+        bewiese es nichts) sagt gleich den Grund, kein Kontext, 0 Anfragen
+     9b einmal 429 „kontingent“ – nach 2,5 s noch einmal, nichts geht
+        verloren, das Diktat läuft weiter, keine Meldung
+     9c dauernd „kontingent“ – nach 3 Versuchen Ende mit Grund (884b),
+        Meldung mit versuche=3 und verworfen=1
+     9d Tagesmenge (hier 4 s) – das Gesprochene wird noch aufgeschrieben,
+        dann Ende mit Grund (884b); der nächste 🎤 (frische Spur) ebenso
+     9e 884b: Tagesmenge erreicht, eine Antwort ist noch unterwegs, Xander
+        tippt EINMAL ⏹ – sie wird noch geschrieben (vorher verworfen)
+     10 884b: das Worklet-Modul hängt – nach 1,5 s übernimmt der
+        ScriptProcessor, der Satz wird erkannt, kein alter Weg; hängt
+        auch der: nach 3 s Ende mit Grund, Meldung strom-kein-start,
+        nichts ausgeliehen
+     10b die Kopie liefert nur Nullen – 884b: Ende mit Grund, kein alter
+        Weg, Meldung strom-nullen; zu leise (keine 0,012) – 884b: nach
+        6 s nur EINE Meldung strom-still (max rms) und weiterhören, nach
+        stillEndeMs (hier 9,5 s, im Original 30 s) „Ich habe nichts
+        gehört …“; nie ausgeliehen, nie „stumm“
+     10c ⏹ ohne Gesprochenes – „Ich habe nichts gehört …“
+     10d 884b (Prüfung, wichtig): 7 s still (zuhören, überlegen), dann ein
+        Satz – aus der Live-Spur erkannt, die anderen hören ihn, kein
+        alter Weg
+     15 884b: Gateway-Antwort ohne RecognitionStatus (546 WORKER_LIMIT) –
+        Fehler, einmal wiederholt, Meldung mit Grund, Diktat läuft weiter
+     16 884b: Raumkanal 2 s weg (lage „fehler“) – das Diktat läuft weiter;
+        bleibt er weg (raumWegMs, hier 1,5 s), endet es
      11 außerhalb des Livestreams: wie bisher, Browser-Erkennung, keine
         Anfrage an die Zentrale
      12 stumm geschaltet (tonUmschalten): das Diktat hört trotzdem, B hört
@@ -90,6 +108,12 @@
    ALT=vorbau – dieselben Dateien aus 7cbc825 (der erste Bau, VOR der
    Nachbesserung). Erwartet rot genau dort, wo nachgebessert wurde: 8b, 8c,
    8d, 9–9d, 10b, 10c, 12b, 12c.
+   GEGENPROBE 884b (der Stand vor der zweiten Nachbesserung, f6f8968 =
+   0df7804 für rueckfrage.js): ein Baum aus Verweisen auf diesen, nur
+   rueckfrage.js aus „git show f6f8968:rueckfrage.js“, dann
+   WURZEL=<Baum> NUR=quelle. Erwartet rot: 8e, 9–9e, 10, 10b, 10d, 15, 16
+   (alter Weg = Browser-Erkennung + ausgeliehen + „stumm“) – gemessen 31 rot,
+   alles andere grün.
    EHRLICH: echtes Azure, Samsung Internet und ein Gespräch über zwei
    Geräte sind hier nicht nachstellbar; die lokale Leitung zeigt nur, dass
    die unveränderte Spur weiter Ton liefert.
@@ -231,6 +255,15 @@ async function einLauf(br, url, lauf) {
     if (window.AudioWorklet) {
       const oAdd = AudioWorklet.prototype.addModule;
       AudioWorklet.prototype.addModule = function (u, o) { return window.__wHaengt ? new Promise(() => {}) : oAdd.call(this, u, o); };
+    }
+    /* Fall I2 (884b): auch der Ersatz (ScriptProcessor) geht nicht */
+    window.__spWirft = false;
+    if (window.BaseAudioContext && BaseAudioContext.prototype.createScriptProcessor) {
+      const oSP = BaseAudioContext.prototype.createScriptProcessor;
+      BaseAudioContext.prototype.createScriptProcessor = function () {
+        if (window.__spWirft) throw new Error("Sonde: kein ScriptProcessor");
+        return oSP.apply(this, arguments);
+      };
     }
     /* lange Aufgaben */
     window.__lange = [];
@@ -421,6 +454,11 @@ async function einLauf(br, url, lauf) {
     });
   }
   const DREI = [[0.5, 2.5], [5.2, 2.5], [9.9, 2.5]];
+  /* 884b: der Rückfall nimmt das Live-Mikro nie weg – nichts ausgeliehen, Original-Spur lebt und ist an, tonAn, kein „stumm“ */
+  const unberuehrt = () => pg.evaluate(() => ({ geliehen: window.LiveChat.mikrofonGeliehen(), spur: window.__live.readyState,
+    an: window.__live.enabled, tonAn: window.LiveChat.lage().tonAn, stumm: window.__raus.filter((p) => p.art === "stumm").length }));
+  const heil = (u) => u.geliehen === false && u.spur === "live" && u.an === true && u.tonAn === true && u.stumm === 0;
+  const heilText = (u) => "geliehen=" + u.geliehen + ", Spur " + u.spur + "/" + u.an + ", tonAn=" + u.tonAn + ", „stumm“=" + u.stumm;
 
   /* ---------- Fall A: drei Sätze, Pausen 2,2 s, 16-kHz-Kontext ---------- */
   console.log("\nA  drei Sätze (2,5 s, Pause 2,2 s), Antwortzeiten 1,5 / 0,2 / 0,7 s");
@@ -589,6 +627,33 @@ async function einLauf(br, url, lauf) {
   sage(e4M.length === 1, "8d … und bleibt danach Sprache übrig: Meldung strom-nachschub-grenze", (e4M[0] || "keine").slice(0, 110));
   await stoppen();
 
+  /* ---------- Fall E5 (884b): Nachschub in Teilen ---------- */
+  console.log("\nE5 Nachschub in Teilen: 6 Sätze mit 0,6-s-Pausen in EINEM Stück, Azure hört an jeder Pause auf");
+  await vorbereiten();
+  /* wie Azures Kurz-Audio, wenn es an der ersten Pause aufhört: von der ersten Sprache bis zur ersten Lücke ≥ 0,3 s */
+  Z.antworter = (k, e) => {
+    const x = e.w.x, r = 16000, f = Math.round(0.05 * r), von = anfang(x);
+    if (von < 0) return { ms: 200, antw: { RecognitionStatus: "NoMatch", Offset: 0, Duration: 0 } };
+    let bis = x.length, still = 0;
+    for (let i = von; i + f <= x.length; i += f) {
+      let q = 0; for (let j = i; j < i + f; j++) q += x[j] * x[j];
+      if (Math.sqrt(q / f) < 0.01) { still += f; if (still >= 0.3 * r) { bis = i + f - still; break; } } else still = 0;
+    }
+    return { ms: 200, antw: { RecognitionStatus: "Success", DisplayText: "Teil " + (k + 1) + ".", Offset: Math.round(von / r * 1e7), Duration: Math.round((bis - von) / r * 1e7) } };
+  };
+  await tipp();
+  await pg.evaluate(() => window.__sprich([[0.5, 1.6], [2.7, 1.6], [4.9, 1.6], [7.1, 1.6], [9.3, 1.6], [11.5, 1.6]]));
+  await warteBis(async () => /Teil 6/.test(await feld()), 24000);
+  await schlaf(1500);
+  const e5S = await stand();
+  const e5D = Z.anfr.map((a) => a.dauerS), e5Summe = e5D.reduce((x, y) => x + y, 0);
+  sage(e5S.anfr === 6 && e5S.feld === "Teil 1. Teil 2. Teil 3. Teil 4. Teil 5. Teil 6.",
+    "8e Alle 6 Sätze, je EINE Anfrage (der Rest geht in Teilen nach, nicht ganz bei jedem Nachschub)",
+    e5S.anfr + " Anfragen (" + e5D.map((x) => x.toFixed(2)).join(" / ") + " s), " + JSON.stringify(e5S.feld));
+  sage(e5D.length && e5Summe <= 2.1 * e5D[0], "8e Gesendeter Ton ≤ 2,1× das Stück (kein Ton mehr als zweimal)",
+    e5Summe.toFixed(1) + " s für ein Stück von " + (e5D[0] || 0).toFixed(1) + " s = " + (e5D.length ? (e5Summe / e5D[0]).toFixed(2) : "–") + "×");
+  await stoppen();
+
   /* ---------- Fall M: Walkie zugeklappt ---------- */
   console.log("\nM  Walkie mitten im 2. Satz zugeklappt (✕)");
   await vorbereiten();
@@ -623,6 +688,32 @@ async function einLauf(br, url, lauf) {
   sage(nS.knopf === "🎤" && /^(ended,?)+$/.test(nE), "12c Knopf 🎤, Klon beendet", nS.knopf + " · Klon " + nE);
   await stoppen();
 
+  /* ---------- Fall Q (884b): kurzer Aussetzer des Raumkanals ---------- */
+  console.log("\nQ  Raumkanal 2 s weg (lage „fehler“ wie nach CHANNEL_ERROR), WebRTC läuft weiter");
+  await vorbereiten();
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI);
+  await schlaf(6000);
+  await pg.evaluate(() => window.LiveChat.pruefLageSetzen("fehler"));
+  await schlaf(2000);
+  await pg.evaluate(() => window.LiveChat.pruefLageSetzen("drin"));
+  await warteBis(async () => /Satz 3/.test(await feld()), 10000);
+  await schlaf(300);
+  const qS = await stand();
+  sage(qS.anfr === 3 && qS.feld === "Satz 1. Satz 2. Satz 3." && qS.knopf === "⏹", "16 Ein kurzer Aussetzer des Raumkanals beendet das Diktat nicht (Satz 3 kommt noch)",
+    qS.anfr + " Anfragen, " + JSON.stringify(qS.feld) + " · " + qS.knopf);
+  await stoppen();
+  console.log("\nQ2 Raumkanal bleibt weg (raumWegMs hier 1,5 s statt 30 s)");
+  await vorbereiten({ raumWegMs: 1500 });
+  await tipp();
+  await schlaf(1000);
+  await pg.evaluate(() => window.LiveChat.pruefLageSetzen("fehler"));
+  const q2Weg = Date.now();
+  const q2 = await bisEnde(5000);
+  sage(q2 && strom && strom.raumWegMs === 30000, "16 … bleibt der Raum weg, endet es nach der Gnadenfrist (Original 30 s)",
+    (q2 ? "Ende nach " + ((Date.now() - q2Weg) / 1000).toFixed(1) + " s" : "läuft noch") + " · raumWegMs " + (strom ? strom.raumWegMs : "–"));
+  await zuruecksetzen();
+
   /* ---------- Fall R: ⏹ ohne Gesprochenes ---------- */
   console.log("\nR  ⏹ nach 1,5 s, ohne zu sprechen");
   await vorbereiten();
@@ -650,6 +741,23 @@ async function einLauf(br, url, lauf) {
   if (Z.anfr.length >= 3) console.log("       Wiederholung nach " + ((Z.anfr[2].t - Z.anfr[1].t) / 1000).toFixed(2) + " s");
   await stoppen();
 
+  /* ---------- Fall P (884b): Gateway-Antwort ohne Azure-Ergebnis ---------- */
+  console.log("\nP  546 WORKER_LIMIT vom Gateway beim 2. Stück (auch beim Wiederholen)");
+  await vorbereiten();
+  Z.antworter = (k, e, std) => (k === 1 || k === 2)
+    ? { ms: 100, status: 546, antw: { code: "WORKER_LIMIT", message: "Function failed due to not having enough compute resources (please check logs)" } }
+    : { ms: 300, antw: Object.assign({}, std.antw, { DisplayText: k === 0 ? "Satz 1." : "Satz 3." }) };
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI);
+  await warteBis(async () => /Satz 3/.test(await feld()), 20000);
+  await schlaf(300);
+  const pS = await stand();
+  const pM = await meldungen("strom-antwort-unlesbar");
+  sage(pS.anfr === 4 && pS.feld === "Satz 1. Satz 3." && pS.knopf === "⏹", "15 Antwort ohne RecognitionStatus = Fehler: einmal wiederholt (4 Anfragen), das Diktat läuft weiter",
+    pS.anfr + " Anfragen, " + JSON.stringify(pS.feld) + " · " + pS.knopf);
+  sage(pM.length === 1 && /grund=WORKER_LIMIT/.test(pM[0]), "15 Meldung strom-antwort-unlesbar mit dem Grund des Gateways (nicht still „nichts gesagt“)", (pM[0] || "keine").slice(0, 130));
+  await stoppen();
+
   /* ---------- Fall O1: die Kopie liefert nur Nullen ---------- */
   console.log("\nO1 die Live-Spur liefert nur Nullen");
   await vorbereiten(null, "tot");
@@ -657,19 +765,46 @@ async function einLauf(br, url, lauf) {
   await schlaf(4300);
   const o1S = await stand();
   const o1M = await meldungen("strom-nullen");
-  sage(o1S.runden === 1 && o1S.anfr === 0, "10b Nur Nullen: nach 3 s der alte Weg", o1S.runden + " Starts, " + o1S.anfr + " Anfragen, Feld " + JSON.stringify(o1S.feld));
+  const o1U = await unberuehrt();
+  sage(o1S.runden === 0 && o1S.anfr === 0 && o1S.knopf === "🎤" && /in einer anderen App belegt/.test(o1S.live),
+    "10b Nur Nullen: nach 3 s Ende mit Grund – KEIN alter Weg", o1S.runden + " Starts, " + o1S.anfr + " Anfragen · " + JSON.stringify(o1S.live));
+  sage(heil(o1U), "10b … nichts ausgeliehen, die Live-Spur lebt, kein „stumm“", heilText(o1U));
   sage(o1M.length === 1, "10b Meldung strom-nullen", (o1M[0] || "keine").slice(0, 140));
   await altAufraeumen();
 
   /* ---------- Fall O2: zu leise ---------- */
-  console.log("\nO2 die Live-Spur ist zu leise (Sprache unter der Schwelle 0,012)");
-  await vorbereiten(null, "leise");
+  console.log("\nO2 die Live-Spur ist zu leise (Sprache unter der Schwelle 0,012); stillEndeMs hier 9,5 s");
+  await vorbereiten({ stillEndeMs: 9500 }, "leise");
   await tipp();
   await schlaf(7200);
   const o2S = await stand();
   const o2M = await meldungen("strom-still");
-  sage(o2S.runden === 1 && o2S.anfr === 0, "10b 6 s nichts Lautes: der alte Weg", o2S.runden + " Starts, " + o2S.anfr + " Anfragen");
-  sage(o2M.length === 1 && /max rms=0\.0\d+/.test(o2M[0]), "10b Meldung strom-still mit max rms", (o2M[0] || "keine").slice(0, 140));
+  const o2U = await unberuehrt();
+  sage(o2S.runden === 0 && o2S.anfr === 0 && o2S.knopf === "⏹", "10b 6 s nichts Lautes: weiter aus der Live-Spur – KEIN alter Weg", o2S.runden + " Starts, " + o2S.anfr + " Anfragen · " + o2S.knopf + " · " + JSON.stringify(o2S.live));
+  sage(heil(o2U), "10b … nichts ausgeliehen, die Live-Spur lebt, kein „stumm“", heilText(o2U));
+  sage(o2M.length === 1 && /max rms=0\.0\d+/.test(o2M[0]) && /weiter/.test(o2M[0]), "10b EINE Meldung strom-still mit max rms („weiter“)", (o2M[0] || "keine").slice(0, 160));
+  const o2E = await bisEnde(4000) && await stand();
+  sage(o2E && o2E.runden === 0 && /Ich habe nichts gehört – nochmal 🎤 und gleich sprechen\./.test(o2E.live),
+    "10b Nach stillEndeMs ohne etwas Lautes: sauberes Ende „Ich habe nichts gehört …“", o2E ? JSON.stringify(o2E.live) : "läuft noch");
+  sage(strom && strom.stillEndeMs === 30000, "10b Im Original: stillEndeMs = 30000", strom ? String(strom.stillEndeMs) : "–");
+  await zuruecksetzen();
+  await altAufraeumen();
+
+  /* ---------- Fall O3 (884b): 7 s still, dann sprechen ---------- */
+  console.log("\nO3 7 s still (dem Gegenüber zuhören, überlegen), dann ein Satz");
+  await vorbereiten();
+  await tipp();
+  await pg.evaluate(() => window.__sprich([[7.0, 2.5]]));
+  await warteBis(async () => /Satz 1|lter weg/i.test(await feld()), 16000);
+  await schlaf(400);
+  const o3S = await stand();
+  const o3U = await unberuehrt();
+  const o3H = await hoerbar();
+  sage(o3S.feld === "Satz 1." && o3S.runden === 0 && o3S.knopf === "⏹", "10d Nach 7 s Stille gesprochen: aus der Live-Spur erkannt – KEIN alter Weg",
+    o3S.runden + " Starts, " + JSON.stringify(o3S.feld) + " · " + o3S.knopf);
+  sage(heil(o3U) && o3H.je.length === 1 && o3H.je[0] > 0, "10d … und die anderen hören den Satz (nichts ausgeliehen, kein „stumm“)",
+    heilText(o3U) + " · Energie bei B " + (o3H.je[0] !== undefined ? o3H.je[0].toExponential(2) : "?"));
+  await stoppen();
   await altAufraeumen();
 
   /* ---------- Fall F: Tagesgrenze ---------- */
@@ -678,22 +813,29 @@ async function einLauf(br, url, lauf) {
   Z.antworter = (k, e, std) => k === 0 ? std : { ms: 200, status: 429, antw: { fehler: "tagesgrenze", grenze: 300 } };
   await tipp();
   await pg.evaluate((p) => window.__sprich(p), DREI);
-  await warteBis(async () => (await stand()).runden >= 1, 14000);
-  await schlaf(400);
+  await warteBis(() => Z.anfr.length >= 2, 14000);
+  await bisEnde(4000);
+  await schlaf(300);
   const fS = await stand();
+  const fU = await unberuehrt();
   const fF = await meldungen("strom-tagesgrenze");
   const fSp = await pg.evaluate(() => { try { return JSON.parse(localStorage.getItem("dma_diktat_strom_sperre")); } catch (e) { return null; } });
-  sage(fS.runden === 1 && fS.knopf === "⏹", "9  Das Diktat geht auf dem alten Weg weiter", fS.runden + " Starts · " + fS.knopf + " · " + JSON.stringify(fS.live));
-  sage(fS.feld === "Satz 1. Alter weg", "9  Der Text bis dahin bleibt und ist der Anfang", JSON.stringify(fS.feld));
-  sage(fF.length === 1 && /^\[automatisch\] Diktat-Fehler: strom-tagesgrenze \(nr=1/.test(fF[0]), "9  Meldung im Funk", (fF[0] || "keine").slice(0, 120));
+  sage(fS.runden === 0 && fS.knopf === "🎤", "9  Tagesgrenze: Ende – KEIN alter Weg (keine Browser-Erkennung)", fS.runden + " Starts · " + fS.knopf);
+  sage(heil(fU), "9  … nichts ausgeliehen, die Live-Spur lebt, kein „stumm“", heilText(fU));
+  sage(fS.feld === "Satz 1." && /Für heute ist die Spracherkennung aufgebraucht – bitte tippen\./.test(fS.live), "9  Der Text bis dahin bleibt, der Grund steht da", JSON.stringify(fS.feld) + " · " + JSON.stringify(fS.live));
+  sage(fF.length === 1 && /^\[automatisch\] Diktat-Fehler: strom-tagesgrenze \(nr=1/.test(fF[0]) && /verworfen=[1-9]/.test(fF[0]),
+    "9  Meldung im Funk, „verworfen=“ zählt das fehlgeschlagene Stück mit", (fF[0] || "keine").slice(0, 150));
   sage(fSp && fSp.grund === "tagesgrenze" && fSp.bis > Date.now(), "9  Der Strom-Weg ruht bis Mitternacht (UTC)", fSp ? new Date(fSp.bis).toISOString() : "keine Sperre");
   await stoppen();
+  /* der nächste 🎤 mit einer FRISCHEN Live-Spur – sonst käme „kein Strom-Weg“ auch ohne Sperre (Prüfung: zahnlos) */
   const fVor = Z.anfr.length;
-  await pg.evaluate(() => { window.__rfRunden = 0; window.LiveChat.pruefLageSetzen("drin"); });
+  const fCtx = await pg.evaluate(() => { window.__rfRunden = 0; window.__neueSpur(); return window.__ctxe.length; });
   await tipp();
-  await schlaf(500);
+  await schlaf(600);
   const fN = await stand();
-  sage(fN.runden === 1 && Z.anfr.length === fVor, "9  Der nächste 🎤 nimmt gleich den alten Weg", fN.runden + " Starts, " + (Z.anfr.length - fVor) + " neue Anfragen");
+  const fNctx = await pg.evaluate(() => window.__ctxe.length);
+  sage(fN.runden === 0 && Z.anfr.length === fVor && fNctx === fCtx && fN.knopf === "🎤" && /Für heute/.test(fN.live),
+    "9  Der nächste 🎤 (frische Live-Spur): gleich der Grund – kein Strom-Weg, kein alter Weg", fN.runden + " Starts, " + (Z.anfr.length - fVor) + " neue Anfragen, " + (fNctx - fCtx) + " neue Kontexte · " + JSON.stringify(fN.live));
   await altAufraeumen();
 
   /* ---------- Fall K2: dauernd „kontingent“ ---------- */
@@ -702,12 +844,16 @@ async function einLauf(br, url, lauf) {
   Z.antworter = (k, e, std) => k === 0 ? std : { ms: 100, status: 429, antw: { fehler: "kontingent" } };
   await tipp();
   await pg.evaluate((p) => window.__sprich(p), DREI.slice(0, 2));
-  await warteBis(async () => (await stand()).runden >= 1, 16000);
-  await schlaf(400);
+  await warteBis(() => Z.anfr.length >= 4, 16000);
+  await bisEnde(4000);
+  await schlaf(300);
   const k2S = await stand();
+  const k2U = await unberuehrt();
   const k2M = await meldungen("strom-kontingent");
-  sage(k2S.runden === 1 && Z.anfr.length === 4 && k2S.feld === "Satz 1. Alter weg", "9c Nach 3 Versuchen der alte Weg, der Text bleibt", k2S.runden + " Starts, " + Z.anfr.length + " Anfragen, " + JSON.stringify(k2S.feld));
-  sage(k2M.length === 1 && /versuche=3/.test(k2M[0]), "9c Meldung strom-kontingent", (k2M[0] || "keine").slice(0, 130));
+  sage(k2S.runden === 0 && Z.anfr.length === 4 && k2S.feld === "Satz 1." && k2S.knopf === "🎤" && /gerade nicht verfügbar – bitte tippen/.test(k2S.live),
+    "9c Nach 3 Versuchen Ende mit Grund, der Text bleibt – KEIN alter Weg", k2S.runden + " Starts, " + Z.anfr.length + " Anfragen, " + JSON.stringify(k2S.feld) + " · " + JSON.stringify(k2S.live));
+  sage(heil(k2U), "9c … nichts ausgeliehen, die Live-Spur lebt, kein „stumm“", heilText(k2U));
+  sage(k2M.length === 1 && /versuche=3/.test(k2M[0]) && /verworfen=1\b/.test(k2M[0]), "9c Meldung strom-kontingent (versuche=3, verworfen=1: das fehlgeschlagene Stück zählt mit)", (k2M[0] || "keine").slice(0, 150));
   await altAufraeumen();
   await zuruecksetzen();
 
@@ -716,19 +862,40 @@ async function einLauf(br, url, lauf) {
   await vorbereiten({ tagesSekunden: 4 });
   await tipp();
   await pg.evaluate((p) => window.__sprich(p), DREI);
-  await warteBis(async () => (await stand()).runden >= 1, 16000);
-  await schlaf(400);
+  await warteBis(() => Z.anfr.length >= 2, 16000);
+  await bisEnde(6000);
+  await schlaf(300);
   const lS = await stand();
+  const lU = await unberuehrt();
   const lM = await meldungen("strom-tagesmenge");
-  sage(lS.runden === 1 && Z.anfr.length === 2 && lS.feld === "Satz 1. Satz 2. Alter weg", "9d Das schon Gesprochene wird noch aufgeschrieben, dann der alte Weg", lS.runden + " Starts, " + Z.anfr.length + " Anfragen, " + JSON.stringify(lS.feld));
+  sage(lS.runden === 0 && Z.anfr.length === 2 && lS.feld === "Satz 1. Satz 2." && /im Livestream aufgebraucht – bitte tippen/.test(lS.live),
+    "9d Das schon Gesprochene wird noch aufgeschrieben, dann Ende mit Grund – KEIN alter Weg", lS.runden + " Starts, " + Z.anfr.length + " Anfragen, " + JSON.stringify(lS.feld) + " · " + JSON.stringify(lS.live));
+  sage(heil(lU), "9d … nichts ausgeliehen, die Live-Spur lebt, kein „stumm“", heilText(lU));
   sage(lM.length === 1, "9d Meldung strom-tagesmenge", (lM[0] || "keine").slice(0, 120));
   await stoppen();
   const lVor = Z.anfr.length;
-  await pg.evaluate(() => { window.__rfRunden = 0; window.LiveChat.pruefLageSetzen("drin"); });
+  const lCtx = await pg.evaluate(() => { window.__rfRunden = 0; window.__neueSpur(); return window.__ctxe.length; });
   await tipp();
-  await schlaf(500);
+  await schlaf(600);
   const lN = await stand();
-  sage(lN.runden === 1 && Z.anfr.length === lVor, "9d Der nächste 🎤 nimmt gleich den alten Weg", lN.runden + " Starts, " + (Z.anfr.length - lVor) + " neue Anfragen");
+  const lNctx = await pg.evaluate(() => window.__ctxe.length);
+  sage(lN.runden === 0 && Z.anfr.length === lVor && lNctx === lCtx && /im Livestream aufgebraucht/.test(lN.live),
+    "9d Der nächste 🎤 (frische Live-Spur): gleich der Grund – kein Strom-Weg, kein alter Weg", lN.runden + " Starts, " + (Z.anfr.length - lVor) + " neue Anfragen, " + (lNctx - lCtx) + " neue Kontexte");
+  await altAufraeumen();
+
+  /* ---------- Fall L2 (884b): erstes ⏹ während des Ausklangs ---------- */
+  console.log("\nL2 Tagesmenge erreicht, die Antwort auf Satz 2 ist noch unterwegs (2,5 s) – Xander tippt EINMAL ⏹");
+  await vorbereiten({ tagesSekunden: 4 });
+  Z.antworter = (k, e, std) => ({ ms: k === 1 ? 2500 : 300, antw: std.antw });
+  await tipp();
+  await pg.evaluate((p) => window.__sprich(p), DREI);
+  await warteBis(async () => /Einen Moment/.test((await stand()).live), 16000);
+  await tipp();
+  await bisEnde(6000);
+  await schlaf(200);
+  const l2S = await stand();
+  sage(l2S.anfr === 2 && l2S.feld === "Satz 1. Satz 2." && l2S.knopf === "🎤" && /im Livestream aufgebraucht/.test(l2S.live),
+    "9e Erstes ⏹ während des Ausklangs: die Antwort unterwegs wird noch geschrieben, dann Ende mit Grund", l2S.anfr + " Anfragen, " + JSON.stringify(l2S.feld) + " · " + JSON.stringify(l2S.live));
   await altAufraeumen();
   await zuruecksetzen();
   sage(strom && strom.tagesSekunden === 300, "9d Im Original: 300 s (5 min) gesendete Sprache am Tag", strom ? String(strom.tagesSekunden) : "–");
@@ -797,17 +964,35 @@ async function einLauf(br, url, lauf) {
   sage(jS.runden >= 1 && jS.anfr === 0 && /alter weg/i.test(jS.feld), "11 Wie bisher: Browser-Erkennung, keine Anfrage an die Zentrale", jS.runden + " Starts, " + jS.anfr + " Anfragen, " + JSON.stringify(jS.feld));
   await stoppen();
 
-  /* ---------- Fall I: kein Block in 3 s → alter Weg ---------- */
-  console.log("\nI  das Worklet hängt (kein Block in 3 s)");
+  /* ---------- Fall I: das Worklet-Modul hängt ---------- */
+  console.log("\nI  das Worklet-Modul hängt (addModule kommt nie zurück)");
   await vorbereiten();
   await pg.evaluate(() => { window.__wHaengt = true; });
   await tipp();
-  await schlaf(4200);
+  await pg.evaluate(() => window.__sprich([[2.5, 2.5]]));
+  await warteBis(async () => /Satz 1|lter weg/i.test(await feld()), 12000);
+  await schlaf(300);
   const iS = await stand();
+  const iU = await unberuehrt();
   const iF = await meldungen("strom-kein-start");
-  sage(iS.runden === 1, "10 Rückfall auf den alten Weg (Browser-Erkennung startet)", iS.runden + " Starts, Feld " + JSON.stringify(iS.feld));
-  sage(iF.length === 1, "10 Meldung strom-kein-start im Funk", (iF[0] || "keine").slice(0, 110));
+  sage(iS.feld === "Satz 1." && iS.runden === 0 && iS.anfr === 1, "10 Nach 1,5 s übernimmt der ScriptProcessor: der Satz wird erkannt – KEIN alter Weg", iS.runden + " Starts, " + iS.anfr + " Anfragen, " + JSON.stringify(iS.feld));
+  sage(iF.length === 0 && heil(iU), "10 … keine Meldung strom-kein-start, nichts ausgeliehen", iF.length + " Meldungen · " + heilText(iU));
+  await stoppen();
   await pg.evaluate(() => { window.__wHaengt = false; });
+  await altAufraeumen();
+
+  /* ---------- Fall I2: auch der ScriptProcessor geht nicht → Ende ---------- */
+  console.log("\nI2 Worklet hängt UND ScriptProcessor wirft (kein Block in 3 s)");
+  await vorbereiten();
+  await pg.evaluate(() => { window.__wHaengt = true; window.__spWirft = true; });
+  await tipp();
+  await schlaf(4200);
+  const i2S = await stand();
+  const i2U = await unberuehrt();
+  const i2F = await meldungen("strom-kein-start");
+  sage(i2S.runden === 0 && i2S.knopf === "🎤" && /ließ sich nicht starten/.test(i2S.live), "10 Kein Block in 3 s: Ende mit Grund – KEIN alter Weg", i2S.runden + " Starts · " + JSON.stringify(i2S.live));
+  sage(i2F.length === 1 && /knoten=keiner/.test(i2F[0]) && heil(i2U), "10 Meldung strom-kein-start, nichts ausgeliehen", (i2F[0] || "keine").slice(0, 110) + " · " + heilText(i2U));
+  await pg.evaluate(() => { window.__wHaengt = false; window.__spWirft = false; });
   await altAufraeumen();
 
   sage(seitenfehler.length === 0, "14 Keine Seitenfehler", seitenfehler.slice(0, 3).join(" | "));
