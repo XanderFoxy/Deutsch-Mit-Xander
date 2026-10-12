@@ -53,16 +53,46 @@
     dmaTeilDa[teil] = true;
     return true;
   }
-  /* Passt ein Teil nicht (die Seite ist älter als der Server) oder fehlt er,
-     zeigt die Seite oben „Neue Fassung – jetzt laden" (wie der Fassungs-
-     Wächter in index.html); von selbst neu geladen wird nichts. */
+  /* Passt ein Teil nicht oder fehlt er, wird das notiert (DMA_TEIL_FEHLER). Liegt auf dem Server wirklich eine
+     neuere Fassung, zeigt die Seite oben „Neue Fassung – jetzt laden" (wie der Fassungs-Wächter in index.html).
+     FASSUNG 884 — bei GLEICHER Fassung keine Blase mehr: „Neue Fassung 883" auf Fassung 883 führte ins Leere (sie
+     lud dieselben kaputten Stücke wieder). Dafür gibt es jetzt den Notweg (dmaTeilNotweg, gleich darunter). */
   function dmaTeilFehler(teil, e) {
     try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push(teil + ": " + String((e && e.message) || e)); } catch (x) {}
     try {
       fetch("fassung.json?t=" + Date.now(), { cache: "no-store" }).then((a) => (a.ok ? a.json() : null)).then((d) => {
-        if (d && d.fassung && window.dmaFassungKnopf) window.dmaFassungKnopf(String(d.fassung));
+        if (d && d.fassung && String(d.fassung) !== String(window.DMA_VERSION) && window.dmaFassungKnopf) window.dmaFassungKnopf(String(d.fassung));
       }).catch(() => {});
     } catch (x) {}
+  }
+  /* FASSUNG 884 — NOTWEG. XANDER (Funk 270): „…fallbeck auf das Klassenzimmer" · Claude (Funk 272/273): fällt der
+     schlanke Weg ins Klassenzimmer aus, lädt die Seite selbst das ganze app.js. Gerufen, wenn ein Platzhalter sein
+     Stück nicht bekommt (dmaTeilRuf) oder die Raum-Stücke beim Betreten bzw. im Raum fehlen (dmaTeilRaum). Den Rest
+     macht index.html (dmaGanzLaden): erst die ganze Quelle holen, dann einmal neu laden – ohne Leitung nicht; liegt
+     auf dem Server eine neuere Fassung, kommt diese. War man im Klassenzimmer, führt die neue Seite dorthin zurück
+     (sessionStorage „dma-notweg-ziel", Einladungs-Block weiter unten); wer im Raum war, kommt über rueckkehrOffen
+     wieder hinein. Antwort: true = die Seite lädt gleich neu. Klappt es nicht (keine Leitung), wird frühestens nach
+     15 s wieder versucht – nicht bei jedem Aufruf eines Platzhalters. */
+  var dmaTeilNotwegLaeuft = false;
+  var dmaTeilNotwegAb = 0;
+  function dmaTeilNotweg(teil, e) {
+    dmaTeilFehler(teil, e);
+    if (dmaTeilNotwegLaeuft || Date.now() < dmaTeilNotwegAb || !DMA_TEILE_BAU || !window.dmaGanzLaden) return Promise.resolve(false);
+    dmaTeilNotwegLaeuft = true;
+    let ziel = false;
+    try {
+      ziel = dmaRaumDrin || document.getElementById("sub-livechat")?.dataset.active === "true";
+      if (ziel) sessionStorage.setItem("dma-notweg-ziel", "klassenzimmer");
+    } catch (x) {}
+    const zurueck = () => {
+      dmaTeilNotwegLaeuft = false;
+      dmaTeilNotwegAb = Date.now() + 15000;
+      if (ziel) { try { sessionStorage.removeItem("dma-notweg-ziel"); } catch (x) {} }
+      return false;
+    };
+    let p;
+    try { p = window.dmaGanzLaden("app.js", teil + ": " + String((e && e.message) || e)); } catch (x) { return Promise.resolve(zurueck()); }
+    return Promise.resolve(p).then((neu) => (neu ? true : zurueck()), zurueck);
   }
   /* Eingesetzt wird in Ruhepausen, ein Stück je Pause (jedes nur ein paar Dutzend Millisekunden Rechnen), die
      Stücke fürs Klassenzimmer zuerst. Wird vorher eine Funktion daraus gebraucht, setzt dmaTeilRuf ihr Stück
@@ -113,6 +143,22 @@
     return Promise.all(DMA_TEILE_BAU.teile.filter((t) => t.replace(/\d+$/, "") === gruppe)
       .map((t) => { const p = dmaTeilHolen(t); return geholt && dmaTeilAnkunft[t] ? dmaTeilAnkunft[t] : p; }));
   }
+  /* FASSUNG 884 — die Raum-Stücke holen (fehlgeschlagene ein zweites Mal) und alle gleich einsetzen. Antwort true,
+     wenn danach jedes Raum-Stück eingesetzt ist; false = der schlanke Weg fällt aus (dann der Notweg). */
+  function dmaTeilRaum() {
+    if (!DMA_TEILE_BAU) return Promise.resolve(true);
+    const einsetzen = () => DMA_TEILE_BAU.teile.filter((t) => /^raum/.test(t)).map((t) => {
+      try { return dmaTeilEinsetzen(t); } catch (e) { dmaTeilFehler(t, e); return false; }
+    }).every(Boolean);
+    return dmaTeilGruppe("raum", true)
+      .then((da) => (da.indexOf(false) < 0 ? da : dmaTeilGruppe("raum", true)))
+      .then(einsetzen)
+      .catch(() => false);
+  }
+  /* … und warum (der letzte Fehler eines Raum-Stücks) – für den Grund des Notwegs */
+  function dmaTeilRaumFehlt() {
+    return new Error("Raum-Stücke fehlen – " + ((window.DMA_TEIL_FEHLER || []).filter((x) => /^raum/.test(x)).slice(-1)[0] || "?"));
+  }
   function dmaTeilSofort(teil) {
     if (dmaTeilEinsetzen(teil)) return;
     try { (window.DMA_TEIL_SOFORT = window.DMA_TEIL_SOFORT || []).push(teil + " " + String(new Error().stack || "").split("\n").slice(3, 4).join("").trim()); } catch (x) {}
@@ -127,8 +173,13 @@
     let f = dmaTeilImpl[i];
     if (!f) {
       const teil = DMA_TEILE_BAU.teile[DMA_TEILE_BAU.fn[i]];
-      try { dmaTeilSofort(teil); } catch (e) { dmaTeilFehler(teil, e); throw e; }
-      f = dmaTeilImpl[i];
+      /* FASSUNG 884 — fehlt das Stück, passt es nicht oder wirft es beim Einsetzen: der Notweg (ganze Quelle, einmal
+         neu laden). Dieser eine Aufruf scheitert trotzdem wie bisher (throw). */
+      try {
+        dmaTeilSofort(teil);
+        f = dmaTeilImpl[i];
+        if (!f) throw new Error("app-teil " + teil + " ohne Funktion " + i);
+      } catch (e) { dmaTeilNotweg(teil, e); throw e; }
     }
     return neu ? Reflect.construct(f, args, neu) : f.apply(self, args);
   }
@@ -154,16 +205,20 @@
     if (dmaRaumDrin || !DMA_TEILE_BAU) return;
     dmaRaumDrin = true;
     raumVorbereiten();
-    dmaTeilGruppe("raum", true).then(() => {
-      DMA_TEILE_BAU.teile.forEach((t) => { if (/^raum/.test(t)) { try { dmaTeilEinsetzen(t); } catch (e) { dmaTeilFehler(t, e); } } });
-    });
+    /* FASSUNG 884 — fehlen sie auch im zweiten Anlauf, der Notweg: ohne die Raum-Stücke wären Plätze und großes Bild
+       kaputt (livechatPlaetzeAuffrischen, livechatGrossAuffrischen). Nach dem Neuladen geht es über rueckkehrOffen von
+       selbst wieder in den Raum. */
+    dmaTeilRaum().then((ok) => { if (!ok) dmaTeilNotweg("raum", dmaTeilRaumFehlt()); });
   }
   /* Zum Nachsehen (werkzeug/pruefe-876-start-schlank.js): welche Teile es gibt, welche eingesetzt sind und ob ein
      Platzhalter je sofort nachladen musste. */
   window.DMA_TEILE = {
     stand: () => ({ gebaut: Boolean(DMA_TEILE_BAU), teile: DMA_TEILE_BAU ? DMA_TEILE_BAU.teile.slice() : [],
       da: Object.assign({}, dmaTeilDa), geholt: Object.keys(dmaTeilWeg).filter((t) => dmaTeilWeg[t]),
-      sofort: (window.DMA_TEIL_SOFORT || []).slice(), fehler: (window.DMA_TEIL_FEHLER || []).slice() }),
+      sofort: (window.DMA_TEIL_SOFORT || []).slice(), fehler: (window.DMA_TEIL_FEHLER || []).slice(),
+      /* FASSUNG 884 — Notweg: läuft diese Seite mit der ganzen Quelle, und warum (pruefe-884-notweg.js) */
+      ganz: Boolean(window.DMA_GANZ && window.DMA_GANZ["app.js"]),
+      notweg: (() => { try { return sessionStorage.getItem("dma-ganz-grund") || ""; } catch (e) { return ""; } })() }),
     holen: (t) => dmaTeilHolen(t), gruppe: (g) => dmaTeilGruppe(g)
   };
   /* Nach dem Start in der ersten Ruhepause: erst der Teil fürs Klassenzimmer, dann der Rest. Früh, damit
@@ -571,7 +626,10 @@
      Jetzt wird der Raum erkannt und der Weg gegangen: Wissen →
      Klassenzimmer. Die Wartezeit ist kein Schmuck — der Unterreiter
      entsteht erst, wenn die Ansicht steht. */
-  if (/(^|[?&#])raum=/.test(window.location.hash || "")
+  /* FASSUNG 884 — NOTWEG (dmaTeilNotweg): war man vor dem Neuladen im Klassenzimmer, führt derselbe Weg dorthin zurück. */
+  let dmaNotwegZiel = false;
+  try { dmaNotwegZiel = sessionStorage.getItem("dma-notweg-ziel") === "klassenzimmer"; sessionStorage.removeItem("dma-notweg-ziel"); } catch (e) {}
+  if (dmaNotwegZiel || /(^|[?&#])raum=/.test(window.location.hash || "")
       || /(^|[?&])raum=/.test(window.location.search || "")) {
     activateTab("view-knowledge");
     setTimeout(() => {
@@ -69757,10 +69815,13 @@
       else {
         let los = false;
         const einmal = () => { if (!los) { los = true; rein(); } };
-        dmaTeilGruppe("raum", true).then(() => {
-          /* geholt – jetzt die noch wartenden Stücke gleich einsetzen (nicht erst in der Ruhepause) */
-          DMA_TEILE_BAU.teile.forEach((t) => { if (/^raum/.test(t)) { try { dmaTeilEinsetzen(t); } catch (e) {} } });
-          einmal();
+        /* geholt – jetzt gleich einsetzen (nicht erst in der Ruhepause). FASSUNG 884 — fehlen sie oder passen sie nicht:
+           nicht mit halbem app.js hinein, erst der Notweg (ganze Quelle, neu laden, dann geht es hier wieder hinein);
+           lädt der nicht neu (keine Leitung), wie bisher hinein. */
+        dmaTeilRaum().then((ok) => {
+          if (ok || los) { einmal(); return; }
+          los = true;
+          dmaTeilNotweg("raum", dmaTeilRaumFehlt()).then((neu) => { if (!neu) rein(); });
         }, einmal);
         setTimeout(einmal, 2500);
       }

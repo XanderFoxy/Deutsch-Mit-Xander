@@ -4337,3 +4337,73 @@ select id, erstellt, left(text, 200) as text from betreiber_funk
 **Funk-Antwort (Entwurf, nach der Nachbesserung)**: „Walkie-Diktat im Livestream (Funk 163): Bisher hat das Diktat dem Livestream das Mikrofon weggenommen – deshalb haben dich die anderen nicht mehr gehört, solange du mir etwas diktiert hast. Jetzt hört das Diktat im Livestream bei deinem laufenden Mikrofon nur mit: die anderen hören dich die ganze Zeit. Bedienung wie immer (🎤, sprechen, ⏹). Klappst du das Walkie zu oder gehst aus dem Raum, hört das Diktat sofort auf. Was du diktierst, hören die anderen mit; wenn du das nicht willst, schalte dich stumm – das Diktat funktioniert trotzdem. Außerhalb des Livestreams ist alles wie vorher.
 Zwei Fragen an dich: (1) Der Text kommt im Livestream satzweise, kurz nachdem du eine Pause machst, nicht mehr Wort für Wort. Passt dir das, oder willst du beim Sprechen etwas sehen? (2) Das Aufschreiben läuft über denselben Azure-Zugang wie der Aussprache-Trainer und die Stadt-Quests aller Lernenden. Ist das der kostenlose Tarif F0 (5 Stunden im Monat für alle zusammen) oder S0 (bezahlt, etwa 1 $ pro Stunde)? Solange ich das nicht weiß, nimmt das Diktat im Livestream höchstens 5 Minuten Sprache am Tag; danach geht es auf dem alten Weg weiter (dann bist du währenddessen für die anderen stumm, wie bisher).
 Bitte teste es einmal im echten Livestream, wenn jemand Zweites da ist: Hört dich die andere Person weiter, während du diktierst, und steht der Text richtig im Feld? Wenn etwas hakt – kein Ton, zu leise, Netz, Kontingent –, bekomme ich automatisch eine Meldung.“
+
+## Fassung 884 — Notweg ins Klassenzimmer (Funk 268/270/272/273)
+
+XANDER (Funk 270): „…fallbeck auf das Klassenzimmer“. Zusage Claude (Funk 272/273): fällt der neue schlanke Weg ins Klassenzimmer aus (ein Stück von min/app.js fehlt, lädt nicht oder passt nicht zur Fassung), lädt die Seite von selbst das ganze app.js, und man kommt trotzdem ins Klassenzimmer. Aussehen, Größe und Bedienung bleiben; livechat.js ist unberührt.
+
+### Befund (Stand vor diesem Punkt, 0df7804)
+Den Notweg gab es nur zur Hälfte: `dmaMinFehlt` (Fassung 694) greift nur, wenn ein ganzes `<script>` aus min/ nicht lädt. Für die Stücke von min/app.js (seit 876) gab es keinen:
+- Stück fehlt (404) → Tipp auf „Klassenzimmer betreten“ wirft im Platzhalter (`livechatHinein` liegt im Raum-Stück), es passiert nichts, kein Tor. Oben erscheint „↻ Neue Fassung 883 – jetzt laden“ – auf Fassung 883. Der Knopf lädt dieselbe Fassung mit denselben kaputten Stücken: ins Leere.
+- Stück passt nicht (falsche Kennung) → genauso; bei der Rückkehr nach dem Neuladen bricht `rein()` schon beim Zusammenstellen der Angaben ab (`livechatName`/`livechatGeschlecht` liegen im Raum-Stück) – man kommt nie zurück in den Raum, still.
+- Im Raum (`raumDrin`) wurden Fehler nur notiert; Plätze und großes Bild (`livechatPlaetzeAuffrischen`, `livechatGrossAuffrischen`, Raum-Stück) wären kaputt geblieben.
+
+### Was geändert ist
+**index.html** (Block „FASSUNG 694“ und Fassungs-Wächter):
+- localStorage `dma-ganz` = `{f: Fassung, d: ["app.js"]}`: für DIESE Fassung gibt `DMA_Q("app.js")` die Quelle `app.js` statt `min/app.js`; alle anderen Dateien bleiben verkleinert. Ein Eintrag einer anderen Fassung wird beim Laden weggeräumt – mit der nächsten Fassung ist man wieder schlank. Der Stempel stimmt von selbst (`v()` nimmt `st["app.js"]`).
+- `window.dmaGanzLaden(datei, grund)` → Versprechen true/false: ohne Speicher (Probe-Schreiben vorab), mit `?quelle`, schon ganz, ohne min-Kopie oder einmal je Fassung+Datei+Tab schon versucht (`dma-ganz-neu`) → false. Sonst `fassung.json` (no-store): steht dort eine ANDERE Fassung, holt die Seite diese (`dmaFassungLaden`, ?f=…) und stellt NIE auf die Quelle um. Sonst wird `app.js?v=<Stempel>` ganz geholt (unter 10 000 Byte oder Fehler → false, also ohne Leitung kein Neuladen); erst dann `dma-ganz`, `dma-ganz-neu`, `dma-ganz-grund` (≤ 300 Zeichen) setzen und nach 50 ms neu laden (`DMA_MESS.selbst`, kein Abbruch in der Messung).
+- `window.dmaFassungLaden(neu)`: dieselbe Merkerlogik wie der erste Blick des Wächters (`dma-neu-geladen`), einmal je Fassung und Tab; sonst false (dann bleibt es bei der Blase).
+
+**app.js** (drei örtliche Stellen, alles im Kern – Namen `dmaTeil…` lagern teile-bauen/teile-messen nie aus):
+- `dmaTeilFehler`: die Blase nur noch, wenn `fassung.json` wirklich eine andere Fassung meldet.
+- Neu `dmaTeilNotweg(teil, e)`: notiert den Fehler, merkt sich „zurück ins Klassenzimmer“ (sessionStorage `dma-notweg-ziel`, wenn man im Klassenzimmer oder im Raum war) und ruft `dmaGanzLaden`. Läuft nur einmal gleichzeitig; schlägt er fehl, frühestens nach 15 s wieder (nicht bei jedem Platzhalter-Aufruf; **Abweichung vom Plan**: der Plan erlaubte sofortiges Wiederholen – bei toter Leitung hätte jeder Platzhalter-Aufruf `fassung.json` + `/app.js` neu angefragt).
+- Neu `dmaTeilRaum()`: Raum-Stücke holen (fehlgeschlagene ein zweites Mal) und alle sofort einsetzen; true nur, wenn danach jedes eingesetzt ist. `dmaTeilRaumFehlt()` nennt den letzten Stück-Fehler als Grund.
+- `dmaTeilRuf`: scheitert das Sofort-Holen/Einsetzen (oder fehlt danach die Funktion) → Notweg; dieser eine Aufruf wirft wie bisher.
+- `raumDrin`: `dmaTeilRaum()`, bei false der Notweg (im Raum: Neuladen, dann über `rueckkehrOffen` von selbst wieder hinein – so in Funk 272/273 vereinbart).
+- Rückkehr nach dem Neuladen: erst `dmaTeilRaum()`; bei false NICHT mit halbem app.js hinein, sondern der Notweg; lädt der nicht neu (keine Leitung), wie bisher hinein. Zwischen `rueckkehrOffen` und `konto:` ist nichts eingefügt (Abstand 748 wie vorher).
+- Einladungs-Block: `dma-notweg-ziel` führt wie ein Einladungslink Wissen → Klassenzimmer (einmal, danach gelöscht).
+- `DMA_TEILE.stand()` zusätzlich `ganz` und `notweg` (Grund) für die Sonde.
+
+Größe: min/app.js gepackt +376 Byte (194 712 → 195 088). Im Normalfall ändert sich sonst nichts (Sonde D, 876).
+
+### Sonden
+- Neu: `werkzeug/pruefe-884-notweg.js` (eigener Server mit Anfragen-Protokoll; die Fehler macht der Server, weil die Platzhalter synchrones XHR benutzen; Supabase-Attrappe wie 871). **Alles grün (35 Prüfungen)**:
+  - A Stück fehlt, Tipp: genau EIN Neuladen (index.html 2×), neue Seite 1,4–1,7 s nach dem Tipp (lokaler Server); `/app.js?v=<Stempel>` geholt; Seite 2: `DMA_Q("app.js") = app.js`, `gebaut=false`, `ganz=true`, keine `min/app-teil-*`/`min/app.js`-Anfrage; Grund „raum1: app-teil raum1 nicht geladen (404)“; Klassenzimmer ohne Tipp offen; Tor kommt; „Rakete“ läuft; keine Seitenfehler auf Seite 2 (Seite 1: der eine gescheiterte Tipp).
+  - B Stück passt nicht + Rückkehr: ein Neuladen; Seite 1 betritt nicht; Seite 2 betritt mit der Quelle; Grund „raum: Raum-Stücke fehlen – raum8: app-teil 000000000000 passt nicht zu app.js“.
+  - C keine Leitung zur Quelle: kein Neuladen in 8 s, kein `dma-ganz`, die Quelle wurde versucht (404), **keine Blase „Neue Fassung 883“**, „Lernen“ geht.
+  - D Normalfall: Tor, kein Neuladen, keine /app.js-Anfrage, kein `dma-ganz`, keine Seitenfehler.
+  - E `dma-ganz` der Fassung 882 wird weggeräumt (min/app.js); `dma-ganz` der Fassung 883 in einem neuen Tab: ganze app.js, livechat.js bleibt min/, Tor kommt.
+  - F neuere Fassung auf dem Server: die Seite landet auf `?f=884` mit min/app.js (kein `dma-ganz`), Klassenzimmer offen, Tor, Stücke passen.
+  - G mit `?mit-sw`: sw.js führt die Seite; der Server sieht `/app.js` genau EINMAL (das Vorab-Holen), beim Neuladen kommt sie aus sw.js (Resource-Timing: über den Worker, 0 Byte übertragen).
+- Gegenprobe (index.html, app.js, min/ aus 0df7804 in scratchpad/gegen884/notweg, Rest als Verweise, `WURZEL=…`): **19 rot** – Bau (2), A (kein Neuladen, keine Quelle, kein Tor, keine Rakete), B (kein Neuladen, betritt nie), C („der Notweg hat die Quelle versucht“ und die Blase „↻ Neue Fassung 883 – jetzt laden“), E (alter Merker bleibt liegen / wird nicht befolgt), F (bleibt auf 883, Stücke passen nicht), G. Grün bleiben D (Normalfall) und die Prüfungen, die im alten Stand nichts tun (C kein Neuladen, „Lernen“ geht).
+- Bestehende Sonden (nach `fassung-setzen.js --nur-stempel`): grün: 876-start-schlank (Start schlank, Sofort-Nachladen, ?quelle), neue-fassung (Fassungsblase), einladungslink (derselbe Block), 858-ladeweg, 840-bilderwelt-alt-neu (Pflicht, app.js angefasst), 859-kanal-sofort, runde18, 884-messung (index.html-Block DMA_MESS). 694-leistung 1 rot („beim erneuten Öffnen kommt KEINE gestempelte Datei mehr übers Netz“: /min/spiel.js) – mit einer Kopie der Sonde gegen den Stand 0df7804 derselbe Fehler (spiel.js kommt in der Ruhepause, bevor sw.js die Seite führt), also älter; Teil 2 „fehlt eine Kopie, kommt die Quelle“ (dmaMinFehlt) grün. 862-angebotssturm 1 rot: Teil D (Text-Regex, Abstand 748) – am Stand 0df7804 genauso rot (siehe Offen 5).
+
+### Ehrlich
+- Nicht nachstellbar: echte Funklöcher, die CDN von GitHub Pages während des Auslieferns, der Zwischenspeicher sw.js auf dem Samsung. Bewiesen sind die Abläufe im Chromium gegen einen Server, der die Fehler absichtlich macht; dass die vorab geholte app.js aus sw.js kommt, zeigt G (?mit-sw), auf dem Telefon nicht geprüft.
+- Draußen noch nicht messbar: `spiel_diagnose` hat noch keine Zeile „mess-start“ (884 ist nicht ausgeliefert). Danach zeigt messung.js für eine Notweg-Seite `bau: "quelle"` und `teile[1] > 0` (siehe SQL unten); `?quelle` lässt sich davon nicht unterscheiden (nutzen nur Xander und ich).
+- Sichtbar nur im Fehlerfall: die Seite lädt einmal von selbst neu (zugesagt). Die irreführende Blase „Neue Fassung 883“ auf 883 entfällt – das bringt den Code auf die Absicht von 876 (dort stand „Teil passt nicht (die Seite ist älter als der Server)“). Liegt wirklich eine neuere Fassung bereit, kommt die Blase wie bisher.
+- Nach dem Notweg muss man „Klassenzimmer betreten“ noch einmal tippen (das Tor fragt ohnehin nach Mikrofon und Kamera); wer schon im Raum war, kommt ohne Tipp zurück.
+- Für den Rest der Fassung ist dieses Gerät schwerer: app.js als Quelle (gepackt ~1,7 MB, 5,8 MB zum Übersetzen) statt 195 KB + Stücke. Auf dem Samsung ist der Start bis zur nächsten Fassung spürbar langsamer. Bewusst so (Alternative min/app-ganz.js kostet bei jeder app.js-Änderung +2,6 MB im Git).
+- Ein Neuladen mitten im Gespräch ist möglich, wenn im Raum ein Raum-Stück auch im zweiten Anlauf fehlt (Ton 3–5 s weg, dann `rueckkehrOffen`). Ohne Neuladen wären Plätze und großes Bild kaputt.
+- Ein Platzhalter holt sein Stück auf toter Leitung weiter synchron (seit 876, unverändert).
+- Randfall: meldet `fassung.json` (veraltet) eine ÄLTERE Fassung als die Seite, nimmt der Notweg den Fassungs-Weg (einmal ?f=…, danach Blase) statt der Quelle – wie der Wächter selbst. Nicht nachgestellt; `fassung.json` kommt mit no-store.
+- Nicht gebaut (optional im Plan): (i) Notweg auch für `data-exercises-teil.js` (betrifft nicht das Klassenzimmer), (ii) eine eigene Diagnose-Zeile „notweg“ (die 40-am-Tag-Grenze wird von leitung/tonstand schon erreicht; mess-start zeigt es ohnehin, s. o.).
+
+**Vorschlag an Xander (sichtbar, nicht gebaut)**: Während der Notweg die ganze app.js holt (über 3G bis ~10 s), passiert nach dem Tipp scheinbar nichts. Eine kurze Zeile „Klassenzimmer wird neu geladen …“ wäre eine sichtbare Änderung – nur mit deinem OK.
+
+**Offen**
+1. Gegenprobe auf dem echten Samsung (mit sw.js) – z. B. mit einer absichtlich kaputten Stück-Adresse auf einer Prüf-Kopie; draußen erst nach dem Ausliefern über mess-start (SQL unten).
+2. Vorschlag „Klassenzimmer wird neu geladen …“ (Antwort Xanders).
+3. Möglicher Folgeschritt: bei `navigator.onLine === false` kein synchrones Nachholen im Platzhalter (seit 876).
+4. Werkstatt-Eintrag und Fassungsnummer beim Ausliefern von 884 (WIP-Stand wie die anderen 884-Punkte).
+5. Sonde 862 Teil D (Text-Regex `rueckkehrOffen[\s\S]{0,600}konto:`) ist schon vor diesem Punkt rot (Abstand 748, von 876) – hier nicht verändert, eigener kleiner Punkt (die Sonde, nicht der Code).
+
+### Auslesen nach dem Ausliefern (nur lesen)
+```sql
+select daten->>'f' as fassung, daten->>'bau' = 'quelle' as quelle, count(*) as seiten,
+       sum(case when coalesce((daten->'teile'->>1)::int, 0) > 0 then 1 else 0 end) as mit_teilfehler,
+       max(zeit) as zuletzt
+  from spiel_diagnose where art = 'mess-start' group by 1, 2 order by 1 desc, 2;
+```
+
+**Funk-Antwort (Entwurf)**: „Notweg ins Klassenzimmer (Funk 270/272): Seit der schlanken Seite (876) wird das Klassenzimmer in Stücken nachgeladen. Fehlte eines davon oder passte es nicht, ging „Klassenzimmer betreten“ einfach nicht, und oben stand fälschlich „Neue Fassung 883 – jetzt laden“, was nichts half. Jetzt holt sich die Seite in so einem Fall selbst das ganze Programm in einem Stück, lädt einmal neu und öffnet das Klassenzimmer wieder – du tippst nur noch einmal auf „Klassenzimmer betreten“. Warst du schon im Raum, kommst du von selbst zurück. Ohne Netz lädt sie nicht neu. Liegt schon eine neuere Fassung bereit, nimmt sie diese. Im Normalfall ändert sich nichts. Eine Frage: Während das Programm geholt wird (über schwaches Netz bis etwa 10 Sekunden), sieht man nichts. Soll da eine kurze Zeile „Klassenzimmer wird neu geladen …“ stehen?“
