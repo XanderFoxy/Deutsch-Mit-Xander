@@ -556,6 +556,10 @@
     var minQ = typeof DMA_Q === "function" && DMA_Q("app.js") !== "app.js";
     return {
       f: FASSUNG, bau: minQ ? (st["min/app.js"] || "?") : "quelle", ua: String(navigator.userAgent || "").slice(0, 120),
+      /* FASSUNG 884 — Notweg (index.html dmaGanzLaden): 1 = diese Seite läuft mit der ganzen app.js, weil vorher ein Stück
+         ausfiel. bau="quelle" allein unterscheidet das nicht von ?quelle oder dmaMinFehlt; die Teilfehler (teile[1]) stehen
+         nur auf der Seite VOR dem Neuladen. Nur 0/1, kein Grundtext. */
+      ganz: window.DMA_GANZ && window.DMA_GANZ["app.js"] ? 1 : 0,
       typ: nav.type || "", neu: neu, sw: navigator.serviceWorker && navigator.serviceWorker.controller ? 1 : 0, hinten: M.hinten,
       t: { ttfb: rund(nav.responseStart), fcp: rund(fcp), lcp: rund(lcp), bereit: rund(bereitT), load: rund(nav.loadEventEnd), drinAb: drinAb },
       tipp: tipp, kb: Math.round(kb / 1024), n: n, cache: cache,

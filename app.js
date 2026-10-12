@@ -56,9 +56,14 @@
   /* Passt ein Teil nicht oder fehlt er, wird das notiert (DMA_TEIL_FEHLER). Liegt auf dem Server wirklich eine
      neuere Fassung, zeigt die Seite oben „Neue Fassung – jetzt laden" (wie der Fassungs-Wächter in index.html).
      FASSUNG 884 — bei GLEICHER Fassung keine Blase mehr: „Neue Fassung 883" auf Fassung 883 führte ins Leere (sie
-     lud dieselben kaputten Stücke wieder). Dafür gibt es jetzt den Notweg (dmaTeilNotweg, gleich darunter). */
+     lud dieselben kaputten Stücke wieder). Dafür gibt es jetzt den Notweg (dmaTeilNotweg, gleich darunter).
+     Gefragt wird höchstens alle 15 s: fallen mehrere Stücke zugleich aus (8 Raum-Stücke, zweiter Anlauf, Notweg), ging
+     sonst je Stück eine Anfrage über die ohnehin schwache Leitung – neben dem Abruf der ganzen Quelle. */
+  var dmaTeilFehlerFrage = 0;
   function dmaTeilFehler(teil, e) {
     try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push(teil + ": " + String((e && e.message) || e)); } catch (x) {}
+    if (Date.now() < dmaTeilFehlerFrage) return;
+    dmaTeilFehlerFrage = Date.now() + 15000;
     try {
       fetch("fassung.json?t=" + Date.now(), { cache: "no-store" }).then((a) => (a.ok ? a.json() : null)).then((d) => {
         if (d && d.fassung && String(d.fassung) !== String(window.DMA_VERSION) && window.dmaFassungKnopf) window.dmaFassungKnopf(String(d.fassung));
@@ -72,27 +77,59 @@
      auf dem Server eine neuere Fassung, kommt diese. War man im Klassenzimmer, führt die neue Seite dorthin zurück
      (sessionStorage „dma-notweg-ziel", Einladungs-Block weiter unten); wer im Raum war, kommt über rueckkehrOffen
      wieder hinein. Antwort: true = die Seite lädt gleich neu. Klappt es nicht (keine Leitung), wird frühestens nach
-     15 s wieder versucht – nicht bei jedem Aufruf eines Platzhalters. */
-  var dmaTeilNotwegLaeuft = false;
+     15 s wieder versucht – nicht bei jedem Aufruf eines Platzhalters.
+     Nachbesserung nach der Prüfung:
+       - Neu geladen wird nur, wenn das Stück dann NOCH fehlt: ist die ganze Quelle angekommen, fragt dmaGanzLaden
+         „noch" – die fehlenden Stücke werden ein letztes Mal über die Leitung geholt. Sind sie da (oder hat ein
+         Platzhalter sie inzwischen selbst geholt, etwa beim zweiten Tipp), bleibt die Seite, wie sie ist: kein
+         Neuladen, das eine frische Verbindung abreißt, und keine schwere Quelle für den Rest der Fassung.
+       - Läuft der Notweg schon, kommt ein weiterer Ausfall dazu (dmaTeilNotwegBedarf) und bekommt DIESELBE Antwort –
+         nicht gleich „false" (sonst ginge die Rückkehr mit halbem app.js hinein).
+       - Wohin die neue Seite führt, entscheidet der Augenblick des Neuladens, nicht der erste Ausfall (dmaTeilNotwegZiel):
+         ist das Klassenzimmer offen oder ist man im Raum (LiveChat drin/verbindet), geht es zurück ins Klassenzimmer –
+         wer den Raum längst verlassen hat und anderswo ist, bleibt, wo die Seite ihn hinstellt.
+       - Hängt die Leitung, endet der Notweg trotzdem (Fristen in dmaGanzLaden); danach ist ein neuer Versuch möglich. */
+  var dmaTeilNotwegLaeuft = null;
   var dmaTeilNotwegAb = 0;
+  var dmaTeilNotwegBedarf = {};
+  function dmaTeilNotwegZiel() {
+    try {
+      const kz = document.getElementById("sub-livechat");
+      if (kz && kz.offsetParent !== null) return true;
+      const l = window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage() : null;
+      return Boolean(l && (l.lage === "drin" || l.lage === "verbindet"));
+    } catch (x) { return false; }
+  }
   function dmaTeilNotweg(teil, e) {
     dmaTeilFehler(teil, e);
-    if (dmaTeilNotwegLaeuft || Date.now() < dmaTeilNotwegAb || !DMA_TEILE_BAU || !window.dmaGanzLaden) return Promise.resolve(false);
-    dmaTeilNotwegLaeuft = true;
-    let ziel = false;
-    try {
-      ziel = dmaRaumDrin || document.getElementById("sub-livechat")?.dataset.active === "true";
-      if (ziel) sessionStorage.setItem("dma-notweg-ziel", "klassenzimmer");
-    } catch (x) {}
-    const zurueck = () => {
-      dmaTeilNotwegLaeuft = false;
-      dmaTeilNotwegAb = Date.now() + 15000;
-      if (ziel) { try { sessionStorage.removeItem("dma-notweg-ziel"); } catch (x) {} }
+    if (!DMA_TEILE_BAU || !window.dmaGanzLaden) return Promise.resolve(false);
+    (teil === "raum" ? DMA_TEILE_BAU.teile.filter((t) => /^raum/.test(t)) : [teil])
+      .forEach((t) => { if (!dmaTeilDa[t]) dmaTeilNotwegBedarf[t] = true; });
+    if (dmaTeilNotwegLaeuft) return dmaTeilNotwegLaeuft;
+    if (Date.now() < dmaTeilNotwegAb) return Promise.resolve(false);
+    let entwarnt = false;
+    /* „noch": fehlt eines der Stücke noch? Dann auch das Ziel der neuen Seite festhalten. */
+    const noch = () => dmaTeilListe(Object.keys(dmaTeilNotwegBedarf).filter((t) => !dmaTeilDa[t])).then((da) => {
+      if (da) { entwarnt = true; return false; }
+      try {
+        if (dmaTeilNotwegZiel()) sessionStorage.setItem("dma-notweg-ziel", "klassenzimmer");
+        else sessionStorage.removeItem("dma-notweg-ziel");
+      } catch (x) {}
+      return true;
+    });
+    const ende = (neu) => {
+      dmaTeilNotwegLaeuft = null;
+      if (neu) return true;
+      dmaTeilNotwegBedarf = {};
+      dmaTeilNotwegAb = entwarnt ? 0 : Date.now() + 15000;
+      try { sessionStorage.removeItem("dma-notweg-ziel"); } catch (x) {}
       return false;
     };
     let p;
-    try { p = window.dmaGanzLaden("app.js", teil + ": " + String((e && e.message) || e)); } catch (x) { return Promise.resolve(zurueck()); }
-    return Promise.resolve(p).then((neu) => (neu ? true : zurueck()), zurueck);
+    try { p = Promise.resolve(window.dmaGanzLaden("app.js", teil + ": " + String((e && e.message) || e), noch)); }
+    catch (x) { p = Promise.resolve(false); }
+    dmaTeilNotwegLaeuft = p.then(ende, () => ende(false));
+    return dmaTeilNotwegLaeuft;
   }
   /* Eingesetzt wird in Ruhepausen, ein Stück je Pause (jedes nur ein paar Dutzend Millisekunden Rechnen), die
      Stücke fürs Klassenzimmer zuerst. Wird vorher eine Funktion daraus gebraucht, setzt dmaTeilRuf ihr Stück
@@ -143,17 +180,26 @@
     return Promise.all(DMA_TEILE_BAU.teile.filter((t) => t.replace(/\d+$/, "") === gruppe)
       .map((t) => { const p = dmaTeilHolen(t); return geholt && dmaTeilAnkunft[t] ? dmaTeilAnkunft[t] : p; }));
   }
-  /* FASSUNG 884 — die Raum-Stücke holen (fehlgeschlagene ein zweites Mal) und alle gleich einsetzen. Antwort true,
-     wenn danach jedes Raum-Stück eingesetzt ist; false = der schlanke Weg fällt aus (dann der Notweg). */
-  function dmaTeilRaum() {
-    if (!DMA_TEILE_BAU) return Promise.resolve(true);
-    const einsetzen = () => DMA_TEILE_BAU.teile.filter((t) => /^raum/.test(t)).map((t) => {
+  /* FASSUNG 884 — diese Stücke holen (fehlgeschlagene ein zweites Mal) und alle gleich einsetzen. Antwort true, wenn
+     danach jedes eingesetzt ist; false = der schlanke Weg fällt aus (dann der Notweg). dmaTeilRaum: die Raum-Stücke;
+     „noch" im Notweg: die Stücke, die ausgefallen sind. */
+  function dmaTeilListe(liste) {
+    if (!DMA_TEILE_BAU || !liste.length) return Promise.resolve(true);
+    const holen = () => Promise.all(liste.map((t) => {
+      if (dmaTeilDa[t]) return true;
+      const p = dmaTeilHolen(t);
+      return dmaTeilAnkunft[t] ? dmaTeilAnkunft[t] : p;
+    }));
+    const einsetzen = () => liste.map((t) => {
       try { return dmaTeilEinsetzen(t); } catch (e) { dmaTeilFehler(t, e); return false; }
     }).every(Boolean);
-    return dmaTeilGruppe("raum", true)
-      .then((da) => (da.indexOf(false) < 0 ? da : dmaTeilGruppe("raum", true)))
+    return holen()
+      .then((da) => (da.indexOf(false) < 0 ? da : holen()))
       .then(einsetzen)
       .catch(() => false);
+  }
+  function dmaTeilRaum() {
+    return DMA_TEILE_BAU ? dmaTeilListe(DMA_TEILE_BAU.teile.filter((t) => /^raum/.test(t))) : Promise.resolve(true);
   }
   /* … und warum (der letzte Fehler eines Raum-Stücks) – für den Grund des Notwegs */
   function dmaTeilRaumFehlt() {
@@ -217,7 +263,7 @@
       da: Object.assign({}, dmaTeilDa), geholt: Object.keys(dmaTeilWeg).filter((t) => dmaTeilWeg[t]),
       sofort: (window.DMA_TEIL_SOFORT || []).slice(), fehler: (window.DMA_TEIL_FEHLER || []).slice(),
       /* FASSUNG 884 — Notweg: läuft diese Seite mit der ganzen Quelle, und warum (pruefe-884-notweg.js) */
-      ganz: Boolean(window.DMA_GANZ && window.DMA_GANZ["app.js"]),
+      ganz: Boolean(window.DMA_GANZ && window.DMA_GANZ["app.js"]), laeuft: Boolean(dmaTeilNotwegLaeuft),
       notweg: (() => { try { return sessionStorage.getItem("dma-ganz-grund") || ""; } catch (e) { return ""; } })() }),
     holen: (t) => dmaTeilHolen(t), gruppe: (g) => dmaTeilGruppe(g)
   };
