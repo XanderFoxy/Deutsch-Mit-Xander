@@ -52,8 +52,25 @@
      N  ohne sw.js und ohne page.route (die schaltet den HTTP-Zwischen-
         speicher ab), Cache-Control wie GitHub Pages: der Server sieht
         /app.js genau einmal, Seite 2 überträgt 0 Byte.
+   Zweite Nachbesserung (884b, Prüfung: „auf langsamer Leitung lädt die
+   Seite die ganze app.js immer wieder, ohne dass sie je ankommt"):
+     J  (geändert) die Rückkehr wartet höchstens 40 s (eigene Frist), die
+        hängende Quelle wird NICHT abgebrochen und nicht neu angefragt;
+        kommt sie danach doch an, wird nicht neu geladen (Stücke da).
+     O  LANGSAME LEITUNG, Stück fehlt, Tipp alle 4 s: /app.js tröpfelt in
+        LANGSAM s (Vorgabe 45, mehr als die alte 40-s-Frist) – genau EIN
+        Abruf, nicht abgebrochen, genau EIN Neuladen nach der Ankunft,
+        Seite 2 aus dem Zwischenspeicher (kein zweiter Abruf), Tor kommt.
+     P  LANGSAME LEITUNG, Stück KAPUTT (wirft beim Einsetzen), nur EIN
+        Tipp: nach 41 s läuft der Notweg noch (kein Abbruch), nach der
+        Ankunft ein Neuladen von selbst, Klassenzimmer offen, Tor kommt.
+     Q  „noch" antwortet nicht binnen 8 s (die Stücke hängen, sobald die
+        Quelle angefragt ist): Neuladen nach der 8-s-Frist, und das
+        Klassenzimmer ist trotzdem wieder offen (Ziel-Merker).
+     R  höchstens drei Abrufe der Quelle je Fassung und Tab (auch über
+        ein Neuladen hinweg), nie zwei zugleich.
 
-   Aufruf:  node werkzeug/pruefe-884-notweg.js
+   Aufruf:  node werkzeug/pruefe-884-notweg.js   (LANGSAM=<s> verstellt O/P)
    Gegenprobe: WURZEL=<ordner mit altem index.html, app.js, min/> node …
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
@@ -69,6 +86,7 @@ const warte = async (f, ms) => { const bis = Date.now() + ms; while (Date.now() 
 const INDEX = fs.readFileSync(path.join(WURZEL, "index.html"), "utf8");
 const FASSUNG = (INDEX.match(/window\.DMA_VERSION = "(\d+)"/) || [0, "0"])[1];
 const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
+const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /app.js in O und P */
 
 (async () => {
   /* ---- 1. Bau ---- */
@@ -76,9 +94,10 @@ const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
   {
     const minApp = fs.readFileSync(path.join(WURZEL, "min/app.js"), "utf8");
     const echt = (n) => { const m = minApp.match(new RegExp("function " + n + "\\([^)]*\\)\\{(.{0,60})")); return Boolean(m && !/^return dmaTeilRufA?\(/.test(m[1])); };
-    sage(echt("dmaTeilNotweg") && echt("dmaTeilRaum") && echt("dmaTeilListe") && echt("dmaTeilNotwegZiel"), "dmaTeilNotweg, dmaTeilRaum, dmaTeilListe und dmaTeilNotwegZiel stehen als echte Funktionen in min/app.js (nicht ausgelagert)");
+    sage(echt("dmaTeilNotweg") && echt("dmaTeilRaum") && echt("dmaTeilListe") && echt("dmaTeilNotwegZiel") && echt("dmaTeilNotwegFrist"), "dmaTeilNotweg, dmaTeilRaum, dmaTeilListe, dmaTeilNotwegZiel und dmaTeilNotwegFrist stehen als echte Funktionen in min/app.js (nicht ausgelagert)");
     sage(/window\.dmaGanzLaden = function/.test(INDEX) && /window\.dmaFassungLaden = function/.test(INDEX) && /dma-ganz/.test(INDEX), "index.html hat dmaGanzLaden und dmaFassungLaden");
-    sage(/window\.dmaGanzLaden = function \(d, grund, noch\)/.test(INDEX) && /AbortController/.test(INDEX), "dmaGanzLaden fragt „noch\" und hat Fristen (AbortController)");
+    sage(/window\.dmaGanzLaden = function \(d, grund, noch\)/.test(INDEX) && /AbortController/.test(INDEX), "dmaGanzLaden fragt „noch\" und hat eine Frist für fassung.json (AbortController)");
+    sage(/function quelleHolen\(d, merk\)/.test(INDEX) && /dma-ganz-hol/.test(INDEX) && !/holenFrist\(d \+/.test(INDEX), "884b: die ganze Quelle holt quelleHolen – ohne Abbruch-Frist, höchstens drei Abrufe je Fassung und Tab");
   }
 
   /* ---- Server, der mitschreibt und Fehler macht ---- */
@@ -86,6 +105,11 @@ const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
   /* spaet/haengt: die Raum-Stücke fehlen, solange stueckWeg; /app.js hält der Server fest (spaet: bis quelleFrei(),
      haengt: nie). restfehlt: die Rest-Stücke fehlen. mitCache: /app.js mit Cache-Control wie GitHub Pages. */
   let stueckWeg = false, mitCache = false, quelleAbgebrochen = 0;
+  /* 884b: traeufeln = /app.js kommt in LANGSAM s (Content-Length, wie eine langsame Leitung; jeder Abruf landet in
+     quelleLog mit Beginn, Ende bzw. Abbruch). kaputt: die Raum-Stücke sind halb abgeschnitten (werfen beim Einsetzen).
+     nochhaengt: die Raum-Stücke fehlen (404); sobald /app.js angefragt ist, antworten sie erst nach 12 s (404). */
+  let traeufeln = false, quelleGesehen = false;
+  const quelleLog = [];
   const gehalten = [];
   const quelleFrei = () => { while (gehalten.length) { const x = gehalten.shift(); try { x.a.writeHead(200, { "Content-Type": "text/javascript" }); x.a.end(fs.readFileSync(path.join(WURZEL, "app.js"))); } catch (e) {} } };
   const anfragen = [];
@@ -100,6 +124,37 @@ const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
     if (modus === "offline" && p === "/app.js") return nicht();
     if ((modus === "spaet" || modus === "haengt") && raumTeil && stueckWeg) return nicht();
     if (modus === "restfehlt" && /^\/min\/app-teil-rest\d+\.js$/.test(p)) return nicht();
+    if (modus === "kaputt" && raumTeil) {
+      const roh = String(fs.readFileSync(path.join(WURZEL, p)));
+      a.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-store" });
+      return a.end(roh.slice(0, Math.floor(roh.length / 2)) + "\n@@kaputt@@\n");
+    }
+    if (modus === "nochhaengt" && raumTeil) {
+      if (!quelleGesehen) return nicht();
+      const uhr = setTimeout(() => { try { if (!a.destroyed) nicht(); } catch (e) {} }, 12000);
+      a.on("close", () => clearTimeout(uhr));
+      return;
+    }
+    if (modus === "nochhaengt" && p === "/app.js") quelleGesehen = true;
+    if (traeufeln && p === "/app.js") {
+      const body = fs.readFileSync(path.join(WURZEL, "app.js"));
+      const e = { t0: Date.now(), ende: 0, ab: 0 };
+      quelleLog.push(e);
+      const kopf = { "Content-Type": "text/javascript", "Content-Length": body.length };
+      if (mitCache) kopf["Cache-Control"] = "max-age=600";
+      a.writeHead(200, kopf);
+      const n = Math.ceil(LANGSAM * 1000 / 250), stueck = Math.ceil(body.length / n);
+      let k = 0;
+      const uhr = setInterval(() => {
+        if (a.destroyed) { clearInterval(uhr); return; }
+        const teil = body.subarray(k * stueck, (k + 1) * stueck); k++;
+        /* mit dem letzten Stück gleich schließen – „ende" ist der Augenblick, in dem das letzte Byte hinausgeht */
+        if (k * stueck >= body.length) { clearInterval(uhr); a.end(teil); e.ende = Date.now(); return; }
+        a.write(teil);
+      }, 250);
+      a.on("close", () => { clearInterval(uhr); if (!a.writableEnded) e.ab = Date.now(); });
+      return;
+    }
     if ((modus === "spaet" || modus === "haengt") && p === "/app.js") {
       a.on("close", () => { if (!a.writableEnded) quelleAbgebrochen++; });
       gehalten.push({ a, t: Date.now() });
@@ -125,6 +180,8 @@ const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
   await new Promise((r) => srv.on("listening", r));
   const HIER = "http://127.0.0.1:" + srv.address().port;
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
+  /* ein eigener Browser ohne page.route (die schaltet den HTTP-Zwischenspeicher ab); fremde Adressen sperrt er selbst */
+  const ohneRoute = () => chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1"] });
 
   async function fenster(init, arg, opt) {
     opt = opt || {};
@@ -442,7 +499,7 @@ const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
   }
 
   /* ---- J: Rückkehr, die Quelle hängt ganz ---- */
-  console.log("\nJ) RÜCKKEHR NACH DEM NEULADEN – DIE QUELLE HÄNGT GANZ (dauert ~45 s)\n");
+  console.log("\nJ) RÜCKKEHR NACH DEM NEULADEN – DIE QUELLE HÄNGT GANZ (dauert ~50 s)\n");
   {
     modus = "haengt"; stueckWeg = true; gehalten.length = 0; quelleAbgebrochen = 0;
     const { ctx, pg } = await fenster(falleZurueck);
@@ -459,8 +516,15 @@ const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
     const r = await pg.evaluate(() => ({ liste: JSON.parse(sessionStorage.getItem("sonde-betreten") || "[]"), ganz: localStorage.getItem("dma-ganz"), stand: window.DMA_TEILE.stand() })).catch((e) => ({ liste: [], x: e.message, stand: {} }));
     sage(rein && ms < 60000, "die Rückkehr geht nach der Frist trotzdem hinein – nicht ewig warten", rein ? ms + " ms nach der Anfrage der Quelle" : "in 70 s nicht");
     sage(r.liste.length >= 1 && r.liste.every((x) => x.gebaut === true), "hinein wie bisher (schlank, die Platzhalter holen ihre Stücke)", JSON.stringify(r.liste));
-    sage(quelleAbgebrochen >= 1, "der hängende Abruf der Quelle wurde abgebrochen (AbortController)", quelleAbgebrochen + "×");
-    sage(r.stand.laeuft === false && indexZahl(ab) === 1 && r.ganz === null, "der Notweg ist zu Ende, kein Neuladen, kein dma-ganz", JSON.stringify({ laeuft: r.stand.laeuft, index: indexZahl(ab), ganz: r.ganz }));
+    /* 884b: die Frist gilt nur dem Wartenden (Rückkehr) – die Quelle wird weder abgebrochen noch neu angefragt */
+    const nQ = anfragen.slice(ab).filter((x) => x.p === "/app.js").length;
+    sage(quelleAbgebrochen === 0 && nQ === 1, "884b: die hängende Quelle wird NICHT abgebrochen und nicht neu angefragt (sie darf noch ankommen)", "abgebrochen " + quelleAbgebrochen + "×, angefragt " + nQ + "×");
+    sage(r.stand.laeuft === true && indexZahl(ab) === 1 && r.ganz === null, "solange sie hängt: kein Neuladen, kein dma-ganz, der Notweg wartet auf sie", JSON.stringify({ laeuft: r.stand.laeuft, index: indexZahl(ab), ganz: r.ganz }));
+    quelleFrei();                                        /* … und jetzt kommt sie doch noch an */
+    await schlaf(4000);
+    const r2 = await pg.evaluate(() => ({ liste: JSON.parse(sessionStorage.getItem("sonde-betreten") || "[]"), ganz: localStorage.getItem("dma-ganz"), stand: window.DMA_TEILE.stand() })).catch((e) => ({ liste: [], x: e.message, stand: {} }));
+    sage(indexZahl(ab) === 1 && r2.ganz === null && r2.stand.laeuft === false && r2.liste.length === r.liste.length,
+      "sie kommt danach an: „noch\" findet die Stücke – kein Neuladen, der Notweg endet, man bleibt im Raum", JSON.stringify({ index: indexZahl(ab), ganz: r2.ganz, laeuft: r2.stand.laeuft, betreten: r2.liste.length }));
     gehalten.length = 0; modus = ""; stueckWeg = false;
     await ctx.close();
   }
@@ -547,7 +611,7 @@ const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
   /* ---- N: HTTP-Zwischenspeicher ohne sw.js und ohne page.route (Prüfung X4) ---- */
   console.log("\nN) OHNE sw.js: DIE VORAB GEHOLTE QUELLE KOMMT AUS DEM HTTP-ZWISCHENSPEICHER\n");
   {
-    const br2 = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1"] });
+    const br2 = await ohneRoute();
     modus = "fehlt"; mitCache = true;
     const { ctx, pg } = await fenster(null, null, { br: br2, ohneRoute: true });
     const ab = anfragen.length;
@@ -567,6 +631,149 @@ const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
     modus = ""; mitCache = false;
     await ctx.close();
     await br2.close();
+  }
+
+  /* Zeitpunkt der n-ten /index.html-Anfrage ab ab (0 = keine) */
+  const indexZeit = (ab, n) => { const i = nachIndex(ab, n); return i < anfragen.length ? anfragen[i].t : 0; };
+  const quelleText = () => JSON.stringify(quelleLog.map((e) => ({ beginn: 0, fertig: e.ende ? e.ende - e.t0 : null, abgebrochen: e.ab ? e.ab - e.t0 : null })));
+
+  /* ---- O: langsame Leitung, Stück fehlt, Tipp alle 4 s (Prüfung 884b, nachgestellt wie drain.js) ---- */
+  console.log("\nO) LANGSAME LEITUNG – EIN RAUM-STÜCK FEHLT, TIPP ALLE 4 s (/app.js braucht " + LANGSAM + " s; dauert ~" + (LANGSAM + 15) + " s)\n");
+  {
+    const br3 = await ohneRoute();
+    modus = "fehlt"; traeufeln = true; mitCache = true; quelleLog.length = 0;
+    const { ctx, pg } = await fenster(null, null, { br: br3, ohneRoute: true });
+    const ab = anfragen.length;
+    await pg.goto(HIER + "/index.html", { waitUntil: "load" });
+    await bereit(pg);
+    await attrappe(pg);
+    await zumKlassenzimmer(pg);
+    await schlaf(1200);
+    /* es passiert scheinbar nichts – man tippt immer wieder (bis die Seite neu lädt oder LANGSAM + 30 s um sind) */
+    const bis = Date.now() + (LANGSAM + 30) * 1000;
+    let tipps = 0;
+    while (Date.now() < bis && indexZahl(ab) < 2) { await betreten(pg); tipps++; await warte(() => indexZahl(ab) >= 2, 4000); }
+    const neu = await neueSeite(pg, ab, 2, 5000);
+    const tNeu = indexZeit(ab, 2);
+    await schlaf(2500);
+    const q = quelleLog.slice();
+    const nQ = anfragen.slice(ab).filter((x) => x.p === "/app.js").length;
+    const st = await pg.evaluate(() => ({ q: window.DMA_Q("app.js"), stand: window.DMA_TEILE.stand(),
+      kz: document.getElementById("sub-livechat")?.dataset.active, wissen: document.getElementById("view-knowledge")?.dataset.active })).catch((e) => ({ x: e.message, stand: {} }));
+    console.log("   (" + tipps + " Tipps; Abrufe der Quelle in ms ab ihrem Beginn: " + quelleText() + ")");
+    sage(q.length === 1 && !q[0].ab && q[0].ende > 0, "genau EIN Abruf der ganzen Quelle – nicht abgebrochen, vollständig angekommen", q.length + " Abruf(e)");
+    sage(neu && indexZahl(ab) === 2 && q.length >= 1 && q[0].ende > 0 && tNeu >= q[0].ende, "genau EIN Neuladen – erst nach der Ankunft der Quelle (index.html " + indexZahl(ab) + "×)",
+      neu && q[0] && q[0].ende ? "Neuladen " + (tNeu - q[0].ende) + " ms nach der Ankunft" : "");
+    sage(neu && st.q === "app.js" && st.stand.ganz === true && nQ === 1, "Seite 2 läuft mit der ganzen Quelle aus dem Zwischenspeicher (der Server sieht /app.js nur einmal)", "/app.js " + nQ + "×");
+    sage(st.kz === "true" && st.wissen === "true", "das Klassenzimmer ist wieder offen", "Wissen " + st.wissen + ", Klassenzimmer " + st.kz);
+    await attrappe(pg).catch(() => {});
+    const ok2 = neu && await zumKlassenzimmer(pg).catch(() => false);
+    await betreten(pg);
+    sage(ok2 && await torDa(pg, 8000), "Seite 2: „Klassenzimmer betreten\" → das Tor kommt");
+    modus = ""; traeufeln = false; mitCache = false;
+    await ctx.close();
+    await br3.close();
+  }
+
+  /* ---- P: langsame Leitung, Stück kaputt, nur ein Tipp ---- */
+  console.log("\nP) LANGSAME LEITUNG – DIE RAUM-STÜCKE SIND KAPUTT, NUR EIN TIPP (dauert ~" + (LANGSAM + 15) + " s)\n");
+  {
+    const br3 = await ohneRoute();
+    modus = "kaputt"; traeufeln = true; mitCache = true; quelleLog.length = 0;
+    const { ctx, pg } = await fenster(null, null, { br: br3, ohneRoute: true });
+    const ab = anfragen.length;
+    await pg.goto(HIER + "/index.html", { waitUntil: "load" });
+    await bereit(pg);
+    await attrappe(pg);
+    await zumKlassenzimmer(pg);
+    await schlaf(1200);
+    await betreten(pg);
+    const angefragt = await warte(() => quelleLog.length > 0, 15000);
+    const t0 = angefragt ? quelleLog[0].t0 : Date.now();
+    await warte(() => Date.now() - t0 > 41500, 45000);   /* nach der alten 40-s-Frist */
+    const mitte = await pg.evaluate(() => window.DMA_TEILE.stand()).catch(() => ({ fehler: [] }));
+    const nMitte = quelleLog.length, abMitte = quelleLog.some((e) => e.ab);
+    const neu = await neueSeite(pg, ab, 2, (LANGSAM + 20) * 1000);
+    const tNeu = indexZeit(ab, 2);
+    await schlaf(2500);
+    const q = quelleLog.slice();
+    const nQ = anfragen.slice(ab).filter((x) => x.p === "/app.js").length;
+    const st = await pg.evaluate(() => ({ q: window.DMA_Q("app.js"), stand: window.DMA_TEILE.stand(),
+      kz: document.getElementById("sub-livechat")?.dataset.active, wissen: document.getElementById("view-knowledge")?.dataset.active })).catch((e) => ({ x: e.message, stand: {} }));
+    console.log("   (Abrufe der Quelle in ms ab ihrem Beginn: " + quelleText() + ")");
+    sage((mitte.fehler || []).some((x) => /^raum/.test(x) && !/nicht geladen|HTTP/.test(x)), "das Stück kam an, wirft aber beim Einsetzen (kaputt, nicht 404)", (mitte.fehler || []).filter((x) => /^raum/.test(x)).slice(-1)[0]);
+    sage(angefragt && mitte.laeuft === true && nMitte === 1 && !abMitte, "41,5 s nach dem Abruf läuft der Notweg noch – die Quelle wird nicht abgebrochen", JSON.stringify({ laeuft: mitte.laeuft, abrufe: nMitte, abgebrochen: abMitte }));
+    sage(neu && indexZahl(ab) === 2 && q.length === 1 && q[0].ende > 0 && tNeu >= q[0].ende, "ohne weiteren Tipp: genau EIN Neuladen, sobald die Quelle da ist",
+      neu && q[0] && q[0].ende ? "Neuladen " + (tNeu - q[0].ende) + " ms nach der Ankunft" : "index.html " + indexZahl(ab) + "×");
+    sage(neu && st.q === "app.js" && st.stand.ganz === true && nQ === 1 && st.kz === "true", "Seite 2: ganze Quelle aus dem Zwischenspeicher, das Klassenzimmer ist offen", JSON.stringify({ q: st.q, app: nQ, kz: st.kz }));
+    await attrappe(pg).catch(() => {});
+    const ok2 = neu && await zumKlassenzimmer(pg).catch(() => false);
+    await betreten(pg);
+    sage(ok2 && await torDa(pg, 8000), "Seite 2: „Klassenzimmer betreten\" → das Tor kommt");
+    const f2 = pg.__fehler.filter((x) => x.s >= 2).map((x) => x.t);
+    sage(neu && !f2.length, "keine Seitenfehler auf Seite 2", f2.slice(0, 3).join(" | "));
+    modus = ""; traeufeln = false; mitCache = false;
+    await ctx.close();
+    await br3.close();
+  }
+
+  /* ---- Q: „noch" antwortet nicht binnen 8 s (Prüfung 884b, Mangel 2) ---- */
+  console.log("\nQ) „NOCH\" ANTWORTET NICHT BINNEN 8 s – DAS ZIEL BLEIBT DAS KLASSENZIMMER\n");
+  {
+    modus = "nochhaengt"; quelleGesehen = false;
+    const { ctx, pg } = await fenster();
+    const ab = anfragen.length;
+    await pg.goto(HIER + "/index.html", { waitUntil: "load" });
+    await bereit(pg);
+    await attrappe(pg);
+    await zumKlassenzimmer(pg);
+    await schlaf(1200);
+    await betreten(pg);
+    const neu = await neueSeite(pg, ab, 2, 40000);
+    const iQ = anfragen.slice(ab).find((x) => x.p === "/app.js");
+    const tNeu = indexZeit(ab, 2);
+    await schlaf(2500);
+    const r = await pg.evaluate(() => ({ kz: document.getElementById("sub-livechat")?.dataset.active, wissen: document.getElementById("view-knowledge")?.dataset.active, q: window.DMA_Q("app.js") })).catch((e) => ({ x: e.message }));
+    sage(neu && indexZahl(ab) === 2 && r.q === "app.js", "ein Neuladen mit der ganzen Quelle (index.html " + indexZahl(ab) + "×)");
+    sage(neu && iQ && tNeu - iQ.t >= 7500, "erst nach der 8-s-Frist von „noch\" (die Stücke hingen)", iQ && tNeu ? (tNeu - iQ.t) + " ms nach der Anfrage der Quelle" : "");
+    sage(r.kz === "true" && r.wissen === "true", "danach ist das Klassenzimmer offen – das Ziel stand schon beim Fragen fest", "Wissen " + r.wissen + ", Klassenzimmer " + r.kz);
+    modus = ""; quelleGesehen = false;
+    await ctx.close();
+  }
+
+  /* ---- R: höchstens drei Abrufe je Fassung und Tab, nie zwei zugleich ---- */
+  console.log("\nR) HÖCHSTENS DREI ABRUFE DER QUELLE JE FASSUNG UND TAB – NIE ZWEI ZUGLEICH\n");
+  {
+    modus = "offline";
+    const { ctx, pg } = await fenster();
+    const ab = anfragen.length;
+    await pg.goto(HIER + "/index.html", { waitUntil: "load" });
+    await bereit(pg);
+    const ruf = () => pg.evaluate(() => window.dmaGanzLaden("app.js", "sonde-r", () => false)).catch(() => null);
+    await ruf(); await ruf();
+    await pg.reload({ waitUntil: "load" });
+    await bereit(pg);
+    await ruf(); await ruf();
+    const n = anfragen.slice(ab).filter((x) => x.p === "/app.js").length;
+    sage(n === 3, "vier Notwege (zwei vor, zwei nach einem Neuladen), die Quelle ist jedesmal weg: der Server sieht /app.js höchstens dreimal", n + "×");
+    await ctx.close();
+  }
+  {
+    modus = "haengt"; stueckWeg = false; gehalten.length = 0;
+    const { ctx, pg } = await fenster();
+    const ab = anfragen.length;
+    await pg.goto(HIER + "/index.html", { waitUntil: "load" });
+    await bereit(pg);
+    await pg.evaluate(() => { window.__sondeR = []; [1, 2].forEach(() => window.dmaGanzLaden("app.js", "sonde-r", () => false).then((x) => window.__sondeR.push(x))); });
+    await schlaf(2500);
+    const n1 = anfragen.slice(ab).filter((x) => x.p === "/app.js").length;
+    quelleFrei();
+    await pg.waitForFunction(() => window.__sondeR.length === 2, null, { timeout: 15000 }).catch(() => {});
+    const r = await pg.evaluate(() => ({ r: window.__sondeR, ganz: localStorage.getItem("dma-ganz") })).catch((e) => ({ r: [], x: e.message }));
+    sage(n1 === 1, "zwei Notwege zugleich: EIN Abruf der Quelle", n1 + "×");
+    sage(r.r.length === 2 && r.r.every((x) => x === false) && r.ganz === null && indexZahl(ab) === 1, "beide bekommen ihre Antwort („noch\" sagt nein: kein Neuladen, kein dma-ganz)", JSON.stringify(r.r));
+    gehalten.length = 0; modus = "";
+    await ctx.close();
   }
 
   await br.close(); srv.close();

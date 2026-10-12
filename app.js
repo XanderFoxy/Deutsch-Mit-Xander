@@ -88,7 +88,16 @@
        - Wohin die neue Seite führt, entscheidet der Augenblick des Neuladens, nicht der erste Ausfall (dmaTeilNotwegZiel):
          ist das Klassenzimmer offen oder ist man im Raum (LiveChat drin/verbindet), geht es zurück ins Klassenzimmer –
          wer den Raum längst verlassen hat und anderswo ist, bleibt, wo die Seite ihn hinstellt.
-       - Hängt die Leitung, endet der Notweg trotzdem (Fristen in dmaGanzLaden); danach ist ein neuer Versuch möglich. */
+     Zweite Nachbesserung (Prüfung 884b, „keine Neulade-Schleife auf langsamer Leitung"):
+       - Die ganze Quelle wird nicht mehr nach 40 s abgebrochen (das war auf langsamer Leitung eine Schleife: Abbruch,
+         15 s Pause, derselbe Abruf von vorn, nie angekommen). Sie wird einmal geholt, bis sie da ist (index.html
+         quelleHolen, höchstens drei Abrufe je Fassung und Tab); solange läuft dieser Notweg, und jeder weitere
+         Ausfall bekommt seine Antwort. Wer nicht so lange warten kann (die Rückkehr in den Raum), hat seine eigene
+         Frist (dmaTeilNotwegFrist) – das Holen läuft dabei weiter.
+       - Das Ziel der neuen Seite wird gleich beim Fragen von „noch" festgehalten und nach der Antwort aufgefrischt:
+         antwortet „noch" nicht binnen 8 s, lädt index.html trotzdem neu – vorher fehlte dann der Merker, und wer im
+         Klassenzimmer getippt hatte, stand nach dem Neuladen woanders. Weggeräumt wird er nur, wenn NICHT neu
+         geladen wird (ende). */
   var dmaTeilNotwegLaeuft = null;
   var dmaTeilNotwegAb = 0;
   var dmaTeilNotwegBedarf = {};
@@ -108,15 +117,22 @@
     if (dmaTeilNotwegLaeuft) return dmaTeilNotwegLaeuft;
     if (Date.now() < dmaTeilNotwegAb) return Promise.resolve(false);
     let entwarnt = false;
-    /* „noch": fehlt eines der Stücke noch? Dann auch das Ziel der neuen Seite festhalten. */
-    const noch = () => dmaTeilListe(Object.keys(dmaTeilNotwegBedarf).filter((t) => !dmaTeilDa[t])).then((da) => {
-      if (da) { entwarnt = true; return false; }
+    /* „noch": fehlt eines der Stücke noch? Das Ziel der neuen Seite wird sofort festgehalten (falls index.html nach 8 s
+       nicht mehr auf die Antwort wartet) und mit der Antwort aufgefrischt. */
+    const ziel = () => {
       try {
         if (dmaTeilNotwegZiel()) sessionStorage.setItem("dma-notweg-ziel", "klassenzimmer");
         else sessionStorage.removeItem("dma-notweg-ziel");
       } catch (x) {}
-      return true;
-    });
+    };
+    const noch = () => {
+      ziel();
+      return dmaTeilListe(Object.keys(dmaTeilNotwegBedarf).filter((t) => !dmaTeilDa[t])).then((da) => {
+        if (da) { entwarnt = true; return false; }
+        ziel();
+        return true;
+      });
+    };
     const ende = (neu) => {
       dmaTeilNotwegLaeuft = null;
       if (neu) return true;
@@ -130,6 +146,11 @@
     catch (x) { p = Promise.resolve(false); }
     dmaTeilNotwegLaeuft = p.then(ende, () => ende(false));
     return dmaTeilNotwegLaeuft;
+  }
+  /* FASSUNG 884 (884b) — auf den Notweg warten, aber höchstens ms: danach false für DIESEN Wartenden. Der Notweg selbst
+     läuft weiter (die Quelle wird nicht abgebrochen); kommt sie an und fehlen die Stücke dann noch, lädt er neu. */
+  function dmaTeilNotwegFrist(p, ms) {
+    return Promise.race([p, new Promise((r) => setTimeout(() => r(false), ms))]);
   }
   /* Eingesetzt wird in Ruhepausen, ein Stück je Pause (jedes nur ein paar Dutzend Millisekunden Rechnen), die
      Stücke fürs Klassenzimmer zuerst. Wird vorher eine Funktion daraus gebraucht, setzt dmaTeilRuf ihr Stück
@@ -69863,11 +69884,12 @@
         const einmal = () => { if (!los) { los = true; rein(); } };
         /* geholt – jetzt gleich einsetzen (nicht erst in der Ruhepause). FASSUNG 884 — fehlen sie oder passen sie nicht:
            nicht mit halbem app.js hinein, erst der Notweg (ganze Quelle, neu laden, dann geht es hier wieder hinein);
-           lädt der nicht neu (keine Leitung), wie bisher hinein. */
+           lädt der nicht neu (keine Leitung), wie bisher hinein. 884b: höchstens 40 s gewartet (dmaTeilNotwegFrist),
+           dann wie bisher hinein – die Quelle wird dabei weiter geholt (nicht mehr abgebrochen). */
         dmaTeilRaum().then((ok) => {
           if (ok || los) { einmal(); return; }
           los = true;
-          dmaTeilNotweg("raum", dmaTeilRaumFehlt()).then((neu) => { if (!neu) rein(); });
+          dmaTeilNotwegFrist(dmaTeilNotweg("raum", dmaTeilRaumFehlt()), 40000).then((neu) => { if (!neu) rein(); });
         }, einmal);
         setTimeout(einmal, 2500);
       }
