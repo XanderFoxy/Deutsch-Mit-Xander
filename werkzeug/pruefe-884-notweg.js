@@ -69,8 +69,24 @@
         Klassenzimmer ist trotzdem wieder offen (Ziel-Merker).
      R  höchstens drei Abrufe der Quelle je Fassung und Tab (auch über
         ein Neuladen hinweg), nie zwei zugleich.
+   Nachbesserung 1 zu 884b (Prüfung: „auf langsamer Leitung lädt die
+   Seite mitten im Gespräch neu, weil ein Stück fehlt, das der Raum gar
+   nicht braucht"):
+     S  LANGSAME LEITUNG, ein REST-Stück fällt im Lernen aus (Grammatik),
+        danach betritt man den Raum; die Quelle kommt im Gespräch an:
+        KEIN Neuladen, solange man drin ist; ein weiterer Ausfall eines
+        Rest-Stücks im Raum beginnt keinen Notweg. Raum verlassen, der
+        nächste Ausfall: genau EIN Neuladen, sofort, ohne neuen Abruf
+        (/app.js 1×), nicht ungefragt ins Klassenzimmer.
+     T  „noch" antwortet zu spät, der Notweg endet ohne Neuladen (neuere
+        Fassung schon einmal geholt): die späte Antwort setzt den
+        Ziel-Merker NICHT neu; ein Neuladen von Hand öffnet danach nicht
+        ungefragt das Klassenzimmer.
+     U  „noch" hängt (das Rest-Stück antwortet erst nach 10 s), und man
+        betritt WÄHRENDDESSEN den Raum: auch nach der 8-s-Frist kein
+        Neuladen im Gespräch („noch" antwortet selbst binnen 7,5 s).
 
-   Aufruf:  node werkzeug/pruefe-884-notweg.js   (LANGSAM=<s> verstellt O/P)
+   Aufruf:  node werkzeug/pruefe-884-notweg.js   (LANGSAM=<s> verstellt O/P; NUR=S,T,U nur diese Fälle, ohne A–R)
    Gegenprobe: WURZEL=<ordner mit altem index.html, app.js, min/> node …
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
@@ -87,6 +103,8 @@ const INDEX = fs.readFileSync(path.join(WURZEL, "index.html"), "utf8");
 const FASSUNG = (INDEX.match(/window\.DMA_VERSION = "(\d+)"/) || [0, "0"])[1];
 const NEU = String(Number(FASSUNG) + 1), ALT = String(Number(FASSUNG) - 1);
 const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /app.js in O und P */
+const NUR = String(process.env.NUR || "").split(",").map((x) => x.trim().toUpperCase()).filter(Boolean);
+const lauf = (k) => !NUR.length || NUR.indexOf(k) >= 0;
 
 (async () => {
   /* ---- 1. Bau ---- */
@@ -98,6 +116,7 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
     sage(/window\.dmaGanzLaden = function/.test(INDEX) && /window\.dmaFassungLaden = function/.test(INDEX) && /dma-ganz/.test(INDEX), "index.html hat dmaGanzLaden und dmaFassungLaden");
     sage(/window\.dmaGanzLaden = function \(d, grund, noch\)/.test(INDEX) && /AbortController/.test(INDEX), "dmaGanzLaden fragt „noch\" und hat eine Frist für fassung.json (AbortController)");
     sage(/function quelleHolen\(d, merk\)/.test(INDEX) && /dma-ganz-hol/.test(INDEX) && !/holenFrist\(d \+/.test(INDEX), "884b: die ganze Quelle holt quelleHolen – ohne Abbruch-Frist, höchstens drei Abrufe je Fassung und Tab");
+    sage(echt("dmaTeilNotwegWarten") && echt("dmaTeilNotwegImRaum"), "884b NB1: dmaTeilNotwegWarten und dmaTeilNotwegImRaum stehen als echte Funktionen in min/app.js (im Gespräch nur für Raum-Stücke neu laden)");
   }
 
   /* ---- Server, der mitschreibt und Fehler macht ---- */
@@ -110,10 +129,16 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
      nochhaengt: die Raum-Stücke fehlen (404); sobald /app.js angefragt ist, antworten sie erst nach 12 s (404). */
   let traeufeln = false, quelleGesehen = false;
   const quelleLog = [];
+  /* 884b NB1: traeufelS = eigene Dauer für /app.js (sonst LANGSAM). fassungLangsam: fassung.json antwortet erst nach 1 s
+     (damit die Sonde den Server umstellen kann, bevor „noch" fragt). stueckHaengt: in resthaengt (Rest-Stücke) bzw.
+     zielspaet (Raum-Stücke) antworten die Stücke erst nach HAENG ms (404) – vorher sofort 404; jede hängende Anfrage
+     landet in haengend. zielspaet: fassung.json meldet immer die neuere Fassung. */
+  let traeufelS = 0, fassungLangsam = false, stueckHaengt = false;
+  const HAENG = 10000, haengend = [];
   const gehalten = [];
   const quelleFrei = () => { while (gehalten.length) { const x = gehalten.shift(); try { x.a.writeHead(200, { "Content-Type": "text/javascript" }); x.a.end(fs.readFileSync(path.join(WURZEL, "app.js"))); } catch (e) {} } };
   const anfragen = [];
-  const srv = http.createServer((q, a) => {
+  const bedienen = (q, a) => {
     const i = q.url.indexOf("?");
     let p = decodeURIComponent(i < 0 ? q.url : q.url.slice(0, i)); if (p === "/") p = "/index.html";
     const such = i < 0 ? "" : q.url.slice(i + 1);
@@ -124,6 +149,17 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
     if (modus === "offline" && p === "/app.js") return nicht();
     if ((modus === "spaet" || modus === "haengt") && raumTeil && stueckWeg) return nicht();
     if (modus === "restfehlt" && /^\/min\/app-teil-rest\d+\.js$/.test(p)) return nicht();
+    if ((modus === "resthaengt" && /^\/min\/app-teil-rest\d+\.js$/.test(p)) || (modus === "zielspaet" && raumTeil)) {
+      if (!stueckHaengt) return nicht();
+      haengend.push({ p, t: Date.now() });
+      const uhr = setTimeout(() => { try { if (!a.destroyed) nicht(); } catch (e) {} }, HAENG);
+      a.on("close", () => clearTimeout(uhr));
+      return;
+    }
+    if (modus === "zielspaet" && p === "/fassung.json") {
+      a.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      return a.end(JSON.stringify({ fassung: NEU }));
+    }
     if (modus === "kaputt" && raumTeil) {
       const roh = String(fs.readFileSync(path.join(WURZEL, p)));
       a.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-store" });
@@ -143,7 +179,7 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
       const kopf = { "Content-Type": "text/javascript", "Content-Length": body.length };
       if (mitCache) kopf["Cache-Control"] = "max-age=600";
       a.writeHead(200, kopf);
-      const n = Math.ceil(LANGSAM * 1000 / 250), stueck = Math.ceil(body.length / n);
+      const n = Math.ceil((traeufelS || LANGSAM) * 1000 / 250), stueck = Math.ceil(body.length / n);
       let k = 0;
       const uhr = setInterval(() => {
         if (a.destroyed) { clearInterval(uhr); return; }
@@ -176,6 +212,10 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
     if (modus === "neuer" && neuStufe === 2 && p === "/index.html") body = Buffer.from(String(body).replace(/window\.DMA_VERSION = "\d+"/, 'window.DMA_VERSION = "' + NEU + '"'));
     if (mitCache && p === "/app.js") kopf["Cache-Control"] = "max-age=600";
     a.writeHead(200, kopf); a.end(body);
+  };
+  const srv = http.createServer((q, a) => {
+    if (fassungLangsam && /^\/fassung\.json/.test(q.url)) { setTimeout(() => bedienen(q, a), 1000); return; }
+    bedienen(q, a);
   }).listen(0);
   await new Promise((r) => srv.on("listening", r));
   const HIER = "http://127.0.0.1:" + srv.address().port;
@@ -249,8 +289,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   };
 
   /* ---- A: Stück fehlt, Tipp ---- */
-  console.log("\nA) EIN RAUM-STÜCK FEHLT – TIPP AUF „KLASSENZIMMER BETRETEN\"\n");
-  {
+  if (lauf("A")) console.log("\nA) EIN RAUM-STÜCK FEHLT – TIPP AUF „KLASSENZIMMER BETRETEN\"\n");
+  if (lauf("A")) {
     modus = "fehlt";
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -295,8 +335,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- B: Stück passt nicht, Rückkehr nach dem Neuladen ---- */
-  console.log("\nB) EIN RAUM-STÜCK PASST NICHT – RÜCKKEHR NACH DEM NEULADEN\n");
-  {
+  if (lauf("B")) console.log("\nB) EIN RAUM-STÜCK PASST NICHT – RÜCKKEHR NACH DEM NEULADEN\n");
+  if (lauf("B")) {
     modus = "passtnicht";
     const { ctx, pg } = await fenster(falleZurueck);
     const ab = anfragen.length;
@@ -312,8 +352,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- C: keine Leitung zur Quelle ---- */
-  console.log("\nC) KEINE LEITUNG ZUR GANZEN QUELLE\n");
-  {
+  if (lauf("C")) console.log("\nC) KEINE LEITUNG ZUR GANZEN QUELLE\n");
+  if (lauf("C")) {
     modus = "offline";
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -337,8 +377,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- D: Normalfall ---- */
-  console.log("\nD) NORMALFALL: NICHTS ÄNDERT SICH\n");
-  {
+  if (lauf("D")) console.log("\nD) NORMALFALL: NICHTS ÄNDERT SICH\n");
+  if (lauf("D")) {
     modus = "";
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -359,8 +399,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- E: dma-ganz einer anderen / derselben Fassung ---- */
-  console.log("\nE) DER MERKER GILT NUR FÜR SEINE FASSUNG\n");
-  {
+  if (lauf("E")) console.log("\nE) DER MERKER GILT NUR FÜR SEINE FASSUNG\n");
+  if (lauf("E")) {
     modus = "";
     const { ctx, pg } = await fenster((alt) => { try { if (!sessionStorage.getItem("sonde-e")) { localStorage.setItem("dma-ganz", JSON.stringify({ f: alt, d: ["app.js"] })); sessionStorage.setItem("sonde-e", "1"); } } catch (e) {} }, ALT);
     const ab = anfragen.length;
@@ -371,7 +411,7 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
     sage(r.q === "min/app.js" && r.gebaut && anfragen.slice(ab).some((x) => x.p === "/min/app.js") && !anfragen.slice(ab).some((x) => x.p === "/app.js"), "es kommt min/app.js wie immer");
     await ctx.close();
   }
-  {
+  if (lauf("E")) {
     modus = "";
     const { ctx, pg } = await fenster((f) => { try { localStorage.setItem("dma-ganz", JSON.stringify({ f, d: ["app.js"] })); } catch (e) {} }, FASSUNG);
     const ab = anfragen.length;
@@ -389,8 +429,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- F: neuere Fassung auf dem Server ---- */
-  console.log("\nF) AUF DEM SERVER LIEGT SCHON FASSUNG " + NEU + "\n");
-  {
+  if (lauf("F")) console.log("\nF) AUF DEM SERVER LIEGT SCHON FASSUNG " + NEU + "\n");
+  if (lauf("F")) {
     modus = "neuer"; fassungNeu = false; neuStufe = 0;
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -421,8 +461,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- G: mit sw.js ---- */
-  console.log("\nG) MIT DEM ZWISCHENSPEICHER sw.js (?mit-sw)\n");
-  {
+  if (lauf("G")) console.log("\nG) MIT DEM ZWISCHENSPEICHER sw.js (?mit-sw)\n");
+  if (lauf("G")) {
     modus = "fehlt";
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -446,8 +486,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- H: die Quelle kommt spät, das Stück ist inzwischen da (Prüfung X3) ---- */
-  console.log("\nH) DIE QUELLE KOMMT SPÄT – DAS STÜCK IST INZWISCHEN DA (ZWEITER TIPP)\n");
-  {
+  if (lauf("H")) console.log("\nH) DIE QUELLE KOMMT SPÄT – DAS STÜCK IST INZWISCHEN DA (ZWEITER TIPP)\n");
+  if (lauf("H")) {
     modus = "spaet"; stueckWeg = true; gehalten.length = 0;
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -473,8 +513,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- I: die Quelle kommt spät, das Stück ist jetzt über die Leitung zu haben (kein zweiter Tipp) ---- */
-  console.log("\nI) DIE QUELLE KOMMT SPÄT – DAS STÜCK IST JETZT ZU HABEN (OHNE ZWEITEN TIPP)\n");
-  {
+  if (lauf("I")) console.log("\nI) DIE QUELLE KOMMT SPÄT – DAS STÜCK IST JETZT ZU HABEN (OHNE ZWEITEN TIPP)\n");
+  if (lauf("I")) {
     modus = "spaet"; stueckWeg = true; gehalten.length = 0;
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -499,8 +539,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- J: Rückkehr, die Quelle hängt ganz ---- */
-  console.log("\nJ) RÜCKKEHR NACH DEM NEULADEN – DIE QUELLE HÄNGT GANZ (dauert ~50 s)\n");
-  {
+  if (lauf("J")) console.log("\nJ) RÜCKKEHR NACH DEM NEULADEN – DIE QUELLE HÄNGT GANZ (dauert ~50 s)\n");
+  if (lauf("J")) {
     modus = "haengt"; stueckWeg = true; gehalten.length = 0; quelleAbgebrochen = 0;
     const { ctx, pg } = await fenster(falleZurueck);
     const ab = anfragen.length;
@@ -530,8 +570,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- K: im Raum, Ansicht nicht das Klassenzimmer (Prüfung X2b) ---- */
-  console.log("\nK) IM RAUM, ANDERE ANSICHT – DIE RAUM-STÜCKE FEHLEN\n");
-  {
+  if (lauf("K")) console.log("\nK) IM RAUM, ANDERE ANSICHT – DIE RAUM-STÜCKE FEHLEN\n");
+  if (lauf("K")) {
     modus = "fehlt";
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -553,8 +593,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- L: Raum verlassen, später fällt anderswo ein Stück aus ---- */
-  console.log("\nL) RAUM VERLASSEN – SPÄTER FÄLLT IM LERNEN EIN REST-STÜCK AUS\n");
-  {
+  if (lauf("L")) console.log("\nL) RAUM VERLASSEN – SPÄTER FÄLLT IM LERNEN EIN REST-STÜCK AUS\n");
+  if (lauf("L")) {
     modus = "restfehlt";
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -581,8 +621,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- M: messung.js meldet die Notweg-Seite ---- */
-  console.log("\nM) MESSUNG: DIE NOTWEG-SEITE IST IN mess-start ZU ERKENNEN\n");
-  {
+  if (lauf("M")) console.log("\nM) MESSUNG: DIE NOTWEG-SEITE IST IN mess-start ZU ERKENNEN\n");
+  if (lauf("M")) {
     modus = "fehlt";
     const { ctx, pg } = await fenster(() => { try {
       if (!localStorage.getItem("dma-mess-pruef")) localStorage.setItem("dma-mess-pruef", "schnell");
@@ -609,8 +649,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- N: HTTP-Zwischenspeicher ohne sw.js und ohne page.route (Prüfung X4) ---- */
-  console.log("\nN) OHNE sw.js: DIE VORAB GEHOLTE QUELLE KOMMT AUS DEM HTTP-ZWISCHENSPEICHER\n");
-  {
+  if (lauf("N")) console.log("\nN) OHNE sw.js: DIE VORAB GEHOLTE QUELLE KOMMT AUS DEM HTTP-ZWISCHENSPEICHER\n");
+  if (lauf("N")) {
     const br2 = await ohneRoute();
     modus = "fehlt"; mitCache = true;
     const { ctx, pg } = await fenster(null, null, { br: br2, ohneRoute: true });
@@ -638,8 +678,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   const quelleText = () => JSON.stringify(quelleLog.map((e) => ({ beginn: 0, fertig: e.ende ? e.ende - e.t0 : null, abgebrochen: e.ab ? e.ab - e.t0 : null })));
 
   /* ---- O: langsame Leitung, Stück fehlt, Tipp alle 4 s (Prüfung 884b, nachgestellt wie drain.js) ---- */
-  console.log("\nO) LANGSAME LEITUNG – EIN RAUM-STÜCK FEHLT, TIPP ALLE 4 s (/app.js braucht " + LANGSAM + " s; dauert ~" + (LANGSAM + 15) + " s)\n");
-  {
+  if (lauf("O")) console.log("\nO) LANGSAME LEITUNG – EIN RAUM-STÜCK FEHLT, TIPP ALLE 4 s (/app.js braucht " + LANGSAM + " s; dauert ~" + (LANGSAM + 15) + " s)\n");
+  if (lauf("O")) {
     const br3 = await ohneRoute();
     modus = "fehlt"; traeufeln = true; mitCache = true; quelleLog.length = 0;
     const { ctx, pg } = await fenster(null, null, { br: br3, ohneRoute: true });
@@ -676,8 +716,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- P: langsame Leitung, Stück kaputt, nur ein Tipp ---- */
-  console.log("\nP) LANGSAME LEITUNG – DIE RAUM-STÜCKE SIND KAPUTT, NUR EIN TIPP (dauert ~" + (LANGSAM + 15) + " s)\n");
-  {
+  if (lauf("P")) console.log("\nP) LANGSAME LEITUNG – DIE RAUM-STÜCKE SIND KAPUTT, NUR EIN TIPP (dauert ~" + (LANGSAM + 15) + " s)\n");
+  if (lauf("P")) {
     const br3 = await ohneRoute();
     modus = "kaputt"; traeufeln = true; mitCache = true; quelleLog.length = 0;
     const { ctx, pg } = await fenster(null, null, { br: br3, ohneRoute: true });
@@ -718,8 +758,8 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
   }
 
   /* ---- Q: „noch" antwortet nicht binnen 8 s (Prüfung 884b, Mangel 2) ---- */
-  console.log("\nQ) „NOCH\" ANTWORTET NICHT BINNEN 8 s – DAS ZIEL BLEIBT DAS KLASSENZIMMER\n");
-  {
+  if (lauf("Q")) console.log("\nQ) „NOCH\" ANTWORTET NICHT BINNEN 8 s – DAS ZIEL BLEIBT DAS KLASSENZIMMER\n");
+  if (lauf("Q")) {
     modus = "nochhaengt"; quelleGesehen = false;
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -735,15 +775,15 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
     await schlaf(2500);
     const r = await pg.evaluate(() => ({ kz: document.getElementById("sub-livechat")?.dataset.active, wissen: document.getElementById("view-knowledge")?.dataset.active, q: window.DMA_Q("app.js") })).catch((e) => ({ x: e.message }));
     sage(neu && indexZahl(ab) === 2 && r.q === "app.js", "ein Neuladen mit der ganzen Quelle (index.html " + indexZahl(ab) + "×)");
-    sage(neu && iQ && tNeu - iQ.t >= 7500, "erst nach der 8-s-Frist von „noch\" (die Stücke hingen)", iQ && tNeu ? (tNeu - iQ.t) + " ms nach der Anfrage der Quelle" : "");
+    sage(neu && iQ && tNeu - iQ.t >= 7500, "erst nach der Frist von „noch\" (die Stücke hingen; 7,5 s in app.js, 8 s in index.html)", iQ && tNeu ? (tNeu - iQ.t) + " ms nach der Anfrage der Quelle" : "");
     sage(r.kz === "true" && r.wissen === "true", "danach ist das Klassenzimmer offen – das Ziel stand schon beim Fragen fest", "Wissen " + r.wissen + ", Klassenzimmer " + r.kz);
     modus = ""; quelleGesehen = false;
     await ctx.close();
   }
 
   /* ---- R: höchstens drei Abrufe je Fassung und Tab, nie zwei zugleich ---- */
-  console.log("\nR) HÖCHSTENS DREI ABRUFE DER QUELLE JE FASSUNG UND TAB – NIE ZWEI ZUGLEICH\n");
-  {
+  if (lauf("R")) console.log("\nR) HÖCHSTENS DREI ABRUFE DER QUELLE JE FASSUNG UND TAB – NIE ZWEI ZUGLEICH\n");
+  if (lauf("R")) {
     modus = "offline";
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -758,7 +798,7 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
     sage(n === 3, "vier Notwege (zwei vor, zwei nach einem Neuladen), die Quelle ist jedesmal weg: der Server sieht /app.js höchstens dreimal", n + "×");
     await ctx.close();
   }
-  {
+  if (lauf("R")) {
     modus = "haengt"; stueckWeg = false; gehalten.length = 0;
     const { ctx, pg } = await fenster();
     const ab = anfragen.length;
@@ -773,6 +813,129 @@ const LANGSAM = Number(process.env.LANGSAM || 45);   /* s, so lange tröpfelt /a
     sage(n1 === 1, "zwei Notwege zugleich: EIN Abruf der Quelle", n1 + "×");
     sage(r.r.length === 2 && r.r.every((x) => x === false) && r.ganz === null && indexZahl(ab) === 1, "beide bekommen ihre Antwort („noch\" sagt nein: kein Neuladen, kein dma-ganz)", JSON.stringify(r.r));
     gehalten.length = 0; modus = "";
+    await ctx.close();
+  }
+
+  /* ---- Nachbesserung 1 zu 884b: im Gespräch nur für ein Raum-Stück neu laden ---- */
+  const grammatik = (pg) => pg.evaluate(() => {
+    document.querySelector('.tape-tab[data-target="view-learn"]').click();
+    const b = [...document.querySelectorAll("#view-learn .subnav-pill")].find((x) => /Grammatik/.test(x.textContent));
+    if (b) b.click();
+    return Boolean(b);
+  }).catch(() => false);
+  const insGespraech = (pg) => pg.evaluate(() => {
+    window.LiveChat.pruefSitz({ lage: "drin", ichId: "ich", ichName: "Alex", seit: 1000, zuruecksetzen: true, leute: {} });
+    try { window.LiveChat.pruefEmpfangen({ art: "hallo", von: "cem", name: "Cem", buehne: true, seit: 7000 }); } catch (e) {}
+    return window.LiveChat.lage().lage;
+  }).catch((e) => "?" + e.message);
+  const lageJetzt = (pg) => pg.evaluate(() => ({ lage: window.LiveChat.lage().lage, stand: window.DMA_TEILE.stand(), ganz: localStorage.getItem("dma-ganz"),
+    ziel: sessionStorage.getItem("dma-notweg-ziel"), kz: document.getElementById("sub-livechat")?.dataset.active, q: window.DMA_Q("app.js") })).catch((e) => ({ x: e.message, stand: {} }));
+
+  /* ---- S: Rest-Stück fällt aus, danach ins Gespräch, die Quelle kommt im Raum an (Prüfung 884b NB1, wie riss.js FALL=gespraech) ---- */
+  const DAUER_S = Number(process.env.DAUER_S || 15);
+  if (lauf("S")) console.log("\nS) LANGSAME LEITUNG – REST-STÜCK FÄLLT IM LERNEN AUS, DANN INS GESPRÄCH; DIE QUELLE KOMMT IM RAUM AN (/app.js " + DAUER_S + " s; dauert ~" + (DAUER_S + 20) + " s)\n");
+  if (lauf("S")) {
+    const br3 = await ohneRoute();
+    modus = "restfehlt"; traeufeln = true; traeufelS = DAUER_S; mitCache = true; quelleLog.length = 0;
+    const { ctx, pg } = await fenster(null, null, { br: br3, ohneRoute: true });
+    const ab = anfragen.length;
+    await pg.goto(HIER + "/index.html", { waitUntil: "load" });
+    await bereit(pg);
+    await schlaf(1500);
+    await grammatik(pg);                                 /* Lernen → Grammatik: rest1 fehlt → Notweg, die Quelle tröpfelt */
+    const angefragt = await warte(() => quelleLog.length > 0, 10000);
+    await schlaf(1500);
+    const lage0 = await insGespraech(pg);                /* danach ins Gespräch (Ansicht bleibt Lernen) */
+    const da = await warte(() => quelleLog.length > 0 && quelleLog[0].ende > 0, (DAUER_S + 15) * 1000);
+    await schlaf(4000);                                  /* „noch" hätte jetzt längst entschieden */
+    const r1 = await lageJetzt(pg);
+    sage(angefragt && da && lage0 === "drin", "Rest-Stück fällt aus, der Notweg holt die Quelle; man betritt den Raum, die Quelle kommt im Gespräch an",
+      JSON.stringify({ lage: lage0, quelle: quelleText() }));
+    sage(indexZahl(ab) === 1 && r1.lage === "drin" && r1.ganz === null && r1.ziel === null && r1.stand.laeuft === false,
+      "KEIN Neuladen im Gespräch – es fehlt nur ein Rest-Stück, das der Raum nicht braucht (der Notweg endet)",
+      JSON.stringify({ index: indexZahl(ab), lage: r1.lage, ganz: r1.ganz, ziel: r1.ziel, laeuft: r1.stand.laeuft }));
+    /* noch im Raum: derselbe Ausfall noch einmal – kein neuer Notweg, kein Abruf, kein Neuladen */
+    const ab2 = anfragen.length;
+    await grammatik(pg);
+    const laeuft2 = await pg.evaluate(() => window.DMA_TEILE.stand().laeuft).catch(() => null);
+    await schlaf(3000);
+    const r2 = await lageJetzt(pg);
+    sage(laeuft2 === false && indexZahl(ab) === 1 && r2.lage === "drin" && !anfragen.slice(ab2).some((x) => x.p === "/app.js"),
+      "im Gespräch: ein weiterer Ausfall eines Rest-Stücks beginnt keinen Notweg (kein Abruf, kein Neuladen)", JSON.stringify({ laeuft: laeuft2, index: indexZahl(ab), lage: r2.lage }));
+    /* Raum verlassen – der nächste Ausfall lädt sofort neu, ohne die Quelle noch einmal zu holen */
+    await pg.evaluate(() => window.LiveChat.pruefSitz({ lage: "aus" })).catch(() => {});
+    await schlaf(500);
+    const t0 = Date.now();
+    await grammatik(pg);
+    const neu = await neueSeite(pg, ab, 2, 15000);
+    const ms = indexZeit(ab, 2) - t0;
+    await schlaf(2500);
+    const r3 = await lageJetzt(pg);
+    const nQ = anfragen.slice(ab).filter((x) => x.p === "/app.js").length;
+    sage(neu && indexZahl(ab) === 2 && ms >= 0 && ms < 5000, "Raum verlassen, der nächste Ausfall: genau EIN Neuladen, sofort (index.html " + indexZahl(ab) + "×)", neu ? (ms >= 0 ? ms + " ms nach dem Tipp" : "schon " + -ms + " ms VOR dem Tipp neu geladen") : "");
+    sage(neu && nQ === 1 && quelleLog.length === 1 && r3.q === "app.js" && r3.stand.ganz === true,
+      "ohne neuen Abruf: der Server sieht /app.js genau einmal, Seite 2 läuft mit der Quelle aus dem Zwischenspeicher", "/app.js " + nQ + "×");
+    sage(neu && r3.kz !== "true", "danach NICHT ungefragt ins Klassenzimmer (man war nicht mehr im Raum)", "Klassenzimmer " + r3.kz);
+    modus = ""; traeufeln = false; traeufelS = 0; mitCache = false;
+    await ctx.close();
+    await br3.close();
+  }
+
+  /* ---- T: „noch" antwortet zu spät, der Notweg endet ohne Neuladen (Prüfung 884b NB1, kleiner Mangel) ---- */
+  if (lauf("T")) console.log("\nT) „NOCH\" ANTWORTET ZU SPÄT, DER NOTWEG ENDET OHNE NEULADEN – KEIN VERWAISTER ZIEL-MERKER (dauert ~30 s)\n");
+  if (lauf("T")) {
+    modus = "zielspaet"; stueckHaengt = false; haengend.length = 0;
+    /* die neuere Fassung wurde in diesem Tab schon einmal geholt: dmaFassungLaden sagt false, es wird nicht neu geladen */
+    const { ctx, pg } = await fenster((neu) => { try { sessionStorage.setItem("dma-neu-geladen", neu); } catch (e) {} }, NEU);
+    const ab = anfragen.length;
+    await pg.goto(HIER + "/index.html", { waitUntil: "load" });
+    await bereit(pg);
+    await attrappe(pg);
+    await zumKlassenzimmer(pg);
+    await schlaf(1200);
+    fassungLangsam = true;
+    await betreten(pg);                                  /* das Raum-Stück fehlt → Notweg (fassung.json: neuere Fassung) */
+    stueckHaengt = true;                                 /* „noch" holt die Stücke: sie antworten erst nach 10 s */
+    const nochDa = await warte(() => haengend.length > 0, 6000);
+    const tNoch = Date.now();
+    await warte(() => Date.now() - tNoch > 2 * HAENG + 3000, 2 * HAENG + 5000);   /* beide Anläufe von dmaTeilListe sind vorbei */
+    const r = await lageJetzt(pg);
+    sage(nochDa, "„noch\" hängt (die Raum-Stücke antworten erst nach " + HAENG / 1000 + " s)", haengend.length + " hängende Anfragen");
+    sage(indexZahl(ab) === 1 && r.stand.laeuft === false, "kein Neuladen (die neuere Fassung war schon geholt), der Notweg ist zu Ende", JSON.stringify({ index: indexZahl(ab), laeuft: r.stand.laeuft }));
+    sage(r.ziel === null, "die späte Antwort von „noch\" setzt den Ziel-Merker NICHT neu", "dma-notweg-ziel = " + JSON.stringify(r.ziel));
+    fassungLangsam = false; stueckHaengt = false;
+    await pg.reload({ waitUntil: "load" });
+    await bereit(pg);
+    await schlaf(1500);
+    const r2 = await lageJetzt(pg);
+    sage(r2.kz !== "true", "ein späteres Neuladen von Hand öffnet NICHT ungefragt das Klassenzimmer", "Klassenzimmer " + r2.kz);
+    modus = ""; haengend.length = 0;
+    await ctx.close();
+  }
+
+  /* ---- U: „noch" hängt, man betritt währenddessen den Raum (Prüfung 884b NB1: die 8-s-Frist von index.html) ---- */
+  if (lauf("U")) console.log("\nU) „NOCH\" HÄNGT, UND MAN BETRITT WÄHRENDDESSEN DEN RAUM – KEIN NEULADEN IM GESPRÄCH (dauert ~20 s)\n");
+  if (lauf("U")) {
+    modus = "resthaengt"; stueckHaengt = false; haengend.length = 0;
+    const { ctx, pg } = await fenster();
+    const ab = anfragen.length;
+    await pg.goto(HIER + "/index.html", { waitUntil: "load" });
+    await bereit(pg);
+    await schlaf(1500);
+    fassungLangsam = true;
+    await grammatik(pg);                                 /* rest1 fehlt → Notweg; die Quelle kommt schnell */
+    stueckHaengt = true;                                 /* „noch" holt rest1 noch einmal: es antwortet erst nach 10 s */
+    const nochDa = await warte(() => haengend.length > 0, 6000);
+    const tNoch = Date.now();
+    const draussen = await pg.evaluate(() => window.LiveChat.lage().lage).catch(() => "?");
+    await schlaf(1500);
+    const lage0 = await insGespraech(pg);                /* während „noch" wartet: ins Gespräch */
+    await warte(() => Date.now() - tNoch > 9500, 10000); /* nach beiden Fristen (7,5 s app.js, 8 s index.html) */
+    const r = await lageJetzt(pg);
+    sage(nochDa && draussen !== "drin" && lage0 === "drin", "„noch\" begann außerhalb des Raums und hängt; 1,5 s später betritt man den Raum", JSON.stringify({ vorher: draussen, danach: lage0 }));
+    sage(indexZahl(ab) === 1 && r.lage === "drin", "nach der 8-s-Frist: KEIN Neuladen im Gespräch (index.html " + indexZahl(ab) + "×)", JSON.stringify({ lage: r.lage }));
+    sage(r.stand.laeuft === false && r.ganz === null && r.ziel === null, "der Notweg ist zu Ende, kein dma-ganz, kein Ziel-Merker", JSON.stringify({ laeuft: r.stand.laeuft, ganz: r.ganz, ziel: r.ziel }));
+    fassungLangsam = false; stueckHaengt = false; modus = ""; haengend.length = 0;
     await ctx.close();
   }
 

@@ -97,17 +97,40 @@
        - Das Ziel der neuen Seite wird gleich beim Fragen von „noch" festgehalten und nach der Antwort aufgefrischt:
          antwortet „noch" nicht binnen 8 s, lädt index.html trotzdem neu – vorher fehlte dann der Merker, und wer im
          Klassenzimmer getippt hatte, stand nach dem Neuladen woanders. Weggeräumt wird er nur, wenn NICHT neu
-         geladen wird (ende). */
+         geladen wird (ende).
+     FASSUNG 884 — Nachbesserung 1 (Prüfung 884b „notweg", Funk 255: „die Verbindung zu den anderen hat oberste
+     Priorität"): seit die Quelle nie mehr abgebrochen wird, kam das Neuladen beliebig spät – auf langsamer Leitung
+     auch mitten in einem Gespräch, das erst NACH dem Ausfall begonnen hatte, und für ein Stück, das der Raum gar nicht
+     braucht (nachgestellt: Rest-Stück fällt im Lernen aus, man betritt den Raum, die Quelle kommt nach 50 s an →
+     Neuladen bei Lage „drin"; Fassung 883 lädt da nie neu). Jetzt gilt (dmaTeilNotwegWarten):
+       - Im Gespräch (LiveChat „drin" oder „verbindet") wird nur für ein RAUM-Stück neu geladen. Fehlen nur andere
+         Stücke, sagt „noch" nein – die Quelle bleibt in index.html geholt (quelleWeg) und liegt im Zwischenspeicher;
+         der nächste Ausfall AUSSERHALB des Raums lädt dann sofort neu, ohne neuen Abruf (dmaTeilNotwegAb = 0).
+       - Im Gespräch beginnt ein solcher Ausfall auch keinen Notweg: kein Abruf der schweren Quelle neben dem Ton für
+         ein Stück, das der Raum nicht braucht. Der eine Aufruf scheitert wie vor 884; das Stück bleibt vorgemerkt.
+       - „noch" antwortet selbst binnen 7,5 s (vor der 8-s-Frist von index.html, die nicht weiß, ob man im Raum ist):
+         wer WÄHREND „noch" den Raum betritt, wird so auch nicht herausgerissen.
+       - Das Ziel schreibt „noch" nur, solange dieser Notweg läuft (vorbei): eine späte Antwort setzte sonst den Merker
+         neu, nachdem ende ihn weggeräumt hatte, und das nächste Neuladen von Hand öffnete ungefragt das Klassenzimmer. */
   var dmaTeilNotwegLaeuft = null;
   var dmaTeilNotwegAb = 0;
   var dmaTeilNotwegBedarf = {};
+  function dmaTeilNotwegImRaum() {
+    try {
+      const l = window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage() : null;
+      return Boolean(l && (l.lage === "drin" || l.lage === "verbindet"));
+    } catch (x) { return false; }
+  }
   function dmaTeilNotwegZiel() {
     try {
       const kz = document.getElementById("sub-livechat");
       if (kz && kz.offsetParent !== null) return true;
-      const l = window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage() : null;
-      return Boolean(l && (l.lage === "drin" || l.lage === "verbindet"));
-    } catch (x) { return false; }
+    } catch (x) {}
+    return dmaTeilNotwegImRaum();
+  }
+  /* fehlen nur Stücke, die der Raum nicht braucht, und ist man im Gespräch: jetzt nicht neu laden */
+  function dmaTeilNotwegWarten(liste) {
+    return liste.length > 0 && !liste.some((t) => /^raum/.test(t)) && dmaTeilNotwegImRaum();
   }
   function dmaTeilNotweg(teil, e) {
     dmaTeilFehler(teil, e);
@@ -115,11 +138,13 @@
     (teil === "raum" ? DMA_TEILE_BAU.teile.filter((t) => /^raum/.test(t)) : [teil])
       .forEach((t) => { if (!dmaTeilDa[t]) dmaTeilNotwegBedarf[t] = true; });
     if (dmaTeilNotwegLaeuft) return dmaTeilNotwegLaeuft;
-    if (Date.now() < dmaTeilNotwegAb) return Promise.resolve(false);
-    let entwarnt = false;
+    const fehlt = () => Object.keys(dmaTeilNotwegBedarf).filter((t) => !dmaTeilDa[t]);
+    if (Date.now() < dmaTeilNotwegAb || dmaTeilNotwegWarten(fehlt())) return Promise.resolve(false);
+    let entwarnt = false, warten = false, vorbei = false;
     /* „noch": fehlt eines der Stücke noch? Das Ziel der neuen Seite wird sofort festgehalten (falls index.html nach 8 s
-       nicht mehr auf die Antwort wartet) und mit der Antwort aufgefrischt. */
+       nicht mehr auf die Antwort wartet) und mit der Antwort aufgefrischt – beides nur, solange dieser Notweg läuft. */
     const ziel = () => {
+      if (vorbei) return;
       try {
         if (dmaTeilNotwegZiel()) sessionStorage.setItem("dma-notweg-ziel", "klassenzimmer");
         else sessionStorage.removeItem("dma-notweg-ziel");
@@ -127,17 +152,23 @@
     };
     const noch = () => {
       ziel();
-      return dmaTeilListe(Object.keys(dmaTeilNotwegBedarf).filter((t) => !dmaTeilDa[t])).then((da) => {
-        if (da) { entwarnt = true; return false; }
+      if (dmaTeilNotwegWarten(fehlt())) { warten = true; return Promise.resolve(false); }
+      let uhr = 0;
+      return Promise.race([dmaTeilListe(fehlt()), new Promise((r) => { uhr = setTimeout(() => r(false), 7500); })]).then((da) => {
+        clearTimeout(uhr);
+        const rest = fehlt();
+        if (da || !rest.length) { entwarnt = true; return false; }
+        if (dmaTeilNotwegWarten(rest)) { warten = true; return false; }
         ziel();
         return true;
       });
     };
     const ende = (neu) => {
+      vorbei = true;
       dmaTeilNotwegLaeuft = null;
       if (neu) return true;
       dmaTeilNotwegBedarf = {};
-      dmaTeilNotwegAb = entwarnt ? 0 : Date.now() + 15000;
+      dmaTeilNotwegAb = entwarnt || warten ? 0 : Date.now() + 15000;
       try { sessionStorage.removeItem("dma-notweg-ziel"); } catch (x) {}
       return false;
     };
