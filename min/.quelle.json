@@ -53,10 +53,10 @@
  "korrekturen.css": "43bfef2e5a3ab921d3236d8fd00d433e1d7a935b",
  "data-werkstatt.js": "8f9f710a2e3aa5bac7e460a0d618550bb61c5c1e",
  "aussprache-pruefung.js": "f07453b70d1c10fa30062572624cd4299d9bc4d7",
- "livechat.js": "36c47576c1a9318abc477c548ee55b7c60589ccb",
  "rueckfrage.js": "496a04e35685a6a4c70997e46f05dd278191e132",
  "app.js": "932602ac87155ca4ade28a7279b85b36cd9b0f49",
  "messung.js": "96616c51272e318ab0e9597dc90caef11f5642d2",
  "spiel.css": "05e174c95c16d4253b5847d857ff2e2518fed83a",
- "spiel.js": "288f2e038df5ca17f7d57dae1628da5b70c525e0"
+ "livechat.js": "c581964d42ee72fede5ef53604ccc595cfacc858",
+ "spiel.js": "2558e54988fde2504e3f9c94eacac49491b36714"
 }

@@ -4504,3 +4504,103 @@ Die Latenzen sind zweigeteilt (0–3 ms und 16–39 ms): beim Hineinzoomen koste
 5. Werkstatt-Eintrag und Fassungsnummer beim Ausliefern von 884 (WIP-Stand wie die anderen 884-Punkte).
 
 **Funk-Antwort (Entwurf)**: „Doppeltipp-Zoom im alten Dorf (Funk 159): Ich habe nachgemessen, was beim Doppeltipp passiert. Bei jedem Hineinzoomen wurde die kleine Karte als neues Bild angelegt (10× hinein = 10 Bilder im Speicher), schnelle Doppeltipps stapelten bis zu drei Zoom-Bewegungen übereinander, am hellen Tag lag eine unsichtbare Abend-Schicht über dem ganzen Dorf, und vor der Bewegung wurde erst das ganze Menü neu gebaut. Das ist jetzt alles weg: eine Karte, eine Bewegung, die Abend-Schicht nur abends, und der Zoom startet sofort (auf einem langsamen Handy statt nach ~70 nach ~20 Millisekunden). Aussehen und Bedienung sind gleich. Ob das deinen Absturz wirklich behebt, kann ich hier nicht beweisen – das iPhone gibt Speicher anders frei als mein Testbrowser. Probier bitte 20 schnelle Doppeltipps im Dorf. Wenn es noch abstürzt, hätte ich drei Ideen, die man aber sieht: (1) Zoom ohne oder mit kürzerer Bewegung, (2) „nah“ etwas weniger groß (1,6× statt 2×), (3) Zug, Rauch und Leute während des Zoomens kurz anhalten.“
+
+## Fassung 884 — Ton 310: „sie hört mich dann nicht mehr“ (Funk 310)
+
+XANDER (Funk 310, 11.10., wörtlich): „… mit Emmi … dann bricht es noch ab und sie fragt mich immer ob ich sie hören kann ich höre sie immer aber sie hört mich dann nicht mehr und ich weiß nicht ob es die Last ist dass sie im Spiel irgendeine Dopplung erzeugt …“ (Emy: OPPO CPH1937, Android 11, WebView).
+
+**Ursache** (Untersuchung wf_588b532b, Versuch 310 im Labor nachgestellt; im Feld nur zeitlich belegt): `livechat.js` → `bruecke()` → `pc.ontrack` verglich Spuren nur nach ihrer **Kennung** (`t.id === e.track.id`). Baut der Anrufer – immer die kleinere Kennung, also Xander – die Leitung neu auf, ohne dass jemand neu lädt (Ton-Knopf, Abriss der Wache, „pc-fehl“, Gruss bei hängender Leitung, seit 884 auch „auch-da haelt:false“), kommt seine neue Spur bei Emy mit **derselben Kennung** an (Chromium übernimmt die msid seines Mikrofons, `addTransceiver(tonSpur)`). Die alte, beim Abbau beendete Spur lag noch in Emys Strom → „kenne ich schon“, die lebende wurde nicht angehängt, das neue `<audio>` spielte die tote, die Tonwache räumte sie weg. Pakete kamen an, abgespielt wurde nichts, `/verbindung` sagte „Ton kommt an“. **Jeder zweite Neuaufbau taub**, Xander hörte Emy weiter. Das Spiel selbst änderte im Labor nichts am Ton (es ist nur Begleitumstand; ob es im Feld Neuaufbauten häufiger macht, ist offen). Die „Dopplung“ (zweite Leitung/Sitzung durch das Spiel) ist im Labor widerlegt.
+
+Sichtbar ändert sich nichts (keine Zeile, kein Toast, kein Zeichen); Aussehen, Größe und Bedienung bleiben. Der Hörfilter „Nur Mitspieler hören“ bleibt im Verhalten genau, wie er ist (nur gemessen).
+
+### Was geändert ist (livechat.js, spiel.js; app.js und DB unberührt)
+- **Behebung 1 – `pc.ontrack`**: Vergleich nach dem **Gegenstand** (`t === e.track`, `indexOf(e.track)`), wie `sfuSpurEinsetzen` seit 842. Reihenfolge bleibt (erst alt heraus, dann neu hinein). Spielt das Element den Strom schon (kein Abbau dazwischen) und war die alte Spur gleicher Kennung darin, wird es einmal neu angehängt (`srcObject` null → Strom, leises `play()`), weil eine WebView einen Spurwechsel im laufenden Strom nicht sicher übernimmt.
+- **Behebung 2 – `brueckeAbbauen`**: vor `pc.close()` kommen die **Ton**-Empfangsspuren dieser Leitung aus seinem Strom (Server-Stimme und Bild bleiben). Ihre Kennung merkt sich die Person (`tonKennungAlt`), damit die Messung den Auslöser trotzdem sieht.
+- **Empfangswache** (`empfangPruefen`, Block nach `wacheBeenden`): läuft im 2,5-s-Takt der Leitungswache mit deren Statistik – **kein eigenes `getStats`, kein eigener Zeitgeber** – und einmal beim Zurückkommen auf die Seite (ohne Statistik). Befunde: `spur` (lebende Empfangsspur fehlt im Strom → `spurEinhaengen`), `element` (kein Element/falscher Strom → anschliessen), `stumm` (Element stumm, obwohl er gehört werden darf → entstummen), `pause` (→ leises `play()`), `still` (> 20 Pakete je Takt, 0 abgespielte Samples, 2 Takte → Stufe 1 neu anhängen, 2 Takte später Stufe 2 anderes Element, 4 Takte später Stufe 3), `rede` (er sagt „redet“, Energie 0, wie still), `pakete` (er sagt „redet“, Ton an, 0 Pakete in 2 Takten → gleich Stufe 3). **Stufe 3**: kleinere Kennung baut die Leitung neu (Abbau, 0,4 s, `anrufen(…, "tonweg")`), sonst geht das Paket `{art:"tonweg", an, b, tw}` über Datenkanal und Raumkanal; Bremse 1 je 60 s, 3 je 10 min je Gegenüber. Nie eingegriffen: Leitung steht nicht, Tonserver-Stimme, Puppe, nicht im Raum, Telefonat oder Hörfilter verlangen Stille (dann nur gezählt). Im Hintergrund nur Stufe 1.
+- **`tonwegEmpfangen`** (Weiche in `dc.onmessage` und `empfangen`, abwärtskompatibel – ältere Fassungen überhören das Paket): legt den eigenen Tonsender zu ihm auf die Spur, die gelten soll (`sfuEigeneTonspur()`; heilt auch ein nicht zurückgegebenes Mikrofon), löscht ein falsches `sfu.hoertMich[er]`; fand sich nichts Falsches und ist man die kleinere Kennung, wird die Leitung (gebremst) erneuert. Doppelt angekommene Pakete (beide Wege) zählen einmal (`tw`).
+- **„redet“**: merkt zusätzlich `sprichtUm` (für die Wache); Ring und Plätze unverändert.
+- **Plan B für strenge WebViews**: `tonAbspielenVersuchen(a, beiFehlstart, leise)` – leise = aus der Selbstheilung, keine Hinweiszeile. Der Nachhol-Horcher lauscht auf `pointerup`, `touchend`, `click`, `keydown` (nicht mehr `pointerdown` – auf Android keine Nutzergeste) und meldet sich erst ab, wenn nichts mehr wartet (`tonNachholen`, auch als `LiveChat.tonNachholen`). `spiel.js` `lsAuf`: Tipps in der Stadt im Rahmen holen über `tonNachholen` + `klangWecken` nach (gleicher Ursprung).
+- **Nebenbefund, behoben**: ein `play()`, das von einem neuen `srcObject` abgelöst wurde (`AbortError`, z. B. Tonwache: `stimmenWecken` spielt an, gleich danach hängt `tonElementeAufraeumen` den richtigen Strom an), zeigte fälschlich „🔇 Dein Browser lässt den Ton noch nicht durch …“. Für Stimmen (`srcObject`) wird `AbortError` jetzt überhört (Sonde Fall C; im alten Stand rot). Text und Fall „wirklich verweigert“ unverändert.
+- **Messung**: Zeitleiste „leitung“ neues Ereignis `tonGleicheKennung` (Zusatz ton/bild) und `tonwegGeheilt`; neuer Bericht **„ton-weg“** (einer je Vorfall, einen Takt nach der Heilung bzw. nach 30 s ohne; höchstens 1 je Gegenüber in 2 min und **3 je Seitenaufruf** – 6, sobald der Server in der Antwort `ton` trägt); `tonGueteJe` + `sm`; Bericht „verbindung“ + `heil` (Zähler je Befund und Stufe) und `filt`; `hoerFilterSetzen(f, {spielt, nur})` nur für die Berichte, `hoerFilterStand()` = `{an, stumm, redet, haeu, spielt, nur}` (keine Namen); `spiel.js` `hoerFilterPflegen` nimmt `spielSichtbar()` in den Schlüssel, „tonstand“ trägt `nur` und `filt`.
+- Prüfhaken (nur Sonde): `LiveChat.pruefEmpfang(id)`, `LiveChat.pruefEmpfangFaelschen(id, {pk, sm, en, n})`.
+- Ladeweg: min/livechat.js 307716 → 315220 Byte (gzip +2650), min/spiel.js +429 (gzip +289).
+
+### Messgrößen „ton-weg“
+| Feld | Bedeutung |
+|---|---|
+| `mit` | 10 Zeichen seiner Kennung (wie „leitung“) |
+| `befund` / `stufe` / `geheilt` / `nachMs` | spur, element, stumm, pause, still, rede, pakete / 1–3 / 1 = wieder hörbar / ms bis dahin |
+| `ms` | ms seit Beginn der Leitung beim Vorfall |
+| `dpk` / `dsm` / `den` | Zuwachs Pakete / abgespielte Samples / Energie im Takt des Vorfalls |
+| `rx` / `el` | Empfangsspur `{lebt, sysStumm}` / Element `{da, pause, stumm, spieltR}` |
+| `soll` / `grund` / `spricht` | darf er gehört werden / filter, telefonat, leer / er sprach |
+| `spiel` | `{spielt, nur, stadt, voll}` – spielt man, „Nur Mitspieler hören“, Stadt im Rahmen offen, Vollbild |
+| `heil` | alle Zähler seit Seitenaufruf (z. B. `spur1`, `stumm1`, `still2`, `pakete3`, `tonwegSender`, `gebremst`) |
+| `sichtbar`, `fassung`, `ua` | wie bei den anderen Berichten |
+
+### Sonden
+- **Neu: `werkzeug/pruefe-884-ton310.js`** – zwei echte Chromium-Seiten aus `?quelle`, echte WebRTC-Leitung, Pakete von Hand getragen, Spiel nachgebildet, `--autoplay-policy=user-gesture-required`; A = Betreiber k258507e0a (ruft an), B = k908c6857a mit Emys UA im Telefon-Kontext. „Hört“ von aussen gemessen (Pakete, abgespielte Samples, Energie, `<audio>` spielt die lebende Empfangsspur als Gegenstand). Fälle A–E aus dem Plan, dazu F (Plan B, Seite und Stadt im Rahmen), G (Hörfilter), H (Berichte), I (Ruhe). **Neu: 37 ok, 0 rot** (zweimal): 6 Neuaufbauten alle hörbar in ~1 s, je genau eine lebende Tonspur, 6 Berichte mit `tonGleicheKennung`; C heilt in ~1 s ohne Leitung/Angebot/Zeile/Toast, genau ein „ton-weg“ (spur, geheilt 1, 2,5 s); D „tonweg“ nach ~3,2 s, B hört nach 4–5 s, A zählt `tonwegSender`; E Stufe 1 → 2 (Element 1 → 2) in ~9,8 s; F1/F2 binnen 1 s nach dem Tipp; G bleibt stumm (`filt` an 1, stumm 1, redet 3, haeu 1); B ruft `getStats` 4× in 10 s.
+- **Gegenprobe** (`WURZEL=scratchpad/gegen884b/wurzel`: Baum mit Verweisen, livechat.js und spiel.js aus 7f053be): **21 rot** – A1/A3/A5 taub (genau jeder zweite, wie Versuch 310), B1/B3/B5 (Strom leer), kein `tonGleicheKennung`, C-spur und C-stumm (bleiben taub), C-Zeile (falsche Hinweiszeile nach `AbortError`), C-Bericht, C-Zähler, D (kein „tonweg“, Sender bleibt leer), E, F1, F2, G-`hoerFilterStand`, H (3). **Grün** wie erwartet: Kontrollen, A2/A4/A6, C-element (die alte Tonwache heilt in 3,3 s), C ohne Leitung/Angebot, D-Kontrolle, G stumm/Schalter aus, H-Grösse, I.
+- Mitgelaufen (nach `fassung-setzen.js --nur-stempel`, nacheinander): grün 884-leitung, 884-mikro, 884-bild, 827-sfu, 659-verbindung, 738-controller-leise, 884-messung, 884-diktat, 884-notweg, 861, 871, 811-leitung, leitung, 856, 859, 799-stadt-im-dorfrahmen (lsAuf mit neuem Horcher); 840 nicht nötig (app.js unberührt); 842-sfu-spiel im ersten Lauf 1 rot („beim Schliessen der Seite macht A seine Server-Sitzung zu“), danach zweimal grün – zeitabhängig; 884-sitz Fall 12 (Absender 6-fach gedrosselt, 4 von 5) wackelt in beiden Ständen (neu 2 von 4 Läufen rot, alt 1 von 3) – vorbestehend, keine Folge dieses Punkts.
+
+### Ehrlich
+- Nachgestellt ist der Fehler in **Chromium 141**; Emys WebView (Chrome/154 auf dem OPPO) hat dieselbe libwebrtc, die Kennungsregel dort ist aber nur angenommen. Ob es bei ihr wirklich dieser Weg war, zeigen erst `tonGleicheKennung` und „ton-weg“ aus dem Feld.
+- **Schutz greift erst nach Neuladen**, und zwar auf **Emys** Gerät (Behebung 1 und 2 und die Wache laufen beim Empfänger). Stufe 3 („tonweg“) braucht beide Seiten auf der neuen Fassung.
+- Fall F verschärft `play()` künstlich (echter MediaStream-Ton ist von der Gestensperre ausgenommen; im Labor nie abgelehnt). Audiofokus, Hörmuschel/Lautsprecher und die Last auf dem OPPO sind hier nicht nachstellbar. Zwei Instanzen desselben Kontos nicht geprüft.
+- Die Regel „still“ beruht darauf, dass Chromium `totalSamplesReceived` nur zählt, wenn ein Ausgang die Spur zieht (gemessen: +0 taub, +120 480 bei stummem Element). Andere Browser können anders zählen; dann greifen nur spur/element/stumm/pause. „rede“/„pakete“ gibt es nur für Leute, die „redet“ melden (auf der Bühne).
+- Stufe 3 bei gemischten Fassungen: erneuert die kleinere Kennung (neu) die Leitung zu einem Gegenüber mit **alter** Fassung, kann dieses danach selbst taub werden (der alte Fehler drüben). Selten (nur nach Stufe 2 ohne Erfolg oder „pakete“), gebremst.
+- Kontingent: bis die Migration eingespielt ist, zählen „ton-weg“-Berichte gegen die 40 je Tag; deshalb höchstens 3 je Seitenaufruf.
+
+**Vorschläge (sichtbar oder verhaltensändernd – nur im Funk, nicht gebaut)**
+- V1 Im Hörfilter Betreiber bzw. Häuptling ausnehmen (Xander bliebe für Emy hörbar, auch wenn sie mitspielt und er nicht).
+- V2 Ein Hinweis am Platz, solange der Filter jemanden stumm hält (heute nur das graue Lautsprecher-Zeichen).
+- V3 Den Schalter „Nur Mitspieler hören“ nicht über ein Neuladen hinweg merken.
+- V4 In `/verbindung` „Ton kommt an“ ersetzen durch „Ton kam zuletzt vor x s – abgespielt ja/nein“ (im tauben Zustand war die Meldung falsch).
+- V5 (technisch, nicht empfohlen ohne Sonden 659/884-leitung/842): Anrufer legt `addTransceiver("audio")` + `replaceTrack` statt `addTransceiver(tonSpur)` – dann wäre die Kennung je Leitung neu und auch alte Empfänger geschützt.
+
+### Datenbank (nicht eingespielt – Claude spielt es selbst ein)
+Dritter Topf „ton-“ (20 je 24 h) in `public.spiel_diagnose_senden`, Basis = Fassung mit „mess-“-Topf; Antwort trägt zusätzlich `ton: 20` (die Seite hebt dann ihre Drossel von 3 auf 6 je Seitenaufruf). „tonstand“/„tontest“ beginnen mit „ton“, aber nicht „ton-“ – sie bleiben im Rest-Topf.
+```sql
+create or replace function public.spiel_diagnose_senden(p_art text, p_daten jsonb)
+ returns jsonb language plpgsql security definer set search_path to 'public'
+as $function$
+declare
+  uid uuid := auth.uid();
+  a text := left(coalesce(p_art, ''), 40);
+  topf text := case when left(coalesce(p_art, ''), 5) = 'mess-' then 'mess'
+                    when left(coalesce(p_art, ''), 4) = 'ton-' then 'ton' else 'rest' end;
+  n integer;
+begin
+  if uid is null then return jsonb_build_object('ok', false); end if;
+  select count(*) into n from spiel_diagnose
+    where spieler = uid and zeit > now() - interval '1 day'
+      and (case when left(art, 5) = 'mess-' then 'mess' when left(art, 4) = 'ton-' then 'ton' else 'rest' end) = topf;
+  if n >= (case topf when 'mess' then 12 when 'ton' then 20 else 40 end) then
+    return jsonb_build_object('ok', false, 'grund', 'genug für heute');
+  end if;
+  insert into spiel_diagnose (spieler, art, daten)
+    values (uid, a, case when length(p_daten::text) > 6000 then jsonb_build_object('zu_lang', true) else coalesce(p_daten, '{}'::jsonb) end);
+  return jsonb_build_object('ok', true, 'mess', 12, 'ton', 20);
+end $function$;
+```
+
+### Auslesen nach dem Ausliefern (nur lesen)
+```sql
+select zeit, daten->>'befund' befund, daten->>'stufe' stufe, daten->>'geheilt' geheilt, daten->'spiel' spiel, daten->'heil' heil
+  from spiel_diagnose where art = 'ton-weg' order by id desc limit 50;
+select zeit, spieler, daten->>'mit' mit from spiel_diagnose where art = 'leitung' and daten::text like '%tonGleicheKennung%' order by id desc limit 50;
+select zeit, daten->'heil' heil, daten->'filt' filt from spiel_diagnose where art = 'verbindung' and daten ? 'heil' order by id desc limit 50;
+```
+Erwartet nach der Behebung: `tonGleicheKennung` kommt weiter vor (die Auslöser bleiben), „ton-weg“ mit Befund `spur` bleibt bei 0; gibt es andere Befunde, sagt das Feld, welcher Weg es war.
+
+**Offen**
+1. Migration „ton-“-Topf einspielen (SQL oben).
+2. Feldbeleg: nach dem Ausliefern Emys „leitung“ (`tonGleicheKennung`) und „ton-weg“ ansehen; Emy einmal neu laden lassen, damit sie die neue Fassung hat.
+3. Fragen, ob bei Emy „Nur Mitspieler hören“ an ist (graues Lautsprecher-Zeichen mit X an Xanders Platz) – `filt` im „tonstand“/„verbindung“ beantwortet es künftig auch.
+4. Vorschläge V1–V5 (Antwort Xanders).
+5. Rolle des Spiels (Last auf dem OPPO, hängende Seite → mehr Neuaufbauten): erst mit „abbau“/Auslöser aus 884 und „ton-weg“ zusammen messbar.
+6. Ladeweg: +2,7 KB gzip in min/livechat.js – gegen das Ziel von 885 abzuwägen (die beiden Prüfhaken sind davon 627 Byte, gzip einzeln ~0,4 KB).
+7. 884-sitz Fall 12 wackelt (vorbestehend) – eigener Punkt.
+8. Werkstatt-Eintrag und Fassungsnummer beim Ausliefern von 884 (WIP-Stand).
+
+**Funk-Antwort (Entwurf)**: „Emy hört dich nicht (Funk 310): Ich habe es im Test genau nachgestellt, und es liegt nicht am Spiel und an keiner Dopplung. Wenn dein Gerät die Verbindung zu Emy neu aufbaut (zum Beispiel wenn du den Ton-Knopf drückst oder die Seite das von selbst tut), kam deine Stimme bei ihr jedes zweite Mal nicht mehr an – du hörst sie trotzdem, weil die Verbindung immer von deinem Gerät aus aufgebaut wird. Das ist jetzt repariert, und eine stille Wache merkt so einen Aussetzer in wenigen Sekunden selbst und behebt ihn, ohne dass sich am Aussehen etwas ändert. Damit es bei Emy wirkt, muss sie die Seite einmal neu laden, wenn die neue Fassung draußen ist. Ob es bei ihrem Handy genau dieser Fehler war, sehe ich danach an den neuen Messungen. Frag sie bitte noch, ob sie beim Spielen an deinem Bild ein graues Lautsprecher-Zeichen mit X sieht – dann ist zusätzlich der Schalter „Nur Mitspieler hören“ an.“

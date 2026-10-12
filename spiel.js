@@ -697,7 +697,9 @@
         if (!S.bereit) return;
         rpc("spiel_diagnose_senden", { p_art: "tonstand", p_daten: { ua: navigator.userAgent.slice(0, 160), ctx: KLANG.ctx ? KLANG.ctx.state : "keiner",
           geladen: Object.keys(KLANG.puffer).length, gespielt: KLANG.gespielt, ersatz: KLANG.ersatz, toene: toeneAn(), fehler: KLANG.fehler,
-          kaputt: Object.keys(KLANG.kaputt).slice(0, 6).map(function (n) { return n + ":" + KLANG.kaputt[n]; }) } }).catch(function () {});
+          kaputt: Object.keys(KLANG.kaputt).slice(0, 6).map(function (n) { return n + ":" + KLANG.kaputt[n]; }),
+          /* FASSUNG 884 (Funk 310) — „Nur Mitspieler hören" an? Wen hält der Filter stumm (Zahl, keine Namen)? */
+          nur: S.nurSpieler ? 1 : 0, filt: (LC() && LC().hoerFilterStand) ? LC().hoerFilterStand() : null } }).catch(function () {});
       }, 60000);
     }
   }
@@ -5971,12 +5973,16 @@
   function lpAusAnwenden() { document.documentElement.classList.toggle("sp-lp-aus", Boolean(S.lpAus)); }
   lpAusAnwenden();
   /* Nur Mitspieler hören: gilt, solange ich selbst mitspiele. Der Filter fragt bei jedem Ton neu. */
+  /* FASSUNG 884 — XANDER (Funk 310): „… sie hört mich dann nicht mehr". Der Filter bleibt im Verhalten genau, wie er
+     ist; neu ist nur, dass die Berichte wissen, ob man gerade spielt und ob „Nur Mitspieler hören" an ist (info) –
+     deshalb steckt spielSichtbar() jetzt auch im Schlüssel (sonst käme ein Wechsel bei ausgeschaltetem Filter nie an). */
   function hoerFilterPflegen(zwingend) {
-    var an = Boolean(S.nurSpieler && spielSichtbar());
+    var sp = spielSichtbar(), an = Boolean(S.nurSpieler && sp);
     var key = an ? plaetze().filter(function (p) { return !p.leer && !p.ich && spieltChat(p.id); }).map(function (p) { return p.id; }).join(",") : "";
-    if (!zwingend && S.hoerKey === (an ? "an:" + key : "aus")) return;
-    S.hoerKey = an ? "an:" + key : "aus";
-    try { var l = LC(); if (l && l.hoerFilterSetzen) l.hoerFilterSetzen(an ? function (id) { return id === meineChatId() || spieltChat(id); } : null); } catch (e) {}
+    var hk = (sp ? "s" : "-") + (an ? "an:" + key : "aus");
+    if (!zwingend && S.hoerKey === hk) return;
+    S.hoerKey = hk;
+    try { var l = LC(); if (l && l.hoerFilterSetzen) l.hoerFilterSetzen(an ? function (id) { return id === meineChatId() || spieltChat(id); } : null, { spielt: sp ? 1 : 0, nur: S.nurSpieler ? 1 : 0 }); } catch (e) {}
   }
   function zeichnen() {
     var reihe = document.getElementById("lcPlaetze");
@@ -14141,6 +14147,19 @@
       + '<button type="button" class="sp-ls-zu">Zurück</button>';
     document.body.appendChild(el);
     LSTADT = { el: el, rahmen: el.querySelector("iframe"), voll: false, ohne: 0 };
+    /* FASSUNG 884 — XANDER (Funk 310): „sie hört mich dann nicht mehr" (Emy, beim Spielen). Tipps in der Stadt (eigenes
+       Dokument im Rahmen) erreichen die Horcher der Seite nicht: lehnte eine strenge WebView den Ton einer Stimme ab,
+       holte ihn ein Tipp in der Stadt nie nach. Jetzt holt jeder Tipp dort einen abgelehnten Ton nach und weckt den
+       Spielklang – unsichtbar, gleicher Ursprung (lsLadeFertig liest contentDocument ebenso). */
+    LSTADT.rahmen.addEventListener("load", function () {
+      try {
+        var d = this.contentDocument;
+        if (!d || d.__dmaTon) return;
+        d.__dmaTon = 1;
+        var weck = function () { var l = LC(); if (l && l.tonNachholen) l.tonNachholen(); klangWecken(); };
+        ["touchend", "click", "pointerup", "keydown"].forEach(function (a) { d.addEventListener(a, weck, { capture: true, passive: true }); });
+      } catch (e) {}
+    });
     el.querySelector(".sp-ls-zu").addEventListener("click", function () { lsVoll(false); });
     LSTADT.post = function (ev) {
       if (!LSTADT || ev.origin !== location.origin || !ev.data || ev.source !== LSTADT.rahmen.contentWindow) return;
