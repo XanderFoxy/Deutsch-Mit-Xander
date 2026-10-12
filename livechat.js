@@ -3185,7 +3185,12 @@ window.LiveChat = (function () {
      Nie eingegriffen wird, wenn die Leitung nicht steht (das macht die Leitungswache), er über den Tonserver kommt,
      bei der Puppe, ausserhalb des Raums und wenn Telefonat oder „Nur Mitspieler hören" Stille VERLANGEN – dann wird
      nur gezählt (Grund „filter"/„telefonat"), nie entstummt. Liegt die Seite im Hintergrund (Android drosselt dort
-     die Zeitgeber), gibt es nur Stufe 1. Gemeldet wird in die Diagnose („ton-weg", siehe tonwegMelden). */
+     die Zeitgeber), gibt es nur Stufe 1. Gemeldet wird in die Diagnose („ton-weg", siehe tonwegMelden).
+     FASSUNG 884 (Funk 310, Nachbesserung 1) — „still" und „rede" brauchen Messgrößen, die nicht jeder Browser liefert
+     (totalSamplesReceived, totalAudioEnergy; Chrome, Firefox ab 104 und Safari seit etwa 2022 haben beide). Fehlte
+     eine, zählte die Wache sie als 0 – und erneuerte im Versuch der Prüfung eine GESUNDE Leitung (Stufe 1 nach 10 s,
+     Stufe 3 nach 25 s). Jetzt gilt eine fehlende Grösse als „unbekannt": still/rede werden dann nicht gewertet, und
+     sie hält auch „hört wieder" nicht auf. */
   var empfangFalsch = {};      // nur für die Sonde: gefälschte Zuwächse je Gegenüber (pruefEmpfangFaelschen)
   var pruefElNr = 0;           // nur für die Sonde: Nummer je Abspiel-Element (pruefEmpfang)
   var empfangVorfall = {};     // offener Vorfall je Gegenüber (überlebt eine erneuerte Leitung)
@@ -3208,8 +3213,11 @@ window.LiveChat = (function () {
       var jetzt = Date.now(), d = null;
       if (ein) {
         h.takt++;
-        var pk = ein.packetsReceived || 0, sm = ein.totalSamplesReceived || 0, en = ein.totalAudioEnergy || 0;
-        if (w.pkAlt != null && pk >= w.pkAlt) d = { pk: pk - w.pkAlt, sm: sm - w.smAlt, en: en - w.enAlt };
+        var pk = ein.packetsReceived || 0;
+        var sm = typeof ein.totalSamplesReceived === "number" ? ein.totalSamplesReceived : null;   // null = der Browser liefert es nicht
+        var en = typeof ein.totalAudioEnergy === "number" ? ein.totalAudioEnergy : null;
+        if (w.pkAlt != null && pk >= w.pkAlt) d = { pk: pk - w.pkAlt, sm: sm != null && w.smAlt != null ? sm - w.smAlt : null,
+                                                    en: en != null && w.enAlt != null ? en - w.enAlt : null };
         w.pkAlt = pk; w.smAlt = sm; w.enAlt = en;
         var f = empfangFalsch[id];
         if (d && f && f.n > 0) {
@@ -3248,15 +3256,17 @@ window.LiveChat = (function () {
       }
       if (!d || !a || !p.strom) return;
       /* Hört wieder: Pakete UND abgespielte Samples steigen, das Element spielt die lebende Spur, nicht stumm – und
-         spricht er gerade, kommt auch Energie an. Dann gelten alle Stufen als zurückgesetzt. */
-      if (d.pk > 0 && d.sm > 0 && drin && !a.muted && !a.paused && (!spricht || d.en > 0)) {
+         spricht er gerade, kommt auch Energie an. Dann gelten alle Stufen als zurückgesetzt. Liefert der Browser
+         Samples bzw. Energie nicht (null), entscheidet der Rest. */
+      var smDa = d.sm != null, enDa = d.en != null;
+      if (d.pk > 0 && (!smDa || d.sm > 0) && drin && !a.muted && !a.paused && (!spricht || !enDa || d.en > 0)) {
         h.stufe = 0; h.still = h.rede = h.pakete = 0;
         var v = empfangVorfall[id];
         if (v) { delete empfangVorfall[id]; if (!v.gemeldet) tonwegMelden(id, v, 1); }
         return;
       }
-      h.still = d.pk > 20 && d.sm === 0 ? h.still + 1 : 0;
-      h.rede = p.spricht && p.tonAn !== false && d.pk > 20 && d.sm > 0 && d.en === 0 ? h.rede + 1 : 0;
+      h.still = smDa && d.pk > 20 && d.sm === 0 ? h.still + 1 : 0;
+      h.rede = smDa && enDa && p.spricht && p.tonAn !== false && d.pk > 20 && d.sm > 0 && d.en === 0 ? h.rede + 1 : 0;
       h.pakete = spricht && d.pk === 0 ? h.pakete + 1 : 0;
       var vo = empfangVorfall[id];
       if (vo && !vo.gemeldet && jetzt - vo.t0 > 30000) tonwegMelden(id, vo, 0);   // 30 s ohne Heilung: so melden
@@ -3295,21 +3305,28 @@ window.LiveChat = (function () {
     if (i >= 0 && tonVorrat.length < 8) tonVorrat.push(alt);
   }
   /* Stufe 3: die Leitung erneuern. Anrufen darf nur die kleinere Kennung; sonst wird drüben gebeten („tonweg"). */
+  /* FASSUNG 884 — XANDER (Funk 310), Nachbesserung 1: auch die KLEINERE Kennung sagt drüben „tonweg", und zwar VOR dem
+     Neuaufbau. Liegt die Ursache beim Grösseren (etwa ein veraltetes sfu.hoertMich[ich] – er glaubt, ich höre ihn über
+     den Tonserver, und schickt mir übers Netz eine leere Tonspur), räumt der Neuaufbau allein das nicht auf: in Chromium
+     kam die Stimme danach zwar zurück (sein spurenNachtragen leert die Spur nicht, weil replaceTrack noch läuft), aber
+     der falsche Eintrag blieb stehen und leerte die Spur beim nächsten Spurwechsel drüben wieder (Mikrofon nach Diktat
+     oder Sprachnachricht zurück, Bühne – Sonde 884-ton310, Fall K). Drüben räumt tonwegEmpfangen jetzt auf (hoertMich,
+     Sender) – ein Grösserer baut daraufhin NICHT selbst neu auf, das tut weiter nur die kleinere Kennung. Der Raumkanal
+     trägt das Paket sicher; der Datenkanal ist gleich zu. */
   function empfangStufe3(id, befund) {
     if (document.hidden) return false;
     var j = Date.now(), l = tonwegBremseJe[id] = (tonwegBremseJe[id] || []).filter(function (t) { return j - t < 600000; });
     if (l.length >= 3 || (l.length && j - l[l.length - 1] < 60000)) { heilZaehlen("gebremst"); return false; }
     l.push(j);
+    var n = { art: "tonweg", an: id, b: befund, tw: Math.random().toString(36).slice(2, 10) };
+    var dc = kanalJe[id];
+    if (dc && dc.readyState === "open") { try { dc.send(JSON.stringify(Object.assign({ von: zustand.ichId }, n))); } catch (x) {} }
+    senden(n);
     if (zustand.ichId < id) {
       brueckeAbbauen(id, "tonweg");
       setTimeout(function () {
         if (zustand.lage === "drin" && !brueckeJe[id] && zustand.leute[id] && belegt() <= PLAETZE) anrufen(id, "tonweg");
       }, 400);
-    } else {
-      var n = { art: "tonweg", an: id, b: befund, tw: Math.random().toString(36).slice(2, 10) };
-      var dc = kanalJe[id];
-      if (dc && dc.readyState === "open") { try { dc.send(JSON.stringify(Object.assign({ von: zustand.ichId }, n))); } catch (x) {} }
-      senden(n);
     }
     return true;
   }
@@ -3326,7 +3343,9 @@ window.LiveChat = (function () {
     if (s && s.ton && s.ton.sender && s.ton.sender.track !== soll) {
       try { s.ton.sender.replaceTrack(soll); geheilt = true; heilZaehlen("tonwegSender"); } catch (x) {}
     }
-    if (geheilt) { leitungMerk(id, "tonwegGeheilt", n.b || ""); return; }
+    /* n.b kommt vom Gegenüber (über den Raumkanal sogar mit frei gewählter Absenderkennung): gekürzt, sonst treibt ein
+       langer Text die eigene Zeitleiste „leitung" über 6000 Zeichen, und der Server speichert nur {zu_lang:true}. */
+    if (geheilt) { leitungMerk(id, "tonwegGeheilt", String(n.b || "").slice(0, 10)); return; }
     /* 2. Nichts Falsches gefunden: die Leitung erneuern (nur die kleinere Kennung ruft an, mit eigener Bremse). */
     if (zustand.ichId < id) {
       var j = Date.now(), l = tonwegBremseJe[id] = (tonwegBremseJe[id] || []).filter(function (t) { return j - t < 600000; });
@@ -3345,7 +3364,7 @@ window.LiveChat = (function () {
     if (v) { if (stufe > v.stufe) v.stufe = stufe; return; }
     empfangVorfall[id] = {
       befund: befund, stufe: stufe, t0: Date.now(), ms: pc && pc.__seit ? Date.now() - pc.__seit : -1,
-      dpk: d ? d.pk : null, dsm: d ? d.sm : null, den: d ? Math.round(d.en * 1e6) / 1e6 : null,
+      dpk: d ? d.pk : null, dsm: d ? d.sm : null, den: d && d.en != null ? Math.round(d.en * 1e6) / 1e6 : null,
       rx: { lebt: R ? 1 : 0, sysStumm: R && R.muted ? 1 : 0 },
       el: { da: a ? 1 : 0, pause: a && a.paused ? 1 : 0, stumm: a && a.muted ? 1 : 0,
             spieltR: a && R && a.srcObject && a.srcObject.getAudioTracks && a.srcObject.getAudioTracks().indexOf(R) >= 0 ? 1 : 0 },
@@ -4534,7 +4553,7 @@ window.LiveChat = (function () {
            den richtigen Strom an – mit eigenem play()). Bisher stand dann fälschlich „Dein Browser lässt den Ton noch
            nicht durch" im Chat (Sonde 884-ton310, Fall C). Für Stimmen (srcObject) wird das jetzt überhört. */
         if (fehler && fehler.name === "AbortError" && stimme) return;
-        if (tonWartet.indexOf(a) < 0) tonWartet.push(a);
+        if (tonWartet.indexOf(a) < 0) { tonWartet.push(a); a.__nachFehl = 0; }
         tonNachholenAnmelden();
         if (typeof beiFehlstart === "function") {
           var los = false;
@@ -4567,7 +4586,11 @@ window.LiveChat = (function () {
      (2) er meldet sich erst ab, wenn nichts mehr wartet: play() je Element einzeln, Gelungenes kommt heraus,
          Abgelehntes bleibt, der Horcher bleibt angemeldet.
      (3) tonNachholen() gibt es auch nach aussen: Tipps im Stadt-Rahmen (eigenes Dokument) erreichen diese Horcher
-         nicht – spiel.js ruft es von dort aus (lsAuf). */
+         nicht – spiel.js ruft es von dort aus (lsAuf).
+     (4) Nachbesserung 1: ein Element, dessen play() 5-mal hintereinander beim Nachholen scheitert (etwa Quelle geleert,
+         a.src aber noch die Seitenadresse), kommt heraus – sonst hinge der Horcher für immer an jedem Tipp. Eine Stimme,
+         die noch pausiert, verliert dadurch nichts: stimmenWecken (hier und alle 4 s in der Tonwache) legt sie mit
+         frischer Zählung wieder hinein. */
   var TON_GESTEN = ["pointerup", "touchend", "click", "keydown"];
   function tonHorcherAb() {
     if (!tonHorcherDa) return;
@@ -4582,8 +4605,9 @@ window.LiveChat = (function () {
         if (i >= 0) tonWartet.splice(i, 1);
         if (!tonWartet.length) tonHorcherAb();
       };
+      var fehl = function () { a.__nachFehl = (a.__nachFehl || 0) + 1; if (a.__nachFehl >= 5) weg(); };
       var v; try { v = a.play(); } catch (e) { v = null; }
-      if (v && v.then) v.then(weg, function () {}); else weg();
+      if (v && v.then) v.then(weg, fehl); else weg();
     });
     if (!tonWartet.length) tonHorcherAb();
     try { stimmenWecken(); } catch (e) {}
@@ -18406,7 +18430,13 @@ window.LiveChat = (function () {
                vorfall: empfangVorfall[id] ? JSON.parse(JSON.stringify(empfangVorfall[id])) : null,
                d: w.dZuletzt || null, tonweg: { gesendet: tonwegGesendet, grenze: tonwegGrenze }, filt: hoerFilterStand() };
     },
-    pruefEmpfangFaelschen: function (id, f) { if (f) empfangFalsch[id] = Object.assign({ n: 4 }, f); else delete empfangFalsch[id]; return true; },
+    pruefEmpfangFaelschen: function (id, f) {
+      if (f && "hoertMich" in f) {   // Nachbesserung 1 (Sonde Fall K): ein veraltetes „er hört mich über den Tonserver"
+        if (f.hoertMich) sfu.hoertMich[id] = true; else delete sfu.hoertMich[id];
+        sfuMeshTonAnwenden(id); return "hoertMich";
+      }
+      if (f) empfangFalsch[id] = Object.assign({ n: 4 }, f); else delete empfangFalsch[id]; return true;
+    },
     /* FASSUNG 884 — nur zum Nachprüfen (Sonde 884-sitz): die Sitz-Messung ansehen bzw. sofort senden; ein Gegenüber
        als „noch nicht bereit“ behandeln (wie ein verlorenes dc-hallo), auf Wunsch mit neuem Hallo. */
     pruefSitzMess: function (o) {

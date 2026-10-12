@@ -49,6 +49,17 @@
         Server misst), kein Anzeigename; verbindung trägt heil und filt
      I  Ruhe: B ruft getStats höchstens 5× in 10 s (eine Leitung, Takt
         2,5 s); im Leerlauf keine Heilung; keine Seitenfehler
+   NACHBESSERUNG 1 (nach der Prüfung):
+     A  zusätzlich: während der sechs Neuaufbauten greift die Wache bei B
+        NICHT ein (Befund-Zähler unverändert) – sonst bliebe A grün, auch
+        wenn ontrack wieder bricht (die Wache heilt das in ~3 s)
+     J  Browser ohne Messgrösse (B's getStats ohne totalSamplesReceived
+        bzw. ohne totalAudioEnergy, A redet): gesunde Leitung, je 15 s –
+        keine Heilung, keine neue Leitung, kein „tonweg"; ohne Samples
+        schliesst ein Vorfall trotzdem („hört wieder" ohne sm)
+     K  Stufe 3 von der KLEINEREN Kennung: bei B ein veraltetes „A hört
+        mich über den Tonserver" (leere Netz-Tonspur zu A), B redet → A
+        schickt „tonweg" und baut neu auf, B räumt auf, A hört B
    GEGENPROBE: WURZEL=<Baum mit livechat.js und spiel.js aus 7f053be> (siehe
    SPIELSYSTEM.md, Fassung 884 — Ton 310) oder ALT=1 (= 7f053be) bzw.
    ALT=<rev> (git show aus WURZEL). Im alten Stand bleibt B nach einem
@@ -61,6 +72,15 @@
    G-hoerFilterStand, H (3); grün: Kontrollen, A2/A4/A6, C-element (die alte
    Tonwache heilt das in 3,3 s), C ohne Leitung/Angebot, D-Kontrolle, G
    (stumm, Schalter aus), H-Grösse, I.
+   GEGENPROBEN DER NACHBESSERUNG (WURZEL=<Baum mit Verweisen, nur
+   livechat.js ausgetauscht>): „vor" = livechat.js aus e704342 (J rot,
+   K rot – dort fehlt auch der Prüfhaken); „ohneFix" = neue livechat.js,
+   nur ontrack (Kennung) und brueckeAbbauen (Ton bleibt im Strom) auf dem
+   alten Stand (A-Wache rot); „ohneTonwegKlein" = neue livechat.js, nur
+   empfangStufe3 schickt bei der kleineren Kennung kein „tonweg" (K rot).
+   Gemessen am 12.10. (Nachbesserung 1): neu 45 ok, 0 rot (zweimal); vor 4 rot
+   (J ×3, K-Haken), ohneFix 2 rot (A-Wache spur1:6, C-ton-weg), ohneTonwegKlein
+   3 rot (K: kein Paket, kein Aufräumen, nach dem Spurwechsel bei B taub).
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
@@ -289,6 +309,11 @@ const HAKEN = () => {
     ["B spielt mit + Stadt offen, Gruss (2)", () => hallo("g4")]
   ];
   let taub = 0, spurFalsch = 0, stadtWie = "";
+  /* Nachbesserung 1: die Befund-Zähler der Wache bei B vorher/nachher – heilt sie einen Neuaufbau (Befund spur in ~3 s),
+     verdeckt das einen kaputten ontrack, und A bliebe grün */
+  const befunde = (h) => Object.keys(h || {}).filter((k) => /^(spur|element|stumm|pause|still|rede|pakete)\d$/.test(k)).sort().map((k) => k + ":" + h[k]).join(",");
+  const heilB = async () => NEU ? (await B.evaluate((ida) => window.LiveChat.pruefEmpfang(ida), IDA)).heil : null;
+  const heilA0 = await heilB();
   for (let i = 0; i < ausloeser.length; i++) {
     if (i === 4) {
       console.log("     B: " + await mitspielen(B, true));
@@ -322,6 +347,9 @@ const HAKEN = () => {
     await schlaf(800);
   }
   console.log("     taub: " + taub + " von 6, Spur falsch: " + spurFalsch + " von 6");
+  const heilA1 = await heilB();
+  sage(NEU && befunde(heilA1) === befunde(heilA0), "A: über alle sechs Neuaufbauten greift die Wache bei B nicht ein (Befund-Zähler unverändert)",
+    NEU ? "vorher {" + befunde(heilA0) + "} · nachher {" + befunde(heilA1) + "}" : "Prüfhaken fehlt (alter Stand)");
   await schlaf(1800);   // Bericht „leitung" geht 1,5 s nach „connected"
   const leitB = await B.evaluate(() => window.__berichte.filter((b) => b.art === "leitung").map((b) => JSON.stringify(b.d)));
   const gleichZahl = leitB.filter((s) => /tonGleicheKennung/.test(s)).length;
@@ -490,6 +518,105 @@ const HAKEN = () => {
     vb ? JSON.stringify({ heil: vb.d.heil, filt: vb.d.filt, sm: vbJe && vbJe.sm }) : "keiner");
   const ts = await B.evaluate(() => { try { return window.DMA_SPIEL.pruef.zustand().nurSpieler; } catch (e) { return null; } });
   console.log("     (tonstand geht erst nach 1 min Spiel – hier nicht abgewartet; nurSpieler jetzt " + ts + ")");
+
+  /* ============================================================== J */
+  console.log("\nJ) BROWSER OHNE MESSGRÖSSE – DIE WACHE ERNEUERT KEINE GESUNDE LEITUNG (Nachbesserung 1)\n");
+  /* Wie im Versuch der Prüfung (ohnesm.js): B's getStats ohne totalSamplesReceived bzw. ohne totalAudioEnergy. Im
+     Stand e704342 zählte die Wache das Fehlende als 0: Stufe 1 nach 10 s, Stufe 2 nach 15 s, Stufe 3 nach 25 s. Die
+     Sonde misst „hört" weiter mit dem echten getStats (__getStats0). */
+  const ohne = (feld) => B.evaluate((feld) => {
+    const P = window.RTCPeerConnection.prototype;
+    if (!feld) { delete P.getStats; return "getStats wieder vollständig"; }
+    const gs = Object.getPrototypeOf(P).getStats;   // der Zähler aus HAKEN
+    P.getStats = function () {
+      return gs.apply(this, arguments).then((r) => {
+        const m = new Map();
+        r.forEach((v, k) => { if (v.type === "inbound-rtp" && v.kind === "audio") { const c = Object.assign({}, v); delete c[feld]; m.set(k, c); } else m.set(k, v); });
+        return m;
+      });
+    };
+    return "getStats ohne " + feld;
+  }, feld);
+  const twZahl = () => gesendet.A.concat(gesendet.B).filter((p) => p.art === "tonweg").length;
+  await zurueck("J");
+  await A.evaluate(() => window.LiveChat.pruefSelbstSpricht(false));
+  await schlaf(2600);
+  for (const [feld, redet] of [["totalSamplesReceived", false], ["totalAudioEnergy", true]]) {
+    const j0 = { pa: await pcZahl(A), pb: await pcZahl(B), tw: twZahl(), heil: await heilB() };
+    console.log("     B: " + await ohne(feld) + (redet ? ", A redet" : ""));
+    if (redet) await A.evaluate(() => window.LiveChat.pruefSelbstSpricht(true));
+    await schlaf(15000);
+    const j1 = { pa: await pcZahl(A), pb: await pcZahl(B), tw: twZahl(), heil: await heilB() };
+    const hj = await bisHoert(B, 3000);
+    if (redet) await A.evaluate(() => window.LiveChat.pruefSelbstSpricht(false));
+    await ohne("");
+    sage(j1.pa === j0.pa && j1.pb === j0.pb && j1.tw === j0.tw && befunde(j1.heil) === befunde(j0.heil) && hj.ms >= 0,
+      "J: gesunde Leitung, 15 s ohne " + feld + (redet ? " (A redet)" : "") + " → keine Heilung, keine neue Leitung, kein „tonweg“, B hört A",
+      JSON.stringify({ leitungen: (j1.pa - j0.pa) + (j1.pb - j0.pb), tonweg: j1.tw - j0.tw, befunde: befunde(j1.heil) }) + " · " + zeige(hj));
+    if (j1.pb !== j0.pb || befunde(j1.heil) !== befunde(j0.heil)) await zurueck("J (weiter)");
+    await schlaf(2600);
+  }
+  /* „hört wieder" ohne Samples: eine gestörte Spur heilt (Befund spur), und der Vorfall schliesst im nächsten Takt */
+  let jHeil = "Prüfhaken fehlt (alter Stand)", jOk = false;
+  if (NEU) {
+    await ohne("totalSamplesReceived");
+    const was = await stoeren("spur");
+    const t0 = Date.now(), h = await bisHoert(B, 6000);
+    let pe = null;
+    while (Date.now() - t0 < 10000) { pe = await B.evaluate((ida) => window.LiveChat.pruefEmpfang(ida), IDA); if (!pe.vorfall && pe.stufe === 0 && h.ms >= 0) break; await schlaf(300); }
+    await ohne("");
+    jOk = h.ms >= 0 && Boolean(pe) && !pe.vorfall && pe.stufe === 0;
+    jHeil = was + " → " + zeige(h) + " · Vorfall " + (pe && pe.vorfall ? JSON.stringify({ befund: pe.vorfall.befund, stufe: pe.vorfall.stufe }) : "geschlossen") + " nach " + (Date.now() - t0) + " ms";
+  }
+  sage(jOk, "J: ohne totalSamplesReceived heilt eine gestörte Spur, und der Vorfall schliesst („hört wieder“ ohne Samples)", jHeil);
+
+  /* ============================================================== K */
+  console.log("\nK) STUFE 3 VON DER KLEINEREN KENNUNG – BEI B EIN VERALTETES „A HÖRT MICH ÜBER DEN TONSERVER“ (Nachbesserung 1)\n");
+  /* B glaubt, A höre ihn über den Tonserver (sfu.hoertMich[A], etwa nach einem verlorenen „sfu-hoere nein") und schickt
+     A übers Netz eine leere Tonspur. B redet. A (kleinere Kennung) bekommt 0 Pakete → Befund „pakete" → Stufe 3. Bisher
+     baute A nur neu auf – B's spurenNachtragen legte die leere Spur gleich wieder hin. Jetzt sagt A vorher „tonweg",
+     und B räumt hoertMich auf. */
+  await zurueck("K");
+  await schlaf(2600);
+  const kHaken = await B.evaluate((ida) => window.LiveChat.pruefEmpfangFaelschen ? window.LiveChat.pruefEmpfangFaelschen(ida, { hoertMich: true }) : null, IDA);
+  if (kHaken !== "hoertMich") {
+    await B.evaluate((ida) => window.LiveChat.pruefEmpfangFaelschen && window.LiveChat.pruefEmpfangFaelschen(ida, null), IDA);
+    sage(false, "K: Prüfhaken hoertMich fehlt (Stand vor der Nachbesserung)");
+  } else {
+    await schlaf(1200);
+    const kVor = await hoertJetzt(A);
+    const pa0 = await pcZahl(A), twA0 = gesendet.A.filter((p) => p.art === "tonweg").length;
+    const heilBK0 = await heilB();
+    await B.evaluate(() => window.LiveChat.pruefSelbstSpricht(true));
+    const t0 = Date.now();
+    let neu = false;
+    while (Date.now() - t0 < 15000 && !neu) { neu = (await pcZahl(A)) > pa0; if (!neu) await schlaf(100); }
+    const tNeu = Date.now() - t0;
+    const hK = await bisHoert(A, Math.max(3000, 20000 - (Date.now() - t0)));
+    const twA = gesendet.A.filter((p) => p.art === "tonweg").slice(twA0);
+    const heilBK1 = await heilB();
+    const peA = await A.evaluate((idb) => window.LiveChat.pruefEmpfang(idb), IDB);
+    sage(!kVor.ok, "K Vorbedingung: B's Netz-Tonspur zu A ist leer → A hört B nicht", JSON.stringify(kVor.d));
+    sage(twA.length >= 1 && twA[0].an === IDB && neu, "K: A (kleinere Kennung) schickt „tonweg“ an B und baut die Leitung neu",
+      "tonweg " + twA.length + (twA[0] ? " (Befund " + twA[0].b + ", nach " + (twA[0].t - t0) + " ms)" : "") + " · neue Leitung " + (neu ? "nach " + tNeu + " ms" : "nie"));
+    sage((heilBK1.tonwegServer || 0) > ((heilBK0 && heilBK0.tonwegServer) || 0) && hK.ms >= 0, "K: B räumt „hört mich über den Tonserver“ auf, A hört B binnen 20 s",
+      "B tonwegServer " + ((heilBK0 && heilBK0.tonwegServer) || 0) + " → " + (heilBK1.tonwegServer || 0) + " · A " + zeige(hK) + " · A zählt " + JSON.stringify(peA.heil));
+    await B.evaluate(() => window.LiveChat.pruefSelbstSpricht(false));
+    /* K2: In Chromium hilft schon der Neuaufbau allein (B's spurenNachtragen ruft sfuMeshTonAnwenden, solange
+       replaceTrack(Mikrofon) noch läuft – sender.track ist dann noch null, „schon leer", nichts geschieht). Der veraltete
+       Eintrag bleibt aber stehen und schlägt beim nächsten Spurwechsel bei B zu (Mikrofon nach Diktat/Sprachnachricht
+       zurück, Bühne): spurTauschen legt zu A wieder eine LEERE Spur. Ohne „tonweg" von A: A wieder taub. */
+    await B.evaluate(() => window.LiveChat.mikrofonLeihen());
+    await schlaf(600);
+    await B.evaluate(() => window.LiveChat.mikrofonZurueck());
+    await schlaf(1500);
+    const hK2 = await bisHoert(A, 8000);
+    const sfuB = await B.evaluate(() => window.LiveChat.pruefSfu({}).hoertMich);
+    sage(hK2.ms >= 0 && sfuB.indexOf(IDA) < 0, "K: danach holt B sein Mikrofon zurück (Spurwechsel) → A hört B weiter, B führt A nicht mehr als „hört mich über den Tonserver“",
+      "A " + zeige(hK2) + " · B hoertMich " + JSON.stringify(sfuB));
+    await B.evaluate((ida) => window.LiveChat.pruefEmpfangFaelschen(ida, { hoertMich: false }), IDA);
+    if (hK.ms < 0 || hK2.ms < 0) { await A.evaluate(() => window.LiveChat.tonNeuAufbauen()); await bisHoert(A, 12000); }
+  }
 
   /* ============================================================== I */
   console.log("\nI) RUHE\n");
