@@ -5199,7 +5199,8 @@
       var hin = k.dataset.g, hq = dorfLageVon((dorfBesuchStand() || { st: S.ich }).st)[hin];
       S.dorfKarte = false; S.dorfTippWeg = true; S.dorfWahl = DORF[hin] ? hin : "";
       ton("swoosh", 0.25);
-      if (hq) dorfZoom(true, hq[0] / 320, Math.max(0, hq[1] - 10) / 200); else schnellZeichnen(true);
+      /* FASSUNG 884 — gleich ganz zeichnen: 60 ms später wird die Station im Menü gesucht. */
+      if (hq) dorfZoom(true, hq[0] / 320, Math.max(0, hq[1] - 10) / 200, true); else schnellZeichnen(true);
       if (S.dorfWahl) setTimeout(function () { menueZeigen(schnellEl.querySelector(".sp-dl-station"), "nearest"); }, 60);
       return;
     } else if (s === "dorfzeichen") {
@@ -12223,6 +12224,14 @@
     var f = schnellEl && schnellEl.querySelector(".sp-dl-fenster");
     if (f && !f._blickLauscher) { f._blickLauscher = true; f.addEventListener("scroll", dorfBlickZeigen, { passive: true }); }
     if (!lw || !kb || !lw.dataset.gemalt) { dorfBlickZeigen(); return; }
+    /* FASSUNG 884 — XANDER (Funk 159): „… mit Doppeltipp größer machen … und das hängt noch ein bisschen ich bin jetzt
+       zweimal abgestürzt". GEMESSEN: jedes Hineinzoomen legte die kleine Karte als NEUE 480×300-Leinwand an und malte das
+       Dorf noch einmal hinein (drawImage); die alte blieb liegen, bis der Speicher aufräumt – 10× hinein = 10 Leinwände.
+       Jetzt bleibt es EINE Leinwand mit fertigem Bild: die frisch erzeugte (noch leere) wird durch die gemerkte ersetzt.
+       Ist das Dorf anders gemalt (Besuch, Ausbau, Tag/Nacht), stimmt „gemalt" nicht mehr, und es wird wie bisher neu
+       gezeichnet. Hält eine abgehängte 480×300-Leinwand (576 KB) fest – gewollt und begrenzt. */
+    if (DM.karte && kb !== DM.karte && !kb.dataset.gemalt) { DM.karte.setAttribute("data-sig", kb.getAttribute("data-sig") || ""); kb.parentNode.replaceChild(DM.karte, kb); kb = DM.karte; }
+    DM.karte = kb;
     if (kb.dataset.gemalt !== lw.dataset.gemalt) {
       kb.width = 480; kb.height = 300;
       try { kb.getContext("2d").drawImage(lw, 0, 0, 480, 300); } catch (e) {}
@@ -12245,7 +12254,11 @@
     var glut = w.tag ? Math.max(0, 1 - Math.abs(h - 2) / 7) : 0;
     var dunkel = w.tag ? Math.max(0, Math.min(.38, (5 - h) / 14)) : 0;
     if (w.art !== "klar" && w.art !== "wolken") glut *= .35;
-    return '<i class="sp-dl-daemmer" aria-hidden="true" style="--glut:' + glut.toFixed(2) + ";--dunkel:" + dunkel.toFixed(2) + '"></i>';
+    /* FASSUNG 884 — Funk 159 (Doppeltipp-Zoom stürzt ab): am hellen Tag (glut und dunkel 0) mischte die Abend-Ebene
+       trotzdem das ganze Dorf (soft-light + multiply) – eine volle Misch-Ebene ohne sichtbare Wirkung, die beim Zoomen
+       mit der doppelt großen Fläche mitlief. Dann ist sie aus (display: none, spiel.css). Das Element bleibt im HTML,
+       damit sich beim Angleichen nichts verschiebt (sonst würden Rauch-Ebene und Zug neu erzeugt). */
+    return '<i class="sp-dl-daemmer' + (glut < .005 && dunkel < .005 ? " sp-aus" : "") + '" aria-hidden="true" style="--glut:' + glut.toFixed(2) + ";--dunkel:" + dunkel.toFixed(2) + '"></i>';
   }
   function dmLeinwandWeg(b) {
     [b.bild, b.maske].forEach(function (c) { try { if (c && c.getContext) { c.width = 0; c.height = 0; } } catch (e) {} });
@@ -14527,14 +14540,26 @@
     }
     S.dorfLetzterTipp = { x: ev.clientX, y: ev.clientY, t: jetzt };
   }
-  function dorfZoom(nah, fx, fy) {
+  function dorfZoom(nah, fx, fy, gleich) {
     var f = schnellEl && schnellEl.querySelector(".sp-dl-fenster"), l = f && f.querySelector(".sp-dorfland");
     if (fx == null && f && l) { fx = (f.scrollLeft + f.clientWidth / 2) / (l.clientWidth || 1); fy = (f.scrollTop + f.clientHeight / 2) / (l.clientHeight || 1); }
     if (fx == null) { fx = .5; fy = .56; }
     var war = dorfNah();
     S.dorfNah = !!nah;
     try { localStorage.setItem("dma_dorf_nah", nah ? "1" : "0"); } catch (e) {}
-    schnellZeichnen(true);
+    /* FASSUNG 884 — XANDER (Funk 159): „… mit Doppeltipp größer machen … und das hängt noch ein bisschen ich bin jetzt
+       zweimal abgestürzt". GEMESSEN (4× gedrosselte CPU): vor der Bewegung baute dorfZoom die ganze Leiste neu
+       (schnellZeichnen) – Loslassen bis Zoombeginn im Median rund 70 ms, jetzt rund 20 ms. Zuerst nur, was die Bewegung braucht:
+       Klasse (nah/ganz = Fenstergröße), Scrollstand, Animation. Das volle Angleichen (kleine Karte, Kompass-Zeichen,
+       Tipp-Text, Station zu) kommt im nächsten Bild, während die Bewegung schon läuft (rAF + setTimeout: ein reines rAF
+       liefe noch vor dem Bild und hielte den Start wieder auf). „gleich" = sofort ganz zeichnen (wer danach etwas im
+       Menü sucht, z. B. dorfhin die Station). */
+    var rz = l && schnellEl.querySelector(".sp-dl-rahmen");   /* nur das gemalte Dorf (die neue Stadt hat kein .sp-dorfland) */
+    clearTimeout(DW.zoomNach);
+    if (rz && war !== !!nah && !gleich) {
+      rz.classList.toggle("sp-dl-nah", !!nah); rz.classList.toggle("sp-dl-ganz", !nah);
+      requestAnimationFrame(function () { clearTimeout(DW.zoomNach); DW.zoomNach = setTimeout(function () { schnellZeichnen(true); dorfBlickZeigen(); }, 0); });
+    } else schnellZeichnen(true);
     var f2 = schnellEl && schnellEl.querySelector(".sp-dl-fenster"), l2 = f2 && f2.querySelector(".sp-dorfland");
     if (!f2 || !l2) return;
     if (nah) {
@@ -14545,7 +14570,10 @@
     if (war !== !!nah && l2.animate) {
       try {
         l2.style.transformOrigin = (fx * 100).toFixed(1) + "% " + (fy * 100).toFixed(1) + "%";
-        l2.animate([{ transform: nah ? "scale(.5)" : "scale(2)" }, { transform: "scale(1)" }], { duration: 320, easing: "cubic-bezier(.2,.7,.3,1)" });
+        /* FASSUNG 884 — Funk 159: schnelle Doppeltipps stapelten bis zu drei Zoom-Animationen auf der doppelt großen
+           Dorffläche. Im Bild gewinnt ohnehin die jüngste (sie ersetzt die älteren ganz) – die älteren werden beendet. */
+        if (DW.zoomAnim) { try { DW.zoomAnim.cancel(); } catch (e) {} }
+        DW.zoomAnim = l2.animate([{ transform: nah ? "scale(.5)" : "scale(2)" }, { transform: "scale(1)" }], { duration: 320, easing: "cubic-bezier(.2,.7,.3,1)" });
       } catch (e) {}
     }
     dorfBlickZeigen();

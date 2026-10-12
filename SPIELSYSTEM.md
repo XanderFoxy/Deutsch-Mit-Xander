@@ -4436,3 +4436,71 @@ select daten->>'f' as fassung, daten->>'bau' = 'quelle' as quelle, count(*) as s
 ```
 
 **Funk-Antwort (Entwurf)**: „Notweg ins Klassenzimmer (Funk 270/272): Seit der schlanken Seite (876) wird das Klassenzimmer in Stücken nachgeladen. Fehlte eines davon oder passte es nicht, ging „Klassenzimmer betreten“ einfach nicht, und oben stand fälschlich „Neue Fassung 883 – jetzt laden“, was nichts half. Jetzt holt sich die Seite in so einem Fall selbst das ganze Programm in einem Stück, lädt einmal neu und öffnet das Klassenzimmer wieder – du tippst nur noch einmal auf „Klassenzimmer betreten“. Warst du schon im Raum, kommst du von selbst zurück. Kommt das fehlende Stück doch noch (kurzes Funkloch), lädt sie nicht neu. Ohne Netz lädt sie nicht neu. Liegt schon eine neuere Fassung bereit, nimmt sie diese. Im Normalfall ändert sich nichts. Eine Frage: Während das Programm geholt wird (über schwaches Netz bis etwa 10 Sekunden), sieht man nichts. Soll da eine kurze Zeile „Klassenzimmer wird neu geladen …“ stehen?“
+
+## Fassung 884 — Doppeltipp-Zoom im alten Dorf: weniger Speicher-Umwälzung, Zoom startet sofort (Funk 159/255)
+
+XANDER (Funk 159): „… mit Doppeltipp größer machen … und das hängt noch ein bisschen ich bin jetzt zweimal abgestürzt". Funk 255: die schnelle Seite hat oberste Priorität. Weg: `dorfDoppelPruefen` → `dorfZoom`. Aussehen, Größe und Bedienung bleiben; nur spiel.js und spiel.css (livechat.js und app.js unberührt, alte Bilderwelt nicht berührt).
+
+### Befund (Stand vor diesem Punkt, ada429c; Sonde 884-zoom mit `ALT=`)
+- **Leinwand je Hineinzoomen:** die kleine Karte (`canvas.sp-dl-karte-bild`, 480×300 = 576 KB) entsteht bei jedem Hineinzoomen NEU aus dem HTML und bekommt das Dorf noch einmal hineingemalt (`drawImage` aus der großen Leinwand); die alte bleibt liegen, bis der Speicher aufräumt. 20 Doppeltipps (10× hinein): +10 Leinwände, vor GC 2 abgehängte 480×300 mit Speicher.
+- **Gestapelte Animationen:** 3× `dorfZoom` im Abstand von 90 ms → 3 gleichzeitig laufende `scale`-Animationen auf der doppelt großen `.sp-dorfland`.
+- **Abend-Ebene am hellen Tag:** `.sp-dl-daemmer` (soft-light) und ihr `::after` (multiply) liegen auch bei `--glut:0; --dunkel:0` über dem ganzen Dorf – 2 Mischebenen ohne sichtbare Wirkung. Ebenenfläche „nah“: 15,95 Bildschirme.
+- **Zoombeginn:** vor der Bewegung baute `dorfZoom` die ganze Leiste neu (`schnellZeichnen(true)`). 4× gedrosselte CPU: Loslassen → `animate()` im Median 69,6–75,4 ms (drei Läufe), bis zum Bild 113–145 ms.
+- Keine Ebenen-Explosion in Chromium: mitten in der Animation 2–4 Ebenen mehr als in Ruhe, Fläche unter Ruhe „nah“; Knoten und JS-Speicher wachsen über 20 Doppeltipps nicht.
+
+### Was geändert ist (spiel.js, spiel.css – vier örtliche Eingriffe)
+1. `dorfKarteMalen`: **eine Leinwand für die kleine Karte.** Die frisch erzeugte (noch leere) Leinwand wird durch die gemerkte (`DM.karte`, mit fertigem Bild) ersetzt; ihre `data-sig` wird übernommen, damit `domAngleichen` sie überspringt. Stimmt „gemalt“ nicht mehr mit der großen Leinwand überein (Besuch, Ausbau, Tag/Nacht), wird wie bisher neu gezeichnet; weicht die `data-sig` ab, entfernt das Angleichen `data-gemalt`, also ebenfalls neu.
+2. `dorfZoom`: **höchstens eine Zoom-Animation** – die vorige (`DW.zoomAnim`) wird beendet; im Bild gewinnt ohnehin die jüngste (composite replace).
+3. `dorfDaemmerHtml` + spiel.css: **Abend-Ebene nur, wenn sie etwas tut** – bei `glut < .005 && dunkel < .005` Klasse `sp-aus` (`display: none`). Das Element bleibt im HTML (sonst verschieben sich beim Angleichen die Positionen und Rauch-Ebene und Zug-SVG würden neu erzeugt); `--glut`/`--dunkel` bleiben am Element (Sonde 804). Der Abgleich der Startblätter nimmt die eine Regel mit ins `min/spiel-start.css`.
+4. `dorfZoom`: **Bewegung zuerst, Menü danach.** Klasse `sp-dl-nah`/`sp-dl-ganz` am Rahmen, Scrollstand und Animation stehen sofort; das volle Angleichen (kleine Karte, ±-Zeichen am Kompass, Tipp-Text, Station zu) kommt per rAF + `setTimeout(0)` im nächsten Bild (`DW.zoomNach`, ein neuer Zoom räumt einen offenen weg). Ein reines rAF liefe noch vor dem Bild und hielte den Start wieder auf. Nur im gemalten Dorf (`.sp-dorfland` im Fenster) und nur beim echten Umschalten; sonst wie bisher sofort. Neuer 4. Parameter `gleich`: `dorfhin` zeichnet sofort ganz, weil es 60 ms später die Station sucht. `.sp-dl-fenster` wird nicht ersetzt, `rollPos` behält den neuen Scrollstand.
+
+### Messung (Sonde 884-zoom, Chromium, Android 360×740, DPR 2,75, echte Fingertipps, heller Tag)
+
+| | alt (ada429c) | neu |
+|---|---|---|
+| neue Karten-Leinwände bei 10× Hineinzoomen | +10 | +0 (4 Läufe) |
+| Leinwände insgesamt angelegt (20 Doppeltipps) | +10 | +0 |
+| laufende Zoom-Animationen nach 3× in 270 ms | 3 | 1 |
+| Mischebenen im Dorf, heller Tag (ganz / nah) | 2 / 2 | 0 / 0 |
+| Ebenenfläche „nah“, Ruhe | 16,12 Bildschirme | 15,39 |
+| Ebenenfläche „nah“ ohne / mit eingeblendeter Abend-Ebene | 15,95 / 15,95 | 15,21 / 15,95 |
+| Loslassen → Zoombeginn, CPU 4×, Median | 69,6–75,4 ms (3 Läufe) | 16,4–22,9 ms (8 Läufe) |
+| Loslassen → Bild, in dem die Bewegung startet (Auskunft) | 113–145 ms | 39,5–69,6 ms |
+| Ebenen mitten in der Animation (max.) / Ruhe „nah“ | 90–95 / 88–91 | 87–97 / 87–91 |
+| Knoten / JS-Speicher nach 20 Doppeltipps + GC | −10 bis 0 / −0,6 bis −0,1 MB | −8 bis +22 / −0,6 bis +0,7 MB |
+| Foto `.sp-dl-fenster` (ganz, nah) gegen alt | – | höchstens 2/255 Abweichung |
+
+Die Latenzen sind zweigeteilt (0–3 ms und 16–39 ms): beim Hineinzoomen kostet das Setzen des Scrollstands ein Layout der doppelt großen Fläche.
+
+### Sonden
+- Neu: `werkzeug/pruefe-884-zoom.js` (Gerüst wie 709 plus Bergwerk, `S.sonneTest = 30`; CDP `Performance.getMetrics`, `LayerTree`, `HeapProfiler.collectGarbage`; Haken an `getContext` mit WeakRef). Schalter `QUELLE=1`, `ALT=<ordner>` (spiel.js/spiel.css von dort, erzwingt `?quelle`), `DROSSEL=`, `BILD=`, `VERGLEICH=`. A 20 Doppeltipps schalten um; B Leinwände; C Stapel; D Mischebenen/Fläche/Abendrot bei 1,5°; E Latenz bei 4×; F Schutz (Ebenen, Fläche, Knoten, JS-Speicher); H nach 900 ms stimmen kleine Karte, Kompass „+/−“ und `data-n`, Tipp-Text, offene Station geht zu, Kompass-Lupe, Doppeltipp „genau dort“ (< 0,15); G Fotos ganz/nah mit angehaltener Bewegung (Leute, Fuhrwerk, Vögel, Rauch, Zug-Ebene mit Anglern, Uhr ausgeblendet; zweimal fotografiert = 0 Abweichung) gleich dem Bild mit eingeblendeter Abend-Ebene (≤ 3/255).
+  - Neu: **alles grün** mit `?quelle` (2 Läufe) und min/ (5 Läufe); mit `VERGLEICH=` gegen die Fotos des alten Stands: ganz und nah höchstens 2/255. „Ruhe“ in F ist die Spitze über 1,5 s (Leute, Vögel und Zug kommen und gehen; ein einzelner Blick lag einmal genau an der Grenze +6). Beim Bauen der Sonde liefen Zug, Dampf und Angler (per Skript bewegt) noch in den Fotos – seitdem ist die ganze Zug-Ebene ausgeblendet; ein früher Lauf gegen damals aufgenommene Vergleichsfotos war deshalb in G rot.
+  - Gegenprobe `ALT=` (spiel.js/spiel.css aus HEAD = ada429c, scratchpad/gegen884, drei Läufe): **rot B (1), C (1), D (4), E (1)**; grün F, G, H. In einem der drei alten Läufe zusätzlich A rot (19 von 20 Doppeltipps schalteten um).
+- Bestehende Sonden nacheinander (nach `fassung-setzen.js --nur-stempel`, min/): grün 709-dorf-kompass, 711-dorf-bedienung (0 rot; die 2 roten zum Nachthimmel aus der Untersuchung kamen hier nicht), 704-dorf-gemalt, 804-tag-nacht, 817-rahmen-bedienung, 850-platz-nach-menue, 789-haeuser-versetzen, 799-stadt-im-dorfrahmen, 854-spaete-haeuser, 733-jahreszeiten. 828-einsammeln: 2 rot in Teil B („die neue Stadt ist im Spiel geladen“, danach Abbruch) im Gesamtlauf – mit dem Stand ada429c (HEAD-Kopie über Verweise, scratchpad/gegen884/wurzel884) genauso rot, mit `NUR=B` allein grün: älter, betrifft die neue Stadt, nicht diesen Punkt. 840 nicht nötig (app.js unberührt).
+
+### Ehrlich
+- **Nicht beweisbar:** den Absturz auf dem iPhone kann ich hier nicht nachstellen – kein WebKit, kein iOS-Jetsam; Chromium legt Ebenen anders an, und der Speicher gerasterter Kacheln ist kopflos nicht messbar. Ebenen-Zahl und -Fläche in CSS-px sind Stellvertreter. In Chromium erzeugt die Zoom-Animation selbst keine zusätzlichen Ebenen.
+- Herausgenommen ist, was messbar war: Leinwand-Umwälzung (10 → 0), gestapelte Animationen (3 → 1), eine volle Mischebene am Tag, gut 50 ms Hauptthread vor dem Zoombeginn (bei 4×). Ob das den Absturz beseitigt, zeigt erst Xanders Gerät. Ein Teil des damaligen Problems war vermutlich das Leinwand-Budget (Funk 159 kam vor Fassung 801/802).
+- Punkt 4: ein Bild lang (~16–20 ms) zeigen kleine Karte, ±-Zeichen und Tipp-Text noch den alten Stand, und eine offene Station schließt ein Bild später. Nicht wahrnehmbar – wer es strenger sieht, muss es als sichtbar einstufen. Ein Tipp genau in diesem Fenster auf den Kompass läse das alte `data-n` (geringes Risiko). Im Hintergrund-Tab wartet rAF; `dorfhin` zeichnet deshalb sofort.
+- Punkt 1: `DM.karte` hält eine abgehängte 480×300-Leinwand (576 KB) dauerhaft fest, auch bei „ganz“ – gewollt und begrenzt. Würde die Karte künftig mit `data-gemalt` im HTML erzeugt, greift das Ersetzen nicht – dann ist es wieder wie vorher, kein Fehler.
+- Punkt 3: Abweichung ≤ 3/255 durch Rundung beim Mischen (gemessen 2/255). Beim Übergang glut 0,00 → 0,01 erscheint die Ebene wieder (unsichtbar weich).
+- Die Latenzmessung endet beim Aufruf von `animate()`; die Bewegung beginnt auf dem Compositor im nächsten Bild (Auskunftszahl „bis zum Bild“).
+
+**Bewusst nicht gebaut**
+- Nur den Rahmen statt der ganzen Leiste angleichen: das HTML zu bauen kostet bei 4× nur ~3 ms; ein Teilabgleich müsste Station, Tipp-Text und Kompass doppelt pflegen, und `dataset.html` liefe auseinander. Mit Punkt 4 ist der teure Teil aus dem Weg der Bewegung. Erst, wenn Xander weiter Hänger meldet.
+- Animation auf kleinerer Ebene: geht nur mit Standbild oder ausgeblendeten Figuren, Zug und Namen während der Bewegung – sichtbar, also Vorschlag.
+- Bild und Vorrats-Kopie zu einer Leinwand zusammenlegen (−4,9 MB): bricht die Tag/Nacht-Überblendung (`dorfMalPflegen`, `blende`) – riskant (Offen 3).
+
+**Vorschläge an Xander (sichtbar, nicht gebaut – nur falls es auf dem iPhone weiter abstürzt)**
+- V1 Zoom ohne Bewegung oder kürzer (z. B. 200 statt 320 ms).
+- V2 „Nah“ 1,6× statt 2× (rund 36 % weniger Ebenenfläche).
+- V3 Zug, Rauch und Leute während der 320 ms anhalten.
+
+**Offen**
+1. Gegenprobe auf Xanders iPhone (20 schnelle Doppeltipps im alten Dorf, auch nachts/abends, wenn die Abend-Ebene mischt).
+2. Vorschläge V1–V3 (Antwort Xanders).
+3. Bild + Vorrats-Kopie zu einer Leinwand (−4,9 MB) nur mit neuer Tag/Nacht-Überblendung.
+4. Sonde 828 Teil B im Gesamtlauf rot (älter, neue Stadt) – eigener Punkt.
+5. Werkstatt-Eintrag und Fassungsnummer beim Ausliefern von 884 (WIP-Stand wie die anderen 884-Punkte).
+
+**Funk-Antwort (Entwurf)**: „Doppeltipp-Zoom im alten Dorf (Funk 159): Ich habe nachgemessen, was beim Doppeltipp passiert. Bei jedem Hineinzoomen wurde die kleine Karte als neues Bild angelegt (10× hinein = 10 Bilder im Speicher), schnelle Doppeltipps stapelten bis zu drei Zoom-Bewegungen übereinander, am hellen Tag lag eine unsichtbare Abend-Schicht über dem ganzen Dorf, und vor der Bewegung wurde erst das ganze Menü neu gebaut. Das ist jetzt alles weg: eine Karte, eine Bewegung, die Abend-Schicht nur abends, und der Zoom startet sofort (auf einem langsamen Handy statt nach ~70 nach ~20 Millisekunden). Aussehen und Bedienung sind gleich. Ob das deinen Absturz wirklich behebt, kann ich hier nicht beweisen – das iPhone gibt Speicher anders frei als mein Testbrowser. Probier bitte 20 schnelle Doppeltipps im Dorf. Wenn es noch abstürzt, hätte ich drei Ideen, die man aber sieht: (1) Zoom ohne oder mit kürzerer Bewegung, (2) „nah“ etwas weniger groß (1,6× statt 2×), (3) Zug, Rauch und Leute während des Zoomens kurz anhalten.“

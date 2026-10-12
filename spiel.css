@@ -3067,6 +3067,9 @@ body.sp-graben.sp-wz-hacke #lcPlaetze .lc-kreis { outline-color: rgba(217, 130, 
 .sp-dl-daemmer { position: absolute; inset: 0; pointer-events: none; z-index: 0; mix-blend-mode: soft-light;
   background: linear-gradient(180deg, rgba(255, 140, 40, calc(var(--glut, 0) * .85)), rgba(255, 120, 70, calc(var(--glut, 0) * .6)) 60%, rgba(200, 90, 120, calc(var(--glut, 0) * .4))); }
 .sp-dl-daemmer::after { content: ""; position: absolute; inset: 0; background: rgba(25, 35, 80, var(--dunkel, 0)); mix-blend-mode: multiply; }
+/* FASSUNG 884 — Funk 159 (Doppeltipp-Zoom stürzt ab): am hellen Tag (glut und dunkel 0) tut die Abend-Ebene nichts –
+   dann wird sie gar nicht erst gemischt (eine volle Misch-Ebene über der doppelt großen Dorffläche weniger). */
+.sp-dl-daemmer.sp-aus { display: none; }
 
 /* FASSUNG 813 — XANDER: „ich kann immer nur noch verkaufen. Ich kann nirgendswo irgendwelche Produkte einkaufen".
    Umschalter Einkaufen | Verkaufen oben in Markt & Handel; Schloss und „ab Level N" für Gesperrtes; die Übersicht
