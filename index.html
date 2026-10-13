@@ -268,6 +268,7 @@ svg{display:block}
 #carLabel.q{color:var(--amber);letter-spacing:.02em;text-transform:none;font-size:10px;font-weight:700}
 #carLabel.hintS{color:var(--amber);opacity:.8;text-transform:none;letter-spacing:0;font-size:10px}
 #carLabel.deg{color:var(--amber);font-size:10px;font-weight:700;letter-spacing:.04em}
+#carLabel.own{color:var(--amber);opacity:.85;text-transform:none;letter-spacing:0;font-size:10px;font-weight:700}   /* P: „1 Clip eigene Tonart“ in full */
 #carRing{width:11px;height:11px;flex:none;display:none}
 #carRing.show{display:block}
 #carRing circle{fill:none;stroke-width:3}
@@ -278,6 +279,7 @@ svg{display:block}
 #carVal.orig{color:var(--text-dim);font-size:20px;letter-spacing:.06em;filter:none}
 #carShift{font:700 16px/1 var(--font-num);color:var(--amber);flex:none}
 #carShift.deg{font:600 12px/1.2 var(--font-ui);letter-spacing:.01em;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#carShift.own{font:600 9px/1.1 var(--font-ui);letter-spacing:.02em;text-transform:uppercase;color:var(--amber);opacity:.85;flex:1 1 0;min-width:0;white-space:normal;align-self:center}
 #carLock{font-size:12px;flex:none;display:none}
 #carLock.show{display:inline}
 #bLatch{grid-area:latch;height:44px;flex-direction:column;gap:2px;font-size:13px}
@@ -640,7 +642,21 @@ svg{display:block}
 #toast button{pointer-events:auto;height:34px;padding:0 10px;border-radius:5px;background:var(--ink);color:var(--sel);font:700 12px/1 var(--font-ui);letter-spacing:.04em;flex:none;touch-action:manipulation}
 #toast .tmsg{min-width:0}
 #toast.band{position:relative;left:auto;top:auto;transform:none;z-index:auto;flex:none;justify-content:space-between;max-width:none;min-height:44px;margin:0 8px 6px;padding:5px 6px 5px 12px;box-shadow:0 2px 10px rgba(0,0,0,.45);pointer-events:auto}
-#toast.band .tmsg,#toast.dock .tmsg{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#toast.dock .tmsg{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* the band never cuts its message („2 Takte · 14 Noten · a-Moll · 1/8“, §3.1 Result): the text wraps onto a 2nd line
+   beside the buttons (--tmb and the classes tcomp / t3 are set by toastFit); a toast whose buttons have no symbol
+   puts them on their own row, right-aligned, where its text does not fit */
+#toast.band{flex-wrap:wrap;row-gap:4px}
+#toast.band .tmsg{flex:1 1 var(--tmb,auto);overflow-wrap:break-word;white-space:normal}
+#toast .tacts{display:flex;align-items:center;align-self:stretch;gap:inherit;row-gap:0;flex:none}
+#toast.band .tacts{margin-left:auto}
+#toast.band .tp{white-space:nowrap}
+#toast.band.tpw .tp{white-space:normal}
+#toast.band.tcomp .tacts{gap:6px}
+#toast.band.tcomp .tacts button[data-ic]{width:44px;padding:0;font-size:18px;letter-spacing:0}
+#toast.band.tcomp .tacts button[data-ic] .bl{display:none}
+#toast.band.tcomp .tacts button[data-ic]::before{content:attr(data-ic)}
+#toast.band.t3 .tmsg{font-size:12px;line-height:1.15}
 #toast.dock{transform:none;max-width:none;justify-content:space-between;gap:6px;padding:0 4px 0 10px;pointer-events:auto}
 #toast.dock.lcdk{border-radius:5px;padding:0 2px 0 10px;font-size:12px}
 #toast.dock.lcdk button{height:calc(100% - 4px);min-height:22px}
@@ -871,6 +887,9 @@ svg{display:block}
 .slot.sel .sq{right:6px;bottom:5px}
 .slot.playing .tx{right:15px}
 .slot.sel.playing .tx{right:18px}
+/* the ■ moves the live text („2/3“) left: in a narrow cell it would run into the length label („3T“), so there the
+   length label gives way while the live text shows (class lnoff, from the cell width that cellFit measures) */
+.slot.lnoff .ln{display:none}
 .slot.qstop{animation:qstopBlink .25s steps(2,start) infinite}
 @keyframes qstopBlink{50%{opacity:.45}}
 .slot.qstop .tx{color:var(--text)}
@@ -886,6 +905,9 @@ svg{display:block}
 /* strip: ✎ and the 52 px FOLGT icon toggle */
 #bEdit{width:44px;min-width:44px;padding:0;font-size:17px}
 #bFolgt{width:52px;min-width:52px;padding:0;font-size:14px;letter-spacing:0;gap:1px}
+/* below 360 px ⇅ shows only its glyph (no ✓): ⇅ and ✎ get 38 px (× 44 tall) so the selected track's name stays readable
+   in the strip — at this width it is the only place that shows it in full („SYNTH 4 / VA · Lead“) */
+@media (orientation:portrait) and (max-width:359px){#strip #bFolgt,#strip #bEdit{width:38px;min-width:38px}#strip #bKlang{padding:0 6px}}
 #bFolgt .ck{width:auto;font-size:11px}
 #bFolgt:not(.on) .ck{font-size:9px;letter-spacing:.04em;text-transform:uppercase}
 #stLock{font-size:13px;width:34px;text-align:center}
@@ -937,12 +959,15 @@ svg{display:block}
 }
 @media (orientation:landscape) and (max-height:430px){#reclane{height:90px;grid-template-rows:14px minmax(0,1fr) 36px}#bRecDone{height:36px}}
 /* coach card (first TRANSPONIEREN, §4.2): inside the grid area, never over the keys */
-#coach{position:absolute;inset:6px 8px auto 8px;z-index:9;background:linear-gradient(#2a2214,#1d1810);border:1px solid #6b4c16;border-radius:10px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.6);max-height:calc(100% - 12px);overflow:hidden}
-#coach h4{margin:0 0 6px;font:700 11px/1 var(--font-ui);letter-spacing:.12em;color:var(--amber)}
+#coach{position:absolute;inset:6px 8px auto 8px;z-index:9;display:flex;flex-direction:column;background:linear-gradient(#2a2214,#1d1810);border:1px solid #6b4c16;border-radius:10px;padding:10px 12px;box-shadow:0 10px 30px rgba(0,0,0,.6);max-height:calc(100% - 12px);overflow:hidden}
+#coach h4{flex:none;margin:0 0 6px;font:700 11px/1 var(--font-ui);letter-spacing:.12em;color:var(--amber)}
+/* the four lines give way (smaller, then scrolling) before the [Verstanden] button is ever cut (§4.2, 320×568, Safari toolbars) */
+#coach .cbody{flex:0 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
 #coach p{margin:0 0 5px;font:500 13px/1.3 var(--font-ui);color:var(--text)}
-#coach .row{display:flex;justify-content:flex-end;margin-top:6px}
+#coach .row{flex:none;display:flex;justify-content:flex-end;margin-top:6px}
 #coach button{height:40px;padding:0 16px;font:700 13px/1 var(--font-ui);color:var(--ink);background:var(--amber);border-color:var(--amber)}
 @media (orientation:landscape){#coach p{font-size:12px;margin-bottom:3px}}
+@media (orientation:portrait) and (max-height:600px){#coach{padding:8px 10px}#coach h4{margin-bottom:4px}#coach p{font-size:12px;line-height:1.22;margin-bottom:3px}#coach .row{margin-top:3px}}
 /* ---------- clip editor sheet (§3.3): P covers grid + strip + carrier; L covers rows 2 and 3 ([⌨] brings the keyboard back) ---------- */
 #rollSheet{flex-direction:column}
 #rollSheet .rhead{flex:none;display:flex;align-items:center;gap:6px;height:44px;padding:0 4px 0 10px;border-bottom:1px solid var(--panel-edge);background:linear-gradient(#1d2026,#16181d);min-width:0}
@@ -1040,7 +1065,7 @@ svg{display:block}
 /* short screens: P ≤ 600 px tall also covers the carrier row (the sheet would scroll otherwise); L ≤ 380 px compacts */
 @media (orientation:portrait) and (max-height:600px){
   #clipSheet{grid-row:2/5}
-  .cs3 .cgrid .hb,.cs3 .lenrow .hb{height:40px}
+  .cs3 .cgrid .hb,.cs3 .lenrow .hb{height:44px}          /* §3.7 P: buttons ≥ 44 px, also at 320×568 */
   #clipSheet .keyrow{min-height:36px}
   #clipSheet .kchip{height:32px}
   #clipSheet .keyrow .hb{height:36px}
@@ -1059,15 +1084,15 @@ svg{display:block}
 /* ---------- drum STEPS tab (§3.4): chips, lane tabs, 8×2 / 16×1 step cells, lane strip, overview + bar pager ---------- */
 .pg-dsteps .se{display:flex;flex-direction:column;min-height:0;flex:none}
 .pg-dsteps .se-row,.pg-dsteps .se-lane,.pg-dsteps .vchips,.pg-dsteps .stabs{flex:none}
-.pg-dsteps .se-lane{--se-lh:60px}
+.pg-dsteps .se-lane{--se-lh:72px}                        /* §2.4: P step cell 42×44, lane strip 72 */
 .pg-dsteps .stabs{display:flex;align-items:center;gap:8px;min-width:0}
 .pg-dsteps .stabs .se-tabs{flex:1 1 auto;min-width:0}
 .pg-dsteps .vchips .chip{height:34px}
-.pg-dsteps .se-cell{height:42px}
+.pg-dsteps .se-cell{height:44px}
 .pg-dsteps .foot{min-height:0}
-@media (orientation:portrait) and (max-height:700px){.pg-dsteps{gap:4px}.pg-dsteps .se-lane{--se-lh:34px;margin-top:4px}.pg-dsteps .se-cell{height:36px}.pg-dsteps .se-row{row-gap:4px}.pg-dsteps .vchips .chip{height:30px}.pg-dsteps .se-tabs button{min-height:28px;padding:0 8px}
-  .pg-dsteps .ovw{grid-template-columns:repeat(16,4px);grid-auto-rows:4px;gap:2px 3px;padding:4px}.pg-dsteps .ovw i{width:4px;height:4px}}
-@media (orientation:portrait) and (max-height:600px){.pg-dsteps .se-lane{--se-lh:34px}.pg-dsteps .se-cell{height:34px}.pg-dsteps .vchips .chip{height:30px}.pg-dsteps .se-tabs button{min-height:28px;padding:0 7px}.pg-dsteps .ovw{display:none}}
+@media (orientation:portrait) and (max-height:700px){.pg-dsteps{gap:4px}.pg-dsteps .se-lane{--se-lh:44px;margin-top:4px}.pg-dsteps .se-cell{height:42px}.pg-dsteps .se-row{row-gap:4px}.pg-dsteps .vchips .chip{height:30px}.pg-dsteps .se-tabs button{min-height:28px;padding:0 8px}
+  .pg-dsteps .ovw{grid-template-columns:repeat(16,4px);grid-auto-rows:3px;gap:1px 3px;padding:3px}.pg-dsteps .ovw i{width:4px;height:3px}}
+@media (orientation:portrait) and (max-height:600px){.pg-dsteps .se-lane{--se-lh:44px}.pg-dsteps .se-cell{height:40px}.pg-dsteps .vchips .chip{height:30px}.pg-dsteps .se-tabs button{min-height:28px;padding:0 7px}.pg-dsteps .ovw{display:none}}
 @media (orientation:landscape){
   .pg-dsteps{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto auto;gap:3px 10px}
   .pg-dsteps .vchips{grid-column:1;grid-row:1}
@@ -1085,10 +1110,17 @@ svg{display:block}
   .pg-dsteps{gap:3px 8px}
   .pg-dsteps .vchips .chip{height:28px}
   .pg-dsteps .se-tabs button{min-height:26px;padding:0 7px;font-size:10px}
-  .pg-dsteps .se-cell{height:34px}
-  .pg-dsteps .se-lane{--se-lh:32px;margin-top:3px}
+  .pg-dsteps .se-cell{height:40px}                      /* §2.4 L: 36×40 cells, 48 px lane (fits 844×390 without scrolling) */
+  .pg-dsteps .se-lane{--se-lh:48px;margin-top:3px}
   .pg-dsteps .ovw{gap:1px 2px;padding:3px}
 }
+/* small landscape (667×375, usable ≈ 355 tall): the body has room for 36 px cells and a 34 px lane only */
+@media (orientation:landscape) and (max-height:380px){.pg-dsteps .se-cell{height:36px}.pg-dsteps .se-lane{--se-lh:34px}}
+/* a multi-bar clip adds the bar pager (P: its own row; L: it makes the lane-tab row taller): the cells and the lane
+   give back exactly that height on the short screens, so the step body still never scrolls */
+@media (orientation:portrait) and (max-height:600px){.pg-dsteps:has(.pgside.haspg) .se-cell{height:34px}.pg-dsteps:has(.pgside.haspg) .se-lane{--se-lh:34px}}
+@media (orientation:landscape) and (max-height:430px){.pg-dsteps:has(.pgside.haspg) .se-lane{--se-lh:42px}}
+@media (orientation:landscape) and (max-height:380px){.pg-dsteps:has(.pgside.haspg) .se-cell{height:34px}.pg-dsteps:has(.pgside.haspg) .se-lane{--se-lh:32px}}
 @media (orientation:landscape) and (max-width:759px){.vchip .lf{display:none}.vchip .ls{display:inline}}
 /* bar pager of a multi-bar clip: P short screens keep pager + info on one line; L puts a compact pager into the
    lane-tab row (segment for 2–4 bars, ‹ k/n › for more) and drops the info text, so the step body never scrolls */
@@ -4818,13 +4850,57 @@ function qPos(raw, grid, swing, strength, L) {
   return KeyDetect.quantize([{t: raw, d: .1, n: 60, v: .8}], {grid, swing: swing || .5, strength: strength == null ? 1 : strength, len: L})[0].t;
 }
 // after a take / FANG: grid ('auto' = detected from the raw onsets, a fixed grid, or 'off') and the key (§3.5, §4.1)
-// auto grid: KeyDetect's human tolerance (32 ms) first; a take played consistently late or early by up to 60 ms
-// (touch + output latency on a phone) still snaps when that wider tolerance explains it clearly (sure)
+/* auto grid = the grid the played notes hit (Nachtrag 2), on top of KeyDetect.detectGrid (human tolerance 32 ms):
+   1. latency: a take played consistently late or early (touch + output latency on a phone, up to 100 ms) is judged
+      — and quantized — with that constant offset removed (`off`, in beats), so quarters played 50–90 ms late are
+      quarters, not a 1/32 or 1/16T pattern that bakes the lateness into the clip;
+   2. no played note changes its rhythmic place: when the detected grid leaves notes unexplained that a finer grid
+      containing it does explain (a mostly-quarter phrase with one eighth: 1/4 -> 1/8), the finer grid is taken, so no
+      note is moved onto another beat or wrapped onto the downbeat. 1/32 is never chosen this way (sloppy timing).
+   Among the candidates (as played / shifted) the one explaining the most notes wins, then the coarser grid. */
+function gridFitN(on, step, tol) {
+  const tl = Math.min(tol, step * .3); let k = 0;
+  for (const t of on) if (Math.abs(t - Math.round(t / step) * step) <= tl + 1e-9) k++;
+  return k;
+}
 function detectGridApp(notes) {
-  const g = KeyDetect.detectGrid(notes, {bpm: S.bpm});
-  if (g.grid !== 'off') return g;
-  const g2 = KeyDetect.detectGrid(notes, {bpm: S.bpm, tolMs: 60});
-  return g2.grid !== 'off' && g2.sure ? g2 : g;
+  const bpm = S.bpm, on = notes.map(n => n.t).filter(Number.isFinite);
+  const plain = ns => {
+    const g = KeyDetect.detectGrid(ns, {bpm});
+    if (g.grid !== 'off') return g;
+    const g2 = KeyDetect.detectGrid(ns, {bpm, tolMs: 60});
+    return g2.grid !== 'off' && g2.sure ? g2 : g;
+  };
+  if (on.length < 3) return Object.assign(plain(notes), {off: 0});
+  const bps = bpm / 60, tol = .032 * bps, maxOff = Math.min(.1 * bps, .2), n = on.length;   // ≤ 100 ms and ≤ 1/32 + a bit
+  // the finer grid that keeps every position of g and explains notes g leaves out (never 1/32)
+  const refine = (sh, g) => {
+    const st = GRID_STEP[g.grid]; if (!st || g.swing > .5) return Object.assign({}, g, {k: st ? Math.round((g.fit || 0) * n) : 0});
+    const k0 = gridFitN(sh, st, tol); let best = null;
+    if (k0 < n) for (const G of KeyDetect.GRIDS) {
+      if (G.step >= st - 1e-9 || G.step < 1 / 6 - 1e-9) continue;
+      const r = st / G.step; if (Math.abs(r - Math.round(r)) > 1e-6) continue;
+      const k = gridFitN(sh, G.step, tol), ch = Math.min(.95, 2 * Math.min(tol, G.step * .3) / G.step);
+      if (k > k0 && (k / n - ch) / (1 - ch) >= .75 && (!best || k > best.k)) best = {grid: G.id, swing: .5, fit: +(k / n).toFixed(3), sure: true, k};
+    }
+    return best || Object.assign({}, g, {k: k0});
+  };
+  const offs = [0];
+  for (const step of [1, .5, .25]) {                         // an offset most notes share (a swing's late off-beats are not one)
+    const r = on.map(t => t - Math.round(t / step) * step), d = median(r);
+    if (Math.abs(d) > tol * .5 && Math.abs(d) <= Math.min(maxOff, step * .4) && r.filter(x => Math.abs(x - d) <= tol).length >= n * .6
+      && !offs.some(o => Math.abs(o - d) < tol * .25)) offs.push(d);
+  }
+  let best = null;
+  for (const off of offs) {
+    const sh = on.map(t => t - off), g = refine(sh, plain(sh.map(t => ({t}))));
+    if (!GRID_STEP[g.grid]) { if (!best) best = Object.assign(g, {off: 0, k: -1}); continue; }
+    const c = Object.assign(g, {off});
+    const better = !best || best.k < 0 || (c.sure && !best.sure) || (c.sure === best.sure && (c.k > best.k || (c.k === best.k && (GRID_STEP[c.grid] > GRID_STEP[best.grid] + 1e-9 || (Math.abs(GRID_STEP[c.grid] - GRID_STEP[best.grid]) < 1e-9 && Math.abs(c.off) < Math.abs(best.off))))));
+    if (better) best = c;
+  }
+  delete best.k;
+  return best;
 }
 // take = the notes of an overdub (only they are quantized; the earlier takes keep their grid). Without it: the whole clip.
 function analyseClip(ti, si, recorded, keyNow, take) {
@@ -4838,7 +4914,9 @@ function analyseClip(ti, si, recorded, keyNow, take) {
     else if (take && c.q && GRID_STEP[c.q.grid]) g = {grid: c.q.grid, swing: c.q.swing};     // overdub: the clip's own grid
     else g = detectGridApp(qn.map(n => ({t: n.o, d: n.d, n: n.n, v: n.v})));                // < 3 notes -> 1/16 (KeyDetect default)
     if (g.grid && GRID_STEP[g.grid]) {
-      const sw = g.grid.endsWith('T') ? .5 : clamp(g.swing || .5, .5, .75);
+      const sw = g.grid.endsWith('T') ? .5 : clamp(g.swing || .5, .5, .75), off = g.off || 0;
+      // a constant latency found by the detection is removed from the raw onsets too (re-quantizing later stays on time)
+      if (off) for (const n of qn) n.o = +clamp(n.o - off, 0, Math.max(0, L - 1e-4)).toFixed(4);
       for (const n of qn) n.t = qPos(n.o, g.grid, sw, 1, L);
       c.notes.sort((a, b) => a.t - b.t);
       if (!take || !c.q) c.q = {grid: g.grid, swing: sw, strength: 1};
@@ -5108,6 +5186,12 @@ function sameKey(a, b) { return a && b && a.root === b.root && a.scale === b.sca
 function padFlashAt(idx, t) { const q = PADQ[idx]; if (q.length < 16) q.push(t); }
 
 /* ---------- grid ---------- */
+// cells too narrow for the length label and the live text side by side (unselected / selected cell insets differ)
+function cellFit() {
+  const g = EL.grid, c = g && g.querySelector('.slot'); if (!c) return;
+  const w = c.getBoundingClientRect().width; if (!w) return;
+  if (w !== UI.cellW) { UI.cellW = w; UI.dirty.grid = true; }
+}
 function buildGrid() {
   const g = EL.grid; g.textContent = '';
   g.appendChild(el('div', 'corner', '<span class="clogo">' + LOGO_SVG + '</span><span class="lbl">Szene</span>'));
@@ -5209,6 +5293,9 @@ function renderGrid(bAud) {
       else if (qstop && vs.qBeat != null && R.playing) tx = 'stopp in ' + Math.max(1, Math.ceil(vs.qBeat - bAud - 1e-6));
       else if (playing && clip && clip.len > 1 && R.playing && bAud >= 0) { const L = clip.len * 4, ph = (((bAud - audCstart(i, bAud)) % L) + L) % L; tx = (Math.floor(ph / 4) + 1) + '/' + clip.len; }
       setTxt(C.tx, st, 'tx', tx);
+      // live text and length label side by side only where both fit (10 px mono ≈ 6 px per character; insets as in CSS)
+      const lnS = clip ? clip.len + 'T' : '';
+      setCls(C.el, st, 'lnoff', !!tx && !!lnS && (sel ? 7 : 4) + (playing && rs !== 'rec' ? (sel ? 18 : 15) : (sel ? 7 : 4)) + 6 * (lnS.length + tx.length) + 3 > UI.cellW);
       setTxt(C.big, st, 'big', big);
       setCls(C.big, st, 'on', !!big);
       // while recording the target slot shows the notes played so far (redrawn at most every 250 ms)
@@ -5303,7 +5390,7 @@ function recNotesCount() {
 }
 function recLaneFrame(bAud) {
   const on = rec.state !== 'off';
-  if (on !== UI.last.recLane) { UI.last.recLane = on; EL.app.classList.toggle('recording', on); RL.last = ''; }
+  if (on !== UI.last.recLane) { UI.last.recLane = on; EL.app.classList.toggle('recording', on); RL.last = ''; UI.dirty.carrier = true; }
   const kr = recActive(); if (kr !== UI.last.kbRec) { UI.last.kbRec = kr; EL.kb.classList.toggle('rec', kr); }
   if (!on) return;
   const setTxt2 = txt => { if (txt !== RL.last) { RL.last = txt; EL.recLaneTxt.textContent = txt; } };
@@ -5378,8 +5465,13 @@ function renderCarrier(now) {
   const degLab = !!deg && window.matchMedia('(orientation: portrait)').matches;
   EL.carVal.textContent = tgt ? prettyTarget(tgt) : 'ORIGINAL';
   EL.carVal.classList.toggle('orig', !tgt);
-  EL.carShift.textContent = tgt ? (deg ? (degLab ? '' : '· ' + deg) : fmtShift(ss.shift)) : '';
+  // §4.1.6 guard „· 1 Clip eigene Tonart“: in P the label line (≈ 100–140 px) cannot hold it next to anything else
+  const own = tgt && !queued && UI.last.ownKey ? UI.last.ownKey + (UI.last.ownKey === 1 ? ' Clip' : ' Clips') + ' eigene Tonart' : '';
+  const ownP = !!own && window.matchMedia('(orientation: portrait)').matches;
+  const ownInShift = ownP && degLab;                   // P with a degree label: the big line has room right of „D“ (2 small lines)
+  EL.carShift.textContent = tgt ? (deg ? (degLab ? (ownInShift ? own : '') : '· ' + deg) : fmtShift(ss.shift)) : '';
   EL.carShift.classList.toggle('deg', !!deg && !degLab);
+  EL.carShift.classList.toggle('own', ownInShift);
   EL.carLock.classList.toggle('show', !!(S.settings.harmony.latch && tgt));
   let lab = 'TRÄGER', cls = '';
   if (UI.octFlash && performance.now() < UI.octFlash.until) lab = 'TASTATUR ' + UI.octFlash.txt;
@@ -5389,7 +5481,10 @@ function renderCarrier(now) {
   } else if (!R.playing && (R.kbMode === 'transpose' || R.momentary)) { lab = '▶ drücken zum Hören'; cls = 'hintS'; }
   else if (ss.snap != null) lab = 'TRÄGER · TONART ' + noteNames()[ss.snap];
   else if (degLab) { lab = deg; cls = 'deg'; }
-  if (tgt && !queued && UI.last.ownKey) lab += ' · ' + UI.last.ownKey + (UI.last.ownKey === 1 ? ' Clip' : ' Clips') + ' eigene Tonart';
+  if (own && !ownInShift) {
+    if (ownP && (lab === 'TRÄGER' || lab.startsWith('TRÄGER · '))) { lab = (lab === 'TRÄGER' ? '' : lab.slice(9) + ' · ') + own; cls = (cls ? cls + ' ' : '') + 'own'; }
+    else lab += ' · ' + own;
+  }
   EL.carLabel.textContent = lab; EL.carLabel.className = cls;
   fitCarVal();
   EL.carRing.classList.toggle('show', !!queued);
@@ -5702,9 +5797,9 @@ function popHMode() {
 /* coach card (§4.2): the first time TRANSPONIEREN is entered; inside the grid area, never over the keys; a tap closes it */
 function showCoach() {
   const c = EL.coach; if (!c) return;
-  c.innerHTML = '<h4>TRANSPONIEREN – SO FUNKTIONIERT\'S</h4>' + ['Jeder Clip kennt seine Tonart – automatisch erkannt (z. B. a-Moll).',
+  c.innerHTML = '<h4>TRANSPONIEREN – SO FUNKTIONIERT\'S</h4><div class="cbody">' + ['Jeder Clip kennt seine Tonart – automatisch erkannt (z. B. a-Moll).',
     'Taste leuchtet = Stufe in der Tonart: alles bleibt in der Tonart (wie OP-Z).', 'Dunkle Taste = neue Tonart: alles wird verschoben.',
-    'Akkord = alle Spuren folgen dem Akkord (wie Improvisor).'].map(t => `<p>${esc(t)}</p>`).join('') + '<div class="row"><button class="rb" id="coachOk">Verstanden</button></div>';
+    'Akkord = alle Spuren folgen dem Akkord (wie Improvisor).'].map(t => `<p>${esc(t)}</p>`).join('') + '</div><div class="row"><button class="rb" id="coachOk">Verstanden</button></div>';
   c.hidden = false; UI.coach = true;
   if (!c._bound) { c._bound = true; onTap(c, () => hideCoach()); }
 }
@@ -5729,8 +5824,16 @@ function toast(msg, actions) {
   let acts = (Array.isArray(actions) ? actions : actions ? [actions] : []).filter(Boolean).slice(0, 2);
   if (R.editor === 'roll') acts = [];                    // the clip editor has ↶ ↷ itself: never dock a toast over its tools
   t.textContent = '';
-  t.appendChild(el('span', 'tmsg', esc(msg)));
-  for (const a of acts) { const b = el('button', '', esc(a.label)); onTap(b, () => { hideToast(); shieldTap(); a.fn(); }); t.appendChild(b); }
+  // the message in unbreakable pieces („2 Takte ·“ „14 Noten ·“ „a-Moll ·“ „1/8“): a band breaks it only between them
+  const sep = String(msg).includes(' · ') ? ' · ' : ' ', parts = String(msg).split(sep);
+  t.appendChild(el('span', 'tmsg', parts.map((x, k) => '<span class="tp">' + esc(x + (k < parts.length - 1 ? sep.trimEnd() : '')) + '</span>').join(' ')));
+  const box = acts.length ? el('span', 'tacts') : null;                // the buttons stay together (one row) when the band wraps
+  for (const a of acts) {
+    const b = el('button', '', '<span class="bl">' + esc(a.label) + '</span>'), ic = toastIcon(a.label);
+    if (ic) { b.dataset.ic = ic; b.setAttribute('aria-label', a.label.replace(/^\W+\s/, '')); }
+    onTap(b, () => { hideToast(); shieldTap(); a.fn(); }); box.appendChild(b);
+  }
+  if (box) t.appendChild(box);
   UI.toastActs = acts.length > 0; UI.toastPos = '';
   t.classList.add('show'); toastPlace();
   clearTimeout(UI.toastT); UI.toastT = setTimeout(hideToast, acts.length ? 5000 : 1600);
@@ -5759,20 +5862,64 @@ function toastPlace() {
 function toastPlace1(t) {
   if (!UI.toastActs) {
     if (t.parentNode !== document.body) document.body.appendChild(t);
-    if (UI.toastPos !== 'top') { UI.toastPos = 'top'; t.classList.remove('band', 'dock'); t.style.cssText = ''; }
+    if (UI.toastPos !== 'top') { UI.toastPos = 'top'; t.classList.remove('band', 'dock', 'lcdk', 'tcomp', 't3', 'tpw'); t.style.cssText = ''; }
     return;
   }
   const h = toastHome();
   if (h.kind === 'band') {
     if (t.parentNode !== h.ref) h.ref.appendChild(t);
-    if (UI.toastPos !== 'band') { UI.toastPos = 'band'; t.classList.remove('dock'); t.classList.add('band'); t.style.cssText = ''; }
+    if (UI.toastPos !== 'band') { UI.toastPos = 'band'; t.classList.remove('dock', 'lcdk'); t.classList.add('band'); t.style.cssText = ''; toastFit(t); }
     return;
   }
   if (t.parentNode !== document.body) document.body.appendChild(t);
   const r = h.ref.getBoundingClientRect();
   const css = h.kind === 'lcd' ? `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`
     : `left:${r.left + 8}px;top:${r.top + 6}px;width:${Math.max(0, r.width - 16)}px;height:44px`;
-  if (UI.toastPos !== css) { UI.toastPos = css; t.classList.remove('band'); t.classList.add('dock'); t.classList.toggle('lcdk', h.kind === 'lcd'); t.style.cssText = css; }
+  if (UI.toastPos !== css) { UI.toastPos = css; t.classList.remove('band', 'tcomp', 't3', 'tpw'); t.classList.add('dock'); t.classList.toggle('lcdk', h.kind === 'lcd'); t.style.cssText = css; }
+}
+// the same symbols as the strip and the editors: ✎ = bearbeiten, ↶ / ↷ = rückgängig / wiederholen
+function toastIcon(label) {
+  const m = /^([^\p{L}\p{N}\s])\s/u.exec(label); if (m) return m[1];
+  return {Bearbeiten: '✎', 'Rückgängig': '↶', Wiederholen: '↷'}[label] || '';
+}
+/* band toast (§3.1 Result: „2 Takte · 14 Noten · a-Moll · 1/8“ must be read in full, without the clip rows losing their
+   height): the message goes on one line beside the buttons if it can, else on two; if two lines do not fit beside the
+   labelled buttons (narrow phones, long overdub texts) the buttons show their symbols (✎ ↶, 44 px), then the text may
+   take three smaller lines. --tmb = the width of the chosen line break (pieces never break inside). */
+function toastFit(t) {
+  const m = t.querySelector('.tmsg'), box = t.querySelector('.tacts'); if (!m) return;
+  t.classList.remove('tcomp', 't3', 'tpw'); t.style.removeProperty('--tmb');
+  if (!box) return;
+  const cs = getComputedStyle(t), A = t.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight); if (!(A > 0)) return;
+  const gap = parseFloat(cs.columnGap) || 10;
+  const widths = () => {
+    m.style.cssText = 'flex:0 0 auto;white-space:nowrap';
+    const ps = [...m.querySelectorAll('.tp')], w = ps.map(p => p.getBoundingClientRect().width), tot = m.getBoundingClientRect().width;
+    m.style.cssText = '';
+    return {w, sp: ps.length > 1 ? Math.max(0, (tot - w.reduce((a, b) => a + b, 0)) / (ps.length - 1)) : 0};
+  };
+  // narrowest width that holds the pieces on at most k lines (pieces stay in order)
+  const lineW = (k, M) => {
+    const {w, sp} = M, n = w.length; let best = Infinity;
+    const rec = (i, lines, mx) => {
+      if (i >= n) { best = Math.min(best, mx); return; }
+      if (lines >= k) return;
+      let cur = 0;
+      for (let j = i; j < n; j++) { cur += (j > i ? sp : 0) + w[j]; if (Math.max(mx, cur) >= best) break; rec(j + 1, lines + 1, Math.max(mx, cur)); }
+    };
+    rec(0, 0, 0); return best;
+  };
+  let M = widths(), bw = box.getBoundingClientRect().width, w;
+  if (Math.max(0, ...M.w) > A) { t.classList.add('tpw'); return; }   // a piece longer than the band: plain word wrapping
+  const fits = (k, b) => lineW(k, M) + gap + b <= A;
+  if (fits(1, bw)) w = lineW(1, M);
+  else if (fits(2, bw)) w = lineW(2, M);
+  else if ([...box.children].every(b => b.dataset.ic)) {
+    t.classList.add('tcomp'); bw = box.getBoundingClientRect().width;
+    if (fits(2, bw)) w = lineW(2, M);
+    else { t.classList.add('t3'); M = widths(); w = lineW(3, M); }
+  } else w = lineW(2, M);                                              // the buttons take their own row below
+  if (isFinite(w)) t.style.setProperty('--tmb', Math.ceil(w + 1) + 'px');
 }
 function showBanner(onB) { if (EL.banner) EL.banner.classList.toggle('show', !!onB); }
 
@@ -6220,6 +6367,27 @@ function setSheetOpen(onS) {
   a.toggle('sheet-open', !!onS);
   UI.kbRelayout = true;
 }
+/* ✎ on an empty slot made an empty clip (§3.3); closed again without a single note, the slot is left empty as before
+   (with its undo steps): only looking into the editor never turns the next ● into a 1-bar overdub or takes a free slot */
+function dropUntouchedRollClip() {
+  const nw = ED.rollNew, keep = ED.rollOpening; if (!nw) return false;
+  if (keep && keep.t === nw.t && keep.s === nw.s) return false;          // the editor is (re)opened on that very slot
+  ED.rollNew = null;
+  const {t, s, clip} = nw, tr = S.tracks[t];
+  if (!tr || tr.clips[s] !== clip || clip.notes.length) return false;
+  if (rec.state !== 'off' && rec.track === t && rec.scene === s) return false;
+  let k = UNDO.length - 1;
+  while (k >= 0 && UNDO[k].kind === 'clip' && UNDO[k].track === t && UNDO[k].scene === s && UNDO[k].label !== 'Neuer Clip') k--;
+  if (k >= 0 && UNDO[k].kind === 'clip' && UNDO[k].track === t && UNDO[k].scene === s && UNDO[k].label === 'Neuer Clip' && !UNDO[k].before) { UNDO.splice(k); REDO.length = 0; }
+  tr.clips[s] = null;
+  if (R.pend[t] && R.pend[t].slot === s) R.pend[t] = null;
+  if (R.slot[t] === s) { R.slot[t] = -1; if (AU.ctx) cancelTrackFrom(t, AU.ctx.currentTime); }
+  if (R.prev && R.prev[t] && R.prev[t].slot === s) R.prev[t] = null;
+  if (tr.kind === 'synth') scheduleAutoKey(s);
+  clipChanged(t, s); markDirty(); UI.dirty.all = true; UI.dirty.strip = true;
+  if (typeof edUndoBtns === 'function') edUndoBtns();
+  return true;
+}
 function closeSheets() {
   EL.synthSheet.classList.remove('open'); EL.drumSheet.classList.remove('open'); EL.clipSheet.classList.remove('open');
   if (QS.open) closeQuantSheet(false, true);
@@ -6227,6 +6395,7 @@ function closeSheets() {
   if (ED.roll) { try { ED.roll.destroy(); } catch (e) { logErr(e); } ED.roll = null; }
   if (EL.rollSheet.classList.contains('open')) { EL.rollSheet.classList.remove('open'); EL.rollSheet.innerHTML = ''; }
   ED.rollAt = null; ED.rollInfo = null; ED.step = null; STEPQ.notes.length = 0;
+  dropUntouchedRollClip();
   EL.app.classList.remove('rollfull', 'rollkb');
   if (ED.hear) { ED.hear.release(nowT()); ED.hear = null; }
   if (PK.open) closePop();
@@ -6742,15 +6911,19 @@ function openRoll(t, s) {
   selectSlot(t, s);
   if (tr.kind === 'drum') { cancelTapStop(t, s); ED.dTab = 'steps'; openEditor(); return; }
   cancelTapStop(t, s);                                                 // selecting to edit never stops by accident (§3.2)
+  let made = null;
   if (!tr.clips[s]) {
     // ✎ on an empty slot: an empty clip (LÄNGE if numeric, else 1 bar; key = scene key) as one undo step
     pushUndo(t, s, null, 'Neuer Clip');
     const sk = sceneKeyOf(s) || S.key;
     tr.clips[s] = {len: S.settings.recLength === 'auto' ? 1 : +S.settings.recLength, key: {root: sk.root, scale: sk.scale, src: 'auto'}, notes: []};
     clipChanged(t, s); markDirty();
+    made = tr.clips[s];
   }
   if (!EL.rollSheet.classList.contains('open')) UI.shield = null;
-  closeSheets(); R.editor = 'roll'; ED.rollAt = {t, s};
+  ED.rollOpening = {t, s};                           // an untouched new clip of another slot goes, never this one
+  closeSheets(); ED.rollOpening = null; R.editor = 'roll'; ED.rollAt = {t, s};
+  if (made) ED.rollNew = {t, s, clip: made};
   if (UI.toastActs) hideToast();
   buildRoll();
   setSheetOpen(true);
@@ -6822,7 +6995,7 @@ function quantizeNoteSet(c, notes, base, o) {
   let seed = 7;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647) * 2 - 1;
   notes.forEach((n, k) => {
-    const raw = base[k].o != null ? base[k].o : base[k].t;
+    const raw = base[k].o != null ? Math.max(0, base[k].o - (o.off || 0)) : base[k].t;   // off: latency found by Auto
     let t;
     if (grid === 'off') t = base[k].o != null ? base[k].o : base[k].t;
     else t = qPos(raw, grid, o.swing, o.strength, L);
@@ -6838,11 +7011,12 @@ function quantizeClip(t, s, o, only, preview) {
   const notes = only ? c.notes.filter(n => only.includes(n)) : c.notes.slice();
   if (!notes.length) return false;
   const base = (preview && preview.base) || notes.map(n => ({t: n.t, o: n.o}));
-  if (grid === 'auto') { const g = detectGridApp(notes.map((n, k) => ({t: base[k].o != null ? base[k].o : base[k].t, d: n.d, n: n.n, v: n.v}))); grid = g.grid; if (o.swingAuto !== false && g.swing > .5) swing = g.swing; }
+  let off = 0;
+  if (grid === 'auto') { const g = detectGridApp(notes.map((n, k) => ({t: base[k].o != null ? base[k].o : base[k].t, d: n.d, n: n.n, v: n.v}))); grid = g.grid; off = g.off || 0; if (o.swingAuto !== false && g.swing > .5) swing = g.swing; }
   if (grid !== 'off' && !GRID_STEP[grid]) return false;
   if (grid.endsWith && grid.endsWith('T')) swing = .5;
   const before = preview ? null : cleanClip(c);
-  quantizeNoteSet(c, notes, base, {grid, strength: clamp(o.strength == null ? 1 : +o.strength, 0, 1), swing, humanize: o.humanize});
+  quantizeNoteSet(c, notes, base, {grid, strength: clamp(o.strength == null ? 1 : +o.strength, 0, 1), swing, humanize: o.humanize, off});
   c.notes.sort((a, b) => a.t - b.t);
   if (!preview) {
     if (grid === 'off') delete c.q; else c.q = {grid, swing, strength: clamp(o.strength == null ? 1 : +o.strength, 0, 1)};
@@ -8264,8 +8438,13 @@ function init() {
   window.addEventListener('pagehide', () => { releaseEverything(); });
   window.addEventListener('resize', () => { UI.kbRelayout = true; UI.dirty.carrier = true; if (UI.pop) closePop(); });
   window.addEventListener('orientationchange', () => { UI.kbRelayout = true; UI.dirty.carrier = true; });
-  try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { UI.dirty.carrier = true; }); if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => { UI.dirty.carrier = true; }); } catch (e) {}
+  // a web font that arrives late changes every text width: refit the readout and re-measure the mode labels (§3.6)
+  try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { UI.dirty.carrier = true; UI.kbRelayout = true; }); if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => { UI.dirty.carrier = true; UI.kbRelayout = true; }); } catch (e) {}
   if (window.ResizeObserver) new ResizeObserver(() => { UI.kbRelayout = true; }).observe(EL.kb);
+  if (window.ResizeObserver) try { new ResizeObserver(() => cellFit()).observe(EL.grid); } catch (e) {}
+  cellFit();
+  // the readout is fitted to its width; while it is hidden (recording lane, sheets) that width is 0 -> refit when it returns
+  if (window.ResizeObserver) try { new ResizeObserver(() => { UI.dirty.carrier = true; }).observe(EL.readout); } catch (e) {}
   document.addEventListener('dblclick', e => e.preventDefault(), {passive: false});
   // fonts (optional, non-blocking)
   if (/^https?:$/.test(location.protocol)) try {
