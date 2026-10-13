@@ -32,11 +32,17 @@
         zweites Hallo unbeantwortet (kein Hin und Her), eines mit „bitte“
         wird beantwortet
      9  Bericht „sitz“: genau ein rpc, < 6000 Zeichen, Felder rtt/ein/raus/
-        kan, raus.srv.kein ≥ 1; Tageszähler nur für Angenommenes: alter
-        Server (Antwort ohne „sitz“) 1 je Tag, ohne Anmeldung (ok:false)
-        nicht gezählt und kein zweiter Versuch, „genug für heute“ → heute
-        nichts mehr, neuer Server (Antwort mit „sitz“) 4 je Tag; höchstens
-        2 je Betreten
+        kan, raus.srv.kein ≥ 1; Tageszähler nur für Angenommenes: heutiger
+        Server (Antwort ohne „sitz“) 1 je Tag, Gast (kein currentUser) →
+        gar kein rpc, Anmeldung abgelehnt (42501/401) und ok:false ohne
+        Grund → nicht gezählt und kein zweiter Versuch im selben Betreten,
+        Netzfehler (error mit status 0) und abgelehntes Versprechen →
+        zurückgenommen (der Tag ist nicht verbraucht), „genug für heute“ →
+        heute nichts mehr, neuer Server (Antwort mit „sitz“) 4 je Tag,
+        sagt eine angenommene Antwort „sitz“ nicht mehr → wieder 1 je Tag
+        (s = 0); höchstens 2 je Betreten. Angemeldet ist die Seite nur
+        während des ausdrücklichen Sendens (pruefSitzMess) – die eigenen
+        Uhren (12 Werte / 90 s) schicken in der Sonde also nichts.
     10  Quelltext (wie vorher) und VERHALTEN: der Streifen wird bei
         „plaetze“ (eigenes Sprechen, empfangenes „redet“) nicht neu
         geschrieben, bei einer vollen Meldung schon; eigenes Sprechen
@@ -45,9 +51,19 @@
     11  keine Fehler in der Konsole
    Ausgegeben (nicht geprüft): die Probe bei 4-fach gedrosselter CPU beim
    EMPFÄNGER (kleines #lcPlaetze, echtes Klassenzimmer).
-    12  ABSENDER mit echtem Klassenzimmer 6-fach gedrosselt: die Quittung
-        wartet auf seine eigene Arbeit, und genau die steht in belegt
-        (ms − belegt ≤ 5 in mindestens 4 von 5)
+    12  ABSENDER mit echtem Klassenzimmer beschäftigt (die Sonde hält A
+        nach dem Senden 80 ms in derselben Aufgabe fest), Netz ~1 ms:
+        belegt ≥ 80, ms ≥ 80, belegt ≤ bild, ms ≤ bild + 5 (5 von 5) –
+        die Wartezeit auf den Absender steht in belegt/bild, die Lesart
+        „Netz zwischen ms − bild und ms“ gilt. Bei echter Drosselung (CPU
+        1×/6×) nur Ausgabe: wo die Quittung zwischen belegt und bild
+        drankommt, entscheidet Chromium (884b: „ms − belegt ≤ 5 in 4 von
+        5“ wackelte, am unveränderten Stand in 1 von 5 Läufen rot).
+    13  TRENNSCHARF: B hält seine Quittung 300 ms zurück (dc.send für
+        „sitz-q“ verzögert), A ungedrosselt: ms ≥ 300, aber bild < 150 und
+        ms − bild ≥ 150, belegt ≤ bild (5 von 5) – belegt/bild messen den
+        Absender, nicht die Quittung (eine Fälschung belegt = bild = ms
+        beim Eintreffen wäre hier rot).
    GEGENPROBE: ALT=<Ordner> – Dateien, die dort liegen (livechat.js,
    app.js), liefert der Sonden-Server statt der Repo-Dateien aus; auch die
    Quelltext-Prüfungen lesen sie. Erwartet: rot.
@@ -102,12 +118,22 @@ const datei = (name) => {
       window.__arten = [];
       window.LiveChat.beiAenderung((l, art) => window.__arten.push(art || "voll"));
       window.DMA_SPIEL.empfangen = () => {};
-      /* Berichte an den Betreiber abfangen (statt Supabase) */
+      /* Berichte an den Betreiber abfangen (statt Supabase). __rpcAntwort: ein Objekt = data wie vom Server (Standard:
+         was spiel_diagnose_senden heute antwortet – ohne „sitz“); { __fehler, status } = Fehler wie supabase-js ihn
+         liefert (Netz: status 0; anon ohne EXECUTE: 42501/401); "werfen" = das Versprechen wird abgelehnt. */
       window.__berichte = [];
-      window.__rpcAntwort = { ok: true };                  // wie der alte Server (ohne „sitz“)
-      (typeof Backend !== "undefined" ? Backend : window.Backend).zugang = () => ({ rpc: (name, a) => {
+      window.__rpcAntwort = { ok: true, mess: 12, ton: 20 };
+      const be = (typeof Backend !== "undefined" ? Backend : window.Backend);
+      be.zugang = () => ({ rpc: (name, a) => {
         window.__berichte.push({ name, art: a && a.p_art, d: a && JSON.parse(JSON.stringify(a.p_daten)) });
-        return Promise.resolve({ data: JSON.parse(JSON.stringify(window.__rpcAntwort)) }); } });
+        const w = JSON.parse(JSON.stringify(window.__rpcAntwort));
+        if (w === "werfen") return Promise.reject(new Error("TypeError: Failed to fetch"));
+        if (w && w.__fehler) return Promise.resolve({ data: null, error: w.__fehler, status: w.status });
+        return Promise.resolve({ data: w, error: null, status: 200 }); } });
+      /* Angemeldet NUR während des ausdrücklichen Sendens (window.__nutzer setzt mess() unten für diesen einen
+         Aufruf): der Rest der Seite bleibt abgemeldet wie bisher, und die eigenen Uhren schicken nichts dazwischen. */
+      window.__nutzer = null;
+      be.currentUser = () => window.__nutzer;
       /* Ein kleines #lcPlaetze: 8 Plätze, data-lc-id wie im Klassenzimmer (livechatPlaetzeAuffrischen) */
       const schon = Boolean(document.getElementById("lcPlaetze"));
       const box = document.createElement("div");
@@ -146,7 +172,12 @@ const datei = (name) => {
   tragen(A, B, "aaa>bbb"); tragen(B, A, "bbb>aaa");
 
   /* Prüf-Haken, die es erst ab 884 gibt: fehlen sie (Gegenprobe), kommt null zurück */
-  const mess = (pg, o) => pg.evaluate((o) => (window.LiveChat.pruefSitzMess ? window.LiveChat.pruefSitzMess(o) : null), o || null);
+  /* o.senden: angemeldet (o.gast: nicht) genau für diesen einen Aufruf */
+  const mess = (pg, o) => pg.evaluate((o) => {
+    if (!window.LiveChat.pruefSitzMess) return null;
+    window.__nutzer = o && o.senden && !o.gast ? { id: "sonde" } : null;
+    try { return window.LiveChat.pruefSitzMess(o); } finally { window.__nutzer = null; }
+  }, o || null);
   const vergessen = (pg, id, hallo) => pg.evaluate(([id, hallo]) => {
     if (!window.LiveChat.pruefKanalVergessen) return false;
     window.LiveChat.pruefKanalVergessen(id, hallo); return true;
@@ -263,7 +294,20 @@ const datei = (name) => {
   };
   const vorBer = await zahl();
   sage(vorBer === 0, "9: vor dem ersten Aufruf ging noch kein Bericht hinaus (keine 12 Werte, keine 90 s)", String(vorBer));
-  /* a) alter Server: 1 je Tag – mit heute|1 geht nichts hinaus, obwohl Werte da sind */
+  const HEUTE_SRV = { ok: true, mess: 12, ton: 20 };   // was spiel_diagnose_senden heute antwortet (ohne „sitz“, nachgelesen 13.10.)
+  /* Ein Fall: frische Werte (ein Wechsel mit Quittung), Zähler leeren (bzw. vorgeben), Antwort setzen, wie ein neues
+     Betreten senden; danach Zähler und rpc-Zahl. Jeder Fall steht damit für sich – fällt in einer Gegenprobe einer um,
+     reißt er die folgenden nicht mit (rot wird nur, was im Code anders ist). */
+  const fall = async (zaehlerVorher, a, o) => {
+    await wechselMitQuittung();
+    await A.evaluate((z) => { if (z == null) localStorage.removeItem("dma_sitz_mess"); else localStorage.setItem("dma_sitz_mess", z); }, zaehlerVorher);
+    await antwort(a);
+    const vor = await zahl();
+    const s = await mess(A, Object.assign({ senden: true, neu: true }, o || {}));
+    await schlaf(60);                                  // die Antwort ist ein aufgelöstes Versprechen – einen Takt später ist sie verarbeitet
+    return { s, z: await zaehler(), rpc: (await zahl()) - vor };
+  };
+  /* a) heutiger Server: 1 je Tag – mit heute|1 geht nichts hinaus, obwohl Werte da sind */
   await A.evaluate((h) => localStorage.setItem("dma_sitz_mess", h + "|1"), heute);
   const s0 = await mess(A, { senden: true });
   sage(!!s0 && s0.gesendetJetzt === false && (await zahl()) === vorBer && (s0.rtt.length + s0.ein.length) > 0,
@@ -278,46 +322,78 @@ const datei = (name) => {
     "9: unter 6000 Zeichen, mit rtt, ein, raus, kan", d1 ? JSON.stringify(d1).length + " Zeichen: " + JSON.stringify(d1).slice(0, 420) : "");
   sage(!!(d1 && d1.rtt.length && d1.rtt.every((x) => x.length === 5 && typeof x[3] === "number")), "9: jede Quittung im Bericht trägt belegt und bild", d1 && JSON.stringify(d1.rtt));
   sage(!!(d1 && d1.raus.srv && d1.raus.srv.kein >= 1), "9: raus.srv.kein ≥ 1 (die Sonde hat keinen echten Raumkanal)", d1 && JSON.stringify(d1.raus.srv));
-  await schlaf(50);
-  sage((await zaehler()) === heute + "|1|0", "9: angenommen (alter Server) → Tageszähler heute|1|0", await zaehler());
+  await schlaf(60);
+  sage((await zaehler()) === heute + "|1|0", "9: angenommen (heutiger Server, Antwort ohne „sitz“) → Tageszähler heute|1|0", await zaehler());
   await wechselMitQuittung();
   const s2 = await mess(A, { senden: true });
-  sage(!!(s2 && s2.gesendetJetzt === false && s2.rtt.length > 0 && (await zahl()) === 1), "9: alter Server: der zweite Bericht am selben Tag geht nicht hinaus", "Berichte " + (await zahl()));
-  /* c) ohne Anmeldung: der Server sagt ok:false ohne Grund → nicht gezählt, in diesem Betreten kein zweiter Versuch */
-  await A.evaluate(() => localStorage.removeItem("dma_sitz_mess"));
-  await antwort({ ok: false });
-  const s3 = await mess(A, { senden: true, neu: true });
-  await schlaf(50);
-  const z3 = await zaehler();
+  sage(!!(s2 && s2.gesendetJetzt === false && s2.rtt.length > 0 && (await zahl()) === 1), "9: heutiger Server: der zweite Bericht am selben Tag geht nicht hinaus", "Berichte " + (await zahl()));
+  /* c) Gast (kein Backend.currentUser): gar kein rpc, nichts gezählt, obwohl Werte da sind */
+  const fG = await fall(null, HEUTE_SRV, { gast: true });
+  sage(!!(fG.s && fG.s.gesendetJetzt === false && fG.rpc === 0 && fG.z === null && fG.s.rtt.length > 0),
+    "9: Gast (nicht angemeldet): kein rpc – anon darf spiel_diagnose_senden nicht ausführen (42501), es ginge ins Leere",
+    "rpc " + fG.rpc + ", Zähler " + fG.z);
+  /* d) angemeldet, aber der Server lehnt die Anmeldung ab (abgelaufen; anon ohne EXECUTE): nicht gezählt, und in diesem
+        Betreten kein zweiter Versuch */
+  const f42 = await fall(null, { __fehler: { code: "42501", message: "permission denied for function spiel_diagnose_senden" }, status: 401 });
   await wechselMitQuittung();
-  const s3b = await mess(A, { senden: true });
-  sage(!!(s3 && s3.gesendetJetzt === true && z3 === heute + "|0|0" && s3b && s3b.gesendetJetzt === false && (await zahl()) === 2),
-    "9: ohne Anmeldung (ok:false) zählt der Bericht nicht, und in diesem Betreten wird es nicht noch einmal versucht", "Zähler " + z3 + ", Berichte " + (await zahl()));
-  /* d) „genug für heute“ → heute nichts mehr */
-  await antwort({ ok: false, grund: "genug für heute" });
-  const s4 = await mess(A, { senden: true, neu: true });
-  await schlaf(50);
-  const z4 = await zaehler();
+  const vor42 = await zahl();
+  const s42b = await mess(A, { senden: true });
+  sage(!!(f42.s && f42.s.gesendetJetzt === true && f42.rpc === 1 && f42.z === heute + "|0|0" && s42b && s42b.gesendetJetzt === false && (await zahl()) === vor42),
+    "9: Anmeldung abgelehnt (42501, status 401): nicht gezählt, in diesem Betreten kein zweiter Versuch",
+    "Zähler " + f42.z + ", zweiter Versuch " + (s42b && s42b.gesendetJetzt));
+  /* e) ok:false ohne Grund (der Server sah kein auth.uid()) → genauso */
+  const fOk = await fall(null, { ok: false });
   await wechselMitQuittung();
-  const s4b = await mess(A, { senden: true, neu: true });
-  sage(!!(s4 && s4.gesendetJetzt === true && z4 === heute + "|99|0" && s4b && s4b.gesendetJetzt === false && (await zahl()) === 3),
-    "9: „genug für heute“ → Zähler heute|99, heute geht kein „sitz“ mehr hinaus", "Zähler " + z4 + ", Berichte " + (await zahl()));
-  /* e) neuer Server (antwortet mit „sitz“): 4 je Tag, aber weiter höchstens 2 je Betreten */
-  await A.evaluate(() => localStorage.removeItem("dma_sitz_mess"));
-  await antwort({ ok: true, mess: 12, sitz: 8 });
-  const s5 = await mess(A, { senden: true, neu: true });
-  await schlaf(50);
-  const z5 = await zaehler();
+  const vorOk = await zahl();
+  const sOkb = await mess(A, { senden: true });
+  sage(!!(fOk.s && fOk.s.gesendetJetzt === true && fOk.rpc === 1 && fOk.z === heute + "|0|0" && sOkb && sOkb.gesendetJetzt === false && (await zahl()) === vorOk),
+    "9: ok:false ohne Grund: nicht gezählt, in diesem Betreten kein zweiter Versuch", "Zähler " + fOk.z + ", zweiter Versuch " + (sOkb && sOkb.gesendetJetzt));
+  /* f) Netzfehler (supabase-js: error mit status 0): zurückgenommen – der Tag ist nicht verbraucht, der nächste Bericht
+        im selben Betreten geht hinaus */
+  const fNetz = await fall(null, { __fehler: { code: "", message: "TypeError: Failed to fetch" }, status: 0 });
+  await wechselMitQuittung();
+  await antwort(HEUTE_SRV);
+  const vorNetz = await zahl();
+  const sNetzb = await mess(A, { senden: true });
+  await schlaf(60);
+  const zNetzb = await zaehler();
+  sage(!!(fNetz.s && fNetz.s.gesendetJetzt === true && fNetz.rpc === 1 && fNetz.z === heute + "|0|0"
+      && sNetzb && sNetzb.gesendetJetzt === true && (await zahl()) === vorNetz + 1 && zNetzb === heute + "|1|0"),
+    "9: Netzfehler (status 0): zurückgenommen, der nächste Bericht im selben Betreten geht hinaus und zählt",
+    "nach dem Fehler " + fNetz.z + ", danach " + zNetzb);
+  /* g) das Versprechen wird abgelehnt: ebenso zurückgenommen */
+  const fWirft = await fall(null, "werfen");
+  sage(!!(fWirft.s && fWirft.s.gesendetJetzt === true && fWirft.rpc === 1 && fWirft.z === heute + "|0|0"),
+    "9: rpc abgelehnt (Promise.reject): zurückgenommen", "Zähler " + fWirft.z);
+  /* h) „genug für heute“ → heute nichts mehr */
+  const f99 = await fall(null, { ok: false, grund: "genug für heute" });
+  await wechselMitQuittung();
+  const vor99 = await zahl();
+  const s99b = await mess(A, { senden: true, neu: true });
+  sage(!!(f99.s && f99.s.gesendetJetzt === true && f99.z === heute + "|99|0" && s99b && s99b.gesendetJetzt === false && (await zahl()) === vor99),
+    "9: „genug für heute“ → Zähler heute|99, heute geht kein „sitz“ mehr hinaus", "Zähler " + f99.z);
+  /* i) neuer Server (antwortet mit „sitz“): 4 je Tag, aber weiter höchstens 2 je Betreten */
+  const f5 = await fall(null, { ok: true, mess: 12, ton: 20, sitz: 8 });
   await wechselMitQuittung();
   const s6 = await mess(A, { senden: true });
-  await schlaf(50);
+  await schlaf(60);
   const z6 = await zaehler();
   await wechselMitQuittung();
+  const vor7 = await zahl();
   const s7 = await mess(A, { senden: true });
-  sage(!!(s5 && s5.gesendetJetzt === true && z5 === heute + "|1|1" && s6 && s6.gesendetJetzt === true && z6 === heute + "|2|1"),
-    "9: der Server zählt „sitz“ getrennt (Antwort mit „sitz“) → s = 1, ein zweiter Bericht am Tag geht hinaus", z5 + " → " + z6);
-  sage(!!(s7 && s7.gesendetJetzt === false && s7.rtt.length > 0 && (await zahl()) === 5),
+  sage(!!(f5.s && f5.s.gesendetJetzt === true && f5.z === heute + "|1|1" && s6 && s6.gesendetJetzt === true && z6 === heute + "|2|1"),
+    "9: der Server zählt „sitz“ getrennt (Antwort mit „sitz“) → s = 1, ein zweiter Bericht am Tag geht hinaus", f5.z + " → " + z6);
+  sage(!!(s7 && s7.gesendetJetzt === false && s7.rtt.length > 0 && (await zahl()) === vor7),
     "9: der dritte im selben Betreten nicht (höchstens 2 je Betreten, obwohl Werte da sind)", "Berichte " + (await zahl()));
+  /* j) die Funktion wird wieder durch eine ohne „sitz“ ersetzt: die nächste angenommene Antwort ohne „sitz“ setzt s = 0
+        zurück → sofort wieder 1 je Tag */
+  const fZur = await fall(heute + "|2|1", HEUTE_SRV);
+  await wechselMitQuittung();
+  const vorZur = await zahl();
+  const sZurb = await mess(A, { senden: true });
+  sage(!!(fZur.s && fZur.s.gesendetJetzt === true && fZur.z === heute + "|3|0" && sZurb && sZurb.gesendetJetzt === false && (await zahl()) === vorZur),
+    "9: Antwort ohne „sitz“ nach s = 1 → s = 0, heute geht keiner mehr hinaus (wieder 1 je Tag)",
+    "Zähler " + fZur.z + ", danach gesendet " + (sZurb && sZurb.gesendetJetzt));
   await schlaf(1300);   // Nachsendungen vorbei
 
   console.log("\n10  QUELLTEXT\n");
@@ -426,32 +502,83 @@ const datei = (name) => {
     if (f2.length) console.log("   Seitenfehler dabei (nicht gezählt): " + f2.slice(0, 3).join(" | "));
   } catch (e) { console.log("   (nicht messbar: " + String(e.message || e).slice(0, 160) + ")"); }
 
-  /* ---------- 12: der ABSENDER gedrosselt (Nachprüfung) – die Quittung wartet auf seine eigene Arbeit ---------- */
-  console.log("\n12  QUITTUNG BEI GEDROSSELTEM ABSENDER (A mit echtem Klassenzimmer, " + echtA + " Plätze), [wer, ms, Weg, belegt, bild]\n");
-  const quittungBeiA = async () => {
+  /* ---------- 12: der ABSENDER beschäftigt – die Quittung wartet auf seine eigene Arbeit ---------- */
+  console.log("\n12  QUITTUNG BEI BESCHÄFTIGTEM ABSENDER (A mit echtem Klassenzimmer, " + echtA + " Plätze), [wer, ms, Weg, belegt, bild]\n");
+  /* fest: A bleibt nach dem Senden so viele ms in DERSELBEN Aufgabe beschäftigt (wie ein langsames Telefon, das nach
+     dem Wechsel noch die Plätze neu zeichnet) – die Quittung (Netz ~1 ms) liegt dann schon bereit und muss warten. */
+  const quittungBeiA = async (fest) => {
     const vor = (await mess(A) || { rtt: [] }).rtt.length;
     const z = await freierPlatz(A);
-    await A.evaluate((n) => window.LiveChat.platzNehmen(n), z);
+    await A.evaluate(([n, fest]) => {
+      window.LiveChat.platzNehmen(n);
+      const t0 = performance.now(); while (performance.now() - t0 < fest) { /* beschäftigt */ }
+    }, [z, fest || 0]);
     const m = await warteAuf(async () => { const x = await mess(A); return x && x.rtt.length > vor && x.rtt[x.rtt.length - 1][4] != null ? x : null; }, 3000);
     await schlaf(1400);
     return m ? m.rtt[m.rtt.length - 1] : null;
   };
+  const zeile = (titel, w) => console.log("   " + titel + ": " + w.map((q) => JSON.stringify(q)).join(" ") + "   ms − belegt: "
+    + w.map((q) => (q ? q[1] - q[3] : "?")).join(", ") + "   ms − bild: " + w.map((q) => (q && q[4] != null ? q[1] - q[4] : "?")).join(", "));
+  /* Nur Ausgabe: wie sich die Quittung bei echter Drosselung verteilt. 884b: hier stand die Prüfung „ms − belegt ≤ 5 in
+     4 von 5“ – sie wackelte (am unveränderten Stand 2a17b72 in 1 von 5 Läufen rot): ob Chromium nach einer langen
+     Aufgabe erst das Bild oder erst die Datenkanal-Nachricht nimmt, liegt nicht bei uns (z. B. ["bbb",29,"d",6,29]). Auch
+     „ms ≤ bild + 5“ ist bei natürlicher Drosselung nicht fest: braucht A nur ~30 ms, entscheidet die Laufzeit über B
+     mit (einmal ["bbb",38,"d",30,32]). Darum prüft 12 mit festgehaltenem Absender. */
   try {
     const cdpA = await A.context().newCDPSession(A);
-    let w6 = [];
     for (const rate of [1, 6]) {
       await cdpA.send("Emulation.setCPUThrottlingRate", { rate });
       const w = [];
       for (let i = 0; i < 5; i++) w.push(await quittungBeiA());
-      console.log("   CPU " + rate + "×: " + w.map((q) => JSON.stringify(q)).join(" ") + "   ms − belegt: " + w.map((q) => (q ? q[1] - q[3] : "?")).join(", "));
-      if (rate === 6) w6 = w;
+      zeile("CPU " + rate + "× (nur Ausgabe)", w);
     }
     await cdpA.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-    /* Geprüft (Nachprüfung): bei 6-fach gedrosseltem Absender und Netz ~1 ms ist die Quittungszeit seine eigene Arbeit –
-       genau die steht in belegt. Ohne dieses Feld läse man ms als Netz. */
-    const erklaert = w6.filter((q) => q && typeof q[3] === "number" && q[1] - q[3] <= 5).length;
-    sage(erklaert >= 4, "12: Absender 6-fach gedrosselt: ms − belegt ≤ 5 in mindestens 4 von 5 (die Wartezeit auf ihn selbst steht in belegt)", erklaert + " von " + w6.length);
-  } catch (e) { sage(false, "12: Absender gedrosselt – nicht messbar", String(e.message || e).slice(0, 160)); }
+  } catch (e) { console.log("   (Drosselung nicht messbar: " + String(e.message || e).slice(0, 160) + ")"); }
+  /* Geprüft: A hält nach dem Senden FEST ms fest. Fest (nicht vom Zufall abhängig): belegt ≥ FEST (der setTimeout 0
+     kommt erst nach der Aufgabe dran), ms ≥ FEST (die Quittung auch), belegt ≤ bild (rAF erst danach, sein setTimeout
+     hinter dem von belegt). ms ≤ bild + 5: die Quittung liegt nach ~1 ms bereit und kommt vor dem setTimeout aus dem
+     nächsten Bild dran – B müsste schon über FEST ms trödeln, damit es anders wäre. Lesart damit belegt: ms ≈ FEST,
+     obwohl das Netz ~1 ms hat; die Untergrenze fürs Netz (ms − bild) ist ≤ 5. Ohne belegt/bild läse man FEST ms als Netz. */
+  const FEST = 80;
+  try {
+    const w = [];
+    for (let i = 0; i < 5; i++) w.push(await quittungBeiA(FEST));
+    zeile("A " + FEST + " ms festgehalten", w);
+    const gut = w.filter((q) => q && q[2] === "d" && typeof q[3] === "number" && typeof q[4] === "number"
+      && q[3] >= FEST && q[1] >= FEST && q[3] <= q[4] && q[1] <= q[4] + 5).length;
+    sage(gut === 5, "12: Absender " + FEST + " ms beschäftigt, Netz ~1 ms: belegt ≥ " + FEST + ", ms ≥ " + FEST + ", belegt ≤ bild und ms ≤ bild + 5 in 5 von 5 (die Wartezeit auf ihn selbst steht in belegt/bild, nicht im Netz)",
+      gut + " von " + w.length);
+  } catch (e) { sage(false, "12: Absender beschäftigt – nicht messbar", String(e.message || e).slice(0, 160)); }
+
+  /* ---------- 13: trennscharf – B hält die Quittung 300 ms zurück, A ist frei ---------- */
+  /* Die Prüfung von 884 fand: eine Fälschung, die beim Eintreffen der Quittung einfach belegt = bild = ms setzt (ohne
+     setTimeout und ohne rAF), war in allen Prüfungen grün. Hier kommt die Quittung absichtlich spät (B verzögert sein
+     dc.send für „sitz-q“ um 300 ms), A ist ungedrosselt: belegt/bild müssen klein bleiben (sie messen A), ms groß
+     (es misst den Weg), und ms − bild – die Untergrenze fürs Netz in der Lesart – muss die Verzögerung zeigen. */
+  const VERZUG = 300;
+  console.log("\n13  QUITTUNG " + VERZUG + " ms ZURÜCKGEHALTEN (bei B), A frei: [wer, ms, Weg, belegt, bild]\n");
+  try {
+    await B.evaluate((ms) => {
+      if (!window.__sendeOrig) {
+        const orig = window.__sendeOrig = RTCDataChannel.prototype.send;
+        RTCDataChannel.prototype.send = function (d) {
+          if (window.__qVerzug && typeof d === "string" && d.indexOf('"art":"sitz-q"') >= 0) {
+            const k = this; setTimeout(() => { try { orig.call(k, d); } catch (e) {} }, window.__qVerzug); return;
+          }
+          return orig.call(this, d);
+        };
+      }
+      window.__qVerzug = ms;
+    }, VERZUG);
+    const w = [];
+    for (let i = 0; i < 5; i++) w.push(await quittungBeiA());
+    await B.evaluate(() => { window.__qVerzug = 0; });
+    console.log("   CPU 1×: " + w.map((q) => JSON.stringify(q)).join(" ") + "   ms − bild: " + w.map((q) => (q && q[4] != null ? q[1] - q[4] : "?")).join(", "));
+    const trenn = w.filter((q) => q && q[2] === "d" && q[1] >= VERZUG && typeof q[3] === "number" && typeof q[4] === "number"
+      && q[3] <= q[4] && q[4] < 150 && q[1] - q[4] >= 150).length;
+    sage(trenn === 5, "13: Quittung " + VERZUG + " ms zurückgehalten: ms ≥ " + VERZUG + ", aber bild < 150 und ms − bild ≥ 150, belegt ≤ bild in 5 von 5 (belegt/bild messen den Absender, nicht die Quittung)",
+      trenn + " von " + w.length);
+  } catch (e) { sage(false, "13: Quittung zurückgehalten – nicht messbar", String(e.message || e).slice(0, 160)); }
 
   if (ALT) console.log("\nAus ALT geliefert: " + (ausAlt.join(", ") || "nichts"));
   laeuft = false;

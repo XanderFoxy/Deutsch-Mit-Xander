@@ -885,9 +885,10 @@ window.LiveChat = (function () {
      90 s nach dem ersten, höchstens 2 je Betreten. Je Tag und Gerät (dma_sitz_mess = „JJJJ-MM-TT|n|s“) höchstens 1,
      solange der Server „sitz“ mit allen anderen Arten zählt (40 je Konto und 24 h – an Xanders Tagen schon voll, und
      „leitung“ hat Vorrang); 4, sobald er „sitz“ getrennt zählt und das mit „sitz“ in der Antwort sagt (s = 1, SQL im
-     Logbuch). Gezählt wird nur, was der Server annimmt: „genug für heute“ → heute keiner mehr; ohne Anmeldung
-     (ok:false ohne Grund) → nicht gezählt und in diesem Betreten kein weiterer Versuch. Nur Zahlen, keine Inhalte;
-     für Xander nichts sichtbar. */
+     Logbuch; sagt eine angenommene Antwort es nicht mehr, wieder 1). Gezählt wird nur, was der Server annimmt:
+     „genug für heute“ → heute keiner mehr; ohne Anmeldung (kein Backend.currentUser) → gar nicht gesendet; vom Server
+     abgelehnte Anmeldung (401/403/42501 bzw. ok:false ohne Grund) → nicht gezählt und in diesem Betreten kein
+     weiterer Versuch; Netzfehler → zurückgenommen. Nur Zahlen, keine Inhalte; für Xander nichts sichtbar. */
   var sitzMess = null, sitzRausUm = {}, sitzErst = {}, sitzEchoUm = {};
   var SITZ_MESS_ZAHL = 12, SITZ_MESS_MS = 90000, SITZ_JE_BETRETEN = 2, SITZ_JE_TAG = 4, SITZ_JE_TAG_ALT = 1;
   function sitzRausLeer() { return { n: 0, peers: 0, direkt: 0, ohne: { pc: 0, dc: 0, bereit: 0 }, srv: {}, buf: 0 }; }
@@ -963,7 +964,8 @@ window.LiveChat = (function () {
     if (e && e.w !== weg && e.p[4] == null) e.p[4] = Math.round(ein - e.t);
   }
   /* Tageszähler je Gerät: n = heute angenommene Berichte (99 = der Server sagte „genug für heute“), s = 1, sobald
-     der Server „sitz“ getrennt zählt (bleibt über den Tag hinaus gemerkt). */
+     der Server „sitz“ getrennt zählt (bleibt über den Tag hinaus gemerkt – bis eine angenommene Antwort es nicht
+     mehr sagt, siehe sitzMessSenden). */
   function sitzTag() {
     var d0 = new Date(), t = { tag: d0.getFullYear() + "-" + ("0" + (d0.getMonth() + 1)).slice(-2) + "-" + ("0" + d0.getDate()).slice(-2), n: 0, s: 0 };
     try {
@@ -988,6 +990,11 @@ window.LiveChat = (function () {
       var be = (typeof Backend !== "undefined" && Backend) || window.Backend;
       var k = be && be.zugang && be.zugang();
       if (!k || !k.rpc) return false;
+      /* FASSUNG 884 (Nachprüfung 884b) — ohne Anmeldung gar nicht erst senden (wie messung.js): „anon“ darf
+         spiel_diagnose_senden nicht ausführen (nachgelesen: EXECUTE nur postgres, authenticated, service_role), die
+         Antwort wäre kein {ok:false}, sondern ein Fehler 42501 – ein Gast schickte sonst je Betreten bis zu zwei
+         Aufrufe ins Leere, an beliebig vielen Betreten am Tag. Nicht gezählt, nichts gemerkt. */
+      if (!be.currentUser || !be.currentUser()) return false;
       var kan = {};
       Object.keys(zustand.leute).filter(function (id) { return !istPuppe(id); }).slice(0, 12).forEach(function (id) {
         var pc = brueckeJe[id], dc = kanalJe[id];
@@ -1001,13 +1008,22 @@ window.LiveChat = (function () {
       sitzTagSetzen(function (t) { t.n++; }); gezaehlt = true;
       k.rpc("spiel_diagnose_senden", { p_art: "sitz", p_daten: d }).then(function (a) {
         var r = a && a.data;
+        /* 884b: abgelaufene oder fehlende Anmeldung (401/403, 42501) – nicht gezählt, in diesem Betreten kein weiterer
+           Versuch. Jeder andere Fehler (Netz: status 0) wird nur zurückgenommen. */
+        if (a && a.error && (a.status === 401 || a.status === 403 || a.error.code === "42501")) {
+          sitzTagZurueck(); m.gesendet = SITZ_JE_BETRETEN; return;
+        }
         if (!a || a.error || !r) return sitzTagZurueck();
         if (r.ok === false) {
           if (r.grund) sitzTagSetzen(function (t) { t.n = 99; });              // „genug für heute“ – die Leitung hat Vorrang
           else { sitzTagZurueck(); m.gesendet = SITZ_JE_BETRETEN; }              // keine Anmeldung: nicht weiter versuchen
           return;
         }
-        if (r.sitz && !sitzTag().s) sitzTagSetzen(function (t) { t.s = 1; });   // der Server zählt „sitz“ getrennt
+        /* Der Server zählt „sitz“ getrennt, solange seine Antwort „sitz“ trägt. 884b: auch zurück auf 0 – wird die
+           Funktion wieder durch eine ohne eigene Gruppe ersetzt, gilt sofort wieder 1 je Tag (sonst blieben Geräte,
+           die einmal „sitz“ gesehen haben, für immer bei 4 und verdrängten Leitungszeilen). */
+        var s = r.sitz ? 1 : 0;
+        if (sitzTag().s !== s) sitzTagSetzen(function (t) { t.s = s; });
       }, sitzTagZurueck);
     } catch (e) { if (gezaehlt) sitzTagZurueck(); return false; }
     m.gesendet++;

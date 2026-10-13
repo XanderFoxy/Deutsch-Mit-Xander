@@ -30,7 +30,8 @@
      G  Abbruch beim Laden („laden"); eine neue Fassung zählt nicht
      H  ohne Anmeldung kein Aufruf, die Zeile wartet in der Kiste und geht
         mit „gast: 1" raus; eine Kisten-Zeile von Konto A nie unter Konto B
-     I  sparsam: Tagesdeckel 1 (alter Server) bzw. 8, „genug für heute"
+     I  sparsam: Tagesdeckel 1 (alter Server) bzw. 8, „genug für heute";
+        884b: eine Antwort ohne „mess" setzt srv wieder auf 0 (wieder 1)
      J  Prüfläufe ohne dma-mess-pruef senden nichts
      K  (nachgebessert) die Raumzeile beim Weggehen: Neuladen und Schließen
         mitten im Raum, Tab-Wechsel mit Teilzeile, im Hintergrund
@@ -594,14 +595,14 @@ function server(wurzel) {
 
   /* ================= I ================= */
   console.log("\nI) SPARSAM\n");
-  async function neuLaden(n, antwort) {
+  async function neuLaden(n, antwort, o) {   // o (z. B. { srv: true }) nur beim ersten Laden – wie ein Gerät, das von gestern etwas weiß
     const ctx = await fenster();
     /* feste Uhr (läuft weiter): der Tagesdeckel hängt am Kalendertag – kein Mitternachtswechsel mitten in der Prüfung */
     await ctx.clock.install({ time: new Date("2026-10-03T10:00:00") }); await ctx.clock.resume();
     const pg = await ctx.newPage();
     let alle = 0, tag = null;
     for (let i = 0; i < n; i++) {
-      if (i === 0) await laden(pg, null, true, antwort); else { await pg.reload({ waitUntil: "load" }); await attrappe(pg, true, antwort); }
+      if (i === 0) await laden(pg, null, true, antwort, o); else { await pg.reload({ waitUntil: "load" }); await attrappe(pg, true, antwort); }
       await messDa(pg); await startRaus(pg);
       alle += (await berichte(pg)).length;
       tag = (await stand(pg) || {}).tag;
@@ -616,6 +617,12 @@ function server(wurzel) {
     sage(b.alle <= 8 && b.alle >= 8, "I: neuer Server (antwortet mit „mess“): höchstens 8 Zeilen am Tag", b.alle + " Zeilen bei 15 Neuladungen, " + JSON.stringify(b.tag));
     const c = await neuLaden(3, { ok: false, grund: "genug für heute" });
     sage(c.alle === 1 && c.tag && c.tag.n >= 8, "I: „genug für heute“ vom Server stoppt das Senden für den Tag", c.alle + " Zeile(n), " + JSON.stringify(c.tag));
+    /* FASSUNG 884 (Nachprüfung 884b, gefunden an „sitz“): das Gerät kennt den neuen Server schon (srv = 1), die Funktion
+       wurde aber wieder durch eine ohne eigenen „mess“-Topf ersetzt (Antwort ohne „mess“) → srv zurück auf 0, ab da
+       wieder 1 am Tag. Vorher blieb srv für immer 1, und das Gerät schickte weiter 8 in die gemeinsamen 40. */
+    const d = await neuLaden(5, { ok: true }, { srv: true });
+    sage(d.alle === 1 && d.tag && d.tag.srv === 0, "I: Antwort ohne „mess“ auf einem Gerät, das ihn kannte (srv = 1) → srv = 0, wieder höchstens 1 Zeile am Tag",
+      d.alle + " Zeilen bei 5 Neuladungen, " + JSON.stringify(d.tag));
   }
 
   /* ================= K ================= */

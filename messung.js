@@ -178,8 +178,12 @@
         tagSetzen(function (t) { t.n = 99; });                   /* „genug für heute" */
         return fertig(false);
       }
-      /* Der Server mit eigenem Zähler für „mess-*" (fassung-884-messung.sql) sagt es mit „mess" – erst dann 8 am Tag. */
-      if (r && r.mess && !tagStand().srv) tagSetzen(function (t) { t.srv = 1; });
+      /* Der Server mit eigenem Zähler für „mess-*" (fassung-884-messung.sql) sagt es mit „mess" – erst dann 8 am Tag.
+         FASSUNG 884 (Nachprüfung 884b, wie „sitz“ in livechat.js) — und wieder 1, sobald eine angenommene Antwort es
+         nicht mehr sagt (die Funktion wurde ersetzt): sonst blieb ein Gerät, das „mess" einmal gesehen hatte, für immer
+         bei 8 in den gemeinsamen 40. Nur bei einer echten Antwort (keepalive ohne lesbaren Inhalt ändert nichts). */
+      var srv = r && r.mess ? 1 : 0;
+      if (r && tagStand().srv !== srv) tagSetzen(function (t) { t.srv = srv; });
       fertig(true);
     }
     function los() {
