@@ -1,6 +1,14 @@
 -- =====================================================================
 -- FASSUNG 884 — MESSUNG BEI ECHTEN NUTZERN: eigener Tageszähler für „mess-*"
 -- ---------------------------------------------------------------------
+-- !! EINGESPIELT (nachgelesen 13.10.2026). NICHT NOCH EINMAL EINSPIELEN !!
+-- Live steht inzwischen eine NEUERE Fassung mit drei Töpfen („mess-" 12,
+-- „ton-" 20, Rest 40; Antwort {ok, mess: 12, ton: 20}) – siehe
+-- SPIELSYSTEM.md „Fassung 884 — Ton 310". Diese Datei kennt den „ton-"-Topf
+-- nicht und würfe ihn zurück in die 40. Wer die Funktion ändert, geht von
+-- der Live-Fassung aus (pg_get_functiondef). Die Datei bleibt als Beleg
+-- und wegen der Auswerte-Abfragen unten.
+-- ---------------------------------------------------------------------
 -- XANDER (Funk 255): „… niemals abstürzt und alles optimiert ist".
 -- Zugesagt (Funk 258, Punkt 5): „Echte Messung bei echten Nutzern
 -- (Ladezeit, Abbrüche) statt nur bei mir."
@@ -71,6 +79,11 @@ grant execute on function public.spiel_diagnose_senden(text, jsonb) to authentic
 -- folge = 0 trägt ein gültiges „drin"), „grund" = aus | wechsel |
 -- hidden (Teilzeile, teil = 1) | weg (pagehide, keepalive) | offen
 -- (Zusammenfassung, von der nächsten Seite mit spaet = 1 nachgeschickt).
+-- 884b: „dauer" = ganze Zeit (auch im Hintergrund), „sicht" = davon
+-- sichtbare Sekunden, „anzahl" = 30-s-Fenster nur über die sichtbare
+-- Zeit (kann 0 sein); fenster/ges/zaeh/loaf/inp zählen nur, was ganz in
+-- sichtbarer Zeit lag. Eine Folgezeile (folge ≥ 1) ohne Langläufer, LoAF
+-- und Eingabe kommt nur mit ≥ 30 s sichtbarer Zeit.
 -- Kommt überhaupt etwas an?
 --   select art, count(*), count(distinct spieler) konten, max(zeit) from spiel_diagnose
 --    where art like 'mess-%' group by art;
@@ -102,7 +115,8 @@ grant execute on function public.spiel_diagnose_senden(text, jsonb) to authentic
 --   with r as (select distinct on (spieler, coalesce(daten->>'k', id::text)) daten from spiel_diagnose
 --               where art = 'mess-raum' order by spieler, coalesce(daten->>'k', id::text), zeit)
 --   select count(*) filter (where coalesce((daten->>'folge')::int, 0) = 0) aufenthalte, count(*) zeilen,
---          sum((daten->>'zaeh')::int) zaehe_fenster, sum((daten->>'anzahl')::int) fenster,
+--          sum((daten->>'zaeh')::int) zaehe_fenster, sum((daten->>'anzahl')::int) sichtbare_fenster,
+--          sum((daten->>'sicht')::int) sichtbar_s, sum((daten->>'dauer')::int) dauer_s,
 --          max((daten->'ges'->>2)::int) laengster_ms, sum((daten->>'uhr')::int) nur_ersatzuhr,
 --          percentile_cont(0.5) within group (order by (daten->>'drin')::numeric)
 --            filter (where coalesce((daten->>'folge')::int, 0) = 0) betreten_bis_drin_median

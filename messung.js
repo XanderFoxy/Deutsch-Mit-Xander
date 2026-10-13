@@ -41,7 +41,14 @@
    Seite überlebt (eine Ruhepause kommt beim Entladen nie mehr). Bis der
    Server sie bestätigt, steht sie im Laufbuch („ru"); stirbt die Seite
    vorher, schickt die nächste sie nach – außer sie ging schon mit
-   keepalive raus. Eine Zeile ohne neue Daten wird nie gesendet.
+   keepalive raus. Eine Folgezeile (nach einer Teilzeile) ohne
+   Langläufer, LoAF und Eingabe geht nur raus, wenn seit der letzten
+   Zeile mindestens ein ganzes Fenster (30 s) SICHTBAR lag – sonst
+   entsteht sie gar nicht (Nachprüfung 884b: vorher reichten 2 s
+   irgendeiner Zeit, auch im Hintergrund).
+   SICHTBAR (884b): Langläufer zählen im Raum nur, wenn sie ganz in
+   sichtbarer Zeit lagen; „anzahl" zählt nur sichtbare Fenster, „sicht"
+   die sichtbaren Sekunden („dauer" bleibt die ganze Zeit).
 
    WAS BEWUSST NICHT GESENDET WIRD: Namen, Raumnamen, Chat-Inhalte,
    Kennungen, Adressen. Fehlertexte werden gereinigt (E-Mail, IDs, lange
@@ -49,11 +56,14 @@
    Platzhalter, höchstens 140 Zeichen). Gäste senden nichts (der Server
    verlangt eine Anmeldung); ihre Zeilen warten in einer kleinen Kiste,
    bis sich jemand anmeldet, und tragen dann „gast: 1" (wem sie gehören,
-   ist auf einem geteilten Gerät nicht sicher).
+   ist auf einem geteilten Gerät nicht sicher). Jede Zeile – auch eine,
+   die die nächste Seite nachschickt – geht nur unter dem Konto raus,
+   unter dem sie gemessen wurde (884b).
 
    SPARSAM: höchstens 8 Zeilen „mess-*" je Kalendertag und Gerät – aber
    nur 1, solange der Server sie noch mit den Leitungs-Zeilen zusammen-
-   zählt (siehe TAG_ALT und supabase/fassung-884-messung.sql). Je Seite
+   zählt (siehe TAG_ALT und supabase/fassung-884-messung.sql; seit
+   13.10.2026 eingespielt, die Antwort trägt „mess": 12). Je Seite
    höchstens 1 Start-, 2 Fehler-, 3 Raumzeilen. Gezählt wird, wenn ein
    Aufruf wirklich losgeht; schlägt er fehl, wird zurückgezählt. Fehler
    beim Senden werden still geschluckt. Nie console.*.
@@ -92,7 +102,7 @@
   /* =========================================================
      SENDEN — wie leitungSenden (livechat.js), nur angemeldet
      ========================================================= */
-  var gesendet = [], jeSeite = {}, tagMerk = null, marke = "", markeBis = 0, markeUm = 0, ende = false;
+  var gesendet = [], jeSeite = {}, tagMerk = null, marke = "", markeBis = 0, markeUm = 0, markeWer = "", ende = false, KA = null;
   function konto() { try { return (typeof Backend !== "undefined" && Backend) || window.Backend || null; } catch (e) { return null; } }
   function zugang() {
     try {
@@ -120,27 +130,43 @@
     var k = lesen("dma-mess-kiste");
     return (k && k.filter ? k : []).filter(function (x) { return x && x.a && Date.now() - x.t < 3 * 864e5; });
   }
-  function kisteRein(art, d) {
+  /* u: unter welchem Konto die Zeile gemessen wurde (Fingerabdruck wie wer()); ohne Angabe das jetzige.
+     FASSUNG 884 (Nachprüfung 884b) — die nächste Seite gibt beim Nachschicken das Konto der toten Seite mit: ist die
+     Sitzung beim Nachschicken noch nicht wiederhergestellt, landete die Zeile sonst mit u = "" in der Kiste und ging
+     später fälschlich mit „gast: 1" raus. */
+  function kisteRein(art, d, u) {
     var k = kisteLesen();
     if (k.length >= 3) return;
-    k.push({ a: art, d: d, t: Date.now(), u: wer() });
+    k.push({ a: art, d: d, t: Date.now(), u: u != null ? u : wer() });
     schreiben("dma-mess-kiste", k);
+  }
+  /* FASSUNG 884 (Nachprüfung 884b) — keepalive nur, wo der Browser es wirklich kann. Firefox vor 133 kennt die Option
+     nicht und übergeht sie still: die Anfrage stirbt mit der Seite, die Zeile galt aber als zugestellt („ka") und wurde
+     nie nachgeschickt. Ohne keepalive gibt es keine Marke – die Zeile bleibt im Laufbuch, die nächste Seite schickt sie. */
+  function kaGeht() {
+    if (KA == null) { try { KA = typeof Request === "function" && new Request(location.href, { keepalive: true }).keepalive === true; } catch (e) { KA = false; } }
+    return KA;
   }
   /* Zugangsmarke für das Senden beim Weggehen (keepalive): nur im Speicher, geholt beim Betreten des Raums und danach
      höchstens alle 10 min, solange man drin ist – nie beim Start. supabase-js holt sie sonst erst asynchron, und beim
-     Entladen der Seite läuft nichts Asynchrones mehr. */
+     Entladen der Seite läuft nichts Asynchrones mehr.
+     FASSUNG 884 (Nachprüfung 884b) — die Marke gehört zu dem Konto, für das sie geholt wurde (markeWer). Abmelden und ein
+     anderes Konto anmelden ohne Neuladen: die alte Marke gilt nicht mehr (sonst gingen die Raumzeilen bis zu 10 min unter
+     dem vorigen Konto raus), und die nächste Runde holt sofort eine neue. */
   function markeHolen() {
-    var k = zugang();
-    if (!PRUEF || !k || !k.auth || typeof k.auth.getSession !== "function" || Date.now() - markeUm < 600000) return;
-    markeUm = Date.now();
+    var k = zugang(), ich = wer();
+    if (!PRUEF || !k || !k.auth || typeof k.auth.getSession !== "function" || !kaGeht()) return;
+    if (ich !== markeWer) { marke = ""; markeUm = 0; }
+    if (Date.now() - markeUm < 600000) return;
+    markeUm = Date.now(); markeWer = ich;
     try {
       k.auth.getSession().then(function (a) {
         var s = a && a.data && a.data.session;
-        if (s && s.access_token) { marke = s.access_token; markeBis = s.expires_at ? s.expires_at * 1000 - 120000 : Date.now() + 3e6; }
+        if (s && s.access_token && wer() === ich) { marke = s.access_token; markeBis = s.expires_at ? s.expires_at * 1000 - 120000 : Date.now() + 3e6; }
       }, function () {});
     } catch (e) {}
   }
-  function markeGut() { return Boolean(marke) && Date.now() < markeBis; }
+  function markeGut() { return Boolean(marke) && Date.now() < markeBis && markeWer === wer(); }
   function keepalive(art, d) {
     var cfg = window.SUPABASE_CONFIG || {};
     if (!markeGut() || !cfg.url || typeof fetch !== "function") return null;
@@ -155,7 +181,8 @@
   }
   /* o.sofort: ohne Ruhepause (die Seite geht in den Hintergrund oder weg); o.weg: mit keepalive, falls eine Marke da
      ist (o.ka() meldet das); o.fertig(ok): die Antwort, solange die Seite lebt; o.frei: zählt nicht gegen die Höchstzahl
-     je Seite (Kiste, Nachsenden). Rückgabe: "raus" (unterwegs oder in der Ruhepause), "kiste" oder "" (verworfen). */
+     je Seite (Kiste, Nachsenden); o.u: Konto, unter dem die Zeile gemessen wurde (Nachsenden, für die Kiste).
+     Rückgabe: "raus" (unterwegs oder in der Ruhepause), "kiste" oder "" (verworfen). */
   function senden(art, d, o) {
     o = o || {};
     if (!PRUEF) return "";
@@ -166,10 +193,10 @@
     d.f = d.f || FASSUNG;
     d.mv = MV;
     var k = zugang();
-    if (!k) { kisteRein(art, d); return "kiste"; }
+    if (!k) { kisteRein(art, d, o.u); return "kiste"; }
     if (!tagFrei()) return "";
     function fertig(ok) { if (o.fertig) { try { o.fertig(ok); } catch (e) {} } }
-    function zurueck() { tagSetzen(function (t) { if (t.n > 0 && t.n < 99) t.n--; }); kisteRein(art, d); fertig(false); }
+    function zurueck() { tagSetzen(function (t) { if (t.n > 0 && t.n < 99) t.n--; }); kisteRein(art, d, o.u); fertig(false); }
     function antwort(a) {
       var r = a && a.data;
       if (!a || a.error) return zurueck();
@@ -227,9 +254,11 @@
   }
   /* Chrome hängt bei JSON.parse und bei ungültigen Selektoren einen Ausschnitt der Eingabe an, Safari setzt sie in
      Anführungszeichen – darin können Namen oder Chat stehen. Bezeichner in einfachen Anführungszeichen ('foo') bleiben,
-     sie sagen, was kaputt war. Das senkt das Risiko, schließt es aber nicht ganz aus (siehe SPIELSYSTEM.md). */
+     sie sagen, was kaputt war. Das senkt das Risiko, schließt es aber nicht ganz aus (siehe SPIELSYSTEM.md).
+     884b: die Werte in Postgres-Meldungen („Key (name)=(Zuzana) already exists") → ‹wert›; die Spalte bleibt. */
   function sauber(t) {
     t = String(t == null ? "" : t)
+      .replace(/\)=\([^)]*\)/g, ")=(‹wert›)")
       .replace(/data:[^\s'"]+/g, "‹data›")
       .replace(/\b(?:https?|wss?|blob|file):\/\/[^\s'"<>()]+/g, function (u) { return "‹" + (datei(u) || "url") + "›"; })
       .replace(/(^|, )(?:\.\.\.)?"[\s\S]*(?= is not valid JSON)/, "$1‹json›")
@@ -291,13 +320,33 @@
   var startLt = [0, 0, 0], raum = null, raumZuletzt = -1e12, drinAb = null, lueckeAnfang = M.lt.length >= 300;
   var TYPEN = (window.PerformanceObserver && PerformanceObserver.supportedEntryTypes) || [];
   var mitLongtask = TYPEN.indexOf("longtask") >= 0, loafObs = null, evObs = null, uhr = null;
+  /* FASSUNG 884 (Nachprüfung 884b) — SICHTBARE ZEIT. Die Prüfung fand: dauer und anzahl zählten die Zeit im Hintergrund
+     mit; dort wird nicht gezeichnet, die Fenster sahen „glatt" aus und drückten den Anteil zäher Fenster (zaeh/anzahl)
+     nach unten. Und eine Folgezeile nach einer Teilzeile, die nur Hintergrundzeit enthielt, ging als leere Zeile raus
+     (Tagesplatz, Raumplatz, verdünnte Kernzahl). Jetzt: sichtVon = Beginn der jetzigen (bzw. letzten) sichtbaren Strecke,
+     sichtBis = ihr Ende (null, solange sichtbar); raum.sicht sammelt die sichtbaren ms seit raum.seit. */
+  var sichtVon = sichtbar() ? 0 : null, sichtBis = sichtbar() ? null : 0;
   function neuerRaum(t, haupt) {
     return { v: t, ab: null, seit: null, drin: null, haupt: haupt, f: {}, ges: [0, 0, 0], loaf: [], inp: [], leute: 0, bild: 0,
-             uhr: mitLongtask ? 0 : 1, luecke: lueckeAnfang ? 1 : 0, folge: 0 };
+             uhr: mitLongtask ? 0 : 1, luecke: lueckeAnfang ? 1 : 0, folge: 0, sicht: 0 };
   }
+  function sichtMs(r, t) {
+    return r.sicht + (sichtBis == null && sichtVon != null ? Math.max(0, t - Math.max(sichtVon, r.seit)) : 0);
+  }
+  function sichtWechsel(t) {
+    if (!sichtbar()) {
+      if (sichtBis != null) return;
+      if (raum && raum.seit != null) raum.sicht = sichtMs(raum, t);
+      sichtBis = t;
+    } else if (sichtBis != null) { sichtVon = t; sichtBis = null; }
+  }
+  /* Ein Langläufer zählt im Raum nur, wenn er ganz in sichtbarer Zeit lag. Das gilt auch für die Ersatzuhr (iPhone,
+     Firefox): deren erster Takt nach der Rückkehr maß sonst die ganze Pause im Hintergrund (Zeitgeber ruhen dort) als
+     einen Langläufer – bis zu Minuten, ein „zähes" Fenster bei jeder Rückkehr (884b beim Bauen gefunden). */
+  function sichtbarGelaufen(s, d) { return sichtVon != null && s >= sichtVon && (sichtBis == null || s + d <= sichtBis); }
   function lang(s, d) {
     if (s < bereitT + 5000) { startLt[0]++; startLt[1] += d; if (d > startLt[2]) startLt[2] = d; }
-    if (!raum || raum.seit == null || s < raum.seit) return;
+    if (!raum || raum.seit == null || s < raum.seit || !sichtbarGelaufen(s, d)) return;
     var i = Math.floor((s - raum.ab) / ZEIT.fenster), w = raum.f[i] || (raum.f[i] = [0, 0, 0]);
     w[0] += d; if (d > w[1]) w[1] = d; w[2]++;
     raum.ges[0]++; raum.ges[1] += d; if (d > raum.ges[2]) raum.ges[2] = d;
@@ -321,7 +370,7 @@
         loafObs = new PerformanceObserver(function (l) {
           if (!raum || raum.seit == null) return;
           l.getEntries().forEach(function (x) {
-            if (x.startTime < raum.seit || x.duration < 50) return;
+            if (x.startTime < raum.seit || x.duration < 50 || !sichtbarGelaufen(x.startTime, x.duration)) return;
             var sc = (x.scripts || []).slice().sort(function (a, b) { return b.duration - a.duration; })[0] || {};
             oben3(raum.loaf, [rund(x.duration), datei(sc.sourceURL || ""), sc.sourceCharPosition == null ? -1 : sc.sourceCharPosition, String(sc.invokerType || "")]);
           });
@@ -332,7 +381,7 @@
         evObs = new PerformanceObserver(function (l) {
           if (!raum || raum.seit == null) return;
           l.getEntries().forEach(function (x) {
-            if (x.startTime < raum.seit) return;
+            if (x.startTime < raum.seit || !sichtbarGelaufen(x.startTime, x.duration)) return;
             oben3(raum.inp, [rund(x.duration), String(x.name || ""), ziel(x.target)]);
           });
         });
@@ -355,10 +404,15 @@
     if (uhr) { clearInterval(uhr); uhr = null; }
   }
   /* grund: aus | wechsel | hidden (Teilzeile im Hintergrund) | weg (pagehide) | offen (Zusammenfassung im Laufbuch).
-     folge = wie viele Zeilen dieses Aufenthalts schon raus sind; eine Folgezeile ohne neue Daten gibt es nicht (null). */
+     folge = wie viele Zeilen dieses Aufenthalts schon raus sind; eine Folgezeile ohne neue Daten gibt es nicht (null).
+     FASSUNG 884 (Nachprüfung 884b) — „neue Daten" heißt: ein Langläufer, ein langes Bild oder eine langsame Eingabe,
+     oder mindestens ein ganzes Fenster (30 s) sichtbare Zeit seit der letzten Zeile (glatte sichtbare Zeit ist auch eine
+     Aussage). Vorher: „weniger als 2000 ms seit der letzten Zeile" – fest, nicht an ZEIT, und Hintergrundzeit zählte mit.
+     Die Prüfung stellte nach: Teilzeile beim Tab-Wechsel, versteckt bleiben, nach > 2 s schließen → eine zweite Zeile
+     {weg, folge 1, ges [0,0,0]} per keepalive bzw. ohne Marke {offen, spaet 1, …} von der nächsten Seite. */
   function raumBauen(grund) {
-    var r = raum, t = jetzt(), fen = [], zaeh = 0, kz = null;
-    if (r.folge && t - r.seit < 2000 && !r.ges[0] && !r.loaf.length && !r.inp.length) return null;
+    var r = raum, t = jetzt(), fen = [], zaeh = 0, kz = null, sicht = sichtMs(r, t);
+    if (r.folge && sicht < ZEIT.fenster && !r.ges[0] && !r.loaf.length && !r.inp.length) return null;
     Object.keys(r.f).forEach(function (i) {
       var w = r.f[i];
       fen.push([+i, rund(w[0]), rund(w[1]), w[2]]);
@@ -368,8 +422,8 @@
     fen.sort(function (a, b) { return a[0] - b[0]; });
     (M.tipp.kz || []).forEach(function (x) { if (x[0] <= r.ab && x[0] >= (r.v != null ? r.v : r.ab) - 60000) kz = x; });
     return { k: zufall(6), grund: grund, folge: r.folge, teil: grund === "hidden" ? 1 : 0,
-             haupt: r.haupt, dauer: rund((t - r.seit) / 1000), drin: rund(r.drin), ab: rund(r.ab), kz: kz,
-             fenster: fen, anzahl: Math.max(1, Math.ceil((t - r.seit) / ZEIT.fenster)), zaeh: zaeh,
+             haupt: r.haupt, dauer: rund((t - r.seit) / 1000), sicht: rund(sicht / 1000), drin: rund(r.drin), ab: rund(r.ab), kz: kz,
+             fenster: fen, anzahl: Math.ceil(sicht / ZEIT.fenster), zaeh: zaeh,
              ges: [r.ges[0], rund(r.ges[1]), rund(r.ges[2])], uhr: r.uhr, luecke: r.luecke, loaf: r.loaf, inp: r.inp,
              mb: speicherMb(), leute: r.leute, bild: r.bild, f: FASSUNG };
   }
@@ -393,7 +447,7 @@
     raumZuletzt = t;
     /* Nach einer Zeile zählt das nächste Mal nur die Zeit seitdem. */
     raum.folge++;
-    raum.seit = t; raum.f = {}; raum.ges = [0, 0, 0]; raum.loaf = []; raum.inp = [];
+    raum.seit = t; raum.sicht = 0; raum.f = {}; raum.ges = [0, 0, 0]; raum.loaf = []; raum.inp = [];
     eigen({ ro: offenerRaum() });
   }
   function hoch(leute, bild) {
@@ -450,13 +504,14 @@
       e.s = sichtbar() ? "v" : "h";
       e.mb = speicherMb();
       e.kz = raum && raum.ab != null ? 1 : 0;
+      if (Object.prototype.hasOwnProperty.call(felder, "ro")) e.u = wer();   /* Konto zu „ro" (884b, bleibt auf dem Gerät) */
     });
   }
   /* „ru": Raumzeilen, die raus sind, aber noch nicht bestätigt (höchstens 2); ka = ging mit keepalive */
   function unterwegs(d, was) {
     eigen({}, function (e) {
       var ru = (e.ru || []).filter(function (x) { return x && x.d && (was !== "raus" || x.d.k !== d.k); });
-      if (was === "rein") ru = ru.concat([{ d: d }]).slice(-2);
+      if (was === "rein") ru = ru.concat([{ d: d, u: wer() }]).slice(-2);
       if (was === "ka") ru.forEach(function (x) { if (x.d.k === d.k) x.ka = 1; });
       if (ru.length) e.ru = ru; else delete e.ru;
     });
@@ -477,8 +532,8 @@
       var raus = [], spaet = [];
       /* was die tote oder geschlossene Seite nicht mehr loswurde: die offene Zusammenfassung und unbestätigte Zeilen */
       function nach(e) {
-        if (e.ro) spaet.push(e.ro);
-        (e.ru || []).forEach(function (x) { if (x && x.d && !x.ka) spaet.push(x.d); });
+        if (e.ro) spaet.push({ d: e.ro, u: e.u || "" });
+        (e.ru || []).forEach(function (x) { if (x && x.d && !x.ka) spaet.push({ d: x.d, u: x.u || "" }); });
       }
       buch(function (b2) {
         fremd.forEach(function (id) {
@@ -497,7 +552,15 @@
         });
       });
       raus.forEach(function (x) { if (vorher.length < 3) vorher.push(x); });
-      spaet.slice(0, 3).forEach(function (d) { d.spaet = 1; senden("mess-raum", d, { frei: true }); });
+      /* FASSUNG 884 (Nachprüfung 884b) — wie kisteLeeren: nie unter einem anderen Konto; ohne Anmeldung gemessen → „gast";
+         ist die Sitzung noch nicht wiederhergestellt, wartet die Zeile mit ihrem Konto in der Kiste. */
+      var ich = wer();
+      spaet.slice(0, 3).forEach(function (x) {
+        if (x.u && ich && x.u !== ich) return;
+        x.d.spaet = 1;
+        if (!x.u) x.d.gast = 1;
+        senden("mess-raum", x.d, { frei: true, u: x.u });
+      });
     }, ZEIT.ping);
   }
   try {
@@ -526,6 +589,7 @@
     if (raum && raum.ab != null) markeHolen();
   }, ZEIT.herz);
   document.addEventListener("visibilitychange", function () {
+    sichtWechsel(jetzt());                     /* zuerst: die Teilzeile trägt die sichtbare Zeit bis jetzt */
     if (!sichtbar()) raumSenden("hidden");
     eigen({ ro: offenerRaum() });
   });

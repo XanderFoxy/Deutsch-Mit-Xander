@@ -40,8 +40,18 @@
         Seite. Die Attrappe geht wie supabase-js erst nach einem
         asynchronen Schritt raus (beim Entladen also nie mehr); keepalive-
         Aufrufe landen beim Sonden-Server (/__supa).
+        884b (Nachprüfung): Teilzeile, versteckt bleiben, nach 3 s neu
+        laden bzw. schließen (mit und ohne Marke) → keine zweite, leere
+        Zeile; Hintergrund zählt nicht (Langläufer, LoAF, anzahl – „sicht"
+        neu), glatte sichtbare Zeit ≥ 1 Fenster schon; Ersatzuhr (ohne
+        longtask) misst die Pause im Hintergrund nicht als Langläufer;
+        Browser ohne keepalive → keine Marke, die nächste Seite schickt
+        nach; Kontowechsel ohne Neuladen → nie die Marke des vorigen
+        Kontos; Nachschicken vor der wiederhergestellten Sitzung → mit
+        dem richtigen Konto, ohne „gast"; unter einem anderen Konto → weg.
    Gegenprobe: WURZEL=<Stand vor 884> → B bis K rot, ohne Absturz;
-   WURZEL=<messung.js vor der Nachbesserung> → K, I und die Reinigung rot.
+   WURZEL=<messung.js vor der Nachbesserung> → K, I und die Reinigung rot;
+   WURZEL=<messung.js vor 884b-messung> → die neuen K-Fälle und D (Postgres) rot.
    Aufruf: node werkzeug/pruefe-884-messung.js
            ALT=/pfad/zum/alten/stand [PAARE=16] node werkzeug/pruefe-884-messung.js
    ===================================================================== */
@@ -96,7 +106,14 @@ function server(wurzel) {
   async function fenster(o) {
     o = o || {};
     const ctx = await (o.br || br).newContext({ viewport: { width: 393, height: 800 } });
-    await ctx.addInitScript(([pruef, neuGeladen, domHaken]) => {
+    await ctx.addInitScript(([pruef, neuGeladen, domHaken, ohneLongtask, ohneKeepalive]) => {
+      /* 884b: wie iPhone/Firefox ohne longtask, LoAF und Event-Timing (messung.js nimmt dann die Ersatzuhr) */
+      if (ohneLongtask) {
+        const typen = (PerformanceObserver.supportedEntryTypes || []).filter((x) => !/^(longtask|long-animation-frame|event)$/.test(x));
+        Object.defineProperty(PerformanceObserver, "supportedEntryTypes", { configurable: true, get: () => typen });
+      }
+      /* 884b: wie Firefox vor 133 – Request kennt keepalive nicht (die Option wird still übergangen) */
+      if (ohneKeepalive) Object.defineProperty(Request.prototype, "keepalive", { configurable: true, get() { return undefined; } });
       try {
         localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus");
         if (pruef) localStorage.setItem("dma-mess-pruef", pruef);
@@ -116,7 +133,7 @@ function server(wurzel) {
           } });
         } });
       }
-    }, [o.pruef === undefined ? "schnell" : o.pruef, o.neuGeladen !== false, Boolean(o.domHaken)]);
+    }, [o.pruef === undefined ? "schnell" : o.pruef, o.neuGeladen !== false, Boolean(o.domHaken), Boolean(o.ohneLongtask), Boolean(o.ohneKeepalive)]);
     ctx.__fehler = [];
     if (!o.br) await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
     ctx.on("page", (pg) => beobachten(ctx, pg));
@@ -132,7 +149,8 @@ function server(wurzel) {
      nur 1 Zeile am Tag (I prüft das eigens). Wie supabase-js geht der Aufruf erst nach einem asynchronen Schritt raus
      (dort: Marke holen) – beim Entladen der Seite also nie mehr. Mitgeschrieben wird auch in localStorage
      („__sonde-rpc"), damit die nächste Seite es lesen kann. o.marke: auth.getSession liefert eine Marke, und
-     SUPABASE_CONFIG.url zeigt auf den Sonden-Server – dort landen die keepalive-Aufrufe (S.supa). o.srv: das Gerät
+     SUPABASE_CONFIG.url zeigt auf den Sonden-Server – dort landen die keepalive-Aufrufe (S.supa); die Marke heißt
+     „sonde-marke-<Konto>" (884b). o.srv: das Gerät
      kennt den neuen Server schon (wie ab dem zweiten Tag). */
   const NEU = { ok: true, mess: 12 };
   async function attrappe(pg, login, antwort, o) {
@@ -147,7 +165,8 @@ function server(wurzel) {
           try { const l = JSON.parse(localStorage.getItem("__sonde-rpc") || "[]"); l.push(z); localStorage.setItem("__sonde-rpc", JSON.stringify(l)); } catch (e) {}
           fertig(window.__antwort === "fehler" ? { data: null, error: { message: "kaputt" } } : { data: window.__antwort, error: null });
         }, window.__rpcWarte || 0)),
-        auth: marke ? { getSession: () => Promise.resolve({ data: { session: { access_token: "sonde-marke", expires_at: Math.floor(Date.now() / 1000) + 3600 } } }) } : undefined
+        /* die Marke gehört zum gerade angemeldeten Konto (884b: Kontowechsel ohne Neuladen) */
+        auth: marke ? { getSession: () => Promise.resolve({ data: { session: { access_token: "sonde-marke-" + window.__login, expires_at: Math.floor(Date.now() / 1000) + 3600 } } }) } : undefined
       });
       be.currentUser = () => (window.__login ? { id: window.__login } : null);
       if (marke) window.SUPABASE_CONFIG = Object.assign({}, window.SUPABASE_CONFIG, { url: location.origin + "/__supa" });
@@ -356,6 +375,9 @@ function server(wurzel) {
     }).catch(() => []);
     sage(echt.length === 3 && echt.every(([roh, s]) => /Zuz/.test(roh) && !/Zuz|Testp/.test(s)), "D: Ausschnitte in echten Browser-Meldungen (JSON.parse, querySelector) werden entfernt",
       echt.map((x) => x[1]).join(" | "));
+    /* 884b: Postgres-Meldungen tragen den Wert („Key (name)=(…) already exists") – die Spalte bleibt, der Wert nicht */
+    const pg1 = await pg.evaluate(() => DMA_MESS.stand().sauber("duplicate key: Key (name)=(Zuzana Testperson) already exists.")).catch(() => "");
+    sage(pg1 && !/Zuz|Testp/.test(pg1) && /Key \(name\)=/.test(pg1), "D: der Wert in einer Postgres-Meldung wird ersetzt, die Spalte bleibt", pg1);
     /* derselbe Fehler noch einmal: kein neuer Schlüssel → keine zweite Zeile */
     await pg.evaluate(() => setTimeout(window.__wirf, 0)).catch(() => {});
     await schlaf(4000);
@@ -641,8 +663,10 @@ function server(wurzel) {
   const verstecken = (pg, h) => pg.evaluate((h) => { Object.defineProperty(document, "visibilityState", { configurable: true, get: () => (h ? "hidden" : "visible") }); document.dispatchEvent(new Event("visibilitychange")); }, h).catch(() => {});
   const rpcAlle = (pg) => pg.evaluate(() => JSON.parse(localStorage.getItem("__sonde-rpc") || "[]")).then((l) => l.filter((x) => /^mess-/.test(x.art || "")), () => []);
   const hatMarke = (pg) => pg.waitForFunction(() => DMA_MESS.stand().marke, null, { timeout: frist(5000), polling: 50 }).then(() => true, () => false);
-  const kurz = (z) => z.map((x) => x.art.replace("mess-", "") + (x.art === "mess-raum" ? "(" + [x.d.grund, "teil" + x.d.teil, "folge" + x.d.folge, x.d.spaet ? "spaet" : "", "dauer" + x.d.dauer, "ges" + JSON.stringify(x.d.ges)].filter(Boolean).join(" ") + ")" : "")).join(", ");
-  const nieLeer = (raeume) => raeume.every((x) => x.d && x.d.ges && x.d.ges[0] >= 1);
+  const kurz = (z) => z.map((x) => x.art.replace("mess-", "") + (x.art === "mess-raum" ? "(" + [x.d.grund, "teil" + x.d.teil, "folge" + x.d.folge, x.d.spaet ? "spaet" : "", "dauer" + x.d.dauer, x.d.sicht != null ? "sicht" + x.d.sicht : "", "anzahl" + x.d.anzahl, x.d.gast ? "gast" : "", "ges" + JSON.stringify(x.d.ges)].filter(Boolean).join(" ") + ")" : "")).join(", ");
+  /* „leer" (884b genauer): eine Folgezeile ohne Langläufer, LoAF und Eingabe und ohne ein ganzes Fenster sichtbare Zeit
+     (Schnellmodus: 1 s). Die erste Zeile eines Aufenthalts (folge 0) trägt immer „drin". */
+  const nieLeer = (raeume) => raeume.every((x) => x.d && x.d.ges && (x.d.folge === 0 || x.d.ges[0] >= 1 || (x.d.loaf || []).length || (x.d.inp || []).length || x.d.sicht >= 1));
   /* Ein eigener Browser OHNE Playwright-Umleitung (ctx.route): die verschluckt keepalive-Aufrufe einer Seite, die gerade
      geht (Versuch: beim Navigieren kamen mit Umleitung 3 von 11 an, ohne 11 von 11; beim Schließen 12/12 bzw. 12/12).
      Fremde Adressen sperrt hier die Namensauflösung. */
@@ -663,7 +687,7 @@ function server(wurzel) {
     await messDa(pg); await startRaus(pg); await schlaf(400);
     const rpc = await rpcAlle(pg), ka = S.supa.filter((x) => x.art === "mess-raum"), raeume = ka.concat(rpc.filter((x) => x.art === "mess-raum"));
     console.log("   keepalive: " + kurz(S.supa) + "   |  rpc: " + kurz(rpc));
-    sage(da && mk && raeume.length === 1 && ka.length === 1 && ka[0].d.ges[0] >= 2 && ka[0].auth === "Bearer sonde-marke",
+    sage(da && mk && raeume.length === 1 && ka.length === 1 && ka[0].d.ges[0] >= 2 && ka[0].auth === "Bearer sonde-marke-u1",
       "K: Neuladen mitten im Raum → die Raumzeile geht mit keepalive raus, genau einmal, mit beiden Langläufern", ka[0] && ("grund " + ka[0].d.grund + ", ges " + JSON.stringify(ka[0].d.ges)));
     sage(rpc.filter((x) => x.art === "mess-start").length === 2 && nieLeer(raeume), "K: … keine leere Raumzeile, und die Startzeile der nächsten Seite kommt auch");
     await zu(ctx);
@@ -781,6 +805,201 @@ function server(wurzel) {
     sage(mk && ka.length === 1 && ka[0].d.grund === "weg" && ka[0].d.folge === 0 && ka[0].d.ges[0] === 1 && ka[0].d.drin >= 100 && !rpc.some((x) => x.art === "mess-raum"),
       "K: kurzer Aufenthalt, Seite zu → die Zeile geht beim Weggehen mit keepalive raus (mit „drin“), die nächste Seite schickt nichts doppelt", "Marke " + mk);
     await zu(p2); await zu(ctx);
+  }
+  /* ================= K, 884b (Nachprüfung) ================= */
+  console.log("\nK) 884b: KEINE LEERE FOLGEZEILE, SICHTBARE ZEIT, KEEPALIVE, KONTO\n");
+  {
+    /* K6: Teilzeile beim Tab-Wechsel (mit Marke → keepalive), versteckt bleiben – darin ein Langläufer im Hintergrund –,
+       nach 3 s neu laden. Die Prüfung fand hier eine zweite Zeile {weg, folge 1, ges [0,0,0]}: die Sperre galt nur
+       unter 2 s, egal ob sichtbar. Jetzt: genau eine Raumzeile. */
+    S.supa = [];
+    const ctx = await fensterK();
+    const pg = await ctx.newPage();
+    await laden(pg, null, true, NEU, { marke: true });
+    await messDa(pg); await startRaus(pg);
+    await raumRein(pg, 1);
+    const mk = await hatMarke(pg);
+    await zweiLanglaeufer(pg);
+    await verstecken(pg, true);
+    for (let i = 0; i < 30 && !S.supa.some((x) => x.art === "mess-raum"); i++) await schlaf(100);
+    await blockiere(pg, 250);
+    await schlaf(3000);
+    await pg.reload({ waitUntil: "load" });
+    await attrappe(pg, true, NEU);
+    await messDa(pg); await startRaus(pg); await schlaf(400);
+    const rpc = await rpcAlle(pg), ka = S.supa.filter((x) => x.art === "mess-raum"), raeume = ka.concat(rpc.filter((x) => x.art === "mess-raum"));
+    console.log("   keepalive: " + kurz(S.supa) + "   |  rpc: " + kurz(rpc));
+    sage(mk && raeume.length === 1 && ka.length === 1 && ka[0].d.teil === 1 && ka[0].d.ges[0] >= 2 && nieLeer(raeume),
+      "K: Teilzeile, versteckt geblieben, nach 3 s neu geladen (mit Marke) → genau eine Raumzeile, keine leere „weg“-Zeile", raeume.length + " Raumzeilen");
+    await zu(ctx);
+  }
+  {
+    /* K7: dasselbe ohne Marke, Seite geschlossen → die nächste Seite schickt keine leere „offen“-Zeile nach */
+    const ctx = await fensterK();
+    const p1 = await ctx.newPage();
+    await laden(p1, null, true, NEU);
+    await messDa(p1); await startRaus(p1);
+    await raumRein(p1, 1);
+    await zweiLanglaeufer(p1);
+    await verstecken(p1, true);
+    await p1.waitForFunction(() => (window.__berichte || []).some((b) => b.art === "mess-raum"), null, { timeout: frist(5000), polling: 50 }).catch(() => {});
+    await blockiere(p1, 250);
+    await schlaf(3000);
+    await p1.close({ runBeforeUnload: false }).catch(() => {});
+    await schlaf(300);
+    const p2 = await ctx.newPage();
+    await laden(p2, null, true, NEU);
+    await messDa(p2); await startRaus(p2); await schlaf(400);
+    const raeume = (await rpcAlle(p2)).filter((x) => x.art === "mess-raum");
+    console.log("   rpc: " + kurz(raeume));
+    sage(raeume.length === 1 && raeume[0].d.teil === 1 && !raeume[0].d.spaet && raeume[0].d.ges[0] >= 2 && nieLeer(raeume),
+      "K: Teilzeile, versteckt geblieben, nach 3 s geschlossen (ohne Marke) → die nächste Seite schickt nichts Leeres nach", raeume.length + " Raumzeilen");
+    await zu(p2); await zu(ctx);
+  }
+  {
+    /* K8: Hintergrund zählt nicht, glatte sichtbare Zeit schon. Teilzeile; im Hintergrund ein Langläufer (zählt nicht,
+       auch nicht als LoAF); zurück und 1,6 s glatt (> 1 Fenster); „aus“ → Folgezeile mit ges [0,0,0], sicht ≈ 2 s,
+       anzahl nur über die sichtbare Zeit (vorher über die ganze dauer). K8b: zurück, nur 0,3 s sichtbar, „aus“ → keine
+       Folgezeile (weniger als ein Fenster, keine Daten). */
+    async function lauf(sichtbarMs) {
+      const ctx = await fensterK();
+      const pg = await ctx.newPage();
+      await laden(pg, null, true, NEU);
+      await messDa(pg); await startRaus(pg);
+      await raumRein(pg, 1);
+      await zweiLanglaeufer(pg);
+      await verstecken(pg, true);
+      await schlaf(300);
+      await blockiere(pg, 250);
+      await schlaf(2500);
+      await verstecken(pg, false);
+      await schlaf(sichtbarMs);
+      await pg.evaluate(() => { LiveChat.pruefSitz({ lage: "aus" }); LiveChat.spielSitzeNeu(); }).catch(() => {});
+      await schlaf(900);
+      const raeume = (await rpcAlle(pg)).filter((x) => x.art === "mess-raum");
+      await zu(ctx);
+      return raeume;
+    }
+    let raeume = await lauf(1600);
+    console.log("   rpc: " + kurz(raeume));
+    const r0 = raeume[0] && raeume[0].d, r1 = raeume[1] && raeume[1].d;
+    sage(raeume.length === 2 && r0.teil === 1 && r0.ges[0] >= 2 && r0.anzahl >= 2 && r0.anzahl <= 4 && r1.folge === 1 && r1.grund === "aus"
+      && r1.ges[0] === 0 && !(r1.loaf || []).length && r1.sicht >= 1 && r1.sicht <= 3 && r1.dauer >= 4 && r1.anzahl >= 1 && r1.anzahl <= 3 && r1.anzahl < r1.dauer,
+      "K: Hintergrund zählt nicht (kein Langläufer, kein LoAF, anzahl nur sichtbar), 1,6 s glatt sichtbar → Folgezeile mit „sicht“",
+      r1 ? JSON.stringify({ ges: r1.ges, loaf: (r1.loaf || []).length, sicht: r1.sicht, dauer: r1.dauer, anzahl: r1.anzahl }) : "keine Folgezeile");
+    raeume = await lauf(300);
+    console.log("   rpc: " + kurz(raeume));
+    sage(raeume.length === 1 && raeume[0].d.teil === 1 && nieLeer(raeume), "K: zurück, nur 0,3 s sichtbar, ohne Langläufer, „aus“ → keine Folgezeile", raeume.length + " Raumzeilen");
+  }
+  {
+    /* K9: Ersatzuhr (Browser ohne longtask – iPhone, Firefox). Der sichtbare Stau (700 ms) zählt; die Pause im
+       Hintergrund (Zeitgeber ruhen dort; nachgestellt: versteckt, 1,5 s nichts, zurück) zählte vorher beim ersten Takt
+       danach als ein Langläufer von über 1 s. */
+    const ctx = await fenster({ ohneLongtask: true });
+    const pg = await ctx.newPage();
+    await laden(pg, null, true, NEU);
+    await messDa(pg); await startRaus(pg);
+    await raumRein(pg, 1);
+    await blockiere(pg, 700);
+    await schlaf(300);
+    await pg.evaluate(() => {
+      Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" }); document.dispatchEvent(new Event("visibilitychange"));
+      const t = performance.now(); while (performance.now() - t < 1500) {}
+      Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "visible" }); document.dispatchEvent(new Event("visibilitychange"));
+    }).catch(() => {});
+    await schlaf(800);
+    await pg.evaluate(() => { LiveChat.pruefSitz({ lage: "aus" }); LiveChat.spielSitzeNeu(); }).catch(() => {});
+    await schlaf(900);
+    const raeume = (await rpcAlle(pg)).filter((x) => x.art === "mess-raum"), d = raeume[0] && raeume[0].d;
+    console.log("   rpc: " + kurz(raeume));
+    sage(raeume.length === 1 && d.uhr === 1 && d.ges[0] === 1 && d.ges[2] >= 150 && d.ges[2] < 1000,
+      "K: Ersatzuhr – der sichtbare Stau zählt, die Pause im Hintergrund nicht", d && ("uhr " + d.uhr + ", ges " + JSON.stringify(d.ges)));
+    sage(!ctx.__fehler.length, "K: keine Seitenfehler ohne longtask/LoAF/Event-Timing", ctx.__fehler.slice(0, 3).join(" | "));
+    await zu(ctx);
+  }
+  {
+    /* K10: Browser ohne keepalive (wie Firefox vor 133: Request kennt die Option nicht). Vorher galt die Zeile als mit
+       keepalive zugestellt und wurde nie nachgeschickt – starb die Anfrage mit der Seite, war sie weg. Jetzt: keine
+       Marke, die Zeile bleibt im Laufbuch, die nächste Seite schickt sie genau einmal. */
+    S.supa = [];
+    const ctx = await fenster({ br: brK, ohneKeepalive: true });
+    const p1 = await ctx.newPage();
+    await laden(p1, null, true, NEU, { marke: true });
+    await messDa(p1); await startRaus(p1);
+    await raumRein(p1, 1);
+    await schlaf(600);
+    const mk = ((await stand(p1)) || {}).marke;
+    await zweiLanglaeufer(p1);
+    await p1.close({ runBeforeUnload: false }).catch(() => {});
+    await schlaf(300);
+    const p2 = await ctx.newPage();
+    await laden(p2, null, true, NEU);
+    await messDa(p2); await startRaus(p2); await schlaf(400);
+    const raeume = (await rpcAlle(p2)).filter((x) => x.art === "mess-raum"), ka = S.supa.filter((x) => x.art === "mess-raum");
+    console.log("   keepalive: " + kurz(S.supa) + "   |  rpc: " + kurz(raeume));
+    sage(mk === false && ka.length === 0 && raeume.length === 1 && raeume[0].d.spaet === 1 && raeume[0].d.ges[0] >= 2,
+      "K: Browser ohne keepalive → keine Marke, nichts auf gut Glück; die nächste Seite schickt die Zeile genau einmal", "Marke " + mk + ", keepalive " + ka.length + ", nachgeschickt " + raeume.length);
+    await zu(p2); await zu(ctx);
+  }
+  {
+    /* K11: Konto u1 im Raum (Marke für u1), raus, abmelden, u2 anmelden – ohne Neuladen –, wieder rein, neu laden. Vorher
+       galt die Marke von u1 bis zu 10 min weiter: die Raumzeile von u2 ging unter u1 raus. */
+    S.supa = [];
+    const ctx = await fensterK();
+    const pg = await ctx.newPage();
+    await laden(pg, null, true, NEU, { marke: true });
+    await messDa(pg); await startRaus(pg);
+    await raumRein(pg, 1);
+    const mk = await hatMarke(pg);
+    await blockiere(pg, 220); await schlaf(300);
+    await pg.evaluate(() => { LiveChat.pruefSitz({ lage: "aus" }); LiveChat.spielSitzeNeu(); }).catch(() => {});
+    await schlaf(300);
+    await pg.evaluate(() => { window.__login = "u2"; }).catch(() => {});
+    await raumRein(pg, 5);
+    await blockiere(pg, 230); await schlaf(400);
+    await pg.reload({ waitUntil: "load" });
+    await attrappe(pg, "u2", NEU);
+    await messDa(pg); await startRaus(pg); await schlaf(400);
+    const ka = S.supa.filter((x) => x.art === "mess-raum"), rpc = (await rpcAlle(pg)).filter((x) => x.art === "mess-raum");
+    console.log("   keepalive: " + kurz(S.supa) + " " + JSON.stringify(ka.map((x) => x.auth)) + "   |  rpc: " + kurz(rpc));
+    sage(mk && ka.length === 1 && ka[0].auth === "Bearer sonde-marke-u2" && rpc.length === 1 && rpc[0].d.grund === "aus",
+      "K: Kontowechsel ohne Neuladen → die Raumzeile von u2 geht mit der Marke von u2 raus, nie mit der von u1", JSON.stringify(ka.map((x) => x.auth)));
+    await zu(ctx);
+  }
+  {
+    /* K12: Nachschicken, bevor die Sitzung wiederhergestellt ist. Seite 1 (u1) schließt mitten im Raum ohne Marke; Seite 2
+       ist noch abgemeldet, als sie nachschickt → die Zeile wartet in der Kiste – mit dem Konto von Seite 1, nicht als
+       Gast; nach der Anmeldung geht sie ohne „gast“ raus. K12b: Seite 2 gehört einem anderen Konto → verworfen. */
+    async function lauf(login2) {
+      const ctx = await fensterK();
+      const p1 = await ctx.newPage();
+      await laden(p1, null, "u1", NEU);
+      await messDa(p1); await startRaus(p1);
+      await raumRein(p1, 1);
+      await zweiLanglaeufer(p1);
+      await p1.close({ runBeforeUnload: false }).catch(() => {});
+      await schlaf(300);
+      const p2 = await ctx.newPage();
+      await laden(p2, null, login2 ? login2 : false, NEU);
+      await messDa(p2);
+      let inKiste = null;
+      if (!login2) {
+        inKiste = await p2.waitForFunction(() => DMA_MESS.stand().kiste.some((x) => x.a === "mess-raum"), null, { timeout: frist(5000), polling: 20 }).then(() => true, () => false);
+        await p2.evaluate(() => { window.__login = "u1"; }).catch(() => {});
+      }
+      await startRaus(p2); await schlaf(600);
+      const raeume = (await rpcAlle(p2)).filter((x) => x.art === "mess-raum"), st = await stand(p2);
+      await zu(p2); await zu(ctx);
+      return { inKiste, raeume, kiste: st ? st.kiste.length : -1 };
+    }
+    let e = await lauf(null);
+    console.log("   rpc: " + kurz(e.raeume));
+    sage(e.inKiste && e.raeume.length === 1 && e.raeume[0].d.spaet === 1 && !e.raeume[0].d.gast && e.raeume[0].d.ges[0] >= 2 && e.kiste === 0,
+      "K: Nachschicken vor der wiederhergestellten Sitzung → wartet in der Kiste, geht danach unter dem richtigen Konto ohne „gast“ raus",
+      "Kiste " + e.inKiste + ", " + e.raeume.length + " Raumzeilen" + (e.raeume[0] ? ", gast " + (e.raeume[0].d.gast || 0) : ""));
+    e = await lauf("u2");
+    console.log("   rpc: " + kurz(e.raeume));
+    sage(e.raeume.length === 0 && e.kiste === 0, "K: die nächste Seite gehört einem anderen Konto → die Zeile wird verworfen, nicht unter u2 gesendet", e.raeume.length + " Raumzeilen");
   }
   sage(!/Zuzana|Testperson/.test(JSON.stringify(S.supa)), "B: auch in den keepalive-Zeilen kein Name");
   await Promise.race([brK.close(), schlaf(5000)]);
