@@ -40,21 +40,51 @@
         ≈ 0,84); Elementbreite bleibt 26 % (Sonde runde99-kleinkram);
         der Mittelpunkt der Schale bleibt (−16,25 % ± 1,5)
     10  Quelltext: beim Betreten wird der Raumstand geleert
-    11  keine Fehler auf beiden Seiten
+   NACHBESSERUNG 1 (Prüfung der 884) – die Wege, die vorher fehlten:
+    12  DATENKANAL: zwei Seiten mit ECHTER WebRTC-Leitung (wie 884-sitz);
+        der „Server" verwirft jedes lesefest/lesezeile/raumstand und nimmt
+        rs aus Puls und „auch-da" – der Fokus kommt beim anderen nur über
+        den Kanal (dc.onmessage) an
+    13  GEMISCHTER RAUM: O läuft auf der LIVE-FASSUNG (ALTGERAET, Vorgabe
+        876cc04 = 883: livechat.js und app.js aus git, nur für diese
+        Seite), F hat eine um 10 min VORGEHENDE Uhr, G eine richtige.
+        O hält Tafel X fest (Meldung ohne Stempel), dann Y – das zweite
+        Paket verliert F. F's Puls darf G nicht auf X zurückdrehen (der
+        Fall aus der Prüfung). F's Raumstand trägt keinen Fokus (ohne
+        Absender-Stempel fährt nichts mit). O versteht die neuen Pakete
+        (lesefest mit rt, raumstand, auch-da mit rs) ohne Fehler.
+    14  UHREN (nur neue Fassungen): F (+10 min) setzt die Lesezeile, G
+        danach – G's Wechsel setzt sich trotz der vorgehenden Uhr von F
+        durch, ein älterer Puls von F dreht nichts zurück
+    15  EINMAL ZEICHNEN: „auch-da" mit vier neuen dran-Einträgen zeichnet
+        nicht öfter voll (melden) als ein „auch-da" ohne; ein Puls und ein
+        raumstand mit vier dran-Einträgen zeichnen höchstens einmal
+    16  ALTERSGRENZE: A's Fokus und Lesezeile fahren mit, nach 3 h + 1 min
+        (A's Uhr vorgestellt) nicht mehr – die Anzeige bei A bleibt; ein
+        empfangener Eintrag älter als 3 h wird nicht weitergegeben
+    17  keine Fehler auf allen Seiten (auch O auf der Live-Fassung)
    GEGENPROBE: ALT=<Ordner> – livechat.js, app.js, korrekturen.css, die
    dort liegen, liefert der Sonden-Server statt der Repo-Dateien aus (auch
-   die Quelltext-Prüfung liest sie). Erwartet: rot in 1, 2, 3, 4, 5, 6, 8,
-   9, 10. Die Sonde stürzt auf dem alten Stand nicht ab (neue Schnittstellen
-   werden vorher abgefragt).
+   die Quelltext-Prüfung liest sie). Erwartet gegen b9aebd3 (vor 884-gleich):
+   rot in 1–10, 12, 15 (angekommen) und 16 – gemessen 32 rot; 13 und 14
+   bleiben grün (vor 884 fuhr nichts mit, also auch nichts Falsches).
+   Gegen a7e9447 (884-gleich vor der Nachbesserung): rot nur in 13 (F trägt
+   den Fokus, G springt auf X zurück), 15 und 16 – gemessen 7 rot. Die Sonde stürzt auf dem alten Stand nicht ab
+   (neue Schnittstellen werden vorher abgefragt).
+   ALTGERAET=<Revision>: aus welcher Revision O (Fall 13) livechat.js und
+   app.js bekommt (Vorgabe 876cc04, die Live-Fassung 883). Ohne git wird
+   Fall 13 übersprungen und das gesagt.
    BILD=<Ordner>: Bildschirmfotos des Eis bei 360, 412 und 760 px.
    MIN=1: dieselben Fälle mit min/ (Raum-Stücke von app.js) statt ?quelle.
    Aufruf: node werkzeug/pruefe-884-gleich.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
+const { execFileSync } = require("child_process");
 const WURZEL = process.env.WURZEL || path.join(__dirname, "..");
 const ALT = process.env.ALT || "";
 const BILD = process.env.BILD || "";
+const ALTGERAET = process.env.ALTGERAET || "876cc04";
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".jpg": "image/jpeg", ".gif": "image/gif", ".svg": "image/svg+xml", ".webp": "image/webp",
   ".opus": "audio/ogg", ".m4a": "audio/mp4", ".mp3": "audio/mpeg" };
@@ -83,17 +113,37 @@ const datei = (name) => {
   }).listen(0);
   /* MIN=1: die verkleinerten Dateien aus min/ (nach fassung-setzen.js --nur-stempel) statt der Quellen */
   const URL = "http://127.0.0.1:" + srv.address().port + "/index.html" + (process.env.MIN ? "" : "?quelle");
-  const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
+  /* Fall 12 baut eine echte WebRTC-Leitung (wie 884-sitz) – dafür die nachgestellten Geräte */
+  const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium",
+    args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream", "--disable-features=WebRtcHideLocalIpsWithMdns"] });
 
   const fehlerJe = { A: [], B: [], E: [] };
-  const seite = async (wer, breite) => {
+  /* o.versatz: die Uhr dieser Seite geht so viele ms vor (Date.now; window.__uhr(ms) stellt sie um).
+     o.altQuelle: { "livechat.js": Text, "app.js": Text } – diese Seite bekommt die Dateien einer älteren Fassung
+     (immer ?quelle, damit genau diese Dateien laden). */
+  const seite = async (wer, breite, o) => {
+    o = o || {};
+    if (!fehlerJe[wer]) fehlerJe[wer] = [];
     const ctx = await br.newContext({ viewport: { width: breite || 460, height: 900 } });
+    if (o.altQuelle) {
+      await ctx.route(/\/(livechat|app)\.js(\?.*)?$/, (r) => {
+        const pfad = new globalThis.URL(r.request().url()).pathname.slice(1);
+        if (o.altQuelle[pfad]) r.fulfill({ status: 200, contentType: "text/javascript", body: o.altQuelle[pfad] });
+        else r.continue();
+      });
+    }
     const pg = await ctx.newPage();
     pg.on("pageerror", (e) => fehlerJe[wer].push(String(e).slice(0, 200)));
-    await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
-    await pg.goto(URL, { waitUntil: "domcontentloaded" });
-    await pg.waitForFunction(() => window.LiveChat && window.LiveChat.pruefSitz && window.LiveChat.pruefPost
-      && window.DMA_PRUEFUNG && window.DMA_LESEFEST && window.DMA_PRUEF && window.DMA_PRUEF.effektBuehne, null, { timeout: 30000 });
+    await pg.addInitScript((v) => {
+      try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {}
+      const echt = Date.now.bind(Date); let versatz = v || 0;
+      Date.now = () => echt() + versatz;
+      window.__uhr = (ms) => { versatz = ms; };
+    }, o.versatz || 0);
+    await pg.goto(o.altQuelle ? URL.split("?")[0] + "?quelle" : URL, { waitUntil: "domcontentloaded" });
+    await pg.waitForFunction((alt) => window.LiveChat && window.LiveChat.pruefSitz && window.LiveChat.pruefPost
+      && window.DMA_LESEFEST && (alt || (window.DMA_PRUEFUNG && window.DMA_PRUEF && window.DMA_PRUEF.effektBuehne)),
+      Boolean(o.altQuelle), { timeout: 30000 });
     return pg;
   };
   const A = await seite("A"), B = await seite("B");
@@ -384,9 +434,225 @@ const datei = (name) => {
   sage(/spielSitz = \{\};\s*\n\s*raumStand = \{ lf: null, lz: \{\}, dr: \{\}, rb: \{\} \};/.test(lc),
     "beim Betreten wird der Raumstand geleert (sonst wanderte er von Raum A nach B)");
 
-  console.log("\n11 KEINE FEHLER\n");
-  sage(fehlerJe.A.length === 0 && fehlerJe.B.length === 0 && fehlerJe.E.length === 0, "keine Fehler auf den Seiten",
-    [].concat(fehlerJe.A, fehlerJe.B, fehlerJe.E).slice(0, 3).join(" | ") || "keine");
+  /* ================================================================== */
+  console.log("\n12 DATENKANAL: DER FOKUS KOMMT AUCH OHNE SERVER AN\n");
+  {
+    /* Zwei frische Seiten mit echter Leitung (Aufbau wie 884-sitz: B grüsst, die kleinere Kennung ruft an). */
+    const P = await seite("P"), Q = await seite("Q");
+    await P.evaluate(() => {
+      LiveChat.pruefSitz({ lage: "drin", ichId: "aaa", ichName: "Paul", seit: 1000, buehne: true, zuruecksetzen: true,
+        leute: { bbb: { id: "bbb", name: "Quirin", seit: 2000, gesehen: 9e15, buehne: true, bild: "" } } });
+      LiveChat.kontoNachladen({ betreiber: true });
+    });
+    await Q.evaluate(() => {
+      LiveChat.pruefSitz({ lage: "drin", ichId: "bbb", ichName: "Quirin", seit: 2000, buehne: true, zuruecksetzen: true,
+        leute: { aaa: { id: "aaa", name: "Paul", seit: 1000, gesehen: 9e15, buehne: true, bild: "" } } });
+    });
+    for (const pg of [P, Q]) {
+      await pg.evaluate(() => {
+        window.__raus = [];
+        LiveChat.pruefPost((p) => { try { window.__raus.push(JSON.parse(JSON.stringify(p))); } catch (e) {} });
+        const t = document.querySelector('[data-sub="sub-livechat"]'); if (t) t.click();
+      });
+      await pg.waitForSelector("#lcVerlauf", { state: "attached", timeout: 20000 });
+    }
+    /* Der „Server": trägt alles hinüber – nur Fokus, Lesezeile und Raumstand verwirft er (und zählt sie), und aus
+       Puls und „auch-da" nimmt er den Raumstand (rs) heraus. So bleibt für den Fokus NUR der Datenkanal. */
+    let laeuft = true;
+    const verworfen = { lesefest: 0, lesezeile: 0, raumstand: 0, rs: 0 };
+    const tragen = async (von, nach) => {
+      while (laeuft) {
+        let ps = [];
+        try { ps = await von.evaluate(() => window.__raus.splice(0)); } catch (e) { break; }
+        for (const p of ps) {
+          if (p.art !== "rs" && Object.prototype.hasOwnProperty.call(verworfen, p.art)) { verworfen[p.art]++; continue; }
+          if (p.rs) { delete p.rs; verworfen.rs++; }
+          try { await nach.evaluate((p) => LiveChat.pruefEmpfangen(p), p); } catch (e) {}
+        }
+        await schlaf(15);
+      }
+    };
+    tragen(P, Q); tragen(Q, P);
+    await P.evaluate(() => LiveChat.pruefEmpfangen({ art: "hallo", von: "bbb", name: "Quirin", seit: 2000, kf: 1 }));
+    const bereit = async (pg, id) => ((await pg.evaluate(() => LiveChat.pruefKanal())).bereit || []).indexOf(id) >= 0;
+    let steht = false;
+    for (let i = 0; i < 300 && !steht; i++) { steht = (await bereit(P, "bbb")) && (await bereit(Q, "aaa")); if (!steht) await schlaf(50); }
+    sage(steht, "die Leitung steht, der Datenkanal ist auf beiden Seiten bereit");
+    await P.evaluate(() => LiveChat.leseTextSenden({ titel: "Kanal", niveau: "A1", zeilen: ["Eins.", "Zwei."] }));
+    let pid = "";
+    for (let i = 0; i < 100 && !pid; i++) {
+      pid = await Q.evaluate(() => { const t = document.querySelector(".lc-lesetafel"); return t ? t.dataset.leseId : ""; });
+      if (!pid) await schlaf(30);
+    }
+    const gesetzt = await P.evaluate((id) => LiveChat.leseFestSetzen(id), pid);
+    let qFest = "";
+    for (let i = 0; i < 60 && qFest !== pid; i++) { qFest = await Q.evaluate(() => LiveChat.leseFestWelche()); if (qFest !== pid) await schlaf(50); }
+    await schlaf(1500);   // auch die Nachsendungen gehen beim Server ins Leere
+    sage(Boolean(pid) && gesetzt && qFest === pid && verworfen.lesefest >= 1,
+      "der Fokus kommt bei Q über den Datenkanal an (dc.onmessage, art „raumstand\"); der Server verwarf jede Meldung",
+      "Tafel " + (pid || "-") + ", Q: " + (qFest || "(leer)") + ", verworfen " + JSON.stringify(verworfen));
+    laeuft = false; await schlaf(120);
+    await P.context().close(); await Q.context().close();
+  }
+
+  /* ================================================================== */
+  console.log("\n13 GEMISCHTER RAUM: DIE LIVE-FASSUNG UND EINE VORGEHENDE UHR\n");
+  /* Wer im Raum sitzt, ohne neu geladen zu haben, läuft auf der Live-Fassung. O bekommt livechat.js und app.js
+     daraus (git), F eine um 10 min vorgehende Uhr, G eine richtige. */
+  let altQuelle = null;
+  try {
+    altQuelle = {};
+    for (const d of ["livechat.js", "app.js"]) {
+      altQuelle[d] = execFileSync("git", ["show", ALTGERAET + ":" + d], { cwd: WURZEL, maxBuffer: 256 << 20 }).toString("utf8");
+    }
+  } catch (e) { altQuelle = null; }
+  const drin = (pg, ich, name, seit, leute) => pg.evaluate(({ ich, name, seit, leute }) => {
+    LiveChat.pruefSitz({ lage: "drin", ichId: ich, ichName: name, seit: seit, zuruecksetzen: true, leute: leute });
+    window.__raus = [];
+    LiveChat.pruefPost((p) => { try { window.__raus.push(JSON.parse(JSON.stringify(p))); } catch (e) {} });
+    const t = document.querySelector('[data-sub="sub-livechat"]'); if (t) t.click();
+  }, { ich, name, seit, leute });
+  const LEUTE = { o: { id: "o", name: "Olaf", seit: 500 }, f: { id: "f", name: "Finn", seit: 2500 }, g: { id: "g", name: "Gina", seit: 2600 } };
+  const ohne = (id) => { const l = JSON.parse(JSON.stringify(LEUTE)); delete l[id]; return l; };
+  const F = await seite("F", 460, { versatz: 10 * 60 * 1000 }), G = await seite("G");
+  await drin(F, "f", "Finn", 2500, ohne("f")); await drin(G, "g", "Gina", 2600, ohne("g"));
+  for (const pg of [F, G]) await pg.waitForSelector("#lcVerlauf", { state: "attached", timeout: 20000 });
+  const fUhr = await F.evaluate(() => Date.now()) - Date.now();
+  console.log("  F's Uhr geht " + Math.round(fUhr / 60000) + " min vor");
+  let X = "", Y = "";
+  if (!altQuelle) {
+    console.log("  ??   übersprungen: livechat.js/app.js aus " + ALTGERAET + " nicht lesbar (kein git?) – Fall 13 NICHT geprüft");
+  } else {
+    const O = await seite("O", 460, { altQuelle });
+    await drin(O, "o", "Olaf", 500, ohne("o"));
+    await O.evaluate(() => LiveChat.kontoNachladen({ betreiber: true }));
+    await O.waitForSelector("#lcVerlauf", { state: "attached", timeout: 20000 });
+    const oAlt = await O.evaluate(() => typeof LiveChat.pruefRaumStand !== "function");
+    await O.evaluate(() => {
+      LiveChat.leseTextSenden({ titel: "Erste", niveau: "A1", zeilen: ["Eins."] });
+      LiveChat.leseTextSenden({ titel: "Zweite", niveau: "A1", zeilen: ["Zwei."] });
+    });
+    await schlaf(400);
+    const tafeln = (await abholen(O)).filter((p) => p.art === "text" && p.chatArt === "lesen");
+    X = (tafeln[0] || {}).id || ""; Y = (tafeln[1] || {}).id || "";
+    await zustellen(F, tafeln); await zustellen(G, tafeln);
+    const oHaeupt = await O.evaluate(() => Boolean((LiveChat.lage() || {}).haeuptling));
+    await O.evaluate((x) => LiveChat.leseFestSetzen(x), X);
+    await schlaf(1500);
+    const festX = (await abholen(O)).filter((p) => p.art === "lesefest");
+    sage(oAlt && oHaeupt && Boolean(X && Y) && festX.length === 1 && festX[0].rt === undefined,
+      "O (" + ALTGERAET + ", ohne Raumstand) hält X fest – eine Meldung, ohne Stempel",
+      "Häuptling " + oHaeupt + ", " + festX.length + "× lesefest, rt " + (festX[0] ? festX[0].rt : "-"));
+    await zustellen(F, festX); await zustellen(G, festX);
+    const fg1 = [await F.evaluate(() => LiveChat.leseFestWelche()), await G.evaluate(() => LiveChat.leseFestWelche())];
+    sage(fg1[0] === X && fg1[1] === X, "F und G halten X fest (die Meldung ohne Stempel gilt)", JSON.stringify(fg1));
+    const fRs = await F.evaluate(() => (LiveChat.pruefRaumStand ? LiveChat.pruefRaumStand() : {}));
+    sage(!fRs.lf, "F's Raumstand trägt diesen Fokus NICHT (ohne Absender-Stempel fährt nichts mit)", JSON.stringify(fRs));
+    await O.evaluate((y) => LiveChat.leseFestSetzen(y), Y);
+    await schlaf(400);
+    const festY = (await abholen(O)).filter((p) => p.art === "lesefest");
+    await zustellen(G, festY);                                   // F verliert dieses Paket
+    const gY = await G.evaluate(() => LiveChat.leseFestWelche());
+    await abholen(F);
+    await F.evaluate(() => LiveChat.pruefPuls());
+    const fPuls = (await abholen(F)).filter((p) => p.art === "puls");
+    await zustellen(G, fPuls);
+    const gNach = await G.evaluate(() => LiveChat.leseFestWelche());
+    sage(gY === Y && gNach === Y, "F's Puls (Uhr 10 min vor, Y verpasst) dreht G NICHT auf X zurück",
+      "G vor dem Puls " + (gY === Y ? "Y" : gY) + ", danach " + (gNach === Y ? "Y" : gNach === X ? "X (zurückgedreht)" : gNach)
+      + ", rs im Puls: " + JSON.stringify((fPuls[0] || {}).rs || null));
+    const fNoch = await F.evaluate(() => LiveChat.leseFestWelche());
+    console.log("  Auskunft: F zeigt " + (fNoch === X ? "weiter X" : fNoch === Y ? "Y" : fNoch)
+      + " – wie vor 884: bis O das nächste Mal etwas ändert (O schickt keinen Raumstand)");
+    /* O (Live-Fassung) bekommt die Pakete der neuen Fassung */
+    const j = Date.now();
+    await zustellen(O, [{ art: "lesefest", von: "g", leseId: X, rt: j },
+      { art: "raumstand", von: "g", rs: { lf: [X, j], lz: { [X]: [0, j] } } },
+      { art: "puls", von: "g", name: "Gina", seit: 2600, rs: { lf: [X, j] } },
+      { art: "auch-da", von: "f", an: "o", name: "Finn", seit: 2500, rs: { lf: [X, j], dr: { zz: ["Gina", j] } } }]);
+    await schlaf(300);
+    const oX = await O.evaluate(() => LiveChat.leseFestWelche());
+    sage(oX === X && fehlerJe.O.length === 0, "O versteht „lesefest\" mit Stempel und überhört raumstand und rs ohne Fehler",
+      "O hält " + (oX === X ? "X" : oX || "(leer)") + ", Fehler: " + (fehlerJe.O.slice(0, 2).join(" | ") || "keine"));
+    await O.context().close();
+  }
+
+  /* ================================================================== */
+  console.log("\n14 UHREN: EINE VORGEHENDE UHR DRÄNGT NIEMANDEN AUS\n");
+  {
+    const T = X || "tafel-uhr";
+    await abholen(F); await abholen(G);
+    await F.evaluate((t) => LiveChat.leseZeileSetzen(t, 1), T);
+    await schlaf(1500);
+    await zustellen(G, (await abholen(F)).filter((p) => p.art === "raumstand" || p.art === "lesezeile"));
+    await F.evaluate(() => LiveChat.pruefPuls());
+    const fPulsAlt = (await abholen(F)).filter((p) => p.art === "puls");
+    const g1 = await G.evaluate((t) => LiveChat.leseZeile(t), T);
+    await G.evaluate((t) => LiveChat.leseZeileSetzen(t, 2), T);
+    await schlaf(1500);
+    await zustellen(F, (await abholen(G)).filter((p) => p.art === "raumstand" || p.art === "lesezeile"));
+    const f2 = await F.evaluate((t) => LiveChat.leseZeile(t), T);
+    await zustellen(G, fPulsAlt);
+    const g2 = await G.evaluate((t) => LiveChat.leseZeile(t), T);
+    sage(g1 === 1, "G übernimmt die Zeile von F (dessen Uhr 10 min vorgeht)", "G: " + g1);
+    sage(f2 === 2, "G wechselt danach – bei F setzt sich G's Wechsel durch (Stempel = bekannter + 1, nicht G's Uhr)", "F: " + f2);
+    sage(g2 === 2, "ein älterer Puls von F dreht G nicht zurück", "G: " + g2);
+  }
+
+  /* ================================================================== */
+  console.log("\n15 EINMAL ZEICHNEN: WER DRAN IST, ZEICHNET JE PAKET HÖCHSTENS EINMAL\n");
+  {
+    const jetzt = Date.now();
+    const vierDran = (z) => { const o = {}; ["Bea", "Cem", "Dana", "Emil"].forEach((nm, i) => { o[z + i] = [nm, jetzt + i]; }); return o; };
+    /* Volle Neuzeichnungen (melden ohne art = renderLiveChat) je Paket, im selben Takt gezählt */
+    const zahlen = await G.evaluate((ps) => {
+      let voll = 0;
+      LiveChat.beiAenderung((l, art) => { if (!art) voll++; });
+      return ps.map((p) => { voll = 0; try { LiveChat.pruefEmpfangen(p); } catch (e) {} return voll; });
+    }, [
+      { art: "auch-da", von: "h1", an: "g", name: "Hanna", seit: 4000 },
+      { art: "auch-da", von: "h2", an: "g", name: "Hugo", seit: 4100, rs: { dr: vierDran("za") } },
+      { art: "puls", von: "h1", name: "Hanna", seit: 4000, rs: { dr: vierDran("zb") } },
+      { art: "raumstand", von: "h1", rs: { dr: vierDran("zc") } }]);
+    const da = await G.evaluate(() => [LiveChat.dranZu("za0"), LiveChat.dranZu("zb3"), LiveChat.dranZu("zc2")].join(","));
+    sage(zahlen[1] <= zahlen[0], "„auch-da\" mit vier neuen dran-Einträgen zeichnet nicht öfter voll als eins ohne",
+      zahlen[1] + " gegen " + zahlen[0] + " (vorher je Eintrag ein volles Neuzeichnen direkt nach anrufen)");
+    sage(zahlen[2] <= 1, "ein Puls mit vier neuen dran-Einträgen zeichnet höchstens einmal voll", zahlen[2] + "×");
+    sage(zahlen[3] <= 1, "ein raumstand mit vier neuen dran-Einträgen ebenso", zahlen[3] + "×");
+    sage(da === "Bea,Emil,Dana", "und alle Einträge sind angekommen", da);
+  }
+
+  /* ================================================================== */
+  console.log("\n16 ALTERSGRENZE: NICHTS ÄLTER ALS 3 STUNDEN FÄHRT MIT\n");
+  {
+    const alter = await A.evaluate(() => {
+      if (!LiveChat.pruefRaumStand || !window.__uhr) return null;
+      const vorher = LiveChat.pruefRaumStand();
+      window.__uhr(3 * 3600 * 1000 + 60 * 1000);
+      let nach;
+      try { nach = LiveChat.pruefRaumStand(); } finally { window.__uhr(0); }
+      return { vorher: vorher, nach: nach, fest: LiveChat.leseFestWelche() };
+    });
+    sage(Boolean(alter && alter.vorher.lf && alter.vorher.lz), "A's Fokus und Lesezeile fahren im Raumstand mit",
+      alter ? Object.keys(alter.vorher).join(",") : "kein pruefRaumStand");
+    sage(Boolean(alter) && Object.keys(alter.nach).length === 0,
+      "3 h + 1 min später fährt nichts mehr mit (ein vergessener Fokus landet nicht stundenlang bei jedem Neuen)",
+      alter ? JSON.stringify(alter.nach) : "-");
+    sage(Boolean(alter) && alter.fest === leseId, "bei A selbst bleibt der Fokus stehen", alter ? alter.fest || "(leer)" : "-");
+    const gAlt = await G.evaluate(() => {
+      const j = Date.now();
+      LiveChat.pruefEmpfangen({ art: "raumstand", von: "h1", rs: { lz: { uralt: [1, j - 4 * 3600 * 1000], frisch: [1, j] } } });
+      const rs = LiveChat.pruefRaumStand ? LiveChat.pruefRaumStand() : {};
+      return { uralt: Boolean(rs.lz && rs.lz.uralt), frisch: Boolean(rs.lz && rs.lz.frisch), angezeigt: LiveChat.leseZeile("uralt") };
+    });
+    sage(gAlt.frisch && !gAlt.uralt, "G gibt einen empfangenen Eintrag älter als 3 h nicht weiter (der frische fährt mit)",
+      JSON.stringify(gAlt));
+  }
+
+  console.log("\n17 KEINE FEHLER\n");
+  const alleFehler = [].concat.apply([], Object.keys(fehlerJe).map((k) => fehlerJe[k].map((f) => k + ": " + f)));
+  sage(alleFehler.length === 0, "keine Fehler auf den Seiten (" + Object.keys(fehlerJe).join(", ") + ")",
+    alleFehler.slice(0, 3).join(" | ") || "keine");
 
   await br.close(); srv.close();
   console.log(fehler ? "\n" + fehler + " Abweichung(en)" : "\nalles gruen");
