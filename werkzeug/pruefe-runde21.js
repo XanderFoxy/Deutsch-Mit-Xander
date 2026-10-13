@@ -59,13 +59,17 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("er trennt an Satzzeichen", /\[\^\.\!\?\]\+\[\.\!\?\]\*/.test(js));
 
   console.log("\nDIE ZEILE SEHEN ALLE\n");
+  /* FASSUNG 884 — XANDER (Walkie 128/138): die Lesezeile ist jetzt Raumstand (livechat.js, raumStand): die Meldung
+     trägt einen Stempel (rt), der Empfang geht durch rsEintragen, und die Stelle fährt im Puls und in „auch-da" mit –
+     erst damit sieht sie ein Späterkommender wirklich. Beide Formen (vor und ab 884) gelten hier. */
   pruefe("die Marke geht als eigener Rundruf hinaus",
-    /senden\(\{ art: "lesezeile", leseId: id, nr: n \}\)/.test(lc),
+    /senden\(\{ art: "lesezeile", leseId: id, nr: n(, rt: rt)? \}\)/.test(lc),
     "keine neue Chatzeile je Satz");
   pruefe("und wird beim Empfang gesetzt",
     /if \(n\.art === "lesezeile"\)/.test(lc));
   pruefe("die Stelle wird gemerkt, fuer Spaeterkommende",
-    /var leseStelle = \{\};/.test(lc) && /leseStelle\[String\(n\.leseId\)\]/.test(lc));
+    /var leseStelle = \{\};/.test(lc) && (/leseStelle\[String\(n\.leseId\)\]/.test(lc)
+      || (/rsEintragen\("lz", lzId/.test(lc) && /leseStelle\[k\] = w;/.test(lc) && /rs: raumStandPaket\(\)/.test(lc))));
   /* NACHGEBESSERT IN RUNDE 28: jedes Zusatzfeld stand frueher an drei
      Stellen einzeln, und die zuletzt dazugekommene fehlte jedes Mal.
      Jetzt gibt es EINE Liste (ZUSATZ_FELDER) und eine Uebernahme

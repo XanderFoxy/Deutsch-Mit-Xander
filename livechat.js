@@ -2492,6 +2492,17 @@ window.LiveChat = (function () {
       /* Das Profilbild reist nicht mehr in jeder Zeile mit (Fassung
          642) — hat die eine Ausfertigung es, bekommt es die andere. */
       if (!zwilling.bild && n.bild) zwilling.bild = n.bild;
+      /* FASSUNG 884 — XANDER (Walkie 138): „Lesetafel … Andere sehen es nicht". Die Abschrift aus der Tabelle kennt
+         nur Text und Art (serverSichern); Sätze der Lesetafel, der Aufdeck-Satz, wer dran ist, die Sortierteile
+         stehen nur in der Abschrift aus dem Gerät. Lag die Tabellen-Abschrift zeitlich vorn (die Uhr des Absenders
+         geht vor), gewann sie, und beim Späterkommenden stand nur noch „📖 Titel" da. Jetzt bekommt der Zwilling,
+         was ihm davon fehlt. */
+      if (typeof ZUSATZ_FELDER !== "undefined" && ZUSATZ_FELDER) {
+        ZUSATZ_FELDER.forEach(function (f) {
+          if ((zwilling[f] === undefined || zwilling[f] === null || zwilling[f] === "")
+              && n[f] !== undefined && n[f] !== null && n[f] !== "") zwilling[f] = n[f];
+        });
+      }
     });
     /* DIE OBERGRENZE DARF KEINE AUFNAHME FRESSEN.
        GEMELDET: „Ich kann meine Sprachnachrichten nicht mehr sehen,
@@ -4161,6 +4172,124 @@ window.LiveChat = (function () {
      Eine Kennung, fuer den ganzen Raum dieselbe; leer heisst: nichts
      ist angepinnt. */
   var leseFest = "";
+  /* =================================================================
+     FASSUNG 884 — DER RAUMSTAND: ALLE SEHEN DASSELBE, AUCH WER SPÄTER KOMMT
+     -----------------------------------------------------------------
+     XANDER (Walkie 128/129/138, Abnahme 24.09.): „Andere sehen den Fokus nicht" · „Andere sehen es anders"
+     (Aufdecken) · „Strichlinie/Lesetafel/Ei: Andere sehen es nicht".
+     GEFUNDEN: Fokus (lesefest), Lesezeile (lesezeile) und wer dran ist (dran) gingen je EINMAL über den Server hinaus –
+     nicht im Puls, nicht in der Antwort auf „hallo", nicht direkt, nicht nachgesendet. Wer später kam oder das eine
+     Paket verlor, sah es nie. Die aufgedeckten Buchstaben gingen gar nicht hinaus (siehe lcRatenTafel in app.js).
+     JETZT ist das ein Zustand des Raums, nicht ein Ereignis:
+       lf: welche Tafel angepinnt ist · lz: Lesezeile je Tafel · dr: wer dran ist je Aufgabenzeile ·
+       rb: aufgedeckte Buchstaben je Aufgabenzeile (eine MENGE – es kommen nur Buchstaben dazu).
+     Jeder Eintrag trägt einen Stempel t (rsStempel: nie kleiner als der bekannte Stand + 1, so setzt sich auch ein
+     Gerät mit nachgehender Uhr durch). Was einen älteren Stempel trägt, ändert nichts – ein alter Puls dreht nichts
+     zurück. Der Stand fährt in „auch-da" und im Puls mit (rs, knapp: je Feld die 4 jüngsten Einträge, typisch unter
+     250 Zeichen); eine Änderung geht direkt (Datenkanal) und über den Server hinaus und nach 0,35 s und 1,2 s noch
+     einmal (wie sitzNachsenden). Übernommenes wird NICHT weitergeschickt (kein Echo) – es fährt erst im nächsten
+     eigenen Puls mit. Gezeichnet wird nur, was einen neuen Stempel UND einen anderen Wert hat (keine Dauerlast,
+     Fassung 836 bleibt gewahrt). Ältere Fassungen überhören „raumstand" und rs; sie bekommen weiter die alten
+     Einmal-Meldungen (jetzt mit rt). ================================================================= */
+  var raumStand = { lf: null, lz: {}, dr: {}, rb: {} };   // je Eintrag { w: Wert, t: Stempel }
+  var RS_JE_FELD = 4, RS_ANNEHMEN = 8;
+  function rsStempel(alt) { return Math.max(Date.now(), ((alt && alt.t) || 0) + 1); }
+  function rsEintrag(feld, k) { return feld === "lf" ? raumStand.lf : raumStand[feld][k]; }
+  function rsLokal(feld, k, w) {
+    var e = { w: w, t: rsStempel(rsEintrag(feld, k)) };
+    if (feld === "lf") raumStand.lf = e; else raumStand[feld][k] = e;
+    return e.t;
+  }
+  /* Buchstaben für die Menge: nur Buchstaben, groß (ß bleibt ß), jeder einmal, höchstens 40. */
+  function rsBuchstaben(s) {
+    var raus = "";
+    Array.from(String(s || "")).forEach(function (z) {
+      var g = z.toUpperCase(); if (g.length !== 1) g = z;
+      if (raus.length < 40 && /\p{L}/u.test(g) && raus.indexOf(g) < 0) raus += g;
+    });
+    return raus;
+  }
+  function raumStandPaket() {
+    var p = {}, etwas = false;
+    if (raumStand.lf) { p.lf = [raumStand.lf.w, raumStand.lf.t]; etwas = true; }
+    ["lz", "dr", "rb"].forEach(function (f) {
+      var tab = raumStand[f];
+      var ks = Object.keys(tab).sort(function (a, b) { return tab[b].t - tab[a].t; }).slice(0, RS_JE_FELD);
+      if (!ks.length) return;
+      p[f] = {}; ks.forEach(function (k) { p[f][k] = [tab[k].w, tab[k].t]; }); etwas = true;
+    });
+    return etwas ? p : undefined;
+  }
+  /* Einen Eintrag von draußen übernehmen. Antwort: true, wenn sich dadurch etwas Sichtbares geändert hat. */
+  function rsEintragen(feld, k, w, t) {
+    if (typeof t !== "number" || !(t > 0)) return false;
+    k = String(k == null ? "" : k).slice(0, 80);
+    if (feld !== "lf" && !k) return false;
+    var alt = rsEintrag(feld, k);
+    if (feld === "rb") {
+      var vorher = alt ? alt.w : "", dazu = "";
+      Array.from(rsBuchstaben(w)).forEach(function (b) { if ((vorher + dazu).length < 40 && (vorher + dazu).indexOf(b) < 0) dazu += b; });
+      if (!dazu) { if (alt && t > alt.t) alt.t = t; return false; }
+      raumStand.rb[k] = { w: vorher + dazu, t: Math.max(t, alt ? alt.t : 0) };
+      try { if (window.DMA_RATEN_AUFDECKEN) window.DMA_RATEN_AUFDECKEN(k, vorher + dazu); } catch (e) {}
+      return true;
+    }
+    if (feld === "lz") { w = Number(w); if (!(w >= 0 && w < 200 && Math.floor(w) === w)) return false; }
+    else w = String(w == null ? "" : w).slice(0, feld === "dr" ? 60 : 80);
+    /* Gleicher Stempel (zwei Geräte in derselben Millisekunde): der größere Wert gewinnt – überall derselbe. */
+    if (alt && (t < alt.t || (t === alt.t && !(String(w) > String(alt.w))))) return false;
+    if (feld === "lf") raumStand.lf = { w: w, t: t }; else raumStand[feld][k] = { w: w, t: t };
+    if (feld === "lf") {
+      var welcheJetzt = leseFest;
+      try { if (window.DMA_LESEFEST) welcheJetzt = String(window.DMA_LESEFEST.welche() || ""); } catch (e) {}
+      if (leseFest === w && welcheJetzt === w) return false;
+      leseFest = w;
+      try { if (window.DMA_LESEFEST) window.DMA_LESEFEST.vonAussen(w); } catch (e) {}
+      return true;
+    }
+    if (feld === "lz") {
+      if (leseStelle[k] === w) return false;
+      leseStelle[k] = w;
+      try { if (window.DMA_LESEZEILE) window.DMA_LESEZEILE(k, w); } catch (e) {}
+      return true;
+    }
+    /* dr: wer bei dieser Aufgabenzeile dran ist (wie der Empfang von „dran"); die offene Aufgabe nur, wenn sie
+       diese Zeile ist */
+    var offenHier = offeneAufgabe && (offeneAufgabe.zeileId === k || !offeneAufgabe.zeileId);
+    if (dranMerker[k] === w && !(offenHier && offeneAufgabe.dran !== w)) return false;
+    dranMerker[k] = w;
+    if (offenHier) { offeneAufgabe.dran = w; aufgabeMerken(); }
+    melden();
+    return true;
+  }
+  function raumStandUebernehmen(rs) {
+    if (!rs || typeof rs !== "object") return;
+    if (Array.isArray(rs.lf)) rsEintragen("lf", "", rs.lf[0], rs.lf[1]);
+    ["lz", "dr", "rb"].forEach(function (f) {
+      var o = rs[f];
+      if (!o || typeof o !== "object") return;
+      Object.keys(o).slice(0, RS_ANNEHMEN).forEach(function (k) {
+        if (Array.isArray(o[k])) rsEintragen(f, k, o[k][0], o[k][1]);
+      });
+    });
+  }
+  /* Eine eigene Änderung hinaus: direkt + Server, nach 0,35 s und 1,2 s der DANN gültige Stand noch einmal. Läuft
+     schon eine Nachsendung, nimmt sie die neue Änderung mit (keine zweite). */
+  var rsNachUhr = 0;
+  function raumStandRaus() {
+    if (zustand.lage !== "drin") return;
+    var raus = function () {
+      var rs = raumStandPaket(); if (!rs || zustand.lage !== "drin") return;
+      var p = { art: "raumstand", rs: rs };
+      direktSenden(p); senden(p);
+    };
+    raus();
+    if (rsNachUhr) return;
+    rsNachUhr = setTimeout(function () {
+      raus();
+      rsNachUhr = setTimeout(function () { rsNachUhr = 0; raus(); }, 850);
+    }, 350);
+  }
 
   var tonWacheTakt = 0;
   var tonWacheZaehler = { geheilt: 0, letzte: "" };
@@ -4815,6 +4944,8 @@ window.LiveChat = (function () {
         if (n.art === "sfu-hoere") { if (!n.an || n.an === zustand.ichId) sfuPaket(n); return; }
         /* FASSUNG 884 (Funk 310) — „ich höre dich nicht" (siehe empfangStufe3/tonwegEmpfangen) auch auf diesem Weg */
         if (n.art === "tonweg") { if (!n.an || n.an === zustand.ichId) tonwegEmpfangen(n); return; }
+        /* FASSUNG 884 — der Raumstand (Fokus, Lesezeile, dran, Buchstaben) auch auf diesem schnellen Weg (siehe raumStand) */
+        if (n.art === "raumstand" && n.rs) { empfangen(n); return; }
         if (n.art === "spiel" && n.ereignis) empfangen(n);
         /* FASSUNG 836 — die Sitzordnung kommt auch auf diesem schnellen Weg (siehe sitzSenden) */
         else if ((n.art === "sitzplatz" || n.art === "spielsitz") && typeof n.sn === "number" && n.ordnung) {
@@ -6085,12 +6216,16 @@ window.LiveChat = (function () {
         else senden({ art: "auch-da", an: n.von, haelt: Boolean(brueckeJe[n.von]), name: zustand.ichName,   // FASSUNG 884 — haelt: siehe „auch-da"
                       geschlecht: zustand.geschlecht || "", konto: kontoId || "",
                       tonAn: zustand.tonAn, bildAn: zustand.bildAn, bild: zustand.ichBild,
-                      seit: zustand.seit, buehne: zustand.buehne });
+                      seit: zustand.seit, buehne: zustand.buehne,
+                      rs: raumStandPaket() });   // FASSUNG 884 — der Raumstand (siehe raumStand)
       }
       /* FASSUNG 836 — Gegenprüfung zu Funk 263: jeder Puls (alle 6 s von jedem) zeichnete das ganze Klassenzimmer samt
          allen Chatzeilen neu, auch wenn sich nichts geändert hatte – Dauerlast im Hauptfaden, die eingehende Sitzmeldungen
          und das Tippen verzögert. Jetzt nur noch, wenn er neu ist oder sich an ihm etwas Sichtbares geändert hat. */
       if (neuDa || pulsBild(n.von) !== pulsVorher) melden();
+      /* FASSUNG 884 — der Raumstand (Fokus, Lesezeile, wer dran ist, aufgedeckte Buchstaben; siehe raumStand) heilt
+         ein verlorenes Paket spätestens mit dem nächsten Puls. Gezeichnet wird nur bei neuem Stempel. */
+      if (n.rs) raumStandUebernehmen(n.rs);
       return;
     }
 
@@ -6171,7 +6306,11 @@ window.LiveChat = (function () {
                fokus: zustand.fokus,
                seit: zustand.seit, buehne: zustand.buehne,
                raumHg: zustand.raumHg || "",
-               abgeschlossen: zustand.abgeschlossen });
+               abgeschlossen: zustand.abgeschlossen,
+               /* FASSUNG 884 — XANDER (Walkie 128/129/138): „Andere sehen den Fokus nicht" · „Andere sehen es
+                  anders". Der Raumstand (Fokus, Lesezeile, wer dran ist, aufgedeckte Buchstaben; siehe raumStand)
+                  fährt im Gruss mit – wer später kommt, sieht dasselbe wie alle. Leer: das Feld fällt weg. */
+               rs: raumStandPaket() });
       /* FASSUNG 840 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller". Die Messung vom 02.10. (zwei Geräte,
          spiel_diagnose „verbindung") zeigt: das Angebot kam beim Neuen erst 3,1 s nach seinem „hallo" an. Bis hierhin
          lief vor dem Anruf noch die Begrüssungszeile und der ganze Auftritt (Sportwagen, Rakete …) – auf einem
@@ -6312,6 +6451,9 @@ window.LiveChat = (function () {
       if (zustand.ichId < n.von && belegt() <= PLAETZE
           && (!auchPc || auchPc.connectionState === "failed" || auchPc.connectionState === "closed")) anrufen(n.von, "auch-da");
       melden();
+      /* FASSUNG 884 — wer hereinkommt, bekommt mit dem Gruss den Raumstand (siehe raumStand): der Fokus, die
+         Lesezeile, wer dran ist und die aufgedeckten Buchstaben stehen sofort, nicht erst beim nächsten Wechsel. */
+      if (n.rs) raumStandUebernehmen(n.rs);
       return;
     }
     if (n.art === "spielsitz" || n.art === "sitzplatz") {
@@ -6415,7 +6557,10 @@ window.LiveChat = (function () {
          wird die Runde je Aufgabenzeile gemerkt, auch ohne offene
          Aufgabe; die Tafel fragt danach. */
       var zidD = String(n.zeileId || "");
-      if (zidD) dranMerker[zidD] = String(n.name || "");
+      /* FASSUNG 884 — mit Zeilenkennung ist das Raumstand (siehe raumStand): ein älterer Stempel dreht nichts zurück,
+         die offene Aufgabe ändert sich nur, wenn sie diese Zeile ist. Eine ältere Fassung schickt keinen Stempel –
+         dann gilt die Meldung jetzt (eigene Uhr, nie kleiner als bekannt). */
+      if (zidD) { rsEintragen("dr", zidD, String(n.name || ""), typeof n.rt === "number" ? n.rt : rsStempel(raumStand.dr[zidD])); return; }
       if (!offeneAufgabe) { melden(); return; }
       offeneAufgabe.dran = String(n.name || "");
       aufgabeMerken();
@@ -6556,22 +6701,23 @@ window.LiveChat = (function () {
        dieses Ding festmacht … den Fokus muessen alle immer sehen."
        Bisher galt der Fokus nur auf dem Geraet, an dem er gesetzt
        wurde. Jetzt reist er wie die aufgerufene Zeile. */
+    /* FASSUNG 884 — beides ist jetzt Raumstand (siehe raumStand): ein älterer Stempel dreht nichts zurück; ohne
+       Stempel (ältere Fassung) gilt die Meldung jetzt. */
     if (n.art === "lesefest") {
-      leseFest = String(n.leseId || "");
-      try { if (window.DMA_LESEFEST) window.DMA_LESEFEST.vonAussen(leseFest); }
-      catch (e) {}
+      rsEintragen("lf", "", String(n.leseId || ""), typeof n.rt === "number" ? n.rt : rsStempel(raumStand.lf));
       return;
     }
     if (n.art === "lesezeile") {
       /* Die Stelle merken (auch fuer den, der die Tafel erst spaeter
          zeichnet) und sofort anzeigen. */
       if (n.leseId && Number(n.nr) >= 0) {
-        leseStelle[String(n.leseId)] = Number(n.nr);
-        try { if (window.DMA_LESEZEILE) window.DMA_LESEZEILE(String(n.leseId), Number(n.nr)); }
-        catch (e) {}
+        var lzId = String(n.leseId);
+        rsEintragen("lz", lzId, Number(n.nr), typeof n.rt === "number" ? n.rt : rsStempel(raumStand.lz[lzId]));
       }
       return;
     }
+    /* FASSUNG 884 — eine Änderung des Raumstands (direkt oder über den Server, auch die Nachsendungen) */
+    if (n.art === "raumstand") { raumStandUebernehmen(n.rs); return; }
     if (n.art === "redet") {
       if (zustand.leute[n.von]) {
         /* FASSUNG 836 — Sprechen an/aus ändert nur den Platz (der Ring): nur die Plätze neu zeichnen, und nur bei Änderung */
@@ -6881,10 +7027,27 @@ window.LiveChat = (function () {
          Stueck hinaus, in einem Paket von hoechstens VERLAUF_PAKET
          Zeichen, von hinten nach vorn einmal abgezaehlt, ohne
          Profilbilder als Datenadresse. */
-      var paket = [], groesse = 2;
+      var paket = [], groesse = 2, vorweg = {};
+      /* FASSUNG 884 — XANDER (Walkie 138): „Lesetafel … Andere sehen es nicht". Ein Gast ohne Anmeldung bekommt
+         keinen Tabellenverlauf, nur dieses jüngste Stück. Lag die festgehaltene Lesetafel (oder die Zeile der offenen
+         Aufgabe) weiter zurück, fehlte sie ihm ganz – das Fokusband blieb leer. Diese beiden gehen jetzt zuerst ins
+         Paket, wenn sie höchstens die halbe Paketgrösse brauchen; die Grenze des Pakets bleibt. */
+      [leseFest, offeneAufgabe && offeneAufgabe.zeileId].forEach(function (vid) {
+        if (!vid || vorweg[vid]) return;
+        for (var j = zustand.nachrichten.length - 1; j >= 0; j--) {
+          var m = zustand.nachrichten[j];
+          if (!m || String(m.id) !== String(vid)) continue;
+          var vz = verlaufZeile(m);
+          if (vz.bildImChat) { vz.bildImChat = ""; vz.bildWeg = true; }
+          var vl = JSON.stringify(vz).length + 1;
+          if (groesse + vl <= VERLAUF_PAKET / 2) { groesse += vl; paket.push(vz); vorweg[String(vid)] = true; }
+          return;
+        }
+      });
       for (var i = zustand.nachrichten.length - 1; i >= 0; i--) {
         var n = zustand.nachrichten[i];
         if (!n || n.art === "fluester" || n.art === "system" || n.art === "kommen") continue;
+        if (vorweg[String(n.id)]) continue;   // FASSUNG 884 — schon vorn im Paket (siehe oben)
         var zeile = verlaufZeile(n);
         var laenge = JSON.stringify(zeile).length + 1;
         if (zeile.bildImChat && groesse + laenge > VERLAUF_PAKET) {
@@ -7127,6 +7290,9 @@ window.LiveChat = (function () {
                /* Damit Spaeterkommende dieselbe Sitzordnung sehen. */
                sitz: sitzTausch,
                spielsitz: spielSitz,
+               /* FASSUNG 884 — und denselben Raumstand (siehe raumStand): ein verlorenes Paket heilt spätestens
+                  hier. Leer fällt das Feld weg; sonst typisch unter 250 Zeichen. */
+               rs: raumStandPaket(),
                /* RUNDE 73 — XANDER: „Der Neuankoemmling soll auch den
                   naechsten freien Platz bekommen. Und nicht auf dem
                   ersten Platz landen."
@@ -7929,6 +8095,7 @@ window.LiveChat = (function () {
     platzJe = {};                 // neuer Raum, neue Sitzordnung
     sitzTausch = {};              // und kein Tausch aus dem alten Raum
     spielSitz = {};
+    raumStand = { lf: null, lz: {}, dr: {}, rb: {} };   // FASSUNG 884 — sonst wanderte der Stand aus Raum A über den Puls nach B
     zustand.seit = Date.now();
     /* FASSUNG 841 — eine Kennung je Betreten (siehe „hallo"): damit unterscheidet die Gegenseite ein echtes Neuladen von
        einer Erinnerung derselben Sitzung. */
@@ -10552,7 +10719,11 @@ window.LiveChat = (function () {
     offeneAufgabe.dran = String(name || "");
     if (offeneAufgabe.zeileId) dranMerker[offeneAufgabe.zeileId] = offeneAufgabe.dran;
     aufgabeMerken();
-    senden({ art: "dran", zeileId: offeneAufgabe.zeileId || "", name: offeneAufgabe.dran });
+    /* FASSUNG 884 — XANDER (Walkie 129): „Andere sehen es anders". Wer dran ist, ist Raumstand (dr, siehe
+       raumStand): ging diese eine Meldung verloren oder kam jemand später, stand dort für immer der alte Name. */
+    var rt = offeneAufgabe.zeileId ? rsLokal("dr", offeneAufgabe.zeileId, offeneAufgabe.dran) : 0;
+    senden({ art: "dran", zeileId: offeneAufgabe.zeileId || "", name: offeneAufgabe.dran, rt: rt || undefined });
+    if (rt) raumStandRaus();
     melden();
     return true;
   }
@@ -11328,6 +11499,9 @@ window.LiveChat = (function () {
     if (zeile && zeile.id) {
       offeneAufgabe.zeileId = zeile.id;
       zeile.aufgabeId = zeile.id;
+      /* FASSUNG 884 — der Anfang der Runde als Raumstand (ohne eigene Meldung: die Zeile trägt ihn schon). So kennt
+         ihn auch, wer die Zeile nie bekommt, aus dem Puls. */
+      rsLokal("dr", zeile.id, offeneAufgabe.dran);
     }
     aufgabeMerken();
     aufgabeVerkuenden();
@@ -18357,7 +18531,7 @@ window.LiveChat = (function () {
                bildAn: zustand.bildAn, bild: zustand.ichBild,
                seit: zustand.seit, buehne: zustand.buehne, spricht: zustand.spricht,
                geschlecht: zustand.geschlecht || "", konto: kontoId || "",
-               sprechbild: zustand.sprechbild || "", sitz: sitzTausch });
+               sprechbild: zustand.sprechbild || "", sitz: sitzTausch, rs: raumStandPaket() });   // 884: rs wie im echten Puls
     },
     pruefEmpfangenPost: function (n) { return postEmpfangen(n); },
     pruefPostAbfangen: function (f) { pruefPostHaken = typeof f === "function" ? f : null; },
@@ -18779,7 +18953,12 @@ window.LiveChat = (function () {
       var id = String(leseId || "");
       if (!zustand.haeuptling) return false;
       leseFest = id;
-      senden({ art: "lesefest", leseId: id });
+      /* FASSUNG 884 — XANDER (Walkie 128): „Andere sehen den Fokus nicht". Der Fokus ist jetzt Raumstand (siehe
+         raumStand): Stempel, direkt + Server + Nachsenden, im Puls und in „auch-da". Die alte Meldung bleibt für
+         ältere Fassungen im Raum und trägt den Stempel mit (rt). */
+      var rt = rsLokal("lf", "", id);
+      senden({ art: "lesefest", leseId: id, rt: rt });
+      raumStandRaus();
       return true;
     },
     leseFestWelche: function () { return leseFest; },
@@ -18788,7 +18967,9 @@ window.LiveChat = (function () {
       var n = Number(nr);
       if (!id || !(n >= 0)) return false;
       leseStelle[id] = n;
-      senden({ art: "lesezeile", leseId: id, nr: n });
+      var rt = rsLokal("lz", id, n);   // FASSUNG 884 — Raumstand wie beim Fokus (siehe raumStand)
+      senden({ art: "lesezeile", leseId: id, nr: n, rt: rt });
+      raumStandRaus();
       try { if (window.DMA_LESEZEILE) window.DMA_LESEZEILE(id, n); } catch (e) {}
       return true;
     },
@@ -18826,6 +19007,24 @@ window.LiveChat = (function () {
       }
       return "";
     },
+    /* FASSUNG 884 — XANDER (Walkie 129): „Andere sehen es anders" (Aufdecken). Ein Buchstabe, den hier jemand
+       aufdeckt, wird Raumstand (rb, eine Menge je Aufgabenzeile, siehe raumStand) – die Tafel in app.js fragt
+       beim Zeichnen nach, was schon offen ist (ratenBuchstaben). */
+    ratenBuchstabe: function (zeileId, b) {
+      var zid = String(zeileId || "").slice(0, 80), g = rsBuchstaben(b).charAt(0);
+      if (!zid || !g) return false;
+      var alt = raumStand.rb[zid], vorher = alt ? alt.w : "";
+      if (vorher.indexOf(g) >= 0 || vorher.length >= 40) return false;
+      rsLokal("rb", zid, vorher + g);
+      raumStandRaus();
+      return true;
+    },
+    ratenBuchstaben: function (zeileId) {
+      var e = raumStand.rb[String(zeileId || "")];
+      return e ? e.w : "";
+    },
+    /* Nur zum Nachprüfen (Sonde 884-gleich): was im Puls mitfährt. */
+    pruefRaumStand: function () { return raumStandPaket() || {}; },
     lieder: function () { return LIEDER.map(function (l) {
       return { datei: l.datei, titel: l.titel }; }); },
     tonWacheStand: function () { return { geheilt: tonWacheZaehler.geheilt,

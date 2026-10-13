@@ -55,9 +55,20 @@ const pruefe = (was, gut, zusatz) => {
   pruefe("eine Tafel laesst sich festhalten", /function lcLeseFestSetzen/.test(js));
   pruefe("sie wird nach jedem Neuzeichnen nachgezogen",
     /livechatGrossAuffrischen\(l\);[\s\S]{0,400}lcLeseTafelNachziehen\(\)/.test(js));
-  pruefe("der zweite Tipp auf dieselbe Zeile schiebt sie unter den Chat",
-    /const schonHier = b\.classList\.contains\("lc-lese-hier"\)/.test(js)
-    && /if \(schonHier\) \{\s*\n\s*lcLeseTafelNachziehen\(\)/.test(js));
+  /* FASSUNG 884 — seit Fassung 749 gilt eine andere Regel, auf Xanders Wunsch (Funk 180): „das reißt das Ganze nach
+     unten immer den Chat runter … die Zeile soll alleine markiert sein". Ein Tipp auf eine Zeile MARKIERT nur noch;
+     festgehalten (unter den Chat geschoben) wird allein über den Knopf „Fokus". Die Sonde prüfte bis hier noch die Regel
+     von vorher („zweiter Tipp hält fest") und war deshalb seit 749 rot, ohne dass am Code etwas falsch war. */
+  const zeilenKlick = (() => {
+    const a = js.indexOf('b.className = "lc-lese-zeile";');
+    const k = a >= 0 ? js.indexOf('b.addEventListener("click"', a) : -1;
+    const e = k >= 0 ? js.indexOf("liste.appendChild(b)", k) : -1;
+    return k >= 0 && e > k ? js.slice(k, e) : "";
+  })();
+  pruefe("ein Tipp auf eine Zeile markiert nur, er hält nichts fest (Fassung 749)",
+    zeilenKlick.length > 0 && !/lcLeseFestSetzen\(/.test(zeilenKlick));
+  pruefe("festgehalten wird über den Knopf „Fokus\"",
+    /festKnopf\.addEventListener\("click"[\s\S]{0,300}lcLeseFestSetzen\(/.test(js));
   pruefe("und festgehalten klebt sie unten",
     /\.lc-lesetafel\.lc-lese-fest \{[\s\S]*?position: sticky;[\s\S]*?bottom: 0;/.test(css));
 
@@ -181,7 +192,12 @@ const pruefe = (was, gut, zusatz) => {
     const tafel = document.querySelector(".lc-lesetafel");
     if (!tafel) return null;
     const zeilen = [...tafel.querySelectorAll(".lc-lese-zeile")];
-    zeilen[0].click();                       // erster Tipp: festhalten
+    /* FASSUNG 884 — Regel seit Fassung 749 (siehe oben): der Tipp auf die Zeile markiert nur, „Fokus" hält fest. */
+    zeilen[0].click();
+    await new Promise((f) => setTimeout(f, 200));
+    const nurMarkiert = zeilen[0].classList.contains("lc-lese-hier") && !tafel.classList.contains("lc-lese-fest");
+    const festKnopf = [...tafel.querySelectorAll(".lc-lese-schalter")].find((k) => /Fokus/.test(k.textContent));
+    if (festKnopf) festKnopf.click();
     await new Promise((f) => setTimeout(f, 200));
     const fest = tafel.classList.contains("lc-lese-fest");
     const kleben = getComputedStyle(tafel).position;
@@ -197,12 +213,14 @@ const pruefe = (was, gut, zusatz) => {
     const imBand = Boolean(band) && zeile.parentElement === band;
     const rv = verlauf.getBoundingClientRect();
     const rt = tafel.getBoundingClientRect();
-    return { fest: fest, kleben: kleben, imBand: imBand,
+    return { fest: fest, kleben: kleben, imBand: imBand, nurMarkiert: nurMarkiert,
              unterDemChat: Math.round(rt.top) >= Math.round(rv.bottom) - 2,
              schalter: tafel.querySelectorAll(".lc-lese-schalter").length };
   });
-  pruefe("ein Tipp auf die Zeile haelt den Text fest",
-    Boolean(fokus && fokus.fest), fokus ? "Klasse gesetzt" : "keine Tafel");
+  pruefe("ein Tipp auf die Zeile markiert sie nur (kein Festhalten, Fassung 749)",
+    Boolean(fokus && fokus.nurMarkiert), fokus ? (fokus.nurMarkiert ? "markiert" : "festgehalten oder nicht markiert") : "keine Tafel");
+  pruefe("„Fokus\" haelt den Text fest",
+    Boolean(fokus && fokus.fest), fokus ? (fokus.fest ? "Klasse gesetzt" : "nicht fest") : "keine Tafel");
   /* =====================================================================
      RUNDE 98 — DIE REGEL IST GEAENDERT, UND ZWAR AUF SEINEN WUNSCH
      ---------------------------------------------------------------------

@@ -12671,11 +12671,17 @@ code, pre {
    — also 15 % schmaler, obwohl beide Zeichnungen dieselbe Breite
    haben (40 Einheiten in der viewBox). Aus einem Ei von 26 % wurden
    also Schalen von 22 %, und genau das sieht man. Jetzt sind sie
-   gleich breit, und die Schale passt zum Ei, aus dem sie kommt. */
+   gleich breit, und die Schale passt zum Ei, aus dem sie kommt.
+   FASSUNG 884 — XANDER (Walkie 138, Notiz 24.09.): „Das Ei hat immer
+   noch zu kleine Schalen nach dem Aufmachen." Die Breite stimmte, die
+   ZEICHNUNG darin nicht (≈ 28,7 statt 34 Einheiten, siehe lcEi). Die
+   Schale ist jetzt so lang, wie das Ei breit ist (viewBox 40×36 statt
+   40×30); das Element wird dadurch 23,4 % statt 19,5 % hoch, und
+   damit sein Mittelpunkt bleibt (−16,25 %), steht es 2 % höher. */
 .lc-zei-schale {
   position: absolute;
   left: 50%;
-  top: -26%;
+  top: -28%;
   width: 26%;
   margin-left: -13%;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .28));

@@ -25810,6 +25810,9 @@
     lcLeseFest = String(leseId || "");
     document.querySelectorAll(".lc-lesetafel").forEach((t) => {
       t.classList.toggle("lc-lese-fest", t.dataset.leseId === lcLeseFest);
+      /* FASSUNG 884 — XANDER (Walkie 128): „Andere sehen den Fokus nicht". Kam der Fokus von drüben, zeigte der
+         Knopf hier weiter „📎" – gezeichnet wurde er nur beim eigenen Tipp. Jetzt auf jeder Tafel, bei jedem Setzen. */
+      if (t._lcFestZeichnen) { try { t._lcFestZeichnen(); } catch (e) {} }
     });
     if (!vonAussen) {
       try {
@@ -26107,6 +26110,7 @@
     });
     betZeichnen();
     festZeichnen();
+    t._lcFestZeichnen = festZeichnen;   // FASSUNG 884 — für lcLeseFestSetzen (Fokus von drüben)
     if (lcLeseFest === (n.id || "")) t.classList.add("lc-lese-fest");
     /* RUNDE 98 — kam die Fokus-Meldung aus dem Raum an, BEVOR die
        Tafel gezeichnet war (wer spaeter dazukommt, hat genau das),
@@ -45956,18 +45960,24 @@
            Eiform und innen die gezackte Bruchkante. Dazu innen ein
            heller Streifen: das ist die Eihaut, die man in einer
            frisch aufgeschlagenen Schale sieht. */
-        + '<svg class="lc-zei-schale lc-zei-schale-links" viewBox="0 0 40 30">'
-        + '<path d="M24 1 C14 0 5 6 2 15 C5 24 14 30 24 29'
-        + ' L18 26 L25 23 L17 19 L25 15 L17 11 L25 7 L19 4 Z"'
+        /* FASSUNG 884 — XANDER (Walkie 138, Notiz 24.09.): „Das Ei hat immer noch zu kleine Schalen nach dem
+           Aufmachen." NACHGEMESSEN: Runde 99 hatte nur die Elementbreite angeglichen (beide 26 %). Die Zeichnung
+           der Schale war aber nur ≈ 28,7 Einheiten lang (viewBox 40×30, y 0,6 … 29,3), das Ei 34 (Ellipse rx 17)
+           – jede Hälfte blieb ≈ 16 % kleiner als das Ei, aus dem sie kommt. Jetzt ist die Schale so lang, wie das
+           Ei breit ist (viewBox 40×36, y ≈ 0,6 … 35,4); die Breite des Elements bleibt 26 %, sein Mittelpunkt bleibt
+           (korrekturen.css: top −28 % statt −26 %). Form, Bruchkante und Eihaut wie vorher, nur gestreckt. */
+        + '<svg class="lc-zei-schale lc-zei-schale-links" viewBox="0 0 40 36">'
+        + '<path d="M24 1 C13 0 3 8 2 18 C3 28 13 36 24 35'
+        + ' L18 31 L25 27 L17 23 L25 18 L17 13 L25 9 L19 5 Z"'
         + ' fill="#fdf3e0" stroke="#d9c7a6" stroke-width="2" stroke-linejoin="round"/>'
-        + '<path d="M8 8 C4 12 3 19 6 24" fill="none" stroke="#fffaf0"'
+        + '<path d="M8 9 C4 14 3 22 6 28" fill="none" stroke="#fffaf0"'
         + ' stroke-width="2.4" stroke-linecap="round" opacity=".85"/>'
         + "</svg>"
-        + '<svg class="lc-zei-schale lc-zei-schale-rechts" viewBox="0 0 40 30">'
-        + '<path d="M16 1 C26 0 35 6 38 15 C35 24 26 30 16 29'
-        + ' L22 26 L15 23 L23 19 L15 15 L23 11 L15 7 L21 4 Z"'
+        + '<svg class="lc-zei-schale lc-zei-schale-rechts" viewBox="0 0 40 36">'
+        + '<path d="M16 1 C27 0 37 8 38 18 C37 28 27 36 16 35'
+        + ' L22 31 L15 27 L23 23 L15 18 L23 13 L15 9 L21 5 Z"'
         + ' fill="#fdf3e0" stroke="#d9c7a6" stroke-width="2" stroke-linejoin="round"/>'
-        + '<path d="M32 8 C36 12 37 19 34 24" fill="none" stroke="#fffaf0"'
+        + '<path d="M32 9 C36 14 37 22 34 28" fill="none" stroke="#fffaf0"'
         + ' stroke-width="2.4" stroke-linecap="round" opacity=".85"/>'
         + "</svg>");
       /* Das Knacken laeuft schon (LC_TON_PLAN), das Glibbern kommt
@@ -65512,6 +65522,8 @@
         kasten.querySelectorAll(".lc-raten-taste, .lc-betonung-fertig, .lc-raten-eingabe")
               .forEach((el) => { el.disabled = alt || el.dataset.fertig === "1"; });
       } catch (e) {}
+      /* FASSUNG 884 — Sicherheitsnetz: der Raumstand der Buchstaben (siehe unten, raumAufdecken) */
+      if (kasten._lcAufdecken) raumAufdecken();
     }, 1500);
 
     const offen = lcRatenVorgabe(satz);
@@ -65560,28 +65572,57 @@
             + (daneben === 1 ? "" : "en") : " — ohne einen Fehlversuch") + ".";
     };
 
+    /* =================================================================
+       FASSUNG 884 — XANDER (Walkie 129, Abnahme 24.09.): „Andere sehen es anders."
+       -----------------------------------------------------------------
+       NACHGESTELLT, zwei Fehler:
+         1. Ein Tipp auf einen Buchstaben deckte NUR HIER auf – hinaus ging kein einziges Paket. Was oben steht
+            („deckt ihn überall auf"), war nie gebaut. Jetzt wird jeder Buchstabe Raumstand (LiveChat.ratenBuchstabe,
+            eine Menge je Aufgabenzeile, im Puls und in „auch-da"); jede Tafel mit dieser Kennung deckt dieselben
+            Buchstaben auf (DMA_RATEN_AUFDECKEN), auch die eines Späterkommenden und eine neu gezeichnete.
+         2. Der 1,5-s-Takt oben gab benutzte Tasten wieder frei (sie trugen kein dataset.fertig): ein falscher
+            Buchstabe zählte beim zweiten Tipp doppelt („1 daneben" → „2 daneben"). Jetzt ist jede benutzte oder schon
+            offene Taste „fertig".
+       tasteAnwenden wirkt je Buchstabe nur einmal – so darf derselbe Stand beliebig oft ankommen.
+       Die Regeln bleiben: jeder darf Buchstaben tippen, die Lösung sagt, wer dran ist.
+       ================================================================= */
+    const tastenJe = {};
+    const tasteAnwenden = (b) => {
+      const k = tastenJe[b];
+      if (!k || k.dataset.fertig === "1") return;
+      k.dataset.fertig = "1";
+      k.disabled = true;
+      const treffer = felder.filter((f) => f.gross === b);
+      if (!treffer.length) {
+        k.classList.add("daneben");
+        daneben++;
+      } else {
+        k.classList.add("offen");
+        treffer.forEach((f) => { f.knoten.textContent = f.zeichen; f.knoten.classList.add("offen"); });
+      }
+      standSagen();
+    };
     LC_RATEN_TASTEN.forEach((b) => {
       const k = document.createElement("button");
       k.type = "button";
       k.className = "lc-raten-taste";
       k.textContent = b;
-      if (offen.has(b)) { k.disabled = true; k.classList.add("offen"); }
+      tastenJe[b] = k;
+      if (offen.has(b)) { k.disabled = true; k.classList.add("offen"); k.dataset.fertig = "1"; }
       k.addEventListener("click", () => {
-        if (k.disabled) return;
-        k.disabled = true;
-        const treffer = felder.filter((f) => f.gross === b);
-        if (!treffer.length) {
-          k.classList.add("daneben");
-          daneben++;
-        } else {
-          k.classList.add("offen");
-          treffer.forEach((f) => { f.knoten.textContent = f.zeichen; f.knoten.classList.add("offen"); });
-        }
-        standSagen();
+        if (k.disabled || k.dataset.fertig === "1") return;
+        tasteAnwenden(b);
+        try { if (LiveChat.ratenBuchstabe) LiveChat.ratenBuchstabe(meineAufgabeId, b); } catch (e) {}
       });
       tasten.appendChild(k);
     });
     kasten.appendChild(tasten);
+    /* Was im Raum schon aufgedeckt ist (Späterkommende, neu gezeichnete Tafel) */
+    const raumAufdecken = () => {
+      try { if (LiveChat.ratenBuchstaben) kasten._lcAufdecken(LiveChat.ratenBuchstaben(meineAufgabeId)); } catch (e) {}
+    };
+    kasten._lcAufdecken = (s) => Array.from(String(s || "")).forEach(tasteAnwenden);
+    raumAufdecken();
 
     /* =================================================================
        ABSCHICKEN — UND ZWAR WIRKLICH
@@ -65686,6 +65727,13 @@
     standSagen();
     zeile.appendChild(kasten);
   }
+  /* FASSUNG 884 — der Weg aus livechat.js (Raumstand der Buchstaben, siehe raumStand dort): jede Tafel dieser
+     Aufgabenzeile deckt dieselben Buchstaben auf. Verglichen über dataset – kein Selektor aus fremdem Text. */
+  window.DMA_RATEN_AUFDECKEN = (zid, s) => {
+    document.querySelectorAll(".lc-raten").forEach((k) => {
+      if (k.dataset.aufgabeId === String(zid) && k._lcAufdecken) k._lcAufdecken(s);
+    });
+  };
 
   function lcBetonungsTafel(n, zeile) {
     /* =================================================================
