@@ -19,7 +19,8 @@
      - Jede Funktion aus werkzeug/app-teile.json wird in min/app.js durch
        einen kurzen Platzhalter mit demselben Namen ersetzt. Ihr Körper
        steht in einem Stück min/app-teil-raum<N>.js bzw. -rest<N>.js (je
-       etwa 250 000 Zeichen Quelltext, in der Reihenfolge der Datei).
+       etwa 250 000 Zeichen Quelltext, in der Reihenfolge der Datei). Reihen
+       aus „beisammen“ (app-teile.json, Fassung 884) teilt keine Stückgrenze.
      - Reine Datenblöcke („const"), die nur ausgelagerte Funktionen
        desselben Stücks lesen, wandern mit (im Kern bleibt „var NAME;").
      - Die Seite holt die Stücke nach dem Start über die Leitung und setzt
@@ -155,10 +156,35 @@ function appTeilen(quelle, liste, acorn) {
   const STUECK = 250000;
   const gruppeVon = {};
   auswahl.forEach((st) => { gruppeVon[st.id.name] = teilVon[st.id.name]; });
-  const stueckZahl = {}, stueckGroesse = {};
-  auswahl.forEach((st) => {
+  /* FASSUNG 884 (884b beta, Nachbesserung 2) — „beisammen“ in app-teile.json: Reihen von Funktionen, die zusammen
+     gebraucht werden. Innerhalb einer Reihe fällt keine Stückgrenze; das Stück wird erst nach ihrem letzten Mitglied
+     geschlossen (höchstens ein paar KB größer). Anlass: Die Stückgrenzen fallen nach Dateireihenfolge bei etwa
+     250 000 Zeichen – jede Änderung weiter vorn verschiebt sie. Nachbesserung 1 (fünf Beta-Helfer nach rest1)
+     schob so die Grenze rest3/rest4 genau zwischen eigeneBeitraege und beitraegeLaden. Für Betreiber, Admins,
+     Moderation und Beta zeichnet renderKompass beim Start die Kompass-Bereiche (lesetexteWennSichtbar,
+     beitraegeLaden, danach renderTileGallery) – statt einem Stück (rest3) mussten sie dann zwei per synchronem XHR
+     holen: auf Slow 4G 0,4 s (Prüfung) bis 1,1 s (eigene Messung) mehr gesperrter Hauptfaden je Seitenaufruf. Eine Reihe, deren Mitglieder
+     weiter als STUECK/4 auseinander liegen, gilt nicht (sie würde ein Stück aufblähen); --zeigen nennt sie. */
+  const reiheVon = {};
+  (Array.isArray(liste.beisammen) ? liste.beisammen : []).forEach((reihe, k) => {
+    (Array.isArray(reihe) ? reihe : []).forEach((n) => { if (reiheVon[n] === undefined) reiheVon[n] = k; });
+  });
+  const reiheSpanne = {};   // „Gruppe|Reihe“ → [Stelle in auswahl des ersten, des letzten Mitglieds, Anfang, Ende im Quelltext]
+  auswahl.forEach((st, i) => {
+    const k = reiheVon[st.id.name];
+    if (k === undefined) return;
+    const s = gruppeVon[st.id.name] + "|" + k;
+    if (!reiheSpanne[s]) reiheSpanne[s] = [i, i, st.start, st.end];
+    else { reiheSpanne[s][1] = i; reiheSpanne[s][3] = st.end; }
+  });
+  const reiheZuWeit = Object.keys(reiheSpanne).filter((s) => reiheSpanne[s][3] - reiheSpanne[s][2] > STUECK / 4);
+  const stueckZahl = {}, stueckGroesse = {}, haltenBis = {};
+  auswahl.forEach((st, i) => {
     const g = gruppeVon[st.id.name];
-    if (!stueckZahl[g] || stueckGroesse[g] >= STUECK) { stueckZahl[g] = (stueckZahl[g] || 0) + 1; stueckGroesse[g] = 0; }
+    const halten = haltenBis[g] !== undefined && i <= haltenBis[g];
+    if (!stueckZahl[g] || (stueckGroesse[g] >= STUECK && !halten)) { stueckZahl[g] = (stueckZahl[g] || 0) + 1; stueckGroesse[g] = 0; }
+    const s = reiheVon[st.id.name] !== undefined ? g + "|" + reiheVon[st.id.name] : "";
+    if (s && reiheZuWeit.indexOf(s) < 0) haltenBis[g] = Math.max(haltenBis[g] === undefined ? -1 : haltenBis[g], reiheSpanne[s][1]);
     stueckGroesse[g] += st.end - st.start;
     teilVon[st.id.name] = g + stueckZahl[g];
   });
@@ -209,7 +235,9 @@ function appTeilen(quelle, liste, acorn) {
     ersatz.push([k.st.start, k.st.end, "var " + k.decl.name + ";"]);
     (koerper[k.teil] = koerper[k.teil] || []).unshift(k.decl.name + " = " + quelle.slice(k.st.declarations[0].init.start, k.st.declarations[0].init.end) + ";");
   });
-  const kennung = crypto.createHash("sha1").update(quelle).update(JSON.stringify(liste.teile)).update(fs.readFileSync(__filename)).digest("hex").slice(0, 12);
+  /* „beisammen“ bestimmt mit, was in welchem Stück steht – also auch die Kennung (sonst passte ein altes Stück zum neuen Kern) */
+  const kennung = crypto.createHash("sha1").update(quelle).update(JSON.stringify(liste.teile)).update(JSON.stringify(liste.beisammen || []))
+    .update(fs.readFileSync(__filename)).digest("hex").slice(0, 12);
   const bau = { id: kennung, teile: benutzt, fn: fnTeil };
   ersatz.push([marke.start, marke.end, "var DMA_TEILE_BAU = " + JSON.stringify(bau) + ";"]);
   ersatz.sort((a, b) => b[0] - a[0]);
@@ -221,7 +249,12 @@ function appTeilen(quelle, liste, acorn) {
   const teile = {};
   benutzt.forEach((t) => { teile[t] = "dmaTeilPasst(" + JSON.stringify(kennung) + ");\n" + koerper[t].join("\n") + "\n"; });
   return { kern, teile, kennung, zahl: auswahl.length, daten: daten.length,
-    fehlend: Object.keys(teilVon).filter((f) => !auswahl.some((st) => st.id.name === f)) };
+    fehlend: Object.keys(teilVon).filter((f) => !auswahl.some((st) => st.id.name === f)),
+    beisammen: Object.keys(reiheSpanne).map((s) => {
+      const [i0, i1, a, e] = reiheSpanne[s];
+      return { reihe: s, von: auswahl[i0].id.name, bis: auswahl[i1].id.name, stueck: teilVon[auswahl[i0].id.name] + (teilVon[auswahl[i1].id.name] !== teilVon[auswahl[i0].id.name] ? "–" + teilVon[auswahl[i1].id.name] : ""),
+        zeichen: e - a, gilt: reiheZuWeit.indexOf(s) < 0 };
+    }) };
 }
 
 /* Reine Daten: beim Anlegen wird kein Name gelesen und nichts aufgerufen (Funktionen im Wert laufen erst später). */
@@ -390,7 +423,7 @@ function verkleinertTeilen(quelle, eb, meldung) {
     /* sourceURL: in Fehlermeldungen und im Entwicklerwerkzeug heißt der Teil dann wie seine Datei */
     for (const [t, c] of Object.entries(r.teile)) teile[t] = eb.transformSync(c, ESBUILD_OPT).code + "//# sourceURL=min/app-teil-" + t + ".js\n";
     if (!/\beval\(/.test(kern)) throw new Error("dmaTeilAuswerten fehlt im Kern");
-    return { kern, teile, kennung: r.kennung, zahl: r.zahl, daten: r.daten, fehlend: r.fehlend };
+    return { kern, teile, kennung: r.kennung, zahl: r.zahl, daten: r.daten, fehlend: r.fehlend, beisammen: r.beisammen };
   } catch (e) {
     sag("app.js nicht geteilt (" + String(e.message || e).split("\n")[0] + ") – app.js bleibt ganz");
     return null;
@@ -437,6 +470,8 @@ if (require.main === module) {
   const gz = (s) => Math.round(zlib.gzipSync(s, { level: 9 }).length / 1024);
   console.log("ausgelagert: " + erg.zahl + " Funktionen, " + erg.daten + " Datenblöcke" + (erg.fehlend.length ? ", nicht gefunden/doppelt: " + erg.fehlend.length : ""));
   console.log("min/app.js " + Math.round(erg.kern.length / 1024) + " KB (gepackt " + gz(erg.kern) + " KB)");
+  (erg.beisammen || []).forEach((b) => console.log("beisammen " + b.reihe + ": " + b.von + " … " + b.bis + " → " + b.stueck + " (" + b.zeichen + " Zeichen"
+    + (b.gilt ? ")" : ", zu weit auseinander – gilt nicht)")));
   Object.entries(erg.teile).forEach(([t, c]) => console.log("min/app-teil-" + t + ".js " + Math.round(c.length / 1024) + " KB (gepackt " + gz(c) + " KB)"));
   if (process.argv[2] === "--zeigen") process.exit(0);
   const MIN = path.join(WURZEL, "min");

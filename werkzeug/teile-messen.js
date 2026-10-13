@@ -247,9 +247,16 @@ function falscherKlient() {
     console.log(d + ": " + stilRegeln[d].length + " Regeln, später " + spaet[d].length);
   });
   if (process.argv[2] === "--nur-zeigen") return;
-  fs.writeFileSync(teile.LISTE, JSON.stringify({
+  /* FASSUNG 884 (884b beta, Nachbesserung 2) — „beisammen“ ist von Hand gesetzt (welche Reihen nie geteilt werden,
+     teile-bauen.js) und wird nicht gemessen: beim Neu-Schreiben übernehmen. */
+  let alt = {};
+  try { alt = JSON.parse(fs.readFileSync(teile.LISTE, "utf8")); } catch (e) {}
+  const liste = {
     erklaerung: "FASSUNG 876 — Funktionen von app.js, die nur in min/ ausgelagert werden (werkzeug/teile-bauen.js). Erzeugt von werkzeug/teile-messen.js.",
-    teile: { raum, rest }, daten: { "data-exercises.js": uebSpaet } }, null, 0).replace(/\],"/g, "],\n\"") + "\n");
+    teile: { raum, rest }, daten: { "data-exercises.js": uebSpaet } };
+  if (alt.beisammen_warum) liste.beisammen_warum = alt.beisammen_warum;
+  if (Array.isArray(alt.beisammen)) liste.beisammen = alt.beisammen;
+  fs.writeFileSync(teile.LISTE, JSON.stringify(liste, null, 0).replace(/\],"/g, "],\n\"") + "\n");
   fs.writeFileSync(stil.LISTE, JSON.stringify({
     erklaerung: "FASSUNG 876 — Regeln, die beim Start nicht greifen (Prüfsummen, werkzeug/stil-bauen.js). Erzeugt von werkzeug/teile-messen.js. Unbekannte Regeln kommen ins Startblatt.",
     immer: [...animNamen].sort(), spaet }, null, 0).replace(/\],"/g, "],\n\"") + "\n");

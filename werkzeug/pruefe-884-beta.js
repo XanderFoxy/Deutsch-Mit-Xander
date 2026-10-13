@@ -37,12 +37,28 @@
      E  Betonungs-Trainer (default true, nie gesetzt = für alle frei) 3 s offen:
         keine Meldung „Betonungs-Trainer“
      F  keine Seitenfehler aus der Beta-Wache
+     E2 (Nachbesserung 2) Betonungs-Trainer als zurückgezogenes „default true“-
+        Spiel (Schalter ausdrücklich false), aber die Schalter kommen erst NACH
+        dem Zeichnen an: 1 s vorher 0, danach 3 s im Blick: genau 1
+     E3 dasselbe, die Schalter kommen an und der Wert bleibt leer (für alle
+        frei): 0
      G  nur min/ (Nachbesserung 1): die Beta-Wache kostet den Start nichts –
         betaEchtAngetippt, betaBereichImBlick, betaAnsehenAbwarten,
         betaFuerAlleFrei und betaMeldenDarf stehen im Kern nur als
         Platzhalter (werkzeug/app-teile.json, „rest“), und zwar im selben
         Stück wie notifyAdminsIfBetaTesting (kein zweites Stück nachladen);
         der Tipp-Merker bleibt im Kern (er muss den ersten Tipp hören)
+     H  nur min/ (Nachbesserung 2): der Startweg wird für niemanden schwerer.
+        H0 die Kompass-Reihe (lesetexteWennSichtbar … beitraegeLaden,
+        renderTileGallery, renderEntryDetail) steht in EINEM Stück
+        (app-teile.json „beisammen“). H-beta/H-betreiber: Start mit Konto
+        (Attrappe), 2,5 s nach load (vor dem Einsetzen in der Ruhepause ab
+        3 s): DMA_TEILE.stand().sofort höchstens 3 Stücke wie vor 884
+        (rest1 renderComingSoonGate, rest3 lesetexteWennSichtbar, rest6
+        tinyAvatar) und die Beiträge sind gezeichnet (der Weg lief wirklich);
+        H-normal: höchstens 2 (rest1 trophyCounts, rest6 tinyAvatar).
+        In ce53c58 (Nachbesserung 1) rot: Beta und Betreiber 4 Stücke – rest4
+        für beitraegeLaden kam dazu (Slow 4G: +0,43 s Sync-XHR je Aufruf).
    Schalter:
      QUELLE=1   index.html?quelle (ohne: min/ – vorher
                 node werkzeug/fassung-setzen.js --nur-stempel); G entfällt
@@ -50,12 +66,14 @@
                 Stand VOR dem Beta-Commit (67102a5 – nicht HEAD, das ist seit
                 347445a schon die neue Fassung):
                 mkdir -p $S/gegen884b/beta-vor && git show 67102a5:app.js > $S/gegen884b/beta-vor/app.js
-                (dann 11 rot: A, A2, B, B1, B2, B4, C ×2, D, D2, E – schon beim Start
-                3 Meldungen; grün bleiben B3 „einmal je Sitzung“ und F)
+                (dann 13 rot: A, A2, B, B1, B2, B4, C ×2, D, D2, E, E2, E3 – schon beim
+                Start 3 Meldungen, „Betonungs-Trainer“ sofort beim Zeichnen; grün
+                bleiben B3 „einmal je Sitzung“ und F)
      WURZEL=/pfad  ganzer Baum woanders (wie Sonde 884-ton310). Gegenprobe zu G:
                 ein Baum aus Verweisen auf diesen, nur index.html, min/.quelle.json,
                 min/app.js und min/app-teil-*.js aus 347445a (Beta-Commit vor der
-                Nachbesserung) → 2 rot (G1, G2), A–F grün
+                Nachbesserung) → G1, G2 rot. Gegenprobe zu H und E2: derselbe Baum aus
+                ce53c58 (Nachbesserung 1) → H0, H-beta, H-betreiber, E2 rot
    EHRLICH: Gemessen wird in Chromium; Safari vor 16.4 kennt
    navigator.userActivation nicht – dort zählt der eigene Merker für einen
    echten Tipp (pointerdown/keydown/touchend, isTrusted). Ob eine Person
@@ -144,6 +162,38 @@ const ANHANG = "\n;(function(){try{if(window.__betaAttrappe)window.__betaAttrapp
     return "D " + r("dichterArea") + " · S " + r("schneeArea") + " · M " + r("beitraegeArea");
   });
   const rolle = (pg, sel, block) => pg.evaluate(([s, b]) => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: b || "start", behavior: "instant" }); }, [sel, block]);
+  /* H: frische Seite mit Konto der Rolle (Attrappe), 2,5 s nach load – vor dem Einsetzen in der Ruhepause (ab 3 s) –
+     DMA_TEILE.stand(): welche Stücke ein Platzhalter sofort (synchron) nachladen musste. */
+  async function startStand(wer) {
+    const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, serviceWorkers: "block" });
+    await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+    const pg = await ctx.newPage();
+    pg.on("pageerror", (e) => seitenFehler.push(String(e.message || e)));
+    await pg.addInitScript((wer) => {
+      try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {}
+      window.__beta = [];
+      window.__betaAttrappe = (B) => {
+        B.signUp("h@attrappe.test", "attrappe", "H");
+        const p = B.currentProfile();
+        if (p) {
+          if (wer === "beta") p.isBetaTester = true;
+          if (wer === "betreiber") p.isOwner = true;
+          p.extraProfileData = Object.assign({}, p.extraProfileData, { seenFoxIntro: true });
+        }
+        B.notifyAdminsBetaTesting = async () => {};
+      };
+    }, wer);
+    await pg.goto(adresse, { waitUntil: "load" });
+    await warte(2500);
+    const st = await pg.evaluate(() => {
+      const s = window.DMA_TEILE ? window.DMA_TEILE.stand() : { sofort: ["kein DMA_TEILE"], fehler: [] };
+      const b = document.getElementById("beitraegeArea");
+      return { sofort: s.sofort, fehler: s.fehler || [],
+        beitraege: Boolean(window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE && b && b.childElementCount && !/werden geladen/.test(b.textContent)) };
+    });
+    await ctx.close();
+    return st;
+  }
 
   try {
     /* ---------------- A, B: Start und echtes Ansehen ---------------- */
@@ -256,6 +306,38 @@ const ANHANG = "\n;(function(){try{if(window.__betaAttrappe)window.__betaAttrapp
     sage(!m.includes("Betonungs-Trainer"), "keine Meldung „Betonungs-Trainer“ (Schalter: " + roh + ")", JSON.stringify(m));
     await ctx.close();
 
+    /* ---------------- E2, E3: die Schalter kommen erst nach dem Zeichnen ---------------- */
+    /* Im Demo-Modus sind die Schalter beim Öffnen eines Spiels längst da. Nachgestellt wird „noch nicht da“ an genau
+       einem Schalter: bis zur Freigabe liefert getRawFeatureFlagValue undefined und getFeatureFlags wartet. */
+    for (const [t, nachher, soll] of [["E2", false, 1], ["E3", undefined, 0]]) {
+      ({ ctx, pg } = await neueSeite());
+      abschnitt(t, "Betonungs-Trainer, Schalter kommen erst nach dem Zeichnen, Wert dann " + String(nachher));
+      await pg.evaluate((nachher) => {
+        const B = Backend, KEY = "betonungstrainer_aktiv";
+        const roh = B.getRawFeatureFlagValue, holen = B.getFeatureFlags;
+        let da = false, los = null;
+        const warten = new Promise((r) => { los = r; });
+        B.getRawFeatureFlagValue = (k) => (k === KEY ? (da ? (nachher === "false" ? false : undefined) : undefined) : roh(k));
+        B.getFeatureFlags = () => (da ? holen() : warten.then(() => holen()));
+        window.__schalterLos = () => { da = true; los(); };
+      }, String(nachher));
+      await pg.tap('.tape-tab[data-target="view-learn"]');
+      await warte(800);
+      await pg.evaluate(() => { document.querySelector('#learnSubnav [data-sub="sub-stresstrainer"]').click(); });
+      await warte(400);
+      await pg.evaluate(() => { const e = document.getElementById("stressTrainerArea"); if (e) e.scrollIntoView({ block: "start", behavior: "instant" }); });
+      await warte(1000);
+      const vorher = await meldungen(pg);
+      await pg.evaluate(() => window.__schalterLos());
+      await warte(3000);
+      m = await meldungen(pg);
+      const zahl = m.filter((x) => x === "Betonungs-Trainer").length;
+      sage(vorher.length === 0 && zahl === soll && m.length === soll,
+        soll ? "zurückgezogen (false), Schalter kamen später: genau 1 „Betonungs-Trainer“" : "für alle frei (Wert bleibt leer), Schalter kamen später: keine Meldung",
+        "vorher " + JSON.stringify(vorher) + ", nachher " + JSON.stringify(m));
+      await ctx.close();
+    }
+
     abschnitt("F", "Seitenfehler");
     const beta = seitenFehler.filter((t) => /beta|IntersectionObserver/i.test(t));
     sage(beta.length === 0, "keine Seitenfehler aus der Beta-Wache", beta.slice(0, 3).join(" | "));
@@ -287,6 +369,22 @@ const ANHANG = "\n;(function(){try{if(window.__betaAttrappe)window.__betaAttrapp
       sage(Boolean(ort) && fremd.length === 0, "alle im selben Stück wie notifyAdminsIfBetaTesting (" + (ort || "?") + ")", fremd.join(", "));
       teil = "G3";
       sage(/betaEchterTipp\s*=\s*!0/.test(kern), "der Tipp-Merker bleibt im Kern (hört den ersten Tipp schon beim Start)");
+
+      /* ---------------- H: Startweg je Rolle (nur min/) ---------------- */
+      abschnitt("H", "Startweg: was ein Platzhalter beim Start synchron nachladen muss (nur min/)");
+      const KOMPASS = ["lesetexteWennSichtbar", "eigeneBeitraege", "beitraegeLaden", "renderTileGallery", "renderEntryDetail"];
+      const kOrt = KOMPASS.map((n) => [n, platz(n) < 0 ? "Kern" : stueck[platz(n)]]);
+      teil = "H0";
+      sage(new Set(kOrt.map(([, o]) => o)).size === 1, "die Kompass-Reihe steht in einem Stück", kOrt.map(([n, o]) => n + "→" + o).join(" "));
+      for (const [rolle, hoechstens] of [["beta", 3], ["betreiber", 3], ["normal", 2]]) {
+        const st = await startStand(rolle);
+        teil = "H-" + rolle;
+        const namen = st.sofort.map((x) => x.split(" ")[0] + " (" + ((x.match(/at (\w+)/) || [])[1] || "?") + ")");
+        sage(st.sofort.length <= hoechstens && (rolle === "normal" || st.beitraege) && !st.fehler.length,
+          (rolle === "normal" ? "angemeldet ohne Rolle" : rolle === "beta" ? "Beta" : "Betreiber") + ": höchstens " + hoechstens + " Stücke synchron beim Start"
+            + (rolle === "normal" ? "" : ", Beiträge gezeichnet"),
+          st.sofort.length + ": " + namen.join(", ") + (rolle === "normal" ? "" : "  Beiträge " + (st.beitraege ? "da" : "FEHLEN")) + (st.fehler.length ? "  Fehler " + st.fehler.join(" | ") : ""));
+      }
     }
   } catch (e) {
     fehler++;

@@ -1803,15 +1803,30 @@
     const roh = Backend.getRawFeatureFlagValue ? Backend.getRawFeatureFlagValue(flagKey) : Backend.getRawFeatureFlag(flagKey);
     return defaultTrue ? (roh === undefined || Boolean(roh)) : Boolean(roh);
   }
-  function betaMeldenDarf(flagKey, defaultTrue) {
+  /* vorlaeufig: nur „Beta-Person und noch nicht gemeldet“, ohne die Frage „schon für alle frei?“ */
+  function betaMeldenDarf(flagKey, defaultTrue, vorlaeufig) {
     const profile = Backend.currentProfile();
     if (!profile || !profile.isBetaTester || (Backend.canModerate && Backend.canModerate())) return false;
-    if (betaFuerAlleFrei(flagKey, defaultTrue)) return false;   // schon für alle frei, keine Beta-Situation mehr
-    return !betaTestingNotifiedThisSession.has(flagKey);
+    if (betaTestingNotifiedThisSession.has(flagKey)) return false;
+    return vorlaeufig ? true : !betaFuerAlleFrei(flagKey, defaultTrue);   // schon für alle frei, keine Beta-Situation mehr
   }
   function notifyAdminsIfBetaTesting(flagKey, featureName, subTarget, area, defaultTrue) {
     try {
-      if (!area || !betaMeldenDarf(flagKey, defaultTrue)) return;
+      if (!area || !betaMeldenDarf(flagKey, defaultTrue, true)) return;
+      /* FASSUNG 884 (884b beta, Nachbesserung 2) — „default true“ ohne Wert heißt „für alle frei“, aber nur, wenn die
+         Schalter (feature_flags) schon geladen sind. Vorher sieht ein zurückgezogenes Spiel (ausdrücklich false) genauso
+         aus – es wurde dann gar nicht gewacht, und kam der Schalter später ohne neues Zeichnen, fehlte die Meldung (vor
+         884 wurde sie geschickt). Darum hier erst die Schalter abwarten (Backend.getFeatureFlags: aus dem Speicher sofort,
+         sonst dieselbe laufende Abfrage, keine zweite) und neu entscheiden: steht jetzt ein Wert da, wacht die Wache wie
+         sonst; bleibt er leer, ist das Spiel frei und es gibt keine Wache. Betrifft nur Beta-Personen in „default
+         true“-Spielen; für alle anderen endet es schon oben. */
+      if (defaultTrue && Backend.getRawFeatureFlagValue(flagKey) === undefined) {
+        if (Backend.getFeatureFlags) Promise.resolve(Backend.getFeatureFlags()).then(() => {
+          if (Backend.getRawFeatureFlagValue(flagKey) !== undefined && area.isConnected) notifyAdminsIfBetaTesting(flagKey, featureName, subTarget, area, defaultTrue);
+        }, () => {});
+        return;
+      }
+      if (betaFuerAlleFrei(flagKey, defaultTrue)) return;   // schon für alle frei
       betaAnsehenAbwarten(area, flagKey, async () => {
         if (!betaMeldenDarf(flagKey, defaultTrue)) return;   // inzwischen freigegeben, abgemeldet oder schon gemeldet
         betaTestingNotifiedThisSession.add(flagKey);
