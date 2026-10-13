@@ -1724,15 +1724,102 @@
   // noch gesperrt ist, bekommen alle Admins/Betreiber:innen einmalig eine Nachricht mit einem
   // anklickbaren Link, der direkt zu genau diesem Bereich springt — damit man mittesten kann,
   // während die Beta-Person es gerade ausprobiert, statt es erst viel später zufällig zu bemerken.
-  async function notifyAdminsIfBetaTesting(flagKey, featureName, subTarget) {
+  /* FASSUNG 884 — XANDER (Funk 310): „überprüfe bitte ob … ein Beta-Tester online kommt ob er wirklich Sachen testet
+     oder ob das nur irgendwelche Quatsch ist". Nachgesehen (private_messages, 01.09.–09.10.): bei JEDEM Seitenaufruf
+     einer Beta-Person kamen in derselben Minute dieselben 9 Nachrichten – „testet gerade Dichter & Denker / Schnee von
+     gestern / Menschen, Dinge, Geschichten“, je an alle drei Admins. Das war Quatsch: renderKompass zeichnet die drei
+     Bereiche beim Start verdeckt vor (der Reiter „Wissen“ ist dabei gar nicht offen), und renderComingSoonGate meldete
+     schon beim ZEICHNEN. Dazu kamen Meldungen für Spiele, die längst für alle offen sind (Betonungs-Trainer,
+     Wortbaustelle: „default true“, nie ausgeschaltet – getRawFeatureFlag sah dort „nicht freigegeben“).
+     Jetzt wird erst gemeldet, wenn die Person den Bereich wirklich ansieht:
+       - mindestens die Hälfte des Bereichs ist zu sehen (bei einem Bereich, der höher ist als der Bildschirm: der halbe
+         Bildschirm), 2 s am Stück, im sichtbaren Tab;
+       - und sie hat auf der Seite schon etwas angetippt (navigator.userActivation.hasBeenActive, sonst ein eigener
+         Merker für einen echten Tipp/Tastendruck) – ein bloß offener Tab ist kein Testen.
+     Weiterhin höchstens einmal je Bereich und Sitzung; die Spiele (Gate erst beim echten Öffnen) haben denselben Schutz.
+     „Für alle frei“ heißt bei „default true“-Spielen dasselbe wie in isFeatureOnDefaultTrue (nie gesetzt = frei).
+     Kosten: nur für Beta-Personen bei nicht freigegebenen Bereichen. Ein IntersectionObserver weckt die Wache; nur
+     solange der Bereich im Bild ist, schaut ein Takt (400 ms) nach. Nach dem Melden ist sie weg. Sichtbar ändert sich
+     nichts. Sonde: werkzeug/pruefe-884-beta.js. */
+  const BETA_ANSEHEN_MS = 2000;
+  const betaWachen = new Map();   // flagKey → Wache am Bereich, der gerade gezeichnet ist
+  let betaEchterTipp = false;
+  (function betaTippHorchen() {
+    const arten = ["pointerdown", "keydown", "touchend"];
+    const merken = (ev) => {
+      if (!ev || !ev.isTrusted) return;
+      betaEchterTipp = true;
+      arten.forEach((a) => document.removeEventListener(a, merken, true));
+    };
+    arten.forEach((a) => document.addEventListener(a, merken, { capture: true, passive: true }));
+  })();
+  function betaEchtAngetippt() {
+    try { if (navigator.userActivation && navigator.userActivation.hasBeenActive) return true; } catch (e) {}
+    return betaEchterTipp;
+  }
+  function betaBereichImBlick(el) {
+    if (!el || !el.isConnected || document.visibilityState === "hidden") return false;
+    const r = el.getBoundingClientRect();
+    if (!(r.width > 0 && r.height > 0)) return false;   // verdeckter Reiter (display:none) misst 0 × 0
+    const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+    const vb = window.innerWidth || document.documentElement.clientWidth || 0;
+    const hoch = Math.min(r.bottom, vh) - Math.max(r.top, 0);
+    const breit = Math.min(r.right, vb) - Math.max(r.left, 0);
+    if (hoch <= 0 || breit <= 0) return false;
+    return hoch >= 0.5 * Math.min(r.height, vh) && breit >= 0.5 * Math.min(r.width, vb);
+  }
+  function betaAnsehenAbwarten(area, flagKey, melden) {
+    const alt = betaWachen.get(flagKey);
+    if (alt && alt.el === area) return;   // wacht schon an genau diesem Bereich
+    if (alt) alt.stop();                  // neu gezeichnet (renderKompass baut die drei Bereiche jedes Mal neu)
+    let seit = 0, takt = 0, imBild = false, io = null;
+    const w = { el: area };
+    w.stop = () => {
+      clearTimeout(takt); takt = 0;
+      if (io) { io.disconnect(); io = null; }
+      if (betaWachen.get(flagKey) === w) betaWachen.delete(flagKey);
+    };
+    const schauen = () => {
+      takt = 0;
+      if (!area.isConnected) { w.stop(); return; }
+      if (!betaBereichImBlick(area)) seit = 0;
+      else {
+        const jetzt = performance.now();
+        if (!seit) seit = jetzt;
+        if (jetzt - seit >= BETA_ANSEHEN_MS && betaEchtAngetippt()) { w.stop(); melden(); return; }
+      }
+      if (imBild || !io) takt = setTimeout(schauen, 400);
+    };
+    betaWachen.set(flagKey, w);
+    if (typeof IntersectionObserver !== "function") { schauen(); return; }
+    io = new IntersectionObserver((eintraege) => {
+      imBild = eintraege[eintraege.length - 1].isIntersecting;
+      if (!imBild) { clearTimeout(takt); takt = 0; seit = 0; return; }
+      if (!takt) schauen();
+    });
+    io.observe(area);
+  }
+  function betaFuerAlleFrei(flagKey, defaultTrue) {
+    const roh = Backend.getRawFeatureFlagValue ? Backend.getRawFeatureFlagValue(flagKey) : Backend.getRawFeatureFlag(flagKey);
+    return defaultTrue ? (roh === undefined || Boolean(roh)) : Boolean(roh);
+  }
+  function betaMeldenDarf(flagKey, defaultTrue) {
     const profile = Backend.currentProfile();
-    if (!profile || !profile.isBetaTester || (Backend.canModerate && Backend.canModerate())) return;
-    if (Backend.getRawFeatureFlag(flagKey)) return; // schon für alle freigegeben, keine Beta-Situation mehr
-    if (betaTestingNotifiedThisSession.has(flagKey)) return;
-    betaTestingNotifiedThisSession.add(flagKey);
+    if (!profile || !profile.isBetaTester || (Backend.canModerate && Backend.canModerate())) return false;
+    if (betaFuerAlleFrei(flagKey, defaultTrue)) return false;   // schon für alle frei, keine Beta-Situation mehr
+    return !betaTestingNotifiedThisSession.has(flagKey);
+  }
+  function notifyAdminsIfBetaTesting(flagKey, featureName, subTarget, area, defaultTrue) {
     try {
-      await Backend.notifyAdminsBetaTesting(profile.name, featureName, subTarget);
-    } catch (e) { console.warn("Beta-Test-Benachrichtigung an Admins fehlgeschlagen:", e); }
+      if (!area || !betaMeldenDarf(flagKey, defaultTrue)) return;
+      betaAnsehenAbwarten(area, flagKey, async () => {
+        if (!betaMeldenDarf(flagKey, defaultTrue)) return;   // inzwischen freigegeben, abgemeldet oder schon gemeldet
+        betaTestingNotifiedThisSession.add(flagKey);
+        try {
+          await Backend.notifyAdminsBetaTesting(Backend.currentProfile().name, featureName, subTarget);
+        } catch (e) { console.warn("Beta-Test-Benachrichtigung an Admins fehlgeschlagen:", e); }
+      });
+    } catch (e) { console.warn("Beta-Wache:", e); }
   }
   function renderComingSoonGate(area, flagKey, gameName, gameIcon, defaultTrue, istBereich) {
     const isOn = defaultTrue ? Backend.isFeatureOnDefaultTrue(flagKey) : Backend.isFeatureOn(flagKey);
@@ -1762,7 +1849,7 @@
       toggleHost.remove();
     }
     if (isOn || canSeeAnyway) {
-      if (isOn) notifyAdminsIfBetaTesting(flagKey, gameName);
+      if (isOn) notifyAdminsIfBetaTesting(flagKey, gameName, undefined, area, defaultTrue);   // FASSUNG 884: erst beim echten Ansehen
       return true;
     }
     /* Ausdrücklich auf „aus" gestellt heißt: es war schon draußen und

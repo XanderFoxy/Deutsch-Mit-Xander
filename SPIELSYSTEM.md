@@ -4723,3 +4723,49 @@ Erwartet nach der Behebung: `tonGleicheKennung` kommt weiter vor (die Auslöser 
 8. Werkstatt-Eintrag und Fassungsnummer beim Ausliefern von 884 (WIP-Stand).
 
 **Funk-Antwort (Entwurf, nach der Prüfung abgeschwächt)**: „Emy hört dich nicht (Funk 310): Ich habe im Test einen Fehler gefunden, der genau so aussieht: Baut dein Gerät die Verbindung zu Emy neu auf (zum Beispiel wenn du den Ton-Knopf drückst oder die Seite das von selbst tut), kam deine Stimme bei ihr jedes zweite Mal nicht mehr an – du hörst sie trotzdem, weil die Verbindung immer von deinem Gerät aus aufgebaut wird. Das ist behoben, und eine stille Wache fängt so einen Aussetzer in wenigen Sekunden selbst ab, ohne dass sich am Aussehen etwas ändert. Im Test hat das Spiel am Ton nichts geändert, und eine Dopplung durch das Spiel habe ich dort nicht gefunden. Ob es bei Emy genau dieser Fehler war und ob das Spiel die Neuaufbauten auf ihrem Handy häufiger macht, sehe ich erst nach dem Ausliefern an den neuen Messungen – nachgestellt habe ich es in Chrome am Rechner, nicht auf ihrem Handy. Damit es wirkt, muss Emy die Seite einmal neu laden, wenn die neue Fassung draußen ist. Frag sie bitte noch, ob sie beim Spielen an deinem Bild ein graues Lautsprecher-Zeichen mit X sieht – dann ist zusätzlich der Schalter „Nur Mitspieler hören“ an.“
+
+## Fassung 884 — Beta-Meldungen nur bei echtem Ansehen (Funk 310)
+
+XANDER (Funk 310): „überprüfe bitte ob … ein Beta-Tester online kommt ob er wirklich Sachen testet oder ob das nur irgendwelche Quatsch ist“. Nur app.js (Block vor `renderComingSoonGate`); livechat.js, spiel.js, backend.js und die DB unberührt, alte Bilderwelt nicht berührt. Sichtbar ändert sich nichts – es geht nur um die Postfach-Nachrichten an die Admins.
+
+### Befund (DB, nur gelesen, 13.10.)
+- `private_messages` „🧪 X testet gerade …“: „Dichter & Denker“ 96, „Schnee von gestern“ 96, „Menschen, Dinge, Geschichten“ 69 – immer **alle drei in derselben Minute**, je an die drei Admins (9 Nachrichten je Seitenaufruf; einmal je Tag, weil `sendSystemMessage` gleiche Texte 24 h sperrt). Zuletzt Maram 09.10. 21:09, Ola 08.10., Yacout 01.10. Maram allein: 165 Beta-Meldungen an 17 Tagen.
+- **Ursache:** `renderKompass` (app.js, Ende des Blocks) ruft beim Start `renderDichterUndDenker`/`renderSchneeVonGestern`/`renderEigeneBeitraege` – der Reiter „Wissen“ ist dabei gar nicht offen (Start = „Über mich“). Jeder davon geht durch `renderComingSoonGate` → `notifyAdminsIfBetaTesting`, das sofort beim **Zeichnen** meldete. Die drei Schalter sind in `feature_flags` nie gesetzt (also nur für Beta/Moderation sichtbar).
+- **Zweiter Quatsch:** „Betonungs-Trainer“ (9) und „Wortbaustelle“ (3) wurden gemeldet, obwohl sie für alle offen sind: „default true“-Spiele, Schalter nie gesetzt; `getRawFeatureFlag` sah dort „nicht freigegeben“.
+- **Was wirklich getestet wurde** (Ergebnisse in `results`, nur die zwei Beta-Spiele mit eigener Auswertung): Artikel-Garten („Gärtner:in“) Reza 2 (06.09.), TOMM 2 (14./16.09.); Beim Arzt TOMM 1, Menna 2 (Sept.). Im Oktober keine Runde in einem Beta-Spiel. Maram ist sehr aktiv (145 Runden in 45 Tagen), aber in freigegebenen Spielen. Ob jemand die Lesebereiche gelesen hat, steht nirgends (sie schreiben keine Ergebnisse) – genau das soll die neue Meldung jetzt ehrlich sagen.
+
+### Was geändert ist (app.js, ein Block)
+- `notifyAdminsIfBetaTesting(flagKey, featureName, subTarget, area, defaultTrue)` meldet nicht mehr beim Zeichnen, sondern legt eine **Wache** an den Bereich (`betaAnsehenAbwarten`). Gemeldet wird erst, wenn
+  - mindestens die Hälfte des Bereichs zu sehen ist (bei einem Bereich, der höher ist als der Bildschirm: der halbe Bildschirm – `betaBereichImBlick`), **2 s am Stück** (`BETA_ANSEHEN_MS`), im sichtbaren Tab, und
+  - die Person auf der Seite schon etwas angetippt hat: `navigator.userActivation.hasBeenActive`, sonst ein eigener Merker für einen echten Tipp/Tastendruck (`pointerdown`/`keydown`/`touchend`, `isTrusted`; die Horcher melden sich nach dem ersten echten Tipp ab).
+- Weiterhin **einmal je Bereich und Sitzung** (`betaTestingNotifiedThisSession`, erst beim Melden gesetzt). Vor dem Melden wird noch einmal geprüft (inzwischen freigegeben, abgemeldet, schon gemeldet → nichts).
+- **„Für alle frei“** (`betaFuerAlleFrei`) heißt bei „default true“-Spielen dasselbe wie in `isFeatureOnDefaultTrue`: nie gesetzt oder an = frei → keine Beta-Meldung. `renderComingSoonGate` reicht dazu `area` und `defaultTrue` weiter.
+- Spiele (Gate erst beim echten Öffnen) melden wie bisher – mit demselben Schutz: wer ein Beta-Spiel öffnet und nach 0,5 s wieder zurückgeht, löst nichts aus.
+- **Kosten:** nur für Beta-Personen (nicht Moderation) und nur bei nicht freigegebenen Bereichen. Ein `IntersectionObserver` je Bereich weckt die Wache; nur solange der Bereich im Bild ist, schaut ein 400-ms-Takt nach (eine `getBoundingClientRect`). Nach dem Melden ist sie weg; zeichnet `renderKompass` die Bereiche neu, wandert die Wache an das neue Element. Für alle anderen: drei passive Tipp-Horcher, die sich beim ersten Tipp abmelden.
+- Ladeweg: min/app.js 723926 → 725827 Byte (gzip 195456 → 196176, +720), im Teil `app-teil-rest1.js` (nicht auf dem Weg ins Klassenzimmer).
+
+### Sonden
+- **Neu: `werkzeug/pruefe-884-beta.js`** – Telefon 390 × 844 mit echten Fingertipps, Beta-Profil als Attrappe im Demo-Modus (`Backend.signUp` ohne Supabase, `isBetaTester`, `seenFoxIntro`), `Backend.notifyAdminsBetaTesting` durch einen Zähler ersetzt, alle Anfragen nach draußen gesperrt. A Start 4 s: 0 · A2 echter Tipp auf der Startseite: 0 · B Tipp auf „Wissen“ (Dichter noch unten): 0 · B1 Dichter 3 s im Blick: genau 1 „Dichter & Denker“ · B2 „Schnee“ nur 0,8 s im Blick: keine · B3 Reiter weg und her, Dichter erneut: weiterhin 1 · B4 „Schnee“ 3 s: 2 · C ohne `navigator.userActivation` (wie Safari < 16.4), „Wissen“ per Programm, Dichter 3 s ganz im Blick: 0, nach echtem Tipp: 1 · D Artikel-Garten echt geöffnet: genau 1 · D2 Satzbrücke 0,5 s: keine · E Betonungs-Trainer (default true, nie gesetzt): keine · F keine Seitenfehler aus der Wache. **Grün** in `?quelle` und `min/` (nach `fassung-setzen.js --nur-stempel`).
+- **Gegenprobe** (`ALT=scratchpad/gegen884b/beta-vor`, app.js aus 67102a5): **11 rot** – schon beim Start 3 Meldungen (Dichter, Schnee, Beiträge), dazu D (4 statt 1), D2 („Satzbrücke“ nach 0,5 s gemeldet), E („Betonungs-Trainer“ gemeldet), C ×2; grün bleiben B3 (einmal je Sitzung galt schon) und F.
+- Mitgelaufen (grün): 840-bilderwelt-alt-neu (alte Bilderwelt unverändert), 865-lesetexte-nachladen, runde87-kalender, 843-italienisch-nur-im-raum, 884-notweg (min/-Stücke von app.js).
+
+### Ehrlich
+- In Chromium lässt sich „nie angetippt“ nicht mit dem echten `navigator.userActivation` prüfen: Playwright führt jedes `evaluate` als Nutzergeste aus und setzt damit `hasBeenActive`. Fall C prüft deshalb den Rückweg (eigener Tipp-Merker), wie ihn Safari vor 16.4 nimmt; der echte Weg ist in A/A2/B (verdeckt bzw. nicht im Blick) und B1/D (echter Tipp) mitgeprüft.
+- Ob jemand einen Bereich wirklich **liest**, kann keine Seite wissen. „2 s halb im Bild nach einem Tipp“ ist die Annäherung; wer lange auf „Wissen“ steht und an Dichter & Denker vorbeiscrollt, löst die Meldung aus.
+- Hintergrund-Tab (`visibilityState`) ist in der Sonde nicht nachgestellt.
+- Die Meldung gilt weiter nur für die Beta-Rolle (`isBetaTester`), nicht für Personen, die nur für ein einzelnes Spiel eingeladen sind (`beta:<flag>`) – unverändert.
+- Alte Fassungen auf den Geräten melden weiter beim Start, bis die Person neu lädt.
+
+**Vorschläge (nicht gebaut)**
+- V1 Die Meldung um „wie lange“ ergänzen (z. B. nach dem Verlassen des Bereichs: „hat 3 min in Dichter & Denker gelesen“) – dann sieht man auch, ob es mehr als ein Blick war. Ändert den Text der Admin-Nachricht, deshalb erst nach Rückfrage.
+- V2 Einladungen für ein einzelnes Spiel (`beta:<flag>`) ebenfalls melden.
+
+### Datenbank
+Keine Änderung nötig.
+
+**Offen**
+1. Nach dem Ausliefern: `select date_trunc('minute', created_at), left(body, 80), count(*) from private_messages where is_system and body like '🧪 %testet gerade%' and created_at > '<Auslieferung>' group by 1, 2 order by 1 desc;` – erwartet: keine 3er-Bündel mehr in derselben Minute.
+2. V1/V2 (Antwort Xanders).
+3. Werkstatt-Eintrag und Fassungsnummer beim Ausliefern von 884 (WIP-Stand).
+
+**Funk-Antwort (Entwurf)**: „Beta-Tester (Funk 310): Du hattest recht, das war zum größten Teil Quatsch. Die Nachrichten „X testet gerade Dichter & Denker / Schnee von gestern / Menschen, Dinge, Geschichten“ kamen bei jedem Öffnen der Seite automatisch, alle drei in derselben Minute – auch wenn die Person diese Bereiche gar nicht angesehen hat. Bei Maram waren es so 165 Meldungen an 17 Tagen. Dazu kamen Meldungen für Spiele, die längst für alle offen sind (Betonungs-Trainer, Wortbaustelle). Echtes Testen sieht man nur wenig: Artikel-Garten haben Reza und TOMM im September gespielt, „Beim Arzt“ TOMM und Menna; im Oktober niemand. Ab der nächsten Fassung kommt die Nachricht nur noch, wenn die Person den Bereich wirklich offen hat und mindestens zwei Sekunden darauf schaut, und nur für Sachen, die noch nicht für alle frei sind. Wenn du willst, kann die Nachricht später auch sagen, wie lange jemand drin war.“
