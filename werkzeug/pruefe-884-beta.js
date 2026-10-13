@@ -37,14 +37,25 @@
      E  Betonungs-Trainer (default true, nie gesetzt = für alle frei) 3 s offen:
         keine Meldung „Betonungs-Trainer“
      F  keine Seitenfehler aus der Beta-Wache
+     G  nur min/ (Nachbesserung 1): die Beta-Wache kostet den Start nichts –
+        betaEchtAngetippt, betaBereichImBlick, betaAnsehenAbwarten,
+        betaFuerAlleFrei und betaMeldenDarf stehen im Kern nur als
+        Platzhalter (werkzeug/app-teile.json, „rest“), und zwar im selben
+        Stück wie notifyAdminsIfBetaTesting (kein zweites Stück nachladen);
+        der Tipp-Merker bleibt im Kern (er muss den ersten Tipp hören)
    Schalter:
      QUELLE=1   index.html?quelle (ohne: min/ – vorher
-                node werkzeug/fassung-setzen.js --nur-stempel)
-     ALT=/pfad  app.js aus diesem Ordner, erzwingt ?quelle. Gegenprobe:
-                mkdir -p $S/gegen884b/beta-vor && git show HEAD:app.js > $S/gegen884b/beta-vor/app.js
+                node werkzeug/fassung-setzen.js --nur-stempel); G entfällt
+     ALT=/pfad  app.js aus diesem Ordner, erzwingt ?quelle. Gegenprobe gegen den
+                Stand VOR dem Beta-Commit (67102a5 – nicht HEAD, das ist seit
+                347445a schon die neue Fassung):
+                mkdir -p $S/gegen884b/beta-vor && git show 67102a5:app.js > $S/gegen884b/beta-vor/app.js
                 (dann 11 rot: A, A2, B, B1, B2, B4, C ×2, D, D2, E – schon beim Start
                 3 Meldungen; grün bleiben B3 „einmal je Sitzung“ und F)
-     WURZEL=/pfad  ganzer Baum woanders (wie Sonde 884-ton310)
+     WURZEL=/pfad  ganzer Baum woanders (wie Sonde 884-ton310). Gegenprobe zu G:
+                ein Baum aus Verweisen auf diesen, nur index.html, min/.quelle.json,
+                min/app.js und min/app-teil-*.js aus 347445a (Beta-Commit vor der
+                Nachbesserung) → 2 rot (G1, G2), A–F grün
    EHRLICH: Gemessen wird in Chromium; Safari vor 16.4 kennt
    navigator.userActivation nicht – dort zählt der eigene Merker für einen
    echten Tipp (pointerdown/keydown/touchend, isTrusted). Ob eine Person
@@ -249,6 +260,34 @@ const ANHANG = "\n;(function(){try{if(window.__betaAttrappe)window.__betaAttrapp
     const beta = seitenFehler.filter((t) => /beta|IntersectionObserver/i.test(t));
     sage(beta.length === 0, "keine Seitenfehler aus der Beta-Wache", beta.slice(0, 3).join(" | "));
     if (seitenFehler.length) console.log("  (andere Seitenfehler, nur zur Kenntnis: " + seitenFehler.length + " – " + [...new Set(seitenFehler)].slice(0, 3).join(" | ").slice(0, 300) + ")");
+
+    /* ---------------- G: Ladeweg (nur min/) ---------------- */
+    abschnitt("G", "Ladeweg: die Beta-Wache steht im Teil, nicht im Kern von min/app.js");
+    if (QUELLE) console.log("  –    entfällt (?quelle lädt die Quelle ganz)");
+    else {
+      const kern = fs.readFileSync(path.join(WURZEL, "min/app.js"), "utf8");
+      const bau = kern.match(/DMA_TEILE_BAU\s*=\s*\{id:"[^"]*",teile:(\[[^\]]*\])/);
+      const teile = bau ? JSON.parse(bau[1]) : [];
+      const stueck = {};   // Nummer des Platzhalters → Stück (esbuild schreibt 1000 als 1e3)
+      teile.forEach((t) => {
+        const s = fs.readFileSync(path.join(WURZEL, "min/app-teil-" + t + ".js"), "utf8");
+        for (const k of s.matchAll(/dmaTeilImpl\[([0-9.e]+)\]\s*=/g)) stueck[Number(k[1])] = t;
+      });
+      const platz = (n) => { const r = kern.match(new RegExp("function " + n + "\\([^)]*\\)\\s*\\{\\s*return dmaTeilRufA?\\(([0-9.e]+),")); return r ? Number(r[1]) : -1; };
+      const HILFE = ["betaEchtAngetippt", "betaBereichImBlick", "betaAnsehenAbwarten", "betaFuerAlleFrei", "betaMeldenDarf"];
+      const wo = HILFE.map((n) => [n, platz(n)]);
+      const imKern = wo.filter(([, i]) => i < 0).map(([n]) => n);
+      teil = "G1";
+      sage(teile.length > 0 && imKern.length === 0, "die fünf Hilfsfunktionen sind im Kern nur Platzhalter",
+        imKern.length ? "noch ausgeschrieben im Kern: " + imKern.join(", ") : wo.map(([n, i]) => n + "→" + i).join(" "));
+      const melden = platz("notifyAdminsIfBetaTesting");
+      const ort = stueck[melden];
+      const fremd = wo.filter(([, i]) => i < 0 || stueck[i] !== ort).map(([n, i]) => n + "→" + (i < 0 ? "Kern" : stueck[i]));
+      teil = "G2";
+      sage(Boolean(ort) && fremd.length === 0, "alle im selben Stück wie notifyAdminsIfBetaTesting (" + (ort || "?") + ")", fremd.join(", "));
+      teil = "G3";
+      sage(/betaEchterTipp\s*=\s*!0/.test(kern), "der Tipp-Merker bleibt im Kern (hört den ersten Tipp schon beim Start)");
+    }
   } catch (e) {
     fehler++;
     console.log("  FEHL Abbruch: " + (e && e.stack ? e.stack.split("\n").slice(0, 3).join(" / ") : e));
