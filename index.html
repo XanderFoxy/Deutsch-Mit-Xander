@@ -434,7 +434,26 @@ svg{display:block}
 .pg-fx .segcol{grid-area:s}
 .pg-dfx .kn-row{grid-template-columns:repeat(3,72px)}
 .pg-dsound,.pg-dsteps{gap:8px}
-.pg-dsteps .foot{align-items:flex-start;gap:8px 12px}
+.pg-dsteps .foot{flex-wrap:nowrap;align-items:flex-start;gap:12px}
+.pg-dsteps .ovw{flex:none}
+/* bar pager next to the overview: segment where it fits on one row, else ‹ Takt k/n › (+ grid popover) */
+.pgside{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:5px;container-type:inline-size}
+.pginfo{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.pgnav{display:flex;min-width:0}
+.pgseg{display:none;align-items:center;gap:8px;min-width:0}
+.pgseg .seg{flex-wrap:nowrap}
+.pgseg .seg button{min-width:40px;padding:0 6px}
+.pgstep{display:flex;align-items:center;gap:3px;min-width:0}
+.pgstep .pa{flex:none;width:42px;height:40px;padding:0;font-size:18px}
+.pgstep .pv{flex:0 1 auto;min-width:78px;height:40px;padding:0 8px;font:700 13px/1 var(--font-ui);white-space:nowrap;overflow:hidden}
+.pgstep .pv small{font-size:11px;color:var(--text-dim);margin-left:1px}
+.pgstep .pa:disabled{opacity:.3}
+@container (min-width:150px){.pgnav.n2 .pgseg{display:flex}.pgnav.n2 .pgstep{display:none}}
+@container (min-width:240px){.pgnav.n4 .pgseg{display:flex}.pgnav.n4 .pgstep{display:none}}
+@container (min-width:420px){.pgnav.n8 .pgseg{display:flex}.pgnav.n8 .pgstep{display:none}}
+@container (min-width:760px){.pgnav.n16 .pgseg{display:flex}.pgnav.n16 .pgstep{display:none}}
+.plist.bars{grid-template-columns:repeat(4,52px)}
+.plist.bars button.on{border-color:var(--sel);color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
 /* segments: LED dot on the active one */
 .seg{display:inline-flex;flex-wrap:wrap;border-radius:6px;background:#0b0c0e;border:1px solid var(--panel-edge);padding:2px;gap:2px;max-width:100%}
 .seg button{position:relative;min-width:44px;height:40px;padding:0 9px;border-radius:4px;font:700 12px/1 var(--font-ui);letter-spacing:.04em;color:var(--text-dim);white-space:nowrap}
@@ -615,6 +634,13 @@ svg{display:block}
 #toast.show{display:flex}
 #toast button{pointer-events:auto;height:34px;padding:0 10px;border-radius:5px;background:var(--ink);color:var(--sel);font:700 12px/1 var(--font-ui);letter-spacing:.04em;flex:none;touch-action:manipulation}
 #toast .tmsg{min-width:0}
+#toast.band{position:relative;left:auto;top:auto;transform:none;z-index:auto;flex:none;justify-content:space-between;max-width:none;min-height:44px;margin:0 8px 6px;padding:5px 6px 5px 12px;box-shadow:0 2px 10px rgba(0,0,0,.45);pointer-events:auto}
+#toast.band .tmsg,#toast.dock .tmsg{flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#toast.dock{transform:none;max-width:none;justify-content:space-between;gap:6px;padding:0 4px 0 10px;pointer-events:auto}
+#toast.dock.lcdk{border-radius:5px;padding:0 2px 0 10px;font-size:12px}
+#toast.dock.lcdk button{height:calc(100% - 4px);min-height:22px}
+#menu>#toast.band,#clipSheet>#toast.band{margin:6px 10px 8px}
+#gridArea.toasting #hint{display:none}                 /* the action band takes the hint's place for 5 s: the clip rows keep their size */
 #banner{position:fixed;left:0;right:0;top:0;z-index:65;display:none;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;background:var(--rec);color:#fff;text-align:center;font:700 14px/1.2 var(--font-ui)}
 #banner.show{display:block}
 
@@ -661,6 +687,7 @@ svg{display:block}
   .seg button{height:32px;min-width:40px}
   .seg.wv button{min-width:40px}
   .seg.pages button{height:30px}
+  .pgstep .pa,.pgstep .pv{height:32px}
   .kn-row{display:flex;flex-wrap:nowrap;gap:2px 6px}
   .pg{gap:6px}
   .pg-filter,.pg-env{display:grid;grid-template-columns:max-content minmax(0,1fr);grid-template-rows:auto minmax(0,1fr);gap:6px 14px}
@@ -703,15 +730,17 @@ svg{display:block}
   .sheet.ed .preset .pv{min-width:56px;max-width:96px}
   .sheet.ed .preset .pa{width:30px}
   .sh-head .seg button{min-width:36px;padding:0 6px}
+  .pgstep .pa{width:36px}
+  .pgstep .pv{min-width:62px;padding:0 6px}
   .kn-row{gap:2px 4px}
   .pg-fx .kn-row{gap:2px 4px}
 }
 
 /* ---------- small portrait phones (SE, mini) ---------- */
 @media (orientation:portrait) and (max-height:700px){
-  #app{grid-template-rows:46px minmax(0,1fr) 42px 52px 46px clamp(140px,27vh,220px);
-    grid-template-rows:46px minmax(0,1fr) 42px 52px 46px clamp(140px,27dvh,220px)}
-  #app.sheet-open{grid-template-rows:46px minmax(0,1fr) 42px 52px 46px 140px}
+  #app{grid-template-rows:50px minmax(0,1fr) 42px 52px 46px clamp(140px,27vh,220px);
+    grid-template-rows:50px minmax(0,1fr) 42px 52px 46px clamp(140px,27dvh,220px)}
+  #app.sheet-open{grid-template-rows:50px minmax(0,1fr) 42px 52px 46px 140px}
   #clipSheet .sh-head{padding:3px 0}
   #clipSheet .sh-body{gap:6px;padding:6px 8px 8px}
   #clipSheet .grp{gap:3px}
@@ -722,12 +751,13 @@ svg{display:block}
   .lcd{height:24px;margin-top:3px}
   .sh-tabs{height:36px;padding-top:4px}
   .tab{height:32px}
-  .sh-body{padding:6px 8px 4px}
+  .sh-body{padding:5px 8px 3px}
   .pg{gap:6px}
   .seg button{height:36px}
   .stepb{height:40px}
   .vchips .chip{height:36px}
-  #top .tb,#bBpm{height:40px}.takt{height:40px}
+  .pgstep .pa,.pgstep .pv{height:36px}
+  #top{padding-top:2px;padding-bottom:2px}               /* top-bar targets stay 44 high (§2.1, A5): 2+44+2+1 border ≤ 50 */
   #taktVal{font-size:24px}
   #clipGrid{grid-template-rows:30px repeat(5,minmax(22px,1fr));gap:2px 3px;padding:3px 6px}
   .th{gap:2px}
@@ -757,14 +787,14 @@ svg{display:block}
 }
 /* short portrait screens (iPhone SE 1st gen 320×568): the editor pages still fit without scrolling */
 @media (orientation:portrait) and (max-height:600px){
-  #app.sheet-open{grid-template-rows:46px minmax(0,1fr) 42px 52px 46px 110px}
-  .sh-head .r1,.sh-head .r2{height:36px}
+  #app.sheet-open{grid-template-rows:50px minmax(0,1fr) 42px 52px 46px 110px}
+  .sh-head .r1,.sh-head .r2{height:34px}
   .sh-head .seg button{height:30px}
   .preset .pv,.preset .pa,.hb,.sh-x{height:32px}
   .lcd{display:none}
   .sh-tabs{height:34px;padding-top:3px}
   .tab{height:31px}
-  .sh-body{padding:5px 8px 4px}
+  .sh-body{padding:4px 8px 3px}
   .pg{gap:5px}
   .seg button{height:34px}
   .knob{height:80px}
@@ -774,6 +804,7 @@ svg{display:block}
   .pg-filter .xy{min-height:60px}
   .vchips .chip{height:34px}
   .stepb{height:38px}
+  .pgstep .pa,.pgstep .pv{height:34px}
   .ovw{grid-template-columns:repeat(16,5px);grid-auto-rows:5px;gap:2px 3px;padding:4px}
   .ovw i{width:5px;height:5px}
 }
@@ -1419,18 +1450,32 @@ return Transposer;
       } catch (e) { res(mode); }
     });
     const tx = (m, fn) => new Promise((res, rej) => { try { const t = db.transaction('kv', m), st = t.objectStore('kv'), r = fn(st); t.oncomplete = () => res(r && r.result); t.onerror = t.onabort = () => rej(t.error || new Error('idb')); } catch (e) { rej(e); } });
+    const lsGet = k => { if (!lsOk) return undefined; try { const v = G.localStorage.getItem(LS + k); return v == null ? undefined : JSON.parse(v); } catch (e) { return undefined; } };
+    const lsKeys = () => { const ks = []; if (lsOk) { try { for (let i = 0; i < G.localStorage.length; i++) { const k = G.localStorage.key(i); if (k && k.startsWith(LS)) ks.push(k.slice(LS.length)); } } catch (e) {} } return ks; };
     const api = {
       get mode() { return mode; }, ready,
-      async get(k) { await ready; if (db) { try { return await tx('readonly', s => s.get(k)); } catch (e) {} }
-        if (lsOk) { try { const v = G.localStorage.getItem(LS + k); return v == null ? undefined : JSON.parse(v); } catch (e) {} } return mem.get(k); },
+      async get(k) { return (await api.getFrom(k)).v; },
+      /* {v, from}. With IndexedDB as the primary store, a localStorage copy of the same key exists only when an IndexedDB
+         write failed and fell back (a later successful IndexedDB write removes it), so that copy is the newer one;
+         objects that carry `mt` are compared by it (§12.4/§12.5: the newest copy wins) */
+      async getFrom(k) { await ready;
+        if (db) {
+          let a, aOk = false; try { a = await tx('readonly', s => s.get(k)); aOk = true; } catch (e) {}
+          const b = lsGet(k);
+          if (b !== undefined && (!aOk || a === undefined || !(a && b && isFinite(a.mt) && isFinite(b.mt) && +a.mt >= +b.mt))) return {v: b, from: 'localStorage'};
+          if (aOk) return {v: a, from: 'indexedDB'};
+          return {v: mem.get(k), from: 'memory'};
+        }
+        if (lsOk) { const v = lsGet(k); if (v !== undefined) return {v, from: 'localStorage'}; }
+        return {v: mem.get(k), from: 'memory'}; },
       // returns the backend that took the write (WP1): a fallback write must not count as the primary copy
-      async set(k, v) { await ready; if (db) { try { await tx('readwrite', s => s.put(v, k)); return 'indexedDB'; } catch (e) { if (!lsOk) throw e; } }
+      async set(k, v) { await ready; if (db) { try { await tx('readwrite', s => s.put(v, k)); if (lsOk) { try { G.localStorage.removeItem(LS + k); } catch (e) {} } return 'indexedDB'; } catch (e) { if (!lsOk) throw e; } }
         if (lsOk) { G.localStorage.setItem(LS + k, JSON.stringify(v)); return 'localStorage'; }   // may throw QuotaExceededError: caller handles
         mem.set(k, v); return 'memory'; },
       async del(k) { await ready; if (db) { try { await tx('readwrite', s => s.delete(k)); } catch (e) {} } if (lsOk) { try { G.localStorage.removeItem(LS + k); } catch (e) {} } mem.delete(k); },
       async keys(prefix) { await ready; let ks = [];
-        if (db) { try { ks = await tx('readonly', s => s.getAllKeys()); } catch (e) { ks = []; } }
-        else if (lsOk) { for (let i = 0; i < G.localStorage.length; i++) { const k = G.localStorage.key(i); if (k && k.startsWith(LS)) ks.push(k.slice(LS.length)); } }
+        if (db) { try { ks = await tx('readonly', s => s.getAllKeys()); } catch (e) { ks = []; } ks = Array.from(new Set(ks.map(String).concat(lsKeys()))); }   // + fallback copies
+        else if (lsOk) ks = lsKeys();
         else ks = Array.from(mem.keys());
         return ks.filter(k => String(k).startsWith(prefix || '')); },
       // synchronous last-chance write (pagehide on iOS may kill async IndexedDB work): localStorage only
@@ -1486,15 +1531,15 @@ return Transposer;
     const opt = (k, d) => (opts[k] != null && isFinite(opts[k]) ? +opts[k] : d);
     const kv = opts.kv, deb = opt('debounceMs', 800), maxWait = opt('maxWaitMs', 4000), histEvery = opt('historyEvery', 600000), histMax = opt('historyMax', 12);
     // WP1: the first periodic history snapshot comes after 10 min of editing (explicit saves add one at once)
-    let timer = 0, first = 0, running = null, queued = null, lastHist = now(), warned = false, dirty = false, mt = 0, lastOk = 0, lastErr = null, lastKey = 0;
+    let timer = 0, first = 0, running = null, queued = null, lastHist = now(), warned = false, dirty = false, mt = 0, lastOk = 0, lastErr = null, lastKey = 0, where = null, loadedFallback = false;
     const histKey = () => { let k = Math.max(now(), lastKey + 1); lastKey = k; return 'hist:' + k; };   // unique: every explicit save is its own entry
     const warn = m => { if (!warned) { warned = true; opts.onWarn && opts.onWarn(m); } };
     const snapshot = () => ({mt, project: mapClips(JSON.parse(JSON.stringify(opts.getProject(), stripRuntime)), packClipNotes)});
     async function doWrite() {
       const snap = snapshot(); dirty = false;
-      // the rescue copy is dropped only when the primary store took the write (WP1: an IndexedDB write that fell back to
-      // localStorage is not read back by get(), so the rescue must survive it)
-      const done = where => { if (where === kv.mode || kv.mode === 'memory') kv.delSync('rescue'); };
+      // the rescue copy is dropped only when the primary store took the write; an IndexedDB write that fell back to
+      // localStorage keeps it (both copies are read back by load(), the newest by mt wins)
+      const done = w => { where = w; if (w === kv.mode || kv.mode === 'memory') kv.delSync('rescue'); };
       try { done(await kv.set('project', snap)); }
       catch (e) {                                            // quota: drop history and retry once
         try { for (const k of await kv.keys('hist:')) await kv.del(k); done(await kv.set('project', snap)); }
@@ -1527,12 +1572,16 @@ return Transposer;
         if (!dirty && !timer && !running) return true;     // WP1: a write still in flight may be killed by the unload
         const ok = kv.setSync('rescue', JSON.stringify(snapshot())); write(); return ok;
       },
+      // newest of {KV project (IndexedDB or its localStorage fallback copy), rescue} by mt (§12.4/§12.5)
       async load() {
-        let a = null, b = null; try { a = await kv.get('project'); } catch (e) {}
+        let a = null, b = null, from = null; try { const r = kv.getFrom ? await kv.getFrom('project') : {v: await kv.get('project'), from: kv.mode}; a = r.v || null; from = r.from; } catch (e) {}
         try { const r = kv.getSync('rescue'); b = r ? JSON.parse(r) : null; } catch (e) {}
         const pick = a && b ? (b.mt > a.mt ? b : a) : a || b; if (!pick || !pick.project) return null;
+        loadedFallback = pick === a && from !== kv.mode && kv.mode !== 'memory';
         mt = pick.mt || 0; return mapClips(pick.project, unpackClipNotes);
       },
+      get loadedFallback() { return loadedFallback; },     // read back from a fallback copy: write it to the primary store again
+      get where() { return where; },                        // backend that took the last write
       async history() { const ks = (await kv.keys('hist:')).sort((a, b) => +b.slice(5) - +a.slice(5)); return ks.map(k => ({key: k, mt: +k.slice(5)})); },
       snapshotNow: () => addHist(snapshot()),               // WP1: "the current state first becomes a snapshot" (Ältere Versionen)
       get lastOk() { return lastOk; }, get lastErr() { return lastErr; }, get mt() { return mt; },
@@ -2799,19 +2848,28 @@ function stop() {
   wakeReleaseLater();
 }
 /* ---------- screen wake lock (§1.7.6): a locked screen stops Web Audio mid-song ---------- */
-const WAKE = {sentinel: null, relT: 0, pending: false, ok: null, err: null, requests: 0, releases: 0};
+const WAKE = {sentinel: null, relT: 0, pending: false, ok: null, err: null, requests: 0, releases: 0, blocked: false};
+// §1.7.6 fail silently: in a frame without the screen-wake-lock permission (artifact viewer) do not ask at all (every
+// request would log a "Permissions policy violation" console error), and after a refusal in a visible page do not ask again
+function wakeAllowed() {
+  try { const pp = document.permissionsPolicy || document.featurePolicy; if (pp && typeof pp.allowsFeature === 'function') return pp.allowsFeature('screen-wake-lock'); } catch (e) {}
+  return true;
+}
 async function wakeAcquire() {
   clearTimeout(WAKE.relT); WAKE.relT = 0;
-  if ((WAKE.sentinel && !WAKE.sentinel.released) || WAKE.pending) return;
+  if ((WAKE.sentinel && !WAKE.sentinel.released) || WAKE.pending || WAKE.blocked) return;
   try {
     if (!navigator.wakeLock || typeof navigator.wakeLock.request !== 'function') throw new Error('nicht unterstützt');
+    if (!wakeAllowed()) { WAKE.blocked = true; const e = new Error('Permissions-Policy'); e.name = 'NotAllowedError'; throw e; }
     WAKE.pending = true; WAKE.requests++;
     const sn = await navigator.wakeLock.request('screen');
     WAKE.sentinel = sn; WAKE.ok = true; WAKE.err = null;
     try { if (sn && sn.addEventListener) sn.addEventListener('release', () => { if (WAKE.sentinel === sn) WAKE.sentinel = null; }); } catch (e) {}
     if (!R.playing && !WAKE.relT) wakeReleaseLater();     // stopped while the request was pending
-  } catch (e) { WAKE.ok = false; WAKE.err = String((e && (e.name || e.message)) || e); }
-  finally { WAKE.pending = false; }
+  } catch (e) {
+    WAKE.ok = false; WAKE.err = String((e && (e.name || e.message)) || e);
+    if (e && e.name === 'NotAllowedError' && document.visibilityState !== 'hidden') WAKE.blocked = true;
+  } finally { WAKE.pending = false; }
 }
 function wakeReleaseLater() { clearTimeout(WAKE.relT); WAKE.relT = setTimeout(wakeRelease, 60000); }
 function wakeRelease() {
@@ -3815,11 +3873,49 @@ function toast(msg, actions) {
   t.textContent = '';
   t.appendChild(el('span', 'tmsg', esc(msg)));
   for (const a of acts) { const b = el('button', '', esc(a.label)); onTap(b, () => { hideToast(); shieldTap(); a.fn(); }); t.appendChild(b); }
-  t.classList.add('show');
+  UI.toastActs = acts.length > 0; UI.toastPos = '';
+  t.classList.add('show'); toastPlace();
   clearTimeout(UI.toastT); UI.toastT = setTimeout(hideToast, acts.length ? 5000 : 1600);
   UI.lastToast = msg;
 }
-function hideToast() { if (EL.toast) EL.toast.classList.remove('show'); }
+function hideToast() { if (EL.toast) EL.toast.classList.remove('show'); UI.toastActs = false; toastPlace(); }
+/* A toast with action buttons never lies on top of a control (§10.4 toasts, live use): on the main screen, in the clip
+   sheet and in the menu it is an in-flow band at the bottom (the clip grid / sheet body shrinks for those 5 s); in the
+   synth and drum editors it covers the LCD line (a display) or, where the LCD is hidden (320×568), the keyboard top.
+   A plain message toast stays a floating, tap-through label at the top as before. Re-checked every frame while shown. */
+function toastHome() {
+  if ((R.editor === 'synth' || R.editor === 'drum') && (EL.synthSheet.classList.contains('open') || EL.drumSheet.classList.contains('open'))) {
+    const l = ED.lcd;
+    if (l && l.isConnected && l.offsetHeight >= 18 && l.offsetWidth >= 160) return {kind: 'lcd', ref: l};
+    return {kind: 'kb', ref: EL.kbArea};
+  }
+  if (EL.menu.classList.contains('open')) return {kind: 'band', ref: EL.menu};
+  if (EL.clipSheet.classList.contains('open')) return {kind: 'band', ref: EL.clipSheet};
+  return {kind: 'band', ref: EL.gridArea};
+}
+function toastPlace() {
+  const t = EL.toast; if (!t) return;
+  toastPlace1(t);
+  EL.gridArea.classList.toggle('toasting', !!UI.toastActs && t.parentNode === EL.gridArea);
+}
+function toastPlace1(t) {
+  if (!UI.toastActs) {
+    if (t.parentNode !== document.body) document.body.appendChild(t);
+    if (UI.toastPos !== 'top') { UI.toastPos = 'top'; t.classList.remove('band', 'dock'); t.style.cssText = ''; }
+    return;
+  }
+  const h = toastHome();
+  if (h.kind === 'band') {
+    if (t.parentNode !== h.ref) h.ref.appendChild(t);
+    if (UI.toastPos !== 'band') { UI.toastPos = 'band'; t.classList.remove('dock'); t.classList.add('band'); t.style.cssText = ''; }
+    return;
+  }
+  if (t.parentNode !== document.body) document.body.appendChild(t);
+  const r = h.ref.getBoundingClientRect();
+  const css = h.kind === 'lcd' ? `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`
+    : `left:${r.left + 8}px;top:${r.top + 6}px;width:${Math.max(0, r.width - 16)}px;height:44px`;
+  if (UI.toastPos !== css) { UI.toastPos = css; t.classList.remove('band'); t.classList.add('dock'); t.classList.toggle('lcdk', h.kind === 'lcd'); t.style.cssText = css; }
+}
 function showBanner(onB) { if (EL.banner) EL.banner.classList.toggle('show', !!onB); }
 
 /* ---------- selection ---------- */
@@ -3898,6 +3994,7 @@ function uiFrame() {
   paintGhosts(tAud);
   padFlashes(tAud);
   if (R.editor === 'drum') drumEdFrame(bAud);
+  if (UI.toastActs) toastPlace();                           // sheets opened/closed/rebuilt under an action toast
 }
 function renderTakt(bAud) {
   let txt, cls = '';
@@ -4589,7 +4686,9 @@ function buildDrumEd() {
     steps.style.setProperty('--pc', `var(--p${ED.dVoice + 1})`);
     for (let s = 0; s < 16; s++) { const b = el('button', 'stepb' + (s % 4 === 0 ? ' q4' : ''), `<span class="sn">${s + 1}</span>`); b.dataset.s = s; b.setAttribute('aria-label', 'Schritt ' + (s + 1)); steps.appendChild(b); ED.stepEls.push(b); }
     onTap(steps, b => {
+      const had = !!S.tracks[4].clips[R.selS];
       ensureAudio(); toggleStep(DRUM_VOICES[ED.dVoice].id, +b.dataset.s, ED.page); paintSteps();
+      if (!had && S.tracks[4].clips[R.selS]) { safeRebuild(buildDrumEd); return; }   // a new clip: show its bar pager and info at once
       b.classList.remove('fl'); void b.offsetWidth; b.classList.add('fl'); haptic('tick');
       const st = stepState(S.tracks[4].clips[R.selS], DRUM_VOICES[ED.dVoice].gm, ED.page * 4 + (+b.dataset.s) * .25);
       lcdShow(DRUM_VOICES[ED.dVoice].l + ' · Schritt ' + (+b.dataset.s + 1), st === 2 ? 'Akzent' : st === 1 ? 'an' : 'aus');
@@ -4597,11 +4696,12 @@ function buildDrumEd() {
     const ov = el('div', 'ovw');
     for (let v = 0; v < 8; v++) for (let s = 0; s < 16; s++) { const d = el('i'); d.style.setProperty('--pc', `var(--p${v + 1})`); d.dataset.v = v; ov.appendChild(d); ED.ovEls.push(d); }
     onTap(ov, d => { ED.dVoice = +d.dataset.v; safeRebuild(buildDrumEd); }, 'i');
-    const foot = el('div', 'pgrow foot rest');
-    const info = el('span', 'small', 'Szene ' + (R.selS + 1) + (clip ? '' : ' · leer – Schritt erzeugt Clip'));
-    foot.append(ov);
-    if (len > 1) foot.appendChild(makeSeg(Array.from({length: len}, (_, k) => [k, 'Takt ' + (k + 1)]), () => ED.page, v => { ED.page = v; safeRebuild(buildDrumEd); }, 'pages', {lcd: false}));
-    foot.appendChild(info);
+    // footer = one row that never wraps: overview | bar pager + info (§3.4, no-scroll body §1.7.3)
+    const foot = el('div', 'pgrow foot rest'), side = el('div', 'pgside');
+    const info = el('span', 'small pginfo', 'Szene ' + (R.selS + 1) + (clip ? (len > 1 ? ' · ' + len + ' Takte' : '') : ' · leer – Schritt erzeugt Clip'));
+    foot.append(ov, side);
+    if (len > 1) side.appendChild(barPager(len));
+    side.appendChild(info);
     pg.append(drumVoiceChips(() => safeRebuild(buildDrumEd)), steps, foot);
     paintSteps();
   } else {
@@ -4610,6 +4710,26 @@ function buildDrumEd() {
     pg.append(ff, knobRow(['fx.drive', 'fx.reverb', 'fx.delay', 'fx.pan'].map(p => SYN_DESC[p]).map(d => makeCtl(d, () => S.tracks[4].fx[d.p.slice(3)], v => setDrumFx(d.p, v), {undo: soundUndo(4), mod: SYN_MOD.has(d.p)}))));
   }
   sh.classList.add('open');
+}
+// bar pager of the STEPS tab: a one-row segment [TAKT 1|2|…] where the footer is wide enough (container query),
+// otherwise ‹ Takt k/n › whose middle button opens a grid of all bars. Every bar of a 2–16-bar clip stays one or two taps away.
+function barPager(len) {
+  const go = v => { v = clamp(v | 0, 0, len - 1); if (v === ED.page) return; ED.page = v; safeRebuild(buildDrumEd); };
+  const nav = el('div', 'pgnav n' + (len <= 2 ? 2 : len <= 4 ? 4 : len <= 8 ? 8 : 16));
+  const seg = makeSeg(Array.from({length: len}, (_, k) => [k, String(k + 1), 'Takt ' + (k + 1)]), () => ED.page, go, 'pages', {lcd: false});
+  const sw = el('div', 'pgseg'); sw.append(el('span', 'lbl', 'Takt'), seg);
+  const st = el('div', 'pgstep');
+  const prev = el('button', 'rb pa', '‹'), mid = el('button', 'rb pv', `Takt ${ED.page + 1}<small>/${len}</small>`), next = el('button', 'rb pa', '›');
+  prev.setAttribute('aria-label', 'Voriger Takt'); next.setAttribute('aria-label', 'Nächster Takt'); mid.setAttribute('aria-label', 'Takt wählen');
+  prev.disabled = ED.page <= 0; next.disabled = ED.page >= len - 1;
+  onTap(prev, () => go(ED.page - 1)); onTap(next, () => go(ED.page + 1));
+  onTap(mid, () => openPop(mid, p => {
+    p.innerHTML = '<h4>Takt wählen</h4><div class="plist bars">' + Array.from({length: len}, (_, k) => `<button class="rb${k === ED.page ? ' on' : ''}" data-k="${k}" aria-label="Takt ${k + 1}">${k + 1}</button>`).join('') + '</div>';
+    guardTouch(p); onTap(p, b => { closePop(); go(+b.dataset.k); }, 'button[data-k]');
+  }, {name: 'bars', above: true}));
+  st.append(prev, mid, next);
+  nav.append(sw, st);
+  return nav;
 }
 function stepState(clip, gm, pos) {
   if (!clip) return 0;
@@ -4781,7 +4901,8 @@ const STORE_LABEL = {indexedDB: 'im Browser (IndexedDB)', localStorage: 'im Brow
 function storageStatus() {
   if (!kv) return 'Speicher wird geladen …';
   if (kv.mode === 'memory') return 'Speichern im Browser nicht möglich – bitte ‚Als Datei sichern‘';
-  const where = STORE_LABEL[kv.mode] || kv.mode;
+  // an IndexedDB write that fell back to localStorage is said so (the copy is still read back on the next start)
+  const where = autosave && autosave.where && autosave.where !== kv.mode && autosave.where !== 'memory' ? 'im Browser (localStorage – IndexedDB gestört)' : STORE_LABEL[kv.mode] || kv.mode;
   if (autosave && autosave.lastErr) return 'Speichern fehlgeschlagen – bitte ‚Als Datei sichern‘';
   if (autosave && autosave.dirty) return 'Wird gespeichert … · ' + where;
   const at = autosave && autosave.lastOk;
@@ -5247,7 +5368,9 @@ function exportReminder() {
   const P = uiPrefs(), now = Date.now(), DAY = 86400000;
   const last = P.lastExport || P.firstUse || now;
   if (now - last < 7 * DAY || (P.remindedAt && now - P.remindedAt < DAY)) return;
-  if (!(autosave.mt > last) && isPristine(S)) return;     // nothing new since the last file save
+  // §12.2: only with unsaved-to-file changes: edited after the last file save, or (never saved) anything but the untouched demo
+  const changed = P.lastExport ? autosave.mt > P.lastExport || autosave.dirty : !isPristine(S);
+  if (!changed) return;
   setUiPref('remindedAt', now);
   toast('Projekt seit 7 Tagen nicht als Datei gesichert', {label: 'Sichern', fn: () => saveFile()});
 }
@@ -5271,7 +5394,7 @@ async function boot() {
   EL.app.classList.remove('loading');
   const take = !!p && gen === BOOT.gen;                     // a project changed through the API meanwhile is never overwritten
   // a project read back unchanged from the store is not written again; a rescue copy or a takeover is
-  if (take) applyProject(normalizeProject(p), {first: !!msg && /Version 1/.test(msg), clean: fromStore && !hadRescue});
+  if (take) applyProject(normalizeProject(p), {first: !!msg && /Version 1/.test(msg), clean: fromStore && !hadRescue && !(autosave && autosave.loadedFallback)});
   else if (BOOT.dirty) markDirty();                         // changed (API, UI) while the store was loading
   if (msg && take) toast(msg);
   if (kv && kv.mode === 'memory') setTimeout(() => toast('Speichern im Browser nicht möglich – bitte „Als Datei sichern“ benutzen'), msg ? 1800 : 0);
@@ -5509,6 +5632,9 @@ function bindUI() {
   // under the finger; a quick second tap on the same spot (a double tap) must not act on them
   window.addEventListener('pointerup', e => { const t = e.target; UI.lastUp = {t: performance.now(), x: e.clientX, y: e.clientY, pop: !!(t && t.closest && t.closest('.pop'))}; }, true);
   window.addEventListener('pointerdown', e => {
+    // a click eaten for a closing tap belongs to THAT gesture only: its click (if any) comes before the next pointerdown.
+    // A touch on the guardTouch'ed backdrop produces no click at all, so a later, separate tap must never be swallowed.
+    UI.eatClick = 0;
     const s = UI.shield; if (!s) return;
     if (performance.now() - s.t > 500) { UI.shield = null; return; }
     if (Math.abs(e.clientX - s.x) > 30 || Math.abs(e.clientY - s.y) > 30) return;
