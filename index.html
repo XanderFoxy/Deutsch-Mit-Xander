@@ -165,11 +165,11 @@ svg{display:block}
 #gridArea{position:relative;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(120% 90% at 50% 0%,#14161a,var(--bg))}
 #clipGrid{flex:1 1 auto;min-height:0;min-width:0;display:grid;grid-template-columns:minmax(84px,1.7fr) repeat(4,minmax(46px,1fr)) 40px;grid-template-rows:44px repeat(5,minmax(26px,1fr));gap:3px;padding:4px 8px}
 @media (orientation:landscape){#clipGrid{grid-template-rows:44px repeat(5,minmax(0,1fr));gap:2px 3px;padding:3px 6px}}
-@media (orientation:landscape) and (max-height:370px){#clipGrid{grid-template-rows:32px repeat(5,minmax(0,1fr))}}
+@media (orientation:landscape) and (max-height:380px){#clipGrid{grid-template-rows:32px repeat(5,minmax(0,1fr))}}   /* 667×375: rows ≥ 30 px (§2.2) */
 @media (orientation:landscape) and (max-width:759px) and (max-height:560px){
   #app{grid-template-columns:84px minmax(0,1fr) 260px}
   #chipQ,#chipLen{display:none!important}           /* [FANG] stays (§2.2: only Q and LÄNGE move to the popover) */
-  #clipGrid{grid-template-columns:minmax(60px,1.2fr) repeat(4,minmax(34px,1fr)) 30px;padding:3px 4px}
+  #clipGrid{grid-template-columns:minmax(60px,1.2fr) repeat(4,minmax(34px,1fr)) 40px;padding:3px 4px}   /* ■ per row ≥ 40 px wide */
   .chipT{height:34px;padding:0 6px;font-size:10px;letter-spacing:.02em}
   .chipT b{margin-left:3px}
   #strip{gap:4px;padding:3px 5px}
@@ -202,6 +202,9 @@ svg{display:block}
 .th .bar{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--tc)}
 .th .nm{font:700 12px/1 var(--font-ui);letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .th .sb{font-size:10px;line-height:1;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 14px)}
+.th .nm{flex:none;line-height:13px}                                /* the track name never shrinks (it was cut at 320×568); the sound line gives way */
+.th .sb{min-height:0}
+@media (orientation:portrait) and (max-height:600px){.th .sb{display:none}}
 .th .fb{position:absolute;right:4px;bottom:4px;font-size:11px;line-height:1;color:var(--text-faint);font-weight:700}
 .th .fb.act{color:var(--amber);text-shadow:0 0 6px var(--amber-glow)}
 .th .fb.fix{font-size:9px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-dim)}
@@ -334,11 +337,12 @@ svg{display:block}
 #app.tr #modebar,#app.mom #modebar{box-shadow:0 0 0 1px var(--amber),0 0 18px var(--amber-glow)}
 .trl .l1,.trl .l2{display:inline}
 @media (orientation:landscape){
-  #modebar{grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) minmax(0,1fr) 28px;grid-template-areas:"seg seg" "seg seg" "dn up";padding:4px;gap:4px;border-right:1px solid var(--panel-edge)}
+  #modebar{grid-template-columns:1fr 1fr;grid-template-rows:minmax(0,1fr) minmax(0,1fr) 40px;grid-template-areas:"seg seg" "seg seg" "dn up";padding:4px;gap:4px;border-right:1px solid var(--panel-edge)}
   #modeSeg{flex-direction:column}
   #modeSeg button{font-size:11px;flex-direction:column;gap:3px;white-space:normal;min-height:0}
   .trl{display:flex;flex-direction:column;line-height:1.05}
   .trl .l1,.trl .l2{display:block}
+  .trl .l1::after{content:'-'}                       /* „TRANS-“ / „PONIEREN“: a German word break needs its hyphen */
   .oct{min-height:0;font-size:20px}
   #modeSeg .ico{display:none}
 }
@@ -707,6 +711,8 @@ svg{display:block}
 .knob{width:72px;height:92px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:1px;touch-action:none;position:relative;outline:none;cursor:ns-resize;border-radius:8px}
 .knob .kl,.fader .kl{font:600 11px/13px var(--font-ui);letter-spacing:.03em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;max-width:72px;overflow:hidden;text-overflow:ellipsis}
 .knob svg{width:60px;height:60px;overflow:visible;transition:transform .08s}
+/* a short knob cell (375×667, fitted drum pages) shrinks the dial, never the caption or the value (they were cut off) */
+.knob .kl,.knob .kn,.knob .kb{flex:none}.knob svg{flex:0 1 auto;min-height:0}
 .knob .kt{fill:none;stroke:#2a2e36;stroke-width:4;stroke-linecap:round}
 .knob .kv{fill:none;stroke:var(--tc,var(--sel));stroke-width:4;stroke-linecap:round}
 .knob .kc{fill:#2a2e36;stroke:#0a0b0d;stroke-width:1.5}
@@ -951,8 +957,8 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 @media (orientation:landscape){
   #menu .mb{flex-direction:row;align-items:flex-start;gap:24px}
   .mcol{display:flex;flex-direction:column;flex:1 1 0;min-width:0}
-  .mlogo svg{height:48px}
 }
+@media (orientation:landscape) and (max-height:560px){.mlogo svg{height:48px}}   /* only the short L phone; W keeps 64 px (§13.2, BR3) */
 .msec{width:100%;max-width:720px;margin:0 auto;padding:12px 0;border-bottom:1px solid var(--line)}
 .mstatus{font:600 13px/1.4 var(--font-ui);color:var(--text);margin:2px 0 6px}
 .mstatus.warn{color:var(--amber)}
@@ -1031,9 +1037,20 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 #toast.band.t3 .tmsg{font-size:12px;line-height:1.15}
 #toast.dock{transform:none;max-width:none;background:#f4f1ea;justify-content:space-between;gap:6px;padding:0 4px 0 10px;pointer-events:auto}
 #toast.dock.lcdk{border-radius:5px;padding:0 2px 0 10px;font-size:12px}
-#toast.dock.lcdk button{height:calc(100% - 4px);min-height:22px}
+#toast.dock.lcdk button{height:calc(100% - 4px);min-height:22px;position:relative}
+/* the LCD line is only 22–28 px high: the action's touch target reaches 10 px above and below it (≈ 44 px, §2.6) */
+#toast.dock.lcdk button::after,#toast.dock button::after{content:'';position:absolute;left:-2px;right:-2px;top:-10px;bottom:-10px}
+#toast.dock button{position:relative}
 #menu>#toast.band,#clipSheet>#toast.band{margin:6px 10px 8px}
-#gridArea.toasting #hint{display:none}                 /* the action band takes the hint's place for 5 s: the clip rows keep their size */
+/* the action band lies over the bottom of the clip area for 5 s (absolute): the clip rows keep their size and position, so
+   a tap aimed at a clip never lands on another one when the band comes or goes; a visible hint keeps its space under it */
+#gridArea>#toast.band{position:absolute;left:0;right:0;bottom:0;z-index:7;margin:0 8px 6px}
+#gridArea.toasting #hint{visibility:hidden}
+/* short landscape (§2.2: 5 clip rows ≥ 30 px): the first-run hint moves out of the clip area into the side panel, over
+   the Träger history row (empty on a first run) just above the track strip — never over the keys or pads (§10) */
+@media (orientation:landscape) and (max-height:560px){#side{position:relative}}
+#side>#hint{position:absolute;left:6px;right:6px;bottom:53px;z-index:6;margin:0;min-height:44px;padding:2px 2px 2px 8px;font-size:11px;line-height:1.2;box-shadow:0 2px 8px rgba(0,0,0,.6)}
+#side>#hint button{width:40px;height:40px}
 #banner{position:fixed;left:0;right:0;top:0;z-index:65;display:none;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;background:var(--rec);color:#fff;text-align:center;font:700 14px/1.2 var(--font-ui)}
 #banner.show{display:block}
 
@@ -1218,19 +1235,18 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
   #strip{gap:3px;padding:3px 4px}
   #strip .sbtn{padding:0 4px;font-size:10px;letter-spacing:.02em}
   #strip #bKlang{min-width:44px}
-  #strip #bEdit,#strip #bFolgt{width:32px;min-width:32px;padding:0}
-  #strip #bMute,#strip #bUndo{width:32px}
+  #strip #bEdit,#strip #bFolgt{width:38px;min-width:38px;padding:0}    /* ≥ 38 px wide touch targets (the name gives way) */
+  #strip #bMute,#strip #bUndo{width:38px;min-width:38px}
 }
 /* WP2: ✎ joined the strip (§3.3); in the 300 px L side panel the dot gives way and the buttons get a little narrower */
 @media (orientation:landscape) and (max-height:560px){
   #stDot{display:none}
   #strip #bFolgt .ck{display:none}
-  #strip #bEdit{width:36px;min-width:36px}
+  #strip #bEdit,#strip #bMute,#strip #bUndo{width:40px;min-width:40px;padding:0}   /* touch targets ≥ 40 px (§2.4 L) */
   #strip #bFolgt{width:40px;min-width:40px;padding:0}
 }
 @media (orientation:landscape) and (max-width:759px) and (max-height:560px){
-  #strip #bEdit,#strip #bFolgt{width:32px;min-width:32px}
-  #strip #bMute,#strip #bUndo{width:30px}
+  #strip #bEdit,#strip #bFolgt,#strip #bMute,#strip #bUndo{width:38px;min-width:38px}   /* touch targets ≥ 38 px; the name gives way */
   #strip #bKlang{min-width:42px;padding:0 3px}
   #strip #stName{font-size:10.5px;letter-spacing:.01em}
 }
@@ -1617,7 +1633,7 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 .kn-row.k5{grid-template-columns:repeat(5,minmax(0,72px));gap:2px 0;justify-content:space-between}
 .kn-row.k5 .knob{width:auto;min-width:0}
 .kn-row.k5 .knob .kl{max-width:100%}
-.knob.inert{opacity:.32;pointer-events:none}
+.knob.inert,.tgl.inert{opacity:.32;pointer-events:none}
 /* Welle: icon + name; at < 390 px only the icon (the name is the title / LCD) */
 .seg.wvn button{display:inline-flex;align-items:center;gap:4px;padding:0 8px;font-size:12px}
 .seg.wvn .wi{font-size:17px;line-height:1}
@@ -2658,6 +2674,7 @@ class AnalogCore extends AudioWorkletProcessor {
     this.msrc = new Int32Array(NSLOT); this.mdst = new Int32Array(NSLOT); this.mamt = new Float64Array(NSLOT);
     this.src = new Float64Array(NSRC); this.dst = new Float64Array(NDST);
     this.gl1 = 0; this.gl2 = 0;         // global (free-running) LFO phases
+    this.gsh1 = Math.random() * 2 - 1; this.gsh2 = Math.random() * 2 - 1;   // global S&H values (new one at every global phase wrap)
     this.bpm = 120; this.songStart = -1; this.ended = []; this.ageCtr = 0; this.stereo = false;
     this.busy = 0; this.busyN = 0; this.lastRep = 0; this.alive = true;
     // mod scope for the UI: source values of the focus voice (newest gated, else newest sounding), ~30 Hz, only on request
@@ -2897,8 +2914,11 @@ class AnalogCore extends AudioWorkletProcessor {
     // global LFO phases: tempo-synced LFOs follow the song position
     const songT = frame * ISR - this.songStart, spb = 60 / this.bpm;
     const r1 = P.l1sync > 0 ? 1 / (P.l1sync * spb) : P.l1rate, r2 = P.l2sync > 0 ? 1 / (P.l2sync * spb) : P.l2rate;
+    const og1 = this.gl1, og2 = this.gl2;
     if (P.l1sync > 0 && this.songStart >= 0) this.gl1 = ((songT / spb / P.l1sync) % 1 + 1) % 1; else this.gl1 = (this.gl1 + r1 * step) % 1;
     if (P.l2sync > 0 && this.songStart >= 0) this.gl2 = ((songT / spb / P.l2sync) % 1 + 1) % 1; else this.gl2 = (this.gl2 + r2 * step) % 1;
+    if (this.gl1 < og1) this.gsh1 = Math.random() * 2 - 1;   // S&H with Start FREI/TAKT: a new value every cycle of the global phase
+    if (this.gl2 < og2) this.gsh2 = Math.random() * 2 - 1;
     let fv = null;
     if (this.scopeOn) for (const v of this.V) if (v.on && v.fade === 0 && (!fv || (v.gate && !fv.gate) || (v.gate === fv.gate && v.age > fv.age))) fv = v;
     for (const v of this.V) {
@@ -2912,7 +2932,7 @@ class AnalogCore extends AudioWorkletProcessor {
       if (P.l1retrig) { const o = v.l1; v.l1 = (v.l1 + r1 * step) % 1; if (v.l1 < o) v.sh1 = Math.random() * 2 - 1; p1 = v.l1; } else p1 = this.gl1;
       if (P.l2retrig) { const o = v.l2; v.l2 = (v.l2 + r2 * step) % 1; if (v.l2 < o) v.sh2 = Math.random() * 2 - 1; p2 = v.l2; } else p2 = this.gl2;
       const fade1 = P.l1fade > 0 ? Math.min(1, v.t0 / P.l1fade) : 1, fade2 = P.l2fade > 0 ? Math.min(1, v.t0 / P.l2fade) : 1;
-      src[S_LFO1] = this.lfoVal(P.l1shape | 0, p1, v.sh1) * fade1; src[S_LFO2] = this.lfoVal(P.l2shape | 0, p2, v.sh2) * fade2;
+      src[S_LFO1] = this.lfoVal(P.l1shape | 0, p1, P.l1retrig ? v.sh1 : this.gsh1) * fade1; src[S_LFO2] = this.lfoVal(P.l2shape | 0, p2, P.l2retrig ? v.sh2 : this.gsh2) * fade2;
       src[S_FENV] = v.fOut; src[S_MENV] = v.mOut; src[S_VEL] = v.vel; src[S_KEY] = (v.pitch - 60) / 24;
       src[S_MW] = P.mw; src[S_RND] = v.rnd; src[S_AENV] = v.aOut;
       if (v === fv) { this.sc.set(src); this.scHas = true; }
@@ -3342,7 +3362,10 @@ class AnalogCore extends AudioWorkletProcessor {
     } else {
       this.tempoAt(f0);
       const P = this.P, spb = 60 / this.bpm, r1 = P.l1sync > 0 ? 1 / (P.l1sync * spb) : P.l1rate, r2 = P.l2sync > 0 ? 1 / (P.l2sync * spb) : P.l2rate;
+      const og1 = this.gl1, og2 = this.gl2;
       this.gl1 = (this.gl1 + r1 * N * ISR) % 1; this.gl2 = (this.gl2 + r2 * N * ISR) % 1;
+      if (this.gl1 < og1) this.gsh1 = Math.random() * 2 - 1;
+      if (this.gl2 < og2) this.gsh2 = Math.random() * 2 - 1;
     }
     const dcs = this.dcS;
     if (any || dcs[0] !== 0 || dcs[1] !== 0 || dcs[2] !== 0 || dcs[3] !== 0) { this.dcOut(L, 0, N); if (R !== L) this.dcOut(R, 2, N); }
@@ -3350,7 +3373,7 @@ class AnalogCore extends AudioWorkletProcessor {
     if (this.scopeOn && f0 >= this.scopeNext) {
       this.scopeNext = f0 + ((SR / 30) | 0);
       const sc = this.sc;
-      if (!this.scHas) { sc.fill(0); sc[S_LFO1] = this.lfoVal(this.P.l1shape | 0, this.gl1, 0); sc[S_LFO2] = this.lfoVal(this.P.l2shape | 0, this.gl2, 0); }
+      if (!this.scHas) { sc.fill(0); sc[S_LFO1] = this.lfoVal(this.P.l1shape | 0, this.gl1, this.gsh1); sc[S_LFO2] = this.lfoVal(this.P.l2shape | 0, this.gl2, this.gsh2); }
       let nv = 0; for (const v of this.V) if (v.on) nv++;
       // plain array (NSRC numbers): structured clone cost is negligible at 30 Hz; t = audio time of this snapshot
       if (this.scopeDst) { if (!nv) this.scD.fill(0); this.port.postMessage({scope: Array.from(sc), t: f0 * ISR, nv, dst: Array.from(this.scD)}); }
@@ -3723,7 +3746,9 @@ class Transposer {
     const cur = this.current().target;
     const same = (a, b) => (!a && !b) || (a && b && a.root === b.root && a.quality === b.quality && a.bass === b.bass);
     // Oktave 'Absolut (CV)': the same chord an octave higher/lower IS a change (+12 / −12)
-    if (same(det, cur) && !(this.opts.octaveMode === 'absolute' && det && cur && det.rootNote !== cur.rootNote)) return null;
+    // a recalled song Träger carries the direction it was heard in (sd): F♯ over C heard +6 is not the same as F♯ heard −6
+    const tieDiff = det && det.sd != null && this.opts.octaveMode !== 'absolute' && H.PC(det.root - this.opts.projectKey.root) === 6 && Math.sign(this.current().shift || 0) !== det.sd;
+    if (same(det, cur) && !tieDiff && !(this.opts.octaveMode === 'absolute' && det && cur && det.rootNote !== cur.rootNote)) return null;
     let at = now, retriggerFrom = pressTime - 0.03;
     if (this.opts.change !== 'now' && grid && grid.running) {
       const unit = grid.secPerBeat * (this.opts.change === 'bar' ? grid.beatsPerBar : 1);
@@ -3737,7 +3762,7 @@ class Transposer {
   _commit(det, at, info) {
     while (this.timeline.length > 1 && this.current().time > at) this.timeline.pop();   // a newer change replaces a queued one
     const prev = this.current(), pk = this.opts.projectKey;
-    const shift = !det ? 0 : this.opts.octaveMode === 'absolute' ? det.rootNote - H.refNote(pk) : H.nearestShift(det.root, pk.root, prev.shift);
+    const shift = !det ? 0 : this.opts.octaveMode === 'absolute' ? det.rootNote - H.refNote(pk) : H.nearestShift(det.root, pk.root, det.sd != null ? det.sd : prev.shift);
     const entry = {time:at, target:det, shift, keys:det && det.keys ? det.keys : []};
     this.timeline.push(entry);
     if (det) { this.history = [det, ...this.history.filter(h => !(h.root === det.root && h.quality === det.quality && h.bass === det.bass))].slice(0, 8); }
@@ -3750,7 +3775,7 @@ class Transposer {
   rekey() {
     const pk = this.opts.projectKey; let prev = 0;
     for (const e of this.timeline) {
-      e.shift = !e.target ? 0 : this.opts.octaveMode === 'absolute' ? e.target.rootNote - H.refNote(pk) : H.nearestShift(e.target.root, pk.root, prev);
+      e.shift = !e.target ? 0 : this.opts.octaveMode === 'absolute' ? e.target.rootNote - H.refNote(pk) : H.nearestShift(e.target.root, pk.root, e.target.sd != null ? e.target.sd : prev);
       prev = e.shift;
     }
   }
@@ -3940,7 +3965,10 @@ const KeyDetect = (() => {
     const TH = .75;
     for (const g of res) {                                           // coarsest grid that explains the onsets
       if (g.score < TH) continue;
-      const finerTrip = res.find(x => x.id.endsWith('T') && x.step < g.step && x.score > g.score + .15 && x.score >= TH);
+      // a finer triplet grid only wins if some onset needs it: one on the triplet grid that the straight 1/16 does not
+      // explain (§3.5 „triplets win only if the middle third of a beat is used“) — a quarter phrase with one eighth stays straight
+      const tripOnly = x => on.filter(t => Math.abs(dist(t, x.step)) <= tolOf(x.step) && Math.abs(dist(t, .25)) > tolOf(.25)).length;
+      const finerTrip = res.find(x => x.id.endsWith('T') && x.step < g.step && x.score > g.score + .15 && x.score >= TH && tripOnly(x) > 0);
       if (finerTrip) return {grid: finerTrip.id, swing: .5, fit: +finerTrip.fit.toFixed(3), sure: true};
       if (g.id.endsWith('T')) { const straight = byStep(g.step > .2 ? .25 : .125); if (straight.score >= g.score - .1) return {grid: straight.id, swing: .5, fit: +straight.fit.toFixed(3), sure: true}; }
       return {grid: g.id, swing: .5, fit: +g.fit.toFixed(3), sure: true};
@@ -3966,7 +3994,7 @@ const KeyDetect = (() => {
       let d = n.d;
       if (o.ends) { const e = n.t + n.d, qe = Math.max(target(e), t + step / 2); d = Math.max(1 / 32, n.d + (qe - e) * str); }
       if (t < 0) t = 0;
-      if (t >= L - 1e-9) t -= L;                                    // pushed over the loop end -> wraps to the start
+      if (t >= L - 1e-9) { t -= L * Math.floor((t + 1e-9) / L); if (t < 0 || t >= L - 1e-9) t = 0; }   // pushed over the loop end -> wraps to the start
       return {...n, t: +t.toFixed(6), d: +d.toFixed(6)};
     }).sort((a, b) => a.t - b.t || a.n - b.n);
   }
@@ -4014,9 +4042,12 @@ const RecHelpers = (() => {
     lane.sort((a, b) => a.bar - b.bar);
     song.bars = Math.max(song.bars, bar + (slot >= 0 ? 1 : 0));
   }
-  function logCarrier(song, beat, target) {
+  // shift (optional): the shift that was heard; its direction (sd) is kept so a tritone Träger replays in the same octave
+  function logCarrier(song, beat, target, shift) {
     while (song.carrier.length && song.carrier[song.carrier.length - 1].beat >= beat - 1e-6) song.carrier.pop();
-    song.carrier.push({beat, target: target ? {root: target.root, quality: target.quality, bass: target.bass, kind: target.kind, name: target.name, rootNote: target.rootNote, keys: target.keys || []} : null});
+    const t = target ? {root: target.root, quality: target.quality, bass: target.bass, kind: target.kind, name: target.name, rootNote: target.rootNote, keys: target.keys || []} : null;
+    if (t && Number.isFinite(shift)) t.sd = shift < 0 ? -1 : 1;
+    song.carrier.push({beat, target: t});
   }
   function slotAt(song, track, bar) { let s = -1; for (const e of song.lanes[track]) { if (e.bar > bar) break; s = e.slot; } return s; }
   // Launch start of the block that contains `bar` (clips restart where they were launched, like Ableton arrangement clips)
@@ -4189,6 +4220,8 @@ const RecHelpers = (() => {
     const L = () => clip().len * 4;
     const gridStep = () => GRID[E.grid] || 1 / 96;
     const noteLen = () => E.noteLen || GRID[E.grid] || .25;
+    // step input: the step is the grid (§3.3); with Raster „frei“ the ♪ length, else 1/16 (never the 1/96 drawing fallback)
+    const stepLen = () => GRID[E.grid] || E.noteLen || .25;
     const scaleOf = () => { const k = clip().key || {root: 0, scale: 'ionian'}; return {root: k.root, S: SC[k.scale] || SC.ionian}; };
     const inScale = n => { const s = scaleOf(); return s.S.includes(PC(n - s.root)); };
     function buildRows(keepCenter) {
@@ -4264,7 +4297,7 @@ const RecHelpers = (() => {
       }
       x.globalAlpha = 1;
       if (xOf(Lb) < V.W) { x.fillStyle = '#000'; x.globalAlpha = .55; x.fillRect(xOf(Lb), 0, V.W - xOf(Lb), V.H); x.globalAlpha = 1; }
-      if (E.step != null) { x.fillStyle = C.amber; x.globalAlpha = .22; x.fillRect(xOf(E.step), 0, Math.max(2, gridStep() * V.ppb), V.H); x.globalAlpha = 1; }
+      if (E.step != null) { x.fillStyle = C.amber; x.globalAlpha = .22; x.fillRect(xOf(E.step), 0, Math.max(2, stepLen() * V.ppb), V.H); x.globalAlpha = 1; }
       for (const nt of c.notes) {
         const r = noteRect(nt); if (r.x > V.W || r.x + r.w < 0 || r.y > V.H || r.y + r.h < 0) continue;
         const selected = E.sel.has(nt);
@@ -4341,13 +4374,13 @@ const RecHelpers = (() => {
       if (ns.length) { model.audition && model.audition(ns[0].n, ns[0].v); centerIfHidden(ns[0].n); }
       return true;
     }
-    function quantizeNotes(ns) { const g = GRID[E.grid]; if (!g) return false; for (const nt of ns) { let t = Math.round((nt.o != null ? nt.o : nt.t) / g) * g; if (t >= L() - 1e-9) t = 0; nt.t = +t.toFixed(6); } return true; }
+    function quantizeNotes(ns) { const g = GRID[E.grid]; if (!g) return false; for (const nt of ns) { let t = Math.round((nt.o != null ? nt.o : nt.t) / g) * g; if (t >= L() - 1e-9) t = ((t % L()) + L()) % L(); if (t >= L() - 1e-9) t = 0; nt.t = +t.toFixed(6); } return true; }
     function legato(ns) { const s = ns.slice().sort((a, b) => a.t - b.t); for (let i = 0; i < s.length; i++) { const nx = s.find(o => o.t > s[i].t + 1e-6); s[i].d = nx ? nx.t - s[i].t : Math.max(s[i].d, L() - s[i].t); } return true; }
     function duplicate() {
       const c = clip();
       if (!E.sel.size) {                                            // nothing selected: double the clip (×2 Länge)
         if (c.len * 2 > 16) { say('max. 16 Takte'); return; }
-        model.begin(); const Lb = L(); c.notes = c.notes.concat(c.notes.map(n => ({...n, t: n.t + Lb}))); c.len *= 2; sortNotes(); E.loop = null; model.end(true, 'Clip verdoppeln'); render(); say('×2 → ' + c.len + ' Takte'); return;
+        model.begin(); const Lb = L(); c.notes = c.notes.concat(c.notes.map(n => Object.assign({...n, t: n.t + Lb}, n.o != null ? {o: +(n.o + Lb).toFixed(4)} : {}))); /* the copy's raw onsets move with it (as clip sheet ×2) */ c.len *= 2; sortNotes(); E.loop = null; model.end(true, 'Clip verdoppeln'); render(); say('×2 → ' + c.len + ' Takte'); return;
       }
       const ns = scope(), t0 = Math.min(...ns.map(n => n.t)), t1 = Math.max(...ns.map(n => n.t + n.d));
       const span = Math.max(gridStep(), Math.ceil((t1 - t0) / gridStep() - 1e-6) * gridStep());
@@ -4356,10 +4389,12 @@ const RecHelpers = (() => {
       const copies = ns.map(n => addNote(n.t + span, n.n, n.d, n.v)).filter(n => n.t < L());
       E.sel = new Set(copies); sortNotes(); model.end(true, 'Duplizieren'); render();
     }
+    // a raw onset stays inside the clip when it gets shorter (a note wrapped onto the downbeat keeps o near the end)
+    function wrapO(o, nl) { const w = ((o % nl) + nl) % nl; return +(w >= nl - 1e-4 ? 0 : w).toFixed(4); }
     function setLen(bars) {
       bars = clamp(bars, 1, 16); const c = clip(); if (bars === c.len) return;
       model.begin(); const nl = bars * 4;
-      if (bars < c.len) { c.notes = c.notes.filter(n => n.t < nl - 1e-9); c.notes.forEach(n => { n.d = Math.min(n.d, nl); }); }
+      if (bars < c.len) { c.notes = c.notes.filter(n => n.t < nl - 1e-9); c.notes.forEach(n => { n.d = Math.min(n.d, nl); if (n.o != null) n.o = wrapO(n.o, nl); }); }
       c.len = bars; E.sel = new Set([...E.sel].filter(n => c.notes.includes(n)));
       if (E.loop && E.loop.b >= bars) E.loop = E.loop.a < bars ? {a: E.loop.a, b: bars - 1} : null;
       if (E.step != null && E.step >= nl) E.step = 0;
@@ -4372,7 +4407,7 @@ const RecHelpers = (() => {
       if (lp.a === 0 && lp.b === c.len - 1) { E.loop = null; render(); return false; }
       model.begin();
       c.notes = c.notes.filter(n => n.t >= a - 1e-9 && n.t < b - 1e-9);
-      for (const n of c.notes) { n.t = +(n.t - a).toFixed(6); if (n.o != null) n.o = +Math.max(0, n.o - a).toFixed(4); n.d = Math.min(n.d, nl); }
+      for (const n of c.notes) { n.t = +(n.t - a).toFixed(6); if (n.o != null) n.o = wrapO(Math.max(0, n.o - a), nl); n.d = Math.min(n.d, nl); }
       c.len = lp.b - lp.a + 1; E.loop = null; E.sel = new Set([...E.sel].filter(n => c.notes.includes(n)));
       if (E.step != null && E.step >= nl) E.step = 0;
       sortNotes(); model.end(true, 'Loop = Auswahl'); V.x0 = 0; render(); say(c.len + (c.len === 1 ? ' Takt' : ' Takte'));
@@ -4564,7 +4599,7 @@ const RecHelpers = (() => {
       const onNum = inClip && px >= xOf(bar * 4) - 4 && px <= xOf(bar * 4) + NUMW + 2, lp = E.loop;
       if (inClip && lp && bar >= lp.a && bar <= lp.b && (onNum || E.step == null)) { E.loop = null; render(); return; }   // a tap on the band clears it
       if (onNum) { E.loop = lp ? {a: Math.min(lp.a, bar), b: Math.max(lp.b, bar)} : {a: bar, b: bar}; if (opts.onTick) opts.onTick(); render(); return; }
-      if (E.step != null) { E.step = clamp(snapDown(beat), 0, L() - gridStep()); render(); }
+      if (E.step != null) { E.step = clamp(snapDown(beat), 0, L() - stepLen()); render(); }
     }
     // velocity: absolute value at the finger, notes nearest to the finger's x (sweep paints)
     (function () {
@@ -4588,17 +4623,17 @@ const RecHelpers = (() => {
     const stepLog = [];
     function stepInput(noteNums, vel) {
       if (E.step == null || !noteNums.length) return false;
-      const len = gridStep(); model.begin();
+      const len = stepLen(); model.begin();
       const made = noteNums.map(n => addNote(E.step, n, len * .98, vel)); sortNotes();
       stepLog.push({at: E.step, notes: made}); E.step = (E.step + len) % L();
       model.end(true, 'Schritt'); centerIfHidden(noteNums[0]); render(); return true;
     }
-    function stepRest() { if (E.step == null) return; stepLog.push({at: E.step, notes: []}); E.step = (E.step + gridStep()) % L(); render(); }
-    function stepTie() { const last = stepLog[stepLog.length - 1]; if (E.step == null || !last) return; model.begin(); last.notes.forEach(n => { n.d = Math.min(L(), n.d + gridStep()); }); E.step = (E.step + gridStep()) % L(); model.end(last.notes.length > 0, 'Bindung'); render(); }
+    function stepRest() { if (E.step == null) return; stepLog.push({at: E.step, notes: []}); E.step = (E.step + stepLen()) % L(); render(); }
+    function stepTie() { const last = stepLog[stepLog.length - 1]; if (E.step == null || !last) return; model.begin(); last.notes.forEach(n => { n.d = Math.min(L(), n.d + stepLen()); }); E.step = (E.step + stepLen()) % L(); model.end(last.notes.length > 0, 'Bindung'); render(); }
     function stepBack() {
       if (E.step == null) return;
       const last = stepLog.pop();
-      if (!last) { E.step = Math.max(0, E.step - gridStep()); render(); return; }
+      if (!last) { E.step = Math.max(0, E.step - stepLen()); render(); return; }
       model.begin(); clip().notes = clip().notes.filter(n => !last.notes.includes(n)); E.step = last.at; model.end(last.notes.length > 0, 'Schritt zurück'); render();
     }
     function setStep(on) { E.step = on ? (E.step == null ? 0 : E.step) : null; if (!on) stepLog.length = 0; if (opts.onStep) opts.onStep(E.step != null); render(); }
@@ -5335,11 +5370,14 @@ const RecHelpers = (() => {
       async duplicate(id) { const s = L.get(id); return s ? L.save(Object.assign(deep(s), {origin: s.id}), {name: s.name}) : null; },
       /* merge sounds from a file: same sound (hash) -> skip; same id with other content -> keep both (new id); name clash -> "Name 2" */
       async importMany(sounds) {
-        const have = new Map(list.map(s => [soundHash(s), s])), res = {added: [], skipped: 0};
-        for (const raw of sounds || []) { const s = normalizeSound(raw); if (!s) continue; const h = soundHash(s);
-          if (have.has(h)) { res.skipped++; continue; }
+        // hash dedupe against the library as it was (§11.3): sounds of the same file that share a hash but carry their own
+        // names (Duplizieren + Umbenennen) are all kept, only an exact repeat (same hash and name) inside the file is skipped
+        const have = new Map(list.map(s => [soundHash(s), s])), seen = new Set(), res = {added: [], skipped: 0};
+        for (const raw of sounds || []) { const s = normalizeSound(raw); if (!s) continue; const h = soundHash(s), hn = h + '\u0000' + String(s.name || '');
+          if (have.has(h) || seen.has(hn)) { res.skipped++; continue; }
+          seen.add(hn);
           if (!s.id || !s.id.startsWith('u-') || L.get(s.id)) s.id = uid('u');
-          s.name = uniqueName(s.name, taken()); list.push(s); have.set(h, s); res.added.push(s.id); }
+          s.name = uniqueName(s.name, taken()); list.push(s); res.added.push(s.id); }
         if (res.added.length) await persist(); return res;
       },
       exportFile: ids => buildSoundsFile(ids ? list.filter(s => ids.includes(s.id)) : list),
@@ -5693,14 +5731,16 @@ const RecHelpers = (() => {
       {gain: -15.7}, {chorus: {mode: 'II', mix: .7}, rev: .3}),
     F('pop-bass-dx', 'Pop-Bass DX', 'fm', 'bass', 'FM-Bass der 80er (Lately, Take On Me)',
       'Holzig und knackig: Modulator-Pegel fallen schnell = der Biss ist nur im Anschlag. Anschlag öffnet die Modulatoren (Velocity 5–6).',
-      {alg: 5, fb: 5, trans: -12, ops: [
+      // trans +12 with the ×0.5 carriers = the fundamental at the played note (Anhang B.2 F3 had −12 = two octaves below,
+      // 16 Hz for C2: inaudible on phones, §11.1 Bass gate fixed here); OP2 hotter (ol 90, L2 72) for the 220 Hz gate
+      {alg: 5, fb: 5, trans: 12, ops: [
         OP(0, 99, [99, 45, 30, 70], [99, 85, 0, 0], {vs: 2, rs: 2}),
-        OP(0, 82, [99, 70, 40, 70], [99, 50, 0, 0], {vs: 5, rs: 3}),
+        OP(0, 90, [99, 70, 40, 70], [99, 72, 0, 0], {vs: 5, rs: 3}),
         OP(1, 86, [99, 60, 30, 70], [99, 70, 0, 0], {det: 2, vs: 2, rs: 2}),
         OP(3, 72, [99, 85, 50, 70], [99, 0, 0, 0], {vs: 6, rs: 3}),
         OP(0, 80, [99, 50, 30, 70], [99, 80, 0, 0], {det: -2, rs: 2}),
         OP(1, 70, [99, 60, 35, 70], [99, 60, 0, 0], {vs: 3, rs: 2})]},
-      {gain: -1.6, mode: 1, poly: 1}, {rev: .05}),
+      {gain: -6.2, mode: 1, poly: 1}, {rev: .05}),            // −4.6 dB: two octaves up is louder (−18 LUFS, FM3)
     F('solid-bass', 'Solid-Bass', 'fm', 'bass', 'Slap-artiger FM-Bass',
       'Paar 1 = Sub (0,5 : 0,5, fast reiner Sinus), Paar 2 = Körper mit „Twang“ (schnell fallender 1:1-Modulator), Paar 3 = Klick (3:1 mit Feedback, 40 ms). Drei Bausteine, drei Aufgaben.',
       {alg: 5, fb: 6, ops: [
@@ -6363,8 +6403,9 @@ const RecHelpers = (() => {
   FX.lfoShape = function (shape, ph, cyc, seed) { // ph 0..1 inside cycle cyc; output -1..1
     switch (shape) {
       case 'sine': return Math.sin(2 * Math.PI * ph);
-      case 'triangle': return ph < 0.25 ? 4 * ph : ph < 0.75 ? 2 - 4 * ph : 4 * ph - 4;
-      case 'saw': return ph < 0.5 ? 2 * ph : 2 * ph - 2;      // rising, 0 at phase 0 (like OscillatorNode 'sawtooth')
+      // triangle and saw as in the synth worklet (lfoVal): -1 at phase 0, so a TAKT LFO resets on the beat on every engine
+      case 'triangle': return ph < 0.5 ? 4 * ph - 1 : 3 - 4 * ph;
+      case 'saw': return 2 * ph - 1;                            // rising from -1, resets at phase 0 (on the beat)
       case 'ramp': return 1 - 2 * ph;                           // falling from +1
       case 'square': return ph < 0.5 ? 1 : -1;
       case 'sh': return hash(cyc, seed);
@@ -6706,8 +6747,11 @@ const RecHelpers = (() => {
       M.trim.gain.setTargetAtTime(dbToGain((p.makeup || 0) - FX.autoMakeupDb(thr, ratio, knee)), t, 0.02);
       const d = clamp(p.drive || 0, 0, 1);
       if (d < 0.01) M.drive.curve = null; else {
-        const kk = 1 + d * 4, cc = new Float32Array(1025);
-        for (let i = 0; i < 1025; i++) { const x = i / 512 - 1; cc[i] = Math.tanh(kk * x) / kk; }   // unity small-signal gain
+        /* linear (unity gain) below the knee θ = 1/(1+4·drive), a tanh saturation above it with a smooth slope (1 at θ):
+           the level is kept (small signals unchanged, full scale still ≈ −1…−2 dBFS), only what goes over the knee gets
+           grit; tanh(k·x)/k used to cap the whole mix at 1/k (−14 dBFS at drive 1) = quieter with more drive */
+        const th = 1 / (1 + d * 4), cc = new Float32Array(1025);
+        for (let i = 0; i < 1025; i++) { const x = i / 512 - 1, a = Math.abs(x); cc[i] = Math.sign(x) * (a <= th ? a : th + (1 - th) * Math.tanh((a - th) / (1 - th))); }
         M.drive.curve = cc; M.drive.oversample = 'none';                   // '2x' would add 128 samples latency only while drive is on
       }
       M.vol.gain.setTargetAtTime(p.vol == null ? 0.85 : p.vol, t, 0.02);
@@ -7611,7 +7655,7 @@ function macroDesc(m, cur) {
 // WT (klassisch, Anhang B.3): built in the app from the v2 WT presets with the §5.6 conversion; level .3, cat 'wt'
 const WT_FACTORY = [
   ['wt-vokal', 'WT Vokal-Fläche', 'pad', 'v2-Wavetable „Pad“', 'Die Tabelle fährt in 3 s von O über A nach E – die Fläche spricht. LFO 1 lässt den Cutoff langsam atmen.',
-    {ftype: 0, cutoff: 1400, res: .14, fenv: .25, kt: .2, fA: .8, fD: 1.5, fS: .6, fR: 1.5, aA: .6, aD: 1, aS: .85, aR: 1.6, l1shape: 1, l1rate: .3, poly: 6,
+    {ftype: 0, cutoff: 1400, res: .14, fenv: .25, kt: .2, fA: .8, fD: 1.5, fS: .6, fR: 1.5, aA: .6, aD: 1, aS: .85, aR: 1.6, l1shape: 0, l1rate: .3, poly: 6,   /* sine: starts at 0 rising (as the native triangle did before the LFOs were aligned to the worklet, -1 at phase 0) */
       wt: {table: 'vocal', pos: .2, scan: .7, scanTime: 3}}, [['lfo1', 'cutoff', .1]], {rev: .45, dly: .1, vol: .7}],
   ['wt-glas', 'WT Glas', 'bell', 'v2-Wavetable „Glocke“', 'Glas-Tabelle mit Scan rückwärts: der Anschlag ist hell, dann wird der Ton runder. Sustain 0 – jede Note klingt aus.',
     {ftype: 1, cutoff: 6000, res: .1, fenv: .1, kt: .3, fA: .001, fD: .8, fS: .3, fR: .8, aA: .001, aD: 1.6, aS: 0, aR: 1.4,
@@ -7931,7 +7975,7 @@ function normClip(c, kind, pk) {
       if (n.t < 0 || n.t >= L || n.d <= 0) continue;
       let nn = clamp(Math.round(n.n), 0, 127);
       if (kind === 'drum' && !DRUM_GMS.includes(nn)) nn = mapV1Drum(nn);
-      notes.push(normNoteExtras(n, {t: n.t, d: Math.min(n.d, 64), n: nn, v: clamp(n.v, 0.01, 1)}, kind));
+      notes.push(normNoteExtras(n, {t: n.t, d: Math.min(n.d, 64), n: nn, v: Math.round(clamp(n.v, 0.01, 1) * 1e3) / 1e3}, kind));   // v to 1/1000 (PF7: MIDI k/127 doubles made files ~50 % larger)
     }
   }
   notes.sort((a, b) => a.t - b.t);
@@ -8031,6 +8075,7 @@ function normTarget(t) {
   const o = {root, quality: kind === 'chord' && q ? q : null, bass: isNum(t.bass) ? PCx(Math.round(t.bass)) : root, kind: kind === 'chord' && !q ? 'single' : kind,
     name: typeof t.name === 'string' ? t.name.slice(0, 16) : Harmony.NAMES[root], rootNote: isNum(t.rootNote) ? clamp(Math.round(t.rootNote), 0, 127) : 60 + root,
     keys: Array.isArray(t.keys) ? t.keys.filter(isNum).map(n => clamp(Math.round(n), 0, 127)).slice(0, 12) : []};
+  if (t.sd === 1 || t.sd === -1) o.sd = t.sd;     // song Träger: the direction it was heard in (tritone)
   if (o.kind === 'chord' && o.name === Harmony.NAMES[root]) o.name = Harmony.chordName(root, q, o.bass);
   return o;
 }
@@ -8265,9 +8310,13 @@ function upgradeHall() {
 function hallClear() {
   const c = AU.ctx; if (!c || !AU.hall) return;
   // the return is muted for 250 ms: what is still in the pre-delay line and the fading echo would start a new tail
-  const now = c.currentTime, rg = AU.hallRet.gain; rg.cancelScheduledValues(now); rg.setValueAtTime(0, now);
+  // the tail is faded out (τ 5 ms, like the echo's 8 ms), never cut in one sample (a click); the worklet's buffers are
+  // cleared only once the return is silent
+  const now = c.currentTime, rg = AU.hallRet.gain;
+  if (rg.cancelAndHoldAtTime) rg.cancelAndHoldAtTime(now); else { rg.cancelScheduledValues(now); rg.setValueAtTime(rg.value, now); }
+  rg.setTargetAtTime(0, now, .005);
   clearTimeout(AU.hallClrT); AU.hallClrT = setTimeout(() => { AU.hallClrT = 0; if (AU.hallKind === 'worklet') AU.hall.port.postMessage({clear: true}); AU.hallRet.gain.setTargetAtTime(S.fxBus.hall.ret, AU.ctx.currentTime, .02); }, 250);
-  if (AU.hallKind === 'worklet') { AU.hall.port.postMessage({clear: true}); return; }
+  if (AU.hallKind === 'worklet') { clearTimeout(AU.hallClrT2); AU.hallClrT2 = setTimeout(() => { AU.hallClrT2 = 0; if (AU.hallKind === 'worklet' && AU.hall) AU.hall.port.postMessage({clear: true}); }, 60); return; }
   const H = AU.hall, live = H.live || []; if (!live.length) return;
   const last = live[live.length - 1], g0 = last.gout.gain.value, buf = last.cv.buffer;
   for (const o of live) { o.gin.gain.cancelScheduledValues(now); o.gin.gain.setValueAtTime(0, now); o.gout.gain.cancelScheduledValues(now); o.gout.gain.setTargetAtTime(0, now, .01); }
@@ -8319,6 +8368,9 @@ function buildChain(c) {
   // N.drive = the sum after the drive stage; the two shapers are crossfaded on a curve change (no oversampling, §14.4.2)
   for (let k = 0; k < 2; k++) { try { N.shp[k].oversample = 'none'; } catch (e) {} N.shg[k].gain.value = k ? 0 : 1; N.trackIn.connect(N.shp[k]); N.shp[k].connect(N.shg[k]); N.shg[k].connect(N.drive); }
   N.wet.gain.value = 0;
+  // the dry path is always stereo (a mono native voice is up-mixed L=R here, like the stereo chorus and the worklet output):
+  // otherwise connecting the chorus would switch the panner from its mono (-3 dB) to its stereo law = a level step + click
+  N.dry.channelCount = 2; N.dry.channelCountMode = 'explicit'; N.dry.channelInterpretation = 'speakers';
   N.drive.connect(N.dry); N.dry.connect(N.trem); N.wet.connect(N.trem);
   N.trem.connect(N.duck); N.duck.connect(N.vol);
   let post = N.vol; if (N.pan) { N.vol.connect(N.pan); post = N.pan; }
@@ -9503,8 +9555,8 @@ function songRecBegin() {
   const sr = R.songRec; if (!sr || !sr.pending || !S.song) return;
   sr.pending = false;
   for (let i = 0; i < 5; i++) RecHelpers.logLaunch(S.song, i, slotAtBeat(i, sr.startBeat), 0);
-  const cur = T.targetAt(b2t(sr.startBeat)).target;
-  RecHelpers.logCarrier(S.song, 0, cur || null);
+  const ce = T.targetAt(b2t(sr.startBeat)), cur = ce.target;
+  RecHelpers.logCarrier(S.song, 0, cur || null, ce.shift);
   UI.dirty.song = true;
 }
 // T.onCommit (Anhang D.7): a Träger change while the song records is logged at its exact beat; while the song plays, a
@@ -9513,7 +9565,7 @@ function songCarrierHook(entry) {
   const sr = R.songRec;
   if (sr && !sr.pending && R.playing && S.song && entry && isFinite(entry.time)) {
     const b = t2b(entry.time) - sr.startBeat;
-    if (b >= -1e-6) { RecHelpers.logCarrier(S.song, Math.max(0, +b.toFixed(4)), entry.target || null); UI.dirty.song = true; }
+    if (b >= -1e-6) { RecHelpers.logCarrier(S.song, Math.max(0, +b.toFixed(4)), entry.target || null, entry.shift); UI.dirty.song = true; }
   }
   if (R.songPlay && !R.songApplying && !R.carrierLive) { R.carrierLive = true; UI.dirty.song = true; }
 }
@@ -9980,7 +10032,7 @@ function recPress(atT) {
 function recKeyNow() {
   const at = R.playing ? b2t(Math.max(0, rec.startBeat || 0)) + 1e-6 : nowT();
   const tg = T.targetAt(at).target;
-  return Object.assign(Harmony.keyForRecording(tg, S.key, S.settings.harmony.mode, {...hopts(), octaveMode: S.settings.harmony.octaveMode}), {src: tg ? 'carrier' : 'auto'});
+  return Object.assign(Harmony.keyForRecording(tg, tg ? heardBaseKey() : S.key, S.settings.harmony.mode, {...hopts(), octaveMode: S.settings.harmony.octaveMode}), {src: tg ? 'carrier' : 'auto'});
 }
 function recBegin() {
   const ti = rec.track, si = rec.scene;
@@ -10122,15 +10174,30 @@ function finishTail() {
   else if (alive) { analyseClip(tl.track, tl.scene, true, true); recResultToast(tl.track, tl.scene, tl.clip.notes.length); }
   UI.dirty.all = true;
 }
+// the notes this overdub added (live objects in the clip): recorded in this run, from the overdub's start (catch window incl.)
+function odTakeOf(c) {
+  const b0 = rec.startBeat - rec.catchWin - 1e-6;
+  return c ? c.notes.filter(n => n.born != null && n.bornRun === R.runId && n.born >= b0) : [];
+}
+// the clip without the running overdub's notes (§3.8 coherent undo: an editor gesture during an overdub never captures the
+// take's notes, and the overdub's own entry restores the state with the gesture applied)
+function clipSansOverdub(t, s) {
+  const c = S.tracks[t] && S.tracks[t].clips[s];
+  if (!c || rec.state !== 'overdub' || rec.track !== t || rec.scene !== s) return c;
+  const take = new Set(odTakeOf(c)); if (!take.size) return c;
+  return Object.assign({}, c, {notes: c.notes.filter(n => !take.has(n))});
+}
 function recEndOverdub(atBeat) {
   if (atBeat == null) atBeat = recBeatNow();
   for (const [id, o] of [...rec.open]) if (o.kind === 'od' && o.b >= atBeat - 1e-9 && rec.odEnd != null) rec.open.delete(id);   // played after the switch
   recCommitOpen(atBeat);
   rec.state = 'off'; rec.odEnd = null;
   if (rec.added > 0 && rec.snapshot) {
-    pushUndo(rec.track, rec.scene, rec.snapshot, 'Overdub');
-    const c = S.tracks[rec.track].clips[rec.scene], b0 = rec.startBeat - rec.catchWin - 1e-6;
-    const take = c ? c.notes.filter(n => n.born != null && n.bornRun === R.runId && n.born >= b0) : [];   // this overdub's notes
+    const c = S.tracks[rec.track].clips[rec.scene];
+    const take = odTakeOf(c);                                                       // this overdub's notes
+    // before = the clip now without the take: editor gestures made during the overdub stay their own undo steps
+    const ts = new Set(take), before = c && rec.clip === c ? Object.assign({}, c, {notes: c.notes.filter(n => !ts.has(n))}) : rec.snapshot;
+    pushUndo(rec.track, rec.scene, before, 'Overdub');
     analyseClip(rec.track, rec.scene, true, true, take); recResultToast(rec.track, rec.scene, rec.added, true); markDirty();
   }
   else toast('Nichts hinzugefügt');
@@ -10185,8 +10252,11 @@ function recOnStop() {
 }
 // every live-recorded note keeps its raw onset o (§3.5); with a fixed input grid t is quantized at once, with 'auto'
 // the grid is detected when the take closes (analyseClip), with 'off' t = o
+// stored values are rounded (d to 1/10000 beat, v to 1/1000): unrounded audio-clock doubles made a recorded project ~40 %
+// larger (PF7 ≤ 300 KB); far below anything audible
+const rd4 = x => Math.round(x * 1e4) / 1e4, rv3 = v => Math.round(v * 1e3) / 1e3;
 function commitRecNote(o, bOff) {
-  const q = GRID_STEP[S.settings.inQuant] || 0, d0 = Math.max(1 / 32, bOff - o.b);
+  const q = GRID_STEP[S.settings.inQuant] || 0, d0 = rd4(Math.max(1 / 32, bOff - o.b)), vv = rv3(o.v);
   if (o.kind === 'new') {
     const raw = Math.max(0, o.b - rec.startBeat);
     let t = raw; if (q) t = Math.round(t / q) * q;
@@ -10195,9 +10265,9 @@ function commitRecNote(o, bOff) {
     const n = o.drum ? o.n : clipNoteFor(o.track, rec.key, o.n, o.tm != null ? o.tm : b2t(o.b), o.en);
     if (rec.fixedLen && rec.clip) {
       const L = rec.clip.len * 4; if (t >= L - 1e-9) t = 0;
-      rec.clip.notes.push({t: +t.toFixed(6), o: +Math.min(raw, L - 1e-4).toFixed(4), d: Math.min(o.drum ? .1 : d0, L), n, v: o.v, born: o.b, bornRun: R.runId});
+      rec.clip.notes.push({t: +t.toFixed(6), o: +Math.min(raw, L - 1e-4).toFixed(4), d: Math.min(o.drum ? .1 : d0, L), n, v: vv, born: o.b, bornRun: R.runId});
       UI.dirty.grid = true;
-    } else rec.temp.push({t, o: raw, d: Math.min(o.drum ? .1 : d0, 64), n, v: o.v, born: o.b});
+    } else rec.temp.push({t, o: raw, d: Math.min(o.drum ? .1 : d0, 64), n, v: vv, born: o.b});
     return;
   }
   const clip = o.clip || (o.kind === 'tail' ? (rec.tail && rec.tail.clip) : rec.clip);
@@ -10211,7 +10281,7 @@ function commitRecNote(o, bOff) {
   let t = raw; if (q) t = Math.round(t / q) * q; if (t >= L - 1e-9) t = 0;
   // the clip is heard through the Träger: store the note in the clip's Bezug so that it plays back as it was played
   const n = o.drum ? o.n : clipNoteFor(tr, clip.key, o.n, o.tm != null ? o.tm : b2t(o.b), o.en);
-  clip.notes.push({t: +t.toFixed(6), o: +Math.min(raw, L - 1e-4).toFixed(4), d: Math.min(o.drum ? .1 : d0, L), n, v: o.v, born: o.b, bornRun: R.runId});
+  clip.notes.push({t: +t.toFixed(6), o: +Math.min(raw, L - 1e-4).toFixed(4), d: Math.min(o.drum ? .1 : d0, L), n, v: vv, born: o.b, bornRun: R.runId});
   clip.notes.sort((a, b) => a.t - b.t);
   if (o.kind === 'od') rec.added++;
   clipChanged(tr, scene); markDirty();
@@ -10319,6 +10389,21 @@ function gridFitN(on, step, tol) {
   for (const t of on) if (Math.abs(t - Math.round(t / step) * step) <= tl + 1e-9) k++;
   return k;
 }
+/* overdub grid: the clip's own grid; if the new notes need a finer one that keeps every position of it (16ths over an
+   1/8 clip), that finer grid (never 1/32) — the take is never forced onto positions it was not played on */
+function overdubGrid(q, on) {
+  const st = GRID_STEP[q.grid], g = {grid: q.grid, swing: q.swing};
+  if (!st || (q.swing || .5) > .5 || !on.length) return g;
+  const tol = .032 * S.bpm / 60, n = on.length, k0 = gridFitN(on, st, tol); if (k0 === n) return g;
+  let best = null;
+  for (const G of KeyDetect.GRIDS) {
+    if (G.step >= st - 1e-9 || G.step < 1 / 6 - 1e-9) continue;
+    const r = st / G.step; if (Math.abs(r - Math.round(r)) > 1e-6) continue;
+    const k = gridFitN(on, G.step, tol);
+    if (k > k0 && (!best || k > best.k)) best = {grid: G.id, swing: .5, k, refined: true};
+  }
+  return best || g;
+}
 function detectGridApp(notes) {
   const bpm = S.bpm, on = notes.map(n => n.t).filter(Number.isFinite);
   const plain = ns => {
@@ -10367,7 +10452,7 @@ function analyseClip(ti, si, recorded, keyNow, take) {
     const L = c.len * 4;
     let g;
     if (iq !== 'auto') g = {grid: iq, swing: .5};
-    else if (take && c.q && GRID_STEP[c.q.grid]) g = {grid: c.q.grid, swing: c.q.swing};     // overdub: the clip's own grid
+    else if (take && c.q && GRID_STEP[c.q.grid]) g = overdubGrid(c.q, qn.map(n => n.o));     // overdub: the clip's own grid (refined if the take needs it)
     else g = detectGridApp(qn.map(n => ({t: n.o, d: n.d, n: n.n, v: n.v})));                // < 3 notes -> 1/16 (KeyDetect default)
     if (g.grid && GRID_STEP[g.grid]) {
       const sw = g.grid.endsWith('T') ? .5 : clamp(g.swing || .5, .5, .75), off = g.off || 0;
@@ -10376,6 +10461,7 @@ function analyseClip(ti, si, recorded, keyNow, take) {
       for (const n of qn) n.t = qPos(n.o, g.grid, sw, 1, L);
       c.notes.sort((a, b) => a.t - b.t);
       if (!take || !c.q) c.q = {grid: g.grid, swing: sw, strength: 1};
+      else if (g.refined) c.q = Object.assign({}, c.q, {grid: g.grid});
       // a clip that already plays (fixed length, overdub): its scheduled notes move to the grid at once
       if (R.playing && R.slot[ti] === si && !R.pend[ti] && AU.ctx) { const at = AU.ctx.currentTime + .006; cancelTrackFrom(ti, at); scheduleTrack(ti, Math.max(R.cstart[ti], t2b(at)), R.schedBeat, true); }
     }
@@ -10484,10 +10570,10 @@ function inputDown(note, id, vel) {
     if (R.playing && (R.songRec || R.melRec) && !recCapturedForSong(rk, R.selT)) melNoteOn(id, R.selT, n, vel);   // §3.9: the melody lane
     // step input into the open clip editor; never recorded at the same time
     if (ED.roll && ED.rollAt && ED.roll.state.step != null && ED.rollAt.t === R.selT && rec.state === 'off') {
-      STEPQ.notes.push(n); STEPQ.vel = vel; clearTimeout(STEPQ.timer);
+      STEPQ.notes.push(n); STEPQ.vel = Math.round(vel * 1e3) / 1e3; clearTimeout(STEPQ.timer);
       STEPQ.timer = setTimeout(stepFlush, 40);                     // UI only, no audio timing
     } else if (ED.lauf && ED.rollAt && ED.rollAt.t === R.selT && rec.state === 'off' && LAUF.sel >= 0) {
-      STEPQ.notes.push(n); STEPQ.vel = vel; clearTimeout(STEPQ.timer);
+      STEPQ.notes.push(n); STEPQ.vel = Math.round(vel * 1e3) / 1e3; clearTimeout(STEPQ.timer);
       STEPQ.timer = setTimeout(laufStepFlush, 40);                 // LAUF (§3.10): into the selected step, mono
     }
   } else {
@@ -10541,9 +10627,9 @@ function capture() {
   const si = !tr.clips[R.selS] ? R.selS : tr.clips.findIndex(c => !c);
   if (si < 0) { toast('Kein freier Platz in dieser Spur'); return false; }
   const tm = AU.ctx.currentTime, tgt = T.targetAt(tm).target, h = S.settings.harmony;
-  const key = tgt && tr.kind === 'synth' ? Object.assign(Harmony.keyForRecording(tgt, S.key, h.mode, Object.assign(hopts(), {octaveMode: h.octaveMode})), {src: 'carrier'})
+  const key = tgt && tr.kind === 'synth' ? Object.assign(Harmony.keyForRecording(tgt, heardBaseKey(), h.mode, Object.assign(hopts(), {octaveMode: h.octaveMode})), {src: 'carrier'})
                                         : {root: S.key.root, scale: S.key.scale, src: 'auto'};
-  const notes = ph.notes.map(n => ({t: n.t, o: +n.t.toFixed(4), d: n.d, n: tr.kind === 'drum' ? n.n : clipNoteFor(ti, key, n.n, tm), v: n.v}));   // heard = stored
+  const notes = ph.notes.map(n => ({t: n.t, o: +n.t.toFixed(4), d: rd4(n.d), n: tr.kind === 'drum' ? n.n : clipNoteFor(ti, key, n.n, tm), v: rv3(n.v)}));   // heard = stored
   pushUndo(ti, si, null, 'Fang');
   tr.clips[si] = {len: ph.len, key, notes};
   if (tr.kind === 'drum') tr.clips[si].seed = newSeed();
@@ -10623,7 +10709,14 @@ function panic() {
   for (const v of VOICES.slice()) v.cancel();
   for (const E of AU.synth) if (E) E.panic();               // ALL-OFF in the worklet (§5.4), also notes without a proxy
   try { if (PV.chain && PV.chain.E) PV.chain.E.panic(); } catch (e) {}
-  for (const h of HITS.slice()) { for (const s of h.srcs) { try { s.stop(); } catch (e) {} } hitCleanup(h); }
+  // drum hits: a sounding one fades out in τ 3 ms (like a choke) instead of a hard stop (a click); one not started yet is dropped
+  const now = c.currentTime;
+  for (const h of HITS.slice()) {
+    if (h.dead) continue;
+    if (h.start > now + .002) { for (const s of h.srcs) { try { s.stop(); } catch (e) {} } hitCleanup(h); continue; }
+    try { h.out.gain.setTargetAtTime(0, now, .003); } catch (e) {}
+    hitStopAll(h, now + .03);
+  }
   T.held.clear();
   tailKill();
   UI.dirty.all = true;
@@ -11155,7 +11248,7 @@ function melodyToClip() {
   // the key like FANG (§3.6): the Träger in effect at the range start → keyForRecording, src 'carrier'; none → auto
   let tg = null; for (const c of song.carrier) { if (c.beat > t0 + 1e-6) break; tg = c.target; }
   const h = S.settings.harmony;
-  const key = tg ? Object.assign(Harmony.keyForRecording(tg, S.key, h.mode, Object.assign(hopts(), {octaveMode: h.octaveMode})), {src: 'carrier'}) : {root: S.key.root, scale: S.key.scale, src: 'auto'};
+  const key = tg ? Object.assign(Harmony.keyForRecording(tg, songKeyAtBar(a), h.mode, Object.assign(hopts(), {octaveMode: h.octaveMode})), {src: 'carrier'}) : {root: S.key.root, scale: S.key.scale, src: 'auto'};
   pushUndo(t, si, null, 'Melodie → Clip');
   tr.clips[si] = {len, key, notes: ns.map(x => ({t: +(x.t - t0).toFixed(6), o: +(x.t - t0).toFixed(4), d: Math.min(x.d, t1 - x.t), n: x.n, v: x.v}))};
   analyseClip(t, si, true, true);
@@ -11316,8 +11409,8 @@ function renderCarrier(now) {
 function shownShift(e) {
   const t = e && e.target; if (!t) return {shift: 0, snap: null};
   if (S.settings.harmony.mode === 'scale') {
-    const Sc = Harmony.SCALES[S.key.scale];
-    if (!Sc.includes(PCx(t.root - S.key.root))) { let d = 1; while (d < 12 && !Sc.includes(PCx(t.root - d - S.key.root))) d++; return {shift: e.shift - d, snap: PCx(t.root - d)}; }
+    const rk = heardBaseKey(), Sc = Harmony.SCALES[rk.scale];   // the engine snaps against the clip's (scene) key, not the project key
+    if (!Sc.includes(PCx(t.root - rk.root))) { let d = 1; while (d < 12 && !Sc.includes(PCx(t.root - d - rk.root))) d++; return {shift: e.shift - d, snap: PCx(t.root - d)}; }
   }
   return {shift: e.shift, snap: null};
 }
@@ -11428,8 +11521,25 @@ function sceneRefKey() {
 }
 function kbRefKey() {
   const tg = T.targetAt(nowT()).target;
-  if (tg && R.kbMode !== 'transpose' && !R.momentary) { const h = S.settings.harmony; return Harmony.keyForRecording(tg, S.key, h.mode, Object.assign(hopts(), {octaveMode: h.octaveMode})); }
+  if (tg && R.kbMode !== 'transpose' && !R.momentary) { const h = S.settings.harmony; return Harmony.keyForRecording(tg, heardBaseKey(), h.mode, Object.assign(hopts(), {octaveMode: h.octaveMode})); }
   return sceneRefKey();
+}
+/* the key the music is in (the playing scene's key, §4.1): the base every Träger result is built on — the engine maps each
+   clip against its own (scene) key, so the lit keys, „Tonart sperren“, the TONART readout and the Bezug of a take under a
+   Träger must use it too, never the project key (which stays C when the scene keys are auto-detected) */
+function heardBaseKey(k) {
+  k = k || sceneRefKey() || S.key;
+  return Harmony.SCALES[k.scale] ? {root: k.root, scale: k.scale} : {root: S.key.root, scale: S.key.scale};
+}
+// key heard at song bar `bar` (the first following lane's clip there), for the song melody → clip
+function songKeyAtBar(bar) {
+  const song = S.song;
+  if (song) for (let i = 0; i < 4; i++) {
+    const tr = S.tracks[i]; if (!tr.follow) continue;
+    const sl = RecHelpers.slotAt(song, i, bar), c = sl >= 0 && tr.clips[sl];
+    if (c && c.notes.length) return heardBaseKey(c.key);
+  }
+  return heardBaseKey(sceneKeyOf(R.selS) || S.key);
 }
 // "Tonart sperren": the substituted key flashes (the pressed one is out of the key)
 function kbFlash(n) { const k = KB.byNote.get(n); if (!k) return; k.el.classList.add('sub'); clearTimeout(k.subT); k.subT = setTimeout(() => k.el.classList.remove('sub'), 220); }
@@ -11686,6 +11796,15 @@ function hideToast() { if (EL.toast) EL.toast.classList.remove('show'); UI.toast
    sheet and in the menu it is an in-flow band at the bottom (the clip grid / sheet body shrinks for those 5 s); in the
    synth and drum editors it covers the LCD line (a display) or, where the LCD is hidden (320×568), the keyboard top.
    A plain message toast stays a floating, tap-through label at the top as before. Re-checked every frame while shown. */
+// §2.2 L: the 5 clip rows stay ≥ 30 px — in a short landscape the first-run hint moves out of the clip area into the side
+// panel (over the Träger history row, above the strip; never over keys or pads); everywhere else it stays under the grid
+const HINT_MQ = window.matchMedia ? window.matchMedia('(orientation: landscape) and (max-height: 560px)') : null;
+function hintHome() {
+  const h = EL.hint, side = document.getElementById('side'); if (!h || !side || !EL.gridArea) return;
+  const to = HINT_MQ && HINT_MQ.matches ? side : EL.gridArea;
+  if (h.parentNode === to) return;
+  if (to === EL.gridArea) to.insertBefore(h, EL.countin && EL.countin.parentNode === to ? EL.countin : null); else to.appendChild(h);
+}
 function toastHome() {
   if ((R.editor === 'synth' || R.editor === 'drum') && (EL.synthSheet.classList.contains('open') || EL.drumSheet.classList.contains('open'))) {
     const l = ED.lcd;
@@ -13305,6 +13424,8 @@ function pageVoice(pg, i) {
   const nva = S.tracks[i].sound.engine !== 'analog';
   const ks = ['poly', 'glide', 'uniDet', 'uniMix', 'uniWidth', 'spread', 'ampVel'].map(k => sKnob(k, nva && /^uni/.test(k) ? {inert: () => true} : null));
   const rs = sToggle('reset', 'Phasen-Reset'); rs.classList.add('tv');
+  // FM always key-syncs its operators and native WT oscillators always start at phase 0: the toggle does nothing there
+  if (nva) { rs.classList.add('inert'); rs.setAttribute('aria-disabled', 'true'); rs.disabled = true; rs.title = 'Nur für Analog: FM und Wavetable starten immer mit Phase 0'; }
   ED.refreshers.push(() => { m.update(); ks.forEach(x => x.update()); });
   const k2 = kRow(ks.slice(4)); k2.appendChild(rs);
   pg.append(r1, kRow(ks.slice(0, 4)), k2);
@@ -15232,12 +15353,13 @@ function toggleStep(voice, step, bar) {
 /* ---------- clip editor (piano roll, §3.3; Anhang D.4) ---------- */
 // one undo entry per gesture; notes are edited in place; every committed edit is heard at once (afterClipEdit)
 function rollModel(t, s) {
-  let snap = null; const cur = () => S.tracks[t].clips[s];
+  let snap = null, usnap = null; const cur = () => S.tracks[t].clips[s];
   return {
     getClip: cur,
-    begin() { snap = cleanClip(cur()); },
-    end(changed, label) { if (changed && snap) { pushUndo(t, s, snap, label || 'Bearbeiten'); afterClipEdit(t, s); } snap = null; },
-    revert() { if (snap && cur()) { const c = cur(), d = deep(snap); Object.keys(c).forEach(k => { if (!(k in d)) delete c[k]; }); Object.assign(c, d); afterClipEdit(t, s, true); } snap = null; },   // same object: the roll keeps its references
+    // undo base without a running overdub's notes (they belong to the overdub's own undo step); revert uses the full state
+    begin() { snap = cleanClip(cur()); usnap = cleanClip(clipSansOverdub(t, s)); },
+    end(changed, label) { if (changed && snap) { pushUndo(t, s, usnap || snap, label || 'Bearbeiten'); afterClipEdit(t, s); } snap = usnap = null; },
+    revert() { usnap = null; if (snap && cur()) { const c = cur(), d = deep(snap); Object.keys(c).forEach(k => { if (!(k in d)) delete c[k]; }); Object.assign(c, d); afterClipEdit(t, s, true); } snap = null; },   // same object: the roll keeps its references
     undo: () => { undo(); }, redo: () => { redo(); },
     canUndo: () => UNDO.length > 0, canRedo: () => REDO.length > 0,
     audition(n, v) { const vo = auditionStart(t, n, v == null ? .8 : v); if (vo) vo.release(AU.ctx.currentTime + .18); }
@@ -15744,7 +15866,7 @@ function quantizeNoteSet(c, notes, base, o) {
   notes.forEach((n, k) => {
     const raw = base[k].o != null ? Math.max(0, base[k].o - (o.off || 0)) : base[k].t;   // off: latency found by Auto
     let t;
-    if (grid === 'off') t = base[k].o != null ? base[k].o : base[k].t;
+    if (grid === 'off') { t = base[k].o != null ? base[k].o : base[k].t; if (t >= L - 1e-9 || t < 0) t = ((t % L) + L) % L; if (t >= L - 1e-4) t = 0; }
     else t = qPos(raw, grid, o.swing, o.strength, L);
     if (hz && grid !== 'off') t = clamp(t + rnd() * hz, 0, L - 1e-4);
     n.t = +t.toFixed(6);
@@ -15755,9 +15877,10 @@ function quantizeClip(t, s, o, only, preview) {
   const c = S.tracks[t] && S.tracks[t].clips[s]; if (!c) return false;
   o = Object.assign({grid: 'auto', strength: 1, swing: .5, humanize: 0}, o || {});
   let grid = o.grid, swing = clamp(+o.swing || .5, .5, .75);
-  const notes = only ? c.notes.filter(n => only.includes(n)) : c.notes.slice();
+  // `only` keeps its own order: the sheet's base[k] belongs to only[k] (c.notes is re-sorted by every preview)
+  const notes = only ? only.filter(n => c.notes.includes(n)) : c.notes.slice();
   if (!notes.length) return false;
-  const base = (preview && preview.base) || notes.map(n => ({t: n.t, o: n.o}));
+  const base = (preview && preview.base && preview.base.length === notes.length) ? preview.base : notes.map(n => ({t: n.t, o: n.o}));
   let off = 0;
   if (grid === 'auto') { const g = detectGridApp(notes.map((n, k) => ({t: base[k].o != null ? base[k].o : base[k].t, d: n.d, n: n.n, v: n.v}))); grid = g.grid; off = g.off || 0; if (o.swingAuto !== false && g.swing > .5) swing = g.swing; }
   if (grid !== 'off' && !GRID_STEP[grid]) return false;
@@ -15946,7 +16069,11 @@ function clipLength(t, s, f) {
   if (nl === clip.len) return;
   pushUndo(t, s, clip, 'Länge');
   const L = clip.len * 4;
-  if (nl < clip.len) { clip.notes = clip.notes.filter(n => n.t < nl * 4 - 1e-9); clip.notes.forEach(n => { n.d = Math.min(n.d, nl * 4); }); }
+  if (nl < clip.len) {
+    const NL = nl * 4;
+    clip.notes = clip.notes.filter(n => n.t < NL - 1e-9);
+    clip.notes.forEach(n => { n.d = Math.min(n.d, NL); if (n.o != null) { const w = ((n.o % NL) + NL) % NL; n.o = +(w >= NL - 1e-4 ? 0 : w).toFixed(4); } });   // raw onsets stay inside the clip
+  }
   else if (f === 2) clip.notes = clip.notes.concat(clip.notes.filter(n => n.t + L < nl * 4).map(n => Object.assign(cleanNote(n), {t: n.t + L}, n.o != null ? {o: +(n.o + L).toFixed(4)} : {})));
   clip.len = nl;
   afterClipEdit(t, s);
@@ -15995,7 +16122,12 @@ function clearClip(t, s, viaUi) {
 function clipChanged(t, s) {
   KEYC.ver++; UI.dirty.grid = true;
   if (R.editor === 'drum' && t === 4 && ED.dTab === 'steps' && !(ED.step && ED.step.busy())) { try { paintSteps(); } catch (e) {} }
-  if (ED.rollAt && ED.rollAt.t === t && ED.rollAt.s === s) { rollHeadUpdate(); if (ED.lauf && !ED.lauf.se.busy()) laufPaint(); }
+  if (ED.rollAt && ED.rollAt.t === t && ED.rollAt.s === s) {
+    rollHeadUpdate(); if (ED.lauf && !ED.lauf.se.busy()) laufPaint();
+    // notes added from outside the editor (recording, overdub, auto-quantize) are drawn at once (rAF-coalesced);
+    // during a gesture only a redraw, never a re-sync of the selection
+    if (ED.roll) { try { if (ED.roll.state.pointers) ED.roll.render(); else ED.roll.refresh(); } catch (e) {} }
+  }
 }
 
 /* ---------- menu (§2.5, §12.2): full-screen sheet; P stacked, L two columns ---------- */
@@ -16068,10 +16200,11 @@ function openMenu(goto) {
   const bNew = btn('Neu'), bDemo = btn('Demo laden'), bSave = btn('Als Datei sichern (.json)', 'go'), bOpen = btn('Datei öffnen');
   // switching never loses work: the current project is parked in [Projekte] first, so no confirm is needed (§12.2)
   if (mem) twoStep(bNew, 'Wirklich neu?', () => { applyProject(newProject(), {}); toast('Neues Projekt'); closeMenu(); });
-  else on(bNew, 'click', () => { switchProject(newProject(), {}); toast('Neues Projekt · Vorheriges Projekt liegt unter Projekte'); closeMenu(); });
+  else on(bNew, 'click', () => { switchProjectUI(newProject(), {}, 'Neues Projekt').then(r => { if (r) closeMenu(); }); });
   on(bDemo, 'click', () => {
     if (mem && S.tracks.some(t => t.clips.some(Boolean)) && !bDemo.classList.contains('arm')) { bDemo.classList.add('arm'); bDemo.textContent = 'Projekt ersetzen?'; setTimeout(() => { bDemo.classList.remove('arm'); bDemo.textContent = 'Demo laden'; }, 3000); return; }
-    switchProject(demoProject(), {first: true}); toast(mem ? 'Demo geladen' : 'Demo geladen · Vorheriges Projekt liegt unter Projekte'); closeMenu();
+    if (mem) { switchProject(demoProject(), {first: true}); toast('Demo geladen'); closeMenu(); return; }
+    switchProjectUI(demoProject(), {first: true}, 'Demo geladen').then(r => { if (r) closeMenu(); });
   });
   on(bSave, 'click', () => saveFile());
   on(bOpen, 'click', () => { EL.fileIn.value = ''; EL.fileIn.click(); });
@@ -16382,19 +16515,36 @@ async function parkFile(fo) {
   await projIndexSave();
   return true;
 }
-// park the open project (a synchronous snapshot; tickAhead first while playing), unless nobody worked on it
-function parkCurrent() {
-  if (!kv || kv.mode === 'memory' || !BOOT.done) return Promise.resolve(false);
-  if (isPristine(S)) return Promise.resolve(false);
+// the open project as a file object worth parking (a synchronous snapshot; tickAhead first while playing), or null when
+// there is no browser storage or nobody worked on it
+function parkSnapshot() {
+  if (!kv || kv.mode === 'memory' || !BOOT.done || isPristine(S)) return null;
   if (R.playing) tickAhead(.3);
-  return parkFile(projectFileObj(S));
+  return projectFileObj(S);
 }
-// [Neu], [Demo laden], [Datei öffnen], open from [Projekte]: switching never loses work (§12.2). The new project is
-// applied at once (the API and UI see it synchronously); the park write of the old one runs in the background.
+// park the open project: resolves true (parked), 'skip' (nothing worth parking) or false (the write failed: storage full)
+function parkCurrent() { const fo = parkSnapshot(); return fo ? parkFile(fo).then(r => r === true, () => false) : Promise.resolve('skip'); }
+const SWITCH_FULL = 'Speicher voll – das offene Projekt ließ sich nicht sichern. Erst „Als Datei sichern“, dann wechseln.';
+const switchRefused = () => { toast(SWITCH_FULL, {label: 'Als Datei sichern', fn: () => saveFile()}); return false; };
+// [Neu], [Demo laden], [Datei öffnen], open from [Projekte] (the UI): switching never loses work (§12.2) — the open project
+// is parked first; when that write fails (storage full) the switch is refused, and „liegt unter Projekte“ is only said
+// when it is true. msg: the toast after the switch.
+async function switchProjectUI(p, opts, msg) {
+  const r = await parkCurrent();
+  if (r === false) return switchRefused();
+  applyProject(p, opts); if (autosave) autosave.flush();
+  if (msg) toast(r === true ? msg + ' · Vorheriges Projekt liegt unter Projekte' : msg);
+  return r === true ? true : 'skip';
+}
+// the API (newProject, loadDemo, importJSON …): the new project is applied at once (callers see it synchronously); the
+// park write runs in the background — if it fails, the previous project stays in memory behind [Zurück]
 function switchProject(p, opts) {
-  const parked = parkCurrent();
+  const keep = parkSnapshot(), parked = keep ? parkFile(keep).then(r => r === true, () => false) : Promise.resolve(false);
   applyProject(p, opts);
-  return parked.then(r => { if (autosave) autosave.flush(); return r; }, () => false);
+  return parked.then(r => {
+    if (!r && keep) toast('Speicher voll – das vorige Projekt ist nicht gesichert', {label: 'Zurück', fn: () => { const q = projFromFile(keep); if (q) { applyProject(q, {}); if (autosave) autosave.flush(); } }});
+    if (autosave) autosave.flush(); return r;
+  }, () => false);
 }
 async function openProject(id) {
   if (!kv || kv.mode === 'memory') return false;
@@ -16404,9 +16554,13 @@ async function openProject(id) {
   const p = fo && fo.project ? projFromFile(fo) : null;
   if (!p) { PROJ.index = ix.filter(x => x.id !== id); await projIndexSave(); toast('Projekt nicht gefunden'); return false; }
   p.id = id;
-  await switchProject(p, {ui: true});
-  if (autosave) await autosave.flush();
-  // its home is now the autosave: it is the open project (move, not copy)
+  const r = await parkCurrent();
+  if (r === false) return switchRefused();
+  applyProject(p, {ui: true});
+  const ok = autosave ? await autosave.flush() : false;
+  // its home is now the autosave: it is the open project (move, not copy) — but only once the autosave really holds it;
+  // with full storage the parked copy stays (it is the only stored one)
+  if (ok !== true) { toast('Projekt „' + p.name + '“ geöffnet – Speicher voll: die gesicherte Kopie bleibt unter Projekte, bitte als Datei sichern'); return true; }
   try { await kv.del('proj:' + id); } catch (e) {}
   PROJ.index = (await projIndexLoad()).filter(x => x.id !== id); await projIndexSave();
   toast('Projekt „' + p.name + '“ geöffnet');
@@ -16499,6 +16653,21 @@ function importProject(p, warnings) {
   }
   (warnings || []).forEach((w, k) => setTimeout(() => toast(w), 1700 * (k + 1)));
 }
+// [Datei öffnen] in the UI: like importProject, but the open project is parked first and a failed park refuses the switch
+async function importProjectUI(p, warnings) {
+  let r;
+  if (p.id === S.id && BOOT.done && kv && kv.mode !== 'memory' && !isPristine(S)) {
+    const prev = JSON.parse(JSON.stringify(S, stripReplacer)); prev.id = newProjectId(); prev.name = (prev.name || 'Projekt').slice(0, 32) + ' (vorher)';
+    r = await parkFile(projectFileObj(prev)).then(x => x === true, () => false);
+  } else {
+    if ((PROJ.index || []).some(e => e.id === p.id)) p.id = newProjectId();
+    r = await parkCurrent();
+  }
+  if (r === false) return switchRefused();
+  applyProject(p, {}); if (autosave) autosave.flush();
+  (warnings || []).forEach((w, k) => setTimeout(() => toast(w), 1700 * (k + 1)));
+  return r;
+}
 function importJSON(json) {
   try {
     const r = parseAny(json); if (!r.ok) return false;
@@ -16529,7 +16698,10 @@ function onFilePicked(file) {
     if (!pr.ok) { toast(pr.error || 'Datei nicht lesbar – unbekanntes Format'); return; }
     if (pr.kind === 'sounds') { importSoundsText(String(r.result)); return; }        // a sounds file goes into the library (§12.2)
     const res = {project: pr.project, warnings: pr.warnings, sounds: pr.sounds || []};
-    const go = () => { importProject(res.project, res.warnings); libImport(res.sounds); toast(kv && kv.mode !== 'memory' ? 'Projekt geladen · Vorheriges Projekt liegt unter Projekte' : 'Projekt geladen'); closeMenu(); };
+    const go = () => {
+      if (!kv || kv.mode === 'memory') { importProject(res.project, res.warnings); libImport(res.sounds); toast('Projekt geladen'); closeMenu(); return; }
+      importProjectUI(res.project, res.warnings).then(r => { if (r === false) return; libImport(res.sounds); toast(r === true ? 'Projekt geladen · Vorheriges Projekt liegt unter Projekte' : 'Projekt geladen'); closeMenu(); });
+    };
     const row = UI.openConfirm;
     // only without browser storage the current project would be lost: then confirm in the page (no modal)
     if (kv && kv.mode !== 'memory') { go(); return; }
@@ -16685,7 +16857,7 @@ function buildMidiSong(withC) {
   const pk = S.key, h = S.settings.harmony, ents = [];
   let prev = 0;
   for (const c of song.carrier) {
-    const sh = !c.target ? 0 : h.octaveMode === 'absolute' ? c.target.rootNote - Harmony.refNote(pk) : Harmony.nearestShift(c.target.root, pk.root, prev);
+    const sh = !c.target ? 0 : h.octaveMode === 'absolute' ? c.target.rootNote - Harmony.refNote(pk) : Harmony.nearestShift(c.target.root, pk.root, c.target.sd != null ? c.target.sd : prev);
     prev = sh; ents.push({beat: c.beat, e: {target: c.target, shift: sh}});
   }
   const entAt = b => { let e = null; for (const x of ents) { if (x.beat > b + 1e-6) break; e = x.e; } return e; };
@@ -16819,7 +16991,11 @@ async function deliverNow(base, bytes, kind, label) {
     }
     return 'claude';
   }
-  if (window.claude && window.claude.use) { toast('Export hier nicht verfügbar – Seite im Browser öffnen'); return 'unavailable'; }
+  // no downloads capability: inside the framed artifact viewer a sandboxed <a download> would fail silently, so say so;
+  // served top-level (the artifact's own page in Safari, Home Screen) every use() resolves null — the share sheet and
+  // <a download> work there (§12.2 / D.12 deliverFile: a null capability is not „present“)
+  let framed = false; try { framed = window.top !== window.self; } catch (e) { framed = true; }
+  if (window.claude && window.claude.use && framed) { toast('Export hier nicht verfügbar – Seite im Browser öffnen'); return 'unavailable'; }
   const fname = base + '.' + kind, type = kind === 'mid' ? 'audio/midi' : kind === 'm4a' ? 'audio/mp4' : kind === 'webm' ? 'audio/webm' : 'application/json';
   let file;
   try { file = new File([bytes], fname, {type}); } catch (e) { file = new Blob([bytes], {type}); file.name = fname; }
@@ -17083,6 +17259,7 @@ function bindUI() {
   on(EL.pads, 'pointerup', padUp); on(EL.pads, 'pointercancel', padUp);
   on(EL.pads, 'contextmenu', e => e.preventDefault());
   // misc
+  hintHome(); on(window, 'resize', hintHome); on(window, 'orientationchange', hintHome);
   on(EL.hintX, 'click', () => { EL.hint.hidden = true; S.settings.hintDismissed = true; setUiPref('hintDismissed', true); markDirty(); });
   // the backdrop takes the outside tap and swallows it: closing never edits what lies underneath (§1.7.4)
   on(EL.popLayer.querySelector('.bd'), 'pointerdown', e => { e.preventDefault(); e.stopPropagation(); UI.eatClick = performance.now() + 500; closePop(); });
