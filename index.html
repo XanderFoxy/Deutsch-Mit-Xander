@@ -399,6 +399,15 @@ svg{display:block}
 .sh-title b{font:700 13px/1 var(--font-ui);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .trchip{flex:0 1 auto;min-width:0;height:26px;padding:0 8px;border-radius:13px;display:inline-flex;align-items:center;font:700 12px/1 var(--font-ui);color:var(--amber);background:rgba(255,178,46,.12);border:1px solid #6b4c16;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis}
 .trchip[hidden]{display:none}
+.sh-title .stt{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;min-width:0}
+.sh-title .stt b{max-width:100%}
+.sh-title .stt .trchip{flex:none;height:16px;padding:0 6px;border-radius:8px;font-size:10.5px;letter-spacing:.02em;max-width:none;overflow:visible}
+.sh-head .r1 .sh-title:has(.trchip:not([hidden])){flex:none}
+@media (orientation:portrait) and (max-width:359px){
+  #synthSheet .sh-head .r1:has(.trchip:not([hidden])) .seg.eng button{min-width:28px;padding:0 2px}
+  #synthSheet .sh-head .r1:has(.trchip:not([hidden])){gap:2px}
+  .sh-title .stt .trchip{padding:0 4px;letter-spacing:0}
+}
 .sh-x{width:44px;height:40px;font-size:16px;flex:none}
 .sh-head .seg{flex-wrap:nowrap;flex:none}
 .sh-head .seg button{height:34px;min-width:40px}
@@ -1294,7 +1303,8 @@ svg{display:block}
 .savrow{display:flex;gap:8px;justify-content:flex-end}
 .savrow .mbtn{min-width:96px}
 /* ---------- sound browser (§11.2) ---------- */
-#sndSheet{grid-row:2/5;grid-column:1/-1}
+/* placement: as every .sheet.ed (P: rows 2–4 over grid, strip and carrier; L/W: row 2 only, so the mode bar and the
+   keyboard stay playable and a key press can stop a preview, §2.3 / §11.3) */
 #sndSheet .br-head .r1{height:48px}
 #sndSheet .br-head .sh-title{flex:none}
 #sndSheet .brcur{flex:0 1 auto}
@@ -1456,6 +1466,33 @@ svg{display:block}
 .tgl.tv{flex-direction:column;justify-content:center;align-self:center;justify-self:center;width:68px;min-width:0;height:58px;padding:5px 4px;gap:6px;
   white-space:normal;text-align:center;font-size:10px;line-height:1.15;letter-spacing:.04em}
 .fhint:not(.on){display:none}
+/* fit levels (fitBody): only when a page would not fit its body otherwise */
+#synthSheet .sh-body.fit1 .pg{gap:4px}
+#synthSheet .sh-body.fit1 .pg-filter-ctl,#synthSheet .sh-body.fit1 .pg-osc-voice{gap:2px 10px}
+#synthSheet .sh-body.fit1 .kn-row .knob,#synthSheet .sh-body.fit1 .knob{height:78px}
+#synthSheet .sh-body.fit1 .knob svg{width:50px;height:50px}
+#synthSheet .sh-body.fit1 .seg button{height:30px}
+#synthSheet .sh-body.fit1 .qcell{gap:2px}
+#synthSheet .sh-body.fit1 .qcell .seg button{height:28px}
+#synthSheet .sh-body.fit1 .fhint{min-height:14px;line-height:14px}
+#synthSheet .sh-body.fit2 .kn-row .knob,#synthSheet .sh-body.fit2 .knob{height:71px}
+#synthSheet .sh-body.fit2 .knob svg{width:42px;height:42px}
+#synthSheet .sh-body.fit2 .seg button{height:28px}
+#synthSheet .sh-body.fit2 .qcell .seg button{height:26px}
+/* LFO route chips: one line that scrolls sideways (the page never grows by a row; the cut chip shows there is more) */
+.pg-lfo-l1 .routes,.pg-lfo-l2 .routes{flex:1 1 0;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;touch-action:pan-x;scrollbar-width:none;overscroll-behavior-x:contain}
+.pg-lfo-l1 .routes::-webkit-scrollbar,.pg-lfo-l2 .routes::-webkit-scrollbar{display:none}
+.pg-lfo-l1 .routes .rchip,.pg-lfo-l2 .routes .rchip{flex:none;margin-top:0;margin-bottom:0}
+.pg-lfo-l1>.pgrow.segs:nth-child(3),.pg-lfo-l2>.pgrow.segs:nth-child(3){flex-wrap:nowrap}
+.pg-lfo-l1>.pgrow.segs:nth-child(3)>.lgrp,.pg-lfo-l2>.pgrow.segs:nth-child(3)>.lgrp{flex:none}
+/* FX: the bus-hint chip in the knob row's free cell */
+.pg-fx .kn-row .bush{grid-column:2/4;grid-row:2;align-self:center;justify-self:start;height:auto;min-height:40px;max-width:100%;
+  white-space:normal;text-align:left;line-height:1.25;padding:4px 10px}
+@media (orientation:landscape){
+  .pg-lfo-l1 .routes,.pg-lfo-l2 .routes{flex:none;max-width:100%}
+  .pg-fx .kn-row{position:relative}
+  .pg-fx .kn-row .bush{position:absolute;left:0;top:100%;margin-top:3px;min-height:0;height:32px;max-width:none;white-space:nowrap}
+}
 .pg-osc-voice .seg{flex-wrap:nowrap}
 .pg-osc-voice .seg button{min-width:64px}
 @media (orientation:portrait) and (max-width:389px){
@@ -3381,9 +3418,11 @@ const RecHelpers = (() => {
   }
 
   /* ---------- user sound library ---------- */
-  function Library(kv) {
+  // reserved(): names that count as taken besides the library's own (the factory names, §11.3 „Rom-Fläche 2“)
+  function Library(kv, reserved) {
     let list = [], loaded = false;
     const persist = () => kv.set('lib', list);
+    const taken = () => { let r = []; try { r = reserved ? Array.from(reserved() || []) : []; } catch (e) {} return L.names().concat(r); };
     const L = {
       async load() { const v = await kv.get('lib'); list = (Array.isArray(v) ? v : []).map(normalizeSound).filter(s => s && s.id); loaded = true; return list; },
       all: () => list.slice(), get: id => list.find(s => s.id === id) || null, names: () => list.map(s => s.name),
@@ -3393,10 +3432,10 @@ const RecHelpers = (() => {
         opts = opts || {}; const s = normalizeSound(sound); if (!s) throw new Error('sound');
         const over = opts.mode === 'overwrite' && s.origin && s.origin.startsWith('u-') && L.get(s.origin);
         if (over) { const i = list.findIndex(x => x.id === s.origin); s.id = s.origin; s.name = cleanName(opts.name || list[i].name); s.ct = list[i].ct; s.mt = now(); s.origin = list[i].origin; list[i] = s; }
-        else { s.id = uid('u'); s.origin = sound.origin || null; s.name = uniqueName(cleanName(opts.name || s.name), L.names()); s.ct = s.mt = now(); if (opts.cat) s.cat = opts.cat; list.push(s); }
+        else { s.id = uid('u'); s.origin = sound.origin || null; s.name = uniqueName(cleanName(opts.name || s.name), taken()); s.ct = s.mt = now(); if (opts.cat) s.cat = opts.cat; list.push(s); }
         await persist(); return deep(s);
       },
-      async rename(id, name) { const s = L.get(id); if (!s) return null; s.name = uniqueName(cleanName(name, s.name), L.names().filter(n => n !== s.name)); s.mt = now(); await persist(); return deep(s); },
+      async rename(id, name) { const s = L.get(id); if (!s) return null; s.name = uniqueName(cleanName(name, s.name), taken().filter(n => n !== s.name)); s.mt = now(); await persist(); return deep(s); },
       async remove(id) { const i = list.findIndex(s => s.id === id); if (i < 0) return null; const [s] = list.splice(i, 1); await persist(); return s; },   // keep the result for "Rückgängig"
       async restore(s) { if (!s || L.get(s.id)) return false; list.push(normalizeSound(s)); await persist(); return true; },
       async duplicate(id) { const s = L.get(id); return s ? L.save(Object.assign(deep(s), {origin: s.id}), {name: s.name}) : null; },
@@ -3406,7 +3445,7 @@ const RecHelpers = (() => {
         for (const raw of sounds || []) { const s = normalizeSound(raw); if (!s) continue; const h = soundHash(s);
           if (have.has(h)) { res.skipped++; continue; }
           if (!s.id || !s.id.startsWith('u-') || L.get(s.id)) s.id = uid('u');
-          s.name = uniqueName(s.name, L.names()); list.push(s); have.set(h, s); res.added.push(s.id); }
+          s.name = uniqueName(s.name, taken()); list.push(s); have.set(h, s); res.added.push(s.id); }
         if (res.added.length) await persist(); return res;
       },
       exportFile: ids => buildSoundsFile(ids ? list.filter(s => ids.includes(s.id)) : list),
@@ -5404,12 +5443,17 @@ function applyTrackParams(i, immediate, deferCurve) {
 }
 /* native LFO 1/2 (§5.5, §9.5): per synth track one FX.TempoLFO per LFO that a route uses (shape, FREI rate or TAKT
    division; Start = FREI only, Einblenden needs the worklet). Routes lfo1/lfo2 -> pitch (cents ×2400 per 1.0 -> each
-   voice's CV), cutoff (cents ×12000 -> each voice's filter detune), amp (track tremolo: trem = 1 − |amt| + amt·lfo) and
+   voice's CV), cutoff (cents ×12000 -> each voice's filter detune), amp (track tremolo, depth |amt|/2: trem = 1 − |amt|/4 + amt/4·lfo, so 0.5…1 at |amt| 1) and
    pan (track pan). All other routes are stored and shown hatched („nur mit Worklet“). */
 function lfoAnchor() { return R.playing ? R.startTime : (AU.lfo0 != null ? AU.lfo0 : (AU.lfo0 = 0)); }
 function rebuildNativeLfos(i) {
   const A = AU.tracks[i], c = AU.ctx, tr = S.tracks[i]; if (!A || !c || !A.nl || !tr || tr.kind !== 'synth') return;
-  const P = tr.sound.p, mods = (tr.sound.mods || []).filter(nativeRoute), now = c.currentTime, nl = A.nl;
+  syncLfoSet(A, tr.sound, i * 7);
+}
+// the LFO set of one chain: A = a track (AU.tracks[i]) or a browser preview chain (pvChain), both with
+// {nl, lfoPitch, lfoCut, trem, pan}; built from the sound's native routes
+function syncLfoSet(A, snd, seed) {
+  const c = AU.ctx, P = snd.p, mods = (snd.mods || []).filter(nativeRoute), now = c.currentTime, nl = A.nl;
   // drop the old routes on both sides: LFO out -> route gain (else every rebuild leaves a dead gain hanging on the LFO)
   // and route gain -> destination
   for (const g of nl.routes) { try { if (g._src) g._src.disconnect(g); } catch (e) {} try { g.disconnect(); } catch (e) {} }
@@ -5425,27 +5469,32 @@ function rebuildNativeLfos(i) {
       else nl.lfo[k].setFree(hz, now);
     } else {
       if (nl.lfo[k]) { nl.lfo[k].stop(now + .02); try { nl.lfo[k].out.disconnect(); } catch (e) {} }
-      const L = FX.TempoLFO(c, shape, {divBeats: sync || 1, hz, seed: i * 7 + k + 1});
+      const L = FX.TempoLFO(c, shape, {divBeats: sync || 1, hz, seed: seed + k + 1});
       L.sync = sync; L.start(sync ? lfoAnchor() : 0, sync ? S.bpm : 0, now); nl.lfo[k] = L;
     }
     nl.key[k] = key;
   }
+  // amp depth = |amt|/2 (§5.5): each route swings ±|amt|/4 around 1 − Σ|amt|/4, so the gain never goes below 0 and the
+  // tremolo runs at the LFO rate (two full routes reach 0…1; more are scaled down to that)
+  const ampTot = mods.reduce((s, m) => s + (m.dst === 'amp' && nl.lfo[m.src === 'lfo1' ? 0 : 1] ? Math.abs(m.amt) : 0), 0);
+  const ampK = .25 * Math.min(1, 2 / Math.max(2, ampTot));
   let ampSum = 0;
   for (const m of mods) {
     const L = nl.lfo[m.src === 'lfo1' ? 0 : 1]; if (!L) continue;
     const g = c.createGain(); L.out.connect(g); g._src = L.out; nl.routes.push(g);
     if (m.dst === 'pitch') { g.gain.value = m.amt * 2400; g.connect(A.lfoPitch); }
     else if (m.dst === 'cutoff') { g.gain.value = m.amt * 12000; g.connect(A.lfoCut); }
-    else if (m.dst === 'amp') { g.gain.value = m.amt; g.connect(A.trem.gain); ampSum += Math.abs(m.amt); }
+    else if (m.dst === 'amp') { g.gain.value = m.amt * ampK; g.connect(A.trem.gain); ampSum += Math.abs(m.amt) * ampK; }
     else if (m.dst === 'pan' && A.pan) { g.gain.value = m.amt; g.connect(A.pan.pan); }
   }
-  nl.tremBase = Math.max(0, 1 - Math.min(1, ampSum));
+  nl.tremBase = Math.max(.5, 1 - ampSum);
   A.trem.gain.setTargetAtTime(nl.tremBase, now, .015);
 }
 // transport (re)start or tempo change: tempo-locked native LFOs follow the new anchor
 function relockLfos() {
   if (!AU.ctx) return;
   for (let i = 0; i < 4; i++) { const A = AU.tracks[i]; if (!A || !A.nl) continue; A.nl.key = ['', '']; rebuildNativeLfos(i); }
+  try { const N = PV.chain; if (N && !N.gone) { N.nl.key = ['', '']; syncLfoSet(N, N.sound, 97); } } catch (e) {}
 }
 function applyTempoDependents() {
   const c = AU.ctx; if (!c) return;
@@ -5542,10 +5591,8 @@ const VoiceProto = {
 function cleanupVoice(v) {
   if (v.dead) return;
   v.dead = true;
-  const A = v.A;
-  try { A.lfoPitch.disconnect(v.cv.offset); } catch (e) {}
-  try { A.lfoCut.disconnect(v.fA.detune); } catch (e) {}
-  if (v.fB) { try { A.lfoCut.disconnect(v.fB.detune); } catch (e) {} }
+  if (v.tapP) { try { v.tapP.disconnect(v.cv.offset); } catch (e) {} }
+  if (v.tapC) { try { v.tapC.disconnect(v.fA.detune); } catch (e) {} if (v.fB) { try { v.tapC.disconnect(v.fB.detune); } catch (e) {} } }
   for (const n of v.nodes) { try { n.disconnect(); } catch (e) {} }
   try { v.srcs[0].onended = null; } catch (e) {}
   const k = VOICES.indexOf(v); if (k >= 0) VOICES.splice(k, 1);
@@ -5605,13 +5652,17 @@ function spawnVoice(i, out, vel, t0, o) {
     }
     gs.grpOuts.push(out); gs.lastOut = out;
   }
-  if (!o.sound || o.sound === tr.sound) { try { A.lfoPitch.connect(cv.offset); } catch (e) {} }
+  // LFO taps: the track's for its own sound; a browser preview of another sound plays through its own preview chain
+  // (o.chain: that sound's fx, LFO 1/2 and tremolo / pan routes) so it is heard as it will sound when loaded (§11.3)
+  const N = o.chain || (!o.sound || o.sound === tr.sound ? A : null);
+  if (N) { try { N.lfoPitch.connect(cv.offset); v.tapP = N.lfoPitch; } catch (e) {} }
   const src = NativeVoice.source(c, P, eng, out, vel, cv.out, {t0, noise: AU.noise, waves: AU.waves});
   nodes.push(...src.nodes); srcs.push(...src.srcs); starts.push(...src.starts);
-  const tl = NativeVoice.tail(c, P, out, vel, src.out, A.trackIn, cv.out, {mkConst: constSrc, pan: voicePan(A, P)});
+  const tl = NativeVoice.tail(c, P, out, vel, src.out, o.chain ? o.chain.trackIn : A.trackIn, cv.out, {mkConst: constSrc, pan: voicePan(A, P)});
   nodes.push(...tl.nodes);
   for (const s of tl.srcs) { srcs.push(s); starts.push([s, 0]); }
-  if (!o.sound || o.sound === tr.sound) { try { A.lfoCut.connect(tl.fA.detune); if (tl.fB) A.lfoCut.connect(tl.fB.detune); } catch (e) {} }
+  if (N) { try { N.lfoCut.connect(tl.fA.detune); if (tl.fB) N.lfoCut.connect(tl.fB.detune); v.tapC = N.lfoCut; } catch (e) {} }
+  if (o.chain) v.chain = o.chain;
   v.peak = tl.peak;
   envStart(tl.fenvSrc.offset, t0, v.fenv, 1, 0);
   envStart(tl.vca.gain, t0, v.aenv, v.peak, 0);
@@ -5806,6 +5857,7 @@ function auditionStart(i, note, vel) {
 
 /* ---------- housekeeping ---------- */
 function gcVoices(now) {
+  try { if (PV_OLD.length) pvChainGc(); } catch (e) {}
   for (let k = VOICES.length - 1; k >= 0; k--) { const v = VOICES[k]; if (!v.dead && now > v.stopAt + 1) cleanupVoice(v); }
   for (let k = HITS.length - 1; k >= 0; k--) { const h = HITS[k]; if (!h.dead && now > h.stopAt + 1) hitCleanup(h); }
 }
@@ -8300,12 +8352,31 @@ function openEditor() {
 }
 function closeEditor() { if (EL.synthSheet.classList.contains('open') || EL.drumSheet.classList.contains('open') || EL.clipSheet.classList.contains('open') || EL.rollSheet.classList.contains('open') || EL.sndSheet.classList.contains('open')) shieldTap(); closeSheets(); R.editor = null; UI.dirty.all = true; }
 function edRefresh() { for (const f of ED.refreshers) { try { f(); } catch (e) { logErr(e); } } }
+/* §1.7.3 / §2.3: editor pages never scroll. Conditional content (FILTER hint line, …) can push a page past its body at
+   320 px, 375×667 or 667×375; the body then steps down to a compact density (fit1: smaller knobs and segments, then fit2)
+   until everything fits. Re-measured from scratch on every size change, stepped up only when a page change overflows. */
+const FIT_LV = ['fit1', 'fit2'];
+function fitOver(b) { return b.scrollHeight > b.clientHeight + 1; }
+function fitBody(b, full) {
+  if (!b || !b.isConnected || !b.clientHeight) return;
+  if (full) { if (FIT_LV.some(c => b.classList.contains(c))) b.classList.remove(...FIT_LV); }
+  for (const c of FIT_LV) { if (b.classList.contains(c)) continue; if (!fitOver(b)) break; b.classList.add(c); }
+}
+let fitRO = null;
+function fitWatch(body) {
+  ED.fitBody = body;
+  if (!fitRO && typeof ResizeObserver === 'function') fitRO = new ResizeObserver(es => { for (const e of es) fitBody(e.target, true); });
+  if (fitRO) { fitRO.disconnect(); fitRO.observe(body); }
+  requestAnimationFrame(() => fitBody(body, true));
+}
 // shared frame of the editor sheets: header row(s), LCD line, tab row, body (no vertical scroll)
 function sheetFrame(sh, title, tabs, curTab, onTab, subs) {
   sh.innerHTML = '';
   const head = el('div', 'sh-head'), r1 = el('div', 'sh-row r1'), r2 = el('div', 'sh-row r2');
-  r1.appendChild(el('div', 'sh-title', `<span class="dot"></span><b>${esc(title)}</b>`));
-  const chip = el('span', 'trchip'); chip.hidden = true; r1.appendChild(chip); ED.trChip = chip;
+  // the Träger chip „⇅ Am7“ (§2.3 / §5.2) sits under the title in the same slot: neither truncates the other
+  const tt = el('div', 'sh-title', `<span class="dot"></span><span class="stt"><b>${esc(title)}</b></span>`);
+  const chip = el('span', 'trchip'); chip.hidden = true; tt.querySelector('.stt').appendChild(chip); ED.trChip = chip;
+  r1.appendChild(tt);
   r1.appendChild(el('span', 'sh-sp'));
   head.append(r1, r2);
   const bar = el('div', 'sh-bar'), lcd = el('div', 'lcd'), tb = el('div', 'sh-tabs');
@@ -8320,6 +8391,7 @@ function sheetFrame(sh, title, tabs, curTab, onTab, subs) {
   }
   const body = el('div', 'sh-body rest');
   sh.append(head, bar, body);
+  if (sh === EL.synthSheet) fitWatch(body);
   ED.lcd = lcd; lcdHint();
   renderEdChip();
   return {head, r1, r2, body};
@@ -8383,6 +8455,13 @@ function setEngineOf(snd, eng) {
   snd.engine = eng;
   if (eng === 'wt' && !snd.p.wt) snd.p.wt = WT_DEF();
   if (eng === 'fm2' && !snd.p.fm2) snd.p.fm2 = FM2_DEF();
+  // a default block of an engine not in use that the switch itself added (untouched, not in the origin record) goes
+  // again: VA → FM → WT → VA with no change is the same sound, not „geändert“ (§5.2 lossless switch)
+  let rec = null; try { rec = originRec(snd); } catch (e) {}
+  for (const [k, e, def] of [['wt', 'wt', WT_DEF], ['fm2', 'fm2', FM2_DEF]]) {
+    if (eng === e || !snd.p[k] || (rec && rec.p && rec.p[k])) continue;
+    if (SQStore.canonical(snd.p[k]) === SQStore.canonical(def())) delete snd.p[k];
+  }
   return snd;
 }
 const sndOf = t => S.tracks[t] && S.tracks[t].kind === 'synth' ? S.tracks[t].sound : null;
@@ -8619,7 +8698,7 @@ function sToggle(key, label) {
   b.update = upd; upd(); ED.refreshers.push(upd);
   return b;
 }
-function edParamChanged(key) { for (const f of ED.refreshers) { try { f(key); } catch (e) { logErr(e); } } UI.dirty.edHead = true; }
+function edParamChanged(key) { for (const f of ED.refreshers) { try { f(key); } catch (e) { logErr(e); } } UI.dirty.edHead = true; fitBody(ED.fitBody, false); }
 function subTabsFor(tab, eng) {
   if (tab === 'osc') return eng === 'analog' ? [['o1', 'OSZ 1'], ['o2', 'OSZ 2'], ['o3', 'OSZ 3'], ['mix', 'MIX'], ['voice', 'STIMME']] : [['eng', eng === 'wt' ? 'WT' : 'FM'], ['voice', 'STIMME']];
   if (tab === 'filter') return [['ctl', 'REGLER'], ['xy', 'XY']];
@@ -8642,7 +8721,7 @@ function buildSynthEd() {
   // row 1: ● SYNTH n · [VA | FM | WT] · ⇅ chip · ↶ ↷ · ✕   (the ECO-Klang badge arrives with the worklet, WP4)
   const engSeg = makeSeg([['analog', 'VA'], ['fm2', 'FM'], ['wt', 'WT']], () => S.tracks[i].sound.engine === 'fm6' ? 'fm2' : S.tracks[i].sound.engine,
     v => setEngine(i, v), 'eng', {undo: soundUndo(i), label: 'Klangerzeugung'});
-  F.r1.insertBefore(engSeg, F.r1.querySelector('.trchip'));
+  F.r1.insertBefore(engSeg, F.r1.querySelector('.sh-title').nextSibling);
   // row 2: ‹ name • › · [A/B] · Sichern · 🎲 · ▶ Hören
   const pre = el('div', 'preset');
   const pPrev = el('button', 'pa rb', '‹'), pName = el('button', 'pv rb', ''), pNext = el('button', 'pa rb', '›');
@@ -8873,9 +8952,10 @@ function pageFx(pg, i) {
   const oc = makeSeg([['follow', 'Mitziehen'], ['hold', 'Halten']], () => S.tracks[i].onChange, v => { S.tracks[i].onChange = v; markDirty(); }, null, {undo: soundUndo(i), label: 'Bei Wechsel'});
   const col = el('div', 'segcol rest');
   col.append(lgrp('Echo-Zeit', div), lgrp('Bei Wechsel', oc));
-  const bh = busHintChip(i); if (bh) col.appendChild(bh);
+  // the bus-hint chip sits in the knob row's free cell (P: right of Panorama; L: under the knobs), so it never adds a row
+  const kr = kRow(ks), bh = busHintChip(i); if (bh) kr.appendChild(bh);
   ED.refreshers.push(() => { vol.update(); ks.forEach(x => x.update()); div.update(); oc.update(); });
-  pg.append(ff, kRow(ks), col);
+  pg.append(ff, kr, col);
 }
 // „Hall/Echo wie im Preset“ (§11.3): appears after loading a sound that has a bus hint; applies only on tap, one undo
 function busHintChip(i) {
@@ -9094,7 +9174,7 @@ function openModAdd(anchor, i) {
 function openSavePop(anchor, i) {
   const snd = S.tracks[i].sound, o = snd.origin, userOrigin = o && o.startsWith('u-') && LIB.ok && LIB.lib.get(o);
   const askName = pop => {
-    const taken = LIB.ok ? LIB.lib.names() : [];
+    const taken = (LIB.ok ? LIB.lib.names() : []).concat(factoryNames());
     const base = snd.name.replace(/\s+\(v2\)$/, '');
     pop.innerHTML = '<h4>Als eigener Sound sichern</h4>';
     const inp = el('input', 'tin'); inp.value = SQStore.uniqueName(SQStore.cleanName(base), taken); inp.maxLength = 32; inp.setAttribute('aria-label', 'Name des Sounds');
@@ -9134,10 +9214,12 @@ async function saveSound(t, name, mode) {
 
 /* ---------- user library (§11.4): KV key 'lib', loaded at start-up; the full library goes into every project file ---------- */
 const LIB = {lib: null, ok: false, ver: 0, wait: null};
+// factory names count as taken for own sounds: no two rows in „Alle“ share a name (§11.3 „Rom-Fläche 2“)
+function factoryNames() { return FACTORY.map(f => f.name); }
 function libReady() {
   if (LIB.ok) return Promise.resolve(LIB.lib);
   if (!LIB.wait) LIB.wait = (async () => {
-    try { if (!kv) kv = SQStore.KV(); LIB.lib = SQStore.Library(kv); await LIB.lib.load(); } catch (e) { logErr(e); LIB.lib = SQStore.Library({get: async () => [], set: async () => 'memory'}); }
+    try { if (!kv) kv = SQStore.KV(); LIB.lib = SQStore.Library(kv, factoryNames); await LIB.lib.load(); } catch (e) { logErr(e); LIB.lib = SQStore.Library({get: async () => [], set: async () => 'memory'}, factoryNames); }
     LIB.ok = true; libChanged(); return LIB.lib;
   })();
   return LIB.wait;
@@ -9157,9 +9239,43 @@ async function restoreSound(s) { await libReady(); const okr = await LIB.lib.res
    current BPM, through the track's chain as preview voices (src 'preview'); never touches the transport or the clips.
    Stops on the next row tap, on close, on any key press. Scheduled with the lookahead of tick() (≤ 120 ms ahead). ---------- */
 const PV = {on: false, t: -1, notes: [], k: 0, t0: 0, spb: .5, sound: null, voices: [], gs: {}, id: null, end: 0};
+/* a preview of a sound that is not the track's own runs through its own copy of the track chain (drive, tremolo, volume,
+   pan, sends to the shared hall / echo) with that sound's fx and native LFO 1/2 routes: ▶ sounds as the row will sound
+   once loaded, and the loaded sound's amp / pan LFO does not leak into it. Disposed once its last voice is gone. */
+function pvChain(t, snd) {
+  const c = AU.ctx, A = AU.tracks[t]; if (!c || !A) return null;
+  const N = {sound: snd, t, gone: false, trackIn: c.createGain(), drive: c.createWaveShaper(), trem: c.createGain(), vol: c.createGain(),
+    pan: c.createStereoPanner ? c.createStereoPanner() : null, revSend: c.createGain(), dlySend: c.createGain(),
+    lfoPitch: c.createGain(), lfoCut: c.createGain(), nl: {lfo: [null, null], key: ['', ''], routes: [], tremBase: 1}};
+  const fx = snd.fx || {drive: 0, rev: 0, dly: 0, vol: .8, pan: 0};
+  try { N.drive.curve = fx.drive > .005 ? driveCurve(fx.drive) : null; N.drive.oversample = 'none'; } catch (e) {}
+  N.trackIn.connect(N.drive); N.drive.connect(N.trem); N.trem.connect(N.vol);
+  let post = N.vol; if (N.pan) { N.vol.connect(N.pan); post = N.pan; N.pan.pan.value = fx.pan || 0; }
+  post.connect(AU.masterSum); post.connect(N.revSend); post.connect(N.dlySend);
+  N.revSend.connect(AU.reverb); N.dlySend.connect(AU.delay);
+  N.vol.gain.value = fx.vol * fx.vol / (1 + fx.drive * 1.5); N.revSend.gain.value = fx.rev * .6; N.dlySend.gain.value = fx.dly * .5;
+  syncLfoSet(N, snd, 97);
+  N.trem.gain.value = N.nl.tremBase;
+  return N;
+}
+function pvChainDispose(N) {
+  if (!N || N.gone) return; N.gone = true;
+  const now = AU.ctx ? AU.ctx.currentTime : 0;
+  for (const L of N.nl.lfo) if (L) { L.stop(now + .02); try { L.out.disconnect(); } catch (e) {} }
+  for (const g of N.nl.routes) { try { g.disconnect(); } catch (e) {} }
+  for (const n of [N.trackIn, N.drive, N.trem, N.vol, N.pan, N.revSend, N.dlySend, N.lfoPitch, N.lfoCut]) if (n) { try { n.disconnect(); } catch (e) {} }
+}
+const PV_OLD = [];
+// housekeeping (gcVoices): a retired preview chain goes once none of its voices sounds any more
+function pvChainGc() {
+  for (let k = PV_OLD.length - 1; k >= 0; k--) { const N = PV_OLD[k]; if (!VOICES.some(v => !v.dead && v.chain === N)) { pvChainDispose(N); PV_OLD.splice(k, 1); } }
+}
+function pvChainRetire() { if (PV.chain) { PV_OLD.push(PV.chain); PV.chain = null; } }
 function previewStart(t, sound, demo, id) {
   previewStop();
   ensureAudio(); const c = AU.ctx; if (!c || !sound) return false;
+  pvChainRetire();
+  const tr = S.tracks[t]; PV.chain = tr && tr.kind === 'synth' && sound !== tr.sound ? pvChain(t, sound) : null;
   const ph = (SQF.PREVIEW && (SQF.PREVIEW[demo] || SQF.PREVIEW.lead)) || [];
   const root = S.key.root, sh = root <= 6 ? root : root - 12;
   Object.assign(PV, {on: true, t, sound, id: id || null, spb: 60 / S.bpm, t0: c.currentTime + .05, k: 0, voices: [], gs: {},
@@ -9174,16 +9290,16 @@ function previewTick(now) {
   while (PV.k < PV.notes.length) {
     const e = PV.notes[PV.k], t = PV.t0 + e.b * PV.spb; if (t > now + .12) break;
     PV.k++;
-    const v = spawnVoice(PV.t, e.n, e.v, Math.max(t, now + .004), {src: 'preview', sound: PV.sound, gs: PV.gs});
+    const v = spawnVoice(PV.t, e.n, e.v, Math.max(t, now + .004), {src: 'preview', sound: PV.sound, gs: PV.gs, chain: PV.chain && !PV.chain.gone ? PV.chain : null});
     if (v) { v.release(Math.max(t, now + .004) + e.d * PV.spb); v.log = logNote({track: PV.t, src: 'preview', clipNote: null, out: v.out, time: v.start, dur: e.d * PV.spb, vel: e.v}); PV.voices.push(v); }
   }
-  if (PV.k >= PV.notes.length && now > PV.end + .05) { PV.on = false; PV.voices = []; UI.dirty.br = true; }
+  if (PV.k >= PV.notes.length && now > PV.end + .05) { PV.on = false; PV.voices = []; pvChainRetire(); UI.dirty.br = true; }
 }
 function previewStop() {
   if (!PV.on && !PV.voices.length) return;
   const now = nowT();
   for (const v of PV.voices) if (!v.dead) { if (v.start > now + .002) v.cancel(); else v.release(now, .02); }
-  PV.on = false; PV.voices = []; PV.id = null; UI.dirty.br = true;
+  PV.on = false; PV.voices = []; PV.id = null; pvChainRetire(); UI.dirty.br = true;
 }
 function previewFor(t, rec) { const snd = soundCopy(rec); return previewStart(t, snd, rec.demo || (FACTORY_BY_ID.get(snd.origin) || {}).demo || demoForCat(rec.cat), rec.id); }
 const demoForCat = c => ({bass: 'bass', lead: 'lead', poly: 'chord', flaeche: 'pad', pluck: 'arp', sequenz: 'seq16', fm: 'keys', glocke: 'bell', wt: 'pad'})[c] || 'lead';
@@ -9218,7 +9334,10 @@ function buildBrowser() {
   sh.innerHTML = ''; sh.style.setProperty('--tc', `var(--t${t + 1})`);
   const head = el('div', 'sh-head br-head');
   const r1 = el('div', 'sh-row r1');
-  r1.appendChild(el('div', 'sh-title', `<span class="dot"></span><b><span class="brpre">SOUNDS · </span>${esc(tr.name)}</b>`));
+  const tt = el('div', 'sh-title', `<span class="dot"></span><span class="stt"><b><span class="brpre">SOUNDS · </span>${esc(tr.name)}</b></span>`);
+  // §2.3: the browser is a sheet too; in P it hides the carrier bar, so its header shows an active Träger as well
+  const chip = el('span', 'trchip'); chip.hidden = true; tt.querySelector('.stt').appendChild(chip); ED.trChip = chip;
+  r1.appendChild(tt);
   const cur = el('span', 'brcur'); r1.appendChild(cur);
   r1.appendChild(el('span', 'sh-sp'));
   const ab = el('button', 'hb rb abb', 'A/B'); onTap(ab, () => { toggleAB(t); brRefresh(); }); r1.appendChild(ab);
@@ -9306,8 +9425,8 @@ function brRename(inp) {
   const row = inp && inp.closest('[data-id]'); if (!row) return;
   const id = row.dataset.id;
   LIB.lib.rename(id, inp.value).then(s => {
+    // §11.4: a track owns a copy of its sound; library operations never touch tracks (the track keeps its name)
     libChanged(); BR.ren = BR.more = null;
-    for (const tr of S.tracks) if (tr.kind === 'synth' && tr.sound.origin === id && !soundEdited(tr.sound)) { tr.sound.name = s.name; UI.dirty.strip = UI.dirty.grid = true; }
     brRefresh();
   });
 }
@@ -10741,7 +10860,7 @@ function bindUI() {
   document.addEventListener('contextmenu', e => { if (!inField(e)) e.preventDefault(); });
   [EL.kb, EL.pads, EL.segTr, EL.drumSheet, EL.popLayer.querySelector('.bd')].forEach(n => { if (n) guardTouch(n); });
   // the synth sheet is guarded against the loupe too, except the label columns of its scrolling list (MOD matrix, §1.7.3)
-  EL.synthSheet.addEventListener('touchstart', e => { if (e.cancelable && !(e.target.closest && e.target.closest('.mxlist .ms, .mxlist .md, .mxlist .mempty'))) e.preventDefault(); }, {passive: false});
+  EL.synthSheet.addEventListener('touchstart', e => { if (e.cancelable && !(e.target.closest && e.target.closest('.mxlist .ms, .mxlist .md, .mxlist .mempty, .pg-lfo-l1 .routes, .pg-lfo-l2 .routes'))) e.preventDefault(); }, {passive: false});
   // transport
   // keyboard activation (Enter/Space on a focused button) only: clicks that follow a pointer interaction are ignored
   const kbdClick = (elx, fn) => {
