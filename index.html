@@ -508,6 +508,12 @@ svg{display:block}
 .fader .fcap{position:absolute;left:2px;right:2px;height:16px;top:calc((1 - var(--n)) * (100% - 16px));border-radius:4px;background:linear-gradient(#3d424d,#262a33);border:1px solid #000;box-shadow:0 2px 4px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.14)}
 .fader .fcap::after{content:"";position:absolute;left:5px;right:5px;top:6px;height:2px;border-radius:1px;background:var(--tc,var(--sel))}
 .fader.press .fcap{background:linear-gradient(#2c3038,#1d2026)}
+/* long-press progress (§9.3, §10.6), the faders' twin of the knob ring: two bars along the track fill from 150 to 450 ms */
+.fader .fpr{position:absolute;left:-5px;right:-5px;top:0;bottom:0;pointer-events:none;opacity:0;transform:scaleY(0);transform-origin:50% 100%;
+  background:linear-gradient(var(--sel),var(--sel)) left/2px 100% no-repeat,linear-gradient(var(--sel),var(--sel)) right/2px 100% no-repeat;border-radius:2px}
+.fader.press:not(.drag):not(.armed) .fpr{animation:flp .3s linear .15s forwards}
+@keyframes flp{from{opacity:.9;transform:scaleY(0)}to{opacity:.9;transform:scaleY(1)}}
+.fader.armed .fpr{opacity:.9;transform:none}
 .fader.drag .ffill{width:6px;margin-left:-3px}
 #bub{position:fixed;left:0;top:0;z-index:80;display:none;transform:translate(-50%,-100%);pointer-events:none;background:var(--sel);color:var(--ink);font:700 13px/1 var(--font-num);padding:5px 7px;border-radius:5px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.6)}
 #bub.on{display:block}
@@ -550,6 +556,18 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) :is(.knob,.fader,.seg,.tgl,
 body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 .mbn{position:absolute;z-index:7;display:flex;align-items:center;gap:8px;padding:0 3px 0 9px;border-radius:6px;background:#26300f;background:color-mix(in srgb,var(--msrc) 20%,#0b0c0e);border:1px solid var(--msrc);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.5)}
 .mbn[hidden]{display:none}
+.mbn.cmp{gap:6px;padding-left:7px}
+.mbn.cmp .mbt small{display:none}
+.mbn.cmp .mbf{min-width:46px;padding:0 7px;font-size:11.5px;letter-spacing:.02em}
+/* L: the tab row gets compact in mod mode, so the banner fits next to every tab and sub-tab (§9.3) */
+@media (orientation:landscape){
+  body[data-mod] #synthSheet .sh-bar .tab{padding:0 5px;letter-spacing:.02em}
+  body[data-mod] #synthSheet .sh-bar .stab{padding:0 4px;letter-spacing:.01em}
+}
+@media (orientation:landscape) and (max-width:759px){
+  body[data-mod] #synthSheet .sh-bar .tab{padding:0 4px;letter-spacing:0}
+  body[data-mod] #synthSheet .sh-bar .stab{padding:0 3px;letter-spacing:0}
+}
 .mbn .dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--msrc);box-shadow:0 0 8px var(--msrc)}
 .mbn .mbt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;overflow:hidden;white-space:nowrap}
 .mbn .mbt b{font:700 12px/1.15 var(--font-ui);letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis}
@@ -604,6 +622,12 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
   .pg-mod .bsl b{top:9px;bottom:9px}
   .pg-mod .modrow .mx{height:30px}
   .pg-mod .mxlist{gap:3px}
+  /* §9.3 L: the matrix shows 3 rows at a time; --mrh = a third of the list height (modRowFit), 24…34 px */
+  .pg-mod{gap:4px}
+  .pg-mod .modrow{min-height:0;height:var(--mrh,34px);padding-top:1px;padding-bottom:1px}
+  .pg-mod .modrow .ms,.pg-mod .modrow .mx{height:calc(var(--mrh,34px) - 4px)}
+  .pg-mod .modrow .bsl{height:calc(var(--mrh,34px) - 6px)}
+  .pg-mod .modrow .bsl b{top:calc(var(--mrh,34px) / 2 - 8px);bottom:calc(var(--mrh,34px) / 2 - 8px)}
 }
 @media (orientation:landscape) and (max-width:759px){.schip .sl,.madd .sl{display:none}.schip .ss,.madd .ss{display:inline}}
 /* „Was ist anders?“ (§5.2 P1): a white dot on every control that differs from the base patch; tab counts */
@@ -622,8 +646,7 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 #synthSheet .hb.wial::after{content:"";position:absolute;top:-6px;left:-7px;right:-7px;bottom:-3px}
 .hb.wia2{display:none}
 @media (orientation:portrait) and (max-height:700px){#synthSheet .hb.wial{top:5px;height:20px}}
-@media (orientation:portrait) and (max-height:600px){.hb.wial{display:none}.hb.wia2{display:inline-flex;align-items:center;justify-content:center}
-  #synthSheet .sh-head .r2:has(.abb:not([hidden])) .preset .pa{display:none}}
+@media (orientation:portrait) and (max-height:600px){.hb.wial{display:none}.hb.wia2{display:inline-flex;align-items:center;justify-content:center}}
 @media (orientation:landscape){#synthSheet .hb.wial{top:auto;bottom:6px;height:22px;right:8px}}
 .lcd.wia{white-space:normal}
 .lcd.wia .lv{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font:500 10.5px/1.18 var(--font-ui);letter-spacing:.01em;overflow:hidden;padding-bottom:0;margin-bottom:0}
@@ -1332,7 +1355,7 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
   .pg-dsteps .stabs .pgstep .pv{height:28px;min-width:58px;padding:0 5px;font-size:12px}
 }
 @media (prefers-reduced-motion:reduce){
-  .knob.press:not(.drag):not(.armed) .kpr,.knob.detent svg,.fader.detent .fcap,.stepb.fl{animation:none}
+  .knob.press:not(.drag):not(.armed) .kpr,.fader.press:not(.drag):not(.armed) .fpr,.knob.detent svg,.fader.detent .fcap,.stepb.fl{animation:none}
   .slot.queued::after,.slot.qstop::after,.slot.armed::after{animation:none;border-style:dashed}
   .slot.qstop,#bRec.active.pulse,#bRec.active:not(.pulse),#bRec.armed.ba,#bRec.armed:not(.ba),#bFang.lit{animation:none}
   #bRec.armed,.scn.q{animation:none;border-style:dashed}
@@ -1621,6 +1644,18 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 /* WP3 layout fixes after the first screenshots */
 #synthSheet .sh-head .r1{gap:4px}
 @media (orientation:portrait){#synthSheet .hb.hold .ht{display:none}#synthSheet .hb.hold{min-width:44px}}
+/* P ≤ 600 px tall: the [◎] twin joins header row 2; the row's buttons get a little narrower so the sound name keeps the
+   WP3 width and ‹ › stay (also while A/B shows) */
+@media (orientation:portrait) and (max-height:600px){
+  #synthSheet .sh-head .r2{gap:3px}
+  #synthSheet .sh-head .r2 .hb.big,#synthSheet .sh-head .r2 .hb.hold{min-width:36px;width:36px;padding:0}
+  #synthSheet .sh-head .r2 .hb.wia2{min-width:34px;width:34px}
+  #synthSheet .sh-head .r2 .hb.sv{padding:0 5px;font-size:10.5px;letter-spacing:.02em}
+  #synthSheet .sh-head .r2 .hb.abb{padding:0 5px}
+  #synthSheet .sh-head .r2 .preset .pa{min-width:15px;flex:0 0 25px}
+  #synthSheet .sh-head .r2:has(.abb:not([hidden])) .preset .pa{flex:0 1 25px}
+  #synthSheet .sh-head .r2 .preset .pv{padding:0 4px}
+}
 @media (orientation:portrait) and (max-width:389px){#synthSheet .sh-head .seg.eng button{min-width:38px;padding:0 6px}}
 .pg-osc-mix .pgrow.segs{flex-wrap:nowrap;gap:8px 14px}
 .pg-osc-mix .pgrow.segs .lgrp{flex-direction:column;align-items:flex-start;gap:3px}
@@ -5555,10 +5590,19 @@ const RecHelpers = (() => {
       const pos = ((cyclesSinceStart + L.phase0) % cycles + cycles) % cycles;   // in cycles
       s.playbackRate.value = rateFor(hz);
       s.connect(L.out); s.start(when, pos / cycles * dur);
-      L.src = s; L.bpm = bpm; return L;
+      L.src = s; L.bpm = bpm; L._ft = when; L._fc = pos; L.hz = hz; return L;
     };
+    // FREI phase bookkeeping: cycles played at audio time t (exact, because setFree changes the rate in one step)
+    L.cycAt = t => L._fc + (t - L._ft) * L.hz;
     L.setTempo = (bpm, tAnchor) => { if (L.src && L.bpm) { L.src.playbackRate.setValueAtTime(rateFor(bpm / 60 / L.divBeats), tAnchor); L.bpm = bpm; } };
-    L.setFree = (hz, t) => { if (L.src) L.src.playbackRate.setTargetAtTime(rateFor(hz), t, 0.02); };
+    // a rate step keeps the phase continuous (only the slope changes, no click); the phase reference moves with it so the
+    // knobs' live dots (§9.4) stay on the running LFO after any rate change
+    L.setFree = (hz, t) => {
+      if (!L.src) return;
+      L._fc = L.cycAt(t); L._ft = t; L.hz = hz;
+      const pr = L.src.playbackRate; try { pr.cancelScheduledValues(t); } catch (e) {}
+      pr.setValueAtTime(rateFor(hz), t);
+    };
     L.stop = t => { if (L.src) { try { L.src.stop(t); } catch (e) {} L.src = null; } };
     return L;
   };
@@ -6771,6 +6815,11 @@ function applyTrackParams(i, immediate) {
    voice's CV), cutoff (cents ×12000 -> each voice's filter detune), amp (track tremolo, depth |amt|/2: trem = 1 − |amt|/4 + amt/4·lfo, so 0.5…1 at |amt| 1) and
    pan (track pan). All other routes are stored and shown hatched („nur mit Worklet“). A track on the worklet runs every
    route inside the engine (§5.4): its native LFO set is empty. */
+// a silent sink to the destination: every native mod LFO hangs on it so the audio graph keeps rendering it
+function lfoSink(c) {
+  if (!AU.lfoSink || AU.lfoSink.context !== c) { const g = c.createGain(); g.gain.value = 0; g.connect(c.destination); AU.lfoSink = g; }
+  return AU.lfoSink;
+}
 function lfoAnchor() { return R.playing ? R.startTime : (AU.lfo0 != null ? AU.lfo0 : (AU.lfo0 = 0)); }
 function rebuildNativeLfos(i) {
   const A = AU.tracks[i], c = AU.ctx, tr = S.tracks[i]; if (!A || !c || !A.nl || !tr || tr.kind !== 'synth') return;
@@ -6812,6 +6861,9 @@ function syncLfoSet(A, snd, seed) {
       const L = FX.TempoLFO(c, shape, {divBeats: sync || 1, hz, seed: seed + k + 1});
       L.sync = sync; L.start(sync ? lfoAnchor() : 0, sync ? S.bpm : 0, now); nl.lfo[k] = L;
       L._t0 = sync ? null : now;                               // phase reference of a FREI LFO (the knobs' live dots, §9.4)
+      // keep the LFO pulled while no voice sounds: pitch/cutoff routes reach only sounding voices, and an unpulled
+      // BufferSource stops advancing (FREI would restart at note-on, TAKT would lose the song lock, the dots would lie)
+      try { L.out.connect(lfoSink(c)); } catch (e) {}
     }
     nl.key[k] = key;
   }
@@ -6988,6 +7040,15 @@ function envStart(p, t0, e, peak, base = 0) {
   if (A < .02) p.setValueAtTime(peak, t0 + A);
   p.setTargetAtTime(base + (peak - base) * e.s, t0 + A, D / 3);
 }
+// LEGATO (§5.1 Modus, §3.10 BINDUNG) on the native path: the new voice takes over the envelope of the held voice instead of
+// retriggering it (origin tOrig = that voice's envelope start); a short fade-in crosses over from the stolen voice (4 ms)
+function envContinue(p, t0, e, peak, tOrig, fade) {
+  const A = Math.max(e.a, .001), D = Math.max(e.d, .005), t1 = t0 + fade;
+  if (fade > 0) { p.setValueAtTime(0, t0); p.linearRampToValueAtTime(envValueAt(t1, tOrig, e, peak, 0), t1); }
+  else p.setValueAtTime(envValueAt(t0, tOrig, e, peak, 0), t0);
+  if (t1 < tOrig + A) { p.setTargetAtTime(peak / 0.9502, t1, A / 3); p.setTargetAtTime(peak * e.s, tOrig + A, D / 3); }
+  else p.setTargetAtTime(peak * e.s, t1, D / 3);
+}
 function envValueAt(t, t0, e, peak, base = 0) {
   const A = Math.max(e.a, .001), D = Math.max(e.d, .005);
   if (t <= t0) return base;
@@ -7008,8 +7069,8 @@ function constSrc(v) {
 /* ---------- synth voice ---------- */
 const VoiceProto = {
   state(now) { if (this.dead) return 'dead'; const t = now == null ? (AU.ctx ? AU.ctx.currentTime : 0) : now; if (t < this.start) return 'pending'; if (t >= this.relT) return 'released'; return 'on'; },
-  ampAt(t) { if (t >= this.relT) return this.relV * Math.exp(-(t - this.relT) / this.relTau); return envValueAt(t, this.start, this.aenv, this.peak, 0); },
-  fenvAt(t) { if (t >= this.fRelT) return this.fRelV * Math.exp(-(t - this.fRelT) / this.fRelTau); return envValueAt(t, this.start, this.fenv, 1, 0); },
+  ampAt(t) { if (t >= this.relT) return this.relV * Math.exp(-(t - this.relT) / this.relTau); return envValueAt(t, this.envT0 != null ? this.envT0 : this.start, this.aenv, this.peak, 0); },
+  fenvAt(t) { if (t >= this.fRelT) return this.fRelV * Math.exp(-(t - this.fRelT) / this.fRelTau); return envValueAt(t, this.envT0 != null ? this.envT0 : this.start, this.fenv, 1, 0); },
   release(t, fastTau) {
     if (this.dead) return;
     if (t < this.start) t = this.start;
@@ -7155,6 +7216,9 @@ function spawnVoice(i, out, vel, t0, o) {
   }
   // LEGATO glides only between overlapping notes: is a voice of this track still held at t0? (checked before makeRoom)
   const gs = o.gs || A, legatoHeld = P.mode === 2 && VOICES.some(v => v.track === i && !v.dead && v.src === o.src && v.start < t0 - 1e-4 && v.relT > t0 + 1e-4);
+  // the held native voice whose envelopes the new note continues (no retrigger, like the worklet's LEGATO)
+  let held = null;
+  if (legatoHeld) for (const x of VOICES) if (x.track === i && !x.dead && !x.wk && x.src === o.src && x.P === P && x.start < t0 - 1e-4 && x.relT > t0 + 1e-4 && (!held || x.start > held.start)) held = x;
   makeRoom(i, t0, P);
   const nodes = [], srcs = [], starts = [];
   const v = Object.create(VoiceProto);
@@ -7186,8 +7250,14 @@ function spawnVoice(i, out, vel, t0, o) {
   if (N) { try { N.lfoCut.connect(tl.fA.detune); if (tl.fB) N.lfoCut.connect(tl.fB.detune); v.tapC = N.lfoCut; } catch (e) {} }
   if (o.chain) v.chain = o.chain;
   v.peak = tl.peak;
-  envStart(tl.fenvSrc.offset, t0, v.fenv, 1, 0);
-  envStart(tl.vca.gain, t0, v.aenv, v.peak, 0);
+  if (held) {
+    v.envT0 = held.envT0 != null ? held.envT0 : held.start;
+    try { envContinue(tl.fenvSrc.offset, t0, v.fenv, 1, v.envT0, 0); } catch (e) {}
+    try { envContinue(tl.vca.gain, t0, v.aenv, v.peak, v.envT0, .006); } catch (e) {}
+  } else {
+    envStart(tl.fenvSrc.offset, t0, v.fenv, 1, 0);
+    envStart(tl.vca.gain, t0, v.aenv, v.peak, 0);
+  }
   for (const [s, off] of starts) { try { off ? s.start(t0, off) : s.start(t0); } catch (e) {} }
   Object.assign(v, {cv, fA: tl.fA, fB: tl.fB, vca: tl.vca, post: tl.post, trim: tl.trim, shaped: tl.shaped, fenvSrc: tl.fenvSrc, fenvGain: tl.fenvGain, ktGain: tl.ktGain, oscs: src.oscs, P});
   cv.node.onended = () => cleanupVoice(v);
@@ -9805,7 +9875,8 @@ function modBannerRender() {
   const B = ED.mbn; if (!B || !B.el.isConnected) return;
   const src = UI.modSrc; if (!src) { if (!B.el.hidden) B.el.hidden = true; return; }
   const f = UI.modFocus && UI.modFocus.isConnected && UI.modFocus.dst ? UI.modFocus : null;
-  let t1 = MSRC[src].l + ' moduliert', t2 = 'Regler ziehen = Tiefe · doppelt tippen = weg';
+  // compact banner (L, narrow tab row): the source name alone; the hint line is hidden there
+  let t1 = MSRC[src].l + (B.el.classList.contains('cmp') ? '' : ' moduliert'), t2 = 'Regler ziehen = Tiefe · doppelt tippen = weg';
   if (f) {
     t1 = MSRC[src].l + ' → ' + f.label;
     const r = modGet(f.mi, src, f.dst), rg = r && f.rangeTxt ? f.rangeTxt(src) : '';
@@ -9822,7 +9893,17 @@ function modBannerPlace() {
   let r = useLcd ? l.getBoundingClientRect() : null;
   if (!r || !r.width) { const r2 = sh.querySelector('.sh-head .r2'); r = r2 ? r2.getBoundingClientRect() : null; }
   if (!r || !r.width) r = sh.querySelector('.sh-head').getBoundingClientRect();
-  const pad = useLcd ? 3 : 0, w = Math.min(s.width - 16, Math.max(r.width, 230)), right = Math.min(r.right, s.right - 4), left = Math.max(s.left + 8, right - w);
+  const pad = useLcd ? 3 : 0, right = Math.min(r.right, s.right - 4);
+  let w = Math.min(s.width - 16, Math.max(r.width, 230)), left = Math.max(s.left + 8, right - w);
+  // L: the banner shares the tab row (§9.3) and never lies on a tab or sub-tab (mod mode persists across them); the
+  // tab row is compacted in mod mode (CSS body[data-mod]), the banner takes the rest of the row
+  let lim = -Infinity;
+  for (const b of sh.querySelectorAll('.sh-bar .sh-tabs > *, .sh-bar .sh-subs > *')) {
+    const q = b.getBoundingClientRect(); if (!q.width || q.bottom <= r.top - pad || q.top >= r.bottom + pad || q.left >= right) continue;
+    lim = Math.max(lim, q.right);
+  }
+  if (lim > left - 5) { left = lim + 5; w = right - left; }
+  if (B.el.classList.contains('cmp') !== w < 215) { B.el.classList.toggle('cmp', w < 215); modBannerRender(); }
   const css = `left:${Math.round(left - s.left)}px;top:${Math.round(r.top - s.top - pad)}px;width:${Math.round(w)}px;height:${Math.round(r.height + 2 * pad)}px`;
   if (B.css !== css) { B.css = css; B.el.style.cssText = css; }
   if (B.el.hidden) B.el.hidden = false;
@@ -9851,7 +9932,8 @@ function modScopeSync() {
 }
 function lfoNow(i, P, n, t) {
   const pre = 'l' + n, sync = +P[pre + 'sync'] || 0, A = AU.tracks[i], L = A && A.nl ? A.nl.lfo[n - 1] : null;
-  const cyc = sync > 0 ? (t - lfoAnchor()) * S.bpm / 60 / sync : (t - (L && L._t0 != null ? L._t0 : 0)) * clamp(+P[pre + 'rate'] || 1, .01, 40);
+  const cyc = sync > 0 ? (t - lfoAnchor()) * S.bpm / 60 / sync
+    : L && L.src && !L.sync && L.cycAt ? L.cycAt(t) : (t - (L && L._t0 != null ? L._t0 : 0)) * clamp(+P[pre + 'rate'] || 1, .01, 40);
   const f = Math.floor(cyc);
   return FX.lfoShape(LFO_FX_SHAPE[P[pre + 'shape'] | 0] || 'sine', cyc - f, f, L ? L.seed || 1 : 1);
 }
@@ -9891,7 +9973,7 @@ function makeCtl(d, get, set, o) {
   k.setAttribute('aria-valuemin', '0'); k.setAttribute('aria-valuemax', '1');
   let ticks = [];
   if (fader) k.innerHTML = `<div class="kl">${esc(label)}</div><div class="ftrack"><i class="ffill"></i><i class="fmid"></i>` +
-    (dst ? '<i class="fmx"></i><i class="fmr"></i><b class="fdot"></b>' : '') + `<b class="fcap"></b></div><div class="kn"></div>` + (dst ? '<div class="kb"></div>' : '') + `<span class="fine"></span>`;
+    (dst ? '<i class="fmx"></i><i class="fmr"></i><b class="fdot"></b>' : '') + `<i class="fpr"></i><b class="fcap"></b></div><div class="kn"></div>` + (dst ? '<div class="kb"></div>' : '') + `<span class="fine"></span>`;
   else {
     let tk = '';
     if (stepped && d.vals.length <= 12) d.vals.forEach((_, i) => { const a = (135 + 270 * i / Math.max(1, d.vals.length - 1)) * Math.PI / 180, c = Math.cos(a), s2 = Math.sin(a);
@@ -10274,7 +10356,7 @@ function fitBody(b, full) {
 let fitRO = null;
 function fitWatch(body) {
   ED.fitBody = body;
-  if (!fitRO && typeof ResizeObserver === 'function') fitRO = new ResizeObserver(es => { for (const e of es) fitBody(e.target, true); MLIVE.lay++; if (UI.modSrc) modBannerPlace(); });
+  if (!fitRO && typeof ResizeObserver === 'function') fitRO = new ResizeObserver(es => { for (const e of es) fitBody(e.target, true); MLIVE.lay++; if (UI.modSrc) modBannerPlace(); if (ED.mxList) modRowFit(ED.mxList); });
   if (fitRO) { fitRO.disconnect(); fitRO.observe(body); }
   requestAnimationFrame(() => fitBody(body, true));
 }
@@ -11223,8 +11305,16 @@ function pageMod(pg, i) {
     if (ED.modHl) { const r = list.querySelector(`[data-key="${ED.modHl}"]`); ED.modHl = null; if (r) { r.classList.add('hl'); try { r.scrollIntoView({block: 'nearest'}); } catch (e) {} setTimeout(() => r.classList.remove('hl'), 1600); } }
   };
   build();
-  ED.mxBuild = build;
+  ED.mxBuild = build; ED.mxList = list;
+  requestAnimationFrame(() => modRowFit(list));
   ED.refreshers.push(k => { if (k === 'mods') safeRebuild(build); else for (const r of list.querySelectorAll('.modrow')) if (r._draw) r._draw(); });
+}
+// L (§9.3): three matrix rows fill the list height (the list keeps its height whatever the rows are: no feedback)
+function modRowFit(list) {
+  if (!list || !list.isConnected) return;
+  if (!isLand()) { list.style.removeProperty('--mrh'); return; }
+  const gap = parseFloat(getComputedStyle(list).rowGap) || 3, h = Math.floor((list.clientHeight - 2 * gap) / 3);
+  if (h > 0) list.style.setProperty('--mrh', clamp(h, 24, 34) + 'px');
 }
 function modRangeText(i, m) {
   const snd = S.tracks[i].sound, src = MSRC[m.src], k = toKnobAmt(m.dst, m.amt), dk = MDST_PD[m.dst];
@@ -12010,7 +12100,7 @@ function laufModel(t, s) {
     steps: per,
     get(i) { const c = clip(); return c ? laufFind(c, kOf(i)) : null; },
     set(i, n) {
-      const c = clip(); if (!c) return;
+      const c = clip(); if (!c || !laufCheck(c).ok) return;            // never edit a chord step blind (the view leaves, see laufPaint)
       const k = kOf(i), T = +(k * g()).toFixed(6), cur = laufFind(c, k);
       if (!n) { if (cur) { if (laufTied(c, cur)) laufSetTie(c, cur, false); c.notes.splice(c.notes.indexOf(cur), 1); } return; }
       if (cur) { if (cur !== n) Object.assign(cur, n); if (Math.abs(cur.t - T) > 1e-9) { cur.t = T; delete cur.o; } return; }   // edited = snapped to its step
@@ -12128,6 +12218,19 @@ function laufPaint() {
   const L = ED.lauf; if (!L || !ED.rollAt) return;
   const c = S.tracks[L.t].clips[L.s]; if (!c) return;
   if (laufTot(c) !== L.tot) { safeRebuild(() => { if (ED.lauf && ED.rollAt) buildRoll(); }); return; }   // length changed (undo, Takte ±)
+  // the clip turned polyphonic while LAUF is open (↶/↷, overdub, paste): back to the roll with the hint (§3.10, LF3);
+  // a clip that only fits another step length is shown in that one (buildRoll re-runs laufCheck)
+  const chk = laufCheck(c);
+  if (!chk.ok || chk.grid !== LAUF.grid) {
+    // the hint after the message of the step that caused it (e.g. „Rückgängig: …“), not instead of it
+    if (!chk.ok && !L.polyMsg) {
+      L.polyMsg = true;
+      setTimeout(() => { const T = EL.toast, prev = T && T.classList.contains('show') ? T.textContent.trim() : ''; toast(prev && !prev.includes(LAUF_MSG) ? prev + ' · ' + LAUF_MSG : LAUF_MSG); }, 0);
+    }
+    if (chk.ok) { LAUF.sel = -1; LAUF.page = 0; }
+    safeRebuild(() => { if (ED.lauf && ED.rollAt) { STEPQ.notes.length = 0; buildRoll(); } });
+    return;
+  }
   if (!L.se.busy()) L.se.paint();
   const kt = 'Skala: ' + keyName(c.key) + ' ▾'; if (L.kbtn.textContent !== kt) L.kbtn.textContent = kt;
 }
