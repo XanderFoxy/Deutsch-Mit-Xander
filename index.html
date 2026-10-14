@@ -90,6 +90,8 @@ svg{display:block}
 #bPlay .g-stop{display:none;color:var(--text)}
 #app.playing #bPlay .g-play{display:none}
 #app.playing #bPlay .g-stop{display:inline}
+#app.tailwin:not(.playing) #bPlay .g-play{display:none}
+#app.tailwin:not(.playing) #bPlay .g-stop{display:inline;color:var(--text-dim)}
 #app.playing #bPlay{border-color:var(--play-dim);box-shadow:inset 0 2px 4px var(--shadow),0 0 10px rgba(53,208,127,.25)}
 #bPlay .spk{position:absolute;right:2px;top:2px;width:12px;height:12px;display:none;color:var(--text-dim)}
 #app.audio-off #bPlay .spk{display:block}
@@ -511,6 +513,7 @@ svg{display:block}
 #bub.on{display:block}
 #bub.side{transform:translate(0,-50%)}
 #bub.side.left{transform:translate(-100%,-50%)}
+#bub.mod{background:var(--msrc);color:var(--ink)}
 /* picker (long-press): marking menu above the control */
 .pop.pk{min-width:0;padding:6px;border-radius:12px;background:#1d2027;border-color:#000}
 .pkrow{display:flex;gap:6px}
@@ -519,6 +522,111 @@ svg{display:block}
 .pchip.hot{background:var(--sel);color:var(--ink);transform:scale(1.04)}
 .pchip.hot small{color:var(--ink)}
 .pkhint{font:600 11px/1.25 var(--font-ui);color:var(--text-faint);text-align:center;margin-top:6px;letter-spacing:.03em;max-width:240px}
+/* ---------- WP5 (§9.3): modulation rings, live dots, source dots, picker with sources, mod mode + banner ---------- */
+:root{--m-lfo1:#b9f227;--m-lfo2:#ff8a3d;--m-menv:#ffe14d;--m-vel:#f4f1ea;--m-fenv:#d8c49a;--m-key:#c9a7ff;--m-rnd:#8fd3c7;--m-mw:#aab4c3;--m-aenv:#d1d5db;--msrc:var(--m-lfo1)}
+.knob .kmr{fill:none;stroke:var(--mc,var(--msrc));stroke-width:2.5;stroke-linecap:round;opacity:.95}
+.knob .kmx{fill:none;stroke:var(--mc,var(--msrc));stroke-width:2.5;stroke-linecap:butt;opacity:.35}
+.knob.mna .kmr{opacity:.45}
+.knob .kmg{fill:none;stroke:var(--msrc);stroke-width:1.2;stroke-dasharray:2 3;opacity:0}
+.knob .kdg{opacity:0}
+.knob.has-mod:not(.mna) .kdg{opacity:1}
+.knob .kd{fill:#fff;stroke:#000;stroke-width:.8}
+.knob .kdh{fill:var(--mc,var(--msrc));opacity:.35}
+.knob .kb,.fader .kb{position:absolute;left:0;right:0;bottom:0;height:5px;display:flex;justify-content:center;gap:3px;pointer-events:none}
+.knob .kb i,.fader .kb i{flex:none;width:5px;height:5px;border-radius:50%;background:var(--c);box-shadow:0 0 0 1px rgba(0,0,0,.6)}
+.fader .kb{bottom:-1px}
+.fader .fmr,.fader .fmx{position:absolute;right:2px;width:3px;border-radius:2px;background:var(--mc,var(--msrc));display:none;pointer-events:none;bottom:calc(8px + var(--m0,0) * (100% - 16px));height:calc((var(--m1,0) - var(--m0,0)) * (100% - 16px))}
+.fader .fmx{opacity:.35;bottom:calc(8px + var(--x0,0) * (100% - 16px));height:calc((var(--x1,0) - var(--x0,0)) * (100% - 16px))}
+.fader.has-mod .fmr,.fader.has-mod .fmx{display:block}
+.fader.mna .fmr{opacity:.45}
+.fader .fdot{position:absolute;left:50%;bottom:3.5px;width:9px;height:9px;margin-left:-4.5px;border-radius:50%;background:#fff;border:1px solid #000;box-shadow:0 0 0 3px rgba(185,242,39,.3);box-shadow:0 0 0 3px color-mix(in srgb,var(--mc,var(--msrc)) 40%,transparent);display:none;pointer-events:none;will-change:transform;z-index:1}
+.fader.has-mod:not(.mna) .fdot{display:block}
+/* mod mode: modulatable controls get a dashed ring in the source colour; everything else on the page rests (.3, inert) */
+body[data-mod] #synthSheet .knob.modable .kmg{opacity:.9}
+body[data-mod] #synthSheet .knob.modable .kv{opacity:.45}
+body[data-mod] #synthSheet .fader.modable .ftrack{outline:1px dashed var(--msrc);outline-offset:1px}
+body[data-mod] #synthSheet :is(.knob,.fader).mfocus{background:rgba(185,242,39,.12);background:color-mix(in srgb,var(--msrc) 14%,transparent)}
+body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) :is(.knob,.fader,.seg,.tgl,.xy,.enved,.rchip,.bush,.qcell):not(.modable){opacity:.3;pointer-events:none}
+body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
+.mbn{position:absolute;z-index:7;display:flex;align-items:center;gap:8px;padding:0 3px 0 9px;border-radius:6px;background:#26300f;background:color-mix(in srgb,var(--msrc) 20%,#0b0c0e);border:1px solid var(--msrc);color:var(--text);box-shadow:0 2px 10px rgba(0,0,0,.5)}
+.mbn[hidden]{display:none}
+.mbn .dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--msrc);box-shadow:0 0 8px var(--msrc)}
+.mbn .mbt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:1px;overflow:hidden;white-space:nowrap}
+.mbn .mbt b{font:700 12px/1.15 var(--font-ui);letter-spacing:.04em;overflow:hidden;text-overflow:ellipsis}
+.mbn .mbt small{font:600 10px/1.15 var(--font-num);color:var(--text-dim);overflow:hidden;text-overflow:ellipsis}
+.mbn .mbf{flex:none;align-self:stretch;margin:3px 0;min-width:64px;padding:0 12px;border-radius:5px;background:var(--msrc);color:var(--ink);font:700 12px/1 var(--font-ui);letter-spacing:.05em;border:0}
+.lcd .lm{flex:none;color:var(--mc,var(--msrc));font:500 12px/1 var(--font-num);white-space:nowrap}
+/* picker with sources: row 1 = 4 big chips (52), row 2 = the others + ↺ Std. + ✕ n (36); L: one row */
+.pkrow + .pkrow{margin-top:6px}
+.pchip.src,.pchip.sm{min-width:0}
+.pchip.src{flex:1 1 0;min-width:64px;height:52px;padding:0 6px;font-size:12px}
+.pchip.src i{width:22px;height:4px;border-radius:2px;background:var(--c);flex:none}
+.pchip.src.hot{background:var(--c);color:var(--ink)}
+.pchip.src.hot i{background:var(--ink)}
+.pchip.sm{flex:1 1 auto;height:36px;padding:0 5px;font-size:11px;color:var(--text-dim);gap:2px;white-space:nowrap}
+.pk.srcs .pkrow + .pkrow{gap:4px}
+.pchip.sm.src{min-width:0;height:36px}
+.pchip.sm.src i{width:16px;height:3px}
+.pchip.sm.hot{color:var(--ink)}
+.pk.srcs{width:min(360px,calc(100vw - 16px))}
+.pk.srcs .pkhint{max-width:none}
+.pk.one{width:auto;max-width:calc(100vw - 16px)}
+.pk.one .pkrow{flex-wrap:nowrap}
+.pk.one .pchip.src,.pk.one .pchip.sm{height:52px;min-width:56px;flex:1 0 auto;padding:0 7px}
+@media (max-width:759px){.pk.one .pkrow{gap:3px}.pk.one .pchip.src,.pk.one .pchip.sm{min-width:0;padding:0 4px;font-size:11px;letter-spacing:.01em}}
+@media (orientation:portrait) and (max-width:359px){.pchip.sm{font-size:10px;letter-spacing:0;padding:0 3px}.pchip.src{min-width:58px;padding:0 4px;font-size:11px;letter-spacing:.01em}}
+.pchip.src>span{white-space:nowrap}
+/* MOD tab (§9.3): source strip with live meters; rows with a live source meter */
+.msrcs{flex:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;min-width:0}
+.schip{min-width:0;height:44px;padding:0 4px;border-radius:8px;background:var(--chassis-2);border:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;font:700 11px/1.1 var(--font-ui);letter-spacing:.03em;color:var(--text);touch-action:manipulation;white-space:nowrap}
+.schip .sl,.schip .ss{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.schip .ss,.madd .ss{display:none}
+@media (orientation:portrait) and (max-height:700px){.schip{height:38px;gap:4px}}
+@media (orientation:portrait) and (max-height:600px){.schip{height:34px;gap:3px;font-size:10.5px;letter-spacing:.01em}}
+.schip .mt{position:relative;width:76%;height:4px;background:#0b0c0e;border-radius:2px;overflow:hidden;flex:none}
+.schip .mt::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;background:var(--text-faint)}
+.schip .mt b{position:absolute;left:50%;top:0;bottom:0;width:50%;background:var(--c);transform-origin:0 50%;transform:scaleX(0)}
+.schip.on{background:#2a3214;background:color-mix(in srgb,var(--c) 22%,var(--chassis-2));border-color:var(--c)}
+.pg-mod .modrow .ms i{transform-origin:50% 50%;will-change:transform}
+.pg-mod .mtop{flex:none;display:flex;flex-direction:column;gap:6px;min-width:0}
+@media (orientation:landscape){
+  .pg-mod .mtop{flex-direction:row;align-items:center}
+  .pg-mod .mtop .msrcs{flex:1 1 auto;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+  .schip{height:36px;gap:4px;padding:0 3px}
+  .schip .mt{width:70%;height:3px}
+  .pg-mod .modhead{flex:none}
+  .pg-mod .modhead .madd{height:34px;padding:0 10px}
+  .pg-mod .modrow{min-height:34px;padding:2px 3px 2px 5px}
+  .pg-mod .modrow .ms{height:30px;flex-direction:row;gap:5px}
+  .pg-mod .modrow .ms i{width:4px;height:16px}
+  .pg-mod .modrow .md{flex-direction:row;align-items:baseline;gap:8px}
+  .pg-mod .bsl{height:28px}
+  .pg-mod .bsl b{top:9px;bottom:9px}
+  .pg-mod .modrow .mx{height:30px}
+  .pg-mod .mxlist{gap:3px}
+}
+@media (orientation:landscape) and (max-width:759px){.schip .sl,.madd .sl{display:none}.schip .ss,.madd .ss{display:inline}}
+/* „Was ist anders?“ (§5.2 P1): a white dot on every control that differs from the base patch; tab counts */
+.fader.diff::before,.seg.diff::before,.tgl.diff::before{content:"";position:absolute;top:1px;right:3px;width:5px;height:5px;border-radius:50%;background:#fff;box-shadow:0 0 0 1px #000,0 0 5px rgba(255,255,255,.6);pointer-events:none;z-index:2}
+.knob .kdf{fill:#fff;stroke:#000;stroke-width:.6;opacity:0}
+.knob.diff .kdf{opacity:1}
+.seg.diff,.tgl.diff{position:relative}
+.tab{position:relative}
+.tab .dn{position:absolute;top:2px;right:3px;font:700 9px/1 var(--font-num);letter-spacing:0;color:var(--sel)}
+.hb.wia{min-width:36px;width:36px;padding:0;font-size:17px}
+.hb.wia.on{background:var(--sel);color:var(--ink);border-color:var(--sel)}
+#synthSheet .sh-bar{position:relative}
+#synthSheet .lcd{padding-right:44px}
+#synthSheet .hb.wial{position:absolute;z-index:3;right:10px;top:6px;height:24px;width:36px;min-width:36px;border-radius:4px;font-size:15px}
+/* a bigger hit area than the drawn button, inside the LCD bar (it must not reach the tabs below or header row 2 above) */
+#synthSheet .hb.wial::after{content:"";position:absolute;top:-6px;left:-7px;right:-7px;bottom:-3px}
+.hb.wia2{display:none}
+@media (orientation:portrait) and (max-height:700px){#synthSheet .hb.wial{top:5px;height:20px}}
+@media (orientation:portrait) and (max-height:600px){.hb.wial{display:none}.hb.wia2{display:inline-flex;align-items:center;justify-content:center}
+  #synthSheet .sh-head .r2:has(.abb:not([hidden])) .preset .pa{display:none}}
+@media (orientation:landscape){#synthSheet .hb.wial{top:auto;bottom:6px;height:22px;right:8px}}
+.lcd.wia{white-space:normal}
+.lcd.wia .lv{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font:500 10.5px/1.18 var(--font-ui);letter-spacing:.01em;overflow:hidden;padding-bottom:0;margin-bottom:0}
 .adsr{width:100%;max-width:420px;height:78px;background:var(--lcd);border:1px solid var(--panel-edge);border-radius:var(--r-s);box-shadow:inset 0 1px 6px rgba(0,0,0,.8)}
 .adsr svg{width:100%;height:100%}
 .adsr .ln{fill:none;stroke:var(--text-faint);stroke-width:2;stroke-linejoin:round}
@@ -1013,7 +1121,68 @@ svg{display:block}
   #rollSheet .pr>.pr-bar.pra{height:36px;padding:2px 6px}
   #rollSheet .pr>.pr-bar.pra button{height:30px}
 }
-@media (orientation:landscape) and (max-width:759px){#rollSheet .rinfo{display:none}#rollSheet .rhead .sh-title b{max-width:64px}#rollSheet .rhead .pr-bar button{min-width:36px;padding:0 5px;font-size:12px}#rollSheet .rhead .pr-bar{gap:3px}#rollSheet .rhead .pr-bar .sep{margin:0}}
+/* ---------- LAUF (§3.10): step view inside the clip editor — steps (height = pitch), lane tabs, lane strip, action row ---------- */
+.rbody.lauf{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.rbody.lauf>.lbar{flex:none;height:44px;border-bottom:1px solid var(--panel-edge)}
+.lauf .lse{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding:6px 8px 4px}
+/* the steps and the lane strip share the free height of the sheet (steps 1 : strip .6), each up to a cap; --lch / --se-lh
+   are the minimum heights per viewport */
+.lauf .se-row{order:1;flex:1 1 auto;max-height:var(--lrmax,262px);grid-template-columns:repeat(var(--lcols,8),minmax(0,1fr));grid-auto-rows:minmax(var(--lch,76px),1fr);row-gap:6px}
+.lauf .se-tabs{order:2;flex:none}
+.lauf .se-tabs button{min-height:32px}
+.lauf .se-tabs button.on{background:var(--pc);color:#000}
+.lauf .se-lane{order:3;flex:.6 1 auto;height:auto;min-height:var(--se-lh);max-height:var(--llmax,124px);grid-template-columns:repeat(var(--lsteps,16),minmax(0,1fr));--se-lh:72px;margin-top:0}
+.lauf .se-cell{height:auto}
+.lauf .se-cell .sn{display:none}
+.lauf .se-cell .f{height:calc(var(--v) * (100% - 16px));border-radius:0 0 6px 6px}
+.lauf .se-cell.on .f{opacity:var(--o,1)}
+.lauf .se-cell .ln{position:absolute;left:0;right:0;top:3px;text-align:center;font:700 10.5px/1 var(--font-num);color:var(--text-faint);pointer-events:none;letter-spacing:-.03em;white-space:nowrap;overflow:hidden}
+.lauf .se-cell.on .ln{color:var(--text)}
+.lauf .se-cell.chr .ln{color:var(--amber)}
+.lauf .se-cell.acc::after{left:auto;right:3px;top:auto;bottom:3px;width:6px;height:6px;border-radius:50%}
+.lauf .se-cell.tie::before{content:"";position:absolute;left:0;top:calc(50% + 4px);width:9px;height:3px;border-radius:0 2px 2px 0;background:var(--sel);opacity:.9;z-index:1}
+.lauf .se-cell.sel{box-shadow:inset 0 0 0 2px var(--amber)}
+.rbody.lauf>.lacts{flex:none;height:44px;border-top:1px solid var(--panel-edge)}
+.lacts .lkey{min-width:0;max-width:48%;overflow:hidden;text-overflow:ellipsis}
+.lacts button.warn,.lacts button.arm{background:var(--rec);color:#fff}
+.lbar .seg{flex:none;flex-wrap:nowrap}
+.lbar .seg button{height:34px;min-width:48px;padding:0 8px}
+.lpager{display:flex;align-items:center;gap:4px;flex:none}
+.lpager .lbl{font-size:9px}
+.lpager .seg button{min-width:38px;padding:0 6px}
+.lpager .lpg1{font:700 11px/1 var(--font-ui);color:var(--text-dim);letter-spacing:.06em;padding:0 4px;white-space:nowrap}
+.lpager .lpv{min-width:72px}
+.pr-bar button.dis{opacity:.4}
+.pr-bar button.lgo{letter-spacing:.06em;border-color:var(--tc,var(--line))}
+.pop .plist.lgr{grid-template-columns:repeat(4,58px)}
+.pop .plist.lroots{grid-template-columns:repeat(6,minmax(0,1fr))}
+.pop .plist.lscales{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:6px}
+.pop .plist.lroots button,.pop .plist.lscales button{min-width:0;padding:0 4px;font-size:12px}
+.pop .plist button.on{border-color:var(--sel);color:var(--sel);box-shadow:inset 0 0 0 1px var(--sel)}
+@media (orientation:portrait) and (max-height:700px){.lauf .se-row{--lch:50px}.lauf .se-lane{--se-lh:46px}.lauf .lse{gap:5px;padding-top:5px}.rbody.lauf>.lbar,.rbody.lauf>.lacts{height:40px}.lauf .se-tabs button{min-height:30px}}
+@media (orientation:portrait) and (max-height:600px){.lauf .se-row{--lch:42px}.lauf .se-lane{--se-lh:34px}.lauf .lse{gap:4px;padding-top:4px}.rbody.lauf>.lbar,.rbody.lauf>.lacts{height:38px}.lauf .se-tabs button{min-height:28px;padding:0 8px}}
+/* P: [ROLLE|LAUF] [1/16 ▾] [1|2] or [Takt k/n ▾] │ [↶][↷] must fit 320 px without scrolling */
+@media (orientation:portrait){.rbody.lauf>.lbar{padding:4px}.lpager .lbl{display:none}.lpager .seg button{min-width:36px;padding:0 6px}.rbody.lauf>.lbar>.rb{min-width:40px;padding:0 8px}.lpager .lpv{min-width:0;padding:0 8px}}
+@media (orientation:portrait) and (max-width:389px){.lbar .seg button{padding:0 6px}.rbody.lauf>.lbar .sep{margin:0 1px}.rbody.lauf>.lbar>.rb{min-width:38px;padding:0 6px}.lpager .lpv{padding:0 6px}}
+@media (orientation:portrait) and (max-width:359px){.lacts button{padding:0 7px;font-size:12px}.lbar .seg button{min-width:42px;padding:0 4px;font-size:11px;letter-spacing:.02em}
+  .rbody.lauf>.lbar{gap:3px;padding:4px}.rbody.lauf>.lbar .sep,.lpager .lpg1{display:none}.rbody.lauf>.lbar>.rb{min-width:36px;padding:0 5px}
+  .rbody.lauf>.lbar .lgrid,.lpager .lpv{padding:0 5px;font-size:11px}.lpager .seg button{min-width:34px;padding:0 4px}}
+@media (orientation:landscape){
+  .lauf .se-row{--lch:104px;--lrmax:140px}
+  .lauf .se-lane{--se-lh:56px;--llmax:96px}
+  .lauf .lse{padding:5px 8px 3px;gap:5px}
+  .lauf .se-tabs button{min-height:28px}
+  .rbody.lauf>.lacts{height:36px;padding:2px 6px}
+  .rbody.lauf>.lacts button{height:30px}
+  #rollSheet .rhead .lbar .seg button{height:28px;min-width:44px}
+  #app.rollkb .lauf .se-row{--lch:44px;--lrmax:60px}
+  #app.rollkb .lauf .se-lane{--se-lh:34px;--llmax:44px}
+}
+@media (orientation:landscape) and (max-height:380px){.lauf .se-row{--lch:92px}.lauf .se-lane{--se-lh:48px}#app.rollkb .lauf .se-row{--lch:40px;--lrmax:52px}#app.rollkb .lauf .se-lane{--se-lh:30px;--llmax:40px}}
+/* L ≤ 759: the track name would show as „SYNT…“ only — the coloured dot names the track, the toolbar gets the room ([LAUF], ↷) */
+@media (orientation:landscape) and (max-width:759px){#rollSheet .rinfo{display:none}#rollSheet .rhead .sh-title b{display:none}}
+/* L up to 899 px: compact toolbar buttons, so that [LAUF] … [↶][↷] fit next to the title */
+@media (orientation:landscape) and (max-width:899px){#rollSheet .rhead .pr-bar button{min-width:36px;padding:0 5px;font-size:12px}#rollSheet .rhead .pr-bar{gap:3px}#rollSheet .rhead .pr-bar .sep{margin:0}}
 @media (orientation:portrait) and (max-height:700px){#rollSheet .rhead{height:40px}#rollSheet .pr-bar.prt,#rollSheet .pr>.pr-bar.pra{height:40px}#rollSheet .pr-bar button{height:34px}#rollSheet .pr{--pr-vh:48px}}
 @media (orientation:portrait) and (max-height:600px){#rollSheet .rhead{height:36px}#rollSheet .pr-bar.prt,#rollSheet .pr>.pr-bar.pra{height:38px}#rollSheet .pr-bar button{height:32px}#rollSheet .pr{--pr-vh:40px}}
 /* ---------- quantize sheet (§3.5): P bottom sheet 300 px over the lower half of the sheet area; L 360 px panel on the right ---------- */
@@ -1794,7 +1963,8 @@ svg{display:block}
 <script type="text/plain" id="sq-worklet-src">
 /* SYNQUENZER synth worklet module (spec v2 1.1 block 1, 1.4, 5.4): processors 'dirigent-analog' and 'dirigent-hall'.
    Built by scratchpad/wp4work/tools/build-worklet.mjs from presetlib/analog-core-sync.js (hard sync) + the scope hunks of
-   modux/analog-core-scope.js + D_UNIDET applied + deferred tempo changes + event 8 + fxresearch/fx-worklet.js.
+   modux/analog-core-scope.js + D_UNIDET applied + deferred tempo changes + event 8 + fxresearch/fx-worklet.js;
+   WP5 (scratchpad/wp5work/tools/build-worklet-wp5.mjs): {scopeDst: bool} adds the focus voice's dst sums to {scope}.
    ASCII only; it never contains the closing script tag (checked by wp4work/tools/check-worklet.mjs).
    ---------------------------------------------------------------------------------------------------------------------
    DIRIGENT AnalogCore - polyphonic virtual-analog voice engine.
@@ -1923,6 +2093,7 @@ class AnalogCore extends AudioWorkletProcessor {
     this.busy = 0; this.busyN = 0; this.lastRep = 0; this.alive = true;
     // mod scope for the UI: source values of the focus voice (newest gated, else newest sounding), ~30 Hz, only on request
     this.scopeOn = false; this.scopeNext = 0; this.sc = new Float64Array(NSRC); this.scHas = false; this.focus = null;
+    this.scopeDst = false; this.scD = new Float64Array(NDST);   // WP5 debug: the focus voice's modulation sums (MO47)
     this.tnext = [];                    // deferred tempo changes [{bpm, start, at}], sorted by at
     this.pend = null; this.xfState = 0; this.xg = 1; this.xg1 = 1;   // structural crossfade (12c)
     this.dcC = Math.exp(-2 * Math.PI * 5 / SR); this.dcS = new Float64Array(4);   // AC coupling (13): x1 L, y1 L, x1 R, y1 R
@@ -1944,6 +2115,7 @@ class AnalogCore extends AudioWorkletProcessor {
       else { this.bpm = e.bpm; this.songStart = e.start; this.tnext.length = 0; }
     }
     if (m.scope != null) { this.scopeOn = !!m.scope; this.scopeNext = 0; }
+    if (m.scopeDst != null) { this.scopeDst = !!m.scopeDst; this.scD.fill(0); }
     if (m.dispose) this.alive = false;
   }
   enqueue(e) {   // e = [timeSec, type, id, a, b, c]; types: 1 on(note, vel, glideFrom) 2 off 3 pitch(note, tau) 4 kill 5 all-off 6 panic 7 fast-off
@@ -2155,6 +2327,7 @@ class AnalogCore extends AudioWorkletProcessor {
       if (v === fv) { this.sc.set(src); this.scHas = true; }
       dst.fill(0);
       for (let i = 0; i < NSLOT; i++) if (this.msrc[i] && this.mdst[i]) dst[this.mdst[i]] += this.mamt[i] * src[this.msrc[i]];
+      if (v === fv && this.scopeDst) this.scD.set(dst);
       // spec v2 5.1: Uni-Verstimm. modulated per voice and control block; skipped entirely when no route targets it
       if (this.uniMod) {
         const det = clamp(P.uniDet + dst[D_UNIDET], 0, 1), semis = (0.25 * det + 0.75 * det * det * det * det) * 1.8;
@@ -2416,7 +2589,8 @@ class AnalogCore extends AudioWorkletProcessor {
       if (!this.scHas) { sc.fill(0); sc[S_LFO1] = this.lfoVal(this.P.l1shape | 0, this.gl1, 0); sc[S_LFO2] = this.lfoVal(this.P.l2shape | 0, this.gl2, 0); }
       let nv = 0; for (const v of this.V) if (v.on) nv++;
       // plain array (NSRC numbers): structured clone cost is negligible at 30 Hz; t = audio time of this snapshot
-      this.port.postMessage({scope: Array.from(sc), t: f0 * ISR, nv});
+      if (this.scopeDst) { if (!nv) this.scD.fill(0); this.port.postMessage({scope: Array.from(sc), t: f0 * ISR, nv, dst: Array.from(this.scD)}); }
+      else this.port.postMessage({scope: Array.from(sc), t: f0 * ISR, nv});
       this.scHas = false;
     }
     // CPU estimate: sum of (quantised) durations is unbiased; report once per second of audio
@@ -3706,7 +3880,7 @@ const RecHelpers = (() => {
     open();
     return api;
   }
-  G.PianoRoll = {create, GRID};
+  G.PianoRoll = {create, GRID, CSS};
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
@@ -3753,6 +3927,9 @@ const RecHelpers = (() => {
    Embedded from scratchpad/drumresearch/step-editor.js. App changes (spec v2 §3.4): lane tabs act on pointer taps
    (opts.tap; the sheet is a guarded touch surface without click), opts.lanes (WP2: TUNE/DECAY hidden), gesture registry
    hooks (opts.reg), 8×2 in portrait / 16×1 in landscape by orientation, opts.onTap haptics, setPlayhead/setLane.
+   WP5 (LAUF, §3.10): opts.laneDefs (own lanes; get/set receive the step index too), a lane's pxPerUnit + setUnits(n, du, n0,
+   i) (vertical drag in whole units, e.g. 14 px per scale step; opts.onValue on every unit change), tapToggle lanes,
+   opts.onDown(i, onStrip), opts.decorate(cell, note, i) after each paint, E.setSel.
    STEP ROW   tap = on/off · horizontal swipe = paint (on if you started on an empty step, off if on a set step)
               vertical drag on a step = its value in the current lane (relative, 120 px = full range)
    LANE STRIP touch/drag anywhere = draw absolute values across steps (only set steps are changed)
@@ -3761,9 +3938,9 @@ const RecHelpers = (() => {
 (function (G) {
   'use strict';
   const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
-  const LANES = {
+  const LANES0 = {
     vel:  {l: 'VEL',     get: n => n.v,                     set: (n, x) => { n.v = clamp(Math.round(x * 100) / 100, .05, 1); }, fmt: x => Math.round(x * 127)},
-    acc:  {l: 'AKZENT',  get: n => n.a ? 1 : 0,             set: (n, x) => { if (x >= .5) n.a = 1; else delete n.a; }, fmt: x => x >= .5 ? 'an' : 'aus', toggle: true},
+    acc:  {l: 'AKZENT',  get: n => n.a ? 1 : 0,             set: (n, x) => { if (x >= .5) n.a = 1; else delete n.a; }, fmt: x => x >= .5 ? 'an' : 'aus', toggle: true, tapToggle: true},
     prob: {l: 'CHANCE',  get: n => n.p == null ? 1 : n.p,   set: (n, x) => { const p = Math.round(x * 20) / 20; if (p >= 1) delete n.p; else n.p = Math.max(.05, p); }, fmt: x => Math.round(x * 100) + ' %'},
     rat:  {l: 'WIRBEL',  get: n => ((n.r || 1) - 1) / 3,    set: (n, x) => { const r = 1 + Math.round(x * 3); if (r <= 1) delete n.r; else n.r = r; }, fmt: x => (1 + Math.round(x * 3)) + '×'},
     nud:  {l: 'TIMING',  get: n => .5 + (n.m || 0),         set: (n, x) => { const m = Math.round((x - .5) * 20) / 20; if (!m) delete n.m; else n.m = clamp(m, -.45, .45); }, fmt: x => { const m = Math.round((x - .5) * 100); return (m > 0 ? '+' : '') + m + ' %'; }, bipolar: true},
@@ -3775,6 +3952,7 @@ const RecHelpers = (() => {
   // model: {steps: 16, get(i) -> note|null, set(i, note|null), begin(), commit(label), revert(), audition(i, v)}
   function StepEditor(root, model, opts) {
     opts = opts || {};
+    const LANES = Object.assign({}, LANES0, opts.laneDefs || {});   // WP5: the instance's lane table (LAUF lanes)
     const lanes = (opts.lanes || Object.keys(LANES)).filter(k => LANES[k]);
     const E = {lane: lanes.includes(opts.lane) ? opts.lane : lanes[0], model, cells: [], bars: []};
     const reg = opts.reg || {begin() {}, end() {}};
@@ -3814,6 +3992,7 @@ const RecHelpers = (() => {
       try { surface.setPointerCapture(e.pointerId); } catch (_) {}
       const i = idxAt(surface, e.clientX, e.clientY);
       g = {id: e.pointerId, surface, x0: e.clientX, y0: e.clientY, i0: i, last: i, mode: surface === lane ? 'draw' : null, was: !!model.get(i), v0: null, changed: false};
+      if (opts.onDown) opts.onDown(i, surface === lane);
       model.begin();
       const me = g; reg.begin(e.pointerId, () => { if (g === me) abort(); });
       if (g.mode === 'draw') drawAt(e);
@@ -3824,14 +4003,18 @@ const RecHelpers = (() => {
       if (!g.mode) {
         if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) { g.mode = 'paint'; paintTo(g.i0, g.i0); }
         else if (Math.abs(dy) > 8) {                                // vertical: value of the touched step (turns it on if needed)
-          g.mode = 'value'; let n = model.get(g.i0); if (!n) { n = newNote(g.i0); model.set(g.i0, n); n = model.get(g.i0) || n; }
-          g.v0 = LANES[E.lane].get(n);
+          g.mode = 'value'; let n = model.get(g.i0); if (!n) { n = newNote(g.i0); model.set(g.i0, n); n = model.get(g.i0) || n; g.changed = true; if (model.audition) model.audition(g.i0, opts.defVel || .8); }
+          g.v0 = LANES[E.lane].get(n, g.i0); g.n0 = Object.assign({}, n); g.du = 0;
         }
       }
       if (g.mode === 'paint') { const i = idxAt(g.surface, e.clientX, e.clientY); paintTo(g.last, i); g.last = i; }
       else if (g.mode === 'value') {
         const L = LANES[E.lane], n = model.get(g.i0); if (!n) return;
-        L.set(n, clamp(g.v0 - dy / 120, 0, 1)); model.set(g.i0, n); g.changed = true; showBubble(g.i0, L.fmt(L.get(n)), e);
+        if (L.pxPerUnit) {                                          // whole units (LAUF: 14 px per scale step)
+          const du = Math.round(-dy / L.pxPerUnit);
+          if (du !== g.du) { g.du = du; L.setUnits(n, du, g.n0, g.i0); model.set(g.i0, n); g.changed = true; if (opts.onValue) opts.onValue(g.i0, n, E.lane); }
+        } else { L.set(n, clamp(g.v0 - dy / 120, 0, 1), g.i0); model.set(g.i0, n); g.changed = true; }
+        showBubble(g.i0, L.fmtN ? L.fmtN(n, g.i0) : L.fmt(L.get(n, g.i0)), e);
       } else if (g.mode === 'draw') drawAt(e);
       paint();
     }
@@ -3841,14 +4024,14 @@ const RecHelpers = (() => {
     }
     function drawAt(e) {
       const L = LANES[E.lane], i = idxAt(lane, e.clientX), x = valAt(lane, e.clientY), from = g.last == null ? i : g.last, s = Math.sign(i - from) || 1;
-      for (let k = from; ; k += s) { const n = model.get(k); if (n) { L.set(n, L.toggle ? (x >= .5 ? 1 : 0) : x); model.set(k, n); g.changed = true; } if (k === i) break; }
-      g.last = i; const n = model.get(i); showBubble(i, n ? L.fmt(L.get(n)) : '–', e); paint();
+      for (let k = from; ; k += s) { const n = model.get(k); if (n) { L.set(n, L.toggle ? (x >= .5 ? 1 : 0) : x, k); model.set(k, n); g.changed = true; } if (k === i) break; }
+      g.last = i; const n = model.get(i); showBubble(i, n ? (L.fmtN ? L.fmtN(n, i) : L.fmt(L.get(n, i))) : '–', e); paint();
     }
     function up(e) {
       if (!g || e.pointerId !== g.id) return;
       if (!g.mode && Math.hypot(e.clientX - g.x0, e.clientY - g.y0) < 10) {   // a tap: on/off, nothing else
-        const n = model.get(g.i0);
-        if (E.lane === 'acc' && n) LANES.acc.set(n, n.a ? 0 : 1), model.set(g.i0, n);
+        const n = model.get(g.i0), TL = LANES[E.lane];
+        if (TL.tapToggle && n) { TL.set(n, TL.get(n, g.i0) >= .5 ? 0 : 1, g.i0); model.set(g.i0, n); }   // AKZENT / BINDUNG: a tap toggles the flag
         else { model.set(g.i0, n ? null : newNote(g.i0)); if (!n && model.audition) model.audition(g.i0, opts.defVel || .8); }
         g.changed = true;
         if (opts.onTap) opts.onTap(g.i0, !!model.get(g.i0));
@@ -3879,15 +4062,17 @@ const RecHelpers = (() => {
         const n = model.get(i), c = E.cells[i], bar = E.bars[i];
         c.classList.toggle('on', !!n); c.classList.toggle('acc', !!(n && n.a)); c.classList.toggle('pr', !!(n && n.p != null && n.p < 1));
         c.style.setProperty('--v', n ? n.v : 0); c.style.setProperty('--m', n && n.m ? n.m : 0); c.dataset.r = n && n.r ? n.r : '';
-        const x = n ? L.get(n) : 0;
+        const x = n ? L.get(n, i) : 0;
         bar.classList.toggle('on', !!n); bar.classList.toggle('bi', !!L.bipolar);
         bar.style.setProperty('--x', x);
+        if (opts.decorate) opts.decorate(c, n, i);
       }
     }
     E.paint = paint; E.abort = abort;
     E.setPlayhead = i => { if (E.ph === i) return; if (E.cells[E.ph]) E.cells[E.ph].classList.remove('ph'); E.ph = i; if (E.cells[i]) E.cells[i].classList.add('ph'); };
     E.flash = i => { const c = E.cells[i]; if (!c) return; c.classList.remove('fl'); void c.offsetWidth; c.classList.add('fl'); };
     E.setLane = k => { if (lanes.includes(k)) { E.lane = k; paint(); } };
+    E.setSel = i => { if (E.sel === i) return; if (E.cells[E.sel]) E.cells[E.sel].classList.remove('sel'); E.sel = i; if (E.cells[i]) E.cells[i].classList.add('sel'); };
     E.busy = () => !!g;
     E.el = {row, lane, tabs};
     paint();
@@ -3919,7 +4104,7 @@ const RecHelpers = (() => {
 .se-bubble{position:absolute;z-index:3;transform:translate(-50%,-100%);padding:4px 8px;border-radius:6px;background:#fff;color:#000;font:700 12px/1 var(--font-num,system-ui);pointer-events:none;opacity:0;white-space:nowrap}
 .se-bubble.on{opacity:1}
 @media (orientation:portrait){.se-row{grid-template-columns:repeat(8,minmax(0,1fr));row-gap:6px}}`;
-  G.StepEditor = {create: StepEditor, LANES, CSS};
+  G.StepEditor = {create: StepEditor, LANES: LANES0, CSS};
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
 <script>
@@ -4009,7 +4194,8 @@ const RecHelpers = (() => {
   const SRC = ['lfo1', 'lfo2', 'fenv', 'menv', 'vel', 'key', 'mw', 'rnd', 'aenv'];
   // §9.2: + fmbright, op1..op6 (FM6, WP7). Unknown ids are dropped on load.
   const DST = ['pitch', 'o2pitch', 'cutoff', 'res', 'drive', 'pw', 'o1lvl', 'o2lvl', 'o3lvl', 'noise', 'amp', 'pan', 'unidet', 'fenv',
-    'fmbright', 'op1', 'op2', 'op3', 'op4', 'op5', 'op6'];
+    'fmbright', 'op1', 'op2', 'op3', 'op4', 'op5', 'op6',
+    'fx.rev', 'fx.dly', 'fx.pan', 'fx.vol'];                    // §9.6 (P1, WP5): track-FX routes from LFO 1/2 (native, never sent to the worklet)
   const CHORUS = ['off', 'I', 'II', 'I+II', 'ENS', 'BREIT'];
   const CATS = ['bass', 'lead', 'poly', 'flaeche', 'pluck', 'sequenz', 'fm', 'glocke', 'wt', 'drums', 'eigene'];
   const SYNTH_ENGINES = ['analog', 'fm6', 'wt', 'fm2'], ENGINES = SYNTH_ENGINES.concat(['drum']);
@@ -4078,7 +4264,7 @@ const RecHelpers = (() => {
   }
   function normMods(m) {
     const out = [];
-    for (const r of Array.isArray(m) ? m : []) { if (!r || !SRC.includes(r.src) || !DST.includes(r.dst)) continue; const amt = clamp(num(r.amt, 0), -1, 1); if (amt !== 0) out.push({src: r.src, dst: r.dst, amt}); }
+    for (const r of Array.isArray(m) ? m : []) { if (!r || !SRC.includes(r.src) || !DST.includes(r.dst) || (r.dst.startsWith('fx.') && r.src !== 'lfo1' && r.src !== 'lfo2')) continue; const amt = clamp(num(r.amt, 0), -1, 1); if (amt !== 0) out.push({src: r.src, dst: r.dst, amt}); }
     return out.slice(0, 8);
   }
   function normCommon(c) {
@@ -5057,7 +5243,9 @@ const RecHelpers = (() => {
    vertically, or a finger resting on an empty panel spot (opts.precision, the knobs' rule) - "hold still 350 ms" and
    "second finger on the graph" are removed; haptics via opts.haptic('tick') at musical steps, only from pointer handlers
    (the file's own label.click() is removed); gesture registry, touch guard, one undo entry per gesture and the LCD line
-   through opts hooks; per-envelope defaults; refresh(true) animates to new values in 150 ms (HÜLLK. Form chips). */
+   through opts hooks; per-envelope defaults; refresh(true) animates to new values in 150 ms (HÜLLK. Form chips).
+   WP5 (§5.3 point 3, P1): 450 ms without movement on a lane = opts.onLongPress(lane, name) (the mod picker; envelope times
+   are not modulatable in v2); the gesture then edits nothing. */
 (function () {
   const NS = 'http://www.w3.org/2000/svg';
   const LANES = [{k: 'a', x0: 0, x1: .3}, {k: 'd', x0: .3, x1: .6}, {k: 's', x0: .6, x1: .7}, {k: 'r', x0: .7, x1: 1}];
@@ -5148,14 +5336,16 @@ const RecHelpers = (() => {
         what: L.k === 's' ? 's' : L.k, before: opts.undo ? opts.undo.snap() : null};
       if (opts.gest) opts.gest.begin(ev.pointerId, () => finish(null));
       if (anim) { cancelAnimationFrame(anim); anim = 0; }
+      if (opts.onLongPress) { const me = active; me.lpT = setTimeout(() => { if (active === me && !me.axis) { me.lp = true; redraw(); opts.onLongPress(me.k, NAME[me.k]); } }, 450); }
       redraw();
     });
     svg.addEventListener('pointermove', ev => {
-      if (!active || ev.pointerId !== active.id) return;
+      if (!active || ev.pointerId !== active.id || active.lp) return;
       const dx = ev.clientX - active.lx, dy = ev.clientY - active.ly;
       if (!active.axis) {
         const tx = ev.clientX - active.x0, ty = ev.clientY - active.y0;
         if (Math.hypot(tx, ty) < 4) return;                                   // dead zone: taps never change values
+        clearTimeout(active.lpT);
         active.axis = Math.abs(tx) >= Math.abs(ty) ? 'x' : 'y';
         const k = active.k; active.what = active.axis === 'x' ? (k === 's' ? 's' : k) : (k === 'd' || k === 's' ? 's' : 'curve');
         // the dead zone is swallowed: the value moves from here on, it never jumps by the slop
@@ -5179,6 +5369,8 @@ const RecHelpers = (() => {
     function finish(ev) {
       if (!active) return;
       const A_ = active; active = null;
+      clearTimeout(A_.lpT);
+      if (A_.lp) { redraw(); if (opts.gest) opts.gest.end(A_.id); return; }   // the long-press opened the picker
       if (ev && ev.type === 'pointerup' && !A_.moved) {   // tap: double tap on the same lane = default value of that lane
         const now = performance.now();
         if (now - lastTap.t < 300 && lastTap.k === A_.k) {
@@ -5272,6 +5464,7 @@ const RecHelpers = (() => {
     E.mods = list => { E.flush(); post({mods: list}); };
     E.tempo = (bpm, start, at) => post({tempo: at == null ? {bpm, start} : {bpm, start, at}});
     E.scope = on => post({scope: !!on});
+    E.scopeDst = on => post({scopeDst: !!on});          // WP5 debug (MO47): {scope} also carries the focus voice's dst sums
     E.dispose = () => { if (E.dead) return; E.flush(); post({dispose: true}); E.dead = true; node.port.onmessage = null; try { node.disconnect(); } catch (e) {} };
     return E;
   };
@@ -5994,6 +6187,8 @@ PD.fmDec.l = 'Länge'; PD.fmRel.l = 'Release';
   ['fx.chorus.depth', 'Tiefe', {min: 0, max: 2, c: 'lin', def: 1, fmt: 'x1'}],
   ['fx.chorus.mix', 'Mischung', {min: 0, max: 1, c: 'lin', def: 1, fmt: 'pct'}],
 ].forEach(([p, l, d]) => { PD[p] = Object.assign({p, l}, d); });
+// §9.6 (P1, WP5): the SPUR knobs Hall, Echo, Panorama and Lautstärke take routes from LFO 1/2 only („nur LFO“)
+for (const k of ['fx.rev', 'fx.dly', 'fx.pan', 'fx.vol']) Object.assign(PD[k], {mod: k, modSrcs: ['lfo1', 'lfo2']});
 const WAVE_NAME = ['Säge', 'Puls', 'Dreieck', 'Sinus'], WAVE_ICO = ['⟋', '⊓', '∧', '∿'];
 const FTYPE_LBL = ['LP24', 'LP12', 'BP24', 'BP12', 'HP24', 'HP12'];
 const LFO_SHAPE_ICO = ['∿', '∧', '⟋', '⊓', 'S&H'], LFO_SHAPE_NAME = ['Sinus', 'Dreieck', 'Säge', 'Rechteck', 'Sample & Hold'];
@@ -6014,10 +6209,12 @@ const toKnobAmt = (dst, amt) => amt / (MOD_K[dst] || 1), toEngineAmt = (dst, k) 
 const MOD_DST = [['OSZ', [['pitch', 'Tonhöhe'], ['o2pitch', 'Osz 2 Tonhöhe'], ['pw', 'Pulsbreite'], ['o1lvl', 'Pegel Osz 1'], ['o2lvl', 'Pegel Osz 2'], ['o3lvl', 'Pegel Osz 3'], ['noise', 'Rauschen'], ['unidet', 'Uni-Verstimm.']]],
   ['FILTER', [['cutoff', 'Cutoff'], ['res', 'Resonanz'], ['drive', 'Drive'], ['fenv', 'Hüllk.-Menge']]],
   ['AMP', [['amp', 'Lautstärke'], ['pan', 'Stimmen-Panorama']]],
-  ['FM', [['fmbright', 'Helligkeit'], ['op1', 'Op 1'], ['op2', 'Op 2'], ['op3', 'Op 3'], ['op4', 'Op 4'], ['op5', 'Op 5'], ['op6', 'Op 6']]]];
+  ['FM', [['fmbright', 'Helligkeit'], ['op1', 'Op 1'], ['op2', 'Op 2'], ['op3', 'Op 3'], ['op4', 'Op 4'], ['op5', 'Op 5'], ['op6', 'Op 6']]],
+  ['FX', [['fx.rev', 'Hall-Anteil'], ['fx.dly', 'Echo-Anteil'], ['fx.pan', 'Spur-Panorama'], ['fx.vol', 'Spur-Lautstärke']]]];   // §9.6 (P1): LFO 1/2 only
 const MDST = {}; MOD_DST.forEach(([g, l]) => l.forEach(([id, n]) => { MDST[id] = {id, l: n, g}; }));
 // real units of a destination for the matrix line (§9.3): the knob the route rings on, or the engine meaning
-const MDST_PD = {cutoff: 'cutoff', res: 'res', drive: 'drive', fenv: 'fenv', o1lvl: 'o1lvl', o2lvl: 'o2lvl', o3lvl: 'o3lvl', noise: 'noise', unidet: 'uniDet', pw: 'o1pw'};
+const MDST_PD = {cutoff: 'cutoff', res: 'res', drive: 'drive', fenv: 'fenv', o1lvl: 'o1lvl', o2lvl: 'o2lvl', o3lvl: 'o3lvl', noise: 'noise', unidet: 'uniDet', pw: 'o1pw',
+  'fx.rev': 'fx.rev', 'fx.dly': 'fx.dly', 'fx.pan': 'fx.pan', 'fx.vol': 'fx.vol'};
 
 /* ---------- project model ---------- */
 const SCALE_KEYS = ['ionian', 'dorian', 'phrygian', 'lydian', 'mixolydian', 'aeolian', 'locrian'];
@@ -6579,12 +6776,24 @@ function rebuildNativeLfos(i) {
   const A = AU.tracks[i], c = AU.ctx, tr = S.tracks[i]; if (!A || !c || !A.nl || !tr || tr.kind !== 'synth') return;
   const E = AU.synth[i];
   if (E) E.mods(wkMods(tr.sound));
-  syncLfoSet(A, E ? {p: tr.sound.p, mods: []} : tr.sound, i * 7);
+  // on the worklet the engine runs the voice routes; the track-FX routes of §9.6 stay native LFOs on every path
+  syncLfoSet(A, E ? {p: tr.sound.p, mods: tr.sound.mods.filter(fxRoute)} : tr.sound, i * 7);
 }
 // the LFO set of one chain: A = a track (AU.tracks[i]) or a browser preview chain (pvChain), both with
 // {nl, lfoPitch, lfoCut, trem, pan}; built from the sound's native routes
 function syncLfoSet(A, snd, seed) {
-  const c = AU.ctx, P = snd.p, mods = (snd.mods || []).filter(nativeRoute), now = c.currentTime, nl = A.nl;
+  const c = AU.ctx, P = snd.p, mods = (snd.mods || []).filter(m => nativeRoute(m) || fxRoute(m)), now = c.currentTime, nl = A.nl;
+  // WP5: a depth drag changes only amounts (60 times a second): the route gains are re-valued in place, nothing is rebuilt
+  const lkey = k => { const pre = 'l' + (k + 1), sync = +P[pre + 'sync'] || 0; return (LFO_FX_SHAPE[P[pre + 'shape'] | 0] || 'sine') + '|' + sync + '|' + (sync ? S.bpm : clamp(+P[pre + 'rate'] || 1, .01, 40).toFixed(4)); };
+  const skey = mods.map(m => m.src + '>' + m.dst).join(',') + '#' + (mods.some(m => m.src === 'lfo1') ? lkey(0) : '') + '#' + (mods.some(m => m.src === 'lfo2') ? lkey(1) : '');
+  if (nl.skey === skey && nl.routes.length === mods.length && mods.length) {
+    const ampTot = mods.reduce((a, m) => a + (m.dst === 'amp' ? Math.abs(m.amt) : 0), 0), ampK = .25 * Math.min(1, 2 / Math.max(2, ampTot));
+    let ampSum = 0; nl.ampK = ampK;
+    mods.forEach((m, j) => { const g = nl.routes[j]; g.gain.setTargetAtTime(routeGain(m, ampK), now, .01); if (m.dst === 'amp') ampSum += Math.abs(m.amt) * ampK; });
+    const tb = Math.max(.5, 1 - ampSum); if (Math.abs(tb - nl.tremBase) > 1e-6) { nl.tremBase = tb; A.trem.gain.setTargetAtTime(tb, now, .015); }
+    return;
+  }
+  nl.skey = skey;
   // drop the old routes on both sides: LFO out -> route gain (else every rebuild leaves a dead gain hanging on the LFO)
   // and route gain -> destination
   for (const g of nl.routes) { try { if (g._src) g._src.disconnect(g); } catch (e) {} try { g.disconnect(); } catch (e) {} }
@@ -6602,6 +6811,7 @@ function syncLfoSet(A, snd, seed) {
       if (nl.lfo[k]) { nl.lfo[k].stop(now + .02); try { nl.lfo[k].out.disconnect(); } catch (e) {} }
       const L = FX.TempoLFO(c, shape, {divBeats: sync || 1, hz, seed: seed + k + 1});
       L.sync = sync; L.start(sync ? lfoAnchor() : 0, sync ? S.bpm : 0, now); nl.lfo[k] = L;
+      L._t0 = sync ? null : now;                               // phase reference of a FREI LFO (the knobs' live dots, §9.4)
     }
     nl.key[k] = key;
   }
@@ -6609,23 +6819,42 @@ function syncLfoSet(A, snd, seed) {
   // tremolo runs at the LFO rate (two full routes reach 0…1; more are scaled down to that)
   const ampTot = mods.reduce((s, m) => s + (m.dst === 'amp' && nl.lfo[m.src === 'lfo1' ? 0 : 1] ? Math.abs(m.amt) : 0), 0);
   const ampK = .25 * Math.min(1, 2 / Math.max(2, ampTot));
+  nl.ampK = ampK;
   let ampSum = 0;
   for (const m of mods) {
-    const L = nl.lfo[m.src === 'lfo1' ? 0 : 1]; if (!L) continue;
+    const L = nl.lfo[m.src === 'lfo1' ? 0 : 1]; if (!L) { nl.skey = ''; continue; }
     const g = c.createGain(); L.out.connect(g); g._src = L.out; nl.routes.push(g);
-    if (m.dst === 'pitch') { g.gain.value = m.amt * 2400; g.connect(A.lfoPitch); }
-    else if (m.dst === 'cutoff') { g.gain.value = m.amt * 12000; g.connect(A.lfoCut); }
-    else if (m.dst === 'amp') { g.gain.value = m.amt * ampK; g.connect(A.trem.gain); ampSum += Math.abs(m.amt) * ampK; }
-    else if (m.dst === 'pan' && A.pan) { g.gain.value = m.amt; g.connect(A.pan.pan); }
+    g.gain.value = routeGain(m, ampK);
+    if (m.dst === 'pitch') g.connect(A.lfoPitch);
+    else if (m.dst === 'cutoff') g.connect(A.lfoCut);
+    else if (m.dst === 'amp') { g.connect(A.trem.gain); ampSum += Math.abs(m.amt) * ampK; }
+    else if (m.dst === 'pan' && A.pan) g.connect(A.pan.pan);
+    // §9.6 (P1): track-FX routes (knob units × the knob's span) onto the send gains, the track pan and the tremolo gain;
+    // a gain may swing below 0 (the ring shows that part dimmed)
+    else if (m.dst === 'fx.rev') g.connect(A.revSend.gain);
+    else if (m.dst === 'fx.dly') g.connect(A.dlySend.gain);
+    else if (m.dst === 'fx.pan' && A.pan) g.connect(A.pan.pan);
+    else if (m.dst === 'fx.vol') g.connect(A.trem.gain);
   }
   nl.tremBase = Math.max(.5, 1 - ampSum);
   A.trem.gain.setTargetAtTime(nl.tremBase, now, .015);
 }
+// the gain of one native LFO route (§5.5 units; §9.6 track-FX routes: knob units × span, Panorama spans 2)
+function routeGain(m, ampK) {
+  switch (m.dst) {
+    case 'pitch': return m.amt * 2400;
+    case 'cutoff': return m.amt * 12000;
+    case 'amp': return m.amt * ampK;
+    case 'pan': return m.amt;
+    case 'fx.pan': return m.amt * 2;
+    default: return m.amt;                                   // fx.rev, fx.dly, fx.vol
+  }
+}
 // transport (re)start or tempo change: tempo-locked native LFOs follow the new anchor; the worklet engines get the tempo
 function relockLfos() {
   if (!AU.ctx) return;
-  for (let i = 0; i < 4; i++) { const A = AU.tracks[i]; if (!A || !A.nl) continue; A.nl.key = ['', '']; rebuildNativeLfos(i); }
-  try { const N = PV.chain; if (N && !N.gone && !N.E) { N.nl.key = ['', '']; syncLfoSet(N, N.sound, 97); } } catch (e) {}
+  for (let i = 0; i < 4; i++) { const A = AU.tracks[i]; if (!A || !A.nl) continue; A.nl.key = ['', '']; A.nl.skey = ''; rebuildNativeLfos(i); }
+  try { const N = PV.chain; if (N && !N.gone) { N.nl.key = ['', '']; N.nl.skey = ''; syncLfoSet(N, N.E ? {p: N.sound.p, mods: N.sound.mods.filter(fxRoute)} : N.sound, 97); } } catch (e) {}
   wkTempoAll();
 }
 // BPM change, project load, transport start: echo times glide (tape repitch), a note-division pre-delay follows, LFOs relock
@@ -6967,10 +7196,13 @@ function spawnVoice(i, out, vel, t0, o) {
   return v;
 }
 function spawnClipVoice(i, out, vel, t, dur, clipNote, clipKey, noGlide) {
+  // LEGATO (§5.1 Modus) + an overlapping clip note (LAUF BINDUNG, §3.10): the engine glides without retriggering; the log says so
+  const tr = S.tracks[i], P = tr && tr.kind === 'synth' ? tr.sound.p : null;
+  const legato = !!(P && P.mode === 2 && VOICES.some(x => x.track === i && !x.dead && x.src === 'clip' && x.start < t - 1e-4 && x.relT > t + 1e-4));
   const v = spawnVoice(i, out, vel, t, {src: 'clip', clipNote, clipKey, noGlide});
   if (!v) return null;
   v.release(t + dur);
-  v.log = logNote({track: i, src: 'clip', clipNote, out: v.out, time: t, dur, vel});
+  v.log = logNote({track: i, src: 'clip', clipNote, out: v.out, time: t, dur, vel, legato});
   return v;
 }
 /* live parameter update for sounding voices of track i (the knob is heard at once): filter, oscillator pitch / levels,
@@ -7222,7 +7454,7 @@ function logDrop(e) { if (e) e.removed = true; }
 function noteLog(n) {
   n = Math.min(n == null ? 128 : n, 4096, LOG.n);
   const out = [];
-  for (let i = LOG.n - n; i < LOG.n; i++) { const e = LOG.buf[i % 4096]; if (e.removed) continue; out.push({seq: e.seq, track: e.track, src: e.src, clipNote: e.clipNote, out: e.out, time: e.time, beat: e.beat, dur: e.dur, vel: e.vel}); }
+  for (let i = LOG.n - n; i < LOG.n; i++) { const e = LOG.buf[i % 4096]; if (e.removed) continue; const o = {seq: e.seq, track: e.track, src: e.src, clipNote: e.clipNote, out: e.out, time: e.time, beat: e.beat, dur: e.dur, vel: e.vel}; if (e.legato) o.legato = true; out.push(o); }
   return out;
 }
 function clearLog() { LOG.n = 0; LOG.buf = new Array(4096); }
@@ -7518,9 +7750,13 @@ function startTransport(countIn) {
 function play() { startTransport(null); }
 function stop() {
   const c = AU.ctx;
-  if (!R.playing) { if (c && performance.now() - (R.stopT || -1e9) < 1000) tailKill(); return; }   // ■ twice within 1 s: tails off (§8.1)
+  if (!R.playing) {                                          // ■ twice within 1 s: tails off (§8.1)
+    if (c && tailWinOpen()) { tailKill(); tailWinSet(false); haptic('snap'); toast('Hall und Echo aus'); }
+    return;
+  }
   const now = c.currentTime;
   R.stopT = performance.now();
+  tailWinSet(true);
   recOnStop();
   if (PV.on) previewStop();                                 // ■ also ends a browser preview phrase
   // release everything while the transport still counts beats, so the Mitschnitt (PERF) gets the real end beats
@@ -7571,7 +7807,16 @@ function wakeStatus() {
   if (WAKE.ok === false) return 'nicht verfügbar';
   return navigator.wakeLock ? 'ja, beim Abspielen' : 'nicht verfügbar';
 }
-function togglePlay() { if (R.playing) stop(); else play(); }
+// ■ stays ■ for 1 s after a stop (#app.tailwin): a second press in that window cuts the hall/echo tails instead of
+// restarting the song (§8.1, Hilfe „■ zweimal schneidet sie ab“); after the window the button is ▶ again
+function tailWinOpen() { return !R.playing && performance.now() - (R.stopT || -1e9) < 1000; }
+function tailWinSet(on) {
+  clearTimeout(R.tailWinT); R.tailWinT = 0;
+  if (!on) R.stopT = -1e9;
+  else R.tailWinT = setTimeout(() => { R.tailWinT = 0; tailWinSet(false); }, 1000);
+  try { EL.app.classList.toggle('tailwin', !!on && !R.playing); } catch (e) {}
+}
+function togglePlay() { if (R.playing) stop(); else if (tailWinOpen()) stop(); else play(); }
 function setBpm(v) {
   v = clamp(Math.round(+v || 120), 40, 240);
   if (v === S.bpm) return;
@@ -7632,7 +7877,11 @@ function undoApply(e, val) {
   UI.dirty.all = true; markDirty();
   if (typeof edUndoBtns === 'function') edUndoBtns();
   if (R.editor === 'clip' && ED.clip && e.kind === 'clip' && e.track === ED.clip.t && e.scene === ED.clip.s) { if (S.tracks[e.track].clips[e.scene]) openClipSheet(e.track, e.scene); else closeClipSheet(); }
-  if (e.kind === 'clip' && ED.rollAt && e.track === ED.rollAt.t && e.scene === ED.rollAt.s) { if (S.tracks[e.track].clips[e.scene] && ED.roll) { ED.roll.refresh(); rollHeadUpdate(); } else closeRoll(); }
+  if (e.kind === 'clip' && ED.rollAt && e.track === ED.rollAt.t && e.scene === ED.rollAt.s) {
+    if (S.tracks[e.track].clips[e.scene] && ED.roll) { ED.roll.refresh(); rollHeadUpdate(); }
+    else if (S.tracks[e.track].clips[e.scene] && ED.lauf) { laufPaint(); rollHeadUpdate(); }
+    else closeRoll();
+  }
   if (e.kind === 'clip' && S.tracks[e.track].kind === 'synth') scheduleAutoKey(e.scene);
 }
 function undo() {
@@ -8206,6 +8455,9 @@ function inputDown(note, id, vel) {
     if (ED.roll && ED.rollAt && ED.roll.state.step != null && ED.rollAt.t === R.selT && rec.state === 'off') {
       STEPQ.notes.push(n); STEPQ.vel = vel; clearTimeout(STEPQ.timer);
       STEPQ.timer = setTimeout(stepFlush, 40);                     // UI only, no audio timing
+    } else if (ED.lauf && ED.rollAt && ED.rollAt.t === R.selT && rec.state === 'off' && LAUF.sel >= 0) {
+      STEPQ.notes.push(n); STEPQ.vel = vel; clearTimeout(STEPQ.timer);
+      STEPQ.timer = setTimeout(laufStepFlush, 40);                 // LAUF (§3.10): into the selected step, mono
     }
   } else {
     const gm = padGmForNote(note); inp.note = gm;
@@ -8541,6 +8793,7 @@ function renderProgress(bAud) {
 function renderModeClasses() {
   const a = EL.app.classList, tr = S.tracks[R.selT];
   a.toggle('playing', R.playing);
+  a.toggle('tailwin', tailWinOpen());
   a.toggle('tr', R.kbMode === 'transpose');
   a.toggle('mom', R.momentary);
   const pads = tr.kind === 'drum' && R.kbMode === 'play' && !R.momentary;
@@ -9249,10 +9502,12 @@ function uiFrame() {
   if (fl !== UI.last.fang) { UI.last.fang = fl; EL.bFang.classList.toggle('lit', fl); EL.bFangT.classList.toggle('lit', fl); }
   if (R.keyPending.size && !traegerActive()) for (const x of [...R.keyPending]) applySceneKeys(x);   // after ORIGINAL (§4.1.3)
   if (R.editor === 'drum') drumEdFrame(bAud);
-  if (R.editor === 'synth') { if (UI.dirty.edHead) { UI.dirty.edHead = false; edHeadRefresh(); } if (ED.lfoPrev) lfoPrevFrame(); }
+  modScopeSync();                                           // §9.4: {scope} only while the editor of a worklet track is open
+  if (R.editor === 'synth') { if (UI.dirty.edHead) { UI.dirty.edHead = false; edHeadRefresh(); } if (ED.lfoPrev) lfoPrevFrame(); modFrame(); }
   if (ED.grm && (R.editor === 'synth' || R.editor === 'drum')) grmFrame();
   if (R.editor === 'browser' && UI.dirty.br) { UI.dirty.br = false; brRefresh(); }
   if (ED.roll && ED.rollAt) rollFrame(bAud);
+  else if (ED.lauf && ED.rollAt) laufFrame(bAud);
   if (UI.toastActs) toastPlace();                           // sheets opened/closed/rebuilt under an action toast
 }
 // the count-in shows the remaining beats: 4…1 (1 bar) or 8…1 (2 bars), never the few ms of start lead
@@ -9355,10 +9610,27 @@ function haptic(kind) {
 /* ---------- controls v2: knob + fader, one state machine (§10.1–10.3; lab sketch 2) ---------- */
 // DOWN -> DRAG (>= 4 px, the slop is subtracted) | PICK (450 ms still) | TAP (never edits; two taps = default)
 const LP_MS = 450, CTL_SLOP = 4, PX_FULL = 200, DETENT_PX = 12, DBL_MS = 300, DBL_PX = 6;
-const ARC_R = 22, LP_R = 26.5;
+// WP5 (§9.3): value arc r 22, modulation range ring r 26.5 (stroke 2.5), long-press progress ring outside it (r 29)
+const ARC_R = 22, MOD_R = 26.5, LP_R = 29;
 const arcD = r => { const p = a => { const t = a * Math.PI / 180; return (28 + r * Math.cos(t)).toFixed(3) + ' ' + (28 + r * Math.sin(t)).toFixed(3); }; return `M${p(135)}A${r} ${r} 0 1 1 ${p(405)}`; };
 const arcLen = r => 1.5 * Math.PI * r;                         // 270 degrees
-const ARCS = {v: arcD(ARC_R), p: arcD(LP_R)}, ARC_LV = arcLen(ARC_R), ARC_LP = arcLen(LP_R);
+const ARCS = {v: arcD(ARC_R), p: arcD(LP_R), m: arcD(MOD_R)}, ARC_LV = arcLen(ARC_R), ARC_LP = arcLen(LP_R), ARC_LM = arcLen(MOD_R);
+// the whole ring circle, starting at the bottom (6 o'clock) and running clockwise: the part of a modulation range beyond
+// the knob range (≤ 45° on either side, into the gap of the 270° arc) is drawn on it at 35 % opacity (§9.3)
+const CIRC_M = `M28 ${(28 + MOD_R).toFixed(1)}A${MOD_R} ${MOD_R} 0 1 1 28 ${(28 - MOD_R).toFixed(1)}A${MOD_R} ${MOD_R} 0 1 1 28 ${(28 + MOD_R).toFixed(1)}`, CIRC_LM = 2 * Math.PI * MOD_R;
+function setRingX(path, n0, n1) {
+  if (n1 < n0) { const x = n0; n0 = n1; n1 = x; }
+  const s = u => CIRC_LM * (.125 + .75 * clamp(u, -1 / 6, 7 / 6)), seg = [];
+  if (n0 < 0) seg.push([s(n0), s(Math.min(n1, 0))]);
+  if (n1 > 1) seg.push([s(Math.max(n0, 1)), s(n1)]);
+  const sg = seg.filter(x => x[1] - x[0] > .3);
+  if (!sg.length) { if (path._x !== '') { path._x = ''; path.setAttribute('visibility', 'hidden'); } return; }
+  let d = '0 ' + sg[0][0].toFixed(2) + ' ' + (sg[0][1] - sg[0][0]).toFixed(2);
+  if (sg[1]) d += ' ' + (sg[1][0] - sg[0][1]).toFixed(2) + ' ' + (sg[1][1] - sg[1][0]).toFixed(2);
+  d += ' ' + (CIRC_LM + 10).toFixed(1);
+  if (path._x === d) return; path._x = d;
+  path.removeAttribute('visibility'); path.setAttribute('stroke-dasharray', d);
+}
 // [n0, n1] on the fixed 270-degree arc via the dash pattern: no path rebuild per move
 function setArc(path, len, n0, n1) {
   if (n1 < n0) { const x = n0; n0 = n1; n1 = x; }
@@ -9392,31 +9664,44 @@ function bubbleShow(x, y, txt, side) {
   b.style.left = Math.round(x) + 'px'; b.style.top = Math.round(y) + 'px';
 }
 function bubbleHide() { if (EL.bub) EL.bub.className = ''; }
-// the LCD line of the open editor: what the finger touches, in words
-function lcdShow(label, txt, extra) {
+// the LCD line of the open editor: what the finger touches, in words. range (WP5, §9.3): the modulation range in real units,
+// „CUTOFF 1,20 kHz ↕ 213 Hz … 6,75 kHz“, in the colour of the strongest route
+function lcdShow(label, txt, extra, range, rc) {
   const L = ED.lcd; if (!L || !L.isConnected) return;
-  const s = label + '\u0001' + txt + '\u0001' + (extra || '');
+  const s = label + '\u0001' + txt + '\u0001' + (extra || '') + '\u0001' + (range || '') + '\u0001' + (rc || '');
   if (L._s === s) return; L._s = s;
-  L.innerHTML = `<span class="lk">${esc(label)}</span><span class="lv">${esc(txt)}</span>` + (extra ? `<span class="lx">${esc(extra)}</span>` : '');
+  if (L.classList.contains('wia')) L.classList.remove('wia');
+  L.innerHTML = `<span class="lk">${esc(label)}</span><span class="lv">${esc(txt)}</span>` + (range ? `<span class="lm"${rc ? ` style="--mc:${rc}"` : ''}>↕ ${esc(range)}</span>` : '') + (extra ? `<span class="lx">${esc(extra)}</span>` : '');
 }
 function lcdHint() {
   const L = ED.lcd; if (!L) return;
   L._s = null;
-  L.innerHTML = '<span class="lk">Regler</span><span class="lv">ziehen = ändern · seitlich = fein · 2× tippen = Standard · halten = Menü</span>';
+  L.innerHTML = '<span class="lk">Regler</span><span class="lv">ziehen = ändern · seitlich = fein · 2× tippen = Standard · halten = modulieren</span>';
 }
-// picker (§10.1 PICK; WP1 stub): "↺ Standardwert" and the not-modulatable hint. Marking menu: slide onto a chip and lift,
-// or lift in place -> it stays open (sticky) -> tap a chip; an outside tap closes it without touching what lies below.
-const PK = {open: false, hot: null, sticky: false, choose: null};
+// picker (§10.1 PICK, §9.3): marking menu above the control. Slide onto a chip and lift (expert), or lift in place -> it
+// stays open (sticky) -> tap a chip (novice); an outside tap closes it without touching what lies below.
+// opts.rows (WP5, modulatable controls): rows of chips {act, label, sub, src, cls}; otherwise opts.chips ([value, label,
+// sub]) + „↺ Standardwert“ (WP1 form, non-modulatable controls and special pickers like the Pre-Delay divisions)
+const PK = {open: false, hot: null, sticky: false, choose: null, stickyHint: null};   // stickyHint: the hint once the finger lifted in place
+function pickChipHTML(c) {
+  const st = c.src ? ` style="--c:${MSRC[c.src].c}"` : '';
+  return `<button class="pchip${c.cls ? ' ' + c.cls : ''}" data-act="${esc(c.act)}"${st} role="menuitem">${c.src ? '<i></i>' : ''}<span>${esc(c.label)}</span>${c.sub ? '<small>' + esc(c.sub) + '</small>' : ''}</button>`;
+}
 function pickerOpen(anchor, opts) {
   const p = openPop(anchor, pop => {
     pop.classList.add('pk');
+    if (opts.rows) {
+      pop.classList.add('srcs'); if (opts.one) pop.classList.add('one');
+      pop.innerHTML = opts.rows.map(r => `<div class="pkrow">${r.filter(Boolean).map(pickChipHTML).join('')}</div>`).join('') + `<div class="pkhint">${esc(opts.hint)}</div>`;
+      return;
+    }
     const chips = (opts.chips || []).map(([v, l, s]) => `<button class="pchip" data-act="x:${esc(String(v))}">${esc(l)}${s ? '<small>' + esc(s) + '</small>' : ''}</button>`).join('');
     pop.innerHTML = `<div class="pkrow">${chips}<button class="pchip" data-act="reset">↺ Standardwert<small>${esc(opts.defTxt)}</small></button></div>` +
       `<div class="pkhint">${esc(opts.hint)}</div>`;
   }, {name: 'picker', above: true, onClose: () => { PK.open = false; PK.hot = null; PK.choose = null; if (opts.onClose) opts.onClose(); }});
   guardTouch(p);
   onTap(p, c => pickerChoose(c), '.pchip');
-  Object.assign(PK, {open: true, hot: null, sticky: !opts.gesture, choose: opts.choose});
+  Object.assign(PK, {open: true, hot: null, sticky: !opts.gesture, choose: opts.choose, stickyHint: opts.stickyHint || null});
   return p;
 }
 function pickerHover(x, y) {
@@ -9429,37 +9714,248 @@ function pickerRelease(x, y, why) {
   if (!PK.open) return;
   if (x != null) pickerHover(x, y);
   if (PK.hot) { pickerChoose(PK.hot); return; }
-  if (why === 'up') { PK.sticky = true; const h = UI.pop && UI.pop.el.querySelector('.pkhint'); if (h) h.textContent = 'Antippen wählt · daneben tippen schließt'; }
+  if (why === 'up') { PK.sticky = true; const h = UI.pop && UI.pop.el.querySelector('.pkhint'); if (h) h.textContent = PK.stickyHint || 'Antippen wählt · daneben tippen schließt'; }
   else closePop();                                       // cancelled by the system
 }
 function pickerChoose(c) { const fn = PK.choose, act = c && c.dataset.act; closePop(); haptic('pop'); if (fn && act) fn(act); }
 
+/* ---------- WP5 (§9.2–9.5): modulation routes of a track, live source values, mod mode ---------- */
+const PICK_MAIN = ['lfo1', 'lfo2', 'menv', 'vel'], PICK_MORE = ['fenv', 'key', 'rnd', 'mw'];
+const MSRC_S = {lfo1: 'L1', lfo2: 'L2', menv: 'H2', vel: 'Anschl.', fenv: 'F-Hk.', key: 'Ton', rnd: 'Zuf.', mw: 'M-Rad', aenv: 'L-Hk.'};
+const SRC_IDX = {lfo1: 1, lfo2: 2, fenv: 3, menv: 4, vel: 5, key: 6, mw: 7, rnd: 8, aenv: 9};     // worklet source numbers (= SQ_FACTORY.SRC_ID)
+// ring geometry in normalized knob position = engine amount / ringK: K of §9.2, except the OSZ 2 HT knob (it spans 36
+// semitones, while engine 1.0 of o2pitch = 24 HT), so that the ring shows exactly what the engine plays
+const RING_K = {o2pitch: 1.5};
+const ringK = dst => RING_K[dst] || MOD_K[dst] || 1;
+const fxRoute = m => (m.src === 'lfo1' || m.src === 'lfo2') && String(m.dst).startsWith('fx.');
+function modRoutes(i, dst) { const s = sndOf(i); return s ? s.mods.filter(m => m.dst === dst) : []; }
+function modGet(i, src, dst) { const s = sndOf(i); return s ? s.mods.find(m => m.src === src && m.dst === dst) || null : null; }
+// does track i play its routes in the worklet? (VA/FM6 while the module is not known to be unavailable)
+function trackOnWorklet(i) {
+  const tr = S.tracks[i]; if (!tr || tr.kind !== 'synth' || !isWkEngine(tr.sound.engine)) return false;
+  if (UI.forceNative || SynthHost.state === 'failed') return false;
+  if (AU.ctx && SynthHost.state === 'ready') return !!AU.synth[i];
+  return true;
+}
+// a route is heard: in the worklet every route, natively only the subset of §9.5; fx.* routes (§9.6) are native LFO 1/2 always
+function routeActive(i, m) { if (String(m.dst).startsWith('fx.')) return fxRoute(m); return trackOnWorklet(i) || nativeRoute(m); }
+// set a route in knob units (§9.2: stored in engine units). keep = a finger is still on it: a route dragged through 0 stays
+// (and keeps its place in the list) until the finger lifts. Returns the depth in knob units, or null at the 8-route limit.
+const MODS_DIRTY = [0, 0, 0, 0]; let modsRaf = 0;
+function modSetK(i, src, dst, kAmt, keep) {
+  const s = sndOf(i); if (!s) return null;
+  const amt = toEngineAmt(dst, Math.round(clamp(+kAmt || 0, -1, 1) * 1000) / 1000);
+  let r = s.mods.find(m => m.src === src && m.dst === dst);
+  if (!r) {
+    if (amt === 0 && !keep) return 0;
+    if (s.mods.length >= 8) { toast('Maximal 8 Modulationen'); return null; }
+    r = {src, dst, amt: 0}; s.mods.push(r);
+  }
+  r.amt = amt;
+  if (amt === 0 && !keep) s.mods.splice(s.mods.indexOf(r), 1);
+  modsChanged(i);
+  return toKnobAmt(dst, amt);
+}
+// routes changed: the engines get them once per frame (worklet E.mods / native LFO gains), the editor redraws
+function modsChanged(i) {
+  UI.sndVer++; markDirty(); UI.dirty.strip = true;
+  MODS_DIRTY[i] = 1;
+  if (!modsRaf) {
+    const run = () => { modsRaf = 0; for (let k = 0; k < 4; k++) if (MODS_DIRTY[k]) { MODS_DIRTY[k] = 0; try { rebuildNativeLfos(k); } catch (e) { logErr(e); } } };
+    modsRaf = requestAnimationFrame(run); setTimeout(() => { if (modsRaf) { cancelAnimationFrame(modsRaf); run(); } }, 60);
+  }
+  if (R.editor === 'synth' && i === R.selT) edParamChanged('mods');
+}
+// [✕ n] of the picker: every route of one destination
+function modClearDst(i, dst, label, before) {
+  const s = sndOf(i); if (!s) return;
+  const n = s.mods.filter(m => m.dst === dst).length; if (!n) return;
+  s.mods = s.mods.filter(m => m.dst !== dst); modsChanged(i);
+  commitSound(i, before, 'Modulationen ' + label + ' entfernt');
+  toast('Modulationen von ' + label + ' entfernt', {label: 'Rückgängig', fn: () => undo()});
+}
+
+/* mod mode (§9.3, source-first or after the picker): every drag on a modulatable control sets the depth of ONE source */
+function enterModMode(src, ctl) {
+  if (!MSRC[src] || R.editor !== 'synth' || S.tracks[R.selT].kind !== 'synth') return false;
+  if (PK.open) closePop();
+  UI.modSrc = src; UI.modFocus = ctl || null; UI.modT = R.selT;
+  document.body.dataset.mod = src;
+  document.documentElement.style.setProperty('--msrc', MSRC[src].c);
+  modModeRefresh(); haptic('pop');
+  return true;
+}
+function exitModMode() {
+  if (!UI.modSrc) return false;
+  const i = UI.modT != null ? UI.modT : R.selT, s = sndOf(i);
+  UI.modSrc = null; UI.modFocus = null; UI.modT = null;
+  delete document.body.dataset.mod;
+  // a route left at 0 by a drag goes (it was never a change: no undo entry)
+  if (s && s.mods.some(m => m.amt === 0)) { s.mods = s.mods.filter(m => m.amt !== 0); modsChanged(i); }
+  modModeRefresh();
+  return true;
+}
+function modModeRefresh() {
+  for (const k of ED.ctls || []) if (k.modRefresh) k.modRefresh();
+  if (ED.msrc) for (const c of ED.msrc) c.classList.toggle('on', c.dataset.src === UI.modSrc);
+  modBannerRender(); modBannerPlace();
+}
+// the banner overlays the LCD line (P; L: its place in the tab row; P ≤ 600 px tall, where the LCD is hidden: header row 2)
+function modBannerRender() {
+  const B = ED.mbn; if (!B || !B.el.isConnected) return;
+  const src = UI.modSrc; if (!src) { if (!B.el.hidden) B.el.hidden = true; return; }
+  const f = UI.modFocus && UI.modFocus.isConnected && UI.modFocus.dst ? UI.modFocus : null;
+  let t1 = MSRC[src].l + ' moduliert', t2 = 'Regler ziehen = Tiefe · doppelt tippen = weg';
+  if (f) {
+    t1 = MSRC[src].l + ' → ' + f.label;
+    const r = modGet(f.mi, src, f.dst), rg = r && f.rangeTxt ? f.rangeTxt(src) : '';
+    t2 = !f.srcOk(src) ? f.label + ' nur mit LFO' : r ? fmtVal('bip', toKnobAmt(f.dst, r.amt)) + (rg ? ' · ' + rg : '') : 'Regler ziehen = Tiefe · doppelt tippen = weg';
+  }
+  if (B.t1.textContent !== t1) B.t1.textContent = t1;
+  if (B.t2.textContent !== t2) B.t2.textContent = t2;
+}
+function modBannerPlace() {
+  const B = ED.mbn; if (!B || !B.el.isConnected) return;
+  if (!UI.modSrc) { if (!B.el.hidden) B.el.hidden = true; return; }
+  const sh = B.el.parentNode, l = ED.lcd, s = sh.getBoundingClientRect();
+  const useLcd = !!(l && l.isConnected && l.offsetHeight >= 18);
+  let r = useLcd ? l.getBoundingClientRect() : null;
+  if (!r || !r.width) { const r2 = sh.querySelector('.sh-head .r2'); r = r2 ? r2.getBoundingClientRect() : null; }
+  if (!r || !r.width) r = sh.querySelector('.sh-head').getBoundingClientRect();
+  const pad = useLcd ? 3 : 0, w = Math.min(s.width - 16, Math.max(r.width, 230)), right = Math.min(r.right, s.right - 4), left = Math.max(s.left + 8, right - w);
+  const css = `left:${Math.round(left - s.left)}px;top:${Math.round(r.top - s.top - pad)}px;width:${Math.round(w)}px;height:${Math.round(r.height + 2 * pad)}px`;
+  if (B.css !== css) { B.css = css; B.el.style.cssText = css; }
+  if (B.el.hidden) B.el.hidden = false;
+}
+// „Tipp: Regler halten = modulieren“ once, after the first knob drag (§9.3)
+function maybeModCoach() {
+  if (S.settings.coach.mod || uiPrefs().coachMod) return;
+  S.settings.coach.mod = true; setUiPref('coachMod', true); markDirty();
+  setTimeout(() => { toast('Tipp: Regler halten = modulieren'); clearTimeout(UI.toastT); UI.toastT = setTimeout(hideToast, 3500); }, 200);
+}
+
+/* live values (§9.4): the worklet posts {scope} at ~30 Hz for the focus voice while the editor of its track is open;
+   natively LFO 1/2 are computed from the audio time (stateless, the same waveform function as the native LFO), the Mod-Rad
+   is its knob, envelopes and velocity read as 0 */
+const MLIVE = {track: -1, scope: null, at: 0, nv: 0, t: 0, last: 0, sv: {}, svN: {}, dst: null, lay: 0};
+function modScopeSync() {
+  const want = R.editor === 'synth' && S.tracks[R.selT] && S.tracks[R.selT].kind === 'synth' ? R.selT : -1;
+  for (let k = 0; k < 4; k++) {
+    const E = AU.synth[k]; if (!E || E.dead) continue;
+    const on_ = k === want;
+    if (!!E.scopeOn !== on_) {
+      E.scopeOn = on_; E.scope(on_);
+      E.onScope = on_ ? (m => { MLIVE.scope = m.scope; MLIVE.at = performance.now(); MLIVE.track = k; MLIVE.nv = m.nv; MLIVE.t = m.t; MLIVE.dst = m.dst || null; }) : null;
+    }
+  }
+}
+function lfoNow(i, P, n, t) {
+  const pre = 'l' + n, sync = +P[pre + 'sync'] || 0, A = AU.tracks[i], L = A && A.nl ? A.nl.lfo[n - 1] : null;
+  const cyc = sync > 0 ? (t - lfoAnchor()) * S.bpm / 60 / sync : (t - (L && L._t0 != null ? L._t0 : 0)) * clamp(+P[pre + 'rate'] || 1, .01, 40);
+  const f = Math.floor(cyc);
+  return FX.lfoShape(LFO_FX_SHAPE[P[pre + 'shape'] | 0] || 'sine', cyc - f, f, L ? L.seed || 1 : 1);
+}
+function modLive(i) {
+  const tr = S.tracks[i], P = tr.sound.p, sv = MLIVE.sv, svN = MLIVE.svN;
+  const t = AU.ctx ? AU.ctx.currentTime : performance.now() / 1000;
+  svN.lfo1 = lfoNow(i, P, 1, t); svN.lfo2 = lfoNow(i, P, 2, t); svN.mw = +P.mw || 0;
+  svN.fenv = svN.menv = svN.vel = svN.key = svN.rnd = svN.aenv = 0;
+  const E = AU.synth[i], a = MLIVE.scope;
+  if (E && E.scopeOn && a && MLIVE.track === i && performance.now() - MLIVE.at < 500) { for (const s in SRC_IDX) sv[s] = +a[SRC_IDX[s]] || 0; }
+  else Object.assign(sv, svN);
+  return sv;
+}
+// ≤ 30 fps, only while the synth editor is open, only controls with routes (§9.4)
+function modFrame() {
+  if (R.editor !== 'synth' || !ED.ctls) return;
+  const now = performance.now(); if (now - MLIVE.last < 32) return; MLIVE.last = now;
+  const i = R.selT, tr = S.tracks[i]; if (!tr || tr.kind !== 'synth') return;
+  const sv = modLive(i);
+  for (const k of ED.ctls) if (k.hasMod && k.anim) k.anim(k.dst.startsWith('fx.') ? MLIVE.svN : sv);
+  if (ED.msrc) for (const c of ED.msrc) { const v = clamp(sv[c.dataset.src] || 0, -1, 1); if (Math.abs(v - (c._v || 0)) > .004) { c._v = v; c._b.style.transform = 'scaleX(' + v.toFixed(3) + ')'; } }
+  if (ED.mrows) for (const r of ED.mrows) { const v = Math.abs((String(r.m.dst).startsWith('fx.') ? MLIVE.svN : sv)[r.m.src] || 0), x = (.3 + .7 * clamp(v, 0, 1)).toFixed(2); if (r.x !== x) { r.x = x; r.bar.style.transform = 'scaleX(' + x + ')'; } }
+}
+
 /* the control. d: descriptor {l, min, max, c, def, fmt, vals?}; get/set in real units; o: {kind:'knob'|'fader', label, fmt,
-   undo: {snap(), commit(before, label)}, onTouch(), onChange(v), mod (modulatable)} */
+   undo: {snap(), commit(before, label)}, onTouch(), onChange(v), inert(), detents, pick(),
+   mod: the destination id of §9.2 (WP5: ring, live dot, source dots, picker sources, mod mode; falsy = not modulatable),
+   modT: the track of the routes (default R.selT), modSrcs: the sources it accepts (FX knobs: LFO 1/2 only, §9.6)} */
 function makeCtl(d, get, set, o) {
   o = o || {};
   const fader = o.kind === 'fader', stepped = !!d.vals, bip = d.c === 'bip' && !stepped;
   const label = o.label || d.l, fmt = v => (o.fmt ? o.fmt(v) : fmtVal(d.fmt, v));
-  const k = el('div', fader ? 'fader' : 'knob');
+  const dst = typeof o.mod === 'string' && o.mod ? o.mod : null, mi = o.modT == null ? R.selT : o.modT;
+  const srcOk = s => !!dst && !!MSRC[s] && (!o.modSrcs || o.modSrcs.includes(s));
+  const k = el('div', (fader ? 'fader' : 'knob') + (dst ? ' mctl' : ' nomod'));
   k.tabIndex = 0; k.setAttribute('role', 'slider'); k.setAttribute('aria-label', label);
   k.setAttribute('aria-valuemin', '0'); k.setAttribute('aria-valuemax', '1');
   let ticks = [];
-  if (fader) k.innerHTML = `<div class="kl">${esc(label)}</div><div class="ftrack"><i class="ffill"></i><i class="fmid"></i><b class="fcap"></b></div><div class="kn"></div><span class="fine"></span>`;
+  if (fader) k.innerHTML = `<div class="kl">${esc(label)}</div><div class="ftrack"><i class="ffill"></i><i class="fmid"></i>` +
+    (dst ? '<i class="fmx"></i><i class="fmr"></i><b class="fdot"></b>' : '') + `<b class="fcap"></b></div><div class="kn"></div>` + (dst ? '<div class="kb"></div>' : '') + `<span class="fine"></span>`;
   else {
     let tk = '';
     if (stepped && d.vals.length <= 12) d.vals.forEach((_, i) => { const a = (135 + 270 * i / Math.max(1, d.vals.length - 1)) * Math.PI / 180, c = Math.cos(a), s2 = Math.sin(a);
       tk += `<line class="tk" x1="${(28 + 25.2 * c).toFixed(2)}" y1="${(28 + 25.2 * s2).toFixed(2)}" x2="${(28 + 27.6 * c).toFixed(2)}" y2="${(28 + 27.6 * s2).toFixed(2)}"/>`; });
+    const dy = (28 - MOD_R).toFixed(1);
     k.innerHTML = `<div class="kl">${esc(label)}</div><svg viewBox="0 0 56 56" aria-hidden="true">` +
-      `<path class="kpr" d="${ARCS.p}" style="stroke-dasharray:${ARC_LP.toFixed(1)} 999;--lpl:${ARC_LP.toFixed(1)}"/>` + (tk ? `<g class="kticks">${tk}</g>` : '') +
-      `<path class="kt" d="${ARCS.v}"/><path class="kv" d="${ARCS.v}"/><circle class="kc" cx="28" cy="28" r="15"/><circle class="kc2" cx="28" cy="28" r="12.5"/>` +
-      `<line class="kp" x1="28" y1="28" x2="28" y2="15"/></svg><div class="kn"></div><span class="fine"></span>`;
+      `<path class="kpr" d="${ARCS.p}" style="stroke-dasharray:${ARC_LP.toFixed(1)} 999;--lpl:${ARC_LP.toFixed(1)}"/>` + (dst ? `<path class="kmg" d="${ARCS.m}"/>` : '') + (tk ? `<g class="kticks">${tk}</g>` : '') +
+      `<path class="kt" d="${ARCS.v}"/>` + (dst ? `<path class="kmx" d="${CIRC_M}" visibility="hidden"/><path class="kmr" d="${ARCS.m}" visibility="hidden"/>` : '') +
+      `<path class="kv" d="${ARCS.v}"/><circle class="kc" cx="28" cy="28" r="15"/><circle class="kc2" cx="28" cy="28" r="12.5"/>` +
+      `<line class="kp" x1="28" y1="28" x2="28" y2="15"/><circle class="kdf" cx="28" cy="50.5" r="2.4"/>` +
+      (dst ? `<g class="kdg"><circle class="kdh" cx="28" cy="${dy}" r="5"/><circle class="kd" cx="28" cy="${dy}" r="2.8"/></g>` : '') +
+      `</svg><div class="kn"></div>` + (dst ? '<div class="kb"></div>' : '') + `<span class="fine"></span>`;
     ticks = Array.from(k.querySelectorAll('.tk'));
   }
   if (bip) k.classList.add('bip');
   const q = s => k.querySelector(s), kn = q('.kn'), fine = q('.fine'), kv = q('.kv'), kp = q('.kp'), track = q('.ftrack');
+  const kmr = q('.kmr'), kmx = q('.kmx'), kdg = q('.kdg'), kb = q('.kb'), fdot = q('.fdot');
   const CAP_H = fader ? 16 : 0;
   let g = null, lastTap = {t: 0, x: 0, y: 0}, lastN = -2, lastTxt = null, lastTick = -1;
+  let mSig = '', routes = [], act = [], all = [], lastDot = -9, trackPx = 0, trackLay = -1, lastBadges = '', ariaLast = '';
   const nBase = () => toNorm(d, get());
+  // the routes this control shows: all of its destination, in mod mode only the active source (§9.3)
+  function modUpdate(n) {
+    all = modRoutes(mi, dst);
+    const mm = UI.modSrc && R.editor === 'synth' ? UI.modSrc : null, only = mm && srcOk(mm) ? mm : null;
+    routes = mm ? (only ? all.filter(m => m.src === only) : []) : all;
+    act = routes.filter(m => routeActive(mi, m));
+    const sig = n.toFixed(5) + '|' + (mm || '') + '|' + all.map(m => m.src + m.amt).join(',') + '|' + act.length;
+    if (sig === mSig) return; mSig = sig;
+    const has = routes.length > 0;
+    k.classList.toggle('has-mod', has); k.classList.toggle('mna', has && !act.length);
+    k.hasMod = act.length > 0; lastDot = -9;
+    if (has) {
+      const [lo, hi] = spanOf(routes), main = routes.reduce((b, m) => (Math.abs(m.amt) > Math.abs(b.amt) ? m : b));
+      k.style.setProperty('--mc', MSRC[main.src].c);
+      if (fader) {
+        k.style.setProperty('--m0', clamp(n + lo, 0, 1).toFixed(4)); k.style.setProperty('--m1', clamp(n + hi, 0, 1).toFixed(4));
+        k.style.setProperty('--x0', clamp(n + lo, -.06, 1.06).toFixed(4)); k.style.setProperty('--x1', clamp(n + hi, -.06, 1.06).toFixed(4));
+      } else { setArc(kmr, ARC_LM, n + lo, n + hi); setRingX(kmx, n + lo, n + hi); }
+    } else {
+      k.style.removeProperty('--mc');
+      if (!fader) { kmr.setAttribute('visibility', 'hidden'); setRingX(kmx, 0, 0); }
+    }
+    const bs = all.map(m => m.src).join();
+    if (bs !== lastBadges) { lastBadges = bs; kb.innerHTML = all.map(m => `<i style="--c:${MSRC[m.src].c}"></i>`).join(''); }
+  }
+  // the summed interval of the routes in normalized knob position: bipolar ±|a|, unipolar [min(0, a), max(0, a)]
+  function spanOf(rs) {
+    let lo = 0, hi = 0; const K = ringK(dst);
+    for (const m of rs) { const a = m.amt / K; if (MSRC[m.src].bip) { lo -= Math.abs(a); hi += Math.abs(a); } else { lo += Math.min(0, a); hi += Math.max(0, a); } }
+    return [lo, hi];
+  }
+  // „213 Hz … 6,75 kHz“ (real units, §9.3); only = one source (the banner in mod mode)
+  function rangeTxt(only) {
+    if (!dst) return '';
+    const rs = modRoutes(mi, dst).filter(m => !only || m.src === only); if (!rs.length) return '';
+    const n = nBase(), [lo, hi] = spanOf(rs);
+    return fmt(fromNorm(d, clamp(n + lo, 0, 1))) + ' … ' + fmt(fromNorm(d, clamp(n + hi, 0, 1)));
+  }
+  function ariaTxt(t) {
+    let s = label + ' ' + t;
+    if (dst && all.length) s += ', moduliert: ' + all.map(m => MSRC[m.src].l + ' ' + fmtVal('bip', toKnobAmt(dst, m.amt))).join(', ');
+    if (s !== ariaLast) { ariaLast = s; k.setAttribute('aria-valuetext', s); }
+  }
   function update() {
     const v = get(), n = toNorm(d, v), t = fmt(v);
     if (Math.abs(n - lastN) > 1e-7) {
@@ -9469,27 +9965,55 @@ function makeCtl(d, get, set, o) {
       k.setAttribute('aria-valuenow', n.toFixed(4));
       if (ticks.length) { const i = d.vals.indexOf(v); if (i !== lastTick) { if (ticks[lastTick]) ticks[lastTick].classList.remove('on'); if (ticks[i]) ticks[i].classList.add('on'); lastTick = i; } }
     }
-    if (t !== lastTxt) { lastTxt = t; kn.textContent = t; k.setAttribute('aria-valuetext', label + ' ' + t); }
+    if (t !== lastTxt) { lastTxt = t; kn.textContent = t; }
+    if (dst) modUpdate(n);
+    ariaTxt(t);
     // o.inert: dimmed and inert (e.g. PW unless the wave is Puls, §5.2)
     if (o.inert) { const x = !!o.inert(); if (x !== k._inert) { k._inert = x; k.classList.toggle('inert', x); k.setAttribute('aria-disabled', String(x)); } }
   }
-  const lcd = () => lcdShow(label, fmt(get()), g && g.f < 1 ? fineLabel(g.f) : '');
+  // live dot (≈ 30 fps from modFrame): the modulated value of the heard routes; transform only, no path rebuild (§9.3)
+  function anim(sv) {
+    if (!act.length) return;
+    let off = 0; const K = ringK(dst);
+    for (const m of act) off += (m.amt / K) * (sv[m.src] || 0);
+    const nm = clamp(nBase() + off, 0, 1);
+    if (Math.abs(nm - lastDot) < 2e-4) return;
+    lastDot = nm; k._dot = nm;
+    if (fader) {
+      if (!trackPx || trackLay !== MLIVE.lay) { trackLay = MLIVE.lay; trackPx = Math.max(0, (track.clientHeight || 0) - 16); }
+      fdot.style.transform = `translateY(${(-nm * trackPx).toFixed(1)}px)`;
+    } else kdg.setAttribute('transform', `rotate(${(270 * nm - 135).toFixed(1)} 28 28)`);
+  }
+  const lcd = () => {
+    const rs = dst && UI.modSrc && srcOk(UI.modSrc) ? rangeTxt(UI.modSrc) : rangeTxt(null), mc = k.style.getPropertyValue('--mc');
+    lcdShow(label, fmt(get()), g && g.f < 1 ? fineLabel(g.f) : '', rs, mc ? mc.trim() : '');
+  };
   const pulse = () => { k.classList.remove('detent'); void k.offsetWidth; k.classList.add('detent'); };
   function bubble() {
     if (!g || !g.r) return;
-    const txt = fmt(get());
+    let txt = fmt(get()), cls = '';
+    if (g.mode === 'depth') { const r = modGet(mi, g.src, dst); txt = MSRC_S[g.src] + ' ' + fmtVal('bip', r ? toKnobAmt(dst, r.amt) : 0); cls = ' mod'; }
     if (fader) {
       const n = nBase(), y = g.r.top + (1 - n) * g.travel + CAP_H / 2, right = g.r.right + 90 < window.innerWidth;
-      bubbleShow(right ? g.r.right + 6 : g.r.left - 6, y, txt, right ? 'side' : 'side left');
-    } else bubbleShow(g.r.left + g.r.width / 2, g.r.top - 6, txt);
+      bubbleShow(right ? g.r.right + 6 : g.r.left - 6, y, txt, (right ? 'side' : 'side left') + cls);
+    } else bubbleShow(g.r.left + g.r.width / 2, g.r.top - 6, txt, cls.trim());
   }
   function pxFull() {
+    if (g.mode === 'depth') return PX_FULL;                // depth: 200 px per knob unit (§9.3)
     if (fader) return g.travel;
     return stepped ? (d.vals.length - 1) * clamp(PX_FULL / Math.max(1, d.vals.length - 1), 18, 40) : PX_FULL;
   }
   // sticky detents: the bipolar centre, or o.detents (values, e.g. HT 0 ±5 ±7 ±12); only at full speed (not in fine mode)
   const dets = o.detents ? o.detents.map(v => toNorm(d, v)).sort((a, b) => a - b) : bip ? [.5] : [];
-  function remap() { const w = g.f === 1 && dets.length ? DETENT_PX / g.px : 0; g.map = ctlTravelN(0, 1, dets, w); g.t = g.map.toT(nBase()); }
+  function remap() {
+    if (g.mode === 'depth') {
+      // depth −1…+1 knob units (±1/K where the engine value would clip: PW, Hüllk.-Menge ±50 %, Resonanz ±87 %), 12 px sticky zero
+      const lim = Math.min(1, 1 / (MOD_K[dst] || 1)), w = g.f === 1 ? DETENT_PX / PX_FULL : 0, r = modGet(mi, g.src, dst);
+      g.map = ctlTravelN(-lim, lim, [0], w); g.t = g.map.toT(r ? Math.round(toKnobAmt(dst, r.amt) * 1000) / 1000 : 0);
+      return;
+    }
+    const w = g.f === 1 && dets.length ? DETENT_PX / g.px : 0; g.map = ctlTravelN(0, 1, dets, w); g.t = g.map.toT(nBase());
+  }
   function startDrag(e) {
     clearTimeout(g.lpT); g.st = 'drag'; k.classList.add('drag');
     const rr = (fader ? track : (q('svg') || k)).getBoundingClientRect();      // one layout read per gesture
@@ -9507,10 +10031,14 @@ function makeCtl(d, get, set, o) {
     e.preventDefault(); e.stopPropagation();
     try { k.focus({preventScroll: true}); } catch (_) {}
     try { k.setPointerCapture(e.pointerId); } catch (_) {}
-    g = {id: e.pointerId, x0: e.clientX, y0: e.clientY, ya: e.clientY, st: 'down', f: 1, map: null, t: 0, lastV: null, before: o.undo ? o.undo.snap() : null, px: PX_FULL, r: null, travel: 120};
+    const depth = !!(UI.modSrc && R.editor === 'synth' && srcOk(UI.modSrc));
+    g = {id: e.pointerId, x0: e.clientX, y0: e.clientY, ya: e.clientY, st: 'down', f: 1, map: null, t: 0, lastV: null, before: o.undo ? o.undo.snap() : null, px: PX_FULL, r: null, travel: 120,
+      mode: depth ? 'depth' : 'value', src: depth ? UI.modSrc : null, full: false};
     gestBegin(e.pointerId, why => finish(null, why));
     g.lpT = setTimeout(longPress, LP_MS);
     k.classList.add('press');
+    // mod mode: the touched control is the focus at once (the banner names its route)
+    if (depth && UI.modFocus !== k) { const old = UI.modFocus; UI.modFocus = k; if (old && old.classList) old.classList.remove('mfocus'); k.classList.add('mfocus'); modBannerRender(); }
     lcd();
     if (o.onTouch) o.onTouch();
   });
@@ -9524,21 +10052,44 @@ function makeCtl(d, get, set, o) {
     if (f < 1) { k.classList.add('fineon'); fine.textContent = fineLabel(f); } else k.classList.remove('fineon');
     g.t = clamp(g.t + (g.ya - e.clientY) / g.px * f, g.map.lo, g.map.hi); g.ya = e.clientY;
     const v = g.map.toV(g.t);
+    if (g.mode === 'depth') {
+      // the route is created on the first movement; it stays while the finger is down, even at 0 (§9.3)
+      const vk = Math.round(v * 1000) / 1000;
+      if (!g.full && modSetK(mi, g.src, dst, vk, true) === null) g.full = true;
+      if (g.lastV !== null && vk !== g.lastV && vk === 0) { pulse(); haptic('snap'); }
+      g.lastV = vk; update(); bubble(); lcd(); modBannerRender();
+      return;
+    }
     if (setVal(fromNorm(d, v)) && stepped) { pulse(); haptic('tick'); }
     if (dets.length && g.lastV !== null && v !== g.lastV && dets.some(c => Math.abs(v - c) < 1e-9)) { pulse(); haptic('snap'); }   // detent pulse
     g.lastV = v;
     bubble(); lcd();
   });
   function longPress() { if (!g || g.st !== 'down') return; g.st = 'pick'; k.classList.add('armed'); haptic('pop'); openPicker(g); }
+  // the picker (§9.3): modulatable = the sources (each chip shows its depth), ↺ Std. and ✕ n; FX knobs only LFO 1/2;
+  // not modulatable = ↺ Standardwert + „<Param> ist nicht modulierbar“ (o.pick: special chips, e.g. the Pre-Delay divisions)
   function openPicker(G) {
-    const pk = o.pick ? o.pick() : null;                 // o.pick(): {chips: [[value, label, sub]], hint} (e.g. Pre-Delay divisions)
-    pickerOpen(k, {gesture: !!G, defTxt: fmt(d.def), chips: pk ? pk.chips : null,
-      hint: pk && pk.hint ? pk.hint : o.mod ? (G ? 'Auf ↺ schieben und loslassen' : '↺ antippen') : label + ' ist nicht modulierbar',
-      choose: act => {
-        const before = G ? G.before : (o.undo ? o.undo.snap() : null);
-        if (act === 'reset') resetDefault(before);
-        else if (act.startsWith('x:') && pk) { const v = pk.parse ? pk.parse(act.slice(2)) : act.slice(2); if (setVal(v)) { if (o.undo) o.undo.commit(before, label); pulse(); haptic('snap'); } lcd(); }
-      }});
+    const pk = o.pick ? o.pick() : null;
+    const choose = act_ => {
+      const before = G ? G.before : (o.undo ? o.undo.snap() : null);
+      if (act_ === 'reset') resetDefault(before);
+      else if (act_ === 'clear') modClearDst(mi, dst, label, before);
+      else if (act_.startsWith('src:')) enterModMode(act_.slice(4), k);
+      else if (act_.startsWith('x:') && pk) { const v = pk.parse ? pk.parse(act_.slice(2)) : act_.slice(2); if (setVal(v)) { if (o.undo) o.undo.commit(before, label); pulse(); haptic('snap'); } lcd(); }
+    };
+    if (dst && !pk) {
+      const rs = modRoutes(mi, dst), land = isLand();
+      const chip = (s, cls) => { const r = rs.find(m => m.src === s); return {act: 'src:' + s, label: MSRC[s].l, sub: r ? fmtVal('bip', toKnobAmt(dst, r.amt)) : '', src: s, cls}; };
+      const main = PICK_MAIN.filter(srcOk), more = PICK_MORE.filter(srcOk);
+      const tail = [{act: 'reset', label: '↺ Std.', cls: 'sm'}, rs.length ? {act: 'clear', label: '✕ ' + rs.length, cls: 'sm'} : null];
+      const rows = land ? [main.map(s => chip(s, 'src')).concat(more.map(s => chip(s, 'src sm')), tail)]
+        : [main.map(s => chip(s, 'src')), more.map(s => chip(s, 'src sm')).concat(tail)];
+      const pre = o.modSrcs ? 'nur LFO · ' : '', hint = pre + (G ? 'Auf eine Quelle schieben und loslassen' : 'Quelle antippen = modulieren');
+      pickerOpen(k, {gesture: !!G, rows, one: land, hint, stickyHint: pre + 'Quelle antippen · daneben tippen schließt', choose});
+      return;
+    }
+    const nm = label + ' ist nicht modulierbar';          // the note stays when the finger lifts in place
+    pickerOpen(k, {gesture: !!G, defTxt: fmt(d.def), chips: pk ? pk.chips : null, hint: pk && pk.hint ? pk.hint : nm, stickyHint: pk ? null : nm, choose});
   }
   function resetDefault(before) {
     const was = get();
@@ -9557,10 +10108,31 @@ function makeCtl(d, get, set, o) {
     bubbleHide();
     GEST.delete(G.id);
     if (G.st === 'pick') pickerRelease(e ? e.clientX : null, e ? e.clientY : null, why);
-    else if (G.st === 'drag') { if (o.undo) o.undo.commit(G.before, label); lcd(); }
-    else if (G.st === 'down' && e && e.type === 'pointerup') {
-      const t = performance.now();
-      if (t - lastTap.t < DBL_MS && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < DBL_PX) { lastTap.t = 0; resetDefault(G.before); }
+    else if (G.st === 'drag') {
+      if (G.mode === 'depth') {
+        const r = modGet(mi, G.src, dst); if (r && r.amt === 0) modSetK(mi, G.src, dst, 0, false);    // a route at 0 goes on lift
+        if (o.undo) o.undo.commit(G.before, MSRC[G.src].l + ' → ' + label);
+        UI.modFocus = k; modModeRefresh();
+      } else {
+        if (o.undo) o.undo.commit(G.before, label);
+        if (dst && R.editor === 'synth') maybeModCoach();
+      }
+      lcd();
+    } else if (G.st === 'down' && e && e.type === 'pointerup') {
+      const t = performance.now(), dbl = t - lastTap.t < DBL_MS && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < DBL_PX;
+      if (G.mode === 'depth') {
+        // mod mode: tap = focus, double tap = remove this source's route (with undo)
+        if (dbl) {
+          lastTap.t = 0;
+          if (modGet(mi, G.src, dst)) {
+            modSetK(mi, G.src, dst, 0, false);
+            const lb = MSRC[G.src].l + ' → ' + label + ' entfernt';
+            if (o.undo) o.undo.commit(G.before, lb);
+            toast(lb, {label: 'Rückgängig', fn: () => undo()}); pulse(); haptic('snap');
+          }
+        } else lastTap = {t, x: e.clientX, y: e.clientY};
+        UI.modFocus = k; modModeRefresh();
+      } else if (dbl) { lastTap.t = 0; resetDefault(G.before); }
       else lastTap = {t, x: e.clientX, y: e.clientY};
     }
     gestEnd(G.id);
@@ -9568,12 +10140,18 @@ function makeCtl(d, get, set, o) {
   on(k, 'pointerup', e => { if (g && e.pointerId === g.id) finish(e, 'up'); });
   on(k, 'pointercancel', e => { if (g && e.pointerId === g.id) finish(e, 'cancel'); });
   on(k, 'lostpointercapture', e => { if (g && e.pointerId === g.id && g.st !== 'pick') finish(e, 'lost'); });
-  // desktop: wheel ±1 % (Shift ±10 %), arrow keys, M = picker; one undo entry per burst
-  let kbBefore = null, kbT = 0;
-  const kbCommit = () => { if (kbBefore != null && o.undo) o.undo.commit(kbBefore, label); kbBefore = null; };
+  // desktop: wheel ±1 % (Shift ±10 %), arrow keys, M = picker; one undo entry per burst. In mod mode they set the depth.
+  let kbBefore = null, kbT = 0, kbLabel = label;
+  const kbCommit = () => { if (kbBefore != null && o.undo) o.undo.commit(kbBefore, kbLabel); kbBefore = null; };
   function nudge(dir, big) {
     if (kbBefore == null && o.undo) kbBefore = o.undo.snap();
     clearTimeout(kbT); kbT = setTimeout(kbCommit, 700);
+    if (UI.modSrc && R.editor === 'synth' && srcOk(UI.modSrc)) {
+      const r = modGet(mi, UI.modSrc, dst), lim = Math.min(1, 1 / (MOD_K[dst] || 1)), cur = r ? toKnobAmt(dst, r.amt) : 0;
+      modSetK(mi, UI.modSrc, dst, clamp(cur + dir * (big ? .1 : .01), -lim, lim), false); kbLabel = MSRC[UI.modSrc].l + ' → ' + label;
+      update(); modBannerRender(); return;
+    }
+    kbLabel = label;
     if (stepped) { const i = d.vals.indexOf(get()); setVal(d.vals[clamp((i < 0 ? 0 : i) + dir, 0, d.vals.length - 1)]); }
     else setVal(fromNorm(d, clamp(nBase() + dir * (big ? .1 : .01), 0, 1)));
     lcd();
@@ -9585,7 +10163,18 @@ function makeCtl(d, get, set, o) {
     if (!up && !dn) return;
     e.preventDefault(); e.stopPropagation(); nudge(up ? 1 : -1, e.shiftKey);
   });
-  k.update = update; update();
+  // mod mode (§9.3): modulatable controls get the dashed ring, everything else rests; the ring shows only the active source
+  k.modRefresh = () => {
+    const mm = UI.modSrc && R.editor === 'synth' ? UI.modSrc : null;
+    k.classList.toggle('modable', !!mm && srcOk(mm));
+    k.classList.toggle('mfocus', !!mm && UI.modFocus === k);
+    mSig = ''; update();
+  };
+  Object.assign(k, {update, anim, dst, mi, label, srcOk, rangeTxt, hasMod: false, ctlKey: o.key || null});
+  if (o.key) k.dataset.key = o.key;
+  if (ED.ctls) ED.ctls.push(k);
+  update();
+  if (UI.modSrc) k.modRefresh();
   return k;
 }
 const makeKnob = (d, get, set, o) => makeCtl(d, get, set, o);
@@ -9648,12 +10237,13 @@ function closeSheets() {
   // the clip editor: destroyed on close, so it opens with the Zeichnen tool next time (never a "deleting" editor)
   if (ED.roll) { try { ED.roll.destroy(); } catch (e) { logErr(e); } ED.roll = null; }
   if (EL.rollSheet.classList.contains('open')) { EL.rollSheet.classList.remove('open'); EL.rollSheet.innerHTML = ''; }
-  ED.rollAt = null; ED.rollInfo = null; ED.step = null; STEPQ.notes.length = 0;
+  ED.rollAt = null; ED.rollInfo = null; ED.step = null; ED.lauf = null; ED.laufBtn = null; STEPQ.notes.length = 0;
   dropUntouchedRollClip();
   EL.app.classList.remove('rollfull', 'rollkb');
   if (ED.hear) { ED.hear.release(nowT()); ED.hear = null; }
   if (PK.open) closePop();
-  ED.lcd = null; ED.trChip = null; ED.undoBtns = [];
+  if (UI.modSrc) exitModMode();                          // closing the sheet ends mod mode (§9.3)
+  ED.lcd = null; ED.trChip = null; ED.undoBtns = []; ED.ctls = null; ED.msrc = null; ED.mrows = null; ED.mbn = null;
   bubbleHide();
   setSheetOpen(false);
 }
@@ -9684,7 +10274,7 @@ function fitBody(b, full) {
 let fitRO = null;
 function fitWatch(body) {
   ED.fitBody = body;
-  if (!fitRO && typeof ResizeObserver === 'function') fitRO = new ResizeObserver(es => { for (const e of es) fitBody(e.target, true); });
+  if (!fitRO && typeof ResizeObserver === 'function') fitRO = new ResizeObserver(es => { for (const e of es) fitBody(e.target, true); MLIVE.lay++; if (UI.modSrc) modBannerPlace(); });
   if (fitRO) { fitRO.disconnect(); fitRO.observe(body); }
   requestAnimationFrame(() => fitBody(body, true));
 }
@@ -9977,6 +10567,7 @@ function getParam(t, path) {
 function setMod(t, src, dst, knobAmt) {
   const snd = sndOf(t); if (!snd) throw new Error('Keine Synth-Spur: ' + t);
   if (!MSRC[src] || !MDST[dst]) throw new Error('Unbekannte Modulation: ' + src + ' → ' + dst);
+  if (String(dst).startsWith('fx.') && src !== 'lfo1' && src !== 'lfo2') return false;      // §9.6: FX destinations take LFO 1/2 only
   const amt = toEngineAmt(dst, +knobAmt || 0), k = snd.mods.findIndex(m => m.src === src && m.dst === dst);
   if (k >= 0) { if (amt === 0) snd.mods.splice(k, 1); else snd.mods[k].amt = amt; }
   else if (amt !== 0) { if (snd.mods.length >= 8) { toast('Maximal 8 Modulationen'); return false; } snd.mods.push({src, dst, amt}); }
@@ -10006,24 +10597,75 @@ ED.sub = {osc: 'o1', filter: 'ctl', env: 'amp', lfo: 'l1'};
 const isLand = () => window.matchMedia('(orientation: landscape)').matches;
 function sKnob(key, o) {
   const i = R.selT, d = PD[key];
+  // WP5: d.mod = the destination this knob rings on (§9.2), d.modSrcs = the sources it accepts (FX: LFO 1/2, §9.6)
   return makeCtl(d, () => sndGet(S.tracks[i].sound, key), v => setP(i, key, v),
-    Object.assign({undo: soundUndo(i), mod: !!d.mod, fmt: v => fmtVal(d.fmt, v), detents: d.detents}, o));
+    Object.assign({undo: soundUndo(i), mod: d.mod || null, modT: i, modSrcs: d.modSrcs || null, key, fmt: v => fmtVal(d.fmt, v), detents: d.detents}, o));
 }
 const sFader = (key, o) => sKnob(key, Object.assign({kind: 'fader'}, o));
 function sSeg(key, opts, cls, label, o) {
   const i = R.selT;
-  return makeSeg(opts, () => sndGet(S.tracks[i].sound, key), v => setP(i, key, v), cls, Object.assign({undo: soundUndo(i), label: label || PD[key].l}, o));
+  const sg = makeSeg(opts, () => sndGet(S.tracks[i].sound, key), v => setP(i, key, v), cls, Object.assign({undo: soundUndo(i), label: label || PD[key].l}, o));
+  sg.dataset.key = key;                                     // „Was ist anders?“ (§5.2)
+  return sg;
 }
 // toggle (§2.4: 56×36 P / 52×32 L) with an LED: SYNC 2→1, Phasen-Reset
 function sToggle(key, label) {
   const i = R.selT, b = el('button', 'tgl rb', `<i class="led"></i><span>${esc(label)}</span>`);
-  b.setAttribute('role', 'switch');
+  b.setAttribute('role', 'switch'); b.dataset.key = key;
   const upd = () => { const on = !!sndGet(S.tracks[i].sound, key); b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on)); };
   onTap(b, () => { const before = soundSnapshot(i); setP(i, key, sndGet(S.tracks[i].sound, key) ? 0 : 1); upd(); commitSound(i, before, label); lcdShow(label, sndGet(S.tracks[i].sound, key) ? 'an' : 'aus'); });
   b.update = upd; upd(); ED.refreshers.push(upd);
   return b;
 }
-function edParamChanged(key) { for (const f of ED.refreshers) { try { f(key); } catch (e) { logErr(e); } } UI.dirty.edHead = true; fitBody(ED.fitBody, false); }
+function edParamChanged(key) { for (const f of ED.refreshers) { try { f(key); } catch (e) { logErr(e); } } UI.dirty.edHead = true; fitBody(ED.fitBody, false); if (UI.wia) wiaPaint(); }
+/* „Was ist anders?“ (§5.2, P1, WP5): which few controls make this sound. While [◎] is on, every knob, fader, segment and
+   toggle whose value differs from the base patch (ANALOG_BASE; the WT / FM blocks against their defaults; FX against the
+   default track effects) gets a white dot, the tabs count them („FILTER ·5“, MOD = routes), and the LCD line shows the
+   factory Trick of the loaded sound */
+const WIA_TABS = {
+  osc: k => /^o[123]/.test(k) || ['subLvl', 'subOct', 'subW', 'noise', 'level', 'analog', 'mode', 'poly', 'glide', 'uniDet', 'uniMix', 'uniWidth', 'spread', 'ampVel', 'reset'].includes(k) || /^(wt|fm2)\./.test(k),
+  filter: k => ['ftype', 'cutoff', 'res', 'drive', 'fenv', 'kt', 'fvel', 'bass', 'lq'].includes(k),
+  env: k => /^[afm](A|D|S|R|Curve)$/.test(k),
+  lfo: k => /^l[12]/.test(k) || k === 'mw',
+  fx: k => k.startsWith('fx.'),
+};
+const FX_BASE = {'fx.drive': 0, 'fx.rev': .15, 'fx.dly': 0, 'fx.vol': .8, 'fx.pan': 0, 'fx.pump': 0, 'fx.pumpRel': '1/8', 'fx.chorus.mode': 'off', 'fx.chorus.rate': 1, 'fx.chorus.depth': 1, 'fx.chorus.mix': 1};
+function wiaBase(key) {
+  if (key.startsWith('fx.')) return FX_BASE[key];
+  if (key.startsWith('wt.')) return WT_DEF()[key.slice(3)];
+  if (key.startsWith('fm2.')) return FM2_DEF()[key.slice(4)];
+  const B = SQF.ANALOG_BASE || {}; return key in B ? B[key] : PD[key] ? PD[key].def : undefined;
+}
+function wiaDiffers(snd, key) {
+  if (key.startsWith('wt.') && snd.engine !== 'wt') return false;
+  if (key.startsWith('fm2.') && snd.engine !== 'fm2') return false;
+  const v = sndGet(snd, key), b = wiaBase(key);
+  if (v === undefined || b === undefined) return false;
+  if (isNum(v) && isNum(b)) return Math.abs(v - b) > 1e-6 * Math.max(1, Math.abs(b));
+  return v !== b;
+}
+function wiaCounts(snd) {
+  const c = {osc: 0, filter: 0, env: 0, lfo: 0, mod: (snd.mods || []).length, fx: 0};
+  for (const k of Object.keys(PD)) { if (!wiaDiffers(snd, k)) continue; for (const t in WIA_TABS) if (WIA_TABS[t](k)) { c[t]++; break; } }
+  return c;
+}
+function wiaPaint() {
+  const sh = EL.synthSheet, snd = sndOf(R.selT); if (!snd || !sh.classList.contains('open')) return;
+  const onW = !!UI.wia;
+  for (const x of sh.querySelectorAll('.sh-body [data-key]')) { const d = onW && wiaDiffers(snd, x.dataset.key); if (x.classList.contains('diff') !== d) x.classList.toggle('diff', d); }
+  const cnt = onW ? wiaCounts(snd) : null;
+  for (const t of sh.querySelectorAll('.sh-tabs .tab')) {
+    let dn = t.querySelector('.dn'); const n = cnt ? cnt[t.dataset.tab] || 0 : 0;
+    if (n) { if (!dn) { dn = el('span', 'dn'); t.appendChild(dn); } const tx = '·' + n; if (dn.textContent !== tx) dn.textContent = tx; } else if (dn) dn.remove();
+  }
+  for (const b of ED.wiaB || []) { b.classList.toggle('on', onW); b.setAttribute('aria-pressed', String(onW)); }
+}
+function wiaTrick() {
+  const snd = sndOf(R.selT), rec = snd ? originRec(snd) : null, tip = rec ? rec.tip || (FACTORY_BY_ID.get(rec.id) || {}).tip : null;
+  lcdShow('Trick', tip || 'Eigener Sound ohne Trick-Text – die Punkte zeigen, was vom Grundklang abweicht');
+  if (ED.lcd) ED.lcd.classList.add('wia');
+}
+function wiaToggle() { UI.wia = !UI.wia; wiaPaint(); if (UI.wia) wiaTrick(); else lcdHint(); haptic('tick'); }
 function subTabsFor(tab, eng) {
   if (tab === 'osc') return eng === 'analog' ? [['o1', 'OSZ 1'], ['o2', 'OSZ 2'], ['o3', 'OSZ 3'], ['mix', 'MIX'], ['voice', 'STIMME']] : [['eng', eng === 'wt' ? 'WT' : 'FM'], ['voice', 'STIMME']];
   if (tab === 'filter') return [['ctl', 'REGLER'], ['xy', 'XY']];
@@ -10035,7 +10677,9 @@ function subTabsFor(tab, eng) {
 function buildSynthEd() {
   const sh = EL.synthSheet, i = R.selT, tr = S.tracks[i];
   if (tr.kind !== 'synth') return;
+  if (UI.modSrc && UI.modT !== i) exitModMode();          // mod mode belongs to one sound: a track switch ends it
   ED.refreshers = []; ED.graph = null; ED.xy = null; ED.env = null; ED.lfoPrev = null; ED.hdr = null;
+  ED.ctls = []; ED.msrc = null; ED.mrows = null; ED.mbn = null;
   sh.style.setProperty('--tc', `var(--t${i + 1})`);
   const eng = tr.sound.engine;
   if (!['osc', 'filter', 'env', 'lfo', 'mod', 'fx'].includes(ED.tab)) ED.tab = 'osc';
@@ -10067,6 +10711,11 @@ function buildSynthEd() {
   onTap(ab, () => toggleAB(i));
   onTap(save, () => openSavePop(save, i));
   const dice = el('button', 'hb big rb', '🎲'); dice.title = 'Zufall'; dice.setAttribute('aria-label', 'Zufall'); onTap(dice, () => soundEdit(i, 'Zufall', () => randomize(i)));
+  // [◎] „Was ist anders?“ (§5.2 P1): at the right end of the LCD line (header row 2 has no room for it on 375/320 px phones
+  // without cutting the sound name); a twin in row 2 where the LCD line is hidden (P ≤ 600 px tall)
+  const mkWia = cls => { const b = el('button', 'hb rb wia ' + cls, '◎'); b.title = 'Was ist anders? (abgucken)'; b.setAttribute('aria-label', 'Was ist anders? – zeigt, welche Regler diesen Sound machen'); onTap(b, () => wiaToggle()); return b; };
+  const wia = mkWia('wia2'), wiaL = mkWia('wial'); sh.querySelector('.sh-bar').appendChild(wiaL);
+  ED.wiaB = [wia, wiaL];
   const hear = el('button', 'hb rb hold', '▶<span class="ht"> Hören</span>'); hear.setAttribute('aria-label', 'Hören (halten)');
   const hearUp = () => { if (ED.hear) { ED.hear.release(nowT()); ED.hear = null; } hear.classList.remove('on'); };
   on(hear, 'pointerdown', e => {
@@ -10078,12 +10727,19 @@ function buildSynthEd() {
   });
   const hearEnd = e => { hearUp(); if (GEST.has(e.pointerId)) gestEnd(e.pointerId); };
   on(hear, 'pointerup', hearEnd); on(hear, 'pointercancel', hearEnd); on(hear, 'lostpointercapture', hearEnd);
-  F.r2.append(pre, ab, save, dice, hear);
+  F.r2.append(pre, ab, save, dice, wia, hear);
   sheetButtons(F.r1, F.r2, true);
   ED.hdr = {pName, ab, save};
   edHeadRefresh();
+  // the mod-mode banner (§9.3): over the LCD line (P), its place in the tab row (L), header row 2 where the LCD is hidden
+  const mbn = el('div', 'mbn', '<i class="dot"></i><span class="mbt"><b></b><small></small></span><button class="mbf rb">Fertig</button>');
+  mbn.hidden = true; mbn.setAttribute('role', 'status'); sh.appendChild(mbn);
+  onTap(mbn.querySelector('.mbf'), () => exitModMode());
+  ED.mbn = {el: mbn, t1: mbn.querySelector('b'), t2: mbn.querySelector('small'), css: ''};
   fillSynthTab(F.body, i);
   sh.classList.add('open');
+  if (UI.modSrc) requestAnimationFrame(() => modModeRefresh());
+  if (UI.wia) { wiaPaint(); wiaTrick(); }
 }
 // header row 2: sound name, „geändert“ dot, [A/B] (§11.3)
 function edHeadRefresh() {
@@ -10196,13 +10852,29 @@ function pageEnv(pg, i, pre) {
     set: o => { for (const k in o) setP(i, pre + (k === 'curve' ? 'Curve' : k.toUpperCase()), o[k]); },
     defaults: {a: PD[pre + 'A'].def, d: PD[pre + 'D'].def, s: PD[pre + 'S'].def, r: PD[pre + 'R'].def, curve: .5},
     haptic: k => haptic(k), precision: adx => ctlPrecision(adx), show: (l, v, x) => lcdShow(l, v, x), guard: n => guardTouch(n),
-    gest: {begin: (id, abort) => gestBegin(id, abort), end: id => gestEnd(id)}, undo: soundUndo(i)});
+    gest: {begin: (id, abort) => gestBegin(id, abort), end: id => gestEnd(id)}, undo: soundUndo(i),
+    onLongPress: (lane, nm) => envLanePicker(i, pre, lane, nm)});
   ED.env = ed;
   const forms = makeSeg(ENV_FORMS.map(([id, l]) => [id, l]), () => envFormOf(P(), pre), id => applyEnvForm(i, pre, id), 'forms', {lcd: false});
   const ks = keys.map(k => sKnob(k, {label: k.endsWith('Curve') ? 'Kurve' : k.slice(1)}));
   ED.refreshers.push(k => { if (!k || keys.includes(k)) { ed.refresh(); ks.forEach(x => x.update()); forms.update(); } });
   const r1 = el('div', 'pgrow segs rest'); r1.append(lgrp('Form', forms));
   pg.append(r1, ed.el, kRow(ks, 'k5'));
+}
+// §5.3 point 3 (P1): a long-press on an envelope lane opens the picker for that time parameter; v2 has no destination for
+// envelope times (§18), so it says so and offers the default value
+function envLanePicker(i, pre, lane, nm) {
+  const key = pre + lane.toUpperCase(), d = PD[key]; if (!d || !ED.env) return;
+  const before = soundSnapshot(i);
+  haptic('pop');
+  pickerOpen(ED.env.el, {gesture: false, defTxt: fmtVal(d.fmt, d.def), chips: null, hint: nm + ' ist nicht modulierbar',
+    choose: act => {
+      if (act !== 'reset') return;
+      const v = sndGet(S.tracks[i].sound, key); if (Math.abs(toNorm(d, v) - toNorm(d, d.def)) < 1e-9) return;
+      setP(i, key, d.def); commitSound(i, before, nm + ' zurückgesetzt');
+      toast(nm + ' zurückgesetzt', {label: 'Rückgängig', fn: () => undo()});
+      if (ED.env) ED.env.refresh(true);
+    }});
 }
 function envFormOf(p, pre) {
   const v = [p[pre + 'A'], p[pre + 'D'], p[pre + 'S'], p[pre + 'R'], p[pre + 'Curve']];
@@ -10240,7 +10912,7 @@ function pageLfo(pg, i, n) {
   const chipsUpd = () => {
     const ms = S.tracks[i].sound.mods.filter(m => m.src === 'lfo' + n);
     const h = ms.map(m => `<button class="rchip rb${nativeRoute(m) ? '' : ' wk'}" data-d="${m.dst}">→ ${esc(MDST[m.dst] ? MDST[m.dst].l : m.dst)} ${fmtVal('bip', toKnobAmt(m.dst, m.amt))}</button>`).join('')
-      || '<span class="small">Ziele im Tab MOD</span>';   // WP3 hint (§5.2); WP5: „Regler gedrückt halten → LFO wählen“
+      || '<span class="small">Regler gedrückt halten → LFO wählen</span>';   // §5.2 (WP5)
     if (chips._h !== h) { chips._h = h; chips.innerHTML = h; }
   };
   chipsUpd();
@@ -10520,22 +11192,33 @@ function toggleAB(i) {
   safeRebuild(buildSynthEd);
 }
 
-/* ---------- MOD tab (§9.3, WP3 basic): matrix list, bipolar slider, ✕, [+ Modulation], empty state, „nur mit Worklet“ ---------- */
+/* ---------- MOD tab (§9.3): source strip with live meters (tap = mod mode, source-first), matrix list with live ranges,
+   bipolar slider, ✕, [+ Modulation], empty state, „nur mit Worklet“ where the track plays natively ---------- */
 function pageMod(pg, i) {
   const snd = () => S.tracks[i].sound;
+  const strip = el('div', 'msrcs'); ED.msrc = [];
+  for (const s of PICK_MAIN.concat(PICK_MORE)) {
+    const c = el('button', 'schip rb' + (UI.modSrc === s ? ' on' : ''), `<span class="sl">${esc(MSRC[s].l)}</span><span class="ss">${esc(MSRC_S[s])}</span><span class="mt"><b></b></span>`);
+    c.dataset.src = s; c.style.setProperty('--c', MSRC[s].c); c._b = c.querySelector('b'); c._v = 0;
+    c.setAttribute('aria-label', MSRC[s].l + ': Quelle wählen, dann Regler ziehen');
+    strip.appendChild(c); ED.msrc.push(c);
+  }
+  // the same chip again = Fertig (§9.3 exits)
+  onTap(strip, c => { const s = c.dataset.src; if (UI.modSrc === s) exitModMode(); else enterModMode(s, null); }, '.schip');
   const head = el('div', 'pgrow modhead rest');
-  const add = el('button', 'madd rb', '+ Modulation'); add.setAttribute('aria-label', 'Modulation hinzufügen');
+  const add = el('button', 'madd rb', '<span class="sl">+ Modulation</span><span class="ss">+ Mod.</span>'); add.setAttribute('aria-label', 'Modulation hinzufügen');
   const cnt = el('span', 'small mcnt');
   head.append(add, cnt);
+  const top = el('div', 'mtop'); top.append(strip, head);
   const list = el('div', 'mxlist');
-  pg.append(head, list);
+  pg.append(top, list);
   onTap(add, () => openModAdd(add, i));
   const build = () => {
-    list.innerHTML = '';
+    list.innerHTML = ''; ED.mrows = [];
     const ms = snd().mods;
     cnt.textContent = ms.length ? ms.length + ' / 8' : '';
     add.disabled = ms.length >= 8;
-    if (!ms.length) { list.appendChild(el('div', 'mempty', 'Halte einen Regler gedrückt und wähle eine Quelle – oder tippe oben auf eine Quelle und ziehe dann Regler.<br><span class="small">In dieser Version: [+ Modulation] wählt Quelle und Ziel, der Schieber stellt die Tiefe.</span>')); return; }
+    if (!ms.length) { list.appendChild(el('div', 'mempty', 'Halte einen Regler gedrückt und wähle eine Quelle – oder tippe oben auf eine Quelle und ziehe dann Regler.')); return; }
     ms.forEach(m => list.appendChild(modRow(i, m)));
     if (ED.modHl) { const r = list.querySelector(`[data-key="${ED.modHl}"]`); ED.modHl = null; if (r) { r.classList.add('hl'); try { r.scrollIntoView({block: 'nearest'}); } catch (e) {} setTimeout(() => r.classList.remove('hl'), 1600); } }
   };
@@ -10544,9 +11227,9 @@ function pageMod(pg, i) {
   ED.refreshers.push(k => { if (k === 'mods') safeRebuild(build); else for (const r of list.querySelectorAll('.modrow')) if (r._draw) r._draw(); });
 }
 function modRangeText(i, m) {
-  const P = S.tracks[i].sound.p, src = MSRC[m.src], k = toKnobAmt(m.dst, m.amt), dk = MDST_PD[m.dst];
+  const snd = S.tracks[i].sound, src = MSRC[m.src], k = toKnobAmt(m.dst, m.amt), dk = MDST_PD[m.dst];
   if (dk && PD[dk] && !PD[dk].vals) {
-    const d = PD[dk], n = toNorm(d, P[dk]), lo = src.bip ? n - Math.abs(k) : n + Math.min(0, k), hi = src.bip ? n + Math.abs(k) : n + Math.max(0, k);
+    const d = PD[dk], n = toNorm(d, sndGet(snd, dk)), lo = src.bip ? n - Math.abs(k) : n + Math.min(0, k), hi = src.bip ? n + Math.abs(k) : n + Math.max(0, k);
     return fmtVal(d.fmt, fromNorm(d, clamp(lo, 0, 1))) + ' … ' + fmtVal(d.fmt, fromNorm(d, clamp(hi, 0, 1)));
   }
   if (m.dst === 'pitch' || m.dst === 'o2pitch') { const st = m.amt * 24; return (src.bip ? '±' : st >= 0 ? '+' : MINUS) + fmtDec(Math.abs(st), Math.abs(st) < 1 ? 2 : 1) + ' HT'; }
@@ -10556,7 +11239,7 @@ function modRangeText(i, m) {
 }
 function modRow(i, m) {
   const src = MSRC[m.src], dst = MDST[m.dst] || {l: m.dst}, K = MOD_K[m.dst] || 1, lim = Math.min(1, 1 / K);
-  const native = nativeRoute(m);
+  const native = routeActive(i, m);                       // hatched only where the track plays natively (§9.5)
   const row = el('div', 'modrow' + (native ? '' : ' wk'));
   row.dataset.key = m.src + ':' + m.dst;
   row.style.setProperty('--c', src.c);
@@ -10572,6 +11255,7 @@ function modRow(i, m) {
     const r = modRangeText(i, m); if (sm.textContent !== r) sm.textContent = r;
   };
   draw(); row._draw = draw;
+  if (ED.mrows) ED.mrows.push({bar: row.querySelector('.ms i'), m, x: ''});   // live source meter (modFrame)
   guardTouch(sl);
   let sg = null;
   on(sl, 'pointerdown', e => {
@@ -10583,7 +11267,8 @@ function modRow(i, m) {
   });
   on(sl, 'pointermove', e => {
     if (!sg || e.pointerId !== sg.id) return;
-    if (!sg.moved) { if (Math.abs(e.clientX - sg.x0) < CTL_SLOP) return; sg.moved = true; sg.xa = e.clientX; const w = DETENT_PX / (sg.w / 2); sg.map = ctlTravelN(-lim, lim, [0], w); sg.t = sg.map.toT(toKnobAmt(m.dst, m.amt)); return; }
+    // exactly CTL_SLOP px are the dead zone (like the knobs); the rest of the first move already counts
+    if (!sg.moved) { const dx = e.clientX - sg.x0; if (Math.abs(dx) < CTL_SLOP) return; sg.moved = true; sg.xa = sg.x0 + Math.sign(dx) * CTL_SLOP; const w = DETENT_PX / (sg.w / 2); sg.map = ctlTravelN(-lim, lim, [0], w); sg.t = sg.map.toT(toKnobAmt(m.dst, m.amt)); }
     // relative drag: half the slider width = the full swing; never jumps to the finger; sticky zero
     const f = ctlPrecision(0);
     sg.t = clamp(sg.t + (e.clientX - sg.xa) / (sg.w / 2) * f, sg.map.lo, sg.map.hi); sg.xa = e.clientX;
@@ -10622,9 +11307,10 @@ function openModAdd(anchor, i) {
       pop.innerHTML = '<h4>Quelle</h4><div class="plist msrc">' + MOD_SRC.map(([id, l, c]) => `<button class="rb" data-s="${id}" style="--c:${c}"><i></i>${esc(l)}</button>`).join('') + '</div>';
     } else {
       const have = new Set(S.tracks[i].sound.mods.filter(m => m.src === srcSel).map(m => m.dst));
-      pop.innerHTML = `<h4>${esc(MSRC[srcSel].l)} → Ziel</h4>` + MOD_DST.filter(([g]) => g !== 'FM' || eng === 'fm6').map(([g, l]) =>
+      const lfo = srcSel === 'lfo1' || srcSel === 'lfo2';
+      pop.innerHTML = `<h4>${esc(MSRC[srcSel].l)} → Ziel</h4>` + MOD_DST.filter(([g]) => (g !== 'FM' || eng === 'fm6') && (g !== 'FX' || lfo)).map(([g, l]) =>
         `<div class="mgrp"><span class="lbl">${g}</span><div class="plist mdst">` + l.map(([id, n]) => {
-          const nat = nativeRoute({src: srcSel, dst: id});
+          const nat = routeActive(i, {src: srcSel, dst: id});
           return `<button class="rb${have.has(id) ? ' on' : ''}${nat ? '' : ' wk'}" data-d="${id}">${esc(n)}${nat ? '' : '<small>Worklet</small>'}</button>`; }).join('') + '</div></div>').join('');
     }
   };
@@ -10643,7 +11329,7 @@ function openModAdd(anchor, i) {
       commitSound(i, before, 'Modulation ' + MSRC[srcSel].l + ' → ' + MDST[b.dataset.d].l);
       ED.modHl = srcSel + ':' + b.dataset.d;
       safeRebuild(() => { if (ED.mxBuild) ED.mxBuild(); });
-      if (!nativeRoute({src: srcSel, dst: b.dataset.d})) toast('Gespeichert – hörbar mit dem Worklet (kommt bald)');
+      if (!routeActive(i, {src: srcSel, dst: b.dataset.d})) toast('Gespeichert – hörbar nur mit dem Studio-Klang (Worklet)');
     }
   }, 'button');
 }
@@ -10724,7 +11410,7 @@ function pvChain(t, snd) {
   const c = AU.ctx, A = AU.tracks[t]; if (!c || !A) return null;
   const N = Object.assign(buildChain(c), {sound: snd, t, gone: false, E: null,
     lfoPitch: c.createGain(), lfoCut: c.createGain(), nl: {lfo: [null, null], key: ['', ''], routes: [], tremBase: 1}});
-  if (isWkEngine(snd.engine) && wkReady()) N.E = newEngine(N.trackIn, snd);    // the worklet runs the sound's routes itself
+  if (isWkEngine(snd.engine) && wkReady()) { N.E = newEngine(N.trackIn, snd); syncLfoSet(N, {p: snd.p, mods: snd.mods.filter(fxRoute)}, 97); }   // the worklet runs the voice routes itself
   else syncLfoSet(N, snd, 97);
   applyChainFx(N, fxOfSound(snd), true);
   return N;
@@ -10935,7 +11621,6 @@ function onSoundsPicked(file) {
 }
 
 // drum track effects (v2 model until WP6): the knobs that a modulation source may reach later (WP1 picker hint)
-const SYN_MOD = new Set(['fx.drive', 'fx.vol', 'fx.pan']);
 /* ---------- drum editor ---------- */
 function setDrumParam(voice, key, value) {
   const vd = typeof voice === 'number' ? (DRUM_BY_GM[voice] || DRUM_VOICES[voice]) : DRUM_BY_ID[voice];
@@ -10975,7 +11660,8 @@ function drumVoiceChips(onPick) {
 }
 function buildDrumEd() {
   const sh = EL.drumSheet, tr = S.tracks[4];
-  ED.refreshers = []; ED.stepEls = []; ED.ovEls = []; ED.lastStep = -2; ED.step = null;
+  if (UI.modSrc) exitModMode();
+  ED.refreshers = []; ED.stepEls = []; ED.ovEls = []; ED.lastStep = -2; ED.step = null; ED.ctls = []; ED.msrc = null; ED.mrows = null; ED.mbn = null;
   sh.style.setProperty('--tc', 'var(--t5)');
   if (!DFX_SUBS.some(x => x[0] === ED.dFx)) ED.dFx = 'spur';
   const F = sheetFrame(sh, tr.name, [['sound', 'SOUND'], ['steps', 'STEPS'], ['fx', 'FX']], ED.dTab, id => { ED.dTab = id; safeRebuild(buildDrumEd); },
@@ -11030,7 +11716,7 @@ function buildDrumEd() {
   else if (ED.dFx === 'master') pageFxMaster(pg);
   else {
     // SPUR of the v2 drum block (until WP6): Drive, Hall, Echo, Lautstärke, Panorama (sends post-fader, §8.1)
-    const ks = ['fx.drive', 'fx.reverb', 'fx.delay', 'fx.vol', 'fx.pan'].map(p => SYN_DESC[p]).map(d => makeCtl(d, () => S.tracks[4].fx[d.p.slice(3)], v => setDrumFx(d.p, v), {undo: soundUndo(4), mod: SYN_MOD.has(d.p)}));
+    const ks = ['fx.drive', 'fx.reverb', 'fx.delay', 'fx.vol', 'fx.pan'].map(p => SYN_DESC[p]).map(d => makeCtl(d, () => S.tracks[4].fx[d.p.slice(3)], v => setDrumFx(d.p, v), {undo: soundUndo(4)}));      // drum FX knobs: not modulatable (P2)
     ks.forEach(k => pg.appendChild(k));
     ED.refreshers.push(() => ks.forEach(x => x.update()));
   }
@@ -11194,9 +11880,12 @@ function openRoll(t, s) {
   setSheetOpen(true);
   UI.dirty.all = true;
 }
-const ROLLP = {grid: '1/16', fold: false, kb: false};               // editor preferences that survive closing (the tool does not)
+const ROLLP = {grid: '1/16', fold: false, kb: false, view: 'roll'};   // editor preferences that survive closing (the tool does not)
 function buildRoll() {
   const {t, s} = ED.rollAt, tr = S.tracks[t], sh = EL.rollSheet;
+  // WP5: LAUF (§3.10) when chosen and the clip is one note per step; otherwise the piano roll
+  if (ROLLP.view === 'lauf') { const chk = tr.kind === 'synth' ? laufCheck(tr.clips[s]) : {ok: false}; if (chk.ok) { LAUF.grid = chk.grid; return buildLauf(); } ROLLP.view = 'roll'; }
+  ED.lauf = null; ED.laufBtn = null;
   if (ED.roll) { try { ED.roll.destroy(); } catch (e) {} ED.roll = null; }
   sh.innerHTML = ''; sh.style.setProperty('--tc', `var(--t${t + 1})`);
   const land = window.matchMedia('(orientation: landscape)').matches; ED.rollLand = land;
@@ -11212,6 +11901,8 @@ function buildRoll() {
   sh.classList.add('open');                                              // laid out before the roll measures itself
   const col = getComputedStyle(document.documentElement).getPropertyValue('--t' + (t + 1)).trim();
   const extra = [];
+  // [LAUF] (§3.10): the step view; disabled (with the hint) while the clip has chords
+  if (tr.kind === 'synth') extra.push({id: 'lauf', label: 'LAUF', title: 'LAUF: Schrittansicht für Basslauf und Sequenz', fn: () => safeRebuild(() => setRollView('lauf'))});
   if (land) extra.push({id: 'kb', label: '⌨', title: 'Tastatur zeigen / verbergen', fn: b => { ROLLP.kb = !ROLLP.kb; rollKbApply(); b.classList.toggle('on', ROLLP.kb); }});
   ED.roll = PianoRoll.create(body, rollModel(t, s), {color: col || '#4cc9f0', follow: true, grid: ROLLP.grid, fold: ROLLP.fold, rowH: 22, toolbarHost: host,
     extraTools: extra, center: 12 * ((tr.kbOct || 4) + 1) + 7,
@@ -11223,6 +11914,9 @@ function buildRoll() {
     onTick: () => haptic('tick')});
   head.appendChild(x);
   if (land && ED.roll.el.bar && ROLLP.kb) { const kbB = [...ED.roll.el.bar.children].find(b => b.textContent === '⌨'); if (kbB) kbB.classList.add('on'); }
+  ED.laufBtn = ED.roll.el.bar ? [...ED.roll.el.bar.children].find(b => b.textContent === 'LAUF') || null : null;
+  // the view switch goes first in the toolbar (in P it scrolls sideways: the tools behind it stay where the thumb expects them)
+  if (ED.laufBtn) { const bar = ED.roll.el.bar; bar.insertBefore(ED.laufBtn, bar.firstChild); bar.insertBefore(el('span', 'sep'), ED.laufBtn.nextSibling); ED.laufBtn.classList.add('lgo'); }
   rollKbApply();
   rollHeadUpdate(); renderEdChip();
   sh.classList.add('open');
@@ -11237,6 +11931,7 @@ function rollKbApply() {
 function rollHeadUpdate() {
   if (!ED.rollInfo || !ED.rollAt) return;
   const c = S.tracks[ED.rollAt.t].clips[ED.rollAt.s]; if (!c) return;
+  if (ED.laufBtn) { const ok = laufCheck(c).ok; ED.laufBtn.classList.toggle('dis', !ok); ED.laufBtn.setAttribute('aria-disabled', String(!ok)); ED.laufBtn.title = ok ? 'LAUF: Schrittansicht für Basslauf und Sequenz' : LAUF_MSG; }
   const txt = (S.tracks[ED.rollAt.t].kind === 'synth' ? keyName(c.key) + ' · ' : '') + c.len + (c.len === 1 ? ' Takt' : ' Takte');
   if (ED.rollInfo._t !== txt) { ED.rollInfo._t = txt; ED.rollInfo.textContent = txt; }
 }
@@ -11250,6 +11945,315 @@ function rollFrame(bAud) {
   if (!c) { closeRoll(); return; }
   const vs = R.playing ? visualSlots(t, bAud) : null;
   ED.roll.playhead(c && vs && vs.playing === s && bAud >= 0 ? ((((bAud - audCstart(t, bAud)) % (c.len * 4)) + c.len * 4) % (c.len * 4)) : -1);
+}
+
+/* ---------- LAUF (§3.10, WP5): a step view for bass lines and sequences inside the clip editor, on the WP2 StepEditor.
+   One note per step, pitch by scale step of the clip key (a wrong note is impossible; chromatic notes only in the roll),
+   lanes TON · OKT · VEL · AKZENT · BINDUNG. No new data: steps are ordinary notes {t, d, n, v} on the grid; a tie lengthens
+   the previous note to overlap this one by 1/64 beat (LEGATO glides like a 303 slide, POLY = a plain tie). ---------- */
+const LAUFG = {'1/8': .5, '1/16': .25, '1/16T': 1 / 6, '1/32': .125};
+const LAUF_PER = {'1/8': 8, '1/16': 16, '1/16T': 12, '1/32': 16};          // steps per page: one bar, half a bar for 1/16T and 1/32
+const LAUF = {grid: '1/16', page: 0, lane: 'ton', sel: -1};                   // view state (survives closing, like ROLLP)
+const LAUF_V = .8, LAUF_TIE = 1 / 64, LS_LO = -7, LS_HI = 13;                // pitch window: three octaves of scale steps (OKT −1…+1)
+const LAUF_LBL = {tap: 'Schritt', paint: 'Schritte malen', value: 'Schritt-Wert', draw: 'Spur zeichnen'};
+const LAUF_MSG = 'Clip ist mehrstimmig – bitte die Rolle benutzen';
+// the clip key and the home octave: the key's root in the track's keyboard octave (kbOct)
+function laufScale(t, c) {
+  const k = (c && c.key) || S.key, SC = Harmony.SCALES[k.scale] || Harmony.SCALES.ionian;
+  return {root: k.root, S: SC, base: 12 * ((S.tracks[t].kbOct || 4) + 1) + k.root};
+}
+function lsPos(sc, n) {
+  const m = n - sc.base, oct = Math.floor(m / 12), r = m - 12 * oct;
+  let deg = 0; for (let j = 0; j < 7; j++) if (sc.S[j] <= r) deg = j;
+  return {oct, deg, chroma: r - sc.S[deg], idx: 7 * oct + deg};
+}
+function lsNote(sc, idx) { const oct = Math.floor(idx / 7), deg = idx - 7 * oct; return sc.base + 12 * oct + sc.S[deg]; }
+// du scale steps from n (a chromatic note counts as lying between its neighbours), inside the window
+function lsStep(sc, n, du) { const p = lsPos(sc, n); let idx = p.idx + du; if (p.chroma && du < 0) idx += 1; return lsNote(sc, clamp(idx, LS_LO, LS_HI)); }
+// in the key: the nearest scale tone below (as „Tonart sperren“)
+function lsSnap(sc, n) { const p = lsPos(sc, n); return n - p.chroma; }
+// the view needs one note start per step: chords (or notes closer than a step of every LAUF grid) -> the roll (§3.10 Daten)
+function laufCheck(c) {
+  if (!c) return {ok: false};
+  const ns = c.notes.slice().sort((a, b) => a.t - b.t);
+  for (let j = 1; j < ns.length; j++) if (ns[j].t - ns[j - 1].t < LAUF_TIE - 1e-9) return {ok: false, why: 'chord'};
+  const L = c.len * 4;
+  for (const gk of [LAUF.grid, '1/16', '1/32', '1/16T', '1/8']) {
+    const g = LAUFG[gk], tot = Math.max(1, Math.round(L / g)), seen = new Set(); let ok = true;
+    for (const n of ns) { const k = ((Math.round(n.t / g + 1e-9) % tot) + tot) % tot; if (seen.has(k)) { ok = false; break; } seen.add(k); }
+    if (ok) return {ok: true, grid: gk};
+  }
+  return {ok: false, why: 'dense'};
+}
+const laufTot = c => Math.max(1, Math.round(c.len * 4 / LAUFG[LAUF.grid]));
+const laufIdx = (c, n) => { const T = laufTot(c); return ((Math.round(n.t / LAUFG[LAUF.grid] + 1e-9) % T) + T) % T; };
+const laufFind = (c, k) => c.notes.find(n => laufIdx(c, n) === k) || null;
+function laufPrev(c, n) { let p = null; for (const x of c.notes) if (x !== n && x.t < n.t - 1e-6 && (!p || x.t > p.t)) p = x; return p; }
+function laufTied(c, n) { const p = c && n ? laufPrev(c, n) : null; return !!p && p.t + p.d > n.t + 1e-6; }
+// BINDUNG: the previous note overlaps this one by 1/64 beat; off = the previous note gets the normal step length back
+function laufSetTie(c, n, onT) {
+  const p = laufPrev(c, n); if (!p) return false;
+  const g = LAUFG[LAUF.grid];
+  if (onT) p.d = +(n.t - p.t + LAUF_TIE).toFixed(6);
+  else if (p.t + p.d > n.t + 1e-6) p.d = +Math.max(1 / 32, Math.min(g * .98, n.t - p.t - g * .02)).toFixed(6);
+  return true;
+}
+function laufNormVel(c) { const vs = c.notes.map(n => n.v).filter(v => v < .995).sort((a, b) => a - b); return vs.length ? vs[vs.length >> 1] : LAUF_V; }
+// a new step: the pitch of the nearest set step to its left, else the clip key's root in the track's kbOct (§3.10)
+function laufNewPitch(t, c, T) { let p = null; for (const x of c.notes) if (x.t < T - 1e-9 && (!p || x.t > p.t)) p = x; return p ? p.n : laufScale(t, c).base; }
+function laufHear(t, n, v) { const vo = auditionStart(t, n, v == null ? LAUF_V : v); if (vo && AU.ctx) vo.release(AU.ctx.currentTime + .18); }
+function laufModel(t, s) {
+  const clip = () => S.tracks[t].clips[s], g = () => LAUFG[LAUF.grid], per = LAUF_PER[LAUF.grid];
+  const kOf = i => LAUF.page * per + i;
+  let snap = null;
+  return {
+    steps: per,
+    get(i) { const c = clip(); return c ? laufFind(c, kOf(i)) : null; },
+    set(i, n) {
+      const c = clip(); if (!c) return;
+      const k = kOf(i), T = +(k * g()).toFixed(6), cur = laufFind(c, k);
+      if (!n) { if (cur) { if (laufTied(c, cur)) laufSetTie(c, cur, false); c.notes.splice(c.notes.indexOf(cur), 1); } return; }
+      if (cur) { if (cur !== n) Object.assign(cur, n); if (Math.abs(cur.t - T) > 1e-9) { cur.t = T; delete cur.o; } return; }   // edited = snapped to its step
+      if (k >= laufTot(c)) return;
+      c.notes.push({t: T, d: +(g() * .98).toFixed(6), n: n.n != null ? n.n : laufNewPitch(t, c, T), v: n.v == null ? LAUF_V : n.v});
+      c.notes.sort((a, b) => a.t - b.t);
+    },
+    begin() { snap = cleanClip(clip()); },
+    commit(label) { pushUndo(t, s, snap, LAUF_LBL[label] || 'Lauf'); snap = null; afterClipEdit(t, s); },
+    revert() { const c = clip(); if (snap && c) { const d = deep(snap); Object.keys(c).forEach(x => { if (!(x in d)) delete c[x]; }); Object.assign(c, d); afterClipEdit(t, s, true); } snap = null; },
+    audition(i, v) { const n = this.get(i); if (n) laufHear(t, n.n, v || n.v); },
+  };
+}
+function laufLanes(t, s) {
+  const clip = () => S.tracks[t].clips[s], sc = () => laufScale(t, clip());
+  return {
+    // TON strip: the scale degree in its octave, bar height (deg + 1) / 7 (the root still shows); a touch picks the degree
+    ton: {l: 'TON', pxPerUnit: 14, get: n => (lsPos(sc(), n.n).deg + 1) / 7,
+      set: (n, x) => { const S_ = sc(), p = lsPos(S_, n.n); n.n = lsNote(S_, 7 * clamp(p.oct, -1, 1) + clamp(Math.ceil(clamp(x, 0, 1) * 7) - 1, 0, 6)); },
+      setUnits: (n, du, n0) => { n.n = lsStep(sc(), n0.n, du); }, fmt: () => '', fmtN: n => noteLabel(n.n)},
+    okt: {l: 'OKT', pxPerUnit: 28, bipolar: true, get: n => (clamp(lsPos(sc(), n.n).oct, -1, 1) + 1) / 2,
+      set: (n, x) => { const S_ = sc(), p = lsPos(S_, n.n); n.n = lsNote(S_, 7 * (Math.round(clamp(x, 0, 1) * 2) - 1) + p.deg) + p.chroma; },
+      setUnits: (n, du, n0) => { const S_ = sc(), p = lsPos(S_, n0.n); n.n = lsNote(S_, 7 * clamp(clamp(p.oct, -1, 1) + du, -1, 1) + p.deg) + p.chroma; },
+      fmt: x => { const o = Math.round(x * 2) - 1; return o > 0 ? '+1 Okt' : o < 0 ? MINUS + '1 Okt' : '0 Okt'; },
+      fmtN: n => { const o = clamp(lsPos(sc(), n.n).oct, -1, 1); return (o > 0 ? '+1' : o < 0 ? MINUS + '1' : '0') + ' Okt · ' + noteLabel(n.n); }},
+    vel: {l: 'VEL', get: n => n.v, set: (n, x) => { n.v = clamp(Math.round(x * 100) / 100, .05, 1); }, fmt: x => String(Math.round(x * 127))},
+    acc: {l: 'AKZENT', toggle: true, tapToggle: true, get: n => (n.v >= .995 ? 1 : 0),
+      set: (n, x) => { if (x >= .5) n.v = 1; else if (n.v >= .995) n.v = laufNormVel(clip()); }, fmt: x => (x >= .5 ? 'Akzent' : 'aus')},
+    tie: {l: 'BINDUNG', toggle: true, tapToggle: true, get: n => (laufTied(clip(), n) ? 1 : 0),
+      set: (n, x) => { laufSetTie(clip(), n, x >= .5); }, fmt: x => (x >= .5 ? 'gebunden' : 'aus')},
+  };
+}
+// switch the clip editor between ROLLE (piano roll) and LAUF; a polyphonic clip stays in the roll with the hint
+function setRollView(v) {
+  if (!ED.rollAt) return false;
+  const {t, s} = ED.rollAt, c = S.tracks[t].clips[s];
+  if (v === 'lauf') {
+    const chk = S.tracks[t].kind === 'synth' ? laufCheck(c) : {ok: false};
+    if (!chk.ok) { toast(LAUF_MSG); return false; }
+    LAUF.grid = chk.grid; LAUF.sel = -1; LAUF.page = 0;
+  }
+  ROLLP.view = v === 'lauf' ? 'lauf' : 'roll';
+  STEPQ.notes.length = 0;
+  buildRoll();
+  return true;
+}
+function buildLauf() {
+  const {t, s} = ED.rollAt, tr = S.tracks[t], sh = EL.rollSheet, c = tr.clips[s];
+  if (ED.roll) { try { ED.roll.destroy(); } catch (e) {} ED.roll = null; }
+  ED.lauf = null; ED.laufBtn = null;
+  sh.innerHTML = ''; sh.style.setProperty('--tc', `var(--t${t + 1})`);
+  const land = isLand(); ED.rollLand = land;
+  const per = LAUF_PER[LAUF.grid], pages = Math.max(1, Math.ceil(laufTot(c) / per));
+  if (LAUF.page >= pages) LAUF.page = 0;
+  const head = el('div', 'rhead'), ht = el('div', 'rht');
+  ht.appendChild(el('div', 'sh-title', `<span class="dot"></span><b>${esc(tr.name)} · Szene ${s + 1}</b>`));
+  const info = el('span', 'rinfo'); ht.appendChild(info); ED.rollInfo = info;
+  const chip = el('span', 'trchip'); chip.hidden = true; ht.appendChild(chip); ED.trChip = chip;
+  head.appendChild(ht); ED.rollHT = ht;
+  const x = el('button', 'sh-x rb', '✕'); x.setAttribute('aria-label', 'Editor schließen'); onTap(x, closeRoll);
+  const body = el('div', 'rbody lauf');
+  sh.append(head, body);
+  // toolbar: [ROLLE|LAUF] [1/16 ▾] [Takt pager] │ [↶][↷] (L: in the header row, + [⌨])
+  const bar = el('div', 'pr-bar prt lbar');
+  const view = makeSeg([['roll', 'ROLLE'], ['lauf', 'LAUF']], () => 'lauf', v => { if (v === 'roll') safeRebuild(() => setRollView('roll')); }, 'lview', {lcd: false});
+  const gb = el('button', 'lgrid rb', `${LAUF.grid} ▾`); gb.setAttribute('aria-label', 'Schrittlänge'); onTap(gb, () => laufGridPop(gb));
+  const ub = el('button', 'rb', '↶'), rb2 = el('button', 'rb', '↷');
+  ub.setAttribute('aria-label', 'Rückgängig'); rb2.setAttribute('aria-label', 'Wiederholen');
+  onTap(ub, () => { undo(); laufPaint(); }); onTap(rb2, () => { redo(); laufPaint(); });
+  bar.append(view, gb, laufPager(pages, per), el('span', 'sep'), ub, rb2);
+  if (land) {
+    const kb = el('button', 'rb' + (ROLLP.kb ? ' on' : ''), '⌨'); kb.setAttribute('aria-label', 'Tastatur zeigen / verbergen');
+    onTap(kb, () => { ROLLP.kb = !ROLLP.kb; rollKbApply(); kb.classList.toggle('on', ROLLP.kb); });
+    bar.appendChild(kb);
+  }
+  if (land) head.appendChild(bar); else body.appendChild(bar);
+  head.appendChild(x);
+  // steps (P 8×2, L 16×1; 12 steps of 1/16T: P 6×2), lane tabs, lane strip
+  const se = el('div', 'se lse'), cols = land ? per : per === 12 ? 6 : 8;
+  se.style.setProperty('--lcols', cols); se.style.setProperty('--lsteps', per); se.style.setProperty('--pc', `var(--t${t + 1})`);
+  body.appendChild(se);
+  let rg = null;                                               // pitch range of the clip, per paint (heights = pitch)
+  const E = StepEditor.create(se, laufModel(t, s), {defVel: LAUF_V, laneDefs: laufLanes(t, s), lanes: ['ton', 'okt', 'vel', 'acc', 'tie'], lane: LAUF.lane,
+    tap: (node, fn, sel) => onTap(node, fn, sel), onLane: k => { LAUF.lane = k; },
+    reg: {begin: (id, abort) => gestBegin(id, abort), end: id => { if (GEST.has(id)) gestEnd(id); }},
+    onDown: (i, strip) => { if (!strip) { LAUF.sel = LAUF.page * per + i; E.setSel(i); } },
+    onTap: () => haptic('tick'),
+    onValue: (i, n, lane) => { haptic('tick'); if (lane === 'ton' || lane === 'okt') laufHear(t, n.n, n.v); },
+    decorate: (cell, n, i) => {
+      const cl = S.tracks[t].clips[s]; if (!cl) return;
+      const sc = laufScale(t, cl);
+      if (i === 0) { let lo = 0, hi = 7; for (const nn of cl.notes) { const p = lsPos(sc, nn.n).idx; if (p < lo) lo = p; if (p > hi) hi = p; } rg = [lo, hi]; }
+      let lb = cell._lb; if (!lb) { lb = cell._lb = el('b', 'ln'); cell.appendChild(lb); }
+      const tied = !!(n && laufTied(cl, n)), p = n ? lsPos(sc, n.n) : null;
+      const txt = n ? (tied ? '⌒' : '') + noteLabel(n.n) : '–';
+      if (lb.textContent !== txt) lb.textContent = txt;
+      cell.classList.toggle('tie', tied); cell.classList.toggle('acc', !!(n && n.v >= .995)); cell.classList.toggle('chr', !!(p && p.chroma));
+      if (n && rg) { cell.style.setProperty('--v', (.22 + .78 * clamp((p.idx - rg[0]) / Math.max(1, rg[1] - rg[0]), 0, 1)).toFixed(3)); cell.style.setProperty('--o', (.4 + .6 * n.v).toFixed(2)); }
+      cell.classList.toggle('sel', LAUF.page * per + i === LAUF.sel);
+    }});
+  E.sel = LAUF.sel - LAUF.page * per;
+  // bottom row: [Skala: a-Moll ▾] [Zufall in Tonart] [Leeren]
+  const acts = el('div', 'pr-bar pra lacts');
+  const kbtn = el('button', 'lkey rb', ''); kbtn.setAttribute('aria-label', 'Skala (Tonart des Clips)'); onTap(kbtn, () => laufKeyPop(kbtn));
+  const rnd = el('button', 'rb', 'Zufall in Tonart'); onTap(rnd, () => laufRandom());
+  const clr = el('button', 'rb lclr', 'Leeren'); laufTwoStep(clr, 'Wirklich leeren?', () => laufClear());
+  acts.append(kbtn, rnd, clr);
+  body.appendChild(acts);
+  ED.lauf = {se: E, t, s, per, pages, tot: laufTot(c), kbtn, ph: -2};
+  laufPaint();
+  rollKbApply(); rollHeadUpdate(); renderEdChip();
+  sh.classList.add('open');
+}
+function laufPaint() {
+  const L = ED.lauf; if (!L || !ED.rollAt) return;
+  const c = S.tracks[L.t].clips[L.s]; if (!c) return;
+  if (laufTot(c) !== L.tot) { safeRebuild(() => { if (ED.lauf && ED.rollAt) buildRoll(); }); return; }   // length changed (undo, Takte ±)
+  if (!L.se.busy()) L.se.paint();
+  const kt = 'Skala: ' + keyName(c.key) + ' ▾'; if (L.kbtn.textContent !== kt) L.kbtn.textContent = kt;
+}
+// [Takt n]: a segment where it fits, otherwise ‹ k/n ›; half-bar pages (1/16T, 1/32) read „1.1“, „1.3“
+function laufPager(pages, per) {
+  const half = per * LAUFG[LAUF.grid] < 4 - 1e-9, lbl = k => (half ? (Math.floor(k / 2) + 1) + '.' + (k % 2 ? 3 : 1) : String(k + 1));
+  const go = v => { v = clamp(v | 0, 0, pages - 1); if (v === LAUF.page) return; LAUF.page = v; safeRebuild(buildRoll); };
+  const w = el('div', 'lpager');
+  if (pages <= 1) { w.appendChild(el('span', 'lpg1', 'Takt 1')); return w; }
+  const list = anchor => openPop(anchor, p => {
+    p.innerHTML = '<h4>Takt wählen</h4><div class="plist bars">' + Array.from({length: pages}, (_, k) => `<button class="rb${k === LAUF.page ? ' on' : ''}" data-k="${k}">${lbl(k)}</button>`).join('') + '</div>';
+    guardTouch(p); onTap(p, b => { closePop(); go(+b.dataset.k); }, 'button[data-k]');
+  }, {name: 'bars'});
+  // P: the toolbar holds [ROLLE|LAUF] [1/16] [1|2] [↶][↷] only up to two pages; more pages = one button „Takt k/n ▾“
+  if (!isLand() && pages > 2) {
+    const b = el('button', 'rb lpv', `Takt ${lbl(LAUF.page)}/${lbl(pages - 1)} ▾`); b.setAttribute('aria-label', 'Takt wählen');
+    onTap(b, () => list(b)); w.appendChild(b); return w;
+  }
+  if (pages <= 4) {
+    w.append(el('span', 'lbl', 'Takt'), makeSeg(Array.from({length: pages}, (_, k) => [k, lbl(k), 'Takt ' + lbl(k)]), () => LAUF.page, go, 'pages', {lcd: false}));
+    return w;
+  }
+  const prev = el('button', 'rb', '‹'), mid = el('button', 'rb lpv', `Takt ${lbl(LAUF.page)}`), next = el('button', 'rb', '›');
+  prev.setAttribute('aria-label', 'Voriger Takt'); next.setAttribute('aria-label', 'Nächster Takt');
+  prev.disabled = LAUF.page <= 0; next.disabled = LAUF.page >= pages - 1;
+  onTap(prev, () => go(LAUF.page - 1)); onTap(next, () => go(LAUF.page + 1));
+  onTap(mid, () => list(mid));
+  w.append(prev, mid, next);
+  return w;
+}
+function laufGridPop(anchor) {
+  openPop(anchor, p => {
+    p.innerHTML = '<h4>Schrittlänge</h4><div class="plist lgr">' + Object.keys(LAUFG).map(k => `<button class="rb${k === LAUF.grid ? ' on' : ''}" data-g="${k}">${k}</button>`).join('') + '</div>';
+    guardTouch(p);
+    onTap(p, b => {
+      closePop();
+      const gk = b.dataset.g; if (gk === LAUF.grid || !ED.rollAt) return;
+      const {t, s} = ED.rollAt, c = S.tracks[t].clips[s], old = LAUF.grid;
+      LAUF.grid = gk;
+      const seen = new Set();
+      for (const n of c.notes) { const k = laufIdx(c, n); if (seen.has(k)) { LAUF.grid = old; toast('Bei ' + gk + ' fielen Noten zusammen – feineres Raster wählen'); return; } seen.add(k); }
+      LAUF.sel = -1; LAUF.page = 0;
+      safeRebuild(buildRoll);
+    }, 'button[data-g]');
+  }, {name: 'lgrid'});
+}
+// [Skala ▾]: the clip key (= the scale of TON); a choice is the user's key (src 'user', one undo, §4.1)
+function laufKeyPop(anchor) {
+  if (!ED.rollAt) return;
+  const {t, s} = ED.rollAt;
+  openPop(anchor, p => {
+    const c = S.tracks[t].clips[s], N = noteNames();
+    p.innerHTML = `<h4>Skala des Clips · ${esc(keyName(c.key))}</h4><div class="plist lroots">` + N.map((n, k) => `<button class="rb${c.key.root === k ? ' on' : ''}" data-r="${k}">${esc(n)}</button>`).join('') +
+      '</div><div class="plist lscales">' + SCALE_KEYS.map(k => `<button class="rb${c.key.scale === k ? ' on' : ''}" data-sc="${k}">${esc(SCALE_LABEL[k])}</button>`).join('') + '</div>' +
+      ((c.key.src || 'auto') !== 'auto' ? '<div class="plist"><button class="rb" data-auto="1">Auto (erkennen)</button></div>' : '');
+    guardTouch(p);
+    onTap(p, b => {
+      if (b.dataset.r != null) setClipKey(t, s, {root: +b.dataset.r});
+      else if (b.dataset.sc) setClipKey(t, s, {scale: b.dataset.sc});
+      else if (b.dataset.auto) setClipKey(t, s, null);
+      closePop(); laufPaint(); rollHeadUpdate();
+    }, 'button');
+  }, {name: 'lkey', above: true});
+}
+// in-place two-step (no modal): the second tap counts only after ARM_MIN_MS
+function laufTwoStep(btn, armText, fn) {
+  const base = btn.textContent; let tmr = 0, armAt = 0;
+  onTap(btn, () => {
+    if (!btn.classList.contains('arm')) { btn.classList.add('arm', 'warn'); armAt = performance.now(); btn.textContent = armText; tmr = setTimeout(() => { btn.classList.remove('arm', 'warn'); btn.textContent = base; }, 3000); return; }
+    if (performance.now() - armAt < ARM_MIN_MS) return;
+    clearTimeout(tmr); btn.classList.remove('arm', 'warn'); btn.textContent = base; fn();
+  });
+}
+function laufEdit(label, fn) {
+  if (!ED.rollAt) return false;
+  const {t, s} = ED.rollAt, c = S.tracks[t].clips[s]; if (!c) return false;
+  const before = cleanClip(c);
+  if (fn(c, t) === false) return false;
+  c.notes.sort((a, b) => a.t - b.t);
+  pushUndo(t, s, before, label); afterClipEdit(t, s); laufPaint();
+  return true;
+}
+// [Zufall in Tonart]: the empty steps of the current page get in-key notes near the existing contour (one undo)
+function laufRandom() {
+  return laufEdit('Zufall in Tonart', (c, t) => {
+    const sc = laufScale(t, c), g = LAUFG[LAUF.grid], per = LAUF_PER[LAUF.grid], k0 = LAUF.page * per, tot = laufTot(c);
+    const near = k => { let best = null, bd = 1e9; for (const n of c.notes) { const d = Math.abs(laufIdx(c, n) - k); if (d < bd) { bd = d; best = n; } } return best ? lsPos(sc, best.n).idx : 0; };
+    const W = [[-2, 1], [-1, 3], [0, 2], [1, 3], [2, 1]], pick = () => { let r = Math.random() * 10; for (const [d, w] of W) { r -= w; if (r < 0) return d; } return 0; };
+    let added = 0, last = null;
+    for (let k = k0; k < Math.min(k0 + per, tot); k++) {
+      const cur = laufFind(c, k);
+      if (cur) { last = lsPos(sc, cur.n).idx; continue; }
+      const ref = last != null ? last : near(k), idx = clamp(ref + pick(), -3, 10);
+      c.notes.push({t: +(k * g).toFixed(6), d: +(g * .98).toFixed(6), n: lsNote(sc, idx), v: LAUF_V}); last = idx; added++;
+    }
+    return added > 0;
+  });
+}
+function laufClear() { return laufEdit('Lauf leeren', c => { if (!c.notes.length) return false; c.notes = []; }); }
+// keys in SPIELEN while LAUF is open: the pitch goes into the selected step (in the key, mono = the lowest of a chord), the
+// cursor moves on (§3.10, the step input of §3.3). Never also recorded.
+function laufStepFlush() {
+  const ns = STEPQ.notes.splice(0); if (!ns.length || !ED.lauf || !ED.rollAt || LAUF.sel < 0) return;
+  const {t, s} = ED.rollAt, c = S.tracks[t].clips[s]; if (!c) return;
+  const k = LAUF.sel; if (k >= laufTot(c)) { LAUF.sel = -1; laufPaint(); return; }
+  const n0 = Math.min(...ns.map(n => clipNoteFor(t, c.key, n, nowT()))), nn = lsSnap(laufScale(t, c), n0);
+  laufEdit('Schritt', cl => {
+    const g = LAUFG[LAUF.grid], T = +(k * g).toFixed(6), cur = laufFind(cl, k);
+    if (cur) { cur.n = nn; if (Math.abs(cur.t - T) > 1e-9) { cur.t = T; delete cur.o; } }
+    else cl.notes.push({t: T, d: +(g * .98).toFixed(6), n: nn, v: STEPQ.vel || LAUF_V});
+  });
+  const per = LAUF_PER[LAUF.grid];
+  LAUF.sel = k + 1 < laufTot(c) ? k + 1 : -1;
+  if (LAUF.sel >= 0 && Math.floor(LAUF.sel / per) !== LAUF.page) { LAUF.page = Math.floor(LAUF.sel / per); safeRebuild(buildRoll); }
+  else laufPaint();
+}
+// the step under the playhead (transform-free: one class toggle when it changes)
+function laufFrame(bAud) {
+  const L = ED.lauf, c = S.tracks[L.t].clips[L.s];
+  if (!c) { closeRoll(); return; }
+  const vs = R.playing ? visualSlots(L.t, bAud) : null; let st = -1;
+  if (vs && vs.playing === L.s && bAud >= 0) {
+    const len = c.len * 4, ph = (((bAud - audCstart(L.t, bAud)) % len) + len) % len, k = Math.floor(ph / LAUFG[LAUF.grid] + 1e-9);
+    if (Math.floor(k / L.per) === LAUF.page) st = k % L.per;
+  }
+  if (st !== L.ph) { L.ph = st; L.se.setPlayhead(st); }
 }
 
 /* ---------- quantize sheet (§3.5): Raster, Stärke, Swing, Humanize; previewed live, Anwenden = one undo step ---------- */
@@ -11513,7 +12517,7 @@ function clearClip(t, s, viaUi) {
 function clipChanged(t, s) {
   KEYC.ver++; UI.dirty.grid = true;
   if (R.editor === 'drum' && t === 4 && ED.dTab === 'steps' && !(ED.step && ED.step.busy())) { try { paintSteps(); } catch (e) {} }
-  if (ED.rollAt && ED.rollAt.t === t && ED.rollAt.s === s) rollHeadUpdate();
+  if (ED.rollAt && ED.rollAt.t === t && ED.rollAt.s === s) { rollHeadUpdate(); if (ED.lauf && !ED.lauf.se.busy()) laufPaint(); }
 }
 
 /* ---------- menu (§2.5, §12.2): full-screen sheet; P stacked, L two columns ---------- */
@@ -11670,8 +12674,10 @@ function openMenu(goto) {
     'Szene starten: ▶ 1–4. Laufenden Clip antippen = stoppt zum nächsten Takt. ■ zweimal = sofort. Clip lange drücken = Clip-Menü.',
     'TRANSPONIEREN: Die Tastatur ist stumm. Leuchtende Taste = Stufe in der Tonart (wie OP-Z), dunkle Taste = neue Tonart, Akkord = alle Spuren folgen (wie Improvisor). Die Tonart jedes Clips wird automatisch erkannt.',
     'LATCH: Träger bleibt nach dem Loslassen. ORIGINAL = zurück. Drums bleiben immer gleich.',
-    'KLANG: Regler ziehen = ändern, seitlich wegziehen = fein, doppelt tippen = Standard, gedrückt halten = Menü (↺ Standardwert).',
+    'KLANG: Regler ziehen = ändern, seitlich wegziehen = fein, doppelt tippen = Standard, gedrückt halten = modulieren (LFO 1, LFO 2 …).',
+    'MODULATION: Regler halten, Quelle wählen (oder im Tab MOD oben eine Quelle antippen) – dann ziehen die Regler die Tiefe. Der farbige Ring zeigt den Bereich, der Punkt den Wert jetzt. „Fertig“ beendet.',
     'SOUNDS: Im Klang-Editor auf den Sound-Namen tippen – Bibliothek mit Vorhören (▶), Trick (ⓘ) und eigenen Sounds. „Sichern“ legt deinen Sound unter „Eigene“ ab.',
+    'LAUF: Basslauf oder Sequenz Schritt für Schritt – Schritt antippen = an, hoch/runter ziehen = Ton in der Tonart.',
     'EFFEKTE: Im Klang-Editor unter FX. SPUR und CHORUS gehören zur Spur, HALL, ECHO und MASTER wirken auf alle Spuren. Nach dem Stopp klingen Hall und Echo aus – ■ zweimal schneidet sie ab.',
     'Jede Änderung lässt sich mit ↶ rückgängig machen, ↷ stellt sie wieder her.',
     'Speichern geht von selbst. „Als Datei sichern“ legt eine Sicherung mit allem an, „Projekte“ zeigt alle Projekte im Browser.'].map(t => `<p>${esc(t)}</p>`).join('') +
@@ -12527,6 +13533,7 @@ function onKeyDown(e) {
     if (UI.pop) { closePop(); return; }
     if (menuOpen) { closeMenu(); return; }
     if (QS.open) { closeQuantSheet(false); return; }
+    if (UI.modSrc && R.editor === 'synth') { exitModMode(); return; }
     if (UI.coach) hideCoach();                // the card goes, and Esc keeps its meaning (close a sheet / ORIGINAL)
     if (R.editor === 'synth' || R.editor === 'drum') { closeEditor(); return; }   // every sheet closes with Escape (§10.5)
     if (R.editor === 'browser') { closeBrowser(false); return; }
@@ -12609,6 +13616,7 @@ function runtimeInfo() {
     liveVoices: VOICES.filter(v => { if (v.dead || v.src !== 'live') return false; const st = v.state(now); return st === 'on' || st === 'pending'; }).length,
     voices: VOICES.filter(v => !v.dead).length + HITS.filter(x => !x.dead).length,
     editor: ['synth', 'drum', 'clip', 'menu', 'roll', 'browser'].includes(R.editor) ? R.editor : null,
+    modSrc: UI.modSrc || null,
     kbScale: S.settings.kbScale, fang: fangLit(), keyPending: [...R.keyPending],
     engine: (({synth, how, err, hall, load, limiter, loopExtra, graphLat}) => ({synth, how, err, hall, load, limiter, loopExtra, graphLat}))(engineInfo()),
   };
@@ -12743,12 +13751,28 @@ const SYNQUENZER = {
   sceneKey: s => { const k = sceneKeyOf(clamp(s | 0, 0, 3)) || S.key; return {root: k.root, scale: k.scale}; },
   analyseKeys: s => { applySceneKeys(s == null ? null : clamp(s | 0, 0, 3)); },
   setKbScale, coach: on => { if (on === false) hideCoach(); else showCoach(); },
+  // WP5 (§9.3, §9.4, §3.10): mod mode, live values, LAUF
+  modMode: src => (src ? enterModMode(src, null) : exitModMode()),
+  modState: () => ({src: UI.modSrc || null, track: UI.modT == null ? null : UI.modT, focus: UI.modFocus && UI.modFocus.label || null, banner: !!(ED.mbn && !ED.mbn.el.hidden)}),
+  modLive: () => (R.editor === 'synth' && sndOf(R.selT) ? Object.assign({}, modLive(R.selT), {scope: !!(AU.synth[R.selT] && AU.synth[R.selT].scopeOn)}) : null),
+  scopeDst: on => { const E = AU.synth[R.selT]; if (!E) return false; E.scopeDst(on); return true; },
+  scopeMsg: () => (MLIVE.scope ? {scope: MLIVE.scope.slice(), dst: MLIVE.dst ? MLIVE.dst.slice() : null, t: MLIVE.t, nv: MLIVE.nv, age: performance.now() - MLIVE.at, track: MLIVE.track} : null),
+  openLauf: (t, s) => { ROLLP.view = 'lauf'; openRoll(t, s); return !!ED.lauf; },
+  setRollView: v => setRollView(v),
+  lauf: () => {
+    if (!ED.lauf || !ED.rollAt) return null;
+    const {t, s} = ED.rollAt, c = S.tracks[t].clips[s], per = LAUF_PER[LAUF.grid], steps = [];
+    for (let i = 0; i < per; i++) { const n = c ? laufFind(c, LAUF.page * per + i) : null; steps.push(n ? {on: true, n: n.n, v: n.v, tie: laufTied(c, n)} : {on: false, n: null, v: 0, tie: false}); }
+    return {t, s, grid: LAUF.grid, page: LAUF.page, pages: ED.lauf.pages, lane: LAUF.lane, sel: LAUF.sel, steps};
+  },
+  laufApi: () => ED.lauf,                       // test hook: the StepEditor instance (cells, lanes)
 };
 // every state-changing API call leaves the UI rendered (no need to wait for the next animation frame)
 function uiSync() { try { if (EL.app) uiFrame(); } catch (e) { logErr(e); } }
 const NO_SYNC = new Set(['state', 'project', 'runtime', 'getClip', 'getParam', 'noteLog', 'voices', 'timeline', 'serialize', 'buildMidi', 'buildZip', 'crc32', 'meter', 'outPitch', 'migrate', 'tapTempo',
   'getSound', 'mods', 'library', 'factory', 'previewState', 'soundEdited',
-  'history', 'projects', 'storage', 'engineInfo', 'getBusFx', 'wake', 'gestures', 'roll', 'rollApi', 'detectKey', 'sceneKey']);
+  'history', 'projects', 'storage', 'engineInfo', 'getBusFx', 'wake', 'gestures', 'roll', 'rollApi', 'detectKey', 'sceneKey',
+  'modState', 'modLive', 'scopeMsg', 'lauf', 'laufApi']);
 for (const k of Object.keys(SYNQUENZER)) {
   const f = SYNQUENZER[k]; if (typeof f !== 'function' || NO_SYNC.has(k)) continue;
   SYNQUENZER[k] = function () { const r = f.apply(this, arguments); uiSync(); if (r && typeof r.then === 'function') return r.then(v => { uiSync(); return v; }); return r; };
@@ -12769,6 +13793,8 @@ function init() {
   try { if (/[?&]engine=native(&|$)/.test(location.search)) UI.forceNative = true; } catch (e) {}
   // research modules' CSS first, so the app's rules (later in the cascade) adapt them
   try { const st = document.createElement('style'); st.id = 'se-css'; st.textContent = StepEditor.CSS; document.head.insertBefore(st, document.head.querySelector('style')); } catch (e) { logErr(e); }
+  // the piano roll's CSS too (WP5: the LAUF view uses its toolbar style before any roll was opened)
+  try { if (!document.getElementById('pr-css')) { const st = document.createElement('style'); st.id = 'pr-css'; st.textContent = PianoRoll.CSS; document.head.insertBefore(st, document.head.querySelector('style')); } } catch (e) { logErr(e); }
   UI.leds = $$('#leds i');
   EL.topLogo.innerHTML = LOGO_SVG;
   UI.haptics = uiPrefs().haptics !== false;
@@ -12796,7 +13822,7 @@ function init() {
   // the autosave writes its rescue copy on pagehide / hidden (autosave.install); back in front while playing: wake lock again
   document.addEventListener('visibilitychange', () => { if (document.hidden) { releaseEverything(); idleSuspendArm(); } else { clearTimeout(UI.suspT); if (R.playing) wakeAcquire(); } });
   window.addEventListener('pagehide', () => { releaseEverything(); });
-  window.addEventListener('resize', () => { UI.kbRelayout = true; UI.dirty.carrier = true; if (UI.pop && !(document.activeElement && UI.pop.el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT')) closePop(); });
+  window.addEventListener('resize', () => { UI.kbRelayout = true; UI.dirty.carrier = true; MLIVE.lay++; if (UI.modSrc) requestAnimationFrame(modBannerPlace); if (UI.pop && !(document.activeElement && UI.pop.el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT')) closePop(); });
   window.addEventListener('orientationchange', () => { UI.kbRelayout = true; UI.dirty.carrier = true; });
   // a web font that arrives late changes every text width: refit the readout and re-measure the mode labels (§3.6)
   try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { UI.dirty.carrier = true; UI.kbRelayout = true; }); if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', () => { UI.dirty.carrier = true; UI.kbRelayout = true; }); } catch (e) {}
