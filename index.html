@@ -468,11 +468,17 @@ svg{display:block}
 @media (orientation:portrait) and (max-width:359px){
   .corner.sw .clogo svg{height:24px}
   .corner.sw .swl{font-size:9px;letter-spacing:.02em}
-  .sv-sw .clogo{display:none}
+  /* §13.2 / BR1: below 360 px the top-bar logo lives in the clip-grid corner; the song view replaces that corner with
+     CLIPS ⇄, so the logo moves along into that button */
+  .sv-sw .clogo{display:flex;align-items:center;justify-content:center;pointer-events:none;flex:none;min-height:0}
+  .sv-sw .clogo svg{height:24px}
   .sv-top .rb{font-size:9px;padding:0 3px}
   .sv-sw{flex-basis:50px}.sv-labs{flex-basis:50px}
   .sv-l{font-size:9px;gap:3px}
 }
+@media (orientation:portrait) and (max-width:359px) and (max-height:519px){.sv-sw .clogo svg{height:16px}}
+/* short phones (≤ 700 px): the SONG ⇄ corner cell is ~30 px high; logo + label must fit inside it (overflow:hidden) */
+@media (orientation:portrait) and (max-width:359px) and (max-height:700px){.corner.sw{gap:1px}.corner.sw .clogo svg{height:18px}.corner.sw .swl{line-height:1}}
 
 /* ---------- drum editor v2 (§7.3, WP6): SOUND · TIEF · SCHRITTE · KIT · FX ---------- */
 .vchips.v12{grid-template-columns:repeat(6,minmax(0,1fr))}
@@ -2132,6 +2138,238 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
   :is(#synthSheet,#drumSheet) .sh-body:is(.fit1,.fit2,.fit3) .knob.fxmini{height:36px}
   :is(#synthSheet,#drumSheet) .sh-body:is(.fit1,.fit2,.fit3) .knob.fxmini svg{width:30px;height:30px}
 }
+/* ---------- FM tab (§6.5, WP7): ALGO · OP · MAKRO ---------- */
+.fmdiag{flex:none;width:170px;height:150px;border-radius:8px;background:var(--lcd);box-shadow:inset 0 1px 5px rgba(0,0,0,.9);border:1px solid var(--panel-edge);touch-action:none;display:flex;align-items:center;justify-content:center;padding:4px;cursor:pointer}
+.fmdiag svg,.athumb svg{width:100%;height:100%;display:block;overflow:visible}
+svg.alg .w{fill:none;stroke:#6b7280;stroke-width:1.5}
+svg.alg .fb{fill:none;stroke:#ff9b3d;stroke-width:1.6;stroke-linejoin:round}
+svg.alg .op rect{fill:#23262d;stroke:#8b93a1;stroke-width:1.4}
+svg.alg .op text{fill:var(--text);font:700 13px/1 var(--font-num);text-anchor:middle}
+svg.alg .op.car rect{fill:var(--tc,var(--sel));stroke:var(--tc,var(--sel))}
+svg.alg .op.car text{fill:#0b0c0e}
+svg.alg .op.off rect{fill:#15171b;stroke:#3a3f49;stroke-dasharray:3 2}
+svg.alg .op.off text{fill:#5a606b}
+svg.alg .op.car.off rect{fill:color-mix(in srgb,var(--tc,var(--sel)) 25%,#15171b)}
+svg.alg .op.sel rect{stroke:#fff;stroke-width:2.6}
+.fmtop{flex:none;display:flex;gap:10px;align-items:stretch;min-width:0}
+.fmaside{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto minmax(0,1fr) auto;gap:4px 4px;align-content:start}
+.fmaside>.fmcap{grid-column:1/-1;grid-row:1}
+.fmaside>.fmstep{grid-column:1;grid-row:2}
+.fmaside>.fmname{grid-column:1/-1;grid-row:3}
+.fmaside>.fmlist{grid-column:1;grid-row:4;justify-self:start}
+.fmaside>.fmfb{grid-column:2;grid-row:2/5;align-self:center;height:auto}
+.fmcap{padding-left:2px}
+.fmstep{display:flex;align-items:center;gap:4px}
+.fmstep .pa{width:38px;height:40px;padding:0;font-size:18px;flex:none}
+.fmnum{min-width:32px;text-align:center;font:600 24px/1 var(--font-num);color:var(--text)}
+.fmname{font:600 11px/14px var(--font-ui);color:var(--text-dim);min-height:28px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.hb.fmlist{height:40px;padding:0 14px}
+:is(.pg-osc-algo,.pg-osc-op,.pg-osc-makro) .knob .kl.lg{font-size:9.5px;letter-spacing:0;max-width:100%}
+.kn-row.fmk2{grid-template-columns:repeat(2,100px)}
+.kn-row.fmk2 .knob{width:100px}
+.kn-row.fmk2 .knob .kl{max-width:100px}
+.fmstrip{flex:1 1 auto;min-height:0;display:flex;gap:3px;justify-content:space-between;align-items:stretch}
+.fmcol{flex:1 1 0;min-width:0;max-width:60px;display:flex;flex-direction:column;align-items:stretch;gap:3px;border-radius:7px;padding:2px 1px;background:rgba(255,255,255,.02)}
+.fmcol.sel{background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1px rgba(255,255,255,.18)}
+.fmled{flex:none;height:30px;min-width:0;padding:0 4px;display:flex;align-items:center;justify-content:center;gap:5px;font:700 13px/1 var(--font-num)}
+.fmled .led{width:8px;height:8px;border-radius:50%;background:#2a2e36;box-shadow:inset 0 1px 2px #000;flex:none}
+.fmled.on .led{background:var(--tc,var(--sel));box-shadow:0 0 6px var(--tc,var(--sel))}
+.fmcol.out .fmled b{color:var(--tc,var(--sel))}
+.fmrat{flex:none;height:24px;min-width:0;padding:0 2px;font:600 11px/1 var(--font-num);letter-spacing:-.03em;white-space:nowrap;overflow:hidden}
+.fmcol .fader{width:auto;height:auto;flex:1 1 auto;min-height:64px}
+.fmcol .fader .kl{display:none}
+.fmcol .fader .ftrack{width:36px;align-self:center}
+.fmcol .fader .kn{font-size:11px;letter-spacing:-.04em}
+.fmcol.off .fader{opacity:.45}
+.fmspk{flex:none;height:22px;border-radius:4px;background:var(--lcd);padding:1px}
+.fmspk svg{width:100%;height:100%;display:block}
+.fmspk path{fill:none;stroke:var(--tc,var(--sel));stroke-width:1.4;vector-effect:non-scaling-stroke}
+.fmcol.off .fmspk path{stroke:#4a4f59}
+.fmhint{flex:none;color:#e0b25a}
+.fmhint[hidden]{display:none}
+/* OP page */
+.fmophd{flex-wrap:wrap;gap:6px 6px}
+.fmophd .pa{width:40px;height:40px;padding:0;font-size:18px;flex:none}
+.fmoptl{flex:1 1 0;min-width:0;font:700 13px/1.2 var(--font-ui);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fmsolo{height:40px;padding:0 10px}
+.fmsolo.on{color:#0b0c0e;background:#ffe14d;border-color:#ffe14d}
+.seg.fmsub{flex:1 1 100%}
+.seg.fmsub button{flex:1 1 0}
+.fmfreq{flex-wrap:nowrap}
+.fmbig{flex:1 1 auto;min-width:0;text-align:right;font:600 28px/1 var(--font-num);color:var(--tc,var(--sel));white-space:nowrap;overflow:hidden}
+.fminfo{flex:none;font:500 11px/14px var(--font-ui);color:var(--text-dim)}
+.kn-row.fmk4{grid-template-columns:repeat(4,minmax(0,72px));justify-content:space-between;gap:2px 4px}
+@media (orientation:portrait) and (min-width:360px){.kn-row.fmk4{grid-template-columns:repeat(4,minmax(0,1fr));justify-content:stretch}.kn-row.fmk4 .knob{width:auto;min-width:0}.kn-row.fmk4 .knob .kl{max-width:100%}}
+.fmenv{flex:1 1 auto;min-height:84px;position:relative;border-radius:8px;background:var(--lcd);box-shadow:inset 0 1px 5px rgba(0,0,0,.9);border:1px solid var(--panel-edge);touch-action:none;overflow:hidden}
+.fmenv svg{position:absolute;inset:0;width:100%;height:100%}
+.fmenv .lanes rect{fill:rgba(255,255,255,.025)}
+.fmenv .lanes rect.b{fill:rgba(255,255,255,.055)}
+.fmenv .lanes rect.on{fill:rgba(255,255,255,.12)}
+.fmenv .lanes text{fill:var(--text-dim);font:700 10px/1 var(--font-ui);text-anchor:middle}
+.fmenv .fill{fill:var(--tc,var(--sel));opacity:.16}
+.fmenv .line{fill:none;stroke:var(--tc,var(--sel));stroke-width:2;stroke-linejoin:round}
+.fmenv circle{fill:#0b0c0e;stroke:var(--tc,var(--sel));stroke-width:2}
+.fmenv circle.on{fill:var(--tc,var(--sel))}
+.fmtimes{flex:none;font:500 12px/16px var(--font-num);color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fmebtn{flex-wrap:nowrap;gap:5px}
+.fmebtn .hb{flex:1 1 auto;min-width:0;padding:0 6px;font-size:11px;height:38px;overflow:hidden;text-overflow:ellipsis}
+.fmcurves{flex-direction:column;align-items:flex-start;gap:6px}
+.fmcurves .seg{flex-wrap:nowrap}
+.fmcurves .lgrp>.lbl{min-width:62px}
+.fmcurves .seg button{min-width:44px;padding:0 5px;font-size:11px}
+.fmamp{flex-wrap:wrap;gap:6px 12px}
+.fmamp .seg{flex-wrap:nowrap}
+@media (orientation:portrait) and (max-width:389px){.fmamp .lgrp{flex-direction:column;align-items:flex-start;gap:3px}}
+.fmamp .seg button{padding:0 8px;font-size:11px}
+.hb.fminit{height:40px}
+/* algorithm sheet (a list: it scrolls) */
+.pop.algsheet{display:flex;flex-direction:column;padding:8px;max-height:none;overflow:hidden}
+.ash{display:flex;align-items:center;gap:8px;flex:none;margin-bottom:6px}
+.ash h4{flex:1 1 auto;margin:0}
+.ash .ashx{width:44px;height:36px;padding:0}
+.agrid{flex:1 1 auto;min-height:0;overflow-y:auto;touch-action:pan-y;overscroll-behavior:contain;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:max-content;gap:6px;align-content:start}
+.acell{height:auto;min-height:84px;padding:4px 3px 5px;display:flex;flex-direction:column;align-items:center;gap:2px;border-radius:8px;font:700 12px/1 var(--font-num);touch-action:pan-y;background:#1b1e24;border:1px solid var(--line);color:var(--text)}
+.acell.on{border-color:var(--tc,var(--sel));box-shadow:inset 0 0 0 1px var(--tc,var(--sel))}
+.acell .athumb{width:100%;height:46px;display:block}
+.acell small{font:600 9.5px/11px var(--font-ui);color:var(--text-dim);text-align:center;white-space:normal}
+.acell.fav{background:linear-gradient(#272b33,#1f2228)}
+.athumb svg.alg .op rect{stroke-width:1}
+.athumb svg.alg .w{stroke-width:1}
+/* compact densities (fit levels) */
+#synthSheet .sh-body.fit1 .fmdiag{height:128px;width:150px}
+#synthSheet .sh-body.fit1 .fmled{height:28px}
+#synthSheet .sh-body.fit1 .fmspk{height:18px}
+#synthSheet .sh-body.fit1 .fmcol .fader{min-height:54px}
+#synthSheet .sh-body.fit1 .fmenv{min-height:70px}
+#synthSheet .sh-body.fit1 .fmophd .pa,#synthSheet .sh-body.fit1 .fmsolo{height:36px}
+#synthSheet .sh-body.fit1 .seg.fmsub button{height:30px}
+#synthSheet .sh-body.fit1 .fminfo{line-height:13px}
+#synthSheet .sh-body.fit2 .fmdiag{height:112px;width:132px}
+#synthSheet .sh-body.fit2 .fmname{min-height:0;-webkit-line-clamp:1}
+#synthSheet .sh-body.fit2 .fmactl .hb.fmlist{margin-bottom:16px;height:34px}
+#synthSheet .sh-body.fit2 .fmrat{height:22px}
+#synthSheet .sh-body.fit2 .fmcol .fader{min-height:46px}
+#synthSheet .sh-body.fit2 .fmled{height:26px}
+#synthSheet .sh-body.fit2 .fmspk{height:16px}
+#synthSheet .sh-body.fit2 .fmebtn .hb{height:32px}
+#synthSheet .sh-body.fit2 .fmaside .fmstep .pa,#synthSheet .sh-body.fit2 .hb.fmlist{height:34px}
+#synthSheet .sh-body.fit2 .fminfo{display:none}
+#synthSheet .sh-body.fit2 .fmenv{min-height:60px}
+#synthSheet .sh-body.fit2 .fmophd .pa,#synthSheet .sh-body.fit2 .fmsolo{height:34px}
+#synthSheet .sh-body.fit3 .fmdiag{height:96px;width:116px}
+#synthSheet .sh-body.fit3 .fmled{height:24px}
+#synthSheet .sh-body.fit3 .fmrat{height:20px}
+#synthSheet .sh-body.fit3 .fmcol .fader{min-height:38px}
+#synthSheet .sh-body.fit3 .fmophd .pa,#synthSheet .sh-body.fit3 .fmsolo{height:30px}
+#synthSheet .sh-body.fit3 .seg.fmsub button{height:28px}
+#synthSheet .sh-body.fit3 .fmcurves .seg button{height:28px}
+#synthSheet .sh-body.fit3 :is(.pg-osc-op,.pg-osc-makro) .knob{height:64px}
+#synthSheet .sh-body.fit3 :is(.pg-osc-op,.pg-osc-makro) .knob svg{width:38px;height:38px}
+#synthSheet .sh-body.fit3 .fmspk{display:none}
+#synthSheet .sh-body.fit3 .fmname{display:none}
+#synthSheet .sh-body.fit3 .fmbig{font-size:22px}
+@media (orientation:portrait) and (max-width:359px){
+  .fmdiag,#synthSheet .sh-body.fit1 .fmdiag,#synthSheet .sh-body.fit2 .fmdiag{width:118px;height:118px}
+  .fmstep .pa{width:32px}
+  .fmnum{min-width:24px;font-size:20px}
+  .fmaside>.fmfb{width:62px}
+  .pg-osc-op .k5 .knob .kl,.pg-osc-op .k5 .knob .kl.lg{font-size:8.5px;letter-spacing:-.02em}
+  .fmcurves .seg button{min-width:38px;padding:0 3px;font-size:10.5px}
+  #synthSheet .pg-osc-algo .fmspk{display:none}
+  .fmrat{font-size:10px}
+  .fmled{gap:3px;font-size:12px;padding:0 2px}
+  .fmebtn .hb{font-size:10px;padding:0 3px}
+  .acell small{font-size:8.5px}
+  #synthSheet .pg.pg-osc-makro .kn-row.fmk2:not(.k5){grid-template-columns:repeat(2,minmax(0,104px));justify-content:start;gap:2px 18px}
+  #synthSheet .pg.pg-osc-makro .kn-row.fmk2:not(.k5) .knob{width:auto}
+}
+/* short portrait screens (375×667, 320×568): a compact head row (diagram + stepper / Liste + FEEDBACK) so the faders keep travel */
+@media (orientation:portrait) and (max-height:700px){
+  #synthSheet .pg-osc-algo .fmtop{height:84px}
+  #synthSheet .pg-osc-algo .fmdiag,#synthSheet .sh-body[class*="fit"] .pg-osc-algo .fmdiag{height:84px;width:104px}
+  #synthSheet .pg-osc-algo .fmaside{grid-template-columns:auto auto;grid-template-rows:auto auto;align-content:center;justify-content:start;gap:4px 8px}
+  #synthSheet .pg-osc-algo .fmaside>.fmcap,#synthSheet .pg-osc-algo .fmaside>.fmname{display:none}
+  #synthSheet .pg-osc-algo .fmaside>.fmstep{grid-column:1;grid-row:1}
+  #synthSheet .pg-osc-algo .fmaside>.fmlist{grid-column:1;grid-row:2;height:34px;justify-self:stretch}
+  #synthSheet .pg-osc-algo .fmaside>.fmfb{grid-column:2;grid-row:1/3}
+  #synthSheet .pg-osc-algo .fmstep .pa{height:36px}
+  #synthSheet .pg-osc-algo .fmspk{height:14px}
+  #synthSheet .pg-osc-algo .fmled{height:26px}
+  #synthSheet .pg-osc-algo .fmrat{height:21px}
+}
+/* L (§6.5): [diagram 130×120] [strip 336×130] [‹ 5 ›, Liste, FEEDBACK] in one row; OP / MAKRO in rows */
+@media (orientation:landscape){
+  .pg-osc-algo{display:grid;grid-template-columns:auto minmax(0,auto) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto;gap:2px 10px;align-items:stretch}
+  .pg-osc-algo>.fmtop{display:contents}
+  .pg-osc-algo .fmdiag{grid-column:1;grid-row:1;width:130px;height:auto;min-height:0;max-height:124px;align-self:center}
+  .pg-osc-algo .fmstrip{grid-column:2;grid-row:1;width:350px}
+  .pg-osc-algo .fmaside{grid-column:3;grid-row:1;align-content:center}
+  .pg-osc-algo .fmhint{grid-column:1/-1;grid-row:2}
+  .fmled{height:26px}
+  .fmrat{height:20px}
+  .fmspk{height:16px}
+  .fmname{min-height:0;-webkit-line-clamp:1}
+  .hb.fmlist{height:34px}
+  .fmstep .pa{height:34px;width:38px}
+  .fmnum{font-size:20px}
+  .pg-osc-op{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;gap:4px 12px;align-content:stretch}
+  .pg-osc-op>.fmophd{grid-column:1/-1;grid-row:1;flex-wrap:nowrap}
+  .seg.fmsub{flex:0 0 auto}
+  .fmophd .pa,.fmsolo{height:34px}
+  .pg-fmop-freq>.fmfreq{grid-column:1;grid-row:2;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px}
+  .pg-fmop-freq>.kn-row{grid-column:2;grid-row:2;display:flex;gap:2px 6px;align-self:center}
+  .pg-fmop-freq>.fminfo{grid-column:1/-1;grid-row:3}
+  .pg-fmop-freq .fmbig{text-align:left;font-size:24px}
+  .pg-fmop-env{grid-template-columns:minmax(0,1fr) minmax(0,auto)}
+  .pg-fmop-env>.fmenv{grid-column:1;grid-row:2/4;min-height:0}
+  .pg-fmop-env>.fmtimes{grid-column:2;grid-row:2;white-space:normal;max-width:200px;font-size:11px;line-height:15px}
+  .pg-fmop-env>.fmebtn{grid-column:2;grid-row:3;display:grid;grid-template-columns:1fr 1fr;gap:4px;width:236px;align-self:end}
+  .pg-fmop-env .fmebtn .hb{height:30px;font-size:10px;padding:0 3px}
+  .pg-fmop-scale>.kn-row{grid-column:1;grid-row:2;display:flex;gap:2px 4px}
+  .pg-fmop-scale>.fmcurves{grid-column:2;grid-row:2;justify-content:center;gap:4px}
+  .pg-fmop-scale .fmcurves .seg button{min-width:36px;height:30px;padding:0 3px;font-size:10.5px}
+  .pg-fmop-scale .fmcurves .lgrp>.lbl{min-width:50px}
+  .pg-fmop-scale>.fminfo,.pg-osc-makro>.fminfo{display:none}
+  .pg-osc-op>.fmhint{grid-column:1/-1}
+  .pg-osc-makro{display:grid;grid-template-columns:max-content max-content minmax(0,1fr);grid-template-rows:auto 1fr;gap:4px 8px;align-content:start}
+  .pg-osc-makro>.kn-row:nth-of-type(1){grid-column:1;grid-row:1;display:flex;gap:2px 4px}
+  .pg-osc-makro>.kn-row:nth-of-type(2){grid-column:2;grid-row:1;display:flex;gap:2px 4px}
+  .pg-osc-makro .kn-row.fmk2 .knob{width:80px}
+  .pg-osc-makro>.fmamp{grid-column:3;grid-row:1;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px}
+  .pg-osc-makro .fmamp .lgrp{flex-direction:column;align-items:flex-start;gap:3px}
+  .pg-osc-makro .fmamp .seg button{height:30px;padding:0 6px;font-size:10px}
+  .pg-osc-makro .hb.fminit{height:30px}
+  .pg-osc-makro>.fmhint{grid-column:1/-1;grid-row:2}
+  .pop.algsheet .agrid{grid-template-columns:repeat(8,minmax(0,1fr))}
+  .acell{min-height:74px}
+  .acell .athumb{height:38px}
+}
+/* small landscape (667×375): diagram 108, strip 6×53, compact strip rows (the sparklines stay inside the 126 px strip);
+   the aside gets ≈ 190 px, so [‹ n ›] and FEEDBACK sit side by side without overlapping */
+@media (orientation:landscape) and (max-width:760px){
+  .pg-osc-algo .fmdiag{width:108px}
+  .pg-osc-algo .fmstrip{width:318px}
+  .fmled{height:24px}
+  .fmrat{height:18px;font-size:10.5px}
+  .fmspk{height:12px}
+  .fmcol .fader{min-height:50px}
+  .fmstep .pa{width:32px}
+  .fmnum{min-width:26px;font-size:18px}
+  .fmaside>.fmfb .kl{font-size:9.5px;letter-spacing:0}
+}
+/* L, OP / FREQ: the knob row spans rows 2–3 (it never rises into the header), the info line stays under the readout;
+   knobs 88 px wide so „Verstimmung“ is not cut */
+@media (orientation:landscape){
+  .pg-fmop-freq>.kn-row{grid-row:2/4;justify-content:space-around}
+  .pg-fmop-freq>.fminfo{grid-column:1}
+  .pg-fmop-freq .kn-row.fmk4 .knob{width:88px}
+  .pg-fmop-freq .kn-row.fmk4 .knob .kl{max-width:100%}
+}
+/* small L: the HÜLLK. times row in one line (it wrapped under the buttons) */
+@media (orientation:landscape) and (max-width:760px){
+  .pg-fmop-env>.fmtimes{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:none;font-size:9.5px;letter-spacing:-.02em}
+}
+/* ---------- end FM tab CSS ---------- */
 </style>
 </head>
 <body>
@@ -2218,11 +2456,14 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 <div id="banner">Audio unterbrochen – tippen zum Fortsetzen</div>
 <input type="file" id="fileIn" accept=".json,application/json" hidden>
 <input type="file" id="sndIn" accept=".json,application/json" hidden>
+<input type="file" id="syxIn" hidden>
 <script type="text/plain" id="sq-worklet-src">
 /* SYNQUENZER synth worklet module (spec v2 1.1 block 1, 1.4, 5.4): processors 'dirigent-analog' and 'dirigent-hall'.
    Built by scratchpad/wp4work/tools/build-worklet.mjs from presetlib/analog-core-sync.js (hard sync) + the scope hunks of
    modux/analog-core-scope.js + D_UNIDET applied + deferred tempo changes + event 8 + fxresearch/fx-worklet.js;
    WP5 (scratchpad/wp5work/tools/build-worklet-wp5.mjs): {scopeDst: bool} adds the focus voice's dst sums to {scope}.
+   WP7 (scratchpad/wp7work/tools/build-worklet-wp7.mjs): the FM6 block (spec v2 6.3, Anhang D.16) ported from
+   fmresearch/proto/dx6-worklet.js: eng 1 = 6 operators, 32 DX7 algorithms in place of the oscillator section.
    ASCII only; it never contains the closing script tag (checked by wp4work/tools/check-worklet.mjs).
    ---------------------------------------------------------------------------------------------------------------------
    DIRIGENT AnalogCore - polyphonic virtual-analog voice engine.
@@ -2234,6 +2475,8 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
                                                 4 KILL (also purges queued events of id)  5 ALL-OFF  6 PANIC  7 FAST-OFF(tauSec)
                                                 8 CANCEL-RETUNE (purges the queued PITCH events of id; applied on arrival)
      {set: {param: number, ...}}   {mods: [{src, dst, amt}]}   {dispose: true}   {scope: bool}
+     {fm6: {alg 1..32, fb 0..7, trans, ops: [6 x {on, fixed, coarse, fine, det, ol, r[4], l[4], vs, rs, ks?}]}}  (DX7 units;
+       sounding FM voices re-target their running envelope stage; an algorithm change crossfades like a structural change)
      {tempo: {bpm, start: ctxTimeOfBeat0 | null, at?: ctxTime}}   (with at: takes effect at that audio time, so a late message
        never bends the phase of synced LFOs; without: at once and pending changes are dropped)
    Worklet -> main: {end: [ids]} when voices are free, {load: fractionOfRealtime, voices: n} once per second,
@@ -2258,8 +2501,52 @@ const S_LFO1 = 1, S_LFO2 = 2, S_FENV = 3, S_MENV = 4, S_VEL = 5, S_KEY = 6, S_MW
 const D_PITCH = 1, D_O2PITCH = 2, D_CUT = 3, D_RES = 4, D_DRIVE = 5, D_PW = 6, D_O1 = 7, D_O2 = 8, D_O3 = 9,
   D_NOISE = 10, D_AMP = 11, D_PAN = 12, D_UNIDET = 13, D_FENV = 14, D_FMBRIGHT = 15, D_OP1 = 16, NDST = 22;   // A.4: op1..op6 = 16..21
 const NSLOT = 8;
-const XF_KEYS = ['o1w', 'o2w', 'o3w', 'o1uni', 'o2uni', 'o3uni', 'o2sync', 'ftype', 'subW', 'subOct', 'lq', 'mode', 'eng'];
+const XF_KEYS = ['o1w', 'o2w', 'o3w', 'o1uni', 'o2uni', 'o3uni', 'o2sync', 'ftype', 'subW', 'subOct', 'lq', 'mode', 'eng', 'fmAmp'];
 const XF_D = CR / 96;      // structural crossfade: 96 samples down, 96 up
+
+/* ---- FM6 (spec v2 6.3, WP7): tables and msfa maths copied verbatim from fmresearch/proto/dx6-worklet.js ---- */
+const SIN_N = 4096, SIN = new Float32Array(SIN_N + 1);
+for (let i = 0; i <= SIN_N; i++) SIN[i] = Math.sin(2 * Math.PI * i / SIN_N);
+const LEVEL_LUT = [0, 5, 9, 13, 17, 20, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 42, 43, 45, 46];
+const VEL_TAB = [0, 70, 86, 97, 106, 114, 121, 126, 132, 138, 142, 148, 152, 156, 160, 163, 166, 170, 173, 174, 178, 181, 184, 186, 189, 190, 194, 196, 198, 200, 202, 205, 206, 209, 211, 214, 216, 218, 220, 222, 224, 225, 227, 229, 230, 232, 233, 235, 237, 238, 240, 241, 242, 243, 244, 246, 246, 248, 249, 250, 251, 252, 253, 254];
+const EXP_SCALE = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 16, 19, 23, 27, 33, 39, 47, 56, 66, 80, 94, 110, 126, 142, 158, 174, 190, 206, 222, 238, 250];
+// algorithm table, 1-based: "carriers|target<-source pairs|feedback dst+src"   (verified against msfa fm_core.cc)
+const DX_ALGS = ['13|12 34 45 56|66', '13|12 34 45 56|22', '14|12 23 45 56|66', '14|12 23 45 56|64', '135|12 34 56|66', '135|12 34 56|65',
+  '13|12 34 35 56|66', '13|12 34 35 56|44', '13|12 34 35 56|22', '14|12 23 45 46|33', '14|12 23 45 46|66', '13|12 34 35 36|22',
+  '13|12 34 35 36|66', '13|12 34 45 46|66', '13|12 34 45 46|22', '1|12 13 15 34 56|66', '1|12 13 15 34 56|22', '1|12 13 14 45 56|33',
+  '145|12 23 46 56|66', '124|13 23 45 46|33', '1245|13 23 46 56|33', '1345|12 36 46 56|66', '1245|23 46 56|66', '12345|36 46 56|66',
+  '12345|46 56|66', '124|23 45 46|66', '124|23 45 46|33', '136|12 34 45|55', '1235|34 56|66', '1236|34 45|55', '12345|56|66', '123456||66'];
+const ALGS = DX_ALGS.map(s => {
+  const [c, m, f] = s.split('|');
+  const car = new Uint8Array(6), mods = [[], [], [], [], [], []];
+  for (const ch of c) car[+ch - 1] = 1;
+  for (const p of m.split(' ').filter(Boolean)) mods[+p[0] - 1].push(+p[1] - 1);
+  return {car, mods: mods.map(a => Int8Array.from(a)), fbDst: +f[0] - 1, fbSrc: +f[1] - 1, nCar: c.length};
+});
+const scaleOL = l => (l >= 20 ? 28 + l : LEVEL_LUT[Math.max(0, l | 0)]);
+function scaleVel(vel127, sens) { return ((sens * (VEL_TAB[vel127 >> 1] - 239) + 7) >> 3) << 4; }
+function scaleRate(note, sens) { return (sens * Math.min(31, Math.max(0, ((note / 3) | 0) - 7))) >> 3; }
+function scaleCurve(group, depth, curve) {
+  const s = (curve === 0 || curve === 3) ? (group * depth * 329) >> 12 : (EXP_SCALE[Math.min(group, 32)] * depth * 329) >> 15;
+  return curve < 2 ? -s : s;
+}
+function scaleLevel(note, ks) { // ks = {bp (0..99, 39 = C3), ld, rd, lc, rc}
+  if (!ks) return 0;
+  const off = note - ks.bp - 17;
+  return off >= 0 ? scaleCurve(((off + 1) / 3) | 0, ks.rd, ks.rc) : scaleCurve((-(off - 1) / 3) | 0, ks.ld, ks.lc);
+}
+const FENV_BLK = CR;                                  // DX envelopes step per 16-sample control block (DX6: 32); gain interpolated per sample
+const LVL_PER_SEC = q => (4 + (q & 3)) * Math.pow(2, (q >> 2) - 8) * (44100 / 64); // msfa increment, in 1/256-doubling units per second
+const GAIN_THRESH = 1120 / 16777216;                  // msfa kLevelThresh
+// a plain sine (OP1 output, the others off) until the host sends the sound's {fm6}
+const FM_OP0 = {on: 1, fixed: 0, coarse: 1, fine: 0, det: 0, ol: 0, r: [99, 99, 99, 99], l: [0, 0, 0, 0], vs: 0, rs: 0};
+const FM_INIT = {alg: 1, fb: 0, trans: 0, ops: [Object.assign({}, FM_OP0, {ol: 99, r: [99, 99, 99, 70], l: [99, 99, 99, 0]}), FM_OP0, FM_OP0, FM_OP0, FM_OP0, FM_OP0]};
+// fmAmp 0: the amp is a gate with a short attack to 1 (6.3.9 asks for 2 ms): an exponential approach (tau .25 ms) that is set
+// to exactly 1 once it is within 1 % (1.15 ms). Key sync starts every operator at phase 0, so the output starts at 0 anyway;
+// the gate only softens the first ms and keeps the DX attack (a linear 2 ms ramp cut up to 2.5 dB off the attack peak of
+// instant-attack patches, FM2 asks for the peak within 1 dB of the standalone DX6)
+const FM_GATE_C = Math.exp(-1 / (.00025 * SR));
+const FM_MAXREL = 12 * SR;                            // DX end rule: a released FM voice ends after 12 s at the latest
 
 function mtof(n) { return 440 * Math.pow(2, (n - 69) / 12); }
 // lookup tables over the MIDI note scale (1/8 semitone steps, linear interpolation: < 0.02 cent error)
@@ -2288,6 +2575,7 @@ function defaults() {
     glide: 0, mode: 0, poly: 8, spread: .2, level: .3, mw: 0,   // mode 0 poly, 1 mono, 2 legato
     lq: 1,                                                       // ladder quality: 0 eco (1 nonlinearity), 1 analog (5)
     eng: 0,                                                      // engine: 0 analog (VA), 1 fm6 (WP7)
+    fmAmp: 0, fmBright: 0, fmAtk: 0, fmDec: 0, fmRel: 0,         // FM6 (6.2): DX envelopes = volume | ADSR; brightness dB; rate offsets
   };
 }
 
@@ -2330,6 +2618,16 @@ class Voice {
     this.ur = new Float64Array(NOSC * MAXU).fill(1);   // unison ratios of this voice while a route modulates Uni-Verstimm. (D_UNIDET)
     this.fadeStep = 0; this.outG = 1; this.panL = 1; this.panR = 1; this.vgain = 0; this.pan0 = 0; this.fenvAmt = 0;
     this.pl0 = -1; this.pr0 = -1; this.lvOk = false;   // last block's output gains (ramp start), smoothed levels valid
+    // FM6 (6.3.4): operator phases (uint32 = one cycle), increments, envelope levels / targets / rates (msfa units),
+    // per-sample gain ramps g0 -> g1, output levels, stage index, rising flag, rate scaling, ratio or fixed Hz, on flags
+    this.fph = new Uint32Array(6); this.finc = new Float64Array(6);
+    this.flvl = new Float64Array(6); this.ftgt = new Float64Array(6); this.frate = new Float64Array(6);
+    this.fg0 = new Float64Array(6); this.fg1 = new Float64Array(6); this.foutLvl = new Float64Array(6);
+    this.fix = new Int8Array(6).fill(4); this.frise = new Uint8Array(6); this.frs = new Int8Array(6);
+    this.fratio = new Float64Array(6); this.ffixed = new Float64Array(6); this.fon = new Uint8Array(6);
+    this.fbuf = [0, 1, 2, 3, 4, 5].map(() => new Float32Array(CR)); this.fmodIn = new Float32Array(CR);
+    this.ffb0 = 0; this.ffb1 = 0; this.fdone = 0; this.fnote = 60; this.fvel = 100;
+    this.frel = 0; this.frelN = 0; this.fgate = 0; this.falive = false;   // release started, samples since, gate amp, a carrier sounds
   }
 }
 
@@ -2356,10 +2654,13 @@ class AnalogCore extends AudioWorkletProcessor {
     this.pend = null; this.xfState = 0; this.xg = 1; this.xg1 = 1;   // structural crossfade (12c)
     this.dcC = Math.exp(-2 * Math.PI * 5 / SR); this.dcS = new Float64Array(4);   // AC coupling (13): x1 L, y1 L, x1 R, y1 R
     this.uniMod = false;                // a route targets D_UNIDET
+    // FM6 (6.3): the patch, its algorithm, the feedback shift, filter bypass, a patch waiting for the structural crossfade
+    this.fm = FM_INIT; this.alg = ALGS[0]; this.fbShift = 0; this.fmBypass = false; this.fmRoutesFilt = false; this.pendFm = null;
     this.hasPerf = typeof performance !== 'undefined' && typeof performance.now === 'function';
     const po = opt && opt.processorOptions;
     if (po && po.patch) this.setParams(po.patch); else this.derive();
     if (po && po.mods) this.setMods(po.mods);
+    if (po && po.fm6) this.setFm(po.fm6, false);
     this.port.onmessage = e => this.onMsg(e.data);
   }
 
@@ -2367,6 +2668,7 @@ class AnalogCore extends AudioWorkletProcessor {
     if (m.ev) { for (const e of m.ev) this.enqueue(e); }
     if (m.set) this.setReq(m.set, !!m.xf);
     if (m.mods) this.setMods(m.mods);
+    if (m.fm6) this.fmMsg(m.fm6);
     if (m.tempo) {
       const e = {bpm: m.tempo.bpm || 120, start: m.tempo.start == null ? -1 : m.tempo.start, at: m.tempo.at};
       if (e.at != null && isFinite(e.at)) { this.tnext.push(e); this.tnext.sort((a, b) => a.at - b.at); }
@@ -2402,12 +2704,19 @@ class AnalogCore extends AudioWorkletProcessor {
   }
   xfBlock() {
     this.xg = this.xg1;
-    if (this.xfState === 1) { this.xg1 = Math.max(0, this.xg - XF_D); if (this.xg === 0) { const o = this.pend; this.pend = null; if (o) this.setParams(o); this.xfState = 2; this.xg1 = Math.min(1, XF_D); } }
+    if (this.xfState === 1) { this.xg1 = Math.max(0, this.xg - XF_D); if (this.xg === 0) { const o = this.pend; this.pend = null; if (o) this.setParams(o); this.fmPendApply(); this.xfState = 2; this.xg1 = Math.min(1, XF_D); } }
     else if (this.xfState === 2) { this.xg1 = Math.min(1, this.xg + XF_D); if (this.xg1 >= 1) this.xfState = 0; }
   }
   setParams(o) {
-    const P = this.P, mono0 = P.mode > 0;
+    const P = this.P, mono0 = P.mode > 0, eng0 = P.eng;
     for (const k in o) if (k in P && typeof o[k] === 'number' && isFinite(o[k])) P[k] = o[k];
+    if (P.eng !== eng0) {                // 6.3.3: changing the engine while voices sound fades them out (crossfade) and ends them
+      for (const s of this.stack) if (!this.findId(s.id)) this.ended.push(s.id);
+      this.stack.length = 0;
+      for (const v of this.V) if (v.on) this.endVoice(v);
+    } else if (P.eng === 1 && ('fmAtk' in o || 'fmDec' in o || 'fmRel' in o)) {
+      for (const v of this.V) if (v.on) for (let k = 0; k < 6; k++) if (v.fix[k] < 4) this.fmAdvance(v, k, v.fix[k]);
+    }
     if ((P.mode > 0) !== mono0) {
       for (const v of this.V) if (v.on && v.gate) this.releaseV(v);
       for (const s of this.stack) if (!this.findId(s.id)) this.ended.push(s.id);
@@ -2421,6 +2730,9 @@ class AnalogCore extends AudioWorkletProcessor {
       const s = list[i]; this.msrc[i] = s.src | 0; this.mdst[i] = s.dst | 0; this.mamt[i] = clamp(+s.amt || 0, -1, 1);
     }
     this.uniMod = false; for (let i = 0; i < NSLOT; i++) if (this.msrc[i] && this.mdst[i] === D_UNIDET && this.mamt[i] !== 0) this.uniMod = true;
+    this.fmRoutesFilt = false;
+    for (let i = 0; i < NSLOT; i++) { const d = this.mdst[i]; if (this.msrc[i] && this.mamt[i] !== 0 && (d === D_CUT || d === D_RES || d === D_DRIVE || d === D_FENV)) this.fmRoutesFilt = true; }
+    this.fmBypassCalc();
   }
   derive() {
     const P = this.P;
@@ -2450,6 +2762,13 @@ class AnalogCore extends AudioWorkletProcessor {
     this.mix = FMIX[clamp(P.ftype | 0, 0, 5)];
     this.cutN0 = 69 + 12 * Math.log2(clamp(P.cutoff, 10, 22000) / 440);
     this.drv0 = .6 * Math.pow(2, clamp(P.drive, 0, 1) * 4); this.outG0 = 1 / (1 + clamp(P.drive, 0, 1) * 1.3);
+    if (P.eng === 1) this.stereo = false;          // FM voices are mono, panned by spread (6.3.7)
+    this.fmBypassCalc();
+  }
+  // 6.3.8: eng 1, an open filter and no route to cutoff / res / drive / fenv -> no ladder (gain exactly 1)
+  fmBypassCalc() {
+    const P = this.P;
+    this.fmBypass = P.eng === 1 && P.ftype <= 1 && P.cutoff >= 18000 && P.res <= .02 && P.fenv === 0 && P.drive <= .01 && !this.fmRoutesFilt;
   }
 
   /* ---------------- voice allocation ---------------- */
@@ -2490,6 +2809,7 @@ class AnalogCore extends AudioWorkletProcessor {
     v.l1 = P.l1retrig ? 0 : this.gl1; v.l2 = P.l2retrig ? 0 : this.gl2; v.sh1 = rnd() * 2 - 1; v.sh2 = rnd() * 2 - 1;
     v.gA = v.gB = -1;   // force a fresh coefficient (no interpolation from a stale value)
     v.pl0 = v.pr0 = -1; v.lvOk = false;
+    if (P.eng === 1) this.fmNoteOn(v);
   }
 
   /* ---------------- events ---------------- */
@@ -2536,7 +2856,7 @@ class AnalogCore extends AudioWorkletProcessor {
     if (!wasGated) this.ended.push(v.id);   // the released note is finished; a held one stays in the stack
     v.id = id; v.note = note; v.target = note; v.vel = vel; v.gate = true;
     v.gcoef = P.glide > 0 && (P.mode === 1 || wasGated) ? 1 - Math.exp(-CR / (P.glide / 3 * SR)) : 1;
-    if (P.mode === 1 || !wasGated) { v.aSt = 1; v.fSt = 1; v.mSt = 1; }   // retrigger from the current level (no click)
+    if (P.mode === 1 || !wasGated) { v.aSt = 1; v.fSt = 1; v.mSt = 1; if (P.eng === 1) this.fmRetrig(v); }   // retrigger from the current level (no click)
   }
   monoOff(id) {
     const st = this.stack, i = st.findIndex(s => s.id === id); if (i < 0) return;
@@ -2593,6 +2913,8 @@ class AnalogCore extends AudioWorkletProcessor {
       }
       // pitch (glide / retune as RC slew, analog drift)
       v.pitch += (v.target - v.pitch) * v.gcoef;
+      if (P.eng === 1) this.fmControl(v, dst);
+      else {
       const fb = lut(FREQ, v.pitch + v.dP + dst[D_PITCH] * 24) * ISR;
       for (let o = 0; o < NOSC; o++) {
         let inc0 = fb * this.oRat[o] * v.dR[o]; const nu = this.uniN[o];
@@ -2606,6 +2928,7 @@ class AnalogCore extends AudioWorkletProcessor {
       const sT = P.subLvl * .5, nT = clamp(P.noise + dst[D_NOISE], 0, 1) * .4;
       if (v.lvOk) { v.subL += (sT - v.subL) * .3; v.noiseL += (nT - v.noiseL) * .3; if (v.subL < 1e-6 && sT === 0) v.subL = 0; if (v.noiseL < 1e-6 && nT === 0) v.noiseL = 0; } else { v.subL = sT; v.noiseL = nT; }
       v.lvOk = true;
+      }
       // filter: cutoff in semitones (MIDI note scale), key tracking around C4, envelope +-6 octaves
       const velF = 1 - P.fvel + P.fvel * v.vel;
       const cutN = this.cutN0 + P.kt * (v.pitch - 60) + v.dC
@@ -2716,6 +3039,7 @@ class AnalogCore extends AudioWorkletProcessor {
     }
   }
   renderVoice(v, L, R, off) {
+    if (this.P.eng === 1) return this.fmRenderVoice(v, L, R, off);
     const bl = this.bl, br = this.br, st = this.stereo;
     bl.fill(0); if (st) br.fill(0);
     if (this.sync) { this.renderOsc(v, 0, st); this.renderSlave(v, st); this.renderOsc(v, 2, st); }
@@ -2766,6 +3090,174 @@ class AnalogCore extends AudioWorkletProcessor {
     if (v.fade > 0) { v.fade -= CR; if (v.fade <= 0 || fg <= 0) this.endVoice(v); }
     else if (s === 0 || (s === 3 && A.s <= 0 && e < 1e-4)) this.endVoice(v);
   }
+  /* ---------------- FM6 (spec v2 6.3, Anhang D.16; port of fmresearch/proto/dx6-worklet.js) ---------------- */
+  fmMsg(P) {
+    if (!P || !Array.isArray(P.ops) || P.ops.length < 6) return;
+    if (this.pend) { this.pendFm = P; return; }             // a structural crossfade is running: apply with it
+    let active = false; for (const v of this.V) if (v.on) { active = true; break; }
+    if (active && this.P.eng === 1 && (P.alg | 0) !== (this.fm.alg | 0)) { this.pendFm = P; this.pend = {}; this.xfState = 1; return; }   // new routing: fade through it
+    this.setFm(P, true);
+  }
+  fmPendApply() { const f = this.pendFm; if (f) { this.pendFm = null; this.setFm(f, true); } }
+  setFm(P, live) {
+    if (!P || !Array.isArray(P.ops) || P.ops.length < 6) return;
+    this.fm = P; this.alg = ALGS[(P.alg | 0) - 1] || ALGS[0];
+    this.fbShift = P.fb > 0 ? Math.pow(2, (P.fb | 0) - 8) : 0;   // (y0+y1)/2 * 2^(fb-8) cycles, like msfa
+    if (live && this.P.eng === 1) for (const v of this.V) if (v.on) this.fmVoicePatch(v, true);
+  }
+  fmNoteOn(v) {                                                 // from startVoice when eng 1 (key sync: phases to 0)
+    const P = this.fm, note = v.note + (P.trans | 0), vel127 = Math.max(1, Math.min(127, Math.round(v.vel * 127)));
+    v.fdone = 0; v.ffb0 = v.ffb1 = 0; v.frel = 0; v.frelN = 0; v.fgate = 0; v.falive = true;
+    for (let k = 0; k < 6; k++) { v.fph[k] = 0; v.flvl[k] = 0; v.fg0[k] = 0; v.fg1[k] = 0; }
+    this.fmVoicePatch(v, false, note, vel127);
+    for (let k = 0; k < 6; k++) this.fmAdvance(v, k, 0);
+  }
+  fmRetrig(v) {                                                 // MONO: the new note restarts the stages from the current level
+    const P = this.fm, note = v.note + (P.trans | 0), vel127 = Math.max(1, Math.min(127, Math.round(v.vel * 127)));
+    v.frel = 0; v.frelN = 0; v.fdone = 0;
+    this.fmVoicePatch(v, false, note, vel127);
+    for (let k = 0; k < 6; k++) this.fmAdvance(v, k, 0);
+  }
+  // per-op output level, rate scaling, ratio / fixed frequency (msfa maths); live: re-target the running stage
+  fmVoicePatch(v, live, note, vel127) {
+    if (note == null) note = v.fnote; if (vel127 == null) vel127 = v.fvel;
+    v.fnote = note; v.fvel = vel127;
+    const P = this.fm, lf = Math.log2(440 * Math.pow(2, (note - 69) / 12));
+    for (let k = 0; k < 6; k++) {
+      const op = P.ops[k];
+      v.fon[k] = op.on !== 0 && op.ol > 0 ? 1 : 0;
+      let ol = scaleOL(op.ol | 0) + scaleLevel(note, op.ks);
+      ol = Math.max(0, (Math.min(127, ol) << 5) + scaleVel(vel127, op.vs | 0));
+      v.foutLvl[k] = ol; v.frs[k] = scaleRate(note, op.rs | 0);
+      if (op.fixed) { v.ffixed[k] = Math.pow(10, (op.coarse & 3) + op.fine / 100) * Math.pow(2, (op.det > 0 ? op.det : 0) * 13457 / 16777216); v.fratio[k] = 0; }
+      else {
+        const det = (op.det || 0) * 0.0209 * Math.exp(-0.396 * lf) / 7 * lf;  // msfa detune, octaves
+        v.fratio[k] = (op.coarse ? op.coarse : 0.5) * (1 + (op.fine || 0) / 100) * Math.pow(2, det); v.ffixed[k] = 0;
+      }
+      // live: re-target the running stage; a held note at its sustain (stage index 3 while the key is down) re-enters
+      // stage 2 toward the new L3, so an edit is heard on a sustained note too (msfa Env::update)
+      if (live && v.fix[k] < 4) this.fmAdvance(v, k, v.fix[k] === 3 && v.gate ? 2 : v.fix[k]);
+    }
+  }
+  // stage target + rate; macro rate offsets: fmAtk on R1, fmDec on R2 / R3, fmRel on R4, clamped 0..99 (6.2)
+  fmAdvance(v, k, ix) {
+    v.fix[k] = ix;
+    if (ix > 3) return;
+    const op = this.fm.ops[k], P = this.P;
+    const off = ix === 0 ? P.fmAtk : ix === 3 ? P.fmRel : P.fmDec, r = Math.max(0, Math.min(99, op.r[ix] + Math.round(off || 0)));
+    const t = Math.max(16, ((scaleOL(op.l[ix]) >> 1) << 6) + v.foutLvl[k] - 4256);
+    v.ftgt[k] = t; v.frise[k] = t > v.flvl[k] ? 1 : 0;
+    v.frate[k] = LVL_PER_SEC(Math.min(63, ((r * 41) >> 6) + v.frs[k])) * FENV_BLK / SR;   // level units per control block
+  }
+  fmEnvStep(v, k) {                                             // msfa Env::getsample, once per control block
+    const ix = v.fix[k];
+    if (!(ix < 3 || (ix < 4 && !v.gate))) return;
+    let l = v.flvl[k];
+    if (v.frise[k]) {
+      if (l < 1716) l = 1716;                                         // DX7 attack jump (~ -50 dB)
+      l += Math.floor(17 - l / 256) * v.frate[k];                     // log-domain approach to 17 doublings
+      if (l >= v.ftgt[k]) { v.flvl[k] = v.ftgt[k]; this.fmAdvance(v, k, ix + 1); return; }
+    } else {
+      l -= v.frate[k];
+      if (l <= v.ftgt[k]) { v.flvl[k] = v.ftgt[k]; this.fmAdvance(v, k, ix + 1); return; }
+    }
+    v.flvl[k] = l;
+  }
+  // per control block (6.3.6): envelopes, gains 2^(lvl/256-14) * 10^(dB/20), frequencies (glide, retune, LFO pitch as analog)
+  fmControl(v, dst) {
+    const P = this.P, fm = this.fm, alg = this.alg;
+    if (!v.gate && !v.frel) { v.frel = 1; for (let k = 0; k < 6; k++) this.fmAdvance(v, k, 3); }   // gate off -> release stage once
+    const f0 = lut(FREQ, v.pitch + v.dP + (fm.trans | 0) + dst[D_PITCH] * 24);
+    const br = P.fmBright + dst[D_FMBRIGHT] * 24;
+    let alive = false, car = 0;
+    for (let k = 0; k < 6; k++) {
+      this.fmEnvStep(v, k);
+      v.fg0[k] = v.fg1[k];
+      const db = (alg.car[k] ? 0 : br) + dst[D_OP1 + k] * 99 * .75;
+      const g = v.fon[k] ? Math.pow(2, v.flvl[k] / 256 - 14) * (db ? Math.pow(10, db / 20) : 1) : 0;
+      v.fg1[k] = g;
+      const f = v.ffixed[k] ? v.ffixed[k] : f0 * v.fratio[k];
+      v.finc[k] = f < SR * 0.45 ? Math.round(f / SR * 4294967296) : 0;   // Nyquist guard: silence ops above 0.45 fs
+      if (alg.car[k]) { if (g > GAIN_THRESH || v.fg0[k] > GAIN_THRESH) alive = true; if (g > car) car = g; }
+    }
+    v.falive = alive;
+    if (!(P.fmAmp >= 1)) v.aOut = Math.min(1, car * .5);          // fmAmp 0: the DX output level is the volume (Lautst.-Hk., stealing)
+  }
+  // operators k = 5..0 exactly as DX6Voice.process: modulation input = sum of the modulator buffers, feedback with the
+  // 2-sample average on fbDst, per-sample linear gain interpolation; outputs summed * 0.5 / sqrt(nCar) into bl (mono)
+  fmRender(v) {
+    const alg = this.alg, out = this.bl, n = CR, outScale = 0.5 / Math.sqrt(alg.nCar);
+    out.fill(0);
+    for (let k = 5; k >= 0; k--) {
+      const b = v.fbuf[k], ga = v.fg0[k], gb = v.fg1[k];
+      if (ga < GAIN_THRESH && gb < GAIN_THRESH) { b.fill(0); if (k === alg.fbDst) v.ffb0 = v.ffb1 = 0; continue; }
+      const dg = (gb - ga) / n, inc = v.finc[k], mods = alg.mods[k];
+      let ph = v.fph[k], g = ga, mi = null;
+      if (mods.length === 1) mi = v.fbuf[mods[0]];
+      else if (mods.length > 1) { mi = v.fmodIn; const a = v.fbuf[mods[0]]; for (let i = 0; i < n; i++) mi[i] = a[i];
+        for (let j = 1; j < mods.length; j++) { const c = v.fbuf[mods[j]]; for (let i = 0; i < n; i++) mi[i] += c[i]; } }
+      if (k === alg.fbDst && this.fbShift > 0) {                  // alg 4/6 loops folded into OP6 self-feedback (as msfa/Dexed)
+        const fs = this.fbShift * 0.5 * 4294967296; let f0 = v.ffb0, f1 = v.ffb1;
+        for (let i = 0; i < n; i++) { g += dg; const pp = (ph + ((f0 + f1) * fs | 0) + (mi ? (mi[i] * 4294967296 | 0) : 0)) >>> 0;
+          const x = pp >>> 20, y = (SIN[x] + (SIN[x + 1] - SIN[x]) * ((pp & 1048575) * 9.5367431640625e-7)) * g;
+          b[i] = y; f0 = f1; f1 = y; ph = (ph + inc) >>> 0; }
+        v.ffb0 = f0; v.ffb1 = f1;
+      } else if (mi) {
+        for (let i = 0; i < n; i++) { g += dg; const pp = (ph + (mi[i] * 4294967296 | 0)) >>> 0;
+          const x = pp >>> 20; b[i] = (SIN[x] + (SIN[x + 1] - SIN[x]) * ((pp & 1048575) * 9.5367431640625e-7)) * g; ph = (ph + inc) >>> 0; }
+      } else {
+        for (let i = 0; i < n; i++) { g += dg; const x = ph >>> 20;
+          b[i] = (SIN[x] + (SIN[x + 1] - SIN[x]) * ((ph & 1048575) * 9.5367431640625e-7)) * g; ph = (ph + inc) >>> 0; }
+      }
+      v.fph[k] = ph;
+      if (alg.car[k]) for (let i = 0; i < n; i++) out[i] += b[i] * outScale;   // output in cycles of phase (peak 2 = 4*pi rad)
+    }
+  }
+  // one control block of an FM voice: operators, the ladder unless bypassed, the amp (6.3.9), steal fade, pan, sum, end rule
+  fmRenderVoice(v, L, R, off) {
+    const bl = this.bl, P = this.P, byp = this.fmBypass;
+    this.fmRender(v);
+    if (!byp) { if (P.lq >= 1) this.ladder(v, bl, false); else this.ladderEco(v, bl, false); }
+    const gain = v.vgain * (byp ? 1 : v.outG);
+    const pl1 = gain * v.panL * this.xg1, pr1 = gain * v.panR * this.xg1;
+    let pl = v.pl0 < 0 ? pl1 : v.pl0, pr = v.pr0 < 0 ? pr1 : v.pr0;
+    const dpl = (pl1 - pl) / CR, dpr = (pr1 - pr) / CR;
+    v.pl0 = pl1; v.pr0 = pr1;
+    let fg = v.fadeG; const fs = v.fade > 0 ? v.fadeStep : 0;
+    if (P.fmAmp >= 1) {                                         // fmAmp 1: the normal amp ADSR on top (it can cut tails)
+      const A = this.A; let s = v.aSt, e = v.aOut;
+      for (let n = 0; n < CR; n++) {
+        pl += dpl; pr += dpr;
+        if (s === 1) { e = A.aT + (e - A.aT) * A.aC; if (e >= 1) { e = 1; s = 2; } }
+        else if (s === 2) { e = A.dT + (e - A.dT) * A.dC; if (e <= A.s) { e = A.s; s = 3; } }
+        else if (s === 3) e += (A.s - e) * .002;
+        else if (s === 4) { e = A.rT + (e - A.rT) * A.rC; if (e <= 0) { e = 0; s = 0; } }
+        if (fs) { fg -= fs; if (fg < 0) fg = 0; }
+        const x = bl[n] * e * fg;
+        L[off + n] += x * pl; R[off + n] += x * pr;
+      }
+      v.aSt = s; v.aOut = e; v.fadeG = fg;
+      if (s === 0 || (s === 3 && A.s <= 0 && e < 1e-4)) { this.endVoice(v); return; }
+    } else {                                                    // fmAmp 0: the DX envelopes shape the volume; the amp is a gate
+      let e = v.fgate;
+      for (let n = 0; n < CR; n++) {
+        pl += dpl; pr += dpr;
+        if (e < 1) { e = 1 - (1 - e) * FM_GATE_C; if (e > .99) e = 1; }
+        if (fs) { fg -= fs; if (fg < 0) fg = 0; }
+        const x = bl[n] * e * fg;
+        L[off + n] += x * pl; R[off + n] += x * pr;
+      }
+      v.fgate = e; v.fadeG = fg;
+    }
+    if (v.fade > 0) { v.fade -= CR; if (v.fade <= 0 || fg <= 0) { this.endVoice(v); return; } }
+    // DX end rule (6.3.9): the gate is off and no output operator is above GAIN_THRESH for > 256 samples, or 12 s after the release
+    if (!v.gate) {
+      v.frelN += CR;
+      if (v.falive) v.fdone = 0; else v.fdone += CR;
+      if (v.fdone > 256 || v.frelN > FM_MAXREL) this.endVoice(v);
+    }
+  }
+
   // zero-delay-feedback transistor ladder; stage nonlinearities linearised around the current state (one solve per sample)
   ladder(v, buf, right) {
     const mx = this.mix, c0 = mx[0], c1 = mx[1], c2 = mx[2], c3 = mx[3], c4 = mx[4];
@@ -2824,7 +3316,7 @@ class AnalogCore extends AudioWorkletProcessor {
     const t0 = this.hasPerf ? performance.now() : Date.now();
     L.fill(0); if (R !== L) R.fill(0);
     let any = this.q.length > 0; for (const v of this.V) if (v.on) { any = true; break; }
-    if (this.pend && !any) { const o = this.pend; this.pend = null; this.setParams(o); this.xfState = 0; this.xg = this.xg1 = 1; }
+    if (this.pend && !any) { const o = this.pend; this.pend = null; this.setParams(o); this.fmPendApply(); this.xfState = 0; this.xg = this.xg1 = 1; }
     if (any) {
       for (let off = 0; off < N; off += CR) {
         this.runEvents(f0 + off + CR);
@@ -4375,7 +4867,11 @@ const RecHelpers = (() => {
    mods for every synth engine; MOD_DST + fmbright, op1..op6; normFx + pump/pumpRel; normDrum keeps the kit block;
    migratePatchV2: wt -> wt sound, fm -> fm2 sound (sub ×1.4, res ×.95, track poly, level .5); migrateProject2to3 also
    migrates the settings and clip key src and leaves drum tracks alone unless opts.drums; compact notes are written
-   exactly (no rounding); buildProjectFile appVersion 3.0.0 and an optional library; fileName kind 'sound'. */
+   exactly (no rounding); buildProjectFile appVersion 3.0.0 and an optional library; fileName kind 'sound'.
+   WP7 changes (§6.2, §6.7, §12.3.1): FM_BASE (the flat patch of a sound created as FM); an FM record without flat keys
+   ({alg, fb, ops} or {fm6}) is based on FM_BASE; `common` of FM records is converted (level = 10^(gain/20), glide / mode /
+   poly, LFO 1 + routes lfo1->pitch / lfo1->amp) and not kept; a legacy 2-operator sound (fm2) becomes an FM6 sound
+   (migrateFm2: FMH.fromV1, fmAmp 1, level matched to the v2 render); normFm6 exported. */
 /* SYNQUENZER storage layer: sound + project file formats, user sound library, migrations, autosave.
    Classic script, no modules, no dependencies (uses SQ_FACTORY if present). Exposes window.SQStore (module.exports in Node).
 
@@ -4449,6 +4945,9 @@ const RecHelpers = (() => {
     fmAmp: [0, 1, 1], fmBright: [-24, 24], fmAtk: [-30, 30], fmDec: [-30, 30], fmRel: [-30, 30],
   };
   const AN_DEF = {fmAmp: 0, fmBright: 0, fmAtk: 0, fmDec: 0, fmRel: 0};          // keys that ANALOG_BASE (v1) does not know
+  // §6.2: FM defaults, applied when a sound is created as FM (the other keys come from ANALOG_BASE): the filter is open
+  const FM_BASE = {ftype: 1, cutoff: 20000, res: 0, drive: 0, kt: 0, fenv: 0, fvel: 0, bass: 0, lq: 0, aA: .002, aD: .05, aS: 1, aR: .05,
+    ampVel: 0, fmAmp: 0, analog: 0, spread: .15, level: 1};
   const SRC = ['lfo1', 'lfo2', 'fenv', 'menv', 'vel', 'key', 'mw', 'rnd', 'aenv'];
   // §9.2: + fmbright, op1..op6 (FM6, WP7). Unknown ids are dropped on load.
   const DST = ['pitch', 'o2pitch', 'cutoff', 'res', 'drive', 'pw', 'o1lvl', 'o2lvl', 'o3lvl', 'noise', 'amp', 'pan', 'unidet', 'fenv',
@@ -4495,7 +4994,9 @@ const RecHelpers = (() => {
   function normSynthP(p, engine) {
     p = p && typeof p === 'object' ? p : {};
     const flat = engine === 'fm6' && Array.isArray(p.ops) && !p.fm6 ? {} : p;      // an FM6 record that is only {alg, fb, ops}
-    const o = normAnalog(flat);
+    // WP7 (§6.2): an FM record without flat keys ({alg, fb, ops} or {fm6}: factory, .syx) starts from FM_BASE
+    const bare = engine === 'fm6' && !('cutoff' in flat) && !('o1w' in flat) && !('level' in flat);
+    const o = normAnalog(bare ? Object.assign({}, FM_BASE, flat) : flat);
     if (p.wt || engine === 'wt') o.wt = normWt(p.wt);
     if (p.fm2 || engine === 'fm2') o.fm2 = normFm2(p.fm2);
     if (p.fm6 || engine === 'fm6') o.fm6 = normFm6(p.fm6 || (Array.isArray(p.ops) ? p : null));
@@ -4550,9 +5051,36 @@ const RecHelpers = (() => {
       p: synth ? normSynthP(o.p, engine) : normDrum(o.p),
       mods: synth ? normMods(o.mods) : [], fx: normFx(o.fx),
       origin: typeof o.origin === 'string' ? o.origin.slice(0, 48) : null, ct: num(o.ct, now()), mt: num(o.mt, now())};
-    if (o.common && typeof o.common === 'object') s.common = normCommon(o.common);     // FM6 records: accepted on input (§12.3.1)
+    // FM6 records: `common` is accepted on input and converted (§6.7, §12.3.1), never stored
+    if (engine === 'fm6' && o.common && typeof o.common === 'object') fm6Common(s, normCommon(o.common));
     const bus = normBus(o.bus); if (bus) s.bus = bus;
     if (typeof o.tip === 'string') s.tip = o.tip.slice(0, 400);
+    return engine === 'fm2' ? migrateFm2(s) : s;
+  }
+  // §6.7: a factory FM record's common block -> level = 10^(gain/20), glide / mode / poly, LFO 1 (wave sine/tri/square/saw ->
+  // shape 0/1/3/2, rate, fade = delay) plus the routes lfo1->pitch (amt = pitch/24) and lfo1->amp (amt = amp)
+  function fm6Common(s, c) {
+    const p = s.p, L = c.lfo, sh = {sine: 0, tri: 1, square: 3, saw: 2}[L.wave];
+    p.level = clamp(Math.pow(10, c.gain / 20), 0, 4); p.glide = c.glide; p.mode = c.mode; p.poly = c.poly;
+    p.l1shape = sh != null ? sh : 0; p.l1rate = clamp(L.rate, .01, 40); p.l1fade = clamp(L.delay, 0, 10); p.l1sync = 0;
+    const mods = s.mods.filter(m => !(m.src === 'lfo1' && (m.dst === 'pitch' || m.dst === 'amp')));
+    if (L.pitch > 0) mods.push({src: 'lfo1', dst: 'pitch', amt: clamp(L.pitch / 24, -1, 1)});
+    if (L.amp > 0) mods.push({src: 'lfo1', dst: 'amp', amt: clamp(L.amp, -1, 1)});
+    s.mods = mods.slice(0, 8);
+  }
+  // §6.7: legacy 2-operator FM (fm2, WP3–WP6) -> FM6: p.fm6 = FMH.fromV1(p.fm2), fmAmp 1 (the v2 ADSR keeps shaping the
+  // volume), every shared parameter kept, p.fm2 deleted; the level is matched to the v2 render by RMS (FM9; FM2_LEVEL is the
+  // factor for the v2 level .5, a user level scales with it). The spec's start value .3 * 10^(-12/20) = .075 measured 16 dB
+  // below the v2 render (fromV1 gives one full-level output at alg 1, 0.5/sqrt(2) per output); dirigent-test/wp7-fm9.mjs
+  // (the v2 demo's FM Arp, WP2 snapshot vs this build) calibrated it to .48
+  const FM2_LEVEL = .48;
+  function migrateFm2(s) {
+    if (!s || s.engine !== 'fm2') return s;
+    const H = G.FMH; if (!H) return s;
+    const p = s.p, f2 = normFm2(p.fm2);
+    p.fm6 = normFm6(H.fromV1(f2)); delete p.fm2;
+    p.fmAmp = 1; p.level = clamp(FM2_LEVEL * (num(p.level, .5) / .5), 0, 4);
+    s.engine = 'fm6';
     return s;
   }
   // factory record -> full Sound (what a track receives when the user picks a factory preset)
@@ -4897,7 +5425,7 @@ const RecHelpers = (() => {
   const SQStore = {APP, PROJECT_FORMAT, SOUNDS_FORMAT, uid, cleanName, uniqueName, canonical, fnv, soundHash, normalizeSound, soundFromFactory,
     migratePatchV2, migrateDrumsV2, migrateProject2to3, buildProjectFile, serializeProjectFile, buildSoundsFile, parseFile, packClipNotes, unpackClipNotes,
     KV, Library, Autosave, requestPersist, fileName, ANALOG_RANGES: AN, MOD_SRC: SRC, MOD_DST: DST,
-    SYNTH_ENGINES, CATS, normFx, normMods, normWt, normFm2, normSynthP};
+    SYNTH_ENGINES, CATS, normFx, normMods, normWt, normFm2, normSynthP, normFm6, FM_BASE, migrateFm2, FM2_LEVEL};
   G.SQStore = SQStore;
 })(typeof window !== 'undefined' ? window : globalThis);
 </script>
@@ -5180,7 +5708,7 @@ const RecHelpers = (() => {
         OP(5, 60, [98, 70, 0, 40], [99, 0, 0, 0], {vs: 4, rs: 2})]},
       {gain: -10.2}, {rev: .4}),
     F('kristallglocke', 'Kristallglocke', 'glocke', 'bell', 'Glas-Glocke / Celesta-artig',
-      'Paar 2 ist ein hoher „Ping“ (4:1 Träger, 7,07:1 Modulator, schnell weg), darunter klingt ein weicher 1:3,5-Glockenton lang aus.',
+      'Paar 2 ist ein hoher „Ping“ (Ausgang 4:1, Modulator 7,07:1, schnell weg), darunter klingt ein weicher 1:3,5-Glockenton lang aus.',
       {alg: 5, fb: 3, ops: [
         OP(1, 97, [96, 36, 30, 40], [99, 40, 0, 0], {vs: 2, rs: 2}),
         OP(3, 70, [96, 45, 30, 40], [99, 30, 0, 0], {fine: 17, vs: 4, rs: 2}),
@@ -5190,7 +5718,7 @@ const RecHelpers = (() => {
         OP(1, 55, [80, 40, 30, 40], [99, 60, 0, 0], {vs: 1})]},
       {gain: -5.8}, {rev: .45, dly: .2}),
     F('marimba-holz', 'Marimba-Holz', 'glocke', 'arp', 'FM-Marimba',
-      'Holz = kurz und harmonisch: Modulator 3:1 nur 30 ms, Träger klingt in ~0,6 s aus. Ein zweiter Träger auf 4:1 gibt den hölzernen Oberton.',
+      'Holz = kurz und harmonisch: Modulator 3:1 nur 30 ms, der Ausgang klingt in ~0,6 s aus. Ein zweiter Ausgang auf 4:1 gibt den hölzernen Oberton.',
       {alg: 5, fb: 0, ops: [
         OP(1, 99, [96, 52, 40, 60], [99, 0, 0, 0], {vs: 2, rs: 3}),
         OP(3, 76, [99, 85, 40, 60], [99, 0, 0, 0], {vs: 4, rs: 3}),
@@ -5199,17 +5727,17 @@ const RecHelpers = (() => {
         OFF(), OFF()]},
       {gain: -4}, {rev: .3}),
     F('kalimba', 'Kalimba', 'glocke', 'arp', 'FM-Kalimba / Daumenklavier',
-      'Kurzer metallischer Anschlag (Modulator 8:1, 25 ms) über einem runden Ton, der ~1 s ausklingt. Ideal für Arpeggios mit Echo.',
+      'Metallischer Anschlag (Modulator 8:1, nach ~0,1 s verklungen) über einem runden Ton, der ~1 s ausklingt. Ideal für Arpeggios mit Echo.',
       {alg: 5, fb: 2, ops: [
         OP(1, 99, [96, 45, 35, 55], [99, 0, 0, 0], {vs: 2, rs: 2}),
-        OP(8, 66, [99, 86, 40, 55], [99, 0, 0, 0], {vs: 5, rs: 3}),
+        OP(8, 72, [99, 62, 40, 55], [99, 0, 0, 0], {vs: 5, rs: 3}),
         OP(3, 70, [99, 70, 40, 55], [99, 0, 0, 0], {vs: 3, rs: 3}),
         OP(1, 40, [99, 70, 40, 55], [99, 0, 0, 0]),
         OP(1, 80, [96, 50, 35, 55], [99, 0, 0, 0], {det: -3, vs: 2, rs: 2}),
         OP(5, 52, [99, 85, 40, 55], [99, 0, 0, 0], {vs: 4})]},
       {gain: -9.5}, {rev: .3, dly: .3}),
     F('fm-pluck', 'FM-Pluck', 'fm', 'arp', 'Kurzer glasiger FM-Pluck',
-      'Algorithmus 7 (zwei Modulatoren auf einen Träger): heller, kurzer Anschlag für Arps und Sequenzen.',
+      'Algorithmus 7 (zwei Modulatoren auf einen Ausgang): heller, kurzer Anschlag für Arps und Sequenzen.',
       {alg: 7, fb: 2, ops: [
         OP(1, 99, [99, 46, 33, 62], [99, 72, 0, 0], {vs: 2, rs: 2}),
         OP(4, 78, [99, 64, 45, 70], [99, 40, 0, 0], {vs: 6, rs: 3}),
@@ -5229,7 +5757,7 @@ const RecHelpers = (() => {
         OP(1, 62, [38, 25, 20, 36], [90, 80, 70, 0])]},
       {gain: -7, lfo: {wave: 'tri', rate: 4.5, delay: 1.5, pitch: .06, amp: 0}}, {chorus: {mode: 'ENS', mix: .5}, rev: .55, dly: .15}),
     F('fm-orgel', 'FM-Orgel', 'fm', 'keys', 'Zugriegel-Orgel mit Perkussion',
-      'Algorithmus 32 = sechs Träger nebeneinander, wie Zugriegel: 16′ 8′ 4′ 2⅔′ 2′ + ein 8′ mit Feedback (rauer). Op 4 (2⅔′) klingt schnell aus = Perkussion.',
+      'Algorithmus 32 = sechs Ausgänge nebeneinander, wie Zugriegel: 16′ 8′ 4′ 2⅔′ 2′ + ein 8′ mit Feedback (rauer). Op 4 (2⅔′) klingt schnell aus = Perkussion.',
       {alg: 32, fb: 4, ops: [
         OP(0, 84, [99, 99, 99, 85], [99, 99, 99, 0]),
         OP(1, 99, [99, 99, 99, 85], [99, 99, 99, 0]),
@@ -5239,7 +5767,7 @@ const RecHelpers = (() => {
         OP(1, 70, [99, 99, 99, 85], [99, 99, 99, 0], {det: 2})]},
       {gain: -15.7, lfo: {wave: 'sine', rate: 6.5, delay: 0, pitch: .03, amp: .1}}, {chorus: {mode: 'I+II', mix: .5}, rev: .25}),
     F('dx-brass', 'DX-Brass', 'fm', 'chord', 'FM-Blech der 80er',
-      'Algorithmus 22: ein Modulator mit Feedback (sägezahnartig) speist drei Träger. Der Modulator schwillt langsamer an als die Lautstärke = Blech wird erst laut, dann hell.',
+      'Algorithmus 22: ein Modulator mit Feedback (sägezahnartig) speist drei Ausgänge. Der Modulator schwillt langsamer an als die Lautstärke = Blech wird erst laut, dann hell.',
       {alg: 22, fb: 6, ops: [
         OP(1, 96, [60, 50, 60, 60], [99, 92, 90, 0], {det: 2, vs: 1}),
         OP(1, 80, [41, 36, 55, 60], [90, 82, 80, 0], {vs: 3}),
@@ -5349,6 +5877,8 @@ const RecHelpers = (() => {
      source(c, P, engine, note, vel, cvOut, o) -> {out, srcs, nodes, starts, oscs}      the oscillators of one voice
         analog: 3 oscillators (unison <= 3 on osc 1, mono), PW as a cached PeriodicWave in 5 % steps, sub, noise
         wt:     the v2 wavetable oscillators and scan weights (reads P.wt);  fm2: the v2 2-operator FM (reads P.fm2)
+        fm6:    (WP7, §6.4) DXN.voice (block 14) with the macros applied at note-on (Härte / Länge / Release as DX rate
+                offsets, Helligkeit as a modulator gain); returns .dx (its release) and .rt (DXN.releaseTime)
      tail(c, P, note, vel, srcOut, dest, cvOut, o) -> {nodes, srcs, vca, post, fenvSrc, fenvGain, ktGain, fA, fB, peak}
         drive (tanh WaveShaper only when drive > .02, oversample 'none'), level trim, Biquad LP/HP/BP with the ladder-matched
         Q in dB, filter envelope as cents on detune (x7200 fenv x velocity factor), keytrack from the pitch CV, a fake
@@ -5406,6 +5936,15 @@ const RecHelpers = (() => {
   }
   const peakFor = (P, vel) => (+P.level || 0) * (1 - P.ampVel + P.ampVel * vel);
 
+  // §6.2 macros at note-on (the native path has no live edits, §6.4): fmAtk on R1, fmDec on R2 / R3, fmRel on R4, clamped 0..99
+  function fm6Macro(P) {
+    const f = P.fm6, a = Math.round(+P.fmAtk || 0), d = Math.round(+P.fmDec || 0), r = Math.round(+P.fmRel || 0);
+    if (!a && !d && !r) return f;
+    const cl = x => Math.max(0, Math.min(99, x));
+    return Object.assign({}, f, {ops: f.ops.map(op => Object.assign({}, op, {r: [cl(op.r[0] + a), cl(op.r[1] + d), cl(op.r[2] + d), cl(op.r[3] + r)]}))});
+  }
+  // §6.3.8 / §6.4: an FM sound with an open filter skips the filter (gain exactly 1, like the worklet's bypass)
+  const fmBypass = (P, engine) => engine === 'fm6' && P.ftype <= 1 && P.cutoff >= 18000 && P.res <= .02 && P.fenv === 0 && P.drive <= .01;
   function source(c, P, engine, note, vel, cvOut, o) {
     o = o || {};
     const nodes = [], srcs = [], starts = [], oscs = [], f = mtof(note), t0 = o.t0 || 0, ny = c.sampleRate / 2 - 100;
@@ -5437,6 +5976,14 @@ const RecHelpers = (() => {
         x.connect(wg); wg.connect(mix);
       }
       mix.gain.value = .85;
+    } else if (engine === 'fm6' && G.DXN && P.fm6) {
+      // §6.4: the native FM voice; the DX sources are started by DXN.voice itself (no `starts` entries)
+      const fm = fm6Macro(P), n6 = note + (fm.trans | 0);
+      const dx = G.DXN.voice(c, fm, n6, vel, t0, mix, cvOut, {bright: +P.fmBright || 0});
+      srcs.push(...dx.srcs); nodes.push(...dx.nodes);
+      // AC coupling like the worklet's 5 Hz DC blocker: 1:1 FM pairs (E-pianos) carry DC (the J-1 sideband), heard as a thump
+      const hp = c.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 5; hp.Q.value = Math.SQRT1_2; nodes.push(hp); mix.connect(hp);
+      return {out: hp, srcs, nodes, starts, oscs, dx, rt: G.DXN.releaseTime(fm, n6, vel)};
     } else if (engine === 'fm2') {
       const fm = P.fm2 || {ratio: 2, index: 3, modDecay: .3, modSus: .2}, mf = f * fm.ratio, I = fm.index * mf;
       const mod = osc(3, mf), mg = G_(0), car = osc(3, f);
@@ -5469,7 +6016,7 @@ const RecHelpers = (() => {
     o = o || {};
     const nodes = [], srcs = [];
     const G_ = v => { const g = c.createGain(); g.gain.value = v; nodes.push(g); return g; };
-    const res = Math.min(+P.res || 0, 1.2), ft = P.ftype | 0, T = trimFor(P);
+    const res = Math.min(+P.res || 0, 1.2), ft = P.ftype | 0, byp = !!o.bypass, T = byp ? {shaped: false, drv: 1, trim: 1} : trimFor(P);
     const trim = G_(T.trim);
     let pre = srcOut;
     if (T.shaped) {      // like the ladder: full drv into the saturation, 1/sqrt(drv) after it
@@ -5492,20 +6039,24 @@ const RecHelpers = (() => {
     const ktGain = G_(P.kt); if (cvOut) cvOut.connect(ktGain);
     for (const F of fB ? [fA, fB] : [fA]) { fenvGain.connect(F.detune); ktGain.connect(F.detune); }
     // fake self-oscillation: a sine at the cutoff, following the same cents modulation, into the filter
-    if (res > .9 && ft <= 1) {
+    if (res > .9 && ft <= 1 && !byp) {
       const w = c.createOscillator(); w.frequency.value = base; fenvGain.connect(w.detune); ktGain.connect(w.detune); nodes.push(w); srcs.push(w);
       const wg = G_(Math.min(1, (res - .9) * 4) * .04); w.connect(wg); wg.connect(fB || fA);
     }
     const vca = G_(0), post = G_(1);
-    trim.connect(fA); if (fB) { fA.connect(fB); fB.connect(vca); } else fA.connect(vca);
+    if (byp) trim.connect(vca);                 // FM bypass: the filter nodes exist (LFO / envelope taps) but carry no audio
+    else { trim.connect(fA); if (fB) { fA.connect(fB); fB.connect(vca); } else fA.connect(vca); }
     vca.connect(post);
     let out = post;
-    if (o.pan && c.createStereoPanner) { const pn = c.createStereoPanner(); pn.pan.value = Math.max(-1, Math.min(1, o.pan)); nodes.push(pn); post.connect(pn); out = pn; }
+    // o.unity (WP7, FM6): the mono DX voice leaves stereo with the worklet's pan law (sqrt(1 -/+ pan): unity in the centre),
+    // so the native fallback is as loud as the worklet whether or not the track chain carries a stereo source
+    if ((o.pan || o.unity) && c.createStereoPanner) { const pn = c.createStereoPanner(); pn.pan.value = Math.max(-1, Math.min(1, o.pan || 0)); nodes.push(pn);
+      if (o.unity) { const k = G_(Math.SQRT2); post.connect(k); k.connect(pn); } else post.connect(pn); out = pn; }
     out.connect(dest);
     return {nodes, srcs, vca, post, fenvSrc: fe, fenvGain, ktGain, fA, fB, trim, shaped: T.shaped, peak: peakFor(P, vel), base};
   }
 
-  G.NativeVoice = {source, tail, pulseWave, qFor, fcFor, trimFor, peakFor, uniOff, mtof, RES, Q24, Q12};
+  G.NativeVoice = {source, tail, pulseWave, qFor, fcFor, trimFor, peakFor, uniOff, mtof, RES, Q24, Q12, fm6Macro, fmBypass};
 })(window);
 </script>
 <script>
@@ -5675,6 +6226,7 @@ const RecHelpers = (() => {
        E.on(id, note, vel, t, from) · E.off(id, t) · E.fastOff(id, t, tau) · E.retune(id, note, t, tau) · E.kill(id)
        E.cancelRetune(id) · E.allOff(t) · E.panic() · E.set(diff) · E.mods(list) · E.tempo(bpm, start, at) · E.scope(on)
        E.dispose(); E.onEnd(id), E.onScope(msg); E.load / E.nv (worklet reports, once per second); E.sent (params last sent)
+       E.fm6(patch) (WP7, §6.3: the FM6 operator block of the sound; also passed as processorOptions.fm6 at creation)
    Changes against host.js: renamed (AnalogHost -> SynthHost); loader timing (ms) recorded; an attempt that resolved after
    its guard timeout still counts (the probe decides); event 8 (cancel queued retunes), tempo `at`, scope, dispose guard,
    E.sent and E.proxies (the app's voice proxies of this engine). Note events are batched per task (queueMicrotask). */
@@ -5713,9 +6265,9 @@ const RecHelpers = (() => {
       });
     return H.promise;
   };
-  H.track = function (ctx, dest, patch, mods) {
+  H.track = function (ctx, dest, patch, mods, fm6) {
     const node = new AudioWorkletNode(ctx, 'dirigent-analog', {
-      numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2], processorOptions: {patch, mods: mods || []}});
+      numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2], processorOptions: fm6 ? {patch, mods: mods || [], fm6} : {patch, mods: mods || []}});
     node.connect(dest);
     const E = {node, q: [], load: 0, nv: 0, onEnd: null, onScope: null, flushQueued: false, dead: false, sent: Object.assign({}, patch), proxies: new Map()};
     node.port.onmessage = e => {
@@ -5738,6 +6290,7 @@ const RecHelpers = (() => {
     // queued note events first, then the params; xf: a whole sound -> the worklet fades sounding voices through the change
     E.set = (diff, xf) => { Object.assign(E.sent, diff); E.flush(); post(xf ? {set: diff, xf: true} : {set: diff}); };
     E.mods = list => { E.flush(); post({mods: list}); };
+    E.fm6 = patch => { E.flush(); post({fm6: patch}); };     // WP7: the FM operators (structured clone = a snapshot)
     E.tempo = (bpm, start, at) => post({tempo: at == null ? {bpm, start} : {bpm, start, at}});
     E.scope = on => post({scope: !!on});
     E.scopeDst = on => post({scopeDst: !!on});          // WP5 debug (MO47): {scope} also carries the focus voice's dst sums
@@ -6283,7 +6836,12 @@ const RecHelpers = (() => {
     opts = opts || {};
     const nodes = [], srcs = [];
     const acc = opts.accent || 0;
-    const tv = clamp(1 - P.dyn * (1 - vel) + acc * .3, 0, 1.3);               // timbre velocity
+    // timbre velocity. The accent's +.3 (tv) drives click, decay and, on pure tone voices (kicks), the pitch punch. The
+    // spectral shapers (FM index, tone / noise filter sweeps, and the pitch sweep of a tone mixed with noise / metal)
+    // stay on the played velocity (tv0): they move energy across the voice's filters and the peak by a random amount,
+    // which ate up to 3 dB of the accent on FM hats (T18: ≥ 3 dB at the peak); the accent's level gain then always holds
+    const tv0 = clamp(1 - P.dyn * (1 - vel), 0, 1), tv = clamp(tv0 + acc * .3, 0, 1.3);
+    const tvP = P.nLvl > .001 || P.mLvl > .001 || P.fmI > .001 ? tv0 : tv;
     const lvl = P.lvl * vel * vel;                                              // level: v^2 (~ -12 dB at v .5)
     const out = c.createGain(); out.gain.value = 1; nodes.push(out);
     // the accent's level (up to +4 dB) is applied AFTER the drive: a driven kick / snare gets louder, not only more saturated
@@ -6304,7 +6862,7 @@ const RecHelpers = (() => {
       const o1 = c.createOscillator(); nodes.push(o1); srcs.push(o1);
       if (P.wav === 'cos') o1.setPeriodicWave(COS(c)); else o1.type = P.wav || 'sine';
       o1.frequency.value = P.frq;
-      const pAmt = P.pAmt * (.55 + .45 * tv) * 100;                            // cents
+      const pAmt = P.pAmt * (.55 + .45 * tvP) * 100;                            // cents
       const pTau = Math.max(P.pDec, .002) / 3;                                  // pDec = time until 5 % of the sweep is left
       const sweep = osc => { if (pAmt > 1) { osc.detune.setValueAtTime(pAmt, t); osc.detune.setTargetAtTime(0, t, pTau); } };
       sweep(o1);
@@ -6312,7 +6870,7 @@ const RecHelpers = (() => {
       let tdst = out;
       if (P.tfTyp) {
         const tf = BQ(P.tfTyp, P.tfFrq, P.tfQ); tf.connect(out); tdst = tf;
-        if (P.tfEnv) { tf.detune.setValueAtTime(P.tfEnv * 1200 * (.5 + .5 * tv), t); tf.detune.setTargetAtTime(0, t, Math.max(P.pDec, .005) / 3); }
+        if (P.tfEnv) { tf.detune.setValueAtTime(P.tfEnv * 1200 * (.5 + .5 * tv0), t); tf.detune.setTargetAtTime(0, t, Math.max(P.pDec, .005) / 3); }
       }
       const g1 = Gn(0), e1 = ahd(g1.gain, t, lvl * P.tLvl, P.tAtk, P.tHld, P.tDec * decK, P.tCrv, P.tSpk);
       o1.connect(g1); g1.connect(tdst);
@@ -6321,7 +6879,7 @@ const RecHelpers = (() => {
         const o2 = c.createOscillator(); nodes.push(o2); srcs.push(o2);
         o2.type = P.o2w || 'sine'; o2.frequency.value = P.frq * P.o2r; sweep(o2);
         if (P.fmI > .001) {                                                     // 2-op FM: deviation (Hz) = index * modulator freq
-          const fm = Gn(0), I = P.fmI * (.5 + .5 * tv) * P.frq * P.o2r;         // detune scales carrier freq AND deviation: index stays constant during the sweep
+          const fm = Gn(0), I = P.fmI * (.5 + .5 * tv0) * P.frq * P.o2r;         // detune scales carrier freq AND deviation: index stays constant during the sweep
           fm.gain.setValueAtTime(I, t); fm.gain.setTargetAtTime(I * .02, t, Math.max(P.fmDec, .002) / 3);
           o2.connect(fm); fm.connect(o1.frequency);
         }
@@ -6335,9 +6893,9 @@ const RecHelpers = (() => {
     if (P.nLvl > .001) {
       const s = c.createBufferSource(); s.buffer = P.nCol ? B.pink : B.white; s.loop = true; nodes.push(s); srcs.push(s);
       const f = BQ(P.nTyp || 'bandpass', P.nFrq, P.nQ);
-      const oct = (P.nEnv || 0) + (tv - 1) * P.dyn * .8;                       // soft hits are darker
+      const oct = (P.nEnv || 0) + (tv0 - 1) * P.dyn * .8;                      // soft hits are darker
       f.detune.setValueAtTime(oct * 1200, t);
-      if (P.nEnv) f.detune.setTargetAtTime((tv - 1) * P.dyn * 960, t, Math.max(P.nEnvDec, .002) / 3);
+      if (P.nEnv) f.detune.setTargetAtTime((tv0 - 1) * P.dyn * 960, t, Math.max(P.nEnvDec, .002) / 3);
       let chain = f;
       if (P.nHp > 20) { const h2 = BQ('highpass', P.nHp, .7); f.connect(h2); chain = h2; }
       const g = Gn(0), pk = lvl * P.nLvl * (P.nTyp === 'bandpass' ? 1 + .6 * Math.sqrt(P.nQ) : 1);   // band-pass makeup
@@ -6538,6 +7096,247 @@ const RecHelpers = (() => {
   }
   G.DrumKits = {SLOTS, KITS, kitVoices};
 })(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+/* ===== §1.1 block 14: DXN + FMH + algorithm SVG — embedded from scratchpad/fmresearch/proto/dx6-native.js, dx6-presets.js
+   (FMH only: the ROM presets of that file are test fixtures and are NOT shipped, §6.6) and algsvg.js (spec v2 §6.4, §6.5) =====
+   Changes against the research files (WP7): module.exports lines removed; the globals are also set on window;
+   DXN.ALGS carries fbSrc (the algorithm diagram draws the feedback loop from it); DXN.voice takes opt.bright (dB on the
+   modulators at note-on: the native form of the Helligkeit macro, §6.4); FMH gets ratioText / fixedHz helpers for the UI. */
+'use strict';
+// DX6 compatibility path: same patch format, native nodes only (no AudioWorklet), for hosts whose CSP blocks
+// blob:/data: worklet modules. Differences to the worklet: FM into OscillatorNode.frequency (linear through-zero FM,
+// identical to PM for a sine modulator, slightly different sideband weights for stacks), feedback = static
+// PeriodicWave (Kepler/Bessel series) instead of a per-sample loop. Envelopes follow the same msfa level maths and
+// use only setValueAtTime + setTargetAtTime (cancel-safe, the app's existing convention).
+const DXN = (() => {
+  const LEVEL_LUT = [0, 5, 9, 13, 17, 20, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 42, 43, 45, 46];
+  const VEL_TAB = [0, 70, 86, 97, 106, 114, 121, 126, 132, 138, 142, 148, 152, 156, 160, 163, 166, 170, 173, 174, 178, 181, 184, 186, 189, 190, 194, 196, 198, 200, 202, 205, 206, 209, 211, 214, 216, 218, 220, 222, 224, 225, 227, 229, 230, 232, 233, 235, 237, 238, 240, 241, 242, 243, 244, 246, 246, 248, 249, 250, 251, 252, 253, 254];
+  const EXP_SCALE = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 14, 16, 19, 23, 27, 33, 39, 47, 56, 66, 80, 94, 110, 126, 142, 158, 174, 190, 206, 222, 238, 250];
+  const DX_ALGS = ['13|12 34 45 56|66', '13|12 34 45 56|22', '14|12 23 45 56|66', '14|12 23 45 56|64', '135|12 34 56|66', '135|12 34 56|65',
+    '13|12 34 35 56|66', '13|12 34 35 56|44', '13|12 34 35 56|22', '14|12 23 45 46|33', '14|12 23 45 46|66', '13|12 34 35 36|22',
+    '13|12 34 35 36|66', '13|12 34 45 46|66', '13|12 34 45 46|22', '1|12 13 15 34 56|66', '1|12 13 15 34 56|22', '1|12 13 14 45 56|33',
+    '145|12 23 46 56|66', '124|13 23 45 46|33', '1245|13 23 46 56|33', '1345|12 36 46 56|66', '1245|23 46 56|66', '12345|36 46 56|66',
+    '12345|46 56|66', '124|23 45 46|66', '124|23 45 46|33', '136|12 34 45|55', '1235|34 56|66', '1236|34 45|55', '12345|56|66', '123456||66'];
+  const ALGS = DX_ALGS.map(s => { const [c, m, f] = s.split('|'); const car = [0, 0, 0, 0, 0, 0], mods = [[], [], [], [], [], []];
+    for (const ch of c) car[+ch - 1] = 1; for (const p of m.split(' ').filter(Boolean)) mods[+p[0] - 1].push(+p[1] - 1);
+    return {car, mods, fbDst: +f[0] - 1, fbSrc: +f[1] - 1, nCar: c.length}; });
+  const scaleOL = l => (l >= 20 ? 28 + l : LEVEL_LUT[Math.max(0, l | 0)]);
+  const scaleVel = (v, s) => ((s * (VEL_TAB[v >> 1] - 239) + 7) >> 3) << 4;
+  const scaleRate = (n, s) => (s * Math.min(31, Math.max(0, ((n / 3) | 0) - 7))) >> 3;
+  const scaleCurve = (g, d, c) => { const s = (c === 0 || c === 3) ? (g * d * 329) >> 12 : (EXP_SCALE[Math.min(g, 32)] * d * 329) >> 15; return c < 2 ? -s : s; };
+  const scaleLevel = (n, ks) => { if (!ks) return 0; const o = n - ks.bp - 17; return o >= 0 ? scaleCurve(((o + 1) / 3) | 0, ks.rd, ks.rc) : scaleCurve((-(o - 1) / 3) | 0, ks.ld, ks.lc); };
+  const LVL_PER_SEC = q => (4 + (q & 3)) * Math.pow(2, (q >> 2) - 8) * (44100 / 64);
+  const amp = l => Math.pow(2, l / 256 - 14);                  // level units -> gain (2.0 at the top = 4*pi rad for a modulator)
+
+  // Kepler/Bessel: steady state of y = sin(phi + beta*y) is  sum_n 2/(n*beta) * J_n(n*beta) * sin(n*phi)  (valid for beta < 1)
+  function besselJ(n, x) { let s = 0; const M = 96; for (let i = 0; i < M; i++) { const t = (i + .5) * Math.PI / M; s += Math.cos(n * t - x * Math.sin(t)); } return s / M; }
+  // numeric version (works for any beta, includes the DX7 2-sample averaging): simulate 1024 samples/period, take the last period
+  // WP7: 8 periods instead of 40 (with the 2-sample average the loop settles within 2-3 periods: identical harmonics for
+  // every beta of the 1/16 grid) and the analysis from sin/cos tables: about 0.6 ms instead of 4 ms per new wave. The wave
+  // is built at note time on the main thread, so a slow build made the first note of a feedback sound start late.
+  const FB_N = 1024, FB_S = new Float64Array(FB_N), FB_C = new Float64Array(FB_N);
+  for (let i = 0; i < FB_N; i++) { FB_S[i] = Math.sin(2 * Math.PI * i / FB_N); FB_C[i] = Math.cos(2 * Math.PI * i / FB_N); }
+  function fbHarmonics(beta, H) {
+    const N = FB_N, b = new Float64Array(2 * H + 2); let y0 = 0, y1 = 0; const per = new Float64Array(N);
+    for (let p = 0; p < 8; p++) for (let i = 0; i < N; i++) { const y = Math.sin(2 * Math.PI * i / N + beta * (y0 + y1) / 2); y0 = y1; y1 = y; if (p === 7) per[i] = y; }
+    for (let n = 1; n <= H; n++) { let a = 0, c = 0, k = 0; for (let i = 0; i < N; i++) { a += per[i] * FB_S[k]; c += per[i] * FB_C[k]; k += n; if (k >= N) k -= N; } b[n] = 2 * a / N; b[n + H + 1] = 2 * c / N; }
+    return b;
+  }
+  const WAVES = new Map();
+  // form 'car': the waveform itself (PM output);  form 'mod': its time derivative / (2*pi*f)  -> FM input that equals PM
+  function opWave(ctx, beta, form) {
+    const key = form + Math.round(beta * 16); if (WAVES.has(key)) return WAVES.get(key);
+    const H = 48, re = new Float32Array(H + 1), im = new Float32Array(H + 1);
+    if (beta <= 1e-3) { if (form === 'mod') re[1] = 1; else im[1] = 1; }
+    else { const h = fbHarmonics(Math.round(beta * 16) / 16, H);
+      for (let n = 1; n <= H; n++) { const sn = h[n], cs = h[n + H + 1];        // y = sum sn*sin + cs*cos
+        if (form === 'mod') { re[n] = n * sn; im[n] = -n * cs; } else { im[n] = sn; re[n] = cs; } } }
+    const w = ctx.createPeriodicWave(re, im, {disableNormalization: true}); WAVES.set(key, w); return w;
+  }
+
+  // envelope -> list of {t, set|target} events (absolute level units), evaluated analytically for live release
+  function envPlan(op, outLvl, rsd, t0, fromLvl, stages) {
+    const ev = []; let t = t0, l = fromLvl;
+    for (const ix of stages) {
+      const tgt = Math.max(16, ((scaleOL(op.l[ix]) >> 1) << 6) + outLvl - 4256);
+      const R = LVL_PER_SEC(Math.min(63, ((op.r[ix] * 41) >> 6) + rsd));
+      if (tgt > l) {                                            // rising: msfa approaches 17 doublings in integer bands
+        if (l < 1716) l = 1716;
+        let x = l; while (x < tgt) { const band = Math.floor(x / 256), nx = Math.min(tgt, (band + 1) * 256), dt = Math.max((nx - x) / ((17 - band) * R), .0002);
+          ev.push({t, kind: 'rise', a: x, b: nx, dur: dt}); t += dt; x = nx; }
+      } else if (tgt < l) { const dt = (l - tgt) / R; ev.push({t, kind: 'fall', a: l, b: tgt, dur: dt}); t += dt; }
+      l = tgt;
+    }
+    return {ev, end: t, last: l};
+  }
+  function levelAt(plan, t, l0) {
+    let l = l0;
+    for (const e of plan.ev) { if (t < e.t) return l; if (t >= e.t + e.dur) { l = e.b; continue; }
+      const x = (t - e.t) / e.dur;
+      if (e.kind === 'fall') return e.a + (e.b - e.a) * x;
+      const A = amp(e.a), B = amp(e.b), v = A + (B - A) * (1 - Math.exp(-x / 3)) / (1 - Math.exp(-1 / 3)); return 256 * (Math.log2(v) + 14); }
+    return l;
+  }
+  function schedule(p, plan, scale) {                           // only setValueAtTime / setTargetAtTime
+    for (const e of plan.ev) {
+      const A = amp(e.a) * scale, B = amp(e.b) * scale;
+      p.setValueAtTime(A, e.t);
+      if (e.kind === 'fall') { p.setTargetAtTime(0, e.t, e.dur / Math.log(A / B)); }      // linear-in-dB decay, exact
+      else { p.setTargetAtTime(A + (B - A) / (1 - Math.exp(-1 / 3)), e.t, e.dur * 3); }       // ~linear within one 6 dB band
+      p.setValueAtTime(B, e.t + e.dur);
+    }
+  }
+
+  // build one voice; returns {release(t), stop(t), srcs, nodes}
+  function voice(ctx, P, note, vel, t0, dest, cvOut, opt = {}) {
+    const alg = ALGS[(P.alg | 0) - 1] || ALGS[0], hz = 440 * Math.pow(2, (note - 69) / 12), lf = Math.log2(hz);
+    const v127 = Math.max(1, Math.min(127, Math.round(vel * 127))), outScale = 0.5 / Math.sqrt(alg.nCar);
+    const bright = opt.bright ? Math.pow(10, opt.bright / 20) : 1;          // WP7: Helligkeit (dB on the modulators) at note-on
+    const ops = [], srcs = [], nodes = [];
+    for (let k = 0; k < 6; k++) {
+      const op = P.ops[k]; if (op.on === 0 || !(op.ol > 0)) { ops.push(null); continue; }
+      const outLvl = Math.max(0, (Math.min(127, scaleOL(op.ol) + scaleLevel(note, op.ks)) << 5) + scaleVel(v127, op.vs | 0));
+      const rsd = scaleRate(note, op.rs | 0);
+      let f;
+      if (op.fixed) f = Math.pow(10, (op.coarse & 3) + op.fine / 100);
+      else f = hz * (op.coarse || .5) * (1 + (op.fine || 0) / 100) * Math.pow(2, (op.det || 0) * 0.0209 * Math.exp(-0.396 * lf) / 7 * lf);
+      if (f > ctx.sampleRate * .45) { ops.push(null); continue; }  // Nyquist guard
+      const o = ctx.createOscillator(); o.frequency.value = f;
+      let beta = 0;
+      const plan = envPlan(op, outLvl, rsd, t0, 0, [0, 1, 2]);
+      if (k === alg.fbDst && P.fb > 0) {                            // static feedback timbre: op level 300 ms into the note ("body")
+        beta = Math.min(2 * Math.PI * amp(levelAt(plan, t0 + (opt.fbAt ?? .3), 0)) * Math.pow(2, P.fb - 8), 3.2);
+      }
+      const form = alg.car[k] ? 'car' : (opt.sineMod ? 'car' : 'mod');
+      if (beta > 0 || form === 'mod') o.setPeriodicWave(opWave(ctx, beta, form));
+      if (!op.fixed && cvOut) cvOut.connect(o.detune);
+      const g = ctx.createGain(); g.gain.value = 0; o.connect(g);
+      // FM input must be d/dt of the PM output: A*y'(theta)*2*pi*(f + delta(t)). Plain modulator (delta = 0): fold
+      // 2*pi*f into the envelope gain. Middle of a stack: env gain * 2*pi, then a GainNode "mul" whose gain = f + delta(t).
+      const mid = !alg.car[k] && alg.mods[k].length > 0 && !opt.noMul;
+      const scale = alg.car[k] ? outScale : (mid ? 2 * Math.PI : 2 * Math.PI * f) * bright;
+      schedule(g.gain, plan, scale);
+      const X = {o, g, op, outLvl, rsd, plan, scale, f, out: g, mul: null};
+      if (mid) { X.mul = ctx.createGain(); X.mul.gain.value = f; g.connect(X.mul); X.out = X.mul; nodes.push(X.mul); }
+      ops.push(X); srcs.push(o); nodes.push(o, g);
+    }
+    for (let k = 0; k < 6; k++) { const X = ops[k]; if (!X) continue;
+      if (alg.car[k]) X.g.connect(dest);
+      for (const m of alg.mods[k]) if (ops[m]) { ops[m].out.connect(X.o.frequency); if (X.mul) ops[m].out.connect(X.mul.gain); } }
+    for (const s of srcs) s.start(t0);
+    let end = Infinity;
+    return {srcs, nodes,
+      release(t) {
+        end = t;
+        for (const X of ops) { if (!X) continue;
+          const l = levelAt(X.plan, t, 0), p = X.g.gain;
+          p.cancelScheduledValues(t); p.setValueAtTime(amp(l) * X.scale, t);
+          const rp = envPlan(X.op, X.outLvl, X.rsd, t, l, [3]); schedule(p, rp, X.scale); X.rel = rp;
+          if (alg.car[ops.indexOf(X)]) end = Math.max(end, rp.end); }
+        for (const s of srcs) s.stop(end + .05);
+        return end;
+      }};
+  }
+  // seconds from key-off until every carrier is silent (or at L4), worst case = release from the loudest stage.
+  // Used for stopAt / cleanup and as the vca release so the gate never cuts the DX release tail.
+  function releaseTime(P, note, vel) {
+    const alg = ALGS[(P.alg | 0) - 1] || ALGS[0], v127 = Math.max(1, Math.min(127, Math.round(vel * 127))); let T = .01;
+    for (let k = 0; k < 6; k++) { const op = P.ops[k]; if (!alg.car[k] || op.on === 0 || !(op.ol > 0)) continue;
+      const outLvl = Math.max(0, (Math.min(127, scaleOL(op.ol) + scaleLevel(note, op.ks)) << 5) + scaleVel(v127, op.vs | 0));
+      const top = Math.max(...[0, 1, 2].map(i => Math.max(16, ((scaleOL(op.l[i]) >> 1) << 6) + outLvl - 4256)));
+      const l4 = Math.max(16, ((scaleOL(op.l[3]) >> 1) << 6) + outLvl - 4256), R = LVL_PER_SEC(Math.min(63, ((op.r[3] * 41) >> 6) + scaleRate(note, op.rs | 0)));
+      T = Math.max(T, (top - Math.max(l4, top - 2550)) / R); }                 // until -60 dB below the loudest stage (2550 units)
+    return Math.min(T, 12);
+  }
+  return {voice, releaseTime, opWave, fbHarmonics, ALGS, DX_ALGS, besselJ, envPlan, levelAt};
+})();
+
+// ---------- FMH: UI helpers (same maths as the worklet; from dx6-presets.js, without its ROM presets) ----------
+const FMH = (() => {
+  const OP = (coarse, ol, r, l, x = {}) => Object.assign({on: 1, fixed: 0, coarse, fine: 0, det: 0, ol, r, l, vs: 0, rs: 0}, x);
+  const LEVEL_LUT = [0, 5, 9, 13, 17, 20, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 42, 43, 45, 46];
+  const scaleOL = l => (l >= 20 ? 28 + l : LEVEL_LUT[Math.max(0, l | 0)]);
+  const LVL_PER_SEC = q => (4 + (q & 3)) * Math.pow(2, (q >> 2) - 8) * (44100 / 64);
+  const lvlOf = (L, ol) => Math.max(16, ((scaleOL(L) >> 1) << 6) + (scaleOL(ol) << 5) - 4256);   // velocity/scaling neutral
+  const scaleRate = (n, s) => (s * Math.min(31, Math.max(0, ((n / 3) | 0) - 7))) >> 3;
+  function segTime(r, from, to, rsd = 0) {             // seconds for one stage, levels in internal units
+    const R = LVL_PER_SEC(Math.min(63, ((r * 41) >> 6) + rsd));
+    if (to < from) return (from - to) / R;
+    let t = 0, x = Math.max(from, 1716); while (x < to) { const b = Math.floor(x / 256), nx = Math.min(to, (b + 1) * 256); t += (nx - x) / ((17 - b) * R); x = nx; } return t;
+  }
+  // times of the 4 stages for display under the envelope graph ("A 4 ms · D1 320 ms · D2 2,1 s · R 450 ms")
+  function envTimes(op, note = 60) {
+    const lv = op.l.map(L => lvlOf(L, op.ol)), rsd = scaleRate(note, op.rs | 0);
+    const prev = [lvlOf(op.l[3], op.ol), lv[0], lv[1], Math.max(lv[1], lv[2])];   // release shown from the body level
+    return op.r.map((r, i) => segTime(r, prev[i], lv[i], rsd));
+  }
+  // inverse for drag-to-time: the rate 0..99 whose stage time is closest (in log time) to `sec`
+  function rateForTime(op, stage, sec, note = 60) {
+    const lv = op.l.map(L => lvlOf(L, op.ol)), from = stage === 0 ? lvlOf(op.l[3], op.ol) : stage === 3 ? Math.max(lv[1], lv[2]) : lv[stage - 1];
+    const rsd = scaleRate(note, op.rs | 0); let best = 0, bd = Infinity;
+    for (let r = 0; r <= 99; r++) { const t = segTime(r, from, lv[stage], rsd); const d = Math.abs(Math.log((t + 1e-4) / (sec + 1e-4))); if (d < bd) { bd = d; best = r; } }
+    return best;
+  }
+  // what a modulator's level means: peak modulation index in radians (4*pi at OL 99/L 99)
+  const modIndex = ol => 2 * Math.PI * Math.pow(2, (((scaleOL(ol) << 5) + 4032 - 4256) / 256) - 14);
+  const olForIndex = I => { let best = 0, bd = Infinity; for (let o = 0; o <= 99; o++) { const d = Math.abs(Math.log(modIndex(o) + 1e-6) - Math.log(I + 1e-6)); if (d < bd) { bd = d; best = o; } } return best; };
+  const ratioOf = op => op.fixed ? Math.pow(10, (op.coarse & 3) + op.fine / 100) : (op.coarse || .5) * (1 + op.fine / 100);
+  // v1 2-op patch {ratio, index, modDecay, modSus} -> fm6 (alg 1, OP1 carrier, OP2 modulator, rest off)
+  function fromV1(fm) {
+    const off = OP(1, 0, [99, 99, 99, 99], [0, 0, 0, 0]);
+    const car = OP(1, 99, [99, 99, 99, 70], [99, 99, 99, 0]);
+    const r = fm.ratio, coarse = r < 1 ? 0 : Math.floor(r), fine = Math.round(((r / (coarse || .5)) - 1) * 100);
+    const L2 = Math.max(0, Math.min(99, Math.round(99 + 20 * Math.log10(Math.max(fm.modSus, 1e-3)) / 0.75)));   // 0.75 dB per level step
+    const mod = OP(coarse, olForIndex(fm.index), [99, 50, 99, 70], [99, L2, 0, 0], {fine: Math.min(99, Math.max(0, fine))});
+    mod.l[2] = mod.l[1]; mod.r[1] = rateForTime(mod, 1, fm.modDecay);
+    return {alg: 1, fb: 0, trans: 0, ops: [car, mod, off, Object.assign({}, off), Object.assign({}, off), Object.assign({}, off)]};
+  }
+  // WP7 (UI): an output operator's level in dB ((ol − 99) · 0.75, Anhang A.2) and the fixed frequency of FEST
+  const outDb = ol => (ol - 99) * .75;
+  return {envTimes, rateForTime, modIndex, olForIndex, ratioOf, fromV1, segTime, lvlOf, outDb, scaleOL};
+})();
+
+// ---------- algorithm diagram (algsvg.js): carriers bottom row, modulators stacked above their targets ----------
+function algLayout(alg) {               // alg = {car[6], mods[6][], fbDst, fbSrc}  (0-based ops)
+  const tg = [[], [], [], [], [], []];
+  alg.mods.forEach((ms, k) => ms.forEach(m => tg[m].push(k)));
+  const row = [], col = [];
+  for (let k = 0; k < 6; k++) row[k] = alg.car[k] ? 0 : 1 + Math.max(...tg[k].map(t => row[t]));
+  let next = 0;
+  const place = k => {
+    const kids = alg.mods[k].filter(m => Math.min(...tg[m]) === k).sort((a, b) => a - b);
+    if (!kids.length) return (col[k] = next++);
+    const cs = kids.map(place); return (col[k] = (cs[0] + cs[cs.length - 1]) / 2);
+  };
+  for (let k = 0; k < 6; k++) if (alg.car[k]) place(k);
+  for (let k = 5; k >= 0; k--) if (tg[k].length > 1) col[k] = tg[k].reduce((s, t) => s + col[t], 0) / tg[k].length;
+  return {row, col, tg, cols: next, rows: 1 + Math.max(...row)};
+}
+function algSvg(alg, o = {}) {
+  const L = algLayout(alg), B = o.box || 30, GX = o.gx || 14, GY = o.gy || 16, PAD = 10;
+  const W = L.cols * B + (L.cols - 1) * GX + 2 * PAD + 10, H = L.rows * B + (L.rows - 1) * GY + 2 * PAD + 14;
+  const x = k => PAD + L.col[k] * (B + GX), y = k => PAD + (L.rows - 1 - L.row[k]) * (B + GY);
+  let s = '';
+  for (let k = 0; k < 6; k++) for (const m of alg.mods[k]) {                 // modulator bottom -> target top
+    const x1 = x(m) + B / 2, y1 = y(m) + B, x2 = x(k) + B / 2, y2 = y(k), ym = y2 - GY / 2;
+    s += `<path class="w" d="M${x1} ${y1}V${ym}H${x2}V${y2}"/>`;
+  }
+  const cars = [0, 1, 2, 3, 4, 5].filter(k => alg.car[k]), yb = H - PAD - 4;   // output bus
+  s += `<path class="w" d="M${x(cars[0]) + B / 2} ${yb}H${x(cars[cars.length - 1]) + B / 2}"/>`;
+  for (const k of cars) s += `<path class="w" d="M${x(k) + B / 2} ${y(k) + B}V${yb}"/>`;
+  if (o.fb !== 0) {                                                            // feedback loop: src right side -> dst top
+    const d = alg.fbDst, sc = alg.fbSrc, xr = Math.max(x(d), x(sc)) + B + 5;
+    s += `<path class="fb" d="M${x(sc) + B} ${y(sc) + B / 2}H${xr}V${y(d) - 5}H${x(d) + B / 2}V${y(d)}"${o.fbW ? ` style="stroke-width:${o.fbW}"` : ''}/>`;
+  }
+  for (let k = 0; k < 6; k++) {
+    const sel = o.sel === k ? ' sel' : '', off = o.levels && !(o.levels[k] > 0) ? ' off' : '';
+    s += `<g class="op${alg.car[k] ? ' car' : ''}${sel}${off}" data-op="${k}"><rect x="${x(k)}" y="${y(k)}" width="${B}" height="${B}" rx="${o.rx != null ? o.rx : 6}"/>` +
+      (o.noText ? '' : `<text x="${x(k) + B / 2}" y="${y(k) + B / 2 + (o.ty != null ? o.ty : 5)}">${k + 1}</text>`) + `</g>`;
+  }
+  return `<svg class="alg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}"${o.fit ? ' preserveAspectRatio="xMidYMid meet"' : ''}>${s}</svg>`;
+}
+window.DXN = DXN; window.FMH = FMH; window.algLayout = algLayout; window.algSvg = algSvg;
 </script>
 <script>
 /* ===== §1.1 block 15: App (SYNQUENZER, formerly DIRIGENT) ===== */
@@ -6816,9 +7615,9 @@ const SQF = window.SQ_FACTORY || {ANALOG: [], FM6: [], KITS: [], PREVIEW: {}, PR
   const fx = SQF.KIT_FIX || {}, NK = SQF.NEW_KITS || {};
   for (const n in fx) { const K = (window.DrumKits && DrumKits.KITS[n]) || NK[n]; if (!K) continue; for (const id in fx[n]) K[id] = Object.assign({}, K[id] || {}, fx[n][id]); }
 })();
-// the factory sounds of this build: 30 analog (WP3) + 4 WT (WP3) in FACTORY (the synth browser); FM6 follows in WP7.
-// WP6 (§7.6, §11.1): the 7 drum kits in DRUM_FACTORY (the kit browser); FACTORY_BY_ID knows both
-const FACTORY = SQF.ANALOG.concat(WT_FACTORY);
+// the factory sounds of this build: 30 analog (WP3), 12 FM6 (WP7, §6.7, Anhang B.2) and 4 WT (WP3) in FACTORY (the synth
+// browser, in the category order of §11.1). WP6 (§7.6, §11.1): the 7 drum kits in DRUM_FACTORY; FACTORY_BY_ID knows both
+const FACTORY = SQF.ANALOG.concat(SQF.FM6 || [], WT_FACTORY);
 const DRUM_FACTORY = (SQF.KITS || []).map(k => Object.assign({}, k, {base: k.base || k.name, demo: 'drums', ref: KIT_REF[k.name] || 'Drum-Kit', fx: k.fx || {drive: 0, rev: .08, dly: 0, vol: .85, pan: 0}}));
 const FACTORY_BY_ID = new Map(FACTORY.concat(DRUM_FACTORY).map(f => [f.id, f]));
 const FCACHE = new Map();
@@ -6852,7 +7651,7 @@ function factorySound(id) {
 }
 // browser categories (§11.1/11.2): chip label (P), column label (L)
 const BCATS = [['alle', 'Alle', 'Alle'], ['bass', 'Bass', 'Bass'], ['lead', 'Lead', 'Lead'], ['poly', 'Poly', 'Poly & Brass'], ['flaeche', 'Fläche', 'Fläche'],
-  ['pluck', 'Pluck', 'Pluck & Keys'], ['sequenz', 'Seq', 'Sequenz'], ['wt', 'WT', 'WT (klassisch)'], ['eigene', 'Eigene', 'Eigene']];
+  ['pluck', 'Pluck', 'Pluck & Keys'], ['sequenz', 'Seq', 'Sequenz'], ['fm', 'FM', 'FM'], ['glocke', 'Glocken', 'Glocken'], ['wt', 'WT', 'WT (klassisch)'], ['eigene', 'Eigene', 'Eigene']];
 const DCATS = [['kits', 'Kits', 'Kits'], ['ekits', 'Eigene', 'Eigene Kits']];                 // §11.2: the drum track's browser
 const CAT_LABEL = Object.fromEntries(BCATS.map(c => [c[0], c[2]]));
 // GM program of a track in the MIDI export, by the category of its sound (§17 WP3)
@@ -6860,10 +7659,12 @@ const GM_PROGRAM = {bass: 38, lead: 81, poly: 62, flaeche: 89, pluck: 45, sequen
 // v2 preset names (old API / tests) -> the factory sound that takes their place
 const OLD_PRESETS = {Bass: 'f-moog-bass', Pluck: 'f-pop-pluck', Pad: 'f-juno-pad', Lead: 'f-mini-lead', Brass: 'f-ob-brass', Glocke: 'f-wt-glas', Acid: 'f-acid-303', Arp: 'f-glas-pluck'};
 const PRESET_NAMES = Object.keys(OLD_PRESETS);
-// engines: API / UI name <-> stored Sound.engine (WP3: FM = the legacy 2-operator engine 'fm2'; WP7: 'fm6')
-const ENG_OF = {va: 'analog', fm: 'fm2', wt: 'wt'}, ENG_API = {analog: 'va', fm2: 'fm', fm6: 'fm', wt: 'wt'};
+// engines: API / UI name <-> stored Sound.engine (WP3–WP6: FM = the legacy 2-operator 'fm2'; WP7: FM = 'fm6', §6, §6.7)
+const ENG_OF = {va: 'analog', fm: 'fm6', wt: 'wt'}, ENG_API = {analog: 'va', fm2: 'fm', fm6: 'fm', wt: 'wt'};
 const ENGINE_LABEL = {va: 'VA', fm: 'FM', wt: 'WT', analog: 'VA', fm2: 'FM', fm6: 'FM', drum: 'KIT'};
 const FM2_DEF = () => ({ratio: 2, index: 3, modDecay: .3, modSus: .2}), WT_DEF = () => ({table: 'digital', pos: .3, scan: .3, scanTime: .8});
+// §5.2: the FM block a sound gets when it is switched to FM without one (the v1 default pair through FMH.fromV1)
+const FM6_DEF = () => SQStore.normFm6(FMH.fromV1(FM2_DEF()));
 
 /* flat patch descriptors (§5.1 binding table): label, range in engine units, knob law, default, display.
    Laws: lin, exp, pow (k), bip (centre detent), db (−40…+12 dB, norm 0 = −∞); vals = stepped / segment values. */
@@ -7021,8 +7822,8 @@ function normFxBus(b) {
   if (['kick', '1/4', '1/8'].includes(b.pumpSrc)) d.pumpSrc = b.pumpSrc;
   return d;
 }
-// §15.3: Synth 1 Moog-Bass (kbOct 2), Synth 2 Pop-Pluck, Synth 3 Rom-Fläche, Synth 4 Mini-Lead; drums: the Rom Pop kit (WP6)
-const DEFAULT_SOUNDS = ['f-moog-bass', 'f-pop-pluck', 'f-rom-flaeche', 'f-mini-lead'], DEFAULT_KIT = 'f-kit-rom-pop';
+// §15.3: Synth 1 Moog-Bass (kbOct 2), Synth 2 FM-Pluck (FM6, from WP7), Synth 3 Rom-Fläche, Synth 4 Mini-Lead; drums: Rom Pop (WP6)
+const DEFAULT_SOUNDS = ['f-moog-bass', 'f-fm-pluck', 'f-rom-flaeche', 'f-mini-lead'], DEFAULT_KIT = 'f-kit-rom-pop';
 function newSynthTrack(i, fid) {
   return {kind: 'synth', name: 'Synth ' + (i + 1), color: 't' + (i + 1), follow: true, onChange: 'follow', mute: false, kbOct: i === 0 ? 2 : 4,
     sound: factorySound(fid || DEFAULT_SOUNDS[i]), clips: [null, null, null, null]};
@@ -7696,7 +8497,7 @@ function wkFlat(snd) {
 const toEngineMods = mods => SQF.toEngineMods((mods || []).filter(m => !String(m.dst).startsWith('fx.')));
 const wkMods = snd => toEngineMods(snd.mods);
 function newEngine(dest, snd) {
-  const E = SynthHost.track(AU.ctx, dest, wkFlat(snd), wkMods(snd));
+  const E = SynthHost.track(AU.ctx, dest, wkFlat(snd), wkMods(snd), snd.engine === 'fm6' && snd.p.fm6 ? snd.p.fm6 : null);
   E.onEnd = id => { const v = E.proxies.get(id); if (v) wkVoiceDead(v); };
   E.tempo(S.bpm, R.playing ? R.startTime : null);
   return E;
@@ -7706,7 +8507,7 @@ function syncEngine(i, full) {
   const A = AU.tracks[i], tr = S.tracks[i]; if (!A || !tr || tr.kind !== 'synth') return;
   if (wkWanted(i)) {
     if (!AU.synth[i]) AU.synth[i] = newEngine(A.trackIn, tr.sound);
-    else if (full) { WKSET[i] = null; AU.synth[i].set(wkFlat(tr.sound), true); }
+    else if (full) { WKSET[i] = null; AU.synth[i].set(wkFlat(tr.sound), true); if (tr.sound.engine === 'fm6') wkFm6(i, true); }
   } else if (AU.synth[i]) retireEngine(i);
   rebuildNativeLfos(i);
 }
@@ -7745,6 +8546,19 @@ function wkSet(i, key, v) {
   if (!wkFlushT) { wkFlushT = 1; requestAnimationFrame(wkFlushAll); setTimeout(wkFlushAll, 40); }
 }
 function wkFlushAll() { wkFlushT = 0; for (let i = 0; i < 4; i++) wkFlush(i); }
+// §6.3.2 / §6.5: the FM operator block reaches the track's engine as one {fm6} message, at most 30 per second while a finger
+// edits (the worklet re-targets the running envelope stages of the sounding notes); now = at once (a whole sound, a note)
+const WKFM = [0, 0, 0, 0], WKFM_AT = [0, 0, 0, 0];
+function wkFm6(i, now) {
+  const send = () => {
+    WKFM[i] = 0; const E = AU.synth[i], snd = sndOf(i);
+    if (!E || E.dead || !snd || snd.engine !== 'fm6' || !snd.p.fm6) return;
+    E.fm6(UI.fmSolo && UI.fmSolo.t === i ? fmSoloPatch(snd.p.fm6, UI.fmSolo.k) : snd.p.fm6); WKFM_AT[i] = performance.now();
+  };
+  if (now) { clearTimeout(WKFM[i]); send(); return; }
+  if (WKFM[i]) return;
+  WKFM[i] = setTimeout(send, Math.max(0, 33 - (performance.now() - WKFM_AT[i])));
+}
 function wkFlush(i) {
   const d = WKSET[i]; if (!d) return;
   WKSET[i] = null;
@@ -7878,6 +8692,38 @@ const VoiceProto = {
     logNote({track: this.track, src: 'retune', clipNote: this.clipNote, out: newOut, time: t, dur: null, vel: this.vel});
   },
 };
+/* a native FM6 voice (§6.4): DXN operators -> the native filter / VCA chain. Key-off starts the DX release stage (once).
+   fmAmp 0: the VCA is a gate that stays open through the DX release (DXN.releaseTime) and then closes; fmAmp 1: the amp
+   ADSR releases as usual (it can cut the tail). A fast release (steal, stop) cuts through the VCA like any native voice. */
+const FmNatProto = Object.assign(Object.create(VoiceProto), {
+  release(t, fastTau) {
+    if (this.dead) return;
+    if (t < this.start) t = this.start;
+    if (!fastTau && t >= this.relT) return;
+    if (fastTau && t >= this.relT && this.relTau <= fastTau) return;
+    if (!this.dxRel && this.dx && !fastTau) { this.dxRel = true; try { this.dxEnd = this.dx.release(t); } catch (e) { this.dxEnd = t; } }
+    if (fastTau || this.P.fmAmp >= 1) {
+      this.gateEnd = null;
+      VoiceProto.release.call(this, t, fastTau);
+      if (this.dxRel && this.dxEnd + .06 < this.stopAt) { const st = this.dxEnd + .06; this.stopAt = st; for (const x of this.srcs) { try { x.stop(st); } catch (e) {} } }
+      return;
+    }
+    const end = Math.max(t + .005, Math.min(isFinite(this.dxEnd) ? this.dxEnd : t + this.dxRT, t + this.dxRT)), val = this.ampAt(t), p = this.vca.gain;
+    try { p.cancelScheduledValues(t); p.setValueAtTime(val, t); p.setValueAtTime(val, end); p.setTargetAtTime(0, end, .008); } catch (e) {}
+    const fv = this.fenvAt(t), ft = Math.max(this.fenv.r, .005) / 3, fp = this.fenvSrc.offset;
+    try { fp.cancelScheduledValues(t); fp.setValueAtTime(fv, t); fp.setTargetAtTime(0, t, ft); } catch (e) {}
+    this.fRelT = t; this.fRelV = fv; this.fRelTau = ft;
+    this.relT = t; this.relV = val; this.relTau = .008; this.gateEnd = end;
+    if (t < this.end) this.end = t;
+    if (R.playing) perfCut(this.perfAll, t2b(t));
+    const stopAt = end + .06;
+    if (stopAt < this.stopAt) { this.stopAt = stopAt; for (const x of this.srcs) { try { x.stop(stopAt); } catch (e) {} } }
+  },
+  ampAt(t) {
+    if (this.gateEnd != null && t >= this.relT) return t < this.gateEnd ? this.relV : this.relV * Math.exp(-(t - this.gateEnd) / .008);
+    return VoiceProto.ampAt.call(this, t);
+  },
+});
 function cleanupVoice(v) {
   if (v.dead) return;
   if (v.wk) { try { v.E.kill(v.id); } catch (e) {} wkVoiceDead(v); return; }   // GC safety net of a worklet proxy (D.1)
@@ -7953,7 +8799,7 @@ function spawnWkVoice(i, out, vel, t0, o, E, snd) {
     if (P.glide > 0 && gs.prevOuts && gs.prevOuts.length) { from = gs.prevOuts[0]; for (const x of gs.prevOuts) if (Math.abs(x - out) < Math.abs(from - out)) from = x; if (from === out) from = -1; }
     gs.grpOuts.push(out); gs.lastOut = out;
   }
-  if (E === AU.synth[i]) wkFlush(i);                   // pending knob values reach the engine before the note
+  if (E === AU.synth[i]) { wkFlush(i); if (WKFM[i]) wkFm6(i, true); }   // pending knob / operator values reach the engine before the note
   E.on(v.id, out, vel, t0, from);
   VOICES.push(v); E.proxies.set(v.id, v);
   if (o.src !== 'preview') { v.perf = perfAdd(i, out, t0, null, vel); if (v.perf) v.perfAll.push(v.perf); }
@@ -7968,7 +8814,7 @@ function voicePan(A, P) { if (!(P.spread > .01)) return 0; A.panIdx = ((A.panIdx
 function spawnVoice(i, out, vel, t0, o) {
   const c = AU.ctx, tr = S.tracks[i], A = AU.tracks[i];
   if (!c || !A || !tr || tr.kind !== 'synth') return null;
-  const snd = o.sound || tr.sound, P = snd.p, eng = snd.engine === 'fm6' ? 'analog' : snd.engine;   // fm6: WP7
+  const snd = o.sound || tr.sound, P = snd.p, eng = snd.engine === 'fm6' && !P.fm6 ? 'analog' : snd.engine;
   out = clamp(Math.round(out), 0, 127);
   // §5.4: VA (and FM6 from WP7) play through the track's worklet engine; a browser preview of another sound through its own
   // preview engine. The choice is made per note: until the module is ready (or when it is blocked) the native path plays.
@@ -7983,7 +8829,7 @@ function spawnVoice(i, out, vel, t0, o) {
   if (legatoHeld) for (const x of VOICES) if (x.track === i && !x.dead && !x.wk && x.src === o.src && x.P === P && x.start < t0 - 1e-4 && x.relT > t0 + 1e-4 && (!held || x.start > held.start)) held = x;
   makeRoom(i, t0, P);
   const nodes = [], srcs = [], starts = [];
-  const v = Object.create(VoiceProto);
+  const v = Object.create(eng === 'fm6' ? FmNatProto : VoiceProto);
   Object.assign(v, {id: ++VSEQ, track: i, src: o.src, clipNote: o.clipNote == null ? null : o.clipNote, clipKey: o.clipKey || null,
     out, baseOut: out, vel, start: t0, end: Infinity, dead: false, stolen: false, relT: Infinity, relV: 0, relTau: .1,
     fRelT: Infinity, fRelV: 0, fRelTau: .1, stopAt: Infinity, peak: 0, aenv: {a: P.aA, d: P.aD, s: P.aS, r: P.aR}, fenv: {a: P.fA, d: P.fD, s: P.fS, r: P.fR},
@@ -8004,9 +8850,12 @@ function spawnVoice(i, out, vel, t0, o) {
   // (o.chain: that sound's fx, LFO 1/2 and tremolo / pan routes) so it is heard as it will sound when loaded (§11.3)
   const N = o.chain || (!o.sound || o.sound === tr.sound ? A : null);
   if (N) { try { N.lfoPitch.connect(cv.offset); v.tapP = N.lfoPitch; } catch (e) {} }
-  const src = NativeVoice.source(c, P, eng, out, vel, cv.out, {t0, noise: AU.noise, waves: AU.waves});
+  const solo = eng === 'fm6' && UI.fmSolo && UI.fmSolo.t === i && snd === tr.sound;          // §6.5 [Solo] (monitor only)
+  const src = NativeVoice.source(c, solo ? Object.assign({}, P, {fm6: fmSoloPatch(P.fm6, UI.fmSolo.k)}) : P, eng, out, vel, cv.out, {t0, noise: AU.noise, waves: AU.waves});
   nodes.push(...src.nodes); srcs.push(...src.srcs); starts.push(...src.starts);
-  const tl = NativeVoice.tail(c, P, out, vel, src.out, o.chain ? o.chain.trackIn : A.trackIn, cv.out, {mkConst: constSrc, pan: voicePan(A, P)});
+  // §6.4: an FM voice's DX release (dx, rt); fmAmp 0 = the DX envelopes shape the volume, the VCA is a gate (fast attack)
+  if (eng === 'fm6') { v.dx = src.dx || null; v.dxRT = src.rt || .05; v.dxEnd = Infinity; if (!(P.fmAmp >= 1)) v.aenv = {a: .0012, d: .05, s: 1, r: Math.max(.05, v.dxRT)}; }
+  const tl = NativeVoice.tail(c, P, out, vel, src.out, o.chain ? o.chain.trackIn : A.trackIn, cv.out, {mkConst: constSrc, pan: voicePan(A, P), bypass: NativeVoice.fmBypass(P, eng), unity: eng === 'fm6'});
   nodes.push(...tl.nodes);
   for (const s of tl.srcs) { srcs.push(s); starts.push([s, 0]); }
   if (N) { try { N.lfoCut.connect(tl.fA.detune); if (tl.fB) N.lfoCut.connect(tl.fB.detune); v.tapC = N.lfoCut; } catch (e) {} }
@@ -8195,7 +9044,9 @@ function drumHit(gm, vel, t, src, ex, o) {
   const dest = (o && o.strip) || AU.strips[sl.id];
   const r = DrumSynth.hit(c, AU.drumBufs, dest.in, P, vel, t, {accent: ex && ex.acc ? accentAmt(drumKit().accent) : 0});
   const h = {id: ++VSEQ, voice: sl.id, gm: sl.gm, track: 4, src, start: t, stopAt: r.end, end: t + .1, srcs: r.srcs, nodes: r.nodes, out: r.out, dead: false, left: r.srcs.length, chokes};
-  for (const s of h.srcs) s.onended = () => { if (--h.left <= 0) hitCleanup(h); };
+  // Chromium fires 'ended' twice for a buffer source that ends on its own before an explicit stop() time (the 6 ms KLICK
+  // layer): count each source once, or the hit is cleaned up (all nodes disconnected) while its tone layer still rings
+  for (const s of h.srcs) s.onended = () => { if (s._ended) return; s._ended = true; if (--h.left <= 0) hitCleanup(h); };
   HITS.push(h);
   if (src !== 'preview') h.perf = perfAdd(4, sl.gm, t, t + .1 * spb(), vel);
   h.log = logNote({track: 4, src, clipNote: src === 'clip' ? sl.gm : null, out: sl.gm, time: t, dur: null, vel});
@@ -9379,11 +10230,23 @@ function recOpenFor(o, k) {
 }
 // atT = the audio time of the key press (taken before the voice was built, so the onset is the touch, not the work after it)
 function recNoteOn(id, track, note, vel, atT) {
-  if (!R.playing || !AU.ctx) return;
+  if (!R.playing || !AU.ctx) return null;
   const tm = atT != null && atT <= AU.ctx.currentTime ? atT : AU.ctx.currentTime, b = t2b(tm - AU.outLat), k = recKindFor(track, b);
   const o = {b, n: note, v: vel, kind: null, track, tm, en: T.targetAt(tm + 1e-6)};
-  if (!k) { recRemember(id, o); return; }
+  if (!k) { recRemember(id, o); return null; }
   rec.open.set(id, recOpenFor(o, k));
+  return k;
+}
+// §3.9 "as heard": a live note that a clip recording captures into a clip the song will play at that time (an overdub,
+// a fixed-length new take launched at its start, a tail note at the clip's start) is not also stored in the melody lane,
+// or ▶ SONG would play it twice. An auto-length new take only enters the song lane after it closes: its notes stay in
+// the melody lane for the bars they were played in.
+function recCapturedForSong(k, track) {
+  if (!k) return false;
+  const inClip = k === 'od' || k === 'odpend' || k === 'tail' || (k === 'new' && !!rec.fixedLen);
+  if (!inClip) return false;
+  if (R.songRec) return true;                                     // every launch is logged in the lane
+  return !!(R.songPlay && !R.songOverride[track]);                // ● MEL.: only a clip the song itself plays
 }
 function recNoteOff(id) {
   const o = rec.open.get(id);
@@ -9597,9 +10460,9 @@ function inputDown(note, id, vel) {
     const le = logNote({track: R.selT, src: 'live', clipNote: null, out: n, time: now + LIVE_LEAD, dur: null, vel});
     if (inp.voice) inp.voice.log = le;
     R.lastNote[R.selT] = n;
-    recNoteOn(id, R.selT, n, vel, now);
+    const rk = recNoteOn(id, R.selT, n, vel, now);
     if (R.playing && rec.state === 'off' && !R.countIn) CAP.open.set(id, {track: R.selT, n, v: vel, b: t2b(now - AU.outLat)});
-    if (R.playing && (R.songRec || R.melRec)) melNoteOn(id, R.selT, n, vel);       // §3.9: the melody lane
+    if (R.playing && (R.songRec || R.melRec) && !recCapturedForSong(rk, R.selT)) melNoteOn(id, R.selT, n, vel);   // §3.9: the melody lane
     // step input into the open clip editor; never recorded at the same time
     if (ED.roll && ED.rollAt && ED.roll.state.step != null && ED.rollAt.t === R.selT && rec.state === 'off') {
       STEPQ.notes.push(n); STEPQ.vel = vel; clearTimeout(STEPQ.timer);
@@ -11759,6 +12622,7 @@ function closeSheets() {
   if (ED.hear) { ED.hear.release(nowT()); ED.hear = null; }
   if (PK.open) closePop();
   if (UI.modSrc) exitModMode();                          // closing the sheet ends mod mode (§9.3)
+  if (UI.fmSolo) fmSoloOff();                            // FM [Solo] is monitor-only (§6.5)
   ED.lcd = null; ED.trChip = null; ED.undoBtns = []; ED.ctls = null; ED.msrc = null; ED.mrows = null; ED.mbn = null;
   bubbleHide();
   setSheetOpen(false);
@@ -11876,14 +12740,17 @@ const fxUndo = {snap: fxSnapshot, commit: (before, label) => { if (before == nul
 // switch a Sound's engine losslessly (§5.2): shared parameters stay, the other engines' blocks are kept, a missing
 // block gets its default (WP3: FM = the legacy 2-operator block p.fm2)
 function setEngineOf(snd, eng) {
-  if (!['analog', 'wt', 'fm2'].includes(eng)) return snd;
+  if (eng === 'fm2') eng = 'fm6';                     // WP7: the legacy 2-operator FM is FM6 now (§6.7)
+  if (!['analog', 'wt', 'fm6'].includes(eng)) return snd;
   snd.engine = eng;
   if (eng === 'wt' && !snd.p.wt) snd.p.wt = WT_DEF();
-  if (eng === 'fm2' && !snd.p.fm2) snd.p.fm2 = FM2_DEF();
+  // a missing FM block: the sound's own v2 FM block (a migrated v2 preset kept it) through FMH.fromV1, else the default
+  if (eng === 'fm6' && !snd.p.fm6) snd.p.fm6 = snd.p.fm2 ? SQStore.normFm6(FMH.fromV1(SQStore.normFm2(snd.p.fm2))) : FM6_DEF();
   // a default block of an engine not in use that the switch itself added (untouched, not in the origin record) goes
   // again: VA → FM → WT → VA with no change is the same sound, not „geändert“ (§5.2 lossless switch)
   let rec = null; try { rec = originRec(snd); } catch (e) {}
-  for (const [k, e, def] of [['wt', 'wt', WT_DEF], ['fm2', 'fm2', FM2_DEF]]) {
+  const fmDef = () => (snd.p.fm2 ? SQStore.normFm6(FMH.fromV1(SQStore.normFm2(snd.p.fm2))) : FM6_DEF());
+  for (const [k, e, def] of [['wt', 'wt', WT_DEF], ['fm6', 'fm6', fmDef]]) {
     if (eng === e || !snd.p[k] || (rec && rec.p && rec.p[k])) continue;
     if (SQStore.canonical(snd.p[k]) === SQStore.canonical(def())) delete snd.p[k];
   }
@@ -11928,6 +12795,14 @@ function setP(i, key, v) {
   UI.sndVer++; UI.dirty.strip = true; markDirty();
   if (R.editor === 'synth' && i === R.selT) edParamChanged(key);
   return nv;
+}
+// WP7 (§6.5): an edit of the FM operator block of track i (p.fm6): dirty marks, the worklet at 30 Hz (now: at once), the
+// editor's controls. The native path takes it from the next note (§6.4: „Kompatibel: Änderungen ab der nächsten Note“)
+function fmChanged(i, now) {
+  if (UI.ab && UI.ab.t === i && UI.ab.side === 'B') UI.ab = null;
+  UI.sndVer++; UI.dirty.strip = true; markDirty();
+  wkFm6(i, !!now);
+  if (R.editor === 'synth' && i === R.selT) edParamChanged('fm6');
 }
 // D.11: a whole sound (preset load, undo, engine switch, setSound, A/B). The track owns this copy.
 // Worklet -> worklet (§5.4, §11.5 PR5): E.set(full flat) + E.mods; sounding and queued notes continue with the new
@@ -11978,7 +12853,7 @@ function loadPreset(t, idOrName) {
   const {rec, old} = findSound(idOrName); if (!rec) throw new Error('Unbekanntes Preset: ' + idOrName);
   if (rec.engine === 'drum') throw new Error('Ein Drum-Kit passt nur auf die Drum-Spur');
   const snd = soundCopy(rec);
-  if (old) setEngineOf(snd, tr.sound.engine === 'fm6' ? 'fm2' : tr.sound.engine);    // v2 rule: a preset keeps the engine
+  if (old) setEngineOf(snd, tr.sound.engine);                      // v2 rule: a preset keeps the engine
   UI.ab = null;
   applySound(t, snd);
   UI.busHint = snd.bus ? {t, bus: snd.bus, name: snd.name} : null;
@@ -11988,7 +12863,7 @@ function loadPreset(t, idOrName) {
 }
 function setEngine(t, eng) {
   const tr = S.tracks[t]; if (!tr || tr.kind !== 'synth') throw new Error('Keine Synth-Spur: ' + t);
-  const e = ENG_OF[eng] || (['analog', 'wt', 'fm2'].includes(eng) ? eng : null);
+  const e = ENG_OF[eng] || (eng === 'fm2' ? 'fm6' : ['analog', 'wt', 'fm6'].includes(eng) ? eng : null);
   if (!e) throw new Error('Engine muss va, fm oder wt sein');
   if (tr.sound.engine === e) return;
   const snd = deep(tr.sound); setEngineOf(snd, e);
@@ -12001,6 +12876,12 @@ function randomize(t) {
   const tr = S.tracks[t]; if (!tr) throw new Error('Keine Spur: ' + t);
   if (tr.kind === 'drum') { randomizeDrumVoice(DRUM_VOICES[ED.dVoice].id); return; }
   const snd = deep(tr.sound), p = snd.p, R_ = Math.random, U = (a, b) => a + (b - a) * R_(), E = (a, b) => a * Math.pow(b / a, R_()), pick = a => a[Math.floor(R_() * a.length)];
+  if (snd.engine === 'fm6' && p.fm6) {                 // WP7: an FM sound varies its FM patch (Anhang A.1 covers VA only)
+    randomizeFm(p, R_);
+    UI.ab = null; applySound(t, snd);
+    if (R.editor === 'synth' && t === R.selT) safeRebuild(buildSynthEd);
+    return;
+  }
   for (const k of [1, 2, 3]) { p['o' + k + 'w'] = pick([0, 1, 2, 3]); p['o' + k + 'fine'] = Math.round(U(-10, 10)); p['o' + k + 'pw'] = U(.2, .8); }
   p.o2oct = pick([-1, 0, 1]); p.o3oct = pick([-1, 0, 1]);
   for (const k of ['o2semi', 'o3semi']) p[k] = R_() < .7 ? 0 : pick([7, 12, -12, 5]);
@@ -12017,6 +12898,25 @@ function randomize(t) {
   applySound(t, snd);
   if (R.editor === 'synth' && t === R.selT) safeRebuild(buildSynthEd);
 }
+/* 🎲 on an FM6 sound (WP7): an algorithm of the 8 favourites (60 %) or any, feedback 0–6, outputs at ×1 (sometimes ×0.5 / ×2)
+   and OL 88–99 with a fast attack, modulators on harmonic ratios at OL 45–88 with their own decay; filter, amp envelope,
+   LFOs, mods, level and fx are kept (as for VA). Every output operator stays on and audible. */
+function randomizeFm(p, R_) {
+  const pick = a => a[Math.floor(R_() * a.length)], I = (a, b) => a + Math.floor(R_() * (b - a + 1));
+  const f = deep(p.fm6), A = () => DXN.ALGS[f.alg - 1] || DXN.ALGS[0];
+  f.alg = R_() < .6 ? pick([1, 2, 5, 7, 16, 19, 22, 32]) : I(1, 32);
+  f.fb = R_() < .3 ? 0 : I(1, 6);
+  const alg = A();
+  f.ops = f.ops.map((o, k) => {
+    const x = Object.assign({}, o, {on: 1, fixed: 0, fine: 0, det: I(-3, 3), rs: I(0, 3)}); delete x.ks;
+    if (alg.car[k]) Object.assign(x, {coarse: R_() < .75 ? 1 : pick([0, 2]), ol: I(88, 99), vs: I(0, 3),
+      r: [I(85, 99), I(20, 60), I(15, 50), I(45, 75)], l: [99, I(70, 95), R_() < .5 ? 0 : I(60, 90), 0]});
+    else Object.assign(x, {coarse: pick([1, 1, 2, 2, 3, 4, 5, 7, 14]), ol: I(45, 88), vs: I(1, 6),
+      r: [I(70, 99), I(25, 80), I(20, 60), I(40, 80)], l: [99, I(40, 90), I(0, 80), 0]});
+    return x;
+  });
+  p.fm6 = SQStore.normFm6(f);
+}
 /* Anhang C.1: the v2 parameter paths keep working (old tests, old data). set: v2 value -> v3; get: the inverse */
 const WAVE_IDX = {saw: 0, square: 1, triangle: 2, sine: 3}, WAVE_V2 = ['saw', 'square', 'triangle', 'sine'];
 const FT_IDX = {lp24: 0, lp12: 1, bp: 3, hp: 5}, FT_V2 = ['lp24', 'lp12', 'bp', 'bp', 'hp', 'hp'];
@@ -12026,7 +12926,7 @@ const LEGACY = {
   'va.wave1': {k: 'o1w', to: v => WAVE_IDX[v], from: x => WAVE_V2[x]}, 'va.wave2': {k: 'o2w', to: v => WAVE_IDX[v], from: x => WAVE_V2[x]},
   'va.oct2': {k: 'o2oct', to: v => clamp(Math.round(v), -1, 1)}, 'va.det2': {k: 'o2fine'},
   'va.sub': {k: 'subLvl', to: v => Math.min(1, v * 1.4), from: x => x / 1.4}, 'va.noise': {k: 'noise', to: v => Math.min(1, v * 1.5), from: x => x / 1.5},
-  'fm.ratio': {k: 'fm2.ratio'}, 'fm.index': {k: 'fm2.index'}, 'fm.modDecay': {k: 'fm2.modDecay'}, 'fm.modSus': {k: 'fm2.modSus'},
+  'fm.ratio': {fm1: 'ratio'}, 'fm.index': {fm1: 'index'}, 'fm.modDecay': {fm1: 'modDecay'}, 'fm.modSus': {fm1: 'modSus'},
   'filter.type': {k: 'ftype', to: v => FT_IDX[v], from: x => FT_V2[x]}, 'filter.cutoff': {k: 'cutoff'}, 'filter.env': {k: 'fenv'}, 'filter.kt': {k: 'kt'},
   'filter.res': {k: 'res', to: v => v * .95, from: x => x / .95},
   'fenv.a': {k: 'fA'}, 'fenv.d': {k: 'fD'}, 'fenv.s': {k: 'fS'}, 'fenv.r': {k: 'fR'}, 'aenv.a': {k: 'aA'}, 'aenv.d': {k: 'aD'}, 'aenv.s': {k: 'aS'}, 'aenv.r': {k: 'aR'},
@@ -12035,6 +12935,24 @@ const LEGACY = {
   'fx.reverb': {k: 'fx.rev'}, 'fx.delay': {k: 'fx.dly'},
 };
 const LEGACY_LFO = [];                         // per track: the v2 LFO target while its depth is 0 (no route to remember it)
+/* Anhang C.1 from WP7: the v2 FM paths 'fm.ratio / index / modDecay / modSus' rebuild p.fm6 = FMH.fromV1(v1 values). The v1
+   values last set through them are remembered per track (with the fm6 they built), so they read back exactly; otherwise
+   they are derived from the patch (OP 2 = the modulator of the pair that fromV1 builds). */
+const LEGACY_FM1 = [];
+function fm1Of(t, snd) {
+  const L = LEGACY_FM1[t], fm = snd.p.fm6 || FM6_DEF();
+  if (L && SQStore.canonical(L.fm6) === SQStore.canonical(fm)) return Object.assign({}, L.v1);
+  const op = fm.ops[1];
+  return {ratio: FMH.ratioOf(op), index: FMH.modIndex(op.ol), modDecay: FMH.envTimes(op)[1], modSus: Math.pow(10, (op.l[1] - 99) * .75 / 20)};
+}
+function setFm1(t, key, value) {
+  const snd = sndOf(t), v1 = fm1Of(t, snd), v = +value;
+  if (!isNum(v)) throw new Error('Ungültiger Wert für fm.' + key + ': ' + value);
+  v1[key] = key === 'ratio' ? clamp(v, .5, 31) : key === 'index' ? clamp(v, 0, 10) : key === 'modDecay' ? clamp(v, .01, 4) : clamp(v, 0, 1);
+  snd.p.fm6 = SQStore.normFm6(FMH.fromV1(v1)); LEGACY_FM1[t] = {v1: Object.assign({}, v1), fm6: deep(snd.p.fm6)};
+  fmChanged(t, true);
+  return v1[key];
+}
 const LFO_V2 = {cutoff: [d => .4 * d, a => a / .4], pitch: [d => d * d / 2, a => Math.sqrt(Math.max(0, 2 * a))], amp: [d => -d / 2, a => -2 * a]};
 function legacyLfo(snd) { const m = snd.mods.find(x => x.src === 'lfo1' && LFO_V2[x.dst]); return m ? {dst: m.dst, d: clamp(LFO_V2[m.dst][1](m.amt), 0, 1)} : null; }
 function setLegacyLfo(t, target, d) {
@@ -12066,6 +12984,7 @@ function setParam(t, path, value) {
   if (path === 'poly') { const v = clamp(Math.round(+value || 6), 1, 8); setP(t, 'poly', v); setP(t, 'mode', v === 1 ? 1 : 0); return v; }
   if (path === 'glide') { setP(t, 'glide', clamp(+value || 0, 0, 2)); return getParam(t, path); }
   const L = LEGACY[path];
+  if (L && L.fm1) { setFm1(t, L.fm1, value); return getParam(t, path); }
   if (L) {
     const v = L.to ? L.to(value) : value;
     if (v === undefined || (typeof v === 'number' && !isNum(v))) throw new Error('Ungültiger Wert für ' + path + ': ' + value);
@@ -12091,6 +13010,7 @@ function getParam(t, path) {
   if (path === 'va.mix2') return snd.p.o2lvl;
   if (path === 'poly') return polyOf(snd.p);
   const L = LEGACY[path];
+  if (L && L.fm1) return fm1Of(t, snd)[L.fm1];
   if (L) { const x = sndGet(snd, L.k); return L.from ? L.from(x) : x; }
   if (!PD[path]) throw new Error('Unbekannter Parameter: ' + path);
   return sndGet(snd, path);
@@ -12155,23 +13075,27 @@ function edParamChanged(key) { for (const f of ED.refreshers) { try { f(key); } 
    default track effects) gets a white dot, the tabs count them („FILTER ·5“, MOD = routes), and the LCD line shows the
    factory Trick of the loaded sound */
 const WIA_TABS = {
-  osc: k => /^o[123]/.test(k) || ['subLvl', 'subOct', 'subW', 'noise', 'level', 'analog', 'mode', 'poly', 'glide', 'uniDet', 'uniMix', 'uniWidth', 'spread', 'ampVel', 'reset'].includes(k) || /^(wt|fm2)\./.test(k),
+  osc: k => /^o[123]/.test(k) || ['subLvl', 'subOct', 'subW', 'noise', 'level', 'analog', 'mode', 'poly', 'glide', 'uniDet', 'uniMix', 'uniWidth', 'spread', 'ampVel', 'reset'].includes(k) || /^(wt|fm2)\./.test(k) || /^fm[A-Z]/.test(k),
   filter: k => ['ftype', 'cutoff', 'res', 'drive', 'fenv', 'kt', 'fvel', 'bass', 'lq'].includes(k),
   env: k => /^[afm](A|D|S|R|Curve)$/.test(k),
   lfo: k => /^l[12]/.test(k) || k === 'mw',
   fx: k => k.startsWith('fx.'),
 };
 const FX_BASE = {'fx.drive': 0, 'fx.rev': .15, 'fx.dly': 0, 'fx.vol': .8, 'fx.pan': 0, 'fx.pump': 0, 'fx.pumpRel': '1/8', 'fx.chorus.mode': 'off', 'fx.chorus.rate': 1, 'fx.chorus.depth': 1, 'fx.chorus.mix': 1};
-function wiaBase(key) {
+// WP7: an FM6 sound compares its flat keys with FM_BASE (§6.2: the open filter is the FM default) and has no VA oscillators
+const WIA_VA_ONLY = /^(o[123]|sub[A-Z]|noise$|uni[A-Z])/;
+function wiaBase(key, snd) {
   if (key.startsWith('fx.')) return FX_BASE[key];
   if (key.startsWith('wt.')) return WT_DEF()[key.slice(3)];
   if (key.startsWith('fm2.')) return FM2_DEF()[key.slice(4)];
+  if (snd && snd.engine === 'fm6' && key in SQStore.FM_BASE) return SQStore.FM_BASE[key];
   const B = SQF.ANALOG_BASE || {}; return key in B ? B[key] : PD[key] ? PD[key].def : undefined;
 }
 function wiaDiffers(snd, key) {
   if (key.startsWith('wt.') && snd.engine !== 'wt') return false;
   if (key.startsWith('fm2.') && snd.engine !== 'fm2') return false;
-  const v = sndGet(snd, key), b = wiaBase(key);
+  if (snd.engine === 'fm6' && WIA_VA_ONLY.test(key)) return false;
+  const v = sndGet(snd, key), b = wiaBase(key, snd);
   if (v === undefined || b === undefined) return false;
   if (isNum(v) && isNum(b)) return Math.abs(v - b) > 1e-6 * Math.max(1, Math.abs(b));
   return v !== b;
@@ -12199,7 +13123,9 @@ function wiaTrick() {
 }
 function wiaToggle() { UI.wia = !UI.wia; wiaPaint(); if (UI.wia) wiaTrick(); else lcdHint(); haptic('tick'); }
 function subTabsFor(tab, eng) {
-  if (tab === 'osc') return eng === 'analog' ? [['o1', 'OSZ 1'], ['o2', 'OSZ 2'], ['o3', 'OSZ 3'], ['mix', 'MIX'], ['voice', 'STIMME']] : [['eng', eng === 'wt' ? 'WT' : 'FM'], ['voice', 'STIMME']];
+  if (tab === 'osc') return eng === 'analog' ? [['o1', 'OSZ 1'], ['o2', 'OSZ 2'], ['o3', 'OSZ 3'], ['mix', 'MIX'], ['voice', 'STIMME']]
+    : eng === 'fm6' ? [['algo', 'ALGO'], ['op', 'OP ' + ((ED.fmOp | 0) + 1)], ['makro', 'MAKRO'], ['voice', 'STIMME']]      // §6.5 (WP7)
+    : [['eng', eng === 'wt' ? 'WT' : 'FM'], ['voice', 'STIMME']];
   if (tab === 'filter') return [['ctl', 'REGLER'], ['xy', 'XY']];
   if (tab === 'env') return [['amp', 'LAUTST.'], ['flt', 'FILTER'], ['mod', 'MOD']];
   if (tab === 'lfo') return [['l1', 'LFO 1'], ['l2', 'LFO 2']];
@@ -12217,11 +13143,12 @@ function buildSynthEd() {
   if (!['osc', 'filter', 'env', 'lfo', 'mod', 'fx'].includes(ED.tab)) ED.tab = 'osc';
   let subs = subTabsFor(ED.tab, eng);
   if (subs && !subs.some(x => x[0] === ED.sub[ED.tab])) ED.sub[ED.tab] = subs[0][0];
+  if (UI.fmSolo && (UI.fmSolo.t !== i || eng !== 'fm6' || ED.tab !== 'osc' || ED.sub.osc !== 'op')) fmSoloOff();   // §6.5: Solo is monitor-only
   const F = sheetFrame(sh, tr.name, [['osc', eng === 'analog' ? 'OSZ' : eng === 'wt' ? 'WT' : 'FM'], ['filter', 'FILTER'], ['env', 'HÜLLK.'], ['lfo', 'LFO'], ['mod', 'MOD'], ['fx', 'FX']], ED.tab,
     id => { ED.tab = id; safeRebuild(buildSynthEd); },
     subs ? {list: subs, cur: ED.sub[ED.tab], on: id => { ED.sub[ED.tab] = id; safeRebuild(buildSynthEd); }} : null);
   // row 1: ● SYNTH n · [VA | FM | WT] · ⇅ chip · ECO-Klang badge (native fallback, §1.3) · ↶ ↷ · ✕
-  const engSeg = makeSeg([['analog', 'VA', 'VA'], ['fm2', 'FM', 'FM'], ['wt', 'WT', 'WT']], () => S.tracks[i].sound.engine === 'fm6' ? 'fm2' : S.tracks[i].sound.engine,
+  const engSeg = makeSeg([['analog', 'VA', 'VA'], ['fm6', 'FM', 'FM'], ['wt', 'WT', 'WT']], () => (S.tracks[i].sound.engine === 'fm2' ? 'fm6' : S.tracks[i].sound.engine),
     v => setEngine(i, v), 'eng', {undo: soundUndo(i), label: 'Klangerzeugung'});
   F.r1.insertBefore(engSeg, F.r1.querySelector('.sh-title').nextSibling);
   const eco = el('span', 'ecob', 'ECO-Klang'); eco.hidden = true; eco.title = 'Vereinfachte Klangerzeugung: der Studio-Klang (AudioWorklet) ist hier nicht verfügbar';
@@ -12295,6 +13222,9 @@ function fillSynthTab(body, i) {
     if (sub === 'o1' || sub === 'o2' || sub === 'o3') pageOsc(pg, i, +sub[1]);
     else if (sub === 'mix') pageMix(pg, i);
     else if (sub === 'voice') pageVoice(pg, i);
+    else if (sub === 'algo') pageFmAlgo(pg, i);
+    else if (sub === 'op') pageFmOp(pg, i);
+    else if (sub === 'makro') pageFmMakro(pg, i);
     else if (S.tracks[i].sound.engine === 'wt') pageWt(pg, i);
     else pageFm2(pg, i);
   } else if (tab === 'filter') { if (sub === 'xy') pageXY(pg, i); else pageFilter(pg, i); }
@@ -12480,6 +13410,390 @@ function pageFm2(pg, i) {
   const ks = ['fm2.ratio', 'fm2.index', 'fm2.modDecay', 'fm2.modSus', 'glide', 'level'].map(k => sKnob(k));
   ED.refreshers.push(() => ks.forEach(x => x.update()));
   pg.append(kRow(ks.slice(0, 4)), kRow(ks.slice(4)), el('div', 'small note', 'FM (klassisch, 2 Operatoren): Ein Modulator (Ratio × Grundton) moduliert den Träger. Menge = Modulationsindex, Mod-Abkling/Halten formen die Helligkeit über die Zeit. Der 6-Operator-FM folgt.'));
+}
+/* ---------- FM tab (§6.5, WP7): ALGO · OP · MAKRO · STIMME. Output operators are „Ausgang“ in the UI (never „Träger“:
+   that word means the transposition carrier). Every gesture is one undo step (kind 'sound'); edits reach the sounding
+   worklet voices at 30 Hz (wkFm6), the native path takes them from the next note. ---------- */
+const FM_FAV = [[1, 'Stapel + Paar'], [2, 'Stapel (FB auf 2)'], [5, '3 Paare (E-Piano/Glocke)'], [7, 'Y-Zweig'], [16, 'Ein Ausgang'], [19, 'Orgel/Bläser'],
+  [22, 'Fächer (1 Mod → 3 Ausgänge)'], [32, 'Additiv (Orgel)']];
+const FM_ALG_NAME = Object.fromEntries(FM_FAV);
+const FM_KS = ['bp', 'ld', 'rd', 'lc', 'rc'], FM_KS_DEF = () => ({bp: 39, ld: 0, rd: 0, lc: 0, rc: 0});
+const FM_RANGE = {on: [0, 1], fixed: [0, 1], coarse: [0, 31], fine: [0, 99], det: [-7, 7], ol: [0, 99], vs: [0, 7], rs: [0, 7], bp: [0, 99], ld: [0, 99], rd: [0, 99],
+  lc: [0, 3], rc: [0, 3], alg: [1, 32], fb: [0, 7], trans: [-24, 24]};
+const fmClampV = (key, v) => { const r = FM_RANGE[key]; return r ? clamp(Math.round(+v || 0), r[0], r[1]) : v; };
+// the DX7 INIT VOICE: OP 1 alone as an output at 99, the other operators at 0
+const FM_INIT_OP = k => ({on: 1, fixed: 0, coarse: 1, fine: 0, det: 0, ol: k === 0 ? 99 : 0, r: [99, 99, 99, 99], l: [99, 99, 99, 0], vs: 0, rs: 0});
+const FM_INIT = () => ({alg: 1, fb: 0, trans: 0, ops: [0, 1, 2, 3, 4, 5].map(FM_INIT_OP)});
+const FM_CURVE = [[0, '−LIN'], [1, '−EXP'], [2, '+EXP'], [3, '+LIN']];
+const fmAlg = fm => DXN.ALGS[(fm.alg | 0) - 1] || DXN.ALGS[0];
+const FMC = {env: null};                                  // the envelope clipboard ([Kopieren] / [Einfügen])
+function fmOf(i) { const snd = sndOf(i); if (!snd) return null; if (!snd.p.fm6) snd.p.fm6 = FM6_DEF(); return snd.p.fm6; }
+function fmGetOp(i, k, key) { const op = fmOf(i).ops[k]; return FM_KS.includes(key) ? (op.ks || FM_KS_DEF())[key] : op[key]; }
+// one operator value (Anhang A.2 ranges; ks.* = bp ld rd lc rc); nothing happens when the value does not change
+function fmSetOp(i, k, key, v) {
+  const fm = fmOf(i); if (!fm) return undefined;
+  const op = fm.ops[k], nv = fmClampV(key, v);
+  if (FM_KS.includes(key)) { if (!op.ks) op.ks = FM_KS_DEF(); if (op.ks[key] === nv) return nv; op.ks[key] = nv; }
+  else { if (op[key] === nv) return nv; op[key] = nv; }
+  fmChanged(i);
+  return nv;
+}
+// rate ('r') or level ('l') of one envelope stage (0..3)
+function fmSetEnv(i, k, which, stage, v) {
+  const a = fmOf(i).ops[k][which], nv = clamp(Math.round(+v || 0), 0, 99);
+  if (a[stage] === nv) return nv; a[stage] = nv; fmChanged(i); return nv;
+}
+function fmSetPatch(i, key, v) {
+  const fm = fmOf(i); if (!fm) return undefined;
+  const nv = fmClampV(key, v); if (fm[key] === nv) return nv;
+  fm[key] = nv; fmChanged(i, key === 'alg');
+  return nv;
+}
+// [Solo] on the OP page (§6.5): only this operator, as an output (algorithm 32), monitor only — the sound is not changed
+function fmSoloPatch(fm, k) {
+  return {alg: 32, fb: k === 5 ? fm.fb : 0, trans: fm.trans, ops: fm.ops.map((op, j) => Object.assign({}, op, {on: j === k ? 1 : 0}))};
+}
+function fmSoloOff() { const s = UI.fmSolo; if (!s) return; UI.fmSolo = null; wkFm6(s.t, true); if (ED.fmSoloB) ED.fmSoloB.classList.remove('on'); }
+// what an operator is in the current algorithm: „Ausgang“ or „Modulator → OP 1 + 3“ (+ „· Feedback“)
+function fmRole(fm, k, short) {
+  const A = fmAlg(fm), tg = [];
+  A.mods.forEach((ms, t) => { if (ms.includes(k)) tg.push(t + 1); });
+  const fb = k === A.fbDst && fm.fb > 0 ? ' · Feedback' : '';
+  return (A.car[k] ? 'Ausgang' : (short ? 'Mod. → ' : 'Modulator → ') + 'OP ' + tg.join(' + ')) + fb;
+}
+const fmIsOut = (fm, k) => !!fmAlg(fm).car[k];
+// value texts (Anhang A.2): ratio „×3,50“ or fixed „324 Hz“; level of an output in dB ((ol − 99) · 0.75), of a modulator as
+// the modulation index „I 3,1“ (FMH.modIndex, radians)
+const fmRatioTxt = op => (op.fixed ? fmtVal('hz', FMH.ratioOf(op)) : '×' + fmtDec(FMH.ratioOf(op), 2));
+const fmOlTxt = (out, ol) => (out ? (ol >= 99 ? '0 dB' : MINUS + fmtDec((99 - ol) * .75, 1).replace(/,0$/, '') + ' dB') : 'I ' + fmtDec(FMH.modIndex(Math.round(ol)), 1));
+const fmBpTxt = v => noteLabel(clamp(Math.round(v), 0, 99) + 21);          // 0 = A-1 (DX7), 39 = middle C
+const fmSign = v => { const r = Math.round(v); return (r > 0 ? '+' : r < 0 ? MINUS : '') + Math.abs(r); };
+const fmTimeTxt = t => (t > 20 ? '>20 s' : fmtVal('s', Math.max(t, .001)));
+// one control on an operator value: makeCtl with the operator as its storage; o.mod: the route destination (op1..op6)
+function fmOpCtl(i, k, key, o) {
+  o = o || {};
+  const fm = fmOf(i), out = fmIsOut(fm, k), D = {
+    coarse: {l: 'Grob', vals: range(0, 31), def: 1},
+    fine: {l: 'Fein', min: 0, max: 99, c: 'lin', def: 0},
+    det: {l: 'Verstimmung', vals: range(-7, 7), def: 0},
+    ol: {l: 'Pegel', min: 0, max: 99, c: 'lin', def: out ? 99 : 0},
+    vs: {l: 'Anschlag', vals: range(0, 7), def: 0},
+    rs: {l: 'Key→Zeit', vals: range(0, 7), def: 0},
+    bp: {l: 'Breakpoint', min: 0, max: 99, c: 'lin', def: 39},
+    ld: {l: 'Tiefe L', min: 0, max: 99, c: 'lin', def: 0},
+    rd: {l: 'Tiefe R', min: 0, max: 99, c: 'lin', def: 0},
+  }[key];
+  const op = () => fmOf(i).ops[k];
+  const fmt = key === 'coarse' ? (v => (op().fixed ? fmtVal('hz', Math.pow(10, v & 3)) : '×' + (v ? v : '0,5')))
+    : key === 'fine' ? (v => (op().fixed ? fmtVal('hz', Math.pow(10, (op().coarse & 3) + Math.round(v) / 100)) : '×' + fmtDec((op().coarse || .5) * (1 + Math.round(v) / 100), 2)))
+    : key === 'det' ? fmSign : key === 'ol' ? (v => fmOlTxt(fmIsOut(fmOf(i), k), v)) : key === 'bp' ? fmBpTxt : (v => String(Math.round(v)));
+  const c = makeCtl(D, () => fmGetOp(i, k, key), v => fmSetOp(i, k, key, v), Object.assign({undo: soundUndo(i), mod: key === 'ol' ? 'op' + (k + 1) : null, modT: i,
+    key: 'fm.' + k + '.' + key, fmt, label: o.label || D.l}, o));
+  return c;
+}
+// a control on the patch (alg / fb / trans)
+function fmPatchCtl(i, key, o) {
+  const D = {fb: {l: 'Feedback', vals: range(0, 7), def: 0}, trans: {l: 'Transponieren', vals: range(-24, 24), def: 0}}[key];
+  return makeCtl(D, () => fmOf(i)[key], v => fmSetPatch(i, key, v), Object.assign({undo: soundUndo(i), key: 'fm.' + key, label: D.l,
+    fmt: key === 'trans' ? (v => fmtVal('semi', v)) : (v => String(v))}, o || {}));
+}
+// the envelope as a small path (sparkline): the four stages in lanes on a log time scale, the sustain as a short plateau
+const FM_TLO = .001, FM_THI = 40;
+const fmLaneX = t => clamp(Math.log(Math.max(t, FM_TLO) / FM_TLO) / Math.log(FM_THI / FM_TLO), 0, 1);
+function fmEnvPts(op, W, H, pad) {
+  const t = FMH.envTimes(op, 60), lw = (W - 2 * pad) / 4.4, sus = .4 * lw, y = L => pad + (1 - L / 99) * (H - 2 * pad);
+  const x0 = pad, x1 = x0 + fmLaneX(t[0]) * lw, x2 = x0 + lw + fmLaneX(t[1]) * lw, x3 = x0 + 2 * lw + fmLaneX(t[2]) * lw;
+  const xs = x0 + 3 * lw + sus, x4 = xs + fmLaneX(t[3]) * lw;
+  return {t, pts: [[x0, y(op.l[3])], [x1, y(op.l[0])], [x2, y(op.l[1])], [x3, y(op.l[2])], [xs, y(op.l[2])], [x4, y(op.l[3])]], lw, sus, y};
+}
+function fmSparkD(op) { const {pts} = fmEnvPts(op, 48, 20, 1.5); return 'M' + pts.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L'); }
+// selecting an operator (diagram box, ratio button, ‹ ›): the OP page shows it; the sub-tab says which
+function fmSelect(i, k, lcd) {
+  ED.fmOp = clamp(k | 0, 0, 5);
+  const st = EL.synthSheet.querySelector('.stab[data-sub="op"]'); if (st) st.textContent = 'OP ' + (ED.fmOp + 1);
+  if (UI.fmSolo && UI.fmSolo.t === i && UI.fmSolo.k !== ED.fmOp) { UI.fmSolo.k = ED.fmOp; wkFm6(i, true); }
+  edRefresh();
+  if (lcd !== false) { const fm = fmOf(i); lcdShow('OP ' + (ED.fmOp + 1), fmRole(fm, ED.fmOp) + ' · ' + fmRatioTxt(fm.ops[ED.fmOp])); }
+  haptic('tick');
+}
+function fmAlgSet(i, a, label) {
+  const fm = fmOf(i); if (!fm) return;
+  a = ((Math.round(a) - 1) % 32 + 32) % 32 + 1; if (a === fm.alg) return;
+  soundEdit(i, label || 'Algorithmus ' + a, () => fmSetPatch(i, 'alg', a));
+  lcdShow('Algorithmus', a + (FM_ALG_NAME[a] ? ' · ' + FM_ALG_NAME[a] : ''));
+  haptic('snap');
+  safeRebuild(buildSynthEd);
+}
+// the algorithm diagram (§6.5): a fixed box (the page never jumps), outputs filled in the track colour, the feedback loop
+// orange with a thickness ~ fb. Tap a box = select that operator; tap empty space = the algorithm sheet; swipe = ±1
+function fmDiagram(i) {
+  const box = el('div', 'fmdiag'); guardTouch(box); box.setAttribute('role', 'img');
+  const draw = () => {
+    const fm = fmOf(i), A = fmAlg(fm);
+    const h = algSvg(A, {box: 26, gx: 10, gy: 12, sel: ED.fmOp | 0, fb: fm.fb, fbW: (1.4 + fm.fb * .5).toFixed(1), levels: fm.ops.map(o => (o.on !== 0 ? o.ol : 0)), fit: true});
+    if (box._h !== h) { box._h = h; box.innerHTML = h; box.setAttribute('aria-label', 'Algorithmus ' + fm.alg + (FM_ALG_NAME[fm.alg] ? ' – ' + FM_ALG_NAME[fm.alg] : '')); }
+  };
+  let g = null;
+  on(box, 'pointerdown', e => {
+    if (g || e.button > 0) return; e.preventDefault();
+    g = {id: e.pointerId, x: e.clientX, y: e.clientY}; try { box.setPointerCapture(e.pointerId); } catch (_) {}
+    gestBegin(e.pointerId, () => { g = null; });
+  });
+  const end = (e, ok) => {
+    if (!g || g.id !== e.pointerId) return; const G = g; g = null; gestEnd(e.pointerId);
+    if (!ok) return;
+    const dx = e.clientX - G.x, dy = e.clientY - G.y;
+    if (Math.abs(dx) >= 32 && Math.abs(dx) > 1.5 * Math.abs(dy)) { fmAlgSet(i, fmOf(i).alg + (dx < 0 ? 1 : -1)); return; }
+    if (Math.abs(dx) > 12 || Math.abs(dy) > 12) return;
+    let opEl = null;
+    for (const b of box.querySelectorAll('g.op')) { const r = b.getBoundingClientRect(); if (e.clientX >= r.left - 3 && e.clientX <= r.right + 3 && e.clientY >= r.top - 3 && e.clientY <= r.bottom + 3) { opEl = b; break; } }
+    if (opEl) fmSelect(i, +opEl.dataset.op); else openAlgSheet(i);
+  };
+  on(box, 'pointerup', e => end(e, true));
+  on(box, 'pointercancel', e => end(e, false));
+  on(box, 'lostpointercapture', e => end(e, false));
+  draw(); ED.refreshers.push(draw);
+  return box;
+}
+// the algorithm sheet (§6.5): 32 thumbnails, the 8 favourites first with their names; a list, so it may scroll
+function openAlgSheet(i) {
+  const fm = fmOf(i), sh = EL.synthSheet.querySelector('.sh-body'), r = sh ? sh.getBoundingClientRect() : null;
+  const order = FM_FAV.map(x => x[0]).concat(range(1, 32).filter(a => !FM_ALG_NAME[a]));
+  const p = openPop(null, pop => {
+    pop.classList.add('algsheet'); pop.style.setProperty('--tc', `var(--t${i + 1})`);
+    pop.innerHTML = `<div class="ash"><h4>Algorithmus wählen</h4><button class="hb rb ashx" aria-label="Schließen">✕</button></div><div class="agrid">` + order.map(a => {
+      const A = DXN.ALGS[a - 1];
+      return `<button class="acell${a === fm.alg ? ' on' : ''}${FM_ALG_NAME[a] ? ' fav' : ''}" data-a="${a}" aria-label="Algorithmus ${a}${FM_ALG_NAME[a] ? ' – ' + esc(FM_ALG_NAME[a]) : ''}">` +
+        `<span class="athumb">${algSvg(A, {box: 14, gx: 5, gy: 6, fb: 1, fit: true, noText: true, rx: 2})}</span><b>${a}</b>${FM_ALG_NAME[a] ? `<small>${esc(FM_ALG_NAME[a])}</small>` : ''}</button>`;
+    }).join('') + '</div>';
+  }, {name: 'algsheet'});
+  if (r) { p.style.left = Math.round(Math.max(4, r.left + 4)) + 'px'; p.style.top = Math.round(Math.max(4, r.top + 2)) + 'px'; p.style.width = Math.round(Math.min(window.innerWidth - 8, r.width - 8)) + 'px'; p.style.height = Math.round(Math.max(200, Math.min(window.innerHeight - r.top - 6, r.height + 40))) + 'px'; }
+  onTap(p.querySelector('.ashx'), () => closePop());
+  onTap(p, b => { const a = +b.dataset.a; closePop(); fmAlgSet(i, a); }, '.acell');
+  return p;
+}
+// one strip column: LED (AN) · ratio (tap = select) · level fader (long-press = modulation) · envelope sparkline
+function fmStripCol(i, k) {
+  const col = el('div', 'fmcol rest'); col.dataset.op = k;
+  const led = el('button', 'fmled rb', `<i class="led"></i><b>${k + 1}</b>`); led.setAttribute('role', 'switch'); led.dataset.key = 'fm.' + k + '.on';
+  const rat = el('button', 'fmrat rb'); rat.dataset.key = 'fm.' + k + '.ratio';
+  const fd = fmOpCtl(i, k, 'ol', {kind: 'fader', label: 'OP ' + (k + 1)});
+  const spk = el('div', 'fmspk', '<svg viewBox="0 0 48 20" preserveAspectRatio="none" aria-hidden="true"><path/></svg>'), path = spk.querySelector('path');
+  onTap(led, () => {
+    const before = soundSnapshot(i), on_ = fmGetOp(i, k, 'on') ? 0 : 1;
+    fmSetOp(i, k, 'on', on_); commitSound(i, before, 'OP ' + (k + 1) + (on_ ? ' an' : ' aus'));
+    lcdShow('OP ' + (k + 1), on_ ? 'an' : 'aus'); haptic('tick');
+  });
+  onTap(rat, () => fmSelect(i, k));
+  const upd = () => {
+    const fm = fmOf(i), op = fm.ops[k], on_ = op.on !== 0, out = fmIsOut(fm, k), t = fmRatioTxt(op), d = fmSparkD(op);
+    led.classList.toggle('on', on_); led.setAttribute('aria-checked', String(on_)); led.setAttribute('aria-label', 'OP ' + (k + 1) + (on_ ? ' an' : ' aus'));
+    if (rat._t !== t) { rat._t = t; rat.textContent = t; rat.setAttribute('aria-label', 'OP ' + (k + 1) + ' wählen – ' + t); }
+    col.classList.toggle('out', out); col.classList.toggle('off', !on_); col.classList.toggle('sel', (ED.fmOp | 0) === k);
+    if (path._d !== d) { path._d = d; path.setAttribute('d', d); }
+    fd.update();
+  };
+  col.append(led, rat, fd, spk);
+  upd(); ED.refreshers.push(upd);
+  return col;
+}
+function fmNativeHint(i) {
+  const h = el('div', 'fmhint small');
+  const upd = () => { const on_ = !trackOnWorklet(i); h.hidden = !on_; if (on_) h.textContent = 'Kompatibel: Änderungen ab der nächsten Note'; };
+  upd(); ED.refreshers.push(upd); return h;
+}
+// ALGO (§6.5): diagram + algorithm stepper / name / [Liste] / FEEDBACK, the operator strip
+function pageFmAlgo(pg, i) {
+  const fm = fmOf(i);
+  const top = el('div', 'fmtop rest');
+  const dg = fmDiagram(i);
+  const side = el('div', 'fmaside rest');
+  const stp = el('div', 'fmstep'), bP = el('button', 'pa rb', '‹'), num = el('span', 'fmnum'), bN = el('button', 'pa rb', '›');
+  bP.setAttribute('aria-label', 'Voriger Algorithmus'); bN.setAttribute('aria-label', 'Nächster Algorithmus');
+  stp.append(bP, num, bN);
+  const nm = el('div', 'fmname');
+  const bList = el('button', 'hb rb fmlist', 'Liste'); bList.setAttribute('aria-label', 'Alle 32 Algorithmen');
+  const fb = fmPatchCtl(i, 'fb');
+  onTap(bP, () => fmAlgSet(i, fmOf(i).alg - 1)); onTap(bN, () => fmAlgSet(i, fmOf(i).alg + 1)); onTap(bList, () => openAlgSheet(i));
+  const upd = () => { const f = fmOf(i), t = String(f.alg), n = FM_ALG_NAME[f.alg] ? '„' + FM_ALG_NAME[f.alg] + '“' : fmAlg(f).nCar + (fmAlg(f).nCar === 1 ? ' Ausgang' : ' Ausgänge');
+    if (num.textContent !== t) num.textContent = t; if (nm.textContent !== n) nm.textContent = n; fb.update(); };
+  upd(); ED.refreshers.push(upd);
+  fb.classList.add('fmfb');
+  side.append(el('span', 'lbl fmcap', 'Algorithmus'), stp, nm, bList, fb);
+  top.append(dg, side);
+  const strip = el('div', 'fmstrip rest');
+  for (let k = 0; k < 6; k++) strip.appendChild(fmStripCol(i, k));
+  pg.append(top, strip, fmNativeHint(i));
+  fxLongLabels(pg);
+  void fm;
+}
+// the rate / level envelope of one operator (§6.5 HÜLLK.): four lanes A | D1 | D2 | (sustain) | R. A finger in a lane grabs
+// that stage: vertical = its level (L1–L4), horizontal = its time (relative, log; FMH.rateForTime makes the DX rate);
+// one axis per gesture after 4 px, one undo entry per gesture, double tap = the INIT value of that stage
+function fmEnvGraph(i) {
+  const wrap = el('div', 'fmenv rest'), NS = 'http://www.w3.org/2000/svg';
+  wrap.innerHTML = '<svg aria-hidden="true"><g class="lanes"></g><path class="fill"/><path class="line"/><g class="pts"></g></svg><div class="fmenvlbl"></div>';
+  guardTouch(wrap);
+  const svg = wrap.querySelector('svg'), lanes = svg.querySelector('.lanes'), fill = svg.querySelector('.fill'), line = svg.querySelector('.line'), ptsG = svg.querySelector('.pts');
+  const dots = [0, 1, 2, 3].map(() => { const c = document.createElementNS(NS, 'circle'); c.setAttribute('r', '5'); ptsG.appendChild(c); return c; });
+  const STG = ['A', 'D1', 'D2', 'R'];
+  let W = 300, H = 110, geo = null, G = null, lastTap = {t: 0, x: 0, y: 0};
+  const op = () => fmOf(i).ops[ED.fmOp | 0];
+  const draw = () => {
+    const r = wrap.getBoundingClientRect(); if (r.width > 20) { W = r.width; H = r.height; }
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    geo = fmEnvPts(op(), W, H, 8);
+    const P = geo.pts, d = 'M' + P.map(p => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join('L');
+    line.setAttribute('d', d); fill.setAttribute('d', d + `L${P[5][0].toFixed(1)} ${H - 8}L8 ${H - 8}Z`);
+    let lh = '';
+    for (let k = 0; k < 4; k++) { const x = 8 + (k < 3 ? k * geo.lw : 3 * geo.lw + geo.sus); lh += `<rect x="${x.toFixed(1)}" y="4" width="${geo.lw.toFixed(1)}" height="${H - 8}" class="${k % 2 ? 'b' : 'a'}${G && G.stage === k ? ' on' : ''}"/>`; }
+    lh += `<text x="${(8 + 3 * geo.lw + geo.sus / 2).toFixed(1)}" y="${H - 12}" class="sus">S</text>`;
+    lanes.innerHTML = lh;
+    const idx = [1, 2, 3, 5];
+    dots.forEach((c, k) => { c.setAttribute('cx', P[idx[k]][0].toFixed(1)); c.setAttribute('cy', P[idx[k]][1].toFixed(1)); c.classList.toggle('on', !!(G && G.stage === k)); });
+  };
+  const laneOf = x => { if (!geo) return 0; const lx = x - 8; if (lx < 3 * geo.lw) return clamp(Math.floor(lx / geo.lw), 0, 2); return 3; };
+  const show = st => { const o = op(), t = FMH.envTimes(o, 60); lcdShow(STG[st] + ' · OP ' + ((ED.fmOp | 0) + 1), fmTimeTxt(t[st]) + ' · Pegel ' + o.l[st], 'R' + (st + 1) + ' ' + o.r[st]); };
+  on(wrap, 'pointerdown', e => {
+    if (G || e.button > 0) return; e.preventDefault();
+    try { wrap.setPointerCapture(e.pointerId); } catch (_) {}
+    const r = wrap.getBoundingClientRect(), st = laneOf(e.clientX - r.left), o = op();
+    G = {id: e.pointerId, x0: e.clientX, y0: e.clientY, st: 'down', stage: st, before: soundSnapshot(i), axis: null,
+      l0: o.l[st], t0: Math.log(Math.max(FMH.envTimes(o, 60)[st], FM_TLO)), h: r.height, w: geo ? geo.lw : r.width / 4.4};
+    gestBegin(e.pointerId, () => { G = null; draw(); });
+    show(st); draw();
+  });
+  on(wrap, 'pointermove', e => {
+    if (!G || e.pointerId !== G.id) return;
+    const dx = e.clientX - G.x0, dy = e.clientY - G.y0;
+    if (!G.axis) { if (Math.max(Math.abs(dx), Math.abs(dy)) < 4) return; G.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y'; G.st = 'drag'; }
+    const f = ctlPrecision(G.axis === 'x' ? Math.abs(dy) : Math.abs(dx)), k = ED.fmOp | 0;
+    if (G.axis === 'y') {
+      const L = clamp(Math.round(G.l0 - dy / (G.h - 16) * 99 * f), 0, 99);
+      fmSetEnv(i, k, 'l', G.stage, L); draw();
+    } else {
+      // the lane spans 1 ms … 40 s (log); the rate is the DX rate whose stage time is nearest (FMH.rateForTime)
+      const lt = G.t0 + dx / G.w * Math.log(FM_THI / FM_TLO) * f, sec = clamp(Math.exp(lt), FM_TLO, FM_THI);
+      fmSetEnv(i, k, 'r', G.stage, FMH.rateForTime(op(), G.stage, sec, 60)); draw();
+    }
+    show(G.stage);
+  });
+  const fin = (e, why) => {
+    if (!G || e.pointerId !== G.id) return; const g0 = G; G = null; gestEnd(e.pointerId);
+    if (g0.st === 'drag') commitSound(i, g0.before, (g0.axis === 'y' ? 'Pegel ' : 'Zeit ') + STG[g0.stage] + ' OP ' + ((ED.fmOp | 0) + 1));
+    else if (why === 'up') {
+      const t = performance.now();
+      if (t - lastTap.t < DBL_MS && Math.hypot(e.clientX - lastTap.x, e.clientY - lastTap.y) < DBL_PX * 3) {
+        lastTap.t = 0;
+        const k = ED.fmOp | 0, ini = FM_INIT_OP(k), before = soundSnapshot(i);
+        fmSetEnv(i, k, 'r', g0.stage, ini.r[g0.stage]); fmSetEnv(i, k, 'l', g0.stage, ini.l[g0.stage]);
+        if (commitSound(i, before, STG[g0.stage] + ' zurückgesetzt')) toast(STG[g0.stage] + ' zurückgesetzt', {label: 'Rückgängig', fn: () => undo()});
+      } else lastTap = {t, x: e.clientX, y: e.clientY};
+    }
+    draw();
+  };
+  on(wrap, 'pointerup', e => fin(e, 'up')); on(wrap, 'pointercancel', e => fin(e, 'cancel')); on(wrap, 'lostpointercapture', e => fin(e, 'lost'));
+  ED.refreshers.push(() => draw());
+  requestAnimationFrame(draw);
+  if (typeof ResizeObserver === 'function') { const ro = new ResizeObserver(() => { if (!wrap.isConnected) { ro.disconnect(); return; } draw(); }); ro.observe(wrap); }
+  return wrap;
+}
+// OP (§6.5): header „OP 2 · Modulator → OP 1“ ‹ › [Solo] · seg FREQ | HÜLLK. | SKAL. · the page of that part
+function pageFmOp(pg, i) {
+  const k = ED.fmOp | 0, fm = fmOf(i), op = () => fmOf(i).ops[ED.fmOp | 0];
+  if (!['freq', 'env', 'scale'].includes(ED.fmSub)) ED.fmSub = 'freq';
+  const hd = el('div', 'pgrow fmophd rest');
+  const bP = el('button', 'pa rb', '‹'), ttl = el('div', 'fmoptl'), bN = el('button', 'pa rb', '›'), solo = el('button', 'hb rb fmsolo', 'Solo');
+  bP.setAttribute('aria-label', 'Voriger Operator'); bN.setAttribute('aria-label', 'Nächster Operator');
+  solo.setAttribute('aria-label', 'Solo: nur diesen Operator hören (wird nicht gespeichert)');
+  ED.fmSoloB = solo;
+  onTap(bP, () => { fmSelect(i, (ED.fmOp + 5) % 6); safeRebuild(buildSynthEd); });
+  onTap(bN, () => { fmSelect(i, (ED.fmOp + 1) % 6); safeRebuild(buildSynthEd); });
+  onTap(solo, () => {
+    if (UI.fmSolo && UI.fmSolo.t === i) { fmSoloOff(); lcdShow('Solo', 'aus'); }
+    else { UI.fmSolo = {t: i, k: ED.fmOp | 0}; wkFm6(i, true); solo.classList.add('on'); lcdShow('Solo', 'nur OP ' + (ED.fmOp + 1) + ' hören (wird nicht gespeichert)'); }
+    haptic('tick');
+  });
+  const updHd = () => { const t = 'OP ' + ((ED.fmOp | 0) + 1) + ' · ' + fmRole(fmOf(i), ED.fmOp | 0); if (ttl.textContent !== t) ttl.textContent = t; solo.classList.toggle('on', !!(UI.fmSolo && UI.fmSolo.t === i)); };
+  updHd(); ED.refreshers.push(updHd);
+  const sub = makeSeg([['freq', 'FREQ'], ['env', 'HÜLLK.'], ['scale', 'SKAL.']], () => ED.fmSub, v => { ED.fmSub = v; safeRebuild(buildSynthEd); }, 'fmsub', {lcd: false});
+  hd.append(bP, ttl, bN, solo, sub);
+  pg.appendChild(hd);
+  pg.classList.add('pg-fmop-' + ED.fmSub);
+  if (ED.fmSub === 'freq') {
+    const mode = makeSeg([[0, 'RATIO'], [1, 'FEST']], () => op().fixed, v => fmSetOp(i, k, 'fixed', v), null, {undo: soundUndo(i), label: 'Frequenz OP ' + (k + 1)});
+    mode.dataset.key = 'fm.' + k + '.fixed';
+    const big = el('div', 'fmbig'), inf = el('div', 'fminfo');
+    const ks = [fmOpCtl(i, k, 'coarse'), fmOpCtl(i, k, 'fine'), fmOpCtl(i, k, 'det'), fmOpCtl(i, k, 'ol')];
+    const upd = () => {
+      const f = fmOf(i), o = f.ops[k], t = fmRatioTxt(o), out = fmIsOut(f, k);
+      if (big.textContent !== t) big.textContent = t;
+      const it = out ? 'Ausgang: ' + fmOlTxt(true, o.ol) : 'Modulationsindex ' + fmtDec(FMH.modIndex(o.ol), 1) + ' rad';
+      if (inf.textContent !== it) inf.textContent = it;
+      mode.update(); ks.forEach(x => x.update());
+    };
+    upd(); ED.refreshers.push(upd);
+    const r1 = el('div', 'pgrow segs rest fmfreq'); r1.append(lgrp('Frequenz', mode), big);
+    pg.append(r1, knobRow(ks, 'fmk4'), inf);
+  } else if (ED.fmSub === 'env') {
+    const g = fmEnvGraph(i), times = el('div', 'fmtimes');
+    const updT = () => { const t = FMH.envTimes(op(), 60), s = 'A ' + fmTimeTxt(t[0]) + ' · D1 ' + fmTimeTxt(t[1]) + ' · D2 ' + fmTimeTxt(t[2]) + ' · R ' + fmTimeTxt(t[3]); if (times.textContent !== s) times.textContent = s; };
+    updT(); ED.refreshers.push(updT);
+    const bAll = el('button', 'hb rb', 'Auf alle Ausgänge'), bCp = el('button', 'hb rb', 'Kopieren'), bPa = el('button', 'hb rb', 'Einfügen'), bIn = el('button', 'hb rb', 'Init');
+    const envOf = o => ({r: o.r.slice(), l: o.l.slice()});
+    const putEnv = (kk, e) => { const o = fmOf(i).ops[kk]; let ch = false; for (let s = 0; s < 4; s++) { if (o.r[s] !== e.r[s] || o.l[s] !== e.l[s]) ch = true; o.r[s] = e.r[s]; o.l[s] = e.l[s]; } return ch; };
+    onTap(bAll, () => {
+      const f = fmOf(i), e = envOf(f.ops[k]), before = soundSnapshot(i); let n = 0;
+      for (let kk = 0; kk < 6; kk++) if (kk !== k && fmIsOut(f, kk) && putEnv(kk, e)) n++;
+      if (n) { fmChanged(i, true); commitSound(i, before, 'Hüllkurve auf alle Ausgänge'); }
+      lcdShow('Hüllkurve', n ? 'auf ' + n + (n === 1 ? ' Ausgang' : ' Ausgänge') + ' übertragen' : 'keine anderen Ausgänge'); haptic('pop');
+    });
+    onTap(bCp, () => { FMC.env = envOf(op()); lcdShow('Hüllkurve', 'kopiert (OP ' + (k + 1) + ')'); bPa.disabled = false; haptic('tick'); });
+    onTap(bPa, () => {
+      if (!FMC.env) return; const before = soundSnapshot(i);
+      if (putEnv(k, FMC.env)) { fmChanged(i, true); commitSound(i, before, 'Hüllkurve eingefügt'); }
+      lcdShow('Hüllkurve', 'eingefügt (OP ' + (k + 1) + ')'); haptic('tick');
+    });
+    onTap(bIn, () => {
+      const before = soundSnapshot(i);
+      if (putEnv(k, FM_INIT_OP(k))) { fmChanged(i, true); commitSound(i, before, 'Hüllkurve Init'); }
+      lcdShow('Hüllkurve', 'Init (R 99 99 99 99 · L 99 99 99 0)'); haptic('tick');
+    });
+    bPa.disabled = !FMC.env;
+    const br = el('div', 'pgrow fmebtn rest'); br.append(bAll, bCp, bPa, bIn);
+    pg.append(g, times, br);
+  } else {
+    const ks = [fmOpCtl(i, k, 'vs'), fmOpCtl(i, k, 'rs'), fmOpCtl(i, k, 'bp'), fmOpCtl(i, k, 'ld'), fmOpCtl(i, k, 'rd')];
+    const cl = makeSeg(FM_CURVE, () => fmGetOp(i, k, 'lc'), v => fmSetOp(i, k, 'lc', v), null, {undo: soundUndo(i), label: 'Kurve L'});
+    const cr = makeSeg(FM_CURVE, () => fmGetOp(i, k, 'rc'), v => fmSetOp(i, k, 'rc', v), null, {undo: soundUndo(i), label: 'Kurve R'});
+    cl.dataset.key = 'fm.' + k + '.lc'; cr.dataset.key = 'fm.' + k + '.rc';
+    ED.refreshers.push(() => { ks.forEach(x => x.update()); cl.update(); cr.update(); });
+    const r2 = el('div', 'pgrow segs rest fmcurves'); r2.append(lgrp('Kurve L', cl), lgrp('Kurve R', cr));
+    pg.append(knobRow(ks, 'k5'), r2, el('div', 'fminfo', 'Anschlag: wie stark die Anschlagstärke den Pegel ändert · Key→Zeit: höhere Töne = schnellere Hüllkurve · Breakpoint/Tiefe/Kurve: Pegel unter und über dem Breakpoint'));
+  }
+  pg.appendChild(fmNativeHint(i));
+  fxLongLabels(pg);
+  void fm;
+}
+// MAKRO (§6.5): Helligkeit (modulatable: fmbright), Härte, Länge, Release, Transponieren, Ausgang · Lautstärke-Form · [Init FM]
+function pageFmMakro(pg, i) {
+  const ks = [sKnob('fmBright', {fmt: v => (v > .05 ? '+' : v < -.05 ? MINUS : '±') + fmtDec(Math.abs(v), 1).replace(/,0$/, '') + ' dB'}),
+    sKnob('fmAtk', {fmt: fmSign}), sKnob('fmDec', {fmt: fmSign}), sKnob('fmRel', {fmt: fmSign}), fmPatchCtl(i, 'trans'), sKnob('level')];
+  const amp = sSeg('fmAmp', [[0, 'DX-HÜLLKURVEN'], [1, 'ADSR']], null, 'Lautstärke-Form');
+  const bInit = el('button', 'hb rb fminit', 'Init FM'); bInit.setAttribute('aria-label', 'FM-Teil auf den Grundklang (DX7 Init Voice) setzen');
+  onTap(bInit, () => {                                  // one undo step (no confirm: ↶ brings it back)
+    const before = soundSnapshot(i), snd = deep(sndOf(i));
+    snd.p.fm6 = FM_INIT(); for (const k of ['fmBright', 'fmAtk', 'fmDec', 'fmRel']) snd.p[k] = 0; snd.p.fmAmp = 0;
+    applySound(i, snd);
+    if (commitSound(i, before, 'Init FM')) toast('FM auf den Grundklang gesetzt', {label: 'Rückgängig', fn: () => undo()});
+    safeRebuild(buildSynthEd);
+  });
+  ED.refreshers.push(() => { ks.forEach(x => x.update()); amp.update(); });
+  const r2 = el('div', 'pgrow segs rest fmamp'); r2.append(lgrp('Lautstärke-Form', amp), bInit);
+  pg.append(knobRow(ks.slice(0, 4)), knobRow(ks.slice(4), 'fmk2'), r2,
+    el('div', 'fminfo', 'Helligkeit: alle Modulatoren lauter/leiser (dB) · Härte/Länge/Release: schnellere oder langsamere Hüllkurven aller Operatoren · DX-Hüllkurven: die Operator-Hüllkurven formen die Lautstärke, ADSR: zusätzlich die Lautstärke-Hüllkurve'),
+    fmNativeHint(i));
+  fxLongLabels(pg);
 }
 /* ---------- FX tab (§8.3): SPUR · CHORUS · HALL · ECHO · MASTER. HALL, ECHO and MASTER are global (S.fxBus, one undo
    kind 'fx'); SPUR and CHORUS belong to the track's sound (undo kind 'sound'). One flat cell list per page: the CSS grid
@@ -12776,6 +14090,9 @@ function modRangeText(i, m) {
   if (m.dst === 'pitch' || m.dst === 'o2pitch') { const st = m.amt * 24; return (src.bip ? '±' : st >= 0 ? '+' : MINUS) + fmtDec(Math.abs(st), Math.abs(st) < 1 ? 2 : 1) + ' HT'; }
   if (m.dst === 'amp') return (m.amt >= 0 ? '+' : MINUS) + Math.round(Math.abs(m.amt) * 100) + ' % Lautstärke';
   if (m.dst === 'pan') return (src.bip ? '±' : '') + Math.round(Math.abs(m.amt) * 100) + ' % Panorama';
+  // WP7 (§6.3.10): amount 1 = +24 dB on all modulators, or +99 level steps (0.75 dB each) on one operator
+  if (m.dst === 'fmbright') { const db = m.amt * 24; return (src.bip ? '±' : db >= 0 ? '+' : MINUS) + fmtDec(Math.abs(db), 1) + ' dB Helligkeit'; }
+  if (/^op[1-6]$/.test(m.dst)) { const st = Math.round(m.amt * 99); return (src.bip ? '±' : st >= 0 ? '+' : MINUS) + Math.abs(st) + ' Pegelstufen (' + fmtDec(Math.abs(st) * .75, 0) + ' dB)'; }
   return '';
 }
 function modRow(i, m) {
@@ -13120,6 +14437,11 @@ function brRefresh() {
   E.ab.hidden = !(edited || (UI.ab && UI.ab.t === BR.t)); E.ab.classList.toggle('on', !!(UI.ab && UI.ab.t === BR.t && UI.ab.side === 'B'));
   E.bus.hidden = !(UI.busHint && UI.busHint.t === BR.t);
   for (const b of E.cats.children) b.classList.toggle('on', b.dataset.c === BR.cat);
+  // WP7: the chip row scrolls (P: 11 categories); the active chip is brought into view when the category changes
+  if (E.cats._shown !== BR.cat) { E.cats._shown = BR.cat; const c = E.cats, onC = c.querySelector('.chip.on');
+    if (onC) { const cr = c.getBoundingClientRect(), r = onC.getBoundingClientRect();
+      if (c.scrollWidth > c.clientWidth + 1 && (r.left < cr.left || r.right > cr.right)) c.scrollLeft += r.left - cr.left - 8;
+      else if (c.scrollHeight > c.clientHeight + 1 && (r.top < cr.top || r.bottom > cr.bottom)) c.scrollTop += r.top - cr.top - 6; } }
   const items = brItems(), st = list.scrollTop;
   let h = '';
   if (!items.length) h = BR.cat === 'eigene' ? '<div class="mempty">Noch keine eigenen Sounds.<br>Im Klang-Editor „Sichern“ tippen – oder „Importieren“.</div>'
@@ -13201,6 +14523,81 @@ async function importSoundsText(text) {
   toast(x.added.length + (x.added.length === 1 ? ' Sound' : ' Sounds') + ' importiert' + (x.skipped ? ', ' + x.skipped + ' schon vorhanden' : ''));
   if (R.editor === 'browser') { BR.cat = S.tracks[BR.t] && S.tracks[BR.t].kind === 'drum' ? 'ekits' : 'eigene'; brRefresh(); }
   return x;
+}
+/* ---------- DX7 bank import (§6.6, WP7): a 32-voice bulk dump (F0 43 0n 09 20 00 + 4096 bytes + checksum + F7) ->
+   32 FM6 user sounds (engine fm6, cat fm, the bank's names, p = FM_BASE + {fm6}) merged into the library (hash dedupe).
+   The field layout is that of fmresearch/tools/syx.mjs (verified on ROM1A). A bad checksum warns and still imports.
+   P1: the DX LFO -> LFO 1 (speed -> rate via the msfa table, delay -> Einblenden, wave), PMD x PMS -> lfo1->pitch,
+   AMD -> lfo1->amp (when an output operator has AMS). The pitch EG is ignored (§18). ---------- */
+const DX_LFO_HZ = [0.062541, 0.125031, 0.312393, 0.437120, 0.624610, 0.750694, 0.936330, 1.125302, 1.249609, 1.436782, 1.560915, 1.752081, 1.875117,
+  2.062494, 2.247191, 2.374451, 2.560492, 2.686728, 2.873976, 2.998950, 3.188013, 3.369840, 3.500175, 3.682224, 3.812065, 4.000800, 4.186202, 4.310716,
+  4.501260, 4.623209, 4.814636, 4.930480, 5.121901, 5.315191, 5.434783, 5.617346, 5.750431, 5.946717, 6.062811, 6.248438, 6.431695, 6.564264, 6.749460,
+  6.868132, 7.052186, 7.250580, 7.375719, 7.556294, 7.687577, 7.877738, 7.993605, 8.181967, 8.372405, 8.504848, 8.685079, 8.810573, 8.986341, 9.122423,
+  9.300595, 9.500285, 9.607994, 9.798158, 9.950249, 10.117361, 11.251125, 11.384335, 12.562814, 13.676149, 13.904338, 15.092062, 16.366612, 16.638935,
+  17.869907, 19.193858, 19.425019, 20.833333, 21.034918, 22.502250, 24.003841, 24.260068, 25.746653, 27.173913, 27.578599, 29.052876, 30.693677,
+  31.191516, 32.658393, 34.317090, 34.674064, 36.416606, 38.197097, 38.550501, 40.387722, 40.749796, 42.625746, 44.326241, 44.883303, 46.772685,
+  48.590865, 49.261084].map(x => x * 1.0332);              // msfa lfo.cc: lfoSource · 4437500000 / 2^32 = Hz
+const DX_PMS = [0, 10, 20, 33, 55, 92, 153, 255];          // msfa pitch mod sensitivity
+const SYX_LEVEL = .35;                                     // imported voices start at −9 dB (the factory FM sounds sit at −1.6 … −15.7 dB)
+function parseSyxBank(bytes) {
+  let off = -1;
+  for (let i = 0; i + 6 <= bytes.length; i++) if (bytes[i] === 0xF0 && bytes[i + 1] === 0x43 && (bytes[i + 2] & 0xF0) === 0 && bytes[i + 3] === 0x09 && bytes[i + 4] === 0x20 && bytes[i + 5] === 0x00) { off = i; break; }
+  if (off < 0 || bytes.length < off + 6 + 4096 + 1) return {ok: false, error: 'Keine DX7-Bank (32 Stimmen)'};
+  const d = bytes.subarray(off + 6, off + 6 + 4096);
+  let sum = 0; for (let i = 0; i < 4096; i++) sum += d[i];
+  const ckOk = ((128 - (sum & 127)) & 127) === (bytes[off + 6 + 4096] & 127);
+  const voices = [];
+  for (let v = 0; v < 32; v++) {
+    const b = d.subarray(v * 128, v * 128 + 128), ops = [];
+    for (let o = 5; o >= 0; o--) {                         // stored OP6 … OP1
+      const p = b.subarray(o * 17, o * 17 + 17);
+      const op = {on: 1, fixed: p[15] & 1, coarse: (p[15] >> 1) & 31, fine: p[16] & 127, det: ((p[12] >> 3) & 15) - 7, ol: p[14] & 127,
+        r: [p[0], p[1], p[2], p[3]].map(x => x & 127), l: [p[4], p[5], p[6], p[7]].map(x => x & 127), vs: (p[13] >> 2) & 7, rs: p[12] & 7, ams: p[13] & 3};
+      if (p[9] || p[10]) op.ks = {bp: p[8] & 127, ld: p[9] & 127, rd: p[10] & 127, lc: p[11] & 3, rc: (p[11] >> 2) & 3};
+      ops.push(op);
+    }
+    const name = String.fromCharCode(...b.subarray(118, 128)).replace(/[^\x20-\x7e]/g, '?').replace(/\s+/g, ' ').trim() || 'DX7 ' + (v + 1);
+    voices.push({name, alg: (b[110] & 31) + 1, fb: b[111] & 7, trans: (b[117] & 63) - 24, ops,
+      lfo: {spd: Math.min(99, b[112] & 127), dly: Math.min(99, b[113] & 127), pmd: Math.min(99, b[114] & 127), amd: Math.min(99, b[115] & 127), wave: (b[116] >> 1) & 7, pms: (b[116] >> 4) & 7}});
+  }
+  return {ok: true, ckOk, voices};
+}
+function syxVoiceSound(v) {
+  const fm6 = {alg: v.alg, fb: v.fb, trans: clamp(v.trans, -24, 24), ops: v.ops.map(o => { const x = Object.assign({}, o); delete x.ams; return x; })};
+  const p = Object.assign({}, SQStore.FM_BASE, {level: SYX_LEVEL, fm6}), mods = [], L = v.lfo, A = DXN.ALGS[fm6.alg - 1] || DXN.ALGS[0];
+  p.l1shape = [1, 2, 2, 3, 0, 4][L.wave] != null ? [1, 2, 2, 3, 0, 4][L.wave] : 0; p.l1rate = clamp(DX_LFO_HZ[L.spd] || 1, .01, 40); p.l1sync = 0;
+  // DX7 LFO delay: (99 − delay) sets the wait + fade (msfa lfo.cc); here one fade-in from the key-down
+  const a0 = 99 - L.dly, a = (16 + (a0 & 15)) << (1 + (a0 >> 4)), t1 = 2147483648 / (25190424 * a), t2 = 2147483648 / (25190424 * Math.max(128, a & 0xff80));
+  p.l1fade = L.dly ? clamp(t1 + t2, 0, 10) : 0;
+  const semis = 12 * DX_PMS[L.pms] / 255 * L.pmd / 99;
+  if (semis > .005) mods.push({src: 'lfo1', dst: 'pitch', amt: clamp(semis / 24, 0, 1)});
+  const ams = Math.max(0, ...v.ops.filter((o, k) => A.car[k]).map(o => o.ams || 0));
+  if (L.amd && ams) mods.push({src: 'lfo1', dst: 'amp', amt: -clamp(L.amd / 99 * [0, .3, .6, 1][ams] * .5, 0, 1)});
+  return {engine: 'fm6', cat: 'fm', name: v.name, p, mods, fx: {drive: 0, rev: .2, dly: 0, vol: .8, pan: 0}, origin: null};
+}
+// bytes (Uint8Array) -> {added, skipped, names}; toasts the result (§6.6)
+async function importSyx(bytes) {
+  bytes = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
+  const r = parseSyxBank(bytes);
+  if (!r.ok) { toast(r.error); return {added: 0, skipped: 0, names: [], error: r.error}; }
+  const sounds = r.voices.map(syxVoiceSound);
+  await libReady();
+  const x = await LIB.lib.importMany(sounds);
+  libChanged();
+  // §6.6: „32 FM-Sounds importiert (11 schon vorhanden)“ counts the bank's voices; the hash dedupe skips the known ones
+  const n = r.voices.length, msg = n + ' FM-Sounds importiert' + (x.skipped ? ' (' + x.skipped + ' schon vorhanden)' : '');
+  if (!r.ckOk) toast('Prüfsumme der DX7-Bank stimmt nicht – trotzdem importiert. ' + msg);
+  else toast(msg);
+  if (R.editor === 'browser') { BR.cat = 'eigene'; brRefresh(); }
+  return {added: x.added.length, skipped: x.skipped, names: r.voices.map(v => v.name), checksum: r.ckOk, ids: x.added.slice()};
+}
+function onSyxPicked(file) {
+  if (!file) return;
+  if (file.size > 4 * 1024 * 1024) { toast('Keine DX7-Bank (32 Stimmen)'); return; }
+  const rd = new FileReader();
+  rd.onload = () => { importSyx(new Uint8Array(rd.result)).catch(e => { logErr(e); toast('Import fehlgeschlagen'); }); };
+  rd.onerror = () => toast('Datei nicht lesbar');
+  rd.readAsArrayBuffer(file);
 }
 function onSoundsPicked(file) {
   if (!file) return;
@@ -14675,6 +16072,9 @@ function openMenu(goto) {
   const bSx = btn('Alle eigenen Sounds exportieren'), bSi = btn('Sounds importieren');
   on(bSx, 'click', () => exportSounds()); on(bSi, 'click', () => { EL.sndIn.value = ''; EL.sndIn.click(); });
   row(sS, null, bSx, bSi);
+  // §6.6 (WP7): a DX7 bank (.syx); the picker has no `accept` attribute (iOS greys out .syx otherwise, §1.7.8)
+  const bSyx = btn('DX7-Bank importieren (.syx)'); on(bSyx, 'click', () => { EL.syxIn.value = ''; EL.syxIn.click(); });
+  row(sS, null, bSyx);
   const nLib = LIB.ok ? LIB.lib.all().length : 0;
   sS.appendChild(el('div', 'small', nLib ? nLib + (nLib === 1 ? ' eigener Sound' : ' eigene Sounds') + ' im Browser – „Als Datei sichern“ nimmt sie mit.' : 'Eigene Sounds entstehen im Klang-Editor mit „Sichern“. Eine Projektdatei enthält immer alle eigenen Sounds.'));
   // 2 MIDI export
@@ -14744,6 +16144,7 @@ function openMenu(goto) {
     'LAUF: Basslauf oder Sequenz Schritt für Schritt – Schritt antippen = an, hoch/runter ziehen = Ton in der Tonart.',
     'SONG: SONG ⇄ (Ecke oben links im Raster) zeigt den Song. ● SONG nimmt Szenenwechsel, Clip-Stopps, Träger und deine Melodie mit, ▶ SONG spielt alles ab. Eine Zelle antippen = anderer Clip in diesem Takt, wischen = blättern. Während der Song läuft: Clip starten = Spur übernehmen, ↩ SONG gibt sie zurück; ● MEL. spielt eine Melodie dazu. Unter MEL. ⋯: Melodie als Clip, Kette aus Szenen.',
     'DRUMS: 12 Pads – oben antippen = laut, unten = leise. KLANG öffnet den Drum-Editor: SOUND (Modell und Regler), TIEF (alle Schichten), SCHRITTE (Euklid, Muster), KIT (Gate, Raum, Akzent).',
+    'FM: Klangerzeugung FM = 6 Operatoren wie beim DX7. ALGO zeigt, wer wen moduliert (farbig = Ausgang); Box antippen = Operator wählen, wischen = anderer Algorithmus. Die Regler unten sind die Pegel der Operatoren (Modulator: Helligkeit, Ausgang: Lautstärke). OP stellt Frequenz, Hüllkurve und Skalierung ein, MAKRO macht alles auf einmal heller, härter oder länger. Menü → Sounds lädt DX7-Bänke (.syx).',
     'EFFEKTE: Im Klang-Editor unter FX. SPUR und CHORUS gehören zur Spur, HALL, ECHO und MASTER wirken auf alle Spuren. Nach dem Stopp klingen Hall und Echo aus – ■ zweimal schneidet sie ab.',
     'Jede Änderung lässt sich mit ↶ rückgängig machen, ↷ stellt sie wieder her.',
     'Speichern geht von selbst. „Als Datei sichern“ legt eine Sicherung mit allem an, „Projekte“ zeigt alle Projekte im Browser.'].map(t => `<p>${esc(t)}</p>`).join('') +
@@ -14777,6 +16178,7 @@ function renderMenuInfo() {
     ['Bildschirm bleibt an', wakeStatus()],
     ['Synth', synthStatus()],
     ['Hall', !c ? '–' : AU.hallKind === 'worklet' ? 'Worklet (Dattorro)' : 'Faltung (vereinfacht)'],
+    ['FM', '6 Operatoren, alle 32 DX7-Algorithmen (' + (UI.forceNative || SynthHost.state === 'failed' ? 'kompatibel: Änderungen ab der nächsten Note' : 'im Synth-Worklet') + '). Algorithmus 4 und 6: die Rückkopplung über mehrere Operatoren wird – wie bei msfa/Dexed – als Rückkopplung von OP 6 auf sich selbst gerechnet.'],
     ['CPU', c ? Math.round(LIM.load * 100) + ' % Last · Begrenzer ' + (LIM.level ? 'Stufe ' + LIM.level : 'aus') + ' · Qualität ' + ({auto: 'Auto', analog: 'Analog', eco: 'Eco'}[S.settings.quality] || 'Auto') : '–'],
     ['Puffer', c ? (AU.hint === 'playback' ? 'Stabil' : 'Interaktiv') : (uiPrefs().buffer === 'playback' ? 'Stabil' : 'Interaktiv')],
   ];
@@ -15662,6 +17064,7 @@ function bindUI() {
   on(EL.popLayer.querySelector('.bd'), 'pointerdown', e => { e.preventDefault(); e.stopPropagation(); UI.eatClick = performance.now() + 500; closePop(); });
   on(EL.fileIn, 'change', () => onFilePicked(EL.fileIn.files && EL.fileIn.files[0]));
   on(EL.sndIn, 'change', () => onSoundsPicked(EL.sndIn.files && EL.sndIn.files[0]));
+  on(EL.syxIn, 'change', () => onSyxPicked(EL.syxIn.files && EL.syxIn.files[0]));
   on(EL.banner, 'click', () => { ensureAudio(); });
   // blur buttons after pointer use so Space/Enter keep their global meaning
   document.addEventListener('pointerup', () => { const a = document.activeElement; if (a && a.tagName === 'BUTTON') a.blur(); }, true);
@@ -15848,6 +17251,28 @@ const SYNQUENZER = {
   toggleStep: (voice, step, bar) => toggleStep(voice, step, bar || 0),
   setTrackFollow, setMute,
   setEngine, loadPreset, setParam, getParam, randomize, setDrumParam,
+  // WP7 (§16): FM6 — patch keys alg / fb / trans, operator keys (Anhang A.2: on fixed coarse fine det ol vs rs, bp ld rd lc rc,
+  // r / l = arrays of 4 or 'r1'…'r4' / 'l1'…'l4'); one undo step per call; importSyx(bytes) -> {added, skipped, names}
+  setFm: (t, key, v) => {
+    const snd = sndOf(t); if (!snd) throw new Error('Keine Synth-Spur: ' + t);
+    if (!['alg', 'fb', 'trans'].includes(key)) throw new Error('setFm: alg, fb oder trans');
+    const b = soundSnapshot(t), r = fmSetPatch(t, key, v); commitSound(t, b, 'FM ' + key);
+    if (R.editor === 'synth' && t === R.selT) safeRebuild(buildSynthEd);
+    return r;
+  },
+  setFmOp: (t, op, key, v) => {
+    const snd = sndOf(t); if (!snd) throw new Error('Keine Synth-Spur: ' + t);
+    const k = clamp(op | 0, 0, 5), b = soundSnapshot(t); let r;
+    const m = /^([rl])([1-4])$/.exec(String(key));
+    if (m) r = fmSetEnv(t, k, m[1], +m[2] - 1, v);
+    else if ((key === 'r' || key === 'l') && Array.isArray(v)) { r = v.slice(0, 4).map((x, j) => fmSetEnv(t, k, key, j, x)); }
+    else if (key in FM_RANGE && !['alg', 'fb', 'trans'].includes(key)) r = fmSetOp(t, k, key, v);
+    else throw new Error('setFmOp: unbekannter Operator-Parameter ' + key);
+    commitSound(t, b, 'OP ' + (k + 1) + ' ' + key);
+    return r;
+  },
+  importSyx: bytes => importSyx(bytes),
+  fmUi: () => (R.editor === 'synth' ? {op: ED.fmOp | 0, sub: ED.fmSub || 'freq', page: ED.sub.osc, solo: UI.fmSolo ? Object.assign({}, UI.fmSolo) : null} : null),
   loadKit: name => soundEdit(4, 'Kit ' + name, () => loadKit(name)),
   // WP3 (§16): sounds, modulation, library
   getSound: t => { const tr = S.tracks[t]; if (!tr) throw new Error('Keine Spur: ' + t); return deep(tr.sound); },
@@ -15945,7 +17370,7 @@ function uiSync() { try { if (EL.app) uiFrame(); } catch (e) { logErr(e); } }
 const NO_SYNC = new Set(['state', 'project', 'runtime', 'getClip', 'getParam', 'noteLog', 'voices', 'timeline', 'serialize', 'buildMidi', 'buildZip', 'crc32', 'meter', 'outPitch', 'migrate', 'tapTempo',
   'getSound', 'mods', 'library', 'factory', 'previewState', 'soundEdited',
   'history', 'projects', 'storage', 'engineInfo', 'getBusFx', 'wake', 'gestures', 'roll', 'rollApi', 'detectKey', 'sceneKey',
-  'modState', 'modLive', 'scopeMsg', 'lauf', 'laufApi', 'song', 'kits', 'patterns', 'drumSlot']);
+  'modState', 'modLive', 'scopeMsg', 'lauf', 'laufApi', 'song', 'kits', 'patterns', 'drumSlot', 'fmUi']);
 for (const k of Object.keys(SYNQUENZER)) {
   const f = SYNQUENZER[k]; if (typeof f !== 'function' || NO_SYNC.has(k)) continue;
   SYNQUENZER[k] = function () { const r = f.apply(this, arguments); uiSync(); if (r && typeof r.then === 'function') return r.then(v => { uiSync(); return v; }); return r; };
@@ -15959,7 +17384,7 @@ function init() {
     'gridArea', 'clipGrid', 'hint', 'hintX', 'countin', 'ciNum', 'side', 'carrier', 'bHMode', 'hModeTxt', 'readout', 'carRing', 'carRingArc',
     'carLabel', 'carVal', 'carShift', 'carLock', 'bLatch', 'bOrig', 'hist', 'strip', 'stDot', 'stName', 'stSub', 'bKlang', 'bFolgt', 'stLock',
     'bMute', 'bUndo', 'modebar', 'octDn', 'octUp', 'segPlay', 'segTr', 'kbArea', 'kb', 'pads', 'kbLabel', 'synthSheet', 'drumSheet', 'clipSheet',
-    'menu', 'popLayer', 'toast', 'banner', 'fileIn', 'sndIn', 'sndSheet', 'topLogo', 'bub',
+    'menu', 'popLayer', 'toast', 'banner', 'fileIn', 'sndIn', 'syxIn', 'sndSheet', 'topLogo', 'bub',
     'bFangT', 'bFang', 'reclane', 'recLaneCv', 'recLaneTxt', 'bRecDone', 'bEdit', 'kbRef', 'rollSheet', 'qSheet', 'coach', 'ciTgt', 'modeSeg', 'bCpu', 'songView'].forEach(id => { EL[id] = document.getElementById(id); });
   EL.grid = EL.clipGrid; EL.taktLbl = EL.takt.querySelector('.lbl');
   // AN10 (§5.7): ?engine=native keeps the synth worklet off (tests of the native fallback)
