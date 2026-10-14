@@ -2158,6 +2158,7 @@ svg.alg .op.sel rect{stroke:#fff;stroke-width:2.6}
 .fmaside>.fmname{grid-column:1/-1;grid-row:3}
 .fmaside>.fmlist{grid-column:1;grid-row:4;justify-self:start}
 .fmaside>.fmfb{grid-column:2;grid-row:2/5;align-self:center;height:auto}
+.fmaside>.fmstep{min-width:0;position:relative;z-index:1}
 .fmcap{padding-left:2px}
 .fmstep{display:flex;align-items:center;gap:4px}
 .fmstep .pa{width:38px;height:40px;padding:0;font-size:18px;flex:none}
@@ -2217,9 +2218,12 @@ svg.alg .op.sel rect{stroke:#fff;stroke-width:2.6}
 .fmcurves .seg{flex-wrap:nowrap}
 .fmcurves .lgrp>.lbl{min-width:62px}
 .fmcurves .seg button{min-width:44px;padding:0 5px;font-size:11px}
-.fmamp{flex-wrap:wrap;gap:6px 12px}
+.pgrow.segs.fmamp{flex-wrap:wrap;gap:6px 12px}
 .fmamp .seg{flex-wrap:nowrap}
-@media (orientation:portrait) and (max-width:389px){.fmamp .lgrp{flex-direction:column;align-items:flex-start;gap:3px}}
+/* the segment group never shrinks under its buttons (it overlapped [Init FM] at 390/393 wide): [Init FM] wraps instead;
+   the label sits above the segments on phones, so segments + [Init FM] share one row */
+.fmamp .lgrp{flex:none}
+@media (orientation:portrait) and (max-width:439px){.fmamp .lgrp{flex-direction:column;align-items:flex-start;gap:3px}}
 .fmamp .seg button{padding:0 8px;font-size:11px}
 .hb.fminit{height:40px}
 /* algorithm sheet (a list: it scrolls) */
@@ -2283,6 +2287,15 @@ svg.alg .op.sel rect{stroke:#fff;stroke-width:2.6}
   #synthSheet .pg.pg-osc-makro .kn-row.fmk2:not(.k5){grid-template-columns:repeat(2,minmax(0,104px));justify-content:start;gap:2px 18px}
   #synthSheet .pg.pg-osc-makro .kn-row.fmk2:not(.k5) .knob{width:auto}
 }
+/* phones 360–401 wide: [‹ n ›] (98 px) and a 62 px FEEDBACK knob fit the aside next to the diagram (the 116 px stepper ran
+   8–23 px under the knob, which took the taps on the lower right of [›]); 360–374: a 154 px diagram leaves room for both */
+@media (orientation:portrait) and (min-width:360px) and (max-width:401px){
+  .fmstep .pa{width:32px}
+  .fmnum{min-width:26px;font-size:22px}
+  .fmaside>.fmfb{width:62px}
+  .fmaside>.fmfb .kl{font-size:9.5px;letter-spacing:0}
+}
+@media (orientation:portrait) and (min-width:360px) and (max-width:374px){.fmdiag{width:154px}}
 /* short portrait screens (375×667, 320×568): a compact head row (diagram + stepper / Liste + FEEDBACK) so the faders keep travel */
 @media (orientation:portrait) and (max-height:700px){
   #synthSheet .pg-osc-algo .fmtop{height:84px}
@@ -3139,12 +3152,13 @@ class AnalogCore extends AudioWorkletProcessor {
       if (live && v.fix[k] < 4) this.fmAdvance(v, k, v.fix[k] === 3 && v.gate ? 2 : v.fix[k]);
     }
   }
-  // stage target + rate; macro rate offsets: fmAtk on R1, fmDec on R2 / R3, fmRel on R4, clamped 0..99 (6.2)
+  // stage target + rate; macro rate offsets: fmAtk on R1 (+ = faster), fmDec on R2 / R3 and fmRel on R4 with the sign
+  // flipped (+ = Laenge / Release longer = slower rate), clamped 0..99 (6.2)
   fmAdvance(v, k, ix) {
     v.fix[k] = ix;
     if (ix > 3) return;
     const op = this.fm.ops[k], P = this.P;
-    const off = ix === 0 ? P.fmAtk : ix === 3 ? P.fmRel : P.fmDec, r = Math.max(0, Math.min(99, op.r[ix] + Math.round(off || 0)));
+    const off = ix === 0 ? P.fmAtk : ix === 3 ? -P.fmRel : -P.fmDec, r = Math.max(0, Math.min(99, op.r[ix] + Math.round(off || 0)));
     const t = Math.max(16, ((scaleOL(op.l[ix]) >> 1) << 6) + v.foutLvl[k] - 4256);
     v.ftgt[k] = t; v.frise[k] = t > v.flvl[k] ? 1 : 0;
     v.frate[k] = LVL_PER_SEC(Math.min(63, ((r * 41) >> 6) + v.frs[k])) * FENV_BLK / SR;   // level units per control block
@@ -5706,7 +5720,7 @@ const RecHelpers = (() => {
         OP(3, 73, [98, 30, 70, 30], [99, 0, 0, 0], {fine: 17, det: -2, vs: 3, rs: 2}),
         OP(2, 70, [95, 60, 70, 40], [99, 0, 0, 0], {vs: 2, rs: 2}),
         OP(5, 60, [98, 70, 0, 40], [99, 0, 0, 0], {vs: 4, rs: 2})]},
-      {gain: -10.2}, {rev: .4}),
+      {gain: -10.2}, {rev: .25}),
     F('kristallglocke', 'Kristallglocke', 'glocke', 'bell', 'Glas-Glocke / Celesta-artig',
       'Paar 2 ist ein hoher „Ping“ (Ausgang 4:1, Modulator 7,07:1, schnell weg), darunter klingt ein weicher 1:3,5-Glockenton lang aus.',
       {alg: 5, fb: 3, ops: [
@@ -5718,24 +5732,24 @@ const RecHelpers = (() => {
         OP(1, 55, [80, 40, 30, 40], [99, 60, 0, 0], {vs: 1})]},
       {gain: -5.8}, {rev: .45, dly: .2}),
     F('marimba-holz', 'Marimba-Holz', 'glocke', 'arp', 'FM-Marimba',
-      'Holz = kurz und harmonisch: Modulator 3:1 nur 30 ms, der Ausgang klingt in ~0,6 s aus. Ein zweiter Ausgang auf 4:1 gibt den hölzernen Oberton.',
+      'Holz = harmonisch mit kurzem Anschlag: Modulator 3:1 nur ~0,15 s, der Ausgang klingt in ~1,5 s aus. Ein zweiter Ausgang auf 4:1 gibt den hölzernen Oberton. Wenig Hall, damit der Ton trocken bleibt.',
       {alg: 5, fb: 0, ops: [
-        OP(1, 99, [96, 52, 40, 60], [99, 0, 0, 0], {vs: 2, rs: 3}),
-        OP(3, 76, [99, 85, 40, 60], [99, 0, 0, 0], {vs: 4, rs: 3}),
-        OP(4, 74, [99, 72, 40, 60], [99, 0, 0, 0], {vs: 3, rs: 3, ks: {bp: 54, ld: 0, rd: 40, lc: 0, rc: 0}}),
+        OP(1, 99, [96, 34, 40, 60], [99, 0, 0, 0], {vs: 2, rs: 3}),
+        OP(3, 82, [99, 60, 40, 60], [99, 0, 0, 0], {vs: 4, rs: 3}),
+        OP(4, 84, [99, 56, 40, 60], [99, 0, 0, 0], {vs: 3, rs: 3, ks: {bp: 54, ld: 0, rd: 40, lc: 0, rc: 0}}),
         OP(1, 50, [99, 80, 40, 60], [99, 0, 0, 0], {vs: 2}),
         OFF(), OFF()]},
-      {gain: -4}, {rev: .3}),
+      {gain: -10.6}, {rev: .1}),
     F('kalimba', 'Kalimba', 'glocke', 'arp', 'FM-Kalimba / Daumenklavier',
-      'Metallischer Anschlag (Modulator 8:1, nach ~0,1 s verklungen) über einem runden Ton, der ~1 s ausklingt. Ideal für Arpeggios mit Echo.',
+      'Metallischer Anschlag (Modulator 8:1, nach ~0,1 s verklungen) über einem runden Ton, der gut 1 s ausklingt. Ideal für Arpeggios mit Echo.',
       {alg: 5, fb: 2, ops: [
-        OP(1, 99, [96, 45, 35, 55], [99, 0, 0, 0], {vs: 2, rs: 2}),
+        OP(1, 99, [96, 36, 35, 55], [99, 0, 0, 0], {vs: 2, rs: 2}),
         OP(8, 72, [99, 62, 40, 55], [99, 0, 0, 0], {vs: 5, rs: 3}),
         OP(3, 70, [99, 70, 40, 55], [99, 0, 0, 0], {vs: 3, rs: 3}),
         OP(1, 40, [99, 70, 40, 55], [99, 0, 0, 0]),
-        OP(1, 80, [96, 50, 35, 55], [99, 0, 0, 0], {det: -3, vs: 2, rs: 2}),
+        OP(1, 80, [96, 40, 35, 55], [99, 0, 0, 0], {det: -3, vs: 2, rs: 2}),
         OP(5, 52, [99, 85, 40, 55], [99, 0, 0, 0], {vs: 4})]},
-      {gain: -9.5}, {rev: .3, dly: .3}),
+      {gain: -11.6}, {rev: .2, dly: .25}),
     F('fm-pluck', 'FM-Pluck', 'fm', 'arp', 'Kurzer glasiger FM-Pluck',
       'Algorithmus 7 (zwei Modulatoren auf einen Ausgang): heller, kurzer Anschlag für Arps und Sequenzen.',
       {alg: 7, fb: 2, ops: [
@@ -5936,9 +5950,10 @@ const RecHelpers = (() => {
   }
   const peakFor = (P, vel) => (+P.level || 0) * (1 - P.ampVel + P.ampVel * vel);
 
-  // §6.2 macros at note-on (the native path has no live edits, §6.4): fmAtk on R1, fmDec on R2 / R3, fmRel on R4, clamped 0..99
+  // §6.2 macros at note-on (the native path has no live edits, §6.4): fmAtk on R1 (+ = faster); fmDec on R2 / R3 and fmRel on R4
+  // subtracted (+ = Länge / Release longer, as the MAKRO knobs say), clamped 0..99 — the same rule as the worklet's fmAdvance
   function fm6Macro(P) {
-    const f = P.fm6, a = Math.round(+P.fmAtk || 0), d = Math.round(+P.fmDec || 0), r = Math.round(+P.fmRel || 0);
+    const f = P.fm6, a = Math.round(+P.fmAtk || 0), d = -Math.round(+P.fmDec || 0), r = -Math.round(+P.fmRel || 0);
     if (!a && !d && !r) return f;
     const cl = x => Math.max(0, Math.min(99, x));
     return Object.assign({}, f, {ops: f.ops.map(op => Object.assign({}, op, {r: [cl(op.r[0] + a), cl(op.r[1] + d), cl(op.r[2] + d), cl(op.r[3] + r)]}))});
@@ -8700,9 +8715,13 @@ const FmNatProto = Object.assign(Object.create(VoiceProto), {
     if (this.dead) return;
     if (t < this.start) t = this.start;
     if (!fastTau && t >= this.relT) return;
-    if (fastTau && t >= this.relT && this.relTau <= fastTau) return;
+    // fmAmp 0 gate still open (relTau .008 is the tau of its closing at gateEnd, not now): a fast release must cut through
+    const gateOpen = this.gateEnd != null && t >= this.relT && t < this.gateEnd + .04;
+    if (fastTau && t >= this.relT && this.relTau <= fastTau && !gateOpen) return;
     if (!this.dxRel && this.dx && !fastTau) { this.dxRel = true; try { this.dxEnd = this.dx.release(t); } catch (e) { this.dxEnd = t; } }
     if (fastTau || this.P.fmAmp >= 1) {
+      // rebase the gate's held / closing value at t, so VoiceProto.release fades from what sounds now (no jump, no early return)
+      if (gateOpen) { const val = this.ampAt(t); this.relT = t; this.relV = val; this.relTau = 1e9; }
       this.gateEnd = null;
       VoiceProto.release.call(this, t, fastTau);
       if (this.dxRel && this.dxEnd + .06 < this.stopAt) { const st = this.dxEnd + .06; this.stopAt = st; for (const x of this.srcs) { try { x.stop(st); } catch (e) {} } }
@@ -12105,7 +12124,10 @@ function trackOnWorklet(i) {
   return true;
 }
 // a route is heard: in the worklet every route, natively only the subset of §9.5; fx.* routes (§9.6) are native LFO 1/2 always
-function routeActive(i, m) { if (String(m.dst).startsWith('fx.')) return fxRoute(m); return trackOnWorklet(i) || nativeRoute(m); }
+// §9.2: these destinations exist on the worklet VA only; an FM6 voice ignores them (hidden in [+ Modulation], hatched if stored)
+const VA_ONLY_DST = new Set(['o2pitch', 'pw', 'o1lvl', 'o2lvl', 'o3lvl', 'noise', 'unidet']);
+function dstDead(i, dst) { const s = sndOf(i); return !!s && s.engine === 'fm6' && VA_ONLY_DST.has(dst); }
+function routeActive(i, m) { if (String(m.dst).startsWith('fx.')) return fxRoute(m); if (dstDead(i, m.dst)) return false; return trackOnWorklet(i) || nativeRoute(m); }
 // set a route in knob units (§9.2: stored in engine units). keep = a finger is still on it: a route dragged through 0 stays
 // (and keeps its place in the list) until the finger lifts. Returns the depth in knob units, or null at the 8-route limit.
 const MODS_DIRTY = [0, 0, 0, 0]; let modsRaf = 0;
@@ -13791,7 +13813,7 @@ function pageFmMakro(pg, i) {
   ED.refreshers.push(() => { ks.forEach(x => x.update()); amp.update(); });
   const r2 = el('div', 'pgrow segs rest fmamp'); r2.append(lgrp('Lautstärke-Form', amp), bInit);
   pg.append(knobRow(ks.slice(0, 4)), knobRow(ks.slice(4), 'fmk2'), r2,
-    el('div', 'fminfo', 'Helligkeit: alle Modulatoren lauter/leiser (dB) · Härte/Länge/Release: schnellere oder langsamere Hüllkurven aller Operatoren · DX-Hüllkurven: die Operator-Hüllkurven formen die Lautstärke, ADSR: zusätzlich die Lautstärke-Hüllkurve'),
+    el('div', 'fminfo', 'Helligkeit: alle Modulatoren lauter/leiser (dB) · mehr Härte = schnellerer Anstieg, mehr Länge/Release = längeres Abklingen aller Operatoren · DX-Hüllkurven: die Operator-Hüllkurven formen die Lautstärke, ADSR: zusätzlich die Lautstärke-Hüllkurve'),
     fmNativeHint(i));
   fxLongLabels(pg);
 }
@@ -14098,10 +14120,11 @@ function modRangeText(i, m) {
 function modRow(i, m) {
   const src = MSRC[m.src], dst = MDST[m.dst] || {l: m.dst}, K = MOD_K[m.dst] || 1, lim = Math.min(1, 1 / K);
   const native = routeActive(i, m);                       // hatched only where the track plays natively (§9.5)
-  const row = el('div', 'modrow' + (native ? '' : ' wk'));
+  const dead = dstDead(i, m.dst);                          // a VA-only destination on an FM sound: no effect at all
+  const row = el('div', 'modrow' + (native ? '' : ' wk') + (dead ? ' dead' : ''));
   row.dataset.key = m.src + ':' + m.dst;
   row.style.setProperty('--c', src.c);
-  row.innerHTML = `<span class="ms"><i></i>${esc(src.l)}</span><div class="md"><b>${esc(dst.l)}</b><small></small>${native ? '' : '<em>nur mit Worklet</em>'}</div>` +
+  row.innerHTML = `<span class="ms"><i></i>${esc(src.l)}</span><div class="md"><b>${esc(dst.l)}</b><small></small>${native ? '' : dead ? '<em>bei FM ohne Wirkung</em>' : '<em>nur mit Worklet</em>'}</div>` +
     `<div class="bsl" role="slider" aria-label="Tiefe ${esc(src.l)} → ${esc(dst.l)}"><i class="lim l"></i><i class="lim r"></i><b></b><span></span></div><button class="mx rb" aria-label="Entfernen">✕</button>`;
   const sl = row.querySelector('.bsl'), bar = sl.querySelector('b'), lab = sl.querySelector('span'), sm = row.querySelector('small');
   // the end zones beyond ±1/K (PW, Hüllk.-Menge, Panorama ±50 %, Resonanz ±87 %) are drawn darker (§9.2)
@@ -14166,8 +14189,9 @@ function openModAdd(anchor, i) {
     } else {
       const have = new Set(S.tracks[i].sound.mods.filter(m => m.src === srcSel).map(m => m.dst));
       const lfo = srcSel === 'lfo1' || srcSel === 'lfo2';
+      // FM group only with the FM6 engine; the VA-only OSZ destinations (§9.2 „worklet VA“) only without it
       pop.innerHTML = `<h4>${esc(MSRC[srcSel].l)} → Ziel</h4>` + MOD_DST.filter(([g]) => (g !== 'FM' || eng === 'fm6') && (g !== 'FX' || lfo)).map(([g, l]) =>
-        `<div class="mgrp"><span class="lbl">${g}</span><div class="plist mdst">` + l.map(([id, n]) => {
+        `<div class="mgrp"><span class="lbl">${g}</span><div class="plist mdst">` + l.filter(([id]) => eng !== 'fm6' || !VA_ONLY_DST.has(id)).map(([id, n]) => {
           const nat = routeActive(i, {src: srcSel, dst: id});
           return `<button class="rb${have.has(id) ? ' on' : ''}${nat ? '' : ' wk'}" data-d="${id}">${esc(n)}${nat ? '' : '<small>Worklet</small>'}</button>`; }).join('') + '</div></div>').join('');
     }
