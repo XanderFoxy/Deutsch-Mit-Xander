@@ -335,8 +335,10 @@ const HAKEN = () => {
     const vorB = await pcZahl(B);
     const t0 = Date.now();
     const x = await ausloeser[i][1]();
-    const neu = await neueLeitung(vorB, 4000);
-    const [hb, ha] = await Promise.all([bisHoert(B, 6000 - (Date.now() - t0)), bisHoert(A, 6000 - (Date.now() - t0))]);
+    /* Fristen 8 s / 10 s statt 4 s / 6 s: unter Last (zwei Sonden gleichzeitig) kam die neue Leitung bei A1 öfter erst
+       nach 4 s, obwohl B danach nach ~1 s hörte – die Frist war zu eng, nicht der Code (Gesamtlauf 884). */
+    const neu = await neueLeitung(vorB, 8000);
+    const [hb, ha] = await Promise.all([bisHoert(B, 10000 - (Date.now() - t0)), bisHoert(A, 10000 - (Date.now() - t0))]);
     if (hb.ms < 0) taub++;
     await schlaf(300);
     const sl = await spurLage();
