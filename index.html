@@ -1362,6 +1362,13 @@ svg{display:block}
   .lfopv{height:44px}
   .modrow{min-height:44px}
 }
+/* P: the six editor tabs show their whole label („FILTER“, „HÜLLK.“ were cut by the letter spacing) */
+@media (orientation:portrait){ .tab{padding:0 3px;letter-spacing:.03em} }
+@media (orientation:portrait) and (max-width:389px){ .tab{font-size:11.5px} }
+@media (orientation:portrait) and (max-width:359px){
+  .tab{padding:0 2px;font-size:10px;letter-spacing:0}
+  .stab{padding:0 2px;font-size:10.5px;letter-spacing:0}
+}
 @media (orientation:portrait) and (max-width:389px){
   .seg.wvn .wn{display:none}
   .seg.wvn button{padding:0 10px}
@@ -1586,6 +1593,119 @@ svg{display:block}
   .qcell .seg button{height:32px;min-width:52px}
   .pg-filter-ctl>.kn-row:nth-of-type(3){align-items:flex-start}
 }
+/* ===================== WP4: effect pages SPUR · CHORUS · HALL · ECHO · MASTER (spec v2 §8.3) =====================
+   one flat cell list per page: P = rows of 4 knob cells (+ full-width segment rows), L = one knob row + one segment row */
+.pg.pg-fxg{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:min-content;gap:2px 6px;align-content:start;justify-content:stretch;max-width:420px}
+.pg-fxg>.knob{width:auto;min-width:0}
+.pg-fxg>.knob .kl{max-width:100%;font-size:10.5px;letter-spacing:.01em}
+.pg-fxg>.lgrp.fxrow{grid-column:1/-1;margin-top:4px}
+.pg-fxg>.lgrp.fxrow>.lbl{min-width:76px}
+.pg-fxg .fxcap{font:600 10px/1.2 var(--font-ui);letter-spacing:.01em;color:var(--text-faint);min-width:0;overflow:hidden}
+.pg-fxg .fxcap b{color:var(--amber);font-weight:700;letter-spacing:.08em}
+.pg-fxg .fxcap .fxst{color:var(--text-dim)}
+.pg-fxg>.bush{grid-column:span 2;align-self:center;justify-self:stretch;height:auto;min-height:40px;white-space:normal;text-align:left;line-height:1.25;padding:4px 10px}
+/* chorus: mode row, 3 knobs, the Juno line in the 4th cell */
+.pg-fx-chorus>.lgrp.r0{grid-column:1/-1;margin:0 0 4px}
+.pg-fx-chorus>.lgrp.r0>.lbl{display:none}
+.pg-fx-chorus .seg.chm{flex:1 1 auto;flex-wrap:nowrap}
+.pg-fx-chorus .seg.chm button{flex:1 1 0;min-width:0;padding:0 4px}
+.pg-fx-chorus>.fxinfo{align-self:center;font:500 11px/1.3 var(--font-num);color:var(--text-dim);min-width:0;grid-column:span 1}
+/* hall: 9 knobs, Pumpen, EINFRIEREN, caption + engine status in the 12th cell */
+.pg-fx-hall>.frz{align-self:center;justify-self:center}
+.pg-fx-hall>.frz.inert{opacity:.35}
+.pg-fx-hall>.fxcap{align-self:center}
+/* echo: 9 knobs; the 3rd row holds Rückweg and the mode segment with the caption */
+.pg-fx-echo>.fxmode{grid-column:2/-1;align-self:center;display:flex;flex-direction:column;gap:5px;min-width:0}
+.pg-fx-echo .seg.ecm{flex-wrap:nowrap}
+.pg-fx-echo .seg.ecm button{flex:1 1 0;min-width:0;padding:0 4px;font-size:12px;letter-spacing:.02em}
+.pg-fx-master>.fxmode{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:4px;min-width:0}
+.pg-fx-master>.fxmode .lgrp>.lbl{min-width:76px}
+/* GR meter (bar grows down from 0 dB to −20 dB) + output peak LED */
+.grm{display:flex;flex-direction:column;align-items:center;gap:2px;height:92px;min-width:0}
+.grm .kl{font:600 11px/13px var(--font-ui);letter-spacing:.03em;color:var(--text-dim)}
+.grm .grt{position:relative;width:14px;flex:1 1 auto;min-height:20px;border-radius:3px;background:var(--lcd);box-shadow:inset 0 1px 4px rgba(0,0,0,.9);border:1px solid var(--panel-edge);overflow:hidden}
+.grm .grb{position:absolute;left:0;right:0;top:0;height:100%;background:linear-gradient(var(--amber),#c96d10);transform-origin:50% 0;transform:scaleY(0)}
+.grm .grv{font:500 11px/13px var(--font-num);color:var(--text);white-space:nowrap}
+.grm .pkl{font:700 8px/1 var(--font-ui);letter-spacing:.08em;color:var(--text-faint);padding:2px 4px;border-radius:3px;border:1px solid var(--panel-edge)}
+.grm .pkl.on{color:#fff;background:var(--rec);border-color:var(--rec);box-shadow:0 0 6px var(--rec)}
+.knob.fxmini .kled{top:2px}
+/* the ECO-Klang badge (§1.3): a VA track on the native fallback */
+.ecob{flex:none;height:22px;padding:0 7px;border-radius:11px;display:inline-flex;align-items:center;font:700 10px/1 var(--font-ui);letter-spacing:.06em;color:var(--text-dim);border:1px solid var(--panel-edge);background:var(--lcd);white-space:nowrap}
+.ecob[hidden]{display:none}
+.seg.eng button.eco::before{content:"ECO";position:absolute;left:0;right:0;bottom:3px;font:700 7.5px/1 var(--font-ui);letter-spacing:.1em;color:var(--amber);text-align:center;pointer-events:none}
+.seg.eng button.eco{padding-bottom:7px}
+@media (orientation:portrait){ .sh-head .ecob{display:none!important} }
+@media (orientation:landscape){ .seg.eng button.eco::before{display:none} .seg.eng button.eco{padding-bottom:0} }
+/* CPU badge (§14.3): L/W amber chip before ≡; P: the TAKT label reads CPU */
+#bCpu{color:var(--amber);border-color:#6b4c16;font-size:9px;letter-spacing:.1em;min-width:40px}
+#bCpu[hidden]{display:none!important}
+.takt .lbl.cpul{color:var(--amber);font-weight:700}
+@media (orientation:portrait) and (max-width:359px){
+  .pg.pg-fxg{gap:2px 4px}
+  .pg-fxg>.lgrp.fxrow>.lbl,.pg-fx-master>.fxmode .lgrp>.lbl{min-width:0}
+  .pg-fx-echo .seg.ecm button{font-size:10px;letter-spacing:0;padding:0 2px}
+}
+@media (orientation:portrait) and (min-width:360px) and (max-width:389px){ .pg.pg-fxg{gap:2px 10px} }
+@media (orientation:portrait) and (max-width:389px){ .pg-fxg>.knob .kl.lg{font-size:9px;letter-spacing:0} .pg-fx-chorus>.fxinfo{font-size:10px;overflow-wrap:anywhere} }
+/* L: one knob row + one segment row (§8.3: HALL's toggle and Pumpen go to the segment row) */
+@media (orientation:landscape){
+  .pg.pg-fxg{grid-template-columns:repeat(9,minmax(0,96px));gap:2px 6px}
+  .pg-fxg>.lgrp.fxrow{margin-top:0}
+  .pg-fx-spur>.lgrp.r1{grid-column:1/5;grid-row:2}
+  .pg-fx-spur>.lgrp.r2{grid-column:5/-1;grid-row:2}
+  .pg-fxg>.lgrp.fxrow>.lbl{min-width:0}
+  .pg-fx-spur>.bush{grid-row:1;grid-column:7/span 3;min-height:0;height:40px}
+  .pg-fx-chorus>.knob{grid-row:1}
+  .pg-fx-chorus>.lgrp.r0{grid-column:4/-1;grid-row:1;align-self:start;margin:6px 0 0}
+  .pg-fx-chorus>.fxinfo{grid-column:4/-1;grid-row:1;align-self:end;margin-bottom:12px}
+  .pg-fx-hall>.knob.fxmini,.pg-fx-hall>.frz,.pg-fx-hall>.fxcap{grid-row:2}
+  .pg-fx-hall>.knob.fxmini{grid-column:1/span 2}
+  .pg-fx-hall>.frz{grid-column:3/span 2;flex-direction:row;width:auto;height:36px;justify-self:start;padding:0 10px}
+  .pg-fx-hall>.fxcap{grid-column:5/-1}
+  .pg-fx-hall>.fxcap br{display:none}
+  .pg-fx-hall>.fxcap .fxst::before{content:" · "}
+  .pg-fx-echo>.fxmode{grid-column:1/-1;grid-row:2;flex-direction:row;align-items:center;gap:12px}
+  .pg-fx-echo .seg.ecm{flex:0 0 auto}
+  .pg-fx-echo .seg.ecm button{flex:none;padding:0 12px}
+  .pg-fx-master>.grm{grid-column:8;grid-row:1}
+  .pg-fx-master>.fxmode{grid-row:2;margin-top:0;flex-wrap:nowrap}
+  /* mini knob (Pumpen of the hall): label, dial and value in one 40 px row */
+  .knob.fxmini{flex-direction:row;height:40px;gap:6px;align-items:center;justify-self:start}
+  .knob.fxmini svg{width:34px;height:34px}
+  .knob.fxmini .kl{max-width:none}
+  .grm{height:88px}
+}
+@media (orientation:landscape){ .pg.pg-fxg{max-width:none} }
+@media (orientation:landscape) and (max-width:759px){
+  .pg.pg-fxg{gap:2px 2px}
+  .pg-fxg>.knob .kl{font-size:10px;letter-spacing:0}
+  .pg-fxg>.knob .kl.lg{font-size:9px}
+  /* 5 FX sub-tabs share the 32 px row with the 6 tabs and the LCD text */
+  .sh-bar.hassubs .tab{padding:0 8px}
+  .sh-bar.hassubs .stab{padding:0 6px}
+}
+/* compact levels (fitBody) for the effect pages; :is(#…) lifts them over the sheets' own fit rules */
+:is(#synthSheet,#drumSheet) .sh-body.fit1 .pg-fxg>.knob{height:78px}
+:is(#synthSheet,#drumSheet) .sh-body.fit1 .pg-fxg>.knob svg{width:50px;height:50px}
+:is(#synthSheet,#drumSheet) .sh-body.fit1 .pg-fxg .seg button{height:30px}
+:is(#synthSheet,#drumSheet) .sh-body.fit1 .grm{height:78px}
+:is(#synthSheet,#drumSheet) .sh-body.fit1 .pg-fxg>.bush{min-height:34px}
+:is(#synthSheet,#drumSheet) .sh-body.fit2 .pg-fxg>.knob{height:71px}
+:is(#synthSheet,#drumSheet) .sh-body.fit2 .pg-fxg>.knob svg{width:42px;height:42px}
+:is(#synthSheet,#drumSheet) .sh-body.fit2 .pg-fxg .seg button{height:28px}
+:is(#synthSheet,#drumSheet) .sh-body.fit2 .grm{height:71px}
+:is(#synthSheet,#drumSheet) .sh-body.fit2 .pg-fxg>.lgrp.fxrow{margin-top:0}
+:is(#synthSheet,#drumSheet) .sh-body.fit2 .pg.pg-fxg{row-gap:0}
+:is(#synthSheet,#drumSheet) .sh-body.fit3 .pg-fxg>.knob{height:66px}
+:is(#synthSheet,#drumSheet) .sh-body.fit3 .pg-fxg>.knob svg{width:38px;height:38px}
+:is(#synthSheet,#drumSheet) .sh-body.fit3 .pg-fxg .seg button{height:26px}
+:is(#synthSheet,#drumSheet) .sh-body.fit3 .grm{height:66px}
+:is(#synthSheet,#drumSheet) .sh-body.fit3 .pg-fxg .fxcap{font-size:9px;line-height:1.15}
+:is(#synthSheet,#drumSheet) .sh-body.fit3 .pg-fx-hall>.frz{height:50px;width:62px}
+@media (orientation:landscape){
+  :is(#synthSheet,#drumSheet) .sh-body:is(.fit1,.fit2,.fit3) .knob.fxmini{height:36px}
+  :is(#synthSheet,#drumSheet) .sh-body:is(.fit1,.fit2,.fit3) .knob.fxmini svg{width:30px;height:30px}
+}
 </style>
 </head>
 <body>
@@ -1604,6 +1724,7 @@ svg{display:block}
     <button id="chipLen" class="chipT rb lwonly" aria-label="Aufnahmelänge">LÄNGE<b id="chipLenv">AUTO</b></button>
     <button id="bFangT" class="chipT rb lwonly fangb" aria-label="FANG – Gespieltes einfangen">FANG ⤓</button>
     <div class="spacer lwonly"></div>
+    <button id="bCpu" class="chipT rb lwonly" aria-label="CPU-Last hoch – Info" hidden>CPU</button>
     <button id="bMenu" class="tb sq rb" aria-label="Menü">≡</button>
   </header>
 
@@ -1670,6 +1791,787 @@ svg{display:block}
 <div id="banner">Audio unterbrochen – tippen zum Fortsetzen</div>
 <input type="file" id="fileIn" accept=".json,application/json" hidden>
 <input type="file" id="sndIn" accept=".json,application/json" hidden>
+<script type="text/plain" id="sq-worklet-src">
+/* SYNQUENZER synth worklet module (spec v2 1.1 block 1, 1.4, 5.4): processors 'dirigent-analog' and 'dirigent-hall'.
+   Built by scratchpad/wp4work/tools/build-worklet.mjs from presetlib/analog-core-sync.js (hard sync) + the scope hunks of
+   modux/analog-core-scope.js + D_UNIDET applied + deferred tempo changes + event 8 + fxresearch/fx-worklet.js.
+   ASCII only; it never contains the closing script tag (checked by wp4work/tools/check-worklet.mjs).
+   ---------------------------------------------------------------------------------------------------------------------
+   DIRIGENT AnalogCore - polyphonic virtual-analog voice engine.
+   One AudioWorkletNode per synth track, 0 inputs, 1 stereo output -> existing trackIn chain.
+   ASCII only (the source is loaded through a Blob URL or a data: URL).
+   Globals used: sampleRate, currentFrame (AudioWorkletGlobalScope).
+   Protocol (main -> worklet, port.postMessage):
+     {ev: [[timeSec, type, id, a, b, c], ...]}  1 ON(note, vel 0..1, glideFromNote|-1)  2 OFF  3 PITCH(note, tauSec)
+                                                4 KILL (also purges queued events of id)  5 ALL-OFF  6 PANIC  7 FAST-OFF(tauSec)
+                                                8 CANCEL-RETUNE (purges the queued PITCH events of id; applied on arrival)
+     {set: {param: number, ...}}   {mods: [{src, dst, amt}]}   {dispose: true}   {scope: bool}
+     {tempo: {bpm, start: ctxTimeOfBeat0 | null, at?: ctxTime}}   (with at: takes effect at that audio time, so a late message
+       never bends the phase of synced LFOs; without: at once and pending changes are dropped)
+   Worklet -> main: {end: [ids]} when voices are free, {load: fractionOfRealtime, voices: n} once per second,
+     {scope: [NSRC source values], t, nv} at ~30 Hz while {scope:true} (focus voice = newest gated, else newest sounding).
+   Events are applied at 16-sample control-block boundaries (0.33 ms at 48 kHz). The worklet owns allocation/stealing. */
+'use strict';
+const CR = 16;            // control-rate sub-block (samples): 128 = 8 x 16
+const MAXU = 7;           // max unison voices per oscillator
+const NOSC = 3;
+const POOL = 12;          // voice slots per track (poly <= 8, the rest absorb steal fades)
+const SR = sampleRate, ISR = 1 / SR;
+const W_SAW = 0, W_PULSE = 1, W_TRI = 2, W_SINE = 3;
+const SINE_N = 4096, SINE = new Float64Array(SINE_N + 2);
+for (let i = 0; i < SINE_N + 2; i++) SINE[i] = Math.sin(2 * Math.PI * i / SINE_N);
+// unison detune positions (JP-8000-like spacing, normalised to the outer voice = 1), sorted low -> high
+const UNI = [null, [0], [-.57, .57], [-1, 0, .98], [-1, -.18, .18, .98], [-1, -.57, 0, .57, .98],
+  [-1, -.57, -.18, .18, .57, .98], [-1, -.57, -.18, 0, .18, .57, .98]];
+// ladder output mixing (Oberheim Xpander style), coefficients on [u0, y1, y2, y3, y4]; feedback always from y4
+const FMIX = [[0, 0, 0, 0, 1], [0, 0, 1, 0, 0], [0, 0, 4, -8, 4], [0, 2, -2, 0, 0], [1, -4, 6, -4, 1], [1, -2, 1, 0, 0]];
+// mod matrix: sources and destinations (amount 1 = the full knob range of the destination)
+const S_LFO1 = 1, S_LFO2 = 2, S_FENV = 3, S_MENV = 4, S_VEL = 5, S_KEY = 6, S_MW = 7, S_RND = 8, S_AENV = 9, NSRC = 10;
+const D_PITCH = 1, D_O2PITCH = 2, D_CUT = 3, D_RES = 4, D_DRIVE = 5, D_PW = 6, D_O1 = 7, D_O2 = 8, D_O3 = 9,
+  D_NOISE = 10, D_AMP = 11, D_PAN = 12, D_UNIDET = 13, D_FENV = 14, D_FMBRIGHT = 15, D_OP1 = 16, NDST = 22;   // A.4: op1..op6 = 16..21
+const NSLOT = 8;
+const XF_KEYS = ['o1w', 'o2w', 'o3w', 'o1uni', 'o2uni', 'o3uni', 'o2sync', 'ftype', 'subW', 'subOct', 'lq', 'mode', 'eng'];
+const XF_D = CR / 96;      // structural crossfade: 96 samples down, 96 up
+
+function mtof(n) { return 440 * Math.pow(2, (n - 69) / 12); }
+// lookup tables over the MIDI note scale (1/8 semitone steps, linear interpolation: < 0.02 cent error)
+const LT0 = -48, LTR = 8, LTN = (176 - LT0) * LTR, FREQ = new Float64Array(LTN + 2), GTAN = new Float64Array(LTN + 2);
+for (let i = 0; i < LTN + 2; i++) { const f = mtof(LT0 + i / LTR); FREQ[i] = f; GTAN[i] = Math.tan(Math.PI * Math.min(f, .45 * SR) / SR); }
+function lut(T, n) { let x = (n - LT0) * LTR; if (x < 0) x = 0; else if (x > LTN) x = LTN; const i = x | 0; return T[i] + (T[i + 1] - T[i]) * (x - i); }
+function clamp(x, a, b) { return x < a ? a : x > b ? b : x; }
+// T(v)/v for T(v) = v(27+v^2)/(27+9v^2) (tanh approximation, exact +-1 beyond |v| = 3)
+function tg(v) { const a = v * v; return a < 9 ? (27 + a) / (27 + 9 * a) : 1 / Math.sqrt(a); }
+
+function defaults() {
+  return {
+    // oscillators: wave 0 saw, 1 pulse, 2 triangle, 3 sine; oct -2..2 (32' 16' 8' 4' 2'); semi -12..12; fine -50..50 ct
+    o1w: 0, o1oct: 0, o1semi: 0, o1fine: 0, o1pw: .5, o1lvl: 1, o1uni: 1,
+    o2w: 0, o2oct: 0, o2semi: 0, o2fine: 7, o2pw: .5, o2lvl: 0, o2uni: 1, o2sync: 0,
+    o3w: 1, o3oct: -1, o3semi: 0, o3fine: 0, o3pw: .5, o3lvl: 0, o3uni: 1,
+    uniDet: .25, uniMix: .6, uniWidth: .8,     // unison detune (0..1, curved), side level, stereo width
+    subLvl: 0, subOct: 1, subW: 0,             // sub: 1 or 2 octaves below osc 1; 0 square, 1 sine
+    noise: 0, analog: .15, reset: 0,           // drift amount; reset = restart phases at note on
+    ftype: 0, cutoff: 1200, res: .2, drive: .2, kt: .5, fenv: .35, fvel: .2, bass: .5,
+    aA: .005, aD: .3, aS: .8, aR: .25, aCurve: .5, ampVel: .6,
+    fA: .005, fD: .3, fS: .3, fR: .3, fCurve: .5,
+    mA: .001, mD: .5, mS: 0, mR: .5, mCurve: .5,
+    l1shape: 0, l1rate: 4, l1sync: 0, l1retrig: 0, l1fade: 0,   // sync = beats per cycle (0 = free Hz)
+    l2shape: 1, l2rate: .3, l2sync: 0, l2retrig: 0, l2fade: 0,
+    glide: 0, mode: 0, poly: 8, spread: .2, level: .3, mw: 0,   // mode 0 poly, 1 mono, 2 legato
+    lq: 1,                                                       // ladder quality: 0 eco (1 nonlinearity), 1 analog (5)
+    eng: 0,                                                      // engine: 0 analog (VA), 1 fm6 (WP7)
+  };
+}
+
+// exponential ADSR (one-pole toward an overshoot target; exact stage times, analog-like curves)
+function envCoefs(E, a, d, s, r, curve) {
+  const ratioA = 0.02 + 2 * (1 - curve) * (1 - curve);   // curve 1 -> very concave attack (RC), 0 -> nearly linear
+  const ratioDR = Math.pow(10, -4 + 3.5 * (1 - curve));  // curve 1 -> 1e-4 (very exponential), 0 -> ~0.3
+  const k = (t, ratio) => Math.exp(-Math.log((1 + ratio) / ratio) / Math.max(1, t * SR));
+  E.aC = k(a, ratioA); E.aT = 1 + ratioA;                 // out = T + (out - T) * C
+  E.dC = k(d, ratioDR); E.dT = s - ratioDR;
+  E.rC = k(r, ratioDR); E.rT = -ratioDR;
+  E.s = s;
+  E.aCB = Math.pow(E.aC, CR); E.dCB = Math.pow(E.dC, CR); E.rCB = Math.pow(E.rC, CR);  // per control block
+}
+function newEnv() { return {aC: 0, aT: 1, dC: 0, dT: 0, rC: 0, rT: 0, s: 1, aCB: 0, dCB: 0, rCB: 0}; }
+// block-rate envelope step (filter + mod envelopes). st: 0 idle 1 att 2 dec 3 sus 4 rel; returns new [st] via v fields
+function envBlock(E, st, out) {
+  if (st === 1) { out = E.aT + (out - E.aT) * E.aCB; if (out >= 1) { out = 1; st = 2; } }
+  else if (st === 2) { out = E.dT + (out - E.dT) * E.dCB; if (out <= E.s) { out = E.s; st = 3; } }
+  else if (st === 3) out += (E.s - out) * .2;
+  else if (st === 4) { out = E.rT + (out - E.rT) * E.rCB; if (out <= 0) { out = 0; st = 0; } }
+  ENV_ST = st; return out;
+}
+let ENV_ST = 0;
+
+class Voice {
+  constructor(i) {
+    this.idx = i; this.on = false; this.id = -1; this.gate = false; this.age = 0;
+    this.note = 60; this.pitch = 60; this.target = 60; this.gcoef = 1; this.vel = 0;
+    this.aSt = 0; this.aOut = 0; this.fSt = 0; this.fOut = 0; this.mSt = 0; this.mOut = 0;
+    this.fade = 0; this.fadeG = 1; this.t0 = 0;
+    this.ph = new Float64Array(NOSC * MAXU); this.inc = new Float64Array(NOSC * MAXU);
+    this.subPh = 0; this.subInc = 0; this.rng = (i * 2654435761 + 12345) >>> 0;
+    this.s1 = 0; this.s2 = 0; this.s3 = 0; this.s4 = 0; this.r1 = 0; this.r2 = 0; this.r3 = 0; this.r4 = 0;
+    this.gA = 0; this.gB = 0; this.kA = 0; this.kB = 0; this.drv = 1; this.comp = 1;
+    this.dP = 0; this.dC = 0; this.dO = new Float64Array(NOSC); this.dR = new Float64Array(NOSC); this.rnd = 0; this.panL0 = 1; this.panR0 = 1;
+    this.l1 = 0; this.l2 = 0; this.l1v = 0; this.l2v = 0; this.sh1 = 0; this.sh2 = 0;
+    this.lvl = new Float64Array(NOSC); this.pw = new Float64Array(NOSC); this.noiseL = 0; this.subL = 0;
+    this.wr = new Float64Array(MAXU * CR).fill(-1); this.sp = new Float64Array(MAXU);
+    this.ur = new Float64Array(NOSC * MAXU).fill(1);   // unison ratios of this voice while a route modulates Uni-Verstimm. (D_UNIDET)
+    this.fadeStep = 0; this.outG = 1; this.panL = 1; this.panR = 1; this.vgain = 0; this.pan0 = 0; this.fenvAmt = 0;
+    this.pl0 = -1; this.pr0 = -1; this.lvOk = false;   // last block's output gains (ramp start), smoothed levels valid
+  }
+}
+
+class AnalogCore extends AudioWorkletProcessor {
+  constructor(opt) {
+    super();
+    this.P = defaults();
+    this.A = newEnv(); this.F = newEnv(); this.M = newEnv();
+    this.V = []; for (let i = 0; i < POOL; i++) this.V.push(new Voice(i));
+    this.q = [];                       // pending events [frame, type, id, a, b, c], sorted by frame
+    this.stack = [];                   // mono/legato note stack [{id, note, vel}]
+    this.bl = new Float64Array(CR); this.br = new Float64Array(CR);
+    this.oW = new Int32Array(NOSC); this.oSemi = new Float64Array(NOSC); this.oRat = new Float64Array(NOSC); this.oLvl = new Float64Array(NOSC); this.oPw = new Float64Array(NOSC); this.cutN0 = 60;
+    this.uniG = new Float64Array(NOSC * MAXU * 2); this.uniR = new Float64Array(NOSC * MAXU); this.uniN = new Int32Array(NOSC);
+    this.msrc = new Int32Array(NSLOT); this.mdst = new Int32Array(NSLOT); this.mamt = new Float64Array(NSLOT);
+    this.src = new Float64Array(NSRC); this.dst = new Float64Array(NDST);
+    this.gl1 = 0; this.gl2 = 0;         // global (free-running) LFO phases
+    this.bpm = 120; this.songStart = -1; this.ended = []; this.ageCtr = 0; this.stereo = false;
+    this.busy = 0; this.busyN = 0; this.lastRep = 0; this.alive = true;
+    // mod scope for the UI: source values of the focus voice (newest gated, else newest sounding), ~30 Hz, only on request
+    this.scopeOn = false; this.scopeNext = 0; this.sc = new Float64Array(NSRC); this.scHas = false; this.focus = null;
+    this.tnext = [];                    // deferred tempo changes [{bpm, start, at}], sorted by at
+    this.pend = null; this.xfState = 0; this.xg = 1; this.xg1 = 1;   // structural crossfade (12c)
+    this.dcC = Math.exp(-2 * Math.PI * 5 / SR); this.dcS = new Float64Array(4);   // AC coupling (13): x1 L, y1 L, x1 R, y1 R
+    this.uniMod = false;                // a route targets D_UNIDET
+    this.hasPerf = typeof performance !== 'undefined' && typeof performance.now === 'function';
+    const po = opt && opt.processorOptions;
+    if (po && po.patch) this.setParams(po.patch); else this.derive();
+    if (po && po.mods) this.setMods(po.mods);
+    this.port.onmessage = e => this.onMsg(e.data);
+  }
+
+  onMsg(m) {
+    if (m.ev) { for (const e of m.ev) this.enqueue(e); }
+    if (m.set) this.setReq(m.set, !!m.xf);
+    if (m.mods) this.setMods(m.mods);
+    if (m.tempo) {
+      const e = {bpm: m.tempo.bpm || 120, start: m.tempo.start == null ? -1 : m.tempo.start, at: m.tempo.at};
+      if (e.at != null && isFinite(e.at)) { this.tnext.push(e); this.tnext.sort((a, b) => a.at - b.at); }
+      else { this.bpm = e.bpm; this.songStart = e.start; this.tnext.length = 0; }
+    }
+    if (m.scope != null) { this.scopeOn = !!m.scope; this.scopeNext = 0; }
+    if (m.dispose) this.alive = false;
+  }
+  enqueue(e) {   // e = [timeSec, type, id, a, b, c]; types: 1 on(note, vel, glideFrom) 2 off 3 pitch(note, tau) 4 kill 5 all-off 6 panic 7 fast-off
+    const q = this.q;
+    if (e[1] === 4) {   // kill: also drop everything still queued for this id (cancel of a voice that has not started yet)
+      for (let i = q.length - 1; i >= 0; i--) if (q[i][2] === e[2] && q[i][1] !== 5 && q[i][1] !== 6) q.splice(i, 1);
+      const v = this.findId(e[2]); if (v) this.fadeOut(v, 96); this.dropStack(e[2]);
+      return;
+    }
+    if (e[1] === 8) { for (let i = q.length - 1; i >= 0; i--) if (q[i][2] === e[2] && q[i][1] === 3) q.splice(i, 1); return; }
+    const f = Math.round(e[0] * SR);
+    const ev = [f, e[1], e[2], e[3], e[4], e[5]];
+    let i = q.length; while (i > 0 && q[i - 1][0] > f) i--;   // events arrive mostly in order: cheap insertion
+    q.splice(i, 0, ev);
+  }
+  // 12c: a change that would step the waveform waits for a 2 ms fade-out of every sounding voice
+  setReq(o, force) {
+    if (this.pend) { Object.assign(this.pend, o); return; }
+    let active = false; for (const v of this.V) if (v.on) { active = true; break; }
+    if (active) {
+      let xf = force; const P = this.P;
+      if (!xf) for (const k of XF_KEYS) if (k in o && typeof o[k] === 'number' && o[k] !== P[k]) { xf = true; break; }
+      if (xf) { this.pend = Object.assign({}, o); this.xfState = 1; return; }
+    }
+    this.setParams(o);
+  }
+  xfBlock() {
+    this.xg = this.xg1;
+    if (this.xfState === 1) { this.xg1 = Math.max(0, this.xg - XF_D); if (this.xg === 0) { const o = this.pend; this.pend = null; if (o) this.setParams(o); this.xfState = 2; this.xg1 = Math.min(1, XF_D); } }
+    else if (this.xfState === 2) { this.xg1 = Math.min(1, this.xg + XF_D); if (this.xg1 >= 1) this.xfState = 0; }
+  }
+  setParams(o) {
+    const P = this.P, mono0 = P.mode > 0;
+    for (const k in o) if (k in P && typeof o[k] === 'number' && isFinite(o[k])) P[k] = o[k];
+    if ((P.mode > 0) !== mono0) {
+      for (const v of this.V) if (v.on && v.gate) this.releaseV(v);
+      for (const s of this.stack) if (!this.findId(s.id)) this.ended.push(s.id);
+      this.stack.length = 0;
+    }
+    this.derive();
+  }
+  setMods(list) {
+    this.msrc.fill(0); this.mdst.fill(0); this.mamt.fill(0);
+    for (let i = 0; i < Math.min(list.length, NSLOT); i++) {
+      const s = list[i]; this.msrc[i] = s.src | 0; this.mdst[i] = s.dst | 0; this.mamt[i] = clamp(+s.amt || 0, -1, 1);
+    }
+    this.uniMod = false; for (let i = 0; i < NSLOT; i++) if (this.msrc[i] && this.mdst[i] === D_UNIDET && this.mamt[i] !== 0) this.uniMod = true;
+  }
+  derive() {
+    const P = this.P;
+    envCoefs(this.A, P.aA, P.aD, P.aS, P.aR, P.aCurve);
+    envCoefs(this.F, P.fA, P.fD, P.fS, P.fR, P.fCurve);
+    envCoefs(this.M, P.mA, P.mD, P.mS, P.mR, P.mCurve);
+    const det = P.uniDet, semis = (0.25 * det + 0.75 * det * det * det * det) * 1.8;  // outer voice detune in semitones
+    const side = -0.73764 * P.uniMix * P.uniMix + 1.2841 * P.uniMix + 0.044372, mid = -0.55366 * P.uniMix + 0.99785;
+    let anyUni = false;
+    for (let o = 0; o < NOSC; o++) {
+      const on = 'o' + (o + 1);
+      this.oW[o] = clamp(P[on + 'w'] | 0, 0, 3); this.oSemi[o] = P[on + 'oct'] * 12 + P[on + 'semi'] + P[on + 'fine'] / 100;
+      this.oRat[o] = Math.pow(2, this.oSemi[o] / 12);
+      this.oLvl[o] = P[on + 'lvl']; this.oPw[o] = P[on + 'pw'];
+      const n = clamp(P[on + 'uni'] | 0, 1, MAXU), pos = UNI[n]; this.uniN[o] = n; if (n > 1) anyUni = true;
+      let norm = 0; for (let u = 0; u < n; u++) { const g = n === 1 ? 1 : (pos[u] === 0 ? mid : side); norm += g * g; }
+      norm = 1 / Math.sqrt(norm);
+      for (let u = 0; u < n; u++) {
+        const k = o * MAXU + u, g = (n === 1 ? 1 : (pos[u] === 0 ? mid : side)) * norm * (n > 1 ? 1.4 : 1);
+        const pan = n === 1 ? 0 : (u / (n - 1) * 2 - 1) * P.uniWidth;
+        this.uniG[2 * k] = g * Math.sqrt(1 - pan); this.uniG[2 * k + 1] = g * Math.sqrt(1 + pan);
+        this.uniR[k] = Math.pow(2, pos[u] * semis / 12);
+      }
+    }
+    this.stereo = anyUni && P.uniWidth > .01;
+    this.sync = P.o2sync >= .5 ? 1 : 0;
+    this.mix = FMIX[clamp(P.ftype | 0, 0, 5)];
+    this.cutN0 = 69 + 12 * Math.log2(clamp(P.cutoff, 10, 22000) / 440);
+    this.drv0 = .6 * Math.pow(2, clamp(P.drive, 0, 1) * 4); this.outG0 = 1 / (1 + clamp(P.drive, 0, 1) * 1.3);
+  }
+
+  /* ---------------- voice allocation ---------------- */
+  findId(id) { for (const v of this.V) if (v.on && v.id === id) return v; return null; }
+  freeSlot() {
+    for (const v of this.V) if (!v.on) return v;
+    let best = null; for (const v of this.V) if (v.fade > 0 && (!best || v.fade < best.fade)) best = v;
+    if (best) { this.endVoice(best); return best; }
+    best = this.V[0]; for (const v of this.V) if (v.age < best.age) best = v;
+    this.endVoice(best); return best;
+  }
+  stealIfFull() {
+    const poly = clamp(this.P.poly | 0, 1, 8);
+    let n = 0; for (const v of this.V) if (v.on && v.fade === 0) n++;
+    while (n >= poly) {
+      let victim = null;
+      for (const v of this.V) if (v.on && v.fade === 0 && !v.gate && (!victim || v.aOut < victim.aOut)) victim = v;
+      if (!victim) for (const v of this.V) if (v.on && v.fade === 0 && (!victim || v.age < victim.age)) victim = v;
+      if (!victim) break;
+      this.fadeOut(victim, 96); n--;
+    }
+  }
+  fadeOut(v, n) { v.fade = n; v.fadeStep = v.fadeG / n; }
+  endVoice(v) { if (v.on) { v.on = false; v.fade = 0; this.ended.push(v.id); v.id = -1; } }
+  startVoice(v, id, note, vel, from) {
+    const P = this.P;
+    v.on = true; v.id = id; v.gate = true; v.age = ++this.ageCtr; v.vel = vel; v.note = note; v.target = note;
+    v.pitch = from >= 0 && P.glide > 0 ? from : note;
+    v.gcoef = P.glide > 0 ? 1 - Math.exp(-CR / (P.glide / 3 * SR)) : 1;
+    v.aSt = 1; v.aOut = 0; v.fSt = 1; v.fOut = 0; v.mSt = 1; v.mOut = 0; v.fade = 0; v.fadeG = 1; v.t0 = 0;
+    v.s1 = v.s2 = v.s3 = v.s4 = v.r1 = v.r2 = v.r3 = v.r4 = 0;
+    const rnd = () => { let x = v.rng; x ^= x << 13; x ^= x >>> 17; x ^= x << 5; v.rng = x >>> 0; return (x >>> 0) / 4294967296; };
+    for (let k = 0; k < NOSC * MAXU; k++) v.ph[k] = (P.reset && k % MAXU === 0) ? 0 : rnd();
+    v.subPh = P.reset ? 0 : rnd(); v.sp.fill(0);
+    v.dP = (rnd() * 2 - 1) * P.analog * .08; v.dC = (rnd() * 2 - 1) * P.analog * 1.5; v.rnd = rnd() * 2 - 1;
+    for (let o = 0; o < NOSC; o++) { v.dO[o] = (rnd() * 2 - 1) * P.analog * .05; v.dR[o] = Math.pow(2, v.dO[o] / 12); }
+    v.pan0 = (v.idx % 2 ? 1 : -1) * P.spread * (0.5 + 0.5 * rnd()); v.panL0 = Math.sqrt(1 - v.pan0); v.panR0 = Math.sqrt(1 + v.pan0);
+    v.l1 = P.l1retrig ? 0 : this.gl1; v.l2 = P.l2retrig ? 0 : this.gl2; v.sh1 = rnd() * 2 - 1; v.sh2 = rnd() * 2 - 1;
+    v.gA = v.gB = -1;   // force a fresh coefficient (no interpolation from a stale value)
+    v.pl0 = v.pr0 = -1; v.lvOk = false;
+  }
+
+  /* ---------------- events ---------------- */
+  runEvents(endFrame) {
+    const q = this.q;
+    while (q.length && q[0][0] < endFrame) {
+      const e = q.shift(), type = e[1], id = e[2];
+      if (type === 1) this.noteOn(id, e[3], e[4], e[5] == null ? -1 : e[5]);
+      else if (type === 2) this.noteOff(id);
+      else if (type === 3) this.retune(id, e[3], e[4]);
+      else if (type === 7) { const v = this.P.mode > 0 ? null : this.findId(id); if (v) this.fadeOut(v, Math.max(64, Math.round(e[3] * 5 * SR))); else this.noteOff(id); }
+      else if (type === 5) { for (const v of this.V) if (v.on && v.gate) this.releaseV(v); this.stack.length = 0; }
+      else if (type === 6) { for (const v of this.V) if (v.on) this.fadeOut(v, 64); this.stack.length = 0; }
+    }
+  }
+  noteOn(id, note, vel, from) {
+    if (this.P.mode > 0) return this.monoOn(id, note, vel, from);
+    this.stealIfFull();
+    this.startVoice(this.freeSlot(), id, note, vel, from);
+  }
+  releaseV(v) { v.gate = false; if (v.aSt) v.aSt = 4; if (v.fSt) v.fSt = 4; if (v.mSt) v.mSt = 4; }
+  noteOff(id) {
+    if (this.P.mode > 0 && this.stack.some(s => s.id === id)) return this.monoOff(id);
+    const v = this.findId(id);
+    if (v) { if (v.gate) this.releaseV(v); return; }
+    const k = this.stack.findIndex(s => s.id === id); if (k >= 0) { this.stack.splice(k, 1); this.ended.push(id); }
+  }
+  retune(id, note, tau) {
+    if (this.P.mode > 0) {
+      const e = this.stack.find(s => s.id === id); if (e) e.note = note;
+      const top = this.stack[this.stack.length - 1]; if (!top || top.id !== id) return;
+    }
+    const v = this.P.mode > 0 ? this.monoVoice() : this.findId(id); if (!v) return;
+    v.target = note; v.note = note; v.gcoef = tau > 0 ? 1 - Math.exp(-CR / (tau * SR)) : 1;
+  }
+  /* mono / legato: one physical voice, last-note priority */
+  monoVoice() { for (const v of this.V) if (v.on && v.fade === 0) return v; return null; }
+  dropStack(id) { const i = this.stack.findIndex(s => s.id === id); if (i >= 0) this.stack.splice(i, 1); }
+  monoOn(id, note, vel, from) {
+    const P = this.P, v = this.monoVoice();
+    this.stack.push({id, note, vel});
+    if (!v) { this.startVoice(this.freeSlot(), id, note, vel, from); return; }
+    const wasGated = v.gate;
+    if (!wasGated) this.ended.push(v.id);   // the released note is finished; a held one stays in the stack
+    v.id = id; v.note = note; v.target = note; v.vel = vel; v.gate = true;
+    v.gcoef = P.glide > 0 && (P.mode === 1 || wasGated) ? 1 - Math.exp(-CR / (P.glide / 3 * SR)) : 1;
+    if (P.mode === 1 || !wasGated) { v.aSt = 1; v.fSt = 1; v.mSt = 1; }   // retrigger from the current level (no click)
+  }
+  monoOff(id) {
+    const st = this.stack, i = st.findIndex(s => s.id === id); if (i < 0) return;
+    st.splice(i, 1);
+    const v = this.monoVoice();
+    if (!v || v.id !== id) { this.ended.push(id); return; }
+    const nx = st[st.length - 1];
+    if (nx) { this.ended.push(id); v.id = nx.id; v.note = nx.note; v.target = nx.note; }   // legato return to the held note
+    else this.releaseV(v);
+  }
+
+  /* ---------------- control rate ---------------- */
+  lfoVal(shape, ph, sh) {
+    switch (shape) {
+      case 0: return SINE[(ph * SINE_N) | 0];
+      case 1: return ph < .5 ? 4 * ph - 1 : 3 - 4 * ph;
+      case 2: return 2 * ph - 1;
+      case 3: return ph < .5 ? 1 : -1;
+      default: return sh;    // 4: sample & hold (new value each cycle)
+    }
+  }
+  control(frame) {
+    const P = this.P, src = this.src, dst = this.dst, step = CR * ISR;
+    this.tempoAt(frame);
+    // global LFO phases: tempo-synced LFOs follow the song position
+    const songT = frame * ISR - this.songStart, spb = 60 / this.bpm;
+    const r1 = P.l1sync > 0 ? 1 / (P.l1sync * spb) : P.l1rate, r2 = P.l2sync > 0 ? 1 / (P.l2sync * spb) : P.l2rate;
+    if (P.l1sync > 0 && this.songStart >= 0) this.gl1 = ((songT / spb / P.l1sync) % 1 + 1) % 1; else this.gl1 = (this.gl1 + r1 * step) % 1;
+    if (P.l2sync > 0 && this.songStart >= 0) this.gl2 = ((songT / spb / P.l2sync) % 1 + 1) % 1; else this.gl2 = (this.gl2 + r2 * step) % 1;
+    let fv = null;
+    if (this.scopeOn) for (const v of this.V) if (v.on && v.fade === 0 && (!fv || (v.gate && !fv.gate) || (v.gate === fv.gate && v.age > fv.age))) fv = v;
+    for (const v of this.V) {
+      if (!v.on) continue;
+      v.t0 += step;
+      // envelopes (filter + mod at block rate)
+      v.fOut = envBlock(this.F, v.fSt, v.fOut); v.fSt = ENV_ST;
+      v.mOut = envBlock(this.M, v.mSt, v.mOut); v.mSt = ENV_ST;
+      // LFOs (per voice if retrigger, else global phase)
+      let p1, p2;
+      if (P.l1retrig) { const o = v.l1; v.l1 = (v.l1 + r1 * step) % 1; if (v.l1 < o) v.sh1 = Math.random() * 2 - 1; p1 = v.l1; } else p1 = this.gl1;
+      if (P.l2retrig) { const o = v.l2; v.l2 = (v.l2 + r2 * step) % 1; if (v.l2 < o) v.sh2 = Math.random() * 2 - 1; p2 = v.l2; } else p2 = this.gl2;
+      const fade1 = P.l1fade > 0 ? Math.min(1, v.t0 / P.l1fade) : 1, fade2 = P.l2fade > 0 ? Math.min(1, v.t0 / P.l2fade) : 1;
+      src[S_LFO1] = this.lfoVal(P.l1shape | 0, p1, v.sh1) * fade1; src[S_LFO2] = this.lfoVal(P.l2shape | 0, p2, v.sh2) * fade2;
+      src[S_FENV] = v.fOut; src[S_MENV] = v.mOut; src[S_VEL] = v.vel; src[S_KEY] = (v.pitch - 60) / 24;
+      src[S_MW] = P.mw; src[S_RND] = v.rnd; src[S_AENV] = v.aOut;
+      if (v === fv) { this.sc.set(src); this.scHas = true; }
+      dst.fill(0);
+      for (let i = 0; i < NSLOT; i++) if (this.msrc[i] && this.mdst[i]) dst[this.mdst[i]] += this.mamt[i] * src[this.msrc[i]];
+      // spec v2 5.1: Uni-Verstimm. modulated per voice and control block; skipped entirely when no route targets it
+      if (this.uniMod) {
+        const det = clamp(P.uniDet + dst[D_UNIDET], 0, 1), semis = (0.25 * det + 0.75 * det * det * det * det) * 1.8;
+        for (let o = 0; o < NOSC; o++) { const nu = this.uniN[o], pos = UNI[nu]; for (let u = 0; u < nu; u++) v.ur[o * MAXU + u] = Math.pow(2, pos[u] * semis / 12); }
+      }
+      // pitch (glide / retune as RC slew, analog drift)
+      v.pitch += (v.target - v.pitch) * v.gcoef;
+      const fb = lut(FREQ, v.pitch + v.dP + dst[D_PITCH] * 24) * ISR;
+      for (let o = 0; o < NOSC; o++) {
+        let inc0 = fb * this.oRat[o] * v.dR[o]; const nu = this.uniN[o];
+        if (o === 1 && dst[D_O2PITCH] !== 0) inc0 *= lut(FREQ, 69 + dst[D_O2PITCH] * 24) / 440;
+        const UR = this.uniMod ? v.ur : this.uniR;
+        for (let u = 0; u < nu; u++) v.inc[o * MAXU + u] = Math.min(inc0 * UR[o * MAXU + u], .45);
+        const lt = clamp(this.oLvl[o] + dst[D_O1 + o], 0, 1.5) * .5, pt = clamp(this.oPw[o] + dst[D_PW] * .45, .03, .97);
+        if (v.lvOk) { v.lvl[o] += (lt - v.lvl[o]) * .3; v.pw[o] += (pt - v.pw[o]) * .3; if (Math.abs(v.lvl[o] - lt) < 1e-5) v.lvl[o] = lt; } else { v.lvl[o] = lt; v.pw[o] = pt; }
+      }
+      v.subInc = Math.min(v.inc[0] / (P.subOct >= 2 ? 4 : 2), .45);
+      const sT = P.subLvl * .5, nT = clamp(P.noise + dst[D_NOISE], 0, 1) * .4;
+      if (v.lvOk) { v.subL += (sT - v.subL) * .3; v.noiseL += (nT - v.noiseL) * .3; if (v.subL < 1e-6 && sT === 0) v.subL = 0; if (v.noiseL < 1e-6 && nT === 0) v.noiseL = 0; } else { v.subL = sT; v.noiseL = nT; }
+      v.lvOk = true;
+      // filter: cutoff in semitones (MIDI note scale), key tracking around C4, envelope +-6 octaves
+      const velF = 1 - P.fvel + P.fvel * v.vel;
+      const cutN = this.cutN0 + P.kt * (v.pitch - 60) + v.dC
+        + clamp(P.fenv + dst[D_FENV], -1, 1) * 72 * v.fOut * velF + dst[D_CUT] * 120;
+      const g = lut(GTAN, cutN < 0 ? 0 : cutN);
+      const k = clamp(P.res + dst[D_RES], 0, 1.15) * 4, fresh = v.gB < 0;
+      v.gA = fresh ? g : v.gB; v.gB = g; v.kA = fresh ? k : v.kB; v.kB = k;
+      if (dst[D_DRIVE] !== 0) { const drive = clamp(P.drive + dst[D_DRIVE], 0, 1); v.drv = .6 * lut(FREQ, 69 + drive * 48) / 440; v.outG = 1 / (1 + drive * 1.3); }
+      else { v.drv = this.drv0; v.outG = this.outG0; }
+      v.comp = 1 + P.bass * k;
+      // amp & pan
+      const vg = 1 - P.ampVel + P.ampVel * v.vel;
+      v.vgain = P.level * vg * Math.max(0, 1 + dst[D_AMP]);
+      if (dst[D_PAN] !== 0) { const pan = clamp(v.pan0 + dst[D_PAN], -1, 1); v.panL = Math.sqrt(1 - pan); v.panR = Math.sqrt(1 + pan); }
+      else { v.panL = v.panL0; v.panR = v.panR0; }
+    }
+  }
+
+  /* ---------------- audio rate ---------------- */
+  renderOsc(v, o, st) {
+    const bl = this.bl, br = this.br, nu = this.uniN[o], w = this.oW[o], lv = v.lvl[o], pw = v.pw[o];
+    const rec = o === 0 && this.sync === 1, wr = v.wr;
+    if (lv <= 0) { if (rec) this.masterPhase(v); return; }
+    for (let u = 0; u < nu; u++) {
+      const k = o * MAXU + u, dt = v.inc[k], gl = this.uniG[2 * k] * lv, gr = this.uniG[2 * k + 1] * lv, wb = u * CR;
+      if (rec) wr.fill(-1, wb, wb + CR);
+      let t = v.ph[k];
+      if (w === W_SAW) {
+        for (let n = 0; n < CR; n++) {
+          t += dt; if (t >= 1) { t -= 1; if (rec) wr[wb + n] = t / dt; }
+          let y = 2 * t - 1;
+          if (t < dt) { const x = t / dt; y -= x + x - x * x - 1; } else if (t > 1 - dt) { const x = (t - 1) / dt; y -= x * x + x + x + 1; }
+          bl[n] += y * gl; if (st) br[n] += y * gr;
+        }
+      } else if (w === W_PULSE) {
+        for (let n = 0; n < CR; n++) {
+          t += dt; if (t >= 1) { t -= 1; if (rec) wr[wb + n] = t / dt; }
+          let y = t < pw ? 1 : -1;
+          if (t < dt) { const x = t / dt; y += x + x - x * x - 1; } else if (t > 1 - dt) { const x = (t - 1) / dt; y += x * x + x + x + 1; }
+          let t2 = t - pw; if (t2 < 0) t2 += 1;
+          if (t2 < dt) { const x = t2 / dt; y -= x + x - x * x - 1; } else if (t2 > 1 - dt) { const x = (t2 - 1) / dt; y -= x * x + x + x + 1; }
+          y -= 2 * pw - 1;   // remove the DC of asymmetric pulses
+          bl[n] += y * gl; if (st) br[n] += y * gr;
+        }
+      } else if (w === W_TRI) {
+        const c = 8 * dt / 6;   // slope change per sample (8 dt) x polyBLAMP peak (1/6)
+        for (let n = 0; n < CR; n++) {
+          t += dt; if (t >= 1) { t -= 1; if (rec) wr[wb + n] = t / dt; }
+          let y = t < .5 ? 4 * t - 1 : 3 - 4 * t;
+          if (t < dt) { const d = 1 - t / dt; y += c * d * d * d; } else if (t > 1 - dt) { const d = 1 - (1 - t) / dt; y += c * d * d * d; }
+          const e = t - .5, ae = e < 0 ? -e : e;
+          if (ae < dt) { const d = 1 - ae / dt; y -= c * d * d * d; }
+          bl[n] += y * gl; if (st) br[n] += y * gr;
+        }
+      } else {
+        for (let n = 0; n < CR; n++) {
+          t += dt; if (t >= 1) { t -= 1; if (rec) wr[wb + n] = t / dt; }
+          const x = t * SINE_N, i = x | 0, y = SINE[i] + (SINE[i + 1] - SINE[i]) * (x - i);
+          bl[n] += y * gl; if (st) br[n] += y * gr;
+        }
+      }
+      v.ph[k] = t;
+    }
+  }
+  masterPhase(v) {   // osc 1 muted but still the sync master: advance phases, record wraps
+    const nu = this.uniN[0], wr = v.wr;
+    for (let u = 0; u < nu; u++) {
+      const k = u, dt = v.inc[k], wb = u * CR; let t = v.ph[k]; wr.fill(-1, wb, wb + CR);
+      for (let n = 0; n < CR; n++) { t += dt; if (t >= 1) { t -= 1; wr[wb + n] = t / dt; } }
+      v.ph[k] = t;
+    }
+  }
+  /* osc 2 hard-synced to osc 1 (unison voice u follows master voice u mod n1). Every step (own wrap, pulse edge,
+     sync reset) gets a 2-sample polyBLEP; the slave runs one sample late so the sample BEFORE the step can be corrected. */
+  renderSlave(v, st) {
+    const bl = this.bl, br = this.br, nu = this.uniN[1], nm = this.uniN[0], w = this.oW[1], lv = v.lvl[1], pw = v.pw[1], wr = v.wr;
+    if (lv <= 0) return;
+    const W = w === W_SAW ? (t => 2 * t - 1) : w === W_PULSE ? (t => (t < pw ? 1 : -1)) : w === W_TRI ? (t => (t < .5 ? 4 * t - 1 : 3 - 4 * t))
+      : (t => { const x = t * SINE_N, i = x | 0; return SINE[i] + (SINE[i + 1] - SINE[i]) * (x - i); });
+    const dc = w === W_PULSE ? 2 * pw - 1 : 0;
+    for (let u = 0; u < nu; u++) {
+      const k = MAXU + u, dt = v.inc[k], gl = this.uniG[2 * k] * lv, gr = this.uniG[2 * k + 1] * lv, wb = (u % nm) * CR;
+      let t = v.ph[k], prev = v.sp[u], cPrev = 0, cNow = 0;      // BLEP corrections for sample n-1 and n
+      const step = (xs, h) => { cPrev += .5 * h * xs * xs; cNow -= .5 * h * (1 - xs) * (1 - xs); };
+      // a phase segment a -> b (no wrap inside) that ended e samples ago: pulse edges inside
+      const seg = w === W_PULSE ? (a, b, e) => { if (a < pw && b >= pw) step(e + (b - pw) / dt, -2); } : () => {};
+      for (let n = 0; n < CR; n++) {
+        const t0 = t, xm = wr[wb + n];
+        cPrev = 0; cNow = 0;
+        if (xm >= 0) {                                            // master wrapped xm samples ago -> reset
+          let tb = t0 + (1 - xm) * dt;                           // slave phase at the reset instant
+          if (tb >= 1) { seg(t0, 1, xm + (tb - 1) / dt); step(xm + (tb - 1) / dt, w === W_SAW ? -2 : w === W_PULSE ? 2 : 0); tb -= 1; seg(0, tb, xm); }
+          else seg(t0, tb, xm);
+          step(xm, W(0) - W(tb));
+          t = xm * dt; seg(0, t, 0);
+        } else if (t + dt < 1 && !(w === W_PULSE && t < pw && t + dt >= pw)) {
+          t += dt;                                                // no step in this sample
+        } else {
+          t += dt;
+          if (t >= 1) { const e = (t - 1) / dt; seg(t0, 1, e); step(e, w === W_SAW ? -2 : w === W_PULSE ? 2 : 0); t -= 1; seg(0, t, 0); }
+          else seg(t0, t, 0);
+        }
+        const y = W(t) + cNow; prev += cPrev;
+        const o = prev - dc; bl[n] += o * gl; if (st) br[n] += o * gr;
+        prev = y;
+      }
+      v.ph[k] = t; v.sp[u] = prev;
+    }
+  }
+  renderVoice(v, L, R, off) {
+    const bl = this.bl, br = this.br, st = this.stereo;
+    bl.fill(0); if (st) br.fill(0);
+    if (this.sync) { this.renderOsc(v, 0, st); this.renderSlave(v, st); this.renderOsc(v, 2, st); }
+    else for (let o = 0; o < NOSC; o++) this.renderOsc(v, o, st);
+    if (v.subL > 0) {   // sub oscillator: square (polyBLEP) or sine
+      let t = v.subPh; const dt = v.subInc, g = v.subL, sine = this.P.subW === 1;
+      for (let n = 0; n < CR; n++) {
+        t += dt; if (t >= 1) t -= 1;
+        let y;
+        if (sine) { const x = t * SINE_N, i = x | 0; y = SINE[i] + (SINE[i + 1] - SINE[i]) * (x - i); }
+        else {
+          y = t < .5 ? 1 : -1;
+          if (t < dt) { const x = t / dt; y += x + x - x * x - 1; } else if (t > 1 - dt) { const x = (t - 1) / dt; y += x * x + x + x + 1; }
+          let t2 = t - .5; if (t2 < 0) t2 += 1;
+          if (t2 < dt) { const x = t2 / dt; y -= x + x - x * x - 1; } else if (t2 > 1 - dt) { const x = (t2 - 1) / dt; y -= x * x + x + x + 1; }
+        }
+        bl[n] += y * g; if (st) br[n] += y * g;
+      }
+      v.subPh = t;
+    }
+    if (v.noiseL > 0) {
+      let x = v.rng; const g = v.noiseL;
+      for (let n = 0; n < CR; n++) { x ^= x << 13; x ^= x >>> 17; x ^= x << 5; const y = (x | 0) * 4.656612873e-10 * g; bl[n] += y; if (st) br[n] += y; }
+      v.rng = x >>> 0;
+    }
+    if (this.P.lq >= 1) { this.ladder(v, bl, false); if (st) this.ladder(v, br, true); }
+    else { this.ladderEco(v, bl, false); if (st) this.ladderEco(v, br, true); }
+    // amp envelope (per sample), steal fade, pan, sum
+    const A = this.A, gain = v.vgain * v.outG;
+    let s = v.aSt, e = v.aOut, fg = v.fadeG;
+    const fs = v.fade > 0 ? v.fadeStep : 0;
+    const pl1 = gain * v.panL * this.xg1, pr1 = gain * v.panR * this.xg1;
+    let pl = v.pl0 < 0 ? pl1 : v.pl0, pr = v.pr0 < 0 ? pr1 : v.pr0;
+    const dpl = (pl1 - pl) / CR, dpr = (pr1 - pr) / CR;
+    v.pl0 = pl1; v.pr0 = pr1;
+    for (let n = 0; n < CR; n++) {
+      pl += dpl; pr += dpr;
+      if (s === 1) { e = A.aT + (e - A.aT) * A.aC; if (e >= 1) { e = 1; s = 2; } }
+      else if (s === 2) { e = A.dT + (e - A.dT) * A.dC; if (e <= A.s) { e = A.s; s = 3; } }
+      else if (s === 3) e += (A.s - e) * .002;
+      else if (s === 4) { e = A.rT + (e - A.rT) * A.rC; if (e <= 0) { e = 0; s = 0; } }
+      if (fs) { fg -= fs; if (fg < 0) fg = 0; }
+      const a = e * fg;
+      L[off + n] += bl[n] * a * pl;
+      R[off + n] += (st ? br[n] : bl[n]) * a * pr;
+    }
+    v.aSt = s; v.aOut = e; v.fadeG = fg;
+    if (v.fade > 0) { v.fade -= CR; if (v.fade <= 0 || fg <= 0) this.endVoice(v); }
+    else if (s === 0 || (s === 3 && A.s <= 0 && e < 1e-4)) this.endVoice(v);
+  }
+  // zero-delay-feedback transistor ladder; stage nonlinearities linearised around the current state (one solve per sample)
+  ladder(v, buf, right) {
+    const mx = this.mix, c0 = mx[0], c1 = mx[1], c2 = mx[2], c3 = mx[3], c4 = mx[4];
+    let s1, s2, s3, s4;
+    if (right) { s1 = v.r1; s2 = v.r2; s3 = v.r3; s4 = v.r4; } else { s1 = v.s1; s2 = v.s2; s3 = v.s3; s4 = v.s4; }
+    let g = v.gA, k = v.kA; const dg = (v.gB - v.gA) / CR, dk = (v.kB - v.kA) / CR, drv = v.drv, comp = v.comp, idrv = 1 / Math.sqrt(drv);
+    for (let n = 0; n < CR; n++) {
+      g += dg; k += dk;
+      const xin = buf[n] * drv * comp + 1e-20;
+      const b1 = tg(s1), b2 = tg(s2), b3 = tg(s3), b4 = tg(s4), a1 = tg(xin - k * s4);
+      const d1 = 1 / (1 + g * b1), d2 = 1 / (1 + g * b2), d3 = 1 / (1 + g * b3), d4 = 1 / (1 + g * b4);
+      const G1 = g * a1 * d1, G2 = g * b1 * d2, G3 = g * b2 * d3, G4 = g * b3 * d4;
+      const S1 = s1 * d1, S2 = s2 * d2, S3 = s3 * d3, S4 = s4 * d4;
+      const G34 = G3 * G4, G234 = G2 * G34;
+      const y4 = (G1 * G234 * xin + G234 * S1 + G34 * S2 + G4 * S3 + S4) / (1 + k * G1 * G234);
+      const x0 = xin - k * y4, y1 = G1 * x0 + S1, y2 = G2 * y1 + S2, y3 = G3 * y2 + S3;
+      s1 = 2 * y1 - s1; s2 = 2 * y2 - s2; s3 = 2 * y3 - s3; s4 = 2 * y4 - s4;
+      buf[n] = (c0 * a1 * x0 + c1 * y1 + c2 * y2 + c3 * y3 + c4 * y4) * idrv;
+    }
+    if (right) { v.r1 = s1; v.r2 = s2; v.r3 = s3; v.r4 = s4; } else { v.s1 = s1; v.s2 = s2; v.s3 = s3; v.s4 = s4; }
+  }
+
+  // eco ladder: linear ZDF stages, one nonlinearity on the stage-1 input (input drive + resonance feedback)
+  ladderEco(v, buf, right) {
+    const mx = this.mix, c0 = mx[0], c1 = mx[1], c2 = mx[2], c3 = mx[3], c4 = mx[4];
+    let s1, s2, s3, s4;
+    if (right) { s1 = v.r1; s2 = v.r2; s3 = v.r3; s4 = v.r4; } else { s1 = v.s1; s2 = v.s2; s3 = v.s3; s4 = v.s4; }
+    let g = v.gA, k = v.kA; const dg = (v.gB - v.gA) / CR, dk = (v.kB - v.kA) / CR, drv = v.drv, comp = v.comp, idrv = 1 / Math.sqrt(drv);
+    for (let n = 0; n < CR; n++) {
+      g += dg; k += dk;
+      const xin = buf[n] * drv * comp + 1e-20;
+      const d = 1 / (1 + g), G = g * d, a1 = tg(xin - k * s4), G1 = G * a1, G2 = G * G, G3 = G2 * G;
+      const y4 = (G1 * G3 * xin + G3 * s1 * d + G2 * s2 * d + G * s3 * d + s4 * d) / (1 + k * G1 * G3);
+      const x0 = xin - k * y4, y1 = G1 * x0 + s1 * d, y2 = G * y1 + s2 * d, y3 = G * y2 + s3 * d;
+      s1 = 2 * y1 - s1; s2 = 2 * y2 - s2; s3 = 2 * y3 - s3; s4 = 2 * y4 - s4;
+      buf[n] = (c0 * a1 * x0 + c1 * y1 + c2 * y2 + c3 * y3 + c4 * y4) * idrv;
+    }
+    if (right) { v.r1 = s1; v.r2 = s2; v.r3 = s3; v.r4 = s4; } else { v.s1 = s1; v.s2 = s2; v.s3 = s3; v.s4 = s4; }
+  }
+
+  // deferred tempo changes: the one due at or before this audio frame becomes current (beat position stays continuous,
+  // because the main thread re-anchors start for the same instant)
+  dcOut(x, k, N) {
+    const c = this.dcC, s = this.dcS; let x1 = s[k], y1 = s[k + 1];
+    for (let n = 0; n < N; n++) { const xi = x[n], y = xi - x1 + c * y1; x1 = xi; y1 = y; x[n] = y; }
+    if (x1 === 0 && y1 < 1e-9 && y1 > -1e-9) y1 = 0;   // decayed on silence: stop (no denormals, no endless idle work)
+    s[k] = x1; s[k + 1] = y1;
+  }
+  tempoAt(frame) {
+    const tn = this.tnext; if (!tn.length) return;
+    const t = frame * ISR;
+    while (tn.length && tn[0].at <= t) { const e = tn.shift(); this.bpm = e.bpm; this.songStart = e.start; }
+  }
+  process(inputs, outputs) {
+    const out = outputs[0], L = out[0], R = out[1] || out[0], N = L.length, f0 = currentFrame;
+    const t0 = this.hasPerf ? performance.now() : Date.now();
+    L.fill(0); if (R !== L) R.fill(0);
+    let any = this.q.length > 0; for (const v of this.V) if (v.on) { any = true; break; }
+    if (this.pend && !any) { const o = this.pend; this.pend = null; this.setParams(o); this.xfState = 0; this.xg = this.xg1 = 1; }
+    if (any) {
+      for (let off = 0; off < N; off += CR) {
+        this.runEvents(f0 + off + CR);
+        this.xfBlock();
+        this.control(f0 + off);
+        for (const v of this.V) if (v.on) this.renderVoice(v, L, R, off);
+      }
+      if (R === L) for (let n = 0; n < N; n++) L[n] *= .5;
+    } else {
+      this.tempoAt(f0);
+      const P = this.P, spb = 60 / this.bpm, r1 = P.l1sync > 0 ? 1 / (P.l1sync * spb) : P.l1rate, r2 = P.l2sync > 0 ? 1 / (P.l2sync * spb) : P.l2rate;
+      this.gl1 = (this.gl1 + r1 * N * ISR) % 1; this.gl2 = (this.gl2 + r2 * N * ISR) % 1;
+    }
+    const dcs = this.dcS;
+    if (any || dcs[0] !== 0 || dcs[1] !== 0 || dcs[2] !== 0 || dcs[3] !== 0) { this.dcOut(L, 0, N); if (R !== L) this.dcOut(R, 2, N); }
+    if (this.ended.length) { this.port.postMessage({end: this.ended}); this.ended = []; }
+    if (this.scopeOn && f0 >= this.scopeNext) {
+      this.scopeNext = f0 + ((SR / 30) | 0);
+      const sc = this.sc;
+      if (!this.scHas) { sc.fill(0); sc[S_LFO1] = this.lfoVal(this.P.l1shape | 0, this.gl1, 0); sc[S_LFO2] = this.lfoVal(this.P.l2shape | 0, this.gl2, 0); }
+      let nv = 0; for (const v of this.V) if (v.on) nv++;
+      // plain array (NSRC numbers): structured clone cost is negligible at 30 Hz; t = audio time of this snapshot
+      this.port.postMessage({scope: Array.from(sc), t: f0 * ISR, nv});
+      this.scHas = false;
+    }
+    // CPU estimate: sum of (quantised) durations is unbiased; report once per second of audio
+    this.busy += (this.hasPerf ? performance.now() : Date.now()) - t0; this.busyN += N;
+    if (this.busyN >= SR) {
+      let nv = 0; for (const v of this.V) if (v.on) nv++;
+      this.port.postMessage({load: this.busy / (this.busyN * ISR * 1000), voices: nv}); this.busy = 0; this.busyN = 0;
+    }
+    return this.alive;
+  }
+}
+registerProcessor('dirigent-analog', AnalogCore);
+
+/* ======================================================================================================================
+   dirigent-hall: fxresearch/fx-worklet.js (clear also resets the loop filters)
+   ====================================================================================================================== */
+/* SYNQUENZER hall: Dattorro figure-of-eight tank (J. Dattorro, "Effect Design Part 1", JAES 1997), ASCII only so it can
+   be loaded from a Blob or data: URL together with the synth worklet (one addModule for all processors).
+   1 input (mono, downmixed by the node: channelCount 1 explicit), 1 stereo output, wet only (send/return bus).
+   All parameters are k-rate AudioParams: live, automatable and modulatable (mod matrix can connect to them).
+     decay  s   RT60 of the mid band (0.2 .. 60, 60 = practically endless)
+     size   x   tank delay scale (0.35 .. 1.6), slewed: turning it gives a short tape-like glide, never a click
+     damp   Hz  in-loop low-pass (HF dies faster: dark halls < 3 kHz, plates > 10 kHz)
+     lowcut Hz  in-loop high-pass (keeps a 20 s tail from turning into mud)
+     tone   Hz  input bandwidth low-pass
+     mod    0..1 tank allpass modulation (lush, de-metallises long tails)
+     width  0..2 M/S width of the return
+     freeze 0/1 tank becomes lossless, input muted (endless pad)
+   CPU: see bench (Chromium, 2.8 GHz Xeon). Sleeps (outputs zeros, no DSP) when input and tail are silent. */
+const DSR = 29761;
+function p2(n) { let p = 1; while (p < n) p <<= 1; return p; }
+// fractional read at position p = writeIndex - delay (delay >= 1), linear interpolation between the two nearest samples
+// p is always positive (the write index starts at 2^20), so p | 0 == floor(p)
+function rd(b, m, p) { const i = p | 0, f = p - i; return b[i & m] * (1 - f) + b[(i + 1) & m] * f; }
+const TL = [266, 2974, 1913, 1996, 1990, 187, 1066], TR = [353, 3627, 1228, 2673, 2111, 335, 121];
+class Line {
+  constructor(maxLen) { this.b = new Float32Array(p2(maxLen + 4)); this.m = this.b.length - 1; }
+}
+class DirigentHall extends AudioWorkletProcessor {
+  static get parameterDescriptors() {
+    const k = 'k-rate';
+    return [
+      {name: 'decay', defaultValue: 3, minValue: 0.2, maxValue: 60, automationRate: k},
+      {name: 'size', defaultValue: 1, minValue: 0.35, maxValue: 1.6, automationRate: k},
+      {name: 'damp', defaultValue: 7000, minValue: 400, maxValue: 20000, automationRate: k},
+      {name: 'lowcut', defaultValue: 70, minValue: 10, maxValue: 600, automationRate: k},
+      {name: 'tone', defaultValue: 12000, minValue: 500, maxValue: 20000, automationRate: k},
+      {name: 'mod', defaultValue: 0.5, minValue: 0, maxValue: 1, automationRate: k},
+      {name: 'width', defaultValue: 1, minValue: 0, maxValue: 2, automationRate: k},
+      {name: 'freeze', defaultValue: 0, minValue: 0, maxValue: 1, automationRate: k},
+    ];
+  }
+  constructor() {
+    super();
+    const r = sampleRate / DSR, MAXS = 1.6, X = 32;           // X: max modulation excursion at 29761 Hz
+    this.r = r;
+    // input diffusers (fixed lengths), tank lines (scaled by size)
+    this.dIn = [142, 107, 379, 277].map(n => Math.round(n * r));
+    this.ins = this.dIn.map(n => new Line(n));
+    this.base = {ap1: 672, d1: 4453, ap2: 1800, d2: 3720, ap3: 908, d3: 4217, ap4: 2656, d4: 3163};
+    this.L = {};
+    for (const k in this.base) this.L[k] = new Line(Math.ceil((this.base[k] * MAXS + X + 2) * r));
+    this.w = 1 << 20;
+    this.size = 1;
+    this.lpL = 0; this.lpR = 0; this.hpL = 0; this.hpR = 0; this.bw = 0;
+    this.s = 0; this.c = 1;                                   // quadrature LFO state
+    this.sleep = 0; this.tl = new Int32Array(7); this.tr = new Int32Array(7);
+    this.port.onmessage = e => { if (e.data && e.data.clear) { for (const k in this.L) this.L[k].b.fill(0); this.ins.forEach(l => l.b.fill(0)); this.lpL = this.lpR = this.hpL = this.hpR = this.bw = 0; } };
+  }
+  process(inputs, outputs, P) {
+    const out = outputs[0], oL = out[0], oR = out[1] || out[0], n = oL.length;
+    const inp = inputs[0] && inputs[0][0];
+    const freeze = P.freeze[0] > 0.5;
+    // ---- sleep when silent (input zero and tail below -120 dB) ----
+    let inPeak = 0;
+    if (inp) for (let i = 0; i < n; i++) { const a = inp[i] < 0 ? -inp[i] : inp[i]; if (a > inPeak) inPeak = a; }
+    if (!freeze && inPeak === 0 && this.sleep > 2) { oL.fill(0); if (oR !== oL) oR.fill(0); return true; }
+    // ---- block-rate parameters ----
+    const r = this.r, sr = sampleRate;
+    const tgtSize = P.size[0];
+    this.size += Math.max(-0.002, Math.min(0.002, tgtSize - this.size));   // slew: ~0.75 s for the full range at 48 kHz
+    const S = this.size * r, B = this.base;
+    const lap1 = B.ap1 * S, ld1 = B.d1 * S, lap2 = B.ap2 * S, ld2 = B.d2 * S, lap3 = B.ap3 * S, ld3 = B.d3 * S, lap4 = B.ap4 * S, ld4 = B.d4 * S;
+    const rt = freeze ? 1e9 : P.decay[0];
+    const kd = -3 / (sr * rt);
+    const gA1 = Math.pow(10, kd * (lap1 + ld1)), gB1 = Math.pow(10, kd * (lap2 + ld2));
+    const gA2 = Math.pow(10, kd * (lap3 + ld3)), gB2 = Math.pow(10, kd * (lap4 + ld4));
+    const dampA = freeze ? 1 : 1 - Math.exp(-2 * Math.PI * Math.min(P.damp[0], 0.45 * sr) / sr);
+    const lowA = freeze ? 0 : 1 - Math.exp(-2 * Math.PI * P.lowcut[0] / sr);
+    const bwA = 1 - Math.exp(-2 * Math.PI * Math.min(P.tone[0], 0.45 * sr) / sr);
+    const mod = P.mod[0], exc = mod * 16 * r, lfoW = 2 * Math.PI * (0.35 + 0.65 * mod) / sr;
+    const width = P.width[0], inGain = freeze ? 0 : 1;
+    const dd1 = -0.7, dd2 = 0.5;                              // decay diffusion 1 (modulated APs, negative), 2
+    const tL = this.tl, tR = this.tr;                          // output taps (Dattorro table 2), scaled by size, integer
+    for (let k = 0; k < 7; k++) { tL[k] = Math.round(TL[k] * S); tR[k] = Math.round(TR[k] * S); }
+    const l0 = tL[0], l1 = tL[1], l2 = tL[2], l3 = tL[3], l4 = tL[4], l5 = tL[5], l6 = tL[6];
+    const r0 = tR[0], r1 = tR[1], r2 = tR[2], r3 = tR[3], r4 = tR[4], r5 = tR[5], r6 = tR[6];
+    // ---- locals ----
+    const I0 = this.ins[0].b, I1 = this.ins[1].b, I2 = this.ins[2].b, I3 = this.ins[3].b;
+    const M0 = this.ins[0].m, M1 = this.ins[1].m, M2 = this.ins[2].m, M3 = this.ins[3].m;
+    const n0 = this.dIn[0], n1 = this.dIn[1], n2 = this.dIn[2], n3 = this.dIn[3];
+    const L = this.L;
+    const AP1 = L.ap1.b, D1 = L.d1.b, AP2 = L.ap2.b, D2 = L.d2.b, AP3 = L.ap3.b, D3 = L.d3.b, AP4 = L.ap4.b, D4 = L.d4.b;
+    const mA1 = L.ap1.m, mD1 = L.d1.m, mA2 = L.ap2.m, mD2 = L.d2.m, mA3 = L.ap3.m, mD3 = L.d3.m, mA4 = L.ap4.m, mD4 = L.d4.m;
+    let w = this.w, lpL = this.lpL, lpR = this.lpR, hpL = this.hpL, hpR = this.hpR, bw = this.bw, s = this.s, c = this.c;
+    let energy = 0;
+    for (let i = 0; i < n; i++) {
+      // LFO (magic circle, amplitude-stable)
+      s += lfoW * c; c -= lfoW * s;
+      let x = (inp ? inp[i] : 0) * inGain;
+      bw += bwA * (x - bw); x = bw;
+      // input diffusion: y = d + g v, v = x - g d
+      let d, v;
+      d = I0[(w - n0) & M0]; v = x - 0.75 * d; I0[w & M0] = v; x = d + 0.75 * v;
+      d = I1[(w - n1) & M1]; v = x - 0.75 * d; I1[w & M1] = v; x = d + 0.75 * v;
+      d = I2[(w - n2) & M2]; v = x - 0.625 * d; I2[w & M2] = v; x = d + 0.625 * v;
+      d = I3[(w - n3) & M3]; v = x - 0.625 * d; I3[w & M3] = v; x = d + 0.625 * v;
+      x += (w & 1) ? 1e-20 : -1e-20;                         // anti-denormal
+      const fbFromR = rd(D4, mD4, w - (ld4)) * gB2, fbFromL = rd(D2, mD2, w - (ld2)) * gB1;
+      // ---- left half ----
+      let a = x + fbFromR;
+      d = rd(AP1, mA1, w - (lap1 + exc * (1 + s))); v = a - dd1 * d; AP1[w & mA1] = v; a = d + dd1 * v;
+      D1[w & mD1] = a;
+      a = rd(D1, mD1, w - (ld1)) * gA1;
+      lpL += dampA * (a - lpL); a = lpL;
+      hpL += lowA * (a - hpL); a -= hpL;
+      d = rd(AP2, mA2, w - (lap2)); v = a - dd2 * d; AP2[w & mA2] = v; a = d + dd2 * v;
+      D2[w & mD2] = a;
+      // ---- right half ----
+      let b = x + fbFromL;
+      d = rd(AP3, mA3, w - (lap3 + exc * (1 + c))); v = b - dd1 * d; AP3[w & mA3] = v; b = d + dd1 * v;
+      D3[w & mD3] = b;
+      b = rd(D3, mD3, w - (ld3)) * gA2;
+      lpR += dampA * (b - lpR); b = lpR;
+      hpR += lowA * (b - hpR); b -= hpR;
+      d = rd(AP4, mA4, w - (lap4)); v = b - dd2 * d; AP4[w & mA4] = v; b = d + dd2 * v;
+      D4[w & mD4] = b;
+      // ---- output taps ----
+      const yl = D3[(w - l0) & mD3] + D3[(w - l1) & mD3] - AP4[(w - l2) & mA4] + D4[(w - l3) & mD4] - D1[(w - l4) & mD1] - AP2[(w - l5) & mA2] - D2[(w - l6) & mD2];
+      const yr = D1[(w - r0) & mD1] + D1[(w - r1) & mD1] - AP2[(w - r2) & mA2] + D2[(w - r3) & mD2] - D3[(w - r4) & mD3] - AP4[(w - r5) & mA4] - D4[(w - r6) & mD4];
+      const mid = (yl + yr) * 0.3, side = (yl - yr) * 0.3 * width;
+      const ol = mid + side, or = mid - side;
+      oL[i] = ol; if (oR !== oL) oR[i] = or;
+      energy += ol * ol + or * or;
+      w++;
+    }
+    if (w > 0x3f000000) w -= 0x20000000;                     // keep w positive; 2^29 is a multiple of every buffer size
+    this.w = w; this.lpL = lpL; this.lpR = lpR; this.hpL = hpL; this.hpR = hpR; this.bw = bw;
+    const m = Math.sqrt(s * s + c * c); this.s = s / m; this.c = c / m;  // renormalise once per block
+    this.sleep = (inPeak === 0 && energy < 1e-12 * n) ? this.sleep + 1 : 0;
+    return true;
+  }
+}
+registerProcessor('dirigent-hall', DirigentHall);
+</script>
 <script>
 /* ===== §1.1 block 2: Harmony + Transposer (unchanged from the DIRIGENT build) ===== */
 /* ===== Harmony core (verbatim port of harmony.js v2) ===== */
@@ -3608,14 +4510,14 @@ const RecHelpers = (() => {
   const ANALOG = [
     // ---------------- BASS ----------------
     A('moog-bass', 'Moog-Bass', 'bass', 'bass', 'Minimoog Model D',
-      'Drei Oszillatoren, Filter fast zu (240 Hz), kurze Filter-Hüllkurve = der „Plock“. Drive 50 % macht ihn fett, Reset lässt jeden Ton gleich hart starten.',
-      {o2fine: -5, o2lvl: .85, o3w: 1, o3oct: -1, o3lvl: .55, cutoff: 240, res: .3, drive: .5, bass: .7, kt: .35, fenv: .45, fvel: .45,
-        fA: .001, fD: .32, fS: .18, fR: .12, fCurve: .7, aA: .001, aD: .8, aS: .85, aR: .07, ampVel: .45, mode: 1, poly: 1, reset: 1, analog: .12, spread: 0, level: 0.6},
+      'Drei Oszillatoren, Filter fast zu (380 Hz), kurze Filter-Hüllkurve = der „Plock“. Drive 50 % macht ihn fett, Reset lässt jeden Ton gleich hart starten.',
+      {o2fine: -5, o2lvl: .85, o3w: 1, o3oct: -1, o3lvl: .35, cutoff: 380, res: .3, drive: .5, bass: .7, kt: .35, fenv: .6, fvel: .45,
+        fA: .001, fD: .5, fS: .18, fR: .12, fCurve: .7, aA: .001, aD: .8, aS: .85, aR: .07, ampVel: .45, mode: 1, poly: 1, reset: 1, analog: .12, spread: 0, level: 0.515},
       [M('vel', 'cutoff', .04)], {rev: .04}),
     A('sub-bass', 'Sub-Bass', 'bass', 'bass', 'Moog Taurus / moderner Pop-Sub',
-      'Sinus trägt den Druck, ein leises Dreieck eine Oktave drüber macht ihn auf Handy-Lautsprechern hörbar (die können 50 Hz nicht).',
-      {o1w: 3, o2w: 2, o2oct: 1, o2fine: 0, o2lvl: .25, cutoff: 900, res: 0, drive: .25, kt: .5, fenv: 0, fvel: 0,
-        aA: .004, aD: .1, aS: 1, aR: .09, ampVel: .35, mode: 2, poly: 1, glide: .03, reset: 1, analog: 0, spread: 0, level: 0.536},
+      'Sinus trägt den Druck, ein leiseres Dreieck zwei Oktaven drüber macht ihn auf Handy-Lautsprechern hörbar (die können 50 Hz nicht).',
+      {o1w: 3, o2w: 2, o2oct: 2, o2fine: 0, o2lvl: .45, cutoff: 1200, res: 0, drive: .25, kt: 0, fenv: 0, fvel: 0,
+        aA: .004, aD: .1, aS: 1, aR: .09, ampVel: .35, mode: 2, poly: 1, glide: .03, reset: 1, analog: 0, spread: 0, level: 0.487},
       [], {rev: 0}),
     A('acid-303', 'Acid 303', 'bass', 'seq16', 'Roland TB-303',
       'Leiser Oszillator (60 %), wenig Drive und Bass-Ausgleich IM Filter – sonst frisst die Sättigung die Resonanz. Der Dreck kommt danach (Track-Drive 25 %). Akzent = Anschlag: fest gespielt öffnet das Filter mehr. Slide = Töne überlappend spielen (Legato + Glide 55 ms). LFO 1 dreht über 4 Takte langsam am Cutoff wie eine Hand.',
@@ -3668,7 +4570,7 @@ const RecHelpers = (() => {
     A('prophet-poly', 'Prophet-Poly', 'poly', 'chord', 'Sequential Prophet-5',
       'Säge + Puls leicht gegeneinander verstimmt, Drift 35 % = jede Stimme minimal anders, wie echte Analogtechnik. Anschlag öffnet das Filter.',
       {o2w: 1, o2pw: .42, o2fine: -6, o2lvl: .75, cutoff: 900, res: .25, drive: .25, kt: .5, fenv: .35, fvel: .35, fA: .004, fD: .75, fS: .35, fR: .5,
-        aA: .004, aD: 1.1, aS: .75, aR: .5, ampVel: .4, analog: .35, spread: .35, poly: 6, level: 0.261},
+        aA: .004, aD: 1.1, aS: .75, aR: .5, ampVel: .4, analog: .35, spread: .6, poly: 6, level: 0.261},
       [M('vel', 'cutoff', .05)], {rev: .3, dly: .08}),
     A('juno-streicher', 'Juno-Streicher', 'poly', 'pad', 'Roland Juno-60 Strings',
       'Puls mit langsamer PWM (LFO 1 → Pulsbreite) + Chorus II = der Juno. Ohne Chorus klingt er nackt – der Chorus ist Teil des Klangs.',
@@ -3722,8 +4624,8 @@ const RecHelpers = (() => {
     A('samtpolster', 'Samtpolster', 'flaeche', 'pad', 'Warme Analog-Fläche',
       'Tiefpass 24 dB bei ~500 Hz plus Sinus-Sub: warm und rund, nimmt der Stimme nichts weg. Zwei Sägezähne 12 Cent auseinander schweben langsam.',
       {o2fine: -12, o2lvl: .8, subLvl: .3, subW: 1, cutoff: 520, res: .1, drive: .2, bass: .6, kt: .35, fenv: .22, fA: 1.6, fD: 3, fS: .6, fR: 3,
-        aA: 1, aD: 2, aS: .9, aR: 3, ampVel: .25, l1shape: 0, l1rate: .11, analog: .4, spread: .35, poly: 6, level: 0.256},
-      [M('lfo1', 'cutoff', .025)], {chorus: {mode: 'BREIT', mix: .7}, rev: .45}),
+        aA: 1, aD: 2, aS: .9, aR: 3, ampVel: .25, l1shape: 0, l1rate: .11, analog: .3, spread: .35, poly: 6, level: 0.27},
+      [M('lfo1', 'cutoff', .025)], {chorus: {mode: 'BREIT', mix: .5}, rev: .45}),
     // ---------------- PLUCK & KEYS ----------------
     A('glas-pluck', 'Glas-Pluck', 'pluck', 'arp', 'Analoger Glas-Pluck',
       'Dreieck + Sinus-Oktave + leiser schmaler Puls zwei Oktaven höher = Glas. Amp-Sustain 0: jede Note klingt aus wie gezupft.',
@@ -3763,9 +4665,9 @@ const RecHelpers = (() => {
         aA: .001, aD: .3, aS: .45, aR: .1, ampVel: .4, mode: 1, poly: 1, reset: 1, l1shape: 1, l1sync: 32, analog: .3, spread: 0, level: 2.133},
       [M('lfo1', 'cutoff', .13)], {drive: .1, dly: .4, rev: .4}, {echo: {mode: 'pp', divL: '1/8', fb: .45}}),
     A('tropfen', 'Tropfen', 'sequenz', 'seq8', 'Wassertropfen-Sequenz (Jarre)',
-      'Hüllkurve 2 hebt die Tonhöhe beim Anschlag 8 Halbtöne an und fällt in 50 ms zurück, das resonante Filter fällt mit: „Blop“. Viel Echo und Hall = Wasser.',
-      {o1w: 2, o2w: 3, o2oct: 1, o2fine: 0, o2lvl: .5, cutoff: 650, res: .8, drive: .3, bass: .6, kt: .8, fenv: .5, fvel: .3, fA: .001, fD: .1, fS: 0, fR: .08,
-        aA: .001, aD: .5, aS: 0, aR: .25, ampVel: .5, mA: .001, mD: .05, mS: 0, mR: .05, poly: 4, analog: .1, spread: .5, level: 1.262},
+      'Hüllkurve 2 hebt die Tonhöhe beim Anschlag 8 Halbtöne an und fällt in 50 ms zurück, das resonante Bandpass-Filter (zwei Oktaven über dem Ton, Keytrack 100 %) fällt mit: „Blop“. Viel Echo und Hall = Wasser.',
+      {o1w: 2, o2w: 3, o2oct: 1, o2fine: 0, o2lvl: .3, ftype: 2, cutoff: 1046.5, res: .9, drive: .15, bass: .2, kt: 1, fenv: .5, fvel: .3, fA: .001, fD: .1, fS: 0, fR: .08,
+        aA: .004, aD: .5, aS: 0, aR: .25, ampVel: .5, mA: .001, mD: .05, mS: 0, mR: .05, poly: 4, analog: .1, spread: .5, level: 3.344},
       [M('menv', 'pitch', .35)], {dly: .4, rev: .45}, {echo: {mode: 'pp', divL: '1/8.', fb: .45}}),
   ];
 
@@ -4297,6 +5199,86 @@ const RecHelpers = (() => {
 })();
 </script>
 <script>
+/* ===== §1.1 block 11: SynthHost — from scratchpad/analog-research/host.js (spec v2 §1.4, §5.4) =====
+   The main-thread side of the synth worklet (block 1: processors 'dirigent-analog' and 'dirigent-hall').
+     SynthHost.load(ctx, src) -> Promise<bool>   Blob URL first, then data: URL (btoa; src is ASCII only), each with a 2.5 s
+                                                 guard; a probe node proves it. state 'idle'|'loading'|'ready'|'failed', how, err
+     SynthHost.track(ctx, dest, flat, mods) -> E one AudioWorkletNode per synth track (0 inputs, 1 stereo output -> dest)
+       E.on(id, note, vel, t, from) · E.off(id, t) · E.fastOff(id, t, tau) · E.retune(id, note, t, tau) · E.kill(id)
+       E.cancelRetune(id) · E.allOff(t) · E.panic() · E.set(diff) · E.mods(list) · E.tempo(bpm, start, at) · E.scope(on)
+       E.dispose(); E.onEnd(id), E.onScope(msg); E.load / E.nv (worklet reports, once per second); E.sent (params last sent)
+   Changes against host.js: renamed (AnalogHost -> SynthHost); loader timing (ms) recorded; an attempt that resolved after
+   its guard timeout still counts (the probe decides); event 8 (cancel queued retunes), tempo `at`, scope, dispose guard,
+   E.sent and E.proxies (the app's voice proxies of this engine). Note events are batched per task (queueMicrotask). */
+(function () {
+  const H = {state: 'idle', err: null, how: null, promise: null, ms: 0};
+  const withTimeout = (p, ms) => new Promise((res, rej) => {
+    const t = setTimeout(() => rej(new Error('Zeitüberschreitung')), ms);   // loader guard only, never used for audio timing
+    p.then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); });
+  });
+  const probe = ctx => { const n = new AudioWorkletNode(ctx, 'dirigent-analog', {numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2]}); n.port.postMessage({dispose: true}); n.disconnect(); };
+  H.load = function (ctx, src, opts) {
+    opts = opts || {};
+    if (H.promise) return H.promise;
+    const T0 = performance.now();
+    if (!ctx || !ctx.audioWorklet || typeof AudioWorkletNode !== 'function' || window.isSecureContext === false) {
+      H.state = 'failed'; H.err = 'AudioWorklet nicht verfügbar'; return (H.promise = Promise.resolve(false));
+    }
+    H.state = 'loading';
+    const tries = [
+      ['blob', () => URL.createObjectURL(new Blob([src], {type: 'application/javascript'}))],
+      ['data', () => 'data:application/javascript;base64,' + btoa(src)],          // src is ASCII only (§1.1)
+    ];
+    const errs = [];
+    const attempt = i => {
+      if (i >= tries.length) return Promise.reject(new Error(errs.join(' · ') || 'kein Ladeweg'));
+      let url; try { url = tries[i][1](); } catch (e) { errs.push(tries[i][0] + ': ' + (e && e.message || e)); return attempt(i + 1); }
+      return withTimeout(ctx.audioWorklet.addModule(url), opts.timeout || 2500)
+        .then(() => { H.how = tries[i][0]; if (tries[i][0] === 'blob') { try { URL.revokeObjectURL(url); } catch (e) {} } })
+        .catch(e => { errs.push(tries[i][0] + ': ' + (e && e.message || e)); return attempt(i + 1); });
+    };
+    H.errs = errs;
+    H.promise = attempt(0).then(() => { probe(ctx); H.state = 'ready'; H.ms = performance.now() - T0; return true; })
+      .catch(e => {
+        try { probe(ctx); H.state = 'ready'; H.how = H.how || 'spät'; H.ms = performance.now() - T0; return true; } catch (_) {}   // registered after a guard timeout
+        H.state = 'failed'; H.err = String(e && e.message || e); H.ms = performance.now() - T0; return false;
+      });
+    return H.promise;
+  };
+  H.track = function (ctx, dest, patch, mods) {
+    const node = new AudioWorkletNode(ctx, 'dirigent-analog', {
+      numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2], processorOptions: {patch, mods: mods || []}});
+    node.connect(dest);
+    const E = {node, q: [], load: 0, nv: 0, onEnd: null, onScope: null, flushQueued: false, dead: false, sent: Object.assign({}, patch), proxies: new Map()};
+    node.port.onmessage = e => {
+      const m = e.data; if (!m) return;
+      if (m.end && E.onEnd) for (const id of m.end) E.onEnd(id);
+      if (m.load != null) { E.load = m.load; E.nv = m.voices; }
+      if (m.scope && E.onScope) E.onScope(m);
+    };
+    const post = m => { if (!E.dead) node.port.postMessage(m); };
+    const push = ev => { if (E.dead) return; E.q.push(ev); if (!E.flushQueued) { E.flushQueued = true; queueMicrotask(E.flush); } };
+    E.flush = () => { E.flushQueued = false; if (E.q.length) { post({ev: E.q}); E.q = []; } };
+    E.on = (id, note, vel, t, from) => push([t, 1, id, note, vel, from == null ? -1 : from]);
+    E.off = (id, t) => push([t, 2, id]);
+    E.fastOff = (id, t, tau) => push([t, 7, id, tau || .004]);
+    E.retune = (id, note, t, tau) => push([t, 3, id, note, tau]);
+    E.kill = id => push([0, 4, id]);
+    E.cancelRetune = id => push([0, 8, id]);
+    E.allOff = t => push([t, 5, 0]);
+    E.panic = () => push([0, 6, 0]);
+    // queued note events first, then the params; xf: a whole sound -> the worklet fades sounding voices through the change
+    E.set = (diff, xf) => { Object.assign(E.sent, diff); E.flush(); post(xf ? {set: diff, xf: true} : {set: diff}); };
+    E.mods = list => { E.flush(); post({mods: list}); };
+    E.tempo = (bpm, start, at) => post({tempo: at == null ? {bpm, start} : {bpm, start, at}});
+    E.scope = on => post({scope: !!on});
+    E.dispose = () => { if (E.dead) return; E.flush(); post({dispose: true}); E.dead = true; node.port.onmessage = null; try { node.disconnect(); } catch (e) {} };
+    return E;
+  };
+  window.SynthHost = H;
+})();
+</script>
+<script>
 /* ===== §1.1 block 12: FX — embedded from scratchpad/fxresearch/fx-native.js (spec v2 §8, §5.5) =====
    Embedded unchanged as a library. WP3 uses FX.TempoLFO for the native LFO 1/2 routes (§5.5); the chorus, echo, hall,
    master and pump of this block are wired into the audio graph in WP4 (§8). */
@@ -4754,6 +5736,13 @@ function fmtVal(fmt, v) {
     case 'db': { if (!(v > 0)) return MINUS + '∞ dB'; const db = 20 * Math.log10(v); return (db > .05 ? '+' : db < -.05 ? MINUS : '') + fmtDec(Math.abs(db), 1) + ' dB'; }
     case 'sync': return syncLbl(v);
     case 'wave': return WAVE_NAME[v] || String(v);
+    // WP4 (§8.2)
+    case 'ms': return typeof v === 'string' ? v : Math.round(v) + ' ms';
+    case 'x1': return '×' + fmtDec(v, v < 10 ? 2 : 1).replace(/0$/, '');
+    case 'dbv': { const r = Math.round(v * 10) / 10; return (r > 0 ? '+' : r < 0 ? MINUS : '') + fmtDec(Math.abs(r), 1).replace(/,0$/, '') + ' dB'; }
+    case 'ratio2': return fmtDec(v, v < 10 ? 1 : 0).replace(/,0$/, '') + ':1';
+    case 'hdec': return v >= 59 ? '∞' : fmtVal('s', v);
+    case 'div': return String(v);
     default: return String(v);
   }
 }
@@ -4811,6 +5800,7 @@ function toNorm(d, v) {
   let n;
   if (d.c === 'exp') n = Math.log(v / d.min) / Math.log(d.max / d.min);
   else if (d.c === 'db') n = v > 0 ? (20 * Math.log10(v) + 40) / 52 : 0;          // −40…+12 dB, norm 0 = −∞ (Ausgang, §5.1)
+  else if (d.c === 'hdec') n = v >= 59 ? 1 : .96 * Math.log(Math.max(v, .2) / .2) / Math.log(100);
   else if (d.c === 'pow') n = Math.pow(Math.max(0, (v - d.min) / (d.max - d.min)), 1 / d.k);
   else n = (v - d.min) / (d.max - d.min);
   return clamp(isNum(n) ? n : 0, 0, 1);
@@ -4820,6 +5810,7 @@ function fromNorm(d, n) {
   if (d.vals) return d.vals[Math.round(n * (d.vals.length - 1))];
   if (d.c === 'exp') return d.min * Math.pow(d.max / d.min, n);
   if (d.c === 'db') return n <= 0 ? 0 : Math.min(d.max, Math.pow(10, (52 * n - 40) / 20));
+  if (d.c === 'hdec') return n >= .985 ? 60 : Math.min(20, .2 * Math.pow(100, n / .96));
   if (d.c === 'pow') return d.min + (d.max - d.min) * Math.pow(n, d.k);
   return d.min + (d.max - d.min) * n;
 }
@@ -4997,6 +5988,11 @@ PD.fmDec.l = 'Länge'; PD.fmRel.l = 'Release';
   ['fx.vol', 'Lautstärke', {min: 0, max: 1, c: 'lin', def: .8, fmt: 'pct'}],
   ['fx.pan', 'Panorama', {min: -1, max: 1, c: 'bip', def: 0, fmt: 'pan'}],
   ['fx.pump', 'Pumpen', {min: 0, max: 1, c: 'lin', def: 0, fmt: 'pct'}],
+  ['fx.pumpRel', 'Pump-Release', {vals: ['1/16', '1/8', '1/4'], def: '1/8', fmt: 'div'}],
+  ['fx.chorus.mode', 'Chorus', {vals: ['off', 'I', 'II', 'I+II', 'ENS', 'BREIT'], def: 'off'}],
+  ['fx.chorus.rate', 'Tempo', {min: .25, max: 4, c: 'exp', def: 1, fmt: 'x1'}],
+  ['fx.chorus.depth', 'Tiefe', {min: 0, max: 2, c: 'lin', def: 1, fmt: 'x1'}],
+  ['fx.chorus.mix', 'Mischung', {min: 0, max: 1, c: 'lin', def: 1, fmt: 'pct'}],
 ].forEach(([p, l, d]) => { PD[p] = Object.assign({p, l}, d); });
 const WAVE_NAME = ['Säge', 'Puls', 'Dreieck', 'Sinus'], WAVE_ICO = ['⟋', '⊓', '∧', '∿'];
 const FTYPE_LBL = ['LP24', 'LP12', 'BP24', 'BP12', 'HP24', 'HP12'];
@@ -5292,13 +6288,20 @@ const stripReplacer = (k, v) => (k === 'born' || k === 'bornRun' ? undefined : v
 /* =====================================================================
    AUDIO ENGINE
    ===================================================================== */
-const AU = {ctx: null, outLat: 0, masterSum: null, masterVol: null, analyser: null, reverb: null, delay: null, fbLP: null, fbGain: null,
-  tracks: [], noise: null, metal: null, waves: null, dcBuf: null, timer: null};
-const VOICES = [];   // synth voices (live, clip, audition), removed on cleanup
+/* WP4 (§1.5, §8): FX.Master (glue, trim, drive, volume, limiter, soft ceiling) after masterSum; a mono-summed hall bus
+   (pre-delay -> worklet hall | ConvHall -> return -> pump duck) and the echo bus (FX.Echo); per track drive -> [chorus]
+   -> tremolo -> pump duck -> volume -> pan, sends post-fader. graphLat = the two compressors' look-ahead (≈ 12 ms) is part
+   of outLat everywhere (TAKT, launch boundaries, recording). */
+const AU = {ctx: null, outLat: 0, devLat: 0, graphLat: .012, compLat: .006, loopExtra: 0, measured: false, hint: 'interactive',
+  masterSum: null, analyser: null, M: null, hall: null, hallKind: 'convolver', hallPre: null, hallIn: null, hallRet: null, hallDuck: null,
+  echo: null, echoIn: null, synth: [null, null, null, null], tracks: [], noise: null, metal: null, dcBuf: null, timer: null};
+const VOICES = [];   // synth voices (live, clip, audition), removed on cleanup; worklet voices are proxies (v.wk)
 const HITS = [];     // drum hits, removed on cleanup
 let VSEQ = 0;
 
 function audioState() { return AU.ctx ? AU.ctx.state : 'none'; }
+// Menü → Klang → Puffer (§14.4.9): read when the context is created (once per app start)
+function bufferHint() { const b = uiPrefs().buffer || (S && S.settings && S.settings.buffer); return b === 'playback' ? 'playback' : 'interactive'; }
 
 function ensureAudio() {
   if (AU.ctx) {
@@ -5311,13 +6314,15 @@ function ensureAudio() {
   if (!AC) return null;
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
   let c = null;
-  try { c = new AC({latencyHint: 'interactive'}); } catch (e) { try { c = new AC(); } catch (e2) { return null; } }
-  AU.ctx = c;
+  const hint = bufferHint();                        // never a sampleRate (WebKit bug 274507, §1.4)
+  try { c = new AC({latencyHint: hint}); } catch (e) { try { c = new AC(); } catch (e2) { return null; } }
+  AU.ctx = c; AU.hint = hint;
   try { const b = c.createBuffer(1, 1, c.sampleRate), s = c.createBufferSource(); s.buffer = b; s.connect(c.destination); s.start(0); } catch (e) {}
+  setTimeout(() => idle(() => { try { void AU.waves; } catch (e) {} }), 1500);   // the WT tables in an idle moment
   try {
-    buildBuffers(); buildMaster();
+    buildBuffers(); buildFx();
     for (let i = 0; i < 5; i++) buildTrack(i);
-    applyEchoInterim(); for (let i = 0; i < 4; i++) rebuildNativeLfos(i);
+    for (let i = 0; i < 4; i++) rebuildNativeLfos(i);
   } catch (e) { console.error(e); }
   updateOutLat();
   c.onstatechange = onCtxState;
@@ -5327,14 +6332,16 @@ function ensureAudio() {
   T.timeline = [{time: -Infinity, target: cur.target, shift: cur.shift, keys: cur.keys || []}];
   T.pendingAt = null;
   AU.timer = setInterval(tick, TICK_MS);
+  measureFx();                                      // loop extra + compressor latency (offline, ≈ 20 ms), then the echo bus
+  loadWorklet();                                    // §1.4: not awaited; notes use the native path until the module is ready
   UI.dirty.all = true;
   return c;
 }
-function updateOutLat() { const c = AU.ctx; if (c) AU.outLat = clamp(c.outputLatency || c.baseLatency || 0, 0, 0.1) || 0; }
+function updateOutLat() { const c = AU.ctx; if (c) { AU.devLat = clamp(c.outputLatency || c.baseLatency || 0, 0, 0.1) || 0; AU.outLat = AU.devLat + AU.graphLat; } }
 function onCtxState() {
   const st = AU.ctx.state;
-  if ((st === 'suspended' || st === 'interrupted') && R.playing) showBanner(true);
-  if (st === 'running') showBanner(false);
+  if ((st === 'suspended' || st === 'interrupted') && R.playing && !UI.idleSusp) showBanner(true);
+  if (st === 'running') { showBanner(false); UI.idleSusp = false; }
   UI.dirty.top = true;
 }
 
@@ -5345,24 +6352,20 @@ function buildBuffers() {
   for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
   AU.noise = nb;
   const mb = c.createBuffer(1, Math.floor(sr * 2), sr), md = mb.getChannelData(0), F = [205.3, 304.4, 369.6, 522.7, 540, 800];
-  for (let i = 0; i < md.length; i++) { const t = i / sr; let s = 0; for (const f of F) s += Math.sign(Math.sin(2 * Math.PI * f * t)) / 6; md[i] = s; }
+  // six square waves (= sign(sin(2πft))) by phase accumulation: the same buffer as before without 0.5 M Math.sin calls at start
+  const inc = F.map(f => f / sr), ph = F.map(() => 0);
+  for (let i = 0; i < md.length; i++) { let s = 0; for (let k = 0; k < 6; k++) { const p = ph[k]; s += p === 0 ? 0 : p < .5 ? 1 : -1; ph[k] = p + inc[k]; if (ph[k] >= 1) ph[k] -= 1; } md[i] = s / 6; }
   AU.metal = mb;
-  const len = Math.floor(sr * 2.4), ir = c.createBuffer(2, len, sr);
-  let peak = 0;
-  for (let ch = 0; ch < 2; ch++) {
-    const d = ir.getChannelData(ch);
-    for (let i = 0; i < len; i++) {
-      const t = i / sr, fade = Math.min(1, t / 0.008);
-      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - t / 2.4, 3.2) * fade;
-      if (Math.abs(d[i]) > peak) peak = Math.abs(d[i]);
-    }
-  }
-  if (peak > 0) for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] *= 0.5 / peak; }
-  AU.ir = ir;
+}
+// the WT wavetables (16 PeriodicWaves, ≈ 20 ms of main-thread work in Chromium): built when the first WT note needs them or
+// in an idle moment after the start (§14.4.1 create only when used; never inside the first gesture)
+let WAVES_T = null;
+Object.defineProperty(AU, 'waves', {get() { return WAVES_T || (WAVES_T = AU.ctx ? makeWaves(AU.ctx) : null); }});
+function makeWaves(c) {
   const mk = a => { const re = new Float32Array(33), im = new Float32Array(33); for (let k = 1; k <= 32; k++) im[k] = a(k) || 0; return c.createPeriodicWave(re, im); };
   const tab = o => k => o[k] || 0;
   const vowel = Fs => k => (k === 1 ? 0.5 : 0) + Fs.reduce((s, F) => s + Math.exp(-Math.pow(k * 130 - F, 2) / (2 * 120 * 120)), 0);
-  AU.waves = {
+  return {
     digital: [mk(k => (k === 1 ? 1 : 0)), mk(k => (k <= 8 ? 1 / k : 0)), mk(k => (k % 2 ? 1 / k : 0)), mk(k => 1 / k)],
     vocal: [mk(vowel([570, 840, 2410])), mk(vowel([730, 1090, 2440])), mk(vowel([530, 1840, 2480])), mk(vowel([270, 2290, 3010]))],
     glas: [mk(tab({1: 1, 3: .4, 5: .2})), mk(tab({1: 1, 2: .5, 4: .35, 7: .2})), mk(tab({1: .8, 3: .6, 6: .5, 9: .3})), mk(tab({1: .6, 4: .6, 8: .5, 11: .4, 13: .3}))],
@@ -5379,36 +6382,135 @@ function driveCurve(drive) {
   return c;
 }
 
-/* ---------- master & tracks ---------- */
-function buildMaster() {
-  const c = AU.ctx;
-  AU.masterSum = c.createGain();
-  const glue = c.createDynamicsCompressor();
-  glue.threshold.value = -14; glue.knee.value = 6; glue.ratio.value = 3; glue.attack.value = .01; glue.release.value = .2;
-  AU.masterVol = c.createGain(); AU.masterVol.gain.value = S.fxBus.master.vol;
-  const lim = c.createDynamicsCompressor();
-  lim.threshold.value = -1.5; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = .001; lim.release.value = .08;
-  AU.masterSum.connect(glue); glue.connect(AU.masterVol); AU.masterVol.connect(lim); lim.connect(c.destination);
-  AU.limiter = lim;
-  AU.analyser = c.createAnalyser(); AU.analyser.fftSize = 2048; AU.analyser.smoothingTimeConstant = 0; lim.connect(AU.analyser);
-  AU.reverb = c.createConvolver(); AU.reverb.buffer = AU.ir; AU.reverb.connect(AU.masterSum);
-  AU.delay = c.createDelay(2); AU.delay.delayTime.value = delaySeconds();
-  AU.fbLP = c.createBiquadFilter(); AU.fbLP.type = 'lowpass'; AU.fbLP.frequency.value = 3500;
-  AU.fbGain = c.createGain(); AU.fbGain.gain.value = .38;
-  AU.delay.connect(AU.masterSum); AU.delay.connect(AU.fbLP); AU.fbLP.connect(AU.fbGain); AU.fbGain.connect(AU.delay);
+/* ---------- effect buses (§8.1, Anhang D.9) ---------- */
+function buildFx() {
+  const c = AU.ctx, F = S.fxBus;
+  AU.M = FX.Master(c); AU.M.set(F.master); AU.masterSum = AU.M.input; AU.analyser = AU.M.analyser;
+  AU.analyser.smoothingTimeConstant = 0;                                  // meter(): one block, no smoothing (as in v2)
+  AU.hallRet = c.createGain(); AU.hallDuck = c.createGain(); AU.hallRet.connect(AU.hallDuck); AU.hallDuck.connect(AU.masterSum);
+  AU.hallPre = c.createDelay(1); AU.hallPre.channelCount = 1; AU.hallPre.channelCountMode = 'explicit'; AU.hallIn = AU.hallPre;   // mono sum
+  AU.hall = FX.ConvHall(c); AU.hall.beforeSwap = () => tickAhead(.35); AU.hallKind = 'convolver';
+  AU.hallPre.connect(AU.hall.input); AU.hall.output.connect(AU.hallRet);
+  AU.echoIn = c.createGain();                       // tracks connect their echo sends here at once; the echo joins after the measurement
+  applyHall(F.hall, false);
+  // the convolution IR is only generated when the worklet hall does not arrive (worklet blocked or slow): no wasted start-up work
+  setTimeout(convWarm, 400);
 }
-// WP3: the echo time is fxBus.echo.divL (§12.6); interim on the v2 delay line until the WP4 echo bus
-function delaySeconds() { const d = S.fxBus && S.fxBus.echo ? S.fxBus.echo.divL : '1/8.'; return clamp(((window.FX && FX.DIV[d]) || DELAY_DIV[d] || .75) * spb(), 0.01, 1.99); }
+function convWarm() { if (AU.ctx && AU.hallKind === 'convolver' && AU.hall && !AU.hall.key) applyHall(S.fxBus.hall, true); }
+async function measureFx() {
+  const c = AU.ctx;
+  try { const r = await Promise.all([FX.measureLoopExtra(c.sampleRate), FX.measureCompLatency(c.sampleRate)]); AU.loopExtra = r[0]; AU.compLat = r[1]; }
+  catch (e) { AU.loopExtra = 0; AU.compLat = FX.COMP_LATENCY; }
+  if (!(AU.loopExtra >= 0 && AU.loopExtra < .02)) AU.loopExtra = 0;
+  if (!(AU.compLat >= 0 && AU.compLat < .05)) AU.compLat = FX.COMP_LATENCY;
+  AU.graphLat = 2 * AU.compLat; AU.measured = true; updateOutLat();
+  try {
+    AU.echo = FX.Echo(c, {loopExtra: AU.loopExtra, maxSec: 6}); AU.echo.set(S.fxBus.echo, S.bpm);
+    AU.echoIn.connect(AU.echo.input); AU.echo.output.connect(AU.masterSum); AU.echo.toHall.connect(AU.hallIn);
+  } catch (e) { logErr(e); }
+}
+// pre-delay in seconds: ms or a note division ('1/64', '1/32', '1/16') at the current tempo
+// (FX.DIV stops at 1/32: 1/64 = 1/16 beat is added here)
+const PRE_DIV = {'1/64': .0625, '1/32': .125, '1/16': .25};
+const preDivSec = d => (PRE_DIV[d] || .0625) * 60 / S.bpm;
+function hallPreSec(h) { return typeof h.predelay === 'string' ? preDivSec(h.predelay) : (+h.predelay || 0) / 1000; }
+// commit: the convolution fallback regenerates its IR (only on knob release, §8.1); the worklet hall takes every value live
+function applyHall(h, commit, t) {
+  const c = AU.ctx; if (!c || !AU.hall) return;
+  t = t == null ? c.currentTime : t;
+  AU.hallPre.delayTime.setTargetAtTime(Math.min(hallPreSec(h), .99), t, .02);
+  if (AU.hallKind === 'worklet') {
+    for (const k of ['decay', 'size', 'damp', 'lowcut', 'tone', 'mod', 'width']) AU.hall.parameters.get(k).setTargetAtTime(h[k], t, .03);
+    AU.hall.parameters.get('freeze').setValueAtTime(h.freeze ? 1 : 0, t);
+  } else {
+    AU.hall.lo.frequency.setTargetAtTime(h.lowcut, t, .02); AU.hall.hi.frequency.setTargetAtTime(h.tone, t, .02);
+    if (commit) AU.hall.set({decay: Math.min(h.decay, 10), size: clamp((h.size - .35) / 1.25, 0, 1), damp: clamp(1 - Math.log(h.damp / 400) / Math.log(50), 0, 1),
+      bass: 1, predelay: 0, lowcut: h.lowcut, highcut: h.tone, ret: 1});
+  }
+  AU.hallRet.gain.setTargetAtTime(h.ret, t, .02);
+}
+// the worklet hall replaces the convolution hall as soon as the module is ready; the old tail rings out (§1.4)
+function upgradeHall() {
+  const c = AU.ctx, old = AU.hall; if (!c || AU.hallKind === 'worklet') return;
+  const node = new AudioWorkletNode(c, 'dirigent-hall', {numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 1, channelCountMode: 'explicit'});
+  AU.hall = node; AU.hallKind = 'worklet';
+  AU.hallPre.connect(node); node.connect(AU.hallRet);
+  try { AU.hallPre.disconnect(old.input); } catch (e) {}
+  setTimeout(() => { try { old.output.disconnect(); for (const o of old.live || []) { o.cv.disconnect(); o.gin.disconnect(); o.gout.disconnect(); } old.live = []; } catch (e) {} }, 3000);   // UI timer, not audio timing
+  applyHall(S.fxBus.hall, true);
+}
+// panic / tail kill (§8.1): empty the hall. Worklet: {clear}; convolution: fresh ConvolverNodes with the same IR replace the
+// ringing ones (the old ones fade in 10 ms)
+function hallClear() {
+  const c = AU.ctx; if (!c || !AU.hall) return;
+  // the return is muted for 250 ms: what is still in the pre-delay line and the fading echo would start a new tail
+  const now = c.currentTime, rg = AU.hallRet.gain; rg.cancelScheduledValues(now); rg.setValueAtTime(0, now);
+  clearTimeout(AU.hallClrT); AU.hallClrT = setTimeout(() => { AU.hallClrT = 0; if (AU.hallKind === 'worklet') AU.hall.port.postMessage({clear: true}); AU.hallRet.gain.setTargetAtTime(S.fxBus.hall.ret, AU.ctx.currentTime, .02); }, 250);
+  if (AU.hallKind === 'worklet') { AU.hall.port.postMessage({clear: true}); return; }
+  const H = AU.hall, live = H.live || []; if (!live.length) return;
+  const last = live[live.length - 1], g0 = last.gout.gain.value, buf = last.cv.buffer;
+  for (const o of live) { o.gin.gain.cancelScheduledValues(now); o.gin.gain.setValueAtTime(0, now); o.gout.gain.cancelScheduledValues(now); o.gout.gain.setTargetAtTime(0, now, .01); }
+  const dead = live.splice(0);
+  setTimeout(() => { for (const o of dead) { try { o.cv.disconnect(); o.gin.disconnect(); o.gout.disconnect(); } catch (e) {} } }, 300);
+  if (!buf) return;
+  tickAhead(.35);                                   // the buffer set below blocks the main thread for a moment
+  const cv = c.createConvolver(); cv.normalize = false; cv.buffer = buf;
+  const gin = c.createGain(), gout = c.createGain(); gout.gain.value = g0;
+  H.pre.connect(gin); gin.connect(cv); cv.connect(gout); gout.connect(H.lo);
+  live.push({cv, gin, gout, len: buf.duration, dieAt: Infinity});
+}
+function applyEcho(t) { if (AU.echo) AU.echo.set(S.fxBus.echo, S.bpm, t); }
+// panic / tail kill: no more repeats; the lines empty while the return is muted, then the echo comes back
+function echoKill() {
+  const E = AU.echo, c = AU.ctx; if (!E || !c) return;
+  const now = c.currentTime; E.kill(now);
+  for (const g of [E.ret.gain, E.toHall.gain]) { g.cancelScheduledValues(now); g.setTargetAtTime(0, now, .008); }
+  const e = S.fxBus.echo, T = Math.max(FX.divSec(e.divL, S.bpm), FX.divSec(e.divR, S.bpm)) + .15;
+  clearTimeout(AU.echoKillT); AU.echoKillT = setTimeout(() => { AU.echoKillT = 0; applyEcho(); }, Math.min(6.2, T) * 1000);   // UI timer: restores feedback and return
+}
+function applyMaster() { if (AU.M) AU.M.set(S.fxBus.master); }
+const applyMasterVol = applyMaster;
+function applyFxBus() { if (!AU.ctx) return; applyMaster(); applyHall(S.fxBus.hall, true); applyEcho(); }
+// §8.1 pump (Pumpen): every scheduled or played kick (or every 1/4, 1/8 per fxBus.pumpSrc) ducks the tracks with pump > 0
+// and the hall return by fxBus.hall.pump; sample-accurate gain automation, no compressor
+function onKickScheduled(t) {
+  if (!AU.ctx) return;
+  for (let i = 0; i < 4; i++) {
+    const tr = S.tracks[i], A = AU.tracks[i], fx = tr && tr.kind === 'synth' ? tr.sound.fx : null;
+    if (A && fx && fx.pump > 0) FX.pump(A.duck, t, fx.pump, FX.divSec(fx.pumpRel || '1/8', S.bpm) * .9);
+  }
+  const hp = S.fxBus.hall.pump; if (hp > 0 && AU.hallDuck) FX.pump(AU.hallDuck, t, hp, spb() * .6);
+}
+function anyPump() { return S.fxBus.hall.pump > 0 || S.tracks.some(tr => tr.kind === 'synth' && tr.sound.fx.pump > 0); }
+// transport stop: every duck back to 1 (within 100 ms, FX7)
+function duckReset(now) {
+  for (const g of AU.tracks.map(a => a && a.duck).concat([AU.hallDuck])) if (g) { try { g.gain.cancelScheduledValues(now); g.gain.setTargetAtTime(1, now, .02); } catch (e) {} }
+}
+
+/* ---------- track chains ---------- */
+// trackIn -> drive (WaveShaper, oversample 'none' for good) -> dry | chorus (only while its mode is not AUS) -> trem -> duck
+// -> vol -> pan -> post; post -> masterSum, revSend -> hall bus, dlySend -> echo bus (post-fader sends)
+function buildChain(c) {
+  const N = {trackIn: c.createGain(), drive: c.createGain(), shp: [c.createWaveShaper(), c.createWaveShaper()], shg: [c.createGain(), c.createGain()], shCur: 0,
+    dry: c.createGain(), wet: c.createGain(), trem: c.createGain(), duck: c.createGain(),
+    vol: c.createGain(), pan: c.createStereoPanner ? c.createStereoPanner() : null, revSend: c.createGain(), dlySend: c.createGain(),
+    chorus: null, chDying: null, chKill: 0, chMode: 'off', driveAmt: -1};
+  // N.drive = the sum after the drive stage; the two shapers are crossfaded on a curve change (no oversampling, §14.4.2)
+  for (let k = 0; k < 2; k++) { try { N.shp[k].oversample = 'none'; } catch (e) {} N.shg[k].gain.value = k ? 0 : 1; N.trackIn.connect(N.shp[k]); N.shp[k].connect(N.shg[k]); N.shg[k].connect(N.drive); }
+  N.wet.gain.value = 0;
+  N.drive.connect(N.dry); N.dry.connect(N.trem); N.wet.connect(N.trem);
+  N.trem.connect(N.duck); N.duck.connect(N.vol);
+  let post = N.vol; if (N.pan) { N.vol.connect(N.pan); post = N.pan; }
+  N.post = post;
+  post.connect(AU.masterSum); post.connect(N.revSend); post.connect(N.dlySend);
+  N.revSend.connect(AU.hallIn); N.dlySend.connect(AU.echoIn);
+  return N;
+}
 function buildTrack(i) {
   const c = AU.ctx, tr = S.tracks[i];
-  const A = {trackIn: c.createGain(), drive: c.createWaveShaper(), trem: c.createGain(), vol: c.createGain(),
-    pan: c.createStereoPanner ? c.createStereoPanner() : null, revSend: c.createGain(), dlySend: c.createGain(), lastOut: null, driveAmt: -1};
-  A.trackIn.connect(A.drive); A.drive.connect(A.trem); A.trem.connect(A.vol);
-  let post = A.vol; if (A.pan) { A.vol.connect(A.pan); post = A.pan; }
-  post.connect(AU.masterSum); post.connect(A.revSend); post.connect(A.dlySend);
-  A.revSend.connect(AU.reverb); A.dlySend.connect(AU.delay);
+  const A = Object.assign(buildChain(c), {lastOut: null});
   if (tr.kind === 'synth') {
-    // native LFO taps (§5.5): every voice connects lfoPitch -> its pitch CV and lfoCut -> its filter detune; the LFO
+    // native LFO taps (§5.5): every native voice connects lfoPitch -> its pitch CV and lfoCut -> its filter detune; the LFO
     // route gains of the track's sound feed them (rebuildNativeLfos). No LFO runs while no route uses it (§14.4.1).
     A.lfoPitch = c.createGain(); A.lfoCut = c.createGain(); A.lfoPitch.gain.value = 1; A.lfoCut.gain.value = 1;
     A.nl = {lfo: [null, null], key: ['', ''], routes: [], tremBase: 1};
@@ -5418,37 +6520,66 @@ function buildTrack(i) {
 }
 // the effect values of a track: v3 sound.fx for synths, the v2 drum block until WP6
 function trackFx(tr) {
-  if (tr.kind === 'synth') { const f = tr.sound.fx; return {drive: f.drive, rev: f.rev, dly: f.dly, vol: f.vol, pan: f.pan}; }
-  const f = tr.fx; return {drive: f.drive, rev: f.reverb, dly: f.delay, vol: f.vol, pan: f.pan};
+  if (tr.kind === 'synth') return fxOfSound(tr.sound);
+  const f = tr.fx; return {drive: f.drive, rev: f.reverb, dly: f.delay, vol: f.vol, pan: f.pan, chorus: null, pump: 0, pumpRel: '1/8'};
 }
-// deferCurve: sounding notes are fading out (preset load, §11.5 PR5): the drive curve changes a moment later (a curve
-// swap on a sounding signal is a step = click); everything else glides (setTargetAtTime)
-function applyTrackParams(i, immediate, deferCurve) {
-  const A = AU.tracks[i], c = AU.ctx; if (!A || !c) return;
-  const tr = S.tracks[i], fx = trackFx(tr), now = c.currentTime;
-  const set = (p, v) => { if (immediate) p.value = v; else p.setTargetAtTime(v, now, .015); };
-  if (Math.abs(A.driveAmt - fx.drive) > .004) {
-    if (deferCurve) { const gen = A.curveGen = (A.curveGen || 0) + 1; setTimeout(() => { if (A.curveGen === gen) applyTrackParams(i, false); }, 60); }
-    else {
-      try { A.drive.curve = fx.drive > .005 ? driveCurve(fx.drive) : null; } catch (e) { try { A.drive.curve = new Float32Array([-1, 1]); } catch (e2) {} }
-      try { A.drive.oversample = 'none'; } catch (e) {}           // §14.4.2 / decision 8: no oversampled shaper (no latency jumps)
-      A.driveAmt = fx.drive;
+function fxOfSound(snd) { const f = snd.fx || {}; return {drive: f.drive || 0, rev: f.rev || 0, dly: f.dly || 0, vol: f.vol == null ? .8 : f.vol, pan: f.pan || 0, chorus: f.chorus || null, pump: f.pump || 0, pumpRel: f.pumpRel || '1/8'}; }
+// chorus insert (§8.1): FX.Chorus exists only while its mode is not AUS; switching crossfades dry <-> chorus in ≈ 30 ms and
+// tears the chorus down completely afterwards
+function applyChorus(N, ch, t) {
+  const c = AU.ctx, mode = ch && ch.mode && ch.mode !== 'off' ? ch.mode : 'off';
+  if (mode !== 'off') {
+    if (!N.chorus) {
+      if (N.chDying) { clearTimeout(N.chKill); N.chorus = N.chDying; N.chDying = null; }
+      else { N.chorus = FX.Chorus(c); N.drive.connect(N.chorus.input); N.chorus.output.connect(N.wet); }
     }
+    N.chorus.set({mode, rate: ch.rate == null ? 1 : ch.rate, depth: ch.depth == null ? 1 : ch.depth, mix: ch.mix == null ? 1 : ch.mix}, t);
+    N.wet.gain.setTargetAtTime(1, t, .01); N.dry.gain.setTargetAtTime(0, t, .01);
+  } else if (N.chorus) {
+    N.dry.gain.setTargetAtTime(1, t, .01); N.wet.gain.setTargetAtTime(0, t, .01);
+    const C = N.chDying = N.chorus; N.chorus = null;
+    N.chKill = setTimeout(() => { if (N.chDying !== C) return; N.chDying = null; try { N.drive.disconnect(C.input); } catch (e) {} try { C.dispose(); } catch (e) {} }, 150);
   }
-  set(A.vol.gain, fx.vol * fx.vol / (1 + fx.drive * 1.5));
-  if (A.pan) set(A.pan.pan, fx.pan);
-  set(A.revSend.gain, fx.rev * .6);
-  set(A.dlySend.gain, fx.dly * .5);
-  set(A.trem.gain, tr.kind === 'synth' && A.nl ? A.nl.tremBase : 1);
+  N.chMode = mode;
+}
+// drive, chorus, sends (fx.rev / fx.dly, no extra scaling, §8.1), volume (vol², drive-compensated), pan, tremolo base.
+// A new drive curve goes into the idle shaper, which is crossfaded in (≈ 25 ms): no step on a sounding signal (§11.5 PR5);
+// everything else glides (setTargetAtTime)
+function applyChainFx(N, fx, immediate) {
+  const c = AU.ctx, now = c.currentTime;
+  const set = (p, v) => { if (immediate) p.value = v; else p.setTargetAtTime(v, now, .015); };
+  if (Math.abs(N.driveAmt - fx.drive) > .004) {
+    const k = immediate ? N.shCur : 1 - N.shCur, ws = N.shp[k];
+    try { ws.curve = fx.drive > .005 ? driveCurve(fx.drive) : null; } catch (e) { try { ws.curve = new Float32Array([-1, 1]); } catch (e2) {} }
+    if (!immediate) {
+      const gi = N.shg[k].gain, go = N.shg[N.shCur].gain;
+      gi.cancelScheduledValues(now); go.cancelScheduledValues(now); gi.setTargetAtTime(1, now, .006); go.setTargetAtTime(0, now, .006);
+      N.shCur = k;
+    }
+    N.driveAmt = fx.drive;
+  }
+  set(N.vol.gain, fx.vol * fx.vol / (1 + fx.drive * 1.5));
+  if (N.pan) set(N.pan.pan, fx.pan);
+  set(N.revSend.gain, fx.rev);
+  set(N.dlySend.gain, fx.dly);
+  set(N.trem.gain, N.nl ? N.nl.tremBase : 1);
+  applyChorus(N, fx.chorus, now);
+}
+function applyTrackParams(i, immediate) {
+  const A = AU.tracks[i], c = AU.ctx; if (!A || !c) return;
+  applyChainFx(A, trackFx(S.tracks[i]), immediate);
 }
 /* native LFO 1/2 (§5.5, §9.5): per synth track one FX.TempoLFO per LFO that a route uses (shape, FREI rate or TAKT
    division; Start = FREI only, Einblenden needs the worklet). Routes lfo1/lfo2 -> pitch (cents ×2400 per 1.0 -> each
    voice's CV), cutoff (cents ×12000 -> each voice's filter detune), amp (track tremolo, depth |amt|/2: trem = 1 − |amt|/4 + amt/4·lfo, so 0.5…1 at |amt| 1) and
-   pan (track pan). All other routes are stored and shown hatched („nur mit Worklet“). */
+   pan (track pan). All other routes are stored and shown hatched („nur mit Worklet“). A track on the worklet runs every
+   route inside the engine (§5.4): its native LFO set is empty. */
 function lfoAnchor() { return R.playing ? R.startTime : (AU.lfo0 != null ? AU.lfo0 : (AU.lfo0 = 0)); }
 function rebuildNativeLfos(i) {
   const A = AU.tracks[i], c = AU.ctx, tr = S.tracks[i]; if (!A || !c || !A.nl || !tr || tr.kind !== 'synth') return;
-  syncLfoSet(A, tr.sound, i * 7);
+  const E = AU.synth[i];
+  if (E) E.mods(wkMods(tr.sound));
+  syncLfoSet(A, E ? {p: tr.sound.p, mods: []} : tr.sound, i * 7);
 }
 // the LFO set of one chain: A = a track (AU.tracks[i]) or a browser preview chain (pvChain), both with
 // {nl, lfoPitch, lfoCut, trem, pan}; built from the sound's native routes
@@ -5490,26 +6621,133 @@ function syncLfoSet(A, snd, seed) {
   nl.tremBase = Math.max(.5, 1 - ampSum);
   A.trem.gain.setTargetAtTime(nl.tremBase, now, .015);
 }
-// transport (re)start or tempo change: tempo-locked native LFOs follow the new anchor
+// transport (re)start or tempo change: tempo-locked native LFOs follow the new anchor; the worklet engines get the tempo
 function relockLfos() {
   if (!AU.ctx) return;
   for (let i = 0; i < 4; i++) { const A = AU.tracks[i]; if (!A || !A.nl) continue; A.nl.key = ['', '']; rebuildNativeLfos(i); }
-  try { const N = PV.chain; if (N && !N.gone) { N.nl.key = ['', '']; syncLfoSet(N, N.sound, 97); } } catch (e) {}
+  try { const N = PV.chain; if (N && !N.gone && !N.E) { N.nl.key = ['', '']; syncLfoSet(N, N.sound, 97); } } catch (e) {}
+  wkTempoAll();
 }
+// BPM change, project load, transport start: echo times glide (tape repitch), a note-division pre-delay follows, LFOs relock
 function applyTempoDependents() {
   const c = AU.ctx; if (!c) return;
-  AU.delay.delayTime.setTargetAtTime(delaySeconds(), c.currentTime, .05);
-  applyEchoInterim();
+  applyEcho();
+  if (typeof S.fxBus.hall.predelay === 'string') applyHall(S.fxBus.hall, false);
   relockLfos();
 }
-// WP3 interim echo on the v2 delay line: feedback and high cut from fxBus.echo (WP4: FX.Echo)
-function applyEchoInterim() {
-  const c = AU.ctx; if (!c || !AU.fbGain) return;
-  const e = S.fxBus.echo, now = c.currentTime;
-  AU.fbGain.gain.setTargetAtTime(clamp(e.fb, 0, .9), now, .05);
-  AU.fbLP.frequency.setTargetAtTime(clamp(e.highcut, 1000, 16000), now, .05);
+
+/* ---------- synth worklet engines (§1.4, §5.4, Anhang D.1, D.11) ---------- */
+const isWkEngine = e => e === 'analog' || e === 'fm6';
+function wkReady() { return SynthHost.state === 'ready' && !UI.forceNative && !!AU.ctx; }
+function wkWanted(i) { const tr = S.tracks[i]; return !!(tr && tr.kind === 'synth' && isWkEngine(tr.sound.engine) && wkReady() && AU.tracks[i]); }
+// a VA/FM track that is not on the worklet (blocked, forced, still loading) runs the native fallback: „ECO-Klang“ (§1.3)
+function trackEco(i) { const tr = S.tracks[i]; return !!(tr && tr.kind === 'synth' && isWkEngine(tr.sound.engine) && (UI.forceNative || SynthHost.state === 'failed' || (SynthHost.state === 'ready' && AU.ctx && !AU.synth[i]))); }
+// the flat patch for the worklet: numbers only, the engine id, and the limiter's working values (§14.3: the stored sound
+// is never changed)
+function wkFlat(snd) {
+  const o = {}; for (const k in snd.p) { const v = snd.p[k]; if (typeof v === 'number' && isFinite(v)) o[k] = v; }
+  o.eng = snd.engine === 'fm6' ? 1 : 0;
+  return Object.assign(o, limited(snd.p));
 }
-function applyMasterVol() { if (AU.masterVol) AU.masterVol.gain.setTargetAtTime(S.fxBus.master.vol, AU.ctx.currentTime, .02); }
+// string routes -> engine numbers (Anhang A.4, D.11); fx.* routes are native (§9.6) and never reach the worklet
+const toEngineMods = mods => SQF.toEngineMods((mods || []).filter(m => !String(m.dst).startsWith('fx.')));
+const wkMods = snd => toEngineMods(snd.mods);
+function newEngine(dest, snd) {
+  const E = SynthHost.track(AU.ctx, dest, wkFlat(snd), wkMods(snd));
+  E.onEnd = id => { const v = E.proxies.get(id); if (v) wkVoiceDead(v); };
+  E.tempo(S.bpm, R.playing ? R.startTime : null);
+  return E;
+}
+// bring track i's engine in line with its sound: create (VA/FM6 + worklet ready), update (full: the whole sound), or retire
+function syncEngine(i, full) {
+  const A = AU.tracks[i], tr = S.tracks[i]; if (!A || !tr || tr.kind !== 'synth') return;
+  if (wkWanted(i)) {
+    if (!AU.synth[i]) AU.synth[i] = newEngine(A.trackIn, tr.sound);
+    else if (full) { WKSET[i] = null; AU.synth[i].set(wkFlat(tr.sound), true); }
+  } else if (AU.synth[i]) retireEngine(i);
+  rebuildNativeLfos(i);
+}
+function syncEngines() { for (let i = 0; i < 4; i++) syncEngine(i, true); }
+function retireEngine(i) { const E = AU.synth[i]; AU.synth[i] = null; WKSET[i] = null; retireE(E); }
+// an engine that is no longer needed (engine switch to WT / FM2, forceNative, preview end): its notes fade, then it goes
+function retireE(E, ms) {
+  if (!E || E.dead || E.retiring) return;
+  E.retiring = true;
+  const now = nowT();
+  for (const v of [...E.proxies.values()]) { if (v.start > now + .002) v.cancel(); else v.release(now, .006); }
+  setTimeout(() => { for (const v of [...E.proxies.values()]) wkVoiceDead(v); E.dispose(); }, ms || 200);   // UI timer: after the 30 ms fade
+}
+function wkTempoAll(at) {
+  const st = R.playing ? R.startTime : null;
+  for (const E of AU.synth) if (E) E.tempo(S.bpm, st, at);
+  try { const N = PV.chain; if (N && N.E && !N.gone) N.E.tempo(S.bpm, st, at); } catch (e) {}
+}
+function wkReport() { if (UI.menuInfo) renderMenuInfo(); UI.dirty.edHead = UI.dirty.top = true; }
+function loadWorklet() {
+  if (UI.forceNative || !AU.ctx || SynthHost.state !== 'idle') return;
+  const el = document.getElementById('sq-worklet-src'), src = el ? el.textContent : '';
+  if (!src) { SynthHost.state = 'failed'; SynthHost.err = 'Quelltext fehlt'; convWarm(); return; }
+  SynthHost.load(AU.ctx, src).then(ok => {
+    if (ok && !UI.forceNative) { try { upgradeHall(); } catch (e) { logErr(e); } syncEngines(); }
+    else convWarm();
+    wkReport();
+  });
+}
+// knob turns -> E.set, coalesced to one message per animation frame and track (§5.4, §14.4.4); flushed before a note too
+const WKSET = [null, null, null, null];
+let wkFlushT = 0;
+function wkSet(i, key, v) {
+  if (!AU.synth[i]) return;
+  (WKSET[i] || (WKSET[i] = {}))[key] = v;
+  if (!wkFlushT) { wkFlushT = 1; requestAnimationFrame(wkFlushAll); setTimeout(wkFlushAll, 40); }
+}
+function wkFlushAll() { wkFlushT = 0; for (let i = 0; i < 4; i++) wkFlush(i); }
+function wkFlush(i) {
+  const d = WKSET[i]; if (!d) return;
+  WKSET[i] = null;
+  const E = AU.synth[i]; if (!E) return;
+  const L = limited(S.tracks[i].sound.p);
+  for (const k of LIM_KEYS) if (k in d) d[k] = L[k];                     // the limiter's working values (§14.3, D.2)
+  E.set(d);
+}
+
+/* ---------- CPU limiter (§14.3, Anhang D.2): once per second from tick() ---------- */
+const LIM = {level: 0, quietSince: 0, last: 0, load: 0};
+const LIM_KEYS = ['lq', 'o1uni', 'o2uni', 'o3uni', 'poly'];
+function cpuLoad() { let s = 0; for (const E of AU.synth) if (E) s += E.load || 0; try { const N = PV.chain; if (N && N.E && !N.gone) s += N.E.load || 0; } catch (e) {} return s; }
+function cpuTick() {
+  const nowP = performance.now(); if (nowP - LIM.last < 1000) return;
+  LIM.last = nowP;
+  if (UI.cpuInjectUntil && nowP > UI.cpuInjectUntil) { UI.cpuInject = 0; UI.cpuInjectUntil = 0; }
+  const load = cpuLoad() + (UI.cpuInject || 0), q = S.settings.quality;
+  LIM.load = load;
+  let want = load > .75 ? 3 : load > .60 ? 2 : load > .45 ? 1 : LIM.level;
+  if (q === 'eco') want = Math.max(want, 2); else if (q === 'analog' && want < 3) want = 0;
+  if (want > LIM.level) { LIM.level = want; LIM.quietSince = 0; applyLimiter(); return; }
+  if (load < .30) {
+    if (!LIM.quietSince) LIM.quietSince = nowP;
+    else if (nowP - LIM.quietSince > 10000 && LIM.level > (q === 'eco' ? 2 : 0)) { LIM.level = q === 'analog' ? 0 : LIM.level - 1; LIM.quietSince = nowP; applyLimiter(); }
+  } else LIM.quietSince = 0;
+}
+// working copy for the worklet; the stored sound is never changed
+function limited(P) {
+  const L = LIM.level, cap = (v, c) => Math.min(v, c);
+  return {lq: L >= 1 && P.poly > 1 && !P.mode ? 0 : P.lq,
+    o1uni: L >= 2 ? cap(P.o1uni, 3) : P.o1uni, o2uni: L >= 2 ? cap(P.o2uni, 3) : P.o2uni, o3uni: L >= 2 ? cap(P.o3uni, 3) : P.o3uni,
+    poly: L >= 3 ? cap(P.poly, 4) : L >= 2 ? cap(P.poly, 6) : P.poly};
+}
+function applyLimiter() {
+  for (let i = 0; i < 4; i++) if (AU.synth[i]) AU.synth[i].set(limited(S.tracks[i].sound.p));
+  try { const N = PV.chain; if (N && N.E && !N.gone) N.E.set(limited(N.sound.p)); } catch (e) {}
+  UI.dirty.top = true; if (UI.menuInfo) renderMenuInfo();
+}
+// Menü → Klang → Qualität (§14.3): Auto | Analog (only level 3 protects against dropouts) | Eco (level 2 for good)
+function setQuality(q) {
+  if (!['auto', 'analog', 'eco'].includes(q)) return;
+  S.settings.quality = q; markDirty();
+  if (q === 'eco') LIM.level = Math.max(LIM.level, 2); else if (q === 'analog') LIM.level = LIM.level >= 3 ? 3 : 0;
+  LIM.quietSince = 0; applyLimiter();
+}
 
 /* ---------- envelopes (cancel-safe: setValueAtTime + setTargetAtTime only) ---------- */
 function envStart(p, t0, e, peak, base = 0) {
@@ -5590,6 +6828,7 @@ const VoiceProto = {
 };
 function cleanupVoice(v) {
   if (v.dead) return;
+  if (v.wk) { try { v.E.kill(v.id); } catch (e) {} wkVoiceDead(v); return; }   // GC safety net of a worklet proxy (D.1)
   v.dead = true;
   if (v.tapP) { try { v.tapP.disconnect(v.cv.offset); } catch (e) {} }
   if (v.tapC) { try { v.tapC.disconnect(v.fA.detune); } catch (e) {} if (v.fB) { try { v.tapC.disconnect(v.fB.detune); } catch (e) {} } }
@@ -5605,22 +6844,70 @@ function pickVictim(list, t) {
 }
 function steal(v, t) { v.stolen = true; if (v.start >= t - 1e-4) v.cancel(); else v.release(t, .004); }
 // polyphony (§14.2): the sound's p.poly per track (MONO / LEGATO = 1); global native cap 24 voices; steal the oldest
-// released voice first, else the oldest (release in 4 ms)
+// released voice first, else the oldest (release in 4 ms). Worklet voices are not counted: the worklet allocates and
+// steals itself (D.1)
 const NATIVE_CAP = 24;
 function polyOf(P) { return P && P.mode > 0 ? 1 : clamp((P && P.poly) | 0 || 6, 1, 8); }
 function makeRoom(i, t, P) {
   const poly = polyOf(P || S.tracks[i].sound.p);
   for (let g = 0; g < 40; g++) {
-    const mine = VOICES.filter(v => v.track === i && !v.dead && !v.stolen && v.stopAt > t);
+    const mine = VOICES.filter(v => v.track === i && !v.wk && !v.dead && !v.stolen && v.stopAt > t);
     if (mine.length < poly) break;
     steal(pickVictim(mine, t), t);
   }
   for (let g = 0; g < 40; g++) {
-    const all = VOICES.filter(v => !v.dead && !v.stolen && v.stopAt > t);
+    const all = VOICES.filter(v => !v.wk && !v.dead && !v.stolen && v.stopAt > t);
     if (all.length < NATIVE_CAP) break;
     steal(pickVictim(all, t), t);
   }
 }
+/* worklet voice proxy (§5.4, Anhang D.1): the same API as the native voice (release, cancel, retune, state, outAt, start,
+   end, relT, stopAt, out, baseOut, perf / log hooks), so the scheduler, the Transposer retune, recording, audition and
+   voices() stay unchanged. The worklet allocates, steals and reports {end}; stopAt is only the GC safety net. */
+const WkVoiceProto = Object.assign(Object.create(VoiceProto), {
+  release(t, fastTau) {
+    if (this.dead) return; if (t < this.start) t = this.start;
+    if (!fastTau && t >= this.relT) return;
+    if (fastTau) this.E.fastOff(this.id, t, fastTau); else this.E.off(this.id, t);
+    this.relT = Math.min(this.relT, t); if (t < this.end) this.end = t;
+    const P = this.P;                                  // GC safety net only (the worklet reports {end}); MONO/LEGATO: normal release
+    this.stopAt = Math.min(this.stopAt, t + (fastTau && !(P.mode > 0) ? fastTau * 5 : Math.max(P.aR, .005) * 1.2 + (this.fm ? 12 : 0)) + .1);
+    if (R.playing) perfCut(this.perfAll, t2b(t));
+  },
+  cancel() {                                           // KILL also purges this id's queued ON/OFF in the worklet
+    if (this.dead) return; this.E.kill(this.id);
+    const now = nowT(); if (this.start > now + 1e-4) logDrop(this.log);
+    if (this.perfAll) { if (R.playing) perfCut(this.perfAll, t2b(now), true); else for (const p of this.perfAll) if (!isFinite(p.endBeat)) p.dead = true; }
+    wkVoiceDead(this);
+  },
+  retune(newOut, t) {
+    if (this.dead) return; const P = this.P;
+    this.E.retune(this.id, newOut, t, P.glide > 0 ? P.glide / 3 : .004);
+    const now = nowT();
+    if (t > now + .001) { if (!this.rt || this.rt.t <= now) this.rt = {t, from: this.out}; else this.rt.t = Math.min(this.rt.t, t); } else this.rt = null;
+    this.out = newOut; perfRetune(this, newOut, t);
+    logNote({track: this.track, src: 'retune', clipNote: this.clipNote, out: newOut, time: t, dur: null, vel: this.vel});
+  },
+});
+function spawnWkVoice(i, out, vel, t0, o, E, snd) {
+  const P = snd.p, v = Object.create(WkVoiceProto), gs = o.gs || AU.tracks[i];
+  Object.assign(v, {id: ++VSEQ, track: i, src: o.src, clipNote: o.clipNote == null ? null : o.clipNote, clipKey: o.clipKey || null,
+    out, baseOut: out, vel, start: t0, end: Infinity, relT: Infinity, stopAt: Infinity, dead: false, stolen: false,
+    E, wk: true, fm: snd.engine === 'fm6', P, perf: null, perfAll: [], log: null});
+  if (o.chain) v.chain = o.chain;
+  let from = -1;
+  if (!o.noGlide) {                                    // the same grouping rule as the native voice (chords never glide among themselves)
+    if (gs.grpT == null || Math.abs(t0 - gs.grpT) > .035) { if (gs.grpOuts && gs.grpOuts.length) gs.prevOuts = gs.grpOuts; gs.grpOuts = []; gs.grpT = t0; }
+    if (P.glide > 0 && gs.prevOuts && gs.prevOuts.length) { from = gs.prevOuts[0]; for (const x of gs.prevOuts) if (Math.abs(x - out) < Math.abs(from - out)) from = x; if (from === out) from = -1; }
+    gs.grpOuts.push(out); gs.lastOut = out;
+  }
+  if (E === AU.synth[i]) wkFlush(i);                   // pending knob values reach the engine before the note
+  E.on(v.id, out, vel, t0, from);
+  VOICES.push(v); E.proxies.set(v.id, v);
+  if (o.src !== 'preview') { v.perf = perfAdd(i, out, t0, null, vel); if (v.perf) v.perfAll.push(v.perf); }
+  return v;
+}
+function wkVoiceDead(v) { if (v.dead) return; v.dead = true; v.E.proxies.delete(v.id); const k = VOICES.indexOf(v); if (k >= 0) VOICES.splice(k, 1); }
 // pan spread (Streuung): alternate voices left / right by the spread amount (native stand-in for the voice pan of the core)
 function voicePan(A, P) { if (!(P.spread > .01)) return 0; A.panIdx = ((A.panIdx || 0) + 1) % 4; return [-.9, .9, -.45, .45][A.panIdx] * P.spread; }
 /* one native synth voice (§5.5): NativeVoice.source (engine oscillators) + NativeVoice.tail (drive, filter, envelopes, VCA),
@@ -5631,6 +6918,12 @@ function spawnVoice(i, out, vel, t0, o) {
   if (!c || !A || !tr || tr.kind !== 'synth') return null;
   const snd = o.sound || tr.sound, P = snd.p, eng = snd.engine === 'fm6' ? 'analog' : snd.engine;   // fm6: WP7
   out = clamp(Math.round(out), 0, 127);
+  // §5.4: VA (and FM6 from WP7) play through the track's worklet engine; a browser preview of another sound through its own
+  // preview engine. The choice is made per note: until the module is ready (or when it is blocked) the native path plays.
+  if (isWkEngine(snd.engine)) {
+    const E = o.chain ? o.chain.E : snd === tr.sound ? AU.synth[i] : null;
+    if (E && !E.dead && !E.retiring) return spawnWkVoice(i, out, vel, t0, o, E, snd);
+  }
   // LEGATO glides only between overlapping notes: is a voice of this track still held at t0? (checked before makeRoom)
   const gs = o.gs || A, legatoHeld = P.mode === 2 && VOICES.some(v => v.track === i && !v.dead && v.src === o.src && v.start < t0 - 1e-4 && v.relT > t0 + 1e-4);
   makeRoom(i, t0, P);
@@ -5688,10 +6981,12 @@ function liveUpdate(i, key) {
   const tr = S.tracks[i]; if (!tr || tr.kind !== 'synth') return;
   if (key.startsWith('fx.')) { applyTrackParams(i, false); return; }
   const snd = tr.sound, P = snd.p, now = c.currentTime;
+  // worklet track (§5.4): every flat key goes to the engine (coalesced per animation frame); its sounding notes follow there
+  if (AU.synth[i]) { if (!key.includes('.') && typeof P[key] === 'number') wkSet(i, key, P[key]); return; }
   if (/^l[12](shape|rate|sync)$/.test(key)) { rebuildNativeLfos(i); return; }
   const m = /^o([123])(lvl|fine|semi|oct)$/.exec(key);
   for (const v of VOICES) {
-    if (v.dead || v.track !== i || (v.src === 'preview' && v.P !== P)) continue;
+    if (v.dead || v.wk || v.track !== i || (v.src === 'preview' && v.P !== P)) continue;
     try {
       if (LIVE_FILTER.has(key)) {
         const ft = v.fType, base = clamp(P.cutoff * NativeVoice.fcFor(ft, P.res) * Math.pow(2, P.kt * (v.baseOut - 60) / 12), 20, c.sampleRate * .45);
@@ -5822,6 +7117,7 @@ function drumHit(gm, vel, t, src) {
       break;
     }
   }
+  if (vd.gm === 36 && S.fxBus.pumpSrc === 'kick') onKickScheduled(t);     // Pumpen (§8.1): every scheduled or played kick
   const h = {id: ++VSEQ, voice: vd.id, gm: vd.gm, track: 4, src, start: t, stopAt: end, end: t + .1, srcs, nodes, out, dead: false, left: srcs.length};
   for (const s of srcs) s.onended = () => { if (--h.left <= 0) hitCleanup(h); };
   HITS.push(h);
@@ -5837,7 +7133,7 @@ function click(t, accent) {
   const o = c.createOscillator(), g = c.createGain(), L = Math.max(S.settings.metroVol * .3, .0012);
   o.frequency.value = accent ? 1760 : 1100;
   g.gain.setValueAtTime(L, t); g.gain.exponentialRampToValueAtTime(.001, t + .03);
-  o.connect(g); g.connect(AU.masterVol);
+  o.connect(g); g.connect(AU.masterSum);
   try { o.start(t); o.stop(t + .04); } catch (e) {}
   const k = {t, o, g, dead: false, log: null};
   o.onended = () => { k.dead = true; try { o.disconnect(); g.disconnect(); } catch (e) {} const x = CLICKS.indexOf(k); if (x >= 0) CLICKS.splice(x, 1); };
@@ -6018,6 +7314,7 @@ function tick(h) {
     gcVoices(now);
     T.prune(now - 2);
     previewTick(now);
+    cpuTick();
     if (!R.playing) return;
     if (R.countIn && t2b(now) >= 0) R.countIn = false;
     let b0 = R.schedBeat;
@@ -6029,6 +7326,11 @@ function tick(h) {
       R.lastClick = b;
       if (b < 0) { if (R.countIn) click(b2t(b), ((b % 4) + 4) % 4 === 0); }      // count-in: the first beat of each bar accented
       else if (S.settings.metro || (recClickOn(b) && S.settings.metroInRec)) click(b2t(b), b % 4 === 0);
+    }
+    // Pumpen on every 1/4 or 1/8 (§8.1, fxBus.pumpSrc); with 'kick' drumHit calls onKickScheduled
+    if (S.fxBus.pumpSrc !== 'kick' && anyPump()) {
+      const st = S.fxBus.pumpSrc === '1/8' ? .5 : 1;
+      for (let b = Math.ceil(b0 / st - 1e-9) * st; b < b1 - 1e-9; b += st) { if (b < 0 || b <= R.lastPump + 1e-9) continue; R.lastPump = b; onKickScheduled(b2t(b)); }
     }
     recTick(b0, b1);
     for (let i = 0; i < 5; i++) {
@@ -6201,7 +7503,7 @@ function startTransport(countIn) {
   R.runId++; stripBorn(); RECENT.length = 0;
   // countIn: bars of count-in (0|1|2, §3.1; true = 1) or null for plain ▶ (starts a few ms ahead)
   const ci = countIn === true ? 1 : isNum(countIn) ? clamp(countIn | 0, 0, 2) : 0;
-  R.playing = true; R.lastClick = -Infinity; R.ciRun = ci > 0; R.ciBars = ci;
+  R.playing = true; R.lastClick = -Infinity; R.lastPump = -Infinity; R.ciRun = ci > 0; R.ciBars = ci;
   if (ci) { R.startTime = now + .1 + 4 * ci * spb(); R.schedBeat = -4 * ci; R.countIn = true; }
   else { R.startTime = now + (countIn == null ? .06 : .1); R.schedBeat = 0; R.countIn = false; }
   for (let i = 0; i < 5; i++) { if (R.pend[i]) { R.slot[i] = R.pend[i].slot; R.pend[i] = null; } R.cstart[i] = 0; R.prev[i] = null; }
@@ -6216,8 +7518,9 @@ function startTransport(countIn) {
 function play() { startTransport(null); }
 function stop() {
   const c = AU.ctx;
-  if (!R.playing) { return; }
+  if (!R.playing) { if (c && performance.now() - (R.stopT || -1e9) < 1000) tailKill(); return; }   // ■ twice within 1 s: tails off (§8.1)
   const now = c.currentTime;
+  R.stopT = performance.now();
   recOnStop();
   if (PV.on) previewStop();                                 // ■ also ends a browser preview phrase
   // release everything while the transport still counts beats, so the Mitschnitt (PERF) gets the real end beats
@@ -6228,6 +7531,8 @@ function stop() {
   for (let i = 0; i < 5; i++) { if (R.pend[i]) { R.slot[i] = R.pend[i].slot; if (R.pend[i].cs != null) R.cstart[i] = 0; R.pend[i] = null; } R.prev[i] = null; }
   flushQueuedCarrier(now);
   stripBorn();
+  duckReset(now);
+  wkTempoAll();
   UI.dirty.all = true;
   wakeReleaseLater();
 }
@@ -6281,7 +7586,7 @@ function setBpm(v) {
       // sounding voices already had their retune scheduled at the old time of the queued change: undo and redo it
       for (const vx of VOICES) {
         if (vx.dead || !vx.rt || vx.rt.t <= now || vx.start > now) continue;
-        try { vx.cv.offset.cancelScheduledValues(now + .001); } catch (e) {}
+        if (vx.wk) vx.E.cancelRetune(vx.id); else try { vx.cv.offset.cancelScheduledValues(now + .001); } catch (e) {}
         vx.out = vx.rt.from; vx.rt = null;
       }
       for (const e of moved) applyCarrierChange(e, {retriggerFrom: -Infinity});
@@ -7032,10 +8337,15 @@ function panic() {
   if (PV.on) previewStop();                                 // a browser preview phrase stops too (§11.3)
   const c = AU.ctx; if (!c) return;
   for (const v of VOICES.slice()) v.cancel();
+  for (const E of AU.synth) if (E) E.panic();               // ALL-OFF in the worklet (§5.4), also notes without a proxy
+  try { if (PV.chain && PV.chain.E) PV.chain.E.panic(); } catch (e) {}
   for (const h of HITS.slice()) { for (const s of h.srcs) { try { s.stop(); } catch (e) {} } hitCleanup(h); }
   T.held.clear();
+  tailKill();
   UI.dirty.all = true;
 }
+// hall and echo tails (§8.1): a stop lets them ring out; a second ■ within 1 s or panic() empties them
+function tailKill() { if (!AU.ctx) return; echoKill(); hallClear(); duckReset(AU.ctx.currentTime); }
 
 /* ---------------- 60-ui.js ---------------- */
 /* =====================================================================
@@ -7248,8 +8558,9 @@ function renderTop() {
   EL.bRec.classList.toggle('armed', rec.state === 'countin' || rec.state === 'armed');
   EL.bRec.style.setProperty('--spb', Math.min(.9, spb()).toFixed(3) + 's');
   // TAKT block: the label reads REC (red) while a take runs (§3.1)
-  const rl2 = recActive() ? 'REC' : 'Takt';
-  if (EL.taktLbl && EL.taktLbl.textContent !== rl2) { EL.taktLbl.textContent = rl2; EL.taktLbl.classList.toggle('recl', rl2 === 'REC'); }
+  const cpu = LIM.level >= 3, rl2 = recActive() ? 'REC' : cpu && !isLand() ? 'CPU' : 'Takt';
+  if (EL.taktLbl && EL.taktLbl.textContent !== rl2) { EL.taktLbl.textContent = rl2; EL.taktLbl.classList.toggle('recl', rl2 === 'REC'); EL.taktLbl.classList.toggle('cpul', rl2 === 'CPU'); }
+  if (EL.bCpu && EL.bCpu.hidden === cpu) EL.bCpu.hidden = !cpu;
   EL.bpmVal.textContent = S.bpm;
   EL.bMetro.classList.toggle('on', S.settings.metro);
   EL.chipQv.textContent = iq === 'off' ? 'AUS' : iq === 'auto' ? 'AUTO' : iq;
@@ -7939,6 +9250,7 @@ function uiFrame() {
   if (R.keyPending.size && !traegerActive()) for (const x of [...R.keyPending]) applySceneKeys(x);   // after ORIGINAL (§4.1.3)
   if (R.editor === 'drum') drumEdFrame(bAud);
   if (R.editor === 'synth') { if (UI.dirty.edHead) { UI.dirty.edHead = false; edHeadRefresh(); } if (ED.lfoPrev) lfoPrevFrame(); }
+  if (ED.grm && (R.editor === 'synth' || R.editor === 'drum')) grmFrame();
   if (R.editor === 'browser' && UI.dirty.br) { UI.dirty.br = false; brRefresh(); }
   if (ED.roll && ED.rollAt) rollFrame(bAud);
   if (UI.toastActs) toastPlace();                           // sheets opened/closed/rebuilt under an action toast
@@ -8098,7 +9410,8 @@ const PK = {open: false, hot: null, sticky: false, choose: null};
 function pickerOpen(anchor, opts) {
   const p = openPop(anchor, pop => {
     pop.classList.add('pk');
-    pop.innerHTML = `<div class="pkrow"><button class="pchip" data-act="reset">↺ Standardwert<small>${esc(opts.defTxt)}</small></button></div>` +
+    const chips = (opts.chips || []).map(([v, l, s]) => `<button class="pchip" data-act="x:${esc(String(v))}">${esc(l)}${s ? '<small>' + esc(s) + '</small>' : ''}</button>`).join('');
+    pop.innerHTML = `<div class="pkrow">${chips}<button class="pchip" data-act="reset">↺ Standardwert<small>${esc(opts.defTxt)}</small></button></div>` +
       `<div class="pkhint">${esc(opts.hint)}</div>`;
   }, {name: 'picker', above: true, onClose: () => { PK.open = false; PK.hot = null; PK.choose = null; if (opts.onClose) opts.onClose(); }});
   guardTouch(p);
@@ -8218,8 +9531,14 @@ function makeCtl(d, get, set, o) {
   });
   function longPress() { if (!g || g.st !== 'down') return; g.st = 'pick'; k.classList.add('armed'); haptic('pop'); openPicker(g); }
   function openPicker(G) {
-    pickerOpen(k, {gesture: !!G, defTxt: fmt(d.def), hint: o.mod ? (G ? 'Auf ↺ schieben und loslassen' : '↺ antippen') : label + ' ist nicht modulierbar',
-      choose: act => { if (act === 'reset') resetDefault(G ? G.before : (o.undo ? o.undo.snap() : null)); }});
+    const pk = o.pick ? o.pick() : null;                 // o.pick(): {chips: [[value, label, sub]], hint} (e.g. Pre-Delay divisions)
+    pickerOpen(k, {gesture: !!G, defTxt: fmt(d.def), chips: pk ? pk.chips : null,
+      hint: pk && pk.hint ? pk.hint : o.mod ? (G ? 'Auf ↺ schieben und loslassen' : '↺ antippen') : label + ' ist nicht modulierbar',
+      choose: act => {
+        const before = G ? G.before : (o.undo ? o.undo.snap() : null);
+        if (act === 'reset') resetDefault(before);
+        else if (act.startsWith('x:') && pk) { const v = pk.parse ? pk.parse(act.slice(2)) : act.slice(2); if (setVal(v)) { if (o.undo) o.undo.commit(before, label); pulse(); haptic('snap'); } lcd(); }
+      }});
   }
   function resetDefault(before) {
     const was = get();
@@ -8355,7 +9674,7 @@ function edRefresh() { for (const f of ED.refreshers) { try { f(); } catch (e) {
 /* §1.7.3 / §2.3: editor pages never scroll. Conditional content (FILTER hint line, …) can push a page past its body at
    320 px, 375×667 or 667×375; the body then steps down to a compact density (fit1: smaller knobs and segments, then fit2)
    until everything fits. Re-measured from scratch on every size change, stepped up only when a page change overflows. */
-const FIT_LV = ['fit1', 'fit2'];
+const FIT_LV = ['fit1', 'fit2', 'fit3'];
 function fitOver(b) { return b.scrollHeight > b.clientHeight + 1; }
 function fitBody(b, full) {
   if (!b || !b.isConnected || !b.clientHeight) return;
@@ -8391,7 +9710,7 @@ function sheetFrame(sh, title, tabs, curTab, onTab, subs) {
   }
   const body = el('div', 'sh-body rest');
   sh.append(head, bar, body);
-  if (sh === EL.synthSheet) fitWatch(body);
+  if (sh === EL.synthSheet || sh === EL.drumSheet) fitWatch(body);
   ED.lcd = lcd; lcdHint();
   renderEdChip();
   return {head, r1, r2, body};
@@ -8441,7 +9760,7 @@ function soundEdit(t, label, fn) { const b = soundSnapshot(t); const r = fn(); c
 function fxSnapshot() { return JSON.stringify(S.fxBus); }
 function restoreFx(o) {
   S.fxBus = normFxBus(o);
-  applyTempoDependents(); applyMasterVol(); markDirty(); UI.dirty.all = true;
+  applyFxBus(); applyTempoDependents(); markDirty(); UI.dirty.all = true;
   if (R.editor === 'synth') safeRebuild(openEditor);
   if (R.editor === 'browser') brRefresh();
 }
@@ -8470,12 +9789,14 @@ function soundLabel(tr) { return tr.kind === 'synth' ? (ENGINE_LABEL[tr.sound.en
 function sndGet(snd, key) {
   if (key.startsWith('wt.')) return (snd.p.wt || WT_DEF())[key.slice(3)];
   if (key.startsWith('fm2.')) return (snd.p.fm2 || FM2_DEF())[key.slice(4)];
+  if (key.startsWith('fx.chorus.')) return (snd.fx.chorus || {})[key.slice(10)];
   if (key.startsWith('fx.')) return snd.fx[key.slice(3)];
   return snd.p[key];
 }
 function sndSet(snd, key, v) {
   if (key.startsWith('wt.')) { if (!snd.p.wt) snd.p.wt = WT_DEF(); snd.p.wt[key.slice(3)] = v; }
   else if (key.startsWith('fm2.')) { if (!snd.p.fm2) snd.p.fm2 = FM2_DEF(); snd.p.fm2[key.slice(4)] = v; }
+  else if (key.startsWith('fx.chorus.')) { if (!snd.fx.chorus) snd.fx.chorus = {mode: 'off', mix: 1, rate: 1, depth: 1}; snd.fx.chorus[key.slice(10)] = v; }
   else if (key.startsWith('fx.')) snd.fx[key.slice(3)] = v;
   else snd.p[key] = v;
 }
@@ -8502,15 +9823,18 @@ function setP(i, key, v) {
   if (R.editor === 'synth' && i === R.selT) edParamChanged(key);
   return nv;
 }
-// D.11 (WP3, native): a whole sound (preset load, undo, engine switch, setSound, A/B). The track owns this copy.
-// Sounding notes of the track fade out in ~20 ms (§11.5 PR5); notes already scheduled ahead are re-spawned with the new
-// sound (the music never drops a note); track effects and native LFOs follow, the drive curve a moment later.
+// D.11: a whole sound (preset load, undo, engine switch, setSound, A/B). The track owns this copy.
+// Worklet -> worklet (§5.4, §11.5 PR5): E.set(full flat) + E.mods; sounding and queued notes continue with the new
+// parameters inside the engine. Otherwise (native, or a switch between the paths): sounding notes fade out in ~20 ms,
+// notes already scheduled ahead are re-spawned with the new sound on the new path (the music never drops a note); the
+// engine is created / kept / retired, track effects and native LFOs follow, the drive curve a moment later.
 function applySound(i, snd, opts) {
   opts = opts || {};
   const T = S.tracks[i]; if (!T || T.kind !== 'synth' || !snd) return;
-  T.sound = snd; markDirty(); UI.dirty.strip = UI.dirty.grid = true; UI.sndVer++;
+  T.sound = snd; markDirty(); UI.dirty.strip = UI.dirty.grid = UI.dirty.edHead = true; UI.sndVer++;
   const c = AU.ctx, A = AU.tracks[i];
   if (!c || !A) return;
+  if (AU.synth[i] && wkWanted(i)) { syncEngine(i, true); applyTrackParams(i, !!opts.immediate); return; }
   const now = c.currentTime; let busy = false;
   const again = [];
   for (const v of VOICES.slice()) {
@@ -8518,8 +9842,9 @@ function applySound(i, snd, opts) {
     if (v.start > now + .003) { if (v.src === 'clip') again.push({out: v.out, vel: v.vel, t: v.start, dur: isFinite(v.relT) ? v.relT - v.start : .25, n: v.clipNote, key: v.clipKey}); v.cancel(); }
     else { v.release(now, .006); busy = true; }
   }
-  rebuildNativeLfos(i);
-  applyTrackParams(i, !!opts.immediate, busy);
+  syncEngine(i, true);
+  applyTrackParams(i, !!opts.immediate);
+  void busy;
   for (const e of again) spawnClipVoice(i, e.out, e.vel, e.t, e.dur, e.n, e.key, true);
 }
 // a fresh track copy of a library or factory record: no id (a working copy), origin = the record
@@ -8704,6 +10029,7 @@ function subTabsFor(tab, eng) {
   if (tab === 'filter') return [['ctl', 'REGLER'], ['xy', 'XY']];
   if (tab === 'env') return [['amp', 'LAUTST.'], ['flt', 'FILTER'], ['mod', 'MOD']];
   if (tab === 'lfo') return [['l1', 'LFO 1'], ['l2', 'LFO 2']];
+  if (tab === 'fx') return FX_SUBS;
   return null;
 }
 function buildSynthEd() {
@@ -8718,10 +10044,17 @@ function buildSynthEd() {
   const F = sheetFrame(sh, tr.name, [['osc', eng === 'analog' ? 'OSZ' : eng === 'wt' ? 'WT' : 'FM'], ['filter', 'FILTER'], ['env', 'HÜLLK.'], ['lfo', 'LFO'], ['mod', 'MOD'], ['fx', 'FX']], ED.tab,
     id => { ED.tab = id; safeRebuild(buildSynthEd); },
     subs ? {list: subs, cur: ED.sub[ED.tab], on: id => { ED.sub[ED.tab] = id; safeRebuild(buildSynthEd); }} : null);
-  // row 1: ● SYNTH n · [VA | FM | WT] · ⇅ chip · ↶ ↷ · ✕   (the ECO-Klang badge arrives with the worklet, WP4)
-  const engSeg = makeSeg([['analog', 'VA'], ['fm2', 'FM'], ['wt', 'WT']], () => S.tracks[i].sound.engine === 'fm6' ? 'fm2' : S.tracks[i].sound.engine,
+  // row 1: ● SYNTH n · [VA | FM | WT] · ⇅ chip · ECO-Klang badge (native fallback, §1.3) · ↶ ↷ · ✕
+  const engSeg = makeSeg([['analog', 'VA', 'VA'], ['fm2', 'FM', 'FM'], ['wt', 'WT', 'WT']], () => S.tracks[i].sound.engine === 'fm6' ? 'fm2' : S.tracks[i].sound.engine,
     v => setEngine(i, v), 'eng', {undo: soundUndo(i), label: 'Klangerzeugung'});
   F.r1.insertBefore(engSeg, F.r1.querySelector('.sh-title').nextSibling);
+  const eco = el('span', 'ecob', 'ECO-Klang'); eco.hidden = true; eco.title = 'Vereinfachte Klangerzeugung: der Studio-Klang (AudioWorklet) ist hier nicht verfügbar';
+  eco.setAttribute('role', 'note'); onTap(eco, () => lcdShow('ECO-Klang', 'Studio-Klang nicht verfügbar – vereinfachte Klangerzeugung'));
+  F.r1.insertBefore(eco, engSeg.nextSibling); ED.eco = eco;
+  // P has no room for the badge in row 1 (the track name would vanish): there the VA button carries a small „ECO“ line
+  // (CSS ::before of the class 'eco', so the button text stays „VA“)
+  ED.ecoB = engSeg.children[0];
+  onTap(ED.ecoB, b => { if (b.classList.contains('eco')) lcdShow('ECO-Klang', 'Studio-Klang nicht verfügbar – vereinfachte Klangerzeugung'); });
   // row 2: ‹ name • › · [A/B] · Sichern · 🎲 · ▶ Hören
   const pre = el('div', 'preset');
   const pPrev = el('button', 'pa rb', '‹'), pName = el('button', 'pv rb', ''), pNext = el('button', 'pa rb', '›');
@@ -8756,6 +10089,7 @@ function buildSynthEd() {
 function edHeadRefresh() {
   const H = ED.hdr; if (!H || !H.pName.isConnected) return;
   const tr = S.tracks[R.selT]; if (tr.kind !== 'synth') return;
+  if (ED.eco) { const e = !trackEco(R.selT); if (ED.eco.hidden !== e) { ED.eco.hidden = e; if (ED.ecoB) ED.ecoB.classList.toggle('eco', !e); } }
   const snd = tr.sound, edited = soundEdited(snd), abOn = !!(UI.ab && UI.ab.t === R.selT);
   const key = snd.name + '|' + edited + '|' + abOn + '|' + (abOn ? UI.ab.side : '');
   if (H.key === key) return; H.key = key;
@@ -8943,19 +10277,163 @@ function pageFm2(pg, i) {
   ED.refreshers.push(() => ks.forEach(x => x.update()));
   pg.append(kRow(ks.slice(0, 4)), kRow(ks.slice(4)), el('div', 'small note', 'FM (klassisch, 2 Operatoren): Ein Modulator (Ratio × Grundton) moduliert den Träger. Menge = Modulationsindex, Mod-Abkling/Halten formen die Helligkeit über die Zeit. Der 6-Operator-FM folgt.'));
 }
-// FX (WP3: as in v2; §8.3 sub-pages arrive with WP4): Drive, Hall, Echo, Lautstärke, Panorama, Echo-Zeit (global), Bei Wechsel
+/* ---------- FX tab (§8.3): SPUR · CHORUS · HALL · ECHO · MASTER. HALL, ECHO and MASTER are global (S.fxBus, one undo
+   kind 'fx'); SPUR and CHORUS belong to the track's sound (undo kind 'sound'). One flat cell list per page: the CSS grid
+   lays it out as rows of 4 (P) or one knob row + one segment row (L), so nothing scrolls (§1.7.3). ---------- */
+const FX_SUBS = [['spur', 'SPUR'], ['chorus', 'CHORUS'], ['hall', 'HALL'], ['echo', 'ECHO'], ['master', 'MASTER']];
+const DFX_SUBS = [['spur', 'SPUR'], ['hall', 'HALL'], ['echo', 'ECHO'], ['master', 'MASTER']];   // drums: no chorus until WP6
+const BUS_PD = {};
+[['hall.decay', 'Länge', {min: .2, max: 60, c: 'hdec', def: 3.2, fmt: 'hdec'}],
+  ['hall.size', 'Größe', {min: .35, max: 1.6, c: 'lin', def: 1, fmt: 'x1'}],
+  ['hall.predelay', 'Pre-Delay', {min: 0, max: 250, c: 'pow', k: 2, def: '1/64', fmt: 'ms'}],
+  ['hall.damp', 'Dämpfung', {min: 400, max: 20000, c: 'exp', def: 6500, fmt: 'hz'}],
+  ['hall.lowcut', 'Bass-Cut', {min: 10, max: 600, c: 'exp', def: 90, fmt: 'hz'}],
+  ['hall.tone', 'Ton', {min: 500, max: 20000, c: 'exp', def: 12000, fmt: 'hz'}],
+  ['hall.mod', 'Bewegung', {min: 0, max: 1, c: 'lin', def: .5, fmt: 'pct'}],
+  ['hall.width', 'Breite', {min: 0, max: 2, c: 'lin', def: 1, fmt: 'pct'}],
+  ['hall.ret', 'Rückweg', {min: 0, max: 1, c: 'lin', def: .8, fmt: 'pct'}],
+  ['hall.pump', 'Pumpen', {min: 0, max: 1, c: 'lin', def: 0, fmt: 'pct'}],
+  ['echo.divL', 'Zeit L', {vals: ECHO_DIVS, def: '1/8.', fmt: 'div'}],
+  ['echo.divR', 'Zeit R', {vals: ECHO_DIVS, def: '1/4', fmt: 'div'}],
+  ['echo.fb', 'Feedback', {min: 0, max: 1.1, c: 'lin', def: .4, fmt: 'pct'}],
+  ['echo.lowcut', 'Low Cut', {min: 20, max: 2000, c: 'exp', def: 250, fmt: 'hz'}],
+  ['echo.highcut', 'High Cut', {min: 1000, max: 16000, c: 'exp', def: 4500, fmt: 'hz'}],
+  ['echo.drive', 'Sättigung', {min: 0, max: 1, c: 'lin', def: .15, fmt: 'pct'}],
+  ['echo.wow', 'Band-Leiern', {min: 0, max: 1, c: 'lin', def: .2, fmt: 'pct'}],
+  ['echo.toHall', 'Echo→Hall', {min: 0, max: 1, c: 'lin', def: .15, fmt: 'pct'}],
+  ['echo.ret', 'Rückweg', {min: 0, max: 1, c: 'lin', def: .8, fmt: 'pct'}],
+  ['master.thr', 'Schwelle', {min: -30, max: 0, c: 'lin', def: -16, fmt: 'dbv'}],
+  ['master.ratio', 'Ratio', {min: 1, max: 8, c: 'exp', def: 2, fmt: 'ratio2'}],
+  ['master.attack', 'Attack', {min: .001, max: .1, c: 'exp', def: .02, fmt: 's'}],
+  ['master.release', 'Release', {min: .05, max: 1, c: 'exp', def: .2, fmt: 's'}],
+  ['master.makeup', 'Make-up', {min: 0, max: 12, c: 'lin', def: 1.5, fmt: 'dbv'}],
+  ['master.drive', 'Drive', {min: 0, max: 1, c: 'lin', def: 0, fmt: 'pct'}],
+  ['master.vol', 'Lautstärke', {min: 0, max: 1, c: 'lin', def: .85, fmt: 'pct'}],
+].forEach(([p, l, d]) => { BUS_PD[p] = Object.assign({p, l}, d); });
+function busGet(path) { if (path === 'pumpSrc') return S.fxBus.pumpSrc; const [b, k] = String(path).split('.'); return S.fxBus[b] ? S.fxBus[b][k] : undefined; }
+// one bus value; live: a knob is moving (the convolution fallback rebuilds its IR only when the gesture ends, §8.1)
+function busSet(path, v, live) {
+  const F = S.fxBus, [b, k] = String(path).split('.');
+  if (path === 'pumpSrc') F.pumpSrc = v;
+  else { if (!F[b] || !(k in F[b])) throw new Error('Unbekannter Effekt-Parameter: ' + path); F[b][k] = v; }
+  S.fxBus = normFxBus(F);
+  if (b === 'hall') applyHall(S.fxBus.hall, !live); else if (b === 'echo') applyEcho(); else if (b === 'master') applyMaster();
+  markDirty();
+  if (R.editor === 'synth' || R.editor === 'drum') edParamChanged('bus.' + path);
+  return busGet(path);
+}
+// §16 setBusFx('hall.decay', 8) etc.: one undo step (kind 'fx')
+function setBusFx(path, v) { const before = fxSnapshot(); const r = busSet(path, v, false); fxUndo.commit(before, (BUS_PD[path] ? BUS_PD[path].l : path)); return r; }
+// §16 setTrackFx(t, key, v): drive, rev, dly, vol, pan, pump, pumpRel, chorus.mode|rate|depth|mix (drums: the v2 block)
+function setTrackFx(t, key, v) {
+  const tr = S.tracks[t]; if (!tr) throw new Error('Keine Spur: ' + t);
+  if (tr.kind === 'drum') {
+    const m = {rev: 'reverb', dly: 'delay'}[key] || key, path = 'fx.' + m;
+    if (!SYN_DESC[path]) throw new Error('Unbekannter Spur-Effekt: ' + key);
+    soundEdit(t, SYN_DESC[path].l, () => setDrumFx(path, v)); return S.tracks[t].fx[m];
+  }
+  const path = 'fx.' + key; if (!PD[path]) throw new Error('Unbekannter Spur-Effekt: ' + key);
+  return soundEdit(t, PD[path].l, () => setP(t, path, v));
+}
+const hallUndo = {snap: fxSnapshot, commit: (before, label) => { const r = fxUndo.commit(before, label); applyHall(S.fxBus.hall, true); return r; }};
+function busKnob(path, o) {
+  const d = BUS_PD[path], blk = path.split('.')[0];
+  return makeCtl(d, (o && o.get) || (() => busGet(path)), v => busSet(path, v, true), Object.assign({undo: blk === 'hall' ? hallUndo : fxUndo, fmt: v => fmtVal(d.fmt, v)}, o));
+}
+function busSeg(path, opts, cls, label) { return makeSeg(opts, () => busGet(path), v => busSet(path, v, false), cls, {undo: path.startsWith('hall') ? hallUndo : fxUndo, label}); }
+// the caption of the global pages; the hall page also names its engine
+function fxCap(extra) { const c = el('div', 'fxcap'); c.innerHTML = '<b>GLOBAL</b> – wirkt auf alle Spuren' + (extra ? '<br><span class="fxst">' + esc(extra) + '</span>' : ''); return c; }
+const hallStatus = () => (AU.hallKind === 'worklet' ? 'Hall: Worklet' : 'Hall: Faltung (vereinfacht)');
+const CHORUS_INFO = {I: ['Juno-60 Chorus I', .513], II: ['Juno-60 Chorus II', .863], 'I+II': ['Juno-60 Chorus I+II', 9.75], ENS: ['Ensemble (Streicher)', .6], BREIT: ['Breit (Dimension)', .25]};
 function pageFx(pg, i) {
-  const vol = sFader('fx.vol', {label: 'Lautst.'});
-  const ff = el('div', 'fxf'); ff.appendChild(vol);
-  const ks = ['fx.drive', 'fx.rev', 'fx.dly', 'fx.pan'].map(k => sKnob(k));
-  const div = makeSeg([['1/16', '1/16'], ['1/8', '1/8'], ['1/8.', '1/8.'], ['1/4', '1/4']], () => S.fxBus.echo.divL, v => { S.fxBus.echo.divL = v; applyTempoDependents(); markDirty(); }, null, {undo: fxUndo, label: 'Echo-Zeit'});
+  const sub = ED.sub.fx || 'spur';
+  pg.classList.add('pg-fxg');
+  if (sub === 'chorus') pageFxChorus(pg, i);
+  else if (sub === 'hall') pageFxHall(pg);
+  else if (sub === 'echo') pageFxEcho(pg);
+  else if (sub === 'master') pageFxMaster(pg);
+  else pageFxSpur(pg, i);
+  fxLongLabels(pg);
+}
+// knob labels of 9+ letters get the class 'lg': a smaller font where the cells are narrow (P < 390 px, L < 760 px)
+function fxLongLabels(pg) { for (const l of pg.querySelectorAll('.knob .kl')) if (l.textContent.trim().length >= 9) l.classList.add('lg'); }
+// SPUR: Drive, Hall, Echo, Lautstärke, Panorama, Pumpen · Pump-Release · Bei Wechsel (synths only) · bus-hint chip
+function pageFxSpur(pg, i) {
+  const ks = ['fx.drive', 'fx.rev', 'fx.dly', 'fx.vol', 'fx.pan', 'fx.pump'].map(k => sKnob(k));
+  const rel = sSeg('fx.pumpRel', [['1/16', '1/16'], ['1/8', '1/8'], ['1/4', '1/4']], null, 'Pump-Release');
   const oc = makeSeg([['follow', 'Mitziehen'], ['hold', 'Halten']], () => S.tracks[i].onChange, v => { S.tracks[i].onChange = v; markDirty(); }, null, {undo: soundUndo(i), label: 'Bei Wechsel'});
-  const col = el('div', 'segcol rest');
-  col.append(lgrp('Echo-Zeit', div), lgrp('Bei Wechsel', oc));
-  // the bus-hint chip sits in the knob row's free cell (P: right of Panorama; L: under the knobs), so it never adds a row
-  const kr = kRow(ks), bh = busHintChip(i); if (bh) kr.appendChild(bh);
-  ED.refreshers.push(() => { vol.update(); ks.forEach(x => x.update()); div.update(); oc.update(); });
-  pg.append(ff, kr, col);
+  ks.forEach(k => pg.appendChild(k));
+  const bh = busHintChip(i); if (bh) pg.appendChild(bh);
+  pg.append(lgrp('Pump-Rel.', rel, 'fxrow r1'), lgrp('Bei Wechsel', oc, 'fxrow r2'));
+  ED.refreshers.push(() => { ks.forEach(x => x.update()); rel.update(); oc.update(); });
+}
+// CHORUS: mode (AUS, I, II, I+II, ENS., BREIT) · Tempo, Tiefe, Mischung · „Juno-60 Chorus I: 0,51 Hz“
+function pageFxChorus(pg, i) {
+  const ch = () => S.tracks[i].sound.fx.chorus || {mode: 'off', rate: 1, depth: 1, mix: 1};
+  const mode = sSeg('fx.chorus.mode', [['off', 'AUS'], ['I', 'I'], ['II', 'II'], ['I+II', 'I+II'], ['ENS', 'ENS.', 'Ensemble'], ['BREIT', 'BREIT']], 'chm', 'Chorus');
+  const inert = () => ch().mode === 'off';
+  const ks = ['fx.chorus.rate', 'fx.chorus.depth', 'fx.chorus.mix'].map(k => sKnob(k, {inert}));
+  const info = el('div', 'fxinfo');
+  const upd = () => { const c = ch(), I = CHORUS_INFO[c.mode]; const t = I ? I[0] + ': ' + fmtDec(I[1] * (c.rate || 1), I[1] * (c.rate || 1) < 10 ? 2 : 1).replace(/0$/, '') + ' Hz' : 'Chorus aus – kein Rechenaufwand'; if (info.textContent !== t) info.textContent = t; };
+  pg.append(lgrp('Chorus', mode, 'fxrow r0'));
+  ks.forEach(k => pg.appendChild(k));
+  pg.appendChild(info);
+  upd(); ED.refreshers.push(() => { mode.update(); ks.forEach(x => x.update()); upd(); });
+}
+// HALL: Länge, Größe, Pre-Delay (long-press: 1/64 1/32 1/16), Dämpfung, Bass-Cut, Ton, Bewegung, Breite, Rückweg, Pumpen
+// · EINFRIEREN · engine status
+function pageFxHall(pg) {
+  // a note-division pre-delay shows its time at the current tempo on the arc and its division as the value
+  const pre = busKnob('hall.predelay', {
+    get: () => { const v = S.fxBus.hall.predelay; return typeof v === 'string' ? Math.min(250, preDivSec(v) * 1000) : v; },
+    fmt: v => (typeof S.fxBus.hall.predelay === 'string' ? S.fxBus.hall.predelay : Math.round(v) + ' ms'),
+    pick: () => ({chips: ['1/64', '1/32', '1/16'].map(x => [x, x, Math.round(preDivSec(x) * 1000) + ' ms']), hint: 'Notenwert im Tempo – oder ziehen für ms'})});
+  const ks = [busKnob('hall.decay'), busKnob('hall.size'), pre, busKnob('hall.damp'), busKnob('hall.lowcut'), busKnob('hall.tone'), busKnob('hall.mod'), busKnob('hall.width'), busKnob('hall.ret')];
+  const pump = busKnob('hall.pump'); pump.classList.add('fxmini');
+  const frz = el('button', 'tgl tv rb frz', '<i class="led"></i><span>EIN&shy;FRIEREN</span>'); frz.setAttribute('role', 'switch');
+  const updF = () => { const on = !!S.fxBus.hall.freeze, ok = AU.hallKind === 'worklet' || !AU.ctx; frz.classList.toggle('on', on); frz.setAttribute('aria-checked', String(on)); frz.classList.toggle('inert', !ok); frz.title = ok ? 'Hall einfrieren (endlose Fläche)' : 'Einfrieren nur mit dem Worklet-Hall'; };
+  onTap(frz, () => { if (AU.ctx && AU.hallKind !== 'worklet') { lcdShow('Einfrieren', 'nur mit dem Worklet-Hall'); return; } const before = fxSnapshot(); busSet('hall.freeze', !S.fxBus.hall.freeze, false); fxUndo.commit(before, 'Einfrieren'); updF(); lcdShow('Einfrieren', S.fxBus.hall.freeze ? 'an – der Hall klingt endlos' : 'aus'); haptic('tick'); });
+  ks.forEach(k => pg.appendChild(k));
+  const cap = fxCap(hallStatus());
+  pg.append(pump, frz, cap);
+  ED.refreshers.push(() => { ks.forEach(x => x.update()); pump.update(); updF(); const st = cap.querySelector('.fxst'); if (st && st.textContent !== hallStatus()) st.textContent = hallStatus(); });
+  updF();
+}
+// ECHO: Modus · Zeit L, Zeit R (only STEREO) · Feedback (LED above 100 %), Low Cut, High Cut, Sättigung, Band-Leiern,
+// Echo→Hall, Rückweg
+function pageFxEcho(pg) {
+  const fb = busKnob('echo.fb'); const led = el('span', 'kled', 'DUB'); fb.appendChild(led);
+  const ks = [busKnob('echo.divL'), busKnob('echo.divR', {inert: () => S.fxBus.echo.mode !== 'st'}), fb, busKnob('echo.lowcut'), busKnob('echo.highcut'),
+    busKnob('echo.drive'), busKnob('echo.wow'), busKnob('echo.toHall'), busKnob('echo.ret')];
+  const mode = busSeg('echo.mode', [['pp', 'PING-PONG'], ['st', 'STEREO'], ['mono', 'MONO']], 'ecm', 'Echo-Modus');
+  ks.forEach(k => pg.appendChild(k));
+  const mc = el('div', 'fxmode'); mc.append(mode, fxCap());
+  pg.appendChild(mc);
+  const upd = () => led.classList.toggle('on', S.fxBus.echo.fb > 1.0001);
+  upd(); ED.refreshers.push(() => { ks.forEach(x => x.update()); mode.update(); upd(); });
+}
+// MASTER: Schwelle, Ratio, Attack, Release, Make-up, Drive, Lautstärke · Pump-Quelle · GR meter · output peak LED
+function pageFxMaster(pg) {
+  const ks = ['master.thr', 'master.ratio', 'master.attack', 'master.release', 'master.makeup', 'master.drive', 'master.vol'].map(p => busKnob(p));
+  const src = busSeg('pumpSrc', [['kick', 'KICK'], ['1/4', '1/4'], ['1/8', '1/8']], null, 'Pump-Quelle');
+  const grm = el('div', 'grm', '<span class="kl">GR</span><div class="grt"><i class="grb"></i></div><span class="grv">0 dB</span><span class="pkl" title="Ausgangspegel-Spitze">PEAK</span>');
+  ks.forEach(k => pg.appendChild(k));
+  pg.appendChild(grm);
+  const mc = el('div', 'fxmode'); mc.append(lgrp('Pump-Quelle', src), fxCap()); pg.appendChild(mc);
+  ED.grm = {el: grm, bar: grm.querySelector('.grb'), val: grm.querySelector('.grv'), led: grm.querySelector('.pkl'), last: '', ledT: 0, t: 0};
+  ED.refreshers.push(() => { ks.forEach(x => x.update()); src.update(); });
+}
+// GR meter + output peak LED (§8.3), read in rAF at ≤ 30 fps while the MASTER page is open
+function grmFrame() {
+  const G = ED.grm; if (!G || !G.el.isConnected || !AU.M) return;
+  const now = performance.now(); if (now - G.t < 33) return; G.t = now;
+  const gr = Math.max(0, -(AU.M.reductionDb() || 0)), pct = Math.min(1, gr / 20);
+  G.bar.style.transform = 'scaleY(' + pct.toFixed(3) + ')';
+  const txt = (gr >= .05 ? MINUS + fmtDec(gr, 1) : '0') + ' dB'; if (txt !== G.last) { G.last = txt; G.val.textContent = txt; }
+  const a = AU.analyser, n = a.fftSize, buf = G.buf || (G.buf = new Float32Array(n)); a.getFloatTimeDomainData(buf);
+  let pk = 0; for (let i = 0; i < n; i++) { const x = buf[i] < 0 ? -buf[i] : buf[i]; if (x > pk) pk = x; }
+  if (pk > .97) G.ledT = now;
+  const on = now - G.ledT < 400; if (on !== G.on) { G.on = on; G.led.classList.toggle('on', on); }
 }
 // „Hall/Echo wie im Preset“ (§11.3): appears after loading a sound that has a bus hint; applies only on tap, one undo
 function busHintChip(i) {
@@ -8971,7 +10449,7 @@ function applyBusHint() {
   if (h.bus.hall) S.fxBus.hall = Object.assign({}, S.fxBus.hall, h.bus.hall);
   if (h.bus.echo) S.fxBus.echo = Object.assign({}, S.fxBus.echo, h.bus.echo);
   S.fxBus = normFxBus(S.fxBus);
-  applyTempoDependents();
+  applyFxBus(); applyTempoDependents();
   fxUndo.commit(before, 'Hall/Echo wie im Preset');
   UI.busHint = null;
   toast('Hall/Echo wie im Preset „' + h.name + '“', {label: 'Rückgängig', fn: () => undo()});
@@ -9244,26 +10722,21 @@ const PV = {on: false, t: -1, notes: [], k: 0, t0: 0, spb: .5, sound: null, voic
    once loaded, and the loaded sound's amp / pan LFO does not leak into it. Disposed once its last voice is gone. */
 function pvChain(t, snd) {
   const c = AU.ctx, A = AU.tracks[t]; if (!c || !A) return null;
-  const N = {sound: snd, t, gone: false, trackIn: c.createGain(), drive: c.createWaveShaper(), trem: c.createGain(), vol: c.createGain(),
-    pan: c.createStereoPanner ? c.createStereoPanner() : null, revSend: c.createGain(), dlySend: c.createGain(),
-    lfoPitch: c.createGain(), lfoCut: c.createGain(), nl: {lfo: [null, null], key: ['', ''], routes: [], tremBase: 1}};
-  const fx = snd.fx || {drive: 0, rev: 0, dly: 0, vol: .8, pan: 0};
-  try { N.drive.curve = fx.drive > .005 ? driveCurve(fx.drive) : null; N.drive.oversample = 'none'; } catch (e) {}
-  N.trackIn.connect(N.drive); N.drive.connect(N.trem); N.trem.connect(N.vol);
-  let post = N.vol; if (N.pan) { N.vol.connect(N.pan); post = N.pan; N.pan.pan.value = fx.pan || 0; }
-  post.connect(AU.masterSum); post.connect(N.revSend); post.connect(N.dlySend);
-  N.revSend.connect(AU.reverb); N.dlySend.connect(AU.delay);
-  N.vol.gain.value = fx.vol * fx.vol / (1 + fx.drive * 1.5); N.revSend.gain.value = fx.rev * .6; N.dlySend.gain.value = fx.dly * .5;
-  syncLfoSet(N, snd, 97);
-  N.trem.gain.value = N.nl.tremBase;
+  const N = Object.assign(buildChain(c), {sound: snd, t, gone: false, E: null,
+    lfoPitch: c.createGain(), lfoCut: c.createGain(), nl: {lfo: [null, null], key: ['', ''], routes: [], tremBase: 1}});
+  if (isWkEngine(snd.engine) && wkReady()) N.E = newEngine(N.trackIn, snd);    // the worklet runs the sound's routes itself
+  else syncLfoSet(N, snd, 97);
+  applyChainFx(N, fxOfSound(snd), true);
   return N;
 }
 function pvChainDispose(N) {
   if (!N || N.gone) return; N.gone = true;
   const now = AU.ctx ? AU.ctx.currentTime : 0;
+  if (N.E) { for (const v of [...N.E.proxies.values()]) wkVoiceDead(v); N.E.dispose(); N.E = null; }
   for (const L of N.nl.lfo) if (L) { L.stop(now + .02); try { L.out.disconnect(); } catch (e) {} }
   for (const g of N.nl.routes) { try { g.disconnect(); } catch (e) {} }
-  for (const n of [N.trackIn, N.drive, N.trem, N.vol, N.pan, N.revSend, N.dlySend, N.lfoPitch, N.lfoCut]) if (n) { try { n.disconnect(); } catch (e) {} }
+  const C = N.chorus || N.chDying; if (C) { try { C.dispose(); } catch (e) {} }
+  for (const n of [N.trackIn, N.drive, ...N.shp, ...N.shg, N.dry, N.wet, N.trem, N.duck, N.vol, N.pan, N.revSend, N.dlySend, N.lfoPitch, N.lfoCut]) if (n) { try { n.disconnect(); } catch (e) {} }
 }
 const PV_OLD = [];
 // housekeeping (gcVoices): a retired preview chain goes once none of its voices sounds any more
@@ -9504,7 +10977,9 @@ function buildDrumEd() {
   const sh = EL.drumSheet, tr = S.tracks[4];
   ED.refreshers = []; ED.stepEls = []; ED.ovEls = []; ED.lastStep = -2; ED.step = null;
   sh.style.setProperty('--tc', 'var(--t5)');
-  const F = sheetFrame(sh, tr.name, [['sound', 'SOUND'], ['steps', 'STEPS'], ['fx', 'FX']], ED.dTab, id => { ED.dTab = id; safeRebuild(buildDrumEd); });
+  if (!DFX_SUBS.some(x => x[0] === ED.dFx)) ED.dFx = 'spur';
+  const F = sheetFrame(sh, tr.name, [['sound', 'SOUND'], ['steps', 'STEPS'], ['fx', 'FX']], ED.dTab, id => { ED.dTab = id; safeRebuild(buildDrumEd); },
+    ED.dTab === 'fx' ? {list: DFX_SUBS, cur: ED.dFx, on: id => { ED.dFx = id; safeRebuild(buildDrumEd); }} : null);
   const kit = el('div', 'preset');
   const kPrev = el('button', 'pa rb', '‹'), kName = el('button', 'pv rb', 'Kit ' + esc(tr.kit)), kNext = el('button', 'pa rb', '›');
   kPrev.setAttribute('aria-label', 'Voriges Kit'); kNext.setAttribute('aria-label', 'Nächstes Kit');
@@ -9520,7 +10995,7 @@ function buildDrumEd() {
   onTap(dice, () => soundEdit(4, 'Zufall ' + DRUM_VOICES[ED.dVoice].l, () => randomizeDrumVoice(DRUM_VOICES[ED.dVoice].id)));
   F.r2.append(kit, dice);
   sheetButtons(F.r1, F.r2);
-  const pg = el('div', 'pg rest pg-d' + ED.dTab + (ED.dTab === 'fx' ? ' pg-fx' : '')); F.body.appendChild(pg);
+  const pg = el('div', 'pg rest pg-d' + ED.dTab + (ED.dTab === 'fx' ? ' pg-fxg pg-fx-' + ED.dFx : '')); F.body.appendChild(pg);
   if (ED.dTab === 'sound') {
     // picking a voice to edit only auditions it: never recorded into a clip (only the pads record, §4.8)
     const vd = DRUM_VOICES[ED.dVoice];
@@ -9550,11 +11025,16 @@ function buildDrumEd() {
     pg.append(drumVoiceChips(() => safeRebuild(buildDrumEd)), stabs, se, foot);
     paintSteps();
     lcdShow('Schritte', 'antippen = an/aus · wischen = malen · hoch/runter = Wert · Streifen = zeichnen');
-  } else {
-    const vol = makeFader(SYN_DESC['fx.vol'], () => S.tracks[4].fx.vol, v => setDrumFx('fx.vol', v), {undo: soundUndo(4), mod: true, label: 'Lautst.'});
-    const ff = el('div', 'fxf'); ff.appendChild(vol);
-    pg.append(ff, knobRow(['fx.drive', 'fx.reverb', 'fx.delay', 'fx.pan'].map(p => SYN_DESC[p]).map(d => makeCtl(d, () => S.tracks[4].fx[d.p.slice(3)], v => setDrumFx(d.p, v), {undo: soundUndo(4), mod: SYN_MOD.has(d.p)}))));
+  } else if (ED.dFx === 'hall') pageFxHall(pg);
+  else if (ED.dFx === 'echo') pageFxEcho(pg);
+  else if (ED.dFx === 'master') pageFxMaster(pg);
+  else {
+    // SPUR of the v2 drum block (until WP6): Drive, Hall, Echo, Lautstärke, Panorama (sends post-fader, §8.1)
+    const ks = ['fx.drive', 'fx.reverb', 'fx.delay', 'fx.vol', 'fx.pan'].map(p => SYN_DESC[p]).map(d => makeCtl(d, () => S.tracks[4].fx[d.p.slice(3)], v => setDrumFx(d.p, v), {undo: soundUndo(4), mod: SYN_MOD.has(d.p)}));
+    ks.forEach(k => pg.appendChild(k));
+    ED.refreshers.push(() => ks.forEach(x => x.update()));
   }
+  if (ED.dTab === 'fx') fxLongLabels(pg);
   sh.classList.add('open');
 }
 // bar pager of the STEPS tab: a one-row segment [TAKT 1|2|…] where the footer is wide enough (container query),
@@ -10075,7 +11555,7 @@ function storageStatus() {
   return (at ? 'Gespeichert ' + relTime(at) : 'Gespeichert') + ' · ' + where;
 }
 function fileStatus() { const t = uiPrefs().lastExport; return t ? 'Als Datei gesichert: ' + relTime(t) : 'Noch nicht als Datei gesichert'; }
-function openMenu() {
+function openMenu(goto) {
   if (!EL.menu.classList.contains('open')) UI.shield = null;
   closePop(); closeSheets(); R.editor = 'menu';
   const m = EL.menu; m.innerHTML = '';
@@ -10162,8 +11642,11 @@ function openMenu() {
   const mv = slider(0, 1, .01, () => st.metroVol, v => { st.metroVol = v; }, v => Math.round(v * 100) + ' %'); mv.prepend(el('span', 'lbl', 'Metronom-Lautst.')); s4.appendChild(mv);
   // 5 Klang
   const s5 = sec('Klang', colR, 6);
-  const ms = slider(0, 1, .01, () => S.fxBus.master.vol, v => { S.fxBus.master.vol = v; applyMasterVol(); }, v => Math.round(v * 100) + ' %'); ms.prepend(el('span', 'lbl', 'Master')); s5.appendChild(ms);
-  row(s5, 'Echo-Zeit', seg([['1/16', '1/16'], ['1/8', '1/8'], ['1/8.', '1/8.'], ['1/4', '1/4']], () => S.fxBus.echo.divL, v => { S.fxBus.echo.divL = v; applyTempoDependents(); }));
+  const ms = slider(0, 1, .01, () => S.fxBus.master.vol, v => { S.fxBus.master.vol = v; applyMaster(); }, v => Math.round(v * 100) + ' %'); ms.prepend(el('span', 'lbl', 'Master-Lautst.')); s5.appendChild(ms);
+  row(s5, 'Qualität', makeSeg([['auto', 'Auto'], ['analog', 'Analog'], ['eco', 'Eco']], () => S.settings.quality, v => { setQuality(v); UI.dirty.all = true; }));
+  row(s5, 'Puffer', makeSeg([['interactive', 'Interaktiv'], ['playback', 'Stabil']], () => (uiPrefs().buffer || S.settings.buffer || 'interactive'),
+    v => { S.settings.buffer = v; setUiPref('buffer', v); markDirty(); if (AU.ctx && AU.hint !== v) toast('Puffer „' + (v === 'playback' ? 'Stabil' : 'Interaktiv') + '“ gilt ab dem nächsten Start der App'); }));
+  s5.appendChild(el('div', 'small', 'Qualität Auto: bei hoher Rechenlast schaltet die App Filter und Unisono kurz einfacher (der Sound bleibt gespeichert, wie er ist). Puffer Stabil: für Geräte, die knacksen (etwas mehr Verzögerung).'));
   const bPanic = btn('Alle Töne aus'); on(bPanic, 'click', () => { panic(); toast('Alle Töne aus'); });
   row(s5, null, bPanic);
   // 6 Bedienung (WP1)
@@ -10189,6 +11672,7 @@ function openMenu() {
     'LATCH: Träger bleibt nach dem Loslassen. ORIGINAL = zurück. Drums bleiben immer gleich.',
     'KLANG: Regler ziehen = ändern, seitlich wegziehen = fein, doppelt tippen = Standard, gedrückt halten = Menü (↺ Standardwert).',
     'SOUNDS: Im Klang-Editor auf den Sound-Namen tippen – Bibliothek mit Vorhören (▶), Trick (ⓘ) und eigenen Sounds. „Sichern“ legt deinen Sound unter „Eigene“ ab.',
+    'EFFEKTE: Im Klang-Editor unter FX. SPUR und CHORUS gehören zur Spur, HALL, ECHO und MASTER wirken auf alle Spuren. Nach dem Stopp klingen Hall und Echo aus – ■ zweimal schneidet sie ab.',
     'Jede Änderung lässt sich mit ↶ rückgängig machen, ↷ stellt sie wieder her.',
     'Speichern geht von selbst. „Als Datei sichern“ legt eine Sicherung mit allem an, „Projekte“ zeigt alle Projekte im Browser.'].map(t => `<p>${esc(t)}</p>`).join('') +
     '<p class="small">Computer-Tastatur: A W S E D F T G Z/Y H U J K O L P = Töne · Leertaste = Start/Stopp · Tab = Modus · Shift halten = kurz TRANSPONIEREN · Esc = ORIGINAL (oder offenes Fenster schließen) · Enter = Aufnahme · 1–4 = Szenen · Y/Z und X = Oktave · M = Metronom · Q = Latch · Regler: Pfeiltasten, Mausrad, M = Menü</p>'));
@@ -10197,8 +11681,18 @@ function openMenu() {
   const info = el('div', 'minfo'); s9.appendChild(info); UI.menuInfo = info;
   renderMenuInfo();
   m.classList.add('open');
+  if (goto === 'info') requestAnimationFrame(() => { try { s9.scrollIntoView({block: 'start'}); } catch (e) {} });
 }
 function closeMenu() { if (EL.menu.classList.contains('open')) shieldTap(); EL.menu.classList.remove('open'); if (R.editor === 'menu') R.editor = null; UI.menuStatus = UI.menuInfo = UI.projBox = UI.histBox = null; UI.dirty.all = true; }
+// Menü → Info: „Worklet (blob)“ or „Kompatibel“ + the reason (§2.5)
+function synthStatus() {
+  const st = SynthHost.state;
+  if (UI.forceNative) return 'Kompatibel (ECO-Klang) – Worklet abgeschaltet';
+  if (st === 'ready') return 'Worklet (' + (SynthHost.how || '?') + ', ' + Math.round(SynthHost.ms) + ' ms)';
+  if (st === 'failed') return 'Kompatibel (ECO-Klang) – ' + (SynthHost.err || 'Worklet nicht verfügbar');
+  if (st === 'loading') return 'wird geladen …';
+  return AU.ctx ? '–' : 'startet mit dem ersten Tippen';
+}
 function renderMenuInfo() {
   const box = UI.menuInfo; if (!box) return;
   const c = AU.ctx, a = audioState();
@@ -10207,8 +11701,12 @@ function renderMenuInfo() {
     ['Speicher', (kv ? (STORE_LABEL[kv.mode] || kv.mode) : '…') + (UI.persist ? ' · ' + ({persisted: 'dauerhaft', 'best-effort': 'bestmöglich', 'n/a': 'ohne Garantie'}[UI.persist] || UI.persist) : '')],
     ['Audio', {running: 'läuft', suspended: 'pausiert', interrupted: 'unterbrochen', closed: 'beendet', none: 'noch nicht gestartet (einmal tippen)'}[a] || a],
     ['Abtastrate', c ? c.sampleRate + ' Hz' : '–'],
-    ['Latenz', c ? 'Ausgabe ' + Math.round(AU.outLat * 1000) + ' ms · Grundlatenz ' + Math.round((c.baseLatency || 0) * 1000) + ' ms' : '–'],
+    ['Latenz', c ? 'Ausgabe ' + Math.round(AU.devLat * 1000) + ' ms · Effekte ' + Math.round(AU.graphLat * 1000) + ' ms · Grundlatenz ' + Math.round((c.baseLatency || 0) * 1000) + ' ms' : '–'],
     ['Bildschirm bleibt an', wakeStatus()],
+    ['Synth', synthStatus()],
+    ['Hall', !c ? '–' : AU.hallKind === 'worklet' ? 'Worklet (Dattorro)' : 'Faltung (vereinfacht)'],
+    ['CPU', c ? Math.round(LIM.load * 100) + ' % Last · Begrenzer ' + (LIM.level ? 'Stufe ' + LIM.level : 'aus') + ' · Qualität ' + ({auto: 'Auto', analog: 'Analog', eco: 'Eco'}[S.settings.quality] || 'Auto') : '–'],
+    ['Puffer', c ? (AU.hint === 'playback' ? 'Stabil' : 'Interaktiv') : (uiPrefs().buffer === 'playback' ? 'Stabil' : 'Interaktiv')],
   ];
   box.innerHTML = rows.map(([k, v]) => `<div class="irow"><span class="lbl">${esc(k)}</span><span>${esc(v)}</span></div>`).join('');
 }
@@ -10336,7 +11834,7 @@ function applyProject(p, opts) {
     // the old project's notes are still fading out through the track chains: swap the drive curves etc. only after
     // the fade (a curve swap on a sounding signal is a step = click)
     const busy = VOICES.some(v => !v.dead) || HITS.some(h => !h.dead);
-    const applyAll = () => { for (let i = 0; i < 5; i++) { AU.tracks[i].driveAmt = -1; AU.tracks[i].lastOut = null; AU.tracks[i].prevOuts = AU.tracks[i].grpOuts = AU.tracks[i].grpT = null; applyTrackParams(i, false); } applyMasterVol(); applyTempoDependents(); };
+    const applyAll = () => { for (let i = 0; i < 5; i++) { AU.tracks[i].driveAmt = -1; AU.tracks[i].lastOut = null; AU.tracks[i].prevOuts = AU.tracks[i].grpOuts = AU.tracks[i].grpT = null; applyTrackParams(i, false); } syncEngines(); applyFxBus(); applyTempoDependents(); };
     const gen = ++UI.projGen;
     if (busy) setTimeout(() => { if (gen === UI.projGen) { try { applyAll(); } catch (e) { logErr(e); } } }, 140); else applyAll();
   }
@@ -10890,6 +12388,9 @@ function bindUI() {
   on(EL.chipQ, 'click', () => popRecOpts(EL.chipQ));
   on(EL.chipLen, 'click', () => popRecOpts(EL.chipLen));
   on(EL.bMenu, 'click', openMenu);
+  // CPU badge (§14.3): a tap opens Menü → Info (L/W chip, or the TAKT block in P while it reads CPU)
+  on(EL.bCpu, 'click', () => openMenu('info'));
+  on(EL.takt, 'click', () => { if (LIM.level >= 3 && !isLand()) openMenu('info'); });
   // grid
   on(EL.grid, 'pointerdown', e => {
     const scn = e.target.closest('.scn');
@@ -11070,6 +12571,11 @@ function onKeyUp(e) {
   if (code === 'Space') e.preventDefault();
   if (KEYMAP[code] != null) inputUp('k' + code);
 }
+// §14.4.8: hidden AND stopped for 30 s -> ctx.suspend(); the next gesture resumes it (the unlock code in init)
+function idleSuspendArm() {
+  clearTimeout(UI.suspT);
+  UI.suspT = setTimeout(() => { const c = AU.ctx; if (document.hidden && !R.playing && c && c.state === 'running') { UI.idleSusp = true; try { const p = c.suspend(); if (p && p.catch) p.catch(() => {}); } catch (e) {} } }, 30000);
+}
 function releaseEverything() {
   releasePointerKeys(); releaseInputs();
   R.momSrc.clear(); if (R.momentary) { R.momentary = false; UI.dirty.all = true; }
@@ -11104,7 +12610,33 @@ function runtimeInfo() {
     voices: VOICES.filter(v => !v.dead).length + HITS.filter(x => !x.dead).length,
     editor: ['synth', 'drum', 'clip', 'menu', 'roll', 'browser'].includes(R.editor) ? R.editor : null,
     kbScale: S.settings.kbScale, fang: fangLit(), keyPending: [...R.keyPending],
+    engine: (({synth, how, err, hall, load, limiter, loopExtra, graphLat}) => ({synth, how, err, hall, load, limiter, loopExtra, graphLat}))(engineInfo()),
   };
+}
+// §16 engineInfo(): synth path, loader, hall kind, summed worklet load, limiter level, per-track voices / load (+ the
+// limiter's working values), latencies, storage mode
+function engineInfo() {
+  const st = SynthHost.state;
+  const synth = UI.forceNative ? 'native' : st === 'ready' ? 'worklet' : st === 'failed' ? 'native' : 'loading';
+  return {synth, how: SynthHost.how || null, err: UI.forceNative ? 'abgeschaltet (forceNative)' : SynthHost.err || null, hall: AU.hallKind, load: +cpuLoad().toFixed(4),
+    limiter: LIM.level, quality: S.settings.quality, loadMs: Math.round(SynthHost.ms || 0),
+    perTrack: [0, 1, 2, 3].map(i => { const E = AU.synth[i];
+      return E ? {voices: E.nv, load: E.load, path: 'worklet', poly: E.sent.poly, lq: E.sent.lq, uni: [E.sent.o1uni, E.sent.o2uni, E.sent.o3uni]}
+        : {voices: VOICES.filter(v => !v.dead && !v.wk && v.track === i).length, load: 0, path: S.tracks[i].kind === 'synth' && isWkEngine(S.tracks[i].sound.engine) ? 'native' : 'native-only'}; }),
+    loopExtra: AU.loopExtra, graphLat: AU.graphLat, compLat: AU.compLat, measured: AU.measured, outLat: AU.outLat, devLat: AU.devLat,
+    storage: kv ? kv.mode : 'memory', hint: AU.hint};
+}
+// §16 forceNative(on): before the audio start = never load the worklet (tests of the fallback); later = the tracks change
+// path from the next note on (sounding worklet notes fade)
+function forceNative(on) {
+  UI.forceNative = !!on;
+  if (AU.ctx) {
+    if (UI.forceNative) { for (let i = 0; i < 4; i++) if (AU.synth[i]) { retireEngine(i); rebuildNativeLfos(i); } }
+    else if (SynthHost.state === 'ready') { try { upgradeHall(); } catch (e) { logErr(e); } syncEngines(); }
+    else loadWorklet();
+  }
+  wkReport();
+  return engineInfo().synth;
 }
 function voicesInfo() {
   const now = nowT();
@@ -11188,7 +12720,12 @@ const SYNQUENZER = {
   exportProject: () => saveFile(), history: () => (autosave ? autosave.history() : Promise.resolve([])), restoreHistory,
   projects: () => projectsList(), openProject, deleteProject, renameProject, duplicateProject,
   storage: () => ({mode: kv ? kv.mode : null, booted: BOOT.done, dirty: !!(autosave && autosave.dirty), lastOk: autosave ? autosave.lastOk : 0, lastErr: autosave ? autosave.lastErr : null, persist: UI.persist || null}),
-  engineInfo: () => ({synth: 'native', how: null, err: null, hall: 'convolver', load: 0, limiter: 0, perTrack: [0, 1, 2, 3].map(() => ({voices: 0, load: 0})), loopExtra: 0, graphLat: 0, storage: kv ? kv.mode : 'memory'}),
+  // WP4 (§16): engine and effects
+  engineInfo: () => engineInfo(),
+  forceNative: on => forceNative(on),
+  cpuInject: (load, seconds) => { UI.cpuInject = Math.max(0, +load || 0); UI.cpuInjectUntil = performance.now() + Math.max(0, +seconds || 0) * 1000; LIM.last = 0; cpuTick(); },
+  setBusFx: (path, v) => setBusFx(path, v), getBusFx: () => deep(S.fxBus), setTrackFx: (t, key, v) => setTrackFx(t, key, v),
+  setQuality: q => setQuality(q),
   wake: () => ({held: !!(WAKE.sentinel && !WAKE.sentinel.released), ok: WAKE.ok, err: WAKE.err, requests: WAKE.requests, releases: WAKE.releases, releasePending: !!WAKE.relT, status: wakeStatus()}),
   gestures: () => ({active: GEST.size, rest: RESTPTR.size, undo: UNDO.length, redo: REDO.length}),
   buildMidi, buildZip: files => buildZip(files), crc32, exportMidi,
@@ -11211,7 +12748,7 @@ const SYNQUENZER = {
 function uiSync() { try { if (EL.app) uiFrame(); } catch (e) { logErr(e); } }
 const NO_SYNC = new Set(['state', 'project', 'runtime', 'getClip', 'getParam', 'noteLog', 'voices', 'timeline', 'serialize', 'buildMidi', 'buildZip', 'crc32', 'meter', 'outPitch', 'migrate', 'tapTempo',
   'getSound', 'mods', 'library', 'factory', 'previewState', 'soundEdited',
-  'history', 'projects', 'storage', 'engineInfo', 'wake', 'gestures', 'roll', 'rollApi', 'detectKey', 'sceneKey']);
+  'history', 'projects', 'storage', 'engineInfo', 'getBusFx', 'wake', 'gestures', 'roll', 'rollApi', 'detectKey', 'sceneKey']);
 for (const k of Object.keys(SYNQUENZER)) {
   const f = SYNQUENZER[k]; if (typeof f !== 'function' || NO_SYNC.has(k)) continue;
   SYNQUENZER[k] = function () { const r = f.apply(this, arguments); uiSync(); if (r && typeof r.then === 'function') return r.then(v => { uiSync(); return v; }); return r; };
@@ -11226,8 +12763,10 @@ function init() {
     'carLabel', 'carVal', 'carShift', 'carLock', 'bLatch', 'bOrig', 'hist', 'strip', 'stDot', 'stName', 'stSub', 'bKlang', 'bFolgt', 'stLock',
     'bMute', 'bUndo', 'modebar', 'octDn', 'octUp', 'segPlay', 'segTr', 'kbArea', 'kb', 'pads', 'kbLabel', 'synthSheet', 'drumSheet', 'clipSheet',
     'menu', 'popLayer', 'toast', 'banner', 'fileIn', 'sndIn', 'sndSheet', 'topLogo', 'bub',
-    'bFangT', 'bFang', 'reclane', 'recLaneCv', 'recLaneTxt', 'bRecDone', 'bEdit', 'kbRef', 'rollSheet', 'qSheet', 'coach', 'ciTgt', 'modeSeg'].forEach(id => { EL[id] = document.getElementById(id); });
+    'bFangT', 'bFang', 'reclane', 'recLaneCv', 'recLaneTxt', 'bRecDone', 'bEdit', 'kbRef', 'rollSheet', 'qSheet', 'coach', 'ciTgt', 'modeSeg', 'bCpu'].forEach(id => { EL[id] = document.getElementById(id); });
   EL.grid = EL.clipGrid; EL.taktLbl = EL.takt.querySelector('.lbl');
+  // AN10 (§5.7): ?engine=native keeps the synth worklet off (tests of the native fallback)
+  try { if (/[?&]engine=native(&|$)/.test(location.search)) UI.forceNative = true; } catch (e) {}
   // research modules' CSS first, so the app's rules (later in the cascade) adapt them
   try { const st = document.createElement('style'); st.id = 'se-css'; st.textContent = StepEditor.CSS; document.head.insertBefore(st, document.head.querySelector('style')); } catch (e) { logErr(e); }
   UI.leds = $$('#leds i');
@@ -11255,7 +12794,7 @@ function init() {
   document.addEventListener('keyup', e => { try { onKeyUp(e); } catch (err) { logErr(err); } });
   window.addEventListener('blur', releaseEverything);
   // the autosave writes its rescue copy on pagehide / hidden (autosave.install); back in front while playing: wake lock again
-  document.addEventListener('visibilitychange', () => { if (document.hidden) releaseEverything(); else if (R.playing) wakeAcquire(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { releaseEverything(); idleSuspendArm(); } else { clearTimeout(UI.suspT); if (R.playing) wakeAcquire(); } });
   window.addEventListener('pagehide', () => { releaseEverything(); });
   window.addEventListener('resize', () => { UI.kbRelayout = true; UI.dirty.carrier = true; if (UI.pop && !(document.activeElement && UI.pop.el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT')) closePop(); });
   window.addEventListener('orientationchange', () => { UI.kbRelayout = true; UI.dirty.carrier = true; });
