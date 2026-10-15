@@ -103,7 +103,7 @@ svg{display:block}
 #bRec.active .sub{color:var(--text)}
 .takt{flex:1 1 auto;min-width:0;max-width:210px;height:44px;display:flex;align-items:center;gap:8px;padding:0 9px;background:var(--lcd);border:1px solid var(--panel-edge);border-radius:var(--r-s);box-shadow:inset 0 1px 6px rgba(0,0,0,.85),0 1px 0 var(--hi);position:relative;overflow:hidden}
 .takt .tcol{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:1px}
-.takt .lbl{font-size:9px;color:var(--text-faint)}
+.takt .lbl{font-size:9px;color:var(--text-faint);white-space:nowrap}
 #taktVal{font:700 28px/1 var(--font-num);color:var(--text);letter-spacing:-.03em;white-space:nowrap;font-variant-numeric:tabular-nums}
 #taktVal.dim{color:var(--text-faint)}
 #taktVal.ci{color:var(--rec)}
@@ -283,6 +283,8 @@ svg{display:block}
 #carVal{font:700 30px/1 var(--font-ui);color:var(--amber);letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;min-width:0;filter:drop-shadow(0 0 6px var(--amber-glow))}
 #carVal.orig{color:var(--text-dim);font-size:20px;letter-spacing:.06em;filter:none}
 #carShift{font:700 16px/1 var(--font-num);color:var(--amber);flex:none}
+#carTgt{font:600 11px/1.2 var(--font-ui);color:var(--amber);opacity:.85;letter-spacing:.01em;flex:0 1000 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#carTgt:empty{display:none}
 #carShift.deg{font:600 12px/1.2 var(--font-ui);letter-spacing:.01em;flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #carShift.own{font:600 9px/1.1 var(--font-ui);letter-spacing:.02em;text-transform:uppercase;color:var(--amber);opacity:.85;flex:1 1 0;min-width:0;white-space:normal;align-self:center}
 #carLock{font-size:12px;flex:none;display:none}
@@ -1709,6 +1711,12 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 .modrow .md b{font:700 12px/1.15 var(--font-ui);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .modrow .md small{font:500 10.5px/1.1 var(--font-num);color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .modrow .md em{font:700 9px/1 var(--font-ui);font-style:normal;letter-spacing:.06em;text-transform:uppercase;color:var(--amber)}
+.modrow .md em.idle{color:var(--text-dim);text-transform:none;letter-spacing:.01em;font-size:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.modrow .md em[hidden],.modrow .md small[hidden]{display:none}
+@media (orientation:portrait){.modrow .md em.idle:not([hidden]){white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.15}}
+@media (orientation:portrait) and (max-width:360px){.modrow .md em.idle:not([hidden]){-webkit-line-clamp:3}}
+.modrow.idle .bsl b{opacity:.45}
+.knob.kidle svg,.fader.kidle .ftrack{opacity:.5}.knob.kidle .kn,.fader.kidle .kn{color:var(--text-dim)}
 .modrow.wk{background:repeating-linear-gradient(135deg,#1c1f25 0 6px,#17191e 6px 12px)}
 .bsl{position:relative;height:36px;touch-action:none;border-radius:6px;background:#0b0c0e;box-shadow:inset 0 1px 4px #000;overflow:hidden}
 .bsl::before{content:"";position:absolute;left:50%;top:5px;bottom:5px;width:1px;background:var(--text-faint)}
@@ -2093,7 +2101,7 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 /* CPU badge (§14.3): L/W amber chip before ≡; P: the TAKT label reads CPU */
 #bCpu{color:var(--amber);border-color:#6b4c16;font-size:9px;letter-spacing:.1em;min-width:40px}
 #bCpu[hidden]{display:none!important}
-.takt .lbl.cpul{color:var(--amber);font-weight:700}
+.takt .lbl.cpul{color:var(--amber);font-weight:700;letter-spacing:.02em}
 @media (orientation:portrait) and (max-width:359px){
   .pg.pg-fxg{gap:2px 4px}
   .pg-fxg>.lgrp.fxrow>.lbl,.pg-fx-master>.fxmode .lgrp>.lbl{min-width:0}
@@ -2441,7 +2449,7 @@ svg.alg .op.sel rect{stroke:#fff;stroke-width:2.6}
       <button id="bHMode" class="rb" aria-label="Harmonie-Modus"><span id="hModeTxt">AKKORD</span><span class="car">▾</span></button>
       <div id="readout" role="button" tabindex="-1" aria-label="Träger">
         <div class="l1"><svg id="carRing" viewBox="0 0 12 12" aria-hidden="true"><circle class="rb0" cx="6" cy="6" r="4.5"/><circle class="rb1" id="carRingArc" cx="6" cy="6" r="4.5"/></svg><span id="carLabel">TRÄGER</span></div>
-        <div class="l2"><span id="carVal" class="orig">ORIGINAL</span><span id="carShift"></span><span id="carLock">🔒</span></div>
+        <div class="l2"><span id="carVal" class="orig">ORIGINAL</span><span id="carShift"></span><span id="carTgt"></span><span id="carLock">🔒</span></div>
       </div>
       <button id="bLatch" class="rb on" aria-label="Latch" title="Latch (Q)"><span>🔒</span><span class="lbl">LATCH</span></button>
       <button id="bOrig" class="rb" aria-label="Original" title="Original (Esc)">ORIGINAL</button>
@@ -4031,8 +4039,9 @@ const RecHelpers = (() => {
     phraseEnd = Math.max(...ph.map(x => x.b + Math.min(x.d, 1)));  // long held notes do not stretch the loop
     const span = Math.max(1, Math.ceil((phraseEnd - .25) / 4 - 1e-9) - startBar);
     const len = Math.min(maxBars, nextPow2(span)), startBeat = startBar * 4, L = len * 4;
+    // app (V0a K-07): the Träger a note was played under (en, tm at note-on) travels with it, like a REC note
     const notes = ph.filter(x => x.b >= startBeat - .25 && x.b < startBeat + L)
-      .map(x => ({t: +Math.max(0, x.b - startBeat).toFixed(6), d: +Math.min(Math.max(1 / 32, x.d), L).toFixed(6), n: x.n, v: x.v}));
+      .map(x => Object.assign({t: +Math.max(0, x.b - startBeat).toFixed(6), d: +Math.min(Math.max(1 / 32, x.d), L).toFixed(6), n: x.n, v: x.v}, x.en ? {en: x.en, tm: x.tm} : null));
     return {startBeat, len, notes};
   }
 
@@ -4101,7 +4110,10 @@ const RecHelpers = (() => {
    - the raw onset field is `o` (research: `r`, which is the drum ratchet): quantizeNotes reads nt.o, a move deletes nt.o
    - (Entscheidung 15) Zeichnen: a tap on a note SELECTS it (at most one) and auditions it; it never deletes it
    - Loop-Bereich: tap a bar number in the ruler = select that bar, tap another = extend, tap the band = clear;
-     [Loop = Auswahl] crops the clip to the range (one undo step)
+     [Zuschneiden] crops the clip to the range (one undo step; V0a K-05: was „Loop = Auswahl“)
+   - V0a K-05/K-06: the length handle ┃ works on a FROZEN view (ppb, x0 taken at the touch, relative: len = len0 + round(dx / bar));
+     at the ruler's edge (≤ 24 px) the view scrolls along (≤ 1 bar/s); on release notes behind the new end are removed and notes
+     over it end there (one undo step with the length). Behind the clip end there is always ≥ 1 bar of room; ⤢ leaves 12 %.
    - ALLE + [Löschen] asks in place first; Radieren is red while active; Raster label „frei“
    - step input buttons (Pause, Bindung, ⌫) in the action bar while Schritt is on
    - app hooks: opts.tap (pointer taps for buttons), opts.reg {begin(id, abort), end(id)} (gesture registry),
@@ -4127,6 +4139,8 @@ const RecHelpers = (() => {
   const GRID = {'1/4': 1, '1/8': .5, '1/8T': 1 / 3, '1/16': .25, '1/16T': 1 / 6, '1/32': .125, 'aus': 0};
   const LO = 24, HI = 108;                                        // C1..C8
   const SLOP = 7;                                                 // px before a touch counts as a drag
+  const FITK = .88;                                               // ⤢ whole clip: the clip fills 88 %, 12 % room on the right (V0a K-05)
+  const EDGE = 24, EDGE_BPS = 4;                                  // length handle at the ruler's edge: scroll along, ≤ 1 bar (4 beats) per s
 
   const CSS = `
 .pr{display:grid;grid-template-columns:40px minmax(0,1fr);grid-template-rows:auto 26px minmax(0,1fr) var(--pr-vh,56px) auto;height:100%;min-height:0;
@@ -4190,7 +4204,7 @@ const RecHelpers = (() => {
     tb.len = btn(bar, '♪ 1/16', () => { const L8 = [null, .25, .5, 1, 2, 4], i = L8.indexOf(E.noteLen); E.noteLen = L8[(i + 1) % L8.length]; render(); }, 'Notenlänge für neue Noten (= Raster, oder fest)');
     tb.fold = btn(bar, 'Tonart', () => { E.fold = !E.fold; buildRows(true); render(); if (opts.onPrefs) opts.onPrefs({grid: E.grid, fold: E.fold}); }, 'Nur Töne der Tonart zeigen');
     tb.step = btn(bar, 'Schritt', () => { setStep(E.step == null); }, 'Schritt-Eingabe mit der Tastatur');
-    tb.fit = btn(bar, '⤢', () => fitView(V.ppb > V.W / L() + 1 ? 'clip' : 'bar'), 'Ganzer Clip / 1 Takt');
+    tb.fit = btn(bar, '⤢', () => fitView(V.ppb > V.W * FITK / L() + 1 ? 'clip' : 'bar'), 'Ganzer Clip / 1 Takt');
     for (const x of opts.extraTools || []) { tb[x.id] = btn(bar, x.label, () => x.fn(tb[x.id]), x.title); if (x.cls) tb[x.id].classList.add(x.cls); }
     sep(bar);
     tb.undo = btn(bar, '↶', () => { if (model.undo) model.undo(); afterExternal(); }, 'Rückgängig');
@@ -4202,7 +4216,7 @@ const RecHelpers = (() => {
     A.tie = btn(acts, 'Bindung', () => stepTie(), 'Schritt: letzte Eingabe einen Schritt länger');
     A.back = btn(acts, '⌫ Schritt', () => stepBack(), 'Schritt zurück und löschen');
     A.sep0 = acts.appendChild(mk('span', 'sep'));
-    A.loop = btn(acts, 'Loop = Auswahl', () => cropToLoop(), 'Clip auf den gewählten Takt-Bereich zuschneiden', 'loopb');
+    A.loop = btn(acts, 'Zuschneiden', () => cropToLoop(), 'Clip auf den gewählten Takt-Bereich zuschneiden', 'loopb');
     btn(acts, '▲ Stufe', () => act('Transponieren', ns => transposeNotes(ns, 1, true)), 'In der Tonart eine Stufe hoch');
     btn(acts, '▼ Stufe', () => act('Transponieren', ns => transposeNotes(ns, -1, true)), 'In der Tonart eine Stufe tiefer');
     btn(acts, '+12', () => act('Oktave', ns => transposeNotes(ns, 12, false)), 'Oktave hoch');
@@ -4245,10 +4259,11 @@ const RecHelpers = (() => {
     function centerOn(n) { V.top = clamp(rowOfNote(n) - V.H / V.rowH / 2 + .5, 0, Math.max(0, V.rows.length - V.H / V.rowH)); }
     function clampView() {
       if (!isFinite(V.x0)) V.x0 = 0; if (!isFinite(V.top)) V.top = 0; if (!isFinite(V.ppb) || V.ppb <= 0) V.ppb = 80;
-      V.ppb = clamp(V.ppb, V.W / Math.max(4, L() + 2), 400);
       V.rowH = clamp(V.rowH, 16, 48);
-      V.x0 = clamp(V.x0, -.25, Math.max(0, L() + 1 - V.W / V.ppb));
       V.top = clamp(V.top, 0, Math.max(0, V.rows.length - V.H / V.rowH));
+      if (V.freeze) return;                                         // length handle in use: the view stays as it was at the touch (K-05)
+      V.ppb = clamp(V.ppb, V.W / Math.max(4, L() + 4), 400);
+      V.x0 = clamp(V.x0, -.25, Math.max(0, L() + 4 - V.W / V.ppb)); // ≥ 1 bar of room behind the clip end
     }
     function noteRect(nt) { const r = rowOfNote(nt.n); return {x: xOf(nt.t), y: yOfRow(r), w: Math.max(3, nt.d * V.ppb), h: V.rowH}; }
     // generous hit-test: rows get 4 px of slop, tiny notes are at least 22 px wide to the finger
@@ -4399,9 +4414,9 @@ const RecHelpers = (() => {
     function wrapO(o, nl) { const w = ((o % nl) + nl) % nl; return +(w >= nl - 1e-4 ? 0 : w).toFixed(4); }
     function setLen(bars) {
       bars = clamp(bars, 1, 16); const c = clip(); if (bars === c.len) return;
-      model.begin(); const nl = bars * 4;
-      if (bars < c.len) { c.notes = c.notes.filter(n => n.t < nl - 1e-9); c.notes.forEach(n => { n.d = Math.min(n.d, nl); if (n.o != null) n.o = wrapO(n.o, nl); }); }
-      c.len = bars; E.sel = new Set([...E.sel].filter(n => c.notes.includes(n)));
+      model.begin(); const nl = bars * 4, shorter = bars < c.len;
+      c.len = bars; if (shorter) trimToLen();                    // V0a K-06: the same trim as the length handle
+      E.sel = new Set([...E.sel].filter(n => c.notes.includes(n)));
       if (E.loop && E.loop.b >= bars) E.loop = E.loop.a < bars ? {a: E.loop.a, b: bars - 1} : null;
       if (E.step != null && E.step >= nl) E.step = 0;
       model.end(true, 'Länge'); say(bars + (bars === 1 ? ' Takt' : ' Takte')); render();
@@ -4416,14 +4431,27 @@ const RecHelpers = (() => {
       for (const n of c.notes) { n.t = +(n.t - a).toFixed(6); if (n.o != null) n.o = wrapO(Math.max(0, n.o - a), nl); n.d = Math.min(n.d, nl); }
       c.len = lp.b - lp.a + 1; E.loop = null; E.sel = new Set([...E.sel].filter(n => c.notes.includes(n)));
       if (E.step != null && E.step >= nl) E.step = 0;
-      sortNotes(); model.end(true, 'Loop = Auswahl'); V.x0 = 0; render(); say(c.len + (c.len === 1 ? ' Takt' : ' Takte'));
+      sortNotes(); model.end(true, 'Zuschneiden'); V.x0 = 0; render(); say(c.len + (c.len === 1 ? ' Takt' : ' Takte'));
       return true;
     }
     function deleteScope() {
       if (!E.sel.size) { if (!clip().notes.length) return; E.ask = true; render(); return; }   // „ALLE“: ask in place first
       act('Löschen', ns => { const c = clip(); c.notes = c.notes.filter(n => !ns.includes(n)); E.sel.clear(); return true; });
     }
-    function fitView(mode) { measure(); V.ppb = mode === 'clip' ? V.W / L() : V.W / Math.min(L(), 4); if (mode === 'clip') V.x0 = 0; clampView(); render(); }
+    function fitView(mode) { measure(); V.ppb = mode === 'clip' ? V.W * FITK / L() : V.W / Math.min(L(), 4); if (mode === 'clip') V.x0 = 0; clampView(); render(); }
+    // V0a K-06: after the length handle let go: notes behind the end go, notes over it end there; true if anything changed
+    function trimToLen() {
+      const c = clip(), nl = L(); let ch = false;
+      const keep = c.notes.filter(n => n.t < nl - 1e-9);
+      if (keep.length !== c.notes.length) { c.notes = keep; ch = true; }
+      for (const n of c.notes) {
+        if (n.t + n.d > nl + 1e-9) { n.d = +(nl - n.t).toFixed(6); ch = true; }
+        if (n.o != null) { const w = wrapO(n.o, nl); if (w !== n.o) { n.o = w; ch = true; } }
+      }
+      if (ch) E.sel = new Set([...E.sel].filter(n => c.notes.includes(n)));
+      if (E.step != null && E.step >= nl) E.step = 0;
+      return ch;
+    }
     function act(label, fn, force) { const ns = scope(); if (!ns.length && !force) return; model.begin(); const ok = fn(ns) !== false; sortNotes(); model.end(ok, label); afterExternal(); }
     function centerIfHidden(n) { const r = rowOfNote(n); if (r < V.top || r > V.top + V.H / V.rowH - 1) centerOn(n); }
     function afterExternal() { const c = clip(); if (!c) return; const live = new Set(c.notes); E.sel = new Set([...E.sel].filter(n => live.has(n))); if (E.loop && E.loop.b >= c.len) E.loop = null; buildRows(true); render(); }
@@ -4589,15 +4617,46 @@ const RecHelpers = (() => {
       el.addEventListener('lostpointercapture', e => { if (s && s.id === e.pointerId) up(e); });
     }
     scroller(cK, (s, p) => { V.top = s.v0.top - (p.y - s.p0.y) / V.rowH; clampView(); render(); }, p => { const n = noteOfRow(rowAt(p.y)); model.audition && model.audition(n, .8); });
+    // the length handle (V0a K-05): the view is frozen at the touch (ppb0, x00); the length follows the finger relatively
+    // (whole bars, rounded); the edge zones scroll the frozen view along so the clip can grow / shrink beyond the screen
+    function lenDrag(s) {
+      const dB = (s.px - s.p0.x) / s.ppb0 + (V.x0 - s.x00), c = clip();
+      const bars = clamp(s.len0 + Math.round(dB / 4), 1, 16);
+      if (bars !== c.len) { c.len = bars; if (E.loop && E.loop.b >= bars) E.loop = null; say(bars + (bars === 1 ? ' Takt' : ' Takte')); if (opts.onTick) opts.onTick(); }
+      render();
+    }
+    function lenEdge(s) {
+      // only in the direction the finger moves (a handle grabbed right at the edge does not run off while dragged back)
+      const dir = s.px < EDGE && s.px < s.p0.x ? -1 : s.px > V.W - EDGE && s.px > s.p0.x ? 1 : 0;
+      s.edge = dir;
+      if (!dir || s.edgeRaf) return;
+      let last = performance.now();
+      const step = () => {
+        s.edgeRaf = 0;
+        if (!s.edge || s.done || dead) return;
+        const now = performance.now(), dt = Math.min(.1, (now - last) / 1000); last = now;
+        const hi = Math.max(0, 16 * 4 + 4 - V.W / V.ppb), x0 = clamp(V.x0 + s.edge * EDGE_BPS * dt, -.25, hi);
+        if (x0 !== V.x0) { V.x0 = x0; lenDrag(s); }
+        s.edgeRaf = requestAnimationFrame(step);
+      };
+      s.edgeRaf = requestAnimationFrame(step);
+    }
     scroller(cR, (s, p) => {
       if (s.len == null) {                                           // decide once: length handle or scroll
         s.len = Math.abs(s.p0.x - xOf(L())) < 22;
-        if (s.len) { model.begin(); s.len0 = clip().len; s.end = cancel => { if (cancel) { model.revert(); afterExternal(); } else model.end(clip().len !== s.len0, 'Länge'); }; }
+        if (s.len) {
+          model.begin(); s.len0 = clip().len; s.ppb0 = V.ppb; s.x00 = V.x0; V.freeze = true;
+          s.end = cancel => {
+            s.done = true; s.edge = 0; if (s.edgeRaf) { cancelAnimationFrame(s.edgeRaf); s.edgeRaf = 0; }
+            V.freeze = false;
+            if (cancel) { model.revert(); afterExternal(); }
+            else { const cut = clip().len < s.len0 && trimToLen(); model.end(clip().len !== s.len0 || cut, 'Länge'); }
+            render();
+          };
+        }
       }
-      if (s.len) {
-        const bars = clamp(Math.round(beatAt(p.x) / 4), 1, 16), c = clip();
-        if (bars !== c.len) { c.len = bars; if (E.loop && E.loop.b >= bars) E.loop = null; say(bars + (bars === 1 ? ' Takt' : ' Takte')); if (opts.onTick) opts.onTick(); render(); }
-      } else { V.x0 = s.v0.x0 - (p.x - s.p0.x) / V.ppb; clampView(); render(); }
+      if (s.len) { s.px = p.x; lenDrag(s); lenEdge(s); }
+      else { V.x0 = s.v0.x0 - (p.x - s.p0.x) / V.ppb; clampView(); render(); }
     }, p => rulerTap(p.x));
     // a tap on a bar number = loop range (first bar, then extend; a tap on the band clears it); elsewhere = step cursor
     function rulerTap(px) {
@@ -4652,7 +4711,7 @@ const RecHelpers = (() => {
     function playhead(beat) {                                         // call from the app's rAF loop; -1 hides it
       if (beat == null || beat < 0 || dead) { if (ph.style.opacity !== '0') ph.style.opacity = '0'; return; }
       const x = xOf(beat); ph.style.opacity = x < 0 || x > V.W ? '0' : '1'; ph.style.transform = 'translateX(' + x.toFixed(1) + 'px)';
-      if (opts.follow && !gst && P.size === 0 && (x > V.W * .85 || x < 0) && L() * V.ppb > V.W + 1) { V.x0 = Math.max(0, beat - V.W * .1 / V.ppb); render(); }
+      if (opts.follow && !gst && P.size === 0 && !V.freeze && (x > V.W * .85 || x < 0) && L() * V.ppb > V.W + 1) { V.x0 = Math.max(0, beat - V.W * .1 / V.ppb); render(); }
     }
     function layoutOpen() {
       buildRows(false);
@@ -5666,7 +5725,7 @@ const RecHelpers = (() => {
         aA: .06, aD: .3, aS: .9, aR: .35, ampVel: .3, mode: 2, poly: 1, glide: .09, l2shape: 0, l2rate: 5, l2fade: .8, analog: 0.02, spread: 0, level: 1.265},
       [M('lfo2', 'pitch', .003), M('lfo2', 'cutoff', .0006)], {rev: .35, dly: .2}),
     // ---------------- POLY & BRASS ----------------
-    A('ob-brass', 'OB-Brass', 'poly', 'stab', 'Oberheim OB-Xa („Jump“)',
+    A('ob-brass', 'OB-Brass', 'poly', 'stab', 'Oberheim OB-X/OB-Xa („Jump“, Quellen uneinig)',
       'Brass-Geheimnis: Filter-Attack (60 ms) etwas langsamer als Lautstärke-Attack (25 ms) – der Ton wird erst laut, dann hell. Voice-Pan 55 % = jede Stimme woanders, wie die Pan-Regler im OB-X.',
       {o2fine: 9, o2lvl: .9, ftype: 1, cutoff: 520, res: .12, drive: .25, kt: .55, fenv: .5, fvel: .45, fA: .06, fD: .55, fS: .45, fR: .3, fCurve: .6,
         aA: .025, aD: .4, aS: .95, aR: .25, ampVel: .4, mA: .001, mD: .1, mS: 0, analog: .3, spread: .55, level: 0.377},
@@ -6037,9 +6096,15 @@ const RecHelpers = (() => {
     if (m.has(key)) return m.get(key);
     const N = 96, re = new Float32Array(N), im = new Float32Array(N), ww = key / 20;
     for (let n = 1; n < N; n++) { re[n] = 2 * Math.sin(2 * Math.PI * n * ww) / (Math.PI * n); im[n] = 2 * (1 - Math.cos(2 * Math.PI * n * ww)) / (Math.PI * n); }
-    const pw = c.createPeriodicWave(re, im); m.set(key, pw); return pw;
+    // V0a-19: not normalised — the exact DC-free ±1 pulse of the worklet (a normalised narrow pulse was up to 6 dB quieter)
+    let pw; try { pw = c.createPeriodicWave(re, im, {disableNormalization: true}); } catch (e) { pw = c.createPeriodicWave(re, im); }
+    m.set(key, pw); return pw;
   }
   const TYPE = ['sawtooth', null, 'triangle', 'sine'];
+  // V0a-19: the browser normalises its band-limited saw and square to a peak of 1 (Gibbs overshoot 1.179 = −1.43 dB); the
+  // worklet's polyBLEP waves are ±1. Gain per wave (saw, pulse, triangle, sine) and for the square sub; unison as in the
+  // worklet: the voices of an oscillator together carry 1.4× the level of one voice (+2.9 dB)
+  const WAVEG = [1.179, 1, 1, 1], SQG = 1.179, UNIG = 1.4;
   let TANH = null;
   const tanhCurve = () => { if (TANH) return TANH; TANH = new Float32Array(1024); for (let i = 0; i < 1024; i++) { const x = i / 511.5 - 1; TANH[i] = Math.tanh(2.5 * x) / Math.tanh(2.5); } return TANH; };
   // the unison spread in cents (AnalogCore law) and the detune offset of unison voice u of n
@@ -6056,11 +6121,31 @@ const RecHelpers = (() => {
   const fcFor = (ft, res) => (ft === 2 || ft === 3 ? interp(RES, ft === 2 ? BPW24 : BPW12, Math.min(Math.max(+res || 0, 0), 1.2)) : 1);
   // level match with the ladder: small-signal gain sqrt(drv) * outG, LP passband (1 + bass k) / (1 + k), HP 1, BP the
   // energy-matched bandpass gain. shaped: the voice's drive structure (a sounding voice keeps the one it was built with)
-  function trimFor(P, shaped) {
+  /* V0a-19 (K-17): level calibration against the worklet ladder, in dB to add — per filter type over the resonance (a saw
+     through the native biquads vs the ladder at 110 Hz / 600 Hz and 262 Hz / 2 kHz, averaged; v3-v0a-natfeat.mjs grid) and
+     for the drive (tanh before the filter vs the ladder's stage saturation, LP 800 Hz). Applies to the engines that have a
+     worklet twin (VA, FM6); the native-only WT / FM2 voices keep their v2 levels. The fake whistle (res > .9) scales along. */
+  const CALR = [
+    [[0, .2, .4, .6, .8, .9, .925, .95, .975, 1, 1.05, 1.1, 1.15, 1.2], [-.08, .04, .3, .35, .75, 1.37, .8, .02, -1.39, -3.03, -5.6, -7.94, -9.52, -10.7]],   // LP24
+    [[0, .2, .4, .6, .8, .9, .925, .95, .975, 1, 1.05, 1.1, 1.15, 1.2], [.33, .77, 1.25, 1.58, 2.2, 2.92, 3.02, 3.08, 2.87, 2.55, 1.33, -.42, -1.42, -2]],     // LP12
+    [[0, .2, .4, .6, .8, .9, .95, .99], [-.44, -1.58, -1.92, -2.37, -2.31, 5.27, 12.03, 12.34]],                // BP24
+    [[0, .2, .4, .6, .8, .9, .95, .99], [-.03, -1.35, -1.53, -1.99, -1.67, 5.9, 12.63, 12.92]],                 // BP12
+    [[0, .3, .6, .9], [-.54, -5.66, -7.69, -8.15]],                                                             // HP24
+    [[0, .3, .6, .9], [.71, -4.19, -7.2, -8.94]]];                                                              // HP12
+  const CALD = [[0, .25, .5, 1], [0, .45, .88, 1.99]], CALDX = [[0, .1, .25, .5, .75, 1], [0, .16, .34, 1.56, 3.42, 4.2]];   // + CALDX above 800 Hz (full from 4 kHz)
+  const calDrive = P => { const d = Math.min(+P.drive || 0, 1), h = Math.min(1, Math.max(0, Math.log2(Math.max(+P.cutoff || 800, 1) / 800) / Math.log2(5)));
+    return interp(CALD[0], CALD[1], d) + h * interp(CALDX[0], CALDX[1], d); };
+  const calFilt = P => { const C = CALR[Math.min(5, Math.max(0, P.ftype | 0))]; return interp(C[0], C[1], Math.min(+P.res || 0, 1.2)); };
+  const calTwin = eng => eng === 'analog' || eng === 'fm6';
+  // the fake whistle's level against the ladder's self-oscillation / ringing (whistle-only power vs the worklet, measured at
+  // res .97 / 1.02 / 1.1 with quiet and full inputs: the needed level depends on the resonance, hardly on the input)
+  const WHR = [[[.9, .97, 1.1, 1.2], [.395, .395, .243, .243]], [[.9, .97, 1.02, 1.1, 1.2], [.556, .556, .7, .88, .88]]];
+  function trimFor(P, shaped, eng) {
     const res = Math.min(+P.res || 0, 1.2), ft = P.ftype | 0, k = 4 * Math.min(res, 1.15), drv = .6 * Math.pow(2, (+P.drive || 0) * 4);
     if (shaped == null) shaped = P.drive > .02;
     const pass = ft === 4 || ft === 5 ? 1 : ft === 2 || ft === 3 ? interp(RES, ft === 2 ? BPG24 : BPG12, res) : 1 / (1 + k);
-    return {shaped, drv, trim: (shaped ? 1 / Math.sqrt(drv) : Math.sqrt(drv)) / (1 + P.drive * 1.3) * (1 + (+P.bass || 0) * k) * pass};
+    const cf = calTwin(eng) ? calFilt(P) : 0, cd = calTwin(eng) && shaped ? calDrive(P) : 0;
+    return {shaped, drv, cf: Math.pow(10, cf / 20), trim: (shaped ? 1 / Math.sqrt(drv) : Math.sqrt(drv)) / (1 + P.drive * 1.3) * (1 + (+P.bass || 0) * k) * pass * Math.pow(10, (cf + cd) / 20)};
   }
   const peakFor = (P, vel) => (+P.level || 0) * (1 - P.ampVel + P.ampVel * vel);
 
@@ -6079,13 +6164,17 @@ const RecHelpers = (() => {
     const nodes = [], srcs = [], starts = [], oscs = [], f = mtof(note), t0 = o.t0 || 0, ny = c.sampleRate / 2 - 100;
     const G_ = v => { const g = c.createGain(); g.gain.value = v; nodes.push(g); return g; };
     const mix = G_(1);
-    const osc = (wave, freq, det, pw) => {
+    // pre (s): the oscillator starts that much before the note (the VCA is still closed) = a start phase. V0a-19: the worklet
+    // starts every oscillator / unison voice at a random phase (unless reset); all native ones at phase 0 summed coherently
+    // in the attack (a pluck with unison or two same-pitch oscillators was up to 2–3 dB louder)
+    const osc = (wave, freq, det, pw, pre) => {
       const x = c.createOscillator();
       if (wave === 1) x.setPeriodicWave(pulseWave(c, pw == null ? .5 : pw)); else if (wave != null) x.type = TYPE[wave] || 'sawtooth';
       x.frequency.value = Math.max(1, Math.min(freq, ny)); if (det) x.detune.value = det;
       if (cvOut) cvOut.connect(x.detune);
-      nodes.push(x); srcs.push(x); starts.push([x, 0]); return x;
+      nodes.push(x); srcs.push(x); starts.push([x, 0, pre || 0]); return x;
     };
+    const phase = (freq, zero) => (zero ? 0 : Math.random() / Math.max(1, freq));
     if (engine === 'wt') {
       const wt = P.wt || {}, frames = o.waves ? (o.waves[wt.table] || o.waves.digital) : null;
       const pos = Math.min(1, Math.max(0, +wt.pos || 0)), scan = +wt.scan || 0, p1 = Math.min(1, Math.max(0, pos + scan));
@@ -6123,29 +6212,31 @@ const RecHelpers = (() => {
       for (let k = 1; k <= 3; k++) {
         const lvl = +P['o' + k + 'lvl']; if (!(lvl > .001)) continue;
         const ratio = Math.pow(2, (P['o' + k + 'oct'] | 0) + (P['o' + k + 'semi'] | 0) / 12), det = +P['o' + k + 'fine'] || 0;
-        const n = k === 1 ? Math.min(3, P.o1uni | 0 || 1) : 1;
-        const g = G_(lvl * .5 / Math.sqrt(n)), xs = [];
-        for (let u = 0; u < n; u++) { const x = osc(P['o' + k + 'w'] | 0, f * ratio, det + uniOff(u, n, P.uniDet), P['o' + k + 'pw']); x.connect(g); xs.push(x); }
-        g.connect(mix); oscs.push({k, xs, g, n, f});
+        const nP = Math.max(1, Math.min(7, P['o' + k + 'uni'] | 0 || 1)), n = k === 1 ? Math.min(3, nP) : 1;   // native: ≤ 3 voices, osc 1 only
+        const gf = (WAVEG[P['o' + k + 'w'] | 0] || 1) * (nP > 1 ? UNIG : 1) / Math.sqrt(n), g = G_(lvl * .5 * gf), xs = [];
+        for (let u = 0; u < n; u++) { const x = osc(P['o' + k + 'w'] | 0, f * ratio, det + uniOff(u, n, P.uniDet), P['o' + k + 'pw'], phase(f * ratio, P.reset && u === 0)); x.connect(g); xs.push(x); }
+        g.connect(mix); oscs.push({k, xs, g, n, f, gf});
       }
       if (P.subLvl > .001) {
         const s = c.createOscillator(); s.type = P.subW === 1 ? 'sine' : 'square'; s.frequency.value = f / (P.subOct >= 2 ? 4 : 2);
-        if (cvOut) cvOut.connect(s.detune); nodes.push(s); srcs.push(s); starts.push([s, 0]);
-        const g = G_(P.subLvl * .5); s.connect(g); g.connect(mix); oscs.push({k: 'sub', xs: [s], g});
+        if (cvOut) cvOut.connect(s.detune); nodes.push(s); srcs.push(s); starts.push([s, 0, phase(s.frequency.value, P.reset)]);
+        const gf = P.subW === 1 ? 1 : SQG, g = G_(P.subLvl * .5 * gf); s.connect(g); g.connect(mix); oscs.push({k: 'sub', xs: [s], g, gf});
       }
       if (P.noise > .001 && o.noise) {
         const n = c.createBufferSource(); n.buffer = o.noise; n.loop = true; nodes.push(n); srcs.push(n); starts.push([n, Math.random() * Math.max(0, o.noise.duration - .2)]);
-        const g = G_(P.noise * .5); n.connect(g); g.connect(mix); oscs.push({k: 'noise', xs: [], g});
+        const g = G_(P.noise * .5 * .8); n.connect(g); g.connect(mix); oscs.push({k: 'noise', xs: [], g, gf: .8});   // .4 as the worklet (V0a-19)
       }
     }
-    return {out: mix, srcs, nodes, starts, oscs};
+    // V0a K-17: the worklet's 5 Hz DC blocker for the VA / WT / FM2 voices too (as WP7 did for FM6)
+    const dc = c.createBiquadFilter(); dc.type = 'highpass'; dc.frequency.value = 5; dc.Q.value = Math.SQRT1_2; nodes.push(dc); mix.connect(dc);
+    return {out: dc, srcs, nodes, starts, oscs, mix};
   }
 
   function tail(c, P, note, vel, srcOut, dest, cvOut, o) {
     o = o || {};
     const nodes = [], srcs = [];
     const G_ = v => { const g = c.createGain(); g.gain.value = v; nodes.push(g); return g; };
-    const res = Math.min(+P.res || 0, 1.2), ft = P.ftype | 0, byp = !!o.bypass, T = byp ? {shaped: false, drv: 1, trim: 1} : trimFor(P);
+    const res = Math.min(+P.res || 0, 1.2), ft = P.ftype | 0, byp = !!o.bypass, T = byp ? {shaped: false, drv: 1, trim: 1, cf: 1} : trimFor(P, null, o.eng);
     const trim = G_(T.trim);
     let pre = srcOut;
     if (T.shaped) {      // like the ladder: full drv into the saturation, 1/sqrt(drv) after it
@@ -6170,7 +6261,11 @@ const RecHelpers = (() => {
     // fake self-oscillation: a sine at the cutoff, following the same cents modulation, into the filter
     if (res > .9 && ft <= 1 && !byp) {
       const w = c.createOscillator(); w.frequency.value = base; fenvGain.connect(w.detune); ktGain.connect(w.detune); nodes.push(w); srcs.push(w);
-      const wg = G_(Math.min(1, (res - .9) * 4) * .04); w.connect(wg); wg.connect(fB || fA);
+      const wh = calTwin(o.eng) ? interp(WHR[ft][0], WHR[ft][1], res) : 1;          // V0a-19: worklet twins: the ladder's whistle level
+      const wa = Math.min(1, (res - .9) * 4) * .04 * wh, wg = G_(wa); w.connect(wg); wg.connect(fB || fA);
+      // V0a-19: above res 1 the ladder's self-oscillation needs time to build up (the slower, the closer res is to 1: ~110 ms
+      // at 1.02, measured); the fake whistle grows the same way instead of starting at full level with each note
+      if (calTwin(o.eng) && res > 1 && o.t0 != null) { wg.gain.value = 0; wg.gain.setValueAtTime(0, o.t0); wg.gain.setTargetAtTime(wa, o.t0, Math.min(.15, .0022 / (res - 1))); }
     }
     const vca = G_(0), post = G_(1);
     if (byp) trim.connect(vca);                 // FM bypass: the filter nodes exist (LFO / envelope taps) but carry no audio
@@ -6956,7 +7051,7 @@ const RecHelpers = (() => {
     let pk = Math.max(peak, 1e-4), ta = t + Math.max(a, .0006);
     param.setValueAtTime(0, t);
     param.linearRampToValueAtTime(pk, ta);
-    if (spk > .01) { ta += .01; pk *= 1 - .75 * spk; param.exponentialRampToValueAtTime(pk, ta); }
+    if (spk > .01) { ta += .01; pk *= 1 - .75 * spk; param.exponentialRampToValueAtTime(Math.max(pk, 1e-4), ta); }   // V0a K-01: never ramp to 0
     const base = curve(crv), arr = new Float32Array(base.length);
     for (let i = 0; i < arr.length; i++) arr[i] = base[i] * pk;
     param.setValueCurveAtTime(arr, ta + Math.max(h, 0) + 1e-5, Math.max(d, .004));
@@ -6990,8 +7085,8 @@ const RecHelpers = (() => {
     const run = (s, a, b, off) => { try { off != null ? s.start(a, off) : s.start(a); s.stop(b); } catch (e) {} s._end = b; end = Math.max(end, b); };
     const decK = .85 + .15 * Math.min(tv, 1);                                   // softer hits ring a little shorter
 
-    /* TONE */
-    if (P.tLvl > .001) {
+    /* TONE (V0a K-01: a layer whose level is below 1e-4 is not built at all) */
+    if (P.tLvl > .001 && lvl * P.tLvl >= 1e-4) {
       const o1 = c.createOscillator(); nodes.push(o1); srcs.push(o1);
       if (P.wav === 'cos') o1.setPeriodicWave(COS(c)); else o1.type = P.wav || 'sine';
       o1.frequency.value = P.frq;
@@ -7023,7 +7118,7 @@ const RecHelpers = (() => {
     }
 
     /* NOISE (with bursts = clap) */
-    if (P.nLvl > .001) {
+    if (P.nLvl > .001 && lvl * P.nLvl >= 1e-4) {
       const s = c.createBufferSource(); s.buffer = P.nCol ? B.pink : B.white; s.loop = true; nodes.push(s); srcs.push(s);
       const f = BQ(P.nTyp || 'bandpass', P.nFrq, P.nQ);
       const oct = (P.nEnv || 0) + (tv0 - 1) * P.dyn * .8;                      // soft hits are darker
@@ -7040,7 +7135,7 @@ const RecHelpers = (() => {
         for (let k = 0; k < nb - 1; k++) {
           g.gain.setValueAtTime(pk * (k ? .9 : 1), tk);
           const nx = tk + gap * (.85 + .3 * Math.random());
-          g.gain.exponentialRampToValueAtTime(pk * .08, nx - .0005);
+          g.gain.exponentialRampToValueAtTime(Math.max(pk * .08, 1e-4), nx - .0005);   // V0a K-01: never ramp to 0 (RangeError)
           tk = nx;
         }
         e = ahd(g.gain, tk + .0002, pk, .0004, P.nHld, P.nDec * decK, P.nCrv); // last burst flows into the tail
@@ -7050,7 +7145,7 @@ const RecHelpers = (() => {
     }
 
     /* METAL (808 hats / cymbal / cowbell colour) */
-    if (P.mLvl > .001) {
+    if (P.mLvl > .001 && lvl * P.mLvl >= 1e-4) {
       const s = c.createBufferSource(); s.buffer = B.metal; s.loop = true; s.playbackRate.value = P.mTun; nodes.push(s); srcs.push(s);
       const hp = BQ('highpass', P.mHp, .7), g = Gn(0), pk = lvl * P.mLvl;
       if (P.mHi > .001) { const bp = BQ('bandpass', 7100, P.mQ || 1.2), gh = Gn(P.mHi * 4); s.connect(bp); bp.connect(gh); gh.connect(hp); }
@@ -7064,7 +7159,7 @@ const RecHelpers = (() => {
     }
 
     /* CLICK */
-    if (P.cLvl > .001) {
+    if (P.cLvl > .001 && lvl * P.cLvl >= 1e-4) {
       const s = c.createBufferSource(); s.buffer = B.click[P.cTyp | 0] || B.click[0]; s.playbackRate.value = Math.pow(2, (P.cTon - .5) * 2);
       const g = Gn(lvl * P.cLvl * (.4 + .6 * Math.min(tv, 1.2))); nodes.push(s); srcs.push(s);
       s.connect(g); g.connect(out); run(s, t, t + s.buffer.duration / s.playbackRate.value + .002);
@@ -7120,16 +7215,44 @@ const RecHelpers = (() => {
   };
 
   /* ---------- kit bus: shared ROOM + GATE returns (ConvolverNode.normalize is on by default, so level lives in the return gain) ---------- */
+  /* V0a K-02: every return has its input bus (K.room / K.gate, the strips' sends) feeding a ConvolverNode through an input
+     gain that only the blend automates. A new impulse response (gate length, a room swap) goes into a FRESH convolver, and the
+     INPUT moves over in 40 ms equal-power (setValueCurveAtTime, cos / sin, 32 points): the old convolver keeps ringing with
+     what it already got (no cut, no click) and is disconnected after its tail. A swap asked for during a running blend waits
+     for its end (only the newest one is applied), so no gain is ever automated twice at once. */
+  const XF = .04, XN = 32, XCOS = new Float32Array(XN), XSIN = new Float32Array(XN);
+  for (let i = 0; i < XN; i++) { const a = i / (XN - 1) * Math.PI / 2; XCOS[i] = Math.cos(a); XSIN[i] = Math.sin(a); }
+  XCOS[XN - 1] = 0; XSIN[XN - 1] = 1;
   function kitBus(c, B, dest) {
-    const K = {in: c.createGain(), room: c.createConvolver(), gate: c.createConvolver(), roomRet: c.createGain(), gateRet: c.createGain(), gateHp: c.createBiquadFilter(), gateLen: .34};
+    const K = {in: c.createGain(), room: c.createGain(), gate: c.createGain(), roomRet: c.createGain(), gateRet: c.createGain(), gateHp: c.createBiquadFilter(), gateLen: .34, swaps: 0};
     K.in.connect(dest);
-    K.room.buffer = B.room; K.room.connect(K.roomRet); K.roomRet.connect(dest); K.roomRet.gain.value = 1.4;
+    const offline = typeof OfflineAudioContext !== 'undefined' && c instanceof OfflineAudioContext;
+    const ret = (bus, buf, out) => {
+      const R = {bus, out, cur: null, busy: 0, want: null, timer: 0};
+      const mk = (b, g0) => { const g = c.createGain(), cv = c.createConvolver(); g.gain.value = g0; cv.buffer = b; bus.connect(g); g.connect(cv); cv.connect(out); return {g, cv, len: b.duration}; };
+      R.cur = mk(buf, 1);
+      R.swap = b => {
+        const now = c.currentTime;
+        if (now < R.busy) {                                       // a blend is running: apply the newest IR after it
+          R.want = b; if (!R.timer) R.timer = setTimeout(() => { R.timer = 0; const w = R.want; R.want = null; if (w) R.swap(w); }, Math.ceil((R.busy - now) * 1000) + 15);
+          return;
+        }
+        const old = R.cur, nw = mk(b, 0), t0 = now + .005;
+        try { old.g.gain.setValueCurveAtTime(XCOS, t0, XF); nw.g.gain.setValueCurveAtTime(XSIN, t0, XF); }
+        catch (e) { old.g.gain.setTargetAtTime(0, t0, XF / 3); nw.g.gain.setTargetAtTime(1, t0, XF / 3); }
+        R.cur = nw; R.busy = t0 + XF + .002; K.swaps++;
+        if (!offline) setTimeout(() => { try { bus.disconnect(old.g); } catch (e) {} try { old.g.disconnect(); old.cv.disconnect(); } catch (e) {} }, Math.ceil((XF + old.len + .25) * 1000));
+      };
+      return R;
+    };
+    K.roomR = ret(K.room, B.room, K.roomRet); K.roomRet.connect(dest); K.roomRet.gain.value = 1.4;
     K.gateHp.type = 'highpass'; K.gateHp.frequency.value = 280;          // keep the gated tail out of the kick's range
-    K.gate.buffer = B.gate; K.gate.connect(K.gateHp); K.gateHp.connect(K.gateRet); K.gateRet.connect(dest); K.gateRet.gain.value = 4;
-    K.setGate = (len, level) => {                                     // rebuild only when the length really changed (IR build ~ 2 ms)
-      if (Math.abs(len - K.gateLen) > .005) { K.gateLen = len; K.gate.buffer = makeIR(c, len, 1, 0); }
+    K.gateR = ret(K.gate, B.gate, K.gateHp); K.gateHp.connect(K.gateRet); K.gateRet.connect(dest); K.gateRet.gain.value = 4;
+    K.setGate = (len, level) => {                                     // a new IR only when the length really changed (IR build ~ 2 ms)
+      if (Math.abs(len - K.gateLen) > .005) { K.gateLen = len; K.gateR.swap(makeIR(c, len, 1, 0)); }
       K.gateRet.gain.setTargetAtTime(level, c.currentTime, .02);
     };
+    K.setRoom = buf => { if (buf && buf !== K.roomR.cur.cv.buffer) K.roomR.swap(buf); };   // same blend for a room IR swap (kit change)
     K.strip = () => strip(c, K.in, K.room, K.gate);
     return K;
   }
@@ -7479,7 +7602,7 @@ const LOGO_SVG = '<svg role="img" aria-label="One Day in Rome" shape-rendering="
 /* =====================================================================
    CORE: utilities, descriptors, presets, kits, project model
    ===================================================================== */
-const VERSION = '3.0.0';
+const VERSION = '3.1.0';
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const isNum = v => typeof v === 'number' && Number.isFinite(v);
 const deep = o => (o == null ? o : JSON.parse(JSON.stringify(o)));
@@ -7498,8 +7621,16 @@ function safeRemove(k) { try { window.localStorage.removeItem(k); return true; }
 function getPath(o, p) { const a = p.split('.'); let x = o; for (const k of a) { if (x == null) return undefined; x = x[k]; } return x; }
 function setPath(o, p, v) { const a = p.split('.'); let x = o; for (let i = 0; i < a.length - 1; i++) { if (x[a[i]] == null || typeof x[a[i]] !== 'object') x[a[i]] = {}; x = x[a[i]]; } x[a[a.length - 1]] = v; }
 
-let errLast = 0;
-function logErr(e) { const t = performance.now(); if (t - errLast > 1000) { errLast = t; console.error(e); } }
+// V0a K-01: the same error at most once per 5 s (a fault in a 25 ms timer must not flood the console); different errors
+// are each reported
+const ERRLOG = new Map();
+function logErr(e) {
+  // the same error = same message thrown at the same place (first stack frame), whoever called it
+  const t = performance.now(), k = (e && e.stack ? String(e.stack).split('\n').slice(0, 2).join('|') : String((e && e.message) || e)).slice(0, 300), last = ERRLOG.get(k);
+  if (last != null && t - last < 5000) return;
+  if (ERRLOG.size > 64) ERRLOG.clear();
+  ERRLOG.set(k, t); console.error(e);
+}
 
 /* ---------- value formatting (German) ---------- */
 function fmtVal(fmt, v) {
@@ -8748,8 +8879,23 @@ function setQuality(q) {
 }
 
 /* ---------- envelopes (cancel-safe: setValueAtTime + setTargetAtTime only) ---------- */
+/* V0a-19: an envelope with a curve (e.c, the VA sound's aCurve / fCurve) has the worklet's shape (envCoefs): every stage aims
+   past its end (attack at 1 + ra, decay at s − rd, release at −rd) with the time constant that lands on the end value exactly
+   at the stage time, where an anchor stops it. Without e.c (WT, FM2, FM6 gate) the v2 shape: τ = time / 3. The decay of a
+   pluck was 1.7× longer than on the worklet (native plucks 2–4 dB louder). */
+function envShape(e) {
+  if (!e || e.c == null) return null;
+  const c = Math.min(1, Math.max(0, +e.c)), ra = .02 + 2 * (1 - c) * (1 - c), rd = Math.pow(10, -4 + 3.5 * (1 - c));
+  return {ra, rd, la: Math.log((1 + ra) / ra), ld: Math.log((1 + rd) / rd)};
+}
 function envStart(p, t0, e, peak, base = 0) {
-  const A = Math.max(e.a, .001), D = Math.max(e.d, .005);
+  const A = Math.max(e.a, .001), D = Math.max(e.d, .005), K = envShape(e);
+  if (K) {
+    const span = peak - base;
+    p.setValueAtTime(base, t0); p.setTargetAtTime(base + span * (1 + K.ra), t0, A / K.la); p.setValueAtTime(peak, t0 + A);
+    if (e.s < 1) { p.setTargetAtTime(base + span * (e.s - K.rd), t0 + A, D / K.ld); p.setValueAtTime(base + span * e.s, t0 + A + D); }
+    return;
+  }
   p.setValueAtTime(base, t0); p.setTargetAtTime(base + (peak - base) / 0.9502, t0, A / 3);
   // explicit anchor at the attack peak, only for very short attacks: if the events reached the audio thread after
   // t0+A the decay would start from a stale value (0). Live notes start LIVE_LEAD in the future, so for longer
@@ -8760,15 +8906,26 @@ function envStart(p, t0, e, peak, base = 0) {
 // LEGATO (§5.1 Modus, §3.10 BINDUNG) on the native path: the new voice takes over the envelope of the held voice instead of
 // retriggering it (origin tOrig = that voice's envelope start); a short fade-in crosses over from the stolen voice (4 ms)
 function envContinue(p, t0, e, peak, tOrig, fade) {
-  const A = Math.max(e.a, .001), D = Math.max(e.d, .005), t1 = t0 + fade;
+  const A = Math.max(e.a, .001), D = Math.max(e.d, .005), t1 = t0 + fade, K = envShape(e);
   if (fade > 0) { p.setValueAtTime(0, t0); p.linearRampToValueAtTime(envValueAt(t1, tOrig, e, peak, 0), t1); }
   else p.setValueAtTime(envValueAt(t0, tOrig, e, peak, 0), t0);
+  if (K) {                                                         // the worklet shape (V0a-19): continue the running stage
+    if (t1 < tOrig + A) { p.setTargetAtTime(peak * (1 + K.ra), t1, A / K.la); p.setValueAtTime(peak, tOrig + A); }
+    if (e.s < 1 && t1 < tOrig + A + D) { p.setTargetAtTime(peak * (e.s - K.rd), Math.max(t1, tOrig + A), D / K.ld); p.setValueAtTime(peak * e.s, tOrig + A + D); }
+    return;
+  }
   if (t1 < tOrig + A) { p.setTargetAtTime(peak / 0.9502, t1, A / 3); p.setTargetAtTime(peak * e.s, tOrig + A, D / 3); }
   else p.setTargetAtTime(peak * e.s, t1, D / 3);
 }
 function envValueAt(t, t0, e, peak, base = 0) {
-  const A = Math.max(e.a, .001), D = Math.max(e.d, .005);
+  const A = Math.max(e.a, .001), D = Math.max(e.d, .005), K = envShape(e);
   if (t <= t0) return base;
+  if (K) {
+    const span = peak - base;
+    if (t < t0 + A) return base + span * (1 + K.ra) * (1 - Math.exp(-(t - t0) * K.la / A));
+    if (e.s >= 1 || t >= t0 + A + D) return base + span * e.s;
+    return base + span * ((e.s - K.rd) + (1 - e.s + K.rd) * Math.exp(-(t - t0 - A) * K.ld / D));
+  }
   if (t < t0 + A) return base + (peak - base) / 0.9502 * (1 - Math.exp(-(t - t0) / (A / 3)));
   const s = base + (peak - base) * e.s; return s + (peak - s) * Math.exp(-(t - t0 - A) / (D / 3));
 }
@@ -8786,25 +8943,27 @@ function constSrc(v) {
 /* ---------- synth voice ---------- */
 const VoiceProto = {
   state(now) { if (this.dead) return 'dead'; const t = now == null ? (AU.ctx ? AU.ctx.currentTime : 0) : now; if (t < this.start) return 'pending'; if (t >= this.relT) return 'released'; return 'on'; },
-  ampAt(t) { if (t >= this.relT) return this.relV * Math.exp(-(t - this.relT) / this.relTau); return envValueAt(t, this.envT0 != null ? this.envT0 : this.start, this.aenv, this.peak, 0); },
-  fenvAt(t) { if (t >= this.fRelT) return this.fRelV * Math.exp(-(t - this.fRelT) / this.fRelTau); return envValueAt(t, this.envT0 != null ? this.envT0 : this.start, this.fenv, 1, 0); },
+  // after a release: v2 shape relV·e^(−dt/τ); the worklet shape (relO = its overshoot below 0, V0a-19) ends at 0 (relEnd)
+  ampAt(t) { if (t >= this.relT) return this.relO ? Math.max(0, -this.relO + (this.relV + this.relO) * Math.exp(-(t - this.relT) / this.relTau)) : this.relV * Math.exp(-(t - this.relT) / this.relTau); return envValueAt(t, this.envT0 != null ? this.envT0 : this.start, this.aenv, this.peak, 0); },
+  fenvAt(t) { if (t >= this.fRelT) return this.fRelO ? Math.max(0, -this.fRelO + (this.fRelV + this.fRelO) * Math.exp(-(t - this.fRelT) / this.fRelTau)) : this.fRelV * Math.exp(-(t - this.fRelT) / this.fRelTau); return envValueAt(t, this.envT0 != null ? this.envT0 : this.start, this.fenv, 1, 0); },
   release(t, fastTau) {
     if (this.dead) return;
     if (t < this.start) t = this.start;
     if (!fastTau && t >= this.relT) return;
     if (fastTau && t >= this.relT && this.relTau <= fastTau) return;
-    const tau = fastTau || Math.max(this.aenv.r, .005) / 3;
-    const val = this.ampAt(t), p = this.vca.gain;
-    try { p.cancelScheduledValues(t); p.setValueAtTime(val, t); p.setTargetAtTime(0, t, tau); } catch (e) {}
+    const K = fastTau || !(this.peak > 0) ? null : envShape(this.aenv), R0 = Math.max(this.aenv.r, .005);
+    const tau = fastTau || (K ? R0 / K.ld : R0 / 3), o = K ? K.rd * this.peak : 0;
+    const val = this.ampAt(t), p = this.vca.gain, tEnd = K ? t + tau * Math.log((val + o) / o) : Infinity;
+    try { p.cancelScheduledValues(t); p.setValueAtTime(val, t); p.setTargetAtTime(-o, t, tau); if (K) p.setValueAtTime(0, tEnd); } catch (e) {}
     if (!fastTau) {
-      const fv = this.fenvAt(t), ft = Math.max(this.fenv.r, .005) / 3, fp = this.fenvSrc.offset;
-      try { fp.cancelScheduledValues(t); fp.setValueAtTime(fv, t); fp.setTargetAtTime(0, t, ft); } catch (e) {}
-      this.fRelT = t; this.fRelV = fv; this.fRelTau = ft;
+      const KF = envShape(this.fenv), F0 = Math.max(this.fenv.r, .005), fv = this.fenvAt(t), ft = KF ? F0 / KF.ld : F0 / 3, fo = KF ? KF.rd : 0, fp = this.fenvSrc.offset;
+      try { fp.cancelScheduledValues(t); fp.setValueAtTime(fv, t); fp.setTargetAtTime(-fo, t, ft); if (KF) fp.setValueAtTime(0, t + ft * Math.log((fv + fo) / fo)); } catch (e) {}
+      this.fRelT = t; this.fRelV = fv; this.fRelTau = ft; this.fRelO = fo;
     }
-    this.relT = t; this.relV = val; this.relTau = tau;
+    this.relT = t; this.relV = val; this.relTau = tau; this.relO = o;
     if (t < this.end) this.end = t;
     if (R.playing) perfCut(this.perfAll, t2b(t));
-    const stopAt = t + tau * 4.8 + .02;
+    const stopAt = K ? tEnd + .02 : t + tau * 4.8 + .02;
     if (stopAt < this.stopAt) { this.stopAt = stopAt; for (const s of this.srcs) { try { s.stop(stopAt); } catch (e) {} } }
   },
   cancel() {
@@ -8978,6 +9137,7 @@ function spawnVoice(i, out, vel, t0, o) {
   Object.assign(v, {id: ++VSEQ, track: i, src: o.src, clipNote: o.clipNote == null ? null : o.clipNote, clipKey: o.clipKey || null,
     out, baseOut: out, vel, start: t0, end: Infinity, dead: false, stolen: false, relT: Infinity, relV: 0, relTau: .1,
     fRelT: Infinity, fRelV: 0, fRelTau: .1, stopAt: Infinity, peak: 0, aenv: {a: P.aA, d: P.aD, s: P.aS, r: P.aR}, fenv: {a: P.fA, d: P.fD, s: P.fS, r: P.fR},
+    relO: 0, fRelO: 0,
     fType: P.ftype | 0, nodes, srcs, A, perf: null, perfAll: [], log: null, eng, lvl0: P.level, glide: P.glide});
   const cv = constSrc(0); srcs.push(cv.node); nodes.push(cv.node); if (cv.extra) nodes.push(cv.extra); starts.push([cv.node, 0]);
   // glide per voice: notes starting together (a chord, within 35 ms) form one group and never glide from each other;
@@ -9000,7 +9160,10 @@ function spawnVoice(i, out, vel, t0, o) {
   nodes.push(...src.nodes); srcs.push(...src.srcs); starts.push(...src.starts);
   // §6.4: an FM voice's DX release (dx, rt); fmAmp 0 = the DX envelopes shape the volume, the VCA is a gate (fast attack)
   if (eng === 'fm6') { v.dx = src.dx || null; v.dxRT = src.rt || .05; v.dxEnd = Infinity; if (!(P.fmAmp >= 1)) v.aenv = {a: .0012, d: .05, s: 1, r: Math.max(.05, v.dxRT)}; }
-  const tl = NativeVoice.tail(c, P, out, vel, src.out, o.chain ? o.chain.trackIn : A.trackIn, cv.out, {mkConst: constSrc, pan: voicePan(A, P), bypass: NativeVoice.fmBypass(P, eng), unity: eng === 'fm6'});
+  if (eng === 'analog') { v.aenv.c = P.aCurve == null ? .5 : +P.aCurve; v.fenv.c = P.fCurve == null ? .5 : +P.fCurve; }   // V0a-19: the worklet's envelope shapes
+  // V0a K-17: every native voice leaves with the worklet's pan law (√2 into a StereoPanner = unity in the centre); a voice with
+  // Streuung was 3 dB quieter than on the worklet (mono into its StereoPanner)
+  const tl = NativeVoice.tail(c, P, out, vel, src.out, o.chain ? o.chain.trackIn : A.trackIn, cv.out, {mkConst: constSrc, pan: voicePan(A, P), bypass: NativeVoice.fmBypass(P, eng), unity: true, eng, t0});
   nodes.push(...tl.nodes);
   for (const s of tl.srcs) { srcs.push(s); starts.push([s, 0]); }
   if (N) { try { N.lfoCut.connect(tl.fA.detune); if (tl.fB) N.lfoCut.connect(tl.fB.detune); v.tapC = N.lfoCut; } catch (e) {} }
@@ -9014,7 +9177,7 @@ function spawnVoice(i, out, vel, t0, o) {
     envStart(tl.fenvSrc.offset, t0, v.fenv, 1, 0);
     envStart(tl.vca.gain, t0, v.aenv, v.peak, 0);
   }
-  for (const [s, off] of starts) { try { off ? s.start(t0, off) : s.start(t0); } catch (e) {} }
+  for (const [s, off, pre] of starts) { try { off ? s.start(t0, off) : pre ? s.start(Math.max(c.currentTime, t0 - pre)) : s.start(t0); } catch (e) {} }
   Object.assign(v, {cv, fA: tl.fA, fB: tl.fB, vca: tl.vca, post: tl.post, trim: tl.trim, shaped: tl.shaped, fenvSrc: tl.fenvSrc, fenvGain: tl.fenvGain, ktGain: tl.ktGain, oscs: src.oscs, P});
   cv.node.onended = () => cleanupVoice(v);
   VOICES.push(v);
@@ -9056,7 +9219,7 @@ function liveUpdate(i, key) {
       if (LIVE_FILTER.has(key)) {
         const ft = v.fType, base = clamp(P.cutoff * NativeVoice.fcFor(ft, P.res) * Math.pow(2, P.kt * (v.baseOut - 60) / 12), 20, c.sampleRate * .45);
         // the level trim follows resonance and bass (drive: from the next note, its structure is fixed per voice)
-        if (v.trim && P.ftype === ft) v.trim.gain.setTargetAtTime(NativeVoice.trimFor(P, v.shaped).trim, now, .015);
+        if (v.trim && P.ftype === ft) v.trim.gain.setTargetAtTime(NativeVoice.trimFor(P, v.shaped, v.eng).trim, now, .015);
         v.fA.frequency.setTargetAtTime(base, now, .015); if (v.fB) v.fB.frequency.setTargetAtTime(base, now, .015);
         v.ktGain.gain.setTargetAtTime(P.kt, now, .015);
         v.fenvGain.gain.setTargetAtTime(P.fenv * 7200 * (1 - P.fvel + P.fvel * v.vel), now, .015);
@@ -9067,13 +9230,13 @@ function liveUpdate(i, key) {
         v.post.gain.setTargetAtTime(v.peak > 0 ? pk / v.peak : 1, now, .015);
       } else if (m && v.eng === 'analog' && v.oscs) {
         const k = +m[1], osc = v.oscs.find(x => x.k === k); if (!osc) continue;
-        if (m[2] === 'lvl') osc.g.gain.setTargetAtTime(P['o' + k + 'lvl'] * .5 / Math.sqrt(osc.n), now, .015);
+        if (m[2] === 'lvl') osc.g.gain.setTargetAtTime(P['o' + k + 'lvl'] * .5 * (osc.gf || 1 / Math.sqrt(osc.n)), now, .015);
         else {
           const ratio = Math.pow(2, (P['o' + k + 'oct'] | 0) + (P['o' + k + 'semi'] | 0) / 12), det = +P['o' + k + 'fine'] || 0;
           osc.xs.forEach((x, u) => { x.frequency.setTargetAtTime(Math.min(osc.f * ratio, c.sampleRate / 2 - 100), now, .005); x.detune.setTargetAtTime(det + NativeVoice.uniOff(u, osc.n, P.uniDet), now, .005); });
         }
       } else if ((key === 'subLvl' || key === 'noise') && v.oscs) {
-        const o = v.oscs.find(x => x.k === (key === 'subLvl' ? 'sub' : 'noise')); if (o) o.g.gain.setTargetAtTime(P[key] * .5, now, .015);
+        const o = v.oscs.find(x => x.k === (key === 'subLvl' ? 'sub' : 'noise')); if (o) o.g.gain.setTargetAtTime(P[key] * .5 * (o.gf || 1), now, .015);
       }
     } catch (e) {}
   }
@@ -9381,52 +9544,59 @@ function flushQueuedCarrier(now) { for (const e of T.timeline) if (e.time > now)
 /* ---------- scheduler ---------- */
 function swingOffset(t) { const sw = S.settings.swing; if (!sw) return 0; return Math.abs((t % .5) - .25) < .02 ? sw / 12 : 0; }
 // h: horizon in s (default LOOKAHEAD). tickAhead(.3) runs it once with 300 ms before a long main-thread job (§1.7.5)
+// V0a K-01: a fault in one part of the scheduler (one track, the song, the metronome) is caught where it happens and counted
+// (tickErrors); the window [schedBeat, b1) is ALWAYS marked as planned (finally), so the other tracks never plan a note twice
+const TICKERR = {n: 0, fail: -1};
+function tickErr(e) { TICKERR.n++; logErr(e); }
 function tick(h) {
   const c = AU.ctx; if (!c) return;
+  let b1 = null; const run = R.runId;
   try {
     const now = c.currentTime;
-    T.tick(now, grid());
-    gcVoices(now);
-    T.prune(now - 2);
-    previewTick(now);
-    cpuTick();
+    try { T.tick(now, grid()); } catch (e) { tickErr(e); }
+    try { gcVoices(now); T.prune(now - 2); previewTick(now); cpuTick(); } catch (e) { tickErr(e); }
     if (!R.playing) return;
     if (R.countIn && t2b(now) >= 0) R.countIn = false;
     let b0 = R.schedBeat;
-    const b1 = t2b(now + (typeof h === 'number' && h > 0 ? h : LOOKAHEAD));
-    if (b1 <= b0) return;
+    const bEnd = t2b(now + (typeof h === 'number' && h > 0 ? h : LOOKAHEAD));
+    if (bEnd <= b0) return;
+    b1 = bEnd;
     if (b2t(b0) < now - .2) b0 = Math.max(b0, t2b(now));        // fell behind (throttled timer): skip, never burst
-    for (let b = Math.ceil(b0 - 1e-9); b < b1 - 1e-9; b++) {
-      if (b <= R.lastClick) continue;                              // never click the same beat twice (float edges)
-      R.lastClick = b;
-      if (b < 0) { if (R.countIn) click(b2t(b), ((b % 4) + 4) % 4 === 0); }      // count-in: the first beat of each bar accented
-      else if (S.settings.metro || (recClickOn(b) && S.settings.metroInRec)) click(b2t(b), b % 4 === 0);
-    }
-    // Pumpen on every 1/4 or 1/8 (§8.1, fxBus.pumpSrc); with 'kick' drumHit calls onKickScheduled
-    if (S.fxBus.pumpSrc !== 'kick' && anyPump()) {
-      const st = S.fxBus.pumpSrc === '1/8' ? .5 : 1;
-      for (let b = Math.ceil(b0 / st - 1e-9) * st; b < b1 - 1e-9; b += st) { if (b < 0 || b <= R.lastPump + 1e-9) continue; R.lastPump = b; onKickScheduled(b2t(b)); }
-    }
-    recTick(b0, b1);
-    if (R.songPlay) songTick(b0, b1);                            // §3.9 (Anhang D.7): the song's launches, Träger, melody
+    try {
+      for (let b = Math.ceil(b0 - 1e-9); b < b1 - 1e-9; b++) {
+        if (b <= R.lastClick) continue;                            // never click the same beat twice (float edges)
+        R.lastClick = b;
+        if (b < 0) { if (R.countIn) click(b2t(b), ((b % 4) + 4) % 4 === 0); }    // count-in: the first beat of each bar accented
+        else if (S.settings.metro || (recClickOn(b) && S.settings.metroInRec)) click(b2t(b), b % 4 === 0);
+      }
+      // Pumpen on every 1/4 or 1/8 (§8.1, fxBus.pumpSrc); with 'kick' drumHit calls onKickScheduled
+      if (S.fxBus.pumpSrc !== 'kick' && anyPump()) {
+        const st = S.fxBus.pumpSrc === '1/8' ? .5 : 1;
+        for (let b = Math.ceil(b0 / st - 1e-9) * st; b < b1 - 1e-9; b += st) { if (b < 0 || b <= R.lastPump + 1e-9) continue; R.lastPump = b; onKickScheduled(b2t(b)); }
+      }
+    } catch (e) { tickErr(e); }
+    try { recTick(b0, b1); } catch (e) { tickErr(e); }
+    if (R.songPlay) { try { songTick(b0, b1); } catch (e) { tickErr(e); } }   // §3.9 (Anhang D.7): the song's launches, Träger, melody
     for (let i = 0; i < 5; i++) {
       let from = Math.max(b0, 0);
       const p = R.pend[i];
       if (p && p.beat < b1) {
-        scheduleTrack(i, from, Math.max(from, p.beat));
-        cutTrackAt(i, b2t(p.beat));
-        R.prev[i] = {slot: R.slot[i], until: p.beat, cs: R.cstart[i]};
-        recTrackSwitch(i, p.slot, p.beat);
+        try { if (TICKERR.fail === i) throw new Error('__failTrack(' + i + ')'); scheduleTrack(i, from, Math.max(from, p.beat)); } catch (e) { tickErr(e); }
+        try {
+          cutTrackAt(i, b2t(p.beat));
+          R.prev[i] = {slot: R.slot[i], until: p.beat, cs: R.cstart[i]};
+          recTrackSwitch(i, p.slot, p.beat);
+        } catch (e) { tickErr(e); }
         R.slot[i] = p.slot; R.cstart[i] = p.cs != null ? p.cs : p.beat; R.pend[i] = null; from = Math.max(from, p.beat);   // FANG: cs = phrase start (in phase)
-        songLog(i, p.slot, p.beat);                              // §3.9: what really happens at the bar line is the song
+        try { songLog(i, p.slot, p.beat); } catch (e) { tickErr(e); }   // §3.9: what really happens at the bar line is the song
         UI.dirty.grid = true; UI.dirty.song = true;
       }
-      scheduleTrack(i, from, b1);
+      try { if (TICKERR.fail === i) throw new Error('__failTrack(' + i + ')'); scheduleTrack(i, from, b1); } catch (e) { tickErr(e); }
     }
-    if (R.songRec && R.songRec.pending && R.songRec.startBeat < b1) songRecBegin();
-    R.schedBeat = b1;
-    if (R.songEndBeat != null) songEndCheck();
-  } catch (e) { logErr(e); }
+    try { if (R.songRec && R.songRec.pending && R.songRec.startBeat < b1) songRecBegin(); } catch (e) { tickErr(e); }
+  } catch (e) { tickErr(e); }
+  finally { if (b1 != null && R.playing && R.runId === run && b1 > R.schedBeat) R.schedBeat = b1; }
+  try { if (R.playing && R.songEndBeat != null) songEndCheck(); } catch (e) { tickErr(e); }
 }
 function tickAhead(h) { if (AU.ctx && R.playing) tick(h || .3); }
 function scheduleTrack(i, from, to, late) {
@@ -9437,6 +9607,7 @@ function scheduleTrack(i, from, to, late) {
   if (tr.kind === 'drum') { scheduleDrums(i, clip, from, to, late); return; }
   const L = clip.len * 4, cs = R.cstart[i], sp = spb(), now = AU.ctx.currentTime, ev = new Map();
   for (const nt of clip.notes) {
+    if (nt.t >= L - 1e-9) continue;                              // V0a K-06: a note behind the clip end never plays
     let k = Math.ceil((from - cs - nt.t) / L - 1e-9); if (k < 0) k = 0;
     for (let B = cs + nt.t + k * L; B < to - 1e-9; B += L) {
       if (B < from - 1e-9) continue;
@@ -9466,6 +9637,7 @@ function scheduleTrack(i, from, to, late) {
 function scheduleDrums(i, clip, from, to, late) {
   const L = clip.len * 4, cs = R.cstart[i], now = AU.ctx.currentTime, ev = new Map(), seed = clip.seed | 0;
   for (const nt of clip.notes) {
+    if (nt.t >= L - 1e-9) continue;                              // V0a K-06
     let k = Math.ceil((from - .35 - cs - nt.t) / L - 1e-9); if (k < 0) k = 0;          // .35: ratchet + late shift reach
     for (let B = cs + nt.t + k * L; B < to + .12 - 1e-9; B += L, k++) {
       if (nt.born != null && nt.bornRun === R.runId && B < nt.born + .5) continue;
@@ -10569,9 +10741,11 @@ function recResultToast(ti, si, n, od) {
 }
 // scene keys (OP-Z: one key per scene, the bass counts most) - cached per scene, invalidated by every clip change
 const KEYC = {ver: 0, cache: [null, null, null, null], timer: 0, pending: new Set()};
+// V0a K-06: what a clip really plays: its notes before the clip end (a note behind it is ignored by the key detection too)
+function liveNotes(c) { const L = c.len * 4 - 1e-9; return c.notes.some(n => n.t >= L) ? c.notes.filter(n => n.t < L) : c.notes; }
 function scenePartsOf(si) {
   const parts = [];
-  for (let i = 0; i < 4; i++) { const tr = S.tracks[i], c = tr && tr.follow && tr.clips[si]; if (c && c.notes.length) parts.push({i, c, med: median(c.notes.map(n => n.n))}); }
+  for (let i = 0; i < 4; i++) { const tr = S.tracks[i], c = tr && tr.follow && tr.clips[si], ns = c ? liveNotes(c) : null; if (ns && ns.length) parts.push({i, c, ns, med: median(ns.map(n => n.n))}); }
   return parts;
 }
 function sceneKeyOf(si) {
@@ -10582,7 +10756,7 @@ function sceneKeyOf(si) {
   let key = null;
   if (parts.length) {
     const bassI = parts.reduce((a, b) => (b.med < a.med ? b : a)).i;
-    const sk = KeyDetect.sceneKey(parts.map(p => ({notes: p.c.notes, isBass: p.i === bassI})), S.key);
+    const sk = KeyDetect.sceneKey(parts.map(p => ({notes: p.ns, isBass: p.i === bassI})), S.key);
     key = {root: sk.root, scale: sk.scale};
   }
   KEYC.cache[si] = {ver: KEYC.ver, pk, S, key};
@@ -10604,7 +10778,7 @@ function applySceneKeys(si) {
   let changed = false;
   for (const p of parts) {
     if (p.c.key.src !== 'auto') continue;
-    const k = KeyDetect.resolveClipKey(p.c.notes, sk, S.key);
+    const k = KeyDetect.resolveClipKey(p.ns, sk, S.key);
     if (k.root === p.c.key.root && k.scale === p.c.key.scale && p.c.key.ref == null) continue;
     const old = p.c.key; p.c.key = {root: k.root, scale: k.scale, src: 'auto'};
     for (const v of VOICES) if (v.clipKey === old) v.clipKey = p.c.key;          // sounding/scheduled notes keep the clip's Bezug
@@ -10657,7 +10831,8 @@ function inputDown(note, id, vel) {
     if (inp.voice) inp.voice.log = le;
     R.lastNote[R.selT] = n;
     const rk = recNoteOn(id, R.selT, n, vel, now);
-    if (R.playing && rec.state === 'off' && !R.countIn) CAP.open.set(id, {track: R.selT, n, v: vel, b: t2b(now - AU.outLat)});
+    // FANG (V0a K-07): each note keeps the Träger it was played under (as REC does), so the phrase is stored as it was heard
+    if (R.playing && rec.state === 'off' && !R.countIn) CAP.open.set(id, {track: R.selT, n, v: vel, b: t2b(now - AU.outLat), tm: now, en: T.targetAt(now + 1e-6)});
     if (R.playing && (R.songRec || R.melRec) && !recCapturedForSong(rk, R.selT)) melNoteOn(id, R.selT, n, vel);   // §3.9: the melody lane
     // step input into the open clip editor; never recorded at the same time
     if (ED.roll && ED.rollAt && ED.roll.state.step != null && ED.rollAt.t === R.selT && rec.state === 'off') {
@@ -10717,10 +10892,13 @@ function capture() {
   if (!ph || !ph.notes.length) { toast('Nichts zum Einfangen – erst spielen, dann FANG'); return false; }
   const si = !tr.clips[R.selS] ? R.selS : tr.clips.findIndex(c => !c);
   if (si < 0) { toast('Kein freier Platz in dieser Spur'); return false; }
-  const tm = AU.ctx.currentTime, tgt = T.targetAt(tm).target, h = S.settings.harmony;
+  // V0a K-07: the clip's Bezug comes from the Träger at the phrase start (its first note), every note is converted back with
+  // the Träger IT was played under (en) — FANG over a chord change (Am → F) plays back as played under the same changes
+  const tm = AU.ctx.currentTime, h = S.settings.harmony, first = ph.notes[0];
+  const tgt = first && first.en ? first.en.target : T.targetAt(tm).target;
   const key = tgt && tr.kind === 'synth' ? Object.assign(Harmony.keyForRecording(tgt, heardBaseKey(), h.mode, Object.assign(hopts(), {octaveMode: h.octaveMode})), {src: 'carrier'})
                                         : {root: S.key.root, scale: S.key.scale, src: 'auto'};
-  const notes = ph.notes.map(n => ({t: n.t, o: +n.t.toFixed(4), d: rd4(n.d), n: tr.kind === 'drum' ? n.n : clipNoteFor(ti, key, n.n, tm), v: rv3(n.v)}));   // heard = stored
+  const notes = ph.notes.map(n => ({t: n.t, o: +n.t.toFixed(4), d: rd4(n.d), n: tr.kind === 'drum' ? n.n : clipNoteFor(ti, key, n.n, n.tm != null ? n.tm : tm, n.en || null), v: rv3(n.v)}));   // heard = stored
   pushUndo(ti, si, null, 'Fang');
   tr.clips[si] = {len: ph.len, key, notes};
   if (tr.kind === 'drum') tr.clips[si].seed = newSeed();
@@ -10832,6 +11010,16 @@ function prettyTarget(t) {
   const N = noteNames();
   if (t.kind !== 'chord') return N[t.root];
   return Harmony.chordName(t.root, t.quality, t.bass, N);
+}
+// V0a K-16: a song Träger chip names what is HEARD: a chord its chord name, a single key the scale it maps the music onto
+// (single A in C = „Am“), against the key heard at that song bar
+function songChipName(c) {
+  const t = c && c.target; if (!t) return 'ORIGINAL';
+  if (t.kind === 'chord') return prettyTarget(t);
+  try {
+    const h = S.settings.harmony, ref = songKeyAtBar(Math.floor(c.beat / 4 + 1e-9));
+    return keyShort(Harmony.keyForRecording(t, ref, h.mode, Object.assign(hopts(), {octaveMode: h.octaveMode})));
+  } catch (e) { return prettyTarget(t); }
 }
 function fmtShift(s) { return s > 0 ? '+' + s : s < 0 ? MINUS + Math.abs(s) : '±0'; }
 function noteLabel(n) { return noteNames()[PCx(n)] + (Math.floor(n / 12) - 1); }
@@ -11272,12 +11460,12 @@ function svDraw(force, sbIn) {
     g.textAlign = 'left';
     song.carrier.forEach((c, k) => {
       const x = c.beat / 4 * cw - SV.x; if (x > W || c.beat >= bars * 4) return;
-      const txt = c.target ? prettyTarget(c.target) : 'ORIG.', tw = Math.max(18, g.measureText(txt).width + 8);
+      const txt = c.target ? songChipName(c) : 'ORIG.', tw = Math.max(18, g.measureText(txt).width + 8);
       if (x + tw < 0) return;
       g.fillStyle = c.target ? 'rgba(255,170,40,.18)' : 'rgba(255,255,255,.06)'; g.strokeStyle = c.target ? '#ffaa28' : '#555';
       g.fillRect(x + 1, y + 4, tw, rh - 8); g.strokeRect(x + 1.5, y + 4.5, tw - 1, rh - 9);
       g.fillStyle = c.target ? '#ffcf7a' : '#8b919c'; g.fillText(txt, x + 5, y + rh / 2);
-      SV.chips.push({k, x0: x, x1: x + tw});
+      SV.chips.push({k, x0: x, x1: x + tw, txt});
     });
     g.textAlign = 'center';
     // MELODIE: the notes as small bars, pitch inside the lane
@@ -11370,9 +11558,10 @@ function renderTop() {
   EL.bRec.classList.toggle('armed', rec.state === 'countin' || rec.state === 'armed');
   EL.bRec.style.setProperty('--spb', Math.min(.9, spb()).toFixed(3) + 's');
   // TAKT block: the label reads REC (red) while a take runs (§3.1)
-  const cpu = LIM.level >= 3, rl2 = recActive() ? 'REC' : cpu && !isLand() ? 'CPU' : 'Takt';
-  if (EL.taktLbl && EL.taktLbl.textContent !== rl2) { EL.taktLbl.textContent = rl2; EL.taktLbl.classList.toggle('recl', rl2 === 'REC'); EL.taktLbl.classList.toggle('cpul', rl2 === 'CPU'); }
-  if (EL.bCpu && EL.bCpu.hidden === cpu) EL.bCpu.hidden = !cpu;
+  // V0a K-14: the limiter shows from level 1 on: „CPU 1“ … „CPU 3“ (L / W: the chip; P: instead of the TAKT label)
+  const lv = LIM.level | 0, cpu = lv >= 1, ct = 'CPU ' + lv, rl2 = recActive() ? 'REC' : cpu && !isLand() ? ct : 'Takt';
+  if (EL.taktLbl && EL.taktLbl.textContent !== rl2) { EL.taktLbl.textContent = rl2; EL.taktLbl.classList.toggle('recl', rl2 === 'REC'); EL.taktLbl.classList.toggle('cpul', rl2.startsWith('CPU')); }
+  if (EL.bCpu) { if (EL.bCpu.hidden === cpu) EL.bCpu.hidden = !cpu; if (cpu && EL.bCpu.textContent !== ct) { EL.bCpu.textContent = ct; EL.bCpu.setAttribute('aria-label', 'Begrenzer Stufe ' + lv + ' (CPU-Last) – Info'); } }
   EL.bpmVal.textContent = S.bpm;
   EL.bMetro.classList.toggle('on', S.settings.metro);
   EL.chipQv.textContent = iq === 'off' ? 'AUS' : iq === 'auto' ? 'AUTO' : iq;
@@ -11469,6 +11658,9 @@ function renderCarrier(now) {
   const ownP = !!own && window.matchMedia('(orientation: portrait)').matches;
   const ownInShift = ownP && degLab;                   // P with a degree label: the big line has room right of „D“ (2 small lines)
   EL.carShift.textContent = tgt ? (deg ? (degLab ? (ownInShift ? own : '') : '· ' + deg) : fmtShift(ss.shift)) : '';
+  // V0a K-08: the key the music is mapped onto, next to the heard shift („+3 · → C-Dur“); a single key shows its degree instead
+  const tt = tgt && !deg && ss.target ? '· → ' + ss.target : '';
+  if (EL.carTgt && (EL.carTgt._full !== tt || EL.carTgt._w !== innerWidth)) { EL.carTgt._full = tt; EL.carTgt._w = null; EL.carTgt.textContent = tt; }
   EL.carShift.classList.toggle('deg', !!deg && !degLab);
   EL.carShift.classList.toggle('own', ownInShift);
   EL.carLock.classList.toggle('show', !!(S.settings.harmony.latch && tgt));
@@ -11486,6 +11678,8 @@ function renderCarrier(now) {
   }
   EL.carLabel.textContent = lab; EL.carLabel.className = cls;
   fitCarVal();
+  // narrow phones (P2/P3): „→ C“ (short key name) when „· → C-Dur“ does not fit next to the shift; measured once per text / width
+  if (EL.carTgt && EL.carTgt._full && EL.carTgt._w == null) { EL.carTgt._w = innerWidth; if (EL.carTgt.scrollWidth > EL.carTgt.clientWidth + 1 && ss.key) EL.carTgt.textContent = '→ ' + keyShort(ss.key); }
   EL.carRing.classList.toggle('show', !!queued);
   UI.queued = queued;
   EL.bLatch.classList.toggle('on', S.settings.harmony.latch);
@@ -11496,14 +11690,26 @@ function renderCarrier(now) {
   renderEdChip();
   UI.dirty.grid = true;
 }
-// shift that is really applied (TONART snaps an out-of-key root down to the next scale degree)
+// shift that is really heard (V0a K-08): the scene's key (heardBaseKey = sceneRefKey) through the real mapping — the root
+// of that key, mapped by the Transposer exactly as a clip note, minus itself. TONART snaps an out-of-key root down to the next
+// degree of that key (snap). key / target: the key the scene's music is mapped onto („→ C-Dur“)
 function shownShift(e) {
-  const t = e && e.target; if (!t) return {shift: 0, snap: null};
-  if (S.settings.harmony.mode === 'scale') {
-    const rk = heardBaseKey(), Sc = Harmony.SCALES[rk.scale];   // the engine snaps against the clip's (scene) key, not the project key
-    if (!Sc.includes(PCx(t.root - rk.root))) { let d = 1; while (d < 12 && !Sc.includes(PCx(t.root - d - rk.root))) d++; return {shift: e.shift - d, snap: PCx(t.root - d)}; }
+  const t = e && e.target; if (!t) return {shift: 0, snap: null, key: null, target: ''};
+  const ref = heardBaseKey(), h = S.settings.harmony, n = 60 + ref.root;
+  let shift = e.shift, snap = null, key = null;
+  try { shift = T.mapEvent(n, 0, {kind: 'synth', follow: true}, {key: ref}, e) - n; } catch (err) { logErr(err); }
+  if (h.mode === 'scale') {
+    const Sc = Harmony.SCALES[ref.scale];
+    if (Sc && !Sc.includes(PCx(t.root - ref.root))) { let d = 1; while (d < 12 && !Sc.includes(PCx(t.root - d - ref.root))) d++; snap = PCx(t.root - d); }
   }
-  return {shift: e.shift, snap: null};
+  try { key = Harmony.keyForRecording(t, ref, h.mode, Object.assign(hopts(), {octaveMode: h.octaveMode})); } catch (err) { key = null; }
+  return {shift, snap, key, target: key ? keyName(key) : ''};
+}
+// §16 carrierShown(): what the readout shows (V0a-10): the heard shift and the target key
+function carrierShown() {
+  const e = T.targetAt(nowT()); if (!e.target) return {shift: 0, target: '', text: ''};
+  const ss = shownShift(e);
+  return {shift: ss.shift, target: ss.target, text: fmtShift(ss.shift) + (ss.target ? ' · → ' + ss.target : '')};
 }
 // the chord name must never be cut ("Cm…" for Cmaj7 reads as C minor): shrink the font until it fits
 function fitText(e, min) {
@@ -11602,14 +11808,18 @@ function releasePointerKeys() { for (const id of KB.ptr.keys()) inputUp('p' + id
 /* the key the keyboard lights (§4.2, Anhang D.8): in TRANSPONIEREN the key of the playing scene (the first following
    track's audible clip, else the selected scene's scene key, else the project key); in SPIELEN under an active Träger the
    Träger's scale, so the lit keys always match what you hear */
+// V0a K-10: an empty or drums-only scene falls back to the scene key heard last (then the project key), never straight to C
+const HEARD = {S: null, key: null};
 function sceneRefKey() {
   const b = AU.ctx && R.playing ? audBeat() : 0;
   for (let i = 0; i < 4; i++) {
     const tr = S.tracks[i]; if (!tr.follow) continue;
     const sl = R.playing ? visualSlots(i, b).playing : R.selS, c = sl >= 0 && tr.clips[sl];
-    if (c && c.notes.length) return c.key;
+    if (c && c.notes.length) { HEARD.S = S; HEARD.key = c.key; return c.key; }
   }
-  return sceneKeyOf(R.selS) || S.key;
+  const sk = sceneKeyOf(R.selS);
+  if (sk) { HEARD.S = S; HEARD.key = sk; return sk; }
+  return (HEARD.S === S && HEARD.key) || S.key;
 }
 function kbRefKey() {
   const tg = T.targetAt(nowT()).target;
@@ -11824,10 +12034,11 @@ function setRecOptions(o) {
   if (o.swing !== undefined && isNum(+o.swing)) st.swing = clamp(+o.swing, 0, 1);
   UI.dirty.top = true; markDirty();
 }
+// V0a K-13: „wie OP-XY Brain“ belongs to AKKORD (brain = chord following with one key in the key), the MPS reference was unproven
 const HMODES = [
-  ['chord', 'AKKORD', 'Folgt Akkorden (wie Improvisor). Ein Ton = Stufe in der Tonart (wie OP-Z).'],
-  ['scale', 'TONART', 'Bleibt immer in der Tonart (wie OP-XY Brain).'],
-  ['chromatic', 'PARALLEL', 'Verschiebt exakt in Halbtönen (CV, wie MPS/KeyStep).'],
+  ['chord', 'AKKORD', 'Folgt Akkorden (wie Improvisor). Ein Ton = Stufe in der Tonart (Prinzip OP-Z/OP-XY).'],
+  ['scale', 'TONART', 'Bleibt immer in der Tonart.'],
+  ['chromatic', 'PARALLEL', 'Verschiebt exakt in Halbtönen (Halbtöne wie ein CV-Keyboard).'],
 ];
 function popHMode() {
   openPop(EL.bHMode, p => {
@@ -12378,6 +12589,21 @@ function trackOnWorklet(i) {
 const VA_ONLY_DST = new Set(['o2pitch', 'pw', 'o1lvl', 'o2lvl', 'o3lvl', 'noise', 'unidet']);
 function dstDead(i, dst) { const s = sndOf(i); return !!s && s.engine === 'fm6' && VA_ONLY_DST.has(dst); }
 function routeActive(i, m) { if (String(m.dst).startsWith('fx.')) return fxRoute(m); if (dstDead(i, m.dst)) return false; return trackOnWorklet(i) || nativeRoute(m); }
+// V0a K-15: why a route that is heard in principle does nothing in the CURRENT sound (null = it acts): PW without a pulse
+// wave, osc 2 pitch while osc 2 is silent, Uni-Verstimm. without unison, filter routes on an FM sound whose filter is skipped
+function routeIdle(i, m) {
+  const s = sndOf(i); if (!s || !m) return null;
+  const P = s.p, d = m.dst;
+  if (s.engine === 'analog') {
+    const on = k => (+P['o' + k + 'lvl'] || 0) > .001;
+    if (d === 'pw' && ![1, 2, 3].some(k => on(k) && (P['o' + k + 'w'] | 0) === 1)) return 'wirkt erst mit Puls-Welle';
+    if (d === 'o2pitch' && !on(2)) return 'wirkt erst mit Anteil Osz 2';
+    if (d === 'unidet' && ![1, 2, 3].some(k => on(k) && (P['o' + k + 'uni'] | 0) > 1)) return 'wirkt erst mit Unison ab 2';
+  }
+  // the worklet keeps the filter while a route uses it; the native FM voice skips an open filter whatever the routes say
+  if (s.engine === 'fm6' && (d === 'cutoff' || d === 'res' || d === 'drive' || d === 'fenv') && !trackOnWorklet(i) && NativeVoice.fmBypass(P, 'fm6')) return 'wirkt erst mit Filter unter 18 kHz';
+  return null;
+}
 // set a route in knob units (§9.2: stored in engine units). keep = a finger is still on it: a route dragged through 0 stays
 // (and keeps its place in the list) until the finger lifts. Returns the depth in knob units, or null at the 8-route limit.
 const MODS_DIRTY = [0, 0, 0, 0]; let modsRaf = 0;
@@ -12569,7 +12795,7 @@ function makeCtl(d, get, set, o) {
     all = modRoutes(mi, dst);
     const mm = UI.modSrc && R.editor === 'synth' ? UI.modSrc : null, only = mm && srcOk(mm) ? mm : null;
     routes = mm ? (only ? all.filter(m => m.src === only) : []) : all;
-    act = routes.filter(m => routeActive(mi, m));
+    act = routes.filter(m => routeActive(mi, m) && !routeIdle(mi, m));     // V0a K-15: an idle route greys the ring too
     const sig = n.toFixed(5) + '|' + (mm || '') + '|' + all.map(m => m.src + m.amt).join(',') + '|' + act.length;
     if (sig === mSig) return; mSig = sig;
     const has = routes.length > 0;
@@ -12621,6 +12847,8 @@ function makeCtl(d, get, set, o) {
     ariaTxt(t);
     // o.inert: dimmed and inert (e.g. PW unless the wave is Puls, §5.2)
     if (o.inert) { const x = !!o.inert(); if (x !== k._inert) { k._inert = x; k.classList.toggle('inert', x); k.setAttribute('aria-disabled', String(x)); } }
+    // o.idle (V0a K-15, §2.4 K11): the knob does nothing in the current sound — grey, the reason on the LCD; stays usable
+    if (o.idle) { const h = o.idle() || ''; if (h !== k._idle) { k._idle = h; k.classList.toggle('kidle', !!h); } }
   }
   // live dot (≈ 30 fps from modFrame): the modulated value of the heard routes; transform only, no path rebuild (§9.3)
   function anim(sv) {
@@ -12637,7 +12865,9 @@ function makeCtl(d, get, set, o) {
   }
   const lcd = () => {
     const rs = dst && UI.modSrc && srcOk(UI.modSrc) ? rangeTxt(UI.modSrc) : rangeTxt(null), mc = k.style.getPropertyValue('--mc');
-    lcdShow(label, fmt(get()), g && g.f < 1 ? fineLabel(g.f) : '', rs, mc ? mc.trim() : '');
+    // V0a K-15: routes on this control that do nothing in the current sound: the reason instead of the range
+    const idle = (o.idle && o.idle()) || (dst && routes.length && !act.length ? routes.map(m => routeIdle(mi, m)).find(Boolean) : null);
+    lcdShow(label, fmt(get()), g && g.f < 1 ? fineLabel(g.f) : '', idle || rs, idle ? '' : mc ? mc.trim() : '');
   };
   const pulse = () => { k.classList.remove('detent'); void k.offsetWidth; k.classList.add('detent'); };
   function bubble() {
@@ -13569,7 +13799,8 @@ function pageFilter(pg, i) {
   const q = sSeg('lq', [[0, 'ECO'], [1, 'ANALOG']], null, 'Qualität');
   const res = sKnob('res');
   const led = el('span', 'kled', 'EIGENSCHW.'); res.appendChild(led);
-  const ks = [sKnob('cutoff'), res, sKnob('drive'), sKnob('fenv'), sKnob('kt'), sKnob('fvel'), sKnob('bass')];
+  // FILTER-ANSCHLAG scales the filter envelope only (§2.4 K11 → K-15 hint until the §18 bipolar velocity)
+  const ks = [sKnob('cutoff'), res, sKnob('drive'), sKnob('fenv'), sKnob('kt'), sKnob('fvel', {idle: () => (Math.abs(+P().fenv || 0) < .005 ? 'wirkt nur mit Filter-Hüllkurve' : null)}), sKnob('bass')];
   const hint = el('div', 'fhint small');
   const upd = () => { const r = P().res; led.classList.toggle('on', r >= 1); const h = r >= 1 ? FHINT2 : r >= .6 ? FHINT1 : ''; if (hint.textContent !== h) hint.textContent = h; hint.classList.toggle('on', !!h); };
   upd(); ED.refreshers.push(upd, () => { ks.forEach(x => x.update()); t.update(); q.update(); });
@@ -13647,7 +13878,8 @@ function pageLfo(pg, i, n) {
   const chips = el('div', 'routes rest');
   const chipsUpd = () => {
     const ms = S.tracks[i].sound.mods.filter(m => m.src === 'lfo' + n);
-    const h = ms.map(m => `<button class="rchip rb${nativeRoute(m) ? '' : ' wk'}" data-d="${m.dst}">→ ${esc(MDST[m.dst] ? MDST[m.dst].l : m.dst)} ${fmtVal('bip', toKnobAmt(m.dst, m.amt))}</button>`).join('')
+    // V0a K-12: hatched only where the route is not heard (routeActive, as in the MOD tab), not „every non-native route“
+    const h = ms.map(m => `<button class="rchip rb${routeActive(i, m) ? '' : ' wk'}" data-d="${m.dst}">→ ${esc(MDST[m.dst] ? MDST[m.dst].l : m.dst)} ${fmtVal('bip', toKnobAmt(m.dst, m.amt))}</button>`).join('')
       || '<span class="small">Regler gedrückt halten → LFO wählen</span>';   // §5.2 (WP5)
     if (chips._h !== h) { chips._h = h; chips.innerHTML = h; }
   };
@@ -14376,9 +14608,9 @@ function modRow(i, m) {
   const row = el('div', 'modrow' + (native ? '' : ' wk') + (dead ? ' dead' : ''));
   row.dataset.key = m.src + ':' + m.dst;
   row.style.setProperty('--c', src.c);
-  row.innerHTML = `<span class="ms"><i></i>${esc(src.l)}</span><div class="md"><b>${esc(dst.l)}</b><small></small>${native ? '' : dead ? '<em>bei FM ohne Wirkung</em>' : '<em>nur mit Worklet</em>'}</div>` +
+  row.innerHTML = `<span class="ms"><i></i>${esc(src.l)}</span><div class="md"><b>${esc(dst.l)}</b><small></small>${native ? '' : dead ? '<em>bei FM ohne Wirkung</em>' : '<em>nur mit Worklet</em>'}<em class="idle" hidden></em></div>` +
     `<div class="bsl" role="slider" aria-label="Tiefe ${esc(src.l)} → ${esc(dst.l)}"><i class="lim l"></i><i class="lim r"></i><b></b><span></span></div><button class="mx rb" aria-label="Entfernen">✕</button>`;
-  const sl = row.querySelector('.bsl'), bar = sl.querySelector('b'), lab = sl.querySelector('span'), sm = row.querySelector('small');
+  const sl = row.querySelector('.bsl'), bar = sl.querySelector('b'), lab = sl.querySelector('span'), sm = row.querySelector('small'), idl = row.querySelector('em.idle');
   // the end zones beyond ±1/K (PW, Hüllk.-Menge, Panorama ±50 %, Resonanz ±87 %) are drawn darker (§9.2)
   sl.querySelector('.lim.l').style.width = sl.querySelector('.lim.r').style.width = ((1 - lim) * 50).toFixed(1) + '%';
   const draw = () => {
@@ -14386,6 +14618,8 @@ function modRow(i, m) {
     bar.style.left = (50 + Math.min(0, a) * 50) + '%'; bar.style.width = (Math.abs(a) * 50) + '%';
     const t = fmtVal('bip', a); if (lab.textContent !== t) lab.textContent = t;
     const r = modRangeText(i, m); if (sm.textContent !== r) sm.textContent = r;
+    const hi = native && !dead ? routeIdle(i, m) || '' : '';                  // V0a K-15: grey hint while the route does nothing
+    if (idl.textContent !== hi) { idl.textContent = hi; idl.hidden = !hi; sm.hidden = !!hi; row.classList.toggle('idle', !!hi); }   // the reason replaces the range
   };
   draw(); row._draw = draw;
   if (ED.mrows) ED.mrows.push({bar: row.querySelector('.ms i'), m, x: ''});   // live source meter (modFrame)
@@ -14905,7 +15139,8 @@ function drumKeyOf(id, key) {
   return L ? [L[0], L[1] || null] : [null, null];
 }
 // the TIEF layers whose LED switches a level (§7.3): the level keys, the memory keys and the level a fresh LED gives
-const LAYER_LVL = {ton: [['tLvl', 1]], fm: [['fmI', 2], ['o2', 0]], noise: [['nLvl', 1]], metal: [['mLvl', 1]], click: [['cLvl', .5]]};
+// V0a K-03: the FM LED switches only the FM index (memory fmI0); osc 2 belongs to the TON layer (Rom Pop kick: o2 .45 stays)
+const LAYER_LVL = {ton: [['tLvl', 1]], fm: [['fmI', 2]], noise: [['nLvl', 1]], metal: [['mLvl', 1]], click: [['cLvl', .5]]};
 const layerOn = (P, lay) => (LAYER_LVL[lay] || []).some(([k]) => P[k] > .001);
 function drumChanged(id) {
   UI.drumVer++; UI.sndVer++;
@@ -15095,7 +15330,7 @@ function drumVoiceChips(onPick) {
 function drumAudition(idx, vel) { ensureAudio(); const c = AU.ctx; if (!c) return; const sl = DRUM_VOICES[idx]; if (sl) drumHit(sl.gm, vel || .9, c.currentTime + .005, 'audition'); }
 // a knob on one slot parameter (one undo entry per gesture, kind 'sound')
 function dKnob(id, d, o) {
-  return makeCtl(d, () => dSlotGet(id, d.p), v => drumSet(id, d.p, v), Object.assign({undo: soundUndo(4), label: d.l}, o));
+  return makeCtl(d, () => dSlotGet(id, d.p), v => drumSet(id, d.p, v), Object.assign({undo: soundUndo(4), label: d.l, key: d.p}, o));
 }
 function dSeg(id, d, cls, label) {
   const nm = k => (d.names || [])[k] != null ? d.names[k] : String(d.vals[k]);
@@ -15178,8 +15413,11 @@ function pageDrumSound(pg) {
   row.append(mb, lb);
   pg.appendChild(row);
   const ks = M.macros.map(m => dKnob(sl.id, macroDesc(m, P[m[0]])));
-  const std = [['lvl', 'Pegel'], ['pan', 'Panorama'], ['sRoom', 'Raum'], ['sGate', 'Gate']].map(([k, l]) => dKnob(sl.id, DPD[k], {label: l}));
-  dKnobs(pg, [ks, std], 'dsnd n' + (ks.length + 4));
+  // V0a K-04: a standard knob whose engine key is already one of the model's macros is left out (snare / tom „Gate-Hall“,
+  // clap „Room“): every engine key at most once on the page
+  const mk = new Set(M.macros.map(m => m[0]));
+  const std = [['lvl', 'Pegel'], ['pan', 'Panorama'], ['sRoom', 'Raum'], ['sGate', 'Gate']].filter(([k]) => !mk.has(k)).map(([k, l]) => dKnob(sl.id, DPD[k], {label: l}));
+  dKnobs(pg, [ks, std], 'dsnd n' + (ks.length + std.length));
   const all = ks.concat(std);
   ED.refreshers.push(() => all.forEach(x => x.update()));
   lcdHint2(sl.l + ' · ' + (DM[P.model] || P.model), 'Instrument antippen = wählen + hören');
@@ -15582,8 +15820,17 @@ function rollHeadUpdate() {
   if (ED.rollAt.mel) { const m = S.song && S.song.melody; if (!m) return; const txt = m.notes.length + (m.notes.length === 1 ? ' Note' : ' Noten') + ' · ' + m.len + (m.len === 1 ? ' Takt' : ' Takte'); if (ED.rollInfo._t !== txt) { ED.rollInfo._t = txt; ED.rollInfo.textContent = txt; ED.rollInfo.title = txt + ' · wie gespielt (nie umgerechnet)'; } return; }
   const c = S.tracks[ED.rollAt.t].clips[ED.rollAt.s]; if (!c) return;
   if (ED.laufBtn) { const ok = laufCheck(c).ok; ED.laufBtn.classList.toggle('dis', !ok); ED.laufBtn.setAttribute('aria-disabled', String(!ok)); ED.laufBtn.title = ok ? 'LAUF: Schrittansicht für Basslauf und Sequenz' : LAUF_MSG; }
-  const txt = (S.tracks[ED.rollAt.t].kind === 'synth' ? keyName(c.key) + ' · ' : '') + c.len + (c.len === 1 ? ' Takt' : ' Takte');
+  const txt = (S.tracks[ED.rollAt.t].kind === 'synth' ? keyName(shownClipKey(ED.rollAt.s, c)) + ' · ' : '') + c.len + (c.len === 1 ? ' Takt' : ' Takte');
   if (ED.rollInfo._t !== txt) { ED.rollInfo._t = txt; ED.rollInfo.textContent = txt; }
+}
+// V0a K-09: the key a clip is shown with. An automatic key waits for the next ORIGINAL while a Träger is latched
+// (R.keyPending, inaudible there); the display does not wait: it shows what the detection says now (scene key / own key)
+function shownClipKey(si, c) {
+  if (!c || !c.key) return c ? c.key : null;
+  if (c.key.src !== 'auto' || !R.keyPending.has(si)) return c.key;
+  const ns = liveNotes(c); if (!ns.length) return c.key;
+  const k = KeyDetect.resolveClipKey(ns, sceneKeyOf(si), S.key);
+  return {root: k.root, scale: k.scale, src: 'auto'};
 }
 // the clip editor on the song's melody lane (§3.9): heading „MELODIE · Synth n“, [Als Clip] (P1), no LAUF
 function buildMelodyRoll() {
@@ -16121,7 +16368,7 @@ function openClipSheet(t, s, opts) {
     if (tr.kind === 'synth') {
       // key chip: Auto / Fest / Aufnahme (§3.7, §4.2); [= Szenen-Tonart] when the clip kept its own key (§4.1.6)
       const kr = el('div', 'keyrow'), src = clip.key.src || 'auto';
-      const kc = el('span', 'kchip' + (src === 'user' ? ' u' : src === 'carrier' ? ' c' : ''), esc({auto: 'Auto', user: 'Fest', carrier: 'Aufnahme'}[src] + ': ' + clipInfo(clip)));
+      const kc = el('span', 'kchip' + (src === 'user' ? ' u' : src === 'carrier' ? ' c' : ''), esc({auto: 'Auto', user: 'Fest', carrier: 'Aufnahme'}[src] + ': ' + keyName(shownClipKey(s, clip)) + (clip.q ? ' · ' + clip.q.grid : '')));
       kr.append(el('span', 'lbl', 'Tonart'), kc);
       kr.append(B(ED.clip.fest ? 'Fertig' : 'Fest…', () => openClipSheet(t, s, {fest: !ED.clip.fest}), null, 'Tonart fest einstellen'));
       if (src !== 'auto') kr.append(B('Auto', () => { setClipKey(t, s, null); reopen(); }, null, 'Tonart automatisch erkennen'));
@@ -16423,11 +16670,14 @@ function openMenu(goto) {
   s8.appendChild(el('div', 'help', ['Spur wählen, leeren Platz antippen, ● drücken – nach dem Einzählen einspielen, ● nochmal = fertig. Die Aufnahme-Leiste zeigt, was gerade aufgenommen wird.',
     'Gespielt ohne Aufnahme? FANG macht daraus einen Clip, der im Takt weiterläuft.',
     '✎ öffnet den Editor: Zeichnen, Auswählen, Radieren; zwei Finger zoomen. Jede Geste lässt sich mit ↶ rückgängig machen.',
+    'Clip-Länge: den hellen Griff ┃ am Ende des Lineals ziehen – die Ansicht bleibt dabei stehen, am Rand läuft sie langsam mit. Noten hinter dem neuen Ende werden gelöscht (↶ holt sie zurück). Taktnummern antippen + „Zuschneiden“ = nur diese Takte behalten.',
     'Szene starten: ▶ 1–4. Laufenden Clip antippen = stoppt zum nächsten Takt. ■ zweimal = sofort. Clip lange drücken = Clip-Menü.',
     'TRANSPONIEREN: Die Tastatur ist stumm. Leuchtende Taste = Stufe in der Tonart (wie OP-Z), dunkle Taste = neue Tonart, Akkord = alle Spuren folgen (wie Improvisor). Die Tonart jedes Clips wird automatisch erkannt.',
     'LATCH: Träger bleibt nach dem Loslassen. ORIGINAL = zurück. Drums bleiben immer gleich.',
+    'Träger-Anzeige: die Zahl ist die Verschiebung, die du hörst, dahinter die Ziel-Tonart – z. B. „C +3 · → C-Dur“ über einer a-Moll-Szene.',
     'KLANG: Regler ziehen = ändern, seitlich wegziehen = fein, doppelt tippen = Standard, gedrückt halten = modulieren (LFO 1, LFO 2 …).',
     'MODULATION: Regler halten, Quelle wählen (oder im Tab MOD oben eine Quelle antippen) – dann ziehen die Regler die Tiefe. Der farbige Ring zeigt den Bereich, der Punkt den Wert jetzt. „Fertig“ beendet.',
+    'Grauer Hinweis „wirkt erst mit …“ an einer Modulation: im jetzigen Klang hörst du sie nicht (z. B. Pulsbreite ohne Puls-Welle) – sie bleibt gespeichert.',
     'SOUNDS: Im Klang-Editor auf den Sound-Namen tippen – Bibliothek mit Vorhören (▶), Trick (ⓘ) und eigenen Sounds. „Sichern“ legt deinen Sound unter „Eigene“ ab.',
     'LAUF: Basslauf oder Sequenz Schritt für Schritt – Schritt antippen = an, hoch/runter ziehen = Ton in der Tonart.',
     'SONG: SONG ⇄ (Ecke oben links im Raster) zeigt den Song. ● SONG nimmt Szenenwechsel, Clip-Stopps, Träger und deine Melodie mit, ▶ SONG spielt alles ab. Eine Zelle antippen = anderer Clip in diesem Takt, wischen = blättern. Während der Song läuft: Clip starten = Spur übernehmen, ↩ SONG gibt sie zurück; ● MEL. spielt eine Melodie dazu. Unter MEL. ⋯: Melodie als Clip, Kette aus Szenen.',
@@ -16435,6 +16685,7 @@ function openMenu(goto) {
     'FM: Klangerzeugung FM = 6 Operatoren wie beim DX7. ALGO zeigt, wer wen moduliert (farbig = Ausgang); Box antippen = Operator wählen, wischen = anderer Algorithmus. Die Regler unten sind die Pegel der Operatoren (Modulator: Helligkeit, Ausgang: Lautstärke). OP stellt Frequenz, Hüllkurve und Skalierung ein, MAKRO macht alles auf einmal heller, härter oder länger. Menü → Sounds lädt DX7-Bänke (.syx).',
     'EFFEKTE: Im Klang-Editor unter FX. SPUR und CHORUS gehören zur Spur, HALL, ECHO und MASTER wirken auf alle Spuren. Nach dem Stopp klingen Hall und Echo aus – ■ zweimal schneidet sie ab.',
     'Jede Änderung lässt sich mit ↶ rückgängig machen, ↷ stellt sie wieder her.',
+    'CPU 1 – CPU 3 (oben): Das Gerät rechnet am Limit, der Begrenzer spart Stimmen und Unisono. Deine Sounds bleiben dabei unverändert.',
     'Speichern geht von selbst. „Als Datei sichern“ legt eine Sicherung mit allem an, „Projekte“ zeigt alle Projekte im Browser.'].map(t => `<p>${esc(t)}</p>`).join('') +
     '<p class="small">Computer-Tastatur: A W S E D F T G Z/Y H U J K O L P = Töne · Drums: A S D F G H J K L Ö Ä # = Pads · Leertaste = Start/Stopp · Tab = Modus · Shift halten = kurz TRANSPONIEREN · Esc = ORIGINAL (oder offenes Fenster schließen) · Enter = Aufnahme · 1–4 = Szenen · Y/Z und X = Oktave · M = Metronom · Q = Latch · Regler: Pfeiltasten, Mausrad, M = Menü</p>'));
   // 9 Info
@@ -16938,6 +17189,7 @@ function buildMidi(opts) {
       const c = tr.clips[s]; if (!c || !c.notes.length) return;
       const cL = c.len * 4, ch = tr.kind === 'drum' ? 9 : i, ded = new Map();
       for (let o = 0; o < L - 1e-9; o += cL) for (const nt of c.notes) {
+        if (nt.t >= cL - 1e-9) continue;                         // V0a K-06: behind the clip end = never heard, never exported
         const st = o + nt.t; if (st >= L - 1e-9) continue;
         const en = Math.min(L, st + Math.max(nt.d, 1 / 32));
         let p = nt.n;
@@ -17003,6 +17255,7 @@ function buildMidiSong(withC) {
       const c = tr.clips[e.slot]; if (!c || !c.notes.length) continue;
       const b0 = e.bar * 4, b1 = Math.min(L, (k + 1 < lane.length ? lane[k + 1].bar : song.bars) * 4), cL = c.len * 4;
       for (let o = b0; o < b1 - 1e-9; o += cL) for (const nt of c.notes) {
+        if (nt.t >= cL - 1e-9) continue;                         // V0a K-06
         const st = o + nt.t; if (st >= b1 - 1e-9) continue;
         const en = Math.min(b1, st + Math.max(nt.d, 1 / 32));
         let p = nt.n;
@@ -17107,16 +17360,24 @@ async function deliver(base, bytes, kind, label) {
   // a plain download finishes instantly: keep the same-export guard a moment longer so a double-tap gives one file
   finally { if (DELIVER.flight === run) { DELIVER.flight = null; DELIVER.until = performance.now() + (how === 'download' ? 700 : 0); } }
 }
+/* EN-12 (V0a N0a, downloads.d.ts): the viewer saves gif png jpg jpeg webp mp4 webm txt json md (+ a second list with zip that
+   the platform can switch off); mid / syx / wav / m4a are not allowed. Audio goes as it is (.webm, or .mp4 for the recorder's
+   audio/mp4), MIDI and DX7 banks (.syx) inside a store-only ZIP, JSON / TXT directly. A refused format (rejected_extension,
+   extension_not_enabled) is said once — no retry, no other format. */
+const DL_EXT = {webm: 'webm', m4a: 'mp4', json: 'json', txt: 'txt', mid: 'zip', syx: 'zip'};
+const DL_MIME = {mid: 'audio/midi', m4a: 'audio/mp4', webm: 'audio/webm', syx: 'application/octet-stream', json: 'application/json', txt: 'text/plain', zip: 'application/zip', mp4: 'audio/mp4'};
 async function deliverNow(base, bytes, kind, label) {
   let dl = null;
   try { dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) { dl = null; }
   if (dl) {
-    const zip = kind === 'mid' || kind === 'm4a' || kind === 'webm';      // the viewer allows json / zip / txt: MIDI and audio go into a ZIP
-    const filename = zip ? base + '.zip' : base + '.json';
-    const data = zip ? new Blob([buildZip([{name: base + '.' + kind, data: bytes}])], {type: 'application/zip'}) : new Blob([bytes], {type: 'application/json'});
-    try { await dl.save({filename, data}); toast(kind === 'mid' ? 'MIDI gespeichert (ZIP)' : zip ? 'Audio gespeichert (ZIP)' : (label || 'Projekt gespeichert') + ': ' + filename); }
-    catch (e) {
+    const ext = DL_EXT[kind] || 'json', zip = ext === 'zip', filename = base + '.' + ext;
+    const data = zip ? new Blob([buildZip([{name: base + '.' + kind, data: bytes}])], {type: 'application/zip'}) : new Blob([bytes], {type: DL_MIME[ext] || 'application/octet-stream'});
+    try {
+      await dl.save({filename, data});
+      toast(kind === 'mid' ? 'MIDI gespeichert (ZIP)' : kind === 'syx' ? 'DX7-Bank gespeichert (ZIP)' : kind === 'webm' || kind === 'm4a' ? 'Audio gespeichert' : (label || 'Projekt gespeichert') + ': ' + filename);
+    } catch (e) {
       const c = String((e && (e.code || e.name || e.message)) || '');
+      if (/rejected_extension|extension_not_enabled/.test(c)) { toast('Dieses Format ist hier nicht verfügbar – App in Safari öffnen'); return 'format'; }
       if (!/declin|cancel|abort/i.test(c)) { toast('Export fehlgeschlagen' + (c ? ': ' + c : '')); return 'failed'; }
       return 'declined';
     }
@@ -17127,7 +17388,7 @@ async function deliverNow(base, bytes, kind, label) {
   // <a download> work there (§12.2 / D.12 deliverFile: a null capability is not „present“)
   let framed = false; try { framed = window.top !== window.self; } catch (e) { framed = true; }
   if (window.claude && window.claude.use && framed) { toast('Export hier nicht verfügbar – Seite im Browser öffnen'); return 'unavailable'; }
-  const fname = base + '.' + kind, type = kind === 'mid' ? 'audio/midi' : kind === 'm4a' ? 'audio/mp4' : kind === 'webm' ? 'audio/webm' : 'application/json';
+  const fname = base + '.' + kind, type = DL_MIME[kind] || 'application/octet-stream';   // Safari: the file itself (.syx = octet-stream)
   let file;
   try { file = new File([bytes], fname, {type}); } catch (e) { file = new Blob([bytes], {type}); file.name = fname; }
   try {
@@ -17141,7 +17402,7 @@ async function deliverNow(base, bytes, kind, label) {
     document.body.appendChild(a); a.click();
     setTimeout(() => { a.remove(); }, 4000);
     showDlLink(url, fname, kind);
-    toast(kind === 'mid' ? 'MIDI-Datei erstellt' : kind === 'm4a' || kind === 'webm' ? 'Audio-Datei erstellt' : label ? label + ': ' + fname : 'Projektdatei erstellt');
+    toast(kind === 'mid' ? 'MIDI-Datei erstellt' : kind === 'syx' ? 'DX7-Bank erstellt' : kind === 'm4a' || kind === 'webm' ? 'Audio-Datei erstellt' : label ? label + ': ' + fname : 'Projektdatei erstellt');
   } catch (e) { toast('Export fehlgeschlagen'); }
   return 'download';
 }
@@ -17535,6 +17796,19 @@ function forceNative(on) {
   wkReport();
   return engineInfo().synth;
 }
+// §16 viewState(kind) (V0a: where the editor looks — ROLLE / Melodie-Rolle x0 and ppb in beats, LAUF and SCHRITTE page;
+// FOLGEN with its reasons follows in V0b): follow 'hold' while a finger works in the roll (the view never moves under it)
+function viewState(kind) {
+  const k = kind || (ED.lauf ? 'lauf' : ED.roll ? (ED.rollAt && ED.rollAt.mel ? 'mel' : 'roll') : R.editor === 'drum' && ED.dTab === 'steps' ? 'steps' : null);
+  if ((k === 'roll' || k === 'mel') && ED.roll && ED.rollAt && !!ED.rollAt.mel === (k === 'mel')) {
+    const st = ED.roll.state, v = st.view, fin = !!(v.freeze || st.pointers || st.gesture);
+    return {editor: k, page: null, x0: v.x0, ppb: v.ppb, follow: fin ? 'hold' : 'on', reason: fin ? 'finger' : null};
+  }
+  if (k === 'lauf' && ED.lauf) { const per = LAUF_PER[LAUF.grid] || 16, g = ({'1/8': .5, '1/16': .25, '1/16T': 1 / 6, '1/32': .125})[LAUF.grid] || .25;
+    return {editor: 'lauf', page: LAUF.page, x0: LAUF.page * per * g, ppb: null, follow: 'off', reason: null}; }
+  if (k === 'steps' && R.editor === 'drum' && ED.dTab === 'steps') return {editor: 'steps', page: ED.page | 0, x0: (ED.page | 0) * 4, ppb: null, follow: 'off', reason: null};
+  return null;
+}
 function voicesInfo() {
   const now = nowT();
   return VOICES.filter(v => !v.dead).map(v => ({id: v.id, track: v.track, src: v.src, out: v.outAt(Math.max(now, v.start)), start: v.start, end: v.end, state: v.state(now)}))
@@ -17696,13 +17970,19 @@ const SYNQUENZER = {
     return {t, s, grid: LAUF.grid, page: LAUF.page, pages: ED.lauf.pages, lane: LAUF.lane, sel: LAUF.sel, steps};
   },
   laufApi: () => ED.lauf,                       // test hook: the StepEditor instance (cells, lanes)
+  // v3 V0a (§16): scheduler faults, editor view, the Träger readout; test hooks __failTrack / deliverNow
+  tickErrors: () => TICKERR.n,
+  __failTrack: i => { TICKERR.fail = i == null || +i < 0 ? -1 : clamp(i | 0, 0, 4); return TICKERR.fail; },
+  viewState: kind => viewState(kind),
+  carrierShown: () => carrierShown(),
+  deliverNow: (base, bytes, kind, label) => deliverNow(base, bytes, kind, label),
 };
 // every state-changing API call leaves the UI rendered (no need to wait for the next animation frame)
 function uiSync() { try { if (EL.app) uiFrame(); } catch (e) { logErr(e); } }
 const NO_SYNC = new Set(['state', 'project', 'runtime', 'getClip', 'getParam', 'noteLog', 'voices', 'timeline', 'serialize', 'buildMidi', 'buildZip', 'crc32', 'meter', 'outPitch', 'migrate', 'tapTempo',
   'getSound', 'mods', 'library', 'factory', 'previewState', 'soundEdited',
   'history', 'projects', 'storage', 'engineInfo', 'getBusFx', 'wake', 'gestures', 'roll', 'rollApi', 'detectKey', 'sceneKey',
-  'modState', 'modLive', 'scopeMsg', 'lauf', 'laufApi', 'song', 'kits', 'patterns', 'drumSlot', 'fmUi']);
+  'modState', 'modLive', 'scopeMsg', 'lauf', 'laufApi', 'song', 'kits', 'patterns', 'drumSlot', 'fmUi', 'tickErrors', 'viewState', 'carrierShown']);
 for (const k of Object.keys(SYNQUENZER)) {
   const f = SYNQUENZER[k]; if (typeof f !== 'function' || NO_SYNC.has(k)) continue;
   SYNQUENZER[k] = function () { const r = f.apply(this, arguments); uiSync(); if (r && typeof r.then === 'function') return r.then(v => { uiSync(); return v; }); return r; };
@@ -17717,7 +17997,7 @@ function init() {
     'carLabel', 'carVal', 'carShift', 'carLock', 'bLatch', 'bOrig', 'hist', 'strip', 'stDot', 'stName', 'stSub', 'bKlang', 'bFolgt', 'stLock',
     'bMute', 'bUndo', 'modebar', 'octDn', 'octUp', 'segPlay', 'segTr', 'kbArea', 'kb', 'pads', 'kbLabel', 'synthSheet', 'drumSheet', 'clipSheet',
     'menu', 'popLayer', 'toast', 'banner', 'fileIn', 'sndIn', 'syxIn', 'sndSheet', 'topLogo', 'bub',
-    'bFangT', 'bFang', 'reclane', 'recLaneCv', 'recLaneTxt', 'bRecDone', 'bEdit', 'kbRef', 'rollSheet', 'qSheet', 'coach', 'ciTgt', 'modeSeg', 'bCpu', 'songView'].forEach(id => { EL[id] = document.getElementById(id); });
+    'bFangT', 'bFang', 'reclane', 'recLaneCv', 'recLaneTxt', 'bRecDone', 'bEdit', 'kbRef', 'rollSheet', 'qSheet', 'coach', 'ciTgt', 'modeSeg', 'bCpu', 'songView', 'carTgt'].forEach(id => { EL[id] = document.getElementById(id); });
   EL.grid = EL.clipGrid; EL.taktLbl = EL.takt.querySelector('.lbl');
   // AN10 (§5.7): ?engine=native keeps the synth worklet off (tests of the native fallback)
   try { if (/[?&]engine=native(&|$)/.test(location.search)) UI.forceNative = true; } catch (e) {}
