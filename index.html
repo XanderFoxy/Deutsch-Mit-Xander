@@ -1037,20 +1037,21 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
 #toast.band.t3 .tmsg{font-size:12px;line-height:1.15}
 #toast.dock{transform:none;max-width:none;background:#f4f1ea;justify-content:space-between;gap:6px;padding:0 4px 0 10px;pointer-events:auto}
 #toast.dock.lcdk{border-radius:5px;padding:0 2px 0 10px;font-size:12px}
-#toast.dock.lcdk button{height:calc(100% - 4px);min-height:22px;position:relative}
-/* the LCD line is only 22–28 px high: the action's touch target reaches 10 px above and below it (≈ 44 px, §2.6) */
-#toast.dock.lcdk button::after,#toast.dock button::after{content:'';position:absolute;left:-2px;right:-2px;top:-10px;bottom:-10px}
-#toast.dock button{position:relative}
+#toast.dock.lcdk button{height:calc(100% - 4px);min-height:22px}
+/* the docked toast's buttons never reach past the toast: a tap on the tab row, a header button or a pad next to it is
+   never taken as [Rückgängig] (no enlarged hit area outside the box) */
+/* main screen (§3.1 Result): P – the toast takes the carrier bar's row, the place the Aufnahme-Leiste held during the take
+   (no layout shift); L – it covers the Träger readout (a display). The clip rows keep their size and position and are
+   never covered, so a tap aimed at a clip or a ■ always acts on that clip or ■ */
+#toast.dock.cark{border-radius:6px;z-index:55}            /* under the popovers (#popLayer 60): an open Kette / Träger popover is never covered */
+#toast.dock.cark button{height:calc(100% - 8px);max-height:40px;min-height:30px}
 #menu>#toast.band,#clipSheet>#toast.band{margin:6px 10px 8px}
-/* the action band lies over the bottom of the clip area for 5 s (absolute): the clip rows keep their size and position, so
-   a tap aimed at a clip never lands on another one when the band comes or goes; a visible hint keeps its space under it */
-#gridArea>#toast.band{position:absolute;left:0;right:0;bottom:0;z-index:7;margin:0 8px 6px}
-#gridArea.toasting #hint{visibility:hidden}
 /* short landscape (§2.2: 5 clip rows ≥ 30 px): the first-run hint moves out of the clip area into the side panel, over
-   the Träger history row (empty on a first run) just above the track strip — never over the keys or pads (§10) */
+   the Träger history row (empty on a first run; the hint steps aside once it holds chips or the song view shows) just above the track strip — never over the keys or pads (§10) */
 @media (orientation:landscape) and (max-height:560px){#side{position:relative}}
 #side>#hint{position:absolute;left:6px;right:6px;bottom:53px;z-index:6;margin:0;min-height:44px;padding:2px 2px 2px 8px;font-size:11px;line-height:1.2;box-shadow:0 2px 8px rgba(0,0,0,.6)}
 #side>#hint button{width:40px;height:40px}
+#side>#hint.hoff{display:none}
 #banner{position:fixed;left:0;right:0;top:0;z-index:65;display:none;padding:calc(env(safe-area-inset-top) + 10px) 16px 10px;background:var(--rec);color:#fff;text-align:center;font:700 14px/1.2 var(--font-ui)}
 #banner.show{display:block}
 
@@ -1244,11 +1245,16 @@ body[data-mod] #synthSheet .sh-body .pg:not(.pg-mod) .qcell .seg{opacity:1}
   #strip #bFolgt .ck{display:none}
   #strip #bEdit,#strip #bMute,#strip #bUndo{width:40px;min-width:40px;padding:0}   /* touch targets ≥ 40 px (§2.4 L) */
   #strip #bFolgt{width:40px;min-width:40px;padding:0}
+  /* 300 px side panel: name (62) + KLANG + 4 × 40 must fit, ↶ was cut at the screen edge — narrower gaps and KLANG padding */
+  #strip{gap:3px}
+  #strip #bKlang{padding:0 4px}
 }
 @media (orientation:landscape) and (max-width:759px) and (max-height:560px){
-  #strip #bEdit,#strip #bFolgt,#strip #bMute,#strip #bUndo{width:38px;min-width:38px}   /* touch targets ≥ 38 px; the name gives way */
+  #strip #bEdit,#strip #bFolgt,#strip #bMute,#strip #bUndo{width:38px;min-width:38px}   /* touch targets ≥ 38 px */
   #strip #bKlang{min-width:42px;padding:0 3px}
-  #strip #stName{font-size:10.5px;letter-spacing:.01em}
+  #strip{gap:2px;padding:3px 3px}
+  /* 260 px side panel: the track name may take two lines („SYNTH“ / „4“) instead of being cut to „SYN…“ */
+  #strip #stName{font-size:10.5px;letter-spacing:0;line-height:1.1;white-space:normal;overflow-wrap:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;max-height:2.4em}
 }
 @media (orientation:landscape) and (max-width:759px){
   .pg-fx{gap:8px}
@@ -5200,15 +5206,67 @@ const RecHelpers = (() => {
     for (const k of NOTE_EXTRA) if (n[k] != null) { (x || (x = {}))[k] = typeof n[k] === 'number' ? n[k] : JSON.parse(JSON.stringify(n[k])); }
     if (x) a.push(x); return a;
   }
-  function packClipNotes(clip) { if (!clip || !Array.isArray(clip.notes)) return clip; const c = Object.assign({}, clip); c.notes = clip.notes.map(packNote); return c; }
+  /* recorded clips (notes with a raw onset o, §3.5) are written denser (PF7: 10 240 recorded notes + 40 sounds ≤ 300 KB;
+     with {"o":…} on every note a file was ~450 KB): the clip gets nz:1 and each note is [Δt, d, n, v, Δo] in integers —
+     t and o in 1/10000 beat (Δt from the previous note's t, Δo from the note's own t), d in 1/10000 beat, v in 1/1000.
+     A value that is not exactly such an integer (a triplet t of 0.333333, an unrounded v) is written as it is (a
+     non-integer number is never a scaled one); a note with other extra fields keeps its {…} object as 5th element.
+     Lossless: the clip is only written this way if every note decodes to exactly what the plain form gives. */
+  const NZ = 1e4, NZV = 1e3;
+  const zInt = (x, f) => { const i = Math.round(x * f); return i / f === x ? i : x; };
+  function packNotesZ(notes) {
+    let T = 0; const out = new Array(notes.length);
+    for (let i = 0; i < notes.length; i++) {
+      const n = notes[i];
+      if (typeof n.t !== 'number' || typeof n.d !== 'number' || typeof n.v !== 'number' || !isFinite(n.t) || !isFinite(n.d) || !isFinite(n.v) || Math.abs(n.t) > 1e5) return null;
+      const ti = zInt(n.t, NZ), a = [Number.isInteger(ti) ? ti - T : ti, zInt(n.d, NZ), n.n | 0, zInt(n.v, NZV)];
+      T = Number.isInteger(ti) ? ti : Math.round(n.t * NZ);
+      let x = null;
+      for (const k of NOTE_EXTRA) if (n[k] != null) { (x || (x = {}))[k] = typeof n[k] === 'number' ? n[k] : JSON.parse(JSON.stringify(n[k])); }
+      if (x) {
+        const ks = Object.keys(x);
+        if (ks.length === 1 && ks[0] === 'o' && typeof x.o === 'number' && isFinite(x.o)) { const oi = zInt(x.o, NZ); a.push(Number.isInteger(oi) ? oi - T : oi); }
+        else a.push(x);
+      }
+      out[i] = a;
+    }
+    // verify: decodes to the plain form exactly
+    const back = unpackNotesZ(out);
+    if (back.length !== notes.length) return null;
+    for (let i = 0; i < notes.length; i++) {
+      const n = notes[i], b = back[i];
+      if (b.t !== n.t || b.d !== n.d || b.n !== (n.n | 0) || b.v !== n.v) return null;
+      for (const k of NOTE_EXTRA) if ((n[k] != null) !== (b[k] != null) || (n[k] != null && typeof n[k] === 'number' && b[k] !== n[k])) return null;
+    }
+    return out;
+  }
+  function unpackNotesZ(arr) {
+    let T = 0;
+    return arr.map(e => {
+      if (!Array.isArray(e)) return e;
+      let t;
+      if (Number.isInteger(e[0])) { T += e[0]; t = T / NZ; } else { t = e[0]; T = Math.round(t * NZ); }
+      const o = {t, d: Number.isInteger(e[1]) ? e[1] / NZ : e[1], n: e[2], v: Number.isInteger(e[3]) ? e[3] / NZV : e[3]}, x = e[4];
+      if (typeof x === 'number') o.o = Number.isInteger(x) ? (T + x) / NZ : x;
+      else if (x && typeof x === 'object') for (const k of NOTE_EXTRA) if (x[k] != null) o[k] = x[k];
+      return o;
+    });
+  }
+  function packClipNotes(clip) {
+    if (!clip || !Array.isArray(clip.notes)) return clip; const c = Object.assign({}, clip);
+    const z = clip.notes.some(n => n && n.o != null) ? packNotesZ(clip.notes) : null;
+    if (z) { c.notes = z; c.nz = 1; } else c.notes = clip.notes.map(packNote);
+    return c;
+  }
   function unpackClipNotes(clip) {
     if (!clip || !Array.isArray(clip.notes)) return clip; const c = Object.assign({}, clip);
-    c.notes = clip.notes.map(n => {
+    const z = c.nz === 1; delete c.nz;
+    c.notes = (z ? unpackNotesZ(clip.notes) : clip.notes.map(n => {
       if (!Array.isArray(n)) return n;
       const o = {t: n[0], d: n[1], n: n[2], v: n[3]}, x = n[4];
       if (x && typeof x === 'object') for (const k of NOTE_EXTRA) if (x[k] != null) o[k] = x[k];
       return o;
-    }).filter(n => n && [n.t, n.d, n.n, n.v].every(Number.isFinite));
+    })).filter(n => n && [n.t, n.d, n.n, n.v].every(Number.isFinite));
     return c;
   }
   const mapClips = (p, fn) => { for (const t of (p && p.tracks) || []) if (t && Array.isArray(t.clips)) t.clips = t.clips.map(c => (c ? fn(c) : c)); return p; };
@@ -5220,8 +5278,24 @@ const RecHelpers = (() => {
     const proj = mapClips(JSON.parse(JSON.stringify(project, stripRuntime)), packClipNotes);
     const body = JSON.stringify(proj);
     const o = {app: APP, kind: 'project', format: PROJECT_FORMAT, saved: new Date().toISOString(), appVersion: appVersion || '3.0.0', sum: fnv(body), project: proj};
-    if (Array.isArray(library)) o.sounds = library.map(normalizeSound).filter(Boolean);
+    if (Array.isArray(library)) o.sounds = library.map(normalizeSound).filter(Boolean).map(packSound);
     return o;
+  }
+  /* library sounds in a project file leave out the parameters that are at their defaults (PF7: 40 sounds were ~60 KB of a
+     300 KB budget); every reader passes file sounds through normalizeSound, which fills them in again. Lossless: a sound
+     is only written short if normalizeSound(short) is exactly the full sound, else it is written in full. */
+  function packSound(s) {
+    try {
+      if (!s || !s.p || typeof s.p !== 'object') return s;
+      const synth = s.engine !== 'drum', keep = synth ? {cutoff: s.p.cutoff, o1w: s.p.o1w, level: s.p.level} : null;   // keeps an FM6 record off the FM_BASE path
+      const d = normalizeSound({engine: s.engine, p: synth ? keep : s.p}); if (!d) return s;
+      const same = (a, b) => a === b || JSON.stringify(a) === JSON.stringify(b);
+      const o = Object.assign({}, s);
+      if (synth) { const p = {}; for (const k in s.p) if (k in keep || !same(s.p[k], d.p[k])) p[k] = s.p[k]; o.p = p; }
+      const fx = {}; for (const k in s.fx || {}) if (!same(s.fx[k], d.fx[k])) fx[k] = s.fx[k]; o.fx = fx;
+      const back = normalizeSound(o);
+      return back && JSON.stringify(back) === JSON.stringify(s) ? o : s;
+    } catch (e) { return s; }
   }
   const serializeProjectFile = (project, library, appVersion) => JSON.stringify(buildProjectFile(project, library, appVersion));
   function buildSoundsFile(sounds) { return {app: APP, kind: 'sounds', format: SOUNDS_FORMAT, saved: new Date().toISOString(), sounds: (sounds || []).map(normalizeSound).filter(Boolean)}; }
@@ -10212,13 +10286,14 @@ function recClose(bd) {
   recCommitOpen(bd);
   cancelRecClicks(bd);
   const ti = rec.track, si = rec.scene;
-  const len = clamp(Math.round((bd - rec.startBeat) / 4), 1, 16), L = len * 4;
+  const len = clamp(Math.round((bd - rec.startBeat) / 4), 1, 16), L = len * 4, qIn = GRID_STEP[S.settings.inQuant] || 0;
   const notes = [];
   for (const n of rec.temp) {
     let t = n.t; while (t >= L) t -= L;
     if (t < 0) t = 0;
     let o = n.o; if (o != null) { while (o >= L) o -= L; o = +Math.max(0, o).toFixed(4); }
-    const x = {t: +t.toFixed(6), d: Math.min(n.d, L), n: n.n, v: n.v, born: n.born, bornRun: R.runId}; if (o != null) x.o = o;
+    // unquantized (Eingabe-Q AUS / AUTO before the grid is found): t = o, the raw onset to 1/10000 beat (§3.5 „with 'off' t = o“)
+    const x = {t: !qIn && o != null && o < L - 1e-9 ? o : +t.toFixed(6), d: Math.min(n.d, L), n: n.n, v: n.v, born: n.born, bornRun: R.runId}; if (o != null) x.o = o;
     notes.push(x);
   }
   rec.state = 'off'; rec.temp = [];
@@ -10265,7 +10340,8 @@ function commitRecNote(o, bOff) {
     const n = o.drum ? o.n : clipNoteFor(o.track, rec.key, o.n, o.tm != null ? o.tm : b2t(o.b), o.en);
     if (rec.fixedLen && rec.clip) {
       const L = rec.clip.len * 4; if (t >= L - 1e-9) t = 0;
-      rec.clip.notes.push({t: +t.toFixed(6), o: +Math.min(raw, L - 1e-4).toFixed(4), d: Math.min(o.drum ? .1 : d0, L), n, v: vv, born: o.b, bornRun: R.runId});
+      const ro = +Math.min(raw, L - 1e-4).toFixed(4);
+      rec.clip.notes.push({t: q ? +t.toFixed(6) : raw >= L - 1e-9 ? 0 : ro, o: ro, d: Math.min(o.drum ? .1 : d0, L), n, v: vv, born: o.b, bornRun: R.runId});
       UI.dirty.grid = true;
     } else rec.temp.push({t, o: raw, d: Math.min(o.drum ? .1 : d0, 64), n, v: vv, born: o.b});
     return;
@@ -10281,7 +10357,8 @@ function commitRecNote(o, bOff) {
   let t = raw; if (q) t = Math.round(t / q) * q; if (t >= L - 1e-9) t = 0;
   // the clip is heard through the Träger: store the note in the clip's Bezug so that it plays back as it was played
   const n = o.drum ? o.n : clipNoteFor(tr, clip.key, o.n, o.tm != null ? o.tm : b2t(o.b), o.en);
-  clip.notes.push({t: +t.toFixed(6), o: +Math.min(raw, L - 1e-4).toFixed(4), d: Math.min(o.drum ? .1 : d0, L), n, v: vv, born: o.b, bornRun: R.runId});
+  const ro = +Math.min(raw, L - 1e-4).toFixed(4);
+  clip.notes.push({t: q ? +t.toFixed(6) : (t === 0 && raw >= L - 1e-9 ? 0 : ro), o: ro, d: Math.min(o.drum ? .1 : d0, L), n, v: vv, born: o.b, bornRun: R.runId});
   clip.notes.sort((a, b) => a.t - b.t);
   if (o.kind === 'od') rec.added++;
   clipChanged(tr, scene); markDirty();
@@ -10390,18 +10467,32 @@ function gridFitN(on, step, tol) {
   return k;
 }
 /* overdub grid: the clip's own grid; if the new notes need a finer one that keeps every position of it (16ths over an
-   1/8 clip), that finer grid (never 1/32) — the take is never forced onto positions it was not played on */
-function overdubGrid(q, on) {
+   1/8 clip), that finer grid (never 1/32) — the take is never forced onto positions it was not played on.
+   Played late or early by a constant amount (phone touch + output latency, up to ≈ 100 ms) the take is first moved back by
+   that offset, as for a fresh take (detectGridApp), so sloppy straight eighths are never read as 1/16T; a finer grid must
+   explain the take clearly (chance-corrected fit ≥ .75), and a triplet grid wins only if at least two notes sit on triplet
+   positions that the straight 1/16 grid does not have (§3.5: „triplets win only if the middle third of a beat is used“). */
+function overdubGrid(q, on0) {
   const st = GRID_STEP[q.grid], g = {grid: q.grid, swing: q.swing};
-  if (!st || (q.swing || .5) > .5 || !on.length) return g;
-  const tol = .032 * S.bpm / 60, n = on.length, k0 = gridFitN(on, st, tol); if (k0 === n) return g;
+  if (!st || (q.swing || .5) > .5 || !on0.length) return g;
+  const bps = S.bpm / 60, tol = .032 * bps, n = on0.length;
+  // a constant offset most of the take shares against the clip's grid (≤ 100 ms, ≤ 40 % of a grid step)
+  const res = on0.map(t => t - Math.round(t / st) * st), dm = median(res);
+  const off = Math.abs(dm) > tol * .5 && Math.abs(dm) <= Math.min(.1 * bps, .2, st * .4) && res.filter(x => Math.abs(x - dm) <= tol).length >= n * .6 ? dm : 0;
+  const on = off ? on0.map(t => t - off) : on0;
+  if (off) g.off = +off.toFixed(4);
+  const k0 = gridFitN(on, st, tol); if (k0 === n) return g;
+  const near = (t, s) => Math.abs(t - Math.round(t / s) * s) <= Math.min(tol, s * .3) + 1e-9;
   let best = null;
   for (const G of KeyDetect.GRIDS) {
     if (G.step >= st - 1e-9 || G.step < 1 / 6 - 1e-9) continue;
     const r = st / G.step; if (Math.abs(r - Math.round(r)) > 1e-6) continue;
-    const k = gridFitN(on, G.step, tol);
-    if (k > k0 && (!best || k > best.k)) best = {grid: G.id, swing: .5, k, refined: true};
+    const k = gridFitN(on, G.step, tol), ch = Math.min(.95, 2 * Math.min(tol, G.step * .3) / G.step);
+    if (k <= k0 || (k / n - ch) / (1 - ch) < .75) continue;
+    if (G.id.endsWith('T') && on.filter(t => near(t, G.step) && !near(t, .25)).length < 2) continue;
+    if (!best || k > best.k) best = {grid: G.id, swing: .5, k, refined: true, off: g.off};
   }
+  if (best && !best.off) delete best.off;
   return best || g;
 }
 function detectGridApp(notes) {
@@ -10926,7 +11017,7 @@ function setSongView(on) {
   if (on === !!UI.songView) return on;
   UI.songView = on;
   EL.gridArea.classList.toggle('song', on);
-  EL.songView.hidden = !on;
+  EL.songView.hidden = !on; hintSideSync();
   if (on) { svLayout(); svAutoScroll(true); }
   UI.dirty.song = UI.dirty.grid = UI.dirty.all = true;
   haptic('tick');
@@ -11433,6 +11524,7 @@ function renderRing(now) {
 }
 function renderHistory() {
   const h = EL.hist; if (!h) return;
+  hintSideSync();
   const cur = T.targetAt(nowT()).target, sig = T.history.map(prettyTarget).join('|') + '#' + (cur ? prettyTarget(cur) : '');
   if (sig === UI.last.hist) return; UI.last.hist = sig;
   h.textContent = '';
@@ -11792,9 +11884,11 @@ function toast(msg, actions) {
   UI.lastToast = msg;
 }
 function hideToast() { if (EL.toast) EL.toast.classList.remove('show'); UI.toastActs = false; toastPlace(); }
-/* A toast with action buttons never lies on top of a control (§10.4 toasts, live use): on the main screen, in the clip
-   sheet and in the menu it is an in-flow band at the bottom (the clip grid / sheet body shrinks for those 5 s); in the
-   synth and drum editors it covers the LCD line (a display) or, where the LCD is hidden (320×568), the keyboard top.
+/* A toast with action buttons never lies on top of the clip grid, the keys or the editor tools (§10.4 toasts, live use):
+   in the clip sheet and in the menu it is an in-flow band at the bottom (the sheet body shrinks for those 5 s); on the
+   main screen it docks on the carrier bar's row in P (where the Aufnahme-Leiste was during the take, §3.1 – the clip rows
+   neither move nor get covered) and on the Träger readout in L; in the synth and drum editors it covers the LCD line
+   (a display) or, where the LCD is hidden (320×568), the keyboard top.
    A plain message toast stays a floating, tap-through label at the top as before. Re-checked every frame while shown. */
 // §2.2 L: the 5 clip rows stay ≥ 30 px — in a short landscape the first-run hint moves out of the clip area into the side
 // panel (over the Träger history row, above the strip; never over keys or pads); everywhere else it stays under the grid
@@ -11804,6 +11898,14 @@ function hintHome() {
   const to = HINT_MQ && HINT_MQ.matches ? side : EL.gridArea;
   if (h.parentNode === to) return;
   if (to === EL.gridArea) to.insertBefore(h, EL.countin && EL.countin.parentNode === to ? EL.countin : null); else to.appendChild(h);
+  hintSideSync();
+}
+// in the side panel the hint lies over the Verlauf row: it steps aside as soon as that row holds Träger chips (the user
+// has done what the hint says) and in the song view (as in the clip area, where the song view hides it)
+function hintSideSync() {
+  const h = EL.hint; if (!h) return;
+  const off = h.parentNode !== EL.gridArea && (T.history.length > 0 || !!UI.songView);
+  if (off !== h.classList.contains('hoff')) h.classList.toggle('hoff', off);
 }
 function toastHome() {
   if ((R.editor === 'synth' || R.editor === 'drum') && (EL.synthSheet.classList.contains('open') || EL.drumSheet.classList.contains('open'))) {
@@ -11814,26 +11916,53 @@ function toastHome() {
   if (EL.menu.classList.contains('open')) return {kind: 'band', ref: EL.menu};
   if (EL.sndSheet && EL.sndSheet.classList.contains('open')) return {kind: 'band', ref: EL.sndSheet.querySelector('.brmain') || EL.sndSheet};
   if (EL.clipSheet.classList.contains('open')) return {kind: 'band', ref: EL.clipSheet};
-  return {kind: 'band', ref: EL.gridArea};
+  return {kind: 'car', r: carDockRect(false)};
+}
+const vis = e => !!(e && e.isConnected && e.offsetWidth > 0 && e.offsetHeight > 0);
+/* main-screen dock (§3.1 Result): P – the carrier bar's row (inset), or while the Aufnahme-Leiste shows, its display part
+   (never ● FERTIG); L – the Träger readout, wide = readout + the AKKORD/LATCH/ORIGINAL row (only if the text needs it) */
+function carDockRect(wide) {
+  const R0 = e => e.getBoundingClientRect(), port = !window.matchMedia || window.matchMedia('(orientation: portrait)').matches;
+  if (vis(EL.carrier)) {
+    if (port) { const r = R0(EL.carrier); return {left: r.left + 6, top: r.top + 4, width: Math.max(0, r.width - 12), height: Math.max(0, r.height - 8)}; }
+    const r = R0(EL.readout), b = wide && vis(EL.bLatch) ? R0(EL.bLatch).bottom : r.bottom;
+    return {left: r.left, top: r.top, width: r.width, height: b - r.top};
+  }
+  if (vis(EL.reclane) && vis(EL.recLaneCv)) {
+    const a = R0(EL.reclane), c = R0(EL.recLaneCv), top = port ? a.top + 3 : R0(EL.recLaneTxt).top;
+    return {left: c.left, top, width: c.width, height: Math.max(0, c.bottom - top)};
+  }
+  const r = R0(EL.side || EL.gridArea);                    // nothing visible to dock on (should not happen): top of the side panel
+  return {left: r.left + 6, top: r.top + 4, width: Math.max(0, r.width - 12), height: 48};
 }
 function toastPlace() {
   const t = EL.toast; if (!t) return;
   toastPlace1(t);
-  EL.gridArea.classList.toggle('toasting', !!UI.toastActs && t.parentNode === EL.gridArea);
 }
 function toastPlace1(t) {
   if (!UI.toastActs) {
     if (t.parentNode !== document.body) document.body.appendChild(t);
-    if (UI.toastPos !== 'top') { UI.toastPos = 'top'; t.classList.remove('band', 'dock', 'lcdk', 'tcomp', 't3', 'tpw', 'dk2', 'dk3'); t.style.cssText = ''; }
+    if (UI.toastPos !== 'top') { UI.toastPos = 'top'; t.classList.remove('band', 'dock', 'lcdk', 'cark', 'tcomp', 't3', 'tpw', 'dk2', 'dk3'); t.style.cssText = ''; }
     return;
   }
   const h = toastHome();
   if (h.kind === 'band') {
     if (t.parentNode !== h.ref) h.ref.appendChild(t);
-    if (UI.toastPos !== 'band') { UI.toastPos = 'band'; t.classList.remove('dock', 'lcdk', 'dk2', 'dk3'); t.classList.add('band'); t.style.cssText = ''; toastFit(t); }
+    if (UI.toastPos !== 'band') { UI.toastPos = 'band'; t.classList.remove('dock', 'lcdk', 'cark', 'dk2', 'dk3'); t.classList.add('band'); t.style.cssText = ''; toastFit(t); }
     return;
   }
   if (t.parentNode !== document.body) document.body.appendChild(t);
+  if (h.kind === 'car') {
+    const px = r => `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`;
+    let css = px(h.r);
+    if (UI.toastPos === css || UI.toastPos === 'w:' + css) return;
+    UI.toastPos = css; t.classList.remove('band', 'tcomp', 't3', 'tpw', 'lcdk'); t.classList.add('dock', 'cark'); t.style.cssText = css;
+    if (!toastDockFit(t, 'car') && !(window.matchMedia && window.matchMedia('(orientation: portrait)').matches)) {
+      t.style.cssText = px(carDockRect(true)); toastDockFit(t, 'car'); UI.toastPos = 'w:' + css;   // L: the readout + the mode row
+    }
+    return;
+  }
+  t.classList.remove('cark');
   const r = h.ref.getBoundingClientRect();
   const css = h.kind === 'lcd' ? `left:${r.left}px;top:${r.top}px;width:${r.width}px;height:${r.height}px`
     : `left:${r.left + 8}px;top:${r.top + 6}px;width:${Math.max(0, r.width - 16)}px;height:44px`;
@@ -11856,8 +11985,10 @@ function toastDockFit(t, kind) {
   if (!m) return true;
   const fits = () => m.scrollWidth <= m.clientWidth + 1 && m.scrollHeight <= m.clientHeight + 1;
   if (fits()) return true;
+  // the main-screen dock (≥ 44 px high) reads the message on two lines beside the labelled buttons before it uses symbols
+  if (kind === 'car' && t.clientHeight >= 40) { t.classList.add('dk2'); if (fits()) return true; t.classList.remove('dk2'); }
   if (box && box.children.length && [...box.children].every(b => b.dataset.ic)) { t.classList.add('tcomp'); if (fits()) return true; }
-  if (kind !== 'kb') return false;
+  if (kind !== 'kb' && kind !== 'car') return false;
   t.classList.add('dk2'); if (fits()) return true;
   t.classList.remove('dk2'); t.classList.add('dk3'); if (fits()) return true;
   return false;
