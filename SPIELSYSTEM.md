@@ -5040,3 +5040,50 @@ Nichts gelesen, nichts geändert.
 2. Mit angemeldetem Konto messen (Attrappe wie 884-beta), damit die synchronen Start-Stücke der Angemeldeten in die Grundlinie kommen.
 3. 3G kalt neu messen (Entwurf: bereit 4299, Wissen 1854 ms, davon 1254 synchron).
 4. Werkstatt-Eintrag und Funk-Antwort beim Ausliefern von 885.
+
+## Fassung 885 — Startskripte vor den Stilblättern anfordern: gemessen, NICHT eingebaut (Ladezeit-Entwurf, Schritt B)
+
+XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 310/312): „das Maximum rausholen“. Der Entwurf versprach: Lader (bzw. `<link rel=preload as=script>`) vor die Stilblätter, dann gehen die ~24 Startskripte schon beim Lesen des Kopfes raus statt erst nach den Stilblättern. **Vorher festgelegtes Maß: „bereit“ kalt; „erstes Bild“ darf nicht schlechter werden.** Ergebnis: „bereit“ kalt 4G wird deutlich früher, aber das erste Bild kommt in **jedem** gemessenen Fall später – auf 3G um 0,65 s. Deshalb ist **nichts an der Seite geändert** (index.html wie 884 = 02613a71); dieser Abschnitt hält nur die Messung fest, damit niemand den Schritt noch einmal blind baut.
+
+### Was 884 heute tut (Spur und Resource Timing, 4G kalt, CPU 4×)
+- Startblätter angefordert bei ~235–270 ms, fertig bei ~360–380 ms. Die Skripte gehen erst bei **519–600 ms** raus: das Lader-Skript am Ende von `<body>` wartet auf die Stilblätter, und der Browser zeichnet vorher das erste Bild (Stil + Layout des Körpers 137–159 ms Hauptfaden) – der Lader läuft danach, wenige ms vor dem ersten Bild (568–612 ms).
+- Die Leitung ist in dieser Lücke frei, der Hauptfaden nicht: genau dort rechnet der Browser das erste Bild.
+
+### Gebaut zum Messen (nur im Zwischenordner, verschränkt gegen 02613a71)
+- **M (Entwurf):** Lader samt supabase-js-Zeile vor das Stilblatt-Skript im Kopf, sonst Zeile für Zeile gleich (Reihenfolge supabase → core → … → app.js unverändert, `?quelle`/`dmaMinFehlt` unverändert). Skripte gehen bei ~250 ms raus, zusammen mit den Stilblättern.
+- **T:** Liste im Kopf, `preload` sobald alle Startblätter ihr `onload` gemeldet haben. Wirkungslos: `onload` kommt erst nach dem ersten Bild (Anforderung 591–601 ms, später als 884).
+- **R:** Liste im Kopf, `preload` im ersten `requestAnimationFrame` nach den Startblättern (vor Stil/Layout des ersten Bildes): Anforderung ~400 statt ~565 ms. **R4:** dasselbe nur für die vier großen (app, livechat, data-exercises, backend).
+
+### Messung (werkzeug/ladezeit-messen.js, HTTP/2 + TLS, CPU 4×, Gast, Profil auf der Platte; B − A gepaart, Median, 95-%-Bereich)
+| Stand | Netz/Fall | Paare | erstes Bild A → B | B − A (95 %) | bereit A → B | B − A (95 %) |
+|---|---|---|---|---|---|---|
+| M | 4G kalt | 10 | 612 → 744 | **+142** (100…162, 10↑/0↓) | 1417 → 1205 | **−255** (−322…−184, 0↑/10↓) |
+| M | 3G kalt | 10 | 1252 → 1894 | **+650** (620…682, 10↑/0↓) | 4267 → 4155 | −122 (−213…+3, nicht deutlich) |
+| M | 4G warm | 6 | 484 → 540 | **+42** (30…96, 6↑/0↓) | 1238 → 1186 | −131 (−242…+23, nicht deutlich) |
+| M | 4G sw | 6 | 598 → 612 | +14 (−16…80) | 876 → 888 | +33 (−86…132) |
+| R | 4G kalt | 3 (Vorlauf) | | +64 / +108 / +116 | | −245 / −168 / −119 |
+| R4 | 4G kalt | 4 (Vorlauf) | 568 → 630 | +40 (−56…72) | 1412 → 1316 | −48 (−286…85) |
+| T | 4G kalt | 2 (Vorlauf) | 576 → 578 | +2 | 1347 → 1434 | +87 |
+
+Wissen- und Klassenzimmer-Tipp, Langläufer, synchron geholte Stücke: in keinem Fall deutlich anders (z. B. M 4G kalt Wissen −23, Klassenzimmer +10). Rechnerlast 1,1–2,9 (4 Kerne). Rauschgrenze (A/A, 7 Paare, siehe Grundlinie): erstes Bild ±54, bereit ±76 (kalt).
+
+### Warum das erste Bild später kommt
+- **Leitung:** Das Werkzeug teilt die Bandbreite gerecht auf alle laufenden Antworten (wie die Drosselung der Entwicklerwerkzeuge). Bei M laufen 8 Startblätter neben 24 Skripten: die Blätter bekommen nur noch etwa ein Viertel der Leitung (Beleg: Startblätter fertig bei 493 statt 378 ms) – 3G +0,65 s.
+- **Hauptfaden:** Selbst wenn die Blätter zuerst kommen, kostet jede Skript-Antwort, die während des ersten Bildes eintrifft, Hauptfaden-Zeit (Daten annehmen, Vorab-Einträge anlegen: R 22 ms für 23 `preload` bei CPU 4×, das erste Layout 139 statt 87 ms). Deshalb kostet auch R +64…+116 ms, obwohl die Blätter dort schon fertig sind.
+- **Gegenprobe mit Vorrang (nur Zwischenordner, nicht eingebaut):** Eine Kopie des Werkzeugs, deren Leitung streng nach der Dringlichkeit verteilt, die Chromium mitschickt (`priority: u=0` Seite/Stilblätter, `u=1` preload, Skripte mit defer ohne Angabe = u=3; geprüft mit einem eigenen HTTP/2-Server) – so wie es ein Server mit Vorrang (RFC 9218) täte. M, je 6 Paare: 4G kalt erstes Bild **+40** (−4…84), bereit **−198** (−293…−1) · 3G kalt erstes Bild **+54** (52…78, deutlich), bereit −76 (nicht deutlich). Auch mit Vorrang wird das erste Bild also später, und der Gewinn auf 3G ist nicht belegt.
+
+### Ehrlich
+- Ob GitHub Pages (Fastly) die Dringlichkeit beachtet, lässt sich von hier aus nicht prüfen (Proxy dazwischen). Beide Modelle zeigen ein späteres erstes Bild; das reicht für „nicht einbauen“.
+- 3G kalt der Grundlinie 884 ist damit neu gemessen (A, 10 Läufe): erstes Bild 1252, bereit 4267, Wissen 1831 ms, davon synchron 1265 (Entwurf: 1256 / 4299 / 1854 / 1254) – Grundlinie, Offen 3.
+- Vorläufe (R, R4, T) mit 2–4 Paaren sind Hinweise, keine Belege.
+
+### Sonde
+Keine – an der Seite ist nichts geändert. Die Messdateien liegen im Zwischenordner (`startliste/*.json`), die Prüfstände als Verweis-Bäume (`gegen885/startliste-*`).
+
+### Datenbank
+Nichts gelesen, nichts geändert.
+
+**Offen**
+1. Der eigentliche Hebel liegt im ersten Bild selbst: Stil + Layout des Körpers 137–159 ms bei CPU 4× (Spur), dazu die Startblätter (korrekturen-start 13,7 KB, themes 14,4 KB gepackt). Wird das erste Bild billiger, schrumpft die Lücke bis zum Lader von selbst – das gehört zu E/D/K, nicht zu B.
+2. Vorschlag für das Werkzeug: Schalter `--vorrang` (Leitung nach Chromiums `priority`-Angabe) fest einbauen und bei jedem Schritt, der die Reihenfolge der Anfragen ändert, beide Modelle messen. Der Code liegt im Zwischenordner (`startliste/prio/messen-vorrang.js`), ist aber nicht geprüft und nicht eingebaut.
+3. Falls die Feldmessung (spiel_diagnose „mess-start“) später zeigt, dass auf echten Geräten die Leitung und nicht der Rechner bremst, B mit `fetchpriority="low"` noch einmal gegen echte Telefone messen – vorher nicht.
