@@ -5087,3 +5087,61 @@ Nichts gelesen, nichts geändert.
 1. Der eigentliche Hebel liegt im ersten Bild selbst: Stil + Layout des Körpers 137–159 ms bei CPU 4× (Spur), dazu die Startblätter (korrekturen-start 13,7 KB, themes 14,4 KB gepackt). Wird das erste Bild billiger, schrumpft die Lücke bis zum Lader von selbst – das gehört zu E/D/K, nicht zu B.
 2. Vorschlag für das Werkzeug: Schalter `--vorrang` (Leitung nach Chromiums `priority`-Angabe) fest einbauen und bei jedem Schritt, der die Reihenfolge der Anfragen ändert, beide Modelle messen. Der Code liegt im Zwischenordner (`startliste/prio/messen-vorrang.js`), ist aber nicht geprüft und nicht eingebaut.
 3. Falls die Feldmessung (spiel_diagnose „mess-start“) später zeigt, dass auf echten Geräten die Leitung und nicht der Rechner bremst, B mit `fetchpriority="low"` noch einmal gegen echte Telefone messen – vorher nicht.
+
+## Fassung 885 — Vorab-Laden der Seite im Service Worker (navigation preload; Ladezeit-Entwurf, Schritt C)
+
+XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“. Feldmessung (884, `spiel_diagnose` „mess-start“, Android mit Service Worker, Öffnen über „navigate“, 7 Seiten 14.–16.10.): erstes Byte der Seite **541–820 ms, Median 616**, obwohl nur 1 KB übers Netz ging. Bisher weckte der Browser beim Öffnen erst den schlafenden Helfer (sw.js), und erst der wache Helfer fragte das Netz nach der Seite – beides nacheinander. **Vorher festgelegtes Maß: Fall sw, „Seite: erstes Byte“; erstes Bild, „bereit“ und die Anfragen dürfen nicht schlechter werden.** Nichts Sichtbares.
+
+### Was gebaut ist (nur `sw.js`, dazu der Stempel in index.html)
+- `activate` schaltet das Vorab-Laden ein (`registration.navigationPreload.enable()`, nur wo es das gibt: Chrome/Android, Firefox ab 99, Safari ab 15.4; sonst wie bisher). Jetzt fragt der Browser das Netz nach der Seite, **während** er den Helfer weckt.
+- `seite()` nimmt genau diese Antwort (`event.preloadResponse`), sonst wie bisher `fetch`. Alles andere bleibt: zuerst das Netz, im Funkloch sofort und nach 6 s die gespeicherte Seite; der Speicher der Seite wird aus derselben Antwort aufgefrischt; `fassung.json` und alles ohne Stempel gehen unverändert ins Netz; gestempelte Dateien unverändert aus dem Speicher; `?ohne-sw` meldet weiter ab.
+- `waitUntil` hält den Helfer wach, bis die Antwort da und gespeichert ist. Gemessen (Sonde, Gegenprobe ohne diese Zeile): ohne sie bricht der Browser eine späte Vorab-Anfrage ab, sobald die Ausweichseite nach 6 s geliefert ist – der Speicher bliebe alt.
+- **Andere Seiten im Bereich** (Prüfseiten, SYNQUENZER.html, Weiterleitungen, 404): liefen bisher ohne `respondWith` vorbei. Mit eingeschaltetem Vorab-Laden fragt Chrome sie dann **zweimal** (Vorab + Rückfall; gemessen mit Chromium 141). Deshalb reicht der Helfer dort jetzt die Vorab-Antwort unverändert durch (Inhalt, Ziel einer Weiterleitung und Status gleich, je Öffnen eine Anfrage). Browser ohne Vorab-Laden: wie bisher kein `respondWith`.
+- Bestehende Geräte bekommen es beim nächsten Öffnen (sw.js wird bei jedem Öffnen geprüft; `skipWaiting` + `clients.claim` wie bisher). **Die offene Seite lädt dabei nicht neu** (kein `controllerchange`-Neuladen in der Seite; Sonde Prüfung 9) – auch nicht im Klassenzimmer.
+
+### Messung (werkzeug/ladezeit-messen.js, 4G 9 Mbit/s 60 ms, Aufbau 2 RTT, HTTP/2 + TLS, CPU 4×, Gast, Profil auf der Platte; A = 02613a71, B = A + neues sw.js; verschränkt A B / B A; Median, B − A gepaart mit 95-%-Bereich)
+| Lauf | Fall | Paare | erstes Byte A → B | B − A (95 %) | erstes Bild A → B | B − A (95 %) | bereit A → B | B − A (95 %) |
+|---|---|---|---|---|---|---|---|---|
+| `--sw` | sw | 10 | 188 → 187 | −1 (−6…2) | 582 → 626 | +50 (−4…102, 8↑/2↓, nicht deutlich) | 981 → 1000 | +7 (−98…167) |
+| `--arten sw` (Nachmessung) | sw | 12 | 186 → 187 | +1 (0…6, nicht deutlich) | 580 → 566 | −24 (−56…42) | 932 → 936 | +24 (−89…129) |
+| **Modell: Helfer wacht langsam (250 ms)** | sw | 10 | **328 → 264** | **−65 (−69…−64, 0↑/10↓) DEUTLICH** | 716 → 680 | −30 (−76…−8, 2↑/8↓) | 1049 → 1014 | −35 (−155…83) |
+
+- **Auf dem Prüfrechner bringt es nichts – weil der Helfer dort in ~3 ms aufwacht** (`workerStart` 2,5–7,6 ms in allen sw-Läufen des ersten Laufs; erstes Byte mit Helfer 188 ms ≈ ohne Helfer 184 ms im Fall pause). Das Werkzeug bremst nur den Hauptfaden der Seite (CPU 4×), nicht den Faden des Helfers – das langsame Aufwachen eines schwachen Telefons kommt in dieser Messung gar nicht vor.
+- **Modell** (nur zum Messen, im Zwischenordner `gegen885/modell-a|b`): in A und B dieselbe Zeile am Anfang von sw.js, die den Helfer bei jedem Aufwachen 250 ms rechnen lässt. A: Aufwachen 250 ms, dann eine Rundreise → 328 ms (die Verbindung baut Chrome offenbar schon während des Aufwachens auf: 328 ≈ 250 + 60 + 18, nicht 250 + 3 × 60). B: die Vorab-Anfrage (3 RTT = 186 ms) läuft während des Aufwachens → 264 ms (= Aufwachen + 14 ms). **Gewinn = eine Rundreise**, in 10 von 10 Paaren; erstes Bild −30 ms (95 % −76…−8).
+- Daraus die Regel: Vorab-Laden spart höchstens die Zeit **einer Anfrage** (Rundreise + Server), und nur, wenn das Aufwachen länger dauert als der Verbindungsaufbau. Auf dem Android (erstes Byte 616 ms bei 1 KB) ist das wahrscheinlich der Fall – wie viel es dort bringt, zeigt erst die nächste Feldmessung (SQL unten). **Das ist kein Schritt zu „zehnmal schneller“, sondern eine Rundreise weniger bei jedem Öffnen mit schlafendem Helfer.**
+- **Schaden: keiner gemessen.** Fälle ohne Helfer (kalt, warm, pause; gleiche Seite bis auf den Stempel): „DEUTLICH“ bei 0 von 120 Maßen; Anfragen beim Server in allen Fällen gleich (sw: 8 → 8, also keine doppelte Anfrage). Das +50 ms beim ersten Bild im ersten Lauf (8↑/2↓) war Rauschen: die Nachmessung mit 12 Paaren ergibt −24 ms (Rauschgrenze sw erstes Bild ±54, Grundlinie). Wissen- und Klassenzimmer-Tipp, Langläufer, synchron geholte Stücke: in keinem Lauf deutlich anders.
+- Rechnerlast 0,1–2,1 (4 Kerne). Messdateien: Zwischenordner `swvorladen/lauf/*.json|txt`.
+
+### Sonde `werkzeug/pruefe-885-swvorladen.js` (27 Prüfungen)
+- Server schreibt jede Anfrage mit (Pfad, Kopf `Service-Worker-Navigation-Preload`) und spielt Funkloch (Abbruch) und Stau (9 s) für /index.html. Geprüft: 1 eingeschaltet · 2/3 je Öffnen GENAU EINE Anfrage für /index.html mit Vorab-Kopf, über den Helfer – wach und schlafend (gestoppt wie nach einer Pause) · 4 andere Seiten, Weiterleitung (302), 404: je Schritt eine Anfrage, Inhalt/Ziel/Status unverändert · 5 Speicher aus der Vorab-Antwort · 6 Funkloch: gespeicherte Seite nach 19 ms, sie läuft · 7 Stau: gespeicherte Seite nach 6016 ms (Grenze 5,8–6,9 s), nur eine Anfrage, die späte Antwort landet im Speicher · 8 fassung.json zweimal gefragt = zweimal beim Server, gestempelte Dateien aus dem Speicher · 9 Update vom alten Helfer (884): danach eingeschaltet, die offene Seite lädt nicht neu, nächstes Öffnen mit Vorab-Kopf · 10 `?ohne-sw` · 11 Sonde 694 mit neuem und altem sw.js gleich.
+- **Ergebnis: 27 grün.** **Gegenprobe** alter Stand (02613a71): 6 rot (1, 2b, 3b, 5, 9b, 9d – alles, was das Vorab-Laden selbst betrifft; grün bleibt, was gleich bleiben soll). „Naives“ Vorab-Laden (nur eingeschaltet, nicht benutzt): 12 rot – je Öffnen zwei Anfragen (2, 3, 4, 5, 7, 9d). Ohne `waitUntil`: 1 rot (7c, der Speicher bleibt alt).
+- Beim Bau gefunden: `controllerchange` kommt laut Regel **vor** dem `activate`-Ereignis; wer gleich danach fragt, sieht das Vorab-Laden noch aus (gemessen: „activating“ ~1 s). Die Sonde wartet deshalb auf „activated“. Für die Seite ohne Belang (Anfragen warten, bis der Helfer aktiv ist).
+- **Sonde 694, Prüfung 3a war schon mit 884 meist rot** („beim erneuten Öffnen kommt KEINE gestempelte Datei mehr übers Netz“): `min/spiel.js` kommt erst in der Ruhepause nach dem Start und ist beim zweiten Öffnen (1,5 s später) oft noch nicht im Speicher des Helfers. Gemessen 17.10.: mit dem sw.js aus 884 7 von 8 Läufen rot, mit dem neuen 8 von 8, jedes Mal nur `min/spiel.js`. Prüfung 11 zählt genau diesen Fall als „bekannt“, jede andere rote Prüfung als Fehler.
+- Grün geblieben: 884-notweg (91, Fall G mit sw.js: /app.js genau einmal beim Server), 694 bis auf 3a (s. o.). app.js, livechat.js und index.html (außer dem Stempel) unberührt.
+
+### Datenbank
+Nur gelesen (Feldwerte oben). Vergleich nach dem Ausliefern (nur lesen):
+```sql
+-- erstes Byte der Seite MIT Service Worker, je Fassung und Gerät (885 = mit Vorab-Laden)
+select daten->>'f' as fassung,
+       case when daten->>'ua' ilike '%android%' then 'android' when daten->>'ua' ~* 'iphone|ipad' then 'ios' else 'andere' end as geraet,
+       daten->>'typ' as typ, count(*) as seiten,
+       percentile_cont(0.5) within group (order by (daten->'t'->>'ttfb')::numeric) as ttfb_median,
+       percentile_cont(0.5) within group (order by (daten->'t'->>'fcp')::numeric) as fcp_median,
+       max(zeit) as zuletzt
+  from spiel_diagnose
+ where art = 'mess-start' and daten->>'sw' = '1'
+ group by 1, 2, 3 order by 1 desc, 2, 3;
+```
+Stand 17.10. (884): Android „navigate“ 7 Seiten, erstes Byte Median 616, erstes Bild 1580; „reload“ 1 Seite 838; iPhone „back_forward“ 6 Seiten 72 ms (zu wenige Seiten für mehr als eine Richtung).
+
+### Ehrlich
+- Auf dem Prüfrechner ist der Gewinn null; belegt ist er nur im Modell (250 ms Aufwachen) und dort genau eine Rundreise. Wie lange der Helfer auf dem OPPO wirklich zum Aufwachen braucht, ist nicht gemessen (messung.js schickt `workerStart` nicht mit).
+- Eingebaut, weil es messbar nirgends schadet, im Modell deutlich hilft und die Standardlösung für „zuerst das Netz“-Helfer ist – der größere Hebel für das Öffnen mit Helfer ist S1 (Seite zuerst aus dem Speicher), dort fällt auch diese Anfrage weg.
+
+**Offen**
+1. Nach dem Ausliefern: erstes Byte mit Helfer draußen 884 gegen 885 (SQL oben); Erwartung Android −1 Rundreise (grob 60–150 ms), nicht mehr.
+2. messung.js könnte `workerStart` (Aufwachen des Helfers) und `deliveryType` mitschicken – dann sieht man draußen, wie lange der Helfer schläft und ob das Vorab-Laden greift (kleine Änderung an messung.js, nicht in diesem Schritt).
+3. Werkzeug: Schalter für ein langsames Aufwachen des Helfers (wie hier mit den Modell-Ordnern) oder die Rechnerbremse auch für den Faden des Helfers – sonst misst der Fall sw das Aufwachen nie.
+4. Sonde 694 Prüfung 3a (spiel.js-Wettlauf, schon in 884): die Sonde sollte vor dem zweiten Öffnen warten, bis `min/spiel.js` im Speicher liegt – eine Änderung an der Sonde, nicht an der Seite.
+5. S1 (stale-while-revalidate für index.html, freigegeben) als eigener Schritt; dann bleibt vom Vorab-Laden nur noch die Auffrischung im Hintergrund.
