@@ -74,6 +74,37 @@
        Knopf „Betreten" sichtbar, kzAbStart = ab dem Öffnen). Sie
        enthalten die Pausen des Werkzeugs; der Unterschied zur Messung in
        der Seite ist MESSFEHLER, kein Gewinn.
+     - SYNCHRON GEHOLTE STÜCKE (FASSUNG 885, Nachtrag): jeder synchrone
+       Abruf (XMLHttpRequest mit async = false – so holt ein Platzhalter
+       sein app-Stück, wenn es noch fehlt) wird in der Seite mit Datei,
+       Beginn, Dauer und Aufrufer festgehalten und dem Abschnitt
+       zugeordnet (start, wissen, kz …). Dazu die eigene Liste der Seite
+       (DMA_TEIL_SOFORT: welches Stück für welche Funktion). Gemessen am
+       14.10.: der erste Tipp auf „Wissen" holte kalt raum3 und rest7
+       synchron, 237 ms gesperrter Hauptfaden – das alte Werkzeug sah das
+       nicht (17.10., Grundlinie 884: 248 ms, in 7 von 7 Läufen).
+     - ANFRAGEN INS LEERE (404) zählt der Server je Lauf und nennt die
+       Pfade: ein unvollständiger Vergleichsstand (git archive ohne die
+       großen Ordner) misst sonst still eine andere Seite.
+     - TIPP SPÄTER (--tipp-nach ms): der erste Tipp kommt erst so viele ms
+       nach „bereit" (Seitenuhr) – zeigt, was der Tipp kostet, wenn die
+       Seite schon zur Ruhe gekommen ist (Standard 0 = sofort).
+     - VORHER/NACHHER EHRLICH (--gegen, --aa): zwei Stände abwechselnd in
+       einer Sitzung (A B, B A, …), je Durchgang der gepaarte Unterschied
+       B − A; dazu je Maß ein 95-%-Bereich des gepaarten Medians (Bootstrap,
+       2000 Ziehungen, fester Startwert) und der Vorzeichentest (wie oft
+       B langsamer, wie oft schneller). --aa misst denselben Stand zweimal
+       (zwei Server, zwei Herkünfte, getrennte Speicher): was dabei
+       herauskommt, ist reines Rauschen – die Rauschgrenze für einen
+       Vergleich mit gleich vielen Paaren. Ein Unterschied zählt erst, wenn
+       sein 95-%-Bereich die Null nicht enthält.
+       VORSICHT (gemessen im A/A-Test der Grundlinie, 17.10.): bei 120
+       Maßen (30 Maße × 4 Fälle) trifft „DEUTLICH" auch reines Rauschen –
+       im A/A-Test 4 von 120, zweimal dasselbe (warm synchron −2 ms,
+       wieder Klassenzimmer −34/−39 ms); mit 7 Paaren heißt DEUTLICH
+       „alle 7 auf derselben Seite", das trifft ein Rauschmaß mit 1,6 %.
+       Deshalb VOR dem Messen festlegen, welches Maß ein Schritt
+       verbessern soll; nur dieses entscheidet.
 
    Aufruf: node werkzeug/ladezeit-messen.js [netz] [wurzel] [Schalter]
      netz = 4g (9 Mbit/s, 60 ms, Standard) | 3g (1,6 Mbit/s, 150 ms) | aus
@@ -83,6 +114,8 @@
      --sw              = --arten kalt,warm,pause,sw
      --gegen <wurzel>  zweiter Stand, abwechselnd gemessen (A B, B A, …),
                        mit gepaartem Unterschied je Durchgang
+     --aa              A/A-Test: derselbe Stand als A und B (Rauschgrenze)
+     --tipp-nach ms    erster Tipp erst ms nach „bereit" (Standard 0)
      --json <datei>    alles als JSON (oder LADEZEIT_JSON=<datei>)
      --cpu n           Rechnerbremse (CPU, Standard 4)
      --supabase <umd>  lokale supabase-js-Kopie (SUPABASE_UMD); ohne Angabe
@@ -103,7 +136,7 @@ const http = require("http"), http2 = require("http2"), fs = require("fs"), path
 const { performance } = require("perf_hooks");
 
 /* ---------- Aufruf ---------- */
-const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner"]);
+const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner", "tipp-nach"]);
 const S = {}, FREI = [];
 for (let i = 2; i < process.argv.length; i++) {
   const a = process.argv[i];
@@ -118,10 +151,15 @@ const LEITUNGEN = { "3g": { down: 1.6e6 / 8, rtt: 150 }, "4g": { down: 9e6 / 8, 
 const LEITUNG = LEITUNGEN[NETZ];
 if (!LEITUNG) { console.error("Netz unbekannt: " + NETZ + " (3g | 4g | aus)"); process.exit(2); }
 const WURZEL = path.resolve(FREI[1] || path.join(__dirname, ".."));
-const GEGEN = S.gegen ? path.resolve(S.gegen) : null;
+/* --aa: derselbe Stand noch einmal als B (eigener Server, eigene Herkunft, also eigener Speicher) */
+const AA = !!S.aa;
+if (AA && S.gegen) { console.error("--aa und --gegen schließen sich aus"); process.exit(2); }
+const GEGEN = AA ? WURZEL : S.gegen ? path.resolve(S.gegen) : null;
 const LAEUFE = Math.max(1, Number(S.laeufe || process.env.LAEUFE || 5));
 const CPU = Number(S.cpu || process.env.CPU || 4);
 const FENSTER = Number(S.fenster || 10000);
+const TIPP_NACH = Math.max(0, Number(S["tipp-nach"] || 0));
+if (!isFinite(TIPP_NACH)) { console.error("--tipp-nach braucht ms"); process.exit(2); }
 const H2 = !S.h1;
 const AUFBAU = S.aufbau != null ? Number(S.aufbau) : 2;
 const SPUR = !S["ohne-spur"];
@@ -202,7 +240,7 @@ if (H2) {
    „mehr als 10 Minuten später" nach (jede Datei muss nachgefragt werden → 304). */
 function server(wurzel, frische) {
   const datei = new Map(), verb = new Set();
-  const z = { anfragen: 0, bytes: 0, packMs: 0, n304: 0 };
+  const z = { anfragen: 0, bytes: 0, packMs: 0, n304: 0, n404: 0, fehlt: [] };
   function lesen(p) {
     let d = datei.get(p);
     if (d) return d;
@@ -223,7 +261,8 @@ function server(wurzel, frische) {
       h = { "Content-Type": "text/javascript", "Cache-Control": "public, max-age=604800", "Timing-Allow-Origin": "*", "Access-Control-Allow-Origin": "*" };
     } else {
       d = lesen(p);
-      if (!d) { a.writeHead(404); return a.end(); }
+      /* fehlende Datei zählen: eine Messung mit 404 misst eine andere Seite (z. B. ein unvollständiger Vergleichsstand) */
+      if (!d) { z.n404++; if (z.fehlt.length < 50 && z.fehlt.indexOf(p) < 0) z.fehlt.push(p); a.writeHead(404); return a.end(); }
       h = { "Content-Type": TYP[d.ext] || "application/octet-stream", "Cache-Control": "max-age=" + frische, "ETag": d.etag };
       if (p === "/index.html" || p === "/fassung.json") h["Cache-Control"] = "no-cache";
     }
@@ -262,8 +301,23 @@ function server(wurzel, frische) {
 function mitschreiber() {
   if (window.__dmaMess || window.top !== window) return;
   try { localStorage.setItem("dma_tour_seen", "1"); sessionStorage.setItem("dma-neu-geladen", "x"); } catch (e) {}
-  var P = performance, M = window.__dmaMess = { t: {}, tipp: [], lt: [], loaf: [], lcp: null, fehler: 0 };
+  var P = performance, M = window.__dmaMess = { t: {}, tipp: [], lt: [], loaf: [], lcp: null, fehler: 0, sync: [] };
   try { P.setResourceTimingBufferSize(5000); } catch (e) {}
+  /* FASSUNG 885 — synchrone Abrufe festhalten (Datei, Beginn, Dauer, Status, Aufrufer). So holt ein Platzhalter von
+     app.js sein Stück, wenn es noch fehlt (dmaTeilSofort) – der Hauptfaden steht, bis es über die Leitung da ist.
+     Nur mitgeschrieben; der Abruf selbst läuft unverändert. */
+  try {
+    var XP = XMLHttpRequest.prototype, xOpen = XP.open, xSend = XP.send;
+    XP.open = function (m, u, as) { this.__dmaSync = arguments.length > 2 && !as ? String(u) : null; return xOpen.apply(this, arguments); };
+    XP.send = function () {
+      if (!this.__dmaSync) return xSend.apply(this, arguments);
+      var a = P.now(), wer = String(new Error().stack || "").split("\n").slice(2, 7).map(function (z) {
+        var m = z.match(/^\s*at (?:async )?(?:new )?([^\s(]+)(?: \(|$)/); return m && !/[/:]/.test(m[1]) ? m[1].replace(/^(HTMLDocument|Document|Window|HTMLButtonElement|HTMLElement)\./, "") : "";
+      }).filter(Boolean).slice(0, 4).join(" < ");
+      try { return xSend.apply(this, arguments); }
+      finally { if (M.sync.length < 300) M.sync.push([kurz(this.__dmaSync), a, P.now() - a, this.status, wer]); }
+    };
+  } catch (e) {}
   try { P.mark("dma-mess-null"); M.null = P.getEntriesByName("dma-mess-null")[0].startTime; } catch (e) {}
   function merk(k) { if (M.t[k] == null) { M.t[k] = P.now(); try { P.mark("dma-mess-" + k); } catch (e) {} } }
   addEventListener("error", function () { M.fehler++; }, true);
@@ -319,6 +373,7 @@ function einsammeln() {
   var paint = {}; P.getEntriesByType("paint").forEach(function (e) { paint[e.name] = e.startTime; });
   return {
     t: M.t, null: M.null, tipp: M.tipp, lt: M.lt, loaf: M.loaf, lcp: M.lcp, fehler: M.fehler, jetzt: P.now(),
+    sync: M.sync, sofort: (window.DMA_TEIL_SOFORT || []).slice(0, 40).map(function (s) { return String(s).replace(/\(?https?:\/\/[^\s)]*\/([^/\s)?]+)(\?[^\s:)]*)?(:\d+:\d+)\)?/g, "($1)").slice(0, 120); }),
     fp: paint["first-paint"], fcp: paint["first-contentful-paint"],
     nav: { ttfb: nz(n.responseStart), html: nz(n.responseEnd), dcl: nz(n.domContentLoadedEventEnd), load: nz(n.loadEventEnd), worker: nz(n.workerStart),
       kb: n.transferSize, enc: n.encodedBodySize, proto: n.nextHopProtocol, typ: n.deliveryType || "" },
@@ -512,11 +567,16 @@ async function oeffnen(ctx, srv, art, o) {
   if (spur) await cdp.send("Tracing.start", { transferMode: "ReturnAsStream", traceConfig: { recordMode: "recordAsMuchAsPossible",
     includedCategories: ["toplevel", "devtools.timeline", "disabled-by-default-devtools.timeline", "v8.execute", "blink.user_timing", "loading"] } });
   if (o.messen && PROFIL) { await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 1000 }); await cdp.send("Profiler.start"); }
-  const z0 = { ...srv.z };
+  const z0 = { ...srv.z, fehlt: srv.z.fehlt.slice() };
   let roh, versuche = [0, 0], spurBuf = null, profile = null, abbruch = null;
   try {
     await pg.goto(srv.basis + "/index.html" + (o.query || ""), { waitUntil: "commit", timeout: 180000 });
     await pg.waitForFunction(() => window.__dmaMess && window.__dmaMess.t.bereit != null, null, { polling: "raf", timeout: 180000 });
+    /* --tipp-nach: der erste Tipp erst TIPP_NACH ms nach „bereit" (Seitenuhr); in der Zeit fragt das Werkzeug nichts */
+    if (o.messen && TIPP_NACH > 0) {
+      const rest = await pg.evaluate((ms) => window.__dmaMess.t.bereit + ms - performance.now(), TIPP_NACH);
+      if (rest > 0) await schlaf(rest);
+    }
     versuche[0] = await tippen(pg, '.tape-tab[data-target="view-knowledge"]', "wissen");
     versuche[1] = await tippen(pg, '.subnav-pill[data-sub="sub-livechat"]', "kz");
     const bis = o.messen ? FENSTER : (o.nachlauf || 4000);
@@ -533,7 +593,8 @@ async function oeffnen(ctx, srv, art, o) {
   leitung.an = false;
   await pg.close();
   if (!o.messen) return { art, abbruch };
-  const r = { art, abbruch, fehler, versuche, roh, server: { anfragen: srv.z.anfragen - z0.anfragen, kb: Math.round((srv.z.bytes - z0.bytes) / 1024), n304: srv.z.n304 - z0.n304, packMs: Math.round(srv.z.packMs - z0.packMs) } };
+  const r = { art, abbruch, fehler, versuche, roh, server: { anfragen: srv.z.anfragen - z0.anfragen, kb: Math.round((srv.z.bytes - z0.bytes) / 1024), n304: srv.z.n304 - z0.n304, packMs: Math.round(srv.z.packMs - z0.packMs),
+    n404: srv.z.n404 - z0.n404, fehlt: srv.z.fehlt.filter((x) => z0.fehlt.indexOf(x) < 0) } };
   if (roh) auswerten(r);
   if (roh && spurBuf) {
     const wins = abschnitte(r);
@@ -541,7 +602,7 @@ async function oeffnen(ctx, srv, art, o) {
     if (profile && r.spur.null0) r.profil = profilAuswerten(profile, r.spur.null0, wins);
     if (SPUR_ORDNER) { fs.mkdirSync(SPUR_ORDNER, { recursive: true }); fs.writeFileSync(path.join(SPUR_ORDNER, o.stand + "-" + art + "-" + o.lauf + ".json.gz"), zlib.gzipSync(spurBuf)); }
   }
-  if (r.roh) { delete r.roh.res; delete r.roh.loaf; delete r.roh.lt; }
+  if (r.roh) { delete r.roh.res; delete r.roh.loaf; delete r.roh.lt; delete r.roh.sync; delete r.roh.sofort; }
   return r;
 }
 
@@ -583,6 +644,15 @@ function auswerten(r) {
   r.netz = n;
   r.dateien = Object.entries(proDatei).sort((a, b2) => b2[1] - a[1]).slice(0, 12).map(([k, v]) => [k, Math.round(v / 1024)]);
   r.sw = t.sw; r.proto = t.nav.proto;
+  /* FASSUNG 885 — synchron geholte Stücke: Anzahl und gesperrte ms gesamt und je Abschnitt, dazu jedes mit Namen
+     (Datei, ab ms, ms, Status, Abschnitt, Aufrufer) und die eigene Liste der Seite (DMA_TEIL_SOFORT) */
+  const wins = abschnitte(r);
+  const wo = (ab) => { const w = wins.find((x) => ab >= x.a && ab < x.e); return w ? w.name : "danach"; };
+  const sy = (t.sync || []).map(([datei, ab, ms, status, wer]) => [datei, rd(ab), rd(ms), status, wo(ab), wer || ""]);
+  r.sync = { n: sy.length, ms: rd(sy.reduce((s, x) => s + x[2], 0)) };
+  for (const w of ABSCHN) r.sync[w] = sy.filter((x) => x[4] === w).reduce((s, x) => s + x[2], 0);
+  r.sync.liste = sy;
+  r.sync.sofort = t.sofort || [];
 }
 
 /* ---------- ein Durchgang: alle Fälle für einen Stand ---------- */
@@ -664,7 +734,9 @@ const MASSE = [
   ["lang.n", "Langläufer 0–10 s: Anzahl"], ["lang.summe", "Langläufer: Summe"], ["lang.max", "Langläufer: längster"], ["lang.sperr", "Sperrzeit (Σ über 50 ms)"],
   ["netz.kbBisBereit", "KB über die Leitung bis bereit"], ["netz.kbGesamt", "KB über die Leitung 0–10 s"], ["netz.ausNetz", "Dateien aus dem Netz"],
   ["netz.nachgefragt", "Dateien nachgefragt (304)"], ["netz.ausSpeicher", "Dateien aus dem Speicher"], ["netz.ausSw", "Dateien vom Service Worker"],
-  ["netz.kbServer", "KB, die der Server schickte"], ["netz.anfragenServer", "Anfragen beim Server"],
+  ["netz.kbServer", "KB, die der Server schickte"], ["netz.anfragenServer", "Anfragen beim Server"], ["server.n404", "Anfragen ins Leere (404)"],
+  ["sync.n", "synchron geholt: Anzahl"], ["sync.ms", "synchron geholt: ms gesperrt"], ["sync.start", "  davon beim Start"],
+  ["sync.wissen", "  davon im Wissen-Tipp"], ["sync.kz", "  davon im Klassenzimmer-Tipp"],
 ];
 const ABSCHN = ["start", "wissen", "kz", "danach", "werkzeug"];
 function spurMasse() {
@@ -683,6 +755,32 @@ function zusammenfassen(alle) {
   for (const s in z) for (const a in z[s]) for (const p in z[s][a]) { z[s][a][p] = stat(z[s][a][p]); if (!z[s][a][p]) delete z[s][a][p]; }
   return z;
 }
+/* FASSUNG 885 — gepaarter Unterschied B − A je Durchgang, dazu
+     ki95: 95-%-Bereich des gepaarten Medians (Bootstrap: 2000-mal n Paare mit Zurücklegen ziehen, fester Startwert –
+           dieselben Zahlen geben denselben Bereich);
+     vz:   Vorzeichentest (wie oft B größer, wie oft kleiner, p zweiseitig; Gleichstände zählen nicht);
+     deutlich: ki95 enthält die Null nicht UND p < 0,05 – erst dann ist B wirklich anders als A.
+   Im A/A-Test (--aa) ist die halbe Breite von ki95 die Rauschgrenze für einen Vergleich mit gleich vielen Paaren. */
+function zufall(start) { let s = start >>> 0; return () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+function medianVon(v) { const s = v.slice().sort((a, b) => a - b), i = (s.length - 1) / 2; return (s[Math.floor(i)] + s[Math.ceil(i)]) / 2; }
+function binomP(k, n) { /* zweiseitig: P(X ≤ min(k, n−k)) · 2 bei p = ½ */
+  if (!n) return 1;
+  const m = Math.min(k, n - k); let s = 0, c = 1;
+  for (let i = 0; i <= m; i++) { s += c; c = c * (n - i) / (i + 1); }
+  return Math.min(1, 2 * s / Math.pow(2, n));
+}
+function paarStat(d) {
+  const s = stat(d);
+  if (!s) return null;
+  const z = zufall(885), m = [];
+  for (let k = 0; k < 2000; k++) { const w = []; for (let i = 0; i < d.length; i++) w.push(d[Math.floor(z() * d.length)]); m.push(medianVon(w)); }
+  m.sort((a, b) => a - b);
+  s.ki95 = [Math.round(m[Math.floor(0.025 * (m.length - 1))]), Math.round(m[Math.ceil(0.975 * (m.length - 1))])];
+  const plus = d.filter((x) => x > 0).length, minus = d.filter((x) => x < 0).length;
+  s.vz = { plus, minus, p: Math.round(binomP(plus, plus + minus) * 1000) / 1000 };
+  s.deutlich = (s.ki95[0] > 0 || s.ki95[1] < 0) && s.vz.p < 0.05;
+  return s;
+}
 function gepaart(alle, art, p) {
   const d = [];
   for (let i = 0; i < LAEUFE; i++) {
@@ -690,24 +788,47 @@ function gepaart(alle, art, p) {
     const x = a && holen(a, p), y = b && holen(b, p);
     if (typeof x === "number" && typeof y === "number") d.push(y - x);
   }
-  return stat(d);
+  return paarStat(d);
+}
+/* synchron geholte Stücke mit Namen: je Stand und Fall, wie oft jede Datei in wie vielen Läufen kam, wo und für wen */
+function syncNamen(alle) {
+  const z = {};
+  for (const r of alle) {
+    if (r.abbruch || !r.sync) continue;
+    const a = ((z[r.stand] = z[r.stand] || {})[r.art] = z[r.stand][r.art] || {});
+    for (const [datei, , ms, , wo, wer] of r.sync.liste) {
+      const x = (a[datei] = a[datei] || { n: 0, ms: [], wo: {}, wer: {} });
+      x.n++; x.ms.push(ms); x.wo[wo] = (x.wo[wo] || 0) + 1;
+      if (wer) x.wer[wer] = (x.wer[wer] || 0) + 1;
+    }
+  }
+  for (const s in z) for (const a in z[s]) for (const f in z[s][a]) { const x = z[s][a][f]; x.ms = stat(x.ms); }
+  return z;
 }
 const fmt = (s) => (s ? String(s.median).padStart(6) + " (" + s.min + "–" + s.max + ")" : "     –");
+const fmtPaar = (d) => (d ? (d.median > 0 ? "+" : "") + d.median + " (" + d.min + "…" + d.max + "; 95 %: " + d.ki95[0] + "…" + d.ki95[1] + ", " + d.vz.plus + "↑/" + d.vz.minus + "↓)" + (d.deutlich ? " DEUTLICH" : "") : "");
 function zeile(r) {
   if (r.abbruch) { console.log("  " + r.stand + " " + r.art.padEnd(6) + " Lauf " + (r.lauf + 1) + ": ABBRUCH " + r.abbruch); return; }
   const sp = r.spur && r.spur.gesamt ? "  Spur 0–10 s: Skript " + (r.spur.gesamt.skript || 0) + ", Stil " + ((r.spur.gesamt.stil || 0) + (r.spur.gesamt.stilLesen || 0)) + ", Layout " + (r.spur.gesamt.layout || 0) : "";
   console.log("  " + r.stand + " " + r.art.padEnd(6) + " Lauf " + (r.lauf + 1) + ": Bild " + r.fcp + "  bereit " + r.bereit + "  Wissen " + r.wissen + "  KZ " + r.kzBild + "/" + r.kzKnopf +
     "  (alt +" + r.kzAlt + ", ab Start " + r.kzAbStart + ")  Langl. " + r.lang.n + "/" + r.lang.summe + "/" + r.lang.max + "  " + r.netz.kbBisBereit + " KB" +
-    (r.versuche[0] > 1 || r.versuche[1] > 1 ? "  Tipps " + r.versuche.join("/") : "") + (r.fehler.length ? "  Seitenfehler " + r.fehler.length : "") + sp);
+    (r.versuche[0] > 1 || r.versuche[1] > 1 ? "  Tipps " + r.versuche.join("/") : "") + (r.fehler.length ? "  Seitenfehler " + r.fehler.length : "") +
+    (r.server.n404 ? "  404: " + r.server.n404 + (r.server.fehlt.length ? " (" + r.server.fehlt.slice(0, 4).join(", ") + ")" : "") : "") +
+    (r.sync && r.sync.n ? "  synchron " + r.sync.liste.map((x) => x[0].replace(/^app-teil-|\.js$/g, "") + "@" + x[4] + " " + x[2]).join(", ") : "") + sp);
 }
 
 (async () => {
   const lesbar = (w) => { try { return (fs.readFileSync(path.join(w, "index.html"), "utf8").match(/DMA_VERSION = "(\d+)"/) || [])[1] || "?"; } catch (e) { return "?"; } };
-  const commit = (w) => { try { return execFileSync("git", ["-C", w, "rev-parse", "--short", "HEAD"], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); } catch (e) { return null; } };
+  /* Stand: git-Commit des Ordners; bei einem ausgepackten Stand (git archive … | tar -x) steht er in <wurzel>/.commit */
+  const commit = (w) => {
+    try { return fs.readFileSync(path.join(w, ".commit"), "utf8").trim().slice(0, 40) || null; } catch (e) {}
+    try { return execFileSync("git", ["-C", w, "rev-parse", "--short", "HEAD"], { stdio: ["ignore", "pipe", "ignore"] }).toString().trim(); } catch (e) { return null; }
+  };
   const staende = [{ name: "A", wurzel: WURZEL }].concat(GEGEN ? [{ name: "B", wurzel: GEGEN }] : []);
   for (const st of staende) { st.srvA = server(st.wurzel, 600); st.srvB = server(st.wurzel, 0); st.fassung = lesbar(st.wurzel); st.commit = commit(st.wurzel); await st.srvA.lauscht; await st.srvB.lauscht; }
   console.log("\nLadezeit: Netz " + NETZ + (isFinite(LEITUNG.down) ? " (" + (LEITUNG.down * 8 / 1e6) + " Mbit/s, " + LEITUNG.rtt + " ms, Aufbau " + AUFBAU + " RTT)" : "") +
     ", Rechner " + CPU + "×, " + (H2 ? "HTTP/2 + TLS" : "HTTP/1.1") + ", " + LAEUFE + " Läufe, Fälle " + ARTEN.join(",") + ", Fenster " + FENSTER + " ms" +
+    (TIPP_NACH ? ", Tipp " + TIPP_NACH + " ms nach bereit" : ", Tipp sofort nach bereit") + (AA ? ", A/A-Test (Rauschgrenze)" : "") +
     (SPUR ? ", Spur" : "") + (PROFIL ? ", Profil" : "") + (FLUECHTIG ? ", flüchtige Kontexte" : ", Profil auf der Platte") + ", supabase-js " + (SUPA ? path.basename(SUPA_PFAD) + " (" + Math.round(SUPA_GZ.length / 1024) + " KB gz)" : "fehlt (fällt aus)"));
   for (const st of staende) console.log("  Stand " + st.name + ": " + st.wurzel + "  (Fassung " + st.fassung + (st.commit ? ", " + st.commit : "") + ")");
   for (const st of staende) await aufwaermen(st);
@@ -719,17 +840,23 @@ function zeile(r) {
   }
   const lastNach = os.loadavg();
   for (const st of staende) { st.srvA.zu(); st.srvB.zu(); }
-  const z = zusammenfassen(alle);
+  const z = zusammenfassen(alle), sn = syncNamen(alle);
 
   console.log("\nMedian (min–max) in ms bzw. KB/Anzahl, je " + LAEUFE + " Läufe:");
   for (const art of ARTEN) {
-    console.log("\n" + art + (staende.length > 1 ? "".padEnd(36) + "A".padStart(18) + "B".padStart(20) + "   B−A gepaart" : ""));
+    console.log("\n" + art + (staende.length > 1 ? "".padEnd(36) + "A".padStart(18) + "B".padStart(20) + "   B−A gepaart (min…max; 95 % des Medians, B größer/kleiner)" : ""));
     for (const [p, txt] of MASSE) {
       const a = z.A && z.A[art] && z.A[art][p], b = z.B && z.B[art] && z.B[art][p];
       if (!a && !b) continue;
       let s = "  " + txt.padEnd(40) + fmt(a).padEnd(20);
-      if (staende.length > 1) { const d = gepaart(alle, art, p); s += fmt(b).padEnd(20) + (d ? (d.median > 0 ? "+" : "") + d.median + " (" + d.min + "…" + d.max + ")" : ""); }
+      if (staende.length > 1) s += fmt(b).padEnd(20) + fmtPaar(gepaart(alle, art, p));
       console.log(s);
+    }
+    /* synchron geholte Stücke mit Namen (alle Läufe dieses Falls) */
+    for (const st of staende) {
+      const N = sn[st.name] && sn[st.name][art];
+      if (N && Object.keys(N).length) console.log("  synchron geholt, Stand " + st.name + ": " + Object.entries(N).sort((x, y) => y[1].n - x[1].n).map(([f, x]) =>
+        f + " " + x.n + "× (" + Object.entries(x.wo).map(([w, k]) => w + " " + k).join(", ") + "; Median " + x.ms.median + " ms" + (Object.keys(x.wer).length ? "; " + Object.keys(x.wer)[0] : "") + ")").join(" · "));
     }
     if (SPUR) for (const st of staende) {
       const S2 = z[st.name] && z[st.name][art]; if (!S2) continue;
@@ -748,21 +875,37 @@ function zeile(r) {
     console.log("\nBeispiel " + st.name + " " + art + " (Lauf " + (r.lauf + 1) + ", bereit " + r.bereit + " ms): LCP " + (r.lcpWas || "–") + "; Dateien KB: " + r.dateien.map(([k, v]) => k + " " + v).join(", "));
     if (r.spur && r.spur.codeCache) console.log("  V8-Code-Cache benutzt (KB): " + (Object.entries(r.spur.codeCache.benutzt).map(([k, v]) => k + " " + v).join(", ") || "–") +
       "; angelegt (ms Hauptfaden): " + (Object.entries(r.spur.codeCache.angelegt).map(([k, v]) => k + " " + v).join(", ") || "–"));
+    if (r.sync && r.sync.n) console.log("  synchron geholt: " + r.sync.liste.map((x) => x[0] + " ab " + x[1] + " ms, " + x[2] + " ms (" + x[4] + (x[5] ? "; " + x[5] : "") + ")").join(" · ") +
+      (r.sync.sofort.length ? "  · Seite (DMA_TEIL_SOFORT): " + r.sync.sofort.join(" · ") : ""));
     if (r.spur && r.spur.lang) r.spur.lang.forEach((L) => console.log("  Aufgabe ab " + L.ab + " ms, " + L.ms + " ms: " + Object.entries(L.kat).sort((a, b) => b[1] - a[1]).map(([k, v]) => k + " " + v).join(", ") + (L.gross ? "  ← " + L.gross : "")));
     r.loaf.slice(0, 3).forEach((x) => console.log("  Bild ab " + x.ab + " ms, " + x.ms + " ms (Stil+Layout " + x.stilLayout + "): " + x.skripte.map((s) => s[2] + " " + (s[3] || s[1]) + " " + s[4] + (s[5] ? " (erzw. " + s[5] + ")" : "")).join(" | ")));
     if (r.profil) for (const w of ABSCHN) if (r.profil[w]) console.log("  Profil " + w + ": " + r.profil[w].gesamt.slice(0, 8).map(([k, v]) => k + " " + v).join("; "));
   }
+  if (staende.length > 1) {
+    const zahl = ARTEN.reduce((s, a) => s + MASSE.filter(([p]) => { const d = gepaart(alle, a, p); return d && d.deutlich; }).length, 0);
+    console.log("\n" + (AA ? "A/A-Test – Rauschgrenze (± halbe Breite des 95-%-Bereichs, " + LAEUFE + " Paare): " + ARTEN.map((a) => a + " " + ["bereit", "wissen", "kzKnopf", "fcp"].map((p) => { const d = gepaart(alle, a, p); return p + " ±" + (d ? Math.round((d.ki95[1] - d.ki95[0]) / 2) : "–"); }).join(" ")).join(" · ") + "\n" : "") +
+      "„DEUTLICH\" bei " + zahl + " von " + ARTEN.length * MASSE.length + " Maßen – auch Rauschen trifft das manchmal (A/A 17.10.: 4 von 120); es zählt das Maß, das vorher festgelegt war.");
+  }
   const bruch = alle.filter((r) => r.abbruch);
   if (bruch.length) console.log("\nABBRÜCHE: " + bruch.length + " – " + bruch.map((r) => r.stand + "/" + r.art + "/" + (r.lauf + 1) + ": " + r.abbruch).join(" · "));
+  for (const st of staende) {
+    const leer = [...new Set(st.srvA.z.fehlt.concat(st.srvB.z.fehlt))];
+    if (leer.length) console.log("\nStand " + st.name + ": Anfragen ins Leere (404, auch beim Aufwärmen): " + leer.join(", "));
+    st.fehlt = leer;
+  }
   console.log("\nRechnerlast vorher " + lastVor.map((x) => x.toFixed(2)).join(" ") + ", nachher " + lastNach.map((x) => x.toFixed(2)).join(" ") + " (" + os.cpus().length + " Kerne)");
   if (JSON_DATEI) {
     fs.writeFileSync(JSON_DATEI, JSON.stringify({
       werkzeug: "werkzeug/ladezeit-messen.js (Fassung 885)", datum: new Date().toISOString(),
       einstellung: { netz: NETZ, leitung: { mbit: LEITUNG.down * 8 / 1e6, rtt: LEITUNG.rtt, aufbauRtt: AUFBAU }, cpu: CPU, http: H2 ? "h2+tls" : "http/1.1", laeufe: LAEUFE, arten: ARTEN, fenster: FENSTER, spur: SPUR, profil: PROFIL, kontext: FLUECHTIG ? "flüchtig" : "Profil auf der Platte",
+        tippNach: TIPP_NACH, aa: AA, verschraenkt: staende.length > 1 ? "Lauf 1: A dann B, Lauf 2: B dann A, …" : null,
         supabase: SUPA ? { datei: path.basename(SUPA_PFAD), kbGz: Math.round(SUPA_GZ.length / 1024) } : null },
-      umgebung: { chromium: "/opt/pw-browsers/chromium", node: process.version, kerne: os.cpus().length, lastVor, lastNach },
-      staende: staende.map((s) => ({ name: s.name, wurzel: s.wurzel, fassung: s.fassung, commit: s.commit })),
+      umgebung: { chromium: "/opt/pw-browsers/chromium", node: process.version, kerne: os.cpus().length, rechner: (os.cpus()[0] || {}).model || "?", lastVor, lastNach },
+      staende: staende.map((s) => ({ name: s.name, wurzel: s.wurzel, fassung: s.fassung, commit: s.commit, fehlt: s.fehlt })),
       zusammenfassung: z, gepaart: staende.length > 1 ? Object.fromEntries(ARTEN.map((a) => [a, Object.fromEntries(MASSE.map(([p]) => [p, gepaart(alle, a, p)]))])) : null,
+      /* A/A: halbe Breite des 95-%-Bereichs = Rauschgrenze je Maß (gilt für Vergleiche mit gleich vielen Paaren) */
+      rauschgrenze: AA ? Object.fromEntries(ARTEN.map((a) => [a, Object.fromEntries(MASSE.map(([p]) => { const d = gepaart(alle, a, p); return [p, d ? Math.round((d.ki95[1] - d.ki95[0]) / 2) : null]; }))])) : null,
+      synchron: sn,
       laeufe: alle,
     }, null, 1));
     console.log("JSON: " + JSON_DATEI);

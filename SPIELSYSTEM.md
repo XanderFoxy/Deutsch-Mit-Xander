@@ -4951,3 +4951,92 @@ Die Prüfung fand einen wichtigen Mangel (#138 falsch gelesen – oben im Befund
 - Weiter nur nachgebaut: die Geräte sind Chromium-Seiten auf einem Rechner, den Server spielt die Sonde, die vorgehende Uhr ist ein verschobenes `Date.now`. Fall 12 nutzt eine echte WebRTC-Leitung, aber über die eigene Maschine. Ein Test mit zwei echten Geräten fehlt (Offen 1).
 - Bleibende Grenze bei verschieden gehenden Uhren: Ändern **zwei** Leute denselben Eintrag (z. B. die Lesezeile einer Schüler-Tafel: Schüler und Lehrer), geht beim ersten die Uhr um Δ vor **und** hat der zweite alle vier Sendungen des ersten verpasst (direkt, Server, zwei Nachsendungen) und ändert innerhalb von Δ, dann verliert die Änderung des zweiten überall, auch bei ihm selbst nach dem nächsten Puls. Mit gleich gehenden Uhren kommt das nicht vor; den Normalfall (der zweite kannte den Stempel des ersten) prüft Fall 14. Im gemischten Raum dasselbe, wenn zwei Häuptlinge auf verschiedenen Fassungen abwechselnd den Fokus setzen – dann aber nur auf dem einen Gerät und ohne Weitergabe.
 - Die Messung „volle Neuzeichnungen" zählt `melden()`-Aufrufe ohne Art im selben Takt; wie lange eine solche Neuzeichnung im Hauptraum dauert, ist hier nicht gemessen.
+
+## Fassung 885 — Messwerkzeug und Grundlinie (Funk 263/271/310/312; Ladezeit-Entwurf, Schritt A)
+
+XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“. Bevor irgendetwas schneller gemacht wird, muss die Messung stimmen – sonst ist jeder „Gewinn“ geraten. Geändert sind nur `werkzeug/ladezeit-messen.js` und die neue Sonde `werkzeug/pruefe-885-messen.js`. **Die Seite ist unverändert** (index.html, min/, alle Skripte wie 884 = 02613a71).
+
+### Vorgeschichte
+- Begonnen am 14.10. (WIP 86a89119: geschärftes Werkzeug, Grundlinie gemessen, Sonde im Bau). Der fertige Stand (lokaler Commit 3dd6005, 32 Prüfungen grün) ging beim Neuaufsetzen der Umgebung verloren, ebenso der ausführliche Ladezeit-Entwurf; die Kurzfassung steht im Zwischenordner (`p2-ladezeit-entwurf.md`). Heute (17.10.) neu vollendet und die Grundlinie neu gemessen.
+
+### Was das alte Werkzeug (884) falsch maß
+- „Wissen“ und „Klassenzimmer“ per `el.click()` – kein echter Tipp (`isTrusted = false`), `DMA_MESS` zählte ihn nicht (Sonde B1); dazu Abfragen alle 100 ms über mehrere Rundreisen.
+- Der Prüfserver packte jede Datei erst beim ersten Abruf (gzip -9) – das zahlte jeder kalte Lauf mit.
+- Drosselung über die Entwicklerwerkzeuge: was der Service Worker selbst holt, lief daran vorbei (Sonde B2: 150-KB-Seite ohne Helfer 3,37 s, über den Helfer 8 ms).
+- Je Fall ein Lauf; Einzelwerte streuen um ±100–150 ms.
+
+### Was das Werkzeug jetzt kann
+- **Echte Tipps** (Berührung über das Prüfprotokoll), gemessen **in der Seite**: Tipp (`event.timeStamp`) bis zum ersten Bild, in dem die Ansicht steht (rAF + setTimeout 0, dieselbe Regel wie `DMA_MESS`).
+- **Leitung im Server** (je Anfrage 1 RTT, je neue Verbindung 2 RTT Aufbau, Bandbreite geteilt) – gilt auch für den Service Worker; HTTP/2 + TLS wie GitHub Pages; aufgewärmt (nichts wird während der Messung gepackt); supabase-js 2.117.3 aus einer lokalen Kopie, gedrosselt; kein fremder Name wird aufgelöst.
+- **Profil auf der Platte** wie ein Telefon (V8-Code-Cache wirkt ab dem dritten Öffnen); Fälle kalt, warm, wieder, pause, sw.
+- **Spur** je Abschnitt (start, wissen, kz, danach, werkzeug): Skript, Stil, Layout, davon erzwungen, synchrones Laden, GC …; Langläufer, längste Bilder (LoAF) mit Datei und Funktion; `--profil` für V8-Stichproben.
+- **Neu (Nachtrag 17.10., Prüfungen 14–17 der Sonde):**
+  - **Synchron geholte Stücke** werden gezählt und benannt: jeder `XMLHttpRequest` mit `async = false` mit Datei, Beginn, Dauer, Status, Abschnitt und Aufrufer (z. B. `app-teil-raum3.js … dmaTeilSofort < dmaTeilRuf < lcWaEntsperren`), dazu die eigene Liste der Seite (`DMA_TEIL_SOFORT`). Neue Maße `sync.n`, `sync.ms`, `sync.start`, `sync.wissen`, `sync.kz`; im JSON die Namensliste `synchron`.
+  - **`--tipp-nach <ms>`**: der erste Tipp erst so viele ms nach „bereit“ (Seitenuhr).
+  - **`--gegen <ordner>`** (schon im WIP) jetzt mit **95-%-Bereich des gepaarten Medians** (Bootstrap, 2000 Ziehungen, fester Startwert) und **Vorzeichentest**; „DEUTLICH“ nur, wenn der Bereich die Null nicht enthält und p < 0,05. **`--aa`** misst denselben Stand als A und B (zwei Server, zwei Herkünfte, getrennte Speicher) – das Ergebnis ist die **Rauschgrenze** (`rauschgrenze` im JSON: halbe Breite des 95-%-Bereichs).
+  - **Anfragen ins Leere (404)** je Lauf mit Pfad – ein unvollständig ausgepackter Vergleichsstand misst sonst still eine andere Seite. Stand-Commit aus `<ordner>/.commit` (für `git archive … | tar -x`), Rechnermodell im JSON.
+
+### Grundlinie 884 (02613a71), gemessen 17.10.
+4G (9 Mbit/s, 60 ms RTT, Aufbau 2 RTT), HTTP/2 + TLS, CPU 4×, Gast, Profil auf der Platte, Fenster 10 s, Tipp sofort nach „bereit“. A/A-Lauf: derselbe Stand (ausgepackt, 0 Anfragen ins Leere) als A und B verschränkt, **je 7 Läufe**; die Tabelle zeigt **A: Median (min–max)**. Rechner: 4 Kerne, Intel Xeon 2,1 GHz, Last vorher 0,9 / nachher 1,1–1,4. Gesamt: 16 min.
+
+| Fall | erstes Bild | bereit | Wissen Tipp→Bild | davon synchron | Klassenzimmer Tipp→Knopf | Langläufer Σ 0–10 s | KB bis bereit |
+|---|---|---|---|---|---|---|---|
+| kalt | 584 (552–624) | 1452 (1412–1480) | 749 (696–845) | 248 (238–265) | 244 (208–327) | 1186 (1097–1276) | 638 |
+| warm | 496 (420–564) | 1140 (972–1346) | 310 (294–438) | 24 (21–29) | 219 (113–444) | 1003 (749–1265) | 1 |
+| wieder | 472 (424–532) | 815 (677–1037) | 345 (324–367) | 23 (20–28) | 231 (187–331) | 749 (570–914) | 1 |
+| sw | 584 (560–644) | 902 (856–1201) | 472 (388–844) | 145 (143–154) | 231 (216–251) | 825 (763–1123) | 1 |
+
+Mit B zusammen (14 Läufe, dieselbe Seite): kalt bereit 1453, Wissen 748 · warm 1120 / 315 · wieder 833 / 340 · sw 906 / 479.
+
+**Tipp erst 5 s nach „bereit“** (`--tipp-nach 5000`, eigener Lauf, je 7): Wissen kalt 294 (263–423), warm 248 (220–275), wieder 283 (208–363), sw 276 (247–359); Klassenzimmer 147–211; **kein synchrones Stück** (die Stücke sind nach 3 s in der Ruhepause eingesetzt).
+
+### Rauschgrenze (A/A, 7 Paare, ± halbe Breite des 95-%-Bereichs)
+| Fall | erstes Bild | bereit | Wissen | Klassenzimmer | Langläufer Σ | synchron |
+|---|---|---|---|---|---|---|
+| kalt | ±54 | ±76 | ±52 | ±21 | ±55 | ±11 |
+| warm | ±50 | ±77 | ±59 | ±116 | ±205 | ±3 |
+| wieder | ±22 | ±141 | ±69 | ±60 | ±154 | ±3 |
+| sw | ±54 | ±139 | ±34 | ±48 | ±62 | ±3 |
+
+- Das deckt sich mit dem Entwurf (A/A „bereit kalt“ ±80–140 ms). Ein Schritt, der z. B. den Wissen-Tipp kalt um 237 ms verkürzt, liegt weit darüber; Verbesserungen unter ~50–80 ms lassen sich mit 7 Paaren nicht belegen – dann mehr Paare (≥ 10, Entwurf) oder ein schärferes Maß (Spur, `sync.wissen` ±11).
+- **Klassenzimmer warm/wieder ist zweigipflig** (Werte um 104–170 und um 215–275 ms, je nachdem, ob Hintergrundarbeit in den Tipp fällt) – dort sind Unterschiede unter ~100 ms mit 7 Paaren nicht zu sehen.
+- **Fehlalarme im A/A-Test:** 4 von 120 Maßen hießen „DEUTLICH“, zweimal dasselbe (warm synchron −2 ms, wieder Klassenzimmer Bild/Knopf −34/−39 ms). Mit 7 Paaren heißt „DEUTLICH“ praktisch: alle 7 auf derselben Seite – das trifft ein reines Rauschmaß mit 1,6 % (2 von 128); bei 120 Maßen sind also rund 2 Zufallstreffer zu erwarten, und Maße wie Bild/Knopf hängen zusammen. Deshalb gilt für jeden 885-Schritt: **vor** dem Messen festlegen, welches Maß er verbessern soll; nur dieses entscheidet (steht so im Kopf des Werkzeugs und in seiner Ausgabe).
+
+### Vergleich mit dem Entwurf (Grundlinie vom 14.10., anderer Rechner)
+| Fall | erstes Bild | bereit | Wissen | Klassenzimmer | Langläufer Σ | KB |
+|---|---|---|---|---|---|---|
+| kalt | 576 → 584 | 1407 → 1452 | 708 → 749 | 212 → 244 | 1047 → 1186 | 638 → 638 |
+| warm | 436 → 496 | 971 → 1140 | 267 → 310 | 148 → 219 | 755 → 1003 | 1 → 1 |
+| wieder | 416 → 472 | 706 → 815 | 309 → 345 | 150 → 231 | 481 → 749 | 1 → 1 |
+| sw | 560 → 584 | 815 → 902 | 461 → 472 | 140 → 231 | 764 → 825 | 1 → 1 |
+
+- **Die Seite ist dieselbe** (gleiche Dateien, gleiche KB bis bereit, dieselben synchronen Stücke). Kalt liegt alles innerhalb der Rauschgrenze (+8 … +45 ms), warm und wieder ist heute alles 10–18 % langsamer, die Langläufer um 30–55 %. Das ist der Rechner der neu aufgesetzten Umgebung, weder die Seite noch das Werkzeug: das WIP-Werkzeug vom 14.10. (86a89119) und das neue heute **abwechselnd** auf derselben Seite, je 3 × 2 Läufe (Median aus 6, WIP / neu): kalt bereit 1519 / 1480, Wissen 772 / 773 · warm bereit 1228 / 1163, Wissen 304 / 333 · wieder bereit 775 / 829, Wissen 358 / 334 – gleich innerhalb der Rauschgrenze, und beide heute über den Zahlen vom 14.10. Das neue Mitschreiben (synchrone Abrufe, 404) kostet also nichts Messbares.
+- **Folgerung:** Zahlen aus verschiedenen Sitzungen sind nicht vergleichbar. Jeder 885-Schritt wird **verschränkt gegen 02613a71** in derselben Sitzung gemessen (`--gegen`), nie gegen diese Tabelle.
+
+### Was die Grundlinie zeigt (für die nächsten Schritte)
+- **Erster Wissen-Tipp kalt 749 ms, davon 248 ms synchron**: `app-teil-raum3.js` 156 ms (über `lcWaEntsperren`, hängt an pointerdown am ganzen Dokument) und `app-teil-rest7.js` 94 ms (über `tutorSchreibzeile`) – in **jedem** Lauf (7/7 je Fall). Im Fall sw kommen sie aus dem Speicher des Helfers und kosten trotzdem 145 ms (75 + 71) gesperrten Hauptfaden; warm/wieder 22–24 ms. Entwurf: 237 ms – bestätigt. → Schritt E.
+- **Spur des Wissen-Tipps kalt** (Median): synchrones Laden 233, Layout 150 (davon erzwungen 133), Skript 130, Stilblätter lesen 64, Stil 63, Rest 76. Mit Tipp nach 5 s: synchron 0, Stilblätter lesen 0, Stil 17, Skript 98, Rest 16 – **der Unterschied 749 → 294 ms ist fast ganz synchrones Nachladen und das, was beim Start noch läuft**.
+- **Erzwungenes Stil/Layout im Wissen-Tipp 118–137 ms in allen Fällen**, auch nach 5 s Ruhe (Entwurf ~103 ms) – das ist die feste Kost des Tipps (renderKompass, bereichSichtbar). → Schritt D.
+- „bereit“ warm 1140 → wieder 815 ms: der V8-Code-Cache wirkt (Entwurf: 971 → 706).
+
+### Sonde `werkzeug/pruefe-885-messen.js`
+- Teil A gegen eine Prüfseite, deren Zeiten die Sonde festlegt (zwei kaum packbare Skripte, 150 ms Arbeit beim Laden, Wissen-Tipp holt `teil-x.js` synchron und arbeitet 200 ms, Klassenzimmer 120 ms, kleiner Service Worker), dazu die echte Seite (kalt, warm, wieder) und Teil B (Belege ohne Werkzeug).
+- Prüfungen 1–13 und B1/B2 wie im WIP (Lauf, echte Tipps, Zerlegung, Leitung, Bandbreite, Fälle, Langläufer/LoAF, Spur, kein Packen, Median, kein Internet, DMA_MESS gleich, V8-Code-Cache). **Neu:** 14 synchron geholte Stücke (Prüfseite: genau eins je Lauf, `teil-x.js`, Abschnitt „wissen“, Aufrufer `pruefTeil`, Meldung der Seite, kalt ≥ 1 RTT / warm < 1 RTT, JSON; echte Seite: jedes Stück, das die Seite selbst meldet, mit Namen), 15 `--tipp-nach 1200` (Tipp 1215–1229 ms nach „bereit“, ohne Schalter 32–71 ms; die Wartezeit liegt nicht in „wissen“), 16 `--gegen` (Lauf-Reihenfolge A1 B1 B2 A2 …; Prüfseite mit 400 statt 200 ms: gepaart kalt +210 (95 %: 180…230), warm +185, 6↑/0↓, DEUTLICH), 17 `--aa` (Prüfseite gegen sich selbst: Wissen −1, bereit 0, nicht deutlich; Rauschgrenze im JSON).
+- Damit die Prüfseite nicht selbst rauscht, zeichnet sie 200 statt 600 Zeilen (das erzwungene Layout streute bei 600 Zeilen 88–466 ms).
+- **Ergebnis: 44 Prüfungen grün**, dreimal hintereinander (je 5 min 46–48 s; der letzte Lauf mit den endgültigen Dateien). **Gegenprobe** mit dem Werkzeug aus 02613a71 (`WURZEL=scratchpad/gegen885/werkzeug-884`): **42 rot, grün nur B1 und B2** (die Belege ohne Werkzeug). Mit dem WIP-Werkzeug aus 86a89119 (`WURZEL=scratchpad/gegen885/werkzeug-wip`): **12 rot** – genau die neuen (14 ×5, 15 ×3 mit Schalter, 16 „DEUTLICH“, 17 ×3); grün bleiben 1–13, B1/B2, 15 ohne Schalter und 16 „verschränkt“ (das konnte das WIP schon). Vorher (WIP-Sonde gegen WIP-Werkzeug, heute): 30 grün.
+- Die Sonde verträgt jetzt auch ältere Werkzeuge (kein Absturz, wenn `staende`, `ki95` oder `vz` fehlen) – sonst liefen in der Gegenprobe B1/B2 gar nicht.
+
+### Ehrlich
+- Gemessen ist ein nachgestelltes Telefon (Chromium, CPU 4× gebremst) auf einem Server-Rechner, nicht ein echtes Android. Die Feldmessung vom 14.10. (OPPO, Android 11: bereit 1890 ms, 7 Langläufer, zusammen 1207 ms) zeigt, dass echte schwache Geräte deutlich langsamer sind; die Richtung der Schritte stimmt, die Größe nicht 1 : 1.
+- Gast ohne Konto: angemeldete Personen holen beim Start zusätzlich rest1/rest6 synchron (884-beta, Offen 4) – das misst diese Grundlinie nicht.
+- 7 Paare je Fall sind das Minimum: für Schritte mit erwartet kleinem Gewinn (< 80 ms) reicht das nicht.
+- Die Zahlen vom 14.10. lassen sich nicht nachprüfen (Rohdaten verloren); verglichen ist nur mit der Tabelle im Entwurf.
+
+### Datenbank
+Nichts gelesen, nichts geändert.
+
+**Offen**
+1. Schritt B (Startskripte vor den Stilblättern), C (navigation preload), E (Stücke ruhiger einsetzen; raum3/rest7 nicht mehr am ersten Tipp), D (Kompass), S1–S3, S8, K – je mit `--gegen 02613a71` in derselben Sitzung, Maß vorher festgelegt.
+2. Mit angemeldetem Konto messen (Attrappe wie 884-beta), damit die synchronen Start-Stücke der Angemeldeten in die Grundlinie kommen.
+3. 3G kalt neu messen (Entwurf: bereit 4299, Wissen 1854 ms, davon 1254 synchron).
+4. Werkstatt-Eintrag und Funk-Antwort beim Ausliefern von 885.

@@ -11,14 +11,17 @@
    Zeiten die Sonde selbst festlegt (eigener Ordner im Zwischenordner):
      - beim Laden 150 ms Arbeit (pruefLast), zwei kaum packbare Skripte
        (je 400 KB) vor „bereit", ein kleiner Service Worker wie sw.js;
-     - Tipp „Wissen": 200 ms Arbeit + 10× erzwungenes Layout;
+     - Tipp „Wissen": holt zuerst ein Stück synchron (teil-x.js, ~20 KB,
+       wie ein Platzhalter von app.js über dmaTeilSofort, und meldet es in
+       DMA_TEIL_SOFORT), dann 200 ms Arbeit + 10× erzwungenes Layout;
      - Tipp „Klassenzimmer": 120 ms Arbeit, dann der Knopf „Betreten";
      - ein Abruf an example.com (muss sofort scheitern: das Werkzeug löst
        keinen fremden Namen auf – nie ein Geist im echten Klassenzimmer).
    Geprüft (je Fall 2 Läufe, Fenster 3 s):
      1  läuft durch: alle vier Fälle, je 2 Läufe, kein Abbruch, JSON
      2  echte Tipps: je ein Tipp genügt; Wissen Tipp → Bild ≥ 200 ms und
-        < 600 ms; Klassenzimmer ≥ 120 ms und < 400 ms
+        < 800 ms (mit dem synchronen Stück); Klassenzimmer ≥ 120 ms und
+        < 400 ms
      3  Zerlegung: alte Spalte = Wissen + Werkzeug-Pause + Klassenzimmer
      4  Leitung im Server: kalt und pause erstes Byte ≥ 2,5 RTT (Aufbau
         TCP+TLS + Anfrage = 3 RTT; Chrome beginnt den Aufbau teils schon vor
@@ -43,6 +46,22 @@
     13  Profil auf der Platte: beim dritten Öffnen nimmt min/app.js den
         übersetzten Code aus dem Speicher (V8-Code-Cache), beim zweiten wird
         er angelegt; kalt nicht
+    14  synchron geholte Stücke werden gezählt und benannt: in jedem Lauf
+        genau eins, teil-x.js, im Abschnitt „wissen", Aufrufer pruefTeil,
+        dazu die Meldung der Seite (DMA_TEIL_SOFORT); kalt über die Leitung
+        (≥ 1 RTT), warm aus dem Speicher (< 1 RTT); Zusammenfassung und
+        Namensliste im JSON; echte Seite: jedes Stück, das die Seite selbst
+        als sofort geholt meldet, steht beim Werkzeug mit Namen
+    15  --tipp-nach 1200: der erste Tipp kommt 1200…1500 ms nach „bereit"
+        (ohne den Schalter: < 400 ms), die Wartezeit liegt im Abschnitt
+        „werkzeug", nicht in „wissen"
+    16  --gegen: zwei Prüfseiten (Wissen 200 bzw. 400 ms Arbeit), je 6
+        Paare kalt und warm, verschränkt (Lauf 1 A B, Lauf 2 B A, …);
+        gepaarter Unterschied Wissen +130…+270 ms und DEUTLICH (95-%-Bereich
+        ohne Null, Vorzeichentest p < 0,05)
+    17  --aa: derselbe Stand zweimal (6 Paare kalt): gepaarter Median Wissen
+        höchstens ± 30 ms, bereit höchstens ± 60 ms, nicht deutlich;
+        Rauschgrenze je Maß im JSON
    Teil B – Belege, warum das alte Werkzeug falsch maß (ohne Werkzeug; bleiben
    in der Gegenprobe grün):
     B1  el.click() auf „Wissen" zählt DMA_MESS nicht (isTrusted), ein Tipp schon
@@ -50,8 +69,13 @@
         nicht, die der Service Worker holt: eine 150-KB-Seite kommt über den
         Helfer in < 300 ms, ohne Helfer braucht sie ≥ 900 ms
 
-   Aufruf: node werkzeug/pruefe-885-messen.js
+   Aufruf: TMPDIR=/tmp/claude-0/t885 node werkzeug/pruefe-885-messen.js
+     (kurzer Zwischenordner: Chromium legt dort Sockets an, ein langer Pfad
+     lässt ihn abstürzen; Dauer ~6 min; 44 Prüfungen)
    Gegenprobe: WURZEL=<ordner mit werkzeug/ladezeit-messen.js aus 02613a7> node …
+     (git archive 02613a71 werkzeug/ladezeit-messen.js | tar -x -C <ordner>):
+     alles rot außer B1/B2 (17.10.: 42 rot). Mit dem WIP-Werkzeug aus
+     86a89119: genau die neuen Prüfungen 14–17 rot (12), der Rest grün.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), crypto = require("crypto"), { spawnSync } = require("child_process");
@@ -66,14 +90,18 @@ const sage = (gut, was, zusatz) => {
   if (!gut) fehler++;
   console.log((gut ? "  ok   " : "  FEHL ") + was + (zusatz != null ? "   " + zusatz : ""));
 };
+/* gepaarter Unterschied lesbar (ältere Werkzeuge kennen ki95/vz nicht – dann nur der Median) */
+const paarTxt = (d) => (!d ? "–" : d.median + (d.ki95 && d.vz ? " (" + d.ki95.join("…") + ", " + d.vz.plus + "↑/" + d.vz.minus + "↓, p " + d.vz.p + ")" : " (ohne 95-%-Bereich)"));
 const med = (v) => { const s = v.slice().sort((a, b) => a - b), i = (s.length - 1) / 2; return Math.round((s[Math.floor(i)] + s[Math.ceil(i)]) / 2); };
 
 /* ---------- die Prüfseite ---------- */
-function pruefseite() {
+function pruefseite(wissenMs) {
   const d = fs.mkdtempSync(path.join(os.tmpdir(), "dma-pruef885-"));
   const gross = (n) => "/* " + crypto.randomBytes(300 * 1024).toString("base64") + " */ window.__g" + n + " = 1;\n";
   fs.writeFileSync(d + "/gross1.js", gross(1));
   fs.writeFileSync(d + "/gross2.js", gross(2));
+  /* 14: das Stück, das der Wissen-Tipp synchron holt (~20 KB gepackt: kalt 1 RTT + ~18 ms über die Leitung) */
+  fs.writeFileSync(d + "/teil-x.js", "/* " + crypto.randomBytes(20 * 1024).toString("base64") + " */ window.__teilX = 1;\n");
   fs.writeFileSync(d + "/a.css", ".view[data-active=false],#sub-livechat[data-active=false]{display:none} button{font-size:18px;min-height:48px;margin:4px} #viele div{padding:2px}\n");
   fs.writeFileSync(d + "/index.html", `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Prüfseite 885</title><link rel="stylesheet" href="a.css?v=1">
@@ -87,15 +115,23 @@ function pruefseite() {
   /* B2: dieselbe Seite mit 150 KB Ballast (ungepackt ausgeliefert), damit man die Bandbreite sieht */
   fs.writeFileSync(d + "/gross.html", fs.readFileSync(d + "/index.html", "utf8").replace("</body>", "<!-- " + crypto.randomBytes(112 * 1024).toString("base64") + " --></body>"));
   fs.writeFileSync(d + "/seite.js", `function pruefLast(ms) { var t = performance.now(); while (performance.now() - t < ms) {} }
+function pruefTeil() {
+  if (window.__teilX) return;
+  try { (window.DMA_TEIL_SOFORT = window.DMA_TEIL_SOFORT || []).push("teilx " + String(new Error().stack || "").split("\\n").slice(1, 2).join("").trim()); } catch (x) {}
+  var x = new XMLHttpRequest();
+  x.open("GET", "teil-x.js?v=1", false);
+  x.send(null);
+  (0, eval)(x.responseText);
+}
 document.addEventListener("DOMContentLoaded", function () {
   pruefLast(150);
   var v = document.getElementById("viele"), h = "";
-  for (var i = 0; i < 600; i++) h += "<div>Zeile " + i + " mit etwas Text zum Umbrechen</div>";
+  for (var i = 0; i < 200; i++) h += "<div>Zeile " + i + " mit etwas Text zum Umbrechen</div>";
   v.innerHTML = h;
   window.LiveChat = {}; window.DMA_TAFEL_STAND = {};
   document.querySelectorAll(".tape-tab").forEach(function (b) {
     b.addEventListener("click", function () {
-      if (b.dataset.target === "view-knowledge") { pruefLast(200); for (var j = 0; j < 10; j++) { v.style.width = (300 + j) + "px"; void v.offsetHeight; } }
+      if (b.dataset.target === "view-knowledge") { pruefTeil(); pruefLast(${wissenMs || 200}); for (var j = 0; j < 10; j++) { v.style.width = (300 + j) + "px"; void v.offsetHeight; } }
       document.querySelectorAll(".view").forEach(function (x) { x.dataset.active = String(x.id === b.dataset.target); });
     });
   });
@@ -159,7 +195,7 @@ function werkzeug(args, json) {
   const alle = L.filter((r) => !r.abbruch);
   /* 2 */
   sage(alle.length && alle.every((r) => r.versuche && r.versuche[0] === 1 && r.versuche[1] === 1), "2  ein echter Tipp genügt (Wissen und Klassenzimmer)", alle.map((r) => (r.versuche || []).join("/")).join(" "));
-  sage(alle.length && alle.every((r) => r.wissen >= 200 && r.wissen < 600), "2  Wissen: Tipp → Bild 200…600 ms", alle.map((r) => r.wissen).join(" "));
+  sage(alle.length && alle.every((r) => r.wissen >= 200 && r.wissen < 800), "2  Wissen: Tipp → Bild 200…800 ms (mit dem synchronen Stück)", alle.map((r) => r.wissen).join(" "));
   sage(alle.length && alle.every((r) => r.kzKnopf >= 120 && r.kzKnopf < 400 && r.kzBild >= 120), "2  Klassenzimmer: Tipp → Knopf 120…400 ms", alle.map((r) => r.kzBild + "/" + r.kzKnopf).join(" "));
   /* 3 */
   sage(alle.length && alle.every((r) => { const W = r.tippW, K = r.tippK; return W && K && Math.abs(r.kzAlt - (r.wissen + (K.ab - W.ab - W.bild) + r.kzKnopf)) <= 2 && r.pause >= 0; }),
@@ -199,6 +235,19 @@ function werkzeug(args, json) {
   sage(zus, "10 Zusammenfassung = Median/Min/Max der Einzelläufe", zeig.join(", "));
   /* 11 */
   sage(alle.length && alle.every((r) => r.roh && r.roh.pruef && r.roh.pruef.fremd === "gescheitert" && r.roh.pruef.ms < 1000), "11 fremde Adresse scheitert sofort (kein Weg ins Internet)", alle.map((r) => r.roh && r.roh.pruef ? r.roh.pruef.fremd + " " + r.roh.pruef.ms + " ms" : "–").join(", "));
+  /* 14 – synchron geholte Stücke */
+  const sy = (r) => (r.sync && r.sync.liste) || [];
+  sage(alle.length && alle.every((r) => r.sync && r.sync.n === 1 && sy(r)[0][0] === "teil-x.js" && sy(r)[0][3] === 200 && sy(r)[0][4] === "wissen" && /pruefTeil/.test(sy(r)[0][5]) && r.sync.wissen === sy(r)[0][2] && r.sync.start === 0),
+    "14 synchron geholt: genau eins je Lauf, benannt (teil-x.js), im Abschnitt „wissen\", Aufrufer pruefTeil", alle.map((r) => sy(r).map((x) => x[0] + "@" + x[4] + " " + x[2] + " ms (" + x[5] + ")").join("+") || "–").join(" · "));
+  sage(alle.length && alle.every((r) => r.sync && r.sync.sofort.length === 1 && /^teilx at pruefTeil/.test(r.sync.sofort[0])), "14 die Meldung der Seite (DMA_TEIL_SOFORT) ist dabei", alle.map((r) => (r.sync && r.sync.sofort.join("|")) || "–").join(" · "));
+  sage(fall("kalt").length === 2 && fall("kalt").every((r) => sy(r)[0] && sy(r)[0][2] >= RTT) && fall("warm").length === 2 && fall("warm").every((r) => sy(r)[0] && sy(r)[0][2] < RTT),
+    "14 kalt über die Leitung (≥ 1 RTT), warm aus dem Speicher (< 1 RTT)", "kalt " + fall("kalt").map((r) => sy(r)[0] && sy(r)[0][2]).join(" ") + " · warm " + fall("warm").map((r) => sy(r)[0] && sy(r)[0][2]).join(" "));
+  const zs = j && j.zusammenfassung && j.zusammenfassung.A && j.zusammenfassung.A.kalt, nm = j && j.synchron && j.synchron.A && j.synchron.A.kalt && j.synchron.A.kalt["teil-x.js"];
+  sage(!!(zs && zs["sync.n"] && zs["sync.n"].median === 1 && zs["sync.wissen"] && zs["sync.wissen"].median >= RTT && nm && nm.n === 2 && nm.wo.wissen === 2 && Object.keys(nm.wer).some((w) => /pruefTeil/.test(w))),
+    "14 JSON: Zusammenfassung (sync.n, sync.wissen) und Namensliste (synchron)", nm ? JSON.stringify({ n: nm.n, wo: nm.wo, wer: nm.wer }) : "–");
+  /* 15 (ohne Schalter): der Tipp kommt gleich nach „bereit" */
+  const abB = (r) => (r.tippW && r.roh && r.roh.t ? Math.round(r.tippW.ab - r.roh.t.bereit) : null);
+  sage(alle.length && alle.every((r) => abB(r) != null && abB(r) >= 0 && abB(r) < 400), "15 ohne --tipp-nach: erster Tipp < 400 ms nach „bereit\"", alle.map(abB).join(" "));
 
   /* 12/13 – echte Seite, je ein Lauf kalt, warm, wieder */
   console.log("\nTeil A – echte Seite (" + SEITE + ")");
@@ -213,6 +262,42 @@ function werkzeug(args, json) {
   const ck = cc("kalt"), cw = cc("warm"), cx = cc("wieder");
   sage(!!(ck && !ck.benutzt["app.js"] && cw && !cw.benutzt["app.js"] && cw.angelegt["app.js"] != null && cx && cx.benutzt["app.js"] > 100),
     "13 V8-Code-Cache: warm legt ihn an, wieder nimmt ihn (app.js), kalt nicht", ck ? "kalt " + JSON.stringify(ck.benutzt) + " · warm angelegt " + JSON.stringify(cw && cw.angelegt) + " · wieder " + JSON.stringify(cx && cx.benutzt) : "–");
+  /* 14 – echte Seite: jedes Stück, das die Seite selbst als sofort geholt meldet (dmaTeilSofort, dmaUebTeil schreiben
+     erst DMA_TEIL_SOFORT, dann den synchronen Abruf), hat das Werkzeug mit Namen (app-teil-<stück>.js bzw. die Datei) */
+  const ok14 = EL.filter((r) => !r.abbruch && r.sync);
+  const passt = (r) => r.sync.sofort.length === r.sync.n && r.sync.sofort.every((s, i) => {
+    const t = s.split(" ")[0], f = r.sync.liste[i] && r.sync.liste[i][0];
+    return !!f && (t === "uebung" ? /^data-exercises/.test(f) : f === "app-teil-" + t + ".js");
+  });
+  sage(ok14.length === 3 && ok14.every(passt), "14 echte Seite: synchron geholte Stücke mit Namen, gleich wie die Seite sie meldet",
+    ok14.map((r) => r.art + ": " + (r.sync.liste.map((x) => x[0].replace(/^app-teil-|\.js$/g, "") + "@" + x[4] + " " + x[2] + " ms").join(", ") || "keins") + " / Seite " + r.sync.sofort.length).join(" · "));
+
+  /* 15/16 – --tipp-nach und --gegen: Prüfseite A (Wissen 200 ms) gegen B (300 ms), verschränkt */
+  console.log("\nTeil A – --gegen und --tipp-nach (Prüfseite 200 ms gegen 400 ms)");
+  const P2 = pruefseite(400);
+  const G = werkzeug(["4g", P, "--gegen", P2, "--arten", "kalt,warm", "--laeufe", "6", "--tipp-nach", "1200", "--fenster", "3500", "--supabase", "-", "--leise", "--ohne-spur"], path.join(tmp, "g.json"));
+  const GJ = G.j, GL = (GJ && GJ.laeufe) || [], gAlle = GL.filter((r) => !r.abbruch);
+  sage(!!(GJ && GJ.einstellung && GJ.einstellung.tippNach === 1200 && gAlle.length === 24), "15 Lauf mit --tipp-nach 1200 und --gegen: 2 Stände × 2 Fälle × 6 Läufe", GJ ? gAlle.length + " Läufe, tippNach " + (GJ.einstellung && GJ.einstellung.tippNach) : G.aus.split("\n").slice(-4).join(" | "));
+  sage(gAlle.length && gAlle.every((r) => abB(r) >= 1200 && abB(r) < 1500), "15 --tipp-nach 1200: erster Tipp 1200…1500 ms nach „bereit\"", gAlle.map(abB).join(" "));
+  sage(gAlle.length && gAlle.every((r) => r.wissen >= 200 && r.wissen < 1000 && r.sync && r.sync.n === 1 && r.sync.liste[0][4] === "wissen"), "15 die Wartezeit liegt nicht im Abschnitt „wissen\" (Wissen 200…1000 ms, Stück im Tipp)", gAlle.map((r) => r.wissen).join(" "));
+  /* verschränkt: in Lauf i misst zuerst A (i gerade) bzw. B (i ungerade) */
+  const reihe = GL.filter((r) => r.art === "kalt").map((r) => r.stand + (r.lauf + 1)).join(" ");
+  sage(reihe === "A1 B1 B2 A2 A3 B3 B4 A4 A5 B5 B6 A6", "16 verschränkt: A B, B A, …", reihe);
+  const gw = (art, p) => GJ && GJ.gepaart && GJ.gepaart[art] && GJ.gepaart[art][p];
+  sage(["kalt", "warm"].every((a) => { const d = gw(a, "wissen"); return d && d.n === 6 && d.median >= 130 && d.median <= 270 && d.deutlich && d.ki95[0] > 0; }),
+    "16 gepaart: Wissen +130…+270 ms, DEUTLICH (95 % ohne Null, Vorzeichentest)", ["kalt", "warm"].map((a) => a + " " + paarTxt(gw(a, "wissen"))).join(" · "));
+
+  /* 17 – A/A: derselbe Stand zweimal */
+  console.log("\nTeil A – A/A-Test (Prüfseite gegen sich selbst)");
+  const AAr = werkzeug(["4g", P, "--aa", "--arten", "kalt", "--laeufe", "6", "--fenster", "2500", "--supabase", "-", "--leise", "--ohne-spur"], path.join(tmp, "aa.json"));
+  const AJ = AAr.j, aw = (p) => AJ && AJ.gepaart && AJ.gepaart.kalt && AJ.gepaart.kalt[p];
+  sage(!!(AJ && AJ.einstellung && AJ.einstellung.aa === true && Array.isArray(AJ.staende) && AJ.staende.length === 2 && AJ.staende[0].wurzel === AJ.staende[1].wurzel && (AJ.laeufe || []).filter((r) => !r.abbruch).length === 12),
+    "17 --aa: ein Stand als A und B, 6 Paare", AJ && Array.isArray(AJ.staende) ? JSON.stringify(AJ.staende.map((s) => s.name + " " + path.basename(s.wurzel))) : AAr.aus.split("\n").slice(-4).join(" | "));
+  sage(!!(aw("wissen") && Math.abs(aw("wissen").median) <= 30 && !aw("wissen").deutlich && aw("bereit") && Math.abs(aw("bereit").median) <= 60 && !aw("bereit").deutlich),
+    "17 A/A: gepaarter Median Wissen ≤ ± 30 ms, bereit ≤ ± 60 ms, nicht deutlich", ["wissen", "bereit"].map((p) => p + " " + paarTxt(aw(p))).join(" · "));
+  const rg = AJ && AJ.rauschgrenze && AJ.rauschgrenze.kalt;
+  sage(!!(rg && typeof rg.wissen === "number" && typeof rg.bereit === "number" && rg.wissen < 80 && rg.bereit < 150), "17 Rauschgrenze je Maß im JSON", rg ? "wissen ±" + rg.wissen + ", bereit ±" + rg.bereit + ", fcp ±" + rg.fcp : "–");
+  fs.rmSync(P2, { recursive: true, force: true });
 
   /* ---------- Teil B – Belege ---------- */
   console.log("\nTeil B – Belege (ohne Werkzeug)");
