@@ -21,6 +21,7 @@
        steht in einem Stück min/app-teil-raum<N>.js bzw. -rest<N>.js (je
        etwa 250 000 Zeichen Quelltext, in der Reihenfolge der Datei). Reihen
        aus „beisammen“ (app-teile.json, Fassung 884) teilt keine Stückgrenze.
+       Funktionen aus „kern“ (Fassung 885) bleiben immer in min/app.js.
      - Reine Datenblöcke („const"), die nur ausgelagerte Funktionen
        desselben Stücks lesen, wandern mit (im Kern bleibt „var NAME;").
      - Die Seite holt die Stücke nach dem Start über die Leitung und setzt
@@ -147,7 +148,14 @@ function appTeilen(quelle, liste, acorn) {
   const zahl = namenZaehlen(rumpf);
   const teilVon = {};
   const teilNamen = Object.keys(liste.teile).filter((t) => /^[a-z0-9]+$/.test(t));
-  teilNamen.forEach((t) => (liste.teile[t] || []).forEach((f) => { if (!teilVon[f]) teilVon[f] = t; }));
+  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. „kern“ in app-teile.json (von Hand,
+     teile-messen.js übernimmt es wie „beisammen“): Funktionen, die NIE ausgelagert werden, auch wenn sie in „teile“
+     stehen. Anlass (gemessen, Grundlinie 884): lcWaEntsperren hängt an pointerdown/touchend/keydown am ganzen Dokument,
+     tutorSchreibzeile an focusin/focusout – jeder erste Tipp der Seite rief beide Platzhalter und holte raum3 und rest7
+     per synchronem XHR (4G kalt 248 ms, 3G 1,25 s gesperrter Hauptfaden). Die Coverage-Messung sah das nicht, weil
+     sie ohne echte Berührung tippt. */
+  const immerKern = new Set(Array.isArray(liste.kern) ? liste.kern : []);
+  teilNamen.forEach((t) => (liste.teile[t] || []).forEach((f) => { if (!teilVon[f] && !immerKern.has(f)) teilVon[f] = t; }));
   const auswahl = rumpf.filter((st) => st.type === "FunctionDeclaration" && st.id && teilVon[st.id.name]
     && zahl[st.id.name] === 1 && !/^dmaTeil/.test(st.id.name));
   /* Jede Gruppe (raum, rest) in Stücke von etwa STUECK Zeichen Quelltext, in der Reihenfolge der Datei (was
@@ -237,7 +245,7 @@ function appTeilen(quelle, liste, acorn) {
   });
   /* „beisammen“ bestimmt mit, was in welchem Stück steht – also auch die Kennung (sonst passte ein altes Stück zum neuen Kern) */
   const kennung = crypto.createHash("sha1").update(quelle).update(JSON.stringify(liste.teile)).update(JSON.stringify(liste.beisammen || []))
-    .update(fs.readFileSync(__filename)).digest("hex").slice(0, 12);
+    .update(JSON.stringify(liste.kern || [])).update(fs.readFileSync(__filename)).digest("hex").slice(0, 12);
   const bau = { id: kennung, teile: benutzt, fn: fnTeil };
   ersatz.push([marke.start, marke.end, "var DMA_TEILE_BAU = " + JSON.stringify(bau) + ";"]);
   ersatz.sort((a, b) => b[0] - a[0]);
@@ -248,7 +256,7 @@ function appTeilen(quelle, liste, acorn) {
   const kern = stuecke.reverse().join("");
   const teile = {};
   benutzt.forEach((t) => { teile[t] = "dmaTeilPasst(" + JSON.stringify(kennung) + ");\n" + koerper[t].join("\n") + "\n"; });
-  return { kern, teile, kennung, zahl: auswahl.length, daten: daten.length,
+  return { kern, teile, kennung, zahl: auswahl.length, daten: daten.length, immerKern: immerKern.size,
     fehlend: Object.keys(teilVon).filter((f) => !auswahl.some((st) => st.id.name === f)),
     beisammen: Object.keys(reiheSpanne).map((s) => {
       const [i0, i1, a, e] = reiheSpanne[s];
@@ -423,7 +431,7 @@ function verkleinertTeilen(quelle, eb, meldung) {
     /* sourceURL: in Fehlermeldungen und im Entwicklerwerkzeug heißt der Teil dann wie seine Datei */
     for (const [t, c] of Object.entries(r.teile)) teile[t] = eb.transformSync(c, ESBUILD_OPT).code + "//# sourceURL=min/app-teil-" + t + ".js\n";
     if (!/\beval\(/.test(kern)) throw new Error("dmaTeilAuswerten fehlt im Kern");
-    return { kern, teile, kennung: r.kennung, zahl: r.zahl, daten: r.daten, fehlend: r.fehlend, beisammen: r.beisammen };
+    return { kern, teile, kennung: r.kennung, zahl: r.zahl, daten: r.daten, fehlend: r.fehlend, beisammen: r.beisammen, immerKern: r.immerKern };
   } catch (e) {
     sag("app.js nicht geteilt (" + String(e.message || e).split("\n")[0] + ") – app.js bleibt ganz");
     return null;
@@ -468,7 +476,8 @@ if (require.main === module) {
   const erg = verkleinertTeilen(quelle, eb, (m) => console.error("  " + m));
   if (!erg) process.exit(1);
   const gz = (s) => Math.round(zlib.gzipSync(s, { level: 9 }).length / 1024);
-  console.log("ausgelagert: " + erg.zahl + " Funktionen, " + erg.daten + " Datenblöcke" + (erg.fehlend.length ? ", nicht gefunden/doppelt: " + erg.fehlend.length : ""));
+  console.log("ausgelagert: " + erg.zahl + " Funktionen, " + erg.daten + " Datenblöcke" + (erg.fehlend.length ? ", nicht gefunden/doppelt: " + erg.fehlend.length : "")
+    + (erg.immerKern ? ", immer im Kern („kern“): " + erg.immerKern : ""));
   console.log("min/app.js " + Math.round(erg.kern.length / 1024) + " KB (gepackt " + gz(erg.kern) + " KB)");
   (erg.beisammen || []).forEach((b) => console.log("beisammen " + b.reihe + ": " + b.von + " … " + b.bis + " → " + b.stueck + " (" + b.zeichen + " Zeichen"
     + (b.gilt ? ")" : ", zu weit auseinander – gilt nicht)")));

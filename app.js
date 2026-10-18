@@ -235,6 +235,13 @@
   /* FASSUNG 884 — diese Stücke holen (fehlgeschlagene ein zweites Mal) und alle gleich einsetzen. Antwort true, wenn
      danach jedes eingesetzt ist; false = der schlanke Weg fällt aus (dann der Notweg). dmaTeilRaum: die Raum-Stücke;
      „noch" im Notweg: die Stücke, die ausgefallen sind. */
+  /* FASSUNG 885 — eine neue Aufgabe abwarten (MessageChannel: ohne die 4-ms-Bremse geschachtelter Zeitgeber) */
+  function dmaTeilPause() {
+    return new Promise((weiter) => {
+      try { const k = new MessageChannel(); k.port1.onmessage = () => { k.port1.close(); weiter(); }; k.port2.postMessage(0); }
+      catch (e) { setTimeout(weiter, 0); }
+    });
+  }
   function dmaTeilListe(liste) {
     if (!DMA_TEILE_BAU || !liste.length) return Promise.resolve(true);
     const holen = () => Promise.all(liste.map((t) => {
@@ -242,9 +249,18 @@
       const p = dmaTeilHolen(t);
       return dmaTeilAnkunft[t] ? dmaTeilAnkunft[t] : p;
     }));
-    const einsetzen = () => liste.map((t) => {
-      try { return dmaTeilEinsetzen(t); } catch (e) { dmaTeilFehler(t, e); return false; }
-    }).every(Boolean);
+    /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 255): „die Verbindung zu den
+       anderen hat oberste Priorität“. Bisher wurden alle Stücke der Liste in EINER Aufgabe eingesetzt – beim Betreten
+       und bei der Rückkehr acht Raum-Stücke am Stück (gemessen bei CPU 4×: 52–55 ms, auf einem schwachen Telefon
+       das Doppelte), genau dann, wenn die Leitung zu den anderen aufgebaut wird. Jetzt je Stück eine eigene Aufgabe
+       (dmaTeilPause): dazwischen kommen Nachrichten der Leitung und Tipps dran. Die Antwort bleibt dieselbe (true,
+       wenn danach jedes eingesetzt ist); was ein Platzhalter inzwischen selbst eingesetzt hat, wird übersprungen. */
+    const einsetzen = () => liste.reduce((p, t) => p.then((alle) => {
+      if (dmaTeilDa[t]) return alle;
+      return dmaTeilPause().then(() => {
+        try { return dmaTeilEinsetzen(t) && alle; } catch (e) { dmaTeilFehler(t, e); return false; }
+      });
+    }), Promise.resolve(true));
     return holen()
       .then((da) => (da.indexOf(false) < 0 ? da : holen()))
       .then(einsetzen)
@@ -325,7 +341,13 @@
     try {
       window.addEventListener("load", () => {
         dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 3000);
-        const los = () => { dmaTeilGruppe("raum"); dmaTeilGruppe("rest"); };
+        /* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream“. Erst die Raum-Stücke über die Leitung, die
+           Rest-Stücke danach (höchstens 6 s gewartet, falls ein Raum-Stück hängt). Vorher teilten sich alle 15 Stücke
+           die Leitung – auf 3G kamen die Raum-Stücke, auf die z. B. die Rückkehr in den Raum wartet, dadurch etwa
+           doppelt so spät. */
+        const los = () => {
+          Promise.race([dmaTeilGruppe("raum", true), new Promise((r) => setTimeout(r, 6000))]).then(() => dmaTeilGruppe("rest"));
+        };
         if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 2000 }); else setTimeout(los, 200);
       });
     } catch (e) {}
@@ -70048,7 +70070,7 @@
     const zurueck = LiveChat.rueckkehrOffen && LiveChat.rueckkehrOffen();
     if (zurueck) {
       /* FASSUNG 876 — gleich wieder im Raum: Effekte, Spiel und Blätter sofort holen. Hinein geht es, sobald die
-         Stücke fürs Klassenzimmer da sind (über 4G gut 0,3 s; höchstens 2,5 s gewartet) – sonst müsste jedes
+         Stücke fürs Klassenzimmer da sind (über 4G gut 0,3 s; höchstens 2,5 s gewartet – seit 885 höchstens 12 s, s. u.) – sonst müsste jedes
          Stück einzeln sofort nachgeladen werden, während der Raum sich aufbaut. Zusammen ist das immer noch
          früher als vor 876, als erst die ganze app.js über die Leitung musste. */
       raumVorbereiten();
@@ -70072,7 +70094,12 @@
           los = true;
           dmaTeilNotwegFrist(dmaTeilNotweg("raum", dmaTeilRaumFehlt()), 40000).then((neu) => { if (!neu) rein(); });
         }, einmal);
-        setTimeout(einmal, 2500);
+        /* FASSUNG 885 — XANDER (Funk 263/271). Bisher ging es nach spätestens 2,5 s hinein, auch wenn die Raum-Stücke
+           noch unterwegs waren. Auf langsamer Leitung (3G) hieß das: jeder Platzhalter holte sein Stück noch einmal
+           per synchronem XHR (dieselbe Datei ein zweites Mal über die Leitung), und die Seite stand, bis alle da
+           waren – LiveChat.betreten kam dadurch nicht früher, sondern später. Jetzt wird auf die Stücke gewartet,
+           die ohnehin unterwegs sind; die Frist bleibt nur als Netz, falls die Leitung ganz hängt. */
+        setTimeout(einmal, 12000);
       }
     }
   }

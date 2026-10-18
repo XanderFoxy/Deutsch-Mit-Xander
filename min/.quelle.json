@@ -53,10 +53,10 @@
  "spiel.css": "05e174c95c16d4253b5847d857ff2e2518fed83a",
  "spiel.js": "2558e54988fde2504e3f9c94eacac49491b36714",
  "rueckfrage.js": "7d35c80443adc7533a67dd37f74953ec2d666787",
- "data-exercises.js": "8c18a56d974098810c236f2e0afd1a6324379d3f",
- "app.js": "db59de35022dfd7a3f30657daa79297e2fdc60db",
  "korrekturen.css": "0ab791607b816ffb37db3df7dfb4b60c2e0c583b",
  "livechat.js": "42abee3f5fdcf801fb37546e7fe6e454871c6113",
  "messung.js": "e37987b64ce2ef2d711876cf7dc95a2074982bc7",
- "data-werkstatt.js": "0870ef6e867b266f4a19c6bc6cbb06c059f25658"
+ "data-werkstatt.js": "0870ef6e867b266f4a19c6bc6cbb06c059f25658",
+ "app.js": "c355b021c0606f204f80c5e22b6e683977f5ab53",
+ "data-exercises.js": "e44c6dc66db86b3c8f81591c1900eef82a25eac5"
 }
