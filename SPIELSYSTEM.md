@@ -5145,3 +5145,81 @@ Stand 17.10. (884): Android „navigate“ 7 Seiten, erstes Byte Median 616, ers
 3. Werkzeug: Schalter für ein langsames Aufwachen des Helfers (wie hier mit den Modell-Ordnern) oder die Rechnerbremse auch für den Faden des Helfers – sonst misst der Fall sw das Aufwachen nie.
 4. Sonde 694 Prüfung 3a (spiel.js-Wettlauf, schon in 884): die Sonde sollte vor dem zweiten Öffnen warten, bis `min/spiel.js` im Speicher liegt – eine Änderung an der Sonde, nicht an der Seite.
 5. S1 (stale-while-revalidate für index.html, freigegeben) als eigener Schritt; dann bleibt vom Vorab-Laden nur noch die Auffrischung im Hintergrund.
+
+## Fassung 885 — App-Stücke: der erste Tipp ohne synchrones Nachladen, Raum-Stücke einzeln (Ladezeit-Entwurf, Schritt E)
+
+XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“. Befund der Grundlinie 884: der **erste Tipp auf „Wissen“ holte in jedem Lauf zwei Stücke per synchronem XHR** – `app-teil-raum3.js` über `lcWaEntsperren` (hängt an pointerdown/touchend/keydown am ganzen Dokument) und `app-teil-rest7.js` über `tutorSchreibzeile` (focusin) –, 4G kalt 248 ms, 3G 1,25 s gesperrter Hauptfaden. Feld (884, `spiel_diagnose` „mess-start“, nur gelesen): **auf 10 von 10 Android- und 7 von 8 iPhone-Seiten hatte schon beim Start ein Platzhalter synchron nachgeladen** (`teile[0] > 0`); erster Wissen-Tipp Android Median 303 ms (7 Seiten, längster 689). **Vorher festgelegtes Maß: „Wissen: Tipp → Bild“ und „synchron geholt“, Fall kalt; erstes Bild und „bereit“ dürfen nicht über die Rauschgrenze schlechter werden.** Nichts Sichtbares.
+
+### Vorgeschichte
+Begonnen am 18.10. (WIP 6d85c9aa „Zwischenstand vor Container-Neustart“: Liste „kern“, Bau-Unterstützung, erste Änderungen an app.js; nicht gemessen, nicht geprüft). Heute vollendet: gemessen, Sonde mit Gegenprobe, Kommentare nach den Messwerten berichtigt.
+
+### Was gebaut ist
+1. **„kern“ in `werkzeug/app-teile.json`** (21 Funktionen): `teile-bauen.js` lagert sie nie aus, auch wenn sie in „teile“ stehen; `teile-messen.js` übernimmt die Liste beim Neu-Messen (wie „beisammen“); die Kennung der Stücke hängt mit davon ab. Drin ist, was ein erster Handgriff sofort braucht: `lcWaEntsperren`, `lcWaKontextHolen` (erster Tipp, erste Taste), `tutorSchreibzeile` (erster Fokus), `kzBackend`, `lcSlfLage`, `sammelSchalterHtml`, `sammelTextHtml`, `historyUebersetzungHtml`, `firstStepsLangFor`, `ohneItalienisch`, `sprachwahlOhneItalienisch` (Lernen, Profil, Kompass, Größenänderung, Rückkehr aus dem Hintergrund), `trophyCounts`, `tinyAvatar` und die Melde-Töne (`isNotifyMuted` … `startNotifyReminder`; Start mit Konto). Gefunden mit Precise Coverage bei echten Berührungen (Erkundung `scratchpad/stuecke/abdeckung.js`, `?quelle`): **nachher ruft keiner von 15 Handgriffen** (Wissen + Kalender, Lernen, Profil, Über mich, Klassenzimmer, Taste, Wischen, Größe, Hintergrund, Ruhe, Start mit Konto + Wissen/Profil/Lernen/Klassenzimmer) eine ausgelagerte Funktion. Preis: `min/app.js` +8 KB (gepackt +3,2 KB; 195,8 → 199,0 KB).
+2. **`dmaTeilListe` setzt jedes Stück in einer eigenen Aufgabe ein** (`dmaTeilPause`, MessageChannel – ohne die 4-ms-Bremse geschachtelter Zeitgeber). Vorher alle acht Raum-Stücke beim Betreten/bei der Rückkehr in EINER Aufgabe (gemessen: zusammen 70 ms, Aufgabe 83 ms bei CPU 4×); jetzt je Stück 4–23 ms, dazwischen kommen Leitung und Tipps dran. Antwort unverändert (true = alle eingesetzt); Notweg („noch“), `dmaTeilRaum`, `raumDrin` laufen darüber wie bisher.
+3. **Nach `load` erst die Raum-Stücke über die Leitung, die Rest-Stücke danach** (höchstens 6 s gewartet, falls ein Raum-Stück hängt). Vorher teilten sich alle 15 Stücke die Leitung.
+4. **Rückkehr in den Raum nach dem Neuladen wartet auf die Raum-Stücke, die ohnehin unterwegs sind** (Netz: 12 s statt 2,5 s). Vorher ging es nach 2,5 s hinein; fehlte dann ein Stück, holte der Platzhalter es synchron – dieselbe Datei ein zweites Mal über die Leitung, die Seite stand.
+
+**Nicht gebaut: Rest-Stücke erst beim ersten Gebrauch einsetzen** (Entwurf E, zweiter Teil). Gemessen (Erkundung `evalzeit.js`, CPU 4×, je 2 Läufe vorher/nachher): ein Stück einzusetzen kostet 4–32 ms, alle sieben Rest-Stücke zusammen 85–131 ms, alle acht Raum-Stücke 70–95 ms (alle 15 zusammen 159–226 ms; der Entwurf nannte 0,5–0,8 s – nachgemessen ist es ein Drittel davon). Eingesetzt wird in Ruhepausen, ein Stück je Pause, ab 3 s nach `load`: **kein einziger Langläufer** in diesem Abschnitt (evalzeit: 0; Messwerkzeug 4G: in keinem der 40 Läufe ein Langläufer später als 2,5 s nach `load`). Beim ersten Gebrauch einzusetzen hieße: dieselben 4–32 ms fielen in einen Tipp, statt in eine Pause. Gewinn für die Bedienung: keiner messbar; also nicht eingebaut. „Spät holen“ (Punkt 3) ist gebaut.
+
+### Messung (werkzeug/ladezeit-messen.js, verschränkt A B / B A in einer Sitzung; A = 21b774d3 (Stand vor diesem Schritt, mit Schritt C), B = dieser Stand; HTTP/2 + TLS, CPU 4×, Gast, Profil auf der Platte; Median, B − A gepaart mit 95-%-Bereich, ↑/↓ = B langsamer/schneller)
+| Lauf | Paare | Wissen Tipp→Bild | synchron | Sperrzeit | Langläufer Σ | erstes Bild | bereit |
+|---|---|---|---|---|---|---|---|
+| **4G kalt** | 10 | **684 → 467, −241 (−266…−203, 0↑/10↓) DEUTLICH** | **258 → 0** | 767 → 545, −214 DEUTLICH | 1034 → 878, −181 DEUTLICH | 548 → 568, +20 (−22…54) | 1379 → 1414, +52 (−37…132) |
+| 4G warm | 10 | 277 → 224, −54 (−129…0, 2↑/8↓) | 19 → 0 DEUTLICH | 499 → 473, −35 (−143…61) | 799 → 729, −58 | 400 → 414, +10 (−8…48) | 990 → 975, −21 (−102…90) |
+| **3G kalt** | 7 | **1799 → 262, −1537 (−1575…−1425, 0↑/7↓) DEUTLICH** | **1269 → 0** | 1801 → 496, −1309 DEUTLICH | 2098 → 796, −1289 DEUTLICH (längster 959 → 319) | 1224 → 1212, −8 | 4248 → 4269, +7 (−36…188) |
+| 3G kalt, Tipp 4 s nach „bereit“ | 7 | 942 → 285, −657 (−697…−639) DEUTLICH | 520 → 0 | 981 → 483 | 1231 → 772 | 1164 → 1164 | 4165 → 4225, +9 (−11…150) |
+
+- **Das Ziel ist erreicht: der erste Wissen-Tipp holt nichts mehr synchron** – in allen 34 B-Läufen 0, in allen A-Läufen 2 (3G mit spätem Tipp: 1). 4G kalt −241 ms (35 %), 3G kalt −1,5 s (85 %).
+- **Erstes Bild und „bereit“: innerhalb der Rauschgrenze** (Grundlinie A/A: erstes Bild ±54, bereit ±76). Erwartet war ein kleiner Preis für +3,2 KB im Kern (4G ~3 ms Leitung + Übersetzen); +20/+52 ms auf 4G liegen im Rauschen (6↑/4↓ bzw. 7↑/3↓), auf 3G +7/+9.
+- **load 4G kalt −148 ms DEUTLICH**: in A hielt das synchrone Nachladen im Wissen-Tipp das Ende des Ladens auf.
+- **3G kalt (Tipp sofort): load +2,9 s und Klassenzimmer +41 ms „DEUTLICH“ – das ist der frühere Tipp, nicht die Seite.** Weil Wissen 1,5 s früher fertig ist, tippt das Werkzeug das Klassenzimmer bei ~4,6 s statt ~6,1 s, also noch VOR `load`, während die Seite noch Blätter lädt; und was der Klassenzimmer-Tipp holt (spiel.js 274 KB, tutor-Bild 91 KB), zählt jetzt zum Laden (KB 0–10 s +317). Gegenprobe mit Tipp 4 s nach „bereit“ (beide Tipps nach `load`): Klassenzimmer −28 (−43…46, gleich), load +41 (6…129, 6↑/1↓, nach Vorzeichentest nicht deutlich; +3 KB Kern ≈ 15 ms auf 3G).
+- Klassenzimmer 4G: +13 (−28…58) kalt, +26 (−114…56) warm – gleich (Rauschgrenze ±21/±116).
+- Rechnerlast 0,1–1,3 (4 Kerne). Messdateien: Zwischenordner `stuecke/mess/{4g-wip,3g-wip,3g-nach4000}.{json,txt}`.
+
+### Rückkehr in den Raum nach dem Neuladen (Erkundung `stuecke/rueckkehr.js`, A/B abwechselnd, CPU 4×; Leitung über die Entwicklerwerkzeuge; Fall „nach einem Fassungswechsel“: app.js und Stücke neu, alles andere aus dem Speicher)
+| Leitung | Paare | synchron gesperrt A → B | betreten A → B | „drin“ A → B |
+|---|---|---|---|---|
+| 3G | 3 | **5298–5300 ms → 0** (raum1 über `livechatGeschlecht`, schon beim Zusammenstellen der Angaben für betreten) | 12409 → 10443 | **12847 → 10792 (−2,1 s)** |
+| 4G | 2 | 0 → 0 | 2149 → 2041 | 2532/2556 → 2418/2475 |
+
+- Auf 3G war die Seite in A **5,3 s eingefroren** (das Stück kam ein zweites Mal über die Leitung, neben den acht schon laufenden Abrufen und spiel.js) und kam trotzdem 2 s SPÄTER in den Raum. Der Kommentar in app.js sagt das jetzt mit diesen Zahlen.
+
+### Betreten über die Knöpfe (Erkundung `stuecke/betreten-ui.js`, Wissen → Klassenzimmer → Betreten → Tor → „Nur mit Ton hinein“, CPU 4×, je 2 Läufe)
+- Stücke wie gewohnt (in der Ruhepause nach dem Klassenzimmer-Tipp eingesetzt, je Aufgabe eines – schon in 884): kein synchroner Abruf; **die längste Aufgabe nach „hinein“ ist 144–195 ms (A) bzw. 182–185 ms (B) – das ist der Aufbau des Raums selbst** (betreten, Gerüst, Plätze), kein Einsetzen. Das Ziel „keine Aufgabe > 120 ms beim Betreten“ gilt für das Einsetzen der Stücke (Sonde 5: keine ≥ 50 ms); der Raum-Aufbau selbst ist ein eigener Schritt (Offen 2).
+- Wer auf langsamer Leitung schneller ist als die Raum-Stücke (Sonde hält sie bis „hinein“ zurück): in A **und** B holt das Tor raum1 und „hinein“ raum2, raum3, raum5, raum6, raum8 synchron (Aufgabe 246–313 ms auf dem Prüfrechner; auf 3G hieße das Sekunden, s. Rückkehr). Unverändert gegenüber 884 – Offen 1.
+
+### Sonde `werkzeug/pruefe-885-stuecke.js` (25 Prüfungen)
+- Die Sonde hält die Stücke im Browser zurück (page.route – belegt keine der sechs Verbindungen; ein synchroner Abruf wird markiert und durchgelassen), damit nichts vom Zufall der Zeit abhängt; min/app.js wird im Sondenserver so ergänzt, dass jedes Einsetzen mit Dauer und Aufgabe mitgeschrieben wird. Geprüft: 1 Bau („kern“, 21 echte Funktionen in min/app.js, teile-bauen/teile-messen) · 2 Gast kalt, kein Stück da: Wissen, Tab, Größe, Hintergrund, Lernen, Profil – nichts synchron · 3 Start mit Konto, Wissen, Profil – nichts synchron · 4 Rückkehr mit langsamen Raum-Stücken (je 3 s): betreten erst mit 8 von 8, 206 ms nach dem letzten, nichts synchron · 5 Rückkehr schnell: acht Aufgaben für acht Stücke, keine ≥ 50 ms · 6 Rest erst nach Raum (+61 ms nach dem letzten Raum-Stück), alle 15 eingesetzt; hängt raum3, kommt der Rest nach 6,1 s trotzdem.
+- **Ergebnis: 25 grün.** **Gegenprobe** 21b774d3 (`WURZEL=scratchpad/gegen885/stuecke-vorher`): **12 rot** – 1 ×3, 2 ×2 (raum3, rest7, rest6, rest2, raum1 synchron über lcWaEntsperren, tutorSchreibzeile, sammelSchalterHtml, firstStepsLangFor, kzBackend), 3 ×3 (rest1/rest6 schon beim Start), 4 ×2 (betreten bei 1 von 8, raum1 synchron), 5 (alle acht in EINER Aufgabe, 83 ms), 6 (Rest 1,5 s VOR dem letzten Raum-Stück angefordert). Grün bleibt dort, was gleich bleiben soll (keine Seitenfehler, Aufgabe < 120 ms, alle eingesetzt, 6b).
+
+### Grün geblieben
+885-stuecke 25, 876-start-schlank 62 („in der Ruhepause werden alle Teile eingesetzt“, „kein Platzhalter musste beim Start nachladen“), 884-beta 22 (H: Beta/Betreiber weiter 2 Stücke beim Start, angemeldet ohne Rolle **0** statt bisher 2 – rest1/rest6 sind jetzt Kern), 884-notweg 91, 884-messung, ladezeit, 858-ladeweg, 865-lesetexte-nachladen, 873-ausgelagert: grün. 694-leistung: nur Prüfung 3a rot (`min/spiel.js` beim zweiten Öffnen noch nicht im Speicher des Helfers) – mit dem Stand 21b774d3 genauso rot (heute nachgeprüft), bekannt seit 884 (Abschnitt Schritt C, Offen 4). 840-bilderwelt-alt-neu läuft in dieser Umgebung nicht: die Sonde vergleicht mit dem Stand 53eaa31, der flache Klon hat ihn nicht (`fatal: Not a valid object name`); die Änderung berührt in app.js nur den Lader (Zeilen 238–351) und die Rückkehr (70074–70105), keine Bilderwelt-Stelle.
+
+### Ehrlich
+- Gemessen ist ein nachgestelltes Telefon (Chromium, CPU 4×). Der Gewinn hängt am synchronen Abruf – je langsamer Leitung und Gerät, desto größer; auf dem OPPO (Feld: Wissen-Tipp 257 ms bei 1 KB übers Netz) eher am unteren Ende, weil die Stücke dort meist aus dem Speicher kommen und nur das Einsetzen kostet.
+- Die Liste „kern“ ist von Hand (Coverage bei 15 Handgriffen). Ein Handgriff, der nicht dabei war, kann weiter ein Stück synchron holen; messung.js meldet das draußen (`teile[0]`), SQL unten.
+- Rückkehr und Betreten sind mit eigenen Erkundungs-Skripten gemessen (wenige Paare, Leitung über die Entwicklerwerkzeuge), nicht mit dem Messwerkzeug.
+
+### Datenbank
+Nur gelesen (Feldwerte oben). Vergleich nach dem Ausliefern:
+```sql
+-- Start mit synchronem Nachladen und erster Wissen-Tipp, je Fassung und Gerät (885 = mit „kern“)
+select daten->>'f' as fassung,
+       case when daten->>'ua' ilike '%android%' then 'android' when daten->>'ua' ~* 'iphone|ipad' then 'ios' else 'andere' end as geraet,
+       count(*) as seiten,
+       count(*) filter (where (daten->'teile'->>0)::int > 0) as start_mit_sofort,
+       count(daten->'tipp'->'wissen'->0) as mit_wissen_tipp,
+       percentile_cont(0.5) within group (order by (daten->'tipp'->'wissen'->0->>1)::numeric) as wissen_erster_tipp_median,
+       max((daten->'tipp'->'wissen'->0->>1)::numeric) as wissen_erster_tipp_max,
+       max(zeit) as zuletzt
+  from spiel_diagnose
+ where art = 'mess-start'
+ group by 1, 2 order by 1 desc, 2;
+```
+Stand 18.10. (884): Android 10 Seiten, 10 mit Sofort-Nachladen beim Start, erster Wissen-Tipp Median 303 ms (7 Seiten, längster 689); iPhone 8 Seiten, 7 mit Sofort-Nachladen, kein Wissen-Tipp gemeldet.
+
+**Offen**
+1. **Betreten über die Knöpfe auf langsamer Leitung**, wenn man schneller ist als die Raum-Stücke: Tor und „hinein“ holen bis zu sechs Raum-Stücke synchron (schon in 884). Lösung wie bei der Rückkehr: beim Tipp auf „hinein“ auf die Stücke warten, die unterwegs sind (der Ton wird schon im Tipp freigeschaltet, der Kanal ist vorgewärmt) – oder spiel.js/Blätter beim Klassenzimmer-Tipp erst nach den Raum-Stücken holen (wie hier Rest nach Raum). Eigener Schritt mit Messung, weil er den Weg ins Gespräch berührt.
+2. **Raum-Aufbau beim Betreten 144–195 ms** in einer Aufgabe (CPU 4×) – Gerüst und Plätze; gehört zu Schritt D (Zeichnen), nicht zu den Stücken.
+3. Beta und Betreiber holen beim Start weiter rest1 (`renderComingSoonGate`) und rest3 (`lesetexteWennSichtbar`) synchron (Sonde 884-beta H, wie vor 884) – Kandidaten für „kern“ oder „erst beim Öffnen zeichnen“ (Schritt D).
+4. Nach dem Ausliefern: Feldwerte 884 gegen 885 (SQL oben); Erwartung: `start_mit_sofort` fällt bei Gästen auf 0, erster Wissen-Tipp Android deutlich unter 303 ms.
