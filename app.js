@@ -208,13 +208,29 @@
     if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 2500 }); else setTimeout(los, 40);
   }
   var dmaTeilAnkunft = {};
+  /* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream“. Wann zuletzt Bytes eines Raum-Stücks ankamen: die
+     Rückkehr in den Raum wartet, solange die Raum-Stücke vorankommen, und geht hinein, sobald sie 4 s stillstehen
+     (ein Stück hängt). Dafür werden nur die Raum-Stücke stückweise gelesen (gleicher Text wie a.text()); ohne
+     getReader/TextDecoder wie bisher. */
+  var dmaTeilRaumRegung = 0;
+  function dmaTeilLesen(a, teil) {
+    if (!/^raum/.test(teil) || !a.body || !a.body.getReader || typeof TextDecoder === "undefined") return a.text();
+    const leser = a.body.getReader(), dek = new TextDecoder(), text = [];
+    const weiter = () => leser.read().then((r) => {
+      if (r.done) { text.push(dek.decode()); return text.join(""); }
+      dmaTeilRaumRegung = Date.now();
+      text.push(dek.decode(r.value, { stream: true }));
+      return weiter();
+    });
+    return weiter();
+  }
   function dmaTeilHolen(teil) {
     if (!DMA_TEILE_BAU || dmaTeilDa[teil] || DMA_TEILE_BAU.teile.indexOf(teil) < 0) return Promise.resolve(true);
     if (dmaTeilWeg[teil]) return dmaTeilWeg[teil];
     let angekommen = null;
     dmaTeilAnkunft[teil] = new Promise((r) => { angekommen = r; });
     dmaTeilWeg[teil] = fetch(dmaTeilAdresse(teil))
-      .then((a) => { if (!a.ok) throw new Error("HTTP " + a.status); return a.text(); })
+      .then((a) => { if (!a.ok) throw new Error("HTTP " + a.status); return dmaTeilLesen(a, teil); })
       .then((t) => new Promise((fertig) => {
         if (!dmaTeilDa[teil]) dmaTeilText[teil] = t;
         angekommen(true);
@@ -70071,7 +70087,7 @@
     const zurueck = LiveChat.rueckkehrOffen && LiveChat.rueckkehrOffen();
     if (zurueck) {
       /* FASSUNG 876 — gleich wieder im Raum: Effekte, Spiel und Blätter sofort holen. Hinein geht es, sobald die
-         Stücke fürs Klassenzimmer da sind (über 4G gut 0,3 s; seit 885 höchstens 12 s gewartet, s. u.) – sonst müsste jedes
+         Stücke fürs Klassenzimmer da sind (über 4G gut 0,3 s; seit 885 gewartet, solange sie vorankommen, s. u.) – sonst müsste jedes
          Stück einzeln sofort nachgeladen werden, während der Raum sich aufbaut. Zusammen ist das immer noch
          früher als vor 876, als erst die ganze app.js über die Leitung musste. */
       raumVorbereiten();
@@ -70096,13 +70112,23 @@
           dmaTeilNotwegFrist(dmaTeilNotweg("raum", dmaTeilRaumFehlt()), 40000).then((neu) => { if (!neu) rein(); });
         }, einmal);
         /* FASSUNG 885 — XANDER (Funk 263/271). Bisher ging es nach spätestens 2,5 s hinein, auch wenn die Raum-Stücke
-           noch unterwegs waren. Auf langsamer Leitung (3G) hieß das: jeder Platzhalter holte sein Stück noch einmal
-           per synchronem XHR (dieselbe Datei ein zweites Mal über die Leitung), und die Seite stand, bis alle da
-           waren – LiveChat.betreten kam dadurch nicht früher, sondern später (gemessen, 3G nach einem
-           Fassungswechsel: Seite 5,3 s eingefroren, „drin" nach 12,8 s; jetzt kein Einfrieren, „drin" nach 10,8 s).
-           Jetzt wird auf die Stücke gewartet, die ohnehin unterwegs sind; die Frist bleibt nur als Netz, falls die
-           Leitung ganz hängt. */
-        setTimeout(einmal, 12000);
+           noch unterwegs waren. Auf sehr langsamer Leitung hieß das: jeder Platzhalter holte sein Stück noch einmal
+           per synchronem XHR (dieselbe Datei ein zweites Mal über die Leitung), und die Seite stand, bis es da war.
+           Gemessen (gepackt wie bei GitHub Pages, nach einem Fassungswechsel, CPU 4×, A/B je 5–7 Läufe): auf 3G
+           (1,6 Mbit/s) sind die Stücke nach 1,9 s da – kein Einfrieren, auch vorher nicht; „drin" 0,3 s früher (Ladeweg).
+           Erst auf sehr langsamer Leitung (0,4 Mbit/s) stand die Seite 10,6 s, „drin" nach 19,2 s; jetzt kein Einfrieren,
+           „drin" nach 14,1 s. Jetzt wird gewartet, solange die Raum-Stücke vorankommen
+           (dmaTeilRaumRegung): hinein, sobald alle da sind, oder wenn 4 s kein Byte mehr kam (ein Stück hängt – dann
+           wie bisher), ohne jedes Byte nach 12 s, spätestens nach 40 s. 4 s, weil ein vorgezogenes Stilblatt
+           (korrekturen.css, gepackt 158 KB) auf 0,4 Mbit/s gut 3 s lang die Leitung allein haben kann. */
+        const ab = Date.now();
+        const wache = () => {
+          if (los) return;
+          const jetzt = Date.now();
+          if (jetzt - ab >= 40000 || (dmaTeilRaumRegung ? jetzt - Math.max(ab, dmaTeilRaumRegung) >= 4000 : jetzt - ab >= 12000)) einmal();
+          else setTimeout(wache, 250);
+        };
+        setTimeout(wache, 250);
       }
     }
   }

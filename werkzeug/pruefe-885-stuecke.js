@@ -46,10 +46,27 @@
         sonst die Leitung); hängt ein Raum-Stück, kommen die Rest-Stücke
         nach höchstens 6 s trotzdem. Danach sind alle 15 eingesetzt,
         ohne synchronen Abruf.
+   NACHBESSERUNG 1 (Prüfbericht zu 9135613f):
+     7  Rückkehr, die Frist hängt am Fortschritt (dmaTeilRaumRegung):
+        a) die Raum-Stücke tröpfeln (der Sondenserver schickt jedes in
+           8 Happen über 6 s – länger als die alte Frist von 2,5 s und als
+           die 4-s-Stillstandsregel, aber nie 4 s ohne Byte): betreten erst
+           mit allen Raum-Stücken, nichts synchron;
+        b) EIN Raum-Stück hängt (raum3 kommt nie, die anderen sofort):
+           hinein nach höchstens 4 s Stillstand (+ Spielraum), nicht erst
+           nach 12 s wie in 9135613f.
+     8  Erster Besuch und Tipp auf Text, Stücke zurückgehalten:
+        a) ohne dma_tour_seen: die Tour erscheint (600 ms nach dem Start),
+           „Überspringen" – nichts synchron (vorher rest1 über startTour);
+        b) Tipps auf Text außerhalb der Betonungs-Kästen (Wissen, Lernen):
+           nichts synchron (vorher rest1 über betonungKastenFinden – jeder
+           Tipp, der keinen Knopf trifft).
    Gegenprobe (Stand vor diesem Schritt, 21b774d3):
      S=/tmp/claude-0/-home-user-Deutsch-Mit-Xander/<sitzung>/scratchpad
      mkdir -p $S/gegen885/stuecke-vorher && git archive 21b774d3 index.html min werkzeug app.js livechat.js backend.js … | tar -x -C $S/gegen885/stuecke-vorher
      WURZEL=$S/gegen885/stuecke-vorher node werkzeug/pruefe-885-stuecke.js
+   Gegenprobe Nachbesserung 1 (9135613f): WURZEL=$S/gegen885/stuecke-9135 (cp -al
+   des Stands 21b774d3 + git archive 9135613f der 26 geänderten Dateien).
    Ergebnis 18.10.: 25 grün. Gegenprobe 21b774d3: 12 rot (1 ×3 keine Liste
    „kern", 21 Platzhalter · 2 ×2 raum3/rest7/rest6/rest2/raum1 synchron –
    lcWaEntsperren, tutorSchreibzeile, sammelSchalterHtml, firstStepsLangFor,
@@ -58,6 +75,11 @@
    5 alle acht in EINER Aufgabe (83 ms) · 6 Rest gleichzeitig mit Raum).
    Grün bleibt dort, was gleich bleiben soll (Mitschreiben, keine
    Seitenfehler, Aufgabe < 120 ms, alle eingesetzt, 6b).
+   Ergebnis Nachbesserung 1 (18.10.): 38 grün. Gegenprobe 9135613f: 7 rot
+   (1 ×2 startTour/betonungKastenFinden/-Taugt Platzhalter · 7a betreten
+   mit 6 von 8 – die feste 12-s-Frist kam vor der zweiten Welle · 7b
+   11930 ms · 8 ×3 rest1 über startTour bzw. betonungKastenFinden).
+   Gegenprobe 21b774d3: 18 rot (die 12 oben + 7a ×3 + 8 ×3; 7b grün).
    EHRLICH: geprüft in Chromium. Die Größenänderung und „Hintergrund"
    sind nachgestellt (setViewportSize, visibilitychange); echte
    Bildschirmtastaturen schicken dieselben Ereignisse.
@@ -131,9 +153,9 @@ function seitenSonde() {
   const listeRepo = JSON.parse(lies(path.join(REPO, "werkzeug/app-teile.json")) || "{}");
   const listeW = JSON.parse(lies(path.join(WURZEL, "werkzeug/app-teile.json")) || "{}");
   const minApp = lies(path.join(WURZEL, "min/app.js"));
-  const SOLL = ["lcWaEntsperren", "lcWaKontextHolen", "tutorSchreibzeile", "trophyCounts", "tinyAvatar"];
+  const SOLL = ["lcWaEntsperren", "lcWaKontextHolen", "tutorSchreibzeile", "trophyCounts", "tinyAvatar", "startTour", "betonungKastenFinden", "betonungKastenTaugt"];
   const kernW = Array.isArray(listeW.kern) ? listeW.kern : [];
-  sage(SOLL.every((n) => kernW.includes(n)), "app-teile.json „kern\" nennt die Funktionen des ersten Tipps und des Starts mit Konto",
+  sage(SOLL.every((n) => kernW.includes(n)), "app-teile.json „kern\" nennt die Funktionen des ersten Tipps, des Starts mit Konto und des ersten Besuchs (Tour, Tipp auf Text)",
     kernW.length ? kernW.length + " Funktionen" : "keine Liste „kern\"");
   const kernAlle = Array.from(new Set(SOLL.concat(Array.isArray(listeRepo.kern) ? listeRepo.kern : [])));
   const platz = kernAlle.filter((n) => new RegExp("function " + n + "\\([^)]*\\)\\{return dmaTeilRufA?\\(").test(minApp));
@@ -146,6 +168,8 @@ function seitenSonde() {
 
   /* ---------- Server ---------- */
   const anfragen = [];
+  /* Nachbesserung 1: { re, ms, happen } – passende Raum-Stücke (nicht die synchronen) in Happen über ms schicken */
+  let troepfeln = null;
   const teilName = (p) => (p.match(/^\/min\/app-teil-(\w+)\.js$/) || [])[1] || "";
   const srv = http.createServer((q, a) => {
     const i = q.url.indexOf("?");
@@ -159,6 +183,15 @@ function seitenSonde() {
     if (/(^|\/)backend\.js$/.test(p)) body = Buffer.concat([body, Buffer.from(ANHANG)]);
     if (p === "/min/app.js") body = Buffer.from(String(body).replace(EVAL_ALT, EVAL_NEU));
     a.writeHead(200, { "Content-Type": TYP[path.extname(f).toLowerCase()] || "application/octet-stream", "Cache-Control": "no-store" });
+    if (troepfeln && e.teil && !sync && troepfeln.re.test(e.teil)) {
+      const n = troepfeln.happen, gr = Math.ceil(body.length / n), takt = troepfeln.ms / n;
+      let k = 0;
+      const weiter = () => {
+        a.write(body.slice(k * gr, (k + 1) * gr));
+        if (++k < n) setTimeout(weiter, takt); else { a.end(); e.t1 = Date.now(); }
+      };
+      return setTimeout(weiter, takt);
+    }
     a.end(body); e.t1 = Date.now();
   }).listen(0);
   await new Promise((r) => srv.on("listening", r));
@@ -371,6 +404,109 @@ function seitenSonde() {
       const restAn = Math.min.apply(null, anfragen.slice(ab).filter((x) => /^rest/.test(x.teil) && !x.sync).map((x) => x.t0));
       sage(da && isFinite(restAn) && restAn - tLoad <= 9000, "raum3 hängt: die Rest-Stücke kommen trotzdem (höchstens 6 s gewartet, + Ruhepause)",
         isFinite(restAn) ? (restAn - tLoad) + " ms nach load" : "nie");
+      freigeben(pg);
+      await ctx.close();
+    }
+
+    /* ---------- 7) Rückkehr: die Frist hängt am Fortschritt (Nachbesserung 1) ---------- */
+    titel("7", "RÜCKKEHR: WARTEN, SOLANGE DIE RAUM-STÜCKE VORANKOMMEN – NICHT, WENN EINES HÄNGT");
+    {
+      /* a) tröpfeln: jedes Raum-Stück in 8 Happen über 6 s */
+      const ab = anfragen.length;
+      troepfeln = { re: /^raum/, ms: 6000, happen: 8 };
+      const { ctx, pg } = await fenster(rueckkehr);
+      await pg.goto(HIER + "/index.html", { waitUntil: "commit" });
+      await bereit(pg);
+      await pg.waitForFunction(() => window.__betreten.length > 0, null, { timeout: 30000, polling: 100 }).catch(() => {});
+      await schlaf(1500);
+      troepfeln = null;
+      const r = await pg.evaluate(() => ({ betreten: window.__betreten.slice(), sync: window.__sync.slice(), sofort: (window.DMA_TEIL_SOFORT || []).slice(),
+        nav: Math.round(performance.timeOrigin) }));
+      const n = await raumZahl(pg);
+      const l = anfragen.slice(ab).filter((x) => /^raum/.test(x.teil) && !x.sync);
+      const raumAn = Math.min.apply(null, l.map((x) => x.t0)), raumEnde = Math.max.apply(null, l.map((x) => x.t1 || Infinity));
+      const b = r.betreten[0];
+      const bWand = b ? r.nav + b.t : 0;
+      sage(isFinite(raumAn) && isFinite(raumEnde) && raumEnde - raumAn >= 5500, "die Raum-Stücke waren über 5,5 s unterwegs (länger als 2,5 s und als 4 s Stillstand)",
+        isFinite(raumEnde) ? (raumEnde - raumAn) + " ms" : "–");
+      sage(b && b.da === n && n > 0, "betreten erst mit allen Raum-Stücken", b ? b.da + " von " + n + ", " + (bWand - raumEnde) + " ms nach dem letzten" : "nie");
+      sage(!r.sync.length && !r.sofort.length && !pg.__fehler.length, "kein synchroner Abruf, keine Seitenfehler",
+        (syncText({ sync: r.sync, sofort: r.sofort }) + " " + pg.__fehler.slice(0, 2).join(" | ")).trim() || "0");
+      await ctx.close();
+    }
+    {
+      /* b) raum3 hängt (der gewöhnliche Abruf kommt nie an; ein synchroner ginge durch), die anderen kommen sofort */
+      const ab = anfragen.length;
+      const { ctx, pg } = await fenster(rueckkehr, null, { halten: /^raum3$/ });
+      await pg.goto(HIER + "/index.html", { waitUntil: "commit" });
+      await bereit(pg);
+      await pg.waitForFunction(() => window.__betreten.length > 0, null, { timeout: 30000, polling: 100 }).catch(() => {});
+      await schlaf(800);
+      const r = await pg.evaluate(() => ({ betreten: window.__betreten.slice(), nav: Math.round(performance.timeOrigin) }));
+      const l = anfragen.slice(ab).filter((x) => /^raum/.test(x.teil) && x.teil !== "raum3" && !x.sync);
+      const andereEnde = Math.max.apply(null, l.map((x) => x.t1 || Infinity));
+      const b = r.betreten[0];
+      const bWand = b ? r.nav + b.t : 0;
+      sage(Boolean(b) && l.length >= 6 && isFinite(andereEnde), "raum3 hängt, die anderen Raum-Stücke sind da – LiveChat.betreten wird gerufen",
+        b ? b.da + " Raum-Stücke eingesetzt" : "nie");
+      sage(b && bWand - andereEnde <= 5500, "hinein spätestens 5,5 s nach dem letzten angekommenen Raum-Stück (4 s Stillstand + Prüftakt)",
+        b && isFinite(andereEnde) ? (bWand - andereEnde) + " ms danach" : "–");
+      sage(!pg.__fehler.length, "keine Seitenfehler", pg.__fehler.slice(0, 3).join(" | "));
+      freigeben(pg);
+      await ctx.close();
+    }
+
+    /* ---------- 8) Erster Besuch und Tipp auf Text (Nachbesserung 1) ---------- */
+    titel("8", "ERSTER BESUCH (TOUR) UND TIPP AUF TEXT: NICHTS SYNCHRON");
+    {
+      const { ctx, pg } = await fenster(() => { try { localStorage.removeItem("dma_tour_seen"); } catch (e) {} }, null, { halten: /./ });
+      await pg.goto(HIER + "/index.html", { waitUntil: "commit" });
+      await bereit(pg);
+      const tour = await pg.waitForFunction(() => { const k = document.querySelector(".lightbox .profile-modal-card"); return k && /Willkommen/.test(k.textContent) && document.getElementById("tourSkip"); },
+        null, { timeout: 8000, polling: 100 }).then(() => true, () => false);
+      const s1 = await stand(pg);
+      const weg = tour ? await tippe(pg, "#tourSkip") : false;
+      await schlaf(500);
+      const zu = await pg.evaluate(() => !document.querySelector(".lightbox .profile-modal-card") && localStorage.getItem("dma_tour_seen") === "1");
+      const s2 = await stand(pg);
+      sage(tour, "ohne dma_tour_seen erscheint die Tour");
+      sage(weg && zu, "„Überspringen\" schließt sie und merkt es sich");
+      sage(!s1.sync.length && !s1.sofort.length && !s2.sync.length && !s2.sofort.length, "Start mit Tour und „Überspringen\": kein synchroner Abruf", syncText(s2) || "0");
+      sage(!pg.__fehler.length && s2.da.length === 0, "keine Seitenfehler, kein Stück eingesetzt", pg.__fehler.slice(0, 2).join(" | ") || "eingesetzt " + s2.da.length);
+      freigeben(pg);
+      await ctx.close();
+    }
+    {
+      const { ctx, pg } = await fenster(null, null, { halten: /./ });
+      await pg.goto(HIER + "/index.html", { waitUntil: "commit" });
+      await bereit(pg);
+      await schlaf(800);
+      const KASTEN = await pg.evaluate(() => [".question-card", ".sammel-text", ".kal-karte", ".lesetext", ".about-card", ".profile-modal-card", ".tile-detail",
+        ".kompass-karte", ".bw-wortkarte", ".dlg-satz", ".breakdown-list", ".witz-karte", ".material-card", ".link-card", ".tip-card", ".guestbook-entry",
+        ".inbox-message", ".community-text", ".fst-karte", ".weg-karte"].join(", "));
+      const textTipp = async (ansicht) => {
+        await pg.evaluate((t) => document.querySelector('.tape-tab[data-target="' + t + '"]').click(), ansicht);
+        await schlaf(900);
+        const b = await pg.evaluate(([v, K]) => {
+          const e = [...document.querySelectorAll("#" + v + " p, #" + v + " h2, #" + v + " h3, #" + v + " li, #" + v + " span")].find((x) => {
+            const r = x.getBoundingClientRect();
+            return r.height > 8 && r.width > 40 && (x.textContent || "").trim().length > 10 && !x.querySelector("button, a, input")
+              && !x.closest("button, a, input, select, textarea, label, summary, [role='button'], [contenteditable], svg, .sammel-wort, .speak-btn") && !x.closest(K);
+          });
+          if (!e) return null;
+          e.scrollIntoView({ block: "center", behavior: "instant" });
+          const r = e.getBoundingClientRect();
+          return { x: r.x + Math.min(20, r.width / 2), y: r.y + r.height / 2, t: e.tagName.toLowerCase() + (e.className ? "." + String(e.className).split(" ")[0] : "") };
+        }, [ansicht, KASTEN]);
+        if (b) await pg.touchscreen.tap(b.x, b.y);
+        await schlaf(600);
+        return b ? ansicht.replace("view-", "") + " (" + b.t + ")" : "";
+      };
+      const getippt = [await textTipp("view-knowledge"), await textTipp("view-learn")].filter(Boolean);
+      const s = await stand(pg);
+      sage(getippt.length === 2, "zwei Tipps auf Text außerhalb der Betonungs-Kästen", getippt.join(", ") || "kein Ziel gefunden");
+      sage(!s.sync.length && !s.sofort.length, "kein synchroner Abruf (betonungKastenFinden ist Kern)", syncText(s) || "0");
+      sage(!pg.__fehler.length, "keine Seitenfehler", pg.__fehler.slice(0, 3).join(" | "));
       freigeben(pg);
       await ctx.close();
     }
