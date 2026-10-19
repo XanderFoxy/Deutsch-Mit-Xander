@@ -62,6 +62,11 @@
     17  --aa: derselbe Stand zweimal (6 Paare kalt): gepaarter Median Wissen
         höchstens ± 30 ms, bereit höchstens ± 60 ms, nicht deutlich;
         Rauschgrenze je Maß im JSON
+    18  FASSUNG 885 (S1): Fall neu auf der echten Seite (Server stellt
+        index.html und fassung.json auf Fassung + 1): am Ende läuft die neue
+        Fassung; lud die Seite neu (seiten 2), ist Vorlauf > 0 und „bereit ab
+        Öffnen" = Vorlauf + bereit, sonst Vorlauf 0. --sw-wach 300: der Helfer
+        wacht 300 ms (erstes Byte im Fall sw ≥ 280 ms), Einstellung im JSON.
    Teil B – Belege, warum das alte Werkzeug falsch maß (ohne Werkzeug; bleiben
    in der Gegenprobe grün):
     B1  el.click() auf „Wissen" zählt DMA_MESS nicht (isTrusted), ein Tipp schon
@@ -71,7 +76,7 @@
 
    Aufruf: TMPDIR=/tmp/claude-0/t885 node werkzeug/pruefe-885-messen.js
      (kurzer Zwischenordner: Chromium legt dort Sockets an, ein langer Pfad
-     lässt ihn abstürzen; Dauer ~6 min; 44 Prüfungen)
+     lässt ihn abstürzen; Dauer ~8 min; 47 Prüfungen)
    Gegenprobe: WURZEL=<ordner mit werkzeug/ladezeit-messen.js aus 02613a7> node …
      (git archive 02613a71 werkzeug/ladezeit-messen.js | tar -x -C <ordner>):
      alles rot außer B1/B2 (17.10.: 42 rot). Mit dem WIP-Werkzeug aus
@@ -298,6 +303,18 @@ function werkzeug(args, json) {
   const rg = AJ && AJ.rauschgrenze && AJ.rauschgrenze.kalt;
   sage(!!(rg && typeof rg.wissen === "number" && typeof rg.bereit === "number" && rg.wissen < 80 && rg.bereit < 150), "17 Rauschgrenze je Maß im JSON", rg ? "wissen ±" + rg.wissen + ", bereit ±" + rg.bereit + ", fcp ±" + rg.fcp : "–");
   fs.rmSync(P2, { recursive: true, force: true });
+
+  /* 18 – FASSUNG 885 (S1): Fall neu und --sw-wach auf der echten Seite */
+  console.log("\nTeil A – Fall neu und --sw-wach (echte Seite)");
+  const grund = (fs.readFileSync(path.join(SEITE, "index.html"), "utf8").match(/DMA_VERSION = "(\d+)"/) || [])[1];
+  const N = werkzeug(["4g", SEITE, "--arten", "neu", "--laeufe", "1", "--fenster", "6000", "--supabase", "-", "--leise", "--ohne-spur"], path.join(tmp, "neu.json"));
+  const nr = ((N.j && N.j.laeufe) || []).find((r) => r.art === "neu");
+  sage(!!(nr && !nr.abbruch && grund && nr.fassung === String(Number(grund) + 1)), "18 Fall neu: am Ende läuft Fassung + 1", nr ? (nr.abbruch || "Fassung " + nr.fassung + " (Stand " + grund + ")") : N.aus.split("\n").slice(-3).join(" | "));
+  sage(!!(nr && ((nr.seiten === 1 && nr.ab === 0 && nr.bereitAb === nr.bereit) || (nr.seiten === 2 && nr.ab > 0 && nr.bereitAb === nr.ab + nr.bereit))),
+    "18 Neuladen gezählt: seiten 1 → Vorlauf 0; seiten 2 → Vorlauf > 0, bereit ab Öffnen = Vorlauf + bereit", nr ? JSON.stringify({ seiten: nr.seiten, ab: nr.ab, bereit: nr.bereit, bereitAb: nr.bereitAb, vorher: nr.vorher }) : "–");
+  const W = werkzeug(["4g", SEITE, "--arten", "sw", "--laeufe", "1", "--fenster", "4000", "--supabase", "-", "--leise", "--ohne-spur", "--sw-wach", "300"], path.join(tmp, "wach.json"));
+  const wr = ((W.j && W.j.laeufe) || []).find((r) => r.art === "sw");
+  sage(!!(wr && !wr.abbruch && wr.ttfb >= 280 && W.j.einstellung && W.j.einstellung.swWach === 300), "18 --sw-wach 300: erstes Byte im Fall sw ≥ 280 ms, im JSON vermerkt", wr ? (wr.abbruch || "erstes Byte " + wr.ttfb + " ms, swWach " + (W.j.einstellung || {}).swWach) : W.aus.split("\n").slice(-3).join(" | "));
 
   /* ---------- Teil B – Belege ---------- */
   console.log("\nTeil B – Belege (ohne Werkzeug)");

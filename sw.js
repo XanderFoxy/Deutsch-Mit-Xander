@@ -21,8 +21,8 @@
    Was er NICHT anfasst: Anfragen an andere Server (Supabase, GIPHY,
    Schriften), fassung.json (die Frage „gibt es Neues?" muss immer ins
    Netz), Filme und Töne mit Teilanfragen (Range), alles ohne Stempel.
-   Die Seite selbst (index.html) kommt immer zuerst aus dem Netz; nur
-   wenn das Netz nicht antwortet, aus dem Speicher.
+   Die Seite selbst (index.html): seit Fassung 885 zuerst aus dem
+   Speicher, im Hintergrund frisch geholt (siehe unten, „S1").
 
    NOTAUS: index.html?ohne-sw meldet diesen Helfer ab.
    ===================================================================== */
@@ -117,30 +117,172 @@ function vorab(e) {
   return Promise.resolve(p);
 }
 
-/* Die Seite selbst: immer aus dem Netz. Antwortet es nicht (Funkloch)
-   oder dauert es über sechs Sekunden, kommt die zuletzt geladene
-   Seite — die fragt dann selbst über fassung.json, ob sie aktuell ist.
-   FASSUNG 885: „aus dem Netz" = die Vorab-Anfrage, sonst wie bisher
-   fetch. waitUntil hält den Helfer wach, bis die Antwort da und
-   gespeichert ist – sonst bräche der Browser eine späte Vorab-Anfrage
-   ab (Ausweichseite nach 6 s) und der Speicher bliebe alt. */
+/* Die Seite selbst. Bis 884 immer zuerst aus dem Netz; antwortete es
+   nicht (Funkloch) oder dauerte es über sechs Sekunden, kam die zuletzt
+   geladene Seite – die fragt dann selbst über fassung.json, ob sie
+   aktuell ist. FASSUNG 885 (Schritt C): „aus dem Netz" = die
+   Vorab-Anfrage, sonst fetch; waitUntil hält den Helfer wach, bis die
+   Antwort da und gespeichert ist.
+
+   FASSUNG 885 — S1, SEITE ZUERST AUS DEM SPEICHER (freigegeben, Funk 311).
+   XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk" ·
+   (Funk 271): „alles insgesamt nur zehn Mal schneller" · (Funk 310/312):
+   „die maximal professionellste Lösung".
+   Eine App zeigt beim Öffnen sofort, was sie hat, und fragt im
+   Hintergrund nach Neuem. Hier wartete jedes Öffnen mit Helfer auf die
+   Seite aus dem Netz: Verbindungsaufbau und Rundreise (gemessen 4G:
+   erstes Byte 188 ms; draußen auf Android 616 ms), im Funkloch bis 6 s.
+   Jetzt („stale-while-revalidate", wie es große Web-Apps machen):
+     - Liegt eine Seite im Speicher (jünger als 12 h), kommt SIE sofort.
+       Die Vorab-Anfrage läuft im Hintergrund weiter und frischt den
+       Speicher auf – je Öffnen weiter genau EINE Anfrage.
+     - Ausnahme: hat das Netz schon geantwortet, während der Helfer
+       aufwachte (schwaches Telefon), kommt die frische Seite – außer sie
+       ist nach dem Datum des Servers älter als die gespeicherte.
+       Gemessen (250 ms Aufwachen nachgestellt): ohne diese Ausnahme kein
+       Gewinn beim Öffnen, aber nach jedem Update ein Neuladen.
+     - Ist inzwischen eine neue Fassung draußen, merkt das der
+       Fassungs-Wächter in index.html über fassung.json und lädt GENAU
+       EINMAL neu (index.html?f=…) – nie im Klassenzimmer, im Raum oder
+       mitten in einer Eingabe (dann die Blase „Neue Fassung").
+     - index.html?f=X, X neuer als die gespeicherte Seite: läuft gerade
+       eine Auffrischung, wartet der Helfer auf sie (höchstens 3 s) –
+       meist liegt die neue Seite dann schon im Speicher und kommt ohne
+       weitere Rundreise. Sonst wie bisher zuerst das Netz (6 s, im
+       Funkloch der Speicher). Ein ÄLTERES ?f= (eine alte Adresse, die
+       der Browser wieder öffnet) bekommt die gespeicherte Seite.
+     - Älter als 12 h: zuerst das Netz wie bisher. Nach so langer Pause
+       ist meist eine neue Fassung draußen; die alte Seite starten und
+       dann neu laden wäre langsamer als gleich die neue.
+     - Nie rückwärts: kommt aus dem Netz eine ÄLTERE Seite als die
+       gespeicherte (der Browser darf index.html bei GitHub Pages 10 min
+       selbst aufheben), fragt der Helfer beim Server nach (no-cache) und
+       nimmt dessen Antwort. So verdrängt ein alter Stand aus dem
+       Browser-Speicher nie einen neueren, eine echte Rücknahme auf dem
+       Server kommt trotzdem an.
+     - Gespeichert wird nur eine Seite mit DMA_VERSION, mit zwei eigenen
+       Köpfen: x-dma-fassung (Fassung) und x-dma-zeit (wann geholt).
+   Kein Neulade-Kreis: der Wächter lädt je Fassung und Tab höchstens
+   einmal selbst (sessionStorage), und für ?f=X liefert der Helfer nie
+   eine ältere Seite als X, wenn das Netz X hat. */
+var KOPF = "x-dma-fassung", ZEIT = "x-dma-zeit", ALTER_MS = 12 * 3600 * 1000;
+var auffrischung = null;   /* laufende Auffrischung (Versprechen → gespeicherte Fassung oder "") */
+
 function seite(r, e) {
-  var merken = null;
-  var netz = vorab(e).then(function (a) { return a || fetch(r); }).then(function (a) {
-    if (a && a.status === 200 && a.type === "basic") {
-      var kopie = a.clone();
-      merken = caches.open(SEITE).then(function (k) { return k.put("seite", kopie); }).catch(function () {});
-    }
-    return a;
+  /* waitUntil gleich zu Beginn: der Helfer bleibt wach, bis die Seite im Hintergrund gelesen und gespeichert ist */
+  var los, halten = new Promise(function (ok) { los = ok; });
+  try { e.waitUntil(halten); } catch (x) {}
+  var netz = vorab(e).then(function (a) { return a || fetch(r); });
+  netz.catch(function () {});
+  var f = "";
+  try { f = new URL(r.url).searchParams.get("f") || ""; } catch (x) {}
+  var antwort = ausSpeicher().then(function (g) {
+    return fassungVon(g).then(function (c) {
+      if (!g || alterVon(g) > ALTER_MS) return netzZuerst(netz, r, g, c, los);
+      if (!(f && neuer(f, c))) return schonDa(netz).then(function (a) {
+        return a ? frischWennDa(a, g, c, r, los) : (los(auffrischen(netz, c, r.url)), g);
+      });
+      if (!auffrischung) return netzZuerst(netz, r, g, c, los);
+      return frist(auffrischung, 3000).then(ausSpeicher).then(function (g2) {
+        return fassungVon(g2).then(function (c2) {
+          if (g2 && !neuer(f, c2)) { los(auffrischen(netz, c2, r.url)); return g2; }
+          return netzZuerst(netz, r, g2 || g, c2, los);
+        });
+      });
+    });
   });
-  try { e.waitUntil(netz.then(function () { return merken; }, function () {})); } catch (x) {}
-  var gespeichert = caches.open(SEITE).then(function (k) { return k.match("seite"); }).catch(function () { return null; });
+  antwort.catch(function () { los(); });
+  return antwort;
+}
+
+/* zuerst das Netz (wie bis 884): im Funkloch sofort, nach 6 s die gespeicherte Seite */
+function netzZuerst(netz, r, g, c, los) {
+  var ablage = netz.then(function (a) {
+    return a && a.status === 200 && a.type === "basic" ? speichern(a.clone(), c, r.url) : "";
+  }, function () { return ""; });
+  los(ablage);
   return new Promise(function (fertig, fehl) {
     var erledigt = false;
     function nimm(a) { if (!erledigt && a) { erledigt = true; fertig(a); } }
     netz.then(nimm, function () {
-      gespeichert.then(function (g) { if (g) nimm(g); else if (!erledigt) { erledigt = true; fehl(new Error("offline")); } });
+      if (g) nimm(g); else if (!erledigt) { erledigt = true; fehl(new Error("offline")); }
     });
-    setTimeout(function () { gespeichert.then(function (g) { if (g) nimm(g); }); }, 6000);
+    if (g) setTimeout(function () { nimm(g); }, 6000);
+  });
+}
+
+/* Hat die Vorab-Anfrage schon geantwortet, während der Helfer aufwachte und den Speicher las? (sonst null, ohne zu warten) */
+function schonDa(netz) {
+  var m = {};
+  return Promise.race([netz, Promise.resolve(m)]).then(function (a) { return a === m ? null : a; }, function () { return null; });
+}
+/* Die frische Seite ist schon da (schwaches Telefon: der Helfer wacht langsamer auf, als das Netz antwortet – gemessen
+   mit 250 ms Aufwachen: sonst kein Gewinn, aber nach einem Update ein Neuladen). Dann sie nehmen – außer sie ist älter
+   als die gespeicherte. „Älter" nach dem Datum des Servers (Kopf date: beide Uhren sind die des Servers; eine Kopie aus
+   dem Browser-Speicher trägt das Datum, an dem sie geholt wurde). Ohne Datum: die gespeicherte. Nichts wird vorher
+   gelesen – den Inhalt erst zu lesen kostete gemessen +46 ms bis zum ersten Bild. */
+function frischWennDa(a, g, c, r, los) {
+  var x = Date.parse(a.headers.get("date") || ""), y = Date.parse(g.headers.get("date") || "");
+  if (a.status === 200 && a.type === "basic" && x && y && x >= y) { los(auffrischen(Promise.resolve(a.clone()), c, r.url)); return a; }
+  los(auffrischen(Promise.resolve(a), c, r.url));
+  return g;
+}
+
+function auffrischen(netz, c, url) {
+  return merken(netz.then(function (a) { return speichern(a, c, url); }));
+}
+function merken(p) {
+  p = p.catch(function () { return ""; });
+  auffrischung = p;
+  p.then(function () { if (auffrischung === p) auffrischung = null; });
+  return p;
+}
+
+/* Seite in den Speicher – nur mit Fassung, nie rückwärts (siehe oben). Antwort: die gespeicherte Fassung oder "". */
+function speichern(a, c, url) {
+  if (!a || a.status !== 200 || a.type !== "basic") return Promise.resolve("");
+  return a.text().then(function (t) { return speichernText(t, a, c, url); }).catch(function () { return ""; });
+}
+function speichernText(t, a, c, url) {
+  return Promise.resolve().then(function () {
+    var v = textFassung(t);
+    if (!v) return "";
+    if (c && url && neuer(c, v)) {
+      return fetch(url, { cache: "no-cache" }).then(function (b) { return speichern(b, "", ""); }, function () { return ""; });
+    }
+    var h = new Headers(a.headers);
+    h.delete("content-length"); h.delete("content-encoding");
+    h.set(KOPF, v); h.set(ZEIT, String(Date.now()));
+    return caches.open(SEITE).then(function (k) {
+      return k.put("seite", new Response(t, { status: 200, statusText: a.statusText || "OK", headers: h }));
+    }).then(function () { return v; });
+  }).catch(function () { return ""; });
+}
+
+function ausSpeicher() {
+  return caches.open(SEITE).then(function (k) { return k.match("seite"); }).catch(function () { return null; });
+}
+function textFassung(t) { var m = /DMA_VERSION = "([^"]+)"/.exec(t || ""); return m ? m[1] : ""; }
+/* Fassung der gespeicherten Seite: aus dem Kopf; eine Seite aus der Zeit vor S1 hat keinen – dann einmal aus dem Text */
+function fassungVon(a) {
+  if (!a) return Promise.resolve("");
+  var k = a.headers.get(KOPF);
+  return k ? Promise.resolve(k) : a.clone().text().then(textFassung, function () { return ""; });
+}
+/* Alter in ms (ohne eigenen Kopf: das Datum des Servers; ganz ohne: unbekannt = zu alt) */
+function alterVon(a) {
+  var t = Number(a.headers.get(ZEIT)) || Date.parse(a.headers.get("date") || "") || 0;
+  return t ? Date.now() - t : Infinity;
+}
+/* Ist Fassung a neuer als b? Zahlen als Zahlen; nicht vergleichbar: „anders" zählt als neuer (dann lieber das Netz). */
+function neuer(a, b) {
+  a = String(a || ""); b = String(b || "");
+  if (/^\d+$/.test(a) && /^\d+$/.test(b)) return Number(a) > Number(b);
+  return a !== b;
+}
+function frist(p, ms) {
+  return new Promise(function (ok) {
+    var u = setTimeout(ok, ms);
+    p.then(function () { clearTimeout(u); ok(); }, function () { clearTimeout(u); ok(); });
   });
 }

@@ -44,6 +44,16 @@
    9d); „naives" Vorab-Laden (eingeschaltet, aber nicht benutzt) 12 rot
    (2, 3, 4, 5, 7, 9: doppelte Anfragen); ohne waitUntil 1 rot (7c).
 
+   FASSUNG 885 — S1 (pruefe-885-schale.js): seitdem kommt die Hauptseite
+   zuerst aus dem Speicher. Die Sonde erkennt das am sw.js (Kopf
+   x-dma-fassung) und prüft in 5 und 7 dann: 5 – die Seite ist die
+   gespeicherte oder (hat das Netz schon geantwortet, als der Helfer den
+   Speicher gelesen hatte – hier im schnellen Prüfnetz oft) die frische;
+   der Speicher wird aus der Vorab-Antwort aufgefrischt;
+   7 – im Stau kommt die gespeicherte Seite SOFORT (< 2,5 s) statt nach
+   6 s. Alles andere (eine Anfrage je Öffnen, Vorab-Kopf, späte Antwort im
+   Speicher, andere Seiten, fassung.json, ?ohne-sw, 694) gilt unverändert.
+
    Aufruf:  node werkzeug/pruefe-885-swvorladen.js
    Gegenprobe: WURZEL=<ordner mit altem index.html, sw.js, min/> node …
    (OHNE_694=1 lässt Prüfung 11 weg.)
@@ -53,6 +63,8 @@ const http = require("http"), fs = require("fs"), path = require("path"), os = r
 const { execFileSync, spawnSync } = require("child_process");
 const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const REPO = path.join(__dirname, "..");
+/* FASSUNG 885 — S1: Hauptseite zuerst aus dem Speicher (Prüfungen 5 und 7 entsprechend) */
+const S1 = /x-dma-fassung/.test(fs.readFileSync(path.join(WURZEL, "sw.js"), "utf8"));
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
 let fehler = 0;
@@ -188,14 +200,16 @@ try { ALT_SW = execFileSync("git", ["-C", REPO, "show", "02613a71:sw.js"], { std
 
     /* 5: Speicher aus der Vorab-Antwort */
     console.log("");
+    const g4 = await gespeichert(pg);
     S.marke = "A1";
     await schlafen(cdp);
     let ab = anfragen.length;
     await pg.goto(HIER + "/index.html?mit-sw", { waitUntil: "load" });
     await schlaf(600);
     const m5 = await marke(pg), g5 = await gespeichert(pg), ix5 = indexAb(ab);
-    sage(m5 === "A1" && g5 === "A1" && ix5.length === 1 && ix5[0].vorab === "true", "5  der Speicher der Seite wird aus der Vorab-Antwort aufgefrischt",
-      "Seite " + m5 + ", Speicher " + g5 + ", " + ix5.length + " Anfrage(n)" + (ix5[0] && ix5[0].vorab ? " mit Vorab-Kopf" : ""));
+    sage((S1 ? m5 === "A1" || m5 === (g4 === "ohne Marke" ? null : g4) : m5 === "A1") && g5 === "A1" && ix5.length === 1 && ix5[0].vorab === "true",
+      "5  der Speicher der Seite wird aus der Vorab-Antwort aufgefrischt" + (S1 ? " (S1: die Seite ist die gespeicherte oder – schon da – die frische)" : ""),
+      "Seite " + m5 + ", Speicher vorher " + g4 + ", nachher " + g5 + ", " + ix5.length + " Anfrage(n)" + (ix5[0] && ix5[0].vorab ? " mit Vorab-Kopf" : ""));
 
     /* 6: Funkloch */
     S.index = "aus"; S.marke = "";
@@ -217,7 +231,7 @@ try { ALT_SW = execFileSync("git", ["-C", REPO, "show", "02613a71:sw.js"], { std
     const dt7 = Date.now() - t0;
     await pg.waitForLoadState("domcontentloaded").catch(() => {});
     const m7 = await marke(pg);
-    sage(r7 === true && m7 === "A1" && dt7 >= 5800 && dt7 <= 6900, "7  Stau: nach 6 s die gespeicherte Seite (≤ 6 s + Anlauf)", dt7 + " ms, Marke " + m7 + (r7 === true ? "" : ", " + r7));
+    sage(r7 === true && m7 === "A1" && (S1 ? dt7 < 2500 : dt7 >= 5800 && dt7 <= 6900), S1 ? "7  Stau: sofort die gespeicherte Seite (S1; bis 884 nach 6 s)" : "7  Stau: nach 6 s die gespeicherte Seite (≤ 6 s + Anlauf)", dt7 + " ms, Marke " + m7 + (r7 === true ? "" : ", " + r7));
     await schlaf(Math.max(0, 9000 - (Date.now() - t0)) + 1500);
     const ix7 = indexAb(ab), g7 = await gespeichert(pg);
     sage(ix7.length === 1, "7  … dabei nur EINE Anfrage ans Netz (keine zweite neben der Vorab-Anfrage)", ix7.map((x) => x.url + (x.vorab ? "[v]" : "")).join(" "));

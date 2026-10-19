@@ -5409,3 +5409,95 @@ XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen
 2. Für Betreiber, Moderation und Beta kostet das erste Öffnen des Kompass weiter das Zeichnen der drei Lesebereiche (wie vor 885). Fehlen rest1/rest3 dann noch (Öffnen in den ersten Sekunden), holt der Platzhalter sie synchron – durch einen Tipp ausgelöst, wie vor 885. Ein Vorzeichnen dieser Bereiche lohnt erst, wenn `beitraegeLaden` selbst auf Sichtbarkeit wartet (wie `lesetexteWennSichtbar`).
 3. Die Ruhepause im Klassenzimmer ist mit der Sonde (Mechanik) belegt, nicht gemessen; die Rückkehr in den Raum misst das Werkzeug nicht.
 4. Werkstatt-Eintrag und Funk-Antwort beim Ausliefern von 885.
+
+## Fassung 885 — Seite zuerst aus dem Speicher (S1, freigegeben Funk 311; Ladezeit-Entwurf)
+
+XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“. Befund: Jedes Öffnen mit Service Worker wartete auf die Seite aus dem Netz – nach einer Pause Verbindungsaufbau plus Rundreise (4G-Modell: erstes Byte 186–190 ms, 3G 455 ms; draußen Android 616 ms), im Funkloch bis zu 6 s. S1 (Entwurf, freigegeben): die Seite kommt sofort aus dem Speicher, frisch geholt wird im Hintergrund; nach einem Update lädt der Fassungs-Wächter genau einmal neu, nie im Klassenzimmer oder Livestream. **Vorher festgelegtes Maß: Fall sw (Öffnen mit Helfer) – erstes Byte, erstes Bild, „bereit“. Dazu, was es kostet: neuer Fall „neu“ (Öffnen mit Helfer, seit dem letzten Mal ist eine neue Fassung draußen) – „bereit ab Öffnen“ über das Neuladen hinweg. Fälle ohne Helfer dürfen nicht schlechter werden.** Sichtbar (freigegeben): nach einem Update kurz die alte Seite, dann einmal Neuladen; im Klassenzimmer, im Raum oder beim Tippen stattdessen die bekannte Blase „Neue Fassung – jetzt laden“.
+
+### Was gebaut ist
+**`sw.js` – die Hauptseite (`seite()`):**
+1. **Zuerst der Speicher** (stale-while-revalidate): Liegt eine Seite im Speicher und ist sie jünger als 12 h, kommt sie sofort. Die Vorab-Anfrage (Schritt C) läuft weiter und frischt den Speicher auf (`auffrischen`, `waitUntil` gleich zu Beginn des Ereignisses). Je Öffnen weiter genau **eine** Anfrage.
+2. **„Schon da“** (`schonDa`, `frischWennDa`): Hat das Netz schon geantwortet, während der Helfer aufwachte und den Speicher las (schwaches Telefon), kommt die **frische** Seite – außer sie ist nach dem Datum des Servers (Kopf `date`, beide Uhren die des Servers) älter als die gespeicherte (dann war es eine alte Kopie aus dem Browser-Speicher). Ohne Datum die gespeicherte. Warum: mit nachgestelltem langsamem Aufwachen (250 ms) brachte reines stale-while-revalidate beim Öffnen nichts, kostete aber nach jedem Update ein Neuladen (+201 ms, s. u.). Eine erste Fassung las dafür erst den Inhalt der frischen Seite (Fassung vergleichen, 50-ms-Frist) – gemessen +46 ms beim ersten Bild (95 %: 28…52, deutlich); nach dem Datum ohne Lesen: nicht mehr messbar.
+3. **`index.html?f=X`** (so lädt der Wächter neu): X neuer als die gespeicherte Seite und eine Auffrischung läuft → der Helfer wartet auf sie (höchstens 3 s) und liefert die neue Seite aus dem Speicher – keine zweite Rundreise. Sonst zuerst das Netz wie bis 884 (Funkloch sofort, nach 6 s der Speicher). Ein **älteres** `?f=` (eine alte Adresse, die der Browser wieder öffnet) bekommt die gespeicherte Seite.
+4. **Älter als 12 h**: zuerst das Netz wie bis 884. Nach so langer Pause ist meist eine neue Fassung draußen; die alte Seite zu starten und dann neu zu laden wäre langsamer (Fall neu). Die 12 h sind gesetzt, nicht gemessen (Offen 3).
+5. **Nie rückwärts**: Kommt aus dem Netz eine ältere Seite als die gespeicherte (GitHub Pages erlaubt dem Browser, index.html 10 min aufzuheben), fragt der Helfer beim Server nach (`cache: no-cache`) und speichert dessen Antwort – so verdrängt ein alter Stand aus dem Browser-Speicher nie einen neueren, eine echte Rücknahme auf dem Server kommt trotzdem an.
+6. Gespeichert wird nur eine Seite mit `DMA_VERSION`, mit zwei eigenen Köpfen `x-dma-fassung` und `x-dma-zeit`; `content-length`/`content-encoding` werden dabei entfernt (der Inhalt ist schon entpackt). Seiten aus der Zeit vor S1 (ohne Köpfe) werden einmal aus dem Text gelesen und gelten nach dem Datum des Servers.
+
+**`index.html` – Fassungs-Wächter** (nur knappe Kommentare):
+- `bleiben()`: findet die **erste** Prüfung eine neue Fassung, während das Klassenzimmer offen ist (Reiter-Attribute wie `ruheImRaum`), man im Raum ist (`LiveChat.lage()` „drin“/„verbindet“) oder in einem Textfeld etwas steht → **kein** Neuladen, die Blase. Sonst wie bisher genau einmal (`sessionStorage` „dma-neu-geladen“).
+- Die Prüfung holt `fassung.json` per **XHR statt fetch**: fetch liest den Inhalt beim Start in weiteren Aufgaben, die hinter dem Seitenaufbau warten (Spur: Antwort bei 146 ms im Netz-Faden, `location.replace` erst bei 406 ms). Gemessen (Fall neu, 8 Paare, A = fetch, B = XHR): Neuladen beginnt **−118 ms** früher (412 → 311; 95 %: −258…−69, 8 von 8), erstes Bild der bleibenden Seite −108 (−246…−20), „bereit ab Öffnen“ −93 (−156…73). `?t=` hält die Antwort aus jedem Zwischenspeicher heraus.
+
+**Werkzeug `werkzeug/ladezeit-messen.js`:** neuer Fall **neu** (wie sw, danach liefert der Server index.html und fassung.json als Fassung + 1 – gestempelte Dateien gleich, gemessen wird genau, was das Update an der Seite kostet); Maße `seiten` (2 = neu geladen), `ab` (Vorlauf bis zur Seite, die bleibt), `fcpAb`, `bereitAb` (ab dem Öffnen); die Seite vor dem Neuladen wird mitgeschrieben (erstes Byte, fassung.json, erstes Bild, wann sie ging). **`--sw-wach ms`**: der Helfer rechnet bei jedem Aufwachen ms lang (Offen 3 aus Schritt C). Der Merker „dma-neu-geladen“ wird nur noch gesetzt, wenn er fehlt (sonst hebelte das Werkzeug den Schutz vor einem zweiten Neuladen aus). Sonde 885-messen Prüfung 18 (Fall neu, `--sw-wach`).
+
+### Messung (werkzeug/ladezeit-messen.js, HTTP/2 + TLS, CPU 4×, Gast, Profil auf der Platte, Tipp sofort nach „bereit“; A = 6b724580 (vor S1), B = dieser Stand; verschränkt; Median, B − A gepaart mit 95-%-Bereich)
+Endgültiger Stand („schon da“ nach Datum) und die Läufe davor (reines stale-while-revalidate; „schon da“ mit Lesen des Inhalts) – der Weg „zuerst der Speicher“ ist in allen drei derselbe, solange der Helfer schnell aufwacht:
+
+| Lauf | Paare | Fall | erstes Byte A → B | erstes Bild A → B, B − A (95 %) | bereit A → B, B − A (95 %) |
+|---|---|---|---|---|---|
+| **4G, endgültig** | 8 | **sw** | 190 → 13 | 504 → 336, **−166** (−196…−124) | 793 → 550, **−223** (−305…−175) |
+| 4G, mit Lesen | 10 | sw | 187 → 14 | 510 → 338, −172 (−192…−148) | 775 → 580, −170 (−262…−96) |
+| 4G, rein | 10 | sw | 186 → 13 | 524 → 378, −146 (−204…−108) | 819 → 627, −164 (−246…−79) |
+| **3G**, mit Lesen | 6 | **sw** | 456 → 13 | 776 → 360, **−442** (−458…−374) | 1061 → 637, **−433** (−454…−281) |
+| 3G, rein | 8 | sw | 458 → 13 | 780 → 350, −430 (−468…−408) | 1063 → 676, −377 (−400…−319) |
+| **4G, Helfer wacht 250 ms, endgültig** | 8 | sw | 262 → 263 | 584 → 614, +22 (−16…40) | 873 → 868, +35 (−61…112) |
+| 4G, 250 ms, mit Lesen | 8 | sw | 264 → 263 | 568 → 616, +46 (28…52) **deutlich** | 841 → 893, +48 (23…148) **deutlich** |
+| 4G, 250 ms, rein | 8 | sw | 264 → 263 | 590 → 592, +16 (−4…44) | 940 → 893, −7 (−78…87) |
+
+Fall **neu** (seit dem letzten Öffnen eine neue Fassung draußen; „ab Öffnen“ = über das Neuladen hinweg):
+
+| Lauf | Paare | Neuladen | Vorlauf | erstes Bild der bleibenden Seite ab Öffnen | bereit ab Öffnen | Server |
+|---|---|---|---|---|---|---|
+| **4G, endgültig** | 8 | 0 → 1 | 244 | 506 → 576, **+66** (53…90) | 826 → 853, **+43** (12…58, 7↑/1↓) | +27 KB, +2 Anfragen |
+| 4G, mit Lesen | 10 | 0 → 1 | 230 | 506 → 549, +47 (20…62) | 770 → 832, +23 (−11…90) | +27 KB |
+| 4G, rein | 10 | 0 → 1 | 252 | 528 → 575, +69 (10…93) | 786 → 884, +61 (27…171) | +27 KB |
+| **3G**, mit Lesen | 6 | 0 → 1 | 346 | 768 → 892, **+119** (74…179) | 1035 → 1127, **+88** (−116…142) | +28 KB, +3 |
+| **4G, Helfer wacht 250 ms, endgültig** | 8 | 0 → **0** | 0 | 578 → 606, +28 (0…52) | 830 → 915, +86 (−16…192) | gleich |
+| 4G, 250 ms, rein | 8 | 0 → 1 | 526 | 570 → 775, +201 (139…264) | 862 → 1062, +201 (54…335) | +27 KB |
+
+Ohne Helfer (kalt, warm, pause; 6 Paare, 4G; index.html wie endgültig bis auf eine Kommentarzeile): erstes Byte, erstes Bild, „bereit“, Wissen, Klassenzimmer alle im Rauschen (kalt bereit −41 (−80…169), warm +44 (−197…248), pause −18 (−88…21)); „deutlich“ nur 2 von 102 Maßen: KB bis „bereit“ und KB 0–10 s je +1 (index.html +0,4 KB gepackt).
+
+- **Gewinn beim Öffnen mit Helfer:** 4G erstes Byte −176, erstes Bild −166, „bereit“ −223 ms; 3G −442 / −433 ms – in jedem Paar (0↑). Funkloch und Stau: sofort statt nach 6 s (Sonde B).
+- **Preis nach einem Update** (einmal je Gerät und Fassung, und nur wenn das letzte Öffnen jünger als 12 h ist): 4G +43 ms bis „bereit“ der neuen Fassung, 3G +88 ms; die alte Seite wird gestartet und nach dem Wächter einmal ersetzt. Auf 4G malt die alte Seite noch nicht (das Neuladen beginnt bei 222–407 ms, ihr erstes Bild käme später) – man sieht nur das erste Bild 66 ms später. **Auf 3G sieht man die alte Seite etwa 0,35 s** (erstes Bild 296–376 ms, ersetzt bei 630–743 ms). Dazu wird die Seite einmal doppelt geholt (+27 KB gepackt): die Vorab-Anfrage des Neuladens lässt sich nicht abbestellen.
+- **Rechnung:** S1 lohnt sich, solange weniger als etwa 80 % der Öffnungen mit Helfer die ersten nach einem Update sind (4G: 166/(166+43); 3G: 433/(433+88)). Wie oft das draußen ist, zeigt das Feld nach dem Ausliefern (`neu` = 1 in „mess-start“, SQL unten).
+- **Schwaches Telefon (Helfer wacht 250 ms):** endgültig kein Gewinn und kein messbarer Schaden („deutlich“ bei 0 von 68 Maßen), nach einem Update **kein** Neuladen mehr. Reines stale-while-revalidate hätte dort nichts gebracht und je Update +201 ms gekostet – deshalb „schon da“.
+- **Nebenbefund (Sonde E, Gegenprobe):** Bis 884 bekam ein Gerät, das innerhalb von 10 min nach dem letzten Öffnen wieder öffnete, trotz „zuerst das Netz“ die **alte** index.html aus dem Browser-Speicher (max-age 600) und lud nach einem Update bei jedem dieser Öffnen neu. Jetzt nicht mehr (Speicher des Helfers bleibt neu, das nächste Öffnen zeigt gleich die neue Fassung).
+- Rauschgrenze (A/A 17.10., sw, 7 Paare): erstes Bild ±54, bereit ±139. Rechnerlast 0,4–1,6 (4 Kerne). Messdateien: Zwischenordner `schale/` (`m-*` rein, `h-*` mit Lesen, `y-*` endgültig, `h-4g-fetch-xhr`); Vergleichsstände `gegen885/schale-vorher` (6b724580: index.html und sw.js aus git, alles andere verlinkt) und `schale-v1…v5` (Varianten für die Gegenproben).
+
+### Sonde `werkzeug/pruefe-885-schale.js`
+Server schreibt jede Anfrage mit (Vorab-Kopf, Cache-Control der Anfrage, Marke je index.html), stellt die Fassung in index.html und fassung.json getrennt um, spielt Funkloch, Stau, langsames Netz (400 ms, 3 s), verzögertes fassung.json, max-age=600 und einen langsam aufwachenden Helfer (400 ms Rechnen vorn in sw.js). A Grundlage (Speicher mit Köpfen) · B zuerst der Speicher (3 s Netz: 11–19 ms; Funkloch 21 ms; Stau 9 s: 20 ms statt 6 s; eine Anfrage; Speicher aufgefrischt) · C Update: genau ein Neuladen, die neue Seite aus der Auffrischung (Marke der ersten Anfrage), danach sofort aus dem Speicher · D fassung.json neu, index.html alt: ein Neuladen, dann die Blase, kein Kreis · E nie rückwärts (max-age) · F Rücknahme kommt an · G alte Adresse `?f=884` · H älter als 12 h → Netz; Seite aus der Zeit vor S1 → Speicher, danach mit Köpfen · I schwaches Telefon: Update ohne Neuladen; ältere Kopie aus dem Browser-Speicher → die gespeicherte · K Wächter ohne Helfer: Klassenzimmer offen, im Raum („drin“), Tippen → kein Neuladen, Blase; Gegenprobe ohne diese Lage: ein Neuladen.
+- **Ergebnis: 40 Prüfungen grün.** **Gegenprobe** 6b724580 (vor S1): 15 rot (A Köpfe, B ×3 Zeit, C nächstes Öffnen, E ×2, G, H ×2, I ×2, K ×3) – grün bleibt, was gleich bleiben soll (Funkloch, eine Anfrage, Auffrischung, kein Kreis, Rücknahme). Varianten, je ein Baustein herausgenommen: ohne „nie rückwärts“ 3 rot (E ×2, I), ohne Warten auf die Auffrischung 1 rot (C: zweite Rundreise), index.html von 6b724580 (ohne `bleiben()`) 3 rot (K ×3), ohne „schon da“ 1 rot (I: Neuladen beim schwachen Telefon).
+
+**Sonde 885-swvorladen** angepasst: Sie erkennt S1 am sw.js (`x-dma-fassung`) und prüft dann in 5 „die Seite ist die gespeicherte oder – schon da, im schnellen Prüfnetz oft – die frische; der Speicher wird aus der Vorab-Antwort aufgefrischt“ und in 7 „im Stau sofort die gespeicherte Seite (< 2,5 s)“ statt nach 6 s; alles andere unverändert. Grün mit diesem Stand und mit 6b724580.
+
+**Sonden (dieser Stand, Stempel neu):** 885-schale 40 grün · 885-swvorladen grün (Gegenprobe 6b724580 grün; Prüfung 11 – Sonde 694 mit neuem und altem sw.js gleich – in 1 von 4 Läufen rot, in 3 grün: der aus Schritt C bekannte Wettlauf um `min/spiel.js` in 694/3a trifft die beiden 694-Läufe nicht immer gleich) · 694-leistung: nur 3a rot (bekannter spiel.js-Wettlauf seit 884) · 884-notweg 91 grün · 876-start-schlank, 884-messung, 858-ladeweg, ladezeit, 884-beta, 865-lesetexte-nachladen, 873-ausgelagert grün · 885-messen 47 grün (neu Prüfung 18; das Werkzeug von 6b724580 kennt den Fall nicht: „Art unbekannt: neu“). app.js und min/ unberührt; 840-bilderwelt-alt-neu läuft im flachen Klon weiter nicht.
+
+### Datenbank
+Nicht gelesen (die Feldwerte aus Schritt C genügen). Nach dem Ausliefern, nur lesen:
+```sql
+-- S1 (885): Öffnen mit Helfer je Fassung und Gerät – erstes Byte, erstes Bild, bereit (Median)
+-- und der Anteil der Seiten, die der Fassungs-Wächter nach einem Update selbst neu geladen hat (neu = 1)
+select daten->>'f' as fassung,
+       case when daten->>'ua' ilike '%android%' then 'android' when daten->>'ua' ~* 'iphone|ipad' then 'ios' else 'andere' end as geraet,
+       count(*) as seiten,
+       round(avg((daten->>'neu')::numeric), 2) as anteil_neu_geladen,
+       percentile_cont(0.5) within group (order by (daten->'t'->>'ttfb')::numeric) as ttfb_median,
+       percentile_cont(0.5) within group (order by (daten->'t'->>'fcp')::numeric) as fcp_median,
+       percentile_cont(0.5) within group (order by (daten->'t'->>'bereit')::numeric) as bereit_median
+  from spiel_diagnose
+ where art = 'mess-start' and daten->>'sw' = '1' and zeit > now() - interval '30 days'
+ group by 1, 2 order by 1 desc, 2;
+```
+Vorsicht beim Lesen: Eine neu geladene Seite (`neu` = 1) misst ihre Zeiten ab ihrem eigenen Start; die Zeit der alten Seite davor (Vorlauf, 4G ~0,25 s) fehlt draußen. Die alte Seite schickt nichts (sie geht vor 20 s).
+
+### Ehrlich
+- Der Gewinn gilt für das Öffnen mit Helfer, wenn das Netz langsamer ist als das Aufwachen des Helfers (Prüfrechner: Helfer ~3 ms). Wie lange der Helfer auf dem OPPO wirklich schläft, ist weiter nicht gemessen; ist er dort langsam, bringt S1 beim Öffnen wenig (Modell 250 ms: ±0), hilft aber im Funkloch und im Stau.
+- Nach einem Update ist das erste Öffnen etwas langsamer als bisher (4G +43, 3G +88 ms) und auf 3G sieht man die alte Seite kurz. Das ist der Preis des freigegebenen „einmal neu laden“.
+- Die 12-h-Grenze ist eine Annahme (Fassungen kamen zuletzt 1–5 am Tag): nach so langer Pause ist die alte Seite fast immer überholt. Gemessen ist sie nicht.
+
+**Offen**
+1. Nach dem Ausliefern: SQL oben – erstes Byte/erstes Bild/„bereit“ mit Helfer 884 gegen 885, und der Anteil `neu` (Erwartung weit unter 80 %).
+2. messung.js könnte `workerStart`, „Seite aus dem Speicher des Helfers“ und den Vorlauf der alten Seite (sessionStorage) mitschicken – dann sieht man draußen das Aufwachen und den ganzen Preis eines Updates.
+3. 12 h nach den Felddaten nachstellen (z. B. kürzer, wenn `neu` oft vorkommt).
+4. Die doppelt geholte Seite beim Neuladen (+27 KB): ließe sich nur sparen, wenn der Wächter nicht neu lädt, sondern die neue Seite beim nächsten Öffnen kommt – sichtbar anders, also nur als Vorschlag.
+5. Eine alte Seite aus dem Speicher holt Dateien, die nicht im Speicher des Helfers liegen, mit ihrem alten Stempel; liegt auf dem Server schon ein neuerer Inhalt, kommt der unter dem alten Stempel (wie bisher bei lange offenen Seiten). Die App-Stücke fängt der 884-Notweg ab; das Fenster ist die Zeit bis zum Neuladen (4G ~0,25 s). Ein Abgleich Stempel ↔ Inhalt im Helfer wäre möglich (nicht in diesem Schritt).
+6. Werkstatt-Eintrag und Funk-Antwort beim Ausliefern von 885.

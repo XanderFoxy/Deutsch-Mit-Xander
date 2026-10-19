@@ -56,6 +56,14 @@
        Service Worker: viertes Öffnen, Helfer gestoppt, Verbindungen zu,
        Dateien und übersetzter Code aus seinem Speicher).
        --sw = kalt,warm,pause,sw.
+       FASSUNG 885 (S1): neu (Stammgast MIT Service Worker, und seit dem
+       letzten Öffnen ist eine neue Fassung draußen: wie sw, danach stellt
+       der Server index.html und fassung.json auf Fassung + 1 – die
+       gestempelten Dateien bleiben gleich, gemessen wird also genau, was
+       das Update an der SEITE kostet). Kommt die Seite zuerst aus dem
+       Speicher, lädt der Fassungs-Wächter einmal neu; gemessen wird bis
+       „bereit" der NEUEN Fassung, ab dem Öffnen (bereitAb, fcpAb; ab =
+       Vorlauf bis zur Seite, die bleibt; seiten = 2 heißt neu geladen).
      - FENSTER: jede Seite bleibt 10 s offen (--fenster). Die Zeit wird in
        Abschnitte geteilt: start (0 → bereit), wissen (Tipp → Bild),
        kz (Tipp → Bild und Knopf „Betreten"), danach (bis 10 s) und
@@ -110,8 +118,13 @@
      netz = 4g (9 Mbit/s, 60 ms, Standard) | 3g (1,6 Mbit/s, 150 ms) | aus
      wurzel = anderes Verzeichnis (zum Vergleich mit einem alten Stand)
      --laeufe n        Läufe je Fall (LAEUFE, Standard 5)
-     --arten a,b       aus kalt, warm, wieder, pause, sw (Standard kalt,warm)
+     --arten a,b       aus kalt, warm, wieder, pause, sw, neu (Standard kalt,warm)
      --sw              = --arten kalt,warm,pause,sw
+                       (dazu neu: --arten sw,neu, siehe FÄLLE)
+     --sw-wach ms      der Service Worker rechnet bei jedem Aufwachen ms lang
+                       (schwaches Telefon; der Prüfrechner weckt ihn in ~3 ms –
+                       die Rechnerbremse gilt nur für die Seite). Die Zeile
+                       steht vorn in sw.js, für beide Stände gleich.
      --gegen <wurzel>  zweiter Stand, abwechselnd gemessen (A B, B A, …),
                        mit gepaartem Unterschied je Durchgang
      --aa              A/A-Test: derselbe Stand als A und B (Rauschgrenze)
@@ -136,7 +149,7 @@ const http = require("http"), http2 = require("http2"), fs = require("fs"), path
 const { performance } = require("perf_hooks");
 
 /* ---------- Aufruf ---------- */
-const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner", "tipp-nach"]);
+const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner", "tipp-nach", "sw-wach"]);
 const S = {}, FREI = [];
 for (let i = 2; i < process.argv.length; i++) {
   const a = process.argv[i];
@@ -165,7 +178,10 @@ const AUFBAU = S.aufbau != null ? Number(S.aufbau) : 2;
 const SPUR = !S["ohne-spur"];
 const PROFIL = !!S.profil;
 const ARTEN = (S.arten || (S.sw ? "kalt,warm,pause,sw" : "kalt,warm")).split(",").map((x) => x.trim()).filter(Boolean);
-for (const a of ARTEN) if (!["kalt", "warm", "wieder", "pause", "sw"].includes(a)) { console.error("Art unbekannt: " + a); process.exit(2); }
+for (const a of ARTEN) if (!["kalt", "warm", "wieder", "pause", "sw", "neu"].includes(a)) { console.error("Art unbekannt: " + a); process.exit(2); }
+/* FASSUNG 885 (S1) — langsames Aufwachen des Service Workers nachstellen (ms, gleich für beide Stände) */
+const SW_WACH = Math.max(0, Number(S["sw-wach"] || 0));
+if (!isFinite(SW_WACH)) { console.error("--sw-wach braucht ms"); process.exit(2); }
 const JSON_DATEI = S.json || process.env.LADEZEIT_JSON || "";
 /* supabase-js: dieselbe Fassung, die jsDelivr heute für @2 ausliefert, aus npm geholt und im Zwischenordner gemerkt */
 const SUPA_FASSUNG = "2.117.3";
@@ -240,6 +256,20 @@ if (H2) {
    „mehr als 10 Minuten später" nach (jede Datei muss nachgefragt werden → 304). */
 function server(wurzel, frische) {
   const datei = new Map(), verb = new Set();
+  /* FASSUNG 885 (S1) — Fall neu: solange s.neu gesetzt ist, liefert der Server index.html und fassung.json als
+     Fassung s.neu (eigener ETag, sonst käme 304 mit der alten Seite); alles andere bleibt gleich */
+  const neuStand = new Map();
+  function alsNeu(p, d, f) {
+    const k = p + " " + f;
+    if (neuStand.has(k)) return neuStand.get(k);
+    let t = d.inhalt.toString("utf8");
+    if (p === "/fassung.json") t = JSON.stringify({ fassung: f, stand: new Date().toISOString() }, null, 2) + "\n";
+    else { const vor = t; t = t.replace(/window\.DMA_VERSION = "[^"]*";/, 'window.DMA_VERSION = "' + f + '";'); if (t === vor) throw new Error("DMA_VERSION nicht in index.html"); }
+    const inhalt = Buffer.from(t), n = { inhalt, ext: d.ext, gz: zlib.gzipSync(inhalt, { level: 9 }), etag: '"' + crypto.createHash("md5").update(inhalt).digest("hex") + '-neu"' };
+    neuStand.set(k, n);
+    return n;
+  }
+  let swWach = null;
   const z = { anfragen: 0, bytes: 0, packMs: 0, n304: 0, n404: 0, fehlt: [] };
   function lesen(p) {
     let d = datei.get(p);
@@ -263,6 +293,12 @@ function server(wurzel, frische) {
       d = lesen(p);
       /* fehlende Datei zählen: eine Messung mit 404 misst eine andere Seite (z. B. ein unvollständiger Vergleichsstand) */
       if (!d) { z.n404++; if (z.fehlt.length < 50 && z.fehlt.indexOf(p) < 0) z.fehlt.push(p); a.writeHead(404); return a.end(); }
+      if (o.neu && (p === "/index.html" || p === "/fassung.json")) d = alsNeu(p, d, o.neu);
+      if (p === "/sw.js" && SW_WACH) {
+        if (!swWach) { const inhalt = Buffer.concat([Buffer.from("(function(){var t=Date.now();while(Date.now()-t<" + SW_WACH + "){}})();\n"), d.inhalt]);
+          swWach = { inhalt, ext: d.ext, gz: zlib.gzipSync(inhalt, { level: 9 }), etag: '"' + crypto.createHash("md5").update(inhalt).digest("hex") + '"' }; }
+        d = swWach;
+      }
       h = { "Content-Type": TYP[d.ext] || "application/octet-stream", "Cache-Control": "max-age=" + frische, "ETag": d.etag };
       if (p === "/index.html" || p === "/fassung.json") h["Cache-Control"] = "no-cache";
     }
@@ -288,20 +324,42 @@ function server(wurzel, frische) {
   if (H2) srv.on("session", (s) => { s.__auf = performance.now(); verb.add(s); s.on("close", () => verb.delete(s)); });
   else srv.on("connection", (s) => { s.__auf = performance.now(); verb.add(s); s.on("close", () => verb.delete(s)); });
   const lauscht = new Promise((r) => srv.listen(0, "127.0.0.1", r));
-  return {
-    z, frische, lesen, lauscht,
+  const o = {
+    z, frische, lesen, lauscht, neu: "",
     get basis() { return (H2 ? "https" : "http") + "://127.0.0.1:" + srv.address().port; },
     /* alle Verbindungen schließen: nach einer Pause sind sie beim echten Telefon längst zu */
     trennen() { for (const s of verb) { try { s.destroy(); } catch (e) {} } verb.clear(); },
     zu() { this.trennen(); srv.close(); },
   };
+  return o;
 }
 
 /* ---------- Mitschreiber in der Seite (vor jedem Skript der Seite) ---------- */
 function mitschreiber() {
   if (window.__dmaMess || window.top !== window) return;
-  try { localStorage.setItem("dma_tour_seen", "1"); sessionStorage.setItem("dma-neu-geladen", "x"); } catch (e) {}
-  var P = performance, M = window.__dmaMess = { t: {}, tipp: [], lt: [], loaf: [], lcp: null, fehler: 0, sync: [] };
+  var P = performance, M = window.__dmaMess = { t: {}, tipp: [], lt: [], loaf: [], lcp: null, fehler: 0, sync: [], ab: 0, seiten: 1 };
+  /* FASSUNG 885 (S1): der Merker des Fassungs-Wächters nur setzen, wenn er fehlt – sonst hebelte jedes Neuladen den
+     Schutz vor einem zweiten Neuladen aus (Fall neu). Dazu: die wievielte Seite in diesem Tab, und wie lange nach dem
+     ersten Öffnen sie begann (ab, ms). */
+  try {
+    localStorage.setItem("dma_tour_seen", "1");
+    if (sessionStorage.getItem("dma-neu-geladen") == null) sessionStorage.setItem("dma-neu-geladen", "x");
+    var ur = sessionStorage.getItem("__dmaMessUr");
+    if (ur == null) sessionStorage.setItem("__dmaMessUr", String(P.timeOrigin));
+    else M.ab = Math.max(0, P.timeOrigin - Number(ur));
+    M.seiten = Number(sessionStorage.getItem("__dmaMessSeiten") || 0) + 1;
+    sessionStorage.setItem("__dmaMessSeiten", String(M.seiten));
+    M.vorher = JSON.parse(sessionStorage.getItem("__dmaMessVorher") || "null");
+    /* die Seite davor (vor einem Neuladen): wann fassung.json ankam, wann sie ging, wie weit sie war */
+    addEventListener("pagehide", function () {
+      try {
+        var fj = P.getEntriesByType("resource").filter(function (x) { return /fassung\.json/.test(x.name); })[0];
+        sessionStorage.setItem("__dmaMessVorher", JSON.stringify({ geht: Math.round(P.now()), fjAb: fj ? Math.round(fj.startTime) : null, fjDa: fj ? Math.round(fj.responseEnd) : null,
+          bild: Math.round((P.getEntriesByName("first-contentful-paint")[0] || {}).startTime || 0) || null, bereit: M.t.bereit != null ? Math.round(M.t.bereit) : null,
+          ttfb: Math.round((P.getEntriesByType("navigation")[0] || {}).responseStart || 0) }));
+      } catch (e) {}
+    });
+  } catch (e) {}
   try { P.setResourceTimingBufferSize(5000); } catch (e) {}
   /* FASSUNG 885 — synchrone Abrufe festhalten (Datei, Beginn, Dauer, Status, Aufrufer). So holt ein Platzhalter von
      app.js sein Stück, wenn es noch fehlt (dmaTeilSofort) – der Hauptfaden steht, bis es über die Leitung da ist.
@@ -373,6 +431,7 @@ function einsammeln() {
   var paint = {}; P.getEntriesByType("paint").forEach(function (e) { paint[e.name] = e.startTime; });
   return {
     t: M.t, null: M.null, tipp: M.tipp, lt: M.lt, loaf: M.loaf, lcp: M.lcp, fehler: M.fehler, jetzt: P.now(),
+    ab: M.ab, seiten: M.seiten, fassung: String(window.DMA_VERSION || ""), vorher: M.vorher || null,
     sync: M.sync, sofort: (window.DMA_TEIL_SOFORT || []).slice(0, 40).map(function (s) { return String(s).replace(/\(?https?:\/\/[^\s)]*\/([^/\s)?]+)(\?[^\s:)]*)?(:\d+:\d+)\)?/g, "($1)").slice(0, 120); }),
     fp: paint["first-paint"], fcp: paint["first-contentful-paint"],
     nav: { ttfb: nz(n.responseStart), html: nz(n.responseEnd), dcl: nz(n.domContentLoadedEventEnd), load: nz(n.loadEventEnd), worker: nz(n.workerStart),
@@ -571,7 +630,8 @@ async function oeffnen(ctx, srv, art, o) {
   let roh, versuche = [0, 0], spurBuf = null, profile = null, abbruch = null;
   try {
     await pg.goto(srv.basis + "/index.html" + (o.query || ""), { waitUntil: "commit", timeout: 180000 });
-    await pg.waitForFunction(() => window.__dmaMess && window.__dmaMess.t.bereit != null, null, { polling: "raf", timeout: 180000 });
+    /* FASSUNG 885 (S1): im Fall neu zählt erst „bereit" der NEUEN Fassung (eine alte Seite aus dem Speicher lädt neu) */
+    await pg.waitForFunction((f) => window.__dmaMess && window.__dmaMess.t.bereit != null && (!f || String(window.DMA_VERSION) === f), o.fassung || "", { polling: "raf", timeout: 180000 });
     /* --tipp-nach: der erste Tipp erst TIPP_NACH ms nach „bereit" (Seitenuhr); in der Zeit fragt das Werkzeug nichts */
     if (o.messen && TIPP_NACH > 0) {
       const rest = await pg.evaluate((ms) => window.__dmaMess.t.bereit + ms - performance.now(), TIPP_NACH);
@@ -614,6 +674,9 @@ function auswerten(r) {
   const W = r.tippW, K = r.tippK;
   r.fp = rd(t.fp); r.fcp = rd(t.fcp); r.lcp = t.lcp ? rd(t.lcp[0]) : null; r.lcpWas = t.lcp ? t.lcp.slice(1, 3).filter(Boolean).join(" ") : "";
   r.ttfb = rd(t.nav.ttfb); r.dcl = rd(t.nav.dcl); r.load = rd(t.nav.load); r.bereit = rd(t.t.bereit);
+  /* FASSUNG 885 (S1): über ein Neuladen hinweg ab dem ersten Öffnen gerechnet (ohne Neuladen ab = 0) */
+  r.ab = rd(t.ab || 0); r.seiten = t.seiten || 1; r.fassung = t.fassung || ""; r.vorher = t.seiten > 1 ? t.vorher : null;
+  r.bereitAb = r.bereit == null ? null : r.ab + r.bereit; r.fcpAb = r.fcp == null ? null : r.ab + r.fcp;
   r.wissen = W ? rd(W.bild) : null;
   r.kzBild = K ? rd(K.bild) : null; r.kzKnopf = K ? rd(K.knopf) : null;
   r.kzAlt = W && K ? rd(K.ab + K.knopf - W.ab) : null;
@@ -697,14 +760,20 @@ async function durchgang(st, lauf) {
       vor(await oeffnen(ctx, st.srvB, "vor", { nachlauf: 6000 }), "pause 2");
       await mess(ctx, st.srvB, "pause", { trennen: true });
     });
-    if (ARTEN.includes("sw")) await gruppe(async (ctx) => {
+    if (ARTEN.includes("sw") || ARTEN.includes("neu")) await gruppe(async (ctx) => {
       /* 1. Öffnen meldet den Helfer an (2,5 s nach load), 2. Öffnen läuft schon durch ihn und füllt seinen Speicher,
          3. Öffnen ist das erste aus seinem Speicher: dabei legt Chrome den übersetzten Code (V8-Code-Cache) an – auf dem
          Hauptfaden, gemessen ~85 ms (v8.produceCache). Ein Stammgast hat das hinter sich; gemessen wird das 4. Öffnen. */
       vor(await oeffnen(ctx, st.srvB, "vor", { query: "?mit-sw", nachlauf: 3000, swWarten: 2000, trennen: true }), "sw 1");
       vor(await oeffnen(ctx, st.srvB, "vor", { query: "?mit-sw", nachlauf: 8000 }), "sw 2");
       vor(await oeffnen(ctx, st.srvB, "vor", { query: "?mit-sw", nachlauf: 6000 }), "sw 3");
-      await mess(ctx, st.srvB, "sw", { query: "?mit-sw", swStopp: true, trennen: true });
+      if (ARTEN.includes("sw")) await mess(ctx, st.srvB, "sw", { query: "?mit-sw", swStopp: true, trennen: true });
+      /* FASSUNG 885 (S1) — neu: dieselbe Lage, inzwischen ist Fassung + 1 draußen (nur index.html und fassung.json) */
+      if (ARTEN.includes("neu")) {
+        st.srvB.neu = String(Number(st.fassung) + 1);
+        try { await mess(ctx, st.srvB, "neu", { query: "?mit-sw", swStopp: true, trennen: true, fassung: st.srvB.neu }); }
+        finally { st.srvB.neu = ""; }
+      }
     });
   }
   return erg;
@@ -729,6 +798,8 @@ function stat(werte) {
 const holen = (r, pfad) => pfad.split(".").reduce((o, k) => (o == null ? undefined : o[k]), r);
 const MASSE = [
   ["fcp", "erstes Bild"], ["lcp", "größtes Bild (LCP)"], ["ttfb", "Seite: erstes Byte"], ["dcl", "DOMContentLoaded"], ["bereit", "bereit"], ["load", "load"],
+  ["seiten", "Seiten je Öffnen (2 = neu geladen)"], ["ab", "Vorlauf bis zur Seite, die bleibt"], ["fcpAb", "erstes Bild (bleibende Seite) ab Öffnen"],
+  ["bereitAb", "bereit (bleibende Seite) ab Öffnen"],
   ["wissen", "Wissen: Tipp → Bild"], ["kzBild", "Klassenzimmer: Tipp → Bild"], ["kzKnopf", "Klassenzimmer: Tipp → Knopf"],
   ["kzAlt", "alte Spalte: Wissen-Tipp → Knopf"], ["kzAbStart", "alte Spalte: Öffnen → Knopf"], ["pause", "  davon Werkzeug-Pausen"],
   ["lang.n", "Langläufer 0–10 s: Anzahl"], ["lang.summe", "Langläufer: Summe"], ["lang.max", "Langläufer: längster"], ["lang.sperr", "Sperrzeit (Σ über 50 ms)"],
@@ -812,6 +883,8 @@ function zeile(r) {
   const sp = r.spur && r.spur.gesamt ? "  Spur 0–10 s: Skript " + (r.spur.gesamt.skript || 0) + ", Stil " + ((r.spur.gesamt.stil || 0) + (r.spur.gesamt.stilLesen || 0)) + ", Layout " + (r.spur.gesamt.layout || 0) : "";
   console.log("  " + r.stand + " " + r.art.padEnd(6) + " Lauf " + (r.lauf + 1) + ": Bild " + r.fcp + "  bereit " + r.bereit + "  Wissen " + r.wissen + "  KZ " + r.kzBild + "/" + r.kzKnopf +
     "  (alt +" + r.kzAlt + ", ab Start " + r.kzAbStart + ")  Langl. " + r.lang.n + "/" + r.lang.summe + "/" + r.lang.max + "  " + r.netz.kbBisBereit + " KB" +
+    (r.seiten > 1 ? "  neu geladen: " + r.seiten + " Seiten, Vorlauf " + r.ab + ", bereit ab Öffnen " + r.bereitAb +
+      (r.vorher ? " (alte Seite: erstes Byte " + r.vorher.ttfb + ", fassung.json " + r.vorher.fjAb + "→" + r.vorher.fjDa + ", Bild " + r.vorher.bild + ", ging " + r.vorher.geht + ")" : "") : "") +
     (r.versuche[0] > 1 || r.versuche[1] > 1 ? "  Tipps " + r.versuche.join("/") : "") + (r.fehler.length ? "  Seitenfehler " + r.fehler.length : "") +
     (r.server.n404 ? "  404: " + r.server.n404 + (r.server.fehlt.length ? " (" + r.server.fehlt.slice(0, 4).join(", ") + ")" : "") : "") +
     (r.sync && r.sync.n ? "  synchron " + r.sync.liste.map((x) => x[0].replace(/^app-teil-|\.js$/g, "") + "@" + x[4] + " " + x[2]).join(", ") : "") + sp);
@@ -829,6 +902,7 @@ function zeile(r) {
   console.log("\nLadezeit: Netz " + NETZ + (isFinite(LEITUNG.down) ? " (" + (LEITUNG.down * 8 / 1e6) + " Mbit/s, " + LEITUNG.rtt + " ms, Aufbau " + AUFBAU + " RTT)" : "") +
     ", Rechner " + CPU + "×, " + (H2 ? "HTTP/2 + TLS" : "HTTP/1.1") + ", " + LAEUFE + " Läufe, Fälle " + ARTEN.join(",") + ", Fenster " + FENSTER + " ms" +
     (TIPP_NACH ? ", Tipp " + TIPP_NACH + " ms nach bereit" : ", Tipp sofort nach bereit") + (AA ? ", A/A-Test (Rauschgrenze)" : "") +
+    (SW_WACH ? ", Service Worker wacht " + SW_WACH + " ms" : "") +
     (SPUR ? ", Spur" : "") + (PROFIL ? ", Profil" : "") + (FLUECHTIG ? ", flüchtige Kontexte" : ", Profil auf der Platte") + ", supabase-js " + (SUPA ? path.basename(SUPA_PFAD) + " (" + Math.round(SUPA_GZ.length / 1024) + " KB gz)" : "fehlt (fällt aus)"));
   for (const st of staende) console.log("  Stand " + st.name + ": " + st.wurzel + "  (Fassung " + st.fassung + (st.commit ? ", " + st.commit : "") + ")");
   for (const st of staende) await aufwaermen(st);
@@ -898,7 +972,7 @@ function zeile(r) {
     fs.writeFileSync(JSON_DATEI, JSON.stringify({
       werkzeug: "werkzeug/ladezeit-messen.js (Fassung 885)", datum: new Date().toISOString(),
       einstellung: { netz: NETZ, leitung: { mbit: LEITUNG.down * 8 / 1e6, rtt: LEITUNG.rtt, aufbauRtt: AUFBAU }, cpu: CPU, http: H2 ? "h2+tls" : "http/1.1", laeufe: LAEUFE, arten: ARTEN, fenster: FENSTER, spur: SPUR, profil: PROFIL, kontext: FLUECHTIG ? "flüchtig" : "Profil auf der Platte",
-        tippNach: TIPP_NACH, aa: AA, verschraenkt: staende.length > 1 ? "Lauf 1: A dann B, Lauf 2: B dann A, …" : null,
+        tippNach: TIPP_NACH, aa: AA, swWach: SW_WACH, verschraenkt: staende.length > 1 ? "Lauf 1: A dann B, Lauf 2: B dann A, …" : null,
         supabase: SUPA ? { datei: path.basename(SUPA_PFAD), kbGz: Math.round(SUPA_GZ.length / 1024) } : null },
       umgebung: { chromium: "/opt/pw-browsers/chromium", node: process.version, kerne: os.cpus().length, rechner: (os.cpus()[0] || {}).model || "?", lastVor, lastNach },
       staende: staende.map((s) => ({ name: s.name, wurzel: s.wurzel, fassung: s.fassung, commit: s.commit, fehlt: s.fehlt })),
