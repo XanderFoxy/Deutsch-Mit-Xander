@@ -22,8 +22,10 @@
      B  Zuerst aus dem Speicher: Netz langsam (3 s) → die gespeicherte
         Seite kommt sofort (< 1,5 s), je Öffnen genau EINE Anfrage
         (die Vorab-Anfrage), der Speicher wird dahinter aufgefrischt;
-        Funkloch und Stau (9 s): sofort die gespeicherte Seite, sie läuft,
-        die späte Antwort landet im Speicher.
+        Stau (9 s, hängende Leitung): sofort die gespeicherte Seite (bis
+        884: nach 6 s), die späte Antwort landet im Speicher. Funkloch
+        (Verbindung bricht sofort ab): sofort die gespeicherte Seite – das
+        war schon bis 884 so (Gegenprobe grün), hier nur festgehalten.
      C  Update (Netz 400 ms – langsamer als der Helfer, also zuerst die
         gespeicherte Seite): genau EIN Neuladen, am Ende die neue Fassung;
         die neue Seite kommt aus der Auffrischung (Marke der ersten
@@ -34,14 +36,30 @@
      E  Nie rückwärts: der Browser hat eine ältere index.html selbst
         aufgehoben (max-age) – der Speicher bleibt neu, das nächste Öffnen
         zeigt gleich die neue Fassung (ohne Neuladen).
-     F  Rücknahme auf dem Server (Fassung wieder kleiner) kommt an:
-        spätestens beim zweiten Öffnen die zurückgenommene Fassung, nie
-        mehr als ein Neuladen je Öffnen.
+     F  Rücknahme auf dem Server (Fassung wieder kleiner), Netz 400 ms
+        (langsamer als der Helfer, also zuerst die gespeicherte Seite):
+        der Wächter lädt einmal auf ?f=<ältere> neu, und DIESE Seite ist
+        schon die zurückgenommene (der Helfer wartet auch bei einem
+        älteren ?f= auf die laufende Auffrischung) – keine Blase, kein
+        zweiter Start der alten; das nächste Öffnen gleich die
+        zurückgenommene. (Nachbesserung 1; bis dahin prüfte F im schnellen
+        Netz nur den Weg „schon da“.)
      G  Alte Adresse ?f=<ältere Fassung> (der Browser öffnet sie wieder):
         die gespeicherte Seite, sofort, kein Neuladen.
      H  Gespeicherte Seite älter als 12 h: zuerst das Netz (wie bis 884).
         Seite aus der Zeit vor S1 (ohne eigene Köpfe, Datum frisch): sofort
-        aus dem Speicher, danach mit Köpfen.
+        aus dem Speicher, danach mit Köpfen. Älter als 12 h und Stau 9 s:
+        nach 6 s die gespeicherte Seite (die Ausweichfrist). ?f=<neuer>,
+        eine Auffrischung hängt, die Leitung hängt (12 s): spätestens nach
+        6 s ab dem Öffnen die gespeicherte Seite – die Frist zählt ab dem
+        Öffnen, nicht nach den 3 s Warten (vorher bis 9 s; Nachbesserung 1).
+     U  Unterordner (wie sicherung/<x>/ mit eigener alter DMA_VERSION 175):
+        der Helfer reicht ihn unverändert durch (eine Anfrage), der Speicher
+        bleibt die Hauptseite, das nächste Öffnen zeigt sofort die
+        laufende Fassung (Nachbesserung 1; vorher: Fassung 175). Liegt
+        noch eine Unterordner-Seite aus der Zeit vor S1 im Speicher (bis
+        884 legte der Helfer jede Navigation auf …/ ab), wird sie nicht
+        ausgeliefert: zuerst das Netz.
      I  Schwaches Telefon (der Helfer rechnet beim Aufwachen 400 ms, die
         Zeile steht vorn in sw.js): hat das Netz schon geantwortet, kommt
         die FRISCHE Seite – nach einem Update also ohne Neuladen; ist die
@@ -51,6 +69,9 @@
         „neue Fassung" erst, wenn das Klassenzimmer offen ist, man im Raum
         ist (LiveChat „drin") oder etwas tippt → KEIN Neuladen, die Blase
         „Neue Fassung" erscheint. Gegenprobe ohne diese Lage: ein Neuladen.
+     M  messung.js „neu" (mess-start): 1 nur auf der ersten Seite nach dem
+        Neuladen durch den Wächter, 0 nach einem Neuladen von Hand im
+        selben Tab (Nachbesserung 1; vorher blieb es 1).
    Die Sonden 885-swvorladen (Vorab-Laden, andere Seiten, ?ohne-sw,
    fassung.json frisch, Gestempeltes aus dem Speicher) und 694 laufen
    getrennt.
@@ -81,6 +102,14 @@ const F = (k) => String(Number(GRUND) + k);
     const eintrag = { p, url: q.url, vorab: q.headers["service-worker-navigation-preload"] || "", cc: q.headers["cache-control"] || "", t: Date.now() };
     anfragen.push(eintrag);
     if (p === "/index.html" && S.index === "aus") { q.socket.destroy(); return; }
+    /* U: ein Unterordner wie sicherung/<x>/ – eine eigene Seite mit alter DMA_VERSION */
+    if (p === "/alt/" || p === "/alt/index.html") {
+      a.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-cache" });
+      return a.end('<!doctype html><meta charset="utf-8"><title>Sicherung</title><script>window.DMA_VERSION = "175";</script>'
+        /* wie die echten Sicherungen: Dateien relativ und mit altem Stempel (im Unterordner 404; unter /index.html
+           ausgeliefert landete min/styles.css?v=175 im Dateispeicher und verdrängte den gültigen Eintrag) */
+        + '<link rel="stylesheet" href="min/styles.css?v=175"><p id="alt">Sicherung 175</p>');
+    }
     const f = path.join(WURZEL, p);
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
     let body = fs.readFileSync(f);
@@ -136,7 +165,7 @@ const F = (k) => String(Number(GRUND) + k);
   const ersteIndex = (ab) => { const i = indexAb(ab)[0]; return i ? i.t : Date.now(); };
   const bis = async (pg, f, ms, arg) => { const ende = Date.now() + ms; while (Date.now() < ende) { if (await pg.evaluate(f, arg).catch(() => false)) return true; await schlaf(100); } return false; };
   const gespeichert = (pg) => pg.evaluate(async () => {
-    const k = await caches.open("dma-seite-1"); const r = await k.match("seite");
+    const k = await caches.open("dma-seite-1"); const r = await k.match("/seite");   /* Schlüssel neben sw.js (auch aus einem Unterordner gelesen) */
     if (!r) return null;
     const t = await r.text(), m = t.match(/SONDE-MARKE:(\w+)/), v = t.match(/window\.DMA_VERSION = "([^"]*)"/);
     return { marke: m ? m[1] : null, fassung: v ? v[1] : null, kopfFassung: r.headers.get("x-dma-fassung"), kopfZeit: Number(r.headers.get("x-dma-zeit")) || null };
@@ -304,20 +333,24 @@ const F = (k) => String(Number(GRUND) + k);
       await zu(w);
     }
 
-    /* F: Rücknahme auf dem Server (F(3) → F(1)) */
+    /* F: Rücknahme auf dem Server (F(3) → F(1)), Netz 400 ms – langsamer als der Helfer, also zuerst die gespeicherte F(3) */
     {
-      S.seite = F(1);
+      S.seite = F(1); S.index = "stau"; S.stauMs = 400;
       const x = await oeffnen(G, "/index.html?mit-sw", { schlafen: true });
       await bis(x.pg, () => document.readyState === "complete", 15000);
       await schlaf(4000);
-      const l = await lage(x.pg);
+      const l = await lage(x.pg), ix = indexAb(x.ab);
       await zu(x);
+      sage(l.fassung === F(1) && l.seiten <= 2 && l.adressen.filter((a) => /[?&]f=/.test(a)).length <= 1 && !l.blase,
+        "F  Rücknahme " + F(3) + " → " + F(1) + " (Netz 400 ms): schon das ERSTE Öffnen endet bei " + F(1) + ", höchstens ein Neuladen, keine Blase",
+        JSON.stringify({ f: l.fassung, adressen: l.adressen, blase: l.blase, anfragen: ix.map((y) => y.url.replace(/^\/index\.html/, "") + (y.vorab ? "[v]" : "") + (y.cc ? "[" + y.cc + "]" : "")) }));
       const y = await oeffnen(G, "/index.html?mit-sw", { schlafen: true });
       await bis(y.pg, () => document.readyState === "complete", 15000);
       await schlaf(3000);
       const l2 = await lage(y.pg);
-      sage(l2.fassung === F(1) && l.seiten <= 2 && l2.seiten <= 2, "F  Rücknahme " + F(3) + " → " + F(1) + ": spätestens beim zweiten Öffnen " + F(1) + ", je Öffnen höchstens ein Neuladen",
-        JSON.stringify({ erstes: [l.fassung, l.adressen], zweites: [l2.fassung, l2.adressen] }));
+      sage(l2.fassung === F(1) && l2.seiten === 1, "F  … das nächste Öffnen: gleich " + F(1) + ", kein Neuladen",
+        JSON.stringify({ f: l2.fassung, adressen: l2.adressen }));
+      S.index = "";
       await zu(y);
     }
 
@@ -360,8 +393,82 @@ const F = (k) => String(Number(GRUND) + k);
       sage(g && g.kopfFassung === F(1) && g.kopfZeit, "H  … danach mit Köpfen gespeichert", JSON.stringify(g));
       S.index = "";
       await zu(y);
+
+      /* H3: älter als 12 h und Stau 9 s – die Ausweichfrist (nach 6 s die gespeicherte Seite) */
+      const h3 = await nebenbei(G, (pg) => setzen(pg, "alt"));
+      const h3vor = await nebenbei(G, gespeichert);
+      S.index = "stau"; S.stauMs = 9000;
+      const z = await oeffnen(G, "/index.html?mit-sw", { schlafen: true });
+      await z.pg.waitForLoadState("domcontentloaded").catch(() => {});
+      const lz = await lage(z.pg);
+      sage(z.ok === true && z.ms >= 5500 && z.ms <= 7500 && lz.marke === h3vor.marke,
+        "H  älter als 12 h und Stau 9 s: nach 6 s die gespeicherte Seite (Ausweichfrist)", z.ms + " ms, Seite " + lz.marke + ", Speicher " + h3vor.marke + " (" + h3 + ")");
+      /* die späte Antwort (9 s) frischt den Speicher auf – danach ist er wieder jünger als 12 h */
+      await schlaf(Math.max(0, 9000 - (Date.now() - ersteIndex(z.ab))) + 1200);
+      await zu(z);
+
+      /* H4: ?f=<neuer>, eine Auffrischung hängt, die Leitung hängt (12 s) – höchstens 6 s ab dem Öffnen */
+      S.stauMs = 12000;
+      const h4vor = await nebenbei(G, gespeichert);
+      const a = await oeffnen(G, "/index.html?mit-sw&h=4");   /* sofort aus dem Speicher; die Auffrischung hängt 12 s */
+      const b = await oeffnen(G, "/index.html?mit-sw&f=" + F(4));
+      await b.pg.waitForLoadState("domcontentloaded").catch(() => {});
+      const lb = await lage(b.pg);
+      sage(a.ok === true && a.ms < 1500 && b.ok === true && b.ms >= 5000 && b.ms <= 7000 && lb.marke === h4vor.marke,
+        "H  ?f=" + F(4) + " (neuer), Auffrischung und Leitung hängen: nach 6 s ab dem Öffnen die gespeicherte Seite (vorher 3 + 6 s)",
+        "erstes Öffnen " + a.ms + " ms, ?f= " + b.ms + " ms, Seite " + lb.marke + ", Speicher " + (h4vor && h4vor.marke) + " (" + JSON.stringify(h4vor && { f: h4vor.fassung, zeit: h4vor.kopfZeit && Math.round((Date.now() - h4vor.kopfZeit) / 1000) + " s alt" }) + ")");
+      /* die hängenden Antworten auslaufen lassen (sie landen im Speicher), dann weiter */
+      await schlaf(Math.max(0, 12000 - (Date.now() - ersteIndex(a.ab))) + 1500);
+      S.index = "";
+      await zu(a); await zu(b);
     }
-    sage(!G.seitenfehler.length, "   keine Seitenfehler (A–H)", G.seitenfehler.slice(0, 3).join(" | "));
+
+    /* U: Unterordner (wie sicherung/<x>/) – nie als Hauptseite behandeln */
+    console.log("");
+    {
+      const vor = await nebenbei(G, gespeichert);
+      for (const pfad of ["/alt/", "/alt/index.html"]) {
+        const x = await oeffnen(G, pfad, { schlafen: true });
+        await x.pg.waitForLoadState("domcontentloaded").catch(() => {});
+        await schlaf(1500);
+        const t = await x.pg.evaluate(() => ({ v: String(window.DMA_VERSION), alt: !!document.getElementById("alt") })).catch((e) => ({ fehler: e.message }));
+        const ax = anfragen.slice(x.ab).filter((y) => y.p === pfad);
+        const g = await gespeichert(x.pg);
+        sage(x.ok === true && t.v === "175" && t.alt, "U  " + pfad + ": der Helfer reicht die Seite des Unterordners unverändert durch", JSON.stringify(t));
+        sage(ax.length === 1, "U  … genau EINE Anfrage (kein Nachfragen „nie rückwärts“)", ax.map((y) => y.url + (y.vorab ? "[v]" : "") + (y.cc ? "[" + y.cc + "]" : "")).join(" "));
+        sage(g && vor && g.fassung === vor.fassung && g.marke === vor.marke, "U  … der Speicher bleibt die Hauptseite (" + (vor && vor.fassung) + ")", "Speicher " + JSON.stringify(g && { f: g.fassung, marke: g.marke }));
+        await zu(x);
+      }
+      S.index = "stau"; S.stauMs = 3000;
+      const y = await oeffnen(G, "/index.html?mit-sw", { schlafen: true });
+      await y.pg.waitForLoadState("domcontentloaded").catch(() => {});
+      await schlaf(1500);
+      const l = await lage(y.pg);
+      sage(y.ms < 1500 && vor && l.fassung === vor.fassung && l.seiten === 1, "U  danach die Hauptseite: sofort " + (vor && vor.fassung) + " aus dem Speicher, kein Neuladen", y.ms + " ms, " + JSON.stringify({ f: l.fassung, seiten: l.seiten }));
+      const kasten = await y.pg.evaluate(async () => { const k = await caches.open("dma-dateien-1"); return (await k.keys()).filter((q) => /[?&]v=175\b/.test(q.url)).length; }).catch(() => -1);
+      sage(kasten === 0, "U  … und im Dateispeicher liegt nichts mit ?v=175", "Einträge mit v=175: " + kasten);
+      await schlaf(Math.max(0, 3000 - (Date.now() - ersteIndex(y.ab))) + 900);
+      S.index = "";
+      await zu(y);
+
+      /* U2: so legte der Helfer bis 884 einen Unterordner ab (die Antwort selbst, ohne eigene Köpfe, Datum frisch) –
+         beim ersten Öffnen nach dem Update auf 885 darf sie nicht ausgeliefert werden */
+      const u2 = await nebenbei(G, (pg) => pg.evaluate(async () => {
+        const k = await caches.open("dma-seite-1"); const r = await fetch("/alt/", { cache: "no-store" });
+        await k.put("/seite", r); const m = await k.match("/seite"); return m ? m.url.replace(location.origin, "") + " " + (m.headers.get("x-dma-fassung") || "ohne Kopf") : "leer";
+      }).catch((e) => "fehler " + e.message));
+      S.index = "stau"; S.stauMs = 3000;
+      const z = await oeffnen(G, "/index.html?mit-sw", { schlafen: true });
+      await z.pg.waitForLoadState("domcontentloaded").catch(() => {});
+      await schlaf(1000);
+      const lz = await lage(z.pg), gz = await gespeichert(z.pg), iz = indexAb(z.ab);
+      sage(z.ok === true && z.ms >= 2800 && lz.fassung === vor.fassung && iz[0] && lz.marke === iz[0].marke && gz && gz.fassung === vor.fassung && gz.kopfFassung === vor.fassung,
+        "U  Unterordner-Seite aus der Zeit vor S1 im Speicher (wie 884 sie ablegte): nicht ausgeliefert – zuerst das Netz, danach liegt die Hauptseite im Speicher",
+        z.ms + " ms, Seite " + JSON.stringify({ f: lz.fassung, marke: lz.marke }) + ", Speicher vorher „" + u2 + "“, nachher " + JSON.stringify(gz && { f: gz.fassung, kopf: gz.kopfFassung }));
+      S.index = "";
+      await zu(z);
+    }
+    sage(!G.seitenfehler.length, "   keine Seitenfehler (A–U)", G.seitenfehler.slice(0, 3).join(" | "));
     await G.ctx.close();
   }
 
@@ -449,6 +556,32 @@ const F = (k) => String(Number(GRUND) + k);
     sage(frei.l.seiten === 2 && frei.l.fassung && /[?&]f=/.test(frei.l.url), "K  Gegenprobe ohne diese Lage: der Wächter lädt wie bisher einmal neu", JSON.stringify({ seiten: frei.l.seiten, url: frei.l.url, adressen: frei.l.adressen }));
     S.fj = ""; S.fjStau = 0;
     await K.ctx.close();
+  }
+
+  /* ================= M: messung.js „neu" nur auf der ersten Seite nach dem Neuladen durch den Wächter ================= */
+  console.log("");
+  {
+    const M = await geraet();
+    await M.ctx.addInitScript(() => { try { localStorage.setItem("dma-mess-pruef", "schnell"); } catch (e) {} });
+    const zeilen = (pg) => pg.evaluate(() => { try { return (JSON.parse(localStorage.getItem("dma-mess-kiste") || "[]") || []).filter((x) => x.a === "mess-start").map((x) => ({ f: x.d.f, typ: x.d.typ, neu: x.d.neu })); } catch (e) { return []; } }).catch(() => []);
+    /* Seite 1 = F(11); fassung.json sagt (1,5 s später) F(12), und der Server hat inzwischen F(12) → der Wächter lädt einmal neu */
+    S.seite = F(11); S.fj = F(12); S.fjStau = 1500;
+    const { pg } = await M.neuerTab();
+    await pg.goto(HIER + "/index.html", { waitUntil: "commit" });
+    S.seite = F(12);
+    const da = await bis(pg, (f) => String(window.DMA_VERSION) === f && document.readyState === "complete", 20000, F(12));
+    const z1 = await bis(pg, () => { try { return JSON.parse(localStorage.getItem("dma-mess-kiste") || "[]").some((x) => x.a === "mess-start"); } catch (e) { return false; } }, 20000);
+    const l1 = await lage(pg), r1 = await zeilen(pg);
+    sage(da && z1 && l1.seiten === 2 && r1.length === 1 && r1[0].f === F(12) && r1[0].typ === "navigate" && r1[0].neu === 1,
+      "M  erste Seite nach dem Neuladen durch den Wächter: mess-start neu = 1", JSON.stringify({ adressen: l1.adressen, zeilen: r1 }));
+    S.fjStau = 0; S.fj = "";
+    await pg.reload({ waitUntil: "load" });
+    const z2 = await bis(pg, () => { try { return JSON.parse(localStorage.getItem("dma-mess-kiste") || "[]").filter((x) => x.a === "mess-start").length >= 2; } catch (e) { return false; } }, 20000);
+    const r2 = await zeilen(pg);
+    sage(z2 && r2.length === 2 && r2[1].typ === "reload" && r2[1].neu === 0, "M  danach ein Neuladen von Hand im selben Tab: neu = 0 (vorher 1)", JSON.stringify(r2));
+    sage(!M.seitenfehler.length, "   keine Seitenfehler (M)", M.seitenfehler.slice(0, 3).join(" | "));
+    S.seite = "";
+    await M.ctx.close();
   }
 
   await br.close(); srv.close();

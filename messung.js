@@ -618,7 +618,13 @@
       });
     } catch (e) {}
     var neu = 0, c = navigator.connection, fcp = null, tipp = {};
-    try { neu = sessionStorage.getItem("dma-neu-geladen") === FASSUNG ? 1 : 0; } catch (e) {}
+    /* FASSUNG 885 (S1, Nachbesserung 1): „neu" = nur die ERSTE Seite nach dem Neuladen durch den Fassungs-Wächter
+       (index.html?f=<diese Fassung>, Navigation „navigate"). Der Merker allein bleibt für jede weitere Seite im Tab stehen
+       (Neuladen von Hand, Notweg, Rückkehr ins Klassenzimmer) – der Anteil im SQL des Logbuchs wäre sonst zu hoch. */
+    try {
+      neu = sessionStorage.getItem("dma-neu-geladen") === FASSUNG && nav.type === "navigate"
+        && new URLSearchParams(location.search).get("f") === FASSUNG ? 1 : 0;
+    } catch (e) {}
     try { fcp = (P.getEntriesByName("first-contentful-paint")[0] || {}).startTime; } catch (e) {}
     Object.keys(M.tipp).forEach(function (w) { tipp[w] = M.tipp[w].slice(0, 3); });
     var minQ = typeof DMA_Q === "function" && DMA_Q("app.js") !== "app.js";

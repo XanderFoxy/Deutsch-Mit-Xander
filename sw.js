@@ -69,8 +69,12 @@ self.addEventListener("fetch", function (e) {
   if (u.origin !== self.location.origin) return;
   if (r.headers.has("range")) return;
   if (r.mode === "navigate") {
-    /* Nur die Hauptseite — andere Seiten (Prüfseiten usw.) laufen vorbei. */
-    if (/\/(index\.html)?$/.test(u.pathname)) e.respondWith(seite(r, e));
+    /* Nur die Hauptseite — andere Seiten (Prüfseiten usw.) laufen vorbei.
+       FASSUNG 885 (S1, Nachbesserung 1): „Hauptseite" heißt genau die Wurzel des Bereichs (…/ und …/index.html).
+       Vorher galt jedes …/ und …/index.html – auch die alten Sicherungen unter sicherung/<x>/ mit eigener
+       DMA_VERSION (175, 196 …). „Nie rückwärts" hielt so eine Seite für eine Rücknahme und legte sie als Seite ab;
+       seit S1 kam sie beim nächsten Öffnen der App ZUERST (nachgestellt: Fassung 175 im ganzen nächsten Besuch). */
+    if (hauptseite(u)) e.respondWith(seite(r, e));
     /* FASSUNG 885: „vorbei" heißt jetzt: die Antwort der schon laufenden
        Vorab-Anfrage unverändert durchreichen. Ohne respondWith fragte der
        Browser die Seite ein zweites Mal (gemessen: 2 Anfragen je Öffnen).
@@ -109,6 +113,14 @@ function gestempelt(r, u) {
   }).catch(function () { return fetch(r); });
 }
 
+/* FASSUNG 885 (Nachbesserung 1): die Hauptseite = die Wurzel des Bereichs, in dem dieser Helfer gilt */
+function hauptseite(u) {
+  var w = "/";
+  try { w = new URL("./", self.registration.scope).pathname; } catch (x) {}
+  try { if (typeof u === "string") u = new URL(u); } catch (x) { return false; }
+  return u.pathname === w || u.pathname === w + "index.html";
+}
+
 /* FASSUNG 885: die Antwort der Vorab-Anfrage (undefined, wenn der
    Browser kein Vorab-Laden kann oder es noch nicht eingeschaltet ist). */
 function vorab(e) {
@@ -131,7 +143,9 @@ function vorab(e) {
    Eine App zeigt beim Öffnen sofort, was sie hat, und fragt im
    Hintergrund nach Neuem. Hier wartete jedes Öffnen mit Helfer auf die
    Seite aus dem Netz: Verbindungsaufbau und Rundreise (gemessen 4G:
-   erstes Byte 188 ms; draußen auf Android 616 ms), im Funkloch bis 6 s.
+   erstes Byte 188 ms; draußen auf Android 616 ms), bei hängender Leitung
+   bis 6 s (im echten Funkloch – Verbindung bricht sofort ab – kam die
+   gespeicherte Seite schon bis 884 sofort).
    Jetzt („stale-while-revalidate", wie es große Web-Apps machen):
      - Liegt eine Seite im Speicher (jünger als 12 h), kommt SIE sofort.
        Die Vorab-Anfrage läuft im Hintergrund weiter und frischt den
@@ -145,12 +159,18 @@ function vorab(e) {
        Fassungs-Wächter in index.html über fassung.json und lädt GENAU
        EINMAL neu (index.html?f=…) – nie im Klassenzimmer, im Raum oder
        mitten in einer Eingabe (dann die Blase „Neue Fassung").
-     - index.html?f=X, X neuer als die gespeicherte Seite: läuft gerade
+     - index.html?f=X, X anders als die gespeicherte Seite: läuft gerade
        eine Auffrischung, wartet der Helfer auf sie (höchstens 3 s) –
        meist liegt die neue Seite dann schon im Speicher und kommt ohne
-       weitere Rundreise. Sonst wie bisher zuerst das Netz (6 s, im
-       Funkloch der Speicher). Ein ÄLTERES ?f= (eine alte Adresse, die
-       der Browser wieder öffnet) bekommt die gespeicherte Seite.
+       weitere Rundreise. Sonst: X neuer → wie bisher zuerst das Netz
+       (im Funkloch der Speicher, nach 6 s ab dem Öffnen der Speicher);
+       X ÄLTER (eine alte Adresse, die der Browser wieder öffnet) → die
+       gespeicherte Seite.
+       Nachbesserung 1: auch bei einem älteren X auf die Auffrischung
+       warten. Sonst kam eine Rücknahme auf dem Server (887 → 885) bei
+       realem Netz erst beim zweiten Öffnen an: der Wächter lud auf
+       ?f=885 neu, und dieses „ältere ?f=" bekam wieder die gespeicherte
+       887 – die zurückgezogene Fassung lief zweimal, dann die Blase.
      - Älter als 12 h: zuerst das Netz wie bisher. Nach so langer Pause
        ist meist eine neue Fassung draußen; die alte Seite starten und
        dann neu laden wäre langsamer als gleich die neue.
@@ -169,6 +189,7 @@ var KOPF = "x-dma-fassung", ZEIT = "x-dma-zeit", ALTER_MS = 12 * 3600 * 1000;
 var auffrischung = null;   /* laufende Auffrischung (Versprechen → gespeicherte Fassung oder "") */
 
 function seite(r, e) {
+  var t0 = Date.now();
   /* waitUntil gleich zu Beginn: der Helfer bleibt wach, bis die Seite im Hintergrund gelesen und gespeichert ist */
   var los, halten = new Promise(function (ok) { los = ok; });
   try { e.waitUntil(halten); } catch (x) {}
@@ -177,17 +198,21 @@ function seite(r, e) {
   var f = "";
   try { f = new URL(r.url).searchParams.get("f") || ""; } catch (x) {}
   var antwort = ausSpeicher().then(function (g) {
+    /* Nachbesserung 1: bis 884 legte der Helfer JEDE Navigation auf …/ als Seite ab, auch sicherung/<x>/. So eine Seite
+       aus der Zeit vor S1 (ohne eigenen Kopf; die gespeicherte Antwort kennt ihre Adresse) nie ausliefern. */
+    if (g && !g.headers.get(KOPF) && g.url && !hauptseite(g.url)) g = null;
     return fassungVon(g).then(function (c) {
-      if (!g || alterVon(g) > ALTER_MS) return netzZuerst(netz, r, g, c, los);
-      if (!(f && neuer(f, c))) return schonDa(netz).then(function (a) {
-        return a ? frischWennDa(a, g, c, r, los) : (los(auffrischen(netz, c, r.url)), g);
-      });
-      if (!auffrischung) return netzZuerst(netz, r, g, c, los);
-      return frist(auffrischung, 3000).then(ausSpeicher).then(function (g2) {
+      if (!g || alterVon(g) > ALTER_MS) return netzZuerst(netz, r, g, c, los, t0);
+      /* ?f= anders als die gespeicherte (neuer ODER älter, Nachbesserung 1) und eine Auffrischung läuft: auf sie warten */
+      if (f && f !== c && auffrischung) return frist(auffrischung, 3000).then(ausSpeicher).then(function (g2) {
         return fassungVon(g2).then(function (c2) {
           if (g2 && !neuer(f, c2)) { los(auffrischen(netz, c2, r.url)); return g2; }
-          return netzZuerst(netz, r, g2 || g, c2, los);
+          return netzZuerst(netz, r, g2 || g, c2, los, t0);
         });
+      });
+      if (f && neuer(f, c)) return netzZuerst(netz, r, g, c, los, t0);
+      return schonDa(netz).then(function (a) {
+        return a ? frischWennDa(a, g, c, r, los) : (los(auffrischen(netz, c, r.url)), g);
       });
     });
   });
@@ -195,8 +220,10 @@ function seite(r, e) {
   return antwort;
 }
 
-/* zuerst das Netz (wie bis 884): im Funkloch sofort, nach 6 s die gespeicherte Seite */
-function netzZuerst(netz, r, g, c, los) {
+/* zuerst das Netz (wie bis 884): im Funkloch sofort, nach 6 s die gespeicherte Seite.
+   Nachbesserung 1: die 6 s zählen ab dem Öffnen (t0), nicht ab hier – sonst kamen nach 3 s Warten auf eine hängende
+   Auffrischung noch einmal 6 s dazu (bis 9 s). */
+function netzZuerst(netz, r, g, c, los, t0) {
   var ablage = netz.then(function (a) {
     return a && a.status === 200 && a.type === "basic" ? speichern(a.clone(), c, r.url) : "";
   }, function () { return ""; });
@@ -207,7 +234,7 @@ function netzZuerst(netz, r, g, c, los) {
     netz.then(nimm, function () {
       if (g) nimm(g); else if (!erledigt) { erledigt = true; fehl(new Error("offline")); }
     });
-    if (g) setTimeout(function () { nimm(g); }, 6000);
+    if (g) setTimeout(function () { nimm(g); }, Math.max(0, 6000 - (Date.now() - (t0 || Date.now()))));
   });
 }
 
@@ -241,6 +268,8 @@ function merken(p) {
 /* Seite in den Speicher – nur mit Fassung, nie rückwärts (siehe oben). Antwort: die gespeicherte Fassung oder "". */
 function speichern(a, c, url) {
   if (!a || a.status !== 200 || a.type !== "basic") return Promise.resolve("");
+  /* Nachbesserung 1: nur die Hauptseite (nie eine Seite aus einem Unterordner) */
+  if (!hauptseite(a.url || url)) return Promise.resolve("");
   return a.text().then(function (t) { return speichernText(t, a, c, url); }).catch(function () { return ""; });
 }
 function speichernText(t, a, c, url) {
