@@ -612,13 +612,28 @@
      der acht Abfragen an die Datenbank hinaus (Links, Tipps, Wissen-Bild, Anmeldebild) und die Filmliste – genau
      dann, wenn Seite, Anmeldung und Klassenzimmer die Leitung brauchen. Gemessen: SPIELSYSTEM.md, „Fassung 885 —
      Verdeckte Bereiche später zeichnen“. */
+  /* FASSUNG 885 (Nachbesserung 1) — XANDER (Funk 255): „die Verbindung zu den anderen hat oberste Priorität“.
+     Nicht im Klassenzimmer: ist es offen oder ist man im Raum (auch bei der Rückkehr nach dem Neuladen), wartet die
+     Ruhepause (alle 3 s nachgesehen) – sonst liefen Datenbank-Abfragen und Vorzeichnen genau beim Betreten des Raums,
+     wie es wortschatzSpaeterHolen und das Vorladen der Filme schon vermeiden. Nur was dem Raum dient, läuft trotzdem
+     (auchImRaum: die Filmliste). Liest nur Attribute und die Lage des Chats, kein erzwungenes Layout. */
+  function ruheImRaum() {
+    if (unterbereichOffen("view-knowledge", "sub-livechat")) return true;
+    try {
+      const l = window.LiveChat && window.LiveChat.lage && window.LiveChat.lage();
+      return Boolean(l && (l.lage === "drin" || l.lage === "verbindet"));
+    } catch (e) { return false; }
+  }
   var ruheArbeit = [];
-  function nachLadenInRuhe(arbeit) {
-    ruheArbeit.push(arbeit);
+  function nachLadenInRuhe(arbeit, auchImRaum) {
+    ruheArbeit.push({ f: arbeit, auchImRaum: Boolean(auchImRaum) });
     if (ruheArbeit.length > 1) return;
     const eine = () => {
-      try { ruheArbeit[0](); } catch (e) { console.warn("Ruhepause:", e); }
-      ruheArbeit.shift();
+      const i = ruheImRaum() ? ruheArbeit.findIndex((a) => a.auchImRaum) : 0;
+      if (i < 0) { setTimeout(planen, 3000); return; }
+      const a = ruheArbeit[i];
+      try { a.f(); } catch (e) { console.warn("Ruhepause:", e); }
+      ruheArbeit.splice(ruheArbeit.indexOf(a), 1);
       if (ruheArbeit.length) planen();
     };
     const planen = () => { if (window.requestIdleCallback) requestIdleCallback(eine, { timeout: 2000 }); else setTimeout(eine, 200); };
@@ -36459,7 +36474,7 @@
       /* FASSUNG 885 — geholt wurde sie aber schon beim Seitenstart (eine Anfrage mehr im Aufbau, ohne Speicher:
          cache no-cache). Jetzt in der Ruhepause nach dem Laden – und sofort, wenn es ins Klassenzimmer geht
          (raumVorbereiten: Tipp, Einladungslink, Rückkehr nach dem Neuladen), je nachdem, was zuerst kommt. */
-      nachLadenInRuhe(() => lcFilmListeHolen().then((namen) => lcFilmeVorladen(namen)));
+      nachLadenInRuhe(() => lcFilmListeHolen().then((namen) => lcFilmeVorladen(namen)), true);   // auch im Raum (dort gebraucht)
       if (LiveChat.beiFilm) {
         LiveChat.beiFilm((name, melden) => {
           lcFilmSpielen(name).then((lief) => {
@@ -91269,6 +91284,24 @@
        - beim Öffnen wird nur neu gezeichnet, wenn sich der Stand seitdem geändert hat.
      Gemessen: SPIELSYSTEM.md, „Fassung 885 — Verdeckte Bereiche später zeichnen“. */
   var kompassStand = "", kompassWache = null;
+  /* FASSUNG 885 (Nachbesserung 1) — XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen
+     haben oberste Priorität“. Die drei Lesebereiche unter dem Kompass (Dichter & Denker, Schnee von gestern,
+     Beiträge – nur mit Schalter, Moderation oder Beta zu sehen) werden NICHT verdeckt vorgezeichnet, sondern erst,
+     wenn der Kompass aufgeht (kompassLeseWache, gleiches Muster wie kompassWache; oder der Tipp auf den Unterreiter).
+     Grund (Prüfbericht zu 8437dc48): ihr Zeichnen braucht die Rest-Stücke (renderComingSoonGate in rest1,
+     lesetexteWennSichtbar … in rest3). In der ersten Ruhepause nach load sind die noch nicht geholt (erst kommen die
+     Raum-Stücke) – der Platzhalter holte sie per synchronem Abruf, und für Betreiber, Moderation und Beta stand die
+     Seite bei jedem Start still (gemessen 4G 457 ms, 3G 2625 ms; vorher 0). Dazu luden die Beiträge ihre 300 KB
+     (data-beitraege.js) verdeckt nach. Jetzt geschieht das wie vor diesem Schritt erst beim Öffnen; verdeckt
+     vorgezeichnet wird nur der Kompass selbst (er braucht keine Rest-Stücke). */
+  var kompassLeseWache = null, kompassLeseFehlt = false;
+  function kompassLeseZeichnen() {
+    if (kompassLeseWache) { kompassLeseWache.disconnect(); kompassLeseWache = null; }
+    renderDichterUndDenker();
+    renderSchneeVonGestern();
+    renderEigeneBeitraege();
+    kompassLeseFehlt = false;   // erst wenn alle drei durchgelaufen sind – sonst versucht es das nächste Öffnen wieder
+  }
   function kompassKalenderPlanen() {
     /* FASSUNG 840 — nicht im selben Augenblick: wer über „Wissen" ins Klassenzimmer geht, sieht den Kompass nur
        im Vorbeigehen (Funk 271, „zehnmal schneller"). Erst wenn er nach 1,2 s noch zu sehen ist. */
@@ -91576,9 +91609,15 @@
     const stand = [(Backend.currentUser() || {}).id || "", Backend.isBetaTester && Backend.isBetaTester(), canSeeGatedSections,
       Backend.isAdmin && Backend.isAdmin(), ["dichter_und_denker", "schnee_von_gestern", "eigene_beitraege"].map((k) => String(Backend.getRawFeatureFlag ? Backend.getRawFeatureFlag(k) : "")),
       betonung].join("|") + "|" + kompassHtml;
-    if ((oeffnen || vorzeichnen) && stand === kompassStand && !(betonung && !(VocabData.alleThemenDa && VocabData.alleThemenDa()))) return;
-    kompassStand = stand;
+    if ((oeffnen || vorzeichnen) && stand === kompassStand && !(betonung && !(VocabData.alleThemenDa && VocabData.alleThemenDa()))) {
+      if (oeffnen && kompassLeseFehlt) kompassLeseZeichnen();   // FASSUNG 885 (Nachbesserung 1): die Lesebereiche beim Öffnen
+      return;
+    }
+    /* FASSUNG 885 (Nachbesserung 1) — der Stand gilt erst, wenn alles gezeichnet ist (ganz unten): bricht etwas ab,
+       zeichnet das nächste Öffnen wieder ganz. */
+    kompassStand = "";
     if (kompassWache) { kompassWache.disconnect(); kompassWache = null; }
+    if (kompassLeseWache) { kompassLeseWache.disconnect(); kompassLeseWache = null; }
     kompassArea.innerHTML = kompassHtml;
     /* Auch die Wegweiser-Links landen sonst zu früh: der Kompass lädt
        sein Banner nach, alles darunter rutscht, und man steht neben dem
@@ -91635,9 +91674,16 @@
       sel.addEventListener("change", (e) => { historyUebersetzungSprache = e.target.value || null; renderKompass(); });
     });
     wireSiteBannerUploads(kompassArea);
-    renderDichterUndDenker();
-    renderSchneeVonGestern();
-    renderEigeneBeitraege();
+    /* FASSUNG 885 (Nachbesserung 1) — verdeckt vorgezeichnet: die Lesebereiche erst, wenn der Kompass Platz bekommt
+       (s. kompassLeseZeichnen). Ohne ResizeObserver wie bisher sofort. */
+    if (vorzeichnen && window.ResizeObserver && (dichterVisible || schneeVisible || beitraegeVisible)) {
+      kompassLeseFehlt = true;
+      kompassLeseWache = new ResizeObserver(() => {
+        if (kompassLeseFehlt && kompassLeseWache && bereichSichtbar(kompassArea)) kompassLeseZeichnen();
+      });
+      kompassLeseWache.observe(kompassArea);
+    } else kompassLeseZeichnen();
+    kompassStand = stand;
   }
   /* FASSUNG 885 — beim Start nur zeichnen, wenn der Kompass offen ist (Einsprung mit #view-knowledge). Sonst wacht
      die Wache, bis sein Bereich Platz bekommt (von 0 auf eine Breite – vor dem nächsten Bild), und die Ruhepause
@@ -96139,6 +96185,10 @@ An einem Morgen lief ein kleiner Fuchs los…
       return;
     }
     activateTab("view-profile");
+    /* FASSUNG 885 (Nachbesserung 1) — das Profil wird beim Start nicht mehr verdeckt gezeichnet (Ruhepause bzw. nach
+       der Anmeldung); wer vorher hier tippt, sähe sonst länger ein leeres Profil. Gezeichnet wie beim Unterreiter. */
+    const konto = document.getElementById("accountArea");
+    if (konto && !konto.childElementCount) renderAccount();
   });
 
   /* ============================================================

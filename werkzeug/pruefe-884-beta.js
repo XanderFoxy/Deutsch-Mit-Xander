@@ -59,6 +59,13 @@
         H-normal: höchstens 2 (rest1 trophyCounts, rest6 tinyAvatar).
         In ce53c58 (Nachbesserung 1) rot: Beta und Betreiber 4 Stücke – rest4
         für beitraegeLaden kam dazu (Slow 4G: +0,43 s Sync-XHR je Aufruf).
+        FASSUNG 885 (Verdeckte Bereiche, Nachbesserung 1): die Lesebereiche
+        unter dem Kompass werden verdeckt nicht mehr gezeichnet, sondern erst
+        beim Öffnen. Deshalb jetzt: beim Start 0 Stücke synchron für alle drei
+        (vorher Grenze 3/3/2), und „Beiträge gezeichnet“ wird NACH einem echten
+        Tipp auf „Wissen“ geprüft (der Weg läuft wirklich, jetzt beim Öffnen).
+        Wie draußen (Anmeldung erst nach dem Start, gedrosselt) prüft es
+        Sonde 885-bereiche, Teil G.
    Schalter:
      QUELLE=1   index.html?quelle (ohne: min/ – vorher
                 node werkzeug/fassung-setzen.js --nur-stempel); G entfällt
@@ -187,10 +194,17 @@ const ANHANG = "\n;(function(){try{if(window.__betaAttrappe)window.__betaAttrapp
     await warte(2500);
     const st = await pg.evaluate(() => {
       const s = window.DMA_TEILE ? window.DMA_TEILE.stand() : { sofort: ["kein DMA_TEILE"], fehler: [] };
-      const b = document.getElementById("beitraegeArea");
-      return { sofort: s.sofort, fehler: s.fehler || [],
-        beitraege: Boolean(window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE && b && b.childElementCount && !/werden geladen/.test(b.textContent)) };
+      return { sofort: s.sofort, fehler: s.fehler || [] };
     });
+    /* FASSUNG 885 (Nachbesserung 1): die Beiträge kommen beim Öffnen – echter Tipp auf „Wissen“, bis 4 s warten */
+    if (wer !== "normal") {
+      await pg.tap('[data-target="view-knowledge"]');
+      st.beitraege = await pg.waitForFunction(() => {
+        const b = document.getElementById("beitraegeArea");
+        return Boolean(window.DMA_DATEN && window.DMA_DATEN.EIGENE_BEITRAEGE && b && b.childElementCount && !/werden geladen/.test(b.textContent));
+      }, null, { timeout: 4000 }).then(() => true, () => false);
+      st.sofortNachTipp = await pg.evaluate(() => (window.DMA_TEILE ? window.DMA_TEILE.stand().sofort.length : -1));
+    }
     await ctx.close();
     return st;
   }
@@ -376,14 +390,14 @@ const ANHANG = "\n;(function(){try{if(window.__betaAttrappe)window.__betaAttrapp
       const kOrt = KOMPASS.map((n) => [n, platz(n) < 0 ? "Kern" : stueck[platz(n)]]);
       teil = "H0";
       sage(new Set(kOrt.map(([, o]) => o)).size === 1, "die Kompass-Reihe steht in einem Stück", kOrt.map(([n, o]) => n + "→" + o).join(" "));
-      for (const [rolle, hoechstens] of [["beta", 3], ["betreiber", 3], ["normal", 2]]) {
+      for (const [rolle, hoechstens] of [["beta", 0], ["betreiber", 0], ["normal", 0]]) {
         const st = await startStand(rolle);
         teil = "H-" + rolle;
         const namen = st.sofort.map((x) => x.split(" ")[0] + " (" + ((x.match(/at (\w+)/) || [])[1] || "?") + ")");
         sage(st.sofort.length <= hoechstens && (rolle === "normal" || st.beitraege) && !st.fehler.length,
           (rolle === "normal" ? "angemeldet ohne Rolle" : rolle === "beta" ? "Beta" : "Betreiber") + ": höchstens " + hoechstens + " Stücke synchron beim Start"
-            + (rolle === "normal" ? "" : ", Beiträge gezeichnet"),
-          st.sofort.length + ": " + namen.join(", ") + (rolle === "normal" ? "" : "  Beiträge " + (st.beitraege ? "da" : "FEHLEN")) + (st.fehler.length ? "  Fehler " + st.fehler.join(" | ") : ""));
+            + (rolle === "normal" ? "" : ", Beiträge nach dem Wissen-Tipp gezeichnet"),
+          st.sofort.length + ": " + namen.join(", ") + (rolle === "normal" ? "" : "  Beiträge " + (st.beitraege ? "da" : "FEHLEN") + " (synchron bis dahin gesamt " + st.sofortNachTipp + ")") + (st.fehler.length ? "  Fehler " + st.fehler.join(" | ") : ""));
       }
     }
   } catch (e) {
