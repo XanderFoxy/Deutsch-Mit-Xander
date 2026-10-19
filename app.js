@@ -321,9 +321,11 @@
      spiel.js und die ganzen Stilblätter (index.html: dmaSpielLaden, dmaStileVoll). Geholt wird sofort; was
      rechnet, wartet, bis das Bild steht. */
   /* FASSUNG 885 (S3) — startet den Präsenzkanal und das Mithören fürs Laufband, je genau einmal; gesetzt weiter unten
-     („Den Klassenzimmer-Kanal mithören"), also erst am Ende des Starts – davor ist es null. */
+     („Den Klassenzimmer-Kanal mithören"), also erst am Ende des Starts – davor ist es null. dmaPraesenzLos(true) öffnet
+     nur den Kanal (Rückkehr, Betreten), ohne Mithörer fürs Laufband. */
   let dmaPraesenzLos = null;
-  function raumVorbereiten() {
+  /* tipp: nur der Tipp auf die Pille „Klassenzimmer“ (S3). Rückkehr nach dem Neuladen und Betreten rufen ohne. */
+  function raumVorbereiten(tipp) {
     dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 600);
     dmaTeilGruppe("raum");
     try { lcFilmListeHolen(); } catch (e) {}   // FASSUNG 885 — die Filmliste kommt sonst erst in der Ruhepause
@@ -338,10 +340,15 @@
        Licht), sagt der Präsenzkanal. Den öffnete die Seite erst 4 s nach dem Start – wer früher auf „Klassenzimmer“
        tippte, sah bis dahin „leer — geh ruhig hinein“, obwohl jemand da war. Jetzt geht er beim Tipp auf, gleich nach
        dem ersten Bild (erst das Bild, dann die Leitung). Derselbe eine Kanal wie bisher: wer zuerst kommt (Tipp oder
-       die 4 s), öffnet ihn, danach tut dmaPraesenzLos nichts mehr. Beim Seitenstart ohne Tipp bleibt alles wie vorher;
-       nur die Rückkehr nach dem Neuladen (geht ohnehin gleich in den Raum, der den Kanal sonst beim Betreten öffnet)
-       hat ihn jetzt schon ab dem ersten Bild. */
-    const praesenz = () => { try { if (dmaPraesenzLos) dmaPraesenzLos(); } catch (e) {} };
+       die 4 s), öffnet ihn, danach tut dmaPraesenzLos nichts mehr. Beim Seitenstart ohne Tipp bleibt alles wie vorher.
+       NACHBESSERUNG 1 (Prüfer): Rückkehr nach dem Neuladen und Betreten ohne Tipp (Einladungslink) öffnen hier nur den
+       Kanal (mit der richtigen Kennung); den Mithörer fürs Laufband gibt es dort wie bis 884 erst nach 4 s. Kam er
+       schon beim ersten Bild, bekam er den noch leeren Stand als erste Aufnahme, und das Laufband meldete danach alle,
+       die längst da waren, zwei Minuten lang als „gerade ins Klassenzimmer gekommen“ – nach dem Neuladen auch einen
+       selbst (Sonde 885-praesenz R, 8 Rückkehr-Paare: 09fedd06 in 8 von 8 Läufen, 2ea2044c und jetzt in 0 von 8). Nach
+       4 s steht der Stand schon da: kein Ereignis. Der frühe Kanal bleibt (richtige Kennung, livechat.js sieht „andere
+       da“ früher); „drin“ wird dadurch nicht später (+5 ms gepaart, Rauschen). */
+    const praesenz = () => { try { if (dmaPraesenzLos) dmaPraesenzLos(!tipp); } catch (e) {} };
     if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(praesenz, 0)); else setTimeout(praesenz, 0);
   }
   /* Im Raum: Raum-Stücke sofort holen und, sobald sie da sind, alle auf einmal einsetzen (nicht erst in Ruhepausen). */
@@ -70220,7 +70227,7 @@
     /* FASSUNG 876 — XANDER (Funk 271): „die Verbindung zu den anderen haben oberste Priorität". Was der Raum
        braucht (Chat-Effekte, spiel.js, die ganzen Stilblätter), kommt jetzt schon beim Öffnen des Klassenzimmers,
        nicht erst in der Ruhepause – beim Betreten und bei jedem Effekt ist alles da. */
-    raumVorbereiten();
+    raumVorbereiten(true);   // FASSUNG 885 (S3): der Tipp öffnet auch den Präsenzkanal samt Laufband
     renderLiveChat();
     /* RUNDE 87 — HIER und nur hier darf das Vollbild anfangen: dieser
        Ruf steht in einer echten Fingerbewegung, und nur daraus laesst
@@ -99121,9 +99128,13 @@ An einem Morgen lief ein kleiner Fuchs los…
          ist oder gerade hineingeht (Betreten ohne Tipp auf die Pille, z. B. Einladungslink): seine Raum-Kennung
          (lage().ichId) – dieselbe, die livechat.js beim Betreten nimmt. Vorher setzten die 4 s sie auf „", und
          livechat.js hielt den eigenen Eintrag für „andere da“ (ein überflüssiges „hallo“ nach 1,2 und 3 s).
-       - beiPraesenz (Laufband, Online-Liste) einmal; der Rückruf selbst ist unverändert. */
+       - beiPraesenz (Laufband, Online-Liste) einmal; der Rückruf selbst ist unverändert. Nur beim Tipp und nach 4 s,
+         nicht mit nurKanal (Rückkehr, Betreten; Nachbesserung 1, s. raumVorbereiten): beiPraesenz ruft den Mithörer
+         sofort mit dem Stand, den livechat.js gerade hat, und kzEreignisseAbleiten nimmt diesen als erste Aufnahme.
+         Ist der Kanal eben erst aufgegangen, ist das {} – dann wäre danach jeder, der schon da war, „gerade
+         gekommen“. */
   let kzPraesenzZu = false, kzPraesenzHorcht = false;
-  dmaPraesenzLos = () => {
+  dmaPraesenzLos = (nurKanal) => {
     if (!window.LiveChat || !LiveChat.praesenzZuhoeren) return;
     if (!kzPraesenzZu && window.supabase) {
       kzPraesenzZu = true;
@@ -99146,7 +99157,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       }
       LiveChat.praesenzZuhoeren(id);
     }
-    if (kzPraesenzHorcht) return;
+    if (nurKanal === true || kzPraesenzHorcht) return;
     kzPraesenzHorcht = true;
     LiveChat.beiPraesenz((da) => {
       kzDaJetzt = da || {};
@@ -99178,7 +99189,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen();
     });
   };
-  setTimeout(dmaPraesenzLos, 4000);
+  setTimeout(() => dmaPraesenzLos(false), 4000);
   /* Das Postfach im Hintergrund vorwärmen: so ist auch der allererste
      Sprung „✉️ Ergebnis im Postfach" sofort da und nicht erst nach zwei
      Datenbankabfragen. */

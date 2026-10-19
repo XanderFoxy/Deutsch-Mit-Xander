@@ -15,17 +15,26 @@
    hinein“.
    Jetzt öffnet ihn auch der Tipp (raumVorbereiten, gleich nach dem ersten
    Bild) – wer zuerst kommt; derselbe eine Kanal.
+   NACHBESSERUNG 1 (Prüfer): Rückkehr nach dem Neuladen und Betreten ohne
+   Tipp (Einladungslink) öffnen früh nur den Kanal; den Mithörer fürs
+   Laufband gibt es dort wie bis 884 erst nach 4 s. In 09fedd06 kam er dort
+   schon beim ersten Bild, bekam den noch leeren Stand als erste Aufnahme,
+   und das Laufband meldete alle, die längst da waren (nach dem Neuladen
+   auch einen selbst), zwei Minuten lang als „gerade gekommen“.
 
    Die Sonde ersetzt supabase-js durch einen nachgebauten Klienten (erst,
    wenn backend.js gelaufen ist – Backend bleibt im Demo-Betrieb; nur
    livechat.js bekommt den Kanal). Der Präsenzkanal meldet SUBSCRIBED nach
    KANAL_MS (Standard 300 ms ≈ Verbindung + Beitritt über 4G) und dann,
-   wer da ist: Emmy im Hauptraum, Otto in „Ottos Raum“. Rechner 4×
+   wer da ist: Emmy im Hauptraum, Otto in „Ottos Raum“; wer sich selbst
+   einträgt (track), steht 100 ms später auch darin. Rechner 4×
    gebremst (Telefon), echte Tipps (Berührung). Nur min/ (vorher
    node werkzeug/fassung-setzen.js --nur-stempel).
      Q  Bau: kzEreignisSetzen, kzNurName, kzWohinText im Kern (app-teile.json
         „kern“, in min/app.js echte Funktionen); raumVorbereiten ruft
-        dmaPraesenzLos, die 4 s rufen dieselbe Funktion
+        dmaPraesenzLos, die 4 s rufen dieselbe Funktion; nur der Tipp auf die
+        Pille gibt raumVorbereiten „tipp“ mit, Rückkehr und Betreten nicht,
+        und ohne „tipp“ meldet dmaPraesenzLos keinen Mithörer an
      A  früher Tipp (Gast, gleich nach „bereit“): Kanal gleich nach dem
         ersten Bild des Klassenzimmers offen (≤ Knopf + 200 ms, ≤ 500 ms nach
         dem Tipp), nicht davor; Emmy in
@@ -34,19 +43,28 @@
         Aufruf von praesenzZuhoeren aus app.js, ein Mithörer fürs Laufband);
         kein synchroner Abruf, keine Seitenfehler
      B  ohne Tipp: wie bisher – kein Kanal vor 3,8 s nach dem Start von
-        app.js, danach genau einer (kein Mehrverbrauch beim Seitenstart)
+        app.js, danach genau einer (kein Mehrverbrauch beim Seitenstart; die
+        obere Grenze ist nur „bis 8 s“: der Zeitgeber feuert bei gebremstem
+        Rechner auch einmal spät)
      C  Konto, die Anmeldung lädt noch (früher Tipp): der Kanal trägt die
         Konto-Kennung aus dem Gerät (sb-…-auth-token, sonst dma_lc_konto) –
         wie livechat.js beim Betreten – statt einer Zufallskennung
-     D  Raum-Stücke zurückgehalten (langsame Leitung) und die Antwort des
-        Kanals bringt Ereignisse fürs Laufband (Otto macht einen Raum auf):
-        kein synchroner Abruf eines Raum-Stücks
+     D  Raum-Stücke zurückgehalten (langsame Leitung), und nach dem ersten
+        Stand kommt jemand dazu (Lena macht „Lenas Raum“ auf): das Ereignis
+        steht im Laufband, kein synchroner Abruf eines Raum-Stücks. „Otto
+        macht gerade … auf“ ist KEIN Erfolg (Otto war schon da) – das ist
+        der Fehler beim ersten Öffnen nach dem Tipp (Offen 1, in 2ea2044c nach
+        den 4 s genauso) und wird nur genannt
      E  Rückkehr nach dem Neuladen (raumVorbereiten noch im Start von
         app.js), mit Konto und als Gast: keine Seitenfehler, genau ein Kanal
         mit der Konto- bzw. Raum-Kennung, nach „drin“ übergibt app.js keine
         andere Kennung (vorher: nach 4 s praesenzZuhoeren(u ? u.id : "") –
         lädt die Anmeldung noch oder ist es ein Gast, hält livechat.js den
-        eigenen Eintrag für „andere da“)
+        eigenen Eintrag für „andere da“); der Mithörer fürs Laufband kommt
+        wie bis 884 erst nach 3,8 s, und das Laufband meldet niemanden, der
+        beim Öffnen schon da war (auch nicht einen selbst), als „gekommen“,
+        „macht gerade … auf“ oder „gewechselt“ (gegen 2ea2044c grün, gegen
+        09fedd06 rot)
      F  Gast betritt den Raum ohne Tipp auf die Pille (LiveChat.betreten
         direkt, vor den 4 s): dasselbe wie E
      G  supabase-js kommt spät (nach den 4 s): der nächste Tipp öffnet den
@@ -55,9 +73,12 @@
         verschränkt, PAARE Paare (Standard 10): Tipp → Emmy in „DIE RÄUME“,
         Tipp → Knopf „Betreten“, früher Tipp und später Tipp (5 s nach dem
         Start; PAARE_SPAET, Standard 5)
+     R  Messung Rückkehr nach dem Neuladen (nur mit GEGEN=, Konto, PAARE_R
+        Paare, Standard 7, verschränkt): „drin“ ab dem Öffnen, Kanal ab dem
+        Öffnen, falsche „gekommen“-Meldungen im Laufband
    Aufruf: node werkzeug/pruefe-885-praesenz.js
            WURZEL=<stand> node werkzeug/pruefe-885-praesenz.js   (Gegenprobe)
-           GEGEN=<stand vorher> node werkzeug/pruefe-885-praesenz.js (mit M)
+           GEGEN=<stand vorher> node werkzeug/pruefe-885-praesenz.js (mit M und R)
            NUR=A,C …  nur diese Abschnitte im Browser (Q läuft immer)
    EHRLICH: der Kanal ist nachgebaut (fester Zeitpunkt). Draußen hängt die
    Zeit bis „Emmy steht da“ an der Leitung (Verbindung + Beitritt); der
@@ -69,7 +90,7 @@ const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const GEGEN = process.env.GEGEN ? path.resolve(process.env.GEGEN) : "";
 const CPU = Number(process.env.CPU || 4);
 const KANAL_MS = Number(process.env.KANAL_MS || 300);
-const PAARE = Number(process.env.PAARE || 10), PAARE_SPAET = Number(process.env.PAARE_SPAET || 5);
+const PAARE = Number(process.env.PAARE || 10), PAARE_SPAET = Number(process.env.PAARE_SPAET || 5), PAARE_R = Number(process.env.PAARE_R || 7);
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg",
   ".woff2": "font/woff2", ".gif": "image/gif", ".webmanifest": "application/manifest+json" };
@@ -112,7 +133,7 @@ function seitenSonde(o) {
     if (o.lcKonto) localStorage.setItem("dma_lc_konto", o.lcKonto);
     if (o.rueckkehr) sessionStorage.setItem("dma_livechat_zurueck", JSON.stringify({ raum: "sonde885praesenz", name: "Sonde", mitBild: false, zeit: Date.now() }));
   } catch (e) {}
-  const P = window.__p = { kanaele: [], zuhoeren: [], horcher: 0, horcherKz: 0, init: 0, tipps: [] };
+  const P = window.__p = { kanaele: [], zuhoeren: [], horcher: 0, horcherKz: 0, kzReg: [], init: 0, drin: 0, tipps: [] };
   let ini;
   Object.defineProperty(window, "__dmaAppInitialized", { configurable: true, get: () => ini,
     set: (v) => { ini = v; if (v && !P.init) P.init = performance.now(); } });
@@ -126,7 +147,17 @@ function seitenSonde(o) {
         P.zuhoeren.push({ t: performance.now(), id: String(id), lage: (v.lage && v.lage().lage) || "" });
         return z.apply(this, arguments);
       };
-      v.beiPraesenz = function (f) { P.horcher++; if (/kzDaJetzt/.test(String(f))) P.horcherKz++; return b.apply(this, arguments); };
+      v.beiPraesenz = function (f) {
+        P.horcher++;
+        if (/kzDaJetzt/.test(String(f))) {
+          P.horcherKz++;
+          /* leer = der Präsenzkanal hatte noch nicht geantwortet: dann ist die erste Aufnahme {} */
+          const pk = P.kanaele.filter((k) => k.name === "dma-klassenzimmer-da")[0];
+          P.kzReg.push({ t: performance.now(), leer: !(pk && pk.ok) });
+        }
+        return b.apply(this, arguments);
+      };
+      if (v.beiAenderung) v.beiAenderung((l) => { if (l && l.lage === "drin" && !P.drin) P.drin = performance.now(); });
     } catch (e) {}
   } });
   /* supabase-js nachgebaut: Kanäle mitschreiben; der Präsenzkanal meldet nach kanalMs SUBSCRIBED und wer da ist */
@@ -135,7 +166,7 @@ function seitenSonde(o) {
   const FAKE = { createClient: () => ({
     realtime: { connect() {}, isConnected: () => false },
     channel(name, opt) {
-      const k = { name, key: (((opt || {}).config || {}).presence || {}).key, t: performance.now(), h: {}, st: {}, ok: 0,
+      const k = { name, key: (((opt || {}).config || {}).presence || {}).key, t: performance.now(), h: {}, st: {}, eigen: {}, ok: 0,
         on(art, f, fn) { const ev = (f && f.event) || art; (this.h[ev] = this.h[ev] || []).push(fn); return this; },
         subscribe(fn) {
           setTimeout(() => {
@@ -146,10 +177,17 @@ function seitenSonde(o) {
           }, kanalMs);
           return this;
         },
-        presenceState() { return this.st; },
-        track() { return Promise.resolve("ok"); }, untrack() { return Promise.resolve("ok"); },
+        presenceState() { return Object.assign({}, this.st, this.ok ? this.eigen : {}); },
+        /* sich selbst eintragen: 100 ms später (Rundreise) steht man im Stand wie alle anderen */
+        melde() { setTimeout(() => { if (this.ok) ["join", "sync"].forEach((ev) => (this.h[ev] || []).forEach((g) => { try { g(); } catch (e) {} })); }, 100); },
+        track(p) { if (name === "dma-klassenzimmer-da") { this.eigen = {}; this.eigen[String(this.key)] = [p || {}]; this.melde(); } return Promise.resolve("ok"); },
+        untrack() { if (name === "dma-klassenzimmer-da") { this.eigen = {}; this.melde(); } return Promise.resolve("ok"); },
         send() { return Promise.resolve("ok"); }, unsubscribe() { return Promise.resolve("ok"); } };
       P.kanaele.push(k);
+      if (name === "dma-klassenzimmer-da") {
+        /* D: jemand kommt dazu (nach dem ersten Stand) */
+        window.__sondeKommt = (schl, e) => { k.st[schl] = [e]; ["join", "sync"].forEach((ev) => (k.h[ev] || []).forEach((g) => { try { g(); } catch (x) {} })); };
+      }
       return k;
     },
     removeChannel() { return Promise.resolve("ok"); }, getChannels: () => [],
@@ -218,9 +256,17 @@ function server(wurzel) {
     DREI.filter((n) => !kern.includes(n)).join(", ") || "alle drei");
   const platz = DREI.filter((n) => new RegExp("function " + n + "\\([^)]*\\)\\{return dmaTeilRufA?\\(").test(minApp));
   sage(minApp && !platz.length, "in min/app.js sind sie echte Funktionen (kein Platzhalter, der ein Raum-Stück holt)", platz.length ? "Platzhalter: " + platz.join(", ") : "ok");
-  const rv = (minApp.match(/function raumVorbereiten\(\)\{[\s\S]*?\n?function /) || [""])[0];
+  const rvM = minApp.match(/function raumVorbereiten\((\w*)\)\{[\s\S]*?\n?function /);
+  const rv = rvM ? rvM[0] : "", rvArg = rvM ? rvM[1] : "";
   sage(/dmaPraesenzLos/.test(rv), "raumVorbereiten (Tipp, Rückkehr, Betreten) startet die Präsenz (dmaPraesenzLos)", rv ? "" : "raumVorbereiten nicht gefunden");
-  sage(/setTimeout\(dmaPraesenzLos,4e3\)/.test(minApp), "die 4 s nach dem Start rufen dieselbe Funktion (einmal, wer zuerst kommt)");
+  sage(/setTimeout\(\(\)=>dmaPraesenzLos\(!1\),4e3\)/.test(minApp), "die 4 s nach dem Start rufen dieselbe Funktion (einmal, wer zuerst kommt), mit Mithörer");
+  /* Nachbesserung 1: nur der Tipp auf die Pille gibt „tipp“ mit; ohne meldet dmaPraesenzLos keinen Mithörer an */
+  const pille = (minApp.match(/\[data-sub="sub-livechat"\]'\)\?\.addEventListener\("click",\(\)=>\{[^}]{0,80}/) || [""])[0];
+  sage(/raumVorbereiten\(!0\)/.test(pille), "der Tipp auf die Pille „Klassenzimmer“ ruft raumVorbereiten(tipp)", pille.slice(0, 120) || "Pille nicht gefunden");
+  const ohne = (minApp.match(/raumVorbereiten\(\)/g) || []).length;
+  sage(ohne === 2, "Rückkehr und raumDrin rufen raumVorbereiten ohne „tipp“", ohne + "×");
+  sage(Boolean(rvArg) && new RegExp("dmaPraesenzLos\\(!" + rvArg + "\\)").test(rv), "raumVorbereiten gibt dmaPraesenzLos „nur Kanal“ = !tipp", rvArg ? "" : "ohne Parameter");
+  sage(/dmaPraesenzLos=(\w+)=>\{[\s\S]{0,1500}?\1===!0\|\|kzPraesenzHorcht/.test(minApp), "dmaPraesenzLos(true) endet vor dem Mithörer fürs Laufband");
 
   const S = server(WURZEL); await S.lauscht;
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream"] });
@@ -270,13 +316,18 @@ function server(wurzel) {
     return { init: Math.round(P.init), jetzt: Math.round(performance.now()),
       kanaele: pk.map((k) => ({ t: Math.round(k.t), ok: Math.round(k.ok), key: String(k.key) })),
       alle: P.kanaele.map((k) => k.name), zuhoeren: P.zuhoeren.map((z) => ({ t: Math.round(z.t), id: z.id, lage: z.lage })),
-      horcher: P.horcher, horcherKz: P.horcherKz,
+      horcher: P.horcher, horcherKz: P.horcherKz, kzReg: P.kzReg.map((r) => ({ t: Math.round(r.t), leer: r.leer })), drin: Math.round(P.drin),
+      ticker: ((document.getElementById("tickerTrack") || {}).textContent || "").replace(/\s+/g, " "),
       tipps: P.tipps.map((m) => ({ t: Math.round(m.t), knopf: Math.round(m.knopf), leute: Math.round(m.leute), ticker: Math.round(m.ticker) })),
       sync: window.__sync.slice(), sofort: (window.DMA_TEIL_SOFORT || []).slice(),
       lage: window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage().lage : "",
       ichId: window.LiveChat && window.LiveChat.lage ? String(window.LiveChat.lage().ichId || "") : "" };
   });
   const syncText = (s) => s.sync.map((x) => x.u.replace(/^.*\//, "") + " " + x.d + " ms").concat(s.sofort).join(", ");
+  /* Laufband-Ereignisse (kzEreignisseAbleiten, app.js): „… ist gerade ins Klassenzimmer gekommen“, „… macht gerade „…“
+     auf“, „… ist in „…“ gewechselt“ – je Name einmal, auch wenn das Laufband sich zum Weiterlaufen verdoppelt */
+  const EREIGNIS = /([A-ZÄÖÜ][\wäöüß]*) (?:ist gerade (?:ins|in) [^·•]{1,60}? gekommen|macht gerade [^·•]{1,60}? auf|ist (?:ins|in) [^·•]{1,60}? gewechselt)/g;
+  const ereignisse = (text) => Array.from(new Set((String(text).match(EREIGNIS) || []).map((x) => x.trim())));
 
   /* ---------- A) früher Tipp ---------- */
   titel("A", "FRÜHER TIPP AUF „KLASSENZIMMER“ (GAST)");
@@ -322,11 +373,15 @@ function server(wurzel) {
     const bisVor = Math.max(0, init + 3800 - (await pg.evaluate(() => performance.now())));
     await schlaf(bisVor);
     const vor = await stand(pg);
-    await schlaf(Math.max(0, init + 5000 - (await pg.evaluate(() => performance.now()))));
+    /* Nachbesserung 1 (Prüfer): bei 4× gebremstem Rechner feuert der 4-s-Zeitgeber auch einmal spät (gemessen 4252 ms);
+       geprüft wird „nicht vor 3,8 s und genau einer“, gewartet höchstens bis 8 s nach dem Start */
+    await pg.waitForFunction((g) => performance.now() >= g && window.__p.kanaele.some((k) => k.name === "dma-klassenzimmer-da"), init + 4300,
+      { timeout: Math.max(1000, init + 8000 - (await pg.evaluate(() => performance.now()))), polling: 50 }).catch(() => {});
+    await schlaf(300);
     const nach = await stand(pg);
     const k = nach.kanaele[0];
     sage(!vor.kanaele.length, "kein Präsenzkanal vor 3,8 s nach dem Start von app.js", vor.kanaele.length ? "Kanal nach " + (vor.kanaele[0].t - init) + " ms" : "keiner (" + (vor.jetzt - init) + " ms)");
-    sage(nach.kanaele.length === 1 && k.t - init >= 3900 && k.t - init <= 4600, "genau einer nach 4 s, wie bisher", k ? (k.t - init) + " ms nach dem Start" : "keiner");
+    sage(nach.kanaele.length === 1 && k.t - init >= 3800, "genau einer nach 4 s, wie bisher", k ? (k.t - init) + " ms nach dem Start" : "keiner (bis 8 s)");
     sage(nach.zuhoeren.length === 1 && nach.horcherKz === 1, "ein Aufruf, ein Mithörer", nach.zuhoeren.length + " / " + nach.horcherKz);
     sage(!nach.sync.length && !nach.sofort.length && !pg.__fehler.length, "kein synchroner Abruf, keine Seitenfehler", (syncText(nach) + " " + pg.__fehler.slice(0, 2).join(" | ")).trim() || "0");
     await ctx.close();
@@ -357,12 +412,17 @@ function server(wurzel) {
     await bereit(pg);
     await insKlassenzimmer(pg);
     const init = Math.round(await pg.evaluate(() => window.__p.init));
-    await schlaf(Math.max(KANAL_MS + 800, init + 5000 - (await pg.evaluate(() => performance.now()))));
+    await schlaf(KANAL_MS + 800);
+    /* erst nach dem ersten Stand kommt jemand dazu – ein echtes Ereignis fürs Laufband */
+    await pg.evaluate(() => window.__sondeKommt && window.__sondeKommt("u-lena", { name: "Lena", raum: "lenas-raum", seit: 3 }));
+    await schlaf(Math.max(600, init + 5000 - (await pg.evaluate(() => performance.now()))));
     const s = await stand(pg);
-    const lauftext = await pg.evaluate(() => (document.getElementById("tickerTrack") || {}).textContent || "");
     const raumDa = await pg.evaluate(() => Object.keys(window.DMA_TEILE.stand().da).filter((t) => /^raum/.test(t)).length);
-    console.log("  info Raum-Stücke eingesetzt: " + raumDa + " · Laufband: " + (lauftext.match(/[^·•]*Otto[^·•]*/) || [""])[0].trim().slice(0, 80));
-    sage(/Otto/.test(lauftext), "der Rückruf lief (Otto steht im Laufband)");
+    const erD = ereignisse(s.ticker);
+    console.log("  info Raum-Stücke eingesetzt: " + raumDa + " · Ereignisse im Laufband: " + (erD.join(" · ") || "keine"));
+    sage(erD.some((x) => /^Lena macht gerade/.test(x)), "der Rückruf lief: „Lena macht gerade „Lenas Raum“ auf“ steht im Laufband (sie kam nach dem ersten Stand)");
+    sage(/Otto/.test(s.ticker), "wer schon da war, steht im Laufband (Otto in „Ottos Raum“)");
+    if (erD.some((x) => /^(Emmy|Otto) /.test(x))) console.log("  info bekannt (Offen 1, in 2ea2044c nach den 4 s genauso): nach dem Tipp meldet das Laufband auch, wer schon da war – " + erD.filter((x) => /^(Emmy|Otto) /.test(x)).join(" · "));
     sage(!s.sync.length && !s.sofort.length, "kein synchroner Abruf eines Raum-Stücks", syncText(s) || "0");
     sage(!pg.__fehler.length, "keine Seitenfehler", pg.__fehler.slice(0, 2).join(" | "));
     freigeben(pg);
@@ -381,6 +441,16 @@ function server(wurzel) {
     sage(!spaet.length, "nach dem Betreten übergibt app.js keine andere Kennung (sonst gilt der eigene Eintrag als „andere da“)",
       spaet.length ? spaet.map((z) => (z.t - s.init) + " ms mit „" + z.id + "“ (" + z.lage + ")").join(", ") : "ok");
   };
+  /* Nachbesserung 1: auf diesen Wegen kein Mithörer vor den 4 s und keine „gekommen“-Meldung für Leute, die beim Öffnen
+     schon da waren (Emmy, Otto – und man selbst, der nach dem Neuladen wieder einträgt) */
+  const laufbandPruefen = (s, ich) => {
+    const r = s.kzReg[0];
+    sage(s.horcherKz === 1 && r && r.t - s.init >= 3800, "der Mithörer fürs Laufband kommt wie bis 884 erst nach den 4 s (genau einer)",
+      s.horcherKz + "× · " + (r ? (r.t - s.init) + " ms nach dem Start" + (r.leer ? ", Kanal hatte noch nicht geantwortet" : ", Stand schon da") : "keiner"));
+    const er = ereignisse(s.ticker).filter((x) => new RegExp("^(Emmy|Otto|" + ich + ") ").test(x));
+    sage(!er.length, "das Laufband meldet niemanden, der schon da war, als gerade gekommen (auch nicht einen selbst)", er.join(" · ") || "keine");
+    sage(/Emmy/.test(s.ticker), "das Laufband nennt Emmy (der Mithörer läuft)", /Emmy/.test(s.ticker) ? "ja" : "nein");
+  };
   titel("E", "RÜCKKEHR NACH DEM NEULADEN (raumVorbereiten NOCH IM START)");
   if (lauf("E")) {
     for (const [fall, o, soll] of [["Konto", { rueckkehr: true, konto: KONTO }, KONTO], ["Gast", { rueckkehr: true }, ""]]) {
@@ -396,6 +466,7 @@ function server(wurzel) {
       console.log("  info drin nach " + Math.round(drinAb - init) + " ms; app.js ruft praesenzZuhoeren: " + (s.zuhoeren.map((z) => (z.t - init) + " ms „" + z.id.slice(0, 12) + "“ " + (z.lage || "–")).join(", ") || "nie"));
       sage(s.lage === "drin", "zurück im Raum", s.lage);
       kennungPruefen(s, soll);
+      laufbandPruefen(s, "Sonde");
       sage(!s.sync.length && !s.sofort.length && !pg.__fehler.length, "kein synchroner Abruf, keine Seitenfehler", (syncText(s) + " " + pg.__fehler.slice(0, 2).join(" | ")).trim() || "0");
       await ctx.close();
     }
@@ -415,6 +486,7 @@ function server(wurzel) {
     console.log("  info app.js ruft praesenzZuhoeren: " + (s.zuhoeren.map((z) => (z.t - init) + " ms „" + z.id.slice(0, 12) + "“ " + (z.lage || "–")).join(", ") || "nie"));
     sage(s.lage === "drin", "im Raum", s.lage);
     kennungPruefen(s, "");
+    laufbandPruefen(s, "Gast");
     sage(!pg.__fehler.length, "keine Seitenfehler", pg.__fehler.slice(0, 2).join(" | "));
     await ctx.close();
   }
@@ -480,6 +552,44 @@ function server(wurzel) {
       sage(A.concat(B).every((x) => !x.fehler && !x.sync), art + ": keine Seitenfehler, kein synchroner Abruf");
     }
     const datei = process.env.MESS_JSON || "";
+    if (datei) fs.writeFileSync(datei, JSON.stringify(erg, null, 1));
+    SA.srv.close();
+  }
+
+  /* ---------- R) Messung Rückkehr ---------- */
+  if (GEGEN && lauf("R")) {
+    titel("R", "MESSUNG RÜCKKEHR NACH DEM NEULADEN (KONTO): A = " + GEGEN + ", B = " + WURZEL + " (verschränkt)");
+    const SA = server(GEGEN); await SA.lauscht;
+    const staende = { A: SA, B: S };
+    const erg = { A: [], B: [] };
+    for (let i = 0; i < PAARE_R; i++) {
+      for (const st of (i % 2 ? ["B", "A"] : ["A", "B"])) {
+        const { ctx, pg } = await fenster({ rueckkehr: true, konto: KONTO });
+        await pg.goto(staende[st].url() + "/index.html", { waitUntil: "commit" });
+        await bereit(pg);
+        await pg.waitForFunction(() => window.__p.drin > 0, null, { timeout: 30000, polling: 50 }).catch(() => {});
+        const init = Math.round(await pg.evaluate(() => window.__p.init));
+        await schlaf(Math.max(300, init + 5500 - (await pg.evaluate(() => performance.now()))));
+        const s = await stand(pg);
+        const k = s.kanaele[0];
+        const er = ereignisse(s.ticker).filter((x) => /^(Emmy|Otto|Sonde) /.test(x));
+        erg[st].push({ drin: s.drin || null, kanal: k ? k.t : null, init: s.init, falsch: er.length, mithoerer: s.kzReg[0] ? s.kzReg[0].t - s.init : null,
+          fehler: pg.__fehler.length, sync: s.sync.length });
+        await ctx.close();
+      }
+    }
+    const A = erg.A, B = erg.B;
+    console.log("\n  " + A.length + " Paare, Median ms (ab dem Öffnen):");
+    for (const mass of ["drin", "kanal", "init", "mithoerer", "falsch"]) {
+      const d = A.map((a, j) => (B[j][mass] != null && a[mass] != null ? B[j][mass] - a[mass] : null)).filter((x) => x != null);
+      const hoch = d.filter((x) => x > 0).length, tief = d.filter((x) => x < 0).length;
+      console.log("    " + mass.padEnd(10) + String(Math.round(med(A.map((x) => x[mass])))).padStart(7) + " → " + String(Math.round(med(B.map((x) => x[mass])))).padStart(7)
+        + "   B−A gepaart " + Math.round(med(d)) + " (" + tief + "↓/" + hoch + "↑)");
+    }
+    console.log("    falsche „gekommen“-Meldungen: A in " + A.filter((x) => x.falsch).length + "/" + A.length + ", B in " + B.filter((x) => x.falsch).length + "/" + B.length + " Läufen");
+    sage(B.every((x) => !x.falsch), "B: keine falsche „gekommen“-Meldung nach der Rückkehr", B.map((x) => x.falsch).join(","));
+    sage(A.concat(B).every((x) => !x.fehler && !x.sync), "keine Seitenfehler, kein synchroner Abruf");
+    const datei = process.env.MESS_JSON_R || "";
     if (datei) fs.writeFileSync(datei, JSON.stringify(erg, null, 1));
     SA.srv.close();
   }
