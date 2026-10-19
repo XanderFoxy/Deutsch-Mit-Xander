@@ -32,7 +32,13 @@
         aus dem Hintergrund, echter Tipp auf „Lernen" und „Profil": kein
         synchroner Abruf, DMA_TEIL_SOFORT leer, keine Seitenfehler.
      3  Start mit Konto (Attrappe im Demo-Modus): Start, „Wissen",
-        „Profil": kein synchroner Abruf.
+        „Profil": kein synchroner Abruf – a) leeres Profil, b) (seit
+        Nachbesserung 2) volles Profil wie draußen: Orden und Pokale,
+        Sammelfigur als Profilbild („figures/…"), Hobbys, Bio, 1200 Punkte
+        (Meilenstein-Feier, wird weggetippt), Freunde, Freundschafts-
+        anfrage, ungelesene Post, Meldung; geprüft wird auch, dass das
+        Profil wirklich so gezeichnet wurde. Postfach öffnen steht nur
+        als „info" da (Offen 6).
      4  Rückkehr in den Raum nach dem Neuladen, Raum-Stücke langsam
         (je 3 s unterwegs): LiveChat.betreten erst, wenn alle Raum-Stücke
         eingesetzt sind, spätestens 1,5 s nach dem letzten; kein
@@ -61,6 +67,13 @@
         b) Tipps auf Text außerhalb der Betonungs-Kästen (Wissen, Lernen):
            nichts synchron (vorher rest1 über betonungKastenFinden – jeder
            Tipp, der keinen Knopf trifft).
+   NACHBESSERUNG 2 (Prüfbericht zu cadb2e63): Abschnitt 3 bewies „Start
+   mit Konto lädt nichts synchron" nur für ein LEERES Profil. Mit Orden,
+   Sammelfigur und Hobbys holte der Start weiter rest1 (trophyKind), rest6
+   (isFigureAvatarUrl) und rest2 (hobbyBeschriftung) synchron – jetzt Kern,
+   dazu avatarPhotoHtml (Precise Coverage mit vollem Profil). Neu: 3b,
+   1 nennt die vier. NUR=3 (oder NUR=2,3 …) prüft nur diese Abschnitte im
+   Browser.
    Gegenprobe (Stand vor diesem Schritt, 21b774d3):
      S=/tmp/claude-0/-home-user-Deutsch-Mit-Xander/<sitzung>/scratchpad
      mkdir -p $S/gegen885/stuecke-vorher && git archive 21b774d3 index.html min werkzeug app.js livechat.js backend.js … | tar -x -C $S/gegen885/stuecke-vorher
@@ -80,6 +93,14 @@
    mit 6 von 8 – die feste 12-s-Frist kam vor der zweiten Welle · 7b
    11930 ms · 8 ×3 rest1 über startTour bzw. betonungKastenFinden).
    Gegenprobe 21b774d3: 18 rot (die 12 oben + 7a ×3 + 8 ×3; 7b grün).
+   Ergebnis Nachbesserung 2 (19.10.): 43 grün (3b neu: 5 Prüfungen;
+   info: Postfach öffnen holt rest6 synchron, Offen 6). Gegenprobe
+   cadb2e63 (WURZEL=$S/gegen885/stuecke-cadb, cp -al von stuecke-9135 +
+   git archive cadb2e63 der 22 geänderten Dateien): 5 rot (1 ×2 – vier
+   Platzhalter; 3b ×3 – rest6, rest2, rest1 synchron über
+   isFigureAvatarUrl, hobbyBeschriftung, trophyKind; das volle Profil war
+   dort genauso gezeichnet). Gegenprobe 21b774d3: 21 rot (die 18 oben,
+   dazu 3b ×3: rest6, rest1, rest2).
    EHRLICH: geprüft in Chromium. Die Größenänderung und „Hintergrund"
    sind nachgestellt (setViewportSize, visibilitychange); echte
    Bildschirmtastaturen schicken dieselben Ereignisse.
@@ -102,6 +123,9 @@ const sage = (gut, was, zusatz) => {
 const titel = (k, t) => { abschnitt = k; console.log("\n" + k + ") " + t + "\n"); };
 const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
 const lies = (p) => { try { return fs.readFileSync(p, "utf8"); } catch (e) { return ""; } };
+/* NUR=3 oder NUR=2,3: nur diese Abschnitte im Browser (1, der Bau, läuft immer) */
+const NUR = (process.env.NUR || "").split(",").map((x) => x.trim()).filter(Boolean);
+const lauf = (k) => !NUR.length || NUR.indexOf(k) >= 0;
 
 /* Am Ende von backend.js: die Konto-Attrappe einhängen, bevor app.js läuft (wie Sonde 884-beta). */
 const ANHANG = "\n;(function(){try{if(window.__sondeKonto)window.__sondeKonto(Backend);}catch(e){console.error('Attrappe:',e);}})();\n";
@@ -153,9 +177,10 @@ function seitenSonde() {
   const listeRepo = JSON.parse(lies(path.join(REPO, "werkzeug/app-teile.json")) || "{}");
   const listeW = JSON.parse(lies(path.join(WURZEL, "werkzeug/app-teile.json")) || "{}");
   const minApp = lies(path.join(WURZEL, "min/app.js"));
-  const SOLL = ["lcWaEntsperren", "lcWaKontextHolen", "tutorSchreibzeile", "trophyCounts", "tinyAvatar", "startTour", "betonungKastenFinden", "betonungKastenTaugt"];
+  const SOLL = ["lcWaEntsperren", "lcWaKontextHolen", "tutorSchreibzeile", "trophyCounts", "tinyAvatar", "startTour", "betonungKastenFinden", "betonungKastenTaugt",
+    "trophyKind", "isFigureAvatarUrl", "avatarPhotoHtml", "hobbyBeschriftung"];
   const kernW = Array.isArray(listeW.kern) ? listeW.kern : [];
-  sage(SOLL.every((n) => kernW.includes(n)), "app-teile.json „kern\" nennt die Funktionen des ersten Tipps, des Starts mit Konto und des ersten Besuchs (Tour, Tipp auf Text)",
+  sage(SOLL.every((n) => kernW.includes(n)), "app-teile.json „kern\" nennt die Funktionen des ersten Tipps, des Starts mit Konto (auch mit Orden, Sammelfigur, Hobbys) und des ersten Besuchs (Tour, Tipp auf Text)",
     kernW.length ? kernW.length + " Funktionen" : "keine Liste „kern\"");
   const kernAlle = Array.from(new Set(SOLL.concat(Array.isArray(listeRepo.kern) ? listeRepo.kern : [])));
   const platz = kernAlle.filter((n) => new RegExp("function " + n + "\\([^)]*\\)\\{return dmaTeilRufA?\\(").test(minApp));
@@ -240,7 +265,7 @@ function seitenSonde() {
   try {
     /* ---------- 2) Gast: der erste Tipp ---------- */
     titel("2", "GAST, KALT, NOCH KEIN STÜCK DA: ERSTER TIPP, FOKUS, GRÖSSE, HINTERGRUND");
-    {
+    if (lauf("2")) {
       const { ctx, pg } = await fenster(null, null, { halten: /./ });
       await pg.goto(HIER + "/index.html", { waitUntil: "commit" });
       await bereit(pg);
@@ -279,29 +304,83 @@ function seitenSonde() {
     }
 
     /* ---------- 3) Start mit Konto ---------- */
-    titel("3", "START MIT KONTO (ATTRAPPE): START, WISSEN, PROFIL");
-    {
-      const { ctx, pg } = await fenster(() => {
-        window.__sondeKonto = (B) => {
-          B.signUp("sonde885@attrappe.test", "attrappe", "Sonde");
-          const p = B.currentProfile();
-          if (p) p.extraProfileData = Object.assign({}, p.extraProfileData, { seenFoxIntro: true });
-          B.notifyAdminsBetaTesting = async () => {};
-        };
-      }, null, { halten: /./ });
+    titel("3", "START MIT KONTO (ATTRAPPE): START, WISSEN, PROFIL – LEERES UND VOLLES PROFIL");
+    /* Nachbesserung 2 (Prüfbericht zu cadb2e63): mit dem LEEREN Profil der Attrappe liefen trophyKind (je Trophäe),
+       isFigureAvatarUrl/avatarPhotoHtml (Sammelfigur „figures/…") und hobbyBeschriftung nie – die Prüfung bewies
+       „Start mit Konto lädt nichts synchron" nur für ein leeres Konto. b) ist ein Konto, wie es draußen aussieht:
+       Orden und Pokale, Sammelfigur als Profilbild, Hobbys, Bio, 1200 Punkte (die Meilenstein-Feier geht auf und wird
+       weggetippt), drei Freunde (einer mit Sammelfigur), eine Freundschaftsanfrage, eine ungelesene Nachricht und
+       eine Meldung (Toasts, Melde-Ton). */
+    const kontoAttrappe = (voll) => {
+      const jetzt = Date.now(), iso = (ms) => new Date(jetzt - ms).toISOString();
+      if (voll) window.__sondeVoll = {
+        profil: { trophies: ["Wortschatz – Bronze", "Grammatik – Gold", "Fleißig – Meister", "Grammatik-Profi – Superheld", "Artikel – Silber", "Wortschatz – Silber"],
+          avatarUrl: "figures/fuchs.png", avatar_url: "figures/fuchs.png", points: 1200, badges: ["Erste Runde", "Fleißig"], collectedFigures: ["kleiner-lernfuchs"],
+          languages: ["Englisch", "Italienisch"], origin: "Italien", hobbies: ["Lesen", "Fußball", "Kochen"], bio: "Ich lerne Deutsch seit zwei Jahren und mag Bücher.",
+          birthday: "2001-05-04", favMovie: "Lola rennt", favSong: "99 Luftballons", favFood: "Brezel",
+          history: [{ character: "Artikel-Detektiv", points: 12, bonus: 2, percent: 80, categories: ["artikel"], played_at: iso(86400000) },
+            { character: "Grammatik-Profi", points: 20, bonus: 0, percent: 100, categories: ["grammatik"], played_at: iso(3600000) }] },
+        freunde: [
+          { id: "f1", name: "Mia", points: 340, badges: [], trophies: ["Grammatik – Gold"], bio: "Hallo!", avatar_url: "figures/hase.png", avatar_emoji: "", online: true, last_active: iso(60000), birthday: "" },
+          { id: "f2", name: "Kwame Mensah", points: 152, badges: [], trophies: [], bio: "", avatar_url: "", avatar_emoji: "🦊", online: false, last_active: iso(3 * 86400000), birthday: "" },
+          { id: "f3", name: "Yui", points: 90, badges: [], trophies: [], bio: "", avatar_url: "", avatar_emoji: "", online: false, last_active: iso(3600000), birthday: "" }],
+        anfragen: [{ id: "r1", id_other: "f4", name: "Lena" }],
+        post: [
+          { id: "m1", from_user: "f1", to_user: "sonde885@attrappe.test", author_name: "Mia", body: "Hallo! Wie geht's? Üben wir morgen zusammen?", is_system: false, image_url: null, read: false, created_at: iso(120000) },
+          { id: "m2", from_user: null, to_user: "sonde885@attrappe.test", author_name: "System", body: "🏁 Runde beendet: 12 Punkte", is_system: true, image_url: null, read: true, created_at: iso(86400000) }],
+        meld: [{ id: "n1", user_id: "sonde885@attrappe.test", message: "Mia hat deinen Beitrag geliked ❤️", read: false, created_at: iso(300000) }]
+      };
+      window.__sondeKonto = (B) => {
+        B.signUp("sonde885@attrappe.test", "attrappe", "Sonde");
+        const p = B.currentProfile();
+        if (p) p.extraProfileData = Object.assign({}, p.extraProfileData, { seenFoxIntro: true });
+        B.notifyAdminsBetaTesting = async () => {};
+        const v = window.__sondeVoll;
+        if (!v || !p) return;
+        Object.assign(p, v.profil);
+        B.getFriends = async () => v.freunde.map((f) => Object.assign({}, f));
+        B.getIncomingRequests = async () => v.anfragen.slice();
+        B.getMyMessages = async () => ({ inbox: v.post.map((m) => Object.assign({}, m)), outbox: [] });
+        B.getUnreadMessageCount = async () => v.post.filter((m) => !m.read).length;
+        B.getUnreadNotifications = async () => v.meld.map((m) => Object.assign({}, m));
+      };
+    };
+    for (const voll of [false, true]) {
+      if (!lauf("3")) break;
+      console.log("  " + (voll ? "b) volles Profil" : "a) leeres Profil (wie bisher)"));
+      const { ctx, pg } = await fenster(kontoAttrappe, voll, { halten: /./ });
       await pg.goto(HIER + "/index.html", { waitUntil: "load" });
       await bereit(pg);
       await schlaf(2500);
       /* Backend ist ein Name der Seite, nicht window.Backend (livechat.js „DAS BACKEND HEISST BACKEND") */
       const konto = await pg.evaluate(() => Boolean(typeof Backend !== "undefined" && Backend.currentUser && Backend.currentUser()));
       const s1 = await stand(pg);
+      let feier = 0;
+      if (voll) for (let i = 0; i < 3; i++) { if (!(await tippe(pg, ".lightbox .lightbox-close"))) break; feier++; await schlaf(600); }
       const w = await tippe(pg, '.tape-tab[data-target="view-knowledge"]'); await schlaf(1000);
+      const ws = await pg.evaluate(() => document.querySelector('.tape-tab[data-target="view-knowledge"]').getAttribute("aria-selected") === "true");
       const pr = await tippe(pg, '.tape-tab[data-target="view-profile"]'); await schlaf(1000);
+      const beleg = await pg.evaluate(() => {
+        const v = document.getElementById("view-profile"), t = v ? v.innerText : "";
+        const b = document.getElementById("inboxTabBadge");
+        return { profil: Boolean(v && getComputedStyle(v).display !== "none"), hobby: /Fußball/.test(t), orden: /Orden|Pokal/.test(t),
+          figur: document.querySelectorAll(".tiny-avatar-figure-wrap, .avatar-figure-sticker-wrap").length, post: Boolean(b && b.style.display === "block") };
+      });
       const s2 = await stand(pg);
-      sage(konto && w && pr && s2.da.length === 0, "angemeldet, Wissen und Profil getippt, kein Stück eingesetzt", "Konto " + konto + ", eingesetzt " + s2.da.length);
+      sage(konto && w && ws && pr && beleg.profil && s2.da.length === 0, "angemeldet, Wissen und Profil getippt (Ansicht gewechselt), kein Stück eingesetzt",
+        "Konto " + konto + ", Profil " + beleg.profil + ", eingesetzt " + s2.da.length);
+      if (voll) sage(feier >= 1 && beleg.hobby && beleg.orden && beleg.figur >= 1 && beleg.post,
+        "das volle Profil wurde wirklich gezeichnet (Meilenstein-Feier weggetippt, Hobby, Orden/Pokale, Sammelfigur, ungelesene Post)", JSON.stringify(beleg) + ", Feier " + feier);
       sage(!s1.sync.length && !s1.sofort.length, "Start: kein synchroner Abruf", syncText(s1) || "0");
-      sage(!s2.sync.length && !s2.sofort.length, "Wissen und Profil: kein synchroner Abruf", syncText(s2) || "0");
+      sage(!s2.sync.length && !s2.sofort.length, (voll ? "Feier schließen, " : "") + "Wissen und Profil: kein synchroner Abruf", syncText(s2) || "0");
       sage(!pg.__fehler.length, "keine Seitenfehler", pg.__fehler.slice(0, 3).join(" | "));
+      if (voll) {
+        /* Nur zur Kenntnis (Offen 6 im Logbuch, keine Prüfung): Postfach öffnen braucht renderInbox – zu groß für den Kern */
+        await tippe(pg, '#profileSubnav [data-sub="sub-inbox"]'); await schlaf(1000);
+        const s3 = await stand(pg);
+        const neu = s3.sync.slice(s2.sync.length);
+        console.log("  info Postfach öffnen, Stücke zurückgehalten: " + (neu.length ? neu.map((x) => x.u.replace(/^.*\//, "") + " " + x.d + " ms").join(", ") + " synchron (Offen 6)" : "nichts synchron"));
+      }
       freigeben(pg);
       await ctx.close();
     }
@@ -327,7 +406,7 @@ function seitenSonde() {
 
     /* ---------- 4) Rückkehr, Raum-Stücke langsam ---------- */
     titel("4", "RÜCKKEHR IN DEN RAUM, RAUM-STÜCKE LANGSAM (JE 3 s)");
-    {
+    if (lauf("4")) {
       const ab = anfragen.length;
       const { ctx, pg } = await fenster(rueckkehr, null, { langsam: { re: /^raum/, ms: 3000 } });
       const t0 = Date.now();
@@ -352,7 +431,7 @@ function seitenSonde() {
 
     /* ---------- 5) Rückkehr, schnelle Leitung: jedes Raum-Stück in seiner eigenen Aufgabe ---------- */
     titel("5", "RÜCKKEHR BEI SCHNELLER LEITUNG: JEDES RAUM-STÜCK IN SEINER EIGENEN AUFGABE");
-    {
+    if (lauf("5")) {
       const { ctx, pg } = await fenster(rueckkehr);
       await pg.goto(HIER + "/index.html", { waitUntil: "commit" });
       await bereit(pg);
@@ -376,7 +455,7 @@ function seitenSonde() {
 
     /* ---------- 6) Ladeweg nach load ---------- */
     titel("6", "LADEWEG NACH LOAD: ERST DIE RAUM-STÜCKE, DANN DER REST");
-    {
+    if (lauf("6")) {
       const ab = anfragen.length;
       const { ctx, pg } = await fenster(null, null, { langsam: { re: /^raum/, ms: 1500 } });
       await pg.goto(HIER + "/index.html", { waitUntil: "load" });
@@ -393,7 +472,7 @@ function seitenSonde() {
       sage(!s.sync.length && !s.sofort.length && !s.fehler.length && !pg.__fehler.length, "ohne synchronen Abruf, ohne Fehler", (syncText(s) + " " + s.fehler.join(" | ") + " " + pg.__fehler.slice(0, 2).join(" | ")).trim() || "0");
       await ctx.close();
     }
-    {
+    if (lauf("6")) {
       /* ein Raum-Stück hängt: der Rest kommt nach höchstens 6 s trotzdem */
       const ab = anfragen.length;
       const { ctx, pg } = await fenster(null, null, { halten: /^raum3$/ });
@@ -410,7 +489,7 @@ function seitenSonde() {
 
     /* ---------- 7) Rückkehr: die Frist hängt am Fortschritt (Nachbesserung 1) ---------- */
     titel("7", "RÜCKKEHR: WARTEN, SOLANGE DIE RAUM-STÜCKE VORANKOMMEN – NICHT, WENN EINES HÄNGT");
-    {
+    if (lauf("7")) {
       /* a) tröpfeln: jedes Raum-Stück in 8 Happen über 6 s */
       const ab = anfragen.length;
       troepfeln = { re: /^raum/, ms: 6000, happen: 8 };
@@ -434,7 +513,7 @@ function seitenSonde() {
         (syncText({ sync: r.sync, sofort: r.sofort }) + " " + pg.__fehler.slice(0, 2).join(" | ")).trim() || "0");
       await ctx.close();
     }
-    {
+    if (lauf("7")) {
       /* b) raum3 hängt (der gewöhnliche Abruf kommt nie an; ein synchroner ginge durch), die anderen kommen sofort */
       const ab = anfragen.length;
       const { ctx, pg } = await fenster(rueckkehr, null, { halten: /^raum3$/ });
@@ -458,7 +537,7 @@ function seitenSonde() {
 
     /* ---------- 8) Erster Besuch und Tipp auf Text (Nachbesserung 1) ---------- */
     titel("8", "ERSTER BESUCH (TOUR) UND TIPP AUF TEXT: NICHTS SYNCHRON");
-    {
+    if (lauf("8")) {
       const { ctx, pg } = await fenster(() => { try { localStorage.removeItem("dma_tour_seen"); } catch (e) {} }, null, { halten: /./ });
       await pg.goto(HIER + "/index.html", { waitUntil: "commit" });
       await bereit(pg);
@@ -476,7 +555,7 @@ function seitenSonde() {
       freigeben(pg);
       await ctx.close();
     }
-    {
+    if (lauf("8")) {
       const { ctx, pg } = await fenster(null, null, { halten: /./ });
       await pg.goto(HIER + "/index.html", { waitUntil: "commit" });
       await bereit(pg);
