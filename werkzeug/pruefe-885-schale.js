@@ -66,9 +66,27 @@
         frische Antwort älter als die gespeicherte (aus dem Browser-
         Speicher, max-age), kommt die gespeicherte.
      K  Fassungs-Wächter (index.html, ohne Helfer): kommt die Antwort
-        „neue Fassung" erst, wenn das Klassenzimmer offen ist, man im Raum
-        ist (LiveChat „drin") oder etwas tippt → KEIN Neuladen, die Blase
-        „Neue Fassung" erscheint. Gegenprobe ohne diese Lage: ein Neuladen.
+        „neue Fassung" erst, wenn man das Klassenzimmer selbst geöffnet hat
+        (echte Tipps), man im Raum ist (LiveChat „drin") oder etwas tippt →
+        KEIN Neuladen, die Blase „Neue Fassung" erscheint. Gegenprobe ohne
+        diese Lage: ein Neuladen – und die übrige Adresse bleibt (?sonde=k,
+        #…; Nachbesserung 2, vorher nur ?f=).
+        Nachbesserung 2: Klassenzimmer VON SELBST offen (Einladung #raum=,
+        Rückweg dma-notweg-ziel, Einladung ?raum=), nichts angetippt → ein
+        Neuladen, danach wieder im Klassenzimmer, ?raum= bleibt (vorher:
+        Blase, die alte Fassung blieb die ganze Sitzung). Schon etwas
+        angetippt und die Antwort kommt nach
+        mehr als 2 s → kein Neuladen, die Blase (vorher: Neuladen unter dem
+        Finger). Angetippt, Antwort vor 2 s → ein Neuladen (wie vorher).
+     L  Einladung mit Helfer (Nachbesserung 2, der Fall des Prüfers): Server
+        hat Fassung+1, index.html und fassung.json je 1,5 s, Öffnen über
+        index.html?mit-sw#raum=… → am Ende die neue Fassung im
+        Klassenzimmer, ein Neuladen, Adresse ?mit-sw&f=… .
+     N  NOTAUS ?ohne-sw, während auf dem Server schon eine neuere Fassung
+        liegt (Nachbesserung 2): die Seite kommt frisch aus dem Netz, kein
+        Neuladen, der Helfer ist abgemeldet, das nächste Öffnen läuft ohne
+        ihn (vorher: gespeicherte Seite, Neuladen auf ?f=… ohne ?ohne-sw,
+        Helfer blieb angemeldet).
      M  messung.js „neu" (mess-start): 1 nur auf der ersten Seite nach dem
         Neuladen durch den Wächter, 0 nach einem Neuladen von Hand im
         selben Tab (Nachbesserung 1; vorher blieb es 1).
@@ -174,7 +192,11 @@ const F = (k) => String(Number(GRUND) + k);
     marke: (document.head && document.head.innerHTML.match(/SONDE-MARKE:(\w+)/) || [])[1] || null, fassung: String(window.DMA_VERSION || ""),
     seiten: Number(sessionStorage.getItem("__sondeSeiten") || 0), adressen: JSON.parse(sessionStorage.getItem("__sondeAdressen") || "[]"),
     blase: (document.getElementById("dmaNeueFassung") || {}).textContent || "", url: location.pathname + location.search,
+    hash: location.hash, kz: (() => { const v = document.getElementById("view-knowledge"), s = document.getElementById("sub-livechat");
+      return Boolean(v && s && v.dataset.active === "true" && s.dataset.active === "true"); })(),
   })).catch((e) => ({ fehler: e.message.split("\n")[0] }));
+  const istKz = (pg) => pg.evaluate(() => { const v = document.getElementById("view-knowledge"), s = document.getElementById("sub-livechat");
+    return Boolean(v && s && v.dataset.active === "true" && s.dataset.active === "true"); }).catch(() => false);
   /* nebenbei: ein Tab auf einer kleinen Datei derselben Herkunft (für den Speicher des Helfers), danach zu */
   const nebenbei = async (G, f) => {
     const t = await G.neuerTab();
@@ -526,25 +548,30 @@ const F = (k) => String(Number(GRUND) + k);
   {
     S.seite = ""; S.fj = F(5); S.fjStau = 5000;
     const K = await geraet();
-    const fall = async (name, vorbereiten) => {
+    /* o.adresse (Standard /index.html), o.vorher(pg) vor dem Öffnen, o.frueh(pg) gleich nach domcontentloaded (vor „läuft"),
+       o.warte: Bedingung am Ende (Standard: Blase oder zweite Seite) */
+    const fall = async (name, vorbereiten, o = {}) => {
       const { pg } = await K.neuerTab();
-      await pg.goto(HIER + "/index.html", { waitUntil: "domcontentloaded" });
+      if (o.vorher) await o.vorher(pg);
+      await pg.goto(HIER + (o.adresse || "/index.html"), { waitUntil: "domcontentloaded" });
+      const fr = o.frueh ? await o.frueh(pg) : "";
       await laeuft(pg, 20000);
-      const lageVor = vorbereiten ? await vorbereiten(pg) : "";
-      await bis(pg, () => !!document.getElementById("dmaNeueFassung") || Number(sessionStorage.getItem("__sondeSeiten")) > 1, 9000);
+      const lageVor = vorbereiten ? await vorbereiten(pg) : fr;
+      await bis(pg, o.warte || (() => !!document.getElementById("dmaNeueFassung") || Number(sessionStorage.getItem("__sondeSeiten")) > 1), o.warteMs || 9000);
       await schlaf(1500);
       const l = await lage(pg);
       await pg.close();
       return { l, lageVor };
     };
+    /* Nachbesserung 2: das Klassenzimmer mit echten Tipps öffnen (pointerdown) – so öffnet es ein Mensch */
     const kz = await fall("kz", async (pg) => {
-      await pg.evaluate(() => document.querySelector('.tape-tab[data-target="view-knowledge"]').click());
+      await pg.tap('.tape-tab[data-target="view-knowledge"]');
       await bis(pg, () => !!document.querySelector('.subnav-pill[data-sub="sub-livechat"]'), 8000);
-      await pg.evaluate(() => document.querySelector('.subnav-pill[data-sub="sub-livechat"]').click());
+      await pg.tap('.subnav-pill[data-sub="sub-livechat"]');
       await bis(pg, () => { const v = document.getElementById("view-knowledge"), s = document.getElementById("sub-livechat"); return v && s && v.dataset.active === "true" && s.dataset.active === "true"; }, 8000);
-      return pg.evaluate(() => document.getElementById("sub-livechat").dataset.active);
+      return pg.evaluate(() => document.getElementById("sub-livechat").dataset.active + " bei " + Math.round(performance.now()) + " ms");
     });
-    sage(kz.l.seiten === 1 && /Neue Fassung/.test(kz.l.blase), "K  Klassenzimmer offen, dann „neue Fassung\": KEIN Neuladen, die Blase erscheint", JSON.stringify({ kz: kz.lageVor, seiten: kz.l.seiten, blase: kz.l.blase }));
+    sage(kz.l.seiten === 1 && /Neue Fassung/.test(kz.l.blase), "K  Klassenzimmer selbst geöffnet (Tipps), dann „neue Fassung\": KEIN Neuladen, die Blase erscheint", JSON.stringify({ kz: kz.lageVor, seiten: kz.l.seiten, blase: kz.l.blase }));
     const drin = await fall("drin", (pg) => pg.evaluate(() => { const alt = window.LiveChat.lage; window.LiveChat.lage = function () { const l = alt.apply(this, arguments); l.lage = "drin"; return l; }; return window.LiveChat.lage().lage; }));
     sage(drin.l.seiten === 1 && /Neue Fassung/.test(drin.l.blase), "K  im Raum (LiveChat „drin\"): KEIN Neuladen, die Blase", JSON.stringify({ lage: drin.lageVor, seiten: drin.l.seiten, blase: drin.l.blase }));
     const tippt = await fall("tippt", (pg) => pg.evaluate(() => {
@@ -552,11 +579,117 @@ const F = (k) => String(Number(GRUND) + k);
       return document.activeElement === e ? "tippt" : "nicht fokussiert";
     }));
     sage(tippt.l.seiten === 1 && /Neue Fassung/.test(tippt.l.blase), "K  mitten in einer Eingabe: KEIN Neuladen, die Blase", JSON.stringify({ lage: tippt.lageVor, seiten: tippt.l.seiten, blase: tippt.l.blase }));
-    const frei = await fall("frei", null);
+    const frei = await fall("frei", null, { adresse: "/index.html?sonde=k#view-knowledge" });
     sage(frei.l.seiten === 2 && frei.l.fassung && /[?&]f=/.test(frei.l.url), "K  Gegenprobe ohne diese Lage: der Wächter lädt wie bisher einmal neu", JSON.stringify({ seiten: frei.l.seiten, url: frei.l.url, adressen: frei.l.adressen }));
+    sage(frei.l.url === "/index.html?sonde=k&f=" + F(5) && frei.l.hash === "#view-knowledge", "K  … und die übrige Adresse bleibt (?sonde=k, #view-knowledge; nur f wird gesetzt – Nachbesserung 2)", frei.l.url + frei.l.hash);
+
+    /* Nachbesserung 2: Klassenzimmer VON SELBST offen, nichts angetippt → einmal neu laden, danach wieder im Klassenzimmer */
+    const zweiteImKz = () => Number(sessionStorage.getItem("__sondeSeiten")) > 1 && (() => { const v = document.getElementById("view-knowledge"), s = document.getElementById("sub-livechat");
+      return Boolean(v && s && v.dataset.active === "true" && s.dataset.active === "true"); })();
+    const einl = await fall("einladung", null, { adresse: "/index.html#raum=sondenraum1", warte: zweiteImKz, warteMs: 15000,
+      frueh: (pg) => bis(pg, () => { const s = document.getElementById("sub-livechat"); return s && s.dataset.active === "true"; }, 4000).then((j) => j ? "Klassenzimmer von selbst offen" : "nicht offen") });
+    /* (#raum= selbst ersetzt app.js schon auf der ersten Seite durch #view-knowledge – activateTab; das ist älter als S1.
+       Zurück ins Klassenzimmer führt hier dma-notweg-ziel.) */
+    sage(einl.l.seiten === 2 && einl.l.kz && /[?&]f=/.test(einl.l.url),
+      "K  Einladung (#raum=), Klassenzimmer von selbst offen, nichts angetippt: EIN Neuladen, danach wieder im Klassenzimmer (vorher: Blase, alte Fassung blieb)",
+      JSON.stringify({ vorher: einl.lageVor, seiten: einl.l.seiten, kz: einl.l.kz, url: einl.l.url + einl.l.hash, blase: einl.l.blase }));
+    /* Einladung mit ?raum= (bleibt in der Adresse): nach dem Neuladen derselbe Raum (vorher fiel ?raum= beim Neuladen weg) */
+    const einlQ = await fall("einladung-q", null, { adresse: "/index.html?raum=sondenraum3", warte: zweiteImKz, warteMs: 15000,
+      frueh: (pg) => bis(pg, () => { const s = document.getElementById("sub-livechat"); return s && s.dataset.active === "true"; }, 4000).then((j) => j ? "Klassenzimmer von selbst offen" : "nicht offen") });
+    sage(einlQ.l.seiten === 2 && einlQ.l.kz && einlQ.l.url === "/index.html?raum=sondenraum3&f=" + F(5),
+      "K  Einladung (?raum=): EIN Neuladen, danach im Klassenzimmer, Adresse ?raum=sondenraum3&f=" + F(5) + " (der Raum bleibt)",
+      JSON.stringify({ vorher: einlQ.lageVor, seiten: einlQ.l.seiten, kz: einlQ.l.kz, url: einlQ.l.url + einlQ.l.hash }));
+    const rueck = await fall("rueckweg", null, { warte: zweiteImKz, warteMs: 15000,
+      vorher: (pg) => pg.addInitScript(() => { try { if (!sessionStorage.getItem("__sondeZiel")) { sessionStorage.setItem("__sondeZiel", "1"); sessionStorage.setItem("dma-notweg-ziel", "klassenzimmer"); } } catch (e) {} }),
+      frueh: (pg) => bis(pg, () => { const s = document.getElementById("sub-livechat"); return s && s.dataset.active === "true"; }, 4000).then((j) => j ? "Klassenzimmer von selbst offen" : "nicht offen") });
+    sage(rueck.l.seiten === 2 && rueck.l.kz && /[?&]f=/.test(rueck.l.url),
+      "K  Rückweg (dma-notweg-ziel), Klassenzimmer von selbst offen: EIN Neuladen, danach wieder im Klassenzimmer (dma-notweg-ziel neu gesetzt)",
+      JSON.stringify({ vorher: rueck.lageVor, seiten: rueck.l.seiten, kz: rueck.l.kz, url: rueck.l.url }));
+
+    /* Nachbesserung 2: schon etwas angetippt (hier „Wissen“), die Antwort kommt nach > 2 s → kein Neuladen, die Blase */
+    const tipp = await fall("tipp", async (pg) => {
+      await pg.tap('.tape-tab[data-target="view-knowledge"]');
+      return pg.evaluate(() => "getippt bei " + Math.round(performance.now()) + " ms");
+    });
+    sage(tipp.l.seiten === 1 && /Neue Fassung/.test(tipp.l.blase), "K  „Wissen“ angetippt, die Antwort kommt nach 5 s: KEIN Neuladen, die Blase (vorher: Neuladen unter dem Finger)",
+      JSON.stringify({ tipp: tipp.lageVor, seiten: tipp.l.seiten, blase: tipp.l.blase, url: tipp.l.url }));
+    /* … die Antwort kommt vor 2 s: wie bisher einmal neu laden (vorher wartete man auf die frische Seite) */
+    S.fjStau = 1500;
+    const frueh = await fall("frueh", null, {
+      frueh: async (pg) => { await pg.mouse.click(200, 700).catch(() => {}); return pg.evaluate(() => "geklickt bei " + Math.round(performance.now()) + " ms").catch(() => "?"); } });
+    sage(frueh.l.seiten === 2 && /[?&]f=/.test(frueh.l.url), "K  angetippt, die Antwort kommt nach 1,5 s (vor 2 s): einmal neu laden wie bisher",
+      JSON.stringify({ klick: frueh.lageVor, seiten: frueh.l.seiten, url: frueh.l.url }));
     S.fj = ""; S.fjStau = 0;
     await K.ctx.close();
   }
+
+  /* ================= L: Einladung mit Helfer, langsame Leitung (Nachbesserung 2, Fall T1 des Prüfers) ================= */
+  console.log("");
+  {
+    S.seite = F(20); S.fj = ""; S.index = ""; S.fjStau = 0; S.maxAge = false;
+    const L = await geraet();
+    const x0 = await oeffnen(L, "/index.html?mit-sw");
+    await x0.pg.waitForLoadState("load").catch(() => {});
+    await x0.pg.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller, null, { timeout: 20000 }).catch(() => {});
+    await zu(x0);
+    const x1 = await oeffnen(L, "/index.html?mit-sw");
+    await x1.pg.waitForLoadState("load").catch(() => {});
+    await schlaf(1200);
+    const g = await gespeichert(x1.pg);
+    await zu(x1);
+    /* Server hat F(21); index.html und fassung.json je 1,5 s */
+    S.seite = F(21); S.index = "stau"; S.stauMs = 1500; S.fjStau = 1500;
+    const x = await oeffnen(L, "/index.html?mit-sw#raum=sondenraum2", { schlafen: true });
+    const fr = await bis(x.pg, () => { const s = document.getElementById("sub-livechat"); return s && s.dataset.active === "true" && Number(sessionStorage.getItem("__sondeSeiten")) === 1; }, 4000);
+    const ende = await bis(x.pg, (f) => String(window.DMA_VERSION) === f && (() => { const v = document.getElementById("view-knowledge"), s = document.getElementById("sub-livechat");
+      return Boolean(v && s && v.dataset.active === "true" && s.dataset.active === "true"); })(), 15000, F(21));
+    await schlaf(2000);
+    const l = await lage(x.pg);
+    sage(g && g.fassung === F(20) && x.ms < 1500 && ende && l.fassung === F(21) && l.kz && l.seiten === 2,
+      "L  Einladung #raum= mit Helfer (Netz 1,5 s, Server " + F(21) + ", gespeichert " + F(20) + "): erst die gespeicherte Seite, EIN Neuladen, am Ende " + F(21) + " im Klassenzimmer (vorher: " + F(20) + " + Blase)",
+      x.ms + " ms, " + JSON.stringify({ kzVorDemNeuladen: fr, f: l.fassung, kz: l.kz, seiten: l.seiten, blase: l.blase, adressen: l.adressen }));
+    sage(l.url === "/index.html?mit-sw&f=" + F(21), "L  … Adresse ?mit-sw&f=" + F(21) + " (die übrige Adresse bleibt)", l.url + l.hash);
+    S.index = ""; S.fjStau = 0;
+    await zu(x);
+    sage(!L.seitenfehler.length, "   keine Seitenfehler (L)", L.seitenfehler.slice(0, 3).join(" | "));
+    await L.ctx.close();
+  }
+
+  /* ================= N: NOTAUS ?ohne-sw, während draußen schon eine neuere Fassung liegt (Nachbesserung 2) ================= */
+  console.log("");
+  for (const fj of [0, 300]) {
+    S.seite = F(30); S.fj = ""; S.index = ""; S.fjStau = 0;
+    const N = await geraet();
+    const x0 = await oeffnen(N, "/index.html?mit-sw");
+    await x0.pg.waitForLoadState("load").catch(() => {});
+    await x0.pg.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller, null, { timeout: 20000 }).catch(() => {});
+    await zu(x0);
+    const x1 = await oeffnen(N, "/index.html?mit-sw");
+    await x1.pg.waitForLoadState("load").catch(() => {});
+    await schlaf(1200);
+    await zu(x1);
+    S.seite = F(31); S.index = "stau"; S.stauMs = 400; S.fjStau = fj;
+    const x = await oeffnen(N, "/index.html?ohne-sw");
+    await x.pg.waitForLoadState("load").catch(() => {});
+    await schlaf(2500);
+    const l = await lage(x.pg), ix = indexAb(x.ab);
+    const regs = await x.pg.evaluate(() => navigator.serviceWorker.getRegistrations().then((r) => r.length)).catch(() => -1);
+    await zu(x);
+    S.index = ""; S.fjStau = 0;
+    await schlaf(1500);
+    const y = await oeffnen(N, "/index.html");
+    await y.pg.waitForLoadState("load").catch(() => {});
+    const gef = await y.pg.evaluate(() => !!(navigator.serviceWorker && navigator.serviceWorker.controller)).catch(() => null);
+    await zu(y);
+    const was = " (fassung.json " + fj + " ms)";
+    sage(l.fassung === F(31) && l.seiten === 1 && ix[0] && l.marke === ix[0].marke, "N  ?ohne-sw, Server hat " + F(31) + ": die Seite kommt frisch aus dem Netz, kein Neuladen" + was,
+      JSON.stringify({ f: l.fassung, marke: l.marke, adressen: l.adressen, netz: ix.map((q) => q.url + " " + q.marke) }));
+    sage(regs === 0, "N  … nach 2,5 s ist der Helfer abgemeldet" + was, "Anmeldungen " + regs);
+    sage(gef === false, "N  … das nächste Öffnen läuft ohne Helfer" + was, "geführt " + gef);
+    sage(!N.seitenfehler.length, "   keine Seitenfehler (N)" + was, N.seitenfehler.slice(0, 3).join(" | "));
+    await N.ctx.close();
+  }
+  S.seite = "";
 
   /* ================= M: messung.js „neu" nur auf der ersten Seite nach dem Neuladen durch den Wächter ================= */
   console.log("");

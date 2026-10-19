@@ -24,7 +24,8 @@
    Die Seite selbst (index.html): seit Fassung 885 zuerst aus dem
    Speicher, im Hintergrund frisch geholt (siehe unten, „S1").
 
-   NOTAUS: index.html?ohne-sw meldet diesen Helfer ab.
+   NOTAUS: index.html?ohne-sw meldet diesen Helfer ab (die Seite kommt
+   dafür immer aus dem Netz, auch seit 885).
    ===================================================================== */
 /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal
    schneller" · (Funk 263): „sofort im Livestream wie bei HelloTalk".
@@ -74,7 +75,15 @@ self.addEventListener("fetch", function (e) {
        Vorher galt jedes …/ und …/index.html – auch die alten Sicherungen unter sicherung/<x>/ mit eigener
        DMA_VERSION (175, 196 …). „Nie rückwärts" hielt so eine Seite für eine Rücknahme und legte sie als Seite ab;
        seit S1 kam sie beim nächsten Öffnen der App ZUERST (nachgestellt: Fassung 175 im ganzen nächsten Besuch). */
-    if (hauptseite(u)) e.respondWith(seite(r, e));
+    /* FASSUNG 885 (S1, Nachbesserung 2) — NOTAUS ?ohne-sw: nie durch seite(), sondern wie andere Seiten zuerst aus
+       dem Netz (wie bis 884). Vorher (S1) kam auch für ?ohne-sw die gespeicherte Seite; lag draußen schon eine
+       neuere Fassung, lud ihr Wächter sofort auf ?f=… neu, ?ohne-sw fiel weg, und das Abmelden am Ende der Seite
+       kam nicht mehr zustande (nachgestellt: Helfer danach noch angemeldet in 6 von 6 Läufen bei sofortiger
+       Antwort von fassung.json; jetzt 0 von 18) – gerade wenn ein Fehler im Helfer mit einer neuen Fassung behoben
+       wird, braucht man den Schalter. Erprobt und verworfen: der Helfer meldet sich selbst ab – das Abmelden
+       hängt dann in der Warteschlange des Browsers (hinter seiner eigenen Update-Prüfung) und kam ohne die Seite
+       nur in 1 von 4 Läufen zustande. */
+    if (hauptseite(u) && !notaus(u)) e.respondWith(seite(r, e));
     /* FASSUNG 885: „vorbei" heißt jetzt: die Antwort der schon laufenden
        Vorab-Anfrage unverändert durchreichen. Ohne respondWith fragte der
        Browser die Seite ein zweites Mal (gemessen: 2 Anfragen je Öffnen).
@@ -112,6 +121,9 @@ function gestempelt(r, u) {
     });
   }).catch(function () { return fetch(r); });
 }
+
+/* FASSUNG 885 (Nachbesserung 2): NOTAUS – dieselbe Regel wie in index.html (/[?&]ohne-sw\b/) */
+function notaus(u) { return /[?&]ohne-sw\b/.test(u.search || ""); }
 
 /* FASSUNG 885 (Nachbesserung 1): die Hauptseite = die Wurzel des Bereichs, in dem dieser Helfer gilt */
 function hauptseite(u) {
