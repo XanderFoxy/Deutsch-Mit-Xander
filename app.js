@@ -320,6 +320,9 @@
   /* Wer ins Klassenzimmer geht (Tipp, Einladungslink, Rückkehr nach dem Neuladen), braucht bald den Teil „raum",
      spiel.js und die ganzen Stilblätter (index.html: dmaSpielLaden, dmaStileVoll). Geholt wird sofort; was
      rechnet, wartet, bis das Bild steht. */
+  /* FASSUNG 885 (S3) — startet den Präsenzkanal und das Mithören fürs Laufband, je genau einmal; gesetzt weiter unten
+     („Den Klassenzimmer-Kanal mithören"), also erst am Ende des Starts – davor ist es null. */
+  let dmaPraesenzLos = null;
   function raumVorbereiten() {
     dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 600);
     dmaTeilGruppe("raum");
@@ -330,6 +333,14 @@
     };
     /* 0,3 s nach dem ersten Bild: so schnell tippt niemand auf „Betreten", und das Klassenzimmer steht schon */
     if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(weiter, 300)); else setTimeout(weiter, 300);
+    /* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“; S3, freigegeben (Funk 311). Wer gerade
+       im Klassenzimmer sitzt und welche Räume offen sind („DIE RÄUME“, das Schulhaus in der Liste hinter dem grünen
+       Licht), sagt der Präsenzkanal. Den öffnete die Seite erst 4 s nach dem Start – wer früher auf „Klassenzimmer“
+       tippte, sah bis dahin „leer — geh ruhig hinein“, obwohl jemand da war. Jetzt geht er beim Tipp auf, gleich nach
+       dem ersten Bild (erst das Bild, dann die Leitung). Derselbe eine Kanal wie bisher: wer zuerst kommt (Tipp oder
+       die 4 s), öffnet ihn, danach tut dmaPraesenzLos nichts mehr. Beim Seitenstart ohne Tipp bleibt alles wie vorher. */
+    const praesenz = () => { try { if (dmaPraesenzLos) dmaPraesenzLos(); } catch (e) {} };
+    if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(praesenz, 0)); else setTimeout(praesenz, 0);
   }
   /* Im Raum: Raum-Stücke sofort holen und, sobald sie da sind, alle auf einmal einsetzen (nicht erst in Ruhepausen). */
   var dmaRaumDrin = false;
@@ -99097,10 +99108,37 @@ An einem Morgen lief ein kleiner Fuchs los…
   /* Den Klassenzimmer-Kanal mithören — auch ohne selbst hineinzugehen.
      Nur so kann in der Online-Liste stehen, wer gerade Unterricht hat.
      Zuhören kostet nichts und schickt nichts. */
-  setTimeout(() => {
+  /* FASSUNG 885 — XANDER (Funk 263/271), S3 (freigegeben Funk 311): nicht mehr nur nach 4 s, sondern auch sofort beim
+     Tipp auf „Klassenzimmer“ (raumVorbereiten) – wer zuerst kommt. Beides geschieht genau einmal, wie bisher:
+       - praesenzZuhoeren öffnet den Kanal; ein zweiter Aufruf setzte in livechat.js die eigene Kennung neu
+         (praesenzIch, daran erkennt der Raum „andere da“) – deshalb nur einmal, und nur, wenn supabase-js schon da
+         ist (sonst wäre der eine Versuch verschenkt: dann gilt der nächste Tipp bzw. die 4 s).
+       - die Kennung: lädt die Anmeldung noch (früher Tipp), die aus dem Gerät – genau wie livechat.js beim Betreten
+         (Fassung 841/843: sb-…-auth-token, sonst dma_lc_konto). Mit „" bekäme der Kanal eine Zufallskennung, und
+         die Online-Liste der anderen fände das Konto nicht im Klassenzimmer.
+       - beiPraesenz (Laufband, Online-Liste) einmal; der Rückruf selbst ist unverändert. */
+  let kzPraesenzZu = false, kzPraesenzHorcht = false;
+  dmaPraesenzLos = () => {
     if (!window.LiveChat || !LiveChat.praesenzZuhoeren) return;
-    const u = Backend.currentUser();
-    LiveChat.praesenzZuhoeren(u ? u.id : "");
+    if (!kzPraesenzZu && window.supabase) {
+      kzPraesenzZu = true;
+      const u = Backend.currentUser();
+      const gemerkt = () => {
+        try {
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i) || "";
+            if (!/^sb-.+-auth-token$/.test(k)) continue;
+            const d = JSON.parse(localStorage.getItem(k) || "null");
+            const n = d && (d.user || (d.currentSession && d.currentSession.user));
+            if (n && n.id) return String(n.id);
+          }
+          return String(localStorage.getItem("dma_lc_konto") || "");
+        } catch (e) { return ""; }
+      };
+      LiveChat.praesenzZuhoeren(u ? u.id : gemerkt());
+    }
+    if (kzPraesenzHorcht) return;
+    kzPraesenzHorcht = true;
     LiveChat.beiPraesenz((da) => {
       kzDaJetzt = da || {};
       /* GEWUENSCHT: „Die allgemeine Online-Anzeige soll ein gruenes Licht
@@ -99130,7 +99168,8 @@ An einem Morgen lief ein kleiner Fuchs los…
       updateTicker();
       if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen();
     });
-  }, 4000);
+  };
+  setTimeout(dmaPraesenzLos, 4000);
   /* Das Postfach im Hintergrund vorwärmen: so ist auch der allererste
      Sprung „✉️ Ergebnis im Postfach" sofort da und nicht erst nach zwei
      Datenbankabfragen. */
