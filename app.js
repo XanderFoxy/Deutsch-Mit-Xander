@@ -338,7 +338,9 @@
        Licht), sagt der Präsenzkanal. Den öffnete die Seite erst 4 s nach dem Start – wer früher auf „Klassenzimmer“
        tippte, sah bis dahin „leer — geh ruhig hinein“, obwohl jemand da war. Jetzt geht er beim Tipp auf, gleich nach
        dem ersten Bild (erst das Bild, dann die Leitung). Derselbe eine Kanal wie bisher: wer zuerst kommt (Tipp oder
-       die 4 s), öffnet ihn, danach tut dmaPraesenzLos nichts mehr. Beim Seitenstart ohne Tipp bleibt alles wie vorher. */
+       die 4 s), öffnet ihn, danach tut dmaPraesenzLos nichts mehr. Beim Seitenstart ohne Tipp bleibt alles wie vorher;
+       nur die Rückkehr nach dem Neuladen (geht ohnehin gleich in den Raum, der den Kanal sonst beim Betreten öffnet)
+       hat ihn jetzt schon ab dem ersten Bild. */
     const praesenz = () => { try { if (dmaPraesenzLos) dmaPraesenzLos(); } catch (e) {} };
     if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(praesenz, 0)); else setTimeout(praesenz, 0);
   }
@@ -99115,7 +99117,10 @@ An einem Morgen lief ein kleiner Fuchs los…
          ist (sonst wäre der eine Versuch verschenkt: dann gilt der nächste Tipp bzw. die 4 s).
        - die Kennung: lädt die Anmeldung noch (früher Tipp), die aus dem Gerät – genau wie livechat.js beim Betreten
          (Fassung 841/843: sb-…-auth-token, sonst dma_lc_konto). Mit „" bekäme der Kanal eine Zufallskennung, und
-         die Online-Liste der anderen fände das Konto nicht im Klassenzimmer.
+         die Online-Liste der anderen fände das Konto nicht im Klassenzimmer. Ein Gast ohne beides, der schon im Raum
+         ist oder gerade hineingeht (Betreten ohne Tipp auf die Pille, z. B. Einladungslink): seine Raum-Kennung
+         (lage().ichId) – dieselbe, die livechat.js beim Betreten nimmt. Vorher setzten die 4 s sie auf „", und
+         livechat.js hielt den eigenen Eintrag für „andere da“ (ein überflüssiges „hallo“ nach 1,2 und 3 s).
        - beiPraesenz (Laufband, Online-Liste) einmal; der Rückruf selbst ist unverändert. */
   let kzPraesenzZu = false, kzPraesenzHorcht = false;
   dmaPraesenzLos = () => {
@@ -99135,7 +99140,11 @@ An einem Morgen lief ein kleiner Fuchs los…
           return String(localStorage.getItem("dma_lc_konto") || "");
         } catch (e) { return ""; }
       };
-      LiveChat.praesenzZuhoeren(u ? u.id : gemerkt());
+      let id = u ? u.id : gemerkt();
+      if (!id && LiveChat.lage) {
+        try { const l = LiveChat.lage(); if (l && (l.lage === "drin" || l.lage === "verbindet")) id = l.ichId || ""; } catch (e) {}
+      }
+      LiveChat.praesenzZuhoeren(id);
     }
     if (kzPraesenzHorcht) return;
     kzPraesenzHorcht = true;

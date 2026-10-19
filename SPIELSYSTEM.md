@@ -5645,3 +5645,59 @@ select key, value from site_content where key in ('about', 'about_photo_history'
 2. **Zusammenspiel mit S8** (Foto ohne `loading="lazy"`): ohne `lazy` holt der Vorab-Scanner des Browsers das Standardbild schon beim Lesen der Seite – mit gemerktem Foto wären das verschenkte Bytes. S8 sollte das berücksichtigen (z. B. `lazy` nur dann weglassen, wenn kein eigenes Foto gemerkt ist, oder die gestempelte Kopie ist das gespeicherte Foto).
 3. Eine per SQL gelöschte „about“-Zeile: Geräte zeigen weiter den letzten Text (null = Stand bleibt). Abhilfe wäre, dass `getSiteContent` Fehler von „nichts da“ unterscheidet (kleine Änderung an backend.js) – bewusst nicht gebaut: jedes Gerät müsste backend.js (~27 KB gepackt) einmal neu holen, für einen Fall, den die Oberfläche nicht kennt.
 4. Vorschlag (sichtbar, nicht gebaut): auch der Erstbesuch ohne Sprung – den gespeicherten Text beim Ausliefern in index.html schreiben (Werkzeug liest „about“ beim Fassung-Setzen). Braucht einen Datenbank-Lesezugriff im Werkzeug.
+
+## Fassung 885 — Offene Räume und grünes Licht sofort beim Tipp auf „Klassenzimmer“ (S3, freigegeben Funk 311; Ladezeit-Entwurf)
+
+XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“. **Befund bis 885 (2ea2044c):** Wer gerade im Klassenzimmer sitzt und welche Räume offen sind („DIE RÄUME“, das Laufband oben, das Schulhaus in der Liste hinter dem grünen Licht), kommt über den Präsenzkanal `dma-klassenzimmer-da`. Den öffnete app.js fest **4 s nach dem Start**. Wer früher auf „Klassenzimmer“ tippte – der Normalfall, „bereit“ ist kalt nach ~1,4 s, warm nach ~1 s –, sah bis dahin bei jedem Raum „leer — geh ruhig hinein“, auch wenn jemand drin war. **Vorher festgelegtes Maß:** Zeit vom Tipp auf „Klassenzimmer“, bis „DIE RÄUME“ die Leute zeigt (Sonde, Teil M); dazu dürfen Tipp → Knopf „Betreten“, erstes Bild und „bereit“ (ladezeit-messen, kalt/warm) nicht über die Rauschgrenze schlechter werden. Sichtbar (freigegeben): die Leute in den Räumen und im Laufband stehen beim Tipp sofort da statt erst nach 4 s.
+
+### Was gebaut ist
+- **app.js, `raumVorbereiten`** (läuft beim Tipp auf die Pille „Klassenzimmer“, bei der Rückkehr nach dem Neuladen und beim Betreten): ruft nach dem ersten Bild (requestAnimationFrame → setTimeout 0) `dmaPraesenzLos` – erst das Bild des Klassenzimmers, dann die Leitung.
+- **`dmaPraesenzLos`** (ersetzt den alten 4-s-Block; die 4 s rufen dieselbe Funktion): wer zuerst kommt, öffnet den Kanal – **genau einmal** `praesenzZuhoeren`, **genau ein** Mithörer (`beiPraesenz`) fürs Laufband und die Online-Liste. Ein zweiter `praesenzZuhoeren`-Aufruf setzt in livechat.js `praesenzIch` neu (daran erkennt der Raum „andere da“); deshalb nur einmal, und nur, wenn supabase-js schon da ist. Sonst gilt der nächste Tipp bzw. die 4 s – vorher ging der eine Versuch nach 4 s ohne supabase-js ins Leere, und es gab bis zum Betreten keinen Kanal (Sonde G).
+- **Die Kennung:** angemeldet `Backend.currentUser().id`; lädt die Anmeldung noch (früher Tipp), die aus dem Gerät – genau wie livechat.js beim Betreten (Fassung 841/843: `sb-…-auth-token`, sonst `dma_lc_konto`); ein Gast ohne beides, der schon im Raum ist oder gerade hineingeht, seine Raum-Kennung (`LiveChat.lage().ichId`). Vorher gab app.js bei noch ladender Anmeldung `""`: der Kanal bekam eine Zufallskennung (die Online-Liste der anderen fand das Konto nicht im Klassenzimmer), und war man nach 4 s schon im Raum, hielt livechat.js den eigenen Eintrag für „andere da“ (ein überflüssiges „hallo“ nach 1,2 und 3 s). Ohne den Gast-Fall (Zwischenstand 1e56a35f) wäre das beim Betreten ohne Tipp auf die Pille schon nach ~0,85 s passiert statt nach 4 s (Sonde F dort rot).
+- **app-teile.json „kern“ += `kzEreignisSetzen`, `kzNurName`, `kzWohinText`** (drei Einzeiler): Der Rückruf des Kanals ruft sie, sobald jemand in einem eigenen Raum ist („Otto macht gerade „Ottos Raum“ auf“). Sie lagen im Raum-Stück raum1; kam die Antwort des Kanals vor dem Stück, holte der Platzhalter es **synchron** – schon in 2ea2044c nach den 4 s (Gegenprobe Sonde D: `raum1` über `kzWohinText`), mit dem früheren Kanal öfter.
+- **Ohne Tipp unverändert:** kein Kanal vor 4 s (Sonde B: nach 3,8 s keiner, genau einer nach ~4,2 s). Die Rückkehr nach dem Neuladen, die ohnehin gleich hineingeht (der Raum öffnet den Kanal sonst beim Betreten), hat ihn jetzt schon ab dem ersten Bild.
+- livechat.js, Datenbank: unverändert; index.html nur der Stempel. Kein neuer Kanal, keine neue Abfrage. min/app.js +0,3 KB gepackt.
+
+### Messung
+**Maß (Sonde `pruefe-885-praesenz.js`, Teil M):** Rechner 4× gebremst, echte Tipps (Berührung) auf „Wissen“ und „Klassenzimmer“ gleich nach „bereit“, Präsenzkanal nachgebaut (SUBSCRIBED nach 300 ms ≈ Verbindung + Beitritt über 4G, dann Emmy im Hauptraum und Otto in „Ottos Raum“); verschränkt A B / B A, A = 2ea2044c (`gegen885/praesenz-2ea2`), B = dieser Stand; Median, B − A gepaart.
+
+| Tipp | Tipp → Emmy in „DIE RÄUME“ (und im Laufband) | Tipp → Kanal offen | Tipp → Knopf „Betreten“ | „bereit“ |
+|---|---|---|---|---|
+| früh (gleich nach „bereit“, 0,7 s nach dem Start von app.js), 10 Paare | **3828 → 496, −3339 (10 von 10)** | 3508 → 175 | 108 → 118, +4 (3↓/7↑) | 859 → 868, −2 |
+| spät (4,8 s nach dem Start, Kontrolle), 6 Paare | 87 → 99, +14 (2↓/4↑) | Kanal schon offen | 87 → 99, +14 | 883 → 881 |
+
+Der Knopf kommt im selben ersten Bild wie vorher (der Kanal geht erst danach auf); +4 ms bei 7 von 10 ist kein Beleg (Vorzeichentest p ≈ 0,34; ladezeit-messen unten: kalt +8, warm −21, beides im Rauschen).
+
+**Kosten (`werkzeug/ladezeit-messen.js` 4g, HTTP/2 + TLS, CPU 4×, Gast, Tipp sofort nach „bereit“, 10 Paare verschränkt, A = 2ea2044c, B = dieser Stand; Rechnerlast nachher 1,9 auf 4 Kernen).** Dort gibt es keinen echten Präsenzkanal (fremde Adressen gehen nie ins Netz, der Kanal versucht es und scheitert) – gemessen wird, dass der frühere Aufruf nichts kostet.
+
+| Fall | erstes Bild A → B, B − A (95 %) | bereit A → B, B − A (95 %) | Klassenzimmer Tipp → Knopf | Wissen Tipp → Bild | Langläufer Summe | KB bis bereit |
+|---|---|---|---|---|---|---|
+| kalt | 558 → 562, +24 (−46…56) | 1354 → 1343, −2 (−124…65) | 215 → 224, +8 (−44…62) | 409 → 403, −13 (−110…47) | 790 → 754, −57 (−176…118) | 644 → 644 |
+| warm | 416 → 426, −4 (−44…36) | 1006 → 998, −70 (−112…72) | 182 → 171, −21 (−75…42) | 200 → 230, +17 (−27…70) | 700 → 728, +7 (−81…62) | 1 → 1 |
+
+„DEUTLICH“ bei **0 von 68** Maßen; synchron geholte Stücke 0/0, Anfragen 64/3 unverändert. Rauschgrenze (A/A 17.10.): gepaarter Median „bereit“ kalt ±80–140 ms.
+
+### Sonde `werkzeug/pruefe-885-praesenz.js`
+Q Bau (die drei im Kern und in min/app.js echte Funktionen, `raumVorbereiten` und die 4 s rufen `dmaPraesenzLos`) · A früher Tipp als Gast (Kanal gleich nach dem ersten Bild des Klassenzimmers, ≤ Knopf + 200 ms; Emmy in „DIE RÄUME“ ≤ 800 ms, im Laufband ≤ 900 ms; zweiter Tipp, „Lernen“ und die 4 s öffnen nichts Zweites: ein Kanal, ein Aufruf, ein Mithörer; kein synchroner Abruf) · B ohne Tipp wie bisher nach 4 s · C Konto, Anmeldung lädt noch (Kennung aus `sb-…-auth-token` bzw. `dma_lc_konto`) · D Raum-Stücke zurückgehalten, der Kanal bringt Ereignisse fürs Laufband (kein synchroner Abruf) · E Rückkehr nach dem Neuladen mit Konto und als Gast (ein Kanal, richtige Kennung, nach „drin“ keine andere Kennung) · F Gast betritt den Raum ohne Tipp auf die Pille (dasselbe) · G supabase-js kommt erst nach den 4 s (der nächste Tipp öffnet den Kanal) · M Messung (nur mit `GEGEN=`).
+- **Ergebnis: 41 grün.** Teil A dreimal wiederholt: Kanal 135/229/139 ms nach dem Tipp (Knopf 69/116/101), Emmy 453/545/457 ms. **Gegenprobe 2ea2044c: 16 rot** (Q ×4, A ×4, C ×2, D, E ×2, F, G ×2); grün bleibt, was gleich bleiben soll (B ganz, ein Kanal, ein Mithörer, keine Seitenfehler). Gegenprobe Zwischenstand 1e56a35f (ohne den Gast-Fall): F rot.
+- **Sonden (dieser Stand, min/ und Stempel neu):** 884-leitung · 659-verbindung · 859-kanal-sofort · 876-start-schlank · 884-messung · 884-notweg · 884-beta · ladezeit · 858-ladeweg · 865-lesetexte-nachladen · 873-ausgelagert · 885-stuecke · 885-bereiche · 885-schale · 885-swvorladen · 885-messen · 885-ueber – alle grün. 694-leistung nur 3a rot (der bekannte `min/spiel.js`-Wettlauf, schon in 884). 840-bilderwelt-alt-neu im flachen Klon nicht lauffähig (Stand 53eaa31 fehlt).
+
+### Datenbank
+Nicht gelesen (der Präsenzkanal ist Supabase Realtime, keine Tabelle). Ob draußen früh getippt wird (nur lesen; `tipp.kz[0][0]` = Zeitpunkt des ersten Klassenzimmer-Tipps ab dem Öffnen; mess-start geht nach dem Start hinaus, spätere Tipps fehlen darin – die Zahl unterschätzt also eher den Anteil später Tipps):
+```sql
+select daten->>'f' as fassung, count(*) as seiten_mit_kz_tipp,
+       sum(case when (daten->'tipp'->'kz'->0->>0)::numeric - (daten->'t'->>'bereit')::numeric < 4000 then 1 else 0 end) as tipp_vor_4s_nach_bereit,
+       percentile_cont(0.5) within group (order by (daten->'tipp'->'kz'->0->>0)::numeric - (daten->'t'->>'bereit')::numeric) as median_ms_nach_bereit
+  from spiel_diagnose
+ where art = 'mess-start' and jsonb_typeof(daten->'tipp'->'kz') = 'array' and daten->'t'->>'bereit' is not null
+ group by 1 order by 1 desc;
+```
+
+### Ehrlich
+- Der Kanal ist in der Sonde nachgebaut (fester Zeitpunkt). Draußen hängt „Emmy steht da“ an der Leitung (Verbindung + Beitritt); der Gewinn ist der Teil der 4 s, der beim Tipp noch übrig war. Wer erst nach 4 s tippt, merkt nichts (Teil M, später Tipp).
+- 3G nicht eigens gemessen. Die 4 s zählen ab dem Start von app.js, der Tipp kommt frühestens nach „bereit“ – erwartet also derselbe Gewinn.
+
+**Offen**
+1. **Vorschlag (sichtbar, nicht gebaut):** Das Laufband meldet beim ersten Öffnen des Kanals alle, die schon da sind, als „gerade ins Klassenzimmer gekommen“ bzw. „macht gerade … auf“ (Sonde D: „Otto macht gerade „Ottos Raum“ auf“, in 2ea2044c genauso). Ursache: `beiPraesenz` ruft den Mithörer sofort mit dem leeren Stand, `kzEreignisseAbleiten` nimmt `{}` als erste Aufnahme (gemeint war laut Kommentar: „Die allererste Aufnahme ergibt kein Ereignis“). Abhilfe: erst den Stand nach SUBSCRIBED als erste Aufnahme nehmen (livechat.js müsste das melden). Ändert, was im Laufband steht – deshalb erst im Funk.
+2. Feld: Anteil früher Klassenzimmer-Tipps nachsehen (SQL oben), wenn 885 draußen ist.
+3. Werkstatt-Eintrag und Funk beim Ausliefern von 885 (wie die anderen 885-Punkte).
