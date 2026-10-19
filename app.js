@@ -323,6 +323,7 @@
   function raumVorbereiten() {
     dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 600);
     dmaTeilGruppe("raum");
+    try { lcFilmListeHolen(); } catch (e) {}   // FASSUNG 885 — die Filmliste kommt sonst erst in der Ruhepause
     const weiter = () => {
       try { if (window.dmaStileAn) window.dmaStileAn(); else if (window.dmaStileVoll) window.dmaStileVoll(); } catch (e) {}
       try { if (window.dmaSpielLaden) window.dmaSpielLaden(); } catch (e) {}
@@ -602,6 +603,32 @@
      großen Dateien hätte nichts gebracht. */
   function bereichSichtbar(el) {
     return Boolean(el && el.offsetParent !== null);
+  }
+  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 255): „die schnelle Performance
+     und die Verbindung zu den anderen haben oberste Priorität“. Was beim Start verdeckt ist (Kompass, Weiterführende
+     Links, Schwarmwissen, Memory, Profil) und die Filmliste kommen nicht mehr im Seitenaufbau dran, sondern nach dem
+     Laden in Ruhepausen – je eine Arbeit je Pause, damit keine lange Aufgabe entsteht. Unsichtbar vorgezeichnet, also
+     nicht erst beim Öffnen: sonst stünde der Bereich einen Augenblick leer. Im Seitenaufbau gingen dafür bisher vier
+     der acht Abfragen an die Datenbank hinaus (Links, Tipps, Wissen-Bild, Anmeldebild) und die Filmliste – genau
+     dann, wenn Seite, Anmeldung und Klassenzimmer die Leitung brauchen. Gemessen: SPIELSYSTEM.md, „Fassung 885 —
+     Verdeckte Bereiche später zeichnen“. */
+  var ruheArbeit = [];
+  function nachLadenInRuhe(arbeit) {
+    ruheArbeit.push(arbeit);
+    if (ruheArbeit.length > 1) return;
+    const eine = () => {
+      try { ruheArbeit[0](); } catch (e) { console.warn("Ruhepause:", e); }
+      ruheArbeit.shift();
+      if (ruheArbeit.length) planen();
+    };
+    const planen = () => { if (window.requestIdleCallback) requestIdleCallback(eine, { timeout: 2000 }); else setTimeout(eine, 200); };
+    if (document.readyState === "complete") planen(); else window.addEventListener("load", planen, { once: true });
+  }
+  /* Ist ein Unterbereich laut Reitern offen? Liest nur Attribute – anders als bereichSichtbar zwingt das den Browser
+     nicht, mitten im Aufbau das Layout zu berechnen. */
+  function unterbereichOffen(viewId, subId) {
+    const v = document.getElementById(viewId), s = document.getElementById(subId);
+    return Boolean(v && s && v.dataset.active === "true" && s.dataset.active === "true");
   }
   let wortschatzAufgeschoben = false, wortschatzUhr = 0;
   function klassenzimmerOffen() {
@@ -36429,7 +36456,10 @@
          ob ein Geschenk seinen Jubel spielen darf und ob es sich
          lohnt, den Abspieler nachzuladen. Wer sie erst dann holt,
          wenn das erste Geschenk kommt, hoert einmal beides. */
-      lcFilmListeHolen().then((namen) => lcFilmeVorladen(namen));
+      /* FASSUNG 885 — geholt wurde sie aber schon beim Seitenstart (eine Anfrage mehr im Aufbau, ohne Speicher:
+         cache no-cache). Jetzt in der Ruhepause nach dem Laden – und sofort, wenn es ins Klassenzimmer geht
+         (raumVorbereiten: Tipp, Einladungslink, Rückkehr nach dem Neuladen), je nachdem, was zuerst kommt. */
+      nachLadenInRuhe(() => lcFilmListeHolen().then((namen) => lcFilmeVorladen(namen)));
       if (LiveChat.beiFilm) {
         LiveChat.beiFilm((name, melden) => {
           lcFilmSpielen(name).then((lief) => {
@@ -74146,6 +74176,7 @@
     Backend.updateExtraProfileField("memoryCardDesign", id);
   }
   async function renderMemory() {
+    if (!memoryState) return newMemoryGame();   // FASSUNG 885 — die erste Runde kommt erst in der Ruhepause
     const profile = Backend.currentProfile();
     const activeDesign = getMemoryCardDesign();
     const designBar = `
@@ -74377,7 +74408,9 @@
       }
     }
   }
-  newMemoryGame();
+  /* FASSUNG 885 — die erste Runde nicht im Seitenaufbau (Memory ist beim Start verdeckt; mit Konto ging dafür die
+     Freundesliste an die Datenbank), sondern in der Ruhepause. Jeder Weg hinein mischt ohnehin neu (newMemoryGame). */
+  nachLadenInRuhe(() => { if (!memoryState) newMemoryGame(); });
 
   document.querySelector('#learnSubnav [data-sub="sub-memory"]')?.addEventListener("click", () => {
     activeMemoryChallengeId = null; activeMemoryOpponentName = "";
@@ -77667,7 +77700,9 @@
     });
   }
   document.querySelector('#knowledgeSubnav [data-sub="sub-howitworks"]')?.addEventListener("click", renderHowItWorks);
-  document.querySelector('#knowledgeSubnav [data-sub="sub-kompass"]')?.addEventListener("click", renderKompass);
+  /* FASSUNG 885 — beim Öffnen nur neu zeichnen, wenn sich der Stand geändert hat (renderKompass, kompassStand); noch nie
+     gezeichnet: das tut die Wache vor dem nächsten Bild. */
+  document.querySelector('#knowledgeSubnav [data-sub="sub-kompass"]')?.addEventListener("click", () => { if (!kompassWache) renderKompass("oeffnen"); });
 
   const LOGIN_PLACEHOLDER_SVG = `<svg class="site-banner-svg" viewBox="0 0 400 120" preserveAspectRatio="xMidYMid slice">
     <defs><linearGradient id="loginGrad" x1="0" y1="0" x2="1" y2="1">
@@ -91223,26 +91258,47 @@
   }
 
   let kompassKalenderUhr = 0;   // FASSUNG 840
-  async function renderKompass() {
+  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. Der Kompass (Startansicht von
+     „Wissen“) wurde beim Start verdeckt gezeichnet und beim ersten Tipp auf „Wissen“ gleich noch einmal; davor
+     zwang bereichSichtbar den Browser, die ganze Ansicht mit dem alten Inhalt zu berechnen (Spur, Grundlinie 884:
+     erzwungenes Stil/Layout 118–137 ms in jedem Wissen-Tipp, CPU 4×). Jetzt:
+       - beim Start nicht gezeichnet; geht er auf, bevor er vorgezeichnet ist, zeichnet ihn eine Wache
+         (ResizeObserver, Muster aus 879) vor dem nächsten Bild – ohne leeres Aufblitzen;
+       - in der Ruhepause nach dem Laden unsichtbar vorgezeichnet, mit Stand-Schlüssel (kompassStand: der fertige
+         Text des Kompass und was ihn sonst verändert – Konto, Rolle, Schalter, Betonung);
+       - beim Öffnen wird nur neu gezeichnet, wenn sich der Stand seitdem geändert hat.
+     Gemessen: SPIELSYSTEM.md, „Fassung 885 — Verdeckte Bereiche später zeichnen“. */
+  var kompassStand = "", kompassWache = null;
+  function kompassKalenderPlanen() {
+    /* FASSUNG 840 — nicht im selben Augenblick: wer über „Wissen" ins Klassenzimmer geht, sieht den Kompass nur
+       im Vorbeigehen (Funk 271, „zehnmal schneller"). Erst wenn er nach 1,2 s noch zu sehen ist. */
+    clearTimeout(kompassKalenderUhr);
+    kompassKalenderUhr = setTimeout(() => {
+      if (ExerciseData.kalenderDa() || !bereichSichtbar(kompassArea) || klassenzimmerOffen()) return;
+      ExerciseData.ladeKalender().then(() => {
+        if (bereichSichtbar(kompassArea)) renderKompass();
+      }).catch(() => {});
+    }, 1200);
+  }
+  /* art: leer = wie bisher · "vorzeichnen" = verdeckt, in der Ruhepause · "oeffnen" = der Kompass geht gerade auf */
+  async function renderKompass(art) {
+    const vorzeichnen = art === "vorzeichnen", oeffnen = art === "oeffnen";
+    /* FASSUNG 885 — noch nie gezeichnet und zu: nichts tun, das holen Wache bzw. Ruhepause mit dem neuesten Stand nach
+       (Lernraum oder Niveau beim Wiederherstellen der Anmeldung, Betonung in den Einstellungen …). */
+    if (!art && kompassWache && !unterbereichOffen("view-knowledge", "sub-kompass")) return;
     /* Der Kalender liegt seit dieser Fassung in einer eigenen Datei, die
        erst bei Bedarf geladen wird — beim Seitenstart wäre er mit 7,4 MB
        die größte Einzellast, obwohl man immer nur einen Tag sieht.
        Geladen wird erst, wenn der Kompass wirklich sichtbar ist. */
     let kalenderFehltNoch = false;
-    if (ExerciseData.ladeKalender && !ExerciseData.kalenderDa() && bereichSichtbar(kompassArea)) {
+    /* FASSUNG 885 — „wird geladen …“ steht auch im vorgezeichneten Kompass (er muss beim Öffnen genau so aussehen wie
+       ein frisch gezeichneter); geholt wird weiter erst, wenn er zu sehen ist. */
+    if (ExerciseData.ladeKalender && !ExerciseData.kalenderDa() && (vorzeichnen || oeffnen || bereichSichtbar(kompassArea))) {
       /* NICHT abwarten: der Kalender füllt genau eine Karte auf dieser
          Seite, alles andere steht sofort bereit. Ist er da, zeichnen
          wir noch einmal — dann steht die Tagesgeschichte drin. */
       kalenderFehltNoch = true;
-      /* FASSUNG 840 — nicht im selben Augenblick: wer über „Wissen" ins Klassenzimmer geht, sieht den Kompass nur
-         im Vorbeigehen (Funk 271, „zehnmal schneller"). Erst wenn er nach 1,2 s noch zu sehen ist. */
-      clearTimeout(kompassKalenderUhr);
-      kompassKalenderUhr = setTimeout(() => {
-        if (ExerciseData.kalenderDa() || !bereichSichtbar(kompassArea) || klassenzimmerOffen()) return;
-        ExerciseData.ladeKalender().then(() => {
-          if (bereichSichtbar(kompassArea)) renderKompass();
-        }).catch(() => {});
-      }, 1200);
+      if (!vorzeichnen) kompassKalenderPlanen();
     }
     // Das Sprachniveau wird IMMER gesetzt, nicht erst wenn der heutige Tag freigegeben ist.
     // Vorher blieb es an Tagen ohne freigegebenen Eintrag auf null — im Archiv stand dann
@@ -91263,7 +91319,7 @@
     // Automatisches Tracking: sobald jemand hier war, gilt "Es war einmal in Deutschland" als
     // gelesen — kein extra "Ich hab's gelesen"-Knopf nötig, für Missionen, die das voraussetzen.
     // Läuft im Hintergrund: es ist ein Vermerk, kein Inhalt dieser Seite.
-    const visitedProfile = Backend.currentProfile();
+    const visitedProfile = vorzeichnen ? null : Backend.currentProfile();   // FASSUNG 885: verdeckt vorgezeichnet heißt nicht „hier gewesen“
     if (visitedProfile) {
       const visited = (visitedProfile.extraProfileData && visitedProfile.extraProfileData.visitedSections) || [];
       if (!visited.includes("es-war-einmal")) {
@@ -91316,7 +91372,7 @@
     const dichterVisible = Backend.isFeatureOn("dichter_und_denker") || canSeeGatedSections;
     const schneeVisible = Backend.isFeatureOn("schnee_von_gestern") || canSeeGatedSections;
     const beitraegeVisible = Backend.isFeatureOn("eigene_beitraege") || canSeeGatedSections;
-    kompassArea.innerHTML = `
+    const kompassHtml = `
       <div style="margin:-4px -4px 14px; border-radius:var(--radius-md); overflow:hidden;">${siteBannerHtml("wissen_banner", bannerUrl, WISSEN_PLACEHOLDER_SVG, "Wissen")}</div>
       <div class="wegweiser" data-wegweiser="kompass">
         <a href="#kompass-geschichte" class="wegweiser-item"><span>📜</span>${imItalienischraum() ? "C'era una volta in Italia" : "Es war einmal in Deutschland"}</a>
@@ -91513,6 +91569,17 @@
       <h3 id="kompass-partikeln" class="kompass-heading">✨ Kleine Wörter, große Wirkung</h3>
       <div class="kompass-grid">${VocabData.PARTIKELN.map((p) => kompassCard(p.word, p.explain, p.example, p.syl)).join("")}</div>
     `;
+    /* FASSUNG 885 — Stand-Schlüssel: der fertige Text und was außerhalb davon zählt (Konto und Rolle für die drei
+       Lesebereiche darunter, ihre rohen Schalter, Betonung). Gleich wie beim Vorzeichnen → nichts neu zeichnen. Mit
+       eingeschalteter Betonung, solange der Wortschatz fehlt, wird immer gezeichnet (sie wird beim Zeichnen gesetzt). */
+    const betonung = leseBetonungAn() || isStressModeOn();
+    const stand = [(Backend.currentUser() || {}).id || "", Backend.isBetaTester && Backend.isBetaTester(), canSeeGatedSections,
+      Backend.isAdmin && Backend.isAdmin(), ["dichter_und_denker", "schnee_von_gestern", "eigene_beitraege"].map((k) => String(Backend.getRawFeatureFlag ? Backend.getRawFeatureFlag(k) : "")),
+      betonung].join("|") + "|" + kompassHtml;
+    if ((oeffnen || vorzeichnen) && stand === kompassStand && !(betonung && !(VocabData.alleThemenDa && VocabData.alleThemenDa()))) return;
+    kompassStand = stand;
+    if (kompassWache) { kompassWache.disconnect(); kompassWache = null; }
+    kompassArea.innerHTML = kompassHtml;
     /* Auch die Wegweiser-Links landen sonst zu früh: der Kompass lädt
        sein Banner nach, alles darunter rutscht, und man steht neben dem
        Ziel statt davor. Sie nehmen deshalb denselben Weg wie der Sprung
@@ -91572,7 +91639,24 @@
     renderSchneeVonGestern();
     renderEigeneBeitraege();
   }
-  renderKompass();
+  /* FASSUNG 885 — beim Start nur zeichnen, wenn der Kompass offen ist (Einsprung mit #view-knowledge). Sonst wacht
+     die Wache, bis sein Bereich Platz bekommt (von 0 auf eine Breite – vor dem nächsten Bild), und die Ruhepause
+     zeichnet ihn verdeckt vor. Ohne ResizeObserver (sehr alte Browser) wie bisher sofort. */
+  /* Nach dem Wiederherstellen der Anmeldung bzw. dem Anmelden (Konto, Rolle, Schalter): verdeckt neu vorzeichnen, damit
+     auch Angemeldete beim Öffnen nichts neu zeichnen müssen – die Ruhepause nach load kommt meist vor der Anmeldung.
+     Gleicher Stand → nichts; noch nie gezeichnet → das tut die Ruhepause ohnehin mit dem neuesten Stand. */
+  function kompassNachAnmeldung() {
+    if (kompassWache || !kompassStand) return;
+    nachLadenInRuhe(() => { if (!unterbereichOffen("view-knowledge", "sub-kompass")) renderKompass("vorzeichnen"); });
+  }
+  if (unterbereichOffen("view-knowledge", "sub-kompass") || !window.ResizeObserver || !kompassArea) renderKompass();
+  else {
+    kompassWache = new ResizeObserver(() => {
+      if (kompassWache && bereichSichtbar(kompassArea)) renderKompass("oeffnen");
+    });
+    kompassWache.observe(kompassArea);
+    nachLadenInRuhe(() => { if (kompassWache) renderKompass(unterbereichOffen("view-knowledge", "sub-kompass") ? "oeffnen" : "vorzeichnen"); });
+  }
 
   /* ============================================================
      MATERIALIEN & LINKS
@@ -91984,9 +92068,11 @@ An einem Morgen lief ein kleiner Fuchs los…
     renderCommunityTexts();
   });
 
+  var linksAngestossen = false;   // FASSUNG 885
   async function renderLinks() {
     const area = document.getElementById("linksArea");
     if (!area) return;
+    linksAngestossen = true;
     const user = Backend.currentUser();
     const [userLinks, myLinks, pendingLinks] = await Promise.all([
       Backend.getApprovedUserLinks(),
@@ -92056,7 +92142,9 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
     });
   }
-  renderLinks();
+  /* FASSUNG 885 — nicht im Seitenaufbau (zwei Abfragen, verdeckter Bereich), sondern in der Ruhepause vorgezeichnet;
+     wer „Weiterführende Links“ öffnet, holt wie bisher frisch. */
+  nachLadenInRuhe(() => { if (!linksAngestossen) renderLinks(); });
   document.querySelector('#knowledgeSubnav [data-sub="sub-links"]')?.addEventListener("click", () => renderLinks());
   // Vorstellungsrunde: geführtes Formular mit hilfreichen Platzhaltern, damit niemand vor einem
   // leeren Feld sitzt — plus eine kompakte Kartenübersicht aller Vorstellungen (mit dem jeweils
@@ -92186,9 +92274,11 @@ An einem Morgen lief ein kleiner Fuchs los…
   // "Schwarmwissen" — freier Austausch von Tipps, Links, Videos, Bildern zwischen
   // Nutzer:innen. Alex bietet die Inhalte an, lernt aber selbst kein Deutsch mehr — wer gerade
   // mittendrin steckt, weiß am besten, was wirklich hilft.
+  var tippsAngestossen = false;   // FASSUNG 885
   async function renderTips() {
     const area = document.getElementById("tipsArea");
     if (!area) return;
+    tippsAngestossen = true;
     const user = Backend.currentUser();
     const [tips, myTips, pendingTips] = await Promise.all([
       Backend.getApprovedCommunityTips(),
@@ -92292,7 +92382,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       img.addEventListener("click", () => openGallerySlideshow([img.dataset.modalViewPhoto], 0, "Bild"));
     });
   }
-  renderTips();
+  nachLadenInRuhe(() => { if (!tippsAngestossen) renderTips(); });   // FASSUNG 885 — wie die Links oben
   document.querySelector('#knowledgeSubnav [data-sub="sub-tips"]')?.addEventListener("click", () => renderTips());
 
   /* ============================================================
@@ -92437,8 +92527,10 @@ An einem Morgen lief ein kleiner Fuchs los…
     );
     document.body.appendChild(box);
   }
+  var profilAngestossen = false;   // FASSUNG 885
   async function renderAccount() {
     const area = document.getElementById("accountArea");
+    profilAngestossen = true;
     const user = Backend.currentUser();
     /* Diese drei Abfragen hingen bisher hintereinander — jede wartete
        auf die vorige, obwohl keine von der anderen abhängt. Nebeneinander
@@ -92506,6 +92598,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           // manuell neu geladen hat.
           applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
           await renderAccount();
+          kompassNachAnmeldung();   // FASSUNG 885
           updateSpecialDayBar();
           Backend.touchActivity();
           notifyAboutAppUpdateIfNeeded();
@@ -98616,7 +98709,12 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
   }
 
-  renderAccount();
+  /* FASSUNG 885 — der Profil-Aufruf beim Start nur, wenn das Profil offen ist (Einsprung mit #view-profile). Beim
+     Start ist die Anmeldung noch nicht wiederhergestellt: gezeichnet wurde verdeckt das Anmeldeformular (samt Abfrage
+     des Anmeldebilds), und nach der Anmeldung gleich noch einmal (restoreSession unten). Sonst in der Ruhepause, falls
+     bis dahin noch nicht gezeichnet; wer das Profil öffnet, zeichnet es wie bisher neu. */
+  if (unterbereichOffen("view-profile", "sub-account")) renderAccount();
+  else nachLadenInRuhe(() => { if (!profilAngestossen) renderAccount(); });
   refreshHeaderAuth();
 
   // Ranking/Gästebuch/Premium erst rendern, wenn der jeweilige Reiter geöffnet wird
@@ -98669,6 +98767,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     refreshHeaderAuth();
     renderAccount();
     renderSetup();
+    kompassNachAnmeldung();   // FASSUNG 885
     applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
     updateSpecialDayBar();
     notifyAboutAppUpdateIfNeeded();
