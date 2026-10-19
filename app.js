@@ -453,28 +453,51 @@
 
   // "Über mich" ist admin-editierbar — lädt beim Start eventuelle gespeicherte Anpassungen und
   // zeigt Admins (nur ihnen) einen dezenten Bearbeiten-Knopf direkt an Ort und Stelle.
+  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie
+     bei HelloTalk“ · S2, freigegeben (Funk 311): „Über mich“ sofort mit dem zuletzt gespeicherten Text, dann still angleichen.
+     BEFUND bis 884: „Über mich“ ist die Startansicht. Das erste Bild zeigte den Text aus index.html; erst wenn app.js lief
+     UND die Datenbank geantwortet hatte (gemessen im 4G-Modell: ~1,3 s nach dem ersten Bild), sprang er auf den gespeicherten –
+     ebenso das Foto (erst das Standardbild geladen, dann das gespeicherte).
+     JETZT: Jede gelesene Fassung von site_content „about“ merkt sich das Gerät (localStorage „dma-ueber“ = { f: Fassung,
+     t: Zeitstempel, w: Wert }). index.html setzt sie ein, BEVOR das erste Bild gemalt wird (kleiner Wächter im Kopf);
+     hier wird nur noch still angeglichen: geschrieben wird nur ein Feld, das sich wirklich unterscheidet. Gleich = kein
+     Schreiben, kein Umspringen. Hat Xander inzwischen etwas geändert, wechselt genau dieses Feld (wie bisher, nur seltener).
+     Ein leeres Feld zeigt den Text aus index.html (data-dma-orig merkt ihn, bevor er überschrieben wird).
+     Kommt null zurück (offline, Fehler – getSiteContent unterscheidet das nicht von „nichts gespeichert“), bleibt der
+     angezeigte Stand stehen und der Merker unverändert: im Funkloch springt nichts auf den alten Text zurück. Über die
+     Oberfläche wird „about“ nie gelöscht (Speichern schreibt immer ein Objekt). */
+  const UEBER_FELDER = [["h2", "heading"], [".role", "role"], [".about-text-short", "shortText"], [".about-support-note", "supportNote"]];
+  function ueberAngleichen(saved) {
+    const view = document.getElementById("view-about");
+    if (!view) return;
+    UEBER_FELDER.forEach(([sel, k]) => {
+      const el = view.querySelector(sel);
+      if (!el) return;
+      if (el.dataset.dmaOrig == null) el.dataset.dmaOrig = el.textContent;
+      const soll = saved[k] ? String(saved[k]) : el.dataset.dmaOrig;
+      if (el.textContent !== soll) el.textContent = soll;
+    });
+    // photoUrl === "" (bewusst leer gespeichert, z. B. über "Auf Original zurücksetzen") stellt
+    // das gesicherte Original-Bild wieder her, statt es einfach unverändert zu lassen.
+    const img = view.querySelector(".avatar-wrap img");
+    if (img) {
+      const soll = saved.photoUrl ? String(saved.photoUrl) : img.dataset.originalSrc;
+      if (soll && img.getAttribute("src") !== soll && img.src !== soll) img.src = soll;
+    }
+  }
   async function loadAndRenderAboutSection() {
-    const saved = await Backend.getSiteContent("about");
     const img = document.querySelector("#view-about .avatar-wrap img");
     // Das URSPRÜNGLICHE, fest im HTML stehende Bild EINMALIG sichern, bevor es je überschrieben
     // wird — sonst gibt es später keine Möglichkeit mehr, "auf Original zurücksetzen" zu wählen,
     // weil das ursprüngliche src schon lange durch das gespeicherte ersetzt wurde.
+    // (FASSUNG 885: setzt index.html das gemerkte Foto ein, sichert es das Original vorher genauso.)
     if (img && !img.dataset.originalSrc) img.dataset.originalSrc = img.src;
-    if (saved) {
-      const h2 = document.querySelector("#view-about h2");
-      const role = document.querySelector("#view-about .role");
-      const shortText = document.querySelector("#view-about .about-text-short");
-      const supportNote = document.querySelector("#view-about .about-support-note");
-      if (saved.heading && h2) h2.textContent = saved.heading;
-      if (saved.role && role) role.textContent = saved.role;
-      if (saved.shortText && shortText) shortText.textContent = saved.shortText;
-      if (saved.supportNote && supportNote) supportNote.textContent = saved.supportNote;
-      // photoUrl === "" (bewusst leer gespeichert, z. B. über "Auf Original zurücksetzen") stellt
-      // das gesicherte Original-Bild wieder her, statt es einfach unverändert zu lassen.
-      if (img) {
-        if (saved.photoUrl) img.src = saved.photoUrl;
-        else if (saved.photoUrl === "") img.src = img.dataset.originalSrc;
-      }
+    const saved = await Backend.getSiteContent("about");
+    if (saved && typeof saved === "object") {
+      ueberAngleichen(saved);
+      const w = {};
+      ["heading", "role", "shortText", "supportNote", "photoUrl"].forEach((k) => { if (typeof saved[k] === "string") w[k] = saved[k]; });
+      try { localStorage.setItem("dma-ueber", JSON.stringify({ f: window.DMA_VERSION, t: Date.now(), w })); } catch (e) {}
     }
     renderAboutEditButton();
   }

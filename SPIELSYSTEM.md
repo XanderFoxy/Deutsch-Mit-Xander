@@ -5592,3 +5592,56 @@ Rauschgrenze (A/A 17.10.): erstes Bild ±54, bereit ±139. Messdateien: Zwischen
 3. Die 2-s-Grenze ist gesetzt, nicht gemessen (vor S1 wartete man auf 4G ~0,2 s, auf 3G ~0,5 s auf die Seite; 2 s lassen langsamen Leitungen Luft).
 4. Nebenbefund `#raum=` (s. o.) – eigener Schritt, unsichtbar.
 5. Weiter offen aus S1 und Nachbesserung 1 (Feldwerte, `workerStart`, 12 h, doppelt geholte Seite, Stempel ↔ Inhalt, Werkstatt und Funk beim Ausliefern).
+
+## Fassung 885 — „Über mich“ sofort (S2, freigegeben Funk 311; Ladezeit-Entwurf)
+
+XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“. **Befund bis 884:** „Über mich“ ist die Startansicht. Das erste Bild zeigte den Text aus index.html; erst wenn app.js gelaufen war **und** die Datenbank (site_content „about“) geantwortet hatte, sprang er auf den gespeicherten – bei jedem Öffnen, auch beim hundertsten. Ebenso das Foto: erst wurde das Standardbild aus index.html geholt (github.com), dann das gespeicherte. S2 (Entwurf, freigegeben): „Über mich“ sofort mit dem zuletzt gespeicherten Text und Foto, dann still angleichen. **Vorher festgelegtes Maß:** Zeit, bis der endgültige Text steht, und Zahl der Bilder mit altem Text (Wiederkehr; Sonde, Teil M). **Dazu darf in `werkzeug/ladezeit-messen.js` erstes Bild und „bereit“ (kalt, warm) nicht schlechter werden.** Sichtbar (freigegeben): wer schon einmal da war, sieht vom ersten Bild an den gespeicherten Text; ändert Xander ihn, wechselt beim nächsten Öffnen genau das geänderte Feld einmal (wie bisher, nur nicht mehr bei jedem Öffnen).
+
+### Was gebaut ist
+- **app.js (`loadAndRenderAboutSection`, neu `ueberAngleichen`; im Kern, also `min/app.js`):** Jeder gelesene Stand wird gemerkt – localStorage `dma-ueber` = `{ f: Fassung, t: Zeitstempel, w: { heading, role, shortText, supportNote, photoUrl } }` (nur Texte). Angeglichen wird still: geschrieben wird nur ein Feld, das sich vom Angezeigten unterscheidet; ist alles gleich, schreibt app.js nichts (Sonde B3: 0 Änderungen, vorher 5). Ein leeres Feld zeigt wie bisher den Text bzw. das Bild aus index.html – dafür merkt sich jedes Feld seinen Text aus index.html (`data-dma-orig`, das Bild wie bisher `data-original-src`), bevor er überschrieben wird. Ergebnis für jeden Datenbank-Stand Feld für Feld wie in 884 (Sonde C2, auch in der Gegenprobe grün).
+- **Kommt `null` zurück** (Funkloch, Fehler – `getSiteContent` unterscheidet das nicht von „nichts gespeichert“), bleibt der angezeigte Stand stehen und der Merker unverändert (Sonde D, E). Über die Oberfläche wird „about“ nie gelöscht; Speichern schreibt immer ein Objekt, danach läuft `loadAndRenderAboutSection` und frischt den Merker auf.
+- **index.html, Kopf (ein kleiner Wächter, 20 Zeilen, +0,45 KB gepackt):** Gibt es einen Merker, setzt ein `MutationObserver` die gemerkten Texte und das Foto ein, sobald der Parser „Über mich“ fertig gelesen hat (`.about-links` ist da). Die Rückrufe eines MutationObserver laufen als Mikroaufgabe gleich nach der Parser-Aufgabe, also immer **vor** dem nächsten Bild. Ohne Merker: nur ein `localStorage.getItem`, kein Beobachter.
+- **Warum im Kopf und nicht als Skript direkt hinter „Über mich“:** Ein Skript im Body wartet nach HTML-Regel, bis alle Stilblätter davor geladen sind, und hält so lange den Parser an (das tut heute erst der Lader am Ende). Der Wächter steht vor dem Skript, das die Stilblätter einhängt, läuft also sofort und hält nichts an (Sonde Q). Die Variante hinter der Section ist nicht gebaut und nicht gemessen.
+- **Foto:** Das Standardbild hat `loading="lazy"`; der Wächter tauscht die Adresse vor dem ersten Layout, das Standardbild wird gar nicht erst geholt (Sonde B4: 0 Anfragen an github.com, vorher 1 je Öffnen).
+- Erstbesuch (noch kein Merker): unverändert – erstes Bild mit dem Text aus index.html, Sprung nach der Antwort, danach steht der Merker (Sonde A).
+
+### Messung
+**Maß (Sonde `pruefe-885-ueber.js`, Teil M):** 4G (60 ms, 9 Mbit/s) und CPU 4× über das Prüfprotokoll, gepackt, Datenbank nachgestellt (supabase-js aus der lokalen Kopie, „about“ nach 300 ms), Wiederkehr mit Merker; je Lauf erstes Öffnen (Dateien aus dem Netz) und zweites (HTTP-Speicher); 10 Paare verschränkt (A B / B A), A = c30a68f7, B = dieser Stand. Jedes Bild wird per requestAnimationFrame mitgeschrieben (vier Texte + Foto-Adresse).
+
+| Öffnen | erstes Bild (FCP) A → B, B − A | endgültiger Text steht A → B, B − A | Bilder mit altem Text A → B | DOMContentLoaded B − A | Standardfoto geholt |
+|---|---|---|---|---|---|
+| erstes (Netz) | 470 → 440, −22 (7↓/2↑) | **1757 → 304, −1455 (10 von 10)** | **55 → 0** | −17 (7↓/3↑) | 1 → 0 |
+| zweites (Speicher) | 460 → 452, −2 (5↓/3↑) | **1760 → 297, −1470 (10 von 10)** | **56 → 0** | −1 (5↓/5↑) | 1 → 0 |
+
+„Endgültiger Text steht“ ist das erste Bild-Ereignis (rAF), in dem alle vier Texte und das Foto stimmen; in B ist das schon das erste Ereignis überhaupt (vor dem FCP-Zeitpunkt) – sichtbar steht der Text also **vom ersten gemalten Bild an**, in A erst ~1,3 s danach (app.js + Datenbank). Draußen hängt dieser Abstand an Gerät und Leitung (Feld 884: „bereit“ iPhone 803 ms, Android 1890 ms, dazu die Rundreise zur Datenbank).
+
+**Gegenprobe Kosten (`werkzeug/ladezeit-messen.js` 4g, HTTP/2 + TLS, CPU 4×, Gast, 10 Paare verschränkt, A = c30a68f7 (`gegen885/ueber-vorher`), B = dieser Stand).** Dort ist die Datenbank gesperrt, es entsteht nie ein Merker – gemessen wird also der Weg ohne Merker (ein `localStorage.getItem` mehr, Seite +1 KB); den Weg mit Merker misst Teil M oben (FCP und DOMContentLoaded nicht schlechter).
+
+| Fall | erstes Bild A → B, B − A (95 %) | bereit A → B, B − A (95 %) | KB bis bereit |
+|---|---|---|---|
+| kalt | 562 → 566, +8 (−14…28) | 1382 → 1380, −54 (−95…34) | 643 → 644 |
+| warm | 434 → 418, −2 (−30…20) | 1017 → 971, −43 (−108…24) | 1 → 1 |
+
+„DEUTLICH“ bei 3 von 68 Maßen, alle drei „+1 KB“ (Seite und app.js etwas größer – das ist echt). Wissen- und Klassenzimmer-Tipp, synchron geholte Stücke (0), Anfragen (64/3) unverändert. Warm „Langläufer: Summe“ −126 (95 % −201…−39, 2↑/8↓) hat mit diesem Schritt nichts zu tun (der Weg ohne Merker unterscheidet sich um eine Zeile) – Rauschen, Rauschgrenze (A/A 17.10.) erstes Bild ±54, bereit ±139. Rechnerlast 0,1–1,6 (4 Kerne). Messdateien: Zwischenordner `ueber/` (`ladezeit-4g.txt|json`, `mess-m.json`).
+
+### Sonde `werkzeug/pruefe-885-ueber.js`
+Q Bauweise (Wächter im Kopf vor den Stilblättern, Merker aus dem Kern) · A Erstbesuch · B Wiederkehr gleich (erstes Bild X, ein einziger Stand, app.js schreibt nichts, Standardfoto nie geholt, Merker aufgefrischt) · C Datenbank inzwischen anders (erstes Bild Merker, genau ein Wechsel, Ende wie 884, Merker neu) · D Funkloch · E Antwort „nichts“ · F kaputter Merker (drei Arten) · M Messung (s. o.) · P Seitenfehler.
+- **Ergebnis: 22 grün** (mit M 23; M prüft, dass gedrosselt in keinem der 20 Öffnungen ein Bild mit altem Text kam). **Gegenprobe c30a68f7: 18 rot** (Q ×2, A3, B1–B5, C1, C3, C4, D ×2, E ×2, F ×3); grün bleibt, was gleich bleiben soll (A1, A2, C2, P).
+- **Sonden (dieser Stand, min/ und Stempel neu):** 885-schale 72 · 885-bereiche 56 · 885-stuecke 43 · 885-swvorladen 27 · 885-messen 47 · 884-notweg 91 · 884-beta 22 · 884-messung · 876-start-schlank · 858-ladeweg · 865-lesetexte-nachladen · 873-ausgelagert · ladezeit – alle grün. 694-leistung nur 3a rot (der bekannte `min/spiel.js`-Wettlauf, schon in 884). 840-bilderwelt-alt-neu läuft im flachen Klon weiter nicht (53eaa31 fehlt); die Änderung an app.js liegt in den Zeilen 455–510, die von 840 geprüften Bilderwelt-Abschnitte beginnen bei Zeile 89159. Die app-Stücke unterscheiden sich vom Stand davor nur in der Kennung des Baus (geprüft: nach Ersetzen der Kennung Byte für Byte gleich); neu gebaut nach der letzten Kommentar-Änderung: 885-ueber, 876, 885-stuecke, 858, 873, 865, ladezeit, 884-beta noch einmal grün.
+
+### Datenbank
+Nicht gelesen (für den Schritt nicht nötig; ob „about“ gesetzt ist, entscheidet nur, ob draußen etwas zu sehen ist). Zum Nachsehen (nur lesen):
+```sql
+select key, value from site_content where key in ('about', 'about_photo_history');
+```
+
+### Ehrlich
+- **Wirkt nur, wenn „about“ in der Datenbank gesetzt ist und sich von index.html unterscheidet.** Ist keine Zeile da, schreibt app.js keinen Merker, und alles bleibt wie in 884 (kein Sprung, weil nichts zu ersetzen ist). Ob Xander den Text gespeichert hat, ist nicht nachgesehen (SQL oben).
+- Der Erstbesuch springt weiter einmal (ohne Merker geht es nicht).
+- Die 300 ms der Datenbank sind gesetzt; der Gewinn ist im Modell „app.js + Antwort“, draußen eher größer (Android „bereit“ 1,9 s).
+
+**Offen**
+1. Nachsehen, ob „about“ gesetzt ist (SQL oben) – davon hängt ab, ob draußen überhaupt etwas zu sehen ist.
+2. **Zusammenspiel mit S8** (Foto ohne `loading="lazy"`): ohne `lazy` holt der Vorab-Scanner des Browsers das Standardbild schon beim Lesen der Seite – mit gemerktem Foto wären das verschenkte Bytes. S8 sollte das berücksichtigen (z. B. `lazy` nur dann weglassen, wenn kein eigenes Foto gemerkt ist, oder die gestempelte Kopie ist das gespeicherte Foto).
+3. Eine per SQL gelöschte „about“-Zeile: Geräte zeigen weiter den letzten Text (null = Stand bleibt). Abhilfe wäre, dass `getSiteContent` Fehler von „nichts da“ unterscheidet (kleine Änderung an backend.js) – bewusst nicht gebaut: jedes Gerät müsste backend.js (~27 KB gepackt) einmal neu holen, für einen Fall, den die Oberfläche nicht kennt.
+4. Vorschlag (sichtbar, nicht gebaut): auch der Erstbesuch ohne Sprung – den gespeicherten Text beim Ausliefern in index.html schreiben (Werkzeug liest „about“ beim Fassung-Setzen). Braucht einen Datenbank-Lesezugriff im Werkzeug.
