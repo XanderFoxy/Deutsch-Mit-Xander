@@ -1404,7 +1404,9 @@ window.Rueckfrage = (function () {
     uhr = setTimeout(function () { holen(); planen(); }, istOffen() ? TAKT_OFFEN : TAKT);
   }
 
+  var gestartet = false;
   function start() {
+    gestartet = true;
     holen();
     planen();
     /* FASSUNG 884 — geht die Tastatur auf oder zu, das Walkie-Feld neu ausrichten (tastaturLuft) */
@@ -1414,15 +1416,29 @@ window.Rueckfrage = (function () {
     });
   }
 
+  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. rueckfrage.js steht nicht mehr in der
+     Startliste von index.html (79 KB Quelle, 28,7 KB min/, die jedes Gerät holte und übersetzte, obwohl das Walkie nur
+     beim Betreiber erscheint). Es kommt nur noch zu ihm: index.html dmaWalkieLaden – gerufen von backend.js, sobald das
+     Profil mit is_owner da ist, und auf seinem Gerät (localStorage „dma-walkie“) schon in der Ruhepause nach
+     DOMContentLoaded. Damit das Walkie genauso schnell da ist wie vorher, gilt weiter „1,5 s nach DOMContentLoaded“ –
+     gerechnet ab DOMContentLoaded, nicht ab dem Eintreffen der Datei; kommt sie später, geht es sofort los. */
+  function startUhr() {
+    var d = 0;
+    try { var n = performance.getEntriesByType("navigation")[0]; d = n ? n.domContentLoadedEventStart : 0; } catch (e) {}
+    setTimeout(start, d > 0 ? Math.max(0, 1500 - (performance.now() - d)) : 1500);
+  }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", function () { setTimeout(start, 1500); });
   } else {
-    setTimeout(start, 1500);
+    startUhr();
   }
 
   return {
     holen: holen,
     aufzu: aufzu,
+    /* FASSUNG 885 — backend.js hat den Betreiber erkannt (über index.html dmaWalkieLaden): steht das Walkie noch nicht
+       da, gleich nachsehen statt erst beim nächsten Takt (bis 20 s) – etwa wenn das Profil nach den 1,5 s kam. */
+    erkannt: function () { if (gestartet && !reiter) holen(); },
     stand: function () { return fragen.slice(); },
     /* FASSUNG 884 — nur für die Sonde (Zeiten verkürzen, rate16k umschalten) */
     diktatStrom: STROM

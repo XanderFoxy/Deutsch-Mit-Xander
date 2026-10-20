@@ -78,6 +78,16 @@ const Backend = (function () {
 
   /* ================= AUTH ================= */
 
+  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. rueckfrage.js (das Walkie) lädt nicht
+     mehr bei jedem Start, sondern nur für den Betreiber (index.html, dmaWalkieLaden). Hier wird er erkannt: das eigene
+     Profil kommt mit is_owner. Das Gerät merkt es sich („dma-walkie“) und holt die Datei beim nächsten Start schon in
+     der Ruhepause; ein anderes Konto auf dem Gerät nimmt den Merker wieder weg. setTimeout: erst wenn demo.profile
+     gesetzt ist (das geschieht nach dem return, im selben Durchlauf). */
+  function walkieMerken(betreiber) {
+    try { if (betreiber) localStorage.setItem("dma-walkie", "1"); else localStorage.removeItem("dma-walkie"); } catch (e) {}
+    if (betreiber && window.dmaWalkieLaden) setTimeout(function () { try { window.dmaWalkieLaden(); } catch (e) {} }, 0);
+  }
+
   /* ============================================================
      DATENVERLUST-SCHUTZ — die wichtigste Regel dieser Datei
      ------------------------------------------------------------
@@ -103,6 +113,7 @@ const Backend = (function () {
       const { data, error } = await client.from("profiles").select("*").eq("id", userId).maybeSingle();
       if (error) throw new Error(error.message);
       if (!error && data) {
+        walkieMerken(Boolean(data.is_owner));   // FASSUNG 885
         return {
           name: data.name || name || email,
           bio: data.bio || "",

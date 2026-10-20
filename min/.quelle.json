@@ -41,7 +41,6 @@
  "data-szenen.js": "facd9322aa9a85e01fb979df8f95dc077e1222b1",
  "konjugation.js": "740bad9ac8234b00f3a6b64b3e0793ae54ecf619",
  "data-vocab.js": "4d1c59095b00c2be502216599ba8328d5402a7fe",
- "backend.js": "c6b366da16e1a5ec6e9a4f97c52686c9c151c7ed",
  "data-lesetexte.js": "3896db02514c24a24d57d055e51b388a8730fd3b",
  "data-italienisch.js": "705ae2d7e61ddf90c9fd83e7c653602b299bd710",
  "data-tutor.js": "8ac5d581188aabfe22784be7260db93d01265aba",
@@ -52,11 +51,12 @@
  "aussprache-pruefung.js": "f07453b70d1c10fa30062572624cd4299d9bc4d7",
  "spiel.css": "05e174c95c16d4253b5847d857ff2e2518fed83a",
  "spiel.js": "2558e54988fde2504e3f9c94eacac49491b36714",
- "rueckfrage.js": "7d35c80443adc7533a67dd37f74953ec2d666787",
  "korrekturen.css": "0ab791607b816ffb37db3df7dfb4b60c2e0c583b",
  "livechat.js": "42abee3f5fdcf801fb37546e7fe6e454871c6113",
  "data-werkstatt.js": "0870ef6e867b266f4a19c6bc6cbb06c059f25658",
  "messung.js": "31f58efd091f542a12b17fbc533b1a70931c3f48",
  "data-exercises.js": "52861dc92295be2a22f8504eac815b55e6921177",
- "app.js": "3a501d97116bdda50c9e89f2a55b193b02560c4c"
+ "app.js": "3a501d97116bdda50c9e89f2a55b193b02560c4c",
+ "backend.js": "b1ab4cabc932cf3396ea67ae1f36b6fbf9b4619e",
+ "rueckfrage.js": "d5bc312993098131a25ee2d5b468c75dd0ab07d6"
 }

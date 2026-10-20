@@ -5798,3 +5798,498 @@ XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): �
 1. **Vorschlag (sichtbar, nicht gebaut; Offen 1 mit den Teilfällen):** Das Laufband meldet beim ersten Öffnen des Kanals alle, die schon da sind, als „gerade gekommen“ bzw. „macht gerade … auf“. (a) Normaler Start nach den 4 s: wie bis 884. (b) Klick auf die Pille ohne Hineingehen – Finger, Einladungslink, Benachrichtigung, Briefkasten, Unterricht-Einladung, Notweg-Ziel, Laufband, „Zurück“: wie bis 884, nur früher. (c) Klick und schon vor den 4 s drin: neu mit S3 (2ea2044c 0 von 5, jetzt 5 von 5). Abhilfe für alle drei: die erste Aufnahme erst nehmen, wenn der Kanal geantwortet hat (livechat.js müsste das melden). Braucht die Freigabe im Funk.
 2. **Nebenbefund Einladungslink (oben):** ~1,6–1,8 s Langläufer und synchroner Abruf von rest2 beim Start über einen Einladungslink, schon in 884. Eigener Punkt (unsichtbar), Vorrang Leistung und Verbindung.
 3. Weiter offen aus Nachbesserung 1: Punkt 2 (zweiter Tipp während der Rückkehr, nicht gemessen) und Punkt 3 (3G, Feldwert früher Tipps, Werkstatt und Funk beim Ausliefern von 885).
+
+## Fassung 885 — Start schlanker: Kommentare aus index.html, rueckfrage.js nur für den Betreiber (Ladezeit-Entwurf, Schritt K)
+
+(ENTWURF – Messung folgt)
+
+### Ausgelagerte Begründungen aus index.html (wörtlich, I1–I42)
+In index.html steht an jeder dieser Stellen nur noch die kurze Zeile mit „SPIELSYSTEM.md I<n>“. Die Texte unten sind Zeichen für Zeichen die Kommentare aus dem Stand vor diesem Schritt (a508dc56); Sonde 885-schlank, Teil Q, prüft das.
+
+#### I1 — Kopfzeilen gegen das Zwischenspeichern (Kopf)
+Jetzt in index.html: `<!-- Kopfzeilen gegen das Zwischenspeichern der Seite (SPIELSYSTEM.md I1) -->`
+```text
+<!-- WICHTIG: Verhindert, dass der Browser diese HTML-Datei selbst zwischenspeichert. Ohne das
+     konnte eine einmal geladene, alte Version der Seite dauerhaft aus dem Browser-Cache kommen,
+     OHNE dass die neuen ?v=-Nummern der CSS/JS-Dateien je gesehen wurden — das war vermutlich die
+     eigentliche Ursache dafür, dass Aktualisierungen im normalen Tab nicht ankamen, im privaten
+     Fenster (das nie einen alten Cache hat) aber schon. -->
+```
+
+#### I2 — RUNDE 87 — Vollbild vom Home-Bildschirm (Kopf, apple-mobile-web-app-capable)
+Jetzt in index.html: `<!-- RUNDE 87 — Vollbild ohne Adresszeile vom Home-Bildschirm (iPhone) (SPIELSYSTEM.md I2) -->`
+```text
+<!-- RUNDE 87 — XANDER: „Ich habe auch noch immer nicht den Modus, dass oben die
+     Adresszeile ausgeblendet wird beim Klassenzimmer."
+     Auf Android und am Rechner macht das die Vollbild-Schnittstelle (siehe
+     lcKinoAn() in app.js). Auf dem iPhone gibt es die fuer normale Elemente
+     NICHT — dort faellt die Adresszeile nur weg, wenn die Seite ueber „Zum
+     Home-Bildschirm" abgelegt wurde. Genau dafuer sind diese beiden Zeilen da:
+     ohne sie oeffnet iOS auch das Symbol vom Home-Bildschirm wieder in Safari,
+     mitsamt Adresszeile. Das manifest allein (display: standalone) reicht dem
+     iPhone nicht, es liest diese Angabe. -->
+```
+
+#### I3 — FASSUNG 837 — preconnect (Kopf)
+Jetzt in index.html: `<!-- FASSUNG 837 — Verbindungen zu jsDelivr und Supabase schon beim Lesen der Seite (SPIELSYSTEM.md I3) -->`
+```text
+<!-- FASSUNG 837 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller". Die Verbindungen zu jsDelivr (supabase-js)
+     und zum Supabase-Projekt (Anmeldung, Raumkanal, Relais) wurden erst aufgebaut, wenn das erste Skript sie brauchte.
+     Jetzt öffnet der Browser sie schon beim Lesen der Seite (DNS, TCP, TLS parallel zum CSS). -->
+```
+
+#### I4 — Fassung 694 — Schriften (Kopf)
+Jetzt in index.html: `<!-- Fassung 694 — Schriften halten das erste Bild nicht an (SPIELSYSTEM.md I4) -->`
+```text
+<!-- Fassung 694: die Schriften halten das erste Bild nicht mehr an
+     (media="print" → beim Laden auf "all"). Mit display=swap stand der
+     Text ohnehin sofort in der Ersatzschrift da; jetzt wartet auch der
+     Rest der Seite nicht mehr auf den fremden Server. -->
+```
+
+#### I5 — FASSUNG 884 — Messung bei echten Nutzern (Block DMA_MESS)
+Jetzt in index.html: `/* FASSUNG 884 — Messung bei echten Nutzern: hier nur mitschreiben, auswerten und senden macht messung.js (SPIELSYSTEM.md I5) */`
+```text
+/* FASSUNG 884 — XANDER (Funk 255): „… niemals abstürzt und alles optimiert ist“. Zusage Funk 258 (5): echte Messung bei
+   echten Nutzern. Hier wird nur mitgeschrieben (Fehler, Langläufer, Tipps, Raum); Auswerten und Senden macht messung.js
+   nach dem Laden. Kein Speicher, keine Leitung, kein DOM – nur beim Abbruch mitten im Laden ein Merker (pagehide). */
+```
+
+#### I6 — FASSUNG 694 — Verkleinerte Kopien (Block DMA_Q)
+Jetzt in index.html: `/* FASSUNG 694 — verkleinerte Kopien (min/): DMA_Q wählt Kopie oder Quelle, ?quelle = Quellen (SPIELSYSTEM.md I6) */`
+```text
+/* =================================================================
+   FASSUNG 694 — VERKLEINERTE KOPIEN (min/)
+   -----------------------------------------------------------------
+   XANDER: „wenn die Ladl nicht so groß wäre oder man das alles so
+   ein bisschen professioneller aufteilen könnte … ohne dass jemand
+   ne Grafikeinbuße"
+   Zu jeder Datei liegt in min/ dieselbe Datei ohne Kommentare und
+   Leerraum (werkzeug/fassung-setzen.js baut sie). DMA_Q("app.js")
+   sagt, welche geladen wird: die Kopie, wenn es für sie einen
+   Stempel gibt, sonst die Quelle. Lädt eine Kopie nicht, merkt sich
+   das Gerät für diese Fassung „Quellen laden" und lädt einmal neu.
+   Mit ?quelle in der Adresse gibt es immer die Quellen (zum
+   Nachsehen, mit allen Kommentaren). */
+```
+
+#### I7 — FASSUNG 884 — NOTWEG, localStorage „dma-ganz“ (Block DMA_Q)
+Jetzt in index.html: `/* FASSUNG 884 — NOTWEG: „dma-ganz“ = Dateien, die diese Fassung ganz lädt (SPIELSYSTEM.md I7) */`
+```text
+/* FASSUNG 884 — NOTWEG. XANDER (Funk 270): „…fallbeck auf das Klassenzimmer" · Claude (Funk 272/273): fällt der
+     schlanke Weg ins Klassenzimmer aus (ein Stück von min/app.js fehlt, lädt nicht oder passt nicht zur Fassung),
+     nimmt die Seite für DIESE Fassung die ganze Quelle. Welche Dateien das sind, steht in localStorage „dma-ganz"
+     ({f: Fassung, d: [Dateien]}); ein Eintrag einer anderen Fassung wird weggeräumt – mit der nächsten Fassung ist
+     man wieder schlank. Alle anderen Dateien bleiben verkleinert. Gesetzt wird der Eintrag nur von dmaGanzLaden. */
+```
+
+#### I8 — FASSUNG 884/884b — NOTWEG dmaGanzLaden, quelleHolen (Block DMA_Q)
+Jetzt in index.html: `/* FASSUNG 884/884b — NOTWEG dmaGanzLaden: true = lädt gleich neu, false = bleibt; nie eine Schleife (SPIELSYSTEM.md I8) */`
+```text
+/* FASSUNG 884 — NOTWEG (siehe oben). app.js ruft das, wenn ein Stück fehlt, nicht lädt, nicht passt oder beim
+     Einsetzen wirft. Antwort (Versprechen): true = die Seite lädt gleich neu, false = es bleibt, wie es ist.
+       - Liegt auf dem Server eine neuere Fassung, kommt zuerst DIESE (?f=…, über den Fassungs-Wächter unten) – dort
+         passen die Stücke wieder. Dann wird NIE auf die Quelle umgestellt: sonst bekäme eine alte Seite die neue
+         Quelle.
+       - Sonst wird die ganze Quelle erst über die Leitung geholt (danach liegt sie im Zwischenspeicher, gleiche
+         Adresse wie das Skript beim Neuladen). Kommt sie nicht an (keine Leitung), wird NICHT neu geladen.
+       - Je Fassung und Datei höchstens einmal je Tab (sessionStorage „dma-ganz-neu") – nie eine Schleife.
+       - Ohne localStorage (gesperrt) false: dann bleibt alles wie vor 884.
+     Nachbesserung nach der Prüfung:
+       - noch (von app.js): wird gefragt, NACHDEM die Quelle angekommen ist und unmittelbar bevor umgestellt und neu
+         geladen wird. Sagt es nicht „ja" (das Stück ist inzwischen doch über die Leitung gekommen, etwa beim zweiten
+         Tipp), wird NICHT neu geladen – sonst risse das Neuladen eine frische Verbindung ab, und das Gerät bliebe für
+         den Rest der Fassung bei der schweren Quelle, obwohl nichts mehr kaputt ist. Antwortet es nicht binnen 8 s,
+         gilt „ja" (die ganze Quelle kam, die Stücke nicht).
+       - Frist für fassung.json 8 s (AbortController, winzig).
+     884b (Prüfung: Schleife auf langsamer Leitung): die ganze Quelle wird NIE von der Seite abgebrochen – die alte
+     40-s-Frist brach sie bei ~270 kbit/s jedesmal kurz vor dem Ziel ab, und nach 15 s begann alles von vorn.
+     quelleHolen: je Seite ein Abruf zugleich (weitere Ausfälle warten darauf), je Fassung und Tab höchstens drei
+     (sessionStorage „dma-ganz-hol", auch über ein Neuladen hinweg; ein neuer nur nach einem gescheiterten). Wer
+     nicht warten kann (Rückkehr), hat seine eigene Frist in app.js. Neu geladen: höchstens einmal je Fassung und Tab. */
+```
+
+#### I9 — Die Seite merkt selbst, dass sie veraltet ist (Block Fassungs-Wächter)
+Jetzt in index.html: `/* Fassungs-Wächter: fassung.json gegen die geladene Fassung (SPIELSYSTEM.md I9) */`
+```text
+/* =================================================================
+   DIE SEITE MERKT SELBST, DASS SIE VERALTET IST
+   -----------------------------------------------------------------
+   XANDER: „Ich weiss nicht, ob du die Adressen richtig aufgesetzt
+   hast. Alles, was du mir in dem Update beschreibst, ist nirgendswo
+   sichtbar … ich kriege in keinem Update irgendwie eine
+   grossartige Aenderung."
+
+   DAS WAR KEINE EINBILDUNG, UND ES LAG NICHT AN DEN ADRESSEN.
+   Jede Datei haengt an „?v=" + DMA_VERSION — das wirkt aber nur,
+   wenn die index.html SELBST neu geholt wird. Genau das tut ein
+   Browser nicht von sich aus: GitHub Pages schickt eigene
+   Cache-Kopfzeilen mit, und die drei <meta http-equiv=
+   "Cache-Control">-Zeilen weiter oben beachtet kein Browser fuer
+   das Dokument selbst — sie sind wirkungslos. Wer die Seite einmal
+   geladen hatte, bekam also weiter die ALTE index.html, mit der
+   alten Fassungsnummer und damit dem alten Javascript, dem alten
+   Aussehen und den alten Toenen. Im privaten Fenster ging es, weil
+   das nie einen Cache hat.
+
+   Hier steht deshalb die Gegenprobe: „fassung.json" ist winzig und
+   wird mit „cache: no-store" geholt — das umgeht jeden
+   Zwischenspeicher, auch den von GitHub Pages. Steht dort eine
+   andere Zahl als die geladene, holt sich die Seite EINMAL eine
+   frische Adresse (index.html?f=…) und ist damit auf dem Stand.
+   Der Merker in sessionStorage sorgt dafuer, dass daraus keine
+   Schleife wird, falls die Zahl einmal nicht stimmen sollte.
+   ================================================================= */
+```
+
+#### I10 — RUNDE 101 — Wächter auch später (Block Fassungs-Wächter)
+Jetzt in index.html: `/* RUNDE 101 — auch bei pageshow, Sichtbarwerden und alle 2 min; später nur die Blase (SPIELSYSTEM.md I10) */`
+```text
+/* RUNDE 101 — XANDER (24.09.): „ich sehe seit Stunden keine Veränderung
+   mehr". GEFUNDEN: geprueft wurde nur beim allerersten Laden. Holt der
+   Browser die Seite aus dem Zwischenspeicher zurueck (Android: Zurueck-
+   Taste, App-Wechsel — „bfcache"), laeuft dieses Skript NICHT noch
+   einmal; und wer die Seite stundenlang offen hat (Livestream), bekam
+   ohnehin nie etwas mit. Jetzt wird zusaetzlich geprueft, wenn die
+   Seite wieder sichtbar wird, wenn sie aus dem Zwischenspeicher kommt,
+   und alle zwei Minuten. Beim ersten Laden laedt sie wie bisher selbst
+   neu; spaeter erscheint oben ein kleiner Knopf „Neue Fassung – laden"
+   (mitten im Livestream soll nichts von selbst neu laden). */
+```
+
+#### I11 — FASSUNG 698 — die Blase „Neue Fassung“ (Block Fassungs-Wächter)
+Jetzt in index.html: `/* FASSUNG 698 — immer diese kleine Blase oben, Aussehen unverändert (Funk 142; SPIELSYSTEM.md I11) */`
+```text
+/* FASSUNG 698 — XANDER (Funk 142): „Mach bitte doch wieder diese
+       updateanzeige oben mit dieser Bubble wie wir das zuletzt hatten …
+       ändere das nicht vom Look". 694 hatte hier auf die breite Leiste
+       umgeleitet; jetzt wieder immer diese kleine Blase oben (unverändert). */
+```
+
+#### I12 — FASSUNG 885 (S1) — bleiben() (Block Fassungs-Wächter)
+Jetzt in index.html: `/* FASSUNG 885 (S1) — wann nie von selbst neu geladen wird (SPIELSYSTEM.md I12) */`
+```text
+/* FASSUNG 885 (S1, sw.js): nie von selbst neu laden im Raum, beim Tippen, im selbst geöffneten Klassenzimmer oder
+     nach einem Tipp bei Antwort nach 2 s – dann die Blase. Von selbst offenes Klassenzimmer: zurück über dma-notweg-ziel. */
+```
+
+#### I13 — FASSUNG 884 — NOTWEG dmaFassungLaden (Block Fassungs-Wächter)
+Jetzt in index.html: `/* FASSUNG 884 — NOTWEG: neuere Fassung einmal von selbst holen (SPIELSYSTEM.md I13) */`
+```text
+/* FASSUNG 884 — NOTWEG (dmaGanzLaden oben): passt ein Stück von app.js nicht, weil auf dem Server schon eine neuere
+     Fassung liegt, holt die Seite diese EINMAL von selbst (derselbe Merker wie beim ersten Laden – keine Schleife).
+     War das schon versucht: false, dann bleibt es bei der Blase. */
+```
+
+#### I14 — FASSUNG 885 (S1) — XHR statt fetch (Block Fassungs-Wächter)
+Jetzt in index.html: `/* FASSUNG 885 (S1) — XHR statt fetch; ?t= nie aus einem Zwischenspeicher (SPIELSYSTEM.md I14) */`
+```text
+/* FASSUNG 885 (S1): XHR statt fetch – beim Start kommt seine Antwort früher in der Seite an (fetch liest den
+         Inhalt in weiteren Aufgaben; gemessen: Neuladen ~120 ms früher). ?t= = nie aus einem Zwischenspeicher. */
+```
+
+#### I15 — Stilblätter mit der laufenden Fassung (Block Stilblätter)
+Jetzt in index.html: `/* Stilblätter mit der laufenden Fassung (SPIELSYSTEM.md I15) */`
+```text
+/* Auch die Stilblätter hängen an der laufenden Fassung — sonst
+   kommt das neue Javascript, aber das alte Aussehen dazu. Genau wie
+   bei den Skripten weiter unten: EINE Zahl, nicht zwei. */
+```
+
+#### I16 — FASSUNG 876 — Startblätter (Block Stilblätter)
+Jetzt in index.html: `/* FASSUNG 876 — erst das Startblatt (min/<name>-start.css), das ganze danach (SPIELSYSTEM.md I16) */`
+```text
+/* FASSUNG 876 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller". Gibt es zu einem
+       Blatt ein Startblatt (min/<name>-start.css, werkzeug/stil-bauen.js), hält nur dieses kleine
+       Blatt das erste Bild an. Das ganze Blatt kommt, sobald die Startskripte gelaufen sind, direkt
+       dahinter (dmaStileVoll) – dann gilt genau dasselbe wie vorher. */
+```
+
+#### I17 — Die ganzen Blätter bei DOMContentLoaded (Block Stilblätter, dmaStileVoll)
+Jetzt in index.html: `/* Die ganzen Blätter bei DOMContentLoaded (SPIELSYSTEM.md I17) */`
+```text
+/* Die ganzen Blätter werden eingehängt, sobald die Startskripte gelaufen sind (DOMContentLoaded) – das erste
+     Bild ist dann schon da, und bis ein Tipp etwas öffnet, das sie braucht, sind sie geladen. Für alles, was man
+     beim Start sieht, ist das Bild mit den Startblättern allein Punkt für Punkt dasselbe (Bildvergleich, siehe
+     werkzeug/stil-bauen.js). spiel.css gehört dazu, auch wenn spiel.js erst später kommt: es gestaltet auch
+     Dinge außerhalb des Spiels (z. B. die Bilder im Platzmenü). */
+```
+
+#### I18 — FUNK 101 — supabase-js mit defer (Kopf)
+Jetzt in index.html: `<!-- supabase-js, defer (FUNK 101; SPIELSYSTEM.md I18) -->`
+```text
+<!-- Supabase JS SDK (nur aktiv, wenn supabase-config.js ausgefüllt ist)
+     FUNK 101 — „defer": vorher hielt diese eine fremde Datei das Zeichnen
+     der ganzen Seite an, bis sie vom CDN da war. Mit defer läuft sie
+     trotzdem VOR allen eigenen Skripten (die stehen weiter unten und
+     sind ebenfalls defer; defer-Skripte laufen in Dokumentreihenfolge). -->
+```
+
+#### I19 — Der Betonungsschalter (Kopfzeile)
+Jetzt in index.html: `<!-- Betonung: Tippen in einen Textkasten (betonungTippen() in app.js; SPIELSYSTEM.md I19) -->`
+```text
+<!-- Der Betonungsschalter stand hier früher als kleines „ȧ".
+         Er ist weg: er saß deplatziert in der Kopfzeile, und man musste
+         erst erraten, was er tut. Stattdessen genügt jetzt ein Tippen
+         mitten in einen Textkasten — dann stehen dort die Punkte und
+         Striche, noch einmal tippen und sie sind wieder weg.
+         Siehe betonungTippen() in app.js. -->
+```
+
+#### I20 — Das Sende-Zeichen (Laufband)
+Jetzt in index.html: `<!-- Live-Zeichen: der Platz ist immer da (SPIELSYSTEM.md I20) -->`
+```text
+<!-- Das Sende-Zeichen: ein Punkt mit Klammern, die links und rechts
+       abstrahlen. Es blinkt in der Farbe der App, bei der Alex gerade
+       live ist. WICHTIG: der Platz ist IMMER da (nur leer, wenn niemand
+       live ist) — dadurch verschiebt sich die Leiste nicht, wenn die
+       Anzeige angeht. Das Auge links behält seine Aufgabe. -->
+```
+
+#### I21 — Versteckte Spiel-Knöpfe (Lernen)
+Jetzt in index.html: `<!-- Spiel-Knöpfe bleiben versteckt hier im DOM (SPIELSYSTEM.md I21) -->`
+```text
+<!-- Die einzelnen Spiel-Knöpfe stehen bewusst weiterhin HIER im DOM (nur unsichtbar) statt
+           komplett entfernt zu werden — mehrere Spiele haben eigene, direkte Klick-Listener genau
+           auf diese Knöpfe registriert (nicht nur die allgemeine Subnav-Logik). Die neue
+           Spiele-Übersicht (siehe gamesOverviewArea) simuliert bei Bedarf einen Klick auf den
+           passenden dieser versteckten Knöpfe, statt jeden einzelnen Listener umzubauen. -->
+```
+
+#### I22 — Spiele-Übersicht (Lernen)
+Jetzt in index.html: `<!-- Spiele-Übersicht als Kacheln (SPIELSYSTEM.md I22) -->`
+```text
+<!-- Alle einzelnen Spiele waren bisher als eigene Punkte im Hauptmenü aufgelistet — bei so
+           vielen Spielen wurde das Menü selbst unübersichtlich lang. Jetzt gebündelt: dieser
+           Bereich zeigt eine Kachel-Übersicht, von der aus man das gewünschte Spiel antippt. -->
+```
+
+#### I23 — Versteckter YouTube-Player (Musik)
+Jetzt in index.html: `<!-- Versteckter YouTube-Player, nur Ton (SPIELSYSTEM.md I23) -->`
+```text
+<!-- Versteckter YouTube-Player fürs Musik-Modul -- steuert nur Ton, kein sichtbares Video.
+       Startet bewusst mit display:none: erst JavaScript macht es sichtbar, sobald es wirklich an
+       seinem endgültigen Platz (Reiter oder schwebende Leiste) eingesetzt wurde — sonst könnte es
+       kurz an seiner rohen, unpositionierten HTML-Stelle als schwarzes Kästchen aufblitzen. -->
+```
+
+#### I24 — Schwebende Mini-Player-Leiste (Musik)
+Jetzt in index.html: `<!-- Schwebende Mini-Player-Leiste (SPIELSYSTEM.md I24) -->`
+```text
+<!-- Schwebende Mini-Player-Leiste — sichtbar auf der GANZEN Seite, egal welcher Reiter gerade
+       aktiv ist, solange ein Song läuft/pausiert ist. Bewusst außerhalb des Reiter-Systems, damit
+       sie beim Wechseln nicht verschwindet. -->
+```
+
+#### I25 — Fassung auch für Nachgeladenes (vor dem Lader)
+Jetzt in index.html: `<!-- Fassung auch für Nachgeladenes (SPIELSYSTEM.md I25) -->`
+```text
+<!-- Die Fassungsnummer auch für die Datenteile, die erst bei Bedarf
+     nachgeladen werden (Kalender, Übungen) — sonst käme dort eine alte
+     Fassung aus dem Zwischenspeicher des Browsers. -->
+```
+
+#### I26 — Fassung 694 — zweiter Fassungs-Wächter entfernt (vor dem Lader)
+Jetzt in index.html: `<!-- Fassung 694: zweiter Fassungs-Wächter entfernt (SPIELSYSTEM.md I26) -->`
+```text
+<!-- Fassung 694: Hier stand ein zweiter Fassungs-Wächter, der die ganze
+     index.html (69 KB, ohne Zwischenspeicher) bei jedem Zurückkommen in
+     den Vordergrund neu holte. Dasselbe erledigt der Wächter oben mit
+     fassung.json (60 Byte). -->
+```
+
+#### I27 — Die Skripte werden mit der laufenden Fassung geladen (Lader)
+Jetzt in index.html: `/* Skripte mit der laufenden Fassung, in fester Reihenfolge (SPIELSYSTEM.md I27) */`
+```text
+/* =====================================================================
+   DIE SKRIPTE WERDEN MIT DER LAUFENDEN FASSUNG GELADEN
+   ---------------------------------------------------------------------
+   GEMELDET, und lange nicht gefunden: „Ich sehe auf meinem iPhone noch
+   das alte Update."
+
+   HIER LAG ES. Die Fassungsnummer oben (DMA_VERSION) wurde bei jeder
+   Änderung hochgezählt, die Zahl an den Skripten aber NICHT — sie stand
+   fest bei 182. Der Fassungs-Wächter meldete also richtig „es gibt was
+   Neues", und der Browser holte trotzdem dieselben alten Dateien aus
+   seinem Zwischenspeicher, weil sich deren Adresse nicht geändert hatte.
+   Zwei Zahlen, die dasselbe bedeuten sollen, laufen früher oder später
+   auseinander — und genau das war passiert.
+
+   Jetzt gibt es nur noch EINE Zahl. Die Adressen werden hier aus
+   DMA_VERSION gebaut, also kann nichts mehr auseinanderlaufen.
+
+   document.write ist hier kein Notbehelf, sondern das Richtige: es
+   behält die Reihenfolge bei. Die Dateien bauen aufeinander auf
+   (core vor app, backend vor app), und ein nachträglich eingehängtes
+   <script> liefe in beliebiger Reihenfolge.
+   ===================================================================== */
+```
+
+#### I28 — FUNK 101 — eigener Stempel je Datei (Lader)
+Jetzt in index.html: `/* FUNK 101 — jede Datei mit eigenem Stempel aus ihrem Inhalt (SPIELSYSTEM.md I28) */`
+```text
+/* FUNK 101 — XANDER: „warum es im Chat manchmal so extrem lange lädt
+     … liegt das an diesen Updates … bitte mach das der Chat immer
+     flüssig bleibt und dass er von den Updates nicht beeinträchtigt
+     ist."
+     JA, ES LAG AUCH AN DEN UPDATES. Jede Adresse hing an der
+     Fassungsnummer, also holte jedes Gerät nach jedem Update alle
+     Skripte neu (gemessen 3,1 MB), auch die unveränderten. Jetzt hat
+     jede Datei ihren eigenen Stempel aus ihrem Inhalt
+     (window.DMA_STEMPEL, gesetzt von werkzeug/fassung-setzen.js).
+     Was sich nicht geändert hat, kommt aus dem Zwischenspeicher. Die
+     EINE Zahl bleibt die Quelle: der Stempel wird aus dem Inhalt
+     gerechnet, niemand setzt ihn von Hand. */
+```
+
+#### I29 — DMA_V (Lader)
+Jetzt in index.html: `/* DMA_V: Stempel der Datei, dann ihres Ordners, sonst die Fassung (SPIELSYSTEM.md I29) */`
+```text
+/* Für alles, was später nachgeladen wird (Töne, Tutor, Datendateien):
+     erst der Stempel der Datei, dann der ihres Ordners, sonst die
+     Fassung. */
+```
+
+#### I30 — FASSUNG 840 — Weiche Bilderwelt (Lader)
+Jetzt in index.html: `/* FASSUNG 840 — Weiche Bilderwelt: alt, neu nur mit ?bilderwelt=neu (Funk 225; SPIELSYSTEM.md I30) */`
+```text
+/* FASSUNG 840 — WEICHE BILDERWELT. XANDER (Funk 225): „für die
+     Bilderwelt möchte ich meine alte Version wieder zurück haben so wie
+     sie war unverändert und nur eine Option als Link zur neuen Version“.
+     Standard ist die alte Bilderwelt (Stand 812). Die neue (834/836/838)
+     liegt in bilderwelt-neu/ und wird nur mit ?bilderwelt=neu oder der
+     gemerkten Wahl (localStorage dma_bilderwelt) geladen. */
+```
+
+#### I31 — Die Werkstatt zuletzt (Startliste)
+Jetzt in index.html: `/* Die Werkstatt zuletzt (fragt backend.js nach dem Betreiber; SPIELSYSTEM.md I31) */`
+```text
+/* Die Werkstatt zuletzt — sie fragt backend.js, ob hier der
+       Betreiber sitzt. Stand sie davor, gab es diese Antwort beim
+       ersten Zeichnen noch gar nicht. */
+```
+
+#### I32 — RUNDE 99 — das Walkie-Talkie (Startliste; mit dem Eintrag "rueckfrage.js" entfernt)
+Jetzt: `rueckfrage.js` steht nicht mehr in der Startliste (s. o., „Was gebaut ist“).
+```text
+/* RUNDE 99 — das Walkie-Talkie: Rueckfragen von Claude, nur fuer
+       den Betreiber sichtbar. Nach backend.js, weil es fragt, ob hier
+       der Betreiber sitzt. */
+```
+
+#### I33 — FUNK 95 — das Spielsystem (Startliste)
+Jetzt in index.html: `/* FUNK 95 — spiel.js kommt nach dem Start (Fassung 849; SPIELSYSTEM.md I33) */`
+```text
+/* FUNK 95 — das Spielsystem „Deutsch zum Überleben" (SPIELSYSTEM.md).
+       FASSUNG 849: steht nicht mehr hier, sondern kommt nach dem Start (unten). */
+```
+
+#### I34 — data-geraeusche.js (Startliste)
+Jetzt in index.html: `/* Welche echten Geräusche es gibt (SPIELSYSTEM.md I34) */`
+```text
+/* Welche echten Geraeusche es gibt — eine Zeile Text, kein Ton.
+       Die Dateien selbst holt der Browser erst, wenn ein Effekt
+       wirklich laeuft. */
+```
+
+#### I35 — data-refrain.js (Startliste)
+Jetzt in index.html: `/* Wo in jedem Lied der Refrain anfängt (SPIELSYSTEM.md I35) */`
+```text
+/* Wo in jedem Lied der Refrain anfaengt — gemessen von
+       werkzeug/refrain-messen.js, eine Zeile Zahlen. /noten mit einem
+       Liednamen springt dorthin. */
+```
+
+#### I36 — data-tutorvideo.js (Startliste)
+Jetzt in index.html: `/* Zu welchen Tutor-Stücken es einen Film gibt (SPIELSYSTEM.md I36) */`
+```text
+/* Zu welchen Tutor-Stuecken es einen Film gibt. Eine Zeile Text;
+       die Filme selbst holt der Browser erst, wenn der Tutor
+       wirklich spricht. */
+```
+
+#### I37 — Alle Skripte mit „defer“ (Lader)
+Jetzt in index.html: `/* Alle Skripte mit „defer“: gleichzeitig holen, in dieser Reihenfolge ausführen (SPIELSYSTEM.md I37) */`
+```text
+/* =================================================================
+     ALLE SKRIPTE MIT „defer" — DAS IST DER EIGENTLICHE HEBEL
+     -----------------------------------------------------------------
+     GEFRAGT: „Muss die App-JS sofort alles laden, oder kann man das
+     schlanker machen? Wie wuerde man das professionell umsetzen,
+     damit es schlanker sein wuerde?"
+
+     NACHGEMESSEN, mit gedrosselter Leitung (1,6 Mbit/s) und
+     vierfach gebremstem Rechner — also ungefaehr ein Telefon im
+     Mobilfunknetz:
+         erstes Bild   5,9 s
+         Seite fertig 39,4 s
+     Ein normales Skript HAELT DAS ZEICHNEN AN: der Browser liest
+     die Seite, stoesst auf ein Skript, laedt es, fuehrt es aus, und
+     erst danach liest er weiter. Bei 22 Dateien hintereinander wird
+     daraus eine Kette, in der fast nichts gleichzeitig passiert.
+
+     „defer" sagt: lade JETZT, aber fuehre erst aus, wenn die Seite
+     gelesen ist — und zwar in der Reihenfolge, in der die Dateien
+     hier stehen. Damit faellt die Kette weg: alle 22 werden
+     gleichzeitig geholt, die Seite ist sofort da, und die
+     Reihenfolge bleibt trotzdem erhalten (core vor app, backend vor
+     app). Genau deshalb steht hier nicht „async" — das wuerde die
+     Reihenfolge aufgeben, und dann faende app.js sein backend.js
+     nicht mehr.
+
+     Was „defer" NICHT tut: es laedt keine Datei weniger. Die 7,6 MB
+     bleiben 7,6 MB. Weniger zu laden hiesse, app.js und die
+     Datendateien aufzuteilen und nachzuladen, sobald ein Bereich
+     geoeffnet wird — dafuer gibt es hier schon das Werkzeug
+     (brDatei() in app.js laedt data-grossgeschenke.js und
+     filmspieler.js genau so). Das ist der naechste Schritt und
+     steht als offener Punkt in der Werkstatt; er will sorgfaeltig
+     gemacht werden, weil jede Datei wissen muss, wer auf sie
+     wartet. */
+```
+
+#### I38 — FASSUNG 849 — spiel.js nach dem Start (Lader)
+Jetzt in index.html: `/* FASSUNG 849 — spiel.js nicht beim Start; das Angebot „Als App“ fängt die Zeile darunter auf (SPIELSYSTEM.md I38) */`
+```text
+/* FASSUNG 849 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller".
+     spiel.js (280 KB gepackt, 850 KB Code) stand in der Startliste: beim ersten Laden
+     teilte es sich die Leitung mit app.js, und der Browser übersetzte es, bevor die Seite
+     fertig war – obwohl es nur Mitspieler betrifft. Jetzt wird es geholt, wenn alle
+     Startskripte gelaufen sind (DOMContentLoaded). Alles, was es aufruft, fragt vorher
+     „window.DMA_SPIEL &&"; Spiel-Nachrichten, die vorher kommen, hebt livechat.js auf
+     (DMA_SPIEL_WARTET), das Angebot „Als App" fängt die Zeile darunter auf. */
+```
+
+#### I39 — FASSUNG 876 — dmaSpielLaden (Lader)
+Jetzt in index.html: `/* FASSUNG 876 — spiel.js beim Öffnen des Klassenzimmers oder 1,5 s nach load in einer Ruhepause (SPIELSYSTEM.md I39) */`
+```text
+/* FASSUNG 876 — XANDER (Funk 271): „die schnelle Performance und die Verbindung zu den anderen haben
+     oberste Priorität". spiel.js kam bei DOMContentLoaded – genau in dem Augenblick, in dem man nach
+     Wissen → Klassenzimmer tippt; das Übersetzen der 850 KB hielt diesen Weg auf. Jetzt: beim Öffnen des
+     Klassenzimmers (app.js ruft dmaSpielLaden) oder sonst 1,5 s nach dem Laden in einer Ruhepause. */
+```
+
+#### I40 — Erst spiel.css, dann spiel.js (Lader)
+Jetzt in index.html: `/* Erst das ganze spiel.css, dann das Skript (SPIELSYSTEM.md I40) */`
+```text
+/* Erst das ganze spiel.css (eingehängt bei DOMContentLoaded), dann das Skript – damit nichts ungestaltet
+       aufblitzt. Ist das Blatt schon gelesen (sheet da), geht es sofort weiter. */
+```
+
+#### I41 — FASSUNG 884 — messung.js (Lader)
+Jetzt in index.html: `/* FASSUNG 884 — messung.js 4 s nach load in einer Ruhepause, ohne dmaMinFehlt (SPIELSYSTEM.md I41) */`
+```text
+/* FASSUNG 884 — messung.js kommt 4 s nach dem Laden in einer Ruhepause: dem Start nimmt sie nichts. Ohne dmaMinFehlt –
+     fehlt die Messung, lädt die Seite deswegen nicht neu. */
+```
+
+#### I42 — FASSUNG 694 — Service Worker anmelden (letzter Block)
+Jetzt in index.html: `/* FASSUNG 694 — Service Worker (sw.js) nach load anmelden; ?ohne-sw meldet ab (SPIELSYSTEM.md I42) */`
+```text
+/* FASSUNG 694 — der Zwischenspeicher wie bei einer App (sw.js erklärt
+   ihn). Angemeldet wird erst, wenn die Seite fertig geladen ist — er
+   soll dem Start nichts wegnehmen. ?ohne-sw meldet ihn ab. In den
+   Prüfläufen (navigator.webdriver) nur mit ?mit-sw, damit jede Probe
+   frisch vom Server lädt. */
+```
+

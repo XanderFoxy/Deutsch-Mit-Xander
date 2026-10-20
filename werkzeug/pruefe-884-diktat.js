@@ -231,6 +231,8 @@ async function einLauf(br, url, lauf) {
   });
   await pg.addInitScript(() => {
     try { localStorage.setItem("dma_tour_seen", "1"); localStorage.removeItem("dma_funk_offen"); } catch (e) {}
+    /* FASSUNG 885 (Schritt K): rueckfrage.js lädt nur auf dem Gerät des Betreibers (Merker „dma-walkie“, Sonde 885-schlank) */
+    try { localStorage.setItem("dma-walkie", "1"); } catch (e) {}
     /* Spracherkennung des Browsers: zählt Starts, liefert „alter weg“ */
     window.__rfRunden = 0;
     window.webkitSpeechRecognition = class {

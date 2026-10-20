@@ -48,7 +48,11 @@ const sage = (gut, text, dazu) => {
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
   const pg = await br.newPage({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
   pg.on("pageerror", (e) => { console.log("  FEHL Seitenfehler: " + e.message); fehler++; });
-  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {} });
+  /* FASSUNG 885 (Schritt K): rueckfrage.js kommt nur noch zum Betreiber – auf seinem Gerät steht der Merker
+     „dma-walkie“ (backend.js setzt ihn, sobald das Profil mit is_owner kommt), dann holt index.html die Datei in der
+     Ruhepause nach DOMContentLoaded. Diese Seite steht für sein Gerät; wer NICHT Betreiber ist (Teil 1), ist hier
+     „Backend.isOwner = () => false“ auf demselben Gerät. Das Laden selbst prüft Sonde 885-schlank. */
+  await pg.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma-walkie", "1"); } catch (e) {} });
   /* Eine nachgebaute Spracherkennung: sie „hoert" erst einen
      Zwischenstand, dann den fertigen Satz, und endet — wie Chrome auf
      Android bei continuous = false. */
