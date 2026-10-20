@@ -58,9 +58,11 @@
      GEGEN=<ordner>    alter Stand für Teil M
      PAARE=n           Paare je Messfall (Standard 8)
      NUR=QABCDEFGM     nur diese Teile
-   Gegenprobe (Stand vor K):
-     S=<Zwischenordner>; bash $S/schlank/stand-bauen.sh a508dc56 $S/gegen885/schlank-vorher
-     WURZEL=$S/gegen885/schlank-vorher node werkzeug/pruefe-885-schlank.js
+   Gegenprobe (Stand vor K): ein Ordner G mit diesem Baum (Kopie oder
+   Verweise), darin nur die von K berührten Dateien aus a508dc56:
+     git archive a508dc56 index.html rueckfrage.js backend.js min/rueckfrage.js \
+       min/backend.js SPIELSYSTEM.md | tar -x -C G
+     WURZEL=G node werkzeug/pruefe-885-schlank.js        (27 rot erwartet)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path"), zlib = require("zlib"), os = require("os");

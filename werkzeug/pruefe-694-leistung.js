@@ -64,7 +64,8 @@ const sage = (gut, was, zusatz) => {
       return { skripte, stil, q: window.DMA_Q("app.js"), v: window.DMA_V("app.js") };
     });
     const ohneMin = r.skripte.concat(r.stil).filter((s) => !/^min\//.test(s));
-    sage(r.skripte.length >= 25 && r.stil.length >= 8 && !ohneMin.length, "alle Skripte und Stilblätter kommen aus min/",
+    /* FASSUNG 885 (Schritt K): rueckfrage.js lädt nur noch für den Betreiber – ein Gast hat ein Skript weniger (25 → 24) */
+    sage(r.skripte.length >= 24 && r.stil.length >= 8 && !ohneMin.length, "alle Skripte und Stilblätter kommen aus min/",
       r.skripte.length + " Skripte, " + r.stil.length + " Stilblätter" + (ohneMin.length ? " — ohne: " + ohneMin.join(", ") : ""));
     const quelle = fs.statSync(path.join(WURZEL, "app.js")).size, klein = fs.statSync(path.join(WURZEL, "min/app.js")).size;
     sage(klein < quelle * 0.7, "min/app.js ist deutlich kleiner als die Quelle", (quelle / 1e6).toFixed(2) + " MB → " + (klein / 1e6).toFixed(2) + " MB");
