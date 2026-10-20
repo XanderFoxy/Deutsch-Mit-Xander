@@ -83,7 +83,7 @@ const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const GEGEN = process.env.GEGEN ? path.resolve(process.env.GEGEN) : null;
 const N = Math.max(1, Number(process.env.N || 2));
 const PAARE = Math.max(1, Number(process.env.PAARE || 6));
-const NUR = process.env.NUR || "RKGFOS" + (GEGEN ? "M" : "");
+const NUR = process.env.NUR || "RKGFTWNOS" + (GEGEN ? "M" : "");
 const JSON_AUS = process.env.JSON || "";
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".woff2": "font/woff2",
@@ -144,6 +144,23 @@ function falle(rueck) {
     const l = JSON.parse(sessionStorage.getItem("__a") || "[]"); l.push(location.search); sessionStorage.setItem("__a", JSON.stringify(l));
     if (rueck && sessionStorage.getItem("__rueck") === "1")
       sessionStorage.setItem("dma_livechat_zurueck", JSON.stringify({ raum: "pruefraum885", name: "Pruef", mitBild: false, zeit: Date.now() }));
+    /* Teil W: Merker dma-wechsel vorgeben (einmal, beim nächsten Start) */
+    const wv = sessionStorage.getItem("__wechselVor");
+    if (wv) { sessionStorage.removeItem("__wechselVor"); const [art, alter, f] = wv.split("|"); sessionStorage.setItem("dma-wechsel", art === "*" ? "* " + (Date.now() - Number(alter)) + " " + f : f + " " + (Date.now() - Number(alter))); }
+    /* Teil N: die Seite meldet dem Helfer nichts, und das Neuladen des Wächters wird abgebrochen (window.stop) – „bleibt die Seite wider Erwarten“ */
+    if (sessionStorage.getItem("__ohneNeuladen") === "1") {
+      try { ServiceWorker.prototype.postMessage = function () { throw new Error("Sonde: keine Meldung"); }; } catch (e) {}
+      const si = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (k, w) {
+        if (k === "dma-wechsel" && !/^\*/.test(String(w))) {
+          const l = JSON.parse(sessionStorage.getItem("__stopp") || "[]"); l.push(Math.round(performance.now())); si.call(this, "__stopp", JSON.stringify(l));
+          queueMicrotask(() => { try { window.stop(); } catch (e) {} });
+        }
+        return si.apply(this, arguments);
+      };
+    }
+    /* Teil T: Uhrzeit der ersten Berührung */
+    addEventListener("pointerdown", () => { if (!sessionStorage.getItem("__tipp")) sessionStorage.setItem("__tipp", String(Math.round(performance.now()))); }, { capture: true });
     let lc;
     Object.defineProperty(window, "LiveChat", { configurable: true, get: () => lc, set: (v) => {
       lc = v;
@@ -176,7 +193,10 @@ async function lauf(br, sv, o) {
   await pg.goto(hier + "/index.html" + q, { waitUntil: "load" });
   await schlaf(1500);
   const gesteuert = await pg.evaluate(() => Boolean(navigator.serviceWorker && navigator.serviceWorker.controller));
-  await pg.evaluate(() => { sessionStorage.setItem("__rueck", "1"); sessionStorage.setItem("__s", "0"); sessionStorage.setItem("__a", "[]"); sessionStorage.setItem("__b", "[]"); });
+  await pg.evaluate((o) => { sessionStorage.setItem("__rueck", "1"); sessionStorage.setItem("__s", "0"); sessionStorage.setItem("__a", "[]"); sessionStorage.setItem("__b", "[]");
+    sessionStorage.removeItem("__tipp"); sessionStorage.removeItem("__stopp");
+    if (o.wechselVor) sessionStorage.setItem("__wechselVor", o.wechselVor);
+    if (o.ohneNeuladen) sessionStorage.setItem("__ohneNeuladen", "1"); }, { wechselVor: (o.wechselVor || "").replace("{V}", V), ohneNeuladen: Boolean(o.ohneNeuladen) });
   let blaseVorher = null;
   if (o.bekannt) {
     /* die Seite im Raum hat die neue Fassung schon gesehen: der Wächter prüft beim Sichtbarwerden → Blase */
@@ -190,6 +210,8 @@ async function lauf(br, sv, o) {
   const t0 = Date.now();
   if (o.art === "goto") await pg.goto(hier + "/index.html" + q, { waitUntil: "commit" }).catch(() => {});
   else await pg.reload({ waitUntil: "commit" }).catch(() => {});
+  /* Teil T: ein Tipp, bevor die Antwort da ist (Prüfer: nach 1,2 s; das Klassenzimmer ist dabei nicht offen) */
+  if (o.tipp != null) { await schlaf(Math.max(0, o.tipp - (Date.now() - t0))); await pg.touchscreen.tap(200, 500).catch(() => {}); }
   const bis = Date.now() + (o.warten || 9000);
   let l = null;
   while (Date.now() < bis) {
@@ -200,6 +222,7 @@ async function lauf(br, sv, o) {
   const e = await pg.evaluate(() => ({ f: String(window.DMA_VERSION), seiten: Number(sessionStorage.getItem("__s") || 0),
     marke: document.documentElement.hasAttribute("data-dma-speicher"),
     adressen: JSON.parse(sessionStorage.getItem("__a") || "[]"), betreten: JSON.parse(sessionStorage.getItem("__b") || "[]"),
+    tipp: sessionStorage.getItem("__tipp"), stopp: JSON.parse(sessionStorage.getItem("__stopp") || "[]"),
     lage: window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage().lage : "?",
     blase: (document.getElementById("dmaNeueFassung") || {}).textContent || "" })).catch((x) => ({ fehler: x.message.split("\n")[0] }));
   await ctx.close();
@@ -209,6 +232,8 @@ async function lauf(br, sv, o) {
   return e;
 }
 lauf.k = 0;
+/* grobe Zeitgrenze für betreten ab dem Neuladen (Nachbesserung 1) */
+const grenze = (fa) => fa.D + (fa.cpu > 1 ? 1800 : 900);
 const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Seiten " + e.seiten + ", betreten " + JSON.stringify((e.betreten || []).map((b) => b.seite + ":" + b.t + "ms/" + b.f))
   + ", ab Neuladen " + e.abNeuladen + " ms, Blase " + JSON.stringify(e.blase) + (e.gesteuert ? "" : ", OHNE Helfer") + (e.marke ? ", aus dem Speicher" : ", frisch")
   + (e.blaseVorher != null ? ", Blase vorher " + e.blaseVorher : "");
@@ -228,6 +253,9 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       /* höchstens ein Neuladen (aus dem Speicher: die alte Seite, dann die neue; frisch aus dem Netz: gleich die neue) */
       const gut = e.f === e.V1 && e.seiten <= 2 && b.length === 1 && b[0].seite === e.seiten && b[0].f === e.V1 && !e.blase && e.gesteuert;
       sage(gut, "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": neue Fassung, höchstens ein Neuladen, betreten einmal und nur auf der neuen Seite", zeile(e));
+      /* Nachbesserung 1: grobe Zeitgrenze (884 brauchte hier höchstens ~D + 0,3 s bei CPU 1×, ~D + 0,9 s bei CPU 4×) –
+         fängt jedes Warten auf eine Frist (6 s, 15 s) ab; die feine Messung ist Teil M */
+      sage(e.abNeuladen != null && e.abNeuladen <= grenze(fa), "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": betreten nach höchstens " + grenze(fa) + " ms", e.abNeuladen + " ms");
     }
   }
 
@@ -251,21 +279,87 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       const e = await lauf(br, sv, Object.assign({ teil: "G", update: false, art: "reload" }, fa));
       const b = e.betreten || [];
       sage(e.f === e.V && e.seiten === 1 && b.length === 1 && !e.blase && e.gesteuert, "G CPU " + fa.cpu + "× D=" + fa.D + " Lauf " + (n + 1) + ": betreten einmal, kein Neuladen, keine Blase", zeile(e));
+      sage(e.abNeuladen != null && e.abNeuladen <= grenze(fa), "G CPU " + fa.cpu + "× D=" + fa.D + " Lauf " + (n + 1) + ": betreten nach höchstens " + grenze(fa) + " ms", e.abNeuladen + " ms");
     }
   }
 
   if (NUR.includes("F")) {
-    abschnitt("F", "fassung.json mit Fehler oder hängend");
+    abschnitt("F", "fassung.json mit Fehler oder hängend (Nachbesserung 1: der Helfer weiß beim Neuladen, welche Fassung der Server hat)");
     {
+      /* bis zur Nachbesserung: hinein auf der ALTEN Seite, kein Neuladen (der Wächter wusste nichts). Jetzt wie 884: die neue */
       const e = await lauf(br, sv, { teil: "F", update: true, art: "reload", cpu: 1, D: 250, fjD: 0, fjArt: "500" });
       const b = e.betreten || [];
-      sage(e.seiten === 1 && b.length === 1 && b[0].t < 3000 && e.gesteuert, "F fassung.json 500: sofort hinein (< 3 s), kein Neuladen", zeile(e));
+      sage(e.f === e.V1 && e.seiten <= 2 && b.length === 1 && b[0].f === e.V1 && b[0].seite === e.seiten && e.abNeuladen < 3000 && e.gesteuert,
+        "F fassung.json 500, Update: betreten einmal auf der NEUEN Fassung (< 3 s) – wie 884", zeile(e));
     }
     {
-      const e = await lauf(br, sv, { teil: "F", update: true, art: "reload", cpu: 1, D: 250, fjArt: "haengt", warten: 11000, ruhe: 1500 });
+      const e = await lauf(br, sv, { teil: "F", update: true, art: "reload", cpu: 1, D: 250, fjArt: "haengt", warten: 8000, ruhe: 1500 });
       const b = e.betreten || [];
-      sage(e.seiten === 1 && b.length === 1 && b[0].t >= 5500 && b[0].t <= 7500 && e.gesteuert, "F fassung.json hängt: hinein nach der Frist (6 s ab dem Öffnen), kein Neuladen", zeile(e));
+      sage(e.f === e.V1 && e.seiten <= 2 && b.length === 1 && b[0].f === e.V1 && e.abNeuladen < 3000 && e.gesteuert,
+        "F fassung.json hängt, Update: betreten einmal auf der NEUEN Fassung (< 3 s)", zeile(e));
     }
+    {
+      /* ohne Update: der Helfer hat beim Neuladen dieselbe Fassung vom Server – nicht auf fassung.json warten (884: sofort) */
+      const e = await lauf(br, sv, { teil: "F", update: false, art: "reload", cpu: 1, D: 250, fjArt: "haengt", warten: 8000, ruhe: 1500 });
+      const b = e.betreten || [];
+      sage(e.seiten === 1 && b.length === 1 && e.abNeuladen < 3000 && e.gesteuert, "F fassung.json hängt, ohne Update: hinein ohne auf fassung.json zu warten (< 3 s), kein Neuladen", zeile(e));
+    }
+    {
+      /* index.html UND fassung.json hängen: niemand weiß etwas – hinein nach der Frist (6 s ab dem Öffnen), kein Neuladen */
+      const e = await lauf(br, sv, { teil: "F", update: true, art: "reload", cpu: 1, D: 30000, fjArt: "haengt", warten: 11000, ruhe: 1500 });
+      const b = e.betreten || [];
+      sage(e.seiten === 1 && b.length === 1 && b[0].t >= 5500 && b[0].t <= 7500 && e.gesteuert, "F index.html und fassung.json hängen: hinein nach der Frist (6 s ab dem Öffnen), kein Neuladen", zeile(e));
+    }
+  }
+
+  if (NUR.includes("T")) {
+    /* Prüfer (Nachbesserung 1): ein Tipp, bevor die erste Antwort da ist – bleiben() hielt die Seite dann wegen „eingabe && > 2 s“
+       an, nur die Blase, und die Rückkehr ging auf der ALTEN Fassung hinein (für die ganze Sitzung). */
+    abschnitt("T", "Tipp während des Wartens (Update, Antwort nach > 2 s): trotzdem die neue Fassung");
+    const faelle = [
+      { cpu: 1, D: 2500, tipp: 1200, wer: "Helfer weiß es (index.html und fassung.json je 2,5 s)" },
+      { cpu: 4, D: 2500, tipp: 1200, wer: "Helfer weiß es (index.html und fassung.json je 2,5 s)" },
+      /* index.html später als fassung.json: hier entscheidet der Wächter (bleiben) */
+      { cpu: 1, D: 4500, fjD: 2500, tipp: 1200, wer: "Wächter entscheidet (fassung.json 2,5 s, index.html 4,5 s)" },
+      { cpu: 4, D: 4500, fjD: 2500, tipp: 1200, wer: "Wächter entscheidet (fassung.json 2,5 s, index.html 4,5 s)" }
+    ];
+    for (const fa of faelle) for (let n = 0; n < N; n++) {
+      const e = await lauf(br, sv, Object.assign({ teil: "T", update: true, art: "reload", warten: 14000 }, fa));
+      const b = e.betreten || [];
+      sage(e.tipp != null && e.f === e.V1 && b.length === 1 && b[0].f === e.V1 && !e.blase && e.gesteuert,
+        "T CPU " + fa.cpu + "× " + fa.wer + ", Tipp nach " + fa.tipp + " ms, Lauf " + (n + 1) + ": am Ende die neue Fassung, betreten einmal, keine Blase", zeile(e) + ", Tipp bei " + e.tipp + " ms");
+    }
+  }
+
+  if (NUR.includes("W")) {
+    /* Merker dma-wechsel: nur jünger als 20 s gilt die Seite als frisch (Öffnen, damit die Antwort des Helfers nicht zählt;
+       fassung.json hängt – ohne Merker wartet die Rückkehr also bis zur Frist von 6 s) */
+    abschnitt("W", "Merker dma-wechsel (Seite eben vom Wächter oder Helfer geladen): jünger als 20 s frisch, älter nicht");
+    const faelle = [
+      { vor: "f|5000|{V}", frisch: true, was: "Fassung, 5 s alt" },
+      { vor: "f|25000|{V}", frisch: false, was: "Fassung, 25 s alt" },
+      { vor: "*|5000|1", frisch: true, was: "„*“ (Helfer) mit älterer Fassung, 5 s alt" },
+      { vor: "*|5000|{V}", frisch: false, was: "„*“ mit DIESER Fassung (nicht neu geladen), 5 s alt" },
+      { vor: "*|25000|1", frisch: false, was: "„*“ mit älterer Fassung, 25 s alt" }
+    ];
+    for (const fa of faelle) {
+      const e = await lauf(br, sv, { teil: "W", update: false, art: "goto", cpu: 1, D: 250, fjArt: "haengt", wechselVor: fa.vor, warten: 11000, ruhe: 1500 });
+      const b = e.betreten || [];
+      const t = b.length ? b[0].t : null;
+      sage(e.seiten === 1 && b.length === 1 && (fa.frisch ? t < 3000 : t >= 5500 && t <= 7500),
+        "W Merker " + fa.was + ": " + (fa.frisch ? "frisch, hinein ohne zu warten (< 3 s)" : "nicht frisch, hinein erst nach der Frist (6 s)"), zeile(e));
+    }
+  }
+
+  if (NUR.includes("N")) {
+    /* „neu“, aber die Seite bleibt (das Neuladen des Wächters wird abgebrochen, der Helfer bekommt keine Meldung): nach 15 s
+       doch hinein, genau einmal, auf dieser Seite */
+    abschnitt("N", "Antwort „neu“, aber das Neuladen scheitert: nach 15 s doch hinein");
+    const e = await lauf(br, sv, { teil: "N", update: true, art: "reload", cpu: 1, D: 250, ohneNeuladen: true, warten: 22000, ruhe: 2500 });
+    const b = e.betreten || [];
+    const st = (e.stopp || [])[0];
+    sage(st != null && e.seiten === 1 && e.f === e.V && b.length === 1 && b[0].t - st >= 14500 && b[0].t - st <= 17000,
+      "N Neuladen abgebrochen: betreten einmal auf dieser Seite, 15 s nach der Antwort (die Blase darf stehen: draußen liegt eine neuere)", zeile(e) + ", abgebrochen bei " + st + " ms, betreten " + (b.length ? b[0].t - (st || 0) : "–") + " ms danach");
   }
 
   if (NUR.includes("O")) {
@@ -293,6 +387,12 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     await pg.goto(hier + "/index.html?mit-sw", { waitUntil: "load" });
     await schlaf(1500);
     const st = await pg.evaluate(() => window.DMA_STEMPEL || {});
+    {
+      /* Prüfer (Nachbesserung 1): index.html schreibt „draussen“ in den Seitenspeicher des Helfers; der Name steht dort fest */
+      const html = fs.readFileSync(path.join(WURZEL, "index.html"), "utf8"), sw = fs.readFileSync(path.join(WURZEL, "sw.js"), "utf8");
+      const a = (/caches\.open\("([^"]+)"\)\.then\(function \(k\) \{ return k\.put\(new URL\("draussen"/.exec(html) || [])[1], b = (/var SEITE = "([^"]+)";/.exec(sw) || [])[1];
+      sage(a && a === b, "S index.html schreibt „draussen“ in genau den Seitenspeicher des Helfers (SEITE in sw.js)", "index.html " + a + ", sw.js " + b);
+    }
     {
       const m = await pg.evaluate(async () => { const k = await caches.open("dma-seite-1"); const r = await k.match("seite"); const t = r ? await r.text() : "";
         return { gespeichert: /<html[^>]*data-dma-speicher/.test(t), diese: document.documentElement.hasAttribute("data-dma-speicher") }; });

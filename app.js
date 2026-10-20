@@ -70210,6 +70210,9 @@
         try { art = (performance.getEntriesByType("navigation")[0] || {}).type || ""; } catch (e) {}
         if (!art) try { art = performance.navigation && performance.navigation.type === 1 ? "reload" : ""; } catch (e) {}
         if (!erst || (art === "reload" && !document.documentElement.hasAttribute("data-dma-speicher"))) return Promise.resolve();
+        /* Nachbesserung 1: Neuladen aus dem Speicher – der Helfer hat die Seite eben beim Server nachgefragt (Vorab-Anfrage
+           dieser Navigation, wie bis 884) und dieselbe Fassung bekommen (sw.js, „dma-rueckkehr“): dann ist sie aktuell */
+        if (art === "reload" && window.dmaHelferSagt === "gleich") return Promise.resolve();
         return new Promise((ok) => {
           const uhr = setTimeout(ok, Math.max(0, 6000 - performance.now()));
           erst.then((w) => {
@@ -70226,7 +70229,10 @@
         geschlecht: livechatGeschlecht(),
         mitBild: zurueck.mitBild !== false })
         .then(() => { klassenzimmerStreifen(); renderLiveChat(); });
-      const rein = () => { fassungFrei.then(() => reinJetzt()); };
+      /* FASSUNG 885 (Rückkehr, Nachbesserung 1): hat die Seite dem Helfer „Rückkehr wartet“ gemeldet (index.html), geht
+         sie jetzt doch hier hinein – dann soll er sie nicht mehr neu laden („halt“, sw.js) */
+      const halt = () => { try { const sw = navigator.serviceWorker && navigator.serviceWorker.controller; if (sw && window.dmaRueckHalt) sw.postMessage({ rueckkehr: "halt" }); } catch (e) {} };
+      const rein = () => { fassungFrei.then(() => { halt(); reinJetzt(); }); };
       if (!DMA_TEILE_BAU) rein();
       else {
         let los = false;
@@ -77353,7 +77359,9 @@
     };
     lesetexteVersprechen = Promise.resolve().then(() => brDatei("data-lesetexte.js")).then(() => bauen() || new Promise((fertig) => {
       const sk = document.createElement("script");
-      sk.src = "data-lesetexte.js" + (window.DMA_V ? DMA_V("data-lesetexte.js") : "?v=" + (window.DMA_VERSION || "1"));
+      /* FASSUNG 885 (Nachbesserung 1 zu „Rückkehr“): die Quelle mit IHREM Stempel (DMA_V gäbe den von min/ – passt nicht zum
+         Inhalt, der Helfer legte die Datei dann nie ab, sw.js „Stempel ↔ Inhalt“) */
+      sk.src = "data-lesetexte.js?v=" + ((window.DMA_STEMPEL || {})["data-lesetexte.js"] || window.DMA_VERSION || "1");
       sk.onload = () => fertig(bauen());
       sk.onerror = () => fertig(null);
       document.head.appendChild(sk);
@@ -98062,7 +98070,8 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (ok && window.Satzbau) return true;
       return new Promise((fertig) => {
         const s = document.createElement("script");
-        s.src = "satzbau.js" + (window.DMA_V ? DMA_V("satzbau.js") : "?v=" + (window.DMA_VERSION || "1"));
+        /* FASSUNG 885 (Nachbesserung 1 zu „Rückkehr“): die Quelle mit IHREM Stempel (nicht dem von min/, s. data-lesetexte.js) */
+        s.src = "satzbau.js?v=" + ((window.DMA_STEMPEL || {})["satzbau.js"] || window.DMA_VERSION || "1");
         s.onload = () => fertig(Boolean(window.Satzbau));
         s.onerror = () => fertig(false);
         document.head.appendChild(s);

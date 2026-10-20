@@ -47,6 +47,8 @@
    von 10 Paaren. Mehr als die Zeit einer Anfrage (Rundreise plus
    Server) kann es nicht bringen – und nur, wenn der Helfer langsam wacht. */
 var KASTEN = "dma-dateien-1";
+/* SEITE: index.html schreibt „draussen“ selbst in diesen Speicher (knopf im Fassungs-Wächter, Name dort fest) – bekommt er
+   einen neuen Namen, dort mitändern (Sonde pruefe-885-rueckkehr.js prüft, dass beide gleich sind). */
 var SEITE = "dma-seite-1";
 
 self.addEventListener("install", function () { self.skipWaiting(); });
@@ -89,6 +91,14 @@ self.addEventListener("fetch", function (e) {
        Browser die Seite ein zweites Mal (gemessen: 2 Anfragen je Öffnen).
        Browser ohne Vorab-Laden: wie bisher kein respondWith. */
     else if (e.preloadResponse) e.respondWith(vorab(e).then(function (a) { return a || fetch(r); }));
+    return;
+  }
+  /* FASSUNG 885 (Rückkehr, Nachbesserung 1): die alte Seite wartet an dieser Stelle, bis die Entscheidung steht (s. unten) */
+  if (u.pathname === wurzel() + "dma-rueckkehr") {
+    var ent = "";
+    e.respondWith(frist(rueckEntscheiden(e.clientId, u.searchParams.get("f")).then(function (w) { ent = w; }), 3000).then(function () {
+      return new Response(ent === "gleich" ? 'window.dmaHelferSagt="gleich";' : "", { headers: { "Content-Type": "text/javascript", "Cache-Control": "no-store" } });
+    }));
     return;
   }
   if (!u.searchParams.get("v")) return;
@@ -239,9 +249,10 @@ function vorab(e) {
    eine ältere Seite als X, wenn das Netz X hat. */
 var KOPF = "x-dma-fassung", ZEIT = "x-dma-zeit", ALTER_MS = 12 * 3600 * 1000;
 var auffrischung = null;   /* laufende Auffrischung (Versprechen → gespeicherte Fassung oder "") */
+var gestartet = null;      /* die zuletzt gestartete (bleibt, auch wenn sie fertig ist) */
 
 function seite(r, e) {
-  var t0 = Date.now();
+  var t0 = Date.now(), vorher = gestartet;
   /* waitUntil gleich zu Beginn: der Helfer bleibt wach, bis die Seite im Hintergrund gelesen und gespeichert ist */
   var los, halten = new Promise(function (ok) { los = ok; });
   try { e.waitUntil(halten); } catch (x) {}
@@ -274,6 +285,11 @@ function seite(r, e) {
     });
   });
   antwort.catch(function () { los(); });
+  /* FASSUNG 885 (Rückkehr, Nachbesserung 1): welche Auffrischung zu dieser Seite gehört (für rueckEntscheiden) */
+  antwort.then(function () {
+    var id = e.resultingClientId;
+    if (id && gestartet !== vorher) { proSeite[id] = gestartet; setTimeout(function () { delete proSeite[id]; }, 30000); }
+  }, function () {});
   return antwort;
 }
 
@@ -317,7 +333,7 @@ function auffrischen(netz, c, url) {
 }
 function merken(p) {
   p = p.catch(function () { return ""; });
-  auffrischung = p;
+  auffrischung = gestartet = p;
   p.then(function () { if (auffrischung === p) auffrischung = null; });
   return p;
 }
@@ -379,6 +395,52 @@ function neuer(a, b) {
   a = String(a || ""); b = String(b || "");
   if (/^\d+$/.test(a) && /^\d+$/.test(b)) return Number(a) > Number(b);
   return a !== b;
+}
+/* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die schnelle Performance und
+   die Verbindung zu den anderen haben oberste Priorität“. RÜCKKEHR: DER HELFER LÄDT DIE NEUE FASSUNG SELBST (Nachbesserung 1
+   zu „Rückkehr“, Prüfer: „nie langsamer als 884“). Kommt die Seite beim Neuladen im Raum aus diesem Speicher und liegt
+   draußen schon eine neue Fassung, wartet die Rückkehr (app.js), bis der Fassungs-Wächter neu lädt. Dessen Antwort von
+   fassung.json war auf einem langsamen Telefon zwar nach ~0,3 s da, wurde aber erst nach ~0,55 s verarbeitet: so lange
+   startete der Hauptfaden die ALTE Seite (gemessen: CPU 4×, fassung.json nach 0,25 s: +0,32 s bis „betreten“ gegen 884).
+   Hier weiß es der Helfer früher und ohne den Hauptfaden: seine Auffrischung (dieselbe Anfrage wie bis 884) bringt die
+   neue Seite in den Speicher. Meldet die Seite „Rückkehr wartet“ (index.html, mit ihrer Fassung), lädt der Helfer sie
+   selbst neu (WindowClient.navigate, dieselbe Adresse wie der Wächter, ?f=<neu>), sobald die Auffrischung eine NEUERE
+   Fassung abgelegt hat – höchstens 5 s lang, genau einmal; „halt“ (die Rückkehr geht doch auf dieser Seite hinein) hebt
+   es auf. Die neue Seite fragt nicht noch einmal (Merker dma-wechsel „*“). Ohne navigate (ältere Browser) oder ohne
+   Auffrischung macht es wie bisher der Wächter. Gemessen: SPIELSYSTEM.md „Fassung 885 — Rückkehr … Nachbesserung 1“. */
+var rueck = {};      /* Seite (Client-Kennung) → { ent: Entscheidung (Versprechen), aus: „halt“ kam } */
+var proSeite = {};   /* Seite (resultingClientId) → die Auffrischung, die IHRE Navigation gestartet hat */
+function rueckEntscheiden(id, alt) {
+  var r = rueck[id] || (rueck[id] = {}), eigene = proSeite[id], server = "";
+  alt = String(alt || "");
+  if (r.ent) return r.ent;
+  delete proSeite[id];
+  var p = (eigene || auffrischung || Promise.resolve("")).then(function (v) { server = eigene ? String(v || "") : ""; });
+  r.ent = frist(p, 5000).then(ausSpeicher).then(fassungVon).then(function (v) {
+    /* „gleich“ nur, wenn die Anfrage DIESER Navigation die Fassung des Servers gebracht hat (die Seite traut dem nur beim Neuladen) */
+    if (server && server === alt) return "gleich";
+    if (r.aus || !v || !neuer(v, alt)) return "";
+    return self.clients.get(id).then(function (c) {
+      if (!c || r.aus || typeof c.navigate !== "function") return "";
+      /* auf das Neuladen warten (höchstens 3 s): bis dahin bleibt die alte Seite angehalten (s. „dma-rueckkehr“) */
+      return frist(c.navigate(mitFassung(c.url, v)).then(function () { r.neu = 1; }), 3000).then(function () { return r.neu ? "neu" : ""; });
+    });
+  }).catch(function () { return ""; });
+  r.ent.then(function () { setTimeout(function () { delete rueck[id]; }, 30000); });
+  return r.ent;
+}
+self.addEventListener("message", function (e) {
+  var d = e.data || {}, c = e.source;
+  if (!d.rueckkehr || !c || !c.id) return;
+  if (d.rueckkehr === "halt") { (rueck[c.id] || (rueck[c.id] = {})).aus = true; return; }
+  e.waitUntil(rueckEntscheiden(c.id, d.rueckkehr));
+});
+/* dieselbe Adresse wie neuLaden in index.html: alles bleibt, nur f= wird gesetzt */
+function mitFassung(adresse, v) {
+  var u = new URL(adresse);
+  var q = u.search.replace(/^\?/, "").split("&").filter(function (p) { return p && !/^f(=|$)/.test(p); });
+  q.push("f=" + encodeURIComponent(v));
+  return u.origin + u.pathname + "?" + q.join("&") + u.hash;
 }
 function frist(p, ms) {
   return new Promise(function (ok) {
