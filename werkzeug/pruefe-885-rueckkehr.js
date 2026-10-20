@@ -25,9 +25,11 @@
    TEILE
      R  Rückkehr bei Update (Server Fassung + 1), CPU 1× und 4×, D = 250
         und 800 ms, Neuladen (reload) – dazu Öffnen derselben Adresse
-        (goto, wie ein verworfener Tab, CPU 1×, D = 250): am Ende die NEUE
-        Fassung, genau ein Neuladen, betreten genau EINMAL und erst auf
-        der neuen Seite (nie auf der alten), keine Blase.
+        (goto, wie ein verworfener Tab, CPU 1×, D = 250; dort reicht der
+        Helfer oft die alte index.html aus dem Speicher des Browsers durch,
+        „schon da“): am Ende die NEUE Fassung, höchstens ein Neuladen,
+        betreten genau EINMAL und nur auf der neuen Seite (nie auf der
+        alten), keine Blase.
      K  Update schon bekannt: die Seite im Raum hat die Blase schon gezeigt
         (der Wächter prüft beim Sichtbarwerden), dann Neuladen: der Helfer
         weiß es („draussen“) und holt die Seite wie bis 884 aus dem Netz – am
@@ -40,8 +42,12 @@
         Neuladen). fassung.json hängt ganz: hinein nach der Frist (6 s ab
         dem Öffnen, nicht früher als 5,5 s, spätestens 7,5 s), kein
         Neuladen.
-     O  Ohne Helfer (Seite immer aus dem Netz, wie bis 884), fassung.json
-        hängt: betreten wartet NICHT (< 3 s) – dort ist die Seite frisch.
+     O  Ohne Helfer, Neuladen (der Browser fragt beim Server nach, wie bis
+        884), fassung.json hängt: betreten wartet NICHT (< 3 s) – die Seite
+        ist frisch. Ohne Helfer, gewöhnliches Öffnen bei Update: index.html
+        kommt aus dem Speicher des Browsers (max-age=600, alt) → betreten
+        erst auf der neuen Seite, genau einmal (884: betreten auf der alten,
+        dann Neuladen mitten im Verbinden und noch einmal betreten).
      S  Die gespeicherte Seite trägt die Marke data-dma-speicher (daran
         erkennt die Rückkehr, dass sie aus dem Speicher kam), die frisch
         geholte nicht. Stempel ↔ Inhalt (sw.js): liefert der Server unter einem
@@ -50,6 +56,10 @@
         Seite, aber NICHT in den Speicher des Helfers; der richtige Inhalt
         wird abgelegt und danach aus dem Speicher geliefert; Ordner-Stempel
         (szenen/) und ?v=<Fassung> werden wie bisher abgelegt.
+     H  (nur mit GEGEN und NUR=…H…) Helfer füllt seinen Speicher: zweites
+        Öffnen, jede gestempelte Datei ein Fehltreffer (wie nach einem
+        Update), CPU 4× (die Bremse gilt nur für die Seite, nicht für den
+        Helfer): load A/B gepaart, und gleich viele Einträge im Speicher.
      M  Messung (nur mit GEGEN=<alter Stand>): Neuladen → betreten ab dem
         Neuladen (Uhrzeit), verschränkt A B / B A, A = GEGEN, B = WURZEL,
         mit und ohne Update (Standard: Update CPU 1× D = 250, CPU 4× D = 250
@@ -215,8 +225,9 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     for (const fa of faelle) for (let n = 0; n < N; n++) {
       const e = await lauf(br, sv, Object.assign({ teil: "R", update: true, art: "reload" }, fa));
       const b = e.betreten || [];
-      const gut = e.f === e.V1 && e.seiten === 2 && b.length === 1 && b[0].seite === 2 && b[0].f === e.V1 && !e.blase && e.gesteuert;
-      sage(gut, "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": neue Fassung, ein Neuladen, betreten einmal auf der neuen Seite", zeile(e));
+      /* höchstens ein Neuladen (aus dem Speicher: die alte Seite, dann die neue; frisch aus dem Netz: gleich die neue) */
+      const gut = e.f === e.V1 && e.seiten <= 2 && b.length === 1 && b[0].seite === e.seiten && b[0].f === e.V1 && !e.blase && e.gesteuert;
+      sage(gut, "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": neue Fassung, höchstens ein Neuladen, betreten einmal und nur auf der neuen Seite", zeile(e));
     }
   }
 
@@ -261,7 +272,14 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     abschnitt("O", "ohne Helfer: kein Warten (die Seite kommt frisch aus dem Netz)");
     const e = await lauf(br, sv, { teil: "O", update: false, helfer: false, art: "reload", cpu: 1, D: 250, fjArt: "haengt", warten: 8000, ruhe: 1500 });
     const b = e.betreten || [];
-    sage(!e.gesteuert && e.seiten === 1 && b.length === 1 && b[0].t < 3000, "O ohne Helfer, fassung.json hängt: betreten wartet nicht (< 3 s)", zeile(e));
+    sage(!e.gesteuert && e.seiten === 1 && b.length === 1 && b[0].t < 3000, "O ohne Helfer, Neuladen, fassung.json hängt: betreten wartet nicht (< 3 s)", zeile(e));
+    /* gewöhnliches Öffnen ohne Helfer: index.html kommt aus dem Speicher des Browsers (max-age=600) – kann alt sein */
+    for (let n = 0; n < N; n++) {
+      const e2 = await lauf(br, sv, { teil: "O", update: true, helfer: false, art: "goto", cpu: 1, D: 250 });
+      const b2 = e2.betreten || [];
+      sage(!e2.gesteuert && e2.f === e2.V1 && e2.seiten <= 2 && b2.length === 1 && b2[0].seite === e2.seiten && !e2.blase,
+        "O ohne Helfer, Öffnen (alte index.html aus dem Browser-Speicher), Update: betreten einmal, erst auf der neuen Seite", zeile(e2));
+    }
   }
 
   if (NUR.includes("S")) {
@@ -329,6 +347,38 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       info((fa.bekannt ? "bekannt  " : fa.update ? "Update   " : "ohne Upd ") + " CPU " + fa.cpu + "× D=" + fa.D + " " + fa.art + ": betreten ab Neuladen A " + med(A.map((e) => e.abNeuladen)) + " ms, B " + med(B.map((e) => e.abNeuladen))
         + " ms, B − A gepaart " + med(diff) + " ms (B schneller " + schneller + ", langsamer " + langsamer + " von " + diff.length + "; Einzel " + JSON.stringify(diff) + "); neue Fassung am Ende A " + neuA + "/" + A.length + ", B " + neuB + "/" + B.length);
     }
+    sa.srv.close();
+  }
+
+  if (NUR.includes("H") && GEGEN) {
+    abschnitt("H", "Helfer füllt seinen Speicher (2. Öffnen, jede gestempelte Datei ein Fehltreffer – wie nach einem Update): Stempel-Prüfung kostet? (A = GEGEN, B = WURZEL)");
+    const sa = await serverBauen(GEGEN);
+    const A = [], B = [], diff = [];
+    for (let n = 0; n < PAARE; n++) {
+      const r = {};
+      for (const [wer, s] of n % 2 ? [["B", sv], ["A", sa]] : [["A", sa], ["B", sv]]) {
+        s.S.seite = ""; s.S.stau = 0; s.S.fjStau = 0; s.S.fjArt = ""; s.S.anders = {};
+        const ctx = await br.newContext({ viewport: { width: 393, height: 800 }, isMobile: true, hasTouch: true });
+        const pg = await ctx.newPage(); const cdp = await ctx.newCDPSession(pg);
+        await pg.goto(s.hier + "/index.html?mit-sw", { waitUntil: "load" });
+        await pg.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller, null, { timeout: 20000 }).catch(() => {});
+        await schlaf(500);
+        await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+        await pg.goto(s.hier + "/index.html?mit-sw", { waitUntil: "load" });
+        await schlaf(4000);
+        r[wer] = await pg.evaluate(async () => {
+          const nv = performance.getEntriesByType("navigation")[0];
+          const k = await caches.open("dma-dateien-1"); const e = (await k.keys()).length;
+          return { dcl: Math.round(nv.domContentLoadedEventStart), load: Math.round(nv.loadEventStart), eintraege: e };
+        });
+        await ctx.close();
+      }
+      A.push(r.A); B.push(r.B); diff.push(r.B.load - r.A.load);
+      ERG.messung.push({ fall: "H", paar: n, A: r.A, B: r.B }); schreiben();
+    }
+    info("load A " + med(A.map((x) => x.load)) + " ms, B " + med(B.map((x) => x.load)) + " ms, B − A gepaart " + med(diff) + " ms (Einzel " + JSON.stringify(diff) + "); DOMContentLoaded A "
+      + med(A.map((x) => x.dcl)) + ", B " + med(B.map((x) => x.dcl)) + "; Einträge im Dateispeicher A " + JSON.stringify(A.map((x) => x.eintraege)) + ", B " + JSON.stringify(B.map((x) => x.eintraege)));
+    sage(B.every((x, i) => x.eintraege === A[i].eintraege), "H gleich viele Dateien im Speicher des Helfers wie vorher (jede echte Datei passt zu ihrem Stempel)");
     sa.srv.close();
   }
 

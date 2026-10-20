@@ -70194,16 +70194,22 @@
          bis 884 kam die Seite aus dem Netz, immer neu). Jetzt wartet das Hineingehen auf die erste Antwort des
          Wächters (window.dmaFassungErst): gleich → sofort hinein; neue Fassung → der Wächter lädt genau einmal neu,
          hinein geht erst die neue Seite (dieselbe Rückkehr; sie fragt nicht noch einmal, Merker dma-wechsel); Fehler/kein
-         Netz → sofort hinein. Gewartet wird nur, wenn die Seite aus dem Speicher des Helfers kam (Marke
-         data-dma-speicher, gesetzt von sw.js) – frisch aus dem Netz ist sie schon die neueste, wie bis 884 –, und
-         höchstens bis 6 s nach dem Öffnen (dieselbe Frist, nach der der Helfer bis 884 die gespeicherte Seite nahm).
+         Netz → sofort hinein. Nicht gewartet wird nur, wenn die Seite sicher frisch ist (Neuladen, nicht aus dem
+         Speicher des Helfers – wie bis 884), sonst höchstens bis 6 s nach dem Öffnen (dieselbe Frist, nach der der Helfer
+         bis 884 die gespeicherte Seite nahm).
          Hat die Seite die neue Fassung schon vorher gesehen (Blase), kommt sie beim Neuladen wie bis 884 aus dem Netz
          (sw.js, „draussen“). Gemessen gegen 884 und was offen bleibt: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“;
          Sonde pruefe-885-rueckkehr.js. */
       const fassungFrei = (() => {
         const erst = window.dmaFassungErst;
-        /* die Seite kam aus dem Speicher des Helfers (Marke, die sw.js beim Ablegen setzt) */
-        if (!erst || !document.documentElement.hasAttribute("data-dma-speicher")) return Promise.resolve();
+        /* Sicher frisch ist nur eine Seite, die NICHT aus dem Speicher des Helfers kam (Marke data-dma-speicher, gesetzt
+           von sw.js) UND per Neuladen geholt wurde: dann fragt der Browser beim Server nach (auch der Helfer, Vorab-Laden).
+           Bei einem gewöhnlichen Öffnen (verworfener Tab, Zurück) darf der Browser index.html bis zu 10 min aus seinem
+           eigenen Speicher nehmen (GitHub Pages max-age=600) – auch dann kann sie alt sein (Sonde R, Öffnen). */
+        let art = "";
+        try { art = (performance.getEntriesByType("navigation")[0] || {}).type || ""; } catch (e) {}
+        if (!art) try { art = performance.navigation && performance.navigation.type === 1 ? "reload" : ""; } catch (e) {}
+        if (!erst || (art === "reload" && !document.documentElement.hasAttribute("data-dma-speicher"))) return Promise.resolve();
         return new Promise((ok) => {
           const uhr = setTimeout(ok, Math.max(0, 6000 - performance.now()));
           erst.then((w) => {
