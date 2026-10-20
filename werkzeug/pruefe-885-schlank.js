@@ -121,8 +121,10 @@ function rueckbauRueckkehr(y) {
   return y
     /* Nachbesserung 1 zu „Rückkehr“: Rückkehr-Merker, Tipp zählt nicht, Meldung an den Helfer, „halt“ beim Neuladen */
     .replace('var rueck=false;try{var rz=JSON.parse(sessionStorage.getItem("dma_livechat_zurueck")||"null");rueck=Boolean(rz&&rz.raum&&Date.now()-(rz.zeit||0)<=18e5)}catch(e){}', "")
-    .replace(';if(window.dmaRueckHalt)navigator.serviceWorker.controller.postMessage({rueckkehr:"halt"})}catch(e){}', "}catch(e){}")
+    .replace(';if(window.dmaRueckGemeldet)navigator.serviceWorker.controller.postMessage({rueckkehr:"halt"})}catch(e){}', "}catch(e){}")
     .replace("eingabe&&!rueck&&(kz()||ms>2e3)", "eingabe&&(kz()||ms>2e3)")
+    .replace('wechsel=[],helferSagt="",fjFehler=false;', "wechsel=[];")
+    .replace('var fertig=function(w){if(!erstesMal)return;if(w==="fehler"&&window.dmaRueckGemeldet&&!helferSagt){fjFehler=true;return}erstOk(w)};', "var fertig=function(w){if(erstesMal)erstOk(w)};")
     .replace(/else if\(rueck&&document\.documentElement\.hasAttribute\("data-dma-speicher"\)\)try\{var helfer=[\s\S]*?\}\}catch\(e\)\{\}/, "")
     .replace('if(Date.now()-Number(wechsel[1])<2e4&&(wechsel[0]===jetzt||wechsel[0]==="*"&&wechsel[2]!==jetzt))erstOk("frisch");', 'if(wechsel[0]===jetzt&&Date.now()-Number(wechsel[1])<2e4)erstOk("frisch");')
     .replace('try{var sw=navigator.serviceWorker&&navigator.serviceWorker.controller;if(sw&&window.caches)caches.open("dma-seite-1").then(function(k){return k.put(new URL("draussen",sw.scriptURL).href,new Response(neu))}).catch(function(){})}catch(e){}', "")
@@ -302,8 +304,6 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           x = x.replace('"rueckfrage.js",', "");
           const i0 = y.indexOf("window.dmaWalkieLaden="), i1 = y.indexOf('try{window.addEventListener("beforeinstallprompt"', i0);
           if (i0 >= 0 && i1 > i0) y = y.slice(0, i0) + y.slice(i1);
-          /* Nachbesserung 1 zu „Rückkehr“: die Rückkehr aus dem Speicher wartet vor den Skripten auf den Helfer */
-          y = y.replace(`if(window.dmaRueckHalt)document.write('<script src="'+window.dmaRueckHalt+'"><\\/script>');`, "");
           lader = x === y;
         }
         /* FASSUNG 885 (rueckkehr, nach K): der Fassungs-Wächter bekam die erste Antwort als Versprechen (dmaFassungErst)

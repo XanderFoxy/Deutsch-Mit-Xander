@@ -70199,7 +70199,14 @@
          bis 884 die gespeicherte Seite nahm).
          Hat die Seite die neue Fassung schon vorher gesehen (Blase), kommt sie beim Neuladen wie bis 884 aus dem Netz
          (sw.js, „draussen“). Gemessen gegen 884 und was offen bleibt: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“;
-         Sonde pruefe-885-rueckkehr.js. */
+         Sonde pruefe-885-rueckkehr.js.
+         NACHBESSERUNG 1 (Prüfer: „nie langsamer als 884“). Auf einem langsamen Telefon kam das Neuladen des Wächters zu
+         spät: die Antwort von fassung.json lag nach ~0,3 s da, verarbeitet wurde sie erst nach ~0,55 s, weil der Hauptfaden
+         die alte Seite startete (+315 ms bis „betreten“ gegen 884). Jetzt meldet die Seite „Rückkehr wartet“ an den Helfer
+         (index.html), und der lädt die neue Fassung selbst (sw.js, WindowClient.navigate), sobald seine Auffrischung sie
+         hat – ohne den Hauptfaden. Hat dieselbe Anfrage beim Neuladen die gleiche Fassung gebracht, sagt er „gleich“, und es
+         geht ohne fassung.json hinein. Ein Tipp während des Wartens hält das Neuladen nicht mehr an (bleiben, index.html).
+         Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr: Nachbesserung 1“. */
       const fassungFrei = (() => {
         const erst = window.dmaFassungErst;
         /* Sicher frisch ist nur eine Seite, die NICHT aus dem Speicher des Helfers kam (Marke data-dma-speicher, gesetzt
@@ -70210,9 +70217,6 @@
         try { art = (performance.getEntriesByType("navigation")[0] || {}).type || ""; } catch (e) {}
         if (!art) try { art = performance.navigation && performance.navigation.type === 1 ? "reload" : ""; } catch (e) {}
         if (!erst || (art === "reload" && !document.documentElement.hasAttribute("data-dma-speicher"))) return Promise.resolve();
-        /* Nachbesserung 1: Neuladen aus dem Speicher – der Helfer hat die Seite eben beim Server nachgefragt (Vorab-Anfrage
-           dieser Navigation, wie bis 884) und dieselbe Fassung bekommen (sw.js, „dma-rueckkehr“): dann ist sie aktuell */
-        if (art === "reload" && window.dmaHelferSagt === "gleich") return Promise.resolve();
         return new Promise((ok) => {
           const uhr = setTimeout(ok, Math.max(0, 6000 - performance.now()));
           erst.then((w) => {
@@ -70231,7 +70235,7 @@
         .then(() => { klassenzimmerStreifen(); renderLiveChat(); });
       /* FASSUNG 885 (Rückkehr, Nachbesserung 1): hat die Seite dem Helfer „Rückkehr wartet“ gemeldet (index.html), geht
          sie jetzt doch hier hinein – dann soll er sie nicht mehr neu laden („halt“, sw.js) */
-      const halt = () => { try { const sw = navigator.serviceWorker && navigator.serviceWorker.controller; if (sw && window.dmaRueckHalt) sw.postMessage({ rueckkehr: "halt" }); } catch (e) {} };
+      const halt = () => { try { const sw = navigator.serviceWorker && navigator.serviceWorker.controller; if (sw && window.dmaRueckGemeldet) sw.postMessage({ rueckkehr: "halt" }); } catch (e) {} };
       const rein = () => { fassungFrei.then(() => { halt(); reinJetzt(); }); };
       if (!DMA_TEILE_BAU) rein();
       else {

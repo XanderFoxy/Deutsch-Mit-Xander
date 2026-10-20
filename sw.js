@@ -93,14 +93,6 @@ self.addEventListener("fetch", function (e) {
     else if (e.preloadResponse) e.respondWith(vorab(e).then(function (a) { return a || fetch(r); }));
     return;
   }
-  /* FASSUNG 885 (Rückkehr, Nachbesserung 1): die alte Seite wartet an dieser Stelle, bis die Entscheidung steht (s. unten) */
-  if (u.pathname === wurzel() + "dma-rueckkehr") {
-    var ent = "";
-    e.respondWith(frist(rueckEntscheiden(e.clientId, u.searchParams.get("f")).then(function (w) { ent = w; }), 3000).then(function () {
-      return new Response(ent === "gleich" ? 'window.dmaHelferSagt="gleich";' : "", { headers: { "Content-Type": "text/javascript", "Cache-Control": "no-store" } });
-    }));
-    return;
-  }
   if (!u.searchParams.get("v")) return;
   e.respondWith(gestempelt(r, u));
 });
@@ -398,16 +390,25 @@ function neuer(a, b) {
 }
 /* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die schnelle Performance und
    die Verbindung zu den anderen haben oberste Priorität“. RÜCKKEHR: DER HELFER LÄDT DIE NEUE FASSUNG SELBST (Nachbesserung 1
-   zu „Rückkehr“, Prüfer: „nie langsamer als 884“). Kommt die Seite beim Neuladen im Raum aus diesem Speicher und liegt
-   draußen schon eine neue Fassung, wartet die Rückkehr (app.js), bis der Fassungs-Wächter neu lädt. Dessen Antwort von
-   fassung.json war auf einem langsamen Telefon zwar nach ~0,3 s da, wurde aber erst nach ~0,55 s verarbeitet: so lange
-   startete der Hauptfaden die ALTE Seite (gemessen: CPU 4×, fassung.json nach 0,25 s: +0,32 s bis „betreten“ gegen 884).
-   Hier weiß es der Helfer früher und ohne den Hauptfaden: seine Auffrischung (dieselbe Anfrage wie bis 884) bringt die
-   neue Seite in den Speicher. Meldet die Seite „Rückkehr wartet“ (index.html, mit ihrer Fassung), lädt der Helfer sie
-   selbst neu (WindowClient.navigate, dieselbe Adresse wie der Wächter, ?f=<neu>), sobald die Auffrischung eine NEUERE
-   Fassung abgelegt hat – höchstens 5 s lang, genau einmal; „halt“ (die Rückkehr geht doch auf dieser Seite hinein) hebt
-   es auf. Die neue Seite fragt nicht noch einmal (Merker dma-wechsel „*“). Ohne navigate (ältere Browser) oder ohne
-   Auffrischung macht es wie bisher der Wächter. Gemessen: SPIELSYSTEM.md „Fassung 885 — Rückkehr … Nachbesserung 1“. */
+   zu „Rückkehr“; Prüfer: „nie langsamer als 884“). Kommt die Seite beim Neuladen im Raum aus diesem Speicher und liegt
+   draußen schon eine neue Fassung, wartet die Rückkehr (app.js), bis die neue Seite da ist. Bisher lud erst der
+   Fassungs-Wächter der ALTEN Seite neu: die Antwort von fassung.json war auf einem langsamen Telefon nach ~0,3 s da,
+   wurde aber erst nach ~0,55 s verarbeitet, so lange startete der Hauptfaden die alte Seite (Prüfer, CPU 4×, Antwort
+   nach 0,25 s: +315 ms bis „betreten“ gegen 884; nach 0,05 s: +200 ms).
+   Der Helfer weiß es früher und ohne den Hauptfaden der Seite: seine Auffrischung (die Vorab-Anfrage dieser Navigation,
+   dieselbe Anfrage wie bis 884) bringt die Fassung des Servers. Meldet die Seite „Rückkehr wartet“ (index.html, mit ihrer
+   Fassung), dann
+     - ist die Auffrischung NEUER: der Helfer lädt die Seite selbst neu (WindowClient.navigate, dieselbe Adresse wie der
+       Wächter, ?f=<neu>) – genau einmal, höchstens 5 s lang; „halt“ (die Rückkehr geht doch auf dieser Seite hinein,
+       oder der Wächter lädt selbst neu) hebt es auf. Die neue Seite fragt nicht noch einmal (Merker dma-wechsel „*“).
+     - hat die Anfrage DIESER Navigation dieselbe Fassung gebracht: „gleich“ an die Seite. Die Seite glaubt das nur beim
+       Neuladen (dann hat der Browser beim Server nachgefragt) und geht dann hinein, ohne auf fassung.json zu warten.
+     - sonst „nichts“. Antwortet fassung.json mit einem Fehler, wartet die Rückkehr auf diese Antwort des Helfers (sonst
+       ging sie auf der alten Seite hinein, obwohl der Helfer die neue schon hat).
+   Gemessen und verworfen: die alte Seite vor ihren Skripten anhalten, bis der Helfer entschieden hat (kostete auf
+   schnellem Gerät +26…+29 ms und bei langsamer Leitung den Gewinn, brachte im fraglichen Fall nur Rauschen).
+   Ohne navigate (ältere Browser) oder ohne Auffrischung macht es wie bisher der Wächter.
+   Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr: Nachbesserung 1“; Sonde pruefe-885-rueckkehr.js. */
 var rueck = {};      /* Seite (Client-Kennung) → { ent: Entscheidung (Versprechen), aus: „halt“ kam } */
 var proSeite = {};   /* Seite (resultingClientId) → die Auffrischung, die IHRE Navigation gestartet hat */
 function rueckEntscheiden(id, alt) {
@@ -417,13 +418,12 @@ function rueckEntscheiden(id, alt) {
   delete proSeite[id];
   var p = (eigene || auffrischung || Promise.resolve("")).then(function (v) { server = eigene ? String(v || "") : ""; });
   r.ent = frist(p, 5000).then(ausSpeicher).then(fassungVon).then(function (v) {
-    /* „gleich“ nur, wenn die Anfrage DIESER Navigation die Fassung des Servers gebracht hat (die Seite traut dem nur beim Neuladen) */
-    if (server && server === alt) return "gleich";
-    if (r.aus || !v || !neuer(v, alt)) return "";
     return self.clients.get(id).then(function (c) {
-      if (!c || r.aus || typeof c.navigate !== "function") return "";
-      /* auf das Neuladen warten (höchstens 3 s): bis dahin bleibt die alte Seite angehalten (s. „dma-rueckkehr“) */
-      return frist(c.navigate(mitFassung(c.url, v)).then(function () { r.neu = 1; }), 3000).then(function () { return r.neu ? "neu" : ""; });
+      if (!c) return "";
+      var nichts = function () { c.postMessage({ dmaHelfer: "nichts" }); return ""; };
+      if (server && server === alt) { c.postMessage({ dmaHelfer: "gleich" }); return "gleich"; }
+      if (r.aus || !v || !neuer(v, alt) || typeof c.navigate !== "function") return nichts();
+      return c.navigate(mitFassung(c.url, v)).then(function () { return "neu"; }, nichts);
     });
   }).catch(function () { return ""; });
   r.ent.then(function () { setTimeout(function () { delete rueck[id]; }, 30000); });

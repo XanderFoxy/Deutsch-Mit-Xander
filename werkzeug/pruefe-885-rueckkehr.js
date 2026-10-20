@@ -29,7 +29,9 @@
         Helfer oft die alte index.html aus dem Speicher des Browsers durch,
         „schon da“): am Ende die NEUE Fassung, höchstens ein Neuladen,
         betreten genau EINMAL und nur auf der neuen Seite (nie auf der
-        alten), keine Blase.
+        alten), keine Blase. Dazu eine grobe Zeitgrenze: betreten nach
+        höchstens D + 0,9 s (CPU 1×) bzw. D + 1,8 s (CPU 4×) – fängt jedes
+        Warten auf eine Frist ab (die feine Messung ist Teil M).
      K  Update schon bekannt: die Seite im Raum hat die Blase schon gezeigt
         (der Wächter prüft beim Sichtbarwerden), dann Neuladen: der Helfer
         weiß es („draussen“) und holt die Seite wie bis 884 aus dem Netz – am
@@ -37,11 +39,28 @@
         ohne Speicher-Marke; hängt fassung.json, wartet die Rückkehr auf
         dieser frischen Seite nicht (< 3 s).
      G  Rückkehr ohne Update (CPU 1× und 4×, D = 250/800): betreten genau
-        einmal, kein Neuladen, keine Blase.
-     F  fassung.json antwortet mit 500: sofort hinein (betreten < 3 s, kein
-        Neuladen). fassung.json hängt ganz: hinein nach der Frist (6 s ab
-        dem Öffnen, nicht früher als 5,5 s, spätestens 7,5 s), kein
-        Neuladen.
+        einmal, kein Neuladen, keine Blase; Zeitgrenze wie R.
+     F  (Nachbesserung 1) fassung.json antwortet mit 500 oder hängt, Update:
+        betreten einmal auf der NEUEN Fassung, < 3 s (der Helfer weiß es aus
+        der Vorab-Anfrage – wie 884, das die Seite aus dem Netz nahm; vorher
+        ging es hier auf der alten Seite hinein). fassung.json hängt, ohne
+        Update: hinein ohne zu warten (der Helfer sagt beim Neuladen
+        „gleich“), < 3 s. index.html UND fassung.json hängen: hinein nach der
+        Frist (6 s ab dem Öffnen, 5,5 … 7,5 s), kein Neuladen.
+     T  (Nachbesserung 1, Prüfer) Tipp während des Wartens: Update, Antwort
+        nach > 2 s, ein Tipp nach 1,2 s (Klassenzimmer nicht offen) – am Ende
+        die neue Fassung, betreten einmal, keine Blase. Zwei Wege: der Helfer
+        weiß es (index.html und fassung.json je 2,5 s) und der Wächter
+        entscheidet (fassung.json 2,5 s, index.html 4,5 s; dort zählte
+        bleiben() den Tipp). CPU 1× und 4×.
+     W  (Nachbesserung 1) Merker dma-wechsel: „<Fassung> <Zeit>“ und „* <Zeit>
+        <alte Fassung>“ (vom Helfer geladen) gelten nur jünger als 20 s und
+        nur für eine ANDERE Fassung als „*“ nennt; Öffnen (dort zählt das
+        „gleich“ des Helfers nicht), fassung.json hängt: frisch < 3 s, sonst
+        erst nach der Frist (6 s).
+     N  (Nachbesserung 1) Antwort „neu“, aber das Neuladen scheitert (die
+        Sonde bricht es mit window.stop ab, der Helfer bekommt keine Meldung):
+        nach 15 s doch hinein, genau einmal, auf dieser Seite.
      O  Ohne Helfer, Neuladen (der Browser fragt beim Server nach, wie bis
         884), fassung.json hängt: betreten wartet NICHT (< 3 s) – die Seite
         ist frisch. Ohne Helfer, gewöhnliches Öffnen bei Update: index.html
@@ -55,11 +74,17 @@
         Update eine Datei, die nicht im Speicher liegt), geht er an die
         Seite, aber NICHT in den Speicher des Helfers; der richtige Inhalt
         wird abgelegt und danach aus dem Speicher geliefert; Ordner-Stempel
-        (szenen/) und ?v=<Fassung> werden wie bisher abgelegt.
+        (szenen/) und ?v=<Fassung> werden wie bisher abgelegt. Dazu
+        (Nachbesserung 1, Prüfer): index.html schreibt „draussen“ in genau
+        den Seitenspeicher, den sw.js als SEITE führt (Name steht in
+        index.html fest).
      H  (nur mit GEGEN und NUR=…H…) Helfer füllt seinen Speicher: zweites
         Öffnen, jede gestempelte Datei ein Fehltreffer (wie nach einem
         Update), CPU 4× (die Bremse gilt nur für die Seite, nicht für den
-        Helfer): load A/B gepaart, und gleich viele Einträge im Speicher.
+        Helfer): load A/B gepaart; B hat in keinem Lauf weniger Einträge im
+        Speicher als A im besten Lauf (A streut um eins, das Ablegen läuft
+        nach load weiter – nach einem roten Lauf von „gleich viele“ so
+        gefasst, siehe SPIELSYSTEM.md).
      M  Messung (nur mit GEGEN=<alter Stand>): Neuladen → betreten ab dem
         Neuladen (Uhrzeit), verschränkt A B / B A, A = GEGEN, B = WURZEL,
         mit und ohne Update (Standard: Update CPU 1× D = 250, CPU 4× D = 250
@@ -71,11 +96,11 @@
      GEGEN=<ordner>    alter Stand für Teil M
      N=n               Läufe je Fall in R/G (Standard 2)
      PAARE=n           Paare je Messfall in M (Standard 6)
-     NUR=RKGFOSM       nur diese Teile
+     NUR=RKGFTWNOSHM   nur diese Teile (Standard RKGFTWNOS, mit GEGEN dazu M)
      JSON=<datei>      Ergebnisse (Läufe, Messung) als JSON, laufend
    Aufruf:  node werkzeug/pruefe-885-rueckkehr.js
    Gegenprobe: WURZEL=<ordner mit altem Stand> node …  (c30a68f7: R rot;
-   6b724580, vor S1: R grün)
+   6b724580, vor S1: R grün; 864324e7, vor Nachbesserung 1: T rot)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
