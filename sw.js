@@ -103,24 +103,64 @@ function gestempelt(r, u) {
     return k.match(r).then(function (da) {
       if (da) return da;
       return fetch(r).then(function (a) {
-        if (a && a.status === 200 && a.type === "basic") {
-          var kopie = a.clone();
-          k.put(r, kopie).then(function () {
-            return k.keys();
-          }).then(function (alle) {
-            alle.forEach(function (q) {
-              try {
-                var w = new URL(q.url);
-                if (w.pathname === u.pathname && w.search !== u.search) k.delete(q);
-              } catch (x) {}
-            });
-          }).catch(function () {});
-        }
+        if (a && a.status === 200 && a.type === "basic") ablegen(k, r, u, a);
         return a;
       });
     });
   }).catch(function () { return fetch(r); });
 }
+
+/* FASSUNG 885 — XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste
+   Priorität“. STEMPEL ↔ INHALT (Prüfer, S1-Nachtrag; S1 Offen 5). Der Server hat von jeder Datei nur den NEUESTEN
+   Inhalt, egal welcher Stempel (?v=) gefragt wird. Holt eine ALTE Seite nach einem Update eine Datei, die noch nicht
+   im Speicher liegt, kommt also der neue Inhalt – und lag bisher danach unter dem ALTEN Stempel im Speicher. Seit S1
+   läuft eine alte Seite öfter (kurz vor dem Neuladen, mit der Blase im Raum die ganze Sitzung). Kommt dieser Stempel
+   später wieder (Rücknahme auf dem Server, oder eine Datei bekommt ihren alten Inhalt zurück), lieferte der Speicher
+   ungefragt den falschen Inhalt. Jetzt: ein Stempel, der der Inhalt einer einzelnen Datei ist (werkzeug/
+   fassung-setzen.js: die ersten 10 Zeichen von SHA-1 – zu erkennen an der Liste DMA_STEMPEL der gespeicherten Seite),
+   wird vor dem Ablegen nachgerechnet; passt er nicht, geht die Antwort an die Seite, aber nicht in den Speicher.
+   Ordner-Stempel (ton/, szenen/ …) und ?v=<Fassung> werden wie bisher abgelegt (dort ist nichts nachzurechnen).
+   Kostet nichts auf dem Weg zur Seite: die Seite bekommt die Antwort sofort, gerechnet wird an einer Kopie im Helfer
+   (WebCrypto), und nur, wenn eine Datei nicht im Speicher lag (nach einem Update). */
+function ablegen(k, r, u, a) {
+  var kopie = a.clone(), v = u.searchParams.get("v") || "";
+  var probe = /^[0-9a-f]{10}$/.test(v) && self.crypto && self.crypto.subtle ? a.clone() : null;
+  (probe ? passt(u, v, probe) : Promise.resolve(true)).then(function (ja) {
+    if (!ja) { try { kopie.body.cancel(); } catch (x) {} return; }
+    return k.put(r, kopie).then(function () {
+      return k.keys();
+    }).then(function (alle) {
+      alle.forEach(function (q) {
+        try {
+          var w = new URL(q.url);
+          if (w.pathname === u.pathname && w.search !== u.search) k.delete(q);
+        } catch (x) {}
+      });
+    });
+  }).catch(function () {});
+}
+function passt(u, v, probe) {
+  return stempelKarte().then(function (m) {
+    var p = u.pathname.slice(wurzel().length);
+    if (!m || typeof m[p] !== "string" || /\/$/.test(p)) { try { probe.body.cancel(); } catch (x) {} return true; }
+    return probe.arrayBuffer().then(function (b) { return self.crypto.subtle.digest("SHA-1", b); }).then(function (h) {
+      var x = new Uint8Array(h), t = "";
+      for (var i = 0; i < 5; i++) t += (x[i] < 16 ? "0" : "") + x[i].toString(16);
+      return t === v;
+    });
+  }).catch(function () { return true; });
+}
+/* Die Liste DMA_STEMPEL der gespeicherten Seite (nur: welche Pfade einen Datei-Stempel haben) */
+var karte = null;
+function stempelKarte() {
+  if (!karte) karte = ausSpeicher().then(function (g) { return g ? g.clone().text() : ""; }).then(karteAus, function () { return {}; });
+  return karte;
+}
+function karteAus(t) {
+  var m = /window\.DMA_STEMPEL = (\{[^\n]*?\});<\/script>/.exec(t || "");
+  try { return m ? JSON.parse(m[1]) : {}; } catch (x) { return {}; }
+}
+function wurzel() { try { return new URL("./", self.registration.scope).pathname; } catch (x) { return "/"; } }
 
 /* FASSUNG 885 (Nachbesserung 2): NOTAUS – dieselbe Regel wie in index.html (/[?&]ohne-sw\b/) */
 function notaus(u) { return /[?&]ohne-sw\b/.test(u.search || ""); }
@@ -296,7 +336,7 @@ function speichernText(t, a, c, url) {
     h.set(KOPF, v); h.set(ZEIT, String(Date.now()));
     return caches.open(SEITE).then(function (k) {
       return k.put("seite", new Response(t, { status: 200, statusText: a.statusText || "OK", headers: h }));
-    }).then(function () { return v; });
+    }).then(function () { karte = Promise.resolve(karteAus(t)); return v; });
   }).catch(function () { return ""; });
 }
 

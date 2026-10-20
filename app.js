@@ -70185,13 +70185,41 @@
          Stück einzeln sofort nachgeladen werden, während der Raum sich aufbaut. Zusammen ist das immer noch
          früher als vor 876, als erst die ganze app.js über die Leitung musste. */
       raumVorbereiten();
-      const rein = () => LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
+      /* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die Verbindung zu den
+         anderen haben oberste Priorität“. RÜCKKEHR AUF DIE NEUE FASSUNG (Prüfer, S1-Nachtrag). Seit S1 kommt die Seite
+         beim Neuladen (Ziehen zum Aktualisieren, ein vom Browser verworfener Tab) zuerst aus dem Speicher des Helfers.
+         Lag draußen schon eine neue Fassung, ging die Rückkehr hier auf der ALTEN Seite in den Raum, bevor der
+         Fassungs-Wächter (index.html) antwortete; der sah dann „verbindet“ und zeigte nur die Blase – die alte Fassung
+         blieb die ganze Sitzung im Raum (Prüfer: schnelles Telefon, fassung.json nach 0,25 s: 0 von 3 auf der neuen;
+         bis 884 kam die Seite aus dem Netz, immer neu). Jetzt wartet das Hineingehen auf die erste Antwort des
+         Wächters (window.dmaFassungErst): gleich → sofort hinein; neue Fassung → der Wächter lädt genau einmal neu,
+         hinein geht erst die neue Seite (dieselbe Rückkehr); Fehler/kein Netz → sofort hinein. Gewartet wird nur, wenn
+         ein Helfer die Seite liefern konnte (ohne ihn kommt sie wie bis 884 frisch aus dem Netz), und höchstens bis 6 s
+         nach dem Öffnen – dieselbe Frist, nach der der Helfer bis 884 die gespeicherte Seite nahm. Nie später als 884:
+         dort wartete die Rückkehr auf die Seite aus dem Netz (eine Rundreise), hier auf fassung.json (eine Rundreise,
+         früher losgeschickt). Messung und Sonde: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“, pruefe-885-rueckkehr.js. */
+      const fassungFrei = (() => {
+        const erst = window.dmaFassungErst;
+        let helfer = false;
+        try { helfer = Boolean(navigator.serviceWorker && navigator.serviceWorker.controller); } catch (e) {}
+        if (!erst || !helfer) return Promise.resolve();
+        return new Promise((ok) => {
+          const uhr = setTimeout(ok, Math.max(0, 6000 - performance.now()));
+          erst.then((w) => {
+            clearTimeout(uhr);
+            /* „neu": die Seite geht gerade; bleibt sie wider Erwarten (Neuladen abgelehnt), nach 15 s doch hinein */
+            if (w === "neu") setTimeout(ok, 15000); else ok();
+          }, () => { clearTimeout(uhr); ok(); });
+        });
+      })();
+      const reinJetzt = () => LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
         /* FASSUNG 841 — auch bei der Rückkehr nach dem Neuladen das Konto mitgeben (sonst Zufallskennung, siehe livechat.js) */
         konto: (Backend.currentUser() || {}).id || "",
         betreiber: Boolean(Backend.canModerate && Backend.canModerate()),
         geschlecht: livechatGeschlecht(),
         mitBild: zurueck.mitBild !== false })
         .then(() => { klassenzimmerStreifen(); renderLiveChat(); });
+      const rein = () => { fassungFrei.then(() => reinJetzt()); };
       if (!DMA_TEILE_BAU) rein();
       else {
         let los = false;

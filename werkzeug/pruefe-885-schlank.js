@@ -115,6 +115,19 @@ function esbuildHolen() {
   return null;
 }
 
+/* FASSUNG 885 (rueckkehr): die Änderung am Fassungs-Wächter (verkleinert) wieder herausnehmen – für Teil Q */
+function rueckbauRueckkehr(y) {
+  return y
+    .replace('try{sessionStorage.setItem("dma-wechsel",neu+" "+Date.now())}catch(e){}', "")
+    .replace(/var erstOk,erst=new Promise\(function\(ok\)\{erstOk=ok\}\),wechsel=\[\];[\s\S]*?erstOk\("frisch"\);/, "")
+    .replace("var fertig=function(w){if(erstesMal)erstOk(w)};", "")
+    .replace('return fertig("fehler");', "return;").replace('return fertig("gleich");', "return;")
+    .split('return fertig("blase")}').join("return}")
+    .replace('neuLaden(neu);fertig("neu")}', "neuLaden(neu)}")
+    .replace('x.onerror=x.onabort=x.ontimeout=function(){fertig("fehler")};', "")
+    .replace('x.send()}catch(e){fertig("fehler")}', "x.send()}catch(e){}");
+}
+
 /* ---------- Quelltext ---------- */
 const lies = (w, f) => fs.readFileSync(path.join(w, f), "utf8");
 const inlineSkripte = (html) => [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
@@ -282,6 +295,13 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           const i0 = y.indexOf("window.dmaWalkieLaden="), i1 = y.indexOf('try{window.addEventListener("beforeinstallprompt"', i0);
           if (i0 >= 0 && i1 > i0) y = y.slice(0, i0) + y.slice(i1);
           lader = x === y;
+        }
+        /* FASSUNG 885 (rueckkehr, nach K): der Fassungs-Wächter bekam die erste Antwort als Versprechen (dmaFassungErst)
+           und den Merker „dma-wechsel“ – genau diese Stellen werden für den Vergleich mit dem Stand vor K zurückgebaut,
+           alles andere muss weiter Zeichen für Zeichen gleich sein. */
+        if (/window\.dmaFassungErst=/.test(y) && !/dmaFassungErst/.test(x)) {
+          y = rueckbauRueckkehr(y);
+          info("Skript " + (i + 1) + ": Fassungs-Wächter ohne die Änderung aus 885 rueckkehr verglichen");
         }
         if (x === y) gleich++;
         else { let k = 0; while (k < x.length && x[k] === y[k]) k++; info("Skript " + (i + 1) + " weicht ab bei: …" + x.slice(Math.max(0, k - 60), k + 60) + "… / …" + y.slice(Math.max(0, k - 60), k + 60) + "…"); }
