@@ -378,7 +378,8 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     }
     info("load A " + med(A.map((x) => x.load)) + " ms, B " + med(B.map((x) => x.load)) + " ms, B − A gepaart " + med(diff) + " ms (Einzel " + JSON.stringify(diff) + "); DOMContentLoaded A "
       + med(A.map((x) => x.dcl)) + ", B " + med(B.map((x) => x.dcl)) + "; Einträge im Dateispeicher A " + JSON.stringify(A.map((x) => x.eintraege)) + ", B " + JSON.stringify(B.map((x) => x.eintraege)));
-    sage(B.every((x, i) => x.eintraege === A[i].eintraege), "H gleich viele Dateien im Speicher des Helfers wie vorher (jede echte Datei passt zu ihrem Stempel)");
+    /* je Lauf nie weniger als vorher (A streut um eins: das Ablegen läuft nach load weiter) */
+    sage(B.every((x) => x.eintraege >= Math.max(...A.map((y) => y.eintraege))), "H nie weniger Dateien im Speicher des Helfers als vorher (jede echte Datei passt zu ihrem Stempel)");
     sa.srv.close();
   }
 

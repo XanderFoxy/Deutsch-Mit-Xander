@@ -5500,7 +5500,7 @@ Vorsicht beim Lesen: Eine neu geladene Seite (`neu` = 1) misst ihre Zeiten ab ih
 2. messung.js könnte `workerStart`, „Seite aus dem Speicher des Helfers“ und den Vorlauf der alten Seite (sessionStorage) mitschicken – dann sieht man draußen das Aufwachen und den ganzen Preis eines Updates.
 3. 12 h nach den Felddaten nachstellen (z. B. kürzer, wenn `neu` oft vorkommt).
 4. Die doppelt geholte Seite beim Neuladen (+27 KB): ließe sich nur sparen, wenn der Wächter nicht neu lädt, sondern die neue Seite beim nächsten Öffnen kommt – sichtbar anders, also nur als Vorschlag.
-5. Eine alte Seite aus dem Speicher holt Dateien, die nicht im Speicher des Helfers liegen, mit ihrem alten Stempel; liegt auf dem Server schon ein neuerer Inhalt, kommt der unter dem alten Stempel (wie bisher bei lange offenen Seiten). Die App-Stücke fängt der 884-Notweg ab; das Fenster ist die Zeit bis zum Neuladen (4G ~0,25 s). Ein Abgleich Stempel ↔ Inhalt im Helfer wäre möglich (nicht in diesem Schritt).
+5. Eine alte Seite aus dem Speicher holt Dateien, die nicht im Speicher des Helfers liegen, mit ihrem alten Stempel; liegt auf dem Server schon ein neuerer Inhalt, kommt der unter dem alten Stempel (wie bisher bei lange offenen Seiten). Die App-Stücke fängt der 884-Notweg ab; das Fenster ist die Zeit bis zum Neuladen (4G ~0,25 s). Ein Abgleich Stempel ↔ Inhalt im Helfer wäre möglich (nicht in diesem Schritt). → **Erledigt** in „Fassung 885 — Rückkehr in den Raum …“ (sw.js legt einen Datei-Stempel nur mit passendem Inhalt ab).
 6. Werkstatt-Eintrag und Funk-Antwort beim Ausliefern von 885.
 
 ### Nachbesserung 1 (Prüfbericht zu b180a553)
@@ -5587,7 +5587,7 @@ Rauschgrenze (A/A 17.10.): erstes Bild ±54, bereit ±139. Messdateien: Zwischen
 **Sonden (dieser Stand, Stempel neu):** 885-schale 72 grün (Gegenprobe s. o.) · 885-swvorladen 27 grün (10 `?ohne-sw` ohne Update) · 884-notweg 91 grün · 884-messung grün · 884-beta grün · 876-start-schlank, 858-ladeweg grün · ladezeit: im Sammellauf einmal rot („nach dem Update weniger als ein Viertel“: das erste Laden war mit 1939 statt 3277 KB vorzeitig gezählt, der Rest landete im zweiten Lauf), danach 3 von 3 grün – ebenso 3 von 3 mit bfca930c · 694-leistung: nur 3a rot, der bekannte `min/spiel.js`-Wettlauf seit 884. app.js und seine Stücke unberührt (865, 873, 840 nicht betroffen). `node --check` für sw.js und die Sonde; die 8 Inline-Skripte in index.html fehlerfrei übersetzt (`vm.Script`).
 
 **Offen (Nachbesserung 2)**
-1. **Rückkehr in den Raum** (`rueckkehrOffen`: nach einem Neuladen innerhalb von 30 min geht die App beim Start selbst wieder hinein, LiveChat „verbindet“): Kommt die erste Antwort erst danach – nur auf sehr langsamer Leitung, auf dem 4G-Modell beginnt das Neuladen nach ~0,25 s –, bleibt es bei der Blase und der alten Fassung für die Sitzung. Nicht gebaut, weil beide Auswege etwas kosten: (a) im Raum „verbindet“ trotzdem neu laden (bricht den Verbindungsaufbau ab; „nie mitten im Livestream“) oder (b) das Wieder-Hineingehen auf die erste Prüfung warten lassen, wenn die Seite aus dem Speicher kam (kostet auf langsamer Leitung Zeit bis „drin“). Vorschlag für den Funk; nicht gemessen (die Sonde hat keinen echten Raum).
+1. **Rückkehr in den Raum** (`rueckkehrOffen`: nach einem Neuladen innerhalb von 30 min geht die App beim Start selbst wieder hinein, LiveChat „verbindet“): Kommt die erste Antwort erst danach – nur auf sehr langsamer Leitung, auf dem 4G-Modell beginnt das Neuladen nach ~0,25 s –, bleibt es bei der Blase und der alten Fassung für die Sitzung. Nicht gebaut, weil beide Auswege etwas kosten: (a) im Raum „verbindet“ trotzdem neu laden (bricht den Verbindungsaufbau ab; „nie mitten im Livestream“) oder (b) das Wieder-Hineingehen auf die erste Prüfung warten lassen, wenn die Seite aus dem Speicher kam (kostet auf langsamer Leitung Zeit bis „drin“). Vorschlag für den Funk; nicht gemessen (die Sonde hat keinen echten Raum). → **Berichtigt und erledigt** in „Fassung 885 — Rückkehr in den Raum …“: es traf auch schnelle Telefone (Prüfbericht 3); jetzt wartet die Rückkehr auf den Wächter, gemessen und mit Sonde.
 2. Notaus bei sofort wieder geschlossener Seite: wie vor S1 bleibt der Helfer dann angemeldet (s. o.). Abhilfe wäre ein Abmelden früher in der Seite (Kopf statt Ende) – auch das wartet aber auf die Warteschlange des Browsers; nicht gebaut.
 3. Die 2-s-Grenze ist gesetzt, nicht gemessen (vor S1 wartete man auf 4G ~0,2 s, auf 3G ~0,5 s auf die Seite; 2 s lassen langsamen Leitungen Luft).
 4. Nebenbefund `#raum=` (s. o.) – eigener Schritt, unsichtbar.
@@ -6350,3 +6350,110 @@ Jetzt in index.html: `/* FASSUNG 694 — Service Worker (sw.js) nach load anmeld
    frisch vom Server lädt. */
 ```
 
+
+## Fassung 885 — Rückkehr in den Raum nach dem Neuladen kommt auf der neuen Fassung an (S1-Nachtrag, Prüfbericht 3)
+
+XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“ · (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“.
+
+**Befund (dritte gegnerische Prüfung von S1, wichtig):** Wer im Raum ist und denselben Tab neu lädt (Ziehen zum Aktualisieren, ein vom Browser verworfener Tab; Merker `dma_livechat_zurueck`, 30 min), nachdem eine neue Fassung erschienen ist, blieb oft die ganze Sitzung auf der **alten** Fassung im Raum – nur die Blase, die anderen mit gemischten Fassungen. Ursache: S1 liefert beim Neuladen die gespeicherte (alte) Seite; die Rückkehr (`rueckkehrOffen`, app.js) rief `LiveChat.betreten` sehr früh, und kam die erste Antwort von fassung.json danach, galt „verbindet“ als `bleiben()` → nur die Blase. Prüfer (Falle für betreten, je 3 Läufe): CPU 1× bei D = 250/400 ms **0 von 3** auf der neuen Fassung, CPU 4× bei D = 800 **0 von 3**; vor S1 (6b724580) immer neu, ohne Neuladen. Die Aussage in S1 „Offen 1 (Nachbesserung 2)“, das treffe nur sehr langsame Leitungen, war falsch. Dazu drei kleine Befunde: die Sonde 885-schale prüfte den Wettlauf nicht; fassung.json-Antworten landen seit dem XHR im HTTP-Speicher; eine alte Seite legt neuen Inhalt unter altem Stempel ab (S1 Offen 5).
+
+**Vorher festgelegtes Maß:** (1) Rückkehr nach Update: am Ende die neue Fassung, betreten nur auf der neuen Seite (Sonde, CPU 1×/4×, D = 250/800). (2) „Neuladen → betreten“ (Uhrzeit, verschränkt gegen den Stand vor S1 = 884-Weg, 6 Paare je Fall) **nicht langsamer als 884** – mit und ohne Update. (3) `werkzeug/ladezeit-messen.js` (4G, kalt/sw/neu) nicht schlechter. Sichtbar: nichts (gegenüber 884 unsichtbar).
+
+### Was gebaut ist
+1. **index.html, Fassungs-Wächter:** die erste Antwort ist jetzt ein Versprechen, `window.dmaFassungErst` → „gleich“ / „neu“ (der Wächter lädt gerade genau einmal neu) / „blase“ / „fehler“ (auch onerror, onabort, Ausnahme). Neu der Merker `dma-wechsel` (sessionStorage, Fassung + Uhrzeit), den `neuLaden` unmittelbar vor `location.replace` setzt: die Seite, die der Wächter selbst geladen hat, liest und löscht ihn beim Start, und ist sie genau diese Fassung (≤ 20 s), gilt sie sofort als „frisch“ – sie fragt nicht noch einmal (I43).
+2. **app.js, Rückkehr (`rueckkehrOffen`):** `betreten` wartet auf `dmaFassungErst` und höchstens bis 6 s nach dem Öffnen (dieselbe Frist, nach der der Helfer bis 884 die gespeicherte Seite nahm). „neu“ → nicht hinein (die neue Seite kommt gleich und geht über dieselbe Rückkehr hinein; bleibt die Seite wider Erwarten 15 s, doch hinein); alles andere → sofort hinein. **Nicht gewartet** wird nur auf einer Seite, die sicher frisch ist: per **Neuladen** geholt (dann fragt der Browser beim Server nach, auch beim Vorab-Laden des Helfers) **und nicht** aus dem Speicher des Helfers (Marke, s. 3) – das ist genau der Weg von 884 (Ziehen zum Aktualisieren ohne Helfer, oder der Helfer holt die Seite aus dem Netz). Bei einem gewöhnlichen Öffnen (verworfener Tab, Zurück) darf der Browser index.html bis zu 10 min aus seinem eigenen Speicher nehmen (GitHub Pages `max-age=600`) – die Sonde fand das (R „Öffnen“, 1 von 2 Läufen auf der alten Fassung, s. u.), deshalb wird dort gewartet. `raumVorbereiten` (Stücke, Blätter, Präsenzkanal) läuft wie bisher sofort; der Kanal auf einer alten Seite hört nur (kein `track`), es sieht also niemand ein Kommen und Gehen.
+3. **sw.js, Marke:** die gespeicherte Kopie der Seite trägt `<html data-dma-speicher="1">` (beim Ablegen eingesetzt, kostet beim Ausliefern nichts). Nur so weiß die Seite sicher, ob sie aus dem Speicher des Helfers kam – `navigator.serviceWorker.controller` sagt das nicht (auch eine frisch geholte Seite hat einen Helfer; dort zu warten hieße auf einem schnellen Gerät bis zu eine Rundreise später hinein als 884 – Sonde K: frische Seite, fassung.json hängt, betreten nach ~0,46 s ohne Warten).
+4. **sw.js + index.html, „draussen“:** zeigt eine Seite die Blase (sie weiß also, dass draußen eine neuere Fassung liegt), schreibt ihr Wächter `draussen = <Fassung>` in den Speicher der Seite (`dma-seite-1`, Schlüssel neben sw.js). Beim nächsten Öffnen der Hauptseite liest der Helfer das (parallel zum Speicher, ~1 ms) und holt die Seite, wenn sie neuer ist als die gespeicherte, **wie bis 884 aus dem Netz** (`netzZuerst`) – kein Start der alten Seite, kein zweites Laden. Jede aus dem Netz abgelegte Seite löscht den Eintrag (dann kennt der Speicher den Stand des Servers; auch nach einer Rücknahme hängt nichts fest) (I44).
+5. **sw.js, Stempel ↔ Inhalt** (kleiner Befund, S1 Offen 5): Holt eine Seite eine gestempelte Datei, die nicht im Speicher liegt, und ist der Stempel ein **Datei-Stempel** (steht in `DMA_STEMPEL` der gespeicherten Seite, nicht `…/`; das ist SHA-1 des Inhalts, `werkzeug/fassung-setzen.js`), rechnet der Helfer an einer Kopie nach (WebCrypto, im Helfer, nicht auf dem Weg zur Seite). Passt er nicht (der Server hat schon den neuen Inhalt, die alte Seite fragte mit altem Stempel), geht die Antwort an die Seite, **aber nicht in den Speicher**. Ordner-Stempel (ton/, szenen/ …) und `?v=<Fassung>` wie bisher. Geprüft für den Stand 884 (02613a71) und diesen: alle 186 Datei-Stempel = SHA-1 der Datei im Commit, keine Datei mit Front-Matter (GitHub Pages liefert sie also unverändert).
+6. **Sonde neu `werkzeug/pruefe-885-rueckkehr.js`** (s. u.); **885-schlank Teil Q** baut die Wächter-Änderung dieses Schritts vor dem Vergleich mit dem Stand vor K genau zurück (alles andere weiter Zeichen für Zeichen).
+
+### Messung
+**Rückkehr: Neuladen → `betreten`** (Sonde 885-rueckkehr, Teil M: Falle für betreten, Uhrzeit ab dem Neuladen; Server wie GitHub Pages, index.html und fassung.json je D ms; verschränkt A B / B A, **6 Paare je Fall**; A = 6b724580, der Stand vor S1 = der Weg von 884: Seite aus dem Netz; B = dieser Stand; gemessen mit c7cd9229 – die letzte Änderung danach betrifft nur das gewöhnliche Öffnen, nicht das Neuladen). Median in ms, dahinter **B − A gepaart**.
+
+| Fall | 884-Weg (A) | jetzt (B) | B − A | am Ende neue Fassung |
+|---|---|---|---|---|
+| Update, noch nicht gesehen, CPU 1×, D = 250 | 446 | 412 | −24 (5 von 6 schneller) | A 6/6, B 6/6 |
+| Update, noch nicht gesehen, CPU 4×, D = 250 | 956 | 1299 | **+318 (6 von 6 langsamer)** | 6/6, 6/6 |
+| Update, noch nicht gesehen, CPU 4×, D = 800 | 1529 | 1379 | −161 (6 von 6 schneller) | 6/6, 6/6 |
+| Update schon gesehen (Blase), CPU 1×, D = 250 | 430 | 439 | +3 (2 schneller, 4 langsamer – Rauschen) | 6/6, 6/6 |
+| Update schon gesehen (Blase), CPU 4×, D = 250 | 985 | 979 | +10 (2/4 – Rauschen) | 6/6, 6/6 |
+| ohne Update, CPU 1×, D = 250 | 442 | 280 | **−160 (6 von 6)** | – |
+| ohne Update, CPU 4×, D = 800 | 1535 | 869 | **−647 (6 von 6)** | – |
+
+**Gewöhnliches Öffnen derselben Adresse** (wie ein verworfener Tab oder Zurück ohne bfcache; CPU 1×, D = 250, 6 Paare, gleiche Sonde, `MFAELLE=u1-250-goto,g1-250-goto`): der Browser nimmt index.html dabei aus seinem eigenen Speicher (max-age=600).
+- *Mit Update:* 884 geht nach 192 ms auf der **alten** Seite hinein, lädt dann mitten im Verbinden neu und geht nach **685 ms** ein zweites Mal hinein (6 von 6 zweimal); jetzt **einmal**, gleich auf der neuen, nach **692 ms** (+7, gleich).
+- *Ohne Update:* 884 207 ms, jetzt 281 ms – **+74 ms (6 von 6)**: hier kann die Seite alt sein, also wartet die Rückkehr auf die Antwort. Das ist der Preis dafür, nie auf einer alten Seite hineinzugehen (s. Offen 2).
+
+Zum Vergleich der Stand vor diesem Schritt (S1 bis K, 0fd1548a) und c30a68f7: beim Update **nie** die neue Fassung (s. Sonde, Gegenprobe), ohne Update betreten so früh wie hier ohne Warten.
+
+**Ladezeit allgemein (`werkzeug/ladezeit-messen.js 4g --gegen gegen885/rk-vorher --laeufe 8 --arten kalt,sw,neu`;** HTTP/2 + TLS, CPU 4×, verschränkt; im Werkzeug ist hier Stand A = dieser Stand, B = 0fd1548a – unten umgerechnet auf **nachher − vorher**, 95 % des gepaarten Medians):
+
+| Fall | erstes Bild | bereit | sonst |
+|---|---|---|---|
+| 4G kalt | 578 → 564, −12 (−44…88) | 1396 → 1411, +28 (−59…115) | KB bis bereit 626 → 627 (+1, 8 von 8 – echt: index.html gepackt +0,46 KB, min/app.js +0,2 KB) |
+| 4G mit Helfer (sw) | 396 → 390, −14 (−52…20) | 716 → 678, −25 (−100…135) | DOMContentLoaded −36 (−39…31); je 56 Dateien vom Helfer |
+| 4G neu (Update, die gespeicherte Seite zuerst) | ab Öffnen 606 → 625, +5 (−36…82) | ab Öffnen 922 → 914, −32 (−103…33) | 2 Seiten wie vorher |
+
+Alles im Rauschen (A/A-Grenze vom 17.10.: erstes Bild ±50, bereit ±76–139); „DEUTLICH“ nur die beiden KB-Zeilen (2 von 102 Maßen). Das festgelegte Maß (3) – nicht schlechter – ist erfüllt.
+
+**Ergebnis gegen das Maß:** (1) erfüllt in jedem geprüften Fall (Sonde, s. u.). (2) **nicht ganz:** im Raum mit Neuladen ohne Update −160 … −647 ms, Update schon gesehen gleich (+3/+10), Update noch nicht gesehen auf schnellem Gerät oder bei langsamer Antwort gleich bis −161 ms – aber **+318 ms** auf langsamem Gerät mit schneller Antwort (CPU 4×, D = 250), und beim gewöhnlichen Öffnen ohne Update **+74 ms** (Offen 1, 2). (3) erfüllt.
+
+**Zwischenstufen (gemessen, verworfen bzw. weitergebaut):**
+- *Stufe 1 – nur warten (jede Seite mit Helfer, die neue Seite fragt noch einmal):* Update CPU 1× D 250 554/602 ms, CPU 1× D 800 1647/1655, CPU 4× D 250 1243/1326, CPU 4× D 800 1730/1734 (je 2 Läufe; 884-Weg gemessen ~440 / – / ~960 / ~1530) – richtig, aber bis +0,6 s langsamer: die neu geladene Seite wartete ein zweites Mal auf fassung.json.
+- *Stufe 2 – dazu `dma-wechsel` (die vom Wächter geladene Seite fragt nicht noch einmal):* 421 / 986 / 1198 / 1374 ms (je 1 Lauf); verschränkt gegen den 884-Weg (6 Paare): Update CPU 1× D 250 −6, CPU 4× D 250 **+303**, CPU 4× D 800 −95; ohne Update −159 / −625.
+- *Stufe 3 (dieser Stand) – dazu Marke und „draussen“:* Tabelle oben. Die Marke ändert die Zeiten aus dem Speicher nicht (Stufe 2 und 3 gleich: +303 ↔ +318, −159 ↔ −160, −625 ↔ −647, alles im Rauschen), sie verhindert das Warten auf frischen Seiten (Sonde K: fassung.json hängt, betreten nach 458 ms statt nach der Frist).
+
+**Wohin die +0,3 s gehen (Zeitleiste, CPU 4×, D = 250, Update noch nicht gesehen, 3 Läufe):** Die alte Seite aus dem Speicher schickt fassung.json nach 49–63 ms; die Antwort ist nach ~300 ms da, wird aber erst nach 511–560 ms verarbeitet – der Hauptfaden startet die alte Seite (Langläufer 174–205 ms, DOMContentLoaded nach 360–403 ms, danach die Start-Aufgaben). Erst dann lädt der Wächter neu (Seite 2 ab 505–556 ms, aus dem Speicher, ohne zweite Frage), `betreten` nach 1145–1267 ms. Der 884-Weg wartete dieselben ~250 ms auf das Netz und startete dann gleich die neue Seite. Auf einem schnellen Gerät (CPU 1×) ist die alte Seite fertig, bevor die Antwort kommt (−24 ms), bei langsamer Antwort (D = 800) auch auf dem langsamen (−161 ms).
+
+### Entscheidung (mit Messung)
+- **Weg A (die Rückkehr wartet auf den Wächter) statt Weg B (Neulade-Navigationen im Helfer zuerst aus dem Netz, wie 884).** B als Variante gebaut und geprüft (Ordner `gegen885/rk-B`: Stand vor diesem Schritt + eine Zeile in `seite()`): Neuladen 8 von 8 auf der neuen Fassung, **gewöhnliches Öffnen (verworfener Tab) 0 von 2** – dort bleibt es bei der alten Fassung und der Blase. Dazu nähme B **jedem** Neuladen, auch außerhalb des Raums, den Gewinn aus S1 (S1 gemessen, 4G mit Helfer: erstes Bild −166 ms, „bereit“ −223 ms), und die Rückkehr ohne Update wäre nur so schnell wie 884 statt −160 … −647 ms. Nicht gebaut.
+- **Die alte Seite erst nach der Antwort starten** (Skripte zurückhalten, solange die Rückkehr wartet) brächte den einen langsamen Fall (+318 ms) auf etwa 884, kostete aber in allen anderen Fällen den Gewinn (ohne Update −160 … −647 ms → ±0). Gerechnet, nicht gebaut: der Gewinn trifft fast jedes Neuladen im Raum, der Verlust nur ein Neuladen kurz nach einer neuen Fassung.
+- **„draussen“** (Stufe 3) holt den häufigsten Update-Fall – die Seite im Raum zeigt schon die Blase, man zieht zum Aktualisieren – auf genau den Weg von 884 (+3 / +10 ms, Rauschen) statt +318 ms.
+- **Wann nicht gewartet wird** (Nachbesserung in diesem Schritt, Sonde R „Öffnen“): zuerst hing das Warten an der Marke allein. Beim gewöhnlichen Öffnen reichte der Helfer aber die Vorab-Antwort durch, und die kam aus dem Speicher des **Browsers** (max-age=600) – ohne Marke, trotzdem alt: 1 von 2 Läufen blieb auf der alten Fassung. Jetzt gilt nur ein Neuladen ohne Marke als frisch.
+
+
+### Sonde `werkzeug/pruefe-885-rueckkehr.js`
+Teile R (Update, noch nicht gesehen: CPU 1×/4×, D = 250/800, Neuladen; dazu Öffnen), K (Update schon gesehen, mit und ohne hängende fassung.json), G (ohne Update), F (fassung.json 500 / hängt), O (ohne Helfer: Neuladen mit hängender fassung.json; Öffnen mit alter index.html aus dem Browser-Speicher), S (Marke; Stempel ↔ Inhalt; Ordner-Stempel und ?v=<Fassung> wie bisher), dazu H und M (Messung, nur mit GEGEN). Falle für betreten wie beim Prüfer.
+- **Ergebnis: 30 grün** (N = 2); Teil H gegen 0fd1548a grün (nie weniger Dateien im Speicher).
+- **Gegenprobe c30a68f7 (`gegen885/rk-c30a`, ganzer Stand per git archive): 20 rot** – R 8 von 10 (grün nur CPU 4× D = 250: dort ist die alte Seite so langsam, dass die Antwort vor betreten kommt), K 5, O-Öffnen 2, F hängt 1, S 4. **Gegenprobe 0fd1548a (Stand vor diesem Schritt): 20 rot**, dasselbe Muster.
+- **Gegenprobe 6b724580 (vor S1, der Weg von 884): R Neuladen 8 von 8 grün, K 5 von 5 grün, G grün** – wie verlangt. Rot dort: R/O „Öffnen“ (884 geht erst auf der alten Seite hinein und lädt dann mitten im Verbinden neu: zweimal betreten), F hängt (884 wartet nie), S (keine Marke, keine Stempel-Prüfung).
+- **Variante B (`gegen885/rk-B`): R Neuladen 8 von 8 grün, Öffnen 0 von 2** (bleibt alt mit Blase).
+- **Andere Sonden (dieser Stand):** 885-schale 72, 885-swvorladen 27, 884-notweg 91, 884-leitung 40, 885-praesenz 69 (E: Rückkehr nach dem Neuladen), 885-stuecke 43, 876-start-schlank 62, 884-messung 75, 884-beta, ladezeit, 858-ladeweg, 865-lesetexte-nachladen, 873-ausgelagert, 885-messen 47, 885-bereiche 56, 885-ueber 22 grün; 885-schlank 41 grün (Q baut die Wächter-Änderung zurück; die Verweise I43/I44 stehen unten); 694 nur 3a (bekannt: spiel.js-Wettlauf seit 884); 840 im flachen Klon nicht lauffähig (Commit 53eaa31 fehlt). `node --check` für app.js, min/app.js, sw.js und die beiden Sonden; die 9 Inline-Skripte in index.html fehlerfrei übersetzt (`vm.Script`).
+
+### Kleine Befunde
+- **Sonde ohne Rückkehr-Wettlauf:** erledigt (neue Sonde, Teile R/K/G/F/O mit Falle für betreten).
+- **fassung.json im HTTP-Speicher:** seit S1 (XHR ohne `cache: "no-store"`) legt der Browser jede Antwort (`fassung.json?t=…`, GitHub Pages `max-age=600`, ~20 Byte Inhalt) im HTTP-Speicher ab – wegen `?t=` nie wieder gelesen, vom Browser nach Alter verdrängt. **Bewusst nicht geändert:** XHR kennt keinen Cache-Modus; ein Kopf `Cache-Control: no-store` in der Anfrage ändert in Chromium das Ablegen nicht (nachgeprüft mit einem kleinen Server, max-age=600: die zweite gleiche Anfrage kam mit und ohne den Kopf aus dem Speicher, der Server sah sie je einmal); fetch mit `no-store` kostete in S1 gemessen ~120 ms beim Neuladen; die Frage durch den Helfer zu leiten, legt ihn auf den Weg jeder Prüfung. Die Wirkung (ein paar kleine Einträge je Stunde, die der Browser selbst wegräumt) ist kleiner als jede dieser Kosten.
+- **Neuer Inhalt unter altem Stempel:** erledigt (s. 5).
+
+### Datenbank
+Nicht gelesen (nicht nötig).
+
+**Offen**
+1. **Der eine langsamere Fall bleibt:** Update noch **nicht** gesehen (weniger als ~2 min vor dem Neuladen veröffentlicht, oder die Seite lag verdeckt), **langsames** Gerät und **schnelle** Antwort von fassung.json: **+318 ms** gegen 884 (CPU 4×, D = 250, 6 von 6). Dort startet erst die alte Seite, bevor ihr Hauptfaden die Antwort verarbeiten kann (Zeitleiste oben). Auf schnellem Gerät oder bei langsamer Antwort ist es gleich oder schneller. Unsichtbare Abhilfen, nicht gebaut (erst messen): (a) im Raum fragt der Wächter öfter (z. B. alle 30 s statt 2 min) – dann ist das Fenster „noch nicht gesehen“ kleiner und „draussen“ greift öfter; (b) der Helfer führt die Navigation selbst (`WindowClient.navigate`), sobald seine Auffrischung eine neuere Fassung bringt und die Seite „Rückkehr wartet“ gemeldet hat – das spart die Warteschlange hinter DOMContentLoaded (~0,2 s).
+2. **Gewöhnliches Öffnen ohne Update** (verworfener Tab, den der Browser nicht per Neuladen zurückholt; Zurück ohne bfcache): +74 ms gegen 884 (CPU 1×, D = 250), weil die Seite aus dem Speicher des Browsers alt sein kann und die Rückkehr deshalb auf die Antwort wartet. Ob Chrome und Safari einen verworfenen Tab als Neuladen oder als Öffnen zurückholen, lässt sich im Prüfbrowser nicht auslösen – im Feld nachsehen (Offen 3).
+3. **Feld:** messung.js schickt die Rückkehr nicht mit. Vorschlag: eine Zeile „rueckkehr“ (Weg: aus dem Speicher / frisch / nach dem Wechsel; Art der Navigation; betreten ab dem Öffnen; ob dazwischen neu geladen wurde) – dann sieht man draußen, wie oft Offen 1 und 2 wirklich vorkommen.
+4. Die 6-s-Frist und die 15 s nach „neu“ sind gesetzt, nicht im Feld gemessen.
+5. „draussen“ gilt je Gerät (alle Tabs): zeigt ein Tab die Blase, holt jedes nächste Öffnen der Hauptseite die Seite aus dem Netz, bis eine aus dem Netz abgelegt ist (dann 884-Weg statt S1, nie langsamer als 884).
+6. Stempel ↔ Inhalt kostet SHA-1 je Datei, die nach einem Update nicht im Speicher lag; Teil H (zweites Öffnen, jede Datei ein Fehltreffer, 2 × 6 Paare gegen 0fd1548a; Prüfrechner, die CPU-Bremse gilt dort nicht für den Helfer): load −32 und −6 ms (Rauschen, Einzelwerte −135 … +87), je Lauf alle 54 Dateien abgelegt (vorher 53–54). Auf einem schwachen Telefon nicht gemessen.
+7. fassung.json im HTTP-Speicher: bewusst gelassen (s. „Kleine Befunde“).
+8. Werkstatt-Eintrag und Funk-Antwort beim Ausliefern von 885.
+
+### Begründungen zu index.html (I43, I44)
+#### I43 — FASSUNG 885 — erste Antwort als Versprechen, Merker dma-wechsel (Block Fassungs-Wächter)
+Jetzt in index.html: `/* FASSUNG 885 — die erste Antwort als Versprechen; die Rückkehr in den Raum wartet darauf (SPIELSYSTEM.md I43) */`
+```text
+FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“. window.dmaFassungErst: die erste Antwort des
+Wächters („gleich“, „neu“ = lädt gerade neu, „blase“, „fehler“). Die Rückkehr in den Raum nach dem Neuladen (app.js)
+wartet darauf, wenn die Seite nicht sicher frisch ist (aus dem Speicher des Helfers oder ein gewöhnliches Öffnen) – sonst ginge sie auf einer alten Seite hinein und bliebe
+dort (Prüfbericht 3 zu S1). neuLaden setzt vorher den Merker „dma-wechsel“ (Fassung + Uhrzeit); die so geladene Seite
+fragt nicht noch einmal (gemessen, je 1–2 Läufe: sonst +90 … +660 ms bis „betreten“).
+```
+
+#### I44 — FASSUNG 885 — die Blase meldet „draussen“ an den Helfer (Block Fassungs-Wächter, knopf)
+Jetzt in index.html: `/* 885: dem Helfer sagen, dass draußen eine neuere liegt – das nächste Öffnen kommt dann aus dem Netz (SPIELSYSTEM.md I44) */`
+```text
+FASSUNG 885 — zeigt die Seite die Blase, weiß sie, dass draußen eine neuere Fassung liegt. Das schreibt sie in den
+Speicher der Seite (dma-seite-1, „draussen“, Schlüssel neben sw.js). Der Helfer holt die Seite beim nächsten Öffnen dann
+wie bis 884 aus dem Netz, statt erst die alte zu starten und neu zu laden (gemessen: CPU 4×, fassung.json nach 0,25 s,
++0,3 s gegen 884). Nur mit Helfer; jede abgelegte Seite aus dem Netz löscht den Eintrag.
+```
