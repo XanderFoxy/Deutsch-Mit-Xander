@@ -28,6 +28,12 @@
         (goto, wie ein verworfener Tab, CPU 1×, D = 250): am Ende die NEUE
         Fassung, genau ein Neuladen, betreten genau EINMAL und erst auf
         der neuen Seite (nie auf der alten), keine Blase.
+     K  Update schon bekannt: die Seite im Raum hat die Blase schon gezeigt
+        (der Wächter prüft beim Sichtbarwerden), dann Neuladen: der Helfer
+        weiß es („draussen“) und holt die Seite wie bis 884 aus dem Netz – am
+        Ende die neue Fassung OHNE zweites Laden, betreten einmal, die Seite
+        ohne Speicher-Marke; hängt fassung.json, wartet die Rückkehr auf
+        dieser frischen Seite nicht (< 3 s).
      G  Rückkehr ohne Update (CPU 1× und 4×, D = 250/800): betreten genau
         einmal, kein Neuladen, keine Blase.
      F  fassung.json antwortet mit 500: sofort hinein (betreten < 3 s, kein
@@ -36,7 +42,9 @@
         Neuladen.
      O  Ohne Helfer (Seite immer aus dem Netz, wie bis 884), fassung.json
         hängt: betreten wartet NICHT (< 3 s) – dort ist die Seite frisch.
-     S  Stempel ↔ Inhalt (sw.js): liefert der Server unter einem
+     S  Die gespeicherte Seite trägt die Marke data-dma-speicher (daran
+        erkennt die Rückkehr, dass sie aus dem Speicher kam), die frisch
+        geholte nicht. Stempel ↔ Inhalt (sw.js): liefert der Server unter einem
         Datei-Stempel einen anderen Inhalt (eine alte Seite holt nach einem
         Update eine Datei, die nicht im Speicher liegt), geht er an die
         Seite, aber NICHT in den Speicher des Helfers; der richtige Inhalt
@@ -53,7 +61,7 @@
      GEGEN=<ordner>    alter Stand für Teil M
      N=n               Läufe je Fall in R/G (Standard 2)
      PAARE=n           Paare je Messfall in M (Standard 6)
-     NUR=RGFOSM        nur diese Teile
+     NUR=RKGFOSM       nur diese Teile
      JSON=<datei>      Ergebnisse (Läufe, Messung) als JSON, laufend
    Aufruf:  node werkzeug/pruefe-885-rueckkehr.js
    Gegenprobe: WURZEL=<ordner mit altem Stand> node …  (c30a68f7: R rot;
@@ -65,7 +73,7 @@ const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const GEGEN = process.env.GEGEN ? path.resolve(process.env.GEGEN) : null;
 const N = Math.max(1, Number(process.env.N || 2));
 const PAARE = Math.max(1, Number(process.env.PAARE || 6));
-const NUR = process.env.NUR || "RGFOS" + (GEGEN ? "M" : "");
+const NUR = process.env.NUR || "RKGFOS" + (GEGEN ? "M" : "");
 const JSON_AUS = process.env.JSON || "";
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".woff2": "font/woff2",
@@ -159,6 +167,14 @@ async function lauf(br, sv, o) {
   await schlaf(1500);
   const gesteuert = await pg.evaluate(() => Boolean(navigator.serviceWorker && navigator.serviceWorker.controller));
   await pg.evaluate(() => { sessionStorage.setItem("__rueck", "1"); sessionStorage.setItem("__s", "0"); sessionStorage.setItem("__a", "[]"); sessionStorage.setItem("__b", "[]"); });
+  let blaseVorher = null;
+  if (o.bekannt) {
+    /* die Seite im Raum hat die neue Fassung schon gesehen: der Wächter prüft beim Sichtbarwerden → Blase */
+    S.seite = V1;
+    await pg.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+    blaseVorher = await pg.waitForFunction(() => document.getElementById("dmaNeueFassung"), null, { timeout: 5000 }).then(() => true, () => false);
+    await schlaf(400);
+  }
   S.seite = V1; S.stau = o.D; S.fjStau = o.fjD != null ? o.fjD : o.D; S.fjArt = o.fjArt || "";
   if (o.cpu > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: o.cpu });
   const t0 = Date.now();
@@ -172,18 +188,20 @@ async function lauf(br, sv, o) {
     if (l && l.b.length && Date.now() - l.b[l.b.length - 1].uhr > (o.ruhe || 2500)) break;
   }
   const e = await pg.evaluate(() => ({ f: String(window.DMA_VERSION), seiten: Number(sessionStorage.getItem("__s") || 0),
+    marke: document.documentElement.hasAttribute("data-dma-speicher"),
     adressen: JSON.parse(sessionStorage.getItem("__a") || "[]"), betreten: JSON.parse(sessionStorage.getItem("__b") || "[]"),
     lage: window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage().lage : "?",
     blase: (document.getElementById("dmaNeueFassung") || {}).textContent || "" })).catch((x) => ({ fehler: x.message.split("\n")[0] }));
   await ctx.close();
-  e.V = V; e.V1 = V1; e.gesteuert = gesteuert; e.t0 = t0;
+  e.V = V; e.V1 = V1; e.gesteuert = gesteuert; e.t0 = t0; e.blaseVorher = blaseVorher;
   e.abNeuladen = e.betreten && e.betreten.length ? e.betreten[0].uhr - t0 : null;
   ERG.laeufe.push(Object.assign({ teil: o.teil, wurzel: sv.wurzel }, o, e)); schreiben();
   return e;
 }
 lauf.k = 0;
 const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Seiten " + e.seiten + ", betreten " + JSON.stringify((e.betreten || []).map((b) => b.seite + ":" + b.t + "ms/" + b.f))
-  + ", ab Neuladen " + e.abNeuladen + " ms, Blase " + JSON.stringify(e.blase) + (e.gesteuert ? "" : ", OHNE Helfer");
+  + ", ab Neuladen " + e.abNeuladen + " ms, Blase " + JSON.stringify(e.blase) + (e.gesteuert ? "" : ", OHNE Helfer") + (e.marke ? ", aus dem Speicher" : ", frisch")
+  + (e.blaseVorher != null ? ", Blase vorher " + e.blaseVorher : "");
 
 (async () => {
   console.log("SONDE 885 — Rückkehr nach dem Neuladen   WURZEL " + WURZEL + " (Fassung " + grund(WURZEL) + ")" + (GEGEN ? "   GEGEN " + GEGEN : ""));
@@ -200,6 +218,20 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       const gut = e.f === e.V1 && e.seiten === 2 && b.length === 1 && b[0].seite === 2 && b[0].f === e.V1 && !e.blase && e.gesteuert;
       sage(gut, "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": neue Fassung, ein Neuladen, betreten einmal auf der neuen Seite", zeile(e));
     }
+  }
+
+  if (NUR.includes("K")) {
+    abschnitt("K", "Update schon bekannt (Blase vor dem Neuladen): die Seite kommt wie bis 884 aus dem Netz, kein zweites Laden");
+    for (const fa of [{ cpu: 1, D: 250 }, { cpu: 4, D: 250 }]) for (let n = 0; n < N; n++) {
+      const e = await lauf(br, sv, Object.assign({ teil: "K", update: true, bekannt: true, art: "reload" }, fa));
+      const b = e.betreten || [];
+      sage(e.blaseVorher === true && e.f === e.V1 && e.seiten === 1 && b.length === 1 && b[0].f === e.V1 && !e.blase && !e.marke,
+        "K CPU " + fa.cpu + "× D=" + fa.D + " Lauf " + (n + 1) + ": neue Fassung frisch aus dem Netz, ein Laden, betreten einmal", zeile(e));
+    }
+    /* frisch aus dem Netz wartet die Rückkehr nicht auf fassung.json (die hängt hier ganz) */
+    const e = await lauf(br, sv, { teil: "K", update: true, bekannt: true, art: "reload", cpu: 1, D: 250, fjArt: "haengt", warten: 8000, ruhe: 1500 });
+    const b = e.betreten || [];
+    sage(e.f === e.V1 && e.seiten === 1 && b.length === 1 && b[0].t < 3000 && !e.marke, "K frisch aus dem Netz, fassung.json hängt: betreten wartet nicht (< 3 s)", zeile(e));
   }
 
   if (NUR.includes("G")) {
@@ -243,6 +275,11 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     await pg.goto(hier + "/index.html?mit-sw", { waitUntil: "load" });
     await schlaf(1500);
     const st = await pg.evaluate(() => window.DMA_STEMPEL || {});
+    {
+      const m = await pg.evaluate(async () => { const k = await caches.open("dma-seite-1"); const r = await k.match("seite"); const t = r ? await r.text() : "";
+        return { gespeichert: /<html[^>]*data-dma-speicher/.test(t), diese: document.documentElement.hasAttribute("data-dma-speicher") }; });
+      sage(m.gespeichert && !m.diese, "S die gespeicherte Seite trägt die Marke data-dma-speicher, die frisch geholte nicht", JSON.stringify(m));
+    }
     const szene = fs.readdirSync(path.join(WURZEL, "szenen")).filter((n) => /\.js$/.test(n)).sort()[0];
     const holen = (u) => pg.evaluate(async (u) => {
       const t = await fetch(u).then((a) => a.text(), () => "");
@@ -271,24 +308,25 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
   if (NUR.includes("M") && GEGEN) {
     abschnitt("M", "Messung: Neuladen → betreten, verschränkt (A = GEGEN, B = WURZEL), " + PAARE + " Paare je Fall");
     const sa = await serverBauen(GEGEN);
-    /* MFAELLE=u1-250,u4-800,… (u = Update, g = gleich; CPU; D) */
+    /* MFAELLE=u1-250,u4-800,g1-250-goto … (u = Update, k = Update schon bekannt (Blase), g = gleich; CPU; D; -goto = Öffnen
+       derselben Adresse statt Neuladen) */
     const faelle = (process.env.MFAELLE || "u1-250,u4-250,u4-800,g1-250,g4-800").split(",").map((x) => {
-      const m = /^([ug])(\d+)-(\d+)$/.exec(x.trim());
-      return m ? { update: m[1] === "u", cpu: Number(m[2]), D: Number(m[3]) } : null;
+      const m = /^([ugk])(\d+)-(\d+)(-goto)?$/.exec(x.trim());
+      return m ? { update: m[1] !== "g", bekannt: m[1] === "k", cpu: Number(m[2]), D: Number(m[3]), art: m[4] ? "goto" : "reload" } : null;
     }).filter(Boolean);
     for (const fa of faelle) {
       const A = [], B = [], diff = [];
       for (let n = 0; n < PAARE; n++) {
         const reihe = n % 2 ? [["B", sv], ["A", sa]] : [["A", sa], ["B", sv]];
         const r = {};
-        for (const [wer, s] of reihe) r[wer] = await lauf(br, s, Object.assign({ teil: "M", art: "reload" }, fa, { wer }));
+        for (const [wer, s] of reihe) r[wer] = await lauf(br, s, Object.assign({ teil: "M" }, fa, { wer }));
         A.push(r.A); B.push(r.B);
         if (r.A.abNeuladen != null && r.B.abNeuladen != null) diff.push(r.B.abNeuladen - r.A.abNeuladen);
         ERG.messung.push({ fall: fa, paar: n, A: r.A.abNeuladen, B: r.B.abNeuladen, Af: r.A.f === r.A.V1, Bf: r.B.f === r.B.V1 }); schreiben();
       }
       const neuA = A.filter((e) => e.f === e.V1).length, neuB = B.filter((e) => e.f === e.V1).length;
       const schneller = diff.filter((d) => d < 0).length, langsamer = diff.filter((d) => d > 0).length;
-      info((fa.update ? "Update   " : "ohne Upd ") + " CPU " + fa.cpu + "× D=" + fa.D + ": betreten ab Neuladen A " + med(A.map((e) => e.abNeuladen)) + " ms, B " + med(B.map((e) => e.abNeuladen))
+      info((fa.bekannt ? "bekannt  " : fa.update ? "Update   " : "ohne Upd ") + " CPU " + fa.cpu + "× D=" + fa.D + " " + fa.art + ": betreten ab Neuladen A " + med(A.map((e) => e.abNeuladen)) + " ms, B " + med(B.map((e) => e.abNeuladen))
         + " ms, B − A gepaart " + med(diff) + " ms (B schneller " + schneller + ", langsamer " + langsamer + " von " + diff.length + "; Einzel " + JSON.stringify(diff) + "); neue Fassung am Ende A " + neuA + "/" + A.length + ", B " + neuB + "/" + B.length);
     }
     sa.srv.close();

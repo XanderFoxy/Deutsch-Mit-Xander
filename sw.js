@@ -249,6 +249,7 @@ function seite(r, e) {
   netz.catch(function () {});
   var f = "";
   try { f = new URL(r.url).searchParams.get("f") || ""; } catch (x) {}
+  var draussen = draussenLesen();
   var antwort = ausSpeicher().then(function (g) {
     /* Nachbesserung 1: bis 884 legte der Helfer JEDE Navigation auf …/ als Seite ab, auch sicherung/<x>/. So eine Seite
        aus der Zeit vor S1 (ohne eigenen Kopf; die gespeicherte Antwort kennt ihre Adresse) nie ausliefern. */
@@ -263,8 +264,12 @@ function seite(r, e) {
         });
       });
       if (f && neuer(f, c)) return netzZuerst(netz, r, g, c, los, t0);
-      return schonDa(netz).then(function (a) {
-        return a ? frischWennDa(a, g, c, r, los) : (los(auffrischen(netz, c, r.url)), g);
+      /* FASSUNG 885 (Rückkehr): eine Seite hat schon gesehen, dass draußen eine neuere Fassung liegt → wie bis 884 */
+      return draussen.then(function (d) {
+        if (d && neuer(d, c)) return netzZuerst(netz, r, g, c, los, t0);
+        return schonDa(netz).then(function (a) {
+          return a ? frischWennDa(a, g, c, r, los) : (los(auffrischen(netz, c, r.url)), g);
+        });
       });
     });
   });
@@ -334,12 +339,26 @@ function speichernText(t, a, c, url) {
     var h = new Headers(a.headers);
     h.delete("content-length"); h.delete("content-encoding");
     h.set(KOPF, v); h.set(ZEIT, String(Date.now()));
+    /* FASSUNG 885 (Rückkehr): die gespeicherte Kopie trägt eine Marke (<html data-dma-speicher>) – so weiß die Seite, dass
+       sie aus dem Speicher kam (nur dann wartet die Rückkehr in den Raum auf den Fassungs-Wächter, s. u.) */
+    var gespeichert = t.replace(/<html\b/i, '<html data-dma-speicher="1"');
     return caches.open(SEITE).then(function (k) {
-      return k.put("seite", new Response(t, { status: 200, statusText: a.statusText || "OK", headers: h }));
+      return k.put("seite", new Response(gespeichert, { status: 200, statusText: a.statusText || "OK", headers: h })).then(function () {
+        /* jetzt kennt der Speicher die Fassung des Servers: „draußen neuer“ ist erledigt */
+        return k.delete("draussen");
+      });
     }).then(function () { karte = Promise.resolve(karteAus(t)); return v; });
   }).catch(function () { return ""; });
 }
 
+/* FASSUNG 885 (Rückkehr): „draußen liegt Fassung X“ – geschrieben vom Fassungs-Wächter einer Seite, die die Blase zeigt
+   (index.html, knopf). Eine Seite im Raum, die die neue Fassung schon kennt, soll beim Neuladen nicht erst die alte
+   starten und dann neu laden (gemessen: CPU 4×, fassung.json nach 0,25 s: +0,3 s gegen 884), sondern wie bis 884 gleich
+   die Seite aus dem Netz bekommen. */
+function draussenLesen() {
+  return caches.open(SEITE).then(function (k) { return k.match("draussen"); })
+    .then(function (a) { return a ? a.text() : ""; }).catch(function () { return ""; });
+}
 function ausSpeicher() {
   return caches.open(SEITE).then(function (k) { return k.match("seite"); }).catch(function () { return null; });
 }

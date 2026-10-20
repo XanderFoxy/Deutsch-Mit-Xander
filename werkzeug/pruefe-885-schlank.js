@@ -115,9 +115,11 @@ function esbuildHolen() {
   return null;
 }
 
-/* FASSUNG 885 (rueckkehr): die Änderung am Fassungs-Wächter (verkleinert) wieder herausnehmen – für Teil Q */
+/* FASSUNG 885 (rueckkehr): die Änderung am Fassungs-Wächter (verkleinert) wieder herausnehmen – für Teil Q
+   (Blase meldet „draussen“ an den Helfer, Merker dma-wechsel, erste Antwort als Versprechen) */
 function rueckbauRueckkehr(y) {
   return y
+    .replace('try{var sw=navigator.serviceWorker&&navigator.serviceWorker.controller;if(sw&&window.caches)caches.open("dma-seite-1").then(function(k){return k.put(new URL("draussen",sw.scriptURL).href,new Response(neu))}).catch(function(){})}catch(e){}', "")
     .replace('try{sessionStorage.setItem("dma-wechsel",neu+" "+Date.now())}catch(e){}', "")
     .replace(/var erstOk,erst=new Promise\(function\(ok\)\{erstOk=ok\}\),wechsel=\[\];[\s\S]*?erstOk\("frisch"\);/, "")
     .replace("var fertig=function(w){if(erstesMal)erstOk(w)};", "")

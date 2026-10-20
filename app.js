@@ -70193,16 +70193,17 @@
          blieb die ganze Sitzung im Raum (Prüfer: schnelles Telefon, fassung.json nach 0,25 s: 0 von 3 auf der neuen;
          bis 884 kam die Seite aus dem Netz, immer neu). Jetzt wartet das Hineingehen auf die erste Antwort des
          Wächters (window.dmaFassungErst): gleich → sofort hinein; neue Fassung → der Wächter lädt genau einmal neu,
-         hinein geht erst die neue Seite (dieselbe Rückkehr); Fehler/kein Netz → sofort hinein. Gewartet wird nur, wenn
-         ein Helfer die Seite liefern konnte (ohne ihn kommt sie wie bis 884 frisch aus dem Netz), und höchstens bis 6 s
-         nach dem Öffnen – dieselbe Frist, nach der der Helfer bis 884 die gespeicherte Seite nahm. Nie später als 884:
-         dort wartete die Rückkehr auf die Seite aus dem Netz (eine Rundreise), hier auf fassung.json (eine Rundreise,
-         früher losgeschickt). Messung und Sonde: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“, pruefe-885-rueckkehr.js. */
+         hinein geht erst die neue Seite (dieselbe Rückkehr; sie fragt nicht noch einmal, Merker dma-wechsel); Fehler/kein
+         Netz → sofort hinein. Gewartet wird nur, wenn die Seite aus dem Speicher des Helfers kam (Marke
+         data-dma-speicher, gesetzt von sw.js) – frisch aus dem Netz ist sie schon die neueste, wie bis 884 –, und
+         höchstens bis 6 s nach dem Öffnen (dieselbe Frist, nach der der Helfer bis 884 die gespeicherte Seite nahm).
+         Hat die Seite die neue Fassung schon vorher gesehen (Blase), kommt sie beim Neuladen wie bis 884 aus dem Netz
+         (sw.js, „draussen“). Gemessen gegen 884 und was offen bleibt: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“;
+         Sonde pruefe-885-rueckkehr.js. */
       const fassungFrei = (() => {
         const erst = window.dmaFassungErst;
-        let helfer = false;
-        try { helfer = Boolean(navigator.serviceWorker && navigator.serviceWorker.controller); } catch (e) {}
-        if (!erst || !helfer) return Promise.resolve();
+        /* die Seite kam aus dem Speicher des Helfers (Marke, die sw.js beim Ablegen setzt) */
+        if (!erst || !document.documentElement.hasAttribute("data-dma-speicher")) return Promise.resolve();
         return new Promise((ok) => {
           const uhr = setTimeout(ok, Math.max(0, 6000 - performance.now()));
           erst.then((w) => {
