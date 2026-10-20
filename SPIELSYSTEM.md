@@ -5801,7 +5801,64 @@ XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): �
 
 ## Fassung 885 — Start schlanker: Kommentare aus index.html, rueckfrage.js nur für den Betreiber (Ladezeit-Entwurf, Schritt K)
 
-(ENTWURF – Messung folgt)
+XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“ · (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“. **Befund bis 885 (a508dc56):** index.html – die Seite, die jeder bei jedem Start holt und liest – trug 21,7 KB Begründungs-Kommentare (65 Stück, 42 davon länger als 140 Zeichen, der längste 2 079 Zeichen); gepackt war die Seite 28,3 KB groß, davon ~7 KB nur Erklärungen. Dazu holte und übersetzte **jedes** Gerät `min/rueckfrage.js` (28,7 KB, 10,8 KB gepackt) vor DOMContentLoaded, obwohl das Walkie nur beim Betreiber erscheint. Schritt K des Ladezeit-Entwurfs (unsichtbar): beides aus dem Startweg nehmen, ohne dass sich etwas am Verhalten ändert und ohne dass das Walkie für Xander später da ist. **Vorher festgelegtes Maß:** `werkzeug/ladezeit-messen.js` kalt „KB über die Leitung bis bereit“ kleiner, erstes Bild und „bereit“ (kalt, warm) nicht schlechter; für den Betreiber (Sonde, Teil M) „Reiter da“ nicht später als vorher.
+
+### Was gebaut ist
+- **index.html, Kommentare:** Die 42 langen Kommentare stehen jetzt **wörtlich** unten in diesem Abschnitt (I1 … I42); in index.html bleibt an jeder Stelle eine kurze Zeile mit „SPIELSYSTEM.md I<n>“. Kommentare in index.html zusammen 21 656 → 5 599 Zeichen (65 → 65, keiner länger als zwei Zeilen). Am Programm ändert sich nichts: nach dem Verkleinern (esbuild, wie für min/) ist der Code aller 8 Inline-Skripte Zeichen für Zeichen derselbe wie vorher (bis auf den Walkie-Lader, s. u.), und die Seite ohne Kommentare ist Knoten für Knoten dieselbe (DOMParser, 1 957 Einträge) – beides prüft die Sonde (Teil Q). **index.html 100 695 → 85 177 Byte roh, 28,3 → 21,2 KB gepackt (−7,1 KB).**
+- **index.html, Startliste:** `"rueckfrage.js"` ist heraus. Neu `window.dmaWalkieLaden` (13 Zeilen): hängt `min/rueckfrage.js` (Stempel wie alle) einmal als Skript ein; fehlt die Kopie (404), kommt die Quelle `rueckfrage.js` – **ohne** `dmaMinFehlt`, also nie ein Neuladen (bis 884 lud die Seite dann neu, Sonde F). Ein zweiter Aufruf, wenn die Datei schon da ist, ruft `Rueckfrage.erkannt()`. Steht im Gerät der Merker `dma-walkie`, ruft index.html `dmaWalkieLaden` bei DOMContentLoaded in der nächsten Ruhepause (`requestIdleCallback`, spätestens nach 700 ms).
+- **backend.js, `fetchOrCreateProfile` → `walkieMerken`:** Kommt das **eigene** Profil (nur dieser Weg liest `profiles` für das angemeldete Konto: Start, Anmelden, Registrieren, Auffrischen), setzt `is_owner` den Merker und ruft `dmaWalkieLaden` (setTimeout 0, damit `demo.profile` schon gesetzt ist); ein anderes Konto auf dem Gerät nimmt den Merker weg (Sonde E). Abmelden lässt ihn stehen – dann lädt das Gerät die Datei, das Walkie bleibt aber unsichtbar (`istBetreiber()`), wie bisher. Der Demo-Modus ohne Datenbank hat kein Walkie (es braucht `betreiber_rueckfragen`) – dort ändert sich nichts.
+- **rueckfrage.js:** Der erste Abruf bleibt **1,5 s nach DOMContentLoaded** – jetzt ab DOMContentLoaded gerechnet (`performance.getEntriesByType("navigation")`), nicht ab dem Eintreffen der Datei; kommt sie später, geht es sofort los. Neu `Rueckfrage.erkannt()`: steht das Walkie noch nicht da, gleich nachsehen. Bis 884 sah das Walkie, wenn das Profil erst nach den 1,5 s kam (Funkloch, späte Anmeldung über das Formular), erst beim nächsten 20-s-Takt wieder nach; jetzt steht es ~0,2 s nach der Antwort da (Sonde D, G). Das ist für Xander früher, nie später.
+- **Gast, Schüler, jedes andere Konto:** holt `rueckfrage.js` nie (Sonde A: load + 6 s, kein Abruf, kein `window.Rueckfrage`). **Zusammen kalt −18 KB über die Leitung, eine Anfrage weniger, 28,7 KB weniger Skript zu übersetzen.**
+- **Betreiber:** Auf seinem Gerät (Merker) kommt die Datei in der ersten Ruhepause nach DOMContentLoaded (Sonde B ungedrosselt 7–12 ms danach, Teil M mit CPU 4× ~400 ms danach – beides weit vor dem ersten Abruf bei 1,5 s), also nicht mehr im Startweg vor „bereit“; beim ersten Start nach dem Update (noch kein Merker) mit der Antwort aufs Profil (Sonde C), danach steht der Merker.
+- **Sonden angepasst, nicht ausgehebelt:** `pruefe-runde99-rueckfrage.js`, `pruefe-884-diktat.js` und `pruefe-884-vollbild.js` prüfen das Walkie auf dem Gerät des Betreibers – sie setzen jetzt den Merker `dma-walkie` (wie es backend.js beim Betreiber tut); das Laden selbst prüft 885-schlank.
+- Nicht verändert: livechat.js, app.js, sw.js, die Datenbank, das Aussehen. Die Walkie-Stile (`rf-…`) stehen weiter in korrekturen.css (s. Offen).
+
+### Messung
+**Gast (`werkzeug/ladezeit-messen.js`, HTTP/2 + TLS, CPU 4×, Profil auf der Platte, Tipp sofort nach „bereit“, verschränkt A B / B A).** Vorher = a508dc56 (Ordner `gegen885/schlank-vorher`: dieser Baum, nur index.html, rueckfrage.js, backend.js, min/rueckfrage.js, min/backend.js, SPIELSYSTEM.md aus a508dc56), nachher = 6c4b789b (Code dieses Stands). Median in ms; dahinter **nachher − vorher gepaart** (95 % des gepaarten Medians).
+
+| Fall | erstes Bild | bereit | KB bis bereit | Anfragen | Wissen Tipp → Bild | Klassenzimmer Tipp → Knopf | Sperrzeit (Σ über 50 ms) |
+|---|---|---|---|---|---|---|---|
+| 4G kalt, 12 Paare | 688 → 676, −12 (−88…20) | 1656 → 1629, −15 (−100…10) | **644 → 626, −18 (12 von 12)** | 64 → 63 | 596 → 607, +8 (−43…29) | 294 → 297, −10 (−18…10) | 834 → 790, −26 (−109…45) |
+| 4G warm, 12 Paare | 528 → 532, −10 (−24…30) | 1426 → 1412, +34 (−85…76) | 1 → 1 | 3 → 3 | 344 → 302, −36 (−56…12) | 305 → 303, +27 (−53…52) | 870 → 911, 0 (−81…106) |
+| 4G warm, 2. Reihe, 12 Paare | 446 → 436, −10 (−22…30) | 1010 → 989, −11 (−91…18) | 1 → 1 | 3 → 3 | 237 → 227, −16 (−62…33) | 183 → 183, +24 (−56…47) | 468 → 478, +3 (−52…64) |
+| 4G mit Helfer (sw), 12 Paare | 386 → 378, −2 (−46…28) | 668 → 671, +19 (−91…58) | 0 → 0 | 6 → 6 | 238 → 225, −11 (−68…23) | 224 → 204, +8 (−26…36) | 258 → 254, −6 (−52…41) |
+| 3G kalt, 8 Paare | 1302 → 1278, −28 (−52…−4) | **4414 → 4338, −88 (−125…−28; 8 von 8)** | **644 → 626** | 64 → 63 | 336 → 351, +14 (−32…80) | 218 → 220, −1 (−82…59) | 679 → 703, +28 (−76…92) |
+
+- **Das festgelegte Maß ist erfüllt:** kalt 18 KB weniger über die Leitung bis „bereit“ (in jedem Lauf, 4G und 3G), eine Anfrage weniger; erstes Bild und „bereit“ nirgends schlechter (alle Unterschiede innerhalb der Rauschgrenze des A/A-Laufs vom 17.10.: erstes Bild ±50–54, bereit ±76–139).
+- **Auf 3G sichtbar:** „bereit“ und DOMContentLoaded −88 ms in 8 von 8 Paaren (DEUTLICH), load −84 ms. Das ist genau die Leitungszeit für 18 KB bei 1,6 Mbit/s (≈ 90 ms). Auf 4G (9 Mbit/s) sind es rechnerisch ~16 ms – darunter liegt das Rauschen.
+- **Warm:** keine Bytes gespart (alles kommt aus dem Speicher); gespart wird nur das Übersetzen von rueckfrage.js und ~15 KB weniger HTML zu lesen – wenige ms, nicht messbar. Eine zweite Reihe warm und eine mit dem Helfer (sw – seit S1 der häufigste Weg für Stammgäste; `neu/lz4-4g-warm-sw`, Rechnerlast ~1,0) zeigen dasselbe: alle Unterschiede in beide Richtungen und innerhalb der Rauschgrenze; „Dateien aus dem Speicher“ bzw. „vom Service Worker“ je eine weniger (12 von 12, echt – rueckfrage.js).
+- Rechnerlast während der Läufe kalt 1,5–2,5, warm/sw ~1,0 (4 Kerne). „DEUTLICH“ bei 6 von 68 (4G) bzw. 9 von 34 (3G) Maßen; auf 4G waren das die Bytes, Dateien und Anfragen (echt) und „Dateien aus dem Speicher 58 → 57“ (warm, echt), auf 3G dazu DOMContentLoaded/bereit/load; in der Reihe warm/sw 2 von 68 (je die eine Datei weniger aus dem Speicher bzw. vom Helfer).
+
+**Betreiber (Sonde `pruefe-885-schlank.js`, Teil M):** CPU 4×, Datenbank nachgestellt (jede Antwort 150 ms, das eigene Profil 300 ms), angemeldet aus dem Gerät, eine offene Walkie-Frage, 10 Paare verschränkt; Zeiten ab DOMContentLoaded, Median vorher → nachher, nachher − vorher gepaart.
+
+| Gerät | rueckfrage.js geholt | erste Walkie-Abfrage | **Reiter da** | DOMContentLoaded (ab Start) |
+|---|---|---|---|---|
+| mit Merker (sein Gerät) | −528 → +403 (nach DOMContentLoaded, Ruhepause) | 1507 → 1507, +1 | **1687 → 1691, −2 (6↓/4↑)** | 967 → 1052, +43 (7↑/3↓) |
+| ohne Merker (erster Start nach dem Update) | −552 → +378 (mit der Profil-Antwort) | 1508 → 1506, +0 | **1687 → 1686, −2 (5↓/5↑)** | 1014 → 967, −64 (8↓/2↑) |
+
+Das Walkie steht für Xander also genauso schnell da wie vorher (±2 ms). DOMContentLoaded schwankt in beide Richtungen um ±50 ms (Rauschen; mit Merker passiert vor DOMContentLoaded nichts anderes als vorher, nur ohne rueckfrage.js).
+
+Messdateien im Zwischenordner `schlank/`: `lz2-4g.txt|json`, `lz2-3g.txt|json`, `neu/lz4-4g-warm-sw.txt|json`, `mess-m.txt|json`; die Sonden-Ausgaben unter `schlank/sonden/` und `schlank/neu/`.
+
+### Sonde `werkzeug/pruefe-885-schlank.js`
+Q Bau (Startliste ohne rueckfrage.js; dmaWalkieLaden, walkieMerken, erkannt in Quelle und min/; Inline-Code nach esbuild gleich; Seite ohne Kommentare Knoten für Knoten gleich; kein Kommentar über zwei Zeilen; jeder lange Kommentar wörtlich hier; jeder Verweis I<n> hat seine Überschrift; index.html gepackt ≥ 5 KB kleiner) · A Gast · B Betreiber mit Merker · C erster Start nach dem Update · D Profil kommt spät (3,5 s) · E anderes Konto auf seinem Gerät · F min/rueckfrage.js fehlt (404) · G Anmeldung über das Formular · M Messung (s. o.).
+- **Ergebnis: 41 grün** (mit M 43). **Gegenprobe a508dc56 (`gegen885/schlank-vorher`): 27 rot** (Q ×14, A ×2, B ×1, C ×2, D ×2, E ×2, F ×1, G ×3); grün bleibt, was gleich bleiben soll (Seite ohne Kommentare gleich, Reiter da, erste Abfrage bei 1,5 s, kein Seitenfehler).
+- **Andere Sonden (dieser Stand):** runde99-rueckfrage, 884-diktat, 884-vollbild (alle drei mit Merker, s. o.), 876-start-schlank, 884-messung, 884-notweg, 884-beta, ladezeit, 858-ladeweg, 865-lesetexte-nachladen, 873-ausgelagert, 885-schale (72), 885-swvorladen, 885-messen grün; 694 nur 3a (bekannt: spiel.js-Wettlauf, 884; 1a mit 24 statt 25 Skripten angepasst, weil der Gast eins weniger holt); 840 im flachen Klon nicht lauffähig (Commit 53eaa31 fehlt). runde99-rueckfrage war in einem von vier Läufen bei „⏹ beendet es …“ einmal rot (die Sonde wartet dort fest 400 ms; das Walkie ist zu dem Zeitpunkt längst geladen, der Schritt berührt diese Stelle nicht); die drei anderen Läufe, auch der vor dem Umbau, sind grün.
+
+### Datenbank
+Nicht gelesen (für den Schritt nicht nötig: ob ein Konto Betreiber ist, entscheidet `profiles.is_owner`, das backend.js ohnehin liest). Zum Nachsehen (nur lesen), wer den Merker bekommt:
+```sql
+select id, name from profiles where is_owner;
+```
+
+### Ehrlich
+- **Der Gewinn ist klein:** −18 KB (−2,8 % der 644 KB bis „bereit“) und eine Anfrage; auf 4G im Rauschen, auf 3G −88 ms (2 %). Zu „zehn Mal schneller“ trägt der Schritt fast nichts bei – er nimmt nur Ballast weg, den jeder bei jedem Start mitschleppte. Die großen Brocken bleiben app.js (~198 KB), data-exercises (~106 KB), livechat.js (~107 KB) und das Rechnen beim Start (Spur: Skript ~530–630 ms bis „bereit“).
+- Auf dem Gerät des Betreibers lädt rueckfrage.js weiter bei jedem Start – nur nicht mehr vor „bereit“, sondern in der ersten Ruhepause.
+
+**Offen**
+1. **Merker nach dem Abmelden:** Meldet sich Xander ab und nutzt jemand anderes das Gerät als Gast, holt es rueckfrage.js weiter in der Ruhepause (unsichtbar, ~11 KB gepackt), bis sich dort ein anderes Konto anmeldet. Bewusst so: Abmelden soll nichts am Walkie-Weg ändern; wer das will, nimmt den Merker beim Abmelden weg (eine Zeile in `signOut`).
+2. **Walkie-Stile:** Die `rf-…`-Regeln (51 Regeln, 4,5 KB in `min/korrekturen.css`) laden weiter für alle, aber nur mit dem ganzen Blatt nach DOMContentLoaded (nicht im Startblatt) – gepackt rund 1 KB. Sie in rueckfrage.js mitzugeben brächte dem Start nichts Messbares.
+3. Der Rest von index.html (21,2 KB gepackt) sind jetzt fast nur noch Markup und die Inline-Skripte; mehr holt nur das Aufteilen des Markups (verdeckte Bereiche erst beim Öffnen, Vorschlag S4/S6) – sichtbar, also nicht in diesem Schritt.
 
 ### Ausgelagerte Begründungen aus index.html (wörtlich, I1–I42)
 In index.html steht an jeder dieser Stellen nur noch die kurze Zeile mit „SPIELSYSTEM.md I<n>“. Die Texte unten sind Zeichen für Zeichen die Kommentare aus dem Stand vor diesem Schritt (a508dc56); Sonde 885-schlank, Teil Q, prüft das.
