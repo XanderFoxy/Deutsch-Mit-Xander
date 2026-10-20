@@ -15,12 +15,17 @@
    hinein“.
    Jetzt öffnet ihn auch der Tipp (raumVorbereiten, gleich nach dem ersten
    Bild) – wer zuerst kommt; derselbe eine Kanal.
-   NACHBESSERUNG 1 (Prüfer): Rückkehr nach dem Neuladen und Betreten ohne
-   Tipp (Einladungslink) öffnen früh nur den Kanal; den Mithörer fürs
-   Laufband gibt es dort wie bis 884 erst nach 4 s. In 09fedd06 kam er dort
-   schon beim ersten Bild, bekam den noch leeren Stand als erste Aufnahme,
-   und das Laufband meldete alle, die längst da waren (nach dem Neuladen
-   auch einen selbst), zwei Minuten lang als „gerade gekommen“.
+   NACHBESSERUNG 1 (Prüfer): Die Rückkehr nach dem Neuladen (und raumDrin
+   ohne vorherigen Klick auf die Pille) öffnet früh nur den Kanal; den
+   Mithörer fürs Laufband gibt es dort wie bis 884 erst nach 4 s. Im
+   Zwischenstand 09fedd06 kam er dort schon beim ersten Bild, bekam den noch
+   leeren Stand als erste Aufnahme, und das Laufband meldete alle, die längst
+   da waren (nach dem Neuladen auch einen selbst), als „gerade gekommen“.
+   NACHBESSERUNG 2 (Prüfer): Der Einladungslink geht NICHT über raumDrin,
+   sondern klickt die Pille (app.js „EIN EINLADUNGSLINK …“: pille.click()) –
+   wie Benachrichtigung, Briefkasten, Unterricht-Einladung und Notweg-Ziel.
+   Er ist also der Tipp-Weg (Teil L, neu); F ruft LiveChat.betreten direkt,
+   ein Weg, den keine Oberfläche nimmt (nur der Schutz für raumDrin).
 
    Die Sonde ersetzt supabase-js durch einen nachgebauten Klienten (erst,
    wenn backend.js gelaufen ist – Backend bleibt im Demo-Betrieb; nur
@@ -65,10 +70,22 @@
         beim Öffnen schon da war (auch nicht einen selbst), als „gekommen“,
         „macht gerade … auf“ oder „gewechselt“ (gegen 2ea2044c grün, gegen
         09fedd06 rot)
-     F  Gast betritt den Raum ohne Tipp auf die Pille (LiveChat.betreten
-        direkt, vor den 4 s): dasselbe wie E
+     F  raumDrin ohne vorherigen Klick auf die Pille (Gast, LiveChat.betreten
+        direkt, vor den 4 s – kein Weg der Oberfläche, die klickt vorher
+        immer die Pille; über die Oberfläche kommt raumDrin ohne Klick nur
+        bei der Rückkehr, E): dasselbe wie E. Beweist nichts für den
+        Einladungslink – dafür L
      G  supabase-js kommt spät (nach den 4 s): der nächste Tipp öffnet den
         Kanal (vorher: nie, bis zum Betreten)
+     L  der echte Einladungslink (index.html#raum=sonde885einl, Gast): die
+        Seite klickt die Pille selbst; Kanal und Mithörer fürs Laufband
+        kommen mit diesem Klick (Tipp-Weg, S3), „DIE RÄUME“ zeigt Emmy mit
+        der Antwort des Kanals; genau ein Kanal, ein Aufruf, ein Mithörer;
+        einmal ohne hineinzugehen, einmal hinein (Aufruf 0,3 s nach dem
+        Klick, wie Benachrichtigung und Briefkasten; Kennung wie E); kein
+        synchroner Abruf eines Raum-Stücks. Was das Laufband dabei meldet,
+        steht nur als „info“ da (Offen 1, nicht freigegeben zu ändern), der
+        synchrone Abruf von rest2 (wortschatzHolenFuer, schon in 884) auch
      M  Messung (nur mit GEGEN=<wurzel A>): A (GEGEN) und B (WURZEL)
         verschränkt, PAARE Paare (Standard 10): Tipp → Emmy in „DIE RÄUME“,
         Tipp → Knopf „Betreten“, früher Tipp und später Tipp (5 s nach dem
@@ -76,9 +93,14 @@
      R  Messung Rückkehr nach dem Neuladen (nur mit GEGEN=, Konto, PAARE_R
         Paare, Standard 7, verschränkt): „drin“ ab dem Öffnen, Kanal ab dem
         Öffnen, falsche „gekommen“-Meldungen im Laufband
+     LM Messung (nur mit GEGEN=, Gast, PAARE_L Paare, Standard 5,
+        verschränkt): Einladungslink ohne hineinzugehen und mit Hineingehen,
+        dazu „Tipp auf Klassenzimmer, gleich hinein“: Klick, Antwort des
+        Kanals, Emmy in „DIE RÄUME“, Mithörer, „drin“ ab dem Start von
+        app.js, Läufe mit Meldungen über Leute, die schon da waren
    Aufruf: node werkzeug/pruefe-885-praesenz.js
            WURZEL=<stand> node werkzeug/pruefe-885-praesenz.js   (Gegenprobe)
-           GEGEN=<stand vorher> node werkzeug/pruefe-885-praesenz.js (mit M und R)
+           GEGEN=<stand vorher> node werkzeug/pruefe-885-praesenz.js (mit M, R und LM)
            NUR=A,C …  nur diese Abschnitte im Browser (Q läuft immer)
    EHRLICH: der Kanal ist nachgebaut (fester Zeitpunkt). Draußen hängt die
    Zeit bis „Emmy steht da“ an der Leitung (Verbindung + Beitritt); der
@@ -91,6 +113,8 @@ const GEGEN = process.env.GEGEN ? path.resolve(process.env.GEGEN) : "";
 const CPU = Number(process.env.CPU || 4);
 const KANAL_MS = Number(process.env.KANAL_MS || 300);
 const PAARE = Number(process.env.PAARE || 10), PAARE_SPAET = Number(process.env.PAARE_SPAET || 5), PAARE_R = Number(process.env.PAARE_R || 7);
+const PAARE_L = Number(process.env.PAARE_L || 5);
+const LINK = "sonde885einl";
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg",
   ".woff2": "font/woff2", ".gif": "image/gif", ".webmanifest": "application/manifest+json" };
@@ -472,8 +496,11 @@ function server(wurzel) {
     }
   }
 
-  /* ---------- F) Gast betritt den Raum ohne Tipp auf die Pille ---------- */
-  titel("F", "GAST BETRITT DEN RAUM OHNE TIPP AUF DIE PILLE (VOR DEN 4 s)");
+  /* ---------- F) raumDrin ohne vorherigen Klick auf die Pille ---------- */
+  /* Nachbesserung 2 (Prüfer): LiveChat.betreten direkt – diesen Weg nimmt keine Oberfläche (Tipp, Einladungslink,
+     Benachrichtigung, Briefkasten, Unterricht-Einladung, Notweg-Ziel klicken vorher die Pille; ohne Klick kommt raumDrin
+     über die Oberfläche nur bei der Rückkehr, E). F hält nur den Schutz fest; der Einladungslink steht in L. */
+  titel("F", "raumDrin OHNE VORHERIGEN KLICK AUF DIE PILLE (GAST, LiveChat.betreten DIREKT, VOR DEN 4 s; KEIN WEG DER OBERFLÄCHE)");
   if (lauf("F")) {
     const { ctx, pg } = await fenster();
     await pg.goto(S.url() + "/index.html", { waitUntil: "commit" });
@@ -515,6 +542,70 @@ function server(wurzel) {
     sage(nach.horcherKz === 1, "ein Mithörer fürs Laufband (auch nach zwei Tipps und den 4 s)", String(nach.horcherKz));
     sage(!nach.sync.length && !nach.sofort.length && !pg.__fehler.length, "kein synchroner Abruf, keine Seitenfehler", (syncText(nach) + " " + pg.__fehler.slice(0, 2).join(" | ")).trim() || "0");
     await ctx.close();
+  }
+
+  /* ---------- L) der echte Einladungslink ---------- */
+  /* Nachbesserung 2 (Prüfer): index.html#raum=… – app.js („EIN EINLADUNGSLINK …“) klickt 360 ms nach dem Start die
+     Pille selbst (pille.click()), der Klick-Rückruf ruft raumVorbereiten(true): derselbe Weg wie der Tipp. „rein“: 0,3 s
+     nach dem Klick hinein (LiveChat.betreten wie livechatHinein hinter dem Tor; Benachrichtigung und Briefkasten gehen
+     320 ms nach ihrem Klick hinein). Der Aufruf läuft erst, wenn der Hauptfaden frei ist: auf dem Link-Weg zeichnet der
+     Start „Wissen“ samt ganzer Wortliste (renderVocab, schon in 884; Nebenbefund im Logbuch) – bei 4× gebremstem
+     Rechner bis ~3,5–4 s. „tipp“ (nur für LM): normaler Start, echte Tipps auf „Wissen“ und „Klassenzimmer“ gleich nach
+     „bereit“ – der Teilfall des Prüfers „Tipp und schnell hinein“. */
+  const linkLauf = async (url, rein, tipp) => {
+    const { ctx, pg } = await fenster();
+    await pg.goto(url + "/index.html" + (tipp ? "" : "#raum=" + LINK), { waitUntil: "commit" });
+    await bereit(pg);
+    if (tipp) await insKlassenzimmer(pg);
+    await pg.waitForFunction(() => window.__p.tipps.length > 0, null, { timeout: 15000, polling: 20 }).catch(() => {});
+    if (rein) {
+      await schlaf(300);
+      await pg.evaluate((r) => { try { window.LiveChat.betreten(window.LiveChat.raumAusAdresse() || r, { name: "Gast", mitBild: false }); } catch (e) {} }, LINK);
+      await pg.waitForFunction(() => window.LiveChat.lage().lage === "drin", null, { timeout: 30000, polling: 50 }).catch(() => {});
+    }
+    const init = Math.round(await pg.evaluate(() => window.__p.init));
+    await schlaf(Math.max(500, init + 5500 - (await pg.evaluate(() => performance.now()))));
+    const s = await stand(pg);
+    s.fehler = pg.__fehler.slice();
+    await ctx.close();
+    const m = s.tipps[0] || {}, k = s.kanaele[0], r = s.kzReg[0];
+    s.klickNachStart = m.t ? m.t - s.init : null;
+    s.kanalNachKlick = k && m.t ? k.t - m.t : null;
+    s.antwortNachStart = k && k.ok ? k.ok - s.init : null;
+    s.emmyNachStart = m.t && m.leute ? m.t + m.leute - s.init : null;
+    s.mithoererNachStart = r ? r.t - s.init : null;
+    s.drinNachStart = s.drin ? s.drin - s.init : null;
+    s.alt = ereignisse(s.ticker).filter((x) => /^(Emmy|Otto|Gast) /.test(x));
+    s.syncRaum = s.sync.filter((x) => /app-teil-raum/.test(x.u)).map((x) => x.u.replace(/^.*\//, "")).concat(s.sofort.filter((x) => /^raum/.test(String(x))));
+    return s;
+  };
+  titel("L", "DER ECHTE EINLADUNGSLINK (#raum=" + LINK + ", GAST): DIE SEITE KLICKT DIE PILLE – DER TIPP-WEG");
+  if (lauf("L")) {
+    for (const [fall, rein] of [["ohne hineinzugehen", false], ["hinein (Aufruf 0,3 s nach dem Klick)", true]]) {
+      console.log("  – " + fall);
+      const s = await linkLauf(S.url(), rein);
+      const r = s.kzReg[0];
+      console.log("  info ab dem Start von app.js: Klick " + (s.klickNachStart != null ? s.klickNachStart : "–") + " ms, Kanal antwortet " + (s.antwortNachStart != null ? s.antwortNachStart : "–")
+        + " ms, Emmy in „DIE RÄUME“ " + (s.emmyNachStart != null ? s.emmyNachStart : "–") + " ms" + (rein ? ", drin " + (s.drinNachStart != null ? s.drinNachStart : "–") + " ms" : ""));
+      sage(s.tipps.length >= 1, "die Seite klickt die Pille „Klassenzimmer“ selbst (Einladungslink → Tipp-Weg)", s.tipps.length + " Klick(s)");
+      /* Nicht „≤ 500 ms nach dem Klick“ wie in A: auf dem Link-Weg zeichnet der Start gleich nach dem Klick „Wissen“ samt
+         Wortliste (renderVocab, ein Langläufer von ~1,6 s bei 4× gebremstem Rechner, schon in 884). Fällt der Klick davor,
+         kommt das erste Bild danach – und mit ihm der Kanal – erst nach diesem Langläufer (gemessen 152–2068 ms nach dem
+         Klick). Geprüft wird deshalb: geöffnet vom Klick, also vor den 4 s (ohne S3: ≥ 4 s nach dem Start). */
+      sage(s.kanaele[0] && s.kanalNachKlick >= 0 && s.kanaele[0].t - s.init < 3800, "der Präsenzkanal geht mit diesem Klick auf (vor den 4 s nach dem Start, nicht erst mit ihnen)",
+        s.kanalNachKlick != null ? s.kanalNachKlick + " ms nach dem Klick, " + (s.kanaele[0].t - s.init) + " ms nach dem Start" : "kein Kanal oder kein Klick");
+      sage(r && s.mithoererNachStart < 3800, "der Mithörer fürs Laufband kommt mit dem Klick (Tipp-Weg, S3) – nicht nurKanal",
+        r ? s.mithoererNachStart + " ms nach dem Start" + (r.leer ? ", Kanal hatte noch nicht geantwortet (erste Aufnahme {})" : ", Stand schon da") : "keiner");
+      if (!rein) sage(s.emmyNachStart != null && s.antwortNachStart != null && s.emmyNachStart - s.antwortNachStart <= 600,
+        "„DIE RÄUME“ zeigt Emmy mit der Antwort des Kanals (≤ 600 ms danach) – nicht erst nach den 4 s",
+        s.emmyNachStart != null && s.antwortNachStart != null ? (s.emmyNachStart - s.antwortNachStart) + " ms nach der Antwort" : "nicht bis " + (s.jetzt - s.init) + " ms nach dem Start");
+      sage(s.kanaele.length === 1 && s.zuhoeren.length === 1 && s.horcherKz === 1, "genau ein Kanal, ein Aufruf, ein Mithörer (auch nach den 4 s)",
+        s.kanaele.length + " / " + s.zuhoeren.length + " / " + s.horcherKz);
+      if (rein) { sage(s.lage === "drin", "im Raum", s.lage); kennungPruefen(s, ""); }
+      console.log("  info Laufband (Offen 1, bekannt; nicht freigegeben zu ändern): " + (s.alt.join(" · ") || "keine Meldung über Leute, die schon da waren"));
+      sage(!s.syncRaum.length && !s.fehler.length, "kein synchroner Abruf eines Raum-Stücks, keine Seitenfehler", (s.syncRaum.join(", ") + " " + s.fehler.slice(0, 2).join(" | ")).trim() || "0");
+      if (s.sync.length || s.sofort.length) console.log("  info Nebenbefund (schon in 884, nicht S3): synchron geholt " + syncText(s));
+    }
   }
 
   /* ---------- M) Messung A/B ---------- */
@@ -591,6 +682,40 @@ function server(wurzel) {
     sage(A.concat(B).every((x) => !x.fehler && !x.sync), "keine Seitenfehler, kein synchroner Abruf");
     const datei = process.env.MESS_JSON_R || "";
     if (datei) fs.writeFileSync(datei, JSON.stringify(erg, null, 1));
+    SA.srv.close();
+  }
+
+  /* ---------- LM) Messung Einladungslink ---------- */
+  if (GEGEN && lauf("LM")) {
+    titel("LM", "MESSUNG EINLADUNGSLINK UND „TIPP, GLEICH HINEIN“ (GAST): A = " + GEGEN + ", B = " + WURZEL + " (verschränkt)");
+    const SA = server(GEGEN); await SA.lauscht;
+    const staende = { A: SA, B: S };
+    const ergL = {};
+    for (const [fall, rein, tipp, text] of [["link", false, false, "Einladungslink, ohne hineinzugehen"], ["link-rein", true, false, "Einladungslink, hinein (Aufruf 0,3 s nach dem Klick)"],
+      ["tipp-rein", true, true, "Tipp auf „Klassenzimmer“ gleich nach „bereit“, hinein 0,3 s danach"]]) {
+      const erg = ergL[fall] = { A: [], B: [] };
+      for (let i = 0; i < PAARE_L; i++) {
+        for (const st of (i % 2 ? ["B", "A"] : ["A", "B"])) {
+          const s = await linkLauf(staende[st].url(), rein, tipp);
+          erg[st].push({ emmy: s.emmyNachStart, antwort: s.antwortNachStart, mithoerer: s.mithoererNachStart, klick: s.klickNachStart, drin: s.drinNachStart,
+            falsch: s.alt.length, alt: s.alt, fehler: s.fehler.length, syncRaum: s.syncRaum.length });
+        }
+      }
+      const A = erg.A, B = erg.B;
+      console.log("\n  " + text + ", " + A.length + " Paare, Median ms ab dem Start von app.js:");
+      for (const mass of (rein ? ["klick", "drin", "antwort", "mithoerer"] : ["klick", "antwort", "emmy", "mithoerer"])) {
+        const d = A.map((a, j) => (B[j][mass] != null && a[mass] != null ? B[j][mass] - a[mass] : null)).filter((x) => x != null);
+        const hoch = d.filter((x) => x > 0).length, tief = d.filter((x) => x < 0).length;
+        console.log("    " + mass.padEnd(10) + String(Math.round(med(A.map((x) => x[mass])))).padStart(7) + " → " + String(Math.round(med(B.map((x) => x[mass])))).padStart(7)
+          + "   B−A gepaart " + Math.round(med(d)) + " (" + tief + "↓/" + hoch + "↑)");
+      }
+      console.log("    Meldungen über Leute, die schon da waren: A in " + A.filter((x) => x.falsch).length + "/" + A.length + ", B in " + B.filter((x) => x.falsch).length + "/" + B.length + " Läufen"
+        + (rein ? " · drin vor 3,8 s: A " + A.filter((x) => x.drin != null && x.drin < 3800).length + "/" + A.length + ", B " + B.filter((x) => x.drin != null && x.drin < 3800).length + "/" + B.length : "")
+        + (B.find((x) => x.falsch) ? " (B z. B.: " + B.find((x) => x.falsch).alt.join(" · ") + ")" : ""));
+      sage(A.concat(B).every((x) => !x.fehler && !x.syncRaum), text + ": keine Seitenfehler, kein synchroner Abruf eines Raum-Stücks");
+    }
+    const datei = process.env.MESS_JSON_L || "";
+    if (datei) fs.writeFileSync(datei, JSON.stringify(ergL, null, 1));
     SA.srv.close();
   }
 

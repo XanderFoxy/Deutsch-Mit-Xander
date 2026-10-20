@@ -322,9 +322,11 @@
      rechnet, wartet, bis das Bild steht. */
   /* FASSUNG 885 (S3) — startet den Präsenzkanal und das Mithören fürs Laufband, je genau einmal; gesetzt weiter unten
      („Den Klassenzimmer-Kanal mithören"), also erst am Ende des Starts – davor ist es null. dmaPraesenzLos(true) öffnet
-     nur den Kanal (Rückkehr, Betreten), ohne Mithörer fürs Laufband. */
+     nur den Kanal, ohne Mithörer fürs Laufband (Rückkehr nach dem Neuladen; raumDrin ohne vorherigen Klick auf die Pille). */
   let dmaPraesenzLos = null;
-  /* tipp: nur der Tipp auf die Pille „Klassenzimmer“ (S3). Rückkehr nach dem Neuladen und Betreten rufen ohne. */
+  /* tipp: jeder Klick auf die Pille „Klassenzimmer“ (S3) – vom Finger oder von der Seite selbst: Einladungslink (#raum=),
+     Benachrichtigung (DMA_ZUM_KLASSENZIMMER), Briefkasten, Unterricht-Einladung, Notweg-Ziel, Laufband, „Zurück“.
+     NACHBESSERUNG 2 (Prüfer): ohne „tipp“ rufen nur die Rückkehr nach dem Neuladen und raumDrin. */
   function raumVorbereiten(tipp) {
     dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 600);
     dmaTeilGruppe("raum");
@@ -341,13 +343,17 @@
        tippte, sah bis dahin „leer — geh ruhig hinein“, obwohl jemand da war. Jetzt geht er beim Tipp auf, gleich nach
        dem ersten Bild (erst das Bild, dann die Leitung). Derselbe eine Kanal wie bisher: wer zuerst kommt (Tipp oder
        die 4 s), öffnet ihn, danach tut dmaPraesenzLos nichts mehr. Beim Seitenstart ohne Tipp bleibt alles wie vorher.
-       NACHBESSERUNG 1 (Prüfer): Rückkehr nach dem Neuladen und Betreten ohne Tipp (Einladungslink) öffnen hier nur den
-       Kanal (mit der richtigen Kennung); den Mithörer fürs Laufband gibt es dort wie bis 884 erst nach 4 s. Kam er
-       schon beim ersten Bild, bekam er den noch leeren Stand als erste Aufnahme, und das Laufband meldete danach alle,
-       die längst da waren, zwei Minuten lang als „gerade ins Klassenzimmer gekommen“ – nach dem Neuladen auch einen
-       selbst (Sonde 885-praesenz R, 8 Rückkehr-Paare: 09fedd06 in 8 von 8 Läufen, 2ea2044c und jetzt in 0 von 8). Nach
-       4 s steht der Stand schon da: kein Ereignis. Der frühe Kanal bleibt (richtige Kennung, livechat.js sieht „andere
-       da“ früher); „drin“ wird dadurch nicht später (+5 ms gepaart, Rauschen). */
+       NACHBESSERUNG 1 (Prüfer): Die Rückkehr nach dem Neuladen öffnet hier nur den Kanal (mit der richtigen Kennung),
+       ebenso raumDrin, wenn vorher keine Pille geklickt wurde (über die Oberfläche nur bei der Rückkehr); den Mithörer
+       fürs Laufband gibt es dort wie bis 884 erst nach 4 s, dann steht der Stand schon da: kein Ereignis. Im
+       Zwischenstand 09fedd06 (nie ausgeliefert) kam er schon beim ersten Bild, bekam den noch leeren Stand als erste
+       Aufnahme, und das Laufband meldete alle, die längst da waren, samt einem selbst zwei Minuten lang als „gerade ins
+       Klassenzimmer gekommen“ (Sonde 885-praesenz R: 09fedd06 8 von 8 Rückkehr-Läufen; 2ea2044c und jetzt 0 von 8).
+       NACHBESSERUNG 2 (Prüfer): Der Einladungslink geht NICHT diesen Weg, sondern klickt die Pille (pille.click(), s.
+       „EIN EINLADUNGSLINK …“) – wie Benachrichtigung, Briefkasten, Unterricht-Einladung und Notweg-Ziel: Tipp-Weg,
+       Mithörer sofort, und das Laufband meldet, wer schon da ist, als „gerade gekommen“ (Logbuch, Offen 1; bis 884
+       genauso nach den 4 s, neu nur, wenn man vor den 4 s schon drin ist – Sonde 885-praesenz L). Der frühe Kanal bei
+       der Rückkehr macht „drin“ nicht später (Rauschen); einen Nutzen hat niemand gemessen. */
     const praesenz = () => { try { if (dmaPraesenzLos) dmaPraesenzLos(!tipp); } catch (e) {} };
     if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(praesenz, 0)); else setTimeout(praesenz, 0);
   }
@@ -70227,7 +70233,7 @@
     /* FASSUNG 876 — XANDER (Funk 271): „die Verbindung zu den anderen haben oberste Priorität". Was der Raum
        braucht (Chat-Effekte, spiel.js, die ganzen Stilblätter), kommt jetzt schon beim Öffnen des Klassenzimmers,
        nicht erst in der Ruhepause – beim Betreten und bei jedem Effekt ist alles da. */
-    raumVorbereiten(true);   // FASSUNG 885 (S3): der Tipp öffnet auch den Präsenzkanal samt Laufband
+    raumVorbereiten(true);   // FASSUNG 885 (S3): jeder Klick (auch Einladungslink & Co.) öffnet Präsenzkanal samt Laufband
     renderLiveChat();
     /* RUNDE 87 — HIER und nur hier darf das Vollbild anfangen: dieser
        Ruf steht in einer echten Fingerbewegung, und nur daraus laesst
@@ -99125,11 +99131,12 @@ An einem Morgen lief ein kleiner Fuchs los…
        - die Kennung: lädt die Anmeldung noch (früher Tipp), die aus dem Gerät – genau wie livechat.js beim Betreten
          (Fassung 841/843: sb-…-auth-token, sonst dma_lc_konto). Mit „" bekäme der Kanal eine Zufallskennung, und
          die Online-Liste der anderen fände das Konto nicht im Klassenzimmer. Ein Gast ohne beides, der schon im Raum
-         ist oder gerade hineingeht (Betreten ohne Tipp auf die Pille, z. B. Einladungslink): seine Raum-Kennung
+         ist oder gerade hineingeht (Rückkehr nach dem Neuladen; raumDrin ohne vorherigen Klick): seine Raum-Kennung
          (lage().ichId) – dieselbe, die livechat.js beim Betreten nimmt. Vorher setzten die 4 s sie auf „", und
          livechat.js hielt den eigenen Eintrag für „andere da“ (ein überflüssiges „hallo“ nach 1,2 und 3 s).
-       - beiPraesenz (Laufband, Online-Liste) einmal; der Rückruf selbst ist unverändert. Nur beim Tipp und nach 4 s,
-         nicht mit nurKanal (Rückkehr, Betreten; Nachbesserung 1, s. raumVorbereiten): beiPraesenz ruft den Mithörer
+       - beiPraesenz (Laufband, Online-Liste) einmal; der Rückruf selbst ist unverändert. Nur beim Klick auf die Pille
+         (Tipp, Einladungslink & Co.) und nach 4 s, nicht mit nurKanal (Rückkehr, raumDrin ohne Klick; Nachbesserung 1/2,
+         s. raumVorbereiten): beiPraesenz ruft den Mithörer
          sofort mit dem Stand, den livechat.js gerade hat, und kzEreignisseAbleiten nimmt diesen als erste Aufnahme.
          Ist der Kanal eben erst aufgegangen, ist das {} – dann wäre danach jeder, der schon da war, „gerade
          gekommen“. */
