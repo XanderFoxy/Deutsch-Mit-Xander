@@ -127,6 +127,10 @@ const sage = (gut, text, dazu) => {
       limit() {
         return Promise.resolve({ data: tab === "betreiber_funk" ? meldungen : fragen, error: null });
       },
+      /* FASSUNG 885 (Nachbesserung 1) — der Funk holt den Text nur noch für neue Zeilen (.in("id", […])) */
+      in(feld, werte) {
+        return Promise.resolve({ data: (tab === "betreiber_funk" ? meldungen : fragen).filter((z) => werte.indexOf(z[feld]) >= 0), error: null });
+      },
       update(werte) {
         return { eq(feld, wert) {
           window.__rf.antworten.push({ id: wert, werte: werte });

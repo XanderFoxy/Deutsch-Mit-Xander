@@ -161,7 +161,8 @@ window.Rueckfrage = (function () {
             v.data.forEach(function (m) { neu[m.id] = m; });
             return zusammen(neu);
           });
-      });
+      })
+      ["catch"](function (e) { return { error: e }; });   /* der Funk darf die offenen Fragen nicht mitreißen */
     Promise.all([a, b]).then(function (r) {
       laeuft = false;
       if (!r[0].error && r[0].data) fragen = r[0].data;
