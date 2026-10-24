@@ -34,8 +34,11 @@
         Sitzung (läuft in der Sperre ab) noch im Speicher; ein echter Tipp
         öffnet genau einen Versuch, ein zweiter Tipp nach 3 s keinen; nach
         Ende der Sperre ist die Seite spätestens nach 20 min wieder da (eine
-        erfolgreiche Benachrichtigungs-Abfrage, Bremse los); 503: höchstens
-        2 Anfragen für eine Abfrage (vorher 4); Netz weg: höchstens 2.
+        erfolgreiche Benachrichtigungs-Abfrage, Bremse los); die Echtzeit-
+        Leitung (in der Sperre getrennt) verbindet höchstens 20-mal neu
+        (bisher alle 10 s); 503 für 20 s: höchstens 2 Anfragen (eine Lese-
+        abfrage, die Takte ruhen; 884: 48); Netz weg 10 min: höchstens
+        200 Versuche (die Takte pausieren), nach „online“ binnen 25 s wieder da.
      D  nach Mitternacht (00:05), heute noch niemand, zuletzt aktiv vor 3
         Tagen: Fuchs-Abfragen in 10 min ≤ 20; Fuchs des Tages bleibt
         „übernommen“ bei Emmy (wie vorher), die Rückwärtssuche kostet ≤ 10
@@ -45,6 +48,8 @@
      F  keine Seitenfehler aus den neuen Stellen.
    Zahlen je Fall stehen am Ende (und mit AUSGABE=datei.json als JSON).
 
+   Gegenprobe 884 (02613a71, Baum aus git archive + Verweisen auf die
+   übrigen Ordner): 14 rot (A 3, B 3, C 6, D 2), E grün.
    Schalter:
      WURZEL=/pfad      anderer Baum (Gegenprobe 884: git archive 02613a71)
      QUELLE=1          index.html?quelle statt min/
@@ -323,9 +328,11 @@ function schluessel(adresse, methode) {
       if (url.indexOf("https://" + HOST + "/") === 0) return supabaseAntwort(route, req).catch(() => route.abort().catch(() => {}));
       return route.abort();
     });
+    zustand.offeneWs = [];
     await ctx.routeWebSocket(/attrappe\.supabase\.co/, (ws) => {
       zaehler().ws++;
       if (zustand.modus !== "ok") { ws.close({ code: 4000, reason: zustand.modus }); return; }
+      zustand.offeneWs.push(ws);
       ws.onMessage((m) => {
         if (typeof m !== "string") return;
         let d; try { d = JSON.parse(m); } catch (e) { return; }
@@ -427,9 +434,12 @@ function schluessel(adresse, methode) {
       await laufen(s, 90000);
       const z = phase(s, "C");
       s.zustand.modus = "402";
+      /* die Echtzeit-Leitung bricht in der Sperre ebenfalls weg */
+      s.zustand.offeneWs.splice(0).forEach((ws) => { try { ws.close({ code: 4000, reason: "402" }); } catch (e) {} });
       await laufen(s, 600000);
       console.log("  Anfragen ans Netz in 10 min 402: " + z.gesamt + " (Echtzeit-Verbindungsversuche: " + z.ws + ") · " + kurz(z));
       sage(z.gesamt <= 40, "402: höchstens 40 Anfragen in 10 min", String(z.gesamt));
+      sage(z.ws <= 20, "402: Echtzeit verbindet höchstens 20-mal neu in 10 min (bisher alle 10 s)", String(z.ws));
       const sitz = await s.pg.evaluate(() => ({ speicher: Boolean(localStorage.getItem("sb-attrappe-auth-token")), konto: Boolean(Backend.currentUser()) }));
       sage(sitz.speicher, "Sitzung nach 402 beim Erneuern noch im Speicher (nach der Sperre nicht abgemeldet)", JSON.stringify(sitz));
       /* ein echter Tipp öffnet genau einen Versuch – ein zweiter 3 s später keinen */
@@ -459,16 +469,26 @@ function schluessel(adresse, methode) {
       s.zustand.modus = "503";
       await s.pg.evaluate(() => { window.__q = Backend.zugang().from("activity").select("id").limit(1); window.__q.then(() => {}); });
       await laufen(s, 20000);
-      sage(z5.gesamt <= 2, "503: höchstens 2 Anfragen für eine Abfrage", String(z5.gesamt));
+      const n503 = z5.gesamt;
+      sage(n503 <= 2, "503 für 20 s: höchstens 2 Anfragen (eine Leseabfrage; die Takte ruhen)", String(n503));
       s.zustand.modus = "ok";
+      await s.pg.mouse.click(20, 300);   // ein Tipp: der nächste Versuch darf sofort (sonst bis zu 18 min Pause)
       await s.pg.evaluate(() => { try { Backend.zugang().from("activity").select("id").limit(1).then(() => {}); } catch (e) {} });
-      await laufen(s, 16 * 60000, 5000);
+      await laufen(s, 60000);
+      /* Netz weg (Funkloch) 10 min: die Takte pausieren, einzelne Abfragen dürfen weiter (z. B. das Profil beim Start) */
       const zo = phase(s, "C-offline");
       s.zustand.modus = "offline";
-      await s.pg.evaluate(() => { Backend.zugang().from("activity").select("id").limit(1).then(() => {}); });
-      await laufen(s, 20000);
-      sage(zo.gesamt <= 2, "Netz weg: höchstens 2 Anfragen für eine Abfrage", String(zo.gesamt));
-      ergebnis.faelle.C.a503 = z5.gesamt; ergebnis.faelle.C.offline = zo.gesamt;
+      await laufen(s, 600000);
+      const nOffline = zo.gesamt;
+      /* Netzfehler erreichen den Server nicht (kein Kontingent); gezählt wird trotzdem, damit kein Dauerfeuer bleibt.
+         Streuung durch den Zufallsanteil der Pausen: gemessen 44–96. */
+      sage(nOffline <= 200, "Netz weg 10 min: höchstens 200 Versuche (die Takte pausieren)", String(nOffline) + " · " + kurz(zo));
+      s.zustand.modus = "ok";
+      const zon = phase(s, "C-online");
+      await s.pg.evaluate(() => window.dispatchEvent(new Event("online")));
+      await laufen(s, 25000);
+      sage((zon.ok["notifications*"] || zon.ok["notifications"]) > 0, "Netz wieder da („online“): binnen 25 s wieder abgefragt", kurz(zon));
+      ergebnis.faelle.C.a503 = n503; ergebnis.faelle.C.offline = nOffline;
       fehlerPruefen(s);
       await s.ctx.close();
     }

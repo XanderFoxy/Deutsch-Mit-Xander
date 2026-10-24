@@ -23,7 +23,9 @@ const Backend = (function () {
      1 → 2 → 5 → 15 min (±20 % Zufall, damit nicht alle Geräte im selben Augenblick wiederkommen). In der Pause
      antwortet die Bremse selbst mit 429 (darauf wiederholt supabase-js nicht; bei 503 fragte es noch dreimal
      nach) – es geht nichts ans Netz. 402 zieht sofort, alles andere erst der zweite Fehlschlag in Folge (ein
-     einzelner Aussetzer im Mobilnetz hält nichts an).
+     einzelner Aussetzer im Mobilnetz hält nichts an). Ist nur das Netz weg (kommt beim Server gar nicht an),
+     pausieren nur die Takte (Backend.bremse().aktiv); einzelne Abfragen – etwa das Profil beim Start – gehen
+     weiter hinaus, damit ein wackliges Mobilnetz beim Laden nichts aufhält.
      Wieder los: jede Antwort, die zeigt, dass der Server lebt (unter 500, außer 402/429), löst sie sofort.
      Spätestens nach der Pause geht der nächste Versuch hinaus – kein Stillstand nach Ende der Sperre. Ein echter
      Tipp oder Tastendruck öffnet für 5 s einen Versuch (höchstens alle 15 s); nach einem Netzfehler lösen
@@ -43,7 +45,8 @@ const Backend = (function () {
     if (status !== 402 && bremse.folge < 2 && !probe) return;
     if (jetzt < bremse.bis && !probe) return;    // Nachzügler derselben Runde: nicht doppelt hochstufen
     const basis = BREMS_STUFEN[Math.min(bremse.stufe, BREMS_STUFEN.length - 1)];
-    bremse.status = status;
+    /* Scheitert der Versuch nach einem Tipp am Netz, bleibt eine Server-Sperre eine Server-Sperre. */
+    bremse.status = status || (jetzt < bremse.bis ? bremse.status : 0);
     bremse.bis = jetzt + Math.round(basis * (0.8 + Math.random() * 0.4));
     bremse.stufe += 1;
   }
@@ -57,7 +60,7 @@ const Backend = (function () {
     const methode = String((opt && opt.method) || (eingabe && eingabe.method) || "GET").toUpperCase();
     const lesen = erneuern || methode === "GET" || methode === "HEAD" || adresse.indexOf("/rest/v1/rpc/") >= 0;
     const jetzt = Date.now();
-    if (lesen && jetzt < bremse.bis && jetzt > bremse.frei) {
+    if (lesen && bremse.status !== 0 && jetzt < bremse.bis && jetzt > bremse.frei) {
       bremse.abgefangen += 1;
       if (erneuern) return Promise.reject(new TypeError("Bremse: Server pausiert"));
       return Promise.resolve(new Response(JSON.stringify({ message: "Der Server pausiert gerade (" + (bremse.status || "Netz") + ") – bitte gleich noch einmal versuchen.", code: "DMA_BREMSE", details: null, hint: null }),

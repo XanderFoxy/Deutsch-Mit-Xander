@@ -4951,3 +4951,94 @@ Die Prüfung fand einen wichtigen Mangel (#138 falsch gelesen – oben im Befund
 - Weiter nur nachgebaut: die Geräte sind Chromium-Seiten auf einem Rechner, den Server spielt die Sonde, die vorgehende Uhr ist ein verschobenes `Date.now`. Fall 12 nutzt eine echte WebRTC-Leitung, aber über die eigene Maschine. Ein Test mit zwei echten Geräten fehlt (Offen 1).
 - Bleibende Grenze bei verschieden gehenden Uhren: Ändern **zwei** Leute denselben Eintrag (z. B. die Lesezeile einer Schüler-Tafel: Schüler und Lehrer), geht beim ersten die Uhr um Δ vor **und** hat der zweite alle vier Sendungen des ersten verpasst (direkt, Server, zwei Nachsendungen) und ändert innerhalb von Δ, dann verliert die Änderung des zweiten überall, auch bei ihm selbst nach dem nächsten Puls. Mit gleich gehenden Uhren kommt das nicht vor; den Normalfall (der zweite kannte den Stempel des ersten) prüft Fall 14. Im gemischten Raum dasselbe, wenn zwei Häuptlinge auf verschiedenen Fassungen abwechselnd den Fokus setzen – dann aber nur auf dem einen Gerät und ohne Weitergabe.
 - Die Messung „volle Neuzeichnungen" zählt `melden()`-Aufrufe ohne Art im selben Takt; wie lange eine solche Neuzeichnung im Hauptraum dauert, ist hier nicht gemessen.
+
+## Fassung 885 — Notfall: Anfrage-Sturm und Supabase-Sperre
+
+**Lage (24.10.2026):** Seit 22.10. 22:46 UTC antwortet Supabase (Gratis-Plan) auf alles – Anmeldung, Datenbank, Echtzeit – mit HTTP 402 „Kontingent überschritten“. Das Projekt ist gesperrt, niemand kann sich anmelden. CLAUDE.md (Puls): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“. Diese Fassung ist ein Notfall-Zwischenschritt; die laufende Ladezeit-Arbeit wird 886.
+
+### Befund (Supabase-Logs, schon erhoben – für 885 wurde Supabase nicht abgefragt)
+- **Ein einziges Gerät:** Xanders Samsung (SamsungBrowser 30, Android 10, Konto XanderFox = Betreiber) hatte die Seite dauerhaft offen, auch im Hintergrund.
+  - In den 9 h vor der Sperre: 18 505 erfolgreiche Anfragen (≈ 2 056 je Stunde).
+  - Nach der Sperre: 62 917 abgelehnte Anfragen in 15 h (≈ 4 194 je Stunde, gut 70 je Minute).
+- **24 h vor der Sperre (alles dieses Gerät):** profiles 4 543, rpc 3 250, user_links / community_tips / results / community_texts je ≈ 1 180, activity 857, friends 841, notifications 828, betreiber_rueckfragen 828, private_messages 826, betreiber_funk 821, challenges 821, site_content 485.
+- **Muster vor der Sperre:** alle 20 s genau ein Satz `results?select=user_id,points,bonus,played_at&played_at=gte.<heute 00:00>` plus `community_texts/community_tips/user_links?…created_at=gte.<heute>`. Das ist die Wertung „Fuchs des Tages“.
+- **Nach der Sperre:** etwa ein Satz je 4 s und Tabelle. Ein Fehler zählte als „heute niemand“, und die Rückwärtssuche lief über bis zu 30 Zeiträume.
+- **Welches Kontingent voll ist,** sieht nur Xander im Dashboard (Organization → Usage). Meist steht es auch im Text der 402 (z. B. `exceed_egress_quota`). Am wahrscheinlichsten ist es der Datenabfluss (5 GB/Monat), danach die Realtime-Nachrichten.
+
+### Ursache (im Code nachgewiesen und mit der Sonde nachgestellt)
+1. **Kein Takt achtete auf eine verdeckte Seite.** Benachrichtigungen (20 s), Laufschrift (20 s und bei jedem Präsenz-Ereignis), Walkie/Funk (20 s, offen 8 s), Online-Liste (60 s) und der Spiel-Abgleich im Raum (12 s) fragten rund um die Uhr. Der Browser drosselt verdeckte Seiten nur auf etwa einen Takt je Minute, und bei offener WebRTC-Leitung gar nicht.
+2. **Die Fuchs-Prüfung hing am 20-s-Takt der Benachrichtigungen.** Je Zeitraum (Tag, Woche, Monat, Jahr) gingen 5–6 Abfragen hinaus, darunter die volle Profilzeile des Siegers (`select *`). Wer nicht selbst Fuchs war, ließ dabei alle 20 s auch alle Runden des Jahres scannen. Die Läufe konnten sich überlappen.
+3. **Ein Fehler galt als „leer“.** Dann startete `letzterAktiverFuchs(30)`: bis zu 30 Zeiträume nacheinander, je 4–5 Abfragen, in jedem Takt. Dasselbe geschah jede Nacht ab 00:00, solange noch niemand gespielt hatte und die letzte Aktivität mindestens 2 Tage zurücklag.
+4. **Niemand bremste bei 402.** supabase-js wiederholt bei 503 und Netzfehlern jede Leseabfrage sogar noch dreimal.
+5. **Große Antworten im Takt.** `namesFor` holte für Namen die ganze Profilzeile (`select *` mit `extra_profile_data`: Bildersammlung, Wortschatz, Lernstände), und das für den ganzen Postausgang (nach einer Rundmail: alle Mitglieder) und alle Duellpartner samt eigener Zeile. Dazu kamen 120 volle Nachrichten (`private_messages select *`) für das Lämpchen. Beides alle 20 s.
+6. **Die Anmeldung ging verloren (gemessen).** Der Echtzeit-Klient in livechat.js teilt den Speicherplatz der Anmeldung und erneuert die Sitzung selbst. Bei 402 löschte supabase-js dort die Sitzung, und nach der Sperre wären alle abgemeldet gewesen.
+
+### Reparatur (Fassung 885) – nichts Sichtbares, Echtzeit-Kanäle unberührt
+- **Bremse in backend.js (`bremsFetch`, eigener fetch für den Klienten):**
+  - Auslöser: 402, 429, 502–504 oder 520–530 auf `/rest/v1/`. 402 zieht sofort, alles andere ab dem zweiten Fehlschlag in Folge.
+  - Dann pausieren Lese-Abfragen und rpc 1 → 2 → 5 → 15 min, jeweils ±20 % Zufall. In der Pause antwortet die Bremse selbst (429, `DMA_BREMSE`), und es geht nichts ans Netz.
+  - Schreiben in Tabellen (Punkte, Nachrichten) bremst sie nie aus.
+  - Ist nur das Netz weg, pausieren nur die Takte. Einzelne Abfragen (z. B. das Profil beim Start) gehen weiter.
+  - Gelöst wird sie durch jede Antwort, die zeigt, dass der Server lebt, spätestens nach der Pause. Ein echter Tipp öffnet für 5 s einen Versuch (höchstens alle 15 s). „online“ und das Zurückkommen lösen sie nach einem Netzfehler.
+  - Beim Erneuern der Sitzung reicht sie eine 402/429 als „vorübergehend“ (503) weiter, damit die Anmeldung nicht gelöscht wird. Denselben Schutz bekommen die beiden anderen Klienten mit demselben Speicherplatz (livechat.js, aussprache-pruefung.js).
+  - Abfragen: `Backend.bremse()` (aktiv, Status, Stufe).
+- **Verdeckte Seite = Ruhe.** Benachrichtigungen, Laufschrift, Online-Liste, Walkie/Funk und die Fuchs-Prüfung laufen nicht bei verdeckter Seite. Im Spiel gilt das für den 12-s-Abgleich, das 4-s-Nachfragen bei fertiger Baustelle, die Angebotsliste und die Trophäen-Wiederholung.
+  - Beim Zurückkommen wird sofort einmal nachgeholt.
+  - Verdeckt bleibt nur das kleine „zuletzt aktiv“ (eine Schreibanfrage je Minute ohne Antwort), damit man für die anderen online bleibt wie bisher.
+  - Während der Bremse ruhen alle diese Takte.
+  - Der Dorf-Takt (Automatik, „je Aufruf ein Schritt“) bleibt bewusst unverändert, damit sich das Spiel nicht ändert.
+- **Benachrichtigungen:** nie zwei Durchgänge zugleich. Wer währenddessen ruft, bekommt einen frischen Durchgang danach. Für das Lämpchen werden nur die ungelesenen Eingänge geholt (id, Zeit) statt 120 voller Nachrichten samt Namen.
+- **Fuchs-Wertung:**
+  - Ergebnisse werden gemerkt: 60 s für Anzeigen, 10 min für die stille Prüfung. Eigene Runden und Beiträge räumen das Gedächtnis.
+  - Ein Fehler wird mitgeführt (`liste.fehler`) und startet keine Rückwärtssuche.
+  - Die Rückwärtssuche ist EINE kleine Abfrage je Tabelle (letzter Eintrag vor heute, `limit 1`) plus EINE Wertung. Das Ergebnis gilt bis Mitternacht.
+  - Die Prüfung „bin ich Fuchs?“ läuft für den Tag höchstens alle 5 min (nach einer eigenen Runde sofort), für Woche, Monat und Jahr höchstens alle 30 min. Sie läuft ohne Profil des Siegers und ohne Überlappung. Die Gratulation kommt höchstens Minuten später.
+- **`namesFor`:** nur noch die 13 Spalten, die alle Aufrufer lesen. Fehlt eine in der Datenbank, geht es einmal mit `*` weiter.
+- **Echtzeit:** Wiederverbinden wie bisher (1, 2, 5, dann alle 10 s). Nur solange die Bremse wegen 402 aktiv ist, geschieht es einmal je Minute.
+
+### Messung vorher/nachher – Sonde `werkzeug/pruefe-885-sparsam.js`
+Supabase ist nachgebaut (echtes supabase-js 2.117.3, Route, routeWebSocket). Je Fall laufen 10 min mit `page.clock`. Getestet wird der Betreiber-Tab ohne Klassenzimmer; Emmy ist in jedem Zeitraum Fuchs.
+
+| Fall | 884 (Gegenprobe 02613a71) | 885 |
+|---|---|---|
+| A sichtbar: Anfragen / Antwortdaten der Attrappe | 992 / 3 349 KB | 247 / 34 KB |
+| A Fuchs-Abfragen (results + community_*) | 480 | 4 |
+| A `profiles?select=*` / `private_messages?select=*` | 150 / 30 | 0 / 0 |
+| B verdeckt (nach 90 s sichtbar) | 992 | 10 (nur „zuletzt aktiv“) |
+| C 402, sichtbar | 4 327 + 62 Echtzeit-Versuche, Anmeldung gelöscht | 4–8 + 13 Echtzeit-Versuche, Anmeldung bleibt |
+| C Tipp in der Sperre, dann noch ein Tipp nach 3 s | 1 / 1 | 1 / 0 |
+| C nach Ende der Sperre wieder da | sofort | nach 12,5–16,5 min (Pause läuft ab; ein Tipp früher) |
+| C 503 für 20 s (eine Leseabfrage, dazu die Takte) | 48 | 2 |
+| C Netz weg 10 min (erreicht den Server nicht) | 11 049 | 44–96 (Zufallsanteil der Pausen) |
+| D 00:05, heute niemand, zuletzt aktiv vor 3 Tagen: Fuchs-Abfragen | 960 | 4 |
+| D Rückwärtssuche „Fuchs des Tages“ | 21 Abfragen | 4, Ergebnis gleich (Emmy, „übernommen“) |
+| E eigene Runde mit den meisten Punkten: Gratulation | 1 | 1 |
+
+- Gegenprobe gegen 884: **14 rot** (A 3, B 3, C 6, D 2). E ist grün; das ist gewollt, denn es zeigt, dass die Gratulation geblieben ist.
+- Weitergerechnet für den Betreiber-Tab: Sichtbar sind es bei 885 ≈ 1 480 statt ≈ 5 950 Anfragen je Stunde. Verdeckt sind es ≈ 60 statt ≈ 1 330 im echten, drosselnden Browser (Modell, das zum Log passt). In der Sperre sind es ≈ 25 statt ≈ 4 200 (Log), sichtbar sogar ≈ 26 000 bei 884.
+- **Ehrlich:**
+  - „Verdeckt“ ist in der Sonde `document.hidden`. Die Drosselung durch den Browser ist nicht nachgestellt, deshalb zählt 884 verdeckt hier so viel wie sichtbar.
+  - Die Datenmengen sind die der Attrappe; echte Profilzeilen mit Bildern sind größer.
+  - Das Klassenzimmer (Spiel-Abgleich verdeckt) ist nur gelesen und nicht in dieser Sonde gemessen.
+
+### Offen (885)
+- **Xander, sofort:** den Tab auf dem Samsung schließen. Er schickt sonst weiter Anfragen, und mit 884 begänne nach dem Zurücksetzen des Kontingents sofort wieder das alte Muster. 885 muss live sein, bevor das Kontingent zurückgesetzt wird.
+- Im Dashboard nachsehen, welches Kontingent voll ist (Egress, Realtime, Datenbankgröße).
+- Weiter große Antworten, aber nur noch bei sichtbarer Seite:
+  - `challenges select *` alle 20 s (alle je geführten Duelle samt Wortliste),
+  - `getAllMembers` jede Minute (ganze Mitgliederliste),
+  - `betreiber_funk` mit vollem Text alle 20 s,
+  - `notifications select *` ohne Grenze,
+  - das Postfach beim Öffnen (120 volle Nachrichten).
+  Hebel: nur Neues nachladen, Spalten wählen, Online-Liste auf dem Server filtern.
+- Klassenzimmer: Der Raumpuls alle 6 s an alle macht 10·N² Realtime-Nachrichten je Minute (allein im Raum ≈ 430 000 im Monat). Dazu kommen „redet“-Rundrufe und der Verlauf beim Zurückkommen (300 Zeilen samt Bild-Datenadressen). Die Datenbankgröße wächst durch Profilfotos je Chatzeile. Nichts davon ist angefasst (Verbindung hat Vorrang).
+- Feature-Schalter: Nach einem Fehler beim Start bleibt `{}` bis zum Neuladen gemerkt.
+- `onAuthStateChange` fehlt (ein abgemeldeter Tab behält `demo.user`).
+- `supabase-js@2` ist nicht auf eine Fassung festgelegt; die Sonden routen nach `supabase-js@2/dist`.
+- Avatare und Galerie werden in Originalgröße hochgeladen.
+- Die Sonde 885-sparsam deckt das Klassenzimmer nicht ab.
+
+### Vorschläge, die man sehen würde – nur im Funk, nicht gebaut
+- Bei 402 auf der Anmeldeseite deutsch statt Supabase-Englisch: „Der Server hat sein Gratis-Kontingent aufgebraucht – Anmelden geht im Moment nicht. Bitte später noch einmal versuchen.“ (technischer Rest in Klammern, er sagt Xander, welches Kontingent voll ist).
+- Ein kleines Band, solange die Bremse wegen 402 aktiv ist: „Der Server ist gerade gesperrt – die Seite fragt in X min wieder nach.“
+- Raumpuls nur senden, wenn noch jemand im Raum ist; Bilder vor dem Hochladen auf ≈ 512 px verkleinern.

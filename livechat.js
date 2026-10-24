@@ -5984,7 +5984,14 @@ window.LiveChat = (function () {
        (gemessen: in der 402-Sperre löschte GENAU er die Anmeldung der ganzen Seite). Er bekommt deshalb denselben
        Schutz wie backend.js (Backend.bremsFetch: eine 402/429 beim Erneuern gilt als vorübergehend). Die
        Echtzeit-Leitung selbst läuft nicht über fetch – Klassenzimmer, Ton und Chat bleiben unberührt. */
-    var optionen = { realtime: { params: { eventsPerSecond: 20 }, heartbeatIntervalMs: 10000 } };
+    var optionen = { realtime: { params: { eventsPerSecond: 20 }, heartbeatIntervalMs: 10000,
+      /* FASSUNG 885 — Wiederverbinden wie bisher (1, 2, 5, dann alle 10 s). Nur solange Supabase das Projekt
+         sperrt (Bremse mit 402, Kontingent voll) einmal je Minute statt alle 10 s – dann geht ohnehin nichts.
+         Bei jedem anderen Fehler, Funkloch oder Netzwechsel bleibt es beim schnellen Takt. */
+      reconnectAfterMs: function (n) {
+        try { var b = Backend.bremse && Backend.bremse(); if (b && b.aktiv && b.status === 402) return 60000; } catch (e) {}
+        return [1000, 2000, 5000, 10000][n - 1] || 10000;
+      } } };
     try { if (typeof Backend !== "undefined" && Backend && Backend.bremsFetch) optionen.global = { fetch: Backend.bremsFetch }; } catch (e) {}
     sbKlient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, optionen);
     return sbKlient;
