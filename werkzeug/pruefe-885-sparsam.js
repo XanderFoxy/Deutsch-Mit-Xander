@@ -307,38 +307,6 @@ function schluessel(adresse, methode) {
       /* wie im Browser: das Ereignis steigt bis window auf (dort hört die Echtzeit-Bibliothek) */
       window.__sichtbar = (an) => { verdeckt = !an; document.dispatchEvent(new Event("visibilitychange", { bubbles: true })); };
     }, [opt.ohneSitzung ? {} : { access_token: tokenFuer(ablauf), refresh_token: "rt-1", expires_in: ablauf - Math.floor(t0 / 1000), expires_at: ablauf, token_type: "bearer", user: NUTZER }]);
-    /* Nachbesserung 2 — die Sperre der Echtzeit-Leitung wie in Wirklichkeit: der Handshake wird abgelehnt, die
-       Verbindung öffnet sich nie (Schluss 1006). Solange window.__wsSperre gilt, kommt jeder Versuch zu Supabase
-       hierher (gezählt in window.__wsVersuche). Dazu werden die Klienten mitgeschrieben (Fall R braucht den Klienten
-       von livechat.js); createClient selbst bleibt unverändert. */
-    await ctx.addInitScript(() => {
-      const Echt = window.WebSocket;
-      window.__wsSperre = false; window.__wsVersuche = 0;
-      class Weg extends EventTarget {
-        constructor(u) {
-          super(); this.url = String(u); this.readyState = 0; this.binaryType = "blob"; this.bufferedAmount = 0; this.protocol = ""; this.extensions = "";
-          window.__wsVersuche++;
-          setTimeout(() => {
-            this.readyState = 3;
-            const f = new Event("error"); if (this.onerror) this.onerror(f); this.dispatchEvent(f);
-            const c = new CloseEvent("close", { code: 1006, reason: "", wasClean: false }); if (this.onclose) this.onclose(c); this.dispatchEvent(c);
-          }, 20);
-        }
-        send() { throw new DOMException("nicht offen", "InvalidStateError"); }
-        close() {}
-      }
-      window.WebSocket = new Proxy(Echt, { construct(Z, a) { return window.__wsSperre && String(a[0]).indexOf("attrappe") >= 0 ? new Weg(...a) : new Z(...a); } });
-      let sb;
-      Object.defineProperty(window, "supabase", { configurable: true, get() { return sb; }, set(v) {
-        if (v && typeof v.createClient === "function" && !v.__sonde) {
-          const orig = v.createClient;
-          v.createClient = function () { const k = orig.apply(this, arguments); (window.__klienten = window.__klienten || []).push({ k, opt: arguments[2] || null }); return k; };
-          v.__sonde = true;
-        }
-        sb = v;
-      } });
-    });
-
     const kopf = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Allow-Methods": "*", "Access-Control-Expose-Headers": "Content-Range, X-Total-Count" };
     async function supabaseAntwort(route, req) {
       const methode = req.method();
@@ -422,7 +390,7 @@ function schluessel(adresse, methode) {
       if (zustand.modus !== "ok") { ws.close({ code: 4000, reason: zustand.modus }); return; }
       zustand.offeneWs.push(ws);
       ws.onMessage((m) => {
-        if (typeof m !== "string") return;
+        if (typeof m !== "string") { zaehler().wsRundruf++; return; }   // Rundrufe gehen in realtime-js 2.x binär
         let d; try { d = JSON.parse(m); } catch (e) { return; }
         const arr = Array.isArray(d);
         const [joinRef, ref, topic, event, payload] = arr ? d : [d.join_ref, d.ref, d.topic, d.event, d.payload];
@@ -437,6 +405,40 @@ function schluessel(adresse, methode) {
         ws.send(JSON.stringify(arr ? [joinRef, ref, topic, "phx_reply", r] : { join_ref: joinRef, ref, topic, event: "phx_reply", payload: r }));
       });
     });
+    /* Nachbesserung 2 — die Sperre der Echtzeit-Leitung wie in Wirklichkeit: der Handshake wird abgelehnt, die
+       Verbindung öffnet sich nie (Schluss 1006). Solange window.__wsSperre gilt, kommt jeder Versuch zu Supabase
+       hierher (gezählt in window.__wsVersuche). Dazu werden die Klienten mitgeschrieben (Fall R braucht den Klienten
+       von livechat.js); createClient selbst bleibt unverändert. Erst NACH routeWebSocket eingehängt: Playwright ersetzt
+       window.WebSocket in der Seite durch sein eigenes Gegenstück – der Ersatz hier muss davor sitzen, sonst geht jeder
+       Versuch an ihm vorbei (so war es im ersten Lauf von R: die Leitung stand weiter, kein Rundruf über REST). */
+    await ctx.addInitScript(() => {
+      const Echt = window.WebSocket;
+      window.__wsSperre = false; window.__wsVersuche = 0;
+      class Weg extends EventTarget {
+        constructor(u) {
+          super(); this.url = String(u); this.readyState = 0; this.binaryType = "blob"; this.bufferedAmount = 0; this.protocol = ""; this.extensions = "";
+          window.__wsVersuche++;
+          setTimeout(() => {
+            this.readyState = 3;
+            const f = new Event("error"); if (this.onerror) this.onerror(f); this.dispatchEvent(f);
+            const c = new CloseEvent("close", { code: 1006, reason: "", wasClean: false }); if (this.onclose) this.onclose(c); this.dispatchEvent(c);
+          }, 20);
+        }
+        send() { throw new DOMException("nicht offen", "InvalidStateError"); }
+        close() {}
+      }
+      window.WebSocket = new Proxy(Echt, { construct(Z, a) { return window.__wsSperre && String(a[0]).indexOf("attrappe") >= 0 ? new Weg(...a) : new Z(...a); } });
+      let sb;
+      Object.defineProperty(window, "supabase", { configurable: true, get() { return sb; }, set(v) {
+        if (v && typeof v.createClient === "function" && !v.__sonde) {
+          const orig = v.createClient;
+          v.createClient = function () { const k = orig.apply(this, arguments); (window.__klienten = window.__klienten || []).push({ k, opt: arguments[2] || null }); return k; };
+          v.__sonde = true;
+        }
+        sb = v;
+      } });
+    });
+
     if (process.env.LAUT) await ctx.addInitScript(() => {
       const weg = Storage.prototype.removeItem;
       Storage.prototype.removeItem = function (k) { if (/auth-token/.test(k)) console.log("SITZUNG WEG " + new Date(Date.now()).toISOString() + " " + new Error().stack.split("\n").slice(1, 9).join(" < ")); return weg.call(this, k); };
