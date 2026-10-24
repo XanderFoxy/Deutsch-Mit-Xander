@@ -3759,7 +3759,7 @@ const Backend = (function () {
     const alter = m && m.liste ? Date.now() - m.zeit : -1;
     if (alter >= 0 && alter < (m.liste.fehler ? Math.min(grenze, AKTIV_FEHLER_MS) : grenze)) return m.liste;
     /* Nachbesserung 1 — eine Rechnung, die nach 60 s noch läuft (Anfrage ohne Antwort), hält niemanden mehr auf. */
-    if (m && m.laeuft && Date.now() - (m.seit || 0) < AKTIV_FEHLER_MS) return m.laeuft;
+    if (m && m.laeuft && Date.now() - (m.seit || 0) >= 0 && Date.now() - (m.seit || 0) < AKTIV_FEHLER_MS) return m.laeuft;
     const laeuft = aktivitaetRechnen(daysBack);
     aktivMerk.set(schluessel, Object.assign({}, m, { laeuft, seit: Date.now() }));
     try {
@@ -3875,7 +3875,7 @@ const Backend = (function () {
     const tag = zeitraumBeginn(1).toISOString() + "|" + maxTage;
     const m = letzterFuchsMerk;
     if (m && m.tag === tag && (!m.fehler || (Date.now() - m.zeit >= 0 && Date.now() - m.zeit < AKTIV_FEHLER_MS))) return m.wert;
-    if (letzterFuchsLaeuft && letzterFuchsLaeuft.tag === tag && Date.now() - letzterFuchsLaeuft.seit < AKTIV_FEHLER_MS) return letzterFuchsLaeuft.p;
+    if (letzterFuchsLaeuft && letzterFuchsLaeuft.tag === tag && Date.now() - letzterFuchsLaeuft.seit >= 0 && Date.now() - letzterFuchsLaeuft.seit < AKTIV_FEHLER_MS) return letzterFuchsLaeuft.p;
     const p = letzterAktiverFuchsSuchen(maxTage).then((r) => {
       letzterFuchsMerk = { tag, zeit: Date.now(), wert: r.wert, fehler: r.fehler };
       return r.wert;

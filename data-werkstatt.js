@@ -49,7 +49,7 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 885 — Notfall: Supabase-Sperre, Anfrage-Sturm gebremst (Nachbesserung 1)",
+  stand: "Fassung 885 — Notfall: Supabase-Sperre, Anfrage-Sturm gebremst (Nachbesserung 2)",
 
   inArbeit: [
     { seit: "2026-10-24T15:21",
@@ -58,6 +58,8 @@ window.DMA_WERKSTATT = {
       text: "885 muss online sein, bevor Supabase das Kontingent zurücksetzt" },
     { seit: "2026-10-24T15:21",
       text: "Weitere große Abfragen verkleinern (Duelle, Mitgliederliste, Benachrichtigungen, Postfach beim Öffnen) – laufen nur noch bei sichtbarer Seite" },
+    { seit: "2026-10-24T21:31",
+      text: "Deine Entscheidung: Töne für Nachrichten und Walkie auch bei verdeckter Seite (langsamer Takt alle 5 min) – Vorschlag im Funk" },
     { seit: "2026-10-14T04:06",
       text: "Ladezeit-Fassung (wird 886)" },
     { seit: "2026-10-14T04:06",
@@ -73,12 +75,16 @@ window.DMA_WERKSTATT = {
     { seit: "2026-10-24T18:05",
       text: "Verdeckte Seite fragt nicht mehr nach: 10 statt 992 Anfragen in 10 min" },
     { seit: "2026-10-24T18:05",
-      text: "Bremse bei Sperre: 4 statt 4 327 Anfragen in 10 min (auch verdeckt 4), Anmeldung bleibt erhalten" },
+      text: "Bremse bei Sperre: 8 statt 4 327 Anfragen in 10 min (verdeckt 3), Anmeldung bleibt erhalten" },
     { seit: "2026-10-24T18:05",
-      text: "Nach der Sperre von selbst wieder da (Test: nach 0,5–0,8 min), Anmelden gibt sofort das echte Profil" },
+      text: "Nach der Sperre von selbst wieder da (Test: nach 0,8 min), Anmelden gibt sofort das echte Profil" },
     { seit: "2026-10-24T18:05",
       text: "Fuchs-Wertung ohne 30er-Schleife: nach Mitternacht 4 statt 960 Abfragen in 10 min" },
     { seit: "2026-10-24T18:05",
       text: "Kleinere Antworten: Namen ohne ganze Profilzeile, Lämpchen zählt wie das Postfach, Funk lädt nur Neues" },
+    { seit: "2026-10-24T21:31",
+      text: "Klassenzimmer in der Sperre: 4 statt 100 Rundrufe über den Notweg in 10 min" },
+    { seit: "2026-10-24T21:31",
+      text: "Einstellungen gehen nach einer Sperre nicht verloren, Anmeldung bleibt auch im Dorf erhalten" },
   ],
 };

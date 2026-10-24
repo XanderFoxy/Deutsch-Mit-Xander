@@ -5021,8 +5021,18 @@ Die Prüfung fand einen wichtigen Mangel (#138 falsch gelesen – oben im Befund
 - **Werkstatt:** die verschwundenen offenen Punkte (Vite-Plan Funk 312, Feldbeleg Ton 310, Aussprache-/Tonserver-Funktion) stehen wieder drin; „Ladezeit-Fassung (wird 886)“ trägt wieder ihren Beginn 2026-10-14T04:06.
 - **Sonde:** visibilitychange steigt jetzt wie im Browser bis window auf (dort hören Echtzeit und Anmeldung mit); neu sind G (402 bei verdeckter Seite), H (über Mitternacht offen), L, M, N und Benachrichtigungen in der Tabelle `notifications`; Fall C wartet vor dem Tipp, bis die Bremse wirklich gezogen ist (vorher hing er vom Zufall ab).
 
+### Nachbesserung 2 (Prüfer-Befunde zu 885 nach Nachbesserung 1)
+- **REST-Notweg der Echtzeit-Kanäle (wichtig):** Steht der Websocket nicht – und in der Sperre lehnt Supabase ihn ab –, schickt supabase-js jeden Rundruf als POST an `/realtime/v1/api/broadcast`. Der Weg lief über `bremsFetch`, aber ungebremst, und seine 402 zog die Bremse nicht. Ein offenes Klassenzimmer (Puls alle 6 s) schickte so in der Sperre jeden Puls ans Netz: gemessen 100 von 100 in 10 min, ≈ 600 je Stunde, dazu „redet“ und Chat. Der Kommentar in backend.js („die Echtzeit-Kanäle laufen gar nicht hier durch“) war falsch und ist richtiggestellt. Jetzt: 3–4 von 100 (Sonde R), im Normalbetrieb geht der Notweg wie bisher hinaus (10 von 10).
+- **Lesen vor dem Schreiben:** Im Fenster „Server wieder da, Bremse noch zu“ bekam `frischesExtra` die Ersatzantwort, nahm den lokalen Stand, und das Schreiben überschrieb Einstellungen eines anderen Geräts. Dieses eine Lesen wird nicht mehr gebremst (Sonde P: Einstellung des anderen Geräts bleibt; Nachbesserung 1: verloren).
+- **Uhrsprung:** Stellte sich die Geräteuhr zurück (Zeitabgleich am Handy), blieb die Bremse entsprechend länger stehen (Sonde U, 2 h zurück: 121 min Pause übrig), und ein Tipp öffnete kein Fenster mehr. Jetzt bleibt höchstens die Dauer der gezogenen Stufe (gemessen 1 min), und Zeitmarken aus der „Zukunft“ verfallen.
+- **Weitere Klienten mit demselben Speicherplatz:** Das Dorf (stadt-leicht/spiel.js, stadt-leicht/quests.js) und der Ersatz-Klient in `marke()` (livechat.js) erneuerten die Sitzung ohne Schutz – wer während einer Sperre das Dorf öffnete, konnte die Anmeldung der ganzen Seite verlieren. Jetzt dieselbe Hülle (402/429 beim Erneuern → 503, dann 1 → 2 → 5 → 15 min Pause auf diesem Weg). Nachgestellt mit supabase-js 2.117.3 (abgelaufene Sitzung, Erneuern antwortet 402): ohne Hülle ist die Sitzung weg, mit Hülle bleibt sie, 1 Anfrage ans Netz. `marke()` legt seinen Ersatz-Klienten nur noch einmal je Seite an. Das Dorf-Bündel ist neu gepackt (`werkzeug/leicht-packen.js`).
+- **Keine Gastsitzung über einer echten Anmeldung:** Fand `marke()` keine Sitzung (weil die Bremse das Erneuern abfing oder supabase-js einen Fehlschlag 60 s merkt), lief `signInAnonymously()` auf dem Haupt-Klienten und konnte die echte Sitzung im Speicher durch eine anonyme ersetzen. Jetzt nie, wenn Backend ein Konto kennt oder im Speicher eine nicht-anonyme Sitzung liegt (dann diesmal keine Relais-Marke, der nächste Versuch holt die echte).
+- **Lämpchen an der 120er-Grenze:** Eine Rundmail kommt in einem Zug, alle Zeilen tragen dieselbe Zeit; an der Grenze war die Reihenfolge zufällig. Postfach, Lämpchen und Grenze ordnen jetzt nach Zeit und dann Kennung, die Grenze vergleicht beides (Zeit auf Mikrosekunden).
+- **Sonde:** Die Sperre der Echtzeit-Leitung ist jetzt wie in Wirklichkeit nachgestellt (der Handshake wird abgelehnt, die Verbindung öffnet sich nie, Schluss 1006; vorher öffnete routeWebSocket und schloss dann mit 4000, und Phoenix setzte dabei den Versuchszähler zurück). Der Ersatz sitzt vor dem Gegenstück von routeWebSocket (sonst ging jeder Versuch an ihm vorbei – so im ersten Lauf von R); binäre Rundrufe (realtime-js 2.x) werden mitgezählt. Neu: R (Raumkanal mit Puls über den Klienten von livechat.js), P, U.
+- **Bewusst nicht geändert:** Ton und Blase bei verdeckter Seite (braucht Xanders Entscheidung, Vorschlag unten); das Zurückkommen auf die Seite löst eine Server-Bremse nicht (sonst bei jedem App-Wechsel ein Durchgang in die Sperre).
+
 ### Messung vorher/nachher – Sonde `werkzeug/pruefe-885-sparsam.js`
-Supabase ist nachgebaut (echtes supabase-js 2.117.3, Route, routeWebSocket). Je Fall laufen 10 min mit `page.clock`. Getestet wird der Betreiber-Tab ohne Klassenzimmer; Emmy ist in jedem Zeitraum Fuchs.
+Supabase ist nachgebaut (echtes supabase-js 2.117.3, Route, routeWebSocket; in der Sperre seit Nachbesserung 2 ein Websocket-Ersatz, dessen Handshake scheitert). Je Fall laufen 10 min mit `page.clock`. Getestet wird der Betreiber-Tab ohne Klassenzimmer, in Fall R mit einem Raumkanal über den Klienten von livechat.js; Emmy ist in jedem Zeitraum Fuchs.
 
 | Fall | 884 (Gegenprobe 02613a71) | 885 |
 |---|---|---|
@@ -5030,31 +5040,37 @@ Supabase ist nachgebaut (echtes supabase-js 2.117.3, Route, routeWebSocket). Je 
 | A Fuchs-Abfragen (results + community_*) | 480 | 4 |
 | A `profiles?select=*` / `private_messages?select=*` | 150 / 30 | 0 / 0 |
 | B verdeckt (nach 90 s sichtbar) | 992 | 10 (nur „zuletzt aktiv“) |
-| C 402, sichtbar | 4 327 + 62 Echtzeit-Versuche, Anmeldung gelöscht | 4 + 13–15 Echtzeit-Versuche, Anmeldung bleibt |
+| C 402, sichtbar (seit Nachbesserung 2: Handshake abgelehnt wie bei Supabase) | 5 011 + 62 Echtzeit-Versuche, Anmeldung gelöscht (mit routeWebSocket: 4 327) | 8 + 15 Echtzeit-Versuche, Anmeldung bleibt (mit routeWebSocket: 4 + 13–15) |
 | C Tipp in der Sperre, dann noch ein Tipp nach 3 s | 1 / 1 | 1 / 0 |
-| C nach Ende der Sperre wieder da | sofort | nach 0,5–0,8 min (zwei Läufe; die Echtzeit-Leitung meldet sich; erste 885: 12–18 min) |
+| C nach Ende der Sperre wieder da | sofort | nach 0,5–0,8 min (drei Läufe; die Echtzeit-Leitung meldet sich; erste 885: 12–18 min) |
 | C 503 für 20 s (eine Leseabfrage, dazu die Takte) | 59 | 3 |
 | C Netz weg 10 min (erreicht den Server nicht) | 11 055 | 63–72 (Zufallsanteil der Pausen; erste 885: 44–96) |
 | D 00:05, heute niemand, zuletzt aktiv vor 3 Tagen: Fuchs-Abfragen | 960 | 4 |
 | D Rückwärtssuche „Fuchs des Tages“ | 21 Abfragen | 0 in diesem Lauf (schon gemerkt), ohne Gedächtnis 4; Ergebnis gleich (Emmy, „übernommen“) |
 | E eigene Runde mit den meisten Punkten: Gratulation | 1 | 1 |
 | G 402 bei verdeckter Seite, 10 min | 4 322 | 3–4 (nur „zuletzt aktiv“, je einmal nach Ablauf der Pause) |
-| H über Mitternacht offen: Fuchs-Abfragen in den 10 min danach | 717 | 4, Ergebnis gleich (Emmy, „übernommen“) |
+| H über Mitternacht offen: Fuchs-Abfragen in den 10 min danach | 717–728 | 4, Ergebnis gleich (Emmy, „übernommen“) |
 | L abgemeldet, nach der Sperre angemeldet: echtes Profil | ja | ja (erste 885: Ersatzprofil mit Schreibsperre) |
 | M alte ungelesene hinter 130 eigenen: Lämpchen nach dem Lesen | aus | aus (erste 885: bleibt an) |
 | N eine Anfrage hängt: Durchgänge in den 5 min danach | 15 | 15 (erste 885: 0) |
+| R Raumkanal ohne Websocket, ohne Sperre: REST-Rundrufe in 60 s | 10 | 10 (Notweg wie bisher) |
+| R dann 402 bei verdeckter Seite, 10 min: REST-Rundrufe (von 100 Pulsen) / alle Anfragen | 100 / 4 422 | 3–4 / 4 (Nachbesserung 1: 100 / 103) |
+| R nach der Sperre: Puls kommt wieder an | nach 0,2 min | nach 0,2 min |
+| P Server wieder da, Bremse noch zu: Einstellung speichern | die des anderen Geräts bleibt | bleibt (Nachbesserung 1: überschrieben) |
+| U Uhr 2 h zurück: Pause übrig / ein Tipp öffnet einen Versuch | keine Bremse | 1 min / ja (Nachbesserung 1: 121 min) |
 
-- Gegenprobe gegen 884: **16 rot** (A 3, B 3, C 6, D 2, G 1, H 1). E, L, M, N sind auf 884 grün; das ist gewollt: E zeigt, dass die Gratulation geblieben ist, und L, M, N sind Rückschritte der ersten 885 (dort rot: C „binnen 3 min wieder da“ (18,2 min), L (Ersatzprofil mit „Der Server pausiert gerade (402)“), M 2, N (0 Durchgänge)).
+- Gegenprobe gegen 884: **18 rot** (A 3, B 3, C 6, D 2, G 1, H 1, R 2; bis Nachbesserung 1: 16). Gegenprobe gegen 885 nach Nachbesserung 1 (fecdf57a, Fälle C, G, R, P, U): **4 rot** (R 2, P, U); C und G dort grün. E, L, M, N sind auf 884 grün; das ist gewollt: E zeigt, dass die Gratulation geblieben ist, und L, M, N sind Rückschritte der ersten 885 (dort rot: C „binnen 3 min wieder da“ (18,2 min), L (Ersatzprofil mit „Der Server pausiert gerade (402)“), M 2, N (0 Durchgänge)).
 - Weitergerechnet für den Betreiber-Tab: Sichtbar sind es bei 885 ≈ 1 660 statt ≈ 5 950 Anfragen je Stunde (Nachbesserung 1: +1 winzige Abfrage je Takt, solange etwas ungelesen ist). Verdeckt sind es ≈ 60 statt ≈ 1 330 im echten, drosselnden Browser (Modell, das zum Log passt). In der Sperre sind es ≈ 25 statt ≈ 4 200 (Log), sichtbar sogar ≈ 26 000 bei 884.
 - **Andere Sonden auf 885 (erste Fassung):**
   - Grün: 884-notweg (91 Prüfungen), 884-beta, 876-start-schlank, runde99-rueckfrage, 859-kanal-sofort, 871-leitung-frisch, 867-spiel-nach-start und 884-leitung.
   - 694-leistung: eine Zeile rot (6 Anfragen beim erneuten Öffnen), auf 884 genauso, also unverändert.
   - ladezeit: Wackler. Das Seitenbild von raw.githubusercontent.com (1,3 MB, echtes Netz) kommt je nach Leitung im ersten, zweiten oder dritten Laden und färbt dann „nach dem Update“ bzw. „ohne Update“ rot. 885 war in 2 von 5 Läufen grün, 884 in 3 von 3. Zwei der Läufe protokollierten jede große Datei: Das Bild ist der Grund, nicht 885 (alle eigenen Dateien kamen gleich).
 - **Andere Sonden nach Nachbesserung 1:** grün: runde99-rueckfrage (die Attrappe dort kennt jetzt `.in()` für das Funk-Nachladen), 884-notweg, 884-beta, 876-start-schlank, 859-kanal-sofort, 871-leitung-frisch, 867-spiel-nach-start, 884-leitung und ladezeit. 694-leistung: dieselbe eine Zeile rot wie auf 884 (6 Anfragen beim erneuten Öffnen), unverändert.
+- **Andere Sonden nach Nachbesserung 2 (auf min/):** grün: runde99-rueckfrage, 884-notweg, 884-beta, 876-start-schlank, 859-kanal-sofort, 871-leitung-frisch, 867-spiel-nach-start, 884-leitung, ladezeit und leicht (das neu gepackte Dorf lädt ohne Fehler). 694-leistung: dieselbe eine Zeile rot wie auf 884 (6 Anfragen beim erneuten Öffnen), unverändert. Sonde 885-sparsam: alle 13 Fälle grün.
 - **Ehrlich:**
   - „Verdeckt“ ist in der Sonde `document.hidden` samt visibilitychange bis window. Die Drosselung durch den Browser ist nicht nachgestellt, deshalb zählt 884 verdeckt hier so viel wie sichtbar.
   - Die Datenmengen sind die der Attrappe; echte Profilzeilen mit Bildern sind größer.
-  - Das Klassenzimmer (Spiel-Abgleich verdeckt) ist nur gelesen und nicht in dieser Sonde gemessen.
+  - Vom Klassenzimmer misst die Sonde nur den Raumkanal mit Puls (Fall R, ohne WebRTC und Ton); der Spiel-Abgleich bei verdeckter Seite ist nur gelesen.
 
 ### Offen (885)
 - **Xander, sofort:** den Tab auf dem Samsung schließen. Er schickt sonst weiter Anfragen, und mit 884 begänne nach dem Zurücksetzen des Kontingents sofort wieder das alte Muster. 885 muss live sein, bevor das Kontingent zurückgesetzt wird.
