@@ -5016,6 +5016,10 @@ Supabase ist nachgebaut (echtes supabase-js 2.117.3, Route, routeWebSocket). Je 
 
 - Gegenprobe gegen 884: **14 rot** (A 3, B 3, C 6, D 2). E ist grün; das ist gewollt, denn es zeigt, dass die Gratulation geblieben ist.
 - Weitergerechnet für den Betreiber-Tab: Sichtbar sind es bei 885 ≈ 1 480 statt ≈ 5 950 Anfragen je Stunde. Verdeckt sind es ≈ 60 statt ≈ 1 330 im echten, drosselnden Browser (Modell, das zum Log passt). In der Sperre sind es ≈ 25 statt ≈ 4 200 (Log), sichtbar sogar ≈ 26 000 bei 884.
+- **Andere Sonden auf 885:**
+  - Grün: 884-notweg (91 Prüfungen), 884-beta, 876-start-schlank, runde99-rueckfrage, 859-kanal-sofort, 871-leitung-frisch, 867-spiel-nach-start und 884-leitung.
+  - 694-leistung: eine Zeile rot (6 Anfragen beim erneuten Öffnen), auf 884 genauso, also unverändert.
+  - ladezeit: Wackler. Das Seitenbild von raw.githubusercontent.com (1,3 MB, echtes Netz) kommt je nach Leitung im ersten, zweiten oder dritten Laden und färbt dann „nach dem Update“ bzw. „ohne Update“ rot. 885 war in 2 von 5 Läufen grün, 884 in 3 von 3. Zwei der Läufe protokollierten jede große Datei: Das Bild ist der Grund, nicht 885 (alle eigenen Dateien kamen gleich).
 - **Ehrlich:**
   - „Verdeckt“ ist in der Sonde `document.hidden`. Die Drosselung durch den Browser ist nicht nachgestellt, deshalb zählt 884 verdeckt hier so viel wie sichtbar.
   - Die Datenmengen sind die der Attrappe; echte Profilzeilen mit Bildern sind größer.
