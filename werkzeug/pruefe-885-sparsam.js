@@ -46,10 +46,28 @@
      E  eigene Runde heute mit den meisten Punkten: die Gratulation „Fuchs
         des Tages“ kommt weiterhin (eine Systemnachricht).
      F  keine Seitenfehler aus den neuen Stellen.
+   Nachbesserung 1 (Prüfer-Befunde zu 885):
+     G  402 bei VERDECKTER Seite (so war es auf dem Samsung), 10 min:
+        höchstens 12 Anfragen.
+     H  Seite bleibt über Mitternacht offen (23:52 → 00:12), heute war
+        jemand aktiv, nach Mitternacht noch niemand: Fuchs-Abfragen in den
+        10 min nach Mitternacht ≤ 30; danach „übernommen“ bei Emmy.
+     L  abgemeldeter Tab zog in der Sperre die Bremse; nach dem Ende ein
+        Tipp ins Feld, 8 s später Anmelden: echtes Profil, kein Ersatzprofil
+        mit Schreibsperre (eine Anmeldung mit 2xx lockert die Bremse).
+     M  eine alte ungelesene Nachricht hinter 130 eigenen (Rundmail): nach
+        dem Lesen aller Nachrichten, die das Postfach zeigt, ist das
+        Lämpchen aus (es zählt dasselbe Fenster wie das Postfach).
+     N  eine einzige notifications-Anfrage hängt ohne Antwort: danach
+        laufen die Benachrichtigungen weiter (≥ 5 Durchgänge in 5 min).
+   Gegenprobe Nachbesserung: auf dem ersten 885 (f832f83b) sind L, M, N
+   rot; auf 884 grün (es sind Rückschritte von 885, nicht von 884).
+   Verdeckt/sichtbar wird wie im Browser mit einem visibilitychange
+   verschickt, das bis window aufsteigt (dort hört die Echtzeit-Bibliothek).
    Zahlen je Fall stehen am Ende (und mit AUSGABE=datei.json als JSON).
 
    Gegenprobe 884 (02613a71, Baum aus git archive + Verweisen auf die
-   übrigen Ordner): 14 rot (A 3, B 3, C 6, D 2), E grün.
+   übrigen Ordner): A–D, G, H rot, E, L, M, N grün.
    Schalter:
      WURZEL=/pfad      anderer Baum (Gegenprobe 884: git archive 02613a71)
      QUELLE=1          index.html?quelle statt min/
@@ -69,7 +87,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const QUELLE = Boolean(process.env.QUELLE);
-const FAELLE = (process.env.FAELLE || "A,B,C,D,E").split(",").map((x) => x.trim()).filter(Boolean);
+const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N").split(",").map((x) => x.trim()).filter(Boolean);
 const SUPA = [process.env.SUPABASE_UMD,
   "/tmp/claude-0/node_modules/@supabase/supabase-js/dist/umd/supabase.js",
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
@@ -132,6 +150,11 @@ function datenbank(fall, t0) {
   } else if (fall === "E") {
     runde(ICH, t0 - 600000, 60);
     runde(EMMY, t0 - 3600000, 10);
+  } else if (fall === "H") {
+    /* die Seite ist um 23:52 offen; heute (vor Mitternacht) spielte Emmy, davor jeden zweiten Tag */
+    runde(EMMY, t0 - 3 * 3600000, 50);
+    runde(ICH, t0 - 4 * 3600000, 10);
+    for (let i = 1; i < 60; i += 2) runde(i % 3 ? EMMY : TOM, mitternacht - i * tag + 12 * 3600000, 30 + (i % 7));
   } else {
     runde(EMMY, t0 - 1800000, 80);
     runde(ICH, t0 - 3600000, 20);
@@ -144,6 +167,15 @@ function datenbank(fall, t0) {
   nachricht(EMMY, ICH, t0 - 800000, false, "Bist du heute im Klassenzimmer?");
   nachricht(TOM, ICH, t0 - 5 * 86400000, true, "Danke");
   for (let i = 0; i < 30; i++) nachricht(ICH, i % 2 ? EMMY : TOM, t0 - (i + 1) * 3600000, i % 3 === 0, "Rundmail " + i + ": " + "Neuigkeiten ".repeat(40));
+  /* Nachbesserung 1 — die Tabelle notifications ist nicht mehr leer (zwei ungelesene, eine gelesene) */
+  db.notifications.push({ id: "b1", user_id: ICH, message: "Emmy hat deinen Beitrag kommentiert", read: false, created_at: iso(t0 - 700000) },
+    { id: "b2", user_id: ICH, message: "Tom hat deinen Tipp gelikt", read: false, created_at: iso(t0 - 600000) },
+    { id: "b3", user_id: ICH, message: "Alt", read: true, created_at: iso(t0 - 9 * 86400000) });
+  if (fall === "M") {
+    db.private_messages = [];
+    nachricht(EMMY, ICH, t0 - 200 * 3600000, false, "Alte ungelesene");
+    for (let i = 0; i < 130; i++) nachricht(ICH, i % 2 ? EMMY : TOM, t0 - (i + 1) * 60000, false, "Rundmail " + i);
+  }
   for (let i = 0; i < 6; i++) db.activity.push({ id: i + 1, text: "Emmy hat eine Runde gespielt (" + i + ")", date: iso(t0 - i * 600000), created_at: iso(t0 - i * 600000) });
   return db;
 }
@@ -194,7 +226,8 @@ function ordnen(zeilen, sp) {
     zeilen.sort((a, b) => (a[spalte] > b[spalte] ? ab : a[spalte] < b[spalte] ? -ab : 0));
   }
   const l = Number(sp.get("limit"));
-  return l > 0 ? zeilen.slice(0, l) : zeilen;
+  const ab = Number(sp.get("offset")) || 0;   // .range(a, b) → offset/limit
+  return l > 0 ? zeilen.slice(ab, ab + l) : zeilen.slice(ab);
 }
 function waehlen(zeilen, sp) {
   const s = sp.get("select");
@@ -245,13 +278,14 @@ function schluessel(adresse, methode) {
     await ctx.addInitScript(([sitzung]) => {
       try {
         localStorage.setItem("dma_tour_seen", "1");
-        localStorage.setItem("sb-attrappe-auth-token", JSON.stringify(sitzung));
+        if (sitzung && sitzung.access_token) localStorage.setItem("sb-attrappe-auth-token", JSON.stringify(sitzung));
       } catch (e) {}
       let verdeckt = false;
       Object.defineProperty(Document.prototype, "hidden", { configurable: true, get() { return verdeckt; } });
       Object.defineProperty(Document.prototype, "visibilityState", { configurable: true, get() { return verdeckt ? "hidden" : "visible"; } });
-      window.__sichtbar = (an) => { verdeckt = !an; document.dispatchEvent(new Event("visibilitychange")); };
-    }, [{ access_token: tokenFuer(ablauf), refresh_token: "rt-1", expires_in: ablauf - Math.floor(t0 / 1000), expires_at: ablauf, token_type: "bearer", user: NUTZER }]);
+      /* wie im Browser: das Ereignis steigt bis window auf (dort hört die Echtzeit-Bibliothek) */
+      window.__sichtbar = (an) => { verdeckt = !an; document.dispatchEvent(new Event("visibilitychange", { bubbles: true })); };
+    }, [opt.ohneSitzung ? {} : { access_token: tokenFuer(ablauf), refresh_token: "rt-1", expires_in: ablauf - Math.floor(t0 / 1000), expires_at: ablauf, token_type: "bearer", user: NUTZER }]);
 
     const kopf = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Allow-Methods": "*", "Access-Control-Expose-Headers": "Content-Range, X-Total-Count" };
     async function supabaseAntwort(route, req) {
@@ -261,6 +295,8 @@ function schluessel(adresse, methode) {
       if (process.env.LAUT) console.log("    [netz] " + zustand.phase + " " + zustand.modus + " " + methode + " " + req.url().slice(0, 160));
       const z = zaehler();
       z.gesamt++; z.je[k] = (z.je[k] || 0) + 1;
+      /* N: genau eine Anfrage bekommt nie eine Antwort */
+      if (zustand.haengen && zustand.haengen.test(k) && !zustand.gehangen) { zustand.gehangen = true; return new Promise(() => {}); }
       if (zustand.modus === "offline") return route.abort("internetdisconnected");
       if (zustand.modus === "402" || zustand.modus === "503") {
         const body = zustand.modus === "402"
@@ -356,7 +392,10 @@ function schluessel(adresse, methode) {
     pg.on("pageerror", (e) => zustand.fehler.push(String(e.message || e).slice(0, 300)));
     if (process.env.LAUT) pg.on("console", (m) => console.log("    [seite] " + m.type() + " " + m.text().slice(0, process.env.LAUT === "2" ? 2000 : 200)));
     await pg.goto(adresse, { waitUntil: "domcontentloaded" });
-    await pg.waitForFunction(() => typeof Backend !== "undefined" && Backend.currentUser && Backend.currentUser() && Backend.currentProfile && Backend.currentProfile(), null, { timeout: 90000 });
+    if (opt.ohneSitzung) {
+      await pg.waitForFunction(() => typeof Backend !== "undefined" && document.getElementById("tickerTrack"), null, { timeout: 90000 });
+      await warte(3000);
+    } else await pg.waitForFunction(() => typeof Backend !== "undefined" && Backend.currentUser && Backend.currentUser() && Backend.currentProfile && Backend.currentProfile(), null, { timeout: 90000 });
     const jetzt = await pg.evaluate(() => Date.now());
     await pg.clock.pauseAt(jetzt + 1000);
     zustand.jetzt = jetzt + 1000;
@@ -382,6 +421,7 @@ function schluessel(adresse, methode) {
   }
   const T_TAG = Date.parse("2026-10-24T10:00:00Z");      // 12:00 in Berlin
   const T_NACHT = Date.parse("2026-10-24T22:05:00Z");    // 00:05 in Berlin (25.10.)
+  const T_VOR_MITTERNACHT = Date.parse("2026-10-24T21:52:00Z");   // 23:52 in Berlin (24.10.)
 
   try {
     /* ---------------- A: sichtbar ---------------- */
@@ -442,7 +482,10 @@ function schluessel(adresse, methode) {
       sage(z.ws <= 20, "402: Echtzeit verbindet höchstens 20-mal neu in 10 min (bisher alle 10 s)", String(z.ws));
       const sitz = await s.pg.evaluate(() => ({ speicher: Boolean(localStorage.getItem("sb-attrappe-auth-token")), konto: Boolean(Backend.currentUser()) }));
       sage(sitz.speicher, "Sitzung nach 402 beim Erneuern noch im Speicher (nach der Sperre nicht abgemeldet)", JSON.stringify(sitz));
-      /* ein echter Tipp öffnet genau einen Versuch – ein zweiter 3 s später keinen */
+      /* ein echter Tipp öffnet genau einen Versuch – ein zweiter 3 s später keinen.
+         Nachbesserung 1: erst warten, bis die Bremse wirklich gezogen ist (die Stufen haben ±20 % Zufall; endete
+         eine Stufe kurz vor dem Tipp, ging die Abfrage ungebremst hinaus, und die Prüfung hing vom Zufall ab). */
+      for (let i = 0; i < 90 && !(await s.pg.evaluate(() => Boolean(Backend.bremse && Backend.bremse().aktiv))); i++) await laufen(s, 1000);
       const t1 = phase(s, "C-tipp1");
       await s.pg.mouse.click(20, 300);
       await s.pg.evaluate(() => { window.__tipp = Backend.getUnreadNotifications(); });
@@ -455,13 +498,15 @@ function schluessel(adresse, methode) {
       await laufen(s, 1000);
       await s.pg.evaluate(() => window.__tipp);
       sage(t1.gesamt === 1 && t2.gesamt === 0, "Tipp in der Sperre: genau ein Versuch, zweiter Tipp nach 3 s keiner", t1.gesamt + " / " + t2.gesamt);
-      /* Sperre vorbei: spätestens nach 20 min wieder da */
+      /* Sperre vorbei: spätestens nach 20 min wieder da – mit Echtzeit-Leitung schon nach wenigen Minuten
+         (Nachbesserung 1: die wieder verbundene Leitung lockert die Bremse) */
       const zw = phase(s, "C-wieder");
       s.zustand.modus = "ok";
       let nach = 0;
-      for (; nach < 20 * 60000 && !((zw.ok["notifications*"] || zw.ok["notifications"]) > 0); nach += 30000) await laufen(s, 30000, 5000);
+      for (; nach < 20 * 60000 && !((zw.ok["notifications*"] || zw.ok["notifications"]) > 0); nach += 10000) await laufen(s, 10000, 5000);
       const los = await s.pg.evaluate(() => (Backend.bremse ? !Backend.bremse().aktiv : true));
       sage((zw.ok["notifications*"] || zw.ok["notifications"]) > 0 && los, "nach der Sperre wieder da (Benachrichtigungen geholt, Bremse los)", "nach " + Math.round(nach / 60000 * 10) / 10 + " min · " + kurz(zw));
+      sage(nach <= 3 * 60000, "nach der Sperre binnen 3 min wieder da, ohne Tipp (die Echtzeit-Leitung meldet sich zurück)", "nach " + Math.round(nach / 60000 * 10) / 10 + " min");
       ergebnis.faelle.C = { gesamt: z.gesamt, ws: z.ws, je: z.je, sitzung: sitz, tipp: [t1.gesamt, t2.gesamt], wiederNachMin: Math.round(nach / 6000) / 10 };
       /* 503: eine Abfrage – supabase-js fragte bei 503 von sich aus noch dreimal nach */
       await laufen(s, 30000);
@@ -470,7 +515,9 @@ function schluessel(adresse, methode) {
       await s.pg.evaluate(() => { window.__q = Backend.zugang().from("activity").select("id").limit(1); window.__q.then(() => {}); });
       await laufen(s, 20000);
       const n503 = z5.gesamt;
-      sage(n503 <= 2, "503 für 20 s: höchstens 2 Anfragen (eine Leseabfrage; die Takte ruhen)", String(n503));
+      /* Nachbesserung 1: zwei Fehlschläge müssen ≥ 2 s auseinanderliegen – supabase-js wiederholt nach 1 s und 3 s,
+         erst die dritte Antwort zieht die Bremse, die vierte Anfrage beantwortet sie selbst. */
+      sage(n503 <= 3, "503 für 20 s: höchstens 3 Anfragen (eine Leseabfrage; die Takte ruhen)", String(n503));
       s.zustand.modus = "ok";
       await s.pg.mouse.click(20, 300);   // ein Tipp: der nächste Versuch darf sofort (sonst bis zu 18 min Pause)
       await s.pg.evaluate(() => { try { Backend.zugang().from("activity").select("id").limit(1).then(() => {}); } catch (e) {} });
@@ -523,6 +570,112 @@ function schluessel(adresse, methode) {
       sage(gratuliert.length === 1, "Gratulation „Fuchs des Tages“ kommt (eine Systemnachricht)", String(gratuliert.length));
       fehlerPruefen(s);
       ergebnis.faelle.E = { gratuliert: gratuliert.length };
+      await s.ctx.close();
+    }
+
+    /* ---------------- G: 402 bei verdeckter Seite ---------------- */
+    if (FAELLE.includes("G")) {
+      abschnitt("G", "402 bei verdeckter Seite (wie auf dem Samsung), 10 min");
+      const s = await seiteOeffnen("G", T_TAG);
+      await laufen(s, 90000);
+      await s.pg.evaluate(() => window.__sichtbar(false));
+      await laufen(s, 5000);
+      const z = phase(s, "G");
+      s.zustand.modus = "402";
+      s.zustand.offeneWs.splice(0).forEach((ws) => { try { ws.close({ code: 4000, reason: "402" }); } catch (e) {} });
+      await laufen(s, 600000);
+      console.log("  Anfragen ans Netz in 10 min 402 verdeckt: " + z.gesamt + " (Echtzeit-Versuche: " + z.ws + ") · " + kurz(z));
+      sage(z.gesamt <= 12, "402 verdeckt: höchstens 12 Anfragen in 10 min", String(z.gesamt));
+      const sitz = await s.pg.evaluate(() => Boolean(localStorage.getItem("sb-attrappe-auth-token")));
+      sage(sitz, "Sitzung bleibt im Speicher", String(sitz));
+      fehlerPruefen(s);
+      ergebnis.faelle.G = { gesamt: z.gesamt, ws: z.ws, je: z.je };
+      await s.ctx.close();
+    }
+
+    /* ---------------- H: über Mitternacht offen ---------------- */
+    if (FAELLE.includes("H")) {
+      abschnitt("H", "Seite offen von 23:52 über Mitternacht, heute war Emmy aktiv, danach noch niemand");
+      const s = await seiteOeffnen("H", T_VOR_MITTERNACHT, { rundenVerwerfen: true });
+      /* bis Mitternacht laufen (die Anmeldebelohnung beim Start füllt „heute“ nicht – rundenVerwerfen) */
+      const bisNull = T_NACHT - 5 * 60000 - s.zustand.jetzt;
+      await laufen(s, bisNull);
+      const z = phase(s, "H");
+      await laufen(s, 600000);
+      const fuchs = summe(z, FUCHS);
+      console.log("  Fuchs-Abfragen in den 10 min nach Mitternacht: " + fuchs + " · alle: " + z.gesamt + " · " + kurz(z));
+      sage(fuchs <= 30, "über Mitternacht offen: Fuchs-Abfragen nach Mitternacht ≤ 30 in 10 min", String(fuchs));
+      await s.pg.evaluate(() => { window.__f = Backend.getFoxOfTheDay(); });
+      await laufen(s, 8000);
+      const f = await s.pg.evaluate(() => window.__f.then((x) => (x ? { id: x.user_id, name: x.name, uebernommen: Boolean(x.uebernommen) } : null)));
+      sage(Boolean(f && f.id === EMMY && f.uebernommen), "nach Mitternacht: Fuchs des Tages „übernommen“ bei Emmy (wie vorher)", JSON.stringify(f));
+      fehlerPruefen(s);
+      ergebnis.faelle.H = { fuchs, gesamt: z.gesamt, je: z.je, tagesfuchs: f };
+      await s.ctx.close();
+    }
+
+    /* ---------------- L: Anmeldung nach Ende der Sperre ---------------- */
+    if (FAELLE.includes("L")) {
+      abschnitt("L", "abgemeldet, 402 für 3 min, dann frei; Tipp ins Feld, 8 s später Anmelden");
+      const s = await seiteOeffnen("A", T_TAG, { ohneSitzung: true });
+      await laufen(s, 30000);
+      const z4 = phase(s, "L-402");
+      s.zustand.modus = "402";
+      await laufen(s, 180000);
+      const br = await s.pg.evaluate(() => (Backend.bremse ? Backend.bremse() : null));
+      console.log("  in der Sperre (abgemeldet, 3 min): " + z4.gesamt + " Anfragen · " + kurz(z4) + " · Bremse " + JSON.stringify(br));
+      s.zustand.modus = "ok";
+      const zl = phase(s, "L-anmelden");
+      await s.pg.mouse.click(20, 300);       // Tipp ins E-Mail-Feld (verbraucht das 5-s-Fenster)
+      await laufen(s, 8000);
+      await s.pg.mouse.click(20, 300);       // Tipp auf „Anmelden“ (kein neues Fenster: < 15 s)
+      await s.pg.evaluate(() => { window.__login = Backend.signIn("xander@attrappe.test", "geheim").then(() => "ok", (e) => "err:" + (e && e.message)); });
+      await laufen(s, 12000);
+      const erg = await s.pg.evaluate(async () => { const r = await window.__login; const p = Backend.currentProfile();
+        return { r, ladefehler: Boolean(p && p.ladefehler), text: p && p.ladefehlerText, punkte: p && p.points }; });
+      console.log("  Anmeldung: " + JSON.stringify(erg) + " · " + kurz(zl));
+      sage(erg.r === "ok" && !erg.ladefehler && erg.punkte === 900, "nach Ende der Sperre angemeldet MIT echtem Profil (kein Ersatzprofil mit Schreibsperre)", JSON.stringify(erg));
+      fehlerPruefen(s);
+      ergebnis.faelle.L = { sperre: z4.gesamt, anmeldung: erg };
+      await s.ctx.close();
+    }
+
+    /* ---------------- M: Lämpchen = Postfach-Fenster ---------------- */
+    if (FAELLE.includes("M")) {
+      abschnitt("M", "eine alte ungelesene Nachricht hinter 130 eigenen (Rundmail)");
+      const s = await seiteOeffnen("M", T_TAG);
+      await laufen(s, 60000);
+      const lampe = () => s.pg.evaluate(() => { const b = document.getElementById("inboxTabBadge"); const l = document.getElementById("loginBtnBadge");
+        return { inbox: b ? b.style.display : "fehlt", pille: l ? l.style.display : "fehlt" }; });
+      const vorher = await lampe();
+      const postfach = await s.pg.evaluate(async () => { const m = await Backend.getMyMessages(); const ids = m.inbox.filter((x) => !x.read).map((x) => x.id);
+        await Backend.markMessagesRead(ids); return { imPostfach: m.inbox.length, ungelesenImPostfach: ids.length }; });
+      /* die Benachrichtigungen (Tabelle notifications) gelten als gesehen – es geht nur um das Postfach */
+      s.zustand.db.notifications.forEach((n) => { n.read = true; });
+      await laufen(s, 45000);
+      const nachher = await lampe();
+      console.log("  vorher " + JSON.stringify(vorher) + " · Postfach " + JSON.stringify(postfach) + " · nach dem Lesen " + JSON.stringify(nachher));
+      sage(nachher.inbox !== "block", "nach dem Lesen aller Nachrichten im Postfach ist das Postfach-Lämpchen aus (zählt nur, was das Postfach zeigt)", JSON.stringify(nachher));
+      sage(nachher.pille !== "block", "… und die Profil-Pille auch", JSON.stringify(nachher));
+      fehlerPruefen(s);
+      ergebnis.faelle.M = { vorher, postfach, nachher };
+      await s.ctx.close();
+    }
+
+    /* ---------------- N: eine hängende Anfrage ---------------- */
+    if (FAELLE.includes("N")) {
+      abschnitt("N", "eine einzige notifications-Anfrage hängt ohne Antwort, danach 5 min");
+      const s = await seiteOeffnen("A", T_TAG);
+      await laufen(s, 60000);
+      s.zustand.haengen = /^notifications/;
+      await laufen(s, 25000);
+      const z = phase(s, "N");
+      await laufen(s, 300000);
+      console.log("  gehangen: " + Boolean(s.zustand.gehangen) + " · danach 5 min: " + kurz(z));
+      sage(Boolean(s.zustand.gehangen) && summe(z, /^friends\*?$/) >= 5, "nach einer hängenden Anfrage laufen die Benachrichtigungen weiter (≥ 5 Durchgänge in 5 min)",
+        "friends " + summe(z, /^friends\*?$/) + ", notifications " + summe(z, /^notifications\*?$/));
+      fehlerPruefen(s);
+      ergebnis.faelle.N = { friends: summe(z, /^friends\*?$/), je: z.je };
       await s.ctx.close();
     }
   } catch (e) {

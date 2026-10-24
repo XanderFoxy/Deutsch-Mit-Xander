@@ -132,10 +132,36 @@ window.Rueckfrage = (function () {
       .is("beantwortet", null)
       .order("id", { ascending: true })
       .limit(60);
+    /* FASSUNG 885 (Nachbesserung 1) — vom Funk nur nachladen, was neu ist. Vorher kamen bei jedem Takt (20 s, offen
+       8 s) die 20 neuesten Funkzeilen mit vollem Text – Claudes Antworten oft mehrere KB; bei sichtbarer Seite der
+       größte Posten beim Datenabfluss (gemessen ≈ 7 von 12 MB je Stunde). Jetzt: Kennung und „gelesen“ der 20
+       neuesten (winzig), den Text nur für Zeilen, die noch nicht da sind. Angezeigt wird genau dasselbe. */
     var b = sb.from("betreiber_funk")
-      .select("id, erstellt, von, text, gelesen")
+      .select("id, gelesen")
       .order("id", { ascending: false })
-      .limit(20);
+      .limit(20)
+      .then(function (k) {
+        if (!k || k.error || !k.data) return k;
+        var bekannt = {};
+        funk.forEach(function (m) { bekannt[m.id] = m; });
+        var fehlt = k.data.filter(function (x) { return !bekannt[x.id]; }).map(function (x) { return x.id; });
+        function zusammen(neu) {
+          return { data: k.data.map(function (x) {
+            var m = neu[x.id] || bekannt[x.id];
+            return m ? Object.assign({}, m, { gelesen: x.gelesen }) : null;
+          }).filter(Boolean) };
+        }
+        if (!fehlt.length) return zusammen({});
+        return sb.from("betreiber_funk")
+          .select("id, erstellt, von, text, gelesen")
+          .in("id", fehlt)
+          .then(function (v) {
+            if (!v || v.error || !v.data) return v;
+            var neu = {};
+            v.data.forEach(function (m) { neu[m.id] = m; });
+            return zusammen(neu);
+          });
+      });
     Promise.all([a, b]).then(function (r) {
       laeuft = false;
       if (!r[0].error && r[0].data) fragen = r[0].data;

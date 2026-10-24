@@ -7656,7 +7656,14 @@ window.LiveChat = (function () {
     praesenzKanal.on("presence", { event: "sync" }, praesenzLesen);
     praesenzKanal.on("presence", { event: "join" }, praesenzLesen);
     praesenzKanal.on("presence", { event: "leave" }, praesenzLesen);
-    praesenzKanal.subscribe(function (st) { if (st === "SUBSCRIBED") praesenzLesen(); });
+    praesenzKanal.subscribe(function (st) {
+      if (st !== "SUBSCRIBED") return;
+      praesenzLesen();
+      /* FASSUNG 885 (Nachbesserung 1) — die Leitung steht wieder: in einer Supabase-Sperre lehnt der Server auch sie
+         ab. Die Bremse in backend.js lässt dann den nächsten Versuch sofort hinaus, statt die Pause (bis 18 min)
+         abzuwarten. */
+      try { if (typeof Backend !== "undefined" && Backend && Backend.bremseLockern) Backend.bremseLockern(); } catch (e) {}
+    });
   }
 
   /* Die Präsenz trägt den RAUM mit. Nur so kann „/f Nickname" dorthin

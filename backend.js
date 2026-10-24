@@ -22,11 +22,13 @@ const Backend = (function () {
      429 (zu viel) oder 502–504/520–530 (Server weg) – oder ist das Netz weg –, pausieren Lese-Abfragen und rpc
      1 → 2 → 5 → 15 min (±20 % Zufall, damit nicht alle Geräte im selben Augenblick wiederkommen). In der Pause
      antwortet die Bremse selbst mit 429 (darauf wiederholt supabase-js nicht; bei 503 fragte es noch dreimal
-     nach) – es geht nichts ans Netz. 402 zieht sofort, alles andere erst der zweite Fehlschlag in Folge (ein
-     einzelner Aussetzer im Mobilnetz hält nichts an). Ist nur das Netz weg (kommt beim Server gar nicht an),
-     pausieren nur die Takte (Backend.bremse().aktiv); einzelne Abfragen – etwa das Profil beim Start – gehen
-     weiter hinaus, damit ein wackliges Mobilnetz beim Laden nichts aufhält.
-     Wieder los: jede Antwort, die zeigt, dass der Server lebt (unter 500, außer 402/429), löst sie sofort.
+     nach) – es geht nichts ans Netz. 402 zieht sofort, alles andere erst der zweite Fehlschlag in Folge, mit
+     mindestens 2 s Abstand (ein einzelner Aussetzer im Mobilnetz hält nichts an). Ist nur das Netz weg (kommt beim
+     Server gar nicht an), pausieren nur die Takte (Backend.bremse().aktiv), und das höchstens 1 → 2 min; einzelne
+     Abfragen – etwa das Profil beim Start – gehen weiter hinaus, damit ein wackliges Mobilnetz beim Laden nichts
+     aufhält.
+     Wieder los: jede Antwort, die zeigt, dass der Server lebt (unter 500, außer 402/429), löst sie sofort. Eine
+     Anmeldung mit 2xx oder die wieder verbundene Echtzeit-Leitung lassen den nächsten Versuch sofort hinaus.
      Spätestens nach der Pause geht der nächste Versuch hinaus – kein Stillstand nach Ende der Sperre. Ein echter
      Tipp oder Tastendruck öffnet für 5 s einen Versuch (höchstens alle 15 s); nach einem Netzfehler lösen
      „online“ und das Zurückkommen auf die Seite sie gleich.
@@ -35,28 +37,49 @@ const Backend = (function () {
      Ausnahme bei auth: das Erneuern der Sitzung. Eine 402/429 dort reicht die Bremse als „vorübergehend“ (503)
      weiter – sonst löscht supabase-js die Anmeldung, und nach der Sperre wären alle abgemeldet. */
   const BREMS_STUFEN = [60e3, 120e3, 300e3, 900e3];
+  /* Nachbesserung 1 — ist nur das Netz weg, erreicht ohnehin nichts den Server (kein Kontingent). Dann pausieren die
+     Takte höchstens 1 → 2 min statt bis 15 min, sonst blieben Walkie und Lämpchen in einem WLAN ohne Internet bis zu
+     18 min still. */
+  const BREMS_STUFEN_NETZ = [60e3, 120e3];
   const BREMS_CODES = [402, 429, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530];
-  const bremse = { bis: 0, stufe: 0, status: 0, frei: 0, freiAb: 0, folge: 0, abgefangen: 0 };
+  const bremse = { bis: 0, stufe: 0, status: 0, frei: 0, freiAb: 0, folge: 0, fehlZuletzt: 0, abgefangen: 0 };
   function bremseZiehen(status) {
     const jetzt = Date.now();
     const probe = jetzt <= bremse.frei;          // der Versuch nach einem Tipp ging schief
     bremse.frei = 0;
-    bremse.folge += 1;
-    if (status !== 402 && bremse.folge < 2 && !probe) return;
+    if (status !== 402 && !probe) {
+      /* Nachbesserung 1 — Fehlschläge zählen nur mit ≥ 2 s Abstand. checkNotifications schickt 4 Anfragen zugleich,
+         und supabase-js wiederholt eine Leseabfrage bei 503 schon nach 1 s: ein einziger kurzer Aussetzer zählte so
+         bis zu 4-mal und hielt 1 min lang alles an, auch Spielzüge. Jetzt braucht es zwei Fehlschläge, die mindestens
+         2 s auseinanderliegen – der Server ist dann wirklich eine Weile weg. */
+      if (jetzt - bremse.fehlZuletzt >= 2000) { bremse.folge += 1; bremse.fehlZuletzt = jetzt; }
+      if (bremse.folge < 2) return;
+    }
     if (jetzt < bremse.bis && !probe) return;    // Nachzügler derselben Runde: nicht doppelt hochstufen
-    const basis = BREMS_STUFEN[Math.min(bremse.stufe, BREMS_STUFEN.length - 1)];
     /* Scheitert der Versuch nach einem Tipp am Netz, bleibt eine Server-Sperre eine Server-Sperre. */
     bremse.status = status || (jetzt < bremse.bis ? bremse.status : 0);
+    const stufen = bremse.status === 0 ? BREMS_STUFEN_NETZ : BREMS_STUFEN;
+    const basis = stufen[Math.min(bremse.stufe, stufen.length - 1)];
     bremse.bis = jetzt + Math.round(basis * (0.8 + Math.random() * 0.4));
     bremse.stufe += 1;
   }
-  function bremseLoesen() { bremse.bis = 0; bremse.stufe = 0; bremse.frei = 0; bremse.folge = 0; bremse.status = 0; }
+  function bremseLoesen() { bremse.bis = 0; bremse.stufe = 0; bremse.frei = 0; bremse.folge = 0; bremse.fehlZuletzt = 0; bremse.status = 0; }
+  /* Nachbesserung 1 — ein Zeichen, dass der Server wieder lebt, bevor eine Datenbank-Abfrage durch ist: eine Antwort
+     von auth/v1 mit 2xx (z. B. die Anmeldung) oder die Echtzeit-Leitung meldet SUBSCRIBED (livechat.js, Präsenzkanal –
+     in der Sperre lehnt Supabase auch sie ab). Dann darf der nächste Versuch sofort hinaus. Vorher wartete ein Tab,
+     den niemand antippt, nach dem Ende der Sperre bis zu 18 min – und wer sich in diesem Augenblick neu anmeldete,
+     bekam von der eigenen Bremse ein Ersatzprofil mit Schreibsperre. Die Stufe bleibt, bis eine Abfrage wirklich
+     durchkommt: scheitert sie doch, geht es mit der nächsten Stufe weiter (kein Kreisel). */
+  function bremseLockern() { if (bremse.bis) { bremse.bis = 0; bremse.frei = 0; } }
   function bremseAktiv() { return Date.now() < bremse.bis; }
   function bremsFetch(eingabe, opt) {
     const adresse = String(typeof eingabe === "string" ? eingabe : (eingabe && eingabe.url) || eingabe);
     const rest = adresse.indexOf("/rest/v1/") >= 0;
     const erneuern = adresse.indexOf("/auth/v1/token") >= 0 && adresse.indexOf("refresh_token") >= 0;
-    if (!rest && !erneuern) return fetch(eingabe, opt);
+    if (!rest && !erneuern) {
+      if (adresse.indexOf("/auth/v1/") < 0) return fetch(eingabe, opt);
+      return fetch(eingabe, opt).then((antwort) => { if (antwort.ok) bremseLockern(); return antwort; });
+    }
     const methode = String((opt && opt.method) || (eingabe && eingabe.method) || "GET").toUpperCase();
     const lesen = erneuern || methode === "GET" || methode === "HEAD" || adresse.indexOf("/rest/v1/rpc/") >= 0;
     const jetzt = Date.now();
@@ -902,17 +925,30 @@ const Backend = (function () {
 
   /* FASSUNG 885 — für das Lämpchen im 20-s-Takt (app.js checkNotifications) reichen die ungelesenen
      eingegangenen Nachrichten mit Kennung und Zeit. Vorher kam jedes Mal getMyMessages: 120 volle
-     Nachrichten (select *) plus namesFor für den ganzen Postausgang. Das Postfach selbst lädt wie bisher. */
+     Nachrichten (select *) plus namesFor für den ganzen Postausgang. Das Postfach selbst lädt wie bisher.
+     Nachbesserung 1 — es zählt GENAU das, was das Postfach zeigt: ungelesene Eingänge unter den 120 neuesten
+     Nachrichten (ein- und ausgehend zusammen, wie getMyMessages). Ohne dieses Fenster zählte das Lämpchen auch
+     alte ungelesene Nachrichten, die hinter einer Rundmail (eine Zeile je Mitglied) liegen und die das Postfach
+     nie zeigt – es wäre für immer an geblieben, mit Blase und Erinnerungston bei jedem Laden. Die Grenze (Zeit der
+     120. neuesten Nachricht) kostet eine winzige Abfrage und nur, wenn überhaupt etwas ungelesen ist. */
   async function getUngeleseneNachrichten() {
     if (!demo.user) return [];
     if (client) {
+      const ich = demo.user.id;
       const { data, error } = await client.from("private_messages").select("id,read,created_at")
-        .eq("to_user", demo.user.id).eq("read", false).not("deleted_by_recipient", "is", true)
+        .eq("to_user", ich).not("read", "is", true).not("deleted_by_recipient", "is", true)
         .order("created_at", { ascending: false }).limit(120);
       /* Fehlt eine Spalte (alte Datenbank), wie bisher über das ganze Postfach. */
       if (error && /column|42703/i.test(String(error.message) + " " + String(error.code))) return (await getMyMessages()).inbox.filter((m) => !m.read);
       if (error || !data) return [];
-      return data;
+      if (!data.length) return data;
+      const grenzeAntwort = await client.from("private_messages").select("created_at")
+        .or(`to_user.eq.${ich},from_user.eq.${ich}`)
+        .order("created_at", { ascending: false }).range(119, 119);
+      if (grenzeAntwort.error) return [];
+      const zeile = (grenzeAntwort.data || [])[0];
+      const grenze = zeile ? Date.parse(zeile.created_at) : 0;   // weniger als 120 Nachrichten: alles im Fenster
+      return grenze ? data.filter((m) => Date.parse(m.created_at) >= grenze) : data;
     }
     return (await getMyMessages()).inbox.filter((m) => !m.read);
   }
@@ -3659,15 +3695,18 @@ const Backend = (function () {
     const grenze = maxAlter == null ? AKTIV_ANZEIGE_MS : maxAlter;
     const m = aktivMerk.get(schluessel);
     if (m && m.liste && Date.now() - m.zeit < (m.liste.fehler ? Math.min(grenze, AKTIV_FEHLER_MS) : grenze)) return m.liste;
-    if (m && m.laeuft) return m.laeuft;
+    /* Nachbesserung 1 — eine Rechnung, die nach 60 s noch läuft (Anfrage ohne Antwort), hält niemanden mehr auf. */
+    if (m && m.laeuft && Date.now() - (m.seit || 0) < AKTIV_FEHLER_MS) return m.laeuft;
     const laeuft = aktivitaetRechnen(daysBack);
-    aktivMerk.set(schluessel, Object.assign({}, m, { laeuft }));
+    aktivMerk.set(schluessel, Object.assign({}, m, { laeuft, seit: Date.now() }));
     try {
       const liste = await laeuft;
-      if (aktivMerk.has(schluessel)) aktivMerk.set(schluessel, { zeit: Date.now(), liste });
+      const stand = aktivMerk.get(schluessel);
+      if (stand && stand.laeuft === laeuft) aktivMerk.set(schluessel, { zeit: Date.now(), liste });
       return liste;
     } catch (e) {
-      aktivMerk.delete(schluessel);
+      const stand = aktivMerk.get(schluessel);
+      if (stand && stand.laeuft === laeuft) aktivMerk.delete(schluessel);
       throw e;
     }
   }
@@ -3768,17 +3807,17 @@ const Backend = (function () {
      Eintrag vor heute (limit 1), daraus der Zeitraum, dann EINE Wertung dieses Zeitraums. Das Ergebnis hängt
      nur an vergangenen Tagen und wird bis Mitternacht gemerkt (ein Fehler nur 60 s, dann kein Weitersuchen). */
   let letzterFuchsMerk = null;      // { tag, zeit, wert, fehler }
-  let letzterFuchsLaeuft = null;    // { tag, p }
+  let letzterFuchsLaeuft = null;    // { tag, p, seit }
   async function letzterAktiverFuchs(maxTage) {
     const tag = zeitraumBeginn(1).toISOString() + "|" + maxTage;
     const m = letzterFuchsMerk;
     if (m && m.tag === tag && (!m.fehler || Date.now() - m.zeit < AKTIV_FEHLER_MS)) return m.wert;
-    if (letzterFuchsLaeuft && letzterFuchsLaeuft.tag === tag) return letzterFuchsLaeuft.p;
+    if (letzterFuchsLaeuft && letzterFuchsLaeuft.tag === tag && Date.now() - letzterFuchsLaeuft.seit < AKTIV_FEHLER_MS) return letzterFuchsLaeuft.p;
     const p = letzterAktiverFuchsSuchen(maxTage).then((r) => {
       letzterFuchsMerk = { tag, zeit: Date.now(), wert: r.wert, fehler: r.fehler };
       return r.wert;
     }).finally(() => { if (letzterFuchsLaeuft && letzterFuchsLaeuft.p === p) letzterFuchsLaeuft = null; });
-    letzterFuchsLaeuft = { tag, p };
+    letzterFuchsLaeuft = { tag, p, seit: Date.now() };
     return p;
   }
   async function letzterAktiverFuchsSuchen(maxTage) {
@@ -4356,6 +4395,7 @@ const Backend = (function () {
     zugang: () => client,
     /* FASSUNG 885 — Stand der Bremse für die Takte (app.js, rueckfrage.js): aktiv = gerade Pause. */
     bremse: () => ({ aktiv: bremseAktiv(), status: bremse.status, bis: bremse.bis, stufe: bremse.stufe, abgefangen: bremse.abgefangen }),
+    bremseLockern,   // Nachbesserung 1 — die Echtzeit-Leitung ist wieder da (livechat.js)
     /* … und der Schutz selbst für die anderen Klienten mit demselben Speicherplatz (livechat.js, aussprache-pruefung.js). */
     bremsFetch,
     getFoxForMeldung, getUngeleseneNachrichten,

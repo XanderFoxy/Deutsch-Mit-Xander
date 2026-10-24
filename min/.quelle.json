@@ -52,11 +52,11 @@
  "data-exercises.js": "8c18a56d974098810c236f2e0afd1a6324379d3f",
  "korrekturen.css": "0ab791607b816ffb37db3df7dfb4b60c2e0c583b",
  "messung.js": "e37987b64ce2ef2d711876cf7dc95a2074982bc7",
- "app.js": "183e69d58b32c6705428ef8e44bed2c68faf3602",
- "rueckfrage.js": "3f2bc4c16bfcf5a098ec6e1415bd0d8fd87a8fd4",
  "spiel.js": "b240a15e7c6b7d28bd72946ff39a77bec1eb21ba",
  "aussprache-pruefung.js": "d99786def20343b7bd67616b66506f1c0150a301",
- "backend.js": "566d0828788d71228580baff3a20f0b9582e9665",
- "livechat.js": "0f6fb103c1f4217bbfabb746477d1a75397a27bc",
- "data-werkstatt.js": "054d129abded84c760816ecc2aa3298e2e705225"
+ "data-werkstatt.js": "054d129abded84c760816ecc2aa3298e2e705225",
+ "app.js": "6e3ac0cc30b1c459cd7b611bb2a94bd81214ce94",
+ "backend.js": "c9f6fd174069ea06944c3a878d17933db1dc1d4d",
+ "livechat.js": "0a2612fa3ef3b781a4bb5bfdf8333b74dadfbb99",
+ "rueckfrage.js": "d8d81b3431270a12d4e7a2a537a48a89343fedd7"
 }

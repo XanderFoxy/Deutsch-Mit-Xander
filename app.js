@@ -7853,6 +7853,16 @@
   function seiteGebremst() {
     try { return Boolean(Backend.bremse && Backend.bremse().aktiv); } catch (e) { return false; }
   }
+  /* FASSUNG 885 (Nachbesserung 1) — Zeitgrenze für die Sperren „nie zwei Durchgänge zugleich“: bekommt eine einzige
+     Anfrage nie eine Antwort (Funkloch ohne Abbruch), gilt der Durchgang nach ms als beendet. Sonst liefen Lämpchen,
+     Fuchs-Prüfung und Spiel-Freischaltung bis zum Neuladen nicht mehr. Die hängende Anfrage läuft weiter; kommt sie
+     doch noch, wird sie still verworfen. */
+  function mitZeitgrenze(versprechen, ms) {
+    let uhr = null;
+    versprechen.catch(() => {});
+    return Promise.race([versprechen, new Promise((fertig) => { uhr = setTimeout(fertig, ms); })])
+      .finally(() => clearTimeout(uhr));
+  }
   async function checkNotifications() {
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
     if (document.hidden || seiteGebremst()) { notifyVerpasst = true; return; }
@@ -7861,7 +7871,7 @@
       return notifyFolge;
     }
     notifyVerpasst = false;
-    notifyLauf = checkNotificationsDurchgang();
+    notifyLauf = mitZeitgrenze(checkNotificationsDurchgang(), 30000);
     try { await notifyLauf; } finally { notifyLauf = null; notifyZuletzt = Date.now(); }
   }
   document.addEventListener("visibilitychange", () => {
@@ -97326,7 +97336,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     fuchsPruefLaeuft = true;
     const nachRunde = fuchsNachEigenerRunde;
     fuchsNachEigenerRunde = false;
-    try { await pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde); } finally { fuchsPruefLaeuft = false; }
+    try { await mitZeitgrenze(pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde), 60000); } finally { fuchsPruefLaeuft = false; }   // Nachbesserung 1: Zeitgrenze
   }
   async function pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde) {
     let gemerkt = {};
