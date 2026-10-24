@@ -5980,10 +5980,13 @@ window.LiveChat = (function () {
     /* FASSUNG 836 — (Funk 263, Verbindung) Herzschlag alle 10 s statt 25 s: eine halbtote Leitung (Netzwechsel,
        Funkloch) wird nach 10–20 s statt 25–50 s erkannt und neu verbunden. Bis dahin gingen Sitzwechsel und Chatzeilen
        still verloren. Kostet eine kleine Meldung je 10 s. */
-    sbKlient = window.supabase.createClient(
-      window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey,
-      { realtime: { params: { eventsPerSecond: 20 }, heartbeatIntervalMs: 10000 } }
-    );
+    /* FASSUNG 885 — dieser Klient teilt trotzdem den Speicherplatz der Anmeldung und erneuert die Sitzung mit
+       (gemessen: in der 402-Sperre löschte GENAU er die Anmeldung der ganzen Seite). Er bekommt deshalb denselben
+       Schutz wie backend.js (Backend.bremsFetch: eine 402/429 beim Erneuern gilt als vorübergehend). Die
+       Echtzeit-Leitung selbst läuft nicht über fetch – Klassenzimmer, Ton und Chat bleiben unberührt. */
+    var optionen = { realtime: { params: { eventsPerSecond: 20 }, heartbeatIntervalMs: 10000 } };
+    try { if (typeof Backend !== "undefined" && Backend && Backend.bremsFetch) optionen.global = { fetch: Backend.bremsFetch }; } catch (e) {}
+    sbKlient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, optionen);
     return sbKlient;
   }
 

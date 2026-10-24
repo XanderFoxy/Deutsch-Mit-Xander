@@ -4353,6 +4353,8 @@ const Backend = (function () {
     zugang: () => client,
     /* FASSUNG 885 — Stand der Bremse für die Takte (app.js, rueckfrage.js): aktiv = gerade Pause. */
     bremse: () => ({ aktiv: bremseAktiv(), status: bremse.status, bis: bremse.bis, stufe: bremse.stufe, abgefangen: bremse.abgefangen }),
+    /* … und der Schutz selbst für die anderen Klienten mit demselben Speicherplatz (livechat.js, aussprache-pruefung.js). */
+    bremsFetch,
     getFoxForMeldung, getUngeleseneNachrichten,
     isConfigured,
     restoreSession,

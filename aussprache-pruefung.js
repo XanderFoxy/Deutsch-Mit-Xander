@@ -1052,9 +1052,13 @@ window.AusspracheP = (function () {
   function klientHolen() {
     if (zKlient) return zKlient;
     if (!zentralMoeglich()) return null;
-    zKlient = window.supabase.createClient(
-      window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey
-    );
+    /* FASSUNG 885 — derselbe Speicherplatz heißt auch: dieser Klient erneuert die Sitzung mit. Mit dem Schutz aus
+       backend.js (Backend.bremsFetch) löscht eine 402/429 beim Erneuern die Anmeldung nicht mehr. */
+    var schutz = null;
+    try { if (typeof Backend !== "undefined" && Backend && Backend.bremsFetch) schutz = { global: { fetch: Backend.bremsFetch } }; } catch (e) {}
+    zKlient = schutz
+      ? window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, schutz)
+      : window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
     return zKlient;
   }
 
