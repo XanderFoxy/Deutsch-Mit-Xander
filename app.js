@@ -97351,7 +97351,8 @@ An einem Morgen lief ein kleiner Fuchs los…
     for (const z of zeitraeume) {
       const marke = fuchsZeitraumMarke(z.art);
       if (gemerkt[z.art] === marke) continue;
-      const faellig = (nachRunde && z.art === "tag") || Date.now() - (fuchsGeprueft[z.art] || 0) >= FUCHS_PRUEF_ABSTAND[z.art];
+      const seitPruefung = Date.now() - (fuchsGeprueft[z.art] || 0);   // < 0: Uhr zurückgestellt (Nachbesserung 2)
+      const faellig = (nachRunde && z.art === "tag") || seitPruefung < 0 || seitPruefung >= FUCHS_PRUEF_ABSTAND[z.art];
       if (!faellig) continue;
       fuchsGeprueft[z.art] = Date.now();
       let fuchs = null;

@@ -64,6 +64,25 @@
    Gegenprobe Nachbesserung: auf dem ersten 885 (f832f83b) sind C „binnen
    3 min wieder da“ (dort 18,2 min), L, M (2) und N rot – 5 rot; auf 884
    sind L, M, N grün (Rückschritte der ersten 885, nicht von 884).
+   Nachbesserung 2 (Prüfer-Befunde zu 885 nach Nachbesserung 1):
+     R  der REST-Notweg der Echtzeit-Kanäle: ein Raumkanal über den Klienten
+        von livechat.js, Puls alle 6 s (wie PULS_MS), der Websocket kommt
+        nicht zustande. Ohne Sperre gehen die Rundrufe wie bisher über REST
+        hinaus (≥ 8 in 60 s); dann 402 bei verdeckter Seite 10 min: höchstens
+        5 REST-Rundrufe (884 und 885 nach Nachbesserung 1: jeder Puls) und
+        höchstens 20 Anfragen; nach der Sperre kommt der Puls binnen 3 min
+        wieder an (REST oder Websocket).
+     P  Server wieder da, Bremse noch zu: eine Einstellung speichern
+        (updateExtraProfileField) behält, was ein anderes Gerät inzwischen
+        gespeichert hat (das Lesen davor geht hinaus).
+     U  Bremse gezogen, dann springt die Geräteuhr 2 h zurück: höchstens
+        18 min Pause übrig, und ein Tipp öffnet wieder einen Versuch.
+   Die Sperre der Echtzeit-Leitung ist jetzt nachgestellt wie in Wirklichkeit
+   (Nachbesserung 2): Supabase lehnt schon den Handshake ab, die Verbindung
+   öffnet sich nie und schließt mit 1006 (eigener WebSocket-Ersatz, solange
+   window.__wsSperre gilt). Vorher öffnete routeWebSocket und schloss dann
+   (4000) – Phoenix setzt dabei den Versuchszähler zurück, gemessen wurde ein
+   anderer Weg. Echtzeit-Versuche = Ersatz + routeWebSocket.
    Verdeckt/sichtbar wird wie im Browser mit einem visibilitychange
    verschickt, das bis window aufsteigt (dort hört die Echtzeit-Bibliothek).
    Zahlen je Fall stehen am Ende (und mit AUSGABE=datei.json als JSON).
@@ -89,7 +108,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const QUELLE = Boolean(process.env.QUELLE);
-const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N").split(",").map((x) => x.trim()).filter(Boolean);
+const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U").split(",").map((x) => x.trim()).filter(Boolean);
 const SUPA = [process.env.SUPABASE_UMD,
   "/tmp/claude-0/node_modules/@supabase/supabase-js/dist/umd/supabase.js",
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
@@ -239,7 +258,7 @@ function waehlen(zeilen, sp) {
 }
 
 /* ---------------- Zähler ---------------- */
-function neuerZaehler() { return { gesamt: 0, bytes: 0, je: {}, ok: {}, ws: 0 }; }
+function neuerZaehler() { return { gesamt: 0, bytes: 0, je: {}, ok: {}, ws: 0, wsRundruf: 0 }; }
 function schluessel(adresse, methode) {
   const u = new URL(adresse);
   const p = u.pathname;
@@ -288,6 +307,37 @@ function schluessel(adresse, methode) {
       /* wie im Browser: das Ereignis steigt bis window auf (dort hört die Echtzeit-Bibliothek) */
       window.__sichtbar = (an) => { verdeckt = !an; document.dispatchEvent(new Event("visibilitychange", { bubbles: true })); };
     }, [opt.ohneSitzung ? {} : { access_token: tokenFuer(ablauf), refresh_token: "rt-1", expires_in: ablauf - Math.floor(t0 / 1000), expires_at: ablauf, token_type: "bearer", user: NUTZER }]);
+    /* Nachbesserung 2 — die Sperre der Echtzeit-Leitung wie in Wirklichkeit: der Handshake wird abgelehnt, die
+       Verbindung öffnet sich nie (Schluss 1006). Solange window.__wsSperre gilt, kommt jeder Versuch zu Supabase
+       hierher (gezählt in window.__wsVersuche). Dazu werden die Klienten mitgeschrieben (Fall R braucht den Klienten
+       von livechat.js); createClient selbst bleibt unverändert. */
+    await ctx.addInitScript(() => {
+      const Echt = window.WebSocket;
+      window.__wsSperre = false; window.__wsVersuche = 0;
+      class Weg extends EventTarget {
+        constructor(u) {
+          super(); this.url = String(u); this.readyState = 0; this.binaryType = "blob"; this.bufferedAmount = 0; this.protocol = ""; this.extensions = "";
+          window.__wsVersuche++;
+          setTimeout(() => {
+            this.readyState = 3;
+            const f = new Event("error"); if (this.onerror) this.onerror(f); this.dispatchEvent(f);
+            const c = new CloseEvent("close", { code: 1006, reason: "", wasClean: false }); if (this.onclose) this.onclose(c); this.dispatchEvent(c);
+          }, 20);
+        }
+        send() { throw new DOMException("nicht offen", "InvalidStateError"); }
+        close() {}
+      }
+      window.WebSocket = new Proxy(Echt, { construct(Z, a) { return window.__wsSperre && String(a[0]).indexOf("attrappe") >= 0 ? new Weg(...a) : new Z(...a); } });
+      let sb;
+      Object.defineProperty(window, "supabase", { configurable: true, get() { return sb; }, set(v) {
+        if (v && typeof v.createClient === "function" && !v.__sonde) {
+          const orig = v.createClient;
+          v.createClient = function () { const k = orig.apply(this, arguments); (window.__klienten = window.__klienten || []).push({ k, opt: arguments[2] || null }); return k; };
+          v.__sonde = true;
+        }
+        sb = v;
+      } });
+    });
 
     const kopf = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Allow-Methods": "*", "Access-Control-Expose-Headers": "Content-Range, X-Total-Count" };
     async function supabaseAntwort(route, req) {
@@ -377,6 +427,7 @@ function schluessel(adresse, methode) {
         const arr = Array.isArray(d);
         const [joinRef, ref, topic, event, payload] = arr ? d : [d.join_ref, d.ref, d.topic, d.event, d.payload];
         if (!ref) return;
+        if (event === "broadcast") zaehler().wsRundruf++;
         let antwort = {};
         if (event === "phx_join") {
           const pc = (payload && payload.config && payload.config.postgres_changes) || [];
@@ -412,6 +463,9 @@ function schluessel(adresse, methode) {
     }
     await warte(60);
   }
+  const wsVersuche = (s) => s.pg.evaluate(() => window.__wsVersuche || 0);
+  const wsSperre = (s, an) => s.pg.evaluate((x) => { window.__wsSperre = x; }, an);
+  const bremseAbwarten = async (s) => { for (let i = 0; i < 90 && !(await s.pg.evaluate(() => Boolean(Backend.bremse && Backend.bremse().aktiv))); i++) await laufen(s, 1000); };
   const phase = (s, name) => { s.zustand.phase = name; s.zustand.zaehler[name] = s.zustand.zaehler[name] || neuerZaehler(); return s.zustand.zaehler[name]; };
   const summe = (z, re) => Object.keys(z.je).filter((k) => re.test(k)).reduce((n, k) => n + z.je[k], 0);
   const kurz = (z) => Object.entries(z.je).sort((a, b) => b[1] - a[1]).map(([k, n]) => k + " " + n).join(", ");
@@ -476,9 +530,12 @@ function schluessel(adresse, methode) {
       await laufen(s, 90000);
       const z = phase(s, "C");
       s.zustand.modus = "402";
-      /* die Echtzeit-Leitung bricht in der Sperre ebenfalls weg */
+      /* die Echtzeit-Leitung bricht in der Sperre ebenfalls weg; neue Versuche scheitern schon am Handshake */
+      await wsSperre(s, true);
+      const wsVorher = await wsVersuche(s);
       s.zustand.offeneWs.splice(0).forEach((ws) => { try { ws.close({ code: 4000, reason: "402" }); } catch (e) {} });
       await laufen(s, 600000);
+      z.ws += (await wsVersuche(s)) - wsVorher;
       console.log("  Anfragen ans Netz in 10 min 402: " + z.gesamt + " (Echtzeit-Verbindungsversuche: " + z.ws + ") · " + kurz(z));
       sage(z.gesamt <= 40, "402: höchstens 40 Anfragen in 10 min", String(z.gesamt));
       sage(z.ws <= 20, "402: Echtzeit verbindet höchstens 20-mal neu in 10 min (bisher alle 10 s)", String(z.ws));
@@ -504,6 +561,7 @@ function schluessel(adresse, methode) {
          (Nachbesserung 1: die wieder verbundene Leitung lockert die Bremse) */
       const zw = phase(s, "C-wieder");
       s.zustand.modus = "ok";
+      await wsSperre(s, false);
       let nach = 0;
       for (; nach < 20 * 60000 && !((zw.ok["notifications*"] || zw.ok["notifications"]) > 0); nach += 10000) await laufen(s, 10000, 5000);
       const los = await s.pg.evaluate(() => (Backend.bremse ? !Backend.bremse().aktiv : true));
@@ -584,8 +642,11 @@ function schluessel(adresse, methode) {
       await laufen(s, 5000);
       const z = phase(s, "G");
       s.zustand.modus = "402";
+      await wsSperre(s, true);
+      const wsVorher = await wsVersuche(s);
       s.zustand.offeneWs.splice(0).forEach((ws) => { try { ws.close({ code: 4000, reason: "402" }); } catch (e) {} });
       await laufen(s, 600000);
+      z.ws += (await wsVersuche(s)) - wsVorher;
       console.log("  Anfragen ans Netz in 10 min 402 verdeckt: " + z.gesamt + " (Echtzeit-Versuche: " + z.ws + ") · " + kurz(z));
       sage(z.gesamt <= 12, "402 verdeckt: höchstens 12 Anfragen in 10 min", String(z.gesamt));
       const sitz = await s.pg.evaluate(() => Boolean(localStorage.getItem("sb-attrappe-auth-token")));
@@ -682,6 +743,105 @@ function schluessel(adresse, methode) {
         "friends " + summe(z, /^friends\*?$/) + ", notifications " + summe(z, /^notifications\*?$/));
       fehlerPruefen(s);
       ergebnis.faelle.N = { friends: summe(z, /^friends\*?$/), je: z.je };
+      await s.ctx.close();
+    }
+
+    /* ---------------- R: REST-Notweg der Echtzeit-Kanäle (Nachbesserung 2) ---------------- */
+    if (FAELLE.includes("R")) {
+      abschnitt("R", "Raumkanal mit Puls alle 6 s (Klient von livechat.js), Websocket kommt nicht zustande; 402 verdeckt 10 min");
+      const s = await seiteOeffnen("A", T_TAG);
+      await laufen(s, 30000);
+      await wsSperre(s, true);
+      s.zustand.offeneWs.splice(0).forEach((ws) => { try { ws.close({ code: 4000, reason: "weg" }); } catch (e) {} });
+      const gefunden = await s.pg.evaluate(() => {
+        try { if (window.LiveChat && LiveChat.kanalVorwaermen) LiveChat.kanalVorwaermen(); } catch (e) {}
+        const e = (window.__klienten || []).find((x) => x.opt && x.opt.realtime && x.opt.realtime.heartbeatIntervalMs === 10000);
+        if (!e) return "kein Klient von livechat.js (" + (window.__klienten || []).length + " Klienten)";
+        const kanal = e.k.channel("dma-raum-sonde", { config: { broadcast: { self: false } } });
+        kanal.subscribe(() => {});
+        window.__puls = 0;
+        setInterval(() => { window.__puls++; try { kanal.send({ type: "broadcast", event: "raum", payload: { art: "puls", von: "sonde" } }); } catch (x) {} }, 6000);
+        return "ok";
+      });
+      sage(gefunden === "ok", "Raumkanal über den Klienten von livechat.js (wie im Klassenzimmer)", gefunden);
+      const RUND = /^sonst:\/realtime\/v1\/api\/broadcast/;
+      const zok = phase(s, "R-ok");
+      await laufen(s, 60000);
+      const rundOk = summe(zok, RUND);
+      sage(rundOk >= 8, "ohne Sperre: der Notweg (REST-Rundruf) geht wie bisher hinaus (≥ 8 von 10 Pulsen in 60 s)", String(rundOk));
+      await s.pg.evaluate(() => window.__sichtbar(false));
+      await laufen(s, 5000);
+      const z = phase(s, "R-402");
+      const p0 = await s.pg.evaluate(() => window.__puls);
+      const wsVorher = await wsVersuche(s);
+      s.zustand.modus = "402";
+      await laufen(s, 600000);
+      z.ws += (await wsVersuche(s)) - wsVorher;
+      const rund = summe(z, RUND);
+      const pulse = (await s.pg.evaluate(() => window.__puls)) - p0;
+      console.log("  402 verdeckt 10 min mit Raumkanal: " + z.gesamt + " Anfragen, davon REST-Rundrufe " + rund + " (Pulse " + pulse + ", Echtzeit-Versuche " + z.ws + ") · " + kurz(z));
+      sage(rund <= 5, "402 verdeckt, Raumkanal mit Puls: höchstens 5 REST-Rundrufe in 10 min (vorher jeder Puls)", rund + " von " + pulse);
+      sage(z.gesamt <= 20, "402 verdeckt mit Raumkanal: höchstens 20 Anfragen in 10 min", String(z.gesamt));
+      /* Sperre vorbei, Seite wieder zu sehen: der Puls kommt wieder an – über REST (202) oder den Websocket */
+      s.zustand.modus = "ok";
+      await wsSperre(s, false);
+      await s.pg.evaluate(() => window.__sichtbar(true));
+      const zw = phase(s, "R-wieder");
+      let nach = 0;
+      for (; nach < 20 * 60000 && !((zw.ok["sonst:/realtime/v1/api/broadcast"] || 0) > 0 || zw.wsRundruf > 0); nach += 10000) await laufen(s, 10000, 5000);
+      sage(nach <= 3 * 60000 && ((zw.ok["sonst:/realtime/v1/api/broadcast"] || 0) > 0 || zw.wsRundruf > 0), "nach der Sperre kommt der Puls binnen 3 min wieder an (REST oder Websocket)",
+        "nach " + Math.round(nach / 6000) / 10 + " min · REST " + (zw.ok["sonst:/realtime/v1/api/broadcast"] || 0) + ", Websocket " + zw.wsRundruf);
+      fehlerPruefen(s);
+      ergebnis.faelle.R = { ohneSperre: rundOk, gesamt: z.gesamt, rundrufe: rund, pulse, ws: z.ws, je: z.je, wiederNachMin: Math.round(nach / 6000) / 10 };
+      await s.ctx.close();
+    }
+
+    /* ---------------- P: Lesen vor dem Schreiben (Nachbesserung 2) ---------------- */
+    if (FAELLE.includes("P")) {
+      abschnitt("P", "Server wieder da, Bremse noch zu: Einstellung speichern, ein anderes Gerät hat inzwischen etwas gespeichert");
+      const s = await seiteOeffnen("A", T_TAG);
+      await laufen(s, 30000);
+      s.zustand.modus = "402";
+      await bremseAbwarten(s);
+      s.zustand.modus = "ok";
+      const zeile = s.zustand.db.profiles.find((p) => p.id === ICH);
+      zeile.extra_profile_data = Object.assign({}, zeile.extra_profile_data, { anderesGeraet: "neu" });
+      const zp = phase(s, "P");
+      const aktiv = await s.pg.evaluate(() => Boolean(Backend.bremse && Backend.bremse().aktiv));
+      await s.pg.evaluate(() => { window.__p = Backend.updateExtraProfileField("sondeWert", 7); });
+      await laufen(s, 3000);
+      const erg = await s.pg.evaluate(() => Promise.resolve(window.__p).then((r) => JSON.stringify(r)));
+      const nachher = (s.zustand.db.profiles.find((p) => p.id === ICH) || {}).extra_profile_data || {};
+      console.log("  Bremse beim Speichern aktiv: " + aktiv + " · " + erg + " · " + kurz(zp));
+      sage(nachher.sondeWert === 7 && nachher.anderesGeraet === "neu", "Einstellung gespeichert, die des anderen Geräts bleibt erhalten",
+        JSON.stringify({ sondeWert: nachher.sondeWert, anderesGeraet: nachher.anderesGeraet }));
+      fehlerPruefen(s);
+      ergebnis.faelle.P = { bremseAktiv: aktiv, sondeWert: nachher.sondeWert, anderesGeraet: nachher.anderesGeraet, je: zp.je };
+      await s.ctx.close();
+    }
+
+    /* ---------------- U: Uhrsprung (Nachbesserung 2) ---------------- */
+    if (FAELLE.includes("U")) {
+      abschnitt("U", "Bremse gezogen (402), ein Tipp, dann springt die Geräteuhr 2 h zurück");
+      const s = await seiteOeffnen("A", T_TAG);
+      await laufen(s, 30000);
+      s.zustand.modus = "402";
+      await bremseAbwarten(s);
+      await s.pg.mouse.click(20, 300);   // ein Tipp vor dem Sprung (setzt die 15-s-Sperre für den nächsten)
+      await laufen(s, 6000);
+      const t = await s.pg.evaluate(() => Date.now());
+      await s.pg.clock.setSystemTime(t - 2 * 3600000);
+      s.zustand.jetzt -= 2 * 3600000;
+      await laufen(s, 1000);
+      const rest = await s.pg.evaluate(() => (Backend.bremse ? Math.max(0, Backend.bremse().bis - Date.now()) : 0));
+      sage(rest <= 18 * 60000, "nach dem Uhrsprung höchstens 18 min Pause übrig", Math.round(rest / 6000) / 10 + " min");
+      const zt = phase(s, "U-tipp");
+      await s.pg.mouse.click(20, 300);
+      await s.pg.evaluate(() => { window.__tipp = Backend.getUnreadNotifications(); });
+      await laufen(s, 1000);
+      sage(zt.gesamt >= 1, "nach dem Uhrsprung öffnet ein Tipp wieder einen Versuch", String(zt.gesamt) + " · " + kurz(zt));
+      fehlerPruefen(s);
+      ergebnis.faelle.U = { restMin: Math.round(rest / 6000) / 10, tipp: zt.gesamt };
       await s.ctx.close();
     }
   } catch (e) {

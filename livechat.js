@@ -302,16 +302,56 @@ window.LiveChat = (function () {
   }
   function gastBefund() { return gastGrund; }
 
+  /* FASSUNG 885 (Nachbesserung 2) — DERSELBE SPEICHERPLATZ, DERSELBE SCHUTZ. Jeder Klient, der den Speicherplatz der
+     Anmeldung teilt, erneuert die Sitzung mit. Eine 402/429 beim Erneuern gilt in supabase-js als endgültig: ist das
+     Zugangszeichen schon abgelaufen, löscht es die Anmeldung der GANZEN Seite. Mit backend.js gilt dessen Bremse
+     (Backend.bremsFetch); ohne backend.js (Testseiten) eine kleine Hülle nur für das Erneuern: 402/429 → 503
+     („vorübergehend“, die Sitzung bleibt), danach 1 → 2 → 5 → 15 min kein neuer Versuch über diesen Weg. */
+  var erneuernPause = 0, erneuernStufe = 0;
+  function schutzFetch() {
+    try { if (typeof Backend !== "undefined" && Backend && Backend.bremsFetch) return Backend.bremsFetch; } catch (e) {}
+    return function (eingabe, opt) {
+      var adresse = String(typeof eingabe === "string" ? eingabe : (eingabe && eingabe.url) || eingabe);
+      if (adresse.indexOf("/auth/v1/token") < 0 || adresse.indexOf("refresh_token") < 0) return fetch(eingabe, opt);
+      if (Date.now() < erneuernPause && erneuernPause - Date.now() <= 18 * 60000) return Promise.reject(new TypeError("Bremse: Server pausiert"));
+      return fetch(eingabe, opt).then(function (a) {
+        if (a.status !== 402 && a.status !== 429) { if (a.ok) erneuernStufe = 0; return a; }
+        erneuernPause = Date.now() + [60e3, 120e3, 300e3, 900e3][Math.min(erneuernStufe++, 3)];
+        return new Response('{"message":"vorübergehend nicht erreichbar"}', { status: 503, headers: { "Content-Type": "application/json" } });
+      });
+    };
+  }
+  /* Nachbesserung 2 — eine echte Anmeldung wird nie durch eine Gastsitzung ersetzt. Fing die Bremse das Erneuern ab
+     (oder merkt supabase-js einen Fehlschlag 60 s lang), liefert getSession() nichts; signInAnonymously() auf dem
+     Haupt-Klienten hätte dann die echte Sitzung im Speicher durch eine anonyme ersetzt. Angemeldet heißt: Backend
+     kennt ein Konto, oder im Speicher liegt eine nicht-anonyme Sitzung. Dann gibt es diesmal keine Marke (Relais
+     über die öffentlichen Server), und der nächste Versuch (relaisPflegen, ≤ 5 min) holt die echte. */
+  function echtAngemeldet() {
+    try { if (typeof Backend !== "undefined" && Backend && Backend.currentUser && Backend.currentUser()) return true; } catch (e) {}
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var s = localStorage.key(i);
+        if (!/^sb-.+-auth-token$/.test(s || "")) continue;
+        var v = JSON.parse(localStorage.getItem(s) || "null");
+        if (v && v.refresh_token && v.user && !v.user.is_anonymous) return true;
+      }
+    } catch (e) {}
+    return false;
+  }
+  var markeKlient = null;
   function marke() {
     try {
       var k = (konto() && Backend.zugang && Backend.zugang()) || null;
       if (!k && window.supabase && window.SUPABASE_CONFIG) {
-        k = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+        /* Nachbesserung 2 — einmal je Seite (vorher bei jedem Aufruf ein neuer Klient) und mit Schutz beim Erneuern */
+        if (!markeKlient) markeKlient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, { global: { fetch: schutzFetch() } });
+        k = markeKlient;
       }
       if (!k) return Promise.resolve("");
       return k.auth.getSession().then(function (a) {
         var t = (a && a.data && a.data.session && a.data.session.access_token) || "";
         if (t) return t;
+        if (echtAngemeldet()) return "";   // FASSUNG 885 (Nachbesserung 2) — siehe oben
         /* Keine Sitzung? Dann als Gast — sonst gibt es kein Relais. */
         return gastAnmelden(k);
       }).catch(function () { return ""; });
@@ -5992,7 +6032,7 @@ window.LiveChat = (function () {
         try { var b = Backend.bremse && Backend.bremse(); if (b && b.aktiv && b.status === 402) return 60000; } catch (e) {}
         return [1000, 2000, 5000, 10000][n - 1] || 10000;
       } } };
-    try { if (typeof Backend !== "undefined" && Backend && Backend.bremsFetch) optionen.global = { fetch: Backend.bremsFetch }; } catch (e) {}
+    optionen.global = { fetch: schutzFetch() };   // Nachbesserung 2: ohne backend.js die kleine Hülle (siehe marke)
     sbKlient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, optionen);
     return sbKlient;
   }

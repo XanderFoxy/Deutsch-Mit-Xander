@@ -33,17 +33,34 @@ const Backend = (function () {
      Tipp oder Tastendruck öffnet für 5 s einen Versuch (höchstens alle 15 s); nach einem Netzfehler lösen
      „online“ und das Zurückkommen auf die Seite sie gleich.
      Nicht gebremst: Schreiben in Tabellen (Punkte, Nachrichten – sonst ginge etwas verloren), auth/v1, storage,
-     functions und die Echtzeit-Kanäle (Klassenzimmer, Ton, Livechat laufen gar nicht hier durch). Einzige
-     Ausnahme bei auth: das Erneuern der Sitzung. Eine 402/429 dort reicht die Bremse als „vorübergehend“ (503)
-     weiter – sonst löscht supabase-js die Anmeldung, und nach der Sperre wären alle abgemeldet. */
+     functions und die Echtzeit-Leitung selbst (Websocket: Klassenzimmer, Ton, Livechat). Einzige Ausnahme bei
+     auth: das Erneuern der Sitzung. Eine 402/429 dort reicht die Bremse als „vorübergehend“ (503) weiter – sonst
+     löscht supabase-js die Anmeldung, und nach der Sperre wären alle abgemeldet.
+     Nachbesserung 2 — Richtigstellung: Steht der Websocket NICHT, schickt supabase-js jeden Rundruf eines Kanals
+     (Raumpuls alle 6 s, „redet“, Chat) als POST an /realtime/v1/api/broadcast – und zwar über diesen fetch (auch
+     beim Klienten in livechat.js). Dieser Notweg lief bisher ungebremst an der Bremse vorbei: in einer 402-Sperre
+     gemessen 100 von 100 Pulsen ans Netz (≈ 600 Anfragen je Stunde je offenem Klassenzimmer). Jetzt: nur in einer
+     402-Sperre antwortet die Bremse dort selbst (429, realtime-js meldet „error“), und eine 402 von dort zieht sie.
+     Im Normalbetrieb und bei 5xx bleibt der Notweg genau wie in 884. */
   const BREMS_STUFEN = [60e3, 120e3, 300e3, 900e3];
   /* Nachbesserung 1 — ist nur das Netz weg, erreicht ohnehin nichts den Server (kein Kontingent). Dann pausieren die
      Takte höchstens 1 → 2 min statt bis 15 min, sonst blieben Walkie und Lämpchen in einem WLAN ohne Internet bis zu
      18 min still. */
   const BREMS_STUFEN_NETZ = [60e3, 120e3];
   const BREMS_CODES = [402, 429, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530];
-  const bremse = { bis: 0, stufe: 0, status: 0, frei: 0, freiAb: 0, folge: 0, fehlZuletzt: 0, abgefangen: 0 };
+  const bremse = { bis: 0, dauer: 0, stufe: 0, status: 0, frei: 0, freiAb: 0, folge: 0, fehlZuletzt: 0, abgefangen: 0 };
+  /* Nachbesserung 2 — springt die Geräteuhr zurück (Zeitabgleich am Handy), lag „bis“ plötzlich Stunden in der
+     Zukunft (nachgestellt: 2 h zurück → 2 h 17 min Pause), und ein Tipp öffnete kein Fenster mehr (jetzt − freiAb
+     negativ). Jetzt bleibt höchstens die Dauer der gezogenen Stufe übrig, und Zeitmarken aus der „Zukunft“ verfallen. */
+  function bremseUhrPruefen() {
+    const jetzt = Date.now();
+    if (bremse.bis && bremse.bis - jetzt > bremse.dauer) bremse.bis = jetzt + bremse.dauer;
+    if (bremse.freiAb > jetzt) bremse.freiAb = 0;
+    if (bremse.frei > jetzt + 5000) bremse.frei = 0;
+    if (bremse.fehlZuletzt > jetzt) bremse.fehlZuletzt = 0;
+  }
   function bremseZiehen(status) {
+    bremseUhrPruefen();
     const jetzt = Date.now();
     const probe = jetzt <= bremse.frei;          // der Versuch nach einem Tipp ging schief
     bremse.frei = 0;
@@ -60,7 +77,8 @@ const Backend = (function () {
     bremse.status = status || (jetzt < bremse.bis ? bremse.status : 0);
     const stufen = bremse.status === 0 ? BREMS_STUFEN_NETZ : BREMS_STUFEN;
     const basis = stufen[Math.min(bremse.stufe, stufen.length - 1)];
-    bremse.bis = jetzt + Math.round(basis * (0.8 + Math.random() * 0.4));
+    bremse.dauer = Math.round(basis * (0.8 + Math.random() * 0.4));
+    bremse.bis = jetzt + bremse.dauer;
     bremse.stufe += 1;
   }
   function bremseLoesen() { bremse.bis = 0; bremse.stufe = 0; bremse.frei = 0; bremse.folge = 0; bremse.fehlZuletzt = 0; bremse.status = 0; }
@@ -71,17 +89,42 @@ const Backend = (function () {
      bekam von der eigenen Bremse ein Ersatzprofil mit Schreibsperre. Die Stufe bleibt, bis eine Abfrage wirklich
      durchkommt: scheitert sie doch, geht es mit der nächsten Stufe weiter (kein Kreisel). */
   function bremseLockern() { if (bremse.bis) { bremse.bis = 0; bremse.frei = 0; } }
-  function bremseAktiv() { return Date.now() < bremse.bis; }
+  function bremseAktiv() { bremseUhrPruefen(); return Date.now() < bremse.bis; }
+  /* Nachbesserung 2 — der REST-Notweg der Echtzeit-Kanäle (siehe oben). Nur die Kontingent-Sperre (402) hält ihn an:
+     dann erreicht ohnehin kein Rundruf jemanden. Ein Tipp öffnet auch hier sein 5-s-Fenster. Kommt ein Rundruf durch
+     (2xx), während die Bremse wegen 402 steht, ist die Sperre vorbei: lockern wie bei der Anmeldung. */
+  function rundrufFetch(eingabe, opt) {
+    bremseUhrPruefen();
+    const jetzt = Date.now();
+    if (bremse.status === 402 && jetzt < bremse.bis && jetzt > bremse.frei) {
+      bremse.abgefangen += 1;
+      return Promise.resolve(new Response('{"message":"Der Server pausiert gerade (402)."}', { status: 429, headers: { "Content-Type": "application/json" } }));
+    }
+    return fetch(eingabe, opt).then((antwort) => {
+      if (antwort.status === 402) bremseZiehen(402);
+      else if (antwort.ok && bremse.status === 402) bremseLockern();
+      return antwort;
+    });
+  }
+  /* Nachbesserung 2 — das Lesen direkt vor einem Schreiben (frischesExtra: erst den Serverstand der Einstellungen
+     holen, dann zusammengeführt schreiben) bremst die Bremse nicht. Sonst bekam das Lesen im Fenster „Server wieder
+     da, Bremse noch zu“ die Ersatzantwort, frischesExtra nahm den lokalen Stand, und das (nie gebremste) Schreiben
+     überschrieb Einstellungen, die inzwischen auf einem anderen Gerät gemacht wurden. Kostet nichts extra: das
+     Schreiben geht ohnehin hinaus, und 884 las davor genauso. */
+  const LESEN_VOR_SCHREIBEN = "/rest/v1/profiles?select=extra_profile_data&";
   function bremsFetch(eingabe, opt) {
     const adresse = String(typeof eingabe === "string" ? eingabe : (eingabe && eingabe.url) || eingabe);
+    if (adresse.indexOf("/realtime/v1/api/broadcast") >= 0) return rundrufFetch(eingabe, opt);
     const rest = adresse.indexOf("/rest/v1/") >= 0;
     const erneuern = adresse.indexOf("/auth/v1/token") >= 0 && adresse.indexOf("refresh_token") >= 0;
     if (!rest && !erneuern) {
       if (adresse.indexOf("/auth/v1/") < 0) return fetch(eingabe, opt);
       return fetch(eingabe, opt).then((antwort) => { if (antwort.ok) bremseLockern(); return antwort; });
     }
+    bremseUhrPruefen();
     const methode = String((opt && opt.method) || (eingabe && eingabe.method) || "GET").toUpperCase();
-    const lesen = erneuern || methode === "GET" || methode === "HEAD" || adresse.indexOf("/rest/v1/rpc/") >= 0;
+    const vorSchreiben = adresse.indexOf(LESEN_VOR_SCHREIBEN) >= 0;
+    const lesen = !vorSchreiben && (erneuern || methode === "GET" || methode === "HEAD" || adresse.indexOf("/rest/v1/rpc/") >= 0);
     const jetzt = Date.now();
     if (lesen && bremse.status !== 0 && jetzt < bremse.bis && jetzt > bremse.frei) {
       bremse.abgefangen += 1;
@@ -105,6 +148,7 @@ const Backend = (function () {
   try {
     ["pointerdown", "keydown"].forEach((art) => window.addEventListener(art, (ev) => {
       if (ev && ev.isTrusted === false) return;
+      bremseUhrPruefen();   // Nachbesserung 2 — nach einem Uhrsprung öffnet der Tipp wieder ein Fenster
       const jetzt = Date.now();
       if (jetzt < bremse.bis && jetzt - bremse.freiAb > 15000) { bremse.freiAb = jetzt; bremse.frei = jetzt + 5000; }
     }, { capture: true, passive: true }));
@@ -891,9 +935,12 @@ const Backend = (function () {
   async function getMyMessages() {
     if (!demo.user) return { inbox: [], outbox: [] };
     if (client) {
+      /* FASSUNG 885 (Nachbesserung 2) — bei gleicher Zeit (eine Rundmail kommt in einem Zug: alle Zeilen mit
+         derselben created_at) entscheidet die Kennung. Ohne sie war die Reihenfolge an der 120er-Grenze zufällig, und
+         das Lämpchen (getUngeleseneNachrichten, gleiche Ordnung) konnte eine Nachricht zählen, die hier fehlt. */
       const { data, error } = await client.from("private_messages").select("*")
         .or(`to_user.eq.${demo.user.id},from_user.eq.${demo.user.id}`)
-        .order("created_at", { ascending: false }).limit(120);
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(120);
       if (error || !data) return { inbox: [], outbox: [] };
       const outboxRaw = data.filter((m) => m.from_user === demo.user.id && !m.deleted_by_sender);
       const names = await namesFor([...new Set(outboxRaw.map((m) => m.to_user))]);
@@ -931,24 +978,38 @@ const Backend = (function () {
      alte ungelesene Nachrichten, die hinter einer Rundmail (eine Zeile je Mitglied) liegen und die das Postfach
      nie zeigt – es wäre für immer an geblieben, mit Blase und Erinnerungston bei jedem Laden. Die Grenze (Zeit der
      120. neuesten Nachricht) kostet eine winzige Abfrage und nur, wenn überhaupt etwas ungelesen ist. */
+  function zeitMikro(s) {
+    const ms = Date.parse(s);
+    if (isNaN(ms)) return 0;
+    const f = /\.(\d+)/.exec(String(s));
+    return ms * 1000 + (f ? Number((f[1] + "000000").slice(3, 6)) : 0);
+  }
+  function kennungVergleich(a, b) {
+    if (typeof a === "number" && typeof b === "number") return a - b;
+    a = String(a); b = String(b);
+    return a < b ? -1 : a > b ? 1 : 0;
+  }
   async function getUngeleseneNachrichten() {
     if (!demo.user) return [];
     if (client) {
       const ich = demo.user.id;
       const { data, error } = await client.from("private_messages").select("id,read,created_at")
         .eq("to_user", ich).not("read", "is", true).not("deleted_by_recipient", "is", true)
-        .order("created_at", { ascending: false }).limit(120);
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(120);
       /* Fehlt eine Spalte (alte Datenbank), wie bisher über das ganze Postfach. */
       if (error && /column|42703/i.test(String(error.message) + " " + String(error.code))) return (await getMyMessages()).inbox.filter((m) => !m.read);
       if (error || !data) return [];
       if (!data.length) return data;
-      const grenzeAntwort = await client.from("private_messages").select("created_at")
+      const grenzeAntwort = await client.from("private_messages").select("id,created_at")
         .or(`to_user.eq.${ich},from_user.eq.${ich}`)
-        .order("created_at", { ascending: false }).range(119, 119);
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).range(119, 119);
       if (grenzeAntwort.error) return [];
       const zeile = (grenzeAntwort.data || [])[0];
-      const grenze = zeile ? Date.parse(zeile.created_at) : 0;   // weniger als 120 Nachrichten: alles im Fenster
-      return grenze ? data.filter((m) => Date.parse(m.created_at) >= grenze) : data;
+      if (!zeile) return data;   // weniger als 120 Nachrichten: alles im Fenster
+      /* Nachbesserung 2 — im Fenster ist, was in derselben Ordnung (Zeit, dann Kennung, beides absteigend) nicht hinter
+         der 120. Nachricht liegt. Zeit auf Mikrosekunden (Postgres), Date.parse kennt nur Millisekunden. */
+      const g = zeitMikro(zeile.created_at);
+      return data.filter((m) => { const t = zeitMikro(m.created_at); return t > g || (t === g && kennungVergleich(m.id, zeile.id) >= 0); });
     }
     return (await getMyMessages()).inbox.filter((m) => !m.read);
   }
@@ -3694,7 +3755,9 @@ const Backend = (function () {
     const schluessel = daysBack + "|" + zeitraumBeginn(daysBack).toISOString();
     const grenze = maxAlter == null ? AKTIV_ANZEIGE_MS : maxAlter;
     const m = aktivMerk.get(schluessel);
-    if (m && m.liste && Date.now() - m.zeit < (m.liste.fehler ? Math.min(grenze, AKTIV_FEHLER_MS) : grenze)) return m.liste;
+    /* Nachbesserung 2 — ein Alter unter 0 (Uhr zurückgestellt) gilt als veraltet, sonst hielte das Gedächtnis Stunden. */
+    const alter = m && m.liste ? Date.now() - m.zeit : -1;
+    if (alter >= 0 && alter < (m.liste.fehler ? Math.min(grenze, AKTIV_FEHLER_MS) : grenze)) return m.liste;
     /* Nachbesserung 1 — eine Rechnung, die nach 60 s noch läuft (Anfrage ohne Antwort), hält niemanden mehr auf. */
     if (m && m.laeuft && Date.now() - (m.seit || 0) < AKTIV_FEHLER_MS) return m.laeuft;
     const laeuft = aktivitaetRechnen(daysBack);
@@ -3811,7 +3874,7 @@ const Backend = (function () {
   async function letzterAktiverFuchs(maxTage) {
     const tag = zeitraumBeginn(1).toISOString() + "|" + maxTage;
     const m = letzterFuchsMerk;
-    if (m && m.tag === tag && (!m.fehler || Date.now() - m.zeit < AKTIV_FEHLER_MS)) return m.wert;
+    if (m && m.tag === tag && (!m.fehler || (Date.now() - m.zeit >= 0 && Date.now() - m.zeit < AKTIV_FEHLER_MS))) return m.wert;
     if (letzterFuchsLaeuft && letzterFuchsLaeuft.tag === tag && Date.now() - letzterFuchsLaeuft.seit < AKTIV_FEHLER_MS) return letzterFuchsLaeuft.p;
     const p = letzterAktiverFuchsSuchen(maxTage).then((r) => {
       letzterFuchsMerk = { tag, zeit: Date.now(), wert: r.wert, fehler: r.fehler };

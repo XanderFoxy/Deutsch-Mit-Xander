@@ -17,10 +17,31 @@
   const SP = (ST.spiel = { angemeldet: false, betreiber: false, beispiel: false, fehler: "" });
   let klient = null;
 
+  /* FASSUNG 885 (Nachbesserung 2) — DERSELBE SPEICHERPLATZ, DERSELBE SCHUTZ. Dieser Klient (und der in quests.js)
+     teilt den Speicherplatz der Anmeldung mit der Hauptseite und erneuert die Sitzung mit. Eine 402/429 beim Erneuern
+     gilt in supabase-js als endgültig: ist das Zugangszeichen schon abgelaufen, löscht es die Anmeldung der ganzen
+     Seite – so geschehen, wenn jemand während einer Supabase-Sperre das Dorf öffnet. Jetzt gilt sie als
+     „vorübergehend“ (503, die Sitzung bleibt), danach 1 → 2 → 5 → 15 min kein neuer Versuch über diesen Weg (eine
+     Pause, die nach einem Uhrsprung länger als 18 min wäre, verfällt). Alles andere geht unverändert hinaus. (Die
+     Bremse der Hauptseite ist von hier aus nicht erreichbar: Backend ist dort keine Eigenschaft von window.) */
+  let erneuernPause = 0, erneuernStufe = 0;
+  function schutzFetch(eingabe, opt) {
+    const adresse = String(typeof eingabe === "string" ? eingabe : (eingabe && eingabe.url) || eingabe);
+    if (adresse.indexOf("/auth/v1/token") < 0 || adresse.indexOf("refresh_token") < 0) return fetch(eingabe, opt);
+    const jetzt = Date.now();
+    if (jetzt < erneuernPause && erneuernPause - jetzt <= 18 * 60000) return Promise.reject(new TypeError("Bremse: Server pausiert"));
+    return fetch(eingabe, opt).then((a) => {
+      if (a.status !== 402 && a.status !== 429) { if (a.ok) erneuernStufe = 0; return a; }
+      erneuernPause = Date.now() + [60e3, 120e3, 300e3, 900e3][Math.min(erneuernStufe++, 3)];
+      return new Response('{"message":"vorübergehend nicht erreichbar"}', { status: 503, headers: { "Content-Type": "application/json" } });
+    });
+  }
+  SP.schutzFetch = schutzFetch;
+
   function klientHolen() {
     if (klient) return Promise.resolve(klient);
     if (!window.supabase || !window.SUPABASE_CONFIG) return Promise.reject(new Error("keine Verbindung"));
-    klient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+    klient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, { global: { fetch: schutzFetch } });
     return Promise.resolve(klient);
   }
   function rpc(name, args) {
