@@ -222,7 +222,7 @@
   var jetzt = String(window.DMA_VERSION || "");
   var merker = "dma-neu-geladen";
   var eingabe = false;   /* 885: schon etwas angetippt? (bleiben) */
-  /* 885: Rückkehr in den Raum offen (livechat.js, 30 min)? (SPIELSYSTEM.md I45) */
+  /* 885: Rückkehr in den Raum offen (livechat.js, 30 min)? Dann zählt ein Tipp bei der ersten Prüfung nicht (SPIELSYSTEM.md I45) */
   var rueck = false;
   try { var rz = JSON.parse(sessionStorage.getItem("dma_livechat_zurueck") || "null"); rueck = Boolean(rz && rz.raum && Date.now() - (rz.zeit || 0) <= 1800000); } catch (e) {}
   ["pointerdown", "keydown", "touchstart"].forEach(function (t) {
@@ -289,7 +289,7 @@
   /* eben vom Wächter (oder Helfer, „*“) geladen: nicht noch einmal warten */
   if (Date.now() - Number(wechsel[1]) < 20000 && (wechsel[0] === jetzt || (wechsel[0] === "*" && wechsel[2] !== jetzt))) erstOk("frisch");
   /* 885: Rückkehr auf einer Seite aus dem Speicher – der Helfer lädt die neue Fassung selbst, sobald er sie hat;
-     „gleich“ gilt nur beim Neuladen (SPIELSYSTEM.md I45) */
+     „gleich“ gilt nur beim Neuladen (SPIELSYSTEM.md I46) */
   else if (rueck && document.documentElement.hasAttribute("data-dma-speicher")) try {
     var helfer = navigator.serviceWorker && navigator.serviceWorker.controller;
     if (helfer) {
@@ -309,7 +309,7 @@
   function pruefen(erstesMal) {
     var fertig = function (w) {
       if (!erstesMal) return;
-      if (w === "fehler" && window.dmaRueckGemeldet && !helferSagt) { fjFehler = true; return; }   /* 885: erst hören, was der Helfer weiß (I45) */
+      if (w === "fehler" && window.dmaRueckGemeldet && !helferSagt) { fjFehler = true; return; }   /* 885: erst hören, was der Helfer weiß (I46) */
       erstOk(w);
     };
     try {

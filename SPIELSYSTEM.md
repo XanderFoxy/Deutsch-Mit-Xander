@@ -6457,3 +6457,112 @@ Speicher der Seite (dma-seite-1, „draussen“, Schlüssel neben sw.js). Der He
 wie bis 884 aus dem Netz, statt erst die alte zu starten und neu zu laden (gemessen: CPU 4×, fassung.json nach 0,25 s,
 +0,3 s gegen 884). Nur mit Helfer; jede abgelegte Seite aus dem Netz löscht den Eintrag.
 ```
+
+## Fassung 885 — Rückkehr: Nachbesserung 1 (Prüfbericht zur Rückkehr, „nie langsamer als 884“)
+
+XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“ · (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“.
+
+**Befunde des Prüfers zum Schritt „Rückkehr“ (864324e7):**
+1. *wichtig* – Ein Tipp während des Wartens (bevor fassung.json nach mehr als 2 s antwortet) machte `bleiben()` wahr (`eingabe && ms > 2000`): nur die Blase, und die Rückkehr ging auf der **alten** Fassung in den Raum, für die ganze Sitzung (Prüfer: D = 2500, Tipp nach 1,2 s, CPU 1× und 4×: 4 von 4 alt; 884-Weg 4 von 4 neu).
+2. *wichtig* – „nie langsamer als 884“ nicht erfüllt: Update noch nicht gesehen, CPU 4×, D = 250: +315 ms; CPU 4×, D = 50: +200 ms; gewöhnliches Öffnen ohne Update, CPU 1×, D = 250: +76 ms (Prüfer, 5 Paare).
+3. *klein* – Der Rückfall für `data-lesetexte.js` / `satzbau.js` holte die Quelle mit dem Stempel von `min/` → der Stempel passte nie zum Inhalt → die Datei kam nie mehr in den Speicher des Helfers.
+4. *klein* – Die Sonde kannte keinen Tipp, keinen 15-s-Weg, keinen Merker älter als 20 s und keine Zeitgrenze in R/G; die Lockerung von Teil H stand nicht im Logbuch.
+5. *klein* – Messmethode M: die CPU-Bremse gilt nur für den Hauptfaden der Seite, der Helfer ist warm; der Fall „schnelles Netz, langsames Gerät“ (u4-50) fehlte in der Tabelle.
+6. *klein* – „nur lokal committet, nicht gepusht“ stimmt so nicht (s. „Push“).
+7. *klein* – index.html schreibt fest in den Speicher `dma-seite-1` von sw.js.
+
+### Was gebaut ist
+1. **Ein Tipp zählt während der Rückkehr nicht** (index.html, `bleiben`): steht `dma_livechat_zurueck` (gültig, 30 min wie in livechat.js), zählt `eingabe` bei der ersten Prüfung nicht – man ist noch nicht im Raum, und S1 lädt eine von selbst geöffnete Seite ohnehin einmal neu. Die Regel „Textfeld mit Inhalt“ bleibt (Offen 3) (I45).
+2. **Der Helfer lädt die neue Fassung selbst** (index.html + sw.js; das war Offen 1(b) der Rückkehr). Kommt die Rückkehr-Seite aus dem Speicher des Helfers, meldet ihr Wächter gleich am Anfang „Rückkehr wartet“ (`postMessage`, mit ihrer Fassung). Der Helfer wartet auf die Auffrischung, die **diese** Navigation gestartet hat (die Vorab-Anfrage – dieselbe Anfrage wie bis 884), höchstens 5 s. Ist sie **neuer**, lädt er die Seite mit `WindowClient.navigate` selbst neu – dieselbe Adresse wie der Wächter (`?f=<neu>`, alles andere bleibt), genau einmal, ohne den Hauptfaden der alten Seite. Die neue Seite fragt nicht noch einmal: der Merker `dma-wechsel` darf jetzt auch „* <Zeit> <alte Fassung>“ sein (geschrieben vor der Meldung; gilt 20 s und nur, wenn die neue Seite eine **andere** Fassung hat) (I46).
+3. **„gleich“ vom Helfer:** hat die Vorab-Anfrage dieser Navigation dieselbe Fassung gebracht, schickt der Helfer „gleich“. Die Seite glaubt das **nur beim Neuladen** (dann hat der Browser beim Server nachgefragt; beim gewöhnlichen Öffnen kann die Vorab-Antwort aus dem Browser-Speicher kommen, max-age=600) und löst damit `dmaFassungErst` – die Rückkehr wartet nicht mehr auf fassung.json (I46).
+4. **Fehler von fassung.json** (500, kein Netz): die Rückkehr wartet auf die Antwort des Helfers („gleich“, „nichts“ – oder er lädt neu), statt sofort auf der alten Seite hineinzugehen (vorher: alte Fassung, ohne Blase, weil fassung.json nichts sagte) (I46).
+5. **„halt“:** geht die Rückkehr doch auf dieser Seite hinein (Frist, „neu“ + 15 s) oder lädt der Wächter selbst neu (`neuLaden`), sagt die Seite dem Helfer „halt“ – kein zweites Neuladen (die Sonde fand ohne das einmal drei Seiten: Wächter und Helfer luden nacheinander).
+6. **Rückfall Lesetexte / Satzbaukasten** (app.js): die Quelle mit **ihrem** Stempel (`DMA_STEMPEL["data-lesetexte.js"]`, `DMA_STEMPEL["satzbau.js"]`), nicht dem von `min/` (Befund 3).
+7. **sw.js:** Kommentar bei `SEITE` – index.html schreibt „draussen“ fest in diesen Speicher; die Sonde (Teil S) prüft, dass beide Namen gleich sind (Befund 7).
+8. **Sonde** `werkzeug/pruefe-885-rueckkehr.js` (s. u.); **885-schlank Q** baut auch diese Wächter-Änderung vor dem Vergleich mit dem Stand vor K genau zurück (offline nachgeprüft: 8 von 8 Inline-Skripten Zeichen für Zeichen gleich).
+
+### Gemessen und verworfen: die alte Seite anhalten, bis der Helfer entschieden hat
+Der Helfer lädt neu, sobald er es weiß – übernommen wird die neue Seite aber erst, wenn der Hauptfaden der alten frei ist. Zeitleiste (CPU 4×, D = 250, 10 Läufe): `navigate` nach 265–281 ms; übernommen nach +33 … +74 ms (4 von 10) oder erst nach +297 … +445 ms (6 von 10: die alte Seite war schon in ihren `defer`-Skripten samt Start von app.js, einer langen Aufgabe bis nach DOMContentLoaded). Darum zwei Varianten mit **Halt**: die alte Rückkehr-Seite wartet am Ende des Dokuments auf ein Skript, das der Helfer erst beantwortet, wenn er entschieden hat (höchstens 3 s) – H: hinter den `defer`-Tags, H2: davor (die Tags erst danach geschrieben, damit nichts vorab geholt wird). Übernommen wurde dann immer sofort (+9 … +22 ms). Verschränkt gegen den 884-Weg (6b724580), 8 Paare je Fall, B − A gepaart (Median; schneller/langsamer); P = ohne Halt:
+
+| Update, noch nicht gesehen | P (gebaut) | H | H2 |
+|---|---|---|---|
+| CPU 4×, D = 250 | +27 (3/5) | +13 (4/4) | +2 (4/4) |
+| CPU 4×, D = 50 | +53 (4/4) | +41 (3/5) | +107 (2/6) |
+| CPU 1×, D = 250 | **−57 (8/0)** | +26 (1/7) | +29 (0/8) |
+| CPU 4×, D = 800 | **−178 (7/1)** | +68 (1/7) | −24 (6/2) |
+
+Der Halt bringt im Fall, für den er gedacht war, nur Rauschen, kostet aber auf schnellem Gerät 8 von 8 Paaren und bei langsamer Leitung den Gewinn – und ohne Update hätte die Seite mit allem auf den Helfer gewartet. Nicht gebaut.
+
+### Messung (diese Fassung)
+**Rückkehr: Neuladen → `betreten`** (Sonde 885-rueckkehr Teil M; Falle für betreten, Uhrzeit ab dem Neuladen; Server wie GitHub Pages, index.html und fassung.json je D ms; verschränkt A B / B A; **A = 884-Weg** (6b724580, eigener `git archive`-Baum), **B = diese Fassung**; 8 Paare je Fall; Median, dahinter **B − A gepaart** mit 95-%-Bereich (Bootstrap über die Paare) und schneller/langsamer). Zum Vergleich der Stand vor dieser Nachbesserung (864324e7) in derselben Sitzung.
+
+| Fall | 884 (A) | jetzt (B) | B − A | vorher (864324e7) B − A |
+|---|---|---|---|---|
+| Update, noch nicht gesehen, CPU 4×, D = 250 | 1024 | 1152 | +91 [−39 … +237] (3/5) | **+305** [+239 … +352] (0/8) · Prüfer +315 |
+| Update, noch nicht gesehen, CPU 4×, D = 50 | 801 | 884 | **+93** [+41 … +234] (1/7) | **+190** [+86 … +283] (0/8) · Prüfer +200 |
+| Update, noch nicht gesehen, CPU 1×, D = 250 | 462 | 412 | **−49** [−68 … −40] (8/0) | −24 (Bauer, 6 Paare) |
+| Update, noch nicht gesehen, CPU 4×, D = 800 | 1553 | 1418 | **−110** [−183 … −67] (7/1) | −161 (Bauer) |
+| Update schon gesehen (Blase), CPU 4×, D = 250 | 1042 | 1002 | −21 [−132 … +106] (5/3) | +10 (Bauer) |
+| ohne Update, CPU 1×, D = 250 | 448 | 265 | **−181** [−195 … −172] (8/0) | −160 / −192 (Bauer / Prüfer) |
+| ohne Update, CPU 4×, D = 250 | 1003 | 750 | **−267** [−332 … −136] (8/0) | – |
+| ohne Update, CPU 4×, D = 800 | 1542 | 832 | **−702** [−748 … −588] (8/0) | −647 (Bauer) |
+| ohne Update, CPU 4×, D = 50 | 836 | 750 | −71 [−202 … +11] (6/2) | −92 (Prüfer, 3/2) |
+| Öffnen (verworfener Tab), ohne Update, CPU 1×, D = 250 | 204 | 286 | **+80** [+68 … +97] (0/8) | +74 / +76 |
+| Öffnen, Update, CPU 1×, D = 250 | 195 erstes / 679 letztes | 674 | erstes +480; **auf der neuen Fassung ±0** [−46 … +29] | – |
+
+Im Fall „Öffnen mit Update“ geht 884 erst auf der **alten** Seite hinein (195 ms), lädt dann mitten im Verbinden neu und geht ein zweites Mal hinein (679 ms; 8 von 8 zweimal) – jetzt einmal, gleich auf der neuen (674 ms). Rauschgrenze: A streut innerhalb eines Falls um 30–35 % des Medians (z. B. CPU 4×, D = 250: 959 … 1157 ms); die 95-%-Bereiche der gepaarten Differenzen sind darum bei CPU 4× bis ±150 ms breit.
+
+**Ergebnis gegen das Maß „nie langsamer als 884“:** erfüllt für jedes Neuladen ohne Update (−71 … −702 ms), mit schon gesehenem Update (±0) und mit noch nicht gesehenem Update auf schnellem Gerät oder bei langsamer Leitung (−49, −110). **Nicht ganz erfüllt** in zwei Fällen: (a) Update noch nicht gesehen, **langsames** Gerät, **schnelle** Antwort: +91 (D = 250, im Rauschen, aber mit Ausreißern bis +372) und +93 ms (D = 50, deutlich) – vorher +305 / +190; (b) gewöhnliches Öffnen ohne Update auf schnellem Gerät: +80 ms (unverändert; der Preis dafür, nie auf einer alten Seite hineinzugehen – 884 ging dort beim Update zweimal hinein). Siehe Offen 1 und 2.
+
+**Wohin der Rest bei (a) geht** (Zeitleisten CPU 4×): D = 50 – die alte Seite meldet sich nach 59–100 ms (Kopf der Seite), der Helfer lädt sofort neu, übernommen nach +41 … +67 ms; 884 hatte die neue Seite nach ~65 ms. D = 250 – wie oben: übernommen sofort oder erst nach den `defer`-Skripten der alten Seite (+300 … +450 ms), je nachdem, wann die Vorab-Antwort kommt.
+
+{LADEZEIT}
+
+### Messmethode und ihre Grenzen (Befund 5)
+`Emulation.setCPUThrottlingRate` bremst nur den Hauptfaden der Seite, nicht den Helfer, und der Helfer ist in jedem Lauf warm (1,5 s vorher benutzt). Auf einem echten langsamen Telefon mit kaltem Helfer kostet der Weg über den Speicher (S1, jetzt auch die Entscheidung des Helfers) mehr: die Gewinne ohne Update (−181 … −702 ms, wie schon −160 … −647 im vorigen Schritt) sind darum eher **obere Schranken**, und der Rest in Fall (a) eher eine untere. Das gilt für Teil M wie für Teil H.
+
+### Sonde `werkzeug/pruefe-885-rueckkehr.js`
+Neu bzw. geändert: **T** (Tipp nach 1,2 s, Antwort nach 2,5 s; „Helfer weiß es“ und „Wächter entscheidet“ mit index.html nach 4,5 s; CPU 1× und 4×), **W** (Merker `dma-wechsel`: Fassung 5 s / 25 s alt, „*“ mit älterer Fassung 5 s / 25 s alt, „*“ mit derselben Fassung), **N** (Antwort „neu“, das Neuladen des Wächters wird mit `window.stop` abgebrochen, der Helfer bekommt keine Meldung: betreten 15 s danach, einmal, auf dieser Seite), **F** (jetzt wie 884: fassung.json 500 oder hängend mit Update → einmal auf der **neuen** Fassung < 3 s; hängend ohne Update → < 3 s ohne zu warten; index.html und fassung.json hängen → nach der Frist 5,5 … 7,5 s), **R/G** mit grober Zeitgrenze (betreten ≤ D + 0,9 s bei CPU 1×, ≤ D + 1,8 s bei CPU 4×), **S** prüft den Namen des Seitenspeichers. **Teil H** (Befund 4): nach einem roten Lauf (A hatte einmal 53 statt 54 Einträge – das Ablegen läuft nach `load` weiter) von „gleich viele“ auf „B hat in keinem Lauf weniger Einträge als A im besten Lauf“ gefasst.
+- **Ergebnis: 61 grün** (N = 2).
+- **Gegenprobe 864324e7** (vor dieser Nachbesserung, R F T W N): **8 rot** – T 4 von 4 (Tipp: alte Fassung mit Blase, der Befund des Prüfers), F 3 (alte Fassung bzw. 6 s), W 1 („*“ kannte es nicht); R grün.
+- **Gegenprobe 6b724580** (884-Weg, R K G F T W N): R-Neuladen, K, G, F, **T 4 von 4 grün**; rot nur, was 884 nicht hat: R „Öffnen“ (zweimal betreten), W 3 (884 wartet nie), N.
+- **Gegenprobe c30a68f7:** 10 rot (R 3, F 3, T 4).
+
+**Andere Sonden (dieser Stand):** 885-schale 72, 885-swvorladen 27, 884-notweg 91, 884-leitung 40, 885-praesenz 69 (E: Rückkehr nach dem Neuladen), 885-schlank 42 (Q: auch diese Wächter-Änderung zurückgebaut, Kommentare zusammen 6263 ≤ 6500 Zeichen, I45/I46 je einmal), 876-start-schlank 62, 884-beta 22, ladezeit, 858-ladeweg, 865-lesetexte-nachladen (Rückfall mit eigenem Stempel), 873-ausgelagert, 885-stuecke 43, 885-messen 47, 885-ueber 22 grün; {MESSUNG884}; 694 nur 3a (bekannt: spiel.js-Wettlauf seit 884); 840 im flachen Klon nicht lauffähig (Commit 53eaa31 fehlt). `node --check` für app.js, min/app.js, sw.js und die Sonden 885-rueckkehr und 885-schlank.
+
+### Push (Befund 6)
+Ich habe nicht gepusht. Der entfernte Zweig `origin/claude/audio-pronunciation-live-chat-3a5elt` steht trotzdem nach jedem WIP-Commit ~25 s später auf demselben Stand (reflog „update by push“, z. B. 864324e7: Commit 07:34:15, Zweig 07:34:40; einen post-commit-Haken gibt es nicht) – die Umgebung spiegelt den Sitzungszweig offenbar selbst. `main` und `dirigent-synth` sind unberührt, live ist nichts betroffen. „Nicht gepusht“ in früheren Berichten heißt also: nicht von mir – gespiegelt wird der Arbeitszweig trotzdem.
+
+### Datenbank
+Nicht gelesen (nicht nötig).
+
+**Offen**
+1. **Rest bei (a), Update noch nicht gesehen auf langsamem Gerät mit schneller Antwort: +91 / +93 ms gegen 884** (vorher +305 / +190). Ganz auf 884 käme man nur, wenn die Rückkehr nach dem Neuladen die Seite wieder zuerst aus dem Netz nähme (Variante B des vorigen Schritts) – dann fiele aber der Gewinn ohne Update (−181 … −702 ms bei jedem Neuladen im Raum) weg, und beim gewöhnlichen Öffnen bliebe es bei der alten Fassung. Unsichtbare Feinheiten, nicht gebaut (Gewinn kleiner als das Rauschen, erst mit mehr Paaren messbar): (i) die Meldung „Rückkehr wartet“ ins erste Skript im Kopf ziehen; (ii) die Seite im Raum sagt dem Helfer schon beim Weggehen (`pagehide`) „gleich kommt eine Rückkehr“ – dann weiß er es ~50–100 ms früher. **Bitte entscheiden (Auftraggeber/Xander):** diesen Tausch annehmen – im häufigen Fall (kein Update) deutlich schneller als 884, im seltenen (Update in den letzten ~2 min, langsames Telefon, schnelles Netz) bis ~0,1 s langsamer – oder Variante B.
+2. **Gewöhnliches Öffnen ohne Update: +80 ms** auf schnellem Gerät (CPU 1×, D = 250; bei CPU 4× verdeckt der Start der Seite das Warten). Dort kann die Seite aus dem Browser-Speicher alt sein, darum wartet die Rückkehr auf fassung.json; 884 ging sofort hinein und beim Update **zweimal** (alt, dann neu – die anderen sehen Kommen, Gehen, Kommen). Strikt „nie langsamer“ ginge nur mit genau diesem Doppel-Hinein; **nicht gebaut**, zur Entscheidung.
+3. Regel „Textfeld mit Inhalt“ in `bleiben()`: hat man während des Wartens schon etwas getippt, bleibt es bei der Blase und die Rückkehr geht auf der alten Fassung hinein (wie bisher; ein Neuladen würde den Text löschen). Lädt der Helfer vorher neu (Antwort schneller als das Tippen), geht der halb getippte Text verloren – wie bis 884, wo man während des Wartens auf das Netz die alte Seite vor sich hatte.
+4. Safari/ältere Browser ohne `WindowClient.navigate` oder ohne Typ der Navigation: es bleibt beim Weg des Wächters (vorher-Verhalten), „gleich“ wird dann nicht geglaubt.
+5. Feld: weiter keine Zeile „rueckkehr“ in messung.js (Offen 3 der Rückkehr).
+6. Werkstatt-Eintrag und Funk-Antwort beim Ausliefern von 885.
+
+### Begründungen zu index.html (I45, I46)
+#### I45 — FASSUNG 885 — Rückkehr offen: ein Tipp zählt bei der ersten Prüfung nicht (Block Fassungs-Wächter)
+Jetzt in index.html: `/* 885: Rückkehr in den Raum offen (livechat.js, 30 min)? Dann zählt ein Tipp bei der ersten Prüfung nicht (SPIELSYSTEM.md I45) */`
+```text
+FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“. Nachbesserung 1 zur Rückkehr (Prüfer):
+rueck = dma_livechat_zurueck steht (30 min, wie livechat.js). Dann zählt eingabe bei der ersten Prüfung nicht (bleiben):
+sonst blieb die Rückkehr nach einem Tipp vor der Antwort (> 2 s) auf der alten Fassung, nur mit der Blase, für die ganze
+Sitzung. Man ist noch nicht im Raum, und S1 lädt eine von selbst geöffnete Seite ohnehin einmal neu. Ein Textfeld mit
+Inhalt hält die Seite weiter an.
+```
+
+#### I46 — FASSUNG 885 — Rückkehr aus dem Speicher: der Helfer lädt die neue Fassung selbst (Block Fassungs-Wächter)
+Jetzt in index.html: `/* 885: Rückkehr auf einer Seite aus dem Speicher – der Helfer lädt die neue Fassung selbst, sobald er sie hat; „gleich“ gilt nur beim Neuladen (SPIELSYSTEM.md I46) */` und `/* 885: erst hören, was der Helfer weiß (I46) */`
+```text
+FASSUNG 885 — XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“.
+Kommt die Rückkehr-Seite aus dem Speicher des Helfers, meldet sie ihm „Rückkehr wartet“ (mit ihrer Fassung). Liegt
+draußen eine neuere, lädt der HELFER die Seite neu (sw.js, WindowClient.navigate) – ohne auf den Hauptfaden dieser alten
+Seite zu warten (gemessen: CPU 4×, fassung.json nach 0,25 s: +305 → +91 ms gegen 884). Vorher schreibt sie den Merker
+„* <Zeit> <Fassung>“: die neue Seite muss nicht noch einmal fragen. Sagt der Helfer „gleich“ und war es ein Neuladen
+(dann hat der Browser beim Server nachgefragt), geht es ohne fassung.json hinein. Meldet fassung.json einen Fehler,
+wird erst die Antwort des Helfers abgewartet. neuLaden sagt dem Helfer „halt“ (kein zweites Neuladen).
+```
