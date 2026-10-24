@@ -52,22 +52,24 @@
      H  Seite bleibt über Mitternacht offen (23:52 → 00:12), heute war
         jemand aktiv, nach Mitternacht noch niemand: Fuchs-Abfragen in den
         10 min nach Mitternacht ≤ 30; danach „übernommen“ bei Emmy.
-     L  abgemeldeter Tab zog in der Sperre die Bremse; nach dem Ende ein
-        Tipp ins Feld, 8 s später Anmelden: echtes Profil, kein Ersatzprofil
-        mit Schreibsperre (eine Anmeldung mit 2xx lockert die Bremse).
+     L  abgemeldeter Tab zog in der Sperre die Bremse; die Sperre endet,
+        während die Bremse noch ≥ 30 s läuft; ein Tipp ins Feld, 8 s später
+        Anmelden: echtes Profil, kein Ersatzprofil mit Schreibsperre (eine
+        Anmeldung mit 2xx lockert die Bremse).
      M  eine alte ungelesene Nachricht hinter 130 eigenen (Rundmail): nach
         dem Lesen aller Nachrichten, die das Postfach zeigt, ist das
         Lämpchen aus (es zählt dasselbe Fenster wie das Postfach).
      N  eine einzige notifications-Anfrage hängt ohne Antwort: danach
         laufen die Benachrichtigungen weiter (≥ 5 Durchgänge in 5 min).
-   Gegenprobe Nachbesserung: auf dem ersten 885 (f832f83b) sind L, M, N
-   rot; auf 884 grün (es sind Rückschritte von 885, nicht von 884).
+   Gegenprobe Nachbesserung: auf dem ersten 885 (f832f83b) sind C „binnen
+   3 min wieder da“ (dort 18,2 min), L, M (2) und N rot – 5 rot; auf 884
+   sind L, M, N grün (Rückschritte der ersten 885, nicht von 884).
    Verdeckt/sichtbar wird wie im Browser mit einem visibilitychange
    verschickt, das bis window aufsteigt (dort hört die Echtzeit-Bibliothek).
    Zahlen je Fall stehen am Ende (und mit AUSGABE=datei.json als JSON).
 
    Gegenprobe 884 (02613a71, Baum aus git archive + Verweisen auf die
-   übrigen Ordner): A–D, G, H rot, E, L, M, N grün.
+   übrigen Ordner): 16 rot (A 3, B 3, C 6, D 2, G 1, H 1), E, L, M, N grün.
    Schalter:
      WURZEL=/pfad      anderer Baum (Gegenprobe 884: git archive 02613a71)
      QUELLE=1          index.html?quelle statt min/
@@ -622,6 +624,10 @@ function schluessel(adresse, methode) {
       const z4 = phase(s, "L-402");
       s.zustand.modus = "402";
       await laufen(s, 180000);
+      /* Die Sperre endet, während die Bremse noch mindestens 30 s läuft (sonst hinge der Fall vom Zufallsanteil der
+         Stufen ab – so war es beim Prüfer rot und in einem anderen Lauf grün). 884 hat keine Bremse. */
+      const rest = () => s.pg.evaluate(() => (Backend.bremse ? Backend.bremse().bis - Date.now() : 1e9));
+      for (let i = 0; i < 240 && (await rest()) < 30000; i++) await laufen(s, 1000);
       const br = await s.pg.evaluate(() => (Backend.bremse ? Backend.bremse() : null));
       console.log("  in der Sperre (abgemeldet, 3 min): " + z4.gesamt + " Anfragen · " + kurz(z4) + " · Bremse " + JSON.stringify(br));
       s.zustand.modus = "ok";

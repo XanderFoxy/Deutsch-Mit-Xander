@@ -4973,13 +4973,14 @@ Die Prüfung fand einen wichtigen Mangel (#138 falsch gelesen – oben im Befund
 5. **Große Antworten im Takt.** `namesFor` holte für Namen die ganze Profilzeile (`select *` mit `extra_profile_data`: Bildersammlung, Wortschatz, Lernstände), und das für den ganzen Postausgang (nach einer Rundmail: alle Mitglieder) und alle Duellpartner samt eigener Zeile. Dazu kamen 120 volle Nachrichten (`private_messages select *`) für das Lämpchen. Beides alle 20 s.
 6. **Die Anmeldung ging verloren (gemessen).** Der Echtzeit-Klient in livechat.js teilt den Speicherplatz der Anmeldung und erneuert die Sitzung selbst. Bei 402 löschte supabase-js dort die Sitzung, und nach der Sperre wären alle abgemeldet gewesen.
 
-### Reparatur (Fassung 885) – nichts Sichtbares, Echtzeit-Kanäle unberührt
+### Reparatur (Fassung 885) – Echtzeit-Kanäle unberührt; was man merkt, steht weiter unten
 - **Bremse in backend.js (`bremsFetch`, eigener fetch für den Klienten):**
-  - Auslöser: 402, 429, 502–504 oder 520–530 auf `/rest/v1/`. 402 zieht sofort, alles andere ab dem zweiten Fehlschlag in Folge.
+  - Auslöser: 402, 429, 502–504 oder 520–530 auf `/rest/v1/`. 402 zieht sofort, alles andere ab dem zweiten Fehlschlag in Folge, wenn die beiden mindestens 2 s auseinanderliegen (Nachbesserung 1: vier zugleich gescheiterte Anfragen eines Durchgangs oder die Wiederholung von supabase-js nach 1 s zählen nur einmal).
   - Dann pausieren Lese-Abfragen und rpc 1 → 2 → 5 → 15 min, jeweils ±20 % Zufall. In der Pause antwortet die Bremse selbst (429, `DMA_BREMSE`), und es geht nichts ans Netz.
   - Schreiben in Tabellen (Punkte, Nachrichten) bremst sie nie aus.
-  - Ist nur das Netz weg, pausieren nur die Takte. Einzelne Abfragen (z. B. das Profil beim Start) gehen weiter.
+  - Ist nur das Netz weg, pausieren nur die Takte, und das höchstens 1 → 2 min (Nachbesserung 1; vorher bis 15 min, obwohl nichts beim Server ankommt). Einzelne Abfragen (z. B. das Profil beim Start) gehen weiter.
   - Gelöst wird sie durch jede Antwort, die zeigt, dass der Server lebt, spätestens nach der Pause. Ein echter Tipp öffnet für 5 s einen Versuch (höchstens alle 15 s). „online“ und das Zurückkommen lösen sie nach einem Netzfehler.
+  - Nachbesserung 1: Eine Antwort von `auth/v1` mit 2xx (z. B. die Anmeldung) und die wieder verbundene Echtzeit-Leitung (Präsenzkanal meldet SUBSCRIBED, livechat.js) lockern sie: Der nächste Versuch darf sofort hinaus, die Stufe bleibt, bis eine Abfrage wirklich durchkommt (scheitert sie, geht es mit der nächsten Stufe weiter).
   - Beim Erneuern der Sitzung reicht sie eine 402/429 als „vorübergehend“ (503) weiter, damit die Anmeldung nicht gelöscht wird. Denselben Schutz bekommen die beiden anderen Klienten mit demselben Speicherplatz (livechat.js, aussprache-pruefung.js).
   - Abfragen: `Backend.bremse()` (aktiv, Status, Stufe).
 - **Verdeckte Seite = Ruhe.** Benachrichtigungen, Laufschrift, Online-Liste, Walkie/Funk und die Fuchs-Prüfung laufen nicht bei verdeckter Seite. Im Spiel gilt das für den 12-s-Abgleich, das 4-s-Nachfragen bei fertiger Baustelle, die Angebotsliste und die Trophäen-Wiederholung.
@@ -4987,7 +4988,9 @@ Die Prüfung fand einen wichtigen Mangel (#138 falsch gelesen – oben im Befund
   - Verdeckt bleibt nur das kleine „zuletzt aktiv“ (eine Schreibanfrage je Minute ohne Antwort), damit man für die anderen online bleibt wie bisher.
   - Während der Bremse ruhen alle diese Takte.
   - Der Dorf-Takt (Automatik, „je Aufruf ein Schritt“) bleibt bewusst unverändert, damit sich das Spiel nicht ändert.
-- **Benachrichtigungen:** nie zwei Durchgänge zugleich. Wer währenddessen ruft, bekommt einen frischen Durchgang danach. Für das Lämpchen werden nur die ungelesenen Eingänge geholt (id, Zeit) statt 120 voller Nachrichten samt Namen.
+- **Benachrichtigungen:** nie zwei Durchgänge zugleich. Wer währenddessen ruft, bekommt einen frischen Durchgang danach. Hängt eine Anfrage ohne Antwort, gilt der Durchgang nach 30 s als beendet (Fuchs-Prüfung: 60 s; Nachbesserung 1).
+  - Für das Lämpchen werden nur die ungelesenen Eingänge geholt (id, Zeit) statt 120 voller Nachrichten samt Namen – und zwar genau im Fenster des Postfachs: ungelesene Eingänge unter den 120 neuesten Nachrichten (ein- und ausgehend). Die Grenze (Zeit der 120. Nachricht) ist eine winzige zweite Abfrage, nur wenn überhaupt etwas ungelesen ist (Nachbesserung 1).
+- **Walkie/Funk (Nachbesserung 1):** je Takt nur Kennung und „gelesen“ der 20 neuesten Funkzeilen, der Text nur für Zeilen, die noch nicht da sind. Angezeigt wird dasselbe.
 - **Fuchs-Wertung:**
   - Ergebnisse werden gemerkt: 60 s für Anzeigen, 10 min für die stille Prüfung. Eigene Runden und Beiträge räumen das Gedächtnis.
   - Ein Fehler wird mitgeführt (`liste.fehler`) und startet keine Rückwärtssuche.
@@ -4995,33 +4998,55 @@ Die Prüfung fand einen wichtigen Mangel (#138 falsch gelesen – oben im Befund
   - Die Prüfung „bin ich Fuchs?“ läuft für den Tag höchstens alle 5 min (nach einer eigenen Runde sofort), für Woche, Monat und Jahr höchstens alle 30 min. Sie läuft ohne Profil des Siegers und ohne Überlappung. Die Gratulation kommt höchstens Minuten später.
 - **`namesFor`:** nur noch die 13 Spalten, die alle Aufrufer lesen. Fehlt eine in der Datenbank, geht es einmal mit `*` weiter.
 - **Echtzeit:** Wiederverbinden wie bisher (1, 2, 5, dann alle 10 s). Nur solange die Bremse wegen 402 aktiv ist, geschieht es einmal je Minute.
+- **Werkstatt-Werkzeug:** `werkzeug/werkstatt-setzen.py` nimmt „@JJJJ-MM-TTTHH:MM Text“, damit eine weiterlaufende Baustelle ihren Beginn behält (Regel 2 der Werkstatt).
+
+### Was man merkt (CLAUDE.md Regel 3 – offen gesagt)
+- **Verdeckte Seite:** Liegt die Seite im Hintergrund, kommen Ton und Blase für neue Nachrichten, Freundschaftsanfragen, Duelle und das Walkie erst beim Zurückkommen (sofort beim Zurückkommen). Vorher meldete sich ein verdeckter Tab nach 20 s bis 1 min. Das ist die Folge von „verdeckt = Ruhe“; ein langsamer Hintergrund-Takt steht unter „Vorschläge“.
+- **Nur im Fehlerfall:** Wo bisher eine englische Supabase-Meldung stand (Warnband „Nochmal laden“ → „Klappt noch nicht: …“, Fehlermeldungen beim Speichern), steht während der Bremse „Der Server pausiert gerade (402) – bitte gleich noch einmal versuchen.“
+- Die Gratulation „Fuchs des Tages/der Woche …“ kommt höchstens einige Minuten später.
+
+### Nachbesserung 1 (Prüfer-Befunde zur ersten 885)
+- **Anmeldung nach der Sperre (wichtig):** Ein abgemeldeter Tab hatte in der Sperre die Bremse gezogen. Meldete man sich nach dem Ende an, ging die Anmeldung durch, das Profil aber scheiterte an der eigenen Bremse: Ersatzprofil mit Schreibsperre und rotes Warnband – genau dann, wenn alle zurückkommen. Jetzt lockert eine Anmeldung mit 2xx die Bremse. Sonde L: grün (erste 885: rot).
+- **Lämpchen (wichtig):** Es zählte alle ungelesenen Eingänge, das Postfach zeigt aber nur die 120 neuesten Nachrichten. Eine alte ungelesene Nachricht hinter einer Rundmail ließ das Lämpchen für immer leuchten (Blase und Erinnerungston bei jedem Laden). Jetzt gilt dasselbe Fenster wie im Postfach. Sonde M: grün (erste 885: rot).
+- **Hängende Anfrage:** Die Sperre „nie zwei zugleich“ hatte keine Zeitgrenze; eine Anfrage ohne Antwort hielt Lämpchen, Fuchs-Prüfung und Spiel-Freischaltung bis zum Neuladen an. Jetzt 30 s (Fuchs 60 s), und eine Fuchs-Rechnung, die nach 60 s noch läuft, hält niemanden mehr auf. Sonde N: grün (erste 885: rot).
+- **Nach der Sperre wieder da:** vorher erst nach Ablauf der Pause (gemessen 12–18 min), jetzt nach 0,5–0,8 min, weil die Echtzeit-Leitung sich zurückmeldet. Ohne Echtzeit-Leitung bleibt es bei „spätestens nach der Pause“ (bis 18 min) oder dem nächsten Tipp.
+- **Kurzer Aussetzer** zieht die Bremse nicht mehr (Fehlschläge mit ≥ 2 s Abstand), **Netz weg** pausiert höchstens 2 min.
+- **Funk** lädt nur noch Neues (vorher der größte Posten bei sichtbarer Seite).
+- **Werkstatt:** die verschwundenen offenen Punkte (Vite-Plan Funk 312, Feldbeleg Ton 310, Aussprache-/Tonserver-Funktion) stehen wieder drin; „Ladezeit-Fassung (wird 886)“ trägt wieder ihren Beginn 2026-10-14T04:06.
+- **Sonde:** visibilitychange steigt jetzt wie im Browser bis window auf (dort hören Echtzeit und Anmeldung mit); neu sind G (402 bei verdeckter Seite), H (über Mitternacht offen), L, M, N und Benachrichtigungen in der Tabelle `notifications`; Fall C wartet vor dem Tipp, bis die Bremse wirklich gezogen ist (vorher hing er vom Zufall ab).
 
 ### Messung vorher/nachher – Sonde `werkzeug/pruefe-885-sparsam.js`
 Supabase ist nachgebaut (echtes supabase-js 2.117.3, Route, routeWebSocket). Je Fall laufen 10 min mit `page.clock`. Getestet wird der Betreiber-Tab ohne Klassenzimmer; Emmy ist in jedem Zeitraum Fuchs.
 
 | Fall | 884 (Gegenprobe 02613a71) | 885 |
 |---|---|---|
-| A sichtbar: Anfragen / Antwortdaten der Attrappe | 992 / 3 349 KB | 247 / 34 KB |
+| A sichtbar: Anfragen / Antwortdaten der Attrappe | 992 / 3 358 KB | 277 / 56 KB |
 | A Fuchs-Abfragen (results + community_*) | 480 | 4 |
 | A `profiles?select=*` / `private_messages?select=*` | 150 / 30 | 0 / 0 |
 | B verdeckt (nach 90 s sichtbar) | 992 | 10 (nur „zuletzt aktiv“) |
-| C 402, sichtbar | 4 327 + 62 Echtzeit-Versuche, Anmeldung gelöscht | 4–8 + 13 Echtzeit-Versuche, Anmeldung bleibt |
+| C 402, sichtbar | 4 327 + 62 Echtzeit-Versuche, Anmeldung gelöscht | 4 + 13–15 Echtzeit-Versuche, Anmeldung bleibt |
 | C Tipp in der Sperre, dann noch ein Tipp nach 3 s | 1 / 1 | 1 / 0 |
-| C nach Ende der Sperre wieder da | sofort | nach 12,5–16,5 min (Pause läuft ab; ein Tipp früher) |
-| C 503 für 20 s (eine Leseabfrage, dazu die Takte) | 48 | 2 |
-| C Netz weg 10 min (erreicht den Server nicht) | 11 049 | 44–96 (Zufallsanteil der Pausen) |
+| C nach Ende der Sperre wieder da | sofort | nach 0,5–0,8 min (zwei Läufe; die Echtzeit-Leitung meldet sich; erste 885: 12–18 min) |
+| C 503 für 20 s (eine Leseabfrage, dazu die Takte) | 59 | 3 |
+| C Netz weg 10 min (erreicht den Server nicht) | 11 055 | 63–72 (Zufallsanteil der Pausen; erste 885: 44–96) |
 | D 00:05, heute niemand, zuletzt aktiv vor 3 Tagen: Fuchs-Abfragen | 960 | 4 |
-| D Rückwärtssuche „Fuchs des Tages“ | 21 Abfragen | 4, Ergebnis gleich (Emmy, „übernommen“) |
+| D Rückwärtssuche „Fuchs des Tages“ | 21 Abfragen | 0 in diesem Lauf (schon gemerkt), ohne Gedächtnis 4; Ergebnis gleich (Emmy, „übernommen“) |
 | E eigene Runde mit den meisten Punkten: Gratulation | 1 | 1 |
+| G 402 bei verdeckter Seite, 10 min | 4 322 | 3–4 (nur „zuletzt aktiv“, je einmal nach Ablauf der Pause) |
+| H über Mitternacht offen: Fuchs-Abfragen in den 10 min danach | 717 | 4, Ergebnis gleich (Emmy, „übernommen“) |
+| L abgemeldet, nach der Sperre angemeldet: echtes Profil | ja | ja (erste 885: Ersatzprofil mit Schreibsperre) |
+| M alte ungelesene hinter 130 eigenen: Lämpchen nach dem Lesen | aus | aus (erste 885: bleibt an) |
+| N eine Anfrage hängt: Durchgänge in den 5 min danach | 15 | 15 (erste 885: 0) |
 
-- Gegenprobe gegen 884: **14 rot** (A 3, B 3, C 6, D 2). E ist grün; das ist gewollt, denn es zeigt, dass die Gratulation geblieben ist.
-- Weitergerechnet für den Betreiber-Tab: Sichtbar sind es bei 885 ≈ 1 480 statt ≈ 5 950 Anfragen je Stunde. Verdeckt sind es ≈ 60 statt ≈ 1 330 im echten, drosselnden Browser (Modell, das zum Log passt). In der Sperre sind es ≈ 25 statt ≈ 4 200 (Log), sichtbar sogar ≈ 26 000 bei 884.
-- **Andere Sonden auf 885:**
+- Gegenprobe gegen 884: **16 rot** (A 3, B 3, C 6, D 2, G 1, H 1). E, L, M, N sind auf 884 grün; das ist gewollt: E zeigt, dass die Gratulation geblieben ist, und L, M, N sind Rückschritte der ersten 885 (dort rot: C „binnen 3 min wieder da“ (18,2 min), L (Ersatzprofil mit „Der Server pausiert gerade (402)“), M 2, N (0 Durchgänge)).
+- Weitergerechnet für den Betreiber-Tab: Sichtbar sind es bei 885 ≈ 1 660 statt ≈ 5 950 Anfragen je Stunde (Nachbesserung 1: +1 winzige Abfrage je Takt, solange etwas ungelesen ist). Verdeckt sind es ≈ 60 statt ≈ 1 330 im echten, drosselnden Browser (Modell, das zum Log passt). In der Sperre sind es ≈ 25 statt ≈ 4 200 (Log), sichtbar sogar ≈ 26 000 bei 884.
+- **Andere Sonden auf 885 (erste Fassung):**
   - Grün: 884-notweg (91 Prüfungen), 884-beta, 876-start-schlank, runde99-rueckfrage, 859-kanal-sofort, 871-leitung-frisch, 867-spiel-nach-start und 884-leitung.
   - 694-leistung: eine Zeile rot (6 Anfragen beim erneuten Öffnen), auf 884 genauso, also unverändert.
   - ladezeit: Wackler. Das Seitenbild von raw.githubusercontent.com (1,3 MB, echtes Netz) kommt je nach Leitung im ersten, zweiten oder dritten Laden und färbt dann „nach dem Update“ bzw. „ohne Update“ rot. 885 war in 2 von 5 Läufen grün, 884 in 3 von 3. Zwei der Läufe protokollierten jede große Datei: Das Bild ist der Grund, nicht 885 (alle eigenen Dateien kamen gleich).
+- **Andere Sonden nach Nachbesserung 1:** grün: runde99-rueckfrage (die Attrappe dort kennt jetzt `.in()` für das Funk-Nachladen), 884-notweg, 884-beta, 876-start-schlank, 859-kanal-sofort, 871-leitung-frisch, 867-spiel-nach-start, 884-leitung und ladezeit. 694-leistung: dieselbe eine Zeile rot wie auf 884 (6 Anfragen beim erneuten Öffnen), unverändert.
 - **Ehrlich:**
-  - „Verdeckt“ ist in der Sonde `document.hidden`. Die Drosselung durch den Browser ist nicht nachgestellt, deshalb zählt 884 verdeckt hier so viel wie sichtbar.
+  - „Verdeckt“ ist in der Sonde `document.hidden` samt visibilitychange bis window. Die Drosselung durch den Browser ist nicht nachgestellt, deshalb zählt 884 verdeckt hier so viel wie sichtbar.
   - Die Datenmengen sind die der Attrappe; echte Profilzeilen mit Bildern sind größer.
   - Das Klassenzimmer (Spiel-Abgleich verdeckt) ist nur gelesen und nicht in dieser Sonde gemessen.
 
@@ -5031,7 +5056,6 @@ Supabase ist nachgebaut (echtes supabase-js 2.117.3, Route, routeWebSocket). Je 
 - Weiter große Antworten, aber nur noch bei sichtbarer Seite:
   - `challenges select *` alle 20 s (alle je geführten Duelle samt Wortliste),
   - `getAllMembers` jede Minute (ganze Mitgliederliste),
-  - `betreiber_funk` mit vollem Text alle 20 s,
   - `notifications select *` ohne Grenze,
   - das Postfach beim Öffnen (120 volle Nachrichten).
   Hebel: nur Neues nachladen, Spalten wählen, Online-Liste auf dem Server filtern.
@@ -5041,8 +5065,10 @@ Supabase ist nachgebaut (echtes supabase-js 2.117.3, Route, routeWebSocket). Je 
 - `supabase-js@2` ist nicht auf eine Fassung festgelegt; die Sonden routen nach `supabase-js@2/dist`.
 - Avatare und Galerie werden in Originalgröße hochgeladen.
 - Die Sonde 885-sparsam deckt das Klassenzimmer nicht ab.
+- Ein Tab ohne Echtzeit-Leitung (sehr alter Browser) wartet nach dem Ende der Sperre weiter bis zum Ende der Pause (bis 18 min) oder bis zum nächsten Tipp.
 
 ### Vorschläge, die man sehen würde – nur im Funk, nicht gebaut
 - Bei 402 auf der Anmeldeseite deutsch statt Supabase-Englisch: „Der Server hat sein Gratis-Kontingent aufgebraucht – Anmelden geht im Moment nicht. Bitte später noch einmal versuchen.“ (technischer Rest in Klammern, er sagt Xander, welches Kontingent voll ist).
 - Ein kleines Band, solange die Bremse wegen 402 aktiv ist: „Der Server ist gerade gesperrt – die Seite fragt in X min wieder nach.“
 - Raumpuls nur senden, wenn noch jemand im Raum ist; Bilder vor dem Hochladen auf ≈ 512 px verkleinern.
+- Falls Xander Töne auch bei verdeckter Seite will: verdeckt alle 5 min nur die vier kleinen Abfragen (Freunde, Duelle, Benachrichtigungen, Postfach-Lämpchen) und das Walkie, ohne Fuchs-Prüfung – ≈ 70–85 Anfragen je Stunde zusätzlich zu den ≈ 60 heute („zuletzt aktiv“); 884 verdeckt: ≈ 1 330 (Log-Modell). Ton und Blase kämen dann höchstens 5 min später.

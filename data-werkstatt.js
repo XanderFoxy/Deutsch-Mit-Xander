@@ -75,7 +75,7 @@ window.DMA_WERKSTATT = {
     { seit: "2026-10-24T18:05",
       text: "Bremse bei Sperre: 4 statt 4 327 Anfragen in 10 min (auch verdeckt 4), Anmeldung bleibt erhalten" },
     { seit: "2026-10-24T18:05",
-      text: "Nach der Sperre von selbst wieder da (Test: nach 0,5 min), Anmelden gibt sofort das echte Profil" },
+      text: "Nach der Sperre von selbst wieder da (Test: nach 0,5–0,8 min), Anmelden gibt sofort das echte Profil" },
     { seit: "2026-10-24T18:05",
       text: "Fuchs-Wertung ohne 30er-Schleife: nach Mitternacht 4 statt 960 Abfragen in 10 min" },
     { seit: "2026-10-24T18:05",
