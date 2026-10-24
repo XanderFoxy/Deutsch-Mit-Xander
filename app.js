@@ -4614,6 +4614,7 @@
     await checkDailyRankingReward();
     // ECHTES Warten statt eines geratenen Timeouts — sonst kommt Sound & Leuchten der Profil-Pille
     // bei einem Meilenstein bis zu 20 Sekunden verzögert (Hintergrund-Timer), statt sofort.
+    fuchsNachEigenerRunde = true;   // FASSUNG 885 — der Tages-Fuchs wird dann gleich geprüft (nicht erst im 5-min-Abstand)
     checkNotifications();
   }
   // Kleines Glückwunsch-Popup mit dem Bild und dem genauen Namen des neu freigeschalteten Fuchses
@@ -5944,6 +5945,7 @@
   /* ============ Lauftext-Ticker ============ */
   let tickerVisible = true;
   let tickerUpdateInFlight = false;
+  let tickerVerpasst = false;   // FASSUNG 885 — verdeckt übersprungen, beim Zurückkommen nachholen
   /* ============================================================
      LIVE-ANZEIGE — „Alex ist gerade live bei …"
      ------------------------------------------------------------
@@ -6435,6 +6437,10 @@
   async function updateTicker() {
     const track = document.getElementById("tickerTrack");
     if (!track) return;
+    /* FASSUNG 885 — die Laufschrift fragte alle 20 s (und bei jedem Präsenz-Ereignis) auch bei verdeckter
+       Seite nach. Verdeckt oder während der Bremse: nichts holen, beim Zurückkommen einmal nachziehen. */
+    if (document.hidden || seiteGebremst()) { tickerVerpasst = true; return; }
+    tickerVerpasst = false;
     // Absicherung: läuft gerade schon eine Aktualisierung (z. B. weil auf einer stark besuchten
     // Seite mehrere Auslöser fast gleichzeitig feuern), wird ein zweiter, sich überlappender
     // Durchlauf übersprungen — zwei gleichzeitige Durchläufe könnten sich sonst gegenseitig die
@@ -6582,6 +6588,7 @@
 
   updateTicker();
   setInterval(updateTicker, 20000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && tickerVerpasst) updateTicker(); });
   // Begrüßungsnachricht, wenn jemand über einen Empfehlungs-Link landet — zeigt, wer die Person
   // eingeladen hat. Der Name kommt zur schnellen Anzeige direkt aus dem Link (refname), wird aber
   // sicherheitshalber mit dem tatsächlich aktuellen Profilnamen abgeglichen, sobald der geladen
@@ -7838,13 +7845,39 @@
   }
   let notifyPrimed = false;
   let toastedNotificationIds = new Set();
+  /* FASSUNG 885 — NOTFALL ANFRAGE-STURM. Dieser 20-s-Takt lief auch bei verdeckter Seite (ein Handy mit der
+     Seite im Hintergrund fragte so rund um die Uhr) und konnte sich überlappen. Jetzt: bei verdeckter Seite und
+     während der Bremse (backend.js) Pause, beim Zurückkommen sofort einmal nachholen; nie zwei Durchgänge
+     zugleich – wer währenddessen ruft, bekommt einen frischen Durchgang danach. */
+  let notifyLauf = null, notifyFolge = null, notifyVerpasst = false, notifyZuletzt = 0;
+  function seiteGebremst() {
+    try { return Boolean(Backend.bremse && Backend.bremse().aktiv); } catch (e) { return false; }
+  }
   async function checkNotifications() {
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
-    const [requests, alleDuelle, notifications, myMessages] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), Backend.getMyMessages()]);
+    if (document.hidden || seiteGebremst()) { notifyVerpasst = true; return; }
+    if (notifyLauf) {
+      if (!notifyFolge) notifyFolge = notifyLauf.catch(() => {}).then(() => { notifyFolge = null; return checkNotifications(); });
+      return notifyFolge;
+    }
+    notifyVerpasst = false;
+    notifyLauf = checkNotificationsDurchgang();
+    try { await notifyLauf; } finally { notifyLauf = null; notifyZuletzt = Date.now(); }
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    if (notifyVerpasst || Date.now() - notifyZuletzt > 20000) checkNotifications();
+  });
+  async function checkNotificationsDurchgang() {
+    /* FASSUNG 885 — für das Lämpchen nur die ungelesenen Eingänge (id, Zeit) statt 120 voller Nachrichten
+       samt Namen des ganzen Postausgangs. */
+    const ungelesenHolen = Backend.getUngeleseneNachrichten ? Backend.getUngeleseneNachrichten()
+      : Backend.getMyMessages().then((m) => m.inbox.filter((x) => !x.read));
+    const [requests, alleDuelle, notifications, ungelesen] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), ungelesenHolen]);
     /* Nur die Duelle des aktuellen Lernraums zählen und blinken. */
     const challenges = { incoming: challengesFuerRaum(alleDuelle.incoming), outgoing: challengesFuerRaum(alleDuelle.outgoing) };
     herausforderungenMerken(challenges.incoming);
-    const unreadInbox = myMessages.inbox.filter((m) => !m.read);
+    const unreadInbox = ungelesen || [];
     const unreadMsgCount = unreadInbox.length;
     const inboxBadge = document.getElementById("inboxTabBadge");
     if (inboxBadge) inboxBadge.style.display = unreadMsgCount > 0 ? "block" : "none";
@@ -97278,20 +97311,39 @@ An einem Morgen lief ein kleiner Fuchs los…
     const woche = Math.ceil(((t - jahresStart) / 86400000 + 1) / 7);
     return `${t.getUTCFullYear()}-W${woche}`;
   }
+  /* FASSUNG 885 — die Prüfung hing am 20-s-Takt: je Zeitraum 4–6 Abfragen (Woche/Monat/Jahr für alle, die
+     nicht selbst Fuchs sind – darin der Scan aller Runden des Jahres), auch im Hintergrund und überlappend.
+     Jetzt: nie zwei zugleich, nicht bei verdeckter Seite, Tag höchstens alle 5 min (gleich nach einer eigenen
+     Runde sofort), Woche/Monat/Jahr höchstens alle 30 min; die Wertung kommt aus dem Gedächtnis in backend.js
+     (getFoxForMeldung, ohne Profil des Siegers). Die Gratulation kommt dadurch höchstens Minuten später. */
+  let fuchsPruefLaeuft = false;
+  let fuchsNachEigenerRunde = false;
+  const fuchsGeprueft = {};
+  const FUCHS_PRUEF_ABSTAND = { tag: 5 * 60000, woche: 30 * 60000, monat: 30 * 60000, jahr: 30 * 60000 };
   async function pruefeFuchsAuszeichnung() {
     const nutzer = Backend.currentUser();
-    if (!nutzer) return;
+    if (!nutzer || fuchsPruefLaeuft || document.hidden) return;
+    fuchsPruefLaeuft = true;
+    const nachRunde = fuchsNachEigenerRunde;
+    fuchsNachEigenerRunde = false;
+    try { await pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde); } finally { fuchsPruefLaeuft = false; }
+  }
+  async function pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde) {
     let gemerkt = {};
     try { gemerkt = JSON.parse(localStorage.getItem(FUCHS_MELDUNG_SCHLUESSEL) || "{}"); } catch (e) { gemerkt = {}; }
+    const leicht = (tage, sonst) => (Backend.getFoxForMeldung ? Backend.getFoxForMeldung(tage) : sonst());
     const zeitraeume = [
-      { art: "tag", titel: "Fuchs des Tages", holen: () => Backend.getFoxOfTheDayShowcase() },
-      { art: "woche", titel: "Fuchs der Woche", holen: () => Backend.getFoxOfWeekShowcase() },
-      { art: "monat", titel: "Fuchs des Monats", holen: () => Backend.getFoxOfMonthShowcase() },
-      { art: "jahr", titel: "Fuchs des Jahres", holen: () => Backend.getFoxOfYearShowcase() },
+      { art: "tag", titel: "Fuchs des Tages", holen: () => leicht(1, Backend.getFoxOfTheDayShowcase) },
+      { art: "woche", titel: "Fuchs der Woche", holen: () => leicht(7, Backend.getFoxOfWeekShowcase) },
+      { art: "monat", titel: "Fuchs des Monats", holen: () => leicht(30, Backend.getFoxOfMonthShowcase) },
+      { art: "jahr", titel: "Fuchs des Jahres", holen: () => leicht(365, Backend.getFoxOfYearShowcase) },
     ];
     for (const z of zeitraeume) {
       const marke = fuchsZeitraumMarke(z.art);
       if (gemerkt[z.art] === marke) continue;
+      const faellig = (nachRunde && z.art === "tag") || Date.now() - (fuchsGeprueft[z.art] || 0) >= FUCHS_PRUEF_ABSTAND[z.art];
+      if (!faellig) continue;
+      fuchsGeprueft[z.art] = Date.now();
       let fuchs = null;
       try { fuchs = await z.holen(); } catch (e) { continue; }
       if (!fuchs || fuchs.user_id !== nutzer.id) continue;
@@ -98859,11 +98911,21 @@ An einem Morgen lief ein kleiner Fuchs los…
 
   // Online-Status: alle 60s "zuletzt aktiv" aktualisieren, solange eingeloggt —
   // und im selben Takt den grünen Zähler in der Kopfzeile nachziehen.
+  /* FASSUNG 885 — verdeckt nur noch das kleine „zuletzt aktiv“ (Schreiben ohne Antwort, damit man für die
+     anderen online bleibt wie bisher); die ganze Mitgliederliste erst wieder, wenn die Seite zu sehen ist.
+     Während der Bremse gar nichts. */
+  let onlineVerpasst = false;
   setInterval(() => {
-    if (!Backend.currentUser()) return;
+    if (!Backend.currentUser() || seiteGebremst()) return;
     Backend.touchActivity();
+    if (document.hidden) { onlineVerpasst = true; return; }
     onlineZaehlerAuffrischen();
   }, 60000);
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden || !onlineVerpasst) return;
+    onlineVerpasst = false;
+    onlineZaehlerAuffrischen();
+  });
   setTimeout(onlineZaehlerAuffrischen, 3500);
 
   /* Den Klassenzimmer-Kanal mithören — auch ohne selbst hineinzugehen.

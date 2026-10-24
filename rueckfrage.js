@@ -1399,9 +1399,17 @@ window.Rueckfrage = (function () {
   }
 
   /* ---------- Takt ---------- */
+  /* FASSUNG 885 — der Takt fragte auch bei verdeckter Seite alle 20 s (8 s offen) nach, rund um die Uhr.
+     Verdeckt oder während der Bremse (backend.js) wird nichts geholt; beim Zurückkommen sofort (wie bisher). */
+  function gebremst() {
+    try { return Boolean(Backend.bremse && Backend.bremse().aktiv); } catch (e) { return false; }
+  }
   function planen() {
     if (uhr) clearTimeout(uhr);
-    uhr = setTimeout(function () { holen(); planen(); }, istOffen() ? TAKT_OFFEN : TAKT);
+    uhr = setTimeout(function () {
+      if (!document.hidden && !gebremst()) holen();
+      planen();
+    }, istOffen() ? TAKT_OFFEN : TAKT);
   }
 
   function start() {
@@ -1410,7 +1418,7 @@ window.Rueckfrage = (function () {
     /* FASSUNG 884 — geht die Tastatur auf oder zu, das Walkie-Feld neu ausrichten (tastaturLuft) */
     try { if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { tastaturLuft(); }); } catch (e) {}
     document.addEventListener("visibilitychange", function () {
-      if (!document.hidden) holen();
+      if (!document.hidden && !gebremst()) holen();
     });
   }
 

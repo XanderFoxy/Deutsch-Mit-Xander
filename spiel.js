@@ -982,6 +982,9 @@
     if (!S.bereit) return;
     var jetzt = Date.now();
     if (!sofort && jetzt - S.letzterAbruf < 12000) return;
+    /* FASSUNG 885 — verdeckt kein 12-s-Abgleich (3 rpc je Takt, auch im Hintergrund); die Selbstheilung rechnet
+       der Server ohnehin, und beim Zurückkommen holt der nächste Takt (≤ 0,7 s) sofort nach. */
+    if (!sofort && document.hidden) return;
     S.letzterAbruf = jetzt;
     var ids = [];
     plaetze().forEach(function (p) {
@@ -9229,7 +9232,7 @@
       if (bereit && !g["r:" + k]) neu.push({ key: "r:" + k, art: "fertig", bild: FORSCHUNG_SVG, ziel: "", teil: "forschung", text: F.name + " kann jetzt erforscht werden (" + F.kosten + " Forschung)" });
     });
     /* Angebote und Verkäufe: alle 2 Minuten still nachsehen; beim ersten Mal nur merken, was schon da ist. */
-    if (jetzt - (HANDEL.meldeZeit || 0) > 120000) {
+    if (jetzt - (HANDEL.meldeZeit || 0) > 120000 && !document.hidden) {   /* FASSUNG 885 — nur bei sichtbarer Seite */
       HANDEL.meldeZeit = jetzt;
       rpc("spiel_angebote_liste", {}).then(function (r) { if (r && r.ok) { HANDEL.angebote = r.angebote || []; HANDEL.verkauft = r.verkauft || []; HANDEL.angeboteZeit = Date.now(); } }).catch(function () {});
     }
@@ -9598,6 +9601,7 @@
   function bauPflegen() {
     var ich = S.ich, alle = baustellenVon(ich);
     if (!ich || !alle.length || S.bauAbruf || Date.now() - (S.bauAbrufZuletzt || 0) < 4000) return;
+    if (document.hidden) return;   // FASSUNG 885 — verdeckt nicht alle 4 s nachfragen; sichtbar geht es gleich weiter
     var fertig = alle.filter(function (b) { return Date.parse(b.bis) <= Date.now(); });
     if (!fertig.length) return;
     S.bauAbruf = true; S.bauAbrufZuletzt = Date.now();
@@ -16772,7 +16776,7 @@
     /* FASSUNG 679 — wechselt, wer mitspielt, wird die Spiel-Sitzordnung neu angewendet. */
     var sitzZeichen = spielSichtbar() + "|" + Object.keys(S.stand).filter(function (k) { return S.stand[k] && S.stand[k].mitspielen; }).sort().join(",");
     if (sitzZeichen !== S.sitzZeichen) { S.sitzZeichen = sitzZeichen; try { if (LC() && LC().spielSitzeNeu) LC().spielSitzeNeu(); } catch (e) {} }
-    if (S.bereit && !S.troph && !trophUhr && Date.now() - trophLetzt > 30000) trophaeenBald();
+    if (S.bereit && !S.troph && !trophUhr && Date.now() - trophLetzt > 30000 && !document.hidden) trophaeenBald();   // FASSUNG 885
     schnellZeichnen();
   }, 700);
 
