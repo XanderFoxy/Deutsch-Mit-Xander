@@ -415,15 +415,16 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       const e = await lauf(br, sv, { teil: "Z", update: true, art: "reload", cpu, D: 0, fjD: 3000, zwang: true });
       const b = e.betreten || [], app = e.app || [];
       const alt = app.filter((x) => x.seite === 1 && e.seiten > 1);
-      sage(e.f === e.V1 && e.seiten === 2 && b.length === 1 && b[0].f === e.V1 && b[0].seite === 2 && !e.blase,
-        "Z CPU " + cpu + "× Lauf " + (n + 1) + ": neue Fassung, ein Neuladen, betreten einmal auf der neuen Seite", zeile(e) + ", Antwort nach " + e.zwangRaus + " ms");
+      sage(e.f === e.V1 && e.seiten <= 2 && b.length === 1 && b[0].f === e.V1 && b[0].seite === e.seiten && !e.blase,
+        "Z CPU " + cpu + "× Lauf " + (n + 1) + ": neue Fassung, höchstens ein Neuladen, betreten einmal auf der neuen Seite", zeile(e) + ", Antwort nach " + e.zwangRaus + " ms");
       /* Ob app.js auf der alten Seite noch anläuft, hängt am Zufall der Reihenfolge (ob der Browser zwischen den Skripten eine
          Lücke lässt; CPU 4× 1 von 8, CPU 1× 2 von 4 Läufen) – nur mitgeschrieben. Geprüft wird, was sicher gelten muss: die alte
          Seite hat keine ganzen Stilblätter eingehängt (I48), die neue am Ende alle. */
       info("Z CPU " + cpu + "× Lauf " + (n + 1) + ": app.js auf Seite " + JSON.stringify(app.map((x) => x.seite + ":" + x.t + "ms")) + " (nicht geprüft)");
-      const vollAlt = (e.vollWeg || []).find((x) => x.seite === 1);
-      sage(vollAlt && vollAlt.voll === 0 && e.voll > 0 && e.voll === e.vollAlle, "Z CPU " + cpu + "× Lauf " + (n + 1) + ": die alte Seite hängte keine ganzen Stilblätter ein, die neue hat am Ende alle",
-        "alt " + (vollAlt ? vollAlt.voll : "–") + ", neu " + e.voll + " von " + e.vollAlle);
+      /* ohne alte Seite (884: die Seite kommt aus dem Netz, der Server hält sie bis 2 s) gilt nur „am Ende alle“ */
+      const vollAlt = e.seiten === 2 ? (e.vollWeg || []).find((x) => x.seite === 1) : { voll: 0 };
+      sage(vollAlt && vollAlt.voll === 0 && e.voll > 0 && e.voll === e.vollAlle, "Z CPU " + cpu + "× Lauf " + (n + 1) + ": eine ersetzte Seite hängte keine ganzen Stilblätter ein, die letzte hat am Ende alle",
+        "ersetzt " + (e.seiten === 2 ? (vollAlt ? vollAlt.voll : "–") : "keine") + ", am Ende " + e.voll + " von " + e.vollAlle);
       const ab = b.length ? b[0].abbruch : null;
       sage(!ab || JSON.parse(ab).f !== e.V, "Z CPU " + cpu + "× Lauf " + (n + 1) + ": kein falscher Abbruch-Eintrag", "dma-mess-abbruch " + (ab || "–"));
     }
