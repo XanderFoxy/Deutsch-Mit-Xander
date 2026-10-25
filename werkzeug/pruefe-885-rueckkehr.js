@@ -475,7 +475,8 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
         const wie = fa.was === "Y3" ? " Meldung 0,9 s verspätet, index.html nach 5,4 s," : " index.html nach 4,9 s,";
         sage(e.f === e.V1 && b.length === 1 && b[0].f === e.V1 && !e.blase && e.gesteuert,
           fa.was + " CPU " + fa.cpu + "×" + wie + " Lauf " + (n + 1) + ": am Ende die neue Fassung, betreten einmal", zeile(e));
-        sage(e.seiten === 2 && !vomHelfer, fa.was + " CPU " + fa.cpu + "×" + wie + " Lauf " + (n + 1) + ": nach 4,5 s ab dem Öffnen lädt nicht mehr der Helfer, sondern die Seite selbst neu", "Merker beim Start " + JSON.stringify(e.wm || []));
+        /* (884 nimmt die Seite gleich aus dem Netz: eine Seite, kein Merker – auch das ist richtig) */
+        sage(!vomHelfer, fa.was + " CPU " + fa.cpu + "×" + wie + " Lauf " + (n + 1) + ": nach 4,5 s ab dem Öffnen lädt nicht mehr der Helfer, sondern die Seite selbst neu", "Seiten " + e.seiten + ", Merker beim Start " + JSON.stringify(e.wm || []));
       } else {
         sage(b.length === 1 && (b[0].f === e.V1 || (e.f === e.V && /Neue Fassung/.test(e.blase))) && e.gesteuert,
           "Y2 CPU " + fa.cpu + "× Hauptfaden 4,8–6,3 s belegt, Lauf " + (n + 1) + ": nie zweimal hinein (neue Fassung, oder die alte mit Blase)", zeile(e) + ", Merker " + JSON.stringify(e.wm || []));
