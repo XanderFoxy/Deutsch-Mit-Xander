@@ -125,7 +125,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const QUELLE = Boolean(process.env.QUELLE);
-const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V").split(",").map((x) => x.trim()).filter(Boolean);
+const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM").split(",").map((x) => x.trim()).filter(Boolean);
 const SUPA = [process.env.SUPABASE_UMD,
   "/tmp/claude-0/node_modules/@supabase/supabase-js/dist/umd/supabase.js",
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
@@ -308,6 +308,7 @@ function schluessel(adresse, methode) {
   async function seiteOeffnen(fall, t0, opt) {
     opt = opt || {};
     const zustand = { phase: "start", modus: "ok", zaehler: { start: neuerZaehler() }, db: datenbank(fall, t0), fehler: [], systemNachrichten: [] };
+    if (opt.zustand) Object.assign(zustand, opt.zustand);   // Nachbesserung 4 (FM: schon beim Laden scheitern)
     const zaehler = () => (zustand.zaehler[zustand.phase] = zustand.zaehler[zustand.phase] || neuerZaehler());
     const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2,
       serviceWorkers: "block", timezoneId: "Europe/Berlin", locale: "de-DE",
@@ -335,6 +336,15 @@ function schluessel(adresse, methode) {
       z.gesamt++; z.je[k] = (z.je[k] || 0) + 1;
       /* N: genau eine Anfrage bekommt nie eine Antwort */
       if (zustand.haengen && zustand.haengen.test(k) && !zustand.gehangen) { zustand.gehangen = true; return new Promise(() => {}); }
+      /* Nachbesserung 4 — mitschreiben (FM) und einzelne Leseabfragen mit 500 scheitern lassen (VF, FM): 500 zieht die
+         Bremse nicht (kein Kontingent, kein Ausfall), die Abfragen in backend.js liefern dann still [] bzw. „Fehler“. */
+      if (zustand.protokoll && zustand.protokoll.test(k)) (zustand.log = zustand.log || []).push({ t: zustand.jetzt || 0, url: req.url() });
+      const sch = zustand.scheitern;
+      if (sch && methode === "GET" && sch.re.test(k) && (sch.rest == null || sch.rest > 0)) {
+        if (sch.rest != null) sch.rest--;
+        sch.anzahl = (sch.anzahl || 0) + 1;
+        return route.fulfill({ status: sch.status || 500, headers: Object.assign({ "Content-Type": "application/json" }, kopf), body: '{"message":"Internal Server Error","code":"XX000"}' });
+      }
       if (zustand.modus === "offline") return route.abort("internetdisconnected");
       if (zustand.modus === "402" || zustand.modus === "503") {
         const body = zustand.modus === "402"
@@ -1003,6 +1013,130 @@ function schluessel(adresse, methode) {
       sage(toeneNeu > 0, "V: verdeckt spielt der Ton (wie 884)", toeneNeu + " Oszillatoren");
       fehlerPruefen(s);
       ergebnis.faelle.V = { ruhe: zr.gesamt, ruheKB: Math.round(zr.bytes / 1024), vollRuhe, ruheJe: zr.je, blaseNachrichtMin: minM, blaseBenachrichtigungMin: minB, toene: toeneNeu, neuJe: zn.je };
+      await s.ctx.close();
+    }
+
+    /* ======== Nachbesserung 4: Tipps bei „Netz weg“ und im Ausfall, Walkie mit > 60 offenen, gescheiterter Durchgang, Fuchs ======== */
+    /* NT/NT0: Netz weg 10 min, sichtbar, mit und ohne Tipp alle 16 s auf eine leere Fläche (wie der Prüfer, Q10). */
+    for (const [fall, tippen] of [["NT", true], ["NT0", false]]) {
+      if (!FAELLE.includes(fall)) continue;
+      abschnitt(fall, "Netz weg 10 min, sichtbar" + (tippen ? ", ein Tipp alle 16 s auf eine leere Fläche" : ", kein Tipp") + ": Versuche");
+      const s = await seiteOeffnen("A", T_TAG);
+      await laufen(s, 90000);
+      const z = phase(s, fall);
+      s.zustand.modus = "offline";
+      for (let t = 0; t < 600000; t += 16000) { if (tippen) await s.pg.mouse.click(20, 300); await laufen(s, 16000); }
+      console.log("  Netz weg 10 min: " + z.gesamt + " Versuche · " + kurz(z));
+      if (tippen) sage(z.gesamt <= 200, "NT: Netz weg 10 min mit einem Tipp alle 16 s höchstens 200 Versuche (Nachbesserung 3: 1 002; Nachbesserung 2: 72)", String(z.gesamt));
+      else sage(z.gesamt <= 150, "NT0: Netz weg 10 min ohne Tipp höchstens 150 Versuche (Prüfer: 87–88)", String(z.gesamt));
+      s.zustand.modus = "ok";
+      const zon = phase(s, fall + "-online");
+      await s.pg.evaluate(() => window.dispatchEvent(new Event("online")));
+      await laufen(s, 25000);
+      sage((zon.ok["notifications*"] || zon.ok["notifications"]) > 0, fall + ": Netz wieder da („online“): binnen 25 s wieder abgefragt", kurz(zon));
+      fehlerPruefen(s);
+      ergebnis.faelle[fall] = { gesamt: z.gesamt, je: z.je };
+      await s.ctx.close();
+    }
+
+    /* XT: 503 für 10 min, sichtbar, ein Tipp alle 16 s – der Preis des Tipp-Fensters für die Takte (W1). */
+    if (FAELLE.includes("XT")) {
+      abschnitt("XT", "503 für 10 min, sichtbar, ein Tipp alle 16 s auf eine leere Fläche: Anfragen");
+      const s = await seiteOeffnen("A", T_TAG);
+      await laufen(s, 90000);
+      const z = phase(s, "XT");
+      s.zustand.modus = "503";
+      for (let t = 0; t < 600000; t += 16000) { await s.pg.mouse.click(20, 300); await laufen(s, 16000); }
+      console.log("  503 10 min mit Tipps: " + z.gesamt + " Anfragen · " + kurz(z));
+      sage(z.gesamt <= 400, "XT: 503 10 min mit einem Tipp alle 16 s höchstens 400 Anfragen (Prüfer zu Nachbesserung 3: 255; 884: ≈ 10 600)", String(z.gesamt));
+      fehlerPruefen(s);
+      ergebnis.faelle.XT = { gesamt: z.gesamt, je: z.je };
+      await s.ctx.close();
+    }
+
+    /* W60: Walkie mit 70 offenen Fragen (holen lädt die 60 ältesten), verdeckt 10 min ohne Neues, dann eine neue Frage. */
+    if (FAELLE.includes("W60")) {
+      abschnitt("W60", "Walkie mit 70 offenen Fragen, verdeckt 10 min ohne Neues, dann eine neue Frage");
+      const s = await seiteOeffnen("A", T_TAG);
+      const frage = (i) => s.zustand.db.betreiber_rueckfragen.push({ id: i, thema: "Thema " + i, frage: "Frage " + i + ": " + "Text ".repeat(60), art: "frei", optionen: null, wo: null, beantwortet: null, erstellt: iso(s.zustand.jetzt - (100 - i) * 60000) });
+      for (let i = 1; i <= 70; i++) frage(i);
+      await laufen(s, 60000);
+      const sichtbar = await s.pg.evaluate(() => (window.Rueckfrage && Rueckfrage.stand ? Rueckfrage.stand().length : -1));
+      await s.pg.evaluate(() => window.__sichtbar(false));
+      await laufen(s, 5000);
+      const zr = phase(s, "W60-ruhe");
+      await laufen(s, 600000);
+      const vollRuhe = summe(zr, /^betreiber_rueckfragen$/);
+      console.log("  sichtbar geladen: " + sichtbar + " Fragen · verdeckt 10 min: " + zr.gesamt + " Anfragen · " + Math.round(zr.bytes / 1024) + " KB · " + kurz(zr));
+      sage(sichtbar === 60, "W60: sichtbar lädt das Walkie die 60 ältesten offenen Fragen (wie bisher)", String(sichtbar));
+      sage(vollRuhe <= 1, "W60: verdeckt 10 min ohne Neues höchstens 1 volle Abfrage der offenen Fragen (Prüfer zu Nachbesserung 3: 5)", String(vollRuhe));
+      const zn = phase(s, "W60-neu");
+      frage(71);
+      let nach = 0;
+      for (; nach < 6 * 60000 && !(zn.ok["betreiber_rueckfragen"] > 0); nach += 5000) await laufen(s, 5000, 5000);
+      sage(zn.ok["betreiber_rueckfragen"] > 0 && nach <= 2.6 * 60000, "W60: eine neue Frage holt das Walkie verdeckt spätestens nach ≈ 2,5 min", Math.round(nach / 6000) / 10 + " min · " + kurz(zn));
+      fehlerPruefen(s);
+      ergebnis.faelle.W60 = { sichtbar, ruhe: zr.gesamt, ruheKB: Math.round(zr.bytes / 1024), vollRuhe, neuNachMin: Math.round(nach / 6000) / 10, ruheJe: zr.je };
+      await s.ctx.close();
+    }
+
+    /* VF: verdeckt, neue Benachrichtigung, der erste volle Durchgang scheitert (500 auf notifications – backend.js
+       liefert dann still []). Die nächste schlanke Prüfung muss es noch einmal versuchen. */
+    if (FAELLE.includes("VF")) {
+      abschnitt("VF", "verdeckt: neue Benachrichtigung, der erste volle Durchgang scheitert (500) – die nächste Prüfung holt nach");
+      const s = await seiteOeffnen("A", T_TAG);
+      await beobachten(s);
+      await laufen(s, 30000);
+      s.zustand.db.private_messages.forEach((m) => { m.read = true; });
+      s.zustand.db.notifications.forEach((n) => { n.read = true; });
+      await laufen(s, 60000);
+      await s.pg.evaluate(() => window.__sichtbar(false));
+      await laufen(s, 5000);
+      const zn = phase(s, "VF-neu");
+      const t0 = s.zustand.jetzt;
+      s.zustand.scheitern = { re: /^notifications\*$/, rest: 1, status: 500 };
+      neueBenachrichtigung(s, "VF-Benachrichtigung");
+      let ben = null;
+      for (let nach = 0; nach < 8 * 60000 && !ben; nach += 5000) {
+        await laufen(s, 5000, 5000);
+        ben = (await blasen(s)).find((x) => x.t >= t0 && /VF-Benachrichtigung/.test(x.text));
+      }
+      const min = ben ? Math.round((ben.t - t0) / 6000) / 10 : null;
+      console.log("  gescheitert: " + (s.zustand.scheitern.anzahl || 0) + " · Blase nach " + min + " min · " + kurz(zn));
+      sage((s.zustand.scheitern.anzahl || 0) === 1, "VF: der erste volle Durchgang scheiterte wirklich (sonst prüft der Fall nichts)", String(s.zustand.scheitern.anzahl || 0));
+      sage(Boolean(ben) && ben.t - t0 <= 4.6 * 60000, "VF: die Blase kommt trotzdem verdeckt, spätestens mit der Prüfung danach (≈ 4,5 min; Nachbesserung 3: erst beim Zurückkommen)", ben ? min + " min" : "keine in 8 min");
+      fehlerPruefen(s);
+      ergebnis.faelle.VF = { gescheitert: s.zustand.scheitern.anzahl || 0, blaseNachMin: min, je: zn.je };
+      await s.ctx.close();
+    }
+
+    /* FM: die Fuchs-Prüfung beim Laden scheitert (500 auf results), danach geht es wieder. Monat und Jahr müssen nach
+       ≈ 30 min wieder geprüft werden (die 6-h-Marke gilt erst nach einer erfolgreichen Abfrage). */
+    if (FAELLE.includes("FM")) {
+      abschnitt("FM", "Fuchs-Prüfung scheitert beim Laden (500 auf results), dann geht es wieder: Monat und Jahr nach ≈ 30 min erneut");
+      const s = await seiteOeffnen("A", T_TAG, { zustand: { scheitern: { re: /^results/, status: 500 }, protokoll: /^results/ } });
+      await laufen(s, 120000, 5000);
+      const gescheitert = s.zustand.scheitern.anzahl || 0;
+      s.zustand.scheitern = null;
+      const ab = s.zustand.jetzt;
+      s.zustand.log = [];
+      await laufen(s, 40 * 60000, 5000);
+      const art = (e) => {
+        const g = new URL(e.url).searchParams.get("played_at");
+        if (!g || !/^gte\./.test(g)) return null;
+        const tage = (e.t - Date.parse(g.slice(4))) / 86400000;
+        return tage < 2 ? "tag" : tage < 10 ? "woche" : tage < 40 ? "monat" : "jahr";
+      };
+      const je = { tag: [], woche: [], monat: [], jahr: [] };
+      s.zustand.log.forEach((e) => { const a = art(e); if (a) je[a].push(Math.round((e.t - ab) / 6000) / 10); });
+      const erste = (a) => (je[a].length ? je[a][0] : null);
+      console.log("  beim Laden gescheitert: " + gescheitert + " · danach (min nach dem Ende des Fehlers): tag " + je.tag.length + ", woche " + JSON.stringify(je.woche) + ", monat " + JSON.stringify(je.monat) + ", jahr " + JSON.stringify(je.jahr));
+      sage(gescheitert >= 2, "FM: die Prüfung beim Laden scheiterte wirklich", String(gescheitert));
+      sage(erste("monat") != null && erste("monat") <= 35, "FM: Monat nach dem Fehlschlag binnen ≈ 30 min wieder geprüft (Nachbesserung 3: erst nach 6 h)", String(erste("monat")));
+      sage(erste("jahr") != null && erste("jahr") <= 35, "FM: Jahr nach dem Fehlschlag binnen ≈ 30 min wieder geprüft (Nachbesserung 3: erst nach 6 h)", String(erste("jahr")));
+      sage(je.monat.length <= 1 && je.jahr.length <= 1, "FM: nach der erfolgreichen Prüfung nicht wieder (6 h)", "monat " + je.monat.length + ", jahr " + je.jahr.length);
+      fehlerPruefen(s);
+      ergebnis.faelle.FM = { gescheitert, je };
       await s.ctx.close();
     }
   } catch (e) {
