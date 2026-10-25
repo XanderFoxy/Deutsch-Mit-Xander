@@ -252,8 +252,15 @@ function seite(r, e) {
   netz.catch(function () {});
   var f = "";
   try { f = new URL(r.url).searchParams.get("f") || ""; } catch (x) {}
-  var draussen = draussenLesen();
-  var antwort = ausSpeicher().then(function (g) {
+  /* FASSUNG 886 (Rückkehr): genau die Seite, die der Helfer eben selbst neu lädt (rueckEntscheiden, ?f=<neu>), steht schon
+     im Gedächtnis (frisch) – sofort ausliefern, ohne den Speicher zu lesen und ohne auf das Ablegen zu warten (jede
+     Millisekunde hier entscheidet, ob die alte Seite schon in ihren Skripten steckt, s. rueckStand) */
+  var schnell = f && frisch && frisch.v === f && Date.now() - frisch.zeit < 10000 ? frisch : null;
+  var draussen = schnell ? null : draussenLesen();
+  var antwort = schnell ? Promise.resolve().then(function () {
+    los(auffrischen(netz, f, r.url));
+    return new Response(schnell.t, { status: 200, statusText: "OK", headers: schnell.h });
+  }) : ausSpeicher().then(function (g) {
     /* Nachbesserung 1: bis 884 legte der Helfer JEDE Navigation auf …/ als Seite ab, auch sicherung/<x>/. So eine Seite
        aus der Zeit vor S1 (ohne eigenen Kopf; die gespeicherte Antwort kennt ihre Adresse) nie ausliefern. */
     if (g && !g.headers.get(KOPF) && g.url && !hauptseite(g.url)) g = null;
@@ -320,8 +327,13 @@ function frischWennDa(a, g, c, r, los) {
   return g;
 }
 
+/* FASSUNG 886 (Rückkehr): .frueh meldet die Fassung des Servers, sobald sie gelesen ist – vor dem Ablegen (rueckEntscheiden) */
 function auffrischen(netz, c, url) {
-  return merken(netz.then(function (a) { return speichern(a, c, url); }));
+  var melden, frueh = new Promise(function (ok) { melden = ok; });
+  var p = merken(netz.then(function (a) { return speichern(a, c, url, melden); }));
+  p.then(melden);
+  p.frueh = frueh;
+  return p;
 }
 function merken(p) {
   p = p.catch(function () { return ""; });
@@ -331,18 +343,19 @@ function merken(p) {
 }
 
 /* Seite in den Speicher – nur mit Fassung, nie rückwärts (siehe oben). Antwort: die gespeicherte Fassung oder "". */
-function speichern(a, c, url) {
+function speichern(a, c, url, melden) {
   if (!a || a.status !== 200 || a.type !== "basic") return Promise.resolve("");
   /* Nachbesserung 1: nur die Hauptseite (nie eine Seite aus einem Unterordner) */
   if (!hauptseite(a.url || url)) return Promise.resolve("");
-  return a.text().then(function (t) { return speichernText(t, a, c, url); }).catch(function () { return ""; });
+  return a.text().then(function (t) { return speichernText(t, a, c, url, melden); }).catch(function () { return ""; });
 }
-function speichernText(t, a, c, url) {
+var frisch = null;   /* FASSUNG 886: die zuletzt gelesene Seite des Servers { v, t, h, zeit } (seite, rueckEntscheiden) */
+function speichernText(t, a, c, url, melden) {
   return Promise.resolve().then(function () {
     var v = textFassung(t);
     if (!v) return "";
     if (c && url && neuer(c, v)) {
-      return fetch(url, { cache: "no-cache" }).then(function (b) { return speichern(b, "", ""); }, function () { return ""; });
+      return fetch(url, { cache: "no-cache" }).then(function (b) { return speichern(b, "", "", melden); }, function () { return ""; });
     }
     var h = new Headers(a.headers);
     h.delete("content-length"); h.delete("content-encoding");
@@ -350,6 +363,10 @@ function speichernText(t, a, c, url) {
     /* FASSUNG 885 (Rückkehr): die gespeicherte Kopie trägt eine Marke (<html data-dma-speicher>) – so weiß die Seite, dass
        sie aus dem Speicher kam (nur dann wartet die Rückkehr in den Raum auf den Fassungs-Wächter, s. u.) */
     var gespeichert = t.replace(/<html\b/i, '<html data-dma-speicher="1"');
+    var z = Date.now();
+    frisch = { v: v, t: gespeichert, h: h, zeit: z };
+    setTimeout(function () { if (frisch && frisch.zeit === z) frisch = null; }, 10000);
+    if (melden) melden(v);
     return caches.open(SEITE).then(function (k) {
       return k.put("seite", new Response(gespeichert, { status: 200, statusText: a.statusText || "OK", headers: h })).then(function () {
         /* jetzt kennt der Speicher die Fassung des Servers: „draußen neuer“ ist erledigt */
@@ -416,9 +433,11 @@ function rueckEntscheiden(id, alt) {
   alt = String(alt || "");
   if (r.ent) return r.ent;
   delete proSeite[id];
-  var p = (eigene || auffrischung || Promise.resolve("")).then(function (v) { server = eigene ? String(v || "") : ""; });
-  r.ent = frist(p, 5000).then(ausSpeicher).then(fassungVon).then(function (v) {
-    return self.clients.get(id).then(function (c) {
+  /* FASSUNG 886: entschieden wird, sobald die Antwort des Servers gelesen ist (.frueh), nicht erst nach dem Ablegen */
+  var p = (eigene ? eigene.frueh || eigene : auffrischung || Promise.resolve("")).then(function (v) { server = eigene ? String(v || "") : ""; });
+  var seiteHolen = self.clients.get(id);   /* 886: gleich mit holen, nicht erst nach der Antwort */
+  r.ent = frist(p, 5000).then(function () { return server || ausSpeicher().then(fassungVon); }).then(function (v) {
+    return seiteHolen.then(function (c) {
       if (!c) return "";
       var nichts = function () { c.postMessage({ dmaHelfer: "nichts" }); return ""; };
       if (server && server === alt) { c.postMessage({ dmaHelfer: "gleich" }); return "gleich"; }

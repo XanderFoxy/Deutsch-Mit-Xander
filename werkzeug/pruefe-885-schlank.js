@@ -119,6 +119,8 @@ function esbuildHolen() {
    (Blase meldet „draussen“ an den Helfer, Merker dma-wechsel, erste Antwort als Versprechen) */
 function rueckbauRueckkehr(y) {
   return y
+    /* Fassung 886 (Rückkehr): Abbruch-Eintrag der vom Helfer ersetzten Seite wegräumen */
+    .replace('{erstOk("frisch");try{var ab=JSON.parse(localStorage.getItem("dma-mess-abbruch")||"null");if(wechsel[0]==="*"&&ab&&String(ab.f)===wechsel[2])localStorage.removeItem("dma-mess-abbruch")}catch(e){}}else if(rueck', 'erstOk("frisch");else if(rueck')
     /* Nachbesserung 1 zu „Rückkehr“: Rückkehr-Merker, Tipp zählt nicht, Meldung an den Helfer, „halt“ beim Neuladen */
     .replace('var rueck=false;try{var rz=JSON.parse(sessionStorage.getItem("dma_livechat_zurueck")||"null");rueck=Boolean(rz&&rz.raum&&Date.now()-(rz.zeit||0)<=18e5)}catch(e){}', "")
     .replace(';if(window.dmaRueckGemeldet)navigator.serviceWorker.controller.postMessage({rueckkehr:"halt"})}catch(e){}', "}catch(e){}")

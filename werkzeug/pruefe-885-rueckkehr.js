@@ -39,7 +39,11 @@
         ohne Speicher-Marke; hängt fassung.json, wartet die Rückkehr auf
         dieser frischen Seite nicht (< 3 s).
      G  Rückkehr ohne Update (CPU 1× und 4×, D = 250/800): betreten genau
-        einmal, kein Neuladen, keine Blase; Zeitgrenze wie R.
+        einmal, kein Neuladen, keine Blase; Zeitgrenze wie R; am Ende alle
+        ganzen Stilblätter da (Fassung 886).
+     R/Z  dazu (Fassung 886): die vom Helfer ersetzte Seite hat keine ganzen
+        Stilblätter eingehängt (sie warten auf seine Entscheidung), die
+        neue Seite am Ende alle.
      F  (Nachbesserung 1) fassung.json antwortet mit 500 oder hängt, Update:
         betreten einmal auf der NEUEN Fassung, < 3 s (der Helfer weiß es aus
         der Vorab-Anfrage – wie 884, das die Seite aus dem Netz nahm; vorher
@@ -53,6 +57,15 @@
         weiß es (index.html und fassung.json je 2,5 s) und der Wächter
         entscheidet (fassung.json 2,5 s, index.html 4,5 s; dort zählte
         bleiben() den Tipp). CPU 1× und 4×.
+     Z  (Fassung 886) Die Antwort des Servers kommt, während die alte Seite aus
+        dem Speicher ihre Skripte ausführt (der Server hält index.html, bis
+        auf der alten Seite livechat.js läuft; CPU 4× und 1×): am Ende die
+        neue Fassung, ein Neuladen, betreten einmal auf der neuen Seite, und
+        bei CPU 4× lief app.js NICHT auf der alten Seite (der
+        Helfer entscheidet, sobald er die Antwort gelesen hat, und liefert die
+        neue Seite aus dem Gedächtnis). Dazu in R und Z: kein Eintrag
+        „dma-mess-abbruch“ der vom Helfer ersetzten Seite (messung.js zählte
+        ihn als abgebrochenes Laden).
      W  (Nachbesserung 1) Merker dma-wechsel: „<Fassung> <Zeit>“ und „* <Zeit>
         <alte Fassung>“ (vom Helfer geladen) gelten nur jünger als 20 s und
         nur für eine ANDERE Fassung als „*“ nennt; Öffnen (dort zählt das
@@ -96,7 +109,7 @@
      GEGEN=<ordner>    alter Stand für Teil M
      N=n               Läufe je Fall in R/G (Standard 2)
      PAARE=n           Paare je Messfall in M (Standard 6)
-     NUR=RKGFTWNOSHM   nur diese Teile (Standard RKGFTWNOS, mit GEGEN dazu M)
+     NUR=RKGFTZWNOSHM  nur diese Teile (Standard RKGFTZWNOS, mit GEGEN dazu M)
      JSON=<datei>      Ergebnisse (Läufe, Messung) als JSON, laufend
    Aufruf:  node werkzeug/pruefe-885-rueckkehr.js
    Gegenprobe: WURZEL=<ordner mit altem Stand> node …  (c30a68f7: R rot;
@@ -108,7 +121,7 @@ const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const GEGEN = process.env.GEGEN ? path.resolve(process.env.GEGEN) : null;
 const N = Math.max(1, Number(process.env.N || 2));
 const PAARE = Math.max(1, Number(process.env.PAARE || 6));
-const NUR = process.env.NUR || "RKGFTWNOS" + (GEGEN ? "M" : "");
+const NUR = process.env.NUR || "RKGFTZWNOS" + (GEGEN ? "M" : "");
 const JSON_AUS = process.env.JSON || "";
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".woff2": "font/woff2",
@@ -126,13 +139,16 @@ const schreiben = () => { if (JSON_AUS) try { fs.writeFileSync(JSON_AUS, JSON.st
 
 /* ---------- Server (je Stand einer, eigene Herkunft = eigener Helfer) ---------- */
 function serverBauen(wurzel) {
-  const S = { seite: "", stau: 0, fjStau: 0, fjArt: "", anders: {}, zaehler: {} };
+  const S = { seite: "", stau: 0, fjStau: 0, fjArt: "", anders: {}, zaehler: {}, zwang: null };
   const srv = http.createServer((q, a) => {
     const i = q.url.indexOf("?");
     let p = decodeURIComponent(i < 0 ? q.url : q.url.slice(0, i));
     if (!p.startsWith(PRE + "/")) { a.writeHead(404); return a.end(); }
     p = p.slice(PRE.length); if (p === "/") p = "/index.html";
     S.zaehler[p] = (S.zaehler[p] || 0) + 1;
+    /* Teil Z (Fassung 886): die alte Seite meldet „meine Skripte laufen“ (livechat.js) – erst dann geht die gehaltene
+       index.html hinaus (so kommt die Antwort an den Helfer genau dann, wenn die alte Seite ihre Skripte ausführt) */
+    if (p === "/__interaktiv") {   /* Name von früher: das Signal kommt jetzt, wenn livechat.js läuft */ if (S.zwang && S.zwang.los) S.zwang.los(); a.writeHead(204); return a.end(); }
     if (p === "/fassung.json") {
       const kopf = { "Content-Type": "application/json", "Cache-Control": "max-age=600" };
       if (S.fjArt === "haengt") return;   /* nie eine Antwort */
@@ -151,6 +167,13 @@ function serverBauen(wurzel) {
       let t = String(body);
       if (S.seite) t = t.replace(/window\.DMA_VERSION = "[^"]*";/, 'window.DMA_VERSION = "' + S.seite + '";');
       body = Buffer.from(t); kopf["Cache-Control"] = "max-age=600";
+      if (S.zwang && !S.zwang.belegt) {
+        /* genau die erste index.html nach dem Scharfschalten: bis zum Signal (höchstens 2 s), dann gleich */
+        const z = S.zwang; z.belegt = true;
+        const raus = () => { if (z.raus) return; z.raus = Date.now(); if (!a.destroyed) { a.writeHead(200, kopf); a.end(body); } };
+        z.los = raus; setTimeout(raus, 2000);
+        return;
+      }
       if (S.stau) return setTimeout(() => { if (!a.destroyed) { a.writeHead(200, kopf); a.end(body); } }, S.stau);
     }
     if (S.anders[p]) body = Buffer.concat([body, Buffer.from("\n/* anders: neuer Inhalt unter altem Stempel */\n")]);
@@ -184,15 +207,26 @@ function falle(rueck) {
         return si.apply(this, arguments);
       };
     }
+    /* Teil Z (Fassung 886): die erste Seite nach dem Neuladen meldet dem Server, dass ihre Skripte laufen (livechat.js setzt
+       window.LiveChat – das kommt in der Reihe vor app.js) */
+    const zwang = n === 1 && sessionStorage.getItem("__zwang") === "1";
+    const melden = () => { try { fetch(location.pathname.replace(/[^/]*$/, "") + "__interaktiv?t=" + Date.now()).catch(() => {}); } catch (e) {} };
+    /* Fassung 886: auf welcher Seite app.js gelaufen ist (window.DMA_TEILE setzt app.js gleich am Anfang) */
+    let dt;
+    Object.defineProperty(window, "DMA_TEILE", { configurable: true, get: () => dt, set: (v) => { dt = v;
+      const l = JSON.parse(sessionStorage.getItem("__app") || "[]"); l.push({ seite: n, t: Math.round(performance.now()) }); sessionStorage.setItem("__app", JSON.stringify(l)); } });
+    /* Fassung 886: wie viele ganze Stilblätter die Seite eingehängt hatte, als sie ging */
+    addEventListener("pagehide", () => { const l = JSON.parse(sessionStorage.getItem("__voll") || "[]"); l.push({ seite: n, voll: document.querySelectorAll("link[data-dma-voll-da]").length }); sessionStorage.setItem("__voll", JSON.stringify(l)); });
     /* Teil T: Uhrzeit der ersten Berührung */
     addEventListener("pointerdown", () => { if (!sessionStorage.getItem("__tipp")) sessionStorage.setItem("__tipp", String(Math.round(performance.now()))); }, { capture: true });
     let lc;
     Object.defineProperty(window, "LiveChat", { configurable: true, get: () => lc, set: (v) => {
       lc = v;
+      if (zwang) melden();
       try {
         v.betreten = function () {
           const b = JSON.parse(sessionStorage.getItem("__b") || "[]");
-          b.push({ seite: n, t: Math.round(performance.now()), uhr: Date.now(), f: String(window.DMA_VERSION) });
+          b.push({ seite: n, t: Math.round(performance.now()), uhr: Date.now(), f: String(window.DMA_VERSION), abbruch: localStorage.getItem("dma-mess-abbruch") });
           sessionStorage.setItem("__b", JSON.stringify(b));
           try { v.pruefLageSetzen("verbindet"); } catch (e) {}
           return new Promise(() => {});
@@ -219,9 +253,10 @@ async function lauf(br, sv, o) {
   await schlaf(1500);
   const gesteuert = await pg.evaluate(() => Boolean(navigator.serviceWorker && navigator.serviceWorker.controller));
   await pg.evaluate((o) => { sessionStorage.setItem("__rueck", "1"); sessionStorage.setItem("__s", "0"); sessionStorage.setItem("__a", "[]"); sessionStorage.setItem("__b", "[]");
-    sessionStorage.removeItem("__tipp"); sessionStorage.removeItem("__stopp");
+    sessionStorage.removeItem("__tipp"); sessionStorage.removeItem("__stopp"); sessionStorage.setItem("__app", "[]"); sessionStorage.setItem("__voll", "[]");
+    if (o.zwang) sessionStorage.setItem("__zwang", "1"); else sessionStorage.removeItem("__zwang");
     if (o.wechselVor) sessionStorage.setItem("__wechselVor", o.wechselVor);
-    if (o.ohneNeuladen) sessionStorage.setItem("__ohneNeuladen", "1"); }, { wechselVor: (o.wechselVor || "").replace("{V}", V), ohneNeuladen: Boolean(o.ohneNeuladen) });
+    if (o.ohneNeuladen) sessionStorage.setItem("__ohneNeuladen", "1"); }, { wechselVor: (o.wechselVor || "").replace("{V}", V), ohneNeuladen: Boolean(o.ohneNeuladen), zwang: Boolean(o.zwang) });
   let blaseVorher = null;
   if (o.bekannt) {
     /* die Seite im Raum hat die neue Fassung schon gesehen: der Wächter prüft beim Sichtbarwerden → Blase */
@@ -230,7 +265,7 @@ async function lauf(br, sv, o) {
     blaseVorher = await pg.waitForFunction(() => document.getElementById("dmaNeueFassung"), null, { timeout: 5000 }).then(() => true, () => false);
     await schlaf(400);
   }
-  S.seite = V1; S.stau = o.D; S.fjStau = o.fjD != null ? o.fjD : o.D; S.fjArt = o.fjArt || "";
+  S.seite = V1; S.stau = o.D; S.fjStau = o.fjD != null ? o.fjD : o.D; S.fjArt = o.fjArt || ""; S.zwang = o.zwang ? {} : null;
   if (o.cpu > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: o.cpu });
   const t0 = Date.now();
   if (o.art === "goto") await pg.goto(hier + "/index.html" + q, { waitUntil: "commit" }).catch(() => {});
@@ -247,10 +282,12 @@ async function lauf(br, sv, o) {
   const e = await pg.evaluate(() => ({ f: String(window.DMA_VERSION), seiten: Number(sessionStorage.getItem("__s") || 0),
     marke: document.documentElement.hasAttribute("data-dma-speicher"),
     adressen: JSON.parse(sessionStorage.getItem("__a") || "[]"), betreten: JSON.parse(sessionStorage.getItem("__b") || "[]"),
-    tipp: sessionStorage.getItem("__tipp"), stopp: JSON.parse(sessionStorage.getItem("__stopp") || "[]"),
+    tipp: sessionStorage.getItem("__tipp"), stopp: JSON.parse(sessionStorage.getItem("__stopp") || "[]"), app: JSON.parse(sessionStorage.getItem("__app") || "[]"),
+    vollWeg: JSON.parse(sessionStorage.getItem("__voll") || "[]"), voll: document.querySelectorAll("link[data-dma-voll-da]").length, vollAlle: document.querySelectorAll("link[data-dma-voll]").length,
     lage: window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage().lage : "?",
     blase: (document.getElementById("dmaNeueFassung") || {}).textContent || "" })).catch((x) => ({ fehler: x.message.split("\n")[0] }));
   await ctx.close();
+  e.zwangRaus = S.zwang && S.zwang.raus ? S.zwang.raus - t0 : null; S.zwang = null;
   e.V = V; e.V1 = V1; e.gesteuert = gesteuert; e.t0 = t0; e.blaseVorher = blaseVorher;
   e.abNeuladen = e.betreten && e.betreten.length ? e.betreten[0].uhr - t0 : null;
   ERG.laeufe.push(Object.assign({ teil: o.teil, wurzel: sv.wurzel }, o, e)); schreiben();
@@ -281,6 +318,15 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       /* Nachbesserung 1: grobe Zeitgrenze (884 brauchte hier höchstens ~D + 0,3 s bei CPU 1×, ~D + 0,9 s bei CPU 4×) –
          fängt jedes Warten auf eine Frist (6 s, 15 s) ab; die feine Messung ist Teil M */
       sage(e.abNeuladen != null && e.abNeuladen <= grenze(fa), "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": betreten nach höchstens " + grenze(fa) + " ms", e.abNeuladen + " ms");
+      /* Fassung 886: hat der Helfer die alte Seite vor DOMContentLoaded ersetzt, schrieb ihr pagehide „dma-mess-abbruch“
+         (messung.js zählte das als abgebrochenes Laden) – die neue Seite räumt diesen Eintrag weg */
+      const ab = b.length ? b[0].abbruch : null;
+      sage(!ab || JSON.parse(ab).f !== e.V, "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": kein falscher Abbruch-Eintrag der ersetzten Seite (messung.js)", "dma-mess-abbruch " + (ab || "–"));
+      /* Fassung 886: solange der Helfer entscheidet, hängt die alte Seite die ganzen Stilblätter (und spiel.js) nicht ein – ihr
+         Lesen hielt den Wechsel auf die neue Seite bis ~0,25 s auf (CPU 4×); die neue Seite hat sie am Ende alle */
+      const alt = (e.vollWeg || []).find((x) => x.seite === 1);
+      if (e.seiten === 2 && (fa.art || "reload") === "reload" && alt) sage(alt.voll === 0, "R CPU " + fa.cpu + "× D=" + fa.D + " Lauf " + (n + 1) + ": die ersetzte Seite hängte keine ganzen Stilblätter ein", "eingehängt " + alt.voll);
+      sage(e.voll > 0 && e.voll === e.vollAlle, "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": am Ende alle ganzen Stilblätter da", e.voll + " von " + e.vollAlle);
     }
   }
 
@@ -304,6 +350,7 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       const e = await lauf(br, sv, Object.assign({ teil: "G", update: false, art: "reload" }, fa));
       const b = e.betreten || [];
       sage(e.f === e.V && e.seiten === 1 && b.length === 1 && !e.blase && e.gesteuert, "G CPU " + fa.cpu + "× D=" + fa.D + " Lauf " + (n + 1) + ": betreten einmal, kein Neuladen, keine Blase", zeile(e));
+      sage(e.voll > 0 && e.voll === e.vollAlle, "G CPU " + fa.cpu + "× D=" + fa.D + " Lauf " + (n + 1) + ": die ganzen Stilblätter sind da (nach der Antwort des Helfers)", e.voll + " von " + e.vollAlle);
       sage(e.abNeuladen != null && e.abNeuladen <= grenze(fa), "G CPU " + fa.cpu + "× D=" + fa.D + " Lauf " + (n + 1) + ": betreten nach höchstens " + grenze(fa) + " ms", e.abNeuladen + " ms");
     }
   }
@@ -353,6 +400,29 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       const b = e.betreten || [];
       sage(e.tipp != null && e.f === e.V1 && b.length === 1 && b[0].f === e.V1 && !e.blase && e.gesteuert,
         "T CPU " + fa.cpu + "× " + fa.wer + ", Tipp nach " + fa.tipp + " ms, Lauf " + (n + 1) + ": am Ende die neue Fassung, betreten einmal, keine Blase", zeile(e) + ", Tipp bei " + e.tipp + " ms");
+    }
+  }
+
+  if (NUR.includes("Z")) {
+    /* FASSUNG 886 (Auftrag: „nie langsamer als 884“): die Antwort des Servers kommt genau dann, wenn die alte Seite (aus
+       dem Speicher) ihre Skripte ausführt (livechat.js läuft). Bis 886 kam der Wechsel erst, nachdem der Helfer die neue Seite
+       abgelegt und wieder gelesen hatte – bis dahin war die alte Seite in app.js, und der Wechsel wartete, bis ihr Hauptfaden
+       frei war (gemessen bis ~0,45 s bei CPU 4×). Jetzt entscheidet der Helfer, sobald er die Antwort gelesen hat, und
+       liefert die neue Seite aus dem Gedächtnis: der Wechsel kommt zwischen den kleinen Skripten, vor app.js. */
+    abschnitt("Z", "Antwort des Servers, während die alte Seite ihre Skripte ausführt: der Wechsel kommt vor app.js");
+    for (const cpu of [4, 1]) for (let n = 0; n < N; n++) {
+      /* fassung.json erst nach 3 s: sonst lädt der Wächter selbst neu, bevor die alte Seite fertig gelesen hat */
+      const e = await lauf(br, sv, { teil: "Z", update: true, art: "reload", cpu, D: 0, fjD: 3000, zwang: true });
+      const b = e.betreten || [], app = e.app || [];
+      const alt = app.filter((x) => x.seite === 1 && e.seiten > 1);
+      sage(e.f === e.V1 && e.seiten === 2 && b.length === 1 && b[0].f === e.V1 && b[0].seite === 2 && !e.blase,
+        "Z CPU " + cpu + "× Lauf " + (n + 1) + ": neue Fassung, ein Neuladen, betreten einmal auf der neuen Seite", zeile(e) + ", Antwort nach " + e.zwangRaus + " ms");
+      /* nur bei CPU 4× geprüft: bei CPU 1× ist app.js auf der alten Seite nach ~40 ms durch und hält den Wechsel kaum auf
+         (dort läuft es je nach Zufall der Reihenfolge – 2 von 4 Läufen) */
+      if (cpu > 1) sage(alt.length === 0, "Z CPU " + cpu + "× Lauf " + (n + 1) + ": app.js lief NICHT auf der alten Seite", "app.js auf Seite " + JSON.stringify(app.map((x) => x.seite + ":" + x.t + "ms")));
+      else info("Z CPU 1× Lauf " + (n + 1) + ": app.js auf Seite " + JSON.stringify(app.map((x) => x.seite + ":" + x.t + "ms")) + " (nicht geprüft)");
+      const ab = b.length ? b[0].abbruch : null;
+      sage(!ab || JSON.parse(ab).f !== e.V, "Z CPU " + cpu + "× Lauf " + (n + 1) + ": kein falscher Abbruch-Eintrag", "dma-mess-abbruch " + (ab || "–"));
     }
   }
 
