@@ -49,17 +49,19 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 885 — Notfall: Supabase-Sperre, Anfrage-Sturm gebremst (Nachbesserung 2)",
+  stand: "Fassung 885 — Notfall: Supabase-Sperre, Anfrage-Sturm gebremst (Nachbesserung 3)",
 
   inArbeit: [
     { seit: "2026-10-24T15:21",
       text: "Tab auf dem Samsung schließen und im Supabase-Dashboard (Usage) nachsehen, welches Kontingent voll ist" },
     { seit: "2026-10-24T15:21",
       text: "885 muss online sein, bevor Supabase das Kontingent zurücksetzt" },
+    { seit: "2026-10-25T00:42",
+      text: "Alle eigenen Tabs (Handy, Tablet, Rechner) einmal neu laden oder schließen – ein schon offener 884-Tab holt 885 nicht von selbst" },
     { seit: "2026-10-24T15:21",
       text: "Weitere große Abfragen verkleinern (Duelle, Mitgliederliste, Benachrichtigungen, Postfach beim Öffnen) – laufen nur noch bei sichtbarer Seite" },
-    { seit: "2026-10-24T21:31",
-      text: "Deine Entscheidung: Töne für Nachrichten und Walkie auch bei verdeckter Seite (langsamer Takt alle 5 min) – Vorschlag im Funk" },
+    { seit: "2026-10-25T00:42",
+      text: "Fuchs-Wertung auf dem Server rechnen (Jahres-Wertung lädt alle Runden seit 1.1., jetzt nur noch alle 6 h) – braucht eine Datenbank-Änderung nach der Sperre" },
     { seit: "2026-10-14T04:06",
       text: "Ladezeit-Fassung (wird 886)" },
     { seit: "2026-10-14T04:06",
@@ -72,12 +74,16 @@ window.DMA_WERKSTATT = {
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
+    { seit: "2026-10-25T00:42",
+      text: "Verdeckte Seite: Ton und Blase für Nachrichten wieder wie vorher (höchstens 2 min später), dabei nur winzige Abfragen: 40 statt 992 in 10 min" },
+    { seit: "2026-10-25T00:42",
+      text: "Nach einem Serverausfall von selbst wieder da nach höchstens 2,5 min (vorher bis 18 min), ein Tipp holt sofort" },
+    { seit: "2026-10-25T00:42",
+      text: "Gast im Klassenzimmer: in einer Sperre 7 statt 120 Anmeldeversuche je Stunde" },
     { seit: "2026-10-24T18:05",
-      text: "Verdeckte Seite fragt nicht mehr nach: 10 statt 992 Anfragen in 10 min" },
+      text: "Bremse bei Sperre: 4–8 statt 5 011 Anfragen in 10 min (verdeckt 4), Anmeldung bleibt erhalten" },
     { seit: "2026-10-24T18:05",
-      text: "Bremse bei Sperre: 8 statt 4 327 Anfragen in 10 min (verdeckt 3), Anmeldung bleibt erhalten" },
-    { seit: "2026-10-24T18:05",
-      text: "Nach der Sperre von selbst wieder da (Test: nach 0,8 min), Anmelden gibt sofort das echte Profil" },
+      text: "Nach der Sperre von selbst wieder da (Test: nach 0,3 min, beim Prüfer 1–1,5 min), Anmelden gibt sofort das echte Profil" },
     { seit: "2026-10-24T18:05",
       text: "Fuchs-Wertung ohne 30er-Schleife: nach Mitternacht 4 statt 960 Abfragen in 10 min" },
     { seit: "2026-10-24T18:05",

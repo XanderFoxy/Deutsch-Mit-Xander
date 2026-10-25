@@ -54,9 +54,9 @@
  "messung.js": "e37987b64ce2ef2d711876cf7dc95a2074982bc7",
  "aussprache-pruefung.js": "d99786def20343b7bd67616b66506f1c0150a301",
  "livechat.js": "2e8110720ee5f4af4078f914e93c008520221bf8",
- "data-werkstatt.js": "413d100994fb1dd54562cfed37b04fbbd014ed21",
  "app.js": "f7f10de4c2e6b1ee43ce3feb9dc4428c77f54dbf",
  "rueckfrage.js": "2aa640c914f3e26d10f3ace9f28c8d0fc1534060",
  "spiel.js": "972fea07a570493d630b785b688a016f12ca1ecf",
- "backend.js": "191d53fdb78ec9ff896d869703c0163e5e179687"
+ "backend.js": "c7386df49187c8273e5cbd73429a117b1f41872e",
+ "data-werkstatt.js": "d25db6dcf92d27255d7449b9556742aa3f4c3cde"
 }

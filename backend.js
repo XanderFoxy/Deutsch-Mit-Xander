@@ -47,8 +47,8 @@ const Backend = (function () {
      sichtbare Seite ohne Tipp nach 10 min 503 sonst 13,5 min bis zur nächsten Blase (884: 0,2 min), denn die
      Echtzeit-Leitung bleibt bei einem Datenbank-Ausfall offen und meldet kein neues SUBSCRIBED. Dazu: ein Tipp öffnet
      sein 5-s-Fenster auch für die Takte, und das Zurückkommen auf die Seite lockert eine 5xx/429-Bremse – beides nicht
-     in der 402-Sperre. Wird die Bremse frei (Pause um, gelockert, gelöst, Tipp), meldet sie das mit dem Ereignis
-     „dma-bremse-frei“ an window; die Takte holen dann sofort nach, was sie ausgelassen haben. */
+     in der 402-Sperre. Wird die Bremse frei (gelockert, gelöst, Tipp; Pause um nur bei 429/5xx), meldet sie das mit
+     dem Ereignis „dma-bremse-frei“ an window; die Takte holen dann sofort nach, was sie ausgelassen haben. */
   const BREMS_STUFEN = [60e3, 120e3, 300e3, 900e3];
   /* Nachbesserung 1 — ist nur das Netz weg, erreicht ohnehin nichts den Server (kein Kontingent). Dann pausieren die
      Takte höchstens 1 → 2 min statt bis 15 min, sonst blieben Walkie und Lämpchen in einem WLAN ohne Internet bis zu

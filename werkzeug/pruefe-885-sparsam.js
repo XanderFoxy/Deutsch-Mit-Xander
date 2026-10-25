@@ -910,7 +910,9 @@ function schluessel(adresse, methode) {
       await laufen(s, 600000);
       const b = await s.pg.evaluate(() => (Backend.bremse ? (({ aktiv, status, stufe, bis }) => ({ aktiv, status, stufe, restS: Math.round((bis - Date.now()) / 1000) }))(Backend.bremse()) : null));
       console.log("  Anfragen im Ausfall (10 min): " + z.gesamt + " · " + kurz(z) + " · Bremse am Ende " + JSON.stringify(b));
+      const nAusfall = z.gesamt;
       s.zustand.modus = "ok";
+      phase(s, "X3-danach");
       const t0 = s.zustand.jetzt;
       neueBenachrichtigung(s, "X3-nach-Ausfall");
       let nach = 0, ts = [];
@@ -922,9 +924,9 @@ function schluessel(adresse, methode) {
       const min = ts.length ? Math.round((ts[0].t - t0) / 6000) / 10 : null;
       sage(ts.length > 0, "X3: nach dem Ausfall kommt die Blase von selbst (ohne Tipp)", ts.length ? min + " min" : "keine in 25 min");
       sage(ts.length > 0 && ts[0].t - t0 <= 2.6 * 60000, "X3: … spätestens nach ≈ 2,5 min (Bremse bei 5xx höchstens 1 → 2 min; Nachbesserung 2: 13,5 min)", ts.length ? min + " min" : "–");
-      sage(z.gesamt <= 150, "X3: im Ausfall höchstens 150 Anfragen in 10 min (884: ≈ 10 600)", String(z.gesamt));
+      sage(nAusfall <= 150, "X3: im Ausfall höchstens 150 Anfragen in 10 min (884: ≈ 10 600)", String(nAusfall));
       fehlerPruefen(s);
-      ergebnis.faelle.X3 = { ausfall: z.gesamt, je: z.je, bremse: b, blaseNachMin: min };
+      ergebnis.faelle.X3 = { ausfall: nAusfall, je: z.je, bremse: b, blaseNachMin: min };
       await s.ctx.close();
     }
 
