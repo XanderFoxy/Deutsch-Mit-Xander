@@ -66,6 +66,19 @@
         Dazu in R und Z: kein Eintrag
         „dma-mess-abbruch“ der vom Helfer ersetzten Seite (messung.js zählte
         ihn als abgebrochenes Laden).
+     Y  (Fassung 886, Prüfbericht zu dddf4c7b) Späte Antwort des Servers:
+        index.html erst nach 4,9 s, fassung.json hängt. Bis dddf4c7b rief der
+        Helfer navigate bis 5 s nach der MELDUNG – auf einem langsamen Telefon
+        konnte die 6-s-Frist der Rückkehr (ab dem ÖFFNEN) vor dem Wechsel
+        greifen: zweimal betreten. Jetzt navigate nur bis 4,5 s nach dem
+        Öffnen, danach sagt der Helfer der Seite „neu“ und ihr Wächter
+        entscheidet. Y1: am Ende die neue Fassung, betreten einmal, und die
+        neue Seite kam NICHT vom Helfer (Merker dma-wechsel beim Start nicht
+        „*“). Y3: dasselbe mit 0,9 s verspäteter Meldung und index.html nach
+        5,4 s (bis dddf4c7b zählte die Frist ab der Meldung: navigate bis
+        ~5,9 s). Y2: dazu ist der Hauptfaden der alten Seite von 4,8 bis 6,3 s
+        belegt (wie ein langsames Telefon beim Wechsel): betreten nie zweimal;
+        bleibt es bei der alten Fassung, steht die Blase.
      W  (Nachbesserung 1) Merker dma-wechsel: „<Fassung> <Zeit>“ und „* <Zeit>
         <alte Fassung>“ (vom Helfer geladen) gelten nur jünger als 20 s und
         nur für eine ANDERE Fassung als „*“ nennt; Öffnen (dort zählt das
@@ -109,7 +122,7 @@
      GEGEN=<ordner>    alter Stand für Teil M
      N=n               Läufe je Fall in R/G (Standard 2)
      PAARE=n           Paare je Messfall in M (Standard 6)
-     NUR=RKGFTZWNOSHM  nur diese Teile (Standard RKGFTZWNOS, mit GEGEN dazu M)
+     NUR=RKGFTZYWNOSHM nur diese Teile (Standard RKGFTZYWNOS, mit GEGEN dazu M)
      JSON=<datei>      Ergebnisse (Läufe, Messung) als JSON, laufend
    Aufruf:  node werkzeug/pruefe-885-rueckkehr.js
    Gegenprobe: WURZEL=<ordner mit altem Stand> node …  (c30a68f7: R rot;
@@ -121,7 +134,7 @@ const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const GEGEN = process.env.GEGEN ? path.resolve(process.env.GEGEN) : null;
 const N = Math.max(1, Number(process.env.N || 2));
 const PAARE = Math.max(1, Number(process.env.PAARE || 6));
-const NUR = process.env.NUR || "RKGFTZWNOS" + (GEGEN ? "M" : "");
+const NUR = process.env.NUR || "RKGFTZYWNOS" + (GEGEN ? "M" : "");
 const JSON_AUS = process.env.JSON || "";
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".woff2": "font/woff2",
@@ -217,6 +230,13 @@ function falle(rueck) {
       const l = JSON.parse(sessionStorage.getItem("__app") || "[]"); l.push({ seite: n, t: Math.round(performance.now()) }); sessionStorage.setItem("__app", JSON.stringify(l)); } });
     /* Fassung 886: wie viele ganze Stilblätter die Seite eingehängt hatte, als sie ging */
     addEventListener("pagehide", () => { const l = JSON.parse(sessionStorage.getItem("__voll") || "[]"); l.push({ seite: n, voll: document.querySelectorAll("link[data-dma-voll-da]").length }); sessionStorage.setItem("__voll", JSON.stringify(l)); });
+    /* Teil Y (Fassung 886): die Meldung „Rückkehr wartet“ kommt um __meldungSpaet ms verspätet beim Helfer an (wie ein langsamer
+       Start der Seite oder ein langsam wachender Helfer) */
+    const mSp = Number(sessionStorage.getItem("__meldungSpaet") || 0);
+    if (mSp) try { const pm = ServiceWorker.prototype.postMessage; ServiceWorker.prototype.postMessage = function (d) {
+      const w = this, a = arguments; if (d && d.rueckkehr && d.rueckkehr !== "halt") { setTimeout(() => pm.apply(w, a), mSp); return; } return pm.apply(this, a); }; } catch (e) {}
+    /* Teil Y (Fassung 886): welcher Merker dma-wechsel beim Start lag („*“ = der Helfer hat diese Seite geladen) */
+    { const l = JSON.parse(sessionStorage.getItem("__wm") || "[]"); l.push({ seite: n, w: sessionStorage.getItem("dma-wechsel") }); sessionStorage.setItem("__wm", JSON.stringify(l)); }
     /* Teil T: Uhrzeit der ersten Berührung */
     addEventListener("pointerdown", () => { if (!sessionStorage.getItem("__tipp")) sessionStorage.setItem("__tipp", String(Math.round(performance.now()))); }, { capture: true });
     let lc;
@@ -253,10 +273,11 @@ async function lauf(br, sv, o) {
   await schlaf(1500);
   const gesteuert = await pg.evaluate(() => Boolean(navigator.serviceWorker && navigator.serviceWorker.controller));
   await pg.evaluate((o) => { sessionStorage.setItem("__rueck", "1"); sessionStorage.setItem("__s", "0"); sessionStorage.setItem("__a", "[]"); sessionStorage.setItem("__b", "[]");
-    sessionStorage.removeItem("__tipp"); sessionStorage.removeItem("__stopp"); sessionStorage.setItem("__app", "[]"); sessionStorage.setItem("__voll", "[]");
+    sessionStorage.removeItem("__tipp"); sessionStorage.removeItem("__stopp"); sessionStorage.setItem("__app", "[]"); sessionStorage.setItem("__voll", "[]"); sessionStorage.setItem("__wm", "[]");
     if (o.zwang) sessionStorage.setItem("__zwang", "1"); else sessionStorage.removeItem("__zwang");
     if (o.wechselVor) sessionStorage.setItem("__wechselVor", o.wechselVor);
-    if (o.ohneNeuladen) sessionStorage.setItem("__ohneNeuladen", "1"); }, { wechselVor: (o.wechselVor || "").replace("{V}", V), ohneNeuladen: Boolean(o.ohneNeuladen), zwang: Boolean(o.zwang) });
+    if (o.meldungSpaet) sessionStorage.setItem("__meldungSpaet", String(o.meldungSpaet)); else sessionStorage.removeItem("__meldungSpaet");
+    if (o.ohneNeuladen) sessionStorage.setItem("__ohneNeuladen", "1"); }, { wechselVor: (o.wechselVor || "").replace("{V}", V), ohneNeuladen: Boolean(o.ohneNeuladen), zwang: Boolean(o.zwang), meldungSpaet: o.meldungSpaet || 0 });
   let blaseVorher = null;
   if (o.bekannt) {
     /* die Seite im Raum hat die neue Fassung schon gesehen: der Wächter prüft beim Sichtbarwerden → Blase */
@@ -272,6 +293,11 @@ async function lauf(br, sv, o) {
   else await pg.reload({ waitUntil: "commit" }).catch(() => {});
   /* Teil T: ein Tipp, bevor die Antwort da ist (Prüfer: nach 1,2 s; das Klassenzimmer ist dabei nicht offen) */
   if (o.tipp != null) { await schlaf(Math.max(0, o.tipp - (Date.now() - t0))); await pg.touchscreen.tap(200, 500).catch(() => {}); }
+  /* Teil Y: Hauptfaden der Seite belegt [ab, Dauer] ms nach dem Neuladen (wie ein langsames Telefon, das gerade rechnet) */
+  if (o.belegt) {
+    await schlaf(Math.max(0, o.belegt[0] - (Date.now() - t0)));
+    await cdp.send("Runtime.evaluate", { expression: "(() => { const e = performance.now() + " + o.belegt[1] + "; while (performance.now() < e) {} return 1; })()" }).catch(() => {});
+  }
   const bis = Date.now() + (o.warten || 9000);
   let l = null;
   while (Date.now() < bis) {
@@ -282,7 +308,7 @@ async function lauf(br, sv, o) {
   const e = await pg.evaluate(() => ({ f: String(window.DMA_VERSION), seiten: Number(sessionStorage.getItem("__s") || 0),
     marke: document.documentElement.hasAttribute("data-dma-speicher"),
     adressen: JSON.parse(sessionStorage.getItem("__a") || "[]"), betreten: JSON.parse(sessionStorage.getItem("__b") || "[]"),
-    tipp: sessionStorage.getItem("__tipp"), stopp: JSON.parse(sessionStorage.getItem("__stopp") || "[]"), app: JSON.parse(sessionStorage.getItem("__app") || "[]"),
+    tipp: sessionStorage.getItem("__tipp"), wm: JSON.parse(sessionStorage.getItem("__wm") || "[]"), stopp: JSON.parse(sessionStorage.getItem("__stopp") || "[]"), app: JSON.parse(sessionStorage.getItem("__app") || "[]"),
     vollWeg: JSON.parse(sessionStorage.getItem("__voll") || "[]"), voll: document.querySelectorAll("link[data-dma-voll-da]").length, vollAlle: document.querySelectorAll("link[data-dma-voll]").length,
     lage: window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage().lage : "?",
     blase: (document.getElementById("dmaNeueFassung") || {}).textContent || "" })).catch((x) => ({ fehler: x.message.split("\n")[0] }));
@@ -427,6 +453,33 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
         "ersetzt " + (e.seiten === 2 ? (vollAlt ? vollAlt.voll : "–") : "keine") + ", am Ende " + e.voll + " von " + e.vollAlle);
       const ab = b.length ? b[0].abbruch : null;
       sage(!ab || JSON.parse(ab).f !== e.V, "Z CPU " + cpu + "× Lauf " + (n + 1) + ": kein falscher Abbruch-Eintrag", "dma-mess-abbruch " + (ab || "–"));
+    }
+  }
+
+  if (NUR.includes("Y")) {
+    /* FASSUNG 886 (Prüfbericht zu dddf4c7b): die Antwort des Servers kommt spät (index.html nach 4,9 s, fassung.json hängt).
+       Der Helfer darf dann nicht mehr selbst neu laden (navigate nur bis 4,5 s nach dem Öffnen) – die Seite bekommt „neu“
+       und entscheidet auf ihrem eigenen Hauptfaden (noch nicht drin: neu laden; schon drin: Blase). */
+    abschnitt("Y", "Späte Antwort des Servers (4,9 s): der Helfer lädt nicht mehr selbst, die Seite entscheidet – nie zweimal hinein");
+    const yFaelle = [{ cpu: 1, was: "Y1", D: 4900 }, { cpu: 4, was: "Y1", D: 4900 },
+      { cpu: 1, was: "Y3", D: 5400, meldungSpaet: 900 }, { cpu: 4, was: "Y3", D: 5400, meldungSpaet: 900 },
+      { cpu: 1, was: "Y2", D: 4900, belegt: [4800, 1500] }, { cpu: 4, was: "Y2", D: 4900, belegt: [4800, 1500] }]
+      .filter((fa) => !process.env.YNUR || process.env.YNUR.split(",").includes(fa.was));
+    for (const fa of yFaelle) for (let n = 0; n < N; n++) {
+      const e = await lauf(br, sv, { teil: "Y", update: true, art: "reload", cpu: fa.cpu, D: fa.D, fjArt: "haengt", belegt: fa.belegt, meldungSpaet: fa.meldungSpaet, warten: 16000, ruhe: 3000 });
+      const b = e.betreten || [], wm = (e.wm || []).filter((x) => x.seite > 1);
+      const vomHelfer = wm.some((x) => /^\*/.test(String(x.w || "")));
+      if (fa.was !== "Y2") {
+        /* Y3: die Meldung kommt 0,9 s verspätet (langsamer Start), index.html nach 5,4 s – bis dddf4c7b zählten die 5 s ab der
+           Meldung (navigate also bis ~5,9 s nach dem Öffnen), jetzt zählt das Öffnen */
+        const wie = fa.was === "Y3" ? " Meldung 0,9 s verspätet, index.html nach 5,4 s," : " index.html nach 4,9 s,";
+        sage(e.f === e.V1 && b.length === 1 && b[0].f === e.V1 && !e.blase && e.gesteuert,
+          fa.was + " CPU " + fa.cpu + "×" + wie + " Lauf " + (n + 1) + ": am Ende die neue Fassung, betreten einmal", zeile(e));
+        sage(e.seiten === 2 && !vomHelfer, fa.was + " CPU " + fa.cpu + "×" + wie + " Lauf " + (n + 1) + ": nach 4,5 s ab dem Öffnen lädt nicht mehr der Helfer, sondern die Seite selbst neu", "Merker beim Start " + JSON.stringify(e.wm || []));
+      } else {
+        sage(b.length === 1 && (b[0].f === e.V1 || (e.f === e.V && /Neue Fassung/.test(e.blase))) && e.gesteuert,
+          "Y2 CPU " + fa.cpu + "× Hauptfaden 4,8–6,3 s belegt, Lauf " + (n + 1) + ": nie zweimal hinein (neue Fassung, oder die alte mit Blase)", zeile(e) + ", Merker " + JSON.stringify(e.wm || []));
+      }
     }
   }
 

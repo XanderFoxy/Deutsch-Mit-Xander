@@ -416,7 +416,7 @@ function neuer(a, b) {
    dieselbe Anfrage wie bis 884) bringt die Fassung des Servers. Meldet die Seite „Rückkehr wartet“ (index.html, mit ihrer
    Fassung), dann
      - ist die Auffrischung NEUER: der Helfer lädt die Seite selbst neu (WindowClient.navigate, dieselbe Adresse wie der
-       Wächter, ?f=<neu>) – genau einmal, höchstens 5 s lang; „halt“ (die Rückkehr geht doch auf dieser Seite hinein,
+       Wächter, ?f=<neu>) – genau einmal, bis 4,5 s nach dem Öffnen (886, s. unten); „halt“ (die Rückkehr geht doch auf dieser Seite hinein,
        oder der Wächter lädt selbst neu) hebt es auf. Die neue Seite fragt nicht noch einmal (Merker dma-wechsel „*“).
      - hat die Anfrage DIESER Navigation dieselbe Fassung gebracht: „gleich“ an die Seite. Die Seite glaubt das nur beim
        Neuladen (dann hat der Browser beim Server nachgefragt) und geht dann hinein, ohne auf fassung.json zu warten.
@@ -432,16 +432,26 @@ function neuer(a, b) {
    (auffrischen().frueh), nicht erst nach dem Ablegen, die Seite dazu (clients.get) gleich mit geholt; die neue Seite
    (?f=<neu>) kommt aus dem Gedächtnis (frisch), ohne den Speicher zu lesen; die alte Seite hängt die ganzen Blätter und
    spiel.js erst nach der Entscheidung ein (index.html, dmaRueckWarten). Gemessen (CPU 4×): D = 0,5 s −30 ms gegen 884 (Rauschen),
-   0,8 s −235; bei D = 0,25 s bleiben +77 ms (die alte Seite hat da noch nichts vorgewärmt – Offen 1 im
-   Logbuch). Erprobt und verworfen: die alte Seite fragt vor app.js synchron nach (XHR) – Chromium leitet synchrones XHR
+   0,8 s −235; bei schneller Antwort (D = 0,05 … 0,25 s, WLAN/4G) bleiben +0,08 … 0,12 s (die alte Seite hat da noch
+   nichts vorgewärmt; mit S1 nicht ganz wegzubekommen – Entscheidung im Logbuch, Offen 1). Erprobt und verworfen: die alte Seite fragt vor app.js synchron nach (XHR) – Chromium leitet synchrones XHR
    nicht durch den Helfer, die Frage ginge ins Netz.
-   Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“, Unterabschnitt „Nachbesserung 1“; Sonde pruefe-885-rueckkehr.js. */
+   Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“, Unterabschnitt „Nachbesserung 1“; Sonde pruefe-885-rueckkehr.js.
+   FASSUNG 886 (Prüfbericht zu dddf4c7b) — SPÄT ENTSCHIEDEN: DIE SEITE LÄDT SELBST. Die Rückkehr (app.js) geht 6 s nach dem
+   ÖFFNEN auf jeden Fall hinein; die 5 s hier zählten ab der MELDUNG. Kam die Antwort des Servers erst nach ~5 s, rief der
+   Helfer navigate etwa 5,0–5,4 s nach dem Öffnen – und auf einem langsamen Telefon (Wechsel gemessen bis 0,37 s nach
+   navigate) konnte die alte Seite schon hineingehen: Raum betreten, Neuladen, noch einmal betreten. Jetzt meldet die Seite
+   ihre Öffnungszeit mit (auf). navigate nur bis 4,5 s nach dem Öffnen (1,5 s Reserve bis zu ihrer Frist); danach bekommt
+   die Seite „neu“ mit der Fassung, und ihr Wächter entscheidet auf ihrem eigenen Hauptfaden: noch nicht im Raum → neu
+   laden (wie bei der Antwort von fassung.json), schon drin → nur die Blase. Zwei Wege können so nie beide hinein.
+   Sonde pruefe-885-rueckkehr.js Teil Y. */
 var rueck = {};      /* Seite (Client-Kennung) → { ent: Entscheidung (Versprechen), aus: „halt“ kam } */
 var proSeite = {};   /* Seite (resultingClientId) → die Auffrischung, die IHRE Navigation gestartet hat */
-function rueckEntscheiden(id, alt) {
+function rueckEntscheiden(id, alt, auf) {
   var r = rueck[id] || (rueck[id] = {}), eigene = proSeite[id], server = "";
   alt = String(alt || "");
   if (r.ent) return r.ent;
+  /* 886: bis wann der Helfer selbst neu lädt – 4,5 s nach dem Öffnen der Seite (ohne glaubhafte Zeit: 4 s ab der Meldung) */
+  var jetzt = Date.now(), bis = auf > jetzt - 60000 && auf <= jetzt + 1000 ? auf + 4500 : jetzt + 4000;
   delete proSeite[id];
   /* FASSUNG 886: entschieden wird, sobald die Antwort des Servers gelesen ist (.frueh), nicht erst nach dem Ablegen */
   var p = (eigene ? eigene.frueh || eigene : auffrischung || Promise.resolve("")).then(function (v) { server = eigene ? String(v || "") : ""; });
@@ -452,6 +462,8 @@ function rueckEntscheiden(id, alt) {
       var nichts = function () { c.postMessage({ dmaHelfer: "nichts" }); return ""; };
       if (server && server === alt) { c.postMessage({ dmaHelfer: "gleich" }); return "gleich"; }
       if (r.aus || !v || !neuer(v, alt) || typeof c.navigate !== "function") return nichts();
+      /* 886: zu spät für navigate – die Seite entscheidet selbst (index.html, Wächter: neu laden oder Blase) */
+      if (Date.now() > bis) { c.postMessage({ dmaHelfer: "neu", f: v }); return "seite"; }
       return c.navigate(mitFassung(c.url, v)).then(function () { return "neu"; }, nichts);
     });
   }).catch(function () { return ""; });
@@ -462,7 +474,7 @@ self.addEventListener("message", function (e) {
   var d = e.data || {}, c = e.source;
   if (!d.rueckkehr || !c || !c.id) return;
   if (d.rueckkehr === "halt") { (rueck[c.id] || (rueck[c.id] = {})).aus = true; return; }
-  e.waitUntil(rueckEntscheiden(c.id, d.rueckkehr));
+  e.waitUntil(rueckEntscheiden(c.id, d.rueckkehr, Number(d.auf) || 0));
 });
 /* dieselbe Adresse wie neuLaden in index.html: alles bleibt, nur f= wird gesetzt */
 function mitFassung(adresse, v) {
