@@ -56,7 +56,7 @@
  "livechat.js": "2e8110720ee5f4af4078f914e93c008520221bf8",
  "data-werkstatt.js": "413d100994fb1dd54562cfed37b04fbbd014ed21",
  "app.js": "f7f10de4c2e6b1ee43ce3feb9dc4428c77f54dbf",
- "backend.js": "5a5ab201a307718ced1ce8de06d63d76a663b297",
  "rueckfrage.js": "2aa640c914f3e26d10f3ace9f28c8d0fc1534060",
- "spiel.js": "972fea07a570493d630b785b688a016f12ca1ecf"
+ "spiel.js": "972fea07a570493d630b785b688a016f12ca1ecf",
+ "backend.js": "191d53fdb78ec9ff896d869703c0163e5e179687"
 }

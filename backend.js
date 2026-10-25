@@ -100,12 +100,15 @@ const Backend = (function () {
     bremse.dauer = Math.round(basis * (0.8 + Math.random() * 0.4));
     bremse.bis = jetzt + bremse.dauer;
     bremse.stufe += 1;
-    /* Nachbesserung 3 — ist die Pause um, holen die Takte sofort nach (sonst bis zu 20–60 s später). Nicht in der
-       402-Sperre: dort bleibt es beim bisherigen Rhythmus (der erste Takt danach versucht es, gemessen 8–10 Anfragen
-       je Stunde), sonst ginge bei jedem Pausenende ein ganzer Satz Abfragen in die Sperre. */
+    /* Nachbesserung 3 — ist die Pause bei 429/5xx um, holen die Takte sofort nach (sonst bis zu 20–60 s später). Nicht
+       in der 402-Sperre: dort bleibt es beim bisherigen Rhythmus (der erste Takt danach versucht es, gemessen 8–10
+       Anfragen je Stunde), sonst ginge bei jedem Pausenende ein ganzer Satz Abfragen in die Sperre. Auch nicht bei
+       „Netz weg“: dort hält die Bremse einzelne Abfragen nicht an, und supabase-js wiederholt jede Leseabfrage nach
+       einem Netzfehler – ein ganzer Satz Takte am Pausenende wurde so zu ≈ 40 Versuchen (gemessen 262 statt 63–72 in
+       10 min). Dort holen „online“, das Zurückkommen und ein Tipp sofort nach. */
     try { clearTimeout(bremse.uhr); } catch (e) {}
     bremse.uhr = 0;
-    if (bremse.status !== 402) {
+    if (bremse.status !== 402 && bremse.status !== 0) {
       try { bremse.uhr = setTimeout(() => { bremse.uhr = 0; if (!bremseAktiv()) bremseFreiMelden(); }, bremse.dauer + 50); } catch (e) {}
     }
   }
