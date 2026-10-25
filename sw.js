@@ -433,16 +433,24 @@ function neuer(a, b) {
    (?f=<neu>) kommt aus dem Gedächtnis (frisch), ohne den Speicher zu lesen; die alte Seite hängt die ganzen Blätter und
    spiel.js erst nach der Entscheidung ein (index.html, dmaRueckWarten). Gemessen (CPU 4×): D = 0,5 s −30 ms gegen 884 (Rauschen),
    0,8 s −235; bei schneller Antwort (D = 0,05 … 0,25 s, WLAN/4G) bleiben +0,05 … 0,11 s (Mediane aus je 18 Paaren; die
-   alte Seite hat da noch nichts vorgewärmt; mit S1 nicht ganz wegzubekommen – Entscheidung im Logbuch, Offen 1). Erprobt und verworfen: die alte Seite fragt vor app.js synchron nach (XHR) – Chromium leitet synchrones XHR
+   alte Seite hat da noch nichts vorgewärmt; mit S1 nicht ganz wegzubekommen – Entscheidung im Logbuch, Offen 1).
+   Nachbesserung 2 (Prüfbericht zu 1abc32b2): das gilt mit WARMEM Helfer; mit kaltem bis +0,12 s, und auf einem echten
+   langsamen Telefon eher mehr (die CPU-Bremse der Messung bremst den Helfer nicht). Betroffen ist jede Rückkehr-Seite, die
+   die neue Fassung noch nicht gesehen hat – nicht nur in den 2 min nach einem Update: der Wächter fragt nur, solange die
+   Seite sichtbar ist (gesperrtes Telefon, App im Hintergrund, verworfener Tab: beliebig lange).
+   Erprobt und verworfen: die alte Seite fragt vor app.js synchron nach (XHR) – Chromium leitet synchrones XHR
    nicht durch den Helfer, die Frage ginge ins Netz.
    Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“, Unterabschnitt „Nachbesserung 1“; Sonde pruefe-885-rueckkehr.js.
-   FASSUNG 886 (Prüfbericht zu dddf4c7b) — SPÄT ENTSCHIEDEN: DIE SEITE LÄDT SELBST. Die Rückkehr (app.js) geht 6 s nach dem
-   ÖFFNEN auf jeden Fall hinein; die 5 s hier zählten ab der MELDUNG. Kam die Antwort des Servers erst nach ~5 s, rief der
+   FASSUNG 886 (Prüfbericht zu dddf4c7b) — SPÄT ENTSCHIEDEN: DIE SEITE LÄDT SELBST. Die Rückkehr (app.js) geht spätestens 6 s
+   nach dem ÖFFNEN hinein (nur nach „neu“ – Wächter oder Helfer laden neu – wartet sie 15 s); die 5 s hier zählten ab der MELDUNG. Kam die Antwort des Servers erst nach ~5 s, rief der
    Helfer navigate etwa 5,0–5,4 s nach dem Öffnen – und auf einem langsamen Telefon (Wechsel gemessen bis 0,37 s nach
    navigate) konnte die alte Seite schon hineingehen: Raum betreten, Neuladen, noch einmal betreten. Jetzt meldet die Seite
    ihre Öffnungszeit mit (auf). navigate nur bis 4,5 s nach dem Öffnen (1,5 s Reserve bis zu ihrer Frist); danach bekommt
    die Seite „neu“ mit der Fassung, und ihr Wächter entscheidet auf ihrem eigenen Hauptfaden: noch nicht im Raum → neu
-   laden (wie bei der Antwort von fassung.json), schon drin → nur die Blase. Zwei Wege können so nie beide hinein. Gewartet
+   laden (wie bei der Antwort von fassung.json), schon drin → nur die Blase. Auf diesem Weg können nie beide hinein (es
+   entscheidet ein einziger Hauptfaden). Für navigate bis 4,5 s bleiben 1,5 s Reserve: ist der Hauptfaden der alten Seite
+   darüber hinaus belegt (bis nach ihrer 6-s-Frist), hängt es an der Reihenfolge im Browser – Chromium übernimmt den Wechsel
+   vor dem fälligen Zeitgeber (Sonde Teil Y7, Nachbesserung 2), andere Browser sind ungeprüft. Gewartet
    wird jetzt bis zu ihrer Frist (6 s ab dem Öffnen) statt 5 s ab der Meldung – wie 884, das bis 6 s auf das Netz wartete.
    Sonde pruefe-885-rueckkehr.js Teil Y. */
 var rueck = {};      /* Seite (Client-Kennung) → { ent: Entscheidung (Versprechen), aus: „halt“ kam } */

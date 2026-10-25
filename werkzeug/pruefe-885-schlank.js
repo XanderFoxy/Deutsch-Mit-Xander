@@ -125,7 +125,10 @@ function rueckbauRueckkehr(y) {
     .replace('var rueck=false;try{var rz=JSON.parse(sessionStorage.getItem("dma_livechat_zurueck")||"null");rueck=Boolean(rz&&rz.raum&&Date.now()-(rz.zeit||0)<=18e5)}catch(e){}', "")
     .replace(';if(window.dmaRueckGemeldet)navigator.serviceWorker.controller.postMessage({rueckkehr:"halt"})}catch(e){}', "}catch(e){}")
     .replace("eingabe&&!rueck&&(kz()||ms>2e3)", "eingabe&&(kz()||ms>2e3)")
-    .replace('wechsel=[],helferSagt="",fjFehler=false;', "wechsel=[];")
+    /* Fassung 886 (Rückkehr, Nachbesserung 2, I49): eine Seite, die schon geht, zeigt keine Blase mehr */
+    .replace("weg=neu;location.replace(adresse)", "location.replace(adresse)")
+    .replace("if(erstesMal&&weg===neu)return;", "")
+    .replace('wechsel=[],helferSagt="",fjFehler=false,weg="";', "wechsel=[];")
     .replace('var fertig=function(w){if(!erstesMal)return;if(w==="fehler"&&window.dmaRueckGemeldet&&!helferSagt){fjFehler=true;return}erstOk(w)};', "var fertig=function(w){if(erstesMal)erstOk(w)};")
     .replace(/else if\(rueck&&document\.documentElement\.hasAttribute\("data-dma-speicher"\)\)try\{var helfer=[\s\S]*?\}\}catch\(e\)\{\}/, "")
     .replace('if(Date.now()-Number(wechsel[1])<2e4&&(wechsel[0]===jetzt||wechsel[0]==="*"&&wechsel[2]!==jetzt))erstOk("frisch");', 'if(wechsel[0]===jetzt&&Date.now()-Number(wechsel[1])<2e4)erstOk("frisch");')
