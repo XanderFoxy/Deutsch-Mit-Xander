@@ -442,7 +442,8 @@ function neuer(a, b) {
    navigate) konnte die alte Seite schon hineingehen: Raum betreten, Neuladen, noch einmal betreten. Jetzt meldet die Seite
    ihre Öffnungszeit mit (auf). navigate nur bis 4,5 s nach dem Öffnen (1,5 s Reserve bis zu ihrer Frist); danach bekommt
    die Seite „neu“ mit der Fassung, und ihr Wächter entscheidet auf ihrem eigenen Hauptfaden: noch nicht im Raum → neu
-   laden (wie bei der Antwort von fassung.json), schon drin → nur die Blase. Zwei Wege können so nie beide hinein.
+   laden (wie bei der Antwort von fassung.json), schon drin → nur die Blase. Zwei Wege können so nie beide hinein. Gewartet
+   wird jetzt bis zu ihrer Frist (6 s ab dem Öffnen) statt 5 s ab der Meldung – wie 884, das bis 6 s auf das Netz wartete.
    Sonde pruefe-885-rueckkehr.js Teil Y. */
 var rueck = {};      /* Seite (Client-Kennung) → { ent: Entscheidung (Versprechen), aus: „halt“ kam } */
 var proSeite = {};   /* Seite (resultingClientId) → die Auffrischung, die IHRE Navigation gestartet hat */
@@ -450,13 +451,17 @@ function rueckEntscheiden(id, alt, auf) {
   var r = rueck[id] || (rueck[id] = {}), eigene = proSeite[id], server = "";
   alt = String(alt || "");
   if (r.ent) return r.ent;
-  /* 886: bis wann der Helfer selbst neu lädt – 4,5 s nach dem Öffnen der Seite (ohne glaubhafte Zeit: 4 s ab der Meldung) */
-  var jetzt = Date.now(), bis = auf > jetzt - 60000 && auf <= jetzt + 1000 ? auf + 4500 : jetzt + 4000;
+  /* 886: bis wann der Helfer selbst neu lädt – 4,5 s nach dem Öffnen der Seite – und wie lange er auf die Antwort des
+     Servers wartet: bis zu ihrer eigenen Frist (6 s nach dem Öffnen; bis dddf4c7b 5 s ab der Meldung, also ~5,1 s – kam
+     index.html danach, ging die Rückkehr auf der alten Seite hinein, 884 hätte bis 6 s die neue genommen). Ohne glaubhafte
+     Zeit wie bisher: 4 s bzw. 5 s ab der Meldung. */
+  var jetzt = Date.now(), ok = auf > jetzt - 60000 && auf <= jetzt + 1000;
+  var bis = ok ? auf + 4500 : jetzt + 4000, warte = ok ? Math.max(0, auf + 6000 - jetzt) : 5000;
   delete proSeite[id];
   /* FASSUNG 886: entschieden wird, sobald die Antwort des Servers gelesen ist (.frueh), nicht erst nach dem Ablegen */
   var p = (eigene ? eigene.frueh || eigene : auffrischung || Promise.resolve("")).then(function (v) { server = eigene ? String(v || "") : ""; });
   var seiteHolen = self.clients.get(id);   /* 886: gleich mit holen, nicht erst nach der Antwort */
-  r.ent = frist(p, 5000).then(function () { return server || ausSpeicher().then(fassungVon); }).then(function (v) {
+  r.ent = frist(p, warte).then(function () { return server || ausSpeicher().then(fassungVon); }).then(function (v) {
     return seiteHolen.then(function (c) {
       if (!c) return "";
       var nichts = function () { c.postMessage({ dmaHelfer: "nichts" }); return ""; };

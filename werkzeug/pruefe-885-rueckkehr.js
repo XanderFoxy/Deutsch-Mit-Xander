@@ -76,7 +76,9 @@
         neue Seite kam NICHT vom Helfer (Merker dma-wechsel beim Start nicht
         „*“). Y3: dasselbe mit 0,9 s verspäteter Meldung und index.html nach
         5,4 s (bis dddf4c7b zählte die Frist ab der Meldung: navigate bis
-        ~5,9 s). Y2: dazu ist der Hauptfaden der alten Seite von 4,8 bis 6,3 s
+        ~5,9 s). Y4: index.html nach 5,5 s – der Helfer wartet jetzt bis zur
+        Frist der Seite (6 s ab dem Öffnen) statt 5 s ab der Meldung: am Ende
+        die neue Fassung wie bei 884 (bis dddf4c7b: die alte). Y2: dazu ist der Hauptfaden der alten Seite von 4,8 bis 6,3 s
         belegt (wie ein langsames Telefon beim Wechsel): betreten nie zweimal;
         bleibt es bei der alten Fassung, steht die Blase.
      W  (Nachbesserung 1) Merker dma-wechsel: „<Fassung> <Zeit>“ und „* <Zeit>
@@ -463,6 +465,7 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     abschnitt("Y", "Späte Antwort des Servers (4,9 s): der Helfer lädt nicht mehr selbst, die Seite entscheidet – nie zweimal hinein");
     const yFaelle = [{ cpu: 1, was: "Y1", D: 4900 }, { cpu: 4, was: "Y1", D: 4900 },
       { cpu: 1, was: "Y3", D: 5400, meldungSpaet: 900 }, { cpu: 4, was: "Y3", D: 5400, meldungSpaet: 900 },
+      { cpu: 1, was: "Y4", D: 5500 }, { cpu: 4, was: "Y4", D: 5500 },
       { cpu: 1, was: "Y2", D: 4900, belegt: [4800, 1500] }, { cpu: 4, was: "Y2", D: 4900, belegt: [4800, 1500] }]
       .filter((fa) => !process.env.YNUR || process.env.YNUR.split(",").includes(fa.was));
     for (const fa of yFaelle) for (let n = 0; n < N; n++) {
@@ -472,7 +475,9 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       if (fa.was !== "Y2") {
         /* Y3: die Meldung kommt 0,9 s verspätet (langsamer Start), index.html nach 5,4 s – bis dddf4c7b zählten die 5 s ab der
            Meldung (navigate also bis ~5,9 s nach dem Öffnen), jetzt zählt das Öffnen */
-        const wie = fa.was === "Y3" ? " Meldung 0,9 s verspätet, index.html nach 5,4 s," : " index.html nach 4,9 s,";
+        /* Y4: index.html nach 5,5 s – nach der alten Wartezeit des Helfers (5 s ab der Meldung), vor der Frist der Seite (6 s):
+           bis dddf4c7b ging die Rückkehr hier auf der alten Seite hinein (fassung.json hängt), 884 nahm bis 6 s die neue */
+        const wie = fa.was === "Y3" ? " Meldung 0,9 s verspätet, index.html nach 5,4 s," : fa.was === "Y4" ? " index.html nach 5,5 s," : " index.html nach 4,9 s,";
         sage(e.f === e.V1 && b.length === 1 && b[0].f === e.V1 && !e.blase && e.gesteuert,
           fa.was + " CPU " + fa.cpu + "×" + wie + " Lauf " + (n + 1) + ": am Ende die neue Fassung, betreten einmal", zeile(e));
         /* (884 nimmt die Seite gleich aus dem Netz: eine Seite, kein Merker – auch das ist richtig) */
