@@ -77,6 +77,22 @@
         gespeichert hat (das Lesen davor geht hinaus).
      U  Bremse gezogen, dann springt die Geräteuhr 2 h zurück: höchstens
         18 min Pause übrig, und ein Tipp öffnet wieder einen Versuch.
+   Nachbesserung 3 (Prüfer-Befunde zu 885 nach Nachbesserung 2):
+     X3 Serverausfall: 503 für 10 min, die Echtzeit-Leitung bleibt offen
+        (kein neues SUBSCRIBED), sichtbar, kein Tipp; danach eine neue
+        Benachrichtigung: die Blase kommt von selbst, spätestens nach
+        ≈ 2,5 min (Nachbesserung 2: 13,5 min; 884: 0,2 min).
+     X5 503 für 10 min, danach (Bremse noch gezogen) ein Tipp auf eine leere
+        Fläche: die neue Benachrichtigung kommt binnen 10 s (das 5-s-Fenster
+        gilt auch für die Takte; Nachbesserung 2: keine Blase in 60 s).
+     V  verdeckt: 5 min ohne Neues (Anfragen zählen: nur „zuletzt aktiv“ und
+        die schlanke Prüfung select=id, höchstens 25), dann eine neue
+        Nachricht und eine neue Benachrichtigung: Blase und Ton spätestens
+        nach ≈ 2,5 min, ohne zurückzukommen (wie 884; Nachbesserung 2: erst
+        beim Zurückkommen).
+     B  geändert: verdeckt höchstens 45 Anfragen in 10 min, davon außer
+        „zuletzt aktiv“ und der schlanken Prüfung höchstens 2 (vorher: 12
+        gesamt – verdeckt war dort ganz Ruhe, ohne Ton und Blase).
    Die Sperre der Echtzeit-Leitung ist jetzt nachgestellt wie in Wirklichkeit
    (Nachbesserung 2): Supabase lehnt schon den Handshake ab, die Verbindung
    öffnet sich nie und schließt mit 1006 (eigener WebSocket-Ersatz, solange
@@ -108,7 +124,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const QUELLE = Boolean(process.env.QUELLE);
-const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U").split(",").map((x) => x.trim()).filter(Boolean);
+const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V").split(",").map((x) => x.trim()).filter(Boolean);
 const SUPA = [process.env.SUPABASE_UMD,
   "/tmp/claude-0/node_modules/@supabase/supabase-js/dist/umd/supabase.js",
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
@@ -263,7 +279,8 @@ function schluessel(adresse, methode) {
   const u = new URL(adresse);
   const p = u.pathname;
   if (p.startsWith("/rest/v1/rpc/")) return "rpc:" + p.slice(13);
-  if (p.startsWith("/rest/v1/")) return p.slice(9) + (u.searchParams.get("select") === "*" ? "*" : "") + (methode !== "GET" ? ":" + methode : "");
+  /* „*“ = ganze Zeilen, „#id“ = nur Kennungen (die schlanke Prüfung bei verdeckter Seite, Nachbesserung 3) */
+  if (p.startsWith("/rest/v1/")) return p.slice(9) + (u.searchParams.get("select") === "*" ? "*" : u.searchParams.get("select") === "id" ? "#id" : "") + (methode !== "GET" ? ":" + methode : "");
   if (p.startsWith("/auth/v1/")) return "auth:" + p.slice(9) + (u.searchParams.get("grant_type") ? "?" + u.searchParams.get("grant_type") : "");
   if (p.startsWith("/functions/v1/")) return "fn:" + p.slice(14);
   return "sonst:" + p;
@@ -511,17 +528,20 @@ function schluessel(adresse, methode) {
       await s.pg.evaluate(() => window.__sichtbar(false));
       const z = phase(s, "B");
       await laufen(s, 600000);
-      const ohneTouch = z.gesamt - summe(z, /^profiles:PATCH$/);
+      const ohneTouch = z.gesamt - summe(z, /^profiles:PATCH$/) - summe(z, /#id$/);
       console.log("  Anfragen 10 min verdeckt: " + z.gesamt + " · " + Math.round(z.bytes / 1024) + " KB · " + kurz(z));
-      sage(z.gesamt <= 12, "verdeckt höchstens 12 Anfragen in 10 min", String(z.gesamt));
-      sage(ohneTouch <= 2, "außer „zuletzt aktiv“ (profiles PATCH) höchstens 2", String(ohneTouch));
+      /* Nachbesserung 3 — verdeckt wieder Ton und Blase (wie 884), dafür alle 2 min die schlanke Prüfung (select=id):
+         Benachrichtigungen, Nachrichten, Anfragen, Duelle, für den Betreiber Funk und offene Fragen. */
+      sage(z.gesamt <= 45, "verdeckt höchstens 45 Anfragen in 10 min (zuletzt aktiv + schlanke Prüfung)", String(z.gesamt));
+      sage(ohneTouch <= 2, "außer „zuletzt aktiv“ (profiles PATCH) und der schlanken Prüfung (select=id) höchstens 2", String(ohneTouch));
+      sage(z.bytes <= 20 * 1024, "verdeckt höchstens 20 KB Antwortdaten in 10 min", Math.round(z.bytes / 1024) + " KB");
       const zz = phase(s, "B-zurueck");
       await s.pg.evaluate(() => window.__sichtbar(true));
       await laufen(s, 5000);
       console.log("  beim Zurückkommen (5 s): " + kurz(zz));
       sage(summe(zz, /^notifications\*?$/) >= 1 && summe(zz, /^activity\*?$/) >= 1, "beim Zurückkommen binnen 5 s Benachrichtigungen und Laufschrift geholt", kurz(zz));
       fehlerPruefen(s);
-      ergebnis.faelle.B = { gesamt: z.gesamt, kb: Math.round(z.bytes / 1024), je: z.je, zurueck: zz.je };
+      ergebnis.faelle.B = { gesamt: z.gesamt, kb: Math.round(z.bytes / 1024), ohneTouchSchlank: ohneTouch, je: z.je, zurueck: zz.je };
       await s.ctx.close();
     }
 
@@ -844,6 +864,137 @@ function schluessel(adresse, methode) {
       sage(zt.gesamt >= 1, "nach dem Uhrsprung öffnet ein Tipp wieder einen Versuch", String(zt.gesamt) + " · " + kurz(zt));
       fehlerPruefen(s);
       ergebnis.faelle.U = { restMin: Math.round(rest / 6000) / 10, tipp: zt.gesamt };
+      await s.ctx.close();
+    }
+
+    /* ======== Nachbesserung 3: Serverausfall, Tipp danach, verdeckte Seite ======== */
+    /* Blasen (toast-popup) und Töne (gestartete Oszillatoren) mitschreiben; neue Zeilen in der Attrappe anlegen. */
+    const beobachten = (s) => s.pg.evaluate(() => {
+      window.__toasts = [];
+      new MutationObserver((ms) => ms.forEach((m) => m.addedNodes.forEach((n) => {
+        if (n.nodeType === 1 && n.classList && n.classList.contains("toast-popup")) window.__toasts.push({ t: Date.now(), text: n.textContent.slice(0, 80) });
+      }))).observe(document.body, { childList: true });
+      window.__toene = 0;
+      try {
+        const st = OscillatorNode.prototype.start;
+        if (!st.__sonde) {
+          const neu = function () {
+            window.__toene++;
+            if (window.__toeneWo) { const w = String(new Error().stack).split("\n").slice(2, 5).join(" < ").slice(0, 300); window.__toeneWo[w] = (window.__toeneWo[w] || 0) + 1; }
+            return st.apply(this, arguments);
+          };
+          neu.__sonde = true; OscillatorNode.prototype.start = neu;
+        }
+      } catch (e) {}
+    });
+    const blasen = (s) => s.pg.evaluate(() => window.__toasts || []);
+    const toene = (s) => s.pg.evaluate(() => window.__toene || 0);
+    const neueNachricht = (s, text) => s.zustand.db.private_messages.push({ id: "x" + Math.random().toString(36).slice(2), from_user: EMMY, to_user: ICH, author_name: "Emmy",
+      body: text, is_system: false, read: false, created_at: iso(s.zustand.jetzt), image_url: null, deleted_by_sender: false, deleted_by_recipient: false });
+    const neueBenachrichtigung = (s, text) => s.zustand.db.notifications.push({ id: "b" + Math.random().toString(36).slice(2), user_id: ICH, message: text, read: false, created_at: iso(s.zustand.jetzt) });
+
+    /* ---------------- X3: Serverausfall 10 min, Echtzeit-Leitung offen, kein Tipp ---------------- */
+    if (FAELLE.includes("X3")) {
+      abschnitt("X3", "503 für 10 min (Datenbank weg, Echtzeit-Leitung bleibt offen), sichtbar, kein Tipp; dann eine neue Benachrichtigung");
+      const s = await seiteOeffnen("A", T_TAG);
+      await laufen(s, 90000);
+      await beobachten(s);
+      const z = phase(s, "X3-ausfall");
+      s.zustand.modus = "503";
+      await laufen(s, 600000);
+      const b = await s.pg.evaluate(() => (Backend.bremse ? (({ aktiv, status, stufe, bis }) => ({ aktiv, status, stufe, restS: Math.round((bis - Date.now()) / 1000) }))(Backend.bremse()) : null));
+      console.log("  Anfragen im Ausfall (10 min): " + z.gesamt + " · " + kurz(z) + " · Bremse am Ende " + JSON.stringify(b));
+      s.zustand.modus = "ok";
+      const t0 = s.zustand.jetzt;
+      neueBenachrichtigung(s, "X3-nach-Ausfall");
+      let nach = 0, ts = [];
+      for (; nach < 25 * 60000; nach += 5000) {
+        await laufen(s, 5000, 5000);
+        ts = (await blasen(s)).filter((x) => /X3-nach-Ausfall/.test(x.text));
+        if (ts.length) break;
+      }
+      const min = ts.length ? Math.round((ts[0].t - t0) / 6000) / 10 : null;
+      sage(ts.length > 0, "X3: nach dem Ausfall kommt die Blase von selbst (ohne Tipp)", ts.length ? min + " min" : "keine in 25 min");
+      sage(ts.length > 0 && ts[0].t - t0 <= 2.6 * 60000, "X3: … spätestens nach ≈ 2,5 min (Bremse bei 5xx höchstens 1 → 2 min; Nachbesserung 2: 13,5 min)", ts.length ? min + " min" : "–");
+      sage(z.gesamt <= 150, "X3: im Ausfall höchstens 150 Anfragen in 10 min (884: ≈ 10 600)", String(z.gesamt));
+      fehlerPruefen(s);
+      ergebnis.faelle.X3 = { ausfall: z.gesamt, je: z.je, bremse: b, blaseNachMin: min };
+      await s.ctx.close();
+    }
+
+    /* ---------------- X5: Tipp nach dem Ausfall holt sofort ---------------- */
+    if (FAELLE.includes("X5")) {
+      abschnitt("X5", "503 für 10 min, danach (Bremse noch gezogen) ein Tipp auf eine leere Fläche");
+      const s = await seiteOeffnen("A", T_TAG);
+      await laufen(s, 90000);
+      await beobachten(s);
+      s.zustand.modus = "503";
+      await laufen(s, 600000);
+      s.zustand.modus = "ok";
+      neueBenachrichtigung(s, "X5-nach-Ausfall");
+      await laufen(s, 2000);
+      const vorTipp = (await blasen(s)).filter((x) => /X5-nach-Ausfall/.test(x.text)).length;
+      const aktiv = await s.pg.evaluate(() => Boolean(Backend.bremse && Backend.bremse().aktiv));
+      const t0 = s.zustand.jetzt;
+      const zt = phase(s, "X5-tipp");
+      await s.pg.mouse.click(20, 300);
+      await laufen(s, 10000);
+      const ts = (await blasen(s)).filter((x) => /X5-nach-Ausfall/.test(x.text));
+      console.log("  Bremse beim Tipp gezogen: " + aktiv + " · Blase schon vor dem Tipp: " + vorTipp + " · nach dem Tipp (10 s): " + kurz(zt));
+      sage(aktiv && vorTipp === 0, "X5: die Bremse steht beim Tipp noch, die Blase ist noch nicht da (sonst prüft der Fall nichts)", "Bremse " + aktiv + ", Blase vorher " + vorTipp);
+      sage(ts.length > 0, "X5: nach einem Tipp auf eine leere Fläche binnen 10 s die Blase (Nachbesserung 2: keine in 60 s)", ts.length ? Math.round((ts[0].t - t0) / 1000) + " s" : "keine");
+      fehlerPruefen(s);
+      ergebnis.faelle.X5 = { bremseBeimTipp: aktiv, vorTipp, blaseNachS: ts.length ? Math.round((ts[0].t - t0) / 1000) : null, je: zt.je };
+      await s.ctx.close();
+    }
+
+    /* ---------------- V: verdeckt, schlank, Ton und Blase wie in 884 ---------------- */
+    if (FAELLE.includes("V")) {
+      abschnitt("V", "verdeckt: 5 min ohne Neues, dann neue Nachricht und Benachrichtigung – Ton und Blase ohne zurückzukommen");
+      const s = await seiteOeffnen("A", T_TAG);
+      await s.pg.mouse.click(20, 300);   // erst nach einem Tipp darf die Seite Töne spielen (wie im Browser)
+      await beobachten(s);
+      /* alles gelesen (auch die Systemnachrichten vom Start): das Lämpchen geht aus, der Erinnerungston (alle 5 s,
+         solange es leuchtet) hört auf */
+      await laufen(s, 30000);
+      s.zustand.db.private_messages.forEach((m) => { m.read = true; });
+      s.zustand.db.notifications.forEach((n) => { n.read = true; });
+      await laufen(s, 60000);
+      const lampe = await s.pg.evaluate(() => { const l = document.getElementById("loginBtnBadge"); return l ? l.style.display : "fehlt"; });
+      console.log("  Lämpchen vor dem Verdecken: " + lampe);
+      await s.pg.evaluate(() => window.__sichtbar(false));
+      await laufen(s, 5000);
+      const zr = phase(s, "V-ruhe");
+      const toeneRuhe = await toene(s);
+      await s.pg.evaluate(() => { window.__toeneWo = {}; });
+      await laufen(s, 300000);
+      const toeneRuheEnde = await toene(s);
+      const toeneWo = await s.pg.evaluate(() => { const w = window.__toeneWo; window.__toeneWo = null; return w; });
+      if (toeneRuheEnde !== toeneRuhe) console.log("  Töne ohne Neues kamen von: " + JSON.stringify(toeneWo).slice(0, 900));
+      const vollRuhe = zr.gesamt - summe(zr, /^profiles:PATCH$/) - summe(zr, /#id$/);
+      console.log("  verdeckt 5 min ohne Neues: " + zr.gesamt + " Anfragen · " + Math.round(zr.bytes / 1024) + " KB · " + kurz(zr));
+      sage(zr.gesamt <= 25, "V: verdeckt 5 min ohne Neues höchstens 25 Anfragen (zuletzt aktiv + schlanke Prüfung)", String(zr.gesamt));
+      sage(vollRuhe === 0, "V: … davon keine volle Abfrage (nur „zuletzt aktiv“ und select=id)", String(vollRuhe));
+      sage(toeneRuheEnde === toeneRuhe, "V: ohne Neues kein Ton", (toeneRuheEnde - toeneRuhe) + " Oszillatoren");
+      const zn = phase(s, "V-neu");
+      const t0 = s.zustand.jetzt;
+      neueNachricht(s, "Neu, während die Seite verdeckt ist");
+      neueBenachrichtigung(s, "V-Benachrichtigung");
+      let nach = 0, mail = null, ben = null;
+      for (; nach < 6 * 60000; nach += 5000) {
+        await laufen(s, 5000, 5000);
+        const ts = (await blasen(s)).filter((x) => x.t >= t0);
+        mail = ts.find((x) => /Neue Nachricht/.test(x.text)); ben = ts.find((x) => /V-Benachrichtigung/.test(x.text));
+        if (mail && ben) break;
+      }
+      const toeneNeu = (await toene(s)) - toeneRuheEnde;
+      const minM = mail ? Math.round((mail.t - t0) / 6000) / 10 : null, minB = ben ? Math.round((ben.t - t0) / 6000) / 10 : null;
+      console.log("  verdeckt neu: Blase Nachricht nach " + minM + " min, Benachrichtigung nach " + minB + " min, Töne " + toeneNeu + " · " + kurz(zn));
+      sage(Boolean(mail && ben), "V: verdeckt kommen beide Blasen, ohne zurückzukommen (Nachbesserung 2: erst beim Zurückkommen)", "Nachricht " + minM + " min, Benachrichtigung " + minB + " min");
+      sage(Boolean(mail && ben) && Math.max(mail.t, ben.t) - t0 <= 2.6 * 60000, "V: … spätestens nach ≈ 2,5 min", Math.max(minM || 0, minB || 0) + " min");
+      sage(toeneNeu > 0, "V: verdeckt spielt der Ton (wie 884)", toeneNeu + " Oszillatoren");
+      fehlerPruefen(s);
+      ergebnis.faelle.V = { ruhe: zr.gesamt, ruheKB: Math.round(zr.bytes / 1024), vollRuhe, ruheJe: zr.je, blaseNachrichtMin: minM, blaseBenachrichtigungMin: minB, toene: toeneNeu, neuJe: zn.je };
       await s.ctx.close();
     }
   } catch (e) {
