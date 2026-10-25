@@ -97367,9 +97367,9 @@ An einem Morgen lief ein kleiner Fuchs los…
   let fuchsNachEigenerRunde = false;
   const fuchsGeprueft = {};
   /* Nachbesserung 3 — Monat und Jahr nur noch alle 6 h (vorher 30 min): die Jahres-Wertung lädt alle Runden seit dem
-     1.1., die Monats-Wertung die der letzten 30 Tage – zusammen der größte Teil der ≈ 36–40 Fuchs-Abfragen je Stunde
-     und sichtbarem Tab. Beim Laden der Seite wird weiter sofort geprüft; nur eine schon offene Seite gratuliert zum
-     Fuchs des Monats/Jahres bis zu 6 h später. */
+     1.1., die Monats-Wertung die der letzten 30 Tage – die größten Antworten der Fuchs-Prüfung (gemessen je sichtbarem
+     Tab: 32 statt ≈ 36–40 Fuchs-Abfragen je Stunde). Beim Laden der Seite wird weiter sofort geprüft; nur eine schon
+     offene Seite gratuliert zum Fuchs des Monats/Jahres bis zu 6 h später. */
   const FUCHS_PRUEF_ABSTAND = { tag: 5 * 60000, woche: 30 * 60000, monat: 6 * 3600000, jahr: 6 * 3600000 };
   let fuchsNr = 0, fuchsGueltig = 0;   // Nachbesserung 3 — Laufnummer wie bei den Benachrichtigungen
   async function pruefeFuchsAuszeichnung() {
