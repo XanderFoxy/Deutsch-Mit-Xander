@@ -49,7 +49,7 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 885 — Notfall: Supabase-Sperre, Anfrage-Sturm gebremst (Nachbesserung 3)",
+  stand: "Fassung 885 — Notfall: Supabase-Sperre, Anfrage-Sturm gebremst (Nachbesserung 4)",
 
   inArbeit: [
     { seit: "2026-10-24T15:21",
@@ -62,6 +62,8 @@ window.DMA_WERKSTATT = {
       text: "Weitere große Abfragen verkleinern (Duelle, Mitgliederliste, Benachrichtigungen, Postfach beim Öffnen) – laufen nur noch bei sichtbarer Seite" },
     { seit: "2026-10-25T00:42",
       text: "Fuchs-Wertung auf dem Server rechnen (Jahres-Wertung lädt alle Runden seit 1.1., jetzt nur noch alle 6 h) – braucht eine Datenbank-Änderung nach der Sperre" },
+    { seit: "2026-10-25T04:47",
+      text: "Ohne Netz beim App-Wechsel nur eine Probe-Abfrage statt aller Takte (jetzt ≈ 990 Fehlversuche in 10 min bei einem Wechsel alle 20 s, erreichen den Server nicht)" },
     { seit: "2026-10-14T04:06",
       text: "Ladezeit-Fassung (wird 886)" },
     { seit: "2026-10-14T04:06",
@@ -74,6 +76,14 @@ window.DMA_WERKSTATT = {
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
+    { seit: "2026-10-25T04:47",
+      text: "Ohne Netz löst ein Tipp keinen Schwall Fehlversuche mehr aus: 72 statt 1 002 in 10 min" },
+    { seit: "2026-10-25T04:47",
+      text: "Verdeckt kommen Ton und Blase auch dann, wenn die erste Abfrage scheitert (nach 2,4 min statt erst beim Zurückkommen)" },
+    { seit: "2026-10-25T04:47",
+      text: "Walkie mit über 60 offenen Fragen: verdeckt keine vollen Abrufe mehr ohne Neues (0 statt 5 in 10 min)" },
+    { seit: "2026-10-25T04:47",
+      text: "Fuchs des Monats/Jahres: nach einer gescheiterten Prüfung nach 30 min wieder geprüft statt erst nach 6 h" },
     { seit: "2026-10-25T00:42",
       text: "Verdeckte Seite: Ton und Blase für Nachrichten wieder wie vorher (höchstens 2 min später), dabei nur winzige Abfragen: 40 statt 992 in 10 min" },
     { seit: "2026-10-25T00:42",

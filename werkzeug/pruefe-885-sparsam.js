@@ -94,6 +94,23 @@
      B  geändert: verdeckt höchstens 45 Anfragen in 10 min, davon außer
         „zuletzt aktiv“ und der schlanken Prüfung höchstens 2 (vorher: 12
         gesamt – verdeckt war dort ganz Ruhe, ohne Ton und Blase).
+   Nachbesserung 4 (Prüfer-Befunde zu 885 nach Nachbesserung 3):
+     NT Netz weg 10 min, sichtbar, ein Tipp alle 16 s auf eine leere Fläche:
+        höchstens 200 Versuche (Nachbesserung 3: 1 002 – das Tipp-Fenster galt
+        auch bei „Netz weg“ für die Takte; Nachbesserung 2: 72). NT0 dasselbe
+        ohne Tipp (höchstens 200 wie in C). Danach „online“: binnen 25 s da.
+     XT 503 für 10 min mit einem Tipp alle 16 s: höchstens 400 Anfragen (der
+        Preis dafür, dass ein Tipp im Ausfall sofort holt; gemessen 255).
+     W60 Walkie mit 70 offenen Fragen (holen lädt die 60 ältesten), verdeckt
+        10 min ohne Neues: höchstens 1 volle Abfrage der offenen Fragen
+        (Nachbesserung 3: 5); eine neue Frage verdeckt binnen ≈ 2,5 min geholt.
+     VF verdeckt, neue Benachrichtigung, der erste volle Durchgang scheitert
+        (500 auf notifications, backend.js liefert dann still []): die Blase
+        kommt trotzdem verdeckt, spätestens nach ≈ 4,5 min (Nachbesserung 3:
+        erst beim Zurückkommen – die Kennung galt schon als bekannt).
+     FM die Fuchs-Prüfung beim Laden scheitert (500 auf results), danach geht
+        es wieder: Monat und Jahr binnen ≈ 35 min erneut geprüft (Nachbesserung
+        3: erst nach 6 h), danach nicht wieder.
    Die Sperre der Echtzeit-Leitung ist jetzt nachgestellt wie in Wirklichkeit
    (Nachbesserung 2): Supabase lehnt schon den Handshake ab, die Verbindung
    öffnet sich nie und schließt mit 1006 (eigener WebSocket-Ersatz, solange
@@ -1028,7 +1045,7 @@ function schluessel(adresse, methode) {
       for (let t = 0; t < 600000; t += 16000) { if (tippen) await s.pg.mouse.click(20, 300); await laufen(s, 16000); }
       console.log("  Netz weg 10 min: " + z.gesamt + " Versuche · " + kurz(z));
       if (tippen) sage(z.gesamt <= 200, "NT: Netz weg 10 min mit einem Tipp alle 16 s höchstens 200 Versuche (Nachbesserung 3: 1 002; Nachbesserung 2: 72)", String(z.gesamt));
-      else sage(z.gesamt <= 150, "NT0: Netz weg 10 min ohne Tipp höchstens 150 Versuche (Prüfer: 87–88)", String(z.gesamt));
+      else sage(z.gesamt <= 200, "NT0: Netz weg 10 min ohne Tipp höchstens 200 Versuche wie in C (gemessen 76–128, Prüfer 87–88; Streuung durch den Zufallsanteil der Pausen)", String(z.gesamt));
       s.zustand.modus = "ok";
       const zon = phase(s, fall + "-online");
       await s.pg.evaluate(() => window.dispatchEvent(new Event("online")));
