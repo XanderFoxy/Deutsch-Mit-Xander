@@ -254,7 +254,7 @@ function seite(r, e) {
   try { f = new URL(r.url).searchParams.get("f") || ""; } catch (x) {}
   /* FASSUNG 886 (Rückkehr): genau die Seite, die der Helfer eben selbst neu lädt (rueckEntscheiden, ?f=<neu>), steht schon
      im Gedächtnis (frisch) – sofort ausliefern, ohne den Speicher zu lesen und ohne auf das Ablegen zu warten (jede
-     Millisekunde hier entscheidet, ob die alte Seite schon in ihren Skripten steckt, s. rueckStand) */
+     Millisekunde zählt: der Wechsel wird erst übernommen, wenn der Hauptfaden der alten Seite frei ist, s. unten) */
   var schnell = f && frisch && frisch.v === f && Date.now() - frisch.zeit < 10000 ? frisch : null;
   var draussen = schnell ? null : draussenLesen();
   var antwort = schnell ? Promise.resolve().then(function () {
@@ -425,7 +425,15 @@ function neuer(a, b) {
    Gemessen und verworfen: die alte Seite vor ihren Skripten anhalten, bis der Helfer entschieden hat (kostete auf
    schnellem Gerät +26…+29 ms und bei langsamer Leitung den Gewinn, brachte im fraglichen Fall nur Rauschen).
    Ohne navigate (ältere Browser) oder ohne Auffrischung macht es wie bisher der Wächter.
-   Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr: Nachbesserung 1“; Sonde pruefe-885-rueckkehr.js. */
+   FASSUNG 886 — „nie langsamer als 884“ (Prüfer, W2). Übernommen wird die neue Seite erst, wenn der Hauptfaden der alten
+   frei ist – und die steckte oft gerade in app.js oder im Lesen der ganzen Stilblätter, die index.html bei
+   DOMContentLoaded einhängt (gemessen CPU 4×, Antwort nach 0,5 s: Wechsel 0,24–0,43 s nach navigate, „betreten“ +165 ms
+   gegen 884). Darum jetzt: entschieden wird, sobald die Antwort des Servers gelesen ist (auffrischen().frueh), nicht erst
+   nach dem Ablegen, die Seite dazu (clients.get) gleich mit geholt; die neue Seite (?f=<neu>) kommt aus dem Gedächtnis
+   (frisch), ohne den Speicher zu lesen; die alte Seite hängt die ganzen Blätter und spiel.js erst nach der Entscheidung
+   ein (index.html, dmaRueckWarten). Erprobt und verworfen: die alte Seite fragt vor app.js synchron nach (XHR) –
+   Chromium leitet synchrones XHR nicht durch den Helfer, die Frage ginge ins Netz.
+   Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“, Unterabschnitt „Nachbesserung 1“; Sonde pruefe-885-rueckkehr.js. */
 var rueck = {};      /* Seite (Client-Kennung) → { ent: Entscheidung (Versprechen), aus: „halt“ kam } */
 var proSeite = {};   /* Seite (resultingClientId) → die Auffrischung, die IHRE Navigation gestartet hat */
 function rueckEntscheiden(id, alt) {

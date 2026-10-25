@@ -306,6 +306,8 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           x = x.replace('"rueckfrage.js",', "");
           const i0 = y.indexOf("window.dmaWalkieLaden="), i1 = y.indexOf('try{window.addEventListener("beforeinstallprompt"', i0);
           if (i0 >= 0 && i1 > i0) y = y.slice(0, i0) + y.slice(i1);
+          /* Fassung 886 (Rückkehr, SPIELSYSTEM.md I48): spiel.js wartet auf der Rückkehr-Seite aus dem Speicher auf den Helfer */
+          y = y.replace("var spielWarten=true;", "").replace("if(spielWarten&&window.dmaRueckWarten){spielWarten=false;window.dmaRueckWarten(window.dmaSpielLaden);return}", "");
           lader = x === y;
         }
         /* FASSUNG 885 (rueckkehr, nach K): der Fassungs-Wächter bekam die erste Antwort als Versprechen (dmaFassungErst)
@@ -315,6 +317,9 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           y = rueckbauRueckkehr(y);
           info("Skript " + (i + 1) + ": Fassungs-Wächter ohne die Änderung aus 885 rueckkehr verglichen");
         }
+        /* Fassung 886 (Rückkehr, SPIELSYSTEM.md I48): die ganzen Blätter warten auf der Rückkehr-Seite aus dem Speicher auf den Helfer */
+        const i886 = y.indexOf("window.dmaRueckWarten=function(f){"), j886 = y.indexOf("window.dmaStileAn=function(){window.dmaRueckWarten(function(){window.dmaStileVoll()})};");
+        if (i886 >= 0 && j886 > i886) y = y.slice(0, i886) + "window.dmaStileAn=function(){window.dmaStileVoll()};" + y.slice(j886 + "window.dmaStileAn=function(){window.dmaRueckWarten(function(){window.dmaStileVoll()})};".length);
         if (x === y) gleich++;
         else { let k = 0; while (k < x.length && x[k] === y[k]) k++; info("Skript " + (i + 1) + " weicht ab bei: …" + x.slice(Math.max(0, k - 60), k + 60) + "… / …" + y.slice(Math.max(0, k - 60), k + 60) + "…"); }
       }
