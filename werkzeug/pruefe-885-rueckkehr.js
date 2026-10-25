@@ -145,7 +145,9 @@
      JSON=<datei>      Ergebnisse (Läufe, Messung) als JSON, laufend
    Aufruf:  node werkzeug/pruefe-885-rueckkehr.js
    Gegenprobe: WURZEL=<ordner mit altem Stand> node …  (c30a68f7: R rot;
-   6b724580, vor S1: R grün; 864324e7, vor Nachbesserung 1: T rot)
+   6b724580, vor S1: R grün; 864324e7, vor Nachbesserung 1: T rot;
+   dddf4c7b: Y-Mechanismus und Y4 rot; 1abc32b2: Y6b/Y6c Blase auf der
+   gehenden Seite rot)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -520,7 +522,8 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       }
       if (fa.was === "Y7") {
         /* nur Chromium: übernimmt er den Wechsel vor dem fälligen 6-s-Zeitgeber, geht es einmal hinein, auf der neuen Fassung */
-        sage(b.length === 1 && e.gesteuert, kopf + "betreten nie zweimal", zeile(e) + ", betreten auf Seite " + JSON.stringify(b.map((x) => x.seite + "/" + x.f)));
+        sage(b.length === 1 && (b[0].f === e.V1 || (e.f === e.V && /Neue Fassung/.test(e.blase))) && e.gesteuert,
+          kopf + "betreten nie zweimal (neue Fassung, oder die alte mit Blase)", zeile(e) + ", betreten auf Seite " + JSON.stringify(b.map((x) => x.seite + "/" + x.f)));
         info(kopf + (b.length === 1 && b[0].f === e.V1 ? "Wechsel vor dem Zeitgeber (neue Fassung)" : "anders: " + JSON.stringify(b)));
         continue;
       }
