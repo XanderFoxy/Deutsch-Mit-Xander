@@ -2312,7 +2312,11 @@
   function sprMarke() {
     try {
       if (!window.supabase) return Promise.resolve("");
-      if (!sprKlient) sprKlient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
+      /* FASSUNG 885 (Nachbesserung 2) — derselbe Schutz beim Erneuern der Sitzung wie in spiel.js (SP.schutzFetch) */
+      const schutz = ST && ST.spiel && ST.spiel.schutzFetch;
+      if (!sprKlient) sprKlient = schutz
+        ? window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, { global: { fetch: schutz } })
+        : window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey);
       return sprKlient.auth.getSession().then((a) => (a && a.data && a.data.session && a.data.session.access_token) || "").catch(() => "");
     } catch (e) { return Promise.resolve(""); }
   }

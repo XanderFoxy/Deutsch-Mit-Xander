@@ -618,7 +618,7 @@
       });
     } catch (e) {}
     var neu = 0, c = navigator.connection, fcp = null, tipp = {};
-    /* FASSUNG 885 (S1, Nachbesserung 1): „neu" = nur die ERSTE Seite nach dem Neuladen durch den Fassungs-Wächter
+    /* FASSUNG 886 (S1, Nachbesserung 1): „neu" = nur die ERSTE Seite nach dem Neuladen durch den Fassungs-Wächter
        (index.html?f=<diese Fassung>, Navigation „navigate"). Der Merker allein bleibt für jede weitere Seite im Tab stehen
        (Neuladen von Hand, Notweg, Rückkehr ins Klassenzimmer) – der Anteil im SQL des Logbuchs wäre sonst zu hoch. */
     try {

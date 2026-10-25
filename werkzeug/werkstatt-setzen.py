@@ -29,6 +29,11 @@ AUFRUF
 Eine Zeile, die mit „!" beginnt, geht nur den Betreiber an.
 Der Zeitpunkt ist immer JETZT — das ist der Sinn der Sache: man soll
 sehen, wie frisch die Baustelle ist.
+Läuft eine Baustelle schon länger, behält sie ihren Beginn (Regel 2:
+„seit" ist der Zeitpunkt, an dem die Arbeit begonnen hat), wenn die
+Zeile mit „@JJJJ-MM-TTTHH:MM " beginnt (FASSUNG 885, Nachbesserung 1 –
+vorher bekam jede weitergeführte Baustelle die Uhrzeit des Hochladens):
+    --offen "@2026-10-14T04:06 Ladezeit-Fassung (wird 886)"
 """
 import sys, io, os, json, datetime
 
@@ -108,9 +113,16 @@ def zeilen_bauen(zeilen, jetzt):
         nur = text.startswith("!")
         if nur:
             text = text[1:].strip()
+        seit = jetzt
+        if len(text) > 18 and text[0] == "@" and text[17] == " ":
+            try:
+                datetime.datetime.strptime(text[1:17], "%Y-%m-%dT%H:%M")
+                seit, text = text[1:17], text[18:].strip()
+            except ValueError:
+                pass
         marke = ' nurBetreiber: true,' if nur else ''
         teile.append('    { seit: "%s",%s\n      text: %s },\n'
-                     % (jetzt, marke, json.dumps(text, ensure_ascii=False)))
+                     % (seit, marke, json.dumps(text, ensure_ascii=False)))
     return teile
 
 

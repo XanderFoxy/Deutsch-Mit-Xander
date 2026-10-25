@@ -122,7 +122,7 @@ window.Rueckfrage = (function () {
   }
 
   /* ---------- Holen ---------- */
-  function holen() {
+  function holen(nachher) {
     if (!istBetreiber()) { weg(); return; }
     var sb = zugang();
     if (!sb || laeuft) return;
@@ -132,14 +132,42 @@ window.Rueckfrage = (function () {
       .is("beantwortet", null)
       .order("id", { ascending: true })
       .limit(60);
+    /* FASSUNG 885 (Nachbesserung 1) — vom Funk nur nachladen, was neu ist. Vorher kamen bei jedem Takt (20 s, offen
+       8 s) die 20 neuesten Funkzeilen mit vollem Text – Claudes Antworten oft mehrere KB; bei sichtbarer Seite der
+       größte Posten beim Datenabfluss (gemessen ≈ 7 von 12 MB je Stunde). Jetzt: Kennung und „gelesen“ der 20
+       neuesten (winzig), den Text nur für Zeilen, die noch nicht da sind. Angezeigt wird genau dasselbe. */
     var b = sb.from("betreiber_funk")
-      .select("id, erstellt, von, text, gelesen")
+      .select("id, gelesen")
       .order("id", { ascending: false })
-      .limit(20);
+      .limit(20)
+      .then(function (k) {
+        if (!k || k.error || !k.data) return k;
+        var bekannt = {};
+        funk.forEach(function (m) { bekannt[m.id] = m; });
+        var fehlt = k.data.filter(function (x) { return !bekannt[x.id]; }).map(function (x) { return x.id; });
+        function zusammen(neu) {
+          return { data: k.data.map(function (x) {
+            var m = neu[x.id] || bekannt[x.id];
+            return m ? Object.assign({}, m, { gelesen: x.gelesen }) : null;
+          }).filter(Boolean) };
+        }
+        if (!fehlt.length) return zusammen({});
+        return sb.from("betreiber_funk")
+          .select("id, erstellt, von, text, gelesen")
+          .in("id", fehlt)
+          .then(function (v) {
+            if (!v || v.error || !v.data) return v;
+            var neu = {};
+            v.data.forEach(function (m) { neu[m.id] = m; });
+            return zusammen(neu);
+          });
+      })
+      ["catch"](function (e) { return { error: e }; });   /* der Funk darf die offenen Fragen nicht mitreißen */
     Promise.all([a, b]).then(function (r) {
       laeuft = false;
       if (!r[0].error && r[0].data) fragen = r[0].data;
       if (r[1] && !r[1].error && r[1].data) funk = r[1].data;
+      if (typeof nachher === "function") { try { nachher(!r[0].error && Boolean(r[0].data)); } catch (e) {} }   /* Nachbesserung 4 (verdecktNachsehen) */
       /* Die Stelle haengt an der Frage, nicht an der Nummer — kommt
          eine neue dazu, springt er nicht woanders hin. */
       var gemerkt = lesen(SPEICHER_STELLE, null);
@@ -1399,9 +1427,43 @@ window.Rueckfrage = (function () {
   }
 
   /* ---------- Takt ---------- */
+  /* FASSUNG 885 — der Takt fragte auch bei verdeckter Seite alle 20 s (8 s offen) nach, rund um die Uhr.
+     Verdeckt oder während der Bremse (backend.js) wird nichts geholt; beim Zurückkommen sofort (wie bisher). */
+  function gebremst() {
+    try { return Boolean(Backend.bremse && Backend.bremse().aktiv); } catch (e) { return false; }
+  }
+  /* FASSUNG 885 (Nachbesserung 3) — verdeckt wie die Benachrichtigungen (app.js verdecktNachsehen): alle 2 min nur die
+     neueste Kennung von Funk und offenen Fragen (je limit 1, nacheinander). Ist eine neu, wird einmal wie gewohnt geholt –
+     der Reiter zuckt dann beim Zurückkommen schon wie in 884. Sonst holt erst das Zurückkommen. */
+  /* Nachbesserung 4 — holen() lädt die 60 ÄLTESTEN offenen Fragen. Bei mehr als 60 offenen stand die neueste nie in
+     `fragen`, und jede verdeckte Prüfung holte alles voll (Prüfer: 70 offene, 10 min verdeckt, 5 volle Abrufe ohne Neues).
+     Jetzt wird die neueste gesehene Kennung gemerkt, sobald ein holen() die offenen Fragen wirklich bekam. */
+  var VERDECKT_TAKT = 120000, verdecktZuletzt = 0, verpasst = false, neuesteFrageGesehen = null;
+  function verdecktNachsehen() {
+    if (!istBetreiber()) return;
+    var sb = zugang();
+    if (!sb || laeuft) return;
+    verdecktZuletzt = Date.now();
+    function bekannt(liste, zeile) { return !zeile || liste.some(function (x) { return String(x.id) === String(zeile.id); }); }
+    sb.from("betreiber_funk").select("id").order("id", { ascending: false }).limit(1).then(function (k) {
+      if (!k || k.error || !k.data) return;
+      if (!bekannt(funk, k.data[0])) { holen(); return; }
+      return sb.from("betreiber_rueckfragen").select("id").is("beantwortet", null).order("id", { ascending: false }).limit(1).then(function (q) {
+        if (!q || q.error || !q.data) return;
+        var neueste = q.data[0];
+        if (bekannt(fragen, neueste) || String(neueste.id) === String(neuesteFrageGesehen)) return;
+        holen(function (ok) { if (ok) neuesteFrageGesehen = neueste.id; });
+      });
+    })["catch"](function () {});
+  }
   function planen() {
     if (uhr) clearTimeout(uhr);
-    uhr = setTimeout(function () { holen(); planen(); }, istOffen() ? TAKT_OFFEN : TAKT);
+    uhr = setTimeout(function () {
+      if (gebremst()) verpasst = true;
+      else if (!document.hidden) { verpasst = false; holen(); }
+      else if (Date.now() - verdecktZuletzt >= VERDECKT_TAKT || Date.now() < verdecktZuletzt) verdecktNachsehen();
+      planen();
+    }, istOffen() ? TAKT_OFFEN : TAKT);
   }
 
   var gestartet = false;
@@ -1412,11 +1474,15 @@ window.Rueckfrage = (function () {
     /* FASSUNG 884 — geht die Tastatur auf oder zu, das Walkie-Feld neu ausrichten (tastaturLuft) */
     try { if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { tastaturLuft(); }); } catch (e) {}
     document.addEventListener("visibilitychange", function () {
-      if (!document.hidden) holen();
+      if (!document.hidden && !gebremst()) holen();
+    });
+    /* Nachbesserung 3 — die Bremse ist frei (backend.js): gleich nachholen, nicht erst im nächsten Takt */
+    window.addEventListener("dma-bremse-frei", function () {
+      if (verpasst && !document.hidden && !gebremst()) { verpasst = false; holen(); }
     });
   }
 
-  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. rueckfrage.js steht nicht mehr in der
+  /* FASSUNG 886 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. rueckfrage.js steht nicht mehr in der
      Startliste von index.html (79 KB Quelle, 28,7 KB min/, die jedes Gerät holte und übersetzte, obwohl das Walkie nur
      beim Betreiber erscheint). Es kommt nur noch zu ihm: index.html dmaWalkieLaden – gerufen von backend.js, sobald das
      Profil mit is_owner da ist, und auf seinem Gerät (localStorage „dma-walkie“) schon in der Ruhepause nach
@@ -1436,7 +1502,7 @@ window.Rueckfrage = (function () {
   return {
     holen: holen,
     aufzu: aufzu,
-    /* FASSUNG 885 — backend.js hat den Betreiber erkannt (über index.html dmaWalkieLaden): steht das Walkie noch nicht
+    /* FASSUNG 886 — backend.js hat den Betreiber erkannt (über index.html dmaWalkieLaden): steht das Walkie noch nicht
        da, gleich nachsehen statt erst beim nächsten Takt (bis 20 s) – etwa wenn das Profil nach den 1,5 s kam. */
     erkannt: function () { if (gestartet && !reiter) holen(); },
     stand: function () { return fragen.slice(); },

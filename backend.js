@@ -15,8 +15,216 @@ const Backend = (function () {
   const isConfigured = Boolean(cfg.url && cfg.anonKey && cfg.url.startsWith("https://"));
   let client = null;
 
+  /* FASSUNG 885 — DIE BREMSE (Notfall 22.10.2026: Supabase antwortete auf alles mit 402 „Gratis-Kontingent
+     überschritten“, die Seite fragte trotzdem weiter – zuletzt ~70 Anfragen je Minute von einem einzigen Handy,
+     62 917 abgelehnte in 15 h).
+     Jede Anfrage dieses Klienten läuft durch bremsFetch. Antwortet Supabase auf /rest/v1/ mit 402 (Kontingent),
+     429 (zu viel) oder 502–504/520–530 (Server weg) – oder ist das Netz weg –, pausieren Lese-Abfragen und rpc
+     1 → 2 → 5 → 15 min (±20 % Zufall, damit nicht alle Geräte im selben Augenblick wiederkommen). In der Pause
+     antwortet die Bremse selbst mit 429 (darauf wiederholt supabase-js nicht; bei 503 fragte es noch dreimal
+     nach) – es geht nichts ans Netz. 402 zieht sofort, alles andere erst der zweite Fehlschlag in Folge, mit
+     mindestens 2 s Abstand (ein einzelner Aussetzer im Mobilnetz hält nichts an). Ist nur das Netz weg (kommt beim
+     Server gar nicht an), pausieren nur die Takte (Backend.bremse().aktiv), und das höchstens 1 → 2 min; einzelne
+     Abfragen – etwa das Profil beim Start – gehen weiter hinaus, damit ein wackliges Mobilnetz beim Laden nichts
+     aufhält.
+     Wieder los: jede Antwort, die zeigt, dass der Server lebt (unter 500, außer 402/429), löst sie sofort. Eine
+     Anmeldung mit 2xx oder die wieder verbundene Echtzeit-Leitung lassen den nächsten Versuch sofort hinaus.
+     Spätestens nach der Pause geht der nächste Versuch hinaus – kein Stillstand nach Ende der Sperre. Ein echter
+     Tipp oder Tastendruck öffnet für 5 s einen Versuch (höchstens alle 15 s); nach einem Netzfehler lösen
+     „online“ und das Zurückkommen auf die Seite sie gleich.
+     Nicht gebremst: Schreiben in Tabellen (Punkte, Nachrichten – sonst ginge etwas verloren), auth/v1, storage,
+     functions und die Echtzeit-Leitung selbst (Websocket: Klassenzimmer, Ton, Livechat). Einzige Ausnahme bei
+     auth: das Erneuern der Sitzung. Eine 402/429 dort reicht die Bremse als „vorübergehend“ (503) weiter – sonst
+     löscht supabase-js die Anmeldung, und nach der Sperre wären alle abgemeldet.
+     Nachbesserung 2 — Richtigstellung: Steht der Websocket NICHT, schickt supabase-js jeden Rundruf eines Kanals
+     (Raumpuls alle 6 s, „redet“, Chat) als POST an /realtime/v1/api/broadcast – und zwar über diesen fetch (auch
+     beim Klienten in livechat.js). Dieser Notweg lief bisher ungebremst an der Bremse vorbei: in einer 402-Sperre
+     gemessen 100 von 100 Pulsen ans Netz (≈ 600 Anfragen je Stunde je offenem Klassenzimmer). Jetzt: nur in einer
+     402-Sperre antwortet die Bremse dort selbst (429, realtime-js meldet „error“), und eine 402 von dort zieht sie.
+     Im Normalbetrieb und bei 5xx bleibt der Notweg genau wie in 884.
+     Nachbesserung 3 — die langen Stufen (bis 15 min) gelten nur noch für die Kontingent-Sperre (402). Bei einem
+     Serverausfall (5xx) oder 429 pausieren die Takte höchstens 1 → 2 min (wie bei „Netz weg“): gemessen brauchte eine
+     sichtbare Seite ohne Tipp nach 10 min 503 sonst 13,5 min bis zur nächsten Blase (884: 0,2 min), denn die
+     Echtzeit-Leitung bleibt bei einem Datenbank-Ausfall offen und meldet kein neues SUBSCRIBED. Dazu: ein Tipp öffnet
+     sein 5-s-Fenster auch für die Takte, und das Zurückkommen auf die Seite lockert eine 5xx/429-Bremse – beides nicht
+     in der 402-Sperre (das Tipp-Fenster für die Takte seit Nachbesserung 4 auch nicht bei „Netz weg“). Wird die
+     Bremse frei (gelockert, gelöst, Tipp; Pause um und Tipp nur bei 429/5xx), meldet sie das mit dem Ereignis
+     „dma-bremse-frei“ an window; die Takte holen dann sofort nach, was sie ausgelassen haben. */
+  const BREMS_STUFEN = [60e3, 120e3, 300e3, 900e3];
+  /* Nachbesserung 1 — ist nur das Netz weg, erreicht ohnehin nichts den Server (kein Kontingent). Dann pausieren die
+     Takte höchstens 1 → 2 min statt bis 15 min, sonst blieben Walkie und Lämpchen in einem WLAN ohne Internet bis zu
+     18 min still. Nachbesserung 3 — dasselbe für 429 und 5xx (alles außer 402, siehe oben). */
+  const BREMS_STUFEN_KURZ = [60e3, 120e3];
+  const BREMS_CODES = [402, 429, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530];
+  const bremse = { bis: 0, dauer: 0, stufe: 0, status: 0, frei: 0, freiAb: 0, folge: 0, fehlZuletzt: 0, abgefangen: 0, uhr: 0, lesefehler: 0 };
+  /* Nachbesserung 3 — „die Bremse ist frei“: die Takte (app.js, rueckfrage.js) holen dann sofort nach, was sie in der
+     Pause ausgelassen haben, statt bis zu ihrem nächsten Schlag (20–60 s) zu warten. Gebündelt (ein Ereignis je
+     Augenblick) und nach dem laufenden Code verschickt. */
+  let freiMeldung = 0;
+  function bremseFreiMelden() {
+    if (freiMeldung) return;
+    try {
+      freiMeldung = setTimeout(() => {
+        freiMeldung = 0;
+        try { window.dispatchEvent(new Event("dma-bremse-frei")); } catch (e) { /* ohne window (Werkzeuge) */ }
+      }, 0);
+    } catch (e) { freiMeldung = 0; }
+  }
+  /* Nachbesserung 2 — springt die Geräteuhr zurück (Zeitabgleich am Handy), lag „bis“ plötzlich Stunden in der
+     Zukunft (nachgestellt: 2 h zurück → 2 h 17 min Pause), und ein Tipp öffnete kein Fenster mehr (jetzt − freiAb
+     negativ). Jetzt bleibt höchstens die Dauer der gezogenen Stufe übrig, und Zeitmarken aus der „Zukunft“ verfallen. */
+  function bremseUhrPruefen() {
+    const jetzt = Date.now();
+    if (bremse.bis && bremse.bis - jetzt > bremse.dauer) bremse.bis = jetzt + bremse.dauer;
+    if (bremse.freiAb > jetzt) bremse.freiAb = 0;
+    if (bremse.frei > jetzt + 5000) bremse.frei = 0;
+    if (bremse.fehlZuletzt > jetzt) bremse.fehlZuletzt = 0;
+  }
+  function bremseZiehen(status) {
+    bremseUhrPruefen();
+    const jetzt = Date.now();
+    const probe = jetzt <= bremse.frei;          // der Versuch nach einem Tipp ging schief
+    bremse.frei = 0;
+    if (status !== 402 && !probe) {
+      /* Nachbesserung 1 — Fehlschläge zählen nur mit ≥ 2 s Abstand. checkNotifications schickt 4 Anfragen zugleich,
+         und supabase-js wiederholt eine Leseabfrage bei 503 schon nach 1 s: ein einziger kurzer Aussetzer zählte so
+         bis zu 4-mal und hielt 1 min lang alles an, auch Spielzüge. Jetzt braucht es zwei Fehlschläge, die mindestens
+         2 s auseinanderliegen – der Server ist dann wirklich eine Weile weg. */
+      if (jetzt - bremse.fehlZuletzt >= 2000) { bremse.folge += 1; bremse.fehlZuletzt = jetzt; }
+      if (bremse.folge < 2) return;
+    }
+    if (jetzt < bremse.bis && !probe) return;    // Nachzügler derselben Runde: nicht doppelt hochstufen
+    /* Scheitert der Versuch nach einem Tipp am Netz, bleibt eine Server-Sperre eine Server-Sperre. */
+    bremse.status = status || (jetzt < bremse.bis ? bremse.status : 0);
+    const stufen = bremse.status === 402 ? BREMS_STUFEN : BREMS_STUFEN_KURZ;   // Nachbesserung 3: lang nur bei 402
+    const basis = stufen[Math.min(bremse.stufe, stufen.length - 1)];
+    bremse.dauer = Math.round(basis * (0.8 + Math.random() * 0.4));
+    bremse.bis = jetzt + bremse.dauer;
+    bremse.stufe += 1;
+    /* Nachbesserung 3 — ist die Pause bei 429/5xx um, holen die Takte sofort nach (sonst bis zu 20–60 s später). Nicht
+       in der 402-Sperre: dort bleibt es beim bisherigen Rhythmus (der erste Takt danach versucht es, gemessen 8–10
+       Anfragen je Stunde), sonst ginge bei jedem Pausenende ein ganzer Satz Abfragen in die Sperre. Auch nicht bei
+       „Netz weg“: dort hält die Bremse einzelne Abfragen nicht an, und supabase-js wiederholt jede Leseabfrage nach
+       einem Netzfehler – ein ganzer Satz Takte am Pausenende wurde so zu ≈ 40 Versuchen (gemessen 262 statt 63–72 in
+       10 min). Dort holen „online“, das Zurückkommen und ein Tipp sofort nach. */
+    try { clearTimeout(bremse.uhr); } catch (e) {}
+    bremse.uhr = 0;
+    if (bremse.status !== 402 && bremse.status !== 0) {
+      try { bremse.uhr = setTimeout(() => { bremse.uhr = 0; if (!bremseAktiv()) bremseFreiMelden(); }, bremse.dauer + 50); } catch (e) {}
+    }
+  }
+  function bremseLoesen() {
+    const war = bremse.bis;
+    bremse.bis = 0; bremse.stufe = 0; bremse.frei = 0; bremse.folge = 0; bremse.fehlZuletzt = 0; bremse.status = 0;
+    if (war) bremseFreiMelden();   // Nachbesserung 3
+  }
+  /* Nachbesserung 1 — ein Zeichen, dass der Server wieder lebt, bevor eine Datenbank-Abfrage durch ist: eine Antwort
+     von auth/v1 mit 2xx (z. B. die Anmeldung) oder die Echtzeit-Leitung meldet SUBSCRIBED (livechat.js, Präsenzkanal –
+     in der Sperre lehnt Supabase auch sie ab). Dann darf der nächste Versuch sofort hinaus. Vorher wartete ein Tab,
+     den niemand antippt, nach dem Ende der Sperre bis zu 18 min – und wer sich in diesem Augenblick neu anmeldete,
+     bekam von der eigenen Bremse ein Ersatzprofil mit Schreibsperre. Die Stufe bleibt, bis eine Abfrage wirklich
+     durchkommt: scheitert sie doch, geht es mit der nächsten Stufe weiter (kein Kreisel). */
+  function bremseLockern() { if (bremse.bis) { bremse.bis = 0; bremse.frei = 0; bremseFreiMelden(); } }
+  /* Nachbesserung 3 — das 5-s-Fenster nach einem Tipp gilt auch für die Takte (vorher nur für die angetippte Abfrage:
+     ein Tipp auf eine leere Fläche nach einem Serverausfall holte nichts). In der 402-Sperre nicht – dort geht nur die
+     angetippte Abfrage hinaus, nicht ein ganzer Satz Takte.
+     Nachbesserung 4 — auch nicht bei „Netz weg“ (Status 0): dort hält die Bremse einzelne Abfragen ohnehin nicht an,
+     und supabase-js wiederholt jede Leseabfrage nach einem Netzfehler. Ein ganzer Satz Takte je Tipp wurde so zu
+     ≈ 25 Fehlversuchen (Prüfer: Netz weg 10 min, ein Tipp alle 16 s: 1 002 statt 72 Versuche). Kommt dort im Browser
+     ein Serverfehler ohne CORS-Kopf als Netzfehler an, erreichten diese Versuche sogar Supabase. Das Fenster gilt also
+     nur bei 429/5xx (dafür ist es da: W1); bei „Netz weg“ holen „online“, das Zurückkommen und die angetippte Abfrage
+     selbst (sie geht hinaus und löst bei Erfolg die Bremse samt Nachholen). */
+  function tippFensterFuerTakte() { return bremse.status !== 402 && bremse.status !== 0; }
+  function bremseAktiv() {
+    bremseUhrPruefen();
+    const jetzt = Date.now();
+    if (jetzt >= bremse.bis) return false;
+    return !(tippFensterFuerTakte() && jetzt <= bremse.frei);
+  }
+  /* Nachbesserung 2 — der REST-Notweg der Echtzeit-Kanäle (siehe oben). Nur die Kontingent-Sperre (402) hält ihn an:
+     dann erreicht ohnehin kein Rundruf jemanden. Ein Tipp öffnet auch hier sein 5-s-Fenster. Kommt ein Rundruf durch
+     (2xx), während die Bremse wegen 402 steht, ist die Sperre vorbei: lockern wie bei der Anmeldung. */
+  function rundrufFetch(eingabe, opt) {
+    bremseUhrPruefen();
+    const jetzt = Date.now();
+    if (bremse.status === 402 && jetzt < bremse.bis && jetzt > bremse.frei) {
+      bremse.abgefangen += 1;
+      return Promise.resolve(new Response('{"message":"Der Server pausiert gerade (402)."}', { status: 429, headers: { "Content-Type": "application/json" } }));
+    }
+    return fetch(eingabe, opt).then((antwort) => {
+      if (antwort.status === 402) bremseZiehen(402);
+      else if (antwort.ok && bremse.status === 402) bremseLockern();
+      return antwort;
+    });
+  }
+  /* Nachbesserung 2 — das Lesen direkt vor einem Schreiben (frischesExtra: erst den Serverstand der Einstellungen
+     holen, dann zusammengeführt schreiben) bremst die Bremse nicht. Sonst bekam das Lesen im Fenster „Server wieder
+     da, Bremse noch zu“ die Ersatzantwort, frischesExtra nahm den lokalen Stand, und das (nie gebremste) Schreiben
+     überschrieb Einstellungen, die inzwischen auf einem anderen Gerät gemacht wurden. Kostet nichts extra: das
+     Schreiben geht ohnehin hinaus, und 884 las davor genauso. */
+  const LESEN_VOR_SCHREIBEN = "/rest/v1/profiles?select=extra_profile_data&";
+  function bremsFetch(eingabe, opt) {
+    const adresse = String(typeof eingabe === "string" ? eingabe : (eingabe && eingabe.url) || eingabe);
+    if (adresse.indexOf("/realtime/v1/api/broadcast") >= 0) return rundrufFetch(eingabe, opt);
+    const rest = adresse.indexOf("/rest/v1/") >= 0;
+    const erneuern = adresse.indexOf("/auth/v1/token") >= 0 && adresse.indexOf("refresh_token") >= 0;
+    if (!rest && !erneuern) {
+      if (adresse.indexOf("/auth/v1/") < 0) return fetch(eingabe, opt);
+      return fetch(eingabe, opt).then((antwort) => { if (antwort.ok) bremseLockern(); return antwort; });
+    }
+    bremseUhrPruefen();
+    const methode = String((opt && opt.method) || (eingabe && eingabe.method) || "GET").toUpperCase();
+    const vorSchreiben = adresse.indexOf(LESEN_VOR_SCHREIBEN) >= 0;
+    const lesen = !vorSchreiben && (erneuern || methode === "GET" || methode === "HEAD" || adresse.indexOf("/rest/v1/rpc/") >= 0);
+    const jetzt = Date.now();
+    if (lesen && bremse.status !== 0 && jetzt < bremse.bis && jetzt > bremse.frei) {
+      bremse.abgefangen += 1; bremse.lesefehler += 1;
+      if (erneuern) return Promise.reject(new TypeError("Bremse: Server pausiert"));
+      return Promise.resolve(new Response(JSON.stringify({ message: "Der Server pausiert gerade (" + (bremse.status || "Netz") + ") – bitte gleich noch einmal versuchen.", code: "DMA_BREMSE", details: null, hint: null }),
+        { status: 429, headers: { "Content-Type": "application/json" } }));
+    }
+    /* Nachbesserung 4 — gescheiterte Leseabfragen werden gezählt (Backend.bremse().lesefehler). Die schlanke Prüfung
+       bei verdeckter Seite (app.js verdecktNachsehen) merkt sich Neues nur, wenn der Durchgang ohne einen Fehlschlag
+       durchlief – die Abfragen dort verschlucken Fehler und liefern [], dann gäbe es für diese Neuigkeit sonst verdeckt
+       weder Ton noch Blase. */
+    return fetch(eingabe, opt).then((antwort) => {
+      if (lesen && !antwort.ok) bremse.lesefehler += 1;
+      if (BREMS_CODES.indexOf(antwort.status) >= 0) {
+        bremseZiehen(antwort.status);
+        if (erneuern) return new Response('{"message":"vorübergehend nicht erreichbar"}', { status: 503, headers: { "Content-Type": "application/json" } });
+      } else if (antwort.status < 500) {
+        bremseLoesen();
+      }
+      return antwort;
+    }, (fehler) => {
+      if (lesen) bremse.lesefehler += 1;
+      if (!(fehler && fehler.name === "AbortError")) bremseZiehen(0);
+      throw fehler;
+    });
+  }
+  try {
+    ["pointerdown", "keydown"].forEach((art) => window.addEventListener(art, (ev) => {
+      if (ev && ev.isTrusted === false) return;
+      bremseUhrPruefen();   // Nachbesserung 2 — nach einem Uhrsprung öffnet der Tipp wieder ein Fenster
+      const jetzt = Date.now();
+      if (jetzt < bremse.bis && jetzt - bremse.freiAb > 15000) {
+        bremse.freiAb = jetzt; bremse.frei = jetzt + 5000;
+        if (tippFensterFuerTakte()) bremseFreiMelden();   // Nachbesserung 3/4: die Takte nutzen das Fenster gleich (nur 429/5xx)
+      }
+    }, { capture: true, passive: true }));
+    window.addEventListener("online", () => { if (bremse.bis && bremse.status === 0) bremseLoesen(); });
+    /* Zurückkommen auf die Seite: nach einem Netzfehler lösen (wie bisher); Nachbesserung 3 – nach 5xx/429 lockern (der
+       nächste Versuch darf sofort, die Stufe bleibt; scheitert er, geht es mit höchstens 2 min weiter). In der
+       402-Sperre nicht, sonst ginge bei jedem App-Wechsel ein Satz Abfragen in die Sperre. */
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden || !bremse.bis) return;
+      if (bremse.status === 0) bremseLoesen();
+      else if (bremse.status !== 402) bremseLockern();
+    });
+  } catch (e) { /* ohne window (Werkzeuge) */ }
+
   if (isConfigured && window.supabase) {
-    client = window.supabase.createClient(cfg.url, cfg.anonKey);
+    client = window.supabase.createClient(cfg.url, cfg.anonKey, { global: { fetch: bremsFetch } });
   }
 
   // Verwandelt technische "Tabelle/Spalte fehlt"-Fehler von Supabase in eine
@@ -78,7 +286,7 @@ const Backend = (function () {
 
   /* ================= AUTH ================= */
 
-  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. rueckfrage.js (das Walkie) lädt nicht
+  /* FASSUNG 886 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. rueckfrage.js (das Walkie) lädt nicht
      mehr bei jedem Start, sondern nur für den Betreiber (index.html, dmaWalkieLaden). Hier wird er erkannt: das eigene
      Profil kommt mit is_owner. Das Gerät merkt es sich („dma-walkie“) und holt die Datei beim nächsten Start schon in
      der Ruhepause; ein anderes Konto auf dem Gerät nimmt den Merker wieder weg. setTimeout: erst wenn demo.profile
@@ -113,7 +321,7 @@ const Backend = (function () {
       const { data, error } = await client.from("profiles").select("*").eq("id", userId).maybeSingle();
       if (error) throw new Error(error.message);
       if (!error && data) {
-        walkieMerken(Boolean(data.is_owner));   // FASSUNG 885
+        walkieMerken(Boolean(data.is_owner));   // FASSUNG 886
         return {
           name: data.name || name || email,
           bio: data.bio || "",
@@ -256,7 +464,7 @@ const Backend = (function () {
   async function insertReferralBreakdownEntry(userId, points) {
     const entry = { user_id: userId, categories: ["referral"], points: 0, bonus: points, percent: 100, character: "🔗 Freunde werben", played_at: new Date().toISOString() };
     if (client) {
-      try { await client.from("results").insert(entry); }
+      try { await client.from("results").insert(entry); aktivitaetVergessen(); }
       catch (e) { console.warn("Empfehlungs-Eintrag für Punkte-Aufschlüsselung konnte nicht gespeichert werden:", e); }
     } else {
       const targetProfile = userId === demo.user?.id ? demo.profile : (demo.allProfiles || []).find((p) => p.id === userId);
@@ -378,6 +586,7 @@ const Backend = (function () {
         played_at: result.playedAt,
       });
       if (resultsError) console.warn("Tabelle results konnte nicht gespeichert werden:", resultsError.message);
+      aktivitaetVergessen();   // FASSUNG 885 — die eigene Runde zählt sofort in der Fuchs-Wertung
 
       // KRITISCH — echte Wettlaufbedingung behoben: Punkte NIE aus dem lokalen (möglicherweise
       // veralteten) Stand hochrechnen, sondern immer direkt vorher den WIRKLICH aktuellen
@@ -804,9 +1013,12 @@ const Backend = (function () {
   async function getMyMessages() {
     if (!demo.user) return { inbox: [], outbox: [] };
     if (client) {
+      /* FASSUNG 885 (Nachbesserung 2) — bei gleicher Zeit (eine Rundmail kommt in einem Zug: alle Zeilen mit
+         derselben created_at) entscheidet die Kennung. Ohne sie war die Reihenfolge an der 120er-Grenze zufällig, und
+         das Lämpchen (getUngeleseneNachrichten, gleiche Ordnung) konnte eine Nachricht zählen, die hier fehlt. */
       const { data, error } = await client.from("private_messages").select("*")
         .or(`to_user.eq.${demo.user.id},from_user.eq.${demo.user.id}`)
-        .order("created_at", { ascending: false }).limit(120);
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(120);
       if (error || !data) return { inbox: [], outbox: [] };
       const outboxRaw = data.filter((m) => m.from_user === demo.user.id && !m.deleted_by_sender);
       const names = await namesFor([...new Set(outboxRaw.map((m) => m.to_user))]);
@@ -834,6 +1046,77 @@ const Backend = (function () {
     }
     const m = demo.privateMessages.find((x) => x.id === id);
     if (m) m[field] = true;
+  }
+
+  /* FASSUNG 885 — für das Lämpchen im 20-s-Takt (app.js checkNotifications) reichen die ungelesenen
+     eingegangenen Nachrichten mit Kennung und Zeit. Vorher kam jedes Mal getMyMessages: 120 volle
+     Nachrichten (select *) plus namesFor für den ganzen Postausgang. Das Postfach selbst lädt wie bisher.
+     Nachbesserung 1 — es zählt GENAU das, was das Postfach zeigt: ungelesene Eingänge unter den 120 neuesten
+     Nachrichten (ein- und ausgehend zusammen, wie getMyMessages). Ohne dieses Fenster zählte das Lämpchen auch
+     alte ungelesene Nachrichten, die hinter einer Rundmail (eine Zeile je Mitglied) liegen und die das Postfach
+     nie zeigt – es wäre für immer an geblieben, mit Blase und Erinnerungston bei jedem Laden. Die Grenze (Zeit der
+     120. neuesten Nachricht) kostet eine winzige Abfrage und nur, wenn überhaupt etwas ungelesen ist. */
+  function zeitMikro(s) {
+    const ms = Date.parse(s);
+    if (isNaN(ms)) return 0;
+    const f = /\.(\d+)/.exec(String(s));
+    return ms * 1000 + (f ? Number((f[1] + "000000").slice(3, 6)) : 0);
+  }
+  function kennungVergleich(a, b) {
+    if (typeof a === "number" && typeof b === "number") return a - b;
+    a = String(a); b = String(b);
+    return a < b ? -1 : a > b ? 1 : 0;
+  }
+  async function getUngeleseneNachrichten() {
+    if (!demo.user) return [];
+    if (client) {
+      const ich = demo.user.id;
+      const { data, error } = await client.from("private_messages").select("id,read,created_at")
+        .eq("to_user", ich).not("read", "is", true).not("deleted_by_recipient", "is", true)
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(120);
+      /* Fehlt eine Spalte (alte Datenbank), wie bisher über das ganze Postfach. */
+      if (error && /column|42703/i.test(String(error.message) + " " + String(error.code))) return (await getMyMessages()).inbox.filter((m) => !m.read);
+      if (error || !data) return [];
+      if (!data.length) return data;
+      const grenzeAntwort = await client.from("private_messages").select("id,created_at")
+        .or(`to_user.eq.${ich},from_user.eq.${ich}`)
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).range(119, 119);
+      if (grenzeAntwort.error) return [];
+      const zeile = (grenzeAntwort.data || [])[0];
+      if (!zeile) return data;   // weniger als 120 Nachrichten: alles im Fenster
+      /* Nachbesserung 2 — im Fenster ist, was in derselben Ordnung (Zeit, dann Kennung, beides absteigend) nicht hinter
+         der 120. Nachricht liegt. Zeit auf Mikrosekunden (Postgres), Date.parse kennt nur Millisekunden. */
+      const g = zeitMikro(zeile.created_at);
+      return data.filter((m) => { const t = zeitMikro(m.created_at); return t > g || (t === g && kennungVergleich(m.id, zeile.id) >= 0); });
+    }
+    return (await getMyMessages()).inbox.filter((m) => !m.read);
+  }
+
+  /* FASSUNG 885 (Nachbesserung 3) — „gibt es Neues?“ bei VERDECKTER Seite (app.js, alle 2 min). 884 holte verdeckt alle
+     20 s die vollen Benachrichtigungen; 885 bis Nachbesserung 2 gar nichts – Ton und Blase kamen erst beim
+     Zurückkommen (hörbar anders als 884, nie freigegeben). Jetzt nur Kennungen: die neueste ungelesene Benachrichtigung,
+     die neueste ungelesene Nachricht (limit 1), die offenen Freundschaftsanfragen und Duelle an mich (nur id). Die
+     Abfragen laufen nacheinander und hören beim ersten Fehler auf – in einer Sperre geht so höchstens eine hinaus.
+     Ergebnis: Liste von Kennungen („n:…“, „m:…“, „f:…“, „c:…“) oder null bei einem Fehler. Ist etwas unbekannt,
+     läuft in app.js EIN normaler Durchgang (dieselben Blasen und Töne wie in 884). */
+  async function neuesKennungen() {
+    if (!demo.user || !client) return null;
+    const ich = demo.user.id;
+    const abfragen = [
+      ["n:", () => client.from("notifications").select("id").eq("user_id", ich).eq("read", false).order("created_at", { ascending: false }).limit(1)],
+      ["m:", () => client.from("private_messages").select("id").eq("to_user", ich).not("read", "is", true).not("deleted_by_recipient", "is", true)
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(1)],
+      ["f:", () => client.from("friends").select("id").or(`user_a.eq.${ich},user_b.eq.${ich}`).eq("status", "pending").neq("requested_by", ich)],
+      ["c:", () => client.from("challenges").select("id").eq("to_user", ich).eq("status", "pending")],
+    ];
+    const kennungen = [];
+    for (const [vor, holen] of abfragen) {
+      let antwort = null;
+      try { antwort = await holen(); } catch (e) { return null; }
+      if (!antwort || antwort.error || !Array.isArray(antwort.data)) return null;
+      antwort.data.forEach((z) => kennungen.push(vor + z.id));
+    }
+    return kennungen;
   }
 
   async function getUnreadMessageCount() {
@@ -1509,11 +1792,21 @@ const Backend = (function () {
     demo.friends.push({ id: Core.uid(), a: demo.user.email, b: targetId, status: "pending", requestedBy: demo.user.email });
   }
 
+  /* FASSUNG 885 — namesFor holte die GANZE Profilzeile (select *, mit extra_profile_data: Bildersammlung als
+     Datenadressen, Wortschatz, Lernstände … oft viele KB je Person), nur um Namen zu zeigen – im 20-s-Takt
+     über Postausgang (nach einer Rundmail: alle Mitglieder), Duelle (samt eigener Zeile) und Anfragen. Das
+     war vermutlich der größte Posten beim Datenabfluss. Alle Aufrufer lesen nur diese Spalten. Fehlt eine
+     davon in der Datenbank, geht es einmal mit * weiter (wie bisher). */
+  let namesSpalten = "id,name,points,badges,trophies,bio,avatar_url,avatar_emoji,is_admin,is_owner,is_moderator,last_active,birthday";
   async function namesFor(ids) {
     if (!ids.length) return {};
     if (client) {
       try {
-        const { data, error } = await client.from("profiles").select("*").in("id", ids);
+        let { data, error } = await client.from("profiles").select(namesSpalten).in("id", ids);
+        if (error && namesSpalten !== "*" && /column|42703|PGRST204/i.test(String(error.message) + " " + String(error.code))) {
+          namesSpalten = "*";
+          ({ data, error } = await client.from("profiles").select("*").in("id", ids));
+        }
         if (!error && data) return Object.fromEntries(data.map((p) => [p.id, p]));
         if (error) console.warn("Profil-Namen-Abfrage fehlgeschlagen:", error.message);
       } catch (e) {
@@ -2678,6 +2971,7 @@ const Backend = (function () {
       }).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
       if (!data || !data.length) throw new Error("Der Tipp konnte nicht gespeichert werden — die Datenbank hat ihn abgelehnt (Zeilenschutz-Regel für „community_tips“).");
+      aktivitaetVergessen();
       addActivity(`${demo.profile.name} hat einen Schwarmwissen-Tipp geteilt. 💡`);
       await meldeZurFreigabe("tipp", data[0].id, text.slice(0, 80), link || "");
       return;
@@ -2819,6 +3113,7 @@ const Backend = (function () {
       }).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
       if (!data || !data.length) throw new Error("Der Vorschlag konnte nicht gespeichert werden — die Datenbank hat ihn abgelehnt (Zeilenschutz-Regel für „user_links“).");
+      aktivitaetVergessen();
       addActivity(`${demo.profile.name} hat einen Link vorgeschlagen: „${title}". 🔗`);
       await meldeZurFreigabe("link", data[0].id, title, url);
       return;
@@ -2910,6 +3205,7 @@ const Backend = (function () {
       }).select("id");
       if (error) throw new Error(friendlyDbError(error.message));
       if (!data || !data.length) throw new Error("Der Beitrag konnte nicht gespeichert werden — die Datenbank hat ihn abgelehnt (Zeilenschutz-Regel für „community_texts“).");
+      aktivitaetVergessen();
       addActivity(`${demo.profile.name} hat einen eigenen Beitrag eingereicht: „${title}". ✍️`);
       await meldeZurFreigabe("text", data[0].id, title, "Niveau " + level);
       return;
@@ -3536,11 +3832,58 @@ const Backend = (function () {
   async function getDailyActivityScores() {
     return getActivityScoresForPeriod(1);
   }
+  /* FASSUNG 885 — FUCHS-WERTUNG MIT GEDÄCHTNIS. Vorher rechnete jede Frage nach dem Fuchs alles neu
+     (4–5 Abfragen je Zeitraum, alle 20 s, auch im Hintergrund), und ein Fehler zählte als „leer“ – dann lief
+     die Rückwärtssuche über bis zu 30 Zeiträume an. Jetzt:
+       - Ergebnisse werden gemerkt: für Anzeigen (Ranking, Profil-Abzeichen) 60 s, für die stille Prüfung im
+         Takt 10 min; läuft schon eine Rechnung für denselben Zeitraum, hängt sich die nächste an.
+       - Eigene neue Runden und Beiträge räumen das Gedächtnis sofort (aktivitaetVergessen).
+       - Ein Fehler wird mitgeführt (liste.fehler) und nur 60 s gemerkt; die Rückwärtssuche startet dann nicht.
+     Die Wertung selbst (Punkte, Gewichte, Reihenfolge) ist unverändert. */
+  const AKTIV_ANZEIGE_MS = 60000;
+  const AKTIV_TAKT_MS = 10 * 60000;
+  const AKTIV_FEHLER_MS = 60000;
+  const aktivMerk = new Map();   // "tage|Beginn" -> { zeit, liste } bzw. { laeuft }
+  function aktivitaetVergessen() { aktivMerk.clear(); letzterFuchsMerk = null; }
+  /* Gescheitert heißt: Server oder Netz haben nicht geantwortet (402/429/5xx, Netzfehler, Bremse). Eine
+     fehlende Tabelle oder Spalte (400/404) zählt wie bisher als „keine Zeilen“. */
+  function abfrageGescheitert(antwort) {
+    if (!antwort || !antwort.error) return false;
+    const st = Number(antwort.status) || 0;
+    return !(st >= 400 && st < 500 && st !== 402 && st !== 429);
+  }
+  function zeitraumBeginn(daysBack) {
+    const start = new Date(); start.setDate(start.getDate() - (daysBack - 1)); start.setHours(0, 0, 0, 0);
+    return start;
+  }
+  async function getActivityScoresForPeriod(daysBack, maxAlter) {
+    const schluessel = daysBack + "|" + zeitraumBeginn(daysBack).toISOString();
+    const grenze = maxAlter == null ? AKTIV_ANZEIGE_MS : maxAlter;
+    const m = aktivMerk.get(schluessel);
+    /* Nachbesserung 2 — ein Alter unter 0 (Uhr zurückgestellt) gilt als veraltet, sonst hielte das Gedächtnis Stunden. */
+    const alter = m && m.liste ? Date.now() - m.zeit : -1;
+    if (alter >= 0 && alter < (m.liste.fehler ? Math.min(grenze, AKTIV_FEHLER_MS) : grenze)) return m.liste;
+    /* Nachbesserung 1 — eine Rechnung, die nach 60 s noch läuft (Anfrage ohne Antwort), hält niemanden mehr auf. */
+    if (m && m.laeuft && Date.now() - (m.seit || 0) >= 0 && Date.now() - (m.seit || 0) < AKTIV_FEHLER_MS) return m.laeuft;
+    const laeuft = aktivitaetRechnen(daysBack);
+    aktivMerk.set(schluessel, Object.assign({}, m, { laeuft, seit: Date.now() }));
+    try {
+      const liste = await laeuft;
+      const stand = aktivMerk.get(schluessel);
+      if (stand && stand.laeuft === laeuft) aktivMerk.set(schluessel, { zeit: Date.now(), liste });
+      return liste;
+    } catch (e) {
+      const stand = aktivMerk.get(schluessel);
+      if (stand && stand.laeuft === laeuft) aktivMerk.delete(schluessel);
+      throw e;
+    }
+  }
   // Generalisierte Version der Tages-Aktivitäts-Berechnung — nimmt die Anzahl Tage zurück
   // entgegen (1=heute, 7=Woche, 30=Monat, 365=Jahr), damit "Fuchs des Tages" auf denselben
   // Prinzipien auch für Woche/Monat/Jahr funktioniert, ohne die Logik zu verdoppeln.
-  async function getActivityScoresForPeriod(daysBack) {
-    const start = new Date(); start.setDate(start.getDate() - (daysBack - 1)); start.setHours(0, 0, 0, 0);
+  async function aktivitaetRechnen(daysBack) {
+    const start = zeitraumBeginn(daysBack);
+    let fehler = false;   // FASSUNG 885 — ein Fehler ist nicht „niemand war aktiv“
     const scores = {}; // user_id -> { name, punkteGespielt, contributions, shared, total }
     function eintrag(userId, name) {
       if (!scores[userId]) scores[userId] = { name: name || "?", punkteGespielt: 0, contributions: 0, shared: false, total: 0 };
@@ -3554,13 +3897,16 @@ const Backend = (function () {
     // und der ganze Fleiß eines Tages taucht in der Fuchs-Rechnung überhaupt nicht auf.
     if (client) {
       try {
-        const { data } = await client.from("results").select("user_id,points,bonus,played_at").gte("played_at", start.toISOString());
+        const antwort = await client.from("results").select("user_id,points,bonus,played_at").gte("played_at", start.toISOString());
+        if (abfrageGescheitert(antwort)) fehler = true;
+        const data = antwort.data;
         const ids = new Set();
         (data || []).forEach((r) => { if (r.user_id) ids.add(r.user_id); });
         let namen = {};
         if (ids.size) {
-          const { data: profile } = await client.from("profiles").select("id,name").in("id", [...ids]);
-          (profile || []).forEach((p) => { namen[p.id] = p.name; });
+          const namenAntwort = await client.from("profiles").select("id,name").in("id", [...ids]);
+          if (abfrageGescheitert(namenAntwort)) fehler = true;
+          (namenAntwort.data || []).forEach((p) => { namen[p.id] = p.name; });
         }
         (data || []).forEach((r) => {
           if (!r.user_id) return;
@@ -3569,7 +3915,7 @@ const Backend = (function () {
           e.punkteGespielt += punkte;
           e.total += punkte;
         });
-      } catch (e) { console.warn("Ergebnisse für die Fuchs-Rechnung nicht abrufbar:", e); }
+      } catch (e) { fehler = true; console.warn("Ergebnisse für die Fuchs-Rechnung nicht abrufbar:", e); }
     } else {
       (demo.profile?.history || []).forEach((h) => {
         if (!h.playedAt || new Date(h.playedAt) < start) return;
@@ -3587,13 +3933,14 @@ const Backend = (function () {
           client.from("community_tips").select("user_id,author_name").gte("created_at", start.toISOString()),
           client.from("user_links").select("user_id,author_name").gte("created_at", start.toISOString()),
         ]);
+        if (abfrageGescheitert(texts) || abfrageGescheitert(tips) || abfrageGescheitert(links)) fehler = true;
         [...(texts.data || []), ...(tips.data || []), ...(links.data || [])].forEach((row) => {
           if (!row.user_id) return;
           const e = eintrag(row.user_id, row.author_name);
           e.contributions += 1;
           e.total += DAILY_ACTIVITY_WEIGHTS.contribution;
         });
-      } catch (e) { console.warn("Beitrags-Zählung für Fuchs-Zeitraum fehlgeschlagen:", e); }
+      } catch (e) { fehler = true; console.warn("Beitrags-Zählung für Fuchs-Zeitraum fehlgeschlagen:", e); }
     } else {
       [...(demo.communityTexts || []), ...(demo.communityTips || []), ...(demo.userLinks || [])].forEach((row) => {
         if (!row.user_id || new Date(row.created_at) < start) return;
@@ -3611,26 +3958,76 @@ const Backend = (function () {
     // Wer im Zeitraum NICHTS getan hat, steht hier gar nicht erst drin. Bloße Anwesenheit,
     // ein ausgefülltes Profil oder ein alter Gesamtpunktestand zählen ausdrücklich nicht —
     // der Titel soll erkennbar an dem hängen, was jemand in diesem Zeitraum wirklich geleistet hat.
-    return Object.entries(scores)
+    const liste = Object.entries(scores)
       .map(([user_id, s]) => ({ user_id, ...s, points: s.punkteGespielt }))
       .filter((s) => s.total > 0)
       .sort((a, b) => b.total - a.total);
+    if (fehler) liste.fehler = true;
+    return liste;
   }
   // Kein künstlicher Platzhalter mehr. Wenn heute noch niemand etwas getan hat, hält die
   // Person den Titel weiter, die ihn ZULETZT durch echte Aktivität verdient hat — dafür wird
   // der Zeitraum tageweise rückwärts erweitert, bis jemand mit echter Leistung auftaucht.
   // Damit ist der Titel besetzt, ohne dass er je an jemanden geht, der nichts getan hat.
+  /* FASSUNG 885 — dasselbe Ergebnis ohne die Schleife. Vorher wurde Tag für Tag rückwärts je ein ganzer
+     Zeitraum abgefragt (bis zu 30 × 4–5 Abfragen, jede Nacht ab 00:00 alle 20 s, und bei jedem Fehler –
+     daher die 62 917 Anfragen nach der Sperre). Jetzt: je Tabelle EINE kleine Abfrage nach dem letzten
+     Eintrag vor heute (limit 1), daraus der Zeitraum, dann EINE Wertung dieses Zeitraums. Das Ergebnis hängt
+     nur an vergangenen Tagen und wird bis Mitternacht gemerkt (ein Fehler nur 60 s, dann kein Weitersuchen). */
+  let letzterFuchsMerk = null;      // { tag, zeit, wert, fehler }
+  let letzterFuchsLaeuft = null;    // { tag, p, seit }
   async function letzterAktiverFuchs(maxTage) {
-    for (let tage = 1; tage <= maxTage; tage++) {
-      const liste = await getActivityScoresForPeriod(tage);
-      if (liste.length) return { ...liste[0], ausZeitraum: tage };
+    const tag = zeitraumBeginn(1).toISOString() + "|" + maxTage;
+    const m = letzterFuchsMerk;
+    if (m && m.tag === tag && (!m.fehler || (Date.now() - m.zeit >= 0 && Date.now() - m.zeit < AKTIV_FEHLER_MS))) return m.wert;
+    if (letzterFuchsLaeuft && letzterFuchsLaeuft.tag === tag && Date.now() - letzterFuchsLaeuft.seit >= 0 && Date.now() - letzterFuchsLaeuft.seit < AKTIV_FEHLER_MS) return letzterFuchsLaeuft.p;
+    const p = letzterAktiverFuchsSuchen(maxTage).then((r) => {
+      letzterFuchsMerk = { tag, zeit: Date.now(), wert: r.wert, fehler: r.fehler };
+      return r.wert;
+    }).finally(() => { if (letzterFuchsLaeuft && letzterFuchsLaeuft.p === p) letzterFuchsLaeuft = null; });
+    letzterFuchsLaeuft = { tag, p, seit: Date.now() };
+    return p;
+  }
+  async function letzterAktiverFuchsSuchen(maxTage) {
+    if (!client) {
+      /* Demo-Modus: alles liegt im Speicher, die alte Schleife kostet kein Netz. */
+      for (let tage = 1; tage <= maxTage; tage++) {
+        const liste = await getActivityScoresForPeriod(tage);
+        if (liste.length) return { wert: { ...liste[0], ausZeitraum: tage } };
+      }
+      return { wert: null };
     }
-    return null;
+    const heute = zeitraumBeginn(1).toISOString();
+    const frueh = zeitraumBeginn(maxTage).toISOString();
+    let antworten;
+    try {
+      antworten = await Promise.all([
+        client.from("results").select("played_at").lt("played_at", heute).gte("played_at", frueh)
+          .not("user_id", "is", null).or("points.gt.0,bonus.gt.0").order("played_at", { ascending: false }).limit(1),
+        ...["community_texts", "community_tips", "user_links"].map((t) => client.from(t).select("created_at")
+          .lt("created_at", heute).gte("created_at", frueh).not("user_id", "is", null).order("created_at", { ascending: false }).limit(1)),
+      ]);
+    } catch (e) { return { wert: null, fehler: true }; }
+    if (antworten.some(abfrageGescheitert)) return { wert: null, fehler: true };
+    let zuletzt = 0;
+    antworten.forEach((a, i) => {
+      const zeile = a && Array.isArray(a.data) ? a.data[0] : null;
+      const wann = zeile ? Date.parse(i === 0 ? zeile.played_at : zeile.created_at) : 0;
+      if (wann > zuletzt) zuletzt = wann;
+    });
+    if (!zuletzt) return { wert: null };
+    /* Der kleinste Zeitraum, der diesen Eintrag enthält – genau der, bei dem die alte Schleife anhielt. */
+    let tage = 2;
+    while (tage < maxTage && zeitraumBeginn(tage).getTime() > zuletzt) tage++;
+    const liste = await getActivityScoresForPeriod(tage, AKTIV_TAKT_MS);
+    if (liste.fehler && !liste.length) return { wert: null, fehler: true };
+    return { wert: liste.length ? { ...liste[0], ausZeitraum: tage } : null, fehler: Boolean(liste.fehler) };
   }
 
   async function getFoxOfTheDay() {
     const heute = await getDailyActivityScores();
     if (heute.length) return heute[0];
+    if (heute.fehler) return null;   // FASSUNG 885 — Server/Netz weg ist nicht „heute war niemand da“
     // Heute hat noch niemand gepunktet: der Titel bleibt bei der Person, die ihn zuletzt
     // wirklich verdient hat (bis zu 30 Tage zurück), gekennzeichnet als übernommen.
     const letzter = await letzterAktiverFuchs(30);
@@ -3732,7 +4129,7 @@ const Backend = (function () {
     // der rollende Zeitraum lang genug — dort bleibt der Platz leer, wenn wirklich niemand
     // etwas getan hat, statt ihn jemandem ohne Leistung zuzuschreiben.
     let top = scores.length ? scores[0] : null;
-    if (!top && daysBack === 1) {
+    if (!top && daysBack === 1 && !scores.fehler) {   // FASSUNG 885 — bei Fehler nicht rückwärts suchen
       const letzter = await letzterAktiverFuchs(30);
       if (letzter) top = { ...letzter, uebernommen: true };
     }
@@ -3740,6 +4137,18 @@ const Backend = (function () {
     const entry = { ...top, rankPlace: 1 };
     const profile = top.user_id ? await getPublicProfile(top.user_id) : null;
     return { ...entry, reportCard: buildFoxOfDayReportCard(entry, { 1: "heute", 7: "diese Woche", 30: "diesen Monat", 365: "dieses Jahr" }[daysBack]), profile, periodLabel: label };
+  }
+  /* FASSUNG 885 — für die stille Prüfung „bin ich gerade Fuchs?“ (app.js pruefeFuchsAuszeichnung, im Takt):
+     nur die Wertung des Zeitraums, aus dem 10-min-Gedächtnis. Kein getPublicProfile (die volle Profilzeile des
+     Siegers, oft viele KB, wurde für die Meldung nie gebraucht) und keine Rückwärtssuche – die Meldung
+     gratuliert ohnehin nur echter Leistung im Zeitraum, nie einem „übernommenen“ Titel. */
+  async function getFoxForMeldung(daysBack) {
+    const scores = await getActivityScoresForPeriod(daysBack, AKTIV_TAKT_MS);
+    /* Nachbesserung 4 — ein Fehler wird mitgegeben (fehler: true), damit die Prüfung in app.js Monat und Jahr nach einem
+       Fehlschlag nach 30 min wieder versucht statt erst nach 6 h. Sonst wie bisher. */
+    if (!scores.length) return scores.fehler ? { fehler: true } : null;
+    const entry = { ...scores[0], rankPlace: 1 };
+    return { ...entry, fehler: Boolean(scores.fehler), reportCard: buildFoxOfDayReportCard(entry, { 1: "heute", 7: "diese Woche", 30: "diesen Monat", 365: "dieses Jahr" }[daysBack]) };
   }
   async function getFoxOfWeekShowcase() {
     return getFoxShowcaseForPeriod(7, "Wochen");
@@ -4154,6 +4563,13 @@ const Backend = (function () {
        laesst die Datenbank (Zeilenschutz) niemanden an die Tabelle.
        Nur lesen — nie ueberschreiben. */
     zugang: () => client,
+    /* FASSUNG 885 — Stand der Bremse für die Takte (app.js, rueckfrage.js): aktiv = gerade Pause. */
+    bremse: () => ({ aktiv: bremseAktiv(), status: bremse.status, bis: bremse.bis, stufe: bremse.stufe, abgefangen: bremse.abgefangen, lesefehler: bremse.lesefehler }),
+    bremseLockern,   // Nachbesserung 1 — die Echtzeit-Leitung ist wieder da (livechat.js)
+    /* … und der Schutz selbst für die anderen Klienten mit demselben Speicherplatz (livechat.js, aussprache-pruefung.js). */
+    bremsFetch,
+    getFoxForMeldung, getUngeleseneNachrichten,
+    neuesKennungen,   // Nachbesserung 3 — schlanke Prüfung bei verdeckter Seite (app.js)
     isConfigured,
     restoreSession,
     signUp,

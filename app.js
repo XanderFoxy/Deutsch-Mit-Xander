@@ -208,7 +208,7 @@
     if (window.requestIdleCallback) requestIdleCallback(los, { timeout: 2500 }); else setTimeout(los, 40);
   }
   var dmaTeilAnkunft = {};
-  /* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream“. Wann zuletzt Bytes eines Raum-Stücks ankamen: die
+  /* FASSUNG 886 — XANDER (Funk 263): „sofort im Livestream“. Wann zuletzt Bytes eines Raum-Stücks ankamen: die
      Rückkehr in den Raum wartet, solange die Raum-Stücke vorankommen, und geht hinein, sobald sie 4 s stillstehen
      (ein Stück hängt). Dafür werden nur die Raum-Stücke stückweise gelesen (gleicher Text wie a.text()); ohne
      getReader/TextDecoder wie bisher. */
@@ -251,7 +251,7 @@
   /* FASSUNG 884 — diese Stücke holen (fehlgeschlagene ein zweites Mal) und alle gleich einsetzen. Antwort true, wenn
      danach jedes eingesetzt ist; false = der schlanke Weg fällt aus (dann der Notweg). dmaTeilRaum: die Raum-Stücke;
      „noch" im Notweg: die Stücke, die ausgefallen sind. */
-  /* FASSUNG 885 — eine neue Aufgabe abwarten (MessageChannel: ohne die 4-ms-Bremse geschachtelter Zeitgeber) */
+  /* FASSUNG 886 — eine neue Aufgabe abwarten (MessageChannel: ohne die 4-ms-Bremse geschachtelter Zeitgeber) */
   function dmaTeilPause() {
     return new Promise((weiter) => {
       try { const k = new MessageChannel(); k.port1.onmessage = () => { k.port1.close(); weiter(); }; k.port2.postMessage(0); }
@@ -265,7 +265,7 @@
       const p = dmaTeilHolen(t);
       return dmaTeilAnkunft[t] ? dmaTeilAnkunft[t] : p;
     }));
-    /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 255): „die Verbindung zu den
+    /* FASSUNG 886 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 255): „die Verbindung zu den
        anderen hat oberste Priorität“. Bisher wurden alle Stücke der Liste in EINER Aufgabe eingesetzt – beim Betreten
        und bei der Rückkehr acht Raum-Stücke am Stück (gemessen bei CPU 4×: zusammen 70–95 ms, eine Aufgabe von
        83 ms; auf einem schwachen Telefon das Doppelte), genau dann, wenn die Leitung zu den anderen aufgebaut wird.
@@ -320,7 +320,7 @@
   /* Wer ins Klassenzimmer geht (Tipp, Einladungslink, Rückkehr nach dem Neuladen), braucht bald den Teil „raum",
      spiel.js und die ganzen Stilblätter (index.html: dmaSpielLaden, dmaStileVoll). Geholt wird sofort; was
      rechnet, wartet, bis das Bild steht. */
-  /* FASSUNG 885 (S3) — startet den Präsenzkanal und das Mithören fürs Laufband, je genau einmal; gesetzt weiter unten
+  /* FASSUNG 886 (S3) — startet den Präsenzkanal und das Mithören fürs Laufband, je genau einmal; gesetzt weiter unten
      („Den Klassenzimmer-Kanal mithören"), also erst am Ende des Starts – davor ist es null. dmaPraesenzLos(true) öffnet
      nur den Kanal, ohne Mithörer fürs Laufband (Rückkehr nach dem Neuladen; raumDrin ohne vorherigen Klick auf die Pille). */
   let dmaPraesenzLos = null;
@@ -330,14 +330,14 @@
   function raumVorbereiten(tipp) {
     dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 600);
     dmaTeilGruppe("raum");
-    try { lcFilmListeHolen(); } catch (e) {}   // FASSUNG 885 — die Filmliste kommt sonst erst in der Ruhepause
+    try { lcFilmListeHolen(); } catch (e) {}   // FASSUNG 886 — die Filmliste kommt sonst erst in der Ruhepause
     const weiter = () => {
       try { if (window.dmaStileAn) window.dmaStileAn(); else if (window.dmaStileVoll) window.dmaStileVoll(); } catch (e) {}
       try { if (window.dmaSpielLaden) window.dmaSpielLaden(); } catch (e) {}
     };
     /* 0,3 s nach dem ersten Bild: so schnell tippt niemand auf „Betreten", und das Klassenzimmer steht schon */
     if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(weiter, 300)); else setTimeout(weiter, 300);
-    /* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“; S3, freigegeben (Funk 311). Wer gerade
+    /* FASSUNG 886 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“; S3, freigegeben (Funk 311). Wer gerade
        im Klassenzimmer sitzt und welche Räume offen sind („DIE RÄUME“, das Schulhaus in der Liste hinter dem grünen
        Licht), sagt der Präsenzkanal. Den öffnete die Seite erst 4 s nach dem Start – wer früher auf „Klassenzimmer“
        tippte, sah bis dahin „leer — geh ruhig hinein“, obwohl jemand da war. Jetzt geht er beim Tipp auf, gleich nach
@@ -385,7 +385,7 @@
     try {
       window.addEventListener("load", () => {
         dmaTeilAb = Math.min(dmaTeilAb, Date.now() + 3000);
-        /* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream“. Erst die Raum-Stücke über die Leitung, die
+        /* FASSUNG 886 — XANDER (Funk 263): „sofort im Livestream“. Erst die Raum-Stücke über die Leitung, die
            Rest-Stücke danach (höchstens 6 s gewartet, falls ein Raum-Stück hängt). Vorher teilten sich alle 15 Stücke
            (gepackt 630 KB) die Leitung; jetzt haben die acht Raum-Stücke (286 KB), auf die das Betreten und die
            Rückkehr in den Raum warten, sie für sich. Eingesetzt wird weiter in Ruhepausen (dmaTeilSchlangeWeiter). */
@@ -479,7 +479,7 @@
 
   // "Über mich" ist admin-editierbar — lädt beim Start eventuelle gespeicherte Anpassungen und
   // zeigt Admins (nur ihnen) einen dezenten Bearbeiten-Knopf direkt an Ort und Stelle.
-  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie
+  /* FASSUNG 886 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie
      bei HelloTalk“ · S2, freigegeben (Funk 311): „Über mich“ sofort mit dem zuletzt gespeicherten Text, dann still angleichen.
      BEFUND bis 884: „Über mich“ ist die Startansicht. Das erste Bild zeigte den Text aus index.html; erst wenn app.js lief
      UND die Datenbank geantwortet hatte (gemessen im 4G-Modell: ~1,3 s nach dem ersten Bild), sprang er auf den gespeicherten –
@@ -516,7 +516,7 @@
     // Das URSPRÜNGLICHE, fest im HTML stehende Bild EINMALIG sichern, bevor es je überschrieben
     // wird — sonst gibt es später keine Möglichkeit mehr, "auf Original zurücksetzen" zu wählen,
     // weil das ursprüngliche src schon lange durch das gespeicherte ersetzt wurde.
-    // (FASSUNG 885: setzt index.html das gemerkte Foto ein, sichert es das Original vorher genauso.)
+    // (FASSUNG 886: setzt index.html das gemerkte Foto ein, sichert es das Original vorher genauso.)
     if (img && !img.dataset.originalSrc) img.dataset.originalSrc = img.src;
     const saved = await Backend.getSiteContent("about");
     if (saved && typeof saved === "object") {
@@ -653,15 +653,15 @@
   function bereichSichtbar(el) {
     return Boolean(el && el.offsetParent !== null);
   }
-  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 255): „die schnelle Performance
+  /* FASSUNG 886 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 255): „die schnelle Performance
      und die Verbindung zu den anderen haben oberste Priorität“. Was beim Start verdeckt ist (Kompass, Weiterführende
      Links, Schwarmwissen, Memory, Profil) und die Filmliste kommen nicht mehr im Seitenaufbau dran, sondern nach dem
      Laden in Ruhepausen – je eine Arbeit je Pause, damit keine lange Aufgabe entsteht. Unsichtbar vorgezeichnet, also
      nicht erst beim Öffnen: sonst stünde der Bereich einen Augenblick leer. Im Seitenaufbau gingen dafür bisher vier
      der acht Abfragen an die Datenbank hinaus (Links, Tipps, Wissen-Bild, Anmeldebild) und die Filmliste – genau
-     dann, wenn Seite, Anmeldung und Klassenzimmer die Leitung brauchen. Gemessen: SPIELSYSTEM.md, „Fassung 885 —
+     dann, wenn Seite, Anmeldung und Klassenzimmer die Leitung brauchen. Gemessen: SPIELSYSTEM.md, „Fassung 886 —
      Verdeckte Bereiche später zeichnen“. */
-  /* FASSUNG 885 (Nachbesserung 1) — XANDER (Funk 255): „die Verbindung zu den anderen hat oberste Priorität“.
+  /* FASSUNG 886 (Nachbesserung 1) — XANDER (Funk 255): „die Verbindung zu den anderen hat oberste Priorität“.
      Nicht im Klassenzimmer: ist es offen oder ist man im Raum (auch bei der Rückkehr nach dem Neuladen), wartet die
      Ruhepause (alle 3 s nachgesehen) – sonst liefen Datenbank-Abfragen und Vorzeichnen genau beim Betreten des Raums,
      wie es wortschatzSpaeterHolen und das Vorladen der Filme schon vermeiden. Nur was dem Raum dient, läuft trotzdem
@@ -4744,6 +4744,7 @@
     await checkDailyRankingReward();
     // ECHTES Warten statt eines geratenen Timeouts — sonst kommt Sound & Leuchten der Profil-Pille
     // bei einem Meilenstein bis zu 20 Sekunden verzögert (Hintergrund-Timer), statt sofort.
+    fuchsNachEigenerRunde = true;   // FASSUNG 885 — der Tages-Fuchs wird dann gleich geprüft (nicht erst im 5-min-Abstand)
     checkNotifications();
   }
   // Kleines Glückwunsch-Popup mit dem Bild und dem genauen Namen des neu freigeschalteten Fuchses
@@ -6074,6 +6075,7 @@
   /* ============ Lauftext-Ticker ============ */
   let tickerVisible = true;
   let tickerUpdateInFlight = false;
+  let tickerVerpasst = false;   // FASSUNG 885 — verdeckt übersprungen, beim Zurückkommen nachholen
   /* ============================================================
      LIVE-ANZEIGE — „Alex ist gerade live bei …"
      ------------------------------------------------------------
@@ -6565,6 +6567,10 @@
   async function updateTicker() {
     const track = document.getElementById("tickerTrack");
     if (!track) return;
+    /* FASSUNG 885 — die Laufschrift fragte alle 20 s (und bei jedem Präsenz-Ereignis) auch bei verdeckter
+       Seite nach. Verdeckt oder während der Bremse: nichts holen, beim Zurückkommen einmal nachziehen. */
+    if (document.hidden || seiteGebremst()) { tickerVerpasst = true; return; }
+    tickerVerpasst = false;
     // Absicherung: läuft gerade schon eine Aktualisierung (z. B. weil auf einer stark besuchten
     // Seite mehrere Auslöser fast gleichzeitig feuern), wird ein zweiter, sich überlappender
     // Durchlauf übersprungen — zwei gleichzeitige Durchläufe könnten sich sonst gegenseitig die
@@ -6712,6 +6718,8 @@
 
   updateTicker();
   setInterval(updateTicker, 20000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && tickerVerpasst) updateTicker(); });
+  window.addEventListener("dma-bremse-frei", () => { if (!document.hidden && tickerVerpasst) updateTicker(); });   // FASSUNG 885 (Nachbesserung 3)
   // Begrüßungsnachricht, wenn jemand über einen Empfehlungs-Link landet — zeigt, wer die Person
   // eingeladen hat. Der Name kommt zur schnellen Anzeige direkt aus dem Link (refname), wird aber
   // sicherheitshalber mit dem tatsächlich aktuellen Profilnamen abgeglichen, sobald der geladen
@@ -7968,13 +7976,91 @@
   }
   let notifyPrimed = false;
   let toastedNotificationIds = new Set();
-  async function checkNotifications() {
+  /* FASSUNG 885 — NOTFALL ANFRAGE-STURM. Dieser 20-s-Takt lief auch bei verdeckter Seite (ein Handy mit der
+     Seite im Hintergrund fragte so rund um die Uhr) und konnte sich überlappen. Jetzt: bei verdeckter Seite und
+     während der Bremse (backend.js) Pause, beim Zurückkommen sofort einmal nachholen; nie zwei Durchgänge
+     zugleich – wer währenddessen ruft, bekommt einen frischen Durchgang danach. */
+  let notifyLauf = null, notifyFolge = null, notifyVerpasst = false, notifyZuletzt = 0;
+  function seiteGebremst() {
+    try { return Boolean(Backend.bremse && Backend.bremse().aktiv); } catch (e) { return false; }
+  }
+  /* FASSUNG 885 (Nachbesserung 1) — Zeitgrenze für die Sperren „nie zwei Durchgänge zugleich“: bekommt eine einzige
+     Anfrage nie eine Antwort (Funkloch ohne Abbruch), gilt der Durchgang nach ms als beendet. Sonst liefen Lämpchen,
+     Fuchs-Prüfung und Spiel-Freischaltung bis zum Neuladen nicht mehr. Die hängende Anfrage läuft weiter.
+     Nachbesserung 3 — richtiggestellt: „kommt sie doch noch, wird sie still verworfen“ stimmte nicht, der späte
+     Durchgang zeigte seine Blasen trotzdem noch. Jetzt ruft die Zeitgrenze beiAblauf auf; die Durchgänge tragen eine
+     Laufnummer und verwerfen ihr Ergebnis, wenn ihre Nummer nicht mehr gilt. */
+  function mitZeitgrenze(versprechen, ms, beiAblauf) {
+    let uhr = null;
+    versprechen.catch(() => {});
+    return Promise.race([versprechen, new Promise((fertig) => { uhr = setTimeout(() => { try { if (beiAblauf) beiAblauf(); } catch (e) {} fertig(); }, ms); })])
+      .finally(() => clearTimeout(uhr));
+  }
+  let notifyNr = 0, notifyGueltig = 0;   // Nachbesserung 3 — Laufnummer; 0 = keiner gilt (Zeitgrenze abgelaufen)
+  /* FASSUNG 885 (Nachbesserung 3) — was ein Durchgang schon kennt (Benachrichtigungen, ungelesene Nachrichten, Anfragen,
+     Duelle); die schlanke Prüfung bei verdeckter Seite (verdecktNachsehen) vergleicht damit. */
+  const notifyBekannt = new Set();
+  function checkNotifications() { return notifyStarten(false); }
+  async function notifyStarten(verdecktErlaubt) {
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
-    const [requests, alleDuelle, notifications, myMessages] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), Backend.getMyMessages()]);
+    if ((document.hidden && verdecktErlaubt !== true) || seiteGebremst()) { notifyVerpasst = true; return; }
+    if (notifyLauf) {
+      if (!notifyFolge) notifyFolge = notifyLauf.catch(() => {}).then(() => { notifyFolge = null; return notifyStarten(verdecktErlaubt); });
+      return notifyFolge;
+    }
+    notifyVerpasst = false;
+    const nr = ++notifyNr;
+    notifyGueltig = nr;
+    notifyLauf = mitZeitgrenze(checkNotificationsDurchgang(nr), 30000, () => { if (notifyGueltig === nr) notifyGueltig = 0; });
+    try { return (await notifyLauf) === true; } finally { notifyLauf = null; notifyZuletzt = Date.now(); }   // Nachbesserung 4: true = durchgelaufen
+  }
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    if (notifyVerpasst || Date.now() - notifyZuletzt > 20000) checkNotifications();
+  });
+  /* Nachbesserung 3 — die Bremse ist frei (Pause um, Tipp, Leitung wieder da): gleich nachholen, was ausgefallen ist. */
+  window.addEventListener("dma-bremse-frei", () => { if (notifyVerpasst && !document.hidden && !seiteGebremst()) checkNotifications(); });
+  /* FASSUNG 885 (Nachbesserung 3) — VERDECKTE SEITE: Ton und Blase wie in 884, aber schlank. 884 holte verdeckt alle 20 s
+     alles; 885 bis Nachbesserung 2 gar nichts, Ton und Blase für Nachrichten, Anfragen, Duelle und Benachrichtigungen
+     kamen erst beim Zurückkommen (CLAUDE.md Regel 3: hörbar anders, nie freigegeben). Jetzt alle 2 min nur die
+     Kennungen (Backend.neuesKennungen: 4 winzige Abfragen nacheinander, beim ersten Fehler Schluss). Ist eine davon
+     unbekannt, läuft EIN normaler Durchgang – dieselben Blasen und Töne wie in 884, höchstens 2 min später. Fuchs-Prüfung,
+     Laufschrift und Online-Liste bleiben verdeckt aus; volle Abfragen sonst erst beim Zurückkommen. Die Bremse gilt
+     auch hier. */
+  let verdecktLaeuft = false;
+  function leseFehler() { try { return Number(Backend.bremse && Backend.bremse().lesefehler) || 0; } catch (e) { return 0; } }
+  async function verdecktNachsehen() {
+    if (!document.hidden || verdecktLaeuft || notifyLauf || !Backend.currentUser() || !Backend.neuesKennungen || seiteGebremst()) return;
+    verdecktLaeuft = true;
+    try {
+      const kennungen = await mitZeitgrenze(Backend.neuesKennungen(), 30000);
+      if (!Array.isArray(kennungen) || !document.hidden) return;
+      if (!kennungen.some((k) => !notifyBekannt.has(k))) return;
+      /* Auch, was der Durchgang nicht zeigt (z. B. eine alte ungelesene Nachricht außerhalb des Postfach-Fensters), gilt
+         danach als bekannt – sonst liefe alle 2 min ein voller Durchgang. Nachbesserung 4: aber nur, wenn der Durchgang
+         wirklich durchlief (nicht gebremst, keine Zeitgrenze) und keine Leseabfrage dabei scheiterte (die Abfragen dort
+         liefern bei einem Fehler still []). Sonst versucht es die nächste Prüfung in 2 min wieder. */
+      const fehlVorher = leseFehler();
+      const gelaufen = await notifyStarten(true);
+      if (gelaufen === true && leseFehler() === fehlVorher) kennungen.forEach((k) => notifyBekannt.add(k));
+    } catch (e) { /* beim nächsten Mal */ } finally { verdecktLaeuft = false; }
+  }
+  setInterval(verdecktNachsehen, 120000);
+  async function checkNotificationsDurchgang(nr) {
+    /* FASSUNG 885 — für das Lämpchen nur die ungelesenen Eingänge (id, Zeit) statt 120 voller Nachrichten
+       samt Namen des ganzen Postausgangs. */
+    const ungelesenHolen = Backend.getUngeleseneNachrichten ? Backend.getUngeleseneNachrichten()
+      : Backend.getMyMessages().then((m) => m.inbox.filter((x) => !x.read));
+    const [requests, alleDuelle, notifications, ungelesen] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), ungelesenHolen]);
+    if (nr && nr !== notifyGueltig) return;   // Nachbesserung 3 — zu spät (Zeitgrenze abgelaufen): verwerfen
+    (notifications || []).forEach((n) => notifyBekannt.add("n:" + n.id));
+    (ungelesen || []).forEach((m) => notifyBekannt.add("m:" + m.id));
+    (requests || []).forEach((r) => notifyBekannt.add("f:" + r.id));
+    ((alleDuelle && (alleDuelle.incomingAlle || alleDuelle.incoming)) || []).forEach((c) => notifyBekannt.add("c:" + c.id));
     /* Nur die Duelle des aktuellen Lernraums zählen und blinken. */
     const challenges = { incoming: challengesFuerRaum(alleDuelle.incoming), outgoing: challengesFuerRaum(alleDuelle.outgoing) };
     herausforderungenMerken(challenges.incoming);
-    const unreadInbox = myMessages.inbox.filter((m) => !m.read);
+    const unreadInbox = ungelesen || [];
     const unreadMsgCount = unreadInbox.length;
     const inboxBadge = document.getElementById("inboxTabBadge");
     if (inboxBadge) inboxBadge.style.display = unreadMsgCount > 0 ? "block" : "none";
@@ -8065,6 +8151,7 @@
     pruefeFuchsAuszeichnung();
     // Genauso beiläufig prüfen, ob ein Spiel neu offen ist.
     pruefeSpielFreischaltung();
+    return true;   // Nachbesserung 4 — durchgelaufen (verdecktNachsehen)
   }
   // Wiederholt den sanften Hinweiston alle 5 Sekunden, solange noch etwas unbestätigt ist — hört
   // von selbst auf, sobald das Lämpchen verschwindet (z. B. weil im Profil bestätigt wurde).
@@ -36520,7 +36607,7 @@
          ob ein Geschenk seinen Jubel spielen darf und ob es sich
          lohnt, den Abspieler nachzuladen. Wer sie erst dann holt,
          wenn das erste Geschenk kommt, hoert einmal beides. */
-      /* FASSUNG 885 — geholt wurde sie aber schon beim Seitenstart (eine Anfrage mehr im Aufbau, ohne Speicher:
+      /* FASSUNG 886 — geholt wurde sie aber schon beim Seitenstart (eine Anfrage mehr im Aufbau, ohne Speicher:
          cache no-cache). Jetzt in der Ruhepause nach dem Laden – und sofort, wenn es ins Klassenzimmer geht
          (raumVorbereiten: Tipp, Einladungslink, Rückkehr nach dem Neuladen), je nachdem, was zuerst kommt. */
       nachLadenInRuhe(() => lcFilmListeHolen().then((namen) => lcFilmeVorladen(namen)), true);   // auch im Raum (dort gebraucht)
@@ -70181,11 +70268,11 @@
     const zurueck = LiveChat.rueckkehrOffen && LiveChat.rueckkehrOffen();
     if (zurueck) {
       /* FASSUNG 876 — gleich wieder im Raum: Effekte, Spiel und Blätter sofort holen. Hinein geht es, sobald die
-         Stücke fürs Klassenzimmer da sind (über 4G gut 0,3 s; seit 885 gewartet, solange sie vorankommen, s. u.) – sonst müsste jedes
+         Stücke fürs Klassenzimmer da sind (über 4G gut 0,3 s; seit 886 gewartet, solange sie vorankommen, s. u.) – sonst müsste jedes
          Stück einzeln sofort nachgeladen werden, während der Raum sich aufbaut. Zusammen ist das immer noch
          früher als vor 876, als erst die ganze app.js über die Leitung musste. */
       raumVorbereiten();
-      /* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die Verbindung zu den
+      /* FASSUNG 886 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die Verbindung zu den
          anderen haben oberste Priorität“. RÜCKKEHR AUF DIE NEUE FASSUNG (Prüfer, S1-Nachtrag). Seit S1 kommt die Seite
          beim Neuladen (Ziehen zum Aktualisieren, ein vom Browser verworfener Tab) zuerst aus dem Speicher des Helfers.
          Lag draußen schon eine neue Fassung, ging die Rückkehr hier auf der ALTEN Seite in den Raum, bevor der
@@ -70198,7 +70285,7 @@
          Speicher des Helfers – wie bis 884), sonst höchstens bis 6 s nach dem Öffnen (dieselbe Frist, nach der der Helfer
          bis 884 die gespeicherte Seite nahm).
          Hat die Seite die neue Fassung schon vorher gesehen (Blase), kommt sie beim Neuladen wie bis 884 aus dem Netz
-         (sw.js, „draussen“). Gemessen gegen 884 und was offen bleibt: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“;
+         (sw.js, „draussen“). Gemessen gegen 884 und was offen bleibt: SPIELSYSTEM.md „Fassung 886 — Rückkehr …“;
          Sonde pruefe-885-rueckkehr.js.
          NACHBESSERUNG 1 (Prüfer: „nie langsamer als 884“). Auf einem langsamen Telefon kam das Neuladen des Wächters zu
          spät: die Antwort von fassung.json lag nach ~0,3 s da, verarbeitet wurde sie erst nach ~0,55 s, weil der Hauptfaden
@@ -70206,7 +70293,7 @@
          (index.html), und der lädt die neue Fassung selbst (sw.js, WindowClient.navigate), sobald seine Auffrischung sie
          hat – ohne den Hauptfaden. Hat dieselbe Anfrage beim Neuladen die gleiche Fassung gebracht, sagt er „gleich“, und es
          geht ohne fassung.json hinein. Ein Tipp während des Wartens hält das Neuladen nicht mehr an (bleiben, index.html).
-         Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr: Nachbesserung 1“. */
+         Messung: SPIELSYSTEM.md „Fassung 886 — Rückkehr: Nachbesserung 1“. */
       const fassungFrei = (() => {
         const erst = window.dmaFassungErst;
         /* Sicher frisch ist nur eine Seite, die NICHT aus dem Speicher des Helfers kam (Marke data-dma-speicher, gesetzt
@@ -70233,7 +70320,7 @@
         geschlecht: livechatGeschlecht(),
         mitBild: zurueck.mitBild !== false })
         .then(() => { klassenzimmerStreifen(); renderLiveChat(); });
-      /* FASSUNG 885 (Rückkehr, Nachbesserung 1): hat die Seite dem Helfer „Rückkehr wartet“ gemeldet (index.html), geht
+      /* FASSUNG 886 (Rückkehr, Nachbesserung 1): hat die Seite dem Helfer „Rückkehr wartet“ gemeldet (index.html), geht
          sie jetzt doch hier hinein – dann soll er sie nicht mehr neu laden („halt“, sw.js) */
       const halt = () => { try { const sw = navigator.serviceWorker && navigator.serviceWorker.controller; if (sw && window.dmaRueckGemeldet) sw.postMessage({ rueckkehr: "halt" }); } catch (e) {} };
       const rein = () => { fassungFrei.then(() => { halt(); reinJetzt(); }); };
@@ -70250,7 +70337,7 @@
           los = true;
           dmaTeilNotwegFrist(dmaTeilNotweg("raum", dmaTeilRaumFehlt()), 40000).then((neu) => { if (!neu) rein(); });
         }, einmal);
-        /* FASSUNG 885 — XANDER (Funk 263/271). Bisher ging es nach spätestens 2,5 s hinein, auch wenn die Raum-Stücke
+        /* FASSUNG 886 — XANDER (Funk 263/271). Bisher ging es nach spätestens 2,5 s hinein, auch wenn die Raum-Stücke
            noch unterwegs waren. Auf sehr langsamer Leitung hieß das: jeder Platzhalter holte sein Stück noch einmal
            per synchronem XHR (dieselbe Datei ein zweites Mal über die Leitung), und die Seite stand, bis es da war.
            Gemessen (gepackt wie bei GitHub Pages, nach einem Fassungswechsel, CPU 4×, A/B je 5–7 Läufe): auf 3G
@@ -70278,7 +70365,7 @@
     /* FASSUNG 876 — XANDER (Funk 271): „die Verbindung zu den anderen haben oberste Priorität". Was der Raum
        braucht (Chat-Effekte, spiel.js, die ganzen Stilblätter), kommt jetzt schon beim Öffnen des Klassenzimmers,
        nicht erst in der Ruhepause – beim Betreten und bei jedem Effekt ist alles da. */
-    raumVorbereiten(true);   // FASSUNG 885 (S3): jeder Klick (auch Einladungslink & Co.) öffnet Präsenzkanal samt Laufband
+    raumVorbereiten(true);   // FASSUNG 886 (S3): jeder Klick (auch Einladungslink & Co.) öffnet Präsenzkanal samt Laufband
     renderLiveChat();
     /* RUNDE 87 — HIER und nur hier darf das Vollbild anfangen: dieser
        Ruf steht in einer echten Fingerbewegung, und nur daraus laesst
@@ -74285,7 +74372,7 @@
     Backend.updateExtraProfileField("memoryCardDesign", id);
   }
   async function renderMemory() {
-    if (!memoryState) return newMemoryGame();   // FASSUNG 885 — die erste Runde kommt erst in der Ruhepause
+    if (!memoryState) return newMemoryGame();   // FASSUNG 886 — die erste Runde kommt erst in der Ruhepause
     const profile = Backend.currentProfile();
     const activeDesign = getMemoryCardDesign();
     const designBar = `
@@ -74517,7 +74604,7 @@
       }
     }
   }
-  /* FASSUNG 885 — die erste Runde nicht im Seitenaufbau (Memory ist beim Start verdeckt; mit Konto ging dafür die
+  /* FASSUNG 886 — die erste Runde nicht im Seitenaufbau (Memory ist beim Start verdeckt; mit Konto ging dafür die
      Freundesliste an die Datenbank), sondern in der Ruhepause. Jeder Weg hinein mischt ohnehin neu (newMemoryGame). */
   nachLadenInRuhe(() => { if (!memoryState) newMemoryGame(); });
 
@@ -77363,7 +77450,7 @@
     };
     lesetexteVersprechen = Promise.resolve().then(() => brDatei("data-lesetexte.js")).then(() => bauen() || new Promise((fertig) => {
       const sk = document.createElement("script");
-      /* FASSUNG 885 (Nachbesserung 1 zu „Rückkehr“): die Quelle mit IHREM Stempel (DMA_V gäbe den von min/ – passt nicht zum
+      /* FASSUNG 886 (Nachbesserung 1 zu „Rückkehr“): die Quelle mit IHREM Stempel (DMA_V gäbe den von min/ – passt nicht zum
          Inhalt, der Helfer legte die Datei dann nie ab, sw.js „Stempel ↔ Inhalt“) */
       sk.src = "data-lesetexte.js?v=" + ((window.DMA_STEMPEL || {})["data-lesetexte.js"] || window.DMA_VERSION || "1");
       sk.onload = () => fertig(bauen());
@@ -77811,7 +77898,7 @@
     });
   }
   document.querySelector('#knowledgeSubnav [data-sub="sub-howitworks"]')?.addEventListener("click", renderHowItWorks);
-  /* FASSUNG 885 — beim Öffnen nur neu zeichnen, wenn sich der Stand geändert hat (renderKompass, kompassStand); noch nie
+  /* FASSUNG 886 — beim Öffnen nur neu zeichnen, wenn sich der Stand geändert hat (renderKompass, kompassStand); noch nie
      gezeichnet: das tut die Wache vor dem nächsten Bild. */
   document.querySelector('#knowledgeSubnav [data-sub="sub-kompass"]')?.addEventListener("click", () => { if (!kompassWache) renderKompass("oeffnen"); });
 
@@ -91369,7 +91456,7 @@
   }
 
   let kompassKalenderUhr = 0;   // FASSUNG 840
-  /* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. Der Kompass (Startansicht von
+  /* FASSUNG 886 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“. Der Kompass (Startansicht von
      „Wissen“) wurde beim Start verdeckt gezeichnet und beim ersten Tipp auf „Wissen“ gleich noch einmal; davor
      zwang bereichSichtbar den Browser, die ganze Ansicht mit dem alten Inhalt zu berechnen (Spur, Grundlinie 884:
      erzwungenes Stil/Layout 118–137 ms in jedem Wissen-Tipp, CPU 4×). Jetzt:
@@ -91378,9 +91465,9 @@
        - in der Ruhepause nach dem Laden unsichtbar vorgezeichnet, mit Stand-Schlüssel (kompassStand: der fertige
          Text des Kompass und was ihn sonst verändert – Konto, Rolle, Schalter, Betonung);
        - beim Öffnen wird nur neu gezeichnet, wenn sich der Stand seitdem geändert hat.
-     Gemessen: SPIELSYSTEM.md, „Fassung 885 — Verdeckte Bereiche später zeichnen“. */
+     Gemessen: SPIELSYSTEM.md, „Fassung 886 — Verdeckte Bereiche später zeichnen“. */
   var kompassStand = "", kompassWache = null;
-  /* FASSUNG 885 (Nachbesserung 1) — XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen
+  /* FASSUNG 886 (Nachbesserung 1) — XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen
      haben oberste Priorität“. Die drei Lesebereiche unter dem Kompass (Dichter & Denker, Schnee von gestern,
      Beiträge – nur mit Schalter, Moderation oder Beta zu sehen) werden NICHT verdeckt vorgezeichnet, sondern erst,
      wenn der Kompass aufgeht (kompassLeseWache, gleiches Muster wie kompassWache; oder der Tipp auf den Unterreiter).
@@ -91412,7 +91499,7 @@
   /* art: leer = wie bisher · "vorzeichnen" = verdeckt, in der Ruhepause · "oeffnen" = der Kompass geht gerade auf */
   async function renderKompass(art) {
     const vorzeichnen = art === "vorzeichnen", oeffnen = art === "oeffnen";
-    /* FASSUNG 885 — noch nie gezeichnet und zu: nichts tun, das holen Wache bzw. Ruhepause mit dem neuesten Stand nach
+    /* FASSUNG 886 — noch nie gezeichnet und zu: nichts tun, das holen Wache bzw. Ruhepause mit dem neuesten Stand nach
        (Lernraum oder Niveau beim Wiederherstellen der Anmeldung, Betonung in den Einstellungen …). */
     if (!art && kompassWache && !unterbereichOffen("view-knowledge", "sub-kompass")) return;
     /* Der Kalender liegt seit dieser Fassung in einer eigenen Datei, die
@@ -91420,7 +91507,7 @@
        die größte Einzellast, obwohl man immer nur einen Tag sieht.
        Geladen wird erst, wenn der Kompass wirklich sichtbar ist. */
     let kalenderFehltNoch = false;
-    /* FASSUNG 885 — „wird geladen …“ steht auch im vorgezeichneten Kompass (er muss beim Öffnen genau so aussehen wie
+    /* FASSUNG 886 — „wird geladen …“ steht auch im vorgezeichneten Kompass (er muss beim Öffnen genau so aussehen wie
        ein frisch gezeichneter); geholt wird weiter erst, wenn er zu sehen ist. */
     if (ExerciseData.ladeKalender && !ExerciseData.kalenderDa() && (vorzeichnen || oeffnen || bereichSichtbar(kompassArea))) {
       /* NICHT abwarten: der Kalender füllt genau eine Karte auf dieser
@@ -91448,7 +91535,7 @@
     // Automatisches Tracking: sobald jemand hier war, gilt "Es war einmal in Deutschland" als
     // gelesen — kein extra "Ich hab's gelesen"-Knopf nötig, für Missionen, die das voraussetzen.
     // Läuft im Hintergrund: es ist ein Vermerk, kein Inhalt dieser Seite.
-    const visitedProfile = vorzeichnen ? null : Backend.currentProfile();   // FASSUNG 885: verdeckt vorgezeichnet heißt nicht „hier gewesen“
+    const visitedProfile = vorzeichnen ? null : Backend.currentProfile();   // FASSUNG 886: verdeckt vorgezeichnet heißt nicht „hier gewesen“
     if (visitedProfile) {
       const visited = (visitedProfile.extraProfileData && visitedProfile.extraProfileData.visitedSections) || [];
       if (!visited.includes("es-war-einmal")) {
@@ -91698,7 +91785,7 @@
       <h3 id="kompass-partikeln" class="kompass-heading">✨ Kleine Wörter, große Wirkung</h3>
       <div class="kompass-grid">${VocabData.PARTIKELN.map((p) => kompassCard(p.word, p.explain, p.example, p.syl)).join("")}</div>
     `;
-    /* FASSUNG 885 — Stand-Schlüssel: der fertige Text und was außerhalb davon zählt (Konto und Rolle für die drei
+    /* FASSUNG 886 — Stand-Schlüssel: der fertige Text und was außerhalb davon zählt (Konto und Rolle für die drei
        Lesebereiche darunter, ihre rohen Schalter, Betonung). Gleich wie beim Vorzeichnen → nichts neu zeichnen. Mit
        eingeschalteter Betonung, solange der Wortschatz fehlt, wird immer gezeichnet (sie wird beim Zeichnen gesetzt). */
     const betonung = leseBetonungAn() || isStressModeOn();
@@ -91706,10 +91793,10 @@
       Backend.isAdmin && Backend.isAdmin(), ["dichter_und_denker", "schnee_von_gestern", "eigene_beitraege"].map((k) => String(Backend.getRawFeatureFlag ? Backend.getRawFeatureFlag(k) : "")),
       betonung].join("|") + "|" + kompassHtml;
     if ((oeffnen || vorzeichnen) && stand === kompassStand && !(betonung && !(VocabData.alleThemenDa && VocabData.alleThemenDa()))) {
-      if (oeffnen && kompassLeseFehlt) kompassLeseZeichnen();   // FASSUNG 885 (Nachbesserung 1): die Lesebereiche beim Öffnen
+      if (oeffnen && kompassLeseFehlt) kompassLeseZeichnen();   // FASSUNG 886 (Nachbesserung 1): die Lesebereiche beim Öffnen
       return;
     }
-    /* FASSUNG 885 (Nachbesserung 1) — der Stand gilt erst, wenn alles gezeichnet ist (ganz unten): bricht etwas ab,
+    /* FASSUNG 886 (Nachbesserung 1) — der Stand gilt erst, wenn alles gezeichnet ist (ganz unten): bricht etwas ab,
        zeichnet das nächste Öffnen wieder ganz. */
     kompassStand = "";
     if (kompassWache) { kompassWache.disconnect(); kompassWache = null; }
@@ -91770,7 +91857,7 @@
       sel.addEventListener("change", (e) => { historyUebersetzungSprache = e.target.value || null; renderKompass(); });
     });
     wireSiteBannerUploads(kompassArea);
-    /* FASSUNG 885 (Nachbesserung 1) — verdeckt vorgezeichnet: die Lesebereiche erst, wenn der Kompass Platz bekommt
+    /* FASSUNG 886 (Nachbesserung 1) — verdeckt vorgezeichnet: die Lesebereiche erst, wenn der Kompass Platz bekommt
        (s. kompassLeseZeichnen). Ohne ResizeObserver wie bisher sofort. */
     if (vorzeichnen && window.ResizeObserver && (dichterVisible || schneeVisible || beitraegeVisible)) {
       kompassLeseFehlt = true;
@@ -91781,7 +91868,7 @@
     } else kompassLeseZeichnen();
     kompassStand = stand;
   }
-  /* FASSUNG 885 — beim Start nur zeichnen, wenn der Kompass offen ist (Einsprung mit #view-knowledge). Sonst wacht
+  /* FASSUNG 886 — beim Start nur zeichnen, wenn der Kompass offen ist (Einsprung mit #view-knowledge). Sonst wacht
      die Wache, bis sein Bereich Platz bekommt (von 0 auf eine Breite – vor dem nächsten Bild), und die Ruhepause
      zeichnet ihn verdeckt vor. Ohne ResizeObserver (sehr alte Browser) wie bisher sofort. */
   /* Nach dem Wiederherstellen der Anmeldung bzw. dem Anmelden (Konto, Rolle, Schalter): verdeckt neu vorzeichnen, damit
@@ -92210,7 +92297,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     renderCommunityTexts();
   });
 
-  var linksAngestossen = false;   // FASSUNG 885
+  var linksAngestossen = false;   // FASSUNG 886
   async function renderLinks() {
     const area = document.getElementById("linksArea");
     if (!area) return;
@@ -92284,7 +92371,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
     });
   }
-  /* FASSUNG 885 — nicht im Seitenaufbau (zwei Abfragen, verdeckter Bereich), sondern in der Ruhepause vorgezeichnet;
+  /* FASSUNG 886 — nicht im Seitenaufbau (zwei Abfragen, verdeckter Bereich), sondern in der Ruhepause vorgezeichnet;
      wer „Weiterführende Links“ öffnet, holt wie bisher frisch. */
   nachLadenInRuhe(() => { if (!linksAngestossen) renderLinks(); });
   document.querySelector('#knowledgeSubnav [data-sub="sub-links"]')?.addEventListener("click", () => renderLinks());
@@ -92416,7 +92503,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   // "Schwarmwissen" — freier Austausch von Tipps, Links, Videos, Bildern zwischen
   // Nutzer:innen. Alex bietet die Inhalte an, lernt aber selbst kein Deutsch mehr — wer gerade
   // mittendrin steckt, weiß am besten, was wirklich hilft.
-  var tippsAngestossen = false;   // FASSUNG 885
+  var tippsAngestossen = false;   // FASSUNG 886
   async function renderTips() {
     const area = document.getElementById("tipsArea");
     if (!area) return;
@@ -92524,7 +92611,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       img.addEventListener("click", () => openGallerySlideshow([img.dataset.modalViewPhoto], 0, "Bild"));
     });
   }
-  nachLadenInRuhe(() => { if (!tippsAngestossen) renderTips(); });   // FASSUNG 885 — wie die Links oben
+  nachLadenInRuhe(() => { if (!tippsAngestossen) renderTips(); });   // FASSUNG 886 — wie die Links oben
   document.querySelector('#knowledgeSubnav [data-sub="sub-tips"]')?.addEventListener("click", () => renderTips());
 
   /* ============================================================
@@ -92669,7 +92756,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     );
     document.body.appendChild(box);
   }
-  var profilAngestossen = false;   // FASSUNG 885
+  var profilAngestossen = false;   // FASSUNG 886
   async function renderAccount() {
     const area = document.getElementById("accountArea");
     profilAngestossen = true;
@@ -92740,7 +92827,7 @@ An einem Morgen lief ein kleiner Fuchs los…
           // manuell neu geladen hat.
           applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
           await renderAccount();
-          kompassNachAnmeldung();   // FASSUNG 885
+          kompassNachAnmeldung();   // FASSUNG 886
           updateSpecialDayBar();
           Backend.touchActivity();
           notifyAboutAppUpdateIfNeeded();
@@ -96281,7 +96368,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       return;
     }
     activateTab("view-profile");
-    /* FASSUNG 885 (Nachbesserung 1) — das Profil wird beim Start nicht mehr verdeckt gezeichnet (Ruhepause bzw. nach
+    /* FASSUNG 886 (Nachbesserung 1) — das Profil wird beim Start nicht mehr verdeckt gezeichnet (Ruhepause bzw. nach
        der Anmeldung); wer vorher hier tippt, sähe sonst länger ein leeres Profil. Gezeichnet wie beim Unterreiter. */
     const konto = document.getElementById("accountArea");
     if (konto && !konto.childElementCount) renderAccount();
@@ -97573,22 +97660,54 @@ An einem Morgen lief ein kleiner Fuchs los…
     const woche = Math.ceil(((t - jahresStart) / 86400000 + 1) / 7);
     return `${t.getUTCFullYear()}-W${woche}`;
   }
+  /* FASSUNG 885 — die Prüfung hing am 20-s-Takt: je Zeitraum 4–6 Abfragen (Woche/Monat/Jahr für alle, die
+     nicht selbst Fuchs sind – darin der Scan aller Runden des Jahres), auch im Hintergrund und überlappend.
+     Jetzt: nie zwei zugleich, nicht bei verdeckter Seite, Tag höchstens alle 5 min (gleich nach einer eigenen
+     Runde sofort), Woche/Monat/Jahr höchstens alle 30 min; die Wertung kommt aus dem Gedächtnis in backend.js
+     (getFoxForMeldung, ohne Profil des Siegers). Die Gratulation kommt dadurch höchstens Minuten später. */
+  let fuchsPruefLaeuft = false;
+  let fuchsNachEigenerRunde = false;
+  const fuchsGeprueft = {};
+  /* Nachbesserung 3 — Monat und Jahr nur noch alle 6 h (vorher 30 min): die Jahres-Wertung lädt alle Runden seit dem
+     1.1., die Monats-Wertung die der letzten 30 Tage – die größten Antworten der Fuchs-Prüfung (gemessen je sichtbarem
+     Tab: 32 statt ≈ 36–40 Fuchs-Abfragen je Stunde). Beim Laden der Seite wird weiter sofort geprüft; nur eine schon
+     offene Seite gratuliert zum Fuchs des Monats/Jahres bis zu 6 h später. */
+  const FUCHS_PRUEF_ABSTAND = { tag: 5 * 60000, woche: 30 * 60000, monat: 6 * 3600000, jahr: 6 * 3600000 };
+  const FUCHS_PRUEF_NACH_FEHLER = 30 * 60000;   // Nachbesserung 4 — nach einem Fehlschlag wieder nach 30 min
+  let fuchsNr = 0, fuchsGueltig = 0;   // Nachbesserung 3 — Laufnummer wie bei den Benachrichtigungen
   async function pruefeFuchsAuszeichnung() {
     const nutzer = Backend.currentUser();
-    if (!nutzer) return;
+    if (!nutzer || fuchsPruefLaeuft || document.hidden) return;
+    fuchsPruefLaeuft = true;
+    const nachRunde = fuchsNachEigenerRunde;
+    fuchsNachEigenerRunde = false;
+    const nr = ++fuchsNr;
+    fuchsGueltig = nr;
+    try { await mitZeitgrenze(pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde, nr), 60000, () => { if (fuchsGueltig === nr) fuchsGueltig = 0; }); } finally { fuchsPruefLaeuft = false; }   // Nachbesserung 1: Zeitgrenze
+  }
+  async function pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde, nr) {
     let gemerkt = {};
     try { gemerkt = JSON.parse(localStorage.getItem(FUCHS_MELDUNG_SCHLUESSEL) || "{}"); } catch (e) { gemerkt = {}; }
+    const leicht = (tage, sonst) => (Backend.getFoxForMeldung ? Backend.getFoxForMeldung(tage) : sonst());
     const zeitraeume = [
-      { art: "tag", titel: "Fuchs des Tages", holen: () => Backend.getFoxOfTheDayShowcase() },
-      { art: "woche", titel: "Fuchs der Woche", holen: () => Backend.getFoxOfWeekShowcase() },
-      { art: "monat", titel: "Fuchs des Monats", holen: () => Backend.getFoxOfMonthShowcase() },
-      { art: "jahr", titel: "Fuchs des Jahres", holen: () => Backend.getFoxOfYearShowcase() },
+      { art: "tag", titel: "Fuchs des Tages", holen: () => leicht(1, Backend.getFoxOfTheDayShowcase) },
+      { art: "woche", titel: "Fuchs der Woche", holen: () => leicht(7, Backend.getFoxOfWeekShowcase) },
+      { art: "monat", titel: "Fuchs des Monats", holen: () => leicht(30, Backend.getFoxOfMonthShowcase) },
+      { art: "jahr", titel: "Fuchs des Jahres", holen: () => leicht(365, Backend.getFoxOfYearShowcase) },
     ];
     for (const z of zeitraeume) {
       const marke = fuchsZeitraumMarke(z.art);
       if (gemerkt[z.art] === marke) continue;
+      const seitPruefung = Date.now() - (fuchsGeprueft[z.art] || 0);   // < 0: Uhr zurückgestellt (Nachbesserung 2)
+      const faellig = (nachRunde && z.art === "tag") || seitPruefung < 0 || seitPruefung >= FUCHS_PRUEF_ABSTAND[z.art];
+      if (!faellig) continue;
+      /* Nachbesserung 4 — die Marke für den vollen Abstand (Monat/Jahr 6 h) erst, wenn die Abfrage durchkam. Bis dahin
+         (und wenn sie scheitert, hängt oder die Bremse selbst antwortet) gilt höchstens 30 min, wie vor Nachbesserung 3. */
+      fuchsGeprueft[z.art] = Date.now() - Math.max(0, FUCHS_PRUEF_ABSTAND[z.art] - FUCHS_PRUEF_NACH_FEHLER);
       let fuchs = null;
       try { fuchs = await z.holen(); } catch (e) { continue; }
+      if (nr && nr !== fuchsGueltig) return;   // Nachbesserung 3 — nach der Zeitgrenze: verwerfen, nicht mehr gratulieren
+      if (!(fuchs && fuchs.fehler)) fuchsGeprueft[z.art] = Date.now();
       if (!fuchs || fuchs.user_id !== nutzer.id) continue;
       /* GEMELDET: „ich hab Meldungen bekommen, dass ich Tagessieger bin,
          obwohl ich gar nichts gemacht habe."
@@ -98074,7 +98193,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (ok && window.Satzbau) return true;
       return new Promise((fertig) => {
         const s = document.createElement("script");
-        /* FASSUNG 885 (Nachbesserung 1 zu „Rückkehr“): die Quelle mit IHREM Stempel (nicht dem von min/, s. data-lesetexte.js) */
+        /* FASSUNG 886 (Nachbesserung 1 zu „Rückkehr“): die Quelle mit IHREM Stempel (nicht dem von min/, s. data-lesetexte.js) */
         s.src = "satzbau.js?v=" + ((window.DMA_STEMPEL || {})["satzbau.js"] || window.DMA_VERSION || "1");
         s.onload = () => fertig(Boolean(window.Satzbau));
         s.onerror = () => fertig(false);
@@ -98856,7 +98975,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     });
   }
 
-  /* FASSUNG 885 — der Profil-Aufruf beim Start nur, wenn das Profil offen ist (Einsprung mit #view-profile). Beim
+  /* FASSUNG 886 — der Profil-Aufruf beim Start nur, wenn das Profil offen ist (Einsprung mit #view-profile). Beim
      Start ist die Anmeldung noch nicht wiederhergestellt: gezeichnet wurde verdeckt das Anmeldeformular (samt Abfrage
      des Anmeldebilds), und nach der Anmeldung gleich noch einmal (restoreSession unten). Sonst in der Ruhepause, falls
      bis dahin noch nicht gezeichnet; wer das Profil öffnet, zeichnet es wie bisher neu. */
@@ -98914,7 +99033,7 @@ An einem Morgen lief ein kleiner Fuchs los…
     refreshHeaderAuth();
     renderAccount();
     renderSetup();
-    kompassNachAnmeldung();   // FASSUNG 885
+    kompassNachAnmeldung();   // FASSUNG 886
     applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
     updateSpecialDayBar();
     notifyAboutAppUpdateIfNeeded();
@@ -99161,17 +99280,36 @@ An einem Morgen lief ein kleiner Fuchs los…
 
   // Online-Status: alle 60s "zuletzt aktiv" aktualisieren, solange eingeloggt —
   // und im selben Takt den grünen Zähler in der Kopfzeile nachziehen.
+  /* FASSUNG 885 — verdeckt nur noch das kleine „zuletzt aktiv“ (Schreiben ohne Antwort, damit man für die
+     anderen online bleibt wie bisher); die ganze Mitgliederliste erst wieder, wenn die Seite zu sehen ist.
+     Während der Bremse gar nichts. */
+  let onlineVerpasst = false, onlineGebremst = false;
   setInterval(() => {
     if (!Backend.currentUser()) return;
+    if (seiteGebremst()) { onlineGebremst = true; return; }
+    onlineGebremst = false;
     Backend.touchActivity();
+    if (document.hidden) { onlineVerpasst = true; return; }
     onlineZaehlerAuffrischen();
   }, 60000);
+  /* Nachbesserung 3 — die Bremse ist frei: „zuletzt aktiv“ und Online-Liste gleich nachholen, nicht erst in ≤ 60 s. */
+  window.addEventListener("dma-bremse-frei", () => {
+    if (!onlineGebremst || document.hidden || !Backend.currentUser() || seiteGebremst()) return;
+    onlineGebremst = false;
+    Backend.touchActivity();
+    onlineZaehlerAuffrischen();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden || !onlineVerpasst) return;
+    onlineVerpasst = false;
+    onlineZaehlerAuffrischen();
+  });
   setTimeout(onlineZaehlerAuffrischen, 3500);
 
   /* Den Klassenzimmer-Kanal mithören — auch ohne selbst hineinzugehen.
      Nur so kann in der Online-Liste stehen, wer gerade Unterricht hat.
      Zuhören kostet nichts und schickt nichts. */
-  /* FASSUNG 885 — XANDER (Funk 263/271), S3 (freigegeben Funk 311): nicht mehr nur nach 4 s, sondern auch sofort beim
+  /* FASSUNG 886 — XANDER (Funk 263/271), S3 (freigegeben Funk 311): nicht mehr nur nach 4 s, sondern auch sofort beim
      Tipp auf „Klassenzimmer“ (raumVorbereiten) – wer zuerst kommt. Beides geschieht genau einmal, wie bisher:
        - praesenzZuhoeren öffnet den Kanal; ein zweiter Aufruf setzte in livechat.js die eigene Kennung neu
          (praesenzIch, daran erkennt der Raum „andere da“) – deshalb nur einmal, und nur, wenn supabase-js schon da

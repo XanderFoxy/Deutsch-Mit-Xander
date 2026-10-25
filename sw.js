@@ -21,13 +21,13 @@
    Was er NICHT anfasst: Anfragen an andere Server (Supabase, GIPHY,
    Schriften), fassung.json (die Frage „gibt es Neues?" muss immer ins
    Netz), Filme und Töne mit Teilanfragen (Range), alles ohne Stempel.
-   Die Seite selbst (index.html): seit Fassung 885 zuerst aus dem
+   Die Seite selbst (index.html): seit Fassung 886 zuerst aus dem
    Speicher, im Hintergrund frisch geholt (siehe unten, „S1").
 
    NOTAUS: index.html?ohne-sw meldet diesen Helfer ab (die Seite kommt
-   dafür immer aus dem Netz, auch seit 885).
+   dafür immer aus dem Netz, auch seit 886).
    ===================================================================== */
-/* FASSUNG 885 — XANDER (Funk 271): „alles insgesamt nur zehn Mal
+/* FASSUNG 886 — XANDER (Funk 271): „alles insgesamt nur zehn Mal
    schneller" · (Funk 263): „sofort im Livestream wie bei HelloTalk".
    VORAB-LADEN DER SEITE (navigation preload). Nach einer Pause schläft
    dieser Helfer. Bisher musste der Browser ihn beim Öffnen erst wecken,
@@ -58,7 +58,7 @@ self.addEventListener("activate", function (e) {
       return /^dma-/.test(n) && n !== KASTEN && n !== SEITE;
     }).map(function (n) { return caches.delete(n); }));
   }).then(function () {
-    /* FASSUNG 885: Vorab-Laden einschalten (gilt für die Anmeldung, bis sie endet). */
+    /* FASSUNG 886: Vorab-Laden einschalten (gilt für die Anmeldung, bis sie endet). */
     var np = self.registration.navigationPreload;
     if (np && np.enable) return np.enable().catch(function () {});
   }).then(function () { return self.clients.claim(); }));
@@ -73,11 +73,11 @@ self.addEventListener("fetch", function (e) {
   if (r.headers.has("range")) return;
   if (r.mode === "navigate") {
     /* Nur die Hauptseite — andere Seiten (Prüfseiten usw.) laufen vorbei.
-       FASSUNG 885 (S1, Nachbesserung 1): „Hauptseite" heißt genau die Wurzel des Bereichs (…/ und …/index.html).
+       FASSUNG 886 (S1, Nachbesserung 1): „Hauptseite" heißt genau die Wurzel des Bereichs (…/ und …/index.html).
        Vorher galt jedes …/ und …/index.html – auch die alten Sicherungen unter sicherung/<x>/ mit eigener
        DMA_VERSION (175, 196 …). „Nie rückwärts" hielt so eine Seite für eine Rücknahme und legte sie als Seite ab;
        seit S1 kam sie beim nächsten Öffnen der App ZUERST (nachgestellt: Fassung 175 im ganzen nächsten Besuch). */
-    /* FASSUNG 885 (S1, Nachbesserung 2) — NOTAUS ?ohne-sw: nie durch seite(), sondern wie andere Seiten zuerst aus
+    /* FASSUNG 886 (S1, Nachbesserung 2) — NOTAUS ?ohne-sw: nie durch seite(), sondern wie andere Seiten zuerst aus
        dem Netz (wie bis 884). Vorher (S1) kam auch für ?ohne-sw die gespeicherte Seite; lag draußen schon eine
        neuere Fassung, lud ihr Wächter sofort auf ?f=… neu, ?ohne-sw fiel weg, und das Abmelden am Ende der Seite
        kam nicht mehr zustande (nachgestellt: Helfer danach noch angemeldet in 6 von 6 Läufen bei sofortiger
@@ -86,7 +86,7 @@ self.addEventListener("fetch", function (e) {
        hängt dann in der Warteschlange des Browsers (hinter seiner eigenen Update-Prüfung) und kam ohne die Seite
        nur in 1 von 4 Läufen zustande. */
     if (hauptseite(u) && !notaus(u)) e.respondWith(seite(r, e));
-    /* FASSUNG 885: „vorbei" heißt jetzt: die Antwort der schon laufenden
+    /* FASSUNG 886: „vorbei" heißt jetzt: die Antwort der schon laufenden
        Vorab-Anfrage unverändert durchreichen. Ohne respondWith fragte der
        Browser die Seite ein zweites Mal (gemessen: 2 Anfragen je Öffnen).
        Browser ohne Vorab-Laden: wie bisher kein respondWith. */
@@ -112,7 +112,7 @@ function gestempelt(r, u) {
   }).catch(function () { return fetch(r); });
 }
 
-/* FASSUNG 885 — XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste
+/* FASSUNG 886 — XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste
    Priorität“. STEMPEL ↔ INHALT (Prüfer, S1-Nachtrag; S1 Offen 5). Der Server hat von jeder Datei nur den NEUESTEN
    Inhalt, egal welcher Stempel (?v=) gefragt wird. Holt eine ALTE Seite nach einem Update eine Datei, die noch nicht
    im Speicher liegt, kommt also der neue Inhalt – und lag bisher danach unter dem ALTEN Stempel im Speicher. Seit S1
@@ -164,10 +164,10 @@ function karteAus(t) {
 }
 function wurzel() { try { return new URL("./", self.registration.scope).pathname; } catch (x) { return "/"; } }
 
-/* FASSUNG 885 (Nachbesserung 2): NOTAUS – dieselbe Regel wie in index.html (/[?&]ohne-sw\b/) */
+/* FASSUNG 886 (Nachbesserung 2): NOTAUS – dieselbe Regel wie in index.html (/[?&]ohne-sw\b/) */
 function notaus(u) { return /[?&]ohne-sw\b/.test(u.search || ""); }
 
-/* FASSUNG 885 (Nachbesserung 1): die Hauptseite = die Wurzel des Bereichs, in dem dieser Helfer gilt */
+/* FASSUNG 886 (Nachbesserung 1): die Hauptseite = die Wurzel des Bereichs, in dem dieser Helfer gilt */
 function hauptseite(u) {
   var w = "/";
   try { w = new URL("./", self.registration.scope).pathname; } catch (x) {}
@@ -175,7 +175,7 @@ function hauptseite(u) {
   return u.pathname === w || u.pathname === w + "index.html";
 }
 
-/* FASSUNG 885: die Antwort der Vorab-Anfrage (undefined, wenn der
+/* FASSUNG 886: die Antwort der Vorab-Anfrage (undefined, wenn der
    Browser kein Vorab-Laden kann oder es noch nicht eingeschaltet ist). */
 function vorab(e) {
   var p;
@@ -186,11 +186,11 @@ function vorab(e) {
 /* Die Seite selbst. Bis 884 immer zuerst aus dem Netz; antwortete es
    nicht (Funkloch) oder dauerte es über sechs Sekunden, kam die zuletzt
    geladene Seite – die fragt dann selbst über fassung.json, ob sie
-   aktuell ist. FASSUNG 885 (Schritt C): „aus dem Netz" = die
+   aktuell ist. FASSUNG 886 (Schritt C): „aus dem Netz" = die
    Vorab-Anfrage, sonst fetch; waitUntil hält den Helfer wach, bis die
    Antwort da und gespeichert ist.
 
-   FASSUNG 885 — S1, SEITE ZUERST AUS DEM SPEICHER (freigegeben, Funk 311).
+   FASSUNG 886 — S1, SEITE ZUERST AUS DEM SPEICHER (freigegeben, Funk 311).
    XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk" ·
    (Funk 271): „alles insgesamt nur zehn Mal schneller" · (Funk 310/312):
    „die maximal professionellste Lösung".
@@ -274,7 +274,7 @@ function seite(r, e) {
         });
       });
       if (f && neuer(f, c)) return netzZuerst(netz, r, g, c, los, t0);
-      /* FASSUNG 885 (Rückkehr): eine Seite hat schon gesehen, dass draußen eine neuere Fassung liegt → wie bis 884 */
+      /* FASSUNG 886 (Rückkehr): eine Seite hat schon gesehen, dass draußen eine neuere Fassung liegt → wie bis 884 */
       return draussen.then(function (d) {
         if (d && neuer(d, c)) return netzZuerst(netz, r, g, c, los, t0);
         return schonDa(netz).then(function (a) {
@@ -284,7 +284,7 @@ function seite(r, e) {
     });
   });
   antwort.catch(function () { los(); });
-  /* FASSUNG 885 (Rückkehr, Nachbesserung 1): welche Auffrischung zu dieser Seite gehört (für rueckEntscheiden) */
+  /* FASSUNG 886 (Rückkehr, Nachbesserung 1): welche Auffrischung zu dieser Seite gehört (für rueckEntscheiden) */
   antwort.then(function () {
     var id = e.resultingClientId;
     if (id && gestartet !== vorher) { proSeite[id] = gestartet; setTimeout(function () { delete proSeite[id]; }, 30000); }
@@ -360,7 +360,7 @@ function speichernText(t, a, c, url, melden) {
     var h = new Headers(a.headers);
     h.delete("content-length"); h.delete("content-encoding");
     h.set(KOPF, v); h.set(ZEIT, String(Date.now()));
-    /* FASSUNG 885 (Rückkehr): die gespeicherte Kopie trägt eine Marke (<html data-dma-speicher>) – so weiß die Seite, dass
+    /* FASSUNG 886 (Rückkehr): die gespeicherte Kopie trägt eine Marke (<html data-dma-speicher>) – so weiß die Seite, dass
        sie aus dem Speicher kam (nur dann wartet die Rückkehr in den Raum auf den Fassungs-Wächter, s. u.) */
     var gespeichert = t.replace(/<html\b/i, '<html data-dma-speicher="1"');
     var z = Date.now();
@@ -376,7 +376,7 @@ function speichernText(t, a, c, url, melden) {
   }).catch(function () { return ""; });
 }
 
-/* FASSUNG 885 (Rückkehr): „draußen liegt Fassung X“ – geschrieben vom Fassungs-Wächter einer Seite, die die Blase zeigt
+/* FASSUNG 886 (Rückkehr): „draußen liegt Fassung X“ – geschrieben vom Fassungs-Wächter einer Seite, die die Blase zeigt
    (index.html, knopf). Eine Seite im Raum, die die neue Fassung schon kennt, soll beim Neuladen nicht erst die alte
    starten und dann neu laden (gemessen: CPU 4×, fassung.json nach 0,25 s: +0,3 s gegen 884), sondern wie bis 884 gleich
    die Seite aus dem Netz bekommen. */
@@ -405,7 +405,7 @@ function neuer(a, b) {
   if (/^\d+$/.test(a) && /^\d+$/.test(b)) return Number(a) > Number(b);
   return a !== b;
 }
-/* FASSUNG 885 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die schnelle Performance und
+/* FASSUNG 886 — XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 255): „die schnelle Performance und
    die Verbindung zu den anderen haben oberste Priorität“. RÜCKKEHR: DER HELFER LÄDT DIE NEUE FASSUNG SELBST (Nachbesserung 1
    zu „Rückkehr“; Prüfer: „nie langsamer als 884“). Kommt die Seite beim Neuladen im Raum aus diesem Speicher und liegt
    draußen schon eine neue Fassung, wartet die Rückkehr (app.js), bis die neue Seite da ist. Bisher lud erst der
@@ -440,7 +440,7 @@ function neuer(a, b) {
    Seite sichtbar ist (gesperrtes Telefon, App im Hintergrund, verworfener Tab: beliebig lange).
    Erprobt und verworfen: die alte Seite fragt vor app.js synchron nach (XHR) – Chromium leitet synchrones XHR
    nicht durch den Helfer, die Frage ginge ins Netz.
-   Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“, Unterabschnitt „Nachbesserung 1“; Sonde pruefe-885-rueckkehr.js.
+   Messung: SPIELSYSTEM.md „Fassung 886 — Rückkehr …“, Unterabschnitt „Nachbesserung 1“; Sonde pruefe-885-rueckkehr.js.
    FASSUNG 886 (Prüfbericht zu dddf4c7b) — SPÄT ENTSCHIEDEN: DIE SEITE LÄDT SELBST. Die Rückkehr (app.js) geht spätestens 6 s
    nach dem ÖFFNEN hinein (nur nach „neu“ – Wächter oder Helfer laden neu – wartet sie 15 s); die 5 s hier zählten ab der MELDUNG. Kam die Antwort des Servers erst nach ~5 s, rief der
    Helfer navigate etwa 5,0–5,4 s nach dem Öffnen – und auf einem langsamen Telefon (Wechsel gemessen bis 0,37 s nach
