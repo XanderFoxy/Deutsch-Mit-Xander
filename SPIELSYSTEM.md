@@ -6567,7 +6567,7 @@ Blockierte Zeit des Hauptfadens in den 1,5 s nach `betreten` (Summe der Lücken 
 **Ergebnis gegen das Maß „nie langsamer als 884“:**
 - **W1 erfüllt:** Tipp während des Wartens → am Ende die neue Fassung, einmal hinein (Sonde T, 8 von 8; Gegenproben s. u.).
 - **W2 erfüllt** für CPU 1× (D = 250: −15, D = 800: −45) und CPU 4× D = 800 (−235) – dazu D = 500 von +177 auf −30 (Rauschen) – und für jedes Neuladen ohne Update (−234 … −775).
-- **W2 nicht erfüllt bei CPU 4×, D = 250: +77 ms [+13 … +196]** (Stufe E in derselben Reihe +120, der erste Stand laut Prüfer +315). Bei D = 50 im Rauschen (+74 [−12 … +258]). Das ist mit „die Seite zuerst aus dem Speicher“ (S1) nicht ganz wegzubekommen: ob draußen eine neue Fassung liegt, weiß niemand vor der Antwort des Servers (D). 884 startet in diesem Augenblick die neue Seite; S1 muss erst von der alten auf die neue wechseln (oben: ~40 ms bis die neue beginnt), und bei kurzem D hat die alte noch nichts vorgewärmt. Strikt 884 gäbe es nur, wenn das Neuladen im Raum wieder zuerst aus dem Netz käme (Variante B des Rückkehr-Schritts) – dann verlöre jedes Neuladen im Raum ohne Update seinen Gewinn (−234 … −775 ms). **Zur Entscheidung (Offen 1).**
+- **W2 nicht erfüllt bei CPU 4×, D = 250: +77 ms [+13 … +196]** (Stufe E in derselben Reihe +120, der erste Stand laut Prüfer +315). Bei D = 50 im Rauschen (+74 [−12 … +258]). *Runde 2 berichtigt:* zu eng gefasst – betroffen ist die ganze schnelle Leitung (WLAN/4G, Antwort nach 0,05–0,25 s) auf langsamem Telefon: Prüfer D = 50 +118, D = 150 +104, D = 250 +80 (je 6 Paare), zusammen mit Runde 2 je Fall 18 Paare: **D = 50 +85 (13 von 18 langsamer), D = 150 +112 (17 von 18), D = 250 +55 (15 von 18)**; D = 50 ist also kein Rauschen. Erst ab ~0,35 s gleich (+26, 3 von 6), ab 0,5 s schneller. Siehe „Runde 2“. Das ist mit „die Seite zuerst aus dem Speicher“ (S1) nicht ganz wegzubekommen: ob draußen eine neue Fassung liegt, weiß niemand vor der Antwort des Servers (D). 884 startet in diesem Augenblick die neue Seite; S1 muss erst von der alten auf die neue wechseln (oben: ~40 ms bis die neue beginnt), und bei kurzem D hat die alte noch nichts vorgewärmt. Strikt 884 gäbe es nur, wenn das Neuladen im Raum wieder zuerst aus dem Netz käme (Variante B des Rückkehr-Schritts) – dann verlöre jedes Neuladen im Raum ohne Update seinen Gewinn (−234 … −775 ms). **Zur Entscheidung (Offen 1).**
 
 **Ladezeit allgemein** (`werkzeug/ladezeit-messen.js 4g --gegen <Stufe E> --arten sw,neu`; HTTP/2 + TLS, 4G, CPU 4×, verschränkt; im Werkzeug ist A der Baum, aus dem es läuft – hier umgerechnet auf **886 − Stufe E**, Median gepaart mit 95 %):
 - *neu* (Update draußen, die gespeicherte Seite zuerst, der Wächter lädt neu – jetzt aus dem Gedächtnis des Helfers), 8 Läufe: erstes Bild ab Öffnen +12 (−45 … +60), bereit ab Öffnen +10 (−20 … +91), Vorlauf −1 – Rauschen.
@@ -6601,7 +6601,7 @@ Ich habe nicht gepusht. Der entfernte Zweig `origin/claude/audio-pronunciation-l
 Nicht gelesen (nicht nötig).
 
 **Offen**
-1. **Zur Entscheidung (Auftraggeber/Xander): der eine langsamere Fall.** Update in den letzten ~2 min erschienen und von der Seite im Raum noch nicht gesehen, **langsames** Telefon, Antwort des Servers ungefähr so schnell, wie das Telefon die gespeicherte Seite liest (CPU 4×, D = 250): **+77 ms** gegen 884 (D = 50: +74, im Rauschen). Wege:
+1. **Zur Entscheidung (Auftraggeber/Xander): der eine langsamere Fall** (*Runde 2 berichtigt*; Empfehlung des Bauers: (a), Begründung in „Runde 2“). Update in den letzten ≤ 2 min erschienen und von der Seite im Raum noch nicht gesehen, **langsames** Telefon, **schnelle Antwort des Servers (0,05–0,25 s: WLAN/4G): +0,05 … 0,11 s** gegen 884 (Mediane aus 18 Paaren je Fall: D = 50 +85, D = 150 +112, D = 250 +55; einzelne Reihen +0,03 … 0,12 s). Ab ~0,35 s Antwortzeit gleich, ab 0,5 s schneller; auf schnellem Telefon immer gleich oder schneller. Bisher stand hier nur „D = 250: +77 ms, D = 50 im Rauschen“ – das war zu eng. Wege:
    (a) **so lassen** – jedes Neuladen im Raum **ohne** Update ist 0,23–0,78 s schneller als 884, mit Update und D ≥ 0,5 s oder auf schnellem Gerät gleich oder schneller;
    (b) **Rückkehr-Neuladen wieder zuerst aus dem Netz** (wie 884) – dann ist dieser Fall genau 884, aber der Gewinn ohne Update fällt für das Neuladen im Raum ganz weg. Der Helfer erkennt ein Rückkehr-Neuladen selbst nicht (der Merker liegt im sessionStorage des Tabs); die Seite im Raum müsste es ihm vorher sagen (`beforeunload`, nur solange man im Raum ist) – nicht gebaut.
    Unsichtbare Feinheiten für (a), nicht gebaut: die Meldung „Rückkehr wartet“ ins erste Skript im Kopf ziehen (hilft nur bei D ≲ 0,1 s); die Antwort des Servers schon am ersten Stück lesen (DMA_VERSION steht in den ersten 3 KB) – hilft nur auf echter Leitung, im Prüfaufbau kommt die Seite in einem Stück.
@@ -6654,4 +6654,75 @@ ersten Bild bzw. 1,5 s nach load) erst ein, wenn die erste Antwort da ist (dmaFa
 spätestens 6 s nach dem Öffnen, auch bei „neu“ (Runde 2: ein 15-s-Zweig dafür wirkte nie, gestrichen). Grund: lädt der Helfer die
 Seite neu, wird die neue erst übernommen, wenn der Hauptfaden der alten frei ist – das Lesen der ganzen Blätter und
 das Stilrechnen danach hielten den Wechsel bis ~0,25 s auf (CPU 4×). Jede andere Seite: wie bisher.
+```
+
+#### Runde 2 (Prüfbericht zu dddf4c7b, 25.10.) — Fassung 886
+XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“.
+
+**Befunde des Prüfers zu dddf4c7b:**
+1. *wichtig* – W2 („nie langsamer als 884“) weiter nicht erfüllt, und der Rest ist breiter, als Logbuch und Funk-Text sagten. Prüfer (verschränkt, 6 Paare, A = eigener Baum 6b724580, C = dddf4c7b, Update noch nicht gesehen, CPU 4×): D = 50 +118 [−40 … 251] (4 von 6 langsamer), **D = 150 +104** [13 … 232] (0 von 6 schneller; vorher nicht gemessen), D = 250 +80 [44 … 254] (0 von 6), D = 350 +26 (Rauschen). Abhilfe: Logbuch, Offen 1 und Funk-Text auf „schnelle Antwort (0,05–0,25 s): +0,08 … 0,12 s“ berichtigen, dann ausdrücklich (a) oder (b) entscheiden.
+2. *klein* – I48/Punkt 11: „bei ‚neu‘ erst nach 15 s“ stimmte nicht – die 6-s-Uhr lief immer mit, der 15-s-Zweig wirkte nie.
+3. *klein* – das Bildschirmfoto zu I48 zeigte die Startansicht; eine echte Rückkehr wartet in „Wissen“ (Prüfer, Wissen → Klassenzimmer, CPU 1×, D = 2,5 s: 0 abweichende Pixel gegen Stufe E in allen Paaren, obwohl in einem Lauf noch keine ganzen Blätter eingehängt waren).
+4. *klein* (nur aus dem Code) – die Frist des Helfers (5 s ab der **Meldung**) passt nicht zur Frist der Rückkehr (6 s ab dem **Öffnen**): kam index.html nach 4,5–5 s, rief der Helfer navigate etwa 5,0–5,4 s nach dem Öffnen; auf einem langsamen Telefon (Wechsel bis 0,37 s) könnte die alte Seite dann schon hineingehen – Raum zweimal betreten.
+
+**Was gebaut ist:**
+1. **Frist ab dem Öffnen** (sw.js `rueckEntscheiden`, index.html; Befund 4): die Seite schickt mit „Rückkehr wartet“ ihre Öffnungszeit mit (`auf` = Date.now() − performance.now()). Der Helfer lädt nur noch **bis 4,5 s nach dem Öffnen** selbst neu (navigate; 1,5 s Reserve bis zur Frist der Rückkehr, das Vierfache des längsten gemessenen Wechsels). Kommt die Antwort des Servers später, schickt er der Seite **„neu“** mit der Fassung, und ihr Wächter entscheidet auf ihrem **eigenen Hauptfaden**: noch nicht drin → genau einmal neu laden (`dmaFassungLaden`, wie nach einer Antwort von fassung.json), schon drin oder ein Textfeld mit Inhalt → nur die Blase. Ein zweiter Weg hinein ist damit ausgeschlossen, gleich in welcher Reihenfolge der Browser Wechsel und Zeitgeber abarbeitet. Ohne glaubhafte Zeit (eine gespeicherte Seite von vor dieser Fassung): 4 s ab der Meldung.
+2. **Gewartet wird bis zur Frist der Seite** (6 s ab dem Öffnen) statt 5 s ab der Meldung (≈ 5,1 s): kam index.html zwischen ~5,1 und 6 s und hing fassung.json, sagte der Helfer bis dddf4c7b „nichts“, und die Rückkehr ging nach 6 s auf der **alten** Fassung hinein – ohne Blase (884 hätte bis 6 s die neue Seite aus dem Netz genommen). Jetzt: „neu“ an die Seite, sie lädt neu, am Ende die neue Fassung (Sonde Y4).
+3. **15-s-Zweig gestrichen** (index.html `dmaRueckWarten`, Befund 2): bei „neu“ kommen die ganzen Blätter spätestens 6 s nach dem Öffnen – wie der Code es ohnehin tat. Texte in Punkt 11 und I48 berichtigt.
+4. **Texte zu W2 berichtigt** (Befund 1): „Ergebnis gegen das Maß“ und Offen 1 oben, der Kommentar in sw.js, der Funk-Text. Grundlage: Prüfer und eigene Messung zusammen (s. u.).
+5. **Sonde** `werkzeug/pruefe-885-rueckkehr.js` Teil **Y** (s. u.); die Falle schreibt dazu je Seite den Merker `dma-wechsel` beim Start mit („*“ = der Helfer hat diese Seite geladen) und kann den Hauptfaden belegen oder die Meldung verzögern.
+
+**Befund 4 nachgestellt (Chromium):** belegt man den Hauptfaden der alten Seite von 4,8 bis 6,3 s (index.html nach 4,9 s, fassung.json hängt; Sonde Y2), übernimmt Chromium den Wechsel vor dem fälligen 6-s-Zeitgeber – dddf4c7b ging 4 von 4 Läufen genau einmal hinein, auf der neuen Fassung. Ebenso mit 0,9 s verspäteter Meldung und index.html nach 5,9 s (dddf4c7b 6 von 6 einmal, neu). Das doppelte Betreten ließ sich in Chromium also nicht auslösen; die Frist ab dem Öffnen ist eine Absicherung, die nicht an der Reihenfolge im Browser hängt (Safari/Firefox ungeprüft). Gefunden wurde dabei die echte Lücke aus Punkt 2: index.html nach 5,96 s und Meldung 0,9 s verspätet – dddf4c7b CPU 1× 3 von 3 auf der **alten** Fassung ohne Blase (der Helfer hatte schon „nichts“ gesagt), CPU 4× 3 von 3 neu.
+
+**Messung Runde 2** (`werkzeug/messe-885-rueckkehr.js`, Falle für betreten, Uhrzeit ab dem Neuladen; index.html und fassung.json je D ms; drei Stände verschränkt, Reihenfolge rotiert; **A = 884-Weg** (6b724580), **C = dddf4c7b**, **N = 7a518431** (diese Runde vor Punkt 2 – die Wartezeit bis 6 s wirkt erst nach 5 s, hier nie); **6 Paare je Fall**; Median, dahinter gepaart gegen A: Median [95-%-Bereich, Bootstrap] (schneller von n)). Am Ende in jedem Lauf aller Stände die neue Fassung, betreten einmal.
+
+| Fall | 884 (A) | dddf4c7b (C) | C − A | Runde 2 (N) | **N − A** |
+|---|---|---|---|---|---|
+| Update, CPU 4×, D = 50 | 1077 | 1163 | +101 [−70 … 190] (2/6) | 1140 | **+33** [−2 … 92] (1/6) |
+| Update, CPU 4×, D = 150 | 1084 | 1162 | +107 [−16 … 115] (1/6) | 1237 | **+121** [91 … 252] (0/6) |
+| Update, CPU 4×, D = 250 | 1254 | 1285 | +42 [−25 … 239] (2/6) | 1299 | **+61** [18 … 167] (1/6) |
+| Update, CPU 4×, D = 800 | 1749 | 1516 | −222 [−262 … −122] (6/6) | 1586 | **−141** [−234 … −71] (6/6) |
+| Update, CPU 1×, D = 250 | 484 | 426 | −68 [−95 … −20] (6/6) | 436 | **−46** [−71 … −13] (5/6) |
+| Update, CPU 1×, D = 800 | 1030 | 971 | −59 [−84 … −28] (6/6) | 975 | **−52** [−86 … −26] (6/6) |
+| ohne Update, CPU 4×, D = 250 | 1161 | 963 | −169 [−317 … −77] (6/6) | 957 | **−208** [−251 … −180] (6/6) |
+| ohne Update, CPU 1×, D = 250 | 483 | 262 | −221 [−231 … −209] (6/6) | 263 | **−220** [−228 … −210] (6/6) |
+
+**Schnelle Antwort, langsames Telefon – alle Reihen zusammen** (Prüfer C, Runde 2 C und N; gleicher Weg, je Fall 18 Paare, gepaart gegen 884): **D = 50 +85 ms (13 von 18 langsamer), D = 150 +112 (17 von 18), D = 250 +55 (15 von 18)**; D = 350 +26 (Prüfer, 3 von 6 – Rauschen); ab D = 500 schneller (Abschluss 886: −30, D = 800 −141 … −235). Einzelne Reihen streuen von +0,03 bis +0,12 s (CPU 4× streut A selbst um 30 %).
+
+N gegen C gepaart (dieselbe Reihe): CPU 1× ±10 ms (u1-250 +10, u1-800 +2, g1-250 +1); CPU 4× −34 … +56 (u4-50 −34, u4-150 +42, u4-250 +44, u4-800 +56, g4-250 −24). Auf dem schnellen Weg hat sich in Runde 2 nichts geändert (navigate gleich: u4-800 812–818 gegen 813–817 ms, Wechsel gleich); u4-800 war aber 6 von 6 Paaren in N langsamer – darum eine eigene Reihe, nur dddf4c7b gegen den Endstand 04d9443a, abwechselnd, **10 Paare**: u4-800 **−15** [−163 … 45] (5 von 10 schneller), u4-250 **+10** [−52 … 106] (5/10), u4-150 **−80** [−225 … −29] (8/10). Das +56 war Rauschen (diesmal kippt u4-150 in die andere Richtung); auf dem schnellen Weg ist Runde 2 gleich schnell wie dddf4c7b.
+
+**Bildschirmfotos (Befund 3)** – die richtige Ansicht: wie eine echte Rückkehr erst „Wissen“ → „Klassenzimmer“, dann Neuladen (Adresse #view-knowledge, die Seite wartet in „Wissen“ mit Bildlauf), CPU 1×, index.html und fassung.json nach 2,5 s, Fotos 1,2 / 2,0 / 2,9 s nach dem Neuladen, Stufe E (b4b21458, ganze Blätter bei DOMContentLoaded) gegen N, je 2 Runden verschränkt (Werkzeug des Prüfers, `werk/bild.js`, unverändert). **Ohne Update:** N hatte nach 1,2 und 2,0 s **0** ganze Blätter eingehängt (E: 3), nach 2,9 s alle 3 – **0 abweichende Pixel** in allen 18 Bildpaaren. **Mit Update** (der Helfer lädt nach 2,5 s neu): ebenso 0 bei 1,2/2,0 s, 0 nach dem Wechsel (2,9 s). Die wartende Rückkehr-Seite sieht also auch in der echten Ansicht genau aus wie vorher; die Startblätter tragen alles, was dort zu sehen ist. (Prüfer, eigene Reihe gegen dddf4c7b: ebenfalls 0.)
+
+**Sonde** `werkzeug/pruefe-885-rueckkehr.js`, neu Teil **Y** (späte Antwort, fassung.json hängt, CPU 1× und 4×): **Y1** index.html nach 4,9 s → am Ende die neue Fassung, betreten einmal, und die neue Seite kam **nicht** vom Helfer (Merker beim Start nicht „*“); **Y3** dasselbe mit 0,9 s verspäteter Meldung und index.html nach 5,4 s (bis dddf4c7b zählte die Frist ab der Meldung); **Y4** index.html nach 5,5 s → die neue Fassung (bis dddf4c7b: die alte); **Y2** Hauptfaden der alten Seite 4,8–6,3 s belegt → nie zweimal hinein (neue Fassung, oder die alte mit Blase).
+- **Ergebnis (Endstand 04d9443a): 133 grün** (N = 2) – R 48, K 5, G 12, F 4, T 8, Z 12, **Y 28**, W 5, N 1, O 3, S 7. Y1 betreten nach 5,11–5,12 s (CPU 1×) bzw. 5,70–5,80 s (CPU 4×), Y4 nach 5,70–5,71 s bzw. 6,25–6,31 s – so schnell wie 884 (s. u.: 5,09–5,10 / 5,72 / 6,40 s). Der Zwischenstand 7a518431 (vor Punkt 2, ohne Y4): 125 grün.
+- **Gegenprobe dddf4c7b** (`NUR=RKGTZY`): **12 rot**, genau die neuen Prüfungen: Y1 4 und Y3 4 (der Helfer lud nach 4,5 s selbst neu, Merker „*“), Y4 4 (am Ende die **alte** Fassung, betreten nach 6,0 s auf der alten Seite, ohne Blase); Y2 grün (4 von 4 einmal hinein, s. „Befund 4 nachgestellt“); R, K, G, T, Z grün (101 grün)
+- **Gegenprobe c30a68f7** (`NUR=RKGTZY`): **43 rot** – R 10 (Neuladen und Öffnen alt bzw. ersetzte Seite mit ganzen Blättern), K 5, **T 8 von 8** (W1), Z 4, **Y 16 von 16** (dort ging die Rückkehr bei hängender fassung.json immer auf der alten Seite hinein, ohne Blase); G grün
+- **Gegenprobe 6b724580** (884-Weg, `NUR=RKGTZY`): **grün bis auf R „Öffnen“ 2** (wie bekannt: 884 geht dort erst auf der alten Seite hinein, dann noch einmal auf der neuen) – R-Neuladen, K, G, **T 8**, Z, **Y 20 von 20** (884 wartet bis 6 s auf das Netz und nimmt die neue Seite; betreten Y1 CPU 1× nach 5,09–5,10 s, Y4 nach 5,72 s, CPU 4× 6,40 s)
+
+**Andere Sonden (Endstand 04d9443a, Arbeitsbaum):** 885-schale 72, 885-swvorladen 27, 884-notweg 91, 884-leitung 40, 885-schlank 42 (Q: alle 8 Inline-Skripte nach dem Rückbau gleich – die Meldung mit `auf` und die Antwort „neu“ liegen im schon zurückgebauten Block, `dmaRueckWarten` wird ganz herausgeschnitten; Kommentare unverändert 6475 ≤ 6500 Zeichen), 885-praesenz 69, 876-start-schlank 62 grün. `node --check` für sw.js und die Sonde 885-rueckkehr; die 9 Inline-Skripte in index.html fehlerfrei übersetzt (`vm.Script`). app.js und min/ unverändert. Gewicht: index.html +0,16 KB ungepackt (Meldung mit `auf`, Antwort „neu“; der 15-s-Zweig fällt weg).
+
+**Nicht gemessen:** `werkzeug/ladezeit-messen.js` – die Änderungen laufen nur auf einer Rückkehr-Seite aus dem Speicher, die dem Helfer etwas gemeldet hat (dort gemessen, s. o.); jede andere Seite liest nur ~0,16 KB mehr index.html.
+
+**Ergebnis gegen das Maß:**
+- W1 erfüllt (Sonde T 8 von 8; Gegenproben wie im Abschluss).
+- Befunde 2–4 erledigt; Befund 4 zusätzlich mit einer echten Lücke (index.html nach 5,1–6 s → alte Fassung), die jetzt wie bei 884 die neue bringt.
+- **W2 bleibt offen: bei schneller Antwort (0,05–0,25 s) auf langsamem Telefon +0,05 … 0,11 s** (s. o.), nur wenn ein Update in den letzten ≤ 2 min kam und die Seite im Raum es noch nicht gesehen hat. Das ist mit S1 nicht wegzubekommen: ob draußen eine neue Fassung liegt, weiß niemand vor der Antwort des Servers; 884 startet in diesem Augenblick die neue Seite, S1 muss erst von der alten wechseln (navigate, Antwort aus dem Gedächtnis, Wechsel: ~40 ms bis die neue beginnt), und bei kurzer Antwortzeit hat die alte Seite noch nichts vorgewärmt, sie belegt nur den Hauptfaden. Erprobt und verworfen (Messungen oben): die alte Seite anhalten (H, H2), synchron fragen (XHR), Neuladen zuerst aus dem Netz (B). **Entscheidung nötig (Offen 1): (a) so lassen oder (b) Rückkehr-Neuladen wie 884 aus dem Netz.** Empfehlung des Bauers: **(a)** – (b) gibt in jedem Neuladen im Raum ohne Update 0,17–0,78 s her (Runde 2: CPU 1× −220, CPU 4× −208; Abschluss: bis −775), um in einem seltenen Fall 0,05–0,11 s zu sparen.
+
+**Push:** nur lokal committet. Die Umgebung spiegelt den Arbeitszweig weiter selbst (`origin/claude/audio-pronunciation-live-chat-3a5elt`: a432f236 um 16:41 „update by push“, wenige Minuten nach dem Commit, wie im Abschluss beschrieben); `main` und `dirigent-synth` unberührt.
+
+**Datenbank:** nicht gelesen (nicht nötig).
+
+**Offen (Runde 2)**
+1. **Entscheidung (a) oder (b)** – Offen 1 oben (berichtigte Zahlen). Ohne sie ist das Maß „nie langsamer als 884“ für schnelle Antworten auf langsamem Telefon nicht erfüllt.
+2. Die Reihenfolge „Wechsel vor fälligem Zeitgeber“ ist nur in Chromium nachgesehen; dank der Frist ab dem Öffnen hängt nichts mehr daran (Safari/Firefox ungeprüft).
+3. Die 4,5 s für navigate und die 6 s Wartezeit des Helfers sind gesetzt, nicht im Feld gemessen (wie Offen 7).
+
+#### I46 — Nachtrag Runde 2 (Block Fassungs-Wächter)
+In index.html kein neuer Kommentar (die Kommentare stehen bei 6475 von höchstens 6500 Zeichen, Sonde 885-schlank); der Kommentar von I46 deckt den Block. Code: die Meldung trägt `auf`, die Antwort „neu“ des Helfers lässt den Wächter entscheiden.
+```text
+FASSUNG 886 (Runde 2) — Die Meldung „Rückkehr wartet“ trägt die Öffnungszeit der Seite (auf). Der Helfer lädt nur bis
+4,5 s danach selbst neu und wartet höchstens bis 6 s danach auf den Server; kommt die Antwort nach 4,5 s, schickt er
+„neu“ mit der Fassung, und der Wächter DIESER Seite entscheidet: noch nicht im Raum → genau einmal neu laden
+(dmaFassungLaden), schon drin oder Textfeld mit Inhalt → die Blase. Die Rückkehr geht 6 s nach dem Öffnen auf jeden Fall
+hinein – so können Helfer und Rückkehr nie beide hinein (Prüfbericht zu dddf4c7b, Befund 4).
 ```

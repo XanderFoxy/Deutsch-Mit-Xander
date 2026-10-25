@@ -432,8 +432,8 @@ function neuer(a, b) {
    (auffrischen().frueh), nicht erst nach dem Ablegen, die Seite dazu (clients.get) gleich mit geholt; die neue Seite
    (?f=<neu>) kommt aus dem Gedächtnis (frisch), ohne den Speicher zu lesen; die alte Seite hängt die ganzen Blätter und
    spiel.js erst nach der Entscheidung ein (index.html, dmaRueckWarten). Gemessen (CPU 4×): D = 0,5 s −30 ms gegen 884 (Rauschen),
-   0,8 s −235; bei schneller Antwort (D = 0,05 … 0,25 s, WLAN/4G) bleiben +0,08 … 0,12 s (die alte Seite hat da noch
-   nichts vorgewärmt; mit S1 nicht ganz wegzubekommen – Entscheidung im Logbuch, Offen 1). Erprobt und verworfen: die alte Seite fragt vor app.js synchron nach (XHR) – Chromium leitet synchrones XHR
+   0,8 s −235; bei schneller Antwort (D = 0,05 … 0,25 s, WLAN/4G) bleiben +0,05 … 0,11 s (Mediane aus je 18 Paaren; die
+   alte Seite hat da noch nichts vorgewärmt; mit S1 nicht ganz wegzubekommen – Entscheidung im Logbuch, Offen 1). Erprobt und verworfen: die alte Seite fragt vor app.js synchron nach (XHR) – Chromium leitet synchrones XHR
    nicht durch den Helfer, die Frage ginge ins Netz.
    Messung: SPIELSYSTEM.md „Fassung 885 — Rückkehr …“, Unterabschnitt „Nachbesserung 1“; Sonde pruefe-885-rueckkehr.js.
    FASSUNG 886 (Prüfbericht zu dddf4c7b) — SPÄT ENTSCHIEDEN: DIE SEITE LÄDT SELBST. Die Rückkehr (app.js) geht 6 s nach dem
