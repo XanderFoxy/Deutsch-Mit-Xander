@@ -41,14 +41,34 @@ const Backend = (function () {
      beim Klienten in livechat.js). Dieser Notweg lief bisher ungebremst an der Bremse vorbei: in einer 402-Sperre
      gemessen 100 von 100 Pulsen ans Netz (≈ 600 Anfragen je Stunde je offenem Klassenzimmer). Jetzt: nur in einer
      402-Sperre antwortet die Bremse dort selbst (429, realtime-js meldet „error“), und eine 402 von dort zieht sie.
-     Im Normalbetrieb und bei 5xx bleibt der Notweg genau wie in 884. */
+     Im Normalbetrieb und bei 5xx bleibt der Notweg genau wie in 884.
+     Nachbesserung 3 — die langen Stufen (bis 15 min) gelten nur noch für die Kontingent-Sperre (402). Bei einem
+     Serverausfall (5xx) oder 429 pausieren die Takte höchstens 1 → 2 min (wie bei „Netz weg“): gemessen brauchte eine
+     sichtbare Seite ohne Tipp nach 10 min 503 sonst 13,5 min bis zur nächsten Blase (884: 0,2 min), denn die
+     Echtzeit-Leitung bleibt bei einem Datenbank-Ausfall offen und meldet kein neues SUBSCRIBED. Dazu: ein Tipp öffnet
+     sein 5-s-Fenster auch für die Takte, und das Zurückkommen auf die Seite lockert eine 5xx/429-Bremse – beides nicht
+     in der 402-Sperre. Wird die Bremse frei (Pause um, gelockert, gelöst, Tipp), meldet sie das mit dem Ereignis
+     „dma-bremse-frei“ an window; die Takte holen dann sofort nach, was sie ausgelassen haben. */
   const BREMS_STUFEN = [60e3, 120e3, 300e3, 900e3];
   /* Nachbesserung 1 — ist nur das Netz weg, erreicht ohnehin nichts den Server (kein Kontingent). Dann pausieren die
      Takte höchstens 1 → 2 min statt bis 15 min, sonst blieben Walkie und Lämpchen in einem WLAN ohne Internet bis zu
-     18 min still. */
-  const BREMS_STUFEN_NETZ = [60e3, 120e3];
+     18 min still. Nachbesserung 3 — dasselbe für 429 und 5xx (alles außer 402, siehe oben). */
+  const BREMS_STUFEN_KURZ = [60e3, 120e3];
   const BREMS_CODES = [402, 429, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530];
-  const bremse = { bis: 0, dauer: 0, stufe: 0, status: 0, frei: 0, freiAb: 0, folge: 0, fehlZuletzt: 0, abgefangen: 0 };
+  const bremse = { bis: 0, dauer: 0, stufe: 0, status: 0, frei: 0, freiAb: 0, folge: 0, fehlZuletzt: 0, abgefangen: 0, uhr: 0 };
+  /* Nachbesserung 3 — „die Bremse ist frei“: die Takte (app.js, rueckfrage.js) holen dann sofort nach, was sie in der
+     Pause ausgelassen haben, statt bis zu ihrem nächsten Schlag (20–60 s) zu warten. Gebündelt (ein Ereignis je
+     Augenblick) und nach dem laufenden Code verschickt. */
+  let freiMeldung = 0;
+  function bremseFreiMelden() {
+    if (freiMeldung) return;
+    try {
+      freiMeldung = setTimeout(() => {
+        freiMeldung = 0;
+        try { window.dispatchEvent(new Event("dma-bremse-frei")); } catch (e) { /* ohne window (Werkzeuge) */ }
+      }, 0);
+    } catch (e) { freiMeldung = 0; }
+  }
   /* Nachbesserung 2 — springt die Geräteuhr zurück (Zeitabgleich am Handy), lag „bis“ plötzlich Stunden in der
      Zukunft (nachgestellt: 2 h zurück → 2 h 17 min Pause), und ein Tipp öffnete kein Fenster mehr (jetzt − freiAb
      negativ). Jetzt bleibt höchstens die Dauer der gezogenen Stufe übrig, und Zeitmarken aus der „Zukunft“ verfallen. */
@@ -75,21 +95,41 @@ const Backend = (function () {
     if (jetzt < bremse.bis && !probe) return;    // Nachzügler derselben Runde: nicht doppelt hochstufen
     /* Scheitert der Versuch nach einem Tipp am Netz, bleibt eine Server-Sperre eine Server-Sperre. */
     bremse.status = status || (jetzt < bremse.bis ? bremse.status : 0);
-    const stufen = bremse.status === 0 ? BREMS_STUFEN_NETZ : BREMS_STUFEN;
+    const stufen = bremse.status === 402 ? BREMS_STUFEN : BREMS_STUFEN_KURZ;   // Nachbesserung 3: lang nur bei 402
     const basis = stufen[Math.min(bremse.stufe, stufen.length - 1)];
     bremse.dauer = Math.round(basis * (0.8 + Math.random() * 0.4));
     bremse.bis = jetzt + bremse.dauer;
     bremse.stufe += 1;
+    /* Nachbesserung 3 — ist die Pause um, holen die Takte sofort nach (sonst bis zu 20–60 s später). Nicht in der
+       402-Sperre: dort bleibt es beim bisherigen Rhythmus (der erste Takt danach versucht es, gemessen 8–10 Anfragen
+       je Stunde), sonst ginge bei jedem Pausenende ein ganzer Satz Abfragen in die Sperre. */
+    try { clearTimeout(bremse.uhr); } catch (e) {}
+    bremse.uhr = 0;
+    if (bremse.status !== 402) {
+      try { bremse.uhr = setTimeout(() => { bremse.uhr = 0; if (!bremseAktiv()) bremseFreiMelden(); }, bremse.dauer + 50); } catch (e) {}
+    }
   }
-  function bremseLoesen() { bremse.bis = 0; bremse.stufe = 0; bremse.frei = 0; bremse.folge = 0; bremse.fehlZuletzt = 0; bremse.status = 0; }
+  function bremseLoesen() {
+    const war = bremse.bis;
+    bremse.bis = 0; bremse.stufe = 0; bremse.frei = 0; bremse.folge = 0; bremse.fehlZuletzt = 0; bremse.status = 0;
+    if (war) bremseFreiMelden();   // Nachbesserung 3
+  }
   /* Nachbesserung 1 — ein Zeichen, dass der Server wieder lebt, bevor eine Datenbank-Abfrage durch ist: eine Antwort
      von auth/v1 mit 2xx (z. B. die Anmeldung) oder die Echtzeit-Leitung meldet SUBSCRIBED (livechat.js, Präsenzkanal –
      in der Sperre lehnt Supabase auch sie ab). Dann darf der nächste Versuch sofort hinaus. Vorher wartete ein Tab,
      den niemand antippt, nach dem Ende der Sperre bis zu 18 min – und wer sich in diesem Augenblick neu anmeldete,
      bekam von der eigenen Bremse ein Ersatzprofil mit Schreibsperre. Die Stufe bleibt, bis eine Abfrage wirklich
      durchkommt: scheitert sie doch, geht es mit der nächsten Stufe weiter (kein Kreisel). */
-  function bremseLockern() { if (bremse.bis) { bremse.bis = 0; bremse.frei = 0; } }
-  function bremseAktiv() { bremseUhrPruefen(); return Date.now() < bremse.bis; }
+  function bremseLockern() { if (bremse.bis) { bremse.bis = 0; bremse.frei = 0; bremseFreiMelden(); } }
+  /* Nachbesserung 3 — das 5-s-Fenster nach einem Tipp gilt auch für die Takte (vorher nur für die angetippte Abfrage:
+     ein Tipp auf eine leere Fläche nach einem Serverausfall holte nichts). In der 402-Sperre nicht – dort geht nur die
+     angetippte Abfrage hinaus, nicht ein ganzer Satz Takte. */
+  function bremseAktiv() {
+    bremseUhrPruefen();
+    const jetzt = Date.now();
+    if (jetzt >= bremse.bis) return false;
+    return !(bremse.status !== 402 && jetzt <= bremse.frei);
+  }
   /* Nachbesserung 2 — der REST-Notweg der Echtzeit-Kanäle (siehe oben). Nur die Kontingent-Sperre (402) hält ihn an:
      dann erreicht ohnehin kein Rundruf jemanden. Ein Tipp öffnet auch hier sein 5-s-Fenster. Kommt ein Rundruf durch
      (2xx), während die Bremse wegen 402 steht, ist die Sperre vorbei: lockern wie bei der Anmeldung. */
@@ -150,10 +190,20 @@ const Backend = (function () {
       if (ev && ev.isTrusted === false) return;
       bremseUhrPruefen();   // Nachbesserung 2 — nach einem Uhrsprung öffnet der Tipp wieder ein Fenster
       const jetzt = Date.now();
-      if (jetzt < bremse.bis && jetzt - bremse.freiAb > 15000) { bremse.freiAb = jetzt; bremse.frei = jetzt + 5000; }
+      if (jetzt < bremse.bis && jetzt - bremse.freiAb > 15000) {
+        bremse.freiAb = jetzt; bremse.frei = jetzt + 5000;
+        if (bremse.status !== 402) bremseFreiMelden();   // Nachbesserung 3: die Takte nutzen das Fenster gleich
+      }
     }, { capture: true, passive: true }));
     window.addEventListener("online", () => { if (bremse.bis && bremse.status === 0) bremseLoesen(); });
-    document.addEventListener("visibilitychange", () => { if (!document.hidden && bremse.bis && bremse.status === 0) bremseLoesen(); });
+    /* Zurückkommen auf die Seite: nach einem Netzfehler lösen (wie bisher); Nachbesserung 3 – nach 5xx/429 lockern (der
+       nächste Versuch darf sofort, die Stufe bleibt; scheitert er, geht es mit höchstens 2 min weiter). In der
+       402-Sperre nicht, sonst ginge bei jedem App-Wechsel ein Satz Abfragen in die Sperre. */
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden || !bremse.bis) return;
+      if (bremse.status === 0) bremseLoesen();
+      else if (bremse.status !== 402) bremseLockern();
+    });
   } catch (e) { /* ohne window (Werkzeuge) */ }
 
   if (isConfigured && window.supabase) {
@@ -1012,6 +1062,33 @@ const Backend = (function () {
       return data.filter((m) => { const t = zeitMikro(m.created_at); return t > g || (t === g && kennungVergleich(m.id, zeile.id) >= 0); });
     }
     return (await getMyMessages()).inbox.filter((m) => !m.read);
+  }
+
+  /* FASSUNG 885 (Nachbesserung 3) — „gibt es Neues?“ bei VERDECKTER Seite (app.js, alle 2 min). 884 holte verdeckt alle
+     20 s die vollen Benachrichtigungen; 885 bis Nachbesserung 2 gar nichts – Ton und Blase kamen erst beim
+     Zurückkommen (hörbar anders als 884, nie freigegeben). Jetzt nur Kennungen: die neueste ungelesene Benachrichtigung,
+     die neueste ungelesene Nachricht (limit 1), die offenen Freundschaftsanfragen und Duelle an mich (nur id). Die
+     Abfragen laufen nacheinander und hören beim ersten Fehler auf – in einer Sperre geht so höchstens eine hinaus.
+     Ergebnis: Liste von Kennungen („n:…“, „m:…“, „f:…“, „c:…“) oder null bei einem Fehler. Ist etwas unbekannt,
+     läuft in app.js EIN normaler Durchgang (dieselben Blasen und Töne wie in 884). */
+  async function neuesKennungen() {
+    if (!demo.user || !client) return null;
+    const ich = demo.user.id;
+    const abfragen = [
+      ["n:", () => client.from("notifications").select("id").eq("user_id", ich).eq("read", false).order("created_at", { ascending: false }).limit(1)],
+      ["m:", () => client.from("private_messages").select("id").eq("to_user", ich).not("read", "is", true).not("deleted_by_recipient", "is", true)
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(1)],
+      ["f:", () => client.from("friends").select("id").or(`user_a.eq.${ich},user_b.eq.${ich}`).eq("status", "pending").neq("requested_by", ich)],
+      ["c:", () => client.from("challenges").select("id").eq("to_user", ich).eq("status", "pending")],
+    ];
+    const kennungen = [];
+    for (const [vor, holen] of abfragen) {
+      let antwort = null;
+      try { antwort = await holen(); } catch (e) { return null; }
+      if (!antwort || antwort.error || !Array.isArray(antwort.data)) return null;
+      antwort.data.forEach((z) => kennungen.push(vor + z.id));
+    }
+    return kennungen;
   }
 
   async function getUnreadMessageCount() {
@@ -4462,6 +4539,7 @@ const Backend = (function () {
     /* … und der Schutz selbst für die anderen Klienten mit demselben Speicherplatz (livechat.js, aussprache-pruefung.js). */
     bremsFetch,
     getFoxForMeldung, getUngeleseneNachrichten,
+    neuesKennungen,   // Nachbesserung 3 — schlanke Prüfung bei verdeckter Seite (app.js)
     isConfigured,
     restoreSession,
     signUp,

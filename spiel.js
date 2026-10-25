@@ -632,7 +632,8 @@
     stillstand: false, letzterAbruf: 0, einspielen: false,
     zauber: "", zrad: false, nebelBis: {}, wackelBis: {},   /* Fassung 650 */
     zBis: { brezel: {}, hexe: {}, zwerg: {}, formular: {} },  /* Fassung 654 */
-    zauberFlug: {}          /* Fassung 671: Ziel-Platz → fliegende Zauberkugel */
+    zauberFlug: {},         /* Fassung 671: Ziel-Platz → fliegende Zauberkugel */
+    gastKlient: null, gastPause: 0, gastStufe: 0   /* Fassung 885 (Nachbesserung 3): ein Gast-Klient je Seite */
   };
   try { S.niveau = localStorage.getItem("dma_spiel_niveau") || "A1"; } catch (e) {}
   try { S.laserfarbe = localStorage.getItem("dma_spiel_laser") || LASERFARBEN[0]; } catch (e) {}
@@ -880,14 +881,30 @@
       return Promise.resolve(S.klient);
     }
     if (!window.supabase || !window.SUPABASE_CONFIG) return Promise.reject(new Error("keine Verbindung"));
-    /* Eigener Speicherplatz für die Gastsitzung — sonst hielte sich die
-       Konto-Anmeldung der Seite (backend.js) plötzlich für angemeldet. */
-    var k = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey,
-      { auth: { storageKey: "dma-spiel-gast", persistSession: true, autoRefreshToken: true } });
+    /* FASSUNG 885 (Nachbesserung 3) — ein abgemeldeter Gast im Klassenzimmer bekam nach jedem Fehlversuch (alle 30 s)
+       einen NEUEN Klienten und rief signInAnonymously erneut – ≈ 120 Anmelde-Anfragen je Stunde und Gast, auch in der
+       Sperre, und jedes Mal ein weiterer GoTrueClient im Speicher. Jetzt: ein Gast-Klient je Seite, mit dem Schutz der
+       Bremse (Backend.bremsFetch: Erneuern bei 402/429 gilt als vorübergehend, rpc pausiert mit). Antwortet der
+       Server auf die Gastanmeldung mit einem Fehler (402, 429, 5xx – oder 422, wenn Gastsitzungen aus sind), wartet
+       der nächste Versuch 1 → 2 → 5 → 15 min statt 30 s; ein Netzfehler bleibt bei 30 s. Die Anzeige bleibt gleich. */
+    if (Date.now() < S.gastPause && S.gastPause - Date.now() <= 15 * 60000) return Promise.reject(new Error("Gastanmeldung pausiert"));
+    if (!S.gastKlient) {
+      /* Eigener Speicherplatz für die Gastsitzung — sonst hielte sich die
+         Konto-Anmeldung der Seite (backend.js) plötzlich für angemeldet. */
+      var opt = { auth: { storageKey: "dma-spiel-gast", persistSession: true, autoRefreshToken: true } };
+      try { if (be && be.bremsFetch) opt.global = { fetch: be.bremsFetch }; } catch (e) {}
+      S.gastKlient = window.supabase.createClient(window.SUPABASE_CONFIG.url, window.SUPABASE_CONFIG.anonKey, opt);
+    }
+    var k = S.gastKlient;
     return k.auth.getSession().then(function (a) {
       if (a && a.data && a.data.session) return k;
       return k.auth.signInAnonymously().then(function (r) {
-        if (r && r.error) throw r.error;
+        if (r && r.error) {
+          var st = Number(r.error.status) || 0;
+          if (st >= 400) S.gastPause = Date.now() + [60e3, 120e3, 300e3, 900e3][Math.min(S.gastStufe++, 3)];
+          throw r.error;
+        }
+        S.gastStufe = 0;
         return k;
       });
     }).then(function (kk) { S.klient = kk; S.gast = true; return kk; });

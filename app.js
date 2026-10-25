@@ -6589,6 +6589,7 @@
   updateTicker();
   setInterval(updateTicker, 20000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden && tickerVerpasst) updateTicker(); });
+  window.addEventListener("dma-bremse-frei", () => { if (!document.hidden && tickerVerpasst) updateTicker(); });   // FASSUNG 885 (Nachbesserung 3)
   // Begrüßungsnachricht, wenn jemand über einen Empfehlungs-Link landet — zeigt, wer die Person
   // eingeladen hat. Der Name kommt zur schnellen Anzeige direkt aus dem Link (refname), wird aber
   // sicherheitshalber mit dem tatsächlich aktuellen Profilnamen abgeglichen, sobald der geladen
@@ -7855,35 +7856,71 @@
   }
   /* FASSUNG 885 (Nachbesserung 1) — Zeitgrenze für die Sperren „nie zwei Durchgänge zugleich“: bekommt eine einzige
      Anfrage nie eine Antwort (Funkloch ohne Abbruch), gilt der Durchgang nach ms als beendet. Sonst liefen Lämpchen,
-     Fuchs-Prüfung und Spiel-Freischaltung bis zum Neuladen nicht mehr. Die hängende Anfrage läuft weiter; kommt sie
-     doch noch, wird sie still verworfen. */
-  function mitZeitgrenze(versprechen, ms) {
+     Fuchs-Prüfung und Spiel-Freischaltung bis zum Neuladen nicht mehr. Die hängende Anfrage läuft weiter.
+     Nachbesserung 3 — richtiggestellt: „kommt sie doch noch, wird sie still verworfen“ stimmte nicht, der späte
+     Durchgang zeigte seine Blasen trotzdem noch. Jetzt ruft die Zeitgrenze beiAblauf auf; die Durchgänge tragen eine
+     Laufnummer und verwerfen ihr Ergebnis, wenn ihre Nummer nicht mehr gilt. */
+  function mitZeitgrenze(versprechen, ms, beiAblauf) {
     let uhr = null;
     versprechen.catch(() => {});
-    return Promise.race([versprechen, new Promise((fertig) => { uhr = setTimeout(fertig, ms); })])
+    return Promise.race([versprechen, new Promise((fertig) => { uhr = setTimeout(() => { try { if (beiAblauf) beiAblauf(); } catch (e) {} fertig(); }, ms); })])
       .finally(() => clearTimeout(uhr));
   }
-  async function checkNotifications() {
+  let notifyNr = 0, notifyGueltig = 0;   // Nachbesserung 3 — Laufnummer; 0 = keiner gilt (Zeitgrenze abgelaufen)
+  /* FASSUNG 885 (Nachbesserung 3) — was ein Durchgang schon kennt (Benachrichtigungen, ungelesene Nachrichten, Anfragen,
+     Duelle); die schlanke Prüfung bei verdeckter Seite (verdecktNachsehen) vergleicht damit. */
+  const notifyBekannt = new Set();
+  function checkNotifications() { return notifyStarten(false); }
+  async function notifyStarten(verdecktErlaubt) {
     if (!Backend.currentUser()) { updateNotifyBadge(0); return; }
-    if (document.hidden || seiteGebremst()) { notifyVerpasst = true; return; }
+    if ((document.hidden && verdecktErlaubt !== true) || seiteGebremst()) { notifyVerpasst = true; return; }
     if (notifyLauf) {
-      if (!notifyFolge) notifyFolge = notifyLauf.catch(() => {}).then(() => { notifyFolge = null; return checkNotifications(); });
+      if (!notifyFolge) notifyFolge = notifyLauf.catch(() => {}).then(() => { notifyFolge = null; return notifyStarten(verdecktErlaubt); });
       return notifyFolge;
     }
     notifyVerpasst = false;
-    notifyLauf = mitZeitgrenze(checkNotificationsDurchgang(), 30000);
+    const nr = ++notifyNr;
+    notifyGueltig = nr;
+    notifyLauf = mitZeitgrenze(checkNotificationsDurchgang(nr), 30000, () => { if (notifyGueltig === nr) notifyGueltig = 0; });
     try { await notifyLauf; } finally { notifyLauf = null; notifyZuletzt = Date.now(); }
   }
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) return;
     if (notifyVerpasst || Date.now() - notifyZuletzt > 20000) checkNotifications();
   });
-  async function checkNotificationsDurchgang() {
+  /* Nachbesserung 3 — die Bremse ist frei (Pause um, Tipp, Leitung wieder da): gleich nachholen, was ausgefallen ist. */
+  window.addEventListener("dma-bremse-frei", () => { if (notifyVerpasst && !document.hidden && !seiteGebremst()) checkNotifications(); });
+  /* FASSUNG 885 (Nachbesserung 3) — VERDECKTE SEITE: Ton und Blase wie in 884, aber schlank. 884 holte verdeckt alle 20 s
+     alles; 885 bis Nachbesserung 2 gar nichts, Ton und Blase für Nachrichten, Anfragen, Duelle und Benachrichtigungen
+     kamen erst beim Zurückkommen (CLAUDE.md Regel 3: hörbar anders, nie freigegeben). Jetzt alle 2 min nur die
+     Kennungen (Backend.neuesKennungen: 4 winzige Abfragen nacheinander, beim ersten Fehler Schluss). Ist eine davon
+     unbekannt, läuft EIN normaler Durchgang – dieselben Blasen und Töne wie in 884, höchstens 2 min später. Fuchs-Prüfung,
+     Laufschrift und Online-Liste bleiben verdeckt aus; volle Abfragen sonst erst beim Zurückkommen. Die Bremse gilt
+     auch hier. */
+  let verdecktLaeuft = false;
+  async function verdecktNachsehen() {
+    if (!document.hidden || verdecktLaeuft || notifyLauf || !Backend.currentUser() || !Backend.neuesKennungen || seiteGebremst()) return;
+    verdecktLaeuft = true;
+    try {
+      const kennungen = await mitZeitgrenze(Backend.neuesKennungen(), 30000);
+      if (!Array.isArray(kennungen) || !document.hidden) return;
+      if (!kennungen.some((k) => !notifyBekannt.has(k))) return;
+      await notifyStarten(true);
+      kennungen.forEach((k) => notifyBekannt.add(k));   // auch, was der Durchgang nicht zeigt (z. B. abgelaufene Duelle): nur einmal
+    } catch (e) { /* beim nächsten Mal */ } finally { verdecktLaeuft = false; }
+  }
+  setInterval(verdecktNachsehen, 120000);
+  async function checkNotificationsDurchgang(nr) {
     /* FASSUNG 885 — für das Lämpchen nur die ungelesenen Eingänge (id, Zeit) statt 120 voller Nachrichten
        samt Namen des ganzen Postausgangs. */
     const ungelesenHolen = Backend.getUngeleseneNachrichten ? Backend.getUngeleseneNachrichten()
       : Backend.getMyMessages().then((m) => m.inbox.filter((x) => !x.read));
     const [requests, alleDuelle, notifications, ungelesen] = await Promise.all([Backend.getIncomingRequests(), Backend.getMyChallenges(), Backend.getUnreadNotifications(), ungelesenHolen]);
+    if (nr && nr !== notifyGueltig) return;   // Nachbesserung 3 — zu spät (Zeitgrenze abgelaufen): verwerfen
+    (notifications || []).forEach((n) => notifyBekannt.add("n:" + n.id));
+    (ungelesen || []).forEach((m) => notifyBekannt.add("m:" + m.id));
+    (requests || []).forEach((r) => notifyBekannt.add("f:" + r.id));
+    ((alleDuelle && (alleDuelle.incomingAlle || alleDuelle.incoming)) || []).forEach((c) => notifyBekannt.add("c:" + c.id));
     /* Nur die Duelle des aktuellen Lernraums zählen und blinken. */
     const challenges = { incoming: challengesFuerRaum(alleDuelle.incoming), outgoing: challengesFuerRaum(alleDuelle.outgoing) };
     herausforderungenMerken(challenges.incoming);
@@ -97329,16 +97366,23 @@ An einem Morgen lief ein kleiner Fuchs los…
   let fuchsPruefLaeuft = false;
   let fuchsNachEigenerRunde = false;
   const fuchsGeprueft = {};
-  const FUCHS_PRUEF_ABSTAND = { tag: 5 * 60000, woche: 30 * 60000, monat: 30 * 60000, jahr: 30 * 60000 };
+  /* Nachbesserung 3 — Monat und Jahr nur noch alle 6 h (vorher 30 min): die Jahres-Wertung lädt alle Runden seit dem
+     1.1., die Monats-Wertung die der letzten 30 Tage – zusammen der größte Teil der ≈ 36–40 Fuchs-Abfragen je Stunde
+     und sichtbarem Tab. Beim Laden der Seite wird weiter sofort geprüft; nur eine schon offene Seite gratuliert zum
+     Fuchs des Monats/Jahres bis zu 6 h später. */
+  const FUCHS_PRUEF_ABSTAND = { tag: 5 * 60000, woche: 30 * 60000, monat: 6 * 3600000, jahr: 6 * 3600000 };
+  let fuchsNr = 0, fuchsGueltig = 0;   // Nachbesserung 3 — Laufnummer wie bei den Benachrichtigungen
   async function pruefeFuchsAuszeichnung() {
     const nutzer = Backend.currentUser();
     if (!nutzer || fuchsPruefLaeuft || document.hidden) return;
     fuchsPruefLaeuft = true;
     const nachRunde = fuchsNachEigenerRunde;
     fuchsNachEigenerRunde = false;
-    try { await mitZeitgrenze(pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde), 60000); } finally { fuchsPruefLaeuft = false; }   // Nachbesserung 1: Zeitgrenze
+    const nr = ++fuchsNr;
+    fuchsGueltig = nr;
+    try { await mitZeitgrenze(pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde, nr), 60000, () => { if (fuchsGueltig === nr) fuchsGueltig = 0; }); } finally { fuchsPruefLaeuft = false; }   // Nachbesserung 1: Zeitgrenze
   }
-  async function pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde) {
+  async function pruefeFuchsAuszeichnungDurchgang(nutzer, nachRunde, nr) {
     let gemerkt = {};
     try { gemerkt = JSON.parse(localStorage.getItem(FUCHS_MELDUNG_SCHLUESSEL) || "{}"); } catch (e) { gemerkt = {}; }
     const leicht = (tage, sonst) => (Backend.getFoxForMeldung ? Backend.getFoxForMeldung(tage) : sonst());
@@ -97357,6 +97401,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       fuchsGeprueft[z.art] = Date.now();
       let fuchs = null;
       try { fuchs = await z.holen(); } catch (e) { continue; }
+      if (nr && nr !== fuchsGueltig) return;   // Nachbesserung 3 — nach der Zeitgrenze: verwerfen, nicht mehr gratulieren
       if (!fuchs || fuchs.user_id !== nutzer.id) continue;
       /* GEMELDET: „ich hab Meldungen bekommen, dass ich Tagessieger bin,
          obwohl ich gar nichts gemacht habe."
@@ -98925,13 +98970,22 @@ An einem Morgen lief ein kleiner Fuchs los…
   /* FASSUNG 885 — verdeckt nur noch das kleine „zuletzt aktiv“ (Schreiben ohne Antwort, damit man für die
      anderen online bleibt wie bisher); die ganze Mitgliederliste erst wieder, wenn die Seite zu sehen ist.
      Während der Bremse gar nichts. */
-  let onlineVerpasst = false;
+  let onlineVerpasst = false, onlineGebremst = false;
   setInterval(() => {
-    if (!Backend.currentUser() || seiteGebremst()) return;
+    if (!Backend.currentUser()) return;
+    if (seiteGebremst()) { onlineGebremst = true; return; }
+    onlineGebremst = false;
     Backend.touchActivity();
     if (document.hidden) { onlineVerpasst = true; return; }
     onlineZaehlerAuffrischen();
   }, 60000);
+  /* Nachbesserung 3 — die Bremse ist frei: „zuletzt aktiv“ und Online-Liste gleich nachholen, nicht erst in ≤ 60 s. */
+  window.addEventListener("dma-bremse-frei", () => {
+    if (!onlineGebremst || document.hidden || !Backend.currentUser() || seiteGebremst()) return;
+    onlineGebremst = false;
+    Backend.touchActivity();
+    onlineZaehlerAuffrischen();
+  });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden || !onlineVerpasst) return;
     onlineVerpasst = false;

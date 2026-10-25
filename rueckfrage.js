@@ -1431,10 +1431,31 @@ window.Rueckfrage = (function () {
   function gebremst() {
     try { return Boolean(Backend.bremse && Backend.bremse().aktiv); } catch (e) { return false; }
   }
+  /* FASSUNG 885 (Nachbesserung 3) — verdeckt wie die Benachrichtigungen (app.js verdecktNachsehen): alle 2 min nur die
+     neueste Kennung von Funk und offenen Fragen (je limit 1, nacheinander). Ist eine neu, wird einmal wie gewohnt geholt –
+     der Reiter zuckt dann beim Zurückkommen schon wie in 884. Sonst holt erst das Zurückkommen. */
+  var VERDECKT_TAKT = 120000, verdecktZuletzt = 0, verpasst = false;
+  function verdecktNachsehen() {
+    if (!istBetreiber()) return;
+    var sb = zugang();
+    if (!sb || laeuft) return;
+    verdecktZuletzt = Date.now();
+    function bekannt(liste, zeile) { return !zeile || liste.some(function (x) { return String(x.id) === String(zeile.id); }); }
+    sb.from("betreiber_funk").select("id").order("id", { ascending: false }).limit(1).then(function (k) {
+      if (!k || k.error || !k.data) return;
+      if (!bekannt(funk, k.data[0])) { holen(); return; }
+      return sb.from("betreiber_rueckfragen").select("id").is("beantwortet", null).order("id", { ascending: false }).limit(1).then(function (q) {
+        if (!q || q.error || !q.data) return;
+        if (!bekannt(fragen, q.data[0])) holen();
+      });
+    })["catch"](function () {});
+  }
   function planen() {
     if (uhr) clearTimeout(uhr);
     uhr = setTimeout(function () {
-      if (!document.hidden && !gebremst()) holen();
+      if (gebremst()) verpasst = true;
+      else if (!document.hidden) { verpasst = false; holen(); }
+      else if (Date.now() - verdecktZuletzt >= VERDECKT_TAKT || Date.now() < verdecktZuletzt) verdecktNachsehen();
       planen();
     }, istOffen() ? TAKT_OFFEN : TAKT);
   }
@@ -1446,6 +1467,10 @@ window.Rueckfrage = (function () {
     try { if (window.visualViewport) window.visualViewport.addEventListener("resize", function () { tastaturLuft(); }); } catch (e) {}
     document.addEventListener("visibilitychange", function () {
       if (!document.hidden && !gebremst()) holen();
+    });
+    /* Nachbesserung 3 — die Bremse ist frei (backend.js): gleich nachholen, nicht erst im nächsten Takt */
+    window.addEventListener("dma-bremse-frei", function () {
+      if (verpasst && !document.hidden && !gebremst()) { verpasst = false; holen(); }
     });
   }
 
