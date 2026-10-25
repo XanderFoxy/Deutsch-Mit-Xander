@@ -122,7 +122,7 @@ window.Rueckfrage = (function () {
   }
 
   /* ---------- Holen ---------- */
-  function holen() {
+  function holen(nachher) {
     if (!istBetreiber()) { weg(); return; }
     var sb = zugang();
     if (!sb || laeuft) return;
@@ -167,6 +167,7 @@ window.Rueckfrage = (function () {
       laeuft = false;
       if (!r[0].error && r[0].data) fragen = r[0].data;
       if (r[1] && !r[1].error && r[1].data) funk = r[1].data;
+      if (typeof nachher === "function") { try { nachher(!r[0].error && Boolean(r[0].data)); } catch (e) {} }   /* Nachbesserung 4 (verdecktNachsehen) */
       /* Die Stelle haengt an der Frage, nicht an der Nummer — kommt
          eine neue dazu, springt er nicht woanders hin. */
       var gemerkt = lesen(SPEICHER_STELLE, null);
@@ -1434,7 +1435,10 @@ window.Rueckfrage = (function () {
   /* FASSUNG 885 (Nachbesserung 3) — verdeckt wie die Benachrichtigungen (app.js verdecktNachsehen): alle 2 min nur die
      neueste Kennung von Funk und offenen Fragen (je limit 1, nacheinander). Ist eine neu, wird einmal wie gewohnt geholt –
      der Reiter zuckt dann beim Zurückkommen schon wie in 884. Sonst holt erst das Zurückkommen. */
-  var VERDECKT_TAKT = 120000, verdecktZuletzt = 0, verpasst = false;
+  /* Nachbesserung 4 — holen() lädt die 60 ÄLTESTEN offenen Fragen. Bei mehr als 60 offenen stand die neueste nie in
+     `fragen`, und jede verdeckte Prüfung holte alles voll (Prüfer: 70 offene, 10 min verdeckt, 5 volle Abrufe ohne Neues).
+     Jetzt wird die neueste gesehene Kennung gemerkt, sobald ein holen() die offenen Fragen wirklich bekam. */
+  var VERDECKT_TAKT = 120000, verdecktZuletzt = 0, verpasst = false, neuesteFrageGesehen = null;
   function verdecktNachsehen() {
     if (!istBetreiber()) return;
     var sb = zugang();
@@ -1446,7 +1450,9 @@ window.Rueckfrage = (function () {
       if (!bekannt(funk, k.data[0])) { holen(); return; }
       return sb.from("betreiber_rueckfragen").select("id").is("beantwortet", null).order("id", { ascending: false }).limit(1).then(function (q) {
         if (!q || q.error || !q.data) return;
-        if (!bekannt(fragen, q.data[0])) holen();
+        var neueste = q.data[0];
+        if (bekannt(fragen, neueste) || String(neueste.id) === String(neuesteFrageGesehen)) return;
+        holen(function (ok) { if (ok) neuesteFrageGesehen = neueste.id; });
       });
     })["catch"](function () {});
   }

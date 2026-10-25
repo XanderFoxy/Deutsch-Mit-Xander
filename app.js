@@ -7882,7 +7882,7 @@
     const nr = ++notifyNr;
     notifyGueltig = nr;
     notifyLauf = mitZeitgrenze(checkNotificationsDurchgang(nr), 30000, () => { if (notifyGueltig === nr) notifyGueltig = 0; });
-    try { await notifyLauf; } finally { notifyLauf = null; notifyZuletzt = Date.now(); }
+    try { return (await notifyLauf) === true; } finally { notifyLauf = null; notifyZuletzt = Date.now(); }   // Nachbesserung 4: true = durchgelaufen
   }
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) return;
@@ -7898,6 +7898,7 @@
      Laufschrift und Online-Liste bleiben verdeckt aus; volle Abfragen sonst erst beim Zurückkommen. Die Bremse gilt
      auch hier. */
   let verdecktLaeuft = false;
+  function leseFehler() { try { return Number(Backend.bremse && Backend.bremse().lesefehler) || 0; } catch (e) { return 0; } }
   async function verdecktNachsehen() {
     if (!document.hidden || verdecktLaeuft || notifyLauf || !Backend.currentUser() || !Backend.neuesKennungen || seiteGebremst()) return;
     verdecktLaeuft = true;
@@ -7905,8 +7906,13 @@
       const kennungen = await mitZeitgrenze(Backend.neuesKennungen(), 30000);
       if (!Array.isArray(kennungen) || !document.hidden) return;
       if (!kennungen.some((k) => !notifyBekannt.has(k))) return;
-      await notifyStarten(true);
-      kennungen.forEach((k) => notifyBekannt.add(k));   // auch, was der Durchgang nicht zeigt (z. B. abgelaufene Duelle): nur einmal
+      /* Auch, was der Durchgang nicht zeigt (z. B. eine alte ungelesene Nachricht außerhalb des Postfach-Fensters), gilt
+         danach als bekannt – sonst liefe alle 2 min ein voller Durchgang. Nachbesserung 4: aber nur, wenn der Durchgang
+         wirklich durchlief (nicht gebremst, keine Zeitgrenze) und keine Leseabfrage dabei scheiterte (die Abfragen dort
+         liefern bei einem Fehler still []). Sonst versucht es die nächste Prüfung in 2 min wieder. */
+      const fehlVorher = leseFehler();
+      const gelaufen = await notifyStarten(true);
+      if (gelaufen === true && leseFehler() === fehlVorher) kennungen.forEach((k) => notifyBekannt.add(k));
     } catch (e) { /* beim nächsten Mal */ } finally { verdecktLaeuft = false; }
   }
   setInterval(verdecktNachsehen, 120000);
@@ -8015,6 +8021,7 @@
     pruefeFuchsAuszeichnung();
     // Genauso beiläufig prüfen, ob ein Spiel neu offen ist.
     pruefeSpielFreischaltung();
+    return true;   // Nachbesserung 4 — durchgelaufen (verdecktNachsehen)
   }
   // Wiederholt den sanften Hinweiston alle 5 Sekunden, solange noch etwas unbestätigt ist — hört
   // von selbst auf, sobald das Lämpchen verschwindet (z. B. weil im Profil bestätigt wurde).
@@ -97371,6 +97378,7 @@ An einem Morgen lief ein kleiner Fuchs los…
      Tab: 32 statt ≈ 36–40 Fuchs-Abfragen je Stunde). Beim Laden der Seite wird weiter sofort geprüft; nur eine schon
      offene Seite gratuliert zum Fuchs des Monats/Jahres bis zu 6 h später. */
   const FUCHS_PRUEF_ABSTAND = { tag: 5 * 60000, woche: 30 * 60000, monat: 6 * 3600000, jahr: 6 * 3600000 };
+  const FUCHS_PRUEF_NACH_FEHLER = 30 * 60000;   // Nachbesserung 4 — nach einem Fehlschlag wieder nach 30 min
   let fuchsNr = 0, fuchsGueltig = 0;   // Nachbesserung 3 — Laufnummer wie bei den Benachrichtigungen
   async function pruefeFuchsAuszeichnung() {
     const nutzer = Backend.currentUser();
@@ -97398,10 +97406,13 @@ An einem Morgen lief ein kleiner Fuchs los…
       const seitPruefung = Date.now() - (fuchsGeprueft[z.art] || 0);   // < 0: Uhr zurückgestellt (Nachbesserung 2)
       const faellig = (nachRunde && z.art === "tag") || seitPruefung < 0 || seitPruefung >= FUCHS_PRUEF_ABSTAND[z.art];
       if (!faellig) continue;
-      fuchsGeprueft[z.art] = Date.now();
+      /* Nachbesserung 4 — die Marke für den vollen Abstand (Monat/Jahr 6 h) erst, wenn die Abfrage durchkam. Bis dahin
+         (und wenn sie scheitert, hängt oder die Bremse selbst antwortet) gilt höchstens 30 min, wie vor Nachbesserung 3. */
+      fuchsGeprueft[z.art] = Date.now() - Math.max(0, FUCHS_PRUEF_ABSTAND[z.art] - FUCHS_PRUEF_NACH_FEHLER);
       let fuchs = null;
       try { fuchs = await z.holen(); } catch (e) { continue; }
       if (nr && nr !== fuchsGueltig) return;   // Nachbesserung 3 — nach der Zeitgrenze: verwerfen, nicht mehr gratulieren
+      if (!(fuchs && fuchs.fehler)) fuchsGeprueft[z.art] = Date.now();
       if (!fuchs || fuchs.user_id !== nutzer.id) continue;
       /* GEMELDET: „ich hab Meldungen bekommen, dass ich Tagessieger bin,
          obwohl ich gar nichts gemacht habe."

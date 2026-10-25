@@ -47,7 +47,7 @@ const Backend = (function () {
      sichtbare Seite ohne Tipp nach 10 min 503 sonst 13,5 min bis zur nächsten Blase (884: 0,2 min), denn die
      Echtzeit-Leitung bleibt bei einem Datenbank-Ausfall offen und meldet kein neues SUBSCRIBED. Dazu: ein Tipp öffnet
      sein 5-s-Fenster auch für die Takte, und das Zurückkommen auf die Seite lockert eine 5xx/429-Bremse – beides nicht
-     in der 402-Sperre. Wird die Bremse frei (gelockert, gelöst, Tipp; Pause um nur bei 429/5xx), meldet sie das mit
+     in der 402-Sperre (das Tipp-Fenster für die Takte seit Nachbesserung 4 auch nicht bei „Netz weg“). Wird die Bremse frei (gelockert, gelöst, Tipp; Pause um nur bei 429/5xx), meldet sie das mit
      dem Ereignis „dma-bremse-frei“ an window; die Takte holen dann sofort nach, was sie ausgelassen haben. */
   const BREMS_STUFEN = [60e3, 120e3, 300e3, 900e3];
   /* Nachbesserung 1 — ist nur das Netz weg, erreicht ohnehin nichts den Server (kein Kontingent). Dann pausieren die
@@ -55,7 +55,7 @@ const Backend = (function () {
      18 min still. Nachbesserung 3 — dasselbe für 429 und 5xx (alles außer 402, siehe oben). */
   const BREMS_STUFEN_KURZ = [60e3, 120e3];
   const BREMS_CODES = [402, 429, 502, 503, 504, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530];
-  const bremse = { bis: 0, dauer: 0, stufe: 0, status: 0, frei: 0, freiAb: 0, folge: 0, fehlZuletzt: 0, abgefangen: 0, uhr: 0 };
+  const bremse = { bis: 0, dauer: 0, stufe: 0, status: 0, frei: 0, freiAb: 0, folge: 0, fehlZuletzt: 0, abgefangen: 0, uhr: 0, lesefehler: 0 };
   /* Nachbesserung 3 — „die Bremse ist frei“: die Takte (app.js, rueckfrage.js) holen dann sofort nach, was sie in der
      Pause ausgelassen haben, statt bis zu ihrem nächsten Schlag (20–60 s) zu warten. Gebündelt (ein Ereignis je
      Augenblick) und nach dem laufenden Code verschickt. */
@@ -126,12 +126,19 @@ const Backend = (function () {
   function bremseLockern() { if (bremse.bis) { bremse.bis = 0; bremse.frei = 0; bremseFreiMelden(); } }
   /* Nachbesserung 3 — das 5-s-Fenster nach einem Tipp gilt auch für die Takte (vorher nur für die angetippte Abfrage:
      ein Tipp auf eine leere Fläche nach einem Serverausfall holte nichts). In der 402-Sperre nicht – dort geht nur die
-     angetippte Abfrage hinaus, nicht ein ganzer Satz Takte. */
+     angetippte Abfrage hinaus, nicht ein ganzer Satz Takte.
+     Nachbesserung 4 — auch nicht bei „Netz weg“ (Status 0): dort hält die Bremse einzelne Abfragen ohnehin nicht an,
+     und supabase-js wiederholt jede Leseabfrage nach einem Netzfehler. Ein ganzer Satz Takte je Tipp wurde so zu
+     ≈ 25 Fehlversuchen (Prüfer: Netz weg 10 min, ein Tipp alle 16 s: 1 002 statt 72 Versuche). Kommt dort im Browser
+     ein Serverfehler ohne CORS-Kopf als Netzfehler an, erreichten diese Versuche sogar Supabase. Das Fenster gilt also
+     nur bei 429/5xx (dafür ist es da: W1); bei „Netz weg“ holen „online“, das Zurückkommen und die angetippte Abfrage
+     selbst (sie geht hinaus und löst bei Erfolg die Bremse samt Nachholen). */
+  function tippFensterFuerTakte() { return bremse.status !== 402 && bremse.status !== 0; }
   function bremseAktiv() {
     bremseUhrPruefen();
     const jetzt = Date.now();
     if (jetzt >= bremse.bis) return false;
-    return !(bremse.status !== 402 && jetzt <= bremse.frei);
+    return !(tippFensterFuerTakte() && jetzt <= bremse.frei);
   }
   /* Nachbesserung 2 — der REST-Notweg der Echtzeit-Kanäle (siehe oben). Nur die Kontingent-Sperre (402) hält ihn an:
      dann erreicht ohnehin kein Rundruf jemanden. Ein Tipp öffnet auch hier sein 5-s-Fenster. Kommt ein Rundruf durch
@@ -170,12 +177,17 @@ const Backend = (function () {
     const lesen = !vorSchreiben && (erneuern || methode === "GET" || methode === "HEAD" || adresse.indexOf("/rest/v1/rpc/") >= 0);
     const jetzt = Date.now();
     if (lesen && bremse.status !== 0 && jetzt < bremse.bis && jetzt > bremse.frei) {
-      bremse.abgefangen += 1;
+      bremse.abgefangen += 1; bremse.lesefehler += 1;
       if (erneuern) return Promise.reject(new TypeError("Bremse: Server pausiert"));
       return Promise.resolve(new Response(JSON.stringify({ message: "Der Server pausiert gerade (" + (bremse.status || "Netz") + ") – bitte gleich noch einmal versuchen.", code: "DMA_BREMSE", details: null, hint: null }),
         { status: 429, headers: { "Content-Type": "application/json" } }));
     }
+    /* Nachbesserung 4 — gescheiterte Leseabfragen werden gezählt (Backend.bremse().lesefehler). Die schlanke Prüfung
+       bei verdeckter Seite (app.js verdecktNachsehen) merkt sich Neues nur, wenn der Durchgang ohne einen Fehlschlag
+       durchlief – die Abfragen dort verschlucken Fehler und liefern [], dann gäbe es für diese Neuigkeit sonst verdeckt
+       weder Ton noch Blase. */
     return fetch(eingabe, opt).then((antwort) => {
+      if (lesen && !antwort.ok) bremse.lesefehler += 1;
       if (BREMS_CODES.indexOf(antwort.status) >= 0) {
         bremseZiehen(antwort.status);
         if (erneuern) return new Response('{"message":"vorübergehend nicht erreichbar"}', { status: 503, headers: { "Content-Type": "application/json" } });
@@ -184,6 +196,7 @@ const Backend = (function () {
       }
       return antwort;
     }, (fehler) => {
+      if (lesen) bremse.lesefehler += 1;
       if (!(fehler && fehler.name === "AbortError")) bremseZiehen(0);
       throw fehler;
     });
@@ -195,7 +208,7 @@ const Backend = (function () {
       const jetzt = Date.now();
       if (jetzt < bremse.bis && jetzt - bremse.freiAb > 15000) {
         bremse.freiAb = jetzt; bremse.frei = jetzt + 5000;
-        if (bremse.status !== 402) bremseFreiMelden();   // Nachbesserung 3: die Takte nutzen das Fenster gleich
+        if (tippFensterFuerTakte()) bremseFreiMelden();   // Nachbesserung 3/4: die Takte nutzen das Fenster gleich (nur 429/5xx)
       }
     }, { capture: true, passive: true }));
     window.addEventListener("online", () => { if (bremse.bis && bremse.status === 0) bremseLoesen(); });
@@ -4119,9 +4132,11 @@ const Backend = (function () {
      gratuliert ohnehin nur echter Leistung im Zeitraum, nie einem „übernommenen“ Titel. */
   async function getFoxForMeldung(daysBack) {
     const scores = await getActivityScoresForPeriod(daysBack, AKTIV_TAKT_MS);
-    if (!scores.length) return null;
+    /* Nachbesserung 4 — ein Fehler wird mitgegeben (fehler: true), damit die Prüfung in app.js Monat und Jahr nach einem
+       Fehlschlag nach 30 min wieder versucht statt erst nach 6 h. Sonst wie bisher. */
+    if (!scores.length) return scores.fehler ? { fehler: true } : null;
     const entry = { ...scores[0], rankPlace: 1 };
-    return { ...entry, reportCard: buildFoxOfDayReportCard(entry, { 1: "heute", 7: "diese Woche", 30: "diesen Monat", 365: "dieses Jahr" }[daysBack]) };
+    return { ...entry, fehler: Boolean(scores.fehler), reportCard: buildFoxOfDayReportCard(entry, { 1: "heute", 7: "diese Woche", 30: "diesen Monat", 365: "dieses Jahr" }[daysBack]) };
   }
   async function getFoxOfWeekShowcase() {
     return getFoxShowcaseForPeriod(7, "Wochen");
@@ -4537,7 +4552,7 @@ const Backend = (function () {
        Nur lesen — nie ueberschreiben. */
     zugang: () => client,
     /* FASSUNG 885 — Stand der Bremse für die Takte (app.js, rueckfrage.js): aktiv = gerade Pause. */
-    bremse: () => ({ aktiv: bremseAktiv(), status: bremse.status, bis: bremse.bis, stufe: bremse.stufe, abgefangen: bremse.abgefangen }),
+    bremse: () => ({ aktiv: bremseAktiv(), status: bremse.status, bis: bremse.bis, stufe: bremse.stufe, abgefangen: bremse.abgefangen, lesefehler: bremse.lesefehler }),
     bremseLockern,   // Nachbesserung 1 — die Echtzeit-Leitung ist wieder da (livechat.js)
     /* … und der Schutz selbst für die anderen Klienten mit demselben Speicherplatz (livechat.js, aussprache-pruefung.js). */
     bremsFetch,
