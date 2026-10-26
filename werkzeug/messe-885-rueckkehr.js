@@ -21,6 +21,8 @@
    jede Blase auf jeder Seite (auch kurz vor dem Wechsel), „draussen“ im
    Seitenspeicher am Ende, und auf der letzten Seite, wann die Antwort des
    Helfers („gleich“/„nichts“/„neu“) und die von fassung.json ankamen.
+   Fassung 886 (rueckkehrfrist, Nachbesserung 1): -m = Seite sicher aus dem
+   Speicher des Helfers (Marke), Vorab-Antwort aus dem HTTP-Speicher.
    Fassung 886 (rueckkehrfrist): -zurueck = Zurück statt Neuladen (die
    Seite im Raum geht auf about:blank, dann history.back; der Browser
    läuft ohne bfcache, so wie eine Seite mit offener Echtzeit-Leitung
@@ -43,7 +45,7 @@
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const VAR = (process.env.VAR || "").split(",").filter(Boolean).map((x) => x.split("=")).map(([n, p]) => ({ n, p: path.resolve(p) }));
-const FAELLE = (process.env.FAELLE || "u4-250").split(",").map((x) => { const m = /^([ugk])(\d+)-(\d+)(?:f(\d+))?(-goto|-zurueck)?(-n)?$/.exec(x.trim()); return { name: x.trim(), update: m[1] !== "g", bekannt: m[1] === "k", cpu: Number(m[2]), D: Number(m[3]), fD: m[4] != null ? Number(m[4]) : Number(m[3]), art: m[5] ? m[5].slice(1) : "reload", netz: Boolean(m[6]) }; });
+const FAELLE = (process.env.FAELLE || "u4-250").split(",").map((x) => { const m = /^([ugk])(\d+)-(\d+)(?:f(\d+))?(-goto|-zurueck)?(-n)?(-m)?$/.exec(x.trim()); return { name: x.trim(), update: m[1] !== "g", bekannt: m[1] === "k", cpu: Number(m[2]), D: Number(m[3]), fD: m[4] != null ? Number(m[4]) : Number(m[3]), art: m[5] ? m[5].slice(1) : "reload", netz: Boolean(m[6]), marke: Boolean(m[7]) }; });
 const PAARE = Number(process.env.PAARE || 6), AUS = process.env.AUS || "";
 const PRE = "/Deutsch-Mit-Xander";
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".woff2": "font/woff2", ".webmanifest": "application/manifest+json" };
@@ -129,6 +131,14 @@ async function lauf(br, sv, wurzel, fa) {
     }
   }
   S.seite = V1; S.stau = fa.D; S.fjStau = fa.fD;
+  /* 886 (rueckkehrfrist, Nachbesserung 1): -m = die Seite kommt sicher aus dem Speicher des Helfers (Marke), während die
+     Vorab-Antwort die Kopie des Browsers bringt – die abgelegte Seite bekommt ein Server-Datum in der Zukunft (frischWennDa) */
+  if (fa.marke) await pg.evaluate(async () => {
+    const k = await caches.open("dma-seite-1"), u = new URL("seite", navigator.serviceWorker.controller.scriptURL).href, a = await k.match(u);
+    if (!a) return;
+    const h = new Headers(a.headers); h.set("date", new Date(Date.now() + 3600000).toUTCString());
+    await k.put(u, new Response(await a.text(), { status: 200, statusText: "OK", headers: h }));
+  }).catch(() => {});
   if (fa.cpu > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: fa.cpu });
   /* 886 (rueckkehrfrist): Zurück – erst weg (about:blank), die Uhr läuft ab history.back */
   if (fa.art === "zurueck") await pg.goto("about:blank").catch(() => {});
