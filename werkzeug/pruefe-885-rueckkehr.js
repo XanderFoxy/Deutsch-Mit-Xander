@@ -727,8 +727,23 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
         && ((e.f === e.V1 && b[0].f === e.V1 && !e.blase) || (!fa.fest && e.seiten === 1 && e.f === e.V && b[0].f === e.V && /Neue Fassung/.test(e.blase)));
       sage(einmal, kopf + (fa.fest ? "die alte Seite lädt neu und geht NICHT hinein – betreten genau einmal, auf der neuen Fassung"
         : "betreten genau einmal, auf der letzten Seite (neu, oder die alte mit Blase, wenn sie vor fassung.json hineinging)"), zeile(e) + ", Seite 1: " + JSON.stringify(alt));
-      if (e.seiten > 1) sage(alt.geht != null && alt.torWeg !== "offen", kopf + "die gehende Seite: Wächter hat neu geladen (dmaFassungGeht), ihr Start-Tor (Supabase) ist zu, als sie geht",
+      if (e.seiten > 1) sage(alt.geht != null && alt.torWeg === "zu" && !(alt.torAuf || []).length,
+        kopf + "die gehende Seite: Wächter hat neu geladen (dmaFassungGeht), ihr Start-Tor (Supabase) ging nie auf (das „gleich“ gilt beim Öffnen nur „vorab“)",
         "geht " + alt.geht + " ms, Tor beim Gehen " + alt.torWeg + ", Tor auf " + JSON.stringify(alt.torAuf) + ", DOMContentLoaded " + alt.dcl + ", weg " + alt.weg);
+    }
+    /* B5 (Nachbesserung 1): dieselbe Seite mit Marke OHNE Update – das „vorab“ lässt sie weiter sofort hinein (wie B3c), Start-Tor
+       und die ganzen Blätter gehen auf, wenn sie drin ist (dmaRaumDrin) – nicht schon beim „gleich“ des Helfers, nicht erst nach
+       fassung.json (2 s). CPU 1× und 4×, Zurück. */
+    for (const cpu of [1, 4].filter(() => bNur("B5"))) for (let n = 0; n < N; n++) {
+      const e = await lauf(br, sv, { teil: "B", art: "zurueck", cpu, D: 2000, fjD: 2000, update: false, marke: true, warten: 9000 });
+      const b = e.betreten || [], mk = (e.mk || []).find((x) => x.seite === 1) || {}, auf = (mk.torAuf || [])[0], gl = (mk.helfer || []).map((h) => Number(h.split("@")[1]))[0];
+      const kopf = "B5 CPU " + cpu + "× Zurück, Seite mit Marke, „gleich“ des Helfers (vorab), ohne Update, fassung.json 2 s, Lauf " + (n + 1) + ": ";
+      sage(e.markeErzwungen === true && mk.marke === true && gl != null, kopf + "der Weg wird wirklich geprüft (Marke, „gleich“ des Helfers)", JSON.stringify(mk));
+      sage(e.seiten === 1 && b.length === 1 && b[0].f === e.V && !e.blase && e.abNeuladen < (cpu > 1 ? 1700 : 1000),
+        kopf + "betreten einmal, sofort (nicht erst nach fassung.json): < " + (cpu > 1 ? 1700 : 1000) + " ms", zeile(e));
+      sage(auf != null && b.length && auf >= b[0].t - 5 && auf <= b[0].t + 300 && e.voll > 0,
+        kopf + "Start-Tor auf, wenn sie drin ist (nicht beim „gleich“, nicht erst nach fassung.json); danach die ganzen Blätter",
+        "„gleich“ " + gl + " ms, betreten " + (b[0] || {}).t + " ms, Tor auf " + auf + " ms, ganze Blätter " + e.voll + "/" + e.vollAlle);
     }
     if (sb) sb.srv.close();
   }

@@ -125,6 +125,7 @@ function rueckbauRueckkehr(y) {
   return y
     /* Nachbesserung 1 zu „rueckkehrfrist“ (I53): die Seite geht – Merker dmaFassungGeht, Start-Tor zu */
     .replace("weg=neu;window.dmaFassungGeht=Date.now();torZu();location.replace(adresse)", "weg=neu;location.replace(adresse)")
+    .replace('erstOk(w);if(w!=="neu")bleibtOk()};', "erstOk(w)};")   /* … und „bleibt die Seite“ (Start-Tor, ganze Blätter) */
     /* Fassung 886 (Rückkehr): Abbruch-Eintrag der vom Helfer ersetzten Seite wegräumen */
     .replace('{erstOk("frisch");try{var ab=JSON.parse(localStorage.getItem("dma-mess-abbruch")||"null");if(wechsel[0]==="*"&&ab&&String(ab.f)===wechsel[2])localStorage.removeItem("dma-mess-abbruch")}catch(e){}}else if(rueck', 'erstOk("frisch");else if(rueck')
     /* Nachbesserung 1 zu „Rückkehr“: Rückkehr-Merker, Tipp zählt nicht, Meldung an den Helfer, „halt“ beim Neuladen */

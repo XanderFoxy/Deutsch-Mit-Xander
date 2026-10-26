@@ -360,7 +360,8 @@ function schluessel(adresse, methode) {
     a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream", "Cache-Control": "no-store" });
     if (/\.html$/.test(p)) {
       let h = fs.readFileSync(f, "utf8").replace(/rolcktiryrvjzbwuvobb\.supabase\.co/g, HOST);
-      if (netz.neuF && p === "/index.html") h = h.replace(/window\.DMA_VERSION = "\d+";/, 'window.DMA_VERSION = "' + netz.neuF + '";');
+      /* SWZ: die neue Fassung nur unter der neuen Adresse (?f=) – sonst die alte (wie die Kopie im HTTP-Speicher beim Zurück) */
+      if (netz.neuF && p === "/index.html" && (!netz.nurMitF || /[?&]f=/.test(q.url))) h = h.replace(/window\.DMA_VERSION = "\d+";/, 'window.DMA_VERSION = "' + netz.neuF + '";');
       a.end(h); return;
     }
     fs.createReadStream(f).pipe(a);
@@ -401,6 +402,7 @@ function schluessel(adresse, methode) {
       if (process.env.LAUT) console.log("    [netz] " + (zustand.t0r ? ((Date.now() - zustand.t0r) / 1000).toFixed(2) + " s " : "") + zustand.phase + " " + zustand.modus + " " + methode + " " + req.url().slice(0, 160));
       const z = zaehler();
       z.gesamt++; z.je[k] = (z.je[k] || 0) + 1;
+      if (zustand.zeitLog) zustand.zeitLog.push({ t: Date.now(), k });   // SWZ: wann (echte Uhr), um sie der gehenden Seite zuzuordnen
       /* N: genau eine Anfrage bekommt nie eine Antwort */
       if (zustand.haengen && zustand.haengen.test(k) && !zustand.gehangen) { zustand.gehangen = true; return new Promise(() => {}); }
       /* Nachbesserung 4 — mitschreiben (FM) und einzelne Leseabfragen mit 500 scheitern lassen (VF, FM): 500 zieht die
@@ -1420,6 +1422,57 @@ function schluessel(adresse, methode) {
       fehlerPruefen(s);
       ergebnis.faelle.SWTOR = { netz: torOhneSpeicher, frist: t8, taste: Object.assign({ taste: Math.round(tipp) }, t4) };
       await s.ctx.close();
+    }
+    /* SWZ (Nachbesserung 1 zu „rueckkehrfrist“, Prüfbericht zu 69a00801; nicht im Standardlauf, Messung): RÜCKKEHR in den Raum
+       per ZURÜCK auf einer Seite aus dem Speicher (Marke), der Helfer sagt „gleich“ (index.html kommt – wie die Kopie im
+       HTTP-Speicher – noch in der alten Fassung), fassung.json meldet 887 nach SWZ_FJ ms (Vorgabe 250), CPU SWZ_CPU× (4).
+       Seit I52 öffnete das „gleich“ das Start-Tor; lädt der Wächter danach neu, startete die alte Seite Supabase. Gezählt:
+       Supabase-Anfragen der GEHENDEN Seite (vor ihrem pagehide, echte Uhr) und alle der Runde (30 s), Betreten je Seite,
+       Fassung am Ende. SWZ_N Läufe (2). Bewertet wird nicht – Zahlen für das Logbuch (verschiedene Stände über WURZEL). */
+    if (FAELLE.includes("SWZ")) {
+      abschnitt("SWZ", "Helfer an, Rückkehr per Zurück, Seite aus dem Speicher, „gleich“ auf die alte index.html, fassung.json " + (process.env.SWZ_OHNE ? "ohne Update" : "887") + " nach " + (process.env.SWZ_FJ || 250) + " ms, CPU " + (process.env.SWZ_CPU || 4) + "×");
+      const reihe = [];
+      for (let i = 0; i < Number(process.env.SWZ_N || 2); i++) {
+        const { s, ctl } = await mitHelfer({});
+        await s.ctx.addInitScript(() => {
+          if (window.top !== window) return;
+          try {
+            addEventListener("pagehide", () => { const l = JSON.parse(sessionStorage.getItem("__weg") || "[]"); l.push({ uhr: Date.now(), f: String(window.DMA_VERSION), marke: document.documentElement.hasAttribute("data-dma-speicher"), tor: window.dmaStartTor ? (window.dmaStartTor.offen ? "offen" : "zu") : "kein" }); sessionStorage.setItem("__weg", JSON.stringify(l)); });
+            let lc;
+            Object.defineProperty(window, "LiveChat", { configurable: true, get: () => lc, set: (v) => { lc = v; try { const b0 = v.betreten; v.betreten = function () {
+              const l = JSON.parse(sessionStorage.getItem("__betr") || "[]"); l.push({ uhr: Date.now(), f: String(window.DMA_VERSION) }); sessionStorage.setItem("__betr", JSON.stringify(l));
+              return b0.apply(this, arguments); }; } catch (e) {} } });
+          } catch (e) {}
+        });
+        /* das erste Neuladen unter dem Helfer legt die Seite erst ab */
+        await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+        await warte(4000);
+        await cpuBremse(s, Number(process.env.SWZ_CPU || 4));
+        await s.pg.evaluate(() => { sessionStorage.setItem("dma_livechat_zurueck", JSON.stringify({ raum: "pruefraum885", name: "Pruef", mitBild: false, zeit: Date.now() }));
+          sessionStorage.setItem("__weg", "[]"); sessionStorage.setItem("__betr", "[]"); });
+        Object.assign(netz, { neuF: process.env.SWZ_OHNE ? "" : "887", nurMitF: true, verz: 50, verzFj: Number(process.env.SWZ_FJ || 250) });
+        s.zustand.zeitLog = [];
+        const z = phase(s, "SWZ-" + i);
+        await s.pg.goto("about:blank").catch(() => {});
+        const t0 = Date.now();
+        await s.pg.goBack({ waitUntil: "commit", timeout: 20000 }).catch(() => {});
+        await warte(30000);
+        Object.assign(netz, { neuF: "", nurMitF: false, verz: 0, verzFj: 0 });
+        const l = await s.pg.evaluate(() => ({ f: window.DMA_VERSION, weg: JSON.parse(sessionStorage.getItem("__weg") || "[]"), betr: JSON.parse(sessionStorage.getItem("__betr") || "[]"),
+          lage: window.LiveChat && LiveChat.lage ? LiveChat.lage().lage : "?" })).catch((e) => ({ fehler: String(e).slice(0, 80) }));
+        const weg1 = (l.weg || []).find((x) => x.uhr > t0);
+        const alt = weg1 ? s.zustand.zeitLog.filter((x) => x.t >= t0 && x.t <= weg1.uhr) : [];
+        const r = { lauf: i + 1, helfer: ctl, f: l.f, lage: l.lage, seiten: (l.weg || []).filter((x) => x.uhr > t0).length + 1, gehend: weg1 || null,
+          anfragenGehend: alt.length, gehendJe: alt.reduce((o, x) => ((o[x.k] = (o[x.k] || 0) + 1), o), {}), anfragenGesamt: z.gesamt, ws: z.ws,
+          ersteAnfrage: s.zustand.zeitLog.length ? s.zustand.zeitLog[0].t - t0 : null,
+          profil: (s.zustand.zeitLog.find((x) => /^profiles\*/.test(x.k)) || {}).t - t0 || null,
+          betreten: (l.betr || []).filter((x) => x.uhr > t0).map((x) => ({ ab: x.uhr - t0, f: x.f })) };
+        console.log("  " + JSON.stringify(r));
+        reihe.push(r);
+        fehlerPruefen(s);
+        await s.ctx.close();
+      }
+      ergebnis.faelle.SWZ = { reihe };
     }
     /* SWMESS (nicht im Standardlauf; Messung zu I50): ohne Update, Helfer an – wann geht die erste Supabase-Anfrage hinaus,
        wann ist das eigene Profil da? Seite und fassung.json kommen nach D ms (MESS_D, Vorgabe 0,150,300,600), je MESS_N
