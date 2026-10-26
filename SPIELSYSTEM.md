@@ -7100,3 +7100,93 @@ Fuchs-Gedächtnis, die bleibt (das Kontingent geht vor). Mit Helfer kommt nichts
    nur mit Marke und innerhalb der Tagesgrenze (`tagFrei`, 8 am Tag). Eine Lücke gibt es dort also nicht; die frühere
    Aussage „eigener fetch, nicht über die Bremse“ war falsch. Eine Rückkehr-Zeile für messung.js (Rückkehr Offen 3)
    müsste die Sparsamkeit beachten (je Seite höchstens eine Zeile, Tagesgrenze).
+
+### Nachbesserung 1 (Prüfbericht zu b17223b7, 26.10.2026)
+
+**1. Wichtig – das Vorzeichnen in der Ruhepause holte mit Konto mehr als 807e6a7d (behoben).** Auf main (live) zeichnet der
+Seitenaufbau Weiterführende Links, Schwarmwissen und die erste Memory-Runde, bevor die Anmeldung wiederhergestellt ist: je
+eine Abfrage (nur die freigegebenen Links bzw. Tipps), keine Freundesliste. Der Ladezeit-Schritt D verlegt das in die
+Ruhepause nach `load` – dort ist das Konto schon da, also kamen `getMyUserLinks` + `getPendingUserLinks`,
+`getMyCommunityTips` + `getPendingCommunityTips` und `Backend.getFriends` dazu: Betreiber +4, Mitglied +2 Anfragen je Start
+(das eingesparte Anmeldebild schon abgezogen). An der Bremse vorbei ging nichts (in der 402-Sperre fängt sie alles ab), aber
+es weichte die Sparsamkeit der Notfall-Fassung auf, und die Abfragen waren verschenkt: der Tipp auf den Unterreiter holt
+ohnehin frisch, jeder Weg ins Memory mischt neu. 885-sparsam konnte es nicht sehen (jeder Fall zählt erst nach dem Profil
+bzw. nach 90 s). Die Aussagen „Gilt für Gäste und Konten gleich … unverändert“ (Abschnitt D) und „Sparsamkeit unverändert“
+(Bericht zum Einmischen) waren für Konten falsch; Abschnitt D ist an Ort und Stelle berichtigt.
+- **Gebaut (nur app.js):** `renderLinks("vorzeichnen")`, `renderTips("vorzeichnen")` und `newMemoryGame("vorzeichnen")` →
+  `renderMemory("vorzeichnen")` aus der Ruhepause holen nur, was der Seitenaufbau vor 886 holte: die freigegebene Liste
+  (gezeichnet wie damals, wie für einen Gast: ohne „meine in Prüfung“ und ohne Prüffeld), Memory ohne Freundesliste. Das
+  Öffnen bleibt wie bisher (Tipp auf den Unterreiter → alle drei Listen frisch). Kommt während der Abfrage ein frischer Aufruf
+  (Tipp), überschreibt das Vorgezeichnete ihn nicht (`linksLauf`, `tippsLauf`; vorher konnte das spätere Ende der ersten
+  Abfrage das Frische überdecken – mit nur einer Abfrage ist das Fenster kurz, aber nicht null).
+- **Sichtbar:** nichts gegen live. Verdeckt vorgezeichnet steht dasselbe wie auf main; beim Öffnen erscheinen „(du hast N in
+  Prüfung)“ und das Prüffeld nach der Antwort – wie auf main. Gegen den Zweig vor dem Einmischen kommt das Prüffeld beim
+  Betreiber damit eine Antwort später (dort war es schon vorgezeichnet, auf Kosten der zusätzlichen Abfragen).
+- **Gezählt** (nachgebautes Supabase, Sonde 885-sparsam SB/SM: die ersten 3 min ab dem Öffnen nach der Uhr der Seite, die
+  Startphase mitgezählt, sichtbar; SB Betreiber mit Merker `dma-walkie`, SM Mitglied ohne Rolle; verschränkt main → neu →
+  alt, je 3 Läufe plus Endläufe):
+
+  | Stand | SB alle Anfragen | SM alle Anfragen | user_links* (SB/SM) | community_tips* (SB/SM) | Freundesliste |
+  | --- | --- | --- | --- | --- | --- |
+  | 807e6a7d (main, live) | 180, 181, 180 · 180, 180 | 156, 156, 157 · 156 | 1 / 1 | 1 / 1 | 2 |
+  | b17223b7 (Merge ohne Nachbesserung) | 185, 184, 184 · 184, 185 | 158, 158, 158 · 158 | 3 / 2 | 3 / 2 | 3 |
+  | **Nachbesserung 1** | **179, 179, 179 · 179, 179** | **156, 155, 155 · 155** | **1 / 1** | **1 / 1** | **2** |
+
+  Gegen 807e6a7d also Betreiber −1, Mitglied −1 (Median; das Anmeldebild `site_content` 10 → 9 bzw. 11 → 10, weil das
+  Profil beim Start mit Konto nicht mehr verdeckt als Anmeldeformular gezeichnet wird); der Merge ohne Nachbesserung lag bei
+  +4/+5 bzw. +2, jedes Mal an genau diesen Endpunkten. Ein erster Satz mit dem Fenster „3 min ab dem Profil“ (je 5 Läufe)
+  zeigte dasselbe (Median main 180/156, neu 179/155, alt 184/158), schwankte aber beim Mitglied um einen ganzen Takt
+  (main 149, neu 161 in je einem Lauf: die Startphase läuft in Echtzeit, 5–10 s). Darum zählt die Sonde jetzt nach der Uhr
+  der Seite ab dem Öffnen (danach Spanne ≤ 1).
+- **Sonde 885-sparsam SB/SM** (neu, im Standardlauf): Links und Schwarmwissen je höchstens 1 Abfrage, Freundesliste
+  (`friends?…status=eq.accepted`, einzeln mitgeschrieben – der Takt holt nur die Anfragen ohne `status`) nicht öfter als auf
+  807e6a7d (2), alle Anfragen ≤ 807e6a7d + 1 Rauschen (SB 182, SM 158); dazu bei SB das Öffnen: Tipp auf „Weiterführende
+  Links“ und „Schwarmwissen“ holt je 3 Listen und zeigt das Prüffeld, Memory holt die Freundesliste. Grün auf 807e6a7d und
+  auf diesem Stand; **Gegenprobe b17223b7: 7 rot** (SB Links 3, Schwarmwissen 3, Freundesliste 3, gesamt 184 > 182; SM
+  Links 2, Schwarmwissen 2, Freundesliste 3 – gesamt 158 liegt in der Grenze, die Endpunkte nicht). Das Öffnen ist auf
+  allen drei Ständen gleich.
+
+**2. Klein – Beleg für 694-leistung (berichtigt).** Die gemeldete Gegenprobe „auf 807e6a7d und 5aaec640“ lief beide Male
+auf dem Merge: die Sonde las WURZEL nicht (`const WURZEL = path.join(__dirname, "..")`), in beiden Belegen
+(`l886/einmischen/main-694/`, `…/zweig-694/`) steht `min/app.js?v=f62f17a646`, der Stempel des Merges. Nachgeholt aus den
+echten Bäumen (`cd gegen886/e-main` bzw. `e-zweig`, `node werkzeug/pruefe-694-leistung.js`; Belege `…/main-694-echt/`,
+`…/zweig-694-echt/`): main `min/app.js?v=01bfa0ac7c`, Zweig `…?v=3a2a734917`, je 16 ok und genau dieselbe Zeile 2 rot
+(„beim erneuten Öffnen … 6 Anfragen ans Netz“: `min/spiel.js?v=…`, `index.html?mit-sw`, `fassung.json`, `sw.js`,
+`filme/liste…`). „Kein Rückschritt“ stimmt also, nur der Beleg war falsch. Damit das nicht wieder geschieht, lesen
+694-leistung, runde99-rueckfrage, 867-spiel-nach-start und ladezeit jetzt WURZEL wie die anderen Sonden, 885-gast außer dem
+ersten Argument auch WURZEL.
+
+**3. Klein – „FASSUNG 885“ für zwei Dinge in werkzeug/ (behoben).** Die Kommentare der Ladezeit-Arbeit in den Werkzeugen
+heißen jetzt „FASSUNG 886“ bzw. „Fassung 886“ (38 Zeilen in 15 Dateien, nur Kommentare und Ausgabetexte; die Sondennamen
+`pruefe-885-*.js` bleiben). Wo die Notfall-Fassung gemeint ist, steht jetzt „Notfall“ dabei (runde99-rueckfrage, 885-gast,
+werkstatt-setzen.py). **Nicht umbenannt: `werkzeug/teile-bauen.js` (2 Zeilen)** – die Bau-Kennung der App-Stücke und der
+Stücke von data-exercises.js wird über diese Datei selbst gerechnet; ein geänderter Kommentar dort hieße für jedes Gerät
+min/data-exercises.js und min/data-exercises-teil.js neu laden (gepackt rund 200 KB) für nichts. min/ ist nach dem
+Umbenennen Byte für Byte gleich (nur `min/.quelle.json` trägt die neue Prüfsumme von app-teile.json).
+
+**4. Klein – Offen 3 (messung.js) berichtigt:** `mess-start` geht über die Bremse (oben, Offen 3).
+
+Gegenprobe zum versteckten Start (Prüferskript Q3b: Start mit `dma-walkie`, gleich nach dem Profil verdeckt, 10 min, ein
+Paar): diese Fassung 125, 807e6a7d 126 (Prüfer am Merge ohne Nachbesserung: 130 gegen 126) – user_links*, community_tips*
+je 1, friends* 4 wie main, `site_content` 7 statt 8.
+
+**Sonden nach Nachbesserung 1** (alle nacheinander, auf min/, Supabase überall nachgebaut; Rohdaten
+`l886/einmischen/nb1-alle/`, Wiederholungen `…/nb1-nach/`):
+
+| Sonde | Ergebnis |
+| --- | --- |
+| 885-sparsam (Notfall, jetzt 24 Fälle mit SB/SM) | 97 ok, alles grün – A sichtbar 277 (main 277), B verdeckt 40 (40), SB 179 (Grenze 182), SM 155 (158) |
+| 885-gast | 4 ok |
+| 885-messen, -swvorladen, -stuecke, -bereiche, -schale, -ueber, -praesenz, -schlank, -rueckkehr | 47, 27, 43, 56, 72, 22, 69, 42, 233 ok – alles grün (messen und swvorladen im zweiten Lauf, s. u.) |
+| 884-notweg, 884-beta, 884-leitung, 876-start-schlank | 91, 22, 40, 62 ok |
+| runde99-rueckfrage, 871-leitung-frisch, 859-kanal-sofort, 867-spiel-nach-start, ladezeit | 30, 15, 9, 13, 5 ok |
+| 694-leistung | 16 ok, 1 rot – dieselbe Zeile 2 wie auf main und Zweig aus ihren eigenen Bäumen (s. o.); mit `WURZEL=e-main` aus diesem Baum gestartet jetzt wirklich main (`min/app.js?v=01bfa0ac7c`, 25 Skripte, dieselbe Zeile rot) |
+
+Im ersten Durchgang zwei rot, beide nicht vom Code:
+- **885-swvorladen 11** („Sonde 694: die zu ersetzenden Zeilen sind nicht (genau einmal) da“): die Sonde schreibt eine Kopie
+  von pruefe-694-leistung.js um und suchte die alte WURZEL-Zeile, die diese Nachbesserung geändert hat. Sie nimmt jetzt beide
+  Fassungen der Zeile; danach 27 ok (11: mit diesem sw.js dasselbe wie mit dem alten, nur der bekannte spiel.js-Wettlauf).
+- **885-messen 17 (A/A-Rauschprobe):** Wissen −31 ms gegen ± 30 (p 0,22, nicht deutlich) – wie schon beim Einmischen; allein
+  wiederholt −9 ms, 47 ok. Die Probe misst nur das Rauschen des Werkzeugs.
+
+**Datenbank:** nicht benutzt (alles nachgebaut).

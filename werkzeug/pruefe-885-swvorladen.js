@@ -312,7 +312,10 @@ try { ALT_SW = execFileSync("git", ["-C", REPO, "show", "02613a71:sw.js"], { std
   else if (!ALT_SW) sage(false, "11 alter Helfer (git show 02613a71:sw.js) nicht lesbar");
   else {
     const quelle = fs.readFileSync(path.join(__dirname, "pruefe-694-leistung.js"), "utf8");
-    const z1 = 'const WURZEL = path.join(__dirname, "..");', z2 = "    const f = path.join(WURZEL, p);", z3 = "|| !f.startsWith(WURZEL) ||";
+    /* FASSUNG 886 (Einmischen, Nachbesserung 1) — 694 liest jetzt WURZEL; beide Fassungen der Zeile gelten */
+    const z1 = ['const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");',
+      'const WURZEL = path.join(__dirname, "..");'].find((z) => quelle.split(z).length === 2) || "(Zeile mit WURZEL fehlt)";
+    const z2 = "    const f = path.join(WURZEL, p);", z3 = "|| !f.startsWith(WURZEL) ||";
     if (![z1, z2, z3].every((z) => quelle.split(z).length === 2)) sage(false, "11 Sonde 694: die zu ersetzenden Zeilen sind nicht (genau einmal) da");
     else {
       const d = fs.mkdtempSync(path.join(os.tmpdir(), "dma-885-sw-694-"));
