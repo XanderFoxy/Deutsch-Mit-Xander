@@ -283,7 +283,11 @@ function server(wurzel) {
   const rvM = minApp.match(/function raumVorbereiten\((\w*)\)\{[\s\S]*?\n?function /);
   const rv = rvM ? rvM[0] : "", rvArg = rvM ? rvM[1] : "";
   sage(/dmaPraesenzLos/.test(rv), "raumVorbereiten (Tipp, Rückkehr, Betreten) startet die Präsenz (dmaPraesenzLos)", rv ? "" : "raumVorbereiten nicht gefunden");
-  sage(/setTimeout\(\(\)=>dmaPraesenzLos\(!1\),4e3\)/.test(minApp), "die 4 s nach dem Start rufen dieselbe Funktion (einmal, wer zuerst kommt), mit Mithörer");
+  /* Fassung 886 (Einmischen, Nachbesserung 2, I50): auf einer Seite aus dem Speicher warten die 4 s auf das Start-Tor
+     (window.dmaStartTor) – sonst sofort, wie bisher */
+  sage(/setTimeout\(\(\)=>dmaPraesenzLos\(!1\),4e3\)/.test(minApp)
+    || /setTimeout\(\(\)=>\{const (\w+)=window\.dmaStartTor;\1&&!\1\.offen\?\1\.then\(\(\)=>dmaPraesenzLos\(!1\)\):dmaPraesenzLos\(!1\)\},4e3\)/.test(minApp),
+    "die 4 s nach dem Start rufen dieselbe Funktion (einmal, wer zuerst kommt), mit Mithörer (auf einer Seite aus dem Speicher nach dem Start-Tor)");
   /* Nachbesserung 1: nur der Tipp auf die Pille gibt „tipp“ mit; ohne meldet dmaPraesenzLos keinen Mithörer an */
   const pille = (minApp.match(/\[data-sub="sub-livechat"\]'\)\?\.addEventListener\("click",\(\)=>\{[^}]{0,80}/) || [""])[0];
   sage(/raumVorbereiten\(!0\)/.test(pille), "der Tipp auf die Pille „Klassenzimmer“ ruft raumVorbereiten(tipp)", pille.slice(0, 120) || "Pille nicht gefunden");

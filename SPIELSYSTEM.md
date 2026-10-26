@@ -7255,8 +7255,8 @@ Nachtrag; „sogar eine Anfrage darunter“ (Bericht zu Nachbesserung 1) ist obe
   | SWL (CPU 1×, D = 5 500) | 58 → **56**, Echtzeit 1 | 56 → 100, Echtzeit **2** | 57 → 57, Echtzeit 1 |
   | SWa4 (CPU 4×, D = 300) | 59 → **59** | 59 → 67 | 60 → 60 |
   | SWc4 (CPU 4×, D = 1 000) | 59 → **58** | 59 → 71 | 60 → 61 |
-  | SWT (erstes Öffnen des Tages, Supabase 250 ms, D = 1 000) | 96 → **96**, Belohnung 1 / **1** | 96 → 133, Belohnung 1 / **2** | 90 → 90, 1 / 1 |
-  | SWT6 (dasselbe, D = 600) | 97 → **96**, 1 / 1 | 97 → 112, 1 / 1 | 91 → 91, 1 / 1 |
+  | SWT (erstes Öffnen des Tages, Supabase 250 ms, D = 1 000) | **89 → 89**, Belohnung 1 / **1** (vor Punkt 7: 96 → 96) | 96 → 133 · 98 → 132, Belohnung 1 / **2** (beide Läufe) | 90 → 90 · 90 → 90, 1 / 1 |
+  | SWT6 (dasselbe, D = 600) | **89 → 89**, 1 / 1 (vor Punkt 7: 97 → 96) | 97 → 112 · 97 → 112, 1 / 1 | 91 → 91 · 90 → 91, 1 / 1 |
   | SW402 (402-Sperre, D = 5 500) | 8 → **7** | 8 → 14, Echtzeit 2 | 11 → 11 |
 
   Mit dem Tor schickt das Öffnen nach einem Update so viel wie ein gewöhnlicher Start – wie live. Die Anmeldebelohnung geht
@@ -7286,12 +7286,14 @@ Nachtrag; „sogar eine Anfrage darunter“ (Bericht zu Nachbesserung 1) ist obe
   war das Netz schneller (S1 nimmt dann die frische Seite, kein Tor).
 - **Sonde 885-sparsam, neue Fälle (im Standardlauf):** SWa, SWc, SWL, SWa4, SWc4 – Update-Runde ≤ Bezug + 3, höchstens
   eine Echtzeit-Leitung, am Ende 887 mit Profil; SWT/SWT6 – die Anmeldebelohnung genau einmal (ohne und mit Update),
-  Update-Runde ≤ Bezug + 3; SW402 – in der Sperre ≤ Bezug + 2; SWTOR – das Tor selbst, ohne Update: Seite aus dem Netz →
+  Update-Runde ≤ Bezug + 3, dazu (Punkt 7) der Start ohne Update ≤ 807e6a7d + 1 (92); SW402 – in der Sperre ≤ Bezug + 2; SWTOR – das Tor selbst, ohne Update: Seite aus dem Netz →
   kein Tor; Seite aus dem Speicher und fassung.json nach 8 s → die erste Anfrage zur Frist (gemessen 6 000 ms), nicht vorher;
   fassung.json nach 4 s und ein Tastendruck nach 2,5 s → die erste Anfrage gleich danach (2 574 ms), Profil da.
-  **Dieser Stand 46 ok, alles grün.** **Gegenprobe c57cdb8b: 14 rot** (Update-Runde 86/92/100/67/71, SWL zwei
+  **Dieser Stand 46 ok, alles grün** (vor Punkt 7; im Sammellauf mit Punkt 7: 48 ok, Update-Runde 56/59/56/58/56 gegen
+  Bezug 56/56/56/59/59, SWT/SWT6 89 → 89 und 90 → 89, SW402 7 → 7, Tor 6 000 ms bzw. 2 526 ms nach der Taste bei 2 513). **Gegenprobe c57cdb8b: 14 rot** (Update-Runde 86/92/100/67/71, SWL zwei
   Echtzeit-Leitungen, SWT 133 und die Belohnung zweimal, SWT6 112, SW402 14; SWTOR 4 – dort gibt es kein Tor, die erste
-  Anfrage geht nach 0,1–0,2 s). **807e6a7d: SWa…SW402 grün** (38 ok; SWTOR prüft S1 und läuft dort nicht). Dazu der
+  Anfrage geht nach 0,1–0,2 s); die Prüfung aus Punkt 7 dort zwei weitere rot (98/97). **807e6a7d: SWa…SW402 grün**
+  (38 ok; SWTOR prüft S1 und läuft dort nicht; Punkt 7 dort grün, 90/90). Dazu der
   Messfall SWMESS (nicht im Standardlauf) und der Schalter `SW_RUNDE_MS` (längere Runde).
   Rohdaten: Zwischenordner `l886/einmischen/nb2/` (`sw-neu`, `sw-c57c`, `sw-main`, `mess-<paar>-<stand>`, `auswerten.js`);
   Vergleichsbaum c57cdb8b: `gegen886/e-c57c` (git archive, große Ordner verlinkt).
@@ -7311,7 +7313,7 @@ von teile-bauen.js nachziehen (Offen 5).
 
 **5. Klein – keine Sparsamkeits-Sonde sah S1.** 885-sparsam lief nur mit gesperrtem Helfer, 885-schale und 885-rueckkehr
 zählen keine Supabase-Anfragen. Die Aussagen „Sparsamkeit wie live, sogar −1“ galten nur für den Start ohne Helfer und ohne
-Update – berichtigt (oben und im Funk-Text). Den Weg mit Helfer und Update prüfen jetzt die Fälle SW… (Punkt 1).
+Update – berichtigt (oben und im Funk-Entwurf unten). Den Weg mit Helfer und Update prüfen jetzt die Fälle SW… (Punkt 1).
 
 **6. Klein – 885-bereiche sprach wahrscheinlich das echte Supabase an (behoben).** index.html (`preconnect`) und
 supabase-config.js kamen dort mit dem echten Host; `ctx.route` fängt nur HTTP ab – Echtzeit-Websockets und das
@@ -7319,6 +7321,74 @@ Vorverbinden gingen über den Proxy der Sitzung hinaus (der Prüfer sah `connect
 lief; schon vor dem Einmischen so). Jetzt ersetzt die Sonde den Host beim Ausliefern durch die Attrappe (wie 885-sparsam),
 Chromium startet ohne Proxy (der Rest der Welt bleibt per `host-resolver-rules` unauffindbar), und Teil **Z** schreibt jeden
 Websocket-Versuch mit: keiner zum echten Host.
+
+**7. Selbst gefunden beim Zählen von Punkt 1 – mit langsamer Antwort zeichnete die Ruhepause das Profil doppelt
+(behoben).** Schon ohne Update schickte ein gewöhnlicher Start mit Supabase-Antwortzeit 250 ms (Fall SWT, Bezug) **96–97
+statt 90–91 Anfragen** in 30 s (807e6a7d), in 120 s 132 statt 126 – c57cdb8b genauso, also aus der Ladezeit-Arbeit
+(Schritt D, Profil verdeckt in der Ruhepause), nicht vom Tor. Mit Zeitstempeln nachgesehen: Notifications, Playlist,
+Freundesliste, Prüffeld (`community_texts?status=eq.pending`), neue Mitglieder und „zuletzt aktiv“ kamen je zweimal im
+Abstand von ~0,12 s. Ursache: die Ruhepause nach `load` zeichnet das Profil, „falls bis dahin noch nicht gezeichnet“ – bei
+langsamer Antwort ist das Konto da (`demo.user` steht vor dem Profil), restoreSession aber noch nicht fertig; danach zeichnet
+restoreSession es noch einmal. Ohne Wartezeit kam restoreSession vorher und die Ruhepause ließ es aus – deshalb sahen
+SB/SM (ohne Antwortzeit) nichts. Dasselbe hätte das Tor auf einer Seite aus dem Speicher mit langsamer fassung.json-Antwort
+ausgelöst. **Jetzt** (app.js): die Ruhepause wartet auf die Anmeldung samt ihrem eigenen Zeichnen (`anmeldungDa`, das
+Versprechen von `restoreSession().then(…)`) und zeichnet nur, wenn danach noch nichts gezeichnet ist (scheitert der Weg,
+zeichnet sie wie bisher). Unsichtbar: das Profil ist verdeckt und wird nach der Anmeldung gezeichnet wie auf live. Gezählt:
+SWT/SWT6 Bezug 89/89 (807e6a7d 90/90, 90/91), in 120 s 125 (807e6a7d 126). Sonde: SWT/SWT6 prüfen jetzt auch den Start
+gegen 807e6a7d (≤ 92; c57cdb8b 98/97 rot, main 90/90 grün).
+
+**Sonden nach Nachbesserung 2** (alle nacheinander, auf min/, Supabase überall nachgebaut; Rohdaten
+`l886/einmischen/nb2-alle/`, Wiederholungen `…/nb2/x5/`, `…/nb2/885-praesenz-neu.txt`):
+
+| Sonde | Ergebnis |
+| --- | --- |
+| 885-sparsam (Notfall + SB/SM + SW…, 33 Fälle) | 144 ok, **1 rot: X5** (s. u.) – A sichtbar 277 (main 277), B verdeckt 40 (40), SB 179 (Grenze 182), SM 155 (158), SW… 48 ok |
+| 885-gast | 4 ok |
+| 885-messen, -swvorladen, -stuecke, -bereiche, -schale, -ueber, -schlank, -rueckkehr | 47, 27, 43, **57** (neu: Z, kein Websocket zum echten Host), 72, 22, 42, 233 ok – alles grün |
+| 885-praesenz | 68 ok, 1 rot im Sammellauf: Teil Q las die 4-s-Zeile Zeichen für Zeichen (`setTimeout(()=>dmaPraesenzLos(!1),4e3)`) – sie wartet jetzt auf einer Seite aus dem Speicher auf das Tor. Die Sonde nimmt jetzt beide Formen; wiederholt **69 ok** |
+| 884-notweg, 884-beta, 884-leitung, 876-start-schlank | 91, 22, 40, 62 ok |
+| runde99-rueckfrage, 871-leitung-frisch, 859-kanal-sofort, 867-spiel-nach-start, ladezeit | 30, 15, 9, 13, 5 ok |
+| 694-leistung | 16 ok, 1 rot – dieselbe Zeile 2 wie auf main und Zweig (bekannt, s. Nachbesserung 1) |
+
+`node --check` für app.js, backend.js, min/app.js samt Stücken, min/backend.js und die vier geänderten Sonden; die 9
+Inline-Skripte in index.html fehlerfrei übersetzt (`vm.Script`). Gewicht gegen c57cdb8b (gzip -9): index.html +175 B
+(der Block des Tors; die neuen Stempel ändern gepackt nichts), min/backend.js +30 B, min/app.js +48 B; die App-Stücke tragen die neue Bau-Kennung.
+
+**X5** („503 für 10 min, danach ein Tipp auf eine leere Fläche: binnen 10 s die Blase“) war im Sammellauf einmal rot:
+nach dem Tipp **keine einzige** Anfrage in 10 s. Allein wiederholt: dieser Stand **7 von 7 grün** (je 0 s), c57cdb8b 3 von
+3 grün; in den Läufen davor (Einmischen, Nachbesserung 1, Prüfer) 9 von 9 grün. Der Weg des Falls (Seite aus dem Netz,
+Helfer gesperrt) hat kein Tor (`dmaStartTor` = null), und die Ruhepause (Punkt 7) hatte nach 11 min längst gezeichnet. Nicht
+belegte Vermutung: ein Zeitzufall der Bremse (Pausen ±20 %): hat seit dem letzten Anziehen noch kein Takt ausgesetzt
+(`notifyVerpasst` falsch), holt das Tipp-Fenster nichts nach, und die Blase kommt erst mit dem nächsten Takt (≤ 20 s) – das
+wäre ein Rand der Notfall-Bremse selbst, nicht dieses Schritts (Offen 8).
+
+**Funk-Entwurf (Nachbesserung 2):** „Beim Zusammenführen mit der Notfall-Fassung habe ich noch zwei Stellen gefunden und
+behoben, an denen der Ladezeit-Entwurf mehr bei Supabase abfragte als live. Erstens: Seit die Seite zuerst aus dem Speicher
+kommt, hat nach jedem Update kurz die ALTE Seite schon alle Daten abgefragt, bevor sie durch die neue ersetzt wurde – beim
+ersten Öffnen nach einem Update fast doppelt so viele Anfragen (bis 103 statt 57), und am ersten Öffnen des Tages kam die
+Anmeldebelohnung manchmal doppelt. Jetzt wartet die alte Seite, bis klar ist, ob draußen eine neue Fassung liegt: das
+Öffnen nach einem Update fragt so viel ab wie live, die Belohnung kommt genau einmal. Zweitens: Bei langsamer Verbindung
+wurde dein Profil im Hintergrund doppelt gezeichnet (6 Anfragen mehr je Start) – auch das ist weg. Der Preis: auf einem
+schnellen Handy kommen deine Daten nach dem Öffnen um die Antwortzeit des Servers später als im Entwurf (über 4G meist
+0,1–0,3 s) – das Bild nicht, und gegen die Live-Fassung ist es immer noch gleich schnell oder schneller. Sichtbar ändert sich nichts. Und eine Berichtigung: ‚sogar
+eine Anfrage weniger als live‘ war zu viel gesagt – es sind gleich viele bzw. eine weniger.“
+
+**Offen (Nachbesserung 2)** – die Punkte 1–3 von oben gelten weiter, dazu:
+4. Beim Ausliefern als 886 und wann immer sich main ändert: die festen Bezugswerte aus main neu messen – `REF_START3`
+   (SB/SM) und die Grenze 92 der Fälle SWT/SWT6 (je 3 Läufe auf dem main-Baum).
+5. `werkzeug/teile-bauen.js`: die zwei Kommentarzeilen „FASSUNG 885“ beim nächsten echten Umbau der Datei auf 886 ziehen
+   (nicht vorher – sonst laden alle Geräte die Stücke von data-exercises.js für nichts neu).
+6. Das Tor kostet auf einer Seite aus dem Speicher ohne Update die Antwortzeit von fassung.json bis zu den ersten Daten
+   (schnelles Telefon, Tabelle oben; gegen live nie langsamer). Schneller ginge es nur, wenn die Seite die Fassung früher
+   wüsste – etwa der Helfer meldet sie jeder Seite, sobald seine Auffrischung sie gelesen hat (wie bei der Rückkehr). Nicht
+   gebaut: die Auffrischung ist index.html (größer als fassung.json) und beginnt nur um den Start der Inline-Skripte früher;
+   ob das draußen etwas bringt, wäre erst zu messen.
+7. Andere Sonden schicken auch Anfragen an fremde Hosts hinaus (der Proxy der Sitzung meldete während der Läufe des
+   Prüfers `connect_rejected` für www.google.com, api.open-meteo.com, cdn.jsdelivr.net u. a. – kein Supabase). Nicht Teil
+   dieses Punkts; wo es Supabase beträfe, gilt die Regel „immer nachgebaut“ wie in 885-bereiche.
+8. X5 in 1 von 8 Läufen dieses Stands rot (oben): die Vermutung prüfen (Zustand von `notifyVerpasst` und der Bremse beim Tipp
+   mitschreiben) und, falls sie stimmt, das Tipp-Fenster auch ohne ausgelassenen Takt einmal holen lassen – nur bei
+   429/5xx, nicht in der 402-Sperre (Sparsamkeit).
 
 #### I50 — FASSUNG 886 — Start-Tor: auf einer Seite aus dem Speicher wartet Supabase auf den Fassungs-Wächter (Block Fassungs-Wächter)
 Jetzt in index.html: `/* 886 (I50) */` (vor `var tor = null, torNeu = false;`; die Kommentare in index.html stehen an der

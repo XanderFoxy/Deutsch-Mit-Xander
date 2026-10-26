@@ -136,7 +136,8 @@
            nach 2,5 s → die erste Anfrage vor 3,5 s (der Wächter lädt dann nicht mehr von selbst neu); Profil am Ende da.
      Gegenprobe c57cdb8b (ohne Tor): 14 rot – Update-Runde 86/92/100/67/71 gegen 56–59 (SWL zwei Echtzeit-Leitungen),
      SWT 133 gegen 96 und die Anmeldebelohnung zweimal, SWT6 112 gegen 97, SW402 14 gegen 8; SWTOR 4 (dort gibt es kein
-     Tor, die erste Anfrage geht nach 0,1–0,2 s). 807e6a7d (live, Seite zuerst aus dem Netz): SWa…SW402 grün.
+     Tor, die erste Anfrage geht nach 0,1–0,2 s); mit der später dazugekommenen Prüfung „Start ≤ 807e6a7d + 1“ bei SWT/SWT6
+     zwei mehr (98/97). 807e6a7d (live, Seite zuerst aus dem Netz): SWa…SW402 grün.
    Die Sperre der Echtzeit-Leitung ist jetzt nachgestellt wie in Wirklichkeit
    (Nachbesserung 2): Supabase lehnt schon den Handshake ab, die Verbindung
    öffnet sich nie und schließt mit 1006 (eigener WebSocket-Ersatz, solange
