@@ -124,8 +124,8 @@
         und fassung.json je 2 s, CPU 1× und 4×; B1z dasselbe mit Zurück
         (history.back ohne bfcache): betreten höchstens 150 ms nach 884
         (mit BEZUG884=<baum> verschränkt gegen 884, Median; sonst gegen eine
-        feste Grenze aus der Messung: 884 hier 0,24–0,32 s bei CPU 1×,
-        ~1,0–1,2 s bei CPU 4×). B2 Öffnen mit Update (alte index.html aus
+        feste Grenze aus der Messung: 884 hier 0,26 s bei CPU 1×, 1,07 s
+        bei CPU 4×, je + 150 ms). B2 Öffnen mit Update (alte index.html aus
         dem HTTP-Speicher): ebenso schnell, betreten genau einmal, danach
         kein Neuladen. B3 der Browser hat index.html nicht mehr frisch
         (no-cache) – die Seite kommt mit Marke: B3a ohne Update, B3b mit
@@ -376,8 +376,9 @@ async function lauf(br, sv, o) {
   return e;
 }
 lauf.k = 0;
-/* Teil B ohne BEZUG884: 884 (6b724580) gemessen, Öffnen ohne Update, D = 2 s, Median aus 6 Paaren (SPIELSYSTEM.md „Rückkehr: Frist“) */
-const FEST884 = { 1: 270, 4: 1000 };
+/* Teil B ohne BEZUG884: 884 (6b724580) gemessen, Öffnen ohne Update, D = 2 s, Median (CPU 1×: 260 ms aus 6 Paaren; CPU 4×: 1108
+   aus 6 und 1035 aus 12 Paaren → 1070; SPIELSYSTEM.md „Frist (rueckkehrfrist)“) */
+const FEST884 = { 1: 260, 4: 1070 };
 /* grobe Zeitgrenze für betreten ab dem Neuladen (Nachbesserung 1) */
 const grenze = (fa) => fa.D + (fa.cpu > 1 ? 1800 : 900);
 const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Seiten " + e.seiten + ", betreten " + JSON.stringify((e.betreten || []).map((b) => b.seite + ":" + b.t + "ms/" + b.f))

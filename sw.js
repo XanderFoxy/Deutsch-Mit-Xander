@@ -418,8 +418,9 @@ function neuer(a, b) {
      - ist die Auffrischung NEUER: der Helfer lädt die Seite selbst neu (WindowClient.navigate, dieselbe Adresse wie der
        Wächter, ?f=<neu>) – genau einmal, bis 4,5 s nach dem Öffnen (886, s. unten); „halt“ (die Rückkehr geht doch auf dieser Seite hinein,
        oder der Wächter lädt selbst neu) hebt es auf. Die neue Seite fragt nicht noch einmal (Merker dma-wechsel „*“).
-     - hat die Anfrage DIESER Navigation dieselbe Fassung gebracht: „gleich“ an die Seite. Die Seite glaubt das nur beim
-       Neuladen (dann hat der Browser beim Server nachgefragt) und geht dann hinein, ohne auf fassung.json zu warten.
+     - hat die Anfrage DIESER Navigation dieselbe Fassung gebracht: „gleich“ an die Seite. Die Seite glaubt das seit 886
+       („rueckkehrfrist“) auch beim Öffnen – die Vorab-Antwort ist genau die Seite, die bis 884 kam (aus dem Netz oder dem
+       HTTP-Speicher des Browsers) – und geht dann hinein, ohne auf fassung.json zu warten (index.html I52).
      - sonst „nichts“. Antwortet fassung.json mit einem Fehler, wartet die Rückkehr auf diese Antwort des Helfers (sonst
        ging sie auf der alten Seite hinein, obwohl der Helfer die neue schon hat).
    Gemessen und verworfen: die alte Seite vor ihren Skripten anhalten, bis der Helfer entschieden hat (kostete auf

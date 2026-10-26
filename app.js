@@ -70311,9 +70311,9 @@
          bis 884 kam die Seite aus dem Netz, immer neu). Jetzt wartet das Hineingehen auf die erste Antwort des
          Wächters (window.dmaFassungErst): gleich → sofort hinein; neue Fassung → der Wächter lädt genau einmal neu,
          hinein geht erst die neue Seite (dieselbe Rückkehr; sie fragt nicht noch einmal, Merker dma-wechsel); Fehler/kein
-         Netz → sofort hinein. Nicht gewartet wird nur, wenn die Seite sicher frisch ist (Neuladen, nicht aus dem
-         Speicher des Helfers – wie bis 884), sonst höchstens bis 6 s nach dem Öffnen (dieselbe Frist, nach der der Helfer
-         bis 884 die gespeicherte Seite nahm).
+         Netz → sofort hinein. Gewartet wird (seit „rueckkehrfrist“, s. u.) nur auf einer Seite aus dem Speicher des
+         Helfers, höchstens bis 6 s nach dem Öffnen (dieselbe Frist, nach der der Helfer bis 884 die gespeicherte Seite
+         nahm).
          Hat die Seite die neue Fassung schon vorher gesehen (Blase), kommt sie beim Neuladen wie bis 884 aus dem Netz
          (sw.js, „draussen“). Gemessen gegen 884 und was offen bleibt: SPIELSYSTEM.md „Fassung 886 — Rückkehr …“;
          Sonde pruefe-885-rueckkehr.js.
@@ -70335,9 +70335,12 @@
            Speicher des Helfers kommt (Marke data-dma-speicher, sw.js); eine Seite aus dem Netz oder aus dem HTTP-Speicher geht
            jetzt wie bis 884 sofort hinein. Ist sie doch alt (eine neue Fassung kam in den ≤ 10 min, die der Browser seine
            Kopie behält), zeigt der Wächter im Raum die Blase – kein Neuladen mitten im Verbinden (884 lud dort neu und ging
-           ein zweites Mal hinein). Mit Marke wird weiter gewartet (Neuladen: höchstens so lange wie 884 auf das Netz; beim
-           Öffnen gilt jetzt auch das „gleich“ des Helfers, index.html I52) – Messung und die verworfene kurze Frist:
-           SPIELSYSTEM.md „Rückkehr: Frist (rueckkehrfrist)“. */
+           ein zweites Mal hinein). Mit Marke wird weiter gewartet – höchstens so lange, wie 884 auf seine Seite wartete: der
+           Helfer antwortet, sobald er die Vorab-Antwort dieser Navigation hat (genau die Seite, die 884 zeigte), und sein
+           „gleich“ gilt jetzt auch beim Öffnen (index.html I52). Gemessen (6 Paare gegen 884): Öffnen/Zurück ohne Update
+           D = 0,25 / 0,8 / 2 s +24 / +21 / −5 ms (CPU 1×, Rauschen), Zurück −12, CPU 4× bei 12 Paaren 0 / +5. Eine kurze
+           feste Frist (1,2 s) wurde gemessen und nicht gebaut: 1 s früher nur dort, wo 884 selbst so lange wartete, dafür
+           mit Update 6 von 6 auf der alten Fassung (884: neu). SPIELSYSTEM.md „Frist (rueckkehrfrist)“. */
         if (!erst || !document.documentElement.hasAttribute("data-dma-speicher")) return Promise.resolve();
         return new Promise((ok) => {
           const uhr = setTimeout(ok, Math.max(0, 6000 - performance.now()));
