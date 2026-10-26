@@ -11,17 +11,31 @@
    foto (1 369 667 Byte, 4632 × 6176 Pixel), obwohl es nur 76 × 76 Punkte groß
    gezeigt wird (84 px minus 2 × 4 px Rahmen, box-sizing: border-box). Dazu
    loading="lazy": geholt wurde es erst nach dem ersten Layout.
-   DIESES WERKZEUG baut aus dem Original drei kleine Kopien für 1x/2x/3x
-   (76, 152, 228 Pixel, WebP), genau so zugeschnitten wie object-fit: cover
-   es zeigt (die Mitte, quadratisch), und schreibt sie mit Stempel (?v= aus
-   dem Inhalt) in index.html. Danach hält der Pre-Commit-Haken
-   (fassung-setzen.js --nur-stempel) die Stempel aktuell.
+   DIESES WERKZEUG baut aus dem Original kleine Kopien (WebP), genau so
+   zugeschnitten wie object-fit: cover es zeigt (die Mitte, quadratisch), und
+   schreibt sie mit Stempel (?v= aus dem Inhalt) als src/srcset in index.html.
+   Danach hält der Pre-Commit-Haken (fassung-setzen.js --nur-stempel) die
+   Stempel aktuell.
+   WELCHE GRÖSSE – „es muss gleich aussehen“: Chrome malt ein großes Bild nicht
+   aus dem Original, sondern aus einer Mip-Stufe (das Bild je Stufe halbiert,
+   Kästchen-Mittel), und zwar der kleinsten, die noch mindestens so groß ist
+   wie die Fläche auf dem Schirm; das Kippen um −3° (.avatar-wrap) tastet
+   daraus ab. Beim heutigen Original (Seite 4632) sind das 144,75 px für
+   1x (76 Gerätepixel) und 289,5 px für 2x und 3x (152 bzw. 228). Genau diese
+   Stufen baut das Werkzeug nach (Kästchenfilter, Größen aus dem Original
+   gerechnet) – dann tastet Chrome aus demselben Bild ab wie bisher.
+   Gemessen 26.10. (Sonde pruefe-886-foto.js, Teil V, gegen das echte
+   Original von github): Kopien in Gerätegröße (76/152/228, Lanczos) wirkten
+   sichtbar weicher (roh 34,7/35,1/36,3 dB), die Mip-Stufen 145/290 kommen
+   näher (37,5/36,6/36,6 dB); schärfen, mehr Qualität (95/99: +0,1…0,5 dB)
+   oder größere Kopien bringen nichts Nennenswertes mehr.
    DAS ORIGINAL KOMMT NICHT INS REPO (1,3 MB; jede Kopie des Repos trüge es
    mit): es liegt in XanderFoxy/Deutsch, Bilder2/9ob2nzt2.jpeg, und wird für
    einen neuen Bau von dort geholt und als Pfad übergeben. Ins Repo kommen nur
-   die drei Kopien (zusammen wenige KB).
+   die Kopien (zusammen ~15 KB; ein Gerät holt eine davon).
    Aufruf:  node werkzeug/foto-ueber.js <Original.jpeg>
-            QUALITAET=90 node werkzeug/foto-ueber.js <Original>   (dazu FILTER=Lanczos|Mitchell|Triangle)
+            QUALITAET=90 FILTER=Box GROESSEN=145,290,290 node werkzeug/foto-ueber.js <Original>
+            (GROESSEN = Pixel der Kopie für 1x,2x,3x; sonst aus dem Original gerechnet)
    Abstimmen gegen das Original: NUR_V=1 QUELLE=<Original> GEGEN=<Stand vorher> node werkzeug/pruefe-886-foto.js
    Braucht ImageMagick (convert, identify: Zuschnitt und Verkleinern) und ffmpeg mit libwebp (Kodieren).
    Warum zwei Werkzeuge: ImageMagick 6.9.12 auf dem Prüfrechner übergeht -quality beim Schreiben von WebP
@@ -32,7 +46,7 @@
 const fs = require("fs"), path = require("path"), crypto = require("crypto");
 const { execFileSync } = require("child_process");
 const WURZEL = path.dirname(__dirname);
-const GROESSEN = [76, 152, 228];
+const PUNKTE = 76;   // Fläche des Fotos in CSS-Pixeln (styles.css: .avatar-wrap img 84 px, Rahmen 4 px, border-box)
 const QUALITAET = Number(process.env.QUALITAET || 90);
 const name = (g) => "bilder/ueber-alex-" + g + ".webp";
 const stempel = (f) => crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10);
@@ -57,28 +71,36 @@ try { profil = execFileSync("convert", [quelle + "[0]", "icc:-"], { stdio: ["ign
 if (profil && !SRGB) {
   console.error("Das Original hat ein Farbprofil: SRGB=<Pfad zu sRGB.icc> angeben"); process.exit(1);
 }
+/* Je Dichte 1x/2x/3x die Mip-Stufe, aus der Chrome das Original malt: so lange halbieren, wie es noch für die Fläche reicht. */
+const mipStufe = (ziel) => { let s = seite; while (s / 2 >= ziel) s /= 2; return Math.round(s); };
+const GROESSEN = process.env.GROESSEN ? process.env.GROESSEN.split(",").map(Number) : [1, 2, 3].map((d) => mipStufe(PUNKTE * d));
 const dateien = {};
 const zwischen = fs.mkdtempSync(path.join(require("os").tmpdir(), "foto-ueber-"));
-GROESSEN.forEach((g) => {
+[...new Set(GROESSEN)].forEach((g) => {
   const ziel = path.join(WURZEL, name(g)), png = path.join(zwischen, g + ".png");
-  execFileSync("convert", [quelle + "[0]", "-auto-orient"].concat(SRGB ? ["-profile", SRGB] : []).concat(["-gravity", "center",
-    "-crop", seite + "x" + seite + "+0+0", "+repage", "-filter", process.env.FILTER || "Lanczos", "-resize", g + "x" + g + "!", "-strip", "PNG24:" + png]));
+  execFileSync("convert", [quelle + "[0]", "-auto-orient"].concat(SRGB ? ["-profile", SRGB] : [], ["-gravity", "center",
+    "-crop", seite + "x" + seite + "+0+0", "+repage", "-filter", process.env.FILTER || "Box", "-resize", g + "x" + g + "!", "-strip", "PNG24:" + png]));
   execFileSync("ffmpeg", ["-hide_banner", "-loglevel", "error", "-y", "-i", png, "-c:v", "libwebp", "-quality", String(QUALITAET),
     "-compression_level", "6", "-preset", "photo", "-map_metadata", "-1", ziel]);
   dateien[g] = name(g) + "?v=" + stempel(ziel);
   console.log("  " + name(g).padEnd(28) + String(fs.statSync(ziel).size).padStart(7) + " Bytes");
 });
 fs.rmSync(zwischen, { recursive: true, force: true });
+/* Alte Kopien, die nicht mehr gebraucht werden, fliegen raus */
+fs.readdirSync(path.join(WURZEL, "bilder")).filter((n) => /^ueber-alex-\d+\.webp$/.test(n) && !GROESSEN.some((g) => n === "ueber-alex-" + g + ".webp"))
+  .forEach((n) => { fs.unlinkSync(path.join(WURZEL, "bilder", n)); console.log("  entfernt: bilder/" + n); });
 
-/* In index.html: das Bild in „Über mich“ (.avatar-wrap) – src = 2x (Browser ohne srcset), srcset 1x/2x/3x. */
+/* In index.html: das Bild in „Über mich“ (.avatar-wrap) – src = die 2x-Kopie (Browser ohne srcset), srcset je Dichte;
+   ist die Kopie für 3x dieselbe wie für 2x, steht sie nur einmal da (ein Gerät mit 3x nimmt dann die 2x-Kopie). */
 const indexPfad = path.join(WURZEL, "index.html");
 let html = fs.readFileSync(indexPfad, "utf8");
 const a = html.indexOf("<img", html.indexOf('<div class="avatar-wrap">', html.indexOf('id="view-about"'))), e = html.indexOf(">", a) + 1;
 if (a < 0 || e <= a || html.indexOf('id="view-about"') < 0 || a > html.indexOf('id="view-learn"')) { console.error("„Über mich“-Foto in index.html nicht gefunden"); process.exit(1); }
 const block = html.slice(a, e);
+const kandidaten = GROESSEN.map((g, i) => ({ u: dateien[g], d: i + 1 })).filter((k, i, l) => !l.slice(0, i).some((v) => v.u === k.u));
 const neu = block.replace(/<img [^>]*>/, (img) => {
-  let t = img.replace(/ src="[^"]*"/, ' src="' + dateien[152] + '"').replace(/ srcset="[^"]*"/, "");
-  return t.replace(/ src="[^"]*"/, (m) => m + ' srcset="' + dateien[76] + " 1x, " + dateien[152] + " 2x, " + dateien[228] + ' 3x"');
+  const t = img.replace(/ src="[^"]*"/, ' src="' + dateien[GROESSEN[1]] + '"').replace(/ srcset="[^"]*"/, "");
+  return t.replace(/ src="[^"]*"/, (m) => m + ' srcset="' + kandidaten.map((k) => k.u + " " + k.d + "x").join(", ") + '"');
 });
 html = html.slice(0, a) + neu + html.slice(e);
 fs.writeFileSync(indexPfad, html);

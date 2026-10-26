@@ -9,17 +9,18 @@
    Umleitung auf raw.githubusercontent.com, das ganze Originalfoto – 1 369 667
    Byte, 4632 × 6176 – für 76 × 76 Punkte) und hatte loading="lazy" (geholt
    erst nach dem ersten Layout).
-   S8: eigene, gestempelte Kopien bilder/ueber-alex-{76,152,228}.webp (1x/2x/3x
-   über srcset, werkzeug/foto-ueber.js). Der Wächter im Kopf (S2) nimmt lazy
+   S8: eigene, gestempelte Kopien bilder/ueber-alex-<px>.webp (heute 145 für 1x
+   und 290 für 2x/3x – die Mip-Stufen, aus denen Chrome das Original malte;
+   srcset, werkzeug/foto-ueber.js). Der Wächter im Kopf (S2) nimmt lazy
    weg – nach dem Einsetzen eines gemerkten eigenen Fotos, damit nur das
    geholt wird, was man sieht. Ein gespeicherter Link auf das Original (die
    alte github-Adresse oder eine Adresse der Kopie) gilt als Original.
    Geprüft (Telefon 390 × 844, Datenbank nachgestellt wie in pruefe-885-ueber.js):
-     Q  Bauweise: src/srcset zeigen auf die Kopien, Stempel = Inhalt, Größen
-        76/152/228, keine github-Adresse mehr, Wächter nimmt lazy weg, app.js
-        (Kern) kennt das Original
+     Q  Bauweise: src/srcset zeigen auf die Kopien, Stempel = Inhalt, quadratisch
+        und je Dichte mindestens 76 · Dichte Pixel (bis 3x), keine github-Adresse
+        mehr, Wächter nimmt lazy weg, app.js (Kern) kennt das Original
      A  Erstbesuch je DPR 1/2/3, Datenbank-Foto = alte github-Adresse: genau eine
-        Foto-Anfrage (die passende Größe), keine an github, Anfrage vor dem ersten
+        Foto-Anfrage (die zur Dichte passende Kopie), keine an github, Anfrage vor dem ersten
         Bild (nicht lazy), am Ende die Kopie (srcset bleibt)
      B  Wiederkehr (Merker = github-Adresse): ebenso, kein Wechsel der Adresse
      C  Merker = eigenes Foto X: die Kopie wird gar nicht geholt, X vor dem
@@ -92,6 +93,17 @@ function fotoAusHtml(wurzel) {
   const img = (sek.match(/<img [^>]*>/) || [""])[0];
   const attr = (n) => { const m = img.match(new RegExp(" " + n + '="([^"]*)"')); return m ? m[1] : null; };
   return { html, sek, img, src: attr("src"), srcset: attr("srcset") };
+}
+
+/* Die Kandidaten aus srcset ([{ u, d, g }]) und welcher bei Gerätedichte dpr gewählt wird (der kleinste mit d ≥ dpr,
+   sonst der größte – so wählt Chrome bei leerem Speicher) */
+function kandidaten(H) {
+  return (H.srcset || "").split(",").map((x) => x.trim().split(/\s+/)).filter((x) => x[0])
+    .map(([u, d]) => ({ u, d: parseFloat(d), g: Number((u.match(/ueber-alex-(\d+)\.webp/) || [])[1]) }));
+}
+function gewaehlt(H, dpr) {
+  const k = kandidaten(H).sort((a, b) => a.d - b.d);
+  return k.find((x) => x.d >= dpr) || k[k.length - 1];
 }
 
 function server(wurzel) {
@@ -277,16 +289,18 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
     abschnitt("Q  Bauweise");
     {
       teil = "Q1";
-      const kandidaten = (H.srcset || "").split(",").map((s) => s.trim().split(/\s+/)).map(([u, d]) => ({ u, d }));
-      const passend = kandidaten.length === 3 && kandidaten.every(({ u, d }, j) => {
+      const K = kandidaten(H);
+      const passend = K.length >= 2 && K.every(({ u, d }, j) => {
         const m = u.match(/^bilder\/ueber-alex-(\d+)\.webp\?v=([0-9a-f]{10})$/);
         const f = m && path.join(WURZEL, "bilder", "ueber-alex-" + m[1] + ".webp");
-        return m && d === (j + 1) + "x" && Number(m[1]) === 76 * (j + 1) && fs.existsSync(f) && sha10(f) === m[2];
+        return m && d === j + 1 && fs.existsSync(f) && sha10(f) === m[2];
       });
-      sage(passend && /^bilder\/ueber-alex-152\.webp\?v=[0-9a-f]{10}$/.test(H.src || ""), "src = 2x-Kopie, srcset 1x/2x/3x = 76/152/228, Stempel = Inhalt", H.img.slice(0, 220));
+      const zwei = K.find((k) => k.d === 2);
+      sage(passend && zwei && H.src === zwei.u, "src = 2x-Kopie, srcset 1x/2x(/3x) auf eigene Kopien, Stempel = Inhalt", H.img.slice(0, 220));
       teil = "Q2";
-      const groessen = [76, 152, 228].map((g) => { const f = path.join(WURZEL, "bilder", "ueber-alex-" + g + ".webp"); return fs.existsSync(f) ? { g, wh: webpGroesse(f), b: fs.statSync(f).size } : { g, wh: null, b: 0 }; });
-      sage(groessen.every((x) => x.wh && x.wh[0] === x.g && x.wh[1] === x.g), "die Kopien sind quadratisch 76/152/228 px (WebP)", groessen.map((x) => x.g + ": " + (x.wh ? x.wh.join("×") : "–") + ", " + x.b + " B").join(" · "));
+      const groessen = K.map((k) => { const f = path.join(WURZEL, "bilder", "ueber-alex-" + k.g + ".webp"); return fs.existsSync(f) ? { g: k.g, d: k.d, wh: webpGroesse(f), b: fs.statSync(f).size } : { g: k.g, d: k.d, wh: null, b: 0 }; });
+      sage(groessen.length >= 2 && groessen.every((x) => x.wh && x.wh[0] === x.g && x.wh[1] === x.g && x.g >= 76 * x.d) && Math.max(...groessen.map((x) => x.g)) >= 228,
+        "die Kopien sind quadratisch (WebP), je Dichte mindestens 76 · Dichte Pixel, die größte reicht für 3x (228)", groessen.map((x) => x.d + "x: " + (x.wh ? x.wh.join("×") : "–") + ", " + x.b + " B").join(" · "));
       teil = "Q3";
       sage(!/github\.com|raw=true|githubusercontent/.test(H.sek), "keine github-Adresse mehr in „Über mich“");
       teil = "Q4";
@@ -302,7 +316,8 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
       abschnitt("A/B  DPR " + dpr + ": Datenbank-Foto = alte github-Adresse");
       const z = { about: { wert: Object.assign({}, TEXTE, { photoUrl: ORIG_URL }) }, dbMs: 300, github: 0, aboutAbfragen: 0 };
       const ctx = await kontext(z, { dpr });
-      const soll = "ueber-alex-" + (76 * dpr) + ".webp";
+      const wahl = gewaehlt(H, dpr) || { g: 0, d: 1 };
+      const soll = "ueber-alex-" + wahl.g + ".webp", nwSoll = wahl.g / wahl.d;
       for (const [name, nr] of [["A", 1], ["B", 2]]) {
         const st = await oeffnen(ctx, z, haupt);
         const req = fotoReq(st);
@@ -314,8 +329,8 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
         const r0 = req[0];
         sage(Boolean(r0 && st.fcp != null && r0.start <= st.fcp), "das Foto wird vor dem ersten Bild angefragt (nicht erst nach dem Layout)",
           r0 ? "Anfrage " + r0.start + " ms, erstes Bild " + st.fcp + " ms, Foto steht " + st.steht + " ms" : "keine Anfrage gesehen");
-        /* naturalWidth eines srcset-Kandidaten ist schon durch die Dichte geteilt: 228 px bei 3x = 76 */
-        sage(st.current && st.current.indexOf(soll) >= 0 && st.srcset === H.srcset && st.src === H.src && st.nw === 76,
+        /* naturalWidth eines srcset-Kandidaten ist schon durch die Dichte geteilt: 290 px bei 2x = 145 */
+        sage(st.current && st.current.indexOf(soll) >= 0 && st.srcset === H.srcset && st.src === H.src && st.nw === nwSoll,
           "am Ende die Kopie " + soll + " (src/srcset wie index.html)", "current " + kurzUrl(st.current) + ", nw " + st.nw);
         const adressen = new Set(st.foto.map((f) => JSON.parse(f.s)[0]));
         sage(adressen.size === 1, "kein Wechsel der Adresse in keinem Bild", [...adressen].map(kurzUrl).join(" → "));
@@ -347,7 +362,8 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
       const ctx = await kontext(z, { dpr: 2, merker: merkerMit(X_URL) });
       const st = await oeffnen(ctx, z, haupt);
       teil = "D";
-      sage(st.src === H.src && st.srcset === H.srcset && st.current && st.current.indexOf("ueber-alex-152.webp") >= 0 && st.nw === 76,
+      const w2 = gewaehlt(H, 2) || { g: 0, d: 1 };
+      sage(st.src === H.src && st.srcset === H.srcset && st.current && st.current.indexOf("ueber-alex-" + w2.g + ".webp") >= 0 && st.nw === w2.g / w2.d,
         "am Ende src/srcset genau wie in index.html, gezeigt die Kopie", "src " + kurzUrl(st.src) + ", current " + kurzUrl(st.current) + ", nw " + st.nw);
       sage(st.github === 0, "nichts von github", "github: " + st.github);
       await ctx.close();
@@ -356,16 +372,20 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
     /* ---------------- E: Adresse der Kopie mit altem Stempel gespeichert ---------------- */
     abschnitt("E  Datenbank = Adresse der Kopie mit altem Stempel (Formular nach S8)");
     {
-      const alt = haupt.basis.replace("index.html", "bilder/ueber-alex-152.webp?v=0123456789");
-      const z = { about: { wert: Object.assign({}, TEXTE, { photoUrl: alt }) }, dbMs: 300, github: 0, aboutAbfragen: 0 };
-      const ctx = await kontext(z, { dpr: 2 });
-      const a = await oeffnen(ctx, z, haupt);
-      const b = await oeffnen(ctx, z, haupt);
-      teil = "E";
-      const nieAlt = a.kopie.concat(b.kopie).every((u) => u.indexOf("0123456789") < 0);
-      sage(nieAlt && a.src === H.src && b.src === H.src && b.srcset === H.srcset, "bleibt die Kopie aus index.html, die alte Adresse wird nie geholt (Erstbesuch und Wiederkehr)",
-        "Anfragen: " + a.kopie.concat(b.kopie).map(kurzUrl).join(", "));
-      await ctx.close();
+      /* eine Kopie aus einem früheren Bau (andere Größe, die es nicht mehr gibt) und die heutige mit falschem Stempel */
+      for (const altPfad of ["bilder/ueber-alex-152.webp?v=0123456789", (H.src || "").replace(/\?v=.*$/, "") + "?v=0123456789"]) {
+        const alt = haupt.basis.replace("index.html", altPfad);
+        const z = { about: { wert: Object.assign({}, TEXTE, { photoUrl: alt }) }, dbMs: 300, github: 0, aboutAbfragen: 0 };
+        const ctx = await kontext(z, { dpr: 2 });
+        const a = await oeffnen(ctx, z, haupt);
+        const b = await oeffnen(ctx, z, haupt);
+        teil = "E";
+        const nieAlt = a.kopie.concat(b.kopie).every((u) => u.indexOf("0123456789") < 0) && a.x.length + b.x.length === 0;
+        sage(nieAlt && a.src === H.src && b.src === H.src && b.srcset === H.srcset && a.github + b.github === 0,
+          altPfad.replace(/\?.*/, "") + " mit altem Stempel: bleibt die Kopie aus index.html, die alte Adresse wird nie geholt (Erstbesuch und Wiederkehr)",
+          "Anfragen: " + a.kopie.concat(b.kopie).map(kurzUrl).join(", "));
+        await ctx.close();
+      }
     }
 
     /* ---------------- F: kaputter Merker ---------------- */
@@ -400,7 +420,8 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
         if (process.env.BILDER) [["vorher", a], ["nachher", b]].forEach(([n, x]) => fs.writeFileSync(path.join(process.env.BILDER, n + "-" + dpr + "x.png"), x.bild));
         const v = vergleich(a.bild, b.bild, dpr);
         teil = "V" + dpr;
-        sage(a.github > 0 && a.nw > 0 && b.nw === 76 && v.farbe <= 1 && v.glatt >= 33,
+        const wv = gewaehlt(H, dpr) || { g: 0, d: 1 };
+        sage(a.github > 0 && a.nw > 0 && b.nw === wv.g / wv.d && v.farbe <= 1 && v.glatt >= 33,
           "DPR " + dpr + ": sieht gleich aus (Farbe ±1, geglättet ≥ 33 dB)", zeige(v) + ", Ausschnitt " + v.groesse + ", vorher nw " + a.nw + ", nachher nw " + b.nw);
       }
     } else console.log("\n(V übersprungen: " + (gegen ? "" : "kein GEGEN ") + (quelleDa ? "" : "kein Original unter " + QUELLE) + ")");
