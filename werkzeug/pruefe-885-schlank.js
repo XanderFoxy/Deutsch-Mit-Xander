@@ -299,7 +299,10 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
     if (!eb) sage(false, "esbuild fehlt (npx --yes esbuild@0.28.2 --version)");
     else {
       const knapp = (js) => eb.transformSync(js, { minifyWhitespace: true, legalComments: "none", loader: "js" }).code;
-      const ohneStempel = (l) => l.filter((s) => !/^window\.DMA_STEMPEL = /.test(s));
+      /* FASSUNG 886 (Einmischen der Notfall-Fassung 885): die Fassungsnummer selbst zählt nicht – BASIS trägt 884, der
+         eingemischte Stand 885 (wie live); verglichen wird der Code drumherum */
+      const ohneStempel = (l) => l.filter((s) => !/^window\.DMA_STEMPEL = /.test(s))
+        .map((s) => s.replace(/^window\.DMA_VERSION = "\d+";$/, 'window.DMA_VERSION = "…";'));
       const a = ohneStempel(inlineSkripte(ALT)), b = ohneStempel(inlineSkripte(HTML));
       sage(a.length === b.length, "gleich viele Inline-Skripte wie vor K", a.length + " → " + b.length);
       let gleich = 0, lader = null;

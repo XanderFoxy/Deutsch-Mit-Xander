@@ -480,6 +480,10 @@ function seitenSonde() {
       const tLoad = Date.now();
       await bereit(pg);
       const da = await pg.waitForFunction(() => window.DMA_TEILE.stand().geholt.some((t) => /^rest/.test(t)), null, { timeout: 15000, polling: 100 }).then(() => true, () => false);
+      /* FASSUNG 886 (Einmischen): „geholt“ gilt in der Seite schon beim Aufruf von fetch – beim Server kommt die Anfrage
+         einen Augenblick später. Fiel die Abfrage genau dazwischen, stand hier „nie“, obwohl die Rest-Stücke nach 6,1 s
+         unterwegs waren (2 von 9 Läufen). Bis 2 s auf den Eintrag des Servers warten. */
+      for (let k = 0; da && k < 20 && !anfragen.slice(ab).some((x) => /^rest/.test(x.teil) && !x.sync); k++) await schlaf(100);
       const restAn = Math.min.apply(null, anfragen.slice(ab).filter((x) => /^rest/.test(x.teil) && !x.sync).map((x) => x.t0));
       sage(da && isFinite(restAn) && restAn - tLoad <= 9000, "raum3 hängt: die Rest-Stücke kommen trotzdem (höchstens 6 s gewartet, + Ruhepause)",
         isFinite(restAn) ? (restAn - tLoad) + " ms nach load" : "nie");
