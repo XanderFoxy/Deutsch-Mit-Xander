@@ -24,12 +24,14 @@
 
    TEILE
      R  Rückkehr bei Update (Server Fassung + 1), CPU 1× und 4×, D = 250
-        und 800 ms, Neuladen (reload) – dazu Öffnen derselben Adresse
-        (goto, wie ein verworfener Tab, CPU 1×, D = 250; dort reicht der
-        Helfer oft die alte index.html aus dem Speicher des Browsers durch,
-        „schon da“): am Ende die NEUE Fassung, höchstens ein Neuladen,
-        betreten genau EINMAL und nur auf der neuen Seite (nie auf der
-        alten), keine Blase. Dazu eine grobe Zeitgrenze: betreten nach
+        und 800 ms, Neuladen (reload): am Ende die NEUE Fassung, höchstens
+        ein Neuladen, betreten genau EINMAL und nur auf der neuen Seite (nie
+        auf der alten), keine Blase. Dazu Öffnen derselben Adresse (goto,
+        CPU 1×, D = 250; der Helfer reicht die alte index.html aus dem
+        HTTP-Speicher des Browsers durch, „schon da“) – seit 886
+        (rueckkehrfrist) wie 884 sofort hinein: betreten genau einmal, nie
+        ein Neuladen danach, am Ende die alte Fassung mit Blase (oder die
+        neue, falls doch gewartet wurde). Dazu eine grobe Zeitgrenze: betreten nach
         höchstens D + 0,9 s (CPU 1×) bzw. D + 1,8 s (CPU 4×) – fängt jedes
         Warten auf eine Frist ab (die feine Messung ist Teil M).
      K  Update schon bekannt: die Seite im Raum hat die Blase schon gezeigt
@@ -85,7 +87,9 @@
         Mechanismus): Y1/Y3/Y4 prüfen das ERGEBNIS – neue Fassung, betreten
         genau einmal und auf der letzten Seite, auf KEINER Seite je eine Blase
         (auch nicht kurz vor dem Wechsel), kein „draussen“ im Seitenspeicher,
-        betreten nach höchstens D + 0,9 s (CPU 1×) bzw. D + 1,8 s (CPU 4×);
+        betreten nach höchstens D + 0,9 s (CPU 1×) bzw. D + 1,8 s (CPU 4×)
+        (seit rueckkehrfrist als Median der Läufe je Fall, jeder Lauf
+        höchstens 1 s darüber – vorher je Lauf, ein Ausreißer 7014 > 6700 ms);
         „lädt nicht mehr der Helfer“ bleibt als eigens benannte Prüfung des
         Mechanismus (in Chromium ohne sichtbare Folge, Absicherung für
         Browser mit anderer Reihenfolge). Neu: Y5 Tipp nach 1,2 s auf dem
@@ -100,18 +104,35 @@
         zweimal).
      W  (Nachbesserung 1) Merker dma-wechsel: „<Fassung> <Zeit>“ und „* <Zeit>
         <alte Fassung>“ (vom Helfer geladen) gelten nur jünger als 20 s und
-        nur für eine ANDERE Fassung als „*“ nennt; Öffnen (dort zählt das
-        „gleich“ des Helfers nicht), fassung.json hängt: frisch < 3 s, sonst
-        erst nach der Frist (6 s).
+        nur für eine ANDERE Fassung als „*“ nennt; Neuladen, index.html UND
+        fassung.json hängen (seit rueckkehrfrist: niemand sonst antwortet –
+        beim Öffnen zählt jetzt auch das „gleich“ des Helfers): frisch < 3 s,
+        sonst erst nach der Frist (6 s).
      N  (Nachbesserung 1) Antwort „neu“, aber das Neuladen scheitert (die
         Sonde bricht es mit window.stop ab, der Helfer bekommt keine Meldung):
         nach 15 s doch hinein, genau einmal, auf dieser Seite.
      O  Ohne Helfer, Neuladen (der Browser fragt beim Server nach, wie bis
         884), fassung.json hängt: betreten wartet NICHT (< 3 s) – die Seite
         ist frisch. Ohne Helfer, gewöhnliches Öffnen bei Update: index.html
-        kommt aus dem Speicher des Browsers (max-age=600, alt) → betreten
-        erst auf der neuen Seite, genau einmal (884: betreten auf der alten,
-        dann Neuladen mitten im Verbinden und noch einmal betreten).
+        kommt aus dem Speicher des Browsers (max-age=600, alt) → seit 886
+        (rueckkehrfrist) sofort hinein wie 884, genau einmal, danach die
+        Blase (884: betreten auf der alten, dann Neuladen mitten im
+        Verbinden und noch einmal betreten; bis 5aaec640: erst gewartet).
+     B  (Fassung 886, rueckkehrfrist; Prüfbericht zu 5aaec640) Fall B –
+        Öffnen/Zurück OHNE Neuladen: gewartet wird nur auf einer Seite aus
+        dem Speicher des Helfers (Marke). B1 Öffnen ohne Update, index.html
+        und fassung.json je 2 s, CPU 1× und 4×; B1z dasselbe mit Zurück
+        (history.back ohne bfcache): betreten höchstens 150 ms nach 884
+        (mit BEZUG884=<baum> verschränkt gegen 884, Median; sonst gegen eine
+        feste Grenze aus der Messung: 884 hier 0,24–0,32 s bei CPU 1×,
+        ~1,0–1,2 s bei CPU 4×). B2 Öffnen mit Update (alte index.html aus
+        dem HTTP-Speicher): ebenso schnell, betreten genau einmal, danach
+        kein Neuladen. B3 der Browser hat index.html nicht mehr frisch
+        (no-cache) – die Seite kommt mit Marke: B3a ohne Update, B3b mit
+        Update (am Ende die neue Fassung, einmal), je D = 2 s: betreten nach
+        höchstens D + 0,9 s; B3c index.html 0,25 s, fassung.json 2 s: das
+        „gleich“ des Helfers zählt auch beim Öffnen (betreten < 1 s; bis
+        5aaec640 erst nach fassung.json).
      S  Die gespeicherte Seite trägt die Marke data-dma-speicher (daran
         erkennt die Rückkehr, dass sie aus dem Speicher kam), die frisch
         geholte nicht. Stempel ↔ Inhalt (sw.js): liefert der Server unter einem
@@ -138,16 +159,18 @@
 
    Schalter:
      WURZEL=<ordner>   Stand, der geprüft wird (Standard: dieser Baum)
+     BEZUG884=<ordner> Stand 884 (6b724580) für Teil B: verschränkt, Median
      GEGEN=<ordner>    alter Stand für Teil M
      N=n               Läufe je Fall in R/G (Standard 2)
      PAARE=n           Paare je Messfall in M (Standard 6)
-     NUR=RKGFTZYWNOSHM nur diese Teile (Standard RKGFTZYWNOS, mit GEGEN dazu M)
+     NUR=RKGFTZYWNOBSHM nur diese Teile (Standard RKGFTZYWNOBS, mit GEGEN dazu M)
      JSON=<datei>      Ergebnisse (Läufe, Messung) als JSON, laufend
    Aufruf:  node werkzeug/pruefe-885-rueckkehr.js
    Gegenprobe: WURZEL=<ordner mit altem Stand> node …  (c30a68f7: R rot;
    6b724580, vor S1: R grün; 864324e7, vor Nachbesserung 1: T rot;
    dddf4c7b: Y-Mechanismus und Y4 rot; 1abc32b2: Y6b/Y6c Blase auf der
-   gehenden Seite rot)
+   gehenden Seite rot; 5aaec640: B1/B1z/B2 und B3c rot – die Rückkehr wartet
+   dort auf fassung.json)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -155,7 +178,8 @@ const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const GEGEN = process.env.GEGEN ? path.resolve(process.env.GEGEN) : null;
 const N = Math.max(1, Number(process.env.N || 2));
 const PAARE = Math.max(1, Number(process.env.PAARE || 6));
-const NUR = process.env.NUR || "RKGFTZYWNOS" + (GEGEN ? "M" : "");
+const NUR = process.env.NUR || "RKGFTZYWNOBS" + (GEGEN ? "M" : "");
+const BEZUG884 = process.env.BEZUG884 ? path.resolve(process.env.BEZUG884) : null;
 const JSON_AUS = process.env.JSON || "";
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".woff2": "font/woff2",
@@ -173,7 +197,7 @@ const schreiben = () => { if (JSON_AUS) try { fs.writeFileSync(JSON_AUS, JSON.st
 
 /* ---------- Server (je Stand einer, eigene Herkunft = eigener Helfer) ---------- */
 function serverBauen(wurzel) {
-  const S = { seite: "", stau: 0, fjStau: 0, fjArt: "", anders: {}, zaehler: {}, zwang: null };
+  const S = { seite: "", stau: 0, fjStau: 0, fjArt: "", anders: {}, zaehler: {}, zwang: null, ohneSpeicher: false };
   const srv = http.createServer((q, a) => {
     const i = q.url.indexOf("?");
     let p = decodeURIComponent(i < 0 ? q.url : q.url.slice(0, i));
@@ -200,7 +224,7 @@ function serverBauen(wurzel) {
     if (p === "/index.html") {
       let t = String(body);
       if (S.seite) t = t.replace(/window\.DMA_VERSION = "[^"]*";/, 'window.DMA_VERSION = "' + S.seite + '";');
-      body = Buffer.from(t); kopf["Cache-Control"] = "max-age=600";
+      body = Buffer.from(t); kopf["Cache-Control"] = S.ohneSpeicher ? "no-cache" : "max-age=600";   /* Teil B3: der Browser hat sie nicht mehr frisch */
       if (S.zwang && !S.zwang.belegt) {
         /* genau die erste index.html nach dem Scharfschalten: bis zum Signal (höchstens 2 s), dann gleich */
         const z = S.zwang; z.belegt = true;
@@ -286,7 +310,7 @@ async function lauf(br, sv, o) {
   const { S, hier } = sv;
   const G = Number(grund(sv.wurzel));
   const V = String(G + 10 * (++lauf.k)), V1 = o.update ? String(Number(V) + 1) : V;
-  S.seite = V; S.stau = 0; S.fjStau = 0; S.fjArt = "";
+  S.seite = V; S.stau = 0; S.fjStau = 0; S.fjArt = ""; S.ohneSpeicher = Boolean(o.netz);
   const ctx = await br.newContext({ viewport: { width: 393, height: 800 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2 });
   await ctx.addInitScript(falle, true);
   const pg = await ctx.newPage();
@@ -313,8 +337,11 @@ async function lauf(br, sv, o) {
   }
   S.seite = V1; S.stau = o.D; S.fjStau = o.fjD != null ? o.fjD : o.D; S.fjArt = o.fjArt || ""; S.zwang = o.zwang ? {} : null;
   if (o.cpu > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: o.cpu });
+  /* Teil B (rueckkehrfrist): Zurück – erst weg (about:blank), die Uhr läuft ab history.back (Browser ohne bfcache) */
+  if (o.art === "zurueck") await pg.goto("about:blank").catch(() => {});
   const t0 = Date.now();
   if (o.art === "goto") await pg.goto(hier + "/index.html" + q, { waitUntil: "commit" }).catch(() => {});
+  else if (o.art === "zurueck") await pg.goBack({ waitUntil: "commit" }).catch(() => {});
   else await pg.reload({ waitUntil: "commit" }).catch(() => {});
   /* Teil T: ein Tipp, bevor die Antwort da ist (Prüfer: nach 1,2 s; das Klassenzimmer ist dabei nicht offen) */
   if (o.tipp != null) { await schlaf(Math.max(0, o.tipp - (Date.now() - t0))); await pg.touchscreen.tap(200, 500).catch(() => {}); }
@@ -341,6 +368,7 @@ async function lauf(br, sv, o) {
     lage: window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage().lage : "?",
     blase: (document.getElementById("dmaNeueFassung") || {}).textContent || "" })).catch((x) => ({ fehler: x.message.split("\n")[0] }));
   await ctx.close();
+  S.ohneSpeicher = false;
   e.zwangRaus = S.zwang && S.zwang.raus ? S.zwang.raus - t0 : null; S.zwang = null;
   e.V = V; e.V1 = V1; e.gesteuert = gesteuert; e.t0 = t0; e.blaseVorher = blaseVorher;
   e.abNeuladen = e.betreten && e.betreten.length ? e.betreten[0].uhr - t0 : null;
@@ -348,6 +376,8 @@ async function lauf(br, sv, o) {
   return e;
 }
 lauf.k = 0;
+/* Teil B ohne BEZUG884: 884 (6b724580) gemessen, Öffnen ohne Update, D = 2 s, Median aus 6 Paaren (SPIELSYSTEM.md „Rückkehr: Frist“) */
+const FEST884 = { 1: 270, 4: 1000 };
 /* grobe Zeitgrenze für betreten ab dem Neuladen (Nachbesserung 1) */
 const grenze = (fa) => fa.D + (fa.cpu > 1 ? 1800 : 900);
 const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Seiten " + e.seiten + ", betreten " + JSON.stringify((e.betreten || []).map((b) => b.seite + ":" + b.t + "ms/" + b.f))
@@ -356,8 +386,9 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
 
 (async () => {
   console.log("SONDE 885 — Rückkehr nach dem Neuladen   WURZEL " + WURZEL + " (Fassung " + grund(WURZEL) + ")" + (GEGEN ? "   GEGEN " + GEGEN : ""));
+  /* rueckkehrfrist: ohne bfcache (nur für Zurück in Teil B von Belang – eine Seite mit offener Echtzeit-Leitung kommt meist nicht hinein) */
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium",
-    args: ["--no-proxy-server", "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1"] });
+    args: ["--no-proxy-server", "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1", "--disable-features=BackForwardCache"] });
   const sv = await serverBauen(WURZEL);
 
   if (NUR.includes("R")) {
@@ -366,9 +397,17 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     for (const fa of faelle) for (let n = 0; n < N; n++) {
       const e = await lauf(br, sv, Object.assign({ teil: "R", update: true, art: "reload" }, fa));
       const b = e.betreten || [];
+      if (fa.art === "goto") {
+        /* 886 (rueckkehrfrist): Öffnen – die alte index.html aus dem HTTP-Speicher geht wie 884 sofort hinein, danach die Blase
+           (884 lud mitten im Verbinden neu und ging ein zweites Mal hinein; bis 5aaec640 wartete die Seite auf fassung.json) */
+        const gut = b.length === 1 && b[0].seite === e.seiten && e.seiten <= 2 && e.gesteuert
+          && ((e.f === e.V1 && b[0].f === e.V1 && !e.blase) || (e.f === e.V && b[0].f === e.V && /Neue Fassung/.test(e.blase)));
+        sage(gut, "R CPU " + fa.cpu + "× D=" + fa.D + " goto Lauf " + (n + 1) + ": betreten genau einmal, kein Neuladen danach (alte Fassung mit Blase oder die neue)", zeile(e));
+      } else {
       /* höchstens ein Neuladen (aus dem Speicher: die alte Seite, dann die neue; frisch aus dem Netz: gleich die neue) */
       const gut = e.f === e.V1 && e.seiten <= 2 && b.length === 1 && b[0].seite === e.seiten && b[0].f === e.V1 && !e.blase && e.gesteuert;
       sage(gut, "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": neue Fassung, höchstens ein Neuladen, betreten einmal und nur auf der neuen Seite", zeile(e));
+      }
       /* Nachbesserung 1: grobe Zeitgrenze (884 brauchte hier höchstens ~D + 0,3 s bei CPU 1×, ~D + 0,9 s bei CPU 4×) –
          fängt jedes Warten auf eine Frist (6 s, 15 s) ab; die feine Messung ist Teil M */
       sage(e.abNeuladen != null && e.abNeuladen <= grenze(fa), "R CPU " + fa.cpu + "× D=" + fa.D + " " + (fa.art || "reload") + " Lauf " + (n + 1) + ": betreten nach höchstens " + grenze(fa) + " ms", e.abNeuladen + " ms");
@@ -506,7 +545,7 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
          hinaus belegt – hier hängt es an der Reihenfolge im Browser (Wechsel oder fälliger Zeitgeber zuerst) */
       { cpu: 1, was: "Y7", D: 4300, belegt: [4250, 2050] }, { cpu: 4, was: "Y7", D: 4300, belegt: [4250, 2050] }]
       .filter((fa) => !process.env.YNUR || process.env.YNUR.split(",").includes(fa.was));
-    for (const fa of yFaelle) for (let n = 0; n < N; n++) {
+    for (const fa of yFaelle) { const yZeiten = []; let yKopf = ""; for (let n = 0; n < N; n++) {
       const e = await lauf(br, sv, { teil: "Y", update: true, art: "reload", cpu: fa.cpu, D: fa.D, fjD: fa.fjD, fjArt: fa.fjD != null ? "" : "haengt", tipp: fa.tipp,
         belegt: fa.belegt, meldungSpaet: fa.meldungSpaet, warten: 16000, ruhe: 3000, was: fa.was });
       const b = e.betreten || [], wm = (e.wm || []).filter((x) => x.seite > 1);
@@ -532,17 +571,21 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
         kopf + "am Ende die neue Fassung, betreten einmal (auf der letzten Seite)", zeile(e) + (fa.tipp != null ? ", Tipp bei " + e.tipp + " ms" : ""));
       sage(!(e.bl || []).length && !e.draussen, kopf + "auf keiner Seite je eine Blase, kein „draussen“ im Seitenspeicher",
         "Blasen " + JSON.stringify(e.bl || []) + ", draussen " + JSON.stringify(e.draussen || ""));
-      sage(e.abNeuladen != null && e.abNeuladen <= grenze(fa), kopf + "betreten nach höchstens " + grenze(fa) + " ms (D + " + (fa.cpu > 1 ? "1,8" : "0,9") + " s)", e.abNeuladen + " ms");
+      /* rueckkehrfrist (Prüfbericht zu 5aaec640): die Zeitgrenze als Median der Läufe dieses Falls (unten), je Lauf nur grob */
+      yZeiten.push(e.abNeuladen); yKopf = fa.was + " CPU " + fa.cpu + "×" + wie;
+      sage(e.abNeuladen != null && e.abNeuladen <= grenze(fa) + 1000, kopf + "betreten nach höchstens " + (grenze(fa) + 1000) + " ms (grob, je Lauf)", e.abNeuladen + " ms");
       /* der Mechanismus (Prüfbericht zu dddf4c7b, Befund 4): nach 4,5 s ab dem Öffnen ruft der Helfer kein navigate mehr – in Chromium
          ohne sichtbare Folge (er übernimmt den Wechsel vor dem fälligen Zeitgeber), eine Absicherung für andere Browser.
          (884 nimmt die Seite gleich aus dem Netz: eine Seite, kein Merker – auch das ist richtig) */
       sage(!vomHelfer, kopf + "Mechanismus: nach 4,5 s ab dem Öffnen lädt nicht mehr der Helfer, sondern die Seite selbst neu", "Seiten " + e.seiten + ", Merker beim Start " + JSON.stringify(e.wm || []));
     }
+    if (yZeiten.length) sage(med(yZeiten) != null && med(yZeiten) <= grenze(fa), yKopf + " Median über " + yZeiten.length + " Läufe: betreten nach höchstens " + grenze(fa) + " ms (D + " + (fa.cpu > 1 ? "1,8" : "0,9") + " s)", JSON.stringify(yZeiten) + " → " + med(yZeiten) + " ms");
+    }
   }
 
   if (NUR.includes("W")) {
-    /* Merker dma-wechsel: nur jünger als 20 s gilt die Seite als frisch (Öffnen, damit die Antwort des Helfers nicht zählt;
-       fassung.json hängt – ohne Merker wartet die Rückkehr also bis zur Frist von 6 s) */
+    /* Merker dma-wechsel: nur jünger als 20 s gilt die Seite als frisch (Neuladen, index.html und fassung.json hängen – der Helfer
+       weiß nichts, ohne Merker wartet die Rückkehr also bis zur Frist von 6 s) */
     abschnitt("W", "Merker dma-wechsel (Seite eben vom Wächter oder Helfer geladen): jünger als 20 s frisch, älter nicht");
     const faelle = [
       { vor: "f|5000|{V}", frisch: true, was: "Fassung, 5 s alt" },
@@ -552,7 +595,9 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       { vor: "*|25000|1", frisch: false, was: "„*“ mit älterer Fassung, 25 s alt" }
     ];
     for (const fa of faelle) {
-      const e = await lauf(br, sv, { teil: "W", update: false, art: "goto", cpu: 1, D: 250, fjArt: "haengt", wechselVor: fa.vor, warten: 11000, ruhe: 1500 });
+      /* rueckkehrfrist: Neuladen mit hängender index.html (vorher Öffnen mit D = 250 – dort zählt jetzt das „gleich“ des Helfers, und
+         ohne Marke wartet die Seite gar nicht mehr) */
+      const e = await lauf(br, sv, { teil: "W", update: false, art: "reload", cpu: 1, D: 30000, fjArt: "haengt", wechselVor: fa.vor, warten: 11000, ruhe: 1500 });
       const b = e.betreten || [];
       const t = b.length ? b[0].t : null;
       sage(e.seiten === 1 && b.length === 1 && (fa.frisch ? t < 3000 : t >= 5500 && t <= 7500),
@@ -580,9 +625,54 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     for (let n = 0; n < N; n++) {
       const e2 = await lauf(br, sv, { teil: "O", update: true, helfer: false, art: "goto", cpu: 1, D: 250 });
       const b2 = e2.betreten || [];
-      sage(!e2.gesteuert && e2.f === e2.V1 && e2.seiten <= 2 && b2.length === 1 && b2[0].seite === e2.seiten && !e2.blase,
-        "O ohne Helfer, Öffnen (alte index.html aus dem Browser-Speicher), Update: betreten einmal, erst auf der neuen Seite", zeile(e2));
+      /* 886 (rueckkehrfrist): wie 884 sofort hinein (die Seite kommt nicht aus dem Speicher des Helfers), danach die Blase –
+         kein Neuladen mitten im Verbinden (884: zweimal betreten) */
+      sage(!e2.gesteuert && e2.seiten === 1 && b2.length === 1 && e2.f === e2.V && b2[0].f === e2.V && /Neue Fassung/.test(e2.blase) && b2[0].t < 1500,
+        "O ohne Helfer, Öffnen (alte index.html aus dem Browser-Speicher), Update: sofort hinein wie 884 (< 1,5 s), genau einmal, danach die Blase", zeile(e2));
     }
+  }
+
+  if (NUR.includes("B")) {
+    /* FASSUNG 886 (rueckkehrfrist, Prüfbericht zu 5aaec640): beim Öffnen/Zurück ohne Neuladen wartete die Rückkehr auch auf einer
+       Seite ohne Marke auf fassung.json (Prüfer: D = 0,25 / 0,8 / 2 s → +64 / +605 / +1811 ms gegen 884). Jetzt wartet nur eine Seite
+       aus dem Speicher des Helfers; eine aus dem Netz oder dem HTTP-Speicher geht wie 884 sofort hinein. */
+    abschnitt("B", "Fall B – Öffnen/Zurück ohne Neuladen: gewartet wird nur auf einer Seite aus dem Speicher des Helfers");
+    const sb = BEZUG884 ? await serverBauen(BEZUG884) : null;
+    /* ohne BEZUG884: 884 gemessen (rueckkehrfrist, 6 Paare, Median) + 150 ms */
+    const fest = { 1: FEST884[1] + 150, 4: FEST884[4] + 150 };
+    const faelle = [
+      { was: "B1", cpu: 1, D: 2000, art: "goto", update: false }, { was: "B1", cpu: 4, D: 2000, art: "goto", update: false },
+      { was: "B1z", cpu: 1, D: 2000, art: "zurueck", update: false }, { was: "B2", cpu: 1, D: 2000, art: "goto", update: true }
+    ];
+    for (const fa of faelle) {
+      const kopf = fa.was + " CPU " + fa.cpu + "× " + (fa.art === "goto" ? "Öffnen" : "Zurück") + ", index.html und fassung.json " + fa.D / 1000 + " s, " + (fa.update ? "Update" : "ohne Update") + ": ";
+      const zeiten = [], diffs = [];
+      for (let n = 0; n < N; n++) {
+        const reihe = sb ? (n % 2 ? [["B", sv], ["A", sb]] : [["A", sb], ["B", sv]]) : [["B", sv]];
+        const r = {};
+        for (const [wer, s] of reihe) r[wer] = await lauf(br, s, Object.assign({ teil: "B", wer }, fa));
+        const e = r.B, b = e.betreten || [];
+        if (!fa.update) sage(e.seiten === 1 && b.length === 1 && b[0].f === e.V && !e.blase && e.gesteuert, kopf + "Lauf " + (n + 1) + ": betreten genau einmal, kein Neuladen, keine Blase", zeile(e));
+        else sage(b.length === 1 && b[0].seite === e.seiten && e.seiten <= 2 && e.gesteuert && ((e.f === e.V1 && b[0].f === e.V1 && !e.blase) || (e.f === e.V && b[0].f === e.V && /Neue Fassung/.test(e.blase))),
+          kopf + "Lauf " + (n + 1) + ": betreten genau einmal, danach kein Neuladen (alte Fassung mit Blase oder die neue)", zeile(e));
+        zeiten.push(e.abNeuladen);
+        if (r.A) { if (r.A.abNeuladen != null && e.abNeuladen != null) diffs.push(e.abNeuladen - r.A.abNeuladen); info(kopf + "Lauf " + (n + 1) + ": 884 " + r.A.abNeuladen + " ms (betreten " + (r.A.betreten || []).length + "×), dieser Stand " + e.abNeuladen + " ms"); }
+      }
+      if (sb) sage(diffs.length === N && med(diffs) <= 150, kopf + "betreten höchstens 150 ms nach 884 (Median, verschränkt, " + N + " Paare)", "gepaart " + JSON.stringify(diffs) + " → " + med(diffs) + " ms");
+      else sage(med(zeiten) != null && med(zeiten) <= fest[fa.cpu], kopf + "betreten höchstens 150 ms nach 884 (Median ≤ " + fest[fa.cpu] + " ms; 884 hier gemessen " + FEST884[fa.cpu] + " ms)", JSON.stringify(zeiten) + " → " + med(zeiten) + " ms");
+    }
+    /* B3: der Browser hat index.html nicht mehr frisch (no-cache, wie nach mehr als 10 min) – die Vorab-Anfrage geht zum Server,
+       die Seite kommt mit Marke aus dem Speicher des Helfers und wartet (höchstens so lange wie 884 auf die Seite) */
+    const b3 = [{ was: "B3a", update: false, D: 2000, wie: "ohne Update, D = 2 s" }, { was: "B3b", update: true, D: 2000, wie: "Update, D = 2 s" },
+      { was: "B3c", update: false, D: 250, fjD: 2000, wie: "ohne Update, index.html 0,25 s, fassung.json 2 s" }];
+    for (const fa of b3) for (let n = 0; n < N; n++) {
+      const e = await lauf(br, sv, { teil: "B", art: "goto", cpu: 1, netz: true, update: fa.update, D: fa.D, fjD: fa.fjD, warten: 9000 });
+      const b = e.betreten || [], kopf = fa.was + " CPU 1× Öffnen, Browser ohne frische Kopie (Seite mit Marke), " + fa.wie + ", Lauf " + (n + 1) + ": ";
+      if (fa.was === "B3a") sage(e.marke && e.seiten === 1 && b.length === 1 && b[0].f === e.V && !e.blase && e.abNeuladen <= fa.D + 900, kopf + "betreten einmal, nach höchstens " + (fa.D + 900) + " ms", zeile(e));
+      if (fa.was === "B3b") sage(e.f === e.V1 && b.length === 1 && b[0].f === e.V1 && b[0].seite === e.seiten && !e.blase && e.abNeuladen <= fa.D + 900, kopf + "am Ende die neue Fassung, betreten einmal, nach höchstens " + (fa.D + 900) + " ms", zeile(e));
+      if (fa.was === "B3c") sage(e.marke && e.seiten === 1 && b.length === 1 && e.abNeuladen < 1000, kopf + "das „gleich“ des Helfers zählt auch beim Öffnen: betreten < 1 s (nicht erst nach fassung.json)", zeile(e));
+    }
+    if (sb) sb.srv.close();
   }
 
   if (NUR.includes("S")) {
