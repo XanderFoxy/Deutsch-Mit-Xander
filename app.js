@@ -98993,9 +98993,16 @@ An einem Morgen lief ein kleiner Fuchs los…
   /* FASSUNG 886 — der Profil-Aufruf beim Start nur, wenn das Profil offen ist (Einsprung mit #view-profile). Beim
      Start ist die Anmeldung noch nicht wiederhergestellt: gezeichnet wurde verdeckt das Anmeldeformular (samt Abfrage
      des Anmeldebilds), und nach der Anmeldung gleich noch einmal (restoreSession unten). Sonst in der Ruhepause, falls
-     bis dahin noch nicht gezeichnet; wer das Profil öffnet, zeichnet es wie bisher neu. */
+     bis dahin noch nicht gezeichnet; wer das Profil öffnet, zeichnet es wie bisher neu.
+     FASSUNG 886 (Einmischen, Nachbesserung 2) — die Ruhepause wartet, bis die Anmeldung samt ihrem eigenen Zeichnen
+     durch ist (anmeldungDa, unten). Vorher zeichnete sie, sobald die Ruhepause kam: Braucht Supabase etwas länger (250 ms
+     je Antwort nachgestellt) oder wartet der Start auf einer Seite aus dem Speicher auf den Fassungs-Wächter (I50), war
+     das Konto da (demo.user steht vor dem Profil), restoreSession aber noch nicht fertig – das Profil wurde voll
+     gezeichnet und gleich danach noch einmal: Benachrichtigungen, Playlist, Freunde, Prüffeld, neue Mitglieder und
+     „zuletzt aktiv“ doppelt (Sonde 885-sparsam SWT: 96 gegen 90 auf 807e6a7d in 30 s, 132 gegen 126 in 120 s).
+     Scheitert die Anmeldung auf ihrem Weg, zeichnet die Ruhepause wie bisher. */
   if (unterbereichOffen("view-profile", "sub-account")) renderAccount();
-  else nachLadenInRuhe(() => { if (!profilAngestossen) renderAccount(); });
+  else nachLadenInRuhe(() => { const dann = () => { if (!profilAngestossen) renderAccount(); }; anmeldungDa.then(dann, dann); });
   refreshHeaderAuth();
 
   // Ranking/Gästebuch/Premium erst rendern, wenn der jeweilige Reiter geöffnet wird
@@ -99016,7 +99023,7 @@ An einem Morgen lief ein kleiner Fuchs los…
   applyTheme((Backend.currentProfile() && Backend.currentProfile().theme) || sessionTheme);
 
   // Falls Supabase verbunden ist: bestehende Anmeldung (Session) wiederherstellen
-  Backend.restoreSession().then(async () => {
+  const anmeldungDa = Backend.restoreSession().then(async () => {   // FASSUNG 886: die Ruhepause oben wartet darauf
     await Backend.getFeatureFlags(); // Freigabe-Schalter laden — unabhängig davon, ob eingeloggt
     await itKursZugangLaden();       // wer den Italienischkurs öffnen darf
     wortZusatzLaden();               // die über die Seite nachgetragenen Wörter

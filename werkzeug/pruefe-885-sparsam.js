@@ -128,7 +128,8 @@
            fassung.json kommen nach D ms; je Runde 30 s. Anfragen der Update-Runde ≤ Bezugsrunde + 3, Echtzeit-
            Leitungen ≤ 1, am Ende 887. SWa/SWc/SWL: CPU 1×, D = 300/1000/5500; SWa4/SWc4: CPU 4×, D = 300/1000.
      SWT/SWT6  erstes Öffnen des Tages (lastLoginDay gestern), jede Supabase-Antwort 250 ms, D = 1000/600: die
-           Anmeldebelohnung genau einmal in results (Prüfer: auf c57cdb8b in 1 von 3 Läufen zweimal).
+           Anmeldebelohnung genau einmal in results (Prüfer: auf c57cdb8b in 1 von 3 Läufen zweimal); dazu der Start
+           ohne Update ≤ 807e6a7d + 1 (92): die Ruhepause zeichnete das Profil sonst ein zweites Mal (96–97).
      SW402 in der 402-Sperre, D = 5500: Update-Runde ≤ Bezugsrunde + 2 (Prüfer: 14 gegen 11).
      SWTOR ohne Update, nur fassung.json verzögert: Seite aus dem Netz → kein Tor; aus dem Speicher und fassung.json nach
            8 s → die erste Supabase-Anfrage nach ≈ 6 s (Frist), nicht vor 5,8 s; fassung.json nach 4 s und ein Tastendruck
@@ -396,7 +397,7 @@ function schluessel(adresse, methode) {
       if (methode === "OPTIONS") return route.fulfill({ status: 204, headers: kopf });
       if (zustand.supaVerz) await warte(zustand.supaVerz);   // SWT: jede Antwort braucht so lange
       const k = schluessel(req.url(), methode);
-      if (process.env.LAUT) console.log("    [netz] " + zustand.phase + " " + zustand.modus + " " + methode + " " + req.url().slice(0, 160));
+      if (process.env.LAUT) console.log("    [netz] " + (zustand.t0r ? ((Date.now() - zustand.t0r) / 1000).toFixed(2) + " s " : "") + zustand.phase + " " + zustand.modus + " " + methode + " " + req.url().slice(0, 160));
       const z = zaehler();
       z.gesamt++; z.je[k] = (z.je[k] || 0) + 1;
       /* N: genau eine Anfrage bekommt nie eine Antwort */
@@ -1297,6 +1298,7 @@ function schluessel(adresse, methode) {
     const runde = async (s, name, ms) => {
       const z = phase(s, name);
       const l0 = s.zustand.ladungen, d0 = netz.doks, f0 = netz.fass;
+      s.zustand.t0r = Date.now();   // LAUT: Zeit ab dem Neuladen
       await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
       await warte(ms || Number(process.env.SW_RUNDE_MS || 30000));   // SW_RUNDE_MS: längere Runde (Fenster-Probe)
       const info = await lage(s);
@@ -1349,6 +1351,10 @@ function schluessel(adresse, methode) {
       sage(runden.bezug.belohnungen === 1, fall + ": ohne Update genau eine Anmeldebelohnung", String(runden.bezug.belohnungen));
       sage(runden.neu.belohnungen === 1, fall + ": mit Update genau eine Anmeldebelohnung (nicht alte und neue Seite)", String(runden.neu.belohnungen));
       sage(runden.neu.z.gesamt <= runden.bezug.z.gesamt + 3, fall + ": Update-Runde nicht mehr Anfragen als ein Start (+ 3)", runden.neu.z.gesamt + " gegen " + runden.bezug.z.gesamt);
+      /* Einmischen, Nachbesserung 2: mit langsamer Antwort zeichnete die Ruhepause das Profil ein zweites Mal (app.js,
+         anmeldungDa). Bezugswert aus Läufen auf 807e6a7d (26.10.2026: SWT 90/90, SWT6 91/91; c57cdb8b 96/97) – wie
+         REF_START3 beim Ausliefern als 886 bzw. wenn sich main ändert neu messen. */
+      sage(runden.bezug.z.gesamt <= 91 + 1, fall + ": ein Start mit langsamer Antwort nicht mehr als auf 807e6a7d (91 + 1)", runden.bezug.z.gesamt + " (807e6a7d 90–91, c57cdb8b 96–97)");
       fehlerPruefen(s);
       ergebnis.faelle[fall] = { bezug: { gesamt: runden.bezug.z.gesamt, belohnungen: runden.bezug.belohnungen }, neu: { gesamt: runden.neu.z.gesamt, belohnungen: runden.neu.belohnungen, info: runden.neu.info } };
       await s.ctx.close();
