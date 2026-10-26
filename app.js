@@ -495,6 +495,9 @@
   const UEBER_FELDER = [["h2", "heading"], [".role", "role"], [".about-text-short", "shortText"], [".about-support-note", "supportNote"]];
   /* FASSUNG 886 (S8): Adressen, die das Original meinen (alte github-Adresse, eigene Kopie) – siehe ueberAngleichen */
   const UEBER_FOTO_ORIGINAL = /XanderFoxy\/Deutsch\/.*\/9ob2nzt2\.jpe?g|(^|\/)bilder\/ueber-alex-\d+\.webp/;
+  /* FASSUNG 886 (S8, Nachbesserung 2): die Adresse, die vor S8 im HTML stand – nur noch für das Bearbeiten-Formular
+     (openAboutEditForm), geholt wird sie nie mehr */
+  const UEBER_FOTO_GITHUB = "https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9ob2nzt2.jpeg?raw=true";
   function ueberAngleichen(saved) {
     const view = document.getElementById("view-about");
     if (!view) return;
@@ -569,6 +572,12 @@
     const shortText = document.querySelector("#view-about .about-text-short");
     const supportNote = document.querySelector("#view-about .about-support-note");
     const img = document.querySelector("#view-about .avatar-wrap img");
+    /* FASSUNG 886 (S8, Nachbesserung 2): zeigt das Bild das Original (die eigene Kopie), steht im Feld wie vor S8 die
+       github-Adresse. Mit img.src stünde dort die volle Adresse der Kopie (…/bilder/ueber-alex-290.webp?v=…): Speichert
+       Xander dann nur Text und steht in der Datenbank die github-Adresse, wären alte und neue Adresse verschieden – ein
+       Lesen und Schreiben von about_photo_history mehr als vor S8, und „Vorheriges Foto wiederherstellen“ böte das
+       Standardfoto als eigenes an. Beide Adressen zeigen dasselbe (UEBER_FOTO_ORIGINAL). Ein eigenes Foto: wie bisher. */
+    const fotoFeld = !img ? "" : UEBER_FOTO_ORIGINAL.test(img.getAttribute("src") || "") ? UEBER_FOTO_GITHUB : img.src;
     const profile = Backend.currentProfile();
     const gallery = (profile && profile.gallery) || [];
     const box = document.createElement("div");
@@ -583,7 +592,7 @@
         <div class="form-field"><label>Kurztext</label><textarea id="aboutEditShort" class="guestbook-form-textarea">${shortText ? shortText.textContent : ""}</textarea></div>
         <div class="form-field"><label>Kurzer Unterstützungs-Hinweis</label><textarea id="aboutEditSupport" class="guestbook-form-textarea">${supportNote ? supportNote.textContent : ""}</textarea></div>
         <p class="eyebrow" style="margin-top:14px;">📷 Foto — drei Möglichkeiten</p>
-        <div class="form-field"><label>1) Bild-Adresse (Link)</label><input type="text" id="aboutEditPhoto" value="${img ? img.src : ""}" placeholder="https://…" /></div>
+        <div class="form-field"><label>1) Bild-Adresse (Link)</label><input type="text" id="aboutEditPhoto" value="${fotoFeld}" placeholder="https://…" /></div>
         <div class="form-field"><label>2) Datei hochladen</label><input type="file" id="aboutEditPhotoUpload" accept="image/*" /></div>
         <button type="button" class="emoji-toggle-link" id="aboutPhotoResetBtn" style="font-size:0.76rem; margin-top:2px;">↩️ Vorheriges Foto wiederherstellen</button>
         ${gallery.length ? `

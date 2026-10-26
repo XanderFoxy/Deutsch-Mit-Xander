@@ -35,6 +35,9 @@
         nicht mehr gibt (so speichert das Formular nach S8): bleibt die Kopie,
         die alte Adresse wird nie geholt
      F  kaputter Merker: Foto trotzdem sofort, eine Anfrage
+     G  Bearbeiten-Formular (Nachbesserung 2): zeigt das Bild das Original, steht im
+        Foto-Feld wie vor S8 die github-Adresse; Speichern nur des Textes liest
+        about_photo_history dann nicht (Datenbank = github-Adresse); eigenes Foto: das Foto
      V  (GEGEN + Original) Bildvergleich DPR 1/2/3: Stand GEGEN (Original von
         github, nachgestellt aus QUELLE) gegen diesen Stand, Ausschnitt um das
         Foto: Farbe ±1 je Kanal, roh ≥ 36 dB, Schärfe (Laplace-Streuung der
@@ -287,6 +290,8 @@ function messSkript([saat]) {
           return r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: modus === "leer" ? "[]" : JSON.stringify([{ value: modus.wert }]) });
         }).catch(() => {});
       }
+      /* Teil G: wie oft das Formular about_photo_history liest (Nachbesserung 2) */
+      if (/supabase\.co\/rest\/v1\/site_content/.test(k) && /key=eq\.about_photo_history/.test(k)) z.historie = (z.historie || 0) + 1;
       if (/supabase\.co\/rest\//.test(u)) return warte(300).then(() => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" })).catch(() => {});
       return r.abort();
     });
@@ -459,6 +464,49 @@ function messSkript([saat]) {
       teil = "F";
       sage(st.kopie.length === 1 && st.lazyBeiDcl === null && r0 && r0.start <= st.fcp && seitenFehler.length === vor && st.src === H.src,
         name + ": Foto sofort (eine Anfrage vor dem ersten Bild), keine Seitenfehler", "Anfragen " + st.kopie.length + ", loading " + st.lazyBeiDcl + ", Seitenfehler " + (seitenFehler.length - vor));
+      await ctx.close();
+    }
+
+    /* ---------------- G: Bearbeiten-Formular (Nachbesserung 2, Prüfbericht zu 374ff591) ---------------- */
+    abschnitt("G  Bearbeiten-Formular: Foto-Feld und about_photo_history beim Speichern nur des Textes");
+    /* Vor S8 trug das Formular img.src ein – die github-Adresse. Mit S8 stand dort die volle Adresse der Kopie: Speichern
+       nur des Textes bei github-Adresse in der Datenbank las (und schrieb) about_photo_history zusätzlich. Jetzt steht bei
+       gezeigtem Original wieder die github-Adresse im Feld. Angemeldet ist niemand: canModerate und currentProfile werden
+       in der Seite vorgetäuscht, das Schreiben scheitert darum (isAdmin) – gezählt wird das Lesen davor. */
+    for (const [name, foto, merker] of [["Datenbank = github-Adresse", ORIG_URL, null], ["Datenbank und Merker = eigenes Foto X", X_URL, merkerMit(X_URL)]]) {
+      const z = { about: { wert: Object.assign({}, TEXTE, { photoUrl: foto }) }, dbMs: 300, github: 0, aboutAbfragen: 0, historie: 0 };
+      const ctx = await kontext(z, { dpr: 2, merker: merker || undefined });
+      const pg = await ctx.newPage();
+      pg.on("pageerror", (e) => seitenFehler.push(String(e.message || e)));
+      await pg.goto(haupt.basis, { waitUntil: "domcontentloaded", timeout: 60000 });
+      const t0 = Date.now();
+      while (z.aboutAbfragen === 0 && Date.now() - t0 < 20000) await warte(50);
+      await warte(z.dbMs + 1500);
+      const g = await pg.evaluate(async () => {
+        const w = (ms) => new Promise((r) => setTimeout(r, ms));
+        Backend.canModerate = () => true; Backend.currentProfile = () => ({});
+        document.querySelector('.tape-tab[data-target="view-about"]').click();
+        for (let i = 0; i < 40 && !document.getElementById("aboutEditBtn"); i++) await w(50);
+        const knopf = document.getElementById("aboutEditBtn");
+        if (!knopf) return { feld: null };
+        knopf.click();
+        for (let i = 0; i < 40 && !document.getElementById("aboutEditPhoto"); i++) await w(50);
+        const f = document.getElementById("aboutEditPhoto");
+        return { feld: f ? f.value : null };
+      });
+      const vorHist = z.historie;
+      await pg.click("#aboutEditSave").catch(() => {});
+      const t1 = Date.now();
+      while (Date.now() - t1 < 3000 && !(await pg.evaluate(() => { const e = document.getElementById("aboutEditError"); return Boolean(e && e.style.display === "block"); }))) await warte(50);
+      await warte(500);
+      const fehlerText = await pg.evaluate(() => { const e = document.getElementById("aboutEditError"); return e ? e.textContent : "–"; });
+      teil = "G";
+      if (foto === ORIG_URL) {
+        sage(g.feld === ORIG_URL, name + ": im Foto-Feld steht wie vor S8 die github-Adresse (nicht die Adresse der Kopie)", "Feld: " + kurzUrl(g.feld));
+        sage(z.historie - vorHist === 0, name + ": Speichern nur des Textes liest about_photo_history nicht (wie vor S8)",
+          "about_photo_history gelesen: " + (z.historie - vorHist) + ", danach: " + String(fehlerText).slice(0, 60));
+      } else sage(g.feld === X_URL, name + ": im Foto-Feld steht das eigene Foto (unverändert)", "Feld: " + kurzUrl(g.feld));
+      await pg.close();
       await ctx.close();
     }
     }
