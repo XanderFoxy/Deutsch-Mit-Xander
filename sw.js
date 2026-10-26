@@ -420,7 +420,10 @@ function neuer(a, b) {
        oder der Wächter lädt selbst neu) hebt es auf. Die neue Seite fragt nicht noch einmal (Merker dma-wechsel „*“).
      - hat die Anfrage DIESER Navigation dieselbe Fassung gebracht: „gleich“ an die Seite. Die Seite glaubt das seit 886
        („rueckkehrfrist“) auch beim Öffnen – die Vorab-Antwort ist genau die Seite, die bis 884 kam (aus dem Netz oder dem
-       HTTP-Speicher des Browsers) – und geht dann hinein, ohne auf fassung.json zu warten (index.html I52).
+       HTTP-Speicher des Browsers) – und geht dann hinein, ohne auf fassung.json zu warten (index.html I52). Diese
+       Antwort kann alt sein (Zurück: der Browser nimmt seine Kopie gleich welchen Alters); meldet fassung.json danach
+       doch „neu“, bevor die Seite drin ist, lädt der Wächter neu, und sie geht nicht mehr hinein; Supabase wartet dann
+       wieder (index.html I53, Nachbesserung 1 zu „rueckkehrfrist“).
      - sonst „nichts“. Antwortet fassung.json mit einem Fehler, wartet die Rückkehr auf diese Antwort des Helfers (sonst
        ging sie auf der alten Seite hinein, obwohl der Helfer die neue schon hat).
    Gemessen und verworfen: die alte Seite vor ihren Skripten anhalten, bis der Helfer entschieden hat (kostete auf

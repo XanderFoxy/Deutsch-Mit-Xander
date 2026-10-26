@@ -280,6 +280,17 @@ function falle(rueck) {
       const l = JSON.parse(sessionStorage.getItem("__app") || "[]"); l.push({ seite: n, t: Math.round(performance.now()) }); sessionStorage.setItem("__app", JSON.stringify(l)); } });
     /* Fassung 886: wie viele ganze Stilblätter die Seite eingehängt hatte, als sie ging */
     addEventListener("pagehide", () => { const l = JSON.parse(sessionStorage.getItem("__voll") || "[]"); l.push({ seite: n, voll: document.querySelectorAll("link[data-dma-voll-da]").length }); sessionStorage.setItem("__voll", JSON.stringify(l)); });
+    /* Fassung 886 (rueckkehrfrist, Nachbesserung 1): je Seite – Marke, Antworten des Helfers, wann das Start-Tor aufging, wann
+       der Wächter neu lud (dmaFassungGeht), DOMContentLoaded, und wie das Tor stand, als die Seite ging */
+    { const mk = { seite: n, marke: null, helfer: [], torAuf: [], geht: null, dcl: null, torWeg: null, weg: null };
+      const sp = () => { try { const l = JSON.parse(sessionStorage.getItem("__mk") || "[]").filter((x) => x.seite !== n); l.push(mk); sessionStorage.setItem("__mk", JSON.stringify(l)); } catch (e) {} };
+      const jetzt = () => Math.round(performance.now());
+      document.addEventListener("DOMContentLoaded", () => { mk.dcl = jetzt(); mk.marke = document.documentElement.hasAttribute("data-dma-speicher"); sp(); });
+      try { navigator.serviceWorker.addEventListener("message", (e) => { const w = e.data && e.data.dmaHelfer; if (w) { mk.helfer.push(w + "@" + jetzt()); sp(); } }); } catch (e) {}
+      let st, ge;
+      Object.defineProperty(window, "dmaStartTor", { configurable: true, get: () => st, set: (v) => { st = v; if (v && v.then) v.then(() => { mk.torAuf.push(jetzt()); sp(); }); } });
+      Object.defineProperty(window, "dmaFassungGeht", { configurable: true, get: () => ge, set: (v) => { ge = v; mk.geht = jetzt(); sp(); } });
+      addEventListener("pagehide", () => { mk.weg = jetzt(); mk.marke = document.documentElement.hasAttribute("data-dma-speicher"); mk.torWeg = st ? (st.offen ? "offen" : "zu") : "kein"; sp(); }); }
     /* Teil Y (Fassung 886): die Meldung „Rückkehr wartet“ kommt um __meldungSpaet ms verspätet beim Helfer an (wie ein langsamer
        Start der Seite oder ein langsam wachender Helfer) */
     const mSp = Number(sessionStorage.getItem("__meldungSpaet") || 0);
@@ -327,12 +338,13 @@ async function lauf(br, sv, o) {
   await schlaf(1500);
   const gesteuert = await pg.evaluate(() => Boolean(navigator.serviceWorker && navigator.serviceWorker.controller));
   await pg.evaluate((o) => { sessionStorage.setItem("__rueck", "1"); sessionStorage.setItem("__s", "0"); sessionStorage.setItem("__a", "[]"); sessionStorage.setItem("__b", "[]");
-    sessionStorage.removeItem("__tipp"); sessionStorage.removeItem("__stopp"); sessionStorage.setItem("__app", "[]"); sessionStorage.setItem("__voll", "[]"); sessionStorage.setItem("__wm", "[]"); sessionStorage.setItem("__bl", "[]");
+    sessionStorage.removeItem("__tipp"); sessionStorage.removeItem("__stopp"); sessionStorage.setItem("__app", "[]"); sessionStorage.setItem("__voll", "[]"); sessionStorage.setItem("__wm", "[]"); sessionStorage.setItem("__bl", "[]"); sessionStorage.setItem("__mk", "[]");
     if (o.zwang) sessionStorage.setItem("__zwang", "1"); else sessionStorage.removeItem("__zwang");
     if (o.wechselVor) sessionStorage.setItem("__wechselVor", o.wechselVor);
     if (o.meldungSpaet) sessionStorage.setItem("__meldungSpaet", String(o.meldungSpaet)); else sessionStorage.removeItem("__meldungSpaet");
     if (o.ohneNeuladen) sessionStorage.setItem("__ohneNeuladen", "1"); }, { wechselVor: (o.wechselVor || "").replace("{V}", V), ohneNeuladen: Boolean(o.ohneNeuladen), zwang: Boolean(o.zwang), meldungSpaet: o.meldungSpaet || 0 });
   let blaseVorher = null;
+  const e0 = {};
   if (o.bekannt) {
     /* die Seite im Raum hat die neue Fassung schon gesehen: der Wächter prüft beim Sichtbarwerden → Blase */
     S.seite = V1;
@@ -341,6 +353,15 @@ async function lauf(br, sv, o) {
     await schlaf(400);
   }
   S.seite = V1; S.stau = o.D; S.fjStau = o.fjD != null ? o.fjD : o.D; S.fjArt = o.fjArt || ""; S.zwang = o.zwang ? {} : null;
+  /* Teil B4m (rueckkehrfrist, Nachbesserung 1): die Seite soll sicher aus dem Speicher des Helfers kommen (Marke), während die
+     Vorab-Antwort die ALTE index.html aus dem HTTP-Speicher bringt (→ der Helfer sagt „gleich“). Dazu bekommt die abgelegte
+     Seite ein Server-Datum in der Zukunft: dann ist die Kopie des Browsers „älter“, und der Helfer liefert seine (frischWennDa) */
+  if (o.marke) e0.marke = await pg.evaluate(async () => {
+    try { const k = await caches.open("dma-seite-1"), u = new URL("seite", navigator.serviceWorker.controller.scriptURL).href, a = await k.match(u);
+      if (!a) return false;
+      const h = new Headers(a.headers); h.set("date", new Date(Date.now() + 3600000).toUTCString());
+      await k.put(u, new Response(await a.text(), { status: 200, statusText: "OK", headers: h })); return true; } catch (x) { return "fehler " + x.message; }
+  });
   if (o.cpu > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: o.cpu });
   /* Teil B (rueckkehrfrist): Zurück – erst weg (about:blank), die Uhr läuft ab history.back (Browser ohne bfcache) */
   if (o.art === "zurueck") await pg.goto("about:blank").catch(() => {});
@@ -368,14 +389,14 @@ async function lauf(br, sv, o) {
       const a = (c && await k.match(new URL("draussen", c.scriptURL).href)) || await k.match("draussen"); return a ? await a.text() : ""; } catch (x) { return "?"; } })(),
     marke: document.documentElement.hasAttribute("data-dma-speicher"),
     adressen: JSON.parse(sessionStorage.getItem("__a") || "[]"), betreten: JSON.parse(sessionStorage.getItem("__b") || "[]"),
-    tipp: sessionStorage.getItem("__tipp"), wm: JSON.parse(sessionStorage.getItem("__wm") || "[]"), stopp: JSON.parse(sessionStorage.getItem("__stopp") || "[]"), app: JSON.parse(sessionStorage.getItem("__app") || "[]"),
+    tipp: sessionStorage.getItem("__tipp"), wm: JSON.parse(sessionStorage.getItem("__wm") || "[]"), mk: JSON.parse(sessionStorage.getItem("__mk") || "[]"), stopp: JSON.parse(sessionStorage.getItem("__stopp") || "[]"), app: JSON.parse(sessionStorage.getItem("__app") || "[]"),
     vollWeg: JSON.parse(sessionStorage.getItem("__voll") || "[]"), voll: document.querySelectorAll("link[data-dma-voll-da]").length, vollAlle: document.querySelectorAll("link[data-dma-voll]").length,
     lage: window.LiveChat && window.LiveChat.lage ? window.LiveChat.lage().lage : "?",
     blase: (document.getElementById("dmaNeueFassung") || {}).textContent || "" })).catch((x) => ({ fehler: x.message.split("\n")[0] }));
   await ctx.close();
   S.ohneSpeicher = false;
   e.zwangRaus = S.zwang && S.zwang.raus ? S.zwang.raus - t0 : null; S.zwang = null;
-  e.V = V; e.V1 = V1; e.gesteuert = gesteuert; e.t0 = t0; e.blaseVorher = blaseVorher;
+  e.V = V; e.V1 = V1; e.gesteuert = gesteuert; e.t0 = t0; e.blaseVorher = blaseVorher; e.markeErzwungen = e0.marke;
   e.abNeuladen = e.betreten && e.betreten.length ? e.betreten[0].uhr - t0 : null;
   ERG.laeufe.push(Object.assign({ teil: o.teil, wurzel: sv.wurzel }, o, e)); schreiben();
   return e;
@@ -686,6 +707,28 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
       const b = e.betreten || [];
       sage(b.length === 1 && b[0].seite === e.seiten && e.seiten <= 2 && e.gesteuert && ((e.f === e.V1 && b[0].f === e.V1 && !e.blase) || (e.f === e.V && b[0].f === e.V && /Neue Fassung/.test(e.blase))),
         "B4 CPU " + fa.cpu + "× Öffnen, Update, fassung.json nach " + fa.D + " ms (vor dem Hineingehen), Lauf " + (n + 1) + ": betreten genau einmal, auf der letzten Seite – nie auf einer Seite, die gerade neu lädt", zeile(e));
+    }
+    /* B4m (Nachbesserung 1 zu „rueckkehrfrist“, Prüfbericht zu 69a00801): dasselbe auf einer Seite MIT Marke. Seit I52 löst dort
+       schon das „gleich“ des Helfers die erste Antwort – seine Vorab-Antwort ist aber die alte index.html aus dem HTTP-Speicher.
+       Meldet fassung.json danach „neu“, bevor die Rückkehr hineingeht, lädt der Wächter neu; die alte Seite darf trotzdem nicht
+       mehr hinein (69a00801: hinein, dann die neue noch einmal), und ihr Start-Tor (Supabase) muss zu sein, wenn sie geht
+       (69a00801: vom „gleich“ geöffnet). Fälle: Zurück und Öffnen, CPU 4×, fassung.json nach 0,25 s; die neue Seite kommt
+       nach 2 s (dann ist die alte Seite sicher noch da, wenn ihre Raum-Stücke ankommen – B4m-fest) oder nach 0,25 s (wie beim
+       Prüfer; dann ist auch „erst hinein, danach die Blase“ richtig). */
+    for (const fa of [{ art: "zurueck", D: 2000, fjD: 250, fest: true }, { art: "goto", D: 2000, fjD: 250, fest: true },
+      { art: "zurueck", D: 250, fjD: 250 }].filter(() => bNur("B4m"))) for (let n = 0; n < N; n++) {
+      const e = await lauf(br, sv, { teil: "B", art: fa.art, cpu: 4, D: fa.D, fjD: fa.fjD, update: true, marke: true, warten: 9000 });
+      const b = e.betreten || [], mk = e.mk || [], alt = mk.find((x) => x.seite === 1) || {};
+      const kopf = "B4m CPU 4× " + (fa.art === "goto" ? "Öffnen" : "Zurück") + ", Seite mit Marke, „gleich“ des Helfers auf die alte index.html, Update, fassung.json nach " + fa.fjD
+        + " ms, neue Seite nach " + fa.D + " ms, Lauf " + (n + 1) + ": ";
+      const ueber = e.markeErzwungen === true && alt.marke === true && (alt.helfer || []).some((h) => /^gleich@/.test(h));
+      sage(ueber, kopf + "der Weg wird wirklich geprüft (erste Seite mit Marke, der Helfer sagt „gleich“)", JSON.stringify({ erzwungen: e.markeErzwungen, alt }));
+      const einmal = b.length === 1 && b[0].seite === e.seiten && e.seiten <= 2 && e.gesteuert
+        && ((e.f === e.V1 && b[0].f === e.V1 && !e.blase) || (!fa.fest && e.seiten === 1 && e.f === e.V && b[0].f === e.V && /Neue Fassung/.test(e.blase)));
+      sage(einmal, kopf + (fa.fest ? "die alte Seite lädt neu und geht NICHT hinein – betreten genau einmal, auf der neuen Fassung"
+        : "betreten genau einmal, auf der letzten Seite (neu, oder die alte mit Blase, wenn sie vor fassung.json hineinging)"), zeile(e) + ", Seite 1: " + JSON.stringify(alt));
+      if (e.seiten > 1) sage(alt.geht != null && alt.torWeg !== "offen", kopf + "die gehende Seite: Wächter hat neu geladen (dmaFassungGeht), ihr Start-Tor (Supabase) ist zu, als sie geht",
+        "geht " + alt.geht + " ms, Tor beim Gehen " + alt.torWeg + ", Tor auf " + JSON.stringify(alt.torAuf) + ", DOMContentLoaded " + alt.dcl + ", weg " + alt.weg);
     }
     if (sb) sb.srv.close();
   }

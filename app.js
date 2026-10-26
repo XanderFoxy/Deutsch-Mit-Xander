@@ -70350,13 +70350,27 @@
             if (w === "neu") setTimeout(ok, 15000); else ok();
           }, () => { clearTimeout(uhr); ok(); });
         });
-        if (document.documentElement.hasAttribute("data-dma-speicher")) { const p = warten(); return () => p; }
+        /* FASSUNG 886 — RÜCKKEHRFRIST, NACHBESSERUNG 1 (Prüfbericht zu 69a00801): DIE SEITE GEHT – NICHT MEHR HINEIN, AUF
+           BEIDEN WEGEN. Seit I52 löst beim Öffnen/Zurück schon das „gleich“ des Helfers die erste Antwort. Kam seine
+           Vorab-Antwort aus dem HTTP-Speicher (beim Zurück nimmt der Browser seine Kopie gleich welchen Alters), kann sie
+           alt sein: meldet fassung.json danach „neu“, bevor die Stücke fürs Klassenzimmer da sind, lädt der Wächter neu –
+           das schon gelöste „gleich“ ließ die alte Seite aber trotzdem hinein, und die neue ging ein zweites Mal hinein
+           (Prüfer: CPU 4×, Zurück, D = 0,25 s, 1 von 2 Läufen auf diesem Weg; 5aaec640 nie). Jetzt setzt der Wächter beim
+           Neuladen window.dmaFassungGeht (index.html I53); geprüft wird unmittelbar vor dem Hineingehen, auf beiden Wegen
+           (ohne Marke ersetzt das den Merker „neu“ von rueckkehrfrist, Sonde B4). Dann wartet die Seite wie bei „neu“: die
+           neue Seite geht hinein; bleibt diese wider Erwarten 15 s nach dem Neuladen, doch hinein. Kostet nichts, solange
+           der Wächter nicht neu lädt. Sonde 885-rueckkehr B4m; SPIELSYSTEM.md „Frist (rueckkehrfrist): Nachbesserung 1“. */
+        const gehtNicht = () => {
+          const t = window.dmaFassungGeht;
+          if (t) return new Promise((ok) => setTimeout(ok, Math.max(0, 15000 - (Date.now() - t))));
+        };
+        if (document.documentElement.hasAttribute("data-dma-speicher")) { const p = warten(); return () => p.then(gehtNicht); }
         /* Ohne Marke nicht warten – aber hat der Wächter schon „neu“ gesagt (fassung.json kam, bevor die Stücke fürs
            Klassenzimmer da waren: schnelle Antwort oder langsames Telefon), lädt die Seite gerade neu; dann geht sie nicht
            mehr hinein, sondern die neue Seite (sonst zweimal betreten: Sonde 885-rueckkehr B4, vorher 1 von 8 Läufen). */
         let neu = false;
         erst.then((w) => { if (w === "neu") neu = true; }, () => {});
-        return () => (neu ? warten() : Promise.resolve());
+        return () => (neu ? warten() : Promise.resolve()).then(gehtNicht);
       })();
       const reinJetzt = () => LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
         /* FASSUNG 841 — auch bei der Rückkehr nach dem Neuladen das Konto mitgeben (sonst Zufallskennung, siehe livechat.js) */
