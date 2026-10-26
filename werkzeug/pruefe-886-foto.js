@@ -37,7 +37,10 @@
      F  kaputter Merker: Foto trotzdem sofort, eine Anfrage
      V  (GEGEN + Original) Bildvergleich DPR 1/2/3: Stand GEGEN (Original von
         github, nachgestellt aus QUELLE) gegen diesen Stand, Ausschnitt um das
-        Foto: Farbe ±1 je Kanal, geglättet (1 CSS-Pixel) ≥ 33 dB; roh genannt
+        Foto: Farbe ±1 je Kanal, roh ≥ 36 dB, Schärfe (Laplace-Streuung der
+        Bildmitte, Kopie/Original) ≥ 0,85, geglättet (1 CSS-Pixel) ≥ 33 dB
+        (Nachbesserung 2: vorher nur Farbe und geglättet – das ließ eine
+        absichtlich weichgezeichnete Kopie grün; Gegenprobe GEGEN_WEICH unten)
      M  (MESSEN=n, GEGEN, QUELLE) Bytes des Fotos, „Foto geladen“ und „Foto
         gemalt“ (Element Timing) je ab Start und − erstes Bild, 4G + CPU 4×, DPR 2.
         OHNE Playwright-Routen (die schalten den HTTP-Speicher ab): HTTPS mit h2,
@@ -62,6 +65,9 @@
      S=/tmp/claude-0/-home-user-Deutsch-Mit-Xander/<sitzung>/scratchpad
      git archive <vorher> index.html app.js min | tar -x -C $S/gegen886/foto-vorher (Rest als Verweis)
      WURZEL=$S/gegen886/foto-vorher node werkzeug/pruefe-886-foto.js
+   Gegenprobe V (Nachbesserung 2): ein Baum, in dem nur bilder/ueber-alex-*.webp weichgezeichnet sind (verkleinert,
+     wieder vergrößert, gleiche Pixelmaße), bzw. die Kopien in Gerätegröße (GROESSEN=76,152,228 FILTER=Lanczos):
+     NUR_V=1 WURZEL=<Baum> QUELLE=… GEGEN=… node werkzeug/pruefe-886-foto.js  → V1–V3 rot
    Bildvergleich/Messen: QUELLE=<Original> GEGEN=$S/gegen886/foto-vorher [MESSEN=10] [FAELLE_M=…] [X_GROSS=<JPEG>]
      [MESS_JSON=<Datei>] [MESS_LOG=1] [M_CPU=4] [NUR_V=1: ohne A–F] [OHNE_V=1: ohne V, z. B. GEGEN = ein Stand mit S8]
      node werkzeug/pruefe-886-foto.js
@@ -153,8 +159,12 @@ function server(wurzel) {
 
 /* Bildvergleich zweier PNG-Bildschirmfotos gleicher Größe:
    roh     PSNR Pixel für Pixel (straft schon eine Verschiebung um einen Bruchteil eines Pixels an harten Kanten)
-   glatt   PSNR nach Weichzeichnen um 1 CSS-Pixel (σ = DPR) – was ein Auge auf dem Telefon unterscheiden kann
+   glatt   PSNR nach Weichzeichnen um 1 CSS-Pixel (σ = DPR) – grobe Abweichungen (Ausschnitt, Lage, Helligkeit)
    farbe   größte Abweichung der Mittelwerte je Kanal (Farbstich, Helligkeit; Farbprofil vergessen?)
+   schaerfe  Feinzeichnung der Kopie im Verhältnis zum Original: Streuung des Laplace-Filters (Helligkeit, 4 Nachbarn)
+           in der Bildmitte (70 % des Ausschnitts, ohne Rahmen und Ecken) – ein weicheres Bild hat kleinere Sprünge
+           von Pixel zu Pixel. Nachbesserung 2: „geglättet“ allein ließ eine absichtlich weichgezeichnete Kopie
+           grün (geglättet 42,6/47,0/47,2 dB) – das Glätten nimmt genau die Feinzeichnung weg, um die es geht.
    Weichzeichnen mit ImageMagick (convert), wie werkzeug/foto-ueber.js. */
 function psnr(A, B) {
   let se = 0, n = 0;
@@ -164,15 +174,29 @@ function psnr(A, B) {
 function weich(png, sigma) {
   return PNG.sync.read(require("child_process").execFileSync("convert", ["png:-", "-blur", "0x" + sigma, "png:-"], { input: png }));
 }
+function laplaceStreuung(P, anteil) {
+  const { width: w, height: h, data } = P, g = new Float64Array(w * h);
+  for (let i = 0; i < w * h; i++) g[i] = 0.299 * data[4 * i] + 0.587 * data[4 * i + 1] + 0.114 * data[4 * i + 2];
+  const x0 = Math.max(1, Math.round(w * (0.5 - anteil / 2))), x1 = Math.min(w - 1, Math.round(w * (0.5 + anteil / 2)));
+  const y0 = Math.max(1, Math.round(h * (0.5 - anteil / 2))), y1 = Math.min(h - 1, Math.round(h * (0.5 + anteil / 2)));
+  let s = 0, s2 = 0, n = 0;
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
+    const i = y * w + x, l = 4 * g[i] - g[i - 1] - g[i + 1] - g[i - w] - g[i + w];
+    s += l; s2 += l * l; n++;
+  }
+  return n ? Math.sqrt(Math.max(0, s2 / n - (s / n) * (s / n))) : 0;
+}
 function vergleich(a, b, dpr) {
   const A = PNG.sync.read(a), B = PNG.sync.read(b);
-  if (A.width !== B.width || A.height !== B.height) return { roh: 0, glatt: 0, farbe: 255, groesse: A.width + "×" + A.height + " / " + B.width + "×" + B.height };
+  if (A.width !== B.width || A.height !== B.height) return { roh: 0, glatt: 0, farbe: 255, schaerfe: 0, lapA: 0, lapB: 0, groesse: A.width + "×" + A.height + " / " + B.width + "×" + B.height };
   const mA = [0, 0, 0], mB = [0, 0, 0];
   for (let i = 0; i < A.data.length; i += 4) for (let k = 0; k < 3; k++) { mA[k] += A.data[i + k]; mB[k] += B.data[i + k]; }
-  const n = A.data.length / 4;
-  return { roh: psnr(A, B), glatt: psnr(weich(a, dpr), weich(b, dpr)), farbe: Math.max(...mA.map((x, k) => Math.abs(x - mB[k]) / n)), groesse: A.width + "×" + A.height };
+  const n = A.data.length / 4, lapA = laplaceStreuung(A, 0.7), lapB = laplaceStreuung(B, 0.7);
+  return { roh: psnr(A, B), glatt: psnr(weich(a, dpr), weich(b, dpr)), farbe: Math.max(...mA.map((x, k) => Math.abs(x - mB[k]) / n)),
+    schaerfe: lapA > 0 ? lapB / lapA : 0, lapA, lapB, groesse: A.width + "×" + A.height };
 }
-const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.toFixed(1) + " dB, Farbe ±" + v.farbe.toFixed(2);
+const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, Schärfe " + v.lapA.toFixed(1) + " → " + v.lapB.toFixed(1) + " (" + v.schaerfe.toFixed(3) + ")"
+  + ", geglättet " + v.glatt.toFixed(1) + " dB, Farbe ±" + v.farbe.toFixed(2);
 
 /* Messung in der Seite (vor jedem Skript der Seite): erstes Bild, „Foto geladen“ (rAF), „Foto gemalt“ (Element Timing),
    lazy bei DOMContentLoaded, jeder Wechsel von src/srcset/currentSrc; saat = Merker dma-ueber (einmal je Kontext) */
@@ -440,12 +464,19 @@ function messSkript([saat]) {
 
     /* ---------------- V: Bildvergleich ---------------- */
     if (gegen && quelleDa && !process.env.OHNE_V) {
-      /* Maß: Farbe (Mittelwerte je Kanal ±1 von 255) und geglättet (σ = 1 CSS-Pixel) ≥ 33 dB. Roh wird nur genannt:
-         Chrome verkleinert das Original anders als ImageMagick (Mipmaps statt Lanczos) – an harten Kanten ergibt das
-         Säume von einem Bruchteil eines Pixels, die roh viel, fürs Auge nichts ausmachen. Probe 20.10. mit einem
-         ERSATZBILD (harte Kanten, starkes Rauschen): roh 27,7–29,3 dB, geglättet 34,4–35,0 dB, Farbe ±0,08–0,39;
-         Chrome zeigt das Original als JPEG und als verlustfreies PNG Pixel für Pixel gleich (99 dB) – die Abweichung
-         kommt allein aus dem Verkleinern. Mit dem echten Foto nachmessen; Seite an Seite: BILDER=<Ordner>. */
+      /* Maß (Nachbesserung 2, Prüfbericht zu 374ff591): Farbe (Mittelwerte je Kanal ±1 von 255), roh ≥ 36 dB, Schärfe
+         (Laplace-Streuung der Bildmitte, Kopie/Original) ≥ 0,85 und geglättet (σ = 1 CSS-Pixel) ≥ 33 dB. Bis dahin
+         galten nur Farbe und geglättet – zu lasch: eine absichtlich weichgezeichnete Kopie (verkleinert auf 60 bzw.
+         110 px, wieder vergrößert; nebeneinander deutlich weicher) war grün (geglättet 42,6/47,0/47,2 dB), ebenso die
+         beim Bau als „sichtbar weicher“ verworfenen Kopien in Gerätegröße (76/152/228, Lanczos: 42,6/46,5/47,7).
+         Die Grenzen aus den Bildschirmfotos aller Bau-Varianten (SPIELSYSTEM.md, Abschnitt S8, Tabelle) gewählt:
+           gebaut (Mip-Stufen 145/290)   roh 37,5/36,6/36,6  Schärfe 0,991/0,921/0,878   → grün
+           Gerätegröße 76/152/228        roh 34,7/35,1/36,3  Schärfe 0,699/0,620/0,764   → rot (beides)
+           weichgezeichnet (Prüfer)      roh 33,1/34,0/34,1  Schärfe 0,549/0,466/0,365   → rot (beides)
+         Die erste Probe (20.10., ERSATZBILD mit harten Kanten und starkem Rauschen) lag roh bei 27,7–29,3 dB – darum
+         galt roh damals nur als Hinweis; mit dem echten Foto trennt roh gut. Chrome zeigt das Original als JPEG und als
+         verlustfreies PNG Pixel für Pixel gleich (99 dB) – die Abweichung kommt allein aus dem Verkleinern.
+         Seite an Seite: BILDER=<Ordner>. */
       abschnitt("V  Bildvergleich: GEGEN (Original von github, nachgestellt aus " + path.relative(path.join(__dirname, ".."), QUELLE) + ") gegen diesen Stand");
       for (const dpr of [1, 2, 3]) {
         const za = { about: "leer", dbMs: 50, github: 0, aboutAbfragen: 0 }, zb = { about: "leer", dbMs: 50, github: 0, aboutAbfragen: 0 };
@@ -456,8 +487,8 @@ function messSkript([saat]) {
         const v = vergleich(a.bild, b.bild, dpr);
         teil = "V" + dpr;
         const wv = gewaehlt(H, dpr) || { g: 0, d: 1 };
-        sage(a.github > 0 && a.nw > 0 && b.nw === wv.g / wv.d && v.farbe <= 1 && v.glatt >= 33,
-          "DPR " + dpr + ": sieht gleich aus (Farbe ±1, geglättet ≥ 33 dB)", zeige(v) + ", Ausschnitt " + v.groesse + ", vorher nw " + a.nw + ", nachher nw " + b.nw);
+        sage(a.github > 0 && a.nw > 0 && b.nw === wv.g / wv.d && v.farbe <= 1 && v.roh >= 36 && v.schaerfe >= 0.85 && v.glatt >= 33,
+          "DPR " + dpr + ": sieht gleich aus (Farbe ±1, roh ≥ 36 dB, Schärfe ≥ 0,85, geglättet ≥ 33 dB)", zeige(v) + ", Ausschnitt " + v.groesse + ", vorher nw " + a.nw + ", nachher nw " + b.nw);
       }
     } else console.log("\n(V übersprungen: " + (gegen ? "" : "kein GEGEN ") + (quelleDa ? "" : "kein Original unter " + QUELLE) + ")");
 
