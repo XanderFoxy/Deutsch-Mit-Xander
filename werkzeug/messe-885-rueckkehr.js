@@ -21,6 +21,11 @@
    jede Blase auf jeder Seite (auch kurz vor dem Wechsel), „draussen“ im
    Seitenspeicher am Ende, und auf der letzten Seite, wann die Antwort des
    Helfers („gleich“/„nichts“/„neu“) und die von fassung.json ankamen.
+   Fassung 886 (rueckkehrfrist): -zurueck = Zurück statt Neuladen (die
+   Seite im Raum geht auf about:blank, dann history.back; der Browser
+   läuft ohne bfcache, so wie eine Seite mit offener Echtzeit-Leitung
+   meist nicht in den bfcache kommt – Navigationstyp „back_forward“, der
+   Browser nimmt index.html aus seinem Speicher, auch abgelaufen).
    KALT=1: der Helfer wird vor dem Neuladen angehalten (kalter Start) –
    aber erst, wenn die Seite ruhig ist; sonst scheiterten laufende
    Anfragen, dmaMinFehlt lud neu und schaltete min/ ab (so war eine
@@ -38,7 +43,7 @@
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const VAR = (process.env.VAR || "").split(",").filter(Boolean).map((x) => x.split("=")).map(([n, p]) => ({ n, p: path.resolve(p) }));
-const FAELLE = (process.env.FAELLE || "u4-250").split(",").map((x) => { const m = /^([ugk])(\d+)-(\d+)(?:f(\d+))?(-goto)?(-n)?$/.exec(x.trim()); return { name: x.trim(), update: m[1] !== "g", bekannt: m[1] === "k", cpu: Number(m[2]), D: Number(m[3]), fD: m[4] != null ? Number(m[4]) : Number(m[3]), art: m[5] ? "goto" : "reload", netz: Boolean(m[6]) }; });
+const FAELLE = (process.env.FAELLE || "u4-250").split(",").map((x) => { const m = /^([ugk])(\d+)-(\d+)(?:f(\d+))?(-goto|-zurueck)?(-n)?$/.exec(x.trim()); return { name: x.trim(), update: m[1] !== "g", bekannt: m[1] === "k", cpu: Number(m[2]), D: Number(m[3]), fD: m[4] != null ? Number(m[4]) : Number(m[3]), art: m[5] ? m[5].slice(1) : "reload", netz: Boolean(m[6]) }; });
 const PAARE = Number(process.env.PAARE || 6), AUS = process.env.AUS || "";
 const PRE = "/Deutsch-Mit-Xander";
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".woff2": "font/woff2", ".webmanifest": "application/manifest+json" };
@@ -125,8 +130,11 @@ async function lauf(br, sv, wurzel, fa) {
   }
   S.seite = V1; S.stau = fa.D; S.fjStau = fa.fD;
   if (fa.cpu > 1) await cdp.send("Emulation.setCPUThrottlingRate", { rate: fa.cpu });
+  /* 886 (rueckkehrfrist): Zurück – erst weg (about:blank), die Uhr läuft ab history.back */
+  if (fa.art === "zurueck") await pg.goto("about:blank").catch(() => {});
   const t0 = Date.now();
   if (fa.art === "goto") await pg.goto(hier + "/index.html?mit-sw", { waitUntil: "commit" }).catch(() => {});
+  else if (fa.art === "zurueck") await pg.goBack({ waitUntil: "commit" }).catch(() => {});
   else await pg.reload({ waitUntil: "commit" }).catch(() => {});
   const bis = Date.now() + 9000; let l = null;
   while (Date.now() < bis) { await schlaf(250); l = await pg.evaluate(() => JSON.parse(sessionStorage.getItem("__b") || "[]")).catch(() => null); if (l && l.length && Date.now() - l[l.length - 1].uhr > 2000) break; }
@@ -171,7 +179,8 @@ for (const f of dateien) {
 }
 if (process.argv[2] === "--auswerten") { auswerten(process.argv.slice(3)); process.exit(0); }
 (async () => {
-  const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-proxy-server", "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1"] });
+  /* 886 (rueckkehrfrist): ohne bfcache (nur für -zurueck von Belang; Neuladen und Öffnen gehen nie über den bfcache) */
+  const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-proxy-server", "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1", "--disable-features=BackForwardCache"] });
   const sv = {}; for (const v of VAR) sv[v.n] = await server(v.p);
   const ERG = { var: VAR, faelle: FAELLE, laeufe: [] };
   const zusammen = [];

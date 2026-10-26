@@ -70326,14 +70326,19 @@
          Messung: SPIELSYSTEM.md „Fassung 886 — Rückkehr: Nachbesserung 1“. */
       const fassungFrei = (() => {
         const erst = window.dmaFassungErst;
-        /* Sicher frisch ist nur eine Seite, die NICHT aus dem Speicher des Helfers kam (Marke data-dma-speicher, gesetzt
-           von sw.js) UND per Neuladen geholt wurde: dann fragt der Browser beim Server nach (auch der Helfer, Vorab-Laden).
-           Bei einem gewöhnlichen Öffnen (verworfener Tab, Zurück) darf der Browser index.html bis zu 10 min aus seinem
-           eigenen Speicher nehmen (GitHub Pages max-age=600) – auch dann kann sie alt sein (Sonde R, Öffnen). */
-        let art = "";
-        try { art = (performance.getEntriesByType("navigation")[0] || {}).type || ""; } catch (e) {}
-        if (!art) try { art = performance.navigation && performance.navigation.type === 1 ? "reload" : ""; } catch (e) {}
-        if (!erst || (art === "reload" && !document.documentElement.hasAttribute("data-dma-speicher"))) return Promise.resolve();
+        /* FASSUNG 886 — XANDER (Funk 255): „die Verbindung zu den anderen haben oberste Priorität“. WARTEN NUR AUF EINER SEITE
+           AUS DEM SPEICHER DES HELFERS (Prüfbericht zu 5aaec640, Punkt „rueckkehrfrist“). Bisher wartete auch eine Seite ohne
+           Marke beim gewöhnlichen Öffnen (Zurück, Adresse erneut, ein als Öffnen zurückgeholter Tab), weil der Browser
+           index.html bis zu 10 min aus seinem HTTP-Speicher nehmen darf – sie ging erst nach der Antwort von fassung.json
+           hinein; 884 ging sofort (Prüfer, 6 Paare, CPU 1×: fassung.json nach 0,25 / 0,8 / 2 s → +64 / +605 / +1811 ms, auf
+           langsamer Leitung also fast 2 s später im Raum). Verschlechtert hat S1 die Lage aber nur, wo die Seite aus dem
+           Speicher des Helfers kommt (Marke data-dma-speicher, sw.js); eine Seite aus dem Netz oder aus dem HTTP-Speicher geht
+           jetzt wie bis 884 sofort hinein. Ist sie doch alt (eine neue Fassung kam in den ≤ 10 min, die der Browser seine
+           Kopie behält), zeigt der Wächter im Raum die Blase – kein Neuladen mitten im Verbinden (884 lud dort neu und ging
+           ein zweites Mal hinein). Mit Marke wird weiter gewartet (Neuladen: höchstens so lange wie 884 auf das Netz; beim
+           Öffnen gilt jetzt auch das „gleich“ des Helfers, index.html I52) – Messung und die verworfene kurze Frist:
+           SPIELSYSTEM.md „Rückkehr: Frist (rueckkehrfrist)“. */
+        if (!erst || !document.documentElement.hasAttribute("data-dma-speicher")) return Promise.resolve();
         return new Promise((ok) => {
           const uhr = setTimeout(ok, Math.max(0, 6000 - performance.now()));
           erst.then((w) => {
