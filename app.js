@@ -74335,7 +74335,7 @@
   // gameRouting) und beim jeweiligen Spielende ausgewertet.
   let activeGameChallengeId = null;
 
-  async function newMemoryGame() {
+  async function newMemoryGame(art) {
     /* Beim Wechsel des Lernraums wechselt auch die Spielliste: die
        gemerkte Kennung („synonyme") gibt es im italienischen Memory
        nicht, game war dann undefined und getPairs() brach ab. Also
@@ -74352,7 +74352,7 @@
     });
     cards = Core.shuffle(cards);
     memoryState = { cards, flipped: [], matched: new Set(), lastSeenId: null, moves: 0, wrongFlash: [], finished: false, startedAt: Date.now() };
-    await renderMemory();
+    await renderMemory(art);
   }
 
   // Erspielbare Kartenrückseiten-Designs für Memory — dasselbe Freischalt-Prinzip wie bei den
@@ -74371,8 +74371,8 @@
   function setMemoryCardDesign(id) {
     Backend.updateExtraProfileField("memoryCardDesign", id);
   }
-  async function renderMemory() {
-    if (!memoryState) return newMemoryGame();   // FASSUNG 886 — die erste Runde kommt erst in der Ruhepause
+  async function renderMemory(art) {
+    if (!memoryState) return newMemoryGame(art);   // FASSUNG 886 — die erste Runde kommt erst in der Ruhepause
     const profile = Backend.currentProfile();
     const activeDesign = getMemoryCardDesign();
     const designBar = `
@@ -74398,7 +74398,10 @@
       </div>`;
 
     const isLoggedIn = Boolean(Backend.currentUser());
-    const memFriends = isLoggedIn ? await Backend.getFriends() : [];
+    /* FASSUNG 886 (Einmischen, Nachbesserung 1) — das Vorzeichnen in der Ruhepause holt keine Freundesliste: vor 886 lief
+       die erste Runde im Seitenaufbau ohne wiederhergestellte Anmeldung, also ohne diese Abfrage (Supabase-Kontingent,
+       Notfall-Fassung 885). Jeder Weg ins Memory mischt neu (newMemoryGame) und holt sie dann wie bisher. */
+    const memFriends = isLoggedIn && art !== "vorzeichnen" ? await Backend.getFriends() : [];
     // Aufklappbar statt einer immer sichtbaren, potenziell sehr langen Liste — bei vielen
     // Freunden musste man vorher endlos scrollen, nur um überhaupt zum Spielfeld zu kommen.
     // Standardmäßig eingeklappt, mit Suchfeld zum gezielten Filtern statt Scrollen. Ausgewählte
@@ -74604,9 +74607,9 @@
       }
     }
   }
-  /* FASSUNG 886 — die erste Runde nicht im Seitenaufbau (Memory ist beim Start verdeckt; mit Konto ging dafür die
-     Freundesliste an die Datenbank), sondern in der Ruhepause. Jeder Weg hinein mischt ohnehin neu (newMemoryGame). */
-  nachLadenInRuhe(() => { if (!memoryState) newMemoryGame(); });
+  /* FASSUNG 886 — die erste Runde nicht im Seitenaufbau (Memory ist beim Start verdeckt), sondern in der Ruhepause,
+     ohne Freundesliste (art "vorzeichnen", s. renderMemory). Jeder Weg hinein mischt ohnehin neu (newMemoryGame). */
+  nachLadenInRuhe(() => { if (!memoryState) newMemoryGame("vorzeichnen"); });
 
   document.querySelector('#learnSubnav [data-sub="sub-memory"]')?.addEventListener("click", () => {
     activeMemoryChallengeId = null; activeMemoryOpponentName = "";
@@ -92297,17 +92300,26 @@ An einem Morgen lief ein kleiner Fuchs los…
     renderCommunityTexts();
   });
 
-  var linksAngestossen = false;   // FASSUNG 886
-  async function renderLinks() {
+  var linksAngestossen = false, linksLauf = 0;   // FASSUNG 886
+  /* FASSUNG 886 (Einmischen, Nachbesserung 1) — Sparsamkeit der Notfall-Fassung 885 (Supabase-Kontingent). Vor 886 lief
+     das Vorzeichnen im Seitenaufbau, als die Anmeldung noch nicht wiederhergestellt war: eine Abfrage (die freigegebenen
+     Links), weder „meine“ noch „ausstehende“. In der Ruhepause ist das Konto schon da und es wären drei – für einen
+     verdeckten Bereich, den das Öffnen ohnehin frisch holt. Darum holt art "vorzeichnen" nur, was der Start vor 886
+     holte, und zeichnet wie damals (wie für einen Gast); das Öffnen (Tipp auf den Unterreiter) bleibt wie bisher. Kommt
+     während der Abfrage ein frischer Aufruf (Tipp), überschreibt das Vorgezeichnete ihn nicht (linksLauf). */
+  async function renderLinks(art) {
     const area = document.getElementById("linksArea");
     if (!area) return;
     linksAngestossen = true;
-    const user = Backend.currentUser();
+    const vor = art === "vorzeichnen", lauf = ++linksLauf;
+    const user = vor ? null : Backend.currentUser();
+    const mod = !vor && Backend.canModerate();
     const [userLinks, myLinks, pendingLinks] = await Promise.all([
       Backend.getApprovedUserLinks(),
       user ? Backend.getMyUserLinks() : Promise.resolve([]),
-      Backend.canModerate() ? Backend.getPendingUserLinks() : Promise.resolve([]),
+      mod ? Backend.getPendingUserLinks() : Promise.resolve([]),
     ]);
+    if (vor && lauf !== linksLauf) return;
     const myPending = myLinks.filter((l) => l.status === "pending");
     area.innerHTML = `
       ${VocabData.LINKS.map((l) => `<div class="link-card"><h3><a href="${l.url}" target="_blank" rel="noopener">${l.title} ↗</a></h3><p>${l.desc}</p></div>`).join("")}
@@ -92324,7 +92336,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         </div>
         ${myPending.length ? `<div style="margin-top:10px;">${myPending.map((l) => `<div class="breakdown-row"><span>${l.title}</span><span>Wartet auf Freischaltung</span></div>`).join("")}</div>` : ""}
       </div>
-      ${Backend.canModerate() ? `<div class="question-card" style="margin-top:16px; border:2px solid var(--amber-400);">
+      ${mod ? `<div class="question-card" style="margin-top:16px; border:2px solid var(--amber-400);">
         <h3>🛠️ Vorgeschlagene Links prüfen (${pendingLinks.length})</h3>
         ${pendingLinks.length ? pendingLinks.map((l) => `
           <div class="breakdown-row" style="align-items:flex-start; flex-direction:column; gap:4px;">
@@ -92371,9 +92383,9 @@ An einem Morgen lief ein kleiner Fuchs los…
       });
     });
   }
-  /* FASSUNG 886 — nicht im Seitenaufbau (zwei Abfragen, verdeckter Bereich), sondern in der Ruhepause vorgezeichnet;
-     wer „Weiterführende Links“ öffnet, holt wie bisher frisch. */
-  nachLadenInRuhe(() => { if (!linksAngestossen) renderLinks(); });
+  /* FASSUNG 886 — nicht im Seitenaufbau (verdeckter Bereich), sondern in der Ruhepause vorgezeichnet, mit nur der einen
+     Abfrage wie vor 886 (art "vorzeichnen", s. o.); wer „Weiterführende Links“ öffnet, holt wie bisher frisch. */
+  nachLadenInRuhe(() => { if (!linksAngestossen) renderLinks("vorzeichnen"); });
   document.querySelector('#knowledgeSubnav [data-sub="sub-links"]')?.addEventListener("click", () => renderLinks());
   // Vorstellungsrunde: geführtes Formular mit hilfreichen Platzhaltern, damit niemand vor einem
   // leeren Feld sitzt — plus eine kompakte Kartenübersicht aller Vorstellungen (mit dem jeweils
@@ -92503,17 +92515,20 @@ An einem Morgen lief ein kleiner Fuchs los…
   // "Schwarmwissen" — freier Austausch von Tipps, Links, Videos, Bildern zwischen
   // Nutzer:innen. Alex bietet die Inhalte an, lernt aber selbst kein Deutsch mehr — wer gerade
   // mittendrin steckt, weiß am besten, was wirklich hilft.
-  var tippsAngestossen = false;   // FASSUNG 886
-  async function renderTips() {
+  var tippsAngestossen = false, tippsLauf = 0;   // FASSUNG 886
+  async function renderTips(art) {
     const area = document.getElementById("tipsArea");
     if (!area) return;
     tippsAngestossen = true;
-    const user = Backend.currentUser();
+    const vor = art === "vorzeichnen", lauf = ++tippsLauf;   // FASSUNG 886 (Einmischen, Nachbesserung 1) — wie renderLinks
+    const user = vor ? null : Backend.currentUser();
+    const mod = !vor && Backend.canModerate();
     const [tips, myTips, pendingTips] = await Promise.all([
       Backend.getApprovedCommunityTips(),
       user ? Backend.getMyCommunityTips() : Promise.resolve([]),
-      Backend.canModerate() ? Backend.getPendingCommunityTips() : Promise.resolve([]),
+      mod ? Backend.getPendingCommunityTips() : Promise.resolve([]),
     ]);
+    if (vor && lauf !== tippsLauf) return;
     const myPending = myTips.filter((t) => t.status === "pending");
     area.innerHTML = `
       <p class="empty-note" style="margin-bottom:12px;">Hier tauscht ihr euch gegenseitig aus — was hat bei dir funktioniert? Eine Serie, ein Video, eine Übungsmethode? Teil es mit den anderen.</p>
@@ -92532,7 +92547,7 @@ An einem Morgen lief ein kleiner Fuchs los…
         </div>
         ${myPending.length ? `<div style="margin-top:10px;">${myPending.map((t) => `<div class="breakdown-row"><span>${t.text.slice(0, 40)}${t.text.length > 40 ? "…" : ""}</span><span>Wartet auf Freischaltung</span></div>`).join("")}</div>` : ""}
       </div>
-      ${Backend.canModerate() ? `<div class="question-card" style="margin-top:14px; border:2px solid var(--amber-400);">
+      ${mod ? `<div class="question-card" style="margin-top:14px; border:2px solid var(--amber-400);">
         <h3>🛠️ Vorgeschlagene Tipps prüfen (${pendingTips.length})</h3>
         ${pendingTips.length ? pendingTips.map((t) => `
           <div class="breakdown-row" style="align-items:flex-start; flex-direction:column; gap:4px;">
@@ -92611,7 +92626,7 @@ An einem Morgen lief ein kleiner Fuchs los…
       img.addEventListener("click", () => openGallerySlideshow([img.dataset.modalViewPhoto], 0, "Bild"));
     });
   }
-  nachLadenInRuhe(() => { if (!tippsAngestossen) renderTips(); });   // FASSUNG 886 — wie die Links oben
+  nachLadenInRuhe(() => { if (!tippsAngestossen) renderTips("vorzeichnen"); });   // FASSUNG 886 — wie die Links oben
   document.querySelector('#knowledgeSubnav [data-sub="sub-tips"]')?.addEventListener("click", () => renderTips());
 
   /* ============================================================
