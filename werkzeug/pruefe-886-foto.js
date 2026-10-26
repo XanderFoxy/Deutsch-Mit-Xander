@@ -42,10 +42,11 @@
         (Nachbesserung 2: vorher nur Farbe und geglättet – das ließ eine
         absichtlich weichgezeichnete Kopie grün; Gegenprobe GEGEN_WEICH unten)
      M  (MESSEN=n, GEGEN, QUELLE) Bytes des Fotos, „Foto geladen“ und „Foto
-        gemalt“ (Element Timing) je ab Start und − erstes Bild, 4G + CPU 4×, DPR 2.
+        gemalt“ (Element Timing) je ab Start und − erstes Bild, 4G + CPU 4×, DPR 2
+        (M_NETZ=3g: 150 ms, 1,6 Mbit/s – Nachbesserung 2).
         OHNE Playwright-Routen (die schalten den HTTP-Speicher ab): HTTPS mit h2,
         fremde Namen per host-resolver-rules auf eigene Server (je Name ein Port,
-        also eine eigene Verbindung; die erste Anfrage je Verbindung +180 ms =
+        also eine eigene Verbindung; die erste Anfrage je Verbindung +3 Rundreisen =
         DNS + TCP + TLS), github.com 302 no-cache, raw.githubusercontent.com mit
         max-age=300 und ETag wie das echte (per curl geprüft) – ein MODELL der
         Leitung, kein echtes github; Bytes, Speicher und Dekodieren sind echt.
@@ -69,7 +70,7 @@
      wieder vergrößert, gleiche Pixelmaße), bzw. die Kopien in Gerätegröße (GROESSEN=76,152,228 FILTER=Lanczos):
      NUR_V=1 WURZEL=<Baum> QUELLE=… GEGEN=… node werkzeug/pruefe-886-foto.js  → V1–V3 rot
    Bildvergleich/Messen: QUELLE=<Original> GEGEN=$S/gegen886/foto-vorher [MESSEN=10] [FAELLE_M=…] [X_GROSS=<JPEG>]
-     [MESS_JSON=<Datei>] [MESS_LOG=1] [M_CPU=4] [NUR_V=1: ohne A–F] [OHNE_V=1: ohne V, z. B. GEGEN = ein Stand mit S8]
+     [MESS_JSON=<Datei>] [MESS_LOG=1] [M_CPU=4] [M_NETZ=4g|3g] [NUR_V=1: ohne A–F] [OHNE_V=1: ohne V, z. B. GEGEN = ein Stand mit S8]
      node werkzeug/pruefe-886-foto.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
@@ -503,6 +504,11 @@ function messSkript([saat]) {
       const FAELLE = (process.env.FAELLE_M || "erstes,zweites,abgelaufen" + (process.env.X_GROSS ? ",eigen" : "")).split(",").map((x) => x.trim()).filter(Boolean);
       const X_GROSS = process.env.X_GROSS ? fs.readFileSync(path.resolve(process.env.X_GROSS)) : null;
       const M_CPU = Number(process.env.M_CPU || 4);   // CPU-Bremse (4 = Mittelklasse-Telefon; 1 = schneller Rechner, die Leitung entscheidet)
+      /* Nachbesserung 2 (Prüfbericht zu 374ff591): auch auf langsamem Handy-Netz – 3g wie werkzeug/ladezeit-messen.js
+         (150 ms, 1,6 Mbit/s); Aufbau je neue fremde Verbindung 3 Rundreisen wie bei 4G (DNS + TCP + TLS) */
+      const NETZE_M = { "4g": { rtt: 60, down: 9e6, name: "4G (60 ms, 9 Mbit/s)" }, "3g": { rtt: 150, down: 1.6e6, name: "3G (150 ms, 1,6 Mbit/s)" } };
+      const NETZ_M = NETZE_M[process.env.M_NETZ || "4g"];
+      if (!NETZ_M) throw new Error("M_NETZ unbekannt: " + process.env.M_NETZ + " (4g | 3g)");
       if (FAELLE.includes("eigen") && !X_GROSS) throw new Error("M „eigen“ braucht X_GROSS=<großes JPEG>");
       /* eigenes Zertifikat für alle Namen, im Browser per SPKI freigegeben */
       const tdir = fs.mkdtempSync(path.join(os.tmpdir(), "m886-"));
@@ -539,13 +545,13 @@ function messSkript([saat]) {
         });
       };
       /* Fremde Namen: je Name ein eigener Server und Port – Chrome legt h2-Verbindungen nur bei gleicher Adresse samt Port
-         zusammen, so bekommt jeder Name wie draußen eine eigene Verbindung. Die erste Anfrage je Verbindung wartet 180 ms
-         (DNS + TCP + TLS = 3 Rundreisen bei 4G; die Drosselung selbst gibt jeder Anfrage 60 ms). */
+         zusammen, so bekommt jeder Name wie draußen eine eigene Verbindung. Die erste Anfrage je Verbindung wartet 3
+         Rundreisen (DNS + TCP + TLS: 180 ms bei 4G, 450 ms bei 3G; die Drosselung selbst gibt jeder Anfrage eine). */
       const neueVerbindung = async (q) => {
         const s = q.stream ? q.stream.session : q.socket;
         /* MESS_LOG: jede neue Verbindung und jede Anfrage außer den Datenbank-Abfragen */
         if (process.env.MESS_LOG && (!(s && s.__m886) || !/\/rest\/v1\//.test(q.url))) console.log("      " + (q.headers[":authority"] || q.headers.host) + " " + q.method + " " + q.url.slice(0, 50) + (s && s.__m886 ? "" : "  (neue Verbindung)"));
-        if (s && !s.__m886) { s.__m886 = 1; await warte(180); }
+        if (s && !s.__m886) { s.__m886 = 1; await warte(3 * NETZ_M.rtt); }
       };
       const RAW_ETAG = '"' + crypto.createHash("sha1").update(QUELLE_BYTES).digest("hex") + '"';
       const SUPA = "https://rolcktiryrvjzbwuvobb.supabase.co", X_PFAD = "/storage/v1/object/public/avatars/site-images/about-1761400000000-foto.jpg";
@@ -596,7 +602,7 @@ function messSkript([saat]) {
       if (FAELLE.includes("erstes") || FAELLE.includes("zweites")) gruppen.push(["erstes", "zweites"].filter((f) => f === "erstes" || FAELLE.includes(f)));
       if (FAELLE.includes("abgelaufen")) gruppen.push([FAELLE.includes("erstes") ? "erstes" : null, "abgelaufen"]);
       if (FAELLE.includes("eigen")) gruppen.push(["eigen"]);
-      abschnitt("M  Foto, 4G (60 ms, 9 Mbit/s) + CPU " + M_CPU + "×, DPR 2, " + MESSEN + " Paare verschränkt (A = GEGEN, B = dieser Stand); ohne Routen, echter HTTP-Speicher, Fälle " + FAELLE.join(","));
+      abschnitt("M  Foto, " + NETZ_M.name + " + CPU " + M_CPU + "×, DPR 2, " + MESSEN + " Paare verschränkt (A = GEGEN, B = dieser Stand); ohne Routen, echter HTTP-Speicher, Fälle " + FAELLE.join(","));
       const werte = {};
       async function mLauf(name, port, gruppe) {
         const fall0 = gruppe[gruppe.length - 1];
@@ -611,7 +617,7 @@ function messSkript([saat]) {
           pg.on("pageerror", (e) => seitenFehler.push(String(e.message || e)));
           const cdp = await ctx.newCDPSession(pg);
           await cdp.send("Network.enable");
-          await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 60, downloadThroughput: 9e6 / 8, uploadThroughput: 750e3 / 8 });
+          await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: NETZ_M.rtt, downloadThroughput: NETZ_M.down / 8, uploadThroughput: 750e3 / 8 });
           await cdp.send("Emulation.setCPUThrottlingRate", { rate: M_CPU });
           const vor = Object.assign({}, zaehl);
           await pg.goto("https://127.0.0.1:" + port + "/index.html", { waitUntil: "load", timeout: 90000 });
