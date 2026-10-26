@@ -146,6 +146,18 @@ function rueckbauRueckkehr(y) {
     .replace('x.send()}catch(e){fertig("fehler")}', "x.send()}catch(e){}");
 }
 
+/* FASSUNG 886 (S8, Foto auf „Über mich“, SPIELSYSTEM.md I51): der Wächter für „Über mich“ läuft jetzt auch ohne Merker
+   (nimmt lazy weg) und erkennt das Original (github-Adresse, eigene Kopie) – für Teil Q wieder herausnehmen */
+function rueckbauFoto(y) {
+  return y
+    .replace('if(!window.MutationObserver)return;if(!w||typeof w!="object")w={};', 'if(!w||typeof w!="object"||!window.MutationObserver)return;')
+    .replace('if(!i)return;if(p&&typeof p=="string"&&!/XanderFoxy\\/Deutsch\\/.*\\/9ob2nzt2\\.jpe?g|(^|\\/)bilder\\/ueber-alex-\\d+\\.webp/.test(p)&&i.getAttribute("src")!=p){i.setAttribute("data-original-src",i.getAttribute("src")||"");i.setAttribute("data-original-srcset",i.getAttribute("srcset")||"");i.removeAttribute("srcset");i.src=p}i.removeAttribute("loading")});',
+      'if(i&&p&&typeof p=="string"&&i.getAttribute("src")!=p){i.setAttribute("data-original-src",i.src);i.src=p}});');
+}
+/* … und das Foto selbst: eigene Kopie (src/srcset) statt github */
+const FOTO_ALT = '<img src="https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9ob2nzt2.jpeg?raw=true" alt="Alex, Gründer von Deutsch mit Alex" loading="lazy" />';
+const ohneFoto = (html) => html.replace(/<img src="bilder\/ueber-alex-\d+\.webp\?v=[0-9a-f]+" srcset="[^"]*" alt="Alex, Gründer von Deutsch mit Alex" loading="lazy" \/>/, FOTO_ALT);
+
 /* ---------- Quelltext ---------- */
 const lies = (w, f) => fs.readFileSync(path.join(w, f), "utf8");
 const inlineSkripte = (html) => [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
@@ -329,6 +341,7 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
         /* Fassung 886 (Rückkehr, SPIELSYSTEM.md I48): die ganzen Blätter warten auf der Rückkehr-Seite aus dem Speicher auf den Helfer */
         const i886 = y.indexOf("window.dmaRueckWarten=function(f){"), j886 = y.indexOf("window.dmaStileAn=function(){window.dmaRueckWarten(function(){window.dmaStileVoll()})};");
         if (i886 >= 0 && j886 > i886) y = y.slice(0, i886) + "window.dmaStileAn=function(){window.dmaStileVoll()};" + y.slice(j886 + "window.dmaStileAn=function(){window.dmaRueckWarten(function(){window.dmaStileVoll()})};".length);
+        if (/ueber-alex-/.test(y) && !/ueber-alex-/.test(x)) { y = rueckbauFoto(y); info("Skript " + (i + 1) + ": Wächter „Über mich“ ohne die Änderung aus S8 (Foto) verglichen"); }
         if (x === y) gleich++;
         else { let k = 0; while (k < x.length && x[k] === y[k]) k++; info("Skript " + (i + 1) + " weicht ab bei: …" + x.slice(Math.max(0, k - 60), k + 60) + "… / …" + y.slice(Math.max(0, k - 60), k + 60) + "…"); }
       }
@@ -362,7 +375,7 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           return aus.join("\n");
         };
         return [zug(a), zug(b)];
-      }, [ALT, HTML]);
+      }, [ALT, ohneFoto(HTML)]);
       let k = 0; while (k < x.length && x[k] === y[k]) k++;
       sage(x === y, "die Seite ohne Kommentare Knoten für Knoten gleich (DOMParser, " + x.split("\n").length + " Einträge)", x === y ? "" : "erste Abweichung: …" + x.slice(Math.max(0, k - 80), k + 80).replace(/\n/g, "⏎") + "… / …" + y.slice(Math.max(0, k - 80), k + 80).replace(/\n/g, "⏎") + "…");
       await br.close();

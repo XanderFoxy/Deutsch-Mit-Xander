@@ -5855,7 +5855,7 @@ select key, value from site_content where key in ('about', 'about_photo_history'
 
 **Offen**
 1. Nachsehen, ob „about“ gesetzt ist (SQL oben) – davon hängt ab, ob draußen überhaupt etwas zu sehen ist.
-2. **Zusammenspiel mit S8** (Foto ohne `loading="lazy"`): ohne `lazy` holt der Vorab-Scanner des Browsers das Standardbild schon beim Lesen der Seite – mit gemerktem Foto wären das verschenkte Bytes. S8 sollte das berücksichtigen (z. B. `lazy` nur dann weglassen, wenn kein eigenes Foto gemerkt ist, oder die gestempelte Kopie ist das gespeicherte Foto).
+2. **Zusammenspiel mit S8** (Foto ohne `loading="lazy"`): ohne `lazy` holt der Vorab-Scanner des Browsers das Standardbild schon beim Lesen der Seite – mit gemerktem Foto wären das verschenkte Bytes. S8 sollte das berücksichtigen (z. B. `lazy` nur dann weglassen, wenn kein eigenes Foto gemerkt ist, oder die gestempelte Kopie ist das gespeicherte Foto). **→ Erledigt mit S8** (Abschnitt „Fassung 886 — Foto auf ‚Über mich‘ als eigene Kopie“): `lazy` bleibt in index.html stehen (der Vorab-Scanner holt nichts), der Wächter nimmt es erst nach dem Einsetzen eines gemerkten eigenen Fotos weg; gemessen: mit gemerktem eigenem Foto wird die Kopie nie geholt (Sonde 886-foto C1).
 3. Eine per SQL gelöschte „about“-Zeile: Geräte zeigen weiter den letzten Text (null = Stand bleibt). Abhilfe wäre, dass `getSiteContent` Fehler von „nichts da“ unterscheidet (kleine Änderung an backend.js) – bewusst nicht gebaut: jedes Gerät müsste backend.js (~27 KB gepackt) einmal neu holen, für einen Fall, den die Oberfläche nicht kennt.
 4. Vorschlag (sichtbar, nicht gebaut): auch der Erstbesuch ohne Sprung – den gespeicherten Text beim Ausliefern in index.html schreiben (Werkzeug liest „about“ beim Fassung-Setzen). Braucht einen Datenbank-Lesezugriff im Werkzeug.
 
@@ -7401,3 +7401,72 @@ Tipp/Tastendruck, nach dem `bleiben()` gilt; bei „neu“ zu (nach 15 s doch au
 `bremsFetch` (backend.js) und der Präsenzkanal nach 4 s (app.js). Kosten: die Daten kommen auf einer Seite aus dem Speicher
 erst nach der ersten Antwort – gegen live gleich schnell oder schneller, gegen S1 ohne Tor bis zur Antwortzeit von
 fassung.json später (Tabelle oben). 885-schlank Q baut den Block vor dem Vergleich mit dem Stand vor K zurück.
+
+## Fassung 886 — Foto auf „Über mich“ als eigene Kopie (S8, freigegeben Funk 311; Ladezeit-Entwurf)
+
+XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“. **Befund bis 886/S2:** Das Foto auf „Über mich“ (der Startansicht) kam von `https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9ob2nzt2.jpeg?raw=true`: ein fremder Server (neue Verbindung), eine Umleitung auf raw.githubusercontent.com (noch eine Verbindung) und das ganze Originalfoto – **1 369 667 Byte, 4632 × 6176 Pixel (28,6 Mio. Pixel zum Dekodieren)** –, gezeigt in 76 × 76 Punkten (84 px minus 2 × 4 px Rahmen). Dazu `loading="lazy"`: geholt erst nach dem ersten Layout. S8 (Entwurf, freigegeben): das Foto als eigene, kleine, gestempelte Kopie. **Vorher festgelegtes Maß:** Bytes des Fotos und Zeit, bis das Foto **gemalt** ist (Element Timing), verschränkt gegen den Stand davor; erstes Bild nicht schlechter; und „es muss gleich aussehen“: Bildvergleich gegen das echte Original (Farbe je Kanal ±1, geglättet ≥ 33 dB). **Sichtbar (freigegeben):** das Foto steht im ersten gemalten Bild statt ~1,6–1,9 s danach; es sieht gleich aus (Zahlen unten).
+
+### Was gebaut ist
+- **Die Kopien:** `bilder/ueber-alex-145.webp` (4 124 B) für 1x, `bilder/ueber-alex-290.webp` (10 768 B) für 2x und 3x; in index.html `src` = 290 (Browser ohne srcset), `srcset` = 145 1x, 290 2x; Stempel `?v=` = die ersten 10 Zeichen von SHA-1 des Inhalts. Zugeschnitten wie `object-fit: cover` es zeigt (die Mitte, quadratisch: 4632 × 4632 ab Zeile 772), WebP Qualität 90.
+- **Warum 145 und 290 und nicht 76/152/228 (Gerätegröße):** Chrome malt ein großes Bild aus einer Mip-Stufe (je Stufe halbiert, Kästchen-Mittel) – der kleinsten, die noch mindestens so groß ist wie die Fläche auf dem Schirm – und das Kippen der `.avatar-wrap` (−3°) tastet daraus ab. Beim Original sind das 144,75 px für 1x und 289,5 px für 2x und 3x. Kopien in Gerätegröße wurden zweimal abgetastet (verkleinert, dann gekippt) und wirkten sichtbar weicher (Tabelle unten). Das Werkzeug rechnet diese Stufen aus dem Original (für ein anderes Original andere Zahlen) und baut sie mit dem Kästchenfilter nach.
+- **Das Original kommt nicht ins Repo** (1,3 MB, jede Kopie des Repos trüge es mit). Es liegt weiter in XanderFoxy/Deutsch, `Bilder2/9ob2nzt2.jpeg`; ein neuer Bau holt es von dort und übergibt den Pfad: `node werkzeug/foto-ueber.js <Original.jpeg>` (schreibt die Kopien nach `bilder/`, räumt alte Größen weg und setzt src/srcset in index.html). Kodiert wird mit ffmpeg/libwebp, weil ImageMagick 6.9.12 auf dem Prüfrechner `-quality` für WebP übergeht (Qualität 50/75/85/95 ergaben Byte für Byte dieselbe Datei, ≈ 75). Ein Original mit Farbprofil (iPhone, Display P3) wird nur mit `SRGB=<sRGB.icc>` gebaut, sonst bricht das Werkzeug ab (das heutige hat keins und keine EXIF-Drehung).
+- **index.html, Wächter im Kopf (S2, SPIELSYSTEM.md I51):** läuft jetzt auch ohne Merker. Sobald der Parser „Über mich“ gelesen hat, nimmt er `loading="lazy"` vom Foto – das Foto wird angefragt, bevor das erste Bild gemalt ist. `lazy` bleibt im HTML stehen, damit der Vorab-Scanner des Browsers nichts holt: ist ein **eigenes** Foto gemerkt (`dma-ueber`, S2), setzt der Wächter es zuerst ein (src, `srcset` weg, `data-original-src`/`-srcset` gemerkt) und nimmt erst dann `lazy` weg – geholt wird nur, was gezeigt wird (S2 Offen 2).
+- **„Das Original“ heißt jetzt zweierlei** (index.html und app.js, dasselbe Muster `UEBER_FOTO_ORIGINAL`): die alte github-Adresse (`XanderFoxy/Deutsch/…/9ob2nzt2.jpe?g`, so steht sie womöglich in der Datenbank, und so speichert sie das Bearbeiten-Formular, wenn das Foto nicht angefasst wird – es trägt `img.src` ein) und jede Adresse der eigenen Kopie (`bilder/ueber-alex-<px>.webp`, auch mit altem Stempel oder einer Größe, die es nicht mehr gibt). Beides zeigt die Kopie aus index.html. Sonst holte jedes Gerät nach der Antwort der Datenbank doch wieder 1,3 MB von github.
+- **app.js (`ueberAngleichen`, `loadAndRenderAboutSection`, im Kern `min/app.js`):** `srcset` hat Vorrang vor `src` – wer ein eigenes Foto zeigt, entfernt `srcset`; „zurück zum Original“ (photoUrl leer oder eine Original-Adresse) setzt `srcset` und `src` genau wie in index.html wieder ein (`data-original-srcset`). Das Original wird jetzt mit `getAttribute("src")` gemerkt (vorher `img.src`, die volle Adresse).
+- **werkzeug/fassung-setzen.js:** Bilder, die index.html selbst nennt (`"bilder/…?v=…"`), bekommen vor jedem Commit den Stempel ihres Inhalts (Haken `--nur-stempel`). Geprüft: ein falscher Stempel wird berichtigt.
+- **Service Worker:** unverändert. `bilder/…?v=…` ist gestempelt, kommt also nach dem ersten Abruf ohne Nachfrage aus seinem Speicher. Die Bilder stehen nicht in `DMA_STEMPEL`; der Helfer rechnet den Stempel vor dem Ablegen darum nicht nach (nur von Belang, wenn ein Bild später seinen alten Inhalt zurückbekäme).
+- Kosten in index.html: +342 B roh, +96 B gepackt (gzip -9); Kommentare 6 499 → 6 500 Zeichen (Grenze der Sonde 885-schlank: 6 500).
+
+### Bildvergleich gegen das echte Original (Sonde 886-foto, Teil V)
+Bildschirmfoto des Fotos samt Rahmen (Telefon 390 × 844), links der Stand davor mit dem echten Original (über eine nachgestellte github-Antwort mit den Bytes des Originals), rechts dieser Stand; roh = PSNR Pixel für Pixel, geglättet = PSNR nach Weichzeichnen um 1 CSS-Pixel, Farbe = größte Abweichung der Mittelwerte je Kanal (von 255).
+
+| Kopien | Bytes (1x / 2x / 3x) | DPR 1: roh / geglättet / Farbe | DPR 2 | DPR 3 |
+|---|---|---|---|---|
+| 76/152/228, Lanczos, Q 90 | 1 694 / 4 434 / 8 158 | 34,7 / 42,6 / ±0,54 | 35,1 / 46,5 / ±0,22 | 36,3 / 47,7 / ±0,21 |
+| dto. Q 95 | 2 274 / 6 398 / 11 744 | 35,0 / 43,3 / ±0,51 | 35,4 / 47,3 / ±0,23 | 36,5 / 48,0 / ±0,20 |
+| dto. geschärft (unsharp 0x0.6) | 1 880 / 4 924 / 9 196 | 34,6 / 42,2 / ±0,57 | 35,2 / 46,5 / ±0,25 | 35,6 / 47,6 / ±0,25 |
+| 1,5× (114/228/342), Lanczos | 3 026 / 8 158 / 14 504 | 36,8 / 43,8 / ±0,52 | 36,3 / 47,5 / ±0,22 | 35,8 / 48,0 / ±0,24 |
+| 2× (152/304/456), Lanczos | 4 434 / 12 116 / 23 098 | 35,5 / 44,6 / ±0,31 | 35,7 / 48,1 / ±0,11 | 36,7 / 48,5 / ±0,14 |
+| **Mip-Stufen 145/290/290, Kästchen, Q 90 (gebaut)** | **4 124 / 10 768 / 10 768** | **37,5 / 44,7 / ±0,45** | **36,6 / 47,9 / ±0,24** | **36,6 / 48,0 / ±0,24** |
+| dto. Q 95 | 5 916 / 16 780 | 38,0 / 45,2 / ±0,48 | 36,9 / 48,0 / ±0,20 | 36,9 / 48,2 / ±0,20 |
+| dto. Q 99 | 8 062 / 23 172 | 38,1 / 45,2 / ±0,55 | 36,9 / 47,9 / ±0,29 | 36,9 / 48,0 / ±0,29 |
+| dto., 3x aus 579 px | + 33 864 | – | – | 37,3 / 48,3 / ±0,33 |
+
+Seite an Seite (vierfach vergrößert) war bei den Kopien in Gerätegröße der Unterschied sichtbar (Mütze, Bart weicher); bei den Mip-Stufen ist er bei DPR 2/3 kaum noch zu sehen, bei DPR 1 bleibt ein Hauch weniger Kontrast im Kleinen (der Rest ist v. a. die halbe Farbauflösung von WebP; mehr Qualität bringt +0,1…0,5 dB). Bilder: Zwischenordner `l886/foto/bilder-*` (`vorher-/nachher-<n>x.png`).
+
+### Messung (Sonde 886-foto, Teil M)
+4G (60 ms, 9 Mbit/s) und CPU 4× über das Prüfprotokoll, DPR 2, Datenbank „about“ leer (300 ms), 10 Paare verschränkt (A B / B A), A = 34b0e6dc (Stand davor, `gegen886/foto-vorher`), B = dieser Stand. **github ist nachgestellt (ein Modell):** github.com neue Verbindung (DNS + TCP + TLS = 3 Rundreisen) + Anfrage = 240 ms bis zur Umleitung, raw.githubusercontent.com ebenso 240 ms, dann die 1 369 667 Byte mit 9 Mbit/s (1 217 ms); zweites Öffnen mit warmen Verbindungen (60 + 60 ms). „Geladen“ = `complete` und `naturalWidth` im rAF, „gemalt“ = Element Timing (`renderTime`, mit Dekodieren).
+
+| Öffnen | Bytes des Fotos A → B | erstes Bild (FCP) A → B, B − A | Foto gemalt A → B, B − A | gemalt − erstes Bild A → B |
+|---|---|---|---|---|
+| erstes | **1 369 667 → 10 768** (−99,2 %) | 628 → 630, +10 (5↓/5↑) | **2 556 → 630, −1 934 (10 von 10)** | 1 932 → **0** |
+| zweites (Verbindungen warm) | 1 369 667 → 10 768 | 618 → 608, +14 (1↓/6↑) | **2 262 → 608, −1 612 (10 von 10)** | 1 572 → **0** |
+
+Im neuen Stand ist das Foto **im ersten gemalten Bild** (gemalt = FCP in 20 von 20 Öffnungen); geladen ist es schon 230–290 ms vor dem ersten Bild. Im alten Stand kam es 1,6–1,9 s danach; allein das Dekodieren des Originals nach dem Laden kostete 160–230 ms (CPU 4×). Das erste Bild bleibt im Rauschen (Rauschgrenze A/A 17.10.: ±54 ms). Draußen hängt der Gewinn an der echten Leitung zu github (zwei fremde Verbindungen, 1,3 MB) – auf langsamer Leitung eher größer, auf WLAN kleiner; die Bytes sind echt.
+
+‹LADEZEIT›
+
+### Sonde `werkzeug/pruefe-886-foto.js`
+Q Bauweise (src/srcset auf die eigenen Kopien, Stempel = Inhalt, quadratisch und je Dichte genug Pixel, keine github-Adresse, Wächter nimmt lazy weg, Kern kennt das Original) · A/B je DPR 1/2/3 Erstbesuch und Wiederkehr mit der alten github-Adresse in der Datenbank (genau die passende Kopie, vor dem ersten Bild angefragt, kein Wechsel der Adresse, nichts von github) · C eigenes Foto gemerkt (die Kopie wird gar nicht geholt, das eigene Foto vor dem ersten Bild) · D „zurück zum Original“ (src/srcset wie in index.html) · E Adresse einer Kopie mit altem Stempel bzw. einer alten Größe in der Datenbank (bleibt die Kopie, nie geholt) · F kaputter Merker (drei Arten) · V Bildvergleich (mit `QUELLE=<Original>` und `GEGEN`) · M Messung (`MESSEN=n`) · P Seitenfehler.
+‹SONDEN›
+
+### Ehrlich
+- Die Zeiten für github sind ein Modell (Rundreisen und Bandbreite gesetzt); die Bytes und das Dekodieren sind echt.
+- Bei DPR 1 bleibt ein kleiner Unterschied zu Chromes eigener Darstellung des Originals (roh 37,5 dB, Tabelle oben); Safari verkleinert anders als Chrome – dort ist der Bildvergleich nicht gemacht (auf dem Prüfrechner gibt es nur Chromium). Die Kopien sind für jede Dichte mindestens so groß wie die Fläche auf dem Schirm (145 ≥ 76, 290 ≥ 228); auch Safari verkleinert also nur, wie beim Original.
+- Wechselt Xander das Foto über das Formular (eigenes Foto, z. B. Supabase-Speicher), gilt S8 dafür nicht: dann kommt wieder die volle Datei, wie bisher (S2 setzt sie nur früher ein).
+- Ein Erstbesuch, bei dem in der Datenbank ein eigenes Foto steht, holt erst die Kopie (10,8 KB) und wechselt nach der Antwort – wie vorher, nur war es vorher das Original von github.
+
+**Offen**
+1. Was in „about“.photoUrl steht, ist nicht nachgesehen (Datenbank nicht benutzt; SQL im Abschnitt S2). Steht dort die github-Adresse oder nichts, wirkt S8 sofort für alle; steht dort ein eigenes Foto, zeigt jedes Gerät dieses (unverändert).
+2. Vorschlag (nicht gebaut): ein über das Formular hochgeladenes Foto beim Hochladen gleich klein rechnen (Canvas, 290 px WebP) – spart Bytes aus dem Supabase-Speicher bei jedem Besuch. Braucht eine Änderung am Hochladen; vorher fragen.
+
+#### I51 — FASSUNG 886 — „Über mich“: Wächter auch ohne Merker, Foto sofort (Block „Über mich“ im Kopf)
+Vorher in index.html: `/* FASSUNG 886 (S2, Funk 311): „Über mich“ sofort mit dem zuletzt gelesenen Stand (dma-ueber, schreibt app.js), vor dem ersten Bild */`.
+Jetzt: `/* FASSUNG 886 (S2, S8; Funk 311): „Über mich“ vor dem ersten Bild mit gemerktem Stand (dma-ueber), Foto sofort (SPIELSYSTEM.md I51) */`
+(die Kommentare in index.html stehen an der Grenze von 6 500 Zeichen, Sonde 885-schlank – der neue ist eine Zeile wie der alte,
+1 Zeichen länger, jetzt genau 6 500). Begründung: siehe „Fassung 886 — Foto auf ‚Über mich‘ als eigene Kopie“, Punkte „Wächter
+im Kopf“ und „Das Original heißt jetzt zweierlei“. Ohne Merker beobachtet der Wächter jetzt den Parser, bis „Über mich“ gelesen
+ist (Abbruch spätestens bei DOMContentLoaded), und nimmt `loading="lazy"` weg; mit gemerktem eigenem Foto setzt er es zuerst
+ein und entfernt `srcset`. Die Erkennung des Originals (`/XanderFoxy\/Deutsch\/.*\/9ob2nzt2\.jpe?g|(^|\/)bilder\/ueber-alex-\d+\.webp/`)
+steht gleich in app.js (`UEBER_FOTO_ORIGINAL`). 885-schlank Q baut den Block (und das Foto im HTML) vor dem Vergleich mit dem
+Stand vor K zurück; 885-ueber zählt die eigene Kopie als „Standardfoto“ mit.

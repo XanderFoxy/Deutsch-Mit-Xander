@@ -92,12 +92,15 @@ function original(wurzel) {
     (sek.match(/<img src="([^"]*)"/) || [])[1] || ""];
 }
 
-/* Server wie GitHub Pages: gepackt, ETag, max-age=600; index.html no-cache */
+/* Server wie GitHub Pages: gepackt, ETag, max-age=600; index.html no-cache.
+   FASSUNG 886 (S8): das Standardfoto ist jetzt die eigene Kopie bilder/ueber-alex-*.webp – auch sie zählt als „Standardfoto“. */
+let kopieAnfragen = 0;
 function server(wurzel) {
   const datei = new Map();
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]);
     if (p === "/") p = "/index.html";
+    if (/^\/bilder\/ueber-alex-/.test(p)) kopieAnfragen++;
     let d = datei.get(p);
     if (!d) {
       const f = path.join(wurzel, p);
@@ -204,7 +207,7 @@ function server(wurzel) {
     }
     const vorAbfragen = z.aboutAbfragen;
     z.standardFoto = 0;
-    const fotoVor = fotoAnfragen.length;
+    const fotoVor = fotoAnfragen.length, kopieVor = kopieAnfragen;
     await pg.goto(basis, { waitUntil: "domcontentloaded", timeout: 60000 });
     const t0 = Date.now();
     while (z.aboutAbfragen === vorAbfragen && Date.now() - t0 < 20000) await warte(50);
@@ -214,7 +217,7 @@ function server(wurzel) {
       try { m = localStorage.getItem("dma-ueber"); } catch (e) {}
       return { bilder: window.__bilder.slice(), fcp: window.__fcp, dcl: window.__dcl, schreiben: window.__schreiben, merker: m, version: window.DMA_VERSION };
     });
-    st.standardFoto = z.standardFoto;
+    st.standardFoto = z.standardFoto + kopieAnfragen - kopieVor;
     st.fotos = fotoAnfragen.slice(fotoVor);
     st.abfragen = z.aboutAbfragen - vorAbfragen;
     const mitText = st.bilder.filter((b) => b.s !== null);
@@ -272,7 +275,7 @@ function server(wurzel) {
       teil = "B3";
       sage(b.schreiben === 0 && b.abfragen === 1, "nach DOMContentLoaded schreibt niemand in „Über mich“ (Antwort gleich = still)", "Änderungen " + b.schreiben + ", about-Abfragen " + b.abfragen);
       teil = "B4";
-      sage(b.standardFoto === 0, "das Standardfoto aus index.html wird gar nicht erst geholt", "Anfragen an github.com: " + b.standardFoto + "; X-Foto: " + b.fotos.length + " (HTTP-Speicher)");
+      sage(b.standardFoto === 0, "das Standardfoto aus index.html wird gar nicht erst geholt", "Anfragen an github.com bzw. die eigene Kopie: " + b.standardFoto + "; X-Foto: " + b.fotos.length + " (HTTP-Speicher)");
       teil = "B5";
       sage(Boolean(mB && mB.t > tB && gleichX(mB.w)), "der Merker ist aufgefrischt (neuer Zeitstempel, w = X)", (mB ? "t " + tB + " → " + mB.t : "kein Merker"));
 
