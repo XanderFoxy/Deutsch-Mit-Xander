@@ -1459,13 +1459,13 @@ function schluessel(adresse, methode) {
         await warte(30000);
         Object.assign(netz, { neuF: "", nurMitF: false, verz: 0, verzFj: 0 });
         const l = await s.pg.evaluate(() => ({ f: window.DMA_VERSION, weg: JSON.parse(sessionStorage.getItem("__weg") || "[]"), betr: JSON.parse(sessionStorage.getItem("__betr") || "[]"),
-          lage: window.LiveChat && LiveChat.lage ? LiveChat.lage().lage : "?" })).catch((e) => ({ fehler: String(e).slice(0, 80) }));
+          lage: window.LiveChat && LiveChat.lage ? LiveChat.lage().lage : "?", marke: document.documentElement.hasAttribute("data-dma-speicher") })).catch((e) => ({ fehler: String(e).slice(0, 80) }));
         const weg1 = (l.weg || []).find((x) => x.uhr > t0);
         const alt = weg1 ? s.zustand.zeitLog.filter((x) => x.t >= t0 && x.t <= weg1.uhr) : [];
         const r = { lauf: i + 1, helfer: ctl, f: l.f, lage: l.lage, seiten: (l.weg || []).filter((x) => x.uhr > t0).length + 1, gehend: weg1 || null,
           anfragenGehend: alt.length, gehendJe: alt.reduce((o, x) => ((o[x.k] = (o[x.k] || 0) + 1), o), {}), anfragenGesamt: z.gesamt, ws: z.ws,
-          ersteAnfrage: s.zustand.zeitLog.length ? s.zustand.zeitLog[0].t - t0 : null,
-          profil: (s.zustand.zeitLog.find((x) => /^profiles\*/.test(x.k)) || {}).t - t0 || null,
+          ersteAnfrage: (s.zustand.zeitLog.find((x) => x.t >= t0) || {}).t - t0 || null,
+          profil: (s.zustand.zeitLog.find((x) => x.t >= t0 && /^profiles\*/.test(x.k)) || {}).t - t0 || null, markeEnde: l.marke,
           betreten: (l.betr || []).filter((x) => x.uhr > t0).map((x) => ({ ab: x.uhr - t0, f: x.f })) };
         console.log("  " + JSON.stringify(r));
         reihe.push(r);

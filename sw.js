@@ -423,7 +423,7 @@ function neuer(a, b) {
        HTTP-Speicher des Browsers) – und geht dann hinein, ohne auf fassung.json zu warten (index.html I52). Diese
        Antwort kann alt sein (Zurück: der Browser nimmt seine Kopie gleich welchen Alters); meldet fassung.json danach
        doch „neu“, bevor die Seite drin ist, lädt der Wächter neu, und sie geht nicht mehr hinein. Darum gilt es beim
-       Öffnen nur als „vorab“: Supabase und die ganzen Blätter warten, bis die Seite drin ist oder fassung.json geantwortet
+       Öffnen nur als „vorab“: Supabase (Start-Tor) wartet, bis die Seite drin ist oder fassung.json geantwortet
        hat (index.html I53, Nachbesserung 1 zu „rueckkehrfrist“).
      - sonst „nichts“. Antwortet fassung.json mit einem Fehler, wartet die Rückkehr auf diese Antwort des Helfers (sonst
        ging sie auf der alten Seite hinein, obwohl der Helfer die neue schon hat).

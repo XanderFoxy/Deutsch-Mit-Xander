@@ -70360,8 +70360,10 @@
            (ohne Marke ersetzt das den Merker „neu“ von rueckkehrfrist, Sonde B4). Dann wartet die Seite wie bei „neu“: die
            neue Seite geht hinein; bleibt diese wider Erwarten 15 s nach dem Neuladen, doch hinein. Kostet nichts, solange
            der Wächter nicht neu lädt. Dieses „gleich“ beim Öffnen/Zurück heißt jetzt „vorab“: hinein geht es weiter sofort,
-           aber Supabase (Start-Tor) und die ganzen Blätter warten, bis die Seite drin ist oder fassung.json geantwortet hat
-           (dmaRaumDrin unten) – sonst startete die gehende Seite noch Supabase (gemessen 4 Anfragen, 885-sparsam SWZ).
+           aber Supabase (Start-Tor) wartet, bis die Seite drin ist oder fassung.json geantwortet hat (dmaRaumDrin unten) –
+           sonst startete die gehende Seite noch Supabase (gemessen 4 Anfragen, 885-sparsam SWZ). Die ganzen Blätter kommen
+           weiter mit dem „vorab“ (sie mit zu halten kostete beim Zurück ohne Update, CPU 4×, fassung.json 0,25 s, +0,18 s bis
+           zum Betreten – sie fielen dann genau vor das Hineingehen).
            Sonde 885-rueckkehr B4m; SPIELSYSTEM.md „Frist (rueckkehrfrist): Nachbesserung 1“. */
         const gehtNicht = () => {
           const t = window.dmaFassungGeht;
@@ -70386,8 +70388,8 @@
          sie jetzt doch hier hinein – dann soll er sie nicht mehr neu laden („halt“, sw.js) */
       const halt = () => { try { const sw = navigator.serviceWorker && navigator.serviceWorker.controller; if (sw && window.dmaRueckGemeldet) sw.postMessage({ rueckkehr: "halt" }); } catch (e) {} };
       /* FASSUNG 886 (rueckkehrfrist, Nachbesserung 1): drin lädt der Wächter nie mehr von selbst neu – jetzt darf die Seite
-         Supabase starten und die ganzen Blätter holen (index.html dmaRaumDrin, I53). Nach einem „vorab“ des Helfers (sein
-         „gleich“ beim Öffnen/Zurück, vielleicht auf eine alte index.html) warten beide bis hierher oder bis fassung.json. */
+         Supabase starten (index.html dmaRaumDrin, I53). Nach einem „vorab“ des Helfers (sein „gleich“ beim Öffnen/Zurück,
+         vielleicht auf eine alte index.html) wartet das Start-Tor bis hierher oder bis fassung.json. */
       const rein = () => { fassungFrei().then(() => { halt(); try { if (window.dmaRaumDrin) window.dmaRaumDrin(); } catch (e) {} reinJetzt(); }); };
       if (!DMA_TEILE_BAU) rein();
       else {
