@@ -70341,8 +70341,8 @@
            D = 0,25 / 0,8 / 2 s +24 / +21 / −5 ms (CPU 1×, Rauschen), Zurück −12, CPU 4× bei 12 Paaren 0 / +5. Eine kurze
            feste Frist (1,2 s) wurde gemessen und nicht gebaut: 1 s früher nur dort, wo 884 selbst so lange wartete, dafür
            mit Update 6 von 6 auf der alten Fassung (884: neu). SPIELSYSTEM.md „Frist (rueckkehrfrist)“. */
-        if (!erst || !document.documentElement.hasAttribute("data-dma-speicher")) return Promise.resolve();
-        return new Promise((ok) => {
+        if (!erst) return () => Promise.resolve();
+        const warten = () => new Promise((ok) => {
           const uhr = setTimeout(ok, Math.max(0, 6000 - performance.now()));
           erst.then((w) => {
             clearTimeout(uhr);
@@ -70350,6 +70350,13 @@
             if (w === "neu") setTimeout(ok, 15000); else ok();
           }, () => { clearTimeout(uhr); ok(); });
         });
+        if (document.documentElement.hasAttribute("data-dma-speicher")) { const p = warten(); return () => p; }
+        /* Ohne Marke nicht warten – aber hat der Wächter schon „neu“ gesagt (fassung.json kam, bevor die Stücke fürs
+           Klassenzimmer da waren: schnelle Antwort oder langsames Telefon), lädt die Seite gerade neu; dann geht sie nicht
+           mehr hinein, sondern die neue Seite (sonst zweimal betreten: Sonde 885-rueckkehr B4, vorher 1 von 8 Läufen). */
+        let neu = false;
+        erst.then((w) => { if (w === "neu") neu = true; }, () => {});
+        return () => (neu ? warten() : Promise.resolve());
       })();
       const reinJetzt = () => LiveChat.betreten(zurueck.raum, { name: zurueck.name || livechatName(),
         /* FASSUNG 841 — auch bei der Rückkehr nach dem Neuladen das Konto mitgeben (sonst Zufallskennung, siehe livechat.js) */
@@ -70361,7 +70368,7 @@
       /* FASSUNG 886 (Rückkehr, Nachbesserung 1): hat die Seite dem Helfer „Rückkehr wartet“ gemeldet (index.html), geht
          sie jetzt doch hier hinein – dann soll er sie nicht mehr neu laden („halt“, sw.js) */
       const halt = () => { try { const sw = navigator.serviceWorker && navigator.serviceWorker.controller; if (sw && window.dmaRueckGemeldet) sw.postMessage({ rueckkehr: "halt" }); } catch (e) {} };
-      const rein = () => { fassungFrei.then(() => { halt(); reinJetzt(); }); };
+      const rein = () => { fassungFrei().then(() => { halt(); reinJetzt(); }); };
       if (!DMA_TEILE_BAU) rein();
       else {
         let los = false;

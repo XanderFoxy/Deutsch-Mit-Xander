@@ -132,7 +132,10 @@
         Update (am Ende die neue Fassung, einmal), je D = 2 s: betreten nach
         höchstens D + 0,9 s; B3c index.html 0,25 s, fassung.json 2 s: das
         „gleich“ des Helfers zählt auch beim Öffnen (betreten < 1 s; bis
-        5aaec640 erst nach fassung.json).
+        5aaec640 erst nach fassung.json). B4 Öffnen mit Update, fassung.json
+        antwortet, bevor die Rückkehr hineingeht (CPU 1× D = 50, CPU 4×
+        D = 250): der Wächter lädt neu, die alte Seite geht NICHT mehr
+        hinein – betreten genau einmal, auf der letzten Seite.
      S  Die gespeicherte Seite trägt die Marke data-dma-speicher (daran
         erkennt die Rückkehr, dass sie aus dem Speicher kam), die frisch
         geholte nicht. Stempel ↔ Inhalt (sw.js): liefert der Server unter einem
@@ -160,6 +163,7 @@
    Schalter:
      WURZEL=<ordner>   Stand, der geprüft wird (Standard: dieser Baum)
      BEZUG884=<ordner> Stand 884 (6b724580) für Teil B: verschränkt, Median
+     BNUR=B1,B4…       in Teil B nur diese Fälle
      GEGEN=<ordner>    alter Stand für Teil M
      N=n               Läufe je Fall in R/G (Standard 2)
      PAARE=n           Paare je Messfall in M (Standard 6)
@@ -180,6 +184,7 @@ const N = Math.max(1, Number(process.env.N || 2));
 const PAARE = Math.max(1, Number(process.env.PAARE || 6));
 const NUR = process.env.NUR || "RKGFTZYWNOBS" + (GEGEN ? "M" : "");
 const BEZUG884 = process.env.BEZUG884 ? path.resolve(process.env.BEZUG884) : null;
+const bNur = (was) => !process.env.BNUR || process.env.BNUR.split(",").includes(was);   /* Teil B: BNUR=B1,B4 … nur diese Fälle */
 const JSON_AUS = process.env.JSON || "";
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".woff2": "font/woff2",
@@ -644,7 +649,7 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     const faelle = [
       { was: "B1", cpu: 1, D: 2000, art: "goto", update: false }, { was: "B1", cpu: 4, D: 2000, art: "goto", update: false },
       { was: "B1z", cpu: 1, D: 2000, art: "zurueck", update: false }, { was: "B2", cpu: 1, D: 2000, art: "goto", update: true }
-    ];
+    ].filter((fa) => bNur(fa.was));
     for (const fa of faelle) {
       const kopf = fa.was + " CPU " + fa.cpu + "× " + (fa.art === "goto" ? "Öffnen" : "Zurück") + ", index.html und fassung.json " + fa.D / 1000 + " s, " + (fa.update ? "Update" : "ohne Update") + ": ";
       const zeiten = [], diffs = [];
@@ -665,13 +670,22 @@ const zeile = (e) => "Fassung " + e.V + "→" + e.V1 + " am Ende " + e.f + ", Se
     /* B3: der Browser hat index.html nicht mehr frisch (no-cache, wie nach mehr als 10 min) – die Vorab-Anfrage geht zum Server,
        die Seite kommt mit Marke aus dem Speicher des Helfers und wartet (höchstens so lange wie 884 auf die Seite) */
     const b3 = [{ was: "B3a", update: false, D: 2000, wie: "ohne Update, D = 2 s" }, { was: "B3b", update: true, D: 2000, wie: "Update, D = 2 s" },
-      { was: "B3c", update: false, D: 250, fjD: 2000, wie: "ohne Update, index.html 0,25 s, fassung.json 2 s" }];
+      { was: "B3c", update: false, D: 250, fjD: 2000, wie: "ohne Update, index.html 0,25 s, fassung.json 2 s" }].filter((fa) => bNur(fa.was));
     for (const fa of b3) for (let n = 0; n < N; n++) {
       const e = await lauf(br, sv, { teil: "B", art: "goto", cpu: 1, netz: true, update: fa.update, D: fa.D, fjD: fa.fjD, warten: 9000 });
       const b = e.betreten || [], kopf = fa.was + " CPU 1× Öffnen, Browser ohne frische Kopie (Seite mit Marke), " + fa.wie + ", Lauf " + (n + 1) + ": ";
       if (fa.was === "B3a") sage(e.marke && e.seiten === 1 && b.length === 1 && b[0].f === e.V && !e.blase && e.abNeuladen <= fa.D + 900, kopf + "betreten einmal, nach höchstens " + (fa.D + 900) + " ms", zeile(e));
       if (fa.was === "B3b") sage(e.f === e.V1 && b.length === 1 && b[0].f === e.V1 && b[0].seite === e.seiten && !e.blase && e.abNeuladen <= fa.D + 900, kopf + "am Ende die neue Fassung, betreten einmal, nach höchstens " + (fa.D + 900) + " ms", zeile(e));
       if (fa.was === "B3c") sage(e.marke && e.seiten === 1 && b.length === 1 && e.abNeuladen < 1000, kopf + "das „gleich“ des Helfers zählt auch beim Öffnen: betreten < 1 s (nicht erst nach fassung.json)", zeile(e));
+    }
+    /* B4 (gefunden mit der Variante „kurze Frist“): Öffnen mit Update, die alte index.html kommt aus dem HTTP-Speicher und
+       fassung.json antwortet, BEVOR die Rückkehr hineingeht (CPU 1× mit schneller Antwort, CPU 4×). Der Wächter lädt dann neu
+       (noch nicht im Raum) – die alte Seite darf nicht trotzdem noch hineingehen (sonst zweimal betreten, wie 884) */
+    for (const fa of [{ cpu: 1, D: 50 }, { cpu: 4, D: 250 }].filter(() => bNur("B4"))) for (let n = 0; n < N; n++) {
+      const e = await lauf(br, sv, { teil: "B", art: "goto", cpu: fa.cpu, D: fa.D, update: true, warten: 9000 });
+      const b = e.betreten || [];
+      sage(b.length === 1 && b[0].seite === e.seiten && e.seiten <= 2 && e.gesteuert && ((e.f === e.V1 && b[0].f === e.V1 && !e.blase) || (e.f === e.V && b[0].f === e.V && /Neue Fassung/.test(e.blase))),
+        "B4 CPU " + fa.cpu + "× Öffnen, Update, fassung.json nach " + fa.D + " ms (vor dem Hineingehen), Lauf " + (n + 1) + ": betreten genau einmal, auf der letzten Seite – nie auf einer Seite, die gerade neu lädt", zeile(e));
     }
     if (sb) sb.srv.close();
   }
