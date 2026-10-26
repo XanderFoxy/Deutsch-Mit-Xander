@@ -7055,3 +7055,42 @@ genau diese Fassung nichts mehr. Spätere Prüfungen zeigen die Blase wie bisher
   esbuild-Ausgabe von app.js, backend.js, rueckfrage.js, sw.js und messung.js vor und nach der Umbenennung gleich).
 - Werkstatt: offene Punkte beider Seiten zusammengeführt (die fünf der Notfall-Fassung, 886 Ladezeit, die Entscheidung zur
   Rückkehr, die drei aus 884); „fertig“ bleibt das zuletzt Ausgelieferte (885).
+
+**Sonden nach dem Einmischen (alle nacheinander, auf min/, Supabase überall nachgebaut)**
+
+| Sonde | Ergebnis |
+| --- | --- |
+| 885-sparsam (Notfall, 22 Fälle) | 84 ok, alles grün – Zahlen wie auf main: A sichtbar 277 Anfragen (main 277), B verdeckt 40 (40), C 402: 5 + 13 Echtzeit (4–8 + 13–17), G 402 verdeckt 4, NT 72 (68–72), NT0 76 (72–76), XT 255 (253–255), W60 0 volle Abfragen, VF 2,4 min, FM 28,3 min |
+| 885-gast | 4 ok (7 Versuche, 1 Klient je Stunde) |
+| 885-messen, -swvorladen, -stuecke, -bereiche, -schale, -ueber, -praesenz, -schlank, -rueckkehr | 47, 27, 43, 56, 72, 22, 69, 42, 233 ok – alles grün |
+| 884-notweg, 884-beta, 884-leitung, 876-start-schlank | 91, 22, 40, 62 ok |
+| runde99-rueckfrage, 871-leitung-frisch, 859-kanal-sofort, 867-spiel-nach-start, ladezeit | 30, 15, 9, 13, 5 ok |
+| 694-leistung | 16 ok, 1 rot wie bekannt (Teil 2: beim erneuten Öffnen 6 Anfragen ans Netz) – genauso auf main 807e6a7d und auf dem Zweig 5aaec640 (je 1 rot, dieselbe Zeile): kein Rückschritt |
+
+Im ersten Durchgang waren fünf rot; keines davon kam vom Merge:
+- **885-schale K/L, 885-praesenz A:** liefen, während nebenher ein großes `grep` über den Zwischenordner lief (App-Start 1 949 statt ≈ 500–630 ms, Klick bei 922 statt 235 ms). Allein wiederholt: grün (praesenz A auch auf dem Zweig 5aaec640 grün, gleiche Zeiten).
+- **885-messen 17 (A/A-Rauschprobe):** Wissen 35 ms gegen die Grenze ± 30 (p 0,22) – wiederholt 19 ms, grün. Die Probe misst nur das Rauschen des Werkzeugs.
+- **885-schlank Q:** verglich die Inline-Skripte Zeichen für Zeichen mit dem Stand vor K (a508dc56, Fassung 884) und fand die neue Fassungszeile 885. Die Sonde vergleicht jetzt ohne die Fassungsnummer (Code drumherum weiter Zeichen für Zeichen).
+- **885-stuecke 6 („raum3 hängt“):** ein Wettlauf in der Sonde, nicht im Code: „geholt“ gilt in der Seite schon beim Aufruf von fetch, der Server trägt die Anfrage erst einen Augenblick später ein; fiel die Abfrage genau dazwischen, stand „nie“, obwohl die Rest-Stücke nach 6,1 s unterwegs waren (mit Mitschrift belegt; Merge 2 von 9 Läufen, Zweig 0 von 4). Die Sonde wartet jetzt bis 2 s auf den Eintrag des Servers.
+
+**Ladezeit: kostet das Einmischen etwas?** Vorher festgelegtes Maß: „bereit“ und „Wissen: Tipp → Bild“, kalt und mit Helfer
+(sw), dürfen nicht über das Rauschen hinaus schlechter werden. `werkzeug/ladezeit-messen.js 4g --gegen <5aaec640> --laeufe 8
+--arten kalt,sw` (HTTP/2 + TLS, CPU 4×, verschränkt, 8 Paare; Unterschied eingemischt − Zweig, Median gepaart, 95-%-Bereich):
+
+| Fall | erstes Bild | bereit | Wissen: Tipp → Bild | KB bis bereit |
+| --- | --- | --- | --- | --- |
+| kalt | +4 (−76 … +40) | +8 (−94 … +93) | +22 (−60 … +100) | **+5** (8 von 8) |
+| sw | −10 (−56 … +32) | +31 (−60 … +89) | +31 (−62 … +139) | 0 |
+
+Alle Zeiten im Rauschen; deutlich nur die +5 KB gepackt beim kalten Start (min/backend.js +2,8 KB, min/app.js +1,3 KB,
+min/livechat.js +0,5 KB, min/data-werkstatt.js +0,9 KB): das ist die Notfall-Bremse samt verdeckter Prüfung und
+Fuchs-Gedächtnis, die bleibt (das Kontingent geht vor). Mit Helfer kommt nichts übers Netz.
+
+**Datenbank:** nicht benutzt (gesperrt; alles nachgebaut).
+
+**Offen**
+1. Ausliefern als 886 (Fassungsnummer, Werkstatt „fertig“, Funk-Antwort) – nicht Teil dieses Schritts.
+2. Die beiden Entscheidungen zur Rückkehr (Fall A, Fall B; „Rückkehr in den Raum …“, Offen Runde 3) und die Offen-Punkte der
+   Notfall-Fassung (App-Wechsel bei „Netz weg“, Tipp im Ausfall, Gast-Pause, Fuchs-Wertung auf dem Server) gelten weiter.
+3. messung.js schickt `mess-start` weiter mit eigenem fetch an `rpc/spiel_diagnose_senden`, nicht über die Bremse (wie in
+   main; je Start eine Zeile). Eine Rückkehr-Zeile für messung.js (Rückkehr Offen 3) müsste die Sparsamkeit beachten.
