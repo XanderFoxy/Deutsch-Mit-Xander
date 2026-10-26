@@ -7444,7 +7444,14 @@ Seite an Seite (vierfach vergrößert) war bei den Kopien in Gerätegröße der 
 
 Im neuen Stand ist das Foto **im ersten gemalten Bild** (gemalt = FCP in 20 von 20 Öffnungen); geladen ist es schon 230–290 ms vor dem ersten Bild. Im alten Stand kam es 1,6–1,9 s danach; allein das Dekodieren des Originals nach dem Laden kostete 160–230 ms (CPU 4×). Das erste Bild bleibt im Rauschen (Rauschgrenze A/A 17.10.: ±54 ms). Draußen hängt der Gewinn an der echten Leitung zu github (zwei fremde Verbindungen, 1,3 MB) – auf langsamer Leitung eher größer, auf WLAN kleiner; die Bytes sind echt.
 
-‹LADEZEIT›
+**Gegenprobe Kosten (`werkzeug/ladezeit-messen.js` 4g, HTTP/2 + TLS, CPU 4×, Gast, 10 Paare verschränkt; im Lauf A = dieser Stand, B = 34b0e6dc – hier umgerechnet als „vorher → S8“, S8 − vorher gepaart, 95 % des Medians).** Das Werkzeug löst keine fremden Namen auf: die Anfrage an github scheitert im alten Stand sofort und kostet dort **nichts** – gemessen wird also allein, was S8 an der eigenen Seite kostet (die Kopie wird früh geholt, der Wächter läuft immer).
+
+| Fall | erstes Bild vorher → S8, S8 − vorher | bereit vorher → S8, S8 − vorher | Wissen: Tipp → Bild | Klassenzimmer: Tipp → Bild | KB bis bereit · Dateien |
+|---|---|---|---|---|---|
+| kalt | 704 → 720, −8 (−12…80) | 1675 → 1692, +32 (−87…77) | 618 → 599, −11 (−36…9) | 326 → 302, −28 (−67…23) | 634 → 645 · 63 → 64 |
+| warm | 578 → 584, +4 (−36…68) | 1545 → 1479, −37 (−197…32) | 315 → 341, +22 (−16…55) | 260 → 286, +12 (−67…91) | 1 → 1 · aus dem Speicher 57 → 58 |
+
+Alles im Rauschen (A/A 17.10.: erstes Bild ±54, bereit ±139); „DEUTLICH“ nur bei den +11 KB und der einen Datei mehr – das ist die Kopie selbst (im echten alten Stand kamen statt ihrer 1 337 KB von github, nach dem Layout). Langläufer, Sperrzeit, synchron geholte Stücke (0) unverändert im Rauschen. Rechnerlast 0,9–1,9 (4 Kerne). Messdateien: Zwischenordner `l886/foto/` (`ladezeit-4g.txt|json`, `mess-m.txt|json`, `v-*.txt`).
 
 ### Sonde `werkzeug/pruefe-886-foto.js`
 Q Bauweise (src/srcset auf die eigenen Kopien, Stempel = Inhalt, quadratisch und je Dichte genug Pixel, keine github-Adresse, Wächter nimmt lazy weg, Kern kennt das Original) · A/B je DPR 1/2/3 Erstbesuch und Wiederkehr mit der alten github-Adresse in der Datenbank (genau die passende Kopie, vor dem ersten Bild angefragt, kein Wechsel der Adresse, nichts von github) · C eigenes Foto gemerkt (die Kopie wird gar nicht geholt, das eigene Foto vor dem ersten Bild) · D „zurück zum Original“ (src/srcset wie in index.html) · E Adresse einer Kopie mit altem Stempel bzw. einer alten Größe in der Datenbank (bleibt die Kopie, nie geholt) · F kaputter Merker (drei Arten) · V Bildvergleich (mit `QUELLE=<Original>` und `GEGEN`) · M Messung (`MESSEN=n`) · P Seitenfehler.

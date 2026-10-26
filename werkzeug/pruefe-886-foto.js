@@ -27,8 +27,9 @@
         ersten Bild angefragt, gezeigt wird X (srcset weg)
      D  Merker X, Datenbank inzwischen „zurück zum Original“ (""): am Ende
         src/srcset genau wie in index.html, gezeigt die Kopie
-     E  Datenbank = Adresse der Kopie mit altem Stempel (so speichert das
-        Formular nach S8): bleibt die Kopie, die alte Adresse wird nie geholt
+     E  Datenbank = Adresse einer Kopie mit altem Stempel bzw. einer Größe, die es
+        nicht mehr gibt (so speichert das Formular nach S8): bleibt die Kopie,
+        die alte Adresse wird nie geholt
      F  kaputter Merker: Foto trotzdem sofort, eine Anfrage
      V  (GEGEN + Original) Bildvergleich DPR 1/2/3: Stand GEGEN (Original von
         github, nachgestellt aus QUELLE) gegen diesen Stand, Ausschnitt um das
