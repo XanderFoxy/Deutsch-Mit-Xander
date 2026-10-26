@@ -23,7 +23,9 @@
    ===================================================================== */
 const http = require("http"), fs = require("fs"), path = require("path");
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
-const WURZEL = path.join(__dirname, "..");
+/* FASSUNG 886 (Einmischen, Nachbesserung 1) — WURZEL=… wie bei den anderen Sonden: die Gegenprobe auf einem anderen Stand lief
+   sonst unbemerkt auf diesem Baum (so geschehen beim Einmischen: 694 „auf main“ lief in Wahrheit auf dem Merge). */
+const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".json": "application/json", ".webmanifest": "application/manifest+json",
   ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml",
@@ -48,7 +50,7 @@ const sage = (gut, text, dazu) => {
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
   const pg = await br.newPage({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true });
   pg.on("pageerror", (e) => { console.log("  FEHL Seitenfehler: " + e.message); fehler++; });
-  /* FASSUNG 885 (Schritt K): rueckfrage.js kommt nur noch zum Betreiber – auf seinem Gerät steht der Merker
+  /* FASSUNG 886 (Schritt K): rueckfrage.js kommt nur noch zum Betreiber – auf seinem Gerät steht der Merker
      „dma-walkie“ (backend.js setzt ihn, sobald das Profil mit is_owner kommt), dann holt index.html die Datei in der
      Ruhepause nach DOMContentLoaded. Diese Seite steht für sein Gerät; wer NICHT Betreiber ist (Teil 1), ist hier
      „Backend.isOwner = () => false“ auf demselben Gerät. Das Laden selbst prüft Sonde 885-schlank. */
@@ -131,7 +133,7 @@ const sage = (gut, text, dazu) => {
       limit() {
         return Promise.resolve({ data: tab === "betreiber_funk" ? meldungen : fragen, error: null });
       },
-      /* FASSUNG 885 (Nachbesserung 1) — der Funk holt den Text nur noch für neue Zeilen (.in("id", […])) */
+      /* FASSUNG 885 (Notfall, Nachbesserung 1) — der Funk holt den Text nur noch für neue Zeilen (.in("id", […])) */
       in(feld, werte) {
         return Promise.resolve({ data: (tab === "betreiber_funk" ? meldungen : fragen).filter((z) => werte.indexOf(z[feld]) >= 0), error: null });
       },

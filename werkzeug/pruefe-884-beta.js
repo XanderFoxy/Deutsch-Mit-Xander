@@ -59,7 +59,7 @@
         H-normal: höchstens 2 (rest1 trophyCounts, rest6 tinyAvatar).
         In ce53c58 (Nachbesserung 1) rot: Beta und Betreiber 4 Stücke – rest4
         für beitraegeLaden kam dazu (Slow 4G: +0,43 s Sync-XHR je Aufruf).
-        FASSUNG 885 (Verdeckte Bereiche, Nachbesserung 1): die Lesebereiche
+        FASSUNG 886 (Verdeckte Bereiche, Nachbesserung 1): die Lesebereiche
         unter dem Kompass werden verdeckt nicht mehr gezeichnet, sondern erst
         beim Öffnen. Deshalb jetzt: beim Start 0 Stücke synchron für alle drei
         (vorher Grenze 3/3/2), und „Beiträge gezeichnet“ wird NACH einem echten
@@ -196,7 +196,7 @@ const ANHANG = "\n;(function(){try{if(window.__betaAttrappe)window.__betaAttrapp
       const s = window.DMA_TEILE ? window.DMA_TEILE.stand() : { sofort: ["kein DMA_TEILE"], fehler: [] };
       return { sofort: s.sofort, fehler: s.fehler || [] };
     });
-    /* FASSUNG 885 (Nachbesserung 1): die Beiträge kommen beim Öffnen – echter Tipp auf „Wissen“, bis 4 s warten */
+    /* FASSUNG 886 (Nachbesserung 1): die Beiträge kommen beim Öffnen – echter Tipp auf „Wissen“, bis 4 s warten */
     if (wer !== "normal") {
       await pg.tap('[data-target="view-knowledge"]');
       st.beitraege = await pg.waitForFunction(() => {

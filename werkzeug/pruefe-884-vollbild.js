@@ -105,7 +105,7 @@ function mitschreiber(o) {
   try {
     localStorage.setItem("dma_tour_seen", "1");
     localStorage.setItem("dma_tutor", "aus");
-    localStorage.setItem("dma-walkie", "1");   /* FASSUNG 885 (K): rueckfrage.js nur auf dem Gerät des Betreibers (Sonde 885-schlank) */
+    localStorage.setItem("dma-walkie", "1");   /* FASSUNG 886 (K): rueckfrage.js nur auf dem Gerät des Betreibers (Sonde 885-schlank) */
     if (o.walkie) localStorage.setItem("dma_funk_offen", "true");
   } catch (e) {}
   const P = window.__vb = { log: [], klick: -1 };

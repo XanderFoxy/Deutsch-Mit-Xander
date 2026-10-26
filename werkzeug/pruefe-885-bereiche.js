@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE 885 — VERDECKTE BEREICHE SPÄTER ZEICHNEN (Fassung 885,
+   SONDE 885 — VERDECKTE BEREICHE SPÄTER ZEICHNEN (Fassung 886,
    Ladezeit-Entwurf Schritt D)
    ---------------------------------------------------------------------
    XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller" · (Funk
@@ -91,7 +91,7 @@
    66aba333: 11–12 rot (A1 ×2, A2 – je nach Zeitpunkt, in 2 von 3 Läufen –,
    A3, B1, C1, C2 ×2, C3b ×2, C4 ×2); grün bleibt, was gleich bleiben soll
    (A4, B2–B4, C3, C5, D, E, F). Stand ohne kompassNachAnmeldung: 2 rot (C4).
-   NACHBESSERUNG 1: siehe SPIELSYSTEM.md (Fassung 885 — Verdeckte Bereiche,
+   NACHBESSERUNG 1: siehe SPIELSYSTEM.md (Fassung 886 — Verdeckte Bereiche,
    „Nachbesserung 1“) für Ergebnis und Gegenproben (8437dc48: G-b und G-c rot
    für Betreiber und Beta; 66aba333: G grün). G entfällt mit QUELLE=1 (dort
    gibt es keine Stücke). Nur G: NUR_G=1.

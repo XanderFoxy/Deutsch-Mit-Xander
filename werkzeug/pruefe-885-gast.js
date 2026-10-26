@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* SONDE 885-gast (Fassung 885, Nachbesserung 3) — die Gastanmeldung im Spiel (spiel.js klientHolen).
+/* SONDE 885-gast (Notfall-Fassung 885, Nachbesserung 3) — die Gastanmeldung im Spiel (spiel.js klientHolen).
    Befund des Prüfers: ein abgemeldeter Gast im Klassenzimmer rief nach jedem Fehlversuch (alle 30 s) signInAnonymously
    mit einem NEUEN Supabase-Klienten – ≈ 120 Anmelde-Anfragen je Stunde und Gast, auch in der Sperre.
    Nachgestellt: klientHolen wird aus dem Quelltext von spiel.js ausgeschnitten und mit echtem supabase-js 2.117.3 (UMD)
@@ -10,7 +10,8 @@
    EHRLICH: nur dieser eine Baustein, nicht das ganze Klassenzimmer (WebRTC, Echtzeit). */
 const fs = require("fs"), vm = require("vm");
 const path = require("path");
-const WURZEL = process.argv[2] ? path.resolve(process.argv[2]) : path.join(__dirname, "..");
+/* FASSUNG 886 (Einmischen, Nachbesserung 1) — auch WURZEL=… wie bei den anderen Sonden (vorher nur das erste Argument) */
+const WURZEL = process.argv[2] ? path.resolve(process.argv[2]) : process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const SUPA = [process.env.SUPABASE_UMD,
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
   .filter(Boolean).find((p) => fs.existsSync(p));

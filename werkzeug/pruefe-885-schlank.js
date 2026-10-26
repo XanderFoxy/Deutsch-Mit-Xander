@@ -6,7 +6,7 @@
    „das Maximum rausholen“ · (Funk 255): „die schnelle Performance und die
    Verbindung zu den anderen haben oberste Priorität“.
 
-   Was der Schritt tut (SPIELSYSTEM.md, „Fassung 885 — Start schlanker“):
+   Was der Schritt tut (SPIELSYSTEM.md, „Fassung 886 — Start schlanker“):
      1. Die langen Begründungs-Kommentare in index.html (jeder lädt die
         Seite bei jedem Start) stehen jetzt wörtlich in SPIELSYSTEM.md
         (I1 … I42); in index.html bleibt je Stelle eine kurze Zeile mit
@@ -115,7 +115,7 @@ function esbuildHolen() {
   return null;
 }
 
-/* FASSUNG 885 (rueckkehr): die Änderung am Fassungs-Wächter (verkleinert) wieder herausnehmen – für Teil Q
+/* FASSUNG 886 (rueckkehr): die Änderung am Fassungs-Wächter (verkleinert) wieder herausnehmen – für Teil Q
    (Blase meldet „draussen“ an den Helfer, Merker dma-wechsel, erste Antwort als Versprechen) */
 function rueckbauRueckkehr(y) {
   return y
@@ -316,7 +316,7 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           y = y.replace("var spielWarten=true;", "").replace("if(spielWarten&&window.dmaRueckWarten){spielWarten=false;window.dmaRueckWarten(window.dmaSpielLaden);return}", "");
           lader = x === y;
         }
-        /* FASSUNG 885 (rueckkehr, nach K): der Fassungs-Wächter bekam die erste Antwort als Versprechen (dmaFassungErst)
+        /* FASSUNG 886 (rueckkehr, nach K): der Fassungs-Wächter bekam die erste Antwort als Versprechen (dmaFassungErst)
            und den Merker „dma-wechsel“ – genau diese Stellen werden für den Vergleich mit dem Stand vor K zurückgebaut,
            alles andere muss weiter Zeichen für Zeichen gleich sein. */
         if (/window\.dmaFassungErst=/.test(y) && !/dmaFassungErst/.test(x)) {

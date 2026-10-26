@@ -31,7 +31,7 @@ Der Zeitpunkt ist immer JETZT — das ist der Sinn der Sache: man soll
 sehen, wie frisch die Baustelle ist.
 Läuft eine Baustelle schon länger, behält sie ihren Beginn (Regel 2:
 „seit" ist der Zeitpunkt, an dem die Arbeit begonnen hat), wenn die
-Zeile mit „@JJJJ-MM-TTTHH:MM " beginnt (FASSUNG 885, Nachbesserung 1 –
+Zeile mit „@JJJJ-MM-TTTHH:MM " beginnt (Notfall-FASSUNG 885, Nachbesserung 1 –
 vorher bekam jede weitergeführte Baustelle die Uhrzeit des Hochladens):
     --offen "@2026-10-14T04:06 Ladezeit-Fassung (wird 886)"
 """

@@ -18,7 +18,9 @@
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
-const WURZEL = path.join(__dirname, "..");
+/* FASSUNG 886 (Einmischen, Nachbesserung 1) — WURZEL=… wie bei den anderen Sonden: die Gegenprobe auf einem anderen Stand lief
+   sonst unbemerkt auf diesem Baum (so geschehen beim Einmischen: 694 „auf main“ lief in Wahrheit auf dem Merge). */
+const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css",
   ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml", ".webmanifest": "application/manifest+json" };
 
@@ -64,7 +66,7 @@ const sage = (gut, was, zusatz) => {
       return { skripte, stil, q: window.DMA_Q("app.js"), v: window.DMA_V("app.js") };
     });
     const ohneMin = r.skripte.concat(r.stil).filter((s) => !/^min\//.test(s));
-    /* FASSUNG 885 (Schritt K): rueckfrage.js lädt nur noch für den Betreiber – ein Gast hat ein Skript weniger (25 → 24) */
+    /* FASSUNG 886 (Schritt K): rueckfrage.js lädt nur noch für den Betreiber – ein Gast hat ein Skript weniger (25 → 24) */
     sage(r.skripte.length >= 24 && r.stil.length >= 8 && !ohneMin.length, "alle Skripte und Stilblätter kommen aus min/",
       r.skripte.length + " Skripte, " + r.stil.length + " Stilblätter" + (ohneMin.length ? " — ohne: " + ohneMin.join(", ") : ""));
     const quelle = fs.statSync(path.join(WURZEL, "app.js")).size, klein = fs.statSync(path.join(WURZEL, "min/app.js")).size;

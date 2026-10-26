@@ -5504,7 +5504,7 @@ XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 255): �
    - „Es war einmal in Deutschland“ gilt erst beim Öffnen als besucht, nicht beim verdeckten Vorzeichnen (Missionen).
    - **Nach dem Wiederherstellen der Anmeldung** (`restoreSession`) und nach dem Anmelden über das Formular zeichnet `kompassNachAnmeldung` ihn in der Ruhepause verdeckt neu vor (gleicher Stand → nichts). Draußen kommt die Anmeldung meist erst nach der ersten Ruhepause; ohne das hätten Angemeldete beim Öffnen immer neu gezeichnet (Sonde C4).
    - Ruft etwas `renderKompass()` auf, bevor er je gezeichnet wurde, und er ist zu (Lernraum beim Wiederherstellen der Anmeldung, Niveau, Betonung in den Einstellungen), passiert nichts – Wache bzw. Ruhepause zeichnen mit dem neuesten Stand.
-3. **Weiterführende Links, Schwarmwissen, Memory:** statt im Aufbau in der Ruhepause vorgezeichnet (unsichtbar, nicht erst beim Öffnen – sonst stünde der Bereich einen Augenblick leer). Wer vorher öffnet, zeichnet wie bisher; die Ruhepause zeichnet dann nicht noch einmal (`linksAngestossen`, `tippsAngestossen`, `memoryState`). `renderMemory` ohne Runde beginnt eine (`newMemoryGame`).
+3. **Weiterführende Links, Schwarmwissen, Memory:** statt im Aufbau in der Ruhepause vorgezeichnet (unsichtbar, nicht erst beim Öffnen – sonst stünde der Bereich einen Augenblick leer). Wer vorher öffnet, zeichnet wie bisher; die Ruhepause zeichnet dann nicht noch einmal (`linksAngestossen`, `tippsAngestossen`, `memoryState`). `renderMemory` ohne Runde beginnt eine (`newMemoryGame`). *Seit dem Einmischen (Nachbesserung 1):* das Vorzeichnen holt nur, was der Seitenaufbau vorher holte – Links und Schwarmwissen nur die freigegebene Liste, Memory ohne Freundesliste (`art "vorzeichnen"`); s. „Einmischen …“, Nachbesserung 1.
 4. **Profil:** der Aufruf beim Start nur, wenn das Profil offen ist (Einsprung `#view-profile`). Beim Start ist die Anmeldung noch nicht wiederhergestellt – gezeichnet wurde verdeckt das Anmeldeformular samt Abfrage des Anmeldebilds, und nach `restoreSession` gleich noch einmal. Sonst in der Ruhepause, falls bis dahin nicht gezeichnet (`profilAngestossen`); das Öffnen zeichnet wie bisher.
 5. **Filmliste** (`filme/liste.json`, `cache: no-cache`): nicht mehr beim Start (`lcLiveAnmelden`), sondern in der Ruhepause – und sofort in `raumVorbereiten` (Tipp aufs Klassenzimmer, Einladungslink, Rückkehr nach dem Neuladen), je nachdem, was zuerst kommt.
 
@@ -5512,6 +5512,7 @@ XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 255): �
 - **Vorher 8 bis `load`:** custom_favicon_url, activity, about, site_image_wissen_banner, user_links, community_tips, site_image_login_banner, feature_flags. **Jetzt 4:** custom_favicon_url, activity, about, feature_flags. Die vier anderen kommen 45–90 ms nach `load` in den Ruhepausen; die Bereiche füllen sich wie bisher.
 - Dazu die Filmliste: vorher vor `load`, jetzt danach.
 - Gilt für Gäste und Konten gleich (beim Start ist die Anmeldung noch nicht wiederhergestellt). Mit Konto kommen danach wie bisher die Abfragen des Profils (`restoreSession` → `renderAccount`) – unverändert.
+- **Berichtigt (Einmischen, Nachbesserung 1, Prüfbericht zu b17223b7):** Für Konten stimmte „gleich“ nicht. Gezählt war nur bis `load`; danach, in der Ruhepause, ist die Anmeldung schon wiederhergestellt. `renderLinks`/`renderTips` holten dann auch „meine“ und (Betreiber, Moderation) „ausstehende“, die erste Memory-Runde die Freundesliste. Gegen 807e6a7d (Seitenaufbau ohne Anmeldung: je 1 Abfrage, keine Freundesliste) waren das je Start Betreiber +4 und Mitglied +2 bis +3 Anfragen (das eingesparte Anmeldebild schon abgezogen). Behoben: Das Vorzeichnen holt nur noch, was der Seitenaufbau vorher holte; Zahlen und Sonde unter „Einmischen …“, Nachbesserung 1.
 
 ### Messung (werkzeug/ladezeit-messen.js, verschränkt A B / B A in einer Sitzung; A = 66aba333 (vor diesem Schritt), B = dieser Stand; HTTP/2 + TLS, CPU 4×, Gast, Profil auf der Platte; Median, B − A gepaart mit 95-%-Bereich, ↑/↓ = B langsamer/schneller)
 Vorher festgelegt (s. o.): „Wissen: Tipp → Bild“ und das erzwungene Stil/Layout im Wissen-Tipp; erstes Bild und „bereit“ nicht schlechter als die Rauschgrenze (A/A der Grundlinie, 7 Paare: Wissen ±52 kalt / ±59 warm, erstes Bild ±54/±50, bereit ±76/±77). Gemessen mit dem Stand vor `kompassNachAnmeldung` (für Gäste gleich: ohne Anmeldung zeichnet es nichts neu; Bestätigungslauf mit dem endgültigen Stand unten).
@@ -7065,7 +7066,7 @@ genau diese Fassung nichts mehr. Spätere Prüfungen zeigen die Blase wie bisher
 | 885-messen, -swvorladen, -stuecke, -bereiche, -schale, -ueber, -praesenz, -schlank, -rueckkehr | 47, 27, 43, 56, 72, 22, 69, 42, 233 ok – alles grün |
 | 884-notweg, 884-beta, 884-leitung, 876-start-schlank | 91, 22, 40, 62 ok |
 | runde99-rueckfrage, 871-leitung-frisch, 859-kanal-sofort, 867-spiel-nach-start, ladezeit | 30, 15, 9, 13, 5 ok |
-| 694-leistung | 16 ok, 1 rot wie bekannt (Teil 2: beim erneuten Öffnen 6 Anfragen ans Netz) – genauso auf main 807e6a7d und auf dem Zweig 5aaec640 (je 1 rot, dieselbe Zeile): kein Rückschritt |
+| 694-leistung | 16 ok, 1 rot wie bekannt (Teil 2: beim erneuten Öffnen 6 Anfragen ans Netz) – genauso auf main 807e6a7d und auf dem Zweig 5aaec640 (je 1 rot, dieselbe Zeile): kein Rückschritt. *Berichtigt (Nachbesserung 1):* der erste Beleg dafür lief beide Male auf dem Merge (die Sonde las WURZEL nicht; in beiden Belegen steht `min/app.js?v=f62f17a646`, der Stempel des Merges). Nachgeholt aus den echten Bäumen – Ergebnis unten bei Nachbesserung 1 |
 
 Im ersten Durchgang waren fünf rot; keines davon kam vom Merge:
 - **885-schale K/L, 885-praesenz A:** liefen, während nebenher ein großes `grep` über den Zwischenordner lief (App-Start 1 949 statt ≈ 500–630 ms, Klick bei 922 statt 235 ms). Allein wiederholt: grün (praesenz A auch auf dem Zweig 5aaec640 grün, gleiche Zeiten).
@@ -7092,5 +7093,10 @@ Fuchs-Gedächtnis, die bleibt (das Kontingent geht vor). Mit Helfer kommt nichts
 1. Ausliefern als 886 (Fassungsnummer, Werkstatt „fertig“, Funk-Antwort) – nicht Teil dieses Schritts.
 2. Die beiden Entscheidungen zur Rückkehr (Fall A, Fall B; „Rückkehr in den Raum …“, Offen Runde 3) und die Offen-Punkte der
    Notfall-Fassung (App-Wechsel bei „Netz weg“, Tipp im Ausfall, Gast-Pause, Fuchs-Wertung auf dem Server) gelten weiter.
-3. messung.js schickt `mess-start` weiter mit eigenem fetch an `rpc/spiel_diagnose_senden`, nicht über die Bremse (wie in
-   main; je Start eine Zeile). Eine Rückkehr-Zeile für messung.js (Rückkehr Offen 3) müsste die Sparsamkeit beachten.
+3. *Berichtigt (Nachbesserung 1):* messung.js schickt `mess-start` **über die Bremse**: `senden("mess-start", …)` läuft
+   ohne `o.weg` über `ruhig(los)` → `k.rpc("spiel_diagnose_senden", …)`, und `k` ist `Backend.zugang()`, der Klient mit
+   `global.fetch = bremsFetch` (backend.js, `createClient(…, { global: { fetch: bremsFetch } })` und `zugang: () => client`).
+   Mit eigenem fetch (keepalive, an der Bremse vorbei) geht nur `mess-raum` beim Weggehen aus dem Raum hinaus – und auch das
+   nur mit Marke und innerhalb der Tagesgrenze (`tagFrei`, 8 am Tag). Eine Lücke gibt es dort also nicht; die frühere
+   Aussage „eigener fetch, nicht über die Bremse“ war falsch. Eine Rückkehr-Zeile für messung.js (Rückkehr Offen 3)
+   müsste die Sparsamkeit beachten (je Seite höchstens eine Zeile, Tagesgrenze).

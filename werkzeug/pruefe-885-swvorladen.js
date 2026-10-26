@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE 885 — VORAB-LADEN DER SEITE IM SERVICE WORKER (Fassung 885,
+   SONDE 885 — VORAB-LADEN DER SEITE IM SERVICE WORKER (Fassung 886,
    Ladezeit-Entwurf Schritt C: navigation preload)
    ---------------------------------------------------------------------
    XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller" · (Funk
@@ -44,7 +44,7 @@
    9d); „naives" Vorab-Laden (eingeschaltet, aber nicht benutzt) 12 rot
    (2, 3, 4, 5, 7, 9: doppelte Anfragen); ohne waitUntil 1 rot (7c).
 
-   FASSUNG 885 — S1 (pruefe-885-schale.js): seitdem kommt die Hauptseite
+   FASSUNG 886 — S1 (pruefe-885-schale.js): seitdem kommt die Hauptseite
    zuerst aus dem Speicher. Die Sonde erkennt das am sw.js (Kopf
    x-dma-fassung) und prüft in 5 und 7 dann: 5 – die Seite ist die
    gespeicherte oder (hat das Netz schon geantwortet, als der Helfer den
@@ -63,7 +63,7 @@ const http = require("http"), fs = require("fs"), path = require("path"), os = r
 const { execFileSync, spawnSync } = require("child_process");
 const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const REPO = path.join(__dirname, "..");
-/* FASSUNG 885 — S1: Hauptseite zuerst aus dem Speicher (Prüfungen 5 und 7 entsprechend) */
+/* FASSUNG 886 — S1: Hauptseite zuerst aus dem Speicher (Prüfungen 5 und 7 entsprechend) */
 const S1 = /x-dma-fassung/.test(fs.readFileSync(path.join(WURZEL, "sw.js"), "utf8"));
 const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };

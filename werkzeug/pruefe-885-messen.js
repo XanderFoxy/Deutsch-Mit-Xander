@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   SONDE 885 — DAS MESSWERKZEUG MISST, WAS ES SAGT (Fassung 885, Schritt A)
+   SONDE 885 — DAS MESSWERKZEUG MISST, WAS ES SAGT (Fassung 886, Schritt A)
    ---------------------------------------------------------------------
    XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller" · (Funk
    310/312): „das Maximum rausholen", „die maximal professionellste
@@ -62,7 +62,7 @@
     17  --aa: derselbe Stand zweimal (6 Paare kalt): gepaarter Median Wissen
         höchstens ± 30 ms, bereit höchstens ± 60 ms, nicht deutlich;
         Rauschgrenze je Maß im JSON
-    18  FASSUNG 885 (S1): Fall neu auf der echten Seite (Server stellt
+    18  FASSUNG 886 (S1): Fall neu auf der echten Seite (Server stellt
         index.html und fassung.json auf Fassung + 1): am Ende läuft die neue
         Fassung; lud die Seite neu (seiten 2), ist Vorlauf > 0 und „bereit ab
         Öffnen" = Vorlauf + bereit, sonst Vorlauf 0. --sw-wach 300: der Helfer
@@ -304,7 +304,7 @@ function werkzeug(args, json) {
   sage(!!(rg && typeof rg.wissen === "number" && typeof rg.bereit === "number" && rg.wissen < 80 && rg.bereit < 150), "17 Rauschgrenze je Maß im JSON", rg ? "wissen ±" + rg.wissen + ", bereit ±" + rg.bereit + ", fcp ±" + rg.fcp : "–");
   fs.rmSync(P2, { recursive: true, force: true });
 
-  /* 18 – FASSUNG 885 (S1): Fall neu und --sw-wach auf der echten Seite */
+  /* 18 – FASSUNG 886 (S1): Fall neu und --sw-wach auf der echten Seite */
   console.log("\nTeil A – Fall neu und --sw-wach (echte Seite)");
   const grund = (fs.readFileSync(path.join(SEITE, "index.html"), "utf8").match(/DMA_VERSION = "(\d+)"/) || [])[1];
   const N = werkzeug(["4g", SEITE, "--arten", "neu", "--laeufe", "1", "--fenster", "6000", "--supabase", "-", "--leise", "--ohne-spur"], path.join(tmp, "neu.json"));

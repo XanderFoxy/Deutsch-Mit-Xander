@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* =====================================================================
    SONDE 885 — STÜCKE: DER ERSTE TIPP OHNE SYNCHRONES NACHLADEN, DIE
-   RAUM-STÜCKE EINZELN (Fassung 885, Ladezeit-Entwurf Schritt E)
+   RAUM-STÜCKE EINZELN (Fassung 886, Ladezeit-Entwurf Schritt E)
    ---------------------------------------------------------------------
    XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller" · (Funk
    263): „sofort im Livestream wie bei HelloTalk" · (Funk 255): „die
@@ -599,6 +599,6 @@ function seitenSonde() {
   }
   await br.close();
   srv.close();
-  console.log("\n" + (fehler ? "ROT: " + fehler + " Prüfung(en) – Abschnitte " + Array.from(new Set(rot)).join(", ") : "Fassung 885 (Sonde 885-stuecke): alles grün.") + "  [" + WURZEL + "]");
+  console.log("\n" + (fehler ? "ROT: " + fehler + " Prüfung(en) – Abschnitte " + Array.from(new Set(rot)).join(", ") : "Fassung 886 (Sonde 885-stuecke): alles grün.") + "  [" + WURZEL + "]");
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

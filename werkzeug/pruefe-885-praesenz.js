@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* =====================================================================
    SONDE 885 — PRÄSENZ SOFORT BEIM TIPP AUF „KLASSENZIMMER“
-   (Fassung 885, S3 des Ladezeit-Entwurfs, freigegeben Funk 311)
+   (Fassung 886, S3 des Ladezeit-Entwurfs, freigegeben Funk 311)
    ---------------------------------------------------------------------
    XANDER (Funk 263): „sofort im Livestream wie bei HelloTalk" · (Funk
    271): „alles insgesamt nur zehn Mal schneller" · (Funk 255): „die

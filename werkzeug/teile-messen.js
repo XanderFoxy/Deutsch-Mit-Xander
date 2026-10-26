@@ -256,7 +256,7 @@ function falscherKlient() {
     teile: { raum, rest }, daten: { "data-exercises.js": uebSpaet } };
   if (alt.beisammen_warum) liste.beisammen_warum = alt.beisammen_warum;
   if (Array.isArray(alt.beisammen)) liste.beisammen = alt.beisammen;
-  /* FASSUNG 885 — „kern“ (immer im Kern, teile-bauen.js) ist ebenfalls von Hand gesetzt: übernehmen */
+  /* FASSUNG 886 — „kern“ (immer im Kern, teile-bauen.js) ist ebenfalls von Hand gesetzt: übernehmen */
   if (alt.kern_warum) liste.kern_warum = alt.kern_warum;
   if (Array.isArray(alt.kern)) liste.kern = alt.kern;
   fs.writeFileSync(teile.LISTE, JSON.stringify(liste, null, 0).replace(/\],"/g, "],\n\"") + "\n");

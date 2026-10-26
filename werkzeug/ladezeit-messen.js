@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* =====================================================================
-   MESSUNG — WIE LANGE BIS INS KLASSENZIMMER? (Funk 263/271, geschärft in Fassung 885)
+   MESSUNG — WIE LANGE BIS INS KLASSENZIMMER? (Funk 263/271, geschärft in Fassung 886)
    ---------------------------------------------------------------------
    XANDER (Funk 271): „es soll doch unter Wissen und Klassenzimmer dann
    ins Klassenzimmer gehen wie immer auch nur zehnmal schneller … alles
@@ -8,9 +8,9 @@
    XANDER (Funk 310/312): „das Maximum rausholen", „die maximal
    professionellste Lösung".
 
-   FASSUNG 885 — Schritt A des Ladezeit-Entwurfs: ohne belastbare Zahlen
+   FASSUNG 886 — Schritt A des Ladezeit-Entwurfs: ohne belastbare Zahlen
    ist jeder weitere Schritt geraten. Was das alte Werkzeug falsch maß
-   (gemessen, siehe SPIELSYSTEM.md „Fassung 885 — Messwerkzeug und
+   (gemessen, siehe SPIELSYSTEM.md „Fassung 886 — Messwerkzeug und
    Grundlinie"):
      - „Wissen" und „Klassenzimmer" wurden mit el.click() ausgelöst – kein
        echter Tipp (isTrusted = false), die Messung in der Seite
@@ -56,7 +56,7 @@
        Service Worker: viertes Öffnen, Helfer gestoppt, Verbindungen zu,
        Dateien und übersetzter Code aus seinem Speicher).
        --sw = kalt,warm,pause,sw.
-       FASSUNG 885 (S1): neu (Stammgast MIT Service Worker, und seit dem
+       FASSUNG 886 (S1): neu (Stammgast MIT Service Worker, und seit dem
        letzten Öffnen ist eine neue Fassung draußen: wie sw, danach stellt
        der Server index.html und fassung.json auf Fassung + 1 – die
        gestempelten Dateien bleiben gleich, gemessen wird also genau, was
@@ -82,7 +82,7 @@
        Knopf „Betreten" sichtbar, kzAbStart = ab dem Öffnen). Sie
        enthalten die Pausen des Werkzeugs; der Unterschied zur Messung in
        der Seite ist MESSFEHLER, kein Gewinn.
-     - SYNCHRON GEHOLTE STÜCKE (FASSUNG 885, Nachtrag): jeder synchrone
+     - SYNCHRON GEHOLTE STÜCKE (FASSUNG 886, Nachtrag): jeder synchrone
        Abruf (XMLHttpRequest mit async = false – so holt ein Platzhalter
        sein app-Stück, wenn es noch fehlt) wird in der Seite mit Datei,
        Beginn, Dauer und Aufrufer festgehalten und dem Abschnitt
@@ -179,7 +179,7 @@ const SPUR = !S["ohne-spur"];
 const PROFIL = !!S.profil;
 const ARTEN = (S.arten || (S.sw ? "kalt,warm,pause,sw" : "kalt,warm")).split(",").map((x) => x.trim()).filter(Boolean);
 for (const a of ARTEN) if (!["kalt", "warm", "wieder", "pause", "sw", "neu"].includes(a)) { console.error("Art unbekannt: " + a); process.exit(2); }
-/* FASSUNG 885 (S1) — langsames Aufwachen des Service Workers nachstellen (ms, gleich für beide Stände) */
+/* FASSUNG 886 (S1) — langsames Aufwachen des Service Workers nachstellen (ms, gleich für beide Stände) */
 const SW_WACH = Math.max(0, Number(S["sw-wach"] || 0));
 if (!isFinite(SW_WACH)) { console.error("--sw-wach braucht ms"); process.exit(2); }
 const JSON_DATEI = S.json || process.env.LADEZEIT_JSON || "";
@@ -256,7 +256,7 @@ if (H2) {
    „mehr als 10 Minuten später" nach (jede Datei muss nachgefragt werden → 304). */
 function server(wurzel, frische) {
   const datei = new Map(), verb = new Set();
-  /* FASSUNG 885 (S1) — Fall neu: solange s.neu gesetzt ist, liefert der Server index.html und fassung.json als
+  /* FASSUNG 886 (S1) — Fall neu: solange s.neu gesetzt ist, liefert der Server index.html und fassung.json als
      Fassung s.neu (eigener ETag, sonst käme 304 mit der alten Seite); alles andere bleibt gleich */
   const neuStand = new Map();
   function alsNeu(p, d, f) {
@@ -338,7 +338,7 @@ function server(wurzel, frische) {
 function mitschreiber() {
   if (window.__dmaMess || window.top !== window) return;
   var P = performance, M = window.__dmaMess = { t: {}, tipp: [], lt: [], loaf: [], lcp: null, fehler: 0, sync: [], ab: 0, seiten: 1 };
-  /* FASSUNG 885 (S1): der Merker des Fassungs-Wächters nur setzen, wenn er fehlt – sonst hebelte jedes Neuladen den
+  /* FASSUNG 886 (S1): der Merker des Fassungs-Wächters nur setzen, wenn er fehlt – sonst hebelte jedes Neuladen den
      Schutz vor einem zweiten Neuladen aus (Fall neu). Dazu: die wievielte Seite in diesem Tab, und wie lange nach dem
      ersten Öffnen sie begann (ab, ms). */
   try {
@@ -361,7 +361,7 @@ function mitschreiber() {
     });
   } catch (e) {}
   try { P.setResourceTimingBufferSize(5000); } catch (e) {}
-  /* FASSUNG 885 — synchrone Abrufe festhalten (Datei, Beginn, Dauer, Status, Aufrufer). So holt ein Platzhalter von
+  /* FASSUNG 886 — synchrone Abrufe festhalten (Datei, Beginn, Dauer, Status, Aufrufer). So holt ein Platzhalter von
      app.js sein Stück, wenn es noch fehlt (dmaTeilSofort) – der Hauptfaden steht, bis es über die Leitung da ist.
      Nur mitgeschrieben; der Abruf selbst läuft unverändert. */
   try {
@@ -630,7 +630,7 @@ async function oeffnen(ctx, srv, art, o) {
   let roh, versuche = [0, 0], spurBuf = null, profile = null, abbruch = null;
   try {
     await pg.goto(srv.basis + "/index.html" + (o.query || ""), { waitUntil: "commit", timeout: 180000 });
-    /* FASSUNG 885 (S1): im Fall neu zählt erst „bereit" der NEUEN Fassung (eine alte Seite aus dem Speicher lädt neu) */
+    /* FASSUNG 886 (S1): im Fall neu zählt erst „bereit" der NEUEN Fassung (eine alte Seite aus dem Speicher lädt neu) */
     await pg.waitForFunction((f) => window.__dmaMess && window.__dmaMess.t.bereit != null && (!f || String(window.DMA_VERSION) === f), o.fassung || "", { polling: "raf", timeout: 180000 });
     /* --tipp-nach: der erste Tipp erst TIPP_NACH ms nach „bereit" (Seitenuhr); in der Zeit fragt das Werkzeug nichts */
     if (o.messen && TIPP_NACH > 0) {
@@ -674,7 +674,7 @@ function auswerten(r) {
   const W = r.tippW, K = r.tippK;
   r.fp = rd(t.fp); r.fcp = rd(t.fcp); r.lcp = t.lcp ? rd(t.lcp[0]) : null; r.lcpWas = t.lcp ? t.lcp.slice(1, 3).filter(Boolean).join(" ") : "";
   r.ttfb = rd(t.nav.ttfb); r.dcl = rd(t.nav.dcl); r.load = rd(t.nav.load); r.bereit = rd(t.t.bereit);
-  /* FASSUNG 885 (S1): über ein Neuladen hinweg ab dem ersten Öffnen gerechnet (ohne Neuladen ab = 0) */
+  /* FASSUNG 886 (S1): über ein Neuladen hinweg ab dem ersten Öffnen gerechnet (ohne Neuladen ab = 0) */
   r.ab = rd(t.ab || 0); r.seiten = t.seiten || 1; r.fassung = t.fassung || ""; r.vorher = t.seiten > 1 ? t.vorher : null;
   r.bereitAb = r.bereit == null ? null : r.ab + r.bereit; r.fcpAb = r.fcp == null ? null : r.ab + r.fcp;
   r.wissen = W ? rd(W.bild) : null;
@@ -707,7 +707,7 @@ function auswerten(r) {
   r.netz = n;
   r.dateien = Object.entries(proDatei).sort((a, b2) => b2[1] - a[1]).slice(0, 12).map(([k, v]) => [k, Math.round(v / 1024)]);
   r.sw = t.sw; r.proto = t.nav.proto;
-  /* FASSUNG 885 — synchron geholte Stücke: Anzahl und gesperrte ms gesamt und je Abschnitt, dazu jedes mit Namen
+  /* FASSUNG 886 — synchron geholte Stücke: Anzahl und gesperrte ms gesamt und je Abschnitt, dazu jedes mit Namen
      (Datei, ab ms, ms, Status, Abschnitt, Aufrufer) und die eigene Liste der Seite (DMA_TEIL_SOFORT) */
   const wins = abschnitte(r);
   const wo = (ab) => { const w = wins.find((x) => ab >= x.a && ab < x.e); return w ? w.name : "danach"; };
@@ -768,7 +768,7 @@ async function durchgang(st, lauf) {
       vor(await oeffnen(ctx, st.srvB, "vor", { query: "?mit-sw", nachlauf: 8000 }), "sw 2");
       vor(await oeffnen(ctx, st.srvB, "vor", { query: "?mit-sw", nachlauf: 6000 }), "sw 3");
       if (ARTEN.includes("sw")) await mess(ctx, st.srvB, "sw", { query: "?mit-sw", swStopp: true, trennen: true });
-      /* FASSUNG 885 (S1) — neu: dieselbe Lage, inzwischen ist Fassung + 1 draußen (nur index.html und fassung.json) */
+      /* FASSUNG 886 (S1) — neu: dieselbe Lage, inzwischen ist Fassung + 1 draußen (nur index.html und fassung.json) */
       if (ARTEN.includes("neu")) {
         st.srvB.neu = String(Number(st.fassung) + 1);
         try { await mess(ctx, st.srvB, "neu", { query: "?mit-sw", swStopp: true, trennen: true, fassung: st.srvB.neu }); }
@@ -826,7 +826,7 @@ function zusammenfassen(alle) {
   for (const s in z) for (const a in z[s]) for (const p in z[s][a]) { z[s][a][p] = stat(z[s][a][p]); if (!z[s][a][p]) delete z[s][a][p]; }
   return z;
 }
-/* FASSUNG 885 — gepaarter Unterschied B − A je Durchgang, dazu
+/* FASSUNG 886 — gepaarter Unterschied B − A je Durchgang, dazu
      ki95: 95-%-Bereich des gepaarten Medians (Bootstrap: 2000-mal n Paare mit Zurücklegen ziehen, fester Startwert –
            dieselben Zahlen geben denselben Bereich);
      vz:   Vorzeichentest (wie oft B größer, wie oft kleiner, p zweiseitig; Gleichstände zählen nicht);
@@ -970,7 +970,7 @@ function zeile(r) {
   console.log("\nRechnerlast vorher " + lastVor.map((x) => x.toFixed(2)).join(" ") + ", nachher " + lastNach.map((x) => x.toFixed(2)).join(" ") + " (" + os.cpus().length + " Kerne)");
   if (JSON_DATEI) {
     fs.writeFileSync(JSON_DATEI, JSON.stringify({
-      werkzeug: "werkzeug/ladezeit-messen.js (Fassung 885)", datum: new Date().toISOString(),
+      werkzeug: "werkzeug/ladezeit-messen.js (Fassung 886)", datum: new Date().toISOString(),
       einstellung: { netz: NETZ, leitung: { mbit: LEITUNG.down * 8 / 1e6, rtt: LEITUNG.rtt, aufbauRtt: AUFBAU }, cpu: CPU, http: H2 ? "h2+tls" : "http/1.1", laeufe: LAEUFE, arten: ARTEN, fenster: FENSTER, spur: SPUR, profil: PROFIL, kontext: FLUECHTIG ? "flüchtig" : "Profil auf der Platte",
         tippNach: TIPP_NACH, aa: AA, swWach: SW_WACH, verschraenkt: staende.length > 1 ? "Lauf 1: A dann B, Lauf 2: B dann A, …" : null,
         supabase: SUPA ? { datei: path.basename(SUPA_PFAD), kbGz: Math.round(SUPA_GZ.length / 1024) } : null },

@@ -58,7 +58,7 @@
    EHRLICH: Datenbank nachgestellt; was echte Leitung und Gerät beim Start
    kosten, misst werkzeug/ladezeit-messen.js (dort ist die Datenbank
    gesperrt, also läuft dort nur der Weg ohne Merker).
-   ERGEBNIS: siehe SPIELSYSTEM.md, „Fassung 885 — „Über mich“ sofort“.
+   ERGEBNIS: siehe SPIELSYSTEM.md, „Fassung 886 — „Über mich“ sofort“.
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path"), zlib = require("zlib"), crypto = require("crypto");

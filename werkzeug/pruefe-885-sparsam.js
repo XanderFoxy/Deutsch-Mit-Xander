@@ -111,6 +111,16 @@
      FM die Fuchs-Prüfung beim Laden scheitert (500 auf results), danach geht
         es wieder: Monat und Jahr binnen ≈ 35 min erneut geprüft (Nachbesserung
         3: erst nach 6 h), danach nicht wieder.
+   Einmischen in den Ladezeit-Zweig (Fassung 886, Nachbesserung 1 – Prüfbericht zu b17223b7):
+     SB/SM die ersten 3 min ab dem Öffnen MIT der Startphase (alle Fälle oben zählen erst nach dem Profil bzw. nach
+        90 s), sichtbar, als Betreiber (Gerät mit Merker dma-walkie) bzw. als Mitglied ohne Rolle: Weiterführende
+        Links und Schwarmwissen je höchstens eine Abfrage (select=*), die Freundesliste (getFriends) nicht öfter und
+        alle Anfragen zusammen nicht mehr als auf 807e6a7d (+ 1 Rauschen). Das Vorzeichnen in der Ruhepause holte
+        mit wiederhergestellter Anmeldung „meine“/„ausstehende“ und die Freundesliste dazu (Betreiber +4, Mitglied
+        +2 je Start). Danach (nur SB) das Öffnen wie bisher: der Tipp auf „Weiterführende Links“ bzw. „Schwarmwissen“
+        holt frisch alle drei Listen und zeigt das Prüffeld, Memory holt die Freundesliste. Gegenprobe b17223b7:
+        7 rot (SB: Links, Schwarmwissen, Freundesliste, gesamt 184 gegen die Grenze 182; SM: Links, Schwarmwissen,
+        Freundesliste – gesamt 158 liegt in der Grenze).
    Die Sperre der Echtzeit-Leitung ist jetzt nachgestellt wie in Wirklichkeit
    (Nachbesserung 2): Supabase lehnt schon den Handshake ab, die Verbindung
    öffnet sich nie und schließt mit 1006 (eigener WebSocket-Ersatz, solange
@@ -142,7 +152,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const QUELLE = Boolean(process.env.QUELLE);
-const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM").split(",").map((x) => x.trim()).filter(Boolean);
+const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM,SB,SM").split(",").map((x) => x.trim()).filter(Boolean);
 const SUPA = [process.env.SUPABASE_UMD,
   "/tmp/claude-0/node_modules/@supabase/supabase-js/dist/umd/supabase.js",
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
@@ -194,6 +204,8 @@ function datenbank(fall, t0) {
     results: [], private_messages: [], friends: [], challenges: [], notifications: [], activity: [],
     site_content: [], community_texts: [], community_tips: [], user_links: [], betreiber_rueckfragen: [], betreiber_funk: [],
   };
+  /* SM (Einmischen 886, Nachbesserung 1): ein gewöhnliches Mitglied – weder Betreiber noch Admin noch Moderation */
+  if (fall === "SM") Object.assign(db.profiles[0], { is_owner: false, is_admin: false, is_moderator: false });
   let n = 0;
   const runde = (wer, wann, punkte) => db.results.push({ id: ++n, user_id: wer, points: punkte, bonus: 0, percent: 90, categories: ["vokabeln"], character: "", played_at: iso(wann) });
   const mitternacht = (() => { const d = new Date(t0); const s = new Date(d.toLocaleString("en-US", { timeZone: "Europe/Berlin" })); return t0 - (s.getHours() * 3600000 + s.getMinutes() * 60000 + s.getSeconds() * 1000); })();
@@ -332,17 +344,18 @@ function schluessel(adresse, methode) {
       userAgent: "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/30.0 Chrome/131.0 Mobile Safari/537.36" });
     await ctx.clock.install({ time: t0 });
     const ablauf = Math.floor((opt.sitzungBis || (t0 + 10 * 3600000)) / 1000);
-    await ctx.addInitScript(([sitzung]) => {
+    await ctx.addInitScript(([sitzung, walkie]) => {
       try {
         localStorage.setItem("dma_tour_seen", "1");
         if (sitzung && sitzung.access_token) localStorage.setItem("sb-attrappe-auth-token", JSON.stringify(sitzung));
+        if (walkie) localStorage.setItem("dma-walkie", "1");   // SB: das Gerät hat sich als Betreiber-Gerät gemerkt (K)
       } catch (e) {}
       let verdeckt = false;
       Object.defineProperty(Document.prototype, "hidden", { configurable: true, get() { return verdeckt; } });
       Object.defineProperty(Document.prototype, "visibilityState", { configurable: true, get() { return verdeckt ? "hidden" : "visible"; } });
       /* wie im Browser: das Ereignis steigt bis window auf (dort hört die Echtzeit-Bibliothek) */
       window.__sichtbar = (an) => { verdeckt = !an; document.dispatchEvent(new Event("visibilitychange", { bubbles: true })); };
-    }, [opt.ohneSitzung ? {} : { access_token: tokenFuer(ablauf), refresh_token: "rt-1", expires_in: ablauf - Math.floor(t0 / 1000), expires_at: ablauf, token_type: "bearer", user: NUTZER }]);
+    }, [opt.ohneSitzung ? {} : { access_token: tokenFuer(ablauf), refresh_token: "rt-1", expires_in: ablauf - Math.floor(t0 / 1000), expires_at: ablauf, token_type: "bearer", user: NUTZER }, Boolean(opt.walkie)]);
     const kopf = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*", "Access-Control-Allow-Methods": "*", "Access-Control-Expose-Headers": "Content-Range, X-Total-Count" };
     async function supabaseAntwort(route, req) {
       const methode = req.method();
@@ -523,6 +536,10 @@ function schluessel(adresse, methode) {
     sage(neu.length === 0, "keine Seitenfehler aus den neuen Stellen", neu.length ? neu.join(" | ") : (s.zustand.fehler.length ? "(sonst: " + s.zustand.fehler.length + " – " + s.zustand.fehler.slice(0, 2).join(" | ") + ")" : ""));
   }
   const T_TAG = Date.parse("2026-10-24T10:00:00Z");      // 12:00 in Berlin
+  /* SB/SM: drei Läufe dieses Falls auf 807e6a7d (26.10.2026, Fenster fest nach der Uhr der Seite): Anfragen in den ersten
+     3 min, Abrufe der Freundesliste; Rauschen = Spanne dieser Läufe (1). Zum Vergleich der Merge ohne Nachbesserung
+     (b17223b7): SB 185/184/184, SM 158/158/158, Freundesliste je 3, user_links* 3 bzw. 2, community_tips* 3 bzw. 2. */
+  const REF_START3 = { SB: { gesamt: [180, 181, 180], freundesliste: 2, rauschen: 1 }, SM: { gesamt: [156, 156, 157], freundesliste: 2, rauschen: 1 } };
   const T_NACHT = Date.parse("2026-10-24T22:05:00Z");    // 00:05 in Berlin (25.10.)
   const T_VOR_MITTERNACHT = Date.parse("2026-10-24T21:52:00Z");   // 23:52 in Berlin (24.10.)
 
@@ -1154,6 +1171,64 @@ function schluessel(adresse, methode) {
       sage(je.monat.length <= 1 && je.jahr.length <= 1, "FM: nach der erfolgreichen Prüfung nicht wieder (6 h)", "monat " + je.monat.length + ", jahr " + je.jahr.length);
       fehlerPruefen(s);
       ergebnis.faelle.FM = { gescheitert, je };
+      await s.ctx.close();
+    }
+
+    /* SB / SM (Einmischen 886, Nachbesserung 1): Start + 3 min sichtbar, die STARTPHASE MITGEZÄHLT (alle anderen Fälle
+       zählen erst nach dem Profil bzw. nach 90 s – das Vorzeichnen in der Ruhepause fiel dort nicht auf). Gegen
+       807e6a7d (Notfall-Fassung 885, live): dort zeichnete der Seitenaufbau Links, Schwarmwissen und Memory, als die
+       Anmeldung noch nicht wiederhergestellt war – je eine Abfrage für die freigegebenen Links und Tipps, keine
+       Freundesliste. Grenzen aus Läufen dieses Falls auf 807e6a7d (SPIELSYSTEM.md, „Fassung 886 — Einmischen …“,
+       Nachbesserung 1). */
+    const SB_SM = { SB: ["Betreiber, Gerät mit dma-walkie", { walkie: true }], SM: ["Mitglied ohne Rolle", {}] };
+    for (const fall of ["SB", "SM"]) {
+      if (!FAELLE.includes(fall)) continue;
+      const REF = REF_START3[fall];
+      abschnitt(fall, "Start + 3 min sichtbar, Startphase mitgezählt (" + SB_SM[fall][0] + ") – gegen 807e6a7d");
+      /* Fenster fest nach der Uhr der Seite: die ersten 3 min ab dem Öffnen (T_TAG). Ab dem Profil 3 min zu zählen
+         schwankte je Lauf um einen Takt (die Startphase läuft in Echtzeit, 5–10 s; gemessen Mitglied 149…161). Die
+         Freundesliste (getFriends: friends?select=*&status=eq.accepted) wird einzeln mitgeschrieben – der Takt holt
+         nur Anfragen (friends?select=* ohne status) und Kennungen. */
+      const s = await seiteOeffnen(fall, T_TAG, Object.assign({ zustand: { protokoll: /^friends\*$/ } }, SB_SM[fall][1]));
+      const zs = s.zustand.zaehler.start;
+      const z = phase(s, fall);
+      await laufen(s, Math.max(0, T_TAG + 180000 - s.zustand.jetzt));
+      const zus = neuerZaehler();
+      [zs, z].forEach((q) => { zus.gesamt += q.gesamt; Object.entries(q.je).forEach(([k, n]) => { zus.je[k] = (zus.je[k] || 0) + n; }); });
+      const n = (k) => zus.je[k] || 0;
+      const freundesliste = (s.zustand.log || []).filter((e) => /[?&]status=eq\.accepted/.test(e.url)).length;
+      if (process.env.FREUNDE) (s.zustand.log || []).forEach((e) => console.log("    friends " + Math.round((e.t - T_TAG) / 1000) + " s " + decodeURIComponent(e.url.split("?")[1] || "")));
+      const grenze = Math.max(...REF.gesamt) + REF.rauschen;
+      console.log("  bis Profil da: " + zs.gesamt + " · " + kurz(zs));
+      console.log("  danach bis 3 min ab dem Öffnen: " + z.gesamt + " · " + kurz(z));
+      console.log("  zusammen: " + zus.gesamt + " (807e6a7d: " + REF.gesamt.join("/") + ") · user_links* " + n("user_links*") + ", community_tips* " + n("community_tips*") + ", Freundesliste " + freundesliste + " (807e6a7d: " + REF.freundesliste + "), friends* gesamt " + n("friends*"));
+      sage(n("user_links*") <= 1, fall + ": Weiterführende Links höchstens eine Abfrage (nur die freigegebenen, wie 807e6a7d)", String(n("user_links*")));
+      sage(n("community_tips*") <= 1, fall + ": Schwarmwissen höchstens eine Abfrage (nur die freigegebenen, wie 807e6a7d)", String(n("community_tips*")));
+      sage(freundesliste <= REF.freundesliste, fall + ": Freundesliste nicht öfter als auf 807e6a7d (Memory vorgezeichnet ohne)", freundesliste + " (807e6a7d " + REF.freundesliste + ")");
+      sage(zus.gesamt <= grenze, fall + ": Anfragen in den ersten 3 min nicht mehr als auf 807e6a7d (+ " + REF.rauschen + " Rauschen)", zus.gesamt + " (Grenze " + grenze + ")");
+      /* Das Öffnen bleibt wie bisher (nur SB: Betreiber sieht das Prüffeld): frisch geholt, nicht das Vorgezeichnete */
+      let oeffnen = null;
+      if (fall === "SB") {
+        const zo = phase(s, "SB-oeffnen");
+        const bis = async (f) => { for (let i = 0; i < 20; i++) { await laufen(s, 1000); await warte(100); if (await s.pg.evaluate(f)) return true; } return false; };
+        const vorL = (s.zustand.log || []).length;
+        await s.pg.evaluate(() => { const t = document.querySelector('.tape-tab[data-target="view-knowledge"]'); if (t) t.click();
+          const p = document.querySelector('#knowledgeSubnav [data-sub="sub-links"]'); if (p) p.click(); });
+        const links = await bis(() => /Vorgeschlagene Links prüfen/.test((document.getElementById("linksArea") || {}).textContent || ""));
+        await s.pg.evaluate(() => { const p = document.querySelector('#knowledgeSubnav [data-sub="sub-tips"]'); if (p) p.click(); });
+        const tipps = await bis(() => /Vorgeschlagene Tipps prüfen/.test((document.getElementById("tipsArea") || {}).textContent || ""));
+        await s.pg.evaluate(() => { const p = document.querySelector('#learnSubnav [data-sub="sub-memory"]'); if (p) p.click(); });
+        const neueListe = () => (s.zustand.log || []).slice(vorL).filter((e) => /[?&]status=eq\.accepted/.test(e.url)).length;
+        for (let i = 0; i < 10 && !neueListe(); i++) { await laufen(s, 1000); await warte(100); }
+        const fl = neueListe();
+        oeffnen = { links, tipps, user_links: zo.je["user_links*"] || 0, community_tips: zo.je["community_tips*"] || 0, freundesliste: fl };
+        console.log("  Öffnen: " + JSON.stringify(oeffnen));
+        sage(links && oeffnen.user_links === 3, "SB: Tipp auf „Weiterführende Links“ holt wie bisher frisch (freigegebene, meine, ausstehende) und zeigt das Prüffeld", JSON.stringify({ prueffeld: links, abfragen: oeffnen.user_links }));
+        sage(tipps && oeffnen.community_tips === 3, "SB: Tipp auf „Schwarmwissen“ holt wie bisher frisch und zeigt das Prüffeld", JSON.stringify({ prueffeld: tipps, abfragen: oeffnen.community_tips }));
+        sage(fl >= 1, "SB: Memory öffnen holt die Freundesliste wie bisher", String(fl));
+      }
+      fehlerPruefen(s);
+      ergebnis.faelle[fall] = { start: zs.gesamt, startJe: zs.je, sichtbar3: z.gesamt, sichtbarJe: z.je, gesamt: zus.gesamt, freundesliste, oeffnen };
       await s.ctx.close();
     }
   } catch (e) {

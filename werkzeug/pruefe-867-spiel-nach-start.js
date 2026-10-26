@@ -18,7 +18,9 @@
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
-const WURZEL = path.join(__dirname, "..");
+/* FASSUNG 886 (Einmischen, Nachbesserung 1) — WURZEL=… wie bei den anderen Sonden: die Gegenprobe auf einem anderen Stand lief
+   sonst unbemerkt auf diesem Baum (so geschehen beim Einmischen: 694 „auf main“ lief in Wahrheit auf dem Merge). */
+const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json",
   ".png": "image/png", ".svg": "image/svg+xml", ".webp": "image/webp", ".jpg": "image/jpeg" };
 let fehler = 0;
