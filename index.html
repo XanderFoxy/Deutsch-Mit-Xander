@@ -229,7 +229,7 @@
     window.addEventListener(t, function () { eingabe = true; }, { capture: true, passive: true, once: true });
   });
   function neuLaden(neu) {
-    /* 886: die übrige Adresse bleibt (?ohne-sw, ?raum= …) */
+    /* 886: übrige Adresse bleibt (?ohne-sw, ?raum=) */
     var q = location.search.replace(/^\?/, "").split("&").filter(function (p) { return p && !/^f(=|$)/.test(p); });
     q.push("f=" + encodeURIComponent(neu));
     var adresse = location.pathname + "?" + q.join("&") + location.hash;
@@ -312,7 +312,7 @@
       window.dmaRueckGemeldet = true;
     }
   } catch (e) {}
-  /* 886: Seite aus dem Speicher – Supabase erst nach der ersten Antwort, höchstens 6 s; bei „neu“ nichts (SPIELSYSTEM.md I50) */
+  /* 886 (I50) */
   var tor = null, torNeu = false;
   if (document.documentElement.hasAttribute("data-dma-speicher")) {
     var an = ["pointerdown", "keydown", "click"], torAuf, tipp = function (e) {

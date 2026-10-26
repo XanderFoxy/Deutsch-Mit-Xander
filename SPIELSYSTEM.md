@@ -5658,6 +5658,15 @@ Fall **neu** (seit dem letzten Öffnen eine neue Fassung draußen; „ab Öffnen
 | **4G, Helfer wacht 250 ms, endgültig** | 8 | 0 → **0** | 0 | 578 → 606, +28 (0…52) | 830 → 915, +86 (−16…192) | gleich |
 | 4G, 250 ms, rein | 8 | 0 → 1 | 526 | 570 → 775, +201 (139…264) | 862 → 1062, +201 (54…335) | +27 KB |
 
+> **Nachtrag (Einmischen der Notfall-Fassung, Nachbesserung 2 – Prüfbericht zu c57cdb8b): was der Fall „neu“ an
+> Supabase kostete, stand hier nicht.** Gemessen war als Gast; „Server“ zählt nur die Seite selbst. Mit Konto startete die
+> ALTE Seite aus dem Speicher ihren ganzen Supabase-Start (Profil, Anmeldebild, Fuchs, Benachrichtigungen, Freunde,
+> „zuletzt aktiv“), bevor der Wächter sie ersetzte – dann tat es die neue noch einmal: nachgestellt mit Helfer, Betreiber,
+> 30 s ab dem Öffnen **92–103 statt 57 Anfragen** (807e6a7d, Seite aus dem Netz: 57), sobald die Antwort ≥ ~0,3 s brauchte;
+> am ersten Öffnen des Tages in 1 von 3 Läufen die Anmeldebelohnung zweimal. Jedes Gerät, einmal je Fassung. Seitdem wartet
+> der Supabase-Start auf einer Seite aus dem Speicher auf die erste Antwort des Wächters (Start-Tor, I50); Zahlen und
+> Kosten in „Fassung 886 — Einmischen …“, Nachbesserung 2.
+
 Ohne Helfer (kalt, warm, pause; 6 Paare, 4G; index.html wie endgültig bis auf eine Kommentarzeile): erstes Byte, erstes Bild, „bereit“, Wissen, Klassenzimmer alle im Rauschen (kalt bereit −41 (−80…169), warm +44 (−197…248), pause −18 (−88…21)); „deutlich“ nur 2 von 102 Maßen: KB bis „bereit“ und KB 0–10 s je +1 (index.html +0,4 KB gepackt).
 
 - **Gewinn beim Öffnen mit Helfer:** 4G erstes Byte −176, erstes Bild −166, „bereit“ −223 ms; 3G −442 / −433 ms – in jedem Paar (0↑). ~~Funkloch und Stau: sofort statt nach 6 s (Sonde B).~~ **Berichtigt (Nachbesserung 1):** Bei hängender oder sehr langsamer Leitung („Stau“) sofort statt nach 6 s (Sonde B). Im echten Funkloch (die Verbindung bricht sofort ab) kam die gespeicherte Seite schon bis 884 sofort (Gegenprobe 6b724580: B Funkloch grün, 16 ms) – dort gewinnt S1 nichts.
@@ -7132,8 +7141,14 @@ bzw. nach 90 s). Die Aussagen „Gilt für Gäste und Konten gleich … unverän
   | b17223b7 (Merge ohne Nachbesserung) | 185, 184, 184 · 184, 185 | 158, 158, 158 · 158 | 3 / 2 | 3 / 2 | 3 |
   | **Nachbesserung 1** | **179, 179, 179 · 179, 179** | **156, 155, 155 · 155** | **1 / 1** | **1 / 1** | **2** |
 
-  Gegen 807e6a7d also Betreiber −1, Mitglied −1 (Median; das Anmeldebild `site_content` 10 → 9 bzw. 11 → 10, weil das
-  Profil beim Start mit Konto nicht mehr verdeckt als Anmeldeformular gezeichnet wird); der Merge ohne Nachbesserung lag bei
+  ~~Gegen 807e6a7d also Betreiber −1, Mitglied −1 (Median; …)~~ *Berichtigt (Nachbesserung 2, Prüfbericht zu c57cdb8b):*
+  gegen 807e6a7d **gleich viel bzw. eine Anfrage weniger**. Fest ist nur das Anmeldebild (`site_content` 10 → 9 bzw.
+  11 → 10, weil das Profil beim Start mit Konto nicht mehr verdeckt als Anmeldeformular gezeichnet wird); „zuletzt aktiv“
+  (`activity*`) schwankt je nach Takt um ±1 (Prüfer: SB 14 gegen 13). Im Lauf des Prüfers kam dieser Stand bei SB auf
+  180 wie main (180), bei SM auf 155 gegen 156 – Tabelle für Tabelle gegen main verglichen, kein weiterer Unterschied. Und:
+  das gilt nur für den Start **ohne Helfer und ohne Update** (alle SB/SM-Läufe sperren den Service Worker). Mit Helfer und
+  einer neuen Fassung draußen startete die alte Seite aus dem Speicher (S1) ihren ganzen Supabase-Start doppelt –
+  Nachbesserung 2 unten. Der Merge ohne Nachbesserung lag bei
   +4/+5 bzw. +2, jedes Mal an genau diesen Endpunkten. Ein erster Satz mit dem Fenster „3 min ab dem Profil“ (je 5 Läufe)
   zeigte dasselbe (Median main 180/156, neu 179/155, alt 184/158), schwankte aber beim Mitglied um einen ganzen Takt
   (main 149, neu 161 in je einem Lauf: die Startphase läuft in Echtzeit, 5–10 s). Darum zählt die Sonde jetzt nach der Uhr

@@ -120,6 +120,14 @@ const abschnitt = (titel) => console.log("\n" + titel + "\n");
 const warte = (ms) => new Promise((r) => setTimeout(r, ms));
 /* Am Ende von backend.js: die Beta-Attrappe einhängen, bevor app.js läuft (wie Sonde 884-beta). */
 const ANHANG = "\n;(function(){try{if(window.__attrappe)window.__attrappe(Backend);}catch(e){console.error('Attrappe:',e);}})();\n";
+/* Fassung 886 (Einmischen, Nachbesserung 2 – Prüfbericht zu c57cdb8b): das echte Supabase NIE ansprechen. index.html
+   (preconnect) und supabase-config.js kamen mit dem echten Host; ctx.route fängt nur HTTP ab – Echtzeit-Websockets und
+   das Vorverbinden gingen über den Proxy der Sitzung hinaus (dort abgelehnt: connect_rejected …supabase.co:443). Jetzt
+   wird der Host beim Ausliefern durch die Attrappe ersetzt (wie 885-sparsam), Chromium startet ohne Proxy (der Rest der
+   Welt ist per host-resolver-rules unauffindbar), und jeder Websocket-Versuch wird mitgeschrieben (Teil Z). */
+const ECHT = /rolcktiryrvjzbwuvobb\.supabase\.co/g;
+const ohneEcht = (p, t) => (/\.html$|(^|\/)supabase-config\.js$/.test(p) ? String(t).replace(ECHT, "attrappe.supabase.co") : t);
+const wsAdressen = [];
 
 (async () => {
   const srv = http.createServer((q, a) => {
@@ -135,6 +143,7 @@ const ANHANG = "\n;(function(){try{if(window.__attrappe)window.__attrappe(Backen
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
     a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream", "Cache-Control": "no-store" });
     if (/(^|\/)backend\.js$/.test(p)) { a.end(fs.readFileSync(f, "utf8") + ANHANG); return; }
+    if (/\.html$|(^|\/)supabase-config\.js$/.test(p)) { a.end(ohneEcht(p, fs.readFileSync(f, "utf8"))); return; }
     fs.createReadStream(f).pipe(a);
   }).listen(0);
   const basis = "http://127.0.0.1:" + srv.address().port + "/index.html" + (QUELLE ? "?quelle" : "");
@@ -150,12 +159,14 @@ const ANHANG = "\n;(function(){try{if(window.__attrappe)window.__attrappe(Backen
     if (!/text|javascript|json|svg/.test(typ) || !/gzip/.test(q.headers["accept-encoding"] || "")) {
       a.writeHead(200, h);
       if (/(^|\/)backend\.js$/.test(p)) { a.end(fs.readFileSync(f, "utf8") + ANHANG); return; }
+      if (/\.html$|(^|\/)supabase-config\.js$/.test(p)) { a.end(ohneEcht(p, fs.readFileSync(f, "utf8"))); return; }
       fs.createReadStream(f).pipe(a);
       return;
     }
     if (!gepackt[p]) {
       let roh = fs.readFileSync(f);
       if (/(^|\/)backend\.js$/.test(p)) roh = Buffer.concat([roh, Buffer.from(ANHANG)]);
+      if (/\.html$|(^|\/)supabase-config\.js$/.test(p)) roh = Buffer.from(ohneEcht(p, roh.toString("utf8")));
       gepackt[p] = zlib.gzipSync(roh, { level: 6 });
     }
     h["Content-Encoding"] = "gzip";
@@ -163,7 +174,7 @@ const ANHANG = "\n;(function(){try{if(window.__attrappe)window.__attrappe(Backen
     a.end(gepackt[p]);
   }).listen(0);
   const basisGz = "http://127.0.0.1:" + srvGz.address().port + "/index.html";
-  const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1"] });
+  const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-proxy-server", "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1"] });
   const seitenFehler = [];
 
   /* G: Rolle mit später Anmeldung (restoreSession erst ms nach dem Start, wie draußen), gedrosselt, CPU 4× */
@@ -174,6 +185,7 @@ const ANHANG = "\n;(function(){try{if(window.__attrappe)window.__attrappe(Backen
     await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
     const pg = await ctx.newPage();
     pg.on("pageerror", (e) => seitenFehler.push(String(e.message || e)));
+    pg.on("websocket", (w) => wsAdressen.push(w.url()));
     const cdp = await ctx.newCDPSession(pg);
     await cdp.send("Network.enable");
     await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: NETZE[netz].latency, downloadThroughput: NETZE[netz].down, uploadThroughput: 750e3 / 8 });
@@ -251,6 +263,7 @@ const ANHANG = "\n;(function(){try{if(window.__attrappe)window.__attrappe(Backen
     });
     const pg = await ctx.newPage();
     pg.on("pageerror", (e) => seitenFehler.push(String(e.message || e)));
+    pg.on("websocket", (w) => wsAdressen.push(w.url()));
     await pg.addInitScript(([halt, attrappe]) => {
       try { localStorage.setItem("dma_tour_seen", "1"); } catch (e) {}
       window.__beta = [];
@@ -616,6 +629,10 @@ const ANHANG = "\n;(function(){try{if(window.__attrappe)window.__attrappe(Backen
   teil = "F";
   const echte = seitenFehler.filter((x) => !/Failed to fetch|NetworkError|ERR_|Load failed/i.test(x));
   sage(echte.length === 0, "keine Seitenfehler", echte.slice(0, 5).join(" | "));
+  teil = "Z";
+  const echtWs = wsAdressen.filter((u) => /rolcktiryrvjzbwuvobb/.test(u));
+  sage(echtWs.length === 0, "kein Websocket-Versuch zum echten Supabase (Host beim Ausliefern ersetzt, ohne Proxy)",
+    wsAdressen.length + " Versuche, davon zum echten Host " + echtWs.length + (wsAdressen.length ? " (z. B. " + wsAdressen[0].replace(/\?.*/, "") + ")" : ""));
   await br.close();
   srv.close();
   srvGz.close();

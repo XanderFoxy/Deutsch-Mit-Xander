@@ -118,6 +118,9 @@ function esbuildHolen() {
 /* FASSUNG 886 (rueckkehr): die Änderung am Fassungs-Wächter (verkleinert) wieder herausnehmen – für Teil Q
    (Blase meldet „draussen“ an den Helfer, Merker dma-wechsel, erste Antwort als Versprechen) */
 function rueckbauRueckkehr(y) {
+  /* Fassung 886 (Einmischen, Nachbesserung 2, I50): das Start-Tor der Seite aus dem Speicher (window.dmaStartTor) */
+  const t0 = y.indexOf("var tor=null,torNeu=false;"), t1 = y.indexOf("window.dmaStartTor=tor;");
+  if (t0 >= 0 && t1 > t0) y = y.slice(0, t0) + y.slice(t1 + "window.dmaStartTor=tor;".length);
   return y
     /* Fassung 886 (Rückkehr): Abbruch-Eintrag der vom Helfer ersetzten Seite wegräumen */
     .replace('{erstOk("frisch");try{var ab=JSON.parse(localStorage.getItem("dma-mess-abbruch")||"null");if(wechsel[0]==="*"&&ab&&String(ab.f)===wechsel[2])localStorage.removeItem("dma-mess-abbruch")}catch(e){}}else if(rueck', 'erstOk("frisch");else if(rueck')

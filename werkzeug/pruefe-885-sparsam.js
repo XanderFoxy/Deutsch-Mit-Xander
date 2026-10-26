@@ -133,6 +133,9 @@
      SWTOR ohne Update, nur fassung.json verzögert: Seite aus dem Netz → kein Tor; aus dem Speicher und fassung.json nach
            8 s → die erste Supabase-Anfrage nach ≈ 6 s (Frist), nicht vor 5,8 s; fassung.json nach 4 s und ein Tastendruck
            nach 2,5 s → die erste Anfrage vor 3,5 s (der Wächter lädt dann nicht mehr von selbst neu); Profil am Ende da.
+     Gegenprobe c57cdb8b (ohne Tor): 14 rot – Update-Runde 86/92/100/67/71 gegen 56–59 (SWL zwei Echtzeit-Leitungen),
+     SWT 133 gegen 96 und die Anmeldebelohnung zweimal, SWT6 112 gegen 97, SW402 14 gegen 8; SWTOR 4 (dort gibt es kein
+     Tor, die erste Anfrage geht nach 0,1–0,2 s). 807e6a7d (live, Seite zuerst aus dem Netz): SWa…SW402 grün.
    Die Sperre der Echtzeit-Leitung ist jetzt nachgestellt wie in Wirklichkeit
    (Nachbesserung 2): Supabase lehnt schon den Handshake ab, die Verbindung
    öffnet sich nie und schließt mit 1006 (eigener WebSocket-Ersatz, solange
@@ -574,7 +577,13 @@ function schluessel(adresse, methode) {
   const T_TAG = Date.parse("2026-10-24T10:00:00Z");      // 12:00 in Berlin
   /* SB/SM: drei Läufe dieses Falls auf 807e6a7d (26.10.2026, Fenster fest nach der Uhr der Seite): Anfragen in den ersten
      3 min, Abrufe der Freundesliste; Rauschen = Spanne dieser Läufe (1). Zum Vergleich der Merge ohne Nachbesserung
-     (b17223b7): SB 185/184/184, SM 158/158/158, Freundesliste je 3, user_links* 3 bzw. 2, community_tips* 3 bzw. 2. */
+     (b17223b7): SB 185/184/184, SM 158/158/158, Freundesliste je 3, user_links* 3 bzw. 2, community_tips* 3 bzw. 2.
+     GRENZEN DIESER BEZUGSWERTE (Prüfbericht zu c57cdb8b): fest aus Läufen von main eingetragen – beim Ausliefern als 886
+     und wann immer sich main ändert, hier neu messen (FAELLE=SB,SM mit WURZEL=<main-Baum>, je 3 Läufe). Geprüft werden
+     die Summe und drei Endpunkte (Links, Schwarmwissen, Freundesliste), nicht jede Tabelle: −1 an einer Stelle und +1 an
+     einer anderen bei gleicher Summe sähe die Sonde nicht (Tabelle für Tabelle von Hand verglichen: kein Befund; fest
+     ist nur site_content −1, activity* schwankt je nach Takt um ±1). Alle SB/SM-Fälle laufen ohne Helfer – den Start
+     MIT Helfer und Update prüfen die Fälle SW… unten. */
   const REF_START3 = { SB: { gesamt: [180, 181, 180], freundesliste: 2, rauschen: 1 }, SM: { gesamt: [156, 156, 157], freundesliste: 2, rauschen: 1 } };
   const T_NACHT = Date.parse("2026-10-24T22:05:00Z");    // 00:05 in Berlin (25.10.)
   const T_VOR_MITTERNACHT = Date.parse("2026-10-24T21:52:00Z");   // 23:52 in Berlin (24.10.)
@@ -1289,7 +1298,7 @@ function schluessel(adresse, methode) {
       const z = phase(s, name);
       const l0 = s.zustand.ladungen, d0 = netz.doks, f0 = netz.fass;
       await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
-      await warte(ms || 30000);
+      await warte(ms || Number(process.env.SW_RUNDE_MS || 30000));   // SW_RUNDE_MS: längere Runde (Fenster-Probe)
       const info = await lage(s);
       return { z, ladungen: s.zustand.ladungen - l0, doks: netz.doks - d0, fass: netz.fass - f0, info };
     };
@@ -1308,7 +1317,7 @@ function schluessel(adresse, methode) {
       zeigeRunde("Bezug", bezug);
       zeigeRunde("Update", neu);
       sage(ctl, fall + ": der Helfer übernimmt die Seite");
-      sage(neu.z.gesamt <= bezug.z.gesamt + 3, fall + ": Update-Runde nicht mehr Anfragen als ein Start (+ 3 Rauschen)", neu.z.gesamt + " gegen " + bezug.z.gesamt + " (c57cdb8b: 92–103 gegen 56–57)");
+      sage(neu.z.gesamt <= bezug.z.gesamt + 3, fall + ": Update-Runde nicht mehr Anfragen als ein Start (+ 3 Rauschen)", neu.z.gesamt + " gegen " + bezug.z.gesamt + " (c57cdb8b: 67–100 gegen 56–59)");
       sage(neu.z.ws <= 1, fall + ": höchstens eine Echtzeit-Leitung", String(neu.z.ws));
       sage(neu.info.f === "887" && neu.info.profil, fall + ": am Ende die neue Fassung, mit Profil", JSON.stringify(neu.info));
       fehlerPruefen(s);
@@ -1356,7 +1365,7 @@ function schluessel(adresse, methode) {
       zeigeRunde("Bezug", bezug);
       zeigeRunde("Update", neu);
       sage(ctl, "SW402: der Helfer übernimmt die Seite");
-      sage(neu.z.gesamt <= bezug.z.gesamt + 2, "SW402: in der Sperre nicht mehr als ein Start (+ 2)", neu.z.gesamt + " gegen " + bezug.z.gesamt + " (c57cdb8b: 14 gegen 7–11)");
+      sage(neu.z.gesamt <= bezug.z.gesamt + 2, "SW402: in der Sperre nicht mehr als ein Start (+ 2)", neu.z.gesamt + " gegen " + bezug.z.gesamt + " (c57cdb8b: 14 gegen 8)");
       sage(neu.info.f === "887", "SW402: am Ende die neue Fassung", JSON.stringify(neu.info));
       ergebnis.faelle.SW402 = { bezug: bezug.z.gesamt, neu: neu.z.gesamt, wsNeu: neu.z.ws };
       await s.ctx.close();
@@ -1403,6 +1412,48 @@ function schluessel(adresse, methode) {
       Object.assign(netz, { verz: 0, verzFj: 0 });
       fehlerPruefen(s);
       ergebnis.faelle.SWTOR = { netz: torOhneSpeicher, frist: t8, taste: Object.assign({ taste: Math.round(tipp) }, t4) };
+      await s.ctx.close();
+    }
+    /* SWMESS (nicht im Standardlauf; Messung zu I50): ohne Update, Helfer an – wann geht die erste Supabase-Anfrage hinaus,
+       wann ist das eigene Profil da? Seite und fassung.json kommen nach D ms (MESS_D, Vorgabe 0,150,300,600), je MESS_N
+       Läufe bei CPU 1× und 4×. Verschränkt über die Stände: werkzeug außen herum (je Paar ein Lauf je Stand). */
+    if (FAELLE.includes("SWMESS")) {
+      abschnitt("SWMESS", "Messung: ohne Update, Helfer an – erste Supabase-Anfrage und Profil da (Seite und fassung.json nach D ms)");
+      const { s, ctl } = await mitHelfer({});
+      await s.ctx.addInitScript(() => {
+        const f = window.fetch; window.__ersteSupa = null; window.__profilDa = null;
+        window.fetch = function (u) {
+          let a = "";
+          try { a = String((u && u.url) || u); if (window.__ersteSupa == null && a.indexOf("attrappe.supabase.co") >= 0) window.__ersteSupa = performance.now(); } catch (e) {}
+          const p = f.apply(this, arguments);
+          if (window.__profilDa == null && /\/rest\/v1\/profiles\?select=\*&id=eq\./.test(a)) p.then(() => { if (window.__profilDa == null) window.__profilDa = performance.now(); }, () => {});
+          return p;
+        };
+      });
+      await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      await warte(4000);
+      const reihe = [];
+      const n = Number(process.env.MESS_N || 2);
+      for (const cpu of [1, 4]) {
+        const cdp = await s.ctx.newCDPSession(s.pg);
+        await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpu });
+        for (const D of String(process.env.MESS_D || "0,150,300,600").split(",").map(Number)) {
+          for (let i = 0; i < n; i++) {
+            netz.verz = D;
+            await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+            let w = null;
+            for (let k = 0; k < 200; k++) { w = await s.pg.evaluate(() => window.__profilDa).catch(() => null); if (w != null) break; await warte(50); }
+            const l = await lage(s);
+            netz.verz = 0;
+            const z = { cpu, D, i, speicher: l.speicher, tor: l.tor, ersteSupa: l.ersteSupa, profilDa: w == null ? null : Math.round(w) };
+            console.log("  " + JSON.stringify(z));
+            reihe.push(z);
+            await warte(1500);
+          }
+        }
+      }
+      sage(ctl, "SWMESS: der Helfer übernimmt die Seite");
+      ergebnis.faelle.SWMESS = { reihe };
       await s.ctx.close();
     }
   } catch (e) {
