@@ -164,6 +164,20 @@ const Backend = (function () {
      Schreiben geht ohnehin hinaus, und 884 las davor genauso. */
   const LESEN_VOR_SCHREIBEN = "/rest/v1/profiles?select=extra_profile_data&";
   function bremsFetch(eingabe, opt) {
+    /* FASSUNG 886 — XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“;
+       die Sparsamkeit der Notfall-Fassung 885 bleibt. START-TOR (Prüfbericht zum Einmischen, Nachbesserung 2): seit S1
+       kommt die Seite zuerst aus dem Speicher des Helfers. Lag draußen schon eine neue Fassung, startete die ALTE Seite
+       ihren ganzen Supabase-Start (Profil, Anmeldebild, Fuchs, Benachrichtigungen, Freunde, „zuletzt aktiv“, am ersten
+       Öffnen des Tages sogar die Anmeldebelohnung), bevor der Fassungs-Wächter sie neu lud – und die neue Seite tat es
+       noch einmal (Prüfer, Helfer an, Betreiber, 30 s: 92–103 Anfragen gegen 57 auf 807e6a7d, die Belohnung in 1 von 3
+       Läufen zweimal). Bis 884 kam die Seite zuerst aus dem Netz, eine alte startete nie. Jetzt: auf einer Seite aus dem
+       Speicher (index.html, window.dmaStartTor) wartet jede Anfrage dieses Klienten (auch des Klienten in livechat.js,
+       der diesen fetch nimmt) auf die erste Antwort des Wächters – gleich, Blase, Fehler: los; neu: nichts (die Seite
+       geht); spätestens 6 s nach dem Öffnen (dieselbe Frist, nach der der Helfer bis 884 die gespeicherte Seite nahm);
+       ein Tipp, nach dem der Wächter nicht mehr von selbst neu lädt, öffnet es sofort. Das erste Bild bleibt so schnell
+       wie mit S1; die Daten kommen höchstens so spät wie bis 884. Jede andere Seite: kein Tor. SPIELSYSTEM.md I50. */
+    const tor = typeof window !== "undefined" ? window.dmaStartTor : null;
+    if (tor && !tor.offen) return tor.then(() => bremsFetch(eingabe, opt));
     const adresse = String(typeof eingabe === "string" ? eingabe : (eingabe && eingabe.url) || eingabe);
     if (adresse.indexOf("/realtime/v1/api/broadcast") >= 0) return rundrufFetch(eingabe, opt);
     const rest = adresse.indexOf("/rest/v1/") >= 0;

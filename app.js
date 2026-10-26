@@ -99397,7 +99397,10 @@ An einem Morgen lief ein kleiner Fuchs los…
       if (document.getElementById("onlineKlappe")) onlineKlappeZeichnen();
     });
   };
-  setTimeout(() => dmaPraesenzLos(false), 4000);
+  /* FASSUNG 886 (Start-Tor, I50): auf einer Seite aus dem Speicher erst nach der Antwort des Fassungs-Wächters (index.html,
+     dmaStartTor) – sonst öffnete die alte Seite kurz vor dem Neuladen noch die Echtzeit-Leitung (Prüfer: Seite nach 5,5 s,
+     zwei Leitungen statt einer wie auf 807e6a7d). Der Tipp auf „Klassenzimmer“ (S3) wartet nicht. */
+  setTimeout(() => { const tor = window.dmaStartTor; if (tor && !tor.offen) tor.then(() => dmaPraesenzLos(false)); else dmaPraesenzLos(false); }, 4000);
   /* Das Postfach im Hintergrund vorwärmen: so ist auch der allererste
      Sprung „✉️ Ergebnis im Postfach" sofort da und nicht erst nach zwei
      Datenbankabfragen. */

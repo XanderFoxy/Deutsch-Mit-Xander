@@ -121,6 +121,18 @@
         holt frisch alle drei Listen und zeigt das Prüffeld, Memory holt die Freundesliste. Gegenprobe b17223b7:
         7 rot (SB: Links, Schwarmwissen, Freundesliste, gesamt 184 gegen die Grenze 182; SM: Links, Schwarmwissen,
         Freundesliste – gesamt 158 liegt in der Grenze).
+   Einmischen, Nachbesserung 2 (Prüfbericht zu c57cdb8b) – MIT HELFER (Service Worker an, echte Uhr; alle Fälle oben laufen
+   mit gesperrtem Helfer und sahen S1 nicht): die Seite kommt zuerst aus dem Speicher; liegt draußen eine neue Fassung,
+   startete die ALTE Seite ihren ganzen Supabase-Start, bevor der Wächter sie neu lud (Prüfer: 92–103 statt 57 in 30 s).
+     SW…   Betreiber (dma-walkie), einmal neu laden (Bezug „ein Start“), dann neue Fassung 887 draußen, index.html und
+           fassung.json kommen nach D ms; je Runde 30 s. Anfragen der Update-Runde ≤ Bezugsrunde + 3, Echtzeit-
+           Leitungen ≤ 1, am Ende 887. SWa/SWc/SWL: CPU 1×, D = 300/1000/5500; SWa4/SWc4: CPU 4×, D = 300/1000.
+     SWT/SWT6  erstes Öffnen des Tages (lastLoginDay gestern), jede Supabase-Antwort 250 ms, D = 1000/600: die
+           Anmeldebelohnung genau einmal in results (Prüfer: auf c57cdb8b in 1 von 3 Läufen zweimal).
+     SW402 in der 402-Sperre, D = 5500: Update-Runde ≤ Bezugsrunde + 2 (Prüfer: 14 gegen 11).
+     SWTOR ohne Update, nur fassung.json verzögert: Seite aus dem Netz → kein Tor; aus dem Speicher und fassung.json nach
+           8 s → die erste Supabase-Anfrage nach ≈ 6 s (Frist), nicht vor 5,8 s; fassung.json nach 4 s und ein Tastendruck
+           nach 2,5 s → die erste Anfrage vor 3,5 s (der Wächter lädt dann nicht mehr von selbst neu); Profil am Ende da.
    Die Sperre der Echtzeit-Leitung ist jetzt nachgestellt wie in Wirklichkeit
    (Nachbesserung 2): Supabase lehnt schon den Handshake ab, die Verbindung
    öffnet sich nie und schließt mit 1006 (eigener WebSocket-Ersatz, solange
@@ -140,6 +152,7 @@
      SUPABASE_UMD=…    supabase-js (dist/umd/supabase.js); sonst die Kopie
                        im Scratchpad dieser Sitzung (2.117.3)
      AUSGABE=…json     Zahlen als JSON schreiben
+     (Fall SW…: die Seite (index.html) ersetzt beim Ausliefern DMA_VERSION durch 887, fassung.json meldet 887)
    Chromium bei langen Pfaden: TMPDIR=/tmp/claude-0/t885 setzen.
    EHRLICH: Verdeckt heißt hier document.hidden/visibilityState (nachgestellt),
    nicht das Drosseln der Zeitgeber durch den Browser – echtes 884 im
@@ -152,7 +165,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const QUELLE = Boolean(process.env.QUELLE);
-const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM,SB,SM").split(",").map((x) => x.trim()).filter(Boolean);
+const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM,SB,SM,SWa,SWc,SWL,SWa4,SWc4,SWT,SWT6,SW402,SWTOR").split(",").map((x) => x.trim()).filter(Boolean);
 const SUPA = [process.env.SUPABASE_UMD,
   "/tmp/claude-0/node_modules/@supabase/supabase-js/dist/umd/supabase.js",
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
@@ -317,9 +330,22 @@ function schluessel(adresse, methode) {
 }
 
 (async () => {
+  /* Nachbesserung 2 (Fall SW…): Seite und fassung.json verzögern (VERZ: beide, VERZ_FJ: nur fassung.json), eine neue
+     Fassung draußen nachstellen (NEU_F) und Seitenabrufe zählen – nach dem Prüferskript zu c57cdb8b */
+  const netz = { verz: 0, verzFj: 0, neuF: "", doks: 0, fass: 0 };
   const srv = http.createServer((q, a) => {
+    let p0 = decodeURIComponent(q.url.split("?")[0]);
+    if (p0 === "/") p0 = "/index.html";
+    if (p0 === "/index.html") netz.doks++;
+    if (p0 === "/fassung.json") netz.fass++;
+    const v = p0 === "/fassung.json" ? netz.verzFj || netz.verz : p0 === "/index.html" ? netz.verz : 0;
+    if (v) { setTimeout(() => bedienen(q, a), v); return; }
+    bedienen(q, a);
+  });
+  function bedienen(q, a) {
     let p = decodeURIComponent(q.url.split("?")[0]);
     if (p === "/") p = "/index.html";
+    if (netz.neuF && p === "/fassung.json") { a.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" }); a.end(JSON.stringify({ fassung: netz.neuF, stand: "x" })); return; }
     if (/(^|\/)supabase-config\.js$/.test(p)) {
       a.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-store" });
       return a.end("window.SUPABASE_CONFIG = { url: \"https://" + HOST + "\", anonKey: \"" + ANON + "\" };\n");
@@ -327,9 +353,14 @@ function schluessel(adresse, methode) {
     const f = path.join(WURZEL, p);
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
     a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream", "Cache-Control": "no-store" });
-    if (/\.html$/.test(p)) { a.end(fs.readFileSync(f, "utf8").replace(/rolcktiryrvjzbwuvobb\.supabase\.co/g, HOST)); return; }
+    if (/\.html$/.test(p)) {
+      let h = fs.readFileSync(f, "utf8").replace(/rolcktiryrvjzbwuvobb\.supabase\.co/g, HOST);
+      if (netz.neuF && p === "/index.html") h = h.replace(/window\.DMA_VERSION = "\d+";/, 'window.DMA_VERSION = "' + netz.neuF + '";');
+      a.end(h); return;
+    }
     fs.createReadStream(f).pipe(a);
-  }).listen(0);
+  }
+  srv.listen(0);
   const adresse = "http://127.0.0.1:" + srv.address().port + "/index.html" + (QUELLE ? "?quelle" : "");
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-proxy-server"] });
 
@@ -340,9 +371,9 @@ function schluessel(adresse, methode) {
     if (opt.zustand) Object.assign(zustand, opt.zustand);   // Nachbesserung 4 (FM: schon beim Laden scheitern)
     const zaehler = () => (zustand.zaehler[zustand.phase] = zustand.zaehler[zustand.phase] || neuerZaehler());
     const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2,
-      serviceWorkers: "block", timezoneId: "Europe/Berlin", locale: "de-DE",
+      serviceWorkers: opt.sw ? "allow" : "block", timezoneId: "Europe/Berlin", locale: "de-DE",
       userAgent: "Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/30.0 Chrome/131.0 Mobile Safari/537.36" });
-    await ctx.clock.install({ time: t0 });
+    if (!opt.ohneUhr) await ctx.clock.install({ time: t0 });   // Fall SW…: echte Uhr (der Helfer kennt keine Seitenuhr)
     const ablauf = Math.floor((opt.sitzungBis || (t0 + 10 * 3600000)) / 1000);
     await ctx.addInitScript(([sitzung, walkie]) => {
       try {
@@ -360,6 +391,7 @@ function schluessel(adresse, methode) {
     async function supabaseAntwort(route, req) {
       const methode = req.method();
       if (methode === "OPTIONS") return route.fulfill({ status: 204, headers: kopf });
+      if (zustand.supaVerz) await warte(zustand.supaVerz);   // SWT: jede Antwort braucht so lange
       const k = schluessel(req.url(), methode);
       if (process.env.LAUT) console.log("    [netz] " + zustand.phase + " " + zustand.modus + " " + methode + " " + req.url().slice(0, 160));
       const z = zaehler();
@@ -504,14 +536,18 @@ function schluessel(adresse, methode) {
     const pg = await ctx.newPage();
     pg.on("pageerror", (e) => zustand.fehler.push(String(e.message || e).slice(0, 300)));
     if (process.env.LAUT) pg.on("console", (m) => console.log("    [seite] " + m.type() + " " + m.text().slice(0, process.env.LAUT === "2" ? 2000 : 200)));
-    await pg.goto(adresse, { waitUntil: "domcontentloaded" });
+    zustand.ladungen = 0;
+    pg.on("load", () => { zustand.ladungen++; });
+    await pg.goto(adresse + (opt.sw ? (adresse.indexOf("?") < 0 ? "?" : "&") + "mit-sw" : ""), { waitUntil: "domcontentloaded" });
     if (opt.ohneSitzung) {
       await pg.waitForFunction(() => typeof Backend !== "undefined" && document.getElementById("tickerTrack"), null, { timeout: 90000 });
       await warte(3000);
     } else await pg.waitForFunction(() => typeof Backend !== "undefined" && Backend.currentUser && Backend.currentUser() && Backend.currentProfile && Backend.currentProfile(), null, { timeout: 90000 });
-    const jetzt = await pg.evaluate(() => Date.now());
-    await pg.clock.pauseAt(jetzt + 1000);
-    zustand.jetzt = jetzt + 1000;
+    if (!opt.ohneUhr) {
+      const jetzt = await pg.evaluate(() => Date.now());
+      await pg.clock.pauseAt(jetzt + 1000);
+      zustand.jetzt = jetzt + 1000;
+    }
     return { ctx, pg, zustand };
   }
   async function laufen(s, ms, schritt) {
@@ -1229,6 +1265,144 @@ function schluessel(adresse, methode) {
       }
       fehlerPruefen(s);
       ergebnis.faelle[fall] = { start: zs.gesamt, startJe: zs.je, sichtbar3: z.gesamt, sichtbarJe: z.je, gesamt: zus.gesamt, freundesliste, oeffnen };
+      await s.ctx.close();
+    }
+
+    /* ===== Einmischen, Nachbesserung 2 (Prüfbericht zu c57cdb8b): MIT HELFER – S1 und das Start-Tor (backend.js,
+       index.html dmaStartTor; SPIELSYSTEM.md I50). Echte Uhr: der Helfer und seine Fristen kennen keine Seitenuhr. ===== */
+    const mitHelfer = async (opt) => {
+      Object.assign(netz, { verz: 0, verzFj: 0, neuF: "" });
+      const s = await seiteOeffnen("A", Date.now(), Object.assign({ sw: true, ohneUhr: true, walkie: true }, opt || {}));
+      const torOhneSpeicher = await s.pg.evaluate(() => ({ speicher: document.documentElement.hasAttribute("data-dma-speicher"), tor: window.dmaStartTor === null ? "kein" : typeof window.dmaStartTor }));
+      let ctl = false;
+      for (let i = 0; i < 60 && !ctl; i++) { await warte(500); ctl = await s.pg.evaluate(() => Boolean(navigator.serviceWorker && navigator.serviceWorker.controller)); }
+      await warte(8000);   // die Auffrischung des Helfers legt die Seite ab
+      const speicher = await s.pg.evaluate(() => caches.keys().then((k) => k.join(",")));
+      return { s, ctl, speicher, torOhneSpeicher };
+    };
+    const cpuBremse = async (s, n) => { if (n > 1) { const cdp = await s.ctx.newCDPSession(s.pg); await cdp.send("Emulation.setCPUThrottlingRate", { rate: n }); } };
+    const lage = (s) => s.pg.evaluate(() => ({ f: window.DMA_VERSION, speicher: document.documentElement.hasAttribute("data-dma-speicher"),
+      tor: window.dmaStartTor ? (window.dmaStartTor.offen ? "offen" : "zu") : "kein", profil: Boolean(typeof Backend !== "undefined" && Backend.currentProfile && Backend.currentProfile()),
+      ersteSupa: window.__ersteSupa == null ? null : Math.round(window.__ersteSupa), url: location.search })).catch((e) => ({ fehler: String(e).slice(0, 80) }));
+    /* eine Runde: neu laden, ms warten; gezählt werden alle Supabase-Anfragen und Echtzeit-Leitungen dieser Zeit */
+    const runde = async (s, name, ms) => {
+      const z = phase(s, name);
+      const l0 = s.zustand.ladungen, d0 = netz.doks, f0 = netz.fass;
+      await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      await warte(ms || 30000);
+      const info = await lage(s);
+      return { z, ladungen: s.zustand.ladungen - l0, doks: netz.doks - d0, fass: netz.fass - f0, info };
+    };
+    const zeigeRunde = (name, r, extra) => console.log("  " + name + ": " + r.z.gesamt + " Anfragen, Echtzeit " + r.z.ws + " · Seitenaufbauten " + r.ladungen
+      + " · Seitenabrufe " + r.doks + " · fassung.json " + r.fass + " · " + JSON.stringify(r.info) + (extra ? " · " + extra : "") + "\n      " + kurz(r.z));
+    for (const [fall, D, cpu] of [["SWa", 300, 1], ["SWc", 1000, 1], ["SWL", 5500, 1], ["SWa4", 300, 4], ["SWc4", 1000, 4]]) {
+      if (!FAELLE.includes(fall)) continue;
+      abschnitt(fall, "Helfer an, Betreiber: neu laden (Bezug: ein Start), dann neue Fassung 887 draußen – Seite und fassung.json nach " + D + " ms, CPU " + cpu + "×, je 30 s");
+      const { s, ctl, speicher } = await mitHelfer();
+      await cpuBremse(s, cpu);
+      console.log("  Helfer: " + ctl + " · Speicher " + speicher);
+      const bezug = await runde(s, fall + "-bezug");
+      Object.assign(netz, { neuF: "887", verz: D });
+      const neu = await runde(s, fall + "-neu");
+      Object.assign(netz, { neuF: "", verz: 0 });
+      zeigeRunde("Bezug", bezug);
+      zeigeRunde("Update", neu);
+      sage(ctl, fall + ": der Helfer übernimmt die Seite");
+      sage(neu.z.gesamt <= bezug.z.gesamt + 3, fall + ": Update-Runde nicht mehr Anfragen als ein Start (+ 3 Rauschen)", neu.z.gesamt + " gegen " + bezug.z.gesamt + " (c57cdb8b: 92–103 gegen 56–57)");
+      sage(neu.z.ws <= 1, fall + ": höchstens eine Echtzeit-Leitung", String(neu.z.ws));
+      sage(neu.info.f === "887" && neu.info.profil, fall + ": am Ende die neue Fassung, mit Profil", JSON.stringify(neu.info));
+      fehlerPruefen(s);
+      ergebnis.faelle[fall] = { helfer: ctl, bezug: { gesamt: bezug.z.gesamt, je: bezug.z.je, ws: bezug.z.ws, ladungen: bezug.ladungen, info: bezug.info },
+        neu: { gesamt: neu.z.gesamt, je: neu.z.je, ws: neu.z.ws, ladungen: neu.ladungen, info: neu.info } };
+      await s.ctx.close();
+    }
+    /* SWT/SWT6: erstes Öffnen des Tages, Supabase antwortet nach 250 ms – geht die Anmeldebelohnung genau einmal hinaus? */
+    for (const [fall, D] of [["SWT", 1000], ["SWT6", 600]]) {
+      if (!FAELLE.includes(fall)) continue;
+      abschnitt(fall, "Helfer an, Supabase 250 ms, erstes Öffnen des Tages: neue Fassung 887 (Seite nach " + D + " ms) – Anmeldebelohnung genau einmal");
+      const { s, ctl } = await mitHelfer();
+      const runden = {};
+      for (const [name, neuF] of [["bezug", ""], ["neu", "887"]]) {
+        const p0 = s.zustand.db.profiles[0];
+        const gestern = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        p0.extra_profile_data = Object.assign({}, p0.extra_profile_data, { lastLoginDay: gestern, loginStreak: 3 });
+        const r0 = (s.zustand.db.results || []).length;
+        Object.assign(netz, { neuF, verz: neuF ? D : 0 });
+        s.zustand.supaVerz = 250;
+        const r = await runde(s, fall + "-" + name);
+        s.zustand.supaVerz = 0;
+        r.belohnungen = (s.zustand.db.results || []).slice(r0).filter((x) => JSON.stringify(x).indexOf("login") >= 0).length;
+        zeigeRunde(name, r, "Anmeldebelohnungen in results: " + r.belohnungen);
+        runden[name] = r;
+      }
+      Object.assign(netz, { neuF: "", verz: 0 });
+      sage(ctl, fall + ": der Helfer übernimmt die Seite");
+      sage(runden.bezug.belohnungen === 1, fall + ": ohne Update genau eine Anmeldebelohnung", String(runden.bezug.belohnungen));
+      sage(runden.neu.belohnungen === 1, fall + ": mit Update genau eine Anmeldebelohnung (nicht alte und neue Seite)", String(runden.neu.belohnungen));
+      sage(runden.neu.z.gesamt <= runden.bezug.z.gesamt + 3, fall + ": Update-Runde nicht mehr Anfragen als ein Start (+ 3)", runden.neu.z.gesamt + " gegen " + runden.bezug.z.gesamt);
+      fehlerPruefen(s);
+      ergebnis.faelle[fall] = { bezug: { gesamt: runden.bezug.z.gesamt, belohnungen: runden.bezug.belohnungen }, neu: { gesamt: runden.neu.z.gesamt, belohnungen: runden.neu.belohnungen, info: runden.neu.info } };
+      await s.ctx.close();
+    }
+    /* SW402: in der 402-Sperre neu laden, dann die neue Fassung nach 5,5 s */
+    if (FAELLE.includes("SW402")) {
+      abschnitt("SW402", "Helfer an, 402-Sperre: neu laden (Bezug), dann neue Fassung 887 (Seite nach 5500 ms), je 30 s");
+      const { s, ctl } = await mitHelfer();
+      s.zustand.modus = "402";
+      const bezug = await runde(s, "SW402-bezug");
+      Object.assign(netz, { neuF: "887", verz: 5500 });
+      const neu = await runde(s, "SW402-neu");
+      Object.assign(netz, { neuF: "", verz: 0 });
+      zeigeRunde("Bezug", bezug);
+      zeigeRunde("Update", neu);
+      sage(ctl, "SW402: der Helfer übernimmt die Seite");
+      sage(neu.z.gesamt <= bezug.z.gesamt + 2, "SW402: in der Sperre nicht mehr als ein Start (+ 2)", neu.z.gesamt + " gegen " + bezug.z.gesamt + " (c57cdb8b: 14 gegen 7–11)");
+      sage(neu.info.f === "887", "SW402: am Ende die neue Fassung", JSON.stringify(neu.info));
+      ergebnis.faelle.SW402 = { bezug: bezug.z.gesamt, neu: neu.z.gesamt, wsNeu: neu.z.ws };
+      await s.ctx.close();
+    }
+    /* SWTOR: das Tor selbst – ohne Update, nur fassung.json verzögert. Wann geht die erste Supabase-Anfrage hinaus?
+       (window.__ersteSupa: der erste Aufruf von fetch an die Attrappe, performance.now der Seite) */
+    if (FAELLE.includes("SWTOR")) {
+      abschnitt("SWTOR", "Helfer an, ohne Update: Tor auf der Seite aus dem Speicher (Frist 6 s, Tipp), kein Tor ohne Speicher");
+      const { s, ctl, torOhneSpeicher } = await mitHelfer({});
+      await s.ctx.addInitScript(() => {
+        const f = window.fetch; window.__ersteSupa = null;
+        window.fetch = function (u) {
+          try { const a = String((u && u.url) || u); if (window.__ersteSupa == null && a.indexOf("attrappe.supabase.co") >= 0) window.__ersteSupa = performance.now(); } catch (e) {}
+          return f.apply(this, arguments);
+        };
+      });
+      console.log("  Helfer: " + ctl + " · erste Seite (aus dem Netz): " + JSON.stringify(torOhneSpeicher));
+      sage(!torOhneSpeicher.speicher && torOhneSpeicher.tor === "kein", "SWTOR: Seite aus dem Netz – kein Tor", JSON.stringify(torOhneSpeicher));
+      const bisMs = async (ms) => { for (let i = 0; i < 800; i++) { const t = await s.pg.evaluate(() => performance.now()).catch(() => 0); if (t >= ms) return t; await warte(25); } return -1; };
+      /* fassung.json nach 8 s: das Tor geht nach 6 s auf. Die Seite selbst kommt nach 0,4 s aus dem Netz – sonst nimmt der
+         Helfer die schon fertige Antwort aus dem Netz (frischWennDa, S1), und es gibt keine Seite aus dem Speicher. */
+      /* das erste Neuladen unter dem Helfer kommt noch aus dem Netz (es legt die Seite erst ab) */
+      await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      await warte(4000);
+      Object.assign(netz, { verz: 400, verzFj: 8000 });
+      await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      await bisMs(12000);
+      const t8 = await lage(s);
+      console.log("  fassung.json nach 8 s: " + JSON.stringify(t8));
+      sage(t8.speicher === true, "SWTOR: die Seite kam aus dem Speicher (sonst prüft dieser Teil nichts)", JSON.stringify(t8));
+      sage(t8.ersteSupa != null && t8.ersteSupa >= 5800 && t8.ersteSupa < 7900, "SWTOR: erste Supabase-Anfrage erst zur Frist (≈ 6 s), nicht vorher und nicht erst mit fassung.json", String(t8.ersteSupa) + " ms");
+      sage(t8.tor === "offen" && t8.profil, "SWTOR: danach Tor offen, Profil da", JSON.stringify({ tor: t8.tor, profil: t8.profil }));
+      /* fassung.json nach 4 s, ein Tastendruck nach 2,5 s: der Wächter lädt dann nicht mehr von selbst neu → Tor auf */
+      netz.verzFj = 4000;
+      await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      const tipp = await bisMs(2500);
+      await s.pg.keyboard.press("Shift");
+      await bisMs(7000);
+      const t4 = await lage(s);
+      console.log("  fassung.json nach 4 s, Taste nach " + Math.round(tipp) + " ms: " + JSON.stringify(t4));
+      sage(t4.speicher === true, "SWTOR (Taste): die Seite kam aus dem Speicher", JSON.stringify(t4));
+      sage(t4.ersteSupa != null && t4.ersteSupa >= tipp - 50 && t4.ersteSupa < 3500, "SWTOR (Taste): erste Supabase-Anfrage gleich nach dem Tastendruck, vor fassung.json", String(t4.ersteSupa) + " ms (Taste " + Math.round(tipp) + ")");
+      sage(t4.profil, "SWTOR (Taste): Profil da", JSON.stringify({ tor: t4.tor, profil: t4.profil }));
+      Object.assign(netz, { verz: 0, verzFj: 0 });
+      fehlerPruefen(s);
+      ergebnis.faelle.SWTOR = { netz: torOhneSpeicher, frist: t8, taste: Object.assign({ taste: Math.round(tipp) }, t4) };
       await s.ctx.close();
     }
   } catch (e) {
