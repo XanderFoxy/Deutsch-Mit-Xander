@@ -493,6 +493,8 @@
      angezeigte Stand stehen und der Merker unverändert: im Funkloch springt nichts auf den alten Text zurück. Über die
      Oberfläche wird „about“ nie gelöscht (Speichern schreibt immer ein Objekt). */
   const UEBER_FELDER = [["h2", "heading"], [".role", "role"], [".about-text-short", "shortText"], [".about-support-note", "supportNote"]];
+  /* FASSUNG 886 (S8): Adressen, die das Original meinen (alte github-Adresse, eigene Kopie) – siehe ueberAngleichen */
+  const UEBER_FOTO_ORIGINAL = /XanderFoxy\/Deutsch\/.*\/9ob2nzt2\.jpe?g|(^|\/)bilder\/ueber-alex-\d+\.webp/;
   function ueberAngleichen(saved) {
     const view = document.getElementById("view-about");
     if (!view) return;
@@ -505,10 +507,28 @@
     });
     // photoUrl === "" (bewusst leer gespeichert, z. B. über "Auf Original zurücksetzen") stellt
     // das gesicherte Original-Bild wieder her, statt es einfach unverändert zu lassen.
+    /* FASSUNG 886 — XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · S8, freigegeben (Funk 311): das Foto
+       auf „Über mich“ direkt und früher. Das Original steht jetzt als eigene, gestempelte Kopie in index.html (bilder/,
+       1x/2x/3x über srcset, statt github.com/…?raw=true mit Umleitung und dem ganzen Originalfoto von 1,3 MB;
+       werkzeug/foto-ueber.js, SPIELSYSTEM.md „Fassung 886 — Foto auf ‚Über mich‘“). Darum zweierlei:
+       (1) Ein gespeicherter Link auf das Original – die alte github-Adresse (so speichert ihn das Bearbeiten-Formular,
+           wenn das Foto nicht angefasst wird: es trägt img.src ein) oder eine Adresse der eigenen Kopie, auch mit altem
+           Stempel – gilt als „Original“: es bleibt die Kopie aus index.html. Sonst holte jedes Gerät nach der Antwort
+           doch wieder das große Foto von github.
+       (2) srcset hat Vorrang vor src: wer ein anderes Foto zeigt, muss srcset entfernen (sonst bliebe das Original
+           stehen); zurück zum Original kommt srcset wieder dazu (data-original-srcset).
+       Dieselbe Erkennung steht im Wächter im Kopf von index.html (SPIELSYSTEM.md I51). */
     const img = view.querySelector(".avatar-wrap img");
     if (img) {
-      const soll = saved.photoUrl ? String(saved.photoUrl) : img.dataset.originalSrc;
-      if (soll && img.getAttribute("src") !== soll && img.src !== soll) img.src = soll;
+      const p = saved.photoUrl ? String(saved.photoUrl) : "";
+      if (!p || UEBER_FOTO_ORIGINAL.test(p)) {
+        const s = img.dataset.originalSrc, ss = img.dataset.originalSrcset;
+        if (ss && img.getAttribute("srcset") !== ss) img.setAttribute("srcset", ss);
+        if (s && img.getAttribute("src") !== s) img.setAttribute("src", s);
+      } else if (img.getAttribute("src") !== p && img.src !== p) {
+        img.removeAttribute("srcset");
+        img.src = p;
+      } else if (img.hasAttribute("srcset")) img.removeAttribute("srcset");
     }
   }
   async function loadAndRenderAboutSection() {
@@ -517,7 +537,8 @@
     // wird — sonst gibt es später keine Möglichkeit mehr, "auf Original zurücksetzen" zu wählen,
     // weil das ursprüngliche src schon lange durch das gespeicherte ersetzt wurde.
     // (FASSUNG 886: setzt index.html das gemerkte Foto ein, sichert es das Original vorher genauso.)
-    if (img && !img.dataset.originalSrc) img.dataset.originalSrc = img.src;
+    /* FASSUNG 886 (S8): die Adresse wie in index.html (getAttribute), dazu srcset – „zurück zum Original“ stellt genau das wieder her */
+    if (img && !img.dataset.originalSrc) { img.dataset.originalSrc = img.getAttribute("src") || ""; img.dataset.originalSrcset = img.getAttribute("srcset") || ""; }
     const saved = await Backend.getSiteContent("about");
     if (saved && typeof saved === "object") {
       ueberAngleichen(saved);

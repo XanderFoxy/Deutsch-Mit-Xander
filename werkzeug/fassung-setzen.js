@@ -220,6 +220,14 @@ function stempelSetzen() {
   const muster = /<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>/;
   if (muster.test(html)) html = html.replace(muster, zeile);
   else html = html.replace(/(<script>window\.DMA_VERSION = "\d+";<\/script>)/, "$1\n" + zeile);
+  /* FASSUNG 886 (S8, Funk 311) — Bilder, die index.html selbst nennt (das Foto auf „Über mich“, werkzeug/foto-ueber.js),
+     tragen ihren Stempel fest in der Adresse (kein Skript setzt sie zusammen, also kein Warten auf DMA_STEMPEL), und
+     der Service Worker gibt „?v=…“ ohne Nachfrage aus dem Speicher. Ändert sich ein Bild, bekommt es hier den neuen
+     Stempel – wie alle anderen Dateien vor jedem Commit. */
+  html = html.replace(/(["' ,])(bilder\/[a-z0-9-]+\.(?:webp|avif|jpe?g|png))\?v=[0-9a-f]+/g, (alt, vor, datei) => {
+    const f = path.join(WURZEL, datei);
+    return fs.existsSync(f) ? vor + datei + "?v=" + crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10) : alt;
+  });
   fs.writeFileSync(indexPfad, html);
   return Object.keys(stempel).length;
 }
