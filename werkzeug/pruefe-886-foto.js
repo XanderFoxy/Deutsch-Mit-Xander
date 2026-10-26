@@ -12,19 +12,23 @@
    S8: eigene, gestempelte Kopien bilder/ueber-alex-<px>.webp (heute 145 für 1x
    und 290 für 2x/3x – die Mip-Stufen, aus denen Chrome das Original malte;
    srcset, werkzeug/foto-ueber.js). Der Wächter im Kopf (S2) nimmt lazy
-   weg – nach dem Einsetzen eines gemerkten eigenen Fotos, damit nur das
-   geholt wird, was man sieht. Ein gespeicherter Link auf das Original (die
-   alte github-Adresse oder eine Adresse der Kopie) gilt als Original.
+   weg, wenn die Kopie bleibt. Ein gemerktes eigenes Foto setzt er ein und
+   lässt es lazy (Nachbesserung 1: wie in S2 erst nach dem ersten Layout –
+   ein großes Foto aus dem Formular soll nicht schon beim Lesen der Seite mit
+   CSS und JS um die Leitung konkurrieren). Ein gespeicherter Link auf das
+   Original (die alte github-Adresse oder eine Adresse der Kopie) gilt als Original.
    Geprüft (Telefon 390 × 844, Datenbank nachgestellt wie in pruefe-885-ueber.js):
      Q  Bauweise: src/srcset zeigen auf die Kopien, Stempel = Inhalt, quadratisch
         und je Dichte mindestens 76 · Dichte Pixel (bis 3x), keine github-Adresse
-        mehr, Wächter nimmt lazy weg, app.js (Kern) kennt das Original
+        mehr, Wächter nimmt lazy weg (nur wenn die Kopie bleibt), app.js (Kern)
+        kennt das Original
      A  Erstbesuch je DPR 1/2/3, Datenbank-Foto = alte github-Adresse: genau eine
         Foto-Anfrage (die zur Dichte passende Kopie), keine an github, Anfrage vor dem ersten
         Bild (nicht lazy), am Ende die Kopie (srcset bleibt)
      B  Wiederkehr (Merker = github-Adresse): ebenso, kein Wechsel der Adresse
-     C  Merker = eigenes Foto X: die Kopie wird gar nicht geholt, X vor dem
-        ersten Bild angefragt, gezeigt wird X (srcset weg)
+     C  Merker = eigenes Foto X: die Kopie wird gar nicht geholt, X genau
+        einmal angefragt, gezeigt wird X (srcset weg); lazy bleibt, X kommt
+        erst nach den Stilblättern (wie S2)
      D  Merker X, Datenbank inzwischen „zurück zum Original“ (""): am Ende
         src/srcset genau wie in index.html, gezeigt die Kopie
      E  Datenbank = Adresse einer Kopie mit altem Stempel bzw. einer Größe, die es
@@ -35,10 +39,20 @@
         github, nachgestellt aus QUELLE) gegen diesen Stand, Ausschnitt um das
         Foto: Farbe ±1 je Kanal, geglättet (1 CSS-Pixel) ≥ 33 dB; roh genannt
      M  (MESSEN=n, GEGEN, QUELLE) Bytes des Fotos, „Foto geladen“ und „Foto
-        gemalt“ (Element Timing) je ab Start und − erstes Bild, 4G + CPU 4×,
-        github nachgestellt (2 neue Verbindungen à 3 Rundreisen + je 1 Anfrage,
-        Umleitung, Übertragung mit 9 Mbit/s) – ein MODELL, kein echtes github;
-        Routen schalten den HTTP-Speicher ab (zweites Öffnen = Verbindungen warm)
+        gemalt“ (Element Timing) je ab Start und − erstes Bild, 4G + CPU 4×, DPR 2.
+        OHNE Playwright-Routen (die schalten den HTTP-Speicher ab): HTTPS mit h2,
+        fremde Namen per host-resolver-rules auf eigene Server (je Name ein Port,
+        also eine eigene Verbindung; die erste Anfrage je Verbindung +180 ms =
+        DNS + TCP + TLS), github.com 302 no-cache, raw.githubusercontent.com mit
+        max-age=300 und ETag wie das echte (per curl geprüft) – ein MODELL der
+        Leitung, kein echtes github; Bytes, Speicher und Dekodieren sind echt.
+        Fälle (FAELLE_M, Grundeinstellung erstes,zweites,abgelaufen):
+          erstes      neuer Kontext, Speicher leer
+          zweites     derselbe Kontext gleich danach (Speicher frisch: 0 Byte)
+          abgelaufen  raw mit max-age=0: zweites Öffnen fragt nach (304)
+          eigen       (X_GROSS=<großes JPEG>) Merker und Datenbank = eigenes Foto
+                      aus dem Supabase-Speicher, erstes Öffnen: erstes Bild und
+                      „Foto gemalt“ (Kosten eines großen eigenen Fotos)
      P  keine Seitenfehler
    Das ORIGINAL liegt nicht im Repo (1,3 MB): für V und M QUELLE=<Pfad> angeben
    (XanderFoxy/Deutsch, Bilder2/9ob2nzt2.jpeg). Ohne QUELLE bricht die
@@ -48,7 +62,8 @@
      S=/tmp/claude-0/-home-user-Deutsch-Mit-Xander/<sitzung>/scratchpad
      git archive <vorher> index.html app.js min | tar -x -C $S/gegen886/foto-vorher (Rest als Verweis)
      WURZEL=$S/gegen886/foto-vorher node werkzeug/pruefe-886-foto.js
-   Bildvergleich/Messen: QUELLE=<Original> GEGEN=$S/gegen886/foto-vorher [MESSEN=10] node werkzeug/pruefe-886-foto.js
+   Bildvergleich/Messen: QUELLE=<Original> GEGEN=$S/gegen886/foto-vorher [MESSEN=10] [FAELLE_M=…] [X_GROSS=<JPEG>]
+     [MESS_JSON=<Datei>] [MESS_LOG=1] node werkzeug/pruefe-886-foto.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const { PNG } = require("/tmp/claude-0/node_modules/pngjs");
@@ -158,6 +173,39 @@ function vergleich(a, b, dpr) {
 }
 const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.toFixed(1) + " dB, Farbe ±" + v.farbe.toFixed(2);
 
+/* Messung in der Seite (vor jedem Skript der Seite): erstes Bild, „Foto geladen“ (rAF), „Foto gemalt“ (Element Timing),
+   lazy bei DOMContentLoaded, jeder Wechsel von src/srcset/currentSrc; saat = Merker dma-ueber (einmal je Kontext) */
+function messSkript([saat]) {
+  try {
+    localStorage.setItem("dma_tour_seen", "1");
+    if (saat !== null && !localStorage.getItem("__sonde_gesaet")) { localStorage.setItem("dma-ueber", saat); localStorage.setItem("__sonde_gesaet", "1"); }
+  } catch (e) {}
+  window.__foto = []; window.__fcp = null; window.__fotoSteht = null; window.__lazyBeiDcl = null; window.__fotoGemalt = null;
+  try { new PerformanceObserver((l) => l.getEntries().forEach((e) => { if (e.name === "first-contentful-paint") window.__fcp = Math.round(e.startTime); })).observe({ type: "paint", buffered: true }); } catch (e) {}
+  /* „Foto gemalt“: Element Timing (renderTime = das Bild ist auf dem Schirm, mit Dekodieren). Das Merkmal elementtiming
+     setzt die Sonde, sobald der Parser das Bild anlegt – es ändert am Laden nichts. */
+  try {
+    new PerformanceObserver((l) => l.getEntries().forEach((e) => { if (e.identifier === "foto" && window.__fotoGemalt == null) window.__fotoGemalt = Math.round(e.renderTime || e.loadTime); })).observe({ type: "element", buffered: true });
+    const mo = new MutationObserver(() => { const i = document.querySelector("#view-about .avatar-wrap img"); if (i) { i.setAttribute("elementtiming", "foto"); mo.disconnect(); } });
+    mo.observe(document, { childList: true, subtree: true });
+  } catch (e) {}
+  let letzte;
+  const schritt = () => {
+    const i = document.querySelector("#view-about .avatar-wrap img");
+    if (i) {
+      const s = JSON.stringify([i.getAttribute("src"), i.getAttribute("srcset"), i.currentSrc, i.complete && i.naturalWidth > 0]);
+      if (s !== letzte) { window.__foto.push({ t: Math.round(performance.now()), s }); letzte = s; }
+      if (window.__fotoSteht == null && i.complete && i.naturalWidth > 0) window.__fotoSteht = Math.round(performance.now());
+    }
+    requestAnimationFrame(schritt);
+  };
+  requestAnimationFrame(schritt);
+  document.addEventListener("DOMContentLoaded", () => {
+    const i = document.querySelector("#view-about .avatar-wrap img");
+    window.__lazyBeiDcl = i ? i.getAttribute("loading") : "kein Bild";
+  });
+}
+
 (async () => {
   const H = fotoAusHtml(WURZEL);
   const quelleDa = Boolean(QUELLE) && fs.existsSync(QUELLE);
@@ -177,9 +225,10 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
   const gegen = GEGEN ? await server(GEGEN) : null;
   /* Kein Proxy, kein fremder Name (nur 127.0.0.1): nichts verlässt den Rechner – auch keine Anfrage, an der eine Route vorbeigeht */
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-proxy-server", "--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1"] });
+  let brOffen = true;
   const seitenFehler = [];
 
-  /* z: { about, dbMs, github: 0, githubMs: [Verzögerung github.com, Verzögerung raw], aboutAbfragen } */
+  /* z: { about, dbMs, github: 0, githubMs: [Verzögerung github.com, Verzögerung raw], aboutAbfragen } – für Q–V (M läuft ohne Routen) */
   async function kontext(z, o) {
     const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: o.dpr || 2, serviceWorkers: "block",
       userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36" });
@@ -208,37 +257,7 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
       if (/supabase\.co\/rest\//.test(u)) return warte(300).then(() => r.fulfill({ status: 200, contentType: "application/json", headers: { "access-control-allow-origin": "*" }, body: "[]" })).catch(() => {});
       return r.abort();
     });
-    await ctx.addInitScript(([saat]) => {
-      try {
-        localStorage.setItem("dma_tour_seen", "1");
-        if (saat !== null && !localStorage.getItem("__sonde_gesaet")) { localStorage.setItem("dma-ueber", saat); localStorage.setItem("__sonde_gesaet", "1"); }
-      } catch (e) {}
-      window.__foto = []; window.__fcp = null; window.__fotoSteht = null; window.__lazyBeiDcl = null; window.__fotoGemalt = null;
-      try { new PerformanceObserver((l) => l.getEntries().forEach((e) => { if (e.name === "first-contentful-paint") window.__fcp = Math.round(e.startTime); })).observe({ type: "paint", buffered: true }); } catch (e) {}
-      /* „Foto gemalt“: Element Timing (renderTime = das Bild ist auf dem Schirm, mit Dekodieren). Das Merkmal elementtiming
-         setzt die Sonde, sobald der Parser das Bild anlegt – es ändert am Laden nichts. */
-      try {
-        new PerformanceObserver((l) => l.getEntries().forEach((e) => { if (e.identifier === "foto" && window.__fotoGemalt == null) window.__fotoGemalt = Math.round(e.renderTime || e.loadTime); })).observe({ type: "element", buffered: true });
-        const mo = new MutationObserver(() => { const i = document.querySelector("#view-about .avatar-wrap img"); if (i) { i.setAttribute("elementtiming", "foto"); mo.disconnect(); } });
-        mo.observe(document, { childList: true, subtree: true });
-      } catch (e) {}
-      let letzte;
-      const schritt = () => {
-        const i = document.querySelector("#view-about .avatar-wrap img");
-        if (i) {
-          const s = JSON.stringify([i.getAttribute("src"), i.getAttribute("srcset"), i.currentSrc, i.complete && i.naturalWidth > 0]);
-          if (s !== letzte) { window.__foto.push({ t: Math.round(performance.now()), s }); letzte = s; }
-          if (window.__fotoSteht == null && i.complete && i.naturalWidth > 0) window.__fotoSteht = Math.round(performance.now());
-        }
-        requestAnimationFrame(schritt);
-      };
-      requestAnimationFrame(schritt);
-      document.addEventListener("DOMContentLoaded", () => {
-        const i = document.querySelector("#view-about .avatar-wrap img");
-        window.__lazyBeiDcl = i ? i.getAttribute("loading") : "kein Bild";
-      });
-    }, [o.merker === undefined ? null : o.merker]);
-    if (o.drossel) ctx.__drossel = true;
+    await ctx.addInitScript(messSkript, [o.merker === undefined ? null : o.merker]);
     return ctx;
   }
 
@@ -246,12 +265,6 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
     o = o || {};
     const pg = await ctx.newPage();
     pg.on("pageerror", (e) => seitenFehler.push(String(e.message || e)));
-    if (ctx.__drossel) {
-      const cdp = await ctx.newCDPSession(pg);
-      await cdp.send("Network.enable");
-      await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 60, downloadThroughput: 9e6 / 8, uploadThroughput: 750e3 / 8 });
-      await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-    }
     const vorAbfragen = z.aboutAbfragen, vorKopie = srv.anfragen.length, vorX = fotoAnfragen.length, vorBytes = srv.zaehler.bytes;
     z.github = 0; z.githubBytes = 0;
     await pg.goto(srv.basis, { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -264,9 +277,12 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
       const i = document.querySelector("#view-about .avatar-wrap img");
       const res = performance.getEntriesByType("resource").filter((e) => /bilder\/ueber-alex|x\.svg|github/.test(e.name))
         .map((e) => ({ name: e.name, start: Math.round(e.startTime), ende: Math.round(e.responseEnd), bytes: e.encodedBodySize }));
+      /* die Stilblätter, die das erste Bild aufhalten (renderBlockingStatus, Chrome 107+) */
+      const css = performance.getEntriesByType("resource").filter((e) => e.initiatorType === "link" && e.renderBlockingStatus === "blocking")
+        .map((e) => ({ name: e.name, start: Math.round(e.startTime), ende: Math.round(e.responseEnd) }));
       let m = null;
       try { m = localStorage.getItem("dma-ueber"); } catch (e) {}
-      return { foto: window.__foto.slice(), fcp: window.__fcp, steht: window.__fotoSteht, gemalt: window.__fotoGemalt, lazyBeiDcl: window.__lazyBeiDcl, res, merker: m,
+      return { foto: window.__foto.slice(), fcp: window.__fcp, steht: window.__fotoSteht, gemalt: window.__fotoGemalt, lazyBeiDcl: window.__lazyBeiDcl, res, css, merker: m,
         src: i && i.getAttribute("src"), srcset: i && i.getAttribute("srcset"), current: i && i.currentSrc, nw: i && i.naturalWidth };
     });
     if (o.bild) {
@@ -306,7 +322,9 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
       sage(!/github\.com|raw=true|githubusercontent/.test(H.sek), "keine github-Adresse mehr in „Über mich“");
       teil = "Q4";
       const w = H.html.indexOf('localStorage.getItem("dma-ueber")'), weg = H.html.indexOf('i.removeAttribute("loading")'), blaetter = H.html.indexOf("document.write('<link rel=\"stylesheet\"");
-      sage(w > 0 && weg > w && weg < blaetter, "der Wächter im Kopf (vor den Stilblättern) nimmt lazy weg – nach dem Einsetzen eines gemerkten Fotos");
+      /* Nachbesserung 1: nur im Zweig „die Kopie bleibt“ (else nach dem Einsetzen eines eigenen Fotos) */
+      const nurKopie = /\}\s*else\s+i\.removeAttribute\("loading"\)/.test(H.html) && H.html.split('i.removeAttribute("loading")').length === 2;
+      sage(w > 0 && weg > w && weg < blaetter && nurKopie, "der Wächter im Kopf (vor den Stilblättern) nimmt lazy weg – nur wenn die Kopie bleibt (ein eigenes Foto bleibt lazy)");
       teil = "Q5";
       const kern = fs.readFileSync(path.join(WURZEL, "min/app.js"), "utf8");
       sage(kern.indexOf("9ob2nzt2") >= 0 && kern.indexOf("ueber-alex-") >= 0, "app.js (Kern, min/app.js) kennt das Original (github-Adresse und Kopie)");
@@ -350,9 +368,17 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
       sage(st.kopie.length === 0 && st.github === 0, "die Kopie aus index.html wird gar nicht erst geholt", "Kopie: " + st.kopie.length + ", github: " + st.github);
       teil = "C2";
       const rx = st.res.find((e) => /x\.svg/.test(e.name));
-      sage(st.x.length === 1 && rx && st.fcp != null && rx.start <= st.fcp, "X genau einmal angefragt, vor dem ersten Bild", rx ? "Anfrage " + rx.start + ", erstes Bild " + st.fcp + ", X-Anfragen " + st.x.length : "keine");
+      sage(st.x.length === 1 && Boolean(rx), "X genau einmal angefragt", rx ? "Anfrage " + rx.start + ", erstes Bild " + st.fcp + ", X-Anfragen " + st.x.length : "keine");
       teil = "C3";
       sage(st.current === X_URL && st.srcset === null && st.foto.every((f) => JSON.parse(f.s)[0] === X_URL), "gezeigt wird X (srcset weg), in keinem Bild die Kopie", "current " + kurzUrl(st.current) + ", srcset " + st.srcset);
+      /* Nachbesserung 1 (Prüfbericht zu 50f82a93): ein eigenes Foto kommt aus dem Formular in voller Größe (uploadSiteImage
+         rechnet nicht klein) – ohne lazy würde es schon beim Lesen der Seite angefragt und konkurrierte mit CSS und JS.
+         Es bleibt lazy wie in S2: angefragt erst nach dem ersten Layout, also nach den Stilblättern. */
+      teil = "C4";
+      const css = st.css.filter((e) => e.ende > 0);
+      const cssEnde = css.length ? Math.max(...css.map((e) => e.ende)) : null;
+      sage(st.lazyBeiDcl === "lazy" && rx && cssEnde != null && rx.start >= cssEnde, "lazy bleibt: X erst nach den Stilblättern angefragt (wie S2)",
+        "loading bei DOMContentLoaded " + st.lazyBeiDcl + ", X-Anfrage " + (rx ? rx.start : "–") + " ms, Stilblätter fertig " + cssEnde + " ms (" + css.length + ")");
       await ctx.close();
     }
 
@@ -427,48 +453,185 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
       }
     } else console.log("\n(V übersprungen: " + (gegen ? "" : "kein GEGEN ") + (quelleDa ? "" : "kein Original unter " + QUELLE) + ")");
 
-    /* ---------------- M: Messung ---------------- */
+    /* ---------------- M: Messung mit echtem HTTP-Speicher ---------------- */
     if (MESSEN && gegen && quelleDa) {
-      /* github-Modell 4G (60 ms): github.com neue Verbindung (DNS + TCP + TLS = 3 Rundreisen) + Anfrage = 240 ms → 302;
-         raw.githubusercontent.com ebenso 240 ms + Übertragung des Originals mit 9 Mbit/s. Zweites Öffnen: Verbindungen
-         offen (60 ms für die Umleitung). Die eigene Kopie läuft über den gedrosselten Prüfserver (60 ms, 9 Mbit/s). */
-      const uebertragung = Math.round(QUELLE_BYTES.length * 8 / 9e6 * 1000);
-      abschnitt("M  Foto, 4G + CPU 4×, DPR 2, " + MESSEN + " Paare verschränkt (A = GEGEN, B = dieser Stand); github-Modell 240 + 240 + " + uebertragung + " ms");
-      const werte = {};
-      for (let i = 0; i < MESSEN; i++) {
-        const reihe = i % 2 ? [["B", haupt], ["A", gegen]] : [["A", gegen], ["B", haupt]];
-        for (const [name, srv] of reihe) {
-          const z = { about: "leer", dbMs: 300, github: 0, aboutAbfragen: 0, githubMs: [240, 240 + uebertragung] };
-          const ctx = await kontext(z, { dpr: 2, drossel: true });
-          for (const art of ["netz", "speicher"]) {
-            if (art === "speicher") z.githubMs = [60, 60 + uebertragung];
-            const st = await oeffnen(ctx, z, srv);
-            ((werte[art] = werte[art] || {})[name] = werte[art][name] || []).push({ fcp: st.fcp, steht: st.steht, gemalt: st.gemalt, bytes: st.bytes,
-              abstand: st.steht != null && st.fcp != null ? st.steht - st.fcp : null, abstandGemalt: st.gemalt != null && st.fcp != null ? st.gemalt - st.fcp : null });
+      /* Nachbesserung 1 (Prüfbericht zu 50f82a93): bis dahin lief M über Playwright-Routen – die schalten den HTTP-Speicher
+         ab, das „zweite Öffnen“ holte im alten Stand die 1,3 MB jedes Mal neu (gemeldet: 2 262 → 608 ms, 1 369 667 → 10 768 B).
+         Ein echter Browser nimmt das Original beim zweiten Öffnen aus dem Speicher (raw.githubusercontent.com: max-age=300,
+         ETag; danach 304). Darum jetzt ohne Routen: eigene HTTPS-Server (h2) für die Seite und für jeden fremden Namen. */
+      await br.close(); brOffen = false;   // höchstens ein Chromium zugleich (M braucht andere Startschalter)
+      const os = require("os"), http2 = require("http2"), { execFileSync } = require("child_process");
+      const FAELLE = (process.env.FAELLE_M || "erstes,zweites,abgelaufen" + (process.env.X_GROSS ? ",eigen" : "")).split(",").map((x) => x.trim()).filter(Boolean);
+      const X_GROSS = process.env.X_GROSS ? fs.readFileSync(path.resolve(process.env.X_GROSS)) : null;
+      if (FAELLE.includes("eigen") && !X_GROSS) throw new Error("M „eigen“ braucht X_GROSS=<großes JPEG>");
+      /* eigenes Zertifikat für alle Namen, im Browser per SPKI freigegeben */
+      const tdir = fs.mkdtempSync(path.join(os.tmpdir(), "m886-"));
+      execFileSync("openssl", ["req", "-x509", "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:prime256v1", "-nodes", "-keyout", tdir + "/k.pem", "-out", tdir + "/c.pem",
+        "-days", "2", "-subj", "/CN=127.0.0.1", "-addext", "subjectAltName=IP:127.0.0.1,DNS:github.com,DNS:raw.githubusercontent.com,DNS:cdn.jsdelivr.net,DNS:*.supabase.co"], { stdio: "ignore" });
+      const cert = fs.readFileSync(tdir + "/c.pem"), key = fs.readFileSync(tdir + "/k.pem");
+      fs.rmSync(tdir, { recursive: true, force: true });
+      const spki = crypto.createHash("sha256").update(crypto.createPublicKey(cert).export({ type: "spki", format: "der" })).digest("base64");
+      const zaehl = { bytes: 0, kopie: 0, github: 0, x: 0 };
+      const lage = { rawMaxAge: 300, about: "leer" };
+      const h2srv = (fn) => new Promise((ok) => { const srv = http2.createSecureServer({ key, cert, allowHTTP1: true }, fn); srv.listen(0, "127.0.0.1", () => ok({ srv, port: srv.address().port })); });
+      /* die Seite (A, B) wie GitHub Pages: h2, gzip, ETag, max-age=600; index.html und fassung.json no-cache */
+      const seiteM = (wurzel) => {
+        const datei = new Map();
+        return h2srv((q, a) => {
+          let p = decodeURIComponent(q.url.split("?")[0]);
+          if (p === "/") p = "/index.html";
+          let d = datei.get(p);
+          if (!d) {
+            const f = path.join(wurzel, p);
+            if (!f.startsWith(wurzel) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
+            const inhalt = fs.readFileSync(f), ext = path.extname(f).toLowerCase();
+            d = { inhalt, ext, etag: '"' + crypto.createHash("md5").update(inhalt).digest("hex") + '"' };
+            if (/\.(js|css|json|html|svg|webmanifest)$/.test(ext)) d.gz = zlib.gzipSync(inhalt, { level: 6 });
+            datei.set(p, d);
           }
-          await ctx.close();
+          const h = { "content-type": TYP[d.ext] || "application/octet-stream", "cache-control": p === "/index.html" || p === "/fassung.json" ? "no-cache" : "max-age=600", etag: d.etag };
+          if (q.headers["if-none-match"] === d.etag) { a.writeHead(304, h); return a.end(); }
+          const gz = d.gz && /gzip/.test(q.headers["accept-encoding"] || "");
+          if (gz) h["content-encoding"] = "gzip";
+          if (/^\/bilder\/ueber-alex-/.test(p)) { zaehl.bytes += d.inhalt.length; zaehl.kopie++; }
+          a.writeHead(200, h);
+          a.end(gz ? d.gz : d.inhalt);
+        });
+      };
+      /* Fremde Namen: je Name ein eigener Server und Port – Chrome legt h2-Verbindungen nur bei gleicher Adresse samt Port
+         zusammen, so bekommt jeder Name wie draußen eine eigene Verbindung. Die erste Anfrage je Verbindung wartet 180 ms
+         (DNS + TCP + TLS = 3 Rundreisen bei 4G; die Drosselung selbst gibt jeder Anfrage 60 ms). */
+      const neueVerbindung = async (q) => { const s = q.stream ? q.stream.session : q.socket; if (s && !s.__m886) { s.__m886 = 1; await warte(180); } };
+      const RAW_ETAG = '"' + crypto.createHash("sha1").update(QUELLE_BYTES).digest("hex") + '"';
+      const SUPA = "https://rolcktiryrvjzbwuvobb.supabase.co", X_PFAD = "/storage/v1/object/public/avatars/site-images/about-1761400000000-foto.jpg";
+      const X_GROSS_URL = SUPA + X_PFAD;
+      const gh = await h2srv(async (q, a) => {
+        await neueVerbindung(q); zaehl.github++;
+        a.writeHead(302, { location: "https://raw.githubusercontent.com/XanderFoxy/Deutsch/main/Bilder2/9ob2nzt2.jpeg", "cache-control": "no-cache", "timing-allow-origin": "*" });
+        a.end();
+      });
+      const raw = await h2srv(async (q, a) => {
+        await neueVerbindung(q); zaehl.github++;
+        /* timing-allow-origin nur, damit Element Timing die Malzeit nennt (ohne ihn meldet Chrome für fremde Bilder 0) */
+        const h = { "content-type": "image/jpeg", "cache-control": "max-age=" + lage.rawMaxAge, etag: RAW_ETAG, "access-control-allow-origin": "*", "timing-allow-origin": "*" };
+        if (q.headers["if-none-match"] === RAW_ETAG) { a.writeHead(304, h); return a.end(); }
+        zaehl.bytes += QUELLE_BYTES.length;
+        a.writeHead(200, h); a.end(QUELLE_BYTES);
+      });
+      const cdn = await h2srv(async (q, a) => {
+        await neueVerbindung(q);
+        a.writeHead(200, { "content-type": "text/javascript", "cache-control": "max-age=604800", "access-control-allow-origin": "*" }); a.end(UMD_TEXT);
+      });
+      const supa = await h2srv(async (q, a) => {
+        await neueVerbindung(q);
+        if (q.method === "OPTIONS") {
+          a.writeHead(204, { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "GET,POST,PATCH,DELETE,OPTIONS", "access-control-max-age": "600" });
+          return a.end();
         }
-        if (process.env.MESS_JSON) fs.writeFileSync(process.env.MESS_JSON, JSON.stringify(werte, null, 1));
+        const u = decodeURIComponent(q.url);
+        if (u.split("?")[0] === X_PFAD && X_GROSS) {
+          /* Supabase-Speicher, öffentliche Datei: max-age=3600 (Voreinstellung beim Hochladen) */
+          zaehl.x++; zaehl.bytes += X_GROSS.length;
+          a.writeHead(200, { "content-type": "image/jpeg", "cache-control": "max-age=3600", "access-control-allow-origin": "*", "timing-allow-origin": "*" });
+          return a.end(X_GROSS);
+        }
+        await warte(300);
+        let body = "[]";
+        if (/\/rest\/v1\/site_content/.test(u) && /key=eq\.about(&|$)/.test(u) && lage.about !== "leer") body = JSON.stringify([{ value: lage.about }]);
+        a.writeHead(200, { "content-type": "application/json", "access-control-allow-origin": "*" }); a.end(body);
+      });
+      const sA = await seiteM(GEGEN), sB = await seiteM(WURZEL);
+      const regeln = "MAP github.com 127.0.0.1:" + gh.port + ", MAP raw.githubusercontent.com 127.0.0.1:" + raw.port + ", MAP cdn.jsdelivr.net 127.0.0.1:" + cdn.port
+        + ", MAP *.supabase.co 127.0.0.1:" + supa.port + ", MAP * ~NOTFOUND, EXCLUDE 127.0.0.1";
+      const brM = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--no-proxy-server", "--host-resolver-rules=" + regeln, "--ignore-certificate-errors-spki-list=" + spki] });
+      const NAMEN = { erstes: "erstes Öffnen (Speicher leer)", zweites: "zweites Öffnen gleich danach (HTTP-Speicher frisch, raw max-age=300)",
+        abgelaufen: "zweites Öffnen nach Ablauf (raw max-age=0 → Nachfrage, 304)", eigen: "eigenes großes Foto gemerkt (" + (X_GROSS ? X_GROSS.length : 0) + " B, Supabase-Speicher), erstes Öffnen" };
+      /* Gruppen je Kontext: [erstes, zweites], [erstes, abgelaufen], [eigen] – das erste Öffnen jeder Gruppe zählt als „erstes“ */
+      const gruppen = [];
+      if (FAELLE.includes("erstes") || FAELLE.includes("zweites")) gruppen.push(["erstes", "zweites"].filter((f) => f === "erstes" || FAELLE.includes(f)));
+      if (FAELLE.includes("abgelaufen")) gruppen.push([FAELLE.includes("erstes") ? "erstes" : null, "abgelaufen"]);
+      if (FAELLE.includes("eigen")) gruppen.push(["eigen"]);
+      abschnitt("M  Foto, 4G (60 ms, 9 Mbit/s) + CPU 4×, DPR 2, " + MESSEN + " Paare verschränkt (A = GEGEN, B = dieser Stand); ohne Routen, echter HTTP-Speicher, Fälle " + FAELLE.join(","));
+      const werte = {};
+      async function mLauf(name, port, gruppe) {
+        const fall0 = gruppe[gruppe.length - 1];
+        lage.rawMaxAge = fall0 === "abgelaufen" ? 0 : 300;
+        lage.about = fall0 === "eigen" ? Object.assign({}, TEXTE, { photoUrl: X_GROSS_URL }) : "leer";
+        const ctx = await brM.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2, serviceWorkers: "block",
+          userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36" });
+        await ctx.addInitScript(messSkript, [fall0 === "eigen" ? merkerMit(X_GROSS_URL) : null]);
+        for (let n = 0; n < gruppe.length; n++) {
+          const fall = gruppe[n];
+          const pg = await ctx.newPage();
+          pg.on("pageerror", (e) => seitenFehler.push(String(e.message || e)));
+          const cdp = await ctx.newCDPSession(pg);
+          await cdp.send("Network.enable");
+          await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 60, downloadThroughput: 9e6 / 8, uploadThroughput: 750e3 / 8 });
+          await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+          const vor = Object.assign({}, zaehl);
+          await pg.goto("https://127.0.0.1:" + port + "/index.html", { waitUntil: "load", timeout: 90000 });
+          const t0 = Date.now();
+          while (Date.now() - t0 < 15000 && !(await pg.evaluate(() => window.__fotoGemalt != null && window.__fcp != null))) await warte(100);
+          await warte(500);
+          const st = await pg.evaluate(() => {
+            const i = document.querySelector("#view-about .avatar-wrap img");
+            return { fcp: window.__fcp, steht: window.__fotoSteht, gemalt: window.__fotoGemalt, lazy: window.__lazyBeiDcl, current: i && i.currentSrc };
+          });
+          await pg.close();
+          if (fall) {
+            const w = { fcp: st.fcp, steht: st.steht, gemalt: st.gemalt, bytes: zaehl.bytes - vor.bytes, github: zaehl.github - vor.github, kopie: zaehl.kopie - vor.kopie, x: zaehl.x - vor.x,
+              lazy: st.lazy, current: kurzUrl(st.current), abstand: st.steht != null && st.fcp != null ? st.steht - st.fcp : null,
+              abstandGemalt: st.gemalt != null && st.fcp != null ? st.gemalt - st.fcp : null };
+            ((werte[fall] = werte[fall] || {})[name] = werte[fall][name] || []).push(w);
+            if (process.env.MESS_LOG) console.log("    " + name + " " + fall + " " + JSON.stringify(w));
+          }
+          await warte(1000);
+        }
+        await ctx.close();
       }
-      for (const art of Object.keys(werte)) {
-        /* Achtung: Playwright schaltet mit Routen den HTTP-Speicher ab – „zweites Öffnen“ heißt hier: Verbindungen warm,
-           Dateien trotzdem neu geholt (der Speicher-Fall fehlt; ladezeit-messen.js misst ihn ohne Routen). */
-        console.log("  " + (art === "netz" ? "erstes Öffnen" : "zweites Öffnen (Verbindungen warm; Playwright-Routen: ohne HTTP-Speicher)"));
-        for (const k of ["bytes", "fcp", "steht", "gemalt", "abstand", "abstandGemalt"]) {
-          const A = werte[art].A.map((x) => x[k]), B = werte[art].B.map((x) => x[k]);
-          const d = A.map((x, j) => (B[j] != null && x != null ? B[j] - x : null)).filter((x) => x != null);
-          console.log("    " + ({ bytes: "Bytes des Fotos", fcp: "erstes Bild", steht: "Foto geladen", gemalt: "Foto gemalt", abstand: "geladen − erstes Bild", abstandGemalt: "gemalt − erstes Bild" })[k].padEnd(24)
-            + "A " + String(median(A)).padStart(8) + "   B " + String(median(B)).padStart(6)
-            + "   B−A Median " + String(median(d)).padStart(8) + " (" + d.filter((x) => x < 0).length + " kleiner, " + d.filter((x) => x > 0).length + " größer von " + d.length + ")"
-            + (k === "bytes" ? "" : "   A " + Math.min(...A.filter((x) => x != null)) + "…" + Math.max(...A.filter((x) => x != null)) + ", B " + Math.min(...B.filter((x) => x != null)) + "…" + Math.max(...B.filter((x) => x != null))));
+      try {
+        for (let i = 0; i < MESSEN; i++) {
+          const reihe = i % 2 ? [["B", sB.port], ["A", sA.port]] : [["A", sA.port], ["B", sB.port]];
+          for (const gruppe of gruppen) for (const [name, port] of reihe) await mLauf(name, port, gruppe);
+          if (process.env.MESS_JSON) fs.writeFileSync(process.env.MESS_JSON, JSON.stringify(werte, null, 1));
+          console.log("    Paar " + (i + 1) + " von " + MESSEN + " fertig");
+        }
+      } finally {
+        await brM.close().catch(() => {});
+        [gh, raw, cdn, supa, sA, sB].forEach((x) => x.srv.close());
+      }
+      const NAME_K = { bytes: "Bytes des Fotos", fcp: "erstes Bild", steht: "Foto geladen", gemalt: "Foto gemalt", abstand: "geladen − erstes Bild", abstandGemalt: "gemalt − erstes Bild" };
+      const paar = (fall, k) => { const A = werte[fall].A.map((x) => x[k]), B = werte[fall].B.map((x) => x[k]); return A.map((x, j) => (B[j] != null && x != null ? B[j] - x : null)).filter((x) => x != null); };
+      for (const fall of Object.keys(werte)) {
+        console.log("  " + NAMEN[fall] + " – " + werte[fall].A.length + " Paare");
+        for (const k of Object.keys(NAME_K)) {
+          const A = werte[fall].A.map((x) => x[k]), B = werte[fall].B.map((x) => x[k]), d = paar(fall, k);
+          const spanne = (l) => { const z = l.filter((x) => x != null); return z.length ? Math.min(...z) + "…" + Math.max(...z) : "–"; };
+          console.log("    " + NAME_K[k].padEnd(24) + "A " + String(median(A)).padStart(8) + "   B " + String(median(B)).padStart(6)
+            + "   B−A gepaart Median " + String(median(d)).padStart(8) + " (" + d.filter((x) => x < 0).length + " kleiner, " + d.filter((x) => x > 0).length + " größer von " + d.length + ")"
+            + (k === "bytes" ? "" : "   A " + spanne(A) + ", B " + spanne(B)));
         }
       }
       teil = "M";
-      const g = (art, n, k) => median(werte[art][n].map((x) => x[k]));
-      sage(["netz", "speicher"].every((art) => g(art, "B", "steht") < g(art, "A", "steht") && g(art, "B", "bytes") < g(art, "A", "bytes") / 100),
-        "das Foto steht früher und kostet weniger als 1 % der Bytes (je Median, erstes und zweites Öffnen)");
-      sage(["netz", "speicher"].every((art) => g(art, "B", "fcp") <= g(art, "A", "fcp") + 54),
-        "erstes Bild nicht schlechter (Median B − A ≤ Rauschgrenze 54 ms)", ["netz", "speicher"].map((art) => art + " " + g(art, "A", "fcp") + " → " + g(art, "B", "fcp")).join(", "));
+      const g = (fall, n, k) => median(werte[fall][n].map((x) => x[k]));
+      if (werte.erstes) sage(g("erstes", "B", "gemalt") < g("erstes", "A", "gemalt") && g("erstes", "B", "bytes") < g("erstes", "A", "bytes") / 100,
+        "erstes Öffnen: das Foto ist früher gemalt und kostet weniger als 1 % der Bytes (Median)",
+        "gemalt " + g("erstes", "A", "gemalt") + " → " + g("erstes", "B", "gemalt") + " ms, Bytes " + g("erstes", "A", "bytes") + " → " + g("erstes", "B", "bytes"));
+      for (const fall of ["zweites", "abgelaufen"].filter((f) => werte[f])) {
+        /* beide Stände holen kein Byte des Fotos neu (Speicher bzw. 304) – sonst misst M falsch; der Gewinn ist nur noch Zeit */
+        sage(g(fall, "A", "bytes") === 0 && g(fall, "B", "bytes") === 0 && g(fall, "B", "gemalt") < g(fall, "A", "gemalt"),
+          NAMEN[fall] + ": beide 0 Byte, das Foto ist früher gemalt (Median)", "gemalt " + g(fall, "A", "gemalt") + " → " + g(fall, "B", "gemalt") + " ms, B−A gepaart " + median(paar(fall, "gemalt")));
+      }
+      const ohneEigen = Object.keys(werte).filter((f) => f !== "eigen");
+      sage(ohneEigen.every((f) => median(paar(f, "fcp")) <= 54),
+        "erstes Bild im Rauschen (B − A gepaart, Median ≤ Rauschgrenze 54 ms)", ohneEigen.map((f) => f + " " + median(paar(f, "fcp"))).join(", "));
+      if (werte.eigen) {
+        teil = "M-X";
+        /* nur dieser Stand wird geprüft (A hängt an GEGEN): das eigene Foto bleibt lazy, wird gezeigt und genau einmal geholt */
+        sage(werte.eigen.B.every((x) => x.lazy === "lazy" && x.x === 1 && x.kopie === 0 && x.github === 0 && /foto\.jpg/.test(x.current)),
+          "eigenes Foto: lazy bleibt, genau einmal geholt, gezeigt; keine Kopie, nichts von github",
+          "erstes Bild B−A gepaart " + median(paar("eigen", "fcp")) + " ms, Foto gemalt B−A " + median(paar("eigen", "gemalt")) + " ms");
+      }
     }
   } catch (e) {
     fehler++;
@@ -477,7 +640,7 @@ const zeige = (v) => "roh " + v.roh.toFixed(1) + " dB, geglättet " + v.glatt.to
   teil = "P";
   const echte = seitenFehler.filter((x) => !/Failed to fetch|NetworkError|ERR_|Load failed/i.test(x));
   sage(echte.length === 0, "keine Seitenfehler", echte.slice(0, 5).join(" | "));
-  await br.close();
+  if (brOffen) await br.close();
   haupt.srv.close(); if (gegen) gegen.srv.close(); fotoSrv.close();
   console.log("\n" + (fehler ? "ROT: " + fehler + " (" + Object.entries(roteTeile).map(([t, n]) => t + ":" + n).join(", ") + ")" : "GRÜN") + "  [" + (process.env.WURZEL ? "WURZEL=" + WURZEL : "Arbeitsbaum") + "]");
   process.exit(fehler ? 1 : 0);

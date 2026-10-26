@@ -147,11 +147,12 @@ function rueckbauRueckkehr(y) {
 }
 
 /* FASSUNG 886 (S8, Foto auf „Über mich“, SPIELSYSTEM.md I51): der Wächter für „Über mich“ läuft jetzt auch ohne Merker
-   (nimmt lazy weg) und erkennt das Original (github-Adresse, eigene Kopie) – für Teil Q wieder herausnehmen */
+   (nimmt lazy weg, wenn die eigene Kopie bleibt – S8 Nachbesserung 1: ein gemerktes eigenes Foto bleibt lazy) und erkennt
+   das Original (github-Adresse, eigene Kopie) – für Teil Q wieder herausnehmen */
 function rueckbauFoto(y) {
   return y
     .replace('if(!window.MutationObserver)return;if(!w||typeof w!="object")w={};', 'if(!w||typeof w!="object"||!window.MutationObserver)return;')
-    .replace('if(!i)return;if(p&&typeof p=="string"&&!/XanderFoxy\\/Deutsch\\/.*\\/9ob2nzt2\\.jpe?g|(^|\\/)bilder\\/ueber-alex-\\d+\\.webp/.test(p)&&i.getAttribute("src")!=p){i.setAttribute("data-original-src",i.getAttribute("src")||"");i.setAttribute("data-original-srcset",i.getAttribute("srcset")||"");i.removeAttribute("srcset");i.src=p}i.removeAttribute("loading")});',
+    .replace('if(!i)return;if(p&&typeof p=="string"&&!/XanderFoxy\\/Deutsch\\/.*\\/9ob2nzt2\\.jpe?g|(^|\\/)bilder\\/ueber-alex-\\d+\\.webp/.test(p)&&i.getAttribute("src")!=p){i.setAttribute("data-original-src",i.getAttribute("src")||"");i.setAttribute("data-original-srcset",i.getAttribute("srcset")||"");i.removeAttribute("srcset");i.src=p}else i.removeAttribute("loading")});',
       'if(i&&p&&typeof p=="string"&&i.getAttribute("src")!=p){i.setAttribute("data-original-src",i.src);i.src=p}});');
 }
 /* … und das Foto selbst: eigene Kopie (src/srcset) statt github */

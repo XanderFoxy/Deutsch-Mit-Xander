@@ -113,8 +113,7 @@
     if (!i) return;
     if (p && typeof p == "string" && !/XanderFoxy\/Deutsch\/.*\/9ob2nzt2\.jpe?g|(^|\/)bilder\/ueber-alex-\d+\.webp/.test(p) && i.getAttribute("src") != p) {
       i.setAttribute("data-original-src", i.getAttribute("src") || ""); i.setAttribute("data-original-srcset", i.getAttribute("srcset") || ""); i.removeAttribute("srcset"); i.src = p;
-    }
-    i.removeAttribute("loading");
+    } else i.removeAttribute("loading");
   });
   mo.observe(document.documentElement, { childList: true, subtree: true });
   addEventListener("DOMContentLoaded", function () { mo.disconnect(); });
