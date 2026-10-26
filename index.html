@@ -298,7 +298,7 @@
     try { var ab = JSON.parse(localStorage.getItem("dma-mess-abbruch") || "null"); if (wechsel[0] === "*" && ab && String(ab.f) === wechsel[2]) localStorage.removeItem("dma-mess-abbruch"); } catch (e) {}
   }
   /* 886: Rückkehr auf einer Seite aus dem Speicher – der Helfer lädt die neue Fassung selbst, sobald er sie hat;
-     „gleich“ gilt auch beim Öffnen (SPIELSYSTEM.md I46, I52) */
+     „gleich“ gilt auch beim Öffnen (SPIELSYSTEM.md I52) */
   else if (rueck && document.documentElement.hasAttribute("data-dma-speicher")) try {
     var helfer = navigator.serviceWorker && navigator.serviceWorker.controller;
     if (helfer) {
