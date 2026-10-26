@@ -63,7 +63,8 @@
      git archive <vorher> index.html app.js min | tar -x -C $S/gegen886/foto-vorher (Rest als Verweis)
      WURZEL=$S/gegen886/foto-vorher node werkzeug/pruefe-886-foto.js
    Bildvergleich/Messen: QUELLE=<Original> GEGEN=$S/gegen886/foto-vorher [MESSEN=10] [FAELLE_M=…] [X_GROSS=<JPEG>]
-     [MESS_JSON=<Datei>] [MESS_LOG=1] node werkzeug/pruefe-886-foto.js
+     [MESS_JSON=<Datei>] [MESS_LOG=1] [M_CPU=4] [NUR_V=1: ohne A–F] [OHNE_V=1: ohne V, z. B. GEGEN = ein Stand mit S8]
+     node werkzeug/pruefe-886-foto.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const { PNG } = require("/tmp/claude-0/node_modules/pngjs");
@@ -200,6 +201,13 @@ function messSkript([saat]) {
     requestAnimationFrame(schritt);
   };
   requestAnimationFrame(schritt);
+  /* „bereit“ wie werkzeug/ladezeit-messen.js: erstes Bild, in dem LiveChat, die Tafel und der Wissen-Reiter da sind */
+  window.__bereit = null;
+  const bereitSchritt = () => {
+    if (window.LiveChat && window.DMA_TAFEL_STAND && document.readyState !== "loading" && document.querySelector('.tape-tab[data-target="view-knowledge"]')) window.__bereit = Math.round(performance.now());
+    else requestAnimationFrame(bereitSchritt);
+  };
+  requestAnimationFrame(bereitSchritt);
   document.addEventListener("DOMContentLoaded", () => {
     const i = document.querySelector("#view-about .avatar-wrap img");
     window.__lazyBeiDcl = i ? i.getAttribute("loading") : "kein Bild";
@@ -431,7 +439,7 @@ function messSkript([saat]) {
     }
 
     /* ---------------- V: Bildvergleich ---------------- */
-    if (gegen && quelleDa) {
+    if (gegen && quelleDa && !process.env.OHNE_V) {
       /* Maß: Farbe (Mittelwerte je Kanal ±1 von 255) und geglättet (σ = 1 CSS-Pixel) ≥ 33 dB. Roh wird nur genannt:
          Chrome verkleinert das Original anders als ImageMagick (Mipmaps statt Lanczos) – an harten Kanten ergibt das
          Säume von einem Bruchteil eines Pixels, die roh viel, fürs Auge nichts ausmachen. Probe 20.10. mit einem
@@ -463,6 +471,7 @@ function messSkript([saat]) {
       const os = require("os"), http2 = require("http2"), { execFileSync } = require("child_process");
       const FAELLE = (process.env.FAELLE_M || "erstes,zweites,abgelaufen" + (process.env.X_GROSS ? ",eigen" : "")).split(",").map((x) => x.trim()).filter(Boolean);
       const X_GROSS = process.env.X_GROSS ? fs.readFileSync(path.resolve(process.env.X_GROSS)) : null;
+      const M_CPU = Number(process.env.M_CPU || 4);   // CPU-Bremse (4 = Mittelklasse-Telefon; 1 = schneller Rechner, die Leitung entscheidet)
       if (FAELLE.includes("eigen") && !X_GROSS) throw new Error("M „eigen“ braucht X_GROSS=<großes JPEG>");
       /* eigenes Zertifikat für alle Namen, im Browser per SPKI freigegeben */
       const tdir = fs.mkdtempSync(path.join(os.tmpdir(), "m886-"));
@@ -501,7 +510,12 @@ function messSkript([saat]) {
       /* Fremde Namen: je Name ein eigener Server und Port – Chrome legt h2-Verbindungen nur bei gleicher Adresse samt Port
          zusammen, so bekommt jeder Name wie draußen eine eigene Verbindung. Die erste Anfrage je Verbindung wartet 180 ms
          (DNS + TCP + TLS = 3 Rundreisen bei 4G; die Drosselung selbst gibt jeder Anfrage 60 ms). */
-      const neueVerbindung = async (q) => { const s = q.stream ? q.stream.session : q.socket; if (s && !s.__m886) { s.__m886 = 1; await warte(180); } };
+      const neueVerbindung = async (q) => {
+        const s = q.stream ? q.stream.session : q.socket;
+        /* MESS_LOG: jede neue Verbindung und jede Anfrage außer den Datenbank-Abfragen */
+        if (process.env.MESS_LOG && (!(s && s.__m886) || !/\/rest\/v1\//.test(q.url))) console.log("      " + (q.headers[":authority"] || q.headers.host) + " " + q.method + " " + q.url.slice(0, 50) + (s && s.__m886 ? "" : "  (neue Verbindung)"));
+        if (s && !s.__m886) { s.__m886 = 1; await warte(180); }
+      };
       const RAW_ETAG = '"' + crypto.createHash("sha1").update(QUELLE_BYTES).digest("hex") + '"';
       const SUPA = "https://rolcktiryrvjzbwuvobb.supabase.co", X_PFAD = "/storage/v1/object/public/avatars/site-images/about-1761400000000-foto.jpg";
       const X_GROSS_URL = SUPA + X_PFAD;
@@ -551,7 +565,7 @@ function messSkript([saat]) {
       if (FAELLE.includes("erstes") || FAELLE.includes("zweites")) gruppen.push(["erstes", "zweites"].filter((f) => f === "erstes" || FAELLE.includes(f)));
       if (FAELLE.includes("abgelaufen")) gruppen.push([FAELLE.includes("erstes") ? "erstes" : null, "abgelaufen"]);
       if (FAELLE.includes("eigen")) gruppen.push(["eigen"]);
-      abschnitt("M  Foto, 4G (60 ms, 9 Mbit/s) + CPU 4×, DPR 2, " + MESSEN + " Paare verschränkt (A = GEGEN, B = dieser Stand); ohne Routen, echter HTTP-Speicher, Fälle " + FAELLE.join(","));
+      abschnitt("M  Foto, 4G (60 ms, 9 Mbit/s) + CPU " + M_CPU + "×, DPR 2, " + MESSEN + " Paare verschränkt (A = GEGEN, B = dieser Stand); ohne Routen, echter HTTP-Speicher, Fälle " + FAELLE.join(","));
       const werte = {};
       async function mLauf(name, port, gruppe) {
         const fall0 = gruppe[gruppe.length - 1];
@@ -567,20 +581,23 @@ function messSkript([saat]) {
           const cdp = await ctx.newCDPSession(pg);
           await cdp.send("Network.enable");
           await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 60, downloadThroughput: 9e6 / 8, uploadThroughput: 750e3 / 8 });
-          await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+          await cdp.send("Emulation.setCPUThrottlingRate", { rate: M_CPU });
           const vor = Object.assign({}, zaehl);
           await pg.goto("https://127.0.0.1:" + port + "/index.html", { waitUntil: "load", timeout: 90000 });
           const t0 = Date.now();
-          while (Date.now() - t0 < 15000 && !(await pg.evaluate(() => window.__fotoGemalt != null && window.__fcp != null))) await warte(100);
+          while (Date.now() - t0 < 15000 && !(await pg.evaluate(() => window.__fotoGemalt != null && window.__fcp != null && window.__bereit != null))) await warte(100);
           await warte(500);
           const st = await pg.evaluate(() => {
             const i = document.querySelector("#view-about .avatar-wrap img");
-            return { fcp: window.__fcp, steht: window.__fotoSteht, gemalt: window.__fotoGemalt, lazy: window.__lazyBeiDcl, current: i && i.currentSrc };
+            /* Ablauf der Foto-Anfrage (Resource Timing; bei github mit timing-allow-origin): Start, erste Antwort, Ende, übertragen */
+            const r = performance.getEntriesByType("resource").filter((e) => /bilder\/ueber-alex|9ob2nzt2|storage\/v1/.test(e.name))
+              .map((e) => [Math.round(e.startTime), Math.round(e.responseStart), Math.round(e.responseEnd), e.transferSize].join("/"));
+            return { fcp: window.__fcp, steht: window.__fotoSteht, gemalt: window.__fotoGemalt, bereit: window.__bereit, lazy: window.__lazyBeiDcl, current: i && i.currentSrc, ablauf: r.join(" ") };
           });
           await pg.close();
           if (fall) {
-            const w = { fcp: st.fcp, steht: st.steht, gemalt: st.gemalt, bytes: zaehl.bytes - vor.bytes, github: zaehl.github - vor.github, kopie: zaehl.kopie - vor.kopie, x: zaehl.x - vor.x,
-              lazy: st.lazy, current: kurzUrl(st.current), abstand: st.steht != null && st.fcp != null ? st.steht - st.fcp : null,
+            const w = { fcp: st.fcp, steht: st.steht, gemalt: st.gemalt, bereit: st.bereit, bytes: zaehl.bytes - vor.bytes, github: zaehl.github - vor.github, kopie: zaehl.kopie - vor.kopie, x: zaehl.x - vor.x,
+              lazy: st.lazy, current: kurzUrl(st.current), zeigtX: st.current === X_GROSS_URL, ablauf: st.ablauf, abstand: st.steht != null && st.fcp != null ? st.steht - st.fcp : null,
               abstandGemalt: st.gemalt != null && st.fcp != null ? st.gemalt - st.fcp : null };
             ((werte[fall] = werte[fall] || {})[name] = werte[fall][name] || []).push(w);
             if (process.env.MESS_LOG) console.log("    " + name + " " + fall + " " + JSON.stringify(w));
@@ -600,7 +617,7 @@ function messSkript([saat]) {
         await brM.close().catch(() => {});
         [gh, raw, cdn, supa, sA, sB].forEach((x) => x.srv.close());
       }
-      const NAME_K = { bytes: "Bytes des Fotos", fcp: "erstes Bild", steht: "Foto geladen", gemalt: "Foto gemalt", abstand: "geladen − erstes Bild", abstandGemalt: "gemalt − erstes Bild" };
+      const NAME_K = { bytes: "Bytes des Fotos", fcp: "erstes Bild", bereit: "bereit (Seite bedienbar)", steht: "Foto geladen", gemalt: "Foto gemalt", abstand: "geladen − erstes Bild", abstandGemalt: "gemalt − erstes Bild" };
       const paar = (fall, k) => { const A = werte[fall].A.map((x) => x[k]), B = werte[fall].B.map((x) => x[k]); return A.map((x, j) => (B[j] != null && x != null ? B[j] - x : null)).filter((x) => x != null); };
       for (const fall of Object.keys(werte)) {
         console.log("  " + NAMEN[fall] + " – " + werte[fall].A.length + " Paare");
@@ -628,7 +645,7 @@ function messSkript([saat]) {
       if (werte.eigen) {
         teil = "M-X";
         /* nur dieser Stand wird geprüft (A hängt an GEGEN): das eigene Foto bleibt lazy, wird gezeigt und genau einmal geholt */
-        sage(werte.eigen.B.every((x) => x.lazy === "lazy" && x.x === 1 && x.kopie === 0 && x.github === 0 && /foto\.jpg/.test(x.current)),
+        sage(werte.eigen.B.every((x) => x.lazy === "lazy" && x.x === 1 && x.kopie === 0 && x.github === 0 && x.zeigtX),
           "eigenes Foto: lazy bleibt, genau einmal geholt, gezeigt; keine Kopie, nichts von github",
           "erstes Bild B−A gepaart " + median(paar("eigen", "fcp")) + " ms, Foto gemalt B−A " + median(paar("eigen", "gemalt")) + " ms");
       }
