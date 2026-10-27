@@ -7582,6 +7582,170 @@ erst nach der ersten Antwort – in der Messung gegen live gleich schnell oder s
 Antwortzeit von fassung.json später (Tabelle oben). *(Nachbesserung 3: geht das Tor auf, geht zuerst eine Vorhut; die
 übrigen gestauten Lesen erst nach deren Antwort durch die Bremse.)* 885-schlank Q baut den Block vor dem Vergleich mit dem Stand vor K zurück.
 
+### Nachbesserung 3 (Prüfbericht 3 zu 34b0e6dc; Punkt „tor“, 27.10.2026) — Start-Tor mit Vorhut
+
+XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“ – und die
+Sparsamkeit der Notfall-Fassung 885 (Supabase-Kontingent) darf durch nichts aufgeweicht werden.
+
+**1. Wichtig – das Start-Tor gab alles Gestaute in derselben Millisekunde frei (behoben: Vorhut).** Auf einer Seite aus dem
+Speicher (S1) warten seit Nachbesserung 2 alle Supabase-Anfragen auf die Fassungsentscheidung. Geht das Tor auf, gingen alle
+gestauten Lesen zugleich hinaus. Die Bremse hält Lesen aber erst nach der ersten 402-Antwort an (bei 429/5xx nach dem zweiten
+Fehlschlag, ≥ 2 s später) – also gingen sie in einer Sperre an ihr vorbei. Betroffen ist der häufigste S1-Weg: Seite aus dem
+Speicher, kein Update, fassung.json langsam, Sperre läuft. Prüfer (nachgestelltes Supabase, Helfer an, Betreiber, je 30 s ab
+dem Öffnen; 34b0e6dc): 402 und fassung.json nach 1/3/5,5/7,5 s 10/12/13/13 Anfragen gegen 11 auf 807e6a7d und 7–8 auf
+derselben Seite aus dem Netz; verdeckt geöffnet 12 gegen 10; 503 24 gegen 21–23. Mit Zeitstempeln: bei 5,55 s gingen 10 Lesen
+innerhalb von 10 ms in die 402 (Anmeldebild, Links und Tipps aus dem Vorzeichnen, Nachrichten und Freunde aus
+`inboxVorwaermen`, die Mitgliederliste aus `onlineZaehlerAuffrischen` …). Ohne Sperre war nichts zu sehen. Der Satz „Die
+Notfall-Bremse selbst ist unverändert; das Tor sitzt vor ihr“ in Nachbesserung 2 verschwieg das (dort jetzt berichtigt).
+
+- **Gebaut (unsichtbar; Vorschlag b des Prüfers, ohne Merker):** `backend.js`, `bremsFetch` – wie der „halb offene“ Zustand
+  eines Schutzschalters:
+  - Die Anfragen hinter dem Tor stehen in einer Liste (`stau`). Geht das Tor auf, geht alles, was die Bremse nie anhält
+    (Schreiben, Anmeldung, Speicher, Funktionen), sofort wie bisher. Von dem, was die Bremse selbst beantworten könnte
+    (Lesen über /rest/v1/ samt rpc, das Erneuern der Anmeldung, der REST-Notweg der Kanäle – `haltbar`, dieselbe Einteilung
+    wie in der Bremse), geht nur EINE hinaus: das eigene Profil, wenn es wartet (das braucht die Seite ohnehin zuerst), sonst
+    die erste.
+  - Die übrigen (und alle neuen Lesen, solange eine Vorhut unterwegs ist) warten auf deren Antwort und gehen dann durch die
+    Bremse: 402 zieht sie sofort – sie antwortet für den Rest selbst (429, nichts ans Netz). Lebt der Server, geht der Rest wie
+    bisher.
+  - 429/5xx ohne gezogene Bremse (sie braucht zwei Fehlschläge ≥ 2 s auseinander): genau dann, wenn ein zweiter Fehlschlag
+    zählen würde (`fehlZuletzt + 2 s`), geht eine zweite Vorhut. Scheitert sie, zieht die Bremse und gilt für den Rest; kommt
+    sie durch, geht der Rest. Höchstens drei Vorhuten. Zieht inzwischen eine andere Antwort (etwa ein Schreiben) die Bremse,
+    geht keine weitere Vorhut.
+  - Netzfehler (Status 0): der Rest geht sofort – dort lässt die Bremse einzelne Abfragen ohnehin hinaus (885: ein wackliges
+    Mobilnetz soll beim Laden nichts aufhalten).
+  - Hängt eine Vorhut, geht der Rest nach 3 s (`VORHUT_FRIST`) – kein Stillstand.
+  - Die Bremse selbst ist unverändert; eine Seite ohne Tor (aus dem Netz, ohne Helfer) merkt nichts.
+- **Nicht gebaut:** (a) des Prüfers – den Stand der Bremse über das Neuladen merken (sessionStorage/localStorage), damit eine
+  neue Seite in einer bekannten Sperre gleich gebremst startet. Das deckt nur eine schon bekannte Sperre; das erste Öffnen in
+  einer neuen Sperre stieße weiter alles auf einmal hinaus. Die Vorhut deckt beides und braucht keinen Merker (Offen 11).
+  Ebenfalls nicht gebaut: eine Vorhut-Gruppe aus dem ersten Schwall (die vier Lesen, die auch live zuerst zugleich gehen) –
+  das brächte die Laufschrift im gesunden Fall eine Antwortzeit früher, kostete in der 402-Sperre aber 7 statt 4 Anfragen.
+- **Gezählt** (nachgestelltes Supabase, Helfer an, Betreiber mit `dma-walkie`, echte Uhr, je Runde 30 s ab dem Öffnen,
+  ohne Update; „Bezug“ = Neuladen mit schnellem Netz – die Seite kommt aus dem Netz, kein Tor; „Speicher“ = Seite und
+  fassung.json nach D ms – auf diesem Stand und e038be97 kommt die Seite aus dem Speicher, auf 807e6a7d nach D aus dem Netz;
+  Fälle des Prüfers, `faelle-r3.js`; Echtzeit-Leitungen je Runde 1 bzw. 5–6 bei 503, überall gleich):
+
+  | Fall | dieser Stand: Bezug → Speicher | e038be97 (vorher) | 807e6a7d (live) |
+  | --- | --- | --- | --- |
+  | ohne Sperre, D = 1 000 | 56 → 56 / 56 | 57 → 56 / 57 | 58 → 57 / 57 |
+  | 402, D = 1 000 | 7 → **4 / 4** | 8 → 10 / 10 | 11 → 11 / 11 |
+  | 402, D = 3 000 | 7 → **4 / 4** | 8 → 12 / 12 | 12 → 11 / 11 |
+  | 402, D = 5 500 | 7 → **4 / 4** | 8 → 13 / 13 | 12 → 11 / 11 |
+  | 402, D = 7 500 | 8 → **4 / 4** | 8 → 13 / 13 | 11 → 11 / 11 |
+  | 402, verdeckt geöffnet, D = 5 500 | 6 → **4 / 4** | 6 → 12 / 12 | 10 → 10 / 10 |
+  | 503, D = 5 500 | 19 → **5 / 5** (Zwischenstand 1 ohne zweite Vorhut: 20 → 25 / 26) | 20 → 31 / 30 · 19 → 27 / 26 | 22 → 21 / 22 · 22 → 21 / 21 |
+
+  Die 4 in der Sperre: die Vorhut (Profil) und die drei Schreiben der Startphase (results, private_messages, daily_ranking –
+  die Bremse hält Schreiben nie an, live ebenso). Bei 503 dazu die zweite Vorhut. Die Zeilen 402 D = 1 000/3 000/7 500 und
+  „ohne Sperre“ sind mit Zwischenstand 1 (0b90ed3a) gezählt – für 402 und den gesunden Fall ist der Weg dort derselbe (Sonde
+  886-vorhut G und S auf beiden grün); die Zeilen D = 5 500 und 503 mit dem endgültigen Stand. Mit Update (Sonde 885-sparsam
+  SW…) siehe Sonden unten.
+- **Was es kostet** – im gesunden Fall kommen die übrigen gestauten Lesen eine Antwortzeit später. Gemessen (Fall SWMESS,
+  jetzt auch Laufschrift `activity` und „Über mich“ `site_content about`; ohne Update, Helfer an, Seite und fassung.json nach
+  D ms, Supabase-Antwortzeit 150 ms (`MESS_SUPA`); 8 Paare mit Zwischenstand 1, je Paar die drei Stände in wechselnder
+  Reihenfolge; mit dem endgültigen Stand 4 weitere Paare, dieselben Werte ±16 ms (Laufschrift gegen live CPU 1× +49/+78/+80/+78); Median, gepaarter Unterschied mit
+  95-%-Bereich, ↑ = in so vielen Paaren später):
+
+  | CPU | D | Profil da: neu / e038be97 / live | neu − live | Laufschrift da: neu / e038be97 / live | neu − e038be97 | neu − live |
+  | --- | --- | --- | --- | --- | --- | --- |
+  | 1× | 150 | 366 / 364 / 488 | **−113** (8↓) | 530 / 363 / 484 | +167 (8↑) | **+57** (21…74; 8↑) |
+  | 1× | 300 | 500 / 510 / 598 | **−98** (8↓) | 662 / 509 / 585 | +153 (8↑) | **+78** (32…86; 7↑) |
+  | 1× | 600 | 803 / 812 / 902 | **−97** (8↓) | 965 / 810 / 890 | +163 (8↑) | **+78** (54…92; 8↑) |
+  | 1× | 1 500 | 1 704 / 1 716 / 1 796 | **−92** (8↓) | 1 871 / 1 712 / 1 787 | +159 (8↑) | **+82** (74…95; 8↑) |
+  | 4× | 150 | 608 / 651 / 783 | **−148** (7↓) | 607 / 650 / 780 | +14 (5↑) | **−145** (7↓) |
+  | 4× | 300 | 791 / 800 / 875 | −132 (6↓) | 955 / 798 / 855 | +179 (8↑) | +50 (−20…216; 5↑) |
+  | 4× | 600 | 926 / 913 / 1 236 | **−316** (7↓) | 1 095 / 909 / 1 225 | +209 (8↑) | **−136** (7↓) |
+  | 4× | 1 500 | 1 763 / 1 782 / 2 138 | **−355** (8↓) | 1 933 / 1 777 / 2 128 | +166 (8↑) | **−175** (8↓) |
+
+  „Über mich“ (`site_content about`) wie die Laufschrift (±3 ms). Ehrlich also: das **Profil** kommt wie vorher (gegen
+  e038be97 im Rauschen, −11 … +22) und weiter 0,09–0,36 s **früher als live**. Laufschrift und der Abgleich von „Über mich“
+  kommen eine Antwortzeit später als vorher; auf einem schnellen Telefon **0,05–0,08 s später als live** (8 von 8), auf einem
+  langsamen meist früher (−0,14 … −0,18 s; D = 300 im Rauschen). Zu sehen ist das kaum: „Über mich“ zeigt seit S2 vom ersten
+  Bild an den gemerkten Text (der Abgleich ändert nur, was sich geändert hat), und die Laufschrift tauscht ihren Text aus
+  index.html etwa 0,05–0,08 s später. Das erste Bild und „bereit“ (ladezeit-messen) berührt das nicht – dort ist kein
+  Supabase im Spiel. Supabase-Anfragen im gesunden Fall: gleich viele (oben, und SWS0 55 gegen 56–57).
+- **Sonde 885-sparsam, neue Fälle (im Standardlauf):** **SWS402** – Helfer an, ohne Update, 402-Sperre (auch die
+  Echtzeit-Leitung abgelehnt), Runden: Bezug (Seite aus dem Netz), Seite und fassung.json nach 1 000 bzw. 5 500 ms, nur
+  fassung.json nach 8 000 ms (das Tor öffnet zur Frist); jede langsame Runde ≤ Bezug + 1; auf einem Stand mit S1 muss die
+  Seite in den Runden 5 500/8 000 aus dem Speicher kommen. **SWS0** – dasselbe ohne Sperre (D = 5 500): ≤ Bezug + 3, Profil
+  da; dazu „HAENG“: das eigene Profil (die Vorhut) bekommt nie eine Antwort – die Laufschrift geht trotzdem, ≤ 3,5 s nach dem
+  Profil. **Dieser Stand grün** (SWS402 4/4/4 gegen Bezug 7–8, SWS0 55 gegen 56–57, HAENG 3 003 ms). **Gegenprobe e038be97 (je
+  zwei Läufe, der zweite mit der endgültigen Sonde): genau die drei SWS402-Runden rot** (10/13/13 gegen 8, beide Male; HAENG
+  dort grün, −8 ms); **807e6a7d grün** (11/11/11 gegen 12 bzw. 11; dort kein S1, die Seite kommt nach D aus dem Netz). Der Messfall SWMESS misst jetzt auch Laufschrift und „Über mich“ und kennt `MESS_SUPA`.
+- **Neue Sonde `werkzeug/pruefe-886-vorhut.js` (ohne Browser, Sekunden):** lädt backend.js in eine nachgebaute Umgebung,
+  staut sieben Anfragen hinter einem Tor und öffnet es: G gesund (alles geht, erste Lese das Profil), S 402 (nur Vorhut,
+  Schreiben, Anmeldung ans Netz), F 503 (zweite Vorhut ≥ 2 s nach der ersten, dann die Bremse), B 503 nur einmal (Rest kommt
+  durch), N Netzfehler (Rest sofort), H Vorhut hängt (Rest nach 3 s). Dieser Stand 6 grün; e038be97 4 rot (G, S, F, H);
+  Zwischenstand 1 (0b90ed3a, ohne zweite Vorhut) F rot.
+- Gewicht: min/backend.js +495 B gepackt (gzip -9; +1,4 KB roh, davon ein Teil andere Kurznamen des Verkleinerers); die
+  Stempel von backend.js und min/backend.js neu (jedes Gerät holt backend.js einmal neu, ~30 KB gepackt).
+
+**2. Klein – X5 (Offen 8 geschärft).** Der Mechanismus des Prüfers steht jetzt in Offen 8 (ein Tipp holt nur Ausgelassenes;
+hat ein gescheiterter Takt die Bremse kurz vor dem Ende des Ausfalls neu gezogen, ist nichts ausgelassen) – mit beiden
+Abhilfen; noch nicht gebaut, weil nicht mitgeschrieben bestätigt (807e6a7d genauso).
+
+**3. Klein – SWT/SWT6 „Start ≤ 807e6a7d + 1 (92)“ war zu eng (behoben).** Ein Prüferlauf brauchte 92: je ein Takt
+`betreiber_funk` und `betreiber_rueckfragen` mehr im 30-s-Fenster (Fensterrauschen). Grenze jetzt aus der Spanne der Läufe auf
+807e6a7d (Bezug SWT 90/90, im Prüferlauf 91; SWT6 91/90) + 2 für genau dieses Rauschen (je Takt eins) = 93; c57cdb8b (96–98)
+bleibt rot. Beim Ausliefern als 886 neu messen (Offen 4 von Nachbesserung 2).
+
+**4. Klein – „gegen live nie langsamer“ (berichtigt).** In Nachbesserung 2 („Was es kostet“, Funk-Entwurf, Offen 6) und I50
+heißt es jetzt „in der Messung“. Gemessen war nur mit Seite und fassung.json gleich verzögert und ohne frische index.html im
+HTTP-Speicher des Browsers (Fall B: dort startet live sofort aus dem HTTP-Speicher; bekommt die Seite die Kopie des Helfers
+mit Marke, wartet das Tor auf fassung.json?t=…, immer ein Netzabruf – laut Logbuch bekommt sie dort meist die Browser-Kopie
+ohne Marke, die Wirkung ist also klein). Fall B für das Tor nicht gemessen (Offen 12).
+
+**5. Klein – nach „neu“ öffnet das Tor nach 15 s doch (bekannte Grenze).** Dauert der Wechsel auf die neue Fassung länger als
+15 s (sehr langsames Netz), öffnet die alte Seite ihr Tor noch während des Navigierens – ihr Supabase-Start ginge dann doch
+hinaus (zwei Starts). Randfall, gleich gebaut wie bei der Rückkehr; mit der Vorhut geht in einer Sperre dabei nur eine Lese
+hinaus. Bleibt so.
+
+**6. Klein (Prüfer 3:2, Mangel 2) – `livechat.js reconnectAfterMs` prüft die Bremse nur beim Planen.** Endet eine Bremsstufe,
+bevor ein Takt sie neu zieht, und fällt ein Wiederverbinden in diese Lücke, plant realtime 1/2/5/10 s statt 60 s (bis zu 8
+Handshakes je Lücke in die Sperre; ein Lauf des Prüfers 22 gegen die Grenze 20 von Fall C, „sichtbar“). Schon auf 807e6a7d so,
+gleiche Verteilung – nicht von diesem Zweig. Gehört zur Notfall-Bremse, nicht zu diesem Punkt (Offen 13).
+
+**7. Klein (Prüfer 3:2, Mangel 3) – keine Zählsonde für die gewöhnlichste S1-Seite in einer Sperre.** Jetzt SWS402 (Punkt 1).
+
+**Sonden nach Nachbesserung 3** (alle nacheinander auf min/, Supabase überall nachgebaut; Rohdaten `l886/tor/sonden/`):
+
+| Sonde | Ergebnis |
+| --- | --- |
+| 886-vorhut (neu, ohne Browser) | 6 ok |
+| 885-sparsam (35 Fälle, neu SWS402/SWS0) | **162 ok, alles grün** – A sichtbar 277 (main 277), B verdeckt 40, C 402 sichtbar 4, G 4, D 276, H 291, V 23; SB 179 (Grenze 182), SM 156 (158); SWa/SWc/SWL 57 → 56, SWa4 58 → 59, SWc4 59 → 59; SWT 90 → 90, SWT6 89 → 90 (Grenze 93), Belohnung je einmal; SW402 7 → 7; SWTOR 6 000 ms bzw. 2 516 ms nach der Taste bei 2 505; SWS402 4/4/4 gegen Bezug 8; SWS0 55 gegen 56, HAENG 3 006 ms; X5 grün (0 s) |
+| 885-schale, 885-rueckkehr, 885-swvorladen | 72, **300**, 27 ok |
+| 884-notweg, 884-leitung | 91, 40 ok |
+| 885-praesenz, 885-stuecke, 885-schlank, 885-gast, 885-bereiche | 69, 43, 42, 4, 57 ok |
+
+`node --check` für backend.js, min/backend.js, werkzeug/pruefe-885-sparsam.js und werkzeug/pruefe-886-vorhut.js; die 9
+Inline-Skripte in index.html fehlerfrei übersetzt (`vm.Script`; geändert hat sich dort nur der Stempel). Rohdaten:
+Zwischenordner `l886/tor/` (`sws-*`, `swg-*`, `swg2-*`, `mess-*`, `mess2/`, `auswerten.js`, `swg-tabelle.js`, `sonden/`);
+Vergleichsbäume `gegen886/pr2r-jetzt` (e038be97) und `gegen886/pr2r-885` (807e6a7d), beide gegen git geprüft (alle Dateien
+gleich).
+
+**Funk-Entwurf (Nachbesserung 3):** „Beim Prüfen hat sich noch eine Lücke bei der Sparsamkeit gezeigt: Wenn die Seite aus
+dem Speicher kommt und Supabase gerade gesperrt ist, hat die Seite beim Start alle wartenden Abfragen auf einmal
+losgeschickt – bevor die erste Absage da war und die Notbremse greifen konnte (bis 13 statt 11 Anfragen wie live). Jetzt geht
+zuerst nur eine einzige Abfrage hinaus (dein Profil); erst wenn ihre Antwort da ist, folgt der Rest – und in einer Sperre
+fängt die Bremse ihn ab. Gemessen: in der Sperre 4 statt bis zu 13 Anfragen (live 11), bei einem Serverausfall 5 statt bis zu
+31 (live 21–22). Im Normalbetrieb kommt dein Profil so schnell wie vorher (0,1–0,35 s früher als live); nur die Laufschrift
+und der stille Abgleich von ‚Über mich‘ kommen eine Server-Antwortzeit später – auf einem schnellen Handy 0,05–0,08 s später
+als live, auf einem langsamen früher. Sichtbar ändert sich nichts.“
+
+**Offen (Nachbesserung 3)** – die Punkte von Nachbesserung 2 gelten weiter, dazu:
+9. Die Vorhut kostet im gesunden Fall eine Antwortzeit für Laufschrift und „Über mich“-Abgleich (Tabelle oben; schnelles
+   Telefon +0,05–0,08 s gegen live). Gemessen nur mit nachgestelltem Supabase (150 ms); draußen hängt es an der echten
+   Antwortzeit.
+10. Die zweite Vorhut bei 429/5xx hält den Rest bis ~2 s auf, wenn die erste Lese beim Öffnen einen einzelnen Aussetzer
+    (5xx) trifft und der Server sofort wieder da ist (Sonde 886-vorhut B). Selten; dafür in einem Ausfall 5 statt 21–31.
+11. (a) des Prüfers als Ergänzung: den Stand der Bremse über das Neuladen merken – eine Seite in einer bekannten Sperre
+    startete dann gleich gebremst (auch ohne Tor, also auch die Seite aus dem Netz: live 11, aus dem Netz 7–8). Nicht Teil
+    dieses Punkts (es ändert die Bremse selbst).
+12. Fall B (Browser hält index.html noch frisch) für das Tor messen (Punkt 4).
+13. `livechat.js reconnectAfterMs`: „Status 402 in den letzten 20 min“ statt „Bremse aktiv“ prüfen (Punkt 6; Vorschlag
+    des Prüfers für die Notfall-Bremse, gilt auch für main).
+
 ## Fassung 886 — Foto auf „Über mich“ als eigene Kopie (S8, freigegeben Funk 311; Ladezeit-Entwurf)
 
 XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller“ · (Funk 263): „sofort im Livestream wie bei HelloTalk“ · (Funk 310/312): „das Maximum rausholen“, „die maximal professionellste Lösung“. **Befund bis 886/S2:** Das Foto auf „Über mich“ (der Startansicht) kam von `https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9ob2nzt2.jpeg?raw=true`: ein fremder Server (neue Verbindung), eine Umleitung auf raw.githubusercontent.com (noch eine Verbindung) und das ganze Originalfoto – **1 369 667 Byte, 4632 × 6176 Pixel (28,6 Mio. Pixel zum Dekodieren)** –, gezeigt in 76 × 76 Punkten (84 px minus 2 × 4 px Rahmen). Dazu `loading="lazy"`: geholt erst nach dem ersten Layout. S8 (Entwurf, freigegeben): das Foto als eigene, kleine, gestempelte Kopie. **Vorher festgelegtes Maß:** Bytes des Fotos und Zeit, bis das Foto **gemalt** ist (Element Timing), verschränkt gegen den Stand davor; erstes Bild nicht schlechter; und „es muss gleich aussehen“: Bildvergleich gegen das echte Original (Farbe je Kanal ±1, geglättet ≥ 33 dB). **Nachbesserung 2:** das Maß „gleich aussehen“ war zu lasch (eine absichtlich weichgezeichnete Kopie war grün) – seit dann zusätzlich roh ≥ 36 dB und Schärfe ≥ 0,85; und „erstes Bild nicht schlechter“ hält S8 nur auf 4G – auf langsamem Handy-Netz (3G) kommt das erste Bild beim ersten Besuch etwa 40–70 ms später (Abschnitt Nachbesserung 2). **Sichtbar (freigegeben):** das Foto steht im ersten gemalten Bild statt ~2 s danach (erster Besuch) bzw. ~0,3 s danach (Wiederkommen, Foto aus dem Speicher); es sieht gleich aus (Zahlen unten).

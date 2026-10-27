@@ -134,6 +134,11 @@
      SWTOR ohne Update, nur fassung.json verzögert: Seite aus dem Netz → kein Tor; aus dem Speicher und fassung.json nach
            8 s → die erste Supabase-Anfrage nach ≈ 6 s (Frist), nicht vor 5,8 s; fassung.json nach 4 s und ein Tastendruck
            nach 2,5 s → die erste Anfrage vor 3,5 s (der Wächter lädt dann nicht mehr von selbst neu); Profil am Ende da.
+     SWS402 (Fassung 886, Punkt „tor“, Prüfbericht 3 zum Einmischen) ohne Update, 402-Sperre, die Seite aus dem Speicher und
+           fassung.json langsam (1 000 / 5 500 ms, nur fassung.json 8 000 ms): je Runde ≤ Bezug (Seite aus dem Netz) + 1 – das
+           Tor gab alles Gestaute auf einmal frei, die Lesen gingen an der Bremse vorbei (e038be97 10/13/13 gegen 8, rot;
+           807e6a7d 11/11/11 gegen 12, grün; mit Vorhut 4/4/4 gegen 7–8). SWS0 dasselbe ohne Sperre: ≤ Bezug + 3, Profil
+           da; „HAENG“: die Vorhut (Profil) hängt – die Laufschrift geht trotzdem, ≤ 3,5 s nach dem Profil.
      Gegenprobe c57cdb8b (ohne Tor): 14 rot – Update-Runde 86/92/100/67/71 gegen 56–59 (SWL zwei Echtzeit-Leitungen),
      SWT 133 gegen 96 und die Anmeldebelohnung zweimal, SWT6 112 gegen 97, SW402 14 gegen 8; SWTOR 4 (dort gibt es kein
      Tor, die erste Anfrage geht nach 0,1–0,2 s); mit der später dazugekommenen Prüfung „Start ≤ 807e6a7d + 1“ bei SWT/SWT6
