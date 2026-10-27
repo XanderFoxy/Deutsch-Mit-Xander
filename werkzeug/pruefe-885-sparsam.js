@@ -170,7 +170,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const QUELLE = Boolean(process.env.QUELLE);
-const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM,SB,SM,SWa,SWc,SWL,SWa4,SWc4,SWT,SWT6,SW402,SWTOR").split(",").map((x) => x.trim()).filter(Boolean);
+const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM,SB,SM,SWa,SWc,SWL,SWa4,SWc4,SWT,SWT6,SW402,SWTOR,SWS402,SWS0").split(",").map((x) => x.trim()).filter(Boolean);
 const SUPA = [process.env.SUPABASE_UMD,
   "/tmp/claude-0/node_modules/@supabase/supabase-js/dist/umd/supabase.js",
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
@@ -1357,7 +1357,13 @@ function schluessel(adresse, methode) {
       /* Einmischen, Nachbesserung 2: mit langsamer Antwort zeichnete die Ruhepause das Profil ein zweites Mal (app.js,
          anmeldungDa). Bezugswert aus Läufen auf 807e6a7d (26.10.2026: SWT 90/90, SWT6 91/91; c57cdb8b 96/97) – wie
          REF_START3 beim Ausliefern als 886 bzw. wenn sich main ändert neu messen. */
-      sage(runden.bezug.z.gesamt <= 91 + 1, fall + ": ein Start mit langsamer Antwort nicht mehr als auf 807e6a7d (91 + 1)", runden.bezug.z.gesamt + " (807e6a7d 90–91, c57cdb8b 96–97)");
+      /* FASSUNG 886 (Punkt „tor“, kleiner Befund aus Prüfbericht 3 zum Einmischen): die feste Grenze 91 + 1 lag zu eng – ein
+         Prüferlauf brauchte 92, weil je ein Takt von betreiber_funk und betreiber_rueckfragen zusätzlich ins 30-s-Fenster fiel
+         (3 statt 2 je Tabelle: Fensterrauschen, kein Rückschritt). Grenze jetzt aus der Spanne der Läufe auf 807e6a7d
+         (Bezug SWT 90/90 und im Prüferlauf 91, SWT6 91/90) + 2 für genau dieses Fensterrauschen (je Takt eins); c57cdb8b (96–98) bleibt rot. */
+      const REF_SWT = { gesamt: [90, 90, 91, 91, 90], rauschen: 2 };
+      const grenzeSwt = Math.max(...REF_SWT.gesamt) + REF_SWT.rauschen;
+      sage(runden.bezug.z.gesamt <= grenzeSwt, fall + ": ein Start mit langsamer Antwort nicht mehr als auf 807e6a7d (" + Math.max(...REF_SWT.gesamt) + " + " + REF_SWT.rauschen + " Fensterrauschen)", runden.bezug.z.gesamt + " (807e6a7d 90–91, c57cdb8b 96–98)");
       fehlerPruefen(s);
       ergebnis.faelle[fall] = { bezug: { gesamt: runden.bezug.z.gesamt, belohnungen: runden.bezug.belohnungen }, neu: { gesamt: runden.neu.z.gesamt, belohnungen: runden.neu.belohnungen, info: runden.neu.info } };
       await s.ctx.close();
@@ -1423,6 +1429,45 @@ function schluessel(adresse, methode) {
       ergebnis.faelle.SWTOR = { netz: torOhneSpeicher, frist: t8, taste: Object.assign({ taste: Math.round(tipp) }, t4) };
       await s.ctx.close();
     }
+    /* FASSUNG 886 — SWS402 / SWS0 (Punkt „tor“, Prüfbericht 3 zum Einmischen): Helfer an, KEIN Update, die Seite kommt aus
+       dem Speicher, fassung.json antwortet langsam – der häufigste S1-Weg. Das Tor gab alles Gestaute in derselben
+       Millisekunde frei; in einer Sperre gingen so alle Lesen hinaus, bevor die erste 402 die Bremse zog (Prüfer: 12–13 in
+       30 s gegen 11 auf 807e6a7d und 7–8 auf derselben Seite aus dem Netz). Jetzt geht zuerst eine Vorhut (backend.js).
+       Runden je 30 s im selben Lauf: Bezug = Neuladen mit schnellem Netz (die Seite aus dem Netz, kein Tor); dann Seite und
+       fassung.json nach 1 000 bzw. 5 500 ms, und nur fassung.json nach 8 000 ms (Seite nach 0,4 s; das Tor öffnet zur Frist
+       6 s). SWS402 in der 402-Sperre (auch die Echtzeit-Leitung abgelehnt wie in Wirklichkeit): jede langsame Runde
+       ≤ Bezug + 1. SWS0 ohne Sperre, D = 5 500: ≤ Bezug + 3 und Profil da – die Vorhut hält nichts fest. Auf einem Stand
+       mit S1 muss die Seite in den Runden 5 500/8 000 aus dem Speicher kommen (sonst prüfte der Fall nichts); 807e6a7d hat
+       kein S1, die Seite kommt dort nach D aus dem Netz – dieselbe Grenze. */
+    const S1 = /data-dma-speicher/.test(fs.existsSync(path.join(WURZEL, "sw.js")) ? fs.readFileSync(path.join(WURZEL, "sw.js"), "utf8") : "");
+    for (const [fall, sperre, runden] of [["SWS402", "402", [["D1000", 1000, 0], ["D5500", 5500, 0], ["FJ8000", 400, 8000]]], ["SWS0", "", [["D5500", 5500, 0]]]]) {
+      if (!FAELLE.includes(fall)) continue;
+      abschnitt(fall, "Helfer an, ohne Update, Seite aus dem Speicher, fassung.json langsam" + (sperre ? ", " + sperre + "-Sperre" : ", ohne Sperre") + ", je 30 s");
+      const { s, ctl } = await mitHelfer();
+      if (sperre) {
+        s.zustand.modus = sperre;
+        await s.ctx.addInitScript(() => { window.__wsSperre = true; });   // nach dem Ersatz-Skript (setzt false): Handshake abgelehnt
+      }
+      const bezug = await runde(s, fall + "-bezug");
+      zeigeRunde("Bezug", bezug);
+      const erg = { bezug: { gesamt: bezug.z.gesamt, je: bezug.z.je, ws: bezug.z.ws, info: bezug.info } };
+      for (const [name, verz, verzFj] of runden) {
+        Object.assign(netz, { verz, verzFj, neuF: "" });
+        const r = await runde(s, fall + "-" + name);
+        Object.assign(netz, { verz: 0, verzFj: 0 });
+        zeigeRunde(name, r);
+        const grenze = bezug.z.gesamt + (sperre ? 1 : 3);
+        sage(r.z.gesamt <= grenze, fall + " " + name + ": nicht mehr Anfragen als die Seite aus dem Netz (+ " + (sperre ? 1 : 3) + ")", r.z.gesamt + " gegen " + bezug.z.gesamt + (sperre ? " (e038be97: 12–13 gegen 7–8; 807e6a7d 11 gegen 11)" : ""));
+        if (S1 && verz !== 1000) sage(r.info.speicher === true, fall + " " + name + ": die Seite kam aus dem Speicher (sonst prüft dieser Teil nichts)", JSON.stringify(r.info));
+        if (r.info.tor !== "kein") sage(r.info.tor === "offen", fall + " " + name + ": das Tor ist am Ende offen", JSON.stringify(r.info));
+        if (!sperre) sage(r.info.profil, fall + " " + name + ": Profil da", JSON.stringify(r.info));
+        erg[name] = { gesamt: r.z.gesamt, je: r.z.je, ws: r.z.ws, info: r.info };
+      }
+      sage(ctl, fall + ": der Helfer übernimmt die Seite");
+      fehlerPruefen(s);
+      ergebnis.faelle[fall] = erg;
+      await s.ctx.close();
+    }
     /* SWZ (Nachbesserung 1 zu „rueckkehrfrist“, Prüfbericht zu 69a00801; nicht im Standardlauf, Messung): RÜCKKEHR in den Raum
        per ZURÜCK auf einer Seite aus dem Speicher (Marke), der Helfer sagt „gleich“ (index.html kommt – wie die Kopie im
        HTTP-Speicher – noch in der alten Fassung), fassung.json meldet 887 nach SWZ_FJ ms (Vorgabe 250), CPU SWZ_CPU× (4).
@@ -1480,16 +1525,22 @@ function schluessel(adresse, methode) {
     if (FAELLE.includes("SWMESS")) {
       abschnitt("SWMESS", "Messung: ohne Update, Helfer an – erste Supabase-Anfrage und Profil da (Seite und fassung.json nach D ms)");
       const { s, ctl } = await mitHelfer({});
+      /* FASSUNG 886 (Punkt „tor“): dazu, wann die Laufschrift (activity) und „Über mich“ (site_content about) da sind –
+         die gestauten Lesen hinter der Vorhut; MESS_SUPA = Antwortzeit der nachgebauten Datenbank in ms (Vorgabe 0) */
       await s.ctx.addInitScript(() => {
-        const f = window.fetch; window.__ersteSupa = null; window.__profilDa = null;
+        const f = window.fetch; window.__ersteSupa = null; window.__profilDa = null; window.__aktivDa = null; window.__ueberDa = null;
+        const da = (p, k) => p.then(() => { if (window[k] == null) window[k] = performance.now(); }, () => {});
         window.fetch = function (u) {
           let a = "";
           try { a = String((u && u.url) || u); if (window.__ersteSupa == null && a.indexOf("attrappe.supabase.co") >= 0) window.__ersteSupa = performance.now(); } catch (e) {}
           const p = f.apply(this, arguments);
-          if (window.__profilDa == null && /\/rest\/v1\/profiles\?select=\*&id=eq\./.test(a)) p.then(() => { if (window.__profilDa == null) window.__profilDa = performance.now(); }, () => {});
+          if (window.__profilDa == null && /\/rest\/v1\/profiles\?select=\*&id=eq\./.test(a)) da(p, "__profilDa");
+          if (window.__aktivDa == null && /\/rest\/v1\/activity\?select=\*&order=date\.desc/.test(a)) da(p, "__aktivDa");
+          if (window.__ueberDa == null && /\/rest\/v1\/site_content\?select=value&key=eq\.about$/.test(a)) da(p, "__ueberDa");
           return p;
         };
       });
+      s.zustand.supaVerz = Number(process.env.MESS_SUPA || 0);
       await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
       await warte(4000);
       const reihe = [];
@@ -1502,10 +1553,10 @@ function schluessel(adresse, methode) {
             netz.verz = D;
             await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
             let w = null;
-            for (let k = 0; k < 200; k++) { w = await s.pg.evaluate(() => window.__profilDa).catch(() => null); if (w != null) break; await warte(50); }
+            for (let k = 0; k < 200; k++) { w = await s.pg.evaluate(() => (window.__profilDa != null && window.__aktivDa != null && window.__ueberDa != null ? [window.__profilDa, window.__aktivDa, window.__ueberDa] : null)).catch(() => null); if (w != null) break; await warte(50); }
             const l = await lage(s);
             netz.verz = 0;
-            const z = { cpu, D, i, speicher: l.speicher, tor: l.tor, ersteSupa: l.ersteSupa, profilDa: w == null ? null : Math.round(w) };
+            const z = { cpu, D, i, speicher: l.speicher, tor: l.tor, ersteSupa: l.ersteSupa, profilDa: w == null ? null : Math.round(w[0]), aktivDa: w == null ? null : Math.round(w[1]), ueberDa: w == null ? null : Math.round(w[2]) };
             console.log("  " + JSON.stringify(z));
             reihe.push(z);
             await warte(1500);

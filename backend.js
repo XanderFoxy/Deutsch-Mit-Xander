@@ -177,8 +177,67 @@ const Backend = (function () {
        ein Tipp, nach dem der Wächter nicht mehr von selbst neu lädt, öffnet es sofort. Das erste Bild bleibt so schnell
        wie mit S1; die Daten kommen höchstens so spät wie bis 884. Jede andere Seite: kein Tor. SPIELSYSTEM.md I50. */
     const tor = typeof window !== "undefined" ? window.dmaStartTor : null;
-    if (tor && !tor.offen) return tor.then(() => bremsFetch(eingabe, opt));
-    const adresse = String(typeof eingabe === "string" ? eingabe : (eingabe && eingabe.url) || eingabe);
+    if (tor && !tor.offen) return new Promise((weiter) => stauen(tor, weiter, eingabe, opt));
+    if (vorhut && haltbar(eingabe, opt)) return vorhut.then(() => bremsFetch(eingabe, opt));   // FASSUNG 886 — Vorhut (unten)
+    return bremsFetchJetzt(eingabe, opt);
+  }
+  /* FASSUNG 886 — VORHUT HINTER DEM START-TOR (Prüfbericht 3 zum Einmischen, Punkt „tor“). Das Tor gab alles, was sich
+     hinter ihm gestaut hatte, in derselben Millisekunde frei. Die Bremse hält Lesen aber erst nach der ersten Antwort mit
+     402/429/5xx an – so gingen in einer Sperre alle gestauten Lesen hinaus, bevor die erste 402 da war (Prüfer: Seite aus
+     dem Speicher, ohne Update, fassung.json nach 5,5 s, 402: zehn Lesen in 10 ms – 12–13 Anfragen in 30 s gegen 11 auf
+     807e6a7d und 7–8 auf derselben Seite aus dem Netz; 503: 24 gegen 21–23). Der häufigste S1-Weg in einer Sperre.
+     Jetzt: geht das Tor auf, geht von den gestauten Anfragen, die die Bremse selbst beantworten könnte (Lesen über
+     /rest/v1/ samt rpc, das Erneuern der Anmeldung, der REST-Notweg der Kanäle), zuerst nur EINE hinaus – das eigene
+     Profil, wenn es wartet (das braucht die Seite ohnehin zuerst; im gesunden Fall kommt es so nicht später als bisher),
+     sonst die erste. Die übrigen gehen erst, wenn deren Antwort da ist, und dann durch die Bremse: hat die Antwort sie
+     gezogen (402 sofort), antwortet sie für den Rest selbst; sonst geht der Rest wie bisher. Was die Bremse ohnehin nie
+     anhält (Schreiben, Anmeldung, Speicher, Funktionen), geht wie bisher sofort mit dem Tor. Neue Lesen warten, solange
+     die Vorhut unterwegs ist, ebenso. Hängt die Vorhut, geht der Rest nach VORHUT_FRIST (kein Stillstand). Die Bremse
+     selbst bleibt unverändert. Preis im gesunden Fall: die übrigen gestauten Lesen kommen eine Antwortzeit später;
+     gemessen in SPIELSYSTEM.md („Start-Tor mit Vorhut“). Eine Seite ohne Tor (aus dem Netz) merkt nichts. */
+  const VORHUT_FRIST = 3000;
+  const EIGENES_PROFIL = "/rest/v1/profiles?select=*&id=eq.";
+  let stau = null, vorhut = null;
+  const adresseVon = (eingabe) => String(typeof eingabe === "string" ? eingabe : (eingabe && eingabe.url) || eingabe);
+  /* könnte die Bremse diese Anfrage selbst beantworten? (dieselbe Einteilung wie in bremsFetchJetzt und rundrufFetch) */
+  function haltbar(eingabe, opt) {
+    const a = adresseVon(eingabe);
+    if (a.indexOf("/realtime/v1/api/broadcast") >= 0) return true;
+    if (a.indexOf("/auth/v1/token") >= 0 && a.indexOf("refresh_token") >= 0) return true;
+    if (a.indexOf("/rest/v1/") < 0 || a.indexOf(LESEN_VOR_SCHREIBEN) >= 0) return false;
+    const m = String((opt && opt.method) || (eingabe && eingabe.method) || "GET").toUpperCase();
+    return m === "GET" || m === "HEAD" || a.indexOf("/rest/v1/rpc/") >= 0;
+  }
+  function stauen(tor, weiter, eingabe, opt) {
+    if (!stau || stau.tor !== tor) {
+      const s = stau = { tor, liste: [] };
+      tor.then(() => stauLoesen(s));
+    }
+    stau.liste.push([weiter, eingabe, opt]);
+  }
+  function stauLoesen(s) {
+    if (stau === s) stau = null;
+    const liste = s.liste;
+    let v = -1;
+    if (!vorhut) {
+      v = liste.findIndex(([, e, o]) => haltbar(e, o) && adresseVon(e).indexOf(EIGENES_PROFIL) >= 0);
+      if (v < 0) v = liste.findIndex(([, e, o]) => haltbar(e, o));
+    }
+    if (v >= 0) {
+      const [weiter, e, o] = liste[v];
+      const p = bremsFetchJetzt(e, o);
+      let frei;
+      const vh = new Promise((ok) => { frei = ok; });
+      const uhr = setTimeout(frei, VORHUT_FRIST);
+      p.then(frei, frei);
+      vorhut = vh;
+      vh.then(() => { clearTimeout(uhr); if (vorhut === vh) vorhut = null; });   // vor den Wartenden (früher eingehängt)
+      weiter(p);
+    }
+    liste.forEach(([weiter, e, o], i) => { if (i !== v) weiter(bremsFetch(e, o)); });
+  }
+  function bremsFetchJetzt(eingabe, opt) {
+    const adresse = adresseVon(eingabe);
     if (adresse.indexOf("/realtime/v1/api/broadcast") >= 0) return rundrufFetch(eingabe, opt);
     const rest = adresse.indexOf("/rest/v1/") >= 0;
     const erneuern = adresse.indexOf("/auth/v1/token") >= 0 && adresse.indexOf("refresh_token") >= 0;
