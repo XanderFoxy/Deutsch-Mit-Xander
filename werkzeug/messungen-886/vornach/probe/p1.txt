@@ -1,0 +1,177 @@
+
+Ladezeit: Netz 4g (9 Mbit/s, 60 ms, Aufbau 2 RTT), Rechner 4×, HTTP/2 + TLS, 1 Läufe, Fälle kalt,sw, Fenster 10000 ms, Tipp sofort nach bereit, Spur, Profil auf der Platte, supabase-js dma-mess-supabase-js-2.117.3.umd.js (54 KB gz)
+  Stand 886: /tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/l886/grund/886  (Fassung 885, d68ba549)
+  Stand 884: /tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/l886/grund/884  (Fassung 884, 02613a71)
+  Konto: mitglied, Supabase nachgebaut (Bedenkzeit 40 ms), Foto: github nachgebaut (1369667 B)
+  886 kalt   Lauf 1: Bild 716  bereit 1580  Wissen 500  KZ 264/268  (alt +861, ab Start 2496)  Langl. 11/1240/320  645 KB  Spur 0–10 s: Skript 1758, Stil 637, Layout 693  Foto 772/753 ueber-alex-290.webp?v=44cae76e76  Supa 90/17.5KB/ws1
+  886 sw     Lauf 1: Bild 496  bereit 874  Wissen 354  KZ 192/195  (alt +769, ab Start 1806)  Langl. 10/947/177  0 KB  Spur 0–10 s: Skript 1466, Stil 656, Layout 624  Foto 496/307 ueber-alex-290.webp?v=44cae76e76  Supa 86/16.5KB/ws1
+  884 kalt   Lauf 1: Bild 612  bereit 1579  Wissen 963  KZ 359/359  (alt +1483, ab Start 3114)  Langl. 9/1564/353  638 KB  synchron raum3@wissen 200, rest7@wissen 121  Spur 0–10 s: Skript 1924, Stil 686, Layout 677  Foto null/2655 9ob2nzt2.jpeg?raw=true  Supa 99/20.6KB/ws1  gh 2/1338KB
+  884 sw     Lauf 1: Bild 616  bereit 1007  Wissen 503  KZ 253/255  (alt +823, ab Start 1958)  Langl. 8/1059/313  1 KB  synchron raum3@wissen 75, rest7@wissen 71  Spur 0–10 s: Skript 1545, Stil 632, Layout 598  Foto null/1606 9ob2nzt2.jpeg?raw=true  Supa 95/19.6KB/ws1  gh 2/0KB
+  Lauf 1 von 1 fertig (886 884) 07:45:18
+
+Median (min–max) in ms bzw. KB/Anzahl, je 1 Läufe:
+
+kalt                                                     A                   B   B−A gepaart (min…max; 95 % des Medians, B größer/kleiner)
+  erstes Bild                             886 716 (716–716)   884 612 (612–612)
+  größtes Bild (LCP)                      886 716 (716–716)   884 612 (612–612)
+  Seite: erstes Byte                      886 182 (182–182)   884 184 (184–184)
+  DOMContentLoaded                        886 1569 (1569–1569)   884 1566 (1566–1566)
+  bereit                                  886 1580 (1580–1580)   884 1579 (1579–1579)
+  load                                    886 2152 (2152–2152)   884 2664 (2664–2664)
+  Seiten je Öffnen (2 = neu geladen)      886 1 (1–1)   884 1 (1–1)
+  Vorlauf bis zur Seite, die bleibt       886 0 (0–0)   884 0 (0–0)
+  erstes Bild (bleibende Seite) ab Öffnen 886 716 (716–716)   884 612 (612–612)
+  bereit (bleibende Seite) ab Öffnen      886 1580 (1580–1580)   884 1579 (1579–1579)
+  Wissen: Tipp → Bild                     886 500 (500–500)   884 963 (963–963)
+  Klassenzimmer: Tipp → Bild              886 264 (264–264)   884 359 (359–359)
+  Klassenzimmer: Tipp → Knopf             886 268 (268–268)   884 359 (359–359)
+  Über mich: Foto gemalt                  886 772 (772–772)   884 –
+  Über mich: Foto geladen                 886 753 (753–753)   884 2655 (2655–2655)
+  Foto gemalt − erstes Bild               886 56 (56–56)   884 –
+  Supabase-Anfragen 0–10 s                886 90 (90–90)   884 99 (99–99)
+  Supabase-KB 0–10 s                      886 18 (17.5–17.5)   884 21 (20.6–20.6)
+  Echtzeit-Verbindungen                   886 1 (1–1)   884 1 (1–1)
+  github-KB                               886 0 (0–0)   884 1338 (1338–1338)
+  alte Spalte: Wissen-Tipp → Knopf        886 861 (861–861)   884 1483 (1483–1483)
+  alte Spalte: Öffnen → Knopf             886 2496 (2496–2496)   884 3114 (3114–3114)
+    davon Werkzeug-Pausen                 886 147 (147–147)   884 213 (213–213)
+  Langläufer 0–10 s: Anzahl               886 11 (11–11)   884 9 (9–9)
+  Langläufer: Summe                       886 1240 (1240–1240)   884 1564 (1564–1564)
+  Langläufer: längster                    886 320 (320–320)   884 353 (353–353)
+  Sperrzeit (Σ über 50 ms)                886 690 (690–690)   884 1114 (1114–1114)
+  KB über die Leitung bis bereit          886 645 (645–645)   884 638 (638–638)
+  KB über die Leitung 0–10 s              886 2071 (2071–2071)   884 2068 (2068–2068)
+  Dateien aus dem Netz                    886 65 (65–65)   884 65 (65–65)
+  Dateien nachgefragt (304)               886 0 (0–0)   884 0 (0–0)
+  Dateien aus dem Speicher                886 0 (0–0)   884 0 (0–0)
+  Dateien vom Service Worker              886 0 (0–0)   884 0 (0–0)
+  KB, die der Server schickte             886 2052 (2052–2052)   884 2049 (2049–2049)
+  Anfragen beim Server                    886 65 (65–65)   884 66 (66–66)
+  Anfragen ins Leere (404)                886 0 (0–0)   884 0 (0–0)
+  synchron geholt: Anzahl                 886 0 (0–0)   884 2 (2–2)
+  synchron geholt: ms gesperrt            886 0 (0–0)   884 321 (321–321)
+    davon beim Start                      886 0 (0–0)   884 0 (0–0)
+    davon im Wissen-Tipp                  886 0 (0–0)   884 321 (321–321)
+    davon im Klassenzimmer-Tipp           886 0 (0–0)   884 0 (0–0)
+  synchron geholt, Stand 884: app-teil-raum3.js 1× (wissen 1; Median 200 ms; dmaTeilSofort < dmaTeilRuf < lcWaEntsperren) · app-teil-rest7.js 1× (wissen 1; Median 121 ms; dmaTeilSofort < dmaTeilRuf < tutorSchreibzeile < <anonymous>)
+  Hauptfaden (Spur, Median ms) Stand 886:
+    start    skript 440, gc 12, stilLesen 20, stil 76, layout 195, zeichnen 31, html 55, rest 312, (davon erzwungenes Stil/Layout 20)
+    wissen   skript 94, stilLesen 98, stil 61, layout 132, zeichnen 16, html 1, rest 82
+    kz       skript 56, stil 40, layout 95, zeichnen 14, html 2, rest 60
+    danach   skript 1143, gc 12, stil 329, layout 257, zeichnen 618, html 9, rest 1275, (davon erzwungenes Stil/Layout 44)
+    werkzeug skript 26, stil 14, layout 13, zeichnen 9, rest 74
+  Hauptfaden (Spur, Median ms) Stand 884:
+    start    skript 468, gc 10, stilLesen 19, stil 79, layout 136, zeichnen 24, html 46, rest 315, (davon erzwungenes Stil/Layout 21)
+    wissen   skript 162, sync 301, stilLesen 103, stil 98, layout 151, zeichnen 19, html 3, rest 117, (davon erzwungenes Stil/Layout 132)
+    kz       skript 88, stil 52, layout 112, zeichnen 20, html 2, rest 84
+    danach   skript 1151, gc 12, stil 309, layout 253, zeichnen 540, html 8, rest 1259, (davon erzwungenes Stil/Layout 35)
+    werkzeug skript 55, stil 26, layout 25, zeichnen 10, html 1, rest 90
+
+sw                                                     A                   B   B−A gepaart (min…max; 95 % des Medians, B größer/kleiner)
+  erstes Bild                             886 496 (496–496)   884 616 (616–616)
+  größtes Bild (LCP)                      886 496 (496–496)   884 616 (616–616)
+  Seite: erstes Byte                      886 14 (14–14)   884 206 (206–206)
+  DOMContentLoaded                        886 752 (752–752)   884 887 (887–887)
+  bereit                                  886 874 (874–874)   884 1007 (1007–1007)
+  load                                    886 977 (977–977)   884 1068 (1068–1068)
+  Seiten je Öffnen (2 = neu geladen)      886 1 (1–1)   884 1 (1–1)
+  Vorlauf bis zur Seite, die bleibt       886 0 (0–0)   884 0 (0–0)
+  erstes Bild (bleibende Seite) ab Öffnen 886 496 (496–496)   884 616 (616–616)
+  bereit (bleibende Seite) ab Öffnen      886 874 (874–874)   884 1007 (1007–1007)
+  Wissen: Tipp → Bild                     886 354 (354–354)   884 503 (503–503)
+  Klassenzimmer: Tipp → Bild              886 192 (192–192)   884 253 (253–253)
+  Klassenzimmer: Tipp → Knopf             886 195 (195–195)   884 255 (255–255)
+  Über mich: Foto gemalt                  886 496 (496–496)   884 –
+  Über mich: Foto geladen                 886 307 (307–307)   884 1606 (1606–1606)
+  Foto gemalt − erstes Bild               886 0 (0–0)   884 –
+  Supabase-Anfragen 0–10 s                886 86 (86–86)   884 95 (95–95)
+  Supabase-KB 0–10 s                      886 17 (16.5–16.5)   884 20 (19.6–19.6)
+  Echtzeit-Verbindungen                   886 1 (1–1)   884 1 (1–1)
+  github-KB                               886 0 (0–0)   884 0 (0–0)
+  alte Spalte: Wissen-Tipp → Knopf        886 769 (769–769)   884 823 (823–823)
+  alte Spalte: Öffnen → Knopf             886 1806 (1806–1806)   884 1958 (1958–1958)
+    davon Werkzeug-Pausen                 886 383 (383–383)   884 195 (195–195)
+  Langläufer 0–10 s: Anzahl               886 10 (10–10)   884 8 (8–8)
+  Langläufer: Summe                       886 947 (947–947)   884 1059 (1059–1059)
+  Langläufer: längster                    886 177 (177–177)   884 313 (313–313)
+  Sperrzeit (Σ über 50 ms)                886 447 (447–447)   884 659 (659–659)
+  KB über die Leitung bis bereit          886 0 (0–0)   884 1 (1–1)
+  KB über die Leitung 0–10 s              886 1 (1–1)   884 2 (2–2)
+  Dateien aus dem Netz                    886 1 (1–1)   884 1 (1–1)
+  Dateien nachgefragt (304)               886 3 (3–3)   884 5 (5–5)
+  Dateien aus dem Speicher                886 0 (0–0)   884 0 (0–0)
+  Dateien vom Service Worker              886 58 (58–58)   884 56 (56–56)
+  KB, die der Server schickte             886 0 (0–0)   884 0 (0–0)
+  Anfragen beim Server                    886 6 (6–6)   884 8 (8–8)
+  Anfragen ins Leere (404)                886 0 (0–0)   884 0 (0–0)
+  synchron geholt: Anzahl                 886 0 (0–0)   884 2 (2–2)
+  synchron geholt: ms gesperrt            886 0 (0–0)   884 146 (146–146)
+    davon beim Start                      886 0 (0–0)   884 0 (0–0)
+    davon im Wissen-Tipp                  886 0 (0–0)   884 146 (146–146)
+    davon im Klassenzimmer-Tipp           886 0 (0–0)   884 0 (0–0)
+  synchron geholt, Stand 884: app-teil-raum3.js 1× (wissen 1; Median 75 ms; dmaTeilSofort < dmaTeilRuf < lcWaEntsperren) · app-teil-rest7.js 1× (wissen 1; Median 71 ms; dmaTeilSofort < dmaTeilRuf < tutorSchreibzeile < <anonymous>)
+  Hauptfaden (Spur, Median ms) Stand 886:
+    start    skript 241, gc 7, stilLesen 92, stil 56, layout 128, zeichnen 16, html 61, rest 253, (davon erzwungenes Stil/Layout 17)
+    wissen   skript 82, stil 22, layout 154, zeichnen 22, html 7, rest 64
+    kz       skript 33, stil 32, layout 71, zeichnen 17, html 1, rest 28, (davon erzwungenes Stil/Layout 1)
+    danach   skript 1034, gc 14, stil 383, layout 255, zeichnen 744, html 9, rest 921, (davon erzwungenes Stil/Layout 34)
+    werkzeug skript 76, stil 72, layout 15, zeichnen 6, rest 198
+  Hauptfaden (Spur, Median ms) Stand 884:
+    start    skript 214, gc 10, stilLesen 98, stil 71, layout 109, zeichnen 19, html 75, rest 206, (davon erzwungenes Stil/Layout 24)
+    wissen   skript 93, sync 135, stil 19, layout 153, zeichnen 22, html 4, rest 71, (davon erzwungenes Stil/Layout 123)
+    kz       skript 65, stil 21, layout 47, zeichnen 19, html 2, rest 95
+    danach   skript 1123, gc 11, stil 379, layout 282, zeichnen 752, html 8, rest 1027, (davon erzwungenes Stil/Layout 39)
+    werkzeug skript 50, stil 44, layout 6, zeichnen 6, html 3, rest 84
+
+Beispiel 886 kalt (Lauf 1, bereit 1580 ms): LCP p.about-text-short; Dateien KB: min/spiel.js 274, min/app.js 200, min/korrekturen.css 154, min/livechat.js 108, min/data-exercises.js 106, tutor/alex-comic.webp 91, min/data-exercises-teil.js 87, min/app-teil-rest5.js 60, min/app-teil-rest1.js 56, npm/@supabase/supabase-js@2/dist/umd/supabase.js 54, min/app-teil-rest4.js 54, min/app-teil-rest3.js 52
+  V8-Code-Cache benutzt (KB): –; angelegt (ms Hauptfaden): –
+  Aufgabe ab 1263 ms, 318 ms: skript 278, stil 22, erzwungen 20, rest 7, gc 7, layout 3, html 1  ← EvaluateScript  app.js 298
+  Aufgabe ab 438 ms, 245 ms: layout 186, stil 43, zeichnen 10, rest 6, skript 0  ← FunctionCall 0
+  Aufgabe ab 1786 ms, 123 ms: layout 90, skript 15, zeichnen 9, rest 4, stil 4, html 1  ← FunctionCall  app.js 11
+  Aufgabe ab 2257 ms, 108 ms: layout 61, stil 23, skript 20, rest 3, html 2, zeichnen 0  ← FunctionCall  app.js 15
+  Aufgabe ab 1961 ms, 102 ms: stilLesen 65, rest 36, skript 0
+  Aufgabe ab 3222 ms, 89 ms: skript 70, erzwungen 18, layout 11, stil 7, html 1, rest 0  ← FunctionCall entries 1
+  Bild ab 186 ms, 485 ms (Stil+Layout 232): index.html https://127.0.0.1:40323/index.html 9 | index.html https://127.0.0.1:40323/index.html 8
+  Bild ab 1255 ms, 330 ms (Stil+Layout 5): app.js https://127.0.0.1:40323/min/app.js?v=a7a22611fe 298 (erzw. 20)
+  Bild ab 1914 ms, 204 ms (Stil+Layout 51): 
+
+Beispiel 886 sw (Lauf 1, bereit 874 ms): LCP p.about-text-short; Dateien KB: fassung.json 0, manifest.webmanifest 0, icons/icon-192.png 0, filme/liste.json 0
+  V8-Code-Cache benutzt (KB): supabase.js 207, core.js 22, ton-liste.js 3, aussprache-tabelle.js 12, aussprache-pruefung.js 9, aussprache-kreisel.js 1, klassenzimmer.js 3, livechat.js 205, bildverwaltung.js 3, data-exercises.js 423, data-vocab.js 36, data-umgangssprache.js 19, data-dialekt.js 25, backend.js 40, quiz.js 5, baukasten.js 14, app.js 669, data-werkstatt.js 5, werkstatt.js 5, data-geraeusche.js 6, data-lernweg.js 26, spiel.js 219, data-minibilder.js 100, data-wegweiser.js 90, messung.js 17; angelegt (ms Hauptfaden): –
+  Aufgabe ab 1160 ms, 179 ms: layout 116, zeichnen 21, skript 18, stil 12, html 7, rest 5  ← FunctionCall  app.js 19
+  Aufgabe ab 307 ms, 149 ms: layout 117, stil 19, zeichnen 9, rest 3, skript 1  ← FunctionCall 1
+  Aufgabe ab 623 ms, 141 ms: skript 101, stil 19, erzwungen 17, rest 9, gc 7, html 3, layout 2  ← EvaluateScript  app.js 116
+  Aufgabe ab 1970 ms, 83 ms: skript 60, erzwungen 22, layout 16, stil 6, html 2, rest 0  ← FunctionCall entries 1
+  Aufgabe ab 3145 ms, 78 ms: skript 77, rest 1  ← FunctionCall entries 1
+  Aufgabe ab 873 ms, 77 ms: stil 63, rest 6, zeichnen 3, skript 2, layout 2  ← FunctionCall 1
+  Bild ab 621 ms, 321 ms (Stil+Layout 67): app.js https://127.0.0.1:38353/min/app.js?v=a7a22611fe 115 (erzw. 17) | index.html #document.onDOMContentLoaded 6
+  Bild ab 208 ms, 237 ms (Stil+Layout 136): 
+  Bild ab 1086 ms, 228 ms (Stil+Layout 154): app.js ResizeObserverCallback 25 | app.js BUTTON.onclick 15
+
+Beispiel 884 kalt (Lauf 1, bereit 1579 ms): LCP p.about-text-short; Dateien KB: min/spiel.js 274, min/app.js 192, min/korrekturen.css 154, min/livechat.js 107, min/data-exercises.js 106, tutor/alex-comic.webp 91, min/data-exercises-teil.js 87, min/app-teil-rest5.js 60, min/app-teil-rest1.js 57, npm/@supabase/supabase-js@2/dist/umd/supabase.js 54, min/app-teil-rest2.js 54, min/app-teil-rest4.js 54
+  V8-Code-Cache benutzt (KB): –; angelegt (ms Hauptfaden): –
+  synchron geholt: app-teil-raum3.js ab 1653 ms, 200 ms (wissen; dmaTeilSofort < dmaTeilRuf < lcWaEntsperren) · app-teil-rest7.js ab 1940 ms, 121 ms (wissen; dmaTeilSofort < dmaTeilRuf < tutorSchreibzeile < <anonymous>)  · Seite (DMA_TEIL_SOFORT): raum3 at HTMLDocument.lcWaEntsperren (app.js) · rest7 at tutorSchreibzeile (app.js)
+  Aufgabe ab 1220 ms, 353 ms: skript 313, erzwungen 21, stil 18, rest 10, html 6, layout 3, gc 3  ← EvaluateScript  app.js 337
+  Aufgabe ab 1934 ms, 348 ms: layout 145, erzwungen 132, sync 110, skript 49, stil 21, zeichnen 12, rest 6, html 3  ← FunctionCall  app.js 154
+  Aufgabe ab 1642 ms, 290 ms: sync 191, skript 96, rest 2, layout 1  ← FunctionCall lcWaEntsperren app.js 276
+  Aufgabe ab 418 ms, 169 ms: layout 119, stil 31, zeichnen 9, rest 8, skript 2  ← FunctionCall 0
+  Aufgabe ab 2807 ms, 129 ms: layout 65, stil 28, skript 27, rest 6, html 2, zeichnen 0  ← FunctionCall  app.js 20
+  Aufgabe ab 2351 ms, 107 ms: stilLesen 75, rest 31, skript 0
+  Bild ab 1641 ms, 626 ms (Stil+Layout 1): app.js lcWaEntsperren 276 | app.js BUTTON.onclick 154 (erzw. 131) | app.js #document.onfocusin 132
+  Bild ab 174 ms, 398 ms (Stil+Layout 153): index.html https://127.0.0.1:43957/index.html 8 | index.html https://127.0.0.1:43957/index.html 5
+  Bild ab 1210 ms, 373 ms (Stil+Layout 3): app.js https://127.0.0.1:43957/min/app.js?v=b10b28be68 336 (erzw. 21) | index.html #document.onDOMContentLoaded 5
+
+Beispiel 884 sw (Lauf 1, bereit 1007 ms): LCP p.about-text-short; Dateien KB: fassung.json 0, filme/liste.json 0, manifest.webmanifest 0, min/app-teil-raum3.js 0, min/app-teil-rest7.js 0, icons/icon-192.png 0
+  V8-Code-Cache benutzt (KB): supabase.js 170, core.js 22, ton-liste.js 3, aussprache-tabelle.js 12, aussprache-pruefung.js 9, aussprache-kreisel.js 1, klassenzimmer.js 3, livechat.js 205, bildverwaltung.js 3, data-exercises.js 423, data-vocab.js 36, data-umgangssprache.js 19, data-dialekt.js 25, backend.js 35, quiz.js 5, baukasten.js 14, app.js 767, data-werkstatt.js 2, werkstatt.js 5, rueckfrage.js 12, data-geraeusche.js 6, spiel.js 219, data-lernweg.js 26, data-minibilder.js 100, data-wegweiser.js 90, messung.js 17; angelegt (ms Hauptfaden): –
+  synchron geholt: app-teil-raum3.js ab 1168 ms, 75 ms (wissen; dmaTeilSofort < dmaTeilRuf < lcWaEntsperren) · app-teil-rest7.js ab 1280 ms, 71 ms (wissen; dmaTeilSofort < dmaTeilRuf < tutorSchreibzeile < <anonymous>)  · Seite (DMA_TEIL_SOFORT): raum3 at HTMLDocument.lcWaEntsperren (app.js) · rest7 at tutorSchreibzeile (app.js)
+  Aufgabe ab 1272 ms, 314 ms: layout 150, erzwungen 123, sync 67, skript 47, zeichnen 20, stil 18, rest 9, html 4  ← FunctionCall  app.js 150
+  Aufgabe ab 723 ms, 171 ms: skript 122, stil 24, erzwungen 24, gc 10, rest 7, html 7, layout 2  ← EvaluateScript  app.js 120
+  Aufgabe ab 467 ms, 128 ms: layout 94, stil 17, zeichnen 12, rest 3, skript 3  ← FunctionCall 1
+  Aufgabe ab 2266 ms, 128 ms: skript 102, erzwungen 24, layout 14, stil 10, rest 1, html 1  ← FunctionCall MutationObserver.observe.subtree spiel.js 9
+  Aufgabe ab 1155 ms, 117 ms: sync 68, skript 42, rest 5, layout 2  ← FunctionCall lcWaEntsperren app.js 100
+  Aufgabe ab 1752 ms, 79 ms: layout 41, stil 18, skript 18, rest 2, html 2, zeichnen 0  ← FunctionCall  app.js 13
+  Bild ab 1142 ms, 426 ms (Stil+Layout 2): app.js BUTTON.onclick 156 (erzw. 122) | app.js lcWaEntsperren 100 | app.js #document.onfocusin 78
+  Bild ab 720 ms, 326 ms (Stil+Layout 38): app.js https://127.0.0.1:34673/min/app.js?v=b10b28be68 120 (erzw. 23) | backend.js https://127.0.0.1:34673/min/backend.js?v=c65c88ce7b 8 | supabase.js https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase 6
+  Bild ab 379 ms, 201 ms (Stil+Layout 112): 
+
+Rechnerlast vorher 0.19 0.17 0.43, nachher 1.99 0.76 0.61 (4 Kerne)
+JSON: /tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/l886/vornach/probe/p1.json
