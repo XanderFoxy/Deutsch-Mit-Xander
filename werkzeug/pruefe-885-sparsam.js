@@ -1438,9 +1438,11 @@ function schluessel(adresse, methode) {
        6 s). SWS402 in der 402-Sperre (auch die Echtzeit-Leitung abgelehnt wie in Wirklichkeit): jede langsame Runde
        ≤ Bezug + 1. SWS0 ohne Sperre, D = 5 500: ≤ Bezug + 3 und Profil da – die Vorhut hält nichts fest. Auf einem Stand
        mit S1 muss die Seite in den Runden 5 500/8 000 aus dem Speicher kommen (sonst prüfte der Fall nichts); 807e6a7d hat
-       kein S1, die Seite kommt dort nach D aus dem Netz – dieselbe Grenze. */
+       kein S1, die Seite kommt dort nach D aus dem Netz – dieselbe Grenze. Dazu SWS0 „HAENG“: das eigene Profil (die Vorhut)
+       bekommt nie eine Antwort – der Rest (Laufschrift) geht trotzdem, spätestens 3,5 s nach dem Profil (Frist 3 s, kein
+       Stillstand); ohne Vorhut (807e6a7d, e038be97) sofort. */
     const S1 = /data-dma-speicher/.test(fs.existsSync(path.join(WURZEL, "sw.js")) ? fs.readFileSync(path.join(WURZEL, "sw.js"), "utf8") : "");
-    for (const [fall, sperre, runden] of [["SWS402", "402", [["D1000", 1000, 0], ["D5500", 5500, 0], ["FJ8000", 400, 8000]]], ["SWS0", "", [["D5500", 5500, 0]]]]) {
+    for (const [fall, sperre, runden] of [["SWS402", "402", [["D1000", 1000, 0], ["D5500", 5500, 0], ["FJ8000", 400, 8000]]], ["SWS0", "", [["D5500", 5500, 0], ["HAENG", 5500, 0]]]]) {
       if (!FAELLE.includes(fall)) continue;
       abschnitt(fall, "Helfer an, ohne Update, Seite aus dem Speicher, fassung.json langsam" + (sperre ? ", " + sperre + "-Sperre" : ", ohne Sperre") + ", je 30 s");
       const { s, ctl } = await mitHelfer();
@@ -1453,9 +1455,20 @@ function schluessel(adresse, methode) {
       const erg = { bezug: { gesamt: bezug.z.gesamt, je: bezug.z.je, ws: bezug.z.ws, info: bezug.info } };
       for (const [name, verz, verzFj] of runden) {
         Object.assign(netz, { verz, verzFj, neuF: "" });
+        const haeng = name === "HAENG";
+        if (haeng) Object.assign(s.zustand, { haengen: /^profiles\*$/, gehangen: false, zeitLog: [] });
         const r = await runde(s, fall + "-" + name);
         Object.assign(netz, { verz: 0, verzFj: 0 });
         zeigeRunde(name, r);
+        if (haeng) {
+          const zl = s.zustand.zeitLog || [];
+          const tp = (zl.find((x) => x.k === "profiles*") || {}).t, ta = (zl.find((x) => x.k === "activity*") || {}).t;
+          const abstand = tp != null && ta != null ? ta - tp : null;
+          Object.assign(s.zustand, { haengen: null, zeitLog: null });
+          sage(abstand != null && abstand <= 3500, fall + " HAENG: das Profil hängt – die Laufschrift geht trotzdem (≤ 3,5 s nach dem Profil)", "Abstand " + abstand + " ms");
+          erg[name] = { gesamt: r.z.gesamt, abstand, info: r.info };
+          continue;
+        }
         const grenze = bezug.z.gesamt + (sperre ? 1 : 3);
         sage(r.z.gesamt <= grenze, fall + " " + name + ": nicht mehr Anfragen als die Seite aus dem Netz (+ " + (sperre ? 1 : 3) + ")", r.z.gesamt + " gegen " + bezug.z.gesamt + (sperre ? " (e038be97: 12–13 gegen 7–8; 807e6a7d 11 gegen 11)" : ""));
         if (S1 && verz !== 1000) sage(r.info.speicher === true, fall + " " + name + ": die Seite kam aus dem Speicher (sonst prüft dieser Teil nichts)", JSON.stringify(r.info));

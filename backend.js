@@ -178,26 +178,31 @@ const Backend = (function () {
        wie mit S1; die Daten kommen höchstens so spät wie bis 884. Jede andere Seite: kein Tor. SPIELSYSTEM.md I50. */
     const tor = typeof window !== "undefined" ? window.dmaStartTor : null;
     if (tor && !tor.offen) return new Promise((weiter) => stauen(tor, weiter, eingabe, opt));
-    if (vorhut && haltbar(eingabe, opt)) return vorhut.then(() => bremsFetch(eingabe, opt));   // FASSUNG 886 — Vorhut (unten)
+    if (warte && haltbar(eingabe, opt)) return new Promise((weiter) => warte.liste.push([weiter, eingabe, opt]));   // FASSUNG 886 — Vorhut (unten)
     return bremsFetchJetzt(eingabe, opt);
   }
   /* FASSUNG 886 — VORHUT HINTER DEM START-TOR (Prüfbericht 3 zum Einmischen, Punkt „tor“). Das Tor gab alles, was sich
      hinter ihm gestaut hatte, in derselben Millisekunde frei. Die Bremse hält Lesen aber erst nach der ersten Antwort mit
-     402/429/5xx an – so gingen in einer Sperre alle gestauten Lesen hinaus, bevor die erste 402 da war (Prüfer: Seite aus
-     dem Speicher, ohne Update, fassung.json nach 5,5 s, 402: zehn Lesen in 10 ms – 12–13 Anfragen in 30 s gegen 11 auf
-     807e6a7d und 7–8 auf derselben Seite aus dem Netz; 503: 24 gegen 21–23). Der häufigste S1-Weg in einer Sperre.
-     Jetzt: geht das Tor auf, geht von den gestauten Anfragen, die die Bremse selbst beantworten könnte (Lesen über
-     /rest/v1/ samt rpc, das Erneuern der Anmeldung, der REST-Notweg der Kanäle), zuerst nur EINE hinaus – das eigene
-     Profil, wenn es wartet (das braucht die Seite ohnehin zuerst; im gesunden Fall kommt es so nicht später als bisher),
-     sonst die erste. Die übrigen gehen erst, wenn deren Antwort da ist, und dann durch die Bremse: hat die Antwort sie
-     gezogen (402 sofort), antwortet sie für den Rest selbst; sonst geht der Rest wie bisher. Was die Bremse ohnehin nie
-     anhält (Schreiben, Anmeldung, Speicher, Funktionen), geht wie bisher sofort mit dem Tor. Neue Lesen warten, solange
-     die Vorhut unterwegs ist, ebenso. Hängt die Vorhut, geht der Rest nach VORHUT_FRIST (kein Stillstand). Die Bremse
-     selbst bleibt unverändert. Preis im gesunden Fall: die übrigen gestauten Lesen kommen eine Antwortzeit später;
-     gemessen in SPIELSYSTEM.md („Start-Tor mit Vorhut“). Eine Seite ohne Tor (aus dem Netz) merkt nichts. */
+     402 (bei 429/5xx nach der zweiten, ≥ 2 s später) an – so gingen in einer Sperre alle gestauten Lesen hinaus, bevor die
+     erste 402 da war (Prüfer: Seite aus dem Speicher, ohne Update, fassung.json nach 5,5 s, 402: zehn Lesen in 10 ms –
+     12–13 Anfragen in 30 s gegen 11 auf 807e6a7d und 7–8 auf derselben Seite aus dem Netz; 503: 24 gegen 21–23). Der
+     häufigste S1-Weg in einer Sperre.
+     Jetzt (wie der „halb offene“ Zustand eines Schutzschalters): geht das Tor auf, geht von den gestauten Anfragen, die
+     die Bremse selbst beantworten könnte (Lesen über /rest/v1/ samt rpc, das Erneuern der Anmeldung, der REST-Notweg der
+     Kanäle), zuerst nur EINE hinaus – das eigene Profil, wenn es wartet (das braucht die Seite ohnehin zuerst; im
+     gesunden Fall kommt es so nicht später als bisher), sonst die erste. Die übrigen gehen erst, wenn deren Antwort da
+     ist, und dann durch die Bremse: hat die Antwort sie gezogen (402 sofort), antwortet sie für den Rest selbst; lebt der
+     Server, geht der Rest wie bisher. Antwortet er mit 429/5xx, ohne dass die Bremse schon zieht (sie braucht dafür zwei
+     Fehlschläge ≥ 2 s auseinander), geht genau dann eine zweite Vorhut, wenn ihr Fehlschlag zählen würde – scheitert auch
+     sie, zieht die Bremse und gilt für den Rest; kommt sie durch, geht der Rest (höchstens drei Vorhuten). Ein Netzfehler
+     (Status 0) hält nichts weiter auf – dort lässt die Bremse einzelne Abfragen ohnehin hinaus. Was die Bremse nie anhält
+     (Schreiben, Anmeldung, Speicher, Funktionen), geht wie bisher sofort mit dem Tor. Neue Lesen warten, solange eine
+     Vorhut unterwegs ist, ebenso. Hängt die Vorhut, geht der Rest nach VORHUT_FRIST (kein Stillstand). Die Bremse selbst
+     bleibt unverändert. Preis im gesunden Fall: die übrigen gestauten Lesen kommen eine Antwortzeit später; gemessen in
+     SPIELSYSTEM.md („Nachbesserung 3“ des Einmischens). Eine Seite ohne Tor (aus dem Netz) merkt nichts. */
   const VORHUT_FRIST = 3000;
   const EIGENES_PROFIL = "/rest/v1/profiles?select=*&id=eq.";
-  let stau = null, vorhut = null;
+  let stau = null, warte = null;   // warte: { liste, runde } – die zurückgehaltenen Lesen, solange eine Vorhut unterwegs ist
   const adresseVon = (eingabe) => String(typeof eingabe === "string" ? eingabe : (eingabe && eingabe.url) || eingabe);
   /* könnte die Bremse diese Anfrage selbst beantworten? (dieselbe Einteilung wie in bremsFetchJetzt und rundrufFetch) */
   function haltbar(eingabe, opt) {
@@ -208,6 +213,11 @@ const Backend = (function () {
     const m = String((opt && opt.method) || (eingabe && eingabe.method) || "GET").toUpperCase();
     return m === "GET" || m === "HEAD" || a.indexOf("/rest/v1/rpc/") >= 0;
   }
+  function lesenGebremst() {   // dieselbe Bedingung wie in bremsFetchJetzt
+    bremseUhrPruefen();
+    const jetzt = Date.now();
+    return bremse.status !== 0 && jetzt < bremse.bis && jetzt > bremse.frei;
+  }
   function stauen(tor, weiter, eingabe, opt) {
     if (!stau || stau.tor !== tor) {
       const s = stau = { tor, liste: [] };
@@ -217,24 +227,38 @@ const Backend = (function () {
   }
   function stauLoesen(s) {
     if (stau === s) stau = null;
-    const liste = s.liste;
-    let v = -1;
-    if (!vorhut) {
-      v = liste.findIndex(([, e, o]) => haltbar(e, o) && adresseVon(e).indexOf(EIGENES_PROFIL) >= 0);
-      if (v < 0) v = liste.findIndex(([, e, o]) => haltbar(e, o));
-    }
-    if (v >= 0) {
-      const [weiter, e, o] = liste[v];
-      const p = bremsFetchJetzt(e, o);
-      let frei;
-      const vh = new Promise((ok) => { frei = ok; });
-      const uhr = setTimeout(frei, VORHUT_FRIST);
-      p.then(frei, frei);
-      vorhut = vh;
-      vh.then(() => { clearTimeout(uhr); if (vorhut === vh) vorhut = null; });   // vor den Wartenden (früher eingehängt)
-      weiter(p);
-    }
-    liste.forEach(([weiter, e, o], i) => { if (i !== v) weiter(bremsFetch(e, o)); });
+    const halt = [];
+    s.liste.forEach((x) => { if (haltbar(x[1], x[2])) halt.push(x); else x[0](bremsFetchJetzt(x[1], x[2])); });
+    if (!halt.length) return;
+    if (warte) { warte.liste.push(...halt); return; }
+    warte = { liste: halt, runde: 0 };
+    vorhutSchicken(warte);
+  }
+  function vorhutSchicken(w) {
+    if (warte !== w) return;
+    if (!w.liste.length || lesenGebremst()) return vorhutEnde(w);
+    let i = w.liste.findIndex(([, e]) => adresseVon(e).indexOf(EIGENES_PROFIL) >= 0);
+    if (i < 0) i = 0;
+    const [weiter, e, o] = w.liste.splice(i, 1)[0];
+    const p = bremsFetchJetzt(e, o);
+    weiter(p);
+    w.runde += 1;
+    let fertig = false, uhr = 0;
+    const danach = (status) => {
+      if (fertig) return;
+      fertig = true;
+      clearTimeout(uhr);
+      if (w.runde < 3 && w.liste.length && status !== 402 && BREMS_CODES.indexOf(status) >= 0 && !lesenGebremst()) {
+        setTimeout(() => vorhutSchicken(w), Math.max(0, bremse.fehlZuletzt + 2000 - Date.now()) + 20);
+      } else vorhutEnde(w);
+    };
+    uhr = setTimeout(() => danach(-1), VORHUT_FRIST);
+    p.then((antwort) => danach(antwort ? antwort.status : 0), () => danach(0));
+  }
+  function vorhutEnde(w) {
+    if (warte === w) warte = null;
+    w.liste.forEach(([weiter, e, o]) => weiter(bremsFetch(e, o)));
+    w.liste = [];
   }
   function bremsFetchJetzt(eingabe, opt) {
     const adresse = adresseVon(eingabe);

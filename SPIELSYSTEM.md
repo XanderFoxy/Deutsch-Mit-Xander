@@ -7411,7 +7411,9 @@ Nachtrag; „sogar eine Anfrage darunter“ (Bericht zu Nachbesserung 1) ist obe
     `bleiben()` wahr, die Seite bleibt).
   - Nicht gewartet wird, was nur auf einen Tipp hin am fetch vorbeigeht (Relais-Funktion, SFU, Websocket beim Betreten);
     die Rückkehr in den Raum wartete schon vorher auf dieselbe erste Antwort (I43). Die Notfall-Bremse selbst ist
-    unverändert; das Tor sitzt vor ihr.
+    unverändert; das Tor sitzt vor ihr. *(Prüfbericht 3 – so stimmte das nicht ganz: das Tor gab alles Gestaute in
+    derselben Millisekunde frei; die Bremse hält Lesen erst nach der ersten 402/5xx-Antwort an, also gingen in einer Sperre
+    alle gestauten Lesen an ihr vorbei. Jetzt geht zuerst eine Vorhut – s. Nachbesserung 3.)*
 - **Gezählt** (Sonde 885-sparsam, neue Fälle SW…, nachgestelltes Supabase mit Helfer, Betreiber mit `dma-walkie`, echte
   Uhr, je Runde 30 s; „Bezug“ = ein Neuladen ohne Update im selben Lauf, „Update“ = neue Fassung 887 draußen, Seite und
   fassung.json nach D ms):
@@ -7449,7 +7451,9 @@ Nachtrag; „sogar eine Anfrage darunter“ (Bericht zu Nachbesserung 1) ist obe
   D = 300/600 +234/+255 gegen c57cdb8b, −72/−317 gegen live; D = 0 und CPU 4× D = 150 im Rauschen. Ehrlich also: **ein Teil
   des Daten-Gewinns von S1 geht zurück** – auf einem schnellen Telefon kommt das Profil etwa um die Antwortzeit von
   fassung.json später als auf c57cdb8b (über 4G typisch 0,1–0,3 s), auf einem langsamen kaum (die App braucht dort ohnehin
-  so lange). Gegen live bleibt es überall gleich schnell oder schneller (−0,1 bis −0,56 s), und das erste Bild ändert sich
+  so lange). Gegen live bleibt es in dieser Messung überall gleich schnell oder schneller (−0,1 bis −0,56 s) *(Prüfbericht 3:
+  gemessen nur mit Seite und fassung.json gleich verzögert und ohne frische index.html im HTTP-Speicher des Browsers;
+  s. Nachbesserung 3, Punkt 4)*, und das erste Bild ändert sich
   nicht (das Tor hält keine Zeile Darstellung auf). Mit D = 0 kam die Seite in 7 bzw. 6 von 8 Läufen aus dem Speicher, sonst
   war das Netz schneller (S1 nimmt dann die frische Seite, kein Tor).
 - **Sonde 885-sparsam, neue Fälle (im Standardlauf):** SWa, SWc, SWL, SWa4, SWc4 – Update-Runde ≤ Bezug + 3, höchstens
@@ -7538,7 +7542,7 @@ Anmeldebelohnung manchmal doppelt. Jetzt wartet die alte Seite, bis klar ist, ob
 Öffnen nach einem Update fragt so viel ab wie live, die Belohnung kommt genau einmal. Zweitens: Bei langsamer Verbindung
 wurde dein Profil im Hintergrund doppelt gezeichnet (6 Anfragen mehr je Start) – auch das ist weg. Der Preis: auf einem
 schnellen Handy kommen deine Daten nach dem Öffnen um die Antwortzeit des Servers später als im Entwurf (über 4G meist
-0,1–0,3 s) – das Bild nicht, und gegen die Live-Fassung ist es immer noch gleich schnell oder schneller. Sichtbar ändert sich nichts. Und eine Berichtigung: ‚sogar
+0,1–0,3 s) – das Bild nicht, und in der Messung ist es gegen die Live-Fassung gleich schnell oder schneller. Sichtbar ändert sich nichts. Und eine Berichtigung: ‚sogar
 eine Anfrage weniger als live‘ war zu viel gesagt – es sind gleich viele bzw. eine weniger.“
 
 **Offen (Nachbesserung 2)** – die Punkte 1–3 von oben gelten weiter, dazu:
@@ -7547,7 +7551,8 @@ eine Anfrage weniger als live‘ war zu viel gesagt – es sind gleich viele bzw
 5. `werkzeug/teile-bauen.js`: die zwei Kommentarzeilen „FASSUNG 885“ beim nächsten echten Umbau der Datei auf 886 ziehen
    (nicht vorher – sonst laden alle Geräte die Stücke von data-exercises.js für nichts neu).
 6. Das Tor kostet auf einer Seite aus dem Speicher ohne Update die Antwortzeit von fassung.json bis zu den ersten Daten
-   (schnelles Telefon, Tabelle oben; gegen live nie langsamer). Schneller ginge es nur, wenn die Seite die Fassung früher
+   (schnelles Telefon, Tabelle oben; in der Messung gegen live nie langsamer – Fall B, der Browser hält index.html noch
+   frisch, ist nicht gemessen, s. Nachbesserung 3, Punkt 4). Schneller ginge es nur, wenn die Seite die Fassung früher
    wüsste – etwa der Helfer meldet sie jeder Seite, sobald seine Auffrischung sie gelesen hat (wie bei der Rückkehr). Nicht
    gebaut: die Auffrischung ist index.html (größer als fassung.json) und beginnt nur um den Start der Inline-Skripte früher;
    ob das draußen etwas bringt, wäre erst zu messen.
@@ -7556,7 +7561,13 @@ eine Anfrage weniger als live‘ war zu viel gesagt – es sind gleich viele bzw
    dieses Punkts; wo es Supabase beträfe, gilt die Regel „immer nachgebaut“ wie in 885-bereiche.
 8. X5 in 1 von 8 Läufen dieses Stands rot (oben): die Vermutung prüfen (Zustand von `notifyVerpasst` und der Bremse beim Tipp
    mitschreiben) und, falls sie stimmt, das Tipp-Fenster auch ohne ausgelassenen Takt einmal holen lassen – nur bei
-   429/5xx, nicht in der 402-Sperre (Sparsamkeit).
+   429/5xx, nicht in der 402-Sperre (Sparsamkeit). *(Prüfbericht 3, geschärft: der rote Lauf zeigt „nach dem Tipp (10 s):“
+   leer. Ein Tipp holt über `dma-bremse-frei` nur Takte nach, die ausgelassen wurden (`notifyVerpasst`, `onlineGebremst`,
+   `tickerVerpasst`); hat ein gescheiterter Takt die Bremse kurz vor dem Ende des Ausfalls neu gezogen, ist seither nichts
+   ausgelassen – dann geht nach dem Tipp bis zum nächsten Takt nichts hinaus. Mit den ±20 % Zufall der Bremse hängt das von
+   der Zeitlage ab; 807e6a7d genauso, in allen anderen Läufen (885 und gemischter Stand) grün. Zu tun: entweder die Grenze
+   „binnen 10 s“ für diesen Fall auf den nächsten Takt (≤ 20 s) legen, oder der Fall stellt vor dem Tipp sicher, dass ein
+   Takt ausgelassen wurde – erst nach der mitgeschriebenen Bestätigung.)*
 
 #### I50 — FASSUNG 886 — Start-Tor: auf einer Seite aus dem Speicher wartet Supabase auf den Fassungs-Wächter (Block Fassungs-Wächter)
 Jetzt in index.html: `/* 886 (I50) */` (vor `var tor = null, torNeu = false;`; die Kommentare in index.html stehen an der
@@ -7567,8 +7578,9 @@ zweimal). Das Tor: `window.dmaStartTor` (Versprechen mit `.offen`, nur auf einer
 `null`); auf mit der ersten Antwort (`dmaFassungErst` ≠ „neu“), spätestens 6 s nach dem Öffnen, oder bei einem echten
 Tipp/Tastendruck, nach dem `bleiben()` gilt; bei „neu“ zu (nach 15 s doch auf, falls die Seite bleibt). Darauf warten
 `bremsFetch` (backend.js) und der Präsenzkanal nach 4 s (app.js). Kosten: die Daten kommen auf einer Seite aus dem Speicher
-erst nach der ersten Antwort – gegen live gleich schnell oder schneller, gegen S1 ohne Tor bis zur Antwortzeit von
-fassung.json später (Tabelle oben). 885-schlank Q baut den Block vor dem Vergleich mit dem Stand vor K zurück.
+erst nach der ersten Antwort – in der Messung gegen live gleich schnell oder schneller, gegen S1 ohne Tor bis zur
+Antwortzeit von fassung.json später (Tabelle oben). *(Nachbesserung 3: geht das Tor auf, geht zuerst eine Vorhut; die
+übrigen gestauten Lesen erst nach deren Antwort durch die Bremse.)* 885-schlank Q baut den Block vor dem Vergleich mit dem Stand vor K zurück.
 
 ## Fassung 886 — Foto auf „Über mich“ als eigene Kopie (S8, freigegeben Funk 311; Ladezeit-Entwurf)
 
