@@ -8111,7 +8111,7 @@ Sonden auf dem Endstand: 884-leitung 40, 885-praesenz 69 (ALLES GRÜN), 884-ton3
 | 1 | `chatAusLager` setzte `lagerGelesen` VOR der Foto-Abfrage; `pagehide`/„verdeckt“ in diesem Fenster schrieb die kurze Liste ins Lager (3 000 → 301), der Stücklauf ebenso bis 20 s nach dem Betreten | wichtig | behoben (L1 oben): „gelesen“ erst nach den Fotos, Stücklauf verworfen bei ersetzter Liste und ins Lager nur, wenn beim Schnappschuss gelesen; Sonde 887-sichern L (pagehide + verdeckt) und S |
 | 2 | L4a: erster 3D-Auto-Auftritt je Sitzung mit langem Bild (Viper 951 gegen 154 ms) – sichtbar, ohne Freigabe; Funk-Text verschwieg es, Sonde sah es nicht | wichtig | zurückgenommen (app.js wie 886), Vorschlag mit Zahlen (L4 oben); Sonde 887-auto E prüft den ersten Auftritt einzeln |
 | 3 | Profilfotos poppen beim Betreten nach (zweites volles Zeichnen), ohne IndexedDB ganz weg | klein | behoben: Fototafel im localStorage (L1 oben); Sonde 887-sichern T |
-| 4 | Schluss des Stücklaufs ein Stück (112–158 ms bei CPU 4×) | klein | behoben: letzte 300 Zeilen als eigene Stücke, localStorage-Text daraus, Lager eigene Pause (Messung unten) |
+| 4 | Schluss des Stücklaufs ein Stück (112–158 ms bei CPU 4×) | klein | **nur teilweise:** letzte 300 Zeilen als eigene Stücke, localStorage-Text daraus, localStorage eigene Pause; das put des ganzen Texts bleibt ein Bild von 80–170 ms (Messung unten), Lösung 888 |
 | 5 | 884-ton310 A1 auf dem Endstand rot (Fehltipp, auch auf 886) | klein | Sonde wartet, bis das Ziel still steht (Ergebnis unten); Kopf von 887-auto berichtigt |
 
 **Die sofortige Sicherung bei „verdeckt“ kostet etwas** (Prüfer: 122–191 ms Skript, langes Bild 205–358 ms bei CPU 4×; nur wenn
