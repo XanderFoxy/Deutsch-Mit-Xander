@@ -323,7 +323,9 @@ const NUR = (process.env.NUR || "ABWFTRDKSL").split("");
       LiveChat.pruefSichernAbstand(0);
       LiveChat.pruefAnhaengen({ id: "s-neu", von: "p1", name: "Bea", art: "text", text: "neu", zeit: Date.now() });
       await warte(60);
-      for (let k = 0; k < 40 && !LiveChat.pruefSichernStand().laeuft; k++) { runde(); if (!LiveChat.pruefSichernStand().laeuft) await warte(20); }
+      /* Steht aus einem früheren Teil (K) noch eine geplante Sicherung an (setTimeout bis 20 s), plant chatSichernBald
+         nicht neu – sie feuert dann für den jetzigen Raum. Darum bis 30 s auf den Start warten. */
+      for (let k = 0; k < 1500 && !LiveChat.pruefSichernStand().laeuft; k++) { runde(); if (!LiveChat.pruefSichernStand().laeuft) await warte(20); }
       const lief = LiveChat.pruefSichernStand().laeuft;        // geplante Sicherung → Schnappschuss (1001 Zeilen)
       runde();                                                 // erstes Stück
       /* jetzt wie betreten(): Lager lesen und einmischen */
