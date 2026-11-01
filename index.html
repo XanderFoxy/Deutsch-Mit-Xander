@@ -1136,7 +1136,6 @@
       };
       document.head.appendChild(s);
     }
-    /* MODUL-UMBAU (M2, MODULE-PLAN.md): Walkie als Modul aus bau/ (DMA_MODUL), mit ?quelle src/ nativ; Rückweg klassisch */
     var m = window.DMA_MODUL || {}, quelle = /[?&]quelle\b/.test(location.search), s = document.createElement("script");
     if (!("noModule" in s) || !(quelle || m.rueckfrage)) { klassisch(); return; }
     s.type = "module";
