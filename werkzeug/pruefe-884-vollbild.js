@@ -347,10 +347,15 @@ function mitschreiber(o) {
       + "und ob beim Verlassen ein schwarzer Rand bleibt. Wenn ja, schreib mir, wo genau und wie lange.";
     const fragen = art === "mittel" ? [] : [{ id: 901, thema: "Vollbild", frage: "Kommt beim Verlassen des Klassenzimmers noch ein schwarzer Rand?",
       art: "ja_nein", optionen: ["nur kurz", "bleibt stehen", "nur beim Lernen"], wo: "Wissen → Klassenzimmer → Kompass" }];
-    const meldungen = [{ id: 31, erstellt: new Date().toISOString(), von: "claude", text: lang, gelesen: null }];
+    /* MODUL-UMBAU (Schritt 1): seit 885 (Nachbesserung 1) holt das Walkie den Funk in zwei Stufen – erst Kennung und
+       „gelesen“, den Text nur für unbekannte Kennungen (.in("id", …)). Die Attrappe kannte .in nicht, und „mittel“ hatte
+       dieselbe Kennung wie „lang“: der Text kam nie an, die Leiste blieb 216 px hoch – B2m war seitdem auch auf 886
+       (7e23e157) rot („KEIN mittlerer Fall“, Zahlen gleich). Jetzt: .in() und je Art eine eigene Kennung. */
+    const meldungen = [{ id: art === "mittel" ? 32 : 31, erstellt: new Date().toISOString(), von: "claude", text: lang, gelesen: null }];
     const kette = (tab) => ({
       select() { return this; }, is() { return this; }, order() { return this; },
       limit() { return Promise.resolve({ data: tab === "betreiber_funk" ? meldungen : fragen, error: null }); },
+      in() { return Promise.resolve({ data: tab === "betreiber_funk" ? meldungen : fragen, error: null }); },
       update() { return { eq() { return Promise.resolve({ error: null }); }, in() { return Promise.resolve({ error: null }); } }; },
       insert() { return Promise.resolve({ error: null }); }
     });

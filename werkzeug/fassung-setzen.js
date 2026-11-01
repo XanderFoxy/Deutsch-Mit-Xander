@@ -247,7 +247,9 @@ function stempelSetzen() {
   });
   /* MODUL-UMBAU (M1 b): window.DMA_MODUL direkt hinter DMA_STEMPEL (bei einem Baufehler bleibt die alte Zeile) */
   try { html = require("./modul-bauen.js").zeileSetzen(html, mb.karte); } catch (e) {}
-  fs.writeFileSync(indexPfad, html);
+  /* MODUL-UMBAU: nur schreiben, wenn sich etwas geändert hat – sonst läse ein Server, der index.html gerade
+     ausliefert (Sonden, Messung), im falschen Augenblick eine halbe Datei */
+  if (html !== fs.readFileSync(indexPfad, "utf8")) fs.writeFileSync(indexPfad, html);
   /* MODUL-UMBAU (M1 c): selbst anlegen – bei Rückgabe ≠ 0 tut der Haken es nicht mehr, und min/ muss mit den Stempeln
      zusammenpassen. Nur in einem git-Baum (nicht in Vergleichsständen aus git archive). */
   if (fs.existsSync(path.join(WURZEL, ".git"))) {
