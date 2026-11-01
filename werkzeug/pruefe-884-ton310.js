@@ -268,7 +268,15 @@ const HAKEN = () => {
     return { n: st.length, lebt: st.filter((t) => t.readyState === "live").length, istR: st.length === 1 && st[0] === R };
   }, IDA);
   async function tippe(pg, sel) {
-    await pg.evaluate((s) => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: "center" }); }, sel);
+    await pg.evaluate((s) => { const e = document.querySelector(s); if (e) e.scrollIntoView({ block: "center", behavior: "instant" }); }, sel);
+    /* NACHGEBESSERT (887, Prüfer): erst tippen, wenn das Ziel still steht – sonst landete der Tipp auf #lcKopfUnter,
+       weil sich die Seite nach scrollIntoView noch bewegte (auf 886 genauso). Vier ruhige Bilder, höchstens ~2 s. */
+    await pg.evaluate((s) => new Promise((ok) => { let alt = "", ruhig = 0, n = 0;
+      const sieh = () => { const e = document.querySelector(s), r = e ? e.getBoundingClientRect() : null;
+        const k = r ? [r.left, r.top, r.width, r.height].map(Math.round).join(",") : "";
+        if (k === alt) ruhig++; else { ruhig = 0; alt = k; }
+        if (ruhig >= 4 || ++n > 120) return ok(); requestAnimationFrame(sieh); };
+      requestAnimationFrame(sieh); }), sel);
     await schlaf(150);
     const m = await pg.evaluate((s) => { const e = document.querySelector(s); if (!e) return null; const r = e.getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width }; }, sel);
     if (!m || !m.w) return "fehlt";
