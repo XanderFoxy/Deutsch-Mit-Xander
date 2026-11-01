@@ -28,7 +28,7 @@
      C  Dom knapp über dem oberen Bildrand (Fußpunkt draußen, Turm
         noch drin): er bleibt in der Szene.
      D  Ein Bild, das einmal nicht kam, wird erneut versucht.
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/pruefe-857-dom-nacht.js
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/pruefe-857-dom-nacht.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");

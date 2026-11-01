@@ -27,7 +27,7 @@
       kein „leicht-haus wald", passt in den Rahmen, Knöpfe ≥ 30 px →
       Entfernen entfernt ihn; Tipp aufs Haus: Spiel bekommt den Tipp und
       das Menü hat „Versetzen".
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/pruefe-822-versetzen-menue.js
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/pruefe-822-versetzen-menue.js
            (BILD=/pfad für Bildschirmfotos; ALT=/pfad mit leicht.min.js und leicht.css für die Gegenprobe)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
