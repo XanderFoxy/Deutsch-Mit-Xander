@@ -353,8 +353,21 @@
        „EIN EINLADUNGSLINK …“) – wie Benachrichtigung, Briefkasten, Unterricht-Einladung und Notweg-Ziel: Tipp-Weg,
        Mithörer sofort, und das Laufband meldet, wer schon da ist, als „gerade gekommen“ (Logbuch, Offen 1; bis 884
        genauso nach den 4 s, neu nur, wenn man vor den 4 s schon drin ist – Sonde 885-praesenz L). Der frühe Kanal bei
-       der Rückkehr macht „drin“ nicht später (Rauschen); einen Nutzen hat niemand gemessen. */
-    const praesenz = () => { try { if (dmaPraesenzLos) dmaPraesenzLos(!tipp); } catch (e) {} };
+       der Rückkehr macht „drin“ nicht später (Rauschen); einen Nutzen hat niemand gemessen.
+       FASSUNG 887 (Nachtrag aus der 886-Gesamtprüfung): ohne „tipp“ wartet der frühe Kanal jetzt auf das Start-Tor
+       (index.html dmaStartTor, I50) – genau wie die 4 s weiter unten. Auf einer Seite aus dem Speicher des Helfers mit
+       bereitliegendem Update öffnete sonst die ALTE Seite bei der Rückkehr noch die Echtzeit-Leitung, bevor der Helfer
+       bzw. der Wächter sie neu lud: zwei Leitungen statt einer (Sonde 885-sparsam SWR/SWR4: 52769d88 je 2, die gehende
+       Seite eine davon). Später „drin“ wird dadurch nichts: die Rückkehr geht erst nach fassungFrei hinein und öffnet
+       das Tor unmittelbar davor (dmaRaumDrin); betreten öffnet den Kanal ohnehin selbst. Ohne Tor (Seite aus dem Netz)
+       oder mit offenem Tor wie bisher sofort. Der Tipp auf „Klassenzimmer“ (S3) wartet weiter NICHT. */
+    const praesenz = () => {
+      try {
+        const tor = window.dmaStartTor;
+        if (!tipp && tor && !tor.offen) tor.then(() => { try { if (dmaPraesenzLos) dmaPraesenzLos(true); } catch (e) {} });
+        else if (dmaPraesenzLos) dmaPraesenzLos(!tipp);
+      } catch (e) {}
+    };
     if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(praesenz, 0)); else setTimeout(praesenz, 0);
   }
   /* Im Raum: Raum-Stücke sofort holen und, sobald sie da sind, alle auf einmal einsetzen (nicht erst in Ruhepausen). */
