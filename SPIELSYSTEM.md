@@ -7910,7 +7910,30 @@ Präsenz alle 8 s, Flut 1 Zeile/s für 20 s, dann Tipps und lange Drücke auf Ch
 CPU 4× und 6×, ohne Fotos und mit Profilfotos bei 3 von 30 Autoren (je ≈ 16 KB als data:image, wie im Feld).
 Die Sonden prüfen jetzt den eigenen Baum (Befehl 0.1 aus dem Bauplan, 55 Dateien).
 
-‹TABELLE (Endmessung läuft)›
+**Endmessung 886 (7e23e157) → 887** (Nachbau wie oben, verschränkt; 886 je 2 Läufe, 887 je 1–2 Läufe, Median; 887 = Stand
+1f252ce1 bzw. 99d65cfa für die Chatzeile – dazwischen änderte sich nur das Vorab-Malen und die Stückelung der Sicherung).
+Rauschgrenze: die beiden 886-Läufe streuen in der Flut 1 001–1 224 ms (längstes Bild), 69–82 % (Seite belegt), Tipp-Wartezeit
+1,2–7,1 s – jeder Gewinn unten liegt um ein Vielfaches darüber.
+
+| CPU | Fotos | Flut: Seite belegt | längstes Bild in der Flut | längstes Bild nach dem Betreten | Tipp wartet (Median) | langsamste Eingabe | längstes Bild beim Betreten |
+|---|---|---|---|---|---|---|---|
+| 4× | 3 von 30 | 69–82 % → **11 %** | 1 001–1 224 → **127 ms** | 1 235–1 393 → **274 ms** | 1 186–7 111 → **94 ms** | 3 504–7 184 → **464 ms** | 1 015–1 116 → **385 ms** |
+| 6× | 3 von 30 | 49–54 % → **14 %** | 1 564–2 304 → **150 ms** | 2 304–3 131 → **417 ms** | (886: kein Tipp kam an) → **160 ms** | – → **560 ms** | 1 519–1 769 → **553 ms** |
+| 4× | ohne | 20 % (Grundlinie) | 252 ms | 1 200 ms (Vorab-Malen) | 63 ms | 512 ms | 552 ms |
+| 6× | ohne | 41 % (Grundlinie) | 483 ms | 804 ms | 131 ms | 672 ms | 656 ms |
+
+(Ohne Fotos nur die 886-Grundlinie gemessen – die Chatzeile darunter zeigt den Gewinn auch dort.)
+
+| CPU | Fotos | eine empfangene Chatzeile (synchron) | bis zum fertigen Bild | Anhängen + Sichern |
+|---|---|---|---|---|
+| 4× | ohne | 181 → **10 ms** | 305 → **58 ms** | 130 → **0 ms** |
+| 6× | ohne | 229 → **16 ms** | 366 → **111 ms** | 212 → **0 ms** |
+| 4× | 3 von 30 | 579 → **11 ms** | 1 121 → **44 ms** | 545 → **0 ms** |
+| 6× | 3 von 30 | 898 → **14 ms** | 1 759 → **69 ms** | 780 → **0 ms** |
+
+Stufenweise (CPU 4×, Fotos 3/30): nach L1 allein 579 → 39 ms je Zeile; nach L3 → 11 ms. Verlauf je Hintergrund-Seite (L2,
+Sonde 887-verlauf): 1 532 → 65 ms. Vorladen der Autos (L4a): 1 501 + 1 163 → 0 ms. Sicherung im Leerlauf bei CPU 6× mit
+Fotos: 308–319 ms am Stück → längster Leerlauf-Aufruf 71 ms (in Stücken).
 
 ### L1 — chatSichern vom Empfang entkoppelt (livechat.js)
 - **Ursache:** JEDE neue Chatzeile schrieb den ganzen Verlauf neu: `JSON.stringify` von bis zu 20 000 Zeilen ins Lager
