@@ -91,13 +91,17 @@ const STEMPEL_EINZELN = ["vokabeln", "kalender"];   // FASSUNG 837: Stempel je D
    ========================================================= */
 const MIN_ORDNER = path.join(WURZEL, "min");
 function esbuildHolen() {
+  /* MODUL-UMBAU: seit node_modules/ (Vite) im Baum liegt, fände require("esbuild") auch ein anderes esbuild –
+     min/ wird aber nur mit genau 0.28.2 verkleinert (sonst bekämen alle Kopien neue Stempel und jedes Gerät holte
+     alles neu). package.json pinnt 0.28.2 deshalb oben; hier wird die Fassung zusätzlich geprüft. */
+  const passt = (m) => (m && m.version === "0.28.2" ? m : null);
   const suchen = () => {
-    try { return require("esbuild"); } catch (e) {}
+    try { const m = passt(require("esbuild")); if (m) return m; } catch (e) {}
     const basis = path.join(require("os").homedir(), ".npm", "_npx");
     try {
       for (const d of fs.readdirSync(basis)) {
         const p = path.join(basis, d, "node_modules", "esbuild");
-        if (fs.existsSync(path.join(p, "package.json"))) return require(p);
+        if (fs.existsSync(path.join(p, "package.json"))) { const m = passt(require(p)); if (m) return m; }
       }
     } catch (e) {}
     return null;
@@ -181,8 +185,16 @@ function verkleinern() {
   return { neu, weg };
 }
 
+/* MODUL-UMBAU (Schritt 1, MODULE-PLAN.md Abschnitt 3, M1): der Vite-Bau steht in werkzeug/modul-bauen.js. Scheitert er,
+   bleiben bau/ und DMA_MODUL, wie sie waren; die Stempel für min/ werden trotzdem gesetzt, Rückgabe am Ende 2. */
+let modulFehler = null;
 function stempelSetzen() {
   const crypto = require("crypto");
+  let mb = { karte: null, gebaut: false, fehler: null, geloescht: 0 };
+  try { mb = require("./modul-bauen.js").bauen(WURZEL); } catch (e) { mb.fehler = "modul-bauen.js: " + (e.message || e); }
+  if (mb.fehler) { modulFehler = mb.fehler; console.error("\n!!! MODUL-BAU: " + mb.fehler + "\n"); }
+  if (mb.gebaut) console.log("bau/: neu gebaut (" + Object.keys(mb.karte || {}).join(", ") + ")");
+  if (mb.geloescht) console.log("bau/: " + mb.geloescht + " alte Stücke gelöscht");
   const vk = verkleinern();
   if (vk.neu || vk.weg) console.log("min/: " + vk.neu + " neu verkleinert, " + vk.weg + " entfernt");
   let html = fs.readFileSync(indexPfad, "utf8");
@@ -216,6 +228,11 @@ function stempelSetzen() {
       stempel[o + "/" + n] = crypto.createHash("sha1").update(fs.readFileSync(path.join(wo, n))).digest("hex").slice(0, 10);
     });
   });
+  /* MODUL-UMBAU (M2): die Modul-Quellen in src/ mit eigenem Stempel – ?quelle lädt sie als natives Modul */
+  const srcOrdner = path.join(WURZEL, "src");
+  if (fs.existsSync(srcOrdner)) alleDateien(srcOrdner).filter((f) => /\.(js|css|json)$/.test(f)).forEach((f) => {
+    stempel[path.relative(WURZEL, f).split(path.sep).join("/")] = crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10);
+  });
   const zeile = "<script>window.DMA_STEMPEL = " + JSON.stringify(stempel) + ";</script>";
   const muster = /<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>/;
   if (muster.test(html)) html = html.replace(muster, zeile);
@@ -228,7 +245,17 @@ function stempelSetzen() {
     const f = path.join(WURZEL, datei);
     return fs.existsSync(f) ? vor + datei + "?v=" + crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10) : alt;
   });
+  /* MODUL-UMBAU (M1 b): window.DMA_MODUL direkt hinter DMA_STEMPEL (bei einem Baufehler bleibt die alte Zeile) */
+  try { html = require("./modul-bauen.js").zeileSetzen(html, mb.karte); } catch (e) {}
   fs.writeFileSync(indexPfad, html);
+  /* MODUL-UMBAU (M1 c): selbst anlegen – bei Rückgabe ≠ 0 tut der Haken es nicht mehr, und min/ muss mit den Stempeln
+     zusammenpassen. Nur in einem git-Baum (nicht in Vergleichsständen aus git archive). */
+  if (fs.existsSync(path.join(WURZEL, ".git"))) {
+    try {
+      require("child_process").execFileSync("git", ["-C", WURZEL, "add", "--", "index.html", "min"].concat(fs.existsSync(path.join(WURZEL, "bau")) ? ["bau"] : []),
+        { stdio: ["ignore", "ignore", "pipe"] });
+    } catch (e) { console.error("git add index.html min bau gescheitert: " + String(e.message || e).split("\n")[0]); }
+  }
   return Object.keys(stempel).length;
 }
 
@@ -282,7 +309,7 @@ if (process.argv[2] === "--nur-stempel") {
   const n = stempelSetzen();
   hakenAnlegen();
   console.log("Stempel für " + n + " Dateien gesetzt");
-  process.exit(0);
+  process.exit(modulFehler ? 2 : 0);
 }
 
 const zahl = String(process.argv[2] || "").trim();
@@ -308,3 +335,4 @@ fs.writeFileSync(path.join(WURZEL, "fassung.json"),
 const n = stempelSetzen();
 hakenAnlegen();
 console.log("Fassung " + vorher + " → " + zahl + " (index.html und fassung.json), Stempel für " + n + " Dateien");
+if (modulFehler) process.exit(2);
