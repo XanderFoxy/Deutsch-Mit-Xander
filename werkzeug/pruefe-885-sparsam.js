@@ -175,7 +175,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const QUELLE = Boolean(process.env.QUELLE);
-const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM,SB,SM,SWa,SWc,SWL,SWa4,SWc4,SWT,SWT6,SW402,SWTOR,SWS402,SWS0").split(",").map((x) => x.trim()).filter(Boolean);
+const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM,SB,SM,SWa,SWc,SWL,SWa4,SWc4,SWR,SWR4,SWT,SWT6,SW402,SWTOR,SWS402,SWS0").split(",").map((x) => x.trim()).filter(Boolean);
 const SUPA = [process.env.SUPABASE_UMD,
   "/tmp/claude-0/node_modules/@supabase/supabase-js/dist/umd/supabase.js",
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
@@ -1333,6 +1333,51 @@ function schluessel(adresse, methode) {
       fehlerPruefen(s);
       ergebnis.faelle[fall] = { helfer: ctl, bezug: { gesamt: bezug.z.gesamt, je: bezug.z.je, ws: bezug.z.ws, ladungen: bezug.ladungen, info: bezug.info },
         neu: { gesamt: neu.z.gesamt, je: neu.z.je, ws: neu.z.ws, ladungen: neu.ladungen, info: neu.info } };
+      await s.ctx.close();
+    }
+    /* FASSUNG 887 — SWR/SWR4 (Nachtrag aus der 886-Gesamtprüfung): wie SWa…, aber mit RÜCKKEHR IN DEN RAUM (Merker
+       dma_livechat_zurueck wie in pruefe-885-rueckkehr.js, vor jeder Runde frisch gesetzt). Die Rückkehr ruft
+       raumVorbereiten() ohne „tipp“; dort öffnete dmaPraesenzLos(true) die Echtzeit-Leitung gleich nach dem ersten Bild,
+       auch auf der ALTEN Seite aus dem Speicher, bevor das Start-Tor (index.html dmaStartTor, I50) entschieden hatte – mit
+       Update also zwei Leitungen statt einer (die 4 s unten warten seit 886 auf das Tor, dieser Weg nicht). Geprüft:
+       höchstens eine Echtzeit-Leitung in der Update-Runde, keine auf der gehenden Seite (gezählt je Seite über
+       window.DMA_VERSION beim Aufbau), am Ende die neue Fassung mit Profil und wieder im Raum. SWR: CPU 1×, D = 1000;
+       SWR4: CPU 4×, D = 2500 (die alte Seite braucht dort länger bis zum ersten Bild). */
+    for (const [fall, D, cpu] of [["SWR", 1000, 1], ["SWR4", 2500, 4]]) {
+      if (!FAELLE.includes(fall)) continue;
+      abschnitt(fall, "Helfer an, Betreiber, Rückkehr in den Raum: neu laden (Bezug), dann neue Fassung 887 draußen – Seite und fassung.json nach " + D + " ms, CPU " + cpu + "×, je 30 s");
+      const { s, ctl, speicher } = await mitHelfer();
+      await s.ctx.addInitScript(() => {
+        if (window.top !== window) return;
+        const W = window.WebSocket;
+        window.WebSocket = new Proxy(W, { construct(Z, a) {
+          try { if (String(a[0]).indexOf("attrappe") >= 0) { const l = JSON.parse(sessionStorage.getItem("__wsSeiten") || "[]"); l.push(String(window.DMA_VERSION)); sessionStorage.setItem("__wsSeiten", JSON.stringify(l)); } } catch (e) {}
+          return Reflect.construct(Z, a);
+        } });
+      });
+      await cpuBremse(s, cpu);
+      console.log("  Helfer: " + ctl + " · Speicher " + speicher);
+      const merker = () => s.pg.evaluate(() => { sessionStorage.setItem("dma_livechat_zurueck", JSON.stringify({ raum: "pruefraum887", name: "Pruef", mitBild: false, zeit: Date.now() })); sessionStorage.setItem("__wsSeiten", "[]"); });
+      const nachher = () => s.pg.evaluate(() => ({ wsSeiten: JSON.parse(sessionStorage.getItem("__wsSeiten") || "[]"), lage: window.LiveChat && LiveChat.lage ? LiveChat.lage().lage : "?" })).catch((e) => ({ fehler: String(e).slice(0, 80) }));
+      await merker();
+      const bezug = await runde(s, fall + "-bezug");
+      const bezugNach = await nachher();
+      await merker();
+      Object.assign(netz, { neuF: "887", verz: D });
+      const neu = await runde(s, fall + "-neu");
+      Object.assign(netz, { neuF: "", verz: 0 });
+      const neuNach = await nachher();
+      zeigeRunde("Bezug", bezug, JSON.stringify(bezugNach));
+      zeigeRunde("Update", neu, JSON.stringify(neuNach));
+      const alt = (neuNach.wsSeiten || []).filter((f) => f !== "887").length;
+      sage(ctl, fall + ": der Helfer übernimmt die Seite");
+      sage(neu.z.ws <= 1, fall + ": Rückkehr mit Update – höchstens eine Echtzeit-Leitung", String(neu.z.ws) + " (52769d88: 2)");
+      sage(alt === 0, fall + ": die gehende (alte) Seite öffnet keine Echtzeit-Leitung", JSON.stringify(neuNach.wsSeiten));
+      sage(neu.info.f === "887" && neu.info.profil, fall + ": am Ende die neue Fassung, mit Profil", JSON.stringify(neu.info));
+      sage(neuNach.lage === "drin" || neuNach.lage === "verbindet", fall + ": am Ende wieder im Raum", String(neuNach.lage) + " (Bezug: " + bezugNach.lage + ")");
+      fehlerPruefen(s);
+      ergebnis.faelle[fall] = { helfer: ctl, bezug: { gesamt: bezug.z.gesamt, ws: bezug.z.ws, info: bezug.info, nach: bezugNach },
+        neu: { gesamt: neu.z.gesamt, je: neu.z.je, ws: neu.z.ws, ladungen: neu.ladungen, info: neu.info, nach: neuNach } };
       await s.ctx.close();
     }
     /* SWT/SWT6: erstes Öffnen des Tages, Supabase antwortet nach 250 ms – geht die Anmeldebelohnung genau einmal hinaus? */
