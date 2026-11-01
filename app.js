@@ -69227,24 +69227,29 @@
       v.addEventListener("load", () => { if (lcHaeltUnten) lcNachUnten(v); }, true);
     }
     if (lcHaeltUnten) lcNachUnten(v);
-    lcSprungKnopf(v);
+    /* FASSUNG 887 (L3) — der Knopf „↓ Neueste" misst die Höhe: nicht gleich nach dem Schreiben (erzwungenes Layout),
+       sondern einmal im nächsten Bild. */
+    if (!v.__lcKnopfPlan) { v.__lcKnopfPlan = true; requestAnimationFrame(() => { v.__lcKnopfPlan = false; lcSprungKnopf(v); }); }
   }
+  /* FASSUNG 887 (L3) — gemessen (Profil, 7 000 Zeilen, CPU 4×): drei Viertel einer Chatzeile steckten hier, weil
+     scrollTop = scrollHeight direkt nach dem Einsetzen der Zeile das ganze Layout erzwang – bei jeder Zeile. Jetzt
+     springt der Verlauf einmal je Bild, im nächsten Bildaufbau (vor dem Zeichnen, also ohne sichtbaren Unterschied),
+     und noch einmal ein Bild später (dazwischen kann sich die Höhe ändern). Hat der Mensch in der Zwischenzeit selbst
+     gescrollt, unterbleibt der Sprung: sonst reisst er ihn wieder nach unten. */
   function lcNachUnten(v) {
+    if (v.__lcUntenPlan) return;
+    v.__lcUntenPlan = true;
     const stand = lcScrollZaehler;
-    const altesRollen = v.style.scrollBehavior;
-    v.style.scrollBehavior = "auto";
-    v.scrollTop = v.scrollHeight;
-    /* Zweimal: einmal sofort, einmal nach dem naechsten Bildaufbau —
-       dazwischen kann sich die Hoehe noch aendern. Hat der Mensch in
-       der Zwischenzeit selbst gescrollt, unterbleibt der zweite
-       Sprung: sonst reisst er ihn wieder nach unten. */
     requestAnimationFrame(() => {
-      if (lcScrollZaehler !== stand || !lcHaeltUnten) {
-        v.style.scrollBehavior = altesRollen;
-        return;
-      }
+      v.__lcUntenPlan = false;
+      if (lcScrollZaehler !== stand || !lcHaeltUnten) return;
+      const altesRollen = v.style.scrollBehavior;
+      v.style.scrollBehavior = "auto";
       v.scrollTop = v.scrollHeight;
-      v.style.scrollBehavior = altesRollen;
+      requestAnimationFrame(() => {
+        if (lcScrollZaehler === stand && lcHaeltUnten) v.scrollTop = v.scrollHeight;
+        v.style.scrollBehavior = altesRollen;
+      });
     });
   }
   /* Wer oben liest, soll mit einem Tipp zurueckkommen — und sehen,
