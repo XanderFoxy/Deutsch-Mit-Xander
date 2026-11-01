@@ -45,7 +45,6 @@
  "konjugation.js": "740bad9ac8234b00f3a6b64b3e0793ae54ecf619",
  "korrekturen.css": "0ab791607b816ffb37db3df7dfb4b60c2e0c583b",
  "livechat.css": "00c0b7b0908e61bafab519e1d9d7b5dd9c2852ab",
- "livechat.js": "9e6feae67e5e7834188cbcb1870dd3218eb834b2",
  "messung.js": "190da5f9190317b84b4e1be98bda3fd733628dce",
  "quiz.js": "7884e008f38ef069fe65c18b2ddbaeb1ef9ba444",
  "rueckfrage.js": "482037a16ab51fbfa00926c49f6ca9acad516d8a",
@@ -58,5 +57,6 @@
  "themes.css": "9529740c81dcc59ed2e16beebf5b22404b14c625",
  "ton-liste.js": "831b0bb2765251f631db9fe99ea48fc0c46de9c8",
  "werkstatt.css": "5983b13d12f52bb27f26c3a2e174a726ea496e96",
- "werkstatt.js": "6b16574f10d08259b581e0e9f4d0c0e0cbdbf42d"
+ "werkstatt.js": "6b16574f10d08259b581e0e9f4d0c0e0cbdbf42d",
+ "livechat.js": "e82f3d56017993c15c3283dc98be5d9645620b78"
 }
