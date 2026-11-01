@@ -143,6 +143,12 @@
      SWT 133 gegen 96 und die Anmeldebelohnung zweimal, SWT6 112 gegen 97, SW402 14 gegen 8; SWTOR 4 (dort gibt es kein
      Tor, die erste Anfrage geht nach 0,1–0,2 s); mit der später dazugekommenen Prüfung „Start ≤ 807e6a7d + 1“ bei SWT/SWT6
      zwei mehr (98/97). 807e6a7d (live, Seite zuerst aus dem Netz): SWa…SW402 grün.
+   Fassung 887 (Nachtrag aus der 886-Gesamtprüfung):
+     SWR/SWR4  wie SWa…, dazu RÜCKKEHR IN DEN RAUM (Merker dma_livechat_zurueck vor jeder Runde): Update-Runde höchstens eine
+           Echtzeit-Leitung und keine auf der gehenden Seite, am Ende 887 mit Profil und wieder im Raum. CPU 1×/D = 1000 bzw.
+           CPU 4×/D = 2500. Gegenprobe 52769d88 (886): 4 rot – je 2 Leitungen, eine davon auf der gehenden Seite.
+     SWRMESS (nicht im Standardlauf) Rückkehr ohne Update aus dem Speicher, Leitungsaufbau RMESS_L ms nachgestellt: wann
+           Leitung, Tor, betreten, drin – Zahlen für das Logbuch (verschränkt über WURZEL).
    Die Sperre der Echtzeit-Leitung ist jetzt nachgestellt wie in Wirklichkeit
    (Nachbesserung 2): Supabase lehnt schon den Handshake ab, die Verbindung
    öffnet sich nie und schließt mit 1006 (eigener WebSocket-Ersatz, solange
@@ -1378,6 +1384,75 @@ function schluessel(adresse, methode) {
       fehlerPruefen(s);
       ergebnis.faelle[fall] = { helfer: ctl, bezug: { gesamt: bezug.z.gesamt, ws: bezug.z.ws, info: bezug.info, nach: bezugNach },
         neu: { gesamt: neu.z.gesamt, je: neu.z.je, ws: neu.z.ws, ladungen: neu.ladungen, info: neu.info, nach: neuNach } };
+      await s.ctx.close();
+    }
+    /* FASSUNG 887 — SWRMESS (nicht im Standardlauf; Messung zu SWR): Rückkehr OHNE Update auf der Seite aus dem Speicher –
+       kommt „drin“ später, seit der frühe Kanal auf das Start-Tor wartet? Der Aufbau der Echtzeit-Leitung dauert hier
+       RMESS_L ms (Vorgabe 300, wie 4G: Verbindung + TLS + Upgrade; nachgestellt: „open“ kommt so viel später), Seite und
+       fassung.json nach D ms (RMESS_D, Vorgabe 150,400,1000), je RMESS_N Läufe (2) bei CPU 1× und 4×. Gezählt (Uhr der
+       Seite): erste Echtzeit-Leitung, Tor auf, betreten, drin. Bewertet wird nicht – verschränkt über WURZEL vergleichen. */
+    if (FAELLE.includes("SWRMESS")) {
+      abschnitt("SWRMESS", "Messung: Rückkehr ohne Update, Seite aus dem Speicher, Leitungsaufbau " + Number(process.env.RMESS_L || 300) + " ms – wann ist die Seite drin?");
+      const { s, ctl } = await mitHelfer({});
+      await s.ctx.addInitScript((L) => {
+        if (window.top !== window) return;
+        const m = window.__m = { ws: null, tor: null, betr: null, drin: null };
+        const jetzt = () => Math.round(performance.now());
+        const W = window.WebSocket;
+        class Langsam extends EventTarget {
+          constructor(u, p) {
+            super();
+            const e = this._e = p === undefined ? new W(u) : new W(u, p);
+            this.url = String(u); this._auf = false; this.protocol = ""; this.extensions = "";
+            if (m.ws == null && this.url.indexOf("attrappe") >= 0) m.ws = jetzt();
+            const feuer = (typ, ev) => { try { if (this["on" + typ]) this["on" + typ](ev); } catch (x) { setTimeout(() => { throw x; }); } this.dispatchEvent(ev); };
+            e.addEventListener("open", () => setTimeout(() => { this._auf = true; feuer("open", new Event("open")); }, L));
+            e.addEventListener("message", (ev) => feuer("message", new MessageEvent("message", { data: ev.data })));
+            e.addEventListener("error", () => feuer("error", new Event("error")));
+            e.addEventListener("close", (ev) => feuer("close", new CloseEvent("close", { code: ev.code, reason: ev.reason, wasClean: ev.wasClean })));
+          }
+          get readyState() { const r = this._e.readyState; return r === 1 && !this._auf ? 0 : r; }
+          get binaryType() { return this._e.binaryType; }
+          set binaryType(v) { this._e.binaryType = v; }
+          get bufferedAmount() { return this._e.bufferedAmount; }
+          send(d) { if (!this._auf) throw new DOMException("noch nicht offen", "InvalidStateError"); return this._e.send(d); }
+          close(c, r) { return this._e.close(c, r); }
+        }
+        Object.assign(Langsam, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 });
+        window.WebSocket = Langsam;
+        let st;
+        Object.defineProperty(window, "dmaStartTor", { configurable: true, get: () => st, set: (v) => { st = v; if (v && v.then) v.then(() => { if (m.tor == null) m.tor = jetzt(); }); } });
+        let lc;
+        Object.defineProperty(window, "LiveChat", { configurable: true, get: () => lc, set: (v) => { lc = v; try {
+          const b0 = v.betreten; v.betreten = function () { if (m.betr == null) m.betr = jetzt(); return b0.apply(this, arguments); };
+          if (v.beiAenderung) v.beiAenderung((l) => { if (l && l.lage === "drin" && m.drin == null) m.drin = jetzt(); });
+        } catch (e) {} } });
+      }, Number(process.env.RMESS_L || 300));
+      /* das erste Neuladen unter dem Helfer legt die Seite erst ab */
+      await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+      await warte(4000);
+      const reihe = [];
+      for (const cpu of [1, 4]) {
+        const cdp = await s.ctx.newCDPSession(s.pg);
+        await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpu });
+        for (const D of String(process.env.RMESS_D || "150,400,1000").split(",").map(Number)) {
+          for (let i = 0; i < Number(process.env.RMESS_N || 2); i++) {
+            await s.pg.evaluate(() => { sessionStorage.setItem("dma_livechat_zurueck", JSON.stringify({ raum: "pruefraum887", name: "Pruef", mitBild: false, zeit: Date.now() })); }).catch(() => {});
+            netz.verz = D;
+            await s.pg.reload({ waitUntil: "domcontentloaded", timeout: 20000 }).catch(() => {});
+            let w = null;
+            for (let k = 0; k < 300; k++) { w = await s.pg.evaluate(() => (window.__m && window.__m.drin != null ? window.__m : null)).catch(() => null); if (w) break; await warte(50); }
+            netz.verz = 0;
+            const l = await lage(s);
+            const z = Object.assign({ cpu, D, i, speicher: l.speicher, f: l.f }, w || { drin: null });
+            console.log("  " + JSON.stringify(z));
+            reihe.push(z);
+            await warte(1500);
+          }
+        }
+      }
+      sage(ctl, "SWRMESS: der Helfer übernimmt die Seite");
+      ergebnis.faelle.SWRMESS = { reihe };
       await s.ctx.close();
     }
     /* SWT/SWT6: erstes Öffnen des Tages, Supabase antwortet nach 250 ms – geht die Anmeldebelohnung genau einmal hinaus? */
