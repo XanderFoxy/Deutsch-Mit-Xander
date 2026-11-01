@@ -7939,12 +7939,15 @@ Rauschgrenze: die beiden 886-Läufe streuen in der Flut 1 001–1 224 ms (längs
 
 | CPU | Fotos | Flut: Seite belegt | längstes Bild in der Flut | längstes Bild nach dem Betreten | Tipp wartet (Median) | langsamste Eingabe | längstes Bild beim Betreten |
 |---|---|---|---|---|---|---|---|
-| 4× | 3 von 30 | 69–82 % → **11 %** | 1 001–1 224 → **127 ms** | 1 235–1 393 → **274 ms** | 1 186–7 111 → **94 ms** | 3 504–7 184 → **464 ms** | 1 015–1 116 → **385 ms** |
-| 6× | 3 von 30 | 49–54 % → **14 %** | 1 564–2 304 → **150 ms** | 2 304–3 131 → **417 ms** | (886: kein Tipp kam an) → **160 ms** | – → **560 ms** | 1 519–1 769 → **553 ms** |
+| 4× | 3 von 30 | 69–82 % → **11 %** | 1 001–1 224 → **127 ms** | 1 235–1 393 → ~~274 ms~~ **wie 886** ¹ | 1 186–7 111 → **94 ms** | 3 504–7 184 → **464 ms** | 1 015–1 116 → **385 ms** |
+| 6× | 3 von 30 | 49–54 % → **14 %** | 1 564–2 304 → **150 ms** | 2 304–3 131 → ~~417 ms~~ **wie 886** ¹ | (886: kein Tipp kam an) → **160 ms** | – → **560 ms** | 1 519–1 769 → **553 ms** |
 | 4× | ohne | 20 % (Grundlinie) | 252 ms | 1 200 ms (Vorab-Malen) | 63 ms | 512 ms | 552 ms |
 | 6× | ohne | 41 % (Grundlinie) | 483 ms | 804 ms | 131 ms | 672 ms | 656 ms |
 
 (Ohne Fotos nur die 886-Grundlinie gemessen – die Chatzeile darunter zeigt den Gewinn auch dort.)
+¹ NACHGEBESSERT: diese Spalte maß 887 mit L4a. L4a ist zurückgenommen (siehe L4), das lange Bild ohne Skript etwa 10 s nach
+dem Betreten (Vorab-Malen der Autos) ist damit wieder da wie in 886 – Endstand, Nachbau CPU 4× ohne Fotos: **2 067 ms**
+(e9187509 mit L4a: 313 ms). Alle anderen Spalten hängen nicht daran.
 
 | CPU | Fotos | eine empfangene Chatzeile (synchron) | bis zum fertigen Bild | Anhängen + Sichern |
 |---|---|---|---|---|
@@ -7954,8 +7957,9 @@ Rauschgrenze: die beiden 886-Läufe streuen in der Flut 1 001–1 224 ms (längs
 | 6× | 3 von 30 | 898 → **14 ms** | 1 759 → **69 ms** | 780 → **0 ms** |
 
 Stufenweise (CPU 4×, Fotos 3/30): nach L1 allein 579 → 39 ms je Zeile; nach L3 → 11 ms. Verlauf je Hintergrund-Seite (L2,
-Sonde 887-verlauf): 1 532 → 65 ms. Vorladen der Autos (L4a): 1 501 + 1 163 → 0 ms. Sicherung im Leerlauf bei CPU 6× mit
-Fotos: 308–319 ms am Stück → längster Leerlauf-Aufruf 71 ms (in Stücken).
+Sonde 887-verlauf): 1 532 → 65 ms. Vorladen der Autos: unverändert wie 886 (L4a zurückgenommen). Sicherung im Leerlauf bei
+CPU 6× mit Fotos: 308–319 ms am Stück → in Stücken; der Schluss (das put des ganzen Texts ins Lager) bleibt ein Bild von
+80–170 ms bei CPU 4× alle ≥ 20 s (siehe Nachbesserung; „längster Leerlauf-Aufruf 71 ms“ war zu optimistisch).
 
 ### L1 — chatSichern vom Empfang entkoppelt (livechat.js)
 - **Ursache:** JEDE neue Chatzeile schrieb den ganzen Verlauf neu: `JSON.stringify` von bis zu 20 000 Zeilen ins Lager
@@ -8114,7 +8118,25 @@ Sonden auf dem Endstand: 884-leitung 40, 885-praesenz 69 (ALLES GRÜN), 884-ton3
 etwas aussteht). Unsichtbar – die Seite ist in diesem Moment nicht zu sehen –, aber ein schnelles Zurückwechseln kann so lange
 auf den Hauptfaden warten. Sie bleibt, weil eine WebView nach „verdeckt“ ohne `pagehide` beendet werden kann.
 
-⟨NACHMESSUNG⟩
+**Nachmessung (Nachbau wie oben, CPU 4×, ohne Fotos, je 1 Lauf; e9187509 = 887 vor der Nachbesserung, a5dd08f4 = Nachbesserung
+ohne Teilung des Schlusses, 2060b60b = mit Teilung):**
+
+| Stand | lange Bilder der Leerlauf-Sicherung (Bild / Skript, ms) | davon der Schluss | längstes Bild nach dem Betreten |
+|---|---|---|---|
+| e9187509 | 66/39, 53/39, 68/49, 66/40, 92/92, 101/100, 134/125 | 92–134 | 313 (mit L4a) |
+| a5dd08f4 | 56/42, 52/37, 130/129, 91/83 | 91 / 130 (join + put) | – |
+| 2060b60b | 74/40, 64/49, 62/49, 55/30, 83/82, 116/115, 172/169 | 83 / 116 / 172 (put allein) | 2 067 (Vorab-Malen wie 886) |
+
+Kleinmessung (leere Seite, 7 000 Zeilen = 1,69 Mio. Zeichen, CPU 4×, Median aus 5): Text zusammensetzen **38 ms**, IndexedDB-put
+des Texts **67 ms**, put als Array der Stücke 87 ms, als Blob 1 ms – aber den Blob bauen 110 ms. **Ergebnis:** Der Schluss ist
+nicht messbar kürzer geworden; ihn bestimmt das put des ganzen Texts (im Nachbau 80–170 ms je nach Last, alle ≥ 20 s, nur
+im Leerlauf). Die Teilung join/put (2060b60b) brachte gemessen nichts und ist zurückgenommen (7a899780); der Rest der
+Nachbesserung (letzte 300 Zeilen als eigene Stücke, localStorage-Text daraus statt 300 Zeilen neu, localStorage in eigener
+Pause) bleibt, weil er nichts kostet und doppelte Arbeit spart. **Für 888:** das Lager in Stücken (je 400 Zeilen ein Eintrag,
+nur das letzte Stück neu schreiben) – das ist eine Formatänderung des Speicherstands und braucht eine eigene Sonde (altes
+Format lesen, kein Verlust bei pagehide mitten im Schreiben).
+
+⟨SONDEN-NB⟩
 
 ### Sonden
 Alle auf dem Endstand (dc0c9325, Code wie heute; ausgeführt aus einer Kopie des Stands, `WURZEL` = Kopie), nacheinander
