@@ -8081,7 +8081,8 @@ verschränkt gegen 886 nachgeprüft.
 | 885-rueckkehr | R K G F T Z Y 235 grün; W N O B S im zweiten Lauf (der erste brach an der 15-min-Frist ab): 2× O und B1 CPU 4× rot – **Last, nicht 887:** O verschränkt 887/886/887 je 2× grün (betreten 270/252, 274/249, 263/255 ms, Blase da); B1 CPU 4× lag in derselben Stunde auch bei 886 bei 1 477 ms (Grenze 1 220) | – |
 | 885-swvorladen | aus der Kopie: 9 und 11 rot, weil `git show 02613a71:sw.js` dort nicht geht; im Baum 1–10 grün, 11 rot nur „Rechenzeit im Leerlauf“ (Sonde 694) – verschränkt nachgemessen: 887 6,2/6,9, 886 6,3/6,2 ms/s, Grenze 15 → Last | – |
 | raumverlauf 6, verlauf-kein-reset 5, leere, 863-chatfenster, notenknopf-aufgabe 16, stimmzeilen 4, 884-gleich 57, 812-auftritt-autos 38, 845-chat-einzug-gleise 47, 679-spielsitz 10, 697-spiellogik 16 | grün (exit 0) | – |
-| verlauf-nachfassen, verlauf-doppelt, fremde-uhr-reihenfolge, antwort-gehoert-dazu, aufgabe-reist, benoten, bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem | ‹REST› | – |
+| verlauf-nachfassen 7, verlauf-doppelt 5, fremde-uhr-reihenfolge 5, antwort-gehoert-dazu 12 | grün (Endstand dc0c9325) | – |
+| aufgabe-reist, benoten, bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem | **noch nicht gelaufen** (Sperre) – vor dem Ausliefern im Hauptbaum nachholen | – |
 ‹SPARSAM›
 
 ### Offen / Vorschläge für den Funk (nicht gebaut, weil sichtbar)
