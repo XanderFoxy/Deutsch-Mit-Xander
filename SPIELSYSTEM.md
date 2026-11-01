@@ -7887,3 +7887,148 @@ ist (Abbruch spätestens bei DOMContentLoaded), und nimmt `loading="lazy"` weg, 
 eigenem Foto setzt er es ein, entfernt `srcset` und lässt `lazy` stehen (Nachbesserung 1: `} else i.removeAttribute("loading")`). Die Erkennung des Originals (`/XanderFoxy\/Deutsch\/.*\/9ob2nzt2\.jpe?g|(^|\/)bilder\/ueber-alex-\d+\.webp/`)
 steht gleich in app.js (`UEBER_FOTO_ORIGINAL`). 885-schlank Q baut den Block (und das Foto im HTML) vor dem Vergleich mit dem
 Stand vor K zurück; 885-ueber zählt die eigene Kopie als „Standardfoto“ mit.
+
+## Fassung 887 — Livestream ohne Hänger
+
+XANDER (01.11.): „Der Livestream ist das Wichtigste, weil der am meisten hängt.“ Bauplan: `MODULE-PLAN.md` (Zweig
+`module-umbau`), Abschnitte 0–2, Strang LIVE. Gebaut im Arbeitsbaum `dmx-live`, Zweig `live-haenger`, auf dem 886-Stand
+`7e23e157`. Alles bleibt unsichtbar (Aussehen, Größe, Bedienung wie festgelegt); Ton und WebRTC (Funk 310) unberührt;
+keine einzige zusätzliche Supabase-Abfrage. Die Fassungsnummer setzt die Auslieferung (`DMA_VERSION` steht noch auf 885).
+
+### Was das Feld sagte (spiel_diagnose „mess-raum“, 20.–28.10., Fassung 884/885)
+- Lange Bilder (LoAF) 457–872 ms, bis 162 Langläufer je Aufenthalt (Summe 13,7 s); erste Sekunde im Raum bis 5,6 s blockiert.
+- Langsamste Eingaben 704–1 312 ms auf `#livechatArea`, `span.lc-zeilentext`, `button.lc-platz`, `#tutorReiter` – reine
+  Wartezeit auf den Hauptfaden, keine teuren Handler.
+- Zugeordnet (Zeichenposition im verkleinerten Code von 885 nachgeschlagen): `min/spiel.js@795509` = der **700-ms-Spieltakt**
+  (`setInterval(…, 700)` in spiel.js), `supabase.js resolve-promise` = die Arbeit, die livechat.js nach einer Antwort der
+  Datenbank macht (Verlauf verschmelzen, sichern, zeichnen).
+
+### Nachbau und Grundlinie (L0)
+Werkzeuge `scratchpad/m887/live/` (`lsh2.js`, `mikro2.js`, `ana2.js`, `prof-zeile.js`): echte Seite (min/), echtes
+supabase-js 2.117.3, PostgREST- und Realtime-Attrappe, 7 000 Zeilen Verlauf, 6 andere im Raum (hallo, Puls alle 6 s, redet),
+Präsenz alle 8 s, Flut 1 Zeile/s für 20 s, dann Tipps und lange Drücke auf Chat und Plätze, dann 25 s verdeckt und zurück.
+CPU 4× und 6×, ohne Fotos und mit Profilfotos bei 3 von 30 Autoren (je ≈ 16 KB als data:image, wie im Feld).
+Die Sonden prüfen jetzt den eigenen Baum (Befehl 0.1 aus dem Bauplan, 55 Dateien).
+
+‹TABELLE (Endmessung läuft)›
+
+### L1 — chatSichern vom Empfang entkoppelt (livechat.js)
+- **Ursache:** JEDE neue Chatzeile schrieb den ganzen Verlauf neu: `JSON.stringify` von bis zu 20 000 Zeilen ins Lager
+  (IndexedDB) und 300 Zeilen in den localStorage – samt dem Profilfoto in jeder Zeile eines Foto-Autors (7 000 Zeilen mit
+  3/30 Foto-Autoren: 9,5 MB Text je Zeile!).
+- **Jetzt:** `chatSichernBald()` merkt „schmutzig“ und sichert in einer Leerlaufpause (`requestIdleCallback`, spätestens 5 s;
+  ohne: `setTimeout`), mit mindestens 20 s zwischen zwei Sicherungen. Sofort und vollständig gesichert wird bei `pagehide`,
+  `visibilitychange → hidden` (eine WebView kann danach ohne pagehide beendet werden), in `verlassen()` (wie bisher), beim
+  Raumwechsel (`betreten`, vor dem Umschalten), in `chatLeeren` (jetzt ist auch das Lager leer – vorher wurde es erst mit der
+  nächsten Zeile überschrieben, ohne Zeile kam der gelöschte Verlauf beim Wiederkommen aus dem Lager zurück) und in
+  `pruefVerlaufSetzen`.
+- **Fotos einmal:** in der gespeicherten Zeile (Lager UND localStorage-300) steht statt `bild` (data:image) nur
+  `bildH` = `bildFinger(bild)` (derselbe Fingerabdruck wie beim Senden); das Foto liegt einmal im Lager unter
+  `"chatbild:" + bildH` (`lagerEinmal`, je Sitzung einmal – frischt damit auch die 60-Tage-Frist auf). Beim Lesen
+  (`chatLaden` sofort aus dieser Sitzung, `chatAusLager`/`betreten`/`archivLaden` aus dem Lager) wird es wieder eingesetzt.
+  Das alte Format (Foto in der Zeile) wird unverändert gelesen. Ohne Lager fehlt das Foto in alten Zeilen, bis der Server
+  sie wieder füllt (`verschmelzen` übernimmt `bild` vom Zwilling) – sichtbar wäre das nur nach Verlust des Lagers.
+- **Doppelprüfung** in `nachrichtAnhaengen` über ein Kennungs-Verzeichnis (`Set`) statt `some()` über alle Zeilen; es wird neu
+  gebaut, wenn die Liste ihre Referenz ODER Länge ändert, und ein Treffer wird gegengeprüft (eine gelöschte Zeile gilt nie
+  fälschlich als „schon da“).
+- Der `lagerGelesen`-Schutz ist unverändert (nichts ins Lager, bevor es gelesen ist).
+- **Gemessen (mikro, 7 000 Zeilen):** eine empfangene Zeile synchron, CPU 4×: ohne Fotos **181 → 35 ms**, mit Fotos
+  **579 → 39 ms**; CPU 6×: 229 → 48 bzw. 898 → 52 ms. Anhängen + Sichern: 130 → 0 ms bzw. 545 → 0 ms.
+- **Sonde `pruefe-887-sichern.js` 31/31 grün**; Gegenprobe 886: 8 rot (Flut: 50 Sicherungen in 25 s statt 1; Leeren: Lager
+  behält 22 Zeilen; Lager-Text 1,03 MB und localStorage 482 KB mit Foto statt 69 KB/35 KB ohne; keine „chatbild:“-Einträge).
+
+### L7 — supabase-js gepinnt (index.html)
+`@supabase/supabase-js@2` → **`@2.118.0`**. jsDelivr ist aus dieser Umgebung gesperrt (403 am Proxy); `@2` löst jsDelivr nach
+der höchsten 2.x-Fassung auf npm auf – das ist laut npm-Registry heute **2.118.0** (veröffentlicht 15.10.2026, dist-tag
+`latest`; 2.117.3 vom 07.10.). Das Paket enthält `dist/umd/supabase.js` (218 252 Bytes). Die Sonden 885-sparsam, 822 und 874
+fangen jetzt auch die gepinnte Adresse ab (`@2(\.\d+)*`). `stadt-leicht.html` und `__kz.html` laden weiter `@2` (nicht im Plan).
+‹L7-SONDEN›
+
+### L6 — Feldmessung schärfer (messung.js, Zeilenformat mv 2)
+- Je langem Bild (LoAF) zu den bisherigen vier Stellen `[Dauer, Datei, Zeichen, Art]` neu: `blockingDuration`,
+  `renderStart` und `styleAndLayoutStart` (ms ab Bildbeginn, −1 = keins) und die **3 längsten Skripte**
+  `[Dauer, Aufrufer, Art, Datei@Zeichen]`. Der Aufrufer (`invoker`, z. B. `DIV#livechatArea.onpointerover`,
+  `TimerHandler:setTimeout`, `Response.json.then`) wird gereinigt: Adressen → Dateiname, Kennungen (≥ 8 Hex-Zeichen) und
+  Zahlen ≥ 4 Stellen → Platzhalter, höchstens 48 Zeichen.
+- `chat: [Verlaufzeilen, Zeichen der letzten Sicherung, Sicherungen je Minute]` aus `LiveChat.sicherungStand()` (nur Zahlen).
+- Dieselbe Sendung, keine zusätzliche Anfrage; Größenbremse: über 5 400 Zeichen fallen zuerst die Skripte, dann die ruhigsten
+  Fenster weg (Server-Grenze 6 000). Größtmögliche LoAF-Angabe: 1 162 Zeichen.
+- Sonde `pruefe-887-messung.js` ‹L6-SONDE›
+
+### L4 — Auto-Blätter ohne Ruck (app.js)
+**Nicht ausgeliefert – gemessen und zurückgenommen.** Gebaut war: das Vorab-Malen auf 16×16 durch `img.decode()` ersetzt
+(ohne decode nur im Leerlauf) und im Auftritt ImageBitmaps aus `fetch → Blob → createImageBitmap` (≤ 250 ms gewartet, Start mit
+dem Foto gemeinsam, `close()` danach). Sonde `pruefe-887-auto.js` (CPU 4×, je 3 Läufe, gegen 886 im selben Lauf):
+- Start des Auftritts (Uhr läuft): Viper **466 gegen 181 ms**, Batmobil **441 gegen 136 ms** (Median) – 285–305 ms SPÄTER,
+  über der Rauschgrenze (120–153 ms).
+- Längstes Bild im Auftritt: 137 gegen 101 ms bzw. 143 gegen 128 ms – nicht kürzer.
+- Pixel: erstes und mittleres Bild gleich, das Bild in der Kurve nicht (≈ 100 Bildpunkte Unterschied beim starken
+  Verkleinern).
+- Vorladen: das Vorab-Malen von 886 erzeugte hier KEINEN Langläufer (0 ms ≥ 50 ms) – die 1 130 ms aus der Analyse ließen sich
+  im Nachbau ohne Speicherdruck nicht wiederholen; ein Gewinn war also nicht messbar.
+Also nach der Regel „bringt gemessen nichts oder schadet → nicht einbauen“: app.js ist hier wie 886 (Commit 734b7d37).
+**Aber das Feld sagt etwas anderes:** `app-teil-raum6.js@93213` (lange Bilder 465 ms am 28.10., 855 ms am 20.10.) ist im
+verkleinerten Code von 885 genau die Schleife des 3D-Auftritts (`const Yt=()=>{…requestAnimationFrame(Yt)}`). Auf dem Telefon
+ist das entpackte Blatt bis zum Auftritt offenbar wieder verworfen, und das erste `drawImage` entpackt im Hauptfaden.
+**Vorschlag 888:** die Bitmaps schon beim ersten Aufruf von `lcAuftritt` anstoßen (vor `lcRuhigDann`, das bis 3 s auf Ruhe
+wartet), damit sie zum Start fertig sind, und auf einem Gerät mit Speicherdruck messen (Sonde 887-auto als Messgerät).
+
+### L2 — Verlauf schlank verarbeiten (livechat.js, app.js)
+- `verschmelzen` ist ein Reißverschluss zweier nach der Zeit geordneter Listen (bei Gleichstand zuerst die erste Liste, wie
+  beim stabilen Sortieren von `a.concat(b)`); ist eine Liste nicht geordnet, wird wie bisher sortiert.
+- `verlaufRestHolen`: jede Hintergrund-Seite wird in einer Leerlaufpause verarbeitet (`requestIdleCallback`, höchstens 1 s) und
+  meldet nur `melden("aeltere")`; der Zuhörer in app.js frischt dann nur Zahl und Knopf der älteren Zeilen auf
+  (`livechatAeltereAuffrischen` → `lcAeltereZeigen`). Am Ende voll gemeldet wird nur, wenn ältere Chatbilder dazukamen (sie
+  können im Fenster liegen). Gesichert wird nur über L1.
+- `verlaufFrischHolen` (Rückkehr auf die Seite) **nicht umgebaut**: „nur neue Zeilen anhängen“ würde das Auffüllen von
+  Feldern an Zwillingen (Foto, Wirkung, Zusatzfelder) überspringen, und `verschmelzen` kostet nach dem Reißverschluss nur noch
+  wenige ms. Das Vorholen bis 20 000 Zeilen bleibt (2b ist ein Vorschlag).
+- **Sonde `pruefe-887-verlauf.js`** (Tabelle nachgestellt, 7 000 Zeilen, Klassenzimmer offen, CPU 4×, 886 im selben Lauf):
+  Ergebnis zeilengleich mit 886 (Kennung, Text, Foto, Chatbild, Zusatzfeld), keine Doppelzeilen, Bildzwilling und Zusatzfeld
+  der Geräte-Kopie bleiben; 400 Zufallsfälle `verschmelzen` gleich wie 886; Melden: 886 6× voll (5 nach der ersten Seite),
+  887 1× voll + 5× „aeltere“; Knopf „↑ 6 879 ältere Nachrichten“ richtig, Tipp lädt 120 → 320 Zeilen wie 886.
+  **Längstes Bild beim Laden: 886 1 532 ms (dazu 1 134 ms) → 887 150 ms (erste Seite); je Hintergrund-Seite 65 ms** (Ziel ≤ 120).
+- Nebenbefund (nicht geändert, gilt für 886 wie 887): die Seitenabfrage `lt("erstellt", ältestes)` verliert eine Zeile, wenn
+  zwei Zeilen genau denselben Zeitstempel haben und die Seitengrenze zwischen ihnen liegt (in der Sonde 6 999 statt 7 000). Im
+  Feld (Mikrosekunden) sehr selten.
+
+### L3 — Zeichnen gebündelt (livechat.js, app.js)
+- Eine gewöhnliche empfangene Chatzeile meldet `melden("zeile")` (läuft eine Aufgabe oder ist die Zeile eine Antwort darauf,
+  wie bisher voll). Der Zuhörer zeichnet dann nur `livechatChatAuffrischen` und zieht die festgehaltene Lesetafel ans Ende –
+  nicht Kopf, Plätze, Hintergrund und großes Bild (keines davon hängt an den Zeilen).
+- **Der größte Brocken war gar nicht das Zeichnen:** das Profil (7 000 Zeilen, CPU 4×, nach L1) zeigte ¾ der Zeit einer Zeile
+  in `lcNachUnten` – `scrollTop = scrollHeight` direkt nach dem Einsetzen erzwang jedes Mal das ganze Layout. Jetzt springt der
+  Verlauf einmal je Bild im nächsten Bildaufbau (vor dem Zeichnen, also ohne sichtbaren Unterschied) und noch einmal ein Bild
+  später; der Knopf „↓ Neueste“ misst ebenfalls erst im nächsten Bild. Hat jemand selbst gerollt, bleibt er, wo er ist.
+- Seite verdeckt: der Zuhörer merkt nur „nachholen“ und zeichnet beim Zurückkommen einmal (raumDrin läuft weiter).
+- **Nicht gebaut:** alle Meldungen eines Bildes per `requestAnimationFrame` zu einem Zeichnen zusammenfassen – das verschiebt
+  die Zeitfolge für Dutzende Chat-Sonden, und nach „zeile“ kostet eine Zeile nur noch 8 ms. Für 888 vorgemerkt.
+- **Sonde `pruefe-887-zeile.js`** (7 000 Zeilen, CPU 4×, 12 Zeilen, 886 im selben Lauf): **eine Zeile 90,3 → 8,0 ms** (Median,
+  synchron; Ziel ≤ 40); alle Zeilen nach einem Bild da; nach zwei Bildern unten (wie 886); wer hochgerollt hat, bleibt oben,
+  „↓ Neueste“ erscheint; Plätze: **0 DOM-Änderungen statt 1 116**; mit Aufgabe wird die Antwort gezeichnet wie in 886
+  (`lc-versuch lc-versuch-gut`).
+
+### L5 — Spieltakt (spiel.js)
+- Im 700-ms-Takt: `localStorage` („dma_spiel_dabei“/„dma_spiel_raum“) nur noch bei Änderung (vorher zweimal je Takt).
+- `zeichnen()` misst alle Kreise der Reihe einmal (beim ersten Bedarf, vor dem ersten Schreiben); `schmuck()` und der Ring
+  setzen Lage und Größe nur noch, wenn sich der Wert ändert. Außerhalb von `zeichnen()` wird wie bisher direkt gemessen.
+  Keine CSS-Regel an `sp-*`-Klassen ändert Lage oder Größe eines Kreises (nur transform, filter, outline, box-shadow) – die
+  einmal gemessenen Werte sind also im ganzen Takt richtig.
+- `abrufen`, das Netz, `sp-feuert`, die Tierreaktionen und `platzWaechter` sind unverändert.
+- **Sonde `pruefe-887-takt.js`** (8 Plätze, 7 Mitspieler mit Ring/Tier/Rüstung, CPU 4×, 10 s, 886 im selben Lauf):
+  localStorage **14 → 0** Schreibvorgänge; Maß-Lesungen am Kreis **82,3 → 36,6 je Takt**; Plätze, Klassen, Lage und Größe
+  aller Schmuck-Ebenen gleich wie 886; Dauer eines Takts 22,0 gegen 20,7 ms (Median, im Rauschen; längster 34 gegen 38).
+  Ehrlich: auf dem Rechner wird der Takt dadurch nicht kürzer. Das Feld zeigt bis 856 ms in diesem Takt (Telefon, voller
+  Raum) – was dort lange dauert, sagt ab 887 die geschärfte Messung (L6, die 3 längsten Skripte je Bild).
+
+### Sonden
+‹SONDEN›
+
+### Offen / Vorschläge für den Funk (nicht gebaut, weil sichtbar)
+- **2b – Verlauf erst beim Hochrollen:** statt bis zu 20 000 Zeilen beim Betreten nur die sichtbaren holen, ältere erst beim
+  Hochrollen. Spart beim Betreten die Hintergrund-Seiten ganz – ändert aber, wann ältere Zeilen da sind.
+- **Deko-Animationen pausieren**, solange jemand spricht oder die Flut läuft (Hintergrundgesichter, Glitzer) – sichtbar.
+- **Halbe Auto-Blätter auf Telefonen** (1 020 × 2 042 statt 2 040 × 4 084): ¼ des Speichers und der Entpack-Zeit, leicht weicher.
+- **Filmunschärfe** (Blur hinter dem großen Bild) auf schwachen Geräten weglassen – sichtbar.
+- **Sprechring** als CSS-Transform statt Box-Shadow-Animation – minimal anders im Aussehen.
+- Für 888: `melden` je Bild per `requestAnimationFrame` zusammenfassen (L3, Teil 3), Realtime `worker: true` (mit Ton-Sonde).
