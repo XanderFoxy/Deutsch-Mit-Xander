@@ -16049,6 +16049,7 @@
      <video>-Elemente bleiben von Anfang bis Ende dieselben.
      ============================================================ */
   let livechatAbmelden = null;
+  let livechatVerdecktNachholen = false;   // FASSUNG 887 (L3)
   let livechatGeruest = false;
 
   function livechatName() {
@@ -70310,9 +70311,18 @@
      Ansicht, die niemand sieht. Die VERBINDUNG bleibt bestehen:
      wer weiterblättert, bleibt im Raum. */
   if (window.LiveChat && !livechatAbmelden) {
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden || !livechatVerdecktNachholen) return;
+      livechatVerdecktNachholen = false;
+      if (document.getElementById("sub-livechat")?.dataset.active === "true") renderLiveChat();
+      klassenzimmerStreifen();
+    });
     livechatAbmelden = LiveChat.beiAenderung((l, art) => {
       /* FASSUNG 876 — wer drin ist (auf welchem Weg auch immer), braucht die Raum-Stücke jetzt: gleich einsetzen */
       if (l && l.lage === "drin") raumDrin();
+      /* FASSUNG 887 (L3) — Seite verdeckt (Telefon gesperrt, andere App): niemand sieht den Chat. Dann nur merken und
+         beim Zurückkommen EINMAL alles zeichnen, statt jede Zeile und jeden Puls im Hintergrund. */
+      if (document.hidden) { livechatVerdecktNachholen = true; return; }
       /* FASSUNG 836 — XANDER (Funk 263): „die Latenz bei dem Sitzplätzen wenn man sie wechselt ist immer noch
          extrem". Jede Sitz- und Sprechmeldung zeichnete das ganze Klassenzimmer neu – samt Schleife über alle Chatzeilen
          (im Hauptraum über 7 000) und erzwungenem Layout. Meldet LiveChat nur „plaetze", werden nur die Plätze und das
