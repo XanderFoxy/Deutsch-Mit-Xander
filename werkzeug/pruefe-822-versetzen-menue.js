@@ -81,7 +81,7 @@ const FALSCH = `(function(){
   const br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
   const ctx = await br.newContext({ viewport: { width: 360, height: 740 }, isMobile: true, hasTouch: true, deviceScaleFactor: 2,
     userAgent: "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Mobile Safari/537.36" });
-  await ctx.route(/supabase-js@2\/dist\/umd\/supabase\.js/, (r) => r.fulfill({ status: 200, contentType: "text/javascript", body: FALSCH }));
+  await ctx.route(/supabase-js@2(\.\d+)*\/dist\/umd\/supabase\.js/, (r) => r.fulfill({ status: 200, contentType: "text/javascript", body: FALSCH }));
   /* navigator.vibrate mitschreiben (Haptik beim Halten) */
   await ctx.addInitScript(() => { window.__brumm = []; try { Object.defineProperty(navigator, "vibrate", { configurable: true, value: (ms) => { window.__brumm.push(ms); return true; } }); } catch (e) {} });
   const pg = await ctx.newPage();

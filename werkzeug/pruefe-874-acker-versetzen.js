@@ -154,7 +154,7 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
     if (NUR.indexOf("A") >= 0) {
       console.log("\nTEIL A — Telefon 360 × 740, angemeldet (Server-Attrappe)\n");
       const ctx = await handy();
-      await ctx.route(/supabase-js@2\/dist\/umd\/supabase\.js/, (r) => r.fulfill({ status: 200, contentType: "text/javascript", body: FALSCH }));
+      await ctx.route(/supabase-js@2(\.\d+)*\/dist\/umd\/supabase\.js/, (r) => r.fulfill({ status: 200, contentType: "text/javascript", body: FALSCH }));
       await ctx.addInitScript(() => { window.__brumm = []; try { Object.defineProperty(navigator, "vibrate", { configurable: true, value: (ms) => { window.__brumm.push(ms); return true; } }); } catch (e) {} });
       const pg = await ctx.newPage(); pg.setDefaultTimeout(120000);
       pg.on("pageerror", (e) => seitenFehler.push("A: " + String(e.message || e)));
