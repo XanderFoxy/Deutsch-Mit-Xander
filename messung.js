@@ -381,9 +381,10 @@
   function ziel(el) {
     try {
       if (!el || !el.tagName) return "";
-      if (el.id) return "#" + String(el.id).slice(0, 40);
+      /* FASSUNG 887 — Kennungen in id/Klasse (z. B. eine Konto-Kennung im id eines Platzes) → Platzhalter, wie beim Aufrufer */
+      if (el.id) return "#" + aufrufer(String(el.id).slice(0, 40));
       var k = typeof el.className === "string" ? el.className.trim().split(/\s+/)[0] : "";
-      return el.tagName.toLowerCase() + (k ? "." + k.slice(0, 40) : "");
+      return el.tagName.toLowerCase() + (k ? "." + aufrufer(k.slice(0, 40)) : "");
     } catch (e) { return ""; }
   }
   function beobachterAn() {
