@@ -28,7 +28,8 @@
   ST.quests = { vertretung: true };
   const holen = () => {
     const s = document.createElement("script");
-    s.src = window.LEICHT_QUESTS; s.async = true;
+    /* MODUL-UMBAU M5: das Stück kommt aus dem Vite-Bau (bau/…) und ist ein Modul – klassisch geladen fehlte ihm "use strict" */
+    s.type = "module"; s.src = window.LEICHT_QUESTS; s.async = true;
     document.head.appendChild(s);
   };
   /* erst wenn die Stadt steht; im kleinen Rahmen 20 s später, im großen Bild 6 s */

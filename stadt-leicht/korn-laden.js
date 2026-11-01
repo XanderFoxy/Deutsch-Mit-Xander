@@ -30,7 +30,8 @@
     if (!window.__fertig) return;
     clearInterval(warte);
     const s = document.createElement("script");
-    s.src = window.LEICHT_KORN; s.async = true;
+    /* MODUL-UMBAU M5: das Stück kommt aus dem Vite-Bau (bau/…) und ist ein Modul – klassisch geladen fehlte ihm "use strict" */
+    s.type = "module"; s.src = window.LEICHT_KORN; s.async = true;
     document.head.appendChild(s);
   }, 200);
 })();

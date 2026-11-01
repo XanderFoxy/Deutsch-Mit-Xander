@@ -4,5 +4,41 @@
     "name": "rueckfrage",
     "src": "src/rueckfrage.js",
     "isEntry": true
+  },
+  "src/stadt-leicht.html": {
+    "file": "stadt-leicht-BdJl7zdR.js",
+    "name": "stadt-leicht",
+    "src": "src/stadt-leicht.html",
+    "isEntry": true,
+    "css": [
+      "t-stadt-leicht-prA5tZWG.css"
+    ]
+  },
+  "src/stadt.html": {
+    "file": "stadt-2NQF_YYu.js",
+    "name": "stadt",
+    "src": "src/stadt.html",
+    "isEntry": true,
+    "css": [
+      "t-stadt-Y787Fk81.css"
+    ]
+  },
+  "stadt-leicht/autoschau.js": {
+    "file": "leicht-autoschau-Czypxpnr.js",
+    "name": "leicht-autoschau",
+    "src": "stadt-leicht/autoschau.js",
+    "isEntry": true
+  },
+  "stadt-leicht/korn.js": {
+    "file": "leicht-korn-D4FsCl6A.js",
+    "name": "leicht-korn",
+    "src": "stadt-leicht/korn.js",
+    "isEntry": true
+  },
+  "stadt-leicht/quests.js": {
+    "file": "leicht-quests-BYkzhWnm.js",
+    "name": "leicht-quests",
+    "src": "stadt-leicht/quests.js",
+    "isEntry": true
   }
 }

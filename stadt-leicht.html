@@ -1,11 +1,13 @@
 <!doctype html>
+<!-- GEBAUT aus src/stadt-leicht.html (Vite, werkzeug/modul-bauen.js) – hier nichts ändern, sonst bricht der nächste Bau ab -->
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Meine Stadt</title>
 <meta name="theme-color" content="#1b2440">
-<link rel="stylesheet" href="stadt-leicht/leicht.css?v=231a76da15">
+  <link rel="modulepreload" crossorigin href="bau/stadt-leicht-BdJl7zdR.js">
+  <link rel="stylesheet" crossorigin href="bau/t-stadt-leicht-prA5tZWG.css">
 </head>
 <body>
 <div id="lStadt">
@@ -23,15 +25,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <!-- SKRIPTE -->
 <script>
-/* Gebündelt (werkzeug/leicht-packen.js) – ?quelle=1 lädt die Einzeldateien */
-window.LEICHT_STEMPEL = "31e0a8453b";
+/* Gebaut (Vite: src/stadt-leicht.html, werkzeug/modul-bauen.js) – ?quelle=1 lädt die Quellen einzeln */
 (function () {
   var q = /[?&]quelle=1/.test(location.search);
-  var liste = q ? ["stadt-leicht/kern.js","stadt/boden.js","stadt-leicht/bilder.js","stadt-leicht/szene.js","stadt-leicht/leute.js","stadt-leicht/boote.js","stadt-leicht/tiere.js","stadt-leicht/ton.js","stadt-leicht/bahn.js","stadt-leicht/fuhrwerk.js","stadt-leicht/autos.js","stadt-leicht/autoschau.js","stadt-leicht/windmuehle.js","stadt-leicht/himmel.js","stadt-leicht/dorf.js","stadt-leicht/spiel.js","stadt-leicht/drehen.js","stadt-leicht/oberflaeche.js","stadt-leicht/korn.js","stadt-leicht/verwalten.js","stadt-leicht/start.js","stadt-leicht/quests.js"] : ["stadt-leicht/leicht.min.js?v=8f0bcc9f1f"];
-  if (!q) window.LEICHT_AUTOSCHAU = "stadt-leicht/autoschau.min.js?v=420e0d00a3";
-  if (!q) window.LEICHT_QUESTS = "stadt-leicht/quests.min.js?v=47fce1a7c6";
-  if (!q) window.LEICHT_KORN = "stadt-leicht/korn.min.js?v=6547bb4d94";
-  liste.forEach(function (s) { document.write('<script src="' + s + (q ? "?t=" + Date.now() : "") + '"><\/script>'); });
+  window.LEICHT_STEMPEL = "31e0a8453b";
+  if (!q) window.LEICHT_AUTOSCHAU = "bau/leicht-autoschau-Czypxpnr.js";
+  if (!q) window.LEICHT_KORN = "bau/leicht-korn-D4FsCl6A.js";
+  if (!q) window.LEICHT_QUESTS = "bau/leicht-quests-BYkzhWnm.js";
+  if (!q) { document.write('<script type="module" crossorigin src="bau/stadt-leicht-BdJl7zdR.js"><\/script>'); return; }
+  var t = "?t=" + Date.now();
+  [].forEach.call(document.querySelectorAll('link[rel="stylesheet"][href^="bau/"]'), function (l) { l.parentNode.removeChild(l); });
+  ["stadt-leicht/leicht.css"].forEach(function (s) { document.write('<link rel="stylesheet" href="' + s + t + '">'); });
+  ["stadt-leicht/kern.js","stadt/boden.js","stadt-leicht/bilder.js","stadt-leicht/szene.js","stadt-leicht/leute.js","stadt-leicht/boote.js","stadt-leicht/tiere.js","stadt-leicht/ton.js","stadt-leicht/bahn.js","stadt-leicht/fuhrwerk.js","stadt-leicht/autos.js","stadt-leicht/autoschau.js","stadt-leicht/windmuehle.js","stadt-leicht/himmel.js","stadt-leicht/dorf.js","stadt-leicht/spiel.js","stadt-leicht/drehen.js","stadt-leicht/oberflaeche.js","stadt-leicht/korn.js","stadt-leicht/verwalten.js","stadt-leicht/start.js","stadt-leicht/quests.js"].forEach(function (s) { document.write('<script src="' + s + t + '"><\/script>'); });
 })();
 </script>
 <!-- /SKRIPTE -->

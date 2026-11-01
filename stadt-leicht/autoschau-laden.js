@@ -19,7 +19,8 @@
   AS.vorladen = function () {
     return laden || (laden = new Promise((ja, nein) => {
       const s = document.createElement("script");
-      s.src = window.LEICHT_AUTOSCHAU; s.async = true;
+      /* MODUL-UMBAU M5: das Stück kommt aus dem Vite-Bau (bau/…) und ist ein Modul – klassisch geladen fehlte ihm "use strict" */
+      s.type = "module"; s.src = window.LEICHT_AUTOSCHAU; s.async = true;
       s.onload = () => (ST.autoschau !== AS ? ja() : nein());
       s.onerror = () => { laden = null; nein(); };
       document.head.appendChild(s);
