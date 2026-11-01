@@ -8079,6 +8079,21 @@ Sonden auf dem Endstand: 884-leitung 40, 885-praesenz 69 (ALLES GRÜN), 884-ton3
   Ehrlich: auf dem Rechner wird der Takt dadurch nicht kürzer. Das Feld zeigt bis 856 ms in diesem Takt (Telefon, voller
   Raum) – was dort lange dauert, sagt ab 887 die geschärfte Messung (L6, die 3 längsten Skripte je Bild).
 
+### Nachbesserung (Prüfer, Runde 1)
+| # | Befund | Schwere | Was jetzt gilt |
+|---|---|---|---|
+| 1 | `chatAusLager` setzte `lagerGelesen` VOR der Foto-Abfrage; `pagehide`/„verdeckt“ in diesem Fenster schrieb die kurze Liste ins Lager (3 000 → 301), der Stücklauf ebenso bis 20 s nach dem Betreten | wichtig | behoben (L1 oben): „gelesen“ erst nach den Fotos, Stücklauf verworfen bei ersetzter Liste und ins Lager nur, wenn beim Schnappschuss gelesen; Sonde 887-sichern L (pagehide + verdeckt) und S |
+| 2 | L4a: erster 3D-Auto-Auftritt je Sitzung mit langem Bild (Viper 951 gegen 154 ms) – sichtbar, ohne Freigabe; Funk-Text verschwieg es, Sonde sah es nicht | wichtig | zurückgenommen (app.js wie 886), Vorschlag mit Zahlen (L4 oben); Sonde 887-auto E prüft den ersten Auftritt einzeln |
+| 3 | Profilfotos poppen beim Betreten nach (zweites volles Zeichnen), ohne IndexedDB ganz weg | klein | behoben: Fototafel im localStorage (L1 oben); Sonde 887-sichern T |
+| 4 | Schluss des Stücklaufs ein Stück (112–158 ms bei CPU 4×) | klein | behoben: letzte 300 Zeilen als eigene Stücke, localStorage-Text daraus, Lager eigene Pause (Messung unten) |
+| 5 | 884-ton310 A1 auf dem Endstand rot (Fehltipp, auch auf 886) | klein | Sonde wartet, bis das Ziel still steht (Ergebnis unten); Kopf von 887-auto berichtigt |
+
+**Die sofortige Sicherung bei „verdeckt“ kostet etwas** (Prüfer: 122–191 ms Skript, langes Bild 205–358 ms bei CPU 4×; nur wenn
+etwas aussteht). Unsichtbar – die Seite ist in diesem Moment nicht zu sehen –, aber ein schnelles Zurückwechseln kann so lange
+auf den Hauptfaden warten. Sie bleibt, weil eine WebView nach „verdeckt“ ohne `pagehide` beendet werden kann.
+
+⟨NACHMESSUNG⟩
+
 ### Sonden
 Alle auf dem Endstand (dc0c9325, Code wie heute; ausgeführt aus einer Kopie des Stands, `WURZEL` = Kopie), nacheinander
 über die Chromium-Sperre. Während der Läufe liefen im Hauptbaum 886-Sonden ohne Sperre – zeitkritische Grenzen wurden darum
@@ -8086,15 +8101,15 @@ verschränkt gegen 886 nachgeprüft.
 
 | Sonde | Ergebnis | Gegenprobe 886 (7e23e157) |
 |---|---|---|
-| **887-sichern** (L1, neu) | 31/31 grün | 8 rot (Flut, Leeren, Fotos) |
+| **887-sichern** (L1, neu; Nachbesserung: L, S, T) | 31/31 grün; L/S/T 9/9 grün auf a5dd08f4 (Gesamtlauf siehe Nachbesserung) | 886: 8 rot (Flut, Leeren, Fotos); e9187509 (887 vor der Nachbesserung): L 3 000 → 301 Zeilen (pagehide und verdeckt), S legt 1 001 statt 3 001 Zeilen ins Lager, T 0/27 Fotos – 6 rot |
 | **887-messung** (L6, neu) | 13/13 grün | 7 rot |
 | **887-verlauf** (L2, neu, 886 im selben Lauf) | 11/11 grün | Melden und Bilder rot |
 | **887-zeile** (L3, neu, 886 im selben Lauf) | 7/7 grün (Zeile 8,4 ms, 886 85,9 ms) | Zeile rot |
 | **887-takt** (L5, neu, 886 im selben Lauf) | 6/6 grün | localStorage/Maße rot |
-| **887-auto** (L4a, neu, 886 im selben Lauf) | 12/12 grün | Vorladen rot (1 501 + 1 163 ms) |
+| **887-auto** (L4, 886 im selben Lauf; prüft jetzt den ERSTEN Auftritt einzeln) | 16/16 grün auf 6fde319b (erster Auftritt Viper 169 gegen 175 ms, Batmobil 155 gegen 132 ms; Vorladen 1 543/1 205 wie 886 1 610/1 462 – nur gemessen) | e9187509 (mit L4a): erster Auftritt Viper **1 025 gegen 173 ms**, Batmobil **1 205 gegen 156 ms** – rot |
 | 884-leitung | 40 grün | – |
 | 885-praesenz | 69, ALLES GRÜN | – |
-| 884-ton310 | 45 grün | – |
+| 884-ton310 | 45 grün (auf 1f252ce1); auf dem ersten Endstand A1 rot (Prüfer): der Tipp landete nach `scrollIntoView` auf `#lcKopfUnter`, weil die Seite noch rollte – auf 886 im Diagnoselauf genauso. Die Sonde tippt jetzt erst, wenn das Ziel 4 Bilder lang still steht (Ergebnis siehe Nachbesserung) | – |
 | 884-notweg | 91 grün | – |
 | 884-messung | 75 grün | – |
 | 885-rueckkehr | R K G F T Z Y 235 grün; W N O B S im zweiten Lauf (der erste brach an der 15-min-Frist ab): 2× O und B1 CPU 4× rot – **Last, nicht 887:** O verschränkt 887/886/887 je 2× grün (betreten 270/252, 274/249, 263/255 ms, Blase da); B1 CPU 4× lag in derselben Stunde auch bei 886 bei 1 477 ms (Grenze 1 220) | – |
