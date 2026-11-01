@@ -8083,7 +8083,7 @@ verschränkt gegen 886 nachgeprüft.
 | raumverlauf 6, verlauf-kein-reset 5, leere, 863-chatfenster, notenknopf-aufgabe 16, stimmzeilen 4, 884-gleich 57, 812-auftritt-autos 38, 845-chat-einzug-gleise 47, 679-spielsitz 10, 697-spiellogik 16 | grün (exit 0) | – |
 | verlauf-nachfassen 7, verlauf-doppelt 5, fremde-uhr-reihenfolge 5, antwort-gehoert-dazu 12 | grün (Endstand dc0c9325) | – |
 | aufgabe-reist, benoten, bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem | **noch nicht gelaufen** (Sperre) – vor dem Ausliefern im Hauptbaum nachholen | – |
-‹SPARSAM›
+| 885-sparsam | A B C D E G H L M N (41 ok) und R P U X3 V NT (28 ok) grün; **X5 rot** („binnen 10 s die Blase“ – kein Tipp-Nachholen): das ist der bekannte Rand der Notfall-Bremse (Offen 8, in 886 im Sammellauf ebenso einmal rot, allein wiederholt grün); 887 ändert weder backend.js noch die Abfragen. NT0 und die Fälle danach (NT0 … SWS0) liefen nicht mehr zu Ende (alle Läufe wurden um 10:16 von außen beendet) – **vor der Auslieferung nachholen**, zusammen mit X5 allein (3×). | – |
 
 ### Offen / Vorschläge für den Funk (nicht gebaut, weil sichtbar)
 - **2b – Verlauf erst beim Hochrollen:** statt bis zu 20 000 Zeilen beim Betreten nur die sichtbaren holen, ältere erst beim
