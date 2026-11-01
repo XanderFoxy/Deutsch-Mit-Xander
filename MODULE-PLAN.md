@@ -563,3 +563,28 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
       nebenher übersetzt (Streaming) und ab dem dritten Laden aus dem Code-Speicher genommen; für JSON gibt es beides
       nicht. Nach Plan 0.5 („ein Gewinn zählt erst über der Rauschgrenze“) und Auftrag wird M3 als JSON **nicht
       eingebaut**; `daten-bauen.js` bleibt ein Prüfwerkzeug (schreibt nur mit `--schreiben`, `bau/daten/` bleibt leer).
+    - **Gegenproben zum Format (alle in derselben Richtung):** mit Service Worker (CacheStorage, wie `sw.js`): Kategorie
+      kalt +20 ms (6/6), wieder +30 ms (Skript 9 ms, JSON 37 ms); ganz kalt +566 ms, wieder +846 ms. `text()` +
+      `JSON.parse` statt `json()`: Kategorie kalt +24 ms, wieder +34 ms; ganz +649/+898 ms. Die Schritte 2 und 3 des
+      Plans ebenso: `vokabeln/alltag.js` (437 KB) wieder Skript 15 ms, JSON 64 ms (+50 ms, 6/6; mit Helfer +49 ms),
+      kalt +21 ms (−23…+51, nicht eindeutig; mit Helfer +49 ms, 5/5); `kalender/10.js` (625 KB) kalt +53 ms (6/6),
+      wieder Skript 10 ms, JSON 89 ms (+78 ms, 6/6). Die Node-Zahlen des Plans (2,4×/7×/2,9× für JSON) gelten im
+      Browser nicht. Damit entfallen auch M3 Schritt 2–4 (vokabeln, kalender, übrige `data-*`).
+    - Auffällig: JSON zeigte bei der ganzen Datei keinen Langläufer (> 50 ms), das Skript einen (53–75 ms). Der Browser
+      liest den Körper in vielen kleinen Aufgaben; der Hauptfaden ist trotzdem länger belegt (850–940 ms bis „Daten
+      da“ gegen 57–300 ms).
+  - **Der eigentliche Hebel ist die Menge, nicht das Format** → Vorschlag M3b in Abschnitt 3 (Kategorie als Skript;
+    „Lernen“ wartet heute auf 1,2 MB gepackt, eine Kategorie 9–86 KB). Braucht das Ja des Dirigenten.
+  - **Sonden Schritt 0 (über die Sperre, nacheinander):** `887-bau` B (ohne Browser) und S grün (Gast, Betreiber
+    min/`?quelle`/ohne Module); `885-schlank` A–G grün, Q: der Knotenvergleich war rot – die Sonde nahm für den
+    Vergleich mit BASIS „die Zeile DMA_MODUL“ heraus und erwischte jetzt den ganzen Stempel-Block (ein Knoten zu
+    wenig); berichtigt (2c2b583c), nur noch eine EIGENE Zeile fällt weg.
+  - **Messung Schritt 0 a (A = fc5e3ae3, B = neu, verschränkt):** Betreiber (885-schlank M, CPU 4×, 8 Paare)
+    DOMContentLoaded mit Merker 1 291 → 1 302 ms (gepaart −7, 4↓/4↑), ohne Merker 1 321 → 1 301 (−26, 5↓/3↑); Reiter
+    da +28/+16 ms (Grenze der Sonde 100 ms, grün). Die +13…+19 ms der Prüfung sind damit nicht mehr in einer
+    Richtung zu sehen. Gast kalt 4G (5 Paare): bereit 2 255 → 2 126 ms, gepaart −22 ms [−335…+454],
+    DOMContentLoaded −15 [−320…+452], Wissen-Tipp +27 [−178…+167] – kein Unterschied über dem Rauschen; der Rechner
+    war während des Laufs stark belegt (bereit 2,2 s statt 1,76 s im A/A-Lauf am Morgen, A/A-Grenze dort ±~60 ms).
+  - **Nicht gelaufen und warum:** Übungs-, Wortschatz- und Kalender-Sonden und die Messung „Übung öffnen“ 4G/3G – an den
+    Daten-Wegen hat sich nichts geändert (nichts eingebaut). Kommt M3b, gehören sie dazu (mit neuer Sonde
+    `pruefe-887-daten.js` und neuem Messfall „Übung öffnen“).
