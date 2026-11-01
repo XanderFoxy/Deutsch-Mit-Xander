@@ -419,3 +419,43 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
 
 - 01.11. Bauplan festgelegt (dieses Dokument). Stichproben siehe Abschnitt 1. Der Sed-Befehl aus 0.1 wurde an einer
   Kopie geprüft: 55 Dateien, `node --check` 55/55 ohne Fehler.
+- 01.11. **Modul-Umbau — Schritt 1 (M0, M1, M2): Vite-Grundlage und das Walkie als erstes Modul.** Zweig
+  `module-umbau`, Grundlage 7e23e157 (886). Alles unsichtbar; Gäste und Schüler laden nichts anderes als bisher.
+  - **M0:** `.gitignore` + `node_modules/` (eigener Commit vor jedem npm), dann Befehl 0.1: 55 Dateien, grep leer,
+    `node --check` 55/55.
+  - **M1 Gerüst:** `package.json` (privat, ohne `"type"`), `vite@6.3.5` und **`esbuild@0.28.2` exakt gepinnt**.
+    Grund für esbuild oben: Vite bringt esbuild 0.25.12 mit; `require("esbuild")` in `fassung-setzen.js`,
+    `teile-bauen.js`, `stadt-packen.js` … hätte sonst dieses gegriffen und `min/` anders verkleinert (neue Stempel für
+    alle Dateien, jedes Gerät hätte alles neu geholt). Geprüft: `min/rueckfrage.js`, `core.js`, `quiz.js` mit dem
+    gepinnten esbuild Byte für Byte gleich; `fassung-setzen.js` nimmt für `min/` nur 0.28.2 (Fassung geprüft).
+    `vite.config.mjs` wie Plan (base `./`, outDir `bau`, Manifest `bau/manifest.json`, es2020, kein
+    modulePreload-Polyfill, `[name]-[hash].js`, `preserveEntrySignatures: "strict"`, onwarn EMPTY_BUNDLE /
+    MISSING_EXPORT / CIRCULAR_DEPENDENCY / EVAL = Baufehler; Eingänge = `src/*.js`, flacher Graph).
+    `werkzeug/modul-bauen.js` (aus `fassung-setzen.js --nur-stempel`, Haken-Text unverändert): Prüfsumme über
+    `src/**`, `vite.config.mjs`, `package-lock.json` gegen `bau/quelle.json`, gebaut nur bei Änderung, in einen
+    leeren Ordner außerhalb des Baums, erst nach ganzem Erfolg nach `bau/` (Manifest zuletzt); Baufehler oder kein
+    Vite → `bau/` und `DMA_MODUL` bleiben, laute Meldung, Rückgabe 2 (Stempel für `min/` trotzdem). `git add
+    index.html min bau` macht das Werkzeug selbst (bei Rückgabe ≠ 0 fügt der Haken nichts mehr an – `min/` muss
+    aber zu den Stempeln passen). Aufräumen nur, was weder das neue noch eines der letzten 3 Manifeste aus git nennt.
+    `window.DMA_MODUL` steht direkt hinter `DMA_STEMPEL`; `DMA_STEMPEL` nennt jetzt auch `src/rueckfrage.js`
+    (für `?quelle`). Ein Bau dauert 0,7 s.
+  - **sw.js:** Regel für `bau/…-<8 Zeichen>.(js|css|json)` ohne Abfrage: zuerst aus `dma-dateien-1`, sonst Netz,
+    ohne SHA-1; je Grundname (`bau/rueckfrage.js`) höchstens 2 Generationen (die zuletzt abgelegten). Konstanten
+    unverändert.
+  - **M2 Walkie als Modul:** `src/rueckfrage.js` = Körper der Hülle 1:1 (2 Leerzeichen weniger eingerückt,
+    `return {` → `window.Rueckfrage = {`; „use strict“ bleibt). `dmaWalkieLaden`: mit `DMA_MODUL.rueckfrage`
+    `<script type="module" src="bau/rueckfrage-CfC8vCNA.js">`, mit `?quelle` `src/rueckfrage.js` nativ; Fehler →
+    der bisherige klassische Weg (min/ → Quelle); Browser ohne Module (`noModule` fehlt) → gleich klassisch. Bau:
+    30 308 B (gz 11 327) gegen `min/rueckfrage.js` 30 344 B (gz 11 335) – gleich groß, wie erwartet (Module allein
+    machen nichts kleiner, Abschnitt 1).
+  - **Gleichlauf:** `rueckfrage.js` bleibt eine Fassung lang als Rückfall. **Bearbeitet wird ab jetzt
+    `src/rueckfrage.js`**; den Rückfall schreibt `node werkzeug/quelle-lesen.js --klassisch rueckfrage.js >
+    rueckfrage.js` (Rundreise Byte für Byte geprüft). Laufen beide auseinander, meldet es jeder Commit laut
+    (Rückgabe 2) und 887-bau B6 ist rot.
+  - **Neue Sonden:** `pruefe-887-bau.js` (B1–B9 ohne Browser, S im Browser) und `pruefe-887-bruecke.js`
+    (Brückenwächter, Liste `werkzeug/bruecke-liste.json` aus 7e23e157: gast 353, konto 356, raum 357 Namen,
+    Schnittmenge aus min/ und `?quelle`); `885-swvorladen` Prüfung 12 (bau/); `885-schlank` kennt das Modul
+    (Muster `rueckfrage(-<hash>)?.js`, Teil F: Rückweg bau → min → Quelle, Teil Q zählt die Zeile `DMA_MODUL` wie
+    `DMA_STEMPEL` nicht mit; ein Kommentar in index.html fiel dafür weg, Budget 6 500 Zeichen).
+  - **M3-Vorarbeit:** `werkzeug/daten-bauen.js` (nur Prüfen; schreibt erst mit `--schreiben`): alle 76 Kandidaten
+    JSON-fähig, Mischen/Ersetzen je Pfad erkannt, doppelter Tiefenvergleich (leeres window und fremder Vorbestand).
