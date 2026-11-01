@@ -9,7 +9,10 @@
      P  erstes Bild, Kurve und mittleres Bild der Leinwand sind pixelgleich mit 886
      C  nach dem Auftritt sind die Bitmaps geschlossen (close)
    Vergleich: VERGLEICH=<886-Baum> (sonst wird 7e23e157 per git archive in TMPDIR gebaut).
-   Gegenprobe: WURZEL=<886-Baum> → V rot. */
+   ERGEBNIS 887 (01.11.): NICHT ausgeliefert. Mit Bitmaps startete der Auftritt 285–305 ms SPÄTER als 886 (Median 466 gegen
+   181 ms Viper, 441 gegen 136 ms Batmobil), das längste Bild im Auftritt wurde nicht kürzer (137/143 gegen 101/128 ms), und
+   das Bild in der Kurve war nicht pixelgleich; das Vorab-Malen von 886 erzeugte hier keinen Langläufer (0 ms), ein Gewinn war
+   also nicht messbar. Der Code ist zurückgenommen; die Sonde bleibt als Messgerät für den nächsten Versuch (Logbuch 887, L4). */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), { execSync } = require("child_process");
 const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
