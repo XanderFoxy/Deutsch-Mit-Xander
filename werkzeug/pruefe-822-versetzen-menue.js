@@ -71,6 +71,9 @@ const FALSCH = `(function(){
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]);
     if (p === "/__rahmen822.html") { a.writeHead(200, { "Content-Type": "text/html" }); return a.end(RAHMEN); }
+    /* MODUL-UMBAU M5: das Bündel und das Stilblatt kommen jetzt aus bau/ (Vite) – für die Gegenprobe dieselben Adressen */
+    if (ALT && /^\/bau\/stadt-leicht-[A-Za-z0-9_-]{8}\.js$/.test(p)) p = "/stadt-leicht/leicht.min.js";
+    if (ALT && /^\/bau\/t-stadt-leicht-[A-Za-z0-9_-]{8}\.css$/.test(p)) p = "/stadt-leicht/leicht.css";
     if (ALT && (p === "/stadt-leicht/leicht.min.js" || p === "/stadt-leicht/leicht.css")) { a.writeHead(200, { "Content-Type": TYP[path.extname(p)] }); return fs.createReadStream(path.join(ALT, path.basename(p))).pipe(a); }
     const f = path.join(WURZEL, p);
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }

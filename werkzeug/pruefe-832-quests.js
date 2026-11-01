@@ -357,8 +357,11 @@ const ELTERN = `<!doctype html><meta charset="utf-8"><meta name="viewport" conte
 
   if (TEIL.indexOf("F") >= 0) {
     console.log("\nF  KLEINER RAHMEN IM SPIEL\n");
-    const min = fs.readFileSync(path.join(WURZEL, "stadt-leicht/leicht.min.js"), "utf8");
-    sage(!/weg_rathaus|Orientierung verloren/.test(min) && /LEICHT_QUESTS/.test(fs.readFileSync(path.join(WURZEL, "stadt-leicht.html"), "utf8")), "leicht.min.js enthält keinen Quest-Code (nur die kleine Vertretung), quests.min.js wird nachgeladen", (min.length / 1024).toFixed(0) + " KB");
+    /* MODUL-UMBAU M5: das Bündel ist jetzt bau/stadt-leicht-<hash>.js (Vite), die Quests bau/leicht-quests-<hash>.js */
+    const lhtml = fs.readFileSync(path.join(WURZEL, "stadt-leicht.html"), "utf8");
+    const bpfad = (/"(bau\/stadt-leicht-[A-Za-z0-9_-]{8}\.js)"/.exec(lhtml) || [])[1] || "stadt-leicht/leicht.min.js";
+    const min = fs.readFileSync(path.join(WURZEL, bpfad), "utf8");
+    sage(!/weg_rathaus|Orientierung verloren/.test(min) && /LEICHT_QUESTS/.test(lhtml), "das Bündel (" + bpfad + ") enthält keinen Quest-Code (nur die kleine Vertretung), die Quests werden nachgeladen", (min.length / 1024).toFixed(0) + " KB");
     const el = await seite("/__eltern.html", { width: 360, height: 740 }, true);
     const fr = () => el.frames().find((f) => /stadt-leicht\.html/.test(f.url()));
     await el.waitForFunction(() => { const f = document.getElementById("r"); return f && f.contentWindow && f.contentWindow.__fertig; }, null, { timeout: 120000 });
@@ -398,7 +401,7 @@ const ELTERN = `<!doctype html><meta charset="utf-8"><meta name="viewport" conte
     const el0 = await seite("/__eltern0.html", { width: 360, height: 740 }, true);
     await el0.waitForFunction(() => { const f = document.getElementById("r"); return f && f.contentWindow && f.contentWindow.__fertig; }, null, { timeout: 120000 });
     await el0.waitForTimeout(3000);
-    sage(!el0.anfragen.some((u) => /quests\.min\.js/.test(u)), "ohne ?quest=1 (unter Sonden) wird quests.min.js nicht geladen");
+    sage(!el0.anfragen.some((u) => /quests\.min\.js|leicht-quests-/.test(u)), "ohne ?quest=1 (unter Sonden) werden die Quests nicht geladen");
     await el0.context().close();
   }
   return ende();

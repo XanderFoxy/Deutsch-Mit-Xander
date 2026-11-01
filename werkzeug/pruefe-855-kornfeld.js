@@ -49,9 +49,10 @@ const sage = (gut, was, zusatz) => { if (!gut) fehler++; console.log((gut ? "  o
     await pg.waitForTimeout(1000);
     if (!process.env.QUELLE) {
       const html = fs.readFileSync(path.join(WURZEL, "stadt-leicht.html"), "utf8");
-      const geholt = await pg.evaluate(() => performance.getEntriesByType("resource").filter((r) => /korn\.min\.js/.test(r.name)).map((r) => Math.round(r.startTime)));
-      const fertigUm = await pg.evaluate(() => Math.round(performance.getEntriesByType("resource").filter((r) => /leicht\.min\.js/.test(r.name)).map((r) => r.responseEnd)[0] || 0));
-      sage(/LEICHT_KORN = "stadt-leicht\/korn\.min\.js\?v=/.test(html) && kornDa && geholt.length === 1 && geholt[0] > fertigUm,
+      /* MODUL-UMBAU M5: die Äcker heißen jetzt bau/leicht-korn-<hash>.js, das Bündel bau/stadt-leicht-<hash>.js (Vite) */
+      const geholt = await pg.evaluate(() => performance.getEntriesByType("resource").filter((r) => /korn\.min\.js|leicht-korn-/.test(r.name)).map((r) => Math.round(r.startTime)));
+      const fertigUm = await pg.evaluate(() => Math.round(performance.getEntriesByType("resource").filter((r) => /leicht\.min\.js|bau\/stadt-leicht-/.test(r.name)).map((r) => r.responseEnd)[0] || 0));
+      sage(/LEICHT_KORN = "(stadt-leicht\/korn\.min\.js\?v=|bau\/leicht-korn-[A-Za-z0-9_-]{8}\.js")/.test(html) && kornDa && geholt.length === 1 && geholt[0] > fertigUm,
         "die Äcker sind eine eigene Datei (korn.min.js), geholt erst nach der Stadt – der kleine Rahmen lädt nicht langsamer", JSON.stringify({ geholt: geholt, buendel: fertigUm }));
     }
 

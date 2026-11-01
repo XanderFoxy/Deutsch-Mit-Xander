@@ -133,7 +133,8 @@ const BLATT = /\/(schau_|auftritt_)[a-z0-9_]+\.(json|webp)/;
     await p.route(/schau_viper_(30|55)\.json/, async (route) => { await new Promise((ja) => setTimeout(ja, 1500)); route.continue(); });
   });
   sage(!pg.fehler.length, "lädt ohne Seitenfehler", pg.fehler.join(" | "));
-  sage(await pg.evaluate(() => /leicht\.min\.js/.test([...document.scripts].map((s) => s.src).join(" "))), "die Seite lädt die gebündelte leicht.min.js");
+  /* MODUL-UMBAU M5: das Bündel heißt jetzt bau/stadt-leicht-<hash>.js (Vite), vorher stadt-leicht/leicht.min.js */
+  sage(await pg.evaluate(() => /leicht\.min\.js|bau\/stadt-leicht-[A-Za-z0-9_-]{8}\.js/.test([...document.scripts].map((s) => s.src).join(" "))), "die Seite lädt die gebündelte Stadt (bau/stadt-leicht-….js, vorher leicht.min.js)");
   sage(blaetter(pg).length === 0, "vor dem Öffnen wird kein Blatt der Autos angefragt (schau_*, auftritt_*)", blaetter(pg).join(", ") || "keine");
   const a1 = await anschauen(pg, "viper");
   sage(!a1, "die Karte des Vipers hat „Anschauen\"", a1);
