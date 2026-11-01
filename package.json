@@ -1,0 +1,12 @@
+{
+  "name": "deutsch-mit-xander",
+  "private": true,
+  "description": "Bau der Module (Vite) – kein \"type\", sonst brechen die Sonden (require)",
+  "scripts": {
+    "bau": "vite build"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "vite": "6.3.5"
+  }
+}
