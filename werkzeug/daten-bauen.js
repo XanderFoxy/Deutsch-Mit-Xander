@@ -27,6 +27,11 @@
    nichts). Eingebunden wird erst, wenn die Messung im Browser (CPU 4×,
    kalt/wieder) einen Gewinn über der Rauschgrenze zeigt – der Browser hat
    für Skripte einen Code-Speicher, für JSON nicht.
+   GEMESSEN 01.11. (MODULE-PLAN.md, Logbuch Modul, M3): JSON ist im Browser
+   LANGSAMER als das Skript – eine Kategorie (212 KB) kalt +15 ms, wieder
+   +27 ms (Skript 10 ms aus dem Code-Speicher, JSON 37 ms); die ganze Datei
+   kalt +647 ms, wieder +787 ms; mit Service Worker dasselbe. Deshalb NICHT
+   eingebaut; das Werkzeug bleibt zum Prüfen (JSON-fähig, Mischen/Ersetzen).
 
    AUFRUF:
      node werkzeug/daten-bauen.js                    → Bericht für alle Kandidaten

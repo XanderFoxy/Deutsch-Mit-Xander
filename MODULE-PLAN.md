@@ -347,6 +347,23 @@ eine Messung gegen 886.
 - **Gemessen** (Node, Parsen): JS → JSON 2,4× (`data-uebungen`), 7× (`vokabeln/alltag`), 2,9× (`kalender`).
 - **Sonden:** alle Übungs-, Wortschatz- und Kalender-Sonden. Neue Sonde `pruefe-887-daten.js`: JSON = Quelle,
   Kategorie lädt einzeln.
+- **Ergebnis 01.11. (Logbuch Modul): JSON ist im Browser LANGSAMER als das Skript** (Chromium, CPU 4×; eine Kategorie
+  kalt +15 ms, wieder +27 ms; ganze Datei +647/+787 ms; mit Service Worker dasselbe). Das Skript wird beim Laden
+  nebenher übersetzt und ab dem dritten Laden aus dem Code-Speicher genommen, JSON nicht. **M3 als JSON entfällt.**
+- **Vorschlag M3b (braucht das Ja des Dirigenten, nicht gebaut): nach Kategorie teilen, aber als SKRIPT.** Der Hebel
+  ist nicht das Format, sondern die Menge: „Lernen“ wartet heute auf die ganze Sammlung (6,0 MB, 1,2 MB gepackt:
+  4G ~1,1 s, 3G ~6 s Leitung, dazu 262 ms Ausführen bei CPU 4× mit einem Langläufer von 75 ms). Die Übersicht
+  braucht ohne gewählte Kategorie gar keine Aufgaben (nur `maxAvailable` der GEWÄHLTEN Kategorien liest die Sammlung);
+  eine Kategorie wiegt gepackt 9 KB (Median) bis 86 KB (`it-alltag`) und braucht 31 ms kalt, 10 ms wieder.
+  - Bau: aus `data-uebungen.js` je Kategorie eine Skript-Datei (erzeugt wie `min/`, Name aus dem Inhalt), Karte der
+    Kategorien in `DMA_MODUL` (+1,3 KB gepackt in `index.html`) oder ein kleines Verzeichnis.
+  - App: `ladeUebungen(ids)` lädt nur diese; `renderSetup` zeichnet sofort und lädt bei der Wahl; „Runde starten“
+    wartet auf die gewählten. Ganze Sammlung weiter für Kalenderrücken (Tagesaufgabe), Wörterbuch-Erweiterung und
+    `spiel.js` (gesperrt, lädt `data-uebungen.js` selbst).
+  - Messen: neuer Fall „Übung öffnen“ (Tipp „Lernen“ → Karten; Wahl → Start) in `ladezeit-messen.js`, 4G/3G,
+    kalt/wieder/sw, gegen die Vorfassung.
+  - Platz: GitHub Pages steht bei 947,6 MB von 1 GB (Abschnitt 6, Nr. 6). Die geteilten Dateien kämen zur ganzen
+    Datei dazu (+6 MB je Generation, mit 3 Generationen bis +18 MB, ohne Verzicht auf die ganze Datei).
 
 ### M4. app.js-Pilot: tutor + betonung
 - Die Gruppen ziehen nach `src/app/tutor.js` bzw. `betonung.js`.
