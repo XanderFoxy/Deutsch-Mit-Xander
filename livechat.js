@@ -2955,7 +2955,7 @@ window.LiveChat = (function () {
         if (!sichernSchmutzig) return;
         if (sichernRaum !== zustand.raum) { sichernSchmutzig = false; return; }   // beim Wechsel schon gesichert
         if (Date.now() - sichernZuletzt < SICHERN_ABSTAND_MS) { chatSichernBald(); return; }
-        try { chatSichern(); } catch (e) {}
+        try { chatSichernStueckweise(); } catch (e) {}
       };
       if (typeof window.requestIdleCallback === "function") {
         try { window.requestIdleCallback(los, { timeout: 5000 }); return; } catch (e) {}
@@ -2965,7 +2965,8 @@ window.LiveChat = (function () {
   }
   /* Steht noch etwas aus? Dann JETZT sichern (Seite weg, verdeckt, Raumwechsel). */
   function chatSichernOffenes() {
-    if (!sichernSchmutzig) return;
+    if (!sichernSchmutzig && !sichernLauf) return;
+    if (sichernLauf && sichernLauf.raum === zustand.raum) { chatSichern(); return; }
     if (sichernRaum && sichernRaum === zustand.raum) chatSichern();
     else sichernSchmutzig = false;
   }
@@ -3019,16 +3020,8 @@ window.LiveChat = (function () {
       return wieviel;
     }, function () { return 0; });
   }
-  function chatSichern() {
-    if (!zustand.raum) return;
-    sichernSchmutzig = false;
-    sichernZuletzt = Date.now();
-    sichernZeiten.push(sichernZuletzt);
-    sichernZahl += 1;
-    if (sichernZeiten.length > 30) sichernZeiten.shift();
-    var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
-    var raum = zustand.raum;
-    var schlank = liste.map(function (n0) {
+  /* FASSUNG 887 — eine Zeile, wie sie gespeichert wird (Foto, Ton und Chatbild liegen einmal im Lager) */
+  function zeileSchlank(n0, raum) {
       /* FASSUNG 887 — das Profilfoto einmal ins Lager, in der Zeile nur der Fingerabdruck */
       var n = n0;
       if (istChatFoto(n0.bild)) {
@@ -3068,7 +3061,18 @@ window.LiveChat = (function () {
       kopie.bildImLager = true;
       kopie.bildWeg = false;
       return kopie;
-    });
+  }
+  function chatSichern() {
+    if (!zustand.raum) return;
+    sichernGen += 1; sichernLauf = null;   // eine laufende stückweise Sicherung ist damit überholt
+    sichernSchmutzig = false;
+    sichernZuletzt = Date.now();
+    sichernZeiten.push(sichernZuletzt);
+    sichernZahl += 1;
+    if (sichernZeiten.length > 30) sichernZeiten.shift();
+    var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
+    var raum = zustand.raum;
+    var schlank = liste.map(function (n0) { return zeileSchlank(n0, raum); });
     /* DER GANZE VERLAUF GEHOERT INS LAGER, NICHT IN DEN localStorage.
        -------------------------------------------------------------
        GEMELDET: „Man kann immer noch nicht nach ganz oben scrollen",
@@ -3108,7 +3112,9 @@ window.LiveChat = (function () {
     if (lagerGelesen) {
       try { var text = JSON.stringify(schlank); sichernZeichen = text.length; lagerLegen("chat:" + raum, raum, text); } catch (e) {}
     }
-    var versuch = schlank.slice(-300);
+    chatSpeicherKurz(raum, schlank.slice(-300));
+  }
+  function chatSpeicherKurz(raum, versuch) {
     for (var runde = 0; runde < 8; runde++) {
       try {
         var kurz = JSON.stringify(versuch);
@@ -3120,6 +3126,44 @@ window.LiveChat = (function () {
         versuch = versuch.slice(-Math.ceil(versuch.length / 2));
       }
     }
+  }
+  /* FASSUNG 887 — die geplante Sicherung in Stücken: je Leerlaufpause einige hundert Zeilen in Text verwandeln, erst am
+     Ende ins Lager und in den localStorage. Gemessen (7 000 Zeilen, Fotos 3/30, CPU 6×): in einem Stück 308–319 ms alle
+     20 s; in Stücken je Pause ≤ ~25 ms. Wird dazwischen sofort gesichert (Seite weg, Raumwechsel …), ist dieser Lauf
+     überholt und schreibt nichts mehr. */
+  var sichernGen = 0, sichernLauf = null, SICHERN_STUECK = 400;
+  function sichernNaechst(f) {
+    try { if (typeof window.requestIdleCallback === "function") { window.requestIdleCallback(f, { timeout: 2000 }); return; } } catch (e) {}
+    setTimeout(function () { f(null); }, 0);
+  }
+  function chatSichernStueckweise() {
+    if (!zustand.raum || sichernLauf) return;
+    sichernSchmutzig = false;
+    sichernZuletzt = Date.now();
+    sichernZeiten.push(sichernZuletzt);
+    sichernZahl += 1;
+    if (sichernZeiten.length > 30) sichernZeiten.shift();
+    var raum = zustand.raum, liste = zustand.nachrichten.slice(-CHAT_VERLAUF), gen = (sichernGen += 1);
+    var teile = [], i = 0, lauf = sichernLauf = { raum: raum };
+    function schritt(frist) {
+      if (sichernLauf !== lauf) return;
+      if (gen !== sichernGen || raum !== zustand.raum) { sichernLauf = null; return; }
+      var t0 = Date.now();
+      try {
+        do {
+          var stueck = liste.slice(i, i + SICHERN_STUECK).map(function (n) { return zeileSchlank(n, raum); });
+          i += SICHERN_STUECK;
+          if (stueck.length) { var j = JSON.stringify(stueck); teile.push(j.slice(1, -1)); }
+        } while (i < liste.length && (frist && typeof frist.timeRemaining === "function" ? frist.timeRemaining() > 10 : Date.now() - t0 < 8));
+      } catch (e) { sichernLauf = null; return; }
+      if (i < liste.length) { sichernNaechst(schritt); return; }
+      sichernLauf = null;
+      var text = "[" + teile.join(",") + "]";
+      if (lagerGelesen) { sichernZeichen = text.length; try { lagerLegen("chat:" + raum, raum, text); } catch (e) {} }
+      chatSpeicherKurz(raum, liste.slice(-300).map(function (n) { return zeileSchlank(n, raum); }));
+      sichernZuletzt = Date.now();   // der Abstand von 20 s zählt ab dem Ende
+    }
+    sichernNaechst(schritt);
   }
   function chatLeeren() {
     zustand.nachrichten = [];
@@ -19403,7 +19447,7 @@ window.LiveChat = (function () {
     pruefRaum: function (name) { if (name) { try { chatSichernOffenes(); } catch (e) {} zustand.raum = String(name); } return zustand.raum; },
     /* FASSUNG 887 — Sicherung nachmessen: wie oft, wann zuletzt, was steht aus */
     pruefSichernStand: function () {
-      return { schmutzig: sichernSchmutzig, geplant: Boolean(sichernPlan), zuletzt: sichernZuletzt,
+      return { schmutzig: sichernSchmutzig, geplant: Boolean(sichernPlan), laeuft: Boolean(sichernLauf), zuletzt: sichernZuletzt,
                zeiten: sichernZeiten.slice(), zeichen: sichernZeichen, abstand: SICHERN_ABSTAND_MS };
     },
     pruefSichernAbstand: function (ms) { if (typeof ms === "number" && ms >= 0) SICHERN_ABSTAND_MS = ms; return SICHERN_ABSTAND_MS; },
