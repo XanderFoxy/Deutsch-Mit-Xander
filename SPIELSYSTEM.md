@@ -7982,7 +7982,7 @@ Sonden auf dem Endstand: 884-leitung 40, 885-praesenz 69 (ALLES GRÜN), 884-ton3
 - `chat: [Verlaufzeilen, Zeichen der letzten Sicherung, Sicherungen je Minute]` aus `LiveChat.sicherungStand()` (nur Zahlen).
 - Dieselbe Sendung, keine zusätzliche Anfrage; Größenbremse: über 5 400 Zeichen fallen zuerst die Skripte, dann die ruhigsten
   Fenster weg (Server-Grenze 6 000). Größtmögliche LoAF-Angabe: 1 162 Zeichen.
-- - Auch das Ziel langsamer Eingaben (`inp`) wird jetzt gereinigt: 886 schickte ein `id` wie `#lc-k2585aa3c9d…` roh mit.
+- Auch das Ziel langsamer Eingaben (`inp`) wird jetzt gereinigt: 886 schickte ein `id` wie `#lc-k2585aa3c9d…` roh mit.
 - **Sonde `pruefe-887-messung.js` 13/13 grün**; Gegenprobe 886: 7 rot (LoAF nur 4 Stellen, keine Skripte, kein `chat`, `mv 1`,
   Kennung im `inp`-Ziel). Die bestehende Sonde 884-messung läuft mit (Ergebnis unten).
 
