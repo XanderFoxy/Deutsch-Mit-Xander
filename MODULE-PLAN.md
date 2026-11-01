@@ -1,0 +1,421 @@
+# Bauplan 887 und Module (verbindlich)
+
+Stand 01.11.2026. Grundlage: 886-Stand `7e23e157`. Dieser Plan gilt für beide Arbeitsbäume.
+Was hier steht, wird gebaut. Was sichtbar wäre, wird nur im Funk vorgeschlagen (CLAUDE.md, Regel 3).
+
+| Strang | Baum | Zweig | liefert | Commit-Präfix |
+|---|---|---|---|---|
+| LIVE | `/home/user/dmx-live` | `live-haenger` | Fassung 887 (alter Aufbau) | `WIP 887 live: …` |
+| MODUL | `/home/user/dmx-module` | `module-umbau` | Vite-Grundlage und erste Module (nächste freie Nummer nach 887) | `WIP Modul: …` |
+
+Xander, wörtlich: „Der Livestream ist das Wichtigste, weil der am meisten hängt.“ Daraus folgt: LIVE geht vor.
+Wenn sich beide um Chromium, Platte oder Zeit streiten, gewinnt LIVE.
+
+---
+
+## 0. Feste Regeln für beide Stränge
+
+1. **Nur im eigenen Baum arbeiten.** Nie pushen, denn die Sicherung `/tmp/claude-0/sicherung.sh` lädt alle 2 min jeden
+   Arbeitsstand hoch. Nie den Verlauf umschreiben (kein rebase, amend oder reset auf geteilte Commits). Andere Zweige
+   nicht anfassen. Lesen ist erlaubt (`git show live-haenger:app.js`), schreiben nicht. `SYNQUENZER.html` und den Zweig
+   `dirigent-synth` nie anfassen.
+2. **Früh und oft committen, mindestens alle 30 min und nach jedem grünen Teilschritt.** Ungesicherte Arbeit über
+   20 min gibt es nicht. Der Pre-Commit-Haken baut `min/` und die Stempel. `min/` und die Stempel nie von Hand bearbeiten.
+3. **Kein Supabase.** Messen nur gegen Attrappen. Die Sparsamkeit der Fassung 885 und die Zählung von `885-sparsam`
+   dürfen nicht schlechter werden.
+4. **Chromium nur über die Sperre:** `flock /tmp/claude-0/chrom.lock <befehl>`. Playwright über
+   `require("/tmp/claude-0/node_modules/playwright")`, Chromium aus `/opt/pw-browsers/chromium`, Schalter
+   `--no-proxy-server`. Kurzer TMPDIR: `/tmp/claude-0/t-live` bzw. `/tmp/claude-0/t-modul`.
+   - MODUL hält die Sperre höchstens 10 min am Stück (kleine Sondenreihen), damit LIVE nicht verhungert.
+   - Lange Messreihen macht MODUL nur, wenn LIVE gerade nicht misst.
+5. **Messen:** verschränkt gegen die Vorfassung, Median, A/A-Rauschgrenze (`werkzeug/ladezeit-messen.js --gegen/--aa`).
+   Ein Gewinn zählt erst über der Rauschgrenze. Ergebnisse liegen unter
+   `/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/m887/<strang>/`.
+6. **Platte (~17 GB frei):** keine Vollkopie des Baums. Vergleichsstände mit `git archive <commit> <pfade>`, danach
+   löschen. npm nur mit `--prefix` im eigenen Baum, und erst wenn `node_modules/` in `.gitignore` steht.
+7. **Nichts Sichtbares ohne Freigabe.** Aussehen, Größe und Bedienung bleiben, wie Xander sie festgelegt hat.
+   - Nie ein Neuladen mitten im Klassenzimmer.
+   - Ton und WebRTC (Funk 310) nicht berühren. Sonden `884-ton310`, `884-leitung` und `885-praesenz` bleiben grün.
+8. **Die Fassungsnummer setzt nur die Auslieferung im Hauptbaum** (`node werkzeug/fassung-setzen.js 887`). Die Stränge
+   lassen `DMA_VERSION` stehen. Im 886-Baum steht dort noch „885“.
+9. **Logbuch:**
+   - LIVE schreibt seinen 887-Abschnitt in `SPIELSYSTEM.md`.
+   - MODUL schreibt bis zu seiner ersten Auslieferung NUR in dieses Dokument (Abschnitt 7, „Logbuch Modul“). Zwei
+     Anhänge ans Ende derselben Datei würden beim Einmischen kollidieren.
+10. **Zwischenstände für Xander:** Nach jeder Stufe meldet der Strang eine Zeile mit Messwert („L1 grün: Chatzeile
+    180 → 70 ms, Blockade 96 → 30 %“). Der Dirigent gibt sie in den Funk weiter.
+11. **Einmischen:** Nur `git merge`, kein rebase. Bei Konflikten in `min/` oder den Stempeln in `index.html` wird mit
+    `node werkzeug/fassung-setzen.js --nur-stempel` neu gebaut, nie von Hand gemischt. Danach `node --check` auf alle
+    geänderten `.js` und die Sonden der Fassung.
+
+### 0.1 Erster Commit in BEIDEN Bäumen: Sonden prüfen den eigenen Baum
+
+55 Sonden haben den Hauptbaum fest eingetragen (49× `const WURZEL = "…"`, 4× `const W = "…"`, 1× ohne Leerzeichen,
+`pruefe-tutor-stuecke.js` mit zwei festen Pfaden). In `dmx-live` und `dmx-module` prüfen sie still den HAUPTBAUM und
+melden damit falsches Grün.
+
+Beide Stränge führen GENAU diesen Befehl aus. Ein Probelauf ergab 55 Dateien, `node --check` bei allen 55 ohne Fehler.
+Weil die Änderungen auf beiden Seiten byte-gleich sind, gibt es beim späteren Einmischen keinen Konflikt.
+
+```sh
+sed -i -E 's#^const (WURZEL|W) ?= ?"/home/user/Deutsch-Mit-Xander";#const \1 = process.env.WURZEL || require("path").join(__dirname, "..");#; s#"/home/user/Deutsch-Mit-Xander/#require("path").join(__dirname, "..") + "/#g' werkzeug/pruefe-*.js
+grep -rn '/home/user/Deutsch-Mit-Xander' werkzeug/pruefe-*.js   # muss leer sein
+```
+
+Commit-Text: `WIP 887 live: Sonden prüfen den eigenen Baum` bzw. `WIP Modul: Sonden prüfen den eigenen Baum`.
+
+---
+
+## 1. Kritische Prüfung der vier Analysen (Stichproben im Code, 886-Stand)
+
+| Behauptung | Nachgesehen | Ergebnis |
+|---|---|---|
+| Jede Chatzeile schreibt den ganzen Verlauf neu | `livechat.js:2900–2983`; Aufruf in `nachrichtAnhaengen` bei **7634** (7611 ist der Funktionskopf); `CHAT_VERLAUF = 20000` (Z. 105) | **bestätigt.** `JSON.stringify(schlank)` geht ins Lager, zusätzlich 300 Zeilen in den localStorage, beides bei jeder Zeile |
+| Doppelprüfung mit O(n) | `zustand.nachrichten.some(id)` in `nachrichtAnhaengen` | **bestätigt** |
+| Jede Meldung zeichnet alles | `melden()` → `lage()` kopiert `nachrichten.slice()` (Z. 651ff). Der Zuhörer in `app.js:70255` ruft für jede Art außer „plaetze“ `renderLiveChat()` | **bestätigt** |
+| Fotos stehen in jeder Zeile | `profilbilderEinsetzen` (Z. 2189), `bildKuerzen`/`bildEinsetzen` (Z. 6141ff) | **bestätigt.** Fürs SENDEN gibt es den Fingerabdruck `bildH` + `bildLager` schon. Maßnahme 1b nutzt diesen Weg, ohne einen neuen zu erfinden |
+| Auto-Blätter synchron vorab gemalt | `app.js:57948` drawImage auf 16×16 (Fassung 811); `lcAuto3dVorladen` holt alle Arten im Abstand von 1,5 s (Z. 58658) | **bestätigt** |
+| Spieltakt schreibt localStorage | `spiel.js:16771ff`: 2× `setItem` pro Takt, dazu 14 Pflege-Funktionen nacheinander | **bestätigt** |
+| eval und synchrones XHR in app.js | `app.js:39` `dmaTeilAuswerten`, `dmaTeilSofort` Z. ~295 | **bestätigt** |
+| supabase-js ungepinnt | `index.html:444` `@supabase/supabase-js@2` | **bestätigt** |
+| Haken schluckt Fehler | `.git/hooks/pre-commit`: `node werkzeug/fassung-setzen.js --nur-stempel >/dev/null && git add index.html min; exit 0`, gemeinsam für alle Bäume | **bestätigt.** Er ruft das `fassung-setzen.js` des JEWEILIGEN Baums. MODUL kann das Werkzeug also ändern, ohne den Haken-Text anzufassen |
+| 49 Sonden mit festem Hauptbaum | grep | **berichtigt: 55 Dateien** (siehe 0.1) |
+| Walkie wird einzeln nachgeladen | `index.html:1127` `dmaWalkieLaden` mit Rückfall bei Fehler | **bestätigt.** Das ist der ideale erste Modul-Pilot |
+
+**Wertungen und Berichtigungen:**
+
+- **Hauptursache Livestream:** Die Analyse LIVE trägt, ihr Nachbau passt zu den Felddaten. Die Feld-INP auf
+  `#livechatArea`/`lc-platz`/`#tutorReiter` sind reine Wartezeit auf den Hauptfaden, keine teuren Handler. Deshalb
+  steht Maßnahme 1 (chatSichern) an erster Stelle.
+- **Module beheben die Hänger nicht.** Darin sind sich alle vier Analysen einig. Ein Vite-Bau allein ist 0,99× so groß
+  wie heute. Gewinn bringen nur Aufteilen, Laden bei Bedarf, Code-Cache statt `eval` und kleinere Updates. Darum läuft
+  LIVE im alten Aufbau und wird nicht auf die Module warten.
+- **Auto-Blätter (LIVE-Maßnahme 3), Speicher:** Alle Blätter dauerhaft als `ImageBitmap` halten heißt etwa 92 MB fest
+  belegt. Auf einem 4-GB-Telefon mit WebRTC-Video kann das die WebView abschießen, und dann ist das Klassenzimmer weg.
+  Darum wird zuerst mit `img.decode()` dekodiert: abseits des Hauptfadens, der Speicher bleibt wie heute. Ein
+  ImageBitmap gibt es nur für den laufenden Auftritt, danach folgt `close()`.
+- **chatSichern (LIVE-Maßnahme 1a):** Auch der localStorage-Teil (300 Zeilen) muss ohne Fotos geschrieben werden, sonst
+  bleibt er bei Foto-Autoren teuer.
+- **Ausgabeordner:** Die Analyse MODUL schlägt `m/` vor, die Analyse BETRIEB `bau/`. **Entscheidung: `bau/`.** Kein
+  Name beginnt mit `_` oder `.`, Jekyll veröffentlicht ihn also. Das Manifest liegt als `bau/manifest.json` NICHT in
+  `.vite/`.
+- **`package.json` darf KEIN `"type": "module"` haben.** Sonst behandelt Node alle `werkzeug/*.js` als ES-Module, und
+  sämtliche Sonden (`require`) brechen. Die Vite-Einstellungen stehen deshalb in `vite.config.mjs`.
+- **Version von supabase-js:** Die Analysen nennen 2.117.3 bzw. 2.118.0. Gepinnt wird genau die Fassung, die jsDelivr am
+  Bautag für `@2` ausliefert (`curl -sI …@2/dist/umd/supabase.js`, Weiterleitung lesen). Sie kommt ins Logbuch.
+- **Nicht in 887**, weil Verbindung und Ton berührt sind oder etwas sichtbar würde:
+  - Realtime `worker:true` und „Raumverkehr in Stufen“ aus der Analyse LEISTUNG (Nr. 6 und Nr. 1): später, mit
+    Ton-Sonde.
+  - Folgende Punkte nur als Vorschlag im Funk: Film-Kontext (Nr. 6), Deko-Animationen (Nr. 7), Sprechring (Nr. 9) und
+    Verlauf erst beim Hochrollen (Nr. 2b).
+- **Pilot aus app.js (tutor/betonung):** Die Funktionen liegen über die ganze Datei verstreut (Z. 6950 … 100954).
+  Machbar, aber nicht der schnellste Anfang. Erster Pilot ist deshalb `rueckfrage.js`: eine ganze Datei mit eigenem
+  Lader und eingebautem Rückfall.
+
+---
+
+## 2. Strang LIVE → Fassung 887 (alter Aufbau)
+
+**Ziel:** Der Dauerhänger bei Chat-Flut verschwindet, Eingaben antworten ohne Wartezeit, und das Betreten des Raums
+blockiert nicht mehr sekundenlang. Alles bleibt unsichtbar, die Supabase-Abfragen werden gleich viele oder weniger.
+
+**Reihenfolge:** L0 → L1 → L7 → L6 → L4 → L2 → L3 → L5. Jede Stufe bekommt einen eigenen Commit, eine eigene Sonde und
+eine Messung gegen 886.
+
+### L0. Grundlinie
+- Zuerst Befehl 0.1 ausführen und committen.
+- Danach die Werkzeuge aus `scratchpad/m887/livestream/` (`lsh.js`, `mikro.js`, `spur.js`, `ana.js`) auf den Baum
+  `dmx-live` richten.
+- Die 886-Grundlinie einmal festhalten: 7 000 Zeilen, 6 andere im Raum, Flut von 1 Zeile/s für 20 s, CPU 4× und 6×,
+  ohne Fotos und mit Fotos (3 von 30 Autoren).
+- Gemessen werden: Blockade-Anteil, längster Rahmen, Wartezeit eines Tipps, Kosten je Zeile und je Verlauf-Seite.
+
+### L1. chatSichern vom Empfang entkoppeln (größter Hebel)
+- `chatSichernBald()` ersetzt an allen Aufrufstellen den direkten Aufruf: `nachrichtAnhaengen` (7634) sowie die
+  Stellen 6765, 7902, 7945 und 8284.
+  - Es setzt eine Marke „schmutzig“ und plant einen Lauf per `requestIdleCallback({timeout: 5000})`, ersatzweise
+    `setTimeout`.
+  - Zwischen zwei echten Läufen liegen mindestens 20 s.
+- **Sofort und synchron** läuft `chatSichern()` bei `pagehide`, `visibilitychange → hidden`, in `verlassen()` (8540,
+  bzw. dem bestehenden Aufruf 8609), in `chatLeeren` und beim Raumwechsel. `pruefVerlaufSetzen` bleibt sofort.
+- **Fotos einmal:**
+  - In der gespeicherten Zeile (Lager UND localStorage-300) wird ein `data:image` in `n.bild` durch `bildH`
+    (`bildFinger`) ersetzt.
+  - Das Foto selbst geht je Autor und `bildH` einmal über `lagerEinmal` ins Lager, unter dem Schlüssel
+    `"chatbild:" + bildH`.
+  - Beim Lesen wird es wieder eingesetzt. Das alte Format mit dem Foto in der Zeile bleibt lesbar.
+- **Doppelprüfung:** ein Kennungs-Set neben `zustand.nachrichten`. Wechselt die Array-Referenz, wird das Set neu
+  aufgebaut (Wächter `set.quelle !== zustand.nachrichten`). So muss nicht jede Ersetz-Stelle angefasst werden.
+- Der `lagerGelesen`-Schutz bleibt unverändert: kein Überschreiben vor dem Lesen.
+- **Neue Sonde `werkzeug/pruefe-887-sichern.js`:**
+  - (a) Bei einer Flut läuft chatSichern höchstens 1× in 20 s.
+  - (b) Nach `pagehide` enthalten Lager und localStorage alle Zeilen.
+  - (c) Nach dem Neuladen ist der Verlauf vollständig, die Fotos sind wieder da, Sprachnachrichten und Bilder kommen
+    aus dem Lager.
+  - (d) Ein Speicherstand im 886-Format wird richtig gelesen.
+  - (e) Gegenprobe gegen 886 ist rot.
+- **Mitlaufen** müssen alle Sonden zu Verlauf, Lager, Sprachnachrichten und Bildern sowie `884-leitung`,
+  `885-praesenz` und `885-sparsam`.
+- **Ziel bei CPU 4×:**
+  - eine Zeile ≤ 90 ms (heute 178 ms ohne Fotos, 587 ms mit Fotos)
+  - Blockade in der Flut ≤ 35 % (heute 79–96 %)
+  - kein Rahmen über 300 ms
+
+### L7. supabase-js pinnen (eine Zeile, Stabilität)
+- In `index.html:444` wird `@2` durch die am Bautag ausgelieferte Fassung ersetzt.
+- Sonden: `884-leitung`, `885-praesenz`, `884-ton310`, `885-sparsam`.
+
+### L6. Feldmessung schärfen
+- **`messung.js`, `loafObs` (Z. 369ff):** Je Long Animation Frame werden die 3 längsten Skripte festgehalten, mit
+  `invoker`, `invokerType`, `sourceURL@charPosition` und Dauer. Dazu kommen `blockingDuration`, `renderStart` und
+  `styleAndLayoutStart`.
+- **`raumBauen` (Z. 422ff):** zusätzlich die Zahl der Verlaufzeilen, die Zeichenzahl der letzten Sicherung und die
+  Zahl der Sicherungen pro Minute.
+- Alles läuft in derselben Sendung, ohne zusätzliche Anfrage. Die Größenbremse gilt, Inhalte werden keine
+  mitgeschickt.
+
+### L4. Auto-Blätter ohne Ruck
+- **Vorab-Malen ersetzen:** Statt des synchronen Vorab-Malens (`app.js:57948`) läuft
+  `Promise.all(bilder.map(i => i.decode()))`.
+  - Das dekodiert abseits des Hauptfadens, der Speicher bleibt wie heute.
+  - Ohne `decode` gilt der alte Weg, aber nur in einer Leerlauf-Pause.
+- **Im Auftritt (`lcAuftrittAuto3d`, Schleife Z. 58238):**
+  - Vor dem ersten Bild werden die nötigen Blätter per `createImageBitmap` vorbereitet, asynchron und mit höchstens
+    250 ms Warten. Gelingt das nicht, zeichnet der Auftritt wie heute.
+  - Nach dem Auftritt folgt `close()`.
+- **Unverändert bleiben:** der Vorlade-Plan, welche Arten wann geladen werden, und die Blattgröße. Halbe Blätter für
+  Telefone wären sichtbar, das geht nur als Vorschlag.
+- **Neue Sonde `werkzeug/pruefe-887-auto.js`:**
+  - Das Vorladen erzeugt bei CPU 4× keinen Langläufer über 100 ms (heute 1 130 ms).
+  - Der Auftritt startet nicht später als bei 886 (innerhalb der Rauschgrenze).
+  - Erstes und mittleres Bild sind pixelgleich mit 886.
+
+### L2. Verlauf schlank verarbeiten (Maßnahme 2a, unsichtbar)
+- `verschmelzen` (2486) wird ein Merge zweier sortierter Listen statt `concat` + Sortieren.
+- **Nach Hintergrund-Seiten** (`verlaufRestHolen` 7862) kein volles `melden()` mehr. Stattdessen `melden("aeltere")`:
+  Der Zuhörer frischt dann nur Zahl und Knopf der älteren Zeilen auf.
+- **`verlaufFrischHolen` (7907)** hängt nur neue Zeilen an.
+- Seiten werden in Leerlauf-Stücken verarbeitet. Gesichert wird nur über L1.
+- **NICHT bauen:** Das Vorholen bis 20 000 Zeilen bleibt (2b ist ein Vorschlag im Funk).
+- **Sonden:** Doppelzeilen, Bildzwillinge, `ZUSATZ_FELDER`, Hochrollen/`lcAeltereLaden`.
+- **Ziel:** je Verlauf-Seite ≤ 120 ms bei CPU 4× (heute 237–390 ms, mit Fotos 1,45 s).
+
+### L3. Neue Zeile nur anhängen, Zeichnen pro Bild bündeln
+- **Eigene Meldeart:** `empfangen("text")` und `nachrichtAnhaengen` melden `melden("zeile")`.
+- **Zuhörer** (`app.js:70255`): Bei „zeile“ zeichnet er nur `livechatChatAuffrischen`, nicht Plätze, großes Bild und
+  Streifen.
+- **Bündeln:** Alle Meldungen eines Bildes werden per `requestAnimationFrame` zu EINEM Zeichnen zusammengefasst.
+  - Ist eine Meldung ohne Art dabei, folgt ein volles `renderLiveChat()`.
+  - Bei `document.hidden` wird nur eine Marke gesetzt, gezeichnet wird beim Zurückkommen.
+- Die Marke wird nur für neue oder geänderte Zeilen gebildet.
+- `lcNachUnten` läuft einmal pro Bild, ohne direkt nach dem Schreiben zu lesen.
+- **Sonden:** alle Chat-Sonden, `livechatEffekteAb`, Lehrer-Zustand, Aufgabe/Bezug, Bilder aus dem Lager, Halten am
+  Ende beim Rollen. Wo eine Sonde direkt nach dem Ereignis ins DOM sieht, wird ein Bild gewartet. Die Sonde wird dafür
+  nicht abgeschwächt.
+- **Ziel:** eine Zeile ≤ 40 ms bei CPU 4×.
+
+### L5. Spieltakt entschärfen
+- In `zeichnen()`/`schmuck()`/den LP-Bögen (`spiel.js:6007/6086/6233`) erst alle Maße lesen, dann alle Stile
+  schreiben. Stile nur bei Änderung setzen.
+- `localStorage.setItem(dma_spiel_dabei/raum)` nur bei Änderung.
+- **DOM-Pflege** (zeichnen … schnellZeichnen) nur, wenn sich das Zeichen aus Stand, Plätzen und Sichtbarkeit geändert
+  hat oder das Klassenzimmer sichtbar ist.
+- **Unverändert:** `abrufen()` und das ganze Netzverhalten (`885-sparsam`).
+- **Erhalten bleiben müssen:** flüchtige Klassen (`sp-feuert`, Tierreaktionen), `platzWaechter` und alle
+  `pruefe-spiel*`.
+
+### Schnitt und Übergabe
+- **Lieferpunkt A (Mindest-887):** L0 + L1 + L7 + L6 grün und gemessen. Ist 886 schon auf main und brauchen L4/L2/L3/L5
+  danach mehr als 3 h, liefert der Dirigent A sofort als 887. Der Rest folgt dann als 888.
+- **Lieferpunkt B (volles 887):** zusätzlich L4 und L2. L3 und L5 kommen nur mit, wenn sie bis dahin grün sind, sonst
+  in 888.
+- **Übergabe:**
+  - zuerst den finalen 886-Commit per `git merge` einmischen (Stempel neu bauen, siehe 0.11)
+  - alle Sonden der Stufen + `885-sparsam`, `885-rueckkehr`, `885-swvorladen`, `884-notweg`, `884-leitung`,
+    `885-praesenz`, `884-ton310` laufen lassen
+  - den 887-Abschnitt in `SPIELSYSTEM.md` schreiben
+  - einen Prüfbericht mit Messtabelle (886 gegen 887, Median, Rauschgrenze, CPU 4×/6×, ohne/mit Fotos)
+- Ausgeliefert wird im Hauptbaum.
+
+---
+
+## 3. Strang MODUL → Vite-Grundlage und erste Module
+
+**Schnitt gegen LIVE:**
+- MODUL fasst bis zum Einmischen von 887 diese Dateien NICHT an: `livechat.js`, `spiel.js`, `messung.js`,
+  `filmspieler.js`, `klassenzimmer.js`, `livechat.css`.
+- In `app.js` sind diese Bereiche gesperrt: `lcAuto3d*` (Z. 57900–58700), `livechatChatAuffrischen`, `lcAmEndeHalten`,
+  `lcNachUnten`, `renderLiveChat` (Z. 67800–69400) und der LiveChat-Zuhörer (Z. 70200–70300).
+- Vor jedem Commit, der `app.js` berührt: `git diff 7e23e157 live-haenger -- app.js` lesen, um Überschneidungen
+  auszuschließen. Das ist nur Lesen.
+
+### M0. Sicherung zuerst
+- `.gitignore` bekommt `node_modules/` (die Zeile `.claude/` bleibt). Committen, BEVOR irgendein `npm install` läuft.
+  Sonst landen rund 32 MB in `claude/sicherung-module`.
+- Befehl 0.1 ausführen. Beides committen.
+
+### M1. Gerüst (ohne Verhaltensänderung)
+- **Pakete:**
+  - `package.json` mit `"private": true`, OHNE `"type"`.
+  - `npm install --prefix /home/user/dmx-module --save-dev --save-exact vite@6.3.5`
+  - `package-lock.json` committen.
+- **`vite.config.mjs`:**
+  - Allgemein: `base: "./"`, `publicDir: false`.
+  - `build`:
+    - Ausgabe: `outDir: "bau"`, `emptyOutDir: false`, `manifest: "manifest.json"` (also `bau/manifest.json`).
+    - Ziel und Verkleinern: `target: "es2020"`, `modulePreload: { polyfill: false }`, `minify: "esbuild"`,
+      `sourcemap: false`.
+  - `rollupOptions`:
+    - `input` = jede Datei in `src/*.js` als eigener Eingang.
+    - `preserveEntrySignatures: "strict"`, `treeshake: { moduleSideEffects: true }`.
+    - `output.entryFileNames "[name]-[hash].js"`, `chunkFileNames "t-[name]-[hash].js"`,
+      `assetFileNames "t-[name]-[hash][extname]"`.
+    - `onwarn`: `EMPTY_BUNDLE`, `MISSING_EXPORT`, `CIRCULAR_DEPENDENCY` und `EVAL` werfen einen Fehler.
+- **Flacher Graph (gegen die Hash-Kaskade):**
+  - Eingänge importieren einander nicht statisch.
+  - Geteilt wird über die bestehende window-Brücke (`window.LiveChat`, `Backend`, `DMA_*`).
+  - Laden bei Bedarf geht über den Namen aus `DMA_MODUL`, nicht über `import("./x.js")` im Aufrufer.
+  - Kleine Helfer kommen lieber doppelt in jedes Stück als in einen gemeinsamen Kern.
+- **`werkzeug/fassung-setzen.js --nur-stempel`** wird erweitert. Der Haken-Text bleibt unverändert.
+  - (a) Eine Prüfsumme über `src/**`, `vite.config.mjs` und `package-lock.json` wird mit `bau/quelle.json` verglichen.
+    Gebaut wird nur bei einer Änderung, mit `node_modules/.bin/vite build`.
+  - (b) Aus `bau/manifest.json` entsteht die Zeile `window.DMA_MODUL = {"rueckfrage":"bau/rueckfrage-XXXXXXXX.js",…}`
+    direkt hinter `DMA_STEMPEL`.
+  - (c) `git add bau index.html` übernimmt das Werkzeug selbst.
+  - (d) Bei einem Baufehler bleiben der alte `bau/` und das alte `DMA_MODUL` stehen, es gibt eine laute Meldung auf
+    stderr und Rückgabe ≠ 0. Ohne Vite (kein `node_modules`) gilt dasselbe.
+  - (e) Aufräumen: Gelöscht wird nur, was keines der letzten 3 Manifeste aus git mehr nennt.
+  - `min/` bleibt bis zum Ende des Umbaus bestehen.
+- **`sw.js`:**
+  - Neue Regel für `bau/*-[A-Za-z0-9_-]{8}.(js|css|json)`: erst aus dem Speicher, sonst aus dem Netz, OHNE
+    SHA-1-Nachrechnen.
+  - Je Grundname höchstens 2 Generationen.
+  - Die Konstanten-Namen (`KASTEN`, `SEITE`, „draussen“) bleiben.
+  - Die Sonden `885-swvorladen` und `885-rueckkehr` werden um Fälle für `bau/` erweitert.
+- **Sonden:**
+  - `werkzeug/pruefe-887-bau.js` prüft:
+    - keine Eingangsdatei ist leer
+    - kein Name beginnt mit `_` oder `.`
+    - Manifest, `DMA_MODUL` und Dateien stimmen überein
+    - die Stücke der letzten 3 Fassungen sind vorhanden
+    - beim Start gibt es keine 404
+    - `src`-Prüfsumme = `bau/quelle.json` (fängt einen Commit, bei dem der Bau fehlgeschlagen ist)
+    - Kaskaden-Test: eine 1-Zeilen-Änderung benennt nur ihr eigenes Stück um
+  - `werkzeug/pruefe-887-bruecke.js` (Brückenwächter):
+    - Geprüft wird nach dem Laden in drei Fällen: als Gast, mit Konto und mit offenem Klassenzimmer, jeweils mit `min`
+      und mit `?quelle`.
+    - Die window- und globalen const-Namen müssen eine Obermenge von `werkzeug/bruecke-liste.json` bleiben.
+    - Die Reihenfolge stimmt, und es gibt keinen `pageerror`.
+  - `werkzeug/quelle-lesen.js`: liefert die „logische Datei“ (z. B. `app.js` + `src/app/**`). Die Sonden, die
+    Quelltext lesen, stellen erst um, wenn etwas aus ihrer Datei umzieht.
+
+### M2. Pilot: `rueckfrage.js` (Walkie) als Modul
+- `src/rueckfrage.js` ist der Inhalt der IIFE als Modulkörper, 1:1. Die window-Exporte bleiben (`window.Rueckfrage` …).
+- **`dmaWalkieLaden` in `index.html` (Z. 1127):**
+  - Steht `DMA_MODUL.rueckfrage` und kein `?quelle`, gilt `s.type = "module"; s.src = <bau-Datei>`.
+  - Mit `?quelle` wird `src/rueckfrage.js` als natives Modul geladen.
+  - `onerror` führt zum klassischen `min/rueckfrage.js` und von dort zur Quelle, so wie heute. Der Walkie hat damit
+    immer einen Rückweg.
+- Die klassische Datei bleibt eine Fassung lang als Rückfall liegen.
+- **Sonden:** alle `pruefe-*rueckfrage*`/Walkie-Sonden, `pruefe-887-bau`, `pruefe-887-bruecke`, `884-notweg`,
+  `885-sparsam`.
+- **Messung:** Fälle kalt, wieder und sw gegen 886 (es darf nicht langsamer werden).
+- **Damit ist das Muster einmal von Anfang bis Ende erprobt:** Haken, Bau, Lader, SW, `?quelle`, Rückfall, Sonden.
+- **Lieferbar** als erste Modul-Fassung (nächste freie Nummer nach 887).
+
+### M3. Übungsdaten als JSON (echter Gewinn für schwache Geräte)
+- **Neues Werkzeug** `werkzeug/daten-bauen.js`:
+  - Es erzeugt aus der unveränderten JS-Quelle `bau/daten/<name>-<hash>.json`.
+  - Ein Tiefenvergleich prüft, dass nichts verloren geht. Bearbeitet wird weiter die JS-Quelle.
+  - Die Einträge kommen in `DMA_MODUL`.
+- **Reihenfolge:**
+  1. `data-uebungen.js` (6,1 MB, nach Kategorie geteilt, geladen nur die gebrauchte Kategorie)
+  2. `vokabeln/*.js`
+  3. `kalender/*.js`
+  4. die übrigen reinen `data-*.js`
+- **Ausgenommen:** `data-lesetexte` (Bau-Funktion), `data-exercises` und `data-vocab` (Code).
+- Geholt wird per `fetch`, das Parsen läuft mit `JSON.parse`. Die Nutzer warten auf ein Promise (`ladeDatenteil`,
+  `wortschatzNachziehen`).
+- **Gemessen** (Node, Parsen): JS → JSON 2,4× (`data-uebungen`), 7× (`vokabeln/alltag`), 2,9× (`kalender`).
+- **Sonden:** alle Übungs-, Wortschatz- und Kalender-Sonden. Neue Sonde `pruefe-887-daten.js`: JSON = Quelle,
+  Kategorie lädt einzeln.
+
+### M4. app.js-Pilot: tutor + betonung
+- Die Gruppen ziehen nach `src/app/tutor.js` bzw. `betonung.js`.
+  - Helfer bekommt das Modul über `window.DMA_APP` (in app.js gesetzt und erst beim Aufruf gelesen).
+  - Die Eingänge stellt `src/bruecke.js` unter dem alten Namen auf `window`, mit einer Prüfung, dass nichts
+    überschrieben wird.
+  - In app.js bleiben dünne Weiterleitungen.
+- `teile-bauen.js` lässt die verschwundenen Namen von selbst weg.
+- Erst nach M2, mit Brückenwächter und `quelle-lesen` für die betroffenen Sonden.
+
+### M5. Stadt als eigene Vite-Seiten (dritter Agent möglich, sobald M1 steht)
+- `stadt.html`/`stadt-leicht.html` werden Vite-Mehrseiten-Einträge. Die Packer `stadt-packen.js`/`leicht-packen.js`
+  entfallen.
+- Die Hauptseite ist dabei nicht berührt.
+- Sonden: `pruefe-stadt-*`, `-844`, `?quelle=1`, Ladebild.
+
+---
+
+## 4. Danach bis zum vollständigen Umbau (Reihenfolge verbindlich)
+
+Jeder Schritt ist eine eigene Fassung und wird verschränkt gegen die Vorfassung gemessen. Der Brückenwächter muss grün
+sein. Notweg und `?quelle` bleiben als Rückfall.
+
+| # | Schritt | Voraussetzung | Kern |
+|---|---|---|---|
+| 5 | **887 einmischen** in `module-umbau` (`git merge main`) | 887 (und ggf. 888) live | Ab hier gilt der Klassenzimmer-Code mit den 887-Änderungen |
+| 6 | **spiel.js → `src/spiel/`** | 5 | `dmaSpielLaden` ruft `import()`. Danach Aufteilen in einen Raum-Takt-Kern und die Inhalte als dynamische Stücke |
+| 7 | **Klassenzimmer A: `livechat.js` 1:1 als Modul** | 5 | Gleicher Code, gleicher Platz in der Reihenfolge, window-Brücke. Sonden `884-leitung`, `885-praesenz`, `884-ton310` |
+| 8 | **Klassenzimmer B: lc/livechat/kz aus app.js** in dünnen Scheiben nach `src/raum/` | 7 | 215 eigene Hüllvariablen ziehen mit, die 25 geteilten werden zu `raumZustand`. EINE asynchrone Grenze beim Öffnen und Zurückkehren (`import`), danach gibt es im Raum kein synchrones XHR und kein `eval` mehr (Code-Cache: −300…−500 ms je Öffnen auf dem schwachen Android). Die Scheibe mit der Grenze wird einzeln ausgeliefert |
+| 9 | **Klassenzimmer C: Chat-Effekte** als je eigenes dynamisches Stück | 8 | Vorladen in der Ruhepause wie heute |
+| 10 | **Startpfad:** core, bildverwaltung, data-vocab, quiz, baukasten, backend 1:1 als Module, supabase-js als eigenes gepinntes Stück `bau/supabase-*.js` | 9 | backend.js OHNE Logikänderung (Bremse 885, Start-Tor 886, `885-sparsam` 162 Prüfungen). Der Inline-Lader in `index.html` bleibt klassisch |
+| 11 | **Rest von app.js** (Postfach, Freunde, Admin, Beta, Reise, Profil …) als dynamische Stücke. Danach `dmaTeil*`, `teile-bauen.js`, `app-teile.json` und `min/` stilllegen | 10 | Update-Download nur noch für echte Änderungen (885→886 heute 1 075 KB gz, mit Stücken etwa 290 KB) |
+| 12 | **Brücke abbauen:** window-Namen, die kein klassisches Skript mehr liest, fallen weg | 11 | Was Sonden und Messung brauchen, bleibt |
+
+Parallel und unabhängig: M5 Stadt. Ebenfalls unabhängig ist Kritisches CSS nach Bereichen (Analyse LEISTUNG, Nr. 5).
+Dafür ist vorher ein Pixelvergleich je Ansicht Pflicht.
+
+---
+
+## 5. Zeitplan (ehrlich)
+
+Geschätzt, nicht gemessen. Der Engpass ist die eine Chromium-Reihe (443 Browser-Sonden), nicht das Schreiben des Codes.
+Dazu kommen das Wochenlimit und Freigaben von Xander. Die Daten nehmen an, dass ohne lange Pausen gearbeitet wird.
+
+| Was | Arbeitszeit | fertig zum Ausliefern |
+|---|---|---|
+| 886 | Hauptbaum, letzte Prüfung | heute (01.11.) |
+| **887 Lieferpunkt A** (L1 chatSichern + L7 + L6) | 4–6 h | **heute Nacht / 02.11. früh** |
+| **887 voll** (+ L4 Auto, L2 Verlauf; L3/L5 wenn grün) | weitere 5–8 h | **02.11.** |
+| 888 (L3/L5, falls nicht in 887) | 3–5 h | 02.–03.11. |
+| M0 + M1 Gerüst, SW, Bau- und Brücken-Sonde | 1 Tag (parallel zu 887) | 02.11. |
+| M2 Pilot Walkie → **erste Modul-Fassung** | ½ Tag | **03.11.** |
+| M3 Übungsdaten JSON | 1–1½ Tage | 05.11. |
+| M4 tutor/betonung; M5 Stadt (parallel) | je 1–2 Tage | 06.–07.11. |
+| 6–7 Spiel und Klassenzimmer A | 2–3 Tage | ~11.11. |
+| 8–9 Klassenzimmer B und C (mehrere Fassungen) | 1½–2 Wochen | ~22.11. |
+| 10–12 Startpfad, Rest, Abschluss | 1 Woche | **~29.11.–06.12.** |
+
+**Ganzer Umbau: 3½–5 Wochen, Ende November bis Anfang Dezember.** Der Livestream-Gewinn kommt mit 887 sofort und hängt
+nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `eval` und kein synchrones Nachladen mehr.
+
+---
+
+## 6. Vorschläge an Xander (brauchen sein Ja, werden NICHT gebaut)
+
+1. Ältere Chatzeilen erst beim Hochrollen nachladen statt beim Betreten bis 20 000 vorzuholen. Das spart Abfragen und
+   Rechenzeit; beim Hochrollen gibt es ein kurzes Nachladen.
+2. Deko-Animationen (Wetter-Sterne, Tutor-Atmen, verdeckte Laufschrift) pausieren, solange das Klassenzimmer offen ist.
+   Vorher wird das mit einer Gerätespur bestätigt.
+3. Halb so große Auto-Blätter für Telefone (ein Viertel Speicher und Dekodierzeit).
+4. Auf schwachen Geräten bei Szenen-Filmen keine Vollbild-Unschärfe.
+5. Sprechring mit kurzer Mindesthaltezeit gegen Flattern.
+6. `werkzeug/backup` (234 MB) aus der Veröffentlichung nehmen (Pages-Grenze 1 GB, heute 947,6 MB).
+
+---
+
+## 7. Logbuch Modul (bis zur ersten Modul-Auslieferung hier, danach in SPIELSYSTEM.md)
+
+- 01.11. Bauplan festgelegt (dieses Dokument). Stichproben siehe Abschnitt 1. Der Sed-Befehl aus 0.1 wurde an einer
+  Kopie geprüft: 55 Dateien, `node --check` 55/55 ohne Fehler.
