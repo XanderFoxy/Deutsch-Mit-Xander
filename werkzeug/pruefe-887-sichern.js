@@ -317,19 +317,21 @@ const NUR = (process.env.NUR || "ABWFTRDKSL").split("");
       const ric = window.requestIdleCallback, gehalten = [];
       window.requestIdleCallback = (f) => { gehalten.push(f); return 0; };
       const frei = () => { const f = gehalten.shift(); if (f) f({ timeRemaining: () => 0, didTimeout: false }); return !!f; };
+      /* nur die JETZT gehaltenen freigeben – ein Leerlauf-Takt der Seite, der sich selbst neu anmeldet, liefe sonst endlos */
+      const runde = () => { let n = gehalten.length; while (n-- > 0) frei(); };
       const abstand = LiveChat.pruefSichernAbstand();
       LiveChat.pruefSichernAbstand(0);
       LiveChat.pruefAnhaengen({ id: "s-neu", von: "p1", name: "Bea", art: "text", text: "neu", zeit: Date.now() });
       await warte(60);
-      frei();                                                  // geplante Sicherung → Schnappschuss (1001 Zeilen)
-      const lief = LiveChat.pruefSichernStand().laeuft;
-      frei();                                                  // erstes Stück
+      for (let k = 0; k < 40 && !LiveChat.pruefSichernStand().laeuft; k++) { runde(); if (!LiveChat.pruefSichernStand().laeuft) await warte(20); }
+      const lief = LiveChat.pruefSichernStand().laeuft;        // geplante Sicherung → Schnappschuss (1001 Zeilen)
+      runde();                                                 // erstes Stück
       /* jetzt wie betreten(): Lager lesen und einmischen */
       const ausLager = await LiveChat.pruefVerlaufAusLager(raum);
       LiveChat.pruefVerlaufFensterAuf();
       LiveChat.pruefEmpfangen({ art: "verlauf", von: "lager-nachbau", name: "Lager", zeilen: ausLager });
       LiveChat.pruefVerlaufFensterZu();
-      for (let k = 0; k < 60; k++) { await warte(25); while (frei()) {} }
+      for (let k = 0; k < 80; k++) { await warte(25); runde(); }
       window.requestIdleCallback = ric;
       LiveChat.pruefSichernAbstand(abstand);
       await warte(400);
