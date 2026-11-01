@@ -52,11 +52,11 @@
  "korrekturen.css": "0ab791607b816ffb37db3df7dfb4b60c2e0c583b",
  "aussprache-pruefung.js": "d99786def20343b7bd67616b66506f1c0150a301",
  "rueckfrage.js": "482037a16ab51fbfa00926c49f6ca9acad516d8a",
- "data-werkstatt.js": "128890acecb735fb3a95dd82878968bfbeb34b01",
  "data-exercises.js": "4129fcc895fb7f4f593a7162698c02605767a790",
  "backend.js": "03f34bf3116261c80dd9005c8293df0d2ee83a19",
  "livechat.js": "43b974425e4b791684d5350325d5e017ed238c5b",
  "spiel.js": "c0eb3e9a676963bc0c833cc54ed171fa10d9e42e",
  "app.js": "654687448b5419188b7ff776c9e4d30cc3207ae3",
- "messung.js": "190da5f9190317b84b4e1be98bda3fd733628dce"
+ "messung.js": "190da5f9190317b84b4e1be98bda3fd733628dce",
+ "data-werkstatt.js": "01b8deb3efd40e6e6be48fdffb1b4f9742808444"
 }
