@@ -2877,7 +2877,9 @@ window.LiveChat = (function () {
       var l = JSON.parse(localStorage.getItem(chatSchluessel(raum)) || "[]");
       if (!Array.isArray(l)) return [];
       l = altenMuellFiltern(l).slice(-CHAT_HALTEN);
-      chatFotosEinsetzen(l);   // FASSUNG 887 — Profilfotos stehen nur noch als Fingerabdruck in der Zeile
+      /* FASSUNG 887 — Profilfotos stehen nur noch als Fingerabdruck in der Zeile; die der localStorage-Zeilen liegen
+         einmal in der Fototafel daneben (chatFotoTafel) und sind damit schon beim ersten Zeichnen da. */
+      if (chatFotosEinsetzen(l).length) { chatFotoTafelLesen(raum); chatFotosEinsetzen(l); }
       return l;
     } catch (e) { return []; }
   }
@@ -2898,7 +2900,6 @@ window.LiveChat = (function () {
   var lagerGelesen = false;
   function chatAusLager(raum) {
     return lagerHolen(["chat:" + raum]).then(function (gefunden) {
-      lagerGelesen = true;
       var roh = gefunden && gefunden["chat:" + raum];
       if (!roh) return [];
       try {
@@ -2909,7 +2910,16 @@ window.LiveChat = (function () {
            Das alte Format (Foto in der Zeile) braucht nichts davon und bleibt lesbar. */
         return chatFotosZurueck(liste).then(function () { return liste; });
       } catch (e) { return []; }
-    }, function () { lagerGelesen = true; return []; });
+    }, function () { return []; }).then(function (liste) {
+      /* FASSUNG 887 (Nachbesserung, Prüfer) — „gelesen" gilt erst JETZT, nach den Profilfotos, unmittelbar vor dem
+         Einmischen in betreten() (dazwischen liegt kein Ereignis mehr, nur Mikroaufgaben). Vorher stand es VOR der
+         zweiten Lager-Abfrage (chatbild:…): kam genau dann pagehide oder „verdeckt", schrieb die sofortige Sicherung
+         die kurze Liste (localStorage, 300 Zeilen) ins Lager – nachgestellt: 3 000 → 301 Zeilen. 886 hatte dieses
+         Fenster nicht. Und nur für den Raum, in dem man noch ist (ein später Rückläufer aus dem alten Raum gibt den
+         neuen nicht frei). */
+      if (raum === zustand.raum) lagerGelesen = true;
+      return liste;
+    });
   }
 
   /* FASSUNG 836 — Gegenprüfung zu Funk 263 („Seite flüssig"): chatSichern lief bei jeder neuen Zeile und legte dabei JEDES
@@ -2939,7 +2949,10 @@ window.LiveChat = (function () {
         unter „chatbild:" + Fingerabdruck (bildFinger, derselbe wie beim Senden); in der Zeile bleibt n.bildH. Beim
         Lesen wird es wieder eingesetzt. Ein Speicherstand im alten Format (Foto in der Zeile) wird weiter gelesen.
      3. Die Doppelprüfung in nachrichtAnhaengen über ein Kennungs-Verzeichnis statt über some().
-     Der lagerGelesen-Schutz (nichts ins Lager, bevor es gelesen ist) bleibt, wie er war. */
+     Der lagerGelesen-Schutz (nichts ins Lager, bevor es gelesen ist) gilt weiter – NACHGEBESSERT (Prüfer): „gelesen"
+     erst nach den Profilfotos (chatAusLager), und eine stückweise Sicherung, deren Liste inzwischen ersetzt wurde,
+     wird verworfen (chatSichernStueckweise). Die Profilfotos der 300 Zeilen im localStorage stehen einmal daneben
+     (chatFotoTafel), damit sie beim Betreten ohne Lager-Abfrage sofort da sind – auch ohne IndexedDB. */
   var SICHERN_ABSTAND_MS = 20000;
   var sichernSchmutzig = false, sichernRaum = "", sichernPlan = null, sichernZuletzt = 0;
   var sichernZeichen = 0, sichernZeiten = [], sichernZahl = 0;   // Feldmessung (messung.js): Zeichen der letzten Sicherung, Sicherungen je Minute
@@ -3120,6 +3133,7 @@ window.LiveChat = (function () {
         var kurz = JSON.stringify(versuch);
         if (!lagerGelesen) sichernZeichen = kurz.length;
         localStorage.setItem(chatSchluessel(raum), kurz);
+        chatFotoTafel(raum, versuch.map(function (n) { return n && n.bildH; }));
         return;
       } catch (e) {
         if (versuch.length <= 20) return;
@@ -3130,8 +3144,17 @@ window.LiveChat = (function () {
   /* FASSUNG 887 — die geplante Sicherung in Stücken: je Leerlaufpause einige hundert Zeilen in Text verwandeln, erst am
      Ende ins Lager und in den localStorage. Gemessen (7 000 Zeilen, Fotos 3/30, CPU 6×): in einem Stück 308–319 ms alle
      20 s; in Stücken je Pause ≤ ~25 ms. Wird dazwischen sofort gesichert (Seite weg, Raumwechsel …), ist dieser Lauf
-     überholt und schreibt nichts mehr. */
-  var sichernGen = 0, sichernLauf = null, SICHERN_STUECK = 400;
+     überholt und schreibt nichts mehr.
+     NACHGEBESSERT (Prüfer):
+     – Wird zustand.nachrichten unterwegs ERSETZT (etwa der volle Verlauf aus dem Lager eingemischt), ist der
+       Schnappschuss alt: der Lauf wird verworfen und neu geplant – sonst legte er die kurze Liste ins Lager.
+       Ausgenommen ist nur das Kappen auf CHAT_HALTEN in nachrichtAnhaengen (es nimmt den Lauf mit), sonst käme ab
+       20 000 Zeilen in einer Flut keine Sicherung mehr zu Ende.
+     – Ins Lager nur, wenn es schon beim Schnappschuss gelesen war.
+     – Der Schluss war ein Stück (Text zusammensetzen, Lager, 300 Zeilen noch einmal schlank machen + localStorage):
+       gemessen 112–158 ms bei CPU 4×. Jetzt sind die letzten 300 Zeilen eigene Stücke, ihr Text wird für den
+       localStorage wiederverwendet, und localStorage und Lager bekommen je eine eigene Leerlaufpause. */
+  var sichernGen = 0, sichernLauf = null, SICHERN_STUECK = 400, KURZ_ZEILEN = 300;
   function sichernNaechst(f) {
     try { if (typeof window.requestIdleCallback === "function") { window.requestIdleCallback(f, { timeout: 2000 }); return; } } catch (e) {}
     setTimeout(function () { f(null); }, 0);
@@ -3144,26 +3167,85 @@ window.LiveChat = (function () {
     sichernZahl += 1;
     if (sichernZeiten.length > 30) sichernZeiten.shift();
     var raum = zustand.raum, liste = zustand.nachrichten.slice(-CHAT_VERLAUF), gen = (sichernGen += 1);
-    var teile = [], i = 0, lauf = sichernLauf = { raum: raum };
-    function schritt(frist) {
-      if (sichernLauf !== lauf) return;
-      if (gen !== sichernGen || raum !== zustand.raum) { sichernLauf = null; return; }
+    var durfte = lagerGelesen, grenze = Math.max(0, liste.length - KURZ_ZEILEN);
+    var teile = [], kurzTeile = [], kurzFotos = [], i = 0, lauf = sichernLauf = { raum: raum, quelle: zustand.nachrichten };
+    function ueberholt() {
+      if (sichernLauf !== lauf) return true;
+      if (gen !== sichernGen || raum !== zustand.raum) { sichernLauf = null; return true; }
+      if (zustand.nachrichten !== lauf.quelle) { sichernLauf = null; sichernSchmutzig = true; chatSichernBald(); return true; }
+      return false;
+    }
+    function stuecke(frist) {
+      if (ueberholt()) return;
       var t0 = Date.now();
       try {
         do {
-          var stueck = liste.slice(i, i + SICHERN_STUECK).map(function (n) { return zeileSchlank(n, raum); });
-          i += SICHERN_STUECK;
-          if (stueck.length) { var j = JSON.stringify(stueck); teile.push(j.slice(1, -1)); }
+          var bis = Math.min(i + SICHERN_STUECK, i < grenze ? grenze : liste.length);
+          var stueck = liste.slice(i, bis).map(function (n) { return zeileSchlank(n, raum); });
+          if (stueck.length) {
+            var j = JSON.stringify(stueck).slice(1, -1);
+            teile.push(j);
+            if (i >= grenze) { kurzTeile.push(j); for (var k = 0; k < stueck.length; k++) if (stueck[k].bildH) kurzFotos.push(stueck[k].bildH); }
+          }
+          i = bis;
         } while (i < liste.length && Date.now() - t0 < 12 && (!frist || typeof frist.timeRemaining !== "function" || frist.timeRemaining() > 10));
       } catch (e) { sichernLauf = null; return; }
-      if (i < liste.length) { sichernNaechst(schritt); return; }
+      sichernNaechst(i < liste.length ? stuecke : kurzLegen);
+    }
+    function kurzLegen() {
+      if (ueberholt()) return;
+      var kurz = "[" + kurzTeile.join(",") + "]";
+      try {
+        if (!durfte || !lagerGelesen) sichernZeichen = kurz.length;
+        localStorage.setItem(chatSchluessel(raum), kurz);
+        chatFotoTafel(raum, kurzFotos);
+      } catch (e) {
+        /* zu groß für den localStorage: wie bisher halbieren */
+        try { chatSpeicherKurz(raum, liste.slice(-KURZ_ZEILEN).map(function (n) { return zeileSchlank(n, raum); })); } catch (e2) {}
+      }
+      sichernNaechst(insLager);
+    }
+    function insLager() {
+      if (ueberholt()) return;
       sichernLauf = null;
-      var text = "[" + teile.join(",") + "]";
-      if (lagerGelesen) { sichernZeichen = text.length; try { lagerLegen("chat:" + raum, raum, text); } catch (e) {} }
-      chatSpeicherKurz(raum, liste.slice(-300).map(function (n) { return zeileSchlank(n, raum); }));
+      if (durfte && lagerGelesen) {
+        var text = "[" + teile.join(",") + "]";
+        sichernZeichen = text.length;
+        try { lagerLegen("chat:" + raum, raum, text); } catch (e) {}
+      } else if (lagerGelesen) { sichernSchmutzig = true; chatSichernBald(); }   // unterwegs gelesen: beim nächsten Mal
       sichernZuletzt = Date.now();   // der Abstand von 20 s zählt ab dem Ende
     }
-    sichernNaechst(schritt);
+    sichernNaechst(stuecke);
+  }
+  /* FASSUNG 887 (Nachbesserung) — die Profilfotos der localStorage-Zeilen, einmal je Foto, unter eigenem Schlüssel.
+     886 hatte sie in jeder Zeile (300 Zeilen × 16 KB je Foto-Zeile); 887 zuerst nur im Lager – dann fehlten sie beim
+     ersten Zeichnen nach dem Betreten (sie kamen erst nach einer Lager-Abfrage, mit einem zweiten vollen Zeichnen) und
+     ohne IndexedDB (privater Modus, manche WebView) ganz. Geschrieben wird die Tafel nur, wenn sich die Menge der Fotos
+     ändert. Der Schlüssel beginnt bewusst NICHT mit „dma_livechat_chat_" (archivRaeume liest alle diese als Verlauf). */
+  function fotoSchluessel(raum) { return "dma_livechat_chatfoto_" + (raum || "-"); }
+  var fotoTafelStand = Object.create(null);
+  function chatFotoTafel(raum, hs) {
+    var da = Object.create(null), keys = [];
+    for (var i = 0; i < (hs || []).length; i++) { var h = hs[i]; if (h && !da[h] && chatBildVoll[h]) { da[h] = 1; keys.push(h); } }
+    keys.sort();
+    var stand = keys.join(",");
+    if (fotoTafelStand[raum] === stand) return;
+    fotoTafelStand[raum] = stand;
+    try {
+      if (!keys.length) { localStorage.removeItem(fotoSchluessel(raum)); return; }
+      var t = {};
+      keys.forEach(function (x) { t[x] = chatBildVoll[x]; });
+      localStorage.setItem(fotoSchluessel(raum), JSON.stringify(t));
+    } catch (e) {}
+  }
+  function chatFotoTafelLesen(raum) {
+    try {
+      var t = JSON.parse(localStorage.getItem(fotoSchluessel(raum)) || "null");
+      if (!t || typeof t !== "object") return;
+      var gut = [];
+      Object.keys(t).forEach(function (h) { if (istChatFoto(t[h])) { chatBildVoll[h] = t[h]; gut.push(h); } });
+      if (fotoTafelStand[raum] === undefined) fotoTafelStand[raum] = gut.sort().join(",");
+    } catch (e) {}
   }
   function chatLeeren() {
     zustand.nachrichten = [];
@@ -7819,7 +7901,9 @@ window.LiveChat = (function () {
        damit hinten etwas ab. Es ist dieselbe Grenze wie ueberall
        sonst: CHAT_HALTEN. */
     if (zustand.nachrichten.length > CHAT_HALTEN) {
+      var vorKappen = zustand.nachrichten;
       zustand.nachrichten = zustand.nachrichten.slice(-CHAT_HALTEN);
+      if (sichernLauf && sichernLauf.quelle === vorKappen) sichernLauf.quelle = zustand.nachrichten;   // FASSUNG 887 — nur gekappt, nicht ersetzt
     }
     chatSichernBald();   // FASSUNG 887 — nicht mehr bei jeder Zeile den ganzen Verlauf (siehe chatSichernBald)
   }
@@ -8503,8 +8587,9 @@ window.LiveChat = (function () {
        Datenmenge. Der eine ist raus.
        Stattdessen: der VOLLSTAENDIGE Verlauf aus dem Lager. Er ist
        meist laenger als das, was im localStorage Platz hatte. */
-    chatAusLager(zustand.raum).then(function (ausLager) {
-      if (!ausLager || !ausLager.length) return;
+    var lagerRaum = zustand.raum;
+    chatAusLager(lagerRaum).then(function (ausLager) {
+      if (!ausLager || !ausLager.length || zustand.raum !== lagerRaum) return;   // FASSUNG 887 — kein fremder Raum
       ausLager.forEach(function (z) { z.eigen = z.von === zustand.ichId; });
       zustand.nachrichten = verschmelzen(ausLager, zustand.nachrichten);
       /* Gleich wieder sichern: damit sind die alten Bedienungshinweise

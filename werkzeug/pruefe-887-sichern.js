@@ -15,12 +15,20 @@
      R  Nach dem Neuladen: Verlauf vollständig, Fotos wieder eingesetzt, Sprachnachricht und Chatbild aus dem Lager.
      D  Ein Speicherstand im 886-Format (Foto in der Zeile) wird gelesen, auch über eine neue Sicherung hinweg.
      K  Doppelprüfung: dieselbe Kennung kommt nicht zweimal hinein; nach Austausch der Liste gilt die neue Liste.
-   Gegenprobe: WURZEL=<886-Baum> → A, B(verdeckt), W, F rot. */
+   NACHBESSERUNG (Prüfer, Runde 1):
+     L  Die Seite geht (pagehide / verdeckt), WÄHREND das Lager gelesen wird – nach dem Verlauf, vor den Profilfotos,
+        also vor dem Einmischen: das Lager bleibt vollständig (3 000 Zeilen, nicht die kurze Liste).
+     S  Eine stückweise Sicherung, deren Liste unterwegs ersetzt wird (das Lager wird eingemischt), legt nie den alten
+        Schnappschuss ins Lager; danach steht der volle Verlauf dort.
+     T  Nach dem Neuladen haben die localStorage-Zeilen ihre Profilfotos SOFORT (synchron, ohne Lager-Abfrage) –
+        die Fototafel liegt einmal daneben und wird bei unveränderten Fotos nicht neu geschrieben.
+   Gegenprobe: WURZEL=<886-Baum> → A, B(verdeckt), W, F rot. WURZEL=<Baum auf e9187509 (887 vor der Nachbesserung)>
+   → L, S, T rot. */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = process.env.WURZEL || require("path").join(__dirname, "..");
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json" };
-const NUR = (process.env.NUR || "ABWFRDK").split("");
+const NUR = (process.env.NUR || "ABWFTRDKSL").split("");
 (async () => {
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/index.html";
@@ -184,7 +192,11 @@ const NUR = (process.env.NUR || "ABWFRDK").split("");
       LiveChat.pruefVerlaufSetzen(liste.concat([{ id: "P-extra", von: "p0", name: "Schüler0", art: "text", text: "noch", zeit: Date.now() + 5, bild: fotos[0] }]));
       await warte(300);
       const zweitePuts = Object.keys(window.__z.put).filter((k) => k.indexOf("chatbild:") === 0).length;
-      return { rohLaenge: roh ? roh.length : -1, rohFoto: roh ? roh.indexOf(fotos[0].slice(0, 200)) >= 0 : null, lsLaenge: ls.length, lsFoto: ls.indexOf(fotos[0].slice(0, 200)) >= 0,
+      let tafel = null; try { tafel = JSON.parse(localStorage.getItem("dma_livechat_chatfoto_probe-foto") || "null"); } catch (e) {}
+      window.__z.ls = {};
+      LiveChat.pruefVerlaufSetzen(liste.concat([{ id: "P-extra2", von: "p1", name: "Schüler1", art: "text", text: "noch2", zeit: Date.now() + 6, bild: fotos[1] }]));
+      const tafelNeu = window.__z.ls["dma_livechat_chatfoto_probe-foto"] || 0;
+      return { tafelN: tafel ? Object.keys(tafel).length : -1, tafelRichtig: tafel ? Object.values(tafel).every((b) => fotos.indexOf(b) >= 0) : false, tafelNeu, rohLaenge: roh ? roh.length : -1, rohFoto: roh ? roh.indexOf(fotos[0].slice(0, 200)) >= 0 : null, lsLaenge: ls.length, lsFoto: ls.indexOf(fotos[0].slice(0, 200)) >= 0,
                fotoPuts: zuFotos, einFotoOk: fotos.indexOf(einFoto) >= 0, zweitePuts, fotos };
     });
     fotos = r.fotos;
@@ -193,6 +205,10 @@ const NUR = (process.env.NUR || "ABWFRDK").split("");
     ok(Object.keys(r.fotoPuts).length === 3 && Object.values(r.fotoPuts).every((v) => v === 1), "jedes der 3 Fotos genau einmal als „chatbild:…“ ins Lager", JSON.stringify(Object.values(r.fotoPuts)));
     ok(r.einFotoOk, "das gelegte Foto ist das Original");
     ok(r.zweitePuts === 0, "zweite Sicherung legt die Fotos nicht noch einmal", r.zweitePuts + " Mal");
+    if (hat("T")) {
+      ok(r.tafelN === 3 && r.tafelRichtig, "T  Fototafel neben dem localStorage-Verlauf: die 3 Fotos, je einmal", r.tafelN + " Fotos");
+      ok(r.tafelNeu === 0, "T  … bei unveränderten Fotos nicht neu geschrieben", r.tafelNeu + " Mal");
+    }
   }
 
   if (hat("R")) {
@@ -201,6 +217,16 @@ const NUR = (process.env.NUR || "ABWFRDK").split("");
     await pg.waitForFunction(() => window.LiveChat && LiveChat.pruefVerlaufSetzen, null, { timeout: 60000 });
     await pg.waitForTimeout(800);
     await pg.evaluate(helfer);
+    if (hat("T")) {
+      /* T: gleich nach dem Neuladen, vor jeder Lager-Abfrage, synchron – so zeichnet betreten() das erste Mal */
+      const t = await pg.evaluate((fotos) => {
+        LiveChat.pruefRaum("probe-foto");
+        const l = LiveChat.pruefVerlaufAusSpeicher("probe-foto");
+        const mit = l.filter((n) => /^P\d/.test(n.id) && Number(n.id.slice(1)) % 30 < 3);
+        return { n: l.length, mit: mit.length, richtig: mit.filter((n) => n.bild === fotos[Number(n.id.slice(1)) % 30]).length };
+      }, fotos);
+      ok(t.n === 300 && t.mit > 0 && t.richtig === t.mit, "T  nach dem Neuladen: localStorage-Zeilen haben ihr Profilfoto sofort (ohne Lager)", t.richtig + "/" + t.mit + " Foto-Zeilen");
+    }
     const r = await pg.evaluate(async (fotos) => {
       LiveChat.pruefRaum("probe-foto");
       const lager = await LiveChat.pruefVerlaufAusLager("probe-foto");
@@ -269,6 +295,106 @@ const NUR = (process.env.NUR || "ABWFRDK").split("");
     ok(r.n1 === 5001 && r.n2 === 5001, "neue Kennung einmal, zweites Mal nicht", r.n1 + " / " + r.n2);
     ok(r.n3 === 5000 && r.n4 === 5000, "nach Austausch der Liste: gelöschte Kennung wieder erlaubt, vorhandene nicht", r.n3 + " / " + r.n4);
     ok(r.ms < 1, "eine Zeile anhängen (5 000 Zeilen, ohne Sicherung) unter 1 ms", r.ms + " ms");
+  }
+
+  if (hat("S")) {
+    console.log("\n  S  Stückweise Sicherung: Liste unterwegs ersetzt (Lager eingemischt) → nie der alte Schnappschuss ins Lager");
+    const r = await pg.evaluate(async () => {
+      const warte = (ms) => new Promise((f) => setTimeout(f, ms));
+      const raum = "probe-s";
+      LiveChat.pruefRaum(raum);
+      await LiveChat.pruefVerlaufAusLager(raum);
+      const lang = window.__zeilen(3000, "S", 0, null);
+      LiveChat.pruefVerlaufSetzen(lang);                       // Lager: 3000
+      await warte(400);
+      /* wie nach dem Betreten: Lager noch nicht gelesen, im Arbeitsspeicher nur die jüngsten Zeilen */
+      LiveChat.pruefLagerVergessen();
+      LiveChat.pruefVerlaufSetzen(lang.slice(-1000));          // nur localStorage
+      const puts = [];
+      const put = IDBObjectStore.prototype.put;
+      IDBObjectStore.prototype.put = function (v) { if (v && v.id === "chat:" + raum) { try { puts.push(JSON.parse(v.daten).length); } catch (e) { puts.push(-1); } } return put.apply(this, arguments); };
+      /* Leerlaufpausen festhalten: je Freigabe genau ein Schritt (timeRemaining 0 → ein Stück je Pause) */
+      const ric = window.requestIdleCallback, gehalten = [];
+      window.requestIdleCallback = (f) => { gehalten.push(f); return 0; };
+      const frei = () => { const f = gehalten.shift(); if (f) f({ timeRemaining: () => 0, didTimeout: false }); return !!f; };
+      const abstand = LiveChat.pruefSichernAbstand();
+      LiveChat.pruefSichernAbstand(0);
+      LiveChat.pruefAnhaengen({ id: "s-neu", von: "p1", name: "Bea", art: "text", text: "neu", zeit: Date.now() });
+      await warte(60);
+      frei();                                                  // geplante Sicherung → Schnappschuss (1001 Zeilen)
+      const lief = LiveChat.pruefSichernStand().laeuft;
+      frei();                                                  // erstes Stück
+      /* jetzt wie betreten(): Lager lesen und einmischen */
+      const ausLager = await LiveChat.pruefVerlaufAusLager(raum);
+      LiveChat.pruefVerlaufFensterAuf();
+      LiveChat.pruefEmpfangen({ art: "verlauf", von: "lager-nachbau", name: "Lager", zeilen: ausLager });
+      LiveChat.pruefVerlaufFensterZu();
+      for (let k = 0; k < 60; k++) { await warte(25); while (frei()) {} }
+      window.requestIdleCallback = ric;
+      LiveChat.pruefSichernAbstand(abstand);
+      await warte(400);
+      IDBObjectStore.prototype.put = put;
+      const lager = await window.__lagerRoh("chat:" + raum);
+      return { lief, puts, ausLagerN: ausLager.length, lagerN: lager ? JSON.parse(lager).length : -1 };
+    });
+    ok(r.lief, "der Stücklauf lief, als die Liste ersetzt wurde", "Lager gelesen: " + r.ausLagerN + " Zeilen");
+    ok(r.puts.every((n) => n >= 3000), "kein Schreiben eines alten Schnappschusses ins Lager", "Zeilen je Schreiben " + JSON.stringify(r.puts));
+    ok(r.lagerN >= 3001, "danach steht der volle Verlauf (mit der neuen Zeile) im Lager", r.lagerN + " Zeilen");
+  }
+
+  if (hat("L")) {
+    console.log("\n  L  Seite geht, während das Lager gelesen wird (nach dem Verlauf, vor den Profilfotos)");
+    for (const art of ["pagehide", "hidden"]) {
+      const raum = "probe-l-" + art;
+      const vorher = await pg.evaluate(async (raum) => {
+        LiveChat.pruefRaum(raum);
+        await LiveChat.pruefVerlaufAusLager(raum);
+        const l = [], t0 = Date.now() - 3000 * 60000;
+        /* Zeilen 0–999 von „alt*"-Autoren mit Foto, die in den letzten 300 nicht mehr vorkommen (ihr Foto liegt nur im Lager) */
+        for (let i = 0; i < 3000; i++) { const alt = i < 1000; const a = alt ? "alt" + (i % 10) : "p" + (i % 20);
+          l.push({ id: "L" + i, von: a, name: a, text: "Zeile " + i, art: "text", zeit: t0 + i * 60000, bild: window.__foto(alt ? 100 + (i % 10) : (i % 20), 600) }); }
+        LiveChat.pruefVerlaufSetzen(l);
+        await new Promise((f) => setTimeout(f, 600));
+        const roh = await window.__lagerRoh("chat:" + raum);
+        return roh ? JSON.parse(roh).length : -1;
+      }, raum);
+      const B = await ctx.newPage();
+      const fehlerB = [];
+      B.on("pageerror", (e) => fehlerB.push(String(e.message || e).slice(0, 160)));
+      await B.goto(adresse, { waitUntil: "domcontentloaded" });
+      await B.waitForFunction(() => window.LiveChat && LiveChat.pruefVerlaufSetzen, null, { timeout: 60000 });
+      await B.waitForTimeout(1500);
+      await B.evaluate(helfer);
+      const r = await B.evaluate(async ({ raum, art }) => {
+        LiveChat.pruefLagerVergessen();
+        LiveChat.pruefRaum(raum);
+        const kurz = LiveChat.pruefVerlaufAusSpeicher(raum);
+        LiveChat.pruefVerlaufSetzen(kurz);                       // wie chatLaden beim Betreten (Lager ungelesen → nur localStorage)
+        LiveChat.pruefAnhaengen({ id: "neu1", von: "q", name: "Q", text: "neu", art: "text", zeit: Date.now() });   // etwas steht aus
+        let lesend = 0, gefeuert = false, aufgeloest = false;
+        const orig = IDBDatabase.prototype.transaction;
+        IDBDatabase.prototype.transaction = function (fach, modus) {
+          const t = orig.apply(this, arguments);
+          if ((modus || "readonly") === "readonly") {
+            lesend++;
+            /* 1. Lese-Abfrage = chat:<raum>, 2. = chatbild:… – genau jetzt geht die Seite */
+            if (lesend === 2 && !gefeuert) { gefeuert = true; setTimeout(() => { window.__gehtUm = aufgeloest ? "nach" : "vor";
+              if (art === "hidden") { Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" }); document.dispatchEvent(new Event("visibilitychange")); }
+              else window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: false })); }, 0); }
+          }
+          return t;
+        };
+        const aus = await LiveChat.pruefVerlaufAusLager(raum).then((x) => { aufgeloest = true; return x; });
+        IDBDatabase.prototype.transaction = orig;
+        return { kurz: kurz.length, ausLager: aus.length, lesend, gefeuert, gehtUm: window.__gehtUm || "-" };
+      }, { raum, art });
+      await B.waitForTimeout(1200);
+      const nachher = await B.evaluate((raum) => window.__lagerRoh("chat:" + raum).then((x) => (x ? JSON.parse(x).length : -1)), raum);
+      await B.close();
+      ok(r.gefeuert === true && r.gehtUm === "vor", art + ": das Ereignis kam zwischen Lager-Lesen und Einmischen", "Lese-Abfragen " + r.lesend + ", Ereignis " + r.gehtUm + " dem Ende von chatAusLager");
+      ok(vorher === 3000 && nachher >= vorher, art + ": das Lager bleibt vollständig", vorher + " → " + nachher + " Zeilen (kurze Liste " + r.kurz + ")");
+      ok(fehlerB.length === 0, art + ": keine Seitenfehler auf der zweiten Seite", fehlerB.slice(0, 2).join(" | "));
+    }
   }
 
   ok(seitenFehler.length === 0, "keine Seitenfehler", seitenFehler.slice(0, 3).join(" | "));
