@@ -2924,7 +2924,7 @@ window.LiveChat = (function () {
      Der lagerGelesen-Schutz (nichts ins Lager, bevor es gelesen ist) bleibt, wie er war. */
   var SICHERN_ABSTAND_MS = 20000;
   var sichernSchmutzig = false, sichernRaum = "", sichernPlan = null, sichernZuletzt = 0;
-  var sichernZeichen = 0, sichernZeiten = [];   // Feldmessung (messung.js): Zeichen der letzten Sicherung, Sicherungen je Minute
+  var sichernZeichen = 0, sichernZeiten = [], sichernZahl = 0;   // Feldmessung (messung.js): Zeichen der letzten Sicherung, Sicherungen je Minute
   function chatSichernBald() {
     if (!zustand.raum) return;
     sichernSchmutzig = true;
@@ -3006,6 +3006,7 @@ window.LiveChat = (function () {
     sichernSchmutzig = false;
     sichernZuletzt = Date.now();
     sichernZeiten.push(sichernZuletzt);
+    sichernZahl += 1;
     if (sichernZeiten.length > 30) sichernZeiten.shift();
     var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
     var raum = zustand.raum;
@@ -18460,6 +18461,8 @@ window.LiveChat = (function () {
     kameraDazuholen: kameraDazuholen,
     mikrofonDazuholen: mikrofonDazuholen,
     chatLeeren: chatLeeren,
+    /* FASSUNG 887 — für die Feldmessung (messung.js, raumBauen): nur Zahlen, keine Inhalte */
+    sicherungStand: function () { return { zeilen: zustand.nachrichten.length, zeichen: sichernZeichen, zahl: sichernZahl }; },
     befehlsliste: befehlsliste,
     befehlsVorschlaege: befehlsVorschlaege,
     /* FASSUNG 884 (Funk 310) — info {spielt, nur} nur für die Berichte; das Verhalten des Filters bleibt wie bisher */
