@@ -8033,7 +8033,10 @@ fangen jetzt auch die gepinnte Adresse ab (`@2(\.\d+)*`). `stadt-leicht.html` un
   in `lcNachUnten` – `scrollTop = scrollHeight` direkt nach dem Einsetzen erzwang jedes Mal das ganze Layout. Jetzt springt der
   Verlauf einmal je Bild im nächsten Bildaufbau (vor dem Zeichnen, also ohne sichtbaren Unterschied) und noch einmal ein Bild
   später; der Knopf „↓ Neueste“ misst ebenfalls erst im nächsten Bild. Hat jemand selbst gerollt, bleibt er, wo er ist.
-- Seite verdeckt: der Zuhörer merkt nur „nachholen“ und zeichnet beim Zurückkommen einmal (raumDrin läuft weiter).
+- **Nicht gebaut (zuerst gebaut, wieder zurückgenommen):** „bei verdeckter Seite nur eine Marke setzen und beim Zurückkommen
+  einmal zeichnen“. Das Zeichnen spielt eine frisch angekommene Sprachnachricht im Chat sofort ab und löst die Wirkung einer
+  neuen Zeile (Ruf, Konfetti …) aus – im Hintergrund wäre beides erst beim Zurückkommen gekommen, gesammelt auf einmal.
+  Das wäre hörbar anders (Regel 3), und die verdeckte Seite hängt für niemanden. Vorschlag für den Funk, falls gewünscht.
 - **Nicht gebaut:** alle Meldungen eines Bildes per `requestAnimationFrame` zu einem Zeichnen zusammenfassen – das verschiebt
   die Zeitfolge für Dutzende Chat-Sonden, und nach „zeile“ kostet eine Zeile nur noch 8 ms. Für 888 vorgemerkt.
 - **Sonde `pruefe-887-zeile.js`** (7 000 Zeilen, CPU 4×, 12 Zeilen, 886 im selben Lauf): **eine Zeile 90,3 → 8,0 ms** (Median,
