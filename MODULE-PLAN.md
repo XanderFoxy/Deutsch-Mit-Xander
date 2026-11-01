@@ -512,3 +512,37 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     Commit – ein Server, der die Datei gerade an eine Sonde ausliefert, konnte eine halbe lesen).
   - **Chromium-Pause ab 08:05 UTC** auf Bitte des Dirigenten (LIVE-Schlussreihe 887). Restliche Läufe:
     `scratchpad/m887/modul/rest.sh` (ab ~09:30 UTC, ein Läufer, alles über die Sperre).
+- 01.11. **Modul-Umbau — Schritt M3 (Übungsdaten als JSON): gemessen, NICHT eingebaut.** Grundlage fc5e3ae3.
+  - **Schritt 0, Mängel aus der M2-Prüfung (8a3a027b):**
+    - a) `window.DMA_MODUL` steht nicht mehr in einem eigenen `<script>`, sondern vorn im Block von `DMA_STEMPEL`:
+      `<script>window.DMA_MODUL = {…};window.DMA_STEMPEL = {…};</script>` (der Prüfer maß beim Betreiber
+      DOMContentLoaded +13…+19 ms, immer in derselben Richtung). Vorn, weil `sw.js` (auch die alten Helfer auf den
+      Geräten) `DMA_STEMPEL` mit `/window\.DMA_STEMPEL = (\{[^\n]*?\});<\/script>/` liest – dahinter stünde
+      `DMA_MODUL` mit im Fang, `JSON.parse` scheiterte, der Helfer hielte keine Datei mehr für gestempelt.
+      `modul-bauen.zeileSetzen` zieht die alte eigene Zeile hinein; `fassung-setzen.js` lässt den Vorsatz stehen.
+      887-bau B3 prüft die Stelle und dass sw.js die Liste weiter liest, B8 das Ersetzen.
+    - b) Name aus dem Inhalt: `daten-bauen.js` benennt nach sha256 der GESCHRIEBENEN Bytes (base64url, 8 Zeichen),
+      überschreibt nie einen Namen mit anderem Inhalt (Fehler), schreibt über eine Zwischendatei und rechnet
+      zurückgelesen nach. 887-bau B11: jede Datei in `bau/daten/` heißt nach ihrem Inhalt (mit Gegenprobe: fremder
+      Inhalt wird erkannt), kein Hash-Name unter `bau/` hatte in git je zwei Inhalte, Arbeitsbaum = git.
+    - c) `fassung-setzen.js <zahl>` baut zuerst und bricht bei Vite-Baufehler oder Gleichlauf-Bruch ab, BEVOR
+      `DMA_VERSION`/`fassung.json` sich ändern (Rückgabe 1; 887-bau B8 im Wegwerf-Ordner). Gegenprobe mit dem
+      Werkzeug aus fc5e3ae3: setzt „9999“ trotz Baufehler (Rückgabe 2). Übergabe MODUL in Abschnitt 3 (nach M2):
+      `pruefe-887-bau.js` vor jeder Auslieferung.
+    - 887-bau B (ohne Browser) grün; Gegenprobe gegen fc5e3ae3 (Vergleichsbaum aus Verweisen): B3 Stelle, B8 Ersetzen
+      und B8 echte Fassung rot (dazu B4/B11 „kein git“).
+  - **Messung Format (Chromium, CPU 4×, Datei vom eigenen Server ohne Leitungsbremse, je Paar beide Arten im frischen
+    Profil, Reihenfolge gedreht; kalt = 1. Laden, wieder = 3. Laden im selben Profil mit HTTP-Speicher und
+    V8-Code-Speicher; Maß „Daten da“ = vom Anstoß bis die Werte auf window liegen; Skript
+    `scratchpad/m887/modul/m3-json-messen2.js`, Ergebnisse `…/m3/`):**
+    - eine Kategorie (`wortstellung`, 212 KB), 6 Paare: Skript kalt 31 ms (25…40), JSON (`fetch` + `json()`) 46 ms
+      (35…62), gepaart **JSON +15 ms** (+4…+37, 6/6 langsamer); wieder Skript **10 ms** (6…16), JSON 37 ms (30…45),
+      gepaart **JSON +27 ms** (+18…+39, 6/6). Langläufer keine.
+    - ganze Datei (`min/data-uebungen.js`, 6,0 MB), 5 Paare: Skript kalt 262 ms (246…293), JSON 918 ms (851…930),
+      gepaart **JSON +647 ms** (5/5); wieder Skript **63 ms**, JSON 850 ms, gepaart **+787 ms** (5/5). Dafür ohne
+      Langläufer (Skript: einer, 75 ms kalt / 60 ms wieder).
+    - **Ergebnis: JSON ist im Browser NICHT schneller, sondern langsamer** – kalt Faktor 0,68 (Kategorie) bzw. 0,29
+      (ganz), wieder 0,26 bzw. 0,07. Der Node-Vorteil (2,4×) gilt im Browser nicht: das Skript wird beim Laden
+      nebenher übersetzt (Streaming) und ab dem dritten Laden aus dem Code-Speicher genommen; für JSON gibt es beides
+      nicht. Nach Plan 0.5 („ein Gewinn zählt erst über der Rauschgrenze“) und Auftrag wird M3 als JSON **nicht
+      eingebaut**; `daten-bauen.js` bleibt ein Prüfwerkzeug (schreibt nur mit `--schreiben`, `bau/daten/` bleibt leer).
