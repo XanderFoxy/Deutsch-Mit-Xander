@@ -363,7 +363,7 @@ eine Messung gegen 886.
   - Messen: neuer Fall „Übung öffnen“ (Tipp „Lernen“ → Karten; Wahl → Start) in `ladezeit-messen.js`, 4G/3G,
     kalt/wieder/sw, gegen die Vorfassung.
   - Platz: GitHub Pages steht bei 947,6 MB von 1 GB (Abschnitt 6, Nr. 6). Die geteilten Dateien kämen zur ganzen
-    Datei dazu (+6 MB je Generation, mit 3 Generationen bis +18 MB, ohne Verzicht auf die ganze Datei).
+    Datei dazu (einmal +6 MB; danach je Änderung nur die geänderten Kategorien, weil der Name aus dem Inhalt kommt).
 
 ### M4. app.js-Pilot: tutor + betonung
 - Die Gruppen ziehen nach `src/app/tutor.js` bzw. `betonung.js`.
