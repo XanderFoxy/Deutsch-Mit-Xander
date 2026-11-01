@@ -15,7 +15,7 @@
         steht — also „nie gesperrt heisst freigegeben"? */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
-const W = "/home/user/Deutsch-Mit-Xander";
+const W = process.env.WURZEL || require("path").join(__dirname, "..");
 const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", ".png":"image/png", ".json":"application/json" };
 (async () => {
   const srv = http.createServer((q, a) => {

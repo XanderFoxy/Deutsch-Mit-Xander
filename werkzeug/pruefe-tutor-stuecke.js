@@ -10,10 +10,10 @@
    keine Tonaufnahme gehört — der Tutor darf nicht hängenbleiben. */
 const fs = require("fs");
 global.window = {};
-require("/home/user/Deutsch-Mit-Xander/data-tutor.js");
+require(require("path").join(__dirname, "..") + "/data-tutor.js");
 const B = window.DMA_TUTOR_BEREICHE;
 const V = window.DMA_TUTOR;
-const toene = new Set(fs.readdirSync("/home/user/Deutsch-Mit-Xander/tutor")
+const toene = new Set(fs.readdirSync(require("path").join(__dirname, "..") + "/tutor")
   .map((f) => f.replace(/\.(m4a|mp3|wav)$/, "")));
 
 let fehler = 0;

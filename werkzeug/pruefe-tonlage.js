@@ -16,7 +16,7 @@
    ========================================================= */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http=require("http"),fs=require("fs"),path=require("path");
-const WURZEL="/home/user/Deutsch-Mit-Xander";
+const WURZEL = process.env.WURZEL || require("path").join(__dirname, "..");
 const TYP={".html":"text/html",".js":"text/javascript",".css":"text/css",".json":"application/json",".jpg":"image/jpeg",".png":"image/png",".svg":"image/svg+xml",".mp3":"audio/mpeg",".opus":"audio/ogg",".m4a":"audio/mp4"};
 (async()=>{
  const srv=http.createServer((q,a)=>{let p=decodeURIComponent(q.url.split("?")[0]);if(p==="/")p="/index.html";const f=path.join(WURZEL,p);if(!f.startsWith(WURZEL)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){a.writeHead(404);return a.end();}a.writeHead(200,{"Content-Type":TYP[path.extname(f)]||"application/octet-stream"});fs.createReadStream(f).pipe(a);}).listen(0);
