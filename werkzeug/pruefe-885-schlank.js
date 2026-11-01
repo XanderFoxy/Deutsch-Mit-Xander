@@ -384,7 +384,9 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           return aus.join("\n");
         };
         return [zug(a), zug(b)];
-      }, [ALT, ohneFoto(HTML.replace(/\n<script>window\.DMA_MODUL = \{[^\n]*\};<\/script>/, ""))]);
+      /* MODUL-UMBAU: nur eine EIGENE Zeile DMA_MODUL (M1/M2) fällt weg; seit M3 steht DMA_MODUL vorn im Block von
+         DMA_STEMPEL – dieser Block ist derselbe Knoten wie in BASIS und bleibt */
+      }, [ALT, ohneFoto(HTML.replace(/\n<script>window\.DMA_MODUL = \{(?:(?!window\.DMA_STEMPEL = )[^\n])*\};<\/script>/, ""))]);
       let k = 0; while (k < x.length && x[k] === y[k]) k++;
       sage(x === y, "die Seite ohne Kommentare Knoten für Knoten gleich (DOMParser, " + x.split("\n").length + " Einträge)", x === y ? "" : "erste Abweichung: …" + x.slice(Math.max(0, k - 80), k + 80).replace(/\n/g, "⏎") + "… / …" + y.slice(Math.max(0, k - 80), k + 80).replace(/\n/g, "⏎") + "…");
       await br.close();
