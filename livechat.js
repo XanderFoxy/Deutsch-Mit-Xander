@@ -2926,9 +2926,9 @@ window.LiveChat = (function () {
      FASSUNG 887 — LIVESTREAM OHNE HÄNGER (Xander: „Der Livestream ist das Wichtigste, weil der am meisten hängt.")
      ---------------------------------------------------------
      Gemessen im Nachbau (7 000 Zeilen, CPU 4×): JEDE neue Chatzeile schrieb hier den GANZEN Verlauf neu – als Text ins
-     Lager und 300 Zeilen in den localStorage. Das kostete je Zeile 90 ms, mit Profilfotos in den Zeilen (3 von 30
-     Autoren) 440 ms, und in einer Chat-Flut stand die Seite 80–96 % der Zeit. Genau das ist der Hänger aus dem Feld
-     (Long Animation Frames in livechat.js, Eingaben auf #livechatArea warten 0,5–1,2 s).
+     Lager und 300 Zeilen in den localStorage. Das kostete je Zeile 130 ms, mit Profilfotos in den Zeilen (3 von 30
+     Autoren) 545 ms, und in einer Chat-Flut (1 Zeile/s) war die Seite 69–82 % der Zeit belegt. Genau das ist der Hänger
+     aus dem Feld (Long Animation Frames in livechat.js, Eingaben auf #livechatArea warten 0,5–1,2 s).
 
      Jetzt:
      1. chatSichernBald() merkt nur „es gibt Neues" und sichert in einer Leerlaufpause (requestIdleCallback, spätestens
