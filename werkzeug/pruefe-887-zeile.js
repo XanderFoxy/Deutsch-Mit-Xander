@@ -106,7 +106,8 @@ async function lauf(br, wurzel) {
     LiveChat.pruefEmpfangen({ art: "text", von: "p1", name: "Bea", text: "Fahrrad", id: "antw" + Date.now(), zeit: Date.now(), chatArt: "text", kf: 1 });
     await bild(); await bild();
     const z = [...document.querySelectorAll("#lcVerlauf .lc-zeile")].pop();
-    return { gestellt, text: z ? z.textContent.slice(0, 60) : "", knopf: z ? z.querySelectorAll("button").length : -1, html: z ? z.className : "" };
+    /* die Uhrzeit vorn (hh:mm) fällt weg – die zwei Läufe liegen Minuten auseinander */
+    return { gestellt, text: z ? z.textContent.slice(0, 60).replace(/^\d{1,2}:\d{2}/, "") : "", knopf: z ? z.querySelectorAll("button").length : -1, html: z ? z.className : "" };
   });
   await ctx.close(); srv.close();
   return { erg, auf, kf };
