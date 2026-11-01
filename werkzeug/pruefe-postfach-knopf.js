@@ -11,7 +11,7 @@
      2. Führt der Knopf dorthin, wo das Klassenzimmer WIRKLICH ist?
         (Er suchte es unter „Lernen" — es hängt unter „Wissen".) */
 const fs = require("fs");
-const W = "/home/user/Deutsch-Mit-Xander";
+const W = process.env.WURZEL || require("path").join(__dirname, "..");
 const lc = fs.readFileSync(W + "/livechat.js", "utf8");
 const app = fs.readFileSync(W + "/app.js", "utf8");
 const html = fs.readFileSync(W + "/index.html", "utf8");

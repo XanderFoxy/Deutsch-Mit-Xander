@@ -13,7 +13,7 @@
    /hintergrund auf dem Telefon nur seinen Namen zeigt. */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
-const WURZEL = "/home/user/Deutsch-Mit-Xander";
+const WURZEL = process.env.WURZEL || require("path").join(__dirname, "..");
 const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css" };
 (async () => {
   const srv = http.createServer((q, a) => {
