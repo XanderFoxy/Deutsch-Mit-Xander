@@ -69073,6 +69073,19 @@
   var livechatMehrId = "";
   var lcAeltereLaeuft = false;
   var lcUhrFormat = null;
+  /* FASSUNG 887 (L2) — nach einer Hintergrund-Seite des Verlaufs nur Zahl und Knopf der älteren Zeilen auffrischen.
+     Steht noch keine Zeile oder ist die erste gezeichnete nicht mehr da, wird wie bisher ganz gezeichnet. */
+  function livechatAeltereAuffrischen(l) {
+    const v = document.getElementById("lcVerlauf");
+    const erste = v && v.querySelector(".lc-zeile[data-lc-id]");
+    if (!erste || !l || !l.nachrichten) { renderLiveChat(); return; }
+    const eid = erste.dataset.lcId, alle = l.nachrichten;
+    let idx = -1;
+    for (let i = 0; i < alle.length; i++) if (String(alle[i].id) === eid) { idx = i; break; }
+    if (idx < 0) { renderLiveChat(); return; }
+    livechatLetzterStand = l;
+    lcAeltereZeigen(v, idx);
+  }
   function lcAeltereZeigen(v, ab) {
     let k = v.querySelector(".lc-aeltere");
     if (!(ab > 0)) { if (k) k.remove(); return; }
@@ -70303,13 +70316,16 @@
         if (art === "plaetze" && livechatGeruest && l && l.lage === "drin" && !document.getElementById("lcPruefBuehne")) {
           livechatPlaetzeAuffrischen(l);
           livechatGrossAuffrischen(l);
+        } else if (art === "aeltere" && livechatGeruest && l && l.lage === "drin" && !document.getElementById("lcPruefBuehne")) {
+          /* FASSUNG 887 (L2) — eine Hintergrund-Seite des Verlaufs: nur ältere Zeilen (vor dem Fenster) kamen dazu */
+          livechatAeltereAuffrischen(l);
         } else renderLiveChat();
       }
       /* FASSUNG 884 — XANDER (Funk 268): „die Latenz bei den Sitzplätzen ist immer noch bemerkbar“. Der Streifen zeigt
          Raum, Personenzahl, Stumm und Halten – nichts davon ändert sich bei „plaetze“ (Sitzwechsel, Sprechen an/aus).
          Bisher rechnete jede solche Meldung trotzdem eine ganze lage() (samt Kopie aller Chatzeilen) und schrieb den
          Streifen neu. */
-      if (art !== "plaetze") klassenzimmerStreifen();
+      if (art !== "plaetze" && art !== "aeltere") klassenzimmerStreifen();
     });
     /* Jeder Ansichtswechsel entscheidet neu, ob der Streifen zu
        sehen ist: im Klassenzimmer selbst wäre er nur im Weg. */

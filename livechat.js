@@ -2483,10 +2483,28 @@ window.LiveChat = (function () {
     return (liste || []).filter(function (n) { return !muellZeile(n); });
   }
 
+  /* FASSUNG 887 (L2) — beide Listen sind fast immer schon nach der Zeit geordnet (Server-Seite, Verlauf). Dann genügt
+     ein Reißverschluss statt concat + Sortieren; bei gleicher Zeit zuerst a, wie beim stabilen Sortieren von a.concat(b).
+     Ist eine Liste nicht geordnet, wird wie bisher sortiert – das Ergebnis ist in beiden Fällen dasselbe. */
+  function zeitGeordnet(l) {
+    for (var i = 1; i < l.length; i++) if ((l[i].zeit || 0) < (l[i - 1].zeit || 0)) return false;
+    return true;
+  }
+  function zeitReissverschluss(a, b) {
+    if (!zeitGeordnet(a) || !zeitGeordnet(b)) {
+      var alles = a.concat(b);
+      alles.sort(function (x, y) { return (x.zeit || 0) - (y.zeit || 0); });
+      return alles;
+    }
+    var raus = new Array(a.length + b.length), i = 0, j = 0, k = 0;
+    while (i < a.length && j < b.length) raus[k++] = ((b[j].zeit || 0) < (a[i].zeit || 0)) ? b[j++] : a[i++];
+    while (i < a.length) raus[k++] = a[i++];
+    while (j < b.length) raus[k++] = b[j++];
+    return raus;
+  }
   function verschmelzen(a, b) {
-    var alles = altenMuellFiltern((a || []).concat(b || []));
+    var alles = zeitReissverschluss(altenMuellFiltern(a || []), altenMuellFiltern(b || []));
     var raus = [];
-    alles.sort(function (x, y) { return (x.zeit || 0) - (y.zeit || 0); });
     /* HIER LAG EIN FEHLER, und er hat jede Bildnachricht verdoppelt.
        Die Prüfung verglich
            Boolean(m.bildImChat) === Boolean(n.bildImChat)
@@ -8008,7 +8026,7 @@ window.LiveChat = (function () {
   function verlaufRestHolen(raum, v, bis) {
     var z = angemeldeterZugang();
     if (!z || !v) return Promise.resolve(0);
-    var geholt = v.anzahl || 0, dazu = 0, geaendert = false;
+    var geholt = v.anzahl || 0, dazu = 0, geaendert = false, bilderNeu = false;
     var reichtBis = function (zeilen) {
       return Boolean(bis && zeilen.length && (zeilen[0].zeit || 0) <= bis);
     };
@@ -8022,10 +8040,18 @@ window.LiveChat = (function () {
           dazu += s.zeilen.length;
           if (s.zeilen.length) {
             geaendert = true;
-            eigeneMarkieren(s.zeilen);
-            zustand.nachrichten = verschmelzen(s.zeilen, zustand.nachrichten);
-            if (v.bilder) bilderAnwenden(v.bilder.nach, zustand.nachrichten);
-            melden();
+            /* FASSUNG 887 (L2) — eine Hintergrund-Seite bringt nur ÄLTERE Zeilen (vor dem Fenster der Oberfläche).
+               Verarbeitet wird in einer Leerlaufpause, und gemeldet nur „aeltere": die Oberfläche frischt Zahl und
+               Knopf der älteren Zeilen auf, statt den ganzen Raum neu zu zeichnen. Bilder, die dabei an Zeilen im
+               Fenster landen, melden am Ende voll (siehe unten). */
+            return leerlauf().then(function () {
+              if (zustand.raum !== raum) return;
+              eigeneMarkieren(s.zeilen);
+              zustand.nachrichten = verschmelzen(s.zeilen, zustand.nachrichten);
+              if (v.bilder && bilderAnwenden(v.bilder.nach, zustand.nachrichten)) bilderNeu = true;
+              melden("aeltere");
+              if (s.voll && s.aeltestes && !reichtBis(s.zeilen)) return seite(s.aeltestes);
+            });
           }
           if (s.voll && s.aeltestes && !reichtBis(s.zeilen)) return seite(s.aeltestes);
         });
@@ -8040,16 +8066,24 @@ window.LiveChat = (function () {
       return chatBilderHolen(z, raum, v.bilder.aeltestes, Math.max(0, BILDER_ZURUECK - BILDER_ERST))
         .then(function (b) {
           if (zustand.raum !== raum) return;
-          if (bilderAnwenden(b.nach, zustand.nachrichten)) geaendert = true;
+          if (bilderAnwenden(b.nach, zustand.nachrichten)) { geaendert = true; bilderNeu = true; }
         });
     }).then(null, function (fehler) {
       try { console.warn("Klassenzimmer: aelterer Verlauf nicht vollstaendig geholt —", fehler); } catch (e) {}
     }).then(function () {
-      if (geaendert && zustand.raum === raum) { chatSichernBald(); melden(); }
+      /* FASSUNG 887 (L2) — voll zeichnen nur, wenn Bilder dazukamen (sie können im Fenster liegen) */
+      if (geaendert && zustand.raum === raum) { chatSichernBald(); melden(bilderNeu ? undefined : "aeltere"); }
       return dazu;
     });
   }
 
+  /* FASSUNG 887 (L2) — ein Stück Arbeit in die nächste Leerlaufpause (höchstens 1 s warten) */
+  function leerlauf() {
+    return new Promise(function (weiter) {
+      try { if (typeof window.requestIdleCallback === "function") { window.requestIdleCallback(function () { weiter(); }, { timeout: 1000 }); return; } } catch (e) {}
+      setTimeout(weiter, 0);
+    });
+  }
   function verlaufFrischHolen(ersterAnlauf) {
     if (zustand.lage !== "drin" && zustand.lage !== "verbindet") return Promise.resolve(false);
     var raum = zustand.raum;
