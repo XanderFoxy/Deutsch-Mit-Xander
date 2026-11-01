@@ -31,6 +31,10 @@
          das Verzeichnis der Bilder) – eine Änderung dort baut neu
      B7  sw.js gibt die Stücke der Seiten ohne Nachfrage aus dem Speicher
          (Regel für bau/), die Seiten selbst aus dem Netz
+     B8  Wächter (in einem Wegwerf-Ordner mit werkzeug/modul-bauen.js): eine
+         Änderung in stadt-leicht/ baut neu (nur die leichte Stadt bekommt
+         neue Namen, die Baukasten-Stadt nicht); eine im Hauptordner von Hand
+         geänderte Seite wird nicht überschrieben (laute Meldung, bau/ bleibt)
    S (Browser, Chromium, ohne Helfer)
      S1  stadt-leicht.html?demo=1 gebaut: genau ein Modul aus bau/, keine
          Quelle, keine 404, kein Seitenfehler, Ladebild steht vor den
@@ -189,6 +193,37 @@ const PACKER = {
     let re = null; try { re = BAU ? eval(BAU) : null; } catch (e) { re = null; }
     const stuecke = genannt.filter((f) => /^(stadt|leicht|t-stadt)/.test(f)).map((f) => "bau/" + f);
     sage(Boolean(re) && stuecke.length >= 7 && stuecke.every((f) => re.test(f)), "B7 sw.js: die Stücke der Seiten fallen unter die Regel für bau/ (ohne Nachfrage aus dem Speicher)", stuecke.length + " Stücke");
+    /* B8 im Wegwerf-Ordner */
+    if (!MB || !fs.existsSync(path.join(WURZEL, "src", "stadt-leicht.html"))) sage(false, "B8 Wächter: modul-bauen.js und src/stadt-leicht.html nötig");
+    else {
+      const T = fs.mkdtempSync(path.join(os.tmpdir(), "dma-887-waechter-"));
+      try {
+        const kopie = (rel) => { const q = path.join(WURZEL, rel), z = path.join(T, rel); fs.mkdirSync(path.dirname(z), { recursive: true }); fs.copyFileSync(q, z); };
+        const baumL = (o) => !fs.existsSync(o) ? [] : fs.readdirSync(o, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? baumL(path.join(o, e.name)) : [path.join(o, e.name)]);
+        ["vite.config.mjs", "package-lock.json", "stadt.html", "stadt-leicht.html"].concat(ein).forEach(kopie);
+        baumL(path.join(WURZEL, "src")).forEach((f) => kopie(path.relative(WURZEL, f)));
+        baumL(path.join(WURZEL, "bau")).forEach((f) => kopie(path.relative(WURZEL, f)));
+        fs.symlinkSync(path.join(WURZEL, "node_modules"), path.join(T, "node_modules"));
+        const r0 = MB.bauen(T);
+        sage(!r0.fehler && !r0.gebaut, "B8 Ausgangslage: die Kopie gilt als gebaut (Prüfsumme gleich, nichts zu tun)", r0.fehler || (r0.gebaut ? "baute neu" : ""));
+        const m0 = JSON.parse(fs.readFileSync(path.join(T, "bau", "manifest.json"), "utf8"));
+        fs.appendFileSync(path.join(T, "stadt-leicht", "korn-laden.js"), "\nwindow.__sonde887 = 1;\n");   /* Code, kein Kommentar: der fiele beim Verkleinern weg */
+        const r1 = MB.bauen(T);
+        const m1 = JSON.parse(fs.readFileSync(path.join(T, "bau", "manifest.json"), "utf8"));
+        const name = (m, k) => (m[k] || {}).file;
+        sage(!r1.fehler && r1.gebaut && name(m1, "src/stadt-leicht.html") !== name(m0, "src/stadt-leicht.html") && name(m1, "src/stadt.html") === name(m0, "src/stadt.html")
+          && name(m1, "src/rueckfrage.js") === name(m0, "src/rueckfrage.js") && fs.readFileSync(path.join(T, "stadt-leicht.html"), "utf8").indexOf("bau/" + name(m1, "src/stadt-leicht.html")) > 0,
+          "B8 eine Zeile Code in stadt-leicht/korn-laden.js baut neu: nur stadt-leicht bekommt einen neuen Namen, die Seite nennt ihn",
+          name(m0, "src/stadt-leicht.html") + " → " + name(m1, "src/stadt-leicht.html") + "; stadt " + (name(m1, "src/stadt.html") === name(m0, "src/stadt.html") ? "gleich" : "NEU"));
+        fs.appendFileSync(path.join(T, "stadt.html"), "<!-- von Hand -->\n");
+        const vorher = baumL(path.join(T, "bau")).map((f) => f + sha1(fs.readFileSync(f))).sort().join("|");
+        fs.appendFileSync(path.join(T, "stadt-leicht", "korn-laden.js"), "\n/* noch eine Zeile */\n");
+        const r2 = MB.bauen(T);
+        const nachher = baumL(path.join(T, "bau")).map((f) => f + sha1(fs.readFileSync(f))).sort().join("|");
+        sage(Boolean(r2.fehler) && /von Hand/.test(r2.fehler) && r2.karte === null && nachher === vorher && /<!-- von Hand -->\n$/.test(fs.readFileSync(path.join(T, "stadt.html"), "utf8")),
+          "B8 stadt.html im Hauptordner von Hand geändert: laute Meldung, nichts überschrieben, bau/ Byte für Byte wie vorher", String(r2.fehler || "kein Fehler").slice(0, 100));
+      } finally { fs.rmSync(T, { recursive: true, force: true }); }
+    }
     sage(/function hauptseite\(u\)/.test(sw) && /return u\.pathname === w \|\| u\.pathname === w \+ "index\.html";/.test(sw), "B7 sw.js: die Seiten selbst laufen am Helfer vorbei (nur index.html ist Hauptseite)");
   }
 
@@ -269,8 +304,10 @@ const PACKER = {
       (q.klassisch || []).filter((s) => /^stadt/.test(s)).length + " Skripte");
     sage(!(q.module || []).length, "S2 … kein Modul läuft (das Bündel ist nur vorgeladen)", (q.module || []).join(", "));
     sage(JSON.stringify(q.stile) === JSON.stringify(["stadt-leicht/leicht.css"]), "S2 … das Quell-Stilblatt statt des gebauten", (q.stile || []).join(", "));
-    /* S3 */
-    sage(Boolean(g.stadt && q.stadt) && JSON.stringify(g.stadt.filter((k) => k !== "korn")) === JSON.stringify(q.stadt.filter((k) => k !== "korn")),
+    /* S3 — ausgenommen, was nur die Vertretungen im Bündel anlegen (wie beim Packer): questInfo legt quests-laden.js
+       immer an, quests.js unter Sonden (?quelle=1, navigator.webdriver) nicht; korn kommt gebaut erst nach dem Bild */
+    const nurVertretung = (k) => k !== "korn" && k !== "questInfo";
+    sage(Boolean(g.stadt && q.stadt) && JSON.stringify(g.stadt.filter(nurVertretung)) === JSON.stringify(q.stadt.filter(nurVertretung)),
       "S3 gebaut und ?quelle=1: dieselbe Stadt (window.STADT, " + (q.stadt || []).length + " Namen)",
       g.stadt && q.stadt ? "nur gebaut: " + g.stadt.filter((k) => q.stadt.indexOf(k) < 0).join(",") + " · nur Quelle: " + q.stadt.filter((k) => g.stadt.indexOf(k) < 0).join(",") : "");
     /* S4 */
