@@ -62,12 +62,18 @@ async function messen(br, wurzel, name) {
   await schlaf(500);
   /* V: Vorladen */
   const v = await pg.evaluate(async () => {
+    /* Wie im Klassenzimmer: die Seite zeichnet laufend (Videos, Sprechring). Ohne laufende Bilder fällt das Entpacken
+       des Vorab-Malens in keinen Bildaufbau und bleibt unsichtbar – so hatte die erste Fassung dieser Sonde 0 ms gemessen. */
+    const punkt = document.createElement("div"); punkt.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;background:#000;z-index:2";
+    document.body.appendChild(punkt); let laeuft = true, k = 0;
+    const takt = () => { if (!laeuft) return; punkt.style.transform = "translateX(" + (k++ % 50) + "px)"; requestAnimationFrame(takt); }; requestAnimationFrame(takt);
     const t0 = performance.now();
     for (const a of ["viper", "batmobil"]) {
       const L = window.DMA_AUTO3D_VORLADEN(a);
       for (let i = 0; i < 600 && L && !L.fertig && !L.fehler; i++) await new Promise((r) => setTimeout(r, 50));
     }
-    await new Promise((r) => setTimeout(r, 1500));
+    await new Promise((r) => setTimeout(r, 3000));
+    laeuft = false; punkt.remove();
     const t1 = performance.now();
     const l = window.__loaf.filter((x) => x.t >= t0 && x.t <= t1);
     return { ms: Math.round(t1 - t0), max: Math.max(0, ...l.map((x) => x.d)), n: l.length, top: l.sort((a, b) => b.d - a.d).slice(0, 3) };
