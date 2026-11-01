@@ -1,18 +1,22 @@
 #!/usr/bin/env node
-/* PRÜFT FASSUNG 887 (L4): AUTO-BLÄTTER OHNE RUCK.
+/* PRÜFT FASSUNG 887 (L4): DIE AUTOS BLEIBEN, WIE SIE SIND – KEIN RUCK IM ERSTEN AUFTRITT.
    ---------------------------------------------------------------
-   Bis 886 malte lcAuto3dLaden jedes Drehblatt (bis 2040 × 4084 Bildpunkte) einmal auf eine 16×16-Leinwand, damit das
-   Entpacken nicht mitten im Auftritt ruckt – gemessen 1 130 ms am Stück im Hauptfaden (CPU 4×), im Klassenzimmer.
-   Jetzt: img.decode() (abseits des Hauptfadens), im Auftritt ImageBitmaps (≤ 250 ms gewartet, danach close()).
-     V  Vorladen von Viper und Batmobil bei CPU 4×: kein langes Bild (LoAF) über 100 ms
-     S  der Auftritt startet nicht später als bei 886 (Uhr läuft; Median aus je 3 Läufen, Rauschgrenze 120 ms)
+   Bis 886 (und wieder in 887) malt lcAuto3dLaden jedes Drehblatt (bis 2040 × 4084 Bildpunkte) einmal auf eine
+   16×16-Leinwand, damit das Entpacken nicht mitten im Auftritt ruckt (Fassung 811, Xander: „die hängen total nach").
+   Dieses Vorab-Malen kostet selbst ein langes Bild beim Vorladen (V, hier nur gemessen, nicht geprüft).
+   Zwei Versuche, es loszuwerden, sind zurückgenommen:
+     – ImageBitmaps im Auftritt (734b7d37): Auftritt 285–305 ms später, Kurve nicht pixelgleich.
+     – img.decode() statt Vorab-Malen (1f252ce1): der Ruck kam in den ERSTEN Auftritt je Sitzung zurück
+       (Prüfer, CPU 4×: Viper 951 gegen 154 ms, Batmobil 936 gegen 100 ms) – sichtbar anders, ohne Freigabe.
+   Geprüft wird:
+     E  ERSTER Auftritt je Auto (einzeln, nicht im Median): startet nicht später und hat kein längeres Bild als 886
+     S  Start des Auftritts (Uhr läuft; Median aus je 3 Läufen, Rauschgrenze 120 ms)
      P  erstes Bild, Kurve und mittleres Bild der Leinwand sind pixelgleich mit 886
-     C  nach dem Auftritt sind die Bitmaps geschlossen (close)
+     C  falls Bitmaps entstehen: nach dem Auftritt geschlossen (close)
+     V  (nur Messung) längstes Bild beim Vorladen von Viper und Batmobil bei CPU 4× – der Preis des Vorab-Malens,
+        Zahlen für den Vorschlag im Funk (888)
    Vergleich: VERGLEICH=<886-Baum> (sonst wird 7e23e157 per git archive in TMPDIR gebaut).
-   ERGEBNIS 887 (01.11.): NICHT ausgeliefert. Mit Bitmaps startete der Auftritt 285–305 ms SPÄTER als 886 (Median 466 gegen
-   181 ms Viper, 441 gegen 136 ms Batmobil), das längste Bild im Auftritt wurde nicht kürzer (137/143 gegen 101/128 ms), und
-   das Bild in der Kurve war nicht pixelgleich; das Vorab-Malen von 886 erzeugte hier keinen Langläufer (0 ms), ein Gewinn war
-   also nicht messbar. Der Code ist zurückgenommen; die Sonde bleibt als Messgerät für den nächsten Versuch (Logbuch 887, L4). */
+   Gegenprobe: WURZEL=<Baum auf 1f252ce1 … e9187509> → E rot. */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os"), { execSync } = require("child_process");
 const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
@@ -158,7 +162,13 @@ async function messen(br, wurzel, name) {
   const ok = (bed, was, zusatz) => { if (!bed) fehler++; console.log("  " + (bed ? "ok   " : "FEHL ") + was + (zusatz ? "   " + zusatz : "")); };
   console.log("\n  V  Vorladen bei CPU 4×");
   console.log("     886: längstes Bild " + b.v.max + " ms (" + b.v.n + " ≥ 50 ms) " + JSON.stringify(b.v.top.map((x) => [x.d, (x.sk[0] || [])[1]])));
-  ok(a.v.max <= 100, "kein langes Bild über 100 ms beim Vorladen", a.v.max + " ms (" + a.v.n + " ≥ 50 ms) " + JSON.stringify(a.v.top.map((x) => [x.d, (x.sk[0] || [])[1]])));
+  console.log("     dieser: längstes Bild " + a.v.max + " ms (" + a.v.n + " ≥ 50 ms) " + JSON.stringify(a.v.top.map((x) => [x.d, (x.sk[0] || [])[1]])) + "   (nur Messung: Preis des Vorab-Malens, Vorschlag 888)");
+  console.log("\n  E  ERSTER Auftritt je Auto, einzeln (CPU 4×)");
+  for (const art of ["viper", "batmobil"]) {
+    const x = a.start[art][0] || {}, y = b.start[art][0] || {};
+    ok(x.los >= 0 && y.los >= 0 && x.los <= y.los + 120, art + ": erster Auftritt startet nicht später als 886", x.los + " gegen " + y.los + " ms (Rauschgrenze 120)");
+    ok(x.maxLoaf <= Math.max(y.maxLoaf * 1.5, y.maxLoaf + 120), art + ": erster Auftritt ohne längeres Bild als 886", x.maxLoaf + " gegen " + y.maxLoaf + " ms (Grenze " + Math.round(Math.max(y.maxLoaf * 1.5, y.maxLoaf + 120)) + ")");
+  }
   console.log("\n  S  Start des Auftritts (Uhr läuft, ms nach dem Aufruf, CPU 4×)");
   for (const art of ["viper", "batmobil"]) {
     const x = a.start[art].map((r) => r.los), y = b.start[art].map((r) => r.los);
@@ -176,6 +186,6 @@ async function messen(br, wurzel, name) {
   console.log("\n  C  Bitmaps");
   ok(a.bm.neu === 0 || a.bm.zu === a.bm.neu, "alle Bitmaps nach dem Auftritt geschlossen", JSON.stringify(a.bm));
   ok(a.kf.length === 0, "keine Seitenfehler", a.kf.slice(0, 3).join(" | "));
-  console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Die Autos fahren ohne Ruck – und sehen aus wie vorher.") + "\n");
+  console.log("\n  " + (fehler ? fehler + " Abweichung(en)" : "Die Autos fahren wie in 886 – erster Auftritt ohne Ruck, Bilder gleich.") + "\n");
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

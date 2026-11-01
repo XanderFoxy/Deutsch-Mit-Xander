@@ -57944,16 +57944,8 @@
       .then((b) => {
         L.blaetter = b[0]; L.schatten = b[1];
         /* FASSUNG 811 — einmal vorab malen: das erste Entpacken der großen Blätter (2000 × 4000 Bildpunkte) kostete
-           sonst mitten im Auftritt einen Ruck („die hängen total nach … kommen nicht sofort").
-           FASSUNG 887 — dieses Vorab-Malen WAR im Klassenzimmer selbst ein Ruck: das Entpacken landet im nächsten
-           Bildaufbau (kein Skript, nur „Rendern") – gemessen 1,2–2,3 s am Stück (CPU 4×/6×), etwa 10 s nach dem
-           Betreten, je Auto einmal; im Feld sind das die langen Bilder ohne Skript („?"). img.decode() (in bild() oben)
-           entpackt abseits des Hauptfadens; ohne decode (alte Browser) bleibt das Vorab-Malen, aber nur im Leerlauf. */
-        const alle = L.blaetter.concat([L.schatten]);
-        if (!alle.every((i) => i && i.decode)) {
-          const vorab = () => { try { const w = document.createElement("canvas"); w.width = w.height = 16; const wg = w.getContext("2d"); alle.forEach((i) => wg.drawImage(i, 0, 0, 16, 16)); } catch (e) {} };
-          if (window.requestIdleCallback) requestIdleCallback(vorab, { timeout: 4000 }); else setTimeout(vorab, 300);
-        }
+           sonst mitten im Auftritt einen Ruck („die hängen total nach … kommen nicht sofort"). */
+        try { const w = document.createElement("canvas"); w.width = w.height = 16; const wg = w.getContext("2d"); L.blaetter.concat([L.schatten]).forEach((i) => wg.drawImage(i, 0, 0, 16, 16)); } catch (e) {}
         L.fertig = true;
       })
       .catch(() => { L.fehler = true; if (lcAuto3dLager[art] === L) delete lcAuto3dLager[art]; });
