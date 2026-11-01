@@ -3154,7 +3154,7 @@ window.LiveChat = (function () {
           var stueck = liste.slice(i, i + SICHERN_STUECK).map(function (n) { return zeileSchlank(n, raum); });
           i += SICHERN_STUECK;
           if (stueck.length) { var j = JSON.stringify(stueck); teile.push(j.slice(1, -1)); }
-        } while (i < liste.length && (frist && typeof frist.timeRemaining === "function" ? frist.timeRemaining() > 10 : Date.now() - t0 < 8));
+        } while (i < liste.length && Date.now() - t0 < 12 && (!frist || typeof frist.timeRemaining !== "function" || frist.timeRemaining() > 10));
       } catch (e) { sichernLauf = null; return; }
       if (i < liste.length) { sichernNaechst(schritt); return; }
       sichernLauf = null;
