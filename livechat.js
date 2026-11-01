@@ -7179,7 +7179,9 @@ window.LiveChat = (function () {
         sprachAb: Number(n.sprachAb) || 0,
         sprachDauer: Number(n.sprachDauer) || 0
       }, n));
-      melden();
+      /* FASSUNG 887 (L3) — eine gewöhnliche Chatzeile ändert nur den Chat: „zeile" (die Oberfläche frischt nur den
+         Verlauf auf). Läuft eine Aufgabe oder ist es eine Antwort darauf, wird wie bisher alles gezeichnet. */
+      melden(offeneAufgabe || versuch_ || n.aufgabeId ? undefined : "zeile");
       return;
     }
   }

@@ -70316,6 +70316,11 @@
         if (art === "plaetze" && livechatGeruest && l && l.lage === "drin" && !document.getElementById("lcPruefBuehne")) {
           livechatPlaetzeAuffrischen(l);
           livechatGrossAuffrischen(l);
+        } else if (art === "zeile" && livechatGeruest && l && l.lage === "drin" && !document.getElementById("lcPruefBuehne")) {
+          /* FASSUNG 887 (L3) — eine neue Chatzeile: nur der Verlauf (und die festgehaltene Lesetafel ans Ende), nicht
+             Kopf, Plätze, Hintergrund und großes Bild – die ändert eine Zeile nicht. */
+          livechatChatAuffrischen(l);
+          try { lcLeseTafelNachziehen(); } catch (e) {}
         } else if (art === "aeltere" && livechatGeruest && l && l.lage === "drin" && !document.getElementById("lcPruefBuehne")) {
           /* FASSUNG 887 (L2) — eine Hintergrund-Seite des Verlaufs: nur ältere Zeilen (vor dem Fenster) kamen dazu */
           livechatAeltereAuffrischen(l);
