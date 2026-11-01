@@ -578,7 +578,8 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
   - **Sonden Schritt 0 (über die Sperre, nacheinander):** `887-bau` B (ohne Browser) und S grün (Gast, Betreiber
     min/`?quelle`/ohne Module); `885-schlank` A–G grün, Q: der Knotenvergleich war rot – die Sonde nahm für den
     Vergleich mit BASIS „die Zeile DMA_MODUL“ heraus und erwischte jetzt den ganzen Stempel-Block (ein Knoten zu
-    wenig); berichtigt (2c2b583c), nur noch eine EIGENE Zeile fällt weg.
+    wenig); berichtigt (2c2b583c), nur noch eine EIGENE Zeile fällt weg – danach Q 16/16 grün. Dazu die beiden
+    Sonden, die `DMA_STEMPEL` selbst aus `index.html` lesen: `876-start-schlank` 62/62, `858-ladeweg` 14/14 grün.
   - **Messung Schritt 0 a (A = fc5e3ae3, B = neu, verschränkt):** Betreiber (885-schlank M, CPU 4×, 8 Paare)
     DOMContentLoaded mit Merker 1 291 → 1 302 ms (gepaart −7, 4↓/4↑), ohne Merker 1 321 → 1 301 (−26, 5↓/3↑); Reiter
     da +28/+16 ms (Grenze der Sonde 100 ms, grün). Die +13…+19 ms der Prüfung sind damit nicht mehr in einer
