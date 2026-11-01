@@ -1504,7 +1504,12 @@ window.Rueckfrage = (function () {
     aufzu: aufzu,
     /* FASSUNG 886 — backend.js hat den Betreiber erkannt (über index.html dmaWalkieLaden): steht das Walkie noch nicht
        da, gleich nachsehen statt erst beim nächsten Takt (bis 20 s) – etwa wenn das Profil nach den 1,5 s kam. */
-    erkannt: function () { if (gestartet && !reiter) holen(); },
+    /* FASSUNG 887 (Nachtrag aus der 886-Gesamtprüfung) — wie Takt und Zurückkommen: nicht bei verdeckter Seite (das
+       Zurückkommen holt ohnehin) und nicht bei gezogener Bremse (dann „verpasst“: geholt wird, sobald sie frei ist). */
+    erkannt: function () {
+      if (!gestartet || reiter || document.hidden) return;
+      if (gebremst()) verpasst = true; else holen();
+    },
     stand: function () { return fragen.slice(); },
     /* FASSUNG 884 — nur für die Sonde (Zeiten verkürzen, rate16k umschalten) */
     diktatStrom: STROM
