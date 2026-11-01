@@ -6007,6 +6007,10 @@
   function zeichnen() {
     var reihe = document.getElementById("lcPlaetze");
     if (!reihe) return;
+    kreisMasse = { reihe: reihe, map: new Map(), alle: false };   // FASSUNG 887 (L5) — siehe kreisMass
+    try { zeichnenInnen(reihe); } finally { kreisMasse = null; }
+  }
+  function zeichnenInnen(reihe) {
     hoerFilterPflegen(false);
     if (!spielSichtbar()) document.body.classList.remove("sp-ich-nebel");
     platzWaechterSetzen(reihe);
@@ -6083,8 +6087,7 @@
       var manaAnteil = s.mana != null && !istPuppe(chatId) ? Math.max(0, Math.min(1, s.mana / (s.mana_max || 100))) : -1;
       bal.dataset.anteil = (anteil * 100).toFixed(1);
       bal.dataset.radius = String(RING_R / 50);
-      bal.style.left = kreis.offsetLeft + "px"; bal.style.top = kreis.offsetTop + "px";
-      bal.style.width = kreis.offsetWidth + "px"; bal.style.height = kreis.offsetHeight + "px";
+      lageSetzen(bal, kreisMass(kreis));   // FASSUNG 887 (L5)
       bal.classList.toggle("sp-pause", s.mitspielen === false && !istPuppe(chatId));
       bal.title = (s.mitspielen === false && !istPuppe(chatId) ? "spielt gerade nicht mit · " : "") + (s.name || "") + (s.klasse && KLASSEN[s.klasse] ? " (" + KLASSEN[s.klasse].name + ")" : "") + (KAMPF[s.kampfklasse] && kampfFrei() ? " · " + KAMPF[s.kampfklasse].name + " St. " + (s.kampf_stufe || 1) : "") + ": " + s.lp + " / " + s.lp_max + " LP" + (s.schild ? " · Schild " + s.schild : "")
         + (manaAnteil >= 0 ? " · " + s.mana + " Mana" : "");
@@ -6230,6 +6233,31 @@
       + '<path d="M24 80 C31 90 41 104 50 107 C59 104 69 90 76 80 C68 87 59 89 50 89 C41 89 32 87 24 80 Z" fill="#fdfdfd" stroke="#cfcfcf" stroke-width="1.2"/>'
       + '<path d="M38 92 C41 98 45 102 48 104 M62 92 C59 98 55 102 52 104" fill="none" stroke="#dedede" stroke-width="1.4"/></svg>';
   }
+  /* FASSUNG 887 (L5) — ERST LESEN, DANN SCHREIBEN. schmuck() schrieb Klassen und Inhalt und las gleich danach
+     offsetLeft/Top/Width/Height des Kreises – jedes Mal ein erzwungenes Layout, je Platz bis zu zehnmal, alle 700 ms.
+     Jetzt misst zeichnen() alle Kreise der Reihe einmal (beim ersten Bedarf, vor dem ersten Schreiben), und die Stile
+     werden nur gesetzt, wenn sich der Wert ändert. Außerhalb von zeichnen() wird wie bisher direkt gemessen. */
+  var kreisMasse = null;
+  function kreisMass(kreis) {
+    if (kreisMasse) {
+      var m = kreisMasse.map.get(kreis);
+      if (m) return m;
+      if (!kreisMasse.alle && kreisMasse.reihe) {
+        kreisMasse.alle = true;
+        kreisMasse.reihe.querySelectorAll(".lc-kreis").forEach(function (k) { kreisMasse.map.set(k, [k.offsetLeft, k.offsetTop, k.offsetWidth, k.offsetHeight]); });
+        m = kreisMasse.map.get(kreis);
+        if (m) return m;
+      }
+    }
+    return [kreis.offsetLeft, kreis.offsetTop, kreis.offsetWidth, kreis.offsetHeight];
+  }
+  function lageSetzen(e, m) {
+    var l = m[0] + "px", t = m[1] + "px", w = m[2] + "px", h = m[3] + "px", st = e.style;
+    if (st.left !== l) st.left = l;
+    if (st.top !== t) st.top = t;
+    if (st.width !== w) st.width = w;
+    if (st.height !== h) st.height = h;
+  }
   function schmuck(el, klasse, an, kreis, html, zusatz) {
     var s = el.querySelector("." + klasse);
     if (!an) { if (s) s.remove(); return; }
@@ -6242,10 +6270,7 @@
       s.className = klasse + " " + zusatz + (bleiben.length ? " " + bleiben.join(" ") : "");
     }
     if (s.dataset.html !== html) { s.innerHTML = html; s.dataset.html = html; }
-    s.style.left = kreis.offsetLeft + "px";
-    s.style.top = kreis.offsetTop + "px";
-    s.style.width = kreis.offsetWidth + "px";
-    s.style.height = kreis.offsetHeight + "px";
+    lageSetzen(s, kreisMass(kreis));
   }
   /* FASSUNG 657 — das Schaufenster: nur Levelzahl und Tiere, sonst nichts. */
   function schaufenster(el, s, kreis) {
@@ -16770,7 +16795,18 @@
   }
   setInterval(function () {
     if (!drin()) { if (schnellEl) schnellEl.hidden = true; draussenPruefen(); return; }
-    if (S.uid) { try { localStorage.setItem("dma_spiel_dabei", "1"); if (raumName()) localStorage.setItem("dma_spiel_raum", raumName()); } catch (e) {} }
+    /* FASSUNG 887 (L5) — nur bei Änderung schreiben: zwei localStorage-Schreibvorgänge in jedem 700-ms-Takt waren im
+       Feld Teil der langen Bilder aus diesem Takt (spiel.js, user-callback, bis 856 ms). */
+    if (S.uid) {
+      try {
+        var rnT = raumName() || "";
+        if (S.dabeiGeschrieben !== rnT || localStorage.getItem("dma_spiel_dabei") !== "1") {
+          localStorage.setItem("dma_spiel_dabei", "1");
+          if (rnT && localStorage.getItem("dma_spiel_raum") !== rnT) localStorage.setItem("dma_spiel_raum", rnT);
+          S.dabeiGeschrieben = rnT;
+        }
+      } catch (e) {}
+    }
     if (S.sprungNachher && S.bereit && S.ich) {
       var mN = S.sprungNachher; S.sprungNachher = null;
       if (Date.now() < (S.sprungNachherBis || 0)) sprungOeffnen(mN);
