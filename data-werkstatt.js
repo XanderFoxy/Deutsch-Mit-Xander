@@ -49,7 +49,7 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 887 — Livestream ohne Hänger (fertig im Zweig live-haenger, wird nach 886 ausgeliefert)",
+  stand: "Fassung 887 — Livestream ohne Hänger (nachgebessert im Zweig live-haenger, wird nach 886 ausgeliefert)",
 
   inArbeit: [
     { seit: "2026-10-24T15:21",
@@ -67,9 +67,9 @@ window.DMA_WERKSTATT = {
     { seit: "2026-10-25T20:00",
       text: "Rückkehr in den Raum nach dem Neuladen: in zwei seltenen Fällen etwas langsamer als 884 (bis +0,12 s bzw. bis +0,6 s) – wartet auf deine Entscheidung (Logbuch: Fall A Empfehlung a, Fall B Empfehlung c)" },
     { seit: "2026-11-01T05:05",
-      text: "Fassung 887 – Livestream ohne Hänger: Chat-Flut, Verlauf, Auto-Vorladen und Spieltakt entlastet; fertig, wird nach 886 ausgeliefert" },
+      text: "Fassung 887 – Livestream ohne Hänger: Chat-Flut, Tippen, Verlauf und Spieltakt entlastet; nachgebessert (Verlauf geht beim Weggehen nicht mehr verloren, Fotos sofort da), wird nach 886 ausgeliefert" },
     { seit: "2026-11-01T05:05",
-      text: "Erster Auto-Auftritt (Batmobil/Viper) je Sitzung ruckelt einmal – Blätter früher vorbereiten (888)" },
+      text: "Vorschlag (wartet auf dein OK): 1–2-Sekunden-Stillstand etwa 10 s nach dem Betreten weg (Autos nicht mehr vorab malen) – Preis: ein Ruck von ~0,9 s beim ersten Auto-Auftritt; besser ohne Ruck in 888" },
     { seit: "2026-10-14T04:06",
       text: "Profi-Umbau auf Module mit Vite (Funk 312) – läuft im eigenen Zweig" },
     { seit: "2026-10-14T04:06",
@@ -80,17 +80,15 @@ window.DMA_WERKSTATT = {
 
   /* Was mit dem letzten Hochladen fertig geworden ist. */
   fertig: [
-    { seit: "2026-11-01T07:56",
+    { seit: "2026-11-01T11:39",
       text: "Chat-Flut: eine neue Zeile kostet 10 statt 180 ms (mit Fotos 11 statt 580 ms), die Seite ist in der Flut zu 11 statt 69–82 % belegt" },
-    { seit: "2026-11-01T07:56",
+    { seit: "2026-11-01T11:39",
       text: "Tippen im vollen Klassenzimmer: Wartezeit 94 ms statt 1,2–7 s (Median), langsamste Eingabe 0,5 statt 3,5–7 s" },
-    { seit: "2026-11-01T07:56",
-      text: "Kein 1–2-Sekunden-Stillstand mehr etwa 10 s nach dem Betreten (Autos wurden vorab gemalt)" },
-    { seit: "2026-11-01T07:56",
+    { seit: "2026-11-01T11:39",
       text: "Verlauf beim Betreten: längstes Bild 150 statt 1 532 ms, jede weitere Seite 65 ms" },
-    { seit: "2026-11-01T07:56",
+    { seit: "2026-11-01T11:39",
       text: "Spieltakt: keine Speicher-Schreibvorgänge mehr in jedem Takt, halb so viele Layout-Messungen" },
-    { seit: "2026-11-01T07:56",
-      text: "Profilfotos liegen einmal im Gerät statt in jeder Chatzeile; die Messung bei euch sagt jetzt, welches Skript hängt (ohne Inhalte)" },
+    { seit: "2026-11-01T11:39",
+      text: "Profilfotos liegen einmal im Gerät statt in jeder Chatzeile (und sind beim Betreten sofort da); die Messung bei euch sagt jetzt, welches Skript hängt (ohne Inhalte)" },
   ],
 };

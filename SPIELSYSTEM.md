@@ -7949,17 +7949,35 @@ Fotos: 308–319 ms am Stück → längster Leerlauf-Aufruf 71 ms (in Stücken).
   `bildH` = `bildFinger(bild)` (derselbe Fingerabdruck wie beim Senden); das Foto liegt einmal im Lager unter
   `"chatbild:" + bildH` (`lagerEinmal`, je Sitzung einmal – frischt damit auch die 60-Tage-Frist auf). Beim Lesen
   (`chatLaden` sofort aus dieser Sitzung, `chatAusLager`/`betreten`/`archivLaden` aus dem Lager) wird es wieder eingesetzt.
-  Das alte Format (Foto in der Zeile) wird unverändert gelesen. Ohne Lager fehlt das Foto in alten Zeilen, bis der Server
-  sie wieder füllt (`verschmelzen` übernimmt `bild` vom Zwilling) – sichtbar wäre das nur nach Verlust des Lagers.
+  Das alte Format (Foto in der Zeile) wird unverändert gelesen. **Nachgebessert:** die Fotos der 300 localStorage-Zeilen
+  liegen zusätzlich einmal je Foto in einer **Fototafel** im localStorage (`dma_livechat_chatfoto_<raum>`, geschrieben nur,
+  wenn sich die Menge der Fotos ändert; der Schlüssel beginnt bewusst nicht mit `dma_livechat_chat_`, sonst hielte
+  `archivRaeume` ihn für einen Verlauf). Damit sind sie beim Betreten schon beim ersten Zeichnen da – ohne Lager-Abfrage, ohne
+  zweites volles Zeichnen – und auch ohne IndexedDB (privater Modus, manche WebView). Der erste Stand ließ sie nach dem
+  Neuladen nachpoppen und verlor sie ohne IndexedDB ganz (886 hatte sie in jeder Zeile).
 - **Doppelprüfung** in `nachrichtAnhaengen` über ein Kennungs-Verzeichnis (`Set`) statt `some()` über alle Zeilen; es wird neu
   gebaut, wenn die Liste ihre Referenz ODER Länge ändert, und ein Treffer wird gegengeprüft (eine gelöschte Zeile gilt nie
   fälschlich als „schon da“).
-- Der `lagerGelesen`-Schutz ist unverändert (nichts ins Lager, bevor es gelesen ist).
+- Der `lagerGelesen`-Schutz (nichts ins Lager, bevor es gelesen ist) – **der erste Stand war hier NICHT unverändert, der
+  Prüfer fand einen Datenverlust:** `chatAusLager` setzte „gelesen“ schon VOR der zweiten Lager-Abfrage (die Profilfotos,
+  `chatbild:…`). Kam genau dann `pagehide` oder „verdeckt“, schrieb die neue sofortige Sicherung die KURZE Liste (localStorage
+  300 + Neues) ins Lager – nachgestellt: **3 000 → 301 Zeilen** (Gäste verlieren den Verlauf endgültig, Angemeldete laden ihn
+  teuer vom Server). 886 hatte dieses Fenster nicht. **Jetzt:** „gelesen“ gilt erst nach den Fotos, unmittelbar vor dem
+  Einmischen (dazwischen nur Mikroaufgaben, kein Ereignis), und nur für den Raum, in dem man noch ist; `betreten` mischt einen
+  späten Rückläufer aus einem anderen Raum nicht mehr ein.
 - **In Stücken:** die geplante Sicherung verwandelt je Leerlaufpause 400 Zeilen in Text (`zeileSchlank` + `JSON.stringify`,
   am Ende zusammengesetzt – byte-gleich mit dem Ganzen) und schreibt erst dann ins Lager und in den localStorage. Grund: bei
   CPU 6× mit Fotos kostete sie in einem Stück 308–319 ms alle 20 s. Eine sofortige Sicherung (Seite weg, verdeckt,
   Raumwechsel …) überholt einen laufenden Stücklauf, der dann nichts mehr schreibt; `chatSichernOffenes` sichert auch dann
   sofort, wenn ein Stücklauf noch nicht fertig ist. Der 20-s-Abstand zählt ab dem Ende.
+  **Nachgebessert:** (1) Wird `zustand.nachrichten` unterwegs ersetzt (der volle Verlauf aus dem Lager eingemischt, ein Server-
+  Verlauf …), ist der Schnappschuss alt: der Lauf wird verworfen und neu geplant – vorher konnte er bis zu 20 s nach dem
+  Betreten die kurze Liste ins Lager legen. Ausgenommen ist nur das Kappen auf 20 000 Zeilen in `nachrichtAnhaengen` (es nimmt
+  den Lauf mit), sonst käme in einem vollen Raum während einer Flut keine Sicherung mehr zu Ende. (2) Ins Lager nur, wenn es
+  schon beim Schnappschuss gelesen war. (3) Der Schluss war ein Stück (Text zusammensetzen, Lager, die 300 Zeilen noch einmal
+  schlank machen + `JSON.stringify` + localStorage) – vom Prüfer gemessen 112–158 ms bei CPU 4× ohne Fotos. Jetzt sind die
+  letzten 300 Zeilen eigene Stücke, ihr Text wird für den localStorage wiederverwendet, und localStorage und Lager bekommen je
+  eine eigene Leerlaufpause.
 - **Gemessen (mikro, 7 000 Zeilen):** eine empfangene Zeile synchron, CPU 4×: ohne Fotos **181 → 35 ms**, mit Fotos
   **579 → 39 ms**; CPU 6×: 229 → 48 bzw. 898 → 52 ms. Anhängen + Sichern: 130 → 0 ms bzw. 545 → 0 ms.
 - **Sonde `pruefe-887-sichern.js` 31/31 grün**; Gegenprobe 886: 8 rot (Flut: 50 Sicherungen in 25 s statt 1; Leeren: Lager
@@ -7986,28 +8004,29 @@ Sonden auf dem Endstand: 884-leitung 40, 885-praesenz 69 (ALLES GRÜN), 884-ton3
 - **Sonde `pruefe-887-messung.js` 13/13 grün**; Gegenprobe 886: 7 rot (LoAF nur 4 Stellen, keine Skripte, kein `chat`, `mv 1`,
   Kennung im `inp`-Ziel). Die bestehende Sonde 884-messung läuft mit (Ergebnis unten).
 
-### L4 — Auto-Blätter: das Vorab-Malen fällt weg (app.js; Bitmaps NICHT eingebaut)
-- **Fund im Nachbau:** etwa 10 s nach dem Betreten (wenn alle Leitungen stehen, `lcAuto3dVorladen`) entstand je Auto ein
+### L4 — Auto-Blätter: NICHT eingebaut (app.js wie 886) – Vorschlag für den Funk
+- **Fund im Nachbau:** etwa 10 s nach dem Betreten (wenn alle Leitungen stehen, `lcAuto3dVorladen`) entsteht je Auto ein
   langes Bild **ohne Skript** (blockingDuration 0, renderStart am Ende): 1 250 ms (886, CPU 4×), 1 793–2 304 ms (CPU 6×), zwei
   Stück im Abstand von 1,5 s – genau der Vorladeplan (Viper, dann Batmobil). Das Vorab-Malen von Fassung 811 (`drawImage` der
   2 040 × 4 084 großen Blätter auf eine 16×16-Leinwand) entpackt nicht im Skript, sondern im nächsten Bildaufbau. Im Feld sind
-  das sehr wahrscheinlich die langen Bilder „?“ (467–872 ms). Die erste Fassung der Sonde sah es nicht, weil die Prüfseite
-  dabei nichts zeichnete – jetzt läuft während des Vorladens ein Bild-Takt wie im Klassenzimmer.
-- **Gebaut (L4a):** das Vorab-Malen entfällt; `img.decode()` (stand schon in `bild()`) entpackt abseits des Hauptfadens. Ohne
-  `decode` (alte Browser) bleibt das Vorab-Malen, aber nur im Leerlauf. Vorladeplan und Blattgröße unverändert.
-- **Sonde `pruefe-887-auto.js`** (CPU 4×, 886 im selben Lauf): Vorladen **886: 1 501 + 1 163 ms → 887: kein Bild ≥ 50 ms**;
-  Start des Auftritts gleich (Viper 158 gegen 157 ms, Batmobil 165 gegen 168 ms, Median aus 3); erstes Bild, Kurve und
-  Mitte **pixelgleich** mit 886.
-- **Ehrlicher Preis:** der ERSTE Auftritt eines 3D-Autos je Sitzung hat jetzt einmal ein langes Bild (gemessen 956 bzw. 861 ms
-  bei CPU 4×; die folgenden 96–154 ms wie 886). Auf Telefonen gab es das im Feld ohnehin: `app-teil-raum6.js@93213` ist im
-  verkleinerten Code von 885 genau die Schleife des 3D-Auftritts (465 ms am 28.10., 855 ms am 20.10.) – das vorab Entpackte
-  war bis zum Auftritt wieder verworfen. Bilanz: zwei lange Bilder bei JEDEM Betreten für alle im Raum weniger, eins beim
-  ersten Auto-Auftritt mehr (nur, wenn jemand mit Viper/Batmobil kommt).
-- **Zuerst gebaut und zurückgenommen (Commit 734b7d37):** ImageBitmaps im Auftritt (`fetch → Blob → createImageBitmap`, ≤ 250 ms
-  gewartet, `close()` danach). Gemessen: Start **285–305 ms später** als 886 (466 gegen 181 ms, 441 gegen 136 ms), längstes
-  Bild im Auftritt nicht kürzer (137/143 gegen 101/128 ms), das Bild in der Kurve nicht pixelgleich (≈ 100 Bildpunkte beim
-  starken Verkleinern). **Vorschlag 888:** die Bitmaps schon beim ersten Aufruf von `lcAuftritt` anstoßen (vor `lcRuhigDann`,
-  das bis 3 s auf Ruhe wartet), damit sie zum Start fertig sind – dann fällt auch das eine lange Bild beim ersten Auftritt weg.
+  das sehr wahrscheinlich die langen Bilder „?“ (467–872 ms).
+- **Versuch 1, zurückgenommen (734b7d37):** ImageBitmaps im Auftritt (`fetch → Blob → createImageBitmap`, ≤ 250 ms gewartet,
+  `close()` danach). Start **285–305 ms später** als 886, längstes Bild im Auftritt nicht kürzer (137/143 gegen 101/128 ms),
+  Kurve nicht pixelgleich.
+- **Versuch 2 (L4a, 1f252ce1), nach der Prüfung zurückgenommen:** Vorab-Malen weg, `img.decode()` (stand schon in `bild()`).
+  Das Vorladen war danach ruhig (886: 1 501 + 1 163 ms → kein Bild ≥ 50 ms). **Aber:** `decode()` ersetzt das Vorab-Malen für
+  die Leinwand nicht – das Entpacken landet dann im ERSTEN 3D-Auftritt je Sitzung: Prüfer (CPU 4×, erster von 3 Läufen)
+  Viper **951 gegen 154 ms**, Batmobil **936 gegen 100 ms**; eigene Messung 956/861 ms. Genau diesen Ruck hatte Fassung 811
+  nach Xanders Beschwerde beseitigt („die hängen total nach“). Das ist sichtbar anders und bleibt ohne Freigabe draußen
+  (Regel 3) – der erste Stand dieses Logbuchs nannte den Preis, der Funk-Text verschwieg ihn; die Sonde sah ihn nicht, weil
+  sie nur Mediane und die Startzeit prüfte.
+- **Jetzt:** `lcAuto3dLaden` ist wieder genau wie 886. Die Sonde `pruefe-887-auto.js` prüft den **ersten Auftritt je Auto
+  einzeln** (Start und längstes Bild gegen 886) und misst das Vorladen nur noch (Zahlen für den Vorschlag).
+- **Vorschlag für den Funk (mit Zahlen):** weg wären **2 lange Bilder (1,2–2,7 s) bei jedem Betreten** für alle im Raum (etwa
+  10 s nach dem Betreten); dazu käme **1 Ruck von ≈ 0,9 s beim ersten Auftritt** eines 3D-Autos je Sitzung (nur, wenn jemand
+  mit Viper/Batmobil kommt). Besser (888, ohne Ruck): die Bitmaps schon beim Vorladen anlegen und behalten (Speicher: Viper
+  41 MB, Batmobil 51 MB entpackt – auf dem schwächsten Telefon heikel) oder beim ersten Aufruf von `lcAuftritt` vor `lcRuhigDann` anstoßen – das braucht eine eigene
+  Messung auf dem Telefon.
 
 ### L2 — Verlauf schlank verarbeiten (livechat.js, app.js)
 - `verschmelzen` ist ein Reißverschluss zweier nach der Zeit geordneter Listen (bei Gleichstand zuerst die erste Liste, wie

@@ -56,7 +56,7 @@
  "backend.js": "03f34bf3116261c80dd9005c8293df0d2ee83a19",
  "spiel.js": "c0eb3e9a676963bc0c833cc54ed171fa10d9e42e",
  "messung.js": "190da5f9190317b84b4e1be98bda3fd733628dce",
- "data-werkstatt.js": "2179eb6d811043de79c9d95a390f1f38e6dff186",
  "app.js": "3a08c37a48d884072d43b7288cd90b74c5d05863",
- "livechat.js": "e82f3d56017993c15c3283dc98be5d9645620b78"
+ "livechat.js": "e82f3d56017993c15c3283dc98be5d9645620b78",
+ "data-werkstatt.js": "c4d4016711c0a51df92191205323b4ae83dc408f"
 }
