@@ -57944,13 +57944,43 @@
       .then((b) => {
         L.blaetter = b[0]; L.schatten = b[1];
         /* FASSUNG 811 — einmal vorab malen: das erste Entpacken der großen Blätter (2000 × 4000 Bildpunkte) kostete
-           sonst mitten im Auftritt einen Ruck („die hängen total nach … kommen nicht sofort"). */
-        try { const w = document.createElement("canvas"); w.width = w.height = 16; const wg = w.getContext("2d"); L.blaetter.concat([L.schatten]).forEach((i) => wg.drawImage(i, 0, 0, 16, 16)); } catch (e) {}
-        L.fertig = true;
+           sonst mitten im Auftritt einen Ruck („die hängen total nach … kommen nicht sofort").
+           FASSUNG 887 — dieses Vorab-Malen WAR selbst der Ruck: gemessen 1 130 ms am Stück im Hauptfaden (CPU 4×),
+           mitten im Klassenzimmer, nur damit ein Auto vorbereitet ist. Jetzt entpackt img.decode() die Blätter abseits
+           des Hauptfadens (der Speicher bleibt wie bisher); den Auftritt selbst bereitet lcAuto3dBitmaps vor. Ohne decode
+           (alte Browser) bleibt das Vorab-Malen, aber nur in einer Leerlaufpause. */
+        const alle = L.blaetter.concat([L.schatten]);
+        if (alle.every((i) => i && i.decode)) return Promise.all(alle.map((i) => i.decode().catch(() => {})));
+        const vorab = () => { try { const w = document.createElement("canvas"); w.width = w.height = 16; const wg = w.getContext("2d"); alle.forEach((i) => wg.drawImage(i, 0, 0, 16, 16)); } catch (e) {} };
+        if (window.requestIdleCallback) requestIdleCallback(vorab, { timeout: 4000 }); else setTimeout(vorab, 300);
       })
+      .then(() => { L.fertig = true; })
       .catch(() => { L.fehler = true; if (lcAuto3dLager[art] === L) delete lcAuto3dLager[art]; });
     lcAuto3dLager[art] = L;
     return L;
+  }
+  /* FASSUNG 887 — für den laufenden Auftritt die Blätter als ImageBitmap: aus den Bytes (fetch → Blob, meist aus dem
+     Zwischenspeicher) entpackt createImageBitmap abseits des Hauptfadens; danach kostet jedes Bild nur das Zeichnen.
+     Die Bitmaps leben nur während des Auftritts (Batmobil ≈ 51 MB) und werden danach mit close() freigegeben – dauerhaft
+     gehalten wären es ≈ 92 MB neben WebRTC-Video, das kann eine schwache WebView beenden (Bauplan 887, L4). */
+  function lcAuto3dBitmaps(L) {
+    if (!window.createImageBitmap || !window.fetch || !L || !L.blaetter) return null;
+    const quellen = L.blaetter.concat([L.schatten]);
+    const B = { fertig: false, blaetter: null, schatten: null, zu: false };
+    const eins = (i) => fetch(i.currentSrc || i.src).then((r) => { if (!r.ok) throw new Error("fehlt"); return r.blob(); }).then((b) => createImageBitmap(b));
+    B.warten = Promise.all(quellen.map(eins)).then((bm) => {
+      if (B.zu) { bm.forEach((x) => { try { x.close(); } catch (e) {} }); return false; }
+      /* nur nehmen, was genauso groß ist wie das Blatt (dieselben Koordinaten im Blatt) */
+      if (!bm.every((x, j) => x.width === quellen[j].naturalWidth && x.height === quellen[j].naturalHeight)) { bm.forEach((x) => { try { x.close(); } catch (e) {} }); return false; }
+      B.blaetter = bm.slice(0, -1); B.schatten = bm[bm.length - 1]; B.fertig = true;
+      return true;
+    }).catch(() => false);
+    B.schliessen = () => {
+      B.zu = true;
+      (B.blaetter || []).concat(B.schatten ? [B.schatten] : []).forEach((x) => { try { x.close(); } catch (e) {} });
+      B.blaetter = null; B.schatten = null; B.fertig = false;
+    };
+    return B;
   }
   /* Ein Modellpunkt im Drehblatt: Versatz zum Anker (Fußpunkt der Wagenmitte) in Metern auf dem Bild, dazu die Nähe zum Betrachter */
   function lcAuto3dPunkt(M, gier, p) {
@@ -58143,7 +58173,10 @@
       gr.addColorStop(0, "rgba(" + farbe + "," + Math.min(1, a).toFixed(3) + ")"); gr.addColorStop(0.35, "rgba(" + farbe + "," + (a * 0.35).toFixed(3) + ")"); gr.addColorStop(1, "rgba(" + farbe + ",0)");
       g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
     };
-    const blatt = (b) => L.blaetter[b[0]];
+    /* FASSUNG 887 — Bitmaps für diesen Auftritt (siehe lcAuto3dBitmaps); bis sie da sind, wie bisher die Bilder */
+    const BM = lcAuto3dBitmaps(L);
+    const blatt = (b) => (BM && BM.fertig ? BM.blaetter[b[0]] : L.blaetter[b[0]]);
+    const schattenBlatt = () => (BM && BM.fertig ? BM.schatten : L.schatten);
     const lenkIdx = (l) => { const LK = M.lenk; let best = 0; for (let j = 1; j < LK.length; j++) if (Math.abs(LK[j] - l) < Math.abs(LK[best] - l)) best = j; return best; };
     const rollIdx = (weg) => { const nR = M.roll.length, per = (M.roll[1] - M.roll[0]) * nR, rR = raeder.hl[2]; const grad = weg / rR * 180 / Math.PI; return Math.floor(((grad % per) + per) % per / per * nR) % nR; };
     let letzter = null;
@@ -58177,7 +58210,7 @@
       qualmMalen(t, z.Z, false);
       /* Schatten (eigene Ebene) */
       g.globalAlpha = 0.2 * aus;
-      g.drawImage(L.schatten, Bd.s[1], Bd.s[2], Bd.s[3], Bd.s[4], p[0] + Bd.so[0] * f, p[1] + Bd.so[1] * f, Bd.s[3] / M.sf * f, Bd.s[4] / M.sf * f);
+      g.drawImage(schattenBlatt(), Bd.s[1], Bd.s[2], Bd.s[3], Bd.s[4], p[0] + Bd.so[0] * f, p[1] + Bd.so[1] * f, Bd.s[3] / M.sf * f, Bd.s[4] / M.sf * f);
       g.globalAlpha = aus;
       /* Nachbrenner hinter dem Wagen (Düse abgewandt): ein Glühen um das Heck */
       const nb = brenner(t), duese = M.punkte.duese;
@@ -58235,8 +58268,13 @@
     };
     /* Jedes Bild: die Zeit der Uhr (so bleiben Leinwand, Bild und Töne beisammen) */
     let aus = false, bildSetzen = null;
+    /* FASSUNG 887 — vor dem ersten Bild höchstens 250 ms auf die Bitmaps warten (die Uhr steht bis dahin, siehe lcAuftritt:
+       sie läuft erst los, wenn Foto und Blätter bereit sind); danach wird gezeichnet, mit oder ohne. */
+    let ersteBereit = !BM;
+    const bereit = BM ? Promise.race([BM.warten, new Promise((r) => setTimeout(r, 250))]).then(() => { ersteBereit = true; }) : Promise.resolve();
     const schleife = () => {
-      if (aus || !buehne.isConnected) return;
+      if (aus || !buehne.isConnected) { if (BM) BM.schliessen(); return; }
+      if (!ersteBereit) { requestAnimationFrame(schleife); return; }
       const ct = uhr && uhr.currentTime != null ? uhr.currentTime : 0;
       try { zeichnen(Math.min(D, ct) / 1000); } catch (x) {}
       /* FASSUNG 845 — im selben Takt wie das Auto (siehe bildSetzen) */
@@ -58244,7 +58282,7 @@
       requestAnimationFrame(schleife);
     };
     requestAnimationFrame(schleife);
-    try { zeichnen(0); } catch (x) {}
+    bereit.then(() => { if (!aus && buehne.isConnected) { try { zeichnen(0); } catch (x) {} } });
 
     /* ---------- Das Bild der Person: fährt am Steuer mit, steigt aus (oder ein) ---------- */
     /* FASSUNG 845 — XANDER (Walkie 313): „dann hängt meine Intro Animation immer noch sehr weil sie mein Bild gar nicht
@@ -58297,7 +58335,7 @@
     lcTonSpaeter("aufsetzen", ms(rein ? hopp1 - 0.04 : hopp0 + 0.05), 0.35);
     if (C.motor.charAt(0) !== "@") lcTonSpaeter(C.motor, ms(P.Th - 0.12), C.laut, 1700);
     lcTonSpaeter("reifenquietschen", ms(P.Th + 0.05), 0.45, 1000);
-    return { P: P, S: S_NAH };
+    return { P: P, S: S_NAH, bereit: bereit };
   }
   /* ---------------------------------------------------------------------
      DER KLANG DES BATMOBILS — gerechnet (Web Audio), keine Datei:
@@ -58462,8 +58500,9 @@
     setTimeout(() => { if (!ruheAus && !window.DMA_AUFTRITT_HALTEN) { ruheAus = true; lcStadtRuhe(false); } }, D + 3000);
     const cx = rs.left + rs.width / 2, cy = rs.top + rs.height / 2, B = doc.clientWidth;
     const an = (el, bilder, d, e) => { try { el.animate(bilder, { duration: d || D, easing: e || "linear", fill: "forwards" }); } catch (x) {} };
+    let auto3dBereit = null;
     if (auto3d) {
-      lcAuftrittAuto3d(art, buehne, bild, rk, rs, cx, cy, B, rein, D, an);
+      auto3dBereit = (lcAuftrittAuto3d(art, buehne, bild, rk, rs, cx, cy, B, rein, D, an) || {}).bereit || null;
     } else if (art === "transformer") {
       lcAuftrittTrafo(buehne, bild, rk, cx, cy, B, rein, D, an);
     } else if (art === "liane") {
@@ -58634,9 +58673,10 @@
       if (erste && erste.ready) erste.ready.then(toene, toene); else toene();
     };
     const foto = bild.querySelector("img");
-    if (foto && foto.decode) {
+    if ((foto && foto.decode) || auto3dBereit) {
       alle().forEach((a) => { try { a.pause(); } catch (x) {} });
-      foto.decode().then(los, los);
+      /* FASSUNG 887 — beim 3D-Auto auch auf die Bitmaps der Blätter (höchstens 250 ms, siehe lcAuftrittAuto3d) */
+      Promise.all([foto && foto.decode ? foto.decode().catch(() => {}) : null, auto3dBereit]).then(los, los);
       setTimeout(los, 400);
     } else los();
     return true;

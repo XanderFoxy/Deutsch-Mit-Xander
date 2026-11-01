@@ -268,7 +268,7 @@ const NUR = (process.env.NUR || "ABWFRDK").split("");
     ok(r.n0 === 5000, "vorhandene Kennung wird nicht angehängt", r.n0 + " Zeilen");
     ok(r.n1 === 5001 && r.n2 === 5001, "neue Kennung einmal, zweites Mal nicht", r.n1 + " / " + r.n2);
     ok(r.n3 === 5000 && r.n4 === 5000, "nach Austausch der Liste: gelöschte Kennung wieder erlaubt, vorhandene nicht", r.n3 + " / " + r.n4);
-    ok(r.ms < 5, "eine Zeile anhängen (5 000 Zeilen, ohne Sicherung) unter 5 ms", r.ms + " ms");
+    ok(r.ms < 1, "eine Zeile anhängen (5 000 Zeilen, ohne Sicherung) unter 1 ms", r.ms + " ms");
   }
 
   ok(seitenFehler.length === 0, "keine Seitenfehler", seitenFehler.slice(0, 3).join(" | "));
