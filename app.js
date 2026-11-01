@@ -358,9 +358,12 @@
        (index.html dmaStartTor, I50) – genau wie die 4 s weiter unten. Auf einer Seite aus dem Speicher des Helfers mit
        bereitliegendem Update öffnete sonst die ALTE Seite bei der Rückkehr noch die Echtzeit-Leitung, bevor der Helfer
        bzw. der Wächter sie neu lud: zwei Leitungen statt einer (Sonde 885-sparsam SWR/SWR4: 52769d88 je 2, die gehende
-       Seite eine davon). Später „drin“ wird dadurch nichts: die Rückkehr geht erst nach fassungFrei hinein und öffnet
-       das Tor unmittelbar davor (dmaRaumDrin); betreten öffnet den Kanal ohnehin selbst. Ohne Tor (Seite aus dem Netz)
-       oder mit offenem Tor wie bisher sofort. Der Tipp auf „Klassenzimmer“ (S3) wartet weiter NICHT. */
+       Seite eine davon). Ohne Tor (Seite aus dem Netz) oder mit offenem Tor wie bisher sofort. Der Tipp auf
+       „Klassenzimmer“ (S3) wartet weiter NICHT. PREIS (gemessen, 885-sparsam SWRMESS, Rückkehr OHNE Update aus dem
+       Speicher, Leitungsaufbau nachgestellt 300 ms, je 4 Läufe gegen 52769d88): kommt die Antwort des Servers erst nach
+       dem ersten Bild, ist die Seite um bis zu einen Leitungsaufbau später „drin“ – 886 hatte die Leitung bis dahin schon
+       fertig (CPU 1×, Antwort nach 0,4 / 1 s: +166 / +242 ms; CPU 4× +128 / +512 ms; nach 0,15 s kein Unterschied).
+       Abwägung offen: SPIELSYSTEM.md „Fassung 887 — Nachtrag aus der 886-Gesamtprüfung“. */
     const praesenz = () => {
       try {
         const tor = window.dmaStartTor;
