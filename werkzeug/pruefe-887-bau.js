@@ -36,6 +36,7 @@
      B8  Baufehler (Syntaxfehler) und fehlendes Vite: modul-bauen meldet den
          Fehler, bau/ bleibt Byte für Byte, DMA_MODUL bleibt
      B9  package.json ohne "type"; esbuild für min/ ist 0.28.2
+     B10 keine Sonde prüft fest den Hauptbaum (M0, Befehl 0.1)
      S   Start im Browser (Chromium, ohne Helfer): Gast, Betreiber-Gerät
          (Merker dma-walkie) mit min und mit ?quelle: keine 404, das Walkie
          kommt als Modul (bau/… bzw. src/rueckfrage.js), window.Rueckfrage
@@ -187,6 +188,11 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
         fs.rmSync(tmp, { recursive: true, force: true });
       }
     }
+    /* B10 (M0, MODULE-PLAN.md 0.1): keine Sonde prüft fest den Hauptbaum – in einem anderen Arbeitsbaum meldete sie sonst
+       still dessen Ergebnis */
+    const fest = fs.readdirSync(path.join(WURZEL, "werkzeug")).filter((n) => /^pruefe-.*\.js$/.test(n))
+      .filter((n) => fs.readFileSync(path.join(WURZEL, "werkzeug", n), "utf8").indexOf("/home/user/" + "Deutsch-Mit-Xander") >= 0);
+    sage(!fest.length, "B10 keine Sonde mit festem Hauptbaum (/home/user/" + "Deutsch-Mit-Xander)", fest.length ? fest.length + " Dateien, z. B. " + fest.slice(0, 3).join(", ") : "");
     /* B9 */
     const pj = jsonLies(path.join(WURZEL, "package.json"));
     sage(Boolean(pj) && pj.private === true && !("type" in pj), "B9 package.json privat und ohne \"type\" (sonst brechen die Sonden mit require)");
