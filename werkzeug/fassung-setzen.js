@@ -233,10 +233,11 @@ function stempelSetzen() {
   if (fs.existsSync(srcOrdner)) alleDateien(srcOrdner).filter((f) => /\.(js|css|json)$/.test(f)).forEach((f) => {
     stempel[path.relative(WURZEL, f).split(path.sep).join("/")] = crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10);
   });
-  const zeile = "<script>window.DMA_STEMPEL = " + JSON.stringify(stempel) + ";</script>";
-  const muster = /<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>/;
-  if (muster.test(html)) html = html.replace(muster, zeile);
-  else html = html.replace(/(<script>window\.DMA_VERSION = "\d+";<\/script>)/, "$1\n" + zeile);
+  /* MODUL-UMBAU (M3, Prüfung M2 a): im selben Block steht vorn window.DMA_MODUL = {…}; – der bleibt stehen */
+  const zeile = "window.DMA_STEMPEL = " + JSON.stringify(stempel) + ";</script>";
+  const muster = /(<script>(?:window\.DMA_MODUL = \{[^\n]*?\};)?)window\.DMA_STEMPEL = \{[^\n]*\};<\/script>/;
+  if (muster.test(html)) html = html.replace(muster, (m, vor) => vor + zeile);
+  else html = html.replace(/(<script>window\.DMA_VERSION = "\d+";<\/script>)/, (m, v) => v + "\n<script>" + zeile);
   /* FASSUNG 886 (S8, Funk 311) — Bilder, die index.html selbst nennt (das Foto auf „Über mich“, werkzeug/foto-ueber.js),
      tragen ihren Stempel fest in der Adresse (kein Skript setzt sie zusammen, also kein Warten auf DMA_STEMPEL), und
      der Service Worker gibt „?v=…“ ohne Nachfrage aus dem Speicher. Ändert sich ein Bild, bekommt es hier den neuen
@@ -245,7 +246,7 @@ function stempelSetzen() {
     const f = path.join(WURZEL, datei);
     return fs.existsSync(f) ? vor + datei + "?v=" + crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10) : alt;
   });
-  /* MODUL-UMBAU (M1 b): window.DMA_MODUL direkt hinter DMA_STEMPEL (bei einem Baufehler bleibt die alte Zeile) */
+  /* MODUL-UMBAU (M1 b, seit M3 im Block von DMA_STEMPEL, vorn): window.DMA_MODUL (bei einem Baufehler bleibt die alte Angabe) */
   try { html = require("./modul-bauen.js").zeileSetzen(html, mb.karte); } catch (e) {}
   /* MODUL-UMBAU: nur schreiben, wenn sich etwas geändert hat – sonst läse ein Server, der index.html gerade
      ausliefert (Sonden, Messung), im falschen Augenblick eine halbe Datei */
@@ -337,6 +338,22 @@ const zahl = String(process.argv[2] || "").trim();
 if (!/^\d+$/.test(zahl)) {
   console.error("Bitte eine Zahl angeben, z. B.:  node werkzeug/fassung-setzen.js 421");
   process.exit(1);
+}
+
+/* MODUL-UMBAU (M3, Prüfung M2 c): Der Haken vor dem Commit lässt einen Commit mit gescheitertem Vite-Bau durch (er
+   meldet ihn nur auf stderr; der Haken-Text bleibt für alle Bäume gleich). Eine ECHTE Fassung dagegen wird damit nie
+   gesetzt: erst bauen (und den Gleichlauf src/ ↔ Rückfall prüfen); scheitert das, bricht das Werkzeug ab, BEVOR
+   DMA_VERSION oder fassung.json sich ändern. */
+{
+  let mb = null;
+  try { mb = require("./modul-bauen.js").bauen(WURZEL); } catch (e) { mb = { fehler: "modul-bauen.js: " + (e.message || e) }; }
+  if (mb && mb.fehler) {
+    console.error("\n!!! MODUL-BAU: " + mb.fehler + "\n!!! Fassung NICHT gesetzt (DMA_VERSION und fassung.json unverändert). Erst den Bau richten, dann"
+      + " node werkzeug/pruefe-887-bau.js, dann erneut.\n");
+    process.exit(1);
+  }
+  gleichlaufPruefen();
+  if (modulFehler) { console.error("!!! Fassung NICHT gesetzt (Gleichlauf, siehe oben)."); process.exit(1); }
 }
 
 let html = fs.readFileSync(indexPfad, "utf8");

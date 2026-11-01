@@ -5,8 +5,8 @@
    XANDER (Funk 310/312): „die maximal professionellste Lösung".
    Was in src/ steht, baut Vite (vite.config.mjs) zu bau/<name>-<hash>.js;
    bau/manifest.json sagt, welche Datei gilt, und daraus entsteht in
-   index.html direkt hinter DMA_STEMPEL die Zeile
-     <script>window.DMA_MODUL = {"rueckfrage":"bau/rueckfrage-XXXXXXXX.js"};</script>
+   index.html im Block von DMA_STEMPEL (vorn, seit M3):
+     <script>window.DMA_MODUL = {"rueckfrage":"bau/rueckfrage-XXXXXXXX.js"};window.DMA_STEMPEL = {…};</script>
    Gerufen wird das von werkzeug/fassung-setzen.js (--nur-stempel, also
    vom Haken vor jedem Commit; der Haken-Text bleibt, er gilt für alle
    Bäume).
@@ -149,16 +149,29 @@ function bauen(wurzel) {
   return { karte: karte(manifest), gebaut, fehler: null, geloescht };
 }
 
-/* Die Zeile in index.html (direkt hinter DMA_STEMPEL). karte = null: die bestehende Zeile bleibt. */
-const ZEILE = /<script>window\.DMA_MODUL = \{[^\n]*\};<\/script>/;
+/* window.DMA_MODUL in index.html. karte = null: die bestehende Angabe bleibt.
+   M3 (Prüfung M2, Mangel a): KEIN eigenes <script>-Element mehr, sondern im Block von DMA_STEMPEL und dort VORN:
+     <script>window.DMA_MODUL = {…};window.DMA_STEMPEL = {…};</script>
+   Ein Inline-Skript mehr kostete beim Betreiber +13…+19 ms bis DOMContentLoaded (immer in derselben Richtung). Vorn,
+   weil sw.js (auch die alten Helfer auf den Geräten) DMA_STEMPEL mit /window\.DMA_STEMPEL = (\{…\});<\/script>/ liest –
+   dahinter stünde DMA_MODUL in seinem Fang, und JSON.parse scheiterte. */
+const ZEILE = /<script>window\.DMA_MODUL = \{[^\n]*?\};<\/script>\n?/;           /* die alte eigene Zeile (bis M2) */
+const BLOCK = /<script>(window\.DMA_MODUL = \{[^\n]*?\};)?(window\.DMA_STEMPEL = \{[^\n]*\};<\/script>)/;
 function zeileSetzen(html, k) {
   if (k == null) return html;
-  const z = "<script>window.DMA_MODUL = " + JSON.stringify(k) + ";</script>";
-  if (ZEILE.test(html)) return html.replace(ZEILE, z);
-  return html.replace(/(<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>)/, "$1\n" + z);
+  if (!BLOCK.test(html)) return html;
+  const alt = ZEILE.exec(html);
+  if (alt && !/window\.DMA_STEMPEL = /.test(alt[0])) html = html.replace(ZEILE, "");
+  const z = "window.DMA_MODUL = " + JSON.stringify(k) + ";";
+  return html.replace(BLOCK, (m, a, b) => "<script>" + z + b);
+}
+/* → die Karte aus index.html (oder null) */
+function karteLesen(html) {
+  const m = /window\.DMA_MODUL = (\{[^\n]*?\});(?:window\.DMA_STEMPEL = |<\/script>)/.exec(html || "");
+  try { return m ? JSON.parse(m[1]) : null; } catch (e) { return null; }
 }
 
-module.exports = { bauen, summe, karte, dateien, gitManifeste, zeileSetzen, STUECK, ZEILE };
+module.exports = { bauen, summe, karte, dateien, gitManifeste, zeileSetzen, karteLesen, STUECK, ZEILE, BLOCK };
 
 if (require.main === module) {
   const w = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));

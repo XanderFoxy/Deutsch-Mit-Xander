@@ -19,7 +19,8 @@
          veröffentlicht solche Namen nicht)
      B3  Manifest = DMA_MODUL = Dateien: jeder Eingang aus src/ steht im
          Manifest, DMA_MODUL in index.html ist genau die Karte aus dem
-         Manifest und steht direkt hinter DMA_STEMPEL, jede genannte Datei
+         Manifest und steht vorn im Skriptblock von DMA_STEMPEL (seit M3,
+         kein eigenes <script>), sw.js liest DMA_STEMPEL weiter, jede genannte Datei
          liegt da, keine verwaiste Datei in bau/
      B4  die Stücke der letzten 3 Manifeste aus git liegen in bau/ und sind
          in git (alte Seiten in einem Speicher holen sie vom Server)
@@ -34,9 +35,15 @@
          der Bau ist wiederholbar (rueckfrage bekommt denselben Namen wie in
          bau/)
      B8  Baufehler (Syntaxfehler) und fehlendes Vite: modul-bauen meldet den
-         Fehler, bau/ bleibt Byte für Byte, DMA_MODUL bleibt
+         Fehler, bau/ bleibt Byte für Byte, DMA_MODUL bleibt; eine echte
+         Fassung (fassung-setzen.js <zahl>) bricht dann ab, ohne DMA_VERSION
+         oder fassung.json zu ändern (M3, Prüfung M2 c)
      B9  package.json ohne "type"; esbuild für min/ ist 0.28.2
      B10 keine Sonde prüft fest den Hauptbaum (M0, Befehl 0.1)
+     B11 Name aus dem Inhalt (M3, Prüfung M2 b): sw.js gibt bau/…-<8 Zeichen>
+         ungefragt aus dem Speicher; jede Datei in bau/daten/ heißt nach
+         sha256(Inhalt) (mit Gegenprobe), kein Hash-Name unter bau/ hatte in
+         git je zwei Inhalte, der Arbeitsbaum weicht davon nicht ab
      S   Start im Browser (Chromium, ohne Helfer): Gast, Betreiber-Gerät
          (Merker dma-walkie) mit min und mit ?quelle: keine 404, das Walkie
          kommt als Modul (bau/… bzw. src/rueckfrage.js), window.Rueckfrage
@@ -65,7 +72,8 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
   const BAU = path.join(WURZEL, "bau"), SRC = path.join(WURZEL, "src");
   const manifest = jsonLies(path.join(BAU, "manifest.json"));
   const html = lies("index.html") || "";
-  const zeile = /<script>window\.DMA_MODUL = (\{[^\n]*\});<\/script>/.exec(html);
+  /* seit M3 (Prüfung M2 a) im Block von DMA_STEMPEL, vorn: <script>window.DMA_MODUL = {…};window.DMA_STEMPEL = {…};</script> */
+  const zeile = /window\.DMA_MODUL = (\{[^\n]*?\});(?:window\.DMA_STEMPEL = |<\/script>)/.exec(html);
   let dmaModul = null; try { dmaModul = zeile ? JSON.parse(zeile[1]) : null; } catch (e) { dmaModul = null; }
 
   if (NUR.includes("B")) {
@@ -86,7 +94,12 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
     const karte = MB && manifest ? MB.karte(manifest) : null;
     sage(Boolean(karte && dmaModul) && JSON.stringify(karte) === JSON.stringify(dmaModul), "B3 DMA_MODUL in index.html = Karte aus bau/manifest.json",
       JSON.stringify(dmaModul) + (karte && JSON.stringify(karte) !== JSON.stringify(dmaModul) ? " ≠ " + JSON.stringify(karte) : ""));
-    sage(/<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>\n<script>window\.DMA_MODUL = \{[^\n]*\};<\/script>/.test(html), "B3 die Zeile DMA_MODUL steht direkt hinter DMA_STEMPEL");
+    sage(/\n<script>window\.DMA_MODUL = \{[^\n]*?\};window\.DMA_STEMPEL = \{[^\n]*\};<\/script>\n/.test(html) && (html.match(/window\.DMA_MODUL = /g) || []).length === 1,
+      "B3 DMA_MODUL steht vorn im Skriptblock von DMA_STEMPEL (kein eigenes <script>-Element, nur einmal)");
+    /* sw.js liest DMA_STEMPEL aus der gespeicherten Seite mit diesem Muster (auch die alten Helfer auf den Geräten) */
+    let swKarte = null;
+    try { const m = /window\.DMA_STEMPEL = (\{[^\n]*?\});<\/script>/.exec(html); swKarte = m ? JSON.parse(m[1]) : null; } catch (e) { swKarte = null; }
+    sage(Boolean(swKarte && swKarte["index.html"] === undefined && swKarte["min/app.js"]), "B3 sw.js (karteAus) liest DMA_STEMPEL weiter fehlerfrei", swKarte ? Object.keys(swKarte).length + " Einträge" : "JSON.parse scheitert");
     sage(Boolean(dmaModul) && Object.values(dmaModul).every((f) => /^bau\/[a-z0-9-]+-[A-Za-z0-9_-]{8}\.js$/.test(f) && fs.existsSync(path.join(WURZEL, f))),
       "B3 jede Datei aus DMA_MODUL liegt in bau/ (Name mit 8-Zeichen-Hash)");
     let alt = null;
@@ -177,9 +190,32 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
         const r2 = MB.bauen(F);
         const nachher2 = baum(path.join(F, "bau")).map((f) => path.relative(F, f) + ":" + require("crypto").createHash("sha1").update(fs.readFileSync(f)).digest("hex")).join("\n");
         sage(Boolean(r2.fehler) && /Vite fehlt/.test(r2.fehler) && r2.karte === null && nachher2 === nachher0, "B8 ohne Vite (kein node_modules): Fehler gemeldet, bau/ bleibt", String(r2.fehler || "").slice(0, 90));
-        sage(MB.zeileSetzen("<script>window.DMA_STEMPEL = {};</script>\n<script>window.DMA_MODUL = {\"a\":\"bau/a-12345678.js\"};</script>", null).indexOf("bau/a-12345678.js") > 0,
-          "B8 zeileSetzen(null) lässt die alte Zeile DMA_MODUL stehen");
+        const probe = "<script>window.DMA_MODUL = {\"a\":\"bau/a-12345678.js\"};window.DMA_STEMPEL = {\"x.js\":\"1\"};</script>\n";
+        sage(MB.zeileSetzen(probe, null) === probe, "B8 zeileSetzen(null) lässt die alte Angabe DMA_MODUL stehen");
+        sage(MB.zeileSetzen(probe, { b: "bau/b-87654321.js" }) === probe.replace('{"a":"bau/a-12345678.js"}', '{"b":"bau/b-87654321.js"}')
+          && MB.zeileSetzen("<script>window.DMA_STEMPEL = {\"x.js\":\"1\"};</script>\n<script>window.DMA_MODUL = {\"a\":\"bau/a-12345678.js\"};</script>\n<p>", { a: "bau/a-12345678.js" })
+            === probe + "<p>", "B8 zeileSetzen ersetzt im Block und zieht die alte eigene Zeile (bis M2) hinein");
         if (!vorher) console.log("       (bau/ war leer)");
+        /* M3 (Prüfung M2 c): eine ECHTE Fassung (fassung-setzen.js <zahl>) bricht bei einem Baufehler ab, bevor
+           DMA_VERSION oder fassung.json sich ändern – im Wegwerf-Ordner mit dem Werkzeug aus WURZEL */
+        {
+          const G = path.join(tmp, "g");
+          kopie(G);
+          fs.mkdirSync(path.join(G, "werkzeug"));
+          ["fassung-setzen.js", "modul-bauen.js", "quelle-lesen.js"].forEach((n) => {
+            if (fs.existsSync(path.join(WURZEL, "werkzeug", n))) fs.copyFileSync(path.join(WURZEL, "werkzeug", n), path.join(G, "werkzeug", n));
+          });
+          ["index.html", "fassung.json", "package.json"].forEach((n) => { if (fs.existsSync(path.join(WURZEL, n))) fs.copyFileSync(path.join(WURZEL, n), path.join(G, n)); });
+          fs.mkdirSync(path.join(G, "bau"));
+          baum(BAU).filter((f) => !/[\/]daten[\/]/.test(f)).forEach((f) => { const z = path.join(G, "bau", path.relative(BAU, f)); fs.mkdirSync(path.dirname(z), { recursive: true }); fs.copyFileSync(f, z); });
+          fs.appendFileSync(path.join(G, "src", eing[0]), "\nvar kaputt = ;\n");
+          const vorI = fs.readFileSync(path.join(G, "index.html")), vorF = fs.existsSync(path.join(G, "fassung.json")) ? fs.readFileSync(path.join(G, "fassung.json")) : null;
+          const r3 = spawnSync(process.execPath, [path.join(G, "werkzeug", "fassung-setzen.js"), "9999"], { cwd: G, encoding: "utf8", timeout: 180000 });
+          const nachI = fs.readFileSync(path.join(G, "index.html")), nachF = fs.existsSync(path.join(G, "fassung.json")) ? fs.readFileSync(path.join(G, "fassung.json")) : null;
+          sage(r3.status !== 0 && vorI.equals(nachI) && String(vorF) === String(nachF) && /NICHT gesetzt/.test(r3.stderr || ""),
+            "B8 echte Fassung (fassung-setzen.js 9999) bei Baufehler: Abbruch, Rückgabe ≠ 0, index.html und fassung.json unverändert",
+            "Rückgabe " + r3.status + (vorI.equals(nachI) ? "" : ", index.html geändert") + (String(vorF) === String(nachF) ? "" : ", fassung.json geändert"));
+        }
         /* Rückgabe von fassung-setzen.js bei Baufehler: steht im Werkzeug (process.exit(modulFehler ? 2 : 0)) */
         const fs2 = lies("werkzeug/fassung-setzen.js") || "";
         sage(/process\.exit\(modulFehler \? 2 : 0\)/.test(fs2) && /"add", "--", "index\.html", "min"\]/.test(fs2),
@@ -193,6 +229,52 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
     const fest = fs.readdirSync(path.join(WURZEL, "werkzeug")).filter((n) => /^pruefe-.*\.js$/.test(n))
       .filter((n) => fs.readFileSync(path.join(WURZEL, "werkzeug", n), "utf8").indexOf("/home/user/" + "Deutsch-Mit-Xander") >= 0);
     sage(!fest.length, "B10 keine Sonde mit festem Hauptbaum (/home/user/" + "Deutsch-Mit-Xander)", fest.length ? fest.length + " Dateien, z. B. " + fest.slice(0, 3).join(", ") : "");
+    /* B11 (M3, Prüfung M2 b): sw.js gibt jede Datei bau/…-<8 Zeichen>.(js|css|json) OHNE Nachfrage aus dem Speicher –
+       unter einem Namen darf also nie ein anderer Inhalt liegen. Vite nimmt den Hash aus dem Inhalt (B7: wiederholbar);
+       werkzeug/daten-bauen.js nimmt sha256(Inhalt) als base64url, die ersten 8 Zeichen. */
+    {
+      const crypto = require("crypto");
+      const datenFalsch = (ordner) => baum(ordner).filter((f) => /\.json$/.test(f)).filter((f) => {
+        const m = /-([A-Za-z0-9_-]{8})\.json$/.exec(f);
+        return !m || crypto.createHash("sha256").update(fs.readFileSync(f)).digest("base64url").slice(0, 8) !== m[1];
+      }).map((f) => path.relative(WURZEL, f));
+      const DATEN = path.join(BAU, "daten");
+      const df = datenFalsch(DATEN);
+      const dn = baum(DATEN).filter((f) => /\.json$/.test(f)).length;
+      sage(!df.length, "B11 jede Datei in bau/daten/ heißt nach ihrem Inhalt (sha256, base64url, 8 Zeichen)", dn + " Dateien" + (df.length ? "; falsch: " + df.slice(0, 4).join(", ") : ""));
+      /* Gegenprobe der Prüfung selbst: eine Datei mit fremdem Inhalt unter einem Hash-Namen wird erkannt */
+      const tmpD = fs.mkdtempSync(path.join(os.tmpdir(), "dma-887-b11-"));
+      try {
+        const echt = Buffer.from("{\"a\":1}");
+        const h = crypto.createHash("sha256").update(echt).digest("base64url").slice(0, 8);
+        fs.writeFileSync(path.join(tmpD, "x-" + h + ".json"), echt);
+        const gut = datenFalsch(tmpD).length === 0;
+        fs.writeFileSync(path.join(tmpD, "x-" + h + ".json"), "{\"a\":2}");
+        sage(gut && datenFalsch(tmpD).length === 1, "B11 Gegenprobe: ein fremder Inhalt unter einem Hash-Namen wird erkannt");
+      } finally { fs.rmSync(tmpD, { recursive: true, force: true }); }
+      /* git: kein Pfad unter bau/ mit Hash-Namen hatte je zwei Inhalte, und der Arbeitsbaum weicht von git nicht ab */
+      if (fs.existsSync(path.join(WURZEL, ".git"))) {
+        const git = (a) => execFileSync("git", ["-C", WURZEL].concat(a), { encoding: "utf8", maxBuffer: 1 << 26 });
+        const inhalte = new Map();
+        let commits = [];
+        try { commits = git(["log", "--format=%H", "--", "bau"]).split("\n").filter(Boolean); } catch (e) {}
+        commits.forEach((c) => git(["ls-tree", "-r", c, "--", "bau"]).split("\n").filter(Boolean).forEach((z) => {
+          const m = /^\d+ blob ([0-9a-f]+)\t(.+)$/.exec(z);
+          if (m && MB && MB.STUECK.test(m[2])) { if (!inhalte.has(m[2])) inhalte.set(m[2], new Set()); inhalte.get(m[2]).add(m[1]); }
+        }));
+        const doppelt = [...inhalte].filter(([, v]) => v.size > 1).map(([k]) => k);
+        sage(commits.length > 0 && !doppelt.length, "B11 git: kein Hash-Name unter bau/ hatte je zwei Inhalte", inhalte.size + " Namen in " + commits.length + " Commits" + (doppelt.length ? "; doppelt: " + doppelt.join(", ") : ""));
+        const kopf = new Map();
+        try { git(["ls-tree", "-r", "HEAD", "--", "bau"]).split("\n").filter(Boolean).forEach((z) => { const m = /^\d+ blob ([0-9a-f]+)\t(.+)$/.exec(z); if (m) kopf.set(m[2], m[1]); }); } catch (e) {}
+        const pfade = [...kopf.keys()].filter((p) => MB && MB.STUECK.test(p) && fs.existsSync(path.join(WURZEL, p)));
+        let anders = [];
+        if (pfade.length) {
+          const h = execFileSync("git", ["-C", WURZEL, "hash-object", "--stdin-paths"], { input: pfade.join("\n") + "\n", encoding: "utf8" }).split("\n");
+          anders = pfade.filter((p, i) => h[i] !== kopf.get(p));
+        }
+        sage(!anders.length, "B11 Arbeitsbaum: keine Datei mit Hash-Namen weicht vom Stand in git ab", pfade.length + " geprüft" + (anders.length ? "; anders: " + anders.join(", ") : ""));
+      } else sage(false, "B11 git-Baum nötig");
+    }
     /* B9 */
     const pj = jsonLies(path.join(WURZEL, "package.json"));
     sage(Boolean(pj) && pj.private === true && !("type" in pj), "B9 package.json privat und ohne \"type\" (sonst brechen die Sonden mit require)");

@@ -322,6 +322,14 @@ eine Messung gegen 886.
 - **Messung:** Fälle kalt, wieder und sw gegen 886 (es darf nicht langsamer werden).
 - **Damit ist das Muster einmal von Anfang bis Ende erprobt:** Haken, Bau, Lader, SW, `?quelle`, Rückfall, Sonden.
 - **Lieferbar** als erste Modul-Fassung (nächste freie Nummer nach 887).
+- **Übergabe (MODUL, gilt für jede Modul-Fassung):**
+  1. `node werkzeug/pruefe-887-bau.js` (B und S) muss grün sein, VOR jeder Auslieferung und vor jedem Einmischen.
+     Grund: Der Haken vor dem Commit meldet einen gescheiterten Vite-Bau nur auf stderr und lässt den Commit durch
+     (der Haken-Text bleibt für alle Bäume gleich). B5 fängt einen solchen Commit.
+  2. `node werkzeug/fassung-setzen.js <zahl>` bricht bei einem Baufehler oder auseinanderlaufendem Gleichlauf ab,
+     BEVOR `DMA_VERSION` oder `fassung.json` sich ändern (Rückgabe 1, 887-bau B8).
+  3. Mit Daten-Stücken (M3): `node werkzeug/pruefe-887-daten.js` grün.
+  4. Danach die Sonden und die Messung der Stufe wie oben.
 
 ### M3. Übungsdaten als JSON (echter Gewinn für schwache Geräte)
 - **Neues Werkzeug** `werkzeug/daten-bauen.js`:

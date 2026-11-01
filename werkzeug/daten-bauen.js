@@ -178,12 +178,37 @@ function pruefen(name) {
     einspielen(F2, zurueck);
     abw = gleich(A, F2, "window(Vorbestand)");
   }
-  const hash = crypto.createHash("sha256").update(json).digest("base64url").slice(0, 8);
+  const hash = hashVon(Buffer.from(json, "utf8"));
   return { name, ok: !abw, grund: abw, msJs, msJson, bytesJs: Buffer.byteLength(code), bytesJson: Buffer.byteLength(json), wirkung: zurueck, json, hash,
     pfade: w.setzen.map(([p]) => p.join(".")) };
 }
 
-module.exports = { pruefen, kandidaten, einspielen };
+/* NAME AUS DEM INHALT (Prüfung M2, Mangel b): sw.js gibt jede Datei bau/…-<8 Zeichen>.json OHNE Nachfrage aus dem
+   Speicher. Der Name muss also aus genau den Bytes kommen, die auf dem Server liegen: sha256 der geschriebenen Bytes,
+   base64url, die ersten 8 Zeichen. Liegt unter dem Namen schon etwas anderes, wird NICHT überschrieben (Fehler);
+   geschrieben wird über eine Zwischendatei, die nach dem Zurücklesen noch einmal nachgerechnet wird. Die Sonden
+   pruefe-887-bau (B11) und pruefe-887-daten rechnen jede Datei in bau/daten/ nach. */
+function hashVon(buf) { return crypto.createHash("sha256").update(buf).digest("base64url").slice(0, 8); }
+function stueckSchreiben(ordner, grund, buf) {
+  if (!Buffer.isBuffer(buf)) buf = Buffer.from(String(buf), "utf8");
+  const h = hashVon(buf);
+  const ziel = path.join(ordner, grund + "-" + h + ".json");
+  if (fs.existsSync(ziel)) {
+    if (!fs.readFileSync(ziel).equals(buf)) throw new Error("unter " + path.relative(WURZEL, ziel) + " liegt ein anderer Inhalt – nicht überschrieben");
+    return ziel;
+  }
+  fs.mkdirSync(ordner, { recursive: true });
+  const tmp = path.join(ordner, "zwischen-" + process.pid + "-" + Date.now() + ".tmp");
+  try {
+    fs.writeFileSync(tmp, buf);
+    const zurueck = fs.readFileSync(tmp);
+    if (!zurueck.equals(buf) || hashVon(zurueck) !== h) throw new Error("Zurückgelesen ≠ geschrieben: " + path.relative(WURZEL, ziel));
+    fs.renameSync(tmp, ziel);
+  } finally { try { fs.unlinkSync(tmp); } catch (e) {} }
+  return ziel;
+}
+
+module.exports = { pruefen, kandidaten, einspielen, hashVon, stueckSchreiben };
 
 if (require.main === module) {
   const a = process.argv.slice(2), schreiben = a.includes("--schreiben");
@@ -197,11 +222,7 @@ if (require.main === module) {
     console.log((r.ok ? "  ok   " : "  NEIN ") + n.padEnd(32) + (r.ok
       ? (r.bytesJs / 1024).toFixed(0).padStart(6) + " KB JS → " + (r.bytesJson / 1024).toFixed(0).padStart(6) + " KB JSON   Pfade: " + r.pfade.slice(0, 3).join(", ") + (r.pfade.length > 3 ? " … (" + r.pfade.length + ")" : "")
       : "   " + r.grund));
-    if (r.ok && schreiben) {
-      const ziel = path.join(WURZEL, "bau", "daten", n.replace(/\.js$/, "").replace(/\//g, "-") + "-" + r.hash + ".json");
-      fs.mkdirSync(path.dirname(ziel), { recursive: true });
-      fs.writeFileSync(ziel, r.json);
-    }
+    if (r.ok && schreiben) stueckSchreiben(path.join(WURZEL, "bau", "daten"), n.replace(/\.js$/, "").replace(/\//g, "-"), Buffer.from(r.json, "utf8"));
   }
   process.exit(schlecht && liste.length ? 1 : 0);
 }
