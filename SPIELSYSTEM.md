@@ -7932,6 +7932,11 @@ Die Sonden prüfen jetzt den eigenen Baum (Befehl 0.1 aus dem Bauplan, 55 Dateie
   gebaut, wenn die Liste ihre Referenz ODER Länge ändert, und ein Treffer wird gegengeprüft (eine gelöschte Zeile gilt nie
   fälschlich als „schon da“).
 - Der `lagerGelesen`-Schutz ist unverändert (nichts ins Lager, bevor es gelesen ist).
+- **In Stücken:** die geplante Sicherung verwandelt je Leerlaufpause 400 Zeilen in Text (`zeileSchlank` + `JSON.stringify`,
+  am Ende zusammengesetzt – byte-gleich mit dem Ganzen) und schreibt erst dann ins Lager und in den localStorage. Grund: bei
+  CPU 6× mit Fotos kostete sie in einem Stück 308–319 ms alle 20 s. Eine sofortige Sicherung (Seite weg, verdeckt,
+  Raumwechsel …) überholt einen laufenden Stücklauf, der dann nichts mehr schreibt; `chatSichernOffenes` sichert auch dann
+  sofort, wenn ein Stücklauf noch nicht fertig ist. Der 20-s-Abstand zählt ab dem Ende.
 - **Gemessen (mikro, 7 000 Zeilen):** eine empfangene Zeile synchron, CPU 4×: ohne Fotos **181 → 35 ms**, mit Fotos
   **579 → 39 ms**; CPU 6×: 229 → 48 bzw. 898 → 52 ms. Anhängen + Sichern: 130 → 0 ms bzw. 545 → 0 ms.
 - **Sonde `pruefe-887-sichern.js` 31/31 grün**; Gegenprobe 886: 8 rot (Flut: 50 Sicherungen in 25 s statt 1; Leeren: Lager
@@ -7955,23 +7960,28 @@ fangen jetzt auch die gepinnte Adresse ab (`@2(\.\d+)*`). `stadt-leicht.html` un
   Fenster weg (Server-Grenze 6 000). Größtmögliche LoAF-Angabe: 1 162 Zeichen.
 - Sonde `pruefe-887-messung.js` ‹L6-SONDE›
 
-### L4 — Auto-Blätter ohne Ruck (app.js)
-**Nicht ausgeliefert – gemessen und zurückgenommen.** Gebaut war: das Vorab-Malen auf 16×16 durch `img.decode()` ersetzt
-(ohne decode nur im Leerlauf) und im Auftritt ImageBitmaps aus `fetch → Blob → createImageBitmap` (≤ 250 ms gewartet, Start mit
-dem Foto gemeinsam, `close()` danach). Sonde `pruefe-887-auto.js` (CPU 4×, je 3 Läufe, gegen 886 im selben Lauf):
-- Start des Auftritts (Uhr läuft): Viper **466 gegen 181 ms**, Batmobil **441 gegen 136 ms** (Median) – 285–305 ms SPÄTER,
-  über der Rauschgrenze (120–153 ms).
-- Längstes Bild im Auftritt: 137 gegen 101 ms bzw. 143 gegen 128 ms – nicht kürzer.
-- Pixel: erstes und mittleres Bild gleich, das Bild in der Kurve nicht (≈ 100 Bildpunkte Unterschied beim starken
-  Verkleinern).
-- Vorladen: das Vorab-Malen von 886 erzeugte hier KEINEN Langläufer (0 ms ≥ 50 ms) – die 1 130 ms aus der Analyse ließen sich
-  im Nachbau ohne Speicherdruck nicht wiederholen; ein Gewinn war also nicht messbar.
-Also nach der Regel „bringt gemessen nichts oder schadet → nicht einbauen“: app.js ist hier wie 886 (Commit 734b7d37).
-**Aber das Feld sagt etwas anderes:** `app-teil-raum6.js@93213` (lange Bilder 465 ms am 28.10., 855 ms am 20.10.) ist im
-verkleinerten Code von 885 genau die Schleife des 3D-Auftritts (`const Yt=()=>{…requestAnimationFrame(Yt)}`). Auf dem Telefon
-ist das entpackte Blatt bis zum Auftritt offenbar wieder verworfen, und das erste `drawImage` entpackt im Hauptfaden.
-**Vorschlag 888:** die Bitmaps schon beim ersten Aufruf von `lcAuftritt` anstoßen (vor `lcRuhigDann`, das bis 3 s auf Ruhe
-wartet), damit sie zum Start fertig sind, und auf einem Gerät mit Speicherdruck messen (Sonde 887-auto als Messgerät).
+### L4 — Auto-Blätter: das Vorab-Malen fällt weg (app.js; Bitmaps NICHT eingebaut)
+- **Fund im Nachbau:** etwa 10 s nach dem Betreten (wenn alle Leitungen stehen, `lcAuto3dVorladen`) entstand je Auto ein
+  langes Bild **ohne Skript** (blockingDuration 0, renderStart am Ende): 1 250 ms (886, CPU 4×), 1 793–2 304 ms (CPU 6×), zwei
+  Stück im Abstand von 1,5 s – genau der Vorladeplan (Viper, dann Batmobil). Das Vorab-Malen von Fassung 811 (`drawImage` der
+  2 040 × 4 084 großen Blätter auf eine 16×16-Leinwand) entpackt nicht im Skript, sondern im nächsten Bildaufbau. Im Feld sind
+  das sehr wahrscheinlich die langen Bilder „?“ (467–872 ms). Die erste Fassung der Sonde sah es nicht, weil die Prüfseite
+  dabei nichts zeichnete – jetzt läuft während des Vorladens ein Bild-Takt wie im Klassenzimmer.
+- **Gebaut (L4a):** das Vorab-Malen entfällt; `img.decode()` (stand schon in `bild()`) entpackt abseits des Hauptfadens. Ohne
+  `decode` (alte Browser) bleibt das Vorab-Malen, aber nur im Leerlauf. Vorladeplan und Blattgröße unverändert.
+- **Sonde `pruefe-887-auto.js`** (CPU 4×, 886 im selben Lauf): Vorladen **886: 1 501 + 1 163 ms → 887: kein Bild ≥ 50 ms**;
+  Start des Auftritts gleich (Viper 158 gegen 157 ms, Batmobil 165 gegen 168 ms, Median aus 3); erstes Bild, Kurve und
+  Mitte **pixelgleich** mit 886.
+- **Ehrlicher Preis:** der ERSTE Auftritt eines 3D-Autos je Sitzung hat jetzt einmal ein langes Bild (gemessen 956 bzw. 861 ms
+  bei CPU 4×; die folgenden 96–154 ms wie 886). Auf Telefonen gab es das im Feld ohnehin: `app-teil-raum6.js@93213` ist im
+  verkleinerten Code von 885 genau die Schleife des 3D-Auftritts (465 ms am 28.10., 855 ms am 20.10.) – das vorab Entpackte
+  war bis zum Auftritt wieder verworfen. Bilanz: zwei lange Bilder bei JEDEM Betreten für alle im Raum weniger, eins beim
+  ersten Auto-Auftritt mehr (nur, wenn jemand mit Viper/Batmobil kommt).
+- **Zuerst gebaut und zurückgenommen (Commit 734b7d37):** ImageBitmaps im Auftritt (`fetch → Blob → createImageBitmap`, ≤ 250 ms
+  gewartet, `close()` danach). Gemessen: Start **285–305 ms später** als 886 (466 gegen 181 ms, 441 gegen 136 ms), längstes
+  Bild im Auftritt nicht kürzer (137/143 gegen 101/128 ms), das Bild in der Kurve nicht pixelgleich (≈ 100 Bildpunkte beim
+  starken Verkleinern). **Vorschlag 888:** die Bitmaps schon beim ersten Aufruf von `lcAuftritt` anstoßen (vor `lcRuhigDann`,
+  das bis 3 s auf Ruhe wartet), damit sie zum Start fertig sind – dann fällt auch das eine lange Bild beim ersten Auftritt weg.
 
 ### L2 — Verlauf schlank verarbeiten (livechat.js, app.js)
 - `verschmelzen` ist ein Reißverschluss zweier nach der Zeit geordneter Listen (bei Gleichstand zuerst die erste Liste, wie
