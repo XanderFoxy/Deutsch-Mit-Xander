@@ -2857,7 +2857,10 @@ window.LiveChat = (function () {
   function chatLaden(raum) {
     try {
       var l = JSON.parse(localStorage.getItem(chatSchluessel(raum)) || "[]");
-      return Array.isArray(l) ? altenMuellFiltern(l).slice(-CHAT_HALTEN) : [];
+      if (!Array.isArray(l)) return [];
+      l = altenMuellFiltern(l).slice(-CHAT_HALTEN);
+      chatFotosEinsetzen(l);   // FASSUNG 887 — Profilfotos stehen nur noch als Fingerabdruck in der Zeile
+      return l;
     } catch (e) { return []; }
   }
   /* Gesichert wird ZWEIGLEISIG: der Text in den localStorage, die
@@ -2882,7 +2885,11 @@ window.LiveChat = (function () {
       if (!roh) return [];
       try {
         var liste = JSON.parse(roh);
-        return Array.isArray(liste) ? altenMuellFiltern(liste) : [];
+        if (!Array.isArray(liste)) return [];
+        liste = altenMuellFiltern(liste);
+        /* FASSUNG 887 — das Profilfoto liegt einmal im Lager („chatbild:" + Fingerabdruck), nicht in jeder Zeile.
+           Das alte Format (Foto in der Zeile) braucht nichts davon und bleibt lesbar. */
+        return chatFotosZurueck(liste).then(function () { return liste; });
       } catch (e) { return []; }
     }, function () { lagerGelesen = true; return []; });
   }
@@ -2897,11 +2904,122 @@ window.LiveChat = (function () {
     lagerSchonGelegt[k] = daten;
     lagerLegen(id, raum, daten).then(function (ok) { if (!ok && lagerSchonGelegt[k] === daten) delete lagerSchonGelegt[k]; });
   }
+  /* =========================================================
+     FASSUNG 887 — LIVESTREAM OHNE HÄNGER (Xander: „Der Livestream ist das Wichtigste, weil der am meisten hängt.")
+     ---------------------------------------------------------
+     Gemessen im Nachbau (7 000 Zeilen, CPU 4×): JEDE neue Chatzeile schrieb hier den GANZEN Verlauf neu – als Text ins
+     Lager und 300 Zeilen in den localStorage. Das kostete je Zeile 90 ms, mit Profilfotos in den Zeilen (3 von 30
+     Autoren) 440 ms, und in einer Chat-Flut stand die Seite 80–96 % der Zeit. Genau das ist der Hänger aus dem Feld
+     (Long Animation Frames in livechat.js, Eingaben auf #livechatArea warten 0,5–1,2 s).
+
+     Jetzt:
+     1. chatSichernBald() merkt nur „es gibt Neues" und sichert in einer Leerlaufpause (requestIdleCallback, spätestens
+        nach 5 s), und zwischen zwei Sicherungen liegen mindestens 20 s. Sofort und vollständig gesichert wird weiter,
+        wenn es darauf ankommt: Seite weg (pagehide), Seite verdeckt (visibilitychange → hidden), verlassen(),
+        Verlauf leeren, Raumwechsel – und pruefVerlaufSetzen.
+     2. Ein Profilfoto (data:image in n.bild) steht nicht mehr in jeder gespeicherten Zeile, sondern einmal im Lager
+        unter „chatbild:" + Fingerabdruck (bildFinger, derselbe wie beim Senden); in der Zeile bleibt n.bildH. Beim
+        Lesen wird es wieder eingesetzt. Ein Speicherstand im alten Format (Foto in der Zeile) wird weiter gelesen.
+     3. Die Doppelprüfung in nachrichtAnhaengen über ein Kennungs-Verzeichnis statt über some().
+     Der lagerGelesen-Schutz (nichts ins Lager, bevor es gelesen ist) bleibt, wie er war. */
+  var SICHERN_ABSTAND_MS = 20000;
+  var sichernSchmutzig = false, sichernRaum = "", sichernPlan = null, sichernZuletzt = 0;
+  var sichernZeichen = 0, sichernZeiten = [];   // Feldmessung (messung.js): Zeichen der letzten Sicherung, Sicherungen je Minute
+  function chatSichernBald() {
+    if (!zustand.raum) return;
+    sichernSchmutzig = true;
+    sichernRaum = zustand.raum;
+    if (sichernPlan) return;
+    var warten = Math.max(0, sichernZuletzt + SICHERN_ABSTAND_MS - Date.now());
+    sichernPlan = setTimeout(function () {
+      var los = function () {
+        sichernPlan = null;
+        if (!sichernSchmutzig) return;
+        if (sichernRaum !== zustand.raum) { sichernSchmutzig = false; return; }   // beim Wechsel schon gesichert
+        if (Date.now() - sichernZuletzt < SICHERN_ABSTAND_MS) { chatSichernBald(); return; }
+        try { chatSichern(); } catch (e) {}
+      };
+      if (typeof window.requestIdleCallback === "function") {
+        try { window.requestIdleCallback(los, { timeout: 5000 }); return; } catch (e) {}
+      }
+      setTimeout(los, 0);
+    }, warten);
+  }
+  /* Steht noch etwas aus? Dann JETZT sichern (Seite weg, verdeckt, Raumwechsel). */
+  function chatSichernOffenes() {
+    if (!sichernSchmutzig) return;
+    if (sichernRaum && sichernRaum === zustand.raum) chatSichern();
+    else sichernSchmutzig = false;
+  }
+  var CHATBILD_AB = 200;                      // kürzer ist kein Foto (Emoji, Adresse)
+  var chatBildVoll = Object.create(null);     // Fingerabdruck → data:image (diese Sitzung)
+  var chatFingerJe = new Map();               // data:image → Fingerabdruck (dasselbe Foto steht in vielen Zeilen)
+  function chatBildFinger(b) {
+    var h = chatFingerJe.get(b);
+    if (h === undefined) {
+      if (chatFingerJe.size > 300) chatFingerJe.clear();
+      h = bildFinger(b);
+      chatFingerJe.set(b, h);
+    }
+    return h;
+  }
+  function istChatFoto(b) {
+    return typeof b === "string" && b.length >= CHATBILD_AB && b.lastIndexOf("data:image/", 0) === 0;
+  }
+  function zeileKopie(n) {
+    var k = {};
+    Object.keys(n).forEach(function (x) { k[x] = n[x]; });
+    return k;
+  }
+  /* Synchron aus dieser Sitzung einsetzen; liefert die Fingerabdrücke, die noch fehlen. */
+  function chatFotosEinsetzen(liste) {
+    var fehlen = [];
+    for (var i = 0; i < (liste || []).length; i++) {
+      var n = liste[i];
+      if (!n || n.bild || typeof n.bildH !== "string" || !n.bildH) continue;
+      if (chatBildVoll[n.bildH]) n.bild = chatBildVoll[n.bildH];
+      else if (fehlen.indexOf(n.bildH) < 0) fehlen.push(n.bildH);
+    }
+    return fehlen;
+  }
+  /* Aus dem Lager nachholen, was fehlt. Liefert die Zahl der Zeilen, die ein Foto bekommen haben. */
+  function chatFotosZurueck(liste) {
+    var fehlen = chatFotosEinsetzen(liste);
+    if (!fehlen.length) return Promise.resolve(0);
+    return lagerHolen(fehlen.map(function (h) { return "chatbild:" + h; })).then(function (gefunden) {
+      var da = 0;
+      fehlen.forEach(function (h) {
+        var b = gefunden && gefunden["chatbild:" + h];
+        if (istChatFoto(b)) { chatBildVoll[h] = b; da += 1; }
+      });
+      if (!da) return 0;
+      var wieviel = 0;
+      for (var i = 0; i < liste.length; i++) {
+        var n = liste[i];
+        if (n && !n.bild && n.bildH && chatBildVoll[n.bildH]) { n.bild = chatBildVoll[n.bildH]; wieviel += 1; }
+      }
+      return wieviel;
+    }, function () { return 0; });
+  }
   function chatSichern() {
     if (!zustand.raum) return;
+    sichernSchmutzig = false;
+    sichernZuletzt = Date.now();
+    sichernZeiten.push(sichernZuletzt);
+    if (sichernZeiten.length > 30) sichernZeiten.shift();
     var liste = zustand.nachrichten.slice(-CHAT_VERLAUF);
     var raum = zustand.raum;
-    var schlank = liste.map(function (n) {
+    var schlank = liste.map(function (n0) {
+      /* FASSUNG 887 — das Profilfoto einmal ins Lager, in der Zeile nur der Fingerabdruck */
+      var n = n0;
+      if (istChatFoto(n0.bild)) {
+        var h = chatBildFinger(n0.bild);
+        chatBildVoll[h] = n0.bild;
+        lagerEinmal("chatbild:" + h, "", n0.bild);
+        n = zeileKopie(n0);
+        n.bild = "";
+        n.bildH = h;
+      }
       /* SPRACHNACHRICHTEN BLEIBEN — aber nicht im localStorage.
          NACHGEBESSERT: „Sie sollen sich auch nicht unbedingt alleine
          loeschen. Sie koennen ja drin sein, nur sie koennen spaeter
@@ -2915,8 +3033,8 @@ window.LiveChat = (function () {
          einmal den GANZEN Verlauf mitgerissen. */
       if (n.sprach) {
         lagerEinmal("sprach:" + n.id, raum, n.sprach);
-        var ohneTon = {};
-        Object.keys(n).forEach(function (k) { ohneTon[k] = n[k]; });
+        var ohneTon = n !== n0 ? n : {};
+        if (n === n0) Object.keys(n).forEach(function (k) { ohneTon[k] = n[k]; });
         ohneTon.sprach = "";
         ohneTon.sprachImLager = true;
         ohneTon.sprachWeg = false;
@@ -2925,8 +3043,8 @@ window.LiveChat = (function () {
       if (!n.bildImChat) return n;
       /* Ins Lager damit (FASSUNG 836: einmal je Bild – „put() kostet nichts" stimmte nicht: jedes put kopiert das ganze Bild) */
       lagerEinmal(n.id, raum, n.bildImChat);
-      var kopie = {};
-      Object.keys(n).forEach(function (k) { kopie[k] = n[k]; });
+      var kopie = n !== n0 ? n : {};
+      if (n === n0) Object.keys(n).forEach(function (k) { kopie[k] = n[k]; });
       kopie.bildImChat = "";
       kopie.bildImLager = true;
       kopie.bildWeg = false;
@@ -2969,12 +3087,14 @@ window.LiveChat = (function () {
        gelesen wurde. Bis dahin bleibt der localStorage der
        Zwischenspeicher — der ist klein, aber er zerstoert nichts. */
     if (lagerGelesen) {
-      try { lagerLegen("chat:" + raum, raum, JSON.stringify(schlank)); } catch (e) {}
+      try { var text = JSON.stringify(schlank); sichernZeichen = text.length; lagerLegen("chat:" + raum, raum, text); } catch (e) {}
     }
     var versuch = schlank.slice(-300);
     for (var runde = 0; runde < 8; runde++) {
       try {
-        localStorage.setItem(chatSchluessel(raum), JSON.stringify(versuch));
+        var kurz = JSON.stringify(versuch);
+        if (!lagerGelesen) sichernZeichen = kurz.length;
+        localStorage.setItem(chatSchluessel(raum), kurz);
         return;
       } catch (e) {
         if (versuch.length <= 20) return;
@@ -2984,6 +3104,9 @@ window.LiveChat = (function () {
   }
   function chatLeeren() {
     zustand.nachrichten = [];
+    /* FASSUNG 887 — sofort: keine geplante Sicherung darf danach den alten Stand zurücklegen, und das Lager ist
+       jetzt auch leer (vorher wurde es erst mit der nächsten Zeile überschrieben). */
+    try { chatSichern(); } catch (e) {}
     try { localStorage.removeItem(chatSchluessel(zustand.raum)); } catch (e) {}
     melden();
   }
@@ -6762,7 +6885,7 @@ window.LiveChat = (function () {
         return z;
       });
       zustand.nachrichten = verschmelzen(dazu, zustand.nachrichten);
-      chatSichern();
+      chatSichernBald();
       melden();
       return;
     }
@@ -7622,8 +7745,10 @@ window.LiveChat = (function () {
     if (!n.angekommen) n.angekommen = Date.now();
     /* Dieselbe Nachricht kann zweimal ankommen (Neuladen, Puls).
        Sie hat eine Kennung — damit lässt sich das ausschliessen. */
-    if (n.id && zustand.nachrichten.some(function (a) { return a.id === n.id; })) return;
+    /* FASSUNG 887 — über ein Kennungs-Verzeichnis statt über alle Zeilen (siehe kennungSchonDa) */
+    if (n.id && kennungSchonDa(n.id)) return;
     zustand.nachrichten.push(n);
+    kennungDazu(n);
     /* HIER wurde der Verlauf gekappt — und zwar auf das SERVER-Fenster,
        nicht auf das, was der Speicher haelt. Jede neue Zeile schnitt
        damit hinten etwas ab. Es ist dieselbe Grenze wie ueberall
@@ -7631,7 +7756,27 @@ window.LiveChat = (function () {
     if (zustand.nachrichten.length > CHAT_HALTEN) {
       zustand.nachrichten = zustand.nachrichten.slice(-CHAT_HALTEN);
     }
-    chatSichern();
+    chatSichernBald();   // FASSUNG 887 — nicht mehr bei jeder Zeile den ganzen Verlauf (siehe chatSichernBald)
+  }
+  /* FASSUNG 887 — Kennungs-Verzeichnis neben zustand.nachrichten. Wechselt die Liste (verschmelzen, filter, slice …)
+     oder ihre Länge an uns vorbei, wird es neu gebaut; ein Treffer wird gegengeprüft, damit eine gelöschte Zeile nie
+     fälschlich als „schon da" gilt. */
+  var kennungen = null, kennungenFuer = null, kennungenLaenge = -1;
+  function kennungSchonDa(id) {
+    var l = zustand.nachrichten;
+    if (kennungenFuer !== l || kennungenLaenge !== l.length || !kennungen) {
+      kennungen = new Set();
+      for (var i = 0; i < l.length; i++) if (l[i] && l[i].id) kennungen.add(l[i].id);
+      kennungenFuer = l; kennungenLaenge = l.length;
+    }
+    if (!kennungen.has(id)) return false;
+    return l.some(function (a) { return a.id === id; });
+  }
+  function kennungDazu(n) {
+    if (kennungenFuer === zustand.nachrichten && kennungenLaenge === zustand.nachrichten.length - 1) {
+      if (n.id) kennungen.add(n.id);
+      kennungenLaenge = zustand.nachrichten.length;
+    }
   }
 
   /* =========================================================
@@ -7899,7 +8044,7 @@ window.LiveChat = (function () {
     }).then(null, function (fehler) {
       try { console.warn("Klassenzimmer: aelterer Verlauf nicht vollstaendig geholt —", fehler); } catch (e) {}
     }).then(function () {
-      if (geaendert && zustand.raum === raum) { chatSichern(); melden(); }
+      if (geaendert && zustand.raum === raum) { chatSichernBald(); melden(); }
       return dazu;
     });
   }
@@ -7942,7 +8087,7 @@ window.LiveChat = (function () {
       if (vomServer.length) {
         eigeneMarkieren(vomServer);
         zustand.nachrichten = verschmelzen(vomServer, zustand.nachrichten);
-        chatSichern();
+        chatSichernBald();
         melden();
         /* Was vom Server kam, kann Bilder haben, die hier noch fehlen —
            und was hier lag, kann Bilder haben, die der Server nicht
@@ -8156,6 +8301,7 @@ window.LiveChat = (function () {
     }
     if (zustand.lage === "drin" || zustand.lage === "verbindet") return Promise.resolve(lage());
 
+    try { chatSichernOffenes(); } catch (e) {}   // FASSUNG 887 — Raumwechsel: Ausstehendes des alten Raums jetzt sichern
     zustand.raum = String(raumName || "").trim() || gemerkterRaum() || neuerRaumName();
     raumMerken(zustand.raum);
     aufbauStart();   // FASSUNG 836 — Messung des Aufbaus
@@ -8241,6 +8387,8 @@ window.LiveChat = (function () {
     /* Neuer Raum: das Lager dieses Raums ist noch nicht gelesen. */
     lagerGelesen = false;
     zustand.nachrichten = chatLaden(zustand.raum);
+    /* FASSUNG 887 — Profilfotos, die nur als Fingerabdruck gespeichert sind, aus dem Lager wieder einsetzen */
+    chatFotosZurueck(zustand.nachrichten).then(function (etwas) { if (etwas) melden(); });
     /* =====================================================
        EIN VERLAUF FUER ALLE — UND ER WURDE NIE GELESEN
        -----------------------------------------------------
@@ -8281,7 +8429,7 @@ window.LiveChat = (function () {
       /* Gleich wieder sichern: damit sind die alten Bedienungshinweise
          (siehe altenMuellFiltern) nicht nur ausgeblendet, sondern
          wirklich aus dem Geraet heraus. */
-      chatSichern();
+      chatSichernBald();   // FASSUNG 887 — in der nächsten Leerlaufpause
       melden();
       bilderNachreichen(zustand.nachrichten).then(function (etwas) {
         if (etwas) melden();
@@ -8525,8 +8673,15 @@ window.LiveChat = (function () {
      pagehide statt unload: unload wird auf dem Telefon oft gar
      nicht mehr ausgelöst. */
   window.addEventListener("pagehide", function () {
+    try { chatSichernOffenes(); } catch (e) {}   // FASSUNG 887 — Ausstehendes jetzt sichern
     if (zustand.lage === "drin") rueckkehrMerken();
   });
+  /* FASSUNG 887 — verdeckt (Telefon gesperrt, andere App): die WebView kann danach ohne pagehide beendet werden. */
+  try {
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") { try { chatSichernOffenes(); } catch (e) {} }
+    });
+  } catch (e) {}
 
   /* GEWUENSCHT: „Wenn man einen Raum verlaesst auf die Art, dass man
      einen anderen Raum erzeugt, dann soll im Chat stehen: ,Emmi ist in
@@ -18221,7 +18376,7 @@ window.LiveChat = (function () {
        antwortet — zum Nachlesen reicht dann, was im Geraet liegt. */
     return serverLaden(r).then(null, function () { return []; }).then(function (dort) {
       var alles = dort.length ? verschmelzen(dort, hier) : hier;
-      return bilderNachreichen(alles).then(function () {
+      return Promise.all([bilderNachreichen(alles), chatFotosZurueck(alles)]).then(function () {
         return alles.filter(function (n) {
           return n.art !== "fluester" && n.art !== "system";
         });
@@ -19206,7 +19361,14 @@ window.LiveChat = (function () {
     /* Nur zum Nachpruefen: den Verlauf eines Raums ablegen und wieder
        hervorholen — genau die Wege, die das Verlassen und das
        Wiederkommen gehen. */
-    pruefRaum: function (name) { if (name) zustand.raum = String(name); return zustand.raum; },
+    pruefRaum: function (name) { if (name) { try { chatSichernOffenes(); } catch (e) {} zustand.raum = String(name); } return zustand.raum; },
+    /* FASSUNG 887 — Sicherung nachmessen: wie oft, wann zuletzt, was steht aus */
+    pruefSichernStand: function () {
+      return { schmutzig: sichernSchmutzig, geplant: Boolean(sichernPlan), zuletzt: sichernZuletzt,
+               zeiten: sichernZeiten.slice(), zeichen: sichernZeichen, abstand: SICHERN_ABSTAND_MS };
+    },
+    pruefSichernAbstand: function (ms) { if (typeof ms === "number" && ms >= 0) SICHERN_ABSTAND_MS = ms; return SICHERN_ABSTAND_MS; },
+    pruefFotosZurueck: function (liste) { return chatFotosZurueck(liste); },
     pruefVerlaufSetzen: function (liste) { zustand.nachrichten = (liste || []).slice(); chatSichern(); },
     /* Das Fenster, in dem ein fremder Verlauf angenommen wird, von
        Hand auf und zu — damit sich beide Faelle nachstellen lassen,
