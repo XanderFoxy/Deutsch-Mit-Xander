@@ -459,3 +459,46 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     `DMA_STEMPEL` nicht mit; ein Kommentar in index.html fiel dafür weg, Budget 6 500 Zeichen).
   - **M3-Vorarbeit:** `werkzeug/daten-bauen.js` (nur Prüfen; schreibt erst mit `--schreiben`): alle 76 Kandidaten
     JSON-fähig, Mischen/Ersetzen je Pfad erkannt, doppelter Tiefenvergleich (leeres window und fremder Vorbestand).
+  - **Sonden (Stand 08:05 UTC, dieser Baum, über die Sperre, nacheinander):**
+    - grün: `887-bau` B1–B10 + S (Gast/Betreiber min/`?quelle`/ohne Module); `887-bruecke` 18/18 (gast, konto, raum ×
+      min/`?quelle`); `885-swvorladen` inkl. neuer Prüfung 12 und 11 (694 gleich wie mit altem sw.js);
+      `885-schlank` Q A–G; `runde99-rueckfrage`; `walkie207-flug`; `884-notweg` („alles grün“); `884-vollbild` mit
+      `?quelle` und `MIN=1` (nach Sonden-Berichtigung, s. u.); `884-diktat` `?quelle` (der ganze Lauf braucht > 10 min,
+      daher geteilt; min/ steht noch aus); `885-sparsam` A–E, G, H, L, M, N, R, P, U, X3, X5, V, NT, SB, SM, SWa, SWc
+      (90 Prüfungen, 0 rot; in Stücken, weil der ganze Lauf > 10 min braucht); `885-rueckkehr` R, K, G, F, T, Z, Y, W, N, S
+      (0 rot).
+    - **Gegenproben rot wie erwartet:** `887-bau` gegen 7e23e157: B 19 rot (u. a. B10 mit 55 Dateien), S 2 rot (Walkie
+      klassisch statt Modul; die 3 übrigen roten S-Zeilen sind 404 für Bilder/Filme, die der Vergleichsordner nicht
+      hatte); `887-bruecke` mit `BRUCH=Rueckfrage`: konto-min und konto-quelle rot („fehlt: Rueckfrage“);
+      `885-swvorladen` gegen 7e23e157: Prüfung 12 dreimal rot.
+    - **Rot, aber schon auf 886 rot (nicht durch den Umbau):** `694-leistung` 3a (min/spiel.js-Wettlauf, seit 884
+      bekannt, steht in 885-swvorladen); `885-rueckkehr` B1 (CPU 4×, Zeitgrenze 1 220 ms: neu 1 323/1 236 ms, 886
+      1 334 ms im selben Zeitraum – Rechner belastet).
+    - **`884-vollbild` B2m war auch auf 886 rot** (gleiche Zahlen): die Funk-Attrappe der Sonde kannte das zweistufige
+      Holen aus 885 NB1 (`.in("id", …)`) nicht, die „mittlere“ Leiste bekam nie ihren Text. Attrappe berichtigt
+      (76c600b1), danach grün mit `?quelle` und `MIN=1`.
+    - **Offen, nicht erklärt:** `885-rueckkehr` O, zweites „Öffnen ohne Helfer, Update“: auf diesem Stand in 2 von 4
+      Durchgängen statt „sofort hinein + Blase“ ein Neuladen auf die neue Fassung (betreten auf Seite 2 nach 492 ms);
+      auf 886 2 von 2 grün. Der Fall ist ein Wettlauf zwischen „betreten“ (~260 ms) und der Antwort von fassung.json
+      (D = 250 ms); der Walkie-Lader läuft dort nicht (kein Betreiber), sw.js ist aus („ohne Helfer“) – einen Weg, auf
+      dem der Umbau das ändert, sehe ich nicht. Verschränkte Wiederholung (je 2× neu/886) steht in `rest.sh`.
+  - **Messung (CPU 4×, verschränkt, A = 886 = 7e23e157, B = dieser Stand):**
+    - Walkie (Sonde 885-schlank M, 8 Paare, Datenbank 150 ms, Profil 300 ms) – vorher festgelegtes Maß „Reiter da“:
+      mit Merker 1 878 → 1 867 ms (gepaart **+1 ms**, 4↓/4↑), ohne Merker 1 858 → 1 866 ms (**+7 ms**, 3↓/5↑). Erste
+      Walkie-Abfrage +2/+4 ms, Datei geholt −17/+2 ms. **Nicht langsamer.**
+    - Gast kalt (ladezeit-messen 4G, 5 Paare): bereit 1 758 → 1 945 ms, gepaart **+134 ms [−41…+332]** (4↑/1↓),
+      DOMContentLoaded +129 [−44…+340]; Wissen-Tipp −39 [−153…+27]; Langläufer-Summe +53 [−241…+325]. **Nicht
+      gesichert** (der Bereich enthält 0, Rauschgrenze für bereit bei 4G Gast kalt laut 886-Gesamtmessung ±100 ms).
+      Für Gäste ändert sich nur index.html um ~0,5 KB (eine Zeile DMA_MODUL, ein Stempel, der längere Walkie-Lader, der
+      für Gäste nie läuft) – einen Mechanismus für +130 ms gibt es nicht; auch der DCL der Walkie-Messung lag +109 ms
+      (7↑/1↓). Bevor diese Fassung geliefert wird: A/A-Lauf und Wiederholung (`rest.sh`, Punkt 1). Bleibt B danach
+      über der Rauschgrenze langsamer, wird M2 NICHT geliefert.
+    - Fälle „wieder“ und „sw“ stehen noch aus (`rest.sh`).
+  - **M3-Vormessung ohne Browser** (Node, frischer Prozess, min/data-uebungen.js 6,0 MB): Ausführen 151–170 ms,
+    JSON.parse 69–87 ms. Im Browser noch nicht gemessen (Chromium hat für Skripte einen Code-Speicher, für JSON nicht) –
+    deshalb noch NICHTS eingebaut; Messskript `scratchpad/m887/modul/m3-json-messen.js` (kalt/wieder, CPU 4×).
+  - **Nicht angefasst:** app.js, livechat.js, spiel.js, messung.js, filmspieler.js, klassenzimmer.js, livechat.css,
+    backend.js; `DMA_VERSION` bleibt 885. Logbuch hier statt in SPIELSYSTEM.md (Plan 0.9; der Auftragstext nannte
+    SPIELSYSTEM.md, der verbindliche Plan sagt bis zur ersten Modul-Auslieferung dieses Dokument).
+  - **Chromium-Pause ab 08:05 UTC** auf Bitte des Dirigenten (LIVE-Schlussreihe 887). Restliche Läufe:
+    `scratchpad/m887/modul/rest.sh` (ab ~09:30 UTC, ein Läufer, alles über die Sperre).
