@@ -502,3 +502,41 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     SPIELSYSTEM.md, der verbindliche Plan sagt bis zur ersten Modul-Auslieferung dieses Dokument).
   - **Chromium-Pause ab 08:05 UTC** auf Bitte des Dirigenten (LIVE-Schlussreihe 887). Restliche Läufe:
     `scratchpad/m887/modul/rest.sh` (ab ~09:30 UTC, ein Läufer, alles über die Sperre).
+  - **Nachträge (derselbe Tag):** `fassung-setzen.js` schreibt `index.html` nur noch bei einer Änderung (sonst konnte
+    ein Server, der die Datei gerade ausliefert, eine halbe lesen – jeder Commit schrieb sie neu). 887-bau B10: keine
+    Sonde mit festem Hauptbaum (Gegenprobe 7e23e157: 55 Dateien rot).
+  - **Sonden (Chromium nur über die Sperre, Ergebnisse `scratchpad/m887/modul/`):**
+    - neu `887-bau`: B 25/25 und S 9/9 grün. Gegenprobe 7e23e157: B 19 rot, S die Modul-Prüfungen rot (dazu 404 für
+      Bilder, die im Vergleichsstand fehlen).
+    - neu `887-bruecke`: 6 Fälle × (N, R, E) grün. Gegenprobe `BRUCH=Rueckfrage`: rot, genau „fehlt: Rueckfrage“.
+    - `885-swvorladen` alles grün, auch 12 (neu, 5 Prüfungen) und 11 (694 unverändert). Gegenprobe 7e23e157: 12 rot
+      (3 von 5; die zwei Prüfungen „mit Abfrage/ohne Hash wie bisher“ sind dort zu Recht grün).
+    - `885-schlank` grün (Q, A–G; F neu: Rückweg bau → min → Quelle in dieser Reihenfolge). `runde99-rueckfrage`,
+      `walkie207-flug`, `884-notweg`, `884-diktat` (?quelle) grün.
+    - `884-vollbild`: B2m war rot – **auch auf 886 (7e23e157), mit denselben Zahlen**. Ursache in der Sonde: seit 885
+      (Nachbesserung 1) holt das Walkie den Funk in zwei Stufen (`.in("id", …)`), die Attrappe kannte `.in` nicht, und
+      „mittel“ hatte dieselbe Kennung wie „lang“ – die Leiste blieb 216 px hoch, „KEIN mittlerer Fall“. Attrappe
+      berichtigt (`.in()`, eigene Kennung): ?quelle und MIN=1 grün (B2m 547/581 px, Feld 545 → 452 px).
+    - `694-leistung`: nur 3a rot, und nur `min/spiel.js` – der bekannte Wettlauf seit 884 (siehe 885-swvorladen, 11).
+    - `885-sparsam` in Stücken (am Stück > 10 min): A–G, H, L, M, N, R, P, U, X3, X5, V, NT, SB, SM, SWa, SWc
+      grün (90 Prüfungen, 0 rot).
+    - `885-rueckkehr`: R, K, G, F, T, Z, Y, W, N, S grün. B1 (Zeitgrenze CPU 4×, Median ≤ 1 220 ms) rot – **auf 886
+      ebenso** (1 334 ms; Rechnerlast durch parallele Läufe). O (Öffnen ohne Helfer, D = 250 ms, zweiter Durchgang):
+      auf dem Modul-Stand 2 von 2 Läufen rot (die Seite lud auf die neue Fassung, bevor sie hineinging), auf 886 im
+      einen Lauf grün. Es ist ein Wettlauf: 886 geht bei 261–265 ms hinein, fassung.json antwortet nach 250 ms. Vor
+      der Seite hat der Modul-Stand nur eine Zeile mehr (`DMA_MODUL`, 70 Byte, eigenes Inline-Skript). **Offen,
+      verschränkt zu wiederholen** (das Vergleichsskript `ovgl.sh` wurde abgebrochen, siehe unten).
+  - **Messung (verschränkt gegen 886, Median):**
+    - Walkie beim Betreiber (885-schlank Teil M, CPU 4×, Datenbank 150 ms, 8 Paare, kalt): mit Merker Reiter
+      1 878 → 1 867 ms ab DOMContentLoaded (gepaart +1 ms, 4↓/4↑), erste Walkie-Abfrage +2 ms, Datei geholt −17 ms;
+      ohne Merker Reiter +7 ms. **Gleich schnell.** DOMContentLoaded selbst: mit Merker +109 ms (1↓/7↑), ohne +22 ms
+      (3↓/5↑) – vor DOMContentLoaded unterscheiden sich die Stände nur um die Zeile `DMA_MODUL`; A/A fehlt noch.
+    - Gast 4G kalt (ladezeit-messen, CPU 4×, 5 Paare): bereit 1 758 → 1 945 ms, gepaart +134 ms (95 %: −41…+332,
+      4↑/1↓) – nicht über dem Rauschen (886-Grundlinie: ±100), aber auch kein Beweis für „nicht langsamer“.
+      Wissen-Tipp −39 ms, Langläufer-Summe +53, Daten +1 KB.
+    - **Nicht gemessen:** wieder, sw, A/A (Walkie und Gast kalt). Die Läufe standen in einer Reihe hinter der Sperre und
+      wurden um 08:06 von außen beendet (vermutlich, damit die 886-Schlussprüfung im Hauptbaum Vorrang hat – richtig
+      so). **Damit ist M2 gebaut, aber noch nicht lieferbar**: erst A/A + Wiederholung kalt, wieder, sw und O.
+  - **M3-Vormessung (Node, frischer Prozess, `min/data-uebungen.js` 6,0 MB):** Ausführen 151–170 ms, JSON.parse 69–87 ms
+    (2×). Im Browser hat ein Skript aber einen Code-Speicher (wieder), JSON nicht – deshalb vor dem Einbau die
+    Browser-Messung `scratchpad/m887/modul/m3-json-messen.js` (Skript gegen fetch+JSON.parse, CPU 4×, kalt und wieder).
