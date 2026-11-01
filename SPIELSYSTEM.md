@@ -7888,12 +7888,34 @@ eigenem Foto setzt er es ein, entfernt `srcset` und lässt `lazy` stehen (Nachbe
 steht gleich in app.js (`UEBER_FOTO_ORIGINAL`). 885-schlank Q baut den Block (und das Foto im HTML) vor dem Vergleich mit dem
 Stand vor K zurück; 885-ueber zählt die eigene Kopie als „Standardfoto“ mit.
 
+## Fassung 886 — Auslieferung (Überblick, 01.11.2026)
+
+Alles, was oben unter „Fassung 886" steht, geht mit dieser Fassung hinaus: Seite zuerst aus dem Speicher (S1), „Über mich" sofort
+(S2), offene Räume und grünes Licht beim Tipp (S3), schlanker Start (K), verdeckte Bereiche später (D), App-Stücke (E), Vorab-Laden
+im Service Worker (C), Foto als eigene Kopie (S8), Rückkehr in den Raum auf der neuen Fassung, Start-Tor mit Vorhut — zusammengeführt
+mit der Notfall-Bremse von 885, die voll erhalten bleibt.
+
+**Gemessen gegen 885 live** (Summe „bereit" + Wissen-Tipp + Klassenzimmer-Tipp, je 4G/3G, Gast/Konto, kalt/warm/wieder/aus dem
+Speicher): 1,05–1,3× schneller, auf 3G kalt 1,54×, aus dem Speicher auf 3G bis 1,69×. Wissen nach dem Start auf 3G kalt 6,2–6,4×
+(0,35 s statt 2,2 s), sonst 1,2–2,2×. Foto auf „Über mich" etwa 3×. Kein Fall mit gesichert langsamerem Ergebnis.
+
+**Sonden:** 46 Reihen grün, keine neue rote. Rot wie schon auf 807e6a7d (also nicht von 886): 884-vollbild (Nachbildung kennt
+`.in()` nicht), 862 (Zeitfenster der Suche), 694 3a, 884-zoom (wackelt), 885-swvorladen (Vergleichsfehler der Sonde),
+840 (flacher Klon).
+
+**Offen aus der Gesamtprüfung, kommt mit 887:**
+- *wichtig:* Bei der Rückkehr in den Raum öffnet `raumVorbereiten` (app.js) das grüne Licht (`dmaPraesenzLos`) schon vor dem
+  Fassungs-Abgleich (`dmaStartTor`/`fassungFrei`). Liegt ein Update bereit, entstehen kurz zwei Live-Verbindungen statt einer.
+  887 lässt das grüne Licht auf den Abgleich warten.
+- *klein:* `rueckfrage.js` `erkannt()` holt ohne Blick auf Bremse und verdeckte Seite; der Service Worker lässt das Vorab-Laden
+  beim Zurückrollen an; die Werkstatt war veraltet (mit dieser Fassung neu geschrieben).
+
 ## Fassung 887 — Livestream ohne Hänger
 
 XANDER (01.11.): „Der Livestream ist das Wichtigste, weil der am meisten hängt.“ Bauplan: `MODULE-PLAN.md` (Zweig
 `module-umbau`), Abschnitte 0–2, Strang LIVE. Gebaut im Arbeitsbaum `dmx-live`, Zweig `live-haenger`, auf dem 886-Stand
 `7e23e157`. Alles bleibt unsichtbar (Aussehen, Größe, Bedienung wie festgelegt); Ton und WebRTC (Funk 310) unberührt;
-keine einzige zusätzliche Supabase-Abfrage. Die Fassungsnummer setzt die Auslieferung (`DMA_VERSION` steht noch auf 885).
+keine einzige zusätzliche Supabase-Abfrage. Die Fassungsnummer setzt die Auslieferung (`DMA_VERSION` steht nach dem Einmischen von 886 (52769d88) auf 886).
 
 ### Was das Feld sagte (spiel_diagnose „mess-raum“, 20.–28.10., Fassung 884/885)
 - Lange Bilder (LoAF) 457–872 ms, bis 162 Langläufer je Aufenthalt (Summe 13,7 s); erste Sekunde im Raum bis 5,6 s blockiert.
