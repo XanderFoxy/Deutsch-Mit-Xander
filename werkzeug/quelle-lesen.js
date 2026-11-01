@@ -26,7 +26,8 @@
 
    AUFRUF (zum Nachsehen):
      node werkzeug/quelle-lesen.js app.js              → Zeilen/Zeichen der logischen Datei
-     node werkzeug/quelle-lesen.js --modul rueckfrage.js  → Modulkörper auf stdout
+     node werkzeug/quelle-lesen.js --modul rueckfrage.js  → Modulkörper auf stdout (klassisch → src)
+     node werkzeug/quelle-lesen.js --klassisch rueckfrage.js → klassische Hülle aus src/ auf stdout (src → Rückfall)
    WURZEL=<ordner> liest einen anderen Stand.
    ===================================================================== */
 const fs = require("fs");
@@ -84,6 +85,19 @@ function modulKoerper(text) {
   return zeilen.slice(0, kopf).join("\n") + "\n" + aus.join("\n") + "\n";
 }
 
+/* Umgekehrt: Modulkörper → klassische Hülle (für den Rückfall, wenn src/<name> bearbeitet wurde). Kopf = der erste
+   Kommentarblock oben; die letzte Zeile „window.X = {" auf oberster Ebene wird wieder „  return {". */
+function klassischAusModul(text) {
+  const zeilen = String(text).replace(/\r\n/g, "\n").replace(/\n+$/, "").split("\n");
+  let kopfEnde = -1;
+  if (/^\/\*/.test(zeilen[0] || "")) for (let i = 0; i < zeilen.length; i++) if (/\*\/\s*$/.test(zeilen[i])) { kopfEnde = i; break; }
+  let ex = -1, name = "";
+  for (let i = zeilen.length - 1; i > kopfEnde; i--) { const m = /^window\.([A-Za-z_$][\w$]*) = \{\s*$/.exec(zeilen[i]); if (m) { ex = i; name = m[1]; break; } }
+  if (ex < 0) return null;
+  const rumpf = zeilen.slice(kopfEnde + 1).map((z, i) => (i + kopfEnde + 1 === ex ? "  return {" : z === "" ? "" : "  " + z));
+  return zeilen.slice(0, kopfEnde + 1).concat(["window." + name + " = (function () {"], rumpf, ["})();"]).join("\n") + "\n";
+}
+
 /* Gleichlauf: ist src/<name> der Modulkörper der klassischen Datei? (Leerzeichen am Zeilenende zählen nicht) */
 function gleichlauf(name, wurzel) {
   const w = wurzel || WURZEL;
@@ -99,13 +113,17 @@ function gleichlauf(name, wurzel) {
   return { gleich: true };
 }
 
-module.exports = { logisch, stuecke, modulKoerper, gleichlauf, WURZEL };
+module.exports = { logisch, stuecke, modulKoerper, klassischAusModul, gleichlauf, WURZEL };
 
 if (require.main === module) {
   const a = process.argv.slice(2);
   if (a[0] === "--modul" && a[1]) {
     const k = modulKoerper(fs.readFileSync(path.join(WURZEL, a[1]), "utf8"));
     if (k == null) { console.error("keine klassische Hülle: " + a[1]); process.exit(1); }
+    process.stdout.write(k);
+  } else if (a[0] === "--klassisch" && a[1]) {
+    const k = klassischAusModul(fs.readFileSync(path.join(WURZEL, "src", a[1]), "utf8"));
+    if (k == null) { console.error("kein Modulkörper mit window.X = { am Ende: src/" + a[1]); process.exit(1); }
     process.stdout.write(k);
   } else if (a[0]) {
     const t = logisch(a[0]);

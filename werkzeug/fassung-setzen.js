@@ -305,8 +305,27 @@ if (cssFehler.length) {
   if (process.argv[2] !== "--nur-stempel") process.exit(1);
 }
 
+/* MODUL-UMBAU (M2): eine Datei, die als Modul (src/<name>) UND eine Fassung lang als klassischer Rückfall (<name>)
+   liegt, muss in beiden gleich sein – sonst bekäme der Betreiber im Modul anderen Code als im Rückfall. Bearbeitet wird
+   src/<name>; läuft es auseinander, sagt es jeder Commit laut (Rückgabe 2; Sonde pruefe-887-bau.js B6). */
+function gleichlaufPruefen() {
+  const src = path.join(WURZEL, "src");
+  if (!fs.existsSync(src)) return;
+  let ql = null;
+  try { ql = require("./quelle-lesen.js"); } catch (e) { return; }
+  fs.readdirSync(src).filter((n) => /\.js$/.test(n) && fs.existsSync(path.join(WURZEL, n))).forEach((n) => {
+    const g = ql.gleichlauf(n, WURZEL);
+    if (!g.gleich) {
+      modulFehler = modulFehler || "Gleichlauf";
+      console.error("\n!!! GLEICHLAUF: src/" + n + " und " + n + " (klassischer Rückfall) laufen auseinander – " + g.grund
+        + "\n    Bearbeitet wird src/" + n + "; den Rückfall danach neu schreiben: node werkzeug/quelle-lesen.js --klassisch " + n + " > " + n + "\n");
+    }
+  });
+}
+
 if (process.argv[2] === "--nur-stempel") {
   const n = stempelSetzen();
+  gleichlaufPruefen();
   hakenAnlegen();
   console.log("Stempel für " + n + " Dateien gesetzt");
   process.exit(modulFehler ? 2 : 0);
@@ -333,6 +352,7 @@ fs.writeFileSync(path.join(WURZEL, "fassung.json"),
   JSON.stringify({ fassung: zahl, stand: new Date().toISOString() }, null, 2) + "\n");
 
 const n = stempelSetzen();
+gleichlaufPruefen();
 hakenAnlegen();
 console.log("Fassung " + vorher + " → " + zahl + " (index.html und fassung.json), Stempel für " + n + " Dateien");
 if (modulFehler) process.exit(2);

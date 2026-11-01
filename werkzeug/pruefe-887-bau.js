@@ -27,7 +27,8 @@
          bau/quelle.json (fängt einen Commit, bei dem der Bau gescheitert ist)
      B6  Gleichlauf: src/rueckfrage.js ist der Körper der klassischen
          rueckfrage.js (werkzeug/quelle-lesen.js) – der Rückfall ist derselbe
-         Code
+         Code; die Rundreise src → klassisch ist Byte für Byte gleich; der
+         Haken meldet ein Auseinanderlaufen bei jedem Commit
      B7  Kaskade (Vite in einem Wegwerf-Ordner): mit zwei weiteren Eingängen
          gebaut; eine 1-Zeilen-Änderung in einem benennt NUR dessen Stück um;
          der Bau ist wiederholbar (rueckfrage bekommt denselben Namen wie in
@@ -111,6 +112,15 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
     let gl = null;
     try { gl = require(path.join(WURZEL, "werkzeug", "quelle-lesen.js")).gleichlauf("rueckfrage.js", WURZEL); } catch (e) { gl = { gleich: false, grund: String(e.message || e).slice(0, 120) }; }
     sage(gl && gl.gleich, "B6 Gleichlauf: src/rueckfrage.js = Körper der klassischen rueckfrage.js (Rückfall ist derselbe Code)", gl && gl.grund);
+    let rund = null;
+    try {
+      const ql = require(path.join(WURZEL, "werkzeug", "quelle-lesen.js"));
+      rund = ql.klassischAusModul(fs.readFileSync(path.join(SRC, "rueckfrage.js"), "utf8")) === fs.readFileSync(path.join(WURZEL, "rueckfrage.js"), "utf8");
+    } catch (e) { rund = false; }
+    sage(rund === true, "B6 Rundreise: aus src/rueckfrage.js entsteht die klassische rueckfrage.js Byte für Byte (quelle-lesen --klassisch)");
+    const fsz = lies("werkzeug/fassung-setzen.js") || "";
+    sage(/function gleichlaufPruefen\(\)/.test(fsz) && /gleichlaufPruefen\(\);\n  hakenAnlegen\(\);/.test(fsz) && /stempelSetzen\(\);\n  gleichlaufPruefen\(\);/.test(fsz),
+      "B6 der Haken (fassung-setzen.js) meldet auseinanderlaufende Paare bei jedem Commit (Rückgabe 2)");
     /* B7/B8 im Wegwerf-Ordner */
     const vite = path.join(WURZEL, "node_modules", ".bin", "vite");
     if (!MB || !fs.existsSync(vite) || !fs.existsSync(SRC)) {
