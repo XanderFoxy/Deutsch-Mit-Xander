@@ -7970,7 +7970,8 @@ Fotos: 308–319 ms am Stück → längster Leerlauf-Aufruf 71 ms (in Stücken).
 der höchsten 2.x-Fassung auf npm auf – das ist laut npm-Registry heute **2.118.0** (veröffentlicht 15.10.2026, dist-tag
 `latest`; 2.117.3 vom 07.10.). Das Paket enthält `dist/umd/supabase.js` (218 252 Bytes). Die Sonden 885-sparsam, 822 und 874
 fangen jetzt auch die gepinnte Adresse ab (`@2(\.\d+)*`). `stadt-leicht.html` und `__kz.html` laden weiter `@2` (nicht im Plan).
-‹L7-SONDEN›
+Sonden auf dem Endstand: 884-leitung 40, 885-praesenz 69 (ALLES GRÜN), 884-ton310 45 grün; 885-sparsam siehe unten
+(im Nachbau liefern alle Sonden weiter 2.117.3 aus der lokalen Kopie – die gepinnte Adresse wird abgefangen).
 
 ### L6 — Feldmessung schärfer (messung.js, Zeilenformat mv 2)
 - Je langem Bild (LoAF) zu den bisherigen vier Stellen `[Dauer, Datei, Zeichen, Art]` neu: `blockingDuration`,
@@ -7981,7 +7982,9 @@ fangen jetzt auch die gepinnte Adresse ab (`@2(\.\d+)*`). `stadt-leicht.html` un
 - `chat: [Verlaufzeilen, Zeichen der letzten Sicherung, Sicherungen je Minute]` aus `LiveChat.sicherungStand()` (nur Zahlen).
 - Dieselbe Sendung, keine zusätzliche Anfrage; Größenbremse: über 5 400 Zeichen fallen zuerst die Skripte, dann die ruhigsten
   Fenster weg (Server-Grenze 6 000). Größtmögliche LoAF-Angabe: 1 162 Zeichen.
-- Sonde `pruefe-887-messung.js` ‹L6-SONDE›
+- - Auch das Ziel langsamer Eingaben (`inp`) wird jetzt gereinigt: 886 schickte ein `id` wie `#lc-k2585aa3c9d…` roh mit.
+- **Sonde `pruefe-887-messung.js` 13/13 grün**; Gegenprobe 886: 7 rot (LoAF nur 4 Stellen, keine Skripte, kein `chat`, `mv 1`,
+  Kennung im `inp`-Ziel). Die bestehende Sonde 884-messung läuft mit (Ergebnis unten).
 
 ### L4 — Auto-Blätter: das Vorab-Malen fällt weg (app.js; Bitmaps NICHT eingebaut)
 - **Fund im Nachbau:** etwa 10 s nach dem Betreten (wenn alle Leitungen stehen, `lcAuto3dVorladen`) entstand je Auto ein
