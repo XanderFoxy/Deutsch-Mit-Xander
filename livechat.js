@@ -3153,7 +3153,7 @@ window.LiveChat = (function () {
      – Ins Lager nur, wenn es schon beim Schnappschuss gelesen war.
      – Der Schluss war ein Stück (Text zusammensetzen, Lager, 300 Zeilen noch einmal schlank machen + localStorage):
        gemessen 112–158 ms bei CPU 4×. Jetzt sind die letzten 300 Zeilen eigene Stücke, ihr Text wird für den
-       localStorage wiederverwendet, und localStorage und Lager bekommen je eine eigene Leerlaufpause. */
+       localStorage wiederverwendet, und localStorage, Zusammensetzen und Lager bekommen je eine eigene Leerlaufpause. */
   var sichernGen = 0, sichernLauf = null, SICHERN_STUECK = 400, KURZ_ZEILEN = 300;
   function sichernNaechst(f) {
     try { if (typeof window.requestIdleCallback === "function") { window.requestIdleCallback(f, { timeout: 2000 }); return; } } catch (e) {}
@@ -3205,15 +3205,23 @@ window.LiveChat = (function () {
       }
       sichernNaechst(insLager);
     }
+    /* Text zusammensetzen und ins Lager legen in ZWEI Pausen: gemessen (7 000 Zeilen, 1,7 Mio. Zeichen, CPU 4×) kostet
+       das Zusammensetzen 38 ms und das put (IndexedDB kopiert den Text) 67 ms – zusammen ein Bild von 91–130 ms. */
+    var text = null;
     function insLager() {
       if (ueberholt()) return;
+      if (durfte && lagerGelesen) { text = "[" + teile.join(",") + "]"; teile = null; sichernNaechst(lagerPut); return; }
       sichernLauf = null;
-      if (durfte && lagerGelesen) {
-        var text = "[" + teile.join(",") + "]";
-        sichernZeichen = text.length;
-        try { lagerLegen("chat:" + raum, raum, text); } catch (e) {}
-      } else if (lagerGelesen) { sichernSchmutzig = true; chatSichernBald(); }   // unterwegs gelesen: beim nächsten Mal
+      if (lagerGelesen) { sichernSchmutzig = true; chatSichernBald(); }   // unterwegs gelesen: beim nächsten Mal
       sichernZuletzt = Date.now();   // der Abstand von 20 s zählt ab dem Ende
+    }
+    function lagerPut() {
+      if (ueberholt()) return;
+      sichernLauf = null;
+      sichernZeichen = text.length;
+      try { lagerLegen("chat:" + raum, raum, text); } catch (e) {}
+      text = null;
+      sichernZuletzt = Date.now();
     }
     sichernNaechst(stuecke);
   }
