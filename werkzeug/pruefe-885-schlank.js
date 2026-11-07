@@ -162,6 +162,11 @@ function rueckbauFoto(y) {
 /* … und das Foto selbst: eigene Kopie (src/srcset) statt github */
 const FOTO_ALT = '<img src="https://github.com/XanderFoxy/Deutsch/blob/main/Bilder2/9ob2nzt2.jpeg?raw=true" alt="Alex, Gründer von Deutsch mit Alex" loading="lazy" />';
 const ohneFoto = (html) => html.replace(/<img src="bilder\/ueber-alex-\d+\.webp\?v=[0-9a-f]+" srcset="[^"]*" alt="Alex, Gründer von Deutsch mit Alex" loading="lazy" \/>/, FOTO_ALT);
+/* FASSUNG 887 (Prüfung Runde 1, L7; SPIELSYSTEM.md „Auslieferung 887 – Nachbesserung“): supabase-js ist fest gepinnt
+   (@2.x.y statt des losen @2 im Stand vor K) – eine gewollte Änderung, für Teil Q wieder auf „@2“ zurückgebaut. Nur genau
+   die gepinnte jsDelivr-Adresse mit dist/umd/supabase.js; „@latest“, „@3…“ oder ein anderer Pfad bleiben eine Abweichung.
+   Dass die Pinnung selbst stimmt (genau einmal, ≥ 2.119.0, defer), prüft werkzeug/pruefe-887-supabase.js. */
+const ohnePin = (html) => html.replace(/(<script src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@)2\.\d+\.\d+(\/dist\/umd\/supabase\.js" defer><\/script>)/, (m, vor, nach) => vor + "2" + nach);
 
 /* ---------- Quelltext ---------- */
 const lies = (w, f) => fs.readFileSync(path.join(w, f), "utf8");
@@ -380,7 +385,8 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           return aus.join("\n");
         };
         return [zug(a), zug(b)];
-      }, [ALT, ohneFoto(HTML)]);
+      }, [ALT, ohnePin(ohneFoto(HTML))]);
+      if (ohnePin(HTML) !== HTML) info("supabase-js-Adresse ohne die Pinnung aus 887 (L7) verglichen: @" + (HTML.match(/supabase-js@(2\.\d+\.\d+)\//) || [])[1] + " → @2");
       let k = 0; while (k < x.length && x[k] === y[k]) k++;
       sage(x === y, "die Seite ohne Kommentare Knoten für Knoten gleich (DOMParser, " + x.split("\n").length + " Einträge)", x === y ? "" : "erste Abweichung: …" + x.slice(Math.max(0, k - 80), k + 80).replace(/\n/g, "⏎") + "… / …" + y.slice(Math.max(0, k - 80), k + 80).replace(/\n/g, "⏎") + "…");
       await br.close();
