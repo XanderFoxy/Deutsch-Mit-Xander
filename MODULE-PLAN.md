@@ -634,3 +634,19 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
   - **Platz (GitHub Pages):** +6,26 MB (`bau/uebungen/` 6 253 978 B, Verzeichnis 2 209 B, Merkzettel 109 B) →
     ≈ 954 von 1 000 MB. Danach je Änderung der Daten nur die geänderten Kategorien (+ 2 KB Verzeichnis); die ganze
     Datei bleibt als Rückfall und für `spiel.js`.
+  - **Vierte Nebenwirkung (a2cafbbe): das Wörterbuch.** `extractExtendedVocabulary()` (Wörter aus den Übungstexten,
+    „Sonstiges") merkt sich sein Ergebnis je Lernraum. War das Wörterbuch gebaut, bevor die Sammlung ganz da war, fehlten
+    diese Wörter für die ganze Sitzung – das gab es schon auf d9637a22 (Fenster: bis die eine Datei kam), mit M3b ist das
+    Fenster länger (die Teile kommen nach dem Wortschatz). Jetzt merkt es sich, ob es mit der ganzen Sammlung gebaut war;
+    sonst wird es bei `dma-uebungen-ganz` (und damit das Wörterbuch) beim nächsten Gebrauch neu gebaut. Sonde
+    887-daten B10 (früh gebaut → danach so viele Übungswörter wie in einer Seite, die erst alles abwartet).
+  - **Weitere Prüfung: „Runde starten" wartet auf den ganzen Wortschatz.** Das ist nicht entbehrlich: quiz.js stuft
+    JEDE Aufgabe auch nach den Wörtern darin ein (`wortNiveauKarte` aus `VocabData.WORDS`), die Niveau-Auswahl der Runde
+    hängt also am Wortschatz. Darum bleibt das Warten (wie auf d9637a22); siehe „Offen".
+  - **Aufgabenliste (Zwischenstand 07.11. 21:00, Rechner seit 19:33 neu gestartet; Chromium wartet auf die Prüfung
+    der Auslieferung 887):** Endlauf auf a2cafbbe in `scratchpad/m887/modul/m3b/end/` (Warteschlange `schlange.txt`,
+    Läufer `lauf.sh`, je Eintrag eine Sperre, wartet auf `/tmp/claude-0/vorrang-887`): 887-daten B10 neu/d9637a22,
+    ganz neu/d9637a22; „Übung öffnen" 4G kalt (2× 3 Paare), 3G kalt (2× 2), 4G wieder (3), 3G wieder (2), A/A 4G kalt
+    (2× 3); Gast-Start 4G kalt (5)/wieder (3); Sonden betonung-uebung, 853-beugung, galgenmaennchen, 858-ladeweg,
+    876-start-schlank, 636, 868, 843, 885-bereiche, 885-stuecke, 887-bruecke, 887-bau, 885-schlank, 885-swvorladen,
+    884-notweg. Ohne Browser schon grün (a2cafbbe): 887-daten D1–D6, 887-bau B, mehrdeutige-aufgaben, betonung-regeln.
