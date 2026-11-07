@@ -8141,7 +8141,7 @@ Format lesen, kein Verlust bei pagehide mitten im Schreiben).
 
 | Sonde | Ergebnis |
 |---|---|
-| 887-sichern | 41 ok, 2 rot (S) im Gesamtlauf – ein Sonden-Fehler: aus Teil K stand noch eine geplante Sicherung an (setTimeout bis 20 s), S wartete nur 0,8 s. Sonde berichtigt (f105c7a4), K+S danach grün ⟨SICHERN-VOLL⟩ |
+| 887-sichern | 41 ok, 2 rot (S) im Gesamtlauf – ein Sonden-Fehler: aus Teil K stand noch eine geplante Sicherung an (setTimeout bis 20 s), S wartete nur 0,8 s. Sonde berichtigt (f105c7a4), K+S danach grün; **Gesamtlauf auf dem Endstand (07.11.): 43/43 grün** (A B W F T R D K S L) |
 | 884-ton310 | **A1–A6 grün** (Tipp erst, wenn das Ziel still steht; „neu=true“ in allen sechs), 44 ok; 1 rot: „I: keine Seitenfehler“ (`Cannot read properties of undefined (reading 'length')`, 2×) – derselbe Fehler steht im 886-Diagnoselauf des Prüfers (ton310-diag-886), also nicht von 887 (der bekannte Wettlauf in der Szene, `SZ.sichtbare`). ⟨TON310-2⟩ |
 | raumverlauf (lagerGelesen-Schutz) | 6/6 grün |
 | 887-zeile | 7/7 grün |
