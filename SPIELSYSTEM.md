@@ -7915,22 +7915,24 @@ Speicher): 1,05–1,3× schneller, auf 3G kalt 1,54×, aus dem Speicher auf 3G b
 Die drei offenen Punkte aus „Fassung 886 — Auslieferung“ („Offen aus der Gesamtprüfung, kommt mit 887“). WIP auf dem Arbeitszweig,
 `DMA_VERSION` bleibt 886.
 
-**1. (wichtig) Rückkehr in den Raum: der frühe Präsenzkanal wartet auf das Start-Tor.**
+**1. (wichtig) Rückkehr in den Raum: der frühe Präsenzkanal bleibt sofort (wie 886) – Warten auf das Start-Tor gebaut, gemessen,
+zurückgenommen. ENTSCHIEDEN (Koordinator, 07.11.2026).**
 *Was war:* `raumVorbereiten()` ohne `tipp` (Rückkehr nach dem Neuladen; `raumDrin` ohne vorherigen Klick) rief `dmaPraesenzLos(true)`
 gleich nach dem ersten Bild – auch auf einer Seite aus dem Speicher des Helfers (`data-dma-speicher`), bevor das Start-Tor
 (`window.dmaStartTor`, I50) entschieden hatte. Lag draußen ein Update, öffnete die ALTE Seite noch die Echtzeit-Leitung (Präsenzkanal
 `dma-klassenzimmer-da`, nur zuhören, kein `track` – die anderen sahen nichts), bevor Helfer bzw. Wächter sie neu luden: zwei Leitungen
 statt einer. Die 4 s nach dem Start warten seit 886 schon auf das Tor, dieser Weg nicht.
-*Jetzt (app.js `raumVorbereiten`, Kommentar „FASSUNG 887“):* ohne `tipp` und bei geschlossenem Tor `tor.then(() => dmaPraesenzLos(true))`;
-ohne Tor (Seite aus dem Netz) oder mit offenem Tor wie bisher sofort. Der Tipp auf „Klassenzimmer“ (S3) wartet weiter nicht.
-*Wann geht das Tor bei der Rückkehr auf?* Beim Neuladen mit dem „gleich“ des Helfers (also mit der Antwort seiner Auffrischung von
+*Erprobt (Zwischenstand ff0c6a3b, nicht ausgeliefert):* ohne `tipp` und bei geschlossenem Tor `tor.then(() => dmaPraesenzLos(true))`;
+ohne Tor (Seite aus dem Netz) oder mit offenem Tor sofort; der Tipp auf „Klassenzimmer“ (S3) wartete nicht. Damit gab es mit Update
+nur noch eine Leitung (885-sparsam SWR/SWR4 damals „höchstens eine“: grün, 52769d88 je 2).
+*Wann ging das Tor bei der Rückkehr auf?* Beim Neuladen mit dem „gleich“ des Helfers (also mit der Antwort seiner Auffrischung von
 index.html), beim Öffnen/Zurück („vorab“) mit `dmaRaumDrin` unmittelbar vor dem Hineingehen oder mit fassung.json, spätestens 6 s nach
 dem Öffnen; bei „neu“ nicht (die Seite geht; bleibt sie, nach 15 s). Das Hineingehen (`rein`) wartete schon vorher auf `fassungFrei`
 und wartet nicht auf den Kanal; `betreten` baut die Leitung sonst selbst auf. Bei `raumDrin` (Seite schon drin) ist das Tor offen –
 dort ändert sich nichts.
-*Gemessen – „drin“ kommt später, wenn die Antwort des Servers erst nach dem ersten Bild da ist* (885-sparsam SWRMESS, neu: Rückkehr per
-Neuladen OHNE Update, Seite aus dem Speicher, Betreiber; Aufbau der Echtzeit-Leitung nachgestellt 300 ms; index.html und fassung.json
-nach D; je 4 Läufe, verschränkt 2 + 2 mit 52769d88; Median „drin“ ab dem Öffnen, 52769d88 → jetzt):
+*Gemessen – mit dem Tor kommt „drin“ später, wenn die Antwort des Servers erst nach dem ersten Bild da ist* (885-sparsam SWRMESS, neu:
+Rückkehr per Neuladen OHNE Update, Seite aus dem Speicher, Betreiber; Aufbau der Echtzeit-Leitung nachgestellt 300 ms; index.html und
+fassung.json nach D; je 4 Läufe, verschränkt 2 + 2; Median „drin“ ab dem Öffnen, 52769d88 (= jetzt wieder) → mit Tor ff0c6a3b):
 
 | | D = 150 ms | D = 400 ms | D = 1 000 ms |
 |---|---|---|---|
@@ -7938,17 +7940,21 @@ nach D; je 4 Läufe, verschränkt 2 + 2 mit 52769d88; Median „drin“ ab dem �
 | CPU 4× | 1 677 → 1 638 (−39) | 1 594 → 1 721 (**+128**) | 1 418 → 1 930 (**+512**, 4 von 4) |
 
 Grund: 52769d88 baute die Leitung schon beim ersten Bild auf (CPU 1× nach 0,22–0,30 s, CPU 4× nach 0,65–1,15 s) und hatte sie fertig,
-wenn die Seite nach der Antwort hineinging (drin − betreten CPU 1× D = 1 s: 94 ms); jetzt beginnt der Aufbau erst mit dem Tor, also
-mit derselben Antwort (336 ms). Auf CPU 4× mit D = 1 s fällt er zusätzlich mit allem zusammen, was das Tor freigibt (drin − betreten
+wenn die Seite nach der Antwort hineinging (drin − betreten CPU 1× D = 1 s: 94 ms); mit dem Tor beginnt der Aufbau erst mit dem Tor,
+also mit derselben Antwort (336 ms). Auf CPU 4× mit D = 1 s fällt er zusätzlich mit allem zusammen, was das Tor freigibt (drin − betreten
 261 → 807 ms). Kommt die Antwort vor dem ersten Bild (D = 150 ms), ist das Tor schon offen: kein Unterschied. Die Erwartung der
 Gesamtprüfung („nicht später“) stimmt also nur für schnelle Antworten.
-*Abwägung – offen, nicht von mir entschieden:* Die zweite Leitung gab es nur bei der einen Rückkehr direkt nach einer neuen Fassung
-(einmal je Gerät und Fassung); sie lebte bis zum Neuladen, hörte nur zu und kostete eine Verbindung und die Präsenz-Liste als
-Nachricht. Die spätere „drin“-Zeit trifft jede Rückkehr aus dem Speicher mit langsamer Antwort (3G, schwaches 4G) – genau Xanders
-oberste Priorität („die Verbindung zu den anderen haben oberste Priorität“, Funk 255; „sofort im Livestream“, Funk 263). Einen
-Mittelweg ohne beides gibt es nicht: ob die Seite bleibt, steht erst mit derselben Antwort fest. Zurück auf das Verhalten von 886
-wäre die eine Zeile `const praesenz = () => { try { if (dmaPraesenzLos) dmaPraesenzLos(!tipp); } catch (e) {} };` – dann SWR/SWR4
-(885-sparsam) und die Prüfung „wartet auf das Start-Tor“ (885-praesenz Q) wieder herausnehmen.
+*Entscheidung (Koordinator, 07.11.2026): zurück auf 886, die zweite Leitung bewusst hingenommen.* Sie gibt es nur bei der einen
+Rückkehr direkt nach einer neuen Fassung (einmal je Gerät und Fassung), nur auf der gehenden Seite, nur zuhörend (`dmaPraesenzLos(true)`:
+kein `track`, die anderen sehen nichts), weg mit dem Neuladen; sie kostet eine Verbindung und die Präsenz-Liste als Nachricht. Die
+spätere „drin“-Zeit träfe dagegen jede Rückkehr aus dem Speicher mit langsamer Antwort (3G, schwaches 4G) – Xanders oberste Priorität
+(„die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“, Funk 255; „sofort im Livestream“, Funk 263).
+Einen Mittelweg ohne beides gibt es nicht: ob die Seite bleibt, steht erst mit derselben Antwort fest.
+*Jetzt (app.js `raumVorbereiten`):* wieder `const praesenz = () => { try { if (dmaPraesenzLos) dmaPraesenzLos(!tipp); } catch (e) {} };`
+wie 886 (min/app.js bis auf die Bau-Kennung gleich 52769d88), Kommentar „FASSUNG 887 … BEWUSST OHNE START-TOR“ mit der Messung.
+885-sparsam SWR/SWR4 halten den hingenommenen Fall fest (höchstens zwei Leitungen, davon höchstens eine auf der gehenden Seite, dort
+kein `track`, am Ende genau eine offen, auf der neuen Seite genau eine; 887 mit Profil, wieder im Raum); 885-praesenz Q prüft
+umgekehrt „raumVorbereiten wartet nicht auf das Start-Tor“.
 
 **2. (klein) Walkie: `Rueckfrage.erkannt()` holt nicht bei verdeckter Seite und nicht bei gezogener Bremse.** `erkannt()` (gerufen von
 index.html `dmaWalkieLaden`, sobald backend.js den Betreiber erkennt) rief `holen()` ohne die Prüfungen, die Takt (`planen`) und

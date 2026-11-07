@@ -353,24 +353,21 @@
        „EIN EINLADUNGSLINK …“) – wie Benachrichtigung, Briefkasten, Unterricht-Einladung und Notweg-Ziel: Tipp-Weg,
        Mithörer sofort, und das Laufband meldet, wer schon da ist, als „gerade gekommen“ (Logbuch, Offen 1; bis 884
        genauso nach den 4 s, neu nur, wenn man vor den 4 s schon drin ist – Sonde 885-praesenz L). Der frühe Kanal bei
-       der Rückkehr macht „drin“ nicht später (Rauschen); einen Nutzen hat niemand gemessen.
-       FASSUNG 887 (Nachtrag aus der 886-Gesamtprüfung): ohne „tipp“ wartet der frühe Kanal jetzt auf das Start-Tor
-       (index.html dmaStartTor, I50) – genau wie die 4 s weiter unten. Auf einer Seite aus dem Speicher des Helfers mit
-       bereitliegendem Update öffnete sonst die ALTE Seite bei der Rückkehr noch die Echtzeit-Leitung, bevor der Helfer
-       bzw. der Wächter sie neu lud: zwei Leitungen statt einer (Sonde 885-sparsam SWR/SWR4: 52769d88 je 2, die gehende
-       Seite eine davon). Ohne Tor (Seite aus dem Netz) oder mit offenem Tor wie bisher sofort. Der Tipp auf
-       „Klassenzimmer“ (S3) wartet weiter NICHT. PREIS (gemessen, 885-sparsam SWRMESS, Rückkehr OHNE Update aus dem
-       Speicher, Leitungsaufbau nachgestellt 300 ms, je 4 Läufe gegen 52769d88): kommt die Antwort des Servers erst nach
-       dem ersten Bild, ist die Seite um bis zu einen Leitungsaufbau später „drin“ – 886 hatte die Leitung bis dahin schon
-       fertig (CPU 1×, Antwort nach 0,4 / 1 s: +166 / +242 ms; CPU 4× +128 / +512 ms; nach 0,15 s kein Unterschied).
-       Abwägung offen: SPIELSYSTEM.md „Fassung 887 — Nachtrag aus der 886-Gesamtprüfung“. */
-    const praesenz = () => {
-      try {
-        const tor = window.dmaStartTor;
-        if (!tipp && tor && !tor.offen) tor.then(() => { try { if (dmaPraesenzLos) dmaPraesenzLos(true); } catch (e) {} });
-        else if (dmaPraesenzLos) dmaPraesenzLos(!tipp);
-      } catch (e) {}
-    };
+       der Rückkehr macht „drin“ nicht später (Rauschen); einen Nutzen hat niemand gemessen (887: doch – s. u.).
+       FASSUNG 887 (Nachtrag aus der 886-Gesamtprüfung) — BEWUSST OHNE START-TOR. Die Gesamtprüfung fand: auf einer Seite
+       aus dem Speicher des Helfers mit bereitliegendem Update öffnet die ALTE Seite bei der Rückkehr hier noch die
+       Echtzeit-Leitung, bevor Helfer bzw. Wächter sie neu laden – kurz zwei Leitungen statt einer (die 4 s weiter unten
+       warten auf das Tor, index.html dmaStartTor, I50). Gebaut und gemessen wurde das Warten auf das Tor auch hier
+       (Zwischenstand ff0c6a3b): dann ist die Seite bei jeder Rückkehr aus dem Speicher OHNE Update später „drin“, sobald
+       die Antwort des Servers nach dem ersten Bild kommt – 886 hat die Leitung bis dahin schon fertig, mit dem Tor beginnt
+       ihr Aufbau erst mit derselben Antwort (885-sparsam SWRMESS, Leitungsaufbau nachgestellt 300 ms, je 4 Läufe gegen
+       52769d88: CPU 1×, Antwort nach 0,4 / 1 s +166 / +242 ms, CPU 4× +128 / +512 ms; nach 0,15 s kein Unterschied).
+       XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“. Entschieden
+       (Koordinator, 07.11.2026): wie 886 sofort. Hingenommen wird die zweite Leitung nur einmal je Gerät und Fassung, direkt
+       nach einem Update, nur auf der gehenden Seite, nur zuhörend (dmaPraesenzLos(true): kein track, die anderen sehen
+       nichts), weg mit dem Neuladen – Sonde 885-sparsam SWR/SWR4 hält genau das fest. SPIELSYSTEM.md „Fassung 887 —
+       Nachtrag aus der 886-Gesamtprüfung“. */
+    const praesenz = () => { try { if (dmaPraesenzLos) dmaPraesenzLos(!tipp); } catch (e) {} };
     if (window.requestAnimationFrame) requestAnimationFrame(() => setTimeout(praesenz, 0)); else setTimeout(praesenz, 0);
   }
   /* Im Raum: Raum-Stücke sofort holen und, sobald sie da sind, alle auf einmal einsetzen (nicht erst in Ruhepausen). */

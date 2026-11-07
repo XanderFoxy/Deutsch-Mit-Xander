@@ -144,11 +144,14 @@
      Tor, die erste Anfrage geht nach 0,1–0,2 s); mit der später dazugekommenen Prüfung „Start ≤ 807e6a7d + 1“ bei SWT/SWT6
      zwei mehr (98/97). 807e6a7d (live, Seite zuerst aus dem Netz): SWa…SW402 grün.
    Fassung 887 (Nachtrag aus der 886-Gesamtprüfung):
-     SWR/SWR4  wie SWa…, dazu RÜCKKEHR IN DEN RAUM (Merker dma_livechat_zurueck vor jeder Runde): Update-Runde höchstens eine
-           Echtzeit-Leitung und keine auf der gehenden Seite, am Ende 887 mit Profil und wieder im Raum. CPU 1×/D = 1000 bzw.
-           CPU 4×/D = 2500. Gegenprobe 52769d88 (886): 4 rot – je 2 Leitungen, eine davon auf der gehenden Seite.
+     SWR/SWR4  wie SWa…, dazu RÜCKKEHR IN DEN RAUM (Merker dma_livechat_zurueck vor jeder Runde). Erst (ff0c6a3b) „höchstens
+           eine Leitung“ – das Warten auf das Start-Tor kostete aber „drin“-Zeit (SWRMESS) und wurde zurückgenommen;
+           ENTSCHIEDEN (07.11.2026): wie 886 sofort, die zweite Leitung bewusst hingenommen. Jetzt festgehalten: Update-Runde
+           höchstens zwei Leitungen, davon höchstens eine auf der gehenden Seite, dort nur zuhörend (kein track), nach dem
+           Neuladen weg (am Ende genau eine offen), auf der neuen Seite genau eine; am Ende 887 mit Profil und wieder im Raum.
+           CPU 1×/D = 1000 bzw. CPU 4×/D = 2500.
      SWRMESS (nicht im Standardlauf) Rückkehr ohne Update aus dem Speicher, Leitungsaufbau RMESS_L ms nachgestellt: wann
-           Leitung, Tor, betreten, drin – Zahlen für das Logbuch (verschränkt über WURZEL).
+           Leitung, Tor, betreten, drin – Zahlen für das Logbuch (verschränkt über WURZEL; Grundlage der Entscheidung).
    Die Sperre der Echtzeit-Leitung ist jetzt nachgestellt wie in Wirklichkeit
    (Nachbesserung 2): Supabase lehnt schon den Handshake ab, die Verbindung
    öffnet sich nie und schließt mit 1006 (eigener WebSocket-Ersatz, solange
@@ -497,6 +500,9 @@ function schluessel(adresse, methode) {
       zaehler().ws++;
       if (zustand.modus !== "ok") { ws.close({ code: 4000, reason: zustand.modus }); return; }
       zustand.offeneWs.push(ws);
+      /* Fassung 887 (SWR/SWR4): welche Leitung ist am Ende noch offen? Nur wenn der Fall es einschaltet (onClose übernimmt
+         das Schließen; ohne Verbindung zum Server ändert das nichts) */
+      if (zustand.wsBuch) { const b = { offen: true, phase: zustand.phase }; zustand.wsBuch.push(b); ws.onClose(() => { b.offen = false; }); }
       ws.onMessage((m) => {
         if (typeof m !== "string") { zaehler().wsRundruf++; return; }   // Rundrufe gehen in realtime-js 2.x binär
         let d; try { d = JSON.parse(m); } catch (e) { return; }
@@ -1343,12 +1349,15 @@ function schluessel(adresse, methode) {
     }
     /* FASSUNG 887 — SWR/SWR4 (Nachtrag aus der 886-Gesamtprüfung): wie SWa…, aber mit RÜCKKEHR IN DEN RAUM (Merker
        dma_livechat_zurueck wie in pruefe-885-rueckkehr.js, vor jeder Runde frisch gesetzt). Die Rückkehr ruft
-       raumVorbereiten() ohne „tipp“; dort öffnete dmaPraesenzLos(true) die Echtzeit-Leitung gleich nach dem ersten Bild,
-       auch auf der ALTEN Seite aus dem Speicher, bevor das Start-Tor (index.html dmaStartTor, I50) entschieden hatte – mit
-       Update also zwei Leitungen statt einer (die 4 s unten warten seit 886 auf das Tor, dieser Weg nicht). Geprüft:
-       höchstens eine Echtzeit-Leitung in der Update-Runde, keine auf der gehenden Seite (gezählt je Seite über
-       window.DMA_VERSION beim Aufbau), am Ende die neue Fassung mit Profil und wieder im Raum. SWR: CPU 1×, D = 1000;
-       SWR4: CPU 4×, D = 2500 (die alte Seite braucht dort länger bis zum ersten Bild). */
+       raumVorbereiten() ohne „tipp“; dort öffnet dmaPraesenzLos(true) die Echtzeit-Leitung gleich nach dem ersten Bild,
+       auch auf der ALTEN Seite aus dem Speicher, bevor das Start-Tor (index.html dmaStartTor, I50) entschieden hat – mit
+       Update also kurz zwei Leitungen. Das Warten auf das Tor (Zwischenstand ff0c6a3b: eine Leitung) machte jede Rückkehr
+       aus dem Speicher mit langsamer Antwort später „drin“ (SWRMESS: +128 … +512 ms) und wurde zurückgenommen – ENTSCHIEDEN
+       (Koordinator, 07.11.2026): wie 886 sofort, die zweite Leitung ist bewusst hingenommen. Diese Fälle halten fest, WIE:
+       höchstens zwei Leitungen in der Update-Runde, davon höchstens eine auf der gehenden Seite (je Seite gezählt über
+       window.DMA_VERSION beim Aufbau), auf der gehenden Seite nur zuhörend (kein track der Präsenz), nach dem Neuladen weg
+       (am Ende genau eine offen) und auf der neuen Seite genau eine; am Ende die neue Fassung mit Profil und wieder im Raum.
+       SWR: CPU 1×, D = 1000; SWR4: CPU 4×, D = 2500 (die alte Seite braucht dort länger bis zum ersten Bild). */
     for (const [fall, D, cpu] of [["SWR", 1000, 1], ["SWR4", 2500, 4]]) {
       if (!FAELLE.includes(fall)) continue;
       abschnitt(fall, "Helfer an, Betreiber, Rückkehr in den Raum: neu laden (Bezug), dann neue Fassung 887 draußen – Seite und fassung.json nach " + D + " ms, CPU " + cpu + "×, je 30 s");
@@ -1356,29 +1365,43 @@ function schluessel(adresse, methode) {
       await s.ctx.addInitScript(() => {
         if (window.top !== window) return;
         const W = window.WebSocket;
+        const merk = (k) => { try { const l = JSON.parse(sessionStorage.getItem(k) || "[]"); l.push(String(window.DMA_VERSION)); sessionStorage.setItem(k, JSON.stringify(l)); } catch (e) {} };
         window.WebSocket = new Proxy(W, { construct(Z, a) {
-          try { if (String(a[0]).indexOf("attrappe") >= 0) { const l = JSON.parse(sessionStorage.getItem("__wsSeiten") || "[]"); l.push(String(window.DMA_VERSION)); sessionStorage.setItem("__wsSeiten", JSON.stringify(l)); } } catch (e) {}
-          return Reflect.construct(Z, a);
+          const w = Reflect.construct(Z, a);
+          if (String(a[0]).indexOf("attrappe") >= 0) {
+            merk("__wsSeiten");
+            /* track der Präsenz (Phoenix: Ereignis „presence“ mit event „track“, als Text) – je Seite mitschreiben */
+            try { const s0 = w.send; w.send = function (d) {
+              try { const t = typeof d === "string" ? d : new TextDecoder().decode(d); if (/"presence"/.test(t) && /"track"/.test(t)) merk("__wsTrack"); } catch (e) {}
+              return s0.apply(w, arguments); }; } catch (e) {}
+          }
+          return w;
         } });
       });
       await cpuBremse(s, cpu);
       console.log("  Helfer: " + ctl + " · Speicher " + speicher);
-      const merker = () => s.pg.evaluate(() => { sessionStorage.setItem("dma_livechat_zurueck", JSON.stringify({ raum: "pruefraum887", name: "Pruef", mitBild: false, zeit: Date.now() })); sessionStorage.setItem("__wsSeiten", "[]"); });
-      const nachher = () => s.pg.evaluate(() => ({ wsSeiten: JSON.parse(sessionStorage.getItem("__wsSeiten") || "[]"), lage: window.LiveChat && LiveChat.lage ? LiveChat.lage().lage : "?" })).catch((e) => ({ fehler: String(e).slice(0, 80) }));
+      const merker = () => s.pg.evaluate(() => { sessionStorage.setItem("dma_livechat_zurueck", JSON.stringify({ raum: "pruefraum887", name: "Pruef", mitBild: false, zeit: Date.now() })); sessionStorage.setItem("__wsSeiten", "[]"); sessionStorage.setItem("__wsTrack", "[]"); });
+      const nachher = () => s.pg.evaluate(() => ({ wsSeiten: JSON.parse(sessionStorage.getItem("__wsSeiten") || "[]"), track: JSON.parse(sessionStorage.getItem("__wsTrack") || "[]"),
+        lage: window.LiveChat && LiveChat.lage ? LiveChat.lage().lage : "?" })).catch((e) => ({ fehler: String(e).slice(0, 80) }));
       await merker();
       const bezug = await runde(s, fall + "-bezug");
       const bezugNach = await nachher();
       await merker();
+      s.zustand.wsBuch = [];
       Object.assign(netz, { neuF: "887", verz: D });
       const neu = await runde(s, fall + "-neu");
       Object.assign(netz, { neuF: "", verz: 0 });
       const neuNach = await nachher();
+      const buch = s.zustand.wsBuch; s.zustand.wsBuch = null;
+      neuNach.offenAmEnde = buch.filter((b) => b.offen).length;
       zeigeRunde("Bezug", bezug, JSON.stringify(bezugNach));
       zeigeRunde("Update", neu, JSON.stringify(neuNach));
-      const alt = (neuNach.wsSeiten || []).filter((f) => f !== "887").length;
+      const seiten = neuNach.wsSeiten || [], alt = seiten.filter((f) => f !== "887").length, neuS = seiten.filter((f) => f === "887").length;
       sage(ctl, fall + ": der Helfer übernimmt die Seite");
-      sage(neu.z.ws <= 1, fall + ": Rückkehr mit Update – höchstens eine Echtzeit-Leitung", String(neu.z.ws) + " (52769d88: 2)");
-      sage(alt === 0, fall + ": die gehende (alte) Seite öffnet keine Echtzeit-Leitung", JSON.stringify(neuNach.wsSeiten));
+      sage(neu.z.ws <= 2 && alt <= 1, fall + ": Rückkehr mit Update – höchstens zwei Echtzeit-Leitungen, davon höchstens eine auf der gehenden Seite (bewusst hingenommen)", neu.z.ws + " · je Seite " + JSON.stringify(seiten) + " (ff0c6a3b: 1; 52769d88: 2)");
+      sage(neuS === 1, fall + ": auf der neuen Seite genau eine Echtzeit-Leitung", JSON.stringify(seiten));
+      sage(Array.isArray(neuNach.track) && neuNach.track.length >= 1 && neuNach.track.every((f) => f === "887"), fall + ": die gehende Seite hört nur zu (kein track der Präsenz; die neue Seite trägt sich beim Betreten ein – sonst wäre die Erkennung blind)", "track je Seite " + JSON.stringify(neuNach.track));
+      sage(neuNach.offenAmEnde === 1, fall + ": nach dem Neuladen ist die Leitung der gehenden Seite weg – am Ende genau eine offen", neuNach.offenAmEnde + " von " + buch.length);
       sage(neu.info.f === "887" && neu.info.profil, fall + ": am Ende die neue Fassung, mit Profil", JSON.stringify(neu.info));
       sage(neuNach.lage === "drin" || neuNach.lage === "verbindet", fall + ": am Ende wieder im Raum", String(neuNach.lage) + " (Bezug: " + bezugNach.lage + ")");
       fehlerPruefen(s);
@@ -1387,7 +1410,7 @@ function schluessel(adresse, methode) {
       await s.ctx.close();
     }
     /* FASSUNG 887 — SWRMESS (nicht im Standardlauf; Messung zu SWR): Rückkehr OHNE Update auf der Seite aus dem Speicher –
-       kommt „drin“ später, seit der frühe Kanal auf das Start-Tor wartet? Der Aufbau der Echtzeit-Leitung dauert hier
+       kommt „drin“ später, wenn der frühe Kanal auf das Start-Tor wartet (gemessen ff0c6a3b gegen 52769d88)? Der Aufbau der Echtzeit-Leitung dauert hier
        RMESS_L ms (Vorgabe 300, wie 4G: Verbindung + TLS + Upgrade; nachgestellt: „open“ kommt so viel später), Seite und
        fassung.json nach D ms (RMESS_D, Vorgabe 150,400,1000), je RMESS_N Läufe (2) bei CPU 1× und 4×. Gezählt (Uhr der
        Seite): erste Echtzeit-Leitung, Tor auf, betreten, drin. Bewertet wird nicht – verschränkt über WURZEL vergleichen. */

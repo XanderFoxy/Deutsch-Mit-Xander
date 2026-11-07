@@ -39,8 +39,8 @@
         „kern“, in min/app.js echte Funktionen); raumVorbereiten ruft
         dmaPraesenzLos, die 4 s rufen dieselbe Funktion; nur der Tipp auf die
         Pille gibt raumVorbereiten „tipp“ mit, Rückkehr und Betreten nicht,
-        und ohne „tipp“ meldet dmaPraesenzLos keinen Mithörer an; seit 887
-        wartet raumVorbereiten ohne „tipp“ auf das Start-Tor (wie die 4 s)
+        und ohne „tipp“ meldet dmaPraesenzLos keinen Mithörer an; 887:
+        raumVorbereiten wartet NICHT auf das Start-Tor (Rückkehr sofort)
      A  früher Tipp (Gast, gleich nach „bereit“): Kanal gleich nach dem
         ersten Bild des Klassenzimmers offen (≤ Knopf + 200 ms, ≤ 500 ms nach
         dem Tipp), nicht davor; Emmy in
@@ -295,10 +295,12 @@ function server(wurzel) {
   const ohne = (minApp.match(/raumVorbereiten\(\)/g) || []).length;
   sage(ohne === 2, "Rückkehr und raumDrin rufen raumVorbereiten ohne „tipp“", ohne + "×");
   sage(Boolean(rvArg) && new RegExp("dmaPraesenzLos\\(!" + rvArg + "\\)").test(rv), "raumVorbereiten gibt dmaPraesenzLos „nur Kanal“ = !tipp", rvArg ? "" : "ohne Parameter");
-  /* Fassung 887 (Nachtrag aus der 886-Gesamtprüfung): ohne „tipp“ wartet auch raumVorbereiten auf das Start-Tor wie die 4 s
-     (Rückkehr auf einer Seite aus dem Speicher mit Update: sonst öffnete die gehende Seite die Leitung; 885-sparsam SWR) */
-  sage(Boolean(rvArg) && new RegExp("const (\\w+)=window\\.dmaStartTor;!" + rvArg + "&&\\1&&!\\1\\.offen\\?\\1\\.then\\(").test(rv),
-    "raumVorbereiten ohne „tipp“ wartet auf das Start-Tor (der Tipp nicht)", rv.slice(rv.indexOf("dmaStartTor") - 30, rv.indexOf("dmaStartTor") + 90));
+  /* Fassung 887 (Nachtrag aus der 886-Gesamtprüfung): raumVorbereiten wartet NICHT auf das Start-Tor – auch ohne „tipp“
+     (Rückkehr) sofort, wie 886. Das Warten (Zwischenstand ff0c6a3b) machte jede Rückkehr aus dem Speicher mit langsamer
+     Antwort später „drin“ (885-sparsam SWRMESS +128 … +512 ms) und wurde zurückgenommen (entschieden 07.11.2026); die kurze
+     zweite Leitung der gehenden Seite hält 885-sparsam SWR/SWR4 fest. */
+  sage(Boolean(rv) && !/dmaStartTor/.test(rv), "raumVorbereiten wartet nicht auf das Start-Tor (Rückkehr sofort, wie 886)",
+    rv.indexOf("dmaStartTor") >= 0 ? rv.slice(rv.indexOf("dmaStartTor") - 30, rv.indexOf("dmaStartTor") + 90) : "");
   sage(/dmaPraesenzLos=(\w+)=>\{[\s\S]{0,1500}?\1===!0\|\|kzPraesenzHorcht/.test(minApp), "dmaPraesenzLos(true) endet vor dem Mithörer fürs Laufband");
 
   const S = server(WURZEL); await S.lauscht;
