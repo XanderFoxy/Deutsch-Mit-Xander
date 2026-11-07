@@ -3234,45 +3234,50 @@ window.LiveChat = (function () {
      – ein Foto über FOTO_TAFEL_JE Zeichen kommt nicht in die Tafel (es liegt im Lager und kommt nach dem Betreten von
        dort, wie in der ersten 887-Fassung);
      – die Tafel hat höchstens FOTO_TAFEL_MAX Zeichen; die Fotos der jüngsten Zeilen zuerst;
-     – nach dem Schreiben müssen noch FOTO_TAFEL_FREI Zeichen frei sein (Probe unter „dma__frei“, sofort wieder weg).
-       Sonst – oder wenn das Schreiben scheitert – wird sie schrittweise gekürzt (halbiert, wie 886 den Verlauf kürzte)
-       und zuletzt ganz entfernt. Am Verlauf selbst ändert das nichts.
+     – neben der Tafel müssen danach noch FOTO_TAFEL_FREI Zeichen frei sein. Geprüft wird VOR dem Schreiben mit einer
+       Probe unter „dma__frei“ (Tafel + Rest, sofort wieder entfernt; die alte Tafel ist dann schon weg). Passt es nicht,
+       wird die Tafel schrittweise gekürzt (halbiert, wie 886 den Verlauf kürzte), zuletzt bleibt keine. Eine Probe, die
+       nicht passt, scheitert schon im Browser selbst (kein Schreiben) – so kostet ein voller Speicher fast nichts, auch
+       wenn bei jedem Sichern wieder versucht wird. Am Verlauf selbst ändert das nichts.
      – Der Stand gilt erst NACH dem erfolgreichen Schreiben (vorher wurde er davor gesetzt: ein gescheiterter Versuch wurde
        nie wiederholt). Ging gar nichts, wird beim nächsten Sichern wieder versucht. */
   var FOTO_TAFEL_JE = 40000, FOTO_TAFEL_MAX = 400000, FOTO_TAFEL_FREI = 320000;
-  var fotoTafelStand = Object.create(null), fotoFreiText = "";
-  function fotoTafelPlatzBleibt(ls) {
-    if (!fotoFreiText) fotoFreiText = new Array(FOTO_TAFEL_FREI + 1).join("0");
-    try { ls.setItem("dma__frei", fotoFreiText); } catch (e) { return false; }
+  var fotoTafelStand = Object.create(null), fotoProbeText = "";
+  function fotoTafelPasst(ls, zeichen) {
+    if (!fotoProbeText) fotoProbeText = new Array(FOTO_TAFEL_FREI + FOTO_TAFEL_MAX + 1001).join("0");
+    try { ls.setItem("dma__frei", fotoProbeText.slice(0, Math.min(fotoProbeText.length, zeichen + FOTO_TAFEL_FREI))); } catch (e) { return false; }
     try { ls.removeItem("dma__frei"); } catch (e) {}
     return true;
   }
   function chatFotoTafel(raum, hs) {
-    var da = Object.create(null), keys = [], summe = 0;
+    var da = Object.create(null), keys = [], laengen = [], summe = 0;
     for (var i = (hs || []).length - 1; i >= 0; i--) {   // jüngste Zeilen zuerst
       var h = hs[i];
       if (!h || da[h] || !chatBildVoll[h]) continue;
       da[h] = 1;
-      var laenge = chatBildVoll[h].length + h.length + 6;
+      var laenge = chatBildVoll[h].length + h.length + 6;   // so viel trägt ein Foto zum JSON-Text bei
       if (chatBildVoll[h].length > FOTO_TAFEL_JE || summe + laenge > FOTO_TAFEL_MAX) continue;
       summe += laenge;
       keys.push(h);
+      laengen.push(laenge);
     }
     var stand = keys.slice().sort().join(",");
     if (fotoTafelStand[raum] === stand) return;
-    var ls;
+    var ls, schluessel = fotoSchluessel(raum);
     try { ls = window.localStorage; if (!ls) return; } catch (e) { return; }
     try {
+      ls.removeItem(schluessel);   // der Platz der alten Tafel zählt mit
       var n = keys.length;
       while (n > 0) {
-        var t = {};
-        for (var k = 0; k < n; k++) t[keys[k]] = chatBildVoll[keys[k]];
-        var gut = false;
-        try { ls.setItem(fotoSchluessel(raum), JSON.stringify(t)); gut = fotoTafelPlatzBleibt(ls); } catch (e) { gut = false; }
-        if (gut) break;
+        var groesse = schluessel.length + 2;
+        for (var k = 0; k < n; k++) groesse += laengen[k];
+        if (fotoTafelPasst(ls, groesse)) {
+          var t = {};
+          for (k = 0; k < n; k++) t[keys[k]] = chatBildVoll[keys[k]];
+          try { ls.setItem(schluessel, JSON.stringify(t)); break; } catch (e) {}
+        }
         n = Math.floor(n / 2);
       }
-      if (!n) ls.removeItem(fotoSchluessel(raum));
       if (n || !keys.length) fotoTafelStand[raum] = stand;   // erst nach dem Schreiben; ging nichts: beim nächsten Mal wieder
     } catch (e) {}
   }
