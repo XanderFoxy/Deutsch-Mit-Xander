@@ -8371,6 +8371,36 @@ mit 2.117.3):
 
 Damit ist 885-sparsam auf dem Endstand **ganz** gelaufen (alle 37 Fälle, 178 ok, kein Rot) – mit supabase-js 2.119.0.
 
+### Auslieferung 887 – Nachbesserung (Prüfung Runde 2, 07.11.)
+Geprüft wurde 51aeeac9. Hauptbaum, `DMA_VERSION` bleibt 886. Am Code der Seite (index.html, livechat.js, app.js …) ändert
+diese Runde nichts; geändert sind zwei Nebenseiten, zwei Werkzeuge, zwei Sonden und das Logbuch.
+
+| # | Befund | Schwere | Was jetzt gilt |
+|---|---|---|---|
+| 1 | Sonde 885-schlank rot: Q „die Seite ohne Kommentare Knoten für Knoten gleich“ (41/42) – die erste Abweichung gegen den Stand vor K (a508dc56) ist genau die gepinnte supabase-js-Adresse (`@2` → `@2.119.0`, Runde 1). Gewollte Änderung, die Sonde kannte sie noch nicht | rot | **Sonde berichtigt:** Teil Q baut für den Knotenvergleich nur genau die gepinnte jsDelivr-Adresse `…supabase-js@2.x.y/dist/umd/supabase.js" defer` auf `@2` zurück (wie schon das Foto aus S8 und die Rückkehr-Stellen); ob die Pinnung selbst stimmt, prüft 887-supabase. Hauptbaum **42/42 grün**; 886 (v886) Q grün; ohne Pinnung (`@2`) Q grün. Gegenprobe: `@latest` und `@3.0.0` → Q rot; die alte Sonde auf dem Hauptbaum → Q rot (wie beim Prüfer) |
+| 2 | Logbuch: beim freien Platz „mit einer Ausnahme“ (150 K) – es ist ein Bereich | klein | oben berichtigt: **unter ~340 K frei** lässt 887 unter 300 K und weniger als 886, wenn 886 den Verlauf dort gar nicht schreiben konnte (887 schreibt ihn ohne Fotos, 38–39 K). Nachgemessen 330/336/342/360/200/100 K und Fluss 330 K; Grenze zwischen 336 K (→ 298 K) und 342 K (→ 304 K) |
+| 3 | Sonden vor dem Setzen von `DMA_VERSION 887` noch nicht gelaufen | klein | **alle gelaufen** (Tabelle unten), alle grün; `reihenfolge` dabei berichtigt (Nr. 5) |
+| 4 | `stadt-leicht.html` und `__kz.html` laden supabase-js über das lose `@2`; fassung-setzen.js und 887-supabase prüfen nur index.html | klein | **beide fest `@2.119.0/dist/umd/supabase.js`** (dieselbe Datei, die `@2` heute liefert: npm `latest` ist am 07.11. weiter 2.119.0, `jsdelivr`-Feld des Pakets = `dist/umd/supabase.js`; `__kz.html` lud bisher ohne Pfad). `fassung-setzen.js` prüft jetzt jede Seite im Stamm, die supabase-js lädt (auch die Form ohne Pfad), Sonde 887-supabase **Teil P** (jede andere Seite genau einmal, dieselbe Fassung wie index.html). Gegenprobe 3f12a88c (Seiten und Werkzeug vor dieser Runde): P **3 rot** (beide Seiten lose, Werkzeug prüft sie nicht); alte Seiten mit neuem Werkzeug: P 2 rot, `fassung-setzen.js 999` bricht mit „`SUPABASE-JS: __kz.html … stadt-leicht.html …`“ ab (Ausgang 1, nichts geschrieben); das alte Werkzeug ließ sie durch. Die Abfänger der Stadt-Sonden treffen die feste Adresse (822 `@2(\.\d+)*`, sonst `cdn.jsdelivr.net`): 822 27 ok, 874 47 ok, ALLES GUT |
+| 5 | (selbst gefunden) Sonde `reihenfolge` meldete zweimal „FALSCH“, endete aber mit 0 – auf 886 (v886) genau dieselbe Ausgabe | klein | **Sonde berichtigt:** beide Erwartungen stammten von VOR zwei gewollten Änderungen in livechat.js: die Reihe hat nur noch einen Platz (`LIVE_REIHE_MAX = 1`, „die letzte, die gesprochen wird, ist die aktuelle“) – von drei Stücken wartet das zuletzt GESPROCHENE („drittens“, nicht das zuletzt angekommene „zweitens“); und was hereinkommt, ist nie zu alt (fremde Uhren schalteten sonst stumm; das Alter zählt ab der Ankunft hier, in `liveNaechste`). Die Sonde setzt jetzt den Ausgang. 887 und 886: alles richtig. Gegenprobe (min/livechat.js verändert): Einreihen nach Ankunft → „zweitens“, FALSCH, rc 1; die alte Uhr-Prüfung wieder drin → FALSCH, rc 1 – die alte Sonde hätte genau diesen Rückfall „richtig“ genannt |
+
+**Sonden dieser Runde** (Hauptbaum, nacheinander über die Chromium-Sperre, Stand dd45e23e – ab hier nur noch Sonden und Logbuch):
+
+| Sonde | Ergebnis |
+|---|---|
+| 885-schlank | 42/42 grün (vorher 41/42) |
+| 887-supabase | F A S W P N grün (16 ok; P neu) |
+| 822 / 874 (laden stadt-leicht.html) | 27 ok / 47 ok, ALLES GUT |
+| 885-rueckkehr | R K G F T Z Y 232 ok, W N O B S 68 ok – **alles grün** (300 ok; O und B1 CPU 4× diesmal grün, in der 887-Erstprüfung unter Last rot) |
+| 885-swvorladen | 27 ok, „Alles in Ordnung“ (11 grün: Sonde 694 bis auf den bekannten spiel.js-Wettlauf wie mit 02613a71) |
+| 884-notweg | 91 ok, alles grün |
+| 884-messung | 75 ok, alles grün |
+| aufgabe-reist 12, benoten 11, runde99-privat 13, runde99-pssst 6, leitung 8, spielsystem 24 | grün |
+| schreien | ✅ (Buchstaben bunt, Schrift folgt, Stoß vergeht, Ton da) |
+| reihenfolge | nach der Berichtigung alles richtig (887 und 886) |
+| bild-fluestern, 642-verlauf-laden | grün – vom Prüfer auf 51aeeac9 nachgeholt; diese Runde berührt sie nicht |
+
+Damit ist jede Sonde aus „Vor dem Ausliefern im Hauptbaum“ gelaufen.
+
 ### Sonden
 Alle auf dem Endstand (dc0c9325, Code wie heute; ausgeführt aus einer Kopie des Stands, `WURZEL` = Kopie), nacheinander
 über die Chromium-Sperre. Während der Läufe liefen im Hauptbaum 886-Sonden ohne Sperre – zeitkritische Grenzen wurden darum
@@ -8393,7 +8423,7 @@ verschränkt gegen 886 nachgeprüft.
 | 885-swvorladen | aus der Kopie: 9 und 11 rot, weil `git show 02613a71:sw.js` dort nicht geht; im Baum 1–10 grün, 11 rot nur „Rechenzeit im Leerlauf“ (Sonde 694) – verschränkt nachgemessen: 887 6,2/6,9, 886 6,3/6,2 ms/s, Grenze 15 → Last | – |
 | raumverlauf 6, verlauf-kein-reset 5, leere, 863-chatfenster, notenknopf-aufgabe 16, stimmzeilen 4, 884-gleich 57, 812-auftritt-autos 38, 845-chat-einzug-gleise 47, 679-spielsitz 10, 697-spiellogik 16 | grün (exit 0) | – |
 | verlauf-nachfassen 7, verlauf-doppelt 5, fremde-uhr-reihenfolge 5, antwort-gehoert-dazu 12 | grün (Endstand dc0c9325) | – |
-| aufgabe-reist, benoten, bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem | **noch nicht gelaufen** (Sperre) – vor dem Ausliefern im Hauptbaum nachholen | – |
+| aufgabe-reist, benoten, bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem | **noch nicht gelaufen** (Sperre) – vor dem Ausliefern im Hauptbaum nachholen (**nachgeholt**, alle grün: „Auslieferung 887 – Nachbesserung (Prüfung Runde 2)“) | – |
 | 885-sparsam | A B C D E G H L M N (41 ok) und R P U X3 V NT (28 ok) grün; **X5 rot** („binnen 10 s die Blase“ – kein Tipp-Nachholen): das ist der bekannte Rand der Notfall-Bremse (Offen 8, in 886 im Sammellauf ebenso einmal rot, allein wiederholt grün); 887 ändert weder backend.js noch die Abfragen. NT0 und die Fälle danach (NT0 … SWS0) liefen nicht mehr zu Ende (alle Läufe wurden um 10:16 von außen beendet) – **vor der Auslieferung nachholen**, zusammen mit X5 allein (3×). | – |
 
 ### Offen / Vorschläge für den Funk (nicht gebaut, weil sichtbar)
@@ -8402,9 +8432,10 @@ verschränkt gegen 886 nachgeprüft.
   Sitzung. Ohne Ruck (Bitmaps beim Vorladen behalten, 41–51 MB je Auto) erst nach einer Messung auf dem Telefon – 888.
 - **888 – Lager in Stücken:** der Schluss der Leerlauf-Sicherung (put des ganzen Verlaufs) bleibt ein Bild von 70–170 ms alle
   ≥ 20 s (CPU 4×); nur das letzte Stück neu schreiben, mit eigener Sonde (altes Format lesen, kein Verlust mitten im Schreiben).
-- **Vor dem Ausliefern im Hauptbaum** (auf dem Endstand nicht mehr gelaufen, Sperre): ~~885-sparsam ganz~~ (erledigt in der
-  Auslieferung, Prüfung Runde 1: alle 37 Fälle grün, mit supabase-js 2.119.0), 885-rueckkehr, 885-swvorladen, 884-notweg, 884-messung sowie aufgabe-reist, benoten,
-  bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem.
+- ~~**Vor dem Ausliefern im Hauptbaum**~~ – **erledigt:** 885-sparsam ganz (Prüfung Runde 1: alle 37 Fälle grün, mit
+  supabase-js 2.119.0); 885-rueckkehr, 885-swvorladen, 884-notweg, 884-messung, aufgabe-reist, benoten, reihenfolge
+  (berichtigt), runde99-privat/-pssst, schreien, leitung, spielsystem in der Prüfung Runde 2 (alle grün); bild-fluestern und
+  642-verlauf-laden vom Prüfer auf 51aeeac9 (grün).
 - **2b – Verlauf erst beim Hochrollen:** statt bis zu 20 000 Zeilen beim Betreten nur die sichtbaren holen, ältere erst beim
   Hochrollen. Spart beim Betreten die Hintergrund-Seiten ganz – ändert aber, wann ältere Zeilen da sind.
 - **Deko-Animationen pausieren**, solange jemand spricht oder die Flut läuft (Hintergrundgesichter, Glitzer) – sichtbar.
