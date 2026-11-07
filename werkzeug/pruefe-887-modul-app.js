@@ -116,9 +116,11 @@ function teilA() {
   /* A5 index.html */
   const html = lies("index.html");
   const reihe = (/var dateien = \[([\s\S]*?)\];/.exec(html) || [])[1] || "";
-  const iM = reihe.indexOf('["bruecke", "modul"]'), iA = reihe.indexOf('"app.js"');
+  const iM = reihe.indexOf('"@bruecke"'), iA = reihe.indexOf('"app.js"');
   sage(iM > 0 && iA > iM, "A5 index.html: das Modul steht in der defer-Reihe VOR app.js");
-  sage(/type="module"/.test(html) && /onerror="dmaModulFehlt\(/.test(html) && /window\.dmaModulFehlt = function/.test(html), "A5 index.html: Modul-Lader mit Rückweg dmaModulFehlt");
+  sage(/if \(d === "@bruecke"\) return document\.write\('<scr' \+ 'ipt type="module" src="'/.test(html) && /\(window\.DMA_MODUL \|\| \{\}\)\.bruecke \|\| "src\/bruecke\.js"/.test(html),
+    "A5 index.html: schreibt type=\"module\" mit bau/ aus DMA_MODUL, sonst (Quelle, kein Bau) src/bruecke.js");
+  sage(/if \(!window\.DMA_BRUECKE\) \{[^}]*s\.type = "module";[^}]*"src\/bruecke\.js"/.test(app), "A5 app.js: Rückweg – ist die Brücke nicht gelaufen, lädt app.js src/bruecke.js nach");
   let karte = null;
   try { karte = JSON.parse((/window\.DMA_MODUL = (\{[^\n]*?\});/.exec(html) || [])[1]); } catch (e) {}
   let manifest = null;

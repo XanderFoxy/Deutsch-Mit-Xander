@@ -30,6 +30,14 @@
      Warum: ein Modul heißt nach seinem Inhalt (bau/…-<hash>.js). Ändert
      sich nur der Tutor, holt ein Gerät nach dem Update nur ihn neu – und
      der Code-Speicher des Browsers hält ihn, ohne eval.
+     index.html (Eintrag „@bruecke" in der Liste der Startskripte) lädt
+     bau/bruecke-*.js aus DMA_MODUL; kommt app.js aus der Quelle (?quelle,
+     Notweg) oder fehlt der Bau, src/bruecke.js als natives Modul. RÜCKWEG
+     (hier, damit index.html schlank bleibt – 885-schlank Q): ist die
+     Brücke nicht gelaufen (bau/ nicht ladbar), lädt app.js die Quelle
+     src/bruecke.js nach; bis sie da ist, merken sich die Weiterleitungen
+     die Rufe. Die Stücke in src/app/ holt der Browser dann ohne Stempel
+     (gewöhnlicher Zwischenspeicher, auf GitHub Pages höchstens 10 min).
      ===================================================================== */
   const dmaModulWarten = [];
   function dmaModul(name, args, ersatz) {
@@ -49,6 +57,12 @@
     applyStressToTree, betonungAnzeigen, grossMitEszett, grundformKandidaten, removeStressFromTree,
     wortschatzBereit, wortschatzHolenFuer, wortschatzNachziehen,
   };
+  if (!window.DMA_BRUECKE) {
+    const s = document.createElement("script");
+    s.type = "module";
+    s.src = "src/bruecke.js" + (window.DMA_V ? window.DMA_V("src/bruecke.js") : "");
+    document.head.appendChild(s);
+  }
 
   /* =====================================================================
      FASSUNG 876 — XANDER (Funk 271): „alles insgesamt nur zehn Mal
