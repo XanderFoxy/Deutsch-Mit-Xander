@@ -8355,7 +8355,9 @@ mit 2.117.3):
 | 874 | 47 ok, ALLES GUT | – |
 | 885-sparsam A B C D E G H L M N R P U X3 V NT | **64 ok, alles grün** (supabase-js 2.119.0) | – |
 | 885-sparsam SWa SWc SWL SWR SWR4 SWT SW402 SWTOR SWS402 SWS0 | **65 ok, alles grün** (2.119.0; SWR/SWR4: der bewusst hingenommene Fall der Rückkehr, siehe Nachtrag 1) | – |
-| 885-sparsam X5 NT0 XT W60 VF FM SB SM SWa4 SWc4 SWT6 | (läuft) | – |
+| 885-sparsam X5 NT0 XT W60 VF FM SB SM SWa4 SWc4 SWT6 | **49 ok, alles grün** (2.119.0; X5 diesmal grün – der bekannte Rand der Notfall-Bremse, Offen 8) | – |
+
+Damit ist 885-sparsam auf dem Endstand **ganz** gelaufen (alle 37 Fälle, 178 ok, kein Rot) – mit supabase-js 2.119.0.
 
 ### Sonden
 Alle auf dem Endstand (dc0c9325, Code wie heute; ausgeführt aus einer Kopie des Stands, `WURZEL` = Kopie), nacheinander
@@ -8388,8 +8390,8 @@ verschränkt gegen 886 nachgeprüft.
   Sitzung. Ohne Ruck (Bitmaps beim Vorladen behalten, 41–51 MB je Auto) erst nach einer Messung auf dem Telefon – 888.
 - **888 – Lager in Stücken:** der Schluss der Leerlauf-Sicherung (put des ganzen Verlaufs) bleibt ein Bild von 70–170 ms alle
   ≥ 20 s (CPU 4×); nur das letzte Stück neu schreiben, mit eigener Sonde (altes Format lesen, kein Verlust mitten im Schreiben).
-- **Vor dem Ausliefern im Hauptbaum** (auf dem Endstand nicht mehr gelaufen, Sperre): 885-sparsam ganz (Code von backend.js
-  und den Abfragen unverändert), 885-rueckkehr, 885-swvorladen, 884-notweg, 884-messung sowie aufgabe-reist, benoten,
+- **Vor dem Ausliefern im Hauptbaum** (auf dem Endstand nicht mehr gelaufen, Sperre): ~~885-sparsam ganz~~ (erledigt in der
+  Auslieferung, Prüfung Runde 1: alle 37 Fälle grün, mit supabase-js 2.119.0), 885-rueckkehr, 885-swvorladen, 884-notweg, 884-messung sowie aufgabe-reist, benoten,
   bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem.
 - **2b – Verlauf erst beim Hochrollen:** statt bis zu 20 000 Zeilen beim Betreten nur die sichtbaren holen, ältere erst beim
   Hochrollen. Spart beim Betreten die Hintergrund-Seiten ganz – ändert aber, wann ältere Zeilen da sind.
