@@ -22,13 +22,19 @@
         Schnappschuss ins Lager; danach steht der volle Verlauf dort.
      T  Nach dem Neuladen haben die localStorage-Zeilen ihre Profilfotos SOFORT (synchron, ohne Lager-Abfrage) –
         die Fototafel liegt einmal daneben und wird bei unveränderten Fotos nicht neu geschrieben.
+   PRÜFUNG RUNDE 1 (Auslieferung 887):
+     Q  Die Fototafel ist gedeckelt: Fotos über 40 K nur im Lager, Tafel ≤ 400 K, danach bleiben ≥ 300 K frei (Q1: 700 K
+        frei, 30 Fotos je 20 K – 886 ließ 318 K, e84652ac 60 K); ein eigenes Profilfoto (140 K) passt danach noch. Q3:
+        bei vollem Speicher scheitert die Tafel ohne Schaden und wird mit denselben Fotos wieder versucht, sobald Platz ist.
+     P  Kommt eine Zeile, während ein Stücklauf läuft, und feuert ihr Plan vor dessen Ende, wird sie trotzdem gesichert
+        (das Ende des Laufs plant neu).
    Gegenprobe: WURZEL=<886-Baum> → A, B(verdeckt), W, F rot. WURZEL=<Baum auf e9187509 (887 vor der Nachbesserung)>
-   → L, S, T rot. */
+   → L, S, T rot. WURZEL=<Baum auf e84652ac> → Q1, Q3, P rot. */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = process.env.WURZEL || require("path").join(__dirname, "..");
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json" };
-const NUR = (process.env.NUR || "ABWFTRDKSL").split("");
+const NUR = (process.env.NUR || "ABWFTRDKSLQP").split("");
 (async () => {
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/index.html";
@@ -399,6 +405,125 @@ const NUR = (process.env.NUR || "ABWFTRDKSL").split("");
       ok(vorher === 3000 && nachher >= vorher, art + ": das Lager bleibt vollständig", vorher + " → " + nachher + " Zeilen (kurze Liste " + r.kurz + ")");
       ok(fehlerB.length === 0, art + ": keine Seitenfehler auf der zweiten Seite", fehlerB.slice(0, 2).join(" | "));
     }
+  }
+
+  if (hat("Q")) {
+    console.log("\n  Q  Fototafel gedeckelt: der localStorage behält Platz (Prüfung Runde 1, Punkte 2 und 3)");
+    const r = await pg.evaluate(async () => {
+      const warte = (ms) => new Promise((f) => setTimeout(f, ms));
+      /* freier Platz im localStorage in Zeichen (wie das Messskript des Prüfers, a887/quota.js) */
+      const frei = () => { let lo = 0, hi = 12e6; while (hi - lo > 64) { const mid = (lo + hi) >> 1; try { localStorage.setItem("__p", "x".repeat(mid)); localStorage.removeItem("__p"); lo = mid; } catch (e) { hi = mid; } } try { localStorage.removeItem("__p"); } catch (e) {} return lo; };
+      const fuellen = (F) => { try { localStorage.removeItem("__fill"); } catch (e) {} const c = frei(); localStorage.setItem("__fill", "f".repeat(Math.max(0, c - F))); return frei(); };
+      const zeilen = (raum, n, fotos) => { const l = [], t0 = Date.now() - 100000; for (let i = 0; i < n; i++) { const a = i % fotos.length;
+        l.push({ id: raum + "-" + i, von: "q" + a, name: "Q" + a, art: "text", text: "Zeile " + i, zeit: t0 + i * 10, bild: fotos[a] }); } return l; };
+      const tafel = (raum) => { try { return JSON.parse(localStorage.getItem("dma_livechat_chatfoto_" + raum) || "null"); } catch (e) { return "kaputt"; } };
+      const o = {};
+      /* Q1: 700 K frei, 30 Profilfotos je 20 K in den 300 Zeilen (886 ließ hier 318 K frei, 887 vor der Nachbesserung 60 K) */
+      {
+        const raum = "probe-q1";
+        o.q1vorher = fuellen(700000);
+        LiveChat.pruefRaum(raum);
+        await LiveChat.pruefVerlaufAusLager(raum);
+        const fotos = []; for (let a = 0; a < 30; a++) fotos.push(window.__foto(500 + a, 20000));
+        const t0 = performance.now();
+        LiveChat.pruefVerlaufSetzen(zeilen(raum, 300, fotos));
+        o.q1ms = Math.round(performance.now() - t0);
+        const t = tafel(raum) || {};
+        const kurz = JSON.parse(localStorage.getItem("dma_livechat_chat_" + raum) || "[]");
+        const juengste = []; for (let i = kurz.length - 1; i >= 0; i--) { const h = kurz[i].bildH; if (h && juengste.indexOf(h) < 0) juengste.push(h); }
+        const keys = Object.keys(t);
+        o.q1 = { frei: frei(), zeichen: JSON.stringify(t).length, fotos: keys.length, groesstes: Math.max(0, ...Object.values(t).map((b) => b.length)),
+                 juengste: keys.length > 0 && keys.every((h) => juengste.indexOf(h) >= 0 && juengste.indexOf(h) < keys.length),
+                 zeilen: kurz.length, probeWeg: localStorage.getItem("dma__frei") === null };
+        try { localStorage.setItem("__profilprobe", "p".repeat(140000)); o.q1profil = "ok"; localStorage.removeItem("__profilprobe"); } catch (e) { o.q1profil = e.name; }
+      }
+      /* Q2: große Fotos (60 K) – nur im Lager, nicht in der Tafel */
+      {
+        const raum = "probe-q2";
+        o.q2vorher = fuellen(2000000);
+        LiveChat.pruefRaum(raum);
+        await LiveChat.pruefVerlaufAusLager(raum);
+        const fotos = []; for (let a = 0; a < 30; a++) fotos.push(window.__foto(600 + a, 60000));
+        LiveChat.pruefVerlaufSetzen(zeilen(raum, 300, fotos));
+        const t = tafel(raum);
+        o.q2 = { frei: frei(), fotos: t && typeof t === "object" ? Object.keys(t).length : 0 };
+        await warte(300);
+        o.q2lager = await window.__lagerRoh("chatbild:" + JSON.parse(localStorage.getItem("dma_livechat_chat_" + raum) || "[{}]").slice(-1)[0].bildH);
+        o.q2lager = typeof o.q2lager === "string" ? o.q2lager.length : 0;
+      }
+      /* Q3: Speicher voll (100 K frei) – die Tafel scheitert ohne Schaden; ist wieder Platz, wird sie beim nächsten
+         Sichern mit DENSELBEN Fotos geschrieben (vorher galt der Stand schon vor dem Schreiben: nie wieder versucht) */
+      {
+        const raum = "probe-q3";
+        o.q3vorher = fuellen(100000);
+        LiveChat.pruefRaum(raum);
+        await LiveChat.pruefVerlaufAusLager(raum);
+        const fotos = [window.__foto(701, 30000), window.__foto(702, 30000), window.__foto(703, 30000)];
+        const l = zeilen(raum, 300, fotos);
+        let fehler = "";
+        try { LiveChat.pruefVerlaufSetzen(l); } catch (e) { fehler = String(e && e.message || e); }
+        const t1 = tafel(raum);
+        const kurz1 = JSON.parse(localStorage.getItem("dma_livechat_chat_" + raum) || "[]").length;
+        o.q3voll = { fehler, fotos: t1 && typeof t1 === "object" ? Object.keys(t1).length : 0, zeilen: kurz1, frei: frei() };
+        localStorage.removeItem("__fill");
+        LiveChat.pruefVerlaufSetzen(l.slice());
+        const t2 = tafel(raum);
+        o.q3danach = { fotos: t2 && typeof t2 === "object" ? Object.keys(t2).length : 0, richtig: t2 && typeof t2 === "object" ? Object.values(t2).every((b) => fotos.indexOf(b) >= 0) : false };
+      }
+      try { localStorage.removeItem("__fill"); } catch (e) {}
+      ["probe-q1", "probe-q2", "probe-q3"].forEach((x) => { try { localStorage.removeItem("dma_livechat_chat_" + x); localStorage.removeItem("dma_livechat_chatfoto_" + x); } catch (e) {} });
+      return o;
+    });
+    ok(r.q1.frei >= 300000, "Q1  700 K frei, 30 Fotos je 20 K: danach ≥ 300 K frei (886: 318 K; vorher 60 K)", Math.round(r.q1.frei / 1000) + " K frei (vorher " + Math.round(r.q1vorher / 1000) + " K), Tafel " + Math.round(r.q1.zeichen / 1000) + " K / " + r.q1.fotos + " Fotos, Sichern " + r.q1ms + " ms");
+    ok(r.q1.zeichen <= 400100 && r.q1.groesstes <= 40000, "Q1  Tafel ≤ 400 K, kein Foto über 40 K darin", Math.round(r.q1.zeichen / 1000) + " K, größtes " + r.q1.groesstes);
+    ok(r.q1.fotos > 0 && r.q1.juengste, "Q1  in der Tafel die Fotos der jüngsten Zeilen", r.q1.fotos + " Fotos");
+    ok(r.q1.zeilen === 300 && r.q1.probeWeg, "Q1  Verlauf (300 Zeilen) unberührt, keine Probe liegen geblieben", r.q1.zeilen + " Zeilen");
+    ok(r.q1profil === "ok", "Q1  danach passt noch ein eigenes Profilfoto (140 K)", r.q1profil);
+    ok(r.q2.fotos === 0 && r.q2.frei >= r.q2vorher - 60000, "Q2  Fotos über 40 K nur im Lager, nicht in der Tafel", r.q2.fotos + " in der Tafel, " + Math.round((r.q2vorher - r.q2.frei) / 1000) + " K belegt");
+    ok(r.q2lager >= 60000, "Q2  … das Foto liegt im Lager", r.q2lager + " Zeichen");
+    ok(!r.q3voll.fehler && r.q3voll.zeilen === 300 && r.q3voll.fotos === 0, "Q3  Speicher voll (100 K frei): Tafel nicht geschrieben, Verlauf da, kein Fehler", "Tafel " + r.q3voll.fotos + ", Zeilen " + r.q3voll.zeilen + ", frei " + Math.round(r.q3voll.frei / 1000) + " K" + (r.q3voll.fehler ? ", Fehler " + r.q3voll.fehler : ""));
+    ok(r.q3danach.fotos === 3 && r.q3danach.richtig, "Q3  wieder Platz: dieselben Fotos kommen beim nächsten Sichern in die Tafel", r.q3danach.fotos + " Fotos");
+  }
+
+  if (hat("P")) {
+    console.log("\n  P  Zeile kommt, während ein Stücklauf läuft, und dessen Plan feuert noch vor dem Ende → sie wird trotzdem gesichert");
+    const r = await pg.evaluate(async () => {
+      const warte = (ms) => new Promise((f) => setTimeout(f, ms));
+      /* erst Ruhe: keine geplante oder laufende Sicherung aus früheren Teilen (Plan bis 20 s) */
+      for (let k = 0; k < 130; k++) { const s = LiveChat.pruefSichernStand(); if (!s.geplant && !s.laeuft) break; await warte(200); }
+      const raum = "probe-p";
+      LiveChat.pruefRaum(raum);
+      await LiveChat.pruefVerlaufAusLager(raum);
+      LiveChat.pruefVerlaufSetzen(window.__zeilen(1200, "PZ", 0, null));   // sofort gesichert
+      const ric = window.requestIdleCallback, gehalten = [];
+      window.requestIdleCallback = (f) => { gehalten.push(f); return 0; };
+      const runde = () => { let n = gehalten.length; while (n-- > 0) { const f = gehalten.shift(); if (f) f({ timeRemaining: () => 0, didTimeout: false }); } };
+      const abstand = LiveChat.pruefSichernAbstand();
+      LiveChat.pruefSichernAbstand(300);
+      await warte(350);
+      LiveChat.pruefAnhaengen({ id: "p-1", von: "p1", name: "Bea", art: "text", text: "p eins", zeit: Date.now() });
+      for (let k = 0; k < 100 && !LiveChat.pruefSichernStand().laeuft; k++) { runde(); if (!LiveChat.pruefSichernStand().laeuft) await warte(20); }
+      const lief = LiveChat.pruefSichernStand().laeuft;
+      /* jetzt, mitten im Lauf: die zweite Zeile; ihr Plan feuert, bevor der Lauf fertig ist */
+      LiveChat.pruefAnhaengen({ id: "p-2", von: "p1", name: "Bea", art: "text", text: "p zwei", zeit: Date.now() });
+      await warte(450);
+      runde();
+      const mitten = LiveChat.pruefSichernStand();
+      /* den Lauf zu Ende gehen lassen (und alles, was danach geplant wird) */
+      for (let k = 0; k < 120; k++) { await warte(25); runde(); }
+      window.requestIdleCallback = ric;
+      const ende = LiveChat.pruefSichernStand();
+      LiveChat.pruefSichernAbstand(abstand);
+      await warte(300);
+      const roh = await window.__lagerRoh("chat:" + raum);
+      const lager = roh ? JSON.parse(roh) : [];
+      return { lief, mitten: { schmutzig: mitten.schmutzig, geplant: mitten.geplant, laeuft: mitten.laeuft }, ende: { schmutzig: ende.schmutzig, geplant: ende.geplant, laeuft: ende.laeuft },
+               lagerN: lager.length, letzte: (lager.slice(-1)[0] || {}).text, speicherLetzte: (LiveChat.pruefVerlaufAusSpeicher(raum).slice(-1)[0] || {}).text };
+    });
+    ok(r.lief && r.mitten.laeuft && r.mitten.schmutzig, "P  nachgestellt: Plan feuerte während des Laufs (schmutzig, Lauf noch nicht fertig)", JSON.stringify(r.mitten));
+    ok(r.letzte === "p zwei" && r.lagerN === 1202, "P  die Zeile aus dem Lauf heraus steht danach im Lager", r.lagerN + " Zeilen, letzte „" + r.letzte + "“");
+    ok(r.speicherLetzte === "p zwei", "P  … und im localStorage", "letzte „" + r.speicherLetzte + "“");
+    ok(!r.ende.schmutzig, "P  am Ende steht nichts mehr aus", JSON.stringify(r.ende));
   }
 
   ok(seitenFehler.length === 0, "keine Seitenfehler", seitenFehler.slice(0, 3).join(" | "));

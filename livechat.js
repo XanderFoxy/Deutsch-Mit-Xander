@@ -3189,7 +3189,7 @@ window.LiveChat = (function () {
           }
           i = bis;
         } while (i < liste.length && Date.now() - t0 < 12 && (!frist || typeof frist.timeRemaining !== "function" || frist.timeRemaining() > 10));
-      } catch (e) { sichernLauf = null; return; }
+      } catch (e) { sichernLauf = null; if (sichernSchmutzig) chatSichernBald(); return; }
       sichernNaechst(i < liste.length ? stuecke : kurzLegen);
     }
     function kurzLegen() {
@@ -3212,8 +3212,13 @@ window.LiveChat = (function () {
         var text = "[" + teile.join(",") + "]";
         sichernZeichen = text.length;
         try { lagerLegen("chat:" + raum, raum, text); } catch (e) {}
-      } else if (lagerGelesen) { sichernSchmutzig = true; chatSichernBald(); }   // unterwegs gelesen: beim nächsten Mal
+      } else if (lagerGelesen) sichernSchmutzig = true;   // unterwegs gelesen: beim nächsten Mal
       sichernZuletzt = Date.now();   // der Abstand von 20 s zählt ab dem Ende
+      /* NACHGEBESSERT (Prüfung Runde 1) — Planungs-Hänger: kam chatSichernBald, während dieser Lauf lief, und feuerte
+         dessen Plan noch vor dem Ende, kehrte chatSichernStueckweise sofort zurück (es läuft ja einer) – „schmutzig“ blieb
+         stehen, ohne Plan. Die letzten Zeilen lagen dann nur im Arbeitsspeicher, bis die nächste Zeile kam oder die Seite
+         ging. Jetzt plant das Ende des Laufs selbst neu, wenn unterwegs etwas dazukam. */
+      if (sichernSchmutzig) chatSichernBald();
     }
     sichernNaechst(stuecke);
   }
@@ -3223,19 +3228,52 @@ window.LiveChat = (function () {
      ohne IndexedDB (privater Modus, manche WebView) ganz. Geschrieben wird die Tafel nur, wenn sich die Menge der Fotos
      ändert. Der Schlüssel beginnt bewusst NICHT mit „dma_livechat_chat_" (archivRaeume liest alle diese als Verlauf). */
   function fotoSchluessel(raum) { return "dma_livechat_chatfoto_" + (raum || "-"); }
-  var fotoTafelStand = Object.create(null);
+  /* NACHGEBESSERT (Prüfung Runde 1) — die Tafel war ohne Grenze: bei großen Fotos oder vollem Speicher blieben im
+     localStorage nur ~60 K frei (886: 0,3–1,6 M), danach scheiterte z. B. das eigene Profilfoto (dma_livechat_bild,
+     bis 140 K) still. Jetzt:
+     – ein Foto über FOTO_TAFEL_JE Zeichen kommt nicht in die Tafel (es liegt im Lager und kommt nach dem Betreten von
+       dort, wie in der ersten 887-Fassung);
+     – die Tafel hat höchstens FOTO_TAFEL_MAX Zeichen; die Fotos der jüngsten Zeilen zuerst;
+     – nach dem Schreiben müssen noch FOTO_TAFEL_FREI Zeichen frei sein (Probe unter „dma__frei“, sofort wieder weg).
+       Sonst – oder wenn das Schreiben scheitert – wird sie schrittweise gekürzt (halbiert, wie 886 den Verlauf kürzte)
+       und zuletzt ganz entfernt. Am Verlauf selbst ändert das nichts.
+     – Der Stand gilt erst NACH dem erfolgreichen Schreiben (vorher wurde er davor gesetzt: ein gescheiterter Versuch wurde
+       nie wiederholt). Ging gar nichts, wird beim nächsten Sichern wieder versucht. */
+  var FOTO_TAFEL_JE = 40000, FOTO_TAFEL_MAX = 400000, FOTO_TAFEL_FREI = 320000;
+  var fotoTafelStand = Object.create(null), fotoFreiText = "";
+  function fotoTafelPlatzBleibt(ls) {
+    if (!fotoFreiText) fotoFreiText = new Array(FOTO_TAFEL_FREI + 1).join("0");
+    try { ls.setItem("dma__frei", fotoFreiText); } catch (e) { return false; }
+    try { ls.removeItem("dma__frei"); } catch (e) {}
+    return true;
+  }
   function chatFotoTafel(raum, hs) {
-    var da = Object.create(null), keys = [];
-    for (var i = 0; i < (hs || []).length; i++) { var h = hs[i]; if (h && !da[h] && chatBildVoll[h]) { da[h] = 1; keys.push(h); } }
-    keys.sort();
-    var stand = keys.join(",");
+    var da = Object.create(null), keys = [], summe = 0;
+    for (var i = (hs || []).length - 1; i >= 0; i--) {   // jüngste Zeilen zuerst
+      var h = hs[i];
+      if (!h || da[h] || !chatBildVoll[h]) continue;
+      da[h] = 1;
+      var laenge = chatBildVoll[h].length + h.length + 6;
+      if (chatBildVoll[h].length > FOTO_TAFEL_JE || summe + laenge > FOTO_TAFEL_MAX) continue;
+      summe += laenge;
+      keys.push(h);
+    }
+    var stand = keys.slice().sort().join(",");
     if (fotoTafelStand[raum] === stand) return;
-    fotoTafelStand[raum] = stand;
+    var ls;
+    try { ls = window.localStorage; if (!ls) return; } catch (e) { return; }
     try {
-      if (!keys.length) { localStorage.removeItem(fotoSchluessel(raum)); return; }
-      var t = {};
-      keys.forEach(function (x) { t[x] = chatBildVoll[x]; });
-      localStorage.setItem(fotoSchluessel(raum), JSON.stringify(t));
+      var n = keys.length;
+      while (n > 0) {
+        var t = {};
+        for (var k = 0; k < n; k++) t[keys[k]] = chatBildVoll[keys[k]];
+        var gut = false;
+        try { ls.setItem(fotoSchluessel(raum), JSON.stringify(t)); gut = fotoTafelPlatzBleibt(ls); } catch (e) { gut = false; }
+        if (gut) break;
+        n = Math.floor(n / 2);
+      }
+      if (!n) ls.removeItem(fotoSchluessel(raum));
+      if (n || !keys.length) fotoTafelStand[raum] = stand;   // erst nach dem Schreiben; ging nichts: beim nächsten Mal wieder
     } catch (e) {}
   }
   function chatFotoTafelLesen(raum) {
