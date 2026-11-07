@@ -681,7 +681,8 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     (Brückenwächter)**, 885-schlank Q/A–G, 876-start-schlank, 885-swvorladen (alle Prüfungen; neu liegt in Prüfung 12
     zusätzlich bau/bruecke im Speicher des Helfers – beim Start geholt, wie gewollt), 885-stuecke, tutor (Ausgabe bis
     auf Zeitstempel gleich), tutorreiter, tutorstimme34, tutorbild62, tutor-stuecke, runde24, runde29, runde30,
-    betonung-uebung, betonung-regeln, 766/771/772/773/783/882-aussprache. Rot auf beiden Ständen gleich (nicht durch
+    betonung-uebung, betonung-regeln, 766/771/772/773/882-aussprache; 783-aussprache grün (der Vergleichslauf auf
+    d9637a22 fiel in die Zeit von vorrang-887 und steht aus). Rot auf beiden Ständen gleich (nicht durch
     M4): runde60 (3× Tondauer 0,00 s) und tutorfilm34 (Alphaspur) – ffmpeg fehlt auf dem Rechner. 887-bau B auf der
     Vergleichskopie: nur B4/B11 rot („kein git“, Kopie ohne .git).
   - **Ergebnis: am Start und beim Öffnen des Tutors weder schneller noch langsamer** – jeder Unterschied liegt in der
@@ -695,5 +696,8 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     11) ausgeliefert wird, entscheidet der Dirigent. Sichtbar ändert sich nichts.
   - **Offen:** der erste Tipp auf einen Textkasten holt weiter rest-Stücke synchron (applyStressToTree, ruleMarkWord und
     der Wortschatz liegen noch in app.js bzw. in min/app-teil-rest*) – das gehört zu Schritt 11, nicht zu M4. Brücke
-    abbauen erst in Schritt 12. Die Vergleichskopie `/tmp/claude-0/t-m4/basis` (1,7 GB) wird nach der letzten Messung
-    gelöscht.
+    abbauen erst in Schritt 12. **Vor einer Auslieferung nachzuholen** (vorrang-887 hielt den Rechner von 19:35 bis
+    mindestens 23:35): 4G-A/A dieses Stands (`node werkzeug/ladezeit-messen.js 4g <baum> --aa --arten kalt,wieder
+    --laeufe 5 --ohne-spur`), eine zweite Reihe gegen d9637a22 und der Vergleichslauf 783 auf d9637a22. Die
+    Vergleichskopie `/tmp/claude-0/t-m4/basis` (1,7 GB) ist gelöscht (Platte); für die Nachläufe neu mit `git archive
+    d9637a22` bauen.
