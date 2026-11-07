@@ -59,10 +59,13 @@ const ExerciseData = (function () {
      Übungsteile die Leitung füllten (auf dem alten Stand 0,27 s). Jetzt wartet ladeUebungen(ids) auf ihn, die Seite
      bleibt bedienbar; das synchrone Holen bleibt nur der Rückweg. */
   let dmaUebHol = null;
-  function dmaUebTextHolen() {
+  /* eilig: beim Tipp auf „Lernen" (vor dem Wortschatz, der gleich danach die Leitung füllt) mit hoher Priorität */
+  function dmaUebTextHolen(eilig) {
     if (dmaUebDa || !DMA_UEB_BAU || typeof dmaUebText === "string") return Promise.resolve(true);
     if (!dmaUebHol) {
-      dmaUebHol = fetch(dmaUebAdresse()).then((a) => (a.ok ? a.text() : null)).then((t) => {
+      let opt;
+      try { opt = eilig ? { priority: "high" } : undefined; } catch (e) { opt = undefined; }
+      dmaUebHol = fetch(dmaUebAdresse(), opt).then((a) => (a.ok ? a.text() : null)).then((t) => {
         if (t && !dmaUebDa && typeof dmaUebText !== "string") dmaUebText = t;
         if (!t) dmaUebHol = null;
         return Boolean(t);
@@ -6532,5 +6535,7 @@ const ExerciseData = (function () {
     return monatGeladen(String(new Date().getMonth() + 1).padStart(2, "0"));
   }
 
-  return { ladeUebungen, uebungenVorladen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
+  /* M3b: der Teil von data-exercises.js (getBank jeder Kategorie liest ihn) – beim Tipp auf „Lernen" gleich holen */
+  function uebungenBasisHolen() { if (uebTeileWeg()) dmaUebTextHolen(true); }
+  return { ladeUebungen, uebungenVorladen, uebungenBasisHolen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
 })();

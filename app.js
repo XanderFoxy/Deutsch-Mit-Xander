@@ -825,7 +825,12 @@
     if (t.dataset.target === "view-learn" && ExerciseData.ladeUebungen && !ExerciseData.uebungenDa([...selectedCategories])) {
       ExerciseData.ladeUebungen([...selectedCategories]).then(() => { dailyTaskPoolCache = null; renderSetup(); });
     }
-    if (t.dataset.target === "view-learn") uebungenVorladenSpaeter();
+    if (t.dataset.target === "view-learn") {
+      /* M3b: den Teil von data-exercises.js sofort (88 KB gepackt; der Tipp auf eine Karte braucht ihn), bevor der
+         Wortschatz in der Ruhepause die Leitung füllt (gemessen: sonst bis 2,4 s bis „startklar") */
+      try { if (ExerciseData.uebungenBasisHolen) ExerciseData.uebungenBasisHolen(); } catch (e) {}
+      uebungenVorladenSpaeter();
+    }
     /* FASSUNG 840 — XANDER (Funk 271): „unter Wissen und Klassenzimmer dann ins Klassenzimmer gehen wie immer auch
        nur zehnmal schneller". Gemessen (werkzeug/ladezeit-messen.js): der Tipp auf „Wissen" holte sofort den
        Kalendermonat (kalender/10.js, 229 KB) – genau in dem Moment, in dem man weiter ins Klassenzimmer tippt und
