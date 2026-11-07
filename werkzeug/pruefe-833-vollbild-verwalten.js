@@ -26,7 +26,7 @@
    Öffnungszeit liegt Geld in der Kasse, Einsammeln bringt es in die
    Stadtkasse; das Menü liegt ganz im Bild, deckt die Kopfzeile nicht zu,
    kein Knopf unter 30 px, nichts ragt seitlich hinaus.
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/fassung-setzen.js --nur-stempel
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/fassung-setzen.js --nur-stempel
            node werkzeug/pruefe-833-vollbild-verwalten.js   (BILD=/pfad/f833 für Bilder, NUR=A|B,
            WURZEL=<anderer Stand> für die Gegenprobe)
    ===================================================================== */

@@ -26,7 +26,7 @@
    < 150 ms nach dem Finger), die Wald-Station geht nicht auf; Baum →
    spiel_trupp (wald) bzw. spiel_trupp_helfen; See → spiel_angeln;
    Acker → spiel_ernten 91; die Äcker haben ihr Zeichen.
-   Aufruf: node werkzeug/leicht-packen.js
+   Aufruf: node werkzeug/modul-bauen.js   (baut stadt-leicht.html, früher leicht-packen.js)
            node werkzeug/pruefe-828-einsammeln.js   (BILD=/pfad/f828 für Bilder, NUR=A|B)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");

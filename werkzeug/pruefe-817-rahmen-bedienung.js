@@ -31,7 +31,7 @@
    eine kleine Auswahl; die Ecken-Kacheln zeigen genau die Ecken;
    Doppeltipp rein und raus (ohne dass der erste Tipp etwas auslöst);
    Tippflächen ≥ 30 px, nichts überlappt, keine neuen Emoji-Grafiken.
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/fassung-setzen.js --nur-stempel
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/fassung-setzen.js --nur-stempel
            node werkzeug/pruefe-817-rahmen-bedienung.js   (BILD=/pfad/f817 für Bilder)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");

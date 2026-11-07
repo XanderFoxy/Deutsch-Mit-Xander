@@ -36,7 +36,7 @@
    versteckte Rahmen ruht.
    Teil C: Bildschirmfotos Tag und Nacht, 360 × 780 und 390 × 844 (BILD=…).
 
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/pruefe-844-stadt-walkie313.js
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/pruefe-844-stadt-walkie313.js
            (BILD=/pfad für Bildschirmfotos, WURZEL=/pfad für die Gegenprobe, NUR=A|B|C)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");

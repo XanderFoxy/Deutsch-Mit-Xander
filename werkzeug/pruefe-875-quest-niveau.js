@@ -40,7 +40,7 @@
                   „Labo“, „Neu Schwan Stein“), Endungen und Umlaute nie –
                   ein „Fast“ bleibt ein „Fast“; ganzer Ablauf mit Mikrofon
    Mit dem Stand 874 ist das rot (kein Niveau, keine neuen Missionen).
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/pruefe-875-quest-niveau.js
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/pruefe-875-quest-niveau.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");

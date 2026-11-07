@@ -23,7 +23,7 @@
    – „Touristen: an/aus“ legt fest, ob sie (mit jedem Zug) kommen;
    – ✕ schließt klar; Tippflächen ≥ 30 px, nichts überlappt, nichts ragt
      über den Rand, keine Emoji-Grafiken im Fenster.
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/fassung-setzen.js --nur-stempel
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/fassung-setzen.js --nur-stempel
            node werkzeug/pruefe-823-bahnhof-fenster.js   (BILD=/pfad/f823 für Bilder)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");

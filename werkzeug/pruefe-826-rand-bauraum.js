@@ -43,7 +43,7 @@
        Weg), zurück; Baum fällen bleibt gemerkt; kleinster Maßstab ≤ 1,7;
      • keine Seitenfehler.
    Mit dem alten Stand (Fassung 811) ist fast alles rot.
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/pruefe-826-rand-bauraum.js
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/pruefe-826-rand-bauraum.js
            (BILD=/pfad/826 → Fotos, WURZEL=/anderer/stand für die Gegenprobe)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");

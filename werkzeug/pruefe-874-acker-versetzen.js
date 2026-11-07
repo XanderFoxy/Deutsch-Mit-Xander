@@ -44,7 +44,7 @@
           Platz erntet, das Zeichen steht dort; nach Neuladen noch dort
    Gegenprobe: ALT=/pfad mit leicht.min.js, leicht.css, korn.min.js des
    alten Stands – dann ist das rot (kein Menü am Acker, kein Versetzen).
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/pruefe-874-acker-versetzen.js
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/pruefe-874-acker-versetzen.js
            (BILD=/pfad für Bildschirmfotos, NUR=A|B, QUELLE=1 Einzeldateien)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
