@@ -350,7 +350,7 @@ eine Messung gegen 886.
 - **Ergebnis 01.11. (Logbuch Modul): JSON ist im Browser LANGSAMER als das Skript** (Chromium, CPU 4×; eine Kategorie
   kalt +15 ms, wieder +27 ms; ganze Datei +647/+787 ms; mit Service Worker dasselbe). Das Skript wird beim Laden
   nebenher übersetzt und ab dem dritten Laden aus dem Code-Speicher genommen, JSON nicht. **M3 als JSON entfällt.**
-- **Vorschlag M3b (braucht das Ja des Dirigenten, nicht gebaut): nach Kategorie teilen, aber als SKRIPT.** Der Hebel
+- **M3b (vom Dirigenten freigegeben, gebaut im Zweig `module-umbau` ab 19b63a53, Logbuch Abschnitt 7): nach Kategorie teilen, aber als SKRIPT.** Der Hebel
   ist nicht das Format, sondern die Menge: „Lernen“ wartet heute auf die ganze Sammlung (6,0 MB, 1,2 MB gepackt:
   4G ~1,1 s, 3G ~6 s Leitung, dazu 262 ms Ausführen bei CPU 4× mit einem Langläufer von 75 ms). Die Übersicht
   braucht ohne gewählte Kategorie gar keine Aufgaben (nur `maxAvailable` der GEWÄHLTEN Kategorien liest die Sammlung);

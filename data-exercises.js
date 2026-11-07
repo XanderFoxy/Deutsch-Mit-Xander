@@ -53,17 +53,38 @@ const ExerciseData = (function () {
     }
     dmaUebEinsetzen(x.responseText);
   }
+  /* MODUL-UMBAU M3b: den Teil ASYNCHRON holen (ein gemeinsamer Abruf für das Vorladen unten und für
+     ladeUebungen(ids)). Gemessen (ladezeit-messen.js --fall uebung, 4G, CPU 4×): kam der Tipp auf eine Karte, bevor
+     das Vorladen ihn geholt hatte, holte getBank() ihn SYNCHRON – 1,7 s gesperrter Hauptfaden, während Wortschatz und
+     Übungsteile die Leitung füllten (auf dem alten Stand 0,27 s). Jetzt wartet ladeUebungen(ids) auf ihn, die Seite
+     bleibt bedienbar; das synchrone Holen bleibt nur der Rückweg. */
+  let dmaUebHol = null;
+  function dmaUebTextHolen() {
+    if (dmaUebDa || !DMA_UEB_BAU || typeof dmaUebText === "string") return Promise.resolve(true);
+    if (!dmaUebHol) {
+      dmaUebHol = fetch(dmaUebAdresse()).then((a) => (a.ok ? a.text() : null)).then((t) => {
+        if (t && !dmaUebDa && typeof dmaUebText !== "string") dmaUebText = t;
+        if (!t) dmaUebHol = null;
+        return Boolean(t);
+      }, () => { dmaUebHol = null; return false; });
+    }
+    return dmaUebHol;
+  }
+  function uebBasisDa() { return dmaUebDa || !DMA_UEB_BAU; }
+  /* holen und einsetzen; scheitert das Holen, nimmt dmaUebTeil() den alten (synchronen) Weg */
+  function uebBasisHolen() {
+    return dmaUebTextHolen().then(() => { try { dmaUebTeil(); } catch (e) { /* getBank meldet es selbst */ } return true; });
+  }
   /* Vorladen: nach dem Start in einer Ruhepause holen und einsetzen (wie die Teile von app.js). */
   if (DMA_UEB_BAU) {
     try {
       window.addEventListener("load", () => {
         const ruhig = (f, ms) => (window.requestIdleCallback ? requestIdleCallback(f, { timeout: ms }) : setTimeout(f, 200));
         ruhig(() => {
-          fetch(dmaUebAdresse()).then((a) => (a.ok ? a.text() : null)).then((t) => {
-            if (!t || dmaUebDa) return;
-            dmaUebText = t;
+          dmaUebTextHolen().then((ok) => {
+            if (!ok || dmaUebDa) return;
             /* eingesetzt erst 3,5 s nach dem Laden: die ersten Tipps sollen keine Rechenarbeit vorfinden */
-            setTimeout(() => ruhig(() => { try { dmaUebEinsetzen(dmaUebText); } catch (e) { try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push("uebung: " + e.message); } catch (x) {} } }, 3000), 3500);
+            setTimeout(() => ruhig(() => { try { if (typeof dmaUebText === "string") dmaUebEinsetzen(dmaUebText); } catch (e) { try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push("uebung: " + e.message); } catch (x) {} } }, 3000), 3500);
           }).catch(() => {});
         }, 2000);
       });
@@ -6394,12 +6415,13 @@ const ExerciseData = (function () {
   function ladeUebungenDatei() { return ladeDatenteil("data-uebungen.js", "ZUSATZ_FRAGEN"); }
   /* ids (Feld von Kategorien): nur diese; ohne ids: die ganze Sammlung (Kalenderrücken, Wörterbuch …) */
   function ladeUebungen(ids) {
-    if (uebungenDa()) return Promise.resolve(true);
+    if (uebungenDa()) return uebTeileWeg() && Array.isArray(ids) && ids.length && !uebBasisDa() ? uebBasisHolen() : Promise.resolve(true);
     if (!uebTeileWeg()) return ladeUebungenDatei();
     return uebKarte().then((K) => {
       if (!K) return ladeUebungenDatei();
       const liste = Array.isArray(ids) ? ids.map(String) : Object.keys(K);
-      return Promise.all(liste.map((k) => uebTeil(K, k))).then((r) => {
+      /* getBank() liest auch die Datenblöcke aus min/data-exercises-teil.js: mit holen, nicht synchron beim Zeichnen */
+      return Promise.all([Promise.all(liste.map((k) => uebTeil(K, k))), liste.length ? uebBasisHolen() : true]).then(([r]) => {
         if (!r.every(Boolean)) return ladeUebungenDatei();
         uebZusammen();
         return true;
@@ -6420,6 +6442,7 @@ const ExerciseData = (function () {
     const pause = (f) => { if (window.requestIdleCallback) requestIdleCallback(f, { timeout: 1500 }); else setTimeout(f, 60); };
     uebKarte().then((K) => {
       if (!K) { ende(); return; }
+      dmaUebTextHolen();   /* den Teil von data-exercises.js gleich mit (nur holen; eingesetzt wird beim ersten Bedarf) */
       const reihe = [], gesehen = new Set();
       (zuerst || []).concat(Object.keys(K)).forEach((k) => { if (K[k] && !gesehen.has(k)) { gesehen.add(k); reihe.push(k); } });
       let i = 0, laufen = 0;
@@ -6491,11 +6514,13 @@ const ExerciseData = (function () {
   }
   /* ohne ids: die ganze Sammlung; mit ids (M3b): diese Kategorien */
   function uebungenDa(ids) {
-    const D = window.DMA_DATEN;
-    if (D && D.ZUSATZ_FRAGEN) return true;
-    if (!Array.isArray(ids) || !uebTeileWeg()) return false;
+    const D = window.DMA_DATEN, teile = uebTeileWeg();
+    /* mit Teilen und Auswahl gehört der Teil von data-exercises.js dazu (getBank liest ihn) */
+    if (D && D.ZUSATZ_FRAGEN) return !teile || !Array.isArray(ids) || !ids.length || uebBasisDa();
+    if (!Array.isArray(ids) || !teile) return false;
+    if (!ids.length) return true;
     const K = D && D.ZUSATZ_KARTE;
-    if (!K) return ids.length === 0;
+    if (!K || !uebBasisDa()) return false;
     return ids.every((k) => !K[k] || uebTeilDa(k));
   }
   /* „Kalender da“ heißt jetzt: das Verzeichnis UND der laufende Monat

@@ -45,7 +45,9 @@
        B4 eine Kategorie lädt einzeln: ladeUebungen(["wortstellung"]) holt
           Verzeichnis + genau diesen Teil; uebungenDa([…]) ja, uebungenDa()
           nein; getBank so lang wie mit der ganzen Sammlung
-       B5 Ablauf: Lernen → Karte (Häkchen sofort) → Runde starten → Frage
+       B5 Ablauf gleich nach „bereit": Lernen → Karte (Häkchen sofort) → Runde
+          starten → Frage, ohne synchrones Holen (min/data-exercises-teil.js
+          kommt mit ladeUebungen)
        B6 Rückfall: Teil fehlt (404) → ganze Datei; Verzeichnis fehlt → ganze
           Datei; Daten danach = Quelle
        B7 ?quelle und Notweg (dma-ganz): die ganze Quelle wie bisher, keine
@@ -280,7 +282,8 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       pg.on("pageerror", (e) => pe.push(String(e.message || e).slice(0, 160)));
       const ab = log.length;
       await pg.goto(BASIS + "/index.html" + (o.query || ""), { waitUntil: "load", timeout: 60000 });
-      await pg.waitForFunction(() => typeof ExerciseData !== "undefined" && document.querySelector('.tape-tab[data-target="view-learn"]'), null, { timeout: 30000 });
+      await pg.waitForFunction(() => typeof ExerciseData !== "undefined" && window.LiveChat && window.DMA_TAFEL_STAND && document.readyState !== "loading"
+        && document.querySelector('.tape-tab[data-target="view-learn"]'), null, { timeout: 30000 });
       await pg.waitForTimeout(o.ruhe || 2500);
       return { ctx, pg, pe, ab, seit: (n) => log.slice(n == null ? ab : n) };
     };
@@ -361,7 +364,8 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
     }
     /* B5 */
     if (soll("B5")) {
-      const s = await seite({ verzug: 200 });
+      /* gleich nach „bereit" (wie das Messwerkzeug): der Teil von data-exercises.js ist dann noch nicht vorgeladen */
+      const s = await seite({ verzug: 200, ruhe: 50 });
       const ok = await lernen(s.pg);
       const h = await s.pg.evaluate(() => {
         const c = document.querySelector('.category-card[data-cat="wortstellung"]');
@@ -377,6 +381,8 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       const frage = await s.pg.waitForFunction(() => { const p = document.getElementById("exercisePlay"); return p && p.style.display !== "none" && p.offsetParent !== null && p.textContent.trim().length > 20; }, null, { timeout: 30000 }).then(() => true, () => false);
       const st = await s.pg.evaluate(() => { const q = typeof Quiz !== "undefined" && Quiz.getState(); return q ? { n: q.questions.length, kat: [...new Set(q.questions.map((x) => x.categoryId || x.catId || ""))].join(",") } : null; });
       sage(frage && st && st.n >= 5, "B5 Runde startet mit der gewählten Kategorie", (frage ? "Frage da" : "keine Frage zu sehen") + ", " + (st ? st.n + " Fragen" : "kein Quiz-Zustand"));
+      const sofort = await s.pg.evaluate(() => (window.DMA_TEIL_SOFORT || []).filter((x) => /^uebung/.test(String(x))));
+      sage(!sofort.length, "B5 nichts synchron geholt (der Teil von data-exercises.js kommt mit ladeUebungen, nicht per XHR beim Zeichnen)", sofort.join(" | ").slice(0, 120));
       sage(!s.pe.length, "B5 keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
       await s.ctx.close();
     }
