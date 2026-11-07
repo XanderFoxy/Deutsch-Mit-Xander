@@ -7970,3 +7970,20 @@ Vorab-Laden. **Für eine Rücknahme auf ≤ 885:** in die sw.js der Rücknahme i
 sw.js behalten).
 
 **Sonden** (min/; Gegenprobe 52769d88 als Baum aus `git archive` + Verweisen auf die übrigen Ordner, verschränkt):
+- **885-sparsam neu SWR/SWR4:** grün (je 1 Echtzeit-Leitung, auf der gehenden Seite keine, am Ende 887 mit Profil, wieder im
+  Raum). **Gegenprobe 52769d88: genau diese 4 rot** (je 2 Leitungen, eine davon auf der gehenden Seite: `["886","887"]`).
+- **885-sparsam ganz** (37 Fälle): alles grün, 174 Prüfungen (886: 162, dazu 12 aus SWR/SWR4). Der Lauf überschnitt sich
+  mit dem Zwischen-Commit d6b45f86 (nur Kommentar in app.js, min/ mit neuer Bau-Kennung); die Fälle mit Helfer (SW…) liefen
+  deshalb auf dem Endstand noch einmal: 13 Fälle, 77 Prüfungen, alles grün.
+- **885-praesenz:** 70 grün; Gegenprobe 52769d88 genau die neue Prüfung Q „raumVorbereiten ohne ‚tipp‘ wartet auf das Start-Tor“
+  rot (ein erster Gegenlauf ohne `werkzeug/app-teile.json` im Gegenbaum hatte dazu Q „app-teile.json ‚kern‘“ rot – nur der Aufbau
+  des Gegenbaums).
+- **884-leitung:** 40 grün, 52769d88 ebenso. **885-schale:** 72 grün. **runde99-rueckfrage:** 30 grün (erster Lauf 1 rot,
+  „⏹ beendet es, und darunter steht, was jetzt zu tun ist“: Hinweis nach 400 ms noch leer – Zeitfenster unter Last; 52769d88 im
+  Lauf dazwischen grün, Wiederholung grün; `erkannt()` wird in dieser Sonde nicht gerufen). **walkie207-flug:** 16 grün.
+- **885-rueckkehr:** 294 ok, 6 rot; Gegenprobe 52769d88 im selben Zeitraum 295 ok, 5 rot – dieselben Prüfungen (R CPU 4×
+  „betreten nach höchstens 2 050 / 2 600 ms“, O „ohne Helfer, Öffnen … sofort hinein wie 884“, B1 CPU 1×/4× „höchstens 150 ms
+  nach 884“): Zeitgrenzen unter Last und O ohne Helfer, wo die Änderung nichts tut (kein Tor; diese Sonde lädt auch kein
+  supabase-js, `dmaPraesenzLos` kehrt dort sofort zurück). Nicht von 887.
+
+**Offen:** die Abwägung unter Punkt 1 (Xander bzw. Prüfer) – sonst nichts aus der 886-Gesamtprüfung.
