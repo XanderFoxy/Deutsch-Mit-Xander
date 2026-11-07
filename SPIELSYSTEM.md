@@ -7917,11 +7917,11 @@ Die drei offenen Punkte aus „Fassung 886 — Auslieferung“ („Offen aus der
 
 **1. (wichtig) Rückkehr in den Raum: der frühe Präsenzkanal bleibt sofort (wie 886) – Warten auf das Start-Tor gebaut, gemessen,
 zurückgenommen. ENTSCHIEDEN (Koordinator, 07.11.2026).**
-*Was war:* `raumVorbereiten()` ohne `tipp` (Rückkehr nach dem Neuladen; `raumDrin` ohne vorherigen Klick) rief `dmaPraesenzLos(true)`
-gleich nach dem ersten Bild – auch auf einer Seite aus dem Speicher des Helfers (`data-dma-speicher`), bevor das Start-Tor
-(`window.dmaStartTor`, I50) entschieden hatte. Lag draußen ein Update, öffnete die ALTE Seite noch die Echtzeit-Leitung (Präsenzkanal
-`dma-klassenzimmer-da`, nur zuhören, kein `track` – die anderen sahen nichts), bevor Helfer bzw. Wächter sie neu luden: zwei Leitungen
-statt einer. Die 4 s nach dem Start warten seit 886 schon auf das Tor, dieser Weg nicht.
+*Befund der Gesamtprüfung (gilt mit 887 wieder, bewusst):* `raumVorbereiten()` ohne `tipp` (Rückkehr nach dem Neuladen; `raumDrin`
+ohne vorherigen Klick) ruft `dmaPraesenzLos(true)` gleich nach dem ersten Bild – auch auf einer
+Seite aus dem Speicher des Helfers (`data-dma-speicher`), bevor das Start-Tor (`window.dmaStartTor`, I50) entschieden hat. Liegt draußen
+ein Update, öffnet die ALTE Seite noch die Echtzeit-Leitung (Präsenzkanal `dma-klassenzimmer-da`, nur zuhören, kein `track` – die
+anderen sehen nichts), bevor Helfer bzw. Wächter sie neu laden: kurz zwei Leitungen statt einer. Die 4 s nach dem Start warten seit 886 schon auf das Tor, dieser Weg nicht.
 *Erprobt (Zwischenstand ff0c6a3b, nicht ausgeliefert):* ohne `tipp` und bei geschlossenem Tor `tor.then(() => dmaPraesenzLos(true))`;
 ohne Tor (Seite aus dem Netz) oder mit offenem Tor sofort; der Tipp auf „Klassenzimmer“ (S3) wartete nicht. Damit gab es mit Update
 nur noch eine Leitung (885-sparsam SWR/SWR4 damals „höchstens eine“: grün, 52769d88 je 2).
@@ -7975,21 +7975,22 @@ Vorab-Laden. **Für eine Rücknahme auf ≤ 885:** in die sw.js der Rücknahme i
 `var np = self.registration.navigationPreload; if (np && np.disable) np.disable().catch(function () {});` einfügen (oder die heutige
 sw.js behalten).
 
-**Sonden** (min/; Gegenprobe 52769d88 als Baum aus `git archive` + Verweisen auf die übrigen Ordner, verschränkt):
-- **885-sparsam neu SWR/SWR4:** grün (je 1 Echtzeit-Leitung, auf der gehenden Seite keine, am Ende 887 mit Profil, wieder im
-  Raum). **Gegenprobe 52769d88: genau diese 4 rot** (je 2 Leitungen, eine davon auf der gehenden Seite: `["886","887"]`).
-- **885-sparsam ganz** (37 Fälle): alles grün, 174 Prüfungen (886: 162, dazu 12 aus SWR/SWR4). Der Lauf überschnitt sich
-  mit dem Zwischen-Commit d6b45f86 (nur Kommentar in app.js, min/ mit neuer Bau-Kennung); die Fälle mit Helfer (SW…) liefen
-  deshalb auf dem Endstand noch einmal: 13 Fälle, 77 Prüfungen, alles grün.
-- **885-praesenz:** 70 grün; Gegenprobe 52769d88 genau die neue Prüfung Q „raumVorbereiten ohne ‚tipp‘ wartet auf das Start-Tor“
-  rot (ein erster Gegenlauf ohne `werkzeug/app-teile.json` im Gegenbaum hatte dazu Q „app-teile.json ‚kern‘“ rot – nur der Aufbau
-  des Gegenbaums).
-- **884-leitung:** 40 grün, 52769d88 ebenso. **885-schale:** 72 grün. **runde99-rueckfrage:** 30 grün (erster Lauf 1 rot,
-  „⏹ beendet es, und darunter steht, was jetzt zu tun ist“: Hinweis nach 400 ms noch leer – Zeitfenster unter Last; 52769d88 im
-  Lauf dazwischen grün, Wiederholung grün; `erkannt()` wird in dieser Sonde nicht gerufen). **walkie207-flug:** 16 grün.
-- **885-rueckkehr:** 294 ok, 6 rot; Gegenprobe 52769d88 im selben Zeitraum 295 ok, 5 rot – dieselben Prüfungen (R CPU 4×
-  „betreten nach höchstens 2 050 / 2 600 ms“, O „ohne Helfer, Öffnen … sofort hinein wie 884“, B1 CPU 1×/4× „höchstens 150 ms
-  nach 884“): Zeitgrenzen unter Last und O ohne Helfer, wo die Änderung nichts tut (kein Tor; diese Sonde lädt auch kein
-  supabase-js, `dmaPraesenzLos` kehrt dort sofort zurück). Nicht von 887.
+**Sonden auf dem Endstand** (b2702e3c – Präsenz bei der Rückkehr wieder sofort; min/app.js bis auf die Bau-Kennung gleich 52769d88):
+- **885-sparsam, Fälle mit Helfer** (SWa, SWc, SWL, SWa4, SWc4, SWR, SWR4, SWT, SWT6, SW402, SWTOR, SWS402, SWS0): 81 grün. SWR/SWR4
+  in der neuen Form: je 2 Leitungen, je Seite `["886","887"]`, `track` nur auf 887, am Ende 1 von 2 offen, 887 mit Profil, im Raum.
+- **885-praesenz:** 70 grün, darunter Q neu „raumVorbereiten wartet nicht auf das Start-Tor“ (auf ff0c6a3b rot, nachgerechnet am
+  gebauten min/app.js). **885-schale:** 72 grün.
+- Seit dem Stand mit Tor unverändert geblieben ist nur rueckfrage.js – diese Läufe von dort gelten weiter: **885-sparsam ganz**
+  (37 Fälle) 174 grün; **884-leitung** 40 grün, 52769d88 ebenso; **runde99-rueckfrage** 30 grün (erster Lauf 1 rot, „⏹ beendet es,
+  und darunter steht, was jetzt zu tun ist“: Hinweis nach 400 ms noch leer – Zeitfenster unter Last; 52769d88 im Lauf dazwischen
+  grün, Wiederholung grün; `erkannt()` wird in dieser Sonde nicht gerufen); **walkie207-flug** 16 grün; **885-rueckkehr** 294 ok,
+  6 rot, 52769d88 im selben Zeitraum 295 ok, 5 rot – dieselben Prüfungen (R CPU 4× „betreten nach höchstens 2 050 / 2 600 ms“,
+  O „ohne Helfer, Öffnen … sofort hinein wie 884“, B1 CPU 1×/4× „höchstens 150 ms nach 884“): Zeitgrenzen unter Last und O ohne
+  Helfer; diese Sonde sperrt fremde Hosts, supabase-js lädt nicht, `dmaPraesenzLos` kehrt sofort zurück. Nicht von 887.
 
-**Offen:** die Abwägung unter Punkt 1 (Xander bzw. Prüfer) – sonst nichts aus der 886-Gesamtprüfung.
+**Zwischenstand mit Tor (ff0c6a3b … d6b45f86), Gegenprobe 52769d88** (Baum aus `git archive` + Verweisen auf die übrigen Ordner,
+verschränkt): SWR/SWR4 in der damaligen Form „höchstens eine Leitung, keine auf der gehenden Seite“ grün, auf 52769d88 genau diese
+4 rot (je 2 Leitungen, `["886","887"]`); 885-praesenz Q damals „wartet auf das Start-Tor“ grün, auf 52769d88 rot.
+
+**Offen:** nichts aus der 886-Gesamtprüfung. Bewusst so gelassen: die kurze, nur zuhörende zweite Leitung der gehenden Seite bei der
+Rückkehr direkt nach einem Update (Punkt 1).
