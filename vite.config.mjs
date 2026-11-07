@@ -58,6 +58,9 @@ const eingaenge = Object.fromEntries(
    WAS ANDERS IST (unsichtbar): das Bündel ist ein Modul (alle Dateien stehen ohnehin in "use strict"-Hüllen) und wird
    schon im Kopf der Seite angefordert (<link rel="modulepreload">) statt erst, wenn der Lader am Ende läuft – bei der
    leichten Stadt erst nach supabase-js. Ausgeführt wird es wie bisher am Ende der Seite, nach allen anderen Skripten.
+   Das Stilblatt verkleinert Vite jetzt mit (leicht.css 36,9 → 26,3 KB). Ziel es2020 lässt ?. und ?? stehen (der Packer
+   schrieb sie für es2019 um); Rollup wirft toten Code weg (Baukasten-Stadt −47 KB). Nachweis: Bildschirmfotos bei
+   angehaltener Uhr Bildpunkt für Bildpunkt gleich (MODULE-PLAN.md, Logbuch M5).
    ===================================================================== */
 export const SEITEN = {
   /* stadt.html — die Baukasten-Stadt (vorher werkzeug/stadt-packen.js) */
