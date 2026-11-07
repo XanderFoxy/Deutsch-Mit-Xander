@@ -168,8 +168,9 @@
      WURZEL=/pfad      anderer Baum (Gegenprobe 884: git archive 02613a71)
      QUELLE=1          index.html?quelle statt min/
      FAELLE=A,C        nur diese Fälle
-     SUPABASE_UMD=…    supabase-js (dist/umd/supabase.js); sonst die Kopie
-                       im Scratchpad dieser Sitzung (2.117.3)
+     SUPABASE_UMD=…    supabase-js (dist/umd/supabase.js); sonst die Kopie der
+                       Fassung, die index.html lädt (/tmp/dma-mess-supabase-js-<fassung>.umd.js),
+                       sonst die im Scratchpad dieser Sitzung (2.117.3)
      AUSGABE=…json     Zahlen als JSON schreiben
      (Fall SW…: die Seite (index.html) ersetzt beim Ausliefern DMA_VERSION durch 887, fassung.json meldet 887)
    Chromium bei langen Pfaden: TMPDIR=/tmp/claude-0/t885 setzen.
@@ -185,11 +186,15 @@ const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
 const QUELLE = Boolean(process.env.QUELLE);
 const FAELLE = (process.env.FAELLE || "A,B,C,D,E,G,H,L,M,N,R,P,U,X3,X5,V,NT,NT0,XT,W60,VF,FM,SB,SM,SWa,SWc,SWL,SWa4,SWc4,SWR,SWR4,SWT,SWT6,SW402,SWTOR,SWS402,SWS0").split(",").map((x) => x.trim()).filter(Boolean);
+/* FASSUNG 887 (Prüfung Runde 1): index.html lädt supabase-js fest (@2.x.y) – ohne SUPABASE_UMD nimmt die Sonde zuerst
+   genau diese Fassung (Kopie, wie werkzeug/ladezeit-messen.js sie unter /tmp/dma-mess-supabase-js-<fassung>.umd.js ablegt). */
+const SUPA_PIN = (fs.readFileSync(path.join(WURZEL, "index.html"), "utf8").match(/supabase-js@(2\.\d+\.\d+)\//) || [])[1] || "";
 const SUPA = [process.env.SUPABASE_UMD,
+  SUPA_PIN && "/tmp/dma-mess-supabase-js-" + SUPA_PIN + ".umd.js",
   "/tmp/claude-0/node_modules/@supabase/supabase-js/dist/umd/supabase.js",
   "/tmp/claude-0/-home-user-Deutsch-Mit-Xander/3dee9a82-acfe-58e0-bbb5-49b0760fb918/scratchpad/supa/package/dist/umd/supabase.js"]
   .filter(Boolean).find((p) => fs.existsSync(p));
-if (!SUPA) { console.error("supabase-js fehlt: SUPABASE_UMD=…/dist/umd/supabase.js setzen (npm pack @supabase/supabase-js@2.117.3)."); process.exit(2); }
+if (!SUPA) { console.error("supabase-js fehlt: SUPABASE_UMD=…/dist/umd/supabase.js setzen (npm pack @supabase/supabase-js@" + (SUPA_PIN || "2.119.0") + ")."); process.exit(2); }
 const SUPA_TEXT = fs.readFileSync(SUPA);
 
 const HOST = "attrappe.supabase.co";
@@ -349,6 +354,7 @@ function schluessel(adresse, methode) {
 }
 
 (async () => {
+  console.log("supabase-js: " + SUPA + (SUPA_PIN ? "   (index.html lädt @" + SUPA_PIN + ")" : "   (index.html: keine feste Fassung)"));
   /* Nachbesserung 2 (Fall SW…): Seite und fassung.json verzögern (VERZ: beide, VERZ_FJ: nur fassung.json), eine neue
      Fassung draußen nachstellen (NEU_F) und Seitenabrufe zählen – nach dem Prüferskript zu c57cdb8b */
   const netz = { verz: 0, verzFj: 0, neuF: "", doks: 0, fass: 0 };

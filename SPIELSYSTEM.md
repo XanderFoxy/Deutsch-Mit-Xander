@@ -8095,10 +8095,21 @@ CPU 6× mit Fotos: 308–319 ms am Stück → in Stücken; der Schluss (das put 
   behält 22 Zeilen; Lager-Text 1,03 MB und localStorage 482 KB mit Foto statt 69 KB/35 KB ohne; keine „chatbild:“-Einträge).
 
 ### L7 — supabase-js gepinnt (index.html)
-`@supabase/supabase-js@2` → **`@2.118.0`**. jsDelivr ist aus dieser Umgebung gesperrt (403 am Proxy); `@2` löst jsDelivr nach
-der höchsten 2.x-Fassung auf npm auf – das ist laut npm-Registry heute **2.118.0** (veröffentlicht 15.10.2026, dist-tag
-`latest`; 2.117.3 vom 07.10.). Das Paket enthält `dist/umd/supabase.js` (218 252 Bytes). Die Sonden 885-sparsam, 822 und 874
-fangen jetzt auch die gepinnte Adresse ab (`@2(\.\d+)*`). `stadt-leicht.html` und `__kz.html` laden weiter `@2` (nicht im Plan).
+`@supabase/supabase-js@2` → **`@2.119.0`** (BERICHTIGT in der Prüfung Runde 1, siehe unten; im Strang stand zuerst `@2.118.0`).
+jsDelivr ist aus dieser Umgebung gesperrt (403 am Proxy); `@2` löst jsDelivr nach der höchsten 2.x-Fassung auf npm auf.
+Am 01.11. war das **2.118.0** (15.10.2026); **seit 04.11.2026 13:11 UTC ist `latest` 2.119.0** – die Live-Seite 886 lädt
+über `@2` also schon seit Tagen 2.119.0. Darum fest auf **2.119.0**: genau das, was 886-Nutzer heute laden; 2.118.0 wäre eine
+Rückstufung gewesen (geprüft am 07.11. mit `npm view @supabase/supabase-js@2.119.0`: vorhanden, `dist.tarball`
+…/supabase-js-2.119.0.tgz, Paket enthält `dist/umd/supabase.js`, 219 856 Bytes).
+**Beim Einmischen verloren:** der Merge e84652ac nahm index.html aus dem Nachtrag-Zweig – dort stand noch `@2`. Die
+Pinnung des Strangs (56a47513) war damit still weg. Jetzt prüft das zweifach: die neue Sonde `pruefe-887-supabase.js`
+(index.html lädt supabase-js genau einmal als `@2.x.y`, nicht älter als 2.119.0, die Abfänger der Sonden treffen die
+Adresse, die Fassung gibt es auf npm; Gegenprobe e84652ac: 3 rot) und `werkzeug/fassung-setzen.js` (bricht beim Setzen
+einer Fassungsnummer ab, wenn supabase-js lose geladen wird; beim Stempeln im git-Haken nur eine Warnung; Gegenprobe auf
+e84652ac: Abbruch mit Ausgang 1, index.html unverändert). `werkzeug/ladezeit-messen.js` holt seine supabase-js-Kopie jetzt
+in der Fassung, die index.html nennt (vorher fest 2.117.3), und 885-sparsam nimmt ohne `SUPABASE_UMD` zuerst diese Kopie.
+Die Sonden 885-sparsam, 822 und 874 fangen die gepinnte Adresse ab (`@2(\.\d+)*`). `stadt-leicht.html` und `__kz.html`
+laden weiter `@2` (nicht im Plan).
 Sonden auf dem Endstand: 884-leitung 40, 885-praesenz 69 (ALLES GRÜN), 884-ton310 45 grün; 885-sparsam siehe unten
 (im Nachbau liefern alle Sonden weiter 2.117.3 aus der lokalen Kopie – die gepinnte Adresse wird abgefangen).
 

@@ -278,6 +278,23 @@ if (cssFehler.length) {
   if (process.argv[2] !== "--nur-stempel") process.exit(1);
 }
 
+/* FASSUNG 887 (Prüfung Runde 1) — supabase-js mit fester Fassung.
+   Beim Einmischen des Livestream-Strangs ging die Pinnung (@2.118.0) still verloren; index.html lud wieder „@2“, also
+   das, was jsDelivr gerade für die höchste 2.x hält – eine neue supabase-js-Fassung käme dann ungeprüft zu allen.
+   Jetzt: index.html muss supabase-js als @2.x.y laden. Beim Setzen einer Fassungsnummer bricht das Werkzeug sonst ab;
+   beim Stempeln (git-Haken) warnt es nur. Geprüft auch von werkzeug/pruefe-887-supabase.js. */
+function supabaseFassungPruefen(html) {
+  const treffer = html.match(/<script[^>]+src="[^"]*supabase-js@([^/"]*)\/[^"]*"/g) || [];
+  if (!treffer.length) return "index.html lädt supabase-js nicht über <script src=…supabase-js@…>";
+  const lose = treffer.filter((t) => !/supabase-js@2\.\d+\.\d+\//.test(t));
+  return lose.length ? "index.html lädt supabase-js ohne feste Fassung (@2.x.y): " + lose.join(" | ") : "";
+}
+const supaFehler = supabaseFassungPruefen(fs.readFileSync(indexPfad, "utf8"));
+if (supaFehler) {
+  console.error("SUPABASE-JS: " + supaFehler);
+  if (process.argv[2] !== "--nur-stempel") process.exit(1);
+}
+
 if (process.argv[2] === "--nur-stempel") {
   const n = stempelSetzen();
   hakenAnlegen();

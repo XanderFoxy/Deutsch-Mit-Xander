@@ -183,8 +183,12 @@ for (const a of ARTEN) if (!["kalt", "warm", "wieder", "pause", "sw", "neu"].inc
 const SW_WACH = Math.max(0, Number(S["sw-wach"] || 0));
 if (!isFinite(SW_WACH)) { console.error("--sw-wach braucht ms"); process.exit(2); }
 const JSON_DATEI = S.json || process.env.LADEZEIT_JSON || "";
-/* supabase-js: dieselbe Fassung, die jsDelivr heute für @2 ausliefert, aus npm geholt und im Zwischenordner gemerkt */
-const SUPA_FASSUNG = "2.117.3";
+/* supabase-js: dieselbe Fassung, die index.html lädt (seit 887 fest, @2.x.y), aus npm geholt und im Zwischenordner gemerkt.
+   Bis 886 stand hier 2.117.3 fest – „was jsDelivr heute für @2 ausliefert“ war das nur bis 15.10. */
+const SUPA_FASSUNG = (() => {
+  try { return (fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8").match(/supabase-js@(2\.\d+\.\d+)\//) || [])[1] || "2.119.0"; }
+  catch (e) { return "2.119.0"; }
+})();
 function supabaseHolen() {
   if (S.supabase === "-") return "";
   if (S.supabase || process.env.SUPABASE_UMD) return S.supabase || process.env.SUPABASE_UMD;
