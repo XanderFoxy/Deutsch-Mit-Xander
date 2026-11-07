@@ -381,8 +381,8 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       const frage = await s.pg.waitForFunction(() => { const p = document.getElementById("exercisePlay"); return p && p.style.display !== "none" && p.offsetParent !== null && p.textContent.trim().length > 20; }, null, { timeout: 30000 }).then(() => true, () => false);
       const st = await s.pg.evaluate(() => { const q = typeof Quiz !== "undefined" && Quiz.getState(); return q ? { n: q.questions.length, kat: [...new Set(q.questions.map((x) => x.categoryId || x.catId || ""))].join(",") } : null; });
       sage(frage && st && st.n >= 5, "B5 Runde startet mit der gewählten Kategorie", (frage ? "Frage da" : "keine Frage zu sehen") + ", " + (st ? st.n + " Fragen" : "kein Quiz-Zustand"));
-      const sofort = await s.pg.evaluate(() => (window.DMA_TEIL_SOFORT || []).filter((x) => /^uebung/.test(String(x))));
-      sage(!sofort.length, "B5 nichts synchron geholt (der Teil von data-exercises.js kommt mit ladeUebungen, nicht per XHR beim Zeichnen)", sofort.join(" | ").slice(0, 120));
+      const sofort = await s.pg.evaluate(() => (window.DMA_TEIL_SOFORT || []).map(String));
+      sage(!sofort.length, "B5 nichts synchron geholt (Teil von data-exercises.js mit ladeUebungen, app-Stücke vor „Runde starten“ über die Leitung)", sofort.join(" | ").slice(0, 160));
       sage(!s.pe.length, "B5 keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
       await s.ctx.close();
     }

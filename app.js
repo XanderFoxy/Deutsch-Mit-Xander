@@ -314,6 +314,20 @@
     }
     return neu ? Reflect.construct(f, args, neu) : f.apply(self, args);
   }
+  /* MODUL-UMBAU M3b — die Stücke, in denen diese (ausgelagerten) Funktionen stehen, über die Leitung holen; erfüllt, wenn
+     sie angekommen sind (eingesetzt werden sie dann beim ersten Ruf ohne Leitung oder in der Ruhepause). Gemessen
+     (ladezeit-messen.js --fall uebung, 4G, CPU 4×): seit „Lernen" sofort steht, kommt der Tipp auf „Runde starten"
+     früher – rest2 (wortschatzBereit) fehlte noch und kam SYNCHRON, 1,1–1,4 s gesperrter Hauptfaden bei voller
+     Leitung (Wortschatz). In der Quelle (ohne Stücke) sofort erfüllt. */
+  function dmaTeilFuer(f) {
+    if (!DMA_TEILE_BAU || typeof f !== "function") return null;
+    const m = /dmaTeilRuf\((\d+),/.exec(Function.prototype.toString.call(f));
+    return m ? DMA_TEILE_BAU.teile[DMA_TEILE_BAU.fn[Number(m[1])]] || null : null;
+  }
+  function dmaTeileFuer(liste) {
+    const teile = [...new Set(liste.map(dmaTeilFuer).filter(Boolean))].filter((t) => !dmaTeilDa[t]);
+    return Promise.all(teile.map((t) => { const p = dmaTeilHolen(t); return dmaTeilAnkunft[t] || p; }));
+  }
   function dmaTeilRufA(i, self, args) {
     try { return dmaTeilRuf(i, self, args); } catch (e) { return Promise.reject(e); }
   }
@@ -9532,6 +9546,8 @@
     try {
       ExerciseData.uebungenVorladen(ExerciseData.activeCategories().map((c) => c.id),
         () => !document.hidden && lernenOffen() && !ruheImRaum());
+      /* dazu die app-Stücke, die „Runde starten" braucht (sonst kämen sie beim Tipp synchron) */
+      if (lernenOffen() && !ruheImRaum()) dmaTeileFuer([wortschatzBereit, merkeZustand, renderQuestion]).catch(() => {});
     } catch (e) { /* Vorladen darf nie stören */ }
   }
   async function renderSetup() {
@@ -9869,12 +9885,13 @@
       const knopfText = startBtn.textContent;
       startBtn.textContent = "Aufgaben werden geholt …";
       try {
-        await Promise.all([
-          wortschatzBereit(),
-          /* MODUL-UMBAU M3b: nur die gewählten Kategorien (mit ?quelle/ohne Teile die ganze Sammlung wie bisher) */
-          (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa([...selectedCategories]))
-            ? ExerciseData.ladeUebungen([...selectedCategories]) : Promise.resolve(true),
-        ]);
+        /* MODUL-UMBAU M3b: nur die gewählten Kategorien (mit ?quelle/ohne Teile die ganze Sammlung wie bisher) */
+        const uebungenWeg = (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa([...selectedCategories]))
+          ? ExerciseData.ladeUebungen([...selectedCategories]) : Promise.resolve(true);
+        /* MODUL-UMBAU M3b: die app-Stücke für den Start der Runde erst über die Leitung abwarten (die Seite bleibt
+           bedienbar, der Knopf zeigt „wird geholt") statt sie im Aufruf synchron zu holen; nach 8 s wie bisher */
+        await Promise.race([dmaTeileFuer([wortschatzBereit, merkeZustand, renderQuestion]), new Promise((r) => setTimeout(r, 8000))]);
+        await Promise.all([wortschatzBereit(), uebungenWeg]);
       } catch (e) { /* dann eben mit dem, was da ist */ }
       startBtn.textContent = knopfText;
       const topicFilterPruef = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
