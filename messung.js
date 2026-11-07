@@ -85,7 +85,7 @@
      Bis dahin 1: der alte Server zählt 40 Zeilen je Konto und 24 h über ALLE Arten, und an starken Tagen (lesend
      gezählt: 3 Konto-Tage mit 40 in 30 Tagen) verdrängt jede Mess-Zeile eine Leitungs-Zeile – genau die Diagnosen, die
      Vorrang haben. Die eine Zeile verrät zugleich, welcher Server antwortet. MV = Fassung des Zeilenformats. */
-  var TAG = 8, TAG_ALT = 1, MV = 1;
+  var TAG = 8, TAG_ALT = 1, MV = 2;   /* FASSUNG 887: MV 2 – LoAF mit Skripten, Chat-Sicherung (raumBauen) */
   var JE_SEITE = { "mess-start": 1, "mess-fehler": 2, "mess-raum": 3 };
 
   function jetzt() { return P.now(); }
@@ -356,12 +356,35 @@
     liste.sort(function (a, b) { return b[0] - a[0]; });
     if (liste.length > 3) liste.length = 3;
   }
+  /* FASSUNG 887 — der Aufrufer eines Skripts im LoAF („DIV#livechatArea.onpointerover", „TimerHandler:setTimeout",
+     „Response.json.then", eine Adresse …): Adressen → Dateiname, Kennungen und lange Zahlen → Platzhalter, ≤ 48 Zeichen. */
+  function aufrufer(v) {
+    var t = String(v == null ? "" : v)
+      .replace(/(?:https?|blob|file|chrome-extension):\/\/[^\s]*/gi, function (u) { return datei(u) || "‹url›"; })
+      .replace(/data:[^\s]*/gi, "‹data›")
+      .replace(/[0-9a-f][0-9a-f-]{7,}/gi, "‹id›")
+      .replace(/\d{4,}/g, "‹n›")
+      .replace(/@[^\s.]+\.[^\s]+/g, "‹mail›");
+    return t.length > 48 ? t.slice(0, 48) : t;
+  }
+  /* FASSUNG 887 — Chat im Raum: Zahl der Verlaufzeilen, Zeichen der letzten Sicherung, Sicherungen je Minute seit
+     Beginn dieser Zeile (livechat.js, chatSichernBald). */
+  function chatZahl() {
+    try { var lc = window.LiveChat, s = lc && lc.sicherungStand ? lc.sicherungStand() : null; return s || null; } catch (e) { return null; }
+  }
+  function chatStand(r, t) {
+    var s = chatZahl();
+    if (!s) return null;
+    var min = Math.max(1 / 60, (t - r.seit) / 60000);
+    return [s.zeilen, s.zeichen, Math.round(Math.max(0, s.zahl - (r.sz0 || 0)) / min * 10) / 10];
+  }
   function ziel(el) {
     try {
       if (!el || !el.tagName) return "";
-      if (el.id) return "#" + String(el.id).slice(0, 40);
+      /* FASSUNG 887 — Kennungen in id/Klasse (z. B. eine Konto-Kennung im id eines Platzes) → Platzhalter, wie beim Aufrufer */
+      if (el.id) return "#" + aufrufer(String(el.id).slice(0, 40));
       var k = typeof el.className === "string" ? el.className.trim().split(/\s+/)[0] : "";
-      return el.tagName.toLowerCase() + (k ? "." + k.slice(0, 40) : "");
+      return el.tagName.toLowerCase() + (k ? "." + aufrufer(k.slice(0, 40)) : "");
     } catch (e) { return ""; }
   }
   function beobachterAn() {
@@ -371,8 +394,17 @@
           if (!raum || raum.seit == null) return;
           l.getEntries().forEach(function (x) {
             if (x.startTime < raum.seit || x.duration < 50 || !sichtbarGelaufen(x.startTime, x.duration)) return;
-            var sc = (x.scripts || []).slice().sort(function (a, b) { return b.duration - a.duration; })[0] || {};
-            oben3(raum.loaf, [rund(x.duration), datei(sc.sourceURL || ""), sc.sourceCharPosition == null ? -1 : sc.sourceCharPosition, String(sc.invokerType || "")]);
+            var sk = (x.scripts || []).slice().sort(function (a, b) { return b.duration - a.duration; }), sc = sk[0] || {};
+            /* FASSUNG 887 — wer genau? Die ersten vier Stellen wie bisher; dazu blockingDuration, renderStart und
+               styleAndLayoutStart (ms ab Bildbeginn, -1 = keins) und die 3 längsten Skripte
+               [Dauer, Aufrufer (gereinigt), Art, Datei@Zeichen]. Keine Inhalte. */
+            oben3(raum.loaf, [rund(x.duration), datei(sc.sourceURL || ""), sc.sourceCharPosition == null ? -1 : sc.sourceCharPosition, String(sc.invokerType || ""),
+              rund(x.blockingDuration || 0), x.renderStart ? rund(x.renderStart - x.startTime) : -1,
+              x.styleAndLayoutStart ? rund(x.styleAndLayoutStart - x.startTime) : -1,
+              sk.slice(0, 3).map(function (q) {
+                return [rund(q.duration), aufrufer(q.invoker), String(q.invokerType || "").slice(0, 20),
+                        datei(q.sourceURL || "") + "@" + (q.sourceCharPosition == null ? -1 : q.sourceCharPosition)];
+              })]);
           });
         });
         loafObs.observe({ type: "long-animation-frame", buffered: true });
@@ -421,11 +453,21 @@
     if (fen.length > 60) fen = fen.sort(function (a, b) { return b[1] - a[1]; }).slice(0, 60);
     fen.sort(function (a, b) { return a[0] - b[0]; });
     (M.tipp.kz || []).forEach(function (x) { if (x[0] <= r.ab && x[0] >= (r.v != null ? r.v : r.ab) - 60000) kz = x; });
-    return { k: zufall(6), grund: grund, folge: r.folge, teil: grund === "hidden" ? 1 : 0,
+    var d = { k: zufall(6), grund: grund, folge: r.folge, teil: grund === "hidden" ? 1 : 0,
              haupt: r.haupt, dauer: rund((t - r.seit) / 1000), sicht: rund(sicht / 1000), drin: rund(r.drin), ab: rund(r.ab), kz: kz,
              fenster: fen, anzahl: Math.ceil(sicht / ZEIT.fenster), zaeh: zaeh,
              ges: [r.ges[0], rund(r.ges[1]), rund(r.ges[2])], uhr: r.uhr, luecke: r.luecke, loaf: r.loaf, inp: r.inp,
-             mb: speicherMb(), leute: r.leute, bild: r.bild, f: FASSUNG };
+             mb: speicherMb(), leute: r.leute, bild: r.bild, f: FASSUNG, chat: chatStand(r, t) };
+    /* FASSUNG 887 — Größenbremse (der Server nimmt höchstens 6000 Zeichen): erst die Skripte der LoAF weglassen, dann
+       die ruhigsten Fenster. */
+    try {
+      if (JSON.stringify(d).length > 5400) d.loaf = d.loaf.map(function (x) { return x.slice(0, 7); });
+      while (JSON.stringify(d).length > 5400 && d.fenster.length > 10) {
+        d.fenster = d.fenster.slice().sort(function (a, b) { return b[1] - a[1]; }).slice(0, Math.floor(d.fenster.length * 0.7))
+          .sort(function (a, b) { return a[0] - b[0]; });
+      }
+    } catch (e) {}
+    return d;
   }
   /* Die Zeile steht als „unterwegs" im Laufbuch, BEVOR sie losgeht, und erst die Antwort des Servers streicht sie.
      Stirbt die Seite dazwischen, schickt die nächste sie nach (spaet) – außer sie ging mit keepalive raus (ka): die
@@ -448,6 +490,7 @@
     /* Nach einer Zeile zählt das nächste Mal nur die Zeit seitdem. */
     raum.folge++;
     raum.seit = t; raum.sicht = 0; raum.f = {}; raum.ges = [0, 0, 0]; raum.loaf = []; raum.inp = [];
+    raum.sz0 = (chatZahl() || {}).zahl || 0;
     eigen({ ro: offenerRaum() });
   }
   function hoch(leute, bild) {
@@ -465,6 +508,7 @@
       if (!raum) raum = neuerRaum(null, haupt);
       if (raum.ab == null) {
         raum.ab = raum.seit = t;
+        raum.sz0 = (chatZahl() || {}).zahl || 0;
         raum.drin = raum.v != null ? t - raum.v : null;
         raum.haupt = haupt;
         if (drinAb == null) drinAb = rund(t);

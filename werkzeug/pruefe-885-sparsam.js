@@ -491,7 +491,7 @@ function schluessel(adresse, methode) {
     await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (route) => {
       const req = route.request();
       const url = req.url();
-      if (/supabase-js@2\/dist\/umd\/supabase\.js/.test(url)) return route.fulfill({ status: 200, contentType: "text/javascript", body: SUPA_TEXT });
+      if (/supabase-js@2(\.\d+)*\/dist\/umd\/supabase\.js/.test(url)) return route.fulfill({ status: 200, contentType: "text/javascript", body: SUPA_TEXT });
       if (url.indexOf("https://" + HOST + "/") === 0) return supabaseAntwort(route, req).catch(() => route.abort().catch(() => {}));
       return route.abort();
     });

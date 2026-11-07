@@ -7994,3 +7994,301 @@ verschränkt): SWR/SWR4 in der damaligen Form „höchstens eine Leitung, keine 
 
 **Offen:** nichts aus der 886-Gesamtprüfung. Bewusst so gelassen: die kurze, nur zuhörende zweite Leitung der gehenden Seite bei der
 Rückkehr direkt nach einem Update (Punkt 1).
+
+## Fassung 887 — Livestream ohne Hänger
+
+XANDER (01.11.): „Der Livestream ist das Wichtigste, weil der am meisten hängt.“ Bauplan: `MODULE-PLAN.md` (Zweig
+`module-umbau`), Abschnitte 0–2, Strang LIVE. Gebaut im Arbeitsbaum `dmx-live`, Zweig `live-haenger`, auf dem 886-Stand
+`7e23e157`. Alles bleibt unsichtbar (Aussehen, Größe, Bedienung wie festgelegt); Ton und WebRTC (Funk 310) unberührt;
+keine einzige zusätzliche Supabase-Abfrage. Die Fassungsnummer setzt die Auslieferung (`DMA_VERSION` steht nach dem Einmischen von 886 (52769d88) auf 886).
+
+### Was das Feld sagte (spiel_diagnose „mess-raum“, 20.–28.10., Fassung 884/885)
+- Lange Bilder (LoAF) 457–872 ms, bis 162 Langläufer je Aufenthalt (Summe 13,7 s); erste Sekunde im Raum bis 5,6 s blockiert.
+- Langsamste Eingaben 704–1 312 ms auf `#livechatArea`, `span.lc-zeilentext`, `button.lc-platz`, `#tutorReiter` – reine
+  Wartezeit auf den Hauptfaden, keine teuren Handler.
+- Zugeordnet (Zeichenposition im verkleinerten Code von 885 nachgeschlagen): `min/spiel.js@795509` = der **700-ms-Spieltakt**
+  (`setInterval(…, 700)` in spiel.js), `supabase.js resolve-promise` = die Arbeit, die livechat.js nach einer Antwort der
+  Datenbank macht (Verlauf verschmelzen, sichern, zeichnen).
+
+### Nachbau und Grundlinie (L0)
+Werkzeuge `scratchpad/m887/live/` (`lsh2.js`, `mikro2.js`, `ana2.js`, `prof-zeile.js`): echte Seite (min/), echtes
+supabase-js 2.117.3, PostgREST- und Realtime-Attrappe, 7 000 Zeilen Verlauf, 6 andere im Raum (hallo, Puls alle 6 s, redet),
+Präsenz alle 8 s, Flut 1 Zeile/s für 20 s, dann Tipps und lange Drücke auf Chat und Plätze, dann 25 s verdeckt und zurück.
+CPU 4× und 6×, ohne Fotos und mit Profilfotos bei 3 von 30 Autoren (je ≈ 16 KB als data:image, wie im Feld).
+Die Sonden prüfen jetzt den eigenen Baum (Befehl 0.1 aus dem Bauplan, 55 Dateien).
+
+**Endmessung 886 (7e23e157) → 887** (Nachbau wie oben, verschränkt; 886 je 2 Läufe, 887 je 1–2 Läufe, Median; 887 = Stand
+1f252ce1 bzw. 99d65cfa für die Chatzeile – dazwischen änderte sich nur das Vorab-Malen und die Stückelung der Sicherung).
+Rauschgrenze: die beiden 886-Läufe streuen in der Flut 1 001–1 224 ms (längstes Bild), 69–82 % (Seite belegt), Tipp-Wartezeit
+1,2–7,1 s – jeder Gewinn unten liegt um ein Vielfaches darüber.
+
+| CPU | Fotos | Flut: Seite belegt | längstes Bild in der Flut | längstes Bild nach dem Betreten | Tipp wartet (Median) | langsamste Eingabe | längstes Bild beim Betreten |
+|---|---|---|---|---|---|---|---|
+| 4× | 3 von 30 | 69–82 % → **11 %** | 1 001–1 224 → **127 ms** | 1 235–1 393 → ~~274 ms~~ **wie 886** ¹ | 1 186–7 111 → **94 ms** | 3 504–7 184 → **464 ms** | 1 015–1 116 → **385 ms** |
+| 6× | 3 von 30 | 49–54 % → **14 %** | 1 564–2 304 → **150 ms** | 2 304–3 131 → ~~417 ms~~ **wie 886** ¹ | (886: kein Tipp kam an) → **160 ms** | – → **560 ms** | 1 519–1 769 → **553 ms** |
+| 4× | ohne | 20 % (Grundlinie) | 252 ms | 1 200 ms (Vorab-Malen) | 63 ms | 512 ms | 552 ms |
+| 6× | ohne | 41 % (Grundlinie) | 483 ms | 804 ms | 131 ms | 672 ms | 656 ms |
+
+(Ohne Fotos nur die 886-Grundlinie gemessen – die Chatzeile darunter zeigt den Gewinn auch dort.)
+¹ NACHGEBESSERT: diese Spalte maß 887 mit L4a. L4a ist zurückgenommen (siehe L4), das lange Bild ohne Skript etwa 10 s nach
+dem Betreten (Vorab-Malen der Autos) ist damit wieder da wie in 886 – Endstand, Nachbau CPU 4× ohne Fotos: **2 067 ms**
+(e9187509 mit L4a: 313 ms). Alle anderen Spalten hängen nicht daran.
+
+| CPU | Fotos | eine empfangene Chatzeile (synchron) | bis zum fertigen Bild | Anhängen + Sichern |
+|---|---|---|---|---|
+| 4× | ohne | 181 → **10 ms** | 305 → **58 ms** | 130 → **0 ms** |
+| 6× | ohne | 229 → **16 ms** | 366 → **111 ms** | 212 → **0 ms** |
+| 4× | 3 von 30 | 579 → **11 ms** | 1 121 → **44 ms** | 545 → **0 ms** |
+| 6× | 3 von 30 | 898 → **14 ms** | 1 759 → **69 ms** | 780 → **0 ms** |
+
+Stufenweise (CPU 4×, Fotos 3/30): nach L1 allein 579 → 39 ms je Zeile; nach L3 → 11 ms. Verlauf je Hintergrund-Seite (L2,
+Sonde 887-verlauf): 1 532 → 65 ms. Vorladen der Autos: unverändert wie 886 (L4a zurückgenommen). Sicherung im Leerlauf bei
+CPU 6× mit Fotos: 308–319 ms am Stück → in Stücken; der Schluss (das put des ganzen Texts ins Lager) bleibt ein Bild von
+80–170 ms bei CPU 4× alle ≥ 20 s (siehe Nachbesserung; „längster Leerlauf-Aufruf 71 ms“ war zu optimistisch).
+
+### L1 — chatSichern vom Empfang entkoppelt (livechat.js)
+- **Ursache:** JEDE neue Chatzeile schrieb den ganzen Verlauf neu: `JSON.stringify` von bis zu 20 000 Zeilen ins Lager
+  (IndexedDB) und 300 Zeilen in den localStorage – samt dem Profilfoto in jeder Zeile eines Foto-Autors (7 000 Zeilen mit
+  3/30 Foto-Autoren: 9,5 MB Text je Zeile!).
+- **Jetzt:** `chatSichernBald()` merkt „schmutzig“ und sichert in einer Leerlaufpause (`requestIdleCallback`, spätestens 5 s;
+  ohne: `setTimeout`), mit mindestens 20 s zwischen zwei Sicherungen. Sofort und vollständig gesichert wird bei `pagehide`,
+  `visibilitychange → hidden` (eine WebView kann danach ohne pagehide beendet werden), in `verlassen()` (wie bisher), beim
+  Raumwechsel (`betreten`, vor dem Umschalten), in `chatLeeren` (jetzt ist auch das Lager leer – vorher wurde es erst mit der
+  nächsten Zeile überschrieben, ohne Zeile kam der gelöschte Verlauf beim Wiederkommen aus dem Lager zurück) und in
+  `pruefVerlaufSetzen`.
+- **Fotos einmal:** in der gespeicherten Zeile (Lager UND localStorage-300) steht statt `bild` (data:image) nur
+  `bildH` = `bildFinger(bild)` (derselbe Fingerabdruck wie beim Senden); das Foto liegt einmal im Lager unter
+  `"chatbild:" + bildH` (`lagerEinmal`, je Sitzung einmal – frischt damit auch die 60-Tage-Frist auf). Beim Lesen
+  (`chatLaden` sofort aus dieser Sitzung, `chatAusLager`/`betreten`/`archivLaden` aus dem Lager) wird es wieder eingesetzt.
+  Das alte Format (Foto in der Zeile) wird unverändert gelesen. **Nachgebessert:** die Fotos der 300 localStorage-Zeilen
+  liegen zusätzlich einmal je Foto in einer **Fototafel** im localStorage (`dma_livechat_chatfoto_<raum>`, geschrieben nur,
+  wenn sich die Menge der Fotos ändert; der Schlüssel beginnt bewusst nicht mit `dma_livechat_chat_`, sonst hielte
+  `archivRaeume` ihn für einen Verlauf). Damit sind sie beim Betreten schon beim ersten Zeichnen da – ohne Lager-Abfrage, ohne
+  zweites volles Zeichnen – und auch ohne IndexedDB (privater Modus, manche WebView). Der erste Stand ließ sie nach dem
+  Neuladen nachpoppen und verlor sie ohne IndexedDB ganz (886 hatte sie in jeder Zeile).
+- **Doppelprüfung** in `nachrichtAnhaengen` über ein Kennungs-Verzeichnis (`Set`) statt `some()` über alle Zeilen; es wird neu
+  gebaut, wenn die Liste ihre Referenz ODER Länge ändert, und ein Treffer wird gegengeprüft (eine gelöschte Zeile gilt nie
+  fälschlich als „schon da“).
+- Der `lagerGelesen`-Schutz (nichts ins Lager, bevor es gelesen ist) – **der erste Stand war hier NICHT unverändert, der
+  Prüfer fand einen Datenverlust:** `chatAusLager` setzte „gelesen“ schon VOR der zweiten Lager-Abfrage (die Profilfotos,
+  `chatbild:…`). Kam genau dann `pagehide` oder „verdeckt“, schrieb die neue sofortige Sicherung die KURZE Liste (localStorage
+  300 + Neues) ins Lager – nachgestellt: **3 000 → 301 Zeilen** (Gäste verlieren den Verlauf endgültig, Angemeldete laden ihn
+  teuer vom Server). 886 hatte dieses Fenster nicht. **Jetzt:** „gelesen“ gilt erst nach den Fotos, unmittelbar vor dem
+  Einmischen (dazwischen nur Mikroaufgaben, kein Ereignis), und nur für den Raum, in dem man noch ist; `betreten` mischt einen
+  späten Rückläufer aus einem anderen Raum nicht mehr ein.
+- **In Stücken:** die geplante Sicherung verwandelt je Leerlaufpause 400 Zeilen in Text (`zeileSchlank` + `JSON.stringify`,
+  am Ende zusammengesetzt – byte-gleich mit dem Ganzen) und schreibt erst dann ins Lager und in den localStorage. Grund: bei
+  CPU 6× mit Fotos kostete sie in einem Stück 308–319 ms alle 20 s. Eine sofortige Sicherung (Seite weg, verdeckt,
+  Raumwechsel …) überholt einen laufenden Stücklauf, der dann nichts mehr schreibt; `chatSichernOffenes` sichert auch dann
+  sofort, wenn ein Stücklauf noch nicht fertig ist. Der 20-s-Abstand zählt ab dem Ende.
+  **Nachgebessert:** (1) Wird `zustand.nachrichten` unterwegs ersetzt (der volle Verlauf aus dem Lager eingemischt, ein Server-
+  Verlauf …), ist der Schnappschuss alt: der Lauf wird verworfen und neu geplant – vorher konnte er bis zu 20 s nach dem
+  Betreten die kurze Liste ins Lager legen. Ausgenommen ist nur das Kappen auf 20 000 Zeilen in `nachrichtAnhaengen` (es nimmt
+  den Lauf mit), sonst käme in einem vollen Raum während einer Flut keine Sicherung mehr zu Ende. (2) Ins Lager nur, wenn es
+  schon beim Schnappschuss gelesen war. (3) Der Schluss war ein Stück (Text zusammensetzen, Lager, die 300 Zeilen noch einmal
+  schlank machen + `JSON.stringify` + localStorage) – vom Prüfer gemessen 112–158 ms bei CPU 4× ohne Fotos. Jetzt sind die
+  letzten 300 Zeilen eigene Stücke, ihr Text wird für den localStorage wiederverwendet, und localStorage und Lager bekommen je
+  eine eigene Leerlaufpause.
+- **Gemessen (mikro, 7 000 Zeilen):** eine empfangene Zeile synchron, CPU 4×: ohne Fotos **181 → 35 ms**, mit Fotos
+  **579 → 39 ms**; CPU 6×: 229 → 48 bzw. 898 → 52 ms. Anhängen + Sichern: 130 → 0 ms bzw. 545 → 0 ms.
+- **Sonde `pruefe-887-sichern.js` 31/31 grün**; Gegenprobe 886: 8 rot (Flut: 50 Sicherungen in 25 s statt 1; Leeren: Lager
+  behält 22 Zeilen; Lager-Text 1,03 MB und localStorage 482 KB mit Foto statt 69 KB/35 KB ohne; keine „chatbild:“-Einträge).
+
+### L7 — supabase-js gepinnt (index.html)
+`@supabase/supabase-js@2` → **`@2.118.0`**. jsDelivr ist aus dieser Umgebung gesperrt (403 am Proxy); `@2` löst jsDelivr nach
+der höchsten 2.x-Fassung auf npm auf – das ist laut npm-Registry heute **2.118.0** (veröffentlicht 15.10.2026, dist-tag
+`latest`; 2.117.3 vom 07.10.). Das Paket enthält `dist/umd/supabase.js` (218 252 Bytes). Die Sonden 885-sparsam, 822 und 874
+fangen jetzt auch die gepinnte Adresse ab (`@2(\.\d+)*`). `stadt-leicht.html` und `__kz.html` laden weiter `@2` (nicht im Plan).
+Sonden auf dem Endstand: 884-leitung 40, 885-praesenz 69 (ALLES GRÜN), 884-ton310 45 grün; 885-sparsam siehe unten
+(im Nachbau liefern alle Sonden weiter 2.117.3 aus der lokalen Kopie – die gepinnte Adresse wird abgefangen).
+
+### L6 — Feldmessung schärfer (messung.js, Zeilenformat mv 2)
+- Je langem Bild (LoAF) zu den bisherigen vier Stellen `[Dauer, Datei, Zeichen, Art]` neu: `blockingDuration`,
+  `renderStart` und `styleAndLayoutStart` (ms ab Bildbeginn, −1 = keins) und die **3 längsten Skripte**
+  `[Dauer, Aufrufer, Art, Datei@Zeichen]`. Der Aufrufer (`invoker`, z. B. `DIV#livechatArea.onpointerover`,
+  `TimerHandler:setTimeout`, `Response.json.then`) wird gereinigt: Adressen → Dateiname, Kennungen (≥ 8 Hex-Zeichen) und
+  Zahlen ≥ 4 Stellen → Platzhalter, höchstens 48 Zeichen.
+- `chat: [Verlaufzeilen, Zeichen der letzten Sicherung, Sicherungen je Minute]` aus `LiveChat.sicherungStand()` (nur Zahlen).
+- Dieselbe Sendung, keine zusätzliche Anfrage; Größenbremse: über 5 400 Zeichen fallen zuerst die Skripte, dann die ruhigsten
+  Fenster weg (Server-Grenze 6 000). Größtmögliche LoAF-Angabe: 1 162 Zeichen.
+- Auch das Ziel langsamer Eingaben (`inp`) wird jetzt gereinigt: 886 schickte ein `id` wie `#lc-k2585aa3c9d…` roh mit.
+- **Sonde `pruefe-887-messung.js` 13/13 grün**; Gegenprobe 886: 7 rot (LoAF nur 4 Stellen, keine Skripte, kein `chat`, `mv 1`,
+  Kennung im `inp`-Ziel). Die bestehende Sonde 884-messung läuft mit (Ergebnis unten).
+
+### L4 — Auto-Blätter: NICHT eingebaut (app.js wie 886) – Vorschlag für den Funk
+- **Fund im Nachbau:** etwa 10 s nach dem Betreten (wenn alle Leitungen stehen, `lcAuto3dVorladen`) entsteht je Auto ein
+  langes Bild **ohne Skript** (blockingDuration 0, renderStart am Ende): 1 250 ms (886, CPU 4×), 1 793–2 304 ms (CPU 6×), zwei
+  Stück im Abstand von 1,5 s – genau der Vorladeplan (Viper, dann Batmobil). Das Vorab-Malen von Fassung 811 (`drawImage` der
+  2 040 × 4 084 großen Blätter auf eine 16×16-Leinwand) entpackt nicht im Skript, sondern im nächsten Bildaufbau. Im Feld sind
+  das sehr wahrscheinlich die langen Bilder „?“ (467–872 ms).
+- **Versuch 1, zurückgenommen (734b7d37):** ImageBitmaps im Auftritt (`fetch → Blob → createImageBitmap`, ≤ 250 ms gewartet,
+  `close()` danach). Start **285–305 ms später** als 886, längstes Bild im Auftritt nicht kürzer (137/143 gegen 101/128 ms),
+  Kurve nicht pixelgleich.
+- **Versuch 2 (L4a, 1f252ce1), nach der Prüfung zurückgenommen:** Vorab-Malen weg, `img.decode()` (stand schon in `bild()`).
+  Das Vorladen war danach ruhig (886: 1 501 + 1 163 ms → kein Bild ≥ 50 ms). **Aber:** `decode()` ersetzt das Vorab-Malen für
+  die Leinwand nicht – das Entpacken landet dann im ERSTEN 3D-Auftritt je Sitzung: Prüfer (CPU 4×, erster von 3 Läufen)
+  Viper **951 gegen 154 ms**, Batmobil **936 gegen 100 ms**; eigene Messung 956/861 ms. Genau diesen Ruck hatte Fassung 811
+  nach Xanders Beschwerde beseitigt („die hängen total nach“). Das ist sichtbar anders und bleibt ohne Freigabe draußen
+  (Regel 3) – der erste Stand dieses Logbuchs nannte den Preis, der Funk-Text verschwieg ihn; die Sonde sah ihn nicht, weil
+  sie nur Mediane und die Startzeit prüfte.
+- **Jetzt:** `lcAuto3dLaden` ist wieder genau wie 886. Die Sonde `pruefe-887-auto.js` prüft den **ersten Auftritt je Auto
+  einzeln** (Start und längstes Bild gegen 886) und misst das Vorladen nur noch (Zahlen für den Vorschlag).
+- **Vorschlag für den Funk (mit Zahlen):** weg wären **2 lange Bilder (1,2–2,7 s) bei jedem Betreten** für alle im Raum (etwa
+  10 s nach dem Betreten); dazu käme **1 Ruck von ≈ 0,9 s beim ersten Auftritt** eines 3D-Autos je Sitzung (nur, wenn jemand
+  mit Viper/Batmobil kommt). Besser (888, ohne Ruck): die Bitmaps schon beim Vorladen anlegen und behalten (Speicher: Viper
+  41 MB, Batmobil 51 MB entpackt – auf dem schwächsten Telefon heikel) oder beim ersten Aufruf von `lcAuftritt` vor `lcRuhigDann` anstoßen – das braucht eine eigene
+  Messung auf dem Telefon.
+
+### L2 — Verlauf schlank verarbeiten (livechat.js, app.js)
+- `verschmelzen` ist ein Reißverschluss zweier nach der Zeit geordneter Listen (bei Gleichstand zuerst die erste Liste, wie
+  beim stabilen Sortieren von `a.concat(b)`); ist eine Liste nicht geordnet, wird wie bisher sortiert.
+- `verlaufRestHolen`: jede Hintergrund-Seite wird in einer Leerlaufpause verarbeitet (`requestIdleCallback`, höchstens 1 s) und
+  meldet nur `melden("aeltere")`; der Zuhörer in app.js frischt dann nur Zahl und Knopf der älteren Zeilen auf
+  (`livechatAeltereAuffrischen` → `lcAeltereZeigen`). Am Ende voll gemeldet wird nur, wenn ältere Chatbilder dazukamen (sie
+  können im Fenster liegen). Gesichert wird nur über L1.
+- `verlaufFrischHolen` (Rückkehr auf die Seite) **nicht umgebaut**: „nur neue Zeilen anhängen“ würde das Auffüllen von
+  Feldern an Zwillingen (Foto, Wirkung, Zusatzfelder) überspringen, und `verschmelzen` kostet nach dem Reißverschluss nur noch
+  wenige ms. Das Vorholen bis 20 000 Zeilen bleibt (2b ist ein Vorschlag).
+- **Sonde `pruefe-887-verlauf.js`** (Tabelle nachgestellt, 7 000 Zeilen, Klassenzimmer offen, CPU 4×, 886 im selben Lauf):
+  Ergebnis zeilengleich mit 886 (Kennung, Text, Foto, Chatbild, Zusatzfeld), keine Doppelzeilen, Bildzwilling und Zusatzfeld
+  der Geräte-Kopie bleiben; 400 Zufallsfälle `verschmelzen` gleich wie 886; Melden: 886 6× voll (5 nach der ersten Seite),
+  887 1× voll + 5× „aeltere“; Knopf „↑ 6 879 ältere Nachrichten“ richtig, Tipp lädt 120 → 320 Zeilen wie 886.
+  **Längstes Bild beim Laden: 886 1 532 ms (dazu 1 134 ms) → 887 150 ms (erste Seite); je Hintergrund-Seite 65 ms** (Ziel ≤ 120).
+- Nebenbefund (nicht geändert, gilt für 886 wie 887): die Seitenabfrage `lt("erstellt", ältestes)` verliert eine Zeile, wenn
+  zwei Zeilen genau denselben Zeitstempel haben und die Seitengrenze zwischen ihnen liegt (in der Sonde 6 999 statt 7 000). Im
+  Feld (Mikrosekunden) sehr selten.
+
+### L3 — Zeichnen gebündelt (livechat.js, app.js)
+- Eine gewöhnliche empfangene Chatzeile meldet `melden("zeile")` (läuft eine Aufgabe oder ist die Zeile eine Antwort darauf,
+  wie bisher voll). Der Zuhörer zeichnet dann nur `livechatChatAuffrischen` und zieht die festgehaltene Lesetafel ans Ende –
+  nicht Kopf, Plätze, Hintergrund und großes Bild (keines davon hängt an den Zeilen).
+- **Der größte Brocken war gar nicht das Zeichnen:** das Profil (7 000 Zeilen, CPU 4×, nach L1) zeigte ¾ der Zeit einer Zeile
+  in `lcNachUnten` – `scrollTop = scrollHeight` direkt nach dem Einsetzen erzwang jedes Mal das ganze Layout. Jetzt springt der
+  Verlauf einmal je Bild im nächsten Bildaufbau (vor dem Zeichnen, also ohne sichtbaren Unterschied) und noch einmal ein Bild
+  später; der Knopf „↓ Neueste“ misst ebenfalls erst im nächsten Bild. Hat jemand selbst gerollt, bleibt er, wo er ist.
+- **Nicht gebaut (zuerst gebaut, wieder zurückgenommen):** „bei verdeckter Seite nur eine Marke setzen und beim Zurückkommen
+  einmal zeichnen“. Das Zeichnen spielt eine frisch angekommene Sprachnachricht im Chat sofort ab und löst die Wirkung einer
+  neuen Zeile (Ruf, Konfetti …) aus – im Hintergrund wäre beides erst beim Zurückkommen gekommen, gesammelt auf einmal.
+  Das wäre hörbar anders (Regel 3), und die verdeckte Seite hängt für niemanden. Vorschlag für den Funk, falls gewünscht.
+- **Nicht gebaut:** alle Meldungen eines Bildes per `requestAnimationFrame` zu einem Zeichnen zusammenfassen – das verschiebt
+  die Zeitfolge für Dutzende Chat-Sonden, und nach „zeile“ kostet eine Zeile nur noch 8 ms. Für 888 vorgemerkt.
+- **Sonde `pruefe-887-zeile.js`** (7 000 Zeilen, CPU 4×, 12 Zeilen, 886 im selben Lauf): **eine Zeile 90,3 → 8,0 ms** (Median,
+  synchron; Ziel ≤ 40); alle Zeilen nach einem Bild da; nach zwei Bildern unten (wie 886); wer hochgerollt hat, bleibt oben,
+  „↓ Neueste“ erscheint; Plätze: **0 DOM-Änderungen statt 1 116**; mit Aufgabe wird die Antwort gezeichnet wie in 886
+  (`lc-versuch lc-versuch-gut`).
+
+### L5 — Spieltakt (spiel.js)
+- Im 700-ms-Takt: `localStorage` („dma_spiel_dabei“/„dma_spiel_raum“) nur noch bei Änderung (vorher zweimal je Takt).
+- `zeichnen()` misst alle Kreise der Reihe einmal (beim ersten Bedarf, vor dem ersten Schreiben); `schmuck()` und der Ring
+  setzen Lage und Größe nur noch, wenn sich der Wert ändert. Außerhalb von `zeichnen()` wird wie bisher direkt gemessen.
+  Keine CSS-Regel an `sp-*`-Klassen ändert Lage oder Größe eines Kreises (nur transform, filter, outline, box-shadow) – die
+  einmal gemessenen Werte sind also im ganzen Takt richtig.
+- `abrufen`, das Netz, `sp-feuert`, die Tierreaktionen und `platzWaechter` sind unverändert.
+- **Sonde `pruefe-887-takt.js`** (8 Plätze, 7 Mitspieler mit Ring/Tier/Rüstung, CPU 4×, 10 s, 886 im selben Lauf):
+  localStorage **14 → 0** Schreibvorgänge; Maß-Lesungen am Kreis **82,3 → 36,6 je Takt**; Plätze, Klassen, Lage und Größe
+  aller Schmuck-Ebenen gleich wie 886; Dauer eines Takts 22,0 gegen 20,7 ms (Median, im Rauschen; längster 34 gegen 38).
+  Ehrlich: auf dem Rechner wird der Takt dadurch nicht kürzer. Das Feld zeigt bis 856 ms in diesem Takt (Telefon, voller
+  Raum) – was dort lange dauert, sagt ab 887 die geschärfte Messung (L6, die 3 längsten Skripte je Bild).
+
+### Nachbesserung (Prüfer, Runde 1)
+| # | Befund | Schwere | Was jetzt gilt |
+|---|---|---|---|
+| 1 | `chatAusLager` setzte `lagerGelesen` VOR der Foto-Abfrage; `pagehide`/„verdeckt“ in diesem Fenster schrieb die kurze Liste ins Lager (3 000 → 301), der Stücklauf ebenso bis 20 s nach dem Betreten | wichtig | behoben (L1 oben): „gelesen“ erst nach den Fotos, Stücklauf verworfen bei ersetzter Liste und ins Lager nur, wenn beim Schnappschuss gelesen; Sonde 887-sichern L (pagehide + verdeckt) und S |
+| 2 | L4a: erster 3D-Auto-Auftritt je Sitzung mit langem Bild (Viper 951 gegen 154 ms) – sichtbar, ohne Freigabe; Funk-Text verschwieg es, Sonde sah es nicht | wichtig | zurückgenommen (app.js wie 886), Vorschlag mit Zahlen (L4 oben); Sonde 887-auto E prüft den ersten Auftritt einzeln |
+| 3 | Profilfotos poppen beim Betreten nach (zweites volles Zeichnen), ohne IndexedDB ganz weg | klein | behoben: Fototafel im localStorage (L1 oben); Sonde 887-sichern T |
+| 4 | Schluss des Stücklaufs ein Stück (112–158 ms bei CPU 4×) | klein | **nur teilweise:** letzte 300 Zeilen als eigene Stücke, localStorage-Text daraus, localStorage eigene Pause; das put des ganzen Texts bleibt ein Bild von 80–170 ms (Messung unten), Lösung 888 |
+| 5 | 884-ton310 A1 auf dem Endstand rot (Fehltipp, auch auf 886) | klein | Sonde wartet, bis das Ziel still steht (Ergebnis unten); Kopf von 887-auto berichtigt |
+
+**Die sofortige Sicherung bei „verdeckt“ kostet etwas** (Prüfer: 122–191 ms Skript, langes Bild 205–358 ms bei CPU 4×; nur wenn
+etwas aussteht). Unsichtbar – die Seite ist in diesem Moment nicht zu sehen –, aber ein schnelles Zurückwechseln kann so lange
+auf den Hauptfaden warten. Sie bleibt, weil eine WebView nach „verdeckt“ ohne `pagehide` beendet werden kann.
+
+**Nachmessung (Nachbau wie oben, CPU 4×, ohne Fotos, je 1 Lauf; e9187509 = 887 vor der Nachbesserung, a5dd08f4 = Nachbesserung
+ohne Teilung des Schlusses, 2060b60b = mit Teilung):**
+
+| Stand | lange Bilder der Leerlauf-Sicherung (Bild / Skript, ms) | davon der Schluss | längstes Bild nach dem Betreten |
+|---|---|---|---|
+| e9187509 | 66/39, 53/39, 68/49, 66/40, 92/92, 101/100, 134/125 | 92–134 | 313 (mit L4a) |
+| a5dd08f4 | 56/42, 52/37, 130/129, 91/83 | 91 / 130 (join + put) | – |
+| 2060b60b | 74/40, 64/49, 62/49, 55/30, 83/82, 116/115, 172/169 | 83 / 116 / 172 (put allein) | 2 067 (Vorab-Malen wie 886) |
+
+Kleinmessung (leere Seite, 7 000 Zeilen = 1,69 Mio. Zeichen, CPU 4×, Median aus 5): Text zusammensetzen **38 ms**, IndexedDB-put
+des Texts **67 ms**, put als Array der Stücke 87 ms, als Blob 1 ms – aber den Blob bauen 110 ms. **Ergebnis:** Der Schluss ist
+nicht messbar kürzer geworden; ihn bestimmt das put des ganzen Texts (im Nachbau 80–170 ms je nach Last, alle ≥ 20 s, nur
+im Leerlauf). Die Teilung join/put (2060b60b) brachte gemessen nichts und ist zurückgenommen (7a899780); der Rest der
+Nachbesserung (letzte 300 Zeilen als eigene Stücke, localStorage-Text daraus statt 300 Zeilen neu, localStorage in eigener
+Pause) bleibt, weil er nichts kostet und doppelte Arbeit spart. **Für 888:** das Lager in Stücken (je 400 Zeilen ein Eintrag,
+nur das letzte Stück neu schreiben) – das ist eine Formatänderung des Speicherstands und braucht eine eigene Sonde (altes
+Format lesen, kein Verlust bei pagehide mitten im Schreiben).
+
+**Endstand gegen 886, verschränkt (07.11., Nachbau wie oben, CPU 4×, Profilfotos bei 3 von 30 Autoren; 887 = b-nb2 = Code von
+7a899780, 886 = 7e23e157; Reihenfolge 887 → 886 → 887):**
+
+| | Flut: Seite belegt | längstes Bild in der Flut | längstes Bild nach dem Betreten | Tipp wartet (Median) | langsamste Eingabe | längstes Bild beim Betreten | längstes Bild der Leerlauf-Sicherung |
+|---|---|---|---|---|---|---|---|
+| 886 (B5) | 58 % | 774 ms | 1 044 ms | 40 ms | 960 ms | 849 ms | – (sichert bei jeder Zeile) |
+| 887 Endstand (N3) | **0 %** | **69 ms** | 1 022 ms ² | 38 ms | **184 ms** | **272 ms** | 81 ms |
+| 887 Endstand (N4) | **0 %** | **71 ms** | 836 ms ² | 32 ms | **176 ms** | **248 ms** | 71 ms |
+
+² wie 886: das lange Bild ohne Skript ist das Vorab-Malen der Autos (L4 zurückgenommen, Vorschlag für den Funk).
+Rauschgrenze: die 886-Läufe vom 01.11. streuen in derselben Einstellung 58–82 % (belegt), 774–1 224 ms (Flut), Tipp
+40 ms–7,1 s – „Tipp wartet“ hängt daran, ob ein Tipp gerade in ein langes Bild fällt, und ist darum kein belastbarer Vergleich;
+die übrigen Gewinne liegen weit über der Streuung.
+
+**Sonden auf dem nachgebesserten Stand** (Schnappschuss b-nb2: bis auf die zurückgenommene join/put-Teilung = 7a899780, ab
+14:02 genau der Code von 7a899780; nacheinander über die Chromium-Sperre):
+
+| Sonde | Ergebnis |
+|---|---|
+| 887-sichern | 41 ok, 2 rot (S) im Gesamtlauf – ein Sonden-Fehler: aus Teil K stand noch eine geplante Sicherung an (setTimeout bis 20 s), S wartete nur 0,8 s. Sonde berichtigt (f105c7a4), K+S danach grün; **Gesamtlauf auf dem Endstand (07.11.): 43/43 grün** (A B W F T R D K S L) |
+| 884-ton310 | **A1–A6 grün** (Tipp erst, wenn das Ziel still steht; „neu=true“ in allen sechs), 44 ok; 1 rot: „I: keine Seitenfehler“ (`Cannot read properties of undefined (reading 'length')`, 2×) – derselbe Fehler steht im 886-Diagnoselauf des Prüfers (ton310-diag-886), also nicht von 887 (der bekannte Wettlauf in der Szene, `SZ.sichtbare`). Lauf vom 01.11. 14:42–14:52 auf b-nb2 = Code von 7a899780. Ein zweiter Lauf am 07.11. bekam die Sperre nicht (8 Wartende aus anderen Strängen) und wurde abgebrochen. |
+| raumverlauf (lagerGelesen-Schutz) | 6/6 grün |
+| 887-zeile | 7/7 grün |
+| verlauf-doppelt | 5/5 grün |
+| leere | grün (exit 0) |
+| 884-leitung | 40 grün |
+| 885-praesenz | 69, alles grün |
+| 887-auto | 16/16 grün auf 6fde319b (erster Auftritt wie 886); `app.js` ist seitdem unverändert (`git diff 6fde319b HEAD -- app.js` leer). Gegenprobe e9187509 (mit L4a) rot. Wiederholung am 07.11. aus demselben Grund wie ton310 nicht gelaufen. |
+
+
+### Sonden
+Alle auf dem Endstand (dc0c9325, Code wie heute; ausgeführt aus einer Kopie des Stands, `WURZEL` = Kopie), nacheinander
+über die Chromium-Sperre. Während der Läufe liefen im Hauptbaum 886-Sonden ohne Sperre – zeitkritische Grenzen wurden darum
+verschränkt gegen 886 nachgeprüft.
+
+| Sonde | Ergebnis | Gegenprobe 886 (7e23e157) |
+|---|---|---|
+| **887-sichern** (L1, neu; Nachbesserung: L, S, T) | 31/31 grün; L/S/T 9/9 grün auf a5dd08f4 (Gesamtlauf siehe Nachbesserung) | 886: 8 rot (Flut, Leeren, Fotos); e9187509 (887 vor der Nachbesserung): L 3 000 → 301 Zeilen (pagehide und verdeckt), S legt 1 001 statt 3 001 Zeilen ins Lager, T 0/27 Fotos – 6 rot |
+| **887-messung** (L6, neu) | 13/13 grün | 7 rot |
+| **887-verlauf** (L2, neu, 886 im selben Lauf) | 11/11 grün | Melden und Bilder rot |
+| **887-zeile** (L3, neu, 886 im selben Lauf) | 7/7 grün (Zeile 8,4 ms, 886 85,9 ms) | Zeile rot |
+| **887-takt** (L5, neu, 886 im selben Lauf) | 6/6 grün | localStorage/Maße rot |
+| **887-auto** (L4, 886 im selben Lauf; prüft jetzt den ERSTEN Auftritt einzeln) | 16/16 grün auf 6fde319b (erster Auftritt Viper 169 gegen 175 ms, Batmobil 155 gegen 132 ms; Vorladen 1 543/1 205 wie 886 1 610/1 462 – nur gemessen) | e9187509 (mit L4a): erster Auftritt Viper **1 025 gegen 173 ms**, Batmobil **1 205 gegen 156 ms** – rot |
+| 884-leitung | 40 grün | – |
+| 885-praesenz | 69, ALLES GRÜN | – |
+| 884-ton310 | 45 grün (auf 1f252ce1); auf dem ersten Endstand A1 rot (Prüfer): der Tipp landete nach `scrollIntoView` auf `#lcKopfUnter`, weil die Seite noch rollte – auf 886 im Diagnoselauf genauso. Die Sonde tippt jetzt erst, wenn das Ziel 4 Bilder lang still steht (Ergebnis siehe Nachbesserung) | – |
+| 884-notweg | 91 grün | – |
+| 884-messung | 75 grün | – |
+| 885-rueckkehr | R K G F T Z Y 235 grün; W N O B S im zweiten Lauf (der erste brach an der 15-min-Frist ab): 2× O und B1 CPU 4× rot – **Last, nicht 887:** O verschränkt 887/886/887 je 2× grün (betreten 270/252, 274/249, 263/255 ms, Blase da); B1 CPU 4× lag in derselben Stunde auch bei 886 bei 1 477 ms (Grenze 1 220) | – |
+| 885-swvorladen | aus der Kopie: 9 und 11 rot, weil `git show 02613a71:sw.js` dort nicht geht; im Baum 1–10 grün, 11 rot nur „Rechenzeit im Leerlauf“ (Sonde 694) – verschränkt nachgemessen: 887 6,2/6,9, 886 6,3/6,2 ms/s, Grenze 15 → Last | – |
+| raumverlauf 6, verlauf-kein-reset 5, leere, 863-chatfenster, notenknopf-aufgabe 16, stimmzeilen 4, 884-gleich 57, 812-auftritt-autos 38, 845-chat-einzug-gleise 47, 679-spielsitz 10, 697-spiellogik 16 | grün (exit 0) | – |
+| verlauf-nachfassen 7, verlauf-doppelt 5, fremde-uhr-reihenfolge 5, antwort-gehoert-dazu 12 | grün (Endstand dc0c9325) | – |
+| aufgabe-reist, benoten, bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem | **noch nicht gelaufen** (Sperre) – vor dem Ausliefern im Hauptbaum nachholen | – |
+| 885-sparsam | A B C D E G H L M N (41 ok) und R P U X3 V NT (28 ok) grün; **X5 rot** („binnen 10 s die Blase“ – kein Tipp-Nachholen): das ist der bekannte Rand der Notfall-Bremse (Offen 8, in 886 im Sammellauf ebenso einmal rot, allein wiederholt grün); 887 ändert weder backend.js noch die Abfragen. NT0 und die Fälle danach (NT0 … SWS0) liefen nicht mehr zu Ende (alle Läufe wurden um 10:16 von außen beendet) – **vor der Auslieferung nachholen**, zusammen mit X5 allein (3×). | – |
+
+### Offen / Vorschläge für den Funk (nicht gebaut, weil sichtbar)
+- **Autos nicht mehr vorab malen (L4, wartet auf OK):** weg wären 2 lange Bilder (1,0–2,7 s, Endstand-Messung 836–2 067 ms)
+  etwa 10 s nach JEDEM Betreten, für alle im Raum; dazu käme 1 Ruck von ≈ 0,9–1,2 s beim ersten Auftritt eines 3D-Autos je
+  Sitzung. Ohne Ruck (Bitmaps beim Vorladen behalten, 41–51 MB je Auto) erst nach einer Messung auf dem Telefon – 888.
+- **888 – Lager in Stücken:** der Schluss der Leerlauf-Sicherung (put des ganzen Verlaufs) bleibt ein Bild von 70–170 ms alle
+  ≥ 20 s (CPU 4×); nur das letzte Stück neu schreiben, mit eigener Sonde (altes Format lesen, kein Verlust mitten im Schreiben).
+- **Vor dem Ausliefern im Hauptbaum** (auf dem Endstand nicht mehr gelaufen, Sperre): 885-sparsam ganz (Code von backend.js
+  und den Abfragen unverändert), 885-rueckkehr, 885-swvorladen, 884-notweg, 884-messung sowie aufgabe-reist, benoten,
+  bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem.
+- **2b – Verlauf erst beim Hochrollen:** statt bis zu 20 000 Zeilen beim Betreten nur die sichtbaren holen, ältere erst beim
+  Hochrollen. Spart beim Betreten die Hintergrund-Seiten ganz – ändert aber, wann ältere Zeilen da sind.
+- **Deko-Animationen pausieren**, solange jemand spricht oder die Flut läuft (Hintergrundgesichter, Glitzer) – sichtbar.
+- **Halbe Auto-Blätter auf Telefonen** (1 020 × 2 042 statt 2 040 × 4 084): ¼ des Speichers und der Entpack-Zeit, leicht weicher.
+- **Filmunschärfe** (Blur hinter dem großen Bild) auf schwachen Geräten weglassen – sichtbar.
+- **Sprechring** als CSS-Transform statt Box-Shadow-Animation – minimal anders im Aussehen.
+- Für 888: `melden` je Bild per `requestAnimationFrame` zusammenfassen (L3, Teil 3), Realtime `worker: true` (mit Ton-Sonde).
