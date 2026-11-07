@@ -622,3 +622,18 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
       - 824 1: das git-Objekt f3fabf3 fehlt in diesem Verlauf, auf keinem Stand prüfbar.
     - **Eigene Panne, behoben:** Im ersten Durchgang erbte die Umgebung die Variable `ALT` des Läufers. 822, 874 und
       884 lesen `ALT` selbst (für ihre Gegenprobe) und brachen sofort ab. Ohne die Variable sind sie wiederholt (oben).
+  - **Offen:**
+    - Wiederholungen der Sonden, die nur am 01.11. unter Überlast rot waren. Auf fc5e3ae3 sind sie am 07.11. grün.
+      Sie warten auf das Ende der 887-Prüfung (`/tmp/claude-0/vorrang-887`, Läufer
+      `scratchpad/m887/stadt/reihe4.sh`, Ergebnis in `sonden-c/uebersicht.txt`):
+      - 833 neu: 2 rot „neue Stadt im Spiel geladen“, Teil A abgebrochen; alt 30/0.
+      - 817 neu: 1 rot „Saison echt“ meldete am 01.11. halloween; alt 48/0.
+      - 809 neu: Bildschirmfoto außerhalb des Bildes, Abbruch; alt 42/0.
+    - Dazu der alt-Gegenlauf zweier Sonden, die neu je 1 rot haben:
+      - 830: Auto 2,14 m statt ≈ 2 m neben dem Weg.
+      - 848: „836 Lexical“, schon in SPIELSYSTEM.md als rot vermerkt.
+    - Die alten `.min.js` der Stadt nach einer Fassung löschen.
+    - PIL für `leicht-zwerg.py` fehlt auf dem Prüfrechner. Neue Zwergbilder entstehen hier also nicht; das war schon mit
+      dem Packer so.
+    - Einmischen nach `module-umbau`: `git merge-tree` gegen 8a3a027b ohne Konflikt. Gegen `live-haenger` gibt es nur
+      den bekannten Konflikt in `index.html` aus M2 (Stempel neu bauen, Plan 0.11).
