@@ -52,8 +52,9 @@
           Datei; Daten danach = Quelle
        B7 ?quelle und Notweg (dma-ganz): die ganze Quelle wie bisher, keine
           Teile
-       B9 langsame Stücke (min/data-exercises-teil.js, app-teil-rest*, je
-          2,5 s): der Ablauf holt nichts synchron (DMA_TEIL_SOFORT leer)
+       B9 ein Stück kommt langsam (6 s; je einmal min/data-exercises-teil.js
+          und min/app-teil-rest2.js): Lernen → Karte → Runde starten holt
+          nichts synchron (DMA_TEIL_SOFORT leer)
        B8 Vorladen hält an, sobald „Lernen" zu ist (Wissen/Klassenzimmer),
           und macht beim Zurückkommen weiter; in einem anderen Unterbereich von
           „Lernen" (Spiele) läuft es weiter
@@ -391,17 +392,23 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
     }
     /* B9: die Stücke kommen langsam (Leitung voll) – der Ablauf holt nichts synchron (Gegenprobe d9637a22: synchron) */
     if (soll("B9")) {
-      const s = await seite({ ruhe: 50, langsam: /^\/min\/(data-exercises-teil|app-teil-rest\d+)\.js$/, langsamMs: 2500 });
-      const ok = await lernen(s.pg);
-      await s.pg.evaluate(() => document.querySelector('.category-card[data-cat="wortstellung"]').click());
-      const bereit = await s.pg.waitForFunction(() => { const b = document.getElementById("startBtn"); return b && !b.disabled && document.querySelector('.category-card.selected[data-cat="wortstellung"]'); }, null, { timeout: 30000 }).then(() => true, () => false);
-      if (bereit) await s.pg.evaluate(() => document.getElementById("startBtn").click());
-      const frage = bereit && await s.pg.waitForFunction(() => { const p = document.getElementById("exercisePlay"); return p && p.style.display !== "none" && p.offsetParent !== null && p.textContent.trim().length > 20; }, null, { timeout: 30000 }).then(() => true, () => false);
-      const sofort = await s.pg.evaluate(() => (window.DMA_TEIL_SOFORT || []).map(String));
-      sage(ok && frage, "B9 langsame Stücke (data-exercises-teil, app-teil-rest je 2,5 s): Lernen → Karte → Runde starten → Frage");
-      sage(!sofort.length, "B9 … dabei nichts synchron geholt (der Hauptfaden steht nie auf der Leitung)", sofort.map((x) => x.split(" ")[0]).join(", "));
-      sage(!s.pe.length, "B9 keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
-      await s.ctx.close();
+      /* je eines langsam (die Sonde hat HTTP/1.1 mit 6 Verbindungen – alle langsam zugleich hielten auch den alten Weg auf) */
+      for (const [was, langsam] of [["min/data-exercises-teil.js", /^\/min\/data-exercises-teil\.js$/], ["min/app-teil-rest2.js (wortschatzBereit)", /^\/min\/app-teil-rest2\.js$/]]) {
+        const s = await seite({ ruhe: 50, langsam, langsamMs: 6000 });
+        const ok = await lernen(s.pg);
+        const tKarte = await s.pg.evaluate(() => { document.querySelector('.category-card[data-cat="wortstellung"]').click(); return Math.round(performance.now()); });
+        const bereit = await s.pg.waitForFunction(() => { const b = document.getElementById("startBtn"); return b && !b.disabled && document.querySelector('.category-card.selected[data-cat="wortstellung"]'); }, null, { timeout: 30000 }).then(() => true, () => false);
+        if (bereit) await s.pg.evaluate(() => document.getElementById("startBtn").click());
+        const frage = bereit && await s.pg.waitForFunction(() => { const p = document.getElementById("exercisePlay"); return p && p.style.display !== "none" && p.offsetParent !== null && p.textContent.trim().length > 20; }, null, { timeout: 30000 }).then(() => true, () => false);
+        const sofort = await s.pg.evaluate(() => (window.DMA_TEIL_SOFORT || []).map(String));
+        const spur = await s.pg.evaluate(() => performance.getEntriesByType("resource").filter((e) => /data-exercises-teil|app-teil-rest2|data-uebungen|bau\/uebungen-/.test(e.name))
+          .map((e) => e.name.replace(/^.*\//, "").replace(/\?.*$/, "") + " " + Math.round(e.startTime) + "→" + Math.round(e.responseEnd)).join(", "));
+        console.log("       (" + was + " 6 s langsam; Karte getippt bei " + tKarte + " ms; Abrufe: " + spur.slice(0, 300) + ")");
+        sage(ok && frage, "B9 " + was + " kommt langsam (6 s): Lernen → Karte → Runde starten → Frage");
+        sage(!sofort.length, "B9 … dabei nichts synchron geholt (der Hauptfaden steht nie auf der Leitung)", sofort.map((x) => x.split(" ")[0]).join(", "));
+        sage(!s.pe.length, "B9 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+        await s.ctx.close();
+      }
     }
     /* B6 */
     if (soll("B6")) {
