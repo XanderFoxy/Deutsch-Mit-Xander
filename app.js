@@ -5445,7 +5445,12 @@
   let dailyTaskPoolCache = null;
   /* MODUL-UMBAU M3b: die Sammlung kommt jetzt auch in Teilen; sind alle da (ExerciseData.uebungenVorladen), gilt der
      Topf neu – wie bisher nach dem Laden der ganzen Datei */
-  window.addEventListener("dma-uebungen-ganz", () => { dailyTaskPoolCache = null; });
+  window.addEventListener("dma-uebungen-ganz", () => {
+    dailyTaskPoolCache = null;
+    /* … und die Wörter aus den Übungstexten im Wörterbuch (extractExtendedVocabulary), falls es schon ohne die ganze
+       Sammlung gebaut war: die Teile kommen nach dem Wortschatz, das Fenster ist länger als früher mit der einen Datei */
+    if (extVocabCache && !extVocabCacheVoll) { extVocabCache = null; dictCache = null; }
+  });
   function buildDailyTaskPool() {
     if (dailyTaskPoolCache) return dailyTaskPoolCache;
     const pool = [];
@@ -11343,6 +11348,7 @@
      einem Telefon unbenutzbar gemacht. */
   let extVocabCache = null;
   let extVocabCacheRaum = null;
+  let extVocabCacheVoll = false;   /* M3b: mit der ganzen Aufgabensammlung gebaut (sonst neu, sobald sie ganz da ist) */
   function extractExtendedVocabulary() {
     const raum = (ExerciseData.getLernraum && ExerciseData.getLernraum()) || "de";
     if (extVocabCache && extVocabCacheRaum === raum) return extVocabCache;
@@ -11376,6 +11382,7 @@
     }
     extVocabCache = [...found.values()];
     extVocabCacheRaum = raum;
+    extVocabCacheVoll = Boolean(window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN);
     return extVocabCache;
   }
   // Best-mögliche CEFR-Einstufung (A1–C2) für den handgeprüften Kernwortschatz — eigene

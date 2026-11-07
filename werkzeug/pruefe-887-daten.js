@@ -58,6 +58,11 @@
        B8 Vorladen hält an, sobald „Lernen" zu ist (Wissen/Klassenzimmer),
           und macht beim Zurückkommen weiter; in einem anderen Unterbereich von
           „Lernen" (Spiele) läuft es weiter
+       B10 Wörterbuch früh gebaut (gleich nach dem Tipp auf „Lernen", vor der
+          ganzen Sammlung): sobald sie ganz da ist, stehen die Wörter aus den
+          Übungstexten drin – so viele wie in einer Seite, die erst alles
+          abwartet (die Teile kommen nach dem Wortschatz; ohne Neubau fehlten
+          sie für die ganze Sitzung)
 
    Aufruf:     node werkzeug/pruefe-887-daten.js            (NUR=D|B, z. B. NUR=B TEIL=B2,B4)
    Gegenprobe: WURZEL=<ordner mit d9637a22> node werkzeug/pruefe-887-daten.js  → rot
@@ -465,6 +470,35 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       sage(weiter && nEnde === (QUELLE ? Object.keys(QUELLE).length : -1), "B8 zurück in „Lernen“: es macht weiter bis alles da ist (jeder Teil einmal)", nDanach + " → " + nEnde + " Teile");
       sage(!s.pe.length, "B8 keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
       await s.ctx.close();
+    }
+    /* B10 Wörterbuch: früh gebaut (vor der ganzen Sammlung) – sind die Wörter aus den Übungstexten danach drin?
+       Vergleich: dieselbe Zahl wie in einer Seite, die erst alles abwartet und dann baut. */
+    if (soll("B10")) {
+      const zaehlen = () => {
+        const a = window.DMA_PRUEF.ausspracheAlle();
+        return { n: a.length, sonst: a.filter((e) => e && e.verified === false && e.category === "Sonstiges").length };
+      };
+      const allesDa = () => ExerciseData.uebungenDa() && (!VocabData.alleThemenDa || VocabData.alleThemenDa());
+      /* die ganze Datei (alter Weg) kommt hier 3 s spät, damit „früh" auch dort vor der Sammlung liegt */
+      const s1 = await seite({ verzug: 120, langsam: /^\/(min\/)?data-uebungen\.js$/, langsamMs: 3000 });
+      await s1.pg.evaluate(() => document.querySelector('.tape-tab[data-target="view-learn"]').click());
+      const frueh = await s1.pg.evaluate(zaehlen);
+      const da1 = await s1.pg.waitForFunction(allesDa, null, { timeout: 90000 }).then(() => true, () => false);
+      await s1.pg.waitForTimeout(300);
+      const spaet = await s1.pg.evaluate(zaehlen);
+      const pe1 = s1.pe.slice();
+      await s1.ctx.close();
+      const s2 = await seite();
+      await lernen(s2.pg);
+      const da2 = await s2.pg.waitForFunction(allesDa, null, { timeout: 90000 }).then(() => true, () => false);
+      await s2.pg.waitForTimeout(300);
+      const ref = await s2.pg.evaluate(zaehlen);
+      const pe2 = s2.pe.slice();
+      await s2.ctx.close();
+      sage(da1 && da2 && ref.sonst > frueh.sonst && spaet.sonst === ref.sonst && spaet.n === ref.n,
+        "B10 Wörterbuch vor der ganzen Sammlung gebaut: danach mit den Wörtern aus den Übungstexten (wie ohne frühen Bau)",
+        "früh " + frueh.sonst + " · danach " + spaet.sonst + " · Vergleich " + ref.sonst + " (aus Übungstexten; Einträge " + spaet.n + "/" + ref.n + ")");
+      sage(!pe1.length && !pe2.length, "B10 keine Seitenfehler", pe1.concat(pe2).slice(0, 3).join(" | "));
     }
     await br.close(); srv.close();
   }
