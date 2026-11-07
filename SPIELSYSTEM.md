@@ -8279,10 +8279,13 @@ Geprüft wurde e84652ac (Livestream-Strang + Nachtrag eingemischt). Hauptbaum, `
 
 **Fototafel (livechat.js `chatFotoTafel`):** Fotos über **40 000 Zeichen** kommen nicht in die Tafel (sie liegen im Lager und
 kommen nach dem Betreten von dort, wie in der ersten 887-Fassung). Die Tafel hat höchstens **400 000 Zeichen**, die Fotos der
-jüngsten Zeilen zuerst. Nach dem Schreiben müssen noch **320 000 Zeichen** frei sein – geprüft mit einer Probe unter
-`dma__frei`, die sofort wieder entfernt wird. Sonst, oder wenn schon das Schreiben scheitert, wird die Tafel halbiert (wie 886
-den Verlauf halbierte), bis sie passt, zuletzt ganz entfernt. Am Verlauf selbst ändert das nichts. Der Stand
-(`fotoTafelStand`) gilt erst nach dem Schreiben; ging gar nichts, wird beim nächsten Sichern wieder versucht.
+jüngsten Zeilen zuerst. Neben der Tafel müssen danach noch **320 000 Zeichen** frei sein – geprüft VOR dem Schreiben mit
+einer Probe unter `dma__frei` (so lang wie Tafel + 320 000, sofort wieder entfernt; die alte Tafel ist da schon weg, ihr Platz
+zählt mit). Passt es nicht, wird die Tafel halbiert (wie 886 den Verlauf halbierte), bis es passt, zuletzt bleibt keine. Eine
+Probe, die nicht passt, scheitert im Browser schon vor dem Schreiben – darum kostet ein voller Speicher fast nichts, obwohl
+bei jedem Sichern wieder versucht wird (erste Fassung dieser Nachbesserung, 7a6e372a: erst schreiben, dann 320 K proben – bei
+fast vollem Speicher 15 ms je Sichern, siehe unten). Am Verlauf selbst ändert das nichts. Der Stand (`fotoTafelStand`) gilt
+erst nach dem Schreiben; ging gar nichts, wird beim nächsten Sichern wieder versucht.
 
 *Gemessen mit dem Messskript des Prüfers* (`scratchpad/a887/quota.js`, Kopie mit drei Bäumen in `scratchpad/nb887/`; 300
 Zeilen, 30 Autoren mit Foto, nach `pruefVerlaufSetzen`; „frei“ = was danach noch in den localStorage passt; 886 = 52769d88,
@@ -8306,10 +8309,20 @@ frei lässt 887 111 K, 886 150 K. Das ist nicht die Tafel (die bleibt leer), son
 Zeilen mit den Fotos darin gar nicht schreiben (der Verlauf dieses Raums blieb ungesichert), 887 schreibt sie ohne Fotos
 (39 K). Token-Erneuerung, Einstellung und ein 20-K-Merker gingen in allen 887-Fällen; bei 886 scheiterte der 20-K-Merker im
 Fall „400 K“.
-*Kosten der Probe* (CPU 4×, 300 Zeilen, 3 Fotos je 16 K, Median aus 7, je 2 Runden, `scratchpad/nb887/tafelzeit.js`): Sichern
-mit geänderter Tafel 8,8 / 10,2 ms (e84652ac 3,5 / 4,3 ms), ohne Änderung 1,4 / 1,7 ms (e84652ac 1,7 / 2,0 ms). Also rund
-+5–6 ms, nur wenn sich die Menge der Fotos in den letzten 300 Zeilen ändert, und dann meist in einer Leerlaufpause (bei
-Weggehen/Verdecken/Raumwechsel im sofortigen Sichern).
+(Gemessen auf 7a6e372a und auf dem Endstand 7b11d868 – gleiche Zahlen; Probe vor dem Schreiben ändert daran nichts.)
+*Kosten der Probe* (CPU 4×, 300 Zeilen, Median aus 7, `scratchpad/nb887/tafelzeit.js` und `tafelvoll.js`), ein ganzes
+`pruefVerlaufSetzen` (Lager-Text + localStorage + Tafel):
+
+| | e84652ac | 7a6e372a (erst schreiben, dann proben) | **Endstand 7b11d868** (Probe vor dem Schreiben) |
+|---|---|---|---|
+| 3 Fotos je 16 K, 2 000 K frei, Tafel ändert sich | 3,5–4,8 ms | 8,8–10,2 ms | **9,0–9,1 ms** |
+| … Tafel bleibt (der Normalfall jeder weiteren Sicherung) | 1,5–2,0 ms | 1,4–1,7 ms | **1,3–1,6 ms** |
+| Speicher fast voll (350 K frei, 30 Fotos je 20 K): bei JEDEM Sichern wieder versucht | – (nie wieder versucht) | 14,8 ms | **4,4 ms** |
+| 100 K frei, 3 Fotos je 30 K | – | 3,0 ms | **2,8 ms** |
+
+Also +4–5 ms, nur wenn sich die Menge der Fotos in den letzten 300 Zeilen ändert (ein neuer Foto-Autor schreibt, ein alter
+fällt aus den 300 Zeilen), meist in einer Leerlaufpause (bei Weggehen/Verdecken/Raumwechsel im sofortigen Sichern). Bei fast
+vollem Speicher kostet der Wiederversuch je Sicherung (≥ 20 s Abstand) rund 3 ms mehr als ohne Tafel.
 
 **Planungs-Hänger (livechat.js `chatSichernStueckweise`):** `insLager` (Ende des Stücklaufs) und der Fehlerweg in `stuecke`
 rufen jetzt `chatSichernBald()`, wenn `sichernSchmutzig` steht (vorher nur im Sonderfall „Lager unterwegs gelesen“). Sonde P
@@ -8326,6 +8339,23 @@ Fensters. Auf dem Server liegt eine Kopie nur von Zeilen angemeldeter Autoren (`
 man angemeldet ist; Flüstern nur, wenn beide Seiten ein Konto haben) – Zeilen von Gästen, Flüstern ohne Konto und System-Zeilen
 gibt es nur in den Geräten der Anwesenden. Beim nächsten Betreten holt der Verlauf vom Server (und von den anderen im Raum,
 `verlaufNachreichen`) zurück, was dort liegt.
+
+**Sonden dieser Nachbesserung** (Hauptbaum, nacheinander über die Chromium-Sperre; Endstand = 7b11d868, `min/livechat.js`
+e31265f1af – die Sonden ab 19:56 liefen schon auf diesem Code; 885-sparsam mit supabase-js **2.119.0**, der Kopie genau der
+gepinnten Fassung – das ist zugleich der Test, dass die Notfall-Bremse, die Rückkehr und der Notweg mit 2.119.0 so laufen wie
+mit 2.117.3):
+
+| Sonde | Endstand | Gegenprobe e84652ac |
+|---|---|---|
+| **887-supabase** (neu) | F A S W N grün (11 ok, npm kennt 2.119.0, Paket mit `dist/umd/supabase.js`) | 3 rot (lose `@2`, keine Fassung, fassung-setzen ohne Prüfung); `fassung-setzen.js 999` auf e84652ac: Abbruch, Ausgang 1, index.html unverändert |
+| **887-sichern** (Q, P neu) | **56/56 grün** (A B W F T R D K S L Q P), auf 7a6e372a und auf 7b11d868 | Q/P: 8 rot (Q1 60 K frei / Tafel 601 K / Profilfoto scheitert, Q2 30 große Fotos in der Tafel, Q3 nie wieder versucht, P 1 201 statt 1 202 Zeilen, „schmutzig“ ohne Plan) |
+| 887-zeile | 7/7 grün (Zeile 4,7 ms, 886 50,9 ms) | – |
+| 887-verlauf | 11/11 grün | – |
+| 822 | 27 ok, ALLES GUT | – |
+| 874 | 47 ok, ALLES GUT | – |
+| 885-sparsam A B C D E G H L M N R P U X3 V NT | **64 ok, alles grün** (supabase-js 2.119.0) | – |
+| 885-sparsam SWa SWc SWL SWR SWR4 SWT SW402 SWTOR SWS402 SWS0 | **65 ok, alles grün** (2.119.0; SWR/SWR4: der bewusst hingenommene Fall der Rückkehr, siehe Nachtrag 1) | – |
+| 885-sparsam X5 NT0 XT W60 VF FM SB SM SWa4 SWc4 SWT6 | (läuft) | – |
 
 ### Sonden
 Alle auf dem Endstand (dc0c9325, Code wie heute; ausgeführt aus einer Kopie des Stands, `WURZEL` = Kopie), nacheinander
