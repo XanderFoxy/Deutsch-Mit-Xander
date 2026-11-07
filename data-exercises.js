@@ -6436,46 +6436,49 @@ const ExerciseData = (function () {
      vier zugleich (die Teile sind klein, die Rundreise zählt: so ist die Sammlung etwa so schnell ganz da wie früher die
      eine Datei) und mit niedriger Priorität. darf() falsch (Bereich zu, Klassenzimmer, Seite verdeckt): anhalten – der
      nächste Aufruf macht dort weiter. */
-  /* VORRANG vor dem Wortschatz: gemessen (3G, CPU 4×) teilte sich der Tipp auf eine Karte die Leitung mit den
-     26 Wortschatz-Dateien (2,26 MB), die „Lernen" in der Ruhepause holt – bis „Runde starten" frei war, vergingen
-     13,9 s (alter Stand 2,2 s, davor aber 20 s „wird geladen"). Jetzt holt „Lernen" den Wortschatz erst, wenn der Teil
-     von data-exercises.js und die ersten Karten der Übersicht da sind (höchstens 3 s): dieselben Bytes, nur in der
-     Reihenfolge, in der sie gebraucht werden. */
+  /* REIHENFOLGE AUF DER LEITUNG (gemessen, 3G und 4G, CPU 4×; die Leitung teilt sich gerecht auf alle laufenden
+     Abrufe): der Tipp auf eine Karte teilte sich die Leitung mit den 26 Wortschatz-Dateien (2,26 MB), die „Lernen" in
+     der Ruhepause holt – auf 3G vergingen 13,9 s, bis „Runde starten" frei war (alter Stand 2,2 s, davor aber 20 s
+     „wird geladen"). Und die übrigen 82 Teile verzögerten den Wortschatz, auf den „Runde starten" wartet. Darum:
+       1. zuerst der Teil von data-exercises.js (88 KB; jede Karte braucht ihn) – erst danach der Wortschatz
+          (uebungenVorrang, höchstens 3 s);
+       2. die ersten UEB_VORRANG Karten der Übersicht gleich nach dem ersten Bild (der wahrscheinliche Tipp);
+       3. die übrigen Teile erst, wenn der Wortschatz da ist (nachVorrang aus app.js).
+     Dieselben Bytes, nur in der Reihenfolge, in der sie gebraucht werden. */
   const UEB_VORRANG = 8;
-  let uebVorrangWarte = [], uebVorrangDa = false;
-  function uebVorrangMelden() {
-    if (uebVorrangDa) return;
-    uebVorrangDa = true;
-    const w = uebVorrangWarte; uebVorrangWarte = [];
-    w.forEach((f) => { try { f(true); } catch (e) {} });
-  }
   function uebungenVorrang(ms) {
     if (!uebTeileWeg() || uebungenDa()) return Promise.resolve(true);
-    const basis = dmaUebTextHolen(true);
-    const erste = uebVorrangDa ? Promise.resolve(true) : new Promise((r) => { uebVorrangWarte.push(r); });
-    return Promise.race([Promise.all([basis, erste]).then(() => true), new Promise((r) => setTimeout(() => r(false), ms || 3000))]);
+    return Promise.race([dmaUebTextHolen(true).then(() => true), new Promise((r) => setTimeout(() => r(false), ms || 3000))]);
   }
   let uebVorNr = 0, uebVorAktiv = false;
-  function uebungenVorladen(zuerst, darf) {
+  function uebungenVorladen(zuerst, darf, nachVorrang) {
     if (uebVorAktiv || uebungenDa() || !uebTeileWeg() || (typeof darf === "function" && !darf())) return;
     uebVorAktiv = true;
     const nr = ++uebVorNr;
-    const ende = () => { if (nr === uebVorNr) uebVorAktiv = false; uebVorrangMelden(); };
+    const ende = () => { if (nr === uebVorNr) uebVorAktiv = false; };
     const pause = (f) => { if (window.requestIdleCallback) requestIdleCallback(f, { timeout: 1500 }); else setTimeout(f, 60); };
     uebKarte().then((K) => {
       if (!K) { ende(); return; }
       dmaUebTextHolen();   /* den Teil von data-exercises.js gleich mit (nur holen; eingesetzt wird beim ersten Bedarf) */
       const reihe = [], gesehen = new Set();
       (zuerst || []).concat(Object.keys(K)).forEach((k) => { if (K[k] && !gesehen.has(k)) { gesehen.add(k); reihe.push(k); } });
-      let i = 0, laufen = 0, fertig = 0;
+      let i = 0, laufen = 0, gewartet = false;
       const weiter = () => {
         if (nr !== uebVorNr) return;
         if (uebungenDa() || (typeof darf === "function" && !darf())) { ende(); return; }
-        while (laufen < 4 && i < reihe.length) {
+        /* nach den ersten Karten: erst den Wortschatz durchlassen (3.), dann weiter */
+        if (!gewartet && i >= UEB_VORRANG && typeof nachVorrang === "function") {
+          if (laufen) return;
+          gewartet = true;
+          let w; try { w = Promise.resolve(nachVorrang()); } catch (e) { w = Promise.resolve(); }
+          w.then(() => pause(weiter), () => pause(weiter));
+          return;
+        }
+        while (laufen < 4 && i < reihe.length && (gewartet || i < UEB_VORRANG || typeof nachVorrang !== "function")) {
           const k = reihe[i++];
           if (uebTeilDa(k)) continue;
           laufen++;
-          uebTeil(K, k, true).then(() => { laufen--; if (++fertig >= UEB_VORRANG) uebVorrangMelden(); pause(weiter); });
+          uebTeil(K, k, true).then(() => { laufen--; pause(weiter); });
         }
         if (i >= reihe.length && !laufen) { uebZusammen(); ende(); }
       };

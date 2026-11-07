@@ -773,9 +773,9 @@
     if (targetId === "view-learn" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
       const spaeter = () => VocabData.ladeWoerter();
       const ruhig = () => { if (window.requestIdleCallback) requestIdleCallback(spaeter, { timeout: 1500 }); else setTimeout(spaeter, 300); };
-      /* MODUL-UMBAU M3b: erst die Übungsteile, die der nächste Tipp braucht (Teil von data-exercises.js, erste Karten;
-         höchstens 3 s), dann der Wortschatz – dieselben Bytes in der Reihenfolge, in der sie gebraucht werden
-         (ExerciseData.uebungenVorrang; ohne Teile, z. B. ?quelle, sofort wie bisher) */
+      /* MODUL-UMBAU M3b: erst der Teil von data-exercises.js, den jeder Karten-Tipp braucht (88 KB, höchstens 3 s), dann
+         der Wortschatz – dieselben Bytes in der Reihenfolge, in der sie gebraucht werden (ExerciseData.uebungenVorrang;
+         ohne Teile, z. B. ?quelle, sofort wie bisher) */
       if (ExerciseData.uebungenVorrang) ExerciseData.uebungenVorrang(3000).then(ruhig, ruhig);
       else ruhig();
     }
@@ -9554,7 +9554,10 @@
     const lernenOffen = () => { const v = document.getElementById("view-learn"); return Boolean(v && v.dataset.active === "true"); };
     try {
       ExerciseData.uebungenVorladen(ExerciseData.activeCategories().map((c) => c.id),
-        () => !document.hidden && lernenOffen() && !ruheImRaum());
+        () => !document.hidden && lernenOffen() && !ruheImRaum(),
+        /* nach den ersten Karten: lädt gerade der Wortschatz (auf ihn wartet „Runde starten"), erst ihn durchlassen */
+        () => (typeof VocabData !== "undefined" && VocabData.ladenLaeuft && VocabData.ladenLaeuft() && !(VocabData.alleThemenDa && VocabData.alleThemenDa()))
+          ? VocabData.ladeWoerter() : true);
       /* dazu die app-Stücke, die „Runde starten" braucht (sonst kämen sie beim Tipp synchron) */
       if (lernenOffen() && !ruheImRaum()) dmaTeileFuer([wortschatzBereit, merkeZustand, renderQuestion]).catch(() => {});
     } catch (e) { /* Vorladen darf nie stören */ }

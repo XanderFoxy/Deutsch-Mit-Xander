@@ -445,7 +445,8 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       const s = await seite({ verzug: 250 });
       const n0 = log.length;
       await lernen(s.pg);
-      await s.pg.waitForFunction(() => performance.getEntriesByType("resource").filter((e) => /\/bau\/uebungen\//.test(e.name)).length >= 4, null, { timeout: 30000 }).catch(() => {});
+      /* über die ersten Karten hinaus (danach wartet das Vorladen einmal auf den Wortschatz) */
+      await s.pg.waitForFunction(() => performance.getEntriesByType("resource").filter((e) => /\/bau\/uebungen\//.test(e.name)).length >= 12, null, { timeout: 30000 }).catch(() => {});
       /* anderer Unterbereich von „Lernen" (Spiele lesen die Sammlung auch): weiter */
       const nSp = log.slice(n0).filter(istTeil).length;
       await s.pg.evaluate(() => document.querySelector('#learnSubnav [data-sub="sub-games"]').click());
