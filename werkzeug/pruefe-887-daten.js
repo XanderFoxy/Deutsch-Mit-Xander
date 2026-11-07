@@ -52,6 +52,8 @@
           Datei; Daten danach = Quelle
        B7 ?quelle und Notweg (dma-ganz): die ganze Quelle wie bisher, keine
           Teile
+       B9 langsame Stücke (min/data-exercises-teil.js, app-teil-rest*, je
+          2,5 s): der Ablauf holt nichts synchron (DMA_TEIL_SOFORT leer)
        B8 Vorladen hält an, sobald „Lernen" zu ist (Wissen/Klassenzimmer),
           und macht beim Zurückkommen weiter; in einem anderen Unterbereich von
           „Lernen" (Spiele) läuft es weiter
@@ -235,7 +237,7 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
     const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png",
       ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".webp": "image/webp", ".webmanifest": "application/manifest+json", ".mp3": "audio/mpeg", ".woff2": "font/woff2", ".gif": "image/gif" };
     const log = [];
-    const S = { sperre: null, verzug: 25, offen: 0, maxOffen: 0 };
+    const S = { sperre: null, verzug: 25, offen: 0, maxOffen: 0, langsam: null, langsamMs: 0 };
     const srv = http.createServer((q, a) => {
       let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/index.html";
       const f = path.join(WURZEL, p);
@@ -248,7 +250,8 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
         fs.createReadStream(f).pipe(a);
       };
       /* Teile: kleiner Verzug, damit sich zählen lässt, wie viele zugleich unterwegs sind */
-      if (/^\/bau\/uebungen\//.test(p)) {
+      if (S.langsam && S.langsam.test(p)) setTimeout(senden, S.langsamMs);
+      else if (/^\/bau\/uebungen\//.test(p)) {
         S.offen++; S.maxOffen = Math.max(S.maxOffen, S.offen);
         a.on("finish", () => { S.offen--; }); a.on("close", () => { z.zu = 1; });
         setTimeout(senden, S.verzug);
@@ -262,7 +265,7 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
     const istGanz = (x) => /^\/(min\/)?data-uebungen\.js$/.test(x.p);
     const seite = async (o) => {
       o = o || {};
-      S.sperre = o.sperre || null; S.verzug = o.verzug || 25; S.maxOffen = 0;
+      S.sperre = o.sperre || null; S.verzug = o.verzug || 25; S.maxOffen = 0; S.langsam = o.langsam || null; S.langsamMs = o.langsamMs || 0;
       const ctx = await br.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, serviceWorkers: "block" });
       await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
       await ctx.addInitScript((ls) => {
@@ -384,6 +387,20 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       const sofort = await s.pg.evaluate(() => (window.DMA_TEIL_SOFORT || []).map(String));
       sage(!sofort.length, "B5 nichts synchron geholt (Teil von data-exercises.js mit ladeUebungen, app-Stücke vor „Runde starten“ über die Leitung)", sofort.join(" | ").slice(0, 160));
       sage(!s.pe.length, "B5 keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+      await s.ctx.close();
+    }
+    /* B9: die Stücke kommen langsam (Leitung voll) – der Ablauf holt nichts synchron (Gegenprobe d9637a22: synchron) */
+    if (soll("B9")) {
+      const s = await seite({ ruhe: 50, langsam: /^\/min\/(data-exercises-teil|app-teil-rest\d+)\.js$/, langsamMs: 2500 });
+      const ok = await lernen(s.pg);
+      await s.pg.evaluate(() => document.querySelector('.category-card[data-cat="wortstellung"]').click());
+      const bereit = await s.pg.waitForFunction(() => { const b = document.getElementById("startBtn"); return b && !b.disabled && document.querySelector('.category-card.selected[data-cat="wortstellung"]'); }, null, { timeout: 30000 }).then(() => true, () => false);
+      if (bereit) await s.pg.evaluate(() => document.getElementById("startBtn").click());
+      const frage = bereit && await s.pg.waitForFunction(() => { const p = document.getElementById("exercisePlay"); return p && p.style.display !== "none" && p.offsetParent !== null && p.textContent.trim().length > 20; }, null, { timeout: 30000 }).then(() => true, () => false);
+      const sofort = await s.pg.evaluate(() => (window.DMA_TEIL_SOFORT || []).map(String));
+      sage(ok && frage, "B9 langsame Stücke (data-exercises-teil, app-teil-rest je 2,5 s): Lernen → Karte → Runde starten → Frage");
+      sage(!sofort.length, "B9 … dabei nichts synchron geholt (der Hauptfaden steht nie auf der Leitung)", sofort.map((x) => x.split(" ")[0]).join(", "));
+      sage(!s.pe.length, "B9 keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
       await s.ctx.close();
     }
     /* B6 */

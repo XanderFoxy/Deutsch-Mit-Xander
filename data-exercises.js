@@ -6436,19 +6436,38 @@ const ExerciseData = (function () {
      vier zugleich (die Teile sind klein, die Rundreise zählt: so ist die Sammlung etwa so schnell ganz da wie früher die
      eine Datei) und mit niedriger Priorität. darf() falsch (Bereich zu, Klassenzimmer, Seite verdeckt): anhalten – der
      nächste Aufruf macht dort weiter. */
+  /* VORRANG vor dem Wortschatz: gemessen (3G, CPU 4×) teilte sich der Tipp auf eine Karte die Leitung mit den
+     26 Wortschatz-Dateien (2,26 MB), die „Lernen" in der Ruhepause holt – bis „Runde starten" frei war, vergingen
+     13,9 s (alter Stand 2,2 s, davor aber 20 s „wird geladen"). Jetzt holt „Lernen" den Wortschatz erst, wenn der Teil
+     von data-exercises.js und die ersten Karten der Übersicht da sind (höchstens 3 s): dieselben Bytes, nur in der
+     Reihenfolge, in der sie gebraucht werden. */
+  const UEB_VORRANG = 8;
+  let uebVorrangWarte = [], uebVorrangDa = false;
+  function uebVorrangMelden() {
+    if (uebVorrangDa) return;
+    uebVorrangDa = true;
+    const w = uebVorrangWarte; uebVorrangWarte = [];
+    w.forEach((f) => { try { f(true); } catch (e) {} });
+  }
+  function uebungenVorrang(ms) {
+    if (!uebTeileWeg() || uebungenDa()) return Promise.resolve(true);
+    const basis = dmaUebTextHolen(true);
+    const erste = uebVorrangDa ? Promise.resolve(true) : new Promise((r) => { uebVorrangWarte.push(r); });
+    return Promise.race([Promise.all([basis, erste]).then(() => true), new Promise((r) => setTimeout(() => r(false), ms || 3000))]);
+  }
   let uebVorNr = 0, uebVorAktiv = false;
   function uebungenVorladen(zuerst, darf) {
     if (uebVorAktiv || uebungenDa() || !uebTeileWeg() || (typeof darf === "function" && !darf())) return;
     uebVorAktiv = true;
     const nr = ++uebVorNr;
-    const ende = () => { if (nr === uebVorNr) uebVorAktiv = false; };
+    const ende = () => { if (nr === uebVorNr) uebVorAktiv = false; uebVorrangMelden(); };
     const pause = (f) => { if (window.requestIdleCallback) requestIdleCallback(f, { timeout: 1500 }); else setTimeout(f, 60); };
     uebKarte().then((K) => {
       if (!K) { ende(); return; }
       dmaUebTextHolen();   /* den Teil von data-exercises.js gleich mit (nur holen; eingesetzt wird beim ersten Bedarf) */
       const reihe = [], gesehen = new Set();
       (zuerst || []).concat(Object.keys(K)).forEach((k) => { if (K[k] && !gesehen.has(k)) { gesehen.add(k); reihe.push(k); } });
-      let i = 0, laufen = 0;
+      let i = 0, laufen = 0, fertig = 0;
       const weiter = () => {
         if (nr !== uebVorNr) return;
         if (uebungenDa() || (typeof darf === "function" && !darf())) { ende(); return; }
@@ -6456,7 +6475,7 @@ const ExerciseData = (function () {
           const k = reihe[i++];
           if (uebTeilDa(k)) continue;
           laufen++;
-          uebTeil(K, k, true).then(() => { laufen--; pause(weiter); });
+          uebTeil(K, k, true).then(() => { laufen--; if (++fertig >= UEB_VORRANG) uebVorrangMelden(); pause(weiter); });
         }
         if (i >= reihe.length && !laufen) { uebZusammen(); ende(); }
       };
@@ -6537,5 +6556,5 @@ const ExerciseData = (function () {
 
   /* M3b: der Teil von data-exercises.js (getBank jeder Kategorie liest ihn) – beim Tipp auf „Lernen" gleich holen */
   function uebungenBasisHolen() { if (uebTeileWeg()) dmaUebTextHolen(true); }
-  return { ladeUebungen, uebungenVorladen, uebungenBasisHolen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
+  return { ladeUebungen, uebungenVorladen, uebungenBasisHolen, uebungenVorrang, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
 })();

@@ -772,8 +772,12 @@
     if (targetId === "view-learn") satzbauLaden();   // FASSUNG 842 — der Satzbaukasten liegt unter „Lernen"
     if (targetId === "view-learn" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
       const spaeter = () => VocabData.ladeWoerter();
-      if (window.requestIdleCallback) requestIdleCallback(spaeter, { timeout: 1500 });
-      else setTimeout(spaeter, 300);
+      const ruhig = () => { if (window.requestIdleCallback) requestIdleCallback(spaeter, { timeout: 1500 }); else setTimeout(spaeter, 300); };
+      /* MODUL-UMBAU M3b: erst die Übungsteile, die der nächste Tipp braucht (Teil von data-exercises.js, erste Karten;
+         höchstens 3 s), dann der Wortschatz – dieselben Bytes in der Reihenfolge, in der sie gebraucht werden
+         (ExerciseData.uebungenVorrang; ohne Teile, z. B. ?quelle, sofort wie bisher) */
+      if (ExerciseData.uebungenVorrang) ExerciseData.uebungenVorrang(3000).then(ruhig, ruhig);
+      else ruhig();
     }
     /* FASSUNG 837 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller … sofort im Livestream wie HelloTalk".
        Der Weg ins Klassenzimmer führt über „Wissen", und „Wissen" zog bisher nach 1,5 s den ganzen Wortschatz
