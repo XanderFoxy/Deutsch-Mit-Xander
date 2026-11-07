@@ -504,3 +504,91 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     Commit – ein Server, der die Datei gerade an eine Sonde ausliefert, konnte eine halbe lesen).
   - **Chromium-Pause ab 08:05 UTC** auf Bitte des Dirigenten (LIVE-Schlussreihe 887). Restliche Läufe:
     `scratchpad/m887/modul/rest.sh` (ab ~09:30 UTC, ein Läufer, alles über die Sperre).
+
+### M5 Stadt (Zweig `modul-stadt`, Grundlage fc5e3ae3; Commits f36468ab, d42f0348, 015c77df, fb22207d, b3143974, …)
+
+- 01.–07.11. **M5 — die Stadt als eigene Vite-Seiten.** Unsichtbar: dieselbe Stadt, dasselbe Ladebild, dasselbe
+  `?quelle=1`, dieselben Adressen (`stadt.html`, `stadt-leicht.html`; `spiel.js` bettet die leichte Stadt unverändert
+  ein). index.html, sw.js, app.js, livechat.js, spiel.js: Byte für Byte wie fc5e3ae3; `DMA_MODUL` nennt nur `rueckfrage`.
+  - **Aufbau:**
+    - `src/stadt.html`, `src/stadt-leicht.html` sind die Quellen der Seiten (Vite-Mehrseiten-Eingänge). Bearbeitet wird
+      dort. `stadt.html`/`stadt-leicht.html` im Hauptordner sind gebaut wie `min/` (Hinweis direkt hinter dem doctype).
+    - `vite.config.mjs`: `SEITEN` = die Listen der Packer (Reihenfolge gleich) und das Plugin `dma-seiten`. Der Eingang
+      einer Seite ist ein erzeugtes Modul mit den Dateien in Reihenfolge, jede mit `?seite=<name>` – `stadt/boden.js`
+      steckt so in beiden Seiten, kein gemeinsames Stück (flacher Graph). Hinter `modelle.js` folgt
+      `window.STADT.GEBUENDELT = true`, dann die Modelle aus `modelle.js` (ausgeführt wie im Packer). Auto-Schau, Quests
+      und Äcker: im Bündel die Vertretung, die Datei selbst als eigenes Stück (`bau/leicht-autoschau-…`,
+      `leicht-quests-…`, `leicht-korn-…`, genannt in `window.LEICHT_*`). `LEICHT_STEMPEL` = Stempel von
+      `stadt-leicht/bilder/verzeichnis.json` wie bisher (31e0a8453b). `experimental.renderBuiltUrl` schreibt in der Seite
+      `bau/<datei>`. Bündel und Stücke müssen ohne import/export sein (sonst Baufehler).
+    - Gebaute Seite: im Kopf `<link rel="modulepreload">` fürs Bündel und das Stilblatt aus `bau/`. Am Ende der Lader
+      (Block SKRIPTE): gebaut ein `document.write` des Moduls (läuft wie bisher nach allen anderen Skripten). Mit
+      `?quelle=1` kommen die Quellen einzeln (`?t=`) und das Quell-Stilblatt statt des gebauten.
+    - `werkzeug/modul-bauen.js`: Die Prüfsumme umfasst auch alles, was eingeht (`bau/quelle.json` „eingaben“, 93
+      Dateien: stadt/…, stadt-leicht/…, das Verzeichnis der Bilder). Eine Änderung dort baut beim nächsten Commit neu;
+      vorher musste man die Packer von Hand rufen. Seiten kommen über `.neu` + Umbenennen in den Hauptordner. Eine im
+      Hauptordner von Hand geänderte Seite gibt eine laute Meldung, nichts wird überschrieben, Rückgabe ≠ 0
+      (887-stadt B8). `DMA_MODUL` nur aus `src/*.js`. `fassung-setzen.js` legt die gebauten Seiten mit `git add` an.
+    - Die Vertretungen (`autoschau-laden.js`, `quests-laden.js`, `korn-laden.js`) holen ihr Stück als Modul
+      (`s.type = "module"`). Vites Ausgabe hat kein `"use strict"` mehr (Module sind immer streng), klassisch geladen
+      liefe sie locker.
+    - Die Packer `stadt-packen.js`/`leicht-packen.js` sind gelöscht (b3143974, nach dem Nachweis). Die Zwergbilder
+      (`leicht-zwerg.py`, liefen im Packer mit) ruft jetzt `stadt-backen.js` am Ende. Achtung: PIL fehlt auf diesem
+      Rechner, der Schritt meldet das nur, wie vorher im Packer. Die Aufruf-Zeilen der Sonden nennen `modul-bauen.js`.
+    - Die alten `stadt/stadt.min.js` und `stadt-leicht/{leicht,autoschau,quests,korn}.min.js` bleiben EINE Fassung
+      liegen. Sie sind der Rückfall für eine Seite aus dem Browserspeicher (≤ 10 min nach dem Update). Sie werden nicht
+      mehr gebaut und danach gelöscht.
+  - **Fund:** `stadt/stadt.min.js` war veraltet. Es fehlten 7 Modelle (kuh, schwein, huhn, schweinestall, holzhuette,
+    jagdhuette, sternwarte), der Packer lief nach FASSUNG 811/833 nicht mehr. Die Baukasten-Stadt hatte gebündelt 56
+    Modelle, mit `?quelle=1` 65 (887-stadt S5, Gegenprobe). Jetzt baut der Haken, gebaut und `?quelle=1` haben beide 65.
+    Die leichte Stadt war aktuell: der Packer lieferte am 01.11. Byte für Byte die Dateien in git.
+  - **Größen** (Byte, in Klammern gz -9):
+    - Leichte Stadt: Bündel 369 165 → 368 107 (137 052 → 136 920). Stilblatt 36 881 → 26 311 (9 534 → 6 043), Vite
+      verkleinert es jetzt. Quests 192 385 → 185 808, Äcker 10 951 → 10 929, Auto-Schau 21 979 → 21 947.
+    - Baukasten-Stadt (frisch gepackt → Vite): 3 626 699 → 3 579 901 (1 258 757 → 1 243 975). Rollup wirft toten Code
+      weg. Stilblatt 9 707 → 8 012.
+    - Ziel es2020 lässt `?.`/`??` stehen. Der Packer schrieb sie für es2019 um, die Quellen und `min/` haben sie längst.
+    - Platz: jede Code-Änderung an stadt/ legt ein neues Bündel von 3,5 MB (gz 1,2 MB) in git. `bau/` hält die
+      Stücke der letzten 3 Manifeste.
+  - **Nachweis „dasselbe“:**
+    - Vertrag mit den Packern fest in der Sonde: dieselben Dateien, Reihenfolge, Vertretungen, window-Namen und Stempel
+      (887-stadt B2).
+    - Inhalt der Bündel (Zeichenketten, Vorlagen-Texte, Eigenschaftsnamen, Zahlen über Rollups `parseAst`), leichte
+      Stadt: 32 860 gegen 32 818 Einträge. Abweichend sind nur 23× `"use strict"`, 3× `type`/`"module"` (die
+      Vertretungen), `null`-Vergleiche aus der es2019-Umschreibung und eingesetzte Konstanten. Quests, Äcker und
+      Auto-Schau unterscheiden sich nur im `"use strict"`.
+    - **Pixelvergleich** (`scratchpad/m887/stadt/pixel.js`), verschränkt A B B A, A = fc5e3ae3, für die
+      Baukasten-Stadt der Packer frisch auf denselben Quellen. Uhr angehalten: Date, performance.now und die Zeit der
+      Bildschleife fest, Zufall mit festem Startwert. Ohne das zeigt schon derselbe Stand zweimal 4–13 % andere Punkte
+      (Rauch, Wasser, Züge, Mühle).
+      - Ansichten: leichte Stadt Winter-Prüfbild, Herbst Tag 900 × 600, Sommer Nacht, Telefon 360 × 780 Tag,
+        390 × 844 Nacht, kleiner Rahmen 360 × 225, Ladebild; Winterhausen (`stadt.html?neu=1&still=1`), Werkbank Dom.
+      - Ergebnis: in keiner Ansicht ein stabiler Bildpunkt (in beiden Läufen von A und von B gleich) mit A ≠ B. Je
+        Ansicht ist mindestens ein Paar A/B 0 Bildpunkte verschieden; Winterhausen, Dom, Telefon-Tag und Ladebild
+        (Bündel abgewiesen: nur was vor den Skripten steht, mit dem verkleinerten Stilblatt) beide Paare.
+      - Die übrigen Abweichungen sind so groß wie A/A bzw. B/B: zweiter gegen ersten Lauf, bei A und B gleich häufig.
+    - **Sonde 887-stadt** (neu, B1–B8 + S1–S5). Gegenprobe gegen fc5e3ae3: B 38 rot, S 8 rot. Darunter S5: gebündelt 56
+      Modelle, mit `?quelle=1` 65 (der veraltete Stand).
+  - **Messung** (`scratchpad/m887/stadt/messen.js`, Werte in `scratchpad/m887/stadt/mess/`):
+    - Aufbau: leichte Stadt wie im Spiel (`?eingebettet=1&mini=1&demo=1`), Telefon 393 × 800, CPU 4×. Leitung im
+      Server wie ladezeit-messen.js (HTTP/2 mit TLS, gzip, ETag, max-age=600, RTT je Anfrage, 2 RTT je Verbindung,
+      geteilte Bandbreite), supabase-js 2.117.3 gedrosselt. Profil auf der Platte, kalt → wieder. A = fc5e3ae3, B = M5,
+      verschränkt.
+    - Angaben: Median; Unterschied B − A gepaart mit 95-%-Bereich. Vorher festgelegtes Maß: „Stadt fertig“ (erstes Bild,
+      `__fertig`).
+    - 4G (9 Mbit/s, 60 ms), 7 Paare:
+      - kalt fertig 4 129 → 3 747 ms, **−70 [−522 … +106]** (5↓ 2↑); DOMContentLoaded −170 [−346 … −10] (6↓ 1↑),
+        FCP (Ladebild) +16 [−4 … +56].
+      - wieder fertig 4 088 → 3 756, −633 [−1 551 … +180].
+      - A/A (5 Paare): kalt fertig +207 [−695 … +424], DCL +12 [−549 … +459], wieder fertig +530 [+212 … +1 120].
+      - Rauschgrenze also mindestens ±500 ms. Das 4G-A/A „wieder“ schließt die 0 aus: reines Rauschen, wie im Plan
+        gewarnt.
+    - 3G (1,6 Mbit/s, 150 ms), 6 Paare:
+      - kalt fertig 5 051 → 5 230, +244 [−649 … +435] (2↓ 4↑); DCL −40 [−288 … +251].
+      - wieder fertig 3 614 → 3 611, −75 [−286 … +577].
+      - A/A (5 Paare): kalt fertig −1 [−558 … +454].
+    - **Ergebnis: kein Unterschied über der Rauschgrenze, weder schneller noch langsamer.** Übertragen kalt (4G)
+      575 → 571 KB, Anfragen 45 → 45.
+    - Erwarteter Gewinn: das Bündel wird früher angefordert (modulepreload statt nach supabase-js). Er zeigt sich nur
+      im DOMContentLoaded bei 4G, und der Bereich liegt am Rand. Beim Wiederöffnen kam das Ladebild mit M5 öfter sofort
+      (FCP < 400 ms in 3 von 7 statt 1 von 7). Das Modul blockiert den Parser nicht mehr, gesichert ist es nicht.
