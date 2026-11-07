@@ -622,9 +622,10 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     Weiterleitungen beim Neu-Messen im Kern. min/app.js 746 579 → 733 198 B (gz 203 669 → 199 673), rest1/2/3/7 je
     0,5–1,1 KB gz kleiner.
   - **Update-Download (gerechnet, kein Rauschen):** eine Ein-Zeichen-Änderung am Tutor benannte auf d9637a22 alle 16
-    app-Dateien neu (min/app.js + 15 Stücke über `dmaTeilPasst`): **853 618 B gz**. Jetzt nur `bau/bruecke-*.js`:
-    **7 889 B gz (Faktor ~108)** – geprüft mit 887-bau B7 „Kaskade (Stück)“ (Änderung in src/app/tutor.js benennt nur
-    bruecke um, rueckfrage und sonde-zwei bleiben). Änderungen anderswo in app.js kosten wie bisher.
+    app-Dateien neu (min/app.js + 15 Stücke über `dmaTeilPasst`): **848 361 B gz** (gzip -9). Jetzt nur
+    `bau/bruecke-*.js`: **7 889 B gz (Faktor ~108)** – geprüft mit 887-bau B7 „Kaskade (Stück)“ (Änderung in
+    src/app/tutor.js benennt nur bruecke um, rueckfrage und sonde-zwei bleiben). Änderungen anderswo in app.js kosten
+    wie bisher.
   - **Platz (GitHub Pages, ≈948 MB von 1 GB):** alle Dateien im Baum zusammen +48 KB (2 212 703 278 → 2 212 751 350 B:
     src/app + bruecke + bau/bruecke + Sonde/Werkzeug, app.js und min/ kleiner). Jede spätere Tutor-Änderung legt ein
     neues bau/bruecke (~20 KB) dazu; `modul-bauen.js` räumt alles weg, was keines der letzten 3 Manifeste nennt.
