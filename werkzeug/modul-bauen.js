@@ -32,6 +32,9 @@ const crypto = require("crypto");
 const { execFileSync, spawnSync } = require("child_process");
 
 const STUECK = /-[A-Za-z0-9_-]{8}\.(js|css|json)$/;
+/* Dateien unter bau/, die nicht Vite gehören: bau/daten/ (daten-bauen.js), bau/uebungen/ und bau/uebungen-<hash>.js
+   (uebungen-teilen.js, M3b). Das Aufräumen hier lässt sie stehen; ihre Werkzeuge räumen selbst auf. */
+const FREMD = /^(?:daten\/|uebungen\/|uebungen-[A-Za-z0-9_-]{8}\.js$)/;
 
 function baumDateien(ordner) {
   if (!fs.existsSync(ordner)) return [];
@@ -108,6 +111,7 @@ function bauen(wurzel) {
       }
       const neu = jsonLesen(path.join(tmp, "manifest.json"));
       if (!neu || !Object.keys(neu).length) throw new Error("kein Manifest");
+      if (karte(neu).uebungen) throw new Error("ein Eingang heißt „uebungen“ – der Name gehört den Übungsteilen (uebungen-teilen.js, M3b)");
       const liste = [...dateien(neu)];
       liste.forEach((f) => {
         const q = path.join(tmp, f);
@@ -142,8 +146,8 @@ function bauen(wurzel) {
     alt.forEach((m) => dateien(m).forEach((f) => behalten.add(f)));
     baumDateien(BAU).forEach((f) => {
       const rel = path.relative(BAU, f).split(path.sep).join("/");
-      /* bau/daten/ verwaltet werkzeug/daten-bauen.js selbst */
-      if (STUECK.test(rel) && !/^daten\//.test(rel) && !behalten.has(rel)) { fs.unlinkSync(f); geloescht++; }
+      /* bau/daten/ verwaltet werkzeug/daten-bauen.js selbst, bau/uebungen/ und bau/uebungen-*.js werkzeug/uebungen-teilen.js (M3b) */
+      if (STUECK.test(rel) && !FREMD.test(rel) && !behalten.has(rel)) { fs.unlinkSync(f); geloescht++; }
     });
   }
   return { karte: karte(manifest), gebaut, fehler: null, geloescht };
@@ -171,7 +175,7 @@ function karteLesen(html) {
   try { return m ? JSON.parse(m[1]) : null; } catch (e) { return null; }
 }
 
-module.exports = { bauen, summe, karte, dateien, gitManifeste, zeileSetzen, karteLesen, STUECK, ZEILE, BLOCK };
+module.exports = { bauen, summe, karte, dateien, gitManifeste, zeileSetzen, karteLesen, STUECK, FREMD, ZEILE, BLOCK };
 
 if (require.main === module) {
   const w = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));

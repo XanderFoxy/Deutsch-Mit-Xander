@@ -806,9 +806,12 @@
     /* Jetzt ist der Bereich wirklich offen — jetzt lohnt sich das
        Nachladen seiner Daten, und der Bereich wird danach neu
        gezeichnet, damit er sie auch benutzt. */
-    if (t.dataset.target === "view-learn" && ExerciseData.ladeUebungen && !ExerciseData.uebungenDa()) {
-      ExerciseData.ladeUebungen().then(() => { dailyTaskPoolCache = null; renderSetup(); });
+    /* MODUL-UMBAU M3b: nur die gewählten Kategorien (ohne Wahl gar nichts – die Übersicht steht sofort); den Rest
+       holt uebungenVorladenSpaeter() in Ruhepausen. Mit ?quelle/ohne Teile wie bisher die ganze Sammlung. */
+    if (t.dataset.target === "view-learn" && ExerciseData.ladeUebungen && !ExerciseData.uebungenDa([...selectedCategories])) {
+      ExerciseData.ladeUebungen([...selectedCategories]).then(() => { dailyTaskPoolCache = null; renderSetup(); });
     }
+    if (t.dataset.target === "view-learn") uebungenVorladenSpaeter();
     /* FASSUNG 840 — XANDER (Funk 271): „unter Wissen und Klassenzimmer dann ins Klassenzimmer gehen wie immer auch
        nur zehnmal schneller". Gemessen (werkzeug/ladezeit-messen.js): der Tipp auf „Wissen" holte sofort den
        Kalendermonat (kalender/10.js, 229 KB) – genau in dem Moment, in dem man weiter ins Klassenzimmer tippt und
@@ -5417,6 +5420,9 @@
   // die sich innerhalb eines Jahres nie wiederholt (statt einer zufälligen Auswahl, die schon
   // nach wenigen Wochen wieder dieselbe Frage hätte zeigen können).
   let dailyTaskPoolCache = null;
+  /* MODUL-UMBAU M3b: die Sammlung kommt jetzt auch in Teilen; sind alle da (ExerciseData.uebungenVorladen), gilt der
+     Topf neu – wie bisher nach dem Laden der ganzen Datei */
+  window.addEventListener("dma-uebungen-ganz", () => { dailyTaskPoolCache = null; });
   function buildDailyTaskPool() {
     if (dailyTaskPoolCache) return dailyTaskPoolCache;
     const pool = [];
@@ -9514,6 +9520,18 @@
     "Zeit & Kalender": "🗓️",
   };
 
+  /* MODUL-UMBAU M3b (MODULE-PLAN.md Abschnitt 3): die Übungsdaten kommen je Kategorie (ExerciseData.ladeUebungen(ids)).
+     Damit der Tipp auf eine Kategorie nicht wartet, holt ExerciseData.uebungenVorladen() die übrigen in Ruhepausen –
+     zuerst die Karten der Übersicht in ihrer Reihenfolge, je Pause höchstens zwei, mit niedriger Priorität. Nur solange
+     „Lernen → Übungen" offen ist und nicht im Klassenzimmer (Funk 255: „die Verbindung zu den anderen hat oberste
+     Priorität"); sonst hält es an und macht beim nächsten Öffnen weiter. Liest nur Attribute (kein erzwungenes Layout). */
+  function uebungenVorladenSpaeter() {
+    if (!ExerciseData.uebungenVorladen) return;
+    try {
+      ExerciseData.uebungenVorladen(ExerciseData.activeCategories().map((c) => c.id),
+        () => !document.hidden && unterbereichOffen("view-learn", "sub-exercises") && !ruheImRaum());
+    } catch (e) { /* Vorladen darf nie stören */ }
+  }
   async function renderSetup() {
     /* FASSUNG 879 — noch aufgeschoben und nicht zu sehen (z. B. Anmeldung beim Start): nichts zeichnen; das holt
        die Wache nach, sobald der Bereich aufgeht – dann mit dem Stand von diesem Augenblick. */
@@ -9528,10 +9546,17 @@
        Bildschirm steht. Die Seite zeichnet alle Bereiche schon beim
        Start vor, auch die unsichtbaren — würde hier ohne diese Prüfung
        geladen, wäre nichts gewonnen. */
-    if (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa() && bereichSichtbar(setupEl)) {
-      setupEl.innerHTML = '<p class="empty-note">Die Aufgaben werden geladen …</p>';
-      await ExerciseData.ladeUebungen();
+    /* MODUL-UMBAU M3b (MODULE-PLAN.md Abschnitt 3): die Übersicht braucht nur die GEWÄHLTEN Kategorien (maxAvailable);
+       ohne Wahl keine einzige Aufgabe. Statt auf die ganze Sammlung (1,2 MB gepackt) wird nur auf deren Teile
+       gewartet. Steht die Übersicht schon (Tipp auf eine Karte), bleibt sie stehen, bis der Teil da ist – kein
+       „wird geladen" über den Karten; der Tipp setzt sein Häkchen sofort selbst. Mit ?quelle/ohne Teile lädt
+       ladeUebungen() wie bisher die ganze Datei. */
+    if (ExerciseData.ladeUebungen && bereichSichtbar(setupEl) && !ExerciseData.uebungenDa([...selectedCategories])) {
+      if (!setupEl.querySelector(".category-grid")) setupEl.innerHTML = '<p class="empty-note">Die Aufgaben werden geladen …</p>';
+      await ExerciseData.ladeUebungen([...selectedCategories]);
       dailyTaskPoolCache = null;
+      /* während des Wartens noch eine Karte dazugewählt? dann auch deren Teil */
+      if (!ExerciseData.uebungenDa([...selectedCategories])) await ExerciseData.ladeUebungen([...selectedCategories]);
     }
 
     const paused = Quiz.getState();
@@ -9695,6 +9720,8 @@
         </div>` : ""}
       ${selectedCategories.size === 0 ? '<p class="empty-note">Wähle mindestens eine Kategorie aus, um zu starten. Mehrere Kategorien zusammen ergeben spannendere Charakter-Typen!</p>' : '<p class="empty-note">⚡ Tipp: Antworte innerhalb von 4 Sekunden richtig für einen Tempo-Bonus.</p>'}
     `;
+    /* MODUL-UMBAU M3b: nach dem ersten Bild der Übersicht die übrigen Kategorien in Ruhepausen holen */
+    uebungenVorladenSpaeter();
 
     document.getElementById("uebungFokusWeg")?.addEventListener("click", () => { uebungFokusKategorie = null; renderSetup(); });
     setupEl.querySelectorAll(".category-card").forEach((card) => {
@@ -9708,6 +9735,10 @@
         if (e.target.closest(".cat-info-btn") || e.target.closest(".cat-collapse-btn") || e.target.closest(".quiztopic-row")) return;
         if (selectedCategories.has(id)) selectedCategories.delete(id);
         else selectedCategories.add(id);
+        /* MODUL-UMBAU M3b: das Häkchen sofort – auch wenn der Teil dieser Kategorie noch unterwegs ist */
+        card.classList.toggle("selected", selectedCategories.has(id));
+        const haken = card.querySelector(".cat-checkbox");
+        if (haken) haken.textContent = selectedCategories.has(id) ? "✓" : "";
         renderSetup();
       });
     });
@@ -9837,8 +9868,9 @@
       try {
         await Promise.all([
           wortschatzBereit(),
-          (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa())
-            ? ExerciseData.ladeUebungen() : Promise.resolve(true),
+          /* MODUL-UMBAU M3b: nur die gewählten Kategorien (mit ?quelle/ohne Teile die ganze Sammlung wie bisher) */
+          (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa([...selectedCategories]))
+            ? ExerciseData.ladeUebungen([...selectedCategories]) : Promise.resolve(true),
         ]);
       } catch (e) { /* dann eben mit dem, was da ist */ }
       startBtn.textContent = knopfText;

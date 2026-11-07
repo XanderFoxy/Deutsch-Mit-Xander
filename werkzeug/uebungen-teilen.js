@@ -101,7 +101,7 @@ function gleich(a, b, p) {
   return "";
 }
 /* JSON als JS-Literal: U+2028/U+2029 in Zeichenketten maskieren (ältere Browser lasen sie als Zeilenende) */
-function literal(x) { return JSON.stringify(x).replace(/ /g, "\\u2028").replace(/ /g, "\\u2029"); }
+function literal(x) { return JSON.stringify(x).replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029"); }
 function teilText(k, wert) {
   return "((window.DMA_DATEN=window.DMA_DATEN||{}).ZUSATZ_TEILE=window.DMA_DATEN.ZUSATZ_TEILE||{})[" + JSON.stringify(k) + "]=" + literal(wert) + ";\n";
 }

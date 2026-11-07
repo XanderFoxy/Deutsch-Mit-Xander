@@ -188,6 +188,18 @@ function verkleinern() {
 /* MODUL-UMBAU (Schritt 1, MODULE-PLAN.md Abschnitt 3, M1): der Vite-Bau steht in werkzeug/modul-bauen.js. Scheitert er,
    bleiben bau/ und DMA_MODUL, wie sie waren; die Stempel für min/ werden trotzdem gesetzt, Rückgabe am Ende 2. */
 let modulFehler = null;
+/* MODUL-UMBAU M3b (MODULE-PLAN.md Abschnitt 3): die Übungsdaten je Kategorie als Skript (werkzeug/uebungen-teilen.js,
+   aus der unveränderten data-uebungen.js). Scheitert das, gibt es keinen Eintrag „uebungen" in DMA_MODUL (die Seite lädt
+   die ganze Datei), laut auf stderr, Rückgabe 2. Fehlt das Werkzeug (Vergleichsstand), passiert nichts. */
+function uebungenTeilen() {
+  let ut = { eintrag: null, gebaut: false, neu: 0, geloescht: 0, fehler: null };
+  if (!fs.existsSync(path.join(__dirname, "uebungen-teilen.js"))) return ut;
+  try { ut = require("./uebungen-teilen.js").bauen(WURZEL); } catch (e) { ut = { eintrag: null, fehler: "uebungen-teilen.js: " + (e.message || e) }; }
+  if (ut.fehler) { modulFehler = modulFehler || "Übungsteile"; console.error("\n!!! ÜBUNGSTEILE: " + ut.fehler + " – DMA_MODUL ohne „uebungen“, die Seite lädt die ganze data-uebungen.js\n"); }
+  if (ut.gebaut) console.log("bau/uebungen: neu gebaut (" + ut.eintrag + ", " + ut.neu + " Dateien neu)");
+  if (ut.geloescht) console.log("bau/uebungen: " + ut.geloescht + " alte Teile gelöscht");
+  return ut;
+}
 function stempelSetzen() {
   const crypto = require("crypto");
   let mb = { karte: null, gebaut: false, fehler: null, geloescht: 0 };
@@ -195,6 +207,7 @@ function stempelSetzen() {
   if (mb.fehler) { modulFehler = mb.fehler; console.error("\n!!! MODUL-BAU: " + mb.fehler + "\n"); }
   if (mb.gebaut) console.log("bau/: neu gebaut (" + Object.keys(mb.karte || {}).join(", ") + ")");
   if (mb.geloescht) console.log("bau/: " + mb.geloescht + " alte Stücke gelöscht");
+  const ut = uebungenTeilen();
   const vk = verkleinern();
   if (vk.neu || vk.weg) console.log("min/: " + vk.neu + " neu verkleinert, " + vk.weg + " entfernt");
   let html = fs.readFileSync(indexPfad, "utf8");
@@ -247,7 +260,16 @@ function stempelSetzen() {
     return fs.existsSync(f) ? vor + datei + "?v=" + crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10) : alt;
   });
   /* MODUL-UMBAU (M1 b, seit M3 im Block von DMA_STEMPEL, vorn): window.DMA_MODUL (bei einem Baufehler bleibt die alte Angabe) */
-  try { html = require("./modul-bauen.js").zeileSetzen(html, mb.karte); } catch (e) {}
+  /* M3b: dazu „uebungen" (das Verzeichnis der Übungsteile). Scheitert das Teilen, fällt der Eintrag weg – die Seite lädt
+     dann die ganze data-uebungen.js wie bisher (nie falsche Daten). Scheitert nur Vite, bleiben dessen alte Einträge. */
+  try {
+    const MB = require("./modul-bauen.js");
+    let k = mb.karte;
+    if (k == null) { k = Object.assign({}, MB.karteLesen(html) || {}); delete k.uebungen; }
+    else k = Object.assign({}, k);
+    if (ut.eintrag) k.uebungen = ut.eintrag;
+    html = MB.zeileSetzen(html, (mb.karte == null && !Object.keys(k).length && !MB.karteLesen(html)) ? null : k);
+  } catch (e) {}
   /* MODUL-UMBAU: nur schreiben, wenn sich etwas geändert hat – sonst läse ein Server, der index.html gerade
      ausliefert (Sonden, Messung), im falschen Augenblick eine halbe Datei */
   if (html !== fs.readFileSync(indexPfad, "utf8")) fs.writeFileSync(indexPfad, html);
@@ -350,6 +372,11 @@ if (!/^\d+$/.test(zahl)) {
   if (mb && mb.fehler) {
     console.error("\n!!! MODUL-BAU: " + mb.fehler + "\n!!! Fassung NICHT gesetzt (DMA_VERSION und fassung.json unverändert). Erst den Bau richten, dann"
       + " node werkzeug/pruefe-887-bau.js, dann erneut.\n");
+    process.exit(1);
+  }
+  /* M3b: dasselbe für die Übungsteile */
+  if (uebungenTeilen().fehler) {
+    console.error("!!! Fassung NICHT gesetzt (Übungsteile, siehe oben; DMA_VERSION und fassung.json unverändert). Danach node werkzeug/pruefe-887-daten.js.\n");
     process.exit(1);
   }
   gleichlaufPruefen();

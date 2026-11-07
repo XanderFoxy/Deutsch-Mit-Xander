@@ -5195,7 +5195,9 @@ const ExerciseData = (function () {
      siehe ladeDatenteil() weiter unten. Vor dem Laden ist die Sammlung
      leer; die Oberfläche wartet deshalb an den paar Stellen, wo sie
      wirklich gebraucht wird, auf das Nachladen. */
-  function ZUSATZ_FRAGEN_() { return (window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN) || {}; }
+  /* MODUL-UMBAU M3b: solange die Sammlung nicht ganz da ist, die schon geholten Kategorien (je Kategorie vollständig,
+     siehe ladeUebungen(ids) weiter unten) */
+  function ZUSATZ_FRAGEN_() { const D = window.DMA_DATEN; return (D && (D.ZUSATZ_FRAGEN || D.ZUSATZ_TEILE)) || {}; }
   function zusatzBank(id) {
     return Core.shuffle(ZUSATZ_FRAGEN_()[id] || []).map(([prompt, correct, wrongs, explain, level, uebersetzung]) => {
       const opts = Core.shuffle([correct, ...wrongs]);
@@ -6313,7 +6315,8 @@ const ExerciseData = (function () {
      Verschwendung; hier kommen die Rohzeilen ungemischt zurück. */
   function alleRohfragen() {
     const alle = [];
-    const bank = ZUSATZ_FRAGEN_();
+    /* M3b: nur die GANZE Sammlung (wie bisher: alles oder nichts) – Tagesaufgabe und Wörterbuch hängen am ganzen Bestand */
+    const bank = (window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN) || {};
     Object.keys(bank).forEach((id) => {
       (bank[id] || []).forEach((z) => {
         alle.push({ categoryId: id, prompt: z[0], correct: z[1], wrongs: z[2], explain: z[3], level: z[4] });
@@ -6321,7 +6324,118 @@ const ExerciseData = (function () {
     });
     return alle;
   }
-  function ladeUebungen() { return ladeDatenteil("data-uebungen.js", "ZUSATZ_FRAGEN"); }
+  /* --- MODUL-UMBAU M3b: die Aufgabensammlung je Kategorie (MODULE-PLAN.md Abschnitt 3) -------------------------------
+     XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller" · (Funk 255): „die schnelle Performance … oberste
+     Priorität". „Lernen" wartete auf die ganze Sammlung (6,0 MB, 1,2 MB gepackt: 4G ~1,1 s, 3G ~6 s Leitung, dazu
+     ~260 ms Ausführen bei CPU 4×) – die Übersicht braucht ohne gewählte Kategorie keine einzige Aufgabe. Das
+     Bau-Werkzeug (werkzeug/uebungen-teilen.js) legt aus der unveränderten data-uebungen.js je Kategorie ein SKRIPT an
+     (bau/uebungen/<kategorie>-<hash>.js, 9–86 KB gepackt; Skript statt JSON, weil der Browser Skripte nebenher übersetzt
+     und ab dem dritten Laden aus dem Code-Speicher nimmt – M3 gemessen) und ein Verzeichnis (DMA_MODUL.uebungen).
+     Geholt wird nur, was die Auswahl braucht; den Rest holt uebungenVorladen() in Ruhepausen. Sind alle Teile da,
+     steht DMA_DATEN.ZUSATZ_FRAGEN wie bisher (in der Reihenfolge der Quelle – die Tagesaufgabe hängt daran).
+     Die ganze Datei wie bisher: mit ?quelle, ohne min/ (dma-ohne-min, Notweg dma-ganz), ohne Eintrag in DMA_MODUL –
+     und als Rückfall, wenn ein Teil oder das Verzeichnis nicht kommt (nie eine halbe Kategorie). */
+  function uebTeileWeg() {
+    const m = window.DMA_MODUL, k = m && m.uebungen;
+    if (typeof k !== "string" || !/^bau\/uebungen-[A-Za-z0-9_-]{8}\.js$/.test(k)) return null;
+    return window.DMA_Q && DMA_Q("data-uebungen.js") === "min/data-uebungen.js" ? k : null;
+  }
+  function uebSkript(src, leise) {
+    return new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = src;   /* ohne ?v: der Name kommt aus dem Inhalt (sw.js gibt bau/…-<hash> ungefragt aus dem Speicher) */
+      s.async = true;
+      if (leise) try { s.fetchPriority = "low"; } catch (e) {}
+      s.onload = () => fertig(true);
+      s.onerror = () => { try { s.remove(); } catch (e) {} fertig(false); };
+      document.head.appendChild(s);
+    });
+  }
+  let uebKarteHol = null;
+  function uebKarte() {
+    const D = window.DMA_DATEN;
+    if (D && D.ZUSATZ_KARTE) return Promise.resolve(D.ZUSATZ_KARTE);
+    const weg = uebTeileWeg();
+    if (!weg) return Promise.resolve(null);
+    if (!uebKarteHol) uebKarteHol = uebSkript(weg).then((ok) => {
+      const K = ok && window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_KARTE;
+      if (!K) uebKarteHol = null;
+      return K || null;
+    });
+    return uebKarteHol;
+  }
+  function uebTeilDa(k) { const T = window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_TEILE; return Boolean(T && T[k]); }
+  const uebTeilHol = {};
+  function uebTeil(K, k, leise) {
+    /* eine Kategorie ohne Zusatzaufgaben (z. B. „Meine Wörter") hat keinen Teil: nichts zu holen */
+    if (!K[k] || uebTeilDa(k)) return Promise.resolve(true);
+    if (!uebTeilHol[k]) uebTeilHol[k] = uebSkript("bau/uebungen/" + k + "-" + K[k] + ".js", leise).then((ok) => {
+      const da = ok && uebTeilDa(k);
+      if (!da) uebTeilHol[k] = null;
+      return da;
+    });
+    return uebTeilHol[k];
+  }
+  /* alle Teile da → ZUSATZ_FRAGEN in der Reihenfolge des Verzeichnisses (= der Quelle); Bescheid an die Seite */
+  function uebZusammen() {
+    const D = window.DMA_DATEN;
+    if (!D) return false;
+    if (D.ZUSATZ_FRAGEN) return true;
+    const K = D.ZUSATZ_KARTE, T = D.ZUSATZ_TEILE;
+    if (!K || !T) return false;
+    const ids = Object.keys(K);
+    if (!ids.every((k) => T[k])) return false;
+    const Z = {};
+    ids.forEach((k) => { Z[k] = T[k]; });
+    D.ZUSATZ_FRAGEN = Z;
+    try { window.dispatchEvent(new Event("dma-uebungen-ganz")); } catch (e) {}
+    return true;
+  }
+  function ladeUebungenDatei() { return ladeDatenteil("data-uebungen.js", "ZUSATZ_FRAGEN"); }
+  /* ids (Feld von Kategorien): nur diese; ohne ids: die ganze Sammlung (Kalenderrücken, Wörterbuch …) */
+  function ladeUebungen(ids) {
+    if (uebungenDa()) return Promise.resolve(true);
+    if (!uebTeileWeg()) return ladeUebungenDatei();
+    return uebKarte().then((K) => {
+      if (!K) return ladeUebungenDatei();
+      const liste = Array.isArray(ids) ? ids.map(String) : Object.keys(K);
+      return Promise.all(liste.map((k) => uebTeil(K, k))).then((r) => {
+        if (!r.every(Boolean)) return ladeUebungenDatei();
+        uebZusammen();
+        return true;
+      });
+    });
+  }
+  /* Nach dem ersten Bild der Übersicht: die übrigen Kategorien in Ruhepausen holen, damit der Tipp auf eine Kategorie
+     nicht wartet – zuerst die der Übersicht (zuerst, in ihrer Reihenfolge), dann der Rest des Verzeichnisses; höchstens
+     zwei zugleich und mit niedriger Priorität. darf() falsch (Bereich zu, Klassenzimmer, Seite verdeckt): anhalten –
+     der nächste Aufruf macht dort weiter. */
+  let uebVorNr = 0, uebVorAktiv = false;
+  function uebungenVorladen(zuerst, darf) {
+    if (uebVorAktiv || uebungenDa() || !uebTeileWeg() || (typeof darf === "function" && !darf())) return;
+    uebVorAktiv = true;
+    const nr = ++uebVorNr;
+    const ende = () => { if (nr === uebVorNr) uebVorAktiv = false; };
+    const pause = (f) => { if (window.requestIdleCallback) requestIdleCallback(f, { timeout: 1500 }); else setTimeout(f, 60); };
+    uebKarte().then((K) => {
+      if (!K) { ende(); return; }
+      const reihe = [], gesehen = new Set();
+      (zuerst || []).concat(Object.keys(K)).forEach((k) => { if (K[k] && !gesehen.has(k)) { gesehen.add(k); reihe.push(k); } });
+      let i = 0, laufen = 0;
+      const weiter = () => {
+        if (nr !== uebVorNr) return;
+        if (uebungenDa() || (typeof darf === "function" && !darf())) { ende(); return; }
+        while (laufen < 2 && i < reihe.length) {
+          const k = reihe[i++];
+          if (uebTeilDa(k)) continue;
+          laufen++;
+          uebTeil(K, k, true).then(() => { laufen--; pause(weiter); });
+        }
+        if (i >= reihe.length && !laufen) { uebZusammen(); ende(); }
+      };
+      pause(weiter);
+    }, ende);
+  }
   /* --- Der Kalender kommt monatsweise -------------------------------
      Der ganze Kalender wiegt 7,5 MB, weil dort 366 Tage in sechs
      Niveaus und zehn Sprachen liegen. Gebraucht wird davon fast immer
@@ -6374,7 +6488,15 @@ const ExerciseData = (function () {
     for (let m = 1; m <= 12; m++) if (!monatGeladen(String(m).padStart(2, "0"))) return false;
     return true;
   }
-  function uebungenDa() { return Boolean(window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN); }
+  /* ohne ids: die ganze Sammlung; mit ids (M3b): diese Kategorien */
+  function uebungenDa(ids) {
+    const D = window.DMA_DATEN;
+    if (D && D.ZUSATZ_FRAGEN) return true;
+    if (!Array.isArray(ids) || !uebTeileWeg()) return false;
+    const K = D && D.ZUSATZ_KARTE;
+    if (!K) return ids.length === 0;
+    return ids.every((k) => !K[k] || uebTeilDa(k));
+  }
   /* „Kalender da“ heißt jetzt: das Verzeichnis UND der laufende Monat
      sind geladen. Nur die leere Sammlung zu prüfen, würde reichen,
      sobald irgendein Monat da ist — dann fehlte womöglich genau der
@@ -6384,5 +6506,5 @@ const ExerciseData = (function () {
     return monatGeladen(String(new Date().getMonth() + 1).padStart(2, "0"));
   }
 
-  return { ladeUebungen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
+  return { ladeUebungen, uebungenVorladen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
 })();
