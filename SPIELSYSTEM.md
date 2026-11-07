@@ -8156,14 +8156,14 @@ die übrigen Gewinne liegen weit über der Streuung.
 | Sonde | Ergebnis |
 |---|---|
 | 887-sichern | 41 ok, 2 rot (S) im Gesamtlauf – ein Sonden-Fehler: aus Teil K stand noch eine geplante Sicherung an (setTimeout bis 20 s), S wartete nur 0,8 s. Sonde berichtigt (f105c7a4), K+S danach grün; **Gesamtlauf auf dem Endstand (07.11.): 43/43 grün** (A B W F T R D K S L) |
-| 884-ton310 | **A1–A6 grün** (Tipp erst, wenn das Ziel still steht; „neu=true“ in allen sechs), 44 ok; 1 rot: „I: keine Seitenfehler“ (`Cannot read properties of undefined (reading 'length')`, 2×) – derselbe Fehler steht im 886-Diagnoselauf des Prüfers (ton310-diag-886), also nicht von 887 (der bekannte Wettlauf in der Szene, `SZ.sichtbare`). ⟨TON310-2⟩ |
+| 884-ton310 | **A1–A6 grün** (Tipp erst, wenn das Ziel still steht; „neu=true“ in allen sechs), 44 ok; 1 rot: „I: keine Seitenfehler“ (`Cannot read properties of undefined (reading 'length')`, 2×) – derselbe Fehler steht im 886-Diagnoselauf des Prüfers (ton310-diag-886), also nicht von 887 (der bekannte Wettlauf in der Szene, `SZ.sichtbare`). Lauf vom 01.11. 14:42–14:52 auf b-nb2 = Code von 7a899780. Ein zweiter Lauf am 07.11. bekam die Sperre nicht (8 Wartende aus anderen Strängen) und wurde abgebrochen. |
 | raumverlauf (lagerGelesen-Schutz) | 6/6 grün |
 | 887-zeile | 7/7 grün |
 | verlauf-doppelt | 5/5 grün |
 | leere | grün (exit 0) |
 | 884-leitung | 40 grün |
 | 885-praesenz | 69, alles grün |
-| 887-auto | ⟨AUTO⟩ |
+| 887-auto | 16/16 grün auf 6fde319b (erster Auftritt wie 886); `app.js` ist seitdem unverändert (`git diff 6fde319b HEAD -- app.js` leer). Gegenprobe e9187509 (mit L4a) rot. Wiederholung am 07.11. aus demselben Grund wie ton310 nicht gelaufen. |
 
 
 ### Sonden
