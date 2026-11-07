@@ -7,11 +7,29 @@
    Stück braucht mehrere Pakete und ist deshalb erst spät komplett;
    ein kürzeres, das SPÄTER gesprochen wurde, ist schon fertig.
    Die Reihe muss trotzdem nach der SPRECHZEIT abspielen, nicht nach
-   der Ankunft. */
+   der Ankunft.
+
+   BERICHTIGT 887 (Prüfung Runde 2): zwei Erwartungen stammten aus der
+   Zeit VOR zwei gewollten Änderungen in livechat.js und waren seitdem
+   falsch – auf 886 (52769d88) genau dieselbe Ausgabe wie auf 887:
+     1. Die Reihe hat nur noch EINEN Platz (LIVE_REIHE_MAX = 1; GEMELDET:
+        „Die letzte, die gesprochen wird, ist die aktuelle, und nach der
+        kann jeder sprechen.“). Von drei Stücken wartet also eins – das
+        zuletzt GESPROCHENE („drittens“), nicht das zuletzt angekommene
+        („zweitens“). Daran sieht man weiter, dass nach der Sprechzeit
+        eingereiht wird.
+     2. Was hereinkommt, ist nie zu alt (GEMELDET: „Emmy kann mich auf
+        ihrer Seite nicht mehr hören.“ – fremde Uhren gingen vor/nach):
+        das Alter zählt nur mit der eigenen Uhr, ab der Ankunft hier, und
+        erst in der eigenen Reihe (liveNaechste, 90 s). Ein Stück mit
+        einer fünf Minuten alten Absender-Uhr kommt also hinein.
+   Dazu setzt die Sonde jetzt den Ausgang (1 bei FALSCH); vorher endete sie
+   immer mit 0. */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = process.env.WURZEL || require("path").join(__dirname, "..");
 const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", ".json":"application/json", ".png":"image/png" };
+let falsch = 0;
 (async () => {
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/index.html";
@@ -43,12 +61,13 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
   });
 
   console.log("");
-  if (typeof erg === "string") console.log("  " + erg);
+  if (typeof erg === "string") { falsch++; console.log("  FALSCH — " + erg); }
   else {
     console.log("  Angekommen in dieser Reihenfolge: drittens, erstens, zweitens");
     console.log("  Abgespielt wird              : " + erg.join(", "));
-    const richtig = erg.join(",") === "erstens,zweitens,drittens";
-    console.log("  " + (richtig ? "Richtig — nach der Sprechzeit, nicht nach der Ankunft."
+    const richtig = erg.join(",") === "drittens";
+    if (!richtig) falsch++;
+    console.log("  " + (richtig ? "Richtig — es wartet das zuletzt GESPROCHENE (ein Platz), nicht das zuletzt angekommene."
                                 : "FALSCH — es klänge weiter wie rückwärts geredet."));
   }
   /* Und: dieselbe Aufnahme darf nicht zweimal in die Reihe.
@@ -67,7 +86,7 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
   if (doppelt) {
     console.log("");
     console.log("  Dieselbe Aufnahme zweimal eingereicht -> in der Reihe: " + doppelt.length
-      + (doppelt.length === 1 ? "  (einmal, richtig)" : "  FALSCH — sie kaeme doppelt"));
+      + (doppelt.length === 1 ? "  (einmal, richtig)" : (falsch++, "  FALSCH — sie kaeme doppelt")));
   }
   /* Und: die Reihe darf sich nicht stapeln.
      GEMELDET (Screenshot): „Xander Fox spricht · noch 20 in der Reihe." */
@@ -89,10 +108,11 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
   if (reihe) {
     console.log("");
     console.log("  Zwanzig Wortmeldungen auf einmal -> in der Reihe: " + reihe.vonZwanzig
-      + (reihe.vonZwanzig === 1 ? "  (nur die aktuelle, richtig)" : "  FALSCH"));
-    console.log("  Es bleiben die NEUESTEN            : " + reihe.letzte.join(", "));
-    console.log("  Fuenf Minuten alte Wortmeldung    : "
-      + (reihe.altDrin === 0 ? "kommt gar nicht erst in die Reihe" : "FALSCH — sie waere drin"));
+      + (reihe.vonZwanzig === 1 ? "  (nur die aktuelle, richtig)" : (falsch++, "  FALSCH")));
+    console.log("  Es bleiben die NEUESTEN            : " + reihe.letzte.join(", ")
+      + (reihe.letzte.join(",") === "nr19" ? "" : (falsch++, "  FALSCH — nicht die neueste")));
+    console.log("  Absender-Uhr fuenf Minuten zurueck : "
+      + (reihe.altDrin === 1 ? "kommt hinein (gezaehlt wird ab der Ankunft hier, richtig)" : (falsch++, "  FALSCH — die fremde Uhr schaltet sie stumm")));
   }
   /* Dieselbe Kennung darf NIE ein zweites Mal in die Reihe —
      auch nicht Minuten spaeter.
@@ -115,7 +135,10 @@ const TYP = { ".html":"text/html", ".js":"text/javascript", ".css":"text/css", "
     console.log("");
     console.log("  Erste Zustellung          -> in der Reihe: " + spaeter.erste);
     console.log("  Dieselbe Kennung nochmal  -> in der Reihe: " + spaeter.zweite
-      + (spaeter.zweite === 0 ? "  (gar nicht — richtig)" : "  FALSCH — sie kaeme doppelt"));
+      + (spaeter.zweite === 0 ? "  (gar nicht — richtig)" : (falsch++, "  FALSCH — sie kaeme doppelt")));
   }
+  if (!doppelt || !reihe || !spaeter) falsch++;
+  console.log("\n  " + (falsch ? falsch + " FALSCH" : "alles richtig") + "\n");
+  process.exitCode = falsch ? 1 : 0;
   await br.close(); srv.close();
 })();
