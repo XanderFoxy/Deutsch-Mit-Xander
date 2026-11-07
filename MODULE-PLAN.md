@@ -635,5 +635,7 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     - Die alten `.min.js` der Stadt nach einer Fassung löschen.
     - PIL für `leicht-zwerg.py` fehlt auf dem Prüfrechner. Neue Zwergbilder entstehen hier also nicht; das war schon mit
       dem Packer so.
-    - Einmischen nach `module-umbau`: `git merge-tree` gegen 8a3a027b ohne Konflikt. Gegen `live-haenger` gibt es nur
-      den bekannten Konflikt in `index.html` aus M2 (Stempel neu bauen, Plan 0.11).
+    - Einmischen nach `module-umbau` (`git merge-tree` gegen a2cafbbe): Code ohne Konflikt; `fassung-setzen.js` und
+      `modul-bauen.js` mischen sich selbst. Konflikt nur am Ende dieses Dokuments, weil beide Stränge an Abschnitt 7
+      anhängen: beide Blöcke behalten. Gegen `live-haenger` gibt es nur den bekannten Konflikt in `index.html` aus M2
+      (Stempel neu bauen, Plan 0.11).
