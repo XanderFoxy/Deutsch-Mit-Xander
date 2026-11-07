@@ -8192,6 +8192,14 @@ verschränkt gegen 886 nachgeprüft.
 | 885-sparsam | A B C D E G H L M N (41 ok) und R P U X3 V NT (28 ok) grün; **X5 rot** („binnen 10 s die Blase“ – kein Tipp-Nachholen): das ist der bekannte Rand der Notfall-Bremse (Offen 8, in 886 im Sammellauf ebenso einmal rot, allein wiederholt grün); 887 ändert weder backend.js noch die Abfragen. NT0 und die Fälle danach (NT0 … SWS0) liefen nicht mehr zu Ende (alle Läufe wurden um 10:16 von außen beendet) – **vor der Auslieferung nachholen**, zusammen mit X5 allein (3×). | – |
 
 ### Offen / Vorschläge für den Funk (nicht gebaut, weil sichtbar)
+- **Autos nicht mehr vorab malen (L4, wartet auf OK):** weg wären 2 lange Bilder (1,0–2,7 s, Endstand-Messung 836–2 067 ms)
+  etwa 10 s nach JEDEM Betreten, für alle im Raum; dazu käme 1 Ruck von ≈ 0,9–1,2 s beim ersten Auftritt eines 3D-Autos je
+  Sitzung. Ohne Ruck (Bitmaps beim Vorladen behalten, 41–51 MB je Auto) erst nach einer Messung auf dem Telefon – 888.
+- **888 – Lager in Stücken:** der Schluss der Leerlauf-Sicherung (put des ganzen Verlaufs) bleibt ein Bild von 70–170 ms alle
+  ≥ 20 s (CPU 4×); nur das letzte Stück neu schreiben, mit eigener Sonde (altes Format lesen, kein Verlust mitten im Schreiben).
+- **Vor dem Ausliefern im Hauptbaum** (auf dem Endstand nicht mehr gelaufen, Sperre): 885-sparsam ganz (Code von backend.js
+  und den Abfragen unverändert), 885-rueckkehr, 885-swvorladen, 884-notweg, 884-messung sowie aufgabe-reist, benoten,
+  bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem.
 - **2b – Verlauf erst beim Hochrollen:** statt bis zu 20 000 Zeilen beim Betreten nur die sichtbaren holen, ältere erst beim
   Hochrollen. Spart beim Betreten die Hintergrund-Seiten ganz – ändert aber, wann ältere Zeilen da sind.
 - **Deko-Animationen pausieren**, solange jemand spricht oder die Flut läuft (Hintergrundgesichter, Glitzer) – sichtbar.
