@@ -207,7 +207,12 @@ function falscherKlient() {
   const raum = [], rest = [];
   const groesse = { kern: 0, raum: 0, rest: 0 };
   rumpf.forEach((st) => {
-    if (st.type !== "FunctionDeclaration" || !st.id || /^dmaTeil/.test(st.id.name)) return;
+    if (st.type !== "FunctionDeclaration" || !st.id || /^dma(Teil|Modul)/.test(st.id.name)) return;
+    /* MODUL-UMBAU M4 — dünne Weiterleitungen ins Modul („return dmaModul(…)“, werkzeug/app-modul-ziehen.js) bleiben
+       im Kern: ausgelagert müsste ein Ruf erst ein Stück holen, nur um ins Modul weiterzureichen, das längst da ist. */
+    const b = st.body.body;
+    if (b.length === 1 && b[0].type === "ReturnStatement" && b[0].argument && b[0].argument.type === "CallExpression"
+      && b[0].argument.callee.type === "Identifier" && b[0].argument.callee.name === "dmaModul") return;
     const ph = frueh(st.start, st.end);
     if (ph <= PHASEN.indexOf("reiter")) { groesse.kern += st.end - st.start; return; }
     if (ph === PHASEN.indexOf("raum") || /^(lc|livechat|kz|sit|klass)/i.test(st.id.name)) { raum.push(st.id.name); groesse.raum += st.end - st.start; }

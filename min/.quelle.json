@@ -56,7 +56,7 @@
  "rueckfrage.js": "482037a16ab51fbfa00926c49f6ca9acad516d8a",
  "spiel.js": "972fea07a570493d630b785b688a016f12ca1ecf",
  "data-werkstatt.js": "128890acecb735fb3a95dd82878968bfbeb34b01",
- "data-exercises.js": "4129fcc895fb7f4f593a7162698c02605767a790",
  "backend.js": "03f34bf3116261c80dd9005c8293df0d2ee83a19",
- "app.js": "9820f28b004dd00702d3638ef8d6287353c89ced"
+ "app.js": "85a978a8fefc611ea5402a3b775590e4b4fb9ae2",
+ "data-exercises.js": "4b1472fcf8720c8bd6cca402ba90765cf273bf8d"
 }
