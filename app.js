@@ -9555,10 +9555,11 @@
        ladeUebungen() wie bisher die ganze Datei. */
     if (ExerciseData.ladeUebungen && bereichSichtbar(setupEl) && !ExerciseData.uebungenDa([...selectedCategories])) {
       if (!setupEl.querySelector(".category-grid")) setupEl.innerHTML = '<p class="empty-note">Die Aufgaben werden geladen …</p>';
+      const gewaehlt = [...selectedCategories].join(",");
       await ExerciseData.ladeUebungen([...selectedCategories]);
       dailyTaskPoolCache = null;
-      /* während des Wartens noch eine Karte dazugewählt? dann auch deren Teil */
-      if (!ExerciseData.uebungenDa([...selectedCategories])) await ExerciseData.ladeUebungen([...selectedCategories]);
+      /* während des Wartens noch eine Karte dazugewählt? dann auch deren Teil (sonst kein zweiter Versuch, wie bisher) */
+      if ([...selectedCategories].join(",") !== gewaehlt && !ExerciseData.uebungenDa([...selectedCategories])) await ExerciseData.ladeUebungen([...selectedCategories]);
     }
 
     const paused = Quiz.getState();
