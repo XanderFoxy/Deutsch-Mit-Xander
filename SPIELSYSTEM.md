@@ -5127,7 +5127,8 @@ Supabase ist nachgebaut (echtes supabase-js 2.117.3, Route, routeWebSocket; in d
 - Klassenzimmer: Der Raumpuls alle 6 s an alle macht 10·N² Realtime-Nachrichten je Minute (allein im Raum ≈ 430 000 im Monat). Dazu kommen „redet“-Rundrufe und der Verlauf beim Zurückkommen (300 Zeilen samt Bild-Datenadressen). Die Datenbankgröße wächst durch Profilfotos je Chatzeile. Nichts davon ist angefasst (Verbindung hat Vorrang).
 - Feature-Schalter: Nach einem Fehler beim Start bleibt `{}` bis zum Neuladen gemerkt.
 - `onAuthStateChange` fehlt (ein abgemeldeter Tab behält `demo.user`).
-- `supabase-js@2` ist nicht auf eine Fassung festgelegt; die Sonden routen nach `supabase-js@2/dist`.
+- `supabase-js@2` ist nicht auf eine Fassung festgelegt; die Sonden routen nach `supabase-js@2/dist`. **Erledigt mit 887:** fest auf
+  `@2.119.0` (L7 in „Fassung 887 — Livestream ohne Hänger“), geprüft von `pruefe-887-supabase.js` und `fassung-setzen.js`.
 - Avatare und Galerie werden in Originalgröße hochgeladen.
 - Die Sonde 885-sparsam deckt vom Klassenzimmer nur den Raumkanal mit Puls ab (Fall R, Nachbesserung 2), nicht WebRTC, Ton und den Spiel-Abgleich bei verdeckter Seite.
 - Ist die Bremse wegen 402 gezogen, holt das Zurückkommen auf die Seite nichts sofort nach (bewusst, sonst ginge bei jedem App-Wechsel ein Satz Abfragen in die Sperre). Die Takte warten, bis sich die Echtzeit-Leitung zurückmeldet (in der Sperre einmal je Minute versucht), eine angetippte Abfrage durchkommt oder die Stufe endet. Bei 5xx/429 ist das seit Nachbesserung 3 behoben (Zurückkommen und Tipp holen sofort, die Pause dauert höchstens 2,4 min).
@@ -8065,7 +8066,9 @@ CPU 6× mit Fotos: 308–319 ms am Stück → in Stücken; der Schluss (das put 
   wenn sich die Menge der Fotos ändert; der Schlüssel beginnt bewusst nicht mit `dma_livechat_chat_`, sonst hielte
   `archivRaeume` ihn für einen Verlauf). Damit sind sie beim Betreten schon beim ersten Zeichnen da – ohne Lager-Abfrage, ohne
   zweites volles Zeichnen – und auch ohne IndexedDB (privater Modus, manche WebView). Der erste Stand ließ sie nach dem
-  Neuladen nachpoppen und verlor sie ohne IndexedDB ganz (886 hatte sie in jeder Zeile).
+  Neuladen nachpoppen und verlor sie ohne IndexedDB ganz (886 hatte sie in jeder Zeile). **Gedeckelt in der Auslieferung**
+  (Prüfung Runde 1, siehe „Auslieferung 887 – Nachbesserung“ unten): Fotos über 40 K nur im Lager, Tafel ≤ 400 K, danach
+  ≥ 320 K frei, sonst halbiert bis ganz weg; der Stand gilt erst nach dem Schreiben.
 - **Doppelprüfung** in `nachrichtAnhaengen` über ein Kennungs-Verzeichnis (`Set`) statt `some()` über alle Zeilen; es wird neu
   gebaut, wenn die Liste ihre Referenz ODER Länge ändert, und ein Treffer wird gegengeprüft (eine gelöschte Zeile gilt nie
   fälschlich als „schon da“).
@@ -8261,6 +8264,68 @@ die übrigen Gewinne liegen weit über der Streuung.
 | 885-praesenz | 69, alles grün |
 | 887-auto | 16/16 grün auf 6fde319b (erster Auftritt wie 886); `app.js` ist seitdem unverändert (`git diff 6fde319b HEAD -- app.js` leer). Gegenprobe e9187509 (mit L4a) rot. Wiederholung am 07.11. aus demselben Grund wie ton310 nicht gelaufen. |
 
+
+
+### Auslieferung 887 – Nachbesserung (Prüfung Runde 1, 07.11.)
+Geprüft wurde e84652ac (Livestream-Strang + Nachtrag eingemischt). Hauptbaum, `DMA_VERSION` bleibt 886.
+
+| # | Befund | Schwere | Was jetzt gilt |
+|---|---|---|---|
+| 1 | Der Merge e84652ac verlor die Pinnung von supabase-js (index.html lud wieder `@2`); 2.118.0 wäre inzwischen eine Rückstufung | wichtig | fest auf **@2.119.0** (L7 oben berichtigt); Sonde `pruefe-887-supabase.js` neu, `fassung-setzen.js` bricht ohne feste Fassung ab |
+| 2 | Fototafel ohne Größengrenze: bei großen Fotos / vollem Speicher nur ~60 K localStorage frei (886: 0,3–1,6 M), danach scheitert z. B. das eigene Profilfoto still | klein | gedeckelt (unten); Sonde 887-sichern Q1/Q2 |
+| 3 | `fotoTafelStand[raum]` vor `setItem` gesetzt – ein gescheiterter Versuch wurde nie wiederholt | klein | Stand erst nach dem Schreiben; Sonde 887-sichern Q3 |
+| 4 | Planungs-Hänger: feuert der Plan einer neuen Zeile, während ein Stücklauf noch läuft, kehrt `chatSichernStueckweise` sofort zurück – „schmutzig“ ohne Plan | klein | das Ende des Laufs (`insLager`, auch der Fehlerweg) plant neu, wenn unterwegs etwas dazukam; Sonde 887-sichern P |
+| 5 | Werkstatt veraltet | klein | mit `werkzeug/werkstatt-setzen.py` neu geschrieben (Stand „Fassung 887 — Livestream ohne Hänger“ in der Prüfung; die drei von 886 entfernten Zeilen nicht wieder aufgenommen; „grünes Licht erst nach Fassungs-Abgleich“ ist entschieden und steht nicht mehr unter offen) |
+
+**Fototafel (livechat.js `chatFotoTafel`):** Fotos über **40 000 Zeichen** kommen nicht in die Tafel (sie liegen im Lager und
+kommen nach dem Betreten von dort, wie in der ersten 887-Fassung). Die Tafel hat höchstens **400 000 Zeichen**, die Fotos der
+jüngsten Zeilen zuerst. Nach dem Schreiben müssen noch **320 000 Zeichen** frei sein – geprüft mit einer Probe unter
+`dma__frei`, die sofort wieder entfernt wird. Sonst, oder wenn schon das Schreiben scheitert, wird die Tafel halbiert (wie 886
+den Verlauf halbierte), bis sie passt, zuletzt ganz entfernt. Am Verlauf selbst ändert das nichts. Der Stand
+(`fotoTafelStand`) gilt erst nach dem Schreiben; ging gar nichts, wird beim nächsten Sichern wieder versucht.
+
+*Gemessen mit dem Messskript des Prüfers* (`scratchpad/a887/quota.js`, Kopie mit drei Bäumen in `scratchpad/nb887/`; 300
+Zeilen, 30 Autoren mit Foto, nach `pruefVerlaufSetzen`; „frei“ = was danach noch in den localStorage passt; 886 = 52769d88,
+887alt = e84652ac):
+
+| Fall (Fotogröße, frei vorher) | 886 frei danach | 887alt | **887 jetzt** | Tafel jetzt |
+|---|---|---|---|---|
+| 20 K, 2 000 K | 492 K | 1 360 K | **1 580 K** | 19 Fotos, 380 K |
+| 20 K, 700 K | 318 K | **60 K** | **480 K** | 9 Fotos, 180 K |
+| 140 K, 4 300 K | 1 638 K | **60 K** | **4 260 K** | keine (> 40 K) |
+| 20 K, 3 Räume, 2 000 K | 110 K | **80 K** | **741 K** | je 19 Fotos |
+| 60 K, 2 000 K | 858 K | 160 K | **1 960 K** | keine |
+| 16 K, 1 000 K | 388 K | – | **576 K** | 24 Fotos, 384 K |
+| 20 K, 400 K | 18 K (danach scheitert ein 20-K-Eintrag) | – | **321 K** | 2 Fotos |
+| 20 K, 350 K | 350 K (Verlauf nicht gesichert) | – | **311 K** | keine |
+| 40 K, 2 000 K | 476 K | – | **1 600 K** | 9 Fotos |
+| 20 K, 150 K | **150 K** (Verlauf nicht gesichert) | – | **111 K** | keine |
+
+In allen Fällen lässt 887 jetzt mindestens so viel frei wie 886 oder ≥ 300 K – **mit einer Ausnahme, ehrlich:** bei nur 150 K
+frei lässt 887 111 K, 886 150 K. Das ist nicht die Tafel (die bleibt leer), sondern der Verlauf selbst: 886 konnte die 300
+Zeilen mit den Fotos darin gar nicht schreiben (der Verlauf dieses Raums blieb ungesichert), 887 schreibt sie ohne Fotos
+(39 K). Token-Erneuerung, Einstellung und ein 20-K-Merker gingen in allen 887-Fällen; bei 886 scheiterte der 20-K-Merker im
+Fall „400 K“.
+*Kosten der Probe* (CPU 4×, 300 Zeilen, 3 Fotos je 16 K, Median aus 7, je 2 Runden, `scratchpad/nb887/tafelzeit.js`): Sichern
+mit geänderter Tafel 8,8 / 10,2 ms (e84652ac 3,5 / 4,3 ms), ohne Änderung 1,4 / 1,7 ms (e84652ac 1,7 / 2,0 ms). Also rund
++5–6 ms, nur wenn sich die Menge der Fotos in den letzten 300 Zeilen ändert, und dann meist in einer Leerlaufpause (bei
+Weggehen/Verdecken/Raumwechsel im sofortigen Sichern).
+
+**Planungs-Hänger (livechat.js `chatSichernStueckweise`):** `insLager` (Ende des Stücklaufs) und der Fehlerweg in `stuecke`
+rufen jetzt `chatSichernBald()`, wenn `sichernSchmutzig` steht (vorher nur im Sonderfall „Lager unterwegs gelesen“). Sonde P
+stellt es nach: Zeile p-1 startet den Lauf, p-2 kommt mitten im Lauf, ihr Plan feuert vor dessen Ende (Abstand 300 ms,
+Leerlaufpausen festgehalten). Vorher: p-2 nie im Lager (1 201 Zeilen, „schmutzig“, kein Plan); jetzt 1 202 Zeilen, nichts steht aus.
+
+**Das Absturz-Fenster – ehrlich:** 886 schrieb jede empfangene Zeile sofort (synchron) in localStorage und Lager. 887 sichert
+gebündelt: eine neue Zeile liegt bis zur nächsten Sicherung **nur im Arbeitsspeicher** – höchstens 20 s Abstand + bis zu 5 s
+Warten auf eine Leerlaufpause + die Dauer des Stücklaufs (meist unter 1 s; unter Dauerlast höchstens 2 s je 400 Zeilen, weil
+jedes Stück spätestens nach 2 s läuft). Bei `pagehide`, „verdeckt“ (`visibilitychange`), Raumwechsel, Verlassen und Leeren
+wird sofort gesichert – das deckt Schließen, App-Wechsel, Sperrbildschirm und Neuladen ab. **Nicht** gedeckt ist ein harter
+Absturz ohne diese Ereignisse (Browser abgeschossen, Speicher voll, Akku leer): dann fehlen auf DIESEM Gerät die Zeilen dieses
+Fensters. Auf dem Server liegt eine Kopie nur von Zeilen angemeldeter Autoren (`serverSichern` schreibt die eigene Zeile, wenn
+man angemeldet ist; Flüstern nur, wenn beide Seiten ein Konto haben) – Zeilen von Gästen, Flüstern ohne Konto und System-Zeilen
+gibt es nur in den Geräten der Anwesenden. Beim nächsten Betreten holt der Verlauf vom Server (und von den anderen im Raum,
+`verlaufNachreichen`) zurück, was dort liegt.
 
 ### Sonden
 Alle auf dem Endstand (dc0c9325, Code wie heute; ausgeführt aus einer Kopie des Stands, `WURZEL` = Kopie), nacheinander
