@@ -9522,14 +9522,16 @@
 
   /* MODUL-UMBAU M3b (MODULE-PLAN.md Abschnitt 3): die Übungsdaten kommen je Kategorie (ExerciseData.ladeUebungen(ids)).
      Damit der Tipp auf eine Kategorie nicht wartet, holt ExerciseData.uebungenVorladen() die übrigen in Ruhepausen –
-     zuerst die Karten der Übersicht in ihrer Reihenfolge, je Pause höchstens zwei, mit niedriger Priorität. Nur solange
-     „Lernen → Übungen" offen ist und nicht im Klassenzimmer (Funk 255: „die Verbindung zu den anderen hat oberste
-     Priorität"); sonst hält es an und macht beim nächsten Öffnen weiter. Liest nur Attribute (kein erzwungenes Layout). */
+     zuerst die Karten der Übersicht in ihrer Reihenfolge, höchstens vier zugleich, mit niedriger Priorität. Solange
+     „Lernen" offen ist (auch Spiele, Wörterbuch, Artikel-Garten … lesen die Sammlung – bisher kam sie dort mit dem Tipp
+     auf „Lernen" ganz) und nicht im Klassenzimmer (Funk 255: „die Verbindung zu den anderen hat oberste Priorität");
+     sonst hält es an und macht beim nächsten Öffnen weiter. Liest nur Attribute (kein erzwungenes Layout). */
   function uebungenVorladenSpaeter() {
     if (!ExerciseData.uebungenVorladen) return;
+    const lernenOffen = () => { const v = document.getElementById("view-learn"); return Boolean(v && v.dataset.active === "true"); };
     try {
       ExerciseData.uebungenVorladen(ExerciseData.activeCategories().map((c) => c.id),
-        () => !document.hidden && unterbereichOffen("view-learn", "sub-exercises") && !ruheImRaum());
+        () => !document.hidden && lernenOffen() && !ruheImRaum());
     } catch (e) { /* Vorladen darf nie stören */ }
   }
   async function renderSetup() {

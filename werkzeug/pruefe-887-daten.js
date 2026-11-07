@@ -38,7 +38,7 @@
      B  im Browser (Chromium, ohne Helfer, Gast)
        B1 Start: keine Übungsdaten (weder Datei noch Teile noch Verzeichnis)
        B2 „Lernen": die Übersicht steht ohne data-uebungen.js; Teile erst nach
-          dem ersten Bild der Übersicht, höchstens 2 zugleich, niedrige
+          dem ersten Bild der Übersicht, höchstens 4 zugleich, niedrige
           Priorität
        B3 Vorladen fertig: ZUSATZ_FRAGEN = Quelle (JSON gleich, Reihenfolge
           gleich), Ereignis dma-uebungen-ganz, alleRohfragen vollständig
@@ -51,7 +51,8 @@
        B7 ?quelle und Notweg (dma-ganz): die ganze Quelle wie bisher, keine
           Teile
        B8 Vorladen hält an, sobald „Lernen" zu ist (Wissen/Klassenzimmer),
-          und macht beim Zurückkommen weiter
+          und macht beim Zurückkommen weiter; in einem anderen Unterbereich von
+          „Lernen" (Spiele) läuft es weiter
 
    Aufruf:     node werkzeug/pruefe-887-daten.js            (NUR=D|B, z. B. NUR=B TEIL=B2,B4)
    Gegenprobe: WURZEL=<ordner mit d9637a22> node werkzeug/pruefe-887-daten.js  → rot
@@ -308,7 +309,7 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       const frueh = teilZeiten.filter((t) => z2.bild == null || t < z2.bild);
       sage(teilZeiten.length > 0 && z2.bild != null && !frueh.length, "B2 Teile erst nach dem ersten Bild der Übersicht",
         "Bild " + Math.round(z2.bild) + " ms, erster Teil " + Math.round(Math.min.apply(null, teilZeiten.concat([Infinity]))) + " ms" + (frueh.length ? ", " + frueh.length + " davor" : ""));
-      sage(S.maxOffen > 0 && S.maxOffen <= 2, "B2 Vorladen: höchstens 2 Teile zugleich unterwegs", "höchstens " + S.maxOffen);
+      sage(S.maxOffen > 0 && S.maxOffen <= 4, "B2 Vorladen: höchstens 4 Teile zugleich unterwegs", "höchstens " + S.maxOffen);
       const prio = await s.pg.evaluate(() => [...document.querySelectorAll('script[src*="bau/uebungen/"]')].map((x) => x.fetchPriority));
       sage(prio.length > 0 && prio.every((x) => x === "low"), "B2 Vorladen mit niedriger Priorität (fetchPriority low)", prio.length + " Skripte, " + [...new Set(prio)].join("/"));
       /* B3 */
@@ -411,16 +412,22 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
     }
     /* B8 */
     if (soll("B8")) {
-      const s = await seite({ verzug: 150 });
+      const s = await seite({ verzug: 250 });
       const n0 = log.length;
       await lernen(s.pg);
       await s.pg.waitForFunction(() => performance.getEntriesByType("resource").filter((e) => /\/bau\/uebungen\//.test(e.name)).length >= 4, null, { timeout: 30000 }).catch(() => {});
+      /* anderer Unterbereich von „Lernen" (Spiele lesen die Sammlung auch): weiter */
+      const nSp = log.slice(n0).filter(istTeil).length;
+      await s.pg.evaluate(() => document.querySelector('#learnSubnav [data-sub="sub-games"]').click());
+      await s.pg.waitForTimeout(1200);
+      const nSp2 = log.slice(n0).filter(istTeil).length;
+      sage(nSp2 > nSp + 2, "B8 in „Lernen → Spiele“ läuft das Vorladen weiter", nSp + " → " + nSp2 + " Teile in 1,2 s");
       await s.pg.evaluate(() => document.querySelector('.tape-tab[data-target="view-knowledge"]').click());
       const nWeg = log.slice(n0).filter(istTeil).length;
       await s.pg.waitForTimeout(3000);
       const nDanach = log.slice(n0).filter(istTeil).length;
       const ganzWeg = await s.pg.evaluate(() => window.__ueb.ganz != null);
-      sage(!ganzWeg && nDanach - nWeg <= 2, "B8 „Lernen“ zu (Wissen): das Vorladen hält an (höchstens die 2 unterwegs)", nWeg + " → " + nDanach + " Teile in 3 s");
+      sage(!ganzWeg && nDanach - nWeg <= 4, "B8 „Lernen“ zu (Wissen): das Vorladen hält an (höchstens die 4 unterwegs)", nWeg + " → " + nDanach + " Teile in 3 s");
       await s.pg.evaluate(() => document.querySelector('.tape-tab[data-target="view-learn"]').click());
       const weiter = await s.pg.waitForFunction(() => window.__ueb.ganz != null, null, { timeout: 60000 }).then(() => true, () => false);
       const nEnde = log.slice(n0).filter(istTeil).length;

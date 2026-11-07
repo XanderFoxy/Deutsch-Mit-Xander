@@ -92,8 +92,12 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
     const fehlend = eing.filter((n) => !(manifest && manifest["src/" + n] && manifest["src/" + n].isEntry));
     sage(Boolean(manifest) && !fehlend.length, "B3 jeder Eingang aus src/ steht im Manifest", fehlend.length ? "fehlt: " + fehlend.join(", ") : "");
     const karte = MB && manifest ? MB.karte(manifest) : null;
-    sage(Boolean(karte && dmaModul) && JSON.stringify(karte) === JSON.stringify(dmaModul), "B3 DMA_MODUL in index.html = Karte aus bau/manifest.json",
-      JSON.stringify(dmaModul) + (karte && JSON.stringify(karte) !== JSON.stringify(dmaModul) ? " ≠ " + JSON.stringify(karte) : ""));
+    /* M3b: dazu „uebungen" = Verzeichnis der Übungsteile aus bau/uebungen-quelle.json (werkzeug/uebungen-teilen.js; die Teile
+       selbst prüft pruefe-887-daten.js) */
+    const uMerk = jsonLies(path.join(BAU, "uebungen-quelle.json"));
+    const karteSoll = karte ? Object.assign({}, karte, uMerk && uMerk.karte ? { uebungen: uMerk.karte } : {}) : null;
+    sage(Boolean(karteSoll && dmaModul) && JSON.stringify(karteSoll) === JSON.stringify(dmaModul), "B3 DMA_MODUL in index.html = Karte aus bau/manifest.json (+ uebungen aus bau/uebungen-quelle.json, M3b)",
+      JSON.stringify(dmaModul) + (karteSoll && JSON.stringify(karteSoll) !== JSON.stringify(dmaModul) ? " ≠ " + JSON.stringify(karteSoll) : ""));
     sage(/\n<script>window\.DMA_MODUL = \{[^\n]*?\};window\.DMA_STEMPEL = \{[^\n]*\};<\/script>\n/.test(html) && (html.match(/window\.DMA_MODUL = /g) || []).length === 1,
       "B3 DMA_MODUL steht vorn im Skriptblock von DMA_STEMPEL (kein eigenes <script>-Element, nur einmal)");
     /* sw.js liest DMA_STEMPEL aus der gespeicherten Seite mit diesem Muster (auch die alten Helfer auf den Geräten) */
@@ -107,8 +111,8 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
     const genannt = new Set(mDateien);
     (alt || []).forEach((m) => MB.dateien(m).forEach((f) => genannt.add(f)));
     const waisen = baum(BAU).map((f) => path.relative(BAU, f).split(path.sep).join("/"))
-      .filter((r) => MB && MB.STUECK.test(r) && !/^daten\//.test(r) && !genannt.has(r));
-    sage(Boolean(MB) && fs.existsSync(BAU) && !waisen.length, "B3 keine verwaiste Datei in bau/ (jede nennt das Manifest oder eines der letzten 3 aus git)", waisen.join(", "));
+      .filter((r) => MB && MB.STUECK.test(r) && !(MB.FREMD ? MB.FREMD.test(r) : /^daten\//.test(r)) && !genannt.has(r));
+    sage(Boolean(MB) && fs.existsSync(BAU) && !waisen.length, "B3 keine verwaiste Vite-Datei in bau/ (jede nennt das Manifest oder eines der letzten 3 aus git; bau/daten und bau/uebungen* verwalten ihre Werkzeuge)", waisen.join(", "));
     /* B4 */
     if (alt == null) sage(false, "B4 die letzten 3 Manifeste aus git lesbar (git-Baum?)");
     else {

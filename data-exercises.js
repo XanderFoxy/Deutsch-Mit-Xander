@@ -6408,8 +6408,9 @@ const ExerciseData = (function () {
   }
   /* Nach dem ersten Bild der Übersicht: die übrigen Kategorien in Ruhepausen holen, damit der Tipp auf eine Kategorie
      nicht wartet – zuerst die der Übersicht (zuerst, in ihrer Reihenfolge), dann der Rest des Verzeichnisses; höchstens
-     zwei zugleich und mit niedriger Priorität. darf() falsch (Bereich zu, Klassenzimmer, Seite verdeckt): anhalten –
-     der nächste Aufruf macht dort weiter. */
+     vier zugleich (die Teile sind klein, die Rundreise zählt: so ist die Sammlung etwa so schnell ganz da wie früher die
+     eine Datei) und mit niedriger Priorität. darf() falsch (Bereich zu, Klassenzimmer, Seite verdeckt): anhalten – der
+     nächste Aufruf macht dort weiter. */
   let uebVorNr = 0, uebVorAktiv = false;
   function uebungenVorladen(zuerst, darf) {
     if (uebVorAktiv || uebungenDa() || !uebTeileWeg() || (typeof darf === "function" && !darf())) return;
@@ -6425,7 +6426,7 @@ const ExerciseData = (function () {
       const weiter = () => {
         if (nr !== uebVorNr) return;
         if (uebungenDa() || (typeof darf === "function" && !darf())) { ende(); return; }
-        while (laufen < 2 && i < reihe.length) {
+        while (laufen < 4 && i < reihe.length) {
           const k = reihe[i++];
           if (uebTeilDa(k)) continue;
           laufen++;
