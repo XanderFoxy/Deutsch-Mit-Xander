@@ -21,7 +21,7 @@
    B  im Browser (gast min, gast ?quelle, konto min)
       B1 die Brücke läuft vor app.js (Ereignis „load“ je Skript), alle
          Eingänge auf window, kein Konflikt
-      B2 der Tutor kommt von selbst (frisches Gerät), „ד schickt ihn
+      B2 der Tutor kommt von selbst (frisches Gerät, Tipp auf „Lernen“), „ד schickt ihn
          hinaus, der Reiter 🎓 holt ihn zurück (mit Text)
       B3 Betonung: Tippen in einen Textkasten schaltet sie ein (Punkt/Strich
          im Kasten), noch einmal aus; nach dem Neuzeichnen des Kastens stellt
@@ -202,10 +202,11 @@ async function browserTeile() {
   /* B2–B4 auf einer offenen Seite; liefert [gut, was, dazu] */
   async function bedienen(pg) {
     const erg = [];
-    /* B2 Tutor kommt von selbst */
+    /* B2 Tutor kommt von selbst – beim Wechsel in einen Bereich (activateTab; der allererste Aufbau ohne #… ruft ihn nicht) */
+    await pg.evaluate(() => { const t = document.querySelector('.tape-tab[data-target="view-learn"]'); if (t) t.click(); });
     const selbst = await pg.waitForFunction(() => { const b = document.querySelector("#tutorBuehne.tutor-da"); const t = document.getElementById("tutorText"); return b && t && t.textContent.trim().length > 10; }, null, { timeout: 12000 }).then(() => true, () => false);
     const text1 = await pg.evaluate(() => (document.getElementById("tutorText") || {}).textContent || "");
-    erg.push([selbst, "B2 der Tutor kommt von selbst (frisches Gerät) mit Text", "„" + text1.slice(0, 50) + "…“"]);
+    erg.push([selbst, "B2 der Tutor kommt von selbst (frisches Gerät, Tipp auf „Lernen“) mit Text", "„" + text1.slice(0, 50) + "…“"]);
     await pg.evaluate(() => { const z = document.getElementById("tutorZu"); if (z) z.click(); });
     const weg = await pg.waitForFunction(() => !document.getElementById("tutorBuehne") && document.getElementById("tutorReiter"), null, { timeout: 4000 }).then(() => true, () => false);
     erg.push([weg, "B2 „ד schickt ihn hinaus, der Reiter 🎓 steht da"]);
