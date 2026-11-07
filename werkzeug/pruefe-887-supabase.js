@@ -13,7 +13,11 @@
         übrigen Abfänger (cdn.jsdelivr.net/…supabase) ebenso.
      W  werkzeug/fassung-setzen.js prüft die feste Fassung (bricht beim Setzen der Fassungsnummer sonst ab).
      N  Die Fassung gibt es auf npm und sie enthält dist/umd/supabase.js (npm view; ohne Netz: übersprungen, kein Fehler).
-   Gegenprobe: WURZEL=<Baum auf e84652ac> → F (lose „@2“) und W rot.
+     P  (Prüfung Runde 2) Jede andere Seite im Stamm, die supabase-js lädt (stadt-leicht.html, __kz.html), lädt es ebenso
+        fest – dieselbe Fassung wie index.html, über jsDelivr dist/umd/supabase.js; auch die Form ohne Pfad
+        („…supabase-js@2"“, so stand es in __kz.html) zählt als lose. fassung-setzen.js prüft diese Seiten mit.
+   Gegenprobe: WURZEL=<Baum auf e84652ac> → F (lose „@2“) und W rot; WURZEL=<Baum auf 3f12a88c> → P rot (stadt-leicht.html,
+   __kz.html lose), fassung-setzen.js 999 dort: Abbruch.
    Aufruf: node werkzeug/pruefe-887-supabase.js            (WURZEL=… für einen anderen Baum, NPM=0 ohne Teil N) */
 const fs = require("fs"), path = require("path"), { execFileSync } = require("child_process");
 const WURZEL = process.env.WURZEL ? path.resolve(process.env.WURZEL) : path.join(__dirname, "..");
@@ -54,6 +58,19 @@ ok(!/supabase-js@2\//.test(lies("sw.js")), "sw.js nennt keine lose Adresse");
 console.log("\n  W  fassung-setzen.js prüft die feste Fassung");
 const fz = lies("werkzeug/fassung-setzen.js");
 ok(/function supabaseFassungPruefen\(/.test(fz) && /supabase-js@2\\\.\\d\+\\\.\\d\+\\\//.test(fz), "Prüfung vorhanden (bricht beim Setzen der Fassungsnummer ohne feste Fassung ab)");
+
+console.log("\n  P  die anderen Seiten laden supabase-js ebenso fest");
+const seiten = fs.readdirSync(WURZEL).filter((f) => /\.html$/.test(f) && f !== "index.html")
+  .filter((f) => /<script[^>]+src="[^"]*supabase-js/.test(lies(f))).sort();
+ok(seiten.includes("stadt-leicht.html"), "stadt-leicht.html lädt supabase-js (sonst prüft P nichts)", seiten.join(", ") || "(keine Seite)");
+for (const f of seiten) {
+  const t = (lies(f).match(/<script[^>]+src="[^"]*supabase-js[^"]*"[^>]*>/g) || []);
+  const fest = t.map((x) => ((x.match(/src="([^"]+)"/) || [])[1] || "").match(/^https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@(2\.\d+\.\d+)\/dist\/umd\/supabase\.js$/));
+  ok(t.length === 1 && fest.every(Boolean) && fassung && fest[0][1] === fassung.join("."), f + ": genau einmal, fest auf dieselbe Fassung wie index.html (@" + (fassung ? fassung.join(".") : "?") + ")",
+    t.map((x) => (x.match(/supabase-js[^"]*/) || [""])[0]).join(" | "));
+}
+ok(/fs\.readdirSync\(WURZEL\)\.filter\(\(f\) => \/\\\.html\$\/\.test\(f\) && f !== "index\.html"\)/.test(fz) && /supabase-js\[\^"\]\*"/.test(fz),
+  "fassung-setzen.js prüft auch diese Seiten (jede Adresse mit supabase-js, auch ohne Pfad)");
 
 if (process.env.NPM !== "0" && fassung) {
   console.log("\n  N  die Fassung gibt es auf npm");
