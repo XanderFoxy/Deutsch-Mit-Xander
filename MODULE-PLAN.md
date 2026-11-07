@@ -592,3 +592,33 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     - Erwarteter Gewinn: das Bündel wird früher angefordert (modulepreload statt nach supabase-js). Er zeigt sich nur
       im DOMContentLoaded bei 4G, und der Bereich liegt am Rand. Beim Wiederöffnen kam das Ladebild mit M5 öfter sofort
       (FCP < 400 ms in 3 von 7 statt 1 von 7). Das Modul blockiert den Parser nicht mehr, gesichert ist es nicht.
+    - Baukasten-Stadt (`stadt.html?neu=1`), 4G, bis die Stadt-Skripte gelaufen sind, gegen den frisch gepackten Stand,
+      4 Paare (der fünfte lief in die 10-min-Grenze, kein A/A):
+      - kalt 2 389 → 2 320 ms (−78; alle 4 Paare schneller, −49 … −272), wieder 1 215 → 1 151 (−59; 2↓ 2↑).
+      - Übertragen 1 252 → 1 224 KB, Anfragen 5 → 4.
+      - Das erste Bild der Baukasten-Stadt braucht unter CPU 4× rund 13 s Rechnen, bei A und B gleich.
+  - **Sondenstand** (07.11., dieser Baum = „neu“; „alt“ = fc5e3ae3 als Verweis-Farm ohne Vollkopie:
+    `scratchpad/m887/stadt/alt-baum.js`; je Block eine Sperre, höchstens 10 min; Protokolle in
+    `scratchpad/m887/stadt/sonden-{b,c}/`):
+    - **Neue Sonde `887-stadt`:**
+      - neu grün: B1–B8 nach dem Löschen der Packer, S1–S5 20/0.
+      - Gegenprobe auf fc5e3ae3: B 38 rot, S 8 rot, u. a. S5 „gebaut 56, ?quelle 65 Modelle“.
+    - **887-bau:**
+      - neu: B (alles grün) und S 9/0.
+      - S auf fc5e3ae3 auch 9/0: das prüft index.html, und die ist unverändert.
+    - **885-swvorladen:**
+      - neu 32/0, mit Prüfung 12 (bau/).
+      - alt 27/2: die 2 sind „git show 02613a71 nicht lesbar“, die Verweis-Farm hat kein git. sw.js ist unverändert.
+    - **Stadt-Sonden neu grün** (ok/rot):
+      - 844 35/0, leicht 26/0, stadt-bedienung 20/0, 821 43/0, 832 41/0, 855 11/0, 799 40/0, 857 10/0, 850 6/0.
+      - 822 27/0, 874 47/0, 810 40/0, 812-drehschieber 13/0, 812-rathaus-windmuehle 12/0, 814 30/0, 815 44/0.
+      - 818 37/0, 819 19/0, 820 31/0, 823 46/0, 825 32/0, 826 32/0, 828 43/0, 829 25/0, 831 13/0.
+      - 846 9/0, 846b 16/0, 847 23/0, 849 9/0, 851 7/0, 854 30/0, 882 8/0.
+      - Auf fc5e3ae3 ebenso grün: 844 (01.11.: 1 rot „Ladebild geht“, Rechner überlastet, 823 s), leicht, stadt-bedienung,
+        821.
+    - **Neu rot, auf fc5e3ae3 genauso rot** (nicht durch M5):
+      - 807 1 (Lage der Bahn), 808 2 (schräge Bilder der Häuser aus 833 beim Start), 811 4 (Schweine/Auslauf).
+      - 875 2 (Azure-Wortliste), 884-ton310 1 (A1 Ton-Knopf neue Leitung; alt 2).
+      - 824 1: das git-Objekt f3fabf3 fehlt in diesem Verlauf, auf keinem Stand prüfbar.
+    - **Eigene Panne, behoben:** Im ersten Durchgang erbte die Umgebung die Variable `ALT` des Läufers. 822, 874 und
+      884 lesen `ALT` selbst (für ihre Gegenprobe) und brachen sofort ab. Ohne die Variable sind sie wiederholt (oben).
