@@ -8136,7 +8136,21 @@ Pause) bleibt, weil er nichts kostet und doppelte Arbeit spart. **Für 888:** da
 nur das letzte Stück neu schreiben) – das ist eine Formatänderung des Speicherstands und braucht eine eigene Sonde (altes
 Format lesen, kein Verlust bei pagehide mitten im Schreiben).
 
-⟨SONDEN-NB⟩
+**Sonden auf dem nachgebesserten Stand** (Schnappschuss b-nb2: bis auf die zurückgenommene join/put-Teilung = 7a899780, ab
+14:02 genau der Code von 7a899780; nacheinander über die Chromium-Sperre):
+
+| Sonde | Ergebnis |
+|---|---|
+| 887-sichern | 41 ok, 2 rot (S) im Gesamtlauf – ein Sonden-Fehler: aus Teil K stand noch eine geplante Sicherung an (setTimeout bis 20 s), S wartete nur 0,8 s. Sonde berichtigt (f105c7a4), K+S danach grün ⟨SICHERN-VOLL⟩ |
+| 884-ton310 | **A1–A6 grün** (Tipp erst, wenn das Ziel still steht; „neu=true“ in allen sechs), 44 ok; 1 rot: „I: keine Seitenfehler“ (`Cannot read properties of undefined (reading 'length')`, 2×) – derselbe Fehler steht im 886-Diagnoselauf des Prüfers (ton310-diag-886), also nicht von 887 (der bekannte Wettlauf in der Szene, `SZ.sichtbare`). ⟨TON310-2⟩ |
+| raumverlauf (lagerGelesen-Schutz) | 6/6 grün |
+| 887-zeile | 7/7 grün |
+| verlauf-doppelt | 5/5 grün |
+| leere | grün (exit 0) |
+| 884-leitung | 40 grün |
+| 885-praesenz | 69, alles grün |
+| 887-auto | ⟨AUTO⟩ |
+
 
 ### Sonden
 Alle auf dem Endstand (dc0c9325, Code wie heute; ausgeführt aus einer Kopie des Stands, `WURZEL` = Kopie), nacheinander
