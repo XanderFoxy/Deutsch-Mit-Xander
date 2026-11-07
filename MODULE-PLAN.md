@@ -373,6 +373,8 @@ eine Messung gegen 886.
   - In app.js bleiben dünne Weiterleitungen.
 - `teile-bauen.js` lässt die verschwundenen Namen von selbst weg.
 - Erst nach M2, mit Brückenwächter und `quelle-lesen` für die betroffenen Sonden.
+- **Stand 07.11.: gebaut auf `modul-m4`** (Logbuch Abschnitt 7). Start und Tutor-Öffnen gleich schnell (im Rauschen);
+  ein Update nach einer Tutor-/Betonungs-Änderung kostet 7,9 statt 848 KB gz.
 
 ### M5. Stadt als eigene Vite-Seiten (dritter Agent möglich, sobald M1 steht)
 - `stadt.html`/`stadt-leicht.html` werden Vite-Mehrseiten-Einträge. Die Packer `stadt-packen.js`/`leicht-packen.js`
