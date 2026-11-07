@@ -8143,7 +8143,7 @@ Format lesen, kein Verlust bei pagehide mitten im Schreiben).
 |---|---|---|---|---|---|---|---|
 | 886 (B5) | 58 % | 774 ms | 1 044 ms | 40 ms | 960 ms | 849 ms | – (sichert bei jeder Zeile) |
 | 887 Endstand (N3) | **0 %** | **69 ms** | 1 022 ms ² | 38 ms | **184 ms** | **272 ms** | 81 ms |
-| 887 Endstand (N4) | ⟨N4⟩ |
+| 887 Endstand (N4) | **0 %** | **71 ms** | 836 ms ² | 32 ms | **176 ms** | **248 ms** | 71 ms |
 
 ² wie 886: das lange Bild ohne Skript ist das Vorab-Malen der Autos (L4 zurückgenommen, Vorschlag für den Funk).
 Rauschgrenze: die 886-Läufe vom 01.11. streuen in derselben Einstellung 58–82 % (belegt), 774–1 224 ms (Flut), Tipp
