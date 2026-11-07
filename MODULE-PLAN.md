@@ -589,3 +589,42 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
   - **Nicht gelaufen und warum:** Übungs-, Wortschatz- und Kalender-Sonden und die Messung „Übung öffnen“ 4G/3G – an den
     Daten-Wegen hat sich nichts geändert (nichts eingebaut). Kommt M3b, gehören sie dazu (mit neuer Sonde
     `pruefe-887-daten.js` und neuem Messfall „Übung öffnen“).
+- 07.11. **Modul-Umbau — M3b: Übungsdaten je Kategorie, als SKRIPT.** Zweig `module-umbau`, Grundlage d9637a22; der
+  Zwischenstand vor dem Wochenlimit (5129e779, `werkzeug/uebungen-teilen.js`) ist aufgenommen. Für Xander unsichtbar:
+  gleiche Karten, gleiche Texte, gleiche Bedienung – nur ohne die 1,2 MB Wartezeit beim Öffnen von „Lernen“.
+  - **Bau:** `werkzeug/uebungen-teilen.js` (5129e779; dort stand U+2028/U+2029 roh im Suchmuster – Syntaxfehler,
+    berichtigt) führt die UNVERÄNDERTE `data-uebungen.js` in einem leeren Sandkasten aus (nur `DMA_DATEN.ZUSATZ_FRAGEN`,
+    jede Kategorie `[a-z0-9-]`, alles JSON-fähig – sonst kein Eintrag) und schreibt 90 Teile
+    `bau/uebungen/<kategorie>-<hash>.js` (zusammen 6,1 MB, gepackt 1,21 MB; Median 10 KB, größter 84 KB) und das
+    Verzeichnis `bau/uebungen-<hash>.js` (2,2 KB, gepackt 1,3 KB). Name = sha256 der geschriebenen Bytes (wie
+    `daten-bauen.js`), nie ein Name mit anderem Inhalt; Tiefenvergleich Verzeichnis + Teile (umgekehrt ausgeführt) =
+    Quelle, Wert für Wert und in der Reihenfolge der Schlüssel (die Tagesaufgabe hängt daran). `fassung-setzen.js`
+    ruft es vor jedem Commit (0,75 s, nur bei geänderter Quelle oder geändertem Werkzeug) und setzt
+    `DMA_MODUL.uebungen`; scheitert es, fällt der Eintrag weg (die Seite lädt die ganze Datei, nie falsche Daten),
+    laut, Rückgabe 2; eine echte Fassung bricht ab. `modul-bauen.js` räumt `bau/uebungen*` nicht weg, ein Vite-Eingang
+    „uebungen“ ist ein Baufehler. Die `sw.js`-Regel für `bau/` (Unterordner, ungefragt aus dem Speicher, 2 Generationen
+    je Grundname) trägt schon – je Kategorie ein eigener Grundname. Aufräumen: nur, was weder das neue Verzeichnis noch
+    einer der letzten 3 Commits mit Verzeichnis nennt.
+  - **Seite:** `data-exercises.js` – `ladeUebungen(ids)` holt Verzeichnis + nur diese Teile (ohne ids: alle, für
+    Kalenderrücken und Wörterbuch); `uebungenDa(ids)`; sind alle Teile da, steht `ZUSATZ_FRAGEN` wie bisher (Ereignis
+    `dma-uebungen-ganz`, app.js setzt dann den Topf der Tagesaufgabe neu); `alleRohfragen()` liest weiter nur die
+    ganze Sammlung (alles oder nichts, wie bisher). Rückfall auf die ganze Datei: `?quelle`, ohne min/
+    (`dma-ohne-min`), Notweg (`dma-ganz` nennt `data-uebungen.js`), kein Eintrag in `DMA_MODUL`, ein Teil oder das
+    Verzeichnis kommt nicht. `app.js` – Tipp auf „Lernen“, `renderSetup` und „Runde starten“ warten nur auf die
+    GEWÄHLTEN Kategorien (ohne Wahl: auf nichts). Steht die Übersicht schon, bleibt sie beim Tipp auf eine Karte
+    stehen (kein „wird geladen“ über den Karten), das Häkchen kommt sofort. Nach dem ersten Bild der Übersicht holt
+    `uebungenVorladen` die übrigen Kategorien in Ruhepausen (Karten der Übersicht zuerst, höchstens 4 zugleich,
+    `fetchPriority low`), solange „Lernen“ offen ist (Spiele, Wörterbuch, Artikel-Garten … lesen die Sammlung auch;
+    bisher kam sie dort mit dem Tipp auf „Lernen“ ganz) und nicht im Klassenzimmer; sonst hält es an und macht beim
+    nächsten Öffnen weiter.
+  - **Zwei Nebenwirkungen, gefunden mit dem neuen Messfall und behoben:** (1) `getBank()` jeder Kategorie liest
+    Datenblöcke aus `min/data-exercises-teil.js` (88 KB gepackt); kam der Karten-Tipp, bevor sie da waren, holte die
+    Seite sie SYNCHRON – auf dem alten Stand 0,2–0,3 s, neu 1,7 s gesperrter Hauptfaden, weil der Wortschatz
+    (2,26 MB) jetzt gleichzeitig die Leitung füllt. Jetzt: ein gemeinsamer asynchroner Abruf (`dmaUebTextHolen`),
+    beim Tipp auf „Lernen“ als erstes und mit hoher Priorität; `ladeUebungen(ids)` wartet darauf. (2) „Runde
+    starten“ rief `wortschatzBereit()` – das steht im app-Stück rest2, das jetzt noch fehlte: SYNCHRON geholt,
+    1,1–1,4 s gesperrt. Jetzt `dmaTeileFuer([wortschatzBereit, merkeZustand, renderQuestion])`: die Stücke dieser
+    Funktionen über die Leitung abwarten (höchstens 8 s, dann wie bisher), „Lernen“ holt sie vor.
+  - **Platz (GitHub Pages):** +6,26 MB (`bau/uebungen/` 6 253 978 B, Verzeichnis 2 209 B, Merkzettel 109 B) →
+    ≈ 954 von 1 000 MB. Danach je Änderung der Daten nur die geänderten Kategorien (+ 2 KB Verzeichnis); die ganze
+    Datei bleibt als Rückfall und für `spiel.js`.
