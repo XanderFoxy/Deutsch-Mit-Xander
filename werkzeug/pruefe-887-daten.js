@@ -353,7 +353,7 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       const n1 = log.length;
       const r2 = await s.pg.evaluate(async () => {
         const ok = await ExerciseData.ladeUebungen(["artikel", "meinwortschatz"]);
-        return { ok, teile: Object.keys(window.DMA_DATEN.ZUSATZ_TEILE).sort().join(","), la: ExerciseData.getCategory("artikel").getBank().length };
+        return { ok, teile: Object.keys(window.DMA_DATEN.ZUSATZ_TEILE || {}).sort().join(","), la: ExerciseData.getCategory("artikel").getBank().length };
       });
       const l2 = log.slice(n1);
       sage(r2.ok === true && l2.filter(istTeil).length === 1 && /\/artikel-/.test((l2.find(istTeil) || {}).p || "") && !l2.some(istVerz) && r2.teile === "artikel,wortstellung",
