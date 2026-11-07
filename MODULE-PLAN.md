@@ -589,3 +589,42 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
   - **Nicht gelaufen und warum:** Übungs-, Wortschatz- und Kalender-Sonden und die Messung „Übung öffnen“ 4G/3G – an den
     Daten-Wegen hat sich nichts geändert (nichts eingebaut). Kommt M3b, gehören sie dazu (mit neuer Sonde
     `pruefe-887-daten.js` und neuem Messfall „Übung öffnen“).
+- 07.11. **Modul-Umbau — Schritt M4 (app.js-Pilot: Tutor und Betonung als Modul).** Zweig `modul-m4`, Grundlage
+  d9637a22. Fortsetzung zweier von Nutzungslimits abgebrochener Läufe (01.11.: Zwischenstand 896a6846, nur
+  `betonungBeobachten()` als Funktion; 07.11. ~17 Uhr: Code, Sonden und Messung bis 04fa3f17 fertig, Logbuch und
+  A/A der 4G-Ladezeit fehlten). Für Xander unsichtbar: Tutor und Betonung tun genau dasselbe wie vorher.
+  - **Werkzeug `werkzeug/app-modul-ziehen.js`** (Gruppen in `werkzeug/app-gruppen/tutor.json`, `betonung.json`): nimmt
+    die Deklarationen einer Gruppe von der obersten Ebene der app.js-Hülle samt Kommentar davor und schreibt sie
+    Zeichen für Zeichen (2 Leerzeichen weniger eingerückt) nach `src/app/<gruppe>.js`; lehnt ab, wenn ein Name fehlt,
+    eine Deklaration halb dazugehört, das Modul eine VARIABLE von app.js liest oder app.js eine Variable der Gruppe.
+    Tutor 44 Deklarationen (37 184 Zeichen), Betonung 17 (17 398 Zeichen). Anweisungen bleiben in app.js und rufen die
+    Weiterleitung (gleiche Reihenfolge der Ohren am Dokument): die beiden Fokus-Ohren des Tutors stehen dafür in
+    `tutorSchreibOhren()`, der Beobachter der Betonung in `betonungBeobachten()`.
+  - **app.js:** 14 dünne Weiterleitungen, z. B. `function tutorRufen(bereich, nochmal) { return dmaModul("tutorRufen",
+    arguments); }` (nur, was der Rest von app.js ruft); `dmaModul` ruft `window[name]`; fehlt das Modul, gibt es einen
+    Ersatz (`tutorAn` → false, `tutorArt` → "comic", `betonungNachschlagen`/`…AusGrundform` → null) oder der Ruf wird
+    gemerkt und nachgeholt (höchstens 500). `window.DMA_APP` = die 11 Helfer, die die Module brauchen (showToast,
+    brDatei, applyStressToTree …); die Module lesen es erst beim Aufruf. Rückweg: ist die Brücke vor app.js nicht
+    gelaufen (bau/ nicht ladbar), lädt app.js `src/bruecke.js` nach.
+  - **`src/bruecke.js`** importiert beide Stücke (Vite: EIN Stück `bau/bruecke-CL1VLwwc.js`, 20 167 B, gz 7 889) und
+    stellt die Eingänge unter dem alten Namen auf window – überschreibt nichts (`DMA_BRUECKE.konflikt`, laut auf der
+    Konsole; app.js nimmt dann den Ersatz statt des fremden Codes).
+  - **index.html:** Eintrag `"@bruecke"` in der Liste der Startskripte VOR app.js – `type="module"` läuft in derselben
+    defer-Reihe, also in fester Reihenfolge; mit `?quelle` oder wenn app.js aus der Quelle kommt (Notweg)
+    `src/bruecke.js` nativ. Ein erster Entwurf mit Importkarte und eigenem Fehler-Lader machte 885-schlank Q rot
+    (Kommentare 6 805 > 6 500 Zeichen, gepackt nur −4 684 B statt ≥ −5 000 B gegenüber vor K) – jetzt eine Zeile ohne
+    Kommentar, Rückweg in app.js, Stempel nur für die Eingänge `src/*.js` (fassung-setzen.js; die Stücke in `src/app/`
+    kommen über `import`). index.html gz +103 B gegenüber d9637a22.
+  - **min/:** `teile-bauen.js` unverändert – es lässt Namen, die es in app.js nicht mehr findet, von selbst weg
+    („nicht gefunden“); eine Änderung am Werkzeug hätte über die Kennung auch min/data-exercises*.js neu benannt
+    (197 KB gz für jedes Gerät). Die gezogenen Namen stehen trotzdem nicht mehr in `app-teile.json` (teile/kern; Vermerk
+    in kern_warum), die Weiterleitungen stehen in keiner Liste und bleiben so im Kern; `teile-messen.js` lässt
+    Weiterleitungen beim Neu-Messen im Kern. min/app.js 746 579 → 733 198 B (gz 203 669 → 199 673), rest1/2/3/7 je
+    0,5–1,1 KB gz kleiner.
+  - **Update-Download (gerechnet, kein Rauschen):** eine Ein-Zeichen-Änderung am Tutor benannte auf d9637a22 alle 16
+    app-Dateien neu (min/app.js + 15 Stücke über `dmaTeilPasst`): **853 618 B gz**. Jetzt nur `bau/bruecke-*.js`:
+    **7 889 B gz (Faktor ~108)** – geprüft mit 887-bau B7 „Kaskade (Stück)“ (Änderung in src/app/tutor.js benennt nur
+    bruecke um, rueckfrage und sonde-zwei bleiben). Änderungen anderswo in app.js kosten wie bisher.
+  - **Platz (GitHub Pages, ≈948 MB von 1 GB):** alle Dateien im Baum zusammen +48 KB (2 212 703 278 → 2 212 751 350 B:
+    src/app + bruecke + bau/bruecke + Sonde/Werkzeug, app.js und min/ kleiner). Jede spätere Tutor-Änderung legt ein
+    neues bau/bruecke (~20 KB) dazu; `modul-bauen.js` räumt alles weg, was keines der letzten 3 Manifeste nennt.
