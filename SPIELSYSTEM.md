@@ -8319,8 +8319,9 @@ Prüfers, 886 = 52769d88 gegen den Hauptbaum, „Setzen“ = `pruefVerlaufSetzen
 passt hier in beiden nicht); Fluss 330 K → 290 K (886 330 K, Verlauf ungesichert). Außerhalb dieses Bereichs hielten alle
 nachgemessenen Fälle die Regel ein (Prüfer: 39 K/2 000 K → 1 571 K gegen 514 K; 5 Räume/2 000 K → 286 K gegen 110 K, bei 886
 drei Räume ohne Verlauf und das Profilfoto scheitert; 500 K → 381 K gegen 118 K; Fluss 400 K → 320 K gegen 17 K). In jedem
-Fall steht die letzte Zeile im localStorage und es bleibt keine Probe (`dma__frei`) liegen. Token-Erneuerung, Einstellung und ein 20-K-Merker gingen in allen 887-Fällen; bei 886 scheiterte der 20-K-Merker im
-Fall „400 K“.
+Fall steht die letzte Zeile im localStorage und es bleibt keine Probe (`dma__frei`) liegen.
+Token-Erneuerung, Einstellung und ein 20-K-Merker gingen in allen 887-Fällen der ersten Messung; bei 886 scheiterte der
+20-K-Merker im Fall „400 K“.
 (Gemessen auf 7a6e372a und auf dem Endstand 7b11d868 – gleiche Zahlen; Probe vor dem Schreiben ändert daran nichts.)
 *Kosten der Probe* (CPU 4×, 300 Zeilen, Median aus 7, `scratchpad/nb887/tafelzeit.js` und `tafelvoll.js`), ein ganzes
 `pruefVerlaufSetzen` (Lager-Text + localStorage + Tafel):
