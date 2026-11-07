@@ -8136,6 +8136,20 @@ Pause) bleibt, weil er nichts kostet und doppelte Arbeit spart. **Für 888:** da
 nur das letzte Stück neu schreiben) – das ist eine Formatänderung des Speicherstands und braucht eine eigene Sonde (altes
 Format lesen, kein Verlust bei pagehide mitten im Schreiben).
 
+**Endstand gegen 886, verschränkt (07.11., Nachbau wie oben, CPU 4×, Profilfotos bei 3 von 30 Autoren; 887 = b-nb2 = Code von
+7a899780, 886 = 7e23e157; Reihenfolge 887 → 886 → 887):**
+
+| | Flut: Seite belegt | längstes Bild in der Flut | längstes Bild nach dem Betreten | Tipp wartet (Median) | langsamste Eingabe | längstes Bild beim Betreten | längstes Bild der Leerlauf-Sicherung |
+|---|---|---|---|---|---|---|---|
+| 886 (B5) | 58 % | 774 ms | 1 044 ms | 40 ms | 960 ms | 849 ms | – (sichert bei jeder Zeile) |
+| 887 Endstand (N3) | **0 %** | **69 ms** | 1 022 ms ² | 38 ms | **184 ms** | **272 ms** | 81 ms |
+| 887 Endstand (N4) | ⟨N4⟩ |
+
+² wie 886: das lange Bild ohne Skript ist das Vorab-Malen der Autos (L4 zurückgenommen, Vorschlag für den Funk).
+Rauschgrenze: die 886-Läufe vom 01.11. streuen in derselben Einstellung 58–82 % (belegt), 774–1 224 ms (Flut), Tipp
+40 ms–7,1 s – „Tipp wartet“ hängt daran, ob ein Tipp gerade in ein langes Bild fällt, und ist darum kein belastbarer Vergleich;
+die übrigen Gewinne liegen weit über der Streuung.
+
 **Sonden auf dem nachgebesserten Stand** (Schnappschuss b-nb2: bis auf die zurückgenommene join/put-Teilung = 7a899780, ab
 14:02 genau der Code von 7a899780; nacheinander über die Chromium-Sperre):
 
