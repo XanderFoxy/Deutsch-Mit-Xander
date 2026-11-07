@@ -629,3 +629,69 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
   - **Platz (GitHub Pages, ≈948 MB von 1 GB):** alle Dateien im Baum zusammen +48 KB (2 212 703 278 → 2 212 751 350 B:
     src/app + bruecke + bau/bruecke + Sonde/Werkzeug, app.js und min/ kleiner). Jede spätere Tutor-Änderung legt ein
     neues bau/bruecke (~20 KB) dazu; `modul-bauen.js` räumt alles weg, was keines der letzten 3 Manifeste nennt.
+  - **Browser ohne Module:** kein Rückfall wie beim Walkie nötig – app.js braucht schon auf d9637a22 ES2020 (612× `?.`),
+    jeder Browser, der app.js ausführt, kann auch Module.
+  - **Messung Start und „Tutor-Reiter öffnen“ (A = d9637a22, B = M4, verschränkt; Chromium, CPU 4×, Telefonfenster,
+    eigener Server je Stand, je Paar frisches Profil auf der Platte: Laden 1 = kalt, Laden 3 = wieder mit
+    V8-Code-Speicher; Maße in der Seite; Tutor über Tipp auf „Lernen“, dann echter Tipp auf 🎓 bis zum Bild, in dem
+    Alex mit Text steht; Skript `scratchpad/m4/m4-messen.js`, Daten `…/m4/messung/`). Median A → B, gepaart B − A
+    [95-%-Bereich], ↓/↑:**
+    - Gast, 8 Paare: DOMContentLoaded kalt 595 → 621 ms, **+4 [−65…+56]** (4↓/4↑); wieder 574 → 589, **+23
+      [−103…+63]** (2↓/6↑); app.js fertig kalt +4 [−64…+59], wieder +24 [−103…+64]; load kalt +12, wieder +23 (alle
+      Bereiche enthalten 0). Tutor-Reiter öffnen kalt 79 → 76 ms, **−4 [−8…+6]** (6↓/2↑); wieder 74 → 69, **−5
+      [−11…+2]** (5↓/3↑).
+    - Konto (Betreiber, Datenbank 150 ms), 8 Paare: DOMContentLoaded kalt 602 → 613, **−16 [−96…+65]** (5↓/3↑);
+      wieder 591 → 580, **−12 [−34…+5]** (6↓/2↑); Tutor-Reiter öffnen kalt 69 → 70, **−5 [−17…+11]**; wieder 74 → 71,
+      **−2 [−6…+6]**.
+    - **Rauschgrenze (A/A, derselbe Stand zweimal):** Gast 6 Paare DOMContentLoaded kalt −5 [−52…+115], wieder −22
+      [−71…+35]; Reiter öffnen +5 [−11…+18] / −1 [−11…+6]. Konto 4 Paare DOMContentLoaded kalt −26 [−55…−13] – reines
+      Rauschen trifft mit 4 Paaren „deutlich“ (4/4 auf einer Seite: 1 zu 8), wieder −22 [−47…+35].
+  - **Ladezeit 4G (`ladezeit-messen.js`, Gast, 9 Mbit/s, CPU 4×, HTTP/2, Profil auf der Platte, Tipp sofort nach
+    bereit; 5 Läufe verschränkt; `…/m4/messung/lz-gegen.*`). d9637a22 → M4, gepaart M4 − alt [Bereich], ↑/↓:**
+    - kalt: bereit 1 334 → 1 357 ms, **+45 [−38…+88]** (4↑/1↓); DOMContentLoaded +46 [−35…+88]; erstes Bild 564 →
+      552, −8; Wissen-Tipp → Bild 0 [−82…+192]; Sperrzeit (Σ Langläufer über 50 ms) 375 → 460, +68 [−30…+133] (4↑/1↓);
+      über die Leitung bis bereit 646 → 650 KB, 64 → 65 Dateien (die Brücke).
+    - wieder: bereit 680 → 675, +32 [−41…+80] (3↑/2↓); DOMContentLoaded +30 [−36…+76]; Wissen-Tipp +35 [−53…+66];
+      Langläufer-Summe 408 → 321, **−97 [−169…−18] (0↑/5↓)**, Sperrzeit 165 → 121, −47 [−119…−18] (0↑/5↓).
+    - Das Werkzeug nennt bei 0 von 68 Maßen „deutlich“; kalt und wieder zeigen in entgegengesetzte Richtungen (kalt
+      eher langsamer, wieder weniger Langläufer). Rauschgrenze für bereit, 4G Gast kalt: ±100 ms (886-Gesamtmessung),
+      ±~60 ms (A/A 01.11.).
+    - **Eigener A/A-Lauf und zweite Reihe stehen noch aus**: der A/A-Lauf am 07.11. ~18 Uhr brach mit dem Nutzungslimit
+      ab, danach hielt die Prüfung der Auslieferung 887 den Rechner (vorrang-887 ab 19:35). Bis dahin gilt: kein Maß
+      über der Rauschgrenze; die −97 ms Langläufer „wieder“ (5/5) zählen erst nach dem A/A.
+  - **Neue Sonde `pruefe-887-modul-app.js`:** A (ohne Browser) Gruppen im Modul und aus app.js verschwunden,
+    Weiterleitungen = Exporte (14), Helfer in DMA_APP, Weiterleitungen in min/app.js echte Funktionen im Kern, kein
+    gezogener Name mehr in min/app.js, Lader vor app.js, Rückweg in app.js, DMA_MODUL.bruecke = Manifest; B (gast min,
+    gast ?quelle, konto min) Brücke läuft vor app.js, Tutor kommt (Tipp auf „Lernen“), „ד und 🎓, Betonung durch Tippen
+    an/aus und nach dem Neuzeichnen wieder da, Ohren beim Schreiben, kein pageerror; K Konflikt (window.tutorAn schon
+    da: nicht überschrieben, laut, Ersatz statt fremdem Code); R Rückweg (bau/bruecke gesperrt → src/bruecke.js kommt,
+    gemerkte Rufe nachgeholt, alles geht). **Grün: A 14/14, B 30/30, K 4/4, R 9/9. Gegenprobe d9637a22: A 9 rot, B1 6
+    rot** (B2–B5 dort grün: dasselbe Verhalten wie vorher, so gewollt).
+  - **Sonden umgestellt:** runde30, runde60, tutorbild62, betonung-regeln lesen `logisch("app.js")` (app.js +
+    src/app/**, `quelle-lesen`); 885-stuecke zählt „kern“-Namen, die mit ihrer Gruppe ins Modul gezogen sind, dort;
+    887-bau kopiert ganz src/ (B7 Kopie scheiterte sonst an `./app/tutor.js`) und prüft neu „wiederholbar je Eingang“
+    und „Kaskade (Stück)“; 885-schlank Q kennt die Zeile „@bruecke“; 694-leistung zählt bau/-Module wie min/
+    (885-swvorladen 11 war deshalb rot); 887-modul-app B2 tippt „Lernen“ (der allererste Aufbau ohne #… ruft activateTab
+    nicht – der Tutor kommt dort auch auf d9637a22 nicht von selbst). Welche Sonden die gezogenen Namen lesen, per grep
+    über alle 481 Sonden: 885-stuecke, 887-modul-app, betonung-regeln, runde30, runde60, tutor, tutorbild62 – alle oben.
+  - **Sonden (Code-Stand 47b3e31b = 04fa3f17 ohne die 694-Sonde; verschränkt neu/alt = d9637a22, gebündelt über die
+    Sperre):** grün und mit gleicher Ausgabe wie alt: 887-bau B (ohne Browser) und S, **887-bruecke 18/18
+    (Brückenwächter)**, 885-schlank Q/A–G, 876-start-schlank, 885-swvorladen (alle Prüfungen; neu liegt in Prüfung 12
+    zusätzlich bau/bruecke im Speicher des Helfers – beim Start geholt, wie gewollt), 885-stuecke, tutor (Ausgabe bis
+    auf Zeitstempel gleich), tutorreiter, tutorstimme34, tutorbild62, tutor-stuecke, runde24, runde29, runde30,
+    betonung-uebung, betonung-regeln, 766/771/772/773/783/882-aussprache. Rot auf beiden Ständen gleich (nicht durch
+    M4): runde60 (3× Tondauer 0,00 s) und tutorfilm34 (Alphaspur) – ffmpeg fehlt auf dem Rechner. 887-bau B auf der
+    Vergleichskopie: nur B4/B11 rot („kein git“, Kopie ohne .git).
+  - **Ergebnis: am Start und beim Öffnen des Tutors weder schneller noch langsamer** – jeder Unterschied liegt in der
+    Rauschgrenze (Faktor alt/neu: Tutor-Reiter öffnen 0,99–1,07, DOMContentLoaded 0,96–1,02, 4G bereit 0,98/1,01).
+    Erwartet: am Start ändert sich nur, WO der Code steht (min/app.js −4 KB gz, Brücke +7,9 KB gz parallel geholt, beide
+    aus dem Code-Speicher); auf d9637a22 lagen 49 der 61 Deklarationen im Kern von min/app.js, 12 (Betonung
+    nachschlagen/setzen, tutorAnSetzen/ArtSetzen, Maske …) in rest-Stücken – jetzt alle in der Brücke. Der messbare
+    Gewinn von M4 ist das Update: nach einer Änderung am Tutor oder an der Betonung holt jedes Gerät **7,9 KB statt 848
+    KB gz (Faktor ~108)**. Nach der Regel „was nicht schneller ist, wird nicht ausgeliefert“ gilt: M4 macht die Seite
+    nicht schneller, sondern künftige Updates kleiner; ob er allein oder mit den nächsten Gruppen (Abschnitt 4, Schritt
+    11) ausgeliefert wird, entscheidet der Dirigent. Sichtbar ändert sich nichts.
+  - **Offen:** der erste Tipp auf einen Textkasten holt weiter rest-Stücke synchron (applyStressToTree, ruleMarkWord und
+    der Wortschatz liegen noch in app.js bzw. in min/app-teil-rest*) – das gehört zu Schritt 11, nicht zu M4. Brücke
+    abbauen erst in Schritt 12. Die Vergleichskopie `/tmp/claude-0/t-m4/basis` (1,7 GB) wird nach der letzten Messung
+    gelöscht.
