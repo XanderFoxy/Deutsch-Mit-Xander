@@ -8112,7 +8112,8 @@ einer Fassungsnummer ab, wenn supabase-js lose geladen wird; beim Stempeln im gi
 e84652ac: Abbruch mit Ausgang 1, index.html unverändert). `werkzeug/ladezeit-messen.js` holt seine supabase-js-Kopie jetzt
 in der Fassung, die index.html nennt (vorher fest 2.117.3), und 885-sparsam nimmt ohne `SUPABASE_UMD` zuerst diese Kopie.
 Die Sonden 885-sparsam, 822 und 874 fangen die gepinnte Adresse ab (`@2(\.\d+)*`). `stadt-leicht.html` und `__kz.html`
-laden weiter `@2` (nicht im Plan).
+luden zunächst weiter `@2` (nicht im Plan) – **seit der Prüfung Runde 2 ebenfalls fest `@2.119.0`** (siehe dort; Sonde
+887-supabase Teil P, `fassung-setzen.js` prüft alle Seiten im Stamm).
 Sonden auf dem Endstand: 884-leitung 40, 885-praesenz 69 (ALLES GRÜN), 884-ton310 45 grün; 885-sparsam siehe unten
 (im Nachbau liefern alle Sonden weiter 2.117.3 aus der lokalen Kopie – die gepinnte Adresse wird abgefangen).
 
@@ -8304,10 +8305,21 @@ Zeilen, 30 Autoren mit Foto, nach `pruefVerlaufSetzen`; „frei“ = was danach 
 | 40 K, 2 000 K | 476 K | – | **1 600 K** | 9 Fotos |
 | 20 K, 150 K | **150 K** (Verlauf nicht gesichert) | – | **111 K** | keine |
 
-In allen Fällen lässt 887 jetzt mindestens so viel frei wie 886 oder ≥ 300 K – **mit einer Ausnahme, ehrlich:** bei nur 150 K
-frei lässt 887 111 K, 886 150 K. Das ist nicht die Tafel (die bleibt leer), sondern der Verlauf selbst: 886 konnte die 300
-Zeilen mit den Fotos darin gar nicht schreiben (der Verlauf dieses Raums blieb ungesichert), 887 schreibt sie ohne Fotos
-(39 K). Token-Erneuerung, Einstellung und ein 20-K-Merker gingen in allen 887-Fällen; bei 886 scheiterte der 20-K-Merker im
+In allen Fällen lässt 887 jetzt mindestens so viel frei wie 886 oder ≥ 300 K – **außer unter ~340 K frei, ehrlich**
+(BERICHTIGT in der Prüfung Runde 2: hier stand „mit einer Ausnahme“ und nur der Fall 150 K; es ist ein Bereich). Ist vor dem
+Sichern weniger als etwa 340 K frei, lässt 887 danach unter 300 K – und weniger als 886, wenn 886 den Verlauf dort gar nicht
+schreiben konnte: 150 K → 887 111 K (886 150 K), 330 K → 292 K (886 330 K), 336 K → 298 K (886 336 K); ab 342 K → 304 K, also
+wieder ≥ 300 K. Das ist nicht die Tafel (die bleibt in diesem Bereich leer), sondern der Verlauf selbst: 886 konnte die 300
+Zeilen mit den Fotos darin gar nicht schreiben (auch halbiert nicht – der Verlauf dieses Raums blieb ungesichert), 887 schreibt
+sie ohne Fotos (38–39 K) – darum fehlen 887 genau diese 38 K, und dafür ist der Verlauf gesichert. Konnte 886 im selben
+Bereich wenigstens einen halbierten Verlauf schreiben (kleine Fotos, 5 K bei 330 K frei), lässt 887 mehr frei: 292 K gegen
+136 K (bei 886 scheitert danach ein 140-K-Profilfoto). Nachgemessen (Prüfung Runde 2, `scratchpad/r2p887/quota2.js` des
+Prüfers, 886 = 52769d88 gegen den Hauptbaum, „Setzen“ = `pruefVerlaufSetzen`, „Fluss“ = 40 neue Zeilen über den Stücklauf):
+330/336/342/360 K mit 20-K-Fotos wie oben (360 K → 322 K); 200 K → 162 K (886 200 K), 100 K → 62 K (886 100 K; das 140-K-Foto
+passt hier in beiden nicht); Fluss 330 K → 290 K (886 330 K, Verlauf ungesichert). Außerhalb dieses Bereichs hielten alle
+nachgemessenen Fälle die Regel ein (Prüfer: 39 K/2 000 K → 1 571 K gegen 514 K; 5 Räume/2 000 K → 286 K gegen 110 K, bei 886
+drei Räume ohne Verlauf und das Profilfoto scheitert; 500 K → 381 K gegen 118 K; Fluss 400 K → 320 K gegen 17 K). In jedem
+Fall steht die letzte Zeile im localStorage und es bleibt keine Probe (`dma__frei`) liegen. Token-Erneuerung, Einstellung und ein 20-K-Merker gingen in allen 887-Fällen; bei 886 scheiterte der 20-K-Merker im
 Fall „400 K“.
 (Gemessen auf 7a6e372a und auf dem Endstand 7b11d868 – gleiche Zahlen; Probe vor dem Schreiben ändert daran nichts.)
 *Kosten der Probe* (CPU 4×, 300 Zeilen, Median aus 7, `scratchpad/nb887/tafelzeit.js` und `tafelvoll.js`), ein ganzes
