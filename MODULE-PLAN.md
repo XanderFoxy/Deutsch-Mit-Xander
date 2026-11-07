@@ -617,14 +617,20 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     `fetchPriority low`), solange „Lernen“ offen ist (Spiele, Wörterbuch, Artikel-Garten … lesen die Sammlung auch;
     bisher kam sie dort mit dem Tipp auf „Lernen“ ganz) und nicht im Klassenzimmer; sonst hält es an und macht beim
     nächsten Öffnen weiter.
-  - **Zwei Nebenwirkungen, gefunden mit dem neuen Messfall und behoben:** (1) `getBank()` jeder Kategorie liest
+  - **Drei Nebenwirkungen, gefunden mit dem neuen Messfall und behoben:** (1) `getBank()` jeder Kategorie liest
     Datenblöcke aus `min/data-exercises-teil.js` (88 KB gepackt); kam der Karten-Tipp, bevor sie da waren, holte die
     Seite sie SYNCHRON – auf dem alten Stand 0,2–0,3 s, neu 1,7 s gesperrter Hauptfaden, weil der Wortschatz
     (2,26 MB) jetzt gleichzeitig die Leitung füllt. Jetzt: ein gemeinsamer asynchroner Abruf (`dmaUebTextHolen`),
     beim Tipp auf „Lernen“ als erstes und mit hoher Priorität; `ladeUebungen(ids)` wartet darauf. (2) „Runde
     starten“ rief `wortschatzBereit()` – das steht im app-Stück rest2, das jetzt noch fehlte: SYNCHRON geholt,
     1,1–1,4 s gesperrt. Jetzt `dmaTeileFuer([wortschatzBereit, merkeZustand, renderQuestion])`: die Stücke dieser
-    Funktionen über die Leitung abwarten (höchstens 8 s, dann wie bisher), „Lernen“ holt sie vor.
+    Funktionen über die Leitung abwarten (höchstens 8 s, dann wie bisher), „Lernen“ holt sie vor. (3) Die Leitung
+    teilt sich gerecht auf alle laufenden Abrufe: auf 3G teilte sich der Karten-Tipp sie mit den 26 Wortschatz-Dateien,
+    bis „Runde starten“ frei war, vergingen 13,9 s (alter Stand 2,2 s – nach 20 s „wird geladen“). Jetzt eine
+    Reihenfolge: zuerst der Teil von data-exercises.js (dann erst der Wortschatz, `uebungenVorrang`, höchstens 3 s),
+    die ersten 8 Karten gleich nach dem ersten Bild, die übrigen 82 Teile erst nach dem Wortschatz (auf ihn wartet
+    „Runde starten“). Dieselben Bytes, nur in der Reihenfolge, in der sie gebraucht werden. (Ein Zwischenstand, der den
+    Wortschatz auch auf die 8 Karten warten ließ, machte 4G gesamt um 1 s schlechter – verworfen, d83b2ab6.)
   - **Platz (GitHub Pages):** +6,26 MB (`bau/uebungen/` 6 253 978 B, Verzeichnis 2 209 B, Merkzettel 109 B) →
     ≈ 954 von 1 000 MB. Danach je Änderung der Daten nur die geänderten Kategorien (+ 2 KB Verzeichnis); die ganze
     Datei bleibt als Rückfall und für `spiel.js`.
