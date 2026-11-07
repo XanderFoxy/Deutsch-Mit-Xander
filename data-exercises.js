@@ -6480,7 +6480,9 @@ const ExerciseData = (function () {
           laufen++;
           uebTeil(K, k, true).then(() => { laufen--; pause(weiter); });
         }
-        if (i >= reihe.length && !laufen) { uebZusammen(); ende(); }
+        if (i >= reihe.length && !laufen) { uebZusammen(); ende(); return; }
+        /* die ersten Karten waren schon alle da (zweites Öffnen): gleich weiter zum Warten auf den Wortschatz */
+        if (!laufen && !gewartet && i >= UEB_VORRANG && typeof nachVorrang === "function") pause(weiter);
       };
       pause(weiter);
     }, ende);
