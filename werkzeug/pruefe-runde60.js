@@ -33,7 +33,7 @@ require(path.join(WURZEL, "data-tutor.js"));
 require(path.join(WURZEL, "data-tutorvideo.js"));
 const T = global.window.DMA_TUTOR;
 const FILME = new Set(String(global.window.DMA_TUTORVIDEO || "").split("|").filter(Boolean));
-const app = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+const app = require("./quelle-lesen.js").logisch("app.js", WURZEL) /* MODUL M4: app.js + src/app/** */;
 const html = fs.readFileSync(path.join(WURZEL, "index.html"), "utf8");
 const ueber = T["view-about"].stuecke;
 

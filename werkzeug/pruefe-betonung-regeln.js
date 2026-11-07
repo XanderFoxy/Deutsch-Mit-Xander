@@ -103,7 +103,7 @@ sammle("data-umgangssprache.js", lade("data-umgangssprache.js").window.DMA_UMGAN
 }
 // 7) KLEINE_WOERTER aus app.js — nur dieses eine Objekt herausschneiden
 {
-  const code = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+  const code = require("./quelle-lesen.js").logisch("app.js", WURZEL) /* MODUL M4: app.js + src/app/** */;
   const start = code.indexOf("const KLEINE_WOERTER = {");
   if (start < 0) { console.log("FEHL  KLEINE_WOERTER in app.js nicht gefunden"); process.exit(1); }
   let i = code.indexOf("{", start), tiefe = 0, ende = -1;

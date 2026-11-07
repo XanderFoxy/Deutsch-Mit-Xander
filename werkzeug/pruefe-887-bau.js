@@ -144,8 +144,8 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
       const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "dma-887-bau-"));
       try {
         const kopie = (ziel) => {
-          fs.mkdirSync(path.join(ziel, "src"), { recursive: true });
-          eing.forEach((n) => fs.copyFileSync(path.join(SRC, n), path.join(ziel, "src", n)));
+          /* MODUL M4: ganz src/ (auch die Stücke in src/app/, die ein Eingang importiert) */
+          fs.cpSync(SRC, path.join(ziel, "src"), { recursive: true });
           fs.copyFileSync(path.join(WURZEL, "vite.config.mjs"), path.join(ziel, "vite.config.mjs"));
           fs.copyFileSync(path.join(WURZEL, "package-lock.json"), path.join(ziel, "package-lock.json"));
           fs.symlinkSync(path.join(WURZEL, "node_modules"), path.join(ziel, "node_modules"));
@@ -172,6 +172,20 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
         const rf = name(m1, "rueckfrage");
         sage(Boolean(rf) && manifest && manifest["src/rueckfrage.js"] && manifest["src/rueckfrage.js"].file === rf,
           "B7 wiederholbar: derselbe Inhalt bekommt denselben Namen wie in bau/", rf + " / " + (manifest && manifest["src/rueckfrage.js"] ? manifest["src/rueckfrage.js"].file : "–"));
+        /* MODUL M4: jeder Eingang (auch bruecke mit seinen Stücken aus src/app/) baut zum selben Namen wie in bau/ */
+        const anders = eing.map((n) => n.replace(/\.js$/, "")).filter((k) => !(manifest && manifest["src/" + k + ".js"] && name(m1, k) === manifest["src/" + k + ".js"].file));
+        sage(Boolean(m1) && eing.length > 0 && !anders.length, "B7 wiederholbar: jeder Eingang (" + eing.length + ") baut zum selben Namen wie in bau/", anders.join(", "));
+        /* MODUL M4: eine Änderung in einem Stück (src/app/tutor.js) benennt nur den Eingang um, der es importiert */
+        const stueck = path.join(K, "src", "app", "tutor.js");
+        if (fs.existsSync(stueck)) {
+          fs.writeFileSync(stueck, fs.readFileSync(stueck, "utf8").replace('"dma_tutor_gezeigt"', '"dma_tutor_gezeigt_sonde"'));
+          const m3 = bau(K);
+          const rest = andere.filter((k) => k !== "bruecke");
+          const blieb = rest.filter((k) => name(m2, k) && name(m2, k) === name(m3, k));
+          sage(Boolean(m3) && name(m3, "bruecke") && name(m3, "bruecke") !== name(m2, "bruecke") && blieb.length === rest.length,
+            "B7 Kaskade (Stück): eine Änderung in src/app/tutor.js benennt nur bruecke um", "bruecke " + name(m2, "bruecke") + " → " + name(m3, "bruecke")
+            + "; gleich geblieben " + blieb.length + "/" + rest.length);
+        }
         /* B8: Baufehler und fehlendes Vite – mit dem modul-bauen.js aus WURZEL */
         const F = path.join(tmp, "f");
         kopie(F);
