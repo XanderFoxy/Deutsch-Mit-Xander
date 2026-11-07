@@ -7653,7 +7653,7 @@
   /* Die Seite zeichnet ständig Teile neu (Sammelmodus, Niveauwechsel,
      Sprachwechsel). Ein Beobachter stellt die Betonung danach wieder her,
      ohne dass jede einzelne Render-Stelle daran denken muss. */
-  (() => {
+  function betonungBeobachten() {
     let geplant = false;
     const beobachter = new MutationObserver(() => {
       if (geplant || (!betonungOffen.size && !betonungAus.size)) return;
@@ -7661,7 +7661,8 @@
       setTimeout(() => { geplant = false; betonungWiederherstellen(); }, 120);
     });
     beobachter.observe(document.body, { childList: true, subtree: true });
-  })();
+  }
+  betonungBeobachten();
 
   /* Ein Klick-Handler für alle drei Bereiche. */
   document.addEventListener("click", (ev) => {
