@@ -42,7 +42,8 @@
       K2 window.tutorBereichRufen = fremde Funktion – sie wird nie gerufen,
          der Tutor kommt
    R  Rückweg: bau/bruecke-*.js nicht ladbar → die Quelle src/bruecke.js
-      kommt nach (hier 3 s verzögert), die gemerkten Rufe werden nachgeholt
+      kommt nach (angefragt erst bei DOMContentLoaded, genau einmal – seit
+      Prüfung Runde 2; hier 3 s verzögert), die gemerkten Rufe werden nachgeholt
       (Reiter da, Betonung geht), ein Tipp in einen Textkasten VOR der Brücke
       schaltet danach nichts um (Ereignisse werden nicht gemerkt), kein
       pageerror
@@ -439,6 +440,13 @@ async function browserTeile() {
       (frueh || "kein Kasten vor der Brücke") + (r.umgeschaltet ? ": Betonung kam verspätet an" : ""));
     sage(Boolean(r.br && r.br.namen.length >= 14) && r.lauf.some((x) => /^src\/bruecke\.js$/.test(x)), "R  die Quelle src/bruecke.js kommt nach, Eingänge auf window",
       r.lauf.filter((x) => /bruecke/.test(x)).join(", ") || "keine Brücke");
+    /* Prüfung Runde 2: der Rückweg wartet auf DOMContentLoaded (dann ist jedes Modul der defer-Reihe gelaufen oder gescheitert) */
+    const zeit = await s.pg.evaluate(() => {
+      const nav = performance.getEntriesByType("navigation")[0], q = performance.getEntriesByType("resource").filter((x) => /\/src\/bruecke\.js/.test(x.name));
+      return { dcl: nav ? Math.round(nav.domContentLoadedEventStart) : null, src: q.length ? Math.round(q[0].startTime) : null, n: q.length };
+    });
+    sage(zeit.src != null && zeit.dcl > 0 && zeit.src >= zeit.dcl && zeit.n === 1, "R  der Rückweg holt src/bruecke.js erst bei DOMContentLoaded, genau einmal",
+      "DOMContentLoaded " + zeit.dcl + " ms, src/bruecke.js angefragt " + zeit.src + " ms, " + zeit.n + "×");
     for (const [gut, was, dazu] of await bedienen(s.pg)) sage(gut, was.replace(/^(B\d) /, "R  ($1) "), dazu);
     sage(!s.pe.length, "R  kein pageerror", s.pe.slice(0, 3).join(" | "));
     await s.ctx.close();
