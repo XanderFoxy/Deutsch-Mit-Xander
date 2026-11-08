@@ -17,7 +17,9 @@
        kommen die Dateien nach bau/, das Manifest zuletzt.
    (d) Scheitert der Bau oder fehlt Vite (kein node_modules): bau/ und
        DMA_MODUL bleiben, wie sie waren, laut auf stderr, Rückgabe ≠ 0
-       (fassung-setzen.js setzt die Stempel für min/ trotzdem).
+       (fassung-setzen.js setzt die Stempel für min/ trotzdem). Seit M5
+       holt ein git-Baum ohne Vite es vorher einmal mit npm ci
+       (viteHolen, unten); die Meldung nennt, was geändert ist.
    (e) Aufräumen: gelöscht wird nur, was weder das neue Manifest noch
        eines der letzten 3 Manifeste aus git nennt – eine ältere Seite,
        die noch im Speicher eines Geräts liegt, holt ihre Stücke vom
@@ -114,6 +116,58 @@ function gitManifeste(wurzel, n) {
   } catch (e) { return null; }
 }
 
+/* M5 (Prüfung Runde 1) — VITE HOLEN, WENN ES FEHLT. Vorher liefen die Packer der Stadt auch ohne node_modules (esbuild
+   aus dem npx-Speicher, wie fassung-setzen.js es für min/ bis heute holt). Seit M5 baut nur noch Vite die Stadt; im
+   Hauptbaum ohne node_modules hätte eine Änderung an stadt/ dann still alte Seiten ausgeliefert (der Haken lässt jeden
+   Commit durch, sein Text bleibt für alle Bäume gleich). Darum: fehlt Vite, holt das Werkzeug es EINMAL mit npm ci –
+   genau die Fassungen aus package-lock.json, also dieselben Stücke wie in jedem anderen Baum. Nur in einem git-Baum
+   (nicht in Vergleichsständen aus git archive und nicht in den Wegwerf-Ordnern der Sonden), nur wenn .gitignore
+   node_modules/ nennt (Plan, Regel 6: sonst landeten 34 MB in der Sicherung) und nicht mit DMA_KEIN_NPM=1.
+   → null: geholt (oder es war schon da); sonst der Grund, warum nicht */
+function viteHolen(wurzel) {
+  const vite = path.join(wurzel, "node_modules", ".bin", "vite");
+  if (fs.existsSync(vite)) return null;
+  if (process.env.DMA_KEIN_NPM === "1") return "DMA_KEIN_NPM=1";
+  if (!fs.existsSync(path.join(wurzel, ".git"))) return "kein git-Baum";
+  let lock = "", ign = "";
+  try { lock = fs.readFileSync(path.join(wurzel, "package-lock.json"), "utf8"); } catch (e) {}
+  try { ign = fs.readFileSync(path.join(wurzel, ".gitignore"), "utf8"); } catch (e) {}
+  if (!/"node_modules\/vite"/.test(lock)) return "package-lock.json nennt kein Vite";
+  if (!/^\/?node_modules\/?\s*$/m.test(ign)) return ".gitignore nennt node_modules/ nicht";
+  /* nie zwei npm ci zugleich im selben Baum (ein Sondenlauf und ein Commit) */
+  const sperre = path.join(require("os").tmpdir(), "dma-npm-" + sha1(wurzel).slice(0, 12));
+  try { fs.mkdirSync(sperre); } catch (e) {
+    let alt = 0; try { alt = Date.now() - fs.statSync(sperre).mtimeMs; } catch (e2) {}
+    if (alt < 10 * 60000) return "ein anderer Lauf holt Vite gerade";
+    try { fs.rmSync(sperre, { recursive: true, force: true }); fs.mkdirSync(sperre); } catch (e2) { return "Sperre " + sperre; }
+  }
+  try {
+    console.error("MODUL-BAU: Vite fehlt (node_modules/) – einmal holen: npm ci --prefix " + wurzel + " (Fassungen aus package-lock.json)");
+    const r = spawnSync("npm", ["ci", "--prefix", wurzel, "--no-audit", "--no-fund", "--loglevel", "error"],
+      { cwd: wurzel, encoding: "utf8", timeout: 300000, stdio: ["ignore", "pipe", "pipe"] });
+    if (r.status === 0 && fs.existsSync(vite)) { console.error("MODUL-BAU: Vite geholt (node_modules/ steht in .gitignore, kommt nicht in git)"); return null; }
+    return "npm ci: " + ((String(r.stderr || "") + String(r.error || "")).trim().split("\n").filter((z) => z.trim()).slice(0, 3).join(" | ").slice(0, 300)
+      || "Rückgabe " + r.status);
+  } finally { try { fs.rmSync(sperre, { recursive: true, force: true }); } catch (e) {} }
+}
+
+/* M5 (Prüfung Runde 1): WAS hat sich seit dem letzten Bau geändert? (für die Meldung, wenn nicht gebaut werden kann –
+   vorher hieß es immer „src/ hat sich geändert“, auch wenn es stadt/… war). Mit git: was anders ist als in dem Commit,
+   der bau/quelle.json zuletzt geändert hat (dazu neue Dateien in src/); ohne git nur die Arten. */
+function geaendert(wurzel, eingaben) {
+  const art = "src/, vite.config.mjs, package-lock.json oder eine Datei der Seiten (stadt/…, stadt-leicht/…)";
+  try {
+    if (!fs.existsSync(path.join(wurzel, ".git"))) return art;
+    const git = (a) => execFileSync("git", ["-C", wurzel].concat(a), { stdio: ["ignore", "pipe", "ignore"], maxBuffer: 1 << 26 }).toString("utf8");
+    const c = git(["log", "-n", "1", "--format=%H", "--", "bau/quelle.json"]).trim();
+    if (!c) return art;
+    const pfade = ["src", "vite.config.mjs", "package-lock.json"].concat(eingaben.filter((f) => !/^src\//.test(f)));
+    const liste = [...new Set(git(["diff", "--name-only", c, "--"].concat(pfade)).split("\n")
+      .concat(git(["ls-files", "--others", "--exclude-standard", "--", "src"]).split("\n")).filter(Boolean))].sort();
+    return liste.length ? liste.slice(0, 6).join(", ") + (liste.length > 6 ? " (+" + (liste.length - 6) + ")" : "") : art;
+  } catch (e) { return art; }
+}
+
 /* → { karte, gebaut, fehler, geloescht } ; karte = null heißt: DMA_MODUL nicht anfassen */
 function bauen(wurzel) {
   const SRC = path.join(wurzel, "src"), BAU = path.join(wurzel, "bau");
@@ -131,9 +185,18 @@ function bauen(wurzel) {
   let gebaut = false;
   if (merk.summe !== s || !vollstaendig) {
     const vite = path.join(wurzel, "node_modules", ".bin", "vite");
+    /* M5 (Prüfung Runde 1): fehlt Vite, wird es in einem git-Baum einmal geholt (viteHolen) – sonst baute im Hauptbaum
+       nach einer Änderung an stadt/ niemand die Seiten, und der Haken ließe den Commit mit alter Stadt durch */
+    const nichtGeholt = fs.existsSync(vite) ? null : viteHolen(wurzel);
     if (!fs.existsSync(vite)) {
-      return { karte: null, gebaut: false, geloescht: 0, seiten: [], fehler: "Vite fehlt (node_modules/.bin/vite) – src/ hat sich geändert, "
-        + "bau/ und DMA_MODUL sind NICHT neu. Abhilfe: npm ci --prefix " + wurzel };
+      const seitenNamen = Object.keys(seitenMerk);
+      const was = merk.summe !== s ? "geändert seit dem letzten Bau: " + geaendert(wurzel, merk.eingaben || [])
+        : "es fehlen Stücke in bau/ oder gebaute Seiten";
+      return { karte: null, gebaut: false, geloescht: 0, seiten: [], fehler: "Vite fehlt (node_modules/.bin/vite)"
+        + (nichtGeholt ? " und wurde nicht geholt (" + nichtGeholt + ")" : "") + " – " + was + ". bau/, "
+        + (seitenNamen.length ? "die gebauten Seiten (" + seitenNamen.join(", ") + ") " : "") + "und DMA_MODUL sind NICHT neu"
+        + (seitenNamen.length ? " – die Seiten laufen mit altem Code" : "") + ". Abhilfe: npm ci --prefix " + wurzel
+        + " (Voraussetzung für den Bau, MODULE-PLAN.md M5), dann node werkzeug/fassung-setzen.js --nur-stempel und neu committen" };
     }
     const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "dma-bau-"));
     const einDatei = tmp + "-eingaben.json";   /* M5: vite.config.mjs schreibt hierhin, was in den Bau eingegangen ist */
@@ -216,7 +279,7 @@ function zeileSetzen(html, k) {
   return html.replace(/(<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>)/, "$1\n" + z);
 }
 
-module.exports = { bauen, summe, karte, dateien, gitManifeste, zeileSetzen, STUECK, ZEILE };
+module.exports = { bauen, summe, karte, dateien, gitManifeste, zeileSetzen, viteHolen, geaendert, STUECK, ZEILE };
 
 if (require.main === module) {
   const w = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));

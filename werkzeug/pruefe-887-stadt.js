@@ -35,6 +35,12 @@
          Änderung in stadt-leicht/ baut neu (nur die leichte Stadt bekommt
          neue Namen, die Baukasten-Stadt nicht); eine im Hauptordner von Hand
          geänderte Seite wird nicht überschrieben (laute Meldung, bau/ bleibt)
+     B9  supabase-js mit fester Fassung (@2.x.y wie Fassung 887) in
+         src/stadt-leicht.html und in der gebauten Seite
+     B10 Vite fehlt (Hauptbaum ohne node_modules, npm als Attrappe): in einem
+         git-Baum holt modul-bauen es einmal mit npm ci und baut; scheitert
+         das, nennt die Meldung die geänderte Datei, bau/ und Seiten bleiben;
+         kein npm ohne git, ohne node_modules/ in .gitignore, mit DMA_KEIN_NPM=1
    S (Browser, Chromium, ohne Helfer)
      S1  stadt-leicht.html?demo=1 gebaut: genau ein Modul aus bau/, keine
          Quelle, keine 404, kein Seitenfehler, Ladebild steht vor den
@@ -225,6 +231,79 @@ const PACKER = {
       } finally { fs.rmSync(T, { recursive: true, force: true }); }
     }
     sage(/function hauptseite\(u\)/.test(sw) && /return u\.pathname === w \|\| u\.pathname === w \+ "index\.html";/.test(sw), "B7 sw.js: die Seiten selbst laufen am Helfer vorbei (nur index.html ist Hauptseite)");
+    /* B9 (Prüfung Runde 1): supabase-js mit fester Fassung wie in Fassung 887 (L7) – in der Quelle UND der gebauten Seite.
+       Sonst hielte modul-bauen die Seite nach dem Einmischen von main für „von Hand geändert“ (main hat sie gepinnt), oder
+       ein Neubau aus src/ nähme die Pinnung wieder weg. Dieselbe Regel wie supabaseFassungPruefen in main. */
+    for (const f of ["src/stadt-leicht.html", "stadt-leicht.html"]) {
+      const t = (lies(f) || "").match(/<script[^>]+src="[^"]*supabase-js[^"]*"/g) || [];
+      const lose = t.filter((x) => !/supabase-js@2\.\d+\.\d+\//.test(x));
+      sage(t.length === 1 && !lose.length, "B9 " + f + " lädt supabase-js mit fester Fassung (@2.x.y, wie Fassung 887)", lose.join(" | ") || (t[0] || "").replace(/^.*supabase-js@([^/]+)\/.*$/, "@$1"));
+    }
+    /* B10 (Prüfung Runde 1): Vite fehlt (Hauptbaum ohne node_modules). In einem git-Baum holt modul-bauen es einmal mit npm ci;
+       geht das nicht, nennt die Meldung, WAS geändert ist (nicht „src/ hat sich geändert“, wenn es stadt-leicht/ war), und
+       bau/ und die Seiten bleiben. Statt npm läuft eine Attrappe (im PATH): „gut“ legt node_modules an, „schlecht“ scheitert. */
+    if (!MB || !fs.existsSync(vite)) sage(false, "B10 ohne Vite: modul-bauen.js und Vite (für den Bau nach dem Holen) nötig");
+    else {
+      const T = fs.mkdtempSync(path.join(os.tmpdir(), "dma-887-ohnevite-"));
+      const pathVor = process.env.PATH, npmVor = process.env.DMA_KEIN_NPM;
+      try {
+        const W = path.join(T, "w"), BIN = path.join(T, "bin"), LOG = path.join(T, "npm.log");
+        const kopie = (rel) => { const q = path.join(WURZEL, rel), z = path.join(W, rel); fs.mkdirSync(path.dirname(z), { recursive: true }); fs.copyFileSync(q, z); };
+        const baumL = (o) => !fs.existsSync(o) ? [] : fs.readdirSync(o, { withFileTypes: true }).flatMap((e) => e.isDirectory() ? baumL(path.join(o, e.name)) : [path.join(o, e.name)]);
+        ["vite.config.mjs", "package.json", "package-lock.json", ".gitignore", "stadt.html", "stadt-leicht.html"].concat(ein).forEach(kopie);
+        baumL(path.join(WURZEL, "src")).forEach((f) => kopie(path.relative(WURZEL, f)));
+        baumL(path.join(WURZEL, "bau")).forEach((f) => kopie(path.relative(WURZEL, f)));
+        const g = (a) => spawnSync("git", ["-C", W, "-c", "user.name=Sonde", "-c", "user.email=sonde@example.invalid"].concat(a), { encoding: "utf8" });
+        g(["init", "-q"]); g(["add", "-A"]); g(["commit", "-qm", "Ausgang"]);
+        fs.mkdirSync(BIN);
+        fs.writeFileSync(path.join(BIN, "npm"), "#!/bin/sh\necho \"$@\" >> \"" + LOG + "\"\n"
+          + "if [ \"$SONDE_NPM\" = gut ]; then ln -s \"" + path.join(WURZEL, "node_modules") + "\" \"$3/node_modules\"; exit 0; fi\n"
+          + "echo \"npm ERR! code ENOTFOUND (Sonde: kein Netz)\" >&2; exit 1\n", { mode: 0o755 });
+        process.env.PATH = BIN + ":" + pathVor;
+        delete process.env.DMA_KEIN_NPM;
+        const stand = () => baumL(path.join(W, "bau")).concat(["stadt.html", "stadt-leicht.html"].map((n) => path.join(W, n)))
+          .map((f) => f + sha1(fs.readFileSync(f))).sort().join("|");
+        const npmRufe = () => { try { return fs.readFileSync(LOG, "utf8").split("\n").filter(Boolean); } catch (e) { return []; } };
+        const r0 = MB.bauen(W);
+        sage(!r0.fehler && !r0.gebaut && !npmRufe().length, "B10 Ausgangslage: Kopie ohne node_modules, nichts geändert → kein Bau, kein npm", r0.fehler || "");
+        fs.appendFileSync(path.join(W, "stadt-leicht", "korn-laden.js"), "\nwindow.__sonde887b10 = 1;\n");
+        const v0 = stand();
+        process.env.SONDE_NPM = "schlecht";
+        const r1 = MB.bauen(W);
+        sage(Boolean(r1.fehler) && /Vite fehlt/.test(r1.fehler) && /stadt-leicht\/korn-laden\.js/.test(r1.fehler) && !/src\/ hat sich geändert/.test(r1.fehler)
+          && /nicht geholt \(npm ci: npm ERR! code ENOTFOUND/.test(r1.fehler) && /stadt-leicht\.html/.test(r1.fehler) && r1.karte === null && stand() === v0 && npmRufe().length === 1
+          && /^ci --prefix /.test(npmRufe()[0]), "B10 npm scheitert: laute Meldung nennt die geänderte Datei (stadt-leicht/korn-laden.js) und die alten Seiten, bau/ und Seiten bleiben",
+          String(r1.fehler || "kein Fehler").slice(0, 160));
+        process.env.DMA_KEIN_NPM = "1";
+        const r2 = MB.bauen(W);
+        sage(Boolean(r2.fehler) && /DMA_KEIN_NPM/.test(r2.fehler) && npmRufe().length === 1 && stand() === v0, "B10 DMA_KEIN_NPM=1: kein npm-Aufruf, Meldung, nichts gebaut");
+        delete process.env.DMA_KEIN_NPM;
+        fs.writeFileSync(path.join(W, ".gitignore"), ".claude/\n");
+        const r3 = MB.bauen(W);
+        sage(Boolean(r3.fehler) && /\.gitignore nennt node_modules\/ nicht/.test(r3.fehler) && npmRufe().length === 1, "B10 .gitignore ohne node_modules/: kein npm (sonst kämen 34 MB in die Sicherung)");
+        fs.copyFileSync(path.join(WURZEL, ".gitignore"), path.join(W, ".gitignore"));
+        process.env.SONDE_NPM = "gut";
+        const m0 = JSON.parse(fs.readFileSync(path.join(W, "bau", "manifest.json"), "utf8"));
+        const r4 = MB.bauen(W);
+        const m4 = JSON.parse(fs.readFileSync(path.join(W, "bau", "manifest.json"), "utf8"));
+        const nm = (m, k) => (m[k] || {}).file;
+        sage(!r4.fehler && r4.gebaut && npmRufe().length === 2 && nm(m4, "src/stadt-leicht.html") !== nm(m0, "src/stadt-leicht.html") && nm(m4, "src/stadt.html") === nm(m0, "src/stadt.html")
+          && fs.readFileSync(path.join(W, "stadt-leicht.html"), "utf8").indexOf("bau/" + nm(m4, "src/stadt-leicht.html")) > 0,
+          "B10 npm geht: Vite einmal geholt, die leichte Stadt neu gebaut (neuer Name in der Seite), die Baukasten-Stadt unverändert",
+          r4.fehler ? String(r4.fehler).slice(0, 120) : nm(m0, "src/stadt-leicht.html") + " → " + nm(m4, "src/stadt-leicht.html"));
+        const r5 = MB.bauen(W);
+        sage(!r5.fehler && !r5.gebaut && npmRufe().length === 2, "B10 danach: kein zweites npm, nichts mehr zu bauen");
+        fs.rmSync(path.join(W, ".git"), { recursive: true, force: true });
+        fs.rmSync(path.join(W, "node_modules"), { force: true });
+        fs.appendFileSync(path.join(W, "stadt-leicht", "korn-laden.js"), "\nwindow.__sonde887b10b = 1;\n");
+        const r6 = MB.bauen(W);
+        sage(Boolean(r6.fehler) && /kein git-Baum/.test(r6.fehler) && npmRufe().length === 2, "B10 ohne git (Vergleichsstand, Wegwerf-Ordner): kein npm, laute Meldung", String(r6.fehler || "").slice(0, 100));
+      } finally {
+        process.env.PATH = pathVor; delete process.env.SONDE_NPM;
+        if (npmVor === undefined) delete process.env.DMA_KEIN_NPM; else process.env.DMA_KEIN_NPM = npmVor;
+        fs.rmSync(T, { recursive: true, force: true });
+      }
+    }
   }
 
   /* ===================== S: im Browser ===================== */
