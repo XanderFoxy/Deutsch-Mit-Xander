@@ -680,7 +680,9 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     - **Ergebnis:** schneller, wo es zählt – „Lernen" steht sofort (4G 11×, 3G 72×), der ganze Weg bis zur ersten Frage
       ist auf 4G 2,1 s und auf 3G 7,2 s kürzer, nichts mehr synchron. Ehrlich: der Tipp auf „Runde starten" wartet jetzt
       auf den Wortschatz (4G +1,7 s, 3G +11,4 s bei sofortigem Tipp); wer sich die Übersicht ein paar Sekunden ansieht,
-      merkt das nicht, weil der Wortschatz dabei im Hintergrund kommt.
+      merkt das nicht, weil der Wortschatz dabei im Hintergrund kommt. **Nachtrag (Nachbesserung 1):** diese Zahlen gelten
+      für „tiere" (vorgeladen); für eine der 82 übrigen Karten wartet auch der Tipp auf die Karte länger (4G +0,5 s, 3G
+      +1,5 s) und der ganze Weg ist kürzer um 4G 1,3–1,5 s (Faktor 1,33), 3G 7,3 s (Faktor 1,41) – siehe unten.
   - **Sonden (Endlauf, a2cafbbe, über die Sperre):**
     - `887-daten`: D1–D6 grün (ohne Browser), B1–B10 grün (42/42). **Gegenprobe d9637a22: 16 rot** (B2, B3, B4, B8,
       B9 „uebung"/„rest2", B10 „danach 0 statt 658"; dazu D: 10 rot, 07.11.). B5–B7 sind auf beiden grün (Ablauf,
@@ -743,3 +745,52 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
        - **B6** neu dazu: Rückfall beim Vorladen (nur „Lernen" offen, keine Karte): Teil `stil` 404 bzw. Verzeichnis 404 →
          von selbst die ganze Datei, Daten = Quelle; neu grün, **edc48fc5: 2 rot** („nicht fertig"), **d9637a22: 2 rot**
          (kein Teil angefragt; die ganze Datei kommt dort, aber ohne Teile und ohne `dma-uebungen-ganz`).
+    4. **Messung nach der Nachbesserung (a3add543, A = d9637a22, B = neu, verschränkt, Chromium CPU 4×, Gast, Tipp sofort;
+       08.11. 07:05–07:40 UTC, Rechnerlast 3–4 bei 4 Kernen; `scratchpad/m887/modul/m3b/nb1/messung/`).**
+       - **Karte, die NICHT unter den ersten 8 vorgeladenen ist (`--kategorie wortstellung`; so sind 82 der 90):**
+         - 4G kalt, 6 Paare: **Karte: Tipp → startklar 565 → 1 178 ms, +523 [129…810], 5/6 langsamer** (Kreuzschätzer
+           +557). Das ist der Teil der Karte, der sich die Leitung mit dem Wortschatz teilt; „Runde starten" bleibt so lange
+           gesperrt, ohne Hinweis. Die A/A-Probe des Endlaufs hatte bei diesem Maß eine feste Schieflage von −222 ms
+           zugunsten von B – der wahre Nachteil kann also eher größer sein. Runde starten 460 → 1 756 ms (+1 297, 6/6;
+           Wortschatz). **Lernen-Tipp → Frage 5 248 → 3 939 ms, −1 285 [−1 861…−1 107], 6/6, Faktor 1,33**; ab Öffnen
+           6 663 → 5 460 ms (Faktor 1,22); Lernen → Karten 3 817 → 386 ms (Faktor 9,9); längster Langläufer −88,
+           Summe −461 ms.
+         - 3G kalt, 4 Paare: **Karte 2 256 → 3 759 ms, +1 475 [994…1 788], 4/4 langsamer**; Runde starten 2 405 →
+           13 642 ms (+11 245, 4/4: 13,6 s „Aufgaben werden geholt …", der Wortschatz); **Lernen-Tipp → Frage 25 160 →
+           17 862 ms, −7 303 [−7 567…−6 814], 4/4, Faktor 1,41**; ab Öffnen 29 429 → 22 174 ms (Faktor 1,33); Lernen →
+           Karten 20 053 → 307 ms (Faktor 65). Langläufer-Summe 0–10 s +169 ms (bei A fällt das Ausführen der ganzen
+           Sammlung erst nach 20 s, also aus dem Fenster).
+         - Der Prüfer kam unabhängig auf dasselbe (4G Karte 447 → 948, 3G 2 210 → 3 736; gesamt 4G Faktor 1,51, 3G 1,39).
+           **Das Logbuch nannte oben nur „tiere" (vorgeladen, Karte im Rauschen) – für die Mehrzahl gilt diese Zahl.**
+           Insgesamt bleibt es schneller, weil „Lernen" nicht mehr auf die ganze Sammlung wartet; der Tipp auf eine
+           nicht vorgeladene Karte und „Runde starten" warten sichtbar länger als auf d9637a22.
+       - **3G Gast-Start (Standardfall), mehr Paare:** 10 Paare gegen d9637a22, dazu 7 Paare A/A (derselbe Stand
+         zweimal). Auf 3G hat das Werkzeug einen starken Reihenfolge-Effekt: innerhalb eines Laufs ist die zweite Seite
+         rund 300–400 ms langsamer (A/A: B−A +371 ms, wenn A zuerst lief, −305 ms, wenn B zuerst lief). Weil bei ungerader
+         Laufzahl A öfter zuerst läuft, verfälscht der einfache gepaarte Median; ausgewertet wird darum über Kreuz
+         (Median B−A je Reihenfolge, Mittel der beiden; `nb1/kreuz.js`). **bereit: +66 [38…121] ms gegen d9637a22,
+         A/A +33 [−5…84]**; erstes Bild +118 [67…135], A/A +71 [46…122]; Wissen-Tipp +25 (A/A −2); Klassenzimmer-Tipp
+         −10 (A/A +2); ab Start bis Klassenzimmer +64 (A/A +50); Langläufer-Summe +38 (A/A +47). Abzüglich der A/A-
+         Schieflage bleiben +33 ms (bereit) bzw. +47 ms (erstes Bild), innerhalb der Rauschgrenze; der Mechanismus ist
+         klein (+2,0 KB gepackt bis bereit ≈ 10 ms bei 1,6 Mbit/s). **Kein Nachteil über dem Rauschen gesichert; ein
+         Rest von ~+30–50 ms ist nicht auszuschließen.** (Die früheren 3G-Zahlen −53/+79/+186 ms stammen aus je 2 Paaren
+         ohne diese Kreuzauswertung.) Bei „Übung öffnen" ist der Effekt kleiner; über Kreuz nachgerechnet bleiben die
+         Aussagen: Endlauf 4G (tiere) Lernen-Tipp → Frage −1 884 statt −2 065 ms (Faktor ≈ 1,59 statt 1,64), 3G −7 129
+         statt −7 155; wortstellung 4G −1 457 statt −1 285, Karte +557 statt +523, Runde starten +1 203 statt +1 297.
+    5. **Platz:** keine neuen Dateien (die Daten sind unverändert, `bau/uebungen/` bleibt gleich); geändert sind nur
+       `data-exercises.js`, `app.js` und ihre `min/`-Stücke (gepackt +0,4 KB). Weiter ≈ 954 von 1 000 MB.
+    6. **Offen / Vorschläge (aktualisiert):**
+       1. **„Runde starten" ohne den ganzen Wortschatz** bleibt der größte Rest-Hebel (nachgemessen 4G +1,2–1,3 s, 3G
+          +11,2 s, 13,6 s „Aufgaben werden geholt …"). Neu gezählt (Node, `getBank()` aller 62 Kategorien des
+          Deutsch-Raums): **in 41 Kategorien hat jede Aufgabe ein festes Niveau** – für sie liest quiz.js den Wortschatz
+          zur Einstufung gar nicht (`questionLevel` nimmt `q.level`); nur 21 Kategorien haben Aufgaben ohne Niveau
+          (zusammen 2 625 von 24 173, meist je ~100 eingebaute), dazu „wortschatz", das seine Aufgaben aus dem
+          Wortschatz baut. Nächster Schritt (eigener Schritt mit Gleichlauf-Prüfer, unsichtbar): Niveau der 2 625 beim Bau
+          vorberechnen oder nur für diese Kategorien warten; vorher prüfen, ob andere Teile der Runde (z. B. Betonung) den
+          Wortschatz brauchen.
+       2. **Karte, die nicht vorgeladen ist** (4G +0,5 s, 3G +1,5 s; „Runde starten" bleibt so lange ohne Hinweis
+          gesperrt): der Teil teilt sich die Leitung mit dem Wortschatz. Unsichtbar denkbar: den Teil der getippten Karte
+          vor die laufenden Wortschatz-Dateien ziehen – nicht gebaut, nicht gemessen. Ein Hinweis am Knopf wäre sichtbar
+          → nur als Vorschlag. Mit Punkt 1 entfiele der Zielkonflikt.
+       3. Der Zweig `renderChallengePicker` (Duell aus einer Kategorie-Liste) ist nicht angeschlossen – nur gemeldet,
+          nicht entfernt.
