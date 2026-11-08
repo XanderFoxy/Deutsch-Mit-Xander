@@ -279,7 +279,10 @@ function zeileSetzen(html, k) {
   return html.replace(/(<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>)/, "$1\n" + z);
 }
 
-module.exports = { bauen, summe, karte, dateien, gitManifeste, zeileSetzen, viteHolen, geaendert, STUECK, ZEILE };
+module.exports = { bauen, summe, karte, dateien, gitManifeste, zeileSetzen, STUECK, ZEILE };
+
+/* M5 (Prüfung Runde 1) – eigene Zeile, damit sich die Liste oben beim Einmischen mit module-umbau (M3b) nicht reibt */
+Object.assign(module.exports, { viteHolen, geaendert });
 
 if (require.main === module) {
   const w = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
