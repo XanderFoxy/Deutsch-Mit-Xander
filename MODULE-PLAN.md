@@ -643,10 +643,63 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
   - **Weitere Prüfung: „Runde starten" wartet auf den ganzen Wortschatz.** Das ist nicht entbehrlich: quiz.js stuft
     JEDE Aufgabe auch nach den Wörtern darin ein (`wortNiveauKarte` aus `VocabData.WORDS`), die Niveau-Auswahl der Runde
     hängt also am Wortschatz. Darum bleibt das Warten (wie auf d9637a22); siehe „Offen".
-  - **Aufgabenliste (Zwischenstand 07.11. 21:00, Rechner seit 19:33 neu gestartet; Chromium wartet auf die Prüfung
-    der Auslieferung 887):** Endlauf auf a2cafbbe in `scratchpad/m887/modul/m3b/end/` (Warteschlange `schlange.txt`,
-    Läufer `lauf.sh`, je Eintrag eine Sperre, wartet auf `/tmp/claude-0/vorrang-887`): 887-daten B10 neu/d9637a22,
-    ganz neu/d9637a22; „Übung öffnen" 4G kalt (2× 3 Paare), 3G kalt (2× 2), 4G wieder (3), 3G wieder (2), A/A 4G kalt
-    (2× 3); Gast-Start 4G kalt (5)/wieder (3); Sonden betonung-uebung, 853-beugung, galgenmaennchen, 858-ladeweg,
-    876-start-schlank, 636, 868, 843, 885-bereiche, 885-stuecke, 887-bruecke, 887-bau, 885-schlank, 885-swvorladen,
-    884-notweg. Ohne Browser schon grün (a2cafbbe): 887-daten D1–D6, 887-bau B, mehrdeutige-aufgaben, betonung-regeln.
+  - **Endlauf 08.11. 01:42–03:10 UTC auf a2cafbbe (Code; d5a96a2f nur Logbuch), A = d9637a22, B = neu, verschränkt,
+    Chromium CPU 4×, Gast, Tipp sofort, je Eintrag eine Sperre (nach der Prüfung der Auslieferung 887; Rechnerlast
+    1,2–4,0 bei 4 Kernen). Ergebnisse `scratchpad/m887/modul/m3b/end/`, Zusammenfassung mit `m3b/zusammen.js`.**
+    - **Vorher festgelegtes Maß:** „Lernen: Tipp → Karten" (darauf wartete „Lernen" heute 1,2 MB gepackt), daneben
+      „Lernen-Tipp → Frage" (ganzer Weg bis zur ersten Frage).
+    - **Rauschgrenze (A/A, derselbe Stand zweimal, 4G kalt, 6 Paare):** Lernen → Karten −8 ms [−124…1]; Karte → startklar
+      −222 [−269…−57] (6/6 – dieses Maß hat eine feste Schieflage zwischen den beiden Herkünften, es entscheidet nichts);
+      Runde starten −69 [−464…55]; Lernen-Tipp → Frage −573 [−793…0]; bereit +16 [−127…79].
+    - **4G kalt, 6 Paare (Median A → B, gepaarter Median B−A [95 %]):**
+      - **Lernen: Tipp → Karten 3 779 → 337 ms, −3 442 [−3 538…−3 400], 6/6, Faktor 11,2** (weit über der Rauschgrenze).
+      - Karte: Tipp → startklar 520 → 410 ms, −115 [−161…104] – im Rauschen.
+      - Runde starten: Tipp → Frage 442 → 2 067 ms, **+1 650 [1 339…1 767], 6/6 langsamer**: hier wartet jetzt der
+        Wortschatz (2,26 MB), der früher während der 3,8 s „Lernen" mitkam (siehe „Weitere Prüfung" oben).
+      - **Lernen-Tipp → Frage 5 098 → 3 100 ms, −2 065 [−2 126…−1 672], 6/6, Faktor 1,64**; ab Öffnen 6 514 → 4 435 ms
+        (−2 109, Faktor 1,47).
+      - synchron geholt 461 → 0 ms; längster Langläufer 389 → 246 ms (−132), Summe 1 514 → 932 ms (−526).
+      - bereit 1 332 → 1 326 ms (−30 [−117…34]), KB bis bereit 646 → 647, KB 0–10 s +54 (Verzeichnis + Teile statt
+        einer Datei), Anfragen 89 → 179.
+    - **3G kalt, 4 Paare:** Lernen → Karten **20 039 → 279 ms (Faktor 72)**; Karte → startklar 2 173 → 3 462 ms
+      (+1 279, 4/4: der Teil der Karte teilt sich die Leitung mit dem Wortschatz); Runde starten 2 392 → 13 832 ms
+      (+11 440, 4/4: Wortschatz, ~11 s bei 1,6 Mbit/s); **Lernen-Tipp → Frage 24 973 → 17 807 ms (−7 155, 4/4,
+      Faktor 1,40)**, ab Öffnen 29 142 → 22 015 ms (Faktor 1,32); synchron 4 114 → 0 ms. Langläufer-Summe 0–10 s
+      399 → 668 ms (+280): bei A fiel das Ausführen der ganzen Sammlung erst nach 20 s, also aus dem Messfenster.
+    - **4G wieder (3. Öffnen, Code-Speicher), 3 Paare:** Lernen → Karten 409 → 204 ms (−179, 3/3, Faktor 2,0);
+      Lernen-Tipp → Frage 1 045 → 1 025 ms (−50 [−157…34], im Rauschen); längster Langläufer 115 → 149 ms (+28 [6…47],
+      3/3 – klein, Summe +5). **3G wieder, 2 Paare:** Lernen → Karten 465 → 281 ms; gesamt 1 212 → 1 142 ms (−70);
+      Karte +81 [1…161].
+    - **Gast-Start (Standardfall, 4G):** kalt, 5 Paare: bereit 1 298 → 1 312 ms (+43 [−39…48], 4↑/1↓; innerhalb der
+      Rauschgrenze ±100 ms bzw. A/A oben [−127…79]), erstes Bild −12, Wissen-Tipp +2, Klassenzimmer-Tipp −51 (5/5 –
+      ohne Mechanismus, nicht beansprucht), Langläufer-Summe +12. wieder, 3 Paare: bereit −9 [−9…53], Wissen −38,
+      Klassenzimmer +8 [3…27]. Für den Start kommen gepackt +2,0 KB dazu (min/data-exercises.js +1,4 KB,
+      min/app.js +0,6 KB, index.html +32 B). **Kein Nachteil beim Start über der Rauschgrenze.**
+    - **Ergebnis:** schneller, wo es zählt – „Lernen" steht sofort (4G 11×, 3G 72×), der ganze Weg bis zur ersten Frage
+      ist auf 4G 2,1 s und auf 3G 7,2 s kürzer, nichts mehr synchron. Ehrlich: der Tipp auf „Runde starten" wartet jetzt
+      auf den Wortschatz (4G +1,7 s, 3G +11,4 s bei sofortigem Tipp); wer sich die Übersicht ein paar Sekunden ansieht,
+      merkt das nicht, weil der Wortschatz dabei im Hintergrund kommt.
+  - **Sonden (Endlauf, a2cafbbe, über die Sperre):**
+    - `887-daten`: D1–D6 grün (ohne Browser), B1–B10 grün (42/42). **Gegenprobe d9637a22: 16 rot** (B2, B3, B4, B8,
+      B9 „uebung"/„rest2", B10 „danach 0 statt 658"; dazu D: 10 rot, 07.11.). B5–B7 sind auf beiden grün (Ablauf,
+      Rückfall, ?quelle/Notweg – sie prüfen, dass nichts kaputtgeht).
+    - grün: `887-bau` (B ohne Browser und S), `887-bruecke`, `885-bereiche`, `885-stuecke`, `885-schlank` Q A–G,
+      `885-swvorladen` (ohne 694), `853-beugung`, `galgenmaennchen`, `858-ladeweg`, `876-start-schlank`,
+      `636-kein-italienisch`, `868-italienisch-nachladen`, `843-italienisch-nur-im-raum`, `betonung-uebung` (Ausgabe bis
+      auf die Kennung gleich wie auf d9637a22), `mehrdeutige-aufgaben`, `betonung-regeln`. (Die Zählung „1 rot" bei
+      betonung-uebung/843 im Läufer ist falsch: „BEFEHL" bzw. „SEITENFEHLER" enthält „FEHL".)
+    - `884-notweg`: „alles grün" (379 s; die Zählung „4 rot" sind Überschriften mit „FEHLT"), wie am 07.11. auf
+      d9637a22.
+  - **Offen / Vorschläge:**
+    1. **„Runde starten" ohne den ganzen Wortschatz (unsichtbar, größter Rest-Hebel):** quiz.js braucht `VocabData.WORDS`
+       nur, um jede Aufgabe auch nach ihren Wörtern einzustufen (`wortNiveauKarte`). Das ließe sich beim Bau
+       vorberechnen (ein Niveau je Aufgabe in den Teilen, `uebungen-teilen.js`); dann wartete die Runde nur noch auf den
+       Wortschatz, wenn die Kategorie ihn wirklich liest (Wortschatz-Kategorien). 3G: −11 s beim Tipp, 4G −1,7 s.
+       Braucht einen Gleichlauf-Prüfer (Niveau vorberechnet = Niveau zur Laufzeit) – eigener Schritt.
+    2. Karten-Tipp auf 3G (+1,3 s): der Teil der Karte teilt sich die Leitung mit dem Wortschatz. Ein Zwischenstand,
+       der den Wortschatz auf die ersten 8 Karten warten ließ, machte 4G gesamt 1 s schlechter (d83b2ab6, verworfen);
+       mit Punkt 1 entfiele der Zielkonflikt.
+    3. **Platz:** +6,26 MB → ≈ 954 von 1 000 MB. `min/data-uebungen.js` (6,0 MB, gepackt 1,22 MB) ist fast so groß wie
+       die Quelle (6,5 MB, gepackt 1,23 MB); nähmen Rückfall und `spiel.js` die Quelle, wäre der Zuwachs ausgeglichen
+       (betrifft `fassung-setzen.js`/Stempel, `spiel.js` gesperrt – nur nach Einmischen von 887 und mit Freigabe).
+    4. `DMA_VERSION` unverändert (885); ausgeliefert wird erst über den Hauptbaum.
