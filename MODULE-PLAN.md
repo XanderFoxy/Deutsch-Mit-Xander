@@ -511,7 +511,7 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
   - **Chromium-Pause ab 08:05 UTC** auf Bitte des Dirigenten (LIVE-Schlussreihe 887). Restliche Läufe:
     `scratchpad/m887/modul/rest.sh` (ab ~09:30 UTC, ein Läufer, alles über die Sperre).
 
-### M5 Stadt (Zweig `modul-stadt`, Grundlage fc5e3ae3; Commits f36468ab, d42f0348, 015c77df, fb22207d, b3143974, …; Prüfung Runde 1: 183b9512, fa914261, 8717eead, fbb3a64b, …)
+### M5 Stadt (Zweig `modul-stadt`, Grundlage fc5e3ae3; Commits f36468ab, d42f0348, 015c77df, fb22207d, b3143974, …; Prüfung Runde 1: 183b9512, fa914261, 8717eead, fbb3a64b, …; Runde 2: bfc356b8, …)
 
 - 01.–07.11. **M5 — die Stadt als eigene Vite-Seiten.** Die leichte Stadt (die im Spiel) bleibt unsichtbar gleich. Die
   Baukasten-Stadt (`stadt.html`, im Spiel nicht verlinkt) ändert sich SICHTBAR, siehe „Fund“ (berichtigt in Prüfung
@@ -530,7 +530,8 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
       `stadt-leicht/bilder/verzeichnis.json` wie bisher (31e0a8453b). `experimental.renderBuiltUrl` schreibt in der Seite
       `bau/<datei>`. Bündel und Stücke müssen ohne import/export sein (sonst Baufehler).
     - Gebaute Seite: im Kopf `<link rel="modulepreload">` fürs Bündel und das Stilblatt aus `bau/`. Am Ende der Lader
-      (Block SKRIPTE): gebaut ein `document.write` des Moduls (läuft wie bisher nach allen anderen Skripten). Mit
+      (Block SKRIPTE) und direkt dahinter das Bündel als festes `<script type="module" src>` (läuft wie bisher nach
+      allen anderen Skripten; bis Prüfung Runde 2 schrieb der Lader es per `document.write`, siehe dort). Mit
       `?quelle=1` kommen die Quellen einzeln (`?t=`) und das Quell-Stilblatt statt des gebauten. Seit Prüfung Runde 1
       schreibt ein kleines Skript VOR den beiden festen Zeilen im Kopf mit `?quelle=1` gleich das Quell-Stilblatt; der
       Lader nimmt am Ende nur das gebaute weg (vorher kam das Quell-Stilblatt erst mit dem Lader).
@@ -737,3 +738,50 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
       15 Karten (neu Schweinestall, Holzfällerhütte, Jagdhütte, Sternwarte), Kuh, Schwein und Huhn gibt es nur über die
       Werkbank – so steht es seit den Fassungen 811 und 833 in den Quellen. Die Stadt im Spiel bleibt gleich. Dazu: Die
       Auto-Schau kommt nach einem Netzaussetzer wieder, und supabase-js bleibt fest auf 2.119.0.“
+  - **Prüfung Runde 2 (08.11.; Commit bfc356b8, …): kein `document.write` für Module.**
+    - **Restrisiko aus Runde 1:** Der Lader setzte das Bündel per `document.write('<script type="module" …>')` ein. Ob
+      Safari unter iOS 14–17 ein so geschriebenes Modul ausführt, lässt sich hier nicht prüfen (nur Chromium).
+    - **Jetzt:** Das Bündel steht fest als `<script type="module" crossorigin src="bau/…">` direkt hinter dem Lader
+      (Block SKRIPTE). Ein festes Modul läuft nach der HTML-Norm in jedem Browser mit Modulen gleich: nach dem Parsen,
+      vor DOMContentLoaded, nach allen klassischen Skripten – also wie bisher. Ohne `?quelle=1` schreibt die Seite nichts
+      mehr per `document.write`. modulepreload, Stilblatt, Ladebild, `__fertig`, `window.LEICHT_*`, die Vertretungen
+      (Nachladen nach Netzfehler) und die Einbettung in `spiel.js` sind unverändert.
+    - **`?quelle=1`:** Das feste Modul läuft auch dort. Darum steht am Anfang jedes Seiten-Bündels eine Wache
+      `if(!/[?&]quelle=1/.test(location.search)){ … }` (dieselbe Regel wie der Lader). `vite.config.mjs` setzt sie in
+      `renderChunk` (order "post") nach dem Verkleinern und vor dem Namen aus dem Inhalt. Nachgeprüft: neues Bündel =
+      Wache + altes Bündel Byte für Byte + `}` (+44 Byte). Neue Namen: `stadt-leicht-BYt3R0E-.js`, `stadt-rE1U7GHN.js`.
+      Auto-Schau, Quests und Äcker sind unverändert und haben keine Wache (mit `?quelle=1` nennt der Lader sie nicht).
+      Fehlt die Wache, bricht der Bau ab.
+    - **Die Quellen bei `?quelle=1` kommen weiter klassisch per `document.write`** (so lief die Stadt bis M5 auf allen
+      Geräten), nicht per `createElement`. Grund, gemessen (`scratchpad/m5nb2/dcl.js`): per `createElement`
+      (`async=false`) eingesetzte Skripte laufen erst nach DOMContentLoaded. `stadt/baustelle.js` hängt `?baustelle`,
+      `?bauan` und `?kdreh` an DOMContentLoaded. `stadt.html?quelle=1&neu=1&still=1&kdreh=1`: mit `document.write`
+      Kamera gedreht (dreh 1, bei DOMContentLoaded steht `STADT.baustelle`), mit `createElement` nicht (dreh 0,
+      DOMContentLoaded kam vor baustelle.js). Diese Prüfbilder fielen also still aus. Für Nutzer zählt der Weg nicht
+      (nur Prüf- und Backwege).
+    - **Sonde 887-stadt** (angepasst, mit Begründung im Code):
+      - B5 legte das `document.write` des Moduls fest. Jetzt: genau ein Modul aus `bau/`, fest hinter dem Lader.
+      - S2 („kein Modul läuft“) prüfte „kein Modul-Element“. Das feste Element ist jetzt immer da, darum zählt jetzt die
+        Abdeckung (Chromium): keine Funktion des Bündels läuft. Gegenstück S1: gebaut laufen 523 Funktionen. S5 genauso
+        (GEBUENDELT fehlt mit `?quelle=1`).
+      - Neu B11 „kein `document.write` für Module“: Normalweg ohne `document.write`, Wache am Anfang des Bündels (Regel
+        wie im Lader), Bündel mit Wache gültiger Modul-Code (Rollup `parseAst`), Stücke ohne Wache. Neu S1/S5: gebaut
+        kein `document.write` im Browser (mitgeschrieben).
+      - Neu: B 68/0, S 29/0. Gegenprobe 5e698b8b: B 8 rot (B5 ×2, B11 ×6), S 2 rot (S1/S5 „kein document.write“; das
+        Modul kam dort per `document.write`).
+    - **Pixelvergleich** (`m887/stadt/pixel.js`, verschränkt A B B A, A = 5e698b8b, Uhr und Zufall angehalten),
+      leichte Stadt, 7 Ansichten: 0 stabile Abweichungen in 6 Ansichten. In „Telefon Nacht“ waren im ersten Durchgang
+      15 705 Punkte stabil anders: die erleuchteten Fenster des Rathauses. Wiederholt (zwei weitere Durchgänge mit
+      „Telefon Nacht“, einer auch „Sommer Nacht“): 0 stabile Abweichungen, im dritten alle vier Bilder Punkt für Punkt
+      gleich (A/B, A/A, B/B je 0). Dieselben Fenster wechseln auch zwischen zwei Läufen desselben Stands (A/A und B/B
+      bis 5,7 %, max 196). Das ist Rauschen; das Bündel ist ohnehin Byte für Byte derselbe Code.
+    - **Messung Ladebild** (`m887/stadt/messen.js`, leichte Stadt wie im Spiel `?eingebettet=1&mini=1&demo=1`, 4G,
+      CPU 4×, Telefon 393 × 800, verschränkt, A = 5e698b8b; Werte in `scratchpad/m5nb2/mess/`):
+      - 8 Paare, FCP (Ladebild) kalt 596 → 598 ms, B − A **+8 [−20 … +52]** (3↓ 5↑); wieder 168 → 162, −2 [−22 … +4].
+        Stadt fertig kalt +18 [−153 … +111], wieder +19 [−272 … +195]. Übertragen und Anfragen gleich.
+      - A/A (5 Paare): FCP kalt −4 [−16 … +32], fertig kalt −38 [−84 … +110].
+      - **Kein Nachteil über dem Rauschen.** Erwartet war auch keiner: Chromium hat das Bündel schon über modulepreload.
+        Safari kennt modulepreload erst ab 17; bisher fand ein älteres Safari das Bündel erst beim `document.write` am
+        Ende, jetzt kann es der Vorab-Leser im HTML sehen (nicht prüfbar, vermutlich eher früher).
+    - **Sondenstand Runde 2** (dieser Baum, je Sonde eine Sperre, Protokolle in `scratchpad/m5nb2/sonden/`):
+      887-stadt B 68/0, S 29/0; 887-bau 33/0; 885-swvorladen 32/0.
