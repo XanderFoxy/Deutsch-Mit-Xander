@@ -6451,8 +6451,14 @@ const ExerciseData = (function () {
           (uebungenVorrang, höchstens 3 s);
        2. die ersten UEB_VORRANG Karten der Übersicht gleich nach dem ersten Bild (der wahrscheinliche Tipp);
        3. die übrigen Teile erst, wenn der Wortschatz da ist (nachVorrang aus app.js).
-     Dieselben Bytes, nur in der Reihenfolge, in der sie gebraucht werden. */
-  const UEB_VORRANG = 8;
+     Dieselben Bytes, nur in der Reihenfolge, in der sie gebraucht werden.
+     NACHBESSERUNG 2 (Prüfer, gemessen): so stimmte das nicht – die Sammlung war auf 4G erst 6,7 s nach dem Tipp ganz
+     (d9637a22: 3,7 s), der Wortschatz 1,3 s später. Zwei Lücken auf der Leitung: der Wortschatz startete erst nach Teil
+     UND Ruhepause (behoben in activateTab, app.js), und nach dem Wortschatz kamen die 82 Teile zu viert mit einer
+     Ruhepause zwischen jedem – bei 60 ms Rundreise nutzt das die Leitung nicht aus. Jetzt nach dem Wortschatz
+     UEB_NACH zugleich und ohne Ruhepause dazwischen (das Ausführen eines Teils ist klein; es geschieht ohnehin, wenn
+     er ankommt, nicht wenn er angefragt wird). */
+  const UEB_VORRANG = 8, UEB_NACH = 8;
   function uebungenVorrang(ms) {
     if (!uebTeileWeg() || uebungenDa()) return Promise.resolve(true);
     return Promise.race([dmaUebTextHolen(true).then(() => true), new Promise((r) => setTimeout(() => r(false), ms || 3000))]);
@@ -6499,11 +6505,14 @@ const ExerciseData = (function () {
           w.then(los, los);
           return;
         }
-        while (laufen < 4 && i < reihe.length && (gewartet || i < UEB_VORRANG || typeof nachVorrang !== "function")) {
+        /* nach dem Wortschatz (gewartet): mehr zugleich und gleich weiter (Nachbesserung 2) */
+        const zugleich = gewartet ? UEB_NACH : 4;
+        while (laufen < zugleich && i < reihe.length && (gewartet || i < UEB_VORRANG || typeof nachVorrang !== "function")) {
           const k = reihe[i++];
           if (uebTeilDa(k)) continue;
           laufen++;
-          uebTeil(K, k, true).then(() => { laufen--; pause(weiter); });
+          const nach = gewartet;
+          uebTeil(K, k, true).then(() => { laufen--; if (nach) setTimeout(weiter, 0); else pause(weiter); });
         }
         if (i >= reihe.length && !laufen) {
           ende();

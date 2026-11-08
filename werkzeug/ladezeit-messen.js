@@ -413,6 +413,23 @@ function mitschreiber(o) {
     var x = { w: w, ab: e.timeStamp }, offen = Object.keys(BED[w]), i = 0;
     if (w === "wahl") x.kat = e.target.closest(WAHL).getAttribute("data-cat");
     M.tipp.push(x);
+    /* M3b, Nachbesserung 2 (Fall uebung): ab dem ersten Tipp auf „Lernen" alle 25 ms nachsehen, wann der Wortschatz
+       startet und ganz da ist, wann die Kategorie „artikel" und wann die ganze Sammlung da ist (ms ab dem Tipp) –
+       Spiele, Wörterbuch und „Runde starten" hängen daran. Nur lesen (VocabData.ladenLaeuft/alleThemenDa, DMA_DATEN). */
+    if (w === "lernen" && !M.ueb) {
+      var U = M.ueb = { ab: e.timeStamp }, uhr = setInterval(function () {
+        /* VocabData ist ein const der Seite (kein window-Name): über den Namen lesen */
+        var t = P.now() - U.ab, V = null, D = window.DMA_DATEN || {};
+        try { V = typeof VocabData !== "undefined" ? VocabData : null; } catch (f) { V = null; }
+        try {
+          if (U.wsStart == null && V && V.ladenLaeuft && V.ladenLaeuft()) U.wsStart = t;
+          if (U.wsGanz == null && V && V.alleThemenDa && V.alleThemenDa()) U.wsGanz = t;
+          if (U.artikel == null && ((D.ZUSATZ_FRAGEN && D.ZUSATZ_FRAGEN.artikel) || (D.ZUSATZ_TEILE && D.ZUSATZ_TEILE.artikel))) U.artikel = t;
+          if (U.sammlung == null && D.ZUSATZ_FRAGEN) U.sammlung = t;
+        } catch (f) {}
+        if ((U.wsGanz != null && U.sammlung != null) || t > 120000) clearInterval(uhr);
+      }, 25);
+    }
     try { P.mark("dma-mess-tipp-" + w); } catch (f) {}
     (function schau() { requestAnimationFrame(function () {
       offen = offen.filter(function (k) {
@@ -448,7 +465,7 @@ function einsammeln() {
   function nz(x) { return x == null ? null : Math.round(x * 10) / 10; }
   var paint = {}; P.getEntriesByType("paint").forEach(function (e) { paint[e.name] = e.startTime; });
   return {
-    t: M.t, null: M.null, tipp: M.tipp, lt: M.lt, loaf: M.loaf, lcp: M.lcp, fehler: M.fehler, jetzt: P.now(),
+    t: M.t, null: M.null, tipp: M.tipp, ueb: M.ueb || null, lt: M.lt, loaf: M.loaf, lcp: M.lcp, fehler: M.fehler, jetzt: P.now(),
     ab: M.ab, seiten: M.seiten, fassung: String(window.DMA_VERSION || ""), vorher: M.vorher || null,
     sync: M.sync, sofort: (window.DMA_TEIL_SOFORT || []).slice(0, 40).map(function (s) { return String(s).replace(/\(?https?:\/\/[^\s)]*\/([^/\s)?]+)(\?[^\s:)]*)?(:\d+:\d+)\)?/g, "($1)").slice(0, 120); }),
     fp: paint["first-paint"], fcp: paint["first-contentful-paint"],
@@ -694,7 +711,8 @@ async function oeffnen(ctx, srv, art, o) {
     if (profile && r.spur.null0) r.profil = profilAuswerten(profile, r.spur.null0, wins);
     if (SPUR_ORDNER) { fs.mkdirSync(SPUR_ORDNER, { recursive: true }); fs.writeFileSync(path.join(SPUR_ORDNER, o.stand + "-" + art + "-" + o.lauf + ".json.gz"), zlib.gzipSync(spurBuf)); }
   }
-  if (r.roh) { delete r.roh.res; delete r.roh.loaf; delete r.roh.lt; delete r.roh.sync; delete r.roh.sofort; }
+  /* MESS_RES=1: die Abrufe (Resource Timing) bleiben im JSON – zum Nachsehen, was wann auf der Leitung lag */
+  if (r.roh) { if (!process.env.MESS_RES) delete r.roh.res; delete r.roh.loaf; delete r.roh.lt; delete r.roh.sync; delete r.roh.sofort; }
   return r;
 }
 
@@ -709,6 +727,8 @@ function auswerten(r) {
   r.lernen = L ? rd(L.bild) : null; r.wahl = Wa ? rd(Wa.bild) : null; r.runde = Ru ? rd(Ru.bild) : null;
   r.uebGesamt = L && Ru && Ru.bild != null ? rd(Ru.ab + Ru.bild - L.ab) : null;
   r.uebAbStart = Ru && Ru.bild != null ? rd(Ru.ab + Ru.bild) : null;
+  /* M3b, Nachbesserung 2: ab dem Tipp auf „Lernen" (Fall uebung; null = nicht im Fenster) */
+  r.ueb = t.ueb ? { wsStart: rd(t.ueb.wsStart), wsGanz: rd(t.ueb.wsGanz), artikel: rd(t.ueb.artikel), sammlung: rd(t.ueb.sammlung) } : null;
   const W = r.tippW, K = r.tippK;
   r.fp = rd(t.fp); r.fcp = rd(t.fcp); r.lcp = t.lcp ? rd(t.lcp[0]) : null; r.lcpWas = t.lcp ? t.lcp.slice(1, 3).filter(Boolean).join(" ") : "";
   r.ttfb = rd(t.nav.ttfb); r.dcl = rd(t.nav.dcl); r.load = rd(t.nav.load); r.bereit = rd(t.t.bereit);
@@ -842,6 +862,8 @@ const MASSE = [
   ["kzAlt", "alte Spalte: Wissen-Tipp → Knopf"], ["kzAbStart", "alte Spalte: Öffnen → Knopf"], ["pause", "  davon Werkzeug-Pausen"],
   ["lernen", "Lernen: Tipp → Karten"], ["wahl", "Karte: Tipp → startklar"], ["runde", "Runde starten: Tipp → Frage"],
   ["uebGesamt", "Lernen-Tipp → Frage (mit Werkzeug)"], ["uebAbStart", "Öffnen → Frage"],
+  ["ueb.wsStart", "Lernen-Tipp → Wortschatz startet"], ["ueb.wsGanz", "Lernen-Tipp → Wortschatz ganz"],
+  ["ueb.artikel", "Lernen-Tipp → Kategorie artikel da"], ["ueb.sammlung", "Lernen-Tipp → Sammlung ganz"],
   ["lang.n", "Langläufer 0–10 s: Anzahl"], ["lang.summe", "Langläufer: Summe"], ["lang.max", "Langläufer: längster"], ["lang.sperr", "Sperrzeit (Σ über 50 ms)"],
   ["netz.kbBisBereit", "KB über die Leitung bis bereit"], ["netz.kbGesamt", "KB über die Leitung 0–10 s"], ["netz.ausNetz", "Dateien aus dem Netz"],
   ["netz.nachgefragt", "Dateien nachgefragt (304)"], ["netz.ausSpeicher", "Dateien aus dem Speicher"], ["netz.ausSw", "Dateien vom Service Worker"],

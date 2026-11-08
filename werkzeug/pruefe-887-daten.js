@@ -38,8 +38,8 @@
      B  im Browser (Chromium, ohne Helfer, Gast)
        B1 Start: keine Übungsdaten (weder Datei noch Teile noch Verzeichnis)
        B2 „Lernen": die Übersicht steht ohne data-uebungen.js; Teile erst nach
-          dem ersten Bild der Übersicht, höchstens 4 zugleich, niedrige
-          Priorität
+          dem ersten Bild der Übersicht, vor dem Wortschatz höchstens 4
+          zugleich (danach höchstens 8, Nachbesserung 2), niedrige Priorität
        B3 Vorladen fertig: ZUSATZ_FRAGEN = Quelle (JSON gleich, Reihenfolge
           gleich), Ereignis dma-uebungen-ganz, alleRohfragen vollständig
        B4 eine Kategorie lädt einzeln: ladeUebungen(["wortstellung"]) holt
@@ -73,6 +73,23 @@
           weiter, ohne neuen Tipp auf „Lernen" – Bildschirm 3 s aus (in
           „Lernen → Spiele"), Profil, Wissen (nach 8 s Frist), nach dem
           Klassenzimmer; im Klassenzimmer kommt nichts dazu (Nachbesserung 1)
+       NACHBESSERUNG 2 (Prüfer, Runde 2):
+       B13 Wörterbuch gleich nach „Lernen" (der Start des Wortschatzes ist
+          geplant, läuft aber noch nicht): es zeichnet sich nach, sobald die
+          Wörter da sind – im selben Augenblick getippt und 1,5 s danach
+          (Teil von data-exercises.js langsam); dazu: offen, während die
+          Sammlung noch kommt → danach mit den Wörtern aus den Übungstexten
+       B14 die übrigen Teile erst nach dem Wortschatz – auch wenn sein Start
+          beim Ende der ersten Karten erst geplant ist
+       B15 der Wortschatz startet nach Ruhepause UND Teil, die gleichzeitig
+          ab dem Tipp laufen – nicht nacheinander (Ruhepause 1 s
+          nachgestellt, Teil 1,2 s langsam)
+       B16 nach dem Wortschatz: mehr als 4 Teile zugleich und ohne Ruhepause
+          zwischen den Teilen (Ruhepause 1 s nachgestellt) – die Sammlung ist
+          bald nach dem Wortschatz ganz
+       B17 „Dazu üben" (Grammatik) zu einer Kategorie, deren Teil noch fehlt:
+          die Übersicht zeigt nie die alte Auswahl (entweder „wird geladen"
+          oder die neue Wahl mit Fokus-Hinweis), danach die neue Wahl
 
    Aufruf:     node werkzeug/pruefe-887-daten.js            (NUR=D|B, z. B. NUR=B TEIL=B2,B4)
    Gegenprobe: WURZEL=<ordner mit d9637a22> node werkzeug/pruefe-887-daten.js  → rot
@@ -269,7 +286,7 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       if (S.langsam && S.langsam.test(p)) setTimeout(senden, S.langsamMs);
       else if (/^\/bau\/uebungen\//.test(p)) {
         S.offen++; S.maxOffen = Math.max(S.maxOffen, S.offen);
-        a.on("finish", () => { S.offen--; }); a.on("close", () => { z.zu = 1; });
+        a.on("finish", () => { S.offen--; z.ende = Date.now(); }); a.on("close", () => { z.zu = 1; });
         setTimeout(senden, S.verzug);
       } else senden();
     });
@@ -284,18 +301,33 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       S.sperre = o.sperre || null; S.verzug = o.verzug || 25; S.maxOffen = 0; S.langsam = o.langsam || null; S.langsamMs = o.langsamMs || 0;
       const ctx = await br.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, serviceWorkers: "block" });
       await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
-      await ctx.addInitScript((ls) => {
+      await ctx.addInitScript((x) => {
+        const ls = x.ls, idle = x.idle;
         try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus"); Object.keys(ls || {}).forEach((k) => localStorage.setItem(k, ls[k])); } catch (e) {}
+        /* Nachbesserung 2: ein belegter Hauptfaden – jede Ruhepause kommt erst nach idle ms (oder ihrer Frist, wenn kürzer) */
+        if (idle) window.requestIdleCallback = function (f, opt) {
+          return setTimeout(function () { f({ didTimeout: true, timeRemaining: function () { return 0; } }); }, Math.min(idle, (opt && opt.timeout) || idle));
+        };
         /* wann die Übersicht steht: Einfügen und das erste Bild danach (rAF, dann setTimeout 0) */
-        window.__ueb = { grid: null, bild: null, ganz: null };
+        window.__ueb = { grid: null, bild: null, ganz: null, ganzD: null, lernen: null, wsStart: null, ws: null, wsD: null };
+        /* Nachbesserung 2: Tipp auf „Lernen", Start und Ende des Wortschatzes (VocabData ist ein const der Seite) */
+        addEventListener("click", function (e) {
+          if (window.__ueb.lernen == null && e.target && e.target.closest && e.target.closest('.tape-tab[data-target="view-learn"]')) window.__ueb.lernen = performance.now();
+        }, true);
+        const wsUhr = setInterval(function () {
+          let V = null; try { V = typeof VocabData !== "undefined" ? VocabData : null; } catch (e) { V = null; }
+          if (V && window.__ueb.wsStart == null && V.ladenLaeuft && V.ladenLaeuft()) window.__ueb.wsStart = performance.now();
+          if (V && window.__ueb.ws == null && V.alleThemenDa && V.alleThemenDa()) { window.__ueb.ws = performance.now(); window.__ueb.wsD = Date.now(); }
+          if (window.__ueb.ws != null) clearInterval(wsUhr);
+        }, 20);
         new MutationObserver(function (l, mo) {
           if (window.__ueb.grid != null || !document.querySelector("#exerciseSetup .category-grid .category-card")) return;
           window.__ueb.grid = performance.now();
           requestAnimationFrame(function () { setTimeout(function () { window.__ueb.bild = performance.now(); }, 0); });
           mo.disconnect();
         }).observe(document, { childList: true, subtree: true });
-        addEventListener("dma-uebungen-ganz", function () { window.__ueb.ganz = performance.now(); });
-      }, o.ls || {});
+        addEventListener("dma-uebungen-ganz", function () { window.__ueb.ganz = performance.now(); window.__ueb.ganzD = Date.now(); });
+      }, { ls: o.ls || {}, idle: o.idle || 0 });
       const pg = await ctx.newPage();
       const pe = [];
       pg.on("pageerror", (e) => pe.push(String(e.message || e).slice(0, 160) + (process.env.STAPEL ? " @ " + String(e.stack || "").split("\n").slice(1, 4).join(" ").slice(0, 300) : "")));
@@ -331,7 +363,12 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       const frueh = teilZeiten.filter((t) => z2.bild == null || t < z2.bild);
       sage(teilZeiten.length > 0 && z2.bild != null && !frueh.length, "B2 Teile erst nach dem ersten Bild der Übersicht",
         "Bild " + Math.round(z2.bild) + " ms, erster Teil " + Math.round(Math.min.apply(null, teilZeiten.concat([Infinity]))) + " ms" + (frueh.length ? ", " + frueh.length + " davor" : ""));
-      sage(S.maxOffen > 0 && S.maxOffen <= 4, "B2 Vorladen: höchstens 4 Teile zugleich unterwegs", "höchstens " + S.maxOffen);
+      /* Nachbesserung 2: vor dem Wortschatz höchstens 4 zugleich (die Leitung gehört ihm), danach höchstens 8 */
+      const teilSpannen = nachher.filter(istTeil).map((x) => [x.t, x.ende || Infinity]);
+      const zugleich = (bis) => { let m = 0; teilSpannen.forEach(([a]) => { if (a >= bis) return; m = Math.max(m, teilSpannen.filter(([b, e]) => b <= a && e > a).length); }); return m; };
+      const vorWs = z2.wsD ? zugleich(z2.wsD) : -1, ganzMax = zugleich(Infinity);
+      sage(S.maxOffen > 0 && vorWs > 0 && vorWs <= 4 && ganzMax <= 8, "B2 Vorladen: vor dem Wortschatz höchstens 4 Teile zugleich, danach höchstens 8",
+        "vor dem Wortschatz " + vorWs + ", insgesamt " + ganzMax + " (Server " + S.maxOffen + ")");
       const prio = await s.pg.evaluate(() => [...document.querySelectorAll('script[src*="bau/uebungen/"]')].map((x) => x.fetchPriority));
       sage(prio.length > 0 && prio.every((x) => x === "low"), "B2 Vorladen mit niedriger Priorität (fetchPriority low)", prio.length + " Skripte, " + [...new Set(prio)].join("/"));
       /* B3 */
@@ -629,6 +666,155 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
         sage(!s.pe.length, "B12 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
         await s.ctx.close();
       }
+    }
+    /* ===================== Nachbesserung 2 (Prüfer, Runde 2) ===================== */
+    const vocabTeil = (x) => /^\/vokabeln\/[a-z]+\.js$/.test(x.p);
+    const dictZahl = () => { const a = document.getElementById("dictionaryArea"); const m = a && /\(([\d.]+) Einträge/.exec(a.textContent); return m ? Number(m[1].replace(/\./g, "")) : -1; };
+    /* B13 Wörterbuch während der Start des Wortschatzes geplant ist (Prüfer: 289 statt 41 267, bis man neu öffnete) */
+    if (soll("B13")) {
+      const allesDa = () => (typeof VocabData === "undefined" || VocabData.alleThemenDa()) && Boolean(window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN);
+      /* Vergleich: eine Seite, die erst alles abwartet und dann das Wörterbuch öffnet (der Zwischenspeicher der geprüften
+         Seite zählt nicht – auf d9637a22 hielt er die Zahl ohne die Übungswörter fest) */
+      const sRef = await seite();
+      await lernen(sRef.pg);
+      await sRef.pg.waitForFunction(allesDa, null, { timeout: 90000 }).catch(() => {});
+      await sRef.pg.waitForTimeout(500);
+      await sRef.pg.evaluate(() => document.querySelector('#learnSubnav [data-sub="sub-dictionary"]').click());
+      await sRef.pg.waitForTimeout(500);
+      const ref = await sRef.pg.evaluate(dictZahl);
+      await sRef.ctx.close();
+      console.log("       (Vergleich: Wörterbuch nach allem " + ref + " Einträge)");
+      for (const [was, o, nach] of [
+        ["im selben Augenblick wie „Lernen“ getippt", { verzug: 25 }, 0],
+        ["1,5 s nach „Lernen“ (Teil von data-exercises.js 2,8 s langsam)", { verzug: 25, ruhe: 50, langsam: /^\/min\/data-exercises-teil\.js$/, langsamMs: 2800 }, 1500],
+      ]) {
+        const s = await seite(o);
+        const r0 = await s.pg.evaluate(async (ms) => {
+          document.querySelector('.tape-tab[data-target="view-learn"]').click();
+          if (ms) await new Promise((r) => setTimeout(r, ms));
+          const laeuft = VocabData.ladenLaeuft();
+          document.querySelector('#learnSubnav [data-sub="sub-dictionary"]').click();
+          return { laeuft };
+        }, nach);
+        const frueh = await s.pg.evaluate(dictZahl);
+        const da = await s.pg.waitForFunction(allesDa, null, { timeout: 90000 }).then(() => true, () => false);
+        await s.pg.waitForTimeout(800);
+        const gezeigt = await s.pg.evaluate(dictZahl);
+        sage(da && !r0.laeuft && frueh > 0 && frueh < ref && gezeigt === ref,
+          "B13 Wörterbuch " + was + ": zeichnet sich nach, sobald die Wörter da sind",
+          (r0.laeuft ? "Wortschatz lief beim Tipp schon (Fall nicht getroffen); " : "") + "beim Tipp " + frueh + " → gezeigt " + gezeigt + " / Vergleich " + ref + (da ? "" : ", nicht alles da"));
+        sage(!s.pe.length, "B13 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+        await s.ctx.close();
+      }
+      /* offen, während die Sammlung noch kommt (Wortschatz schon da): danach mit den Wörtern aus den Übungstexten */
+      const s = await seite({ verzug: 400, langsam: /^\/(min\/)?data-uebungen\.js$/, langsamMs: 6000 });
+      await lernen(s.pg);
+      await s.pg.waitForFunction(() => typeof VocabData !== "undefined" && VocabData.alleThemenDa(), null, { timeout: 60000 }).catch(() => {});
+      const vorher = await s.pg.evaluate(() => { document.querySelector('#learnSubnav [data-sub="sub-dictionary"]').click(); return Boolean(window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN); });
+      await s.pg.waitForTimeout(300);
+      const frueh = await s.pg.evaluate(dictZahl);
+      const da = await s.pg.waitForFunction(allesDa, null, { timeout: 90000 }).then(() => true, () => false);
+      await s.pg.waitForTimeout(800);
+      const gezeigt = await s.pg.evaluate(dictZahl);
+      sage(da && !vorher && frueh > 0 && frueh < ref && gezeigt === ref,
+        "B13 Wörterbuch offen, während die Sammlung noch kommt: danach in der offenen Ansicht mit den Wörtern aus den Übungstexten",
+        (vorher ? "Sammlung war beim Öffnen schon ganz (Fall nicht getroffen); " : "") + "beim Öffnen " + frueh + " → gezeigt " + gezeigt + " / Vergleich " + ref);
+      sage(!s.pe.length, "B13 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+      await s.ctx.close();
+    }
+    /* B14 die übrigen Teile erst nach dem Wortschatz – auch wenn dessen Start beim Ende der ersten Karten nur geplant ist
+       (Prüfer, 3G: nachVorrang hieß „läuft nicht" = frei, die 82 Teile luden gleichzeitig mit dem Wortschatz) */
+    if (soll("B14")) {
+      const s = await seite({ verzug: 25, ruhe: 50, langsam: /^\/min\/data-exercises-teil\.js$/, langsamMs: 2800 });
+      const n0 = log.length;
+      await lernen(s.pg);
+      await s.pg.waitForFunction(() => window.__ueb.ganz != null, null, { timeout: 60000 }).catch(() => {});
+      const z = await s.pg.evaluate(() => window.__ueb);
+      const l = log.slice(n0), teile = l.filter(istTeil);
+      const vor = z.wsD ? teile.filter((x) => x.t < z.wsD) : [];
+      const geplant = z.wsStart != null && z.bild != null && z.wsStart > z.bild + 1000;
+      sage(teile.length > 8 && z.wsD != null && geplant && vor.length <= 8,
+        "B14 nach den ersten Karten warten die übrigen Teile auf den Wortschatz, auch wenn sein Start noch geplant ist",
+        (teile.length ? "" : "keine Teile; ") + vor.length + " Teile vor dem Ende des Wortschatzes (höchstens die 8 ersten), Wortschatz-Start " + (z.wsStart != null && z.lernen != null ? Math.round(z.wsStart - z.lernen) : "–") + " ms nach „Lernen“"
+        + (geplant ? "" : " (Fall nicht getroffen: Start nicht später als die ersten Karten)"));
+      sage(!s.pe.length, "B14 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+      await s.ctx.close();
+    }
+    /* B15 + B16 mit nachgestellt belegtem Hauptfaden (jede Ruhepause 1 s): der Wortschatz startet nach max(Ruhepause, Teil),
+       nicht nach Teil + Ruhepause; nach ihm kommen die Teile zu mehr als vier und ohne Ruhepause dazwischen */
+    if (soll("B15") || soll("B16")) {
+      const s = await seite({ verzug: 25, ruhe: 50, idle: 1000, langsam: /^\/min\/data-exercises-teil\.js$/, langsamMs: 1200 });
+      const n0 = log.length;
+      await lernen(s.pg);
+      await s.pg.waitForFunction(() => window.__ueb.ganz != null, null, { timeout: 90000 }).catch(() => {});
+      const z = await s.pg.evaluate(() => window.__ueb);
+      const teilEnde = await s.pg.evaluate(() => { const e = performance.getEntriesByType("resource").filter((x) => /data-exercises-teil\.js/.test(x.name)).pop(); return e ? e.responseEnd : null; });
+      if (soll("B15")) {
+        const start = z.wsStart != null && z.lernen != null ? z.wsStart - z.lernen : null;
+        const grenze = Math.max(1000, teilEnde != null ? teilEnde - z.lernen : 0) + 450;
+        sage(start != null && start <= grenze, "B15 Wortschatz startet nach Ruhepause UND Teil (gleichzeitig ab dem Tipp), nicht nacheinander",
+          "Start " + (start != null ? Math.round(start) : "–") + " ms nach „Lernen“, Teil da nach " + (teilEnde != null ? Math.round(teilEnde - z.lernen) : "–") + " ms, Grenze " + Math.round(grenze) + " ms");
+      }
+      if (soll("B16")) {
+        const teile = log.slice(n0).filter(istTeil);
+        const nach = z.wsD ? teile.filter((x) => x.t >= z.wsD) : [];
+        const sp = nach.map((x) => [x.t, x.ende || Infinity]);
+        const zugleich = sp.reduce((m, [a]) => Math.max(m, sp.filter(([b, e]) => b <= a && e > a).length), 0);
+        const dauer = z.ganzD && z.wsD ? z.ganzD - z.wsD : null;
+        sage(nach.length > 20 && zugleich > 4 && dauer != null && dauer < 4000,
+          "B16 nach dem Wortschatz: mehr als 4 Teile zugleich, ohne Ruhepause dazwischen – die Sammlung bald ganz",
+          nach.length + " Teile nach dem Wortschatz, höchstens " + zugleich + " zugleich, Sammlung ganz " + (dauer != null ? Math.round(dauer) + " ms" : "–") + " nach dem Wortschatz");
+      }
+      sage(!s.pe.length, "B15/B16 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+      await s.ctx.close();
+    }
+    /* B17 „Dazu üben" (Grammatik) in eine Kategorie, deren Teil noch fehlt: nie die alte Auswahl (Prüfer: renderSetup
+       behielt das alte Bild – alte Häkchen, ohne Fokus-Hinweis –, bis der Teil kam) */
+    if (soll("B17")) {
+      const s = await seite({ verzug: 25, langsam: /^\/(bau\/uebungen\/[a-z]|min\/data-uebungen\.js)/, langsamMs: 3000 });
+      await lernen(s.pg);
+      /* erst eine andere Karte wählen (die alte Auswahl), dann über die Grammatik springen */
+      const r = await s.pg.evaluate(async () => {
+        const warte = (ms) => new Promise((x) => setTimeout(x, ms));
+        const bild = () => new Promise((x) => requestAnimationFrame(() => requestAnimationFrame(x)));
+        const karte = document.querySelector("#exerciseSetup .category-card[data-cat]");
+        if (!karte) return { fehler: "keine Karte" };
+        const alt = karte.dataset.cat;
+        karte.click();
+        await warte(200);
+        document.querySelector('[data-sub="sub-grammatik"]').click();
+        await warte(300);
+        let knopf = null;
+        for (let i = 0; i < 40 && !knopf; i++) {
+          const t = document.querySelectorAll("#grammatikArea .grammatik-toggle")[i];
+          if (!t) break;
+          t.click();
+          await warte(30);
+          /* eine andere Kategorie, deren Karte offen ist (gesperrte Karten tragen keine Wahl) */
+          knopf = [...document.querySelectorAll("#grammatikArea .grammatik-uebung-btn")]
+            .find((b) => b.dataset.grCat !== alt && document.querySelector('#exerciseSetup .category-card[data-cat="' + b.dataset.grCat + '"]')) || null;
+        }
+        if (!knopf) return { fehler: "kein „Dazu üben“", alt };
+        const ziel = knopf.dataset.grCat;
+        const fehltNoch = !ExerciseData.uebungenDa([ziel]);
+        knopf.click();
+        await bild();
+        const el = document.getElementById("exerciseSetup");
+        const grid = el.querySelector(".category-grid");
+        const gewaehlt = grid ? [...el.querySelectorAll(".category-card.selected[data-cat]")].map((c) => c.dataset.cat).sort().join(",") : null;
+        const sofort = { grid: Boolean(grid), gewaehlt, fokus: Boolean(el.querySelector("#uebungFokusHinweis")), laden: /wird geladen|werden geladen/.test(el.textContent) && !grid };
+        for (let i = 0; i < 100; i++) { await warte(100); if (ExerciseData.uebungenDa([ziel]) && el.querySelector(".category-grid") && el.querySelector("#uebungFokusHinweis")) break; }
+        await warte(300);
+        const spaet = { gewaehlt: [...el.querySelectorAll(".category-card.selected[data-cat]")].map((c) => c.dataset.cat).sort().join(","), fokus: Boolean(el.querySelector("#uebungFokusHinweis")) };
+        return { alt, ziel, fehltNoch, sofort, spaet };
+      });
+      const ok1 = r.sofort && (r.sofort.laden || (r.sofort.grid && r.sofort.gewaehlt === r.ziel && r.sofort.fokus));
+      sage(!r.fehler && r.fehltNoch && ok1, "B17 „Dazu üben“ zu einer Kategorie, deren Teil noch fehlt: sofort „wird geladen“ oder die neue Wahl – nie die alte",
+        r.fehler || ((r.fehltNoch ? "" : "Teil war schon da (Fall nicht getroffen); ") + "vorher " + r.alt + " → " + r.ziel + ": " + (r.sofort.laden ? "„wird geladen“" : "Übersicht mit Wahl „" + r.sofort.gewaehlt + "“" + (r.sofort.fokus ? " und" : " ohne") + " Fokus-Hinweis")));
+      sage(!r.fehler && r.spaet && r.spaet.gewaehlt === r.ziel && r.spaet.fokus, "B17 … danach die neue Wahl mit Fokus-Hinweis",
+        r.spaet ? "Wahl „" + r.spaet.gewaehlt + "“, Fokus " + (r.spaet.fokus ? "ja" : "nein") : "");
+      sage(!s.pe.length, "B17 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+      await s.ctx.close();
     }
     await br.close(); srv.close();
   }
