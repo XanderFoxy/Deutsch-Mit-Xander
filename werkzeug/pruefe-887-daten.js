@@ -728,7 +728,8 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       const s = await seite({ verzug: 25, ruhe: 50, langsam: /^\/min\/data-exercises-teil\.js$/, langsamMs: 2800 });
       const n0 = log.length;
       await lernen(s.pg);
-      await s.pg.waitForFunction(() => window.__ueb.ganz != null, null, { timeout: 60000 }).catch(() => {});
+      /* beides abwarten: auf dem Stand vor der Nachbesserung war die Sammlung ganz, bevor der Wortschatz überhaupt startete */
+      await s.pg.waitForFunction(() => window.__ueb.ganz != null && window.__ueb.wsD != null, null, { timeout: 60000 }).catch(() => {});
       const z = await s.pg.evaluate(() => window.__ueb);
       const l = log.slice(n0), teile = l.filter(istTeil);
       const vor = z.wsD ? teile.filter((x) => x.t < z.wsD) : [];
@@ -736,7 +737,7 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       sage(teile.length > 8 && z.wsD != null && geplant && vor.length <= 8,
         "B14 nach den ersten Karten warten die übrigen Teile auf den Wortschatz, auch wenn sein Start noch geplant ist",
         (teile.length ? "" : "keine Teile; ") + vor.length + " Teile vor dem Ende des Wortschatzes (höchstens die 8 ersten), Wortschatz-Start " + (z.wsStart != null && z.lernen != null ? Math.round(z.wsStart - z.lernen) : "–") + " ms nach „Lernen“"
-        + (geplant ? "" : " (Fall nicht getroffen: Start nicht später als die ersten Karten)"));
+        + (geplant ? "" : " (Fall nicht getroffen: Start nicht später als die ersten Karten)") + (process.env.STAPEL ? " " + JSON.stringify(z) : ""));
       sage(!s.pe.length, "B14 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
       await s.ctx.close();
     }
