@@ -7,7 +7,7 @@
 <title>Meine Stadt</title>
 <meta name="theme-color" content="#1b2440">
   <script>/* ?quelle=1: gleich das Quell-Stilblatt (das gebaute nimmt der Lader am Ende weg) */ if (/[?&]quelle=1/.test(location.search)) ["stadt-leicht/leicht.css"].forEach(function (s) { document.write('<link rel="stylesheet" href="' + s + '?t=' + Date.now() + '">'); });</script>
-  <link rel="modulepreload" crossorigin href="bau/stadt-leicht-DBQQzW2d.js">
+  <link rel="modulepreload" crossorigin href="bau/stadt-leicht-BYt3R0E-.js">
   <link rel="stylesheet" crossorigin href="bau/t-stadt-leicht-prA5tZWG.css">
 </head>
 <body>
@@ -26,19 +26,20 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
 <!-- SKRIPTE -->
 <script>
-/* Gebaut (Vite: src/stadt-leicht.html, werkzeug/modul-bauen.js) – ?quelle=1 lädt die Quellen einzeln */
+/* Gebaut (Vite: src/stadt-leicht.html, werkzeug/modul-bauen.js) – das Bündel steht fest dahinter; ?quelle=1 lädt die Quellen einzeln, das Bündel lässt dann seinen Code aus */
 (function () {
   var q = /[?&]quelle=1/.test(location.search);
   window.LEICHT_STEMPEL = "31e0a8453b";
   if (!q) window.LEICHT_AUTOSCHAU = "bau/leicht-autoschau-Czypxpnr.js";
   if (!q) window.LEICHT_KORN = "bau/leicht-korn-D4FsCl6A.js";
   if (!q) window.LEICHT_QUESTS = "bau/leicht-quests-BYkzhWnm.js";
-  if (!q) { document.write('<script type="module" crossorigin src="bau/stadt-leicht-DBQQzW2d.js"><\/script>'); return; }
+  if (!q) return;
   var t = "?t=" + Date.now();
   [].forEach.call(document.querySelectorAll('link[rel="stylesheet"][href^="bau/"]'), function (l) { l.parentNode.removeChild(l); });
   ["stadt-leicht/kern.js","stadt/boden.js","stadt-leicht/bilder.js","stadt-leicht/szene.js","stadt-leicht/leute.js","stadt-leicht/boote.js","stadt-leicht/tiere.js","stadt-leicht/ton.js","stadt-leicht/bahn.js","stadt-leicht/fuhrwerk.js","stadt-leicht/autos.js","stadt-leicht/autoschau.js","stadt-leicht/windmuehle.js","stadt-leicht/himmel.js","stadt-leicht/dorf.js","stadt-leicht/spiel.js","stadt-leicht/drehen.js","stadt-leicht/oberflaeche.js","stadt-leicht/korn.js","stadt-leicht/verwalten.js","stadt-leicht/start.js","stadt-leicht/quests.js"].forEach(function (s) { document.write('<script src="' + s + t + '"><\/script>'); });
 })();
 </script>
+<script type="module" crossorigin src="bau/stadt-leicht-BYt3R0E-.js"></script>
 <!-- /SKRIPTE -->
 </body>
 </html>

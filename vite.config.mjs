@@ -112,6 +112,8 @@ function modelleListe(datei) {
   return liste;
 }
 const stempelVon = (datei) => createHash("sha1").update(readFileSync(datei)).digest("hex").slice(0, 10);
+/* Prüfung Runde 2: steht vor dem Code jedes Seiten-Bündels (renderChunk unten) – mit ?quelle=1 läuft sein Code nicht */
+const WACHE = "if(!/[?&]quelle=1/.test(location.search)){";
 
 function seitenBau() {
   const VOR = "/@seite/", GEBUENDELT = "/@seite-gebuendelt";
@@ -146,8 +148,22 @@ function seitenBau() {
       }
       return zeilen.join("\n") + "\n";
     },
+    /* Prüfung Runde 2: die Wache am Anfang jedes Seiten-Bündels. Das Bündel steht fest in der Seite (unten), läuft also
+       auch mit ?quelle=1 – dann laufen schon die Quellen, und die Wache lässt den ganzen Code des Bündels aus. Gesetzt
+       NACH dem Verkleinern (order "post"), aber vor dem Namen aus dem Inhalt: der Code dazwischen bleibt Byte für Byte,
+       wie esbuild ihn schreibt, und der neue Name zeigt, dass sich die Datei geändert hat (bau/ gibt der Helfer ohne
+       Nachfrage aus dem Speicher). Im Block gilt dasselbe wie oben im Modul (Module sind immer streng, Funktionen im Block
+       gelten im ganzen Block); das Bündel hat kein import/export (generateBundle). Die nachgeladenen Stücke brauchen keine
+       Wache: mit ?quelle=1 nennt der Lader sie nicht. */
+    renderChunk: {
+      order: "post",
+      handler(code, chunk) {
+        if (!chunk.isEntry || seitenDa.indexOf(chunk.name) < 0) return null;
+        return { code: WACHE + code + (code.endsWith("\n") ? "" : "\n") + "}\n", map: null };
+      },
+    },
     /* Die gebaute Seite: Vite hat das Bündel als <script type="module"> und das Stilblatt in den Kopf gesetzt.
-       Das Bündel wird dort nur angefordert (modulepreload); ob es läuft oder die Quellen, entscheidet der Lader am Ende.
+       Im Kopf wird es nur angefordert (modulepreload); laufen tut es fest am Ende hinter dem Lader (Prüfung Runde 2).
        Prüfung Runde 1: mit ?quelle=1 kam das Quell-Stilblatt erst mit dem Lader am Ende (das gebaute entfernte er), bis
        dahin konnte die Seite ohne Gestaltung stehen. Jetzt schreibt ein kleines Skript VOR den beiden Zeilen mit ?quelle=1
        gleich das Quell-Stilblatt in den Kopf. Die beiden Zeilen selbst bleiben fest im HTML: geschrieben (nur ohne
@@ -181,16 +197,24 @@ function seitenBau() {
           if (!c) throw new Error("Bau abgebrochen: Stück " + x.stueck + " (" + datei + ") fehlt");
           fenster.push("if (!q) window." + x.fenster + " = " + JSON.stringify("bau/" + c.fileName) + ";");
         }
+        /* Prüfung Runde 2: das Bündel steht FEST als <script type="module" src> hinter dem Lader. Vorher schrieb der Lader
+           es per document.write; ob Safari unter iOS 14–17 ein so geschriebenes Modul ausführt, war nicht prüfbar. Ein
+           festes Modul läuft in jedem Browser mit Modulen gleich (HTML-Norm): nach dem Parsen, vor DOMContentLoaded, nach
+           allen klassischen Skripten – wie bisher. Mit ?quelle=1 lässt die Wache am Anfang des Bündels (WACHE, renderChunk
+           oben) seinen Code aus. Die Quellen schreibt der Lader klassisch per document.write wie vor M5 (so lief die
+           Stadt bis M5 auf allen Geräten): nur so laufen sie vor DOMContentLoaded, und darauf wartet stadt/baustelle.js
+           (?baustelle, ?bauan, ?kdreh). Per createElement eingesetzt liefen sie danach, und diese Prüfbilder fielen still
+           aus (gemessen, MODULE-PLAN.md, Logbuch M5). */
         const lader = "<!-- SKRIPTE -->\n<script>\n"
-          + "/* Gebaut (Vite: src/" + name + ".html, werkzeug/modul-bauen.js) – ?quelle=1 lädt die Quellen einzeln */\n"
+          + "/* Gebaut (Vite: src/" + name + ".html, werkzeug/modul-bauen.js) – das Bündel steht fest dahinter; ?quelle=1 lädt die Quellen einzeln, das Bündel lässt dann seinen Code aus */\n"
           + "(function () {\n"
           + "  var q = /[?&]quelle=1/.test(location.search);\n"
           + fenster.map((z) => "  " + z + "\n").join("")
-          + "  if (!q) { document.write('<script type=\"module\" crossorigin src=\"" + js + "\"><\\/script>'); return; }\n"
+          + "  if (!q) return;\n"
           + "  var t = \"?t=\" + Date.now();\n"
           + "  [].forEach.call(document.querySelectorAll('link[rel=\"stylesheet\"][href^=\"bau/\"]'), function (l) { l.parentNode.removeChild(l); });\n"
           + "  " + JSON.stringify(plan.quelle) + ".forEach(function (s) { document.write('<script src=\"' + s + t + '\"><\\/script>'); });\n"
-          + "})();\n</script>\n<!-- /SKRIPTE -->";
+          + "})();\n</script>\n" + tag + "\n<!-- /SKRIPTE -->";
         const teile = html.split(/<!-- SKRIPTE -->[\s\S]*?<!-- \/SKRIPTE -->/);
         if (teile.length !== 2) throw new Error("Bau abgebrochen: src/" + name + ".html braucht genau einen Block <!-- SKRIPTE --> … <!-- /SKRIPTE -->");
         html = teile[0] + lader + teile[1];
@@ -219,6 +243,8 @@ function seitenBau() {
         if (b.type !== "chunk" || !namen.has(b.name)) continue;
         if (b.imports.length || b.dynamicImports.length || b.exports.length || /\bimport\.meta\b/.test(b.code))
           throw new Error("Bau abgebrochen: " + b.fileName + " ist nicht eigenständig (import/export) – jede Seite und jedes nachgeladene Stück ist genau eine Datei");
+        if (seitenDa.indexOf(b.name) >= 0 && !(b.code.startsWith(WACHE) && b.code.endsWith("\n}\n")))
+          throw new Error("Bau abgebrochen: " + b.fileName + " ohne Wache für ?quelle=1 – mit ?quelle=1 liefen Bündel UND Quellen");
       }
     },
   };

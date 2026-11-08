@@ -1,5 +1,5 @@
 {
- "summe": "c122419c060a1aefb4dd10d551ed285fe6ff8c3b",
+ "summe": "30b80e85e330a3fdedaca14c240495afc2cb04cc",
  "vite": "6.3.5",
  "eingaben": [
   "src/rueckfrage.js",
@@ -97,7 +97,7 @@
   "stadt/szene.js"
  ],
  "seiten": {
-  "stadt-leicht.html": "514e6e3bfb5abd2ef713b1e46352d5766d8aae4d",
-  "stadt.html": "c9b51d41d87ebe2067cc8ab0dbdddeae1c7646e2"
+  "stadt-leicht.html": "f27f88d5e42949de5070fd8eb0d9aadc0e890cb3",
+  "stadt.html": "aac478cce886a1955dc2571bc1746cd63219559a"
  }
 }

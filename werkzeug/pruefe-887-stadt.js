@@ -26,8 +26,9 @@
          frischer Vite-Bau aus den Quellen gibt Byte für Byte dieselbe Seite
      B5  die Seite: modulepreload und Stilblatt aus bau/ fest im Kopf (ein
          Skript davor schreibt mit ?quelle=1 gleich das Quell-Stilblatt), der Lader
-         mit der ?quelle-Liste aus SEITEN, window.LEICHT_* zeigen auf die
-         Stücke aus dem Manifest, LEICHT_STEMPEL = Stempel des Verzeichnisses
+         mit der ?quelle-Liste aus SEITEN, das Bündel fest dahinter (Prüfung
+         Runde 2), window.LEICHT_* zeigen auf die Stücke aus dem Manifest,
+         LEICHT_STEMPEL = Stempel des Verzeichnisses
      B6  bau/quelle.json kennt die Eingaben der Seiten (stadt/…, stadt-leicht/…,
          das Verzeichnis der Bilder) – eine Änderung dort baut neu
      B7  sw.js gibt die Stücke der Seiten ohne Nachfrage aus dem Speicher
@@ -42,26 +43,34 @@
          git-Baum holt modul-bauen es einmal mit npm ci und baut; scheitert
          das, nennt die Meldung die geänderte Datei, bau/ und Seiten bleiben;
          kein npm ohne git, ohne node_modules/ in .gitignore, mit DMA_KEIN_NPM=1
+     B11 (Prüfung Runde 2) kein document.write für Module: das Bündel steht
+         fest als <script type="module" src> im HTML (ob Safari unter iOS 14–17
+         ein per document.write eingesetztes Modul ausführt, ist nicht
+         prüfbar); eine Wache am Anfang des Bündels lässt mit ?quelle=1 seinen
+         Code aus (dieselbe Regel wie der Lader); die Stücke ohne Wache
    S (Browser, Chromium, ohne Helfer)
      S1  stadt-leicht.html?demo=1 gebaut: genau ein Modul aus bau/, keine
          Quelle, keine 404, kein Seitenfehler, Ladebild steht vor den
          Skripten, das erste Bild kommt (__fertig), die Äcker kommen danach
-         als Modul aus bau/
+         als Modul aus bau/; kein document.write (Prüfung Runde 2) und der
+         Code des Bündels läuft (Abdeckung, Gegenstück zu S2)
      S2  dasselbe mit ?quelle=1: die Quellen einzeln in Reihenfolge, das
          Quell-Stilblatt steht schon, wenn der Körper der Seite beginnt, kein
-         Modul läuft
+         Modul läuft: das feste Bündel steht da, aber keine Zeile seines Codes
+         läuft (Abdeckung), kein Modul per document.write
      S3  gebaut und ?quelle=1 haben dieselbe Stadt (window.STADT: dieselben
          Namen)
      S4  im Rahmen wie im Spiel (?eingebettet=1&mini=1): Ladebild klein,
          erstes Bild, Auto-Schau und Quests auf Abruf aus bau/
      S5  stadt.html?neu=1 gebaut und ?quelle=1: dasselbe (Modelle gleich,
-         GEBUENDELT nur gebaut)
+         GEBUENDELT nur gebaut; gebaut kein document.write)
      S6  Auto-Schau nach einem Netzfehler: der erste Abruf des Stücks bricht
          ab, der nächste Versuch holt es neu (eigene Adresse ?wieder=1), die
          echte Schau steht (ein gescheitertes Modul merkt sich der Browser)
 
    Aufruf:     node werkzeug/pruefe-887-stadt.js          (NUR=B|S)
    Gegenprobe: WURZEL=<ordner mit fc5e3ae3> node werkzeug/pruefe-887-stadt.js  → rot
+               (B11 und S1/S5 „kein document.write“: WURZEL=<5e698b8b> → rot)
    ===================================================================== */
 const fs = require("fs"), path = require("path"), os = require("os"), http = require("http"), crypto = require("crypto");
 const { spawnSync } = require("child_process");
@@ -173,8 +182,12 @@ const PACKER = {
       const lader = (/<!-- SKRIPTE -->([\s\S]*?)<!-- \/SKRIPTE -->/.exec(h) || [])[1] || "";
       const liste = (/\n {2}(\[[^\n]*\])\.forEach\(function \(s\) \{ document\.write\('<script src=/.exec(lader) || [])[1];
       sage(Boolean(liste) && liste === JSON.stringify(p.quelle), "B5 " + n + ": ?quelle=1 lädt die Quellen des Packers einzeln, in derselben Reihenfolge");
-      sage(lader.indexOf("document.write('<script type=\"module\" crossorigin src=\"bau/" + e.file + "\"><\\/script>')") > 0 && !/<script[^>]*src="bau\//.test(h.replace(/<!-- SKRIPTE -->[\s\S]*?<!-- \/SKRIPTE -->/, "")),
-        "B5 " + n + ": gebaut läuft genau das eine Modul aus bau/ (im Lader, nach allen anderen Skripten)");
+      /* Prüfung Runde 2: vorher legte diese Zeile das document.write des Moduls im Lader fest. Was sie sichern soll, bleibt:
+         genau das eine Modul aus bau/, am Ende nach allen anderen Skripten – jetzt steht es fest hinter dem Lader (B11) */
+      const fest = '<script type="module" crossorigin src="bau/' + e.file + '"></script>';
+      sage(Boolean(e.file) && lader.replace(/<script>[\s\S]*?<\/script>/g, "").trim() === fest && lader.trim().endsWith(fest)
+        && (h.match(/<script[^>]*src="bau\//g) || []).length === 1 && (h.match(/<script[^>]*type="module"/g) || []).length === 1,
+        "B5 " + n + ": gebaut läuft genau das eine Modul aus bau/ (fest hinter dem Lader, nach allen anderen Skripten)");
       /* Prüfung Runde 1: mit ?quelle=1 steht das Quell-Stilblatt gleich im Kopf (ein Skript VOR den festen Zeilen schreibt
          es); der Lader am Ende nimmt nur das gebaute weg und schreibt kein Stilblatt mehr */
       const vor = kopf.split('<link rel="modulepreload"')[0];
@@ -314,6 +327,38 @@ const PACKER = {
         fs.rmSync(T, { recursive: true, force: true });
       }
     }
+    /* B11 (Prüfung Runde 2): kein document.write für Module. Ob Safari unter iOS 14–17 ein per document.write eingesetztes
+       <script type="module"> ausführt, lässt sich hier nicht prüfen (nur Chromium) – darum steht das Bündel fest im HTML
+       (B5), und das läuft in jedem Browser mit Modulen gleich. Mit ?quelle=1 laufen die Quellen; dann lässt die Wache am
+       Anfang des Bündels dessen ganzen Code aus. Die Quellen schreibt der Lader klassisch (wie vor M5), nur mit ?quelle=1. */
+    const WACHE = "if(!/[?&]quelle=1/.test(location.search)){";
+    let parseAst = null;
+    try { parseAst = require(path.join(WURZEL, "node_modules", "rollup", "dist", "parseAst.js")).parseAst; } catch (e) { parseAst = null; }
+    for (const [n, p] of Object.entries(PACKER)) {
+      const h = html[n], e = manifest["src/" + n + ".html"] || {};
+      const lader = (/<!-- SKRIPTE -->([\s\S]*?)<!-- \/SKRIPTE -->/.exec(h) || [])[1] || "";
+      const kopf = (h.split("</head>")[0] || "");
+      const aufrufe = [...h.matchAll(/document\.write(?:ln)?\(([^;]*?)\);/g)].map((m) => m[1]);
+      const modul = aufrufe.filter((x) => /type=\\?["']?module/.test(x));
+      sage(aufrufe.length === (h.match(/document\.write/g) || []).length && !modul.length,
+        "B11 " + n + ": kein document.write für Module (" + aufrufe.length + "× document.write, nur Stilblatt und klassische Quellen)", modul.join(" | ").slice(0, 160));
+      const ersterWrite = lader.indexOf("document.write"), rueck = lader.indexOf("  if (!q) return;\n");
+      const kopfWrite = (/<script>[^\n]*document\.write[^\n]*<\/script>/.exec(kopf) || [""])[0];
+      sage(rueck > 0 && (ersterWrite < 0 || rueck < ersterWrite) && /^<script>[^\n]*\*\/ if \(\/\[\?&\]quelle=1\/\.test\(location\.search\)\) \[/.test(kopfWrite),
+        "B11 " + n + ": ohne ?quelle=1 schreibt die Seite nichts per document.write (Lader: if (!q) return; Kopf: nur unter ?quelle=1)");
+      const qRegel = (/var q = (\/[^\n]*?\/)\.test\(location\.search\);/.exec(lader) || [])[1];
+      const datei = e.file ? path.join(WURZEL, "bau", e.file) : null;
+      const code = datei && fs.existsSync(datei) ? fs.readFileSync(datei, "utf8") : "";
+      sage(code.startsWith(WACHE) && code.endsWith("\n}\n") && qRegel === "/[?&]quelle=1/" && WACHE.indexOf("!" + qRegel + ".test(location.search)") === 3,
+        "B11 " + n + ": das Bündel beginnt mit der Wache (mit ?quelle=1 läuft sein Code nicht; dieselbe Regel wie der Lader)", code.slice(0, 60).replace(/\n/g, "⏎"));
+      let gueltig = null;
+      if (parseAst && code) { try { parseAst(code); gueltig = true; } catch (x) { gueltig = String(x.message || x).slice(0, 100); } }
+      sage(gueltig === true, "B11 " + n + ": das Bündel mit Wache ist gültiger Modul-Code (Rollup parseAst)", gueltig === null ? "parseAst oder Bündel fehlt" : gueltig === true ? "" : gueltig);
+      for (const datei2 of Object.keys(p.nachladen)) {
+        const x = manifest[datei2], c = x && fs.existsSync(path.join(WURZEL, "bau", x.file)) ? fs.readFileSync(path.join(WURZEL, "bau", x.file), "utf8") : null;
+        sage(c != null && !c.startsWith(WACHE), "B11 " + n + ": " + (x ? x.file : datei2) + " ohne Wache (mit ?quelle=1 nennt der Lader die Stücke nicht)");
+      }
+    }
   }
 
   /* ===================== S: im Browser ===================== */
@@ -345,7 +390,10 @@ const PACKER = {
       if (o.vorher) await o.vorher(ctx);
       /* Ladebild: steht es, bevor das erste Skript der Stadt läuft? (bei DOMContentLoaded und beim ersten Bild nachgesehen) */
       await ctx.addInitScript(() => {
-        window.__l887 = { dcl: null };
+        window.__l887 = { dcl: null, schreib: [] };
+        /* Prüfung Runde 2: was die Seite per document.write schreibt (gebaut: nichts; ?quelle=1: Stilblatt und Quellen) */
+        const dw = Document.prototype.write;
+        Document.prototype.write = function () { window.__l887.schreib.push([].join.call(arguments, "").slice(0, 120)); return dw.apply(this, arguments); };
         document.addEventListener("DOMContentLoaded", () => { const l = document.getElementById("lLade"); window.__l887.dcl = l ? l.className : "fehlt"; });
         /* Prüfung Runde 1: welche Stilblätter stehen da, wenn der Körper der Seite beginnt? (ohne Gestaltung stünde er sonst da) */
         const mo = new MutationObserver(() => {
@@ -358,6 +406,8 @@ const PACKER = {
       const pg = await ctx.newPage(); const pe = [];
       pg.on("pageerror", (e) => pe.push(String(e.message || e).slice(0, 160)));
       const ab = log.length;
+      /* Prüfung Runde 2: Abdeckung – läuft Code des Bündels? (gebaut ja, mit ?quelle=1 nein: die Wache lässt ihn aus) */
+      if (o.abdeckung) await pg.coverage.startJSCoverage({ resetOnNavigation: false });
       await pg.goto(B + url, { waitUntil: "load", timeout: 180000 });
       const ziel = o.rahmen ? pg.frames().find((f) => /stadt-leicht\.html/.test(f.url())) : pg;
       const fertig = await ziel.waitForFunction(() => window.__fertig || window.__fehler, null, { timeout: 180000 }).then(() => true, () => false);
@@ -376,7 +426,22 @@ const PACKER = {
         lade: window.__l887 ? window.__l887.dcl : null,
         koerper: window.__l887 ? window.__l887.koerper || null : null,
         korn: !!(window.STADT && window.STADT.korn && !window.STADT.korn.vertretung),
+        schreib: window.__l887 ? window.__l887.schreib : null,
       })).catch((e) => ({ fehler: String(e.message || e) }));
+      if (o.abdeckung) {
+        const cov = await pg.coverage.stopJSCoverage().catch(() => null);
+        /* je Bündel (bau/stadt-… bzw. bau/stadt-leicht-…): wie viele seiner Funktionen liefen (die oberste Ebene des Moduls
+           zählt nicht – die läuft auch mit Wache) */
+        info.lauf = cov ? { skripte: 0, gerufen: 0 } : null;
+        for (const x of cov || []) {
+          if (!/\/bau\/stadt(-leicht)?-[A-Za-z0-9_-]{8}\.js$/.test(x.url.split("?")[0])) continue;
+          info.lauf.skripte++;
+          for (const f of x.functions) {
+            const r0 = f.ranges[0] || {};
+            if (!(r0.startOffset === 0 && r0.endOffset >= x.source.length - 1) && r0.count > 0) info.lauf.gerufen++;
+          }
+        }
+      }
       await ctx.close();
       const l = log.slice(ab);
       return Object.assign(info, { fertig, pe, n404: l.filter((x) => x.s === 404).map((x) => x.p), abrufe: l.map((x) => x.p), extra: t });
@@ -385,7 +450,7 @@ const PACKER = {
     const LE = manifest["src/stadt-leicht.html"] || {}, ST = manifest["src/stadt.html"] || {};
 
     /* S1 */
-    const g = await lauf("/stadt-leicht.html?demo=1&jahr=herbst");
+    const g = await lauf("/stadt-leicht.html?demo=1&jahr=herbst", { abdeckung: true });
     sage(g.fertig && !g.fehler, "S1 stadt-leicht gebaut: das erste Bild kommt (__fertig)", g.fehler || "");
     sage(!g.n404.length, "S1 … keine 404", g.n404.join(", "));
     sage(!g.pe.length, "S1 … kein Seitenfehler", g.pe.join(" | "));
@@ -397,13 +462,22 @@ const PACKER = {
     sage(g.lade === "lk-lade lk-vorhang", "S1 … das Ladebild steht, bevor die Stadt läuft (bei DOMContentLoaded da)", String(g.lade));
     const korn = manifest["stadt-leicht/korn.js"] || {};
     sage(g.korn && (g.module || []).indexOf("bau/" + korn.file) >= 0, "S1 … die Äcker kommen nach dem ersten Bild als Modul aus bau/ (" + (korn.file || "?") + ")", (g.module || []).join(", "));
+    /* Prüfung Runde 2 */
+    sage(Array.isArray(g.schreib) && !g.schreib.length, "S1 … kein document.write (das Bündel steht fest im HTML)", (g.schreib || []).join(" | ").slice(0, 160));
+    sage(Boolean(g.lauf) && g.lauf.skripte === 1 && g.lauf.gerufen > 0, "S1 … der Code des Bündels läuft (Abdeckung: Funktionen gerufen – Gegenstück zu S2)", JSON.stringify(g.lauf));
     /* S2 */
-    const q = await lauf("/stadt-leicht.html?demo=1&jahr=herbst&quelle=1");
+    const q = await lauf("/stadt-leicht.html?demo=1&jahr=herbst&quelle=1", { abdeckung: true });
     sage(q.fertig && !q.fehler && !q.n404.length && !q.pe.length, "S2 stadt-leicht ?quelle=1: erstes Bild, keine 404, kein Seitenfehler", [q.fehler].concat(q.n404, q.pe).filter(Boolean).join(" | "));
     const qsoll = PACKER["stadt-leicht"].quelle;
     sage(JSON.stringify((q.klassisch || []).filter((s) => /^stadt/.test(s))) === JSON.stringify(qsoll), "S2 … die Quellen einzeln, in der Reihenfolge des Packers (" + qsoll.length + ")",
       (q.klassisch || []).filter((s) => /^stadt/.test(s)).length + " Skripte");
-    sage(!(q.module || []).length, "S2 … kein Modul läuft", (q.module || []).join(", "));
+    /* Prüfung Runde 2: das Bündel steht jetzt fest im HTML, das Element ist also auch mit ?quelle=1 da (vorher prüfte diese
+       Zeile „kein Modul-Element“). Was sie sichern soll, bleibt: kein Modul läuft – kein anderes Modul, und vom Bündel keine
+       einzige Funktion (Abdeckung; die Wache lässt seinen Code aus), und nichts davon kommt per document.write */
+    const modulGeschrieben = (q.schreib || []).filter((x) => /type=["']?module/.test(x));
+    sage((q.module || []).every((m) => m === "bau/" + LE.file) && Boolean(q.lauf) && q.lauf.gerufen === 0 && Array.isArray(q.schreib) && !modulGeschrieben.length,
+      "S2 … kein Modul läuft (vom festen Bündel keine Funktion, Abdeckung; kein Modul per document.write)", (q.module || []).join(", ") + " · " + JSON.stringify(q.lauf)
+      + (modulGeschrieben.length ? " · geschrieben: " + modulGeschrieben.join(" | ") : ""));
     sage(JSON.stringify(q.stile) === JSON.stringify(["stadt-leicht/leicht.css"]) && JSON.stringify(q.kopfStile) === JSON.stringify(q.stile),
       "S2 … am Ende nur das Quell-Stilblatt (im Kopf)", (q.stile || []).join(", ") + " · im Kopf: " + (q.kopfStile || []).join(", "));
     sage((q.koerper || []).indexOf("stadt-leicht/leicht.css") === 0, "S2 … das Quell-Stilblatt steht schon, wenn der Körper der Seite beginnt (nie ohne Gestaltung)",
@@ -434,8 +508,11 @@ const PACKER = {
     sage(sg.fertig && !sg.fehler && !sg.n404.length && !sg.pe.length, "S5 stadt.html gebaut: erstes Bild, keine 404, kein Seitenfehler", [sg.fehler].concat(sg.n404, sg.pe).filter(Boolean).join(" | "));
     sage((sg.module || []).length === 1 && sg.module[0] === "bau/" + ST.file && sg.geb === true && !sg.abrufe.some((p) => /^\/stadt\/(modelle\/)?[a-z_]+\.js$/.test(p)),
       "S5 … genau ein Modul aus bau/ (" + (ST.file || "?") + "), die Modelle stecken drin (GEBUENDELT, keine Quelle geholt)", (sg.module || []).join(", "));
-    sage(sq.fertig && !sq.fehler && !sq.n404.length && !sq.pe.length && sq.geb === false && !(sq.module || []).length,
-      "S5 stadt.html ?quelle=1: erstes Bild, Quellen einzeln (Modelle nachgeladen), kein Modul", [sq.fehler].concat(sq.n404, sq.pe).filter(Boolean).join(" | "));
+    /* Prüfung Runde 2: wie S2 – das feste Bündel steht da, läuft aber nicht (GEBUENDELT setzt nur das Bündel) */
+    sage(sq.fertig && !sq.fehler && !sq.n404.length && !sq.pe.length && sq.geb === false && (sq.module || []).every((m) => m === "bau/" + ST.file)
+      && Array.isArray(sq.schreib) && !sq.schreib.some((x) => /type=["']?module/.test(x)),
+      "S5 stadt.html ?quelle=1: erstes Bild, Quellen einzeln (Modelle nachgeladen), kein Modul läuft (GEBUENDELT fehlt)", [sq.fehler].concat(sq.n404, sq.pe).filter(Boolean).join(" | "));
+    sage(Array.isArray(sg.schreib) && !sg.schreib.length, "S5 … gebaut kein document.write (das Bündel steht fest im HTML)", (sg.schreib || []).join(" | ").slice(0, 160));
     sage(JSON.stringify(sg.vorab) === JSON.stringify(["bau/" + ST.file]) && JSON.stringify(sg.kopfStile) === JSON.stringify(["bau/" + (ST.css || [])[0]]),
       "S5 … gebaut: Vorladen und Stilblatt aus bau/ im Kopf", (sg.vorab || []).concat(sg.kopfStile || []).join(", "));
     sage((sq.koerper || []).indexOf("stadt/stadt.css") === 0 && JSON.stringify(sq.kopfStile) === JSON.stringify(["stadt/stadt.css"]),
