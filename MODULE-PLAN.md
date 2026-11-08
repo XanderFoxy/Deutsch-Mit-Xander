@@ -714,15 +714,24 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     - **`?quelle=1` (klein):** Das Quell-Stilblatt kam erst mit dem Lader am Ende, das gebaute hatte er vorher entfernt.
       Bis dahin konnte die Seite ohne Gestaltung stehen.
       - Jetzt schreibt ein Skript VOR den festen Kopfzeilen mit `?quelle=1` gleich das Quell-Stilblatt. 887-stadt S2/S5:
-        Es steht schon, wenn der Körper der Seite beginnt. Gegenprobe 8717eead: 3 rot.
+        Es steht schon, wenn der Körper der Seite beginnt. Gegenprobe 8717eead: 3 rot. Bis der Lader am Ende das gebaute
+        wegnimmt, gilt bei gleichen Regeln das gebaute (es steht dahinter). Nach einem Commit stammen beide aus derselben
+        Quelle; nur wer `stadt/stadt.css` oder `leicht.css` gerade ändert und noch nicht gebaut hat, sieht in den ersten
+        Bildern den gebauten Stand.
       - Nicht übernommen: `?quelle=1` holt das Bündel weiter mit (modulepreload, 368 KB bzw. 3,5 MB, nur Prüf- und
         Backwege). Das ginge nur, wenn auch der Nutzerweg die beiden Zeilen per Skript schreibt. Gemessen
         (`scratchpad/m5nb1/kopf-zeit.js`, CPU 4×, 40 ms je Antwort, 8 Paare verschränkt): Bündel und Stilblatt werden dann
         später angefragt, Median 60 → 82 ms, in jedem Lauf (Skript ganz oben im Kopf: 59 → 72). Die festen Zeilen findet
         der Vorab-Leser des Browsers schon in den ersten Bytes. Mit dem Skript davor: 64 → 58,5 bzw. 60 → 58, also nicht
         später. Der Nutzerweg geht vor (Funk 255).
-    - **Sonden** (08.11., dieser Baum): 887-stadt B (mit B9/B10) und S (mit S6) grün; 887-bau B grün. Weitere siehe
-      unten (Sondenstand Runde 1).
+    - **Sondenstand Runde 1** (08.11., dieser Baum, je Sonde eine Sperre, Protokolle in `scratchpad/m5nb1/sonden/`):
+      - 887-stadt B 57/0 (mit B9/B10), S 27/0 (mit S6); 887-bau B+S grün (rc 0).
+      - Stadt-Sonden grün: 821 43/0, 822 27/0, leicht 26/0, stadt-bedienung 20/0, 844 35/0, 799 40/0, 874 47/0,
+        832 41/0, 812-drehschieber 13/0, 812-rathaus-windmuehle 12/0 (gleiche Zahlen wie am 07.11.).
+      - 855: wechselnd 10/1 und 11/0, „Stoppelfeld heller als reifes Korn“ liegt an der Grenze (Stroh immer 184, reifes
+        Korn 174–180, verlangt +8). Neu 1 grün/2 rot, e53d7280 (vor dieser Runde) 2 grün/1 rot: nicht durch M5; das
+        Stück der Äcker ist unverändert (`leicht-korn-D4FsCl6A.js`). Weitere Läufe scheiterten an der Sperre (M3/M4
+        maßen gerade).
     - **Funk-Zeile (für den Dirigenten):** „M5 Stadt, Prüfung Runde 1: Die Baukasten-Stadt (stadt.html, im Spiel nicht
       verlinkt) sieht nach M5 anders aus als live, denn live lief noch ein altes Bündel. Im Menü ‚Häuser‘ stehen 19 statt
       15 Karten (neu Schweinestall, Holzfällerhütte, Jagdhütte, Sternwarte), Kuh, Schwein und Huhn gibt es nur über die
