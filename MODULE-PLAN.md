@@ -784,4 +784,6 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
         Safari kennt modulepreload erst ab 17; bisher fand ein älteres Safari das Bündel erst beim `document.write` am
         Ende, jetzt kann es der Vorab-Leser im HTML sehen (nicht prüfbar, vermutlich eher früher).
     - **Sondenstand Runde 2** (dieser Baum, je Sonde eine Sperre, Protokolle in `scratchpad/m5nb2/sonden/`):
-      887-stadt B 68/0, S 29/0; 887-bau 33/0; 885-swvorladen 32/0.
+      887-stadt B 68/0, S 29/0; 887-bau 33/0; 885-swvorladen 32/0; 844 35/0.
+      - Die Wiederholungen aus „Offen“ (am 01.11. unter Überlast rot) sind jetzt grün, mit denselben Zahlen wie alt:
+        833 30/0, 817 48/0, 809 42/0. Damit ist dieser Punkt erledigt; offen bleiben dort nur 830/848 (alt-Gegenlauf).
