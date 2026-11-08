@@ -148,8 +148,11 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
       const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "dma-887-bau-"));
       try {
         const kopie = (ziel) => {
-          /* MODUL M4: ganz src/ (auch die Stücke in src/app/, die ein Eingang importiert) */
-          fs.cpSync(SRC, path.join(ziel, "src"), { recursive: true });
+          /* MODUL M4: ganz src/ (auch die Stücke in src/app/, die ein Eingang importiert).
+             FASSUNG 888 (Zusammenführung M4 + M5): ohne die Seiten src/<seite>.html – die brauchen stadt/ und
+             stadt-leicht/ (sonst bricht Vite mit „Seite stadt: stadt/kern.js fehlt“ ab); Bau und Kaskade der Seiten
+             prüft pruefe-887-stadt.js. Die Eingänge aus src/*.js bauen ohne sie zu denselben Namen (B7). */
+          fs.cpSync(SRC, path.join(ziel, "src"), { recursive: true, filter: (q) => !/\.html$/.test(q) });
           fs.copyFileSync(path.join(WURZEL, "vite.config.mjs"), path.join(ziel, "vite.config.mjs"));
           fs.copyFileSync(path.join(WURZEL, "package-lock.json"), path.join(ziel, "package-lock.json"));
           fs.symlinkSync(path.join(WURZEL, "node_modules"), path.join(ziel, "node_modules"));
