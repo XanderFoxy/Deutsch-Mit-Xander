@@ -14,13 +14,18 @@
   const ST = window.STADT;
   if (!ST || ST.autoschau || !window.LEICHT_AUTOSCHAU) return;
   const ARTEN = { viper: 1, batmobil: 1 };
-  let laden = null, warte = null;
+  let laden = null, warte = null, versuch = 0;
   const AS = (ST.autoschau = { offen: false, angefragt: [], vertretung: true });
   AS.vorladen = function () {
     return laden || (laden = new Promise((ja, nein) => {
       const s = document.createElement("script");
-      /* MODUL-UMBAU M5: das Stück kommt aus dem Vite-Bau (bau/…) und ist ein Modul – klassisch geladen fehlte ihm "use strict" */
-      s.type = "module"; s.src = window.LEICHT_AUTOSCHAU; s.async = true;
+      /* MODUL-UMBAU M5: das Stück kommt aus dem Vite-Bau (bau/…) und ist ein Modul – klassisch geladen fehlte ihm "use strict".
+         Ein Modul, dessen Abruf gescheitert ist, merkt sich der Browser für die ganze Seite (Modul-Tabelle): dieselbe
+         Adresse noch einmal scheitert sofort, ohne Netz – nach einem Aussetzer im Mobilnetz bliebe die Auto-Schau bis zum
+         Neuladen aus. Darum hat jeder weitere Versuch eine eigene Adresse (?wieder=n, sw.js reicht sie ans Netz durch);
+         der erste kommt wie bisher ohne Abfrage aus dem Speicher. */
+      s.type = "module"; s.src = window.LEICHT_AUTOSCHAU + (versuch ? "?wieder=" + versuch : ""); s.async = true;
+      versuch++;
       s.onload = () => (ST.autoschau !== AS ? ja() : nein());
       s.onerror = () => { laden = null; nein(); };
       document.head.appendChild(s);

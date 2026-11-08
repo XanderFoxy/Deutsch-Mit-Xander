@@ -54,6 +54,9 @@
          erstes Bild, Auto-Schau und Quests auf Abruf aus bau/
      S5  stadt.html?neu=1 gebaut und ?quelle=1: dasselbe (Modelle gleich,
          GEBUENDELT nur gebaut)
+     S6  Auto-Schau nach einem Netzfehler: der erste Abruf des Stücks bricht
+         ab, der nächste Versuch holt es neu (eigene Adresse ?wieder=1), die
+         echte Schau steht (ein gescheitertes Modul merkt sich der Browser)
 
    Aufruf:     node werkzeug/pruefe-887-stadt.js          (NUR=B|S)
    Gegenprobe: WURZEL=<ordner mit fc5e3ae3> node werkzeug/pruefe-887-stadt.js  → rot
@@ -332,6 +335,7 @@ const PACKER = {
       const ctx = await br.newContext({ viewport: o.vp || { width: 900, height: 600 }, serviceWorkers: "block" });
       await ctx.route(/cdn\.jsdelivr\.net/, (r) => r.fulfill({ status: 200, contentType: "text/javascript", body: "window.supabase=null;" }));
       await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+      if (o.vorher) await o.vorher(ctx);
       /* Ladebild: steht es, bevor das erste Skript der Stadt läuft? (bei DOMContentLoaded und beim ersten Bild nachgesehen) */
       await ctx.addInitScript(() => {
         window.__l887 = { dcl: null };
@@ -413,6 +417,26 @@ const PACKER = {
       "S5 stadt.html ?quelle=1: erstes Bild, Quellen einzeln (Modelle nachgeladen), kein Modul", [sq.fehler].concat(sq.n404, sq.pe).filter(Boolean).join(" | "));
     sage(Boolean(sg.modelle && sq.modelle) && JSON.stringify(sg.modelle) === JSON.stringify(sq.modelle) && sg.modelle.length >= 53,
       "S5 … gebaut und ?quelle=1 haben dieselben Modelle (" + (sg.modelle || []).length + ")", sg.modelle && sq.modelle ? "nur gebaut: " + sg.modelle.filter((k) => sq.modelle.indexOf(k) < 0).join(",") + " · nur Quelle: " + sq.modelle.filter((k) => sg.modelle.indexOf(k) < 0).join(",") : "");
+    /* S6 (Prüfung Runde 1): die Auto-Schau nach einem Netzfehler. Der erste Abruf des Stücks bricht ab (Aussetzer im
+       Mobilnetz), der nächste Versuch muss das Stück NEU holen – ein gescheitertes Modul merkt sich der Browser für die
+       ganze Seite, dieselbe Adresse scheiterte sofort ohne Netz, und die Schau bliebe bis zum Neuladen aus. */
+    const as6 = manifest["stadt-leicht/autoschau.js"] || {};
+    const schau = [];
+    const s6 = await lauf("/stadt-leicht.html?demo=1&leute=0&gaeste=0&quest=0", { warte: 300,
+      vorher: (ctx) => ctx.route(/\/bau\/leicht-autoschau-/, (rt) => { schau.push(rt.request().url().replace(/^[^?]*\/bau\//, "")); return schau.length === 1 ? rt.abort("connectionreset") : rt.continue(); }),
+      danach: (f) => f.evaluate(async () => {
+        const ST = window.STADT, AS = ST.autoschau;
+        if (!AS || !AS.vorladen) return { keineVertretung: true };
+        const eins = await AS.vorladen().then(() => "ja", () => "nein");
+        await new Promise((ok) => setTimeout(ok, 300));
+        const zwei = await ST.autoschau.vorladen().then(() => "ja", () => "nein");
+        return { eins, zwei, echt: !!(ST.autoschau && !ST.autoschau.vertretung) };
+      }) });
+    sage(s6.fertig && Boolean(s6.extra) && s6.extra.eins === "nein" && s6.extra.zwei === "ja" && s6.extra.echt && schau.length === 2,
+      "S6 Auto-Schau nach einem Netzfehler: erster Abruf bricht ab, der nächste Versuch holt das Stück neu, die echte Schau steht",
+      JSON.stringify(s6.extra) + " · Abrufe: " + schau.join(", "));
+    sage(schau[0] === as6.file && /^leicht-autoschau-[A-Za-z0-9_-]{8}\.js\?wieder=1$/.test(schau[1] || ""), "S6 … der erste Versuch ohne Abfrage (aus dem Speicher des Helfers), der zweite mit ?wieder=1",
+      schau.join(", "));
     await br.close(); srv.close();
   }
 
