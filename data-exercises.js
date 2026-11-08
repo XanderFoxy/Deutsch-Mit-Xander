@@ -53,17 +53,41 @@ const ExerciseData = (function () {
     }
     dmaUebEinsetzen(x.responseText);
   }
+  /* MODUL-UMBAU M3b: den Teil ASYNCHRON holen (ein gemeinsamer Abruf für das Vorladen unten und für
+     ladeUebungen(ids)). Gemessen (ladezeit-messen.js --fall uebung, 4G, CPU 4×): kam der Tipp auf eine Karte, bevor
+     das Vorladen ihn geholt hatte, holte getBank() ihn SYNCHRON – 1,7 s gesperrter Hauptfaden, während Wortschatz und
+     Übungsteile die Leitung füllten (auf dem alten Stand 0,27 s). Jetzt wartet ladeUebungen(ids) auf ihn, die Seite
+     bleibt bedienbar; das synchrone Holen bleibt nur der Rückweg. */
+  let dmaUebHol = null;
+  /* eilig: beim Tipp auf „Lernen" (vor dem Wortschatz, der gleich danach die Leitung füllt) mit hoher Priorität */
+  function dmaUebTextHolen(eilig) {
+    if (dmaUebDa || !DMA_UEB_BAU || typeof dmaUebText === "string") return Promise.resolve(true);
+    if (!dmaUebHol) {
+      let opt;
+      try { opt = eilig ? { priority: "high" } : undefined; } catch (e) { opt = undefined; }
+      dmaUebHol = fetch(dmaUebAdresse(), opt).then((a) => (a.ok ? a.text() : null)).then((t) => {
+        if (t && !dmaUebDa && typeof dmaUebText !== "string") dmaUebText = t;
+        if (!t) dmaUebHol = null;
+        return Boolean(t);
+      }, () => { dmaUebHol = null; return false; });
+    }
+    return dmaUebHol;
+  }
+  function uebBasisDa() { return dmaUebDa || !DMA_UEB_BAU; }
+  /* holen und einsetzen; scheitert das Holen, nimmt dmaUebTeil() den alten (synchronen) Weg */
+  function uebBasisHolen() {
+    return dmaUebTextHolen().then(() => { try { dmaUebTeil(); } catch (e) { /* getBank meldet es selbst */ } return true; });
+  }
   /* Vorladen: nach dem Start in einer Ruhepause holen und einsetzen (wie die Teile von app.js). */
   if (DMA_UEB_BAU) {
     try {
       window.addEventListener("load", () => {
         const ruhig = (f, ms) => (window.requestIdleCallback ? requestIdleCallback(f, { timeout: ms }) : setTimeout(f, 200));
         ruhig(() => {
-          fetch(dmaUebAdresse()).then((a) => (a.ok ? a.text() : null)).then((t) => {
-            if (!t || dmaUebDa) return;
-            dmaUebText = t;
+          dmaUebTextHolen().then((ok) => {
+            if (!ok || dmaUebDa) return;
             /* eingesetzt erst 3,5 s nach dem Laden: die ersten Tipps sollen keine Rechenarbeit vorfinden */
-            setTimeout(() => ruhig(() => { try { dmaUebEinsetzen(dmaUebText); } catch (e) { try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push("uebung: " + e.message); } catch (x) {} } }, 3000), 3500);
+            setTimeout(() => ruhig(() => { try { if (typeof dmaUebText === "string") dmaUebEinsetzen(dmaUebText); } catch (e) { try { (window.DMA_TEIL_FEHLER = window.DMA_TEIL_FEHLER || []).push("uebung: " + e.message); } catch (x) {} } }, 3000), 3500);
           }).catch(() => {});
         }, 2000);
       });
@@ -5195,7 +5219,9 @@ const ExerciseData = (function () {
      siehe ladeDatenteil() weiter unten. Vor dem Laden ist die Sammlung
      leer; die Oberfläche wartet deshalb an den paar Stellen, wo sie
      wirklich gebraucht wird, auf das Nachladen. */
-  function ZUSATZ_FRAGEN_() { return (window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN) || {}; }
+  /* MODUL-UMBAU M3b: solange die Sammlung nicht ganz da ist, die schon geholten Kategorien (je Kategorie vollständig,
+     siehe ladeUebungen(ids) weiter unten) */
+  function ZUSATZ_FRAGEN_() { const D = window.DMA_DATEN; return (D && (D.ZUSATZ_FRAGEN || D.ZUSATZ_TEILE)) || {}; }
   function zusatzBank(id) {
     return Core.shuffle(ZUSATZ_FRAGEN_()[id] || []).map(([prompt, correct, wrongs, explain, level, uebersetzung]) => {
       const opts = Core.shuffle([correct, ...wrongs]);
@@ -6313,7 +6339,8 @@ const ExerciseData = (function () {
      Verschwendung; hier kommen die Rohzeilen ungemischt zurück. */
   function alleRohfragen() {
     const alle = [];
-    const bank = ZUSATZ_FRAGEN_();
+    /* M3b: nur die GANZE Sammlung (wie bisher: alles oder nichts) – Tagesaufgabe und Wörterbuch hängen am ganzen Bestand */
+    const bank = (window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN) || {};
     Object.keys(bank).forEach((id) => {
       (bank[id] || []).forEach((z) => {
         alle.push({ categoryId: id, prompt: z[0], correct: z[1], wrongs: z[2], explain: z[3], level: z[4] });
@@ -6321,7 +6348,188 @@ const ExerciseData = (function () {
     });
     return alle;
   }
-  function ladeUebungen() { return ladeDatenteil("data-uebungen.js", "ZUSATZ_FRAGEN"); }
+  /* --- MODUL-UMBAU M3b: die Aufgabensammlung je Kategorie (MODULE-PLAN.md Abschnitt 3) -------------------------------
+     XANDER (Funk 271): „alles insgesamt nur zehn Mal schneller" · (Funk 255): „die schnelle Performance … oberste
+     Priorität". „Lernen" wartete auf die ganze Sammlung (6,0 MB, 1,2 MB gepackt: 4G ~1,1 s, 3G ~6 s Leitung, dazu
+     ~260 ms Ausführen bei CPU 4×) – die Übersicht braucht ohne gewählte Kategorie keine einzige Aufgabe. Das
+     Bau-Werkzeug (werkzeug/uebungen-teilen.js) legt aus der unveränderten data-uebungen.js je Kategorie ein SKRIPT an
+     (bau/uebungen/<kategorie>-<hash>.js, 9–86 KB gepackt; Skript statt JSON, weil der Browser Skripte nebenher übersetzt
+     und ab dem dritten Laden aus dem Code-Speicher nimmt – M3 gemessen) und ein Verzeichnis (DMA_MODUL.uebungen).
+     Geholt wird nur, was die Auswahl braucht; den Rest holt uebungenVorladen() in Ruhepausen. Sind alle Teile da,
+     steht DMA_DATEN.ZUSATZ_FRAGEN wie bisher (in der Reihenfolge der Quelle – die Tagesaufgabe hängt daran).
+     Die ganze Datei wie bisher: mit ?quelle, ohne min/ (dma-ohne-min, Notweg dma-ganz), ohne Eintrag in DMA_MODUL –
+     und als Rückfall, wenn ein Teil oder das Verzeichnis nicht kommt (nie eine halbe Kategorie). */
+  function uebTeileWeg() {
+    const m = window.DMA_MODUL, k = m && m.uebungen;
+    if (typeof k !== "string" || !/^bau\/uebungen-[A-Za-z0-9_-]{8}\.js$/.test(k)) return null;
+    return window.DMA_Q && DMA_Q("data-uebungen.js") === "min/data-uebungen.js" ? k : null;
+  }
+  function uebSkript(src, leise) {
+    return new Promise((fertig) => {
+      const s = document.createElement("script");
+      s.src = src;   /* ohne ?v: der Name kommt aus dem Inhalt (sw.js gibt bau/…-<hash> ungefragt aus dem Speicher) */
+      s.async = true;
+      if (leise) try { s.fetchPriority = "low"; } catch (e) {}
+      s.onload = () => fertig(true);
+      s.onerror = () => { try { s.remove(); } catch (e) {} fertig(false); };
+      document.head.appendChild(s);
+    });
+  }
+  let uebKarteHol = null;
+  function uebKarte() {
+    const D = window.DMA_DATEN;
+    if (D && D.ZUSATZ_KARTE) return Promise.resolve(D.ZUSATZ_KARTE);
+    const weg = uebTeileWeg();
+    if (!weg) return Promise.resolve(null);
+    if (!uebKarteHol) uebKarteHol = uebSkript(weg).then((ok) => {
+      const K = ok && window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_KARTE;
+      if (!K) uebKarteHol = null;
+      return K || null;
+    });
+    return uebKarteHol;
+  }
+  function uebTeilDa(k) { const T = window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_TEILE; return Boolean(T && T[k]); }
+  const uebTeilHol = {};
+  function uebTeil(K, k, leise) {
+    /* eine Kategorie ohne Zusatzaufgaben (z. B. „Meine Wörter") hat keinen Teil: nichts zu holen */
+    if (!K[k] || uebTeilDa(k)) return Promise.resolve(true);
+    if (!uebTeilHol[k]) uebTeilHol[k] = uebSkript("bau/uebungen/" + k + "-" + K[k] + ".js", leise).then((ok) => {
+      const da = ok && uebTeilDa(k);
+      if (!da) uebTeilHol[k] = null;
+      return da;
+    });
+    return uebTeilHol[k];
+  }
+  /* alle Teile da → ZUSATZ_FRAGEN in der Reihenfolge des Verzeichnisses (= der Quelle); Bescheid an die Seite */
+  function uebZusammen() {
+    const D = window.DMA_DATEN;
+    if (!D) return false;
+    if (D.ZUSATZ_FRAGEN) return true;
+    const K = D.ZUSATZ_KARTE, T = D.ZUSATZ_TEILE;
+    if (!K || !T) return false;
+    const ids = Object.keys(K);
+    if (!ids.every((k) => T[k])) return false;
+    const Z = {};
+    ids.forEach((k) => { Z[k] = T[k]; });
+    D.ZUSATZ_FRAGEN = Z;
+    try { window.dispatchEvent(new Event("dma-uebungen-ganz")); } catch (e) {}
+    return true;
+  }
+  /* NACHBESSERUNG 1 (Prüfer): auch auf diesem Weg (Rückfall, ?quelle, Notweg) Bescheid geben, wenn die Sammlung ganz da
+     ist – sonst bauen Tagesaufgabe und Wörterbuch (dma-uebungen-ganz in app.js) nicht neu, wenn sie früher gebaut waren */
+  function ladeUebungenDatei() {
+    return ladeDatenteil("data-uebungen.js", "ZUSATZ_FRAGEN").then((ok) => {
+      if (ok && window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN) try { window.dispatchEvent(new Event("dma-uebungen-ganz")); } catch (e) {}
+      return ok;
+    });
+  }
+  /* ids (Feld von Kategorien): nur diese; ohne ids: die ganze Sammlung (Kalenderrücken, Wörterbuch …) */
+  function ladeUebungen(ids) {
+    if (uebungenDa()) return uebTeileWeg() && Array.isArray(ids) && ids.length && !uebBasisDa() ? uebBasisHolen() : Promise.resolve(true);
+    if (!uebTeileWeg()) return ladeUebungenDatei();
+    return uebKarte().then((K) => {
+      if (!K) return ladeUebungenDatei();
+      const liste = Array.isArray(ids) ? ids.map(String) : Object.keys(K);
+      /* getBank() liest auch die Datenblöcke aus min/data-exercises-teil.js: mit holen, nicht synchron beim Zeichnen */
+      return Promise.all([Promise.all(liste.map((k) => uebTeil(K, k))), liste.length ? uebBasisHolen() : true]).then(([r]) => {
+        if (!r.every(Boolean)) return ladeUebungenDatei();
+        uebZusammen();
+        return true;
+      });
+    });
+  }
+  /* Nach dem ersten Bild der Übersicht: die übrigen Kategorien in Ruhepausen holen, damit der Tipp auf eine Kategorie
+     nicht wartet – zuerst die der Übersicht (zuerst, in ihrer Reihenfolge), dann der Rest des Verzeichnisses; vor dem
+     Wortschatz höchstens vier zugleich, danach UEB_NACH, mit niedriger Priorität. (Hier stand bis Nachbesserung 2: „so ist
+     die Sammlung etwa so schnell ganz da wie früher die eine Datei" – gemessen war das falsch, siehe unten.) darf() falsch (Klassenzimmer, Seite verdeckt, die ersten 8 s in „Wissen"):
+     warten, bis es wieder darf (Nachbesserung 1, unten). */
+  /* REIHENFOLGE AUF DER LEITUNG (gemessen, 3G und 4G, CPU 4×; die Leitung teilt sich gerecht auf alle laufenden
+     Abrufe): der Tipp auf eine Karte teilte sich die Leitung mit den 26 Wortschatz-Dateien (2,26 MB), die „Lernen" in
+     der Ruhepause holt – auf 3G vergingen 13,9 s, bis „Runde starten" frei war (alter Stand 2,2 s, davor aber 20 s
+     „wird geladen"). Und die übrigen 82 Teile verzögerten den Wortschatz, auf den „Runde starten" wartet. Darum:
+       1. zuerst der Teil von data-exercises.js (88 KB; jede Karte braucht ihn) – erst danach der Wortschatz
+          (uebungenVorrang, höchstens 3 s);
+       2. die ersten UEB_VORRANG Karten der Übersicht gleich nach dem ersten Bild (der wahrscheinliche Tipp);
+       3. die übrigen Teile erst, wenn der Wortschatz da ist (nachVorrang aus app.js).
+     Dieselben Bytes in anderer Reihenfolge: was vorgezogen wird, kommt früher, alles andere SPÄTER als auf d9637a22.
+     NACHBESSERUNG 2 (Prüfer, gemessen): so stimmte das nicht – die Sammlung war auf 4G erst 6,7 s nach dem Tipp ganz
+     (d9637a22: 3,7 s), der Wortschatz 1,3 s später. Zwei Lücken auf der Leitung: der Wortschatz startete erst nach Teil
+     UND Ruhepause (behoben in activateTab, app.js), und nach dem Wortschatz kamen die 82 Teile zu viert mit einer
+     Ruhepause zwischen jedem – bei 60 ms Rundreise nutzt das die Leitung nicht aus. Jetzt nach dem Wortschatz
+     UEB_NACH zugleich und ohne Ruhepause dazwischen (das Ausführen eines Teils ist klein; es geschieht ohnehin, wenn
+     er ankommt, nicht wenn er angefragt wird). Was bleibt (gemessen, MODULE-PLAN.md Abschnitt 7, Nachbesserung 2):
+     der Wortschatz ist auf 4G ~0,2 s, auf 3G ~1 s später ganz als auf d9637a22 (vor ihm kommen jetzt der Teil, die
+     ersten Karten und die Stücke für „Runde starten", zusammen ~0,3 MB), und die Sammlung ist später ganz, weil das
+     Vorladen der app-Stücke (Raum zuerst, app.js beim load-Ereignis) jetzt früher startet – die eine große Datei hielt
+     „load" bisher auf. Die Raum-Stücke sind dafür früher da (Funk 255: die Verbindung zu den anderen zuerst). */
+  const UEB_VORRANG = 8, UEB_NACH = 8;
+  function uebungenVorrang(ms) {
+    if (!uebTeileWeg() || uebungenDa()) return Promise.resolve(true);
+    return Promise.race([dmaUebTextHolen(true).then(() => true), new Promise((r) => setTimeout(() => r(false), ms || 3000))]);
+  }
+  /* NACHBESSERUNG 1 (Prüfer, M3b): „anhalten" hieß bisher AUFHÖREN – weiter ging es nur, wenn renderSetup lief oder
+     jemand erneut auf „Lernen" tippte. Nach kurzem Bildschirm-aus oder einem Besuch in „Wissen" blieb die Sammlung für
+     die Sitzung halb (nachgestellt: 4 von 90 Kategorien; Spiele, Duell, Artikel-Garten, Wörterbuch und offline der
+     Rückfall hängen daran – auf d9637a22 kam sie nach dem ersten Öffnen von „Lernen" immer ganz). Jetzt heißt anhalten
+     WARTEN: darf() wird alle 3 s wieder gefragt, beim Zurückkommen der Seite (visibilitychange) und bei jedem neuen
+     Aufruf sofort. Fertig ist es erst, wenn die Sammlung ganz da ist; fehlt am Ende ein Teil, holt ladeUebungen() ihn
+     noch einmal und sonst die ganze Datei (wie jeder andere Rückfall). Wann es darf, sagt app.js (uebVorDarf). */
+  let uebVorNr = 0, uebVorAktiv = false, uebVorWeck = null;
+  try { document.addEventListener("visibilitychange", () => { if (!document.hidden && uebVorWeck) uebVorWeck(); }); } catch (e) {}
+  function uebungenVorladen(zuerst, darf, nachVorrang) {
+    if (uebungenDa() || !uebTeileWeg()) return;
+    if (uebVorAktiv) { if (uebVorWeck) uebVorWeck(); return; }
+    uebVorAktiv = true;
+    const nr = ++uebVorNr;
+    let uhr = 0;
+    const ende = () => { if (nr === uebVorNr) { uebVorAktiv = false; uebVorWeck = null; clearTimeout(uhr); uhr = 0; } };
+    const pause = (f) => { if (window.requestIdleCallback) requestIdleCallback(f, { timeout: 1500 }); else setTimeout(f, 60); };
+    uebKarte().then((K) => {
+      /* Nachbesserung 1: kommt das Verzeichnis nicht, die ganze Datei (ladeUebungen versucht es noch einmal, dann
+         data-uebungen.js) – sonst blieb die Sammlung nach „Lernen" ohne Kartentipp für die Sitzung halb */
+      if (!K) { ende(); ladeUebungen().catch(() => {}); return; }
+      dmaUebTextHolen();   /* den Teil von data-exercises.js gleich mit (nur holen; eingesetzt wird beim ersten Bedarf) */
+      const reihe = [], gesehen = new Set();
+      (zuerst || []).concat(Object.keys(K)).forEach((k) => { if (K[k] && !gesehen.has(k)) { gesehen.add(k); reihe.push(k); } });
+      let i = 0, laufen = 0, gewartet = false, wsWarten = false;
+      const weiter = () => {
+        if (nr !== uebVorNr || wsWarten) return;
+        if (uebungenDa()) { ende(); return; }
+        if (typeof darf === "function" && !darf()) {
+          if (!uhr) uhr = setTimeout(() => { uhr = 0; weiter(); }, 3000);
+          return;
+        }
+        /* nach den ersten Karten: erst den Wortschatz durchlassen (3.), dann weiter */
+        if (!gewartet && i >= UEB_VORRANG && typeof nachVorrang === "function") {
+          if (laufen) return;
+          gewartet = true;
+          wsWarten = true;
+          let w; try { w = Promise.resolve(nachVorrang()); } catch (e) { w = Promise.resolve(); }
+          const los = () => { wsWarten = false; pause(weiter); };
+          w.then(los, los);
+          return;
+        }
+        /* nach dem Wortschatz (gewartet): mehr zugleich und gleich weiter (Nachbesserung 2) */
+        const zugleich = gewartet ? UEB_NACH : 4;
+        while (laufen < zugleich && i < reihe.length && (gewartet || i < UEB_VORRANG || typeof nachVorrang !== "function")) {
+          const k = reihe[i++];
+          if (uebTeilDa(k)) continue;
+          laufen++;
+          const nach = gewartet;
+          uebTeil(K, k, true).then(() => { laufen--; if (nach) setTimeout(weiter, 0); else pause(weiter); });
+        }
+        if (i >= reihe.length && !laufen) {
+          ende();
+          if (!uebZusammen()) ladeUebungen().catch(() => {});
+          return;
+        }
+        /* die ersten Karten waren schon alle da (zweites Öffnen): gleich weiter zum Warten auf den Wortschatz */
+        if (!laufen && !gewartet && i >= UEB_VORRANG && typeof nachVorrang === "function") pause(weiter);
+      };
+      uebVorWeck = () => { if (uhr) { clearTimeout(uhr); uhr = 0; } pause(weiter); };
+      pause(weiter);
+    }, ende);
+  }
   /* --- Der Kalender kommt monatsweise -------------------------------
      Der ganze Kalender wiegt 7,5 MB, weil dort 366 Tage in sechs
      Niveaus und zehn Sprachen liegen. Gebraucht wird davon fast immer
@@ -6374,7 +6582,17 @@ const ExerciseData = (function () {
     for (let m = 1; m <= 12; m++) if (!monatGeladen(String(m).padStart(2, "0"))) return false;
     return true;
   }
-  function uebungenDa() { return Boolean(window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN); }
+  /* ohne ids: die ganze Sammlung; mit ids (M3b): diese Kategorien */
+  function uebungenDa(ids) {
+    const D = window.DMA_DATEN, teile = uebTeileWeg();
+    /* mit Teilen und Auswahl gehört der Teil von data-exercises.js dazu (getBank liest ihn) */
+    if (D && D.ZUSATZ_FRAGEN) return !teile || !Array.isArray(ids) || !ids.length || uebBasisDa();
+    if (!Array.isArray(ids) || !teile) return false;
+    if (!ids.length) return true;
+    const K = D && D.ZUSATZ_KARTE;
+    if (!K || !uebBasisDa()) return false;
+    return ids.every((k) => !K[k] || uebTeilDa(k));
+  }
   /* „Kalender da“ heißt jetzt: das Verzeichnis UND der laufende Monat
      sind geladen. Nur die leere Sammlung zu prüfen, würde reichen,
      sobald irgendein Monat da ist — dann fehlte womöglich genau der
@@ -6384,5 +6602,7 @@ const ExerciseData = (function () {
     return monatGeladen(String(new Date().getMonth() + 1).padStart(2, "0"));
   }
 
-  return { ladeUebungen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
+  /* M3b: der Teil von data-exercises.js (getBank jeder Kategorie liest ihn) – beim Tipp auf „Lernen" gleich holen */
+  function uebungenBasisHolen() { if (uebTeileWeg()) dmaUebTextHolen(true); }
+  return { ladeUebungen, uebungenVorladen, uebungenBasisHolen, uebungenVorrang, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
 })();

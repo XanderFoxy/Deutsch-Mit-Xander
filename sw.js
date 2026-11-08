@@ -93,9 +93,47 @@ self.addEventListener("fetch", function (e) {
     else if (e.preloadResponse) e.respondWith(vorab(e).then(function (a) { return a || fetch(r); }));
     return;
   }
+  /* MODUL-UMBAU (M1): Stücke aus bau/ (Name aus dem Inhalt, siehe bauGrund) */
+  var b = bauGrund(u);
+  if (b) { e.respondWith(bauHolen(r, b)); return; }
   if (!u.searchParams.get("v")) return;
   e.respondWith(gestempelt(r, u));
 });
+
+/* MODUL-UMBAU (Schritt 1, MODULE-PLAN.md Abschnitt 3, M1) — XANDER (Funk 310/312): „die maximal professionellste
+   Lösung". STÜCKE AUS bau/: Vite benennt jede Datei nach ihrem Inhalt (bau/rueckfrage-CfC8vCNA.js); ein neuer Inhalt
+   bekommt einen neuen Namen, unter einem Namen liegt auf dem Server nie ein anderer Inhalt. Also wie gestempelte
+   Dateien zuerst aus dem Speicher, sonst aus dem Netz – OHNE SHA-1-Nachrechnen (der Name ist kein SHA-1, und es gibt
+   nichts nachzurechnen). Je Grundname (bau/rueckfrage.js) höchstens 2 Generationen: die zuletzt abgelegte und die
+   davor – eine Seite, die noch die vorige Fassung zeigt, findet ihr Stück so weiter im Speicher, und der Speicher
+   wächst nicht mit jedem Update. Mit Abfrage (…?x) läuft die Anfrage wie bisher. */
+var BAU = /^bau\/(?:[a-z0-9_-]+\/)*[A-Za-z0-9_.-]+-[A-Za-z0-9_-]{8}\.(?:js|css|json)$/;
+function bauGrund(u) {
+  var w = wurzel(), p = u.pathname || "";
+  if (u.search || p.indexOf(w) !== 0) return "";
+  p = p.slice(w.length);
+  if (!BAU.test(p)) return "";
+  var x = p.slice(p.lastIndexOf("."));
+  return p.slice(0, p.length - x.length - 9) + x;
+}
+function bauHolen(r, grund) {
+  return caches.open(KASTEN).then(function (k) {
+    return k.match(r).then(function (da) {
+      if (da) return da;
+      return fetch(r).then(function (a) {
+        if (a && a.status === 200 && a.type === "basic") bauAblegen(k, r, grund, a.clone());
+        return a;
+      });
+    });
+  }).catch(function () { return fetch(r); });
+}
+function bauAblegen(k, r, grund, kopie) {
+  k.put(r, kopie).then(function () { return k.keys(); }).then(function (alle) {
+    /* keys() in der Reihenfolge des Ablegens: die neue Datei steht hinten */
+    var gleich = alle.filter(function (q) { try { return bauGrund(new URL(q.url)) === grund; } catch (x) { return false; } });
+    gleich.slice(0, Math.max(0, gleich.length - 2)).forEach(function (q) { k.delete(q); });
+  }).catch(function () {});
+}
 
 /* Gestempelte Datei: erst der eigene Speicher, sonst das Netz — und
    dann die ältere Fassung derselben Datei wegräumen, damit der

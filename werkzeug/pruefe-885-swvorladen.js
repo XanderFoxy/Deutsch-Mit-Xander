@@ -87,6 +87,11 @@ try { ALT_SW = execFileSync("git", ["-C", REPO, "show", "02613a71:sw.js"], { std
     if (p === "/__sonde-andere.html") { a.writeHead(200, { "Content-Type": TYP[".html"] }); return a.end("<!doctype html><title>andere</title><p id=x>andere Seite " + (q.url.split("?")[1] || "") + "</p>"); }
     if (p === "/__sonde-weg") { a.writeHead(302, { Location: "/__sonde-andere.html?von=weg" }); return a.end(); }
     if (p === "/__sonde-fehlt.html") { a.writeHead(404, { "Content-Type": TYP[".html"] }); return a.end("<!doctype html><p id=x>gibt es nicht</p>"); }
+    /* MODUL-UMBAU (M1, Prüfung 12): erfundene Stücke in bau/ (Name mit 8-Zeichen-Hash) und eines ohne Hash */
+    if (/^\/bau\/sonde-[A-Za-z0-9_-]{8}\.js$/.test(p) || p === "/bau/sonde.json") {
+      a.writeHead(200, { "Content-Type": p.endsWith(".json") ? TYP[".json"] : "text/javascript" });
+      return a.end(p.endsWith(".json") ? "{\"n\":" + anfragen.length + "}" : "window.__sondeBau = " + JSON.stringify(p) + ";");
+    }
     if (p === "/sw.js" && S.swAlt && ALT_SW) { a.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-cache" }); return a.end(ALT_SW); }
     if (p === "/index.html" && S.index === "aus") { q.socket.destroy(); return; }
     const f = path.join(WURZEL, p);
@@ -258,6 +263,40 @@ try { ALT_SW = execFileSync("git", ["-C", REPO, "show", "02613a71:sw.js"], { std
     const gest = anfragen.slice(ab).filter((x) => /[?&]v=[0-9a-f]{10}$/.test(x.url));
     sage(gest.length === 0, "8  gestempelte Dateien kommen weiter aus dem Speicher des Helfers", gest.length + " übers Netz" + (gest.length ? ": " + gest.slice(0, 3).map((x) => x.p).join(", ") : ""));
     sage(!seitenfehler.length, "   keine Seitenfehler", seitenfehler.slice(0, 2).join(" | "));
+
+    /* 12: MODUL-UMBAU (Schritt 1, M1) — Stücke aus bau/ (Name aus dem Inhalt): zuerst aus dem Speicher (ohne
+       SHA-1 – der Inhalt hier passt zu keinem SHA-1-Stempel), je Grundname höchstens 2 Generationen (die neuesten);
+       mit Abfrage und ohne Hash (bau/manifest.json …) wie bisher übers Netz */
+    console.log("");
+    {
+      const bauAb = (ab, re) => anfragen.slice(ab).filter((x) => re.test(x.url)).length;
+      const holen = (u) => pg.evaluate((u) => fetch(u).then((r) => r.status + ":" + (r.headers.get("content-type") || "")), u).catch((e) => "FEHLER " + e.message);
+      const imSpeicher = () => pg.evaluate(async () => (await (await caches.open("dma-dateien-1")).keys()).map((r) => new URL(r.url).pathname).filter((p) => /\/bau\//.test(p))).catch(() => null);
+      let ab = anfragen.length;
+      const e1 = await holen("bau/sonde-AAAAAAA1.js");
+      await schlaf(400);
+      const e2 = await holen("bau/sonde-AAAAAAA1.js");
+      await schlaf(200);
+      sage(bauAb(ab, /^\/bau\/sonde-AAAAAAA1\.js$/) === 1 && /^200/.test(e1) && /^200/.test(e2),
+        "12 bau/sonde-AAAAAAA1.js: zweimal geholt, EINMAL beim Server (das zweite Mal aus dem Speicher, ohne SHA-1)", bauAb(ab, /^\/bau\/sonde-AAAAAAA1\.js$/) + "× beim Server; " + e1 + " / " + e2);
+      await schlafen(cdp);
+      ab = anfragen.length;
+      const e3 = await holen("bau/sonde-AAAAAAA1.js");
+      sage(bauAb(ab, /^\/bau\/sonde-/) === 0 && /^200/.test(e3), "12 … auch mit schlafendem Helfer aus dem Speicher", bauAb(ab, /^\/bau\/sonde-/) + "× beim Server");
+      await holen("bau/sonde-AAAAAAA2.js"); await schlaf(400);
+      await holen("bau/sonde-AAAAAAA3.js"); await schlaf(600);
+      const sp = await imSpeicher();
+      const sonde = (sp || []).filter((p) => /\/bau\/sonde-/.test(p)).sort();
+      sage(sonde.length === 2 && sonde[0] === "/bau/sonde-AAAAAAA2.js" && sonde[1] === "/bau/sonde-AAAAAAA3.js",
+        "12 je Grundname höchstens 2 Generationen: nach drei Fassungen liegen die zwei neuesten im Speicher", sonde.join(", ") || String(sp));
+      ab = anfragen.length;
+      await holen("bau/sonde-AAAAAAA1.js?x=1"); await holen("bau/sonde-AAAAAAA1.js?x=1");
+      await holen("bau/sonde.json"); await holen("bau/sonde.json");
+      sage(bauAb(ab, /^\/bau\/sonde-AAAAAAA1\.js\?x=1$/) === 2 && bauAb(ab, /^\/bau\/sonde\.json$/) === 2,
+        "12 mit Abfrage (…?x=1) und ohne Hash (bau/sonde.json): jedes Mal übers Netz, wie bisher", bauAb(ab, /\?x=1$/) + "× / " + bauAb(ab, /sonde\.json$/) + "×");
+      const sp2 = await imSpeicher();
+      sage(sp2 && !sp2.some((p) => /sonde\.json$/.test(p)), "12 … und nichts davon im Speicher", (sp2 || []).join(", "));
+    }
 
     /* 10: Notaus */
     await pg.goto(HIER + "/index.html?ohne-sw", { waitUntil: "load" });

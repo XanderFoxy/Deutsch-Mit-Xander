@@ -190,7 +190,9 @@ function server(wurzel, o) {
     let p = decodeURIComponent(q.url.split("?")[0]);
     if (p === "/") p = "/index.html";
     log.push({ p, t: Date.now() });
-    if (o.ohneMinWalkie && p === "/min/rueckfrage.js") { a.writeHead(404); return a.end(); }
+    /* MODUL-UMBAU (M2): das Walkie kommt zuerst als Modul aus bau/ – in F fehlt auch das, damit der ganze Rückweg
+       (bau/ → min/ → Quelle) läuft */
+    if (o.ohneMinWalkie && (p === "/min/rueckfrage.js" || /^\/bau\/rueckfrage-[A-Za-z0-9_-]{8}\.js$/.test(p))) { a.writeHead(404); return a.end(); }
     const f = path.join(wurzel, p);
     if (!f.startsWith(wurzel) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
     a.writeHead(200, { "Content-Type": TYP[path.extname(f)] || "application/octet-stream", "Cache-Control": "no-store" });
@@ -259,7 +261,7 @@ async function seite(br, basis, o) {
     };
     new MutationObserver((l) => l.forEach((m) => m.addedNodes.forEach((n) => {
       if (n.nodeType !== 1) return;
-      if (n.tagName === "SCRIPT" && /rueckfrage\.js/.test(n.getAttribute("src") || "")) window.__s.skripte.push({ src: n.getAttribute("src"), t: performance.now() });
+      if (n.tagName === "SCRIPT" && /rueckfrage(-[A-Za-z0-9_-]{8})?\.js/.test(n.getAttribute("src") || "")) window.__s.skripte.push({ src: n.getAttribute("src"), t: performance.now() });
       if (window.__s.reiter == null && n.classList && n.classList.contains("rf-reiter")) window.__s.reiter = performance.now();
     }))).observe(document, { childList: true, subtree: true });
   }, [o.konto ? KONTO[o.konto] : "", Boolean(o.merker), o.konto ? sitzung(o.konto) : null]);
@@ -281,7 +283,8 @@ function profilZeile(wer) {
 const stand = (pg) => pg.evaluate(() => {
   const n = performance.getEntriesByType("navigation")[0] || {};
   const res = performance.getEntriesByType("resource");
-  const rf = res.filter((e) => /\/rueckfrage\.js(\?|$)/.test(e.name));
+  /* MODUL-UMBAU (M2): auch das Modul bau/rueckfrage-<hash>.js ist „rueckfrage.js“ */
+  const rf = res.filter((e) => /\/rueckfrage(-[A-Za-z0-9_-]{8})?\.js(\?|$)/.test(e.name));
   const ab = window.__s.abrufe;
   const profil = ab.find((a) => /\/rest\/v1\/profiles\?/.test(a.u) && /id=eq\./.test(decodeURIComponent(a.u)));
   const walkie = ab.find((a) => /\/rest\/v1\/betreiber_rueckfragen/.test(a.u));
@@ -294,7 +297,7 @@ const stand = (pg) => pg.evaluate(() => {
 });
 const warteReiter = (pg, ms) => pg.waitForFunction(() => window.__s && window.__s.reiter != null, null, { timeout: ms }).then(() => true, () => false);
 const indexAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => x.p === "/index.html").length;
-const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage\.js$/.test(x.p)).map((x) => x.p);
+const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage(-[A-Za-z0-9_-]{8})?\.js$/.test(x.p)).map((x) => x.p);
 
 (async () => {
   console.log("SONDE 885 — Start schlanker (K)   WURZEL " + WURZEL + (GEGEN ? "   GEGEN " + GEGEN : "") + "   BASIS " + BASIS);
@@ -326,7 +329,8 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
       const knapp = (js) => eb.transformSync(js, { minifyWhitespace: true, legalComments: "none", loader: "js" }).code;
       /* FASSUNG 886 (Einmischen der Notfall-Fassung 885): die Fassungsnummer selbst zählt nicht – BASIS trägt 884, der
          eingemischte Stand 885 (wie live); verglichen wird der Code drumherum */
-      const ohneStempel = (l) => l.filter((s) => !/^window\.DMA_STEMPEL = /.test(s))
+      /* MODUL-UMBAU (M1): die Zeile window.DMA_MODUL ist eine Liste wie DMA_STEMPEL – zählt nicht */
+      const ohneStempel = (l) => l.filter((s) => !/^window\.DMA_STEMPEL = /.test(s) && !/^window\.DMA_MODUL = /.test(s))
         .map((s) => s.replace(/^window\.DMA_VERSION = "\d+";$/, 'window.DMA_VERSION = "…";'));
       const a = ohneStempel(inlineSkripte(ALT)), b = ohneStempel(inlineSkripte(HTML));
       sage(a.length === b.length, "gleich viele Inline-Skripte wie vor K", a.length + " → " + b.length);
@@ -385,7 +389,10 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           return aus.join("\n");
         };
         return [zug(a), zug(b)];
-      }, [ALT, ohnePin(ohneFoto(HTML))]);
+      /* MODUL-UMBAU: nur eine EIGENE Zeile DMA_MODUL (M1/M2) fällt weg; seit M3 steht DMA_MODUL vorn im Block von
+         DMA_STEMPEL – dieser Block ist derselbe Knoten wie in BASIS und bleibt. FASSUNG 887 (L7): die supabase-js-Adresse
+         wird ohne die Pinnung verglichen (ohnePin). */
+      }, [ALT, ohnePin(ohneFoto(HTML.replace(/\n<script>window\.DMA_MODUL = \{(?:(?!window\.DMA_STEMPEL = )[^\n])*\};<\/script>/, "")))]);
       if (ohnePin(HTML) !== HTML) info("supabase-js-Adresse ohne die Pinnung aus 887 (L7) verglichen: @" + (HTML.match(/supabase-js@(2\.\d+\.\d+)\//) || [])[1] + " → @2");
       let k = 0; while (k < x.length && x[k] === y[k]) k++;
       sage(x === y, "die Seite ohne Kommentare Knoten für Knoten gleich (DOMParser, " + x.split("\n").length + " Einträge)", x === y ? "" : "erste Abweichung: …" + x.slice(Math.max(0, k - 80), k + 80).replace(/\n/g, "⏎") + "… / …" + y.slice(Math.max(0, k - 80), k + 80).replace(/\n/g, "⏎") + "…");
@@ -502,6 +509,12 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
       const s = await stand(x.pg);
       sage(da, "Reiter steht da", s.rfNamen.join(", "));
       sage(walkieAbrufe(F.log).includes("/rueckfrage.js"), "die Quelle rueckfrage.js wurde geholt", walkieAbrufe(F.log).join(", "));
+      /* MODUL-UMBAU (M2): mit DMA_MODUL.rueckfrage zuerst das Modul, dann min/, dann die Quelle */
+      if (/window\.DMA_MODUL = \{[^\n]*"rueckfrage"/.test(HTML)) {
+        const w = walkieAbrufe(F.log);
+        sage(w.length === 3 && /^\/bau\/rueckfrage-/.test(w[0]) && w[1] === "/min/rueckfrage.js" && w[2] === "/rueckfrage.js",
+          "Rückweg in dieser Reihenfolge: bau/ (Modul) → min/ → Quelle", w.join(" → "));
+      }
       sage(indexAbrufe(F.log) === 1 && s.ohneMin == null, "kein Neuladen, „dma-ohne-min“ nicht gesetzt", "index.html " + indexAbrufe(F.log) + "×, dma-ohne-min " + s.ohneMin);
       await x.ctx.close(); F.srv.close();
     }

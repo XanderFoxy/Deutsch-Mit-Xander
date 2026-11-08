@@ -91,13 +91,17 @@ const STEMPEL_EINZELN = ["vokabeln", "kalender"];   // FASSUNG 837: Stempel je D
    ========================================================= */
 const MIN_ORDNER = path.join(WURZEL, "min");
 function esbuildHolen() {
+  /* MODUL-UMBAU: seit node_modules/ (Vite) im Baum liegt, fände require("esbuild") auch ein anderes esbuild –
+     min/ wird aber nur mit genau 0.28.2 verkleinert (sonst bekämen alle Kopien neue Stempel und jedes Gerät holte
+     alles neu). package.json pinnt 0.28.2 deshalb oben; hier wird die Fassung zusätzlich geprüft. */
+  const passt = (m) => (m && m.version === "0.28.2" ? m : null);
   const suchen = () => {
-    try { return require("esbuild"); } catch (e) {}
+    try { const m = passt(require("esbuild")); if (m) return m; } catch (e) {}
     const basis = path.join(require("os").homedir(), ".npm", "_npx");
     try {
       for (const d of fs.readdirSync(basis)) {
         const p = path.join(basis, d, "node_modules", "esbuild");
-        if (fs.existsSync(path.join(p, "package.json"))) return require(p);
+        if (fs.existsSync(path.join(p, "package.json"))) { const m = passt(require(p)); if (m) return m; }
       }
     } catch (e) {}
     return null;
@@ -181,8 +185,29 @@ function verkleinern() {
   return { neu, weg };
 }
 
+/* MODUL-UMBAU (Schritt 1, MODULE-PLAN.md Abschnitt 3, M1): der Vite-Bau steht in werkzeug/modul-bauen.js. Scheitert er,
+   bleiben bau/ und DMA_MODUL, wie sie waren; die Stempel für min/ werden trotzdem gesetzt, Rückgabe am Ende 2. */
+let modulFehler = null;
+/* MODUL-UMBAU M3b (MODULE-PLAN.md Abschnitt 3): die Übungsdaten je Kategorie als Skript (werkzeug/uebungen-teilen.js,
+   aus der unveränderten data-uebungen.js). Scheitert das, gibt es keinen Eintrag „uebungen" in DMA_MODUL (die Seite lädt
+   die ganze Datei), laut auf stderr, Rückgabe 2. Fehlt das Werkzeug (Vergleichsstand), passiert nichts. */
+function uebungenTeilen() {
+  let ut = { eintrag: null, gebaut: false, neu: 0, geloescht: 0, fehler: null };
+  if (!fs.existsSync(path.join(__dirname, "uebungen-teilen.js"))) return ut;
+  try { ut = require("./uebungen-teilen.js").bauen(WURZEL); } catch (e) { ut = { eintrag: null, fehler: "uebungen-teilen.js: " + (e.message || e) }; }
+  if (ut.fehler) { modulFehler = modulFehler || "Übungsteile"; console.error("\n!!! ÜBUNGSTEILE: " + ut.fehler + " – DMA_MODUL ohne „uebungen“, die Seite lädt die ganze data-uebungen.js\n"); }
+  if (ut.gebaut) console.log("bau/uebungen: neu gebaut (" + ut.eintrag + ", " + ut.neu + " Dateien neu)");
+  if (ut.geloescht) console.log("bau/uebungen: " + ut.geloescht + " alte Teile gelöscht");
+  return ut;
+}
 function stempelSetzen() {
   const crypto = require("crypto");
+  let mb = { karte: null, gebaut: false, fehler: null, geloescht: 0 };
+  try { mb = require("./modul-bauen.js").bauen(WURZEL); } catch (e) { mb.fehler = "modul-bauen.js: " + (e.message || e); }
+  if (mb.fehler) { modulFehler = mb.fehler; console.error("\n!!! MODUL-BAU: " + mb.fehler + "\n"); }
+  if (mb.gebaut) console.log("bau/: neu gebaut (" + Object.keys(mb.karte || {}).join(", ") + ")");
+  if (mb.geloescht) console.log("bau/: " + mb.geloescht + " alte Stücke gelöscht");
+  const ut = uebungenTeilen();
   const vk = verkleinern();
   if (vk.neu || vk.weg) console.log("min/: " + vk.neu + " neu verkleinert, " + vk.weg + " entfernt");
   let html = fs.readFileSync(indexPfad, "utf8");
@@ -216,10 +241,16 @@ function stempelSetzen() {
       stempel[o + "/" + n] = crypto.createHash("sha1").update(fs.readFileSync(path.join(wo, n))).digest("hex").slice(0, 10);
     });
   });
-  const zeile = "<script>window.DMA_STEMPEL = " + JSON.stringify(stempel) + ";</script>";
-  const muster = /<script>window\.DMA_STEMPEL = \{[^\n]*\};<\/script>/;
-  if (muster.test(html)) html = html.replace(muster, zeile);
-  else html = html.replace(/(<script>window\.DMA_VERSION = "\d+";<\/script>)/, "$1\n" + zeile);
+  /* MODUL-UMBAU (M2): die Modul-Quellen in src/ mit eigenem Stempel – ?quelle lädt sie als natives Modul */
+  const srcOrdner = path.join(WURZEL, "src");
+  if (fs.existsSync(srcOrdner)) alleDateien(srcOrdner).filter((f) => /\.(js|css|json)$/.test(f)).forEach((f) => {
+    stempel[path.relative(WURZEL, f).split(path.sep).join("/")] = crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10);
+  });
+  /* MODUL-UMBAU (M3, Prüfung M2 a): im selben Block steht vorn window.DMA_MODUL = {…}; – der bleibt stehen */
+  const zeile = "window.DMA_STEMPEL = " + JSON.stringify(stempel) + ";</script>";
+  const muster = /(<script>(?:window\.DMA_MODUL = \{[^\n]*?\};)?)window\.DMA_STEMPEL = \{[^\n]*\};<\/script>/;
+  if (muster.test(html)) html = html.replace(muster, (m, vor) => vor + zeile);
+  else html = html.replace(/(<script>window\.DMA_VERSION = "\d+";<\/script>)/, (m, v) => v + "\n<script>" + zeile);
   /* FASSUNG 886 (S8, Funk 311) — Bilder, die index.html selbst nennt (das Foto auf „Über mich“, werkzeug/foto-ueber.js),
      tragen ihren Stempel fest in der Adresse (kein Skript setzt sie zusammen, also kein Warten auf DMA_STEMPEL), und
      der Service Worker gibt „?v=…“ ohne Nachfrage aus dem Speicher. Ändert sich ein Bild, bekommt es hier den neuen
@@ -228,7 +259,28 @@ function stempelSetzen() {
     const f = path.join(WURZEL, datei);
     return fs.existsSync(f) ? vor + datei + "?v=" + crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10) : alt;
   });
-  fs.writeFileSync(indexPfad, html);
+  /* MODUL-UMBAU (M1 b, seit M3 im Block von DMA_STEMPEL, vorn): window.DMA_MODUL (bei einem Baufehler bleibt die alte Angabe) */
+  /* M3b: dazu „uebungen" (das Verzeichnis der Übungsteile). Scheitert das Teilen, fällt der Eintrag weg – die Seite lädt
+     dann die ganze data-uebungen.js wie bisher (nie falsche Daten). Scheitert nur Vite, bleiben dessen alte Einträge. */
+  try {
+    const MB = require("./modul-bauen.js");
+    let k = mb.karte;
+    if (k == null) { k = Object.assign({}, MB.karteLesen(html) || {}); delete k.uebungen; }
+    else k = Object.assign({}, k);
+    if (ut.eintrag) k.uebungen = ut.eintrag;
+    html = MB.zeileSetzen(html, (mb.karte == null && !Object.keys(k).length && !MB.karteLesen(html)) ? null : k);
+  } catch (e) {}
+  /* MODUL-UMBAU: nur schreiben, wenn sich etwas geändert hat – sonst läse ein Server, der index.html gerade
+     ausliefert (Sonden, Messung), im falschen Augenblick eine halbe Datei */
+  if (html !== fs.readFileSync(indexPfad, "utf8")) fs.writeFileSync(indexPfad, html);
+  /* MODUL-UMBAU (M1 c): selbst anlegen – bei Rückgabe ≠ 0 tut der Haken es nicht mehr, und min/ muss mit den Stempeln
+     zusammenpassen. Nur in einem git-Baum (nicht in Vergleichsständen aus git archive). */
+  if (fs.existsSync(path.join(WURZEL, ".git"))) {
+    try {
+      require("child_process").execFileSync("git", ["-C", WURZEL, "add", "--", "index.html", "min"].concat(fs.existsSync(path.join(WURZEL, "bau")) ? ["bau"] : []),
+        { stdio: ["ignore", "ignore", "pipe"] });
+    } catch (e) { console.error("git add index.html min bau gescheitert: " + String(e.message || e).split("\n")[0]); }
+  }
   return Object.keys(stempel).length;
 }
 
@@ -301,17 +353,57 @@ if (supaFehler) {
   if (process.argv[2] !== "--nur-stempel") process.exit(1);
 }
 
+/* MODUL-UMBAU (M2): eine Datei, die als Modul (src/<name>) UND eine Fassung lang als klassischer Rückfall (<name>)
+   liegt, muss in beiden gleich sein – sonst bekäme der Betreiber im Modul anderen Code als im Rückfall. Bearbeitet wird
+   src/<name>; läuft es auseinander, sagt es jeder Commit laut (Rückgabe 2; Sonde pruefe-887-bau.js B6). */
+function gleichlaufPruefen() {
+  const src = path.join(WURZEL, "src");
+  if (!fs.existsSync(src)) return;
+  let ql = null;
+  try { ql = require("./quelle-lesen.js"); } catch (e) { return; }
+  fs.readdirSync(src).filter((n) => /\.js$/.test(n) && fs.existsSync(path.join(WURZEL, n))).forEach((n) => {
+    const g = ql.gleichlauf(n, WURZEL);
+    if (!g.gleich) {
+      modulFehler = modulFehler || "Gleichlauf";
+      console.error("\n!!! GLEICHLAUF: src/" + n + " und " + n + " (klassischer Rückfall) laufen auseinander – " + g.grund
+        + "\n    Bearbeitet wird src/" + n + "; den Rückfall danach neu schreiben: node werkzeug/quelle-lesen.js --klassisch " + n + " > " + n + "\n");
+    }
+  });
+}
+
 if (process.argv[2] === "--nur-stempel") {
   const n = stempelSetzen();
+  gleichlaufPruefen();
   hakenAnlegen();
   console.log("Stempel für " + n + " Dateien gesetzt");
-  process.exit(0);
+  process.exit(modulFehler ? 2 : 0);
 }
 
 const zahl = String(process.argv[2] || "").trim();
 if (!/^\d+$/.test(zahl)) {
   console.error("Bitte eine Zahl angeben, z. B.:  node werkzeug/fassung-setzen.js 421");
   process.exit(1);
+}
+
+/* MODUL-UMBAU (M3, Prüfung M2 c): Der Haken vor dem Commit lässt einen Commit mit gescheitertem Vite-Bau durch (er
+   meldet ihn nur auf stderr; der Haken-Text bleibt für alle Bäume gleich). Eine ECHTE Fassung dagegen wird damit nie
+   gesetzt: erst bauen (und den Gleichlauf src/ ↔ Rückfall prüfen); scheitert das, bricht das Werkzeug ab, BEVOR
+   DMA_VERSION oder fassung.json sich ändern. */
+{
+  let mb = null;
+  try { mb = require("./modul-bauen.js").bauen(WURZEL); } catch (e) { mb = { fehler: "modul-bauen.js: " + (e.message || e) }; }
+  if (mb && mb.fehler) {
+    console.error("\n!!! MODUL-BAU: " + mb.fehler + "\n!!! Fassung NICHT gesetzt (DMA_VERSION und fassung.json unverändert). Erst den Bau richten, dann"
+      + " node werkzeug/pruefe-887-bau.js, dann erneut.\n");
+    process.exit(1);
+  }
+  /* M3b: dasselbe für die Übungsteile */
+  if (uebungenTeilen().fehler) {
+    console.error("!!! Fassung NICHT gesetzt (Übungsteile, siehe oben; DMA_VERSION und fassung.json unverändert). Danach node werkzeug/pruefe-887-daten.js.\n");
+    process.exit(1);
+  }
+  gleichlaufPruefen();
+  if (modulFehler) { console.error("!!! Fassung NICHT gesetzt (Gleichlauf, siehe oben)."); process.exit(1); }
 }
 
 let html = fs.readFileSync(indexPfad, "utf8");
@@ -329,5 +421,7 @@ fs.writeFileSync(path.join(WURZEL, "fassung.json"),
   JSON.stringify({ fassung: zahl, stand: new Date().toISOString() }, null, 2) + "\n");
 
 const n = stempelSetzen();
+gleichlaufPruefen();
 hakenAnlegen();
 console.log("Fassung " + vorher + " → " + zahl + " (index.html und fassung.json), Stempel für " + n + " Dateien");
+if (modulFehler) process.exit(2);

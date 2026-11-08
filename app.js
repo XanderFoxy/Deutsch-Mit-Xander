@@ -314,6 +314,20 @@
     }
     return neu ? Reflect.construct(f, args, neu) : f.apply(self, args);
   }
+  /* MODUL-UMBAU M3b — die Stücke, in denen diese (ausgelagerten) Funktionen stehen, über die Leitung holen; erfüllt, wenn
+     sie angekommen sind (eingesetzt werden sie dann beim ersten Ruf ohne Leitung oder in der Ruhepause). Gemessen
+     (ladezeit-messen.js --fall uebung, 4G, CPU 4×): seit „Lernen" sofort steht, kommt der Tipp auf „Runde starten"
+     früher – rest2 (wortschatzBereit) fehlte noch und kam SYNCHRON, 1,1–1,4 s gesperrter Hauptfaden bei voller
+     Leitung (Wortschatz). In der Quelle (ohne Stücke) sofort erfüllt. */
+  function dmaTeilFuer(f) {
+    if (!DMA_TEILE_BAU || typeof f !== "function") return null;
+    const m = /dmaTeilRuf\((\d+),/.exec(Function.prototype.toString.call(f));
+    return m ? DMA_TEILE_BAU.teile[DMA_TEILE_BAU.fn[Number(m[1])]] || null : null;
+  }
+  function dmaTeileFuer(liste) {
+    const teile = [...new Set(liste.map(dmaTeilFuer).filter(Boolean))].filter((t) => !dmaTeilDa[t]);
+    return Promise.all(teile.map((t) => { const p = dmaTeilHolen(t); return dmaTeilAnkunft[t] || p; }));
+  }
   function dmaTeilRufA(i, self, args) {
     try { return dmaTeilRuf(i, self, args); } catch (e) { return Promise.reject(e); }
   }
@@ -738,6 +752,10 @@
     return Boolean(v && s && v.dataset.active === "true" && s.dataset.active === "true");
   }
   let wortschatzAufgeschoben = false, wortschatzUhr = 0;
+  /* M3b, Nachbesserung 2: der unter „Lernen" geplante, noch nicht gelaufene Start des Wortschatzes (Promise auf das
+     Laden; activateTab) – null, sobald er läuft oder wenn keiner geplant ist */
+  let wortschatzGeplant = null;
+  let wissenSeit = 0;   // M3b, Nachbesserung 1: seit wann „Wissen" offen ist (uebVorDarf; activateTab läuft schon beim Aufbau)
   function klassenzimmerOffen() {
     try {
       if (bereichSichtbar(document.getElementById("sub-livechat"))) return true;
@@ -769,10 +787,19 @@
        laden — die Ansichten holen sich die Wörter über
        wortschatzNachziehen() ohnehin nach, sobald sie da sind. */
     if (targetId === "view-learn") satzbauLaden();   // FASSUNG 842 — der Satzbaukasten liegt unter „Lernen"
-    if (targetId === "view-learn" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
-      const spaeter = () => VocabData.ladeWoerter();
-      if (window.requestIdleCallback) requestIdleCallback(spaeter, { timeout: 1500 });
-      else setTimeout(spaeter, 300);
+    if (targetId === "view-learn" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft() && !wortschatzGeplant) {
+      /* MODUL-UMBAU M3b: erst der Teil von data-exercises.js, den jeder Karten-Tipp braucht (88 KB, höchstens 3 s), dann
+         der Wortschatz (ExerciseData.uebungenVorrang; ohne Teile, z. B. ?quelle, sofort wie bisher).
+         NACHBESSERUNG 2 (Prüfer): Ruhepause und Vorrang laufen GLEICHZEITIG ab dem Tipp, nicht nacheinander – vorher
+         kam die Ruhepause (bis 1,5 s) erst NACH dem Teil, der Wortschatz startete so bis 4,5 s nach dem Tipp (auf
+         d9637a22 nach der Ruhepause allein) und kam auf 4G 1,3 s, auf 3G 3,6 s später ganz an. Der geplante Start steht
+         in wortschatzGeplant: wortschatzNachziehen() hängt sich daran (sonst blieb ein in dieser Zeit geöffnetes
+         Wörterbuch ohne Wörter stehen) und das Vorladen der Übungsteile wartet darauf (uebungenVorladenSpaeter). */
+      const ruhe = new Promise((r) => { if (window.requestIdleCallback) requestIdleCallback(() => r(), { timeout: 1500 }); else setTimeout(r, 300); });
+      let vorrang = true;
+      try { if (ExerciseData.uebungenVorrang) vorrang = ExerciseData.uebungenVorrang(3000).catch(() => true); } catch (e) { vorrang = true; }
+      const los = () => { wortschatzGeplant = null; return VocabData.ladeWoerter(); };
+      wortschatzGeplant = Promise.all([ruhe, vorrang]).then(los, los);
     }
     /* FASSUNG 837 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller … sofort im Livestream wie HelloTalk".
        Der Weg ins Klassenzimmer führt über „Wissen", und „Wissen" zog bisher nach 1,5 s den ganzen Wortschatz
@@ -780,6 +807,7 @@
        Gespräch braucht (gemessen: im langsamen Netz über 10 s belegt). Jetzt wird er unter „Wissen" aufgeschoben:
        Jede Ansicht, die Wörter braucht, holt ihn über wortschatzNachziehen() selbst; sonst kommt er nach 8 s Ruhe –
        aber nicht, solange das Klassenzimmer offen ist oder man im Raum ist. */
+    if (targetId === "view-knowledge") wissenSeit = Date.now();   // M3b, Nachbesserung 1: Frist fürs Vorladen (uebVorDarf)
     if (targetId === "view-knowledge" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
       wortschatzAufgeschoben = true;
       wortschatzSpaeterHolen();
@@ -819,8 +847,16 @@
     /* Jetzt ist der Bereich wirklich offen — jetzt lohnt sich das
        Nachladen seiner Daten, und der Bereich wird danach neu
        gezeichnet, damit er sie auch benutzt. */
-    if (t.dataset.target === "view-learn" && ExerciseData.ladeUebungen && !ExerciseData.uebungenDa()) {
-      ExerciseData.ladeUebungen().then(() => { dailyTaskPoolCache = null; renderSetup(); });
+    /* MODUL-UMBAU M3b: nur die gewählten Kategorien (ohne Wahl gar nichts – die Übersicht steht sofort); den Rest
+       holt uebungenVorladenSpaeter() in Ruhepausen. Mit ?quelle/ohne Teile wie bisher die ganze Sammlung. */
+    if (t.dataset.target === "view-learn" && ExerciseData.ladeUebungen && !ExerciseData.uebungenDa([...selectedCategories])) {
+      ExerciseData.ladeUebungen([...selectedCategories]).then(() => { dailyTaskPoolCache = null; renderSetup(); });
+    }
+    if (t.dataset.target === "view-learn") {
+      /* M3b: den Teil von data-exercises.js sofort (88 KB gepackt; der Tipp auf eine Karte braucht ihn), bevor der
+         Wortschatz in der Ruhepause die Leitung füllt (gemessen: sonst bis 2,4 s bis „startklar") */
+      try { if (ExerciseData.uebungenBasisHolen) ExerciseData.uebungenBasisHolen(); } catch (e) {}
+      uebungenVorladenSpaeter();
     }
     /* FASSUNG 840 — XANDER (Funk 271): „unter Wissen und Klassenzimmer dann ins Klassenzimmer gehen wie immer auch
        nur zehnmal schneller". Gemessen (werkzeug/ladezeit-messen.js): der Tipp auf „Wissen" holte sofort den
@@ -5430,6 +5466,22 @@
   // die sich innerhalb eines Jahres nie wiederholt (statt einer zufälligen Auswahl, die schon
   // nach wenigen Wochen wieder dieselbe Frage hätte zeigen können).
   let dailyTaskPoolCache = null;
+  /* MODUL-UMBAU M3b: die Sammlung kommt jetzt auch in Teilen; sind alle da (ExerciseData.uebungenVorladen), gilt der
+     Topf neu – wie bisher nach dem Laden der ganzen Datei */
+  window.addEventListener("dma-uebungen-ganz", () => {
+    dailyTaskPoolCache = null;
+    /* … und die Wörter aus den Übungstexten im Wörterbuch (extractExtendedVocabulary), falls es schon ohne die ganze
+       Sammlung gebaut war: die Teile kommen nach dem Wortschatz, das Fenster ist länger als früher mit der einen Datei */
+    if (extVocabCache && !extVocabCacheVoll) {
+      extVocabCache = null; dictCache = null;
+      /* NACHBESSERUNG 2 (Prüfer): ist das Wörterbuch gerade offen, gleich neu zeichnen (wie beim Eintreffen des
+         Wortschatzes) – sonst fehlten die Wörter aus den Übungstexten in der offenen Ansicht, bis man sie neu öffnete */
+      try {
+        const a = document.getElementById("dictionaryArea");
+        if (a && a.innerHTML && bereichSichtbar(a)) dictNeuOhneZuklappen();
+      } catch (e) { /* Ansicht ist weg */ }
+    }
+  });
   function buildDailyTaskPool() {
     if (dailyTaskPoolCache) return dailyTaskPoolCache;
     const pool = [];
@@ -9527,6 +9579,54 @@
     "Zeit & Kalender": "🗓️",
   };
 
+  /* MODUL-UMBAU M3b (MODULE-PLAN.md Abschnitt 3): die Übungsdaten kommen je Kategorie (ExerciseData.ladeUebungen(ids)).
+     Damit der Tipp auf eine Kategorie nicht wartet, holt ExerciseData.uebungenVorladen() die übrigen in Ruhepausen –
+     zuerst die Karten der Übersicht in ihrer Reihenfolge, höchstens vier zugleich, mit niedriger Priorität. Solange
+     „Lernen" offen ist (auch Spiele, Wörterbuch, Artikel-Garten … lesen die Sammlung – bisher kam sie dort mit dem Tipp
+     auf „Lernen" ganz) und nicht im Klassenzimmer (Funk 255: „die Verbindung zu den anderen hat oberste Priorität");
+     sonst hält es an und macht beim nächsten Öffnen weiter. Liest nur Attribute (kein erzwungenes Layout). */
+  /* NACHBESSERUNG 1 (Prüfer): angehalten wurde bisher, sobald „Lernen" zu war – und weiter ging es nur über renderSetup
+     oder einen neuen Tipp auf „Lernen". Nach einem kurzen Besuch blieb die Sammlung für die Sitzung halb (nachgestellt:
+     4 von 90 Kategorien; Duell, Spiele, Artikel-Garten, Wörterbuch, offline der Rückfall). Auf d9637a22 kam sie nach dem
+     ersten Öffnen von „Lernen" immer ganz. Jetzt wie damals: angestoßen wird es nur aus „Lernen" (die Seite zeichnet
+     „Lernen" beim Start unsichtbar vor – dort nichts holen), danach lädt es zu Ende, wo man auch ist – außer bei
+     verdeckter Seite, im Klassenzimmer/Raum und in den ersten 8 s von „Wissen" (der Weg ins Klassenzimmer; dieselbe
+     Frist wie beim Wortschatz, wortschatzSpaeterHolen). Angehalten wird nur gewartet (data-exercises.js, alle 3 s und
+     beim Zurückkommen der Seite nachgesehen). */
+  let uebVorGewollt = false;
+  function uebVorDarf() {
+    if (document.hidden || ruheImRaum()) return false;
+    const w = document.getElementById("view-knowledge");
+    return !(w && w.dataset.active === "true" && Date.now() - wissenSeit < 8000);
+  }
+  function uebungenVorladenSpaeter() {
+    if (!ExerciseData.uebungenVorladen) return;
+    const lernenOffen = () => { const v = document.getElementById("view-learn"); return Boolean(v && v.dataset.active === "true"); };
+    if (!uebVorGewollt && !lernenOffen()) return;
+    uebVorGewollt = true;
+    try {
+      ExerciseData.uebungenVorladen(ExerciseData.activeCategories().map((c) => c.id),
+        uebVorDarf,
+        /* nach den ersten Karten: lädt gerade der Wortschatz (auf ihn wartet „Runde starten"), erst ihn durchlassen.
+           NACHBESSERUNG 2 (Prüfer): auch, wenn sein Start erst geplant ist (wortschatzGeplant) – vorher hieß das „läuft
+           nicht" und die übrigen 82 Teile luden auf 3G gleichzeitig mit dem Wortschatz (der dadurch später ganz war) */
+        () => {
+          if (typeof VocabData === "undefined" || (VocabData.alleThemenDa && VocabData.alleThemenDa())) return true;
+          if (VocabData.ladenLaeuft && VocabData.ladenLaeuft()) return VocabData.ladeWoerter();
+          return wortschatzGeplant || true;
+        });
+      /* dazu die app-Stücke, die „Runde starten" braucht (sonst kämen sie beim Tipp synchron) */
+      if (lernenOffen() && !ruheImRaum()) dmaTeileFuer([wortschatzBereit, merkeZustand, renderQuestion]).catch(() => {});
+    } catch (e) { /* Vorladen darf nie stören */ }
+  }
+  /* M3b, Nachbesserung 2: passt die gezeichnete Übersicht noch zur Auswahl? (gleicher Fokus-Hinweis, Häkchen = Auswahl) */
+  let setupBildFokus = null;
+  function setupBildPasst() {
+    if (!setupEl.querySelector(".category-grid")) return false;
+    if ((setupBildFokus || null) !== (uebungFokusKategorie || null)) return false;
+    const gezeigt = [...setupEl.querySelectorAll(".category-card.selected[data-cat]")].map((c) => c.dataset.cat).sort().join(",");
+    return gezeigt === [...selectedCategories].sort().join(",");
+  }
   async function renderSetup() {
     /* FASSUNG 879 — noch aufgeschoben und nicht zu sehen (z. B. Anmeldung beim Start): nichts zeichnen; das holt
        die Wache nach, sobald der Bereich aufgeht – dann mit dem Stand von diesem Augenblick. */
@@ -9541,10 +9641,22 @@
        Bildschirm steht. Die Seite zeichnet alle Bereiche schon beim
        Start vor, auch die unsichtbaren — würde hier ohne diese Prüfung
        geladen, wäre nichts gewonnen. */
-    if (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa() && bereichSichtbar(setupEl)) {
-      setupEl.innerHTML = '<p class="empty-note">Die Aufgaben werden geladen …</p>';
-      await ExerciseData.ladeUebungen();
+    /* MODUL-UMBAU M3b (MODULE-PLAN.md Abschnitt 3): die Übersicht braucht nur die GEWÄHLTEN Kategorien (maxAvailable);
+       ohne Wahl keine einzige Aufgabe. Statt auf die ganze Sammlung (1,2 MB gepackt) wird nur auf deren Teile
+       gewartet. Steht die Übersicht schon (Tipp auf eine Karte), bleibt sie stehen, bis der Teil da ist – kein
+       „wird geladen" über den Karten; der Tipp setzt sein Häkchen sofort selbst. Mit ?quelle/ohne Teile lädt
+       ladeUebungen() wie bisher die ganze Datei. */
+    if (ExerciseData.ladeUebungen && bereichSichtbar(setupEl) && !ExerciseData.uebungenDa([...selectedCategories])) {
+      /* NACHBESSERUNG 2 (Prüfer): stehen bleibt die Übersicht nur, wenn ihr Bild zur Auswahl passt (der Tipp auf eine
+         Karte setzt sein Häkchen selbst). Kam die Auswahl von woanders („Dazu üben" in der Grammatik, ein Schritt im
+         Lernweg: andere Häkchen, Fokus-Hinweis), zeigte sie bis zum Eintreffen des Teils die ALTE Auswahl – dann wie
+         bisher „wird geladen" (der Sprung zur Karte wartet darauf, bringeZielNachOben). */
+      if (!setupBildPasst()) setupEl.innerHTML = '<p class="empty-note">Die Aufgaben werden geladen …</p>';
+      const gewaehlt = [...selectedCategories].join(",");
+      await ExerciseData.ladeUebungen([...selectedCategories]);
       dailyTaskPoolCache = null;
+      /* während des Wartens noch eine Karte dazugewählt? dann auch deren Teil (sonst kein zweiter Versuch, wie bisher) */
+      if ([...selectedCategories].join(",") !== gewaehlt && !ExerciseData.uebungenDa([...selectedCategories])) await ExerciseData.ladeUebungen([...selectedCategories]);
     }
 
     const paused = Quiz.getState();
@@ -9708,6 +9820,9 @@
         </div>` : ""}
       ${selectedCategories.size === 0 ? '<p class="empty-note">Wähle mindestens eine Kategorie aus, um zu starten. Mehrere Kategorien zusammen ergeben spannendere Charakter-Typen!</p>' : '<p class="empty-note">⚡ Tipp: Antworte innerhalb von 4 Sekunden richtig für einen Tempo-Bonus.</p>'}
     `;
+    setupBildFokus = uebungFokusKategorie;   /* M3b, Nachbesserung 2 (setupBildPasst) */
+    /* MODUL-UMBAU M3b: nach dem ersten Bild der Übersicht die übrigen Kategorien in Ruhepausen holen */
+    uebungenVorladenSpaeter();
 
     document.getElementById("uebungFokusWeg")?.addEventListener("click", () => { uebungFokusKategorie = null; renderSetup(); });
     setupEl.querySelectorAll(".category-card").forEach((card) => {
@@ -9721,6 +9836,10 @@
         if (e.target.closest(".cat-info-btn") || e.target.closest(".cat-collapse-btn") || e.target.closest(".quiztopic-row")) return;
         if (selectedCategories.has(id)) selectedCategories.delete(id);
         else selectedCategories.add(id);
+        /* MODUL-UMBAU M3b: das Häkchen sofort – auch wenn der Teil dieser Kategorie noch unterwegs ist */
+        card.classList.toggle("selected", selectedCategories.has(id));
+        const haken = card.querySelector(".cat-checkbox");
+        if (haken) haken.textContent = selectedCategories.has(id) ? "✓" : "";
         renderSetup();
       });
     });
@@ -9848,11 +9967,13 @@
       const knopfText = startBtn.textContent;
       startBtn.textContent = "Aufgaben werden geholt …";
       try {
-        await Promise.all([
-          wortschatzBereit(),
-          (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa())
-            ? ExerciseData.ladeUebungen() : Promise.resolve(true),
-        ]);
+        /* MODUL-UMBAU M3b: nur die gewählten Kategorien (mit ?quelle/ohne Teile die ganze Sammlung wie bisher) */
+        const uebungenWeg = (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa([...selectedCategories]))
+          ? ExerciseData.ladeUebungen([...selectedCategories]) : Promise.resolve(true);
+        /* MODUL-UMBAU M3b: die app-Stücke für den Start der Runde erst über die Leitung abwarten (die Seite bleibt
+           bedienbar, der Knopf zeigt „wird geholt") statt sie im Aufruf synchron zu holen; nach 8 s wie bisher */
+        await Promise.race([dmaTeileFuer([wortschatzBereit, merkeZustand, renderQuestion]), new Promise((r) => setTimeout(r, 8000))]);
+        await Promise.all([wortschatzBereit(), uebungenWeg]);
       } catch (e) { /* dann eben mit dem, was da ist */ }
       startBtn.textContent = knopfText;
       const topicFilterPruef = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
@@ -10706,6 +10827,14 @@
     // den ganzen Wortschatz ziehen, obwohl niemand eine Wortansicht geöffnet
     // hat. Angestoßen wird beim Wechsel nach „Lernen"/„Wissen" (activateTab).
     if (!VocabData.ladenLaeuft || !VocabData.ladenLaeuft()) {
+      /* MODUL-UMBAU M3b, NACHBESSERUNG 2 (Prüfer): unter „Lernen" ist der Start geplant, aber noch nicht gelaufen (er
+         wartet kurz auf den Teil von data-exercises.js, activateTab) – dann nachzeichnen, sobald die Wörter da sind.
+         Vorher kam hier nur „wird nachgeholt" ohne Anmeldung: wer „Lernen" und gleich danach „Wörterbuch" tippte,
+         sah 289 statt 41 267 Einträge, bis er den Bereich wieder öffnete. */
+      if (wortschatzGeplant) {
+        wortschatzGeplant.then(() => { try { nachzeichnen(); } catch (e) { /* Ansicht ist weg */ } });
+        return true;
+      }
       /* FASSUNG 837 — unter „Wissen" aufgeschoben (activateTab): eine Ansicht, die Wörter zeigt, holt sie jetzt selbst –
          nur nicht im Klassenzimmer. Dort fragt schon jeder Tipp (Betonung im Text) hier nach; das zog sofort wieder alle
          26 Wortdateien (Sonde 858). Im Raum holt sie, wer sie wirklich braucht (lcWoerterbuchHolen, Betonung-Schalter). */
@@ -11292,6 +11421,7 @@
      einem Telefon unbenutzbar gemacht. */
   let extVocabCache = null;
   let extVocabCacheRaum = null;
+  let extVocabCacheVoll = false;   /* M3b: mit der ganzen Aufgabensammlung gebaut (sonst neu, sobald sie ganz da ist) */
   function extractExtendedVocabulary() {
     const raum = (ExerciseData.getLernraum && ExerciseData.getLernraum()) || "de";
     if (extVocabCache && extVocabCacheRaum === raum) return extVocabCache;
@@ -11325,6 +11455,7 @@
     }
     extVocabCache = [...found.values()];
     extVocabCacheRaum = raum;
+    extVocabCacheVoll = Boolean(window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN);
     return extVocabCache;
   }
   // Best-mögliche CEFR-Einstufung (A1–C2) für den handgeprüften Kernwortschatz — eigene
@@ -13815,9 +13946,33 @@
     nachher.focus();
     try { nachher.setSelectionRange(stelle, stelle); } catch (e) { /* egal */ }
   }
+  /* MODUL-UMBAU M3b, NACHBESSERUNG 2: neu zeichnen, ohne dass etwas zuklappt. Das Wörterbuch zeichnet sich neu, wenn der
+     Wortschatz ankommt (wortschatzNachziehen) und wenn die ganze Aufgabensammlung da ist (dma-uebungen-ganz); eine schon
+     aufgeklappte Beugungstabelle klappte dabei zu (Sonde 853-beugung), die Schreibmarke ging verloren. Jetzt bleiben
+     die offenen Tabellen (mit ihrer Zeitform) und die Schreibmarke stehen. */
+  function dictNeuOhneZuklappen() {
+    const offen = [...document.querySelectorAll("#dictionaryArea .beug-panel")].map((f) => {
+      const an = f.querySelector(".beug-zeit.an");
+      return { wort: f.dataset.wort, zeit: (an && an.dataset.beugzeit) || "Präsens" };
+    });
+    dictFokusRetten(() => renderDictionary(dictFilterText));
+    offen.forEach(({ wort, zeit }) => {
+      const knopf = [...document.querySelectorAll("#dictionaryArea .beug-btn")].find((b) => b.dataset.beugung === wort);
+      const karte = knopf && knopf.closest(".vocab-card");
+      const t = karte && !karte.querySelector(".beug-panel") ? konjTabelle(wort) : null;
+      if (!t) return;
+      const feld = document.createElement("div");
+      feld.className = "beug-panel";
+      feld.dataset.wort = wort;
+      feld.innerHTML = dictBeugungHtml(t, zeit);
+      karte.appendChild(feld);
+      knopf.setAttribute("aria-expanded", "true");
+      knopf.classList.add("an");
+    });
+  }
   function renderDictionary(filter = "") {
     dictFilterText = filter;
-    wortschatzNachziehen(() => renderDictionary(dictFilterText));
+    wortschatzNachziehen(() => dictNeuOhneZuklappen());
     const area = document.getElementById("dictionaryArea");
     const all = buildDictionaryEntries();
     const verifiedCount = all.filter((e) => e.verified).length;
@@ -97516,7 +97671,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     }
 
     area.querySelectorAll("[data-accept-challenge]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      let annehmenLaeuft = false;   // M3b, Nachbesserung 1: während auf die Aufgaben gewartet wird, kein zweiter Start
+      btn.addEventListener("click", async () => {
+        if (annehmenLaeuft) return;
         const categoryIds = btn.dataset.cats.split(",");
         const challengeId = btn.dataset.acceptChallenge;
         checkNotifications();
@@ -97617,11 +97774,27 @@ An einem Morgen lief ein kleiner Fuchs los…
           }
         }
         document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
+        annehmenLaeuft = true;
+        try { await duellRundeVorbereiten(categoryIds); } finally { annehmenLaeuft = false; }
         Quiz.startSession(categoryIds, "leicht", { challengeId });
         showToast(`🦊 Willkommen, ${personaForCategory(categoryIds[0])}!`);
         renderQuestion();
       });
     });
+  }
+
+  /* MODUL-UMBAU M3b, NACHBESSERUNG 1 (Prüfer): die beiden Duell-Wege („Annehmen", „Freund herausfordern") starten die
+     Runde selbst, ohne „Runde starten" – und warteten nicht auf die Aufgaben. Mit M3b kommen die Kategorien einzeln;
+     was noch nicht vorgeladen war, fehlte (nachgestellt: tiere/wortstellung/stil 0 Fragen – dann brach die Ansicht ab –,
+     artikel 106 statt 705). Den Grundfehler gab es schon auf d9637a22, wenn „Lernen" nie offen war. Jetzt wie bei
+     „Runde starten": erst die Teile der Kategorien (und den Teil von data-exercises.js), dazu die app-Stücke der Runde
+     über die Leitung (höchstens 8 s, dann wie bisher). Unsichtbar; mit ?quelle/ohne Teile die ganze Datei wie bisher. */
+  async function duellRundeVorbereiten(ids) {
+    try {
+      const uebungenWeg = (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa(ids)) ? ExerciseData.ladeUebungen(ids) : true;
+      await Promise.all([uebungenWeg,
+        Promise.race([dmaTeileFuer([merkeZustand, renderQuestion]), new Promise((r) => setTimeout(r, 8000))])]);
+    } catch (e) { /* dann eben mit dem, was da ist */ }
   }
 
   function renderChallengePicker() {
@@ -97644,10 +97817,13 @@ An einem Morgen lief ein kleiner Fuchs los…
         challengePickInProgress = true;
         const categoryId = card.dataset.pickCat;
         try {
+          /* M3b, Nachbesserung 1: die Aufgaben der Kategorie gleich mit holen und vor dem Start abwarten (duellRundeVorbereiten) */
+          const vorbereitet = duellRundeVorbereiten([categoryId]);
           const challengeId = await challengeErstellen(friendChallengeTarget.id, [categoryId]);
           friendChallengeTarget = null;
           activateTab("view-learn");
           document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
+          await vorbereitet;
           Quiz.startSession([categoryId], "leicht", { challengeId });
           showToast(`🦊 Willkommen, ${personaForCategory(categoryId)}!`);
           renderQuestion();

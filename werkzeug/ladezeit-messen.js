@@ -149,7 +149,7 @@ const http = require("http"), http2 = require("http2"), fs = require("fs"), path
 const { performance } = require("perf_hooks");
 
 /* ---------- Aufruf ---------- */
-const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner", "tipp-nach", "sw-wach"]);
+const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner", "tipp-nach", "sw-wach", "fall", "kategorie"]);
 const S = {}, FREI = [];
 for (let i = 2; i < process.argv.length; i++) {
   const a = process.argv[i];
@@ -172,6 +172,13 @@ const LAEUFE = Math.max(1, Number(S.laeufe || process.env.LAEUFE || 5));
 const CPU = Number(S.cpu || process.env.CPU || 4);
 const FENSTER = Number(S.fenster || 10000);
 const TIPP_NACH = Math.max(0, Number(S["tipp-nach"] || 0));
+/* MODUL-UMBAU M3b — FALL „uebung" (Übung öffnen): statt Wissen → Klassenzimmer tippt das Werkzeug „Lernen" (bis die
+   Karten der Übersicht stehen), dann eine Karte (bis sie gewählt und „Runde starten" frei ist), dann „Runde starten"
+   (bis die erste Frage steht). Standard bleibt „kz". */
+const FALL = String(S.fall || "kz");
+if (!["kz", "uebung"].includes(FALL)) { console.error("--fall kz | uebung"); process.exit(2); }
+const KATEGORIE = String(S.kategorie || "tiere");
+if (!/^[a-z0-9-]+$/.test(KATEGORIE)) { console.error("--kategorie: Name einer Kategorie (z. B. tiere)"); process.exit(2); }
 if (!isFinite(TIPP_NACH)) { console.error("--tipp-nach braucht ms"); process.exit(2); }
 const H2 = !S.h1;
 const AUFBAU = S.aufbau != null ? Number(S.aufbau) : 2;
@@ -339,14 +346,17 @@ function server(wurzel, frische) {
 }
 
 /* ---------- Mitschreiber in der Seite (vor jedem Skript der Seite) ---------- */
-function mitschreiber() {
+function mitschreiber(o) {
   if (window.__dmaMess || window.top !== window) return;
+  o = o || {};
   var P = performance, M = window.__dmaMess = { t: {}, tipp: [], lt: [], loaf: [], lcp: null, fehler: 0, sync: [], ab: 0, seiten: 1 };
   /* FASSUNG 886 (S1): der Merker des Fassungs-Wächters nur setzen, wenn er fehlt – sonst hebelte jedes Neuladen den
      Schutz vor einem zweiten Neuladen aus (Fall neu). Dazu: die wievielte Seite in diesem Tab, und wie lange nach dem
      ersten Öffnen sie begann (ab, ms). */
   try {
     localStorage.setItem("dma_tour_seen", "1");
+    /* M3b, Fall uebung: Alex (Tutor) tritt sonst beim Wechsel nach „Lernen" ins Bild und liegt über Karten und Knopf */
+    if (o.fall === "uebung") localStorage.setItem("dma_tutor", "aus");
     if (sessionStorage.getItem("dma-neu-geladen") == null) sessionStorage.setItem("dma-neu-geladen", "x");
     var ur = sessionStorage.getItem("__dmaMessUr");
     if (ur == null) sessionStorage.setItem("__dmaMessUr", String(P.timeOrigin));
@@ -386,7 +396,13 @@ function mitschreiber() {
   function bereit() { return window.LiveChat && window.DMA_TAFEL_STAND && document.readyState !== "loading" && document.querySelector('.tape-tab[data-target="view-knowledge"]'); }
   (function schau() { requestAnimationFrame(function () { if (bereit()) merk("bereit"); else schau(); }); })();
   var WISSEN = '.tape-tab[data-target="view-knowledge"]', KZ = '#knowledgeSubnav [data-sub="sub-livechat"], .subnav-pill[data-sub="sub-livechat"]';
+  /* M3b, Fall uebung: Lernen → Übersicht (Karten), Karte → gewählt und „Runde starten" frei, Runde starten → erste Frage */
+  var LERNEN = '.tape-tab[data-target="view-learn"]', WAHL = "#exerciseSetup .category-card[data-cat]", START = "#startBtn";
+  var sicht = function (e) { return Boolean(e && e.offsetParent !== null); };
   var BED = {
+    lernen: { bild: function () { return sicht(document.querySelector('#view-learn[data-active="true"] #exerciseSetup .category-grid .category-card')); } },
+    wahl: { bild: function (x) { var b = document.getElementById("startBtn"); return Boolean(b && !b.disabled && document.querySelector('#exerciseSetup .category-card.selected[data-cat="' + x.kat + '"]')); } },
+    runde: { bild: function () { return sicht(document.querySelector("#exercisePlay .question-card")); } },
     wissen: { bild: function () { return document.querySelector('#view-knowledge[data-active="true"]'); } },
     kz: {
       bild: function () { return document.querySelector('#sub-livechat[data-active="true"] #livechatArea > *'); },
@@ -395,14 +411,33 @@ function mitschreiber() {
   };
   addEventListener("click", function (e) {
     if (!e.isTrusted || !e.target || !e.target.closest) return;
-    var w = e.target.closest(WISSEN) ? "wissen" : e.target.closest(KZ) ? "kz" : null;
+    var w = e.target.closest(WISSEN) ? "wissen" : e.target.closest(KZ) ? "kz"
+      : e.target.closest(LERNEN) ? "lernen" : e.target.closest(WAHL) ? "wahl" : e.target.closest(START) ? "runde" : null;
     if (!w) return;
     var x = { w: w, ab: e.timeStamp }, offen = Object.keys(BED[w]), i = 0;
+    if (w === "wahl") x.kat = e.target.closest(WAHL).getAttribute("data-cat");
     M.tipp.push(x);
+    /* M3b, Nachbesserung 2 (Fall uebung): ab dem ersten Tipp auf „Lernen" alle 25 ms nachsehen, wann der Wortschatz
+       startet und ganz da ist, wann die Kategorie „artikel" und wann die ganze Sammlung da ist (ms ab dem Tipp) –
+       Spiele, Wörterbuch und „Runde starten" hängen daran. Nur lesen (VocabData.ladenLaeuft/alleThemenDa, DMA_DATEN). */
+    if (w === "lernen" && !M.ueb) {
+      var U = M.ueb = { ab: e.timeStamp }, uhr = setInterval(function () {
+        /* VocabData ist ein const der Seite (kein window-Name): über den Namen lesen */
+        var t = P.now() - U.ab, V = null, D = window.DMA_DATEN || {};
+        try { V = typeof VocabData !== "undefined" ? VocabData : null; } catch (f) { V = null; }
+        try {
+          if (U.wsStart == null && V && V.ladenLaeuft && V.ladenLaeuft()) U.wsStart = t;
+          if (U.wsGanz == null && V && V.alleThemenDa && V.alleThemenDa()) U.wsGanz = t;
+          if (U.artikel == null && ((D.ZUSATZ_FRAGEN && D.ZUSATZ_FRAGEN.artikel) || (D.ZUSATZ_TEILE && D.ZUSATZ_TEILE.artikel))) U.artikel = t;
+          if (U.sammlung == null && D.ZUSATZ_FRAGEN) U.sammlung = t;
+        } catch (f) {}
+        if ((U.wsGanz != null && U.sammlung != null) || t > 120000) clearInterval(uhr);
+      }, 25);
+    }
     try { P.mark("dma-mess-tipp-" + w); } catch (f) {}
     (function schau() { requestAnimationFrame(function () {
       offen = offen.filter(function (k) {
-        if (!BED[w][k]()) return true;
+        if (!BED[w][k](x)) return true;
         setTimeout(function () { x[k] = P.now() - x.ab; if (Object.keys(BED[w]).every(function (j) { return x[j] != null; })) x.fertig = 1; }, 0);
         return false;
       });
@@ -434,7 +469,7 @@ function einsammeln() {
   function nz(x) { return x == null ? null : Math.round(x * 10) / 10; }
   var paint = {}; P.getEntriesByType("paint").forEach(function (e) { paint[e.name] = e.startTime; });
   return {
-    t: M.t, null: M.null, tipp: M.tipp, lt: M.lt, loaf: M.loaf, lcp: M.lcp, fehler: M.fehler, jetzt: P.now(),
+    t: M.t, null: M.null, tipp: M.tipp, ueb: M.ueb || null, lt: M.lt, loaf: M.loaf, lcp: M.lcp, fehler: M.fehler, jetzt: P.now(),
     ab: M.ab, seiten: M.seiten, fassung: String(window.DMA_VERSION || ""), vorher: M.vorher || null,
     sync: M.sync, sofort: (window.DMA_TEIL_SOFORT || []).slice(0, 40).map(function (s) { return String(s).replace(/\(?https?:\/\/[^\s)]*\/([^/\s)?]+)(\?[^\s:)]*)?(:\d+:\d+)\)?/g, "($1)").slice(0, 120); }),
     fp: paint["first-paint"], fcp: paint["first-contentful-paint"],
@@ -472,18 +507,18 @@ function abschnitte(r) {
   const w = [];
   const sch = (name, a, e) => { if (e > a) w.push({ name, a, e }); };
   const t = r.roh, b = t.t.bereit;
-  const wi = r.tippW, kz = r.tippK;
   if (b == null) { sch("start", 0, FENSTER); return w; }
   sch("start", 0, b);
-  if (!wi) { sch("danach", b, FENSTER); return w; }
-  sch("werkzeug", b, wi.ab);
-  const wEnde = wi.ab + (wi.bild || 0);
-  sch("wissen", wi.ab, wEnde);
-  if (!kz) { sch("danach", wEnde, FENSTER); return w; }
-  sch("werkzeug", wEnde, kz.ab);
-  const kEnde = kz.ab + Math.max(kz.bild || 0, kz.knopf || 0);
-  sch("kz", kz.ab, kEnde);
-  sch("danach", kEnde, Math.max(kEnde, FENSTER));
+  /* die Tipps in ihrer Folge (kz: Wissen, Klassenzimmer; uebung: Lernen, Karte, Runde starten), dazwischen das Werkzeug */
+  let bis = b;
+  for (const [name, x] of (r.tippFolge || [])) {
+    if (!x) break;
+    sch("werkzeug", bis, x.ab);
+    const ende = x.ab + Math.max(x.bild || 0, x.knopf || 0);
+    sch(name, x.ab, ende);
+    bis = ende;
+  }
+  sch("danach", bis, Math.max(bis, FENSTER));
   return w;
 }
 
@@ -601,12 +636,20 @@ async function spurHolen(cdp) {
   return Buffer.concat(teile);
 }
 
-async function tippen(pg, sel, w) {
+async function tippen(pg, sel, w, o) {
+  o = o || {};
   for (let v = 1; v <= 4; v++) {
     await pg.waitForFunction((s) => { const e = document.querySelector(s); return e && e.getBoundingClientRect().height > 0; }, sel, { polling: "raf", timeout: 60000 });
     const r = await pg.evaluate((s) => { const b = document.querySelector(s).getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2, n: window.__dmaMess.tipp.length, h: innerHeight, b: innerWidth }; }, sel);
     if (r.y > 0 && r.y < r.h && r.x > 0 && r.x < r.b) await pg.touchscreen.tap(r.x, r.y);
     else await pg.locator(sel).first().tap();
+    /* M3b (Fall uebung): kam der Tipp an, wird auf seine Wirkung gewartet (bis o.warte), nicht noch einmal getippt */
+    if (o.warte) {
+      const an = await pg.waitForFunction(([w, n]) => window.__dmaMess.tipp.slice(n).some((x) => x.w === w), [w, r.n], { polling: "raf", timeout: 3000 }).then(() => true, () => false);
+      if (!an) continue;
+      await pg.waitForFunction(([w, n]) => window.__dmaMess.tipp.slice(n).some((x) => x.w === w && x.fertig), [w, r.n], { polling: "raf", timeout: o.warte });
+      return v;
+    }
     const ok = await pg.waitForFunction(([w, n]) => window.__dmaMess.tipp.slice(n).some((x) => x.w === w && x.fertig), [w, r.n], { polling: "raf", timeout: 15000 }).then(() => true, () => false);
     if (ok) return v;
   }
@@ -641,8 +684,14 @@ async function oeffnen(ctx, srv, art, o) {
       const rest = await pg.evaluate((ms) => window.__dmaMess.t.bereit + ms - performance.now(), TIPP_NACH);
       if (rest > 0) await schlaf(rest);
     }
-    versuche[0] = await tippen(pg, '.tape-tab[data-target="view-knowledge"]', "wissen");
-    versuche[1] = await tippen(pg, '.subnav-pill[data-sub="sub-livechat"]', "kz");
+    if (FALL === "uebung") {
+      versuche[0] = await tippen(pg, '.tape-tab[data-target="view-learn"]', "lernen", { warte: 60000 });
+      versuche[1] = await tippen(pg, '#exerciseSetup .category-card[data-cat="' + KATEGORIE + '"] .cat-checkbox', "wahl", { warte: 60000 });
+      versuche[2] = await tippen(pg, "#startBtn", "runde", { warte: 60000 });
+    } else {
+      versuche[0] = await tippen(pg, '.tape-tab[data-target="view-knowledge"]', "wissen");
+      versuche[1] = await tippen(pg, '.subnav-pill[data-sub="sub-livechat"]', "kz");
+    }
     const bis = o.messen ? FENSTER : (o.nachlauf || 4000);
     const jetzt = await pg.evaluate(() => performance.now());
     if (jetzt < bis) await schlaf(bis - jetzt + 30);
@@ -666,7 +715,8 @@ async function oeffnen(ctx, srv, art, o) {
     if (profile && r.spur.null0) r.profil = profilAuswerten(profile, r.spur.null0, wins);
     if (SPUR_ORDNER) { fs.mkdirSync(SPUR_ORDNER, { recursive: true }); fs.writeFileSync(path.join(SPUR_ORDNER, o.stand + "-" + art + "-" + o.lauf + ".json.gz"), zlib.gzipSync(spurBuf)); }
   }
-  if (r.roh) { delete r.roh.res; delete r.roh.loaf; delete r.roh.lt; delete r.roh.sync; delete r.roh.sofort; }
+  /* MESS_RES=1: die Abrufe (Resource Timing) bleiben im JSON – zum Nachsehen, was wann auf der Leitung lag */
+  if (r.roh) { if (!process.env.MESS_RES) delete r.roh.res; delete r.roh.loaf; delete r.roh.lt; delete r.roh.sync; delete r.roh.sofort; }
   return r;
 }
 
@@ -675,6 +725,14 @@ function auswerten(r) {
   const t = r.roh, rd = (x) => (x == null ? null : Math.round(x));
   const letzter = (w) => t.tipp.filter((x) => x.w === w).pop() || null;
   r.tippW = letzter("wissen"); r.tippK = letzter("kz");
+  /* M3b, Fall uebung */
+  const L = letzter("lernen"), Wa = letzter("wahl"), Ru = letzter("runde");
+  r.tippFolge = FALL === "uebung" ? [["lernen", L], ["wahl", Wa], ["runde", Ru]] : [["wissen", r.tippW], ["kz", r.tippK]];
+  r.lernen = L ? rd(L.bild) : null; r.wahl = Wa ? rd(Wa.bild) : null; r.runde = Ru ? rd(Ru.bild) : null;
+  r.uebGesamt = L && Ru && Ru.bild != null ? rd(Ru.ab + Ru.bild - L.ab) : null;
+  r.uebAbStart = Ru && Ru.bild != null ? rd(Ru.ab + Ru.bild) : null;
+  /* M3b, Nachbesserung 2: ab dem Tipp auf „Lernen" (Fall uebung; null = nicht im Fenster) */
+  r.ueb = t.ueb ? { wsStart: rd(t.ueb.wsStart), wsGanz: rd(t.ueb.wsGanz), artikel: rd(t.ueb.artikel), sammlung: rd(t.ueb.sammlung) } : null;
   const W = r.tippW, K = r.tippK;
   r.fp = rd(t.fp); r.fcp = rd(t.fcp); r.lcp = t.lcp ? rd(t.lcp[0]) : null; r.lcpWas = t.lcp ? t.lcp.slice(1, 3).filter(Boolean).join(" ") : "";
   r.ttfb = rd(t.nav.ttfb); r.dcl = rd(t.nav.dcl); r.load = rd(t.nav.load); r.bereit = rd(t.t.bereit);
@@ -736,7 +794,7 @@ async function profil() {
   let ctx, br = null, dir = null;
   if (FLUECHTIG) { br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args }); ctx = await br.newContext(geraet); }
   else { dir = fs.mkdtempSync(path.join(os.tmpdir(), "dma-mess-profil-")); ctx = await chromium.launchPersistentContext(dir, Object.assign({ executablePath: "/opt/pw-browsers/chromium", args }, geraet)); }
-  await ctx.addInitScript(mitschreiber);
+  await ctx.addInitScript(mitschreiber, { fall: FALL });
   ctx.zu = async () => { await ctx.close().catch(() => {}); if (br) await br.close().catch(() => {}); if (dir) fs.rmSync(dir, { recursive: true, force: true }); };
   return ctx;
 }
@@ -806,6 +864,10 @@ const MASSE = [
   ["bereitAb", "bereit (bleibende Seite) ab Öffnen"],
   ["wissen", "Wissen: Tipp → Bild"], ["kzBild", "Klassenzimmer: Tipp → Bild"], ["kzKnopf", "Klassenzimmer: Tipp → Knopf"],
   ["kzAlt", "alte Spalte: Wissen-Tipp → Knopf"], ["kzAbStart", "alte Spalte: Öffnen → Knopf"], ["pause", "  davon Werkzeug-Pausen"],
+  ["lernen", "Lernen: Tipp → Karten"], ["wahl", "Karte: Tipp → startklar"], ["runde", "Runde starten: Tipp → Frage"],
+  ["uebGesamt", "Lernen-Tipp → Frage (mit Werkzeug)"], ["uebAbStart", "Öffnen → Frage"],
+  ["ueb.wsStart", "Lernen-Tipp → Wortschatz startet"], ["ueb.wsGanz", "Lernen-Tipp → Wortschatz ganz"],
+  ["ueb.artikel", "Lernen-Tipp → Kategorie artikel da"], ["ueb.sammlung", "Lernen-Tipp → Sammlung ganz"],
   ["lang.n", "Langläufer 0–10 s: Anzahl"], ["lang.summe", "Langläufer: Summe"], ["lang.max", "Langläufer: längster"], ["lang.sperr", "Sperrzeit (Σ über 50 ms)"],
   ["netz.kbBisBereit", "KB über die Leitung bis bereit"], ["netz.kbGesamt", "KB über die Leitung 0–10 s"], ["netz.ausNetz", "Dateien aus dem Netz"],
   ["netz.nachgefragt", "Dateien nachgefragt (304)"], ["netz.ausSpeicher", "Dateien aus dem Speicher"], ["netz.ausSw", "Dateien vom Service Worker"],
@@ -813,7 +875,7 @@ const MASSE = [
   ["sync.n", "synchron geholt: Anzahl"], ["sync.ms", "synchron geholt: ms gesperrt"], ["sync.start", "  davon beim Start"],
   ["sync.wissen", "  davon im Wissen-Tipp"], ["sync.kz", "  davon im Klassenzimmer-Tipp"],
 ];
-const ABSCHN = ["start", "wissen", "kz", "danach", "werkzeug"];
+const ABSCHN = ["start", "wissen", "kz", "lernen", "wahl", "runde", "danach", "werkzeug"];
 function spurMasse() {
   const m = [];
   for (const w of ABSCHN) for (const k of KATEGORIEN.concat(["erzwungen"])) m.push(["spur.fenster." + w + "." + k, w + ": " + k]);
@@ -885,11 +947,12 @@ const fmtPaar = (d) => (d ? (d.median > 0 ? "+" : "") + d.median + " (" + d.min 
 function zeile(r) {
   if (r.abbruch) { console.log("  " + r.stand + " " + r.art.padEnd(6) + " Lauf " + (r.lauf + 1) + ": ABBRUCH " + r.abbruch); return; }
   const sp = r.spur && r.spur.gesamt ? "  Spur 0–10 s: Skript " + (r.spur.gesamt.skript || 0) + ", Stil " + ((r.spur.gesamt.stil || 0) + (r.spur.gesamt.stilLesen || 0)) + ", Layout " + (r.spur.gesamt.layout || 0) : "";
-  console.log("  " + r.stand + " " + r.art.padEnd(6) + " Lauf " + (r.lauf + 1) + ": Bild " + r.fcp + "  bereit " + r.bereit + "  Wissen " + r.wissen + "  KZ " + r.kzBild + "/" + r.kzKnopf +
-    "  (alt +" + r.kzAlt + ", ab Start " + r.kzAbStart + ")  Langl. " + r.lang.n + "/" + r.lang.summe + "/" + r.lang.max + "  " + r.netz.kbBisBereit + " KB" +
+  console.log("  " + r.stand + " " + r.art.padEnd(6) + " Lauf " + (r.lauf + 1) + ": Bild " + r.fcp + "  bereit " + r.bereit +
+    (FALL === "uebung" ? "  Lernen " + r.lernen + "  Karte " + r.wahl + "  Runde " + r.runde + "  (gesamt " + r.uebGesamt + ", ab Start " + r.uebAbStart + ")  Langl. "
+      : "  Wissen " + r.wissen + "  KZ " + r.kzBild + "/" + r.kzKnopf + "  (alt +" + r.kzAlt + ", ab Start " + r.kzAbStart + ")  Langl. ") + r.lang.n + "/" + r.lang.summe + "/" + r.lang.max + "  " + r.netz.kbBisBereit + " KB" +
     (r.seiten > 1 ? "  neu geladen: " + r.seiten + " Seiten, Vorlauf " + r.ab + ", bereit ab Öffnen " + r.bereitAb +
       (r.vorher ? " (alte Seite: erstes Byte " + r.vorher.ttfb + ", fassung.json " + r.vorher.fjAb + "→" + r.vorher.fjDa + ", Bild " + r.vorher.bild + ", ging " + r.vorher.geht + ")" : "") : "") +
-    (r.versuche[0] > 1 || r.versuche[1] > 1 ? "  Tipps " + r.versuche.join("/") : "") + (r.fehler.length ? "  Seitenfehler " + r.fehler.length : "") +
+    (r.versuche.some((v) => v > 1) ? "  Tipps " + r.versuche.join("/") : "") + (r.fehler.length ? "  Seitenfehler " + r.fehler.length : "") +
     (r.server.n404 ? "  404: " + r.server.n404 + (r.server.fehlt.length ? " (" + r.server.fehlt.slice(0, 4).join(", ") + ")" : "") : "") +
     (r.sync && r.sync.n ? "  synchron " + r.sync.liste.map((x) => x[0].replace(/^app-teil-|\.js$/g, "") + "@" + x[4] + " " + x[2]).join(", ") : "") + sp);
 }
@@ -904,7 +967,7 @@ function zeile(r) {
   const staende = [{ name: "A", wurzel: WURZEL }].concat(GEGEN ? [{ name: "B", wurzel: GEGEN }] : []);
   for (const st of staende) { st.srvA = server(st.wurzel, 600); st.srvB = server(st.wurzel, 0); st.fassung = lesbar(st.wurzel); st.commit = commit(st.wurzel); await st.srvA.lauscht; await st.srvB.lauscht; }
   console.log("\nLadezeit: Netz " + NETZ + (isFinite(LEITUNG.down) ? " (" + (LEITUNG.down * 8 / 1e6) + " Mbit/s, " + LEITUNG.rtt + " ms, Aufbau " + AUFBAU + " RTT)" : "") +
-    ", Rechner " + CPU + "×, " + (H2 ? "HTTP/2 + TLS" : "HTTP/1.1") + ", " + LAEUFE + " Läufe, Fälle " + ARTEN.join(",") + ", Fenster " + FENSTER + " ms" +
+    (FALL === "uebung" ? ", Fall Übung öffnen (Lernen → Karte " + KATEGORIE + " → Runde starten)" : "") + ", Rechner " + CPU + "×, " + (H2 ? "HTTP/2 + TLS" : "HTTP/1.1") + ", " + LAEUFE + " Läufe, Fälle " + ARTEN.join(",") + ", Fenster " + FENSTER + " ms" +
     (TIPP_NACH ? ", Tipp " + TIPP_NACH + " ms nach bereit" : ", Tipp sofort nach bereit") + (AA ? ", A/A-Test (Rauschgrenze)" : "") +
     (SW_WACH ? ", Service Worker wacht " + SW_WACH + " ms" : "") +
     (SPUR ? ", Spur" : "") + (PROFIL ? ", Profil" : "") + (FLUECHTIG ? ", flüchtige Kontexte" : ", Profil auf der Platte") + ", supabase-js " + (SUPA ? path.basename(SUPA_PFAD) + " (" + Math.round(SUPA_GZ.length / 1024) + " KB gz)" : "fehlt (fällt aus)"));
@@ -961,7 +1024,7 @@ function zeile(r) {
   }
   if (staende.length > 1) {
     const zahl = ARTEN.reduce((s, a) => s + MASSE.filter(([p]) => { const d = gepaart(alle, a, p); return d && d.deutlich; }).length, 0);
-    console.log("\n" + (AA ? "A/A-Test – Rauschgrenze (± halbe Breite des 95-%-Bereichs, " + LAEUFE + " Paare): " + ARTEN.map((a) => a + " " + ["bereit", "wissen", "kzKnopf", "fcp"].map((p) => { const d = gepaart(alle, a, p); return p + " ±" + (d ? Math.round((d.ki95[1] - d.ki95[0]) / 2) : "–"); }).join(" ")).join(" · ") + "\n" : "") +
+    console.log("\n" + (AA ? "A/A-Test – Rauschgrenze (± halbe Breite des 95-%-Bereichs, " + LAEUFE + " Paare): " + ARTEN.map((a) => a + " " + (FALL === "uebung" ? ["bereit", "lernen", "wahl", "runde", "uebGesamt"] : ["bereit", "wissen", "kzKnopf", "fcp"]).map((p) => { const d = gepaart(alle, a, p); return p + " ±" + (d ? Math.round((d.ki95[1] - d.ki95[0]) / 2) : "–"); }).join(" ")).join(" · ") + "\n" : "") +
       "„DEUTLICH\" bei " + zahl + " von " + ARTEN.length * MASSE.length + " Maßen – auch Rauschen trifft das manchmal (A/A 17.10.: 4 von 120); es zählt das Maß, das vorher festgelegt war.");
   }
   const bruch = alle.filter((r) => r.abbruch);
@@ -976,7 +1039,7 @@ function zeile(r) {
     fs.writeFileSync(JSON_DATEI, JSON.stringify({
       werkzeug: "werkzeug/ladezeit-messen.js (Fassung 886)", datum: new Date().toISOString(),
       einstellung: { netz: NETZ, leitung: { mbit: LEITUNG.down * 8 / 1e6, rtt: LEITUNG.rtt, aufbauRtt: AUFBAU }, cpu: CPU, http: H2 ? "h2+tls" : "http/1.1", laeufe: LAEUFE, arten: ARTEN, fenster: FENSTER, spur: SPUR, profil: PROFIL, kontext: FLUECHTIG ? "flüchtig" : "Profil auf der Platte",
-        tippNach: TIPP_NACH, aa: AA, swWach: SW_WACH, verschraenkt: staende.length > 1 ? "Lauf 1: A dann B, Lauf 2: B dann A, …" : null,
+        tippNach: TIPP_NACH, aa: AA, fall: FALL, kategorie: FALL === "uebung" ? KATEGORIE : null, swWach: SW_WACH, verschraenkt: staende.length > 1 ? "Lauf 1: A dann B, Lauf 2: B dann A, …" : null,
         supabase: SUPA ? { datei: path.basename(SUPA_PFAD), kbGz: Math.round(SUPA_GZ.length / 1024) } : null },
       umgebung: { chromium: "/opt/pw-browsers/chromium", node: process.version, kerne: os.cpus().length, rechner: (os.cpus()[0] || {}).model || "?", lastVor, lastNach },
       staende: staende.map((s) => ({ name: s.name, wurzel: s.wurzel, fassung: s.fassung, commit: s.commit, fehlt: s.fehlt })),
