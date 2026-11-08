@@ -6,13 +6,15 @@
    XANDER (Funk 310/312): „die maximal professionellste Lösung".
    Nimmt die Deklarationen einer Gruppe (Funktionen, const/let) von der
    obersten Ebene der app.js-Hülle – samt dem Kommentar davor – und
-   schreibt sie unverändert (zwei Leerzeichen weniger eingerückt) nach
-   src/app/<gruppe>.js. In app.js bleibt an der Stelle der ersten
+   schreibt sie unverändert (zwei Leerzeichen weniger eingerückt; Zeilen,
+   die in einem String beginnen – mehrzeilige Template-Literale –, bleiben
+   genau, wie sie sind) nach src/app/<gruppe>.js. In app.js bleibt an der Stelle der ersten
    Deklaration ein Block dünner Weiterleitungen, aber nur für die Namen,
    die der Rest von app.js wirklich ruft:
        function tutorRufen(bereich, nochmal) { return dmaModul("tutorRufen", arguments); }
-   dmaModul (app.js) ruft window.<name>; dort stellt src/bruecke.js die
-   Eingänge hin. Was das Modul aus app.js braucht (showToast …), bekommt
+   dmaModul (app.js) ruft <name> aus der Tabelle DMA_BRUECKE.fn, die
+   src/bruecke.js anlegt (dort kommen die Eingänge auch auf window – nie
+   über einen fremden Wert). Was das Modul aus app.js braucht (showToast …), bekommt
    es über window.DMA_APP – als kleine Helfer oben im Modul, die erst
    beim Aufruf nachsehen (das Modul läuft VOR app.js).
    Anweisungen, die keine Deklaration sind (Ohren am Dokument, Zeitgeber),
@@ -27,6 +29,8 @@
    AUFRUF
      node werkzeug/app-modul-ziehen.js <gruppe.json>            zeigt nur
      node werkzeug/app-modul-ziehen.js <gruppe.json> --schreiben
+     node werkzeug/app-modul-ziehen.js <gruppe.json> --pruefen <alte app.js>
+                  vergleicht src/app/<gruppe>.js mit der alten app.js
    gruppe.json: { "gruppe": "tutor", "namen": [...],
                   "ersatz": { "tutorAn": "false" },     Rückgabe ohne Modul
                   "kopf": "Text für den Kopf des Moduls" }
@@ -64,6 +68,34 @@ function nennungen(knoten, melde) {
 }
 /* Die eigenen (lokalen) Namen einer Funktion/eines Blocks sind hier egal: gefragt ist nur, ob ein Name der obersten
    Ebene gemeint sein KANN. Vorsichtig gezählt – ein gleichnamiger lokaler Name zählt mit (wie teile-bauen.js). */
+
+/* Wo im Text Strings über das Zeilenende gehen: [Anfang, Ende) jedes Template-Teils (TemplateElement, ohne ${…})
+   und jedes String-Literals mit Zeilenumbruch. Eine Zeile, die darin beginnt, wird nicht ausgerückt. */
+function stringSpannen(anweisungen) {
+  const sp = [];
+  (function gehe(k) {
+    if (!k || typeof k.type !== "string") return;
+    if (k.type === "TemplateElement") sp.push([k.start, k.end]);
+    else if (k.type === "Literal" && typeof k.value === "string" && /[\n\r\u2028\u2029]/.test(k.raw || "")) sp.push([k.start, k.end]);
+    for (const f in k) {
+      if (f === "type" || f === "start" || f === "end" || f === "loc") continue;
+      const w = k[f];
+      if (Array.isArray(w)) w.forEach(gehe); else if (w && typeof w.type === "string") gehe(w);
+    }
+  })({ type: "Programm", body: anweisungen });
+  return sp;
+}
+function ausruecken(quelle, a, e, inString) {
+  let aus = "", p = a;
+  while (p < e) {
+    const n = quelle.indexOf("\n", p), z = n < 0 || n >= e ? e : n + 1;
+    const zeile = quelle.slice(p, z);
+    const drin = inString.some(([s, t]) => s < p && p <= t);
+    aus += !drin && zeile.startsWith("  ") ? zeile.slice(2) : zeile;
+    p = z;
+  }
+  return aus;
+}
 
 function ziehen(gruppe, quelle, acorn) {
   const ast = acorn.parse(quelle, { ecmaVersion: "latest", sourceType: "script" });
@@ -127,9 +159,10 @@ function ziehen(gruppe, quelle, acorn) {
   let neu = "", bis = 0;
   spannen.forEach(([a, e], k) => { neu += quelle.slice(bis, a) + (k === 0 ? block : ""); bis = e; });
   neu += quelle.slice(bis);
-  /* Modul: die Spannen, zwei Leerzeichen weniger eingerückt */
-  const rumpfText = spannen.map(([a, e]) => quelle.slice(a, e)).join("")
-    .split("\n").map((z) => (z.startsWith("  ") ? z.slice(2) : z)).join("\n");
+  /* Modul: die Spannen, zwei Leerzeichen weniger eingerückt – außer Zeilen, die IN einem String beginnen
+     (mehrzeiliges Template-Literal, String mit „\" am Zeilenende): dort gehört der Leerraum zum Inhalt. */
+  const inString = stringSpannen(gezogen);
+  const rumpfText = spannen.map(([a, e]) => ausruecken(quelle, a, e, inString)).join("");
   const helfer = [...braucht].sort().map((n) =>
     "function " + n + "(...a) { return window.DMA_APP." + n + "(...a); }");
   const modul = "/* =====================================================================\n"
@@ -137,9 +170,11 @@ function ziehen(gruppe, quelle, acorn) {
     + "   ---------------------------------------------------------------------\n"
     + String(gruppe.kopf || "").split("\n").map((z) => "   " + z).join("\n") + "\n"
     + "   Gezogen mit werkzeug/app-modul-ziehen.js: der Code unten ist der aus\n"
-    + "   app.js, Zeichen für Zeichen (zwei Leerzeichen weniger eingerückt).\n"
+    + "   app.js, Zeichen für Zeichen (zwei Leerzeichen weniger eingerückt,\n"
+    + "   nicht in Strings).\n"
     + "   Eingänge (export) stellt src/bruecke.js unter dem alten Namen auf\n"
-    + "   window; app.js ruft sie über dünne Weiterleitungen (dmaModul).\n"
+    + "   window; app.js ruft sie über dünne Weiterleitungen (dmaModul, aus der\n"
+    + "   eigenen Tabelle DMA_BRUECKE.fn).\n"
     + "   ===================================================================== */\n"
     + (helfer.length ? "/* Helfer aus app.js – über window.DMA_APP, erst beim Aufruf gelesen (dieses Modul läuft VOR app.js) */\n"
       + helfer.join("\n") + "\n" : "")
@@ -149,7 +184,32 @@ function ziehen(gruppe, quelle, acorn) {
     zeichen: spannen.reduce((s, [a, e]) => s + e - a, 0) };
 }
 
-module.exports = { ziehen, nennungen, namenDerAnweisung };
+/* PRÜFEN: steht im Modul jede Deklaration Zeichen für Zeichen so, wie das Werkzeug sie aus der alten app.js gezogen
+   hätte? (Deklaration ohne den Kommentar davor; Deklarationen, die es in der alten app.js nicht gab – z. B. vor dem
+   Ziehen in eine Funktion gefasste Anweisungen –, werden als „neu" genannt.) */
+function vergleichen(modul, alteQuelle, acorn) {
+  const ast = acorn.parse(alteQuelle, { ecmaVersion: "latest", sourceType: "script" });
+  const huelle = ast.body.find((st) => st.type === "ExpressionStatement" && st.expression.type === "CallExpression"
+    && st.expression.callee.type === "FunctionExpression");
+  const alt = new Map();
+  (huelle ? huelle.expression.callee.body.body : []).forEach((st) => namenDerAnweisung(st).forEach((n) => alt.set(n, st)));
+  const m = acorn.parse(modul, { ecmaVersion: "latest", sourceType: "module" });
+  const anfang = (text, pos) => text.lastIndexOf("\n", pos - 1) + 1;
+  const gleich = [], anders = [], neu = [];
+  m.body.forEach((st) => {
+    const n = namenDerAnweisung(st);
+    if (!n.length) return;
+    const text = modul.slice(anfang(modul, st.start), st.end);
+    if (/^function \w+\(\.\.\.a\) \{ return window\.DMA_APP\.\w+\(\.\.\.a\); \}$/.test(text)) return;   /* Helfer */
+    const a = alt.get(n[0]);
+    if (!a) { neu.push(n.join(",")); return; }
+    const vorher = ausruecken(alteQuelle, anfang(alteQuelle, a.start), a.end, stringSpannen([a]));
+    (vorher === text ? gleich : anders).push(n.join(","));
+  });
+  return { gleich, anders, neu };
+}
+
+module.exports = { ziehen, vergleichen, stringSpannen, ausruecken, nennungen, namenDerAnweisung };
 
 if (require.main === module) {
   const datei = process.argv[2];
@@ -158,6 +218,15 @@ if (require.main === module) {
   const acorn = require("./teile-bauen.js").acornHolen();
   if (!acorn) { console.error("acorn fehlt"); process.exit(1); }
   const quelle = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+  if (process.argv.includes("--pruefen")) {
+    /* node werkzeug/app-modul-ziehen.js <gruppe.json> --pruefen <alte app.js> */
+    const alte = fs.readFileSync(process.argv[process.argv.indexOf("--pruefen") + 1], "utf8");
+    const modul = fs.readFileSync(path.join(WURZEL, "src", "app", gruppe.gruppe + ".js"), "utf8");
+    const v = vergleichen(modul, alte, acorn);
+    console.log(gruppe.gruppe + ": " + v.gleich.length + " Deklarationen Zeichen für Zeichen gleich, " + v.anders.length + " anders"
+      + (v.anders.length ? " (" + v.anders.join(", ") + ")" : "") + ", " + v.neu.length + " neu" + (v.neu.length ? " (" + v.neu.join(", ") + ")" : ""));
+    process.exit(v.anders.length ? 1 : 0);
+  }
   let r;
   try { r = ziehen(gruppe, quelle, acorn); } catch (e) { console.error("ABGELEHNT: " + e.message); process.exit(1); }
   /* beides muss sich übersetzen lassen */

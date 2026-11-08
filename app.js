@@ -21,18 +21,24 @@
      ist da, wenn app.js anläuft. src/bruecke.js stellt die Eingänge unter
      dem alten Namen auf window und überschreibt dabei nichts.
        dmaModul(name, args, ersatz)  die dünnen Weiterleitungen in dieser
-                     Datei rufen window[name]. Ist das Modul (noch) nicht
-                     da, gibt es „ersatz" zurück; ohne „ersatz" wird der Ruf
-                     gemerkt und nachgeholt, sobald es kommt
-                     (dmaModulNachholen) – kein Effekt geht verloren.
+                     Datei rufen die Funktion aus der eigenen Tabelle der
+                     Brücke (DMA_BRUECKE.fn) – nie window[name], dort könnte
+                     fremder Code stehen (die Brücke überschreibt ihn nicht).
+                     Ist das Modul (noch) nicht da, gibt es „ersatz" zurück;
+                     ohne „ersatz" wird der Ruf gemerkt und nachgeholt, sobald
+                     es kommt (dmaModulNachholen). Nicht gemerkt werden Rufe
+                     mit einem Ereignis (Tipp aufs Dokument → betonungTippen):
+                     ein alter Tipp soll später nichts umschalten, und die
+                     Schlange hält so keine Knoten fest.
        window.DMA_APP  was die Module von hier brauchen (showToast …). Sie
                      lesen es erst beim Aufruf, denn sie laufen vor app.js.
      Warum: ein Modul heißt nach seinem Inhalt (bau/…-<hash>.js). Ändert
      sich nur der Tutor, holt ein Gerät nach dem Update nur ihn neu – und
      der Code-Speicher des Browsers hält ihn, ohne eval.
      index.html (Eintrag „@bruecke" in der Liste der Startskripte) lädt
-     bau/bruecke-*.js aus DMA_MODUL; kommt app.js aus der Quelle (?quelle,
-     Notweg) oder fehlt der Bau, src/bruecke.js als natives Modul. RÜCKWEG
+     bau/bruecke-*.js aus DMA_MODUL – auch auf dem Notweg (bau/ hängt nicht
+     an min/, und der Helfer sw.js hält es für offline); nur mit ?quelle
+     oder ohne Bau src/bruecke.js als natives Modul. RÜCKWEG
      (hier, damit index.html schlank bleibt – 885-schlank Q): ist die
      Brücke nicht gelaufen (bau/ nicht ladbar), lädt app.js die Quelle
      src/bruecke.js nach; bis sie da ist, merken sich die Weiterleitungen
@@ -41,9 +47,9 @@
      ===================================================================== */
   const dmaModulWarten = [];
   function dmaModul(name, args, ersatz) {
-    const f = window[name];
+    const t = window.DMA_BRUECKE && window.DMA_BRUECKE.fn, f = t && t[name];
     if (typeof f === "function") return f.apply(undefined, args);
-    if (arguments.length < 3 && dmaModulWarten.length < 500) dmaModulWarten.push([name, Array.prototype.slice.call(args)]);
+    if (arguments.length < 3 && dmaModulWarten.length < 500 && !Array.prototype.some.call(args, (a) => a instanceof Event)) dmaModulWarten.push([name, Array.prototype.slice.call(args)]);
     return ersatz;
   }
   function dmaModulNachholen() {

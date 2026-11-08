@@ -5,9 +5,11 @@
    Betonung durch Tippen in einen Textkasten, Wiederherstellen nach dem
    Neuzeichnen.
    Gezogen mit werkzeug/app-modul-ziehen.js: der Code unten ist der aus
-   app.js, Zeichen für Zeichen (zwei Leerzeichen weniger eingerückt).
+   app.js, Zeichen für Zeichen (zwei Leerzeichen weniger eingerückt,
+   nicht in Strings).
    Eingänge (export) stellt src/bruecke.js unter dem alten Namen auf
-   window; app.js ruft sie über dünne Weiterleitungen (dmaModul).
+   window; app.js ruft sie über dünne Weiterleitungen (dmaModul, aus der
+   eigenen Tabelle DMA_BRUECKE.fn).
    ===================================================================== */
 /* Helfer aus app.js – über window.DMA_APP, erst beim Aufruf gelesen (dieses Modul läuft VOR app.js) */
 function applyStressToTree(...a) { return window.DMA_APP.applyStressToTree(...a); }

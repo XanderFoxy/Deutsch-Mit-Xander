@@ -4,9 +4,11 @@
    Der Tutor: Alex kommt von rechts herein und erklärt den Bereich (Ton,
    Film oder Maske, Leuchten der Unterreiter, Reiter am rechten Rand).
    Gezogen mit werkzeug/app-modul-ziehen.js: der Code unten ist der aus
-   app.js, Zeichen für Zeichen (zwei Leerzeichen weniger eingerückt).
+   app.js, Zeichen für Zeichen (zwei Leerzeichen weniger eingerückt,
+   nicht in Strings).
    Eingänge (export) stellt src/bruecke.js unter dem alten Namen auf
-   window; app.js ruft sie über dünne Weiterleitungen (dmaModul).
+   window; app.js ruft sie über dünne Weiterleitungen (dmaModul, aus der
+   eigenen Tabelle DMA_BRUECKE.fn).
    ===================================================================== */
 /* Helfer aus app.js – über window.DMA_APP, erst beim Aufruf gelesen (dieses Modul läuft VOR app.js) */
 function brDatei(...a) { return window.DMA_APP.brDatei(...a); }
@@ -148,43 +150,43 @@ function tutorBuehne() {
   b.className = "tutor-buehne";
   b.setAttribute("aria-live", "polite");
   b.innerHTML = `
-    <div class="tutor-blase" id="tutorBlase">
-      <button type="button" class="tutor-zu" id="tutorZu" aria-label="Tutor schliessen">×</button>
-      <p class="tutor-text" id="tutorText"></p>
-      <div class="tutor-extra" id="tutorExtra"></div>
-      <div class="tutor-knoepfe">
-        <button type="button" class="tutor-mini" id="tutorNochmal">🔊 Noch einmal</button>
-        <button type="button" class="tutor-mini" id="tutorWeiter">Weiter ›</button>
-        <button type="button" class="tutor-mini" id="tutorNie">Nicht mehr zeigen</button>
+      <div class="tutor-blase" id="tutorBlase">
+        <button type="button" class="tutor-zu" id="tutorZu" aria-label="Tutor schliessen">×</button>
+        <p class="tutor-text" id="tutorText"></p>
+        <div class="tutor-extra" id="tutorExtra"></div>
+        <div class="tutor-knoepfe">
+          <button type="button" class="tutor-mini" id="tutorNochmal">🔊 Noch einmal</button>
+          <button type="button" class="tutor-mini" id="tutorWeiter">Weiter ›</button>
+          <button type="button" class="tutor-mini" id="tutorNie">Nicht mehr zeigen</button>
+        </div>
       </div>
-    </div>
-    <img class="tutor-figur" id="tutorFigur" alt="Alex" />
-    <!-- DIE BEWEGTE FASSUNG.
-         GEWUENSCHT: „ich moechte ihn animiert haben, dass er schoen
-         erklaert und dass es realistisch aussieht mit
-         Lippensynchronizitaet … Aber behalte trotzdem die
-         Standbild-Version als Fallback, falls die Animation nicht
-         greift."
-         Genau so gebaut: das Standbild steht IMMER da. Gibt es zu
-         einem Stueck einen Film (tutor/video/<ton>.mp4, verzeichnet
-         in data-tutorvideo.js), legt er sich darueber — und faellt
-         er aus (fehlt, laedt nicht, Browser spielt ihn nicht), wird
-         er wieder ausgeblendet und das Standbild ist noch da. Der
-         Ton kommt weiter aus der Tonspur; der Film selbst ist
-         stumm, damit nichts doppelt klingt. -->
-    <video class="tutor-video" id="tutorVideo" muted playsinline preload="none"></video>
-    <!-- DER MASKENWEG — FUER DAS IPHONE.
-         GEMELDET: „auf dem Android sieht man ihn freigestellt, auf
-         dem iPhone sieht man ihn mit einem schwarzen Hintergrund.
-         Kannst du das nicht machen wie bei dem Greenscreen, dass wir
-         das ausrechnen koennen, dass es ueberall gleich aussieht?"
-         GEFUNDEN: Safari spielt webm ab, aber OHNE Alphaspur — also
-         bleibt der schwarze Grund stehen. Genau dafuer gibt es im
-         Haus schon einen Weg: Bild und Maske nebeneinander in einer
-         mp4, wieder zusammengerechnet auf der Grafikkarte (so
-         laufen die Geschenkfilme, siehe filmspieler.js). Diese
-         Leinwand ist dieser Weg fuer den Tutor. -->
-    <canvas class="tutor-maske" id="tutorMaske"></canvas>`;
+      <img class="tutor-figur" id="tutorFigur" alt="Alex" />
+      <!-- DIE BEWEGTE FASSUNG.
+           GEWUENSCHT: „ich moechte ihn animiert haben, dass er schoen
+           erklaert und dass es realistisch aussieht mit
+           Lippensynchronizitaet … Aber behalte trotzdem die
+           Standbild-Version als Fallback, falls die Animation nicht
+           greift."
+           Genau so gebaut: das Standbild steht IMMER da. Gibt es zu
+           einem Stueck einen Film (tutor/video/<ton>.mp4, verzeichnet
+           in data-tutorvideo.js), legt er sich darueber — und faellt
+           er aus (fehlt, laedt nicht, Browser spielt ihn nicht), wird
+           er wieder ausgeblendet und das Standbild ist noch da. Der
+           Ton kommt weiter aus der Tonspur; der Film selbst ist
+           stumm, damit nichts doppelt klingt. -->
+      <video class="tutor-video" id="tutorVideo" muted playsinline preload="none"></video>
+      <!-- DER MASKENWEG — FUER DAS IPHONE.
+           GEMELDET: „auf dem Android sieht man ihn freigestellt, auf
+           dem iPhone sieht man ihn mit einem schwarzen Hintergrund.
+           Kannst du das nicht machen wie bei dem Greenscreen, dass wir
+           das ausrechnen koennen, dass es ueberall gleich aussieht?"
+           GEFUNDEN: Safari spielt webm ab, aber OHNE Alphaspur — also
+           bleibt der schwarze Grund stehen. Genau dafuer gibt es im
+           Haus schon einen Weg: Bild und Maske nebeneinander in einer
+           mp4, wieder zusammengerechnet auf der Grafikkarte (so
+           laufen die Geschenkfilme, siehe filmspieler.js). Diese
+           Leinwand ist dieser Weg fuer den Tutor. -->
+      <canvas class="tutor-maske" id="tutorMaske"></canvas>`;
   document.body.appendChild(b);
   document.body.classList.add("tutor-offen");
   b.querySelector("#tutorZu").addEventListener("click", () => tutorSchliessen());
