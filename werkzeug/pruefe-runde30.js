@@ -39,7 +39,7 @@ const pruefe = (was, gut, zusatz) => {
 };
 
 (async () => {
-  const js = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+  const js = require("./quelle-lesen.js").logisch("app.js", WURZEL) /* MODUL M4: app.js + src/app/** */;
   const lc = fs.readFileSync(path.join(WURZEL, "livechat.js"), "utf8");
   const css = fs.readFileSync(path.join(WURZEL, "korrekturen.css"), "utf8");
   const liste = fs.readFileSync(path.join(WURZEL, "data-geraeusche.js"), "utf8");

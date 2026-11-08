@@ -1,4 +1,10 @@
 {
+  "src/bruecke.js": {
+    "file": "bruecke-CSGLwKEs.js",
+    "name": "bruecke",
+    "src": "src/bruecke.js",
+    "isEntry": true
+  },
   "src/rueckfrage.js": {
     "file": "rueckfrage-COPCYzP8.js",
     "name": "rueckfrage",

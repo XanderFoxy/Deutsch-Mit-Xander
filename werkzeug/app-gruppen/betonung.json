@@ -1,0 +1,27 @@
+{
+ "gruppe": "betonung",
+ "namen": [
+  "KLEINE_WOERTER",
+  "betonungIndex",
+  "betonungIndexStand",
+  "betonungNachschlagen",
+  "betonungAusGrundform",
+  "betonungsSchalterEinhaengen",
+  "BETONUNG_TIPP_HINWEIS",
+  "betonungOffen",
+  "betonungSchluessel",
+  "BETONUNG_KASTEN",
+  "betonungKastenTaugt",
+  "betonungKastenFinden",
+  "betonungAus",
+  "betonungSetzen",
+  "betonungWiederherstellen",
+  "betonungTippen",
+  "betonungBeobachten"
+ ],
+ "ersatz": {
+  "betonungNachschlagen": "null",
+  "betonungAusGrundform": "null"
+ },
+ "kopf": "Die Betonung: geprüfte Silben nachschlagen (KLEINE_WOERTER, Wortschatz),\nBetonung durch Tippen in einen Textkasten, Wiederherstellen nach dem\nNeuzeichnen."
+}

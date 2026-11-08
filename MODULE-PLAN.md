@@ -373,6 +373,11 @@ eine Messung gegen 886.
   - In app.js bleiben dünne Weiterleitungen.
 - `teile-bauen.js` lässt die verschwundenen Namen von selbst weg.
 - Erst nach M2, mit Brückenwächter und `quelle-lesen` für die betroffenen Sonden.
+- **Stand 07.11.: gebaut auf `modul-m4`** (Logbuch Abschnitt 7). Start und Tutor-Öffnen gleich schnell (im Rauschen);
+  ein Update nach einer Tutor-/Betonungs-Änderung kostet 7,9 statt 848 KB gz. **08.11.: Nachbesserung Runde 1
+  eingebaut** (Notweg im Funkloch, fremde Funktion, Werkzeug und Strings, Warteschlange) – Sonden grün, Gegenproben
+  auf d9637a22 und 2417165d rot. **08.11.: Nachbesserung Runde 2 eingebaut** (Helferwechsel 887 → dieser sw.js im
+  Funkloch, Rückweg erst bei DOMContentLoaded) – Sonde 887-modul-app W auf d9637a22 grün, auf 542e4250 rot.
 
 ### M5. Stadt als eigene Vite-Seiten (dritter Agent möglich, sobald M1 steht)
 - `stadt.html`/`stadt-leicht.html` werden Vite-Mehrseiten-Einträge. Die Packer `stadt-packen.js`/`leicht-packen.js`
@@ -963,3 +968,311 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
        4. **„wieder“ (3. Öffnen, alles im Speicher):** Die Sammlung ist dort später ganz, weil das Vorladen auch aus dem
           Speicher die Reihenfolge einhält (siehe Messung). Kam das Verzeichnis aus dem Speicher, könnte es ohne Warten
           laden (nicht gebaut).
+- 07.11. **Modul-Umbau — Schritt M4 (app.js-Pilot: Tutor und Betonung als Modul).** Zweig `modul-m4`, Grundlage
+  d9637a22. Fortsetzung zweier von Nutzungslimits abgebrochener Läufe (01.11.: Zwischenstand 896a6846, nur
+  `betonungBeobachten()` als Funktion; 07.11. ~17 Uhr: Code, Sonden und Messung bis 04fa3f17 fertig, Logbuch und
+  A/A der 4G-Ladezeit fehlten). Für Xander unsichtbar: Tutor und Betonung tun genau dasselbe wie vorher.
+  - **Werkzeug `werkzeug/app-modul-ziehen.js`** (Gruppen in `werkzeug/app-gruppen/tutor.json`, `betonung.json`): nimmt
+    die Deklarationen einer Gruppe von der obersten Ebene der app.js-Hülle samt Kommentar davor und schreibt sie
+    Zeichen für Zeichen (2 Leerzeichen weniger eingerückt – **berichtigt 08.11.:** nicht in Strings, siehe
+    Nachbesserung Runde 1) nach `src/app/<gruppe>.js`; lehnt ab, wenn ein Name fehlt,
+    eine Deklaration halb dazugehört, das Modul eine VARIABLE von app.js liest oder app.js eine Variable der Gruppe.
+    Tutor 44 Deklarationen (37 184 Zeichen), Betonung 17 (17 398 Zeichen). Anweisungen bleiben in app.js und rufen die
+    Weiterleitung (gleiche Reihenfolge der Ohren am Dokument): die beiden Fokus-Ohren des Tutors stehen dafür in
+    `tutorSchreibOhren()`, der Beobachter der Betonung in `betonungBeobachten()`.
+  - **app.js:** 14 dünne Weiterleitungen, z. B. `function tutorRufen(bereich, nochmal) { return dmaModul("tutorRufen",
+    arguments); }` (nur, was der Rest von app.js ruft); `dmaModul` ruft `window[name]` (**seit 08.11.:**
+    `DMA_BRUECKE.fn[name]`, Nachbesserung Runde 1); fehlt das Modul, gibt es einen
+    Ersatz (`tutorAn` → false, `tutorArt` → "comic", `betonungNachschlagen`/`…AusGrundform` → null) oder der Ruf wird
+    gemerkt und nachgeholt (höchstens 500; seit 08.11. ohne Rufe mit einem Ereignis). `window.DMA_APP` = die 11 Helfer, die die Module brauchen (showToast,
+    brDatei, applyStressToTree …); die Module lesen es erst beim Aufruf. Rückweg: ist die Brücke vor app.js nicht
+    gelaufen (bau/ nicht ladbar), lädt app.js `src/bruecke.js` nach.
+  - **`src/bruecke.js`** importiert beide Stücke (Vite: EIN Stück `bau/bruecke-CL1VLwwc.js`, 20 167 B, gz 7 889) und
+    stellt die Eingänge unter dem alten Namen auf window – überschreibt nichts (`DMA_BRUECKE.konflikt`, laut auf der
+    Konsole; app.js nimmt dann den Ersatz statt des fremden Codes – **das stimmte nur für einen fremden Wert, nicht
+    für eine fremde Funktion; berichtigt 08.11.:** app.js ruft immer das eigene Modul aus `DMA_BRUECKE.fn`).
+  - **index.html:** Eintrag `"@bruecke"` in der Liste der Startskripte VOR app.js – `type="module"` läuft in derselben
+    defer-Reihe, also in fester Reihenfolge; mit `?quelle` oder wenn app.js aus der Quelle kommt (Notweg)
+    `src/bruecke.js` nativ (**berichtigt 08.11.:** der Notweg nimmt jetzt auch bau/ – offline fielen dort sonst
+    Betonung und Ohren aus; `src/` nur mit `?quelle` oder ohne Bau). Ein erster Entwurf mit Importkarte und eigenem Fehler-Lader machte 885-schlank Q rot
+    (Kommentare 6 805 > 6 500 Zeichen, gepackt nur −4 684 B statt ≥ −5 000 B gegenüber vor K) – jetzt eine Zeile ohne
+    Kommentar, Rückweg in app.js, Stempel nur für die Eingänge `src/*.js` (fassung-setzen.js; die Stücke in `src/app/`
+    kommen über `import`). index.html gz +103 B gegenüber d9637a22.
+  - **min/:** `teile-bauen.js` unverändert – es lässt Namen, die es in app.js nicht mehr findet, von selbst weg
+    („nicht gefunden“); eine Änderung am Werkzeug hätte über die Kennung auch min/data-exercises*.js neu benannt
+    (197 KB gz für jedes Gerät). Die gezogenen Namen stehen trotzdem nicht mehr in `app-teile.json` (teile/kern; Vermerk
+    in kern_warum), die Weiterleitungen stehen in keiner Liste und bleiben so im Kern; `teile-messen.js` lässt
+    Weiterleitungen beim Neu-Messen im Kern. min/app.js 746 579 → 733 198 B (gz 203 669 → 199 673), rest1/2/3/7 je
+    0,5–1,1 KB gz kleiner.
+  - **Update-Download (gerechnet, kein Rauschen):** eine Ein-Zeichen-Änderung am Tutor benannte auf d9637a22 alle 16
+    app-Dateien neu (min/app.js + 15 Stücke über `dmaTeilPasst`): **848 361 B gz** (gzip -9). Jetzt nur
+    `bau/bruecke-*.js`: **7 889 B gz (Faktor ~108)** – geprüft mit 887-bau B7 „Kaskade (Stück)“ (Änderung in
+    src/app/tutor.js benennt nur bruecke um, rueckfrage und sonde-zwei bleiben). Änderungen anderswo in app.js kosten
+    wie bisher.
+  - **Platz (GitHub Pages, ≈948 MB von 1 GB):** alle Dateien im Baum zusammen +48 KB (2 212 703 278 → 2 212 751 350 B:
+    src/app + bruecke + bau/bruecke + Sonde/Werkzeug, app.js und min/ kleiner). Jede spätere Tutor-Änderung legt ein
+    neues bau/bruecke (~20 KB) dazu; `modul-bauen.js` räumt alles weg, was keines der letzten 3 Manifeste nennt.
+  - **Browser ohne Module:** kein Rückfall wie beim Walkie nötig – app.js braucht schon auf d9637a22 ES2020 (612× `?.`),
+    jeder Browser, der app.js ausführt, kann auch Module.
+  - **Messung Start und „Tutor-Reiter öffnen“ (A = d9637a22, B = M4, verschränkt; Chromium, CPU 4×, Telefonfenster,
+    eigener Server je Stand, je Paar frisches Profil auf der Platte: Laden 1 = kalt, Laden 3 = wieder mit
+    V8-Code-Speicher; Maße in der Seite; Tutor über Tipp auf „Lernen“, dann echter Tipp auf 🎓 bis zum Bild, in dem
+    Alex mit Text steht; Skript `scratchpad/m4/m4-messen.js`, Daten `…/m4/messung/`). Median A → B, gepaart B − A
+    [95-%-Bereich], ↓/↑:**
+    - Gast, 8 Paare: DOMContentLoaded kalt 595 → 621 ms, **+4 [−65…+56]** (4↓/4↑); wieder 574 → 589, **+23
+      [−103…+63]** (2↓/6↑); app.js fertig kalt +4 [−64…+59], wieder +24 [−103…+64]; load kalt +12, wieder +23 (alle
+      Bereiche enthalten 0). Tutor-Reiter öffnen kalt 79 → 76 ms, **−4 [−8…+6]** (6↓/2↑); wieder 74 → 69, **−5
+      [−11…+2]** (5↓/3↑).
+    - Konto (Betreiber, Datenbank 150 ms), 8 Paare: DOMContentLoaded kalt 602 → 613, **−16 [−96…+65]** (5↓/3↑);
+      wieder 591 → 580, **−12 [−34…+5]** (6↓/2↑); Tutor-Reiter öffnen kalt 69 → 70, **−5 [−17…+11]**; wieder 74 → 71,
+      **−2 [−6…+6]**.
+    - **Rauschgrenze (A/A, derselbe Stand zweimal):** Gast 6 Paare DOMContentLoaded kalt −5 [−52…+115], wieder −22
+      [−71…+35]; Reiter öffnen +5 [−11…+18] / −1 [−11…+6]. Konto 4 Paare DOMContentLoaded kalt −26 [−55…−13] – reines
+      Rauschen trifft mit 4 Paaren „deutlich“ (4/4 auf einer Seite: 1 zu 8), wieder −22 [−47…+35].
+  - **Ladezeit 4G (`ladezeit-messen.js`, Gast, 9 Mbit/s, CPU 4×, HTTP/2, Profil auf der Platte, Tipp sofort nach
+    bereit; 5 Läufe verschränkt; `…/m4/messung/lz-gegen.*`). d9637a22 → M4, gepaart M4 − alt [Bereich], ↑/↓:**
+    - kalt: bereit 1 334 → 1 357 ms, **+45 [−38…+88]** (4↑/1↓); DOMContentLoaded +46 [−35…+88]; erstes Bild 564 →
+      552, −8; Wissen-Tipp → Bild 0 [−82…+192]; Sperrzeit (Σ Langläufer über 50 ms) 375 → 460, +68 [−30…+133] (4↑/1↓);
+      über die Leitung bis bereit 646 → 650 KB, 64 → 65 Dateien (die Brücke).
+    - wieder: bereit 680 → 675, +32 [−41…+80] (3↑/2↓); DOMContentLoaded +30 [−36…+76]; Wissen-Tipp +35 [−53…+66];
+      Langläufer-Summe 408 → 321, **−97 [−169…−18] (0↑/5↓)**, Sperrzeit 165 → 121, −47 [−119…−18] (0↑/5↓).
+    - Das Werkzeug nennt bei 0 von 68 Maßen „deutlich“; kalt und wieder zeigen in entgegengesetzte Richtungen (kalt
+      eher langsamer, wieder weniger Langläufer). Rauschgrenze für bereit, 4G Gast kalt: ±100 ms (886-Gesamtmessung),
+      ±~60 ms (A/A 01.11.).
+    - **Eigener A/A-Lauf und zweite Reihe stehen noch aus**: der A/A-Lauf am 07.11. ~18 Uhr brach mit dem Nutzungslimit
+      ab, danach hielt die Prüfung der Auslieferung 887 den Rechner (vorrang-887 ab 19:35). Bis dahin gilt: kein Maß
+      über der Rauschgrenze; die −97 ms Langläufer „wieder“ (5/5) zählen erst nach dem A/A.
+  - **Neue Sonde `pruefe-887-modul-app.js`:** A (ohne Browser) Gruppen im Modul und aus app.js verschwunden,
+    Weiterleitungen = Exporte (14), Helfer in DMA_APP, Weiterleitungen in min/app.js echte Funktionen im Kern, kein
+    gezogener Name mehr in min/app.js, Lader vor app.js, Rückweg in app.js, DMA_MODUL.bruecke = Manifest; B (gast min,
+    gast ?quelle, konto min) Brücke läuft vor app.js, Tutor kommt (Tipp auf „Lernen“), „ד und 🎓, Betonung durch Tippen
+    an/aus und nach dem Neuzeichnen wieder da, Ohren beim Schreiben, kein pageerror; K Konflikt (window.tutorAn schon
+    da: nicht überschrieben, laut, Ersatz statt fremdem Code – seit 08.11. K1/K2 mit Wert und fremder Funktion); R Rückweg (bau/bruecke gesperrt → src/bruecke.js kommt,
+    gemerkte Rufe nachgeholt, alles geht). **Grün: A 14/14, B 30/30, K 4/4, R 9/9. Gegenprobe d9637a22: A 9 rot, B1 6
+    rot** (B2–B5 dort grün: dasselbe Verhalten wie vorher, so gewollt).
+  - **Sonden umgestellt:** runde30, runde60, tutorbild62, betonung-regeln lesen `logisch("app.js")` (app.js +
+    src/app/**, `quelle-lesen`); 885-stuecke zählt „kern“-Namen, die mit ihrer Gruppe ins Modul gezogen sind, dort;
+    887-bau kopiert ganz src/ (B7 Kopie scheiterte sonst an `./app/tutor.js`) und prüft neu „wiederholbar je Eingang“
+    und „Kaskade (Stück)“; 885-schlank Q kennt die Zeile „@bruecke“; 694-leistung zählt bau/-Module wie min/
+    (885-swvorladen 11 war deshalb rot); 887-modul-app B2 tippt „Lernen“ (der allererste Aufbau ohne #… ruft activateTab
+    nicht – der Tutor kommt dort auch auf d9637a22 nicht von selbst). Welche Sonden die gezogenen Namen lesen, per grep
+    über alle 481 Sonden: 885-stuecke, 887-modul-app, betonung-regeln, runde30, runde60, tutor, tutorbild62 – alle oben.
+  - **Sonden (Code-Stand 47b3e31b = 04fa3f17 ohne die 694-Sonde; verschränkt neu/alt = d9637a22, gebündelt über die
+    Sperre):** grün und mit gleicher Ausgabe wie alt: 887-bau B (ohne Browser) und S, **887-bruecke 18/18
+    (Brückenwächter)**, 885-schlank Q/A–G, 876-start-schlank, 885-swvorladen (alle Prüfungen; neu liegt in Prüfung 12
+    zusätzlich bau/bruecke im Speicher des Helfers – beim Start geholt, wie gewollt), 885-stuecke, tutor (Ausgabe bis
+    auf Zeitstempel gleich), tutorreiter, tutorstimme34, tutorbild62, tutor-stuecke, runde24, runde29, runde30,
+    betonung-uebung, betonung-regeln, 766/771/772/773/882-aussprache; 783-aussprache grün (der Vergleichslauf auf
+    d9637a22 fiel in die Zeit von vorrang-887 und steht aus). Rot auf beiden Ständen gleich (nicht durch
+    M4): runde60 (3× Tondauer 0,00 s) und tutorfilm34 (Alphaspur) – ffmpeg fehlt auf dem Rechner. 887-bau B auf der
+    Vergleichskopie: nur B4/B11 rot („kein git“, Kopie ohne .git).
+  - **Ergebnis: am Start und beim Öffnen des Tutors weder schneller noch langsamer** – jeder Unterschied liegt in der
+    Rauschgrenze (Faktor alt/neu: Tutor-Reiter öffnen 0,99–1,07, DOMContentLoaded 0,96–1,02, 4G bereit 0,98/1,01).
+    Erwartet: am Start ändert sich nur, WO der Code steht (min/app.js −4 KB gz, Brücke +7,9 KB gz parallel geholt, beide
+    aus dem Code-Speicher); auf d9637a22 lagen 49 der 61 Deklarationen im Kern von min/app.js, 12 (Betonung
+    nachschlagen/setzen, tutorAnSetzen/ArtSetzen, Maske …) in rest-Stücken – jetzt alle in der Brücke. Der messbare
+    Gewinn von M4 ist das Update: nach einer Änderung am Tutor oder an der Betonung holt jedes Gerät **7,9 KB statt 848
+    KB gz (Faktor ~108)**. Nach der Regel „was nicht schneller ist, wird nicht ausgeliefert“ gilt: M4 macht die Seite
+    nicht schneller, sondern künftige Updates kleiner; ob er allein oder mit den nächsten Gruppen (Abschnitt 4, Schritt
+    11) ausgeliefert wird, entscheidet der Dirigent. Sichtbar ändert sich nichts.
+  - **Offen:** der erste Tipp auf einen Textkasten holt weiter rest-Stücke synchron (applyStressToTree, ruleMarkWord und
+    der Wortschatz liegen noch in app.js bzw. in min/app-teil-rest*) – das gehört zu Schritt 11, nicht zu M4. Brücke
+    abbauen erst in Schritt 12. **Vor einer Auslieferung nachzuholen** (vorrang-887 hielt den Rechner von 19:35 bis
+    mindestens 23:35): 4G-A/A dieses Stands (`node werkzeug/ladezeit-messen.js 4g <baum> --aa --arten kalt,wieder
+    --laeufe 5 --ohne-spur`), eine zweite Reihe gegen d9637a22 und der Vergleichslauf 783 auf d9637a22. Die
+    Vergleichskopie `/tmp/claude-0/t-m4/basis` (1,7 GB) ist gelöscht (Platte); für die Nachläufe neu mit `git archive
+    d9637a22` bauen.
+  - **Nachbesserung nach der Prüfung, Runde 1 (08.11., Code-Commit d9ea1fb1).** Für Xander unsichtbar (Aussehen,
+    Größe, Bedienung gleich). Die Befunde des Prüfers, was daraus wurde:
+    1. **Notweg im Funkloch (wichtig, Rückschritt gegen d9637a22).** Auf dem Notweg (`dma-ohne-min`/`dma-ganz`,
+       app.js aus der Quelle) und mit `?quelle` lud index.html `src/bruecke.js`. Die Stücke `src/app/*.js` haben
+       keinen `?v`-Stempel, sw.js legt sie nie ab (nur 10 min im HTTP-Speicher); ohne Leitung scheiterte die Brücke,
+       der Rückweg in app.js an derselben Adresse ebenso: Betonung durch Tippen und die Schreib-Ohren fielen aus (auf
+       d9637a22 gingen sie – dort standen sie in app.js). Gerade wer im Funkloch ist, landet im Notweg (ein
+       min/-Stück scheitert, `dma-ohne-min` bleibt die ganze Fassung). **Behoben mit Weg (a):** die `@bruecke`-Zeile
+       nimmt jetzt auch auf dem Notweg `bau/bruecke-*.js` – bau/ hängt nicht an min/, heißt nach seinem Inhalt und
+       liegt im Speicher des Helfers (`bauHolen`); `src/bruecke.js` nur noch mit `?quelle` oder ohne Bau. Gleich lang
+       wie vorher (885-schlank Q grün: gepackt −5 085 B). Nicht gewählt: (b) sw.js legt `src/**` ab – änderte den
+       Helfer jedes Geräts, gebraucht nur für `?quelle` und den Rückweg; (c) Stempel für die Stücke – ginge nur über
+       eine Importkarte (885-schlank Q, siehe oben) oder umgeschriebene `import`-Zeilen. **Bleibt (klein, offen):**
+       mit `?quelle` (Schalter für Entwickler) und auf dem Rückweg (bau/ nicht ladbar) kommen die Stücke weiter ohne
+       Stempel: offline geht dort die Betonung nicht, und bis zu 10 min nach einem Update kann dort ein neues
+       `src/bruecke.js` mit einem alten Stück laufen.
+    2. **Konflikt mit einer fremden Funktion (klein).** Die Behauptung „app.js nimmt dann den Ersatz statt des
+       fremden Codes“ stimmte nur für einen fremden Wert: `dmaModul` rief jedes `window[name]`, das eine Funktion war
+       (nachgestellt: fremdes `window.tutorBereichRufen` wurde gerufen). Jetzt legt `src/bruecke.js` jede Funktion in
+       die eigene Tabelle `DMA_BRUECKE.fn` (auch bei Konflikt), `dmaModul` ruft nur von dort. Der fremde Wert bleibt
+       auf window stehen (überschrieben wird weiter nichts), app.js ruft immer das eigene Modul.
+    3. **Werkzeug und Strings (klein).** `app-modul-ziehen.js` rückte jede Zeile aus, auch Zeilen in mehrzeiligen
+       Template-Literalen – das änderte den Inhalt eines Strings (innerHTML der Tutor-Bühne 2 578 → 2 504 Zeichen,
+       nur Leerraum zwischen Elementen; Bildvergleich des Prüfers: kein Unterschied). Jetzt bleibt jede Zeile, die
+       in einem String beginnt (Template-Teil oder String mit „\“ am Zeilenende), wie sie ist; neu
+       `--pruefen <alte app.js>` vergleicht ein Modul Deklaration für Deklaration mit der alten app.js. Gegen
+       d9637a22: **tutor 43 Deklarationen Zeichen für Zeichen gleich** (vorher 42, `tutorBuehne` anders), **betonung
+       16 gleich**, je 1 neu (`tutorSchreibOhren`, `betonungBeobachten` – vor dem Ziehen aus Anweisungen gefasst,
+       gewollt). `tutorBuehne` ist wieder genau wie in d9637a22.
+    4. **Warteschlange ohne Ereignisse (klein).** `dmaModul` merkt sich keine Rufe mehr, die ein Ereignis tragen
+       (`betonungTippen` hängt am Dokument, jeder Klick kam samt Ziel in die Schlange). Ein Tipp, solange die Brücke
+       fehlt (nur auf dem Rückweg), bleibt ohne Wirkung, statt Sekunden später umzuschalten, und die Schlange hält
+       keine Knoten fest. Auf dem normalen Weg und dem Notweg ist die Brücke vor app.js da – dort ändert sich nichts.
+    5. **Sondenliste (klein).** 884-notweg gehört dazu (gelaufen, siehe unten); 887-modul-app prüft den Notweg jetzt
+       selbst (N). Weiter lesen 63 Sonden die rohe app.js ohne `logisch()`; 6 davon haben „nicht enthalten“-Prüfungen
+       (864-uhr-ohne-intl, 882-tafel-ordner-griff, runde15, runde22, runde80, tonschleifen) – keine nennt Tutor oder
+       Betonung. Bei jeder weiteren Gruppe (Schritt 11) gehört dazu: per grep, welche Sonde ihre Namen nennt, und die
+       auf `logisch()` umstellen.
+    - **Größe und Platz:** bau/bruecke 20 167 → 20 278 B (gz 7 909 → 7 931); index.html gz 22 941 B (d9637a22:
+      22 842); min/app.js 733 475 B (gz 199 719). Das nie ausgelieferte `bau/bruecke-CL1VLwwc.js` bleibt liegen
+      (`modul-bauen.js` behält, was die letzten 3 Manifeste nennen), +20 KB. Alle Dateien im Baum: gegen 2417165d
+      +35 760 B, gegen d9637a22 +96 105 B (vor diesem Logbuch-Absatz) – für GitHub Pages (≈948 MB) unerheblich.
+    - **Messung (A = d9637a22 als schlanke Kopie, B = d9ea1fb1, verschränkt, CPU 4×, Telefonfenster; Daten
+      `/tmp/claude-0/m4nb/mess/`). Median A → B, gepaart B − A [95-%-Bereich], ↓/↑, Faktor A/B:**
+      - **Notweg** (Skript des Prüfers `scratchpad/m3b4/messen.js`: erst ein normaler Besuch, dann wie `dmaGanzLaden`
+        `dma-ganz = ["app.js"]` und die Quelle vorab geholt; gemessen das Neuladen bei 4G, 60 ms / 9 Mbit/s),
+        6 Paare: DOMContentLoaded 1. Neuladen 7 767 → 7 664 ms, **−90 [−206…+20]** (5↓/1↑, Faktor 1,013); 2. Neuladen
+        7 751 → 7 700, **−25 [−74…+58]** (3↓/3↑, 1,007). A/A (d9637a22 gegen sich, 4 Paare): +45 [−104…+121] /
+        +118 [−192…+132]. Vor der Nachbesserung (Prüfer, 4 Paare): +81 / +72. Im Rauschen – kein Verlust mehr.
+      - **Start Gast** (`scratchpad/m4/m4-messen.js`, 6 Paare): DOMContentLoaded kalt 644 → 653, +6 [−25…+17]; wieder
+        628 → 622, +7 [−139…+52]; Tutor-Reiter öffnen kalt 80 → 79, −11 [−24…+13]; wieder 71 → 68, +1 [−30…+21].
+      - **Start Konto** (Betreiber, Datenbank 150 ms; 2 Reihen, 12 Paare): DOMContentLoaded kalt 673 → 633, −30
+        [−121…+3] (9↓/3↑); **wieder 633 → 690, +37 [+4…+61] (3↓/9↑, „deutlich“)**; Tutor-Reiter öffnen kalt 87 → 76,
+        −8 [−16…+8]; wieder 79 → 93, +10 [−14…+18]. Gegenprüfung des „deutlich“: A/A Konto (d9637a22 gegen sich, 6
+        Paare) wieder +6 [−19…+100] bei Medianen 590 / 659 (69 ms Abstand OHNE Unterschied im Code); nur die
+        Nachbesserung (2417165d → d9ea1fb1, 6 Paare) wieder +57 [−107…+178]; die erste M4-Reihe (07.11., 8 Paare)
+        wieder −12 [−34…+5]. Die Reihen widersprechen sich – kein belegter Unterschied; Konto „wieder“ ist aber das Maß,
+        das vor einer Auslieferung mit mehr Paaren (≥ 16) noch einmal gemessen gehört.
+      - **4G, zweite Reihe gegen d9637a22** (`ladezeit-messen.js 4g … --gegen`, Gast, 5 Läufe; hier M4 − alt): kalt
+        bereit 1 323 → 1 342, +15 [−147…+78] (4↑/1↓); erstes Bild 524 → 544, +32 [−56…+48]; Wissen Tipp → Bild
+        233 → 396, +141 [−174…+182]; Sperrzeit 323 → 383, +60 [−106…+136]; wieder bereit 627 → 652, +91
+        [−136…+151] (4↑/1↓); Wissen +4 [−4…+119]; Langläufer-Summe wieder 370 → 356 – die −97 (5/5) der ersten Reihe
+        kamen nicht wieder (wie vermutet Rauschen). „Alte Spalte“ Wissen-Tipp → Knopf +62 / +56 (5/5) – laut Werkzeug
+        mit dessen eigenen Pausen (Messfehler), im A/A dieselbe Spalte −1 [−258…+37] / −41 [−63…+84]. Das Werkzeug
+        nennt 0 von 68 Maßen „deutlich“.
+      - **4G-A/A (nachgeholt; M4 gegen sich, 5 Läufe):** Rauschgrenze kalt bereit ±109, Wissen ±234,
+        Klassenzimmer-Knopf ±37, erstes Bild ±32; wieder bereit ±85, Wissen ±53, Knopf ±28, erstes Bild ±26. Kein Maß
+        der beiden 4G-Reihen liegt darüber.
+      - **Ergebnis:** die Nachbesserung behebt den Rückschritt im Funkloch und ist sonst unsichtbar; schneller wird
+        dadurch nichts. Für M4 insgesamt bleibt es bei: Start und Tutor-Öffnen im Rauschen (Faktor alt/neu 4G bereit
+        0,99 kalt / 0,96 wieder, Gast DOMContentLoaded 0,99 / 1,01, Notweg 1,01), der Gewinn ist das kleine Update
+        (7,9 statt 848 KB gz nach einer Tutor-/Betonungs-Änderung).
+    - **Sonden nach der Nachbesserung (Code d9ea1fb1; verschränkt: je Sonde erst M4, dann d9637a22 als schlanke Kopie,
+      alles über die Sperre; Ausgaben `/tmp/claude-0/m4nb/aus-*`, `/tmp/claude-0/m4r2/`):**
+      - **887-modul-app grün 75/75** (A 20, B 30, K 8, R 10, N 7). **Gegenprobe d9637a22: 29 rot** (A 14, B1 6, K 6,
+        R 2, N 1 – dort gibt es keine Brücke; dass Betonung und Ohren dort offline gehen, ist der Ausgangsstand, den N
+        für M4 verlangt). **Gegenprobe 2417165d (vor der Nachbesserung): 18 rot, genau die neuen Fälle** – A5 Notweg,
+        Tabelle, Ereignis, `DMA_BRUECKE.fn` (4); A6 Werkzeug (2: Zeilen im Template-Literal um 2 Leerzeichen kürzer,
+        kein `--pruefen`); B1 „0 in fn“ (3); K1/K2 (3: die fremde `tutorBereichRufen` wurde gerufen, „fremd gerufen:
+        1“); R (1: ein Tipp vor der Brücke schaltete die Betonung später ein); N (5: keine Brücke, 0 markierte Silben,
+        Ohren aus – der Rückschritt aus Befund 1).
+      - **Gegenprüfung mit der Sonde des Prüfers** (`scratchpad/m3b4/wege.js`, unverändert; je Fall M4, dann
+        d9637a22): **swnotweg** (Laden 1 und 2 mit Helfer, Laden 3 ohne Leitung) M4: Brücke aus bau/ (14 Namen),
+        Betonung an (24 Silben), wieder, aus, Ohren ok – **genau wie d9637a22** (vor der Nachbesserung beim Prüfer:
+        br=null, Betonung an=false, Ohren=false); der Tutor kommt offline auf beiden nicht. **konfliktfn** (fremde
+        `window.tutorBereichRufen`) M4: Konflikt gemeldet, Tutor kommt, **fremd=0** (beim Prüfer vorher 1); d9637a22
+        fremd=0. **notweg** (online) M4 und d9637a22: Tutor, Reiter, Ohren, Betonung (43) alles da.
+        **ohnebau** (bau/bruecke gesperrt) M4: bau/ scheitert, `src/bruecke.js` kommt über den Rückweg, alles da.
+        **quelle** M4: `src/bruecke.js` vor app.js, alles da. **min** M4: bau/bruecke vor min/app.js, alles da. Auf
+        d9637a22 jeweils dasselbe Verhalten (ohne Brücke). Kein pageerror in den 12 Läufen.
+      - **Grün und gleich wie auf d9637a22** (Ausgabe bis auf Zeiten und Hash-Namen gleich): 884-notweg 91/91 (A–O; G:
+        `/app.js` genau einmal vom Server), 887-bruecke 19/19 (Brückenwächter), 885-schlank 43/43 (Q mit der Zeile
+        „@bruecke“: gepackt −5 085 B), 876-start-schlank 62/62, 885-swvorladen 32/32 (Prüfung 12: bau/bruecke liegt im
+        Speicher des Helfers), 885-stuecke 43/43, 887-bau 42/42 (auf der Kopie von d9637a22 37 ok, B4/B11 rot „kein
+        git“ – Kopie ohne .git), tutor (gleich bis auf Zeitstempel), tutorreiter, tutorstimme34 10/10, tutorbild62 7/7,
+        tutor-stuecke 6/6, runde24 32/32, runde29 32/32, runde30 78/78, betonung-uebung 17/17, betonung-regeln,
+        766 10/10, 771 19/19, 772 17/17, 773 11/11, 882 8/8, **783 10/10 – der Vergleichslauf auf d9637a22 ist
+        nachgeholt: gleich**. runde60 23/23 und tutorfilm34 31/31 sind jetzt auf beiden Ständen grün (am 07.11. auf
+        beiden rot, weil ffmpeg fehlte – es ist inzwischen da).
+      - **Rot auf beiden Ständen gleich (nicht durch M4):** 694-leistung 1 rot „beim erneuten Öffnen kommt KEINE
+        gestempelte Datei mehr übers Netz“ (`min/spiel.js` – der bekannte spiel.js-Wettlauf aus 884, den
+        885-swvorladen 11 als bekannt führt). Der erste Lauf von 885-schlank auf der d9637a22-Kopie brach nach 342 s ab
+        (Rechner geteilt); der zweite verschränkte Lauf beider Stände war grün.
+      - **Damit ist von der Liste „vor einer Auslieferung nachzuholen“ erledigt:** 4G-A/A, zweite 4G-Reihe, 783 auf
+        d9637a22. Offen bleibt nur, was oben steht: Konto „wieder“ mit ≥ 16 Paaren, und (klein) `?quelle`/Rückweg
+        offline ohne Stempel für `src/app/*`.
+  - **Nachbesserung nach der Prüfung, Runde 2 (08.11., Code-Commit 9d82ff6f, Sonde 5230e92d).** Für Xander
+    unsichtbar (Aussehen, Größe, Bedienung gleich). Die Befunde des Prüfers, was daraus wurde:
+    1. **Helferwechsel im Funkloch (wichtig, Rückschritt gegen d9637a22).** Heute hat jedes Gerät den sw.js der
+       Fassung 887 (origin/main). Der kennt die Regel für bau/ nicht: er legt nur Dateien mit `?v=` ab, bau/ geht an
+       ihm vorbei ins Netz. Im Besuch mit dem Update auf diese Fassung kam die Brücke deshalb nur aus dem Netz; der neue
+       Helfer übernimmt erst am Ende des Besuchs (controllerchange) und holt nichts vorab. Im nächsten Besuch ohne
+       Leitung scheiterten `bau/bruecke-*.js` und der Rückweg `src/bruecke.js` – Betonung durch Tippen aus (0 Silben),
+       Ohren aus, `tutorAn()` lieferte den Ersatz false (Einstellung zeigte den Tutor-Schalter aus), kein pageerror.
+       Auf d9637a22 gingen Betonung (73 Silben) und Ohren (dort stand beides in min/app.js mit Stempel, also im
+       Speicher). Einmal je Gerät, genau im Funkloch; heilte sich mit dem nächsten Besuch mit Leitung.
+       **Behoben nach dem Vorschlag des Prüfers** (app.js, `dmaBauSichern`): War die Seite beim Start schon gesteuert,
+       holt sie nach `controllerchange` und einmal in der Ruhepause (8 s nach load, `requestIdleCallback`) jede
+       bau/-Datei, die sie geladen hat (Skript-Elemente und Resource Timing) und die in `dma-dateien-1` fehlt, einmal
+       über den Helfer – `bauHolen` in sw.js legt sie ab. Liegt alles im Speicher (jeder Besuch nach dem Wechsel), geht
+       keine Anfrage hinaus, es bleibt ein `caches.match` je Datei. Beim allerersten Besuch (noch kein Helfer beim
+       Start) bleibt alles wie bisher. Die Ruhepause fängt den Fall, dass der Wechsel kam, bevor app.js zuhörte.
+       Nicht gewählt: die bau/-Regel eine Fassung vor M4 ausliefern – hilft nur Geräten, die dazwischen online waren.
+       **Sonde 887-modul-app W** (neu): der alte Helfer wird aus dem eigenen sw.js ohne die bau/-Regel nachgebildet –
+       Byte für Byte der sw.js von origin/main (die Sonde vergleicht und meldet es); Laden 1 und 2 mit ihm, dann ein
+       Besuch mit Leitung, in dem dieser sw.js übernimmt, dann ohne Leitung: Betonung (an, nach Neuzeichnen wieder,
+       aus) und Ohren gehen, die Brücke liegt nach dem Wechsel im Speicher und kommt offline aus bau/. W1 wie im
+       Betrieb, W2 ohne das Ohr für controllerchange (nachgestellt: Wechsel vor app.js – dann die Ruhepause).
+       Dazu A7 (ohne Browser): Rückweg bei DOMContentLoaded, Sicherung nur mit Helfer beim Start, nach
+       controllerchange und in der Ruhepause, derselbe Speichername wie `KASTEN` in sw.js.
+    2. **Konto „wieder“ (klein, Messung).** Neue Reihe mit 16 Paaren A/A und 16 Paaren A/B, siehe Messung unten.
+    3. **`?quelle` und Rückweg ohne Stempel für `src/app/*` (klein) – bleibt offen.** Mit Befund 1 behoben ist der
+       Fall, der Geräte im Betrieb trifft (normaler Weg und Notweg holen bau/, und bau/ liegt jetzt auch nach dem
+       Helferwechsel im Speicher). Ohne Stempel bleiben nur `?quelle` (Schalter für Entwickler) und der Rückweg, wenn
+       bau/ mit Leitung nicht ladbar ist. Eine Abhilfe bräuchte entweder sw.js, das `src/**` ablegt (ändert den Helfer
+       jedes Geräts für einen Fall, den im Betrieb fast niemand hat), oder Stempel in den `import`-Zeilen
+       (Importkarte: 885-schlank Q, siehe oben; oder umgeschriebene Quelle). Vorschlag: mit Schritt 10/12, wenn bau/
+       alles trägt und `src/` nur noch Quelle ist.
+    4. **Reihenfolge in Safari (klein).** Auf dem Rechner gibt es kein WebKit. Unabhängig davon ist der Rückweg jetzt
+       reihenfolgefest: er lädt `src/bruecke.js` erst bei DOMContentLoaded – dann ist jedes Modul der defer-Reihe
+       gelaufen oder gescheitert. Läuft das Modul in einem Browser doch erst nach app.js, kommt so nicht zusätzlich die
+       Quelle (vorher: Brücke doppelt, `src/` ohne Stempel); die Rufe bis dahin holt `nachholen` wie bisher nach. Sonde
+       R prüft das jetzt (`src/bruecke.js` angefragt erst bei DOMContentLoaded, genau einmal: 193 / 194 ms).
+       Neu `DMA_APP.brueckeVorher` (true = das Modul lief vor app.js) für die Prüfung auf dem Gerät. **Vor der
+       Auslieferung einmal auf einem echten iPhone:** Safari-Web-Inspektor, Konsole `DMA_APP.brueckeVorher` → true,
+       im Netzwerk keine Anfrage an `src/bruecke.js`.
+    - **Größe und Platz:** min/app.js 733 475 → 734 730 B (gz 199 712 → 200 192, +480 B); app.js +3 374 B; bau/ und
+      src/ unverändert (gleiche Brücke `bau/bruecke-CSGLwKEs.js`), index.html nur Stempel. Alle Dateien im Baum gegen
+      542e4250 +13 654 B (Stand 5230e92d, vor diesem Logbuch-Absatz).
+    - **Sonden (Code 9d82ff6f/5230e92d; verschränkt: je Sonde erst M4, dann d9637a22 als schlanke Kopie – für die
+      Sonden mit `git show` mit eigenem `.git` über die Objekte des Hauptbaums –, alles über die Sperre; Ausgaben
+      `/tmp/claude-0/m4r3/aus/`):**
+      - **887-modul-app grün 97/97** (A 23, B 30, K 8, R 11, N 7, W 18). **Gegenprobe d9637a22: W grün** (W1/W2:
+        Ausgangslage, offline Seite aus dem Helfer, Ohren, Betonung an/wieder/aus mit 24 Silben, kein pageerror – dort
+        steht beides in app.js; die Brücken-Prüfungen entfallen, „Stand ohne Brücke“), A 17 rot (keine Brücke, kein
+        A7). **Gegenprobe 542e4250 (vor dieser Nachbesserung): 15 rot** – W1/W2 je 6 (Brücke nach dem Wechsel nicht im
+        Speicher, offline keine Brücke, Ohren aus, 0 Silben, Betonung nicht wieder, nicht aus: der Befund des Prüfers),
+        A7 3; R neu 1 rot (`src/bruecke.js` angefragt bei 205 ms, DOMContentLoaded erst bei 228 ms).
+      - **Grün und gleich wie auf d9637a22:** 887-bruecke 19/19 (Brückenwächter), 885-schlank 43/43 (Q mit der Zeile
+        „@bruecke“), 876-start-schlank 62/62, 885-swvorladen 32/32 (9: Gerät mit dem alten Helfer 884 bekommt den
+        neuen ohne Neuladen), 884-notweg 91/91, 885-stuecke 43/43, 885-schale 72/72, 887-bau 42/42 (auf der Kopie
+        B4/B11 rot: „git-Baum nötig“, Kopie ohne Verlauf – wie in Runde 1).
+      - **Rot auf beiden Ständen gleich (nicht durch M4):** 694-leistung „beim erneuten Öffnen kommt KEINE
+        gestempelte Datei mehr übers Netz“ (`min/spiel.js`, der bekannte Wettlauf; 4 Läufe je Stand verschränkt:
+        d9637a22 1× grün, 3× rot; M4 4× rot – alle Roten mit genau dieser einen Datei, keine Anfrage an bau/).
+      - **Tutor, Betonung, Aussprache (alle 18 aus der Liste von Runde 1, verschränkt): grün, Ausgabe auf beiden
+        Ständen gleich bis auf Zeiten, Zeitstempel und Hash-Namen** (maschinell verglichen): tutor, tutorreiter,
+        tutorstimme34 10/10, tutorbild62 7/7, tutor-stuecke 6/6, runde24 32/32, runde29 32/32, runde30 78/78, runde60
+        23/23, tutorfilm34 31/31, betonung-uebung 17/17, betonung-regeln, 766 10/10, 771 19/19, 772 17/17, 773 11/11,
+        882-aussprache-z 8/8, 783 10/10.
+    - **Damit:** alles Blockierende und Wichtige behoben (Befund 1), die kleinen Befunde 2 (Messung) und 4
+      (Rückweg reihenfolgefest, Marke fürs iPhone) erledigt, Befund 3 begründet offen. **Vor einer Auslieferung bleibt:**
+      einmal auf einem echten iPhone prüfen (`DMA_APP.brueckeVorher` true, keine Anfrage an `src/bruecke.js`); die
+      leichte Neigung bei Konto „wieder“ (36 Paare +27 [−1…+50], p = 0,07) im Blick behalten – mit der nächsten Gruppe
+      (Schritt 11) wird dasselbe Maß ohnehin wieder gemessen.
+    - **Messung Konto (Befund 2; A = d9637a22 als schlanke Kopie, B = 9d82ff6f, `scratchpad/m4/m4-messen.js`, Betreiber,
+      Datenbank 150 ms, CPU 4×, eigener Server je Stand mit max-age=600, ohne Helfer; je 4 Paare pro Sperre, A/B und
+      A/A abwechselnd, 16 + 16 Paare; Daten `/tmp/claude-0/m4r3/mess/`). Median A → B, gepaart B − A [95-%-Bereich],
+      ↓/↑, Vorzeichentest p (zweiseitig), Faktor A/B:**
+      - **wieder: DOMContentLoaded 659 → 662 ms, +13 [−16…+40], 6↓/10↑, p = 0,45, Faktor 0,995**; app.js-Start +3
+        [−18…+27]; app.js-Dauer +4 [−11…+32] (8↓/8↑); Tutor-Reiter öffnen −4 [−12…+8].
+      - kalt: DOMContentLoaded 685 → 699, +16 [−64…+71], 6↓/10↑, p = 0,45, Faktor 0,98; app.js-Dauer −5 [−47…+23];
+        Tutor-Reiter öffnen −2 [−15…+3].
+      - **Rauschgrenze (A/A, d9637a22 gegen sich, 16 Paare):** wieder DOMContentLoaded +6 [−58…+77]; kalt +22
+        [−50…+72]. Im A/A ist ein Maß „deutlich“, ohne Unterschied im Code: kalt app.js-Dauer +22 [+1…+42], 3↓/13↑,
+        p = 0,02 (dazu Tutor-Reiter kalt +14 [+1…+38]) – bei 12 Maßen trifft reines Rauschen das allein.
+      - **Mit allen früheren Paaren zusammen** (20 Paare des Bauers und des Prüfers auf d9ea1fb1, Code bis auf diese
+        Nachbesserung gleich, + 16 neue = 36): wieder DOMContentLoaded +27 [−1…+50], 12↓/24↑, p = 0,07, Faktor 0,97;
+        kalt −19 [−67…+16] (20↓/16↑). A/A zusammen (6 + 16 = 22 Paare): wieder +6 [−27…+77].
+      - **Ergebnis:** kein belegter Verlust – die neue Reihe allein liegt mitten im Rauschen, und kalt zeigt in die
+        andere Richtung. Über alle 36 Paare neigt „wieder“ zu etwa +1…+4 % (p = 0,07, nicht signifikant, innerhalb des
+        A/A-Bereichs). Ausschließen lässt sich ein kleiner Preis beim Laden mit warmem Speicher (ein Modul mehr vor
+        app.js: holen, übersetzen, verknüpfen) damit nicht; nach oben begrenzt auf etwa +50 ms bei CPU 4×. Schneller
+        wird der Start durch M4 nicht – das stand schon so im Ergebnis oben; der Gewinn bleibt das kleine Update.

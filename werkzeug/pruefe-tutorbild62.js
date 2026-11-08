@@ -65,7 +65,7 @@ const pruefe = (was, gut, zusatz) => {
     (await sicht("d")) === "hidden", await sicht("d"));
 
   console.log("\nUND DER TUTOR SETZT DIE KLASSE AUCH WIRKLICH\n");
-  const app = fs.readFileSync(path.join(WURZEL, "app.js"), "utf8");
+  const app = require("./quelle-lesen.js").logisch("app.js", WURZEL) /* MODUL M4: app.js + src/app/** */;
   pruefe("es gibt den Schalter im Code", /function tutorFilmLaeuft\(ja\)/.test(app));
   pruefe("er wird beim Start des Films gesetzt",
     /tutorFilmLaeuft\(true\)/.test(app),

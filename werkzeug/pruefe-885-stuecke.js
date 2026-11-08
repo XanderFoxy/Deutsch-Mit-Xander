@@ -180,9 +180,20 @@ function seitenSonde() {
   const SOLL = ["lcWaEntsperren", "lcWaKontextHolen", "tutorSchreibzeile", "trophyCounts", "tinyAvatar", "startTour", "betonungKastenFinden", "betonungKastenTaugt",
     "trophyKind", "isFigureAvatarUrl", "avatarPhotoHtml", "hobbyBeschriftung"];
   const kernW = Array.isArray(listeW.kern) ? listeW.kern : [];
-  sage(SOLL.every((n) => kernW.includes(n)), "app-teile.json „kern\" nennt die Funktionen des ersten Tipps, des Starts mit Konto (auch mit Orden, Sammelfigur, Hobbys) und des ersten Besuchs (Tour, Tipp auf Text)",
+  /* MODUL M4: was mit seiner Gruppe nach src/app/ gezogen ist (werkzeug/app-gruppen/), läuft als Modul VOR app.js – dort
+     gibt es keinen Platzhalter. Es zählt, wenn es in src/app/<gruppe>.js als Funktion steht. */
+  const imModul = new Set();
+  try {
+    fs.readdirSync(path.join(WURZEL, "werkzeug/app-gruppen")).filter((f) => /\.json$/.test(f)).forEach((f) => {
+      const g = JSON.parse(lies(path.join(WURZEL, "werkzeug/app-gruppen", f)));
+      const t = lies(path.join(WURZEL, "src/app", g.gruppe + ".js"));
+      g.namen.forEach((n) => { if (new RegExp("^function " + n + "\\(", "m").test(t)) imModul.add(n); });
+    });
+  } catch (e) {}
+  if (imModul.size) console.log("  info im Modul (src/app/, vor app.js): " + SOLL.filter((n) => imModul.has(n)).join(", "));
+  sage(SOLL.every((n) => kernW.includes(n) || imModul.has(n)), "app-teile.json „kern\" nennt die Funktionen des ersten Tipps, des Starts mit Konto (auch mit Orden, Sammelfigur, Hobbys) und des ersten Besuchs (Tour, Tipp auf Text)",
     kernW.length ? kernW.length + " Funktionen" : "keine Liste „kern\"");
-  const kernAlle = Array.from(new Set(SOLL.concat(Array.isArray(listeRepo.kern) ? listeRepo.kern : [])));
+  const kernAlle = Array.from(new Set(SOLL.concat(Array.isArray(listeRepo.kern) ? listeRepo.kern : []))).filter((n) => !imModul.has(n));
   const platz = kernAlle.filter((n) => new RegExp("function " + n + "\\([^)]*\\)\\{return dmaTeilRufA?\\(").test(minApp));
   const fehlt = kernAlle.filter((n) => !new RegExp("function " + n + "\\(").test(minApp));
   sage(minApp && !platz.length && !fehlt.length, "jede davon ist in min/app.js eine echte Funktion (kein Platzhalter)",

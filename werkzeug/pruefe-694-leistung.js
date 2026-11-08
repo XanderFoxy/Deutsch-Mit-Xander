@@ -65,7 +65,8 @@ const sage = (gut, was, zusatz) => {
       const stil = [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.getAttribute("href") || "").filter((s) => !/^https?:/.test(s));
       return { skripte, stil, q: window.DMA_Q("app.js"), v: window.DMA_V("app.js") };
     });
-    const ohneMin = r.skripte.concat(r.stil).filter((s) => !/^min\//.test(s));
+    /* MODUL-UMBAU M4: Module aus bau/ (Vite, verkleinert, Name aus dem Inhalt) zählen wie min/ */
+    const ohneMin = r.skripte.concat(r.stil).filter((s) => !/^min\//.test(s) && !/^bau\/[a-z0-9-]+-[A-Za-z0-9_-]{8}\.js$/.test(s));
     /* FASSUNG 886 (Schritt K): rueckfrage.js lädt nur noch für den Betreiber – ein Gast hat ein Skript weniger (25 → 24) */
     sage(r.skripte.length >= 24 && r.stil.length >= 8 && !ohneMin.length, "alle Skripte und Stilblätter kommen aus min/",
       r.skripte.length + " Skripte, " + r.stil.length + " Stilblätter" + (ohneMin.length ? " — ohne: " + ohneMin.join(", ") : ""));

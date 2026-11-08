@@ -241,9 +241,11 @@ function stempelSetzen() {
       stempel[o + "/" + n] = crypto.createHash("sha1").update(fs.readFileSync(path.join(wo, n))).digest("hex").slice(0, 10);
     });
   });
-  /* MODUL-UMBAU (M2): die Modul-Quellen in src/ mit eigenem Stempel – ?quelle lädt sie als natives Modul */
+  /* MODUL-UMBAU (M2): die Modul-Quellen in src/ mit eigenem Stempel – ?quelle lädt sie als natives Modul.
+     M4: nur die Eingänge (src/*.js); die Stücke in src/app/ holt der Browser über ihren import, ohne Stempel – ein
+     Eintrag für sie machte index.html nur größer (885-schlank Q: gepackt mindestens 5 KB kleiner als vor K). */
   const srcOrdner = path.join(WURZEL, "src");
-  if (fs.existsSync(srcOrdner)) alleDateien(srcOrdner).filter((f) => /\.(js|css|json)$/.test(f)).forEach((f) => {
+  if (fs.existsSync(srcOrdner)) fs.readdirSync(srcOrdner).map((n) => path.join(srcOrdner, n)).filter((f) => fs.statSync(f).isFile() && /\.(js|css|json)$/.test(f)).sort().forEach((f) => {
     stempel[path.relative(WURZEL, f).split(path.sep).join("/")] = crypto.createHash("sha1").update(fs.readFileSync(f)).digest("hex").slice(0, 10);
   });
   /* MODUL-UMBAU (M3, Prüfung M2 a): im selben Block steht vorn window.DMA_MODUL = {…}; – der bleibt stehen */

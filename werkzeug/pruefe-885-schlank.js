@@ -343,6 +343,10 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
           if (i0 >= 0 && i1 > i0) y = y.slice(0, i0) + y.slice(i1);
           /* Fassung 886 (Rückkehr, SPIELSYSTEM.md I48): spiel.js wartet auf der Rückkehr-Seite aus dem Speicher auf den Helfer */
           y = y.replace("var spielWarten=true;", "").replace("if(spielWarten&&window.dmaRueckWarten){spielWarten=false;window.dmaRueckWarten(window.dmaSpielLaden);return}", "");
+          /* MODUL-UMBAU M4: Tutor und Betonung als Modul VOR app.js – der Eintrag „@bruecke“ und die eine Zeile, die ihn schreibt */
+          y = y.replace('"@bruecke",', "");
+          const m0 = y.indexOf('if(d==="@bruecke")return document.write('), m1 = y.indexOf("var name=Array.isArray(d)", m0);
+          if (m0 >= 0 && m1 > m0) y = y.slice(0, m0) + y.slice(m1);
           lader = x === y;
         }
         /* FASSUNG 886 (rueckkehr, nach K): der Fassungs-Wächter bekam die erste Antwort als Versprechen (dmaFassungErst)
@@ -360,7 +364,7 @@ const walkieAbrufe = (log, ab) => log.slice(ab || 0).filter((x) => /\/rueckfrage
         else { let k = 0; while (k < x.length && x[k] === y[k]) k++; info("Skript " + (i + 1) + " weicht ab bei: …" + x.slice(Math.max(0, k - 60), k + 60) + "… / …" + y.slice(Math.max(0, k - 60), k + 60) + "…"); }
       }
       sage(gleich === a.length && a.length === b.length, "Code aller Inline-Skripte nach dem Verkleinern gleich (" + gleich + " von " + a.length + ")");
-      sage(lader === true, "im Lader nur: \"rueckfrage.js\" aus der Liste, dmaWalkieLaden + Merker-Zeile dazu");
+      sage(lader === true, "im Lader nur: \"rueckfrage.js\" aus der Liste, dmaWalkieLaden + Merker-Zeile dazu (M4: + „@bruecke“)");
     }
     /* Die Seite ohne Kommentare und Skript-Texte, Knoten für Knoten (DOMParser im Browser) */
     {
