@@ -20,7 +20,7 @@
 <div id="lLade" class="lk-lade lk-vorhang" aria-live="polite"><img vite-ignore src="stadt-leicht/alex-lade.webp" alt="" width="129" height="230"><div><b id="lLadeName">Deine Stadt</b><span>Gleich siehst du deine Stadt!</span><i><em></em></i></div></div>
 <script>try { var n = localStorage.getItem("leicht_stadtname"); if (n && !/[?&]demo=1/.test(location.search)) document.getElementById("lLadeName").textContent = n; if (/[?&]still=1/.test(location.search)) document.getElementById("lLade").remove(); if (/[?&]mini=1/.test(location.search)) document.getElementById("lLade").className += " lk-lade-klein"; setTimeout(function () { var l = document.getElementById("lLade"); if (l) l.remove(); }, 15000); } catch (e) {}</script>
 <script vite-ignore src="supabase-config.js"></script>
-<script vite-ignore src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script vite-ignore src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
 <!-- QUELLE: MODUL-UMBAU M5 — aus dieser Datei baut Vite stadt-leicht.html im Hauptordner (werkzeug/modul-bauen.js, Haken vor
      jedem Commit; dort nichts ändern). Welche Skripte in welcher Reihenfolge: vite.config.mjs, SEITEN["stadt-leicht"]; der Block
      SKRIPTE wird beim Bau durch den Lader ersetzt (gebaut: ein Modul aus bau/; ?quelle=1: die Quellen einzeln). -->
