@@ -279,7 +279,9 @@ function stempelSetzen() {
      zusammenpassen. Nur in einem git-Baum (nicht in Vergleichsständen aus git archive). */
   if (fs.existsSync(path.join(WURZEL, ".git"))) {
     try {
-      require("child_process").execFileSync("git", ["-C", WURZEL, "add", "--", "index.html", "min"].concat(fs.existsSync(path.join(WURZEL, "bau")) ? ["bau"] : []),
+      /* M5: dazu die gebauten Seiten im Hauptordner (stadt.html, stadt-leicht.html – modul-bauen.js) */
+      require("child_process").execFileSync("git", ["-C", WURZEL, "add", "--", "index.html", "min"].concat(fs.existsSync(path.join(WURZEL, "bau")) ? ["bau"] : [])
+        .concat((mb.seiten || []).filter((n) => fs.existsSync(path.join(WURZEL, n)))),
         { stdio: ["ignore", "ignore", "pipe"] });
     } catch (e) { console.error("git add index.html min bau gescheitert: " + String(e.message || e).split("\n")[0]); }
   }

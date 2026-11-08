@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Meine Stadt</title>
+<meta name="theme-color" content="#1b2440">
+<link rel="stylesheet" href="/stadt-leicht/leicht.css">
+</head>
+<body>
+<div id="lStadt">
+  <canvas id="lBoden"></canvas>
+  <canvas id="lDinge"></canvas>
+  <div id="lOber"></div>
+</div>
+<!-- FASSUNG 844 — XANDER (Walkie 313): „wir haben ja nicht mal einen [Lade]bild für die Stadt da könnte man ja witziges Bild
+     mit mir nehmen wo du sagst du siehst deine Stadt gleich … oder das der Name da Stadt schon mal da steht". Das Ladebild
+     steht sofort (vor allen Skripten): Alex zeigt auf die Stadt, darüber ihr Name (vom letzten Mal gemerkt). Es geht weg,
+     sobald die Häuser da sind (oberflaeche.js O.bild). -->
+<div id="lLade" class="lk-lade lk-vorhang" aria-live="polite"><img vite-ignore src="stadt-leicht/alex-lade.webp" alt="" width="129" height="230"><div><b id="lLadeName">Deine Stadt</b><span>Gleich siehst du deine Stadt!</span><i><em></em></i></div></div>
+<script>try { var n = localStorage.getItem("leicht_stadtname"); if (n && !/[?&]demo=1/.test(location.search)) document.getElementById("lLadeName").textContent = n; if (/[?&]still=1/.test(location.search)) document.getElementById("lLade").remove(); if (/[?&]mini=1/.test(location.search)) document.getElementById("lLade").className += " lk-lade-klein"; setTimeout(function () { var l = document.getElementById("lLade"); if (l) l.remove(); }, 15000); } catch (e) {}</script>
+<script vite-ignore src="supabase-config.js"></script>
+<script vite-ignore src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.119.0/dist/umd/supabase.js"></script>
+<!-- QUELLE: MODUL-UMBAU M5 — aus dieser Datei baut Vite stadt-leicht.html im Hauptordner (werkzeug/modul-bauen.js, Haken vor
+     jedem Commit; dort nichts ändern). Welche Skripte in welcher Reihenfolge: vite.config.mjs, SEITEN["stadt-leicht"]; der Block
+     SKRIPTE wird beim Bau durch den Lader ersetzt (gebaut: ein Modul aus bau/; ?quelle=1: die Quellen einzeln). -->
+<!-- SKRIPTE -->
+<script type="module" src="/@seite/stadt-leicht"></script>
+<!-- /SKRIPTE -->
+</body>
+</html>

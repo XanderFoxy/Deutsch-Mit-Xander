@@ -21,7 +21,8 @@ bilder.js nimmt es nur im kleinen Rahmen, solange es scharf genug ist;
 mit der Lupe kommt wieder _k.
 
 Wiederholbar: vorhandene Zwergbilder bleiben, neue _k-Bilder bekommen
-eins. Aufruf: python3 werkzeug/leicht-zwerg.py (auch aus leicht-packen.js).
+eins. Aufruf: python3 werkzeug/leicht-zwerg.py (läuft am Ende von stadt-backen.js mit;
+bis Modul-Umbau M5 rief es leicht-packen.js).
 """
 import json, os, sys
 from PIL import Image

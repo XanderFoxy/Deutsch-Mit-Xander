@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Baukasten-Stadt</title>
+<meta name="theme-color" content="#1b2440">
+<link rel="stylesheet" href="/stadt/stadt.css">
+</head>
+<body>
+<div id="stadt">
+  <canvas id="stadtBoden"></canvas>
+  <canvas id="stadtDinge"></canvas>
+  <div id="stadtOberflaeche"></div>
+</div>
+<!-- QUELLE: MODUL-UMBAU M5 — aus dieser Datei baut Vite stadt.html im Hauptordner (werkzeug/modul-bauen.js, Haken vor
+     jedem Commit; dort nichts ändern). Welche Skripte in welcher Reihenfolge: vite.config.mjs, SEITEN["stadt"]; der Block
+     SKRIPTE wird beim Bau durch den Lader ersetzt (gebaut: ein Modul aus bau/; ?quelle=1: die Quellen einzeln). -->
+<!-- SKRIPTE -->
+<script type="module" src="/@seite/stadt"></script>
+<!-- /SKRIPTE -->
+</body>
+</html>

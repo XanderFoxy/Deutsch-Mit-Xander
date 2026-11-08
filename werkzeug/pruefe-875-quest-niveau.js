@@ -40,7 +40,7 @@
                   „Labo“, „Neu Schwan Stein“), Endungen und Umlaute nie –
                   ein „Fast“ bleibt ein „Fast“; ganzer Ablauf mit Mikrofon
    Mit dem Stand 874 ist das rot (kein Niveau, keine neuen Missionen).
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/pruefe-875-quest-niveau.js
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/pruefe-875-quest-niveau.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
@@ -363,8 +363,10 @@ const NEU_JE_NIVEAU = { A1: 5, A2: 5, B1: 6, B2: 6, C1: 6, C2: 5 };
     await Q(() => { STADT.quests.sprechen.stopp(); STADT.quests._sprTest = null; });
 
     console.log("\nF  SONST\n");
-    const quell = fs.readFileSync(path.join(WURZEL, "stadt-leicht/quests.js"), "utf8"), mini = fs.readFileSync(path.join(WURZEL, "stadt-leicht/quests.min.js"), "utf8");
-    sage(/FASSUNG 875/.test(quell) && /dma_quest_niveau/.test(mini) && /forscher_stand/.test(mini), "quests.min.js ist gepackt (Niveau und neue Missionen drin)");
+    /* MODUL-UMBAU M5: das Stück der Quests nennt stadt-leicht.html (jetzt bau/leicht-quests-<hash>.js, vorher quests.min.js) */
+    const qpfad = ((/LEICHT_QUESTS = "([^"?]+)/.exec(fs.readFileSync(path.join(WURZEL, "stadt-leicht.html"), "utf8")) || [])[1]) || "stadt-leicht/quests.min.js";
+    const quell = fs.readFileSync(path.join(WURZEL, "stadt-leicht/quests.js"), "utf8"), mini = fs.readFileSync(path.join(WURZEL, qpfad), "utf8");
+    sage(/FASSUNG 875/.test(quell) && /dma_quest_niveau/.test(mini) && /forscher_stand/.test(mini), "die Quests sind gepackt (" + qpfad + ": Niveau und neue Missionen drin)");
     sage(!pf.length, "keine Seitenfehler", pf.join(" | ").slice(0, 300));
   } catch (e) { sage(false, "Sonde abgebrochen", String(e.message || e).split("\n")[0]); }
   return ende();

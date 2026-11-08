@@ -384,6 +384,12 @@ eine Messung gegen 886.
   entfallen.
 - Die Hauptseite ist dabei nicht berührt.
 - Sonden: `pruefe-stadt-*`, `-844`, `?quelle=1`, Ladebild.
+- **Voraussetzung (seit M5, Prüfung Runde 1):** Vite im Baum (`node_modules/`, `npm ci`). Seit M5 baut nur noch Vite die
+  Stadt; die Packer liefen auch ohne `node_modules`. Fehlt Vite in einem git-Baum (der Hauptbaum hat bis heute kein
+  `node_modules`), holt `werkzeug/modul-bauen.js` es beim nächsten Bau EINMAL mit `npm ci` (Fassungen aus
+  `package-lock.json`, ≈ 34 MB, nicht in git) – so wie `fassung-setzen.js` esbuild für `min/` holt. Geht das nicht (kein
+  Netz), bricht der Bau laut ab und nennt die geänderte Datei; der Haken lässt den Commit trotzdem durch (sein Text bleibt
+  für alle Bäume), dann sofort `npm ci` und `node werkzeug/fassung-setzen.js --nur-stempel` nachholen.
 
 ---
 
@@ -1276,3 +1282,280 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
         A/A-Bereichs). Ausschließen lässt sich ein kleiner Preis beim Laden mit warmem Speicher (ein Modul mehr vor
         app.js: holen, übersetzen, verknüpfen) damit nicht; nach oben begrenzt auf etwa +50 ms bei CPU 4×. Schneller
         wird der Start durch M4 nicht – das stand schon so im Ergebnis oben; der Gewinn bleibt das kleine Update.
+
+### M5 Stadt (Zweig `modul-stadt`, Grundlage fc5e3ae3; Commits f36468ab, d42f0348, 015c77df, fb22207d, b3143974, …; Prüfung Runde 1: 183b9512, fa914261, 8717eead, fbb3a64b, …; Runde 2: bfc356b8, …)
+
+- 01.–07.11. **M5 — die Stadt als eigene Vite-Seiten.** Die leichte Stadt (die im Spiel) bleibt unsichtbar gleich. Die
+  Baukasten-Stadt (`stadt.html`, im Spiel nicht verlinkt) ändert sich SICHTBAR, siehe „Fund“ (berichtigt in Prüfung
+  Runde 1; vorher stand hier für beide „unsichtbar“). Sonst: dasselbe Ladebild, dasselbe
+  `?quelle=1`, dieselben Adressen (`stadt.html`, `stadt-leicht.html`; `spiel.js` bettet die leichte Stadt unverändert
+  ein). index.html, sw.js, app.js, livechat.js, spiel.js: Byte für Byte wie fc5e3ae3; `DMA_MODUL` nennt nur `rueckfrage`.
+  - **Aufbau:**
+    - `src/stadt.html`, `src/stadt-leicht.html` sind die Quellen der Seiten (Vite-Mehrseiten-Eingänge). Bearbeitet wird
+      dort. `stadt.html`/`stadt-leicht.html` im Hauptordner sind gebaut wie `min/` (Hinweis direkt hinter dem doctype).
+    - `vite.config.mjs`: `SEITEN` = die Listen der Packer (Reihenfolge gleich) und das Plugin `dma-seiten`. Der Eingang
+      einer Seite ist ein erzeugtes Modul mit den Dateien in Reihenfolge, jede mit `?seite=<name>` – `stadt/boden.js`
+      steckt so in beiden Seiten, kein gemeinsames Stück (flacher Graph). Hinter `modelle.js` folgt
+      `window.STADT.GEBUENDELT = true`, dann die Modelle aus `modelle.js` (ausgeführt wie im Packer). Auto-Schau, Quests
+      und Äcker: im Bündel die Vertretung, die Datei selbst als eigenes Stück (`bau/leicht-autoschau-…`,
+      `leicht-quests-…`, `leicht-korn-…`, genannt in `window.LEICHT_*`). `LEICHT_STEMPEL` = Stempel von
+      `stadt-leicht/bilder/verzeichnis.json` wie bisher (31e0a8453b). `experimental.renderBuiltUrl` schreibt in der Seite
+      `bau/<datei>`. Bündel und Stücke müssen ohne import/export sein (sonst Baufehler).
+    - Gebaute Seite: im Kopf `<link rel="modulepreload">` fürs Bündel und das Stilblatt aus `bau/`. Am Ende der Lader
+      (Block SKRIPTE) und direkt dahinter das Bündel als festes `<script type="module" src>` (läuft wie bisher nach
+      allen anderen Skripten; bis Prüfung Runde 2 schrieb der Lader es per `document.write`, siehe dort). Mit
+      `?quelle=1` kommen die Quellen einzeln (`?t=`) und das Quell-Stilblatt statt des gebauten. Seit Prüfung Runde 1
+      schreibt ein kleines Skript VOR den beiden festen Zeilen im Kopf mit `?quelle=1` gleich das Quell-Stilblatt; der
+      Lader nimmt am Ende nur das gebaute weg (vorher kam das Quell-Stilblatt erst mit dem Lader).
+    - `werkzeug/modul-bauen.js`: Die Prüfsumme umfasst auch alles, was eingeht (`bau/quelle.json` „eingaben“, 93
+      Dateien: stadt/…, stadt-leicht/…, das Verzeichnis der Bilder). Eine Änderung dort baut beim nächsten Commit neu;
+      vorher musste man die Packer von Hand rufen. Seiten kommen über `.neu` + Umbenennen in den Hauptordner. Eine im
+      Hauptordner von Hand geänderte Seite gibt eine laute Meldung, nichts wird überschrieben, Rückgabe ≠ 0
+      (887-stadt B8). `DMA_MODUL` nur aus `src/*.js`. `fassung-setzen.js` legt die gebauten Seiten mit `git add` an.
+    - Die Vertretungen (`autoschau-laden.js`, `quests-laden.js`, `korn-laden.js`) holen ihr Stück als Modul
+      (`s.type = "module"`). Vites Ausgabe hat kein `"use strict"` mehr (Module sind immer streng), klassisch geladen
+      liefe sie locker. Nach einem Netzfehler bekommt der nächste Versuch der Auto-Schau eine eigene Adresse
+      (`?wieder=n`, Prüfung Runde 1).
+    - Die Packer `stadt-packen.js`/`leicht-packen.js` sind gelöscht (b3143974, nach dem Nachweis). Die Zwergbilder
+      (`leicht-zwerg.py`, liefen im Packer mit) ruft jetzt `stadt-backen.js` am Ende. Achtung: PIL fehlt auf diesem
+      Rechner, der Schritt meldet das nur, wie vorher im Packer. Die Aufruf-Zeilen der Sonden nennen `modul-bauen.js`.
+    - Die alten `stadt/stadt.min.js` und `stadt-leicht/{leicht,autoschau,quests,korn}.min.js` bleiben EINE Fassung
+      liegen. Sie sind der Rückfall für eine Seite aus dem Browserspeicher (≤ 10 min nach dem Update). Sie werden nicht
+      mehr gebaut und danach gelöscht.
+  - **Fund (für die Baukasten-Stadt SICHTBAR):** `stadt/stadt.min.js` war veraltet. Es fehlten 7 Modelle (kuh, schwein,
+    huhn, schweinestall, holzhuette, jagdhuette, sternwarte), der Packer lief nach FASSUNG 811/833 nicht mehr. Die
+    Baukasten-Stadt hatte gebündelt 56 Modelle, mit `?quelle=1` 65 (887-stadt S5, Gegenprobe). Jetzt baut der Haken,
+    gebaut und `?quelle=1` haben beide 65. Live (Fassung 887) läuft noch das alte Bündel, M5 bringt also den heutigen
+    Stand der Quellen – das sieht man:
+    - Menü „Häuser“ (gemessen 08.11., `scratchpad/m5nb1/haeuser.js`, live f619cbe7 gegen M5): 19 statt 15 Karten, neu
+      Schweinestall, Holzfällerhütte, Jagdhütte und Sternwarte. Kuh (auch die braune), Schwein, Huhn und Hahn sind
+      versteckt, nur über die Werkbank zu sehen. Die anderen Reiter bleiben gleich (Wahrzeichen 7, Weihnachten 6, Deko
+      12, Natur 3, Fahrzeuge 5).
+    - Nicht nur die 7 Modelle: auch frisch gepackt ohne sie unterschied sich das alte Bündel vom heutigen Stand (Prüfer:
+      133 bzw. 276 Arten von Zeichenketten, Eigenschaftsnamen und Zahlen, u. a. aus `boden.js` und `pinsel.js`). Werkbank
+      „Sternwarte“: 34 Bildpunkte stabil anders, ebenso gegen M5 mit `?quelle=1` (kommt also aus den Quellen, nicht aus
+      Vite). Winterhausen (Sommer) und Werkbank „Kirche“: 0 Bildpunkte.
+    - Inhaltlich richtig: so steht es in den Quellen, und Xander hat es verlangt (Funk 255, Fassungen 811 und 833). Ein
+      Vorschlag ist deshalb nicht nötig; Funk-Antwort und Werkstatt nennen es aber als sichtbar (Funk-Zeile unten, Prüfung
+      Runde 1).
+    - Die leichte Stadt war aktuell: der Packer lieferte am 01.11. Byte für Byte die Dateien in git.
+  - **Größen** (Byte, in Klammern gz -9):
+    - Leichte Stadt: Bündel 369 165 → 368 107 (137 052 → 136 920). Stilblatt 36 881 → 26 311 (9 534 → 6 043), Vite
+      verkleinert es jetzt. Quests 192 385 → 185 808, Äcker 10 951 → 10 929, Auto-Schau 21 979 → 21 947.
+    - Baukasten-Stadt (frisch gepackt → Vite): 3 626 699 → 3 579 901 (1 258 757 → 1 243 975). Rollup wirft toten Code
+      weg. Stilblatt 9 707 → 8 012.
+    - Ziel es2020 lässt `?.`/`??` stehen. Der Packer schrieb sie für es2019 um, die Quellen und `min/` haben sie längst.
+    - Platz: jede Code-Änderung an stadt/ legt ein neues Bündel von 3,5 MB (gz 1,2 MB) in git. `bau/` hält die
+      Stücke der letzten 3 Manifeste.
+  - **Nachweis „dasselbe“:**
+    - Vertrag mit den Packern fest in der Sonde: dieselben Dateien, Reihenfolge, Vertretungen, window-Namen und Stempel
+      (887-stadt B2).
+    - Inhalt der Bündel (Zeichenketten, Vorlagen-Texte, Eigenschaftsnamen, Zahlen über Rollups `parseAst`), leichte
+      Stadt: 32 860 gegen 32 818 Einträge. Abweichend sind nur 23× `"use strict"`, 3× `type`/`"module"` (die
+      Vertretungen), `null`-Vergleiche aus der es2019-Umschreibung und eingesetzte Konstanten. Quests, Äcker und
+      Auto-Schau unterscheiden sich nur im `"use strict"`.
+    - **Pixelvergleich** (`scratchpad/m887/stadt/pixel.js`), verschränkt A B B A, A = fc5e3ae3, für die
+      Baukasten-Stadt der Packer frisch auf denselben Quellen (das zeigt: Vite baut dasselbe wie der Packer; gegen das
+      alte Bündel, das live läuft, ist die Baukasten-Stadt sichtbar anders, siehe „Fund“). Uhr angehalten: Date, performance.now und die Zeit der
+      Bildschleife fest, Zufall mit festem Startwert. Ohne das zeigt schon derselbe Stand zweimal 4–13 % andere Punkte
+      (Rauch, Wasser, Züge, Mühle).
+      - Ansichten: leichte Stadt Winter-Prüfbild, Herbst Tag 900 × 600, Sommer Nacht, Telefon 360 × 780 Tag,
+        390 × 844 Nacht, kleiner Rahmen 360 × 225, Ladebild; Winterhausen (`stadt.html?neu=1&still=1`), Werkbank Dom.
+      - Ergebnis: in keiner Ansicht ein stabiler Bildpunkt (in beiden Läufen von A und von B gleich) mit A ≠ B. Je
+        Ansicht ist mindestens ein Paar A/B 0 Bildpunkte verschieden; Winterhausen, Dom, Telefon-Tag und Ladebild
+        (Bündel abgewiesen: nur was vor den Skripten steht, mit dem verkleinerten Stilblatt) beide Paare.
+      - Die übrigen Abweichungen sind so groß wie A/A bzw. B/B: zweiter gegen ersten Lauf, bei A und B gleich häufig.
+    - **Sonde 887-stadt** (neu, B1–B8 + S1–S5). Gegenprobe gegen fc5e3ae3: B 38 rot, S 8 rot. Darunter S5: gebündelt 56
+      Modelle, mit `?quelle=1` 65 (der veraltete Stand).
+  - **Messung** (`scratchpad/m887/stadt/messen.js`, Werte in `scratchpad/m887/stadt/mess/`):
+    - Aufbau: leichte Stadt wie im Spiel (`?eingebettet=1&mini=1&demo=1`), Telefon 393 × 800, CPU 4×. Leitung im
+      Server wie ladezeit-messen.js (HTTP/2 mit TLS, gzip, ETag, max-age=600, RTT je Anfrage, 2 RTT je Verbindung,
+      geteilte Bandbreite), supabase-js 2.117.3 gedrosselt. Profil auf der Platte, kalt → wieder. A = fc5e3ae3, B = M5,
+      verschränkt.
+    - Angaben: Median; Unterschied B − A gepaart mit 95-%-Bereich. Vorher festgelegtes Maß: „Stadt fertig“ (erstes Bild,
+      `__fertig`).
+    - 4G (9 Mbit/s, 60 ms), 7 Paare:
+      - kalt fertig 4 129 → 3 747 ms, **−70 [−522 … +106]** (5↓ 2↑); DOMContentLoaded −170 [−346 … −10] (6↓ 1↑),
+        FCP (Ladebild) +16 [−4 … +56].
+      - wieder fertig 4 088 → 3 756, −633 [−1 551 … +180].
+      - A/A (5 Paare): kalt fertig +207 [−695 … +424], DCL +12 [−549 … +459], wieder fertig +530 [+212 … +1 120].
+      - Rauschgrenze also mindestens ±500 ms. Das 4G-A/A „wieder“ schließt die 0 aus: reines Rauschen, wie im Plan
+        gewarnt.
+    - 3G (1,6 Mbit/s, 150 ms), 6 Paare:
+      - kalt fertig 5 051 → 5 230, +244 [−649 … +435] (2↓ 4↑); DCL −40 [−288 … +251].
+      - wieder fertig 3 614 → 3 611, −75 [−286 … +577].
+      - A/A (5 Paare): kalt fertig −1 [−558 … +454].
+    - **Ergebnis: kein Unterschied über der Rauschgrenze, weder schneller noch langsamer.** Übertragen kalt (4G)
+      575 → 571 KB, Anfragen 45 → 45.
+    - Erwarteter Gewinn: das Bündel wird früher angefordert (modulepreload statt nach supabase-js). Er zeigt sich nur
+      im DOMContentLoaded bei 4G, und der Bereich liegt am Rand. Beim Wiederöffnen kam das Ladebild mit M5 öfter sofort
+      (FCP < 400 ms in 3 von 7 statt 1 von 7). Das Modul blockiert den Parser nicht mehr, gesichert ist es nicht.
+    - Baukasten-Stadt (`stadt.html?neu=1`), 4G, bis die Stadt-Skripte gelaufen sind, gegen den frisch gepackten Stand,
+      4 Paare (der fünfte lief in die 10-min-Grenze, kein A/A):
+      - kalt 2 389 → 2 320 ms (−78; alle 4 Paare schneller, −49 … −272), wieder 1 215 → 1 151 (−59; 2↓ 2↑).
+      - Übertragen 1 252 → 1 224 KB, Anfragen 5 → 4.
+      - Das erste Bild der Baukasten-Stadt braucht unter CPU 4× rund 13 s Rechnen, bei A und B gleich.
+  - **Sondenstand** (07.11., dieser Baum = „neu“; „alt“ = fc5e3ae3 als Verweis-Farm ohne Vollkopie:
+    `scratchpad/m887/stadt/alt-baum.js`; je Block eine Sperre, höchstens 10 min; Protokolle in
+    `scratchpad/m887/stadt/sonden-{b,c}/`):
+    - **Neue Sonde `887-stadt`:**
+      - neu grün: B1–B8 nach dem Löschen der Packer, S1–S5 20/0.
+      - Gegenprobe auf fc5e3ae3: B 38 rot, S 8 rot, u. a. S5 „gebaut 56, ?quelle 65 Modelle“.
+    - **887-bau:**
+      - neu: B (alles grün) und S 9/0.
+      - S auf fc5e3ae3 auch 9/0: das prüft index.html, und die ist unverändert.
+    - **885-swvorladen:**
+      - neu 32/0, mit Prüfung 12 (bau/).
+      - alt 27/2: die 2 sind „git show 02613a71 nicht lesbar“, die Verweis-Farm hat kein git. sw.js ist unverändert.
+    - **Stadt-Sonden neu grün** (ok/rot):
+      - 844 35/0, leicht 26/0, stadt-bedienung 20/0, 821 43/0, 832 41/0, 855 11/0, 799 40/0, 857 10/0, 850 6/0.
+      - 822 27/0, 874 47/0, 810 40/0, 812-drehschieber 13/0, 812-rathaus-windmuehle 12/0, 814 30/0, 815 44/0.
+      - 818 37/0, 819 19/0, 820 31/0, 823 46/0, 825 32/0, 826 32/0, 828 43/0, 829 25/0, 831 13/0.
+      - 846 9/0, 846b 16/0, 847 23/0, 849 9/0, 851 7/0, 854 30/0, 882 8/0.
+      - Auf fc5e3ae3 ebenso grün: 844 (01.11.: 1 rot „Ladebild geht“, Rechner überlastet, 823 s), leicht, stadt-bedienung,
+        821.
+    - **Neu rot, auf fc5e3ae3 genauso rot** (nicht durch M5):
+      - 807 1 (Lage der Bahn), 808 2 (schräge Bilder der Häuser aus 833 beim Start), 811 4 (Schweine/Auslauf).
+      - 875 2 (Azure-Wortliste), 884-ton310 1 (A1 Ton-Knopf neue Leitung; alt 2).
+      - 824 1: das git-Objekt f3fabf3 fehlt in diesem Verlauf, auf keinem Stand prüfbar.
+    - **Eigene Panne, behoben:** Im ersten Durchgang erbte die Umgebung die Variable `ALT` des Läufers. 822, 874 und
+      884 lesen `ALT` selbst (für ihre Gegenprobe) und brachen sofort ab. Ohne die Variable sind sie wiederholt (oben).
+  - **Offen:**
+    - Wiederholungen der Sonden, die nur am 01.11. unter Überlast rot waren. Auf fc5e3ae3 sind sie am 07.11. grün.
+      Sie warten auf das Ende der 887-Prüfung (`/tmp/claude-0/vorrang-887`, Läufer
+      `scratchpad/m887/stadt/reihe4.sh`, Ergebnis in `sonden-c/uebersicht.txt`):
+      - 833 neu: 2 rot „neue Stadt im Spiel geladen“, Teil A abgebrochen; alt 30/0.
+      - 817 neu: 1 rot „Saison echt“ meldete am 01.11. halloween; alt 48/0.
+      - 809 neu: Bildschirmfoto außerhalb des Bildes, Abbruch; alt 42/0.
+    - Dazu der alt-Gegenlauf zweier Sonden, die neu je 1 rot haben:
+      - 830: Auto 2,14 m statt ≈ 2 m neben dem Weg.
+      - 848: „836 Lexical“, schon in SPIELSYSTEM.md als rot vermerkt.
+    - Die alten `.min.js` der Stadt nach einer Fassung löschen.
+    - PIL für `leicht-zwerg.py` fehlt auf dem Prüfrechner. Neue Zwergbilder entstehen hier also nicht; das war schon mit
+      dem Packer so.
+    - Einmischen: berichtigt in Prüfung Runde 1 (unten). Vorher stand hier, gegen `live-haenger` gebe es nur den Konflikt
+      in `index.html`; das gilt nur für live-haenger selbst, nicht für `main`.
+    - Hauptbaum: beim ersten Bau nach dem Einmischen holt `modul-bauen.js` Vite (einmal `npm ci`, ≈ 10 s, 34 MB, nicht in
+      git). Wer das nicht im Haken haben will: vorher von Hand `npm ci` im Hauptbaum.
+    - Quests und Äcker laden ihr Stück einmal, ohne zweiten Versuch (wie vorher klassisch, kein Rückschritt). Nach einem
+      Aussetzer bleiben bis zum Neuladen die einfache Fläche bzw. keine Quests. Unsichtbare Verbesserung für später: ein
+      zweiter Versuch mit eigener Adresse wie bei der Auto-Schau.
+  - **Prüfung Runde 1 (08.11.; Commits 183b9512, fa914261, 8717eead, fbb3a64b, b373a53b, …):**
+    - **supabase-js fest (wichtig):** Fassung 887 (main f619cbe7) legt in `stadt-leicht.html` supabase-js auf @2.119.0
+      fest; die neue Quelle `src/stadt-leicht.html` lud noch „@2“. Gemischt hätte die Seite die Pinnung gehabt, aber
+      `modul-bauen` hätte sie für „von Hand geändert“ gehalten und JEDEN Bau abgebrochen (auch rueckfrage und M3/M4:
+      karte null, Rückgabe 2). Neu aus src/ gebaut wäre die Pinnung weg gewesen.
+      - Jetzt steht @2.119.0 in `src/stadt-leicht.html`. Die gebaute Seite ändert sich nur in dieser Zeile, das Bündel
+        gar nicht. 822 und 874 fangen die feste Adresse ab (die Zeile ist byte-gleich mit main).
+      - Nachgestellt (`scratchpad/m5nb1/einmisch.sh`: `git merge-tree`, schlanker Auszug, danach `modul-bauen.bauen`):
+        HEAD + main: kein Fehler, nichts zu bauen, Seite Byte für Byte, Pinnung da. Gegenprobe e53d7280 + main: „von Hand
+        geändert“, karte null. HEAD + module-umbau (d5a96a2f) und HEAD + live-haenger (2dcd6f83): grün wie HEAD + main.
+      - Sonde 887-stadt B9 (fest in Quelle und Seite). Gegenprobe e53d7280: 2 rot.
+    - **Einmischen, berichtigt:**
+      - Gegen `live-haenger` (2dcd6f83): nur `index.html` (Stempel neu bauen, Plan 0.11).
+      - Gegen `main` (f619cbe7, hat nach live-haenger weitere Commits) drei Konflikte:
+        - `index.html`: Stempel neu bauen, Plan 0.11.
+        - `werkzeug/fassung-setzen.js`: an derselben Stelle stehen `gleichlaufPruefen` (module-umbau, M2) und
+          `supabaseFassungPruefen` (887). Beide behalten.
+        - `werkzeug/pruefe-885-schlank.js`: `DMA_MODUL` herausnehmen (module-umbau) gegen `ohnePin` (887). Beides
+          anwenden: `ohnePin(ohneFoto(HTML.replace(…DMA_MODUL…, "")))`, dazu die info-Zeile aus 887.
+        - Alle drei gibt es schon zwischen module-umbau (fc5e3ae3) und main; M5 bringt keinen dazu.
+      - Gegen `module-umbau` (d5a96a2f): nur das Ende dieses Dokuments. Mit fa914261 rieb sich auch die Export-Zeile von
+        `modul-bauen.js` mit M3b; seit b373a53b stehen die neuen Namen in einer eigenen Zeile, und die Datei mischt sich.
+    - **Ohne Vite (wichtig):** Der Hauptbaum hat kein `node_modules`. Nach M5 hätte dort eine Änderung an stadt/ nur
+      „Vite fehlt … src/ hat sich geändert“ gemeldet (falsch, es war stadt/), Rückgabe 2. Der Haken hätte den Commit mit
+      alten Seiten durchgelassen; die Packer liefen auch ohne `node_modules`. Jetzt:
+      - `viteHolen` in `modul-bauen.js`: Fehlt Vite in einem git-Baum, holt es EINMAL `npm ci --prefix <baum>`. Die
+        Fassungen kommen aus `package-lock.json`, also entstehen dieselben Stücke wie in jedem Baum. Nachgestellt in einem
+        schlanken git-Baum ohne `node_modules`: 10 s, 34 MB, `rueckfrage-CfC8vCNA.js` wie hier, nichts in git.
+      - Kein npm ohne git (Vergleichsstände, Wegwerf-Ordner der Sonden), ohne `node_modules/` in `.gitignore` (Regel 6)
+        und mit `DMA_KEIN_NPM=1`. Eine Sperre verhindert zwei Läufe zugleich.
+      - `geaendert`: die Meldung nennt, was seit dem letzten Bau geändert ist (git diff gegen den Commit von
+        `bau/quelle.json`), dazu die alten Seiten und die Abhilfe. Die Voraussetzung steht jetzt im Plan (M5).
+      - Bleibt: Der Haken kann den Commit nicht aufhalten (sein Text gilt für alle Bäume). Ohne Netz bleibt es bei der
+        lauten Meldung; 887-bau B5 und 887-stadt B4/B6 finden den Stand.
+      - Sonde 887-stadt B10 (npm als Attrappe im PATH: scheitert, DMA_KEIN_NPM, .gitignore ohne, gelingt, zweiter Lauf,
+        ohne git). Gegenprobe e53d7280: 6 rot. 887-bau B8 („ohne Vite“ im Wegwerf-Ordner ohne git) grün.
+    - **Auto-Schau nach einem Netzfehler (wichtig):** Ein Modul, dessen Abruf scheiterte, merkt sich der Browser für die
+      Seite. Die Vertretung versuchte es mit derselben Adresse noch einmal, und das scheiterte sofort, ohne Netz. Nach
+      einem Aussetzer im Mobilnetz blieb die Auto-Schau deshalb bis zum Neuladen aus (nur die Autokarte).
+      - Jetzt hat jeder weitere Versuch eine eigene Adresse (`?wieder=n`). Der erste bleibt ohne Abfrage und kommt aus
+        dem Speicher des Helfers; Adressen mit Abfrage reicht `sw.js` ans Netz durch.
+      - Sonde 887-stadt S6 (erster Abruf abgebrochen): 2 Abrufe, echte Schau. Gegenprobe fa914261: 1 Abruf, die
+        Vertretung bleibt (wie vom Prüfer gemessen).
+    - **Baukasten-Stadt sichtbar (klein):** oben berichtigt (Einleitung und „Fund“). Selbst gemessen: Häuser 15 → 19.
+    - **`?quelle=1` (klein):** Das Quell-Stilblatt kam erst mit dem Lader am Ende, das gebaute hatte er vorher entfernt.
+      Bis dahin konnte die Seite ohne Gestaltung stehen.
+      - Jetzt schreibt ein Skript VOR den festen Kopfzeilen mit `?quelle=1` gleich das Quell-Stilblatt. 887-stadt S2/S5:
+        Es steht schon, wenn der Körper der Seite beginnt. Gegenprobe 8717eead: 3 rot. Bis der Lader am Ende das gebaute
+        wegnimmt, gilt bei gleichen Regeln das gebaute (es steht dahinter). Nach einem Commit stammen beide aus derselben
+        Quelle; nur wer `stadt/stadt.css` oder `leicht.css` gerade ändert und noch nicht gebaut hat, sieht in den ersten
+        Bildern den gebauten Stand.
+      - Nicht übernommen: `?quelle=1` holt das Bündel weiter mit (modulepreload, 368 KB bzw. 3,5 MB, nur Prüf- und
+        Backwege). Das ginge nur, wenn auch der Nutzerweg die beiden Zeilen per Skript schreibt. Gemessen
+        (`scratchpad/m5nb1/kopf-zeit.js`, CPU 4×, 40 ms je Antwort, 8 Paare verschränkt): Bündel und Stilblatt werden dann
+        später angefragt, Median 60 → 82 ms, in jedem Lauf (Skript ganz oben im Kopf: 59 → 72). Die festen Zeilen findet
+        der Vorab-Leser des Browsers schon in den ersten Bytes. Mit dem Skript davor: 64 → 58,5 bzw. 60 → 58, also nicht
+        später. Der Nutzerweg geht vor (Funk 255).
+    - **Sondenstand Runde 1** (08.11., dieser Baum, je Sonde eine Sperre, Protokolle in `scratchpad/m5nb1/sonden/`):
+      - 887-stadt B 57/0 (mit B9/B10), S 27/0 (mit S6); 887-bau B+S grün (rc 0).
+      - Stadt-Sonden grün: 821 43/0, 822 27/0, leicht 26/0, stadt-bedienung 20/0, 844 35/0, 799 40/0, 874 47/0,
+        832 41/0, 812-drehschieber 13/0, 812-rathaus-windmuehle 12/0 (gleiche Zahlen wie am 07.11.).
+      - 855: wechselnd 10/1 und 11/0, „Stoppelfeld heller als reifes Korn“ liegt an der Grenze (Stroh immer 184, reifes
+        Korn 174–180, verlangt +8). Neu 1 grün/2 rot, e53d7280 (vor dieser Runde) 2 grün/1 rot: nicht durch M5; das
+        Stück der Äcker ist unverändert (`leicht-korn-D4FsCl6A.js`). Weitere Läufe scheiterten an der Sperre (M3/M4
+        maßen gerade).
+    - **Funk-Zeile (für den Dirigenten):** „M5 Stadt, Prüfung Runde 1: Die Baukasten-Stadt (stadt.html, im Spiel nicht
+      verlinkt) sieht nach M5 anders aus als live, denn live lief noch ein altes Bündel. Im Menü ‚Häuser‘ stehen 19 statt
+      15 Karten (neu Schweinestall, Holzfällerhütte, Jagdhütte, Sternwarte), Kuh, Schwein und Huhn gibt es nur über die
+      Werkbank – so steht es seit den Fassungen 811 und 833 in den Quellen. Die Stadt im Spiel bleibt gleich. Dazu: Die
+      Auto-Schau kommt nach einem Netzaussetzer wieder, und supabase-js bleibt fest auf 2.119.0.“
+  - **Prüfung Runde 2 (08.11.; Commit bfc356b8, …): kein `document.write` für Module.**
+    - **Restrisiko aus Runde 1:** Der Lader setzte das Bündel per `document.write('<script type="module" …>')` ein. Ob
+      Safari unter iOS 14–17 ein so geschriebenes Modul ausführt, lässt sich hier nicht prüfen (nur Chromium).
+    - **Jetzt:** Das Bündel steht fest als `<script type="module" crossorigin src="bau/…">` direkt hinter dem Lader
+      (Block SKRIPTE). Ein festes Modul läuft nach der HTML-Norm in jedem Browser mit Modulen gleich: nach dem Parsen,
+      vor DOMContentLoaded, nach allen klassischen Skripten – also wie bisher. Ohne `?quelle=1` schreibt die Seite nichts
+      mehr per `document.write`. modulepreload, Stilblatt, Ladebild, `__fertig`, `window.LEICHT_*`, die Vertretungen
+      (Nachladen nach Netzfehler) und die Einbettung in `spiel.js` sind unverändert.
+    - **`?quelle=1`:** Das feste Modul läuft auch dort. Darum steht am Anfang jedes Seiten-Bündels eine Wache
+      `if(!/[?&]quelle=1/.test(location.search)){ … }` (dieselbe Regel wie der Lader). `vite.config.mjs` setzt sie in
+      `renderChunk` (order "post") nach dem Verkleinern und vor dem Namen aus dem Inhalt. Nachgeprüft: neues Bündel =
+      Wache + altes Bündel Byte für Byte + `}` (+44 Byte). Neue Namen: `stadt-leicht-BYt3R0E-.js`, `stadt-rE1U7GHN.js`.
+      Auto-Schau, Quests und Äcker sind unverändert und haben keine Wache (mit `?quelle=1` nennt der Lader sie nicht).
+      Fehlt die Wache, bricht der Bau ab.
+    - **Die Quellen bei `?quelle=1` kommen weiter klassisch per `document.write`** (so lief die Stadt bis M5 auf allen
+      Geräten), nicht per `createElement`. Grund, gemessen (`scratchpad/m5nb2/dcl.js`): per `createElement`
+      (`async=false`) eingesetzte Skripte laufen erst nach DOMContentLoaded. `stadt/baustelle.js` hängt `?baustelle`,
+      `?bauan` und `?kdreh` an DOMContentLoaded. `stadt.html?quelle=1&neu=1&still=1&kdreh=1`: mit `document.write`
+      Kamera gedreht (dreh 1, bei DOMContentLoaded steht `STADT.baustelle`), mit `createElement` nicht (dreh 0,
+      DOMContentLoaded kam vor baustelle.js). Diese Prüfbilder fielen also still aus. Für Nutzer zählt der Weg nicht
+      (nur Prüf- und Backwege).
+    - **Sonde 887-stadt** (angepasst, mit Begründung im Code):
+      - B5 legte das `document.write` des Moduls fest. Jetzt: genau ein Modul aus `bau/`, fest hinter dem Lader.
+      - S2 („kein Modul läuft“) prüfte „kein Modul-Element“. Das feste Element ist jetzt immer da, darum zählt jetzt die
+        Abdeckung (Chromium): keine Funktion des Bündels läuft. Gegenstück S1: gebaut laufen 523 Funktionen. S5 genauso
+        (GEBUENDELT fehlt mit `?quelle=1`).
+      - Neu B11 „kein `document.write` für Module“: Normalweg ohne `document.write`, Wache am Anfang des Bündels (Regel
+        wie im Lader), Bündel mit Wache gültiger Modul-Code (Rollup `parseAst`), Stücke ohne Wache. Neu S1/S5: gebaut
+        kein `document.write` im Browser (mitgeschrieben).
+      - Neu: B 68/0, S 29/0. Gegenprobe 5e698b8b: B 8 rot (B5 ×2, B11 ×6), S 2 rot (S1/S5 „kein document.write“; das
+        Modul kam dort per `document.write`).
+    - **Pixelvergleich** (`m887/stadt/pixel.js`, verschränkt A B B A, A = 5e698b8b, Uhr und Zufall angehalten),
+      leichte Stadt, 7 Ansichten: 0 stabile Abweichungen in 6 Ansichten. In „Telefon Nacht“ waren im ersten Durchgang
+      15 705 Punkte stabil anders: die erleuchteten Fenster des Rathauses. Wiederholt (zwei weitere Durchgänge mit
+      „Telefon Nacht“, einer auch „Sommer Nacht“): 0 stabile Abweichungen, im dritten alle vier Bilder Punkt für Punkt
+      gleich (A/B, A/A, B/B je 0). Dieselben Fenster wechseln auch zwischen zwei Läufen desselben Stands (A/A und B/B
+      bis 5,7 %, max 196). Das ist Rauschen; das Bündel ist ohnehin Byte für Byte derselbe Code.
+    - **Messung Ladebild** (`m887/stadt/messen.js`, leichte Stadt wie im Spiel `?eingebettet=1&mini=1&demo=1`, 4G,
+      CPU 4×, Telefon 393 × 800, verschränkt, A = 5e698b8b; Werte in `scratchpad/m5nb2/mess/`):
+      - 8 Paare, FCP (Ladebild) kalt 596 → 598 ms, B − A **+8 [−20 … +52]** (3↓ 5↑); wieder 168 → 162, −2 [−22 … +4].
+        Stadt fertig kalt +18 [−153 … +111], wieder +19 [−272 … +195]. Übertragen und Anfragen gleich.
+      - A/A (5 Paare): FCP kalt −4 [−16 … +32], fertig kalt −38 [−84 … +110].
+      - **Kein Nachteil über dem Rauschen.** Erwartet war auch keiner: Chromium hat das Bündel schon über modulepreload.
+        Safari kennt modulepreload erst ab 17; bisher fand ein älteres Safari das Bündel erst beim `document.write` am
+        Ende, jetzt kann es der Vorab-Leser im HTML sehen (nicht prüfbar, vermutlich eher früher).
+    - **Sondenstand Runde 2** (dieser Baum, je Sonde eine Sperre, Protokolle in `scratchpad/m5nb2/sonden/`):
+      887-stadt B 68/0, S 29/0; 887-bau 33/0; 885-swvorladen 32/0; 844 35/0.
+      - Die Wiederholungen aus „Offen“ (am 01.11. unter Überlast rot) sind jetzt grün, mit denselben Zahlen wie alt:
+        833 30/0, 817 48/0, 809 42/0. Damit ist dieser Punkt erledigt; offen bleiben dort nur 830/848 (alt-Gegenlauf).

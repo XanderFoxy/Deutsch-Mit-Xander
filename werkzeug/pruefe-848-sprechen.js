@@ -27,7 +27,7 @@
      C SERVER   supabase/functions/aussprache: Aktion „erkennen" (ohne
                 Pronunciation-Assessment), Männerstimme für „stimme: m";
                 spiel.js: der Rahmen darf das Mikrofon benutzen.
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/pruefe-848-sprechen.js
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/pruefe-848-sprechen.js
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");

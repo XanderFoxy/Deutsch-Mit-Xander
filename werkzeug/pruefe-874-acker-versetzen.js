@@ -44,7 +44,7 @@
           Platz erntet, das Zeichen steht dort; nach Neuladen noch dort
    Gegenprobe: ALT=/pfad mit leicht.min.js, leicht.css, korn.min.js des
    alten Stands – dann ist das rot (kein Menü am Acker, kein Versetzen).
-   Aufruf: node werkzeug/leicht-packen.js && node werkzeug/pruefe-874-acker-versetzen.js
+   Aufruf: node werkzeug/modul-bauen.js && node werkzeug/pruefe-874-acker-versetzen.js
            (BILD=/pfad für Bildschirmfotos, NUR=A|B, QUELLE=1 Einzeldateien)
    ===================================================================== */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
@@ -88,9 +88,14 @@ const RAHMEN = (w, h, extra) => `<!doctype html><html><head><meta charset="utf-8
 
 (async () => {
   const srv = http.createServer((q, a) => {
-    const p = decodeURIComponent(q.url.split("?")[0]);
-    const m = /^\/__rahmen874-(\d+)x(\d+)\.html$/.exec(p);
+    const p0 = decodeURIComponent(q.url.split("?")[0]);
+    const m = /^\/__rahmen874-(\d+)x(\d+)\.html$/.exec(p0);
     if (m) { a.writeHead(200, { "Content-Type": "text/html" }); return a.end(RAHMEN(+m[1], +m[2])); }
+    /* MODUL-UMBAU M5: Bündel, Stilblatt und Äcker kommen jetzt aus bau/ (Vite) – für die Gegenprobe dieselben Adressen */
+    let p = p0;
+    if (ALT && /^\/bau\/stadt-leicht-[A-Za-z0-9_-]{8}\.js$/.test(p)) p = "/stadt-leicht/leicht.min.js";
+    if (ALT && /^\/bau\/t-stadt-leicht-[A-Za-z0-9_-]{8}\.css$/.test(p)) p = "/stadt-leicht/leicht.css";
+    if (ALT && /^\/bau\/leicht-korn-[A-Za-z0-9_-]{8}\.js$/.test(p)) p = "/stadt-leicht/korn.min.js";
     if (ALT && (p === "/stadt-leicht/leicht.min.js" || p === "/stadt-leicht/leicht.css" || p === "/stadt-leicht/korn.min.js")) { a.writeHead(200, { "Content-Type": TYP[path.extname(p)] }); return fs.createReadStream(path.join(ALT, path.basename(p))).pipe(a); }
     const f = path.join(WURZEL, p);
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }

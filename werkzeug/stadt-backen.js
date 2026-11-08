@@ -286,6 +286,11 @@ function auftraege() {
   fs.writeFileSync(vzDatei, JSON.stringify(vz));
   await br.close(); srv.close();
   if (dreh.length) await drehblaetterBacken(dreh);
+  /* MODUL-UMBAU M5: die Zwergbilder für den kleinen Rahmen nachziehen – das tat bisher werkzeug/leicht-packen.js, das es
+     nicht mehr gibt. Den Stempel der Bilder (window.LEICHT_STEMPEL aus verzeichnis.json) setzt der Bau vor dem nächsten
+     Commit (werkzeug/modul-bauen.js: das Verzeichnis gehört zu den Eingaben von stadt-leicht.html). */
+  try { require("child_process").execFileSync("python3", [path.join(__dirname, "leicht-zwerg.py")], { stdio: "inherit" }); }
+  catch (e) { console.error("Zwergbilder: " + e.message + " – von Hand: python3 werkzeug/leicht-zwerg.py"); }
 })().catch((e) => { console.error(e); process.exit(1); });
 
 /* =====================================================================
