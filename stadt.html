@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>Baukasten-Stadt</title>
 <meta name="theme-color" content="#1b2440">
+  <script>/* ?quelle=1: gleich das Quell-Stilblatt (das gebaute nimmt der Lader am Ende weg) */ if (/[?&]quelle=1/.test(location.search)) ["stadt/stadt.css"].forEach(function (s) { document.write('<link rel="stylesheet" href="' + s + '?t=' + Date.now() + '">'); });</script>
   <link rel="modulepreload" crossorigin href="bau/stadt-2NQF_YYu.js">
   <link rel="stylesheet" crossorigin href="bau/t-stadt-Y787Fk81.css">
 </head>
@@ -23,7 +24,6 @@
   if (!q) { document.write('<script type="module" crossorigin src="bau/stadt-2NQF_YYu.js"><\/script>'); return; }
   var t = "?t=" + Date.now();
   [].forEach.call(document.querySelectorAll('link[rel="stylesheet"][href^="bau/"]'), function (l) { l.parentNode.removeChild(l); });
-  ["stadt/stadt.css"].forEach(function (s) { document.write('<link rel="stylesheet" href="' + s + t + '">'); });
   ["stadt/kern.js","stadt/pinsel.js","stadt/boden.js","stadt/szene.js","stadt/himmel.js","stadt/baustelle.js","stadt/modelle.js","stadt/oberflaeche.js","stadt/dorf.js","stadt/start.js"].forEach(function (s) { document.write('<script src="' + s + t + '"><\/script>'); });
 })();
 </script>

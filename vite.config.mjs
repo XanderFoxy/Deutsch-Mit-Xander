@@ -147,7 +147,13 @@ function seitenBau() {
       return zeilen.join("\n") + "\n";
     },
     /* Die gebaute Seite: Vite hat das Bündel als <script type="module"> und das Stilblatt in den Kopf gesetzt.
-       Das Bündel wird dort nur angefordert (modulepreload); ob es läuft oder die Quellen, entscheidet der Lader am Ende. */
+       Das Bündel wird dort nur angefordert (modulepreload); ob es läuft oder die Quellen, entscheidet der Lader am Ende.
+       Prüfung Runde 1: mit ?quelle=1 kam das Quell-Stilblatt erst mit dem Lader am Ende (das gebaute entfernte er), bis
+       dahin konnte die Seite ohne Gestaltung stehen. Jetzt schreibt ein kleines Skript VOR den beiden Zeilen mit ?quelle=1
+       gleich das Quell-Stilblatt in den Kopf. Die beiden Zeilen selbst bleiben fest im HTML: geschrieben (nur ohne
+       ?quelle=1) fragte die Seite Bündel und Stilblatt messbar später an (CPU 4×: +13 … +22 ms, in jedem Lauf), denn
+       feste Zeilen findet der Vorab-Leser des Browsers schon in den ersten Bytes. Dass ?quelle=1 das Bündel trotzdem
+       mitholt, kostet nur die Prüf- und Backwege (MODULE-PLAN.md, Logbuch M5). */
     transformIndexHtml: {
       order: "post",
       handler(html, ctx) {
@@ -157,10 +163,13 @@ function seitenBau() {
         const js = "bau/" + ctx.chunk.fileName;
         const tag = '<script type="module" crossorigin src="' + js + '"></script>';
         if (html.split(tag).length !== 2) throw new Error("Bau abgebrochen: " + name + ".html – Vite hat das Bündel nicht wie erwartet eingesetzt");
-        html = html.replace(tag, '<link rel="modulepreload" crossorigin href="' + js + '">');
         /* Stilblätter der Quelle (für ?quelle=1) */
         const quellHtml = readFileSync(ctx.filename, "utf8");
         const stile = [...quellHtml.matchAll(/<link rel="stylesheet" href="\/([^"]+)">/g)].map((m) => m[1]);
+        if (!stile.length) throw new Error("Bau abgebrochen: src/" + name + ".html – kein Stilblatt");
+        html = html.replace(tag, "<script>/* ?quelle=1: gleich das Quell-Stilblatt (das gebaute nimmt der Lader am Ende weg) */ "
+          + "if (/[?&]quelle=1/.test(location.search)) " + JSON.stringify(stile) + ".forEach(function (s) { document.write('<link rel=\"stylesheet\" href=\"' + s + '?t=' + Date.now() + '\">'); });</script>\n"
+          + '  <link rel="modulepreload" crossorigin href="' + js + '">');
         const fenster = [];
         for (const [k, datei] of Object.entries(plan.stempel || {})) {
           const f = resolve(HIER, datei);
@@ -180,7 +189,6 @@ function seitenBau() {
           + "  if (!q) { document.write('<script type=\"module\" crossorigin src=\"" + js + "\"><\\/script>'); return; }\n"
           + "  var t = \"?t=\" + Date.now();\n"
           + "  [].forEach.call(document.querySelectorAll('link[rel=\"stylesheet\"][href^=\"bau/\"]'), function (l) { l.parentNode.removeChild(l); });\n"
-          + "  " + JSON.stringify(stile) + ".forEach(function (s) { document.write('<link rel=\"stylesheet\" href=\"' + s + t + '\">'); });\n"
           + "  " + JSON.stringify(plan.quelle) + ".forEach(function (s) { document.write('<script src=\"' + s + t + '\"><\\/script>'); });\n"
           + "})();\n</script>\n<!-- /SKRIPTE -->";
         const teile = html.split(/<!-- SKRIPTE -->[\s\S]*?<!-- \/SKRIPTE -->/);

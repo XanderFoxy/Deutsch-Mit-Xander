@@ -24,7 +24,8 @@
      B4  die Seite im Hauptordner ist gebaut: Hinweis hinter dem doctype,
          derselbe Inhalt wie beim letzten Bau (bau/quelle.json), und ein
          frischer Vite-Bau aus den Quellen gibt Byte für Byte dieselbe Seite
-     B5  die Seite: modulepreload und Stilblatt aus bau/ im Kopf, der Lader
+     B5  die Seite: modulepreload und Stilblatt aus bau/ fest im Kopf (ein
+         Skript davor schreibt mit ?quelle=1 gleich das Quell-Stilblatt), der Lader
          mit der ?quelle-Liste aus SEITEN, window.LEICHT_* zeigen auf die
          Stücke aus dem Manifest, LEICHT_STEMPEL = Stempel des Verzeichnisses
      B6  bau/quelle.json kennt die Eingaben der Seiten (stadt/…, stadt-leicht/…,
@@ -47,7 +48,8 @@
          Skripten, das erste Bild kommt (__fertig), die Äcker kommen danach
          als Modul aus bau/
      S2  dasselbe mit ?quelle=1: die Quellen einzeln in Reihenfolge, das
-         Quell-Stilblatt, kein Modul läuft
+         Quell-Stilblatt steht schon, wenn der Körper der Seite beginnt, kein
+         Modul läuft
      S3  gebaut und ?quelle=1 haben dieselbe Stadt (window.STADT: dieselben
          Namen)
      S4  im Rahmen wie im Spiel (?eingebettet=1&mini=1): Ladebild klein,
@@ -173,7 +175,12 @@ const PACKER = {
       sage(Boolean(liste) && liste === JSON.stringify(p.quelle), "B5 " + n + ": ?quelle=1 lädt die Quellen des Packers einzeln, in derselben Reihenfolge");
       sage(lader.indexOf("document.write('<script type=\"module\" crossorigin src=\"bau/" + e.file + "\"><\\/script>')") > 0 && !/<script[^>]*src="bau\//.test(h.replace(/<!-- SKRIPTE -->[\s\S]*?<!-- \/SKRIPTE -->/, "")),
         "B5 " + n + ": gebaut läuft genau das eine Modul aus bau/ (im Lader, nach allen anderen Skripten)");
-      sage((/\[("[^"\]]+\.css")\]\.forEach/.exec(lader) || [])[1] === JSON.stringify(p.stil[0]), "B5 " + n + ": ?quelle=1 nimmt das Quell-Stilblatt " + p.stil[0]);
+      /* Prüfung Runde 1: mit ?quelle=1 steht das Quell-Stilblatt gleich im Kopf (ein Skript VOR den festen Zeilen schreibt
+         es); der Lader am Ende nimmt nur das gebaute weg und schreibt kein Stilblatt mehr */
+      const vor = kopf.split('<link rel="modulepreload"')[0];
+      sage((/\[("[^"\]]+\.css")\]\.forEach/.exec(vor) || [])[1] === JSON.stringify(p.stil[0]) && /<script>[^\n]*if \(\/\[\?&\]quelle=1\/\.test\(location\.search\)\) \[/.test(vor)
+        && /querySelectorAll\('link\[rel="stylesheet"\]\[href\^="bau\/"\]'\)/.test(lader) && !/\.css"\]\.forEach/.test(lader),
+        "B5 " + n + ": ?quelle=1 nimmt das Quell-Stilblatt " + p.stil[0] + " gleich im Kopf (Skript vor den festen Zeilen), der Lader nimmt nur das gebaute weg");
       for (const [datei, [, fenster]] of Object.entries(p.nachladen)) {
         const x = manifest[datei];
         sage(Boolean(x) && lader.indexOf("if (!q) window." + fenster + ' = "bau/' + x.file + '";') >= 0, "B5 " + n + ": window." + fenster + " = bau/" + (x ? x.file : "?") + " (nur gebaut)");
@@ -340,6 +347,13 @@ const PACKER = {
       await ctx.addInitScript(() => {
         window.__l887 = { dcl: null };
         document.addEventListener("DOMContentLoaded", () => { const l = document.getElementById("lLade"); window.__l887.dcl = l ? l.className : "fehlt"; });
+        /* Prüfung Runde 1: welche Stilblätter stehen da, wenn der Körper der Seite beginnt? (ohne Gestaltung stünde er sonst da) */
+        const mo = new MutationObserver(() => {
+          if (!document.body || window.__l887.koerper) return;
+          window.__l887.koerper = [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.getAttribute("href").replace(/\?t=\d+$/, ""));
+          mo.disconnect();
+        });
+        mo.observe(document, { childList: true, subtree: true });
       });
       const pg = await ctx.newPage(); const pe = [];
       pg.on("pageerror", (e) => pe.push(String(e.message || e).slice(0, 160)));
@@ -354,10 +368,13 @@ const PACKER = {
         module: [...document.querySelectorAll('script[type="module"]')].map((s) => s.getAttribute("src")),
         klassisch: [...document.scripts].filter((s) => s.src && s.type !== "module").map((s) => s.getAttribute("src").replace(/\?t=\d+$/, "")),
         stile: [...document.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.getAttribute("href").replace(/\?t=\d+$/, "")),
+        kopfStile: [...document.head.querySelectorAll('link[rel="stylesheet"]')].map((l) => l.getAttribute("href").replace(/\?t=\d+$/, "")),
+        vorab: [...document.querySelectorAll('link[rel="modulepreload"]')].map((l) => l.getAttribute("href")),
         stadt: window.STADT ? Object.keys(window.STADT).sort() : null,
         modelle: window.STADT && window.STADT.MODELLE ? Object.keys(window.STADT.MODELLE).sort() : null,
         geb: window.STADT ? window.STADT.GEBUENDELT === true : null,
         lade: window.__l887 ? window.__l887.dcl : null,
+        koerper: window.__l887 ? window.__l887.koerper || null : null,
         korn: !!(window.STADT && window.STADT.korn && !window.STADT.korn.vertretung),
       })).catch((e) => ({ fehler: String(e.message || e) }));
       await ctx.close();
@@ -375,7 +392,8 @@ const PACKER = {
     const mods = (g.module || []).filter((m) => !/leicht-(korn|quests|autoschau)-/.test(m));
     sage(mods.length === 1 && mods[0] === "bau/" + LE.file && !quellen(g).length, "S1 … genau ein Modul aus bau/ (" + (LE.file || "?") + "), keine Quelle geholt",
       (g.module || []).join(", ") + (quellen(g).length ? " · Quellen: " + quellen(g).join(", ") : ""));
-    sage(JSON.stringify(g.stile) === JSON.stringify(["bau/" + (LE.css || [])[0]]), "S1 … das Stilblatt aus bau/", (g.stile || []).join(", "));
+    sage(JSON.stringify(g.stile) === JSON.stringify(["bau/" + (LE.css || [])[0]]) && JSON.stringify(g.kopfStile) === JSON.stringify(g.stile), "S1 … das Stilblatt aus bau/ (im Kopf)", (g.stile || []).join(", "));
+    sage(JSON.stringify(g.vorab) === JSON.stringify(["bau/" + LE.file]), "S1 … das Bündel wird im Kopf vorab angefordert (modulepreload)", (g.vorab || []).join(", "));
     sage(g.lade === "lk-lade lk-vorhang", "S1 … das Ladebild steht, bevor die Stadt läuft (bei DOMContentLoaded da)", String(g.lade));
     const korn = manifest["stadt-leicht/korn.js"] || {};
     sage(g.korn && (g.module || []).indexOf("bau/" + korn.file) >= 0, "S1 … die Äcker kommen nach dem ersten Bild als Modul aus bau/ (" + (korn.file || "?") + ")", (g.module || []).join(", "));
@@ -385,8 +403,11 @@ const PACKER = {
     const qsoll = PACKER["stadt-leicht"].quelle;
     sage(JSON.stringify((q.klassisch || []).filter((s) => /^stadt/.test(s))) === JSON.stringify(qsoll), "S2 … die Quellen einzeln, in der Reihenfolge des Packers (" + qsoll.length + ")",
       (q.klassisch || []).filter((s) => /^stadt/.test(s)).length + " Skripte");
-    sage(!(q.module || []).length, "S2 … kein Modul läuft (das Bündel ist nur vorgeladen)", (q.module || []).join(", "));
-    sage(JSON.stringify(q.stile) === JSON.stringify(["stadt-leicht/leicht.css"]), "S2 … das Quell-Stilblatt statt des gebauten", (q.stile || []).join(", "));
+    sage(!(q.module || []).length, "S2 … kein Modul läuft", (q.module || []).join(", "));
+    sage(JSON.stringify(q.stile) === JSON.stringify(["stadt-leicht/leicht.css"]) && JSON.stringify(q.kopfStile) === JSON.stringify(q.stile),
+      "S2 … am Ende nur das Quell-Stilblatt (im Kopf)", (q.stile || []).join(", ") + " · im Kopf: " + (q.kopfStile || []).join(", "));
+    sage((q.koerper || []).indexOf("stadt-leicht/leicht.css") === 0, "S2 … das Quell-Stilblatt steht schon, wenn der Körper der Seite beginnt (nie ohne Gestaltung)",
+      "beim Körper: " + (q.koerper || []).join(", ") + " · aus bau/ geholt (nur Prüfweg): " + q.abrufe.filter((x) => /^\/bau\//.test(x)).join(", "));
     /* S3 — ausgenommen, was nur die Vertretungen im Bündel anlegen (wie beim Packer): questInfo legt quests-laden.js
        immer an, quests.js unter Sonden (?quelle=1, navigator.webdriver) nicht; korn kommt gebaut erst nach dem Bild */
     const nurVertretung = (k) => k !== "korn" && k !== "questInfo";
@@ -415,6 +436,10 @@ const PACKER = {
       "S5 … genau ein Modul aus bau/ (" + (ST.file || "?") + "), die Modelle stecken drin (GEBUENDELT, keine Quelle geholt)", (sg.module || []).join(", "));
     sage(sq.fertig && !sq.fehler && !sq.n404.length && !sq.pe.length && sq.geb === false && !(sq.module || []).length,
       "S5 stadt.html ?quelle=1: erstes Bild, Quellen einzeln (Modelle nachgeladen), kein Modul", [sq.fehler].concat(sq.n404, sq.pe).filter(Boolean).join(" | "));
+    sage(JSON.stringify(sg.vorab) === JSON.stringify(["bau/" + ST.file]) && JSON.stringify(sg.kopfStile) === JSON.stringify(["bau/" + (ST.css || [])[0]]),
+      "S5 … gebaut: Vorladen und Stilblatt aus bau/ im Kopf", (sg.vorab || []).concat(sg.kopfStile || []).join(", "));
+    sage((sq.koerper || []).indexOf("stadt/stadt.css") === 0 && JSON.stringify(sq.kopfStile) === JSON.stringify(["stadt/stadt.css"]),
+      "S5 … ?quelle=1: das Quell-Stilblatt steht schon, wenn der Körper beginnt, am Ende nur dieses", "beim Körper: " + (sq.koerper || []).join(", ") + " · am Ende: " + (sq.kopfStile || []).join(", "));
     sage(Boolean(sg.modelle && sq.modelle) && JSON.stringify(sg.modelle) === JSON.stringify(sq.modelle) && sg.modelle.length >= 53,
       "S5 … gebaut und ?quelle=1 haben dieselben Modelle (" + (sg.modelle || []).length + ")", sg.modelle && sq.modelle ? "nur gebaut: " + sg.modelle.filter((k) => sq.modelle.indexOf(k) < 0).join(",") + " · nur Quelle: " + sq.modelle.filter((k) => sg.modelle.indexOf(k) < 0).join(",") : "");
     /* S6 (Prüfung Runde 1): die Auto-Schau nach einem Netzfehler. Der erste Abruf des Stücks bricht ab (Aussetzer im
