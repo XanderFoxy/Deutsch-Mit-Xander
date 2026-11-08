@@ -8466,3 +8466,66 @@ einem Update (Nachtrag, Punkt 1); (2) das Absturz-Fenster von höchstens ~20 s +
 Arbeitsspeicher liegen (Server hat die Zeilen angemeldeter Autoren); (3) **Rücknahme auf 886:** 887 legt Profilfotos in den
 Gerätekopien nur als Fingerabdruck (`bildH`) ab, das Foto selbst im Lager („chatbild:…“) und in der Fototafel. Eine 886-Seite
 zeigt in diesen gespeicherten Zeilen bis zum nächsten Laden vom Server keine Profilfotos – Text und Reihenfolge bleiben.
+
+## Fassung 888 — Module (Zusammenführung)
+
+Stand 08.11.2026, Arbeitszweig (noch nicht ausgeliefert, `DMA_VERSION` steht weiter auf 887). Die drei Modul-Zweige sind
+eingemischt: `origin/module-umbau` (M1 Vite-Gerüst, M2 Walkie als Modul, Schritt 0, M3b Übungen je Kategorie als Skript),
+`origin/modul-m4` (M4 Tutor und Betonung als Module, `src/bruecke.js`, `window.DMA_APP`) und `origin/modul-stadt` (M5 Stadt
+als Vite-Seiten, Packer weg). Bau, Messungen und Prüfungen der einzelnen Schritte stehen in **MODULE-PLAN.md, Abschnitt 7
+(„Logbuch Modul“)** – hier nur, was beim Zusammenführen geschah. Für Xander unsichtbar, außer der dort schon festgehaltenen
+Baukasten-Stadt (`stadt.html`, im Spiel nicht verlinkt; M5 „Fund“).
+
+**Commits:** 5f6bc9b4 (module-umbau), f20980d7 (modul-m4), bff18411 (modul-stadt) – je ein Merge-Commit, kein Rebase –,
+dazu 8235b1a3 und 83c684b0 (zwei Sonden berichtigt, unten).
+
+**Konflikte, inhaltlich gelöst (nichts aus 887, nichts aus den Modulen verloren):**
+- `werkzeug/fassung-setzen.js`: `supabaseFassungPruefen` (887) und `gleichlaufPruefen` (M2) stehen beide da.
+- `werkzeug/pruefe-885-schlank.js`: `DMA_MODUL` herausnehmen (M3) UND die Pinnung ausblenden (887):
+  `ohnePin(ohneFoto(HTML.replace(…DMA_MODUL…)))`, dazu die info-Zeile aus 887.
+- `index.html`: `DMA_VERSION` bleibt "887"; der Block `DMA_MODUL`/`DMA_STEMPEL` und `min/` sind neu gebaut
+  (`fassung-setzen.js --nur-stempel`), nie von Hand gemischt. `DMA_MODUL` = bruecke, rueckfrage, uebungen.
+- `MODULE-PLAN.md`: drei Logbuch-Enden (M3b, M4, M5) – alle behalten, in dieser Reihenfolge.
+- `bau/quelle.json`: aus dem Stadt-Zweig (mit „eingaben“/„seiten“) und neu gebaut.
+- **Walkie (87cf9250):** die 887-Änderung an `erkannt()` (nicht bei verdeckter Seite, bei gezogener Bremse „verpasst“) steht
+  jetzt in `src/rueckfrage.js`. Der klassische Rückfall aus src (`quelle-lesen.js --klassisch`) ist Byte für Byte die
+  887-`rueckfrage.js`; Gleichlauf grün. Neues Stück `bau/rueckfrage-COPCYzP8.js` (statt CfC8vCNA aus dem Zweig).
+- **supabase-js überall fest @2.119.0:** index.html, stadt-leicht.html, `src/stadt-leicht.html`, __kz.html (stadt.html lädt es
+  nicht).
+
+**Geprüft, dass nichts zurückgenommen wurde:** je Merge die geänderten Zeilen beider Seiten gegen das Ergebnis verglichen –
+jede Änderung des Modul-Zweigs steht gegen den vorigen Stand im Ergebnis und jede Änderung des Arbeitszweigs gegen den
+Modul-Zweig (Ausnahme nur die neu gebaute Stempelzeile). `git diff f619cbe7..HEAD`: `livechat.js`, `spiel.js`, `messung.js`,
+`backend.js`, `rueckfrage.js` und ihre `min/`-Fassungen unverändert wie in 887. `node --check` aller 164 geänderten Skripte
+ohne Fehler (Module als Modul geprüft).
+
+**Bau im Hauptbaum:** `npm ci` (Vite 6.3.5, esbuild 0.28.2 aus package-lock.json, 34 MB `node_modules/`, nicht in git –
+`.gitignore` hat `node_modules/`), danach `fassung-setzen.js --nur-stempel`: `bau/` mit bruecke-CSGLwKEs, rueckfrage-COPCYzP8,
+uebungen-8HuLU728 + 90 Kategorien, Stadt-Seiten und -Stücke Byte für Byte wie im Stadt-Zweig; 194 Stempel. Ältere, nie
+ausgelieferte Stücke aus den Zweigen (bruecke-CL1VLwwc, rueckfrage-CfC8vCNA, drei Stadt-Generationen) räumt der Bau weg.
+
+**Zwei Sonden berichtigt (Messfehler der Sonde, kein Fehler im Code):**
+- `887-bau` B7/B8 (8235b1a3): M4 kopiert für den Kaskaden-Test ganz `src/`, mit M5 liegen dort aber die Seiten
+  `src/stadt*.html`, die `stadt/` und `stadt-leicht/` brauchen – Vite brach im Wegwerf-Ordner ab („stadt/kern.js fehlt“),
+  5 rot. Die Kopie lässt die Seiten jetzt weg (die prüft `887-stadt`). Danach 42 ok, 0 FEHL.
+- `887-daten` B14 (83c684b0): im ganzen Lauf 2× rot (10 bzw. 14 Teile „vor“ dem Ende des Wortschatzes, erlaubt 8), allein
+  3× grün. Die übrigen 6 Teile starteten 4 ms vor dem Zeitpunkt, den der 20-ms-Blick der Sonde notierte – also nach dem
+  Wortschatz (sie hängen an `ladeWoerter()`), nur sah die Sonde es bis zu 20 ms zu spät. Jetzt hängt sie sich an das
+  Versprechen von `ladeWoerter()`. Ganzer Lauf 96 ok, 0 FEHL; Gegenprobe 943d15c6: B13 3 rot, B14 90 Teile rot, B15/B16 rot
+  (wie im Logbuch M3b).
+
+**Sonden im Hauptbaum (nacheinander, je über die Sperre):** 887-bau 42, 887-bruecke 19, 887-daten 96, 887-stadt 97,
+887-modul-app 97, 887-supabase 16, 885-schlank 43, 876-start-schlank, runde99-rueckfrage und walkie207-flug alle grün; dazu
+885-swvorladen 32, 884-notweg 91, 885-stuecke 43, 885-praesenz 70, 884-ton310 45 grün. **884-leitung:** im ersten Lauf 1 rot
+(A: das erste Angebot trug „hallo|1|neu“ statt „hallo|0|neu“, also erst der zweite Versuch), danach 5× 40/40 grün; 887
+(f619cbe7, verschränkt) 3× 40/40. `livechat.js` ist mit 887 Byte für Byte gleich – vermutlich ein Zeitfall der Sonde, mit
+drei Läufen auf 887 aber nicht ausgeschlossen, dass es dort ebenso selten vorkommt.
+
+**Platz (GitHub Pages, alles außer Pfaden mit „.“-Teil, aus `git ls-tree -r -l`):** f619cbe7 947,92 MB → HEAD 959,08 MB
+(+11,16 MB: `bau/` +10,51 – Übungen je Kategorie 6,25, Stadt/Walkie/Brücke 4,26 –, `werkzeug/` +0,31, MODULE-PLAN.md +0,15,
+`src/` +0,14, package-lock.json +0,05; app.js −0,03). Bis 1 000 MB bleiben ≈ 41 MB. Der größte Brocken bleibt
+`werkzeug/backup` (245 MB) – Vorschlag 6 im Plan, braucht Xanders Ja.
+
+**Offen vor einer Auslieferung als 888:** `node werkzeug/fassung-setzen.js 888` erst bei der Auslieferung; nicht gelaufen
+sind hier die lange 885-sparsam-Reihe und die Ladezeit-Messung gegen 887 (Schritte und Messungen je Modul siehe Plan,
+Abschnitt 7). Die alten `.min.js` der Stadt nach einer Fassung löschen (M5). 884-leitung noch einige Läufe beobachten.
