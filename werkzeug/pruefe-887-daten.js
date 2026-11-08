@@ -316,6 +316,23 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
         }, true);
         const wsUhr = setInterval(function () {
           let V = null; try { V = typeof VocabData !== "undefined" ? VocabData : null; } catch (e) { V = null; }
+          /* FASSUNG 888 (Zusammenführung): das Ende des Wortschatzes genau, nicht erst beim nächsten 20-ms-Blick. Die
+             übrigen Teile starten, sobald ladeWoerter() fertig ist (wortschatzGeplant hängt daran); der Blick alle 20 ms
+             sah das bis zu 20 ms später, und B14 zählte im Hauptbaum 6 Teile 4 ms „vor“ dem Ende mit (14 statt 8, rot).
+             Der Haken hängt sich an das Versprechen, bevor die App es tut – sein Rückruf läuft also vor ihrem. */
+          if (V && !V.__sondeWsHaken && typeof V.ladeWoerter === "function") {
+            try {
+              const orig = V.ladeWoerter;
+              V.ladeWoerter = function () {
+                const p = orig.apply(this, arguments);
+                Promise.resolve(p).then(function () {
+                  if (window.__ueb.ws == null) { window.__ueb.ws = performance.now(); window.__ueb.wsD = Date.now(); }
+                }, function () {});
+                return p;
+              };
+              V.__sondeWsHaken = 1;
+            } catch (e) { /* dann bleibt der 20-ms-Blick */ }
+          }
           if (V && window.__ueb.wsStart == null && V.ladenLaeuft && V.ladenLaeuft()) window.__ueb.wsStart = performance.now();
           if (V && window.__ueb.ws == null && V.alleThemenDa && V.alleThemenDa()) { window.__ueb.ws = performance.now(); window.__ueb.wsD = Date.now(); }
           if (window.__ueb.ws != null) clearInterval(wsUhr);
