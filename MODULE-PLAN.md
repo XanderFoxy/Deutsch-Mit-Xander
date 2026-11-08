@@ -629,7 +629,9 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     bis „Runde starten“ frei war, vergingen 13,9 s (alter Stand 2,2 s – nach 20 s „wird geladen“). Jetzt eine
     Reihenfolge: zuerst der Teil von data-exercises.js (dann erst der Wortschatz, `uebungenVorrang`, höchstens 3 s),
     die ersten 8 Karten gleich nach dem ersten Bild, die übrigen 82 Teile erst nach dem Wortschatz (auf ihn wartet
-    „Runde starten“). Dieselben Bytes, nur in der Reihenfolge, in der sie gebraucht werden. (Ein Zwischenstand, der den
+    „Runde starten“). Dieselben Bytes, nur in der Reihenfolge, in der sie gebraucht werden. **[Berichtigt in
+    Nachbesserung 2: so nicht richtig – was vorgezogen wird, kommt früher, alles andere später als auf d9637a22; und die
+    Reihenfolge griff auf 3G nicht, siehe unten.]** (Ein Zwischenstand, der den
     Wortschatz auch auf die 8 Karten warten ließ, machte 4G gesamt um 1 s schlechter – verworfen, d83b2ab6.)
   - **Platz (GitHub Pages):** +6,26 MB (`bau/uebungen/` 6 253 978 B, Verzeichnis 2 209 B, Merkzettel 109 B) →
     ≈ 954 von 1 000 MB. Danach je Änderung der Daten nur die geänderten Kategorien (+ 2 KB Verzeichnis); die ganze
@@ -800,3 +802,164 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
           → nur als Vorschlag. Mit Punkt 1 entfiele der Zielkonflikt.
        3. Der Zweig `renderChallengePicker` (Duell aus einer Kategorie-Liste) ist nicht angeschlossen – nur gemeldet,
           nicht entfernt.
+  - **Nachbesserung 2 (Prüfer, Runde 2), 08.11.: 37b7396f, 8fe71b0e, a2902a16 (Code, Sonde, Messwerkzeug).** Für
+    Xander unsichtbar: keine neue Anzeige, gleiche Bedienung.
+    1. **Wörterbuch blieb ohne Wortschatz stehen (wichtig).** Die Ursache war die vom Prüfer beschriebene. M3b startete
+       den Wortschatz unter „Lernen“ erst nach dem Teil von data-exercises.js und danach noch einer Ruhepause. Solange
+       hieß `VocabData.ladenLaeuft()` „nein“, und `wortschatzNachziehen()` meldete die Ansicht nicht zum Nachzeichnen
+       an.
+       - Jetzt steht der geplante Start in `wortschatzGeplant` (app.js, activateTab), und `wortschatzNachziehen()`
+         hängt sich daran.
+       - Den Grundfehler gab es schon auf d9637a22: Wer das Wörterbuch im selben Augenblick wie „Lernen“ öffnete,
+         also vor der Ruhepause, sah 289 Einträge bis zum nächsten Öffnen (Sonde B13, auf d9637a22 rot). M3b hatte das
+         Fenster von höchstens 1,5 s auf bis zu 4,5 s verlängert.
+       - Dazu kommen die 658 Wörter aus den Übungstexten. Ist das Wörterbuch offen, während die Sammlung noch kommt,
+         zeichnet es sich bei `dma-uebungen-ganz` neu (vorher erst beim nächsten Öffnen, auf d9637a22 nie).
+       - **Neben-Fund dabei:** Jedes Neuzeichnen klappte eine schon geöffnete Beugungstabelle wieder zu. 853-beugung war
+         auf 8fe71b0e rot (das Neuzeichnen kam jetzt wirklich), auf d9637a22 grün (dort kam es in diesem Ablauf nie).
+         Jetzt zeichnet `dictNeuOhneZuklappen()` neu und lässt offene Tabellen mit ihrer Zeitform und die Schreibmarke
+         stehen. Das gilt auch für das alte Nachzeichnen beim Eintreffen des Wortschatzes.
+    2. **Wortschatz und Sammlung kamen später als auf d9637a22 (wichtig).** Drei Ursachen, alle behoben:
+       - (a) Ruhepause und Vorrang liefen NACHEINANDER (Teil von data-exercises.js, dann bis 1,5 s Ruhepause). Jetzt
+         laufen sie gleichzeitig ab dem Tipp, und der Wortschatz startet nach dem späteren der beiden.
+       - (b) `nachVorrang` hieß „frei“, wenn der Wortschatz noch nicht lief. Deshalb luden die 82 Teile auf 3G
+         gleichzeitig mit ihm. Jetzt wartet es auch auf den geplanten Start.
+       - (c) Nach dem Wortschatz kamen die 82 Teile zu viert, mit einer Ruhepause zwischen jedem Teil. Bei 60 ms
+         Rundreise nutzte das die Leitung nicht aus. Jetzt laden 8 zugleich ohne Pause dazwischen
+         (`UEB_NACH`, data-exercises.js).
+       - Die falschen Sätze sind berichtigt: im Code (data-exercises.js) und oben im Logbuch („Dieselben Bytes …“, „so
+         schnell ganz da wie früher“).
+       - **Was bleibt, ehrlich:**
+         - Der Wortschatz ist auf 4G 0,17 s und auf 3G 1,2 s später ganz als auf d9637a22. Vor ihm kommen jetzt der
+           Teil, die ersten 8 Karten und die Stücke für „Runde starten“, zusammen etwa 0,3 MB.
+         - Die Sammlung ist auf 4G 1,2 s und auf 3G 5,3 s später ganz. Ursache: Das Vorladen der app-Stücke (Raum
+           zuerst, app.js beim `load`) startet jetzt früher. Bisher hielt die eine 1,2-MB-Datei das `load`-Ereignis auf
+           (Zeitleiste MESS_RES, `nb2/messung/diag-*.json`). Dafür sind die Raum-Stücke früher da: auf 4G 0,7 s, auf 3G
+           3,4 s; die übrigen Stücke 0,9 s bzw. 2 s.
+         - Das ist eine Frage des Vorrangs, nicht der Menge, und folgt Funk 255 (die Verbindung zu den anderen zuerst).
+           Die Gegenrichtung (Raum-Stücke hinter die Sammlung, solange „Lernen“ offen ist) steht als Vorschlag unter
+           Offen.
+         - Die Kategorien der Übersicht kommen in ihrer Reihenfolge, deshalb sind die oft gewählten früher da: „artikel“
+           auf 4G −0,12 s, auf 3G −2,4 s gegen d9637a22.
+    3. **„Runde starten“ / Karte / „Annehmen“ warten ohne Hinweis (klein):** Ein Hinweis wäre sichtbar und wurde nicht
+       gebaut (Vorschlag unten). Die Wartezeit ist kürzer geworden, siehe Messung: Karte auf 3G 4,0 → 2,5 s gegen
+       943d15c6 (d9637a22 2,2 s), „Runde starten“ auf 3G 13,3 → 12,2 s.
+    4. **„Dazu üben“/Lernweg zeigte kurz die alte Auswahl (klein):** Steht die Übersicht schon, bleibt sie beim Warten
+       nur noch stehen, wenn ihr Bild zur Auswahl passt (`setupBildPasst`: gleicher Fokus-Hinweis, Häkchen = Auswahl,
+       wie nach einem Tipp auf eine Karte). Sonst erscheint wie auf d9637a22 „Die Aufgaben werden geladen …“. Der Sprung
+       zur Karte wartet darauf (`bringeZielNachOben`, bis 2,4 s).
+    5. **Sonden** (über die Sperre, 08.11. 10:20–11:20 UTC). Die Gegenprobe hier ist 943d15c6, der Stand vor dieser
+       Nachbesserung: Die Mängel 2–4 entstanden mit M3b, d9637a22 hatte sie nicht.
+       - **887-daten neu** (Arbeitsbaum, 8fe71b0e/a2902a16): D 21/21, B1–B7 34/34, B8–B11 17/17, B12+B14 14/14,
+         B13 8/8, B15–B17 grün, B10 auf a2902a16 grün.
+         - B2 ist geschärft: vor dem Wortschatz höchstens 4 Teile zugleich, danach höchstens 8.
+       - **B13 Wörterbuch** (Lernen und Wörterbuch im selben Augenblick / 1,5 s danach bei langsamem Teil / offen,
+         während die Sammlung kommt, mit aufgeklappter Beugungstabelle):
+         - neu: alle grün (289 → 41 267 = Vergleichsseite).
+         - 943d15c6: 3 rot (289 → 289; 4 444 → 4 444; 40 609 → 40 609).
+         - d9637a22: 1. Fall rot (289 → 289, der alte Grundfehler), die beiden anderen dort nicht zu treffen (kein so
+           langes Fenster).
+       - **B14 Reihenfolge** (Teil 2,8 s langsam, Start des Wortschatzes beim Ende der ersten Karten erst geplant):
+         neu 8 Teile vor dem Ende des Wortschatzes (die ersten 8). 943d15c6: alle 90 Teile davor, rot. d9637a22: keine
+         Teile, rot.
+       - **B15 Start** (Ruhepause 1 s nachgestellt, Teil 1,2 s langsam): neu 1 229 ms ≤ 1 661 ms. 943d15c6: 2 228 ms,
+         rot. d9637a22: 1 025 ms, grün (dort kein Warten auf den Teil).
+       - **B16 nach dem Wortschatz:** neu höchstens 6 zugleich (HTTP/1.1 der Sonde: 6 Verbindungen), Sammlung
+         2,1 s nach dem Wortschatz. 943d15c6: 4 zugleich, 21,4 s, rot. d9637a22: keine Teile, rot.
+       - **B17 „Dazu üben“** (alle Teile 3 s langsam, vorher „Meine Wörter“ gewählt): neu sofort „wird geladen“,
+         danach `wenn-ob` mit Fokus-Hinweis. 943d15c6: alte Wahl ohne Fokus-Hinweis, rot. d9637a22: dort nicht zu
+         treffen (ganze Sammlung, Übersicht richtig).
+       - **grün auf a2902a16:** `853-beugung` (auf 8fe71b0e rot, siehe 1.), `876-start-schlank` (der Rotlauf um 11:00
+         war ein ungebautes min/ im Arbeitsbaum), `887-bau`, `885-bereiche`, `885-stuecke`, `885-schlank`,
+         `885-swvorladen`, `885-praesenz`, `884-notweg` („alles grün“; die Zählung „4 rot“ sind Überschriften mit
+         „FEHLT“), `betonung-uebung`, `runde24`, `runde25`, `galgenmaennchen`.
+       - **grün auf 8fe71b0e** (der Unterschied zu a2902a16 ist nur das Neuzeichnen des Wörterbuchs): `887-bruecke`,
+         `858-ladeweg`, `betonung-regeln`, `mehrdeutige-aufgaben`, `636-kein-italienisch`,
+         `868-italienisch-nachladen`, `843-italienisch-nur-im-raum`.
+       - Ergebnisse in `scratchpad/m887/modul/m3b/nb2/sonden/`.
+    6. **Messung** (verschränkt, Chromium CPU 4×, Gast, Tipp sofort, Fall uebung mit Kategorie `wortstellung`, also
+       einer der 82 nicht vorgeladenen; 08.11. 11:20–12:28 UTC, Rechnerlast 1–3,6 bei 4 Kernen;
+       `scratchpad/m887/modul/m3b/nb2/messung/`, zusammengefasst mit `nb2/zusammen.js`).
+       - Neue Marken in `ladezeit-messen.js` (alle ab dem Lernen-Tipp): Wortschatz startet / ganz, „artikel“ da,
+         Sammlung ganz. Dazu MESS_RES=1, das die Abrufe im JSON behält.
+       - **Rauschgrenze (A/A, derselbe Stand zweimal, 4G kalt, 6 Paare):** Lernen → Karten −5 [−136…22], Karte −41
+         [−192…−1], Runde starten −8 [−238…142], Lernen-Tipp → Frage −14 [−612…88], Wortschatz ganz −50 [−623…76],
+         „artikel“ −41 [−283…98], Sammlung ganz −36 [−187…99] ms. Erstes Bild −34 und Langläufer-Summe −167 (6/6): die
+         bekannte Schieflage zwischen den beiden Herkünften, kein Maß, das entscheidet. 3G A/A (2 Paare): alle
+         Übungsmaße innerhalb ±115 ms.
+       - **4G kalt gegen d9637a22, 9 Paare** (Median A → B, gepaarter Median B−A [95 %], Vorzeichen):
+         - Lernen: Tipp → Karten 3 791 → 369 ms (−3 422, 9/9, **Faktor 10,3**).
+         - **Lernen-Tipp → Frage 5 075 → 3 022 ms (−2 091 [−2 189…−1 913], 9/9, Faktor 1,68)**; ab Öffnen 6 461 →
+           4 397 ms (Faktor 1,47). Nach Nachbesserung 1 war es Faktor 1,33.
+         - Karte: Tipp → startklar 536 → 968 ms (+413, 9/9).
+         - Runde starten 421 → 1 206 ms (+736, 9/9, Wortschatz).
+         - Wortschatz startet 230 → 653 ms (+434).
+         - **Wortschatz ganz 2 769 → 3 018 ms (+174 [114…397], 9/9; vorher +1 294).**
+         - **„artikel“ 3 663 → 3 577 ms (−124, 8/9 früher; vorher +1 079).**
+         - **Sammlung ganz 3 663 → 4 874 ms (+1 173 [1 089…1 293], 9/9; vorher +2 961).**
+         - Synchron geholt 463 → 0 ms; längster Langläufer 393 → 250 ms; Summe 1 462 → 1 103 ms.
+       - **3G kalt gegen d9637a22, 6 Paare:**
+         - Lernen → Karten 20 046 → 301 ms (Faktor 67).
+         - **Lernen-Tipp → Frage 24 972 → 15 263 ms (−9 692 [−9 867…−9 579], 6/6, Faktor 1,64**; vorher 1,41); ab
+           Öffnen Faktor 1,50.
+         - Karte 2 199 → 2 454 ms (+271; vorher +1 475).
+         - Runde starten 2 389 → 12 235 ms (+9 856, Wortschatz).
+         - Wortschatz startet 168 → 2 962 ms (wartet auf den Teil, der sich die Leitung mit den Start-Resten teilt).
+         - **Wortschatz ganz 14 015 → 15 236 ms (+1 189, 6/6; vorher +3 602).**
+         - **„artikel“ 19 927 → 17 509 ms (−2 410, 6/6).**
+         - **Sammlung ganz 19 927 → 25 209 ms (+5 290, 6/6; vorher +1 895).** Die Sammlung ist damit auf 3G später als
+           vor der Nachbesserung. Ursache: Die Reihenfolge greift jetzt wie geplant, und dazwischen kommen die
+           app-Stücke (Punkt 2).
+         - Langläufer: längster 2 278 → 290 ms, Summe 4 989 → 974 ms; synchron 4 060 → 0 ms.
+       - **Gegen 943d15c6 (vor dieser Nachbesserung):**
+         - 4G, 6 Paare:
+           - Sammlung ganz 5 880 → 5 103 ms (−724, 6/6).
+           - „artikel“ −207 (6/6).
+           - Wortschatz ganz −94 (5/6, im Rauschen).
+           - Runde starten −122 und Lernen-Tipp → Frage −36: im Rauschen.
+         - 3G, 4 Paare:
+           - **Karte 4 036 → 2 504 ms (−1 508, 4/4, Faktor 1,61).**
+           - Runde starten 13 331 → 12 181 ms (−1 167).
+           - **Lernen-Tipp → Frage 17 879 → 15 210 ms (−2 633, 4/4, Faktor 1,18).**
+           - **Wortschatz ganz 17 851 → 15 209 ms (−2 606, 4/4).**
+           - Dafür „artikel“ 3 713 → 17 485 ms und Sammlung 21 842 → 25 176 ms (+3 300): Vorher luden die Teile wegen
+             des Fehlers (b) gleichzeitig mit dem Wortschatz.
+       - **4G wieder (3. Öffnen, Code-Speicher), 4 Paare gegen d9637a22:**
+         - bereit +15 [−225…275] und Lernen-Tipp → Frage −45: im Rauschen.
+         - Lernen → Karten −91 (4/4); Wortschatz ganz 979 → 695 ms (−284, 4/4).
+         - **Sammlung ganz 336 → 1 385 ms (+1 032, 4/4):** Aus dem Speicher kam die eine Datei in einem Stück. Die Teile
+           halten auch dort die Reihenfolge ein (Offen 4).
+       - **Gast-Start (Fall kz, 4G kalt), 9 Paare gegen d9637a22, dazu A/A mit 3 Paaren:**
+         - bereit +2 [−45…150] (A/A +13).
+         - Wissen-Tipp −2 [−18…151] (A/A +2); Klassenzimmer-Knopf +28 [−44…59] (A/A +13 [0…66]).
+         - Langläufer-Summe +5 [−143…145] (A/A −42).
+         - **Kein Unterschied über dem Rauschen.** (Die ersten 3 Paare zeigten Wissen +33 und Langläufer +145, 3/3; mit
+           9 Paaren verschwand das. Es war Rauschen bei Rechnerlast ~1,3–2.)
+       - **Ergebnis:** Der Hauptweg ist schneller als nach Nachbesserung 1: auf 4G Faktor 1,68 statt 1,33, auf 3G 1,64
+         statt 1,41. Der Wortschatz kommt fast wieder wie auf d9637a22 (4G +0,17 s, 3G +1,2 s statt +1,3/+3,6 s).
+         Später als auf d9637a22 bleibt die GANZE Sammlung: 4G +1,2 s, 3G +5,3 s, wieder +1,0 s. Grund ist die
+         Reihenfolge, nicht die Menge (Punkt 2, Offen 2/4). Die oft gewählten Kategorien („artikel“) sind früher da.
+    7. **Platz:** keine neuen Dateien; `bau/uebungen/` bleibt gleich. Geändert sind `app.js`, `data-exercises.js` und
+       ihre `min/`-Stücke.
+       - Gepackt bis „bereit“ gegen 943d15c6: +0,44 KB (min/app.js +365 B, min/data-exercises.js +58 B, index.html
+         +14 B).
+       - Gegen d9637a22 zusammen +2,8 KB.
+       - Weiter ≈ 954 von 1 000 MB.
+    8. **Offen / Vorschläge:**
+       1. **„Runde starten“ ohne den ganzen Wortschatz** bleibt der größte Rest-Hebel (3G jetzt 12,2 s „Aufgaben werden
+          geholt …“, 4G 1,2 s). Siehe Nachbesserung 1, Offen 1: 41 Kategorien haben ein festes Niveau.
+       2. **Vorrang Sammlung oder Raum-Stücke** (unsichtbar, eine Abwägung für den Dirigenten):
+          - Solange „Lernen“ offen ist und das Vorladen läuft, könnten die app-Stücke (Raum, Rest, spiel.js) hinter die
+            Teile warten.
+          - Erwartet (nicht gebaut, nicht gemessen): Sammlung etwa wie auf d9637a22, Raum-Stücke 0,7 s (4G) bzw. 3 s (3G)
+            später als jetzt, also so spät wie auf d9637a22.
+          - Nicht gebaut, weil Funk 255 die Verbindung zu den anderen vorn sieht.
+       3. **Ein Hinweis am Knopf** („Runde starten“, Karte, „Annehmen“), solange die Aufgaben noch kommen. Er wäre
+          sichtbar und braucht Xanders Ja.
+          - Unsichtbar denkbar (nicht gebaut, nicht gemessen): die 26 Wortschatz-Dateien höchstens zu sechst holen
+            statt alle zugleich. Ein Karten-Tipp bekäme dann 1/7 statt 1/27 der Leitung, auf 3G geschätzt einige
+            Sekunden weniger. Die Gesamtzeit bliebe gleich.
+          - Das berührt data-vocab.js und alle Wortschatz-Wege: eigener Schritt mit eigener Sonde.
+       4. **„wieder“ (3. Öffnen, alles im Speicher):** Die Sammlung ist dort später ganz, weil das Vorladen auch aus dem
+          Speicher die Reihenfolge einhält (siehe Messung). Kam das Verzeichnis aus dem Speicher, könnte es ohne Warten
+          laden (nicht gebaut).
