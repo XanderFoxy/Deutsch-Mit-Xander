@@ -653,7 +653,9 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
       Runde starten −69 [−464…55]; Lernen-Tipp → Frage −573 [−793…0]; bereit +16 [−127…79].
     - **4G kalt, 6 Paare (Median A → B, gepaarter Median B−A [95 %]):**
       - **Lernen: Tipp → Karten 3 779 → 337 ms, −3 442 [−3 538…−3 400], 6/6, Faktor 11,2** (weit über der Rauschgrenze).
-      - Karte: Tipp → startklar 520 → 410 ms, −115 [−161…104] – im Rauschen.
+      - Karte: Tipp → startklar 520 → 410 ms, −115 [−161…104] – im Rauschen. **Berichtigt (Nachbesserung 1): zu
+        günstig** – gemessen war nur „tiere", eine der ersten 8 vorgeladenen Karten. Für die übrigen 82 Kategorien wartet
+        der Tipp länger (wortstellung, unten unter „Nachbesserung 1").
       - Runde starten: Tipp → Frage 442 → 2 067 ms, **+1 650 [1 339…1 767], 6/6 langsamer**: hier wartet jetzt der
         Wortschatz (2,26 MB), der früher während der 3,8 s „Lernen" mitkam (siehe „Weitere Prüfung" oben).
       - **Lernen-Tipp → Frage 5 098 → 3 100 ms, −2 065 [−2 126…−1 672], 6/6, Faktor 1,64**; ab Öffnen 6 514 → 4 435 ms
@@ -703,3 +705,41 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
        die Quelle (6,5 MB, gepackt 1,23 MB); nähmen Rückfall und `spiel.js` die Quelle, wäre der Zuwachs ausgeglichen
        (betrifft `fassung-setzen.js`/Stempel, `spiel.js` gesperrt – nur nach Einmischen von 887 und mit Freigabe).
     4. `DMA_VERSION` unverändert (885); ausgeliefert wird erst über den Hauptbaum.
+  - **Nachbesserung 1 (Prüfer, Runde 1), 08.11.: dc04b613 + a3add543 (Code), Sonde 887-daten B6/B11/B12.** Für Xander
+    unsichtbar (keine neue Anzeige, gleiche Bedienung).
+    1. **Duell-Wege warteten nicht auf die Aufgaben (wichtig).** „Annehmen" (Profil → Freunde) startete die Runde sofort
+       mit `Quiz.startSession`, ohne `ladeUebungen(ids)` wie „Runde starten". Mit M3b fehlten dann nicht vorgeladene
+       Kategorien (beim Prüfer: tiere/wortstellung/stil 0 Fragen – dann brach `renderQuestion` an `q.correct` ab –,
+       artikel 106 statt 705). Den Grundfehler gab es schon auf d9637a22, wenn „Lernen" in der Sitzung nie offen war; M3b
+       machte ihn nach einem kurzen Besuch zum Normalfall. Jetzt `duellRundeVorbereiten(ids)`: erst die Teile der
+       Kategorien (und den Teil von data-exercises.js), dazu die app-Stücke der Runde über die Leitung (höchstens 8 s,
+       dann wie bisher); ein zweiter Tipp währenddessen startet nichts doppelt. Der zweite genannte Weg
+       (`renderChallengePicker` → `challengeErstellen`) ist im Code toter Zweig – `renderChallengePicker` wird nirgends
+       aufgerufen, `friendChallengeTarget` nie gesetzt; „Freund herausfordern" läuft in Wirklichkeit über „Duell starten"
+       in der Übersicht, also über den Knopf von „Runde starten", der schon wartet. Dort ist die Wartezeit trotzdem mit
+       eingebaut (Vorsorge, falls der Zweig wieder angeschlossen wird).
+    2. **Vorladen hörte nach einer Unterbrechung auf (wichtig).** „Anhalten" hieß bisher aufhören; weiter ging es nur über
+       `renderSetup` oder einen neuen Tipp auf „Lernen" (beim Prüfer 40 s nach 3 s Bildschirm-aus: 4 von 90 Kategorien;
+       daran hängen Wortblasen, Kanone, Wackelturm, die `fragenFuerNiveau`-Spiele, IT-Einstufung, Artikel-Garten,
+       Wörterbuch-Erweiterung, offline der Rückfall). Jetzt heißt anhalten WARTEN: `darf()` wird alle 3 s, beim
+       Zurückkommen der Seite (`visibilitychange`) und bei jedem neuen Aufruf wieder gefragt. Angestoßen wird es weiter nur
+       aus „Lernen" (die Seite zeichnet „Lernen" beim Start unsichtbar vor – dort nichts holen); danach lädt es zu Ende,
+       wo man auch ist, wie früher die eine Datei – außer bei verdeckter Seite, im Klassenzimmer/Raum (`ruheImRaum`) und in
+       den ersten 8 s von „Wissen" (der Weg ins Klassenzimmer; dieselbe Frist wie beim Wortschatz). Fehlt am Ende ein
+       Teil oder kommt das Verzeichnis nicht, holt es von selbst die ganze Datei (a3add543; vorher blieb die Sammlung in
+       diesem Fall ohne Kartentipp halb). Der Weg über die ganze Datei (?quelle, Notweg, Rückfall) meldet jetzt auch
+       `dma-uebungen-ganz` (Tagesaufgabe und Wörterbuch bauen dann neu, wenn sie vorher gebaut waren).
+    3. **Sonden (über die Sperre, 08.11. 06:30–07:10 UTC):**
+       - `887-daten` neu (a3add543): D 21/21, B1–B6 32/32, B7–B10 15/15, B11–B12 16/16 grün.
+       - **B11** Duell annehmen (der echte Knopf, Backend als Attrappe in der Seite; wortstellung + stil): neu beide Fälle
+         grün (beim Start 600/100 = ganz, Runde 10 Fragen). **Gegenprobe d9637a22:** „Lernen nie offen" rot (0/0, Runde
+         0 Fragen, Seitenfehler „reading 'correct'" – der alte Grundfehler); „Lernen 1 s offen" dort grün (die ganze
+         Datei kam). **edc48fc5 (vor der Nachbesserung): 4 rot** (beide Fälle 0/0 und Seitenfehler).
+       - **B12** Vorladen nach Unterbrechung, ohne neuen Tipp auf „Lernen" (Bildschirm 3 s aus in „Lernen → Spiele",
+         Profil, Wissen nach der 8-s-Frist, nach 12 s Klassenzimmer): neu alle 4 von selbst zu Ende (90/90, jeder Teil
+         einmal); verdeckt, in den ersten 3 s von „Wissen" und 12 s im Klassenzimmer nichts Neues (0–3 Teile, nur die
+         unterwegs). **Gegenprobe edc48fc5: 4/4 rot** (4 → 4, 8 → 8, 6 → 8, 8 → 8 von 90, nicht fertig); **d9637a22:
+         4/4 rot** (keine Teile, nur die ganze Datei).
+       - **B6** neu dazu: Rückfall beim Vorladen (nur „Lernen" offen, keine Karte): Teil `stil` 404 bzw. Verzeichnis 404 →
+         von selbst die ganze Datei, Daten = Quelle; neu grün, **edc48fc5: 2 rot** („nicht fertig"), **d9637a22: 2 rot**
+         (kein Teil angefragt; die ganze Datei kommt dort, aber ohne Teile und ohne `dma-uebungen-ganz`).
