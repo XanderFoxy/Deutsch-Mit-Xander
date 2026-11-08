@@ -51,15 +51,30 @@
       Speicher des Helfers), Betonung durch Tippen und die Ohren gehen wie
       auf d9637a22 (dort stand beides in app.js). Der Tutor kommt offline
       auf beiden Ständen nicht (kein Teil dieser Prüfung).
+   W  Helferwechsel (Prüfung Runde 2): Laden 1 und 2 mit dem Helfer der
+      Fassung 887 (dieser sw.js OHNE die Regel für bau/ – Byte für Byte der
+      sw.js von main/887; er legt bau/ nicht ab), dann ein Besuch mit
+      Leitung, in dem dieser sw.js übernimmt (controllerchange), dann ein
+      Besuch ohne Leitung: Betonung durch Tippen und Ohren gehen (wie auf
+      d9637a22); hat der Stand eine Brücke, liegt sie nach dem Wechsel im
+      Speicher des Helfers und kommt offline aus bau/.
+      W1 wie im Betrieb; W2 ohne das Ohr für controllerchange (nachgestellt:
+      der Wechsel kam, bevor app.js zuhörte) – dann fängt es die Prüfung
+      in der Ruhepause.
+   A7 (ohne Browser) app.js: der Rückweg wartet auf DOMContentLoaded;
+      die Sicherung nach dem Helferwechsel hört auf controllerchange, prüft
+      in der Ruhepause, nur wenn die Seite beim Start gesteuert war, und
+      nennt denselben Speicher wie KASTEN in sw.js.
 
-   Aufruf:     node werkzeug/pruefe-887-modul-app.js          (TEIL=A,B,K,R,N)
+   Aufruf:     node werkzeug/pruefe-887-modul-app.js          (TEIL=A,B,K,R,N,W)
    Gegenprobe: WURZEL=<Stand d9637a22> node werkzeug/pruefe-887-modul-app.js → rot
-               (K2, R-Tipp und N auch auf 2417165d rot: Stand vor der Nachbesserung)
+               (K2, R-Tipp und N auch auf 2417165d rot: Stand vor der Nachbesserung;
+               W auf d9637a22 grün – Betonung stand dort in app.js –, auf 542e4250 rot)
    ===================================================================== */
 const fs = require("fs"), path = require("path"), http = require("http"), os = require("os");
 const HIER = path.join(__dirname, "..");
 const WURZEL = path.resolve(process.env.WURZEL || HIER);
-const TEILE = (process.env.TEIL || "A,B,K,R,N").split(",");
+const TEILE = (process.env.TEIL || "A,B,K,R,N,W").split(",");
 const PROJEKT = "rolcktiryrvjzbwuvobb";
 const KONTO = "11111111-2222-4333-8444-555555555555";
 let fehler = 0;
@@ -137,7 +152,8 @@ function teilA() {
   sage(iM > 0 && iA > iM, "A5 index.html: das Modul steht in der defer-Reihe VOR app.js");
   sage(/if \(d === "@bruecke"\) return document\.write\('<scr' \+ 'ipt type="module" src="'/.test(html) && /\(window\.DMA_MODUL \|\| \{\}\)\.bruecke \|\| "src\/bruecke\.js"/.test(html),
     "A5 index.html: schreibt type=\"module\" mit bau/ aus DMA_MODUL, sonst (Quelle, kein Bau) src/bruecke.js");
-  sage(/if \(!window\.DMA_BRUECKE\) \{[^}]*s\.type = "module";[^}]*"src\/bruecke\.js"/.test(app), "A5 app.js: Rückweg – ist die Brücke nicht gelaufen, lädt app.js src/bruecke.js nach");
+  sage(/if \(!window\.DMA_BRUECKE\) \{[^}]*s\.type = "module";[^}]*"src\/bruecke\.js"/.test(app)
+    || /function dmaBrueckeRueckweg\(\) \{\s*if \(window\.DMA_BRUECKE\) return;[^}]*s\.type = "module";[^}]*"src\/bruecke\.js"/.test(app), "A5 app.js: Rückweg – ist die Brücke nicht gelaufen, lädt app.js src/bruecke.js nach");
   /* Nachbesserung M4 (Prüfung Runde 1) */
   const lader = (/if \(d === "@bruecke"\) return document\.write\(([^\n]*)\);/.exec(html) || [])[1] || "";
   sage(/!\/\[\?&\]quelle\\b\/\.test\(location\.search\) && \(window\.DMA_MODUL \|\| \{\}\)\.bruecke/.test(lader) && !/DMA_Q\("app\.js"\)/.test(lader),
@@ -154,6 +170,15 @@ function teilA() {
   const datei = karte && karte.bruecke;
   const imManifest = manifest && Object.values(manifest).some((e) => e.isEntry && e.name === "bruecke" && "bau/" + e.file === datei);
   sage(Boolean(datei && imManifest && fs.existsSync(path.join(WURZEL, datei))), "A5 DMA_MODUL.bruecke = Datei aus bau/manifest.json, vorhanden", datei || "fehlt");
+  /* A7 Nachbesserung M4 (Prüfung Runde 2) */
+  const rw = (/if \(!window\.DMA_BRUECKE\) \{\n\s*const nav = [^\n]*\n([^\n]*)\n/.exec(app) || [])[1] || "";
+  sage(/addEventListener\("DOMContentLoaded", dmaBrueckeRueckweg/.test(rw) && /domContentLoadedEventStart/.test(app), "A7 app.js: der Rückweg wartet auf DOMContentLoaded (kein Doppel, wenn das Modul später als app.js läuft)");
+  const bs = (/\(function dmaBauSichern\(\) \{([\s\S]*?)\n  \}\)\(\);/.exec(app) || [])[1] || "";
+  const kasten = (/var KASTEN = "([^"]+)";/.exec(lies("sw.js")) || [])[1] || "";
+  sage(/if \(!sw \|\| !sw\.controller \|\| !window\.caches\) return;/.test(bs) && /addEventListener\("controllerchange"/.test(bs) && /setTimeout\(ruhig, \d+\)/.test(bs),
+    "A7 app.js: Sicherung nach dem Helferwechsel – nur wenn beim Start gesteuert, nach controllerchange und einmal in der Ruhepause", bs ? "" : "dmaBauSichern fehlt");
+  sage(Boolean(kasten) && bs.indexOf('caches.open("' + kasten + '")') >= 0 && /k\.match\(u\)/.test(bs) && /fetch\(u\)/.test(bs),
+    "A7 app.js: holt nur, was im Speicher des Helfers fehlt, und nennt denselben Speicher wie sw.js (KASTEN = " + (kasten || "?") + ")");
 }
 
 /* A6: das Werkzeug lässt Strings, wie sie sind */
@@ -202,10 +227,11 @@ async function browserTeile() {
   const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png",
     ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".webp": "image/webp", ".webmanifest": "application/manifest+json", ".mp3": "audio/mpeg", ".m4a": "audio/mp4",
     ".opus": "audio/ogg", ".woff2": "font/woff2", ".gif": "image/gif", ".webm": "video/webm", ".mp4": "video/mp4" };
-  const zustand = { aus: false };
+  const zustand = { aus: false, sw: null };
   const srv = http.createServer((q, a) => {
     if (zustand.aus) { q.socket.destroy(); return; }   /* N: Funkloch */
     let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/index.html";
+    if (p === "/sw.js" && zustand.sw) { a.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-store" }); return a.end(zustand.sw); }   /* W: alter Helfer */
     const f = path.join(WURZEL, p);
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
     a.writeHead(200, { "Content-Type": TYP[path.extname(f).toLowerCase()] || "application/octet-stream", "Cache-Control": "no-store" });
@@ -238,7 +264,16 @@ async function browserTeile() {
     });
     if (o.ohneBau) await ctx.route(/\/bau\/bruecke-[^/]*\.js/, (r) => r.abort());
     if (o.quelleSpaet) await ctx.route(/\/src\/bruecke\.js/, async (r) => { await warte(o.quelleSpaet); r.continue().catch(() => {}); });
-    await ctx.addInitScript(([konto, sitz, konflikt, notweg]) => {
+    await ctx.addInitScript(([konto, sitz, konflikt, notweg, ohneOhr]) => {
+      window.__wechsel = 0;
+      if (navigator.serviceWorker) {
+        navigator.serviceWorker.addEventListener("controllerchange", () => { window.__wechsel++; });
+        /* W2: app.js hört controllerchange nicht (der Wechsel kam, bevor es zuhörte) */
+        if (ohneOhr) {
+          const ein = ServiceWorkerContainer.prototype.addEventListener;
+          ServiceWorkerContainer.prototype.addEventListener = function (art, f, o) { if (art === "controllerchange") return; return ein.call(this, art, f, o); };
+        }
+      }
       try {
         localStorage.setItem("dma_tour_seen", "1");
         if (konto) localStorage.setItem("sb-rolcktiryrvjzbwuvobb-auth-token", JSON.stringify(sitz));
@@ -251,7 +286,7 @@ async function browserTeile() {
         const t = e.target;
         if (t && t.tagName === "SCRIPT" && t.src) window.__lauf.push(t.src.replace(location.origin + "/", "").replace(/\?.*$/, ""));
       }, true);
-    }, [mitKonto, sitzung(), o.konflikt || "", o.notweg ? FASSUNG : ""]);
+    }, [mitKonto, sitzung(), o.konflikt || "", o.notweg ? FASSUNG : "", Boolean(o.ohneOhr)]);
     const pg = await ctx.newPage();
     const pe = [], kons = [];
     pg.on("pageerror", (e) => pe.push(String(e.message || e).slice(0, 160)));
@@ -433,13 +468,72 @@ async function browserTeile() {
     zustand.aus = false;
     await s.ctx.close();
   }
+  if (TEILE.includes("W")) {
+    console.log("\nW  HELFERWECHSEL (Helfer wie in 887 ohne bau/-Regel → dieser sw.js; nächster Besuch ohne Leitung)");
+    const alt = swOhneBau();
+    const mitBruecke = Boolean((/window\.DMA_MODUL = \{[^\n]*"bruecke":/.exec(lies("index.html")) || [])[0]);
+    if (!alt) sage(false, "W  sw.js: die Regel für bau/ nicht gefunden – kann den Helfer von 887 nicht nachbilden");
+    else {
+      if (alt.main !== null) console.log("  info alter Helfer = sw.js von origin/main: " + (alt.main ? "Byte für Byte gleich" : "NICHT gleich (main hat inzwischen mehr – nachgebildet bleibt: ohne bau/-Regel)"));
+      for (const [w, ohneOhr] of [["W1", false], ["W2", true]]) {
+        zustand.sw = alt.text; zustand.aus = false;
+        const s = await seite({ sw: true, ohneLaden: true, ohneOhr });
+        const imSpeicher = () => s.pg.evaluate(async () => (await (await caches.open("dma-dateien-1")).keys()).map((q) => q.url.replace(location.origin + "/", "")).filter((u) => /^bau\//.test(u))).catch(() => null);
+        await s.pg.goto(s.url, { waitUntil: "load", timeout: 90000 });
+        await s.pg.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.ready.then(() => true), null, { timeout: 20000 }).catch(() => {});
+        await warte(1500);
+        await s.pg.goto(s.url, { waitUntil: "load", timeout: 90000 });
+        await warte(2500);
+        const p1 = { gest: await s.pg.evaluate(() => Boolean(navigator.serviceWorker && navigator.serviceWorker.controller)), bau: await imSpeicher() };
+        /* Phase 2: dieser sw.js auf dem Server; ein Besuch mit Leitung, bis er übernommen hat */
+        zustand.sw = null;
+        await s.pg.goto(s.url, { waitUntil: "load", timeout: 90000 });
+        const wechsel = await s.pg.waitForFunction(() => window.__wechsel > 0, null, { timeout: 25000 }).then(() => true, () => false);
+        await warte(ohneOhr ? 14000 : 4000);
+        const p2 = { bau: await imSpeicher() };
+        sage(p1.gest && Array.isArray(p1.bau) && !p1.bau.length && wechsel, w + " Ausgangslage: Seite vom alten Helfer gesteuert, der legt bau/ nicht ab; danach übernimmt dieser sw.js (controllerchange)",
+          "gesteuert " + p1.gest + ", bau/ im Speicher vorher: " + (p1.bau ? p1.bau.length : "?") + ", Wechsel " + wechsel);
+        if (mitBruecke) sage(Array.isArray(p2.bau) && p2.bau.some((u) => /^bau\/bruecke-[\w-]{8}\.js$/.test(u)), w + " nach dem Wechsel liegt die Brücke im Speicher des Helfers" + (ohneOhr ? " (ohne Ohr: aus der Ruhepause)" : ""), (p2.bau || []).join(", ") || "nichts aus bau/");
+        /* Phase 3: ohne Leitung */
+        zustand.aus = true;
+        let geladen = true;
+        await s.pg.goto(s.url, { waitUntil: "load", timeout: 90000 }).catch(() => { geladen = false; });
+        await s.pg.waitForFunction(() => window.__dmaAppInitialized, null, { timeout: 20000 }).catch(() => {});
+        await warte(2000);
+        const r = await s.pg.evaluate((lesen) => ({ lauf: window.__lauf.slice(), br: (0, eval)(lesen)(), gest: Boolean(navigator.serviceWorker && navigator.serviceWorker.controller) }),
+          "(" + brueckeLesen.toString() + ")").catch(() => ({ lauf: [], br: null }));
+        sage(geladen && r.gest && Boolean(r.lauf.length), w + " ohne Leitung: die Seite kommt aus dem Helfer", "gesteuert " + r.gest + ", " + r.lauf.length + " Skripte");
+        if (mitBruecke) {
+          const b = r.lauf.find((x) => /bruecke/.test(x)) || "";
+          sage(/^bau\/bruecke-[\w-]{8}\.js$/.test(b) && Boolean(r.br && r.br.namen.length >= 14), w + " ohne Leitung: die Brücke kommt aus bau/, Eingänge da", (b || "keine Brücke") + ", " + (r.br ? r.br.namen.length + " Namen" : "DMA_BRUECKE fehlt"));
+        } else console.log("  info " + w + ": Stand ohne Brücke (Tutor und Betonung in app.js)");
+        for (const [gut, was, dazu] of await bedienen(s.pg, true)) sage(gut, was.replace(/^(B\d) /, w + " ($1) "), dazu);
+        sage(!s.pe.length, w + " kein pageerror", s.pe.slice(0, 3).join(" | "));
+        zustand.aus = false; zustand.sw = null;
+        await s.ctx.close();
+      }
+    }
+  }
   await br.close(); srv.close();
+}
+
+/* W: der Helfer der Fassung 887 = dieser sw.js ohne die Regel für bau/ (MODUL-UMBAU M1). Gegen origin/main geprüft
+   (main = null: kein git oder kein origin/main) – nur zur Auskunft; nachgebildet wird immer aus dem eigenen sw.js. */
+function swOhneBau() {
+  const t = lies("sw.js");
+  const z = "  /* MODUL-UMBAU (M1): Stücke aus bau/ (Name aus dem Inhalt, siehe bauGrund) */\n  var b = bauGrund(u);\n  if (b) { e.respondWith(bauHolen(r, b)); return; }\n";
+  const i = t.indexOf(z), a = t.indexOf("/* MODUL-UMBAU (Schritt 1, MODULE-PLAN.md Abschnitt 3, M1)"), e = t.indexOf("/* Gestempelte Datei:");
+  if (i < 0 || a < i || e < a) return null;
+  const text = t.slice(0, i) + t.slice(i + z.length, a) + t.slice(e);
+  let main = null;
+  try { main = require("child_process").execFileSync("git", ["-C", HIER, "show", "origin/main:sw.js"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }) === text; } catch (x) {}
+  return { text, main };
 }
 
 (async () => {
   console.log("SONDE 887 — Modul M4 (Tutor und Betonung)   WURZEL " + WURZEL + "\n");
   if (TEILE.includes("A")) { teilA(); teilA6(); }
-  if (TEILE.some((t) => /^[BKRN]$/.test(t))) await browserTeile();
+  if (TEILE.some((t) => /^[BKRNW]$/.test(t))) await browserTeile();
   console.log("\n  " + (fehler ? fehler + " FEHL" : "Alles in Ordnung.") + "\n");
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });

@@ -41,7 +41,8 @@
      oder ohne Bau src/bruecke.js als natives Modul. RÜCKWEG
      (hier, damit index.html schlank bleibt – 885-schlank Q): ist die
      Brücke nicht gelaufen (bau/ nicht ladbar), lädt app.js die Quelle
-     src/bruecke.js nach; bis sie da ist, merken sich die Weiterleitungen
+     src/bruecke.js nach (seit Prüfung Runde 2 bei DOMContentLoaded, siehe
+     unten); bis sie da ist, merken sich die Weiterleitungen
      die Rufe. Die Stücke in src/app/ holt der Browser dann ohne Stempel
      (gewöhnlicher Zwischenspeicher, auf GitHub Pages höchstens 10 min).
      ===================================================================== */
@@ -63,12 +64,57 @@
     applyStressToTree, betonungAnzeigen, grossMitEszett, grundformKandidaten, removeStressFromTree,
     wortschatzBereit, wortschatzHolenFuer, wortschatzNachziehen,
   };
-  if (!window.DMA_BRUECKE) {
+  /* NACHBESSERUNG M4 (Prüfung Runde 2): Lief das Modul in diesem Browser vor app.js? (für die Prüfung auf echten
+     Geräten, z. B. im iPhone: DMA_APP.brueckeVorher) */
+  window.DMA_APP.brueckeVorher = Boolean(window.DMA_BRUECKE);
+  /* RÜCKWEG – seit Prüfung Runde 2 erst, wenn feststeht, dass das Modul nicht mehr kommt: bei DOMContentLoaded ist
+     jedes Modul der defer-Reihe gelaufen oder gescheitert. Läuft es in einem Browser doch erst nach app.js (die feste
+     Reihenfolge ist nur in Chromium geprüft), kommt so nicht zusätzlich die Quelle. */
+  function dmaBrueckeRueckweg() {
+    if (window.DMA_BRUECKE) return;
     const s = document.createElement("script");
     s.type = "module";
     s.src = "src/bruecke.js" + (window.DMA_V ? window.DMA_V("src/bruecke.js") : "");
     document.head.appendChild(s);
   }
+  if (!window.DMA_BRUECKE) {
+    const nav = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null;
+    if (document.readyState === "loading" || (nav && !nav.domContentLoadedEventStart)) document.addEventListener("DOMContentLoaded", dmaBrueckeRueckweg, { once: true });
+    else dmaBrueckeRueckweg();
+  }
+  /* NACHBESSERUNG M4 (Prüfung Runde 2) — HELFERWECHSEL. XANDER (Funk 255): „die schnelle Performance und die
+     Verbindung zu den anderen haben oberste Priorität". Der Helfer der Fassung 887 (sw.js ohne die Regel für bau/)
+     legt bau/-Dateien nicht ab. Beim Update auf diese Fassung holt die Seite die Brücke darum an ihm vorbei aus dem
+     Netz; der neue Helfer übernimmt erst am Ende des Besuchs (controllerchange) und hat sie nicht im Speicher. Im
+     nächsten Besuch ohne Leitung fielen Betonung und Ohren aus (d9637a22: gingen – dort standen sie in app.js).
+     Jetzt: nach dem Wechsel und einmal in der Ruhepause holt die Seite jede bau/-Datei, die sie geladen hat und die
+     im Speicher fehlt, einmal über den Helfer (bauHolen in sw.js legt sie ab). Nur wenn die Seite beim Start schon
+     gesteuert war – beim allerersten Besuch bleibt alles wie bisher. Liegt alles im Speicher (jeder Besuch nach dem
+     Wechsel), geht keine Anfrage hinaus. „dma-dateien-1" = KASTEN in sw.js (Sonde pruefe-887-modul-app.js, A7). */
+  (function dmaBauSichern() {
+    const sw = navigator.serviceWorker;
+    if (!sw || !sw.controller || !window.caches) return;
+    const holen = () => {
+      if (!sw.controller) return;
+      const dateien = new Set();
+      const nimm = (s) => {
+        try {
+          const u = new URL(s, location.href);
+          if (u.origin === location.origin && !u.search && /\/bau\/(?:[a-z0-9_-]+\/)*[A-Za-z0-9_.-]+-[A-Za-z0-9_-]{8}\.(?:js|css|json)$/.test(u.pathname)) dateien.add(u.href);
+        } catch (e) {}
+      };
+      document.querySelectorAll("script[src]").forEach((s) => nimm(s.src));
+      try { performance.getEntriesByType("resource").forEach((e) => nimm(e.name)); } catch (e) {}
+      if (!dateien.size) return;
+      caches.open("dma-dateien-1").then((k) => Promise.all([...dateien].map((u) => k.match(u).then((da) => {
+        if (!da) return fetch(u).then((a) => a.arrayBuffer());
+      }).catch(() => {})))).catch(() => {});
+    };
+    const ruhig = () => { if (window.requestIdleCallback) requestIdleCallback(holen, { timeout: 4000 }); else setTimeout(holen, 200); };
+    sw.addEventListener("controllerchange", ruhig);
+    const spaeter = () => setTimeout(ruhig, 8000);
+    if (document.readyState === "complete") spaeter(); else window.addEventListener("load", spaeter, { once: true });
+  })();
 
   /* =====================================================================
      FASSUNG 876 — XANDER (Funk 271): „alles insgesamt nur zehn Mal
