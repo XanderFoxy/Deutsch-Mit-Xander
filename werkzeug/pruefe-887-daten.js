@@ -49,7 +49,8 @@
           starten → Frage, ohne synchrones Holen (min/data-exercises-teil.js
           kommt mit ladeUebungen)
        B6 Rückfall: Teil fehlt (404) → ganze Datei; Verzeichnis fehlt → ganze
-          Datei; Daten danach = Quelle
+          Datei; Daten danach = Quelle – über ladeUebungen(ids) und über das
+          Vorladen (nur „Lernen" offen, Nachbesserung 1)
        B7 ?quelle und Notweg (dma-ganz): die ganze Quelle wie bisher, keine
           Teile
        B9 ein Stück kommt langsam (6 s; je einmal min/data-exercises-teil.js
@@ -439,6 +440,21 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
         sage(!s.pe.length, "B6 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
         await s.ctx.close();
       }
+      /* Nachbesserung 1: derselbe Rückfall auf dem Weg des Vorladens („Lernen" offen, keine Karte getippt) – sonst blieb
+         die Sammlung für die Sitzung halb (Spiele, Wörterbuch, offline). Gegenprobe edc48fc5 (vor der Nachbesserung): rot. */
+      for (const [was, sperre, angefragt] of [["ein Teil fehlt (404)", /^\/bau\/uebungen\/stil-/, istTeil], ["das Verzeichnis fehlt (404)", /^\/bau\/uebungen-[A-Za-z0-9_-]{8}\.js$/, istVerz]]) {
+        const s = await seite({ sperre });
+        const n0 = log.length;
+        const ok = await lernen(s.pg);
+        const fertig = await s.pg.waitForFunction(() => window.__ueb.ganz != null, null, { timeout: 60000 }).then(() => true, () => false);
+        const r = await s.pg.evaluate(() => ({ da: ExerciseData.uebungenDa(), json: window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN ? JSON.stringify(window.DMA_DATEN.ZUSATZ_FRAGEN) : "" }));
+        const l = log.slice(n0);
+        sage(ok && fertig && r.da && l.some((x) => angefragt(x) && x.s === 404) && l.some((x) => x.p === "/min/data-uebungen.js" && x.s === 200) && r.json === QUELLE_JSON,
+          "B6 Rückfall beim Vorladen (nur „Lernen“ offen): " + was + " → von selbst die ganze Datei, Daten = Quelle",
+          (fertig ? "" : "nicht fertig; ") + l.filter((x) => istVerz(x) || istGanz(x) || (istTeil(x) && x.s !== 200)).map((x) => x.p.replace(/^.*\//, "") + " " + x.s).join(", "));
+        sage(!s.pe.length, "B6 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+        await s.ctx.close();
+      }
     }
     /* B7 */
     if (soll("B7")) {
@@ -597,6 +613,12 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
         await lernen(s.pg);
         await s.pg.waitForFunction(() => performance.getEntriesByType("resource").filter((e) => /\/bau\/uebungen\//.test(e.name)).length >= 4, null, { timeout: 30000 }).catch(() => {});
         const vor = teile(n0);
+        /* ohne Teile (Stand vor M3b: die ganze Datei) gibt es nichts weiterzuladen – gleich rot, statt 60 s zu warten */
+        if (!vor) {
+          sage(false, "B12 " + was + ": kein Teil geholt (Stand ohne Teile?)", log.slice(n0).filter(istGanz).length ? "die ganze Datei" : "");
+          await s.ctx.close();
+          continue;
+        }
         const r = await weg(s.pg, n0);
         if (r) sage(r.still <= 4, "B12 " + was + ": " + r.wo + " kommt nichts dazu (höchstens die 4 unterwegs)", r.still + " Teile dazu");
         const fertig = await ganz(s.pg, 60000);

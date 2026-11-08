@@ -6441,8 +6441,8 @@ const ExerciseData = (function () {
   /* Nach dem ersten Bild der Übersicht: die übrigen Kategorien in Ruhepausen holen, damit der Tipp auf eine Kategorie
      nicht wartet – zuerst die der Übersicht (zuerst, in ihrer Reihenfolge), dann der Rest des Verzeichnisses; höchstens
      vier zugleich (die Teile sind klein, die Rundreise zählt: so ist die Sammlung etwa so schnell ganz da wie früher die
-     eine Datei) und mit niedriger Priorität. darf() falsch (Bereich zu, Klassenzimmer, Seite verdeckt): anhalten – der
-     nächste Aufruf macht dort weiter. */
+     eine Datei) und mit niedriger Priorität. darf() falsch (Klassenzimmer, Seite verdeckt, die ersten 8 s in „Wissen"):
+     warten, bis es wieder darf (Nachbesserung 1, unten). */
   /* REIHENFOLGE AUF DER LEITUNG (gemessen, 3G und 4G, CPU 4×; die Leitung teilt sich gerecht auf alle laufenden
      Abrufe): der Tipp auf eine Karte teilte sich die Leitung mit den 26 Wortschatz-Dateien (2,26 MB), die „Lernen" in
      der Ruhepause holt – auf 3G vergingen 13,9 s, bis „Runde starten" frei war (alter Stand 2,2 s, davor aber 20 s
@@ -6475,7 +6475,9 @@ const ExerciseData = (function () {
     const ende = () => { if (nr === uebVorNr) { uebVorAktiv = false; uebVorWeck = null; clearTimeout(uhr); uhr = 0; } };
     const pause = (f) => { if (window.requestIdleCallback) requestIdleCallback(f, { timeout: 1500 }); else setTimeout(f, 60); };
     uebKarte().then((K) => {
-      if (!K) { ende(); return; }
+      /* Nachbesserung 1: kommt das Verzeichnis nicht, die ganze Datei (ladeUebungen versucht es noch einmal, dann
+         data-uebungen.js) – sonst blieb die Sammlung nach „Lernen" ohne Kartentipp für die Sitzung halb */
+      if (!K) { ende(); ladeUebungen().catch(() => {}); return; }
       dmaUebTextHolen();   /* den Teil von data-exercises.js gleich mit (nur holen; eingesetzt wird beim ersten Bedarf) */
       const reihe = [], gesehen = new Set();
       (zuerst || []).concat(Object.keys(K)).forEach((k) => { if (K[k] && !gesehen.has(k)) { gesehen.add(k); reihe.push(k); } });
