@@ -6439,9 +6439,9 @@ const ExerciseData = (function () {
     });
   }
   /* Nach dem ersten Bild der Übersicht: die übrigen Kategorien in Ruhepausen holen, damit der Tipp auf eine Kategorie
-     nicht wartet – zuerst die der Übersicht (zuerst, in ihrer Reihenfolge), dann der Rest des Verzeichnisses; höchstens
-     vier zugleich (die Teile sind klein, die Rundreise zählt: so ist die Sammlung etwa so schnell ganz da wie früher die
-     eine Datei) und mit niedriger Priorität. darf() falsch (Klassenzimmer, Seite verdeckt, die ersten 8 s in „Wissen"):
+     nicht wartet – zuerst die der Übersicht (zuerst, in ihrer Reihenfolge), dann der Rest des Verzeichnisses; vor dem
+     Wortschatz höchstens vier zugleich, danach UEB_NACH, mit niedriger Priorität. (Hier stand bis Nachbesserung 2: „so ist
+     die Sammlung etwa so schnell ganz da wie früher die eine Datei" – gemessen war das falsch, siehe unten.) darf() falsch (Klassenzimmer, Seite verdeckt, die ersten 8 s in „Wissen"):
      warten, bis es wieder darf (Nachbesserung 1, unten). */
   /* REIHENFOLGE AUF DER LEITUNG (gemessen, 3G und 4G, CPU 4×; die Leitung teilt sich gerecht auf alle laufenden
      Abrufe): der Tipp auf eine Karte teilte sich die Leitung mit den 26 Wortschatz-Dateien (2,26 MB), die „Lernen" in
@@ -6451,13 +6451,17 @@ const ExerciseData = (function () {
           (uebungenVorrang, höchstens 3 s);
        2. die ersten UEB_VORRANG Karten der Übersicht gleich nach dem ersten Bild (der wahrscheinliche Tipp);
        3. die übrigen Teile erst, wenn der Wortschatz da ist (nachVorrang aus app.js).
-     Dieselben Bytes, nur in der Reihenfolge, in der sie gebraucht werden.
+     Dieselben Bytes in anderer Reihenfolge: was vorgezogen wird, kommt früher, alles andere SPÄTER als auf d9637a22.
      NACHBESSERUNG 2 (Prüfer, gemessen): so stimmte das nicht – die Sammlung war auf 4G erst 6,7 s nach dem Tipp ganz
      (d9637a22: 3,7 s), der Wortschatz 1,3 s später. Zwei Lücken auf der Leitung: der Wortschatz startete erst nach Teil
      UND Ruhepause (behoben in activateTab, app.js), und nach dem Wortschatz kamen die 82 Teile zu viert mit einer
      Ruhepause zwischen jedem – bei 60 ms Rundreise nutzt das die Leitung nicht aus. Jetzt nach dem Wortschatz
      UEB_NACH zugleich und ohne Ruhepause dazwischen (das Ausführen eines Teils ist klein; es geschieht ohnehin, wenn
-     er ankommt, nicht wenn er angefragt wird). */
+     er ankommt, nicht wenn er angefragt wird). Was bleibt (gemessen, MODULE-PLAN.md Abschnitt 7, Nachbesserung 2):
+     der Wortschatz ist auf 4G ~0,2 s, auf 3G ~1 s später ganz als auf d9637a22 (vor ihm kommen jetzt der Teil, die
+     ersten Karten und die Stücke für „Runde starten", zusammen ~0,3 MB), und die Sammlung ist später ganz, weil das
+     Vorladen der app-Stücke (Raum zuerst, app.js beim load-Ereignis) jetzt früher startet – die eine große Datei hielt
+     „load" bisher auf. Die Raum-Stücke sind dafür früher da (Funk 255: die Verbindung zu den anderen zuerst). */
   const UEB_VORRANG = 8, UEB_NACH = 8;
   function uebungenVorrang(ms) {
     if (!uebTeileWeg() || uebungenDa()) return Promise.resolve(true);

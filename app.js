@@ -5465,7 +5465,7 @@
          Wortschatzes) – sonst fehlten die Wörter aus den Übungstexten in der offenen Ansicht, bis man sie neu öffnete */
       try {
         const a = document.getElementById("dictionaryArea");
-        if (a && a.innerHTML && bereichSichtbar(a)) dictFokusRetten(() => renderDictionary(dictFilterText));
+        if (a && a.innerHTML && bereichSichtbar(a)) dictNeuOhneZuklappen();
       } catch (e) { /* Ansicht ist weg */ }
     }
   });
@@ -13933,9 +13933,33 @@
     nachher.focus();
     try { nachher.setSelectionRange(stelle, stelle); } catch (e) { /* egal */ }
   }
+  /* MODUL-UMBAU M3b, NACHBESSERUNG 2: neu zeichnen, ohne dass etwas zuklappt. Das Wörterbuch zeichnet sich neu, wenn der
+     Wortschatz ankommt (wortschatzNachziehen) und wenn die ganze Aufgabensammlung da ist (dma-uebungen-ganz); eine schon
+     aufgeklappte Beugungstabelle klappte dabei zu (Sonde 853-beugung), die Schreibmarke ging verloren. Jetzt bleiben
+     die offenen Tabellen (mit ihrer Zeitform) und die Schreibmarke stehen. */
+  function dictNeuOhneZuklappen() {
+    const offen = [...document.querySelectorAll("#dictionaryArea .beug-panel")].map((f) => {
+      const an = f.querySelector(".beug-zeit.an");
+      return { wort: f.dataset.wort, zeit: (an && an.dataset.beugzeit) || "Präsens" };
+    });
+    dictFokusRetten(() => renderDictionary(dictFilterText));
+    offen.forEach(({ wort, zeit }) => {
+      const knopf = [...document.querySelectorAll("#dictionaryArea .beug-btn")].find((b) => b.dataset.beugung === wort);
+      const karte = knopf && knopf.closest(".vocab-card");
+      const t = karte && !karte.querySelector(".beug-panel") ? konjTabelle(wort) : null;
+      if (!t) return;
+      const feld = document.createElement("div");
+      feld.className = "beug-panel";
+      feld.dataset.wort = wort;
+      feld.innerHTML = dictBeugungHtml(t, zeit);
+      karte.appendChild(feld);
+      knopf.setAttribute("aria-expanded", "true");
+      knopf.classList.add("an");
+    });
+  }
   function renderDictionary(filter = "") {
     dictFilterText = filter;
-    wortschatzNachziehen(() => renderDictionary(dictFilterText));
+    wortschatzNachziehen(() => dictNeuOhneZuklappen());
     const area = document.getElementById("dictionaryArea");
     const all = buildDictionaryEntries();
     const verifiedCount = all.filter((e) => e.verified).length;

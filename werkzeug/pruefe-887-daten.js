@@ -713,8 +713,21 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       const vorher = await s.pg.evaluate(() => { document.querySelector('#learnSubnav [data-sub="sub-dictionary"]').click(); return Boolean(window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN); });
       await s.pg.waitForTimeout(300);
       const frueh = await s.pg.evaluate(dictZahl);
+      /* dabei eine Beugungstabelle aufklappen (Präteritum): das Neuzeichnen darf sie nicht zuklappen (Sonde 853-beugung) */
+      await s.pg.evaluate(() => { const x = document.getElementById("dictSearch"); x.value = "gehen"; x.dispatchEvent(new Event("input", { bubbles: true })); });
+      await s.pg.waitForFunction(() => window.Konjugation && document.querySelector('#dictionaryArea .beug-btn[data-beugung="gehen"]'), null, { timeout: 20000 }).catch(() => {});
+      const auf = await s.pg.evaluate(() => {
+        const b = document.querySelector('#dictionaryArea .beug-btn[data-beugung="gehen"]'); if (!b) return false;
+        b.click();
+        const r = document.querySelector('#dictionaryArea .beug-panel [data-beugzeit="Präteritum"]'); if (r) r.click();
+        return Boolean(document.querySelector('#dictionaryArea .beug-panel'));
+      });
       const da = await s.pg.waitForFunction(allesDa, null, { timeout: 90000 }).then(() => true, () => false);
       await s.pg.waitForTimeout(800);
+      const offen = await s.pg.evaluate(() => { const f = document.querySelector('#dictionaryArea .beug-panel[data-wort="gehen"]'); const z = f && f.querySelector(".beug-zeit.an"); return f ? (z ? z.dataset.beugzeit : "?") : ""; });
+      sage(auf && offen === "Präteritum", "B13 … die aufgeklappte Beugungstabelle (gehen, Präteritum) bleibt beim Neuzeichnen offen", auf ? (offen || "zugeklappt") : "nicht aufgeklappt");
+      await s.pg.evaluate(() => { const x = document.getElementById("dictSearch"); x.value = ""; x.dispatchEvent(new Event("input", { bubbles: true })); });
+      await s.pg.waitForTimeout(500);
       const gezeigt = await s.pg.evaluate(dictZahl);
       sage(da && !vorher && frueh > 0 && frueh < ref && gezeigt === ref,
         "B13 Wörterbuch offen, während die Sammlung noch kommt: danach in der offenen Ansicht mit den Wörtern aus den Übungstexten",
