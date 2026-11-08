@@ -6415,7 +6415,14 @@ const ExerciseData = (function () {
     try { window.dispatchEvent(new Event("dma-uebungen-ganz")); } catch (e) {}
     return true;
   }
-  function ladeUebungenDatei() { return ladeDatenteil("data-uebungen.js", "ZUSATZ_FRAGEN"); }
+  /* NACHBESSERUNG 1 (Prüfer): auch auf diesem Weg (Rückfall, ?quelle, Notweg) Bescheid geben, wenn die Sammlung ganz da
+     ist – sonst bauen Tagesaufgabe und Wörterbuch (dma-uebungen-ganz in app.js) nicht neu, wenn sie früher gebaut waren */
+  function ladeUebungenDatei() {
+    return ladeDatenteil("data-uebungen.js", "ZUSATZ_FRAGEN").then((ok) => {
+      if (ok && window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_FRAGEN) try { window.dispatchEvent(new Event("dma-uebungen-ganz")); } catch (e) {}
+      return ok;
+    });
+  }
   /* ids (Feld von Kategorien): nur diese; ohne ids: die ganze Sammlung (Kalenderrücken, Wörterbuch …) */
   function ladeUebungen(ids) {
     if (uebungenDa()) return uebTeileWeg() && Array.isArray(ids) && ids.length && !uebBasisDa() ? uebBasisHolen() : Promise.resolve(true);
@@ -6450,28 +6457,44 @@ const ExerciseData = (function () {
     if (!uebTeileWeg() || uebungenDa()) return Promise.resolve(true);
     return Promise.race([dmaUebTextHolen(true).then(() => true), new Promise((r) => setTimeout(() => r(false), ms || 3000))]);
   }
-  let uebVorNr = 0, uebVorAktiv = false;
+  /* NACHBESSERUNG 1 (Prüfer, M3b): „anhalten" hieß bisher AUFHÖREN – weiter ging es nur, wenn renderSetup lief oder
+     jemand erneut auf „Lernen" tippte. Nach kurzem Bildschirm-aus oder einem Besuch in „Wissen" blieb die Sammlung für
+     die Sitzung halb (nachgestellt: 4 von 90 Kategorien; Spiele, Duell, Artikel-Garten, Wörterbuch und offline der
+     Rückfall hängen daran – auf d9637a22 kam sie nach dem ersten Öffnen von „Lernen" immer ganz). Jetzt heißt anhalten
+     WARTEN: darf() wird alle 3 s wieder gefragt, beim Zurückkommen der Seite (visibilitychange) und bei jedem neuen
+     Aufruf sofort. Fertig ist es erst, wenn die Sammlung ganz da ist; fehlt am Ende ein Teil, holt ladeUebungen() ihn
+     noch einmal und sonst die ganze Datei (wie jeder andere Rückfall). Wann es darf, sagt app.js (uebVorDarf). */
+  let uebVorNr = 0, uebVorAktiv = false, uebVorWeck = null;
+  try { document.addEventListener("visibilitychange", () => { if (!document.hidden && uebVorWeck) uebVorWeck(); }); } catch (e) {}
   function uebungenVorladen(zuerst, darf, nachVorrang) {
-    if (uebVorAktiv || uebungenDa() || !uebTeileWeg() || (typeof darf === "function" && !darf())) return;
+    if (uebungenDa() || !uebTeileWeg()) return;
+    if (uebVorAktiv) { if (uebVorWeck) uebVorWeck(); return; }
     uebVorAktiv = true;
     const nr = ++uebVorNr;
-    const ende = () => { if (nr === uebVorNr) uebVorAktiv = false; };
+    let uhr = 0;
+    const ende = () => { if (nr === uebVorNr) { uebVorAktiv = false; uebVorWeck = null; clearTimeout(uhr); uhr = 0; } };
     const pause = (f) => { if (window.requestIdleCallback) requestIdleCallback(f, { timeout: 1500 }); else setTimeout(f, 60); };
     uebKarte().then((K) => {
       if (!K) { ende(); return; }
       dmaUebTextHolen();   /* den Teil von data-exercises.js gleich mit (nur holen; eingesetzt wird beim ersten Bedarf) */
       const reihe = [], gesehen = new Set();
       (zuerst || []).concat(Object.keys(K)).forEach((k) => { if (K[k] && !gesehen.has(k)) { gesehen.add(k); reihe.push(k); } });
-      let i = 0, laufen = 0, gewartet = false;
+      let i = 0, laufen = 0, gewartet = false, wsWarten = false;
       const weiter = () => {
-        if (nr !== uebVorNr) return;
-        if (uebungenDa() || (typeof darf === "function" && !darf())) { ende(); return; }
+        if (nr !== uebVorNr || wsWarten) return;
+        if (uebungenDa()) { ende(); return; }
+        if (typeof darf === "function" && !darf()) {
+          if (!uhr) uhr = setTimeout(() => { uhr = 0; weiter(); }, 3000);
+          return;
+        }
         /* nach den ersten Karten: erst den Wortschatz durchlassen (3.), dann weiter */
         if (!gewartet && i >= UEB_VORRANG && typeof nachVorrang === "function") {
           if (laufen) return;
           gewartet = true;
+          wsWarten = true;
           let w; try { w = Promise.resolve(nachVorrang()); } catch (e) { w = Promise.resolve(); }
-          w.then(() => pause(weiter), () => pause(weiter));
+          const los = () => { wsWarten = false; pause(weiter); };
+          w.then(los, los);
           return;
         }
         while (laufen < 4 && i < reihe.length && (gewartet || i < UEB_VORRANG || typeof nachVorrang !== "function")) {
@@ -6480,10 +6503,15 @@ const ExerciseData = (function () {
           laufen++;
           uebTeil(K, k, true).then(() => { laufen--; pause(weiter); });
         }
-        if (i >= reihe.length && !laufen) { uebZusammen(); ende(); return; }
+        if (i >= reihe.length && !laufen) {
+          ende();
+          if (!uebZusammen()) ladeUebungen().catch(() => {});
+          return;
+        }
         /* die ersten Karten waren schon alle da (zweites Öffnen): gleich weiter zum Warten auf den Wortschatz */
         if (!laufen && !gewartet && i >= UEB_VORRANG && typeof nachVorrang === "function") pause(weiter);
       };
+      uebVorWeck = () => { if (uhr) { clearTimeout(uhr); uhr = 0; } pause(weiter); };
       pause(weiter);
     }, ende);
   }

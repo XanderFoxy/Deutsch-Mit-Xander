@@ -739,6 +739,7 @@
     return Boolean(v && s && v.dataset.active === "true" && s.dataset.active === "true");
   }
   let wortschatzAufgeschoben = false, wortschatzUhr = 0;
+  let wissenSeit = 0;   // M3b, Nachbesserung 1: seit wann „Wissen" offen ist (uebVorDarf; activateTab läuft schon beim Aufbau)
   function klassenzimmerOffen() {
     try {
       if (bereichSichtbar(document.getElementById("sub-livechat"))) return true;
@@ -785,6 +786,7 @@
        Gespräch braucht (gemessen: im langsamen Netz über 10 s belegt). Jetzt wird er unter „Wissen" aufgeschoben:
        Jede Ansicht, die Wörter braucht, holt ihn über wortschatzNachziehen() selbst; sonst kommt er nach 8 s Ruhe –
        aber nicht, solange das Klassenzimmer offen ist oder man im Raum ist. */
+    if (targetId === "view-knowledge") wissenSeit = Date.now();   // M3b, Nachbesserung 1: Frist fürs Vorladen (uebVorDarf)
     if (targetId === "view-knowledge" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft()) {
       wortschatzAufgeschoben = true;
       wortschatzSpaeterHolen();
@@ -9554,12 +9556,28 @@
      „Lernen" offen ist (auch Spiele, Wörterbuch, Artikel-Garten … lesen die Sammlung – bisher kam sie dort mit dem Tipp
      auf „Lernen" ganz) und nicht im Klassenzimmer (Funk 255: „die Verbindung zu den anderen hat oberste Priorität");
      sonst hält es an und macht beim nächsten Öffnen weiter. Liest nur Attribute (kein erzwungenes Layout). */
+  /* NACHBESSERUNG 1 (Prüfer): angehalten wurde bisher, sobald „Lernen" zu war – und weiter ging es nur über renderSetup
+     oder einen neuen Tipp auf „Lernen". Nach einem kurzen Besuch blieb die Sammlung für die Sitzung halb (nachgestellt:
+     4 von 90 Kategorien; Duell, Spiele, Artikel-Garten, Wörterbuch, offline der Rückfall). Auf d9637a22 kam sie nach dem
+     ersten Öffnen von „Lernen" immer ganz. Jetzt wie damals: angestoßen wird es nur aus „Lernen" (die Seite zeichnet
+     „Lernen" beim Start unsichtbar vor – dort nichts holen), danach lädt es zu Ende, wo man auch ist – außer bei
+     verdeckter Seite, im Klassenzimmer/Raum und in den ersten 8 s von „Wissen" (der Weg ins Klassenzimmer; dieselbe
+     Frist wie beim Wortschatz, wortschatzSpaeterHolen). Angehalten wird nur gewartet (data-exercises.js, alle 3 s und
+     beim Zurückkommen der Seite nachgesehen). */
+  let uebVorGewollt = false;
+  function uebVorDarf() {
+    if (document.hidden || ruheImRaum()) return false;
+    const w = document.getElementById("view-knowledge");
+    return !(w && w.dataset.active === "true" && Date.now() - wissenSeit < 8000);
+  }
   function uebungenVorladenSpaeter() {
     if (!ExerciseData.uebungenVorladen) return;
     const lernenOffen = () => { const v = document.getElementById("view-learn"); return Boolean(v && v.dataset.active === "true"); };
+    if (!uebVorGewollt && !lernenOffen()) return;
+    uebVorGewollt = true;
     try {
       ExerciseData.uebungenVorladen(ExerciseData.activeCategories().map((c) => c.id),
-        () => !document.hidden && lernenOffen() && !ruheImRaum(),
+        uebVorDarf,
         /* nach den ersten Karten: lädt gerade der Wortschatz (auf ihn wartet „Runde starten"), erst ihn durchlassen */
         () => (typeof VocabData !== "undefined" && VocabData.ladenLaeuft && VocabData.ladenLaeuft() && !(VocabData.alleThemenDa && VocabData.alleThemenDa()))
           ? VocabData.ladeWoerter() : true);
@@ -97548,7 +97566,9 @@ An einem Morgen lief ein kleiner Fuchs los…
     }
 
     area.querySelectorAll("[data-accept-challenge]").forEach((btn) => {
-      btn.addEventListener("click", () => {
+      let annehmenLaeuft = false;   // M3b, Nachbesserung 1: während auf die Aufgaben gewartet wird, kein zweiter Start
+      btn.addEventListener("click", async () => {
+        if (annehmenLaeuft) return;
         const categoryIds = btn.dataset.cats.split(",");
         const challengeId = btn.dataset.acceptChallenge;
         checkNotifications();
@@ -97649,11 +97669,27 @@ An einem Morgen lief ein kleiner Fuchs los…
           }
         }
         document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
+        annehmenLaeuft = true;
+        try { await duellRundeVorbereiten(categoryIds); } finally { annehmenLaeuft = false; }
         Quiz.startSession(categoryIds, "leicht", { challengeId });
         showToast(`🦊 Willkommen, ${personaForCategory(categoryIds[0])}!`);
         renderQuestion();
       });
     });
+  }
+
+  /* MODUL-UMBAU M3b, NACHBESSERUNG 1 (Prüfer): die beiden Duell-Wege („Annehmen", „Freund herausfordern") starten die
+     Runde selbst, ohne „Runde starten" – und warteten nicht auf die Aufgaben. Mit M3b kommen die Kategorien einzeln;
+     was noch nicht vorgeladen war, fehlte (nachgestellt: tiere/wortstellung/stil 0 Fragen – dann brach die Ansicht ab –,
+     artikel 106 statt 705). Den Grundfehler gab es schon auf d9637a22, wenn „Lernen" nie offen war. Jetzt wie bei
+     „Runde starten": erst die Teile der Kategorien (und den Teil von data-exercises.js), dazu die app-Stücke der Runde
+     über die Leitung (höchstens 8 s, dann wie bisher). Unsichtbar; mit ?quelle/ohne Teile die ganze Datei wie bisher. */
+  async function duellRundeVorbereiten(ids) {
+    try {
+      const uebungenWeg = (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa(ids)) ? ExerciseData.ladeUebungen(ids) : true;
+      await Promise.all([uebungenWeg,
+        Promise.race([dmaTeileFuer([merkeZustand, renderQuestion]), new Promise((r) => setTimeout(r, 8000))])]);
+    } catch (e) { /* dann eben mit dem, was da ist */ }
   }
 
   function renderChallengePicker() {
@@ -97676,10 +97712,13 @@ An einem Morgen lief ein kleiner Fuchs los…
         challengePickInProgress = true;
         const categoryId = card.dataset.pickCat;
         try {
+          /* M3b, Nachbesserung 1: die Aufgaben der Kategorie gleich mit holen und vor dem Start abwarten (duellRundeVorbereiten) */
+          const vorbereitet = duellRundeVorbereiten([categoryId]);
           const challengeId = await challengeErstellen(friendChallengeTarget.id, [categoryId]);
           friendChallengeTarget = null;
           activateTab("view-learn");
           document.querySelector('#learnSubnav [data-sub="sub-exercises"]').click();
+          await vorbereitet;
           Quiz.startSession([categoryId], "leicht", { challengeId });
           showToast(`🦊 Willkommen, ${personaForCategory(categoryId)}!`);
           renderQuestion();

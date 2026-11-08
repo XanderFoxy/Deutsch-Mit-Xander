@@ -55,14 +55,23 @@
        B9 ein Stück kommt langsam (6 s; je einmal min/data-exercises-teil.js
           und min/app-teil-rest2.js): Lernen → Karte → Runde starten holt
           nichts synchron (DMA_TEIL_SOFORT leer)
-       B8 Vorladen hält an, sobald „Lernen" zu ist (Wissen/Klassenzimmer),
-          und macht beim Zurückkommen weiter; in einem anderen Unterbereich von
-          „Lernen" (Spiele) läuft es weiter
+       B8 Vorladen hält an, sobald „Lernen" zu ist und „Wissen" offen (die
+          ersten 8 s; Wissen ist der Weg ins Klassenzimmer), und macht beim
+          Zurückkommen weiter; in einem anderen Unterbereich von „Lernen"
+          (Spiele) läuft es weiter
        B10 Wörterbuch früh gebaut (gleich nach dem Tipp auf „Lernen", vor der
           ganzen Sammlung): sobald sie ganz da ist, stehen die Wörter aus den
           Übungstexten drin – so viele wie in einer Seite, die erst alles
           abwartet (die Teile kommen nach dem Wortschatz; ohne Neubau fehlten
           sie für die ganze Sitzung)
+       B11 Duell annehmen (Profil → Freunde → „Annehmen", der echte Knopf;
+          Backend als Attrappe in der Seite): die Runde startet erst, wenn
+          die Kategorien ganz da sind – „Lernen" nie offen und „Lernen" 1 s
+          offen, dann Profil (Nachbesserung 1, Prüfer)
+       B12 Vorladen nach einer Unterbrechung: es wartet und macht von selbst
+          weiter, ohne neuen Tipp auf „Lernen" – Bildschirm 3 s aus (in
+          „Lernen → Spiele"), Profil, Wissen (nach 8 s Frist), nach dem
+          Klassenzimmer; im Klassenzimmer kommt nichts dazu (Nachbesserung 1)
 
    Aufruf:     node werkzeug/pruefe-887-daten.js            (NUR=D|B, z. B. NUR=B TEIL=B2,B4)
    Gegenprobe: WURZEL=<ordner mit d9637a22> node werkzeug/pruefe-887-daten.js  → rot
@@ -288,7 +297,7 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
       }, o.ls || {});
       const pg = await ctx.newPage();
       const pe = [];
-      pg.on("pageerror", (e) => pe.push(String(e.message || e).slice(0, 160)));
+      pg.on("pageerror", (e) => pe.push(String(e.message || e).slice(0, 160) + (process.env.STAPEL ? " @ " + String(e.stack || "").split("\n").slice(1, 4).join(" ").slice(0, 300) : "")));
       const ab = log.length;
       await pg.goto(BASIS + "/index.html" + (o.query || ""), { waitUntil: "load", timeout: 60000 });
       await pg.waitForFunction(() => typeof ExerciseData !== "undefined" && window.LiveChat && window.DMA_TAFEL_STAND && document.readyState !== "loading"
@@ -499,6 +508,105 @@ let DMA_MODUL = null; try { DMA_MODUL = modulZeile ? JSON.parse(modulZeile[1]) :
         "B10 Wörterbuch vor der ganzen Sammlung gebaut: danach mit den Wörtern aus den Übungstexten (wie ohne frühen Bau)",
         "früh " + frueh.sonst + " · danach " + spaet.sonst + " · Vergleich " + ref.sonst + " (aus Übungstexten; Einträge " + spaet.n + "/" + ref.n + ")");
       sage(!pe1.length && !pe2.length, "B10 keine Seitenfehler", pe1.concat(pe2).slice(0, 3).join(" | "));
+    }
+    /* B11 Duell annehmen: die Runde startet erst mit den ganzen Kategorien (Nachbesserung 1, Prüfer: tiere/wortstellung/
+       stil 0 Fragen, artikel 106 statt 705 – bei 0 Fragen brach die Ansicht ab). Backend ist eine Attrappe in der Seite
+       (ein Konto, eine offene Herausforderung); Knopf und Empfänger sind die echten. Vergleich in derselben Seite: getBank
+       der Kategorien beim Start = nach dem Laden der Kategorien. */
+    if (soll("B11")) {
+      const DUELL = ["wortstellung", "stil"];
+      for (const [was, vorher] of [["„Lernen“ nie offen", null], ["„Lernen“ 1 s offen, dann Profil", 1000]]) {
+        const s = await seite({ verzug: 200, ruhe: 50 });
+        if (vorher != null) { await lernen(s.pg); await s.pg.waitForTimeout(vorher); }
+        /* erst Profil öffnen (zeichnet die Kontoseite als Gast), dann die Attrappe – sonst fehlt der Kontoseite das Profil */
+        await s.pg.evaluate(() => document.querySelector('.tape-tab[data-target="view-profile"]').click());
+        await s.pg.waitForTimeout(400);
+        await s.pg.evaluate((ids) => {
+          const ch = { id: "pruef-duell-1", categories: ids, status: "pending", fromName: "Prüf-Freund", fromId: "pruef-freund",
+            extra: { raum: "de" }, createdAt: new Date().toISOString() };
+          Backend.currentUser = () => ({ id: "pruef-ich", email: "pruef@example.org" });
+          Backend.getFriends = async () => [];
+          Backend.getIncomingRequests = async () => [];
+          Backend.getMyChallenges = async () => ({ incoming: [ch], incomingAlle: [ch], outgoing: [] });
+          window.__duell = [];
+          const alt = Quiz.startSession;
+          Quiz.startSession = function (cats) {
+            try { window.__duell.push({ cats: cats.slice(), len: cats.map((k) => ExerciseData.getCategory(k).getBank().length) }); }
+            catch (e) { window.__duell.push({ fehler: String(e) }); }
+            return alt.apply(this, arguments);
+          };
+        }, DUELL);
+        await s.pg.evaluate(() => document.querySelector('#profileSubnav [data-sub="sub-friends"]').click());
+        const knopf = await s.pg.waitForSelector('[data-accept-challenge="pruef-duell-1"]', { timeout: 20000 }).then(() => true, () => false);
+        if (knopf) await s.pg.evaluate(() => document.querySelector('[data-accept-challenge="pruef-duell-1"]').click());
+        const frage = knopf && await s.pg.waitForFunction(() => { const p = document.getElementById("exercisePlay"); return p && p.style.display !== "none" && p.offsetParent !== null && p.textContent.trim().length > 20; }, null, { timeout: 30000 }).then(() => true, () => false);
+        const st = await s.pg.evaluate(async (ids) => {
+          const d = window.__duell[0] || null;
+          const q = Quiz.getState();
+          await ExerciseData.ladeUebungen(ids);   /* Vergleich (auf d9637a22 die ganze Datei) */
+          return { d, n: q && q.questions ? q.questions.length : 0, voll: ids.map((k) => ExerciseData.getCategory(k).getBank().length) };
+        }, DUELL);
+        sage(knopf && frage && st.d && st.d.len && st.n >= 5 && st.d.len.join(",") === st.voll.join(","),
+          "B11 Duell annehmen (" + was + "): die Runde startet mit allen Aufgaben der Kategorien",
+          (knopf ? "" : "kein Annehmen-Knopf; ") + (frage ? "" : "keine Frage; ") + DUELL.join("/") + " beim Start " + (st.d && st.d.len ? st.d.len.join("/") : "–")
+          + ", ganz " + st.voll.join("/") + ", Runde " + st.n + " Fragen");
+        sage(!s.pe.length, "B11 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+        await s.ctx.close();
+      }
+    }
+    /* B12 Vorladen nach einer Unterbrechung (Nachbesserung 1, Prüfer: nach 3 s Bildschirm aus blieb es bei 4 von 90): es
+       wartet und macht von selbst weiter, ohne neuen Tipp auf „Lernen"; im Klassenzimmer kommt nichts dazu. */
+    if (soll("B12")) {
+      const verdecken = (an) => {
+        if (an) {
+          Object.defineProperty(document, "hidden", { configurable: true, get: () => true });
+          Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+        } else { delete document.hidden; delete document.visibilityState; }
+        document.dispatchEvent(new Event("visibilitychange"));
+      };
+      const alle = QUELLE ? Object.keys(QUELLE).length : -1;
+      const teile = (n0) => log.slice(n0).filter(istTeil).length;
+      const ganz = (pg, ms) => pg.waitForFunction(() => window.__ueb.ganz != null, null, { timeout: ms }).then(() => true, () => false);
+      const klick = (pg, sel) => pg.evaluate((x) => document.querySelector(x).click(), sel);
+      const faelle = [
+        ["Bildschirm 3 s aus (in „Lernen → Spiele“)", async (pg, n0) => {
+          await klick(pg, '#learnSubnav [data-sub="sub-games"]');
+          await pg.evaluate(verdecken, true);
+          const a = teile(n0); await pg.waitForTimeout(3000); const b = teile(n0);
+          await pg.evaluate(verdecken, false);
+          return { still: b - a, wo: "verdeckt" };
+        }],
+        ["Profil", async (pg) => { await klick(pg, '.tape-tab[data-target="view-profile"]'); return null; }],
+        ["Wissen (Kompass, nach der Frist von 8 s)", async (pg, n0) => {
+          await klick(pg, '.tape-tab[data-target="view-knowledge"]');
+          const a = teile(n0); await pg.waitForTimeout(3000); const b = teile(n0);
+          return { still: b - a, wo: "die ersten 3 s in Wissen" };
+        }],
+        ["nach dem Klassenzimmer (12 s drin, dann Kompass)", async (pg, n0) => {
+          await klick(pg, '.tape-tab[data-target="view-knowledge"]');
+          await klick(pg, '#knowledgeSubnav [data-sub="sub-livechat"]');
+          const a = teile(n0); await pg.waitForTimeout(12000); const b = teile(n0);
+          const g = await pg.evaluate(() => window.__ueb.ganz != null);
+          await klick(pg, '#knowledgeSubnav [data-sub="sub-kompass"]');
+          return { still: b - a + (g ? 100 : 0), wo: "12 s im Klassenzimmer" };
+        }],
+      ];
+      for (const [was, weg] of faelle) {
+        const s = await seite({ verzug: 250 });
+        const n0 = log.length;
+        await lernen(s.pg);
+        await s.pg.waitForFunction(() => performance.getEntriesByType("resource").filter((e) => /\/bau\/uebungen\//.test(e.name)).length >= 4, null, { timeout: 30000 }).catch(() => {});
+        const vor = teile(n0);
+        const r = await weg(s.pg, n0);
+        if (r) sage(r.still <= 4, "B12 " + was + ": " + r.wo + " kommt nichts dazu (höchstens die 4 unterwegs)", r.still + " Teile dazu");
+        const fertig = await ganz(s.pg, 60000);
+        const nEnde = teile(n0);
+        const lernenOffen = await s.pg.evaluate(() => document.getElementById("view-learn").dataset.active === "true");
+        sage(fertig && nEnde === alle && (was.startsWith("Bildschirm") || !lernenOffen),
+          "B12 " + was + ": danach von selbst zu Ende (ohne neuen Tipp auf „Lernen“), jeder Teil einmal", vor + " → " + nEnde + " / " + alle + " Teile" + (fertig ? "" : ", nicht fertig"));
+        sage(!s.pe.length, "B12 … keine Seitenfehler", s.pe.slice(0, 3).join(" | "));
+        await s.ctx.close();
+      }
     }
     await br.close(); srv.close();
   }
