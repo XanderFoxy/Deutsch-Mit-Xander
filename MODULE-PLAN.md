@@ -856,7 +856,7 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
        im Netzwerk keine Anfrage an `src/bruecke.js`.
     - **Größe und Platz:** min/app.js 733 475 → 734 730 B (gz 199 712 → 200 192, +480 B); app.js +3 374 B; bau/ und
       src/ unverändert (gleiche Brücke `bau/bruecke-CSGLwKEs.js`), index.html nur Stempel. Alle Dateien im Baum gegen
-      542e4250 +12 808 B (vor diesem Logbuch-Absatz).
+      542e4250 +13 654 B (Stand 5230e92d, vor diesem Logbuch-Absatz).
     - **Sonden (Code 9d82ff6f/5230e92d; verschränkt: je Sonde erst M4, dann d9637a22 als schlanke Kopie – für die
       Sonden mit `git show` mit eigenem `.git` über die Objekte des Hauptbaums –, alles über die Sperre; Ausgaben
       `/tmp/claude-0/m4r3/aus/`):**
@@ -873,7 +873,16 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
       - **Rot auf beiden Ständen gleich (nicht durch M4):** 694-leistung „beim erneuten Öffnen kommt KEINE
         gestempelte Datei mehr übers Netz“ (`min/spiel.js`, der bekannte Wettlauf; 4 Läufe je Stand verschränkt:
         d9637a22 1× grün, 3× rot; M4 4× rot – alle Roten mit genau dieser einen Datei, keine Anfrage an bau/).
-      - Tutor-, Betonungs- und Aussprache-Sonden: laufen noch (verschränkt), Ergebnis folgt.
+      - **Tutor, Betonung, Aussprache (alle 18 aus der Liste von Runde 1, verschränkt): grün, Ausgabe auf beiden
+        Ständen gleich bis auf Zeiten, Zeitstempel und Hash-Namen** (maschinell verglichen): tutor, tutorreiter,
+        tutorstimme34 10/10, tutorbild62 7/7, tutor-stuecke 6/6, runde24 32/32, runde29 32/32, runde30 78/78, runde60
+        23/23, tutorfilm34 31/31, betonung-uebung 17/17, betonung-regeln, 766 10/10, 771 19/19, 772 17/17, 773 11/11,
+        882-aussprache-z 8/8, 783 10/10.
+    - **Damit:** alles Blockierende und Wichtige behoben (Befund 1), die kleinen Befunde 2 (Messung) und 4
+      (Rückweg reihenfolgefest, Marke fürs iPhone) erledigt, Befund 3 begründet offen. **Vor einer Auslieferung bleibt:**
+      einmal auf einem echten iPhone prüfen (`DMA_APP.brueckeVorher` true, keine Anfrage an `src/bruecke.js`); die
+      leichte Neigung bei Konto „wieder“ (36 Paare +27 [−1…+50], p = 0,07) im Blick behalten – mit der nächsten Gruppe
+      (Schritt 11) wird dasselbe Maß ohnehin wieder gemessen.
     - **Messung Konto (Befund 2; A = d9637a22 als schlanke Kopie, B = 9d82ff6f, `scratchpad/m4/m4-messen.js`, Betreiber,
       Datenbank 150 ms, CPU 4×, eigener Server je Stand mit max-age=600, ohne Helfer; je 4 Paare pro Sperre, A/B und
       A/A abwechselnd, 16 + 16 Paare; Daten `/tmp/claude-0/m4r3/mess/`). Median A → B, gepaart B − A [95-%-Bereich],
