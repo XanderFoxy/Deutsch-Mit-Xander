@@ -745,6 +745,11 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
        - **B6** neu dazu: Rückfall beim Vorladen (nur „Lernen" offen, keine Karte): Teil `stil` 404 bzw. Verzeichnis 404 →
          von selbst die ganze Datei, Daten = Quelle; neu grün, **edc48fc5: 2 rot** („nicht fertig"), **d9637a22: 2 rot**
          (kein Teil angefragt; die ganze Datei kommt dort, aber ohne Teile und ohne `dma-uebungen-ganz`).
+       - Bestehende Sonden der berührten Bereiche auf a3add543 (07:22–07:53 UTC): grün `galgenmaennchen`,
+         `858-ladeweg`, `876-start-schlank`, `betonung-uebung`, `853-beugung`, `885-bereiche`, `885-stuecke`,
+         `887-bruecke`, `887-bau`, `885-schlank`, `885-swvorladen`, `843-italienisch-nur-im-raum` (die Zählung „1 rot"
+         bei betonung-uebung/843 sind die Überschriften „BEFEHL"/„SEITENFEHLER"), `884-notweg` „alles grün" (die Zählung „4 rot" sind Überschriften mit „FEHLT"). Kein Rot,
+         also nichts gegen d9637a22 zu vergleichen.
     4. **Messung nach der Nachbesserung (a3add543, A = d9637a22, B = neu, verschränkt, Chromium CPU 4×, Gast, Tipp sofort;
        08.11. 07:05–07:40 UTC, Rechnerlast 3–4 bei 4 Kernen; `scratchpad/m887/modul/m3b/nb1/messung/`).**
        - **Karte, die NICHT unter den ersten 8 vorgeladenen ist (`--kategorie wortstellung`; so sind 82 der 90):**
@@ -772,13 +777,14 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
          A/A +33 [−5…84]**; erstes Bild +118 [67…135], A/A +71 [46…122]; Wissen-Tipp +25 (A/A −2); Klassenzimmer-Tipp
          −10 (A/A +2); ab Start bis Klassenzimmer +64 (A/A +50); Langläufer-Summe +38 (A/A +47). Abzüglich der A/A-
          Schieflage bleiben +33 ms (bereit) bzw. +47 ms (erstes Bild), innerhalb der Rauschgrenze; der Mechanismus ist
-         klein (+2,0 KB gepackt bis bereit ≈ 10 ms bei 1,6 Mbit/s). **Kein Nachteil über dem Rauschen gesichert; ein
+         klein (+2,4 KB gepackt bis bereit gegen d9637a22 ≈ 12 ms bei 1,6 Mbit/s). **Kein Nachteil über dem Rauschen gesichert; ein
          Rest von ~+30–50 ms ist nicht auszuschließen.** (Die früheren 3G-Zahlen −53/+79/+186 ms stammen aus je 2 Paaren
          ohne diese Kreuzauswertung.) Bei „Übung öffnen" ist der Effekt kleiner; über Kreuz nachgerechnet bleiben die
          Aussagen: Endlauf 4G (tiere) Lernen-Tipp → Frage −1 884 statt −2 065 ms (Faktor ≈ 1,59 statt 1,64), 3G −7 129
          statt −7 155; wortstellung 4G −1 457 statt −1 285, Karte +557 statt +523, Runde starten +1 203 statt +1 297.
     5. **Platz:** keine neuen Dateien (die Daten sind unverändert, `bau/uebungen/` bleibt gleich); geändert sind nur
-       `data-exercises.js`, `app.js` und ihre `min/`-Stücke (gepackt +0,4 KB). Weiter ≈ 954 von 1 000 MB.
+       `data-exercises.js`, `app.js` und ihre `min/`-Stücke (gepackt +0,8 KB, davon bis „bereit" +0,4 KB:
+       min/app.js +0,23, min/data-exercises.js +0,19). Weiter ≈ 954 von 1 000 MB.
     6. **Offen / Vorschläge (aktualisiert):**
        1. **„Runde starten" ohne den ganzen Wortschatz** bleibt der größte Rest-Hebel (nachgemessen 4G +1,2–1,3 s, 3G
           +11,2 s, 13,6 s „Aufgaben werden geholt …"). Neu gezählt (Node, `getBank()` aller 62 Kategorien des
