@@ -8425,7 +8425,7 @@ verschränkt gegen 886 nachgeprüft.
 | raumverlauf 6, verlauf-kein-reset 5, leere, 863-chatfenster, notenknopf-aufgabe 16, stimmzeilen 4, 884-gleich 57, 812-auftritt-autos 38, 845-chat-einzug-gleise 47, 679-spielsitz 10, 697-spiellogik 16 | grün (exit 0) | – |
 | verlauf-nachfassen 7, verlauf-doppelt 5, fremde-uhr-reihenfolge 5, antwort-gehoert-dazu 12 | grün (Endstand dc0c9325) | – |
 | aufgabe-reist, benoten, bild-fluestern, reihenfolge, runde99-privat/-pssst, schreien, leitung, 642-verlauf-laden, spielsystem | **noch nicht gelaufen** (Sperre) – vor dem Ausliefern im Hauptbaum nachholen (**nachgeholt**, alle grün: „Auslieferung 887 – Nachbesserung (Prüfung Runde 2)“) | – |
-| 885-sparsam | A B C D E G H L M N (41 ok) und R P U X3 V NT (28 ok) grün; **X5 rot** („binnen 10 s die Blase“ – kein Tipp-Nachholen): das ist der bekannte Rand der Notfall-Bremse (Offen 8, in 886 im Sammellauf ebenso einmal rot, allein wiederholt grün); 887 ändert weder backend.js noch die Abfragen. NT0 und die Fälle danach (NT0 … SWS0) liefen nicht mehr zu Ende (alle Läufe wurden um 10:16 von außen beendet) – **vor der Auslieferung nachholen**, zusammen mit X5 allein (3×). | – |
+| 885-sparsam | A B C D E G H L M N (41 ok) und R P U X3 V NT (28 ok) grün; **X5 rot** („binnen 10 s die Blase“ – kein Tipp-Nachholen): das ist der bekannte Rand der Notfall-Bremse (Offen 8, in 886 im Sammellauf ebenso einmal rot, allein wiederholt grün); 887 ändert weder backend.js noch die Abfragen. NT0 und die Fälle danach (NT0 … SWS0) liefen nicht mehr zu Ende (alle Läufe wurden um 10:16 von außen beendet). **Nachgeholt** auf dem Auslieferungsstand (07./08.11.): alle 37 Fälle grün, 178 ok, X5 eingeschlossen (s. „Auslieferung“). | – |
 
 ### Offen / Vorschläge für den Funk (nicht gebaut, weil sichtbar)
 - **Autos nicht mehr vorab malen (L4, wartet auf OK):** weg wären 2 lange Bilder (1,0–2,7 s, Endstand-Messung 836–2 067 ms)
@@ -8444,3 +8444,25 @@ verschränkt gegen 886 nachgeprüft.
 - **Filmunschärfe** (Blur hinter dem großen Bild) auf schwachen Geräten weglassen – sichtbar.
 - **Sprechring** als CSS-Transform statt Box-Shadow-Animation – minimal anders im Aussehen.
 - Für 888: `melden` je Bild per `requestAnimationFrame` zusammenfassen (L3, Teil 3), Realtime `worker: true` (mit Ton-Sonde).
+
+## Fassung 887 — Auslieferung (Überblick, 08.11.2026)
+
+Mit dieser Fassung gehen hinaus: „Livestream ohne Hänger“ (oben, mit Nachbesserung Runde 1 und den Auslieferungs-Nachbesserungen)
+und der „Nachtrag aus der 886-Gesamtprüfung“.
+
+**Gemessen** (Nachbau: volles Klassenzimmer, 7 000 Zeilen Verlauf, Chat-Flut 1 Zeile/s, Fotos bei 3 von 30 Autoren, CPU 4×,
+verschränkt gegen 886): Seite in der Flut belegt 58 % → 0 %, längstes Bild in der Flut 774 → 70 ms, langsamste Eingabe
+960 → 180 ms, längstes Bild beim Betreten 849 → 260 ms; eine empfangene Chatzeile 49 → 4,5 ms (Sonde 887-zeile). Unverändert
+wie 886: das Vorab-Malen der Autos ~10 s nach dem Betreten (Vorschlag dazu wartet auf Xanders OK).
+
+**supabase-js** ist fest auf 2.119.0 (index.html, stadt-leicht.html, __kz.html) – genau die Fassung, die 886 über `@2` seit
+04.11. ohnehin lud; `fassung-setzen.js` bricht ohne feste Fassung ab (Sonde 887-supabase).
+
+**Sonden:** alle 39 Auslieferungs-Sonden im Hauptbaum grün (1 488 ok, keine rote Prüfung, 885-sparsam alle 37 Fälle), dazu
+887-supabase. Zwei gegnerische Prüfungen; die zweite ohne blockierende oder wichtige Mängel.
+
+**Bewusst so gelassen:** (1) die kurze, nur zuhörende zweite Echtzeit-Leitung der gehenden Seite bei der Rückkehr direkt nach
+einem Update (Nachtrag, Punkt 1); (2) das Absturz-Fenster von höchstens ~20 s + Leerlauf, in dem neue Zeilen nur im
+Arbeitsspeicher liegen (Server hat die Zeilen angemeldeter Autoren); (3) **Rücknahme auf 886:** 887 legt Profilfotos in den
+Gerätekopien nur als Fingerabdruck (`bildH`) ab, das Foto selbst im Lager („chatbild:…“) und in der Fototafel. Eine 886-Seite
+zeigt in diesen gespeicherten Zeilen bis zum nächsten Laden vom Server keine Profilfotos – Text und Reihenfolge bleiben.

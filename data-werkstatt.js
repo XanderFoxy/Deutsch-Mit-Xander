@@ -49,11 +49,9 @@ window.DMA_WERKSTATT = {
   nurBetreiber: true,
 
   /* Woran gerade gearbeitet wird — eine Zeile Klartext. */
-  stand: "Fassung 887 — Livestream ohne Hänger: in der Prüfung, dann Auslieferung (live ist 886)",
+  stand: "Fassung 887 — Livestream ohne Hänger · in Arbeit: Umbau auf Module (M3b Übungen, M4 Tutor/Betonung, M5 Stadt)",
 
   inArbeit: [
-    { seit: "2026-11-01T05:05",
-      text: "Fassung 887 – Livestream ohne Hänger: Chat-Flut, Tippen, Verlauf und Spieltakt entlastet; wird gerade geprüft, dann ausgeliefert" },
     { seit: "2026-11-01T06:00",
       text: "Umbau auf Module (Vite): Schritte M3b, M4 und M5 in Arbeit" },
     { seit: "2026-10-25T00:42",
