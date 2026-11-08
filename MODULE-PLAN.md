@@ -748,8 +748,8 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
        - Bestehende Sonden der berührten Bereiche auf a3add543 (07:22–07:53 UTC): grün `galgenmaennchen`,
          `858-ladeweg`, `876-start-schlank`, `betonung-uebung`, `853-beugung`, `885-bereiche`, `885-stuecke`,
          `887-bruecke`, `887-bau`, `885-schlank`, `885-swvorladen`, `843-italienisch-nur-im-raum` (die Zählung „1 rot"
-         bei betonung-uebung/843 sind die Überschriften „BEFEHL"/„SEITENFEHLER"), `884-notweg` „alles grün" (die Zählung „4 rot" sind Überschriften mit „FEHLT"). Kein Rot,
-         also nichts gegen d9637a22 zu vergleichen.
+         bei betonung-uebung/843 sind die Überschriften „BEFEHL"/„SEITENFEHLER"), `884-notweg` „alles grün" (die
+         Zählung „4 rot" sind Überschriften mit „FEHLT"). Kein Rot, also nichts gegen d9637a22 zu vergleichen.
     4. **Messung nach der Nachbesserung (a3add543, A = d9637a22, B = neu, verschränkt, Chromium CPU 4×, Gast, Tipp sofort;
        08.11. 07:05–07:40 UTC, Rechnerlast 3–4 bei 4 Kernen; `scratchpad/m887/modul/m3b/nb1/messung/`).**
        - **Karte, die NICHT unter den ersten 8 vorgeladenen ist (`--kategorie wortstellung`; so sind 82 der 90):**
@@ -790,8 +790,8 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
           +11,2 s, 13,6 s „Aufgaben werden geholt …"). Neu gezählt (Node, `getBank()` aller 62 Kategorien des
           Deutsch-Raums): **in 41 Kategorien hat jede Aufgabe ein festes Niveau** – für sie liest quiz.js den Wortschatz
           zur Einstufung gar nicht (`questionLevel` nimmt `q.level`); nur 21 Kategorien haben Aufgaben ohne Niveau
-          (zusammen 2 625 von 24 173, meist je ~100 eingebaute), dazu „wortschatz", das seine Aufgaben aus dem
-          Wortschatz baut. Nächster Schritt (eigener Schritt mit Gleichlauf-Prüfer, unsichtbar): Niveau der 2 625 beim Bau
+          (zusammen 2 625 von 24 173, meist je ~100 eingebaute). Unter den 41 braucht „wortschatz" ihn trotzdem, weil es
+          seine Aufgaben aus dem Wortschatz baut. Nächster Schritt (eigener Schritt mit Gleichlauf-Prüfer, unsichtbar): Niveau der 2 625 beim Bau
           vorberechnen oder nur für diese Kategorien warten; vorher prüfen, ob andere Teile der Runde (z. B. Betonung) den
           Wortschatz brauchen.
        2. **Karte, die nicht vorgeladen ist** (4G +0,5 s, 3G +1,5 s; „Runde starten" bleibt so lange ohne Hinweis
