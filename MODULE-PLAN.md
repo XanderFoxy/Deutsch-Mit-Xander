@@ -374,7 +374,9 @@ eine Messung gegen 886.
 - `teile-bauen.js` lässt die verschwundenen Namen von selbst weg.
 - Erst nach M2, mit Brückenwächter und `quelle-lesen` für die betroffenen Sonden.
 - **Stand 07.11.: gebaut auf `modul-m4`** (Logbuch Abschnitt 7). Start und Tutor-Öffnen gleich schnell (im Rauschen);
-  ein Update nach einer Tutor-/Betonungs-Änderung kostet 7,9 statt 848 KB gz.
+  ein Update nach einer Tutor-/Betonungs-Änderung kostet 7,9 statt 848 KB gz. **08.11.: Nachbesserung Runde 1
+  eingebaut** (Notweg im Funkloch, fremde Funktion, Werkzeug und Strings, Warteschlange) – Sonden grün, Gegenproben
+  auf d9637a22 und 2417165d rot.
 
 ### M5. Stadt als eigene Vite-Seiten (dritter Agent möglich, sobald M1 steht)
 - `stadt.html`/`stadt-leicht.html` werden Vite-Mehrseiten-Einträge. Die Packer `stadt-packen.js`/`leicht-packen.js`
@@ -777,3 +779,37 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
         dadurch nichts. Für M4 insgesamt bleibt es bei: Start und Tutor-Öffnen im Rauschen (Faktor alt/neu 4G bereit
         0,99 kalt / 0,96 wieder, Gast DOMContentLoaded 0,99 / 1,01, Notweg 1,01), der Gewinn ist das kleine Update
         (7,9 statt 848 KB gz nach einer Tutor-/Betonungs-Änderung).
+    - **Sonden nach der Nachbesserung (Code d9ea1fb1; verschränkt: je Sonde erst M4, dann d9637a22 als schlanke Kopie,
+      alles über die Sperre; Ausgaben `/tmp/claude-0/m4nb/aus-*`, `/tmp/claude-0/m4r2/`):**
+      - **887-modul-app grün 75/75** (A 20, B 30, K 8, R 10, N 7). **Gegenprobe d9637a22: 29 rot** (A 14, B1 6, K 6,
+        R 2, N 1 – dort gibt es keine Brücke; dass Betonung und Ohren dort offline gehen, ist der Ausgangsstand, den N
+        für M4 verlangt). **Gegenprobe 2417165d (vor der Nachbesserung): 18 rot, genau die neuen Fälle** – A5 Notweg,
+        Tabelle, Ereignis, `DMA_BRUECKE.fn` (4); A6 Werkzeug (2: Zeilen im Template-Literal um 2 Leerzeichen kürzer,
+        kein `--pruefen`); B1 „0 in fn“ (3); K1/K2 (3: die fremde `tutorBereichRufen` wurde gerufen, „fremd gerufen:
+        1“); R (1: ein Tipp vor der Brücke schaltete die Betonung später ein); N (5: keine Brücke, 0 markierte Silben,
+        Ohren aus – der Rückschritt aus Befund 1).
+      - **Gegenprüfung mit der Sonde des Prüfers** (`scratchpad/m3b4/wege.js`, unverändert; je Fall M4, dann
+        d9637a22): **swnotweg** (Laden 1 und 2 mit Helfer, Laden 3 ohne Leitung) M4: Brücke aus bau/ (14 Namen),
+        Betonung an (24 Silben), wieder, aus, Ohren ok – **genau wie d9637a22** (vor der Nachbesserung beim Prüfer:
+        br=null, Betonung an=false, Ohren=false); der Tutor kommt offline auf beiden nicht. **konfliktfn** (fremde
+        `window.tutorBereichRufen`) M4: Konflikt gemeldet, Tutor kommt, **fremd=0** (beim Prüfer vorher 1); d9637a22
+        fremd=0. **notweg** (online) M4 und d9637a22: Tutor, Reiter, Ohren, Betonung (43) alles da.
+        **ohnebau** (bau/bruecke gesperrt) M4: bau/ scheitert, `src/bruecke.js` kommt über den Rückweg, alles da.
+        **quelle** M4: `src/bruecke.js` vor app.js, alles da. **min** M4: bau/bruecke vor min/app.js, alles da. Auf
+        d9637a22 jeweils dasselbe Verhalten (ohne Brücke). Kein pageerror in den 12 Läufen.
+      - **Grün und gleich wie auf d9637a22** (Ausgabe bis auf Zeiten und Hash-Namen gleich): 884-notweg 91/91 (A–O; G:
+        `/app.js` genau einmal vom Server), 887-bruecke 19/19 (Brückenwächter), 885-schlank 43/43 (Q mit der Zeile
+        „@bruecke“: gepackt −5 085 B), 876-start-schlank 62/62, 885-swvorladen 32/32 (Prüfung 12: bau/bruecke liegt im
+        Speicher des Helfers), 885-stuecke 43/43, 887-bau 42/42 (auf der Kopie von d9637a22 37 ok, B4/B11 rot „kein
+        git“ – Kopie ohne .git), tutor (gleich bis auf Zeitstempel), tutorreiter, tutorstimme34 10/10, tutorbild62 7/7,
+        tutor-stuecke 6/6, runde24 32/32, runde29 32/32, runde30 78/78, betonung-uebung 17/17, betonung-regeln,
+        766 10/10, 771 19/19, 772 17/17, 773 11/11, 882 8/8, **783 10/10 – der Vergleichslauf auf d9637a22 ist
+        nachgeholt: gleich**. runde60 23/23 und tutorfilm34 31/31 sind jetzt auf beiden Ständen grün (am 07.11. auf
+        beiden rot, weil ffmpeg fehlte – es ist inzwischen da).
+      - **Rot auf beiden Ständen gleich (nicht durch M4):** 694-leistung 1 rot „beim erneuten Öffnen kommt KEINE
+        gestempelte Datei mehr übers Netz“ (`min/spiel.js` – der bekannte spiel.js-Wettlauf aus 884, den
+        885-swvorladen 11 als bekannt führt). Der erste Lauf von 885-schlank auf der d9637a22-Kopie brach nach 342 s ab
+        (Rechner geteilt); der zweite verschränkte Lauf beider Stände war grün.
+      - **Damit ist von der Liste „vor einer Auslieferung nachzuholen“ erledigt:** 4G-A/A, zweite 4G-Reihe, 783 auf
+        d9637a22. Offen bleibt nur, was oben steht: Konto „wieder“ mit ≥ 16 Paaren, und (klein) `?quelle`/Rückweg
+        offline ohne Stempel für `src/app/*`.
