@@ -354,6 +354,12 @@ eine Messung gegen 886.
   entfallen.
 - Die Hauptseite ist dabei nicht berührt.
 - Sonden: `pruefe-stadt-*`, `-844`, `?quelle=1`, Ladebild.
+- **Voraussetzung (seit M5, Prüfung Runde 1):** Vite im Baum (`node_modules/`, `npm ci`). Seit M5 baut nur noch Vite die
+  Stadt; die Packer liefen auch ohne `node_modules`. Fehlt Vite in einem git-Baum (der Hauptbaum hat bis heute kein
+  `node_modules`), holt `werkzeug/modul-bauen.js` es beim nächsten Bau EINMAL mit `npm ci` (Fassungen aus
+  `package-lock.json`, ≈ 34 MB, nicht in git) – so wie `fassung-setzen.js` esbuild für `min/` holt. Geht das nicht (kein
+  Netz), bricht der Bau laut ab und nennt die geänderte Datei; der Haken lässt den Commit trotzdem durch (sein Text bleibt
+  für alle Bäume), dann sofort `npm ci` und `node werkzeug/fassung-setzen.js --nur-stempel` nachholen.
 
 ---
 
@@ -505,9 +511,11 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
   - **Chromium-Pause ab 08:05 UTC** auf Bitte des Dirigenten (LIVE-Schlussreihe 887). Restliche Läufe:
     `scratchpad/m887/modul/rest.sh` (ab ~09:30 UTC, ein Läufer, alles über die Sperre).
 
-### M5 Stadt (Zweig `modul-stadt`, Grundlage fc5e3ae3; Commits f36468ab, d42f0348, 015c77df, fb22207d, b3143974, …)
+### M5 Stadt (Zweig `modul-stadt`, Grundlage fc5e3ae3; Commits f36468ab, d42f0348, 015c77df, fb22207d, b3143974, …; Prüfung Runde 1: 183b9512, fa914261, 8717eead, fbb3a64b, …)
 
-- 01.–07.11. **M5 — die Stadt als eigene Vite-Seiten.** Unsichtbar: dieselbe Stadt, dasselbe Ladebild, dasselbe
+- 01.–07.11. **M5 — die Stadt als eigene Vite-Seiten.** Die leichte Stadt (die im Spiel) bleibt unsichtbar gleich. Die
+  Baukasten-Stadt (`stadt.html`, im Spiel nicht verlinkt) ändert sich SICHTBAR, siehe „Fund“ (berichtigt in Prüfung
+  Runde 1; vorher stand hier für beide „unsichtbar“). Sonst: dasselbe Ladebild, dasselbe
   `?quelle=1`, dieselben Adressen (`stadt.html`, `stadt-leicht.html`; `spiel.js` bettet die leichte Stadt unverändert
   ein). index.html, sw.js, app.js, livechat.js, spiel.js: Byte für Byte wie fc5e3ae3; `DMA_MODUL` nennt nur `rueckfrage`.
   - **Aufbau:**
@@ -523,7 +531,9 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
       `bau/<datei>`. Bündel und Stücke müssen ohne import/export sein (sonst Baufehler).
     - Gebaute Seite: im Kopf `<link rel="modulepreload">` fürs Bündel und das Stilblatt aus `bau/`. Am Ende der Lader
       (Block SKRIPTE): gebaut ein `document.write` des Moduls (läuft wie bisher nach allen anderen Skripten). Mit
-      `?quelle=1` kommen die Quellen einzeln (`?t=`) und das Quell-Stilblatt statt des gebauten.
+      `?quelle=1` kommen die Quellen einzeln (`?t=`) und das Quell-Stilblatt statt des gebauten. Seit Prüfung Runde 1
+      schreibt ein kleines Skript VOR den beiden festen Zeilen im Kopf mit `?quelle=1` gleich das Quell-Stilblatt; der
+      Lader nimmt am Ende nur das gebaute weg (vorher kam das Quell-Stilblatt erst mit dem Lader).
     - `werkzeug/modul-bauen.js`: Die Prüfsumme umfasst auch alles, was eingeht (`bau/quelle.json` „eingaben“, 93
       Dateien: stadt/…, stadt-leicht/…, das Verzeichnis der Bilder). Eine Änderung dort baut beim nächsten Commit neu;
       vorher musste man die Packer von Hand rufen. Seiten kommen über `.neu` + Umbenennen in den Hauptordner. Eine im
@@ -531,17 +541,31 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
       (887-stadt B8). `DMA_MODUL` nur aus `src/*.js`. `fassung-setzen.js` legt die gebauten Seiten mit `git add` an.
     - Die Vertretungen (`autoschau-laden.js`, `quests-laden.js`, `korn-laden.js`) holen ihr Stück als Modul
       (`s.type = "module"`). Vites Ausgabe hat kein `"use strict"` mehr (Module sind immer streng), klassisch geladen
-      liefe sie locker.
+      liefe sie locker. Nach einem Netzfehler bekommt der nächste Versuch der Auto-Schau eine eigene Adresse
+      (`?wieder=n`, Prüfung Runde 1).
     - Die Packer `stadt-packen.js`/`leicht-packen.js` sind gelöscht (b3143974, nach dem Nachweis). Die Zwergbilder
       (`leicht-zwerg.py`, liefen im Packer mit) ruft jetzt `stadt-backen.js` am Ende. Achtung: PIL fehlt auf diesem
       Rechner, der Schritt meldet das nur, wie vorher im Packer. Die Aufruf-Zeilen der Sonden nennen `modul-bauen.js`.
     - Die alten `stadt/stadt.min.js` und `stadt-leicht/{leicht,autoschau,quests,korn}.min.js` bleiben EINE Fassung
       liegen. Sie sind der Rückfall für eine Seite aus dem Browserspeicher (≤ 10 min nach dem Update). Sie werden nicht
       mehr gebaut und danach gelöscht.
-  - **Fund:** `stadt/stadt.min.js` war veraltet. Es fehlten 7 Modelle (kuh, schwein, huhn, schweinestall, holzhuette,
-    jagdhuette, sternwarte), der Packer lief nach FASSUNG 811/833 nicht mehr. Die Baukasten-Stadt hatte gebündelt 56
-    Modelle, mit `?quelle=1` 65 (887-stadt S5, Gegenprobe). Jetzt baut der Haken, gebaut und `?quelle=1` haben beide 65.
-    Die leichte Stadt war aktuell: der Packer lieferte am 01.11. Byte für Byte die Dateien in git.
+  - **Fund (für die Baukasten-Stadt SICHTBAR):** `stadt/stadt.min.js` war veraltet. Es fehlten 7 Modelle (kuh, schwein,
+    huhn, schweinestall, holzhuette, jagdhuette, sternwarte), der Packer lief nach FASSUNG 811/833 nicht mehr. Die
+    Baukasten-Stadt hatte gebündelt 56 Modelle, mit `?quelle=1` 65 (887-stadt S5, Gegenprobe). Jetzt baut der Haken,
+    gebaut und `?quelle=1` haben beide 65. Live (Fassung 887) läuft noch das alte Bündel, M5 bringt also den heutigen
+    Stand der Quellen – das sieht man:
+    - Menü „Häuser“ (gemessen 08.11., `scratchpad/m5nb1/haeuser.js`, live f619cbe7 gegen M5): 19 statt 15 Karten, neu
+      Schweinestall, Holzfällerhütte, Jagdhütte und Sternwarte. Kuh (auch die braune), Schwein, Huhn und Hahn sind
+      versteckt, nur über die Werkbank zu sehen. Die anderen Reiter bleiben gleich (Wahrzeichen 7, Weihnachten 6, Deko
+      12, Natur 3, Fahrzeuge 5).
+    - Nicht nur die 7 Modelle: auch frisch gepackt ohne sie unterschied sich das alte Bündel vom heutigen Stand (Prüfer:
+      133 bzw. 276 Arten von Zeichenketten, Eigenschaftsnamen und Zahlen, u. a. aus `boden.js` und `pinsel.js`). Werkbank
+      „Sternwarte“: 34 Bildpunkte stabil anders, ebenso gegen M5 mit `?quelle=1` (kommt also aus den Quellen, nicht aus
+      Vite). Winterhausen (Sommer) und Werkbank „Kirche“: 0 Bildpunkte.
+    - Inhaltlich richtig: so steht es in den Quellen, und Xander hat es verlangt (Funk 255, Fassungen 811 und 833). Ein
+      Vorschlag ist deshalb nicht nötig; Funk-Antwort und Werkstatt nennen es aber als sichtbar (Funk-Zeile unten, Prüfung
+      Runde 1).
+    - Die leichte Stadt war aktuell: der Packer lieferte am 01.11. Byte für Byte die Dateien in git.
   - **Größen** (Byte, in Klammern gz -9):
     - Leichte Stadt: Bündel 369 165 → 368 107 (137 052 → 136 920). Stilblatt 36 881 → 26 311 (9 534 → 6 043), Vite
       verkleinert es jetzt. Quests 192 385 → 185 808, Äcker 10 951 → 10 929, Auto-Schau 21 979 → 21 947.
@@ -558,7 +582,8 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
       Vertretungen), `null`-Vergleiche aus der es2019-Umschreibung und eingesetzte Konstanten. Quests, Äcker und
       Auto-Schau unterscheiden sich nur im `"use strict"`.
     - **Pixelvergleich** (`scratchpad/m887/stadt/pixel.js`), verschränkt A B B A, A = fc5e3ae3, für die
-      Baukasten-Stadt der Packer frisch auf denselben Quellen. Uhr angehalten: Date, performance.now und die Zeit der
+      Baukasten-Stadt der Packer frisch auf denselben Quellen (das zeigt: Vite baut dasselbe wie der Packer; gegen das
+      alte Bündel, das live läuft, ist die Baukasten-Stadt sichtbar anders, siehe „Fund“). Uhr angehalten: Date, performance.now und die Zeit der
       Bildschleife fest, Zufall mit festem Startwert. Ohne das zeigt schon derselbe Stand zweimal 4–13 % andere Punkte
       (Rauch, Wasser, Züge, Mühle).
       - Ansichten: leichte Stadt Winter-Prüfbild, Herbst Tag 900 × 600, Sommer Nacht, Telefon 360 × 780 Tag,
@@ -635,7 +660,71 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     - Die alten `.min.js` der Stadt nach einer Fassung löschen.
     - PIL für `leicht-zwerg.py` fehlt auf dem Prüfrechner. Neue Zwergbilder entstehen hier also nicht; das war schon mit
       dem Packer so.
-    - Einmischen nach `module-umbau` (`git merge-tree` gegen a2cafbbe): Code ohne Konflikt; `fassung-setzen.js` und
-      `modul-bauen.js` mischen sich selbst. Konflikt nur am Ende dieses Dokuments, weil beide Stränge an Abschnitt 7
-      anhängen: beide Blöcke behalten. Gegen `live-haenger` gibt es nur den bekannten Konflikt in `index.html` aus M2
-      (Stempel neu bauen, Plan 0.11).
+    - Einmischen: berichtigt in Prüfung Runde 1 (unten). Vorher stand hier, gegen `live-haenger` gebe es nur den Konflikt
+      in `index.html`; das gilt nur für live-haenger selbst, nicht für `main`.
+    - Hauptbaum: beim ersten Bau nach dem Einmischen holt `modul-bauen.js` Vite (einmal `npm ci`, ≈ 10 s, 34 MB, nicht in
+      git). Wer das nicht im Haken haben will: vorher von Hand `npm ci` im Hauptbaum.
+    - Quests und Äcker laden ihr Stück einmal, ohne zweiten Versuch (wie vorher klassisch, kein Rückschritt). Nach einem
+      Aussetzer bleiben bis zum Neuladen die einfache Fläche bzw. keine Quests. Unsichtbare Verbesserung für später: ein
+      zweiter Versuch mit eigener Adresse wie bei der Auto-Schau.
+  - **Prüfung Runde 1 (08.11.; Commits 183b9512, fa914261, 8717eead, fbb3a64b, b373a53b, …):**
+    - **supabase-js fest (wichtig):** Fassung 887 (main f619cbe7) legt in `stadt-leicht.html` supabase-js auf @2.119.0
+      fest; die neue Quelle `src/stadt-leicht.html` lud noch „@2“. Gemischt hätte die Seite die Pinnung gehabt, aber
+      `modul-bauen` hätte sie für „von Hand geändert“ gehalten und JEDEN Bau abgebrochen (auch rueckfrage und M3/M4:
+      karte null, Rückgabe 2). Neu aus src/ gebaut wäre die Pinnung weg gewesen.
+      - Jetzt steht @2.119.0 in `src/stadt-leicht.html`. Die gebaute Seite ändert sich nur in dieser Zeile, das Bündel
+        gar nicht. 822 und 874 fangen die feste Adresse ab (die Zeile ist byte-gleich mit main).
+      - Nachgestellt (`scratchpad/m5nb1/einmisch.sh`: `git merge-tree`, schlanker Auszug, danach `modul-bauen.bauen`):
+        HEAD + main: kein Fehler, nichts zu bauen, Seite Byte für Byte, Pinnung da. Gegenprobe e53d7280 + main: „von Hand
+        geändert“, karte null. HEAD + module-umbau (d5a96a2f) und HEAD + live-haenger (2dcd6f83): grün wie HEAD + main.
+      - Sonde 887-stadt B9 (fest in Quelle und Seite). Gegenprobe e53d7280: 2 rot.
+    - **Einmischen, berichtigt:**
+      - Gegen `live-haenger` (2dcd6f83): nur `index.html` (Stempel neu bauen, Plan 0.11).
+      - Gegen `main` (f619cbe7, hat nach live-haenger weitere Commits) drei Konflikte:
+        - `index.html`: Stempel neu bauen, Plan 0.11.
+        - `werkzeug/fassung-setzen.js`: an derselben Stelle stehen `gleichlaufPruefen` (module-umbau, M2) und
+          `supabaseFassungPruefen` (887). Beide behalten.
+        - `werkzeug/pruefe-885-schlank.js`: `DMA_MODUL` herausnehmen (module-umbau) gegen `ohnePin` (887). Beides
+          anwenden: `ohnePin(ohneFoto(HTML.replace(…DMA_MODUL…, "")))`, dazu die info-Zeile aus 887.
+        - Alle drei gibt es schon zwischen module-umbau (fc5e3ae3) und main; M5 bringt keinen dazu.
+      - Gegen `module-umbau` (d5a96a2f): nur das Ende dieses Dokuments. Mit fa914261 rieb sich auch die Export-Zeile von
+        `modul-bauen.js` mit M3b; seit b373a53b stehen die neuen Namen in einer eigenen Zeile, und die Datei mischt sich.
+    - **Ohne Vite (wichtig):** Der Hauptbaum hat kein `node_modules`. Nach M5 hätte dort eine Änderung an stadt/ nur
+      „Vite fehlt … src/ hat sich geändert“ gemeldet (falsch, es war stadt/), Rückgabe 2. Der Haken hätte den Commit mit
+      alten Seiten durchgelassen; die Packer liefen auch ohne `node_modules`. Jetzt:
+      - `viteHolen` in `modul-bauen.js`: Fehlt Vite in einem git-Baum, holt es EINMAL `npm ci --prefix <baum>`. Die
+        Fassungen kommen aus `package-lock.json`, also entstehen dieselben Stücke wie in jedem Baum. Nachgestellt in einem
+        schlanken git-Baum ohne `node_modules`: 10 s, 34 MB, `rueckfrage-CfC8vCNA.js` wie hier, nichts in git.
+      - Kein npm ohne git (Vergleichsstände, Wegwerf-Ordner der Sonden), ohne `node_modules/` in `.gitignore` (Regel 6)
+        und mit `DMA_KEIN_NPM=1`. Eine Sperre verhindert zwei Läufe zugleich.
+      - `geaendert`: die Meldung nennt, was seit dem letzten Bau geändert ist (git diff gegen den Commit von
+        `bau/quelle.json`), dazu die alten Seiten und die Abhilfe. Die Voraussetzung steht jetzt im Plan (M5).
+      - Bleibt: Der Haken kann den Commit nicht aufhalten (sein Text gilt für alle Bäume). Ohne Netz bleibt es bei der
+        lauten Meldung; 887-bau B5 und 887-stadt B4/B6 finden den Stand.
+      - Sonde 887-stadt B10 (npm als Attrappe im PATH: scheitert, DMA_KEIN_NPM, .gitignore ohne, gelingt, zweiter Lauf,
+        ohne git). Gegenprobe e53d7280: 6 rot. 887-bau B8 („ohne Vite“ im Wegwerf-Ordner ohne git) grün.
+    - **Auto-Schau nach einem Netzfehler (wichtig):** Ein Modul, dessen Abruf scheiterte, merkt sich der Browser für die
+      Seite. Die Vertretung versuchte es mit derselben Adresse noch einmal, und das scheiterte sofort, ohne Netz. Nach
+      einem Aussetzer im Mobilnetz blieb die Auto-Schau deshalb bis zum Neuladen aus (nur die Autokarte).
+      - Jetzt hat jeder weitere Versuch eine eigene Adresse (`?wieder=n`). Der erste bleibt ohne Abfrage und kommt aus
+        dem Speicher des Helfers; Adressen mit Abfrage reicht `sw.js` ans Netz durch.
+      - Sonde 887-stadt S6 (erster Abruf abgebrochen): 2 Abrufe, echte Schau. Gegenprobe fa914261: 1 Abruf, die
+        Vertretung bleibt (wie vom Prüfer gemessen).
+    - **Baukasten-Stadt sichtbar (klein):** oben berichtigt (Einleitung und „Fund“). Selbst gemessen: Häuser 15 → 19.
+    - **`?quelle=1` (klein):** Das Quell-Stilblatt kam erst mit dem Lader am Ende, das gebaute hatte er vorher entfernt.
+      Bis dahin konnte die Seite ohne Gestaltung stehen.
+      - Jetzt schreibt ein Skript VOR den festen Kopfzeilen mit `?quelle=1` gleich das Quell-Stilblatt. 887-stadt S2/S5:
+        Es steht schon, wenn der Körper der Seite beginnt. Gegenprobe 8717eead: 3 rot.
+      - Nicht übernommen: `?quelle=1` holt das Bündel weiter mit (modulepreload, 368 KB bzw. 3,5 MB, nur Prüf- und
+        Backwege). Das ginge nur, wenn auch der Nutzerweg die beiden Zeilen per Skript schreibt. Gemessen
+        (`scratchpad/m5nb1/kopf-zeit.js`, CPU 4×, 40 ms je Antwort, 8 Paare verschränkt): Bündel und Stilblatt werden dann
+        später angefragt, Median 60 → 82 ms, in jedem Lauf (Skript ganz oben im Kopf: 59 → 72). Die festen Zeilen findet
+        der Vorab-Leser des Browsers schon in den ersten Bytes. Mit dem Skript davor: 64 → 58,5 bzw. 60 → 58, also nicht
+        später. Der Nutzerweg geht vor (Funk 255).
+    - **Sonden** (08.11., dieser Baum): 887-stadt B (mit B9/B10) und S (mit S6) grün; 887-bau B grün. Weitere siehe
+      unten (Sondenstand Runde 1).
+    - **Funk-Zeile (für den Dirigenten):** „M5 Stadt, Prüfung Runde 1: Die Baukasten-Stadt (stadt.html, im Spiel nicht
+      verlinkt) sieht nach M5 anders aus als live, denn live lief noch ein altes Bündel. Im Menü ‚Häuser‘ stehen 19 statt
+      15 Karten (neu Schweinestall, Holzfällerhütte, Jagdhütte, Sternwarte), Kuh, Schwein und Huhn gibt es nur über die
+      Werkbank – so steht es seit den Fassungen 811 und 833 in den Quellen. Die Stadt im Spiel bleibt gleich. Dazu: Die
+      Auto-Schau kommt nach einem Netzaussetzer wieder, und supabase-js bleibt fest auf 2.119.0.“
