@@ -40,11 +40,13 @@
      an min/, und der Helfer sw.js hält es für offline); nur mit ?quelle
      oder ohne Bau src/bruecke.js als natives Modul. RÜCKWEG
      (hier, damit index.html schlank bleibt – 885-schlank Q): ist die
-     Brücke nicht gelaufen (bau/ nicht ladbar), lädt app.js die Quelle
-     src/bruecke.js nach (seit Prüfung Runde 2 bei DOMContentLoaded, siehe
-     unten); bis sie da ist, merken sich die Weiterleitungen
-     die Rufe. Die Stücke in src/app/ holt der Browser dann ohne Stempel
-     (gewöhnlicher Zwischenspeicher, auf GitHub Pages höchstens 10 min).
+     Brücke nicht gelaufen, holt app.js bei DOMContentLoaded erst bau/ aus
+     DMA_MODUL nach (seit 888, Runde 1: falls ein Browser das geschriebene
+     Modul nicht ausführt), und nur wenn das scheitert, die Quelle
+     src/bruecke.js (siehe unten); bis sie da ist, merken sich die
+     Weiterleitungen die Rufe. Die Stücke in src/app/ holt der Browser dann
+     ohne Stempel (gewöhnlicher Zwischenspeicher, auf GitHub Pages höchstens
+     10 min).
      ===================================================================== */
   const dmaModulWarten = [];
   function dmaModul(name, args, ersatz) {
@@ -70,12 +72,25 @@
   /* RÜCKWEG – seit Prüfung Runde 2 erst, wenn feststeht, dass das Modul nicht mehr kommt: bei DOMContentLoaded ist
      jedes Modul der defer-Reihe gelaufen oder gescheitert. Läuft es in einem Browser doch erst nach app.js (die feste
      Reihenfolge ist nur in Chromium geprüft), kommt so nicht zusätzlich die Quelle. */
+  /* NACHBESSERUNG 888 (Runde 1) — der Rückweg holt zuerst dasselbe gestempelte Stück aus bau/ (DMA_MODUL.bruecke),
+     erst wenn das scheitert (oder mit ?quelle) die Quelle src/bruecke.js. Fall: ein Browser führt das per
+     document.write geschriebene Modul nicht aus (Safari unter iOS ließ sich hier nicht prüfen). Dann kommt bei
+     DOMContentLoaded trotzdem bau/ – mit Stempel, vom Helfer abgelegt, offline da – statt src/ ohne Stempel. In
+     Chromium ändert sich nichts: dort läuft das Modul vor app.js, und ist bau/ nicht ladbar, merkt sich der Browser
+     den Fehler für diese URL (Modul-Tabelle) und es geht ohne zweite Anfrage gleich zur Quelle. Dieselbe URL wie das
+     geschriebene Modul: kam es doch an, läuft es nicht zweimal (eine Auswertung je URL). Sonde 887-modul-app, I. */
   function dmaBrueckeRueckweg() {
     if (window.DMA_BRUECKE) return;
-    const s = document.createElement("script");
-    s.type = "module";
-    s.src = "src/bruecke.js" + (window.DMA_V ? window.DMA_V("src/bruecke.js") : "");
-    document.head.appendChild(s);
+    const laden = (src, sonst) => {
+      const s = document.createElement("script");
+      s.type = "module";
+      s.src = src;
+      if (sonst) s.onerror = sonst;
+      document.head.appendChild(s);
+    };
+    const quelle = () => { if (!window.DMA_BRUECKE) laden("src/bruecke.js" + (window.DMA_V ? window.DMA_V("src/bruecke.js") : "")); };
+    const bau = !/[?&]quelle\b/.test(location.search) && (window.DMA_MODUL || {}).bruecke;
+    if (bau) laden(bau, quelle); else quelle();
   }
   if (!window.DMA_BRUECKE) {
     const nav = performance.getEntriesByType ? performance.getEntriesByType("navigation")[0] : null;

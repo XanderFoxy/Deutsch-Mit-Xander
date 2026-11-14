@@ -62,20 +62,29 @@
       W1 wie im Betrieb; W2 ohne das Ohr für controllerchange (nachgestellt:
       der Wechsel kam, bevor app.js zuhörte) – dann fängt es die Prüfung
       in der Ruhepause.
+   I  (888, Runde 1) das per document.write geschriebene Modul läuft nicht
+      (nachgestellt: document.write lässt genau diese Zeile fallen – der Fall,
+      den Safari unter iOS hier nicht prüfbar macht): der Rückweg holt bei
+      DOMContentLoaded dasselbe gestempelte Stück aus bau/ (DMA_MODUL), keine
+      Anfrage an src/; Tutor, Betonung und Ohren gehen; DMA_APP.brueckeVorher
+      ist false. Besuch 2 mit Leitung (Helfer steuert), Besuch 3 ohne Leitung:
+      die Brücke kommt aus dem Speicher des Helfers, Betonung und Ohren gehen.
+      I4: mit ?quelle kommt in demselben Fall src/bruecke.js, nicht bau/.
    A7 (ohne Browser) app.js: der Rückweg wartet auf DOMContentLoaded;
       die Sicherung nach dem Helferwechsel hört auf controllerchange, prüft
       in der Ruhepause, nur wenn die Seite beim Start gesteuert war, und
       nennt denselben Speicher wie KASTEN in sw.js.
 
-   Aufruf:     node werkzeug/pruefe-887-modul-app.js          (TEIL=A,B,K,R,N,W)
+   Aufruf:     node werkzeug/pruefe-887-modul-app.js          (TEIL=A,B,K,R,N,W,I)
    Gegenprobe: WURZEL=<Stand d9637a22> node werkzeug/pruefe-887-modul-app.js → rot
                (K2, R-Tipp und N auch auf 2417165d rot: Stand vor der Nachbesserung;
-               W auf d9637a22 grün – Betonung stand dort in app.js –, auf 542e4250 rot)
+               W auf d9637a22 grün – Betonung stand dort in app.js –, auf 542e4250 rot;
+               I und A5-888 auf b672fc2c rot: dort holt der Rückweg src/bruecke.js)
    ===================================================================== */
 const fs = require("fs"), path = require("path"), http = require("http"), os = require("os");
 const HIER = path.join(__dirname, "..");
 const WURZEL = path.resolve(process.env.WURZEL || HIER);
-const TEILE = (process.env.TEIL || "A,B,K,R,N,W").split(",");
+const TEILE = (process.env.TEIL || "A,B,K,R,N,W,I").split(",");
 const PROJEKT = "rolcktiryrvjzbwuvobb";
 const KONTO = "11111111-2222-4333-8444-555555555555";
 let fehler = 0;
@@ -153,8 +162,12 @@ function teilA() {
   sage(iM > 0 && iA > iM, "A5 index.html: das Modul steht in der defer-Reihe VOR app.js");
   sage(/if \(d === "@bruecke"\) return document\.write\('<scr' \+ 'ipt type="module" src="'/.test(html) && /\(window\.DMA_MODUL \|\| \{\}\)\.bruecke \|\| "src\/bruecke\.js"/.test(html),
     "A5 index.html: schreibt type=\"module\" mit bau/ aus DMA_MODUL, sonst (Quelle, kein Bau) src/bruecke.js");
+  /* 888 (Runde 1): der Rumpf von dmaBrueckeRueckweg hat jetzt eigene Klammern – darum über den ganzen Rumpf geprüft */
+  const rwf = (/function dmaBrueckeRueckweg\(\) \{([\s\S]*?)\n  \}\n/.exec(app) || [])[1] || "";
   sage(/if \(!window\.DMA_BRUECKE\) \{[^}]*s\.type = "module";[^}]*"src\/bruecke\.js"/.test(app)
-    || /function dmaBrueckeRueckweg\(\) \{\s*if \(window\.DMA_BRUECKE\) return;[^}]*s\.type = "module";[^}]*"src\/bruecke\.js"/.test(app), "A5 app.js: Rückweg – ist die Brücke nicht gelaufen, lädt app.js src/bruecke.js nach");
+    || (/^\s*if \(window\.DMA_BRUECKE\) return;/.test(rwf) && /s\.type = "module";/.test(rwf) && /"src\/bruecke\.js"/.test(rwf)), "A5 app.js: Rückweg – ist die Brücke nicht gelaufen, lädt app.js sie nach (zuletzt src/bruecke.js)");
+  sage(/!\/\[\?&\]quelle\\b\/\.test\(location\.search\) && \(window\.DMA_MODUL \|\| \{\}\)\.bruecke/.test(rwf) && /s\.onerror = sonst/.test(rwf) && /if \(bau\) laden\(bau, quelle\); else quelle\(\);/.test(rwf),
+    "A5 app.js (888): der Rückweg holt zuerst bau/ aus DMA_MODUL, src/bruecke.js nur nach einem Fehler oder mit ?quelle", rwf ? "" : "dmaBrueckeRueckweg fehlt");
   /* Nachbesserung M4 (Prüfung Runde 1) */
   const lader = (/if \(d === "@bruecke"\) return document\.write\(([^\n]*)\);/.exec(html) || [])[1] || "";
   sage(/!\/\[\?&\]quelle\\b\/\.test\(location\.search\) && \(window\.DMA_MODUL \|\| \{\}\)\.bruecke/.test(lader) && !/DMA_Q\("app\.js"\)/.test(lader),
@@ -232,6 +245,7 @@ async function browserTeile() {
   const srv = http.createServer((q, a) => {
     if (zustand.aus) { q.socket.destroy(); return; }   /* N: Funkloch */
     let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/index.html";
+    if (zustand.wege) zustand.wege.push(p);   /* I: was beim Server ankam */
     if (p === "/sw.js" && zustand.sw) { a.writeHead(200, { "Content-Type": "text/javascript", "Cache-Control": "no-store" }); return a.end(zustand.sw); }   /* W: alter Helfer */
     const f = path.join(WURZEL, p);
     if (!f.startsWith(WURZEL) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { a.writeHead(404); return a.end(); }
@@ -265,8 +279,16 @@ async function browserTeile() {
     });
     if (o.ohneBau) await ctx.route(/\/bau\/bruecke-[^/]*\.js/, (r) => r.abort());
     if (o.quelleSpaet) await ctx.route(/\/src\/bruecke\.js/, async (r) => { await warte(o.quelleSpaet); r.continue().catch(() => {}); });
-    await ctx.addInitScript(([konto, sitz, konflikt, notweg, ohneOhr]) => {
+    await ctx.addInitScript(([konto, sitz, konflikt, notweg, ohneOhr, ohneSchreiben]) => {
       window.__wechsel = 0;
+      /* I: das per document.write geschriebene Modul der Brücke läuft nicht (nachgestellt: die Zeile fällt weg) */
+      if (ohneSchreiben) {
+        const schreib = Document.prototype.write;
+        Document.prototype.write = function (t) {
+          if (/<script[^>]*type="module"[^>]*bruecke/.test(String(t))) { window.__ohneSchreiben = (window.__ohneSchreiben || 0) + 1; return; }
+          return schreib.apply(this, arguments);
+        };
+      }
       if (navigator.serviceWorker) {
         navigator.serviceWorker.addEventListener("controllerchange", () => { window.__wechsel++; });
         /* W2: app.js hört controllerchange nicht (der Wechsel kam, bevor es zuhörte) */
@@ -287,7 +309,7 @@ async function browserTeile() {
         const t = e.target;
         if (t && t.tagName === "SCRIPT" && t.src) window.__lauf.push(t.src.replace(location.origin + "/", "").replace(/\?.*$/, ""));
       }, true);
-    }, [mitKonto, sitzung(), o.konflikt || "", o.notweg ? FASSUNG : "", Boolean(o.ohneOhr)]);
+    }, [mitKonto, sitzung(), o.konflikt || "", o.notweg ? FASSUNG : "", Boolean(o.ohneOhr), Boolean(o.ohneSchreiben)]);
     const pg = await ctx.newPage();
     const pe = [], kons = [];
     pg.on("pageerror", (e) => pe.push(String(e.message || e).slice(0, 160)));
@@ -522,6 +544,65 @@ async function browserTeile() {
       }
     }
   }
+  if (TEILE.includes("I")) {
+    console.log("\nI  GESCHRIEBENES MODUL LÄUFT NICHT (nachgestellt wie ein Safari, der das Modul aus document.write nicht ausführt)");
+    const lesenI = (lesen) => ({ lauf: window.__lauf.slice(), br: (0, eval)("(" + lesen + ")")(), vorher: window.DMA_APP ? window.DMA_APP.brueckeVorher : "kein DMA_APP",
+      fallen: window.__ohneSchreiben || 0, gest: Boolean(navigator.serviceWorker && navigator.serviceWorker.controller),
+      dcl: Math.round((performance.getEntriesByType("navigation")[0] || {}).domContentLoadedEventStart || 0),
+      bau: performance.getEntriesByType("resource").filter((x) => /\/bau\/bruecke-[\w-]{8}\.js/.test(x.name)).map((x) => Math.round(x.startTime)),
+      src: performance.getEntriesByType("resource").filter((x) => /\/src\//.test(x.name)).map((x) => x.name.replace(location.origin + "/", "")) });
+    const brueckeText = brueckeLesen.toString();
+    zustand.aus = false; zustand.sw = null; zustand.wege = [];
+    const s = await seite({ sw: true, ohneLaden: true, ohneSchreiben: true });
+    /* Besuch 1: frisch, mit Leitung */
+    await s.pg.goto(s.url, { waitUntil: "load", timeout: 90000 });
+    await s.pg.waitForFunction(() => window.DMA_BRUECKE, null, { timeout: 20000 }).catch(() => {});
+    const r1 = await s.pg.evaluate(lesenI, brueckeText);
+    const b1 = r1.lauf.filter((x) => /bruecke/.test(x));
+    sage(r1.fallen >= 1 && r1.vorher === false, "I1 nachgestellt: das geschriebene Modul fiel weg, DMA_APP.brueckeVorher = false", "weggefallen " + r1.fallen + "×, brueckeVorher " + r1.vorher);
+    sage(b1.length === 1 && /^bau\/bruecke-[\w-]{8}\.js$/.test(b1[0]) && Boolean(r1.br && r1.br.namen.length >= 14 && !r1.br.konflikt.length), "I1 der Rückweg holt dasselbe gestempelte Stück aus bau/ (DMA_MODUL), Eingänge da",
+      (b1.join(", ") || "keine Brücke") + ", " + (r1.br ? r1.br.namen.length + " Namen" : "DMA_BRUECKE fehlt"));
+    sage(r1.bau.length === 1 && r1.dcl > 0 && r1.bau[0] >= r1.dcl, "I1 bau/bruecke erst bei DOMContentLoaded angefragt, genau einmal", "DOMContentLoaded " + r1.dcl + " ms, bau/bruecke " + JSON.stringify(r1.bau) + " ms");
+    for (const [gut, was, dazu] of await bedienen(s.pg)) sage(gut, was.replace(/^(B\d) /, "I1 ($1) "), dazu);
+    /* Besuch 2: der Helfer steuert, mit Leitung (bau/ landet über bauHolen im Speicher) */
+    await s.pg.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.ready.then(() => true), null, { timeout: 20000 }).catch(() => {});
+    await warte(1500);
+    await s.pg.goto(s.url, { waitUntil: "load", timeout: 90000 });
+    await s.pg.waitForFunction(() => window.DMA_BRUECKE, null, { timeout: 20000 }).catch(() => {});
+    await warte(2500);
+    const r2 = await s.pg.evaluate(lesenI, brueckeText);
+    const bauImSpeicher = await s.pg.evaluate(async () => (await (await caches.open("dma-dateien-1")).keys()).map((q) => q.url.replace(location.origin + "/", "")).filter((u) => /^bau\/bruecke-/.test(u))).catch(() => null);
+    sage(r2.gest && r2.fallen >= 1 && r2.lauf.filter((x) => /bruecke/.test(x)).join() === b1.join() && Array.isArray(bauImSpeicher) && bauImSpeicher.length >= 1,
+      "I2 Besuch 2 (Helfer steuert): wieder bau/, und es liegt im Speicher des Helfers", "gesteuert " + r2.gest + ", " + r2.lauf.filter((x) => /bruecke/.test(x)).join(", ") + ", im Speicher: " + (bauImSpeicher || []).join(", "));
+    /* Besuch 3: ohne Leitung */
+    zustand.aus = true;
+    let geladen = true;
+    await s.pg.goto(s.url, { waitUntil: "load", timeout: 90000 }).catch(() => { geladen = false; });
+    await s.pg.waitForFunction(() => window.__dmaAppInitialized, null, { timeout: 20000 }).catch(() => {});
+    await s.pg.waitForFunction(() => window.DMA_BRUECKE, null, { timeout: 10000 }).catch(() => {});
+    await warte(1500);
+    const r3 = await s.pg.evaluate(lesenI, brueckeText).catch(() => ({ lauf: [], br: null, src: [], fallen: 0 }));
+    const b3 = r3.lauf.filter((x) => /bruecke/.test(x));
+    sage(geladen && r3.gest && r3.fallen >= 1 && b3.length === 1 && /^bau\/bruecke-[\w-]{8}\.js$/.test(b3[0]) && Boolean(r3.br && r3.br.namen.length >= 14),
+      "I3 Besuch 3 ohne Leitung: die Brücke kommt aus bau/ (Speicher des Helfers), Eingänge da", "gesteuert " + r3.gest + ", " + (b3.join(", ") || "keine Brücke") + ", " + (r3.br ? r3.br.namen.length + " Namen" : "DMA_BRUECKE fehlt"));
+    for (const [gut, was, dazu] of await bedienen(s.pg, true)) sage(gut, was.replace(/^(B\d) /, "I3 ($1) "), dazu);
+    zustand.aus = false;
+    const srcAmServer = zustand.wege.filter((p) => /^\/src\//.test(p));
+    sage(!srcAmServer.length && ![r1, r2, r3].some((r) => (r.src || []).length), "I  in allen drei Besuchen keine Anfrage an src/ (Seite und Server)", srcAmServer.slice(0, 4).join(", ") || "keine");
+    sage(!s.pe.length, "I  kein pageerror", s.pe.slice(0, 3).join(" | "));
+    await s.ctx.close();
+    /* I4: mit ?quelle (Entwickler) in demselben Fall die Quelle */
+    zustand.wege = [];
+    const q = await seite({ quelle: true, ohneSchreiben: true });
+    await q.pg.waitForFunction(() => window.DMA_BRUECKE, null, { timeout: 20000 }).catch(() => {});
+    const r4 = await q.pg.evaluate(lesenI, brueckeText);
+    const b4 = r4.lauf.filter((x) => /bruecke/.test(x));
+    sage(r4.fallen >= 1 && b4.join() === "src/bruecke.js" && Boolean(r4.br && r4.br.namen.length >= 14) && !zustand.wege.some((p) => /^\/bau\/bruecke-/.test(p)),
+      "I4 mit ?quelle: der Rückweg holt src/bruecke.js, nicht bau/", (b4.join(", ") || "keine Brücke") + ", bau/ am Server: " + zustand.wege.filter((p) => /^\/bau\//.test(p)).length);
+    sage(!q.pe.length, "I4 kein pageerror", q.pe.slice(0, 3).join(" | "));
+    await q.ctx.close();
+    zustand.wege = null;
+  }
   await br.close(); srv.close();
 }
 
@@ -541,7 +622,7 @@ function swOhneBau() {
 (async () => {
   console.log("SONDE 887 — Modul M4 (Tutor und Betonung)   WURZEL " + WURZEL + "\n");
   if (TEILE.includes("A")) { teilA(); teilA6(); }
-  if (TEILE.some((t) => /^[BKRNW]$/.test(t))) await browserTeile();
+  if (TEILE.some((t) => /^[BKRNWI]$/.test(t))) await browserTeile();
   console.log("\n  " + (fehler ? fehler + " FEHL" : "Alles in Ordnung.") + "\n");
   process.exit(fehler ? 1 : 0);
 })().catch((e) => { console.error(e); process.exit(2); });
