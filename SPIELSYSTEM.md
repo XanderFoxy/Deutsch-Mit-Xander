@@ -8526,6 +8526,114 @@ drei Läufen auf 887 aber nicht ausgeschlossen, dass es dort ebenso selten vorko
 `src/` +0,14, package-lock.json +0,05; app.js −0,03). Bis 1 000 MB bleiben ≈ 41 MB. Der größte Brocken bleibt
 `werkzeug/backup` (245 MB) – Vorschlag 6 im Plan, braucht Xanders Ja.
 
-**Offen vor einer Auslieferung als 888:** `node werkzeug/fassung-setzen.js 888` erst bei der Auslieferung; nicht gelaufen
-sind hier die lange 885-sparsam-Reihe und die Ladezeit-Messung gegen 887 (Schritte und Messungen je Modul siehe Plan,
-Abschnitt 7). Die alten `.min.js` der Stadt nach einer Fassung löschen (M5). 884-leitung noch einige Läufe beobachten.
+**Offen vor einer Auslieferung als 888** (berichtigt in Nachbessern Runde 1, 14.11. – hier stand vorher, die
+Ladezeit-Messung gegen 887 sei nicht gelaufen; sie lief vollständig, Ergebnis unten; und die iPhone-Prüfung aus M4 fehlte):
+1. `node werkzeug/fassung-setzen.js 888` erst bei der Auslieferung.
+2. **Einmal auf einem echten iPhone prüfen** (Bedingung aus M4, MODULE-PLAN.md Abschnitt 7, Prüfung Runde 2, Befund 4;
+   war beim Zusammenführen aus dieser Liste gefallen). Safari-Web-Inspektor, Konsole: `DMA_APP.brueckeVorher` → erwartet
+   `true`; im Netzwerk keine Anfrage an `src/bruecke.js`. Geht per Funk an Xander (Zeile unten). Seit Nachbessern 1 wäre
+   `false` kein Ausfall mehr (dann muss `bau/bruecke-*.js` nach DOMContentLoaded angefragt sein und `src/` gar nicht),
+   Tutor und Betonung wären auf dem iPhone aber einen Augenblick später bereit – das soll man wissen.
+3. Die lange 885-sparsam-Reihe (nicht gelaufen; die Brücken-Nachbesserung ändert in Chromium keine Anfrage beim Start).
+4. Die alten `.min.js` der Stadt (3,94 MB) nach einer Fassung löschen (M5) – im selben Schritt den Speicherrest im
+   Helfer (unten, Punkt 4 der Nachbesserung).
+5. 884-leitung weiter beobachten.
+
+### 888 – Nachbessern Runde 1 (14.11.2026)
+
+**1. Brücke auf dem iPhone (wichtig) – behoben, iPhone-Prüfung bleibt in der Liste.** Befund: index.html setzt die Brücke
+per `document.write('<script type="module" …>')` ein; ob Safari unter iOS 14–17 so ein Modul ausführt, lässt sich hier
+nicht prüfen (nur Chromium; M5 hat dasselbe Muster für die Stadt-Seiten darum entfernt). Führte Safari es nicht aus, kam
+bisher bei DOMContentLoaded der Rückweg `src/bruecke.js` – mit `src/app/tutor.js` und `src/app/betonung.js` 58 KB roh
+(20 KB gepackt) bei jedem Besuch ohne Stempel vom Server, vom Helfer nicht abgelegt, offline ohne Tutor und Betonung.
+- **Jetzt (app.js, `dmaBrueckeRueckweg`):** der Rückweg holt zuerst dasselbe gestempelte Stück aus bau/
+  (`DMA_MODUL.bruecke`) als Modul; nur wenn das scheitert (onerror) oder mit `?quelle` die Quelle `src/bruecke.js`.
+  Damit kommt im Safari-Fall dieselbe Datei wie in Chromium, nur nach DOMContentLoaded statt vor app.js: mit Stempel,
+  über `bauHolen` im Speicher des Helfers (und über `dmaBauSichern`), offline da. Die Rufe bis dahin holt
+  `dmaModulWarten`/`nachholen` nach (wie bisher beim Rückweg). Gleiche URL wie das geschriebene Modul: kam es doch an,
+  läuft es nicht zweimal (eine Auswertung je URL; die Brücke prüft ohnehin `window.DMA_BRUECKE`).
+- **Warum nicht der feste `<script type="module">`-Tag wie bei M5 (Abhilfe b des Prüfers):** ein fester Tag hinter dem
+  Lader läuft nach ALLEN geschriebenen defer-Skripten, also nach app.js – in Chromium hieße das: Tutor und Betonung
+  immer über den Rückweg, also eine Änderung auf dem geprüften Weg. So bleibt Chromium genau wie vorher (die Brücke läuft
+  vor app.js, der Rückweg feuert nicht), und nur der ungeprüfte Fall wird sicher.
+- **Kosten in Chromium:** keine auf dem normalen Weg (der Rückweg läuft nur, wenn `DMA_BRUECKE` bei DOMContentLoaded
+  fehlt). Ist bau/ nicht ladbar (Sonde R), scheitert der zweite Versuch gleich, die Quelle wird 5 ms nach
+  DOMContentLoaded angefragt (149 → 154 ms; vorher 193 → 194 ms, also wie vorher knapp danach).
+- **Sonde `887-modul-app`, neuer Teil I** (das geschriebene Modul läuft nicht – nachgestellt: `document.write` lässt
+  genau die Zeile der Brücke fallen): I1 frischer Besuch: `brueckeVorher` false, die Brücke kommt aus
+  `bau/bruecke-CSGLwKEs.js`, angefragt bei DOMContentLoaded (172/173 ms), genau einmal; Tutor kommt, Ohren, Betonung
+  an/wieder/aus. I2 Besuch 2 (Helfer steuert): wieder bau/, liegt im Speicher des Helfers. I3 Besuch 3 ohne Leitung:
+  Brücke aus dem Speicher, 14 Namen, Ohren und Betonung (24 Silben) gehen. In allen drei Besuchen keine Anfrage an
+  `src/` (Seite und Server). I4 mit `?quelle`: der Rückweg holt `src/bruecke.js`, nicht bau/. Dazu A5-888 (der Rückweg
+  nimmt zuerst bau/ aus `DMA_MODUL`); die alte A5-Zeile prüft den Rumpf jetzt als Ganzes (er hat eigene Klammern).
+  **Ganz: 118 ok, 0 FEHL** (A, B, K, R, N, W wie vorher, dazu I 20 und A5-888). **Gegenprobe b672fc2c (Stand vor der
+  Nachbesserung, schlanker Baum `/tmp/claude-0/v888alt`): 10 rot** – A5-888; I1 Brücke aus `src/bruecke.js`, bau/ nie
+  angefragt; I2 nichts aus bau/ im Speicher; I3 offline keine Brücke, Ohren aus, 0 Silben, Betonung nicht an/wieder/aus;
+  `src/bruecke.js`, `src/app/tutor.js`, `src/app/betonung.js` am Server angefragt. Genau der Befund des Prüfers.
+- **Gebaut** mit `fassung-setzen.js --nur-stempel`: app.js, min/app.js und die 15 Teile `min/app-teil-*` (nur ihr
+  Schlüssel `dmaTeilPasst`) neu gestempelt; bau/ unverändert (`bau/bruecke-CSGLwKEs.js`). Commit d50fb6ae.
+- **Berührte bzw. betroffene Sonden (für Runde 2 gezielt):** 887-modul-app (geändert), dazu wegen app.js/min/Stempeln
+  887-bruecke, 887-bau, 885-schlank, 876-start-schlank, 885-stuecke, 884-notweg, 885-swvorladen; 885-sparsam nur,
+  wenn man ganz sicher gehen will (der Startweg in Chromium ist unverändert). Ergebnisse unten.
+
+**2. Ladezeit-Messung 888 gegen 887 (klein) – lief vollständig, hier nachgetragen.** b672fc2c (888) gegen f619cbe7 (887),
+schlanke Bäume, Werkzeug `scratchpad/m888/mess888.js`; Chromium CPU 4×, 4G und 3G nachgestellt, Gast und Konto, je kalt /
+wieder (HTTP-Speicher) / aus dem Helfer; je Bedingung 6 Paare, verschränkt mit A/A (zweite Kopie von 888), Rauschgrenze
+aus A/A; dazu Bestätigungsläufe mit 10 Paaren (3G Konto Helfer 8). Daten `scratchpad/m888/reihe/` (gesamt888.txt,
+kompakt888.md, teilschritte.md, best888.json, best-*.log). Median 887 → 888, gepaart 888 − 887 [95 %]:
+- **Im Rauschen, in allen 12 Bedingungen:** bereit, erstes Bild, Wissen-Tipp → Bild, Klassenzimmer-Tipp → Knopf,
+  Tutor-Reiter da.
+- **Schneller (gesichert): Lernen-Tipp → erste Frage (wortstellung), kalt:** 4G Gast 5 362 → 4 058 ms (−1 341),
+  4G Konto 5 347 → 3 915 (−1 546), 3G Gast 25 287 → 15 391 (−9 885), 3G Konto 24 945 → 15 450 (−9 334); dazu 4G Konto
+  wieder 2 080 → 1 758 (−332). Teilschritt Lernen-Tipp → Karten kalt 4G −3,3/−3,4 s, 3G −19,7 s.
+- **Langsamer (gesichert) nur die bekannten M3b-Kosten beim kalten Start – Teilschritte, kein Auftragsmaß, der Weg
+  bis zur ersten Frage ist insgesamt schneller (oben):** Runde starten → Frage 4G Gast 324 → 1 567 ms (+1 208), 4G Konto
+  157 → 1 013 (+856), 3G Gast 2 568 → 12 327 (+9 808), 3G Konto 1 975 → 11 794 (+9 833), je 6/6 – die Runde wartet auf
+  den ganzen Wortschatz, weil quiz.js jede Aufgabe auch nach ihren Wörtern einstuft. Karte (wortstellung) → gewählt
+  4G Gast 632 → 1 250 (+625), 4G Konto 394 → 1 410 (+964), 3G Konto 1 555 → 2 384 (+849), je 6/6 – der Teil der
+  Kategorie kommt erst beim Tipp und teilt sich die Leitung mit dem Wortschatz. Nicht in dieser Runde behoben: beides
+  ist der größte Rest-Hebel aus M3b (MODULE-PLAN.md Abschnitt 7, M3b „Offen / Vorschläge (aktualisiert)“ 1 und 2: in
+  41 von 62 Kategorien hat jede Aufgabe ein festes Niveau, dort bräuchte die Runde den Wortschatz gar nicht) – ein
+  eigener Schritt mit Gleichlauf-Prüfer, unsichtbar für Xander.
+- **Verdachtsfälle der ersten Reihe, mit 10 Paaren nachgemessen – alle im Rauschen:** kz 3G Gast Helfer erstes Bild
+  +52 → +2 [−32…32]; Übung 3G Gast wieder Lernen → erste Frage +214 → +88 [−198…254]; Übung 3G Konto Helfer Lernen →
+  erste Frage +393 → −19 [−87…199]; leichte Stadt 4G Gast wieder +232 → +111 [−80…189], Helfer +116 → +43 [−125…288].
+- **Ein Verdachtsfall war noch nicht nachgemessen:** leichte Stadt 4G Konto aus dem Helfer +210 [68…437] (6/6).
+  Nachmessung in dieser Runde: siehe unten.
+- **Beim wiederholten Öffnen ist die ganze Sammlung etwa 1,8 s später da** (3G Gast wieder, Lernen-Tipp → Sammlung
+  ganz 316 → 2 109 ms) – bekannt aus M3b: erst die Teile, die ganze Datei danach in der Ruhepause. Spürbar nur, wer
+  sofort nach dem Öffnen das Wörterbuch über alle Übungen braucht (es zeichnet neu, wenn die Sammlung kommt).
+
+**3. Platz (klein) – gemessen, kein Handlungsbedarf in dieser Runde.** Wie beim Zusammenführen gezählt: f619cbe7
+947,92 MB → b672fc2c 959,09 MB → d50fb6ae 959,10 MB (+11,17 MB; = 914,7 MiB). Reserve bis 10⁹ Byte ≈ 41 MB. bau/ trägt
+zurzeit **keine** alte Generation (alle Stücke stehen im aktuellen Manifest; nachgezählt). Risiko für später: das
+Aufräumen behält die Stücke der letzten 3 git-Commits mit Manifest, WIP-Commits eingerechnet; ändert sich die Stadt
+(4,3 MB je Generation) über mehrere WIP-Commits, trüge main vorübergehend bis ≈ 13 MB mehr. **Nicht geändert, mit
+Grund:** „nur ausgelieferte Manifeste (origin/main)“ ist richtig gedacht, aber ein veralteter `origin/main` im Baum
+(nicht geholt nach einer Auslieferung aus einem anderen Baum) ließe das Aufräumen die Stücke der zuletzt ausgelieferten
+Fassung löschen – Geräte mit der alten Seite fielen dann auf den Rückweg. Vorschlag: vor der übernächsten Lieferung
+messen; wenn umgestellt, dann mit `git fetch origin main` im Lieferschritt. `werkzeug/backup` (245 MB) bleibt die
+Frage an Xander (Funk-Zeile unten). Die alten `.min.js` der Stadt (3,94 MB) gehen mit der nächsten Fassung weg (Offen 4).
+
+**4. Speicherrest im Helfer (klein) – begründet offen, mit Plan.** Richtig: `ablegen()` räumt nur ältere Stempel
+desselben Pfads weg, und erst, wenn dieser Pfad neu geholt wird; Einträge, die keine Seite mehr anfragt, bleiben auf den
+Geräten (stadt-leicht/leicht.min.js 369 KB, quests.min.js 192 KB, autoschau/korn; bei Besuchern der Baukasten-Stadt
+stadt/stadt.min.js 3,3 MB). Nur Speicherplatz, keine Geschwindigkeit. Nicht jetzt, weil genau diese Dateien in 888
+noch auf dem Server liegen und eine Seite der Fassung 887, die gerade noch offen ist, sie noch anfragen darf (M5: „nach
+einer Fassung löschen“). Der richtige Zeitpunkt ist die Fassung, die sie vom Server nimmt: dann räumt deren sw.js beim
+Helferwechsel genau diese Pfade aus dem Speicher (feste Liste, mit Sondenfall: Einträge unter dem alten Helfer anlegen,
+nach dem Wechsel weg, gestempelte Dateien der Seite bleiben). Eine allgemeine Regel („alles, was nicht in
+DMA_STEMPEL/DMA_MODUL steht“) wäre zu breit: Stadt-Seiten, Prüfseiten und Ordner-Stempel stehen nicht vollständig in
+der Liste der Hauptseite. `min/data-uebungen.js` neben den 90 Kategorie-Dateien ist kein Rest, sondern so gebaut: die
+Teile tragen den schnellen ersten Weg, die ganze Sammlung wird weiter nachgeladen (Ruhepause; `ladeDatenteil` in
+data-exercises.js, spiel.js) und von der Seite angefragt – doppelt belegt (≈ 6 MB roh) bleibt der Speicher dort, bis die
+ganze Sammlung selbst aus den Teilen entsteht (Vorschlag, nicht gebaut).
+
+**5. 884-leitung (klein) – weiter beobachtet.** Siehe Sondenstand unten.
+
+**Funk-Zeile (für den Dirigenten, vor der Auslieferung als 888):** „Eine Prüfung kann nur jemand mit einem iPhone
+machen: die Seite in Safari öffnen, am Mac im Safari-Menü ‚Entwickler‘ das iPhone wählen (Web-Inspektor), in der
+Konsole `DMA_APP.brueckeVorher` eingeben – dort sollte `true` stehen –, und im Reiter ‚Netzwerk‘ darf keine Datei
+`src/bruecke.js` auftauchen. Wenn das nicht geht, sag Bescheid. Für dich sieht alles aus wie bisher. Und eine Frage zum
+Platz: Die veröffentlichte Seite ist 959 von 1 000 MB groß; davon sind 245 MB alte Sicherungen in `werkzeug/backup`.
+Dürfen die aus der Veröffentlichung heraus (im Verlauf von GitHub bleiben sie)?“

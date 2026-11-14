@@ -277,7 +277,7 @@ async function browserTeile() {
       await warte(120);
       return r.fulfill({ status: 200, contentType: "application/json", headers: kopf, body }).catch(() => {});
     });
-    if (o.ohneBau) await ctx.route(/\/bau\/bruecke-[^/]*\.js/, (r) => r.abort());
+    if (o.ohneBau) await ctx.route(/\/bau\/bruecke-[^/]*\.js/, (r) => { zustand.bauVersuche = (zustand.bauVersuche || 0) + 1; r.abort(); });
     if (o.quelleSpaet) await ctx.route(/\/src\/bruecke\.js/, async (r) => { await warte(o.quelleSpaet); r.continue().catch(() => {}); });
     await ctx.addInitScript(([konto, sitz, konflikt, notweg, ohneOhr, ohneSchreiben]) => {
       window.__wechsel = 0;
@@ -440,6 +440,7 @@ async function browserTeile() {
   }
   if (TEILE.includes("R")) {
     console.log("\nR  RÜCKWEG (bau/bruecke-*.js nicht ladbar, src/bruecke.js 3 s verzögert)");
+    zustand.bauVersuche = 0;
     const s = await seite({ ohneBau: true, quelleSpaet: 3000, bisDom: true });
     await s.pg.waitForFunction(() => window.__dmaAppInitialized, null, { timeout: 20000 }).catch(() => {});
     /* ein Tipp in einen Textkasten, solange die Brücke fehlt – darf später nichts umschalten */
@@ -469,6 +470,8 @@ async function browserTeile() {
     });
     sage(zeit.src != null && zeit.dcl > 0 && zeit.src >= zeit.dcl && zeit.n === 1, "R  der Rückweg holt src/bruecke.js erst bei DOMContentLoaded, genau einmal",
       "DOMContentLoaded " + zeit.dcl + " ms, src/bruecke.js angefragt " + zeit.src + " ms, " + zeit.n + "×");
+    /* 888 (Runde 1): der Rückweg versucht erst bau/ – wie oft ging bau/bruecke hinaus (geschriebenes Modul + Rückweg)? */
+    console.log("  info R  bau/bruecke-*.js hinausgegangen (abgebrochen): " + zustand.bauVersuche + "×");
     for (const [gut, was, dazu] of await bedienen(s.pg)) sage(gut, was.replace(/^(B\d) /, "R  ($1) "), dazu);
     sage(!s.pe.length, "R  kein pageerror", s.pe.slice(0, 3).join(" | "));
     await s.ctx.close();
