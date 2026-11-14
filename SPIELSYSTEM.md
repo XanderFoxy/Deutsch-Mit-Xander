@@ -8651,3 +8651,76 @@ Konsole `DMA_APP.brueckeVorher` eingeben – dort sollte `true` stehen –, und 
 `src/bruecke.js` auftauchen. Wenn das nicht geht, sag Bescheid. Für dich sieht alles aus wie bisher. Und eine Frage zum
 Platz: Die veröffentlichte Seite ist 959 von 1 000 MB groß; davon sind 245 MB alte Sicherungen in `werkzeug/backup`.
 Dürfen die aus der Veröffentlichung heraus (im Verlauf von GitHub bleiben sie)?“
+
+## Fassung 888 — Auslieferung (Überblick, 14.11.2026)
+
+Mit dieser Fassung geht der Umbau auf Module hinaus: Vite-Bau (M1), Walkie als Modul (M2), Übungen je Kategorie (M3b),
+Tutor und Betonung als Module mit `src/bruecke.js` und `window.DMA_APP` (M4), die Stadt als Vite-Seiten ohne Packer (M5) –
+zusammengeführt in „Fassung 888 — Module (Zusammenführung)“ (oben), dazu „888 – Nachbessern Runde 1“ (der Rückweg der
+Brücke holt zuerst das gestempelte Stück aus bau/). Bau, Messungen und Prüfungen der einzelnen Schritte: MODULE-PLAN.md,
+Abschnitt 7. Gesetzt mit `node werkzeug/fassung-setzen.js 888` (prüft vorher Bau, Übungsteile und Gleichlauf):
+`DMA_VERSION` und fassung.json auf 888; bau/, min/ und die 194 Stempel blieben dabei unverändert; supabase-js steht auf
+allen Seiten fest auf @2.119.0. Neu gestempelt nur die Werkstatt (`data-werkstatt.js`, `min/data-werkstatt.js`).
+
+**Für Xander:** ein unsichtbarer Umbau. Aussehen, Größe und Bedienung bleiben wie in 887. Einzige Ausnahme ist die im
+Spiel nicht verlinkte Baukasten-Stadt (`stadt.html`): Sie zeigt jetzt den heutigen Stand der Quellen, im Menü „Häuser“
+19 statt 15 Karten (M5 „Fund“). Spürbar ist nur eines: **Die Übung ist beim ersten Öffnen schneller.** Vom Tipp auf
+„Lernen“ bis zur ersten Frage (Karte wortstellung, kalt, CPU 4×, gesichert):
+
+| Netz | Gast | Konto |
+|---|---|---|
+| 4G | 5,36 → 4,06 s | 5,35 → 3,92 s |
+| 3G | 25,3 → 15,4 s | 24,9 → 15,5 s |
+
+**Sonst gleich schnell.** In allen 12 Bedingungen (4G/3G × Gast/Konto × kalt/wieder/Helfer) liegen diese Maße im
+Rauschen: bereit, erstes Bild, Wissen-Tipp, Klassenzimmer-Tipp, Tutor-Reiter. Die leichte Stadt liegt ebenfalls im
+Rauschen; jeder Verdachtsfall ist mit 10 Paaren nachgemessen. Chat, Livestream und Verbindung sind unberührt:
+`livechat.js`, `spiel.js`, `backend.js`, `messung.js`, `klassenzimmer.js`, `core.js` und ihre `min/`-Kopien sind Byte für
+Byte wie in 887.
+
+**Bekannte Kosten (Teilschritte, bewusst so geliefert):**
+- Nach dem kalten Öffnen wartet „Runde starten“ auf den ganzen Wortschatz: 4G +0,9 bis +1,2 s, 3G +9,8 s.
+- Eine nicht vorgeladene Karte kommt erst beim Tipp: 4G +0,6 bis +1,0 s, 3G Konto +0,8 s.
+- Der Weg bis zur ersten Frage ist trotzdem insgesamt schneller (Tabelle oben).
+- Beim wiederholten Öffnen ist die ganze Übungssammlung etwa 1,8 s später da. Das betrifft nur das Wörterbuch über alle
+  Übungen; es zeichnet neu, sobald die Sammlung kommt.
+
+**Sonden nach dem Stempeln** (Hauptbaum mit 888, nacheinander, je über die Chromium-Sperre; Protokolle
+`/tmp/claude-0/l888/sonden/`):
+
+| Sonde | Ergebnis |
+|---|---|
+| 885-schlank | 43 ok, 0 rot |
+| 887-supabase | 16 ok, 0 rot (supabase-js fest auf 2.119.0) |
+| 887-bau | 42 ok, 0 rot |
+| 887-bruecke | 19 ok, 0 rot |
+| 887-modul-app | 118 ok, 0 rot (mit Teil I und A5-888 aus Nachbessern 1) |
+| 887-daten | 96 ok, 0 rot |
+| 876-start-schlank | 62 ok, 0 rot |
+| 885-swvorladen | 32 ok, 0 rot |
+| 885-rueckkehr | 300 ok, 0 rot (ganzer Lauf R K G F T Z Y W N O B S in 19 min; O und B1 CPU 4× diesmal grün) |
+| 887-stadt | 97 ok, 0 rot |
+
+Zusammen 825 ok, keine rote Prüfung, jede Sonde mit Rückgabe 0 und ohne Änderung am Baum während des Laufs. Damit gab
+es nichts verschränkt auf 887 zu klären. Aus dem Gesamtlauf der Prüfung Runde 1 (111 Sonden, keine neue rote): die
+6 Stadt-Sonden 807, 808, 811, 875, 824 und 848 sind auf 887 genauso rot, kommen also nicht von 888.
+
+**Platz (GitHub Pages, aus `git ls-tree -r -l`, ohne Pfade mit „.“-Teil):** f619cbe7 (887) 947,92 MB → dieser Stand
+959,12 MB (959 116 331 Byte, +11,20 MB, davon bau/ 10,51 MB), also **unter 1 000 MB**, Reserve ≈ 41 MB. Der größte
+Brocken bleibt `werkzeug/backup` mit 244,96 MB (Offen 3).
+
+**Offen:**
+1. **iPhone-Prüfung der Brücke** (Bitte im Funk an Xander). In Safari mit dem Web-Inspektor `DMA_APP.brueckeVorher`
+   prüfen: erwartet ist `true`, und im Netzwerk darf keine Anfrage an `src/bruecke.js` stehen. `false` wäre kein Ausfall,
+   denn dann kommt der Rückweg über bau/ (Nachbessern 1). Tutor und Betonung wären nur einen Augenblick später bereit.
+2. **„Runde starten“ ohne den ganzen Wortschatz** (M3b, Offen 6.1): In 41 von 62 Kategorien hat jede Aufgabe ein festes
+   Niveau. Dazu kommt die nicht vorgeladene Karte (6.2). Das wird ein eigener Schritt mit Gleichlauf-Prüfer und bleibt
+   unsichtbar. Es ist der größte Rest-Hebel für die Übung.
+3. **Platz auf GitHub Pages:** `werkzeug/backup` (245 MB alte Sicherungen) aus der Veröffentlichung nehmen. Dafür braucht
+   es Xanders Ja (Frage im Funk).
+4. **Alte Stadt-`.min.js` (3,94 MB)** mit der nächsten Fassung vom Server löschen. Im selben Schritt räumt sw.js beim
+   Helferwechsel genau diese Pfade aus dem Speicher (feste Liste, mit Sondenfall; Nachbessern 1, Punkt 4).
+5. Die lange 885-sparsam-Reihe ist nicht gelaufen (der Startweg in Chromium ist unverändert). 884-leitung wird weiter
+   beobachtet.
+6. Weiter offen aus 887 (Werkstatt): Chatverlauf im Gerät in Stücken (Ruck von 70–170 ms alle 20 s),
+   Vorab-Malen der Autos (wartet auf Xanders OK), Fuchs-Wertung auf dem Server, große Abfragen, Rückkehr Fall A.
