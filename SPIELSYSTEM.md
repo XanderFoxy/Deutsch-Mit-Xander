@@ -8557,8 +8557,9 @@ bisher bei DOMContentLoaded der Rückweg `src/bruecke.js` – mit `src/app/tutor
   immer über den Rückweg, also eine Änderung auf dem geprüften Weg. So bleibt Chromium genau wie vorher (die Brücke läuft
   vor app.js, der Rückweg feuert nicht), und nur der ungeprüfte Fall wird sicher.
 - **Kosten in Chromium:** keine auf dem normalen Weg (der Rückweg läuft nur, wenn `DMA_BRUECKE` bei DOMContentLoaded
-  fehlt). Ist bau/ nicht ladbar (Sonde R), scheitert der zweite Versuch gleich, die Quelle wird 5 ms nach
-  DOMContentLoaded angefragt (149 → 154 ms; vorher 193 → 194 ms, also wie vorher knapp danach).
+  fehlt). Ist bau/ nicht ladbar (Sonde R), merkt sich Chromium den Fehler der URL (Modul-Tabelle): der zweite Versuch
+  scheitert ohne Anfrage (R zählt jetzt: bau/bruecke ging 1× hinaus, nur für das geschriebene Modul), die Quelle wird
+  5–6 ms nach DOMContentLoaded angefragt (149 → 154 und 182 → 188 ms; vorher 193 → 194 ms).
 - **Sonde `887-modul-app`, neuer Teil I** (das geschriebene Modul läuft nicht – nachgestellt: `document.write` lässt
   genau die Zeile der Brücke fallen): I1 frischer Besuch: `brueckeVorher` false, die Brücke kommt aus
   `bau/bruecke-CSGLwKEs.js`, angefragt bei DOMContentLoaded (172/173 ms), genau einmal; Tutor kommt, Ohren, Betonung
@@ -8599,7 +8600,11 @@ kompakt888.md, teilschritte.md, best888.json, best-*.log). Median 887 → 888, g
   +52 → +2 [−32…32]; Übung 3G Gast wieder Lernen → erste Frage +214 → +88 [−198…254]; Übung 3G Konto Helfer Lernen →
   erste Frage +393 → −19 [−87…199]; leichte Stadt 4G Gast wieder +232 → +111 [−80…189], Helfer +116 → +43 [−125…288].
 - **Ein Verdachtsfall war noch nicht nachgemessen:** leichte Stadt 4G Konto aus dem Helfer +210 [68…437] (6/6).
-  Nachmessung in dieser Runde: siehe unten.
+  **In dieser Runde nachgemessen** (10 Paare, 888 = b672fc2c – die Brücken-Nachbesserung berührt die Stadt-Seite nicht –,
+  `reihe/best-stadt-4g-mitglied-sw.*`, Auswertung `/tmp/claude-0/n1/best4-aus.json`): leichte Stadt fertig 1 748 → 1 812
+  ms, **+97 [−103…411], 6↑/4↓, p = 0,75 – im Rauschen** (Rauschgrenze 153; A/A −132 [−294…11], die Streuung dieses
+  Falls ist groß); erstes Bild 316 → 330, +14 [−20…56]. Damit ist bei den Auftragsmaßen keiner der Verdachtsfälle
+  gesichert langsamer.
 - **Beim wiederholten Öffnen ist die ganze Sammlung etwa 1,8 s später da** (3G Gast wieder, Lernen-Tipp → Sammlung
   ganz 316 → 2 109 ms) – bekannt aus M3b: erst die Teile, die ganze Datei danach in der Ruhepause. Spürbar nur, wer
   sofort nach dem Öffnen das Wörterbuch über alle Übungen braucht (es zeichnet neu, wenn die Sammlung kommt).
@@ -8629,7 +8634,16 @@ Teile tragen den schnellen ersten Weg, die ganze Sammlung wird weiter nachgelade
 data-exercises.js, spiel.js) und von der Seite angefragt – doppelt belegt (≈ 6 MB roh) bleibt der Speicher dort, bis die
 ganze Sammlung selbst aus den Teilen entsteht (Vorschlag, nicht gebaut).
 
-**5. 884-leitung (klein) – weiter beobachtet.** Siehe Sondenstand unten.
+**5. 884-leitung (klein) – weiter beobachtet.** Auf diesem Stand 3 weitere Läufe, je 40/40 grün (Teil A „hallo|0|neu“).
+Zusammen auf 888 jetzt 8 grün, 1 rot (der erste Lauf beim Zusammenführen); 887 verschränkt 3/3 grün. livechat.js ist
+Byte für Byte wie in 887; die Sonde lädt `index.html?quelle` (unverkleinerte Quellen samt `src/`), ein Zeitfall bleibt
+die wahrscheinlichste Erklärung. Weiter beobachten, kein Eingriff.
+
+**Sondenstand Nachbessern 1** (Code d50fb6ae, je Sonde eine Sperre, Protokolle `/tmp/claude-0/n1/`): 887-modul-app
+118/0 (Gegenprobe b672fc2c 10 rot, siehe 1; R nach der Zählung erneut grün), 887-bruecke 19/0, 887-bau 42/0, 885-schlank
+43/0, 876-start-schlank 62/0, 885-stuecke 43/0, 884-notweg 91/0, 885-swvorladen 32/0, 884-leitung 3× 40/0. (Bei
+885-schlank meldet der Läufer „Baum geändert“: in dieser Zeit wurde SPIELSYSTEM.md geschrieben – die Sonde liest es nicht.)
+Nicht gelaufen: 885-sparsam (siehe Offen 3).
 
 **Funk-Zeile (für den Dirigenten, vor der Auslieferung als 888):** „Eine Prüfung kann nur jemand mit einem iPhone
 machen: die Seite in Safari öffnen, am Mac im Safari-Menü ‚Entwickler‘ das iPhone wählen (Web-Inspektor), in der
