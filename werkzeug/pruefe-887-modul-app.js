@@ -46,7 +46,8 @@
       Prüfung Runde 2; hier 3 s verzögert), die gemerkten Rufe werden nachgeholt
       (Reiter da, Betonung geht), ein Tipp in einen Textkasten VOR der Brücke
       schaltet danach nichts um (Ereignisse werden nicht gemerkt), kein
-      pageerror
+      pageerror; bau/bruecke ging genau einmal hinaus (888: der Rückweg
+      versucht dieselbe URL, der Browser kennt den Fehler schon)
    N  Notweg im Funkloch: dma-ohne-min gesetzt, Helfer sw.js an, Laden 1 und
       2 mit Leitung, Laden 3 ohne – die Brücke kommt aus bau/ (aus dem
       Speicher des Helfers), Betonung durch Tippen und die Ohren gehen wie
@@ -70,6 +71,16 @@
       ist false. Besuch 2 mit Leitung (Helfer steuert), Besuch 3 ohne Leitung:
       die Brücke kommt aus dem Speicher des Helfers, Betonung und Ohren gehen.
       I4: mit ?quelle kommt in demselben Fall src/bruecke.js, nicht bau/.
+      Nachtrag 888 (gegnerische Prüfung) – das Netz unter dem Rückweg:
+      E  das geschriebene Modul fällt weg UND bau/ wirft beim Ausführen
+         (vorangestelltes throw in der Antwort; ein Modul meldet dann „load“,
+         nicht „error“): src/bruecke.js kommt, Tutor, Betonung und Ohren gehen
+      E2 dasselbe, aber das geschriebene Modul ist da (es wirft vor app.js,
+         der Rückweg nimmt dieselbe URL aus der Modul-Tabelle): src/ kommt
+      X  fällt weg UND bau/ nicht ladbar: genau 1 Versuch bau/, dann src/
+      D1 die bau/-Antwort 1,5 s verzögert, dieselbe URL (ein spät laufendes
+         geschriebenes Modul) ist bei DOMContentLoaded noch unterwegs:
+         1 Anfrage, 1 Ausführung, kein src/
    A7 (ohne Browser) app.js: der Rückweg wartet auf DOMContentLoaded;
       die Sicherung nach dem Helferwechsel hört auf controllerchange, prüft
       in der Ruhepause, nur wenn die Seite beim Start gesteuert war, und
@@ -79,7 +90,8 @@
    Gegenprobe: WURZEL=<Stand d9637a22> node werkzeug/pruefe-887-modul-app.js → rot
                (K2, R-Tipp und N auch auf 2417165d rot: Stand vor der Nachbesserung;
                W auf d9637a22 grün – Betonung stand dort in app.js –, auf 542e4250 rot;
-               I und A5-888 auf b672fc2c rot: dort holt der Rückweg src/bruecke.js)
+               I und A5-888 auf b672fc2c rot: dort holt der Rückweg src/bruecke.js;
+               I-E, I-E2 und A5-Nachtrag auf 1710d18b rot: dort fehlt das Netz nach „load“)
    ===================================================================== */
 const fs = require("fs"), path = require("path"), http = require("http"), os = require("os");
 const HIER = path.join(__dirname, "..");
@@ -168,6 +180,9 @@ function teilA() {
     || (/^\s*if \(window\.DMA_BRUECKE\) return;/.test(rwf) && /s\.type = "module";/.test(rwf) && /"src\/bruecke\.js"/.test(rwf)), "A5 app.js: Rückweg – ist die Brücke nicht gelaufen, lädt app.js sie nach (zuletzt src/bruecke.js)");
   sage(/!\/\[\?&\]quelle\\b\/\.test\(location\.search\) && \(window\.DMA_MODUL \|\| \{\}\)\.bruecke/.test(rwf) && /s\.onerror = sonst/.test(rwf) && /if \(bau\) laden\(bau, quelle\); else quelle\(\);/.test(rwf),
     "A5 app.js (888): der Rückweg holt zuerst bau/ aus DMA_MODUL, src/bruecke.js nur nach einem Fehler oder mit ?quelle", rwf ? "" : "dmaBrueckeRueckweg fehlt");
+  /* Nachtrag 888: wirft ein Modul beim Ausführen (oder Parse-Fehler), kommt „load“, nicht „error“ */
+  sage(/s\.onload = \(\) => \{ if \(!window\.DMA_BRUECKE\) sonst\(\); \}/.test(rwf),
+    "A5 app.js (888 Nachtrag): kommt bau/ mit „load“ an, ohne dass DMA_BRUECKE steht (Ausführungs- oder Parse-Fehler), holt der Rückweg die Quelle");
   /* Nachbesserung M4 (Prüfung Runde 1) */
   const lader = (/if \(d === "@bruecke"\) return document\.write\(([^\n]*)\);/.exec(html) || [])[1] || "";
   sage(/!\/\[\?&\]quelle\\b\/\.test\(location\.search\) && \(window\.DMA_MODUL \|\| \{\}\)\.bruecke/.test(lader) && !/DMA_Q\("app\.js"\)/.test(lader),
@@ -277,10 +292,31 @@ async function browserTeile() {
       await warte(120);
       return r.fulfill({ status: 200, contentType: "application/json", headers: kopf, body }).catch(() => {});
     });
-    if (o.ohneBau) await ctx.route(/\/bau\/bruecke-[^/]*\.js/, (r) => { zustand.bauVersuche = (zustand.bauVersuche || 0) + 1; r.abort(); });
+    /* R, I-X: bau/bruecke nicht ladbar · I-E: wirft beim Ausführen · I-D1: Antwort verzögert. Gezählt wird jede Anfrage,
+       und jede Ausführung (__bauLauf, vorn in der Antwort) */
+    if (o.ohneBau || o.bauWirft || o.bauSpaet) await ctx.route(/\/bau\/bruecke-[^/]*\.js/, async (r) => {
+      zustand.bauVersuche = (zustand.bauVersuche || 0) + 1;
+      if (o.ohneBau) return r.abort();
+      if (o.bauSpaet) await warte(o.bauSpaet);
+      const text = fs.readFileSync(path.join(WURZEL, new URL(r.request().url()).pathname), "utf8");
+      const vorn = "window.__bauLauf = (window.__bauLauf || 0) + 1;" + (o.bauWirft ? " throw new Error(\"sonde: kaputt-im-bau\");" : "") + "\n";
+      return r.fulfill({ status: 200, contentType: "text/javascript", body: vorn + text }).catch(() => {});
+    });
     if (o.quelleSpaet) await ctx.route(/\/src\/bruecke\.js/, async (r) => { await warte(o.quelleSpaet); r.continue().catch(() => {}); });
-    await ctx.addInitScript(([konto, sitz, konflikt, notweg, ohneOhr, ohneSchreiben]) => {
+    await ctx.addInitScript(([konto, sitz, konflikt, notweg, ohneOhr, ohneSchreiben, extraVorDcl]) => {
       window.__wechsel = 0;
+      /* I-D1: ein spät laufendes geschriebenes Modul – dieselbe URL kommt vor DOMContentLoaded dazu (vor app.js),
+         die Antwort ist verzögert, also bei DOMContentLoaded noch unterwegs */
+      if (extraVorDcl) {
+        document.addEventListener("readystatechange", () => {
+          if (document.readyState !== "interactive" || window.__extra) return;
+          const s = document.createElement("script");
+          s.type = "module";
+          s.src = window.__extra = (window.DMA_MODUL || {}).bruecke || "fehlt";
+          document.head.appendChild(s);
+        });
+        document.addEventListener("DOMContentLoaded", () => { window.__beiDcl = Boolean(window.DMA_BRUECKE); });
+      }
       /* I: das per document.write geschriebene Modul der Brücke läuft nicht (nachgestellt: die Zeile fällt weg) */
       if (ohneSchreiben) {
         const schreib = Document.prototype.write;
@@ -309,7 +345,7 @@ async function browserTeile() {
         const t = e.target;
         if (t && t.tagName === "SCRIPT" && t.src) window.__lauf.push(t.src.replace(location.origin + "/", "").replace(/\?.*$/, ""));
       }, true);
-    }, [mitKonto, sitzung(), o.konflikt || "", o.notweg ? FASSUNG : "", Boolean(o.ohneOhr), Boolean(o.ohneSchreiben)]);
+    }, [mitKonto, sitzung(), o.konflikt || "", o.notweg ? FASSUNG : "", Boolean(o.ohneOhr), Boolean(o.ohneSchreiben), Boolean(o.extraVorDcl)]);
     const pg = await ctx.newPage();
     const pe = [], kons = [];
     pg.on("pageerror", (e) => pe.push(String(e.message || e).slice(0, 160)));
@@ -470,8 +506,10 @@ async function browserTeile() {
     });
     sage(zeit.src != null && zeit.dcl > 0 && zeit.src >= zeit.dcl && zeit.n === 1, "R  der Rückweg holt src/bruecke.js erst bei DOMContentLoaded, genau einmal",
       "DOMContentLoaded " + zeit.dcl + " ms, src/bruecke.js angefragt " + zeit.src + " ms, " + zeit.n + "×");
-    /* 888 (Runde 1): der Rückweg versucht erst bau/ – wie oft ging bau/bruecke hinaus (geschriebenes Modul + Rückweg)? */
-    console.log("  info R  bau/bruecke-*.js hinausgegangen (abgebrochen): " + zustand.bauVersuche + "×");
+    /* 888 (Runde 1): der Rückweg versucht erst bau/ – dieselbe URL wie das geschriebene Modul; dessen Fehler kennt der
+       Browser schon (Modul-Tabelle), also keine zweite Anfrage (Nachtrag 888: geprüft, nicht nur gezählt) */
+    sage(zustand.bauVersuche === 1, "R  bau/bruecke-*.js ging genau einmal hinaus (geschriebenes Modul; der Rückweg fragt nicht noch einmal)",
+      "hinausgegangen (abgebrochen): " + zustand.bauVersuche + "×");
     for (const [gut, was, dazu] of await bedienen(s.pg)) sage(gut, was.replace(/^(B\d) /, "R  ($1) "), dazu);
     sage(!s.pe.length, "R  kein pageerror", s.pe.slice(0, 3).join(" | "));
     await s.ctx.close();
@@ -605,6 +643,71 @@ async function browserTeile() {
     sage(!q.pe.length, "I4 kein pageerror", q.pe.slice(0, 3).join(" | "));
     await q.ctx.close();
     zustand.wege = null;
+    /* NACHTRAG 888 (gegnerische Prüfung): das Netz unter dem Rückweg. Je Fall ein frisches Gerät ohne Helfer; gezählt
+       werden die Anfragen an bau/bruecke (Route), ihre Ausführungen (__bauLauf) und die Reihenfolge der Anfragen. */
+    const zusatz = () => ({ bauLauf: window.__bauLauf || 0, beiDcl: window.__beiDcl, extra: window.__extra || "",
+      skripte: document.querySelectorAll('script[type="module"][src*="bau/bruecke-"]').length });
+    const fall = async (o) => {
+      zustand.bauVersuche = 0;
+      const f = await seite(Object.assign({ ohneSchreiben: true, ohneLaden: true }, o));
+      const anfragen = [];
+      f.pg.on("request", (x) => { const u = x.url(); if (/bruecke|\/src\//.test(u)) anfragen.push(u.replace(BASIS + "/", "").replace(/\?.*$/, "")); });
+      await f.pg.goto(f.url, { waitUntil: "load", timeout: 90000 });
+      await f.pg.waitForFunction(() => window.__dmaAppInitialized, null, { timeout: 20000 }).catch(() => {});
+      await f.pg.waitForFunction(() => window.DMA_BRUECKE, null, { timeout: 12000 }).catch(() => {});
+      await warte(800);
+      const r = Object.assign(await f.pg.evaluate(lesenI, brueckeText), await f.pg.evaluate(zusatz));
+      r.versuche = zustand.bauVersuche;
+      r.anfragen = anfragen;
+      r.wurf = f.pe.filter((x) => /kaputt-im-bau/.test(x)).length;
+      return { f, r };
+    };
+    const brText = (r) => (r.br ? r.br.namen.length + " Namen, Konflikt: " + (r.br.konflikt.join(",") || "keiner") : "DMA_BRUECKE fehlt");
+    const brDa = (r) => Boolean(r.br && r.br.namen.length >= 14 && !r.br.konflikt.length);
+    const peSonst = (f) => f.pe.filter((x) => !/kaputt-im-bau/.test(x));
+    const nurBau = (r) => r.anfragen.filter((x) => /^bau\/bruecke-[\w-]{8}\.js$/.test(x)).length;
+    /* E: geschriebenes Modul fällt weg, bau/ kommt an und wirft beim Ausführen */
+    {
+      const { f, r } = await fall({ bauWirft: true });
+      sage(r.fallen >= 1 && r.versuche === 1 && r.bauLauf === 1 && r.wurf >= 1, "I E  nachgestellt: das geschriebene Modul fiel weg, bau/ kam an (1 Anfrage) und warf beim Ausführen",
+        "weggefallen " + r.fallen + "×, bau/ " + r.versuche + "× angefragt, " + r.bauLauf + "× ausgeführt, Wurf " + r.wurf + "×");
+      sage(r.lauf.includes("src/bruecke.js") && brDa(r), "I E  danach holt der Rückweg die Quelle src/bruecke.js, Eingänge da",
+        "Anfragen: " + r.anfragen.join(" → ") + " · " + brText(r));
+      for (const [gut, was, dazu] of await bedienen(f.pg)) sage(gut, was.replace(/^(B\d) /, "I E  ($1) "), dazu);
+      sage(!peSonst(f).length, "I E  kein pageerror außer dem nachgestellten Wurf", peSonst(f).slice(0, 3).join(" | "));
+      await f.ctx.close();
+    }
+    /* E2: das geschriebene Modul ist da und wirft vor app.js; der Rückweg nimmt dieselbe URL aus der Modul-Tabelle */
+    {
+      const { f, r } = await fall({ ohneSchreiben: false, bauWirft: true });
+      sage(r.versuche === 1 && r.bauLauf === 1 && r.wurf >= 1 && r.vorher === false && r.skripte === 2,
+        "I E2 nachgestellt: das geschriebene Modul warf vor app.js; der Rückweg nahm dieselbe URL ohne zweite Anfrage und ohne zweiten Lauf",
+        "bau/ " + r.versuche + "× angefragt, " + r.bauLauf + "× ausgeführt, Wurf " + r.wurf + "×, brueckeVorher " + r.vorher + ", bau/-Skripte " + r.skripte);
+      sage(r.lauf.includes("src/bruecke.js") && brDa(r), "I E2 danach die Quelle src/bruecke.js, Eingänge da", "Anfragen: " + r.anfragen.join(" → ") + " · " + brText(r));
+      sage(!peSonst(f).length, "I E2 kein pageerror außer dem nachgestellten Wurf", peSonst(f).slice(0, 3).join(" | "));
+      await f.ctx.close();
+    }
+    /* X: geschriebenes Modul fällt weg UND bau/ ist nicht ladbar */
+    {
+      const { f, r } = await fall({ ohneBau: true });
+      const iB = r.anfragen.findIndex((x) => /^bau\/bruecke-/.test(x)), iQ = r.anfragen.indexOf("src/bruecke.js");
+      sage(r.fallen >= 1 && r.versuche === 1 && nurBau(r) === 1 && iB >= 0 && iQ > iB && r.anfragen.filter((x) => x === "src/bruecke.js").length === 1,
+        "I X  fällt weg und bau/ nicht ladbar: genau 1 Versuch bau/, dann einmal src/bruecke.js", "Anfragen: " + r.anfragen.join(" → "));
+      sage(brDa(r), "I X  Eingänge da (aus der Quelle)", brText(r));
+      sage(!f.pe.length, "I X  kein pageerror", f.pe.slice(0, 3).join(" | "));
+      await f.ctx.close();
+    }
+    /* D1: dieselbe URL ist bei DOMContentLoaded noch unterwegs (bau/-Antwort 1,5 s verzögert) */
+    {
+      const { f, r } = await fall({ bauSpaet: 1500, extraVorDcl: true });
+      sage(r.fallen >= 1 && /^bau\/bruecke-[\w-]{8}\.js$/.test(r.extra) && r.beiDcl === false && r.skripte === 2 && r.vorher === false,
+        "I D1 nachgestellt: das „späte“ Modul war bei DOMContentLoaded unterwegs, der Rückweg fügte dieselbe URL dazu",
+        "extra " + (r.extra || "fehlt") + ", Brücke bei DOMContentLoaded " + r.beiDcl + ", bau/-Skripte " + r.skripte + ", brueckeVorher " + r.vorher);
+      sage(r.versuche === 1 && nurBau(r) === 1 && r.bauLauf === 1 && !r.anfragen.some((x) => /^src\//.test(x)) && !(r.src || []).length && brDa(r),
+        "I D1 1 Anfrage, 1 Ausführung, keine Quelle, Eingänge da", "bau/ " + r.versuche + "× angefragt, " + r.bauLauf + "× ausgeführt, Anfragen: " + r.anfragen.join(" → ") + " · " + brText(r));
+      sage(!f.pe.length, "I D1 kein pageerror", f.pe.slice(0, 3).join(" | "));
+      await f.ctx.close();
+    }
   }
   await br.close(); srv.close();
 }

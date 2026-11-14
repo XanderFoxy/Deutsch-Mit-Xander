@@ -75,17 +75,21 @@
   /* NACHBESSERUNG 888 (Runde 1) — der Rückweg holt zuerst dasselbe gestempelte Stück aus bau/ (DMA_MODUL.bruecke),
      erst wenn das scheitert (oder mit ?quelle) die Quelle src/bruecke.js. Fall: ein Browser führt das per
      document.write geschriebene Modul nicht aus (Safari unter iOS ließ sich hier nicht prüfen). Dann kommt bei
-     DOMContentLoaded trotzdem bau/ – mit Stempel, vom Helfer abgelegt, offline da – statt src/ ohne Stempel. In
-     Chromium ändert sich nichts: dort läuft das Modul vor app.js, und ist bau/ nicht ladbar, merkt sich der Browser
-     den Fehler für diese URL (Modul-Tabelle) und es geht ohne zweite Anfrage gleich zur Quelle. Dieselbe URL wie das
-     geschriebene Modul: kam es doch an, läuft es nicht zweimal (eine Auswertung je URL). Sonde 887-modul-app, I. */
+     DOMContentLoaded trotzdem bau/ – ein Stück mit Stempel, vom Helfer abgelegt, offline da – statt src/bruecke.js,
+     dessen Importe src/app/*.js ohne Stempel kommen und nicht abgelegt werden. In Chromium ändert sich nichts: dort
+     läuft das Modul vor app.js, und ist bau/ nicht ladbar, merkt sich der Browser den Fehler für diese URL
+     (Modul-Tabelle) und es geht ohne zweite Anfrage gleich zur Quelle. Dieselbe URL wie das geschriebene Modul: kam
+     es doch an, läuft es nicht zweimal (eine Auswertung je URL). Sonde 887-modul-app, I.
+     NACHTRAG 888: wirft bau/ beim Ausführen (oder Parse-Fehler), meldet das Skript „load“, nicht „error“ – darum
+     auch nach „load“ die Quelle, wenn DMA_BRUECKE fehlt. Kein Doppel: DMA_BRUECKE steht nach der Auswertung, also vor
+     „load“, und läuft das geschriebene Modul spät, warten beide Skripte auf dieselbe Auswertung. Sonde I, E/X/D1. */
   function dmaBrueckeRueckweg() {
     if (window.DMA_BRUECKE) return;
     const laden = (src, sonst) => {
       const s = document.createElement("script");
       s.type = "module";
       s.src = src;
-      if (sonst) s.onerror = sonst;
+      if (sonst) { s.onerror = sonst; s.onload = () => { if (!window.DMA_BRUECKE) sonst(); }; }
       document.head.appendChild(s);
     };
     const quelle = () => { if (!window.DMA_BRUECKE) laden("src/bruecke.js" + (window.DMA_V ? window.DMA_V("src/bruecke.js") : "")); };

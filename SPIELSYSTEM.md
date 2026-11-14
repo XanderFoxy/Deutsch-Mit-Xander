@@ -8534,7 +8534,9 @@ Ladezeit-Messung gegen 887 sei nicht gelaufen; sie lief vollständig, Ergebnis u
    `true`; im Netzwerk keine Anfrage an `src/bruecke.js`. Geht per Funk an Xander (Zeile unten). Seit Nachbessern 1 wäre
    `false` kein Ausfall mehr (dann muss `bau/bruecke-*.js` nach DOMContentLoaded angefragt sein und `src/` gar nicht),
    Tutor und Betonung wären auf dem iPhone aber einen Augenblick später bereit – das soll man wissen.
-3. Die lange 885-sparsam-Reihe (nicht gelaufen; die Brücken-Nachbesserung ändert in Chromium keine Anfrage beim Start).
+3. ~~Die lange 885-sparsam-Reihe (nicht gelaufen; die Brücken-Nachbesserung ändert in Chromium keine Anfrage beim Start).~~
+   – **erledigt** in Runde 2 (sonden:888:2 auf 6fb48f67): ganz gelaufen, alle 37 Fälle in 5 Teilen, 178 ok / 0 FEHL,
+   X5 ebenfalls grün (Protokolle `/tmp/claude-0/r2n/log/`, `zusammenfassung.txt`).
 4. Die alten `.min.js` der Stadt (3,94 MB) nach einer Fassung löschen (M5) – im selben Schritt den Speicherrest im
    Helfer (unten, Punkt 4 der Nachbesserung).
 5. 884-leitung weiter beobachten.
@@ -8544,14 +8546,19 @@ Ladezeit-Messung gegen 887 sei nicht gelaufen; sie lief vollständig, Ergebnis u
 **1. Brücke auf dem iPhone (wichtig) – behoben, iPhone-Prüfung bleibt in der Liste.** Befund: index.html setzt die Brücke
 per `document.write('<script type="module" …>')` ein; ob Safari unter iOS 14–17 so ein Modul ausführt, lässt sich hier
 nicht prüfen (nur Chromium; M5 hat dasselbe Muster für die Stadt-Seiten darum entfernt). Führte Safari es nicht aus, kam
-bisher bei DOMContentLoaded der Rückweg `src/bruecke.js` – mit `src/app/tutor.js` und `src/app/betonung.js` 58 KB roh
-(20 KB gepackt) bei jedem Besuch ohne Stempel vom Server, vom Helfer nicht abgelegt, offline ohne Tutor und Betonung.
+bisher bei DOMContentLoaded der Rückweg `src/bruecke.js` – **mit** Stempel, der Helfer legt es ab (berichtigt im Nachtrag vor
+der Lieferung; hier stand vorher, auch diese Datei käme ohne Stempel). Ohne Stempel und vom Helfer nicht abgelegt waren
+nur seine Importe `src/app/tutor.js` und `src/app/betonung.js` (zusammen mit der Brücke 58 KB roh, 20 KB gepackt): sie
+kamen bei jedem Besuch vom Server, offline also ohne Tutor und Betonung.
 - **Jetzt (app.js, `dmaBrueckeRueckweg`):** der Rückweg holt zuerst dasselbe gestempelte Stück aus bau/
   (`DMA_MODUL.bruecke`) als Modul; nur wenn das scheitert (onerror) oder mit `?quelle` die Quelle `src/bruecke.js`.
   Damit kommt im Safari-Fall dieselbe Datei wie in Chromium, nur nach DOMContentLoaded statt vor app.js: mit Stempel,
   über `bauHolen` im Speicher des Helfers (und über `dmaBauSichern`), offline da. Die Rufe bis dahin holt
   `dmaModulWarten`/`nachholen` nach (wie bisher beim Rückweg). Gleiche URL wie das geschriebene Modul: kam es doch an,
-  läuft es nicht zweimal (eine Auswertung je URL; die Brücke prüft ohnehin `window.DMA_BRUECKE`).
+  läuft es nicht zweimal (eine Auswertung je URL; die Brücke prüft ohnehin `window.DMA_BRUECKE`). **Neues Netz
+  (Nachtrag vor der Lieferung):** kommt bau/ zwar an, wirft aber beim Ausführen (oder hat einen Parse-Fehler), meldet
+  das Modul „load“, nicht „error“ – darum holt der Rückweg die Quelle jetzt auch nach „load“, wenn `DMA_BRUECKE` dann
+  fehlt (Sonde 887-modul-app, I-E und I-E2).
 - **Warum nicht der feste `<script type="module">`-Tag wie bei M5 (Abhilfe b des Prüfers):** ein fester Tag hinter dem
   Lader läuft nach ALLEN geschriebenen defer-Skripten, also nach app.js – in Chromium hieße das: Tutor und Betonung
   immer über den Rückweg, also eine Änderung auf dem geprüften Weg. So bleibt Chromium genau wie vorher (die Brücke läuft
@@ -8643,7 +8650,9 @@ die wahrscheinlichste Erklärung. Weiter beobachten, kein Eingriff.
 118/0 (Gegenprobe b672fc2c 10 rot, siehe 1; R nach der Zählung erneut grün), 887-bruecke 19/0, 887-bau 42/0, 885-schlank
 43/0, 876-start-schlank 62/0, 885-stuecke 43/0, 884-notweg 91/0, 885-swvorladen 32/0, 884-leitung 3× 40/0. (Bei
 885-schlank meldet der Läufer „Baum geändert“: in dieser Zeit wurde SPIELSYSTEM.md geschrieben – die Sonde liest es nicht.)
-Nicht gelaufen: 885-sparsam (siehe Offen 3).
+~~Nicht gelaufen: 885-sparsam (siehe Offen 3).~~ – **erledigt** in Runde 2 (sonden:888:2 auf 6fb48f67): 885-sparsam
+ganz, alle 37 Fälle in 5 Teilen, 178 ok / 0 FEHL, X5 grün; im selben Lauf 884-leitung 2× 40/0, 885-rueckkehr 300/0, alle
+übrigen grün (`/tmp/claude-0/r2n/log/zusammenfassung.txt`).
 
 **Funk-Zeile (für den Dirigenten, vor der Auslieferung als 888):** „Eine Prüfung kann nur jemand mit einem iPhone
 machen: die Seite in Safari öffnen, am Mac im Safari-Menü ‚Entwickler‘ das iPhone wählen (Web-Inspektor), in der
@@ -8720,7 +8729,44 @@ Brocken bleibt `werkzeug/backup` mit 244,96 MB (Offen 3).
    es Xanders Ja (Frage im Funk).
 4. **Alte Stadt-`.min.js` (3,94 MB)** mit der nächsten Fassung vom Server löschen. Im selben Schritt räumt sw.js beim
    Helferwechsel genau diese Pfade aus dem Speicher (feste Liste, mit Sondenfall; Nachbessern 1, Punkt 4).
-5. Die lange 885-sparsam-Reihe ist nicht gelaufen (der Startweg in Chromium ist unverändert). 884-leitung wird weiter
-   beobachtet.
+5. ~~Die lange 885-sparsam-Reihe ist nicht gelaufen (der Startweg in Chromium ist unverändert).~~ – **erledigt** in
+   Runde 2 (sonden:888:2 auf 6fb48f67): alle 37 Fälle in 5 Teilen, 178 ok / 0 FEHL, X5 grün; im selben Lauf 884-leitung
+   2× 40/0, 885-rueckkehr 300/0, alle übrigen grün (`/tmp/claude-0/r2n/log/zusammenfassung.txt`). 884-leitung wird
+   weiter beobachtet.
 6. Weiter offen aus 887 (Werkstatt): Chatverlauf im Gerät in Stücken (Ruck von 70–170 ms alle 20 s),
    Vorab-Malen der Autos (wartet auf Xanders OK), Fuchs-Wertung auf dem Server, große Abfragen, Rückkehr Fall A.
+
+### 888 – Nachtrag vor der Lieferung (14.11.2026)
+
+Drei kleine Befunde der gegnerischen Prüfung (Runde 2), vor dem Liveschalten behoben. Für Xander unsichtbar; in Chromium
+ändert sich auf dem normalen Weg nichts (die Brücke läuft vor app.js, der Rückweg feuert nicht – B1 grün).
+1. **Der Rückweg fängt auch einen Ausführungsfehler von bau/ ab** (app.js, `dmaBrueckeRueckweg`). Kommt ein Modul an und
+   wirft beim Ausführen (oder hat einen Parse-Fehler), meldet das Skript „load“, nicht „error“ – nachgeprüft in Chromium
+   für throw und Parse-Fehler, beim ersten und beim zweiten Skript derselben URL. Der Rückweg hörte nur auf „error“, holte
+   dann also `src/bruecke.js` nicht mehr, und Tutor und Betonung fehlten (b672fc2c fing das noch ab: dort kam src/
+   direkt). Jetzt zusätzlich `onload → if (!window.DMA_BRUECKE) quelle()`. Kein Doppellauf: `DMA_BRUECKE` steht am Ende
+   der Auswertung, also vor „load“ dieses Skripts; läuft das geschriebene Modul spät (dieselbe URL noch unterwegs),
+   warten beide Skripte auf dieselbe Auswertung; `quelle()` und die Brücke prüfen `DMA_BRUECKE` selbst.
+2. **Sonde `887-modul-app`:** R prüft die Zahl der bau/-Versuche (= 1), statt sie nur zu nennen; A5-Nachtrag (die
+   Zeile mit onload). Neu in Teil I (nachgestellt nach der Vorlage der Prüfung, `scratchpad/a888r2/rw.js`):
+   **E** das geschriebene Modul fällt weg, bau/ kommt an und wirft (vorangestelltes throw in der ausgelieferten
+   Antwort): 1 Anfrage, 1 Lauf, danach `src/bruecke.js` → `src/app/tutor.js` → `src/app/betonung.js`, 14 Namen; Tutor,
+   Reiter, Ohren, Betonung an/wieder/aus (43 Silben). **E2** das geschriebene Modul ist da und wirft vor app.js: der
+   Rückweg nimmt dieselbe URL ohne zweite Anfrage und ohne zweiten Lauf, danach src/. **X** fällt weg und bau/ nicht
+   ladbar: genau 1 Versuch bau/, dann einmal `src/bruecke.js`. **D1** bau/-Antwort 1,5 s verzögert, dieselbe URL bei
+   DOMContentLoaded noch unterwegs (der Rückweg fügt ein zweites Skript dazu): 1 Anfrage, 1 Ausführung, keine Quelle,
+   14 Namen, kein Konflikt. **Gegenprobe 1710d18b** (git archive nach `/tmp/claude-0/gp888`, danach gelöscht): 10 rot –
+   A5-Nachtrag, E 8 (keine Brücke, kein Tutor, Ohren aus, 0 Silben), E2 1; R, X und D1 dort grün (dieses Verhalten war
+   schon richtig und bleibt es).
+3. **Logbuch berichtigt:** Nachbessern 1, Punkt 1 (der alte Rückweg holte `src/bruecke.js` mit Stempel, der Helfer legt
+   es ab; ohne Stempel und nicht abgelegt waren nur die Importe; dazu ein Satz zum neuen Netz). „885-sparsam nicht
+   gelaufen“ an drei Stellen durchgestrichen: erledigt in Runde 2 (6fb48f67), 37 Fälle in 5 Teilen, 178 ok / 0 FEHL.
+
+**Gebaut** mit `fassung-setzen.js --nur-stempel`: app.js, min/app.js und die 15 Teile `min/app-teil-*` (nur ihr
+Schlüssel `dmaTeilPasst`) neu gestempelt; bau/ unverändert (`bau/bruecke-CSGLwKEs.js`); `DMA_VERSION` und fassung.json
+bleiben 888 (vorher und nachher nachgesehen).
+
+**Sondenstand** (Hauptbaum, nacheinander, je über die Chromium-Sperre, Protokolle `/tmp/claude-0/n888/log/`):
+887-modul-app 139 ok / 0 (118 + A5-Nachtrag, R-Zählung, E 10, E2 3, X 3, D1 3), 887-bruecke 19/0, 887-bau 42/0,
+885-schlank 43/0, 876-start-schlank 62/0, 884-notweg 91/0, 885-swvorladen 32/0, 887-supabase 16/0 – jede mit Rückgabe 0,
+ohne Änderung am Baum während des Laufs.
