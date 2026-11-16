@@ -127,7 +127,8 @@ async function lauf(br, wurzel, name) {
   }
   await schlaf(3000);
   await pg.evaluate(() => performance.mark("m889:flut-ende"));
-  const seite = await pg.evaluate(() => ({ schritte: window.__m.schritte, loaf: window.__m.loaf, stand: LiveChat.pruefSichernStand(), lager: LiveChat.pruefLager ? LiveChat.pruefLager("klassenzimmer").letzte : null }));
+  const seite = await pg.evaluate(() => ({ schritte: window.__m.schritte, loaf: window.__m.loaf, stand: LiveChat.pruefSichernStand(), lager: LiveChat.pruefLager ? LiveChat.pruefLager("klassenzimmer").letzte : null,
+    marken: performance.getEntriesByType("mark").filter((m) => /^m889:/.test(m.name)).map((m) => [m.name.slice(5), m.startTime]) }));
   const spur = JSON.parse(String(await br.stopTracing()));
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 }).catch(() => {});
   await ctx.close(); srv.close();
@@ -154,9 +155,23 @@ function auswerten(name, spur, seite, betreten, fehler) {
   const betretenA = abschnitt(m("betreten"), m("betreten-ende") + 1000000);
   const ladenA = abschnitt(m("laden"), m("geladen") + 1);
   const flutA = abschnitt(m("flut"), m("flut-ende"));
+  /* Die Rückrufe der Sicherung allein (Seitenuhr) sehen nicht, was danach in derselben Aufgabe als Mikroaufgabe läuft –
+     888 legt den ganzen Text in einem .then nach dem Leerlauf-Rückruf ins Lager. Darum je Schritt die GANZE Aufgabe aus
+     der Spur, in der er lag (Seitenuhr → Spur über die Marke „betreten"). */
+  const seitenMarke = (seite.marken || []).find((x) => x[0] === "betreten");
+  const versatz = seitenMarke && m("betreten") ? m("betreten") - seitenMarke[1] * 1000 : null;   // µs
+  const aufgabeUm = (t) => { const tt = t * 1000 + versatz; let lo = 0, hi = oben.length - 1, f = null;
+    while (lo <= hi) { const mi = (lo + hi) >> 1; if (oben[mi].ts <= tt) { f = oben[mi]; lo = mi + 1; } else hi = mi - 1; }
+    return f && f.ts + f.dur >= tt ? f : null; };
+  const ganz = new Map();
+  if (versatz != null) seite.schritte.forEach((s) => { const a = aufgabeUm(s[1] + s[2] / 2); if (a) ganz.set(a, a.dur / 1000); });
+  const ganzeAufgaben = [...ganz.values()];
   const sicherung = seite.schritte.map((s) => s[2]);
   const r = { name, betreten: Object.assign(betretenA, { zeilen: betreten.zeilen, lager: betreten.lager }), laden: Object.assign(ladenA, { ms: betreten.laden }), flut: flutA,
-              sicherung: { schritte: sicherung.length, laengster: sicherung.length ? Math.max(...sicherung) : 0, summe: sicherung.reduce((a, b) => a + b, 0), ueber16: sicherung.filter((d) => d > 16).length },
+              sicherung: { schritte: sicherung.length, laengster: sicherung.length ? Math.max(...sicherung) : 0, summe: sicherung.reduce((a, b) => a + b, 0), ueber16: sicherung.filter((d) => d > 16).length,
+                           aufgaben: ganzeAufgaben.length, laengsteAufgabe: ganzeAufgaben.length ? Math.max(...ganzeAufgaben) : null, aufgabenSumme: ganzeAufgaben.reduce((a, b) => a + b, 0),
+                           aufgabenUeber16: ganzeAufgaben.filter((d) => d > 16).length, aufgabenUeber50: ganzeAufgaben.filter((d) => d > 50).length },
+              loafLeerlauf: seite.loaf.filter((l) => l.dauer >= 50 && l.skripte.some((x) => /IdleRequestCallback/.test(String(x[1])))).map((l) => Math.round(l.dauer)),
               loaf: seite.loaf.filter((l) => l.dauer >= 50).map((l) => [Math.round(l.dauer), Math.round(l.block), l.skripte.map((s) => s.join(" ")).join(" | ")]).slice(0, 40),
               stand: seite.stand ? { zahl: seite.stand.zeiten.length, zeichen: seite.stand.zeichen } : null, lager: seite.lager, fehler };
   return r;
@@ -174,7 +189,7 @@ function auswerten(name, spur, seite, betreten, fehler) {
       alle.push(e);
       console.log(name.padEnd(5) + " R" + r + "  betreten längste " + e.betreten.laengste.toFixed(0) + " ms, Blockade " + e.betreten.blockade.toFixed(0) + "  | laden " + e.laden.ms.toFixed(0) + " ms (längste " + e.laden.laengste.toFixed(0) + ")"
         + "  | Flut längste " + e.flut.laengste.toFixed(0) + " ms, Blockade " + e.flut.blockade.toFixed(0) + ", belegt " + (100 * e.flut.belegt).toFixed(1) + " %, >16 " + e.flut.ueber16 + ", >50 " + e.flut.ueber50
-        + "  | Sicherung: " + e.sicherung.schritte + " Schritte, längster " + e.sicherung.laengster.toFixed(1) + " ms, zusammen " + e.sicherung.summe.toFixed(0) + " ms" + (e.fehler.length ? "  FEHLER " + e.fehler.join(" | ") : ""));
+        + "  | Sicherung: " + e.sicherung.schritte + " Rückrufe (längster " + e.sicherung.laengster.toFixed(1) + " ms), als ganze Aufgaben: " + e.sicherung.aufgaben + ", längste " + (e.sicherung.laengsteAufgabe == null ? "?" : e.sicherung.laengsteAufgabe.toFixed(1)) + " ms, >16 " + e.sicherung.aufgabenUeber16 + ", >50 " + e.sicherung.aufgabenUeber50 + ", zusammen " + e.sicherung.aufgabenSumme.toFixed(0) + " ms; LoAF Leerlauf ≥ 50: " + JSON.stringify(e.loafLeerlauf) + (e.fehler.length ? "  FEHLER " + e.fehler.join(" | ") : ""));
       fs.writeFileSync(ERGEBNIS, JSON.stringify(alle, null, 1));
     }
   }
@@ -184,7 +199,9 @@ function auswerten(name, spur, seite, betreten, fehler) {
     const l = alle.filter((e) => e.name === n);
     zus[n] = { runden: l.length, betretenLaengste: med(l.map((e) => e.betreten.laengste)), betretenBlockade: med(l.map((e) => e.betreten.blockade)), laden: med(l.map((e) => e.laden.ms)), ladenLaengste: med(l.map((e) => e.laden.laengste)),
                flutLaengste: med(l.map((e) => e.flut.laengste)), flutBlockade: med(l.map((e) => e.flut.blockade)), flutBelegt: med(l.map((e) => e.flut.belegt)), flutUeber50: med(l.map((e) => e.flut.ueber50)), flutUeber16: med(l.map((e) => e.flut.ueber16)),
-               sicherungLaengster: med(l.map((e) => e.sicherung.laengster)), sicherungSumme: med(l.map((e) => e.sicherung.summe)) };
+               sicherungLaengster: med(l.map((e) => e.sicherung.laengster)), sicherungSumme: med(l.map((e) => e.sicherung.summe)),
+               sicherungLaengsteAufgabe: med(l.map((e) => e.sicherung.laengsteAufgabe)), sicherungAufgabenSumme: med(l.map((e) => e.sicherung.aufgabenSumme)),
+               sicherungUeber16: med(l.map((e) => e.sicherung.aufgabenUeber16)), sicherungUeber50: med(l.map((e) => e.sicherung.aufgabenUeber50)) };
   }
   console.log("\nMedian je Baum: " + JSON.stringify(zus, (k, v) => typeof v === "number" ? Math.round(v * 10) / 10 : v, 1));
   fs.writeFileSync(ERGEBNIS, JSON.stringify({ laeufe: alle, median: zus }, null, 1));

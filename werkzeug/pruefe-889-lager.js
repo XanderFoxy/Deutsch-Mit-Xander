@@ -8,9 +8,9 @@
      A  Format: 1 500 Zeilen → Verzeichnis mit 3 Stücken (600/600/300), genau diese 3 im Bereich des Raums, Zeilen gleich.
      N  Nur das Geänderte: 7 000 Zeilen, 1 neue Zeile → im Leerlauf 1 Stück + Verzeichnis, kein put über 200 000 Zeichen;
         450 neue Zeilen → höchstens 3 Stücke; das Lager danach genau der Verlauf.
-     Z  Kein langes Bild aus der Sicherung (CPU 4×, 7 000 Zeilen, Profilfotos bei 3 von 30): jeder Schritt der Leerlauf-
-        Sicherung (Leerlauf-Rückruf, IndexedDB-Rückruf) ≤ 16 ms – auch, wenn ein anderer Tab geschrieben hat und darum
-        alles neu geschrieben wird.
+     Z  Kein langes Bild aus der Sicherung (CPU 4×, 7 000 Zeilen, Profilfotos bei 3 von 30): jede Aufgabe des Hauptfadens,
+        in der die Leerlauf-Sicherung lief (Leerlauf-/IndexedDB-Rückruf samt der Mikroaufgaben danach, aus der Chromium-
+        Spur), ≤ 16 ms – auch, wenn ein anderer Tab geschrieben hat und darum alles neu geschrieben wird.
      K  Kappen bei 20 000 Zeilen: eine neue Zeile → höchstens 2 Stücke (das erste wird kürzer, das letzte bekommt sie).
      V  Altes Format (888, ein Text) wird gelesen und verlustfrei überführt (sofort und im Leerlauf, dabei verschwindet
         „chat:<raum>"); bricht die Überführung mittendrin ab, steht das alte vollständig da.
@@ -28,9 +28,8 @@
      L  Laden beim Betreten nicht langsamer: 7 000 Zeilen im neuen Format lesen gegen dieselben im alten Format (CPU 4×,
         abwechselnd, Median aus 9; eigenes Profil, das Lager auf der Platte wie auf einem Gerät).
    Gegenprobe: WURZEL=/tmp/claude-0/v888 (Fassung 888) → A N K V1 V2 B T M Q F(Zeilen) L(Format) rot (34 Prüfungen).
-   Z ist auf 888 NICHT rot: in dieser leichten Seite (Klassenzimmer zu) kostet auch das put des ganzen Texts dort
-   nur ≤ 13 ms; die langen Bilder zeigt erst der Nachbau mit offenem Klassenzimmer (werkzeug/messe-889-lager.js).
-   Z bleibt als Wächter für 889 (Leerlauf-Schritte ≤ 16 ms, auch beim Neuschreiben aller Stücke). */
+   (Z maß zuerst nur die Rückrufe selbst und war damit auf 888 grün: 888 legt den Text in einem .then NACH dem
+   Leerlauf-Rückruf ins Lager – das sieht nur die ganze Aufgabe. Jetzt aus der Spur, siehe Ergebnis der Gegenprobe.) */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
@@ -46,14 +45,14 @@ function messen() {
   const ric = window.requestIdleCallback;
   if (ric) window.requestIdleCallback = function (f, o) {
     const chat = vonChat();
-    return ric.call(window, function (d) { const t = performance.now(); try { return f(d); } finally { if (chat && window.__m.an) window.__m.dauer.push(["leerlauf", performance.now() - t]); } }, o);
+    return ric.call(window, function (d) { const t = performance.now(); try { return f(d); } finally { if (chat && window.__m.an) window.__m.dauer.push(["leerlauf", performance.now() - t, t]); } }, o);
   };
   const huellen = (proto, namen) => namen.forEach((p) => {
     const d = Object.getOwnPropertyDescriptor(proto, p);
     if (!d || !d.set) return;
     Object.defineProperty(proto, p, { configurable: true, enumerable: d.enumerable, get: d.get, set(f) {
       if (typeof f !== "function" || !vonChat()) return d.set.call(this, f);
-      d.set.call(this, function (e) { const t = performance.now(); try { return f.call(this, e); } finally { if (window.__m.an) window.__m.dauer.push(["idb-" + p, performance.now() - t]); } });
+      d.set.call(this, function (e) { const t = performance.now(); try { return f.call(this, e); } finally { if (window.__m.an) window.__m.dauer.push(["idb-" + p, performance.now() - t, t]); } });
     } });
   });
   huellen(IDBRequest.prototype, ["onsuccess", "onerror"]);
@@ -203,6 +202,10 @@ function server() {
       await window.__fertig(raum);
     });
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    /* Die Rückrufe allein sehen nicht, was danach in DERSELBEN Aufgabe als Mikroaufgabe läuft (888 legt den ganzen Text
+       in einem .then nach dem Leerlauf-Rückruf ins Lager). Darum zählt je Schritt die ganze Aufgabe aus der Chromium-Spur. */
+    await br.startTracing(pg, { categories: ["toplevel", "blink.user_timing"] });
+    const marke = await pg.evaluate(() => { performance.mark("p889:z"); return performance.getEntriesByName("p889:z")[0].startTime; });
     const runde = (fremd) => pg.evaluate(async (fremd) => {
       const raum = "l-z";
       if (fremd) {   /* ein anderer Tab hat geschrieben: Stand im Verzeichnis ändern → die nächste Sicherung schreibt alles */
@@ -218,15 +221,27 @@ function server() {
       LiveChat.pruefSichernAbstand(abstand);
       const d = window.__m.dauer.map((x) => x[1]);
       const groesst = window.__m.dauer.slice().sort((a, b) => b[1] - a[1]).slice(0, 4).map((x) => x[0] + " " + x[1].toFixed(1));
-      return { max: Math.max(0, ...d), summe: d.reduce((a, b) => a + b, 0), schritte: d.length, groesst, dauer: performance.now() - t0, puts: window.__m.puts.length,
+      return { roh: window.__m.dauer.slice(), max: Math.max(0, ...d), summe: d.reduce((a, b) => a + b, 0), schritte: d.length, groesst, dauer: performance.now() - t0, puts: window.__m.puts.length,
                letzte: LiveChat.pruefLager ? LiveChat.pruefLager(raum).letzte.slice(-1)[0] : null };
     }, fremd);
     const a = await runde(false), b = await runde(true), c = await runde(false);
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-    const zeig = (x) => "längster Schritt " + x.max.toFixed(1) + " ms, " + x.schritte + " Schritte, zusammen " + Math.round(x.summe) + " ms, puts " + x.puts + " (" + x.groesst.join(", ") + ")" + (x.letzte ? " " + JSON.stringify(x.letzte) : "");
-    ok(a.schritte > 0 && a.max <= 16, "eine neue Zeile: jeder Schritt der Sicherung ≤ 16 ms", zeig(a));
-    ok(b.schritte > 0 && b.max <= 16 && (!b.letzte || b.letzte[1] === true), "anderer Tab hat geschrieben → alles neu, trotzdem jeder Schritt ≤ 16 ms", zeig(b));
-    ok(c.schritte > 0 && c.max <= 16, "danach wieder nur das Geänderte, jeder Schritt ≤ 16 ms", zeig(c));
+    const spur = JSON.parse(String(await br.stopTracing()));
+    const ev = spur.traceEvents || spur;
+    const mk = ev.find((e) => e.name === "p889:z" && /user_timing/.test(e.cat || ""));
+    let tid = null;
+    ev.forEach((e) => { if (mk && e.ph === "M" && e.name === "thread_name" && e.pid === mk.pid && e.args && e.args.name === "CrRendererMain") tid = e.tid; });
+    const oben = []; let bis = -1;
+    ev.filter((e) => mk && e.ph === "X" && e.pid === mk.pid && e.tid === tid && /RunTask/.test(e.name || "") && e.dur != null).sort((x, y) => x.ts - y.ts).forEach((e) => { if (e.ts >= bis) { oben.push(e); bis = e.ts + e.dur; } });
+    const versatz = mk ? mk.ts - marke * 1000 : null;
+    const ganz = (x) => { const m = new Map(); (x.roh || []).forEach((st) => { const tt = (st[2] + st[1] / 2) * 1000 + versatz; const f = oben.find((e) => e.ts <= tt && e.ts + e.dur >= tt); if (f) m.set(f, f.dur / 1000); });
+      x.aufgaben = [...m.values()]; x.maxAufgabe = x.aufgaben.length ? Math.max(...x.aufgaben) : -1; return x; };
+    [a, b, c].forEach(ganz);
+    const zeig = (x) => "längste Aufgabe " + x.maxAufgabe.toFixed(1) + " ms (" + x.aufgaben.length + " Aufgaben, zusammen " + Math.round(x.aufgaben.reduce((p, q) => p + q, 0)) + " ms); Rückrufe: längster " + x.max.toFixed(1) + " ms, " + x.schritte + ", puts " + x.puts + (x.letzte ? " " + JSON.stringify(x.letzte) : "");
+    ok(versatz != null && oben.length > 0, "Chromium-Spur gelesen (Aufgaben des Hauptfadens)", oben.length + " Aufgaben");
+    ok(a.aufgaben.length > 0 && a.maxAufgabe <= 16, "eine neue Zeile: jede Aufgabe der Sicherung ≤ 16 ms", zeig(a));
+    ok(b.aufgaben.length > 0 && b.maxAufgabe <= 16 && (!b.letzte || b.letzte[1] === true), "anderer Tab hat geschrieben → alles neu, trotzdem jede Aufgabe ≤ 16 ms", zeig(b));
+    ok(c.aufgaben.length > 0 && c.maxAufgabe <= 16, "danach wieder nur das Geänderte, jede Aufgabe ≤ 16 ms", zeig(c));
   }
 
   if (hat("K")) {
