@@ -95,8 +95,11 @@ try { MB = require(path.join(WURZEL, "werkzeug", "modul-bauen.js")); } catch (e)
     /* M3b: dazu „uebungen" = Verzeichnis der Übungsteile aus bau/uebungen-quelle.json (werkzeug/uebungen-teilen.js; die Teile
        selbst prüft pruefe-887-daten.js) */
     const uMerk = jsonLies(path.join(BAU, "uebungen-quelle.json"));
-    const karteSoll = karte ? Object.assign({}, karte, uMerk && uMerk.karte ? { uebungen: uMerk.karte } : {}) : null;
-    sage(Boolean(karteSoll && dmaModul) && JSON.stringify(karteSoll) === JSON.stringify(dmaModul), "B3 DMA_MODUL in index.html = Karte aus bau/manifest.json (+ uebungen aus bau/uebungen-quelle.json, M3b)",
+    /* FASSUNG 889: dazu „wortniveau" = der Auszug der Wortniveaus aus bau/wortniveau-quelle.json (werkzeug/wortniveau-bauen.js;
+       den Inhalt prüft pruefe-889-runde.js) */
+    const wMerk = jsonLies(path.join(BAU, "wortniveau-quelle.json"));
+    const karteSoll = karte ? Object.assign({}, karte, uMerk && uMerk.karte ? { uebungen: uMerk.karte } : {}, wMerk && wMerk.datei ? { wortniveau: wMerk.datei } : {}) : null;
+    sage(Boolean(karteSoll && dmaModul) && JSON.stringify(karteSoll) === JSON.stringify(dmaModul), "B3 DMA_MODUL in index.html = Karte aus bau/manifest.json (+ uebungen aus bau/uebungen-quelle.json, M3b; + wortniveau aus bau/wortniveau-quelle.json, 889)",
       JSON.stringify(dmaModul) + (karteSoll && JSON.stringify(karteSoll) !== JSON.stringify(dmaModul) ? " ≠ " + JSON.stringify(karteSoll) : ""));
     sage(/\n<script>window\.DMA_MODUL = \{[^\n]*?\};window\.DMA_STEMPEL = \{[^\n]*\};<\/script>\n/.test(html) && (html.match(/window\.DMA_MODUL = /g) || []).length === 1,
       "B3 DMA_MODUL steht vorn im Skriptblock von DMA_STEMPEL (kein eigenes <script>-Element, nur einmal)");
