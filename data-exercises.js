@@ -6388,6 +6388,22 @@ const ExerciseData = (function () {
     });
     return uebKarteHol;
   }
+  /* FASSUNG 889 — der Auszug der Wortniveaus (werkzeug/wortniveau-bauen.js, DMA_MODUL.wortniveau; quiz.js nimmt ihn
+     beim Bau einer Runde statt des ganzen Wortschatzes, siehe dort). Derselbe Weg wie die Teile: nur mit min/ und Eintrag
+     (?quelle, Notweg und Rückfall warten wie bisher auf den Wortschatz); ohne ?v (Name aus dem Inhalt). Kommt er nicht,
+     antwortet er false – dann wartet die Runde auf den ganzen Wortschatz. */
+  let wortniveauHol = null;
+  function wortniveauHolen() {
+    if (window.DMA_DATEN && window.DMA_DATEN.WORTNIVEAU) return Promise.resolve(true);
+    const m = window.DMA_MODUL, k = m && m.wortniveau;
+    if (typeof k !== "string" || !/^bau\/wortniveau-[A-Za-z0-9_-]{8}\.js$/.test(k) || !uebTeileWeg()) return Promise.resolve(false);
+    if (!wortniveauHol) wortniveauHol = uebSkript(k).then((ok) => {
+      const da = Boolean(ok && window.DMA_DATEN && window.DMA_DATEN.WORTNIVEAU);
+      if (!da) wortniveauHol = null;
+      return da;
+    });
+    return wortniveauHol;
+  }
   function uebTeilDa(k) { const T = window.DMA_DATEN && window.DMA_DATEN.ZUSATZ_TEILE; return Boolean(T && T[k]); }
   const uebTeilHol = {};
   function uebTeil(K, k, leise) {
@@ -6604,5 +6620,5 @@ const ExerciseData = (function () {
 
   /* M3b: der Teil von data-exercises.js (getBank jeder Kategorie liest ihn) – beim Tipp auf „Lernen" gleich holen */
   function uebungenBasisHolen() { if (uebTeileWeg()) dmaUebTextHolen(true); }
-  return { ladeUebungen, uebungenVorladen, uebungenBasisHolen, uebungenVorrang, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
+  return { ladeUebungen, uebungenVorladen, uebungenBasisHolen, uebungenVorrang, wortniveauHolen, ladeKalender, ladeKalenderMonat, ladeItKalenderMonat, ladeKalenderGanz, kalenderGanzDa, uebungenDa, kalenderDa, alleRohfragen, CATEGORIES, getCategory, getSynonymPairs, MEMORY_GAMES, getQuizTopics, getWortschatzThemen, WORD_MEANINGS, WORD_SYL, DAILY_TIPS, germanHistoryForToday, getAllHistoryEntries, REDEWENDUNGEN, STRESS_PROBLEM_WORDS, HISTORY_TITLES, SATZPUZZLE, WORTARTEN, WER_BIN_ICH, HAEUFIGE_FEHLER, SS_ESZETT, FIRST_STEPS_VOCAB, FIRST_STEPS_SENTENCES, FIRST_STEPS_CULTURE_NOTES, FIRST_STEPS_CORE_VERBS, FIRST_STEPS_INFINITIVES, FIRST_STEPS_COMBOS, FIRST_STEPS_CHAPTERS, FIRST_STEPS_SYLLABLES, historyStand, historyPending, historyDayCount, historyBatchKey, GRAMMATIK, WORTSCHMIEDE, SATZBRUECKE, IT_KATEGORIEN, get IT_GRAMMATIK() { return IT().IT_GRAMMATIK; }, get IT_WOERTER() { return IT().IT_WOERTER; }, get IT_TICKER() { return IT().IT_TICKER; }, get IT_GESCHICHTE() { return IT().IT_GESCHICHTE; }, get IT_SUBJEKTE() { return IT().IT_SUBJEKTE; }, get IT_VERBEN() { return IT().IT_VERBEN; }, get IT_ERGAENZUNGEN() { return IT().IT_ERGAENZUNGEN; }, get IT_ZEITANGABEN() { return IT().IT_ZEITANGABEN; }, ladeItalienisch, italienischDa, setLernraum, getLernraum, activeCategories, activeGetCategory, eigeneFragenAnmelden, activeGrammatik, activeWoerter, activeHistoryForToday, activeHistoryEntries, activeHistoryTitle };
 })();

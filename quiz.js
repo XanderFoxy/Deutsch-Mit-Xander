@@ -107,10 +107,54 @@ const Quiz = (function () {
     wortNiveauKarteCache = karte;
     return karte;
   }
+  /* FASSUNG 889 — „Runde starten" ohne den ganzen Wortschatz (Ladezeit, Vorrang 2; SPIELSYSTEM.md, Abschnitt 889).
+     Die Runde wartete auf alle 26 Wortschatz-Dateien (2,3 MB gepackt; 4G +0,9–1,2 s, 3G +9,8 s), weil die Einstufung
+     hier JEDE Aufgabe auch nach ihren Wörtern misst. Gebraucht wird der Wortschatz dafür aber nur bei Aufgaben OHNE
+     eigenes Niveau und mit mindestens fünf Wörtern (darunter misst wortschatzNiveauIndex nie etwas) – in 42 der 62
+     Kategorien gibt es keine einzige solche Aufgabe. Für die übrigen legt der Bau einen kleinen AUSZUG an
+     (werkzeug/wortniveau-bauen.js → bau/wortniveau-<hash>.js, DMA_DATEN.WORTNIVEAU): für genau die Wörter, die in
+     solchen Aufgaben vorkommen, ihr niedrigstes Niveau im Wörterbuch – dieselbe Rechnung wie wortNiveauKarte(), nur
+     vorher. Er gilt nur, wenn er aus genau den Wortschatz-Dateien gebaut ist, die diese Seite lädt (Stempel in
+     DMA_STEMPEL), und nur für eine Aufgabe, deren Wörter ALLE darin stehen; sonst wartet die Runde wie bisher auf den
+     ganzen Wortschatz. Benutzt wird er nur beim Bau einer Runde (startSession mit { auszug: true }) und nur, solange der
+     Wortschatz nicht ganz da ist – jede andere Einstufung (Übersicht, Spiele) rechnet wie bisher. Gleichlauf-Prüfer:
+     werkzeug/pruefe-889-runde.js (alle Kategorien, viele Zufallsstände, mit Gegenprobe). */
+  let auszugAn = false;
+  let auszugQuelle = null, auszugKarte = null, auszugBereich = null;
+  const auszugStand = { benutzt: 0, luecke: 0 };
+  function wortschatzGanz() {
+    return typeof VocabData !== "undefined" && Boolean(VocabData.alleThemenDa && VocabData.alleThemenDa());
+  }
+  /* der Auszug als Karte (Wort → Stufe) und Bereich (alle Wörter, für die er gebaut ist); null = keiner oder ungültig */
+  function auszugLesen() {
+    const W = (typeof window !== "undefined" && window.DMA_DATEN && window.DMA_DATEN.WORTNIVEAU) || null;
+    if (!W) return null;
+    if (W === auszugQuelle) return auszugKarte ? { karte: auszugKarte, bereich: auszugBereich } : null;
+    auszugQuelle = W; auszugKarte = null; auszugBereich = null;
+    try {
+      const S = window.DMA_STEMPEL || {}, q = W.quelle || {}, namen = Object.keys(q);
+      const themen = (typeof VocabData !== "undefined" && VocabData.themenListe) ? VocabData.themenListe().length : -1;
+      if (!namen.length || namen.length !== themen || namen.some((n) => !q[n] || S[n] !== q[n])) return null;
+      if (!Array.isArray(W.stufen) || W.stufen.length !== LEVELS.length || typeof W.ohne !== "string") return null;
+      const karte = new Map(), bereich = new Set();
+      W.stufen.forEach((t, i) => { String(t).split(" ").forEach((w) => { if (w) { karte.set(w, i); bereich.add(w); } }); });
+      W.ohne.split(" ").forEach((w) => { if (w) bereich.add(w); });
+      auszugKarte = karte; auszugBereich = bereich;
+      return { karte, bereich };
+    } catch (e) { return null; }
+  }
+  /* unter fünf Wörtern misst wortschatzNiveauIndex nie etwas – dort bleibt alles wie bisher (und zählt nicht) */
+  function auszugFuer(woerter) {
+    if (!auszugAn || woerter.length < 5 || wortschatzGanz()) return null;
+    const a = auszugLesen();
+    if (!a || !woerter.every((w) => a.bereich.has(w))) { auszugStand.luecke++; return null; }
+    auszugStand.benutzt++;
+    return a.karte;
+  }
   function wortschatzNiveauIndex(text) {
-    const karte = wortNiveauKarte();
-    if (!karte.size) return null;
     const woerter = String(text || "").toLowerCase().match(/[a-zäöüß]{3,}/g) || [];
+    const karte = auszugFuer(woerter) || wortNiveauKarte();
+    if (!karte.size) return null;
     const stufen = [];
     woerter.forEach((w) => {
       const idx = karte.get(w);
@@ -177,10 +221,55 @@ const Quiz = (function () {
     return treffer.length ? treffer : bank;
   }
 
-  function poolSizeFor(categoryIds, topicFilters, level) {
+  /* FASSUNG 889 — was eine Runde vom Wortschatz braucht (siehe oben, Auszug).
+     - Diese Kategorien bauen ihre AUFGABEN aus dem Wörterbuch (getBank liest VocabData): für sie wartet die Runde wie
+       bisher auf den ganzen Wortschatz – und zwar VOR dem ersten getBank (der Prüfer sieht nach, dass es keine weitere
+       gibt, die VocabData liest).
+     - Sonst hängt nur die Einstufung am Wortschatz, und nur bei einer Aufgabe, deren Niveau ohne ihn offen ist: kein
+       eigenes Niveau, nicht schon eingestuft, mindestens fünf Wörter – dieselbe Reihenfolge wie questionLevel(). */
+  const BANK_AUS_WORTSCHATZ = ["wortschatz", "meinwortschatz"];
+  const WORT_MUSTER = /[a-zäöüß]{3,}/g;
+  function bankBrauchtWortschatz(categoryIds) {
+    return (categoryIds || []).some((id) => BANK_AUS_WORTSCHATZ.includes(id));
+  }
+  function niveauOhneWortschatz(q) {
+    if (q && q.level && LEVELS.includes(q.level)) return true;
+    if (q && q.__niveau) return true;
+    return (`${(q && q.prompt) || ""}`.toLowerCase().match(WORT_MUSTER) || []).length < 5;
+  }
+  function bedarfSammeln(bedarf, bank, categoryId, level) {
+    if (!bedarf.woerter) bedarf.woerter = new Set();
+    bedarf.aufgaben = bedarf.aufgaben || 0;
+    if (BANK_AUS_WORTSCHATZ.includes(categoryId)) bedarf.voll = true;
+    if (!level || !LEVELS.includes(level)) return;   // ohne Niveau stuft filterByLevel nichts ein
+    bank.forEach((q) => {
+      if (niveauOhneWortschatz(q)) return;
+      bedarf.aufgaben++;
+      (`${(q && q.prompt) || ""}`.toLowerCase().match(WORT_MUSTER) || []).forEach((w) => bedarf.woerter.add(w));
+    });
+  }
+  /* Was die Runde zu diesem Bedarf abwarten muss: "keiner" (sofort), "auszug" (der Auszug ist da und deckt alles),
+     "fehlt" (der Auszug würde reichen, ist aber noch nicht da oder ungültig – holen und noch einmal fragen), "voll"
+     (der ganze Wortschatz, wie bisher). Ist der Wortschatz schon ganz da, rechnet die Runde ohnehin mit ihm. */
+  function wortschatzWeg(bedarf) {
+    if (!bedarf || !bedarf.woerter || bedarf.voll) return "voll";
+    if (!bedarf.woerter.size || wortschatzGanz()) return "keiner";
+    const a = auszugLesen();
+    if (!a) return "fehlt";
+    for (const w of bedarf.woerter) if (!a.bereich.has(w)) return "voll";
+    return "auszug";
+  }
+
+  /* bedarf (FASSUNG 889, nur „Runde starten"): ein Objekt, in das der Wortschatz-Bedarf der Auswahl geschrieben wird.
+     Mit bedarf.ohneNiveau stuft diese Zählung NICHTS ein – die Zahl hängt ohnehin nicht am Niveau (filterByLevel mit
+     MAX_SAFE_INTEGER gibt jede Aufgabe der Bank zurück), und eine Einstufung vor dem Wortschatz bliebe an einer
+     wiederverwendeten Aufgabe hängen (__niveau). getBank wird genau wie bisher aufgerufen (gleiche Zufallszahlen). */
+  function poolSizeFor(categoryIds, topicFilters, level, bedarf) {
     return categoryIds.reduce((sum, id) => {
       const t = topicFilters && topicFilters[id];
       const bank = TOPIC_FILTERABLE.includes(id) && t ? ExerciseData.activeGetCategory(id).getBank(t) : ExerciseData.activeGetCategory(id).getBank();
+      if (bedarf) bedarfSammeln(bedarf, bank, id, level);
+      if (bedarf && bedarf.ohneNiveau) return sum + bank.length;
       // Wie viele Fragen für eine Runde überhaupt zur Verfügung stehen — also
       // inklusive der Nachbarstufen, die bei Bedarf geöffnet werden. Sonst würde
       // die Schwierigkeitsauswahl Stufen sperren, die in Wahrheit spielbar sind.
@@ -217,9 +306,14 @@ const Quiz = (function () {
     return Core.drawUnique(pool, count);
   }
 
-  function startSession(categoryIds, difficultyId, meta, orderMode, topicFilters, level) {
+  /* opt.auszug (FASSUNG 889): beim Bau dieser Runde darf die Einstufung den Auszug nehmen (nur solange der Wortschatz
+     nicht ganz da ist und nur für Aufgaben, deren Wörter alle darin stehen) */
+  function startSession(categoryIds, difficultyId, meta, orderMode, topicFilters, level, opt) {
     const diff = DIFFICULTIES.find((d) => d.id === difficultyId);
-    const questions = buildQuestions(categoryIds, diff.count, orderMode, topicFilters, level);
+    let questions;
+    auszugAn = Boolean(opt && opt.auszug);
+    try { questions = buildQuestions(categoryIds, diff.count, orderMode, topicFilters, level); }
+    finally { auszugAn = false; }
     state = {
       categoryIds,
       level: level || null,
@@ -341,6 +435,13 @@ const Quiz = (function () {
     LEVELS,
     questionLevel,
     poolSizeFor,
+    bankBrauchtWortschatz,
+    wortschatzWeg,
+    /* für den Bau des Auszugs (werkzeug/wortniveau-bauen.js) und die Sonden: dieselbe Rechnung wie die Einstufung */
+    wortniveauAuszug: (woerter) => { const k = wortNiveauKarte(); const o = {}; (woerter || []).forEach((w) => { const i = k.get(w); o[w] = i === undefined ? -1 : i; }); return o; },
+    auszugStand: () => Object.assign({}, auszugStand),
+    /* für den Gleichlauf-Prüfer: das Niveau einer Aufgabe so, wie es der Bau einer Runde mit { auszug: true } sieht */
+    niveauBeimRundenbau: (q, categoryId) => { auszugAn = true; try { return questionLevel(q, categoryId); } finally { auszugAn = false; } },
     startSession,
     markShown,
     currentQuestion,

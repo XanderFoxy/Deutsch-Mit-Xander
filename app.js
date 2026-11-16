@@ -9535,7 +9535,11 @@
     // Sprachniveau: beim ersten Aufbau aus dem Profil übernehmen, danach das,
     // was zuletzt hier eingestellt wurde.
     selectedExerciseLevel = applyDefaultCefrLevel(selectedExerciseLevel, (v) => { selectedExerciseLevel = v; }, "uebungen");
-    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel) : 0;
+    /* FASSUNG 889: dieselbe Zählung, dazu der Wortschatz-Bedarf der Auswahl – braucht „Runde starten" den Auszug der
+       Wortniveaus, kommt er gleich jetzt (~16 KB gepackt), nicht erst beim Tipp; sonst nichts */
+    const bedarfSetup = Quiz.wortschatzWeg ? {} : undefined;
+    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel, bedarfSetup) : 0;
+    try { if (bedarfSetup && selectedCategories.size && ExerciseData.wortniveauHolen && Quiz.wortschatzWeg(bedarfSetup) === "fehlt") ExerciseData.wortniveauHolen().catch(() => {}); } catch (e) {}
     const currentDiffCount = (Quiz.DIFFICULTIES.find((d) => d.id === selectedDifficulty) || {}).count || 0;
     if (currentDiffCount > maxAvailable) {
       const fitting = Quiz.DIFFICULTIES.filter((d) => d.count <= maxAvailable).sort((a, b) => b.count - a.count)[0];
@@ -9775,6 +9779,18 @@
          Jetzt wird auf BEIDES gewartet. Der Knopf sagt es. */
       const knopfText = startBtn.textContent;
       startBtn.textContent = "Aufgaben werden geholt …";
+      /* FASSUNG 889 — „Runde starten" ohne den ganzen Wortschatz (Ladezeit, Vorrang 2; SPIELSYSTEM.md Abschnitt 889).
+         Gewartet wurde hier immer auf alle 26 Wortschatz-Dateien (2,3 MB gepackt; nach dem kalten Öffnen 4G +0,9–1,2 s,
+         3G +9,8 s). Die Aufgaben brauchen ihn aber nur in zwei Fällen (quiz.js, „was eine Runde vom Wortschatz braucht"):
+         die Kategorie baut ihre Aufgaben aus dem Wörterbuch (Wortschatz, Meine Wörter) – dann wie bisher –, oder eine
+         Aufgabe ohne eigenes Niveau wird nach ihren Wörtern eingestuft – dann reicht der kleine Auszug
+         (bau/wortniveau-*.js, ~16 KB gepackt; meist schon beim Tipp auf die Karte geholt, renderSetup), sonst wie bisher
+         der ganze Wortschatz. Gezählt wird wie bisher (dieselben getBank-Aufrufe in derselben Folge, also dieselben
+         Zufallszahlen), nur noch ohne Einstufung (die Zahl hängt nicht am Niveau); eingestuft wird erst beim Bau der
+         Runde. Ändert sich die Auswahl während des Wartens, gilt der alte Weg. Welche Aufgaben, in welcher Folge, auf
+         welchem Niveau und wie bewertet: genau wie bisher (Gleichlauf-Prüfer werkzeug/pruefe-889-runde.js). */
+      const rundenWahl = () => [...selectedCategories].join(",") + "|" + selectedQuizTopic + "|" + selectedWortschatzTopic + "|" + selectedExerciseLevel;
+      let vorrat = null, mitAuszug = false;
       try {
         /* MODUL-UMBAU M3b: nur die gewählten Kategorien (mit ?quelle/ohne Teile die ganze Sammlung wie bisher) */
         const uebungenWeg = (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa([...selectedCategories]))
@@ -9782,11 +9798,25 @@
         /* MODUL-UMBAU M3b: die app-Stücke für den Start der Runde erst über die Leitung abwarten (die Seite bleibt
            bedienbar, der Knopf zeigt „wird geholt") statt sie im Aufruf synchron zu holen; nach 8 s wie bisher */
         await Promise.race([dmaTeileFuer([wortschatzBereit, merkeZustand, renderQuestion]), new Promise((r) => setTimeout(r, 8000))]);
-        await Promise.all([wortschatzBereit(), uebungenWeg]);
+        try {
+          const wahl = rundenWahl();
+          if (Quiz.wortschatzWeg && !Quiz.bankBrauchtWortschatz([...selectedCategories])) {
+            await uebungenWeg;
+            if (rundenWahl() === wahl) {
+              const bedarf = { ohneNiveau: true };
+              const n = Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel, bedarf);
+              let weg = Quiz.wortschatzWeg(bedarf);
+              if (weg === "fehlt" && ExerciseData.wortniveauHolen) { await ExerciseData.wortniveauHolen(); weg = Quiz.wortschatzWeg(bedarf); }
+              if (weg !== "keiner" && weg !== "auszug") await wortschatzBereit();
+              if (rundenWahl() === wahl) { vorrat = n; mitAuszug = true; }
+            }
+          }
+        } catch (e) { vorrat = null; mitAuszug = false; }
+        if (vorrat === null) await Promise.all([wortschatzBereit(), uebungenWeg]);
       } catch (e) { /* dann eben mit dem, was da ist */ }
       startBtn.textContent = knopfText;
       const topicFilterPruef = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
-      const vorrat = Quiz.poolSizeFor
+      if (vorrat === null) vorrat = Quiz.poolSizeFor
         ? Quiz.poolSizeFor([...selectedCategories], topicFilterPruef, selectedExerciseLevel) : 99;
       if (vorrat < 5) {
         startBtn.disabled = false;
@@ -9804,14 +9834,14 @@
             const cid = await challengeErstellen(fid, [...selectedCategories]);
             if (!firstChallengeId) firstChallengeId = cid;
           }
-          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, topicFilters, selectedExerciseLevel);
+          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, topicFilters, selectedExerciseLevel, { auszug: mitAuszug });
         } catch (err) {
           alert(err.message || "Duell konnte nicht gestartet werden.");
           startBtn.disabled = false;
           return;
         }
       } else {
-        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, topicFilters, selectedExerciseLevel);
+        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, topicFilters, selectedExerciseLevel, { auszug: mitAuszug });
       }
       /* Letzter Riegel: auch nach allem Warten kann die Runde zu kurz
          ausfallen (etwa wenn ein Thema wirklich nur wenige Aufgaben

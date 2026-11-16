@@ -44,8 +44,9 @@ const { execFileSync, spawnSync } = require("child_process");
 
 const STUECK = /-[A-Za-z0-9_-]{8}\.(js|css|json)$/;
 /* Dateien unter bau/, die nicht Vite gehören: bau/daten/ (daten-bauen.js), bau/uebungen/ und bau/uebungen-<hash>.js
-   (uebungen-teilen.js, M3b). Das Aufräumen hier lässt sie stehen; ihre Werkzeuge räumen selbst auf. */
-const FREMD = /^(?:daten\/|uebungen\/|uebungen-[A-Za-z0-9_-]{8}\.js$)/;
+   (uebungen-teilen.js, M3b), bau/wortniveau-<hash>.js (wortniveau-bauen.js, Fassung 889). Das Aufräumen hier lässt sie
+   stehen; ihre Werkzeuge räumen selbst auf. */
+const FREMD = /^(?:daten\/|uebungen\/|uebungen-[A-Za-z0-9_-]{8}\.js$|wortniveau-[A-Za-z0-9_-]{8}\.js$)/;
 
 function baumDateien(ordner) {
   if (!fs.existsSync(ordner)) return [];
@@ -213,6 +214,7 @@ function bauen(wurzel) {
       const neu = jsonLesen(path.join(tmp, "manifest.json"));
       if (!neu || !Object.keys(neu).length) throw new Error("kein Manifest");
       if (karte(neu).uebungen) throw new Error("ein Eingang heißt „uebungen“ – der Name gehört den Übungsteilen (uebungen-teilen.js, M3b)");
+      if (karte(neu).wortniveau) throw new Error("ein Eingang heißt „wortniveau“ – der Name gehört dem Auszug (wortniveau-bauen.js, Fassung 889)");
       const liste = [...dateien(neu)];
       liste.forEach((f) => {
         const q = path.join(tmp, f);
