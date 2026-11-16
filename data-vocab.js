@@ -121,9 +121,32 @@ const VocabData = (function () {
     return laufendeThemen[thema];
   }
   let alleLaufen = null;
+  /* FASSUNG 889 (Ladezeit, Vorrang 2; MODULE-PLAN.md M3b „Offen 6.2"): höchstens VOKABEL_ZUGLEICH Dateien zugleich.
+     Bisher gingen alle 26 Dateien (2,3 MB gepackt) auf einmal hinaus. Die Leitung teilt sich auf alle laufenden Abrufe
+     auf – wer währenddessen eine Karte unter „Lernen" antippt, bekam für ihren Teil (z. B. wortstellung, 28 KB) nur
+     ein Dreißigstel davon (gemessen 4G: 730 ms für 28 KB, „Karte → startklar" 0,9 s). Seit 889 wartet „Runde starten"
+     nicht mehr auf den Wortschatz – er muss die Leitung nicht mehr für sich haben. Ganz da ist er fast gleich schnell
+     (die Leitung bleibt voll: läuft eine Datei aus, laufen drei weiter), nur kommen die Themen nacheinander statt alle
+     im letzten Augenblick. ladeThema() für ein einzelnes Thema (Wörterbuch) geht weiter sofort hinaus; dieselbe Datei
+     lädt nie doppelt (dateiLaden). Das Versprechen bleibt dasselbe: erfüllt, wenn alle Themen da (oder gescheitert)
+     sind, Wert wie bisher. */
+  const VOKABEL_ZUGLEICH = 4;
   function ladeWoerter() {
     if (alleLaufen) return alleLaufen;
-    alleLaufen = Promise.all(VOKABEL_THEMEN.map((t) => ladeThema(t[0]))).then(() => WORDS.length > 0);
+    const reihe = VOKABEL_THEMEN.map((t) => t[0]);
+    alleLaufen = new Promise((fertig) => {
+      let i = 0, offen = 0;
+      const weiter = () => {
+        if (i >= reihe.length && !offen) { fertig(); return; }
+        while (offen < VOKABEL_ZUGLEICH && i < reihe.length) {
+          offen++;
+          const thema = reihe[i++];
+          let p; try { p = Promise.resolve(ladeThema(thema)); } catch (e) { p = Promise.resolve(false); }
+          p.then(() => {}, () => {}).then(() => { offen--; weiter(); });
+        }
+      };
+      weiter();
+    }).then(() => WORDS.length > 0);
     return alleLaufen;
   }
   function woerterDa() { return WORDS.length > 0; }
