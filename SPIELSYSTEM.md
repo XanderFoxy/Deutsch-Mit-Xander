@@ -8770,3 +8770,137 @@ bleiben 888 (vorher und nachher nachgesehen).
 887-modul-app 139 ok / 0 (118 + A5-Nachtrag, R-Zählung, E 10, E2 3, X 3, D1 3), 887-bruecke 19/0, 887-bau 42/0,
 885-schlank 43/0, 876-start-schlank 62/0, 884-notweg 91/0, 885-swvorladen 32/0, 887-supabase 16/0 – jede mit Rückgabe 0,
 ohne Änderung am Baum während des Laufs.
+
+## Fassung 889 — „Runde starten“ ohne den ganzen Wortschatz (Ladezeit, Vorrang 2)
+
+Stand 16.11.2026, Strang „runde“ (Zweig `runde-889` ab 4bd701b3 = Fassung 888, Sicherung
+`claude/sicherung-889-runde`). Noch nicht ausgeliefert, `DMA_VERSION` bleibt 888. **Für Xander unsichtbar:** gleiche
+Karten, gleiche Texte, gleiche Knöpfe, dieselben Aufgaben in derselben Runde – nur ohne die Wartezeit. Aufgaben aus
+MODULE-PLAN.md M3b „Offen 6.1/6.2“ und 888 „Offen 2“.
+
+**Warum es wartete.** Seit M3b steht die Übersicht schnell, aber „Runde starten“ wartete nach dem kalten Öffnen auf
+alle 26 Wortschatz-Dateien (2,3 MB gepackt; 888 gegen 887: 4G +0,9 bis +1,2 s, 3G +9,8 s). Grund war allein
+`quiz.js`: Es stuft jede Aufgabe OHNE eigenes Niveau zusätzlich nach ihren Wörtern ein (`wortschatzNiveauIndex`: das
+Niveau, auf dem neun von zehn erkannten Wörtern liegen, erst ab fünf Wörtern), und ohne Wörterbuch fiele diese
+Einstufung anders aus. Und eine Karte, deren Teil nicht vorgeladen war, teilte sich die Leitung mit 26 gleichzeitig
+laufenden Wortschatz-Dateien (4G: 730 ms für die 28 KB von „wortstellung“).
+
+**Was jetzt gilt (gezählt in Node über alle Banken):**
+- **40 der 62 deutschen Kategorien und alle 29 italienischen** haben keine Aufgabe, deren Niveau am Wörterbuch hängt
+  (eigenes Niveau, oder weniger als fünf Wörter – z. B. „artikel“): die Runde startet sofort, ohne Wortschatz.
+- **20 Kategorien** (plural, synonyme, wenn-ob, praefixverben, wortpaare, als-wie, kennen-wissen, das-dass,
+  redewendungen, sinn-trainer, doppelt-gemoppelt, haeufige-fehler, ss-eszett, nebensatz, relativsatz, zeitformen,
+  konnektoren, jedesto, quiz, lueckentext) haben solche Aufgaben. Für sie reicht ein kleiner **Auszug**:
+  `bau/wortniveau-<hash>.js` – für genau die 3 940 Wörter, die in solchen Aufgaben vorkommen, ihr niedrigstes Niveau im
+  Wörterbuch (2 308 stehen darin, 1 632 nicht). 36,9 KB, **gepackt 15,6 KB statt 2,3 MB**. Er wird schon beim Tipp auf
+  so eine Karte geholt (renderSetup), nicht erst beim Start.
+- **2 Kategorien** bauen ihre Aufgaben aus dem Wörterbuch (Wortschatz, Meine Wörter): sie warten wie bisher auf den
+  ganzen Wortschatz.
+
+**Gebaut:**
+- `quiz.js`: `bankBrauchtWortschatz`, `wortschatzWeg(bedarf)` („keiner“ / „auszug“ / „fehlt“ / „voll“),
+  `poolSizeFor(…, bedarf)` – zählt wie bisher (dieselben `getBank`-Aufrufe in derselben Folge, also dieselben
+  Zufallszahlen) und schreibt den Bedarf mit; mit `bedarf.ohneNiveau` ohne Einstufung (die Zahl hängt nicht am Niveau:
+  `filterByLevel` mit `MAX_SAFE_INTEGER` gibt jede Aufgabe der Bank zurück). `startSession(…, { auszug: true })` – nur
+  beim Bau dieser Runde, nur solange der Wortschatz nicht ganz da ist und nur für eine Aufgabe, deren Wörter ALLE im
+  Auszug stehen, nimmt die Einstufung den Auszug; sonst rechnet sie wie bisher. Jede andere Einstufung (Übersicht,
+  Spiele, Artikel-Garten) bleibt unverändert. Der Auszug gilt nur, wenn jeder seiner 26 Stempel gleich dem Stempel der
+  Seite ist (`DMA_STEMPEL`) – aus einem anderen Wörterbuch wird er nie benutzt.
+- `app.js`, „Runde starten“: erst die Teile (wie bisher), dann zählen mit Bedarf; je nach Weg sofort, mit dem Auszug
+  (fehlt er noch: holen, dann noch einmal fragen) oder – wie bisher – auf den ganzen Wortschatz warten. Ändert sich die
+  Auswahl während des Wartens, gilt der alte Weg. `renderSetup` holt den Auszug, sobald die Auswahl ihn braucht.
+- `data-exercises.js`: `ExerciseData.wortniveauHolen()` (derselbe Weg wie die Übungsteile: nur mit min/ und Eintrag
+  in `DMA_MODUL`, ohne `?v`, Name aus dem Inhalt; `?quelle`, Notweg und Rückfall warten wie bisher).
+- `data-vocab.js`, `ladeWoerter()`: **höchstens 4 Wortschatz-Dateien zugleich über die Leitung** statt 26 (Offen 6.2).
+  Die Leitung bleibt voll (läuft eine Datei aus, laufen drei weiter), der Wortschatz ist gleich schnell ganz da, aber
+  ein Kartentipp bekommt seinen Teil nicht mehr als Dreißigstel der Leitung. Kommt eine Datei OHNE ihren Inhalt über
+  die Leitung (Resource Timing: `transferSize` kleiner als der Inhalt – aus dem Speicher des Browsers, vom Helfer,
+  oder 304), gehen alle übrigen zugleich hinaus wie bisher – und kam schon `data-vocab.js` selbst beim Start so (dann
+  liegt der Wortschatz mit großer Wahrscheinlichkeit auch im Speicher), gehen von Anfang an alle zugleich. Beides aus den
+  Messreihen (unten): Reihe 1 (nur die Reihe) zeigte bei „wieder“ mit Konto „Karte → startklar“ +41 ms (6 von 6), Reihe 2
+  (Reihe + Meldung des Beobachters) bei 3G Gast „wieder“ „Wortschatz ganz“ +465 ms und „Karte“ +227 ms – die Meldung
+  kommt ~100 ms nach der ersten Datei, und das Einlesen der 26 Dateien rutschte in den Kartentipp. `ladeThema()` für ein
+  einzelnes Thema geht weiter sofort; das Versprechen ist dasselbe wie bisher.
+- `werkzeug/wortniveau-bauen.js` (neu): baut den Auszug mit genau dem Code der Seite in einem Sandkasten (quiz.js,
+  data-vocab.js mit allen Wortschatz-Dateien, data-exercises.js, data-uebungen.js, data-italienisch.js); prüft vorher,
+  dass keine weitere Kategorie beim Bau ihrer Aufgaben `VocabData` liest und dass die Aufgabentexte nicht am Zufall
+  hängen. `fassung-setzen.js` ruft es vor jedem Commit (nur bei geänderter Eingabe, ~0,7 s) und setzt
+  `DMA_MODUL.wortniveau`; scheitert es, fällt der Eintrag weg (die Runde wartet dann wie bisher), laut, Rückgabe 2; eine
+  echte Fassung bricht ab. `modul-bauen.js` lässt `bau/wortniveau-*` stehen (FREMD); `sw.js` legt ihn wie jedes
+  bau/-Stück ab (offline da, wenn einmal geholt).
+- `werkzeug/ladezeit-messen.js` + `werkzeug/mess-konto.js` (neu): `--konto` – angemeldet gegen eine kleine
+  Supabase-Attrappe im Werkzeug (CDP, vor der Namensauflösung, jede Antwort nach 150 ms; das echte Supabase wird nie
+  angesprochen), seit a6f751fa als gewöhnliches Mitglied (vorher Betreiber). Das 888-Werkzeug dafür lag außerhalb des
+  Baums und war nach dem Neustart weg. Ein Versuch, Knöpfe außerhalb des Bildes per Scrollen + Berührung zu tippen
+  (460808f3), ist zurückgenommen (die Karte bekam in „wieder“ mit Konto keinen Tipp mehr).
+
+**Gleichlauf-Prüfer** `werkzeug/pruefe-889-runde.js` (Teil G, ohne Browser; Teil B die echte Seite,
+`pruefe-889-runde-seite.js`). ALT = quiz.js aus 888 (git 4bd701b3) MIT ganzem Wortschatz und dem bisherigen Ablauf
+(warten, zählen, bauen); NEU = quiz.js dieses Baums OHNE Wortschatz und genau der Ablauf aus app.js. Beide Sandkästen
+bekommen vor jedem Fall dieselben Zufallszahlen und dieselbe Uhr; verglichen wird alles (Zahl der Aufgaben, jede Frage
+mit Kategorie, Text, Antworten in ihrer Folge, richtige, Erklärung, Niveau-Angabe; dazu eine nachgespielte Runde mit
+richtigen, falschen, mehrfachen, schnellen und langsamen Antworten und `computeResults`).
+- G2 Einstufung jeder Aufgabe beider Räume (60 628 Aufgaben, 5 252 ohne eigenes Niveau): 0 abweichend; ohne Auszug wären
+  880 anders eingestuft (der Auszug ist also nötig, G2 prüft etwas).
+- G1/G3 5 998 Runden (jede Kategorie beider Räume × 7 Niveaus × 3 Schwierigkeiten × 3 Startwerte, Quiz- und
+  Wortschatz-Themen, 300 gemischte Auswahlen, gemischt und der Reihe nach): **0 abweichend**. Wege: sofort 4 665, mit
+  Auszug 1 234, Wörterbuch-Kategorie 99, ganzer Wortschatz nötig 0.
+- G4 Auszug mit falschem Stempel bzw. ohne Auszug (404): nicht benutzt, Weg „voll“, Runden gleich.
+- **Gegenprobe (muss auffallen, fällt auf):** GP1 ohne Warten und ohne Auszug 184 von 345 Runden anders; GP2 ein Wort
+  im Auszug auf falscher Stufe („sitz“ nach A1) 11 Aufgaben anders; GP3 BANK_AUS_WORTSCHATZ leer 7 von 7 Runden anders;
+  GP4 Fünf-Wörter-Grenze falsch (< 9) 54 von 345 Runden anders.
+- G0 Vorbedingungen grün (u. a. keine wiederverwendete Aufgabe mit wortschatzabhängigem Niveau – 31 wiederverwendete,
+  alle mit festem Niveau; sonst hinge das bisherige Ergebnis vom Zeitpunkt der ersten Einstufung ab).
+- Teil B (Chromium, Wortschatz-Dateien je 3 s zurückgehalten): B1 wortstellung Tipp → Frage 37 ms, vor dem Wortschatz,
+  ohne Auszug; B2 plural 36 ms, Auszug einmal schon beim Kartentipp geholt, 99× benutzt, keine Lücke; B3 quiz +
+  ss-eszett + wortstellung 38 ms; B4 Wortschatz (Thema gewählt) wartet wie bisher; B5 `?quelle` wartet, kein Auszug;
+  B6 Auszug 404 wartet, Runde läuft; B7 Auszug mit falschem Stempel nicht benutzt; B8 Gleichlauf IN der Seite (min/,
+  66 Runden vor und nach dem Wortschatz mit denselben Zufallszahlen) 0 abweichend.
+- **Gegenprobe des ganzen Prüfers auf 888** (`WURZEL=/tmp/claude-0/v888`): G0 rot (kein 889-Weg); B1, B2, B3 rot (Frage
+  erst nach dem Wortschatz, ~2,9 s), B6/B7 rot (kein `Quiz.auszugStand`), B8 rot; B4/B5 dort grün (alter Weg).
+
+**Messung:** MESSUNG_PLATZHALTER
+
+**Sonden** (Baum runde-889, nacheinander, je über die Chromium-Sperre; Protokolle `/tmp/claude-0/runde/log/`):
+| Sonde | Ergebnis |
+|---|---|
+| 889-runde (neu, G + B) | 28 ok, 0 rot (G: 5 998 Runden gleich, Gegenprobe GP1–GP4 fällt auf; B1–B8) |
+| 887-daten | 96 ok, 0 rot (B14/B16 – Teile nach dem Wortschatz – grün mit 4 Dateien zugleich) |
+| 887-bau | 42 ok, 0 rot (B3 kennt jetzt `DMA_MODUL.wortniveau`; vorher 1 rot, s. u.) |
+| 885-schlank | 43 ok, 0 rot |
+| 876-start-schlank | 62 ok, 0 rot |
+| 885-sparsam (A, E, SB, SM) | 20 ok, 0 rot |
+| runde24 / runde25 / runde30 / runde60 | 32 / 28 / 78 / 23 ok, 0 rot |
+| reihenfolge, benoten, galgenmaennchen | „alles richtig“ / 11 / 12 ok, 0 rot |
+| 853-beugung, betonung-uebung, aufgabe-reist | 18 / 17 / 12 ok, 0 rot |
+| mehrdeutige-aufgaben, betonung-regeln | GRÜN / ok |
+
+Jede mit Rückgabe 0, ohne Änderung am Baum während des Laufs. **887-bau** war im ersten Lauf 4× rot: B3 zu Recht –
+`DMA_MODUL` hat jetzt den Eintrag `wortniveau`, die Sonde kannte nur Vite-Karte + `uebungen`; sie liest ihn jetzt aus
+`bau/wortniveau-quelle.json` (ein Eintrag, den das Werkzeug nicht gebaut hat, wäre weiter rot) –, B7–B9 wegen der
+Umgebung (`node_modules` fehlte nach dem Neustart, unten). Nach der Speicher-Weiche in `data-vocab.js` liefen 889-runde,
+887-daten, 853-beugung, betonung-uebung und 876-start-schlank noch einmal: 889-runde 28/0, 887-daten 96/0, 853-beugung 18/0, betonung-uebung 17/0, 876-start-schlank 62/0.
+
+**Umgebung nach dem Neustart (für die nächsten Stränge):** `node_modules` des Hauptbaums fehlt (der Verweis in den
+Arbeitsbäumen zeigt ins Leere – 887-bau B7–B9 rot). Für diesen Baum: `npm ci` nach `/tmp/claude-0/runde/nm`, Verweis
+dorthin (nicht committet). `/tmp/claude-0/node_modules/pngjs` (876-start-schlank) und
+`/tmp/claude-0/node_modules/ffmpeg-static/ffmpeg` → `/usr/bin/ffmpeg` (runde60) neu angelegt. 885-schlank braucht
+a508dc56 – im flachen Klon nachgeholt (`git fetch --depth=1`, +7 MB). 885-sparsam braucht
+`SUPABASE_UMD=/tmp/claude-0/runde/tmp/dma-mess-supabase-js-2.119.0.umd.js`.
+
+**Platz:** +36,9 KB (Auszug) + Werkzeuge/Sonden; bau/ trägt eine Generation des Auszugs.
+
+**Offen:**
+1. **FUND (schon in 888 live, wichtig, nicht gebaut): „Wortschatz – Alle Themen“ friert die Seite ein.** In Node gemessen (V8 wie Chromium, Rechner ungebremst): `ExerciseData.activeGetCategory("wortschatz").getBank()`
+   ohne Thema braucht mit dem ganzen Wörterbuch (41 063 Wörter) **176 s**, mit einem Thema („Essen & Trinken“, 2 127)
+   0,27 s. Grund: `bankWortschatzThemen` filtert für JEDES Wort zweimal den ganzen Bestand nach Ablenkern und mischt die
+   Kandidaten ganz (quadratisch). „Alle Themen“ ist die Vorgabe der Karte: wer die Karte „Wortschatz“ antippt, nachdem
+   der Wortschatz geladen ist (unter „Lernen“ nach wenigen Sekunden), wartet in `renderSetup` → `poolSizeFor`
+   minutenlang (bei CPU 4× entsprechend länger); ebenso jede Frage von Blitzrunde und Leiter (`fragenFuerNiveau` holt
+   `getBank()` ALLER Kategorien). Nicht durch 889 entstanden und von 889 nicht berührt (für diese Kategorie bleibt alles
+   wie bisher). Die Sonde 889 B4 umgeht es (Thema vor dem Wortschatz gewählt). **Vorschlag (unsichtbar, Vorrang 1):**
+   Ablenker je Niveau einmal je Aufruf vorsortieren und drei zufällige ziehen statt den ganzen Bestand je Wort zu
+   filtern und zu mischen – gleiche Regel, gleiche Verteilung, aber andere Zufallsfolge; darum ein eigener Schritt mit
+   einem Prüfer auf die Regel (Ablenker gleiches Niveau, gleiches Thema, nie das Wort selbst) statt auf Gleichheit.
+2. Messung mit einer Karte, die den Auszug braucht (plural/quiz), gegen 888: AUSZUG_PLATZHALTER
+3. `DMA_VERSION` erst bei der Lieferung (`node werkzeug/fassung-setzen.js 889`).
