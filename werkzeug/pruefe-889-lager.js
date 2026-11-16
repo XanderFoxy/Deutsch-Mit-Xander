@@ -3,9 +3,9 @@
    ---------------------------------------------------------------
    Bis 888 schrieb jede Sicherung den GANZEN Verlauf als einen Text ins Lager („chat:<raum>"): im Nachbau ein Bild von
    70–170 ms alle ≥ 20 s (das put von 1,7 Mio. Zeichen allein 67 ms bei CPU 4×). Jetzt: Verzeichnis „chatix:<raum>" +
-   Stücke „chatst:<Länge>:<raum>:<n>" (je ≤ 400 Zeilen); die Sicherung im Leerlauf schreibt nur, was sich geändert hat,
+   Stücke „chatst:<Länge>:<raum>:<n>" (je ≤ 600 Zeilen); die Sicherung im Leerlauf schreibt nur, was sich geändert hat,
    Stück für Stück in EINER Transaktion; die sofortige Sicherung schreibt alles in einer Transaktion.
-     A  Format: 1 000 Zeilen → Verzeichnis mit 3 Stücken (400/400/200), genau diese 3 im Bereich des Raums, Zeilen gleich.
+     A  Format: 1 500 Zeilen → Verzeichnis mit 3 Stücken (600/600/300), genau diese 3 im Bereich des Raums, Zeilen gleich.
      N  Nur das Geänderte: 7 000 Zeilen, 1 neue Zeile → im Leerlauf 1 Stück + Verzeichnis, kein put über 200 000 Zeichen;
         450 neue Zeilen → höchstens 3 Stücke; das Lager danach genau der Verlauf.
      Z  Kein langes Bild aus der Sicherung (CPU 4×, 7 000 Zeilen, Profilfotos bei 3 von 30): jeder Schritt der Leerlauf-
@@ -26,7 +26,7 @@
      F  localStorage-Teil und Fototafel aus der Leerlauf-Sicherung Byte für Byte wie aus der sofortigen; die Zeilen im
         Lager gleich.
      L  Laden beim Betreten nicht langsamer: 7 000 Zeilen im neuen Format lesen gegen dieselben im alten Format (CPU 4×,
-        abwechselnd, Median aus 7).
+        abwechselnd, Median aus 9; eigenes Profil, das Lager auf der Platte wie auf einem Gerät).
    Gegenprobe: WURZEL=/tmp/claude-0/v888 (Fassung 888) → A N K V1 V2 B T M Q F(Zeilen) L(Format) rot (34 Prüfungen).
    Z ist auf 888 NICHT rot: in dieser leichten Seite (Klassenzimmer zu) kostet auch das put des ganzen Texts dort
    nur ≤ 13 ms; die langen Bilder zeigt erst der Nachbau mit offenem Klassenzimmer (werkzeug/messe-889-lager.js).
@@ -136,7 +136,7 @@ function server() {
     console.log("\n  A  Format: Verzeichnis und Stücke");
     const r = await pg.evaluate(async () => {
       const raum = "l-a"; LiveChat.pruefRaum(raum); await LiveChat.pruefVerlaufAusLager(raum);
-      const l = window.__zeilen(1000, "A", 0, null);
+      const l = window.__zeilen(1500, "A", 0, null);
       LiveChat.pruefVerlaufSetzen(l);
       await new Promise((f) => setTimeout(f, 400));
       const roh = await window.__roh(raum);
@@ -144,7 +144,7 @@ function server() {
       return { index: roh.index, bereich: roh.bereich, gleich: window.__ids(roh.zeilen) === window.__ids(l), alt: Boolean(roh.alt), gelesen: window.__ids(gelesen) === window.__ids(l), n: gelesen.length };
     });
     const st = r.index && r.index.stuecke ? r.index.stuecke.map((e) => e[1]) : null;
-    ok(st && st.join(",") === "400,400,200", "1 000 Zeilen → Verzeichnis „chatix:“ mit 3 Stücken 400/400/200", JSON.stringify(st));
+    ok(st && st.join(",") === "600,600,300", "1 500 Zeilen → Verzeichnis „chatix:“ mit 3 Stücken 600/600/300", JSON.stringify(st));
     ok(r.bereich.length === 3 && r.index && r.bereich.slice().sort().join() === r.index.stuecke.map((e) => String(e[0])).sort().join(), "im Bereich des Raums genau diese 3 Stücke", JSON.stringify(r.bereich));
     ok(r.gleich && !r.alt, "Zeilen im Lager = Verlauf, kein „chat:<raum>“ mehr", "gleich " + r.gleich + ", alt " + r.alt);
     ok(r.gelesen, "pruefVerlaufAusLager liefert genau den Verlauf", r.n + " Zeilen");
@@ -496,9 +496,18 @@ function server() {
   }
 
   if (hat("L")) {
-    console.log("\n  L  Laden beim Betreten nicht langsamer (CPU 4×, 7 000 Zeilen)");
-    const cdp = await ctx.newCDPSession(pg);
-    const vor = await pg.evaluate(async () => {
+    console.log("\n  L  Laden beim Betreten nicht langsamer (CPU 4×, 7 000 Zeilen, Lager auf der Platte wie im Feld)");
+    /* eigenes Profil auf der Platte: in den flüchtigen Kontexten von Playwright liegt die IndexedDB im Arbeitsspeicher,
+       dort liest sich ein großer Wert anders als auf einem Gerät (gemessen: 7 000 Zeilen in Stücken zu 600 auf der Platte
+       34 ms gegen 45 ms als ein Text, im Arbeitsspeicher umgekehrt). */
+    const profil = fs.mkdtempSync(path.join(require("os").tmpdir(), "l889-"));
+    const pctx = await chromium.launchPersistentContext(profil, { executablePath: "/opt/pw-browsers/chromium", args: ["--no-proxy-server"], viewport: { width: 390, height: 780 }, serviceWorkers: "block" });
+    await pctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+    await pctx.addInitScript(messen);
+    await pctx.addInitScript(() => { try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus"); } catch (e) {} });
+    const lp = await seite(pctx);
+    const cdp = await pctx.newCDPSession(lp);
+    const vor = await lp.evaluate(async () => {
       const l = window.__zeilen(7000, "L", 0, null);
       LiveChat.pruefRaum("l-neu"); await LiveChat.pruefVerlaufAusLager("l-neu"); LiveChat.pruefVerlaufSetzen(l); await window.__fertig("l-neu");
       LiveChat.pruefRaum("l-zz");
@@ -508,9 +517,9 @@ function server() {
       return { neuFormat: Boolean(roh.index), n: roh.zeilen ? roh.zeilen.length : -1 };
     });
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
-    const z = await pg.evaluate(async () => {
+    const z = await lp.evaluate(async () => {
       const o = { alt: [], neu: [], altSchritt: [], neuSchritt: [] };
-      for (let k = 0; k < 7; k++) for (const raum of (k % 2 ? ["l-alt", "l-neu"] : ["l-neu", "l-alt"])) {
+      for (let k = 0; k < 9; k++) for (const raum of (k % 2 ? ["l-alt", "l-neu"] : ["l-neu", "l-alt"])) {
         await new Promise((f) => setTimeout(f, 150));
         window.__m.dauer = []; window.__m.an = true;
         const t = performance.now(); const g = await LiveChat.pruefVerlaufAusLager(raum); const d = performance.now() - t;
@@ -522,6 +531,7 @@ function server() {
       return o;
     });
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+    await pctx.close(); fs.rmSync(profil, { recursive: true, force: true });
     const ma = med(z.alt), mn = med(z.neu);
     ok(vor.neuFormat && vor.n === 7000, "Raum im neuen Format angelegt (7 000 Zeilen)", JSON.stringify(vor));
     ok(!z.falsch, "beide liefern 7 000 Zeilen", z.falsch || "");

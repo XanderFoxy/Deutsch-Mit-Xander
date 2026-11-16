@@ -2934,7 +2934,10 @@ window.LiveChat = (function () {
      derselben Transaktion gelöscht. Liegen beide da (eine noch offene 888-Seite hat nach der Umstellung geschrieben),
      werden sie vereinigt (verschmelzen) – es geht nichts verloren. */
   var LAGER_INDEX = "chatix:", LAGER_TEIL = "chatst:", LAGER_ALT = "chat:";
-  var LAGER_STUECK = 400;              // Zeilen je Stück
+  /* 600 Zeilen je Stück: gemessen (schwere Seite, CPU 4×, 7 000 Zeilen) liest sich der Verlauf in Stücken zu 600–1 200 Zeilen
+     so schnell wie aus einem Text (Median 35–37 gegen 32 ms), in Stücken zu 400 Zeilen langsamer (45 ms). Das letzte Stück,
+     das je Sicherung neu geschrieben wird, bleibt klein (im Mittel 300 Zeilen, ≈ 50–70 K Zeichen). */
+  var LAGER_STUECK = 600;              // Zeilen je Stück
   var LAGER_GLIED_ZEICHEN = 50000;     // so viel Text je Schreibschritt (ein put kopiert den Text)
   var lagerStand = Object.create(null);       // raum → was nach dem letzten bekannten Schreiben/Lesen im Lager steht
   var lagerUnterwegs = Object.create(null);   // raum → { plan, art: "geprueft" | "sofort", t, aus } (das jüngste Schreiben, läuft noch)
