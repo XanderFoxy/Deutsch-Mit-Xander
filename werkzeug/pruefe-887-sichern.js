@@ -28,6 +28,8 @@
         bei vollem Speicher scheitert die Tafel ohne Schaden und wird mit denselben Fotos wieder versucht, sobald Platz ist.
      P  Kommt eine Zeile, während ein Stücklauf läuft, und feuert ihr Plan vor dessen Ende, wird sie trotzdem gesichert
         (das Ende des Laufs plant neu).
+   FASSUNG 889: das Lager liegt in Stücken (Verzeichnis „chatix:" + Stücke) – die Sonde liest es über __verlaufRoh, das
+   beide Formate kennt (bis 888 ein Text „chat:<raum>"); S zählt beim 889-Format die Zeilen aus dem Verzeichnis.
    Gegenprobe: WURZEL=<886-Baum> → A, B(verdeckt), W, F rot. WURZEL=<Baum auf e9187509 (887 vor der Nachbesserung)>
    → L, S, T rot. WURZEL=<Baum auf e84652ac> → Q1, Q3, P rot. */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
@@ -66,6 +68,21 @@ const NUR = (process.env.NUR || "ABWFTRDKSLQP").split("");
     window.__lagerRoh = (id) => new Promise((ok) => { const a = indexedDB.open("dma_klassenzimmer", 1);
       a.onsuccess = () => { try { const t = a.result.transaction("bilder", "readonly"); const g = t.objectStore("bilder").get(id); g.onsuccess = () => ok(g.result ? g.result.daten : null); g.onerror = () => ok(null); } catch (e) { ok(null); } };
       a.onerror = () => ok(null); });
+    /* FASSUNG 889 — der Chatverlauf im Lager, gleich in welchem Format: 889 Verzeichnis „chatix:<raum>" + Stücke
+       „chatst:<Länge>:<raum>:<n>", bis 888 ein Text „chat:<raum>" (liegen beide da, zählen beide). Liefert
+       { zeilen: [...], text: der gespeicherte Text (alle Teile) } oder null. */
+    window.__verlaufRoh = (raum) => new Promise((ok) => { const a = indexedDB.open("dma_klassenzimmer", 1);
+      a.onsuccess = () => { try { const t = a.result.transaction("bilder", "readonly"), f = t.objectStore("bilder"), o = {}, v = "chatst:" + raum.length + ":" + raum + ":";
+        f.get("chatix:" + raum).onsuccess = (e) => { o.ix = e.target.result; };
+        f.get("chat:" + raum).onsuccess = (e) => { o.alt = e.target.result; };
+        f.getAll(IDBKeyRange.bound(v, v + "\uffff")).onsuccess = (e) => { o.st = e.target.result || []; };
+        t.oncomplete = () => { try { let zeilen = null, text = "";
+          if (o.ix && o.ix.daten && Array.isArray(o.ix.daten.stuecke)) { const je = {}; o.st.forEach((r) => { je[r.id.slice(v.length)] = r.daten; }); zeilen = [];
+            for (const e of o.ix.daten.stuecke) { const d = je[String(e[0])]; if (typeof d !== "string") { ok({ zeilen: null, text: "", fehlt: e[0] }); return; } text += d; zeilen = zeilen.concat(JSON.parse(d)); } }
+          if (o.alt && typeof o.alt.daten === "string") { text += o.alt.daten; zeilen = (zeilen || []).concat(JSON.parse(o.alt.daten)); }
+          ok(zeilen ? { zeilen, text } : null); } catch (e) { ok(null); } };
+        t.onerror = () => ok(null); } catch (e) { ok(null); } };
+      a.onerror = () => ok(null); });
     window.__lagerLegenRoh = (id, raum, daten) => new Promise((ok) => { const a = indexedDB.open("dma_klassenzimmer", 1);
       a.onupgradeneeded = () => { const f = a.result.createObjectStore("bilder", { keyPath: "id" }); f.createIndex("zeit", "zeit"); };
       a.onsuccess = () => { const t = a.result.transaction("bilder", "readwrite"); t.objectStore("bilder").put({ id, raum, daten, zeit: Date.now() }); t.oncomplete = () => ok(true); t.onerror = () => ok(false); };
@@ -94,7 +111,7 @@ const NUR = (process.env.NUR || "ABWFTRDKSLQP").split("");
       Storage.prototype.setItem = function (k) { if (k === "dma_livechat_chat_probe-flut") zeiten.push(Math.round(performance.now() - t0)); return merk.apply(this, arguments); };
       for (let i = 0; i < 50; i++) { LiveChat.pruefAnhaengen({ id: "flut" + i, von: "p1", name: "Bea", art: "text", text: "Flut " + i, zeit: Date.now() }); await warte(500); }
       const nachFlut = window.__z.ls["dma_livechat_chat_probe-flut"] || 0;
-      const putsNachFlut = window.__z.put["chat:probe-flut"] || 0;
+      const putsNachFlut = (window.__z.put["chat:probe-flut"] || 0) + (window.__z.put["chatix:probe-flut"] || 0);   // 889: je Sicherung ein Verzeichnis
       /* die ausstehende Sicherung kommt (spätestens 20 s nach der letzten + Leerlauf) */
       await warte(21000);
       Storage.prototype.setItem = orig;
@@ -188,7 +205,7 @@ const NUR = (process.env.NUR || "ABWFTRDKSLQP").split("");
       window.__z.put = {};
       LiveChat.pruefVerlaufSetzen(liste);
       await warte(400);
-      const roh = await window.__lagerRoh("chat:probe-foto");
+      const roh = ((await window.__verlaufRoh("probe-foto")) || {}).text || null;
       const ls = localStorage.getItem("dma_livechat_chat_probe-foto") || "";
       const zuFotos = {};
       for (const k of Object.keys(window.__z.put)) if (k.indexOf("chatbild:") === 0) zuFotos[k] = window.__z.put[k];
@@ -318,7 +335,9 @@ const NUR = (process.env.NUR || "ABWFTRDKSLQP").split("");
       LiveChat.pruefVerlaufSetzen(lang.slice(-1000));          // nur localStorage
       const puts = [];
       const put = IDBObjectStore.prototype.put;
-      IDBObjectStore.prototype.put = function (v) { if (v && v.id === "chat:" + raum) { try { puts.push(JSON.parse(v.daten).length); } catch (e) { puts.push(-1); } } return put.apply(this, arguments); };
+      IDBObjectStore.prototype.put = function (v) { if (v && v.id === "chat:" + raum) { try { puts.push(JSON.parse(v.daten).length); } catch (e) { puts.push(-1); } }
+        if (v && v.id === "chatix:" + raum) puts.push(v.daten && typeof v.daten.zeilen === "number" ? v.daten.zeilen : -1);   // 889: das Verzeichnis nennt die Zeilen des ganzen Stands
+        return put.apply(this, arguments); };
       /* Leerlaufpausen festhalten: je Freigabe genau ein Schritt (timeRemaining 0 → ein Stück je Pause) */
       const ric = window.requestIdleCallback, gehalten = [];
       window.requestIdleCallback = (f) => { gehalten.push(f); return 0; };
@@ -344,8 +363,8 @@ const NUR = (process.env.NUR || "ABWFTRDKSLQP").split("");
       LiveChat.pruefSichernAbstand(abstand);
       await warte(400);
       IDBObjectStore.prototype.put = put;
-      const lager = await window.__lagerRoh("chat:" + raum);
-      return { lief, puts, ausLagerN: ausLager.length, lagerN: lager ? JSON.parse(lager).length : -1 };
+      const lager = await window.__verlaufRoh(raum);
+      return { lief, puts, ausLagerN: ausLager.length, lagerN: lager ? lager.zeilen.length : -1 };
     });
     ok(r.lief, "der Stücklauf lief, als die Liste ersetzt wurde", "Lager gelesen: " + r.ausLagerN + " Zeilen");
     ok(r.puts.every((n) => n >= 3000), "kein Schreiben eines alten Schnappschusses ins Lager", "Zeilen je Schreiben " + JSON.stringify(r.puts));
@@ -365,8 +384,8 @@ const NUR = (process.env.NUR || "ABWFTRDKSLQP").split("");
           l.push({ id: "L" + i, von: a, name: a, text: "Zeile " + i, art: "text", zeit: t0 + i * 60000, bild: window.__foto(alt ? 100 + (i % 10) : (i % 20), 600) }); }
         LiveChat.pruefVerlaufSetzen(l);
         await new Promise((f) => setTimeout(f, 600));
-        const roh = await window.__lagerRoh("chat:" + raum);
-        return roh ? JSON.parse(roh).length : -1;
+        const roh = await window.__verlaufRoh(raum);
+        return roh ? roh.zeilen.length : -1;
       }, raum);
       const B = await ctx.newPage();
       const fehlerB = [];
@@ -399,7 +418,7 @@ const NUR = (process.env.NUR || "ABWFTRDKSLQP").split("");
         return { kurz: kurz.length, ausLager: aus.length, lesend, gefeuert, gehtUm: window.__gehtUm || "-" };
       }, { raum, art });
       await B.waitForTimeout(1200);
-      const nachher = await B.evaluate((raum) => window.__lagerRoh("chat:" + raum).then((x) => (x ? JSON.parse(x).length : -1)), raum);
+      const nachher = await B.evaluate((raum) => window.__verlaufRoh(raum).then((x) => (x ? x.zeilen.length : -1)), raum);
       await B.close();
       ok(r.gefeuert === true && r.gehtUm === "vor", art + ": das Ereignis kam zwischen Lager-Lesen und Einmischen", "Lese-Abfragen " + r.lesend + ", Ereignis " + r.gehtUm + " dem Ende von chatAusLager");
       ok(vorher === 3000 && nachher >= vorher, art + ": das Lager bleibt vollständig", vorher + " → " + nachher + " Zeilen (kurze Liste " + r.kurz + ")");
@@ -515,8 +534,8 @@ const NUR = (process.env.NUR || "ABWFTRDKSLQP").split("");
       const ende = LiveChat.pruefSichernStand();
       LiveChat.pruefSichernAbstand(abstand);
       await warte(300);
-      const roh = await window.__lagerRoh("chat:" + raum);
-      const lager = roh ? JSON.parse(roh) : [];
+      const roh = await window.__verlaufRoh(raum);
+      const lager = roh ? roh.zeilen : [];
       return { lief, mitten: { schmutzig: mitten.schmutzig, geplant: mitten.geplant, laeuft: mitten.laeuft }, ende: { schmutzig: ende.schmutzig, geplant: ende.geplant, laeuft: ende.laeuft },
                lagerN: lager.length, letzte: (lager.slice(-1)[0] || {}).text, speicherLetzte: (LiveChat.pruefVerlaufAusSpeicher(raum).slice(-1)[0] || {}).text };
     });

@@ -2700,7 +2700,8 @@ window.LiveChat = (function () {
       if (!db) return;
       try {
         var t = db.transaction(LAGER_FACH, "readwrite");
-        var i = t.objectStore(LAGER_FACH).index("zeit");
+        var laden = t.objectStore(LAGER_FACH);
+        var i = laden.index("zeit");
         var grenze = Date.now() - LAGER_FRIST_MS;
         var a = i.openCursor(IDBKeyRange.upperBound(grenze));
         a.onsuccess = function () {
@@ -2710,9 +2711,14 @@ window.LiveChat = (function () {
              ihn selbst wieder wegnimmt. */
           if (!c.value || c.value.id !== HINTERGRUND_ID) {
             try { c.delete(); } catch (e) {}
+            /* FASSUNG 889 — geht das Inhaltsverzeichnis eines Chatverlaufs (60 Tage unbenutzt), dann mit seinen
+               Stücken (die Stücke tragen keine Zeit, sie altern nur mit ihrem Verzeichnis) */
+            var id = c.value ? String(c.value.id || "") : "";
+            if (id.indexOf(LAGER_INDEX) === 0) { try { laden.delete(lagerStueckBereich(id.slice(LAGER_INDEX.length))); } catch (e) {} }
           }
           c.continue();
         };
+        lagerVerwaisteWeg(laden);
       } catch (e) {}
     });
   }
@@ -2898,13 +2904,261 @@ window.LiveChat = (function () {
   /* Steht der volle Verlauf schon im Arbeitsspeicher? Vorher darf
      nichts ins Lager zurueckgeschrieben werden (siehe chatSichern). */
   var lagerGelesen = false;
-  function chatAusLager(raum) {
-    return lagerHolen(["chat:" + raum]).then(function (gefunden) {
-      var roh = gefunden && gefunden["chat:" + raum];
-      if (!roh) return [];
+
+  /* =========================================================
+     FASSUNG 889 — DAS CHAT-LAGER IN STÜCKEN (Livestream, Vorrang 1)
+     ---------------------------------------------------------
+     Bis 888 lag der ganze Verlauf eines Raums als EIN Text im Lager („chat:" + raum), und jede Sicherung schrieb ihn
+     ganz neu: im Nachbau (volles Klassenzimmer, Chat-Flut, CPU 4×) ein Bild von 70–170 ms alle ≥ 20 s, bei 7 000
+     Zeilen allein das put 67 ms (Logbuch 887 „Livestream ohne Hänger", Nachbesserung).
+     Jetzt:
+       „chatix:" + raum                       – das Inhaltsverzeichnis: { v, stand, zeilen, zeichen, naechste,
+                                                stuecke: [[seq, zeilen], …] } (mit Zeit, altert wie bisher 60 Tage)
+       „chatst:" + Länge + ":" + raum + ":" + seq – je höchstens LAGER_STUECK Zeilen als JSON-Text (ohne Zeit: es
+                                                altert mit seinem Verzeichnis; lagerAufraeumen nimmt beides zusammen)
+     Ein Stück behält seine Nummer, solange seine erste Zeile dieselbe bleibt (lagerEinteilen). Neue Zeilen wachsen
+     ins letzte Stück; ist es voll, beginnt ein neues; das Kappen auf 20 000 Zeilen kürzt nur das erste. Geschrieben
+     wird nur, was sich geändert hat – meist das letzte Stück und das Verzeichnis.
+     SICHER, AUCH MIT MEHREREN TABS: Verzeichnis und Stücke ändern sich immer in EINER Transaktion; der Bereich eines
+     Raums enthält danach genau die Stücke seines Verzeichnisses.
+       – Die Sicherung im Leerlauf liest in derselben Transaktion zuerst das Verzeichnis. Steht dort noch der eigene
+         Stand („stand", neu bei jedem Schreiben), schreibt sie nur die geänderten Stücke; sonst (anderer Tab, alter
+         Speicherstand, fremdes Schreiben) leert sie den Bereich und schreibt alles. Die Schreibaufträge gehen Stück für
+         Stück hinaus (der nächste im onsuccess des vorigen – dieselbe Transaktion bleibt offen), damit kein put den
+         ganzen Text auf einmal kopiert.
+       – Die sofortige Sicherung (Seite weg, verdeckt, Raumwechsel, verlassen, leeren) muss alles im selben
+         Augenblick abschicken und kann nicht erst lesen: sie leert den Bereich und schreibt ALLES (wie 888 den ganzen
+         Text), bricht eine laufende Leerlauf-Sicherung desselben Raums vorher ab und schließt mit commit().
+     Bricht das Schreiben mittendrin ab (Tab zu, Absturz), gilt die ganze Transaktion nicht: es bleibt der vorige
+     vollständige Stand. Das ALTE Format („chat:" + raum, ein Text) wird weiter gelesen und beim ersten Schreiben in
+     derselben Transaktion gelöscht. Liegen beide da (eine noch offene 888-Seite hat nach der Umstellung geschrieben),
+     werden sie vereinigt (verschmelzen) – es geht nichts verloren. */
+  var LAGER_INDEX = "chatix:", LAGER_TEIL = "chatst:", LAGER_ALT = "chat:";
+  var LAGER_STUECK = 400;              // Zeilen je Stück
+  var LAGER_GLIED_ZEICHEN = 50000;     // so viel Text je Schreibschritt (ein put kopiert den Text)
+  var lagerStand = Object.create(null);       // raum → was nach dem letzten bekannten Schreiben/Lesen im Lager steht
+  var lagerUnterwegs = Object.create(null);   // raum → { plan, art: "geprueft" | "sofort", t, aus } (Schreiben läuft)
+  function lagerStueckVorsilbe(raum) { raum = String(raum); return LAGER_TEIL + raum.length + ":" + raum + ":"; }
+  function lagerStueckBereich(raum) { var v = lagerStueckVorsilbe(raum); return IDBKeyRange.bound(v, v + "￿"); }
+  /* aus „chatst:5:haupt:12" den Raum („haupt") – null, wenn der Schlüssel nicht so gebaut ist */
+  function lagerStueckRaum(k) {
+    k = String(k);
+    if (k.indexOf(LAGER_TEIL) !== 0) return null;
+    var d = k.indexOf(":", LAGER_TEIL.length), n = parseInt(k.slice(LAGER_TEIL.length, d), 10);
+    if (d < 0 || !(n >= 0)) return null;
+    var raum = k.substr(d + 1, n);
+    return raum.length === n && k.charAt(d + 1 + n) === ":" ? raum : null;
+  }
+  /* Stücke ohne Verzeichnis (etwa wenn eine 888-Seite das Verzeichnis nach 60 Tagen löschte) weg – im selben Laden */
+  function lagerVerwaisteWeg(laden) {
+    if (typeof laden.getAllKeys !== "function") return;
+    var st = laden.getAllKeys(IDBKeyRange.bound(LAGER_TEIL, LAGER_TEIL + "￿"));
+    var ix = laden.getAllKeys(IDBKeyRange.bound(LAGER_INDEX, LAGER_INDEX + "￿"));
+    ix.onsuccess = function () {
       try {
-        var liste = JSON.parse(roh);
-        if (!Array.isArray(liste)) return [];
+        var mit = Object.create(null), weg = Object.create(null);
+        (ix.result || []).forEach(function (k) { mit[String(k).slice(LAGER_INDEX.length)] = 1; });
+        (st.result || []).forEach(function (k) { var r = lagerStueckRaum(k); if (r !== null && !mit[r]) weg[r] = 1; });
+        Object.keys(weg).forEach(function (r) { laden.delete(lagerStueckBereich(r)); });
+      } catch (e) {}
+    };
+  }
+  function lagerNeuerStand() { return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10); }
+  /* Die Zeilen auf Stücke verteilen. basis = was im Lager steht ({ stuecke: [{ seq, erste, … }], naechste }). Ein Stück
+     beginnt dort, wo seine erste Zeile (Kennung) jetzt steht; davor liegt das erste Stück (vorn gekappt oder gewachsen),
+     ein Stück über LAGER_STUECK Zeilen wird geteilt (neue Nummer). Liefert { stuecke: [{ seq, von, bis }], naechste }. */
+  function lagerEinteilen(liste, basis) {
+    var alt = (basis && basis.stuecke) || [], naechste = (basis && basis.naechste) || 0, schnitte = new Map();
+    for (var j = 1; j < alt.length; j++) if (alt[j].erste != null && !schnitte.has(alt[j].erste)) schnitte.set(alt[j].erste, j);
+    var raus = [], cur = null, zuletzt = 0;
+    for (var i = 0; i < liste.length; i++) {
+      var n = liste[i], k = (schnitte.size && n && n.id != null) ? schnitte.get(String(n.id)) : undefined;
+      if (k !== undefined && k > zuletzt) { cur = { seq: alt[k].seq, von: i, bis: i }; raus.push(cur); zuletzt = k; }
+      else if (!cur) { cur = { seq: alt.length ? alt[0].seq : naechste++, von: i, bis: i }; raus.push(cur); }
+      else if (cur.bis - cur.von >= LAGER_STUECK) { cur = { seq: naechste++, von: i, bis: i }; raus.push(cur); }
+      cur.bis = i + 1;
+    }
+    /* zu zersplittert (viele Zeilen mittendrin weg): neu in volle Stücke */
+    if (raus.length > 2 * Math.ceil(liste.length / LAGER_STUECK) + 2) {
+      raus = [];
+      for (i = 0; i < liste.length; i += LAGER_STUECK) raus.push({ seq: naechste++, von: i, bis: Math.min(liste.length, i + LAGER_STUECK) });
+    }
+    return { stuecke: raus, naechste: naechste };
+  }
+  /* Der Schreibplan: je Stück Text und ob er sich gegenüber basis geändert hat; dazu, welche Stücke wegfallen. */
+  function lagerTextGleich(vorher, text) { return typeof vorher === "string" && vorher.length === text.length && vorher === text; }
+  /* gleichVorab: schon verglichen (Leerlauf, je Stück) – oder false: nicht vergleichen (sofort, es wird ohnehin alles geschrieben) */
+  function lagerPlan(raum, liste, einteilung, texte, basis, gleichVorab) {
+    var basisText = Object.create(null), bleibt = Object.create(null), zeichen = 0;
+    ((basis && basis.stuecke) || []).forEach(function (s) { basisText[s.seq] = s.text; });
+    var stuecke = einteilung.stuecke.map(function (s, k) {
+      var text = texte[k], vorher = basisText[s.seq];
+      var gleich = gleichVorab ? Boolean(gleichVorab[k]) : (gleichVorab === false ? false : lagerTextGleich(vorher, text));
+      bleibt[s.seq] = 1;
+      zeichen += text.length;
+      var n0 = liste[s.von];
+      return { seq: s.seq, n: s.bis - s.von, erste: n0 && n0.id != null ? String(n0.id) : null, text: gleich ? vorher : text, neu: !gleich };
+    });
+    var weg = ((basis && basis.stuecke) || []).filter(function (s) { return !bleibt[s.seq]; }).map(function (s) { return s.seq; });
+    return { raum: raum, stand: lagerNeuerStand(), stuecke: stuecke, weg: weg, naechste: einteilung.naechste,
+             zeilen: liste.length, zeichen: zeichen || 2 };
+  }
+  function lagerIndexEintrag(plan) {
+    return { id: LAGER_INDEX + plan.raum, raum: plan.raum, zeit: Date.now(),
+             daten: { v: 1, stand: plan.stand, zeilen: plan.zeilen, zeichen: plan.zeichen, naechste: plan.naechste,
+                      stuecke: plan.stuecke.map(function (s) { return [s.seq, s.n]; }) } };
+  }
+  function lagerStueckEintrag(raum, s) { return { id: lagerStueckVorsilbe(raum) + s.seq, raum: raum, daten: s.text }; }
+  function lagerStandAus(plan) {
+    return { stand: plan.stand, naechste: plan.naechste,
+             stuecke: plan.stuecke.map(function (s) { return { seq: s.seq, n: s.n, erste: s.erste, text: s.text }; }) };
+  }
+  /* Worauf eine neue Sicherung aufbaut: ein noch laufendes Schreiben (geht es schief, merkt das die Prüfung des
+     Verzeichnisses), sonst der letzte bekannte Stand. */
+  function lagerBasis(raum) { var u = lagerUnterwegs[raum]; return u ? u.plan : (lagerStand[raum] || null); }
+  var lagerLetzte = [];   // die letzten Schreibvorgänge (Sonde, Feldmessung): [art, voll, Stücke geschrieben, ok, raum]
+  function lagerFertig(ich, ok) {
+    if (ich.fertig) return;
+    ich.fertig = true;
+    if (lagerUnterwegs[ich.plan.raum] === ich) delete lagerUnterwegs[ich.plan.raum];
+    if (ok) lagerStand[ich.plan.raum] = lagerStandAus(ich.plan);
+    lagerLetzte.push([ich.art, ich.art === "sofort" ? true : Boolean(ich.voll), ich.art === "sofort" ? ich.plan.stuecke.length : (ich.geschrieben || 0), ok, ich.plan.raum]);
+    if (lagerLetzte.length > 20) lagerLetzte.shift();
+  }
+  /* Geprüft schreiben (Leerlauf): Verzeichnis lesen, dann nur das Geänderte – oder alles, wenn der Stand nicht der eigene ist. */
+  function lagerSchreibenGeprueft(plan, basisStand) {
+    var ich = { plan: plan, art: "geprueft", t: null, aus: false };
+    lagerUnterwegs[plan.raum] = ich;
+    return lager().then(function (db) {
+      if (!db || ich.aus) { lagerFertig(ich, false); return false; }
+      return new Promise(function (fertig) {
+        var t, f;
+        try { t = db.transaction(LAGER_FACH, "readwrite"); f = t.objectStore(LAGER_FACH); } catch (e) { lagerFertig(ich, false); fertig(false); return; }
+        ich.t = t;
+        var auftraege = [];
+        function auftrag(a) {
+          if (a.art === "stueck") return f.put(lagerStueckEintrag(plan.raum, a.s));
+          if (a.art === "weg") return f.delete(lagerStueckVorsilbe(plan.raum) + a.seq);
+          if (a.art === "alle") return f.delete(lagerStueckBereich(plan.raum));
+          if (a.art === "alt") return f.delete(LAGER_ALT + plan.raum);
+          return f.put(lagerIndexEintrag(plan));
+        }
+        function weiter(k) {
+          try {
+            var zeichen = 0, letzte = null;
+            while (k < auftraege.length) {
+              var a = auftraege[k++];
+              letzte = auftrag(a);
+              if (a.art === "stueck" && (zeichen += a.s.text.length) >= LAGER_GLIED_ZEICHEN) break;
+            }
+            if (k < auftraege.length) letzte.onsuccess = function () { weiter(k); };
+          } catch (e) { try { t.abort(); } catch (e2) {} }
+        }
+        var v = f.get(LAGER_INDEX + plan.raum);
+        v.onsuccess = function () {
+          try {
+            var d = v.result && v.result.daten;
+            var voll = !(basisStand && d && d.stand === basisStand);
+            ich.voll = voll;
+            if (voll) auftraege.push({ art: "alle" });
+            plan.stuecke.forEach(function (s) { if (voll || s.neu) auftraege.push({ art: "stueck", s: s }); });
+            if (!voll) plan.weg.forEach(function (seq) { auftraege.push({ art: "weg", seq: seq }); });
+            auftraege.push({ art: "alt" }, { art: "index" });
+            ich.geschrieben = auftraege.filter(function (a) { return a.art === "stueck"; }).length;
+            weiter(0);
+          } catch (e) { try { t.abort(); } catch (e2) {} }
+        };
+        t.oncomplete = function () { lagerFertig(ich, true); fertig(true); };
+        t.onabort = function () { lagerFertig(ich, false); fertig(false); };
+        t.onerror = function () {};   // ein Fehler bricht die Transaktion ab → onabort
+      });
+    }, function () { lagerFertig(ich, false); return false; });
+  }
+  /* Sofort schreiben (Seite weg, verdeckt, Raumwechsel …): alles im selben Augenblick, ohne vorher zu lesen. */
+  function lagerSchreibenSofort(plan) {
+    var vorher = lagerUnterwegs[plan.raum];
+    if (vorher && vorher.art === "geprueft") vorher.aus = true;
+    var ich = { plan: plan, art: "sofort", t: null };
+    lagerUnterwegs[plan.raum] = ich;
+    return lager().then(function (db) {
+      if (!db) { lagerFertig(ich, false); return false; }
+      /* die laufende Leerlauf-Sicherung dieses Raums abbrechen: sie bräuchte noch weitere Schritte (die beim Weggehen
+         nicht mehr kommen) und hielte diese Transaktion so lange auf. Ihr Stand ist hier ohnehin enthalten. */
+      if (vorher && vorher.art === "geprueft" && vorher.t && !vorher.fertig) { try { vorher.t.abort(); } catch (e) {} }
+      return new Promise(function (fertig) {
+        try {
+          var t = db.transaction(LAGER_FACH, "readwrite"), f = t.objectStore(LAGER_FACH);
+          ich.t = t;
+          f.delete(lagerStueckBereich(plan.raum));
+          plan.stuecke.forEach(function (s) { f.put(lagerStueckEintrag(plan.raum, s)); });
+          f.delete(LAGER_ALT + plan.raum);
+          f.put(lagerIndexEintrag(plan));
+          t.oncomplete = function () { lagerFertig(ich, true); fertig(true); };
+          t.onabort = function () { lagerFertig(ich, false); fertig(false); };
+          t.onerror = function () {};
+          if (typeof t.commit === "function") { try { t.commit(); } catch (e) {} }
+        } catch (e) { lagerFertig(ich, false); fertig(false); }
+      });
+    }, function () { lagerFertig(ich, false); return false; });
+  }
+  /* Lesen: altes Format, Verzeichnis und alle Stücke in EINER Lese-Transaktion (ein Schnappschuss). */
+  function lagerVerlaufLesen(raum) {
+    return lager().then(function (db) {
+      if (!db) return null;
+      return new Promise(function (fertig) {
+        var o = { alt: null, index: null, stuecke: [] };
+        try {
+          var t = db.transaction(LAGER_FACH, "readonly"), f = t.objectStore(LAGER_FACH);
+          var a = f.get(LAGER_ALT + raum);
+          a.onsuccess = function () { o.alt = (a.result && a.result.daten) || null; };
+          var b = f.get(LAGER_INDEX + raum);
+          b.onsuccess = function () { o.index = (b.result && b.result.daten) || null; };
+          if (typeof f.getAll === "function") {
+            var c = f.getAll(lagerStueckBereich(raum));
+            c.onsuccess = function () { o.stuecke = c.result || []; };
+          } else {
+            var z = f.openCursor(lagerStueckBereich(raum));
+            z.onsuccess = function () { var w = z.result; if (!w) return; o.stuecke.push(w.value); w.continue(); };
+          }
+          t.oncomplete = function () { fertig(o); };
+          t.onabort = function () { fertig(null); };
+        } catch (e) { fertig(null); }
+      });
+    });
+  }
+  /* Aus dem Gelesenen die Zeilen (in der Reihenfolge des Verzeichnisses) und den Stand, auf den die nächste Sicherung aufbaut. */
+  function lagerZusammensetzen(raum, o) {
+    var liste = [], stand = { stand: null, naechste: 0, stuecke: [] };
+    if (o.index && Array.isArray(o.index.stuecke)) {
+      var vor = lagerStueckVorsilbe(raum), je = Object.create(null);
+      for (var i = 0; i < o.stuecke.length; i++) { var r = o.stuecke[i]; if (r && typeof r.id === "string") je[r.id.slice(vor.length)] = r; }
+      stand.stand = o.index.stand || null;
+      stand.naechste = o.index.naechste || 0;
+      o.index.stuecke.forEach(function (e) {
+        var r = je[String(e && e[0])], teil = null;
+        if (!r || typeof r.daten !== "string") return;
+        try { teil = JSON.parse(r.daten); } catch (x) {}
+        if (!Array.isArray(teil)) return;
+        stand.stuecke.push({ seq: e[0], n: teil.length, erste: teil.length && teil[0] && teil[0].id != null ? String(teil[0].id) : null, text: r.daten });
+        for (var k = 0; k < teil.length; k++) liste.push(teil[k]);
+      });
+    }
+    if (o.alt) {
+      var alt = null;
+      try { alt = JSON.parse(o.alt); } catch (x) {}
+      if (Array.isArray(alt)) liste = o.index ? verschmelzen(liste, alt) : alt;
+    }
+    return { liste: liste, stand: stand };
+  }
+  function chatAusLager(raum) {
+    return lagerVerlaufLesen(raum).then(function (o) {
+      if (!o) return [];
+      try {
+        var z = lagerZusammensetzen(raum, o);
+        /* in Lager-Reihenfolge gesetzt: ein danach begonnenes Schreiben dieses Tabs überschreibt das wieder */
+        lagerStand[raum] = z.stand;
+        var liste = z.liste;
+        if (!liste.length) return [];
         liste = altenMuellFiltern(liste);
         /* FASSUNG 887 — das Profilfoto liegt einmal im Lager („chatbild:" + Fingerabdruck), nicht in jeder Zeile.
            Das alte Format (Foto in der Zeile) braucht nichts davon und bleibt lesbar. */
@@ -2978,8 +3232,12 @@ window.LiveChat = (function () {
   }
   /* Steht noch etwas aus? Dann JETZT sichern (Seite weg, verdeckt, Raumwechsel). */
   function chatSichernOffenes() {
-    if (!sichernSchmutzig && !sichernLauf) return;
-    if (sichernLauf && sichernLauf.raum === zustand.raum) { chatSichern(); return; }
+    /* FASSUNG 889 — auch ein Lager-Schreiben, das noch Schritte vor sich hat (Leerlauf-Sicherung in Stücken), steht aus:
+       beim Weggehen kämen seine weiteren Schritte nicht mehr, es bliebe der vorige Stand. Also wie ein laufender Lauf. */
+    var schreibt = lagerUnterwegs[zustand.raum];
+    schreibt = Boolean(schreibt && schreibt.art === "geprueft" && !schreibt.fertig);
+    if (!sichernSchmutzig && !sichernLauf && !schreibt) return;
+    if ((sichernLauf && sichernLauf.raum === zustand.raum) || schreibt) { chatSichern(); return; }
     if (sichernRaum && sichernRaum === zustand.raum) chatSichern();
     else sichernSchmutzig = false;
   }
@@ -3122,8 +3380,15 @@ window.LiveChat = (function () {
        Also: ins Lager wird erst geschrieben, wenn das Lager auch
        gelesen wurde. Bis dahin bleibt der localStorage der
        Zwischenspeicher — der ist klein, aber er zerstoert nichts. */
+    /* FASSUNG 889 — in Stücken, alles in einer Transaktion (lagerSchreibenSofort); die Stückgrenzen wie im Lager. */
     if (lagerGelesen) {
-      try { var text = JSON.stringify(schlank); sichernZeichen = text.length; lagerLegen("chat:" + raum, raum, text); } catch (e) {}
+      try {
+        var basis = lagerBasis(raum), einteilung = lagerEinteilen(liste, basis);
+        var texte = einteilung.stuecke.map(function (s) { return JSON.stringify(schlank.slice(s.von, s.bis)); });
+        var plan = lagerPlan(raum, liste, einteilung, texte, basis, false);
+        sichernZeichen = plan.zeichen;
+        lagerSchreibenSofort(plan);
+      } catch (e) {}
     }
     chatSpeicherKurz(raum, schlank.slice(-300));
   }
@@ -3154,11 +3419,17 @@ window.LiveChat = (function () {
      – Der Schluss war ein Stück (Text zusammensetzen, Lager, 300 Zeilen noch einmal schlank machen + localStorage):
        gemessen 112–158 ms bei CPU 4×. Jetzt sind die letzten 300 Zeilen eigene Stücke, ihr Text wird für den
        localStorage wiederverwendet, und localStorage und Lager bekommen je eine eigene Leerlaufpause. */
-  var sichernGen = 0, sichernLauf = null, SICHERN_STUECK = 400, KURZ_ZEILEN = 300;
+  /* FASSUNG 889 — feiner: je Schritt höchstens SICHERN_HAPPEN Zeilen in Text, solange der Schritt unter SICHERN_BUDGET_MS
+     bleibt (888: 400 Zeilen am Stück, bis 12 ms + ein Stück). Die Happen eines Lager-Stücks werden zu dessen Text
+     zusammengesetzt und gleich mit dem verglichen, was im Lager steht (lagerTextGleich) – geschrieben wird am Ende nur,
+     was anders ist (lagerSchreibenGeprueft). Ohne gelesenes Lager werden nur die letzten 300 Zeilen (localStorage)
+     verarbeitet. */
+  var sichernGen = 0, sichernLauf = null, KURZ_ZEILEN = 300, SICHERN_HAPPEN = 50, SICHERN_BUDGET_MS = 6;
   function sichernNaechst(f) {
     try { if (typeof window.requestIdleCallback === "function") { window.requestIdleCallback(f, { timeout: 2000 }); return; } } catch (e) {}
     setTimeout(function () { f(null); }, 0);
   }
+  function sichernUhr() { try { return performance.now(); } catch (e) { return Date.now(); } }
   function chatSichernStueckweise() {
     if (!zustand.raum || sichernLauf) return;
     sichernSchmutzig = false;
@@ -3168,27 +3439,45 @@ window.LiveChat = (function () {
     if (sichernZeiten.length > 30) sichernZeiten.shift();
     var raum = zustand.raum, liste = zustand.nachrichten.slice(-CHAT_VERLAUF), gen = (sichernGen += 1);
     var durfte = lagerGelesen, grenze = Math.max(0, liste.length - KURZ_ZEILEN);
-    var teile = [], kurzTeile = [], kurzFotos = [], i = 0, lauf = sichernLauf = { raum: raum, quelle: zustand.nachrichten };
+    var basis = null, einteilung = null, basisText = null, texte = [], gleich = [], teile = [], k = 0;
+    var kurzTeile = [], kurzFotos = [], i = durfte ? 0 : grenze, lauf = sichernLauf = { raum: raum, quelle: zustand.nachrichten };
     function ueberholt() {
       if (sichernLauf !== lauf) return true;
       if (gen !== sichernGen || raum !== zustand.raum) { sichernLauf = null; return true; }
       if (zustand.nachrichten !== lauf.quelle) { sichernLauf = null; sichernSchmutzig = true; chatSichernBald(); return true; }
       return false;
     }
+    function stueckFertig() {
+      var s = einteilung.stuecke[k], text = "[" + teile.join(",") + "]", vorher = basisText[s.seq];
+      var g = lagerTextGleich(vorher, text);
+      texte.push(g ? vorher : text);
+      gleich.push(g);
+      teile = [];
+      k += 1;
+    }
     function stuecke(frist) {
       if (ueberholt()) return;
-      var t0 = Date.now();
+      var t0 = sichernUhr();
       try {
+        if (durfte && !einteilung) {
+          basis = lagerBasis(raum);
+          einteilung = lagerEinteilen(liste, basis);
+          basisText = Object.create(null);
+          ((basis && basis.stuecke) || []).forEach(function (s) { basisText[s.seq] = s.text; });
+        }
         do {
-          var bis = Math.min(i + SICHERN_STUECK, i < grenze ? grenze : liste.length);
-          var stueck = liste.slice(i, bis).map(function (n) { return zeileSchlank(n, raum); });
-          if (stueck.length) {
-            var j = JSON.stringify(stueck).slice(1, -1);
-            teile.push(j);
-            if (i >= grenze) { kurzTeile.push(j); for (var k = 0; k < stueck.length; k++) if (stueck[k].bildH) kurzFotos.push(stueck[k].bildH); }
+          var ende = einteilung && k < einteilung.stuecke.length ? einteilung.stuecke[k].bis : liste.length;
+          var bis = Math.min(i + SICHERN_HAPPEN, ende);
+          if (i < grenze && bis > grenze) bis = grenze;
+          var happen = liste.slice(i, bis).map(function (n) { return zeileSchlank(n, raum); });
+          if (happen.length) {
+            var j = JSON.stringify(happen).slice(1, -1);
+            if (einteilung) teile.push(j);
+            if (i >= grenze) { kurzTeile.push(j); for (var m = 0; m < happen.length; m++) if (happen[m].bildH) kurzFotos.push(happen[m].bildH); }
           }
           i = bis;
-        } while (i < liste.length && Date.now() - t0 < 12 && (!frist || typeof frist.timeRemaining !== "function" || frist.timeRemaining() > 10));
+          if (einteilung && k < einteilung.stuecke.length && i >= ende) stueckFertig();
+        } while (i < liste.length && sichernUhr() - t0 < SICHERN_BUDGET_MS && (!frist || typeof frist.timeRemaining !== "function" || frist.timeRemaining() > 1));
       } catch (e) { sichernLauf = null; if (sichernSchmutzig) chatSichernBald(); return; }
       sichernNaechst(i < liste.length ? stuecke : kurzLegen);
     }
@@ -3208,10 +3497,13 @@ window.LiveChat = (function () {
     function insLager() {
       if (ueberholt()) return;
       sichernLauf = null;
-      if (durfte && lagerGelesen) {
-        var text = "[" + teile.join(",") + "]";
-        sichernZeichen = text.length;
-        try { lagerLegen("chat:" + raum, raum, text); } catch (e) {}
+      if (durfte && lagerGelesen && einteilung) {
+        /* FASSUNG 889 — nur die geänderten Stücke, geprüft gegen das Verzeichnis, Schritt für Schritt */
+        try {
+          var plan = lagerPlan(raum, liste, einteilung, texte, basis, gleich);
+          sichernZeichen = plan.zeichen;
+          lagerSchreibenGeprueft(plan, basis ? basis.stand : null);
+        } catch (e) {}
       } else if (lagerGelesen) sichernSchmutzig = true;   // unterwegs gelesen: beim nächsten Mal
       sichernZuletzt = Date.now();   // der Abstand von 20 s zählt ab dem Ende
       /* NACHGEBESSERT (Prüfung Runde 1) — Planungs-Hänger: kam chatSichernBald, während dieser Lauf lief, und feuerte
@@ -19600,6 +19892,22 @@ window.LiveChat = (function () {
        dieses Raums ist noch nicht gelesen. Genau dort wurde der
        Verlauf frueher kurzgeschrieben. */
     pruefLagerVergessen: function () { lagerGelesen = false; },
+    /* FASSUNG 889 — das Chat-Lager in Stücken nachprüfen: was nach dem letzten Schreiben/Lesen im Lager steht, was
+       gerade geschrieben wird, die letzten Schreibvorgänge; und die Grenzen (Zeilen je Stück, je Happen, Zeit je
+       Schritt, Zeichen je Schreibschritt) für eine Sonde verstellen. */
+    pruefLager: function (raum, stellen) {
+      if (stellen) {
+        if (stellen.stueck > 0) LAGER_STUECK = stellen.stueck;
+        if (stellen.happen > 0) SICHERN_HAPPEN = stellen.happen;
+        if (stellen.budget > 0) SICHERN_BUDGET_MS = stellen.budget;
+        if (stellen.glied > 0) LAGER_GLIED_ZEICHEN = stellen.glied;
+      }
+      var r = String(raum || zustand.raum || ""), st = lagerStand[r], u = lagerUnterwegs[r];
+      return { stand: st ? st.stand : null, stuecke: st ? st.stuecke.map(function (s) { return [s.seq, s.n, s.erste]; }) : null,
+               unterwegs: u ? u.art : null, letzte: lagerLetzte.slice(),
+               grenzen: { stueck: LAGER_STUECK, happen: SICHERN_HAPPEN, budget: SICHERN_BUDGET_MS, glied: LAGER_GLIED_ZEICHEN },
+               schluessel: { index: LAGER_INDEX + r, stueck: lagerStueckVorsilbe(r), alt: LAGER_ALT + r } };
+    },
     /* Den Verlauf vom Server holen und zwei Listen zusammenfuehren —
        damit sich nachmessen laesst, dass dieselbe Zeile nicht zweimal
        dasteht. */
