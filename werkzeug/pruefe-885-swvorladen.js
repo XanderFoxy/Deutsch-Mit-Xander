@@ -375,7 +375,9 @@ try { ALT_SW = execFileSync("git", ["-C", REPO, "show", "02613a71:sw.js"], { std
       };
       const neu = lauf694(""), vorher = lauf694(alt);
       fs.rmSync(d, { recursive: true, force: true });
-      const ohne = (z) => z.map((x) => x.replace(/^bekannt \(spiel\.js-Wettlauf, 884\) /, "ok   "));
+      /* FASSUNG 889: eine grüne Zeile heißt hier nur „ok“ (der Text steht hinter drei Leerzeichen und fällt weg) – „bekannt …“
+         wurde bisher zu „ok   <Text>“ und passte so nie zu „ok“: rot, sobald nur EIN der beiden Läufe den Wettlauf traf */
+      const ohne = (z) => z.map((x) => x.replace(/^bekannt \(spiel\.js-Wettlauf, 884\) .*$/, "ok"));
       const gleich = neu.zeilen.length >= 10 && ohne(neu.zeilen).join("\n") === ohne(vorher.zeilen).join("\n") && !neu.zeilen.some((z) => /^FEHL/.test(z));
       sage(gleich, "11 Sonde 694 unverändert: mit diesem sw.js alles grün wie mit dem alten (02613a71) – bis auf den bekannten spiel.js-Wettlauf in 3a",
         neu.zeilen.length + " Prüfungen, rot neu: " + (neu.rot.join(" | ") || "keine") + " · rot alt: " + (vorher.rot.join(" | ") || "keine"));
