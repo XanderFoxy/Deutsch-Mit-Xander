@@ -2937,7 +2937,8 @@ window.LiveChat = (function () {
   var LAGER_STUECK = 400;              // Zeilen je Stück
   var LAGER_GLIED_ZEICHEN = 50000;     // so viel Text je Schreibschritt (ein put kopiert den Text)
   var lagerStand = Object.create(null);       // raum → was nach dem letzten bekannten Schreiben/Lesen im Lager steht
-  var lagerUnterwegs = Object.create(null);   // raum → { plan, art: "geprueft" | "sofort", t, aus } (Schreiben läuft)
+  var lagerUnterwegs = Object.create(null);   // raum → { plan, art: "geprueft" | "sofort", t, aus } (das jüngste Schreiben, läuft noch)
+  var lagerLaufend = [];                      // alle noch laufenden geprüften Schreibvorgänge (sie brauchen weitere Schritte)
   function lagerStueckVorsilbe(raum) { raum = String(raum); return LAGER_TEIL + raum.length + ":" + raum + ":"; }
   function lagerStueckBereich(raum) { var v = lagerStueckVorsilbe(raum); return IDBKeyRange.bound(v, v + "￿"); }
   /* aus „chatst:5:haupt:12" den Raum („haupt") – null, wenn der Schlüssel nicht so gebaut ist */
@@ -3021,6 +3022,8 @@ window.LiveChat = (function () {
     if (ich.fertig) return;
     ich.fertig = true;
     if (lagerUnterwegs[ich.plan.raum] === ich) delete lagerUnterwegs[ich.plan.raum];
+    var w = lagerLaufend.indexOf(ich);
+    if (w >= 0) lagerLaufend.splice(w, 1);
     if (ok) lagerStand[ich.plan.raum] = lagerStandAus(ich.plan);
     lagerLetzte.push([ich.art, ich.art === "sofort" ? true : Boolean(ich.voll), ich.art === "sofort" ? ich.plan.stuecke.length : (ich.geschrieben || 0), ok, ich.plan.raum]);
     if (lagerLetzte.length > 20) lagerLetzte.shift();
@@ -3029,6 +3032,7 @@ window.LiveChat = (function () {
   function lagerSchreibenGeprueft(plan, basisStand) {
     var ich = { plan: plan, art: "geprueft", t: null, aus: false };
     lagerUnterwegs[plan.raum] = ich;
+    lagerLaufend.push(ich);
     return lager().then(function (db) {
       if (!db || ich.aus) { lagerFertig(ich, false); return false; }
       return new Promise(function (fertig) {
@@ -3054,7 +3058,8 @@ window.LiveChat = (function () {
             if (k < auftraege.length) letzte.onsuccess = function () { weiter(k); };
           } catch (e) { try { t.abort(); } catch (e2) {} }
         }
-        var v = f.get(LAGER_INDEX + plan.raum);
+        var v;
+        try { v = f.get(LAGER_INDEX + plan.raum); } catch (e) { try { t.abort(); } catch (e2) {} lagerFertig(ich, false); fertig(false); return; }
         v.onsuccess = function () {
           try {
             var d = v.result && v.result.daten;
@@ -3075,29 +3080,40 @@ window.LiveChat = (function () {
     }, function () { lagerFertig(ich, false); return false; });
   }
   /* Sofort schreiben (Seite weg, verdeckt, Raumwechsel …): alles im selben Augenblick, ohne vorher zu lesen. */
+  function lagerGeprueftLaeuft(raum) {
+    for (var i = 0; i < lagerLaufend.length; i++) if (lagerLaufend[i].plan.raum === raum && !lagerLaufend[i].fertig) return true;
+    return false;
+  }
   function lagerSchreibenSofort(plan) {
-    var vorher = lagerUnterwegs[plan.raum];
-    if (vorher && vorher.art === "geprueft") vorher.aus = true;
+    var vorher = lagerLaufend.filter(function (x) { return x.plan.raum === plan.raum && !x.fertig; });
+    vorher.forEach(function (x) { x.aus = true; });
     var ich = { plan: plan, art: "sofort", t: null };
     lagerUnterwegs[plan.raum] = ich;
     return lager().then(function (db) {
       if (!db) { lagerFertig(ich, false); return false; }
-      /* die laufende Leerlauf-Sicherung dieses Raums abbrechen: sie bräuchte noch weitere Schritte (die beim Weggehen
-         nicht mehr kommen) und hielte diese Transaktion so lange auf. Ihr Stand ist hier ohnehin enthalten. */
-      if (vorher && vorher.art === "geprueft" && vorher.t && !vorher.fertig) { try { vorher.t.abort(); } catch (e) {} }
+      /* die laufenden Leerlauf-Sicherungen dieses Raums abbrechen: sie bräuchten noch weitere Schritte (die beim
+         Weggehen nicht mehr kommen) und hielten diese Transaktion so lange auf. Ihr Stand ist hier ohnehin enthalten. */
+      vorher.forEach(function (x) { if (x.t && !x.fertig) { try { x.t.abort(); } catch (e) {} } });
       return new Promise(function (fertig) {
+        var t = null;
         try {
-          var t = db.transaction(LAGER_FACH, "readwrite"), f = t.objectStore(LAGER_FACH);
+          t = db.transaction(LAGER_FACH, "readwrite");
+          var f = t.objectStore(LAGER_FACH);
           ich.t = t;
+          t.oncomplete = function () { lagerFertig(ich, true); fertig(true); };
+          t.onabort = function () { lagerFertig(ich, false); fertig(false); };
+          t.onerror = function () {};
           f.delete(lagerStueckBereich(plan.raum));
           plan.stuecke.forEach(function (s) { f.put(lagerStueckEintrag(plan.raum, s)); });
           f.delete(LAGER_ALT + plan.raum);
           f.put(lagerIndexEintrag(plan));
-          t.oncomplete = function () { lagerFertig(ich, true); fertig(true); };
-          t.onabort = function () { lagerFertig(ich, false); fertig(false); };
-          t.onerror = function () {};
           if (typeof t.commit === "function") { try { t.commit(); } catch (e) {} }
-        } catch (e) { lagerFertig(ich, false); fertig(false); }
+        } catch (e) {
+          /* ein Auftrag warf (etwa kein Platz): NICHTS davon darf gelten – sonst bliebe ein halber Stand (Bereich schon
+             geleert, Verzeichnis noch alt). Abbrechen; es bleibt der vorige vollständige Stand. */
+          if (t) { try { t.abort(); } catch (e2) {} }
+          lagerFertig(ich, false); fertig(false);
+        }
       });
     }, function () { lagerFertig(ich, false); return false; });
   }
@@ -3234,8 +3250,7 @@ window.LiveChat = (function () {
   function chatSichernOffenes() {
     /* FASSUNG 889 — auch ein Lager-Schreiben, das noch Schritte vor sich hat (Leerlauf-Sicherung in Stücken), steht aus:
        beim Weggehen kämen seine weiteren Schritte nicht mehr, es bliebe der vorige Stand. Also wie ein laufender Lauf. */
-    var schreibt = lagerUnterwegs[zustand.raum];
-    schreibt = Boolean(schreibt && schreibt.art === "geprueft" && !schreibt.fertig);
+    var schreibt = lagerGeprueftLaeuft(zustand.raum);
     if (!sichernSchmutzig && !sichernLauf && !schreibt) return;
     if ((sichernLauf && sichernLauf.raum === zustand.raum) || schreibt) { chatSichern(); return; }
     if (sichernRaum && sichernRaum === zustand.raum) chatSichern();
@@ -19908,6 +19923,7 @@ window.LiveChat = (function () {
                grenzen: { stueck: LAGER_STUECK, happen: SICHERN_HAPPEN, budget: SICHERN_BUDGET_MS, glied: LAGER_GLIED_ZEICHEN },
                schluessel: { index: LAGER_INDEX + r, stueck: lagerStueckVorsilbe(r), alt: LAGER_ALT + r } };
     },
+    pruefLagerAufraeumen: function () { return lagerAufraeumen(); },
     /* Den Verlauf vom Server holen und zwei Listen zusammenfuehren —
        damit sich nachmessen laesst, dass dieselbe Zeile nicht zweimal
        dasteht. */
