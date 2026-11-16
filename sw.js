@@ -57,14 +57,15 @@ var SEITE = "dma-seite-1";
    diese Pfade fragt keine Seite mehr an, ihre Einträge (zusammen bis 3,9 MB) blieben sonst für immer im Speicher.
    Beim Helferwechsel gehen sie weg, mit jedem Stempel; sonst nichts. Feste Liste: eine allgemeine Regel („was die
    Seite nicht nennt“) träfe Stadt-Seiten, Prüfseiten und Ordner-Stempel, die nicht in DMA_STEMPEL stehen. Geräumt wird
-   ERST NACH dem Wechsel (nicht in waitUntil): solange der Helfer „activating“ ist, warten alle Anfragen der Seiten auf
-   ihn – auch die an Supabase. Einmal keys() statt fünfmal delete(ignoreSearch) (das liest jedes Mal den ganzen
-   Speicher). Wird der Helfer mittendrin beendet, räumt der nächste Wechsel den Rest. Sonde pruefe-889-stadtweg.js (C). */
+   ERST NACH dem Wechsel (nicht in waitUntil): solange der Helfer „activating“ ist, warten nach der Norm alle Anfragen
+   der Seiten auf ihn – auch die an Supabase. Einmal keys() statt fünfmal delete(…, { ignoreSearch }) (jedes davon
+   durchsucht den ganzen Speicher). Wird der Helfer mittendrin beendet, räumt der nächste Wechsel den Rest.
+   Sonde pruefe-889-stadtweg.js (C). */
 var ALT_WEG = ["stadt/stadt.min.js", "stadt-leicht/leicht.min.js", "stadt-leicht/autoschau.min.js", "stadt-leicht/quests.min.js", "stadt-leicht/korn.min.js"];
 /* Davon die beiden Bündel: nur eine Seite der Fassung 887 fragt sie an, und nur beim Laden (document.write). Läuft so
    eine Seite noch (Tab tagelang offen), braucht sie sie nicht mehr; ihre Nachlade-Stücke (Auto-Schau, Quests, Äcker)
    fallen bei 404 auf ihre Vertretung zurück (Autokarte, keine Quests, goldene Fläche). Kommt aber eine 887-Seite
-   NEU – nur aus dem HTTP-Speicher des Browsers ohne Nachfrage (Zurück nach Tagen, wiederhergestellter Tab) –, fehlte
+   NEU – das geht nur aus dem HTTP-Speicher des Browsers ohne Nachfrage (z. B. Zurück, wiederhergestellter Tab) –, fehlte
    ihr Bündel: Ladebild, nach 15 s leere Stadt. Dann bekommt sie statt der 404 ein Skript, das die Seite EINMAL neu
    lädt (je Tab und Pfad; ein Neuladen fragt den Server, der hat die neue Seite). Sonde pruefe-889-stadtweg.js (D). */
 var ALT_BUENDEL = /^(?:stadt\/stadt|stadt-leicht\/leicht)\.min\.js$/;
