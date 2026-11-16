@@ -195,14 +195,22 @@ const ALT_SW = git(ALT_GIT, "sw.js");
       await pg.close();
       return anfragen.slice(ab);
     };
+    let lernenUm = 0;
     const idx = async (pg) => {
       const da = await bis(pg, () => window.LiveChat && document.querySelector('.tape-tab[data-target="view-knowledge"]'), 30000);
-      await schlaf(14000);   /* Ruhepause: spiel.js, die ganze Übungssammlung … */
-      return "Seite " + (da ? "läuft" : "NICHT da");
+      await schlaf(14000);   /* Ruhepause: spiel.js … */
+      /* danach „Lernen“ (die ganze Übungssammlung min/data-uebungen.js kommt nach den Kategorie-Teilen, M3b) */
+      lernenUm = anfragen.length;
+      await pg.click('.tape-tab[data-target="view-learn"]', { timeout: 5000 }).catch(() => {});
+      const ende = Date.now() + 25000;
+      while (Date.now() < ende && !anfragen.slice(lernenUm).some((x) => x.p === "/min/data-uebungen.js")) await schlaf(250);
+      await schlaf(1000);
+      return "Seite " + (da ? "läuft" : "NICHT da") + ", „Lernen“ getippt";
     };
-    const r1 = await fall("index.html (Gast, mit Ruhepause)", "/index.html", idx);
-    info("min/data-uebungen.js (die ganze Sammlung neben den 90 Kategorie-Dateien) fragt die Seite in der Ruhepause an: "
-      + (r1.some((x) => x.p === "/min/data-uebungen.js") ? "ja – gebraucht, bleibt" : "in diesen 14 s nicht (wird beim Lernen/Wörterbuch geholt)"));
+    const r1 = await fall("index.html (Gast, mit Ruhepause und „Lernen“)", "/index.html", idx);
+    const ganz = r1.filter((x) => x.p === "/min/data-uebungen.js");
+    info("min/data-uebungen.js (die ganze Sammlung neben den 90 Kategorie-Dateien): " + (ganz.length ? "angefragt (" + ganz.map((x) => x.s).join(",") + ")" : "im Normalweg nicht angefragt")
+      + " – bleibt: Rückfall (ein Teil fehlt, ohne DMA_MODUL, ?quelle/Notweg ohne min/) und spiel.js sammlungLaden (Betreiber spielt Aufgaben ein)");
     await fall("index.html?quelle", "/index.html?quelle", async (pg) => { const da = await bis(pg, () => window.LiveChat && document.querySelector('.tape-tab[data-target="view-knowledge"]'), 60000); await schlaf(4000); return "Seite " + (da ? "läuft" : "NICHT da"); });
     for (const q of ["", "&quelle=1"]) {
       await fall("stadt-leicht.html wie im Spiel" + (q ? " ?quelle=1" : ""), "/stadt-leicht.html?eingebettet=1&mini=1&demo=1&quest=1" + q, async (pg) => {
@@ -318,13 +326,17 @@ const ALT_SW = git(ALT_GIT, "sw.js");
     const offNachher = await offline("nachher");
     sage(offNachher.seite && offNachher.laeuft && offNachher.bruecke && offNachher.seite === offVorher.seite && offNachher.laeuft === offVorher.laeuft && offNachher.bruecke === offVorher.bruecke,
       "C3 ohne Leitung geht danach alles wie vorher: Seite aus dem Speicher, Chat und Reiter, Brücke aus bau/", JSON.stringify({ vorher: [offVorher.seite, offVorher.laeuft, offVorher.bruecke], nachher: [offNachher.seite, offNachher.laeuft, offNachher.bruecke] }));
-    const nurV = offVorher.weg.filter((x) => offNachher.weg.indexOf(x) < 0), nurN = offNachher.weg.filter((x) => offVorher.weg.indexOf(x) < 0);
-    sage(!nurN.length, "C3 … nachher scheitert keine Anfrage, die vorher ging", nurN.join(", ") + (nurV.length ? " (nur vorher gescheitert: " + nurV.join(", ") + ")" : ""));
+    /* was vorher im Speicher lag (ohne die fünf), muss ohne Leitung weiter kommen; was nie im Speicher liegt (fassung.json,
+       Dateien ohne Stempel wie filme/liste.json), scheitert vorher wie nachher – je nachdem, ob die Seite es in den 4 s fragt */
+    const lag = new Set(vorher.filter((z) => !istAlt(z)).map((z) => z.split(" ")[1].split("?")[0]));
+    const schlecht = offNachher.weg.filter((x) => lag.has(x));
+    sage(!schlecht.length, "C3 … nachher scheitert keine Anfrage nach einer Datei, die vorher im Speicher lag",
+      (schlecht.join(", ") || "keine") + " (gescheitert vorher: " + (offVorher.weg.join(" ") || "–") + "; nachher: " + (offNachher.weg.join(" ") || "–") + ")");
 
     if (NUR.includes("D")) {
       console.log("\nD  eine Seite der Fassung 887 nach dem Wechsel\n");
       /* D1: die offene 887-Stadt öffnet ein Auto */
-      await t887.bringToFront().catch(() => {});
+      await t887.bringToFront().catch(() => {}); await schlaf(500);
       const bilder = () => t887.evaluate(() => new Promise((ok) => { let n = 0; const f = () => { if (++n < 5) requestAnimationFrame(f); else ok(n); }; requestAnimationFrame(f); setTimeout(() => ok(n), 3000); })).catch(() => 0);
       const lebtVor = await bilder();
       const fehlerVor = t887.fehler.length, abD1 = anfragen.length;
@@ -352,6 +364,7 @@ const ALT_SW = git(ALT_GIT, "sw.js");
         S.stadt = "887"; S.altDa = new Set(["stadt-leicht/leicht.min.js"]);
         await p2.goto(HIER + "/stadt-leicht.html?eingebettet=1&mini=1&demo=1&quest=1", { waitUntil: "load" });
         const f = await bis(p2, () => window.__fertig || window.__fehler, 90000);
+        await p2.bringToFront().catch(() => {});
         await schlaf(4000);
         const st = await p2.evaluate(() => ({ korn: !!window.STADT.korn, quests: !!(window.STADT.quests && window.STADT.quests.vertretung), fehler: window.__fehler || null })).catch((e) => ({ fehler: e.message }));
         const k404 = anfragen.slice(ab).filter((x) => /\/(korn|quests)\.min\.js$/.test(x.p)).map((x) => x.p.split("/").pop() + " " + x.s);
