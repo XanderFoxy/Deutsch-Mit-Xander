@@ -134,13 +134,21 @@ const VocabData = (function () {
      Leitung der Engpass – dann kostete das Warten in der Reihe nur Zeit (der Wortschatz war später ganz, sein Einlesen
      fiel in den Kartentipp: „Karte → startklar“ +41 ms, 6 von 6). Darum: kam eine Datei OHNE ihren Inhalt über die
      Leitung (Resource Timing: transferSize kleiner als der Inhalt – aus dem Speicher des Browsers, vom Helfer, oder nur
-     nachgefragt mit 304), gehen alle übrigen zugleich hinaus wie bisher. */
+     nachgefragt mit 304), gehen alle übrigen zugleich hinaus wie bisher.
+     NACHGEMESSEN (3G, Gast, „wieder“): diese Meldung kommt erst ~100 ms nach der ersten Datei (der Beobachter läuft in
+     einer eigenen Aufgabe) – genug, dass das Einlesen der 26 Dateien in den Kartentipp rutschte (Wortschatz ganz +465 ms,
+     Karte +227 ms). Darum entscheidet zuerst diese Datei selbst: kam data-vocab.js beim Start ohne Inhalt über die
+     Leitung (Speicher, Helfer, 304), liegt der Wortschatz mit großer Wahrscheinlichkeit auch dort – dann gleich alle
+     zugleich wie bisher; der Beobachter bleibt für den Rest (z. B. die erste Seite nach einer neuen Fassung). */
   const VOKABEL_ZUGLEICH = 4;
   function ladeWoerter() {
     if (alleLaufen) return alleLaufen;
     const reihe = VOKABEL_THEMEN.map((t) => t[0]);
     alleLaufen = new Promise((fertig) => {
-      let i = 0, offen = 0, zugleich = VOKABEL_ZUGLEICH, ende = false, beob = null;
+      const ohneInhalt = (e) => e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize;
+      let schonDa = false;
+      try { schonDa = performance.getEntriesByType("resource").some((e) => /\/(?:min\/)?data-vocab\.js(?:\?|$)/.test(e.name) && ohneInhalt(e)); } catch (e) { schonDa = false; }
+      let i = 0, offen = 0, zugleich = schonDa ? reihe.length : VOKABEL_ZUGLEICH, ende = false, beob = null;
       const weiter = () => {
         if (ende) return;
         if (i >= reihe.length && !offen) { ende = true; try { if (beob) beob.disconnect(); } catch (e) {} fertig(); return; }
@@ -151,10 +159,10 @@ const VocabData = (function () {
           p.then(() => {}, () => {}).then(() => { offen--; weiter(); });
         }
       };
-      try {
+      if (!schonDa) try {
         beob = new PerformanceObserver((liste) => {
           if (zugleich !== VOKABEL_ZUGLEICH) return;
-          if (liste.getEntries().some((e) => /\/vokabeln\/[a-z0-9-]+\.js/.test(e.name) && e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize)) {
+          if (liste.getEntries().some((e) => /\/vokabeln\/[a-z0-9-]+\.js/.test(e.name) && ohneInhalt(e))) {
             zugleich = reihe.length;
             weiter();
           }
