@@ -3153,35 +3153,19 @@ window.LiveChat = (function () {
       for (var i = 0; i < o.stuecke.length; i++) { var r = o.stuecke[i]; if (r && typeof r.id === "string") je[r.id.slice(vor.length)] = r; }
       stand.stand = o.index.stand || null;
       stand.naechste = o.index.naechste || 0;
-      /* EIN JSON.parse über alle Stücke (so schnell wie 888 mit einem Text); stimmt die Zahl der Zeilen nicht mit dem
-         Verzeichnis überein, Stück für Stück (dann fällt nur ein kaputtes Stück weg) */
-      var da = [], innen = [], summe = 0;
+      /* Je Stück ein JSON.parse, dann concat. Gemessen (schwere Seite, CPU 4×, 20 000 Zeilen, Lager auf der Platte):
+         so 41 ms gegen 55 ms für EIN parse über den zusammengesetzten Text (der erst flach kopiert werden muss) und 50 ms
+         für den einen Text von 888; das Holen der 34 Stücke 16 gegen 30 ms. Ein kaputtes Stück fällt allein weg. */
+      var teile = [];
       o.index.stuecke.forEach(function (e) {
-        var r = je[String(e && e[0])];
-        if (!r || typeof r.daten !== "string" || r.daten.length < 2) return;
-        da.push({ seq: e[0], n: Number(e[1]) || 0, text: r.daten });
-        summe += Number(e[1]) || 0;
-        if (r.daten.length > 2) innen.push(r.daten.slice(1, -1));
+        var r = je[String(e && e[0])], teil = null;
+        if (!r || typeof r.daten !== "string") return;
+        try { teil = JSON.parse(r.daten); } catch (x) {}
+        if (!Array.isArray(teil)) return;
+        stand.stuecke.push({ seq: e[0], n: teil.length, erste: teil.length && teil[0] && teil[0].id != null ? String(teil[0].id) : null, text: r.daten });
+        teile.push(teil);
       });
-      var alle = null;
-      try { alle = JSON.parse("[" + innen.join(",") + "]"); } catch (x) {}
-      if (Array.isArray(alle) && alle.length === summe) {
-        liste = alle;
-        var ab = 0;
-        da.forEach(function (d) {
-          var n0 = liste[ab];
-          stand.stuecke.push({ seq: d.seq, n: d.n, erste: d.n && n0 && n0.id != null ? String(n0.id) : null, text: d.text });
-          ab += d.n;
-        });
-      } else {
-        da.forEach(function (d) {
-          var teil = null;
-          try { teil = JSON.parse(d.text); } catch (x) {}
-          if (!Array.isArray(teil)) return;
-          stand.stuecke.push({ seq: d.seq, n: teil.length, erste: teil.length && teil[0] && teil[0].id != null ? String(teil[0].id) : null, text: d.text });
-          for (var k = 0; k < teil.length; k++) liste.push(teil[k]);
-        });
-      }
+      liste = teile.length === 1 ? teile[0] : Array.prototype.concat.apply([], teile);
     }
     if (o.alt) {
       var alt = null;

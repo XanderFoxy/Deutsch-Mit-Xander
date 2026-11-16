@@ -163,14 +163,20 @@ function auswerten(name, spur, seite, betreten, fehler) {
   const aufgabeUm = (t) => { const tt = t * 1000 + versatz; let lo = 0, hi = oben.length - 1, f = null;
     while (lo <= hi) { const mi = (lo + hi) >> 1; if (oben[mi].ts <= tt) { f = oben[mi]; lo = mi + 1; } else hi = mi - 1; }
     return f && f.ts + f.dur >= tt ? f : null; };
+  /* nur die Sicherung: die Rückrufe des Lesens beim Betreten (zwischen den Marken „laden" und „geladen") zählen nicht */
+  const seiteM = (k) => { const x = (seite.marken || []).find((y) => y[0] === k); return x ? x[1] : null; };
+  const lesenVon = seiteM("laden"), lesenBis = seiteM("geladen");
+  const schritte = seite.schritte.filter((s) => !(lesenVon != null && lesenBis != null && s[1] >= lesenVon && s[1] <= lesenBis + 1));
   const ganz = new Map();
-  if (versatz != null) seite.schritte.forEach((s) => { const a = aufgabeUm(s[1] + s[2] / 2); if (a) ganz.set(a, a.dur / 1000); });
+  const art = new Map();
+  if (versatz != null) schritte.forEach((s) => { const a = aufgabeUm(s[1] + s[2] / 2); if (a) { ganz.set(a, a.dur / 1000); art.set(a, (art.get(a) || []).concat([s[0] + " " + s[2].toFixed(1)])); } });
   const ganzeAufgaben = [...ganz.values()];
-  const sicherung = seite.schritte.map((s) => s[2]);
+  const groessteAufgaben = [...ganz.entries()].sort((x, y) => y[1] - x[1]).slice(0, 4).map(([a, d]) => d.toFixed(1) + " (" + art.get(a).join("+") + ")");
+  const sicherung = schritte.map((s) => s[2]);
   const r = { name, betreten: Object.assign(betretenA, { zeilen: betreten.zeilen, lager: betreten.lager }), laden: Object.assign(ladenA, { ms: betreten.laden }), flut: flutA,
               sicherung: { schritte: sicherung.length, laengster: sicherung.length ? Math.max(...sicherung) : 0, summe: sicherung.reduce((a, b) => a + b, 0), ueber16: sicherung.filter((d) => d > 16).length,
                            aufgaben: ganzeAufgaben.length, laengsteAufgabe: ganzeAufgaben.length ? Math.max(...ganzeAufgaben) : null, aufgabenSumme: ganzeAufgaben.reduce((a, b) => a + b, 0),
-                           aufgabenUeber16: ganzeAufgaben.filter((d) => d > 16).length, aufgabenUeber50: ganzeAufgaben.filter((d) => d > 50).length },
+                           aufgabenUeber16: ganzeAufgaben.filter((d) => d > 16).length, aufgabenUeber50: ganzeAufgaben.filter((d) => d > 50).length, groesste: groessteAufgaben },
               loafLeerlauf: seite.loaf.filter((l) => l.dauer >= 50 && l.skripte.some((x) => /IdleRequestCallback/.test(String(x[1])))).map((l) => Math.round(l.dauer)),
               loaf: seite.loaf.filter((l) => l.dauer >= 50).map((l) => [Math.round(l.dauer), Math.round(l.block), l.skripte.map((s) => s.join(" ")).join(" | ")]).slice(0, 40),
               stand: seite.stand ? { zahl: seite.stand.zeiten.length, zeichen: seite.stand.zeichen } : null, lager: seite.lager, fehler };
