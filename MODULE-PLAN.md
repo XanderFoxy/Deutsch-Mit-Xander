@@ -811,6 +811,10 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
           gesperrt): der Teil teilt sich die Leitung mit dem Wortschatz. Unsichtbar denkbar: den Teil der getippten Karte
           vor die laufenden Wortschatz-Dateien ziehen – nicht gebaut, nicht gemessen. Ein Hinweis am Knopf wäre sichtbar
           → nur als Vorschlag. Mit Punkt 1 entfiele der Zielkonflikt.
+       → **1 und 2 gebaut in Fassung 889** (SPIELSYSTEM.md, „Fassung 889 — „Runde starten“ ohne den ganzen Wortschatz“):
+          die Runde wartet nur noch, wo die Aufgaben selbst aus dem Wörterbuch kommen (Wortschatz, Meine Wörter); für die
+          20 Kategorien mit wortabhängiger Einstufung reicht ein Auszug (bau/wortniveau-*.js, 15,6 KB gepackt);
+          Gleichlauf-Prüfer werkzeug/pruefe-889-runde.js. Zu 2: der Wortschatz lädt höchstens 4 Dateien zugleich.
        3. Der Zweig `renderChallengePicker` (Duell aus einer Kategorie-Liste) ist nicht angeschlossen – nur gemeldet,
           nicht entfernt.
   - **Nachbesserung 2 (Prüfer, Runde 2), 08.11.: 37b7396f, 8fe71b0e, a2902a16 (Code, Sonde, Messwerkzeug).** Für

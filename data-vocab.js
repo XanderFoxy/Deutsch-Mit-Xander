@@ -129,22 +129,38 @@ const VocabData = (function () {
      (die Leitung bleibt voll: läuft eine Datei aus, laufen drei weiter), nur kommen die Themen nacheinander statt alle
      im letzten Augenblick. ladeThema() für ein einzelnes Thema (Wörterbuch) geht weiter sofort hinaus; dieselbe Datei
      lädt nie doppelt (dateiLaden). Das Versprechen bleibt dasselbe: erfüllt, wenn alle Themen da (oder gescheitert)
-     sind, Wert wie bisher. */
+     sind, Wert wie bisher.
+     NACHGEMESSEN (4G, Konto, „wieder“): kommen die Dateien aus dem Speicher des Browsers oder vom Helfer, ist nicht die
+     Leitung der Engpass – dann kostete das Warten in der Reihe nur Zeit (der Wortschatz war später ganz, sein Einlesen
+     fiel in den Kartentipp: „Karte → startklar“ +41 ms, 6 von 6). Darum: kam eine Datei OHNE ihren Inhalt über die
+     Leitung (Resource Timing: transferSize kleiner als der Inhalt – aus dem Speicher des Browsers, vom Helfer, oder nur
+     nachgefragt mit 304), gehen alle übrigen zugleich hinaus wie bisher. */
   const VOKABEL_ZUGLEICH = 4;
   function ladeWoerter() {
     if (alleLaufen) return alleLaufen;
     const reihe = VOKABEL_THEMEN.map((t) => t[0]);
     alleLaufen = new Promise((fertig) => {
-      let i = 0, offen = 0;
+      let i = 0, offen = 0, zugleich = VOKABEL_ZUGLEICH, ende = false, beob = null;
       const weiter = () => {
-        if (i >= reihe.length && !offen) { fertig(); return; }
-        while (offen < VOKABEL_ZUGLEICH && i < reihe.length) {
+        if (ende) return;
+        if (i >= reihe.length && !offen) { ende = true; try { if (beob) beob.disconnect(); } catch (e) {} fertig(); return; }
+        while (offen < zugleich && i < reihe.length) {
           offen++;
           const thema = reihe[i++];
           let p; try { p = Promise.resolve(ladeThema(thema)); } catch (e) { p = Promise.resolve(false); }
           p.then(() => {}, () => {}).then(() => { offen--; weiter(); });
         }
       };
+      try {
+        beob = new PerformanceObserver((liste) => {
+          if (zugleich !== VOKABEL_ZUGLEICH) return;
+          if (liste.getEntries().some((e) => /\/vokabeln\/[a-z0-9-]+\.js/.test(e.name) && e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize)) {
+            zugleich = reihe.length;
+            weiter();
+          }
+        });
+        beob.observe({ type: "resource" });
+      } catch (e) { beob = null; }
       weiter();
     }).then(() => WORDS.length > 0);
     return alleLaufen;
