@@ -646,9 +646,16 @@ async function tippen(pg, sel, w, o) {
   o = o || {};
   for (let v = 1; v <= 4; v++) {
     await pg.waitForFunction((s) => { const e = document.querySelector(s); return e && e.getBoundingClientRect().height > 0; }, sel, { polling: "raf", timeout: 60000 });
-    const r = await pg.evaluate((s) => { const b = document.querySelector(s).getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2, n: window.__dmaMess.tipp.length, h: innerHeight, b: innerWidth }; }, sel);
-    if (r.y > 0 && r.y < r.h && r.x > 0 && r.x < r.b) await pg.touchscreen.tap(r.x, r.y);
-    else await pg.locator(sel).first().tap();
+    const wo = (s) => { const b = document.querySelector(s).getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2, n: window.__dmaMess.tipp.length, h: innerHeight, b: innerWidth }; };
+    let r = await pg.evaluate(wo, sel);
+    /* FASSUNG 889: außerhalb des Bildes erst hinscrollen und dann wie ein Mensch tippen. Vorher locator.tap – das wartete in
+       der Messung mit Konto auf 3G bis zu 30 s auf „bedienbar“ und brach den Lauf ab (7 von 24 Öffnungen). */
+    if (!(r.y > 0 && r.y < r.h && r.x > 0 && r.x < r.b)) {
+      await pg.evaluate((s) => document.querySelector(s).scrollIntoView({ block: "center" }), sel);
+      await pg.waitForTimeout(50);
+      r = await pg.evaluate(wo, sel);
+    }
+    await pg.touchscreen.tap(r.x, r.y);
     /* M3b (Fall uebung): kam der Tipp an, wird auf seine Wirkung gewartet (bis o.warte), nicht noch einmal getippt */
     if (o.warte) {
       const an = await pg.waitForFunction(([w, n]) => window.__dmaMess.tipp.slice(n).some((x) => x.w === w), [w, r.n], { polling: "raf", timeout: 3000 }).then(() => true, () => false);
