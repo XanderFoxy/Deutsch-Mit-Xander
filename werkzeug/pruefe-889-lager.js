@@ -27,7 +27,10 @@
         Lager gleich.
      L  Laden beim Betreten nicht langsamer: 7 000 Zeilen im neuen Format lesen gegen dieselben im alten Format (CPU 4×,
         abwechselnd, Median aus 7).
-   Gegenprobe: WURZEL=/tmp/claude-0/v888 (Fassung 888) → A N Z K V B T (Format/Schreibweise) rot. */
+   Gegenprobe: WURZEL=/tmp/claude-0/v888 (Fassung 888) → A N K V1 V2 B T M Q F(Zeilen) L(Format) rot (34 Prüfungen).
+   Z ist auf 888 NICHT rot: in dieser leichten Seite (Klassenzimmer zu) kostet auch das put des ganzen Texts dort
+   nur ≤ 13 ms; die langen Bilder zeigt erst der Nachbau mit offenem Klassenzimmer (werkzeug/messe-889-lager.js).
+   Z bleibt als Wächter für 889 (Leerlauf-Schritte ≤ 16 ms, auch beim Neuschreiben aller Stücke). */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
@@ -78,7 +81,7 @@ function helfer() {
     const t = db.transaction("bilder", "readonly"), f = t.objectStore("bilder"), o = {}, v = "chatst:" + raum.length + ":" + raum + ":";
     f.get("chatix:" + raum).onsuccess = (e) => { o.ix = e.target.result || null; };
     f.get("chat:" + raum).onsuccess = (e) => { o.alt = e.target.result || null; };
-    f.getAll(IDBKeyRange.bound(v, v + "￿")).onsuccess = (e) => { o.st = e.target.result || []; };
+    f.getAll(IDBKeyRange.bound(v, v + "\uffff")).onsuccess = (e) => { o.st = e.target.result || []; };
     t.oncomplete = () => { const r = { index: o.ix ? o.ix.daten : null, alt: o.alt ? JSON.parse(o.alt.daten) : null, bereich: o.st.map((x) => x.id.slice(v.length)), zeilen: null, fehlt: [] };
       if (r.index) { const je = {}; o.st.forEach((x) => { je[x.id.slice(v.length)] = x.daten; }); r.zeilen = []; r.texte = [];
         for (const e of r.index.stuecke) { const d = je[String(e[0])]; if (typeof d !== "string") { r.fehlt.push(e[0]); continue; } r.texte.push(d); r.zeilen = r.zeilen.concat(JSON.parse(d)); } }
@@ -163,17 +166,30 @@ function server() {
       for (let i = 0; i < 450; i++) LiveChat.pruefAnhaengen({ id: "N-viel" + i, von: "p2", name: "Cem", art: "text", text: "viele " + i, zeit: Date.now() + i });
       await new Promise((f) => setTimeout(f, 100)); await window.__fertig(raum);
       const viele = window.__m.puts.slice();
+      /* eine Zeile mitten im Verlauf wird an Ort und Stelle geändert (wie z. B. das Nachtragen des Profilfotos an allen
+         Zeilen eines Autors) – gleiche Länge, damit nur der Inhalt sie verrät */
+      window.__m.puts = [];
+      const mitte = LiveChat.lage().nachrichten[3501];
+      const vorText = mitte.text; mitte.text = vorText.replace(/\d$/, (d) => String((Number(d) + 1) % 10));
+      LiveChat.pruefAnhaengen({ id: "N-nach", von: "p3", name: "Dora", art: "text", text: "danach", zeit: Date.now() + 1000 });
+      await new Promise((f) => setTimeout(f, 100)); await window.__fertig(raum);
+      const geaendert = window.__m.puts.slice();
+      const rohMitte = await window.__roh(raum);
+      const mitteImLager = (rohMitte.zeilen || []).find((n) => n.id === mitte.id);
       window.__m.an = false;
       LiveChat.pruefSichernAbstand(abstand);
       const roh = await window.__roh(raum);
       const soll = LiveChat.lage().nachrichten;
-      return { eins, viele, gleich: window.__ids(roh.zeilen) === window.__ids(soll), n: roh.zeilen ? roh.zeilen.length : -1, sollN: soll.length, fehlt: roh.fehlt, letzte: LiveChat.pruefLager ? LiveChat.pruefLager(raum).letzte.slice(-2) : null };
+      return { eins, viele, geaendert, mitte: { vorher: vorText, jetzt: mitte.text, lager: mitteImLager ? mitteImLager.text : null }, gleich: window.__ids(roh.zeilen) === window.__ids(soll), n: roh.zeilen ? roh.zeilen.length : -1, sollN: soll.length, fehlt: roh.fehlt, letzte: LiveChat.pruefLager ? LiveChat.pruefLager(raum).letzte.slice(-2) : null };
     });
     const stueckPuts = (p) => p.filter((x) => x[0].indexOf("chatst:") === 0);
     const groesste = (p) => Math.max(0, ...p.map((x) => x[1]));
     ok(stueckPuts(r.eins).length === 1 && r.eins.filter((x) => x[0].indexOf("chatix:") === 0).length === 1, "1 neue Zeile → 1 Stück + Verzeichnis geschrieben", JSON.stringify(r.eins.map((x) => x[0].replace(/^chatst:\d+:/, "st:") + "=" + x[1])));
     ok(r.eins.length > 0 && groesste(r.eins) < 200000, "kein put über 200 000 Zeichen", "größtes " + groesste(r.eins) + " Zeichen (888: der ganze Verlauf)");
     ok(stueckPuts(r.viele).length >= 1 && stueckPuts(r.viele).length <= 3 && groesste(r.viele) < 200000, "450 neue Zeilen → höchstens 3 Stücke", stueckPuts(r.viele).length + " Stücke, größtes " + groesste(r.viele));
+    ok(stueckPuts(r.geaendert).length === 2 && r.mitte.lager === r.mitte.jetzt && r.mitte.jetzt !== r.mitte.vorher && r.mitte.jetzt.length === r.mitte.vorher.length,
+       "Zeile mitten im Verlauf an Ort und Stelle geändert (gleiche Länge) → ihr Stück und das letzte geschrieben, Lager hat die Änderung",
+       stueckPuts(r.geaendert).length + " Stücke, „" + r.mitte.vorher + "“ → „" + r.mitte.lager + "“");
     ok(r.gleich && r.fehlt.length === 0, "das Lager ist danach genau der Verlauf", r.n + " / " + r.sollN + " Zeilen" + (r.letzte ? ", Schreiben " + JSON.stringify(r.letzte) : ""));
   }
 

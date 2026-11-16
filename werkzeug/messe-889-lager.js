@@ -13,13 +13,14 @@
    Gemessen über die Chromium-Spur (Kategorie toplevel): jede Aufgabe des Hauptfadens; je Abschnitt die längste Aufgabe,
    die Blockade (Summe über 50 ms) und wie viel der Zeit belegt war; dazu in der Seite die Schritte der Sicherung (Leerlauf-
    und IndexedDB-Rückrufe aus livechat.js) und die langen Bilder (LoAF ≥ 50 ms).
-   Aufruf: node werkzeug/messe-889-lager.js [Runden=3]   VERGLEICH=<Baum> (Vorgabe /tmp/claude-0/v888)
+   Aufruf: node werkzeug/messe-889-lager.js [Runden=3]   ZEILEN=<Verlauf> (Vorgabe 7 000)   VERGLEICH=<Baum> (Vorgabe /tmp/claude-0/v888)
            AA=1: beide Seiten derselbe Baum (A/A). Ergebnis als JSON nach ERGEBNIS (Vorgabe: $TMPDIR/messe-889.json). */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path"), os = require("os");
 const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const VGL = path.resolve(process.env.VERGLEICH || "/tmp/claude-0/v888");
 const RUNDEN = Number(process.argv[2] || 3);
+const ZEILEN = Number(process.env.ZEILEN || 7000);
 const ERGEBNIS = process.env.ERGEBNIS || path.join(os.tmpdir(), "messe-889.json");
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp", ".mp3": "audio/mpeg" };
 const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -79,16 +80,16 @@ async function lauf(br, wurzel, name) {
   await pg.goto(adresse, { waitUntil: "domcontentloaded" }); await bereit();
   /* 1. Vorbereitung */
   await oeffnen(pg);
-  await pg.evaluate(async () => {
+  await pg.evaluate(async (ZEILEN) => {
     const foto = (seed) => { let s = "data:image/png;base64,iVBORw0KGgo"; let x = seed * 7919; const z = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
       while (s.length < 16000) { x = (x * 1103515245 + 12345) % 2147483648; s += z[x % 64]; } return s; };
     const fotos = [foto(1), foto(2), foto(3)];
     LiveChat.pruefRaum("klassenzimmer"); await LiveChat.pruefVerlaufAusLager("klassenzimmer");
-    const l = [], t0 = Date.now() - 7000 * 30000;
-    for (let i = 0; i < 7000; i++) { const a = i % 30; l.push({ id: "z" + i, von: "p" + a, name: "Schüler" + a, text: "Hallo zusammen, Zeile " + i + (i % 7 ? "" : " lang ".repeat(20)), art: "text", zeit: t0 + i * 30000, bild: a < 3 ? fotos[a] : "", eigen: false }); }   // eigen wie im Feld (empfangene Zeilen tragen es)
+    const l = [], t0 = Date.now() - ZEILEN * 30000;
+    for (let i = 0; i < ZEILEN; i++) { const a = i % 30; l.push({ id: "z" + i, von: "p" + a, name: "Schüler" + a, text: "Hallo zusammen, Zeile " + i + (i % 7 ? "" : " lang ".repeat(20)), art: "text", zeit: t0 + i * 30000, bild: a < 3 ? fotos[a] : "", eigen: false }); }   // eigen wie im Feld (empfangene Zeilen tragen es)
     LiveChat.pruefVerlaufSetzen(l);
     await new Promise((f) => setTimeout(f, 1500));
-  });
+  }, ZEILEN);
   await pg.reload({ waitUntil: "domcontentloaded" }); await bereit();
   const cdp = await ctx.newCDPSession(pg);
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });

@@ -2940,7 +2940,7 @@ window.LiveChat = (function () {
   var lagerUnterwegs = Object.create(null);   // raum → { plan, art: "geprueft" | "sofort", t, aus } (das jüngste Schreiben, läuft noch)
   var lagerLaufend = [];                      // alle noch laufenden geprüften Schreibvorgänge (sie brauchen weitere Schritte)
   function lagerStueckVorsilbe(raum) { raum = String(raum); return LAGER_TEIL + raum.length + ":" + raum + ":"; }
-  function lagerStueckBereich(raum) { var v = lagerStueckVorsilbe(raum); return IDBKeyRange.bound(v, v + "￿"); }
+  function lagerStueckBereich(raum) { var v = lagerStueckVorsilbe(raum); return IDBKeyRange.bound(v, v + "\uffff"); }
   /* aus „chatst:5:haupt:12" den Raum („haupt") – null, wenn der Schlüssel nicht so gebaut ist */
   function lagerStueckRaum(k) {
     k = String(k);
@@ -2953,8 +2953,8 @@ window.LiveChat = (function () {
   /* Stücke ohne Verzeichnis (etwa wenn eine 888-Seite das Verzeichnis nach 60 Tagen löschte) weg – im selben Laden */
   function lagerVerwaisteWeg(laden) {
     if (typeof laden.getAllKeys !== "function") return;
-    var st = laden.getAllKeys(IDBKeyRange.bound(LAGER_TEIL, LAGER_TEIL + "￿"));
-    var ix = laden.getAllKeys(IDBKeyRange.bound(LAGER_INDEX, LAGER_INDEX + "￿"));
+    var st = laden.getAllKeys(IDBKeyRange.bound(LAGER_TEIL, LAGER_TEIL + "\uffff"));
+    var ix = laden.getAllKeys(IDBKeyRange.bound(LAGER_INDEX, LAGER_INDEX + "\uffff"));
     ix.onsuccess = function () {
       try {
         var mit = Object.create(null), weg = Object.create(null);
@@ -3476,6 +3476,7 @@ window.LiveChat = (function () {
     var raum = zustand.raum, liste = zustand.nachrichten.slice(-CHAT_VERLAUF), gen = (sichernGen += 1);
     var durfte = lagerGelesen, grenze = Math.max(0, liste.length - KURZ_ZEILEN);
     var basis = null, einteilung = null, basisText = null, texte = [], gleich = [], teile = [], k = 0;
+    var vorher = null, vglPos = 0, vglGleich = false;   // Vergleich des werdenden Stücks mit dem gelagerten, Happen für Happen
     var kurzTeile = [], kurzFotos = [], i = durfte ? 0 : grenze, lauf = sichernLauf = { raum: raum, quelle: zustand.nachrichten };
     function ueberholt() {
       if (sichernLauf !== lauf) return true;
@@ -3483,12 +3484,20 @@ window.LiveChat = (function () {
       if (zustand.nachrichten !== lauf.quelle) { sichernLauf = null; sichernSchmutzig = true; chatSichernBald(); return true; }
       return false;
     }
+    /* Gleich ist ein Stück, wenn jeder Happen genau an seiner Stelle im gelagerten Text steht (startsWith ab Position,
+       ohne den Text des Stücks erst zusammenzusetzen) und der gelagerte Text danach mit „]" endet. Nur ein geändertes
+       Stück wird zusammengesetzt. */
+    function happenVergleichen(j) {
+      if (!teile.length) { vorher = basisText[einteilung.stuecke[k].seq]; vglGleich = typeof vorher === "string"; vglPos = 1; }
+      teile.push(j);
+      if (vglGleich) { if (vorher.startsWith(j, vglPos)) vglPos += j.length + 1; else vglGleich = false; }
+    }
     function stueckFertig() {
-      var s = einteilung.stuecke[k], text = "[" + teile.join(",") + "]", vorher = basisText[s.seq];
-      var g = lagerTextGleich(vorher, text);
-      texte.push(g ? vorher : text);
+      var g = vglGleich && vglPos === vorher.length && vorher.charCodeAt(vglPos - 1) === 93;
+      texte.push(g ? vorher : "[" + teile.join(",") + "]");
       gleich.push(g);
       teile = [];
+      vorher = null;
       k += 1;
     }
     function stuecke(frist) {
@@ -3508,7 +3517,7 @@ window.LiveChat = (function () {
           var happen = liste.slice(i, bis).map(function (n) { return zeileSchlank(n, raum); });
           if (happen.length) {
             var j = JSON.stringify(happen).slice(1, -1);
-            if (einteilung) teile.push(j);
+            if (einteilung) happenVergleichen(j);
             if (i >= grenze) { kurzTeile.push(j); for (var m = 0; m < happen.length; m++) if (happen[m].bildH) kurzFotos.push(happen[m].bildH); }
           }
           i = bis;
