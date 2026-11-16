@@ -149,7 +149,7 @@ const http = require("http"), http2 = require("http2"), fs = require("fs"), path
 const { performance } = require("perf_hooks");
 
 /* ---------- Aufruf ---------- */
-const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner", "tipp-nach", "sw-wach", "fall", "kategorie"]);
+const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner", "tipp-nach", "sw-wach", "fall", "kategorie", "db-ms"]);
 const S = {}, FREI = [];
 for (let i = 2; i < process.argv.length; i++) {
   const a = process.argv[i];
@@ -178,6 +178,11 @@ const TIPP_NACH = Math.max(0, Number(S["tipp-nach"] || 0));
 const FALL = String(S.fall || "kz");
 if (!["kz", "uebung"].includes(FALL)) { console.error("--fall kz | uebung"); process.exit(2); }
 const KATEGORIE = String(S.kategorie || "tiere");
+/* FASSUNG 889 — MIT KONTO (--konto): angemeldet als Betreiber gegen eine kleine Supabase-Attrappe im Werkzeug
+   (werkzeug/mess-konto.js; jede Antwort nach --db-ms ms, Standard 150). Ohne --konto: Gast wie bisher. */
+const KONTO = !!S.konto;
+const DB_MS = Math.max(0, Number(S["db-ms"] || 150));
+const MK = KONTO ? require("./mess-konto.js") : null;
 if (!/^[a-z0-9-]+$/.test(KATEGORIE)) { console.error("--kategorie: Name einer Kategorie (z. B. tiere)"); process.exit(2); }
 if (!isFinite(TIPP_NACH)) { console.error("--tipp-nach braucht ms"); process.exit(2); }
 const H2 = !S.h1;
@@ -287,7 +292,8 @@ function server(wurzel, frische) {
     if (d) return d;
     const f = path.join(wurzel, p);
     if (!f.startsWith(wurzel) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) return null;
-    const inhalt = fs.readFileSync(f), ext = path.extname(f).toLowerCase();
+    let inhalt = fs.readFileSync(f); const ext = path.extname(f).toLowerCase();
+    if (MK) inhalt = MK.datei(p, inhalt);   /* --konto: Adresse der Attrappe (supabase-config.js, *.html) */
     d = { inhalt, ext, etag: '"' + crypto.createHash("md5").update(inhalt).digest("hex") + '"' };
     if (/\.(js|css|json|html|svg|txt|md)$/.test(ext)) { const t0 = performance.now(); d.gz = zlib.gzipSync(inhalt, { level: 9 }); z.packMs += performance.now() - t0; }
     datei.set(p, d);
@@ -661,9 +667,12 @@ async function oeffnen(ctx, srv, art, o) {
   const cdp = await ctx.newCDPSession(pg);
   const fehler = [];
   pg.on("pageerror", (e) => fehler.push(String(e.message).slice(0, 140)));
-  if (SUPA) {
-    await cdp.send("Fetch.enable", { patterns: [{ urlPattern: "https://cdn.jsdelivr.net/*supabase*" }] });
-    cdp.on("Fetch.requestPaused", (e) => cdp.send("Fetch.continueRequest", { requestId: e.requestId, url: srv.basis + "/__fremd/supabase.js" }).catch(() => {}));
+  if (SUPA || MK) {
+    await cdp.send("Fetch.enable", { patterns: [SUPA && { urlPattern: "https://cdn.jsdelivr.net/*supabase*" }, MK && MK.MUSTER].filter(Boolean) });
+    cdp.on("Fetch.requestPaused", (e) => {
+      if (MK && MK.beantworten(cdp, e, DB_MS)) return;   /* --konto: die Attrappe antwortet */
+      cdp.send("Fetch.continueRequest", { requestId: e.requestId, url: srv.basis + "/__fremd/supabase.js" }).catch(() => {});
+    });
   }
   if (o.swStopp) { await cdp.send("ServiceWorker.enable").catch(() => {}); await cdp.send("ServiceWorker.stopAllWorkers").catch(() => {}); }
   if (o.trennen) srv.trennen();
@@ -795,6 +804,7 @@ async function profil() {
   if (FLUECHTIG) { br = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium", args }); ctx = await br.newContext(geraet); }
   else { dir = fs.mkdtempSync(path.join(os.tmpdir(), "dma-mess-profil-")); ctx = await chromium.launchPersistentContext(dir, Object.assign({ executablePath: "/opt/pw-browsers/chromium", args }, geraet)); }
   await ctx.addInitScript(mitschreiber, { fall: FALL });
+  if (MK) await ctx.addInitScript(MK.initSkript, JSON.stringify(MK.sitzung()));   /* --konto: die Sitzung liegt schon da */
   ctx.zu = async () => { await ctx.close().catch(() => {}); if (br) await br.close().catch(() => {}); if (dir) fs.rmSync(dir, { recursive: true, force: true }); };
   return ctx;
 }
@@ -967,7 +977,7 @@ function zeile(r) {
   const staende = [{ name: "A", wurzel: WURZEL }].concat(GEGEN ? [{ name: "B", wurzel: GEGEN }] : []);
   for (const st of staende) { st.srvA = server(st.wurzel, 600); st.srvB = server(st.wurzel, 0); st.fassung = lesbar(st.wurzel); st.commit = commit(st.wurzel); await st.srvA.lauscht; await st.srvB.lauscht; }
   console.log("\nLadezeit: Netz " + NETZ + (isFinite(LEITUNG.down) ? " (" + (LEITUNG.down * 8 / 1e6) + " Mbit/s, " + LEITUNG.rtt + " ms, Aufbau " + AUFBAU + " RTT)" : "") +
-    (FALL === "uebung" ? ", Fall Übung öffnen (Lernen → Karte " + KATEGORIE + " → Runde starten)" : "") + ", Rechner " + CPU + "×, " + (H2 ? "HTTP/2 + TLS" : "HTTP/1.1") + ", " + LAEUFE + " Läufe, Fälle " + ARTEN.join(",") + ", Fenster " + FENSTER + " ms" +
+    (FALL === "uebung" ? ", Fall Übung öffnen (Lernen → Karte " + KATEGORIE + " → Runde starten)" : "") + (KONTO ? ", MIT KONTO (Betreiber, Attrappe, Datenbank " + DB_MS + " ms)" : ", Gast") + ", Rechner " + CPU + "×, " + (H2 ? "HTTP/2 + TLS" : "HTTP/1.1") + ", " + LAEUFE + " Läufe, Fälle " + ARTEN.join(",") + ", Fenster " + FENSTER + " ms" +
     (TIPP_NACH ? ", Tipp " + TIPP_NACH + " ms nach bereit" : ", Tipp sofort nach bereit") + (AA ? ", A/A-Test (Rauschgrenze)" : "") +
     (SW_WACH ? ", Service Worker wacht " + SW_WACH + " ms" : "") +
     (SPUR ? ", Spur" : "") + (PROFIL ? ", Profil" : "") + (FLUECHTIG ? ", flüchtige Kontexte" : ", Profil auf der Platte") + ", supabase-js " + (SUPA ? path.basename(SUPA_PFAD) + " (" + Math.round(SUPA_GZ.length / 1024) + " KB gz)" : "fehlt (fällt aus)"));
@@ -1038,7 +1048,7 @@ function zeile(r) {
   if (JSON_DATEI) {
     fs.writeFileSync(JSON_DATEI, JSON.stringify({
       werkzeug: "werkzeug/ladezeit-messen.js (Fassung 886)", datum: new Date().toISOString(),
-      einstellung: { netz: NETZ, leitung: { mbit: LEITUNG.down * 8 / 1e6, rtt: LEITUNG.rtt, aufbauRtt: AUFBAU }, cpu: CPU, http: H2 ? "h2+tls" : "http/1.1", laeufe: LAEUFE, arten: ARTEN, fenster: FENSTER, spur: SPUR, profil: PROFIL, kontext: FLUECHTIG ? "flüchtig" : "Profil auf der Platte",
+      einstellung: { netz: NETZ, konto: KONTO ? { dbMs: DB_MS } : false, leitung: { mbit: LEITUNG.down * 8 / 1e6, rtt: LEITUNG.rtt, aufbauRtt: AUFBAU }, cpu: CPU, http: H2 ? "h2+tls" : "http/1.1", laeufe: LAEUFE, arten: ARTEN, fenster: FENSTER, spur: SPUR, profil: PROFIL, kontext: FLUECHTIG ? "flüchtig" : "Profil auf der Platte",
         tippNach: TIPP_NACH, aa: AA, fall: FALL, kategorie: FALL === "uebung" ? KATEGORIE : null, swWach: SW_WACH, verschraenkt: staende.length > 1 ? "Lauf 1: A dann B, Lauf 2: B dann A, …" : null,
         supabase: SUPA ? { datei: path.basename(SUPA_PFAD), kbGz: Math.round(SUPA_GZ.length / 1024) } : null },
       umgebung: { chromium: "/opt/pw-browsers/chromium", node: process.version, kerne: os.cpus().length, rechner: (os.cpus()[0] || {}).model || "?", lastVor, lastNach },
