@@ -51,9 +51,47 @@ var KASTEN = "dma-dateien-1";
    einen neuen Namen, dort mitändern (Sonde pruefe-885-rueckkehr.js prüft, dass beide gleich sind). */
 var SEITE = "dma-seite-1";
 
+/* FASSUNG 889 — XANDER (Funk 255): „die schnelle Performance und die Verbindung zu den anderen haben oberste Priorität“.
+   ALTE STADT-DATEIEN. Seit 888 laden die Stadt-Seiten ihre Stücke aus bau/ (Vite, MODULE-PLAN.md M5); die gepackten
+   Dateien der Fassung 887 sind mit 889 vom Server genommen. ablegen() räumt nur ältere Stempel DESSELBEN Pfads weg –
+   diese Pfade fragt keine Seite mehr an, ihre Einträge (zusammen bis 3,9 MB) blieben sonst für immer im Speicher.
+   Beim Helferwechsel gehen sie weg, mit jedem Stempel; sonst nichts. Feste Liste: eine allgemeine Regel („was die
+   Seite nicht nennt“) träfe Stadt-Seiten, Prüfseiten und Ordner-Stempel, die nicht in DMA_STEMPEL stehen. Geräumt wird
+   ERST NACH dem Wechsel (nicht in waitUntil): solange der Helfer „activating“ ist, warten alle Anfragen der Seiten auf
+   ihn – auch die an Supabase. Einmal keys() statt fünfmal delete(ignoreSearch) (das liest jedes Mal den ganzen
+   Speicher). Wird der Helfer mittendrin beendet, räumt der nächste Wechsel den Rest. Sonde pruefe-889-stadtweg.js (C). */
+var ALT_WEG = ["stadt/stadt.min.js", "stadt-leicht/leicht.min.js", "stadt-leicht/autoschau.min.js", "stadt-leicht/quests.min.js", "stadt-leicht/korn.min.js"];
+/* Davon die beiden Bündel: nur eine Seite der Fassung 887 fragt sie an, und nur beim Laden (document.write). Läuft so
+   eine Seite noch (Tab tagelang offen), braucht sie sie nicht mehr; ihre Nachlade-Stücke (Auto-Schau, Quests, Äcker)
+   fallen bei 404 auf ihre Vertretung zurück (Autokarte, keine Quests, goldene Fläche). Kommt aber eine 887-Seite
+   NEU – nur aus dem HTTP-Speicher des Browsers ohne Nachfrage (Zurück nach Tagen, wiederhergestellter Tab) –, fehlte
+   ihr Bündel: Ladebild, nach 15 s leere Stadt. Dann bekommt sie statt der 404 ein Skript, das die Seite EINMAL neu
+   lädt (je Tab und Pfad; ein Neuladen fragt den Server, der hat die neue Seite). Sonde pruefe-889-stadtweg.js (D). */
+var ALT_BUENDEL = /^(?:stadt\/stadt|stadt-leicht\/leicht)\.min\.js$/;
+function altWegRaeumen() {
+  return caches.has(KASTEN).then(function (da) {
+    if (!da) return;
+    return caches.open(KASTEN).then(function (k) {
+      return k.keys().then(function (alle) {
+        var w = wurzel();
+        return Promise.all(alle.filter(function (q) {
+          try { var p = new URL(q.url).pathname; return p.indexOf(w) === 0 && ALT_WEG.indexOf(p.slice(w.length)) >= 0; } catch (x) { return false; }
+        }).map(function (q) { return k.delete(q); }));
+      });
+    });
+  }).catch(function () {});
+}
+function altNeuLaden(u, a) {
+  if (!a || a.status !== 404 || !ALT_BUENDEL.test(u.pathname.slice(wurzel().length))) return a;
+  return new Response("/* sw.js (Fassung 889): diese Seite ist älter als der Server – einmal neu laden */\n"
+    + "(function(){try{var k=\"dma-alt-neu:\"+location.pathname;if(sessionStorage.getItem(k))return;"
+    + "sessionStorage.setItem(k,\"1\");location.reload();}catch(e){}})();\n",
+    { status: 200, headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
 self.addEventListener("install", function () { self.skipWaiting(); });
 self.addEventListener("activate", function (e) {
-  e.waitUntil(caches.keys().then(function (namen) {
+  var wechsel = caches.keys().then(function (namen) {
     return Promise.all(namen.filter(function (n) {
       return /^dma-/.test(n) && n !== KASTEN && n !== SEITE;
     }).map(function (n) { return caches.delete(n); }));
@@ -61,7 +99,10 @@ self.addEventListener("activate", function (e) {
     /* FASSUNG 886: Vorab-Laden einschalten (gilt für die Anmeldung, bis sie endet). */
     var np = self.registration.navigationPreload;
     if (np && np.enable) return np.enable().catch(function () {});
-  }).then(function () { return self.clients.claim(); }));
+  }).then(function () { return self.clients.claim(); });
+  e.waitUntil(wechsel);
+  /* 889: die alten Stadt-Dateien erst danach (siehe ALT_WEG) */
+  wechsel.then(altWegRaeumen, altWegRaeumen);
 });
 
 self.addEventListener("fetch", function (e) {
@@ -144,7 +185,7 @@ function gestempelt(r, u) {
       if (da) return da;
       return fetch(r).then(function (a) {
         if (a && a.status === 200 && a.type === "basic") ablegen(k, r, u, a);
-        return a;
+        return altNeuLaden(u, a);   /* 889: nur die beiden alten Bündel bei 404, sonst a unverändert */
       });
     });
   }).catch(function () { return fetch(r); });
