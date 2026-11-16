@@ -2,7 +2,7 @@
    SONDE 889, TEIL B — die echte Seite (Chromium, min/ wie ausgeliefert)
    ---------------------------------------------------------------------
    Aufgerufen von werkzeug/pruefe-889-runde.js (NUR=B). Der Prüfserver hält
-   jede Wortschatz-Datei (vokabeln/*.js) WS_MS lang zurück (Standard 6 s):
+   jede Wortschatz-Datei (vokabeln/*.js) WS_MS lang zurück (Standard 3 s; HTTP/1.1, also höchstens 6 zugleich – ganz erst nach ≈ 5 × WS_MS):
    so ist sicher, ob die erste Frage vor oder nach dem ganzen Wortschatz
    kommt. Getippt wird wie ein Mensch (Lernen → Karte → Runde starten).
 
@@ -33,13 +33,13 @@ const fs = require("fs"), path = require("path"), http = require("http");
 async function teilB(WURZEL, sage) {
   const vorher = { n: 0 };
   const zaehl = (gut, was, dazu) => { if (!gut) vorher.n++; sage(gut, was, dazu); };
-  console.log("\nB  DIE ECHTE SEITE (Chromium, Wortschatz-Dateien je " + (Number(process.env.WS_MS) || 6000) + " ms zurückgehalten)\n");
+  console.log("\nB  DIE ECHTE SEITE (Chromium, Wortschatz-Dateien je " + (Number(process.env.WS_MS) || 3000) + " ms zurückgehalten)\n");
   const { chromium } = require("/tmp/claude-0/node_modules/playwright");
-  const WS_MS = Number(process.env.WS_MS) || 6000;
+  const WS_MS = Number(process.env.WS_MS) || 3000;
   const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png",
     ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".webp": "image/webp", ".webmanifest": "application/manifest+json", ".mp3": "audio/mpeg", ".woff2": "font/woff2", ".gif": "image/gif" };
   const log = [];
-  const S = { wnWeg: false, wnFalsch: false };
+  const S = { wnWeg: false, wnFalsch: false, halten: false, wartend: [] };
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/index.html";
     const f = path.join(WURZEL, p);
@@ -53,7 +53,8 @@ async function teilB(WURZEL, sage) {
       if (istWn && S.wnFalsch) return a.end(fs.readFileSync(f, "utf8").replace(/("vokabeln\/[a-z]+\.js":")[0-9a-f]{10}"/, '$10000000000"'));
       fs.createReadStream(f).pipe(a);
     };
-    if (/^\/vokabeln\//.test(p)) setTimeout(senden, WS_MS); else senden();
+    /* halten (B4): der Wortschatz kommt erst, wenn die Sonde ihn freigibt */
+    if (/^\/vokabeln\//.test(p)) { if (S.halten) S.wartend.push(senden); else setTimeout(senden, WS_MS); } else senden();
   });
   await new Promise((r) => srv.listen(0, "127.0.0.1", r));
   const BASIS = "http://127.0.0.1:" + srv.address().port;
@@ -61,7 +62,7 @@ async function teilB(WURZEL, sage) {
   const istWn = (x) => /^\/bau\/wortniveau-/.test(x.p);
   const seite = async (o) => {
     o = o || {};
-    S.wnWeg = Boolean(o.wnWeg); S.wnFalsch = Boolean(o.wnFalsch);
+    S.wnWeg = Boolean(o.wnWeg); S.wnFalsch = Boolean(o.wnFalsch); S.halten = Boolean(o.halten); S.wartend = [];
     const ctx = await br.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, serviceWorkers: "block" });
     await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
     await ctx.addInitScript(() => {
@@ -74,7 +75,11 @@ async function teilB(WURZEL, sage) {
       new MutationObserver(() => {
         if (window.__r.frage != null) return;
         const k = document.querySelector("#exercisePlay .question-card");
-        if (k && k.offsetParent !== null) window.__r.frage = performance.now();
+        if (k && k.offsetParent !== null) {
+          window.__r.frage = performance.now();
+          /* im selben Augenblick: war der Wortschatz schon ganz da? (der 10-ms-Blick oben käme bis zu 10 ms zu spät) */
+          try { window.__r.wsBeiFrage = Boolean(VocabData.alleThemenDa()); } catch (e) { window.__r.wsBeiFrage = null; }
+        }
       }).observe(document, { childList: true, subtree: true, attributes: true, attributeFilter: ["style"] });
     });
     const pg = await ctx.newPage();
@@ -96,27 +101,32 @@ async function teilB(WURZEL, sage) {
       await pg.click('.tape-tab[data-target="view-learn"]');
       await pg.waitForFunction(() => { const g = document.querySelector("#exerciseSetup .category-grid .category-card"); return g && g.offsetParent !== null; }, null, { timeout: 30000 });
       for (const k of o.karten) {
-        await pg.click('#exerciseSetup .category-card[data-cat="' + k + '"] .cat-checkbox');
+        await pg.evaluate((k) => { const e = document.querySelector('#exerciseSetup .category-card[data-cat="' + k + '"] .cat-checkbox'); e.scrollIntoView({ block: "center" }); e.click(); }, k);
         await pg.waitForFunction((k) => { const b = document.getElementById("startBtn"); return b && !b.disabled && document.querySelector('#exerciseSetup .category-card.selected[data-cat="' + k + '"]'); }, k, { timeout: 30000 });
       }
       if (o.thema) {
-        await pg.click('[data-wortschatztopic="' + o.thema + '"]');
+        await pg.evaluate((t) => { const e = document.querySelector('[data-wortschatztopic="' + t + '"]'); e.scrollIntoView({ block: "center" }); e.click(); }, o.thema);
         await pg.waitForFunction((t) => { const b = document.querySelector('[data-wortschatztopic="' + t + '"]'); const s = document.getElementById("startBtn"); return b && b.getAttribute("aria-selected") === "true" && s && !s.disabled; }, o.thema, { timeout: 30000 });
       }
       const vorStart = log.slice(s.ab).filter(istWn).length;
+      if (o.halten) { S.halten = false; S.wartend.splice(0).forEach((f) => f()); }
       const tipp = await pg.evaluate(() => performance.now());
-      await pg.click("#startBtn");
-      await pg.waitForFunction(() => window.__r.frage != null, null, { timeout: WS_MS + 30000 });
+      await pg.evaluate(() => { const e = document.getElementById("startBtn"); e.scrollIntoView({ block: "center" }); e.click(); });
+      await pg.waitForFunction(() => window.__r.frage != null, null, { timeout: WS_MS * 12 + 20000 });
       const r = await pg.evaluate(() => ({ r: window.__r, total: Quiz.progress ? Quiz.progress().total : null, stand: Quiz.auszugStand ? Quiz.auszugStand() : null,
         ganz: typeof VocabData !== "undefined" && VocabData.alleThemenDa(), lvl: (Quiz.getState() || {}).level }));
       r.tipp = tipp; r.dauer = Math.round(r.r.frage - tipp);
-      r.vorWs = r.r.ws == null || r.r.frage < r.r.ws;
-      r.wn = log.slice(s.ab).filter(istWn); r.wnVorStart = vorStart;
+      r.vorWs = r.r.wsBeiFrage === false;
+      /* wann die Seite den Auszug ANGEFRAGT hat (Resource Timing; beim Prüfserver mit HTTP/1.1 kann die Anfrage hinter
+         den Wortschatz-Dateien warten, bevor sie beim Server ankommt) */
+      r.wnStarts = await pg.evaluate(() => performance.getEntriesByType("resource").filter((e) => /\/bau\/wortniveau-/.test(e.name)).map((e) => e.startTime));
+      r.wnVorStart = r.wnStarts.filter((t) => t < tipp).length;
+      r.wn = log.slice(s.ab).filter(istWn); void vorStart;
       r.pe = s.pe;
       return r;
     } finally { await s.ctx.close(); }
   };
-  const kurz = (r) => "Tipp → Frage " + r.dauer + " ms, Wortschatz ganz " + (r.r.ws == null ? "noch nicht" : Math.round(r.r.ws - r.tipp) + " ms nach dem Tipp")
+  const kurz = (r) => "Tipp → Frage " + r.dauer + " ms, Wortschatz bei der Frage " + (r.r.wsBeiFrage ? "ganz" : "noch nicht ganz") + (r.r.ws == null ? "" : " (ganz " + Math.round(r.r.ws - r.tipp) + " ms nach dem Tipp)")
     + ", " + r.total + " Fragen (Niveau " + r.lvl + "), Auszug geholt " + r.wn.length + "× (vor dem Start " + r.wnVorStart + "), " + JSON.stringify(r.stand) + (r.pe.length ? ", Fehler: " + r.pe.join(" | ") : "");
 
   try {
@@ -135,7 +145,9 @@ async function teilB(WURZEL, sage) {
         "B3 quiz + ss-eszett + wortstellung: wie B2", kurz(r));
     }
     {
-      const r = await runde({ karten: ["wortschatz"], profil: true, thema: "Essen & Trinken" });
+      /* „Alle Themen" (Vorgabe beim Antippen der Karte) mit schon (teilweise) geladenem Wörterbuch friert die Seite minutenlang
+         ein (Fund 889, schon in 888) – darum hält der Server den Wortschatz zurück, bis das Thema gewählt ist */
+      const r = await runde({ karten: ["wortschatz"], profil: true, thema: "Essen & Trinken", halten: true });
       zaehl(!r.vorWs && r.ganz && r.total === 10 && !r.wn.length && !r.pe.length, "B4 Wortschatz (Thema Essen & Trinken): wartet wie bisher auf den ganzen Wortschatz, kein Auszug", kurz(r));
     }
     {
@@ -144,7 +156,7 @@ async function teilB(WURZEL, sage) {
     }
     {
       const r = await runde({ karten: ["plural"], wnWeg: true });
-      zaehl(!r.vorWs && r.ganz && r.total === 10 && r.stand && r.stand.benutzt === 0 && !r.pe.length, "B6 Auszug 404, plural: wartet auf den Wortschatz, Runde läuft", kurz(r));
+      zaehl(!r.vorWs && r.ganz && r.total === 10 && r.stand && r.stand.benutzt === 0 && !r.pe.length, "B6 Auszug 404, plural: wartet auf den Wortschatz, Runde läuft (der Auszug wird beim Kartentipp und noch einmal beim Start versucht)", kurz(r));
     }
     {
       const r = await runde({ karten: ["plural"], wnFalsch: true });

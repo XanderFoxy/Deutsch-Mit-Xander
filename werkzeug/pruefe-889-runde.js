@@ -382,7 +382,7 @@ async function teilG() {
     let B = null;
     try { B = require("./pruefe-889-runde-seite.js"); } catch (e) { B = null; }
     if (!B) sage(false, "B Teil Seite (werkzeug/pruefe-889-runde-seite.js) fehlt");
-    else fehler += await B.teilB(WURZEL, sage);
+    else { const n = await B.teilB(WURZEL, sage); fehler += n; }   /* sage() zählt schon mit (erst nach dem await lesen) */
   }
   console.log("\n" + (fehler ? fehler + " FEHL" : "alles grün"));
   process.exit(fehler ? 1 : 0);
