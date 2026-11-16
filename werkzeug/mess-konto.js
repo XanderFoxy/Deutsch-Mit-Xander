@@ -9,7 +9,7 @@
      - jede Anfrage an die Attrappe beantwortet das Werkzeug selbst (CDP
        Fetch, vor der Namensauflösung – nichts verlässt den Rechner), nach
        DB_MS ms („Datenbank 150 ms“ wie in M4/888): angemeldet ist ein
-       Betreiber (is_owner, 900 Punkte), alle anderen Tabellen sind leer,
+       Mitglied (900 Punkte, kein Betreiber), alle anderen Tabellen sind leer,
        Schreiben gelingt;
      - die Sitzung liegt vor dem ersten Öffnen im Speicher der Seite
        (localStorage sb-attrappe-auth-token), gültig 10 h;
@@ -22,15 +22,17 @@ const HOST = "attrappe.supabase.co";
 const ICH = "11111111-1111-4111-8111-111111111111";
 const b64 = (o) => Buffer.from(JSON.stringify(o)).toString("base64url");
 const ANON = b64({ alg: "HS256", typ: "JWT" }) + "." + b64({ role: "anon", iss: "supabase" }) + ".x";
-const NUTZER = { id: ICH, aud: "authenticated", role: "authenticated", email: "xander@attrappe.test", user_metadata: { name: "XanderFox" },
+const NUTZER = { id: ICH, aud: "authenticated", role: "authenticated", email: "mira@attrappe.test", user_metadata: { name: "Mira" },
   app_metadata: { provider: "email" }, created_at: "2026-08-25T10:00:00Z" };
 const token = (bis) => b64({ alg: "HS256", typ: "JWT" }) + "." + b64({ sub: ICH, role: "authenticated", aud: "authenticated", exp: bis, email: NUTZER.email }) + ".x";
 function sitzung() {
   const bis = Math.floor(Date.now() / 1000) + 36000;
   return { access_token: token(bis), refresh_token: "rt-1", expires_in: 36000, expires_at: bis, token_type: "bearer", user: NUTZER };
 }
-const PROFIL = { id: ICH, name: "XanderFox", points: 900, badges: [], trophies: [], bio: "", avatar_url: "", avatar_emoji: "🦊", is_owner: true,
-  is_admin: true, is_moderator: false, last_active: new Date().toISOString(), birthday: "", origin: "", created_at: "2026-08-25T10:00:00Z",
+/* ein gewöhnliches Mitglied (wie die Konto-Messung 888, „mitglied“): Betreiber-Teile (Walkie, Rückfragen) lägen sonst über
+   Karten und Knöpfen – mit Betreiber brachen auf 3G 7 von 24 Öffnungen am Knopf „Runde starten“ ab */
+const PROFIL = { id: ICH, name: "Mira", points: 900, badges: [], trophies: [], bio: "", avatar_url: "", avatar_emoji: "🦊", is_owner: false,
+  is_admin: false, is_moderator: false, last_active: new Date().toISOString(), birthday: "", origin: "", created_at: "2026-08-25T10:00:00Z",
   extra_profile_data: { seenFoxIntro: true }, gallery: [], theme: "bastelheft" };
 
 /* Dateien des Servers: Adresse der Attrappe statt des echten Projekts (für beide Stände gleich) */

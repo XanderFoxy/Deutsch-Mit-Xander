@@ -178,7 +178,7 @@ const TIPP_NACH = Math.max(0, Number(S["tipp-nach"] || 0));
 const FALL = String(S.fall || "kz");
 if (!["kz", "uebung"].includes(FALL)) { console.error("--fall kz | uebung"); process.exit(2); }
 const KATEGORIE = String(S.kategorie || "tiere");
-/* FASSUNG 889 — MIT KONTO (--konto): angemeldet als Betreiber gegen eine kleine Supabase-Attrappe im Werkzeug
+/* FASSUNG 889 — MIT KONTO (--konto): angemeldet als Mitglied gegen eine kleine Supabase-Attrappe im Werkzeug
    (werkzeug/mess-konto.js; jede Antwort nach --db-ms ms, Standard 150). Ohne --konto: Gast wie bisher. */
 const KONTO = !!S.konto;
 const DB_MS = Math.max(0, Number(S["db-ms"] || 150));
@@ -646,16 +646,9 @@ async function tippen(pg, sel, w, o) {
   o = o || {};
   for (let v = 1; v <= 4; v++) {
     await pg.waitForFunction((s) => { const e = document.querySelector(s); return e && e.getBoundingClientRect().height > 0; }, sel, { polling: "raf", timeout: 60000 });
-    const wo = (s) => { const b = document.querySelector(s).getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2, n: window.__dmaMess.tipp.length, h: innerHeight, b: innerWidth }; };
-    let r = await pg.evaluate(wo, sel);
-    /* FASSUNG 889: außerhalb des Bildes erst hinscrollen und dann wie ein Mensch tippen. Vorher locator.tap – das wartete in
-       der Messung mit Konto auf 3G bis zu 30 s auf „bedienbar“ und brach den Lauf ab (7 von 24 Öffnungen). */
-    if (!(r.y > 0 && r.y < r.h && r.x > 0 && r.x < r.b)) {
-      await pg.evaluate((s) => document.querySelector(s).scrollIntoView({ block: "center" }), sel);
-      await pg.waitForTimeout(50);
-      r = await pg.evaluate(wo, sel);
-    }
-    await pg.touchscreen.tap(r.x, r.y);
+    const r = await pg.evaluate((s) => { const b = document.querySelector(s).getBoundingClientRect(); return { x: b.left + b.width / 2, y: b.top + b.height / 2, n: window.__dmaMess.tipp.length, h: innerHeight, b: innerWidth }; }, sel);
+    if (r.y > 0 && r.y < r.h && r.x > 0 && r.x < r.b) await pg.touchscreen.tap(r.x, r.y);
+    else await pg.locator(sel).first().tap();
     /* M3b (Fall uebung): kam der Tipp an, wird auf seine Wirkung gewartet (bis o.warte), nicht noch einmal getippt */
     if (o.warte) {
       const an = await pg.waitForFunction(([w, n]) => window.__dmaMess.tipp.slice(n).some((x) => x.w === w), [w, r.n], { polling: "raf", timeout: 3000 }).then(() => true, () => false);
@@ -984,7 +977,7 @@ function zeile(r) {
   const staende = [{ name: "A", wurzel: WURZEL }].concat(GEGEN ? [{ name: "B", wurzel: GEGEN }] : []);
   for (const st of staende) { st.srvA = server(st.wurzel, 600); st.srvB = server(st.wurzel, 0); st.fassung = lesbar(st.wurzel); st.commit = commit(st.wurzel); await st.srvA.lauscht; await st.srvB.lauscht; }
   console.log("\nLadezeit: Netz " + NETZ + (isFinite(LEITUNG.down) ? " (" + (LEITUNG.down * 8 / 1e6) + " Mbit/s, " + LEITUNG.rtt + " ms, Aufbau " + AUFBAU + " RTT)" : "") +
-    (FALL === "uebung" ? ", Fall Übung öffnen (Lernen → Karte " + KATEGORIE + " → Runde starten)" : "") + (KONTO ? ", MIT KONTO (Betreiber, Attrappe, Datenbank " + DB_MS + " ms)" : ", Gast") + ", Rechner " + CPU + "×, " + (H2 ? "HTTP/2 + TLS" : "HTTP/1.1") + ", " + LAEUFE + " Läufe, Fälle " + ARTEN.join(",") + ", Fenster " + FENSTER + " ms" +
+    (FALL === "uebung" ? ", Fall Übung öffnen (Lernen → Karte " + KATEGORIE + " → Runde starten)" : "") + (KONTO ? ", MIT KONTO (Mitglied, Attrappe, Datenbank " + DB_MS + " ms)" : ", Gast") + ", Rechner " + CPU + "×, " + (H2 ? "HTTP/2 + TLS" : "HTTP/1.1") + ", " + LAEUFE + " Läufe, Fälle " + ARTEN.join(",") + ", Fenster " + FENSTER + " ms" +
     (TIPP_NACH ? ", Tipp " + TIPP_NACH + " ms nach bereit" : ", Tipp sofort nach bereit") + (AA ? ", A/A-Test (Rauschgrenze)" : "") +
     (SW_WACH ? ", Service Worker wacht " + SW_WACH + " ms" : "") +
     (SPUR ? ", Spur" : "") + (PROFIL ? ", Profil" : "") + (FLUECHTIG ? ", flüchtige Kontexte" : ", Profil auf der Platte") + ", supabase-js " + (SUPA ? path.basename(SUPA_PFAD) + " (" + Math.round(SUPA_GZ.length / 1024) + " KB gz)" : "fehlt (fällt aus)"));
