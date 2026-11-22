@@ -3020,6 +3020,14 @@ window.LiveChat = (function () {
   /* Worauf eine neue Sicherung aufbaut: ein noch laufendes Schreiben (geht es schief, merkt das die Prüfung des
      Verzeichnisses), sonst der letzte bekannte Stand. */
   function lagerBasis(raum) { var u = lagerUnterwegs[raum]; return u ? u.plan : (lagerStand[raum] || null); }
+  /* NACHGEBESSERT (Prüfung 889, Runde 1) — lagerStand hält den Text aller Stücke (damit die nächste Sicherung nur das
+     Geänderte schreibt). Gemessen bei 20 000 Zeilen: +6 MB im Arbeitsspeicher gegenüber 888 (die Zeilen enthalten ü und
+     Emoji, der Text ist darum zwei Byte je Zeichen). Das braucht nur der Raum, in dem man ist. Der Stand eines
+     verlassenen Raums wird freigegeben, sobald nichts mehr für ihn geschrieben wird; kehrt man zurück, liest
+     chatAusLager ihn neu. Fehlt er doch einmal, schreibt die nächste Sicherung einfach alles (wie bei einem fremden Stand). */
+  function lagerStandFreigeben() {
+    for (var r in lagerStand) if (r !== zustand.raum && !lagerUnterwegs[r] && !lagerGeprueftLaeuft(r)) delete lagerStand[r];
+  }
   var lagerLetzte = [];   // die letzten Schreibvorgänge (Sonde, Feldmessung): [art, voll, Stücke geschrieben, ok, raum]
   function lagerFertig(ich, ok) {
     if (ich.fertig) return;
@@ -3027,7 +3035,8 @@ window.LiveChat = (function () {
     if (lagerUnterwegs[ich.plan.raum] === ich) delete lagerUnterwegs[ich.plan.raum];
     var w = lagerLaufend.indexOf(ich);
     if (w >= 0) lagerLaufend.splice(w, 1);
-    if (ok) lagerStand[ich.plan.raum] = lagerStandAus(ich.plan);
+    if (ich.plan.raum !== zustand.raum) lagerStandFreigeben();   // Raum inzwischen verlassen: sein Stand samt Text weg
+    else if (ok) lagerStand[ich.plan.raum] = lagerStandAus(ich.plan);
     lagerLetzte.push([ich.art, ich.art === "sofort" ? true : Boolean(ich.voll), ich.art === "sofort" ? ich.plan.stuecke.length : (ich.geschrieben || 0), ok, ich.plan.raum]);
     if (lagerLetzte.length > 20) lagerLetzte.shift();
   }
@@ -3179,8 +3188,9 @@ window.LiveChat = (function () {
       if (!o) return [];
       try {
         var z = lagerZusammensetzen(raum, o);
-        /* in Lager-Reihenfolge gesetzt: ein danach begonnenes Schreiben dieses Tabs überschreibt das wieder */
-        lagerStand[raum] = z.stand;
+        /* in Lager-Reihenfolge gesetzt: ein danach begonnenes Schreiben dieses Tabs überschreibt das wieder.
+           Nur für den Raum, in dem man ist (ein später Rückläufer aus einem verlassenen Raum hielte sonst dessen Text). */
+        if (raum === zustand.raum) lagerStand[raum] = z.stand;
         var liste = z.liste;
         if (!liste.length) return [];
         liste = altenMuellFiltern(liste);
@@ -3453,6 +3463,17 @@ window.LiveChat = (function () {
     setTimeout(function () { f(null); }, 0);
   }
   function sichernUhr() { try { return performance.now(); } catch (e) { return Date.now(); } }
+  /* NACHGEBESSERT (Prüfung 889, Runde 1) — Ist der Hauptfaden voll ausgelastet (Livestream mit vielen Bildern, schwaches
+     Gerät), gibt es keine Leerlaufpause: requestIdleCallback springt erst über sein Zeitlimit (2 s) an, mit
+     timeRemaining() = 0. Die Bedingung „timeRemaining() > 1" beendete den Schritt dann nach EINEM Happen (50 Zeilen,
+     ≈ 1 ms Arbeit je 2 s) – nachgestellt (2 000 Zeilen, je Bild 20 ms belegt, CPU 4×) brauchte die Sicherung 93,8 s
+     bis ins Lager und in den localStorage statt 16,2 s in 888 (hochgerechnet bei 20 000 Zeilen rund 13 min); so lange
+     lag nichts Neues im Gerät. Jetzt nutzt ein Schritt nach dem Zeitlimit das Budget von SICHERN_BUDGET_MS ganz
+     (888: 400 Zeilen je Rückruf); eine echte Leerlaufpause wird weiter nicht überzogen. */
+  function sichernFristReicht(frist) {
+    if (!frist || frist.didTimeout || typeof frist.timeRemaining !== "function") return true;
+    return frist.timeRemaining() > 1;
+  }
   function chatSichernStueckweise() {
     if (!zustand.raum || sichernLauf) return;
     sichernSchmutzig = false;
@@ -3509,7 +3530,7 @@ window.LiveChat = (function () {
           }
           i = bis;
           if (einteilung && k < einteilung.stuecke.length && i >= ende) stueckFertig();
-        } while (i < liste.length && sichernUhr() - t0 < SICHERN_BUDGET_MS && (!frist || typeof frist.timeRemaining !== "function" || frist.timeRemaining() > 1));
+        } while (i < liste.length && sichernUhr() - t0 < SICHERN_BUDGET_MS && sichernFristReicht(frist));
       } catch (e) { sichernLauf = null; if (sichernSchmutzig) chatSichernBald(); return; }
       sichernNaechst(i < liste.length ? stuecke : kurzLegen);
     }
@@ -8918,6 +8939,7 @@ window.LiveChat = (function () {
        wurde, auch nach dem Neuladen und nach dem Wiederkommen. */
     /* Neuer Raum: das Lager dieses Raums ist noch nicht gelesen. */
     lagerGelesen = false;
+    lagerStandFreigeben();   // FASSUNG 889 (Nachbesserung) — der Stand des alten Raums (Text aller Stücke) wird nicht mehr gebraucht
     zustand.nachrichten = chatLaden(zustand.raum);
     /* FASSUNG 887 — Profilfotos, die nur als Fingerabdruck gespeichert sind, aus dem Lager wieder einsetzen */
     chatFotosZurueck(zustand.nachrichten).then(function (etwas) { if (etwas) melden(); });
@@ -19896,7 +19918,7 @@ window.LiveChat = (function () {
     /* Nur zum Nachpruefen: den Verlauf eines Raums ablegen und wieder
        hervorholen — genau die Wege, die das Verlassen und das
        Wiederkommen gehen. */
-    pruefRaum: function (name) { if (name) { try { chatSichernOffenes(); } catch (e) {} zustand.raum = String(name); } return zustand.raum; },
+    pruefRaum: function (name) { if (name) { try { chatSichernOffenes(); } catch (e) {} zustand.raum = String(name); lagerStandFreigeben(); } return zustand.raum; },
     /* FASSUNG 887 — Sicherung nachmessen: wie oft, wann zuletzt, was steht aus */
     pruefSichernStand: function () {
       return { schmutzig: sichernSchmutzig, geplant: Boolean(sichernPlan), laeuft: Boolean(sichernLauf), zuletzt: sichernZuletzt,

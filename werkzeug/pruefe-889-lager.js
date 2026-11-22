@@ -34,7 +34,7 @@ const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
 const TYP = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp" };
-const NUR = (process.env.NUR || "ANZKVBTMQFL").split("");
+const NUR = (process.env.NUR || "ANZUSKVBTMQFL").split("");
 const schlaf = (ms) => new Promise((r) => setTimeout(r, ms));
 const med = (a) => { const b = a.slice().sort((x, y) => x - y); return b.length ? b[Math.floor((b.length - 1) / 2)] : null; };
 
@@ -45,7 +45,8 @@ function messen() {
   const ric = window.requestIdleCallback;
   if (ric) window.requestIdleCallback = function (f, o) {
     const chat = vonChat();
-    return ric.call(window, function (d) { const t = performance.now(); try { return f(d); } finally { if (chat && window.__m.an) window.__m.dauer.push(["leerlauf", performance.now() - t, t]); } }, o);
+    return ric.call(window, function (d) { const rest = d && typeof d.timeRemaining === "function" ? d.timeRemaining() : null, zeitlimit = Boolean(d && d.didTimeout);
+      const t = performance.now(); try { return f(d); } finally { if (chat && window.__m.an) window.__m.dauer.push(["leerlauf", performance.now() - t, t, rest, zeitlimit]); } }, o);
   };
   const huellen = (proto, namen) => namen.forEach((p) => {
     const d = Object.getOwnPropertyDescriptor(proto, p);
@@ -244,6 +245,109 @@ function server() {
     ok(c.aufgaben.length > 0 && c.maxAufgabe <= 16, "danach wieder nur das Geänderte, jede Aufgabe ≤ 16 ms", zeig(c));
   }
 
+  if (hat("U")) {
+    console.log("\n  U  Hauptfaden voll ausgelastet (CPU 4×, je Bild 20 ms belegt, 2 000 Zeilen): die Sicherung kommt trotzdem voran");
+    /* NACHGEBESSERT (Prüfung 889, Runde 1): ohne Leerlaufpause springt requestIdleCallback nur über sein Zeitlimit (2 s)
+       an, timeRemaining() ist 0. 889 machte dann je Rückruf EINEN Happen (50 Zeilen): 93,8 s bis ins Lager, 45 Rückrufe;
+       888 16,2 s, 9 Rückrufe (400 Zeilen je Rückruf). */
+    const P = await seite();
+    const cdp = await ctx.newCDPSession(P);
+    await P.evaluate(async () => { const raum = "l-u"; LiveChat.pruefRaum(raum); await LiveChat.pruefVerlaufAusLager(raum);
+      LiveChat.pruefVerlaufSetzen(window.__zeilen(2000, "U", 0, null)); await window.__fertig(raum); });
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+    const r = await P.evaluate(async () => {
+      const raum = "l-u", GRENZE = 60000;
+      const abstand = LiveChat.pruefSichernAbstand(); LiveChat.pruefSichernAbstand(0);
+      let an = true;
+      const brennen = () => { if (!an) return; const t = performance.now(); while (performance.now() - t < 20) {} requestAnimationFrame(brennen); };
+      requestAnimationFrame(brennen);
+      await new Promise((f) => setTimeout(f, 300));
+      window.__m.dauer = []; window.__m.an = true;
+      const t0 = performance.now();
+      LiveChat.pruefAnhaengen({ id: "U-neu", von: "p1", name: "Bea", art: "text", text: "neu unter Last", zeit: Date.now() });
+      let fertig = -1;
+      await new Promise((f) => setTimeout(f, 200));
+      while (performance.now() - t0 < GRENZE) {
+        const s = LiveChat.pruefSichernStand(), l = LiveChat.pruefLager ? LiveChat.pruefLager(raum) : { unterwegs: null };
+        if (!s.schmutzig && !s.geplant && !s.laeuft && !l.unterwegs) { fertig = performance.now() - t0; break; }
+        await new Promise((f) => setTimeout(f, 100));
+      }
+      window.__m.an = false; an = false;
+      LiveChat.pruefSichernAbstand(abstand);
+      const leer = window.__m.dauer.filter((x) => x[0] === "leerlauf");
+      const roh = await window.__roh(raum), ls = JSON.parse(localStorage.getItem("dma_livechat_chat_" + raum) || "[]");
+      const zeilen = roh.zeilen || roh.alt || [];
+      return { fertig: Math.round(fertig), grenze: GRENZE, rueckrufe: leer.length, ohneRest: leer.filter((x) => x[3] === 0).length, zeitlimit: leer.filter((x) => x[4]).length,
+               laengster: Math.max(0, ...leer.map((x) => x[1])), lagerN: zeilen.length, lagerLetzte: (zeilen.slice(-1)[0] || {}).id, lsN: ls.length, lsLetzte: (ls.slice(-1)[0] || {}).id };
+    });
+    await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
+    await P.close();
+    ok(r.rueckrufe > 0 && r.ohneRest >= r.rueckrufe * 0.8, "nachgestellt: kein Leerlauf (timeRemaining 0)", "bei " + r.ohneRest + " von " + r.rueckrufe + " Leerlauf-Rückrufen, über das Zeitlimit " + r.zeitlimit);
+    ok(r.fertig > 0 && r.fertig <= 40000 && r.lagerN === 2001 && r.lagerLetzte === "U-neu" && r.lsN === 300 && r.lsLetzte === "U-neu",
+       "die neue Zeile ist nach ≤ 40 s im Lager und im localStorage (888: 16,2 s; 889 vor der Nachbesserung 93,8 s)",
+       (r.fertig < 0 ? "nach " + r.grenze / 1000 + " s noch nicht fertig" : r.fertig + " ms") + ", Lager " + r.lagerN + " (" + r.lagerLetzte + "), localStorage " + r.lsN + " (" + r.lsLetzte + ")");
+    ok(r.rueckrufe > 0 && r.rueckrufe <= 20, "höchstens 20 Leerlauf-Rückrufe für 2 000 Zeilen (je Rückruf das Budget, nicht nur ein Happen)", r.rueckrufe + " Rückrufe");
+    ok(r.laengster <= 16, "trotzdem jeder Rückruf ≤ 16 ms", "längster " + r.laengster.toFixed(1) + " ms");
+  }
+
+  if (hat("S")) {
+    console.log("\n  S  Arbeitsspeicher: der Stand eines verlassenen Raums wird freigegeben (20 000 Zeilen)");
+    /* NACHGEBESSERT (Prüfung 889, Runde 1): lagerStand hielt den Text aller Stücke JEDES besuchten Raums für immer
+       (bei 20 000 Zeilen rund 6 MB mehr als 888). Im Raum braucht es ihn (nur das Geänderte schreiben), danach nicht. */
+    const P = await seite();
+    const cdp = await ctx.newCDPSession(P);
+    const heap = async () => { await cdp.send("HeapProfiler.collectGarbage"); await cdp.send("HeapProfiler.collectGarbage"); return (await cdp.send("Runtime.getHeapUsage")).usedSize / 1048576; };
+    const stand = (raum) => P.evaluate((raum) => LiveChat.pruefLager ? LiveChat.pruefLager(raum).stuecke !== null : null, raum);
+    /* Aufwärmen (derselbe Weg einmal mit einem anderen Raum: übersetzter Code, Rückrufe), dann der Ausgangsstand. Nach dem
+       Wechsel kommt im neuen Raum eine Zeile: erst dann gibt das Kennungs-Verzeichnis (kennungSchonDa, seit 887) die alte
+       Liste frei – das war schon in 888 so und gilt hier für beide Messungen gleich. */
+    const zyklus = async (raum, wo) => P.evaluate(async ({ raum, wo }) => {
+      LiveChat.pruefRaum(raum); await LiveChat.pruefVerlaufAusLager(raum);
+      LiveChat.pruefVerlaufSetzen(window.__zeilen(20000, wo, 0, null)); await window.__fertig(raum);
+      const abstand = LiveChat.pruefSichernAbstand(); LiveChat.pruefSichernAbstand(0);
+      LiveChat.pruefAnhaengen({ id: wo + "-neu", von: "p1", name: "Bea", art: "text", text: "neu", zeit: Date.now() });
+      await new Promise((f) => setTimeout(f, 100)); await window.__fertig(raum);
+      LiveChat.pruefSichernAbstand(abstand);
+    }, { raum, wo });
+    const hinaus = async (wo) => P.evaluate(async (wo) => {
+      LiveChat.pruefRaum("l-s-leer"); await LiveChat.pruefVerlaufAusLager("l-s-leer"); LiveChat.pruefVerlaufSetzen([]); await window.__fertig("l-s-leer");
+      LiveChat.pruefAnhaengen({ id: "leer-" + wo + "-" + Date.now(), von: "p2", name: "Cem", art: "text", text: "im anderen Raum", zeit: Date.now() });
+      await window.__fertig("l-s-leer");
+    }, wo);
+    await zyklus("l-s-warm", "W"); await hinaus("W");
+    const vorher = await heap();
+    await zyklus("l-s", "S");
+    const drin = await heap(), standDrin = await stand("l-s");
+    /* Raum verlassen: anderer Raum, dessen (leerer) Verlauf, eine Zeile dort */
+    await hinaus("S");
+    const weg = await heap(), standWeg = await stand("l-s");
+    /* ein später Rückläufer: das Lager des verlassenen Raums wird gelesen, während man woanders ist */
+    const spaet = await P.evaluate(async () => { const g = await LiveChat.pruefVerlaufAusLager("l-s"); return { n: g.length, letzte: (g.slice(-1)[0] || {}).id }; });
+    const standSpaet = await stand("l-s");
+    /* zurück, eine Zeile, und gleich wieder hinaus, während das Schreiben noch läuft */
+    const raus = await P.evaluate(async () => {
+      LiveChat.pruefRaum("l-s"); const g = await LiveChat.pruefVerlaufAusLager("l-s"); LiveChat.pruefVerlaufSetzen(g); await window.__fertig("l-s");
+      LiveChat.pruefAnhaengen({ id: "S-raus", von: "p1", name: "Bea", art: "text", text: "kurz vor dem Gehen", zeit: Date.now() });
+      LiveChat.pruefRaum("l-s-leer");   // sichert sofort (Raumwechsel), das Schreiben endet erst nach dem Wechsel
+      const unterwegs = LiveChat.pruefLager ? LiveChat.pruefLager("l-s").unterwegs : null;
+      LiveChat.pruefVerlaufSetzen([]); await window.__fertig("l-s-leer"); await new Promise((f) => setTimeout(f, 200));
+      LiveChat.pruefAnhaengen({ id: "leer-raus", von: "p2", name: "Cem", art: "text", text: "im anderen Raum", zeit: Date.now() });
+      await window.__fertig("l-s-leer");
+      const roh = await window.__roh("l-s"), z = roh.zeilen || roh.alt || [];
+      return { unterwegs, n: z.length, letzte: (z.slice(-1)[0] || {}).id, stand: LiveChat.pruefLager ? LiveChat.pruefLager("l-s").stuecke !== null : null };
+    });
+    const zurueck = await heap();
+    await P.close();
+    const mb = (x) => (x >= 0 ? "+" : "") + x.toFixed(1) + " MB";
+    if (standDrin !== null) ok(standDrin === true, "im Raum: der Stand (Text der Stücke) ist da – die nächste Sicherung schreibt nur das Geänderte");
+    if (standWeg !== null) ok(standWeg === false && standSpaet === false && raus.stand === false, "verlassen: der Stand ist weg – auch nach einem späten Lesen und nach einem Schreiben, das erst nach dem Wechsel endet",
+       "nach dem Wechsel " + standWeg + ", nach spätem Lesen " + standSpaet + ", Schreiben beim Gehen (" + raus.unterwegs + ") " + raus.stand);
+    ok(spaet.n === 20000 && spaet.letzte === "S-neu" && raus.n === 20000 && raus.letzte === "S-raus", "das Lager des verlassenen Raums ist vollständig (die Zeile kurz vor dem Gehen drin)",
+       "gelesen " + spaet.n + " (" + spaet.letzte + "), nach dem zweiten Gehen " + raus.n + " (" + raus.letzte + ")");
+    ok(weg - vorher <= 2 && zurueck - vorher <= 2, "Arbeitsspeicher nach dem Verlassen wieder wie vorher (≤ 2 MB darüber)",
+       "im Raum " + mb(drin - vorher) + ", nach dem Verlassen " + mb(weg - vorher) + ", nach Wiederkommen und Gehen " + mb(zurueck - vorher) + " (Heap nach GC, vorher " + vorher.toFixed(1) + " MB)");
+  }
+
   if (hat("K")) {
     console.log("\n  K  Kappen bei 20 000 Zeilen");
     const r = await pg.evaluate(async () => {
@@ -404,20 +508,33 @@ function server() {
     await A.evaluate(async (raum) => { LiveChat.pruefRaum(raum); await LiveChat.pruefVerlaufAusLager(raum); LiveChat.pruefVerlaufSetzen(window.__zeilen(3000, "M", 0, null)); await window.__fertig(raum); LiveChat.pruefSichernAbstand(0); }, raum);
     await B.evaluate(async (raum) => { LiveChat.pruefSichernAbstand(0); LiveChat.pruefRaum(raum); const g = await LiveChat.pruefVerlaufAusLager(raum);
       LiveChat.pruefVerlaufFensterAuf(); LiveChat.pruefEmpfangen({ art: "verlauf", von: "lager-nachbau", name: "Lager", zeilen: g }); LiveChat.pruefVerlaufFensterZu(); await window.__fertig(raum); LiveChat.pruefSichernAbstand(0); }, raum);
-    const schritt = async (P, id, weg) => {
-      await P.evaluate(async ({ raum, id, weg }) => {
-        LiveChat.pruefAnhaengen({ id, von: "p1", name: "Bea", art: "text", text: id, zeit: Date.now() });
+    const schritt = async (P, id, weg, vorn) => {
+      await P.evaluate(async ({ raum, id, weg, vorn }) => {
+        if (vorn) {   /* so viele ältere Zeilen vorn dazu, wie sie ein Ankömmling mitbringt */
+          const z0 = LiveChat.lage().nachrichten[0].zeit, alt = [];
+          for (let i = 0; i < vorn; i++) alt.push({ id: "Mv" + i, von: "p" + (i % 30), name: "Schüler" + (i % 30), art: "text", text: "älter " + i, zeit: z0 - (vorn - i) * 1000 });
+          LiveChat.pruefVerlaufFensterAuf(); LiveChat.pruefEmpfangen({ art: "verlauf", von: "m-ankoemmling", name: "Ankömmling", zeilen: alt }); LiveChat.pruefVerlaufFensterZu();
+        } else LiveChat.pruefAnhaengen({ id, von: "p1", name: "Bea", art: "text", text: id, zeit: Date.now() });
         if (weg) window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: false }));
         await new Promise((f) => setTimeout(f, 100)); await window.__fertig(raum);
-      }, { raum, id, weg });
+      }, { raum, id, weg, vorn: vorn || 0 });
       await schlaf(150);
       const soll = await P.evaluate(() => LiveChat.lage().nachrichten.map((n) => n.id).join(","));
-      const roh = await A.evaluate(async (raum) => { const r = await window.__roh(raum); return { ids: window.__ids(r.zeilen), fehlt: r.fehlt.length, bereich: r.bereich.length, stuecke: r.index ? r.index.stuecke.length : 0, letzte: LiveChat.pruefLager ? LiveChat.pruefLager(raum).letzte.slice(-1)[0] : null }; }, raum);
-      return { gleich: roh.ids === soll, fehlt: roh.fehlt, bereich: roh.bereich, stuecke: roh.stuecke, n: soll.split(",").length, letzte: roh.letzte };
+      const roh = await A.evaluate(async (raum) => { const r = await window.__roh(raum); return { ids: window.__ids(r.zeilen), fehlt: r.fehlt.length, bereich: r.bereich.length, stuecke: r.index ? r.index.stuecke.length : 0 }; }, raum);
+      /* wie der Schreibende geschrieben hat (art, alles neu?, Stücke, ok, raum) – aus SEINER Seite */
+      const letzte = await P.evaluate((raum) => LiveChat.pruefLager ? LiveChat.pruefLager(raum).letzte.slice(-1)[0] : null, raum);
+      return { gleich: roh.ids === soll, fehlt: roh.fehlt, bereich: roh.bereich, stuecke: roh.stuecke, n: soll.split(",").length, letzte };
     };
     const s1 = await schritt(A, "a1"), s2 = await schritt(B, "b1"), s3 = await schritt(A, "a2"), s4 = await schritt(B, "b2", true), s5 = await schritt(A, "a3");
-    [["A Leerlauf (a1)", s1], ["B Leerlauf (b1, A schrieb vorher)", s2], ["A Leerlauf (a2, B schrieb vorher)", s3], ["B pagehide (b2)", s4], ["A Leerlauf (a3, B schrieb vorher)", s5]].forEach(([was, s]) =>
+    /* NACHGEBESSERT (Prüfung 889, Runde 1): bis hier läuft die Stück-Einteilung der beiden Tabs nie auseinander – eine
+       Mutante, die den fremden Stand übergeht (immer nur das Geänderte schreiben), war damit grün. Jetzt bekommt A 700
+       ältere Zeilen vorn dazu (Verlauf eines Ankömmlings) und teilt neu ein; B kennt sie nicht und schreibt danach eine
+       Zeile – B muss ALLES schreiben (sonst bliebe A's Einteilung mit B's Verzeichnis liegen), danach wieder A. */
+    const s6 = await schritt(A, null, false, 700), s7 = await schritt(B, "b3"), s8 = await schritt(A, "a4");
+    [["A Leerlauf (a1)", s1], ["B Leerlauf (b1, A schrieb vorher)", s2], ["A Leerlauf (a2, B schrieb vorher)", s3], ["B pagehide (b2)", s4], ["A Leerlauf (a3, B schrieb vorher)", s5],
+     ["A Leerlauf (700 ältere Zeilen vorn, neu eingeteilt)", s6], ["B Leerlauf (b3, kennt die 700 nicht, A schrieb vorher)", s7], ["A Leerlauf (a4, B schrieb vorher)", s8]].forEach(([was, s]) =>
       ok(s.gleich && s.fehlt === 0 && s.bereich === s.stuecke, was + ": Lager = Verlauf dieses Tabs, vollständig", s.n + " Zeilen, Bereich " + s.bereich + "/" + s.stuecke + (s.letzte ? ", " + JSON.stringify(s.letzte) : "")));
+    ok(s6.n === 3703 && s7.n === 3003 && s8.n === 3704 && (!s7.letzte || s7.letzte[1] === true), "… die Einteilungen liefen auseinander, B schrieb alles neu", "A " + s6.n + " / B " + s7.n + " / A " + s8.n + " Zeilen" + (s7.letzte ? ", B " + JSON.stringify(s7.letzte) : ""));
     await B.close();
     /* zwei Räume, deren Namen ineinander passen; Aufräumen */
     const r = await A.evaluate(async () => {
