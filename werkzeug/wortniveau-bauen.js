@@ -15,7 +15,7 @@
    aller Wortschatz-Dateien, data-exercises.js, data-uebungen.js,
    data-italienisch.js in einem Sandkasten) – und schreibt es klein:
 
-     bau/wortniveau-<hash>.js   (≈ 25 KB, gepackt ≈ 9 KB)
+     bau/wortniveau-<hash>.js   (36 945 B, gepackt ≈ 15,6 KB – Stand 889, IXPEGkLC)
        (window.DMA_DATEN=window.DMA_DATEN||{}).WORTNIVEAU={
          "quelle": { "vokabeln/alltag.js": "<Stempel>", … alle 26 },
          "stufen": [ "<Wörter A1>", "<A2>", "<B1>", "<B2>", "<C1>", "<C2>" ],

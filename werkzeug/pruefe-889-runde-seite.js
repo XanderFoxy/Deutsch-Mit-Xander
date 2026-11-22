@@ -34,8 +34,20 @@
         diesen Teil 2,5 s zurück); es kommt trotzdem, genau einmal
      B10 wer gleich nach „Lernen" den Reiter „Satzbaukasten" tippt, bekommt
         satzbau.js sofort (vor dem Teil), genau einmal, und den Kasten
+     B11 (Nachbesserung, Prüfer) die Spiele unter „Lernen", die erst mit dem
+        GANZEN Wortschatz zeichnen (Flussfuchs, Setzerei, Wortkette,
+        Augenblick, Meine Sätze, Wortlisten) und „Alle Wörter dieses Textes in
+        eine Liste": warten sie (Platzhalter), sind 400 ms nach dem Öffnen
+        alle Wortschatz-Dateien angefordert (eilig) – die Wortkette zeichnet,
+        sobald er ganz da ist. B11r Gegenstück: ist man im Raum
+        (LiveChat.lage „drin"), bleibt es bei der Reihe (höchstens 4).
+     B12 (Nachbesserung) kennt der Browser transferSize nicht (Safari unter
+        16.4; hier: aus PerformanceResourceTiming.prototype gelöscht), lädt
+        der Wortschatz nach dem Kartentipp wie in 888 ganz zugleich (B1b
+        bleibt die Gegenprobe: mit transferSize die Reihe)
    Gegenprobe: WURZEL=<Baum mit 888> → B1, B1b, B2, B3, B8, B9 rot (B10 dort grün);
-   gegen ed33c26f (vor eilig) B4b rot.
+   gegen ed33c26f (vor eilig) B4b rot; gegen 46223744 (vor der Nachbesserung)
+   B11 ×7 und B12 rot, B11r grün.
    ===================================================================== */
 const fs = require("fs"), path = require("path"), http = require("http");
 
@@ -77,6 +89,8 @@ async function teilB(WURZEL, sage) {
     S.wnWeg = Boolean(o.wnWeg); S.wnFalsch = Boolean(o.wnFalsch); S.halten = Boolean(o.halten); S.wartend = []; S.basisMs = Number(o.basisMs) || 0;
     const ctx = await br.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, serviceWorkers: "block" });
     await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
+    /* B12: ein Browser ohne transferSize (wie Safari unter 16.4) */
+    if (o.ohneTransfer) await ctx.addInitScript(() => { try { delete PerformanceResourceTiming.prototype.transferSize; } catch (e) {} });
     await ctx.addInitScript(() => {
       try { localStorage.setItem("dma_tour_seen", "1"); localStorage.setItem("dma_tutor", "aus"); } catch (e) {}
       window.__r = { ws: null, frage: null };
@@ -117,7 +131,8 @@ async function teilB(WURZEL, sage) {
         await pg.waitForFunction((k) => { const b = document.getElementById("startBtn"); return b && !b.disabled && document.querySelector('#exerciseSetup .category-card.selected[data-cat="' + k + '"]'); }, k, { timeout: 30000 });
       }
       /* Nachmessung 889: wie viele Wortschatz-Dateien hat die Seite nach dem Kartentipp angefordert (Skript-Elemente)? */
-      const vokNachKarte = await pg.evaluate(() => ({ n: document.querySelectorAll('script[src*="vokabeln/"]').length, alle: VocabData.themenListe ? VocabData.themenListe().length : null }));
+      const vokNachKarte = await pg.evaluate(() => ({ n: document.querySelectorAll('script[src*="vokabeln/"]').length, alle: VocabData.themenListe ? VocabData.themenListe().length : null,
+        transfer: "transferSize" in PerformanceResourceTiming.prototype }));
       if (o.thema) {
         await pg.evaluate((t) => { const e = document.querySelector('[data-wortschatztopic="' + t + '"]'); e.scrollIntoView({ block: "center" }); e.click(); }, o.thema);
         await pg.waitForFunction((t) => { const b = document.querySelector('[data-wortschatztopic="' + t + '"]'); const s = document.getElementById("startBtn"); return b && b.getAttribute("aria-selected") === "true" && s && !s.disabled; }, o.thema, { timeout: 30000 });
@@ -207,6 +222,73 @@ async function teilB(WURZEL, sage) {
       zaehl(r.da && r.kasten && r.sb === 1 && !r.nachBasis && !r.pe.length,
         "B10 Reiter „Satzbaukasten“ gleich nach „Lernen“: satzbau.js sofort (vor dem Teil), genau einmal, der Kasten steht",
         "Teil geschickt " + r.basisAus + " ms, satzbau.js angefragt " + r.sbAb + " ms nach dem Tipp (" + r.sb + "×), Kasten " + (r.kasten ? "steht" : "FEHLT") + (r.pe.length ? ", Fehler: " + r.pe.join(" | ") : ""));
+    }
+    /* B11/B12 — Nachbesserung (Prüfer): wer auf den GANZEN Wortschatz wartet, bekommt ihn nicht in der Reihe */
+    const spielFall = async (o) => {
+      const s = await seite({ ohneTransfer: o.ohneTransfer });
+      try {
+        const { pg } = s;
+        await pg.click('.tape-tab[data-target="view-learn"]');
+        await pg.waitForFunction(() => { const g = document.querySelector("#exerciseSetup .category-grid .category-card"); return g && g.offsetParent !== null; }, null, { timeout: 30000 });
+        if (o.konto) await pg.evaluate(() => { Backend.currentUser = () => ({ id: "pruef", email: "pruef@example.invalid" }); });
+        if (o.raum) await pg.evaluate(() => { window.LiveChat.lage = () => ({ lage: "drin" }); });
+        const vorher = await pg.evaluate(() => document.querySelectorAll('script[src*="vokabeln/"]').length);
+        await pg.evaluate(o.oeffnen, o.arg);
+        await pg.waitForTimeout(400);
+        const r = await pg.evaluate((area) => ({ n: document.querySelectorAll('script[src*="vokabeln/"]').length, alle: VocabData.themenListe().length, ganz: VocabData.alleThemenDa(),
+          text: (area && document.getElementById(area) ? document.getElementById(area).textContent : "").replace(/\s+/g, " ").trim().slice(0, 90),
+          toast: [...document.querySelectorAll(".toast, #toast, [class*='toast']")].map((e) => e.textContent).join(" ").replace(/\s+/g, " ").slice(0, 90) }), o.area || null);
+        r.vorher = vorher;
+        if (o.zeichnen) {
+          const t0 = Date.now();
+          r.gezeichnet = await pg.waitForFunction(([area, platz]) => { const a = document.getElementById(area); return VocabData.alleThemenDa() && a && a.textContent.length > 0 && !a.textContent.includes(platz); },
+            [o.area, o.platz], { timeout: WS_MS * 12 + 20000 }).then(() => true, () => false);
+          r.zeichnenMs = Date.now() - t0;
+        }
+        r.pe = s.pe;
+        return r;
+      } finally { await s.ctx.close(); }
+    };
+    const pille = (sub) => { const e = document.querySelector('#learnSubnav [data-sub="' + sub + '"]'); e.click(); };
+    const SPIELE = [
+      { name: "Flussfuchs", sub: "sub-flussfuchs", area: "flussfuchsArea", platz: "sucht sich seine Steine" },
+      { name: "Setzerei", sub: "sub-setzerei", area: "setzereiArea", platz: "wird gefüllt" },
+      { name: "Wortkette", sub: "sub-wortkette", area: "wortketteArea", platz: "wird geschmiedet", zeichnen: true },
+      { name: "Augenblick", sub: "sub-augenblick", area: "augenblickArea", platz: "werden geholt" },
+      { name: "Meine Sätze", sub: "sub-meinesaetze", area: "meineSaetzeArea", platz: "wird geladen" },
+      { name: "Wortlisten (angemeldet)", sub: "sub-wortlisten", area: "wortlistenArea", platz: "wird geladen", konto: true },
+    ];
+    for (const sp of SPIELE) {
+      const r = await spielFall({ oeffnen: pille, arg: sp.sub, area: sp.area, zeichnen: sp.zeichnen, platz: sp.platz, konto: sp.konto });
+      const wartet = r.text.includes(sp.platz);
+      zaehl(wartet && r.alle > 4 && r.n === r.alle && (!sp.zeichnen || r.gezeichnet) && !r.pe.length,
+        "B11 " + sp.name + ": wartet auf den ganzen Wortschatz – 400 ms nach dem Öffnen alle Dateien angefordert (eilig)" + (sp.zeichnen ? ", zeichnet, sobald er ganz da ist" : ""),
+        "vor dem Öffnen " + r.vorher + ", danach " + r.n + " von " + r.alle + ", Platzhalter " + (wartet ? "ja" : "NEIN: " + JSON.stringify(r.text))
+        + (sp.zeichnen ? ", gezeichnet " + (r.gezeichnet ? r.zeichnenMs + " ms nach dem Blick" : "NEIN") : "") + (r.pe.length ? ", Fehler: " + r.pe.join(" | ") : ""));
+    }
+    {
+      /* „Alle Wörter dieses Textes in eine Liste" (Lesetexte, Gespräch, Kompass): angemeldet, Text da, Wortschatz unterwegs */
+      const r = await spielFall({ konto: true, oeffnen: () => {
+        const k = document.createElement("div"); k.className = "question-card";
+        k.innerHTML = '<p class="sammel-text">Am Morgen trinkt meine Schwester einen Kaffee und liest die Zeitung im Garten.</p><button type="button" data-text-in-liste="Sonde">Liste</button>';
+        document.getElementById("view-learn").appendChild(k);
+        k.querySelector("button").click();
+      } });
+      zaehl(/Wortschatz wird geladen/.test(r.toast) && r.alle > 4 && r.n === r.alle && !r.pe.length,
+        "B11 „Alle Wörter dieses Textes in eine Liste“: wartet auf den ganzen Wortschatz – alle Dateien angefordert (eilig)",
+        "vor dem Tipp " + r.vorher + ", danach " + r.n + " von " + r.alle + ", Hinweis " + JSON.stringify(r.toast) + (r.pe.length ? ", Fehler: " + r.pe.join(" | ") : ""));
+    }
+    {
+      const r = await spielFall({ raum: true, oeffnen: pille, arg: "sub-wortkette", area: "wortketteArea" });
+      zaehl(r.text.includes("wird geschmiedet") && r.alle > 4 && r.n <= 4 && !r.pe.length,
+        "B11r Wortkette im Raum (LiveChat.lage „drin“): die Reihe bleibt – höchstens 4 Dateien (Vorrang 1, die Leitung für Raum und Gespräch)",
+        "vor dem Öffnen " + r.vorher + ", danach " + r.n + " von " + r.alle + (r.pe.length ? ", Fehler: " + r.pe.join(" | ") : ""));
+    }
+    {
+      const r = await runde({ karten: ["wortstellung"], ohneTransfer: true });
+      zaehl(r.vok.transfer === false && r.vok.alle > 4 && r.vok.n === r.vok.alle && r.vorWs && r.total === 10 && !r.pe.length,
+        "B12 ohne transferSize (wie Safari unter 16.4): nach dem Kartentipp alle Wortschatz-Dateien zugleich wie in 888 (die Weiche sähe den Speicher nicht); die Runde wie in B1",
+        "transferSize " + (r.vok.transfer ? "DA" : "fehlt") + ", " + r.vok.n + " von " + r.vok.alle + " angefordert; " + kurz(r));
     }
     /* B8 — Gleichlauf in der Seite */
     {

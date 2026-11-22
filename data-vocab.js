@@ -156,9 +156,19 @@ const VocabData = (function () {
     const reihe = VOKABEL_THEMEN.map((t) => t[0]);
     alleLaufen = new Promise((fertig) => {
       const ohneInhalt = (e) => e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize;
+      /* Nachbesserung (Prüfer): die Weiche braucht transferSize und encodedBodySize. Safari unter 16.4 (alte iPhones,
+         die bei iOS 15 stehen bleiben) kennt beide nicht – dort wäre „undefined > 0" immer falsch, und Stammgäste
+         bekämen die Reihe auch dann, wenn alles aus dem Speicher kommt (in Chromium vor der Weiche gemessen: „wieder"
+         Karte → startklar +41 ms, 6 von 6). Kann die Seite Speicher und Leitung nicht unterscheiden, gehen darum alle
+         Dateien zugleich hinaus wie in 888 (ebenso, wenn Resource Timing oder der Beobachter versagen). */
+      let blind = true;
+      try {
+        blind = !(typeof PerformanceObserver !== "undefined" && typeof PerformanceResourceTiming !== "undefined"
+          && "transferSize" in PerformanceResourceTiming.prototype && "encodedBodySize" in PerformanceResourceTiming.prototype);
+      } catch (e) { blind = true; }
       let schonDa = false;
-      try { schonDa = performance.getEntriesByType("resource").some((e) => /\/(?:min\/)?data-vocab\.js(?:\?|$)/.test(e.name) && ohneInhalt(e)); } catch (e) { schonDa = false; }
-      let i = 0, offen = 0, zugleich = (schonDa || eiligAn) ? reihe.length : VOKABEL_ZUGLEICH, ende = false, beob = null;
+      if (!blind) try { schonDa = performance.getEntriesByType("resource").some((e) => /\/(?:min\/)?data-vocab\.js(?:\?|$)/.test(e.name) && ohneInhalt(e)); } catch (e) { blind = true; }
+      let i = 0, offen = 0, zugleich = (blind || schonDa || eiligAn) ? reihe.length : VOKABEL_ZUGLEICH, ende = false, beob = null;
       const weiter = () => {
         if (ende) return;
         if (i >= reihe.length && !offen) { ende = true; reiheWecken = null; try { if (beob) beob.disconnect(); } catch (e) {} fertig(); return; }
@@ -169,7 +179,7 @@ const VocabData = (function () {
           p.then(() => {}, () => {}).then(() => { offen--; weiter(); });
         }
       };
-      if (!schonDa) try {
+      if (!blind && !schonDa) try {
         beob = new PerformanceObserver((liste) => {
           if (zugleich !== VOKABEL_ZUGLEICH) return;
           if (liste.getEntries().some((e) => /\/vokabeln\/[a-z0-9-]+\.js/.test(e.name) && ohneInhalt(e))) {
@@ -178,7 +188,7 @@ const VocabData = (function () {
           }
         });
         beob.observe({ type: "resource" });
-      } catch (e) { beob = null; }
+      } catch (e) { beob = null; zugleich = reihe.length; }
       reiheWecken = () => { if (zugleich !== reihe.length) { zugleich = reihe.length; weiter(); } };
       weiter();
     }).then(() => WORDS.length > 0);

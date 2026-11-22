@@ -10654,6 +10654,16 @@
   function wortschatzBereit() {
     return (VocabData.ladeWoerter ? VocabData.ladeWoerter() : Promise.resolve(true));
   }
+  /* FASSUNG 889, Nachbesserung (Prüfer): die Spiele unter „Lernen", die erst mit dem GANZEN Wortschatz zeichnen
+     (Flussfuchs, Setzerei, Wortkette, Augenblick, Meine Sätze, Wortlisten), und „Alle Wörter dieses Textes in eine
+     Liste" warten auf ihn – nicht nur „Runde starten". Seit 889 lädt er in der Reihe (höchstens 4 Dateien zugleich,
+     data-vocab.js), auf 4G mit Konto kalt 0,1–0,4 s später ganz; wer wartet, bekommt darum wie in 888 alle übrigen
+     Dateien zugleich (VocabData.eilig). Nicht, solange das Klassenzimmer offen ist oder man im Raum ist (ruheImRaum:
+     liest nur Attribute und die Lage des Chats, kein Layout) – dort hält die Reihe die Leitung für Raum und Gespräch
+     frei (Vorrang 1). */
+  function wortschatzEilig() {
+    try { if (VocabData.eilig && !ruheImRaum()) VocabData.eilig(); } catch (e) { /* dann eben in der Reihe */ }
+  }
   /* Wie wortschatzNachziehen(), aber MIT Anstoss.
      ------------------------------------------------------------
      GEMELDET: „Dass man in den Text klicken kann und die
@@ -79808,7 +79818,7 @@
       area.innerHTML = `<div class="question-card" style="text-align:center;">
         <p class="eyebrow">🦊 DER FUCHS AM FLUSS</p>
         <p class="empty-note">Der Fuchs sucht sich seine Steine zusammen …</p></div>`;
-      wortschatzBereit().then(() => renderFlussfuchs());
+      wortschatzEilig(); wortschatzBereit().then(() => renderFlussfuchs());
       return;
     }
     if (!flussSession) neueFlussSession();
@@ -80085,7 +80095,7 @@
     if (!text || text.trim().length < 40) { showToast("Hier steht noch kein Text zum Sammeln."); return; }
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       showToast("Der Wortschatz wird geladen — gleich noch einmal antippen.");
-      wortschatzBereit();
+      wortschatzEilig(); wortschatzBereit();
       return;
     }
     const ergebnis = textAuswerten(text, 120);
@@ -80117,7 +80127,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">📋 MEINE WORTLISTEN</p>
         <p class="empty-note">Der Wortschatz wird geladen …</p></div>`;
-      wortschatzBereit().then(() => renderWortlisten());
+      wortschatzEilig(); wortschatzBereit().then(() => renderWortlisten());
       return;
     }
     const listen = meineWortlisten();
@@ -80430,7 +80440,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa()) && setzPool().length < 200) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">🅰️ DIE SETZEREI</p>
         <p class="empty-note">Der Setzkasten wird gefüllt …</p></div>`;
-      wortschatzBereit().then(() => renderSetzerei());
+      wortschatzEilig(); wortschatzBereit().then(() => renderSetzerei());
       return;
     }
     if (!setzSession) neueSetzSession();
@@ -80666,7 +80676,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">⛓️ DIE WORTKETTE</p>
         <p class="empty-note">Die Kette wird geschmiedet …</p></div>`;
-      wortschatzBereit().then(() => renderWortkette());
+      wortschatzEilig(); wortschatzBereit().then(() => renderWortkette());
       return;
     }
     if (!ketteSession) neueKetteSession();
@@ -80841,7 +80851,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">👁️ AUGENBLICK!</p>
         <p class="empty-note">Die Sätze werden geholt …</p></div>`;
-      wortschatzBereit().then(() => renderAugenblick());
+      wortschatzEilig(); wortschatzBereit().then(() => renderAugenblick());
       return;
     }
     if (!augSession) neueAugSession();
@@ -81032,7 +81042,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">🧩 MEINE SÄTZE</p>
         <p class="empty-note">Der Wortschatz wird geladen …</p></div>`;
-      wortschatzBereit().then(() => renderMeineSaetze());
+      wortschatzEilig(); wortschatzBereit().then(() => renderMeineSaetze());
       return;
     }
     if (!msSession) neueMsSession();
