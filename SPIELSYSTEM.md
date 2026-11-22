@@ -8770,3 +8770,299 @@ bleiben 888 (vorher und nachher nachgesehen).
 887-modul-app 139 ok / 0 (118 + A5-Nachtrag, R-Zählung, E 10, E2 3, X 3, D1 3), 887-bruecke 19/0, 887-bau 42/0,
 885-schlank 43/0, 876-start-schlank 62/0, 884-notweg 91/0, 885-swvorladen 32/0, 887-supabase 16/0 – jede mit Rückgabe 0,
 ohne Änderung am Baum während des Laufs.
+
+## Fassung 889 — Chat-Lager in Stücken (Livestream, Vorrang 1)
+
+Stand 16.11.2026, Arbeitsbaum `dmx-lager`, Zweig `lager-889` ab 888 (`4bd701b3`), Sicherungszweig
+`claude/sicherung-889-lager`. Für Xander unsichtbar (Aussehen, Größe, Bedienung wie 888); keine zusätzliche
+Supabase-Abfrage; nur `livechat.js` (und `min/livechat.js`, Stempel). `DMA_VERSION` bleibt 888.
+
+### Was vorher war
+Der Chatverlauf eines Raums lag im Lager (IndexedDB `dma_klassenzimmer`, Fach `bilder`) als EIN Text unter
+`chat:<raum>`. Jede Sicherung – im Leerlauf höchstens alle 20 s (887) und sofort bei pagehide/verdeckt/Raumwechsel/
+verlassen/leeren – verwandelte den ganzen Verlauf in Text und schrieb ihn ganz neu: bei 7 000 Zeilen 1,1–1,7 Mio.
+Zeichen je Sicherung, bei 20 000 Zeilen dreimal so viel. 887 hatte das Umwandeln schon auf Leerlaufpausen verteilt;
+der Schluss (Text zusammensetzen + ein put des ganzen Texts) blieb ein Stück (Logbuch 887: 70–170 ms im damaligen
+Nachbau, „Für 888: das Lager in Stücken").
+
+### Was jetzt gilt (livechat.js)
+- **Format:** `chatix:<raum>` = Inhaltsverzeichnis `{ v: 1, stand, zeilen, zeichen, naechste, stuecke: [[nummer, zeilen], …] }`
+  (mit `zeit`, altert wie bisher 60 Tage); `chatst:<Länge des Raumnamens>:<raum>:<nummer>` = je höchstens **600 Zeilen**
+  als JSON-Text (ohne `zeit`: die Stücke altern mit ihrem Verzeichnis). Die Länge im Schlüssel trennt Räume, deren Namen
+  ineinander passen („m" und „m:1").
+- **Einteilung (`lagerEinteilen`):** ein Stück behält seine Nummer, solange seine erste Zeile (Kennung) dieselbe bleibt.
+  Neue Zeilen wachsen ins letzte Stück, ein volles wird geteilt; das Kappen auf 20 000 Zeilen kürzt nur das erste Stück.
+  Zu zersplittert (viele Zeilen mittendrin weg) → neu in volle Stücke.
+- **Sicherung im Leerlauf (`chatSichernStueckweise`):** wie 887 in Leerlaufpausen, jetzt feiner (je Schritt Happen zu
+  50 Zeilen in Text, bis 6 ms; 888: 400 Zeilen, bis 12 ms + ein Stück). Gibt es gar keinen Leerlauf (requestIdleCallback
+  springt erst über sein Zeitlimit von 2 s an, `timeRemaining()` = 0), nutzt der Schritt die 6 ms trotzdem ganz
+  (`sichernFristReicht`; bis zur Nachbesserung Runde 1 war es dann nur EIN Happen je 2 s, siehe dort). Jeder Happen wird gleich an seiner Stelle im
+  gelagerten Text des Stücks verglichen (`startsWith` ab Position – kein Zusammensetzen gleicher Stücke). Geschrieben
+  wird nur, was anders ist, meist das letzte Stück und das Verzeichnis (`lagerSchreibenGeprueft`): in EINER Transaktion,
+  die zuerst das Verzeichnis liest – steht dort noch der eigene `stand`, nur die geänderten Stücke, sonst (anderer Tab,
+  altes Format, fremder Stand) Bereich leeren und alles. Die Aufträge gehen Stück für Stück hinaus (der nächste im
+  onsuccess des vorigen, dieselbe Transaktion bleibt offen), kein put kopiert mehr den ganzen Verlauf auf einmal.
+- **Sofortige Sicherung (`chatSichern` → `lagerSchreibenSofort`):** muss alles im selben Augenblick abschicken und kann
+  nicht erst lesen – sie leert den Bereich des Raums und schreibt ALLE Stücke + Verzeichnis in einer Transaktion
+  (so viel wie 888 mit dem ganzen Text), bricht laufende Leerlauf-Schreibvorgänge desselben Raums vorher ab
+  (`lagerLaufend`) und schließt mit `commit()`. Wirft ein Auftrag, wird die Transaktion abgebrochen (vorher wäre ein
+  halber Stand geblieben – gefunden mit der eigenen Sonde, V3).
+- **Unterwegs = ausstehend:** `chatSichernOffenes` (pagehide, verdeckt, Raumwechsel) sichert auch dann sofort, wenn noch
+  ein Leerlauf-Schreiben Schritte vor sich hat – beim Weggehen kämen sie nicht mehr.
+- **Lesen (`chatAusLager` → `lagerVerlaufLesen`):** altes Format, Verzeichnis und alle Stücke in EINER Lese-Transaktion
+  (ein Schnappschuss); je Stück ein `JSON.parse`, zusammengesetzt mit `concat` (ein kaputtes Stück fiele allein weg).
+  Der gelesene Stand (Nummern, erste Kennungen, Texte) ist die Grundlage der nächsten Sicherung (`lagerStand`) – nur
+  für den Raum, in dem man ist; der eines verlassenen Raums wird freigegeben (`lagerStandFreigeben`, Nachbesserung
+  Runde 1).
+- **Altes Format:** `chat:<raum>` wird weiter gelesen und beim ersten Schreiben in derselben Transaktion gelöscht
+  (verlustfrei überführt). Liegen beide da (eine noch offene 888-Seite schrieb nach der Umstellung), werden sie
+  vereinigt (`verschmelzen`, keine Zeile doppelt).
+- **Aufräumen (`lagerAufraeumen`):** mit einem 60 Tage alten Verzeichnis gehen seine Stücke; Stücke ohne Verzeichnis
+  (verwaist) gehen ebenfalls.
+- **Unverändert:** localStorage-Teil (300 Zeilen, Halbieren bei vollem Speicher), Fototafel, Profilfotos/Sprachnachrichten/
+  Chatbilder je einmal im Lager, der `lagerGelesen`-Schutz, der 20-s-Abstand, `sicherungStand()` (Zeichen = Größe des
+  gesicherten Verlaufs) für die Feldmessung.
+- **Für Sonden:** `LiveChat.pruefLager(raum, stellen)` (Stand, Schreibvorgänge, Grenzen verstellbar),
+  `LiveChat.pruefLagerAufraeumen()`.
+
+### Was dabei gefunden und gleich behoben wurde
+- **Halber Stand bei einem Wurf (eigene Sonde, V3):** warf im sofortigen Schreiben ein `put` (etwa „kein Platz"), war die
+  Transaktion schon mit dem Leeren des Bereichs unterwegs und wurde nicht abgebrochen – es blieben 2 Stücke ohne Verzeichnis
+  liegen (das alte Format war noch lesbar, aber mit vorhandenem Verzeichnis wären alte Stücke gelöscht gewesen). Jetzt
+  `t.abort()` in jedem Fehlerweg.
+- **Lesen war zuerst langsamer:** Stücke zu 400 Zeilen lasen sich langsamer als der eine Text (Lager im Arbeitsspeicher
+  45 gegen 32 ms, auf der Platte 46 gegen 45 ms). Gemessen je Stückgröße (schwere Seite, CPU 4×, 7 000 Zeilen, Lager
+  auf der Platte, Median aus 10): 200 → 50, 300 → 46, 400 → 46, **600 → 34**, 1 200 → 35 ms, ein Text → 45 ms. Darum 600 Zeilen. Bei 20 000 Zeilen war auch das noch
+  langsamer, bis der Verlauf je Stück geparst und mit `concat` zusammengesetzt wurde (EIN parse über den zusammengesetzten
+  Text muss ihn erst flach kopieren): Holen 16 gegen 30 ms, Parsen 41 gegen 50 ms (888: ein Text).
+- **Gesamt-Rechenzeit der Sicherung:** der erste Stand verglich jedes Stück, indem er es zusammensetzte – das machte die
+  Sicherung in Summe teurer als 888 (Sonde Z, leichte Seite: 42 gegen 22 ms). Jetzt wird Happen für Happen an seiner
+  Stelle verglichen (`startsWith`), gleiche Stücke werden gar nicht zusammengesetzt (24 ms).
+- **Messfehler im eigenen Werkzeug:** die Rückrufe allein (Leerlauf, IndexedDB) zeigten bei 888 nur ≤ 13–25 ms – 888 legt
+  den Text aber in einem `.then` NACH dem Leerlauf-Rückruf ins Lager; das sieht nur die ganze Aufgabe. Messung und Sonde Z
+  zählen darum die ganze Aufgabe aus der Chromium-Spur. Mit dem alten Maß war Z auf 888 grün; jetzt rot (s. u.).
+
+### Messung (Nachbau, verschränkt gegen 888, mit A/A)
+Werkzeuge im Baum (die 887-Werkzeuge im Scratchpad waren mit dem Neustart weg): `werkzeug/messe-889-lager.js` (Nachbau)
+und `werkzeug/messe-889-laden.js` (Lesen mit dem Lager auf der Platte). Nachbau: echte Seite (min/), Telefon-Ansicht
+390×844, Klassenzimmer offen (`pruefSitz`, 6 andere im Raum), Raum mit 7 000 bzw. 20 000 Zeilen im Lager, Profilfotos bei
+3 von 30 Autoren, CPU 4×. Gemessen: BETRETEN (300 Zeilen aus dem localStorage einmischen und zeichnen, dann den ganzen
+Verlauf aus dem Lager – darin „Verlauf laden" – einmischen und zeichnen, +1 s), FLUT (50 Zeilen in 50 s über den echten
+Empfang `pruefEmpfangen`; die Leerlauf-Sicherung läuft wie im Feld alle ≥ 20 s, je Lauf 2–3 Mal). Jede Aufgabe des
+Hauptfadens aus der Chromium-Spur (`toplevel`); „Aufgabe der Sicherung" = die ganze Aufgabe, in der ein Leerlauf- oder
+IndexedDB-Rückruf der Sicherung lief (samt Mikroaufgaben). Vergleichsbaum 888 = `git archive 4bd701b3` (schlank,
+`/tmp/claude-0/v888`); Reihenfolge abwechselnd 889 → 888 → 888 → 889 …; A/A = 888 gegen 888.
+
+**7 000 Zeilen** (je Lauf; 888 und 889 je 3 Läufe, A/A 888 2 Läufe):
+
+| | 888 | A/A (888 gegen 888) | **889** |
+|---|---|---|---|
+| längste Aufgabe der Sicherung | 52,8 / 39,6 / 49,6 ms | 42,3 / 44,2 ms | **17,2 / 14,4 / 10,3 ms** |
+| Aufgaben der Sicherung über 16 ms | 4 / 3 / 3 | 3 / 3 | **1 / 0 / 0** |
+| lange Bilder (LoAF ≥ 50 ms) aus der Leerlauf-Sicherung | 96 ms / – / 102 ms | 76 ms / – | **keins** |
+| Rechenzeit aller Sicherungen im Lauf | 212 / 159 / 152 ms | 179 / 167 ms | **103 / 138 / 97 ms** |
+| Flut: längste Aufgabe | 71 / 67 / 68 ms | 44 / 60 ms | 57 / 61 / 54 ms |
+| Flut: Blockade (Summe über 50 ms) | 24 / 17 / 18 ms | 0 / 10 ms | 7 / 11 / 4 ms |
+| Betreten: längste Aufgabe | 90 / 150 / 93 ms | 73 / 91 ms | 87 / 159 / 99 ms |
+| Verlauf laden (Lager im Arbeitsspeicher*) | 69 / 89 / 61 ms | 67 / 70 ms | 79 / 129 / 99 ms (Stand vor `concat`) |
+
+**20 000 Zeilen** (je 2 Läufe):
+
+| | 888 | **889** |
+|---|---|---|
+| längste Aufgabe der Sicherung | 100,2 / 129,6 ms | **12,8 / 13,1 ms** |
+| Aufgaben über 16 / über 50 ms | 3 / 2 und 3 / 2 | **0 / 0** |
+| lange Bilder (LoAF ≥ 50 ms) aus der Leerlauf-Sicherung | 100, 94 ms und 53, 184, 89 ms | **keins** |
+| Rechenzeit aller Sicherungen im Lauf | 398 / 393 ms | **131 / 208 ms** |
+| Flut: längste Aufgabe | 100 / 130 ms | 77 / 71 ms |
+| Flut: Blockade | 129 / 184 ms | **27 / 21 ms** |
+| Flut: Aufgaben über 50 ms | 4 / 4 | 1 / 1 |
+| Betreten: längste Aufgabe | 149 / 127 ms | 133 / 151 ms |
+| Verlauf laden (Arbeitsspeicher*) | 114 / 112 ms | 136 / 159 ms (Stand vor `concat`) |
+
+\* Playwright hält die IndexedDB in flüchtigen Kontexten im Arbeitsspeicher; dort liest sich ein großer Wert anders als
+auf einem Gerät. „Verlauf laden" darum zusätzlich mit eigenem Profil auf der Platte (`messe-889-laden.js`, schwere Seite,
+CPU 4×, je Lauf Median aus 9 Lesungen):
+
+| Verlauf laden, Lager auf der Platte (Endstand) | 888 | **889** |
+|---|---|---|
+| 7 000 Zeilen (je 3 Läufe) | 49,8 / 52,4 / 37,3 ms (Median 49,8) | **32,2 / 29,3 / 28,0 ms (Median 29,3)** |
+| längster IndexedDB-Rückruf beim Lesen (7 000) ¹ | 7,4 ms | 3,7 ms |
+| 20 000 Zeilen (je 3 Läufe) | 91,3 / 92,2 / 85,9 ms (Median 91,3) | **92,2 / 88,0 / 85,3 ms (Median 88,0)** – gleich |
+| längster IndexedDB-Rückruf beim Lesen (20 000) ¹ | 21,0 ms | 11,1 ms |
+
+¹ NACHGEBESSERT (Prüfung Runde 1): diese Zeile misst nur den IndexedDB-Rückruf selbst. `JSON.parse` und `concat` laufen
+danach als Mikroaufgaben in DERSELBEN Aufgabe (in 888 wie in 889) und fehlen in der Zahl. Die Aufgabe beim Betreten
+bleibt also ein Stück und ist nicht „halb so lang" – sie ist um das kürzer, was auch die Gesamtzeit „Verlauf laden"
+zeigt (Parsen allein bei 20 000 Zeilen 41 gegen 50 ms, siehe „gefunden"). Die Gesamtzeiten in der Tabelle stimmen.
+
+**Ehrlich zu den Zahlen:**
+- Was sich klar über dem Rauschen bewegt, ist die Sicherung selbst: bei 7 000 Zeilen längste Aufgabe 40–53 ms (888, A/A
+  42–44) → 10–17 ms; bei 20 000 Zeilen 100–130 ms → 13 ms; dazu keine langen Bilder (LoAF ≥ 50 ms) mehr aus dem Leerlauf
+  (888: 76–184 ms) und weniger Rechenzeit (7 000 Zeilen ≈ 0,6×, 20 000 Zeilen ≈ 0,3–0,5×). Geschrieben wird je Sicherung meist ein Stück (≈ 30–90 K
+  Zeichen) statt des ganzen Verlaufs (1,1 bzw. 3,3 Mio. Zeichen).
+- Ziel „kein Bild > ~16 ms aus der Sicherung": in 7 von 8 gemessenen 889-Läufen erreicht; einmal 17,2 ms (7 000 Zeilen,
+  R0; der Rückruf selbst 11,8 ms – der Rest lag in derselben Aufgabe, vermutlich eine Speicherbereinigung).
+- Flut und Betreten bei 7 000 Zeilen: die Unterschiede liegen im A/A-Rauschen (888 gegen 888: Flut längste 44–71 ms,
+  Betreten 73–150 ms). Bei 20 000 Zeilen ist die Flut sichtbar ruhiger (Blockade 129/184 → 27/21 ms, Aufgaben über 50 ms
+  4 → 1) – das sind genau die Sicherungen von 888.
+- Die 70–170 ms aus 887 waren LoAF-Bilder (Bild samt Zeichnen); die ganze Aufgabe der 888-Sicherung lag hier bei 7 000
+  Zeilen bei 40–53 ms, ihr Bild bei 76–102 ms.
+- Verlauf laden im flüchtigen Kontext (Lager im Arbeitsspeicher, nicht wie auf einem Gerät) war im Nachbau mit 889 langsamer
+  (Tabellen oben, Stand VOR dem Umbau auf `concat`); auf der Platte (wie auf einem Gerät) ist es mit dem Endstand schneller
+  (7 000) bzw. gleich (20 000). Der längste IndexedDB-Rückruf ist halb so lang, die ganze Aufgabe beim Lesen aber nicht:
+  Parsen und `concat` laufen in derselben Aufgabe danach (Fußnote ¹, nachgebessert).
+
+### Nachbesserung (Prüfung Runde 1)
+Vier Befunde des Prüfers, alle behoben (Stand 22.11.2026, Commits 7629ab01, 947f8382, faad2a8f und der Logbuch-Commit).
+
+1. **Leerlauf-Sicherung unter Volllast (wichtig).** Ist der Hauptfaden voll ausgelastet (Livestream mit vielen Bildern,
+   schwaches Gerät), gibt es keine Leerlaufpause: `requestIdleCallback` springt erst über sein Zeitlimit (2 s) an,
+   `timeRemaining()` ist 0. Die Bedingung „`timeRemaining() > 1`" beendete den Schritt dann nach EINEM Happen von
+   50 Zeilen – rund 1 ms Arbeit je 2 s. Prüfer-Nachstellung (2 000 Zeilen, rAF-Schleife mit 20 ms je Bild, CPU 4×):
+   889 93,8 s und 45 Rückrufe bis ins Lager, 888 16,2 s und 9 Rückrufe; hochgerechnet bei 20 000 Zeilen rund 13 min
+   statt rund 100 s. So lange lag nichts Neues im Gerät, auch nicht die 300 Zeilen im localStorage (`kurzLegen` kommt
+   erst am Ende des Laufs), und ein langer Lauf wird öfter verworfen, wenn `zustand.nachrichten` ersetzt wird. Mein
+   Bericht oben („bis 6 ms je Schritt") hat diesen Tausch verschwiegen: beim Zeitlimit wurde das Budget gar nicht genutzt.
+   **Jetzt** (`sichernFristReicht`): nach dem Zeitlimit (`didTimeout`) nutzt der Schritt die 6 ms ganz; in einer echten
+   Leerlaufpause gilt weiter `timeRemaining() > 1`. Gemessen mit der neuen Sonde U (dieselbe Last, 2 000 Zeilen + 1):
+
+   | bis die neue Zeile im Lager und im localStorage ist | 888 (A/A: 2 Läufe) | 889 vor der Nachbesserung (Mutante) | **889** (3 Läufe) |
+   |---|---|---|---|
+   | Zeit | 21,3 / 21,3 s | nach 60 s noch nicht fertig (Lager und localStorage ohne die neue Zeile) | **13,3 / 13,3 / 13,3 s** |
+   | Leerlauf-Rückrufe (alle über das Zeitlimit, `timeRemaining` 0) | 9 / 9 | 28 in 60 s | **5 / 5 / 5** |
+   | längster Rückruf (nur der Rückruf selbst) | 3,7 / 3,8 ms | 5,1 ms | 8,7 / 13,5 / 7,5 ms |
+
+   Je Rückruf im 3. Lauf: 1,3 (Plan) · 7,5 und 5,0 (Text, 2 000 Zeilen in zwei Schritten) · 4,1 (localStorage) · 1,1 ms
+   (Lager). Die 13,5 ms im 2. Lauf waren ein einzelner Ausreißer (vermutlich eine Speicherbereinigung im Rückruf). Ehrlich:
+   die Zahl misst nur die Rückrufe; 888 legt den ganzen Text danach in einem `.then` in derselben Aufgabe ins Lager (siehe
+   Z), seine ganze Aufgabe ist also länger als 3,7 ms. Ohne Last (Sonde Z, ganze Aufgaben aus der Spur) unverändert
+   6,5–7,3 ms. Die 888-Zahl hier (21,3 s) liegt über der des Prüfers (16,2 s): in der Sonde kamen alle 9 Rückrufe über
+   das Zeitlimit, beim Prüfer bekam einer eine echte Pause; verglichen wird darum in derselben Sonde.
+2. **Arbeitsspeicher je besuchtem Raum (klein).** `lagerStand` hielt den fertigen Text aller Stücke für jeden besuchten
+   Raum und gab ihn nie frei (888 verwarf den Text nach dem put). Prüfer: bei 20 000 Zeilen +8,8–9,4 MB gegen +2,8–3,3 MB
+   (888), also rund 6 MB mehr je großem Raum (ü und Emoji machen den Text zweibytig). **Jetzt** (`lagerStandFreigeben`):
+   der Stand eines verlassenen Raums wird freigegeben – beim Betreten eines anderen Raums (`betreten`, auch
+   `pruefRaum`), und wenn ein Schreiben erst nach dem Wechsel endet (`lagerFertig`); ein spätes Lesen eines verlassenen
+   Raums setzt keinen Stand mehr (`chatAusLager`). Kehrt man zurück, liest `chatAusLager` ihn neu; fehlt er doch einmal,
+   schreibt die nächste Sicherung einfach alles (wie bei einem fremden Stand). Sonde S (20 000 Zeilen, Heap nach GC,
+   gegenüber dem Stand nach einem Aufwärm-Durchgang):
+
+   | Heap nach GC | 888 (2 Läufe) | 889 vor der Nachbesserung (Mutante) | **889** (3 Läufe) |
+   |---|---|---|---|
+   | im Raum (Verlauf da, gesichert) | +4,0 / +3,9 MB | +9,7 MB | +9,7 / +9,7 / +9,7 MB |
+   | nach dem Verlassen (anderer Raum, eine Zeile dort) | +0,0 / +0,0 MB | **+5,8 MB** | **+0,1 / +0,0 / +0,0 MB** |
+   | nach Wiederkommen und sofort wieder Gehen | +0,1 / +0,1 MB | +5,8 MB | +0,1 / +0,1 / +0,1 MB |
+
+   **Bewusst so gelassen:** im Raum selbst bleibt der Text (rund +6 MB bei 20 000 Zeilen gegenüber 888, bei 7 000 Zeilen
+   entsprechend etwa +2 MB, nicht eigens gemessen) –
+   er ist es, der „nur das Geänderte schreiben" möglich macht (Vergleich mit `startsWith`, nativ). Ohne ihn müsste jede
+   Sicherung wieder alles schreiben wie 888, oder je Stück eine Prüfsumme in JS über jeden Happen rechnen (geschätzt
+   +20–40 % Rechenzeit der Sicherung, dazu ein, wenn auch winziges, Kollisionsrisiko bei einer gleich langen Änderung).
+   Vorschlag, falls alte Telefone knapp werden: Länge + 2×32-Bit-Prüfsumme je Stück, vorher gemessen. Nebenbefund (seit
+   887, nicht angefasst): das Kennungs-Verzeichnis (`kennungSchonDa`) hält die alte Liste, bis im neuen Raum die erste
+   Zeile kommt – darum misst S „nach dem Verlassen" nach einer Zeile im anderen Raum, für 888 wie für 889 gleich.
+3. **Sonde M ohne Biss beim Schreiben mit mehreren Tabs (klein).** In M lief die Stück-Einteilung der beiden Tabs nie
+   auseinander; eine Mutante, die den fremden Stand im Verzeichnis übergeht (`voll = !basisStand`), war in M grün. Jetzt
+   in M: A bekommt 700 ältere Zeilen vorn dazu (Verlauf eines Ankömmlings) und teilt neu ein (8 Stücke), B kennt sie
+   nicht und schreibt danach eine Zeile – B muss alles schreiben –, danach wieder A. Echter Code: 3 703 / 3 003 / 3 704
+   Zeilen, Bereich 8/8 · 6/6 · 8/8, B schrieb alles neu (`["geprueft",true,6,…]`). **Gegenprobe** mit der Mutante:
+   2 rot (B: Bereich 8/6 – A's Stücke bleiben liegen; „B schrieb alles neu" nicht erfüllt). Wie beim Prüfer
+   (`zwei-tabs.js`) verliert die Mutante beim nächsten Schreiben von A Zeilen; der echte Code ist richtig.
+4. **„Längster Rückruf beim Lesen" ehrlich benannt (klein).** Die Zeilen 21,0 → 11,1 ms und 7,4 → 3,7 ms messen nur den
+   IndexedDB-Rückruf; `JSON.parse` und `concat` laufen danach in derselben Aufgabe. Tabelle (Fußnote ¹), Text „Ehrlich zu
+   den Zahlen" und die Ausgabe von Sonde L sind berichtigt; die Gesamtzeiten „Verlauf laden" stimmten.
+
+### Offen / bewusst so gelassen
+1. **Die sofortige Sicherung bleibt so teuer wie 888** (alle Stücke in einer Aufgabe, nur wenn etwas aussteht: verdeckt,
+   Raumwechsel, verlassen, Seite weg). Sie kann nicht erst das Verzeichnis lesen, ohne beim Weggehen zu riskieren, dass
+   ihre Aufträge nie abgehen – und ohne diese Prüfung wäre nur „alles schreiben" mit mehreren Tabs sicher. Möglich wäre
+   für Raumwechsel und „verdeckt" (die Seite lebt weiter) ein geprüftes Schreiben; dann bliebe ein Fenster von einer
+   Lese-Runde, in dem eine WebView, die nach „verdeckt" ohne pagehide beendet wird, die letzten ≤ 20 s verliert. Nicht
+   gebaut; Vorschlag mit Messung, wenn gewünscht.
+2. **Das Umwandeln in Text bleibt je Sicherung so groß wie der Verlauf** (jetzt in Happen ≤ 6 ms + einer Zeile); nur das
+   Schreiben ist auf das Geänderte beschränkt. Weniger ginge nur mit einer Änderungsverfolgung je Zeile – Zeilen werden an
+   vielen Stellen an Ort und Stelle geändert (z. B. das Profilfoto an allen Zeilen eines Autors), die Sonde N prüft genau
+   so einen Fall. Ohne vollständige Durchsicht nicht gebaut.
+3. **Zurück auf 888** (oder eine noch offene 888-Seite): 888 kennt das neue Format nicht, sieht beim Betreten nur die
+   300 Zeilen aus dem localStorage und den Server, und legt wieder `chat:<raum>` an. Nichts geht verloren: 889 vereinigt
+   beides beim nächsten Lesen (Sonde B). Ein 888, das nach 60 Tagen ein Verzeichnis wegräumt, lässt dessen Stücke liegen;
+   889 räumt sie als verwaist weg (Sonde M).
+4. **Lesefehler beim Betreten** (die Lese-Transaktion bricht ab) gilt wie in 888 als „gelesen" – die nächste Sicherung legt
+   dann die kürzere Liste ab. Unverändert aus 888, sehr selten; nicht angefasst.
+5. **Speicher voll** wurde am Lager nachgestellt (put wirft / Anfrage scheitert später): `Storage.overrideQuotaForOrigin`
+   wirkte in diesem Chromium nicht (Quote blieb 10 GB, auch im festen Profil).
+6. Werkstatt: die offene Zeile „Chatverlauf im Gerät in Stücken (Ruck von 70–170 ms alle 20 s)" kann bei der Lieferung
+   raus (`werkzeug/werkstatt-setzen.py`).
+7. **Arbeitsspeicher im Raum** (Nachbesserung Runde 1, Punkt 2): solange man in einem Raum ist, hält 889 den Text seiner
+   Stücke (bei 20 000 Zeilen rund 6 MB mehr als 888). Freigegeben wird er beim Verlassen. Weniger ginge mit Länge +
+   Prüfsumme je Stück, auf Kosten von Rechenzeit – nur als Vorschlag, nicht gebaut.
+
+**Sichtbar:** nichts – Aussehen, Größe und Bedienung wie 888; kein Vorschlag nötig.
+
+**Funk-Zeile (für den Dirigenten):** „Der Chatverlauf auf dem Gerät wird jetzt in Stücken gespeichert. Wenn im
+Livestream viel geschrieben wird, gibt es dadurch alle 20 Sekunden keinen kleinen Ruck mehr (im Nachbau vorher 40–130 ms,
+jetzt um 13 ms). Der Verlauf ist beim Betreten gleich schnell oder schneller da. Für dich sieht alles aus wie bisher."
+
+### Sonden
+**Neu: `werkzeug/pruefe-889-lager.js`** (49 Prüfungen, alle grün auf dem Endstand 8eec202e):
+A Format (1 500 Zeilen → Verzeichnis + 3 Stücke 600/600/300, genau diese im Bereich); N nur das Geänderte (1 neue Zeile →
+1 Stück + Verzeichnis, kein put über 200 000 Zeichen; 450 Zeilen → 2 Stücke; eine Zeile mitten im Verlauf an Ort und
+Stelle geändert, gleiche Länge → genau ihr Stück und das letzte); Z jede Aufgabe der Leerlauf-Sicherung ≤ 16 ms aus der
+Chromium-Spur (CPU 4×, 7 000 Zeilen mit Fotos; auch wenn ein anderer Tab geschrieben hat und alles neu geschrieben wird:
+7,6 / 7,2 / 6,9 ms); K Kappen bei 20 000 (≤ 2 Stücke je Zeile, das Lager = die jüngsten 20 000); V altes Format gelesen
+und überführt (sofort und im Leerlauf, „chat:<raum>" danach weg; Abbruch beim 3. Stück → das alte vollständig da);
+B altes + neues zugleich → vereinigt, keine doppelt; T Abbruch mitten im Schreiben in ~140 Schritten: Tab zu (7 001,
+vollständig), Absturz `Page.crash` (7 000, der vorige Stand vollständig), pagehide (7 001, der neueste); M zwei Tabs
+schreiben abwechselnd (Leerlauf und pagehide) – das Lager ist jedes Mal genau der Verlauf dessen, der zuletzt schrieb;
+Räume „m"/„m:1" getrennt; Aufräumen nimmt verwaiste Stücke und ein 60 Tage altes Verzeichnis samt Stücken, sonst nichts;
+Q Speicher voll nachgestellt (sofort und Leerlauf, put wirft / Anfrage scheitert später): kein Fehler, voriger Stand
+vollständig, localStorage geschrieben, danach geht es wieder; F localStorage-Teil und Fototafel aus der Leerlauf-Sicherung
+Byte für Byte wie aus der sofortigen; L Lesen im neuen Format nicht langsamer (eigenes Profil auf der Platte).
+**Gegenprobe 888** (`WURZEL=/tmp/claude-0/v888`): 34 rot im Gesamtlauf (A N K V1 V2 B T M Q F-Zeilen L-Format), dazu Z mit
+der Spur-Messung 3 rot (ganze Aufgaben der Sicherung 34,6 / 25,7 / 31,1 ms in der leichten Seite). Im ersten Stand maß Z
+nur die Rückrufe und war auf 888 grün – siehe „gefunden".
+**Geändert: `pruefe-887-sichern.js`** liest das Lager über `__verlaufRoh` (beide Formate); S zählt beim neuen Format die
+Zeilen aus dem Verzeichnis, A zählt auch die Verzeichnis-Schreibvorgänge.
+
+**Bestehende Sonden** (Baum `dmx-lager`, nacheinander, je über die Chromium-Sperre, Protokolle `/tmp/claude-0/lager/log/sonden*/`;
+jede mit Rückgabe 0, ohne Änderung an livechat.js/min während des Laufs):
+
+| Sonde | Ergebnis | Stand |
+|---|---|---|
+| 889-lager (neu) | 49 ok, 0 rot | 8eec202e (Endstand) |
+| 887-sichern | 56 ok, 0 rot (A B W F T R D K S L Q P) | 8eec202e; vorher auf a983e6f5 ebenso |
+| raumverlauf | 6/6 | 8eec202e |
+| verlauf-doppelt | 5/5 | 8eec202e |
+| 642-verlauf-laden | 31 ok, „jetzt alles grün" | 8eec202e |
+| runde99-pssst | 6/6 | 8eec202e |
+| 887-zeile 7/7, 887-verlauf 11, 887-takt 6 | grün | a983e6f5 |
+| 887-messung 13, 887-auto 15, 863-chatfenster 18, 885-stuecke 43, 885-praesenz 70, 884-leitung 40/40, leitung 8, schreien ✅, runde99-privat 13 | grün | a210a265 (livechat.js wie a983e6f5) |
+
+Zwischen a983e6f5 und dem Endstand 8eec202e änderte sich in livechat.js nur `lagerZusammensetzen` (das Lesen: je Stück
+parsen, `concat`); alle Sonden, die das Lager lesen, liefen darum noch einmal auf dem Endstand (oben). 884-leitung im
+ersten Lauf 40/40.
+
+**Nachbesserung Runde 1 – Sonden** (livechat.js/min Stand 7629ab01, danach nur Sonden-Text und Logbuch; Protokolle
+`/tmp/claude-0/lager/log/r1/` und `/tmp/claude-0/lager/log/sonden3/`; je über die Chromium-Sperre, Rückgabe 0, Baum
+während des Laufs unverändert):
+
+| Sonde | Ergebnis | Stand |
+|---|---|---|
+| 889-lager (A N Z U S K V B T M Q F L) | **61 ok, 0 rot** | 947f8382 |
+| 889-lager U+S (2. Lauf, verschränkt: 889 → 888 → Mutanten → 888 → 889) | 9 ok | 947f8382 |
+| 889-lager U+S auf 888 (2 Läufe) | 7 ok (die Stand-Prüfungen von S hat 888 nicht) | v888 |
+| 887-sichern | 56 ok, 0 rot | faad2a8f |
+| raumverlauf 6/6, verlauf-doppelt 5/5, 642-verlauf-laden 31, 887-verlauf 11, 887-takt 6, 887-zeile 7, runde99-pssst 6 | grün | faad2a8f |
+| 885-praesenz 70, 884-leitung 40/40 (rufen das echte `betreten`, das jetzt freigibt) | grün | faad2a8f |
+
+**Gegenproben** – U und S sind auf 888 grün (888 nahm 400 Zeilen je Rückruf und hielt keinen Text); ihre Gegenprobe sind
+Mutanten des 889-Stands (Bäume aus `v888` mit harten Verweisen, die geänderten Dateien frisch, livechat.js mutiert und
+min/livechat.js neu verkleinert): U mit der alten Bedingung „`timeRemaining() > 1`" → **2 rot** (nach 60 s nicht fertig,
+28 Rückrufe); S ohne das Freigeben → **2 rot** (Stand bleibt nach Wechsel, spätem Lesen und Schreiben beim Gehen; +5,8 MB);
+M mit „`voll = !basisStand`" → **2 rot** (Bereich 8/6, B schrieb nicht alles neu). Nicht neu gelaufen: Sonden ohne Bezug
+zum Lager und zum Betreten (887-messung, 887-auto, 863-chatfenster, 885-stuecke, leitung, schreien, runde99-privat).
+
+**Commits** (Zweig `lager-889`, Sicherung `claude/sicherung-889-lager`): 03999867, e2139062, 84718451, d7040c79, a983e6f5,
+a210a265, 8eec202e, 4d143a48 (Logbuch); Nachbesserung Runde 1: 7629ab01, 947f8382, faad2a8f und dieser Logbuch-Commit. Gebaut mit `fassung-setzen.js --nur-stempel` (min/livechat.js neu, Stempel);
+`DMA_VERSION` und fassung.json unverändert 888.
