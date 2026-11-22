@@ -8722,9 +8722,10 @@ Brocken bleibt `werkzeug/backup` mit 244,96 MB (Offen 3).
 1. **iPhone-Prüfung der Brücke** (Bitte im Funk an Xander). In Safari mit dem Web-Inspektor `DMA_APP.brueckeVorher`
    prüfen: erwartet ist `true`, und im Netzwerk darf keine Anfrage an `src/bruecke.js` stehen. `false` wäre kein Ausfall,
    denn dann kommt der Rückweg über bau/ (Nachbessern 1). Tutor und Betonung wären nur einen Augenblick später bereit.
-2. **„Runde starten“ ohne den ganzen Wortschatz** (M3b, Offen 6.1): In 41 von 62 Kategorien hat jede Aufgabe ein festes
+2. ~~**„Runde starten“ ohne den ganzen Wortschatz** (M3b, Offen 6.1): In 41 von 62 Kategorien hat jede Aufgabe ein festes
    Niveau. Dazu kommt die nicht vorgeladene Karte (6.2). Das wird ein eigener Schritt mit Gleichlauf-Prüfer und bleibt
-   unsichtbar. Es ist der größte Rest-Hebel für die Übung.
+   unsichtbar. Es ist der größte Rest-Hebel für die Übung.~~ – **erledigt** in 889 (Strang runde, „Fassung 889 —
+   „Runde starten“ ohne den ganzen Wortschatz“, unten; dessen Offen-Liste nennt den Rest).
 3. **Platz auf GitHub Pages:** `werkzeug/backup` (245 MB alte Sicherungen) aus der Veröffentlichung nehmen. Dafür braucht
    es Xanders Ja (Frage im Funk).
 4. ~~**Alte Stadt-`.min.js` (3,94 MB)** mit der nächsten Fassung vom Server löschen. Im selben Schritt räumt sw.js beim
@@ -8734,8 +8735,9 @@ Brocken bleibt `werkzeug/backup` mit 244,96 MB (Offen 3).
    Runde 2 (sonden:888:2 auf 6fb48f67): alle 37 Fälle in 5 Teilen, 178 ok / 0 FEHL, X5 grün; im selben Lauf 884-leitung
    2× 40/0, 885-rueckkehr 300/0, alle übrigen grün (`/tmp/claude-0/r2n/log/zusammenfassung.txt`). 884-leitung wird
    weiter beobachtet.
-6. Weiter offen aus 887 (Werkstatt): Chatverlauf im Gerät in Stücken (Ruck von 70–170 ms alle 20 s),
-   Vorab-Malen der Autos (wartet auf Xanders OK), Fuchs-Wertung auf dem Server, große Abfragen, Rückkehr Fall A.
+6. Weiter offen aus 887 (Werkstatt): ~~Chatverlauf im Gerät in Stücken (Ruck von 70–170 ms alle 20 s)~~ (erledigt in
+   889, Strang lager, „Fassung 889 — Chat-Lager in Stücken“, unten), Vorab-Malen der Autos (wartet auf Xanders OK),
+   Fuchs-Wertung auf dem Server, große Abfragen, Rückkehr Fall A.
 
 ### 888 – Nachtrag vor der Lieferung (14.11.2026)
 
@@ -9674,4 +9676,54 @@ zweimal 885-swvorladen – änderte sich währenddessen nur eine Sonden-Datei di
    2 von 2 Läufen 0 Punkte), 855 verlangt +8 über einem Korn, das zwischen 174 und 185 wiegt (Stoppel 184), 833 Teil A
    trifft das Rathaus nicht immer und wartet höchstens ≈ 40 s auf die Stadt im Spiel (ebenso 828 Teil B), 831 seit 813.
    Gehört zur nächsten Arbeit an der Stadt, nicht zu diesem Strang (die Sonden prüfen Stadt-Code, den 889 nicht anfasst).
-6. Weiter offen aus 888: iPhone-Prüfung der Brücke, „Runde starten“ ohne den ganzen Wortschatz, `werkzeug/backup`.
+6. Weiter offen aus 888: iPhone-Prüfung der Brücke, ~~„Runde starten“ ohne den ganzen Wortschatz~~ (beim Zusammenführen:
+   erledigt im Strang runde derselben Fassung 889, oben), `werkzeug/backup`.
+
+## Fassung 889 — Zusammenführung der drei Stränge (lager, runde, stadtweg)
+
+Stand 22.11.2026, Hauptbaum, Arbeitszweig `claude/audio-pronunciation-live-chat-3a5elt` ab live 888 (`4bd701b3`). Noch
+nicht ausgeliefert: `DMA_VERSION` und fassung.json bleiben 888, main unberührt. **Für Xander unsichtbar** – keiner der
+drei Stränge ändert Aussehen, Größe oder Bedienung (je Abschnitt oben).
+
+**Eingemischt** (Merge-Commits, kein Rebase): `lager-889` (5bf5c078) → fc8b455a, `runde-889` (2fe4b6a3) → b47ffd73,
+`stadtweg-889` (fa8fcbfb) → 564999fc. Nicht eingemischt: nichts.
+
+**Konflikte und wie gelöst:**
+- `SPIELSYSTEM.md`: alle drei 889-Abschnitte stehen vollständig (geprüft: jede Zeile jedes Strangs in seiner Folge
+  vorhanden; fehlen nur die zwei Zeilen von 888 Offen 4, die stadtweg selbst durchgestrichen hat). Beim Zusammenführen
+  dazu in den Offen-Listen durchgestrichen, was ein anderer Strang erledigt hat: 888 Offen 2 („Runde starten“ → runde),
+  888 Offen 6 Chatverlauf in Stücken (→ lager), stadtweg Offen 6 („Runde starten“ → runde).
+- `index.html` und `min/.quelle.json` (generiert, nicht von Hand gemischt): die Merkdatei je Eintrag dreiseitig
+  (`livechat.js` aus lager; `app.js`, `quiz.js`, `data-vocab.js`, `data-exercises.js` aus runde), danach jedes Mal
+  `fassung-setzen.js --nur-stempel`. Ergebnis: alle 194 Stempel passen zum Inhalt, `DMA_MODUL` mit `wortniveau`
+  (bau/wortniveau-IXPEGkLC.js), sw.js 9d21a59737; jede übrige geänderte Datei (Quelle, min/, bau/, Sonde) ist Byte für
+  Byte die ihres Strangs. Mit Vite (vorübergehend verlinkt) baut `--nur-stempel` nichts neu: die Stadt-Seiten und bau/
+  hängen nicht an den gelöschten `.min.js`.
+- `MODULE-PLAN.md`: ohne Konflikt (runde M3b, stadtweg M5).
+
+**Wo sich die Stränge berühren** (nachgesehen): runde liest in `ruheImRaum()` `LiveChat.lage()` – lager hat die Lage
+nicht angefasst (`aus | verbindet | drin | fehler | voll` wie 888). sw.js (stadtweg) legt bau/wortniveau-*.js ab wie jedes
+andere bau/-Stück (je Grundname 2 Generationen). lager und runde teilen keine Datei außer den generierten.
+
+**Sonden auf 564999fc** (Hauptbaum, nacheinander über die Chromium-Sperre, Protokolle `/tmp/claude-0/zus/log/`), jede mit
+Rückgabe 0, ohne Änderung am Baum während des Laufs:
+
+| Sonde | Ergebnis |
+|---|---|
+| 889-lager (A N Z U S K V B T M Q F L) | 61 ok / 0 |
+| 889-runde (G und B) | 42 ok / 0 |
+| 889-stadtweg (A B C D) | 27 ok / 0 |
+| 887-bau | 42 ok / 0 (das ✗ in B8 ist der erwartete Baufehler der Sonde; ohne node_modules im Hauptbaum B7–B9 „Vite nötig“, darum mit vorübergehend verlinktem Vite 6.3.5/esbuild 0.28.2 wiederholt) |
+| 887-sichern | 56 ok / 0 |
+| 885-schlank | 43 ok / 0 |
+| 884-leitung | 40 ok / 0 |
+| 885-swvorladen | 32 ok / 0 |
+
+`node --check` für jede geänderte .js-Datei (Quellen, min/, bau/, Werkzeuge): ohne Fehler.
+
+**Platz** (git ls-tree -r -l, ohne Pfade mit „.“-Teil): 888 959 129 837 → 564999fc 955 575 542 Byte (−3 554 295; lager
++144 350, runde +182 926, stadtweg −3 881 571), Reserve bis 10⁹ ≈ 44,4 MB.
+
+**Offen** (aus den Strängen, unverändert; Einzelheiten je Abschnitt oben): lager 1 (Arbeitsspeicher im Raum +6 MB bei
+20 000 Zeilen, Vorschlag Länge + Prüfsumme), runde Offen 4 Rest/6/7, stadtweg 1 (885-sparsam rechnet „neue Fassung“ fest
+mit 887 – SWL/SW402 rot auf jedem Stand ab 888; hier nicht gelaufen), stadtweg 2–5, 888 Offen 1 und 3.
