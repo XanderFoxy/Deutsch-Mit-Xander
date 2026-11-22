@@ -149,7 +149,7 @@ const http = require("http"), http2 = require("http2"), fs = require("fs"), path
 const { performance } = require("perf_hooks");
 
 /* ---------- Aufruf ---------- */
-const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner", "tipp-nach", "sw-wach", "fall", "kategorie", "db-ms"]);
+const MIT_WERT = new Set(["laeufe", "arten", "gegen", "json", "cpu", "supabase", "aufbau", "fenster", "spur-ordner", "tipp-nach", "sw-wach", "fall", "kategorie", "db-ms", "antwort"]);
 const S = {}, FREI = [];
 for (let i = 2; i < process.argv.length; i++) {
   const a = process.argv[i];
@@ -178,6 +178,12 @@ const TIPP_NACH = Math.max(0, Number(S["tipp-nach"] || 0));
 const FALL = String(S.fall || "kz");
 if (!["kz", "uebung"].includes(FALL)) { console.error("--fall kz | uebung"); process.exit(2); }
 const KATEGORIE = String(S.kategorie || "tiere");
+/* FASSUNG 889, Nachbesserung (Prüfer): --antwort <ms> (Fall uebung) – so lange nach der ersten Frage tippt das Werkzeug
+   die erste Antwort an und misst „Antwort: Tipp → Rückmeldung" (bis die Knöpfe ihre Rückmeldung zeigen). Seit 889 liest
+   die Seite den Wortschatz oft erst NACH der ersten Frage ein (je Datei 50–120 ms Hauptfaden bei CPU 4×); in 888 lag
+   das vor der Frage. Dazu immer (Fall uebung): die Langläufer in den 3 s nach der ersten Frage. */
+const ANTWORT = S.antwort != null ? Math.max(0, Number(S.antwort)) : null;
+if (ANTWORT != null && !isFinite(ANTWORT)) { console.error("--antwort braucht ms"); process.exit(2); }
 /* FASSUNG 889 — MIT KONTO (--konto): angemeldet als Mitglied gegen eine kleine Supabase-Attrappe im Werkzeug
    (werkzeug/mess-konto.js; jede Antwort nach --db-ms ms, Standard 150). Ohne --konto: Gast wie bisher. */
 const KONTO = !!S.konto;
@@ -403,12 +409,14 @@ function mitschreiber(o) {
   (function schau() { requestAnimationFrame(function () { if (bereit()) merk("bereit"); else schau(); }); })();
   var WISSEN = '.tape-tab[data-target="view-knowledge"]', KZ = '#knowledgeSubnav [data-sub="sub-livechat"], .subnav-pill[data-sub="sub-livechat"]';
   /* M3b, Fall uebung: Lernen → Übersicht (Karten), Karte → gewählt und „Runde starten" frei, Runde starten → erste Frage */
-  var LERNEN = '.tape-tab[data-target="view-learn"]', WAHL = "#exerciseSetup .category-card[data-cat]", START = "#startBtn";
+  var LERNEN = '.tape-tab[data-target="view-learn"]', WAHL = "#exerciseSetup .category-card[data-cat]", START = "#startBtn", ANTW = "#exercisePlay .option-btn";
   var sicht = function (e) { return Boolean(e && e.offsetParent !== null); };
   var BED = {
     lernen: { bild: function () { return sicht(document.querySelector('#view-learn[data-active="true"] #exerciseSetup .category-grid .category-card')); } },
     wahl: { bild: function (x) { var b = document.getElementById("startBtn"); return Boolean(b && !b.disabled && document.querySelector('#exerciseSetup .category-card.selected[data-cat="' + x.kat + '"]')); } },
     runde: { bild: function () { return sicht(document.querySelector("#exercisePlay .question-card")); } },
+    /* 889 (--antwort): die Knöpfe zeigen die Rückmeldung (eine Antwort: richtig/falsch; mehrere: gewählt) */
+    antwort: { bild: function () { return Boolean(document.querySelector("#exercisePlay .option-btn.picked, #exercisePlay .option-btn.reveal-correct, #exercisePlay .option-btn.reveal-wrong")); } },
     wissen: { bild: function () { return document.querySelector('#view-knowledge[data-active="true"]'); } },
     kz: {
       bild: function () { return document.querySelector('#sub-livechat[data-active="true"] #livechatArea > *'); },
@@ -418,7 +426,7 @@ function mitschreiber(o) {
   addEventListener("click", function (e) {
     if (!e.isTrusted || !e.target || !e.target.closest) return;
     var w = e.target.closest(WISSEN) ? "wissen" : e.target.closest(KZ) ? "kz"
-      : e.target.closest(LERNEN) ? "lernen" : e.target.closest(WAHL) ? "wahl" : e.target.closest(START) ? "runde" : null;
+      : e.target.closest(LERNEN) ? "lernen" : e.target.closest(WAHL) ? "wahl" : e.target.closest(START) ? "runde" : e.target.closest(ANTW) ? "antwort" : null;
     if (!w) return;
     var x = { w: w, ab: e.timeStamp }, offen = Object.keys(BED[w]), i = 0;
     if (w === "wahl") x.kat = e.target.closest(WAHL).getAttribute("data-cat");
@@ -697,6 +705,11 @@ async function oeffnen(ctx, srv, art, o) {
       versuche[0] = await tippen(pg, '.tape-tab[data-target="view-learn"]', "lernen", { warte: 60000 });
       versuche[1] = await tippen(pg, '#exerciseSetup .category-card[data-cat="' + KATEGORIE + '"] .cat-checkbox', "wahl", { warte: 60000 });
       versuche[2] = await tippen(pg, "#startBtn", "runde", { warte: 60000 });
+      if (o.messen && ANTWORT != null) {
+        const rest = await pg.evaluate((ms) => { const x = window.__dmaMess.tipp.filter((t) => t.w === "runde").pop(); return x.ab + x.bild + ms - performance.now(); }, ANTWORT);
+        if (rest > 0) await schlaf(rest);
+        versuche[3] = await tippen(pg, "#exercisePlay .option-btn", "antwort", { warte: 30000 });
+      }
     } else {
       versuche[0] = await tippen(pg, '.tape-tab[data-target="view-knowledge"]', "wissen");
       versuche[1] = await tippen(pg, '.subnav-pill[data-sub="sub-livechat"]', "kz");
@@ -740,6 +753,14 @@ function auswerten(r) {
   r.lernen = L ? rd(L.bild) : null; r.wahl = Wa ? rd(Wa.bild) : null; r.runde = Ru ? rd(Ru.bild) : null;
   r.uebGesamt = L && Ru && Ru.bild != null ? rd(Ru.ab + Ru.bild - L.ab) : null;
   r.uebAbStart = Ru && Ru.bild != null ? rd(Ru.ab + Ru.bild) : null;
+  /* 889, Nachbesserung: Antwort-Tipp → Rückmeldung (--antwort) und die Langläufer in den 3 s nach der ersten Frage */
+  const An = letzter("antwort");
+  r.antwort = An && An.bild != null ? rd(An.bild) : null;
+  r.antwortNachFrage = An && Ru && Ru.bild != null ? rd(An.ab - Ru.ab - Ru.bild) : null;
+  if (FALL === "uebung" && Ru && Ru.bild != null) {
+    const f0 = Ru.ab + Ru.bild, nf = t.lt.filter(([a]) => a >= f0 && a < f0 + 3000);
+    r.nachFrage = { n: nf.length, summe: rd(nf.reduce((s2, x) => s2 + x[1], 0)), max: rd(nf.reduce((m, x) => Math.max(m, x[1]), 0)), sperr: rd(nf.reduce((s2, x) => s2 + Math.max(0, x[1] - 50), 0)) };
+  } else r.nachFrage = null;
   /* M3b, Nachbesserung 2: ab dem Tipp auf „Lernen" (Fall uebung; null = nicht im Fenster) */
   r.ueb = t.ueb ? { wsStart: rd(t.ueb.wsStart), wsGanz: rd(t.ueb.wsGanz), artikel: rd(t.ueb.artikel), sammlung: rd(t.ueb.sammlung) } : null;
   const W = r.tippW, K = r.tippK;
@@ -878,6 +899,8 @@ const MASSE = [
   ["uebGesamt", "Lernen-Tipp → Frage (mit Werkzeug)"], ["uebAbStart", "Öffnen → Frage"],
   ["ueb.wsStart", "Lernen-Tipp → Wortschatz startet"], ["ueb.wsGanz", "Lernen-Tipp → Wortschatz ganz"],
   ["ueb.artikel", "Lernen-Tipp → Kategorie artikel da"], ["ueb.sammlung", "Lernen-Tipp → Sammlung ganz"],
+  ["antwort", "Antwort: Tipp → Rückmeldung"], ["antwortNachFrage", "  Antwort-Tipp nach der Frage"],
+  ["nachFrage.n", "Langläufer 3 s nach der Frage: Anzahl"], ["nachFrage.summe", "  Summe"], ["nachFrage.max", "  längster"], ["nachFrage.sperr", "  Sperrzeit (Σ über 50 ms)"],
   ["lang.n", "Langläufer 0–10 s: Anzahl"], ["lang.summe", "Langläufer: Summe"], ["lang.max", "Langläufer: längster"], ["lang.sperr", "Sperrzeit (Σ über 50 ms)"],
   ["netz.kbBisBereit", "KB über die Leitung bis bereit"], ["netz.kbGesamt", "KB über die Leitung 0–10 s"], ["netz.ausNetz", "Dateien aus dem Netz"],
   ["netz.nachgefragt", "Dateien nachgefragt (304)"], ["netz.ausSpeicher", "Dateien aus dem Speicher"], ["netz.ausSw", "Dateien vom Service Worker"],
