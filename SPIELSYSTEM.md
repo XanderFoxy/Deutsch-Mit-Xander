@@ -8914,7 +8914,7 @@ zeigt (Parsen allein bei 20 000 Zeilen 41 gegen 50 ms, siehe „gefunden"). Die 
   Parsen und `concat` laufen in derselben Aufgabe danach (Fußnote ¹, nachgebessert).
 
 ### Nachbesserung (Prüfung Runde 1)
-Vier Befunde des Prüfers, alle behoben (Stand 22.11.2026, Commits 7629ab01, 947f8382 und der Logbuch-Commit).
+Vier Befunde des Prüfers, alle behoben (Stand 22.11.2026, Commits 7629ab01, 947f8382, faad2a8f und der Logbuch-Commit).
 
 1. **Leerlauf-Sicherung unter Volllast (wichtig).** Ist der Hauptfaden voll ausgelastet (Livestream mit vielen Bildern,
    schwaches Gerät), gibt es keine Leerlaufpause: `requestIdleCallback` springt erst über sein Zeitlimit (2 s) an,
@@ -9043,6 +9043,26 @@ Zwischen a983e6f5 und dem Endstand 8eec202e änderte sich in livechat.js nur `la
 parsen, `concat`); alle Sonden, die das Lager lesen, liefen darum noch einmal auf dem Endstand (oben). 884-leitung im
 ersten Lauf 40/40.
 
+**Nachbesserung Runde 1 – Sonden** (livechat.js/min Stand 7629ab01, danach nur Sonden-Text und Logbuch; Protokolle
+`/tmp/claude-0/lager/log/r1/` und `/tmp/claude-0/lager/log/sonden3/`; je über die Chromium-Sperre, Rückgabe 0, Baum
+während des Laufs unverändert):
+
+| Sonde | Ergebnis | Stand |
+|---|---|---|
+| 889-lager (A N Z U S K V B T M Q F L) | **61 ok, 0 rot** | 947f8382 |
+| 889-lager U+S (2. Lauf, verschränkt: 889 → 888 → Mutanten → 888 → 889) | 9 ok | 947f8382 |
+| 889-lager U+S auf 888 (2 Läufe) | 7 ok (die Stand-Prüfungen von S hat 888 nicht) | v888 |
+| 887-sichern | 56 ok, 0 rot | faad2a8f |
+| raumverlauf 6/6, verlauf-doppelt 5/5, 642-verlauf-laden 31, 887-verlauf 11, 887-takt 6, 887-zeile 7, runde99-pssst 6 | grün | faad2a8f |
+| 885-praesenz 70, 884-leitung 40/40 (rufen das echte `betreten`, das jetzt freigibt) | grün | faad2a8f |
+
+**Gegenproben** – U und S sind auf 888 grün (888 nahm 400 Zeilen je Rückruf und hielt keinen Text); ihre Gegenprobe sind
+Mutanten des 889-Stands (Bäume aus `v888` mit harten Verweisen, die geänderten Dateien frisch, livechat.js mutiert und
+min/livechat.js neu verkleinert): U mit der alten Bedingung „`timeRemaining() > 1`" → **2 rot** (nach 60 s nicht fertig,
+28 Rückrufe); S ohne das Freigeben → **2 rot** (Stand bleibt nach Wechsel, spätem Lesen und Schreiben beim Gehen; +5,8 MB);
+M mit „`voll = !basisStand`" → **2 rot** (Bereich 8/6, B schrieb nicht alles neu). Nicht neu gelaufen: Sonden ohne Bezug
+zum Lager und zum Betreten (887-messung, 887-auto, 863-chatfenster, 885-stuecke, leitung, schreien, runde99-privat).
+
 **Commits** (Zweig `lager-889`, Sicherung `claude/sicherung-889-lager`): 03999867, e2139062, 84718451, d7040c79, a983e6f5,
-a210a265, 8eec202e und dieser Logbuch-Commit. Gebaut mit `fassung-setzen.js --nur-stempel` (min/livechat.js neu, Stempel);
+a210a265, 8eec202e, 4d143a48 (Logbuch); Nachbesserung Runde 1: 7629ab01, 947f8382, faad2a8f und dieser Logbuch-Commit. Gebaut mit `fassung-setzen.js --nur-stempel` (min/livechat.js neu, Stempel);
 `DMA_VERSION` und fassung.json unverändert 888.
