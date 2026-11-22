@@ -287,7 +287,7 @@ function server() {
       const roh = await window.__roh(raum), ls = JSON.parse(localStorage.getItem("dma_livechat_chat_" + raum) || "[]");
       const zeilen = roh.zeilen || roh.alt || [];
       return { fertig: Math.round(fertig), grenze: GRENZE, rueckrufe: leer.length, ohneRest: leer.filter((x) => x[3] === 0).length, zeitlimit: leer.filter((x) => x[4]).length,
-               laengster: Math.max(0, ...leer.map((x) => x[1])), lagerN: zeilen.length, lagerLetzte: (zeilen.slice(-1)[0] || {}).id, lsN: ls.length, lsLetzte: (ls.slice(-1)[0] || {}).id };
+               laengster: Math.max(0, ...leer.map((x) => x[1])), je: leer.map((x) => Math.round(x[1] * 10) / 10), lagerN: zeilen.length, lagerLetzte: (zeilen.slice(-1)[0] || {}).id, lsN: ls.length, lsLetzte: (ls.slice(-1)[0] || {}).id };
     });
     await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
     await P.close();
@@ -296,7 +296,7 @@ function server() {
        "die neue Zeile ist nach ≤ 40 s im Lager und im localStorage (888: 16,2 s; 889 vor der Nachbesserung 93,8 s)",
        (r.fertig < 0 ? "nach " + r.grenze / 1000 + " s noch nicht fertig" : r.fertig + " ms") + ", Lager " + r.lagerN + " (" + r.lagerLetzte + "), localStorage " + r.lsN + " (" + r.lsLetzte + ")");
     ok(r.rueckrufe > 0 && r.rueckrufe <= 20, "höchstens 20 Leerlauf-Rückrufe für 2 000 Zeilen (je Rückruf das Budget, nicht nur ein Happen)", r.rueckrufe + " Rückrufe");
-    ok(r.laengster <= 16, "trotzdem jeder Rückruf ≤ 16 ms", "längster " + r.laengster.toFixed(1) + " ms");
+    ok(r.laengster <= 16, "trotzdem jeder Rückruf ≤ 16 ms (nur der Rückruf selbst; ganze Aufgaben misst Z)", "längster " + r.laengster.toFixed(1) + " ms, je Rückruf " + JSON.stringify(r.je));
   }
 
   if (hat("S")) {
