@@ -3163,17 +3163,40 @@ const ExerciseData = (function () {
   function wsStamm(wort) {
     return String(wort).replace(/^(der|die|das|sich)\s+/i, "").trim();
   }
+  /* FASSUNG 889 (Nachbesserung, Vorrang 1) — „Wortschatz – Alle Themen“ fror die Seite ein (schon in 888 live).
+     Bisher filterte jede Frage den GANZEN Bestand zweimal nach Ablenkern und mischte die Kandidaten ganz
+     (Core.shuffle(kandidaten).slice(0, 3)): bei 41 000 Wörtern quadratisch, in Node 176 s für getBank() ohne Thema
+     – beim Tipp auf die Karte (renderSetup → poolSizeFor), bei „Runde starten“ und bei jeder Frage von Blitzrunde
+     und Leiter. Jetzt wird je Aufruf einmal nach Niveau sortiert, und je Frage werden drei verschiedene zufällig
+     gezogen. Die Regel ist dieselbe (gleiches Thema; gleiches Niveau, wenn es dort mindestens drei andere gibt, sonst
+     alle anderen; nie das Wort selbst), und auch die VERTEILUNG ist genau dieselbe: die ersten drei einer gleichmäßig
+     gemischten Liste (Core.shuffle ist Fisher–Yates) sind drei gleichmäßig gezogene verschiedene Einträge in
+     zufälliger Folge. Anders ist nur die Folge der Zufallszahlen. Bei kleinen Listen (bis 8 Kandidaten) bleibt es
+     beim Mischen wie bisher. Das Wort selbst erkennt der Vergleich wie bisher am Wort (wsPool hat jedes Wort nur
+     einmal). */
+  function wsAblenkerZiehen(liste, wort) {
+    if (liste.length <= 9) return Core.shuffle(liste.filter((x) => x.wort !== wort)).slice(0, 3);
+    const aus = [], schon = new Set();
+    for (let versuch = 0; aus.length < 3; versuch++) {
+      if (versuch > 200) return Core.shuffle(liste.filter((x) => x.wort !== wort)).slice(0, 3);   // nie (Notweg)
+      const x = liste[Math.floor(Math.random() * liste.length)];
+      if (x.wort === wort || schon.has(x)) continue;
+      schon.add(x);
+      aus.push(x);
+    }
+    return aus;
+  }
   function bankWortschatzThemen(topic) {
     const alle = wsPool();
     const pool = topic ? alle.filter((e) => e.thema === topic) : alle;
     if (!pool.length) return [];
+    const nachNiveau = new Map();
+    pool.forEach((x) => { const g = nachNiveau.get(x.level); if (g) g.push(x); else nachNiveau.set(x.level, [x]); });
     return Core.shuffle(pool).map((e, i) => {
       // Ablenker bevorzugt aus demselben Thema UND demselben Niveau — sonst
       // verrät schon die Wortwahl, welche Antwort gemeint ist.
-      const gleichesNiveau = pool.filter((x) => x.wort !== e.wort && x.level === e.level);
-      const restlich = pool.filter((x) => x.wort !== e.wort && x.level !== e.level);
-      const kandidaten = gleichesNiveau.length >= 3 ? gleichesNiveau : gleichesNiveau.concat(restlich);
-      const ablenker = Core.shuffle(kandidaten).slice(0, 3);
+      const gleich = nachNiveau.get(e.level);
+      const ablenker = wsAblenkerZiehen(gleich.length - 1 >= 3 ? gleich : pool, e.wort);
       // Zwei Fragetypen im Wechsel: Bedeutung erkennen und Wort einsetzen.
       const stamm = wsStamm(e.wort);
       const luecke = e.beispiel && stamm.length > 3 && e.beispiel.includes(stamm);

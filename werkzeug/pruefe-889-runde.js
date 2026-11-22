@@ -166,7 +166,8 @@ function faelle(E, raum, auchMisch) {
   let k = 0;
   /* „Wortschatz" mit „Alle Themen" und ganzem Wörterbuch braucht für EIN getBank() rund 3 min (gemessen in Node: die
      Ablenker werden je Wort aus dem ganzen Bestand gefiltert, 41 063 Wörter – quadratisch; FASSUNG 889, Fund, siehe
-     Logbuch). Hier darum nur mit Thema; die Wörterbuch-Kategorien gehen ohnehin den alten Weg (erst der Wortschatz). */
+     Logbuch). Hier darum nur mit Thema; die Wörterbuch-Kategorien gehen ohnehin den alten Weg (erst der Wortschatz).
+     Seit der Nachbesserung 889 (Gesamt) braucht es ~0,3 s (werkzeug/pruefe-889-nachbesserung.js, W1); die Fälle bleiben. */
   const wsThemen = raum === "de" ? E.getWortschatzThemen() : [];
   let wsI = 0;
   const wsThema = () => wsThemen.length ? wsThemen[(wsI++ * 7) % wsThemen.length] : "";

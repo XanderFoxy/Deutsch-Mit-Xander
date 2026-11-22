@@ -9553,8 +9553,10 @@
         const wegSetup = Quiz.wortschatzWeg(bedarfSetup);
         if (wegSetup === "fehlt" && ExerciseData.wortniveauHolen) ExerciseData.wortniveauHolen().catch(() => {});
         /* FASSUNG 889 (Nachmessung): braucht die Auswahl den GANZEN Wortschatz (Wortschatz, Meine Wörter), lädt er nicht
-           mehr in der Reihe (höchstens 4 zugleich, data-vocab.js), sondern wie bisher alles zugleich – auf ihn wird gewartet */
-        if (wegSetup === "voll" && typeof VocabData !== "undefined" && VocabData.eilig) VocabData.eilig();
+           mehr in der Reihe (höchstens 4 zugleich, data-vocab.js), sondern wie bisher alles zugleich – auf ihn wird gewartet.
+           Nachbesserung (Prüfer, Gesamt): über wortschatzEilig() wie die übrigen Warte-Zweige – im Raum bleibt die Reihe
+           (Vorrang 1: die Leitung für Raum und Gespräch). */
+        if (wegSetup === "voll") wortschatzEilig();
       }
     } catch (e) {}
     const currentDiffCount = (Quiz.DIFFICULTIES.find((d) => d.id === selectedDifficulty) || {}).count || 0;
@@ -9824,12 +9826,12 @@
               const n = Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel, bedarf);
               let weg = Quiz.wortschatzWeg(bedarf);
               if (weg === "fehlt" && ExerciseData.wortniveauHolen) { await ExerciseData.wortniveauHolen(); weg = Quiz.wortschatzWeg(bedarf); }
-              if (weg !== "keiner" && weg !== "auszug") { try { if (VocabData.eilig) VocabData.eilig(); } catch (e) {} await wortschatzBereit(); }
+              if (weg !== "keiner" && weg !== "auszug") { wortschatzEilig(); await wortschatzBereit(); }
               if (rundenWahl() === wahl) { vorrat = n; mitAuszug = true; }
             }
           }
         } catch (e) { vorrat = null; mitAuszug = false; }
-        if (vorrat === null) { try { if (VocabData.eilig) VocabData.eilig(); } catch (e) {} await Promise.all([wortschatzBereit(), uebungenWeg]); }
+        if (vorrat === null) { wortschatzEilig(); await Promise.all([wortschatzBereit(), uebungenWeg]); }
       } catch (e) { /* dann eben mit dem, was da ist */ }
       startBtn.textContent = knopfText;
       const topicFilterPruef = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
@@ -75535,6 +75537,12 @@
     const words = new Set();
     satzbauLaden();   // FASSUNG 842 — die Verbformen kommen aus satzbau.js (wird ab jetzt nachgeladen)
     wortschatzBereit();   // beim ersten Spiel anstoßen, falls noch nicht geschehen
+    /* FASSUNG 889, Nachbesserung (Prüfer, Gesamt): der Vokabelmeister schlägt bei jeder Eingabe im ganzen Wortschatz
+       nach – fehlt ein Thema noch, gilt ein richtiges Wort als „nicht bestätigt". Seit 889 lädt der Wortschatz in der
+       Reihe (data-vocab.js), ganz da 0,1–0,4 s später; wie die anderen Spiele, die ihn ganz brauchen, holt er darum
+       alle übrigen Dateien zugleich wie in 888 (nicht im Raum). Was vorher unbestätigt blieb, wird bei der nächsten
+       Eingabe und am Ende der Runde noch einmal nachgeschlagen (vmNachpruefen). */
+    if (!VocabData.alleThemenDa || !VocabData.alleThemenDa()) wortschatzEilig();
     // Wörter mit Artikel-Präfix ("der Apfel") müssen für den Buchstaben-Abgleich bereinigt
     // werden — sonst würde "der Apfel" fälschlich unter "D" statt "A" gezählt.
     /* Im Lernraum Italienisch stehen il/lo/la/l' vor dem Wort. Ohne
@@ -75630,6 +75638,13 @@
     }
     return false;
   }
+  /* FASSUNG 889, Nachbesserung: Wörter, die bei ihrer Eingabe nicht bestätigt waren (vielleicht fehlte ihr Thema noch),
+     noch einmal nachschlagen – bei der nächsten Eingabe und am Ende der Runde. Ein bestätigtes Wort bleibt bestätigt. */
+  function vmNachpruefen(dict) {
+    if (!vmFoundWords.some((w) => !w.confirmed)) return;
+    const d = dict || vmBuildDictionary();
+    vmFoundWords.forEach((w) => { if (!w.confirmed && vmWortBekannt(w.text, d)) w.confirmed = true; });
+  }
   function vmWordCountForLetter(letter) {
     const dict = vmBuildDictionary();
     let count = 0;
@@ -75650,6 +75665,7 @@
         vmTimerId = null;
         vmRunning = false;
         vmFinished = true;
+        vmNachpruefen();
         Core.sound.fanfare();
         vmFoundWords.forEach((w) => spielNotiz(Boolean(w.confirmed), w.word || String(w)));
         if (Backend.currentUser()) {
@@ -75740,6 +75756,7 @@
       }
       const dict = vmBuildDictionary();
       const confirmed = vmWortBekannt(raw, dict);
+      vmNachpruefen(dict);
       vmFoundWords.unshift({ text: raw, confirmed });
       if (confirmed) Core.sound.correct();
       input.value = "";

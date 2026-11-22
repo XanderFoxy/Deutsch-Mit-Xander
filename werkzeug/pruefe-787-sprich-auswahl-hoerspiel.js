@@ -205,10 +205,15 @@ const sage = (gut, was, zusatz) => {
   });
   console.log("\n/sprich: WÖRTER AUS DEM WÖRTERBUCH ANTIPPEN\n");
   await pg.evaluate(() => { window.LiveChat.pruefBetreiber(true); window.__raus.length = 0; });
+  /* Gegenprobe (FASSUNG 889): GEGEN787=laden → das Tippen lädt den Wortschatz nicht nach; die nächste Prüfung MUSS rot werden */
+  if (process.env.GEGEN787 === "laden") await pg.evaluate(() => { window.DMA_AUSSPR_BRUECKE.laden = () => Promise.resolve(false); });
   const warGeladen = await pg.evaluate(() => window.DMA_AUSSPR_BRUECKE.geladen());
   await pg.evaluate(() => { const f = document.getElementById("lcFeld"); f.scrollIntoView({ block: "center" }); f.focus(); });
   await pg.keyboard.type("/sprich Tis", { delay: 20 });
-  await pg.waitForFunction(() => Array.from(document.querySelectorAll("#lcTipps .lc-tipp-sprich")).some((c) => /^Tischder/.test(c.textContent)), null, { timeout: 20000 }).catch(() => {});
+  /* FASSUNG 889 (Nachbesserung): der Wortschatz lädt in der Reihe (höchstens 4 Dateien zugleich, data-vocab.js) – das
+     Thema mit „Tisch" kann vor dem letzten Thema da sein, der Vorschlag steht dann richtig (mit Artikel), bevor der GANZE
+     Wortschatz da ist (gemessen ~0,3 s davor). Gewartet wird darum auf beides: den Vorschlag UND geladen(). */
+  await pg.waitForFunction(() => window.DMA_AUSSPR_BRUECKE.geladen() && Array.from(document.querySelectorAll("#lcTipps .lc-tipp-sprich")).some((c) => /^Tischder/.test(c.textContent)), null, { timeout: 20000 }).catch(() => {});
   let r = await pg.evaluate(() => ({ geladen: window.DMA_AUSSPR_BRUECKE.geladen(), chips: Array.from(document.querySelectorAll("#lcTipps .lc-tipp")).map((c) => c.textContent) }));
   sage(!warGeladen && r.geladen && r.chips.some((c) => /^Tischder · A1/.test(c)), "Wortschatz wird beim Tippen nachgeladen, dann „Tisch · der · A1“", JSON.stringify(r).slice(0, 200));
   await pg.evaluate(() => { const f = document.getElementById("lcFeld"); f.value = ""; f.blur(); });

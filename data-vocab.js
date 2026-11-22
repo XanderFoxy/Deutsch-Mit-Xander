@@ -146,6 +146,12 @@ const VocabData = (function () {
      („Runde starten“ mit Wortschatz/Meine Wörter), hätte länger gewartet als in 888. Darum eilig(): wartet jemand auf
      den ganzen Wortschatz, gehen alle übrigen Dateien sofort zugleich hinaus (wie bisher); gilt auch für ein später
      angestoßenes Laden. */
+  /* FASSUNG 889, Nachbesserung (Prüfer, Gesamt): eine Frist für die Reihe. Hängen alle VOKABEL_ZUGLEICH Abrufe ohne
+     onload/onerror (schwaches Netz, das „verbunden" meldet, aber kaum etwas durchlässt), kämen die übrigen Themen nie –
+     in 888 liefen alle zugleich, und nur die hängenden fehlten. Ist VOKABEL_FRIST lang KEINE Datei fertig geworden,
+     während noch welche warten, gehen darum alle übrigen zugleich hinaus (wie eilig()). Auf 3G ohne Hänger kommt
+     etwa alle 2 s eine Datei (Ø 90 KB gepackt, ein Viertel der Leitung) – die Frist greift dort nicht. */
+  const VOKABEL_FRIST = 12000;
   let eiligAn = false, reiheWecken = null;
   function eilig() {
     eiligAn = true;
@@ -155,7 +161,12 @@ const VocabData = (function () {
     if (alleLaufen) return alleLaufen;
     const reihe = VOKABEL_THEMEN.map((t) => t[0]);
     alleLaufen = new Promise((fertig) => {
-      const ohneInhalt = (e) => e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize;
+      /* Nachbesserung (Prüfer, Gesamt): auch transferSize 0 heißt „ohne Inhalt über die Leitung". Bei einem Abruf von
+         derselben Adresse ist das immer Speicher oder Helfer – eine Übertragung über die Leitung hat immer Kopfzeilen.
+         Meldet WebKit ab 16.4 für Antworten des Helfers transferSize 0 UND encodedBodySize 0 (ungeprüft, Offen 6),
+         bekämen Stammgäste auf dem iPhone sonst immer die Reihe. Irrt die Weiche hier (ein Browser meldet aus
+         Datenschutzgründen immer 0), gehen alle Dateien zugleich hinaus – wie in 888. */
+      const ohneInhalt = (e) => e.transferSize === 0 || (e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize);
       /* Nachbesserung (Prüfer): die Weiche braucht transferSize und encodedBodySize. Safari unter 16.4 (alte iPhones,
          die bei iOS 15 stehen bleiben) kennt beide nicht – dort wäre „undefined > 0" immer falsch, und Stammgäste
          bekämen die Reihe auch dann, wenn alles aus dem Speicher kommt (in Chromium vor der Weiche gemessen: „wieder"
@@ -169,14 +180,20 @@ const VocabData = (function () {
       let schonDa = false;
       if (!blind) try { schonDa = performance.getEntriesByType("resource").some((e) => /\/(?:min\/)?data-vocab\.js(?:\?|$)/.test(e.name) && ohneInhalt(e)); } catch (e) { blind = true; }
       let i = 0, offen = 0, zugleich = (blind || schonDa || eiligAn) ? reihe.length : VOKABEL_ZUGLEICH, ende = false, beob = null;
+      let wache = null;
+      const wachen = () => {
+        if (wache) { clearTimeout(wache); wache = null; }
+        if (ende || zugleich >= reihe.length || i >= reihe.length) return;
+        wache = setTimeout(() => { wache = null; if (!ende && zugleich < reihe.length) { zugleich = reihe.length; weiter(); } }, VOKABEL_FRIST);
+      };
       const weiter = () => {
         if (ende) return;
-        if (i >= reihe.length && !offen) { ende = true; reiheWecken = null; try { if (beob) beob.disconnect(); } catch (e) {} fertig(); return; }
+        if (i >= reihe.length && !offen) { ende = true; reiheWecken = null; wachen(); try { if (beob) beob.disconnect(); } catch (e) {} fertig(); return; }
         while (offen < zugleich && i < reihe.length) {
           offen++;
           const thema = reihe[i++];
           let p; try { p = Promise.resolve(ladeThema(thema)); } catch (e) { p = Promise.resolve(false); }
-          p.then(() => {}, () => {}).then(() => { offen--; weiter(); });
+          p.then(() => {}, () => {}).then(() => { offen--; weiter(); wachen(); });
         }
       };
       if (!blind && !schonDa) try {
@@ -191,6 +208,7 @@ const VocabData = (function () {
       } catch (e) { beob = null; zugleich = reihe.length; }
       reiheWecken = () => { if (zugleich !== reihe.length) { zugleich = reihe.length; weiter(); } };
       weiter();
+      wachen();
     }).then(() => WORDS.length > 0);
     return alleLaufen;
   }
