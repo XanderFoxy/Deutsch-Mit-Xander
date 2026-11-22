@@ -26,12 +26,16 @@
         Teile aus bau/): je Kategorie × Niveau × Startwert die Runde vor dem
         Wortschatz (889-Weg) = dieselbe Runde nach dem ganzen Wortschatz
         (bisheriger Aufruf)
+     B1b/B4b (Nachmessung) nach dem Kartentipp: wortstellung höchstens 4
+        Wortschatz-Dateien angefordert (die Reihe), Wortschatz ALLE (eilig –
+        auf ihn wird gewartet)
      B9 satzbau.js (185 KB) beim ersten Öffnen von „Lernen" erst NACH dem Teil
         von data-exercises.js, den jeder Kartentipp braucht (der Server hält
         diesen Teil 2,5 s zurück); es kommt trotzdem, genau einmal
      B10 wer gleich nach „Lernen" den Reiter „Satzbaukasten" tippt, bekommt
         satzbau.js sofort (vor dem Teil), genau einmal, und den Kasten
-   Gegenprobe: WURZEL=<Baum mit 888> → B1, B2, B3, B8, B9 rot (B10 dort grün).
+   Gegenprobe: WURZEL=<Baum mit 888> → B1, B1b, B2, B3, B8, B9 rot (B10 dort grün);
+   gegen ed33c26f (vor eilig) B4b rot.
    ===================================================================== */
 const fs = require("fs"), path = require("path"), http = require("http");
 
@@ -112,6 +116,8 @@ async function teilB(WURZEL, sage) {
         await pg.evaluate((k) => { const e = document.querySelector('#exerciseSetup .category-card[data-cat="' + k + '"] .cat-checkbox'); e.scrollIntoView({ block: "center" }); e.click(); }, k);
         await pg.waitForFunction((k) => { const b = document.getElementById("startBtn"); return b && !b.disabled && document.querySelector('#exerciseSetup .category-card.selected[data-cat="' + k + '"]'); }, k, { timeout: 30000 });
       }
+      /* Nachmessung 889: wie viele Wortschatz-Dateien hat die Seite nach dem Kartentipp angefordert (Skript-Elemente)? */
+      const vokNachKarte = await pg.evaluate(() => ({ n: document.querySelectorAll('script[src*="vokabeln/"]').length, alle: VocabData.themenListe ? VocabData.themenListe().length : null }));
       if (o.thema) {
         await pg.evaluate((t) => { const e = document.querySelector('[data-wortschatztopic="' + t + '"]'); e.scrollIntoView({ block: "center" }); e.click(); }, o.thema);
         await pg.waitForFunction((t) => { const b = document.querySelector('[data-wortschatztopic="' + t + '"]'); const s = document.getElementById("startBtn"); return b && b.getAttribute("aria-selected") === "true" && s && !s.disabled; }, o.thema, { timeout: 30000 });
@@ -123,7 +129,7 @@ async function teilB(WURZEL, sage) {
       await pg.waitForFunction(() => window.__r.frage != null, null, { timeout: WS_MS * 12 + 20000 });
       const r = await pg.evaluate(() => ({ r: window.__r, total: Quiz.progress ? Quiz.progress().total : null, stand: Quiz.auszugStand ? Quiz.auszugStand() : null,
         ganz: typeof VocabData !== "undefined" && VocabData.alleThemenDa(), lvl: (Quiz.getState() || {}).level }));
-      r.tipp = tipp; r.dauer = Math.round(r.r.frage - tipp);
+      r.tipp = tipp; r.dauer = Math.round(r.r.frage - tipp); r.vok = vokNachKarte;
       r.vorWs = r.r.wsBeiFrage === false;
       /* wann die Seite den Auszug ANGEFRAGT hat (Resource Timing; beim Prüfserver mit HTTP/1.1 kann die Anfrage hinter
          den Wortschatz-Dateien warten, bevor sie beim Server ankommt) */
@@ -141,6 +147,7 @@ async function teilB(WURZEL, sage) {
     {
       const r = await runde({ karten: ["wortstellung"] });
       zaehl(r.vorWs && r.dauer < WS_MS - 1500 && r.total === 10 && !r.wn.length && !r.pe.length, "B1 wortstellung: Frage vor dem Wortschatz, ohne Auszug, 10 Fragen", kurz(r));
+      zaehl(r.vok.n <= 4, "B1b wortstellung: der Wortschatz lädt in der Reihe (nach dem Kartentipp höchstens 4 Dateien angefordert)", r.vok.n + " von " + r.vok.alle);
     }
     {
       const r = await runde({ karten: ["plural"] });
@@ -157,6 +164,7 @@ async function teilB(WURZEL, sage) {
          ein (Fund 889, schon in 888) – darum hält der Server den Wortschatz zurück, bis das Thema gewählt ist */
       const r = await runde({ karten: ["wortschatz"], profil: true, thema: "Essen & Trinken", halten: true });
       zaehl(!r.vorWs && r.ganz && r.total === 10 && !r.wn.length && !r.pe.length, "B4 Wortschatz (Thema Essen & Trinken): wartet wie bisher auf den ganzen Wortschatz, kein Auszug", kurz(r));
+      zaehl(r.vok.alle > 4 && r.vok.n === r.vok.alle, "B4b Wortschatz: wer auf den ganzen Wortschatz wartet, bekommt ihn nicht mehr in der Reihe (nach dem Kartentipp alle Dateien angefordert, VocabData.eilig)", r.vok.n + " von " + r.vok.alle);
     }
     {
       const r = await runde({ karten: ["plural"], query: "?quelle" });
