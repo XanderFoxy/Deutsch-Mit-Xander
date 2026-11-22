@@ -36,8 +36,9 @@
         satzbau.js sofort (vor dem Teil), genau einmal, und den Kasten
      B11 (Nachbesserung, Prüfer) die Spiele unter „Lernen", die erst mit dem
         GANZEN Wortschatz zeichnen (Flussfuchs, Setzerei, Wortkette,
-        Augenblick, Meine Sätze, Wortlisten) und „Alle Wörter dieses Textes in
-        eine Liste": warten sie (Platzhalter), sind 400 ms nach dem Öffnen
+        Augenblick, Meine Sätze, Wortlisten), „Alle Wörter dieses Textes in
+        eine Liste" und das „Hörspiel mit meiner Stimme": warten sie
+        (Platzhalter), sind 400 ms nach dem Öffnen
         alle Wortschatz-Dateien angefordert (eilig) – die Wortkette zeichnet,
         sobald er ganz da ist. B11r Gegenstück: ist man im Raum
         (LiveChat.lage „drin"), bleibt es bei der Reihe (höchstens 4).
@@ -47,7 +48,7 @@
         bleibt die Gegenprobe: mit transferSize die Reihe)
    Gegenprobe: WURZEL=<Baum mit 888> → B1, B1b, B2, B3, B8, B9 rot (B10 dort grün);
    gegen ed33c26f (vor eilig) B4b rot; gegen 46223744 (vor der Nachbesserung)
-   B11 ×7 und B12 rot, B11r grün.
+   B11 ×8 und B12 rot, B11r grün.
    ===================================================================== */
 const fs = require("fs"), path = require("path"), http = require("http");
 
@@ -277,6 +278,18 @@ async function teilB(WURZEL, sage) {
       zaehl(/Wortschatz wird geladen/.test(r.toast) && r.alle > 4 && r.n === r.alle && !r.pe.length,
         "B11 „Alle Wörter dieses Textes in eine Liste“: wartet auf den ganzen Wortschatz – alle Dateien angefordert (eilig)",
         "vor dem Tipp " + r.vorher + ", danach " + r.n + " von " + r.alle + ", Hinweis " + JSON.stringify(r.toast) + (r.pe.length ? ", Fehler: " + r.pe.join(" | ") : ""));
+    }
+    {
+      /* „Hörspiel mit meiner Stimme" (eigenes Aussprache-Wörterbuch): wartet mit „Das Wörterbuch lädt …" */
+      const r = await spielFall({ area: "sondeHoerspiel", oeffnen: () => {
+        const k = document.createElement("div");
+        k.innerHTML = '<div class="eigen-spiel-start"><button type="button" data-eigen="spiel">Hörspiel</button></div><div class="eigen-spiel" id="sondeHoerspiel" hidden></div>';
+        document.getElementById("view-learn").appendChild(k);
+        k.querySelector("button").click();
+      } });
+      zaehl(r.text.includes("Das Wörterbuch lädt") && r.alle > 4 && r.n === r.alle && !r.pe.length,
+        "B11 „Hörspiel mit meiner Stimme“: wartet auf den ganzen Wortschatz – alle Dateien angefordert (eilig)",
+        "vor dem Tipp " + r.vorher + ", danach " + r.n + " von " + r.alle + ", " + JSON.stringify(r.text) + (r.pe.length ? ", Fehler: " + r.pe.join(" | ") : ""));
     }
     {
       const r = await spielFall({ raum: true, oeffnen: pille, arg: "sub-wortkette", area: "wortketteArea" });

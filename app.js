@@ -10655,8 +10655,8 @@
     return (VocabData.ladeWoerter ? VocabData.ladeWoerter() : Promise.resolve(true));
   }
   /* FASSUNG 889, Nachbesserung (Prüfer): die Spiele unter „Lernen", die erst mit dem GANZEN Wortschatz zeichnen
-     (Flussfuchs, Setzerei, Wortkette, Augenblick, Meine Sätze, Wortlisten), und „Alle Wörter dieses Textes in eine
-     Liste" warten auf ihn – nicht nur „Runde starten". Seit 889 lädt er in der Reihe (höchstens 4 Dateien zugleich,
+     (Flussfuchs, Setzerei, Wortkette, Augenblick, Meine Sätze, Wortlisten), „Alle Wörter dieses Textes in eine
+     Liste" und das „Hörspiel mit meiner Stimme" warten auf ihn – nicht nur „Runde starten". Seit 889 lädt er in der Reihe (höchstens 4 Dateien zugleich,
      data-vocab.js), auf 4G mit Konto kalt 0,1–0,4 s später ganz; wer wartet, bekommt darum wie in 888 alle übrigen
      Dateien zugleich (VocabData.eilig). Nicht, solange das Klassenzimmer offen ist oder man im Raum ist (ruheImRaum:
      liest nur Attribute und die Lage des Chats, kein Layout) – dort hält die Reihe die Leitung für Raum und Gespräch
@@ -15075,6 +15075,7 @@
       if (br && br.geladen && !br.geladen()) {
         ziel.hidden = false;
         ziel.innerHTML = '<p class="empty-note">Das Wörterbuch lädt …</p>';
+        wortschatzEilig();   // FASSUNG 889, Nachbesserung 1: auf den ganzen Wortschatz wird gewartet (nicht im Raum)
         br.laden().then(() => { if (br.geladen()) spielStarten(ziel); else ziel.innerHTML = '<p class="empty-note">Das Wörterbuch ließ sich nicht laden – bitte gleich noch einmal.</p>'; });
         return;
       }
