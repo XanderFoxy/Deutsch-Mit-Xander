@@ -8793,8 +8793,10 @@ Nachbau, „Für 888: das Lager in Stücken").
 - **Einteilung (`lagerEinteilen`):** ein Stück behält seine Nummer, solange seine erste Zeile (Kennung) dieselbe bleibt.
   Neue Zeilen wachsen ins letzte Stück, ein volles wird geteilt; das Kappen auf 20 000 Zeilen kürzt nur das erste Stück.
   Zu zersplittert (viele Zeilen mittendrin weg) → neu in volle Stücke.
-- **Sicherung im Leerlauf (`chatSichernStueckweise`):** wie 887 in Leerlaufpausen, jetzt feiner (je Schritt höchstens
-  50 Zeilen in Text, bis 6 ms; 888: 400 Zeilen, bis 12 ms + ein Stück). Jeder Happen wird gleich an seiner Stelle im
+- **Sicherung im Leerlauf (`chatSichernStueckweise`):** wie 887 in Leerlaufpausen, jetzt feiner (je Schritt Happen zu
+  50 Zeilen in Text, bis 6 ms; 888: 400 Zeilen, bis 12 ms + ein Stück). Gibt es gar keinen Leerlauf (requestIdleCallback
+  springt erst über sein Zeitlimit von 2 s an, `timeRemaining()` = 0), nutzt der Schritt die 6 ms trotzdem ganz
+  (`sichernFristReicht`; bis zur Nachbesserung Runde 1 war es dann nur EIN Happen je 2 s, siehe dort). Jeder Happen wird gleich an seiner Stelle im
   gelagerten Text des Stücks verglichen (`startsWith` ab Position – kein Zusammensetzen gleicher Stücke). Geschrieben
   wird nur, was anders ist, meist das letzte Stück und das Verzeichnis (`lagerSchreibenGeprueft`): in EINER Transaktion,
   die zuerst das Verzeichnis liest – steht dort noch der eigene `stand`, nur die geänderten Stücke, sonst (anderer Tab,
@@ -8809,7 +8811,9 @@ Nachbau, „Für 888: das Lager in Stücken").
   ein Leerlauf-Schreiben Schritte vor sich hat – beim Weggehen kämen sie nicht mehr.
 - **Lesen (`chatAusLager` → `lagerVerlaufLesen`):** altes Format, Verzeichnis und alle Stücke in EINER Lese-Transaktion
   (ein Schnappschuss); je Stück ein `JSON.parse`, zusammengesetzt mit `concat` (ein kaputtes Stück fiele allein weg).
-  Der gelesene Stand (Nummern, erste Kennungen, Texte) ist die Grundlage der nächsten Sicherung (`lagerStand`).
+  Der gelesene Stand (Nummern, erste Kennungen, Texte) ist die Grundlage der nächsten Sicherung (`lagerStand`) – nur
+  für den Raum, in dem man ist; der eines verlassenen Raums wird freigegeben (`lagerStandFreigeben`, Nachbesserung
+  Runde 1).
 - **Altes Format:** `chat:<raum>` wird weiter gelesen und beim ersten Schreiben in derselben Transaktion gelöscht
   (verlustfrei überführt). Liegen beide da (eine noch offene 888-Seite schrieb nach der Umstellung), werden sie
   vereinigt (`verschmelzen`, keine Zeile doppelt).
@@ -8883,9 +8887,14 @@ CPU 4×, je Lauf Median aus 9 Lesungen):
 | Verlauf laden, Lager auf der Platte (Endstand) | 888 | **889** |
 |---|---|---|
 | 7 000 Zeilen (je 3 Läufe) | 49,8 / 52,4 / 37,3 ms (Median 49,8) | **32,2 / 29,3 / 28,0 ms (Median 29,3)** |
-| längster Rückruf beim Lesen (7 000) | 7,4 ms | **3,7 ms** |
+| längster IndexedDB-Rückruf beim Lesen (7 000) ¹ | 7,4 ms | 3,7 ms |
 | 20 000 Zeilen (je 3 Läufe) | 91,3 / 92,2 / 85,9 ms (Median 91,3) | **92,2 / 88,0 / 85,3 ms (Median 88,0)** – gleich |
-| längster Rückruf beim Lesen (20 000) | 21,0 ms | **11,1 ms** |
+| längster IndexedDB-Rückruf beim Lesen (20 000) ¹ | 21,0 ms | 11,1 ms |
+
+¹ NACHGEBESSERT (Prüfung Runde 1): diese Zeile misst nur den IndexedDB-Rückruf selbst. `JSON.parse` und `concat` laufen
+danach als Mikroaufgaben in DERSELBEN Aufgabe (in 888 wie in 889) und fehlen in der Zahl. Die Aufgabe beim Betreten
+bleibt also ein Stück und ist nicht „halb so lang" – sie ist um das kürzer, was auch die Gesamtzeit „Verlauf laden"
+zeigt (Parsen allein bei 20 000 Zeilen 41 gegen 50 ms, siehe „gefunden"). Die Gesamtzeiten in der Tabelle stimmen.
 
 **Ehrlich zu den Zahlen:**
 - Was sich klar über dem Rauschen bewegt, ist die Sicherung selbst: bei 7 000 Zeilen längste Aufgabe 40–53 ms (888, A/A
@@ -8901,7 +8910,8 @@ CPU 4×, je Lauf Median aus 9 Lesungen):
   Zeilen bei 40–53 ms, ihr Bild bei 76–102 ms.
 - Verlauf laden im flüchtigen Kontext (Lager im Arbeitsspeicher, nicht wie auf einem Gerät) war im Nachbau mit 889 langsamer
   (Tabellen oben, Stand VOR dem Umbau auf `concat`); auf der Platte (wie auf einem Gerät) ist es mit dem Endstand schneller
-  (7 000) bzw. gleich (20 000), der längste Rückruf halb so lang.
+  (7 000) bzw. gleich (20 000). Der längste IndexedDB-Rückruf ist halb so lang, die ganze Aufgabe beim Lesen aber nicht:
+  Parsen und `concat` laufen in derselben Aufgabe danach (Fußnote ¹, nachgebessert).
 
 ### Offen / bewusst so gelassen
 1. **Die sofortige Sicherung bleibt so teuer wie 888** (alle Stücke in einer Aufgabe, nur wenn etwas aussteht: verdeckt,

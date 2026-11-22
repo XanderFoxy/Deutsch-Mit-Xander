@@ -11,6 +11,11 @@
      Z  Kein langes Bild aus der Sicherung (CPU 4×, 7 000 Zeilen, Profilfotos bei 3 von 30): jede Aufgabe des Hauptfadens,
         in der die Leerlauf-Sicherung lief (Leerlauf-/IndexedDB-Rückruf samt der Mikroaufgaben danach, aus der Chromium-
         Spur), ≤ 16 ms – auch, wenn ein anderer Tab geschrieben hat und darum alles neu geschrieben wird.
+     U  Hauptfaden voll ausgelastet (je Bild 20 ms belegt, CPU 4×, 2 000 Zeilen; requestIdleCallback springt nur über sein
+        Zeitlimit an): die neue Zeile ist nach ≤ 40 s im Lager und im localStorage, ≤ 20 Leerlauf-Rückrufe, jeder ≤ 16 ms.
+     S  Arbeitsspeicher (20 000 Zeilen): der Stand eines verlassenen Raums (Text aller Stücke) wird freigegeben – nach dem
+        Wechsel, nach einem späten Lesen und nach einem Schreiben, das erst nach dem Wechsel endet; Heap nach GC danach
+        ≤ 2 MB über dem Ausgangsstand; das Lager des verlassenen Raums vollständig.
      K  Kappen bei 20 000 Zeilen: eine neue Zeile → höchstens 2 Stücke (das erste wird kürzer, das letzte bekommt sie).
      V  Altes Format (888, ein Text) wird gelesen und verlustfrei überführt (sofort und im Leerlauf, dabei verschwindet
         „chat:<raum>"); bricht die Überführung mittendrin ab, steht das alte vollständig da.
@@ -19,7 +24,8 @@
      T  Abbruch mitten im Schreiben (kleine Stücke, ~140 Schritte): Tab zu (page.close), Absturz (Page.crash), pagehide –
         danach liegt immer ein vollständiger Stand im Lager (alt oder neu, nie gemischt); nach pagehide der neueste.
      M  Mehrere Tabs: zwei Seiten im selben Raum schreiben abwechselnd (Leerlauf und pagehide) – das Lager ist jedes Mal
-        genau der Verlauf dessen, der zuletzt schrieb; zwei Räume („m", „m:1") mischen sich nicht; Aufräumen nimmt
+        genau der Verlauf dessen, der zuletzt schrieb – auch, wenn ihre Stück-Einteilungen auseinanderlaufen (A bekommt
+        700 ältere Zeilen vorn dazu, B kennt sie nicht); zwei Räume („m", „m:1") mischen sich nicht; Aufräumen nimmt
         verwaiste Stücke und mit einem 60 Tage alten Verzeichnis dessen Stücke weg, sonst nichts.
      Q  Speicher voll (Quota über CDP): Schreiben scheitert ohne Fehler, der vorige Stand bleibt vollständig, der
         localStorage-Teil wird geschrieben; ist wieder Platz, geht die nächste Sicherung durch.
@@ -29,7 +35,10 @@
         abwechselnd, Median aus 9; eigenes Profil, das Lager auf der Platte wie auf einem Gerät).
    Gegenprobe: WURZEL=/tmp/claude-0/v888 (Fassung 888) → A N K V1 V2 B T M Q F(Zeilen) L(Format) rot (34 Prüfungen).
    (Z maß zuerst nur die Rückrufe selbst und war damit auf 888 grün: 888 legt den Text in einem .then NACH dem
-   Leerlauf-Rückruf ins Lager – das sieht nur die ganze Aufgabe. Jetzt aus der Spur, siehe Ergebnis der Gegenprobe.) */
+   Leerlauf-Rückruf ins Lager – das sieht nur die ganze Aufgabe. Jetzt aus der Spur, siehe Ergebnis der Gegenprobe.)
+   U und S sind auf 888 grün (888 nahm 400 Zeilen je Rückruf und hielt keinen Text) – ihre Gegenprobe sind Mutanten des
+   889-Stands (SPIELSYSTEM.md, Fassung 889, Nachbesserung Runde 1): U mit der alten Bedingung „timeRemaining() > 1",
+   S ohne das Freigeben, M mit „voll = !basisStand" (den fremden Stand übergehen). */
 const { chromium } = require("/tmp/claude-0/node_modules/playwright");
 const http = require("http"), fs = require("fs"), path = require("path");
 const WURZEL = path.resolve(process.env.WURZEL || path.join(__dirname, ".."));
@@ -667,7 +676,7 @@ function server() {
     const ma = med(z.alt), mn = med(z.neu);
     ok(vor.neuFormat && vor.n === 7000, "Raum im neuen Format angelegt (7 000 Zeilen)", JSON.stringify(vor));
     ok(!z.falsch, "beide liefern 7 000 Zeilen", z.falsch || "");
-    ok(mn <= ma * 1.2 + 5, "Lesen im neuen Format nicht langsamer (Median, bis +20 % + 5 ms Rauschen)", "neu " + mn.toFixed(1) + " ms, alt " + ma.toFixed(1) + " ms; längster Rückruf neu " + med(z.neuSchritt).toFixed(1) + " / alt " + med(z.altSchritt).toFixed(1) + " ms");
+    ok(mn <= ma * 1.2 + 5, "Lesen im neuen Format nicht langsamer (Median, bis +20 % + 5 ms Rauschen)", "neu " + mn.toFixed(1) + " ms, alt " + ma.toFixed(1) + " ms; längster IndexedDB-Rückruf (ohne Parsen – das läuft danach in derselben Aufgabe) neu " + med(z.neuSchritt).toFixed(1) + " / alt " + med(z.altSchritt).toFixed(1) + " ms");
   }
 
   ok(seitenFehler.length === 0, "keine Seitenfehler", seitenFehler.slice(0, 3).join(" | "));
