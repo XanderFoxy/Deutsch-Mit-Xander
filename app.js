@@ -9548,7 +9548,15 @@
        Wortniveaus, kommt er gleich jetzt (~16 KB gepackt), nicht erst beim Tipp; sonst nichts */
     const bedarfSetup = Quiz.wortschatzWeg ? {} : undefined;
     const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel, bedarfSetup) : 0;
-    try { if (bedarfSetup && selectedCategories.size && ExerciseData.wortniveauHolen && Quiz.wortschatzWeg(bedarfSetup) === "fehlt") ExerciseData.wortniveauHolen().catch(() => {}); } catch (e) {}
+    try {
+      if (bedarfSetup && selectedCategories.size) {
+        const wegSetup = Quiz.wortschatzWeg(bedarfSetup);
+        if (wegSetup === "fehlt" && ExerciseData.wortniveauHolen) ExerciseData.wortniveauHolen().catch(() => {});
+        /* FASSUNG 889 (Nachmessung): braucht die Auswahl den GANZEN Wortschatz (Wortschatz, Meine Wörter), lädt er nicht
+           mehr in der Reihe (höchstens 4 zugleich, data-vocab.js), sondern wie bisher alles zugleich – auf ihn wird gewartet */
+        if (wegSetup === "voll" && typeof VocabData !== "undefined" && VocabData.eilig) VocabData.eilig();
+      }
+    } catch (e) {}
     const currentDiffCount = (Quiz.DIFFICULTIES.find((d) => d.id === selectedDifficulty) || {}).count || 0;
     if (currentDiffCount > maxAvailable) {
       const fitting = Quiz.DIFFICULTIES.filter((d) => d.count <= maxAvailable).sort((a, b) => b.count - a.count)[0];
@@ -9816,12 +9824,12 @@
               const n = Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel, bedarf);
               let weg = Quiz.wortschatzWeg(bedarf);
               if (weg === "fehlt" && ExerciseData.wortniveauHolen) { await ExerciseData.wortniveauHolen(); weg = Quiz.wortschatzWeg(bedarf); }
-              if (weg !== "keiner" && weg !== "auszug") await wortschatzBereit();
+              if (weg !== "keiner" && weg !== "auszug") { try { if (VocabData.eilig) VocabData.eilig(); } catch (e) {} await wortschatzBereit(); }
               if (rundenWahl() === wahl) { vorrat = n; mitAuszug = true; }
             }
           }
         } catch (e) { vorrat = null; mitAuszug = false; }
-        if (vorrat === null) await Promise.all([wortschatzBereit(), uebungenWeg]);
+        if (vorrat === null) { try { if (VocabData.eilig) VocabData.eilig(); } catch (e) {} await Promise.all([wortschatzBereit(), uebungenWeg]); }
       } catch (e) { /* dann eben mit dem, was da ist */ }
       startBtn.textContent = knopfText;
       const topicFilterPruef = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };

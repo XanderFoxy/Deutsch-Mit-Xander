@@ -141,6 +141,16 @@ const VocabData = (function () {
      Leitung (Speicher, Helfer, 304), liegt der Wortschatz mit großer Wahrscheinlichkeit auch dort – dann gleich alle
      zugleich wie bisher; der Beobachter bleibt für den Rest (z. B. die erste Seite nach einer neuen Fassung). */
   const VOKABEL_ZUGLEICH = 4;
+  /* FASSUNG 889, Nachmessung (4G mit Konto, kalt): der GANZE Wortschatz war mit der Reihe 0,1–0,3 s später da (in 2 von
+     4 Läufen gesichert, auch mit 6 statt 4 zugleich) – den Kartentipp kostet das nichts, aber wer auf ihn WARTET
+     („Runde starten“ mit Wortschatz/Meine Wörter), hätte länger gewartet als in 888. Darum eilig(): wartet jemand auf
+     den ganzen Wortschatz, gehen alle übrigen Dateien sofort zugleich hinaus (wie bisher); gilt auch für ein später
+     angestoßenes Laden. */
+  let eiligAn = false, reiheWecken = null;
+  function eilig() {
+    eiligAn = true;
+    if (reiheWecken) try { reiheWecken(); } catch (e) {}
+  }
   function ladeWoerter() {
     if (alleLaufen) return alleLaufen;
     const reihe = VOKABEL_THEMEN.map((t) => t[0]);
@@ -148,10 +158,10 @@ const VocabData = (function () {
       const ohneInhalt = (e) => e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize;
       let schonDa = false;
       try { schonDa = performance.getEntriesByType("resource").some((e) => /\/(?:min\/)?data-vocab\.js(?:\?|$)/.test(e.name) && ohneInhalt(e)); } catch (e) { schonDa = false; }
-      let i = 0, offen = 0, zugleich = schonDa ? reihe.length : VOKABEL_ZUGLEICH, ende = false, beob = null;
+      let i = 0, offen = 0, zugleich = (schonDa || eiligAn) ? reihe.length : VOKABEL_ZUGLEICH, ende = false, beob = null;
       const weiter = () => {
         if (ende) return;
-        if (i >= reihe.length && !offen) { ende = true; try { if (beob) beob.disconnect(); } catch (e) {} fertig(); return; }
+        if (i >= reihe.length && !offen) { ende = true; reiheWecken = null; try { if (beob) beob.disconnect(); } catch (e) {} fertig(); return; }
         while (offen < zugleich && i < reihe.length) {
           offen++;
           const thema = reihe[i++];
@@ -169,6 +179,7 @@ const VocabData = (function () {
         });
         beob.observe({ type: "resource" });
       } catch (e) { beob = null; }
+      reiheWecken = () => { if (zugleich !== reihe.length) { zugleich = reihe.length; weiter(); } };
       weiter();
     }).then(() => WORDS.length > 0);
     return alleLaufen;
@@ -431,5 +442,5 @@ const VocabData = (function () {
     "Gartenarbeit": { article: "il", noun: "giardinaggio", syl: "giar-di-NAG-gio" },
   };
 
-  return { WORDS, ladeWoerter, ladeThema, woerterDa, ladenLaeuft, alleThemenDa, themenListe, HOBBIES_IT, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES, LANGUAGE_SYL };
+  return { WORDS, ladeWoerter, eilig, ladeThema, woerterDa, ladenLaeuft, alleThemenDa, themenListe, HOBBIES_IT, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES, LANGUAGE_SYL };
 })();
