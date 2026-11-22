@@ -8913,6 +8913,66 @@ zeigt (Parsen allein bei 20 000 Zeilen 41 gegen 50 ms, siehe „gefunden"). Die 
   (7 000) bzw. gleich (20 000). Der längste IndexedDB-Rückruf ist halb so lang, die ganze Aufgabe beim Lesen aber nicht:
   Parsen und `concat` laufen in derselben Aufgabe danach (Fußnote ¹, nachgebessert).
 
+### Nachbesserung (Prüfung Runde 1)
+Vier Befunde des Prüfers, alle behoben (Stand 22.11.2026, Commits 7629ab01, 947f8382 und der Logbuch-Commit).
+
+1. **Leerlauf-Sicherung unter Volllast (wichtig).** Ist der Hauptfaden voll ausgelastet (Livestream mit vielen Bildern,
+   schwaches Gerät), gibt es keine Leerlaufpause: `requestIdleCallback` springt erst über sein Zeitlimit (2 s) an,
+   `timeRemaining()` ist 0. Die Bedingung „`timeRemaining() > 1`" beendete den Schritt dann nach EINEM Happen von
+   50 Zeilen – rund 1 ms Arbeit je 2 s. Prüfer-Nachstellung (2 000 Zeilen, rAF-Schleife mit 20 ms je Bild, CPU 4×):
+   889 93,8 s und 45 Rückrufe bis ins Lager, 888 16,2 s und 9 Rückrufe; hochgerechnet bei 20 000 Zeilen rund 13 min
+   statt rund 100 s. So lange lag nichts Neues im Gerät, auch nicht die 300 Zeilen im localStorage (`kurzLegen` kommt
+   erst am Ende des Laufs), und ein langer Lauf wird öfter verworfen, wenn `zustand.nachrichten` ersetzt wird. Mein
+   Bericht oben („bis 6 ms je Schritt") hat diesen Tausch verschwiegen: beim Zeitlimit wurde das Budget gar nicht genutzt.
+   **Jetzt** (`sichernFristReicht`): nach dem Zeitlimit (`didTimeout`) nutzt der Schritt die 6 ms ganz; in einer echten
+   Leerlaufpause gilt weiter `timeRemaining() > 1`. Gemessen mit der neuen Sonde U (dieselbe Last, 2 000 Zeilen + 1):
+
+   | bis die neue Zeile im Lager und im localStorage ist | 888 (A/A: 2 Läufe) | 889 vor der Nachbesserung (Mutante) | **889** (3 Läufe) |
+   |---|---|---|---|
+   | Zeit | 21,3 / 21,3 s | nach 60 s noch nicht fertig (Lager und localStorage ohne die neue Zeile) | **13,3 / 13,3 / 13,3 s** |
+   | Leerlauf-Rückrufe (alle über das Zeitlimit, `timeRemaining` 0) | 9 / 9 | 28 in 60 s | **5 / 5 / 5** |
+   | längster Rückruf (nur der Rückruf selbst) | 3,7 / 3,8 ms | 5,1 ms | 8,7 / 13,5 / 7,5 ms |
+
+   Je Rückruf im 3. Lauf: 1,3 (Plan) · 7,5 und 5,0 (Text, 2 000 Zeilen in zwei Schritten) · 4,1 (localStorage) · 1,1 ms
+   (Lager). Die 13,5 ms im 2. Lauf waren ein einzelner Ausreißer (vermutlich eine Speicherbereinigung im Rückruf). Ehrlich:
+   die Zahl misst nur die Rückrufe; 888 legt den ganzen Text danach in einem `.then` in derselben Aufgabe ins Lager (siehe
+   Z), seine ganze Aufgabe ist also länger als 3,7 ms. Ohne Last (Sonde Z, ganze Aufgaben aus der Spur) unverändert
+   6,5–7,3 ms. Die 888-Zahl hier (21,3 s) liegt über der des Prüfers (16,2 s): in der Sonde kamen alle 9 Rückrufe über
+   das Zeitlimit, beim Prüfer bekam einer eine echte Pause; verglichen wird darum in derselben Sonde.
+2. **Arbeitsspeicher je besuchtem Raum (klein).** `lagerStand` hielt den fertigen Text aller Stücke für jeden besuchten
+   Raum und gab ihn nie frei (888 verwarf den Text nach dem put). Prüfer: bei 20 000 Zeilen +8,8–9,4 MB gegen +2,8–3,3 MB
+   (888), also rund 6 MB mehr je großem Raum (ü und Emoji machen den Text zweibytig). **Jetzt** (`lagerStandFreigeben`):
+   der Stand eines verlassenen Raums wird freigegeben – beim Betreten eines anderen Raums (`betreten`, auch
+   `pruefRaum`), und wenn ein Schreiben erst nach dem Wechsel endet (`lagerFertig`); ein spätes Lesen eines verlassenen
+   Raums setzt keinen Stand mehr (`chatAusLager`). Kehrt man zurück, liest `chatAusLager` ihn neu; fehlt er doch einmal,
+   schreibt die nächste Sicherung einfach alles (wie bei einem fremden Stand). Sonde S (20 000 Zeilen, Heap nach GC,
+   gegenüber dem Stand nach einem Aufwärm-Durchgang):
+
+   | Heap nach GC | 888 (2 Läufe) | 889 vor der Nachbesserung (Mutante) | **889** (3 Läufe) |
+   |---|---|---|---|
+   | im Raum (Verlauf da, gesichert) | +4,0 / +3,9 MB | +9,7 MB | +9,7 / +9,7 / +9,7 MB |
+   | nach dem Verlassen (anderer Raum, eine Zeile dort) | +0,0 / +0,0 MB | **+5,8 MB** | **+0,1 / +0,0 / +0,0 MB** |
+   | nach Wiederkommen und sofort wieder Gehen | +0,1 / +0,1 MB | +5,8 MB | +0,1 / +0,1 / +0,1 MB |
+
+   **Bewusst so gelassen:** im Raum selbst bleibt der Text (rund +6 MB bei 20 000 Zeilen gegenüber 888, bei 7 000 Zeilen
+   entsprechend etwa +2 MB, nicht eigens gemessen) –
+   er ist es, der „nur das Geänderte schreiben" möglich macht (Vergleich mit `startsWith`, nativ). Ohne ihn müsste jede
+   Sicherung wieder alles schreiben wie 888, oder je Stück eine Prüfsumme in JS über jeden Happen rechnen (geschätzt
+   +20–40 % Rechenzeit der Sicherung, dazu ein, wenn auch winziges, Kollisionsrisiko bei einer gleich langen Änderung).
+   Vorschlag, falls alte Telefone knapp werden: Länge + 2×32-Bit-Prüfsumme je Stück, vorher gemessen. Nebenbefund (seit
+   887, nicht angefasst): das Kennungs-Verzeichnis (`kennungSchonDa`) hält die alte Liste, bis im neuen Raum die erste
+   Zeile kommt – darum misst S „nach dem Verlassen" nach einer Zeile im anderen Raum, für 888 wie für 889 gleich.
+3. **Sonde M ohne Biss beim Schreiben mit mehreren Tabs (klein).** In M lief die Stück-Einteilung der beiden Tabs nie
+   auseinander; eine Mutante, die den fremden Stand im Verzeichnis übergeht (`voll = !basisStand`), war in M grün. Jetzt
+   in M: A bekommt 700 ältere Zeilen vorn dazu (Verlauf eines Ankömmlings) und teilt neu ein (8 Stücke), B kennt sie
+   nicht und schreibt danach eine Zeile – B muss alles schreiben –, danach wieder A. Echter Code: 3 703 / 3 003 / 3 704
+   Zeilen, Bereich 8/8 · 6/6 · 8/8, B schrieb alles neu (`["geprueft",true,6,…]`). **Gegenprobe** mit der Mutante:
+   2 rot (B: Bereich 8/6 – A's Stücke bleiben liegen; „B schrieb alles neu" nicht erfüllt). Wie beim Prüfer
+   (`zwei-tabs.js`) verliert die Mutante beim nächsten Schreiben von A Zeilen; der echte Code ist richtig.
+4. **„Längster Rückruf beim Lesen" ehrlich benannt (klein).** Die Zeilen 21,0 → 11,1 ms und 7,4 → 3,7 ms messen nur den
+   IndexedDB-Rückruf; `JSON.parse` und `concat` laufen danach in derselben Aufgabe. Tabelle (Fußnote ¹), Text „Ehrlich zu
+   den Zahlen" und die Ausgabe von Sonde L sind berichtigt; die Gesamtzeiten „Verlauf laden" stimmten.
+
 ### Offen / bewusst so gelassen
 1. **Die sofortige Sicherung bleibt so teuer wie 888** (alle Stücke in einer Aufgabe, nur wenn etwas aussteht: verdeckt,
    Raumwechsel, verlassen, Seite weg). Sie kann nicht erst das Verzeichnis lesen, ohne beim Weggehen zu riskieren, dass
@@ -8934,6 +8994,9 @@ zeigt (Parsen allein bei 20 000 Zeilen 41 gegen 50 ms, siehe „gefunden"). Die 
    wirkte in diesem Chromium nicht (Quote blieb 10 GB, auch im festen Profil).
 6. Werkstatt: die offene Zeile „Chatverlauf im Gerät in Stücken (Ruck von 70–170 ms alle 20 s)" kann bei der Lieferung
    raus (`werkzeug/werkstatt-setzen.py`).
+7. **Arbeitsspeicher im Raum** (Nachbesserung Runde 1, Punkt 2): solange man in einem Raum ist, hält 889 den Text seiner
+   Stücke (bei 20 000 Zeilen rund 6 MB mehr als 888). Freigegeben wird er beim Verlassen. Weniger ginge mit Länge +
+   Prüfsumme je Stück, auf Kosten von Rechenzeit – nur als Vorschlag, nicht gebaut.
 
 **Sichtbar:** nichts – Aussehen, Größe und Bedienung wie 888; kein Vorschlag nötig.
 
