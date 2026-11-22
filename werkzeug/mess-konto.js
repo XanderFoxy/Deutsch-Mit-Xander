@@ -33,7 +33,10 @@ function sitzung() {
    Karten und Knöpfen – mit Betreiber brachen auf 3G 7 von 24 Öffnungen am Knopf „Runde starten“ ab */
 const PROFIL = { id: ICH, name: "Mira", points: 900, badges: [], trophies: [], bio: "", avatar_url: "", avatar_emoji: "🦊", is_owner: false,
   is_admin: false, is_moderator: false, last_active: new Date().toISOString(), birthday: "", origin: "", created_at: "2026-08-25T10:00:00Z",
-  extra_profile_data: { seenFoxIntro: true }, gallery: [], theme: "bastelheft" };
+  /* FASSUNG 889: ein Mitglied mit 900 Punkten hat die Punkte-Meilensteine längst gesehen – sonst legte sich bei JEDEM
+     Öffnen (die Attrappe merkt sich nichts) „🎉 Insgesamt schon 50 Punkte gesammelt!“ über die Seite, auf 3G kalt genau
+     über „Runde starten“ (12 von 12 Öffnungen abgebrochen, locator.tap; Bild mit elementFromPoint: DIV.lightbox) */
+  extra_profile_data: { seenFoxIntro: true, shownMilestones: ["points-50", "points-200", "points-500"] }, gallery: [], theme: "bastelheft" };
 
 /* Dateien des Servers: Adresse der Attrappe statt des echten Projekts (für beide Stände gleich) */
 function datei(p, inhalt) {
