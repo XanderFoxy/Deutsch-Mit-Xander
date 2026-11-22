@@ -911,7 +911,11 @@
        Zeit als leeren Bildschirm. Deshalb erst zeichnen lassen, dann
        laden — die Ansichten holen sich die Wörter über
        wortschatzNachziehen() ohnehin nach, sobald sie da sind. */
-    if (targetId === "view-learn") satzbauLaden();   // FASSUNG 842 — der Satzbaukasten liegt unter „Lernen"
+    /* FASSUNG 889 (Ladezeit, Vorrang 2): satzbau.js (185 KB gepackt) erst nach dem Teil von data-exercises.js (unten,
+       „vorrang", höchstens 3 s) – nur beim ersten Öffnen von „Lernen", sonst wie bisher sofort. Gemessen (3G, kalt,
+       Resource Timing): es lief bisher genau in der Zeit, in der der Kartentipp auf diesen Teil wartet („Karte →
+       startklar" 2,5 s). Der Satzbaukasten liegt hinter seinem Reiter und holt es dort selbst (renderSatzbaukasten). */
+    let satzbauNach = null;
     if (targetId === "view-learn" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft() && !wortschatzGeplant) {
       /* MODUL-UMBAU M3b: erst der Teil von data-exercises.js, den jeder Karten-Tipp braucht (88 KB, höchstens 3 s), dann
          der Wortschatz (ExerciseData.uebungenVorrang; ohne Teile, z. B. ?quelle, sofort wie bisher).
@@ -925,6 +929,11 @@
       try { if (ExerciseData.uebungenVorrang) vorrang = ExerciseData.uebungenVorrang(3000).catch(() => true); } catch (e) { vorrang = true; }
       const los = () => { wortschatzGeplant = null; return VocabData.ladeWoerter(); };
       wortschatzGeplant = Promise.all([ruhe, vorrang]).then(los, los);
+      satzbauNach = vorrang;
+    }
+    if (targetId === "view-learn") {   // FASSUNG 842 — der Satzbaukasten liegt unter „Lernen"
+      if (satzbauNach && satzbauNach !== true) Promise.resolve(satzbauNach).then(() => satzbauLaden(), () => satzbauLaden());
+      else satzbauLaden();
     }
     /* FASSUNG 837 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller … sofort im Livestream wie HelloTalk".
        Der Weg ins Klassenzimmer führt über „Wissen", und „Wissen" zog bisher nach 1,5 s den ganzen Wortschatz
@@ -9535,7 +9544,19 @@
     // Sprachniveau: beim ersten Aufbau aus dem Profil übernehmen, danach das,
     // was zuletzt hier eingestellt wurde.
     selectedExerciseLevel = applyDefaultCefrLevel(selectedExerciseLevel, (v) => { selectedExerciseLevel = v; }, "uebungen");
-    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel) : 0;
+    /* FASSUNG 889: dieselbe Zählung, dazu der Wortschatz-Bedarf der Auswahl – braucht „Runde starten" den Auszug der
+       Wortniveaus, kommt er gleich jetzt (~16 KB gepackt), nicht erst beim Tipp; sonst nichts */
+    const bedarfSetup = Quiz.wortschatzWeg ? {} : undefined;
+    const maxAvailable = selectedCategories.size ? Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel, bedarfSetup) : 0;
+    try {
+      if (bedarfSetup && selectedCategories.size) {
+        const wegSetup = Quiz.wortschatzWeg(bedarfSetup);
+        if (wegSetup === "fehlt" && ExerciseData.wortniveauHolen) ExerciseData.wortniveauHolen().catch(() => {});
+        /* FASSUNG 889 (Nachmessung): braucht die Auswahl den GANZEN Wortschatz (Wortschatz, Meine Wörter), lädt er nicht
+           mehr in der Reihe (höchstens 4 zugleich, data-vocab.js), sondern wie bisher alles zugleich – auf ihn wird gewartet */
+        if (wegSetup === "voll" && typeof VocabData !== "undefined" && VocabData.eilig) VocabData.eilig();
+      }
+    } catch (e) {}
     const currentDiffCount = (Quiz.DIFFICULTIES.find((d) => d.id === selectedDifficulty) || {}).count || 0;
     if (currentDiffCount > maxAvailable) {
       const fitting = Quiz.DIFFICULTIES.filter((d) => d.count <= maxAvailable).sort((a, b) => b.count - a.count)[0];
@@ -9775,6 +9796,18 @@
          Jetzt wird auf BEIDES gewartet. Der Knopf sagt es. */
       const knopfText = startBtn.textContent;
       startBtn.textContent = "Aufgaben werden geholt …";
+      /* FASSUNG 889 — „Runde starten" ohne den ganzen Wortschatz (Ladezeit, Vorrang 2; SPIELSYSTEM.md Abschnitt 889).
+         Gewartet wurde hier immer auf alle 26 Wortschatz-Dateien (2,3 MB gepackt; nach dem kalten Öffnen 4G +0,9–1,2 s,
+         3G +9,8 s). Die Aufgaben brauchen ihn aber nur in zwei Fällen (quiz.js, „was eine Runde vom Wortschatz braucht"):
+         die Kategorie baut ihre Aufgaben aus dem Wörterbuch (Wortschatz, Meine Wörter) – dann wie bisher –, oder eine
+         Aufgabe ohne eigenes Niveau wird nach ihren Wörtern eingestuft – dann reicht der kleine Auszug
+         (bau/wortniveau-*.js, ~16 KB gepackt; meist schon beim Tipp auf die Karte geholt, renderSetup), sonst wie bisher
+         der ganze Wortschatz. Gezählt wird wie bisher (dieselben getBank-Aufrufe in derselben Folge, also dieselben
+         Zufallszahlen), nur noch ohne Einstufung (die Zahl hängt nicht am Niveau); eingestuft wird erst beim Bau der
+         Runde. Ändert sich die Auswahl während des Wartens, gilt der alte Weg. Welche Aufgaben, in welcher Folge, auf
+         welchem Niveau und wie bewertet: genau wie bisher (Gleichlauf-Prüfer werkzeug/pruefe-889-runde.js). */
+      const rundenWahl = () => [...selectedCategories].join(",") + "|" + selectedQuizTopic + "|" + selectedWortschatzTopic + "|" + selectedExerciseLevel;
+      let vorrat = null, mitAuszug = false;
       try {
         /* MODUL-UMBAU M3b: nur die gewählten Kategorien (mit ?quelle/ohne Teile die ganze Sammlung wie bisher) */
         const uebungenWeg = (ExerciseData.ladeUebungen && !ExerciseData.uebungenDa([...selectedCategories]))
@@ -9782,11 +9815,25 @@
         /* MODUL-UMBAU M3b: die app-Stücke für den Start der Runde erst über die Leitung abwarten (die Seite bleibt
            bedienbar, der Knopf zeigt „wird geholt") statt sie im Aufruf synchron zu holen; nach 8 s wie bisher */
         await Promise.race([dmaTeileFuer([wortschatzBereit, merkeZustand, renderQuestion]), new Promise((r) => setTimeout(r, 8000))]);
-        await Promise.all([wortschatzBereit(), uebungenWeg]);
+        try {
+          const wahl = rundenWahl();
+          if (Quiz.wortschatzWeg && !Quiz.bankBrauchtWortschatz([...selectedCategories])) {
+            await uebungenWeg;
+            if (rundenWahl() === wahl) {
+              const bedarf = { ohneNiveau: true };
+              const n = Quiz.poolSizeFor([...selectedCategories], { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic }, selectedExerciseLevel, bedarf);
+              let weg = Quiz.wortschatzWeg(bedarf);
+              if (weg === "fehlt" && ExerciseData.wortniveauHolen) { await ExerciseData.wortniveauHolen(); weg = Quiz.wortschatzWeg(bedarf); }
+              if (weg !== "keiner" && weg !== "auszug") { try { if (VocabData.eilig) VocabData.eilig(); } catch (e) {} await wortschatzBereit(); }
+              if (rundenWahl() === wahl) { vorrat = n; mitAuszug = true; }
+            }
+          }
+        } catch (e) { vorrat = null; mitAuszug = false; }
+        if (vorrat === null) { try { if (VocabData.eilig) VocabData.eilig(); } catch (e) {} await Promise.all([wortschatzBereit(), uebungenWeg]); }
       } catch (e) { /* dann eben mit dem, was da ist */ }
       startBtn.textContent = knopfText;
       const topicFilterPruef = { quiz: selectedQuizTopic, wortschatz: selectedWortschatzTopic };
-      const vorrat = Quiz.poolSizeFor
+      if (vorrat === null) vorrat = Quiz.poolSizeFor
         ? Quiz.poolSizeFor([...selectedCategories], topicFilterPruef, selectedExerciseLevel) : 99;
       if (vorrat < 5) {
         startBtn.disabled = false;
@@ -9804,14 +9851,14 @@
             const cid = await challengeErstellen(fid, [...selectedCategories]);
             if (!firstChallengeId) firstChallengeId = cid;
           }
-          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, topicFilters, selectedExerciseLevel);
+          Quiz.startSession([...selectedCategories], selectedDifficulty, { challengeId: firstChallengeId }, orderMode, topicFilters, selectedExerciseLevel, { auszug: mitAuszug });
         } catch (err) {
           alert(err.message || "Duell konnte nicht gestartet werden.");
           startBtn.disabled = false;
           return;
         }
       } else {
-        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, topicFilters, selectedExerciseLevel);
+        Quiz.startSession([...selectedCategories], selectedDifficulty, null, orderMode, topicFilters, selectedExerciseLevel, { auszug: mitAuszug });
       }
       /* Letzter Riegel: auch nach allem Warten kann die Runde zu kurz
          ausfallen (etwa wenn ein Thema wirklich nur wenige Aufgaben
@@ -10606,6 +10653,16 @@
      ============================================================ */
   function wortschatzBereit() {
     return (VocabData.ladeWoerter ? VocabData.ladeWoerter() : Promise.resolve(true));
+  }
+  /* FASSUNG 889, Nachbesserung (Prüfer): die Spiele unter „Lernen", die erst mit dem GANZEN Wortschatz zeichnen
+     (Flussfuchs, Setzerei, Wortkette, Augenblick, Meine Sätze, Wortlisten), „Alle Wörter dieses Textes in eine
+     Liste" und das „Hörspiel mit meiner Stimme" warten auf ihn – nicht nur „Runde starten". Seit 889 lädt er in der Reihe (höchstens 4 Dateien zugleich,
+     data-vocab.js), auf 4G mit Konto kalt 0,1–0,4 s später ganz; wer wartet, bekommt darum wie in 888 alle übrigen
+     Dateien zugleich (VocabData.eilig). Nicht, solange das Klassenzimmer offen ist oder man im Raum ist (ruheImRaum:
+     liest nur Attribute und die Lage des Chats, kein Layout) – dort hält die Reihe die Leitung für Raum und Gespräch
+     frei (Vorrang 1). */
+  function wortschatzEilig() {
+    try { if (VocabData.eilig && !ruheImRaum()) VocabData.eilig(); } catch (e) { /* dann eben in der Reihe */ }
   }
   /* Wie wortschatzNachziehen(), aber MIT Anstoss.
      ------------------------------------------------------------
@@ -15018,6 +15075,7 @@
       if (br && br.geladen && !br.geladen()) {
         ziel.hidden = false;
         ziel.innerHTML = '<p class="empty-note">Das Wörterbuch lädt …</p>';
+        wortschatzEilig();   // FASSUNG 889, Nachbesserung 1: auf den ganzen Wortschatz wird gewartet (nicht im Raum)
         br.laden().then(() => { if (br.geladen()) spielStarten(ziel); else ziel.innerHTML = '<p class="empty-note">Das Wörterbuch ließ sich nicht laden – bitte gleich noch einmal.</p>'; });
         return;
       }
@@ -79761,7 +79819,7 @@
       area.innerHTML = `<div class="question-card" style="text-align:center;">
         <p class="eyebrow">🦊 DER FUCHS AM FLUSS</p>
         <p class="empty-note">Der Fuchs sucht sich seine Steine zusammen …</p></div>`;
-      wortschatzBereit().then(() => renderFlussfuchs());
+      wortschatzEilig(); wortschatzBereit().then(() => renderFlussfuchs());
       return;
     }
     if (!flussSession) neueFlussSession();
@@ -80038,7 +80096,7 @@
     if (!text || text.trim().length < 40) { showToast("Hier steht noch kein Text zum Sammeln."); return; }
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       showToast("Der Wortschatz wird geladen — gleich noch einmal antippen.");
-      wortschatzBereit();
+      wortschatzEilig(); wortschatzBereit();
       return;
     }
     const ergebnis = textAuswerten(text, 120);
@@ -80070,7 +80128,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">📋 MEINE WORTLISTEN</p>
         <p class="empty-note">Der Wortschatz wird geladen …</p></div>`;
-      wortschatzBereit().then(() => renderWortlisten());
+      wortschatzEilig(); wortschatzBereit().then(() => renderWortlisten());
       return;
     }
     const listen = meineWortlisten();
@@ -80383,7 +80441,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa()) && setzPool().length < 200) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">🅰️ DIE SETZEREI</p>
         <p class="empty-note">Der Setzkasten wird gefüllt …</p></div>`;
-      wortschatzBereit().then(() => renderSetzerei());
+      wortschatzEilig(); wortschatzBereit().then(() => renderSetzerei());
       return;
     }
     if (!setzSession) neueSetzSession();
@@ -80619,7 +80677,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">⛓️ DIE WORTKETTE</p>
         <p class="empty-note">Die Kette wird geschmiedet …</p></div>`;
-      wortschatzBereit().then(() => renderWortkette());
+      wortschatzEilig(); wortschatzBereit().then(() => renderWortkette());
       return;
     }
     if (!ketteSession) neueKetteSession();
@@ -80794,7 +80852,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">👁️ AUGENBLICK!</p>
         <p class="empty-note">Die Sätze werden geholt …</p></div>`;
-      wortschatzBereit().then(() => renderAugenblick());
+      wortschatzEilig(); wortschatzBereit().then(() => renderAugenblick());
       return;
     }
     if (!augSession) neueAugSession();
@@ -80985,7 +81043,7 @@
     if (!(VocabData.alleThemenDa && VocabData.alleThemenDa())) {
       area.innerHTML = `<div class="question-card"><p class="eyebrow">🧩 MEINE SÄTZE</p>
         <p class="empty-note">Der Wortschatz wird geladen …</p></div>`;
-      wortschatzBereit().then(() => renderMeineSaetze());
+      wortschatzEilig(); wortschatzBereit().then(() => renderMeineSaetze());
       return;
     }
     if (!msSession) neueMsSession();

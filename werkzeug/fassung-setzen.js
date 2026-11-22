@@ -200,6 +200,25 @@ function uebungenTeilen() {
   if (ut.geloescht) console.log("bau/uebungen: " + ut.geloescht + " alte Teile gelöscht");
   return ut;
 }
+/* FASSUNG 889 („Runde starten" ohne den ganzen Wortschatz): der Auszug der Wortniveaus (werkzeug/wortniveau-bauen.js,
+   als eigener Vorgang – das Laden des Wortschatzes im Sandkasten ist asynchron). Scheitert er, gibt es keinen Eintrag
+   „wortniveau" in DMA_MODUL (die Runde wartet dann wie bisher auf den ganzen Wortschatz), laut, Rückgabe 2; eine echte
+   Fassung bricht ab – das Werkzeug prüft auch, dass keine weitere Kategorie ihre Aufgaben aus dem Wörterbuch baut. */
+function wortniveauBauen() {
+  let wn = { eintrag: null, gebaut: false, geloescht: 0, fehler: null };
+  const werkzeug = path.join(__dirname, "wortniveau-bauen.js");
+  if (!fs.existsSync(werkzeug)) return wn;
+  try {
+    const r = require("child_process").spawnSync(process.execPath, [werkzeug, "--json"], { cwd: WURZEL, encoding: "utf8", timeout: 300000,
+      env: Object.assign({}, process.env, { WURZEL }) });
+    const zeile = String(r.stdout || "").trim().split("\n").pop();
+    wn = zeile ? JSON.parse(zeile) : { eintrag: null, fehler: (String(r.stderr || "").trim().split("\n")[0] || "Rückgabe " + r.status) };
+  } catch (e) { wn = { eintrag: null, fehler: "wortniveau-bauen.js: " + (e.message || e) }; }
+  if (wn.fehler) { modulFehler = modulFehler || "Wortniveau"; console.error("\n!!! WORTNIVEAU: " + wn.fehler + " – DMA_MODUL ohne „wortniveau“, die Runde wartet auf den ganzen Wortschatz\n"); }
+  if (wn.gebaut) console.log("bau/wortniveau: neu gebaut (" + wn.eintrag + ")");
+  if (wn.geloescht) console.log("bau/wortniveau: " + wn.geloescht + " alte gelöscht");
+  return wn;
+}
 function stempelSetzen() {
   const crypto = require("crypto");
   let mb = { karte: null, gebaut: false, fehler: null, geloescht: 0 };
@@ -208,6 +227,7 @@ function stempelSetzen() {
   if (mb.gebaut) console.log("bau/: neu gebaut (" + Object.keys(mb.karte || {}).join(", ") + ")");
   if (mb.geloescht) console.log("bau/: " + mb.geloescht + " alte Stücke gelöscht");
   const ut = uebungenTeilen();
+  const wn = wortniveauBauen();
   const vk = verkleinern();
   if (vk.neu || vk.weg) console.log("min/: " + vk.neu + " neu verkleinert, " + vk.weg + " entfernt");
   let html = fs.readFileSync(indexPfad, "utf8");
@@ -267,9 +287,10 @@ function stempelSetzen() {
   try {
     const MB = require("./modul-bauen.js");
     let k = mb.karte;
-    if (k == null) { k = Object.assign({}, MB.karteLesen(html) || {}); delete k.uebungen; }
+    if (k == null) { k = Object.assign({}, MB.karteLesen(html) || {}); delete k.uebungen; delete k.wortniveau; }
     else k = Object.assign({}, k);
     if (ut.eintrag) k.uebungen = ut.eintrag;
+    if (wn.eintrag) k.wortniveau = wn.eintrag;   /* FASSUNG 889 */
     html = MB.zeileSetzen(html, (mb.karte == null && !Object.keys(k).length && !MB.karteLesen(html)) ? null : k);
   } catch (e) {}
   /* MODUL-UMBAU: nur schreiben, wenn sich etwas geändert hat – sonst läse ein Server, der index.html gerade
@@ -404,6 +425,11 @@ if (!/^\d+$/.test(zahl)) {
   /* M3b: dasselbe für die Übungsteile */
   if (uebungenTeilen().fehler) {
     console.error("!!! Fassung NICHT gesetzt (Übungsteile, siehe oben; DMA_VERSION und fassung.json unverändert). Danach node werkzeug/pruefe-887-daten.js.\n");
+    process.exit(1);
+  }
+  /* FASSUNG 889: dasselbe für den Auszug der Wortniveaus */
+  if (wortniveauBauen().fehler) {
+    console.error("!!! Fassung NICHT gesetzt (Wortniveau, siehe oben; DMA_VERSION und fassung.json unverändert). Danach node werkzeug/pruefe-889-runde.js.\n");
     process.exit(1);
   }
   gleichlaufPruefen();

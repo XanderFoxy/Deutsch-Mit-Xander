@@ -121,9 +121,77 @@ const VocabData = (function () {
     return laufendeThemen[thema];
   }
   let alleLaufen = null;
+  /* FASSUNG 889 (Ladezeit, Vorrang 2; MODULE-PLAN.md M3b „Offen 6.2"): höchstens VOKABEL_ZUGLEICH Dateien zugleich.
+     Bisher gingen alle 26 Dateien (2,3 MB gepackt) auf einmal hinaus. Die Leitung teilt sich auf alle laufenden Abrufe
+     auf – wer währenddessen eine Karte unter „Lernen" antippt, bekam für ihren Teil (z. B. wortstellung, 28 KB) nur
+     ein Dreißigstel davon (gemessen 4G: 730 ms für 28 KB, „Karte → startklar" 0,9 s). Seit 889 wartet „Runde starten"
+     nicht mehr auf den Wortschatz – er muss die Leitung nicht mehr für sich haben. Ganz da ist er fast gleich schnell
+     (die Leitung bleibt voll: läuft eine Datei aus, laufen drei weiter), nur kommen die Themen nacheinander statt alle
+     im letzten Augenblick. ladeThema() für ein einzelnes Thema (Wörterbuch) geht weiter sofort hinaus; dieselbe Datei
+     lädt nie doppelt (dateiLaden). Das Versprechen bleibt dasselbe: erfüllt, wenn alle Themen da (oder gescheitert)
+     sind, Wert wie bisher.
+     NACHGEMESSEN (4G, Konto, „wieder“): kommen die Dateien aus dem Speicher des Browsers oder vom Helfer, ist nicht die
+     Leitung der Engpass – dann kostete das Warten in der Reihe nur Zeit (der Wortschatz war später ganz, sein Einlesen
+     fiel in den Kartentipp: „Karte → startklar“ +41 ms, 6 von 6). Darum: kam eine Datei OHNE ihren Inhalt über die
+     Leitung (Resource Timing: transferSize kleiner als der Inhalt – aus dem Speicher des Browsers, vom Helfer, oder nur
+     nachgefragt mit 304), gehen alle übrigen zugleich hinaus wie bisher.
+     NACHGEMESSEN (3G, Gast, „wieder“): diese Meldung kommt erst ~100 ms nach der ersten Datei (der Beobachter läuft in
+     einer eigenen Aufgabe) – genug, dass das Einlesen der 26 Dateien in den Kartentipp rutschte (Wortschatz ganz +465 ms,
+     Karte +227 ms). Darum entscheidet zuerst diese Datei selbst: kam data-vocab.js beim Start ohne Inhalt über die
+     Leitung (Speicher, Helfer, 304), liegt der Wortschatz mit großer Wahrscheinlichkeit auch dort – dann gleich alle
+     zugleich wie bisher; der Beobachter bleibt für den Rest (z. B. die erste Seite nach einer neuen Fassung). */
+  const VOKABEL_ZUGLEICH = 4;
+  /* FASSUNG 889, Nachmessung (4G mit Konto, kalt): der GANZE Wortschatz war mit der Reihe 0,1–0,3 s später da (in 2 von
+     4 Läufen gesichert, auch mit 6 statt 4 zugleich) – den Kartentipp kostet das nichts, aber wer auf ihn WARTET
+     („Runde starten“ mit Wortschatz/Meine Wörter), hätte länger gewartet als in 888. Darum eilig(): wartet jemand auf
+     den ganzen Wortschatz, gehen alle übrigen Dateien sofort zugleich hinaus (wie bisher); gilt auch für ein später
+     angestoßenes Laden. */
+  let eiligAn = false, reiheWecken = null;
+  function eilig() {
+    eiligAn = true;
+    if (reiheWecken) try { reiheWecken(); } catch (e) {}
+  }
   function ladeWoerter() {
     if (alleLaufen) return alleLaufen;
-    alleLaufen = Promise.all(VOKABEL_THEMEN.map((t) => ladeThema(t[0]))).then(() => WORDS.length > 0);
+    const reihe = VOKABEL_THEMEN.map((t) => t[0]);
+    alleLaufen = new Promise((fertig) => {
+      const ohneInhalt = (e) => e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize;
+      /* Nachbesserung (Prüfer): die Weiche braucht transferSize und encodedBodySize. Safari unter 16.4 (alte iPhones,
+         die bei iOS 15 stehen bleiben) kennt beide nicht – dort wäre „undefined > 0" immer falsch, und Stammgäste
+         bekämen die Reihe auch dann, wenn alles aus dem Speicher kommt (in Chromium vor der Weiche gemessen: „wieder"
+         Karte → startklar +41 ms, 6 von 6). Kann die Seite Speicher und Leitung nicht unterscheiden, gehen darum alle
+         Dateien zugleich hinaus wie in 888 (ebenso, wenn Resource Timing oder der Beobachter versagen). */
+      let blind = true;
+      try {
+        blind = !(typeof PerformanceObserver !== "undefined" && typeof PerformanceResourceTiming !== "undefined"
+          && "transferSize" in PerformanceResourceTiming.prototype && "encodedBodySize" in PerformanceResourceTiming.prototype);
+      } catch (e) { blind = true; }
+      let schonDa = false;
+      if (!blind) try { schonDa = performance.getEntriesByType("resource").some((e) => /\/(?:min\/)?data-vocab\.js(?:\?|$)/.test(e.name) && ohneInhalt(e)); } catch (e) { blind = true; }
+      let i = 0, offen = 0, zugleich = (blind || schonDa || eiligAn) ? reihe.length : VOKABEL_ZUGLEICH, ende = false, beob = null;
+      const weiter = () => {
+        if (ende) return;
+        if (i >= reihe.length && !offen) { ende = true; reiheWecken = null; try { if (beob) beob.disconnect(); } catch (e) {} fertig(); return; }
+        while (offen < zugleich && i < reihe.length) {
+          offen++;
+          const thema = reihe[i++];
+          let p; try { p = Promise.resolve(ladeThema(thema)); } catch (e) { p = Promise.resolve(false); }
+          p.then(() => {}, () => {}).then(() => { offen--; weiter(); });
+        }
+      };
+      if (!blind && !schonDa) try {
+        beob = new PerformanceObserver((liste) => {
+          if (zugleich !== VOKABEL_ZUGLEICH) return;
+          if (liste.getEntries().some((e) => /\/vokabeln\/[a-z0-9-]+\.js/.test(e.name) && ohneInhalt(e))) {
+            zugleich = reihe.length;
+            weiter();
+          }
+        });
+        beob.observe({ type: "resource" });
+      } catch (e) { beob = null; zugleich = reihe.length; }
+      reiheWecken = () => { if (zugleich !== reihe.length) { zugleich = reihe.length; weiter(); } };
+      weiter();
+    }).then(() => WORDS.length > 0);
     return alleLaufen;
   }
   function woerterDa() { return WORDS.length > 0; }
@@ -384,5 +452,5 @@ const VocabData = (function () {
     "Gartenarbeit": { article: "il", noun: "giardinaggio", syl: "giar-di-NAG-gio" },
   };
 
-  return { WORDS, ladeWoerter, ladeThema, woerterDa, ladenLaeuft, alleThemenDa, themenListe, HOBBIES_IT, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES, LANGUAGE_SYL };
+  return { WORDS, ladeWoerter, eilig, ladeThema, woerterDa, ladenLaeuft, alleThemenDa, themenListe, HOBBIES_IT, PARTIKELN, REDEWENDUNGEN_KURZ, JUGENDSPRACHE, MATERIALS, LINKS, HOBBIES, COUNTRIES, LANGUAGES, LANGUAGE_SYL };
 })();
