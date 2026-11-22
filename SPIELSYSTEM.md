@@ -8774,13 +8774,18 @@ ohne Änderung am Baum während des Laufs.
 ## Fassung 889 — „Runde starten“ ohne den ganzen Wortschatz (Ladezeit, Vorrang 2)
 
 Stand 22.11.2026 (begonnen 16.11., nach dem Wochenlimit fortgesetzt), Strang „runde“ (Zweig `runde-889` ab 4bd701b3
-= Fassung 888, Sicherung `claude/sicherung-889-runde`, Endstand 46223744 + Logbuch). Noch nicht ausgeliefert,
-`DMA_VERSION` bleibt 888. **Für Xander unsichtbar:** gleiche Karten, gleiche Texte, gleiche Knöpfe, dieselben Aufgaben
+= Fassung 888, Sicherung `claude/sicherung-889-runde`, Endstand 46223744, Nachbesserung 1 bis 1b09f623 + Logbuch).
+Noch nicht ausgeliefert, `DMA_VERSION` bleibt 888. **Für Xander unsichtbar:** gleiche Karten, gleiche Texte, gleiche Knöpfe, dieselben Aufgaben
 in derselben Runde – nur ohne die Wartezeit. Aufgaben aus MODULE-PLAN.md M3b „Offen 6.1/6.2“ und 888 „Offen 2“.
 
 **Kurz:** Wer nach dem Öffnen unter „Lernen“ eine Karte antippt und gleich „Runde starten“ drückt, hat die erste Frage
 auf 4G nach 1,2–1,9 statt 3,0–3,3 s, auf 3G nach 2,7–3,2 statt 15,3–15,5 s (gegen 888, je 6 Paare, gesichert); die
-Karte ist 0,3–0,7 s früher startklar. Gemessen wurde auch alles andere – gesichert langsamer ist nichts außer +1,5 KB Code.
+Karte ist 0,3–0,7 s früher startklar. Gemessen wurde auch alles andere auf diesem Weg – gesichert langsamer ist dort
+nichts außer +1,5 KB Code und (Nachbesserung 1 nachgemessen) EIN Langläufer von 60–120 ms in den 3 s nach der ersten
+Frage, den 888 dort nicht hatte; die Antwort 1 s nach der Frage ist nicht langsamer. **Nicht** gemessen hatte das Werkzeug die Ansichten, die auf den GANZEN Wortschatz warten
+(sechs Spiele unter „Lernen“, „Alle Wörter dieses Textes in eine Liste“, „Hörspiel mit meiner Stimme“): mit der Reihe
+hätten sie auf 4G mit Konto kalt 0,1–0,4 s länger gewartet als in 888 – seit Nachbesserung 1 holen sie ihn wie in 888
+alle zugleich (unten, „Nachbesserung 1“).
 
 **Warum es wartete.** Seit M3b steht die Übersicht schnell, aber „Runde starten“ wartete nach dem kalten Öffnen auf
 alle 26 Wortschatz-Dateien (2,3 MB gepackt; 888 gegen 887: 4G +0,9 bis +1,2 s, 3G +9,8 s). Grund war allein
@@ -8832,12 +8837,27 @@ laufenden Wortschatz-Dateien (4G: 730 ms für die 28 KB von „wortstellung“).
   später ganz da (+116 [+22…+600] 6/6, +230 [−330…+756] 5/6, +200 [+50…+929] 6/6, mit 6 statt 4 zugleich +398
   [−247…+797] 4/6 – zweimal gesichert; im Endlauf auf 46223744 +15 [−542…+144] 3/6). Resource Timing: mit der
   Reihe dauert das Herunterladen der 26 Dateien dort 2,4–3,1 s statt 2,2 s; nach jeder Datei wartet ihr Platz, bis der Hauptfaden sie ausgeführt hat (50–120 ms, mit Konto
-  ist er belegter), und füllen sich die Plätze danach zugleich, liegen alle eine Rundreise lang ohne Daten. Den
+  ist er belegter; das ist die Wartezeit des Platzes, nicht die Dauer der Ausführung – als Langläufer über 50 ms zeigen
+  sich die Dateien nach der ersten Frage nicht, Nachbesserung 1 Punkt 3), und füllen sich die Plätze danach zugleich, liegen alle eine Rundreise lang ohne Daten. Den
   Kartentipp kostet das nichts; es zählt nur, wo jemand auf den GANZEN Wortschatz wartet. Darum (Nachbesserung, nach
   ed33c26f): **`VocabData.eilig()`** – wartet jemand auf ihn, gehen alle übrigen Dateien sofort zugleich hinaus wie bisher:
   „Runde starten“ auf dem Weg „voll“ (Wortschatz, Meine Wörter, Rückfall) und schon `renderSetup`, sobald die Auswahl den
-  ganzen Wortschatz braucht. Wörterbuch, Spiele und Aussprache (sie warten über `wortschatzBereit`/`wortschatzNachziehen`)
-  bleiben bei der Reihe: sie zeichnen mit dem, was da ist, und ziehen nach (Offen 4).
+  ganzen Wortschatz braucht. **Richtiggestellt (Nachbesserung 1, Prüfer):** Hier stand, „Wörterbuch, Spiele und
+  Aussprache“ zeichneten mit dem, was da ist, und zögen nach. Für die meisten Spiele unter „Lernen“ stimmte das nicht:
+  Flussfuchs (Vorrat unter 300 Wörtern), Setzerei (unter 200), Wortkette, Augenblick, Meine Sätze und Wortlisten zeigen
+  nur einen Platzhalter („Die Kette wird geschmiedet …“) und zeichnen erst, wenn `alleThemenDa()` wahr ist; „Alle Wörter
+  dieses Textes in eine Liste“ meldet „gleich noch einmal antippen“, das „Hörspiel mit meiner Stimme“ „Das Wörterbuch
+  lädt …“. Sie alle warten auf den GANZEN Wortschatz und riefen eilig() nicht auf – sie warteten also auf die Reihe.
+  Jetzt rufen genau diese Warte-Zweige `wortschatzEilig()` (app.js: `VocabData.eilig()`, nur nicht im Klassenzimmer
+  oder im Raum, `ruheImRaum`). Wirklich mit dem, was da ist, zeichnen das Wörterbuch und die Ansichten über
+  `wortschatzNachziehen` – sie bleiben bei der Reihe (Offen 4).
+  **Ohne transferSize (Nachbesserung 1):** die Weiche liest `transferSize` und `encodedBodySize` (Resource Timing).
+  Safari unter 16.4 kennt beide nicht (alte iPhones, die bei iOS 15 stehen bleiben) – dort war „undefined > 0“ immer
+  falsch, die Weiche griff nie, und Stammgäste bekamen die Reihe auch, wenn alles aus dem Speicher kam (genau der Fall,
+  der in Chromium vor der Weiche +41 ms kostete). Jetzt: kennt der Browser die beiden nicht (geprüft am Prototyp von
+  `PerformanceResourceTiming`), oder versagen Resource Timing bzw. der Beobachter, gehen alle Dateien zugleich hinaus wie
+  in 888. In Chromium, Firefox und Safari ab 16.4 unverändert. Ob WebKit ab 16.4 für Speicher und Helfer wirklich
+  transferSize 0 bei voller encodedBodySize meldet, ist nicht geprüft (kein WebKit hier; Offen 6).
 - `app.js`, `activateTab` (ed33c26f, nach der Fortsetzung): **satzbau.js beim ersten Öffnen von „Lernen“ erst nach dem
   Teil von data-exercises.js**, den jeder Kartentipp braucht (dasselbe Versprechen „vorrang“, auf das auch der
   Wortschatz wartet, höchstens 3 s). Gefunden mit Resource Timing (3G, kalt, Tipp gleich nach „bereit“): Auf 3G
@@ -8864,7 +8884,9 @@ laufenden Wortschatz-Dateien (4G: 730 ms für die 28 KB von „wortstellung“).
   Attrappe (900 Punkte) hat die Punkte-Meilensteine schon gesehen – sonst legte sich bei jedem Öffnen „🎉 Insgesamt schon
   50 Punkte gesammelt!“ (DIV.lightbox) über die Seite; die Attrappe merkt sich nichts. Auf 3G kalt lag es genau über
   „Runde starten“: 12 von 12 Öffnungen brachen ab (gefunden mit elementFromPoint und Bildschirmfoto beim Abbruch).
-  Die Konto-Messungen davor (auch 888 „mitglied“) liefen mit diesem Fenster.
+  Die Konto-Messungen davor (auch 888 „mitglied“) liefen mit diesem Fenster. Nachbesserung 1 (a7abd8f2): im Fall
+  „uebung“ zusätzlich die Langläufer in den 3 s nach der ersten Frage und mit `--antwort <ms>` „Antwort: Tipp →
+  Rückmeldung“ (das Werkzeug tippt so lange nach der ersten Frage die erste Antwort an).
 
 **Gleichlauf-Prüfer** `werkzeug/pruefe-889-runde.js` (Teil G, ohne Browser; Teil B die echte Seite,
 `pruefe-889-runde-seite.js`). ALT = quiz.js aus 888 (git 4bd701b3) MIT ganzem Wortschatz und dem bisherigen Ablauf
@@ -9000,6 +9022,82 @@ Lauf 4× rot: B3 zu Recht – `DMA_MODUL` hat den Eintrag `wortniveau`, die Sond
 liest ihn jetzt aus `bau/wortniveau-quelle.json` (ein Eintrag, den das Werkzeug nicht gebaut hat, wäre weiter rot) –,
 B7–B9 wegen der Umgebung (`node_modules` fehlte nach dem Neustart, unten).
 
+**Nachbesserung 1 (Prüfer, 22.11.; aa517f55, a7abd8f2, 1b09f623).** Vier Punkte, alle für Xander unsichtbar
+(gleiche Platzhalter, gleiche Texte, gleiche Knöpfe):
+
+1. **(wichtig) Die Spiele unter „Lernen“, die auf den GANZEN Wortschatz warten, holen ihn wie in 888 alle zugleich.**
+   Das Logbuch hatte behauptet, Spiele zeichneten „mit dem, was da ist“ (oben richtiggestellt). Gebaut:
+   `wortschatzEilig()` in app.js (`VocabData.eilig()`, nur wenn `ruheImRaum()` falsch ist) in genau den Warte-Zweigen
+   von Flussfuchs, Setzerei, Wortkette, Augenblick, Meine Sätze, Wortlisten und „Alle Wörter dieses Textes in eine
+   Liste“ – dazu beim Durchsehen aller Stellen, die auf `alleThemenDa()` bzw. `DMA_AUSSPR_BRUECKE.geladen()` warten,
+   gefunden: das „Hörspiel mit meiner Stimme“ (eigenes Aussprache-Wörterbuch, „Das Wörterbuch lädt …“). Bewusst NICHT
+   angefasst: die Wege im Chat, die über `DMA_AUSSPR_BRUECKE.laden()` ebenfalls auf ihn warten (`/sprich`, die
+   Vorschläge beim Tippen, `dma-sprich-wort` des Lehrers) – sie laufen im Klassenzimmer, dort bleibt die Reihe
+   (Vorrang 1). Ebenso warten die Spiele weiter auf die Reihe, wenn man im Raum ist (Klassenzimmer offen oder
+   LiveChat „drin“/„verbindet“) – dort wären sie gegen 888 auf 4G mit Konto kalt 0,1–0,4 s langsamer, für die Leitung
+   des Raums.
+   **Sonde 889 B11** (Prüfserver hält jede Wortschatz-Datei 3 s zurück; Spiel öffnen, 400 ms später zählen): alle acht
+   Wege zeigen ihren Platzhalter (bzw. den Hinweis) und haben 26 von 26 Dateien angefordert (vorher 0 oder 4 – beide Fälle kommen vor: die
+   Reihe lief schon oder war erst geplant); die Wortkette zeichnet, sobald er ganz da ist (beim Prüfserver mit HTTP/1.1
+   15,4 s nach dem Blick, auf 46223744 21,7 s). **B11r**: mit LiveChat „drin“ bleibt die Reihe (4 von 26).
+   **Gegenprobe:** 46223744 → B11 7× rot (4 von 26), B11r grün; aa517f55 (vor dem Hörspiel) → nur B11 Hörspiel rot.
+   Wie viel früher die Spiele dadurch zeichnen, misst das Werkzeug nicht (es misst „Runde starten“); der Ladeweg ist
+   derselbe wie bei „Runde starten“ auf dem Weg „voll“ (B4b) – alle zugleich wie in 888.
+2. **(klein) Safari unter 16.4: keine Reihe mehr.** data-vocab.js prüft, ob der Browser `transferSize` und
+   `encodedBodySize` kennt; sonst (oder wenn Resource Timing bzw. der Beobachter versagen) alle Dateien zugleich wie
+   in 888. **Sonde B12**: `transferSize` am Prototyp gelöscht → nach dem Kartentipp 26 von 26, Runde wie in B1;
+   B1b (mit transferSize: 4 von 26) bleibt grün, in Chromium also unverändert. **Gegenprobe** 46223744: B12 rot (4 von
+   26). WebKit ab 16.4 bleibt ungeprüft (Offen 6).
+3. **(klein) Einlesen in den ersten Fragen – jetzt gemessen.** Das Werkzeug misst im Fall „uebung“ die Langläufer in
+   den 3 s nach der ersten Frage und mit `--antwort 1000` „Antwort: Tipp → Rückmeldung“ (1 s nach der Frage tippt es die
+   erste Antwort an; a7abd8f2). 888 (`/tmp/claude-0/v888`) gegen 889 (Schnappschuss aa517f55 – auf diesem Weg gleich
+   dem Endstand), je 6 Paare, nur kalt, wortstellung; Daten `/tmp/claude-0/runde/mess/antwort/` und `antwort2/`:
+
+| Bedingung | Antwort: Tipp → Rückmeldung, 888 → 889, B−A [95 %] | Langläufer in den 3 s nach der Frage, 888 → 889 (Anzahl; Dauer; Sperrzeit B−A [95 %]) | Runde starten → Frage, 888 → 889 |
+|---|---|---|---|
+| 4G Gast kalt | 77 → 72, −9 [−42…+10] 1↑/4↓ | 0 → 0 | 1 216 → 173 |
+| 4G Konto kalt | 84 → 73, −18 [−43…+11] 2↑/4↓ | 0 → 1; 78 ms (58–94); **+28 [+13…+41] 6↑** | 923 → 162 |
+| 3G Gast kalt | 73 → 65, −12 [−24…+2] 1↑/5↓ | 0 → 1; 94 ms (62–123); **+44 [+13…+64] 6↑** | 12 346 → 149 |
+| 3G Konto kalt | 66 → 70, +1 [−15…+15] 3↑/3↓ | 0 → 1; 82 ms (63–109); **+32 [+13…+55] 6↑** | 12 069 → 148 |
+| 3G Konto kalt (Wiederholung) | 78 → 52, −28 [−46…+4] 1↑/5↓ | 0 → 1; 70 ms (62–102); **+20 [+15…+51] 6↑** | 12 105 → 160 |
+| A/A 4G Konto / 3G Konto | −3 [−47…+12] / +3 [−9…+23] | 0 → 0 (einmal 62 ms) / 0 → 0 | – |
+
+   **Ergebnis:** Die Antwort 1 s nach der Frage ist nirgends langsamer (−28 bis +1 ms, nie gesichert). Neu und
+   gesichert ist EIN Langläufer von 60–120 ms in den 3 s nach der Frage (auf 3G Gast 0,43–0,61 s danach), Sperrzeit
+   +20 bis +44 ms – wer genau in diesem Augenblick tippt, wartet bis zu ~0,1 s länger auf die Rückmeldung; in 888 lag
+   in diesen 3 s keiner, dafür wartete man dort 0,8–12 s länger auf die Frage. Er ist **nicht** das Ausführen einer
+   Wortschatz-Datei: die langen Bilder (LoAF) dort nennen kein Skript (jedes Skript über 5 ms stünde darin, so wie
+   `grundwoerter.js` mit 149 ms in 888 kurz VOR der Frage); es ist Stil/Layout oder Speicherbereinigung (GC) – dass es
+   die Bereinigung nach dem Einlesen ist, ist möglich, ohne Spur aber nicht nachgewiesen. Die 26 Dateien selbst sind auf
+   diesem Rechner (CPU 4×) nach der Frage keine Langläufer über 50 ms. Nicht gebaut, nur beobachten.
+   **Nebenbefund, geprüft und Rauschen:** im ersten 3G-Konto-Lauf „erstes Bild“ +424 [+112…+596] (6/6) und
+   DOMContentLoaded +442. Auf diesem Weg ist der Code gleich (index.html +42 B Stempel), und das erste Bild ist
+   zweigipflig (≈ 1,25 oder ≈ 1,6–1,7 s, je nachdem, wie lange das Einlesen von index.html dauert: 700 oder
+   1 050–1 330 ms): in diesem Lauf lagen alle sechs 889-Öffnungen oben, in der Wiederholung −8 [−340…+474] 3↑/3↓,
+   im A/A (888 gegen 888) +42 [−32…+292] mit allen sechs B-Öffnungen oben; in der ersten Messreihe (ed33c26f) −34.
+   Ebenso „Langläufer: längster“ 3G Gast +53 (6/6; das ist min/app.js beim Start: 199–238 gegen 228–343 ms) – im
+   Endlauf (46223744, min/app.js bis auf 14 B gleich) −34, in den übrigen Bedingungen dieser Reihe −13 bis +16, im A/A
+   3G Konto −46.
+4. **(klein)** `werkzeug/wortniveau-bauen.js`, Kopfkommentar: „≈ 25 KB, gepackt ≈ 9 KB“ → 36 945 B, gepackt ≈ 15,6 KB.
+
+Platz der Nachbesserung: +0,1 KB gepackt (siehe Platz).
+
+**Sonden nach Nachbesserung 1 (Endstand 1b09f623, Baum runde-889, nacheinander über die Chromium-Sperre, Läufer
+`/tmp/claude-0/runde/sonden.sh`, Protokolle `/tmp/claude-0/runde/log/`; jede mit Rückgabe 0, kein Baum während eines
+Laufs geändert):**
+| Sonde | Ergebnis |
+|---|---|
+| 889-runde (G + B) | 42 ok, 0 rot (G 20: 5 998 Runden gleich, Gegenprobe GP1–GP4 fällt auf; B 22: B1–B12, B1b, B4b, B11 ×8, B11r) |
+| 889-runde B, Gegenprobe | 46223744: B11 ×7 und B12 rot, B11r grün, alles andere grün; aa517f55: nur B11 Hörspiel rot |
+| 887-daten / 858-ladeweg | 96 / 14 ok, 0 rot |
+| 887-bau | 42 ok, 0 rot (das „✗“ in B8 ist der erwartete Bau-Fehler der Sonde) |
+| 885-schlank / 876-start-schlank | 43 / 62 ok, 0 rot |
+| 885-sparsam (A, E, SB, SM) | 20 ok, 0 rot |
+| runde24 / runde25 / runde30 / runde60 | 32 / 28 / 78 / 23 ok, 0 rot |
+| reihenfolge, benoten, galgenmaennchen | „alles richtig“ / 11 / 12 ok, 0 rot |
+| 853-beugung, betonung-uebung, aufgabe-reist | 18 / 17 / 12 ok, 0 rot |
+| mehrdeutige-aufgaben, betonung-regeln | GRÜN / ok |
+
 **Umgebung nach dem Neustart (für die nächsten Stränge):** `node_modules` des Hauptbaums fehlt (der Verweis in den
 Arbeitsbäumen zeigt ins Leere – 887-bau B7–B9 rot). Für diesen Baum: `npm ci` nach `/tmp/claude-0/runde/nm`, Verweis
 dorthin (nicht committet). `/tmp/claude-0/node_modules/pngjs` (876-start-schlank) und
@@ -9014,7 +9112,8 @@ einmal `filme/` – je Öffnen 1 Anfrage ins Leere; diese Reihe ist verworfen un
 Läufer muss `flock … timeout …` heißen, nicht `timeout … flock …` – sonst zählt die Wartezeit auf die Sperre zur Frist.
 
 **Platz:** +36,9 KB (Auszug) + Werkzeuge/Sonden; bau/ trägt eine Generation des Auszugs. Bis „bereit“ gepackt +1,5 KB
-(neuer Code in min/app.js +0,3, min/quiz.js +0,8, min/data-vocab.js +0,4, min/data-exercises.js +0,1 KB).
+(neuer Code in min/app.js +0,3, min/quiz.js +0,8, min/data-vocab.js +0,4, min/data-exercises.js +0,1 KB); Nachbesserung 1
+dazu +0,1 KB (min/data-vocab.js +71 B, min/app.js +14 B, die Spiele in min/app-teil-rest4.js +11 B).
 
 **Offen:**
 1. **FUND (schon in 888 live, wichtig, nicht gebaut): „Wortschatz – Alle Themen“ friert die Seite ein.** In Node gemessen (V8 wie Chromium, Rechner ungebremst): `ExerciseData.activeGetCategory("wortschatz").getBank()`
@@ -9041,12 +9140,15 @@ Läufer muss `flock … timeout …` heißen, nicht `timeout … flock …` – 
    zusammen mit dem Teil der Karte holen. Braucht eine andere Reihenfolge in `fassung-setzen.js` (Auszug vor den
    Übungsteilen) und ein erweitertes Kartenformat (Sonden 887-daten/887-bau) – eigener Schritt.
 3. `DMA_VERSION` erst bei der Lieferung (`node werkzeug/fassung-setzen.js 889`).
-4. **Wörterbuch und Spiele in den ersten Sekunden (4G mit Konto, kalt):** Sie warten nicht auf den ganzen Wortschatz,
-   sondern zeichnen mit dem, was da ist, und ziehen nach (`wortschatzNachziehen`) – bei ihnen kommt er mit der Reihe
-   0,1–0,4 s später ganz an (siehe data-vocab.js). Vorschlag: `VocabData.eilig()` auch, sobald eine Wortansicht offen
-   ist, aber NICHT im Klassenzimmer (dort hält die Reihe die Leitung für Raum und Gespräch frei, Vorrang 1). Nicht
+4. **Wörterbuch und die Ansichten über `wortschatzNachziehen` in den ersten Sekunden (4G mit Konto, kalt):** Die Spiele,
+   die auf den ganzen Wortschatz WARTEN, sind seit Nachbesserung 1 erledigt (eilig, siehe dort; hier stand vorher, auch
+   sie zeichneten mit dem, was da ist – das war falsch). Offen bleiben die Ansichten, die wirklich sofort zeichnen und
+   nachziehen (Wörterbuch, Betonung im Text, Kompass): bei ihnen ist die Liste mit der Reihe 0,1–0,4 s später vollständig.
+   Vorschlag: `VocabData.eilig()` auch, sobald eine solche Wortansicht offen ist, aber NICHT im Klassenzimmer. Nicht
    gebaut, weil `wortschatzNachziehen` auch vom Betonungsschalter und vom Chat aufgerufen wird – erst die Aufrufer
-   sortieren.
+   sortieren. Dazu, ebenfalls nicht gebaut: „Runde starten“ ruft eilig() auch dann, wenn man im Raum ist (gemessen
+   ist es so); die neuen Warte-Zweige lassen den Raum aus. Vereinheitlichen (auch dort `wortschatzEilig()`) wäre ein
+   eigener kleiner Schritt – im Raum wartete die Runde mit dem Wortschatz dann auf die Reihe.
 5. **Kleine Neigungen ohne Befund (beobachten):** (a) 4G mit Konto, „Lernen → Karten“ kalt: +104, +105, +41, +46, +4 ms
    in fünf Läufen (nie gesichert; mit Gast −18/−19, auf 3G −11/−21; A/A ±47); die Zeiten sind zweigipflig (≈ 0,4 oder
    ≈ 0,65 s, bei 888 seltener oben); satzbau.js ist es nicht (889 vor/nach dieser Änderung: +3 [−100…+132]). (b)
@@ -9055,3 +9157,13 @@ Läufer muss `flock … timeout …` heißen, nicht `timeout … flock …` – 
    Ladeweg ist dort nachweislich gleich (Resource Timing: alle 26 Wortschatz-Dateien zugleich, satzbau.js zur selben
    Zeit). Ursache nicht gefunden – in der nächsten Messung mit Spur (Hauptfaden je Skript in den Abschnitten „lernen“
    und „wahl“) ansehen.
+6. **WebKit ab 16.4 (Nachbesserung 1, nicht prüfbar):** Ob Safari für eine Antwort aus dem Speicher oder vom Helfer
+   transferSize 0 (bzw. kleiner als encodedBodySize) meldet, ist nicht nachgesehen – hier gibt es kein WebKit. Meldet es
+   dort die volle Größe, bekämen Stammgäste auf dem iPhone die Reihe, obwohl alles aus dem Speicher kommt (in Chromium
+   vor der Weiche: „wieder“ Karte → startklar +41 ms). Beim nächsten Gerät mit Safari: Resource Timing von
+   `min/data-vocab.js` beim zweiten Öffnen ansehen. Safari unter 16.4 ist seit Nachbesserung 1 abgedeckt (wie 888).
+7. **Ein Langläufer nach der ersten Frage (Nachbesserung 1, gemessen, nicht gebaut):** 60–120 ms, 0,4–0,6 s nach der
+   Frage, ohne Skript im langen Bild (Stil/Layout oder Speicherbereinigung); 888 hatte in diesen 3 s keinen (dort lag
+   die Arbeit in der Wartezeit vor der Frage). Die Antwort 1 s nach der Frage ist nicht langsamer. Bei der nächsten
+   Messung mit Spur (`--antwort 500`, ohne `--ohne-spur`) nachsehen, was er ist; nur wenn er die Antwort trifft, lohnt
+   es, ihn zu verschieben.
