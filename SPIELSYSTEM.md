@@ -8865,9 +8865,9 @@ von sw.js in `DMA_STEMPEL` neu; `bau/` und `min/` unverändert (Prüfsumme = `ba
 
 **Messung:**
 - **Platz (GitHub Pages, `git ls-tree -r -l`, ohne Pfade mit „.“-Teil):** 4bd701b3 (888) 959 129 837 Byte →
-  955 000 000 Byte (**−3 000 000 Byte**; die fünf Dateien −3 936 264, dazu die neue Sonde +31 070, sw.js +3 354, die
+  955 248 266 Byte (**−3 881 571 Byte**; die fünf Dateien −3 936 264, dazu die neue Sonde +31 070, sw.js +3 354, die
   Sonde 885-swvorladen +276, MODULE-PLAN.md +163, SPIELSYSTEM.md mit diesem Eintrag). Bis 10⁹ Byte bleiben
-  44 000 000 Byte.
+  44 751 734 Byte.
 - **Helferwechsel** (`/tmp/claude-0/stadtweg/mess-aktiv.js`, 6 Paare verschränkt A B B A, je frischer Kontext mit dem
   alten Helfer, Seite zweimal über ihn geöffnet, dazu die fünf alten Dateien mit 887-Stempel: 62 Einträge;
   A = sw.js aus 888 mit angehängtem Kommentar, also nur ein Wechsel; B = 889): „activating → activated“ aus der Seite
