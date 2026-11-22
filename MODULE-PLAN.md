@@ -1439,7 +1439,8 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
     - Dazu der alt-Gegenlauf zweier Sonden, die neu je 1 rot haben:
       - 830: Auto 2,14 m statt ≈ 2 m neben dem Weg.
       - 848: „836 Lexical“, schon in SPIELSYSTEM.md als rot vermerkt.
-    - Die alten `.min.js` der Stadt nach einer Fassung löschen.
+    - ~~Die alten `.min.js` der Stadt nach einer Fassung löschen.~~ – erledigt in 889 (vom Server, und sw.js räumt sie beim
+      Helferwechsel aus dem Speicher; SPIELSYSTEM.md „Fassung 889 — Alte Stadt-Dateien …“).
     - PIL für `leicht-zwerg.py` fehlt auf dem Prüfrechner. Neue Zwergbilder entstehen hier also nicht; das war schon mit
       dem Packer so.
     - Einmischen: berichtigt in Prüfung Runde 1 (unten). Vorher stand hier, gegen `live-haenger` gebe es nur den Konflikt
