@@ -8902,19 +8902,20 @@ von sw.js in `DMA_STEMPEL` neu; `bau/` und `min/` unverändert (Prüfsumme = `ba
 **Gegenproben** (je über die Sperre):
 - **888** (`WURZEL=/tmp/claude-0/v888`, Teile A C D): 9 rot – A1 (keine Liste), A2 (alle fünf liegen da), C2 (kein
   Wechsel, alle fünf bleiben im Speicher), D1 (die Auto-Schau kommt – die Datei ist ja da), D2, D3/D4/D5 (kein Neuladen).
-- **Dateien weg, aber sw.js aus 888** (Verweis-Farm `gp-swalt`): 7 rot – A1, C2 ×2, D1 (die Auto-Schau kommt aus dem
-  Speicher des alten Helfers), D3/D4/D5 (die alte Seite läuft aus dem Speicher des alten Helfers, kein Neuladen nötig).
-  Zeigt: Räumen und Notweg gehören zusammen.
+- **Dateien weg, aber sw.js aus 888** (Verweis-Farm `gp-swalt`, wie `gp887` danach gelöscht): 7 rot – A1, C2 ×2, D1
+  (die Auto-Schau kommt aus dem Speicher des alten Helfers), D3/D4/D5 (die alte Seite läuft aus dem Speicher des alten
+  Helfers, kein Neuladen nötig). Zeigt: Räumen und Notweg gehören zusammen.
 - **887-Seiten auf dem 888-Baum** (`gp887`, Teile A B): 5 rot – A1, A2, A3 (stadt-leicht.html nennt die fünf), B
   stadt-leicht.html und stadt.html fragen leicht.min.js, korn/quests/autoschau bzw. stadt.min.js an; mit ?quelle=1 grün.
 
 **Sonden (Auftrag), auf diesem Stand, je über die Chromium-Sperre** (Protokolle `/tmp/claude-0/stadtweg/log/`; sw.js
-und die Stadt-Dateien seit 446313e4 unverändert, alle Läufe danach):
+und die Stadt-Dateien seit 446313e4 unverändert, alle Läufe danach; in drei Läufen vom 16.11. – 885-rueckkehr und
+zweimal 885-swvorladen – änderte sich währenddessen nur eine Sonden-Datei dieses Strangs, nicht der Code):
 
 | Sonde | 889 | Gegenprobe 888 (`WURZEL=/tmp/claude-0/v888`, verschränkt) |
 |---|---|---|
 | **889-stadtweg** (neu) | 27 ok / 0 | 9 rot (oben) |
-| 885-swvorladen | SWV_ERGEBNIS | 32 / 0 |
+| 885-swvorladen | 32 / 0 (16.11.; 22.11. noch einmal auf d1e0647b: 32 / 0, Baum während des Laufs unverändert) | 32 / 0 |
 | 884-notweg | 91 / 0 | – |
 | 885-sparsam (SWa, SWc, SWL, SWa4, SWc4, SWR, SWR4, SWT, SWT6, SW402, SWTOR, SWS402, SWS0) | 79 / 2 (SWL, SW402) | dieselben 2 rot (unten) |
 | 885-rueckkehr | 300 / 0 | – |
