@@ -8773,10 +8773,14 @@ ohne Änderung am Baum während des Laufs.
 
 ## Fassung 889 — „Runde starten“ ohne den ganzen Wortschatz (Ladezeit, Vorrang 2)
 
-Stand 16.11.2026, Strang „runde“ (Zweig `runde-889` ab 4bd701b3 = Fassung 888, Sicherung
-`claude/sicherung-889-runde`). Noch nicht ausgeliefert, `DMA_VERSION` bleibt 888. **Für Xander unsichtbar:** gleiche
-Karten, gleiche Texte, gleiche Knöpfe, dieselben Aufgaben in derselben Runde – nur ohne die Wartezeit. Aufgaben aus
-MODULE-PLAN.md M3b „Offen 6.1/6.2“ und 888 „Offen 2“.
+Stand 22.11.2026 (begonnen 16.11., nach dem Wochenlimit fortgesetzt), Strang „runde“ (Zweig `runde-889` ab 4bd701b3
+= Fassung 888, Sicherung `claude/sicherung-889-runde`, Endstand 46223744 + Logbuch). Noch nicht ausgeliefert,
+`DMA_VERSION` bleibt 888. **Für Xander unsichtbar:** gleiche Karten, gleiche Texte, gleiche Knöpfe, dieselben Aufgaben
+in derselben Runde – nur ohne die Wartezeit. Aufgaben aus MODULE-PLAN.md M3b „Offen 6.1/6.2“ und 888 „Offen 2“.
+
+**Kurz:** Wer nach dem Öffnen unter „Lernen“ eine Karte antippt und gleich „Runde starten“ drückt, hat die erste Frage
+auf 4G nach 1,2–1,9 statt 3,0–3,3 s, auf 3G nach 2,7–3,2 statt 15,3–15,5 s (gegen 888, je 6 Paare, gesichert); die
+Karte ist 0,3–0,7 s früher startklar. Gemessen wurde auch alles andere – gesichert langsamer ist nichts außer +1,5 KB Code.
 
 **Warum es wartete.** Seit M3b steht die Übersicht schnell, aber „Runde starten“ wartete nach dem kalten Öffnen auf
 alle 26 Wortschatz-Dateien (2,3 MB gepackt; 888 gegen 887: 4G +0,9 bis +1,2 s, 3G +9,8 s). Grund war allein
@@ -8792,8 +8796,10 @@ laufenden Wortschatz-Dateien (4G: 730 ms für die 28 KB von „wortstellung“).
   redewendungen, sinn-trainer, doppelt-gemoppelt, haeufige-fehler, ss-eszett, nebensatz, relativsatz, zeitformen,
   konnektoren, jedesto, quiz, lueckentext) haben solche Aufgaben. Für sie reicht ein kleiner **Auszug**:
   `bau/wortniveau-<hash>.js` – für genau die 3 940 Wörter, die in solchen Aufgaben vorkommen, ihr niedrigstes Niveau im
-  Wörterbuch (2 308 stehen darin, 1 632 nicht). 36,9 KB, **gepackt 15,6 KB statt 2,3 MB**. Er wird schon beim Tipp auf
-  so eine Karte geholt (renderSetup), nicht erst beim Start.
+  Wörterbuch (2 308 stehen darin, 1 632 nicht). 36,9 KB, **gepackt 15,6 KB statt 2,3 MB**. Er wird nach dem Tipp auf
+  so eine Karte geholt, sobald `renderSetup` die Aufgaben der Auswahl zählen kann (also nach dem Teil der Karte UND dem
+  Teil von data-exercises.js), nicht erst bei „Runde starten“. Auf 3G kalt heißt das 2,4 s nach dem Lernen-Tipp
+  (Resource Timing) – wer dort sofort „Runde starten“ tippt, wartet noch ~0,5 s auf ihn (Offen 2).
 - **2 Kategorien** bauen ihre Aufgaben aus dem Wörterbuch (Wortschatz, Meine Wörter): sie warten wie bisher auf den
   ganzen Wortschatz.
 
@@ -8821,6 +8827,28 @@ laufenden Wortschatz-Dateien (4G: 730 ms für die 28 KB von „wortstellung“).
   (Reihe + Meldung des Beobachters) bei 3G Gast „wieder“ „Wortschatz ganz“ +465 ms und „Karte“ +227 ms – die Meldung
   kommt ~100 ms nach der ersten Datei, und das Einlesen der 26 Dateien rutschte in den Kartentipp. `ladeThema()` für ein
   einzelnes Thema geht weiter sofort; das Versprechen ist dasselbe wie bisher.
+  **Ehrlich (Endmessung):** „der Wortschatz ist gleich schnell ganz da“ stimmt mit Gast und auf 3G (dort sogar früher:
+  3G Gast −169, 3G Konto −297 ms, je 6/6), aber **nicht auf 4G mit Konto, kalt**: dort war er in vier Läufen 0,1–0,4 s
+  später ganz da (+116 [+22…+600] 6/6, +230 [−330…+756] 5/6, +200 [+50…+929] 6/6, mit 6 statt 4 zugleich +398
+  [−247…+797] 4/6 – zweimal gesichert; im Endlauf auf 46223744 +15 [−542…+144] 3/6). Resource Timing: mit der
+  Reihe dauert das Herunterladen der 26 Dateien dort 2,4–3,1 s statt 2,2 s; nach jeder Datei wartet ihr Platz, bis der Hauptfaden sie ausgeführt hat (50–120 ms, mit Konto
+  ist er belegter), und füllen sich die Plätze danach zugleich, liegen alle eine Rundreise lang ohne Daten. Den
+  Kartentipp kostet das nichts; es zählt nur, wo jemand auf den GANZEN Wortschatz wartet. Darum (Nachbesserung, nach
+  ed33c26f): **`VocabData.eilig()`** – wartet jemand auf ihn, gehen alle übrigen Dateien sofort zugleich hinaus wie bisher:
+  „Runde starten“ auf dem Weg „voll“ (Wortschatz, Meine Wörter, Rückfall) und schon `renderSetup`, sobald die Auswahl den
+  ganzen Wortschatz braucht. Wörterbuch, Spiele und Aussprache (sie warten über `wortschatzBereit`/`wortschatzNachziehen`)
+  bleiben bei der Reihe: sie zeichnen mit dem, was da ist, und ziehen nach (Offen 4).
+- `app.js`, `activateTab` (ed33c26f, nach der Fortsetzung): **satzbau.js beim ersten Öffnen von „Lernen“ erst nach dem
+  Teil von data-exercises.js**, den jeder Kartentipp braucht (dasselbe Versprechen „vorrang“, auf das auch der
+  Wortschatz wartet, höchstens 3 s). Gefunden mit Resource Timing (3G, kalt, Tipp gleich nach „bereit“): Auf 3G
+  brachten die 4 Dateien zugleich der Karte nichts (2 499 → 2 488 ms), denn dort startet der Wortschatz ohnehin erst nach
+  diesem Teil (2,8 s nach dem Tipp) – „Karte → startklar“ wartete auf den Teil (87 KB), und der teilte sich die Leitung
+  vor allem mit satzbau.js (185 KB), das „Lernen“ seit Fassung 842 sofort holt (für den Satzbaukasten hinter seinem
+  Reiter). Jetzt: Teil 2,8 → 2,35 s, „Karte → startklar“ 2 573 → 2 030 ms (3 Paare gegen 4b0246d9, 3/3); satzbau.js ist
+  dafür auf 3G ~1,9 s später da (7,1 statt 5,2 s nach dem Tipp). Wer gleich auf den Reiter „Satzbaukasten“ tippt, holt es
+  dort wie bisher selbst sofort (`renderSatzbaukasten` → `satzbauLaden`, genau einmal; Sonde B10). Liegt der Teil schon da
+  (wer nicht gleich nach dem Öffnen tippt, bei dem hat ihn die Ruhepause nach `load` meist geholt), oder lädt der
+  Wortschatz schon, geht satzbau.js wie bisher sofort hinaus; mit `?quelle` ebenso.
 - `werkzeug/wortniveau-bauen.js` (neu): baut den Auszug mit genau dem Code der Seite in einem Sandkasten (quiz.js,
   data-vocab.js mit allen Wortschatz-Dateien, data-exercises.js, data-uebungen.js, data-italienisch.js); prüft vorher,
   dass keine weitere Kategorie beim Bau ihrer Aufgaben `VocabData` liest und dass die Aufgabentexte nicht am Zufall
@@ -8832,7 +8860,11 @@ laufenden Wortschatz-Dateien (4G: 730 ms für die 28 KB von „wortstellung“).
   Supabase-Attrappe im Werkzeug (CDP, vor der Namensauflösung, jede Antwort nach 150 ms; das echte Supabase wird nie
   angesprochen), seit a6f751fa als gewöhnliches Mitglied (vorher Betreiber). Das 888-Werkzeug dafür lag außerhalb des
   Baums und war nach dem Neustart weg. Ein Versuch, Knöpfe außerhalb des Bildes per Scrollen + Berührung zu tippen
-  (460808f3), ist zurückgenommen (die Karte bekam in „wieder“ mit Konto keinen Tipp mehr).
+  (460808f3), ist zurückgenommen (die Karte bekam in „wieder“ mit Konto keinen Tipp mehr). 742cef7a: das Mitglied der
+  Attrappe (900 Punkte) hat die Punkte-Meilensteine schon gesehen – sonst legte sich bei jedem Öffnen „🎉 Insgesamt schon
+  50 Punkte gesammelt!“ (DIV.lightbox) über die Seite; die Attrappe merkt sich nichts. Auf 3G kalt lag es genau über
+  „Runde starten“: 12 von 12 Öffnungen brachen ab (gefunden mit elementFromPoint und Bildschirmfoto beim Abbruch).
+  Die Konto-Messungen davor (auch 888 „mitglied“) liefen mit diesem Fenster.
 
 **Gleichlauf-Prüfer** `werkzeug/pruefe-889-runde.js` (Teil G, ohne Browser; Teil B die echte Seite,
 `pruefe-889-runde-seite.js`). ALT = quiz.js aus 888 (git 4bd701b3) MIT ganzem Wortschatz und dem bisherigen Ablauf
@@ -8855,31 +8887,118 @@ richtigen, falschen, mehrfachen, schnellen und langsamen Antworten und `computeR
   ohne Auszug; B2 plural 36 ms, Auszug einmal schon beim Kartentipp geholt, 99× benutzt, keine Lücke; B3 quiz +
   ss-eszett + wortstellung 38 ms; B4 Wortschatz (Thema gewählt) wartet wie bisher; B5 `?quelle` wartet, kein Auszug;
   B6 Auszug 404 wartet, Runde läuft; B7 Auszug mit falschem Stempel nicht benutzt; B8 Gleichlauf IN der Seite (min/,
-  66 Runden vor und nach dem Wortschatz mit denselben Zufallszahlen) 0 abweichend.
+  66 Runden vor und nach dem Wortschatz mit denselben Zufallszahlen) 0 abweichend; B9 (neu, der Server hält den Teil von
+  data-exercises.js 2,5 s zurück) satzbau.js erst nach diesem Teil angefragt (Teil hinaus 1 294 ms, satzbau.js 1 306 ms
+  nach dem Tipp), genau einmal, kommt; B10 (neu) Reiter „Satzbaukasten“ gleich nach „Lernen“: satzbau.js sofort (128 ms,
+  vor dem Teil), genau einmal, der Kasten steht; B1b (neu) wortstellung: nach dem Kartentipp 4 von 26 Wortschatz-Dateien
+  angefordert (die Reihe); B4b (neu) Wortschatz: 26 von 26 (eilig) – und B4 „Tipp → Frage“ beim zurückhaltenden
+  Prüfserver dadurch 18,4 → 12,2 s, B5–B7 (Weg „voll“) 21 → 15 s.
 - **Gegenprobe des ganzen Prüfers auf 888** (`WURZEL=/tmp/claude-0/v888`): G0 rot (kein 889-Weg); B1, B2, B3 rot (Frage
   erst nach dem Wortschatz, ~2,9 s), B6/B7 rot (kein `Quiz.auszugStand`), B8 rot; B4/B5 dort grün (alter Weg).
+  B9/B10 gegen den Stand davor (4b0246d9): B9 rot (satzbau.js 170 ms nach dem Tipp, vor dem Teil bei 1 293 ms), B10 grün
+  (dort ohnehin sofort). B4b gegen ed33c26f (vor eilig, `WURZEL=` Schnappschuss): rot (4 von 26), alles andere grün.
 
-**Messung:** MESSUNG_PLATZHALTER
+**Messung** (`werkzeug/ladezeit-messen.js`, Fall „uebung“: Lernen-Tipp → Karte → „Runde starten“ sofort → erste Frage;
+Chromium CPU 4×, HTTP/2 + TLS, 4G 9 Mbit/s/60 ms, 3G 1,6 Mbit/s/150 ms; Gast und Konto (`--konto`, Mitglied gegen die
+Attrappe im Werkzeug, Datenbank 150 ms – das echte Supabase wird nie angesprochen); kalt und wieder; je 6 Paare
+verschränkt A = 888 (`/tmp/claude-0/v888`) gegen B = 889 (Schnappschuss ed33c26f), dazu A/A (888 gegen 888, 6 Paare)
+als Rauschgrenze; 3G mit Fenster 20 s, siehe unten). Median A → B, gepaarter Unterschied B − A [95 %], ↑/↓ = Paare, in
+denen B langsamer/schneller war; **fett** = DEUTLICH (95 % ohne Null und Vorzeichentest p < 0,05). Daten
+`/tmp/claude-0/runde/mess/end889/`.
 
-**Sonden** (Baum runde-889, nacheinander, je über die Chromium-Sperre; Protokolle `/tmp/claude-0/runde/log/`):
+Karte „wortstellung“ (nicht vorgeladen, braucht keinen Auszug):
+
+| Bedingung | Karte → startklar: 888 → 889, B−A [95 %], A/A ± | Runde starten → Frage: 888 → 889, B−A [95 %], A/A ± | Lernen-Tipp → Frage: 888 → 889, B−A [95 %], A/A ± |
+|---|---|---|---|
+| 4G Gast kalt | 1 023 → 382, **−675 [−811…−525]** 0↑/6↓, ±146 | 1 293 → 151, **−1 141 [−1 382…−867]** 0↑/6↓, ±232 | 3 345 → 1 382, **−1 967 [−2 503…−1 600]** 0↑/6↓, ±479 |
+| 4G Gast wieder | 288 → 185, −92 [−132…+91] 1↑/5↓, ±142 | 126 → 130, −4 [−14…+21] 2↑/4↓, ±39 | 1 141 → 1 084, −91 [−163…−11] 1↑/5↓, ±120 |
+| 4G Konto kalt | 1 154 → 688, **−463 [−679…−305]** 0↑/6↓, ±75 | 1 037 → 189, **−839 [−1 129…−744]** 0↑/6↓, ±177 | 3 143 → 1 892, **−1 235 [−1 710…−1 058]** 0↑/6↓, ±291 |
+| 4G Konto wieder | 358 → 357, +37 [−99…+243] 4↑/2↓, ±101 | 153 → 171, +10 [−17…+36] 5↑/1↓, ±29 | 1 527 → 1 574, +68 [−101…+373] 4↑/2↓, ±174 |
+| 3G Gast kalt | 2 458 → 2 094, **−397 [−460…−291]** 0↑/6↓, ±57 | 12 299 → 143, **−12 166 [−12 439…−12 110]** 0↑/6↓, ±205 | 15 303 → 2 718, **−12 565 [−12 899…−12 521]** 0↑/6↓, ±237 |
+| 3G Gast wieder | 250 → 225, +15 [−105…+50] 4↑/2↓, ±88 | 194 → 209, −7 [−38…+68] 3↑/3↓, ±31 | 1 124 → 1 258, +84 [−168…+335] 4↑/2↓, ±59 |
+| 3G Konto kalt | 2 570 → 2 172, **−427 [−484…−345]** 0↑/6↓, ±36 | 12 081 → 190, **−11 859 [−11 973…−11 715]** 0↑/6↓, ±77 | 15 466 → 3 098, **−12 384 [−12 500…−12 133]** 0↑/6↓, ±23 |
+| 3G Konto wieder | 371 → 308, −60 [−331…−9] 1↑/5↓, ±181 | 202 → 202, +10 [−33…+78] 3↑/3↓, ±49 | 1 736 → 1 687, −76 [−471…+168] 2↑/4↓, ±348 |
+
+Karte „plural“ (braucht den Auszug):
+
+| Bedingung | Karte → startklar: 888 → 889, B−A [95 %], A/A ± | Runde starten → Frage: 888 → 889, B−A [95 %], A/A ± | Lernen-Tipp → Frage: 888 → 889, B−A [95 %], A/A ± |
+|---|---|---|---|
+| 4G Gast kalt | 609 → 292, **−317 [−336…−214]** 0↑/6↓, ±146 | 1 681 → 183, **−1 532 [−1 682…−1 380]** 0↑/6↓, ±232 | 3 092 → 1 227, **−1 766 [−1 964…−1 657]** 0↑/6↓, ±479 |
+| 4G Gast wieder | 357 → 300, +17 [−142…+67] 3↑/3↓, ±142 | 152 → 149, +14 [−34…+21] 4↑/2↓, ±39 | 1 209 → 1 228, +81 [−223…+117] 4↑/2↓, ±120 |
+| 3G Gast kalt | 2 420 → 2 038, **−421 [−463…−278]** 0↑/6↓, ±57 | 12 508 → 702, **−11 793 [−11 994…−11 676]** 0↑/6↓, ±205 | 15 438 → 3 207, **−12 228 [−12 447…−12 097]** 0↑/6↓, ±237 |
+| 3G Gast wieder | 341 → 368, +21 [−90…+157] 3↑/3↓, ±88 | 168 → 201, +18 [−9…+90] 4↑/2↓, ±31 | 1 203 → 1 210, +10 [−65…+249] 3↑/3↓, ±59 |
+
+**Ziel erreicht:** In allen acht kalten Fällen ist die erste Frage gesichert früher da (6 von 6 Paaren): 4G −1,2 bis
+−2,0 s, 3G −12,2 bis −12,6 s ab dem Lernen-Tipp; „Runde starten → Frage“ 4G 1,0–1,7 s → 0,15–0,19 s, 3G 12,1–12,5 s →
+0,14–0,19 s (plural auf 3G 0,7 s, Offen 2); „Karte → startklar“ 4G −0,3 bis −0,7 s, 3G −0,4 s. „wieder“ (alles aus dem
+Speicher) ist in keinem Fall gesichert anders – dort wartete auch 888 nicht.
+
+**Nirgends gesichert langsamer – geprüft über ALLE 43 Maße des Werkzeugs** (nicht nur die drei oben): gesichert
+langsamer waren nur Byte-Zahlen, die so sein müssen – „KB bis bereit“ +1 KB (der neue Code in min/app.js, quiz.js,
+data-vocab.js, data-exercises.js, gepackt +1,5 KB), „KB 0–10 s“ +2 bis +35 KB (bei plural der Auszug, 15,6 KB; auf 3G
+kommt im Fenster mehr an, weil 889 früher fertig ist) – und einmal 4G Konto „wieder“ DOMContentLoaded +55 [+44…+85] /
+load +78 [+14…+119] (6/6). Das ist nachgemessen und Rauschen: derselbe Vergleich noch einmal (6 Paare, mit Spur)
+DOMContentLoaded −25 [−200…+93], bereit +5 [−140…+118]. Die A/A-Läufe hatten 1 von 292 Maßen „deutlich“ (3G Gast wieder
+„Runde starten“ +44). Nebenmaße mit Neigung, aber nicht gesichert: 4G Konto „Lernen → Karten“ kalt +104 [−63…+248] (4/6;
+in Nachmessungen gegen 888 +41 und +46, im Endlauf +4 – Offen 5) und „Wortschatz ganz“ 4G Konto (siehe data-vocab.js
+oben, eilig).
+
+**Warum 3G mit Fenster 20 s:** Das Werkzeug lässt jede Seite 10 s offen, bei 888 aber bis zur ersten Frage (≈ 15 s nach
+dem Öffnen, sie wartet auf den Wortschatz). Mit 10 s schloss es die kalte 889-Seite, bevor der Wortschatz ganz da war –
+beim dritten Öffnen („wieder“) fehlte er 889 dann teilweise im Speicher und im übersetzten Code (16.11.: 3G Gast wieder
+„Lernen-Tipp → Frage“ +336 [+208…+696] 6/6, „Wortschatz ganz“ +435). Das ist das Werkzeug, nicht die Seite: mit 20 s
+(beide Seiten bis zum Ende) +3 [−175…+345] bzw. −75; Endmessung durchweg mit 20 s.
+
+**Werkzeug repariert:** Die Konto-Messungen liefen bisher mit dem Fenster „🎉 Insgesamt schon 50 Punkte gesammelt!“ (die
+Attrappe merkte sich nicht, dass es gezeigt wurde) – auf 3G kalt lag es genau über „Runde starten“, 12 von 12 Öffnungen
+brachen ab (742cef7a, oben). Die Konto-Zeilen oben sind ohne dieses Fenster gemessen.
+
+**Nach den Nachbesserungen (Endstand 46223744: eilig; satzbau.js gehört schon zu ed33c26f):** Die gemessenen Wege
+(wortstellung, plural) berühren eilig() nicht (Weg „keiner“/„auszug“); zur Sicherheit noch einmal Endstand gegen 888
+(je 6 Paare; A/A wie oben; Daten `/tmp/claude-0/runde/mess/end889-final/`):
+
+| Bedingung | Karte → startklar: 888 → 889, B−A [95 %], A/A ± | Runde starten → Frage: 888 → 889, B−A [95 %], A/A ± | Lernen-Tipp → Frage: 888 → 889, B−A [95 %], A/A ± |
+|---|---|---|---|
+| 4G Gast kalt | 939 → 360, **−561 [−641…−410]** 0↑/6↓, ±146 | 1 269 → 152, **−1 131 [−1 240…−1 067]** 0↑/6↓, ±232 | 2 983 → 1 330, **−1 642 [−1 880…−1 437]** 0↑/6↓, ±479 |
+| 4G Gast wieder | 205 → 232, +24 [−106…+143] 3↑/3↓, ±142 | 126 → 129, +3 [−20…+32] 3↑/3↓, ±39 | 1 032 → 1 108, +68 [−32…+138] 4↑/2↓, ±120 |
+| 4G Konto kalt | 1 101 → 578, **−551 [−645…−503]** 0↑/6↓, ±75 | 1 083 → 157, **−922 [−1 166…−860]** 0↑/6↓, ±177 | 2 978 → 1 612, **−1 369 [−1 873…−1 330]** 0↑/6↓, ±291 |
+| 4G Konto wieder | 324 → 372, +46 [−32…+126] 4↑/2↓, ±101 | 150 → 148, −2 [−27…+31] 3↑/3↓, ±29 | 1 385 → 1 443, +88 [−118…+180] 3↑/3↓, ±174 |
+| 3G Gast kalt | 2 545 → 2 129, **−413 [−452…−365]** 0↑/6↓, ±57 | 12 300 → 139, **−12 146 [−12 358…−12 100]** 0↑/6↓, ±205 | 15 362 → 2 723, **−12 636 [−12 816…−12 552]** 0↑/6↓, ±237 |
+| 3G Gast wieder | 209 → 263, +63 [−90…+159] 4↑/2↓, ±88 | 160 → 152, −6 [−89…+51] 3↑/3↓, ±31 | 1 154 → 1 155, −71 [−266…+293] 3↑/3↓, ±59 |
+
+Über alle Maße gesichert langsamer wieder nur Bytes (+1 KB bis „bereit“, +1 bis +18 KB im Fenster). „wieder“: keine
+Zeit gesichert anders; „Karte → startklar“ dort +24 bis +63 (3–4 von 6, A/A ±88…±142) – siehe Offen 5. (Ein erster
+Endlauf war verworfen: im Schnappschuss fehlte `filme/` – je Öffnen 1 Anfrage ins Leere bei 889, nicht bei 888; Daten
+in `end889-final/mit404/`.)
+
+**Die Reihen davor (16.11., ehrlich, weil sie den Code geändert haben):** Reihe 1 (9a2dff09, nur „höchstens 4
+zugleich“): 4G Konto wieder „Karte → startklar“ +41 [25…83] 6/6 – kam der Wortschatz aus dem Speicher, kostete die Reihe
+nur Zeit → Speicher-Weiche. Reihe 2 (8522efe4, mit Beobachter): 3G Gast wieder „Wortschatz ganz“ +465, „Karte“ +227 – der
+Beobachter meldet ~100 ms zu spät → Entscheidung schon beim Start nach `data-vocab.js` (24b4c3e2). Diagnosen 22.11. mit
+Resource Timing (`MESS_RES=1`): 3G kalt Karte (→ satzbau.js nach dem Teil), 3G plural (Auszug erst nach dem Teil von
+data-exercises.js, Offen 2), 4G Konto (Wortschatz in der Reihe, → eilig); ein Versuch mit 6 statt 4 zugleich half nicht
+(„Wortschatz ganz“ 4G Konto +398 [−247…+797]) und ist verworfen.
+
+**Sonden auf dem Endstand 46223744** (Baum runde-889, nacheinander, je über die Chromium-Sperre, Läufer
+`/tmp/claude-0/runde/sonden.sh`; Protokolle `/tmp/claude-0/runde/log/`; jede mit Rückgabe 0, kein Baum während eines
+Laufs geändert):
 | Sonde | Ergebnis |
 |---|---|
-| 889-runde (neu, G + B) | 28 ok, 0 rot (G: 5 998 Runden gleich, Gegenprobe GP1–GP4 fällt auf; B1–B8) |
-| 887-daten | 96 ok, 0 rot (B14/B16 – Teile nach dem Wortschatz – grün mit 4 Dateien zugleich) |
-| 887-bau | 42 ok, 0 rot (B3 kennt jetzt `DMA_MODUL.wortniveau`; vorher 1 rot, s. u.) |
-| 885-schlank | 43 ok, 0 rot |
-| 876-start-schlank | 62 ok, 0 rot |
+| 889-runde (neu, G + B) | 32 ok, 0 rot (G: 5 998 Runden gleich, Gegenprobe GP1–GP4 fällt auf; B1–B10, B1b, B4b) |
+| 887-daten | 96 ok, 0 rot (B14/B16 – Teile nach dem Wortschatz – grün mit der Reihe) |
+| 887-bau | 42 ok, 0 rot (B3 kennt `DMA_MODUL.wortniveau`; das „✗“ in B8 ist der erwartete Bau-Fehler der Sonde) |
+| 885-schlank / 876-start-schlank | 43 / 62 ok, 0 rot |
 | 885-sparsam (A, E, SB, SM) | 20 ok, 0 rot |
 | runde24 / runde25 / runde30 / runde60 | 32 / 28 / 78 / 23 ok, 0 rot |
 | reihenfolge, benoten, galgenmaennchen | „alles richtig“ / 11 / 12 ok, 0 rot |
 | 853-beugung, betonung-uebung, aufgabe-reist | 18 / 17 / 12 ok, 0 rot |
 | mehrdeutige-aufgaben, betonung-regeln | GRÜN / ok |
+| 858-ladeweg (dazu, berührt satzbau.js) | 14 ok, 0 rot („Lernen holt satzbau.js“ grün – ohne Drossel kommt der Teil sofort) |
 
-Jede mit Rückgabe 0, ohne Änderung am Baum während des Laufs. **887-bau** war im ersten Lauf 4× rot: B3 zu Recht –
-`DMA_MODUL` hat jetzt den Eintrag `wortniveau`, die Sonde kannte nur Vite-Karte + `uebungen`; sie liest ihn jetzt aus
-`bau/wortniveau-quelle.json` (ein Eintrag, den das Werkzeug nicht gebaut hat, wäre weiter rot) –, B7–B9 wegen der
-Umgebung (`node_modules` fehlte nach dem Neustart, unten). Nach der Speicher-Weiche in `data-vocab.js` liefen 889-runde,
-887-daten, 853-beugung, betonung-uebung und 876-start-schlank noch einmal: 889-runde 28/0, 887-daten 96/0, 853-beugung 18/0, betonung-uebung 17/0, 876-start-schlank 62/0.
+Auf ed33c26f liefen dieselben bis galgenmaennchen ebenfalls grün (889-runde 30/0). **887-bau** war am 16.11. im ersten
+Lauf 4× rot: B3 zu Recht – `DMA_MODUL` hat den Eintrag `wortniveau`, die Sonde kannte nur Vite-Karte + `uebungen`; sie
+liest ihn jetzt aus `bau/wortniveau-quelle.json` (ein Eintrag, den das Werkzeug nicht gebaut hat, wäre weiter rot) –,
+B7–B9 wegen der Umgebung (`node_modules` fehlte nach dem Neustart, unten).
 
 **Umgebung nach dem Neustart (für die nächsten Stränge):** `node_modules` des Hauptbaums fehlt (der Verweis in den
 Arbeitsbäumen zeigt ins Leere – 887-bau B7–B9 rot). Für diesen Baum: `npm ci` nach `/tmp/claude-0/runde/nm`, Verweis
@@ -8887,8 +9006,15 @@ dorthin (nicht committet). `/tmp/claude-0/node_modules/pngjs` (876-start-schlank
 `/tmp/claude-0/node_modules/ffmpeg-static/ffmpeg` → `/usr/bin/ffmpeg` (runde60) neu angelegt. 885-schlank braucht
 a508dc56 – im flachen Klon nachgeholt (`git fetch --depth=1`, +7 MB). 885-sparsam braucht
 `SUPABASE_UMD=/tmp/claude-0/runde/tmp/dma-mess-supabase-js-2.119.0.umd.js`.
+Am 22.11. war `/tmp/claude-0` nach dem Neustart noch da (v888, `runde/nm`, die Mess-Kopien). Zwei Hinweise für die
+nächsten Messungen: ein Schnappschuss per `git archive` ist 2,2 GB groß (`.sicherung`, `stadt-leicht`, `aussprache`,
+`werkzeug` …) – v888 verweist für die großen, unveränderten Ordner auf `/home/user/dmx-lager/<ordner>` (geprüft: gleich
+4bd701b3); so auch die 889-Schnappschüsse (75 MB). Ein Ordner, der dabei fehlt, verfälscht die Messung still (hier
+einmal `filme/` – je Öffnen 1 Anfrage ins Leere; diese Reihe ist verworfen und mit Verweis wiederholt). Und der Sonden-
+Läufer muss `flock … timeout …` heißen, nicht `timeout … flock …` – sonst zählt die Wartezeit auf die Sperre zur Frist.
 
-**Platz:** +36,9 KB (Auszug) + Werkzeuge/Sonden; bau/ trägt eine Generation des Auszugs.
+**Platz:** +36,9 KB (Auszug) + Werkzeuge/Sonden; bau/ trägt eine Generation des Auszugs. Bis „bereit“ gepackt +1,5 KB
+(neuer Code in min/app.js +0,3, min/quiz.js +0,8, min/data-vocab.js +0,4, min/data-exercises.js +0,1 KB).
 
 **Offen:**
 1. **FUND (schon in 888 live, wichtig, nicht gebaut): „Wortschatz – Alle Themen“ friert die Seite ein.** In Node gemessen (V8 wie Chromium, Rechner ungebremst): `ExerciseData.activeGetCategory("wortschatz").getBank()`
@@ -8902,5 +9028,30 @@ a508dc56 – im flachen Klon nachgeholt (`git fetch --depth=1`, +7 MB). 885-spar
    Ablenker je Niveau einmal je Aufruf vorsortieren und drei zufällige ziehen statt den ganzen Bestand je Wort zu
    filtern und zu mischen – gleiche Regel, gleiche Verteilung, aber andere Zufallsfolge; darum ein eigener Schritt mit
    einem Prüfer auf die Regel (Ablenker gleiches Niveau, gleiches Thema, nie das Wort selbst) statt auf Gleichheit.
-2. Messung mit einer Karte, die den Auszug braucht (plural/quiz), gegen 888: AUSZUG_PLATZHALTER
+   GENAU gleich (dieselben Ablenker bei denselben Zufallszahlen) lässt es sich nicht schnell machen: `Core.shuffle` der
+   ganzen Kandidatenliste verbraucht je Wort so viele Zufallszahlen, wie es Kandidaten gibt (bei 41 063 Wörtern
+   Hunderte Millionen) – wer dieselbe Folge will, muss sie auch ziehen. Sichtbar wäre nur, dass „Alle Themen“ nicht mehr
+   einfriert; welche drei falschen Antworten neben einem Wort stehen, wäre zufällig anders verteilt (nach derselben Regel).
+2. **Auszug früher (unsichtbar, nicht gebaut):** Auf 3G kalt holt die Seite den Auszug erst, wenn `renderSetup` die
+   Aufgaben zählen kann – nach dem Teil der Karte UND dem Teil von data-exercises.js, 2,4 s nach dem Lernen-Tipp; wer
+   dann sofort „Runde starten“ tippt, wartet bei plural noch ~0,5 s (Runde starten → Frage 0,70 statt 0,14 s; 4G
+   ~30 ms). Welche Kategorien ihn brauchen, steht erst im Teil von data-exercises.js (die meisten Aufgaben ohne Niveau
+   sind dort eingebaut, nicht in den Teilen). Vorschlag: die 20 Kategorien beim Bau in die Übungskarte
+   `bau/uebungen-*.js` schreiben (sie kommt schon 0,1–0,3 s nach dem Lernen-Tipp) und den Auszug beim Kartentipp
+   zusammen mit dem Teil der Karte holen. Braucht eine andere Reihenfolge in `fassung-setzen.js` (Auszug vor den
+   Übungsteilen) und ein erweitertes Kartenformat (Sonden 887-daten/887-bau) – eigener Schritt.
 3. `DMA_VERSION` erst bei der Lieferung (`node werkzeug/fassung-setzen.js 889`).
+4. **Wörterbuch und Spiele in den ersten Sekunden (4G mit Konto, kalt):** Sie warten nicht auf den ganzen Wortschatz,
+   sondern zeichnen mit dem, was da ist, und ziehen nach (`wortschatzNachziehen`) – bei ihnen kommt er mit der Reihe
+   0,1–0,4 s später ganz an (siehe data-vocab.js). Vorschlag: `VocabData.eilig()` auch, sobald eine Wortansicht offen
+   ist, aber NICHT im Klassenzimmer (dort hält die Reihe die Leitung für Raum und Gespräch frei, Vorrang 1). Nicht
+   gebaut, weil `wortschatzNachziehen` auch vom Betonungsschalter und vom Chat aufgerufen wird – erst die Aufrufer
+   sortieren.
+5. **Kleine Neigungen ohne Befund (beobachten):** (a) 4G mit Konto, „Lernen → Karten“ kalt: +104, +105, +41, +46, +4 ms
+   in fünf Läufen (nie gesichert; mit Gast −18/−19, auf 3G −11/−21; A/A ±47); die Zeiten sind zweigipflig (≈ 0,4 oder
+   ≈ 0,65 s, bei 888 seltener oben); satzbau.js ist es nicht (889 vor/nach dieser Änderung: +3 [−100…+132]). (b)
+   „wieder“ (alles aus dem Speicher) „Karte → startklar“: +24 bis +63 ms im Endlauf (3–4 von 6, A/A ±88…±142), in
+   der ersten Reihe −92 bis +37; einmal gesichert (+43 [+17…+224], im verworfenen Lauf mit fehlendem `filme/`). Der
+   Ladeweg ist dort nachweislich gleich (Resource Timing: alle 26 Wortschatz-Dateien zugleich, satzbau.js zur selben
+   Zeit). Ursache nicht gefunden – in der nächsten Messung mit Spur (Hauptfaden je Skript in den Abschnitten „lernen“
+   und „wahl“) ansehen.
