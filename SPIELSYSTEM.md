@@ -8727,8 +8727,9 @@ Brocken bleibt `werkzeug/backup` mit 244,96 MB (Offen 3).
    unsichtbar. Es ist der größte Rest-Hebel für die Übung.
 3. **Platz auf GitHub Pages:** `werkzeug/backup` (245 MB alte Sicherungen) aus der Veröffentlichung nehmen. Dafür braucht
    es Xanders Ja (Frage im Funk).
-4. **Alte Stadt-`.min.js` (3,94 MB)** mit der nächsten Fassung vom Server löschen. Im selben Schritt räumt sw.js beim
-   Helferwechsel genau diese Pfade aus dem Speicher (feste Liste, mit Sondenfall; Nachbessern 1, Punkt 4).
+4. ~~**Alte Stadt-`.min.js` (3,94 MB)** mit der nächsten Fassung vom Server löschen. Im selben Schritt räumt sw.js beim
+   Helferwechsel genau diese Pfade aus dem Speicher (feste Liste, mit Sondenfall; Nachbessern 1, Punkt 4).~~ – **erledigt**
+   in 889 („Fassung 889 — Alte Stadt-Dateien vom Server und aus dem Helfer-Speicher“, unten).
 5. ~~Die lange 885-sparsam-Reihe ist nicht gelaufen (der Startweg in Chromium ist unverändert).~~ – **erledigt** in
    Runde 2 (sonden:888:2 auf 6fb48f67): alle 37 Fälle in 5 Teilen, 178 ok / 0 FEHL, X5 grün; im selben Lauf 884-leitung
    2× 40/0, 885-rueckkehr 300/0, alle übrigen grün (`/tmp/claude-0/r2n/log/zusammenfassung.txt`). 884-leitung wird
@@ -8770,3 +8771,213 @@ bleiben 888 (vorher und nachher nachgesehen).
 887-modul-app 139 ok / 0 (118 + A5-Nachtrag, R-Zählung, E 10, E2 3, X 3, D1 3), 887-bruecke 19/0, 887-bau 42/0,
 885-schlank 43/0, 876-start-schlank 62/0, 884-notweg 91/0, 885-swvorladen 32/0, 887-supabase 16/0 – jede mit Rückgabe 0,
 ohne Änderung am Baum während des Laufs.
+
+## Fassung 889 — Alte Stadt-Dateien vom Server und aus dem Helfer-Speicher (Platz/Ordnung)
+
+Stand 22.11.2026, Strang `stadtweg` (Zweig `stadtweg-889` ab 4bd701b3 = live 888, Sicherung
+`claude/sicherung-889-stadtweg`; noch nicht ausgeliefert, `DMA_VERSION` bleibt 888). Erledigt „888 Offen 4“ und
+„888 – Nachbessern Runde 1, Punkt 4“ (Speicherrest im Helfer). **Für Xander unsichtbar:** die Stadt im Spiel, die
+Baukasten-Stadt, Chat und Seite sehen aus und arbeiten wie in 888. Commits 634c41c6, 446313e4, 9b7b2c2d, 6c93d1c4 (Lauf
+vom 16.11., durch das Wochenlimit abgebrochen) und dieser Eintrag (22.11.: Gegenproben der roten Stadt-Sonden, Platz,
+Logbuch).
+
+**Was:**
+1. **Vom Server genommen** (git rm) – genau die gepackten Dateien, die die Stadt-Seiten der Fassung 887 anfragen (die
+   Sonde liest sie aus git f619cbe7, nicht aus einer Liste von Hand):
+
+   | Datei | Byte | gz −9 |
+   |---|---|---|
+   | `stadt/stadt.min.js` (Baukasten-Stadt) | 3 341 784 | 1 159 836 |
+   | `stadt-leicht/leicht.min.js` (Bündel der leichten Stadt) | 369 165 | 137 038 |
+   | `stadt-leicht/quests.min.js` | 192 385 | 62 261 |
+   | `stadt-leicht/autoschau.min.js` | 21 979 | 8 463 |
+   | `stadt-leicht/korn.min.js` | 10 951 | 4 997 |
+   | zusammen | **3 936 264** | 1 372 595 |
+
+   Seit M5 baut sie niemand mehr, keine Seite von 888 fragt sie an (Sonde B, unten).
+2. **sw.js räumt sie aus dem Speicher** (feste Liste `ALT_WEG`, genau diese fünf Pfade, jeder Stempel): nach dem
+   Helferwechsel einmal `keys()`, die Einträge dieser Pfade weg, sonst nichts. Bisher räumte `ablegen()` nur ältere
+   Stempel DESSELBEN Pfads, und nur, wenn der Pfad neu geholt wird – diese Pfade fragt niemand mehr an, die Einträge
+   blieben für immer: je Gerät, das die leichte Stadt unter 887 offen hatte, ≈ 0,57 MB (Bündel, Quests, Äcker), 22 KB
+   mehr, wer ein Auto angeschaut hat, 3,3 MB mehr, wer die Baukasten-Stadt geöffnet hat.
+   - **Nicht in `waitUntil`:** solange ein Helfer „activating“ ist, warten nach der Norm alle Anfragen der Seiten auf ihn
+     (auch die an Supabase). Darum wird erst NACH dem Wechsel geräumt (`wechsel.then(altWegRaeumen)`); der Weg bis
+     „activated“ ist derselbe wie vorher (gemessen, unten). Wird der Helfer mittendrin beendet, räumt der nächste
+     Wechsel den Rest (die Liste bleibt stehen).
+   - **Feste Liste statt Regel** („alles, was die Seite nicht nennt“): Stadt-Seiten, Prüfseiten und Ordner-Stempel stehen
+     nicht vollständig in `DMA_STEMPEL` der Hauptseite (so schon in Nachbessern 1, Punkt 4).
+3. **Notweg für eine alte Seite, die NEU kommt** (sw.js `altNeuLaden`): fragt eine Seite eines der beiden alten
+   **Bündel** an (`stadt/stadt.min.js`, `stadt-leicht/leicht.min.js`) und der Server sagt 404, bekommt sie statt der 404
+   ein kleines Skript, das sie EINMAL neu lädt (Merker in sessionStorage je Tab und Pfad, kein Kreis). Ein Neuladen fragt
+   den Server, und der hat die neue Seite. Jede andere Antwort reicht der Helfer unverändert durch.
+4. **Zwei Sonden berichtigt**, die mit diesem Stand rot waren, ohne dass der Code schuld war (unten, Sonden).
+5. 888 Offen 4 durchgestrichen; MODULE-PLAN.md M5 „Offen: die alten .min.js löschen“ als erledigt vermerkt.
+
+**Was passiert mit einer Seite der Fassung 887 (Auftrag b):**
+- **Normales Öffnen** (Spiel, Link, Neuladen): `stadt-leicht.html`/`stadt.html` reicht der Helfer nicht aus seinem
+  Speicher (nur die Hauptseite), sie kommen aus dem Netz; GitHub Pages erlaubt dem Browser 10 min ohne Nachfrage. Tage
+  nach 888 kommt also immer die Seite von 888/889, und die braucht die alten Dateien nicht. Der Rahmen im Spiel
+  (`spiel.js`: `<iframe src="stadt-leicht.html?eingebettet=1&mini=1">`) wird jedes Mal neu angelegt, also ebenso. Die
+  Hauptseite 887 selbst (index.html, spiel.js, app.js, sw.js, min/) nennt keine der fünf Dateien (git grep f619cbe7).
+- **Eine 887-Seite, die schon läuft** (Tab tagelang offen): ihr Bündel hat sie längst. Danach holt sie nur noch die
+  drei Nachlade-Stücke, und jedes hat eine Vertretung, die ein Scheitern abfängt: **Auto-Schau** (auf Abruf, beim Tipp
+  auf ein Auto) → 404 → die Vertretung ruft `sonst` = `autoKarte` (oberflaeche.js), die Karte wie vor 812; **Äcker**
+  (nach dem ersten Bild) → bleiben goldene Fläche; **Quests** (6 bzw. 20 s nach dem ersten Bild) → keine. Kein
+  Seitenfehler, die Stadt läuft weiter, nach dem Neuladen ist alles da (Sonde D1/D2). Die Hauptseite 887 lädt sich
+  ohnehin neu, sobald ihr Wächter die neue Fassung sieht (im Klassenzimmer, im Raum, mitten in einer Eingabe: die
+  Blase). Darum bekommen diese Stücke KEIN Neuladen (das wäre mitten in der Benutzung ein Ruck), nur die Bündel.
+- **Eine 887-Seite, die neu kommt:** geht nur aus dem HTTP-Speicher ohne Nachfrage. **Gemessen** (Chromium,
+  `/tmp/claude-0/stadtweg/zurueck.js`; Seite mit ETag und max-age=1, nach 3 s abgelaufen, Server hat inzwischen eine neue):
+  beim **Zurück** kommt die alte Seite **ohne eine Anfrage** – ohne Helfer wie mit Helfer und Vorab-Laden (wie sw.js
+  für Nicht-Hauptseiten); `location.reload()` fragt den Server (1 Anfrage) und bekommt die neue. Ohne Notweg hieße das:
+  Ladebild, nach 15 s leere Stadt, Ausweg nur von Hand neu laden; mit Notweg ein Neuladen und die neue Stadt (D3/D4).
+  Ohne Helfer (Safari ohne Anmeldung, `?ohne-sw`) und solange auf dem Gerät noch der alte Helfer läuft, gibt es den
+  Notweg nicht. Gegenprobe ohne Räumen (sw.js aus 888): dort kommt die alte Seite aus dem Speicher des Helfers und
+  läuft – genau diesen Halt nimmt das Räumen weg, und genau dafür ist der Notweg da.
+- **Ohne Leitung:** für die Seiten von 888/889 ändert sich nichts (C3). Schlechter wird ein Fall: eine alte
+  887-Stadtseite, die OHNE Leitung aus dem HTTP-Speicher wiederkommt (Zurück, Tab wiederhergestellt), nachdem der neue
+  Helfer schon geräumt hat – sie fand ihr Bündel bisher im Helfer-Speicher, jetzt nicht mehr (leere Stadt, der Notweg
+  braucht den Server). Abgewogen gegen 3,94 MB auf dem Server und 0,6–3,9 MB je Gerät für immer: gebaut.
+
+**Was bleibt und warum:**
+- **`min/data-uebungen.js`** (die ganze Übungssammlung, 6,0 MB) neben den 90 Kategorie-Teilen in `bau/uebungen/`:
+  **kein Rest.** Genauer als in Nachbessern 1, Punkt 4 (dort stand, die ganze Sammlung werde weiter nachgeladen): im
+  Normalweg fragt sie keine Seite an (Sonde B: index.html mit Ruhepause und „Lernen“ – 185 Anfragen, diese nicht); sie
+  ist der Rückfall (ein Teil oder das Verzeichnis kommt nicht, kein Eintrag in `DMA_MODUL`, ohne min/ und Notweg;
+  `uebTeileWeg`/`ladeUebungenDatei` in data-exercises.js) und wird von `spiel.js` `sammlungLaden` geholt (Betreiber
+  spielt Aufgaben ein). Ohne sie wäre ein fehlender Teil eine halbe Sammlung. Bleibt. (`data-uebungen.js` im Stamm ist die
+  Quelle für `?quelle` und für `werkzeug/uebungen-teilen.js`.)
+- Die Quellen `stadt/*.js`, `stadt-leicht/*.js`, `stadt/stadt.css`, `stadt-leicht/leicht.css`: gebraucht für
+  `?quelle=1` (Sonde B) und als Eingaben des Baus (`bau/quelle.json`). `stadt-leicht/backplan.json` (35 KB): Eingabe von
+  `werkzeug/stadt-backen.js`, keine Seite fragt sie an – klein, bleibt, damit das Backen ohne Pfadänderung geht.
+- Kommentare in `stadt-leicht/*-laden.js`, `korn.js`, `stadt/start.js`, die noch „…min.js“ sagen: nicht angefasst –
+  jede Änderung dort ist eine Eingabe des Stadt-Baus (neue Prüfsumme in `bau/quelle.json`), der Nutzen wäre nur Wortlaut.
+- `werkzeug/backup` (245 MB): nicht angefasst, braucht Xanders Ja (888 Offen 3).
+- Die 8 116 Bilder unter `stadt-leicht/bilder/` (≈ 203 MB) nicht durchgesehen: ihre Namen setzt die Stadt zur Laufzeit
+  zusammen (Jahreszeit, Tag/Nacht, Stufe); ob einzelne verwaist sind, braucht eine eigene Sonde (Offen 4).
+
+**Bauwege und Sonden, die die alten Dateien erwarten (Auftrag d):** keine. `fassung-setzen.js`, `modul-bauen.js`,
+`stadt-backen.js`, `leicht-zwerg.py`, `vite.config.mjs`, `bau/quelle.json`, `package.json` nennen sie nicht, die
+Packer sind seit M5 weg (Sonde A4). Die Stadt-Sonden lesen seit M5 das Bündel aus `bau/` (821, 822, 832, 855, 874,
+875); `stadt-leicht/…min.js` steht dort nur noch als Ersatz für einen ALTEN Stand ohne `bau/` (Gegenprobe mit `ALT=`
+bzw. `WURZEL=`), in 808, 820, 830 nur im Kopfkommentar. Gebaut mit `fassung-setzen.js --nur-stempel`: nur der Stempel
+von sw.js in `DMA_STEMPEL` neu; `bau/` und `min/` unverändert (Prüfsumme = `bau/quelle.json`).
+
+**Messung:**
+- **Platz (GitHub Pages, `git ls-tree -r -l`, ohne Pfade mit „.“-Teil):** 4bd701b3 (888) 959 129 837 Byte →
+  955 000 000 Byte (**−3 000 000 Byte**; die fünf Dateien −3 936 264, dazu die neue Sonde +31 070, sw.js +3 354, die
+  Sonde 885-swvorladen +276, MODULE-PLAN.md +163, SPIELSYSTEM.md mit diesem Eintrag). Bis 10⁹ Byte bleiben
+  44 000 000 Byte.
+- **Helferwechsel** (`/tmp/claude-0/stadtweg/mess-aktiv.js`, 6 Paare verschränkt A B B A, je frischer Kontext mit dem
+  alten Helfer, Seite zweimal über ihn geöffnet, dazu die fünf alten Dateien mit 887-Stempel: 62 Einträge;
+  A = sw.js aus 888 mit angehängtem Kommentar, also nur ein Wechsel; B = 889): „activating → activated“ aus der Seite
+  gesehen **A 1 003,5 ms, B 1 003,5 ms** (Median; A 1003–1005, B 1003–1004) – gleich; die ≈ 1 s gehören zum Wechsel
+  selbst, nicht zum Räumen. Bei B sind die fünf Einträge **11–12 ms nach „activated“ weg** (6 von 6), bei A nach 3 s
+  noch alle da (6 von 6).
+- **Ladezeit der Seiten:** unverändert – keine Seite von 888 fragte die Dateien an, `bau/` und `min/` sind dieselben
+  Bytes; der Helfer ändert nur den 404-Fall der beiden Bündel und räumt nach dem Wechsel.
+
+**Sonde `pruefe-889-stadtweg.js` (neu, 27 ok / 0 rot):**
+- A (ohne Browser): A1 die 887-Seiten (git f619cbe7) fragen genau fünf gepackte Dateien an, `ALT_WEG` nennt genau diese;
+  A2 keine liegt mehr im Baum; A3 keine veröffentlichte Datei nennt sie (alles außer werkzeug/, node_modules/,
+  Punkt-Ordnern, Texten – also auch sicherung/, min/, bau/, src/; auch zusammengesetzte Namen in Zeichenketten);
+  A4 die Bauwege nennen sie nicht, keine Packer.
+- B (Seiten ohne Helfer, Server schreibt jede Anfrage mit): keine alte Datei angefragt und keine 404 unter stadt/,
+  stadt-leicht/, bau/, min/, src/ – index.html (Gast, Ruhepause, „Lernen“), index.html?quelle, stadt-leicht.html wie im
+  Spiel und mit ?quelle=1 (je mit Äckern, Quests und Auto-Schau), stadt.html?neu=1 gebaut und mit ?quelle=1, __kz.html.
+- C (Helferwechsel; vorher Server wie 888: alter Helfer aus git 4bd701b3, alte Dateien da, 887-Seiten aus f619cbe7):
+  C1 vorher liegen alle fünf mit 887-Stempel und die Stücke der neuen Stadt aus bau/ im Speicher (192 Einträge);
+  C2 nach dem Wechsel keine der fünf mehr, alles andere noch da (192 → 187); C3 ohne Leitung wie vorher: Seite aus dem
+  Speicher, Chat und Reiter, Brücke aus bau/, und keine Anfrage nach einer Datei scheitert, die vorher im Speicher lag
+  (gescheitert vorher wie nachher nur `fassung.json` und `filme/liste.json`, die nie im Speicher liegen).
+- D (887-Seite nach dem Wechsel): D1 die offene 887-Stadt öffnet ein Auto → autoschau.min.js 404, die Autokarte kommt
+  (`sonst` 1×), kein Seitenfehler, die Bilder laufen weiter; D2 ohne Äcker und Quests (404) goldene Fläche, keine
+  Quests, kein Seitenfehler; D3 alte leichte Stadt neu → leicht.min.js 404 → genau ein Neuladen → neue Seite mit
+  `bau/stadt-leicht-…`, die Stadt steht; D4 dasselbe für die Baukasten-Stadt; D5 liefert der Server weiter die alte
+  Seite: 2 Navigationen, 2× leicht.min.js, dann Ruhe.
+- Erster Lauf 25/2: C3 verglich alle gescheiterten Anfragen (filme/liste.json fragt die Seite mal in den 4 s, mal
+  nicht) und D2 zählte Bilder einer Seite im Hintergrund (Chromium bremst requestAnimationFrame) – beides Messfehler
+  der Sonde, berichtigt (9b7b2c2d), danach 27/0.
+
+**Gegenproben** (je über die Sperre):
+- **888** (`WURZEL=/tmp/claude-0/v888`, Teile A C D): 9 rot – A1 (keine Liste), A2 (alle fünf liegen da), C2 (kein
+  Wechsel, alle fünf bleiben im Speicher), D1 (die Auto-Schau kommt – die Datei ist ja da), D2, D3/D4/D5 (kein Neuladen).
+- **Dateien weg, aber sw.js aus 888** (Verweis-Farm `gp-swalt`): 7 rot – A1, C2 ×2, D1 (die Auto-Schau kommt aus dem
+  Speicher des alten Helfers), D3/D4/D5 (die alte Seite läuft aus dem Speicher des alten Helfers, kein Neuladen nötig).
+  Zeigt: Räumen und Notweg gehören zusammen.
+- **887-Seiten auf dem 888-Baum** (`gp887`, Teile A B): 5 rot – A1, A2, A3 (stadt-leicht.html nennt die fünf), B
+  stadt-leicht.html und stadt.html fragen leicht.min.js, korn/quests/autoschau bzw. stadt.min.js an; mit ?quelle=1 grün.
+
+**Sonden (Auftrag), auf diesem Stand, je über die Chromium-Sperre** (Protokolle `/tmp/claude-0/stadtweg/log/`; sw.js
+und die Stadt-Dateien seit 446313e4 unverändert, alle Läufe danach):
+
+| Sonde | 889 | Gegenprobe 888 (`WURZEL=/tmp/claude-0/v888`, verschränkt) |
+|---|---|---|
+| **889-stadtweg** (neu) | 27 ok / 0 | 9 rot (oben) |
+| 885-swvorladen | SWV_ERGEBNIS | 32 / 0 |
+| 884-notweg | 91 / 0 | – |
+| 885-sparsam (SWa, SWc, SWL, SWa4, SWc4, SWR, SWR4, SWT, SWT6, SW402, SWTOR, SWS402, SWS0) | 79 / 2 (SWL, SW402) | dieselben 2 rot (unten) |
+| 885-rueckkehr | 300 / 0 | – |
+| 887-bau | 42 / 0 | – |
+| 885-schlank | 43 / 0 | – |
+| 876-start-schlank | 62 / 0 | – |
+| 887-stadt | 97 / 0 | – |
+| 844-stadt-walkie313 | 35 / 0 | – |
+| 799, 809, 810, 811-leitung, 812-auftritt-autos, 812-drehschieber, 812-rathaus-windmuehle, 814, 815, 817, 818, 819, 820, 822, 823, 825, 826, 827, 829, 846, 846b, 847, 849, 850, 851, 857, 882-glocke, leicht, stadt-bedienung | alle 0 rot (40, 42, 40, 10, 38, 13, 12, 30, 44, 48, 37, 19, 31, 27, 46, 32, 32, 56, 25, 9, 16, 23, 9, 6, 7, 10, 8, 26, 20 ok) | – |
+| 821-autoschau | 42 / 1, zweiter Lauf 42 / 1 | 42 / 1 – dieselbe Zeile mit denselben Winkeln |
+| 824-rathaus-dach | 12 / 1 („git ls-tree ging nicht“: f3fabf3 fehlt im flachen Klon) | schon auf 887/888 rot (888-Gesamtlauf) |
+| 828-einsammeln | 29 / 2, zweiter Lauf 43 / 0 | 43 / 0 |
+| 830-verkehr | 30 / 1 (2,14 m), zweiter Lauf 31 / 0 | 31 / 0 |
+| 831-markt-verkehr | 10 / 3; 12 / 1; 3 Paare: 0, 4, 4 rot | 13 / 0; 3 Paare: 0, 4, 4 rot (in Paar 2 und 3 dieselben Zahlen wie 889) |
+| 832-quests | 40 / 1, zweiter Lauf 40 / 1 | 41 / 0 |
+| 833-vollbild-verwalten | 17 / 2, zweiter Lauf 17 / 2; Teil A in 4 weiteren Läufen 4, 0, 0, 0 rot | 30 / 0; Teil A in 4 weiteren Läufen 0, 0, 0, 4 rot |
+| 854-spaete-haeuser | 29 / 1, zweiter Lauf 30 / 0 | 29 / 1 – dieselbe Zeile (marktstand) |
+| 855-kornfeld | 10 / 1, zweiter Lauf 10 / 1; 4 Paare: 3 von 4 rot | 11 / 0; 4 Paare: 4 von 4 rot |
+
+**Zwei Sonden berichtigt (Messfehler der Sonde, nicht des Codes):**
+- **`885-swvorladen` Prüfung 11** (6c93d1c4): eine grüne Zeile heißt dort nur „ok“; der bekannte spiel.js-Wettlauf aus
+  694 (3a) wurde zu „ok   <Text>“ und passte nie zu „ok“ – rot, sobald nur EINER der beiden Läufe (dieses sw.js / das aus
+  884) den Wettlauf traf, grün, wenn beide oder keiner. Hier traf ihn nur der Lauf mit dem alten Helfer. Jetzt zählt er
+  wie beschrieben als ok. Danach 32/0, ebenso auf 888 (`WURZEL=v888`) 32/0. Nebenbei: der Klon ist flach;
+  `git show 02613a71:sw.js` (884) ging nicht, darum im ersten Lauf 9 und 11 rot – das eine Commit ist nachgeholt
+  (`git fetch --depth=1`).
+- **`889-stadtweg`** selbst (9b7b2c2d, oben).
+
+**Festgestellt, nicht geändert:**
+- **`885-sparsam` SWL und SW402:** die Sonde spielt „neue Fassung 887“ fest ein; seit `DMA_VERSION` 888 ist 887 älter,
+  der Helfer nimmt nach „nie rückwärts“ die gespeicherte Seite, also „am Ende 888“ – rot. Gegenprobe 888 (`WURZEL=v888`,
+  unveränderte Sonde): dieselben 2 rot. Eine Kopie der Sonde mit „889“ statt „887“ (`/tmp/claude-0/stadtweg/sparsam889/`)
+  auf diesem Stand: SWL und SW402 grün. Alle übrigen Helfer-Fälle (SWa, SWc, SWa4, SWc4, SWR, SWR4, SWT, SWT6, SWTOR,
+  SWS402, SWS0) grün, 79 ok.
+- **Rote Stadt-Sonden kommen nicht von 889** (Gegenprobe 888 verschränkt, 22.11., `/tmp/claude-0/stadtweg/log/r4`, `r5`):
+  Die Stadt-Sonden haben je einen eigenen kleinen Server ohne `?mit-sw`; unter Playwright (`navigator.webdriver`)
+  meldet index.html den Helfer dann nicht an (index.html, Zeile 1208), stadt-leicht.html und stadt.html nie – sw.js läuft
+  dort gar nicht (nachgesehen: `controller` leer). Die ausgelieferten Bytes: `diff -rq` dieses Baums gegen 888 (ohne
+  werkzeug/, .git, Texte) zeigt nur index.html (nur der Stempel von sw.js in `DMA_STEMPEL`, den kein Code liest – die
+  Anmeldung ist `register("sw.js")` ohne Stempel), sw.js und die fünf Dateien, die keine Seite anfragt (Sonde B). Die
+  Stadt-Seiten bekommen auf 889 und 888 also dieselben Bytes. Jede rote Zeile hat einen Zufall als Grund, und jede
+  kommt auf 888 ebenso: **832** wählt die falsche Antwort mit `mischen` (Math.random) – „Gasthaus“ (beide Läufe auf
+  889): 0 rote Bildpunkte, „Bäckerei“ (888): 449 (warum die Linie zum Gasthaus nicht gezählt wird, nicht weiter
+  untersucht). **833 Teil A** war in 4 weiteren Läufen je einmal auf 889 und auf 888 rot, beide Male an derselben Stelle
+  (der Tipp aufs Rathaus kommt nicht beim Spiel an). Die beiden ersten Läufe auf 889 (und 828 Teil B einmal) scheiterten
+  früher: die Stadt war nach ≈ 40 s Warten noch nicht im Spiel geladen – auf 888 in 6 Läufen nie, auf 889 in den 5
+  übrigen Läufen nie. Bei gleichen Bytes und ohne Helfer bleibt dafür nur Zeit (Last, Plattenspeicher der zwei Bäume), nicht
+  bewiesen. **855** verlangt das Stoppelfeld 8 Helligkeitsstufen über dem reifen Korn;
+  das Korn wiegt im Wind, sein Mittel lag in 11 Läufen zwischen 174 und 185 (Stoppel immer 184) – auf 888 4 von 5 rot,
+  auf 889 5 von 6. **831** (seit 813 bekannt) gibt in Paar 2 und 3 auf beiden Seiten dieselben 4 roten Zeilen mit
+  denselben Zahlen. **821**, **854**: auf 888 dieselbe rote Zeile. **824**: braucht ein Commit, das im flachen Klon
+  fehlt (schon im 888-Gesamtlauf rot). **828**/**830**: im zweiten Lauf grün, wie auf 888.
+
+**Offen:**
+1. **`885-sparsam`: die „neue Fassung“ aus `DMA_VERSION` + 1 rechnen statt fest 887** (Zeilen 1337–1665) – nicht in
+   diesem Strang, weil die Sonde allen Strängen gehört; bis dahin sind SWL/SW402 auf jedem Stand ab 888 rot.
+2. Ob Safari/iOS eine alte Stadtseite beim Zurück aus dem HTTP-Speicher holt, ist nur in Chromium gemessen; ohne Helfer
+   greift der Notweg dort nicht.
+3. Die Kommentare mit „…min.js“ in den Stadt-Quellen beim nächsten echten Umbau der Stadt mitziehen.
+4. Verwaiste Bilder in `stadt-leicht/bilder/` (8 116 Dateien) – eigene Sonde, die die Namen aus `verzeichnis.json` und
+   der Laufzeit gegen die Dateien hält.
+5. **Wacklige Stadt-Sonden** (auf 888 genauso, oben): 832 zählt die rote Linie nur für manche falsche Antwort (Gasthaus:
+   2 von 2 Läufen 0 Punkte), 855 verlangt +8 über einem Korn, das zwischen 174 und 185 wiegt (Stoppel 184), 833 Teil A
+   trifft das Rathaus nicht immer und wartet höchstens ≈ 40 s auf die Stadt im Spiel (ebenso 828 Teil B), 831 seit 813.
+   Gehört zur nächsten Arbeit an der Stadt, nicht zu diesem Strang (die Sonden prüfen Stadt-Code, den 889 nicht anfasst).
+6. Weiter offen aus 888: iPhone-Prüfung der Brücke, „Runde starten“ ohne den ganzen Wortschatz, `werkzeug/backup`.
