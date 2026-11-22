@@ -911,7 +911,11 @@
        Zeit als leeren Bildschirm. Deshalb erst zeichnen lassen, dann
        laden — die Ansichten holen sich die Wörter über
        wortschatzNachziehen() ohnehin nach, sobald sie da sind. */
-    if (targetId === "view-learn") satzbauLaden();   // FASSUNG 842 — der Satzbaukasten liegt unter „Lernen"
+    /* FASSUNG 889 (Ladezeit, Vorrang 2): satzbau.js (185 KB gepackt) erst nach dem Teil von data-exercises.js (unten,
+       „vorrang", höchstens 3 s) – nur beim ersten Öffnen von „Lernen", sonst wie bisher sofort. Gemessen (3G, kalt,
+       Resource Timing): es lief bisher genau in der Zeit, in der der Kartentipp auf diesen Teil wartet („Karte →
+       startklar" 2,5 s). Der Satzbaukasten liegt hinter seinem Reiter und holt es dort selbst (renderSatzbaukasten). */
+    let satzbauNach = null;
     if (targetId === "view-learn" && typeof VocabData !== "undefined" && VocabData.ladeWoerter && !VocabData.ladenLaeuft() && !wortschatzGeplant) {
       /* MODUL-UMBAU M3b: erst der Teil von data-exercises.js, den jeder Karten-Tipp braucht (88 KB, höchstens 3 s), dann
          der Wortschatz (ExerciseData.uebungenVorrang; ohne Teile, z. B. ?quelle, sofort wie bisher).
@@ -925,6 +929,11 @@
       try { if (ExerciseData.uebungenVorrang) vorrang = ExerciseData.uebungenVorrang(3000).catch(() => true); } catch (e) { vorrang = true; }
       const los = () => { wortschatzGeplant = null; return VocabData.ladeWoerter(); };
       wortschatzGeplant = Promise.all([ruhe, vorrang]).then(los, los);
+      satzbauNach = vorrang;
+    }
+    if (targetId === "view-learn") {   // FASSUNG 842 — der Satzbaukasten liegt unter „Lernen"
+      if (satzbauNach && satzbauNach !== true) Promise.resolve(satzbauNach).then(() => satzbauLaden(), () => satzbauLaden());
+      else satzbauLaden();
     }
     /* FASSUNG 837 — XANDER (Funk 263): „die Ladezeit … ca. 10 mal schneller … sofort im Livestream wie HelloTalk".
        Der Weg ins Klassenzimmer führt über „Wissen", und „Wissen" zog bisher nach 1,5 s den ganzen Wortschatz

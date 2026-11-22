@@ -26,7 +26,12 @@
         Teile aus bau/): je Kategorie × Niveau × Startwert die Runde vor dem
         Wortschatz (889-Weg) = dieselbe Runde nach dem ganzen Wortschatz
         (bisheriger Aufruf)
-   Gegenprobe: WURZEL=<Baum mit 888> → B1, B2, B3, B8 rot.
+     B9 satzbau.js (185 KB) beim ersten Öffnen von „Lernen" erst NACH dem Teil
+        von data-exercises.js, den jeder Kartentipp braucht (der Server hält
+        diesen Teil 2,5 s zurück); es kommt trotzdem, genau einmal
+     B10 wer gleich nach „Lernen" den Reiter „Satzbaukasten" tippt, bekommt
+        satzbau.js sofort (vor dem Teil), genau einmal, und den Kasten
+   Gegenprobe: WURZEL=<Baum mit 888> → B1, B2, B3, B8, B9 rot (B10 dort grün).
    ===================================================================== */
 const fs = require("fs"), path = require("path"), http = require("http");
 
@@ -39,7 +44,7 @@ async function teilB(WURZEL, sage) {
   const TYP = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".png": "image/png",
     ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".webp": "image/webp", ".webmanifest": "application/manifest+json", ".mp3": "audio/mpeg", ".woff2": "font/woff2", ".gif": "image/gif" };
   const log = [];
-  const S = { wnWeg: false, wnFalsch: false, halten: false, wartend: [] };
+  const S = { wnWeg: false, wnFalsch: false, halten: false, wartend: [], basisMs: 0 };
   const srv = http.createServer((q, a) => {
     let p = decodeURIComponent(q.url.split("?")[0]); if (p === "/") p = "/index.html";
     const f = path.join(WURZEL, p);
@@ -49,12 +54,15 @@ async function teilB(WURZEL, sage) {
     log.push(z);
     if (!da) { a.writeHead(404); return a.end(); }
     const senden = () => {
+      z.aus = Date.now();
       a.writeHead(200, { "Content-Type": TYP[path.extname(f).toLowerCase()] || "application/octet-stream", "Cache-Control": "no-store" });
       if (istWn && S.wnFalsch) return a.end(fs.readFileSync(f, "utf8").replace(/("vokabeln\/[a-z]+\.js":")[0-9a-f]{10}"/, '$10000000000"'));
       fs.createReadStream(f).pipe(a);
     };
     /* halten (B4): der Wortschatz kommt erst, wenn die Sonde ihn freigibt */
-    if (/^\/vokabeln\//.test(p)) { if (S.halten) S.wartend.push(senden); else setTimeout(senden, WS_MS); } else senden();
+    if (/^\/vokabeln\//.test(p)) { if (S.halten) S.wartend.push(senden); else setTimeout(senden, WS_MS); }
+    else if (S.basisMs && /^\/min\/data-exercises-teil\.js$/.test(p)) setTimeout(senden, S.basisMs);   /* B9/B10: der Teil, den jeder Kartentipp braucht */
+    else senden();
   });
   await new Promise((r) => srv.listen(0, "127.0.0.1", r));
   const BASIS = "http://127.0.0.1:" + srv.address().port;
@@ -62,7 +70,7 @@ async function teilB(WURZEL, sage) {
   const istWn = (x) => /^\/bau\/wortniveau-/.test(x.p);
   const seite = async (o) => {
     o = o || {};
-    S.wnWeg = Boolean(o.wnWeg); S.wnFalsch = Boolean(o.wnFalsch); S.halten = Boolean(o.halten); S.wartend = [];
+    S.wnWeg = Boolean(o.wnWeg); S.wnFalsch = Boolean(o.wnFalsch); S.halten = Boolean(o.halten); S.wartend = []; S.basisMs = Number(o.basisMs) || 0;
     const ctx = await br.newContext({ viewport: { width: 412, height: 915 }, isMobile: true, hasTouch: true, serviceWorkers: "block" });
     await ctx.route(/^https?:\/\/(?!127\.0\.0\.1)/, (r) => r.abort());
     await ctx.addInitScript(() => {
@@ -161,6 +169,36 @@ async function teilB(WURZEL, sage) {
     {
       const r = await runde({ karten: ["plural"], wnFalsch: true });
       zaehl(!r.vorWs && r.ganz && r.total === 10 && r.stand && r.stand.benutzt === 0 && !r.pe.length, "B7 Auszug mit falschem Stempel, plural: nicht benutzt, wartet auf den Wortschatz", kurz(r));
+    }
+    /* B9/B10 — satzbau.js erst nach dem Teil von data-exercises.js (Fassung 889, „Karte → startklar" auf 3G) */
+    const satzbauFall = async (reiter) => {
+      const s = await seite({ basisMs: 2500 });
+      try {
+        const t0 = Date.now();
+        await s.pg.click('.tape-tab[data-target="view-learn"]');
+        if (reiter) await s.pg.evaluate(() => { const e = document.querySelector('#learnSubnav [data-sub="sub-satzbaukasten-de"]'); e.scrollIntoView({ block: "center" }); e.click(); });
+        const da = await s.pg.waitForFunction(() => Boolean(window.Satzbau), null, { timeout: 12000 }).then(() => true, () => false);
+        const kasten = reiter ? await s.pg.waitForFunction(() => { const a = document.getElementById("satzbaukastenDeArea"); return a && a.children.length > 0 && !/wird geladen|nicht geladen/.test(a.textContent); }, null, { timeout: 8000 }).then(() => true, () => false) : null;
+        await s.pg.waitForTimeout(500);
+        /* bis der zurückgehaltene Teil hinaus ist (höchstens 4 s), damit beide Zeiten im Protokoll stehen */
+        for (let i = 0; i < 40 && !log.slice(s.ab).some((x) => x.p === "/min/data-exercises-teil.js" && x.aus); i++) await s.pg.waitForTimeout(100);
+        const l = log.slice(s.ab), sb = l.filter((x) => /^\/(?:min\/)?satzbau\.js$/.test(x.p)), ba = l.filter((x) => x.p === "/min/data-exercises-teil.js");
+        const basisAus = ba.length && ba[0].aus ? ba[0].aus : null;
+        return { da, kasten, sb: sb.length, sbAb: sb.length ? sb[0].t - t0 : null, basis: ba.length, basisAus: basisAus ? basisAus - t0 : null,
+          nachBasis: Boolean(sb.length && basisAus && sb[0].t >= basisAus), pe: s.pe };
+      } finally { await s.ctx.close(); }
+    };
+    {
+      const r = await satzbauFall(false);
+      zaehl(r.da && r.sb === 1 && r.basis === 1 && r.nachBasis && !r.pe.length,
+        "B9 erstes „Lernen“: satzbau.js erst nach dem Teil von data-exercises.js, genau einmal, kommt",
+        "Teil geschickt " + r.basisAus + " ms, satzbau.js angefragt " + r.sbAb + " ms nach dem Tipp (" + r.sb + "×), Satzbau " + (r.da ? "da" : "FEHLT") + (r.pe.length ? ", Fehler: " + r.pe.join(" | ") : ""));
+    }
+    {
+      const r = await satzbauFall(true);
+      zaehl(r.da && r.kasten && r.sb === 1 && !r.nachBasis && !r.pe.length,
+        "B10 Reiter „Satzbaukasten“ gleich nach „Lernen“: satzbau.js sofort (vor dem Teil), genau einmal, der Kasten steht",
+        "Teil geschickt " + r.basisAus + " ms, satzbau.js angefragt " + r.sbAb + " ms nach dem Tipp (" + r.sb + "×), Kasten " + (r.kasten ? "steht" : "FEHLT") + (r.pe.length ? ", Fehler: " + r.pe.join(" | ") : ""));
     }
     /* B8 — Gleichlauf in der Seite */
     {

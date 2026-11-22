@@ -55,8 +55,8 @@
  "spiel.js": "c0eb3e9a676963bc0c833cc54ed171fa10d9e42e",
  "livechat.js": "259106e515788c28bf18a37b109969e05ca6100d",
  "data-werkstatt.js": "c216a9d8295448be5529ab2d7763319b60f00f4d",
- "app.js": "01de97bc143ba9fafcdc01e61f8edc0934607435",
  "data-exercises.js": "af170ec736a662f36695d890364054aa308d54b2",
  "quiz.js": "0749b4af37abea5cd0cfa921ced776d01fa3108c",
- "data-vocab.js": "71393708284fdf7af9fb637b1c56ec460e6a8555"
+ "data-vocab.js": "71393708284fdf7af9fb637b1c56ec460e6a8555",
+ "app.js": "10426ecafe5ba313852bed24e555f529cf75ba57"
 }
