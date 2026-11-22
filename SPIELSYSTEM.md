@@ -9415,7 +9415,8 @@ Läufer muss `flock … timeout …` heißen, nicht `timeout … flock …` – 
 dazu +0,1 KB (min/data-vocab.js +71 B, min/app.js +14 B, die Spiele in min/app-teil-rest4.js +11 B).
 
 **Offen:**
-1. **FUND (schon in 888 live, wichtig, nicht gebaut): „Wortschatz – Alle Themen“ friert die Seite ein.** In Node gemessen (V8 wie Chromium, Rechner ungebremst): `ExerciseData.activeGetCategory("wortschatz").getBank()`
+1. **FUND (schon in 888 live, wichtig) – erledigt in der Nachbesserung Gesamt 1 (Abschnitt unten, Punkt 2; gleiche Regel
+   und gleiche Verteilung, getBank() ohne Thema 0,28 s):** ~~„Wortschatz – Alle Themen“ friert die Seite ein.~~ In Node gemessen (V8 wie Chromium, Rechner ungebremst): `ExerciseData.activeGetCategory("wortschatz").getBank()`
    ohne Thema braucht mit dem ganzen Wörterbuch (41 063 Wörter) **176 s**, mit einem Thema („Essen & Trinken“, 2 127)
    0,27 s. Grund: `bankWortschatzThemen` filtert für JEDES Wort zweimal den ganzen Bestand nach Ablenkern und mischt die
    Kandidaten ganz (quadratisch). „Alle Themen“ ist die Vorgabe der Karte: wer die Karte „Wortschatz“ antippt, nachdem
@@ -9443,6 +9444,8 @@ dazu +0,1 KB (min/data-vocab.js +71 B, min/app.js +14 B, die Spiele in min/app-t
    die auf den ganzen Wortschatz WARTEN, sind seit Nachbesserung 1 erledigt (eilig, siehe dort; hier stand vorher, auch
    sie zeichneten mit dem, was da ist – das war falsch). Offen bleiben die Ansichten, die wirklich sofort zeichnen und
    nachziehen (Wörterbuch, Betonung im Text, Kompass): bei ihnen ist die Liste mit der Reihe 0,1–0,4 s später vollständig.
+   (Nachbesserung Gesamt 1: der Vokabelmeister gehört zu den wartenden – erledigt, ebenso „Runde starten“/renderSetup
+   über `wortschatzEilig()`, siehe Abschnitt unten, Punkte 5 und 6.)
    Vorschlag: `VocabData.eilig()` auch, sobald eine solche Wortansicht offen ist, aber NICHT im Klassenzimmer. Nicht
    gebaut, weil `wortschatzNachziehen` auch vom Betonungsschalter und vom Chat aufgerufen wird – erst die Aufrufer
    sortieren. Dazu, ebenfalls nicht gebaut: „Runde starten“ ruft eilig() auch dann, wenn man im Raum ist (gemessen
@@ -9456,7 +9459,8 @@ dazu +0,1 KB (min/data-vocab.js +71 B, min/app.js +14 B, die Spiele in min/app-t
    Ladeweg ist dort nachweislich gleich (Resource Timing: alle 26 Wortschatz-Dateien zugleich, satzbau.js zur selben
    Zeit). Ursache nicht gefunden – in der nächsten Messung mit Spur (Hauptfaden je Skript in den Abschnitten „lernen“
    und „wahl“) ansehen.
-6. **WebKit ab 16.4 (Nachbesserung 1, nicht prüfbar):** Ob Safari für eine Antwort aus dem Speicher oder vom Helfer
+6. **WebKit ab 16.4 (Nachbesserung 1, nicht prüfbar; Nachbesserung Gesamt 1: transferSize 0 zählt jetzt immer als
+   Speicher/Helfer, offen bleibt nur der Fall „volle Größe“):** Ob Safari für eine Antwort aus dem Speicher oder vom Helfer
    transferSize 0 (bzw. kleiner als encodedBodySize) meldet, ist nicht nachgesehen – hier gibt es kein WebKit. Meldet es
    dort die volle Größe, bekämen Stammgäste auf dem iPhone die Reihe, obwohl alles aus dem Speicher kommt (in Chromium
    vor der Weiche: „wieder“ Karte → startklar +41 ms). Beim nächsten Gerät mit Safari: Resource Timing von
@@ -9727,3 +9731,134 @@ Rückgabe 0, ohne Änderung am Baum während des Laufs:
 **Offen** (aus den Strängen, unverändert; Einzelheiten je Abschnitt oben): lager 1 (Arbeitsspeicher im Raum +6 MB bei
 20 000 Zeilen, Vorschlag Länge + Prüfsumme), runde Offen 4 Rest/6/7, stadtweg 1 (885-sparsam rechnet „neue Fassung“ fest
 mit 887 – SWL/SW402 rot auf jedem Stand ab 888; hier nicht gelaufen), stadtweg 2–5, 888 Offen 1 und 3.
+
+## Fassung 889 — Nachbesserung Gesamt (Runde 1)
+
+Stand 22.11.2026, Hauptbaum, Arbeitszweig `claude/audio-pronunciation-live-chat-3a5elt`, ab der Zusammenführung
+(2260d4d0). Noch nicht ausgeliefert: `DMA_VERSION` und fassung.json bleiben 888, main unberührt. **Für Xander
+unsichtbar** – nichts an Aussehen, Größe oder Bedienung. Spürbar wird nur, dass „Wortschatz – Alle Themen“ nicht mehr
+einfriert.
+
+**1. Rot – Sonde 787 „Wortschatz wird beim Tippen nachgeladen, dann ‚Tisch · der · A1‘“ (Ursache: Zeitannahme der
+Sonde; behoben in der Sonde).** Auf 2260d4d0 rot in 4 von 4, auf 888 grün. Die Sonde wartete, bis der Vorschlag
+„Tischder · A1“ steht, und verlangte im selben Augenblick `DMA_AUSSPR_BRUECKE.geladen()` (der GANZE Wortschatz da).
+Seit 889 lädt der Wortschatz in der Reihe (höchstens 4 Dateien zugleich): das Thema mit „Tisch“ kommt vor dem letzten,
+und jeder Tastendruck zeichnet die Vorschläge mit dem, was schon da ist. Der richtige Vorschlag mit Artikel steht so
+~0,3 s, bevor der ganze Wortschatz da ist. Für den Nutzer ist das kein Fehler, die Vorschläge sind eher früher richtig.
+Das Melden eines Worts „nicht im Wörterbuch“ an Claude wartet weiter auf `geladen()` (app.js, `dma-sprich-wort`).
+Die Sonde wartet jetzt auf beides, Vorschlag UND `geladen()`; die Prüfung selbst ist dieselbe (vorher nicht geladen,
+danach geladen und „Tischder · A1“). **Gegenprobe** `GEGEN787=laden` (das Tippen lädt den Wortschatz nicht nach): rot,
+4 FEHL, auf 889 und auf 888. **Läufe:** 889 grün 3 von 3 (dazu einmal im Sondenlauf unten), 888 (v888) grün 3 von 3.
+
+**2. Klein für 889, schwer für sich (schon in 888 live, runde Offen 1) – „Wortschatz – Alle Themen“ fror die Seite ein
+(behoben).** `bankWortschatzThemen` (data-exercises.js) filterte für JEDE Frage den ganzen Bestand zweimal nach Ablenkern
+und mischte alle Kandidaten (`Core.shuffle(kandidaten).slice(0, 3)`) – mit dem ganzen Wortschatz quadratisch. Das traf
+den Tipp auf die Karte (Vorgabe „Alle Themen“, `renderSetup` → `poolSizeFor`), „Runde starten“ und jede Frage von
+Blitzrunde und Leiter (`fragenFuerNiveau`). **Jetzt:** je Aufruf einmal nach Niveau sortiert, je Frage drei
+verschiedene zufällig gezogen (`wsAblenkerZiehen`; bei höchstens 8 Kandidaten wird wie bisher gemischt). Die Regel ist
+dieselbe (gleiches Thema; gleiches Niveau, wenn es dort mindestens drei andere gibt, sonst alle anderen des Themas; nie
+das Wort selbst), und auch die **Verteilung**: die ersten drei einer gleichmäßig gemischten Liste (`Core.shuffle` ist
+Fisher–Yates) sind drei gleichmäßig gezogene verschiedene Einträge. Anders ist nur die Folge der Zufallszahlen – welche
+falschen Antworten wie oft neben einem Wort stehen, bleibt gleich. Darum gebaut statt vorgeschlagen; der Prüfer hatte
+„andere falsche Antworten“ und damit Xanders OK erwartet, das gilt aber nur für dieselben Zufallszahlen, nicht für das,
+was man sieht. **Gemessen** (Node, ganzer Wortschatz, 40 627 Wörter, 41 063 Fragen): `getBank()` ohne Thema **0,28 s**
+(vorher 176 s laut runde; hier nach 20 s abgebrochen), ein Thema 39 ms (vorher 304 ms), `poolSizeFor` 0,30 s; alle
+26 Themen × 3: 0,77 s statt 19,1 s. **In der Seite** (Sonde S1, min/ wie ausgeliefert): Kartentipp „Wortschatz“ mit
+„Alle Themen“ bei ganzem Wortschatz → „Runde starten“ bereit nach 142 ms, längste Aufgabe 124 ms, die Runde nach
+184 ms. 888 und 2260d4d0: nach 30 s noch eingefroren. Doppelte Antworttexte: 272 (alt) und 286 (neu) von 167 964 Fragen
+zeigen zwei gleiche Knöpfe – das kommt aus den Daten (mehrere Wörter mit derselben Bedeutung, z. B. „gebeugte Form von
+…“), nicht aus dem Ziehen; unverändert (Offen 1).
+
+**3. Klein – Speicher-Weiche bei transferSize 0 (behoben).** `ohneInhalt()` in `ladeWoerter` zählt jetzt auch
+`transferSize === 0` als „ohne Inhalt über die Leitung“. Bei einem Abruf von derselben Adresse ist das immer Speicher
+oder Helfer, eine Übertragung über die Leitung hat immer Kopfzeilen. Meldet WebKit ab 16.4 für Antworten des Helfers
+`transferSize` 0 UND `encodedBodySize` 0, bekommen Stammgäste auf dem iPhone jetzt wie in 888 alles zugleich statt der
+Reihe. Irrt die Weiche (ein Browser meldet aus Datenschutzgründen immer 0), ist das Ergebnis das Verhalten von 888.
+Sonde R2 (data-vocab.js beim Start mit 0/0 → alle 26 zugleich) und R3 (eine Wortschatz-Datei so, über den Beobachter →
+die übrigen zugleich); Gegenprobe 2260d4d0: R2 rot.
+
+**4. Klein – keine Frist in der Reihe (behoben).** Hingen alle vier laufenden Abrufe ohne `onload`/`onerror`, kamen
+die übrigen Themen nie (in 888 fehlten nur die hängenden). Jetzt `VOKABEL_FRIST` = 12 s: ist so lange KEINE Datei
+fertig geworden, während noch welche warten, gehen alle übrigen zugleich hinaus (wie `eilig()`). Jede fertige Datei
+stellt die Uhr neu. Auf 3G ohne Hänger kommt etwa alle 2 s eine Datei (Ø 90 KB gepackt, ein Viertel der Leitung) – dort
+greift die Frist nicht. Das Versprechen bleibt unverändert: erfüllt, wenn alle Themen da (oder gescheitert) sind. Sonde
+R4 (die ersten 4 hängen: bis 11,9 s keine weitere Datei, nach 12 s die übrigen 22, sie kommen an, 4 Themen fehlen) und
+R5 (8 s je Datei, ohne Hänger: nie mehr als 4 zugleich, die Frist greift nicht); Gegenprobe 2260d4d0 und Frist
+ausgeschaltet: R4 rot.
+
+**5. Klein – Vokabelmeister (behoben).** `vmBuildDictionary` schlägt bei jeder Eingabe im ganzen Wortschatz nach; fehlte
+ein Thema noch, galt ein richtiges Wort dauerhaft als „❔“ (nicht bestätigt, keine Punkte). Jetzt holt der
+Vokabelmeister den Wortschatz wie die anderen Spiele, die ihn ganz brauchen, mit `wortschatzEilig()` (alle übrigen
+Dateien zugleich wie in 888, nicht im Raum), und `vmNachpruefen` schlägt Unbestätigtes bei der nächsten Eingabe und am
+Ende der Runde noch einmal nach (vor Punkten und Auswertung). Sonde S3: nach der Wahl des Buchstabens 26 von 26
+angefordert (vorher 4); „Tischler“, eingegeben, als der Wortschatz noch zurückgehalten war → „❔“, nach dem ganzen
+Wortschatz und der nächsten Eingabe „✅“. Gegenprobe 2260d4d0: beides rot; 888: „❔“ bleibt (rot), „alle angefordert“
+grün (888 lädt ohnehin alles zugleich).
+
+**6. Klein – `renderSetup` und „Runde starten“ riefen `VocabData.eilig()` direkt (behoben).** Jetzt über
+`wortschatzEilig()` wie die übrigen Warte-Zweige: im Raum bleibt die Reihe (Vorrang 1, die Leitung für Raum und
+Gespräch), außerhalb alles zugleich wie bisher. Sonde S2 (Karte „Wortschatz“ im Raum, Wortschatz zurückgehalten): nach
+dem Kartentipp 4 von 26 angefordert, die Runde mit Thema kommt, sobald er ganz da ist (10 Fragen). Gegenprobe
+2260d4d0: 26 von 26 (rot). Außerhalb des Raums unverändert (889-runde B4b: alle Dateien).
+
+**7. Aufräumen.** Der node_modules-Verweis im Hauptbaum ist nach dem Neustart nicht mehr da. `--nur-stempel` brauchte
+kein Vite (src/ unverändert); esbuild 0.28.2 kam aus `~/.npm/_npx`. Die Worktrees `/home/user/dmx-lager`, `dmx-runde`
+und `dmx-stadtweg` bleiben stehen, denn v888 verweist für die großen Ordner auf dmx-lager; weg erst mit der Lieferung
+(oder v888 vorher eigenständig machen). In v888 fehlte nach dem Neustart `vokabeln/` (leerer Ordner; Sonde 787 lief dort
+mit „Tisch“ ohne Artikel rot). Nachgetragen aus git 4bd701b3 (16 MB, gleich dem Hauptbaum). `stadt/`, `stadt-leicht/`
+und `werkzeug/` sind in v888 weiter leer – Stadt-Sonden gegen 888 brauchen sie.
+
+**Neue Sonde** `werkzeug/pruefe-889-nachbesserung.js` (W, R und GP ohne Browser; S mit Chromium in
+`pruefe-889-nachbesserung-seite.js`; `NUR=WRGS`): W1 Zeit, W2 Regel, W3 Verteilung (Chi² gegen die Gleichverteilung je
+Zweig: z 0,38 / −0,64 / 0,14), W4 Lückenfragen; R1–R6 die Reihe mit nachgebautem Browser (Skript-Tags, Resource Timing,
+Beobachter, Uhr); GP: alte Bank aus 888 zu langsam, Ablenker ohne Niveau, mit dem Wort selbst, immer dieselben drei,
+data-vocab.js aus 2260d4d0 (R2, R4), Frist aus – jede Gegenprobe fällt auf. S1–S3 siehe oben, Gegenprobe gegen einen
+Schnappschuss von 2260d4d0 (alle fünf rot) und gegen 888.
+
+**Sonden auf cb4f58a5** (Hauptbaum, je Sonde eine Chromium-Sperre, Protokolle `/tmp/claude-0/nach889/lauf1/`):
+
+| Sonde | Ergebnis (ok / rot) |
+|---|---|
+| 889-nachbesserung (W R GP S) | 27 / 0 |
+| 787-sprich-auswahl-hoerspiel | 19 / 0 |
+| 889-runde (G und B) | 42 / 0 (der Vermerk „Baum geändert“ in diesem Lauf kam von meiner Logbuch-Änderung währenddessen, nicht von der Sonde) |
+| 887-daten | 96 / 0 |
+| 858-ladeweg | 14 / 0 |
+| 887-bau | 42 / 0 mit vorübergehend verlinktem Vite (`/tmp/claude-0/runde/nm`, danach entfernt); ohne node_modules 30 / 3 – B7–B9 „Vite nötig“, wie bei der Zusammenführung |
+| 887-modul-app | 139 / 0 |
+| 876-start-schlank | 62 / 0 |
+| 885-schlank | 43 / 0 |
+| 884-leitung | 40 / 0 |
+| 885-praesenz | 70 / 0 |
+| 889-lager | 61 / 0 |
+| 885-bereiche | 57 / 0 |
+| 885-stuecke | 43 / 0 |
+| 887-sichern | 56 / 0 |
+| 885-swvorladen | 32 / 0 |
+| 642-verlauf-laden | 31 ok, „alles GRÜN“ (die 11 „ROT“ sind die Beschreibung des Stands vor 642, wie bisher) |
+| 887-takt, 887-verlauf, 887-zeile, raumverlauf, verlauf-doppelt, 863-chatfenster, runde99-privat/-pssst/-rueckfrage, walkie207-flug, bild-fluestern, aufgabe-reist, 886-vorhut | alle grün (6, 11, 7, 6, 5, 18, 13, 6, 30, 16, 7, 12, 6 ok) |
+| betonung-uebung, betonung-regeln, runde24, runde25, runde30, runde60, benoten, reihenfolge, spielsystem, mehrdeutige-aufgaben, galgenmaennchen, 853-beugung, 772-aussprache-woerterbuch, 786-nachsprechen-freigabe, tutor | alle grün, Rückgabe 0 |
+
+Dazu getrennt: 787 auf 889 dreimal grün, mit `GEGEN787=laden` rot; 787 (neue Fassung der Sonde) auf v888 dreimal grün, mit
+`GEGEN787=laden` rot; Teil S gegen 2260d4d0 (Schnappschuss `/tmp/claude-0/v889vor`) 5 von 5 rot, gegen v888 4 rot, 1 grün
+(wie erwartet, siehe Punkt 5). `node --check` für jede geänderte .js-Datei: ohne Fehler.
+
+**Platz:** cb4f58a5 gegenüber 2260d4d0 +40 184 Byte (git ls-tree -r -l, ohne Pfade mit „.“-Teil): Code +4 504 (app.js +1 243,
+data-vocab.js +1 598, data-exercises.js +1 663), min/ +686, Sonden +34 994; dazu dieser Abschnitt. Bis „bereit“ gepackt
++0,3 KB (min/data-vocab.js +98 B, min/data-exercises.js +132 B, min/app.js +58 B); der Vokabelmeister liegt in
+min/app-teil-rest3.js (+58 B, nur wer „Lernen“ öffnet). Jede Änderung an app.js gibt allen Teilen einen neuen Stempel
+(`dmaTeilPasst`, wie bei jeder Fassung). Stand insgesamt 955 619 509 Byte, Reserve bis 10⁹ ≈ 44,4 MB.
+
+**Offen:**
+1. **Doppelte Antworttexte in „Wortschatz“ (Spiel-Logik, Vorschlag, sichtbar):** etwa 0,17 % der Fragen zeigen zwei
+   gleiche Knöpfe, weil zwei Wörter dieselbe Bedeutung haben (meist „gebeugte Form von …“). Ist die richtige Bedeutung
+   doppelt, zählt nur einer der beiden gleichen Knöpfe als richtig. Vorschlag: beim Ziehen Ablenker überspringen, deren
+   Bedeutung der richtigen oder einer schon gezogenen gleicht. Das ändert, welche falschen Antworten vorkommen können –
+   darum erst im Funk.
+2. **Blitzrunde und Leiter (unsichtbar, nicht gebaut):** `fragenFuerNiveau` baut für JEDE Frage alle Banken neu. Mit
+   dem ganzen Wortschatz sind das jetzt 0,28 s je Frage auf dem Prüfrechner (davon 0,24 s „Wortschatz“; auf dem Handy
+   grob ×3–4), vorher Minuten. Vorschlag: die Liste je Niveau einmal je Runde (oder je Wortschatz-Stand) bauen; welche
+   Frage kommt, bliebe gleich verteilt.
+3. Runde Offen 4 (Wörterbuch, Betonung im Text, Kompass) und Offen 6 (WebKit meldet für den Speicher die volle Größe)
+   bleiben; Offen 2, 5, 7 unverändert.
+4. `DMA_VERSION` erst bei der Lieferung (`node werkzeug/fassung-setzen.js 889`).

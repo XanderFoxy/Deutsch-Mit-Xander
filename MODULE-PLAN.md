@@ -820,6 +820,10 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
           Gemessen gegen 888 (je 6 Paare, kalt): Lernen-Tipp → erste Frage 4G −1,2 bis −2,0 s, 3G −12,2 bis −12,6 s;
           Karte → startklar 4G −0,3 bis −0,7 s, 3G −0,4 s. Offen bleibt dort u. a. der Auszug schon beim Kartentipp (3G
           plural noch ~0,5 s) und der Fund „Wortschatz – Alle Themen“ (minutenlang, schon in 888).
+          **Nachbesserung Gesamt 1 (889):** der Fund ist behoben (gleiche Regel und Verteilung der Ablenker, getBank() ohne
+          Thema 0,28 s); die Reihe hat eine Frist (12 s ohne fertige Datei → alle übrigen zugleich), transferSize 0 zählt
+          als Speicher/Helfer, und „Runde starten“/Vokabelmeister holen den ganzen Wortschatz über wortschatzEilig()
+          (im Raum bleibt die Reihe). SPIELSYSTEM.md „Fassung 889 — Nachbesserung Gesamt (Runde 1)“.
        3. Der Zweig `renderChallengePicker` (Duell aus einer Kategorie-Liste) ist nicht angeschlossen – nur gemeldet,
           nicht entfernt.
   - **Nachbesserung 2 (Prüfer, Runde 2), 08.11.: 37b7396f, 8fe71b0e, a2902a16 (Code, Sonde, Messwerkzeug).** Für
