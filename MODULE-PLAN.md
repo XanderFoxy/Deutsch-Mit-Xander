@@ -824,6 +824,13 @@ nicht am Umbau. Der zweite spürbare Gewinn im Raum kommt mit Schritt 8: kein `e
           Thema 0,28 s); die Reihe hat eine Frist (12 s ohne fertige Datei → alle übrigen zugleich), transferSize 0 zählt
           als Speicher/Helfer, und „Runde starten“/Vokabelmeister holen den ganzen Wortschatz über wortschatzEilig()
           (im Raum bleibt die Reihe). SPIELSYSTEM.md „Fassung 889 — Nachbesserung Gesamt (Runde 1)“.
+          **Nachbesserung Gesamt 2 (889):** die Reihe griff im Feld fast nie, sobald der Helfer (sw.js) die Seite steuert –
+          durch ihn meldet Chromium transferSize 0 für jede Antwort, auch von der Leitung; alle Messungen davor liefen ohne
+          Helfer. Jetzt sieht ladeWoerter unter dem Helfer in SEINEM Speicher nach (caches.match mit cacheName
+          „dma-dateien-1“ je gestempelter Adresse): was dort liegt, geht sofort, der Rest in der Reihe; ohne Helfer wie
+          bisher. Wörterbuch, Betonung im Text und Kompass holen den Wortschatz über wortschatzEilig(). Sonde
+          werkzeug/pruefe-889-helfer.js (mit ?mit-sw), Messung MIT Helfer (ladezeit-messen.js --arten swerst,swzweit,sw).
+          SPIELSYSTEM.md „Fassung 889 — Nachbesserung Gesamt (Runde 2)“.
        3. Der Zweig `renderChallengePicker` (Duell aus einer Kategorie-Liste) ist nicht angeschlossen – nur gemeldet,
           nicht entfernt.
   - **Nachbesserung 2 (Prüfer, Runde 2), 08.11.: 37b7396f, 8fe71b0e, a2902a16 (Code, Sonde, Messwerkzeug).** Für

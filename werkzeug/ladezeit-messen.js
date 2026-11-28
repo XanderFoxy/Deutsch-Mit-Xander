@@ -121,6 +121,22 @@
      --arten a,b       aus kalt, warm, wieder, pause, sw, neu (Standard kalt,warm)
      --sw              = --arten kalt,warm,pause,sw
                        (dazu neu: --arten sw,neu, siehe FÄLLE)
+                       FASSUNG 889, Nachbesserung Gesamt 2 — HELFER-FÄLLE für
+                       den Wortschatz (vor allem mit --fall uebung):
+                       swerst  erster Besuch mit Helfer: getippt wird erst,
+                               wenn er die Seite übernommen hat (er meldet
+                               sich 2,5 s nach load an) – wie jemand, der sich
+                               ein paar Sekunden umsieht
+                       swzweit zweiter Besuch: der erste nur bis der Helfer
+                               steht (ohne Tipp), der zweite läuft von Anfang
+                               an durch ihn; der Wortschatz liegt NICHT in
+                               seinem Speicher
+                       sw      (Fall uebung) „wieder“ mit Helfer: die
+                               Vorbereitung tippt „Lernen“, der Wortschatz
+                               liegt in seinem Speicher
+                       Dazu je Öffnen: wie viele Wortschatz-Dateien höchstens
+                       zugleich unterwegs waren (Seite: eingefügt, nicht
+                       geladen; Server: Antworten in Arbeit).
      --sw-wach ms      der Service Worker rechnet bei jedem Aufwachen ms lang
                        (schwaches Telefon; der Prüfrechner weckt ihn in ~3 ms –
                        die Rechnerbremse gilt nur für die Seite). Die Zeile
@@ -196,7 +212,7 @@ const AUFBAU = S.aufbau != null ? Number(S.aufbau) : 2;
 const SPUR = !S["ohne-spur"];
 const PROFIL = !!S.profil;
 const ARTEN = (S.arten || (S.sw ? "kalt,warm,pause,sw" : "kalt,warm")).split(",").map((x) => x.trim()).filter(Boolean);
-for (const a of ARTEN) if (!["kalt", "warm", "wieder", "pause", "sw", "neu"].includes(a)) { console.error("Art unbekannt: " + a); process.exit(2); }
+for (const a of ARTEN) if (!["kalt", "warm", "wieder", "pause", "sw", "neu", "swerst", "swzweit"].includes(a)) { console.error("Art unbekannt: " + a); process.exit(2); }
 /* FASSUNG 886 (S1) — langsames Aufwachen des Service Workers nachstellen (ms, gleich für beide Stände) */
 const SW_WACH = Math.max(0, Number(S["sw-wach"] || 0));
 if (!isFinite(SW_WACH)) { console.error("--sw-wach braucht ms"); process.exit(2); }
@@ -292,7 +308,7 @@ function server(wurzel, frische) {
     return n;
   }
   let swWach = null;
-  const z = { anfragen: 0, bytes: 0, packMs: 0, n304: 0, n404: 0, fehlt: [] };
+  const z = { anfragen: 0, bytes: 0, packMs: 0, n304: 0, n404: 0, fehlt: [], vokN: 0, vokOffen: 0, vokMax: 0 };
   function lesen(p) {
     let d = datei.get(p);
     if (d) return d;
@@ -324,6 +340,12 @@ function server(wurzel, frische) {
       }
       h = { "Content-Type": TYP[d.ext] || "application/octet-stream", "Cache-Control": "max-age=" + frische, "ETag": d.etag };
       if (p === "/index.html" || p === "/fassung.json") h["Cache-Control"] = "no-cache";
+    }
+    /* 889, Nachbesserung Gesamt 2: Wortschatz-Antworten, die zugleich in Arbeit sind (vom Eingang bis zum letzten Byte) */
+    if (/^\/vokabeln\//.test(p)) {
+      z.vokN++; z.vokOffen++; z.vokMax = Math.max(z.vokMax, z.vokOffen);
+      let zu = false; const weg = () => { if (!zu) { zu = true; z.vokOffen--; } };
+      a.on("finish", weg); a.on("close", weg);
     }
     /* Verbindungsaufbau: die erste Antwort auf einer neuen Verbindung wartet, bis der Aufbau (TCP + TLS) fertig wäre */
     const sitz = q.stream ? q.stream.session : q.socket;
@@ -403,6 +425,23 @@ function mitschreiber(o) {
     };
   } catch (e) {}
   try { P.mark("dma-mess-null"); M.null = P.getEntriesByName("dma-mess-null")[0].startTime; } catch (e) {}
+  /* 889, Nachbesserung Gesamt 2: Wortschatz-Skripte – eingefügt (Zeit, unter dem Helfer?), höchstens zugleich unterwegs,
+     wie viele eingefügt waren, als das erste fertig war; dazu, wann der Helfer übernahm */
+  var VK = M.vok = { n: 0, offen: 0, max: 0, vorErster: null, erstes: null, letztes: null, unterHelfer: 0, claim: null };
+  try { navigator.serviceWorker.addEventListener("controllerchange", function () { if (VK.claim == null) VK.claim = P.now(); }); } catch (e) {}
+  try {
+    /* fertig im Einfangen am Dokument – das läuft vor dem onload des Skripts (dort fügt data-vocab.js schon das nächste ein) */
+    var vkLaeuft = new WeakSet(), vkFertig = function (e) { var s = e.target; if (!vkLaeuft.has(s)) return; vkLaeuft.delete(s); VK.offen--; if (VK.vorErster == null) VK.vorErster = VK.n; };
+    document.addEventListener("load", vkFertig, true); document.addEventListener("error", vkFertig, true);
+    new MutationObserver(function (ms) {
+      ms.forEach(function (m) { Array.prototype.forEach.call(m.addedNodes, function (s) {
+        if (s.tagName !== "SCRIPT" || !/\/vokabeln\/[a-z0-9-]+\.js/.test(s.src || "")) return;
+        var jetzt = P.now(); VK.n++; VK.offen++; VK.max = Math.max(VK.max, VK.offen); vkLaeuft.add(s);
+        if (VK.erstes == null) VK.erstes = jetzt; VK.letztes = jetzt;
+        try { if (navigator.serviceWorker && navigator.serviceWorker.controller) VK.unterHelfer++; } catch (e) {}
+      }); });
+    }).observe(document, { childList: true, subtree: true });
+  } catch (e) {}
   function merk(k) { if (M.t[k] == null) { M.t[k] = P.now(); try { P.mark("dma-mess-" + k); } catch (e) {} } }
   addEventListener("error", function () { M.fehler++; }, true);
   function bereit() { return window.LiveChat && window.DMA_TAFEL_STAND && document.readyState !== "loading" && document.querySelector('.tape-tab[data-target="view-knowledge"]'); }
@@ -483,7 +522,7 @@ function einsammeln() {
   function nz(x) { return x == null ? null : Math.round(x * 10) / 10; }
   var paint = {}; P.getEntriesByType("paint").forEach(function (e) { paint[e.name] = e.startTime; });
   return {
-    t: M.t, null: M.null, tipp: M.tipp, ueb: M.ueb || null, lt: M.lt, loaf: M.loaf, lcp: M.lcp, fehler: M.fehler, jetzt: P.now(),
+    t: M.t, null: M.null, tipp: M.tipp, ueb: M.ueb || null, vok: M.vok || null, lt: M.lt, loaf: M.loaf, lcp: M.lcp, fehler: M.fehler, jetzt: P.now(),
     ab: M.ab, seiten: M.seiten, fassung: String(window.DMA_VERSION || ""), vorher: M.vorher || null,
     sync: M.sync, sofort: (window.DMA_TEIL_SOFORT || []).slice(0, 40).map(function (s) { return String(s).replace(/\(?https?:\/\/[^\s)]*\/([^/\s)?]+)(\?[^\s:)]*)?(:\d+:\d+)\)?/g, "($1)").slice(0, 120); }),
     fp: paint["first-paint"], fcp: paint["first-contentful-paint"],
@@ -690,6 +729,7 @@ async function oeffnen(ctx, srv, art, o) {
   if (spur) await cdp.send("Tracing.start", { transferMode: "ReturnAsStream", traceConfig: { recordMode: "recordAsMuchAsPossible",
     includedCategories: ["toplevel", "devtools.timeline", "disabled-by-default-devtools.timeline", "v8.execute", "blink.user_timing", "loading"] } });
   if (o.messen && PROFIL) { await cdp.send("Profiler.enable"); await cdp.send("Profiler.setSamplingInterval", { interval: 1000 }); await cdp.send("Profiler.start"); }
+  srv.z.vokMax = srv.z.vokOffen;
   const z0 = { ...srv.z, fehlt: srv.z.fehlt.slice() };
   let roh, versuche = [0, 0], spurBuf = null, profile = null, abbruch = null;
   try {
@@ -701,7 +741,10 @@ async function oeffnen(ctx, srv, art, o) {
       const rest = await pg.evaluate((ms) => window.__dmaMess.t.bereit + ms - performance.now(), TIPP_NACH);
       if (rest > 0) await schlaf(rest);
     }
-    if (FALL === "uebung") {
+    /* 889, Nachbesserung Gesamt 2: swerst tippt erst, wenn der Helfer die Seite übernommen hat; swzweit-Vorbereitung tippt nicht */
+    if (o.swVorTipp) await pg.waitForFunction(() => navigator.serviceWorker && navigator.serviceWorker.controller, null, { timeout: 60000 }).then(() => schlaf(300));
+    if (o.ohneTipps) { /* nur öffnen */ }
+    else if (FALL === "uebung") {
       versuche[0] = await tippen(pg, '.tape-tab[data-target="view-learn"]', "lernen", { warte: 60000 });
       versuche[1] = await tippen(pg, '#exerciseSetup .category-card[data-cat="' + KATEGORIE + '"] .cat-checkbox', "wahl", { warte: 60000 });
       versuche[2] = await tippen(pg, "#startBtn", "runde", { warte: 60000 });
@@ -729,7 +772,7 @@ async function oeffnen(ctx, srv, art, o) {
   await pg.close();
   if (!o.messen) return { art, abbruch };
   const r = { art, abbruch, fehler, versuche, roh, server: { anfragen: srv.z.anfragen - z0.anfragen, kb: Math.round((srv.z.bytes - z0.bytes) / 1024), n304: srv.z.n304 - z0.n304, packMs: Math.round(srv.z.packMs - z0.packMs),
-    n404: srv.z.n404 - z0.n404, fehlt: srv.z.fehlt.filter((x) => z0.fehlt.indexOf(x) < 0) } };
+    n404: srv.z.n404 - z0.n404, fehlt: srv.z.fehlt.filter((x) => z0.fehlt.indexOf(x) < 0), vokN: srv.z.vokN - z0.vokN, vokMax: srv.z.vokMax } };
   if (roh) auswerten(r);
   if (roh && spurBuf) {
     const wins = abschnitte(r);
@@ -763,6 +806,9 @@ function auswerten(r) {
   } else r.nachFrage = null;
   /* M3b, Nachbesserung 2: ab dem Tipp auf „Lernen" (Fall uebung; null = nicht im Fenster) */
   r.ueb = t.ueb ? { wsStart: rd(t.ueb.wsStart), wsGanz: rd(t.ueb.wsGanz), artikel: rd(t.ueb.artikel), sammlung: rd(t.ueb.sammlung) } : null;
+  /* 889, Nachbesserung Gesamt 2: Wortschatz-Skripte (Seite) */
+  r.vok = t.vok ? { n: t.vok.n, max: t.vok.max, vorErster: t.vok.vorErster, unterHelfer: t.vok.unterHelfer,
+    spanne: t.vok.erstes != null ? rd(t.vok.letztes - t.vok.erstes) : null, claim: rd(t.vok.claim) } : null;
   const W = r.tippW, K = r.tippK;
   r.fp = rd(t.fp); r.fcp = rd(t.fcp); r.lcp = t.lcp ? rd(t.lcp[0]) : null; r.lcpWas = t.lcp ? t.lcp.slice(1, 3).filter(Boolean).join(" ") : "";
   r.ttfb = rd(t.nav.ttfb); r.dcl = rd(t.nav.dcl); r.load = rd(t.nav.load); r.bereit = rd(t.t.bereit);
@@ -853,6 +899,14 @@ async function durchgang(st, lauf) {
       vor(await oeffnen(ctx, st.srvB, "vor", { nachlauf: 6000 }), "pause 2");
       await mess(ctx, st.srvB, "pause", { trennen: true });
     });
+    /* 889, Nachbesserung Gesamt 2 — Helfer-Fälle (siehe Kopf, --arten): erster Besuch nach der Übernahme, zweiter Besuch */
+    if (ARTEN.includes("swerst")) await gruppe(async (ctx) => {
+      await mess(ctx, st.srvA, "swerst", { query: "?mit-sw", trennen: true, swVorTipp: true });
+    });
+    if (ARTEN.includes("swzweit")) await gruppe(async (ctx) => {
+      vor(await oeffnen(ctx, st.srvA, "vor", { query: "?mit-sw", ohneTipps: true, nachlauf: 3000, swWarten: 1500, trennen: true }), "swzweit 1");
+      await mess(ctx, st.srvA, "swzweit", { query: "?mit-sw", swStopp: true, trennen: true });
+    });
     if (ARTEN.includes("sw") || ARTEN.includes("neu")) await gruppe(async (ctx) => {
       /* 1. Öffnen meldet den Helfer an (2,5 s nach load), 2. Öffnen läuft schon durch ihn und füllt seinen Speicher,
          3. Öffnen ist das erste aus seinem Speicher: dabei legt Chrome den übersetzten Code (V8-Code-Cache) an – auf dem
@@ -899,6 +953,9 @@ const MASSE = [
   ["uebGesamt", "Lernen-Tipp → Frage (mit Werkzeug)"], ["uebAbStart", "Öffnen → Frage"],
   ["ueb.wsStart", "Lernen-Tipp → Wortschatz startet"], ["ueb.wsGanz", "Lernen-Tipp → Wortschatz ganz"],
   ["ueb.artikel", "Lernen-Tipp → Kategorie artikel da"], ["ueb.sammlung", "Lernen-Tipp → Sammlung ganz"],
+  ["vok.max", "Wortschatz: höchstens zugleich unterwegs (Seite)"], ["vok.vorErster", "  eingefügt, als die erste fertig war"],
+  ["vok.spanne", "  vom ersten bis zum letzten Einfügen"], ["server.vokMax", "Wortschatz: höchstens zugleich beim Server"],
+  ["server.vokN", "Wortschatz-Anfragen beim Server"],
   ["antwort", "Antwort: Tipp → Rückmeldung"], ["antwortNachFrage", "  Antwort-Tipp nach der Frage"],
   ["nachFrage.n", "Langläufer 3 s nach der Frage: Anzahl"], ["nachFrage.summe", "  Summe"], ["nachFrage.max", "  längster"], ["nachFrage.sperr", "  Sperrzeit (Σ über 50 ms)"],
   ["lang.n", "Langläufer 0–10 s: Anzahl"], ["lang.summe", "Langläufer: Summe"], ["lang.max", "Langläufer: längster"], ["lang.sperr", "Sperrzeit (Σ über 50 ms)"],
@@ -985,6 +1042,8 @@ function zeile(r) {
       : "  Wissen " + r.wissen + "  KZ " + r.kzBild + "/" + r.kzKnopf + "  (alt +" + r.kzAlt + ", ab Start " + r.kzAbStart + ")  Langl. ") + r.lang.n + "/" + r.lang.summe + "/" + r.lang.max + "  " + r.netz.kbBisBereit + " KB" +
     (r.seiten > 1 ? "  neu geladen: " + r.seiten + " Seiten, Vorlauf " + r.ab + ", bereit ab Öffnen " + r.bereitAb +
       (r.vorher ? " (alte Seite: erstes Byte " + r.vorher.ttfb + ", fassung.json " + r.vorher.fjAb + "→" + r.vorher.fjDa + ", Bild " + r.vorher.bild + ", ging " + r.vorher.geht + ")" : "") : "") +
+    (FALL === "uebung" && r.ueb ? "  Wortschatz ganz " + r.ueb.wsGanz : "") +
+    (r.vok && r.vok.n ? "  Wortschatz zugleich: Seite " + r.vok.max + ", Server " + r.server.vokMax + " (" + r.server.vokN + " Anfragen, " + r.vok.unterHelfer + "/" + r.vok.n + " unter dem Helfer)" : "") +
     (r.versuche.some((v) => v > 1) ? "  Tipps " + r.versuche.join("/") : "") + (r.fehler.length ? "  Seitenfehler " + r.fehler.length : "") +
     (r.server.n404 ? "  404: " + r.server.n404 + (r.server.fehlt.length ? " (" + r.server.fehlt.slice(0, 4).join(", ") + ")" : "") : "") +
     (r.sync && r.sync.n ? "  synchron " + r.sync.liste.map((x) => x[0].replace(/^app-teil-|\.js$/g, "") + "@" + x[4] + " " + x[2]).join(", ") : "") + sp);
