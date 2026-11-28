@@ -9079,7 +9079,10 @@ in derselben Runde – nur ohne die Wartezeit. Aufgaben aus MODULE-PLAN.md M3b �
 
 **Kurz:** Wer nach dem Öffnen unter „Lernen“ eine Karte antippt und gleich „Runde starten“ drückt, hat die erste Frage
 auf 4G nach 1,2–1,9 statt 3,0–3,3 s, auf 3G nach 2,7–3,2 statt 15,3–15,5 s (gegen 888, je 6 Paare, gesichert); die
-Karte ist 0,3–0,7 s früher startklar. Gemessen wurde auch alles andere auf diesem Weg – gesichert langsamer ist dort
+Karte ist 0,3–0,7 s früher startklar (**richtiggestellt in Runde 2:** gemessen ohne Helfer; „Karte → startklar“ hängt an
+der Reihe, und die griff bis Runde 2 unter dem Helfer nicht – im Feld galt dieser Teil nur, wer beim ersten Besuch
+„Lernen“ tippt, bevor der Helfer übernommen hat; „Runde starten → Frage“ hängt nicht an der Reihe. Messung MIT Helfer:
+Abschnitt „Nachbesserung Gesamt (Runde 2)“). Gemessen wurde auch alles andere auf diesem Weg – gesichert langsamer ist dort
 nichts außer +1,5 KB Code und (Nachbesserung 1 nachgemessen) EIN Langläufer von 60–120 ms in den 3 s nach der ersten
 Frage, den 888 dort nicht hatte; die Antwort 1 s nach der Frage ist nicht langsamer. **Nicht** gemessen hatte das Werkzeug die Ansichten, die auf den GANZEN Wortschatz warten
 (sechs Spiele unter „Lernen“, „Alle Wörter dieses Textes in eine Liste“, „Hörspiel mit meiner Stimme“): mit der Reihe
@@ -9131,6 +9134,13 @@ laufenden Wortschatz-Dateien (4G: 730 ms für die 28 KB von „wortstellung“).
   (Reihe + Meldung des Beobachters) bei 3G Gast „wieder“ „Wortschatz ganz“ +465 ms und „Karte“ +227 ms – die Meldung
   kommt ~100 ms nach der ersten Datei, und das Einlesen der 26 Dateien rutschte in den Kartentipp. `ladeThema()` für ein
   einzelnes Thema geht weiter sofort; das Versprechen ist dasselbe wie bisher.
+  **Richtiggestellt (Nachbesserung Gesamt, Runde 2):** „vom Helfer“ war der Fehler. Durch den Helfer (sw.js) meldet
+  Chromium `transferSize` 0 für JEDE Antwort – auch für eine, die er gerade über die Leitung geholt hat. Die Weiche hielt
+  darum unter dem Helfer alles für „aus dem Speicher“: beim ersten Besuch, sobald der Helfer übernommen hatte (er meldet
+  sich 2,5 s nach `load` an), beim zweiten Besuch ohne Wortschatz im Speicher und nach einem Helferwechsel gingen bis
+  Runde 2 alle 26 Dateien zugleich hinaus wie in 888 – im Feld also fast immer. Alle Messungen und Sonden hier liefen
+  ohne Helfer (unter Playwright meldet index.html ihn nur mit `?mit-sw` an). Seit Runde 2 entscheidet unter dem Helfer
+  sein Speicher (Abschnitt „Fassung 889 — Nachbesserung Gesamt (Runde 2)“, mit Messung MIT Helfer).
   **Ehrlich (Endmessung):** „der Wortschatz ist gleich schnell ganz da“ stimmt mit Gast und auf 3G (dort sogar früher:
   3G Gast −169, 3G Konto −297 ms, je 6/6), aber **nicht auf 4G mit Konto, kalt**: dort war er in vier Läufen 0,1–0,4 s
   später ganz da (+116 [+22…+600] 6/6, +230 [−330…+756] 5/6, +200 [+50…+929] 6/6, mit 6 statt 4 zugleich +398
@@ -9463,7 +9473,9 @@ dazu +0,1 KB (min/data-vocab.js +71 B, min/app.js +14 B, die Spiele in min/app-t
    Speicher/Helfer, offen bleibt nur der Fall „volle Größe“):** Ob Safari für eine Antwort aus dem Speicher oder vom Helfer
    transferSize 0 (bzw. kleiner als encodedBodySize) meldet, ist nicht nachgesehen – hier gibt es kein WebKit. Meldet es
    dort die volle Größe, bekämen Stammgäste auf dem iPhone die Reihe, obwohl alles aus dem Speicher kommt (in Chromium
-   vor der Weiche: „wieder“ Karte → startklar +41 ms). Beim nächsten Gerät mit Safari: Resource Timing von
+   vor der Weiche: „wieder“ Karte → startklar +41 ms). (Runde 2: unter dem Helfer fragt die Seite seit Runde 2 seinen
+   Speicher statt transferSize – dort ist die Frage für Safari erledigt; offen bleibt sie nur ohne Helfer, also für den
+   HTTP-Speicher des Browsers.) Beim nächsten Gerät mit Safari: Resource Timing von
    `min/data-vocab.js` beim zweiten Öffnen ansehen. Safari unter 16.4 ist seit Nachbesserung 1 abgedeckt (wie 888).
 7. **Ein Langläufer nach der ersten Frage (Nachbesserung 1, gemessen, nicht gebaut):** 60–120 ms, 0,4–0,6 s nach der
    Frage, ohne Skript im langen Bild (Stil/Layout oder Speicherbereinigung); 888 hatte in diesen 3 s keinen (dort lag
@@ -9776,6 +9788,11 @@ oder Helfer, eine Übertragung über die Leitung hat immer Kopfzeilen. Meldet We
 Reihe. Irrt die Weiche (ein Browser meldet aus Datenschutzgründen immer 0), ist das Ergebnis das Verhalten von 888.
 Sonde R2 (data-vocab.js beim Start mit 0/0 → alle 26 zugleich) und R3 (eine Wortschatz-Datei so, über den Beobachter →
 die übrigen zugleich); Gegenprobe 2260d4d0: R2 rot.
+**Richtiggestellt (Runde 2):** „Bei einem Abruf von derselben Adresse ist das immer Speicher oder Helfer“ stimmt – der Schluss
+daraus nicht: durch den Helfer meldet Chromium `transferSize` 0 auch für eine Datei, die er gerade über die Leitung geholt
+hat (nachgestellt mit `?mit-sw`: 26 von 26 Wortschatz-Dateien mit 0, alle vom Server). Mit diesem Punkt griff die Reihe
+unter dem Helfer gar nicht mehr (vorher schon fast nie, siehe 889 „Runde starten“, Richtigstellung). Seit Runde 2 gilt
+die Weiche über transferSize nur ohne Helfer; unter ihm entscheidet sein Speicher.
 
 **4. Klein – keine Frist in der Reihe (behoben).** Hingen alle vier laufenden Abrufe ohne `onload`/`onerror`, kamen
 die übrigen Themen nie (in 888 fehlten nur die hängenden). Jetzt `VOKABEL_FRIST` = 12 s: ist so lange KEINE Datei
