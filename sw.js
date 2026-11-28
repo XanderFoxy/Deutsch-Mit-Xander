@@ -47,6 +47,9 @@
    von 10 Paaren. Mehr als die Zeit einer Anfrage (Rundreise plus
    Server) kann es nicht bringen – und nur, wenn der Helfer langsam wacht. */
 var KASTEN = "dma-dateien-1";
+/* KASTEN: data-vocab.js sieht seit 889 (Nachbesserung Gesamt 2) unter diesem Namen nach, ob eine Wortschatz-Datei schon
+   hier liegt (die Reihe, höchstens 4 zugleich, nur für Dateien, die über die Leitung kommen) – bekommt er einen neuen
+   Namen, dort mitändern (Sonde pruefe-889-helfer.js prüft, dass beide gleich sind). */
 /* SEITE: index.html schreibt „draussen“ selbst in diesen Speicher (knopf im Fassungs-Wächter, Name dort fest) – bekommt er
    einen neuen Namen, dort mitändern (Sonde pruefe-885-rueckkehr.js prüft, dass beide gleich sind). */
 var SEITE = "dma-seite-1";

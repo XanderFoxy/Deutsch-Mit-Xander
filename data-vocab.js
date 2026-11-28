@@ -79,6 +79,12 @@ const VocabData = (function () {
     const zusatz = (window.DMA_VOKABELN_ZUSATZ || {})[thema];
     if (zusatz) for (let i = 0; i < zusatz.length; i++) WORDS.push(zusatz[i]);
   }
+  /* FASSUNG 837 — eigener Stempel je Datei (werkzeug/fassung-setzen.js, STEMPEL_EINZELN): nach einer neuen Fassung
+     kommt nur eine Wortdatei neu, die sich wirklich geändert hat. (889: eigene Funktion – dieselbe Adresse fragt
+     ladeWoerter im Speicher des Helfers nach.) */
+  function dateiPfad(datei) {
+    return 'vokabeln/' + datei + '.js' + (window.DMA_V ? window.DMA_V('vokabeln/' + datei + '.js') : '?v=' + (window.DMA_VERSION || '1'));
+  }
   /* Jede Datei nur EINMAL laden, auch wenn mehrere Themen sie brauchen. */
   const dateiLaeuft = {};
   const dateiFertig = {};
@@ -87,9 +93,7 @@ const VocabData = (function () {
     dateiLaeuft[datei] = new Promise((fertig) => {
       const melden = (wert) => { dateiFertig[datei] = true; fertig(wert); };
       const s = document.createElement('script');
-      /* FASSUNG 837 — eigener Stempel je Datei (werkzeug/fassung-setzen.js, STEMPEL_EINZELN): nach einer neuen Fassung
-         kommt nur eine Wortdatei neu, die sich wirklich geändert hat. */
-      s.src = 'vokabeln/' + datei + '.js' + (window.DMA_V ? window.DMA_V('vokabeln/' + datei + '.js') : '?v=' + (window.DMA_VERSION || '1'));
+      s.src = dateiPfad(datei);
       s.async = true;
       s.onload = () => melden(true);
       s.onerror = () => {
@@ -130,15 +134,16 @@ const VocabData = (function () {
      im letzten Augenblick. ladeThema() für ein einzelnes Thema (Wörterbuch) geht weiter sofort hinaus; dieselbe Datei
      lädt nie doppelt (dateiLaden). Das Versprechen bleibt dasselbe: erfüllt, wenn alle Themen da (oder gescheitert)
      sind, Wert wie bisher.
-     NACHGEMESSEN (4G, Konto, „wieder“): kommen die Dateien aus dem Speicher des Browsers oder vom Helfer, ist nicht die
-     Leitung der Engpass – dann kostete das Warten in der Reihe nur Zeit (der Wortschatz war später ganz, sein Einlesen
-     fiel in den Kartentipp: „Karte → startklar“ +41 ms, 6 von 6). Darum: kam eine Datei OHNE ihren Inhalt über die
-     Leitung (Resource Timing: transferSize kleiner als der Inhalt – aus dem Speicher des Browsers, vom Helfer, oder nur
-     nachgefragt mit 304), gehen alle übrigen zugleich hinaus wie bisher.
+     NACHGEMESSEN (4G, Konto, „wieder“, ohne Helfer): kommen die Dateien aus dem Speicher des Browsers (oder des
+     Helfers), ist nicht die Leitung der Engpass – dann kostete das Warten in der Reihe nur Zeit (der Wortschatz war
+     später ganz, sein Einlesen fiel in den Kartentipp: „Karte → startklar“ +41 ms, 6 von 6). Darum: kam eine Datei OHNE
+     ihren Inhalt über die Leitung (Resource Timing, ohne Helfer: transferSize kleiner als der Inhalt – aus dem Speicher
+     des Browsers oder nur nachgefragt mit 304), gehen alle übrigen zugleich hinaus wie bisher. Unter dem Helfer sagt
+     transferSize das nicht (immer 0) – dort entscheidet sein Speicher (Runde 2, unten bei KASTEN).
      NACHGEMESSEN (3G, Gast, „wieder“): diese Meldung kommt erst ~100 ms nach der ersten Datei (der Beobachter läuft in
      einer eigenen Aufgabe) – genug, dass das Einlesen der 26 Dateien in den Kartentipp rutschte (Wortschatz ganz +465 ms,
      Karte +227 ms). Darum entscheidet zuerst diese Datei selbst: kam data-vocab.js beim Start ohne Inhalt über die
-     Leitung (Speicher, Helfer, 304), liegt der Wortschatz mit großer Wahrscheinlichkeit auch dort – dann gleich alle
+     Leitung (ohne Helfer: Speicher des Browsers, 304), liegt der Wortschatz mit großer Wahrscheinlichkeit auch dort – dann gleich alle
      zugleich wie bisher; der Beobachter bleibt für den Rest (z. B. die erste Seite nach einer neuen Fassung). */
   const VOKABEL_ZUGLEICH = 4;
   /* FASSUNG 889, Nachmessung (4G mit Konto, kalt): der GANZE Wortschatz war mit der Reihe 0,1–0,3 s später da (in 2 von
@@ -152,6 +157,26 @@ const VocabData = (function () {
      während noch welche warten, gehen darum alle übrigen zugleich hinaus (wie eilig()). Auf 3G ohne Hänger kommt
      etwa alle 2 s eine Datei (Ø 90 KB gepackt, ein Viertel der Leitung) – die Frist greift dort nicht. */
   const VOKABEL_FRIST = 12000;
+  /* FASSUNG 889, Nachbesserung Gesamt 2 (Prüfer, Runde 2) — STEUERT DER HELFER (sw.js) DIE SEITE, SAGT transferSize
+     NICHTS. Chromium meldet für JEDE Antwort durch den Helfer transferSize 0, auch wenn er sie gerade über die Leitung
+     geholt hat. Die Weiche über transferSize (unten) hielt darum unter dem Helfer alles für „aus dem Speicher“ und
+     schickte alle 26 Dateien zugleich wie 888: beim ersten Besuch, sobald der Helfer übernommen hat (er meldet sich 2,5 s
+     nach load an), beim zweiten Besuch ohne Wortschatz im Speicher und nach einem Helferwechsel – im Feld also fast
+     immer. Gemessen und geprüft war die Reihe bis dahin nur ohne Helfer (unter Playwright meldet index.html ihn nur mit
+     ?mit-sw an). Jetzt: steuert ein Helfer die Seite, sieht ladeWoerter in SEINEM Speicher nach (KASTEN, derselbe Name
+     wie in sw.js; Schlüssel ist die gestempelte Adresse, genau wie gestempelt() dort nachsieht). Eine Datei, die dort
+     liegt, kommt ohne die Leitung: sie zählt nicht zu den VOKABEL_ZUGLEICH und geht sofort hinaus; was fehlt, geht in die
+     Reihe. Die Frage geht vor der ersten Datei hinaus, die ersten vier warten aber nicht auf die Antwort – im Netz kostet
+     sie so nichts; liegt alles im Speicher, gehen die übrigen 22 erst mit der Antwort hinaus (ein paar ms; gemessen
+     SPIELSYSTEM.md „889 – Nachbesserung Gesamt Runde 2“). caches.match mit cacheName legt keinen Speicher an
+     (caches.open täte es). Kann die Seite nicht nachsehen (kein caches im Fenster, Fehler), gehen alle zugleich hinaus
+     wie in 888. Ohne Helfer gilt die Weiche über transferSize wie bisher; ein Eintrag, der doch über einen Helfer kam
+     (workerStart > 0: er hat mitten im Laden übernommen, beim ersten Besuch – dann liegt nichts in seinem Speicher),
+     zählt dort nicht. Die Frist VOKABEL_FRIST und eilig() gelten unverändert. */
+  const KASTEN = "dma-dateien-1";   /* = KASTEN in sw.js (Sonde pruefe-889-helfer.js prüft, dass beide gleich sind) */
+  function helferSteuert() {
+    try { return Boolean(navigator.serviceWorker && navigator.serviceWorker.controller); } catch (e) { return false; }
+  }
   let eiligAn = false, reiheWecken = null;
   function eilig() {
     eiligAn = true;
@@ -161,42 +186,68 @@ const VocabData = (function () {
     if (alleLaufen) return alleLaufen;
     const reihe = VOKABEL_THEMEN.map((t) => t[0]);
     alleLaufen = new Promise((fertig) => {
-      /* Nachbesserung (Prüfer, Gesamt): auch transferSize 0 heißt „ohne Inhalt über die Leitung". Bei einem Abruf von
-         derselben Adresse ist das immer Speicher oder Helfer – eine Übertragung über die Leitung hat immer Kopfzeilen.
-         Meldet WebKit ab 16.4 für Antworten des Helfers transferSize 0 UND encodedBodySize 0 (ungeprüft, Offen 6),
-         bekämen Stammgäste auf dem iPhone sonst immer die Reihe. Irrt die Weiche hier (ein Browser meldet aus
-         Datenschutzgründen immer 0), gehen alle Dateien zugleich hinaus – wie in 888. */
-      const ohneInhalt = (e) => e.transferSize === 0 || (e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize);
+      /* Nachbesserung (Prüfer, Gesamt): auch transferSize 0 heißt „ohne Inhalt über die Leitung" – OHNE Helfer: dann
+         kam die Datei aus dem Speicher des Browsers (eine Übertragung über die Leitung hat immer Kopfzeilen).
+         Richtiggestellt in Runde 2: durch den Helfer meldet Chromium IMMER 0, auch für eine Datei, die er gerade über
+         die Leitung geholt hat – darum gilt diese Weiche nur ohne Helfer (oben), und ein Eintrag mit workerStart > 0
+         zählt hier nicht. Irrt die Weiche (ein Browser meldet aus Datenschutzgründen immer 0), gehen alle Dateien
+         zugleich hinaus – wie in 888. */
+      const ohneInhalt = (e) => !(e.workerStart > 0) && (e.transferSize === 0 || (e.encodedBodySize > 0 && e.transferSize < e.encodedBodySize));
       /* Nachbesserung (Prüfer): die Weiche braucht transferSize und encodedBodySize. Safari unter 16.4 (alte iPhones,
          die bei iOS 15 stehen bleiben) kennt beide nicht – dort wäre „undefined > 0" immer falsch, und Stammgäste
          bekämen die Reihe auch dann, wenn alles aus dem Speicher kommt (in Chromium vor der Weiche gemessen: „wieder"
          Karte → startklar +41 ms, 6 von 6). Kann die Seite Speicher und Leitung nicht unterscheiden, gehen darum alle
-         Dateien zugleich hinaus wie in 888 (ebenso, wenn Resource Timing oder der Beobachter versagen). */
+         Dateien zugleich hinaus wie in 888 (ebenso, wenn Resource Timing oder der Beobachter versagen). Unter dem
+         Helfer braucht es beides nicht (sein Speicher sagt es genau). */
+      const helfer = helferSteuert();
       let blind = true;
       try {
         blind = !(typeof PerformanceObserver !== "undefined" && typeof PerformanceResourceTiming !== "undefined"
           && "transferSize" in PerformanceResourceTiming.prototype && "encodedBodySize" in PerformanceResourceTiming.prototype);
       } catch (e) { blind = true; }
       let schonDa = false;
-      if (!blind) try { schonDa = performance.getEntriesByType("resource").some((e) => /\/(?:min\/)?data-vocab\.js(?:\?|$)/.test(e.name) && ohneInhalt(e)); } catch (e) { blind = true; }
-      let i = 0, offen = 0, zugleich = (blind || schonDa || eiligAn) ? reihe.length : VOKABEL_ZUGLEICH, ende = false, beob = null;
+      if (!helfer && !blind) try { schonDa = performance.getEntriesByType("resource").some((e) => /\/(?:min\/)?data-vocab\.js(?:\?|$)/.test(e.name) && ohneInhalt(e)); } catch (e) { blind = true; }
+      /* frei: Themen, deren Datei im Speicher des Helfers liegt (zählen nicht zu VOKABEL_ZUGLEICH); offenNetz: die
+         laufenden übrigen */
+      const frei = {}, gestartet = {};
+      let offen = 0, offenNetz = 0, ende = false, beob = null;
+      let zugleich = (eiligAn || (!helfer && (blind || schonDa))) ? reihe.length : VOKABEL_ZUGLEICH;
       let wache = null;
+      const alleGestartet = () => reihe.every((t) => gestartet[t]);
       const wachen = () => {
         if (wache) { clearTimeout(wache); wache = null; }
-        if (ende || zugleich >= reihe.length || i >= reihe.length) return;
+        if (ende || zugleich >= reihe.length || alleGestartet()) return;
         wache = setTimeout(() => { wache = null; if (!ende && zugleich < reihe.length) { zugleich = reihe.length; weiter(); } }, VOKABEL_FRIST);
+      };
+      const starten = (thema) => {
+        const netz = !frei[thema];
+        gestartet[thema] = true; offen++; if (netz) offenNetz++;
+        let p; try { p = Promise.resolve(ladeThema(thema)); } catch (e) { p = Promise.resolve(false); }
+        p.then(() => {}, () => {}).then(() => { offen--; if (netz) offenNetz--; weiter(); wachen(); });
       };
       const weiter = () => {
         if (ende) return;
-        if (i >= reihe.length && !offen) { ende = true; reiheWecken = null; wachen(); try { if (beob) beob.disconnect(); } catch (e) {} fertig(); return; }
-        while (offen < zugleich && i < reihe.length) {
-          offen++;
-          const thema = reihe[i++];
-          let p; try { p = Promise.resolve(ladeThema(thema)); } catch (e) { p = Promise.resolve(false); }
-          p.then(() => {}, () => {}).then(() => { offen--; weiter(); wachen(); });
+        let rest = 0;
+        for (const t of reihe) {
+          if (gestartet[t]) continue;
+          if (frei[t] || offenNetz < zugleich) starten(t); else rest++;
         }
+        if (!rest && !offen) { ende = true; reiheWecken = null; wachen(); try { if (beob) beob.disconnect(); } catch (e) {} fertig(); }
       };
-      if (!blind && !schonDa) try {
+      if (helfer && zugleich < reihe.length) {
+        let frage = null;
+        try {
+          if (typeof caches !== "undefined" && caches && typeof caches.match === "function") {
+            frage = Promise.all(reihe.map((thema) => Promise.all(themaDateien(thema).map((d) =>
+              caches.match(new URL(dateiPfad(d), document.baseURI).href, { cacheName: KASTEN })))
+              .then((da) => { if (da.length && da.every(Boolean)) frei[thema] = true; })));
+          }
+        } catch (e) { frage = null; }
+        if (!frage) zugleich = reihe.length;
+        else frage.then(() => { if (reihe.some((t) => frei[t] && !gestartet[t])) weiter(); },
+          () => { if (zugleich < reihe.length) { zugleich = reihe.length; weiter(); } });
+      }
+      if (!helfer && !blind && !schonDa) try {
         beob = new PerformanceObserver((liste) => {
           if (zugleich !== VOKABEL_ZUGLEICH) return;
           if (liste.getEntries().some((e) => /\/vokabeln\/[a-z0-9-]+\.js/.test(e.name) && ohneInhalt(e))) {

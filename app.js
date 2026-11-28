@@ -10683,8 +10683,14 @@
      AUSDRÜCKLICH danach gefragt — und dann ist es keine
      Verschwendung, sondern genau das, was er will. Darum eine
      eigene Funktion, die nur der Tipp benutzt. */
+  /* FASSUNG 889, Nachbesserung Gesamt 2 (Prüfer, Runde 2): auch hier wartet eine Ansicht auf den GANZEN Wortschatz
+     (Wörterbuch, Vokabelliste, Betonung im Text, Kompass, Aussprachekurs: sie zeichnen sofort und noch einmal, wenn
+     er ganz da ist) – darum wie die übrigen Warte-Zweige über wortschatzEilig() (alle übrigen Dateien zugleich wie in
+     888; nicht im Klassenzimmer und nicht im Raum, dort bleibt die Reihe). Wer nur eine Karte unter „Lernen“ antippt,
+     kommt hier nicht vorbei (Sonde pruefe-889-helfer.js K). */
   function wortschatzHolenFuer(nachzeichnen) {
     if (VocabData.alleThemenDa && VocabData.alleThemenDa()) return false;
+    wortschatzEilig();
     wortschatzBereit().then(() => { try { nachzeichnen(); } catch (e) { /* Ansicht ist weg */ } });
     return true;
   }
@@ -10700,6 +10706,7 @@
          Vorher kam hier nur „wird nachgeholt" ohne Anmeldung: wer „Lernen" und gleich danach „Wörterbuch" tippte,
          sah 289 statt 41 267 Einträge, bis er den Bereich wieder öffnete. */
       if (wortschatzGeplant) {
+        wortschatzEilig();   // 889, Nachbesserung Gesamt 2: wartet auf den ganzen Wortschatz (siehe wortschatzHolenFuer)
         wortschatzGeplant.then(() => { try { nachzeichnen(); } catch (e) { /* Ansicht ist weg */ } });
         return true;
       }
@@ -10709,6 +10716,7 @@
       if (wortschatzAufgeschoben && !klassenzimmerOffen()) { wortschatzAufgeschoben = false; return wortschatzHolenFuer(nachzeichnen); }
       return true;
     }
+    wortschatzEilig();   // 889, Nachbesserung Gesamt 2: wartet auf den ganzen Wortschatz (siehe wortschatzHolenFuer)
     wortschatzBereit().then(() => { try { nachzeichnen(); } catch (e) { /* Ansicht ist weg */ } });
     return true;
   }
